@@ -459,6 +459,7 @@ ActiveRecord::Schema.define(version: 2014_02_21_071959) do
     t.integer "encounter_type", null: false
     t.integer "patient_id", default: 0, null: false
     t.integer "provider_id", default: 0, null: false
+    t.integer "program_id",
     t.integer "location_id"
     t.integer "form_id"
     t.datetime "encounter_datetime", null: false
