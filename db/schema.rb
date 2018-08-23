@@ -1875,6 +1875,7 @@ ActiveRecord::Schema.define(version: 2014_02_21_071959) do
     t.string "retire_reason"
     t.string "uuid", limit: 38, null: false
     t.string "authentication_token"
+    t.string "token_expiry_time"
     t.index ["changed_by"], name: "user_who_changed_user"
     t.index ["creator"], name: "user_creator"
     t.index ["person_id"], name: "person_id_for_user"
