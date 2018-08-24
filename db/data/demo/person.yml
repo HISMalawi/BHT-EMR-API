@@ -1,0 +1,18 @@
+--- 
+person_00001: 
+  voided: false
+  birthdate: 1982-06-09
+  changed_by: 1
+  uuid: 9a52f25a-bd81-11df-9b35-00248c09418a
+  birthdate_estimated: false
+  creator: 1
+  gender: M
+  voided_by: 
+  date_voided: 
+  dead: false
+  void_reason: 
+  date_changed: 2000-01-01 00:00:00 +02:00
+  death_date: 2000-01-01 00:00:00 +02:00
+  person_id: 1
+  cause_of_death: 0
+  date_created: 2000-01-01 00:00:00 +02:00

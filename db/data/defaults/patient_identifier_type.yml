@@ -1,0 +1,177 @@
+--- 
+patient_identifier_type_00011: 
+  name: MDR-TB Program Identifier
+  required: false
+  validator: ""
+  format: ""
+  retire_reason: 
+  check_digit: false
+  retired_by: 
+  uuid: 9a53a718-bd81-11df-9b35-00248c09418a
+  creator: 22572
+  date_retired: 
+  description: MDR-TB Program Identifier
+  patient_identifier_type_id: 11
+  format_description: ""
+  retired: false
+  date_created: 2008-09-24 08:10:40 +02:00
+patient_identifier_type_00001: 
+  name: OpenMRS Identification Number
+  required: false
+  validator: org.openmrs.patient.impl.LuhnIdentifierValidator
+  format: ""
+  retire_reason: 
+  check_digit: true
+  retired_by: 
+  uuid: 9a53b50a-bd81-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: Unique number used in OpenMRS
+  patient_identifier_type_id: 1
+  format_description: 
+  retired: false
+  date_created: 2005-09-22 09:00:00 +02:00
+patient_identifier_type_00002: 
+  name: Old Identification Number
+  required: false
+  validator: 
+  format: ""
+  retire_reason: 
+  check_digit: false
+  retired_by: 
+  uuid: 9a53bfaa-bd81-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: Number given out prior to the OpenMRS system (No check digit)
+  patient_identifier_type_id: 2
+  format_description: 
+  retired: false
+  date_created: 2005-09-22 09:00:00 +02:00
+patient_identifier_type_00003: 
+  name: National id
+  required: false
+  validator: 
+  format: ""
+  retire_reason: 
+  check_digit: false
+  retired_by: 
+  uuid: 9a53c8d8-bd81-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: National ID number developed by Baobab
+  patient_identifier_type_id: 3
+  format_description: P-175-0000004-5
+  retired: false
+  date_created: 2007-11-30 08:12:34 +02:00
+patient_identifier_type_00004: 
+  name: ARV Number
+  required: false
+  validator: 
+  format: ""
+  retire_reason: 
+  check_digit: false
+  retired_by: 
+  uuid: 9a53d1f2-bd81-11df-9b35-00248c09418a
+  creator: 15878
+  date_retired: 
+  description: Unique ID Number for Patients in ARV Treatment Program
+  patient_identifier_type_id: 4
+  format_description: ""
+  retired: false
+  date_created: 2007-12-18 01:29:01 +02:00
+patient_identifier_type_00005: 
+  name: Pre ART Number
+  required: false
+  validator: 
+  format: ""
+  retire_reason: 
+  check_digit: false
+  retired_by: 
+  uuid: 9a53e3b8-bd81-11df-9b35-00248c09418a
+  creator: 15878
+  date_retired: 
+  description: Sequential number given to patients enrolled in Pre-ART program
+  patient_identifier_type_id: 5
+  format_description: PART-0001
+  retired: false
+  date_created: 2008-05-16 22:26:46 +02:00
+patient_identifier_type_00006: 
+  name: VHW ID
+  required: false
+  validator: 
+  format: ""
+  retire_reason: 
+  check_digit: false
+  retired_by: 
+  uuid: 9a53eeee-bd81-11df-9b35-00248c09418a
+  creator: 15878
+  date_retired: 
+  description: Village Health Worker ID#
+  patient_identifier_type_id: 6
+  format_description: ""
+  retired: false
+  date_created: 2008-06-11 19:22:53 +02:00
+patient_identifier_type_00007: 
+  name: District TB Number
+  required: false
+  validator: ""
+  format: ""
+  retire_reason: 
+  check_digit: false
+  retired_by: 
+  uuid: 9a53f9c0-bd81-11df-9b35-00248c09418a
+  creator: 15878
+  date_retired: 
+  description: Ministry of Health identification number for TB patients
+  patient_identifier_type_id: 7
+  format_description: AA/DOT/####/YY
+  retired: false
+  date_created: 2008-07-10 00:39:46 +02:00
+patient_identifier_type_00008: 
+  name: Dummy ID
+  required: false
+  validator: ""
+  format: ""
+  retire_reason: 
+  check_digit: false
+  retired_by: 
+  uuid: 9a5404c4-bd81-11df-9b35-00248c09418a
+  creator: 15878
+  date_retired: 
+  description: Dummy ID for test patients
+  patient_identifier_type_id: 8
+  format_description: ""
+  retired: false
+  date_created: 2008-08-17 00:41:21 +02:00
+patient_identifier_type_00009: 
+  name: EID Number
+  required: false
+  validator: ""
+  format: ""
+  retire_reason: 
+  check_digit: false
+  retired_by: 
+  uuid: 9a540f78-bd81-11df-9b35-00248c09418a
+  creator: 15878
+  date_retired: 
+  description: "Early Infant Diagnosis number.  Example: 3009-9009-1"
+  patient_identifier_type_id: 9
+  format_description: ""
+  retired: false
+  date_created: 2008-09-17 01:03:40 +02:00
+patient_identifier_type_00010: 
+  name: Unknown ID
+  required: false
+  validator: ""
+  format: ""
+  retire_reason: 
+  check_digit: false
+  retired_by: 
+  uuid: 9a541b12-bd81-11df-9b35-00248c09418a
+  creator: 15878
+  date_retired: 
+  description: Unknown ID as scanned by mateme
+  patient_identifier_type_id: 10
+  format_description: ""
+  retired: false
+  date_created: 2008-09-18 03:17:43 +02:00

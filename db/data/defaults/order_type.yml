@@ -1,0 +1,34 @@
+--- 
+order_type_00003: 
+  name: Test
+  retire_reason: 
+  retired_by: 
+  uuid: 87289a22-bd81-11df-9b35-00248c09418a
+  creator: 2
+  date_retired: 
+  description: New test order
+  order_type_id: 3
+  retired: false
+  date_created: 2005-08-08 16:07:53 +02:00
+order_type_00001: 
+  name: Drug Order
+  retire_reason: 
+  retired_by: 
+  uuid: 8728a8dc-bd81-11df-9b35-00248c09418a
+  creator: 2
+  date_retired: 
+  description: Drug information captured from patient historically
+  order_type_id: 1
+  retired: false
+  date_created: 2005-08-08 16:06:12 +02:00
+order_type_00002: 
+  name: Drug
+  retire_reason: 
+  retired_by: 
+  uuid: 8728b2f0-bd81-11df-9b35-00248c09418a
+  creator: 2
+  date_retired: 
+  description: New drug order
+  order_type_id: 2
+  retired: false
+  date_created: 2005-08-08 16:07:20 +02:00

@@ -1,0 +1,23 @@
+--- 
+order_00269: 
+  start_date: 2000-01-01 00:00:00 +02:00
+  voided: false
+  discontinued_reason: 0
+  uuid: 79f10a88-bd81-11df-9b35-00248c09418a
+  creator: 0
+  order_id: 269
+  patient_id: 0
+  voided_by: 0
+  accession_number: 
+  date_voided: 2000-01-01 00:00:00 +02:00
+  discontinued: false
+  void_reason: 
+  discontinued_by: 0
+  discontinued_date: 2000-01-01 00:00:00 +02:00
+  order_type_id: 0
+  concept_id: 0
+  encounter_id: 0
+  instructions: 
+  orderer: 0
+  auto_expire_date: 2000-01-01 00:00:00 +02:00
+  date_created: 2000-01-01 00:00:00 +02:00

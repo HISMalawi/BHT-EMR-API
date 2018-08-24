@@ -1,0 +1,210 @@
+--- 
+concept_class_00013: 
+  name: Symptom/Finding
+  retire_reason: 
+  retired_by: 
+  uuid: e093208c-df1a-11de-a277-0026181bb84d
+  creator: 1
+  date_retired: 
+  concept_class_id: 13
+  description: Observation that can be reported from patient or found on exam
+  retired: 0
+  date_created: 2004-10-04 00:00:00 +02:00
+concept_class_00002: 
+  name: Procedure
+  retire_reason: 
+  retired_by: 
+  uuid: e0931380-df1a-11de-a277-0026181bb84d
+  creator: 1
+  date_retired: 
+  concept_class_id: 2
+  description: Describes a clinical procedure
+  retired: 0
+  date_created: 2004-03-02 00:00:00 +02:00
+concept_class_00003: 
+  name: Drug
+  retire_reason: 
+  retired_by: 
+  uuid: e09314c0-df1a-11de-a277-0026181bb84d
+  creator: 1
+  date_retired: 
+  concept_class_id: 3
+  description: Drug
+  retired: 0
+  date_created: 2004-02-02 00:00:00 +02:00
+concept_class_00014: 
+  name: Specimen
+  retire_reason: 
+  retired_by: 
+  uuid: e09321b8-df1a-11de-a277-0026181bb84d
+  creator: 1
+  date_retired: 
+  concept_class_id: 14
+  description: Body or fluid specimen
+  retired: 0
+  date_created: 2004-12-02 00:00:00 +02:00
+concept_class_00015: 
+  name: Misc Order
+  retire_reason: 
+  retired_by: 
+  uuid: e09322da-df1a-11de-a277-0026181bb84d
+  creator: 1
+  date_retired: 
+  concept_class_id: 15
+  description: Orderable items which aren't tests or drugs
+  retired: 0
+  date_created: 2005-02-17 00:00:00 +02:00
+concept_class_00004: 
+  name: Diagnosis
+  retire_reason: 
+  retired_by: 
+  uuid: e09315ec-df1a-11de-a277-0026181bb84d
+  creator: 1
+  date_retired: 
+  concept_class_id: 4
+  description: Conclusion drawn through findings
+  retired: 0
+  date_created: 2004-02-02 00:00:00 +02:00
+concept_class_00005: 
+  name: Finding
+  retire_reason: 
+  retired_by: 
+  uuid: e0931718-df1a-11de-a277-0026181bb84d
+  creator: 1
+  date_retired: 
+  concept_class_id: 5
+  description: Practitioner observation/finding
+  retired: 0
+  date_created: 2004-03-02 00:00:00 +02:00
+concept_class_00016: 
+  name: Program
+  retire_reason: 
+  retired_by: 
+  uuid: e0932406-df1a-11de-a277-0026181bb84d
+  creator: 1
+  date_retired: 
+  concept_class_id: 16
+  description: A treatment program
+  retired: 0
+  date_created: 2006-08-16 02:04:09 +02:00
+concept_class_00017: 
+  name: Workflow
+  retire_reason: 
+  retired_by: 
+  uuid: e0932528-df1a-11de-a277-0026181bb84d
+  creator: 1
+  date_retired: 
+  concept_class_id: 17
+  description: A workflow within a treatment program
+  retired: 0
+  date_created: 2006-08-16 02:04:21 +02:00
+concept_class_00006: 
+  name: Anatomy
+  retire_reason: 
+  retired_by: 
+  uuid: e0931844-df1a-11de-a277-0026181bb84d
+  creator: 1
+  date_retired: 
+  concept_class_id: 6
+  description: Anatomic sites / descriptors
+  retired: 0
+  date_created: 2004-03-02 00:00:00 +02:00
+concept_class_00007: 
+  name: Question
+  retire_reason: 
+  retired_by: 
+  uuid: e093197a-df1a-11de-a277-0026181bb84d
+  creator: 1
+  date_retired: 
+  concept_class_id: 7
+  description: Question (eg, patient history, SF36 items)
+  retired: 0
+  date_created: 2004-03-02 00:00:00 +02:00
+concept_class_00018: 
+  name: State
+  retire_reason: 
+  retired_by: 
+  uuid: e0932654-df1a-11de-a277-0026181bb84d
+  creator: 1
+  date_retired: 
+  concept_class_id: 18
+  description: A state within a workflow
+  retired: 0
+  date_created: 2006-08-16 02:04:43 +02:00
+concept_class_00019: 
+  name: Request
+  retire_reason: 
+  retired_by: 
+  uuid: e0932780-df1a-11de-a277-0026181bb84d
+  creator: 1
+  date_retired: 
+  concept_class_id: 19
+  description: Used for making a request.
+  retired: 0
+  date_created: 2009-09-05 10:09:55 +02:00
+concept_class_00008: 
+  name: LabSet
+  retire_reason: 
+  retired_by: 
+  uuid: e0931aa6-df1a-11de-a277-0026181bb84d
+  creator: 1
+  date_retired: 
+  concept_class_id: 8
+  description: Term to describe laboratory sets
+  retired: 0
+  date_created: 2004-03-02 00:00:00 +02:00
+concept_class_00009: 
+  name: MedSet
+  retire_reason: 
+  retired_by: 
+  uuid: e0931bdc-df1a-11de-a277-0026181bb84d
+  creator: 1
+  date_retired: 
+  concept_class_id: 9
+  description: Term to describe medication sets
+  retired: 0
+  date_created: 2004-02-02 00:00:00 +02:00
+concept_class_00010: 
+  name: ConvSet
+  retire_reason: 
+  retired_by: 
+  uuid: e0931cfe-df1a-11de-a277-0026181bb84d
+  creator: 1
+  date_retired: 
+  concept_class_id: 10
+  description: Term to describe convenience sets
+  retired: 0
+  date_created: 2004-03-02 00:00:00 +02:00
+concept_class_00011: 
+  name: Misc
+  retire_reason: 
+  retired_by: 
+  uuid: e0931e2a-df1a-11de-a277-0026181bb84d
+  creator: 1
+  date_retired: 
+  concept_class_id: 11
+  description: Terms which don't fit other categories
+  retired: 0
+  date_created: 2004-03-02 00:00:00 +02:00
+concept_class_00001: 
+  name: Test
+  retire_reason: 
+  retired_by: 
+  uuid: e0930eb2-df1a-11de-a277-0026181bb84d
+  creator: 1
+  date_retired: 
+  concept_class_id: 1
+  description: Acq. during patient encounter (vitals, labs, etc.)
+  retired: 0
+  date_created: 2004-02-02 00:00:00 +02:00
+concept_class_00012: 
+  name: Symptom
+  retire_reason: 
+  retired_by: 
+  uuid: e0931f56-df1a-11de-a277-0026181bb84d
+  creator: 1
+  date_retired: 
+  concept_class_id: 12
+  description: Patient-reported observation
+  retired: 0
+  date_created: 2004-10-04 00:00:00 +02:00
