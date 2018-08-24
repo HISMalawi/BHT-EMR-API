@@ -5,6 +5,7 @@ class ApplicationController < ActionController::API
 
       status = UserService.check_token(params[:token])
       if status == true
+       User.current = User.where(authentication_token: params[:token]).first
        return true
       else
         response = {

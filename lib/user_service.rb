@@ -3,39 +3,73 @@ module UserService
 
 	def self.create_user(params)
 
-    location    = params[:location]
-    app_name    = params[:app_name]
     password    = params[:password]
     username    = params[:username]
     cur_token       = params[:token]
+
     details     = compute_expiry_time
-    token       = details[:token]
-    expiry_time = details[:expiry_time]
     salt        = User.random_string(10)
-    pass        = Digest::SHA1.hexdigest("#{password}#{salt}")
     gender      = params[:gender]
     birthdate   = params[:birthdate]
 
     creator = User.where(authentication_token: cur_token).first
 
-    person_id = Person.create(
+    person = Person.create(
         gender:    gender,
         birthdate: birthdate.to_date.to_s(:db),
         creator: creator.id
     )
 
-    User.create(
-        username:             username,
-        password:             pass,
-        authentication_token: token,
-        token_expiry_time:    expiry_time,
-        person_id:            person_id,
-        creator: creator.id
+    PersonName.create(
+       first_name: params[:first_name],
+       last_name:  params[:last_name]
     )
 
-    return {token: token, expiry_time: expiry_time}
+    User.create(
+        username:             username,
+        password:             Digest::SHA1.hexdigest("#{password}#{salt}"),
+        salt:                 salt,
+        authentication_token: details[:token],
+        token_expiry_time:    details[:expiry_time],
+        person_id:            person.id,
+        creator:              creator.id
+    )
+
+    return {token: details[:token], expiry_time: details[:expiry_time]}
 	end
 
+  def self.update_user(params)
+
+    user = User.where(username: params[:username]).first
+    if user.blank?
+      return false
+    end
+
+    details           = compute_expiry_time
+
+    person = Person.find(user.person_id)
+    name   = PersonName.where(person_id: user.person_id).last
+
+    if name.blank? || person.blank?
+      return false
+    end
+
+    user.authentication_token = details[:token]
+    user.token_expiry_time = details[:expiry_time]
+    user.password         = Digest::SHA1.hexdigest("#{params[:password]}#{user.salt}") if params[:password].present?
+
+    person.gender       = params[:gender] if params[:gender].present?
+    person.birthdate    = params[:birthdate].to_date.to_s(:db) if params[:birthdate].present?
+
+    name.first_name   = params[:first_name] if params[:first_name].present?
+    name.last_name    = params[:last_name] if params[:last_name].present?
+
+    user.save
+    person.save
+    name.save
+
+    return true
+  end
 
 	def self.create_token
 		token_chars  = ('a'..'z').to_a + ('A'..'Z').to_a + ('0'..'9').to_a

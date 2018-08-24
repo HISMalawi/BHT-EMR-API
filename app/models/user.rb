@@ -1,5 +1,6 @@
 class User < ApplicationRecord
 
+  cattr_accessor :current
   def self.random_string(len)
     #generat a random password consisting of strings and digits
     chars = ("a".."z").to_a + ("A".."Z").to_a + ("0".."9").to_a

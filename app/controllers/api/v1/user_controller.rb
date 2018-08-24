@@ -2,24 +2,86 @@ require 'user_service.rb'
 
 class Api::V1::UserController < ApplicationController
 
-  #before_action :check_if_token_valid
+  before_action :check_if_token_valid
+  skip_before_action :check_if_token_valid, only: [:authenticate_user]
+
+  def index
+    results = []
+
+    User.all.each{|user|
+      person = Person.find(user.person_id)
+      name   = PersonName.find(user.person_id)
+
+      results << {
+          username:  user.username,
+          first_name: name.first_name,
+          last_lame: name.last_name,
+          gender:    person.gender,
+          birthdate: person.birthdate,
+          role: ""
+      }
+    }
+
+    if !results.blank?
+      render json: {
+          status: 200,
+          error: false,
+          message: 'users found',
+          data: results
+        }
+    else
+      render json: {
+          status: 401,
+          error: true,
+          message: 'users notfound',
+          data: {}
+      }
+    end
+  end
+
+  def get_user
+    user = User.where(username: params[:username]).first
+    person = Person.find(user.person_id).first
+    name   = PersonName.where(person_id: user.person_id).last
+
+    if user.blank? || person.blank? || name.blank?
+      render json: {
+          status: 200,
+          error: false,
+          message: 'user found',
+          data: {
+              username:  user.username,
+              first_name: name.first_name,
+              last_lame: name.last_name,
+              gender:    person.gender,
+              birthdate: person.birthdate,
+              role: ""
+          }
+      }
+    else
+      render json: {
+          status: 401,
+          error: true,
+          message: "could not find user with username: #{params[:username]}",
+          data: {}
+      }
+
+    end
+  end
+
   def create_user
 =begin
 
   params = {
-    app_name: "",
-    password: "",
-    username": "",
-    location_id: "",
-    gender: "",
-    birthdate: ""
+    username": "", password: "", first_name: "", last_name:  "", gender: "", role:   "Admin|Nurse|Clinician|Doctor",  birthdate: ""
   }
 =end
 
-		if params[:location_id] &&
-        params[:app_name] &&
-        params[:password] &&
+		if  params[:password] &&
         params[:username] &&
+        params[:first_name] &&
+        params[:last_name] &&
+        params[:role]  &&
         params[:token]
 
 			  status = UserService.check_user(params[:username])
@@ -61,7 +123,42 @@ class Api::V1::UserController < ApplicationController
 		render json: response
 	end
 
-	def authenticate_user
+  def update_user
+=begin
+
+  params = {
+    username": "", password: "", first_name: "", last_name:  "", gender: "", role:   "Admin|Nurse|Clinician|Doctor",  birthdate: ""
+  }
+=end
+
+    if UserService.update_user(params)
+
+        details = UserService.compute_expiry_time
+        response = {
+            status: 200,
+            error: false,
+            message: 'account updated successfuly',
+            data: {
+                token: details[:token],
+                expiry_time: details[:expiry_time]
+            }
+        }
+    else
+        response = {
+            status: 401,
+            error: true,
+            message: 'failed to update user',
+            data: {
+
+        }
+      }
+    end
+
+    render json: response
+  end
+
+  def authenticate_user
+
 		if params[:username] && params[:password]
 
 			status = UserService.authenticate(params[:username],params[:password])
