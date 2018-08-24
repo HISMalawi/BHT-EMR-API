@@ -6,14 +6,12 @@ class Encounter < ApplicationRecord
   after_save :after_save
   after_void :after_void
 
-  has_many :observations, dependent: :destroy, conditions: { voided: 0 }
+  has_many :observations, dependent: :destroy
   has_many :drug_orders, through: :orders, foreign_key: 'order_id'
-  has_many :orders, dependent: :destroy, conditions: { voided: 0 }
-  belongs_to(:type, class_name: 'EncounterType',
-                    foreign_key: :encounter_type, conditions: { retired: 0 })
-  belongs_to(:provider, class_name: 'User', foreign_key: :provider_id,
-                        conditions: { retired: 0 })
-  belongs_to :patient, conditions: { voided: 0 }
+  has_many :orders, dependent: :destroy
+  belongs_to(:type, class_name: 'EncounterType', foreign_key: :encounter_type)
+  belongs_to(:provider, class_name: 'User', foreign_key: :provider_id)
+  belongs_to :patient
 
   # TODO: this needs to account for current visit, which needs to account for
   # possible retrospective entry

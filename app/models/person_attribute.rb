@@ -3,10 +3,9 @@ class PersonAttribute < ActiveRecord::Base
   self.primary_key = 'person_attribute_id'
 
   belongs_to(:type, class_name: 'PersonAttributeType',
-                    foreign_key: :person_attribute_type_id,
-                    conditions: { retired: 0 })
+                    foreign_key: :person_attribute_type_id)
 
-  belongs_to :person, foreign_key: :person_id, conditions: { voided: 0 }
+  belongs_to :person, foreign_key: :person_id
 
   # def self.phone_numbers(person_id)
   #   home_phone_id       = PersonAttributeType.find_by_name('HOME PHONE NUMBER').person_attribute_type_id

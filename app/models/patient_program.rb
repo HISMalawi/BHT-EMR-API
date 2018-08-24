@@ -4,11 +4,10 @@ class PatientProgram < ActiveRecord::Base
 
   after_void :after_void
 
-  belongs_to :patient, conditions: { voided: 0 }
-  belongs_to :program, conditions: { retired: 0 }
-  belongs_to :location, conditions: { retired: 0 }
-  has_many(:patient_states, class_name: 'PatientState',
-                            conditions: { voided: 0 }, dependent: :destroy)
+  belongs_to :patient
+  belongs_to :program
+  belongs_to :location
+  has_many :patient_states, class_name: 'PatientState', dependent: :destroy
 
   named_scope :current, conditions: [
     'date_enrolled < NOW() AND (date_completed IS NULL OR date_completed > NOW())'

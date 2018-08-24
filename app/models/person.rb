@@ -9,27 +9,25 @@ class Person < ApplicationRecord
   # cattr_accessor :migrated_creator
   # cattr_accessor :migrated_location
 
-  has_one(:patient, foreign_key: :patient_id, dependent: :destroy,
-                    conditions: { voided: 0 })
-  has_many(:names, class_name: 'PersonName', foreign_key: :person_id,
-                   dependent: :destroy, order: 'person_name.preferred DESC',
-                   conditions: { voided: 0 })
+  has_one :patient, foreign_key: :patient_id, dependent: :destroy
+  has_many(:names,
+           -> { order('person_name.preferred' => 'DESC') },
+           class_name: 'PersonName', foreign_key: :person_id)
   has_many(:addresses, class_name: 'PersonAddress', foreign_key: :person_id,
-                       dependent: :destroy,
-                       order: 'person_address.preferred DESC',
-                       conditions: { voided: 0 })
+                       dependent: :destroy)
   has_many(:relationships, class_name: 'Relationship',
-                           foreign_key: :person_a,
-                           conditions: { voided: 0 })
+                           foreign_key: :person_a)
   has_many(:person_attributes, class_name: 'PersonAttribute',
-                               foreign_key: :person_id,
-                               conditions: { voided: 0 })
+                               foreign_key: :person_id)
   has_many(:observations, class_name: 'Observation', foreign_key: :person_id,
-                          dependent: :destroy, conditions: { voided: 0 }) do
+                          dependent: :destroy) do
     def find_by_concept_name(name)
       concept_name = ConceptName.find_by_name(name)
       conditions = ['concept_id = ?', concept_name.concept_id]
-      find(:all, conditions: conditions) rescue []
+      all(conditions: conditions)
+    rescue StandardError => e
+      Logger.error "Suppressed exception: #{e}"
+      []
     end
   end
 

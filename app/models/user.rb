@@ -4,13 +4,15 @@ class User < ApplicationRecord
 
   cattr_accessor :current
 
-  belongs_to :person, foreign_key: :person_id, conditions: { voided: 0 }
+  belongs_to :person, foreign_key: :person_id
 
   has_many :properties, class_name: 'UserProperty', foreign_key: :user_id
   has_many :user_roles, foreign_key: :user_id, dependent: :delete_all
-  has_many(:names, class_name: 'PersonName', foreign_key: :person_id,
-                   dependent: :destroy, order: 'person_name.preferred DESC',
-                   conditions: { voided: 0 })
+  has_many(:names,
+           -> { order('person_name.preferred' => 'DESC') },
+           class_name: 'PersonName',
+           foreign_key: :person_id,
+           dependent: :destroy)
 
   def self.random_string(len)
     #generat a random password consisting of strings and digits

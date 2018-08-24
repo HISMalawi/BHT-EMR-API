@@ -1,17 +1,16 @@
 # frozen_string_literal: true
 
 class Order < ActiveRecord::Base
-  set_table_name :orders
-  set_primary_key :order_id
-  include Openmrs
-  belongs_to :order_type, conditions: { retired: 0 }
-  belongs_to :concept, conditions: { retired: 0 }
-  belongs_to :encounter, conditions: { voided: 0 }
-  belongs_to :patient, conditions: { voided: 0 }
-  belongs_to(:provider, foreign_key: 'orderer', class_name: 'User',
-                        conditions: { voided: 0 })
-  belongs_to(:observation, foreign_key: 'obs_id', class_name: 'Observation',
-                           conditions: { voided: 0 })
+  self.table_name = :orders
+  self.primary_key = :order_id
+
+  belongs_to :order_type
+  belongs_to :concept
+  belongs_to :encounter
+  belongs_to :patient
+  belongs_to :provider, foreign_key: 'orderer', class_name: 'User'
+  belongs_to :observation, foreign_key: 'obs_id', class_name: 'Observation'
+
   has_one :drug_order # no default scope
 
   named_scope(
