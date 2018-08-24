@@ -1,0 +1,71 @@
+--- 
+relationship_type_00001: 
+  b_is_to_a: Patient
+  preferred: 0
+  uuid: abdfc860-bd98-11df-9b35-00248c09418a
+  a_is_to_b: Doctor
+  creator: 1
+  weight: 0
+  relationship_type_id: 1
+  description: Relationship from a primary care provider to the patient
+  date_created: 2007-11-28 08:11:37 +02:00
+relationship_type_00002: 
+  b_is_to_a: Sibling
+  preferred: 0
+  uuid: abdfd8fa-bd98-11df-9b35-00248c09418a
+  a_is_to_b: Sibling
+  creator: 1
+  weight: 0
+  relationship_type_id: 2
+  description: Relationship between brother/sister, brother/brother, and sister/sister
+  date_created: 2007-11-28 08:11:37 +02:00
+relationship_type_00003: 
+  b_is_to_a: Child
+  preferred: 0
+  uuid: abdfe46c-bd98-11df-9b35-00248c09418a
+  a_is_to_b: Parent
+  creator: 1
+  weight: 0
+  relationship_type_id: 3
+  description: Relationship from a mother/father to the child
+  date_created: 2007-11-28 08:11:37 +02:00
+relationship_type_00004: 
+  b_is_to_a: Niece/Nephew
+  preferred: 0
+  uuid: abdff0ce-bd98-11df-9b35-00248c09418a
+  a_is_to_b: Aunt/Uncle
+  creator: 1
+  weight: 0
+  relationship_type_id: 4
+  description: ""
+  date_created: 2007-11-28 08:11:37 +02:00
+relationship_type_00006: 
+  b_is_to_a: Guardian
+  preferred: 0
+  uuid: abdffbb4-bd98-11df-9b35-00248c09418a
+  a_is_to_b: Patient
+  creator: 1
+  weight: 0
+  relationship_type_id: 6
+  description: Patient Guardian
+  date_created: 2007-12-19 11:03:10 +02:00
+relationship_type_00007: 
+  b_is_to_a: Village Health Worker
+  preferred: 0
+  uuid: abe00654-bd98-11df-9b35-00248c09418a
+  a_is_to_b: Patient
+  creator: 1
+  weight: 0
+  relationship_type_id: 7
+  description: Specifies village health worker for a particular patient.
+  date_created: 2008-05-29 22:17:00 +02:00
+relationship_type_00008: 
+  b_is_to_a: treatment suportee
+  preferred: 0
+  uuid: abe010c2-bd98-11df-9b35-00248c09418a
+  a_is_to_b: treatment suporter
+  creator: 1
+  weight: 0
+  relationship_type_id: 8
+  description: Used by the mdrtb module.
+  date_created: 2008-09-23 23:12:02 +02:00

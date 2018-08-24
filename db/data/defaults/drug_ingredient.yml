@@ -1,0 +1,100 @@
+---
+ingredient_001:
+ concept_id: 625
+ ingredient_id: 625
+ingredient_002:
+ concept_id: 628
+ ingredient_id: 628
+ingredient_003:
+ concept_id: 630
+ ingredient_id: 628
+ingredient_004:
+ concept_id: 630
+ ingredient_id: 797
+ingredient_005:
+ concept_id: 631
+ ingredient_id: 631
+ingredient_006:
+ concept_id: 633
+ ingredient_id: 633
+ingredient_007:
+ concept_id: 635
+ ingredient_id: 635
+ingredient_008:
+ concept_id: 792
+ ingredient_id: 625
+ingredient_009:
+ concept_id: 792
+ ingredient_id: 628
+ingredient_0010:
+ concept_id: 792
+ ingredient_id: 631
+ingredient_0011:
+ concept_id: 794
+ ingredient_id: 794
+ingredient_0012:
+ concept_id: 796
+ ingredient_id: 796
+ingredient_0013:
+ concept_id: 797
+ ingredient_id: 797
+ingredient_0014:
+ concept_id: 802
+ ingredient_id: 802
+ingredient_0015:
+ concept_id: 1610
+ ingredient_id: 628
+ingredient_0016:
+ concept_id: 1610
+ ingredient_id: 631
+ingredient_0017:
+ concept_id: 1610
+ ingredient_id: 797
+ingredient_0018:
+ concept_id: 1613
+ ingredient_id: 625
+ingredient_0019:
+ concept_id: 1613
+ ingredient_id: 628
+ingredient_0020:
+ concept_id: 1613
+ ingredient_id: 633
+ingredient_0021:
+ concept_id: 2833
+ ingredient_id: 625
+ingredient_0022:
+ concept_id: 2833
+ ingredient_id: 628
+ingredient_0023:
+ concept_id: 2988
+ ingredient_id: 794
+ingredient_0024:
+ concept_id: 2988
+ ingredient_id: 796
+ingredient_0025:
+ concept_id: 2988
+ ingredient_id: 814
+ingredient_0026:
+ concept_id: 5811
+ ingredient_id: 5811
+ingredient_0027:
+ concept_id: 6880
+ ingredient_id: 628
+ingredient_0028:
+ concept_id: 6880
+ ingredient_id: 794
+ingredient_0029:
+ concept_id: 6880
+ ingredient_id: 797
+ingredient_0030:
+ concept_id: 6880
+ ingredient_id: 802
+ingredient_0031:
+ concept_id: 1612
+ ingredient_id: 797
+ingredient_0032:
+ concept_id: 1612
+ ingredient_id: 628
+ingredient_0033:
+ concept_id: 1612
+ ingredient_id: 633

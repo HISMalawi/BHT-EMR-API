@@ -1,0 +1,241 @@
+--- 
+person_attribute_type_00007: 
+  foreign_key: 
+  name: Health Center
+  format: org.openmrs.Location
+  person_attribute_type_id: 7
+  retire_reason: 
+  changed_by: 
+  retired_by: 
+  searchable: false
+  uuid: c0c0d790-bd8b-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  date_changed: 
+  description: Specific Location of this person's home health center.
+  retired: false
+  date_created: 2007-11-28 08:11:37 +02:00
+person_attribute_type_00008: 
+  foreign_key: 
+  name: Treatment Supporter
+  format: java.lang.String
+  person_attribute_type_id: 8
+  retire_reason: 
+  changed_by: 
+  retired_by: 
+  searchable: true
+  uuid: c0c20f70-bd8b-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  date_changed: 
+  description: ""
+  retired: false
+  date_created: 2008-09-23 23:12:59 +02:00
+person_attribute_type_00010: 
+  foreign_key: 
+  name: Home Village
+  format: org.openmrs.Location
+  person_attribute_type_id: 10
+  retire_reason: 
+  changed_by: 1
+  retired_by: 
+  searchable: false
+  uuid: c0c21d9e-bd8b-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  date_changed: 2008-11-20 10:08:14 +02:00
+  description: The person's home village or place of origin
+  retired: false
+  date_created: 2008-11-20 10:07:03 +02:00
+person_attribute_type_00009: 
+  foreign_key: 
+  name: MDR-TB Patient Contact ID Number
+  format: java.lang.String
+  person_attribute_type_id: 9
+  retire_reason: 
+  changed_by: 
+  retired_by: 
+  searchable: false
+  uuid: c0c25b74-bd8b-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  date_changed: 
+  description: Used by the mdrtb module to give non-patient contacts an ID number.
+  retired: false
+  date_created: 2008-09-23 23:35:12 +02:00
+person_attribute_type_00011: 
+  foreign_key: 
+  name: Mother's Maiden Name
+  format: java.lang.String
+  person_attribute_type_id: 11
+  retire_reason: 
+  changed_by: 
+  retired_by: 
+  searchable: false
+  uuid: c0c27c26-bd8b-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  date_changed: 
+  description: The maiden name of the person's mother.
+  retired: false
+  date_created: 2008-11-20 10:07:58 +02:00
+person_attribute_type_00012: 
+  foreign_key: 
+  name: "Cell Phone Number "
+  format: java.lang.String
+  person_attribute_type_id: 12
+  retire_reason: 
+  changed_by: 
+  retired_by: 
+  searchable: false
+  uuid: c0c28b80-bd8b-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  date_changed: 
+  description: Person primary cell phone number
+  retired: false
+  date_created: 2009-10-07 15:44:33 +02:00
+person_attribute_type_00001: 
+  foreign_key: 
+  name: Race
+  format: java.lang.String
+  person_attribute_type_id: 1
+  retire_reason: 
+  changed_by: 
+  retired_by: 
+  searchable: false
+  uuid: c0c29922-bd8b-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  date_changed: 
+  description: Group of persons related by common descent or heredity
+  retired: false
+  date_created: 2007-11-28 08:11:37 +02:00
+person_attribute_type_00002: 
+  foreign_key: 
+  name: Birthplace
+  format: java.lang.String
+  person_attribute_type_id: 2
+  retire_reason: 
+  changed_by: 
+  retired_by: 
+  searchable: false
+  uuid: c0c2a5f2-bd8b-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  date_changed: 
+  description: Location of persons birth
+  retired: false
+  date_created: 2007-11-28 08:11:37 +02:00
+person_attribute_type_00013: 
+  foreign_key: 
+  name: Occupation
+  format: java.lang.String
+  person_attribute_type_id: 13
+  retire_reason: 
+  changed_by: 
+  retired_by: 
+  searchable: false
+  uuid: c0c2b33a-bd8b-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  date_changed: 
+  description: This is the current patient occupation
+  retired: false
+  date_created: 2009-10-09 15:45:21 +02:00
+person_attribute_type_00014: 
+  foreign_key: 
+  name: Home Phone Number
+  format: ""
+  person_attribute_type_id: 14
+  retire_reason: 
+  changed_by: 
+  retired_by: 
+  searchable: false
+  uuid: c0c2bd94-bd8b-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  date_changed: 
+  description: Person home phone number, usually fixed line phone number
+  retired: false
+  date_created: 2009-11-11 11:43:28 +02:00
+person_attribute_type_00003: 
+  foreign_key: 
+  name: Citizenship
+  format: java.lang.String
+  person_attribute_type_id: 3
+  retire_reason: 
+  changed_by: 
+  retired_by: 
+  searchable: false
+  uuid: c0c2c76c-bd8b-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  date_changed: 
+  description: Country of which this person is a member
+  retired: false
+  date_created: 2007-11-28 08:11:37 +02:00
+person_attribute_type_00004: 
+  foreign_key: 
+  name: Mother's Name
+  format: java.lang.String
+  person_attribute_type_id: 4
+  retire_reason: 
+  changed_by: 
+  retired_by: 
+  searchable: false
+  uuid: c0c2d252-bd8b-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  date_changed: 
+  description: First or last name of this person's mother
+  retired: false
+  date_created: 2007-11-28 08:11:37 +02:00
+person_attribute_type_00015: 
+  foreign_key: 
+  name: Office Phone Number
+  format: ""
+  person_attribute_type_id: 15
+  retire_reason: 
+  changed_by: 
+  retired_by: 
+  searchable: false
+  uuid: c0c2df0e-bd8b-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  date_changed: 
+  description: Person office phone number. Usually fixed line phone number
+  retired: false
+  date_created: 2009-11-11 11:44:39 +02:00
+person_attribute_type_00005: 
+  foreign_key: 
+  name: Civil Status
+  format: org.openmrs.Concept
+  person_attribute_type_id: 5
+  retire_reason: 
+  changed_by: 
+  retired_by: 
+  searchable: false
+  uuid: c0c2eac6-bd8b-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  date_changed: 
+  description: Marriage status of this person
+  retired: false
+  date_created: 2007-11-28 08:11:37 +02:00
+person_attribute_type_00006: 
+  foreign_key: 
+  name: Health District
+  format: java.lang.String
+  person_attribute_type_id: 6
+  retire_reason: 
+  changed_by: 
+  retired_by: 
+  searchable: false
+  uuid: c0c2f58e-bd8b-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  date_changed: 
+  description: District/region in which this patient' home health center resides
+  retired: false
+  date_created: 2007-11-28 08:11:37 +02:00

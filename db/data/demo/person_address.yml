@@ -1,0 +1,25 @@
+--- 
+person_address_00001: 
+  address1: Green Snake Way
+  region: Southern
+  address2: Friendship House
+  latitude: 
+  preferred: false
+  state_province: 
+  township_division: 
+  voided: false
+  city_village: Katoleza
+  country: Malawi
+  subregion: 
+  uuid: 79f2d5fc-bd81-11df-9b35-00248c09418a
+  creator: 1
+  postal_code: 
+  voided_by: 
+  date_voided: 
+  void_reason: 
+  county_district: Checkuchecku
+  person_address_id: 1
+  person_id: 1
+  longitude: 
+  neighborhood_cell: 
+  date_created: 2000-01-01 00:00:00 +02:00

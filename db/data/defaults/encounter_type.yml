@@ -1,0 +1,568 @@
+--- 
+encounter_type_00052: 
+  name: HIV STAGING
+  retire_reason: 
+  encounter_type_id: 52
+  retired_by: 
+  uuid: 2cc52756-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: A visit to the ART clinician
+  retired: false
+  date_created: 2010-01-10 23:38:23 +02:00
+encounter_type_00041: 
+  name: DIAGNOSIS
+  retire_reason: 
+  encounter_type_id: 41
+  retired_by: 
+  uuid: 2cc53c00-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: General patient diagnosis. Will mainly be used for
+  retired: false
+  date_created: 2009-12-01 10:23:34 +02:00
+encounter_type_00008: 
+  name: OUTPATIENT DIAGNOSIS
+  retire_reason: 
+  encounter_type_id: 8
+  retired_by: 
+  uuid: 2cc54a60-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: Outpatient diagnosis encounter
+  retired: false
+  date_created: 2008-05-02 16:04:54 +02:00
+encounter_type_00030: 
+  name: MEDICAL HISTORY
+  retire_reason: 
+  encounter_type_id: 30
+  retired_by: 
+  uuid: 2cc5599c-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: Medical History
+  retired: false
+  date_created: 2009-11-10 09:51:10 +02:00
+encounter_type_00031: 
+  name: COMPLICATIONS
+  retire_reason: 
+  encounter_type_id: 31
+  retired_by: 
+  uuid: 2cc56540-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: Complications encounter
+  retired: false
+  date_created: 2009-11-10 09:52:58 +02:00
+encounter_type_00020: 
+  name: EID_INITIAL
+  retire_reason: 
+  encounter_type_id: 20
+  retired_by: 
+  uuid: 2cc57256-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: Initial visit for Early Infant Diagnosis Program
+  retired: false
+  date_created: 2008-09-12 11:29:14 +02:00
+encounter_type_00042: 
+  name: ADMIT PATIENT
+  retire_reason: 
+  encounter_type_id: 42
+  retired_by: 
+  uuid: 2cc5832c-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: This is an admit patient encounter
+  retired: false
+  date_created: 2009-12-14 08:17:10 +02:00
+encounter_type_00053: 
+  name: ART NURSE VISIT
+  retire_reason: 
+  encounter_type_id: 53
+  retired_by: 
+  uuid: 2cc5916e-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: A visit to the ART nurse.
+  retired: false
+  date_created: 2010-01-10 23:38:55 +02:00
+encounter_type_00054: 
+  name: DISPENSING
+  retire_reason: 
+  encounter_type_id: 54
+  retired_by: 
+  uuid: 2cc5a15e-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: A drug dispensing encounter
+  retired: false
+  date_created: 2010-01-10 23:39:31 +02:00
+encounter_type_00043: 
+  name: DIABETES HISTORY
+  retire_reason: 
+  encounter_type_id: 43
+  retired_by: 
+  uuid: 2cc5afaa-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: Diabetes History; the first time it was diagnosed
+  retired: false
+  date_created: 2009-12-28 14:59:56 +02:00
+encounter_type_00021: 
+  name: EID_FOLLOWUP
+  retire_reason: 
+  encounter_type_id: 21
+  retired_by: 
+  uuid: 2cc5c116-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: Followup visit for Early Infant Diagnosis program
+  retired: false
+  date_created: 2008-09-12 11:29:33 +02:00
+encounter_type_00010: 
+  name: ART_FOLLOWUP
+  retire_reason: 
+  encounter_type_id: 10
+  retired_by: 
+  uuid: 2cc5ce5e-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: Followup visit for ART patient
+  retired: false
+  date_created: 2008-06-04 09:30:36 +02:00
+encounter_type_00009: 
+  name: ART_INITIAL
+  retire_reason: 
+  encounter_type_id: 9
+  retired_by: 
+  uuid: 2cc5d8d6-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: Initial ART visit
+  retired: false
+  date_created: 2008-06-04 09:30:14 +02:00
+encounter_type_00032: 
+  name: LAB RESULTS
+  retire_reason: 
+  encounter_type_id: 32
+  retired_by: 
+  uuid: 2cc5e416-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: LAB RESULTS
+  retired: false
+  date_created: 2009-11-10 09:56:16 +02:00
+encounter_type_00033: 
+  name: EYE COMPLICATIONS
+  retire_reason: 
+  encounter_type_id: 33
+  retired_by: 
+  uuid: 2cc5efe2-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: eye complications identified in the follow up visi
+  retired: false
+  date_created: 2009-11-27 10:59:09 +02:00
+encounter_type_00011: 
+  name: PART_INITIAL
+  retire_reason: 
+  encounter_type_id: 11
+  retired_by: 
+  uuid: 2cc6061c-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: Initial Pre-ART visit
+  retired: false
+  date_created: 2008-06-04 09:31:08 +02:00
+encounter_type_00022: 
+  name: Bacteriology Result
+  retire_reason: 
+  encounter_type_id: 22
+  retired_by: 
+  uuid: 2cc6160c-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: A smear or culture lab result wrapper.  Used by th
+  retired: false
+  date_created: 2008-09-23 23:14:52 +02:00
+encounter_type_00044: 
+  name: DIABETES TREATMENTS
+  retire_reason: 
+  encounter_type_id: 44
+  retired_by: 
+  uuid: 2cc6223c-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: Diabetes Treatments
+  retired: false
+  date_created: 2009-12-28 15:15:29 +02:00
+encounter_type_00055: 
+  name: LABEL SPECIMENS
+  retire_reason: 
+  encounter_type_id: 55
+  retired_by: 
+  uuid: 2cc62eda-bd8d-11df-9b35-00248c09418a
+  creator: 23
+  date_retired: 
+  description: Used to create observations about samples taken fr
+  retired: false
+  date_created: 2010-02-06 11:24:23 +02:00
+encounter_type_00045: 
+  name: DIABETES ADMISSIONS
+  retire_reason: 
+  encounter_type_id: 45
+  retired_by: 
+  uuid: 2cc63bf0-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: Admissions due to Diabetes
+  retired: false
+  date_created: 2009-12-28 15:37:40 +02:00
+encounter_type_00023: 
+  name: DST Result
+  retire_reason: 
+  encounter_type_id: 23
+  retired_by: 
+  uuid: 2cc648de-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: A DST result wrapper.  Used by the mdrtb module.
+  retired: false
+  date_created: 2008-09-23 23:15:25 +02:00
+encounter_type_00012: 
+  name: PART_FOLLOWUP
+  retire_reason: 
+  encounter_type_id: 12
+  retired_by: 
+  uuid: 2cc65798-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: Followup visit for Pre-ART patient
+  retired: false
+  date_created: 2008-06-04 09:31:29 +02:00
+encounter_type_00001: 
+  name: ADULTINITIAL
+  retire_reason: 
+  encounter_type_id: 1
+  retired_by: 
+  uuid: 2cc6665c-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: Outpatient Adult Initial Visit
+  retired: false
+  date_created: 2005-02-24 00:00:00 +02:00
+encounter_type_00034: 
+  name: NEURALGIC COMPLICATIONS
+  retire_reason: 
+  encounter_type_id: 34
+  retired_by: 
+  uuid: 2cc68d76-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: numbness/tingling of extremities, non-healing sore
+  retired: false
+  date_created: 2009-11-27 11:02:01 +02:00
+encounter_type_00035: 
+  name: CARDIOVASCULAR COMPLICATIONS
+  retire_reason: 
+  encounter_type_id: 35
+  retired_by: 
+  uuid: 2cc69e10-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: Chest pain and shortness of breath
+  retired: false
+  date_created: 2009-11-27 11:03:40 +02:00
+encounter_type_00002: 
+  name: ADULTRETURN
+  retire_reason: 
+  encounter_type_id: 2
+  retired_by: 
+  uuid: 2cc6aafe-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: Outpatient Adult Return Visit
+  retired: false
+  date_created: 2005-02-24 00:00:00 +02:00
+encounter_type_00013: 
+  name: LAB
+  retire_reason: 
+  encounter_type_id: 13
+  retired_by: 
+  uuid: 2cc6b56c-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: Lab test
+  retired: false
+  date_created: 2008-06-04 09:31:43 +02:00
+encounter_type_00024: 
+  name: CHEMOTHERAPY
+  retire_reason: 
+  encounter_type_id: 24
+  retired_by: 
+  uuid: 2cc6bf58-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: Chemotherapy encounter
+  retired: false
+  date_created: 2008-09-25 10:44:22 +02:00
+encounter_type_00046: 
+  name: PAST DIABETES MEDICAL HISTORY
+  retire_reason: 
+  encounter_type_id: 46
+  retired_by: 
+  uuid: 2cc6c926-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: |
+    Past Diabetes medical history
+
+  retired: false
+  date_created: 2009-12-28 15:39:43 +02:00
+encounter_type_00047: 
+  name: INITIAL DIABETES COMPLICATIONS
+  retire_reason: 
+  encounter_type_id: 47
+  retired_by: 
+  uuid: 2cc6d236-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: |
+    Initial Diabetes complications
+
+  retired: false
+  date_created: 2009-12-28 15:40:20 +02:00
+encounter_type_00025: 
+  name: TREATMENT
+  retire_reason: 
+  encounter_type_id: 25
+  retired_by: 
+  uuid: 2cc6daf6-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: Treatment encounter
+  retired: false
+  date_created: 2008-12-18 10:23:27 +02:00
+encounter_type_00014: 
+  name: TB_INITIAL
+  retire_reason: 
+  encounter_type_id: 14
+  retired_by: 
+  uuid: 2cc6e474-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: Initial visit for TB Patient
+  retired: false
+  date_created: 2008-07-15 10:00:14 +02:00
+encounter_type_00003: 
+  name: PEDSINITIAL
+  retire_reason: 
+  encounter_type_id: 3
+  retired_by: 
+  uuid: 2cc6ed84-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: Outpatient Pediatric Initial Visit
+  retired: false
+  date_created: 2005-02-24 00:00:00 +02:00
+encounter_type_00036: 
+  name: RENAL COMPLICATIONS
+  retire_reason: 
+  encounter_type_id: 36
+  retired_by: 
+  uuid: 2cc6f626-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: decrease in urine output
+  retired: false
+  date_created: 2009-11-27 11:04:57 +02:00
+encounter_type_00037: 
+  name: ENDOCRINE COMPLICATIONS
+  retire_reason: 
+  encounter_type_id: 37
+  retired_by: 
+  uuid: 2cc6fee6-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: hyperglycemia, hypoglycemia, sweating/feeling clam
+  retired: false
+  date_created: 2009-11-27 11:13:51 +02:00
+encounter_type_00004: 
+  name: PEDSRETURN
+  retire_reason: 
+  encounter_type_id: 4
+  retired_by: 
+  uuid: 2cc70832-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: Outpatient Pediatric Return Visit
+  retired: false
+  date_created: 2005-02-24 00:00:00 +02:00
+encounter_type_00015: 
+  name: TB_FOLLOWUP
+  retire_reason: 
+  encounter_type_id: 15
+  retired_by: 
+  uuid: 2cc71192-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: Followup visit for TB Patient
+  retired: false
+  date_created: 2008-07-15 10:00:39 +02:00
+encounter_type_00026: 
+  name: REQUEST
+  retire_reason: 
+  encounter_type_id: 26
+  retired_by: 
+  uuid: 2cc71a5c-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: Used for forms for making a request (ie, a concept
+  retired: false
+  date_created: 2009-09-05 10:10:42 +02:00
+encounter_type_00048: 
+  name: HYPERTENSION MANAGEMENT
+  retire_reason: 
+  encounter_type_id: 48
+  retired_by: 
+  uuid: 2cc72362-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: |
+    Hypertension management
+
+  retired: false
+  date_created: 2009-12-28 15:41:03 +02:00
+encounter_type_00049: 
+  name: GENERAL HEALTH
+  retire_reason: 
+  encounter_type_id: 49
+  retired_by: 
+  uuid: 2cc72d9e-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: General health. E.g. does the patient smoke?
+  retired: false
+  date_created: 2009-12-28 15:42:19 +02:00
+encounter_type_00027: 
+  name: ADMINISTRATION
+  retire_reason: 
+  encounter_type_id: 27
+  retired_by: 
+  uuid: 2cc736e0-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: An administration encounter in which the patient w
+  retired: false
+  date_created: 2009-10-29 16:25:32 +02:00
+encounter_type_00005: 
+  name: REGISTRATION
+  retire_reason: 
+  encounter_type_id: 5
+  retired_by: 
+  uuid: 2cc74036-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: Patient Registration Encounter
+  retired: false
+  date_created: 2008-05-02 16:03:48 +02:00
+encounter_type_00038: 
+  name: DIABETES TEST
+  retire_reason: 
+  encounter_type_id: 38
+  retired_by: 
+  uuid: 2cc754f4-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: Tests carried out on a diabetic patient over a per
+  retired: false
+  date_created: 2009-11-30 12:02:52 +02:00
+encounter_type_00039: 
+  name: UPDATE HIV STATUS
+  retire_reason: 
+  encounter_type_id: 39
+  retired_by: 
+  uuid: 2cc77240-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: update hiv patient status
+  retired: false
+  date_created: 2009-11-30 12:41:26 +02:00
+encounter_type_00017: 
+  name: PATIENT EVALUATION
+  retire_reason: 
+  encounter_type_id: 17
+  retired_by: 
+  uuid: 2cc77ce0-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: Patient evaluation encounter
+  retired: false
+  date_created: 2008-09-11 13:47:09 +02:00
+encounter_type_00006: 
+  name: VITALS
+  retire_reason: 
+  encounter_type_id: 6
+  retired_by: 
+  uuid: 2cc7865e-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: Vitals encounter
+  retired: false
+  date_created: 2008-05-02 16:04:05 +02:00
+encounter_type_00028: 
+  name: EXAMINATION
+  retire_reason: 
+  encounter_type_id: 28
+  retired_by: 
+  uuid: 2cc7b4da-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: EXAMINATION
+  retired: false
+  date_created: 2009-11-10 09:23:58 +02:00
+encounter_type_00029: 
+  name: DIABETES HYPERTENSION INITIAL VISIT
+  retire_reason: 
+  encounter_type_id: 29
+  retired_by: 
+  uuid: 2cc7c0b0-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: Diabetes hypertension initial visit
+  retired: false
+  date_created: 2009-11-10 09:42:25 +02:00
+encounter_type_00007: 
+  name: APPOINTMENT
+  retire_reason: 
+  encounter_type_id: 7
+  retired_by: 
+  uuid: 2cc7cd6c-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: New appointment encounter
+  retired: false
+  date_created: 2008-05-02 16:04:20 +02:00
+encounter_type_00040: 
+  name: UPDATE OUTCOME
+  retire_reason: 
+  encounter_type_id: 40
+  retired_by: 
+  uuid: 2cc7db18-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: update patient outcome
+  retired: false
+  date_created: 2009-11-30 12:43:13 +02:00
+encounter_type_00051: 
+  name: HIV RECEPTION
+  retire_reason: 
+  encounter_type_id: 51
+  retired_by: 
+  uuid: 2cc7f9ea-bd8d-11df-9b35-00248c09418a
+  creator: 1
+  date_retired: 
+  description: An HIV reception encounter, for program enrollment
+  retired: false
+  date_created: 2010-01-10 23:32:11 +02:00
