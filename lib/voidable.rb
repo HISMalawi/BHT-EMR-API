@@ -4,7 +4,7 @@ require 'logger'
 
 module Voidable
   def void(reason)
-    raise ArgumentError, 'Void reason required' if reason.nil? || reason.empty
+    raise ArgumentError, 'Void reason required' if reason.nil? || reason.empty?
 
     user = User.current_user
     Rails.logger.warn 'Voiding object outside login session' unless user
@@ -23,6 +23,10 @@ module Voidable
   def voided?
     raise 'Model not voidable' unless voidable?
     voided != 0
+  end
+
+  def voidable?
+    respond_to? :voided
   end
 
   # Add callbacks do be called after a `void` is successfully executed.
