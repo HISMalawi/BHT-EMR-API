@@ -1,12 +1,30 @@
+require 'user_service.rb'
 
 class Api::V1::UserController < ApplicationController
-  require 'user_service.rb'
 
+  #before_action :check_if_token_valid
   def create_user
+=begin
 
-		if params[:location] && params[:app_name] && params[:password] && params[:username] && params[:token] && params[:partner]
-			status = UserService.check_user(params[:username])
-			if status == false
+  params = {
+    app_name: "",
+    password: "",
+    username": "",
+    location_id: "",
+    gender: "",
+    birthdate: ""
+  }
+=end
+
+		if params[:location_id] &&
+        params[:app_name] &&
+        params[:password] &&
+        params[:username] &&
+        params[:token]
+
+			  status = UserService.check_user(params[:username])
+
+        if status == false
 
 				details = UserService.create_user(params)
 				response = {
@@ -49,8 +67,10 @@ class Api::V1::UserController < ApplicationController
 			status = UserService.authenticate(params[:username],params[:password])
 
 			if (status == true)
+
 				details = UserService.compute_expiry_time
-			
+        UserService.set_token(params[:username], details[:token], details[:expiry_time])
+
 				response = {
 					status: 200,
 					error: false,
@@ -101,7 +121,7 @@ class Api::V1::UserController < ApplicationController
 				response = {
 					status: 401,
 					error: true,
-					message: 'invalid_token',
+					message: 'invalid_',
 					data: {
 						
 					}

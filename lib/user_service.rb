@@ -3,6 +3,37 @@ module UserService
 
 	def self.create_user(params)
 
+    location    = params[:location]
+    app_name    = params[:app_name]
+    password    = params[:password]
+    username    = params[:username]
+    cur_token       = params[:token]
+    details     = compute_expiry_time
+    token       = details[:token]
+    expiry_time = details[:expiry_time]
+    salt        = User.random_string(10)
+    pass        = Digest::SHA1.hexdigest("#{password}#{salt}")
+    gender      = params[:gender]
+    birthdate   = params[:birthdate]
+
+    creator = User.where(authentication_token: cur_token).first
+
+    person_id = Person.create(
+        gender:    gender,
+        birthdate: birthdate.to_date.to_s(:db),
+        creator: creator.id
+    )
+
+    User.create(
+        username:             username,
+        password:             pass,
+        authentication_token: token,
+        token_expiry_time:    expiry_time,
+        person_id:            person_id,
+        creator: creator.id
+    )
+
+    return {token: token, expiry_time: expiry_time}
 	end
 
 
@@ -20,8 +51,16 @@ module UserService
    		time = Time.now 
    		time = time + 14400
 		return {token: token, expiry_time: time.strftime("%Y%m%d%H%M%S")}
-	end
+  end
 
+  def self.set_token(username, token, expiry_time)
+    u = User.where(username: username).first
+    if u.present?
+      u.authentication_token = token
+      u.token_expiry_time    = expiry_time
+      u.save
+    end
+  end
 
 	def self.check_token(token)
 		user = User.where(authentication_token: token).first

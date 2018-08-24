@@ -1,6 +1,6 @@
 class ApplicationController < ActionController::API
 
-  def check_token_validity
+  def check_if_token_valid
     if params[:token]
 
       status = UserService.check_token(params[:token])
