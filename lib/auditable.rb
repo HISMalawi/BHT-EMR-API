@@ -1,22 +1,22 @@
+# frozen_string_literal: true
+
 require 'logger'
 
 # Gives ActiveRecord models an auditable Trait
 module Auditable
-  before_save :update_audit_trail
+  extend ActiveSupport::Concern
 
-  class << self
-    private
+  included do
+    before_save :update_audit_trail
+  end
 
-    LOGGER = Logger.new STDOUT
+  # Saves current user after every save
+  def update_audit_trail
+    user = User.current_user
 
-    # Saves current user after every save
-    def update_audit_trail
-      current_user = User.current_user
+    Rails.logger.warn 'update_audit_trail called outside login' unless user
 
-      LOGGER.warn 'update_audit_trail called outside login' unless current_user
-
-      self.changed_by = current_user ? current_user.id : nil
-      self.date_changed = Time.now
-    end
+    self.changed_by = user ? user.id : nil
+    self.date_changed = Time.now
   end
 end
