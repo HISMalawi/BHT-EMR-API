@@ -471,7 +471,6 @@ ActiveRecord::Schema.define(version: 2018_08_24_081008) do
     t.string "uuid", limit: 38, null: false
     t.integer "changed_by"
     t.datetime "date_changed"
-    t.integer "program_id"
     t.index ["changed_by"], name: "encounter_changed_by"
     t.index ["creator"], name: "encounter_creator"
     t.index ["encounter_datetime"], name: "encounter_datetime_idx"
@@ -891,85 +890,6 @@ ActiveRecord::Schema.define(version: 2018_08_24_081008) do
     t.index ["mime_type_id"], name: "mime_type_id"
   end
 
-  create_table "moh_other_medications", primary_key: "medication_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
-    t.integer "drug_inventory_id", null: false
-    t.integer "dose_id", null: false
-    t.float "min_weight", null: false
-    t.float "max_weight", null: false
-    t.string "category", limit: 1, null: false
-  end
-
-  create_table "moh_regimen_doses", primary_key: "dose_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
-    t.float "am"
-    t.float "pm"
-    t.datetime "date_created"
-    t.datetime "date_updated"
-    t.integer "creator"
-    t.boolean "voided", default: false, null: false
-    t.integer "voided_by"
-  end
-
-  create_table "moh_regimen_ingredient", primary_key: "ingredient_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
-    t.integer "regimen_id"
-    t.integer "drug_inventory_id"
-    t.integer "dose_id"
-    t.float "min_weight"
-    t.float "max_weight"
-    t.datetime "date_created"
-    t.datetime "date_updated"
-    t.integer "creator"
-    t.boolean "voided", default: false, null: false
-    t.integer "voided_by"
-  end
-
-  create_table "moh_regimen_ingredient_starter_packs", primary_key: "ingredient_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
-    t.integer "regimen_id"
-    t.integer "drug_inventory_id"
-    t.integer "dose_id"
-    t.float "min_weight"
-    t.float "max_weight"
-    t.datetime "date_created"
-    t.datetime "date_updated"
-    t.integer "creator"
-    t.boolean "voided", default: false, null: false
-    t.integer "voided_by"
-  end
-
-  create_table "moh_regimen_ingredient_tb_treatment", id: false, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
-    t.integer "ingredient_id", default: 0, null: false
-    t.integer "regimen_id"
-    t.integer "drug_inventory_id"
-    t.integer "dose_id"
-    t.float "min_weight"
-    t.float "max_weight"
-    t.datetime "date_created"
-    t.datetime "date_updated"
-    t.integer "creator"
-    t.boolean "voided", default: false, null: false
-    t.integer "voided_by"
-  end
-
-  create_table "moh_regimen_lookup", primary_key: "regimen_lookup_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
-    t.integer "num_of_drug_combination"
-    t.string "regimen_name", limit: 5, null: false
-    t.integer "drug_inventory_id"
-    t.datetime "date_created"
-    t.datetime "date_updated"
-    t.integer "creator"
-    t.boolean "voided", default: false, null: false
-    t.integer "voided_by"
-  end
-
-  create_table "moh_regimens", primary_key: "regimen_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
-    t.integer "regimen_index", null: false
-    t.text "description"
-    t.datetime "date_created"
-    t.datetime "date_updated"
-    t.integer "creator", null: false
-    t.boolean "voided", default: false, null: false
-    t.integer "voided_by"
-  end
-
   create_table "national_id", id: :integer, options: "ENGINE=MyISAM DEFAULT CHARSET=latin1", force: :cascade do |t|
     t.string "national_id", limit: 30, default: "", null: false
     t.boolean "assigned", default: false, null: false
@@ -1086,7 +1006,6 @@ ActiveRecord::Schema.define(version: 2018_08_24_081008) do
     t.string "void_reason"
     t.string "value_complex"
     t.string "uuid", limit: 38, null: false
-    t.integer "value_location"
     t.index ["concept_id"], name: "obs_concept"
     t.index ["creator"], name: "obs_enterer"
     t.index ["encounter_id"], name: "encounter_observations"
@@ -1099,7 +1018,6 @@ ActiveRecord::Schema.define(version: 2018_08_24_081008) do
     t.index ["value_coded"], name: "answer_concept"
     t.index ["value_coded_name_id"], name: "obs_name_of_coded_value"
     t.index ["value_drug"], name: "answer_concept_drug"
-    t.index ["value_location"], name: "location_for_value"
     t.index ["voided_by"], name: "user_who_voided_obs"
   end
 
@@ -1975,7 +1893,6 @@ ActiveRecord::Schema.define(version: 2018_08_24_081008) do
     t.string "retire_reason"
     t.string "uuid", limit: 38, null: false
     t.string "authentication_token"
-    t.string "token_expiry_time"
     t.index ["changed_by"], name: "user_who_changed_user"
     t.index ["creator"], name: "user_creator"
     t.index ["person_id"], name: "person_id_for_user"
@@ -2181,7 +2098,6 @@ ActiveRecord::Schema.define(version: 2018_08_24_081008) do
   add_foreign_key "htmlformentry_html_form", "users", column: "changed_by", primary_key: "user_id", name: "User who changed htmlformentry_htmlform"
   add_foreign_key "htmlformentry_html_form", "users", column: "creator", primary_key: "user_id", name: "User who created htmlformentry_htmlform"
   add_foreign_key "location", "location", column: "parent_location", primary_key: "location_id", name: "parent_location"
-  add_foreign_key "location", "location_type", primary_key: "location_type_id", name: "location_type"
   add_foreign_key "location", "users", column: "creator", primary_key: "user_id", name: "user_who_created_location"
   add_foreign_key "location", "users", column: "retired_by", primary_key: "user_id", name: "user_who_retired_location"
   add_foreign_key "location_tag", "users", column: "creator", primary_key: "user_id", name: "location_tag_creator"
@@ -2212,7 +2128,6 @@ ActiveRecord::Schema.define(version: 2018_08_24_081008) do
   add_foreign_key "obs", "concept_name", column: "value_coded_name_id", primary_key: "concept_name_id", name: "obs_name_of_coded_value"
   add_foreign_key "obs", "drug", column: "value_drug", primary_key: "drug_id", name: "answer_concept_drug"
   add_foreign_key "obs", "encounter", primary_key: "encounter_id", name: "encounter_observations"
-  add_foreign_key "obs", "location", column: "value_location", primary_key: "location_id", name: "location_for_value"
   add_foreign_key "obs", "location", primary_key: "location_id", name: "obs_location"
   add_foreign_key "obs", "obs", column: "obs_group_id", primary_key: "obs_id", name: "obs_grouping_id"
   add_foreign_key "obs", "orders", primary_key: "order_id", name: "obs_order"

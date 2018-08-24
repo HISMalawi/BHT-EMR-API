@@ -20,7 +20,7 @@ set -x # turns on stacktrace mode which gives useful debug information
 
 
 #Creat Database
-bundle exec rake db:drop db:create
+bundle exec rake db:drop db:create db:schema:load
 
 USERNAME=`ruby -ryaml -e "puts YAML::load_file('config/database.yml')['${ENV}']['username']"`
 PASSWORD=`ruby -ryaml -e "puts YAML::load_file('config/database.yml')['${ENV}']['password']"`
@@ -61,8 +61,6 @@ mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/sql/open
 mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/initial_setup/regimens.sql
 
 mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/initial_setup/modular_tables.sql
-
-mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/migrate/alter_observation_to_add_value_location.sql
 
 #rake openmrs:bootstrap:load:defaults RAILS_ENV=$ENV
 #rake openmrs:bootstrap:load:site SITE=$SITE RAILS_ENV=production#
