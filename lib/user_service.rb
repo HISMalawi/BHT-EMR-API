@@ -12,7 +12,7 @@ module UserService
     gender      = params[:gender]
     birthdate   = params[:birthdate]
 
-    creator = User.where(authentication_token: cur_token).first
+    creator = User.current
 
     person = Person.create(
         gender:    gender,
@@ -21,8 +21,10 @@ module UserService
     )
 
     PersonName.create(
-       first_name: params[:first_name],
-       last_name:  params[:last_name]
+       given_name: params[:first_name],
+       family_name:  params[:last_name],
+        person_id: person.id,
+       creator: creator.id
     )
 
     User.create(
@@ -61,8 +63,8 @@ module UserService
     person.gender       = params[:gender] if params[:gender].present?
     person.birthdate    = params[:birthdate].to_date.to_s(:db) if params[:birthdate].present?
 
-    name.first_name   = params[:first_name] if params[:first_name].present?
-    name.last_name    = params[:last_name] if params[:last_name].present?
+    name.given_name   = params[:first_name] if params[:first_name].present?
+    name.family_name    = params[:last_name] if params[:last_name].present?
 
     user.save
     person.save

@@ -9,13 +9,14 @@ class Api::V1::UserController < ApplicationController
     results = []
 
     User.all.each{|user|
-      person = Person.find(user.person_id)
-      name   = PersonName.find(user.person_id)
+      person = Person.find(user.person_id) rescue next
+      name   = PersonName.where(person_id: user.person_id).last
+      next if name.blank?
 
       results << {
           username:  user.username,
-          first_name: name.first_name,
-          last_lame: name.last_name,
+          first_name: name.given_name,
+          last_lame: name.family_name,
           gender:    person.gender,
           birthdate: person.birthdate,
           role: ""
@@ -41,18 +42,19 @@ class Api::V1::UserController < ApplicationController
 
   def get_user
     user = User.where(username: params[:username]).first
-    person = Person.find(user.person_id).first
+    person = Person.find(user.person_id)
     name   = PersonName.where(person_id: user.person_id).last
 
-    if user.blank? || person.blank? || name.blank?
+
+    if !user.blank? && !person.blank? && !name.blank?
       render json: {
           status: 200,
           error: false,
           message: 'user found',
           data: {
               username:  user.username,
-              first_name: name.first_name,
-              last_lame: name.last_name,
+              first_name: name.given_name,
+              last_lame: name.family_name,
               gender:    person.gender,
               birthdate: person.birthdate,
               role: ""
@@ -211,7 +213,6 @@ class Api::V1::UserController < ApplicationController
 					error: false,
 					message: 'token active',
 					data: {
-						
 					}
 				}
 			else	

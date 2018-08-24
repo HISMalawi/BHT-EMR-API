@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2018_08_24_081008) do
+ActiveRecord::Schema.define(version: 2018_08_23_140908) do
 
   create_table "active_list", primary_key: "active_list_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
     t.integer "active_list_type_id", null: false
@@ -471,6 +471,7 @@ ActiveRecord::Schema.define(version: 2018_08_24_081008) do
     t.string "uuid", limit: 38, null: false
     t.integer "changed_by"
     t.datetime "date_changed"
+    t.integer "program_id"
     t.index ["changed_by"], name: "encounter_changed_by"
     t.index ["creator"], name: "encounter_creator"
     t.index ["encounter_datetime"], name: "encounter_datetime_idx"
@@ -1550,8 +1551,8 @@ ActiveRecord::Schema.define(version: 2018_08_24_081008) do
   create_table "regimen", primary_key: "regimen_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.integer "concept_id", default: 0, null: false
     t.string "regimen_index", limit: 5
-    t.float "min_weight", default: 0.0, null: false
-    t.float "max_weight", default: 200.0, null: false
+    t.integer "min_weight", default: 0, null: false
+    t.integer "max_weight", default: 200, null: false
     t.integer "creator", default: 0, null: false
     t.datetime "date_created", null: false
     t.integer "retired", limit: 2, default: 0, null: false
@@ -1893,6 +1894,7 @@ ActiveRecord::Schema.define(version: 2018_08_24_081008) do
     t.string "retire_reason"
     t.string "uuid", limit: 38, null: false
     t.string "authentication_token"
+    t.string "token_expiry_time"
     t.index ["changed_by"], name: "user_who_changed_user"
     t.index ["creator"], name: "user_creator"
     t.index ["person_id"], name: "person_id_for_user"
@@ -2098,6 +2100,7 @@ ActiveRecord::Schema.define(version: 2018_08_24_081008) do
   add_foreign_key "htmlformentry_html_form", "users", column: "changed_by", primary_key: "user_id", name: "User who changed htmlformentry_htmlform"
   add_foreign_key "htmlformentry_html_form", "users", column: "creator", primary_key: "user_id", name: "User who created htmlformentry_htmlform"
   add_foreign_key "location", "location", column: "parent_location", primary_key: "location_id", name: "parent_location"
+  add_foreign_key "location", "location_type", primary_key: "location_type_id", name: "location_type"
   add_foreign_key "location", "users", column: "creator", primary_key: "user_id", name: "user_who_created_location"
   add_foreign_key "location", "users", column: "retired_by", primary_key: "user_id", name: "user_who_retired_location"
   add_foreign_key "location_tag", "users", column: "creator", primary_key: "user_id", name: "location_tag_creator"
