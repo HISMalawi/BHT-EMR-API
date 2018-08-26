@@ -132,8 +132,8 @@ class Api::V1::UserController < ApplicationController
     login_params, error = get_params required: %i[username password]
     render json: login_params, status: :bad_request && return if error
 
-    api_key = UserService.authenticate(login_params[:username],
-                                       login_params[:password])
+    api_key = UserService.logn(login_params[:username],
+                               login_params[:password])
     if api_key.nil?
       render json: { error: 'Invalid user or password' }, status: :unauthorized
     else

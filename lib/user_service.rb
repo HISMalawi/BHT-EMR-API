@@ -92,7 +92,7 @@ module UserService
 
 	end
 
-  def self.authenticate(username, password)
+  def self.login(username, password)
     user = User.where(username: username).first
     unless user && \
            (bart_authenticate(user, password) || \
