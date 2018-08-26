@@ -1,6 +1,7 @@
-require 'user_service.rb'
+require 'user_service'
 
 class Api::V1::UserController < ApplicationController
+  DEFAULT_ROLENAME = 'clerk'
 
   before_action :check_if_token_valid
   skip_before_action :check_if_token_valid, only: [:authenticate_user]
@@ -71,59 +72,27 @@ class Api::V1::UserController < ApplicationController
     end
   end
 
-  def create_user
-=begin
+  def create
+    create_params, error = create_params(
+      fields: %i[role_id], required: %i[username password person_id]
+    )
+    return render json: { errors: create_params }, status: :bad_request if error
 
-  params = {
-    username": "", password: "", first_name: "", last_name:  "", gender: "", role:   "Admin|Nurse|Clinician|Doctor",  birthdate: ""
-  }
-=end
+    if UserService.check_user(create_params[:username])
+      errors = ['User already exists']
+      return render json: { errors: errors }, status: :conflict
+    end
 
-		if  params[:password] &&
-        params[:username] &&
-        params[:first_name] &&
-        params[:last_name] &&
-        params[:role]  &&
-        params[:token]
-
-			  status = UserService.check_user(params[:username])
-
-        if status == false
-
-				details = UserService.create_user(params)
-				response = {
-						status: 200,
-						error: false,
-						message: 'account created successfuly',
-						data: {
-							token: details[:token],
-							expiry_time: details[:expiry_time]
-						}
-					}
-			else
-				response = {
-					status: 401,
-					error: true,
-					message: 'username already taken',
-					data: {
-
-					}
-				}
-			end
-
-		else
-			response = {
-					status: 401,
-					error: true,
-					message: 'missing parameter, please check',
-					data: {
-
-					}
-			}
-		end
-
-		render json: response
-	end
+    user = UserService.create_user(
+      create_params[:username], create_params[:password],
+      create_params[:person], create_params[:role]
+    )
+    if user.errors
+      render json: { errors: user.errors }, status: :bad_request
+    else
+      render json: { user: user }, status: :created
+    end
+  end
 
   def update_user
 =begin
@@ -159,122 +128,108 @@ class Api::V1::UserController < ApplicationController
     render json: response
   end
 
-  def authenticate_user
+  def login
+    login_params, error = get_params required: %i[username password]
+    render json: login_params, status: :bad_request && return if error
 
-		if params[:username] && params[:password]
+    api_key = UserService.authenticate(login_params[:username],
+                                       login_params[:password])
+    if api_key.nil?
+      render json: { error: 'Invalid user or password' }, status: :unauthorized
+    else
+      render json: { authorization: api_key }
+    end
+  end
 
-			status = UserService.authenticate(params[:username],params[:password])
+  def check_token_validity
+    if params[:token]
 
-			if (status == true)
+      status = UserService.check_token(params[:token])
+      if status == true
+        response = {
+          status: 200,
+          error: false,
+          message: 'token active',
+          data: {
+          }
+        }
+      else	
+        response = {
+          status: 401,
+          error: true,
+          message: 'invalid_',
+          data: {
+            
+          }
+        }
+      end
 
-				details = UserService.compute_expiry_time
-        UserService.set_token(params[:username], details[:token], details[:expiry_time])
+    else
+      response = {
+          status: 401,
+          error: true,
+          message: 'token not provided',
+          data: {
+            
+          }
+        }
+    end
 
-				response = {
-					status: 200,
-					error: false,
-					message: 'authenticated',
-					data: {
-						token: details[:token],
-						expiry_time: details[:expiry_time]
-					}
-				}
-			else
-				response = {
-					status: 401,
-					error: true,
-					message: 'not authenticated',
-					data: {
-						token: ""
-					}
-				}
-			end
-		else
-			response = {
-					status: 401,
-					error: true,
-					message: 'username or password not provided',
-					data: {
-						token: ""
-					}
-				}
-		end
+    render json: response
+  end
 
-		render json: response
-	end
+  def re_authenticate
+    if params[:username] && params[:password]
+      details = UserService.re_authenticate(params[:username],params[:password])
+      if details == false
+        response = {
+          status: 401,
+          error: true,
+          message: 'wrong password or username',
+          data: {
+            
+          }
+        }
+      else
+        response = {
+            status: 200,
+            error: false,
+            message: 're authenticated successfuly',
+            data: {
+              token: details[:token],
+              expiry_time: details[:expiry_time]
+            }
+          }
+      end
 
-	def check_token_validity
-		if params[:token]
+    else
+      response = {
+          status: 401,
+          error: true,
+          message: 'password or username not provided',
+          data: {
+            
+          }
+        }
+    end
+    render json: response
+  end
 
-			status = UserService.check_token(params[:token])
-			if status == true
-				response = {
-					status: 200,
-					error: false,
-					message: 'token active',
-					data: {
-					}
-				}
-			else	
-				response = {
-					status: 401,
-					error: true,
-					message: 'invalid_',
-					data: {
-						
-					}
-				}
-			end
+  private
 
-		else
-			response = {
-					status: 401,
-					error: true,
-					message: 'token not provided',
-					data: {
-						
-					}
-				}
-		end
+  def create_params
+    create_params, error = required_params(
+      fields: %i[role_id], required: %i[username password person_id]
+    )
+    return create_params, error if error
 
-		render json: response
-	end
+    create_params[:role] = role_id = create_params[:role_id]
+    role = role_id ? Role.find(role_id) : Role.find(name: DEFAULT_ROLENAME)
+    return { role_id: "Invalid role_id ##{role_id}" }, true unless role
 
-	def re_authenticate
-		if params[:username] && params[:password]
-			details = UserService.re_authenticate(params[:username],params[:password])
-			if details == false
-				response = {
-					status: 401,
-					error: true,
-					message: 'wrong password or username',
-					data: {
-						
-					}
-				}
-			else
-				response = {
-						status: 200,
-						error: false,
-						message: 're authenticated successfuly',
-						data: {
-							token: details[:token],
-							expiry_time: details[:expiry_time]
-						}
-					}
-			end
+    create_params[:person] = person = Person.find(create_params[:person_id])
+    return { person_id: "Invalid person_id ##{person_id}" }, true unless person
 
-		else
-			response = {
-					status: 401,
-					error: true,
-					message: 'password or username not provided',
-					data: {
-						
-					}
-				}
-		end
-		render json: response
-	end
-
+    create_params
+  end
 end
