@@ -1,4 +1,9 @@
+# frozen_string_literal: true
+
+require 'require_params'
+
 class ApplicationController < ActionController::API
+  include RequireParams
 
   def check_if_token_valid
     if params[:token]
