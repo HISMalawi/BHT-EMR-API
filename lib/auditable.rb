@@ -1,8 +1,16 @@
 # frozen_string_literal: true
 
-require 'logger'
-
-# Gives ActiveRecord models an auditable Trait
+# Gives ActiveRecord models an auditable behaviour
+#
+# Models with the Auditable behaviour automagically get their
+# date_changed and changed_by field set to the currently logged
+# in user.
+#
+# USAGE:
+#  class ApplicationRecord < ActiveRecord::Model
+#    include Auditable
+#    ...
+#  end
 module Auditable
   extend ActiveSupport::Concern
 
@@ -12,7 +20,7 @@ module Auditable
 
   # Saves current user after every save
   def update_audit_trail
-    user = User.current_user
+    user = User.current
 
     Rails.logger.warn 'update_audit_trail called outside login' unless user
 
