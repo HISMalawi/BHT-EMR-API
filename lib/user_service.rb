@@ -1,43 +1,18 @@
 
 module UserService
+  AUTHENTICATION_TOKEN_VALIDITY_PERIOD = 24.hours
 
-	def self.create_user(params)
-
-    password    = params[:password]
-    username    = params[:username]
-    cur_token       = params[:token]
-
-    details     = compute_expiry_time
-    salt        = User.random_string(10)
-    gender      = params[:gender]
-    birthdate   = params[:birthdate]
-
-    creator = User.current
-
-    person = Person.create(
-        gender:    gender,
-        birthdate: birthdate.to_date.to_s(:db),
-        creator: creator.id
-    )
-
-    PersonName.create(
-       given_name: params[:first_name],
-       family_name:  params[:last_name],
-        person_id: person.id,
-       creator: creator.id
-    )
+	def self.create_user(username, password, person, role)
+    salt = User.random_string(10)
 
     User.create(
-        username:             username,
-        password:             Digest::SHA1.hexdigest("#{password}#{salt}"),
-        salt:                 salt,
-        authentication_token: details[:token],
-        token_expiry_time:    details[:expiry_time],
-        person_id:            person.id,
-        creator:              creator.id
+      username: username,
+      password: Digest::SHA1.hexdigest("#{password}#{salt}"),
+      salt: salt,
+      person: person,
+      roles: roles,
+      creator: User.current.id
     )
-
-    return {token: details[:token], expiry_time: details[:expiry_time]}
 	end
 
   def self.update_user(params)
@@ -73,21 +48,25 @@ module UserService
     return true
   end
 
+  def self.new_authentication_token(user)
+    token = create_token
+    expires = Time.now + AUTHENTICATION_TOKEN_VALIDITY_PERIOD
+
+    user.authentication_token = token
+    user.token_expiry_time = expires
+
+    { token: token, expiry_time: expires.strftime('%Y%m%d%H%M%S') }
+  end
+
 	def self.create_token
 		token_chars  = ('a'..'z').to_a + ('A'..'Z').to_a + ('0'..'9').to_a
   		token_length = 12
   		token = Array.new(token_length) { token_chars[rand(token_chars.length)] }.join
-		return token
+		return  {
+      token: token,
+      expires: compute_expiry_time
+    }
 	end
- 
-
-	def self.compute_expiry_time
-
-   		token = create_token
-   		time = Time.now 
-   		time = time + 14400
-		return {token: token, expiry_time: time.strftime("%Y%m%d%H%M%S")}
-  end
 
   def self.set_token(username, token, expiry_time)
     u = User.where(username: username).first
@@ -113,23 +92,29 @@ module UserService
 
 	end
 
+  def self.authenticate(username, password)
+    user = User.where(username: username).first
+    unless user && \
+           (bart_authenticate(user, password) || \
+            new_arch_authenticate(user, password))
+      return nil
+    end
+    new_authentication_token user
+  end
 
-	def self.authenticate(username, password)
+  # Tries to authenticate user using the classical BART mode
+  def bart_authenticate(user, password)
+    Digest::SHA1.hexdigest("#{password}#{user.salt}") == user.password
+  end
 
-		user = User.where(username: username).first
-
-    if user
-      salt = user.salt
-			if Digest::SHA1.hexdigest("#{password}#{salt}") == user.password	||
-          Digest::SHA512.hexdigest("#{password}#{salt}") == user.password
-				return true
-			else
-				return false
-			end
-		else
-			return false
-		end
-	end
+  # Tries to authenticate user using the new architecture mode
+  #
+  # NOTE: It's not been established what this model will be but
+  # currently SHA512 is being used it seems, so we going with
+  # that.
+  def new_arch_authenticate(user, password)
+    Digest::SHA512.hexdigest("#{password}#{user.salt}") == user.password
+  end
 
 
 	def self.check_user(username)
