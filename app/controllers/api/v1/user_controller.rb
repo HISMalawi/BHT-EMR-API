@@ -3,8 +3,7 @@ require 'user_service'
 class Api::V1::UserController < ApplicationController
   DEFAULT_ROLENAME = 'clerk'
 
-  before_action :check_if_token_valid
-  skip_before_action :check_if_token_valid, only: [:authenticate_user]
+  skip_before_action :authenticate, only: [:login]
 
   def index
     results = []

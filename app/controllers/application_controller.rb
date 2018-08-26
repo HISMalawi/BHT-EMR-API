@@ -3,37 +3,28 @@
 require 'require_params'
 
 class ApplicationController < ActionController::API
+  before_action :authenticate
+
+  protected
+
   include RequireParams
 
-  def check_if_token_valid
-    if params[:token]
-
-      status = UserService.check_token(params[:token])
-      if status == true
-       User.current = User.where(authentication_token: params[:token]).first
-       return true
-      else
-        response = {
-            status: 401,
-            error: true,
-            message: 'invalid_token',
-            data: {
-
-              }
-        }
-      end
-
-    else
-      response = {
-          status: 401,
-          error: true,
-          message: 'token not provided',
-          data: {
-
-      }
-      }
+  def authenticate
+    authentication_token = request.headers['Authorization']
+    unless authentication_token
+      errors = ['Authorization token required']
+      render json: { errors: errors }, status: :unauthorized
+      return false
     end
 
-    render json: response and return
+    user = UserService.authenticate authentication_token
+    unless user
+      errors = ['Invalid or expired authentication token']
+      render json: { errors: errors }, status: :unauthorized
+      return false
+    end
+
+    User.current = user
+    true
   end
 end
