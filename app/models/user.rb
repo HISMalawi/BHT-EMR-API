@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class User < ApplicationRecord
   self.table_name = :users
   self.primary_key = :user_id
@@ -14,11 +16,19 @@ class User < ApplicationRecord
            foreign_key: :person_id,
            dependent: :destroy)
 
-  def self.random_string(len)
-    #generat a random password consisting of strings and digits
-    chars = ("a".."z").to_a + ("A".."Z").to_a + ("0".."9").to_a
-    newpass = ""
-    1.upto(len) { |i| newpass << chars[rand(chars.size-1)] }
-    return newpass
+  def as_json(options = {})
+    super(options.merge(
+      except: %i[password salt],
+      include: {
+        role: { include: { privileges: {} } },
+        person: {
+          include: {
+            person_names: {},
+            person_attributes: {},
+            person_addresses: {}
+          }
+        }
+      }
+    ))
   end
 end

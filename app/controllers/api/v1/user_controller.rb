@@ -6,69 +6,17 @@ class Api::V1::UserController < ApplicationController
   skip_before_action :authenticate, only: [:login]
 
   def index
-    results = []
-
-    User.all.each{|user|
-      person = Person.find(user.person_id) rescue next
-      name   = PersonName.where(person_id: user.person_id).last
-      next if name.blank?
-
-      results << {
-          username:  user.username,
-          first_name: name.given_name,
-          last_lame: name.family_name,
-          gender:    person.gender,
-          birthdate: person.birthdate,
-          role: ""
-      }
-    }
-
-    if !results.blank?
-      render json: {
-          status: 200,
-          error: false,
-          message: 'users found',
-          data: results
-        }
-    else
-      render json: {
-          status: 401,
-          error: true,
-          message: 'users notfound',
-          data: {}
-      }
-    end
+    render json: User.all, status: :ok
   end
 
-  def get_user
-    user = User.where(username: params[:username]).first
-    person = Person.find(user.person_id)
-    name   = PersonName.where(person_id: user.person_id).last
-
-
-    if !user.blank? && !person.blank? && !name.blank?
-      render json: {
-          status: 200,
-          error: false,
-          message: 'user found',
-          data: {
-              username:  user.username,
-              first_name: name.given_name,
-              last_lame: name.family_name,
-              gender:    person.gender,
-              birthdate: person.birthdate,
-              role: ""
-          }
-      }
-    else
-      render json: {
-          status: 401,
-          error: true,
-          message: "could not find user with username: #{params[:username]}",
-          data: {}
-      }
-
+  def get
+    user = User.find(username: params[:id])
+    unless user
+      errors = ["User ##{params[:id]} not found"]
+      render json: { errors: errors }, status: :not_found
+      return
     end
+    render json: user, status: :ok
   end
 
   def create
@@ -93,7 +41,7 @@ class Api::V1::UserController < ApplicationController
     end
   end
 
-  def update_user
+  def update
 =begin
 
   params = {
