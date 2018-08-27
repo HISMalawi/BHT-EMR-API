@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2018_08_23_140908) do
+ActiveRecord::Schema.define(version: 2018_08_27_062036) do
 
   create_table "active_list", primary_key: "active_list_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
     t.integer "active_list_type_id", null: false
@@ -1904,6 +1904,7 @@ ActiveRecord::Schema.define(version: 2018_08_23_140908) do
     t.string "retire_reason"
     t.string "uuid", limit: 38, null: false
     t.string "authentication_token"
+    t.date "token_expiry_time"
     t.index ["changed_by"], name: "user_who_changed_user"
     t.index ["creator"], name: "user_creator"
     t.index ["person_id"], name: "person_id_for_user"
