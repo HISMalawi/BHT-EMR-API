@@ -1,6 +1,6 @@
 require 'user_service'
 
-class Api::V1::UserController < ApplicationController
+class Api::V1::UsersController < ApplicationController
   DEFAULT_ROLENAME = 'clerk'
 
   skip_before_action :authenticate, only: [:login]
@@ -9,14 +9,8 @@ class Api::V1::UserController < ApplicationController
     render json: User.all, status: :ok
   end
 
-  def get
-    user = User.find(username: params[:id])
-    unless user
-      errors = ["User ##{params[:id]} not found"]
-      render json: { errors: errors }, status: :not_found
-      return
-    end
-    render json: user, status: :ok
+  def show
+    render json: User.find(id: params[:id]), status: :ok
   end
 
   def create
@@ -76,13 +70,13 @@ class Api::V1::UserController < ApplicationController
   end
 
   def login
-    login_params, error = get_params required: %i[username password]
-    render json: login_params, status: :bad_request && return if error
+    login_params, error = required_params required: %i[username password]
+    return render json: login_params, status: :bad_request if error
 
-    api_key = UserService.logn(login_params[:username],
-                               login_params[:password])
+    api_key = UserService.login(login_params[:username],
+                                login_params[:password])
     if api_key.nil?
-      render json: { error: 'Invalid user or password' }, status: :unauthorized
+      render json: { errors: ['Invalid user or password'] }, status: :unauthorized
     else
       render json: { authorization: api_key }
     end
