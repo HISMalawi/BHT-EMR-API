@@ -4,6 +4,7 @@ Rails.application.routes.draw do
       resources :users
       resources :locations
       resources :people
+      resources :roles
     end
   end
 
