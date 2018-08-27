@@ -29,18 +29,19 @@ module RequireParams
     all_fields = required + optional
     all_params = params.permit(*all_fields)
     missing_params = collect_missing_parameters all_params, required
-    return [missing_params, :error] unless missing_params.empty?
-    [all_params, :ok]
+    Rails.logger.debug "missing params: #{missing_params}"
+    if missing_params.empty?
+      [all_params, false]
+    else
+      [missing_params, true]
+    end
   end
 
   private
 
   def collect_missing_parameters(parameters, required)
-    required.collect({}) do |missing_params, field|
-      value = parameters[field]
-      next missing_params if value
-      missing_params[field] = 'Field is required'
-      missing_params
+    required.each_with_object({}) do |field, missing_params|
+      missing_params[field] = 'Field is required' unless parameters[field]
     end
   end
 end
