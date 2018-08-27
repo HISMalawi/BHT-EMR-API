@@ -229,6 +229,12 @@ ActiveRecord::Schema.define(version: 2018_08_23_140908) do
     t.index ["voided_by"], name: "user_who_voided_name"
   end
 
+  create_table "concept_name_map", id: false, options: "ENGINE=MyISAM DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.integer "drug_id"
+    t.string "bart_one_concept_name"
+    t.string "bart_two_concept_name"
+  end
+
   create_table "concept_name_tag", primary_key: "concept_name_tag_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.string "tag", limit: 50, null: false
     t.text "description", null: false
@@ -436,6 +442,13 @@ ActiveRecord::Schema.define(version: 2018_08_23_140908) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "drug_map", id: false, options: "ENGINE=MyISAM DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.integer "drug_id"
+    t.string "bart_one_name"
+    t.string "bart2_two_name"
+    t.integer "new_drug_id"
+  end
+
   create_table "drug_order", primary_key: "order_id", id: :integer, default: 0, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.integer "drug_inventory_id", default: 0
     t.float "dose", limit: 53
@@ -471,7 +484,6 @@ ActiveRecord::Schema.define(version: 2018_08_23_140908) do
     t.string "uuid", limit: 38, null: false
     t.integer "changed_by"
     t.datetime "date_changed"
-    t.integer "program_id"
     t.index ["changed_by"], name: "encounter_changed_by"
     t.index ["creator"], name: "encounter_creator"
     t.index ["encounter_datetime"], name: "encounter_datetime_idx"
@@ -1428,8 +1440,6 @@ ActiveRecord::Schema.define(version: 2018_08_23_140908) do
     t.integer "pharmacy_encounter_type", default: 0, null: false
     t.integer "drug_id", default: 0, null: false
     t.float "value_numeric", limit: 53
-    t.float "expiring_units", limit: 53
-    t.integer "pack_size"
     t.integer "value_coded"
     t.string "value_text", limit: 15
     t.date "expiry_date"
@@ -1884,7 +1894,7 @@ ActiveRecord::Schema.define(version: 2018_08_23_140908) do
     t.string "secret_question"
     t.string "secret_answer"
     t.integer "creator", default: 0, null: false
-    t.datetime "date_created", null: false
+    t.datetime "date_created", default: -> { "CURRENT_TIMESTAMP" }, null: false
     t.integer "changed_by"
     t.datetime "date_changed"
     t.integer "person_id"
@@ -1894,7 +1904,6 @@ ActiveRecord::Schema.define(version: 2018_08_23_140908) do
     t.string "retire_reason"
     t.string "uuid", limit: 38, null: false
     t.string "authentication_token"
-    t.string "token_expiry_time"
     t.index ["changed_by"], name: "user_who_changed_user"
     t.index ["creator"], name: "user_creator"
     t.index ["person_id"], name: "person_id_for_user"
