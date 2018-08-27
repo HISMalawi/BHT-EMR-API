@@ -1,6 +1,6 @@
 class Role < ApplicationRecord
   self.table_name = 'role'
-  self.primary_key = 'role_id'
+  self.primary_key = 'role' # Yes, role is the name of the primary key
 
   # include Openmrs
 
@@ -8,6 +8,8 @@ class Role < ApplicationRecord
   has_many :role_privileges, foreign_key: :role, dependent: :delete_all
   has_many :privileges, through: :role_privileges, foreign_key: :role
   has_many :user_roles, foreign_key: :role
+  has_many :users, through: :user_roles, foreign_key: :role
+
 
   def self.setup_privileges_for_roles
     privileges = Privilege.all

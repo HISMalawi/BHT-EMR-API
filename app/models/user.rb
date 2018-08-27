@@ -10,6 +10,7 @@ class User < ApplicationRecord
 
   has_many :properties, class_name: 'UserProperty', foreign_key: :user_id
   has_many :user_roles, foreign_key: :user_id, dependent: :delete_all
+  has_many :roles, class_name: 'UserRole'
   has_many(:names,
            -> { order('person_name.preferred' => 'DESC') },
            class_name: 'PersonName',
@@ -18,16 +19,17 @@ class User < ApplicationRecord
 
   def as_json(options = {})
     super(options.merge(
-      except: %i[password salt],
+      except: %i[password salt secret_question secret_answer
+                 authentication_token token_expiry_time],
       include: {
-        role: { include: { privileges: {} } },
-        person: {
-          include: {
-            person_names: {},
-            person_attributes: {},
-            person_addresses: {}
-          }
-        }
+        roles: { include: {} },
+        # person: {
+        #   # include: {
+        #   #   person_names: {},
+        #   #   person_attributes: {},
+        #   #   person_addresses: {}
+        #   # }
+        # }
       }
     ))
   end
