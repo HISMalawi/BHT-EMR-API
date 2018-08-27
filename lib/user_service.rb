@@ -54,8 +54,9 @@ module UserService
 
     user.authentication_token = token
     user.token_expiry_time = expires
+    user.save
 
-    { token: token, expiry_time: expires.strftime('%Y%m%d%H%M%S') }
+    { token: token, expiry_time: expires }
   end
 
   def self.create_token
@@ -65,13 +66,9 @@ module UserService
     # at the very least be guaranteed to always be unique.
     # TODO: Look up standard library package 'securerandom' for
     # something we could use here with lim(collisions) -> 0.
-    token_chars  = ('a'..'z').to_a + ('A'..'Z').to_a + ('0'..'9').to_a
-      token_length = 12
-      token = Array.new(token_length) { token_chars[rand(token_chars.length)] }.join
-    return  {
-      token: token,
-      expires: compute_expiry_time
-    }
+    token_chars = ('a'..'z').to_a + ('A'..'Z').to_a + ('0'..'9').to_a
+    token_length = 12
+    Array.new(token_length) { token_chars[rand(token_chars.length)] }.join
   end
 
   def self.set_token(username, token, expiry_time)
@@ -84,9 +81,9 @@ module UserService
   end
 
   def self.authenticate(token)
-    user = User.find(authentication_token: token)
+    user = User.where(authentication_token: token).first
 
-    if user.nil? || user.token_expiry_time < Time.now.strftime('%Y%m%d%H%M%S')
+    if user.nil? || user.token_expiry_time < Time.now
       return nil
     end
 
@@ -104,7 +101,7 @@ module UserService
   end
 
   # Tries to authenticate user using the classical BART mode
-  def bart_authenticate(user, password)
+  def self.bart_authenticate(user, password)
     Digest::SHA1.hexdigest("#{password}#{user.salt}") == user.password
   end
 
@@ -113,7 +110,7 @@ module UserService
   # NOTE: It's not been established what this model will be but
   # currently SHA512 is being used it seems, so we going with
   # that.
-  def new_arch_authenticate(user, password)
+  def self.new_arch_authenticate(user, password)
     Digest::SHA512.hexdigest("#{password}#{user.salt}") == user.password
   end
 
