@@ -1,13 +1,12 @@
 Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
-      resource :users
-      resource :locations
-
-      namespace :auth do
-        post '/login' => 'user#authenticate_user'
-        post '/verify_token' => 'user#check_token_validity'
-      end
+      resources :users
+      resources :locations
+      resources :people
     end
   end
+
+  post '/api/v1/auth/login' => 'api/v1/users#login'
+  post '/api/v1/auth/verify_token' => 'api/v1/users#check_token_validity'
 end
