@@ -2,9 +2,14 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       resources :users
-      resources :locations
       resources :people
       resources :roles
+
+      resource :locations do
+        get '/districts' => 'locations#districts'
+        get '/villages' => 'locations#villages'
+        get '/traditional_authorities' => 'locations#traditional_authorities'
+      end
     end
   end
 

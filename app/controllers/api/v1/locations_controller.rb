@@ -1,6 +1,4 @@
 class Api::V1::LocationsController < ApplicationController
-  before_action :check_if_token_valid
-
   def regions
 
     regions = Region.all.collect{|d|
