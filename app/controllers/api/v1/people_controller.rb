@@ -3,7 +3,7 @@
 require 'person_service'
 
 class Api::V1::PeopleController < ApplicationController
-  extend PersonService
+  include PersonService
 
   def index
     # TODO: Add pagination
@@ -62,8 +62,8 @@ class Api::V1::PeopleController < ApplicationController
   ].freeze
 
   def person_attributes(_params)
-    PERSON_ATTRIBUTES.each_with_object({}) do |fv_pair, attrs|
-      attrs[fv_pair[0]] = fv_pair[1]
+    PERSON_ATTRIBUTES.each_with_object({}) do |field, attrs|
+      attrs[field] = params[field]
     end
   end
 end
