@@ -41,7 +41,7 @@ module RequireParams
 
   def collect_missing_parameters(parameters, required)
     required.each_with_object({}) do |field, missing_params|
-      missing_params[field] = 'Field is required' unless parameters[field]
+      missing_params[field] = 'Field is required' if parameters[field].nil?
     end
   end
 end
