@@ -1,51 +1,52 @@
+# frozen_string_literal: true
+
+require 'logger'
+require 'securerandom'
 
 module UserService
   AUTHENTICATION_TOKEN_VALIDITY_PERIOD = 24.hours
+  LOGGER = Logger.new STDOUT
 
   def self.create_user(username, password, person, role)
-    salt = User.random_string(10)
+    salt = SecureRandom.base64
 
-    User.create(
+    user = User.create(
       username: username,
       password: Digest::SHA1.hexdigest("#{password}#{salt}"),
       salt: salt,
       person: person,
-      roles: roles,
-      creator: User.current.id
+      creator: User.current.id,
     )
+    UserRole.create(role: role, user: user)
+    user
   end
 
   def self.update_user(params)
-
     user = User.where(username: params[:username]).first
-    if user.blank?
-      return false
-    end
+    return false if user.blank?
 
-    details           = compute_expiry_time
+    details = compute_expiry_time
 
     person = Person.find(user.person_id)
     name   = PersonName.where(person_id: user.person_id).last
 
-    if name.blank? || person.blank?
-      return false
-    end
+    return false if name.blank? || person.blank?
 
     user.authentication_token = details[:token]
     user.token_expiry_time = details[:expiry_time]
-    user.password         = Digest::SHA1.hexdigest("#{params[:password]}#{user.salt}") if params[:password].present?
+    user.password = Digest::SHA1.hexdigest("#{params[:password]}#{user.salt}") if params[:password].present?
 
     person.gender       = params[:gender] if params[:gender].present?
     person.birthdate    = params[:birthdate].to_date.to_s(:db) if params[:birthdate].present?
 
-    name.given_name   = params[:first_name] if params[:first_name].present?
-    name.family_name    = params[:last_name] if params[:last_name].present?
+    name.given_name = params[:first_name] if params[:first_name].present?
+    name.family_name = params[:last_name] if params[:last_name].present?
 
     user.save
     person.save
     name.save
 
-    return true
+    true
   end
 
   def self.new_authentication_token(user)
@@ -83,9 +84,7 @@ module UserService
   def self.authenticate(token)
     user = User.where(authentication_token: token).first
 
-    if user.nil? || user.token_expiry_time < Time.now
-      return nil
-    end
+    return nil if user.nil? || user.token_expiry_time < Time.now
 
     user
   end
@@ -114,7 +113,6 @@ module UserService
     Digest::SHA512.hexdigest("#{password}#{user.salt}") == user.password
   end
 
-
   def self.check_user(username)
     user = User.where(username: username).first
     if user
@@ -122,28 +120,24 @@ module UserService
     else
       return false
     end
-
   end
 
-
-  def self.re_authenticate(username,password)
+  def self.re_authenticate(username, password)
     user = User.where(username: username).first
     token = create_token
     expiry_time = compute_expiry_time
     if user
       salt = user.salt
       if Digest::SHA1.hexdigest("#{password}#{salt}") == user.password	||
-          Digest::SHA512.hexdigest("#{password}#{salt}") == user.password
+         Digest::SHA512.hexdigest("#{password}#{salt}") == user.password
 
         User.update(user.id, authentication_token: token, token_expiry_time: expiry_time[:expiry_time])
-        return {token: token, expiry_time: expiry_time[:expiry_time]}
+        return { token: token, expiry_time: expiry_time[:expiry_time] }
       else
         return false
       end
     else
       return false
     end
-
   end
-
 end

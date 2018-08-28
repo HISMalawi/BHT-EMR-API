@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'user_service'
 
 class Api::V1::UsersController < ApplicationController
@@ -6,7 +8,7 @@ class Api::V1::UsersController < ApplicationController
   skip_before_action :authenticate, only: [:login]
 
   def index
-    render json: User.all, status: :ok
+    render json: User.all.limit(10), status: :ok
   end
 
   def show
@@ -14,9 +16,7 @@ class Api::V1::UsersController < ApplicationController
   end
 
   def create
-    create_params, error = create_params(
-      fields: %i[role_id], required: %i[username password person_id]
-    )
+    create_params, error = get_create_params
     return render json: { errors: create_params }, status: :bad_request if error
 
     if UserService.check_user(create_params[:username])
@@ -28,7 +28,7 @@ class Api::V1::UsersController < ApplicationController
       create_params[:username], create_params[:password],
       create_params[:person], create_params[:role]
     )
-    if user.errors
+    if !user.errors.empty?
       render json: { errors: user.errors }, status: :bad_request
     else
       render json: { user: user }, status: :created
@@ -36,31 +36,29 @@ class Api::V1::UsersController < ApplicationController
   end
 
   def update
-=begin
-
-  params = {
-    username": "", password: "", first_name: "", last_name:  "", gender: "", role:   "Admin|Nurse|Clinician|Doctor",  birthdate: ""
-  }
-=end
+    #
+    #   params = {
+    #     username": "", password: "", first_name: "", last_name:  "", gender: "", role:   "Admin|Nurse|Clinician|Doctor",  birthdate: ""
+    #   }
 
     if UserService.update_user(params)
 
-        details = UserService.compute_expiry_time
-        response = {
-            status: 200,
-            error: false,
-            message: 'account updated successfuly',
-            data: {
-                token: details[:token],
-                expiry_time: details[:expiry_time]
-            }
+      details = UserService.compute_expiry_time
+      response = {
+        status: 200,
+        error: false,
+        message: 'account updated successfuly',
+        data: {
+          token: details[:token],
+          expiry_time: details[:expiry_time]
         }
+      }
     else
-        response = {
-            status: 401,
-            error: true,
-            message: 'failed to update user',
-            data: {
+      response = {
+        status: 401,
+        error: true,
+        message: 'failed to update user',
+        data: {
 
         }
       }
@@ -86,34 +84,34 @@ class Api::V1::UsersController < ApplicationController
     if params[:token]
 
       status = UserService.check_token(params[:token])
-      if status == true
-        response = {
-          status: 200,
-          error: false,
-          message: 'token active',
-          data: {
-          }
-        }
-      else	
-        response = {
-          status: 401,
-          error: true,
-          message: 'invalid_',
-          data: {
-            
-          }
-        }
-      end
+      response = if status == true
+                   {
+                     status: 200,
+                     error: false,
+                     message: 'token active',
+                     data: {
+                     }
+                   }
+                 else
+                   {
+                     status: 401,
+                     error: true,
+                     message: 'invalid_',
+                     data: {
+
+                     }
+                   }
+                 end
 
     else
       response = {
-          status: 401,
-          error: true,
-          message: 'token not provided',
-          data: {
-            
-          }
+        status: 401,
+        error: true,
+        message: 'token not provided',
+        data: {
+
         }
+      }
     end
 
     render json: response
@@ -121,52 +119,54 @@ class Api::V1::UsersController < ApplicationController
 
   def re_authenticate
     if params[:username] && params[:password]
-      details = UserService.re_authenticate(params[:username],params[:password])
-      if details == false
-        response = {
-          status: 401,
-          error: true,
-          message: 'wrong password or username',
-          data: {
-            
-          }
-        }
-      else
-        response = {
-            status: 200,
-            error: false,
-            message: 're authenticated successfuly',
-            data: {
-              token: details[:token],
-              expiry_time: details[:expiry_time]
-            }
-          }
-      end
+      details = UserService.re_authenticate(params[:username], params[:password])
+      response = if details == false
+                   {
+                     status: 401,
+                     error: true,
+                     message: 'wrong password or username',
+                     data: {
+
+                     }
+                   }
+                 else
+                   {
+                     status: 200,
+                     error: false,
+                     message: 're authenticated successfuly',
+                     data: {
+                       token: details[:token],
+                       expiry_time: details[:expiry_time]
+                     }
+                   }
+                 end
 
     else
       response = {
-          status: 401,
-          error: true,
-          message: 'password or username not provided',
-          data: {
-            
-          }
+        status: 401,
+        error: true,
+        message: 'password or username not provided',
+        data: {
+
         }
+      }
     end
     render json: response
   end
 
   private
 
-  def create_params
-    create_params, error = required_params(
-      fields: %i[role_id], required: %i[username password person_id]
-    )
+  CREATE_PARAMS = %i[username password person_id role].freeze
+
+  def get_create_params
+    create_params, error = required_params required: CREATE_PARAMS
+    # raise create_params.inspect
     return create_params, error if error
 
-    create_params[:role] = role_id = create_params[:role_id]
-    role = role_id ? Role.find(role_id) : Role.find(name: DEFAULT_ROLENAME)
-    return { role_id: "Invalid role_id ##{role_id}" }, true unless role
+    role = Role.find(create_params[:role])
+    puts role
+    return { role: "Invalid role ##{role}" }, true unless role
+    create_params[:role] = role # Replace id with actual role
 
     create_params[:person] = person = Person.find(create_params[:person_id])
     return { person_id: "Invalid person_id ##{person_id}" }, true unless person
