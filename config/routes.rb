@@ -4,6 +4,7 @@ Rails.application.routes.draw do
       resources :users
       resources :people
       resources :roles
+      resources :patients
 
       resource :locations do
         get '/districts' => 'locations#districts'
