@@ -1276,7 +1276,7 @@ ActiveRecord::Schema.define(version: 2018_08_27_062036) do
     t.datetime "death_date"
     t.integer "cause_of_death"
     t.integer "creator", default: 0, null: false
-    t.datetime "date_created", null: false
+    t.datetime "date_created", default: -> { "CURRENT_TIMESTAMP" }, null: false
     t.integer "changed_by"
     t.datetime "date_changed"
     t.integer "voided", limit: 2, default: 0, null: false
