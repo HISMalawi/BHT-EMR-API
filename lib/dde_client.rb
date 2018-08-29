@@ -122,7 +122,7 @@ class DDEClient
     request
   end
 
-  def exec_request(request, uri, ignore_auto_login = false)
+  def exec_request(request, uri, ignore_auto_login: false)
     response = Net::HTTP.start(uri.hostname, uri.port) do |http|
       LOGGER.debug 'Making a request to DDE API @ ' + uri.to_s
       http.request(request)
@@ -140,7 +140,7 @@ class DDEClient
       @connection = new_connection
       # Login successful, lets retry the last request and make sure we
       # don't retry an auto-login
-      exec_request(request, uri, true)
+      exec_request(request, uri, ignore_auto_login: true)
     end
 
     handle_response response
