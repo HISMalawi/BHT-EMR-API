@@ -18,6 +18,18 @@ class Patient < ApplicationRecord
     end
   end
 
+  def as_json(options = {})
+    super(options.merge({
+      include: {
+        person: {},
+        # programs: {},
+        patient_identifiers: {},
+        encounters: {},
+        orders: {}
+      }
+    }))
+  end
+
   def void_related_models(reason)
     person.void(reason)
     patient_identifiers.each { |row| row.void(reason) }
