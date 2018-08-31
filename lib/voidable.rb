@@ -11,14 +11,13 @@ module Voidable
     user = User.current
     Rails.logger.warn 'Voiding object outside login session' unless user
 
-    return false if voided?
+    clazz = self.class
+    clazz._update_voidable_field self, :voided, 1
+    clazz._update_voidable_field self, :date_voided, Time.now
+    clazz._update_voidable_field self, :void_reason, reason
+    clazz._update_voidable_field self, :voided_by, user ? user.id : nil
 
-    self.voided = 1
-    self.date_voided = Time.now
-    self.void_reason = reason
-    self.voided_by = user ? user.id : nil
-
-    self.class.exec_after_void_callbacks self, reason # See class_methods below
+    clazz._exec_after_void_callbacks self, reason
     save
   end
 
@@ -28,13 +27,25 @@ module Voidable
   end
 
   def voidable?
-    respond_to? :voided
+    respond_to? self.class._voidable_field(:voided)
   end
 
   # Contains voidable's class methods `after_void` which is public
   # and exec_after_void_callbacks which is only available to
   # subclasses.
   class_methods do
+    # Re-map void interface
+    def remap_voidable_interface(voided: :voided, date_voided: :date_voided,
+                                 void_reason: :void_reason,
+                                 voided_by: :voided_by)
+      @interface = {
+        voided: voided,
+        date_voided: date_voided,
+        void_reason: void_reason,
+        voided_by: voided_by
+      }
+    end
+
     # Add callbacks do be called after a `void` is successfully executed.
     #
     # @example
@@ -53,20 +64,32 @@ module Voidable
     #   => Hello Licken Chegs
     #   => Foobar Licken Chegs
     def after_void(*callbacks)
-      after_void_callbacks.push(*callbacks)
+      _after_void_callbacks.push(*callbacks)
     end
 
+    # private methods
+
     # Executes registered after_void callbacks
-    def exec_after_void_callbacks(this, void_reason)
-      after_void_callbacks.each do |callback|
-        this.method(callback).call(void_reason)
+    def _exec_after_void_callbacks(instance, void_reason)
+      _after_void_callbacks.each do |callback|
+        instance.method(callback).call(void_reason)
       end
     end
 
     # Returns array of after_void callbacks
-    def after_void_callbacks
-      # Need variable that's attached to class not instance
+    def _after_void_callbacks
       @after_void_callbacks ||= []
+    end
+
+    def _voidable_field(field)
+      remap_voidable_interface unless @interface # Initialise default interface
+      @interface[field]
+    end
+
+    def _update_voidable_field(instance, field, value)
+      remap_voidable_interface unless @interface # Initialise default interface
+      setter = (_voidable_field(field).to_s + '=').to_sym
+      instance.method(setter).call(value)
     end
   end
 end

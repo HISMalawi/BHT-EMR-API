@@ -4,7 +4,7 @@ require 'rails_helper'
 require 'voidable'
 
 describe Voidable do
-  # DB schema is tinyint not bool for voided 
+  # DB schema is tinyint not bool for voided
   VOIDED = 1
 
   before do
@@ -51,6 +51,39 @@ describe Voidable do
     expect(@voidable.date_voided).to be > (Time.now - 5.minutes)
     expect(@voidable.voided_by).to eq(@user.id)
     expect(@voidable.void_reason).to eq(:pumbwa)
+  end
+
+  it 'is able to re-map void interface' do
+    retirable = (Class.new do
+      include Voidable
+
+      attr_accessor :retired, :date_retired, :retire_reason, :retired_by
+
+      remap_voidable_interface(
+        voided: :retired,
+        date_voided: :date_retired,
+        void_reason: :retire_reason,
+        voided_by: :retired_by
+      )
+
+      def initialize
+        @voided = 0
+      end
+
+      def id
+        :pumbwa_id
+      end
+
+      def save
+        true
+      end
+    end).new
+
+    retirable.void(:pumbwa)
+    expect(retirable.retired).to eq(1)
+    expect(retirable.date_retired).to be > (Time.now - 5.minutes)
+    expect(retirable.retired_by).to eq(@user.id)
+    expect(retirable.retire_reason).to eq(:pumbwa)
   end
 
   it 'triggers after_void callbacks' do
