@@ -24,14 +24,11 @@ class Api::V1::PeopleController < ApplicationController
     create_params, errors = required_params required: PERSON_FIELDS
     return render json: create_params, status: :bad_request if errors
 
-    person = create_person(create_params[:gender], create_params[:birthdate],
-                           create_params[:birthdate_estimated])
+    person = create_person(create_params)
+    create_person_name(person, create_params)
+    create_person_address(person, create_params)
 
-    create_person_name(person, given_name: create_params[:given_name],
-                               family_name: create_params[:family_name],
-                               middle_name: create_params[:middle_name])
-
-    create_person_attributes person, person_attributes(create_params)
+    # create_person_attributes person, person_attributes(create_params)
     render json: person, status: :created
   end
 
