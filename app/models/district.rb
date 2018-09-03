@@ -1,4 +1,4 @@
-class District < ActiveRecord::Base
+class District < ApplicationRecord
   self.table_name = 'district'
   self.primary_key = 'district_id'
 
