@@ -80,6 +80,14 @@ class Api::V1::UsersController < ApplicationController
     end
   end
 
+  def destroy
+    if User.find(params[:id]).void('No reason provided')
+      render status: :no_content
+    else
+      render json: { errors: ['Failed to void user'] }, status: :internal_server_error
+    end
+  end
+
   def check_token_validity
     if params[:token]
 

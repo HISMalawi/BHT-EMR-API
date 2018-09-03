@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class User < ApplicationRecord
+class User < RetirableRecord
   self.table_name = :users
   self.primary_key = :user_id
 
