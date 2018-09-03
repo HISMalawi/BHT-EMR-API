@@ -33,6 +33,18 @@ class Api::V1::PeopleController < ApplicationController
   end
 
   def update
+    update_params, errors = required_params optional: PERSON_FIELDS
+    return render json: { errors: errors }, status: :bad_request if errors
+
+    person = People.find(params[:id])
+
+    update_person person, update_params
+    update_person_name person, update_params
+    update_person_address person, update_params
+
+    # TODO: Send person to DDE service in a fire and forget fashion
+
+    render json: person, status: :created
   end
 
   def destroy

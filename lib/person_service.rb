@@ -3,6 +3,13 @@
 require 'securerandom'
 
 module PersonService
+  PERSON_TRUNK_FIELDS = %i[gender birthdate birthdate_estimated].freeze
+  PERSON_NAME_FIELDS = %i[given_name family_name middle_name].freeze
+  PERSON_ADDRESS_FIELDS = %i[current_district current_traditional_authority
+                             current_village home_district
+                             home_traditional_authority home_village].freeze
+  PERSON_FIELDS = PERSON_TRUNK_FIELDS + PERSON_NAME_FIELDS + PERSON_ADDRESS_FIELDS
+
   def create_person(params)
     Person.create(
       gender: params[:gender],
@@ -10,6 +17,11 @@ module PersonService
       birthdate_estimated: params[:birthdate_estimated],
       creator: User.current.id
     )
+  end
+
+  def update_person(person, params)
+    params = params.select { |k, _| PERSON_TRUNK_FIELDS.include? k }
+    person.update params unless params.empty?
   end
 
   def create_person_name(person, params)
@@ -24,6 +36,11 @@ module PersonService
     )
   end
 
+  def update_person_name(person, params)
+    params = params.select { |k, _| PERSON_NAME_FIELDS.include? k }
+    create_person_name person, params unless params.empty?
+  end
+
   def create_person_address(person, params)
     PersonAddress.create(
       person: person,
@@ -35,6 +52,11 @@ module PersonService
       county_district: params[:home_traditional_authority],
       creator: User.current.id
     )
+  end
+
+  def update_person_address(person, params)
+    params = params.select { |k, _| PERSON_ADDRESS_FIELDS.include? k }
+    create_person_address(person, params) unless params.empty?
   end
 
   # def create_person_attributes(person, person_attributes)
@@ -55,4 +77,6 @@ module PersonService
   #     )
   #   end
   # end
+
+
 end
