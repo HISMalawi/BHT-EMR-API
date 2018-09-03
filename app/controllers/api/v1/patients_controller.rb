@@ -135,6 +135,6 @@ class Api::V1::PatientsController < ApplicationController
   end
 
   def find_patient(npid)
-    patient = @dde_service.find_patient(npid)
+    @dde_service.find_patient(npid)
   end
 end

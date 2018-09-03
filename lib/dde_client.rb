@@ -108,7 +108,7 @@ class DDEClient
     }
   end
 
-  def exec_request(resource, &request)
+  def exec_request(resource)
     LOGGER.debug "Executing DDE request using: #{@connection}"
     response = yield build_uri(resource), headers
     LOGGER.debug "Handling DDE response:\n\tStatus - #{response.code}\n\tBody - #{response.body}"
