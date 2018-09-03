@@ -58,13 +58,6 @@ class Api::V1::PeopleController < ApplicationController
 
   private
 
-  PERSON_FIELDS = %i[
-    given_name middle_name family_name gender birthdate
-    birthdate_estimated home_district home_village
-    home_traditional_authority current_district current_village
-    current_traditional_authority
-  ].freeze
-
   PERSON_ATTRIBUTES = %i[
     home_district home_village home_traditional_authority
     current_district current_village current_traditional_authority

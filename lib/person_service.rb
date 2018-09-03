@@ -8,7 +8,7 @@ module PersonService
   PERSON_ADDRESS_FIELDS = %i[current_district current_traditional_authority
                              current_village home_district
                              home_traditional_authority home_village].freeze
-  PERSON_FIELDS = PERSON_TRUNK_FIELDS + PERSON_NAME_FIELDS + PERSON_ADDRESS_FIELDS
+  PERSON_FIELDS = (PERSON_TRUNK_FIELDS + PERSON_NAME_FIELDS + PERSON_ADDRESS_FIELDS).freeze
 
   def create_person(params)
     Person.create(
