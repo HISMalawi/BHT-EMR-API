@@ -1,6 +1,4 @@
 class Api::V1::EncountersController < ApplicationController
-  DEFAULT_PAGE_SIZE = 12
-
   # Retrieve a list of encounters
   #
   # GET /encounter
@@ -14,17 +12,14 @@ class Api::V1::EncountersController < ApplicationController
     # Ignoring error value as required_params never errors when
     # retrieving optional parameters only
     filters, = required_params optional: %i[
-      patient_id location_id encounter_type_id page page_size
+      patient_id location_id encounter_type_id
     ]
 
-    limit = (filters.delete(:page_size) { DEFAULT_PAGE_SIZE }).to_i
-    offset = (filters.delete(:page) { 0 }).to_i * DEFAULT_PAGE_SIZE
-
     if filters.empty?
-      render json: Encounter.offset(offset).limit(limit)
+      render json: paginate(Encounter)
     else
       remap_encounter_type_id! filters
-      render json: Encounter.where(filters).offset(offset).limit(limit)
+      render json: paginate(Encounter.where(filters))
     end
   end
 

@@ -9,6 +9,8 @@ class ApplicationController < ActionController::API
 
   include RequireParams
 
+  DEFAULT_PAGE_SIZE = 12
+
   def authenticate
     authentication_token = request.headers['Authorization']
     unless authentication_token
@@ -26,5 +28,13 @@ class ApplicationController < ActionController::API
 
     User.current = user
     true
+  end
+
+  def paginate(queryset)
+    # TODO: Check if page and page_size are integers
+    limit = (params[:page_size] || DEFAULT_PAGE_SIZE).to_i
+    offset = (params[:page] || 0).to_i * DEFAULT_PAGE_SIZE
+
+    queryset.offset(offset).limit(limit)
   end
 end
