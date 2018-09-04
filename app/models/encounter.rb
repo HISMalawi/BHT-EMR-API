@@ -12,11 +12,28 @@ class Encounter < ApplicationRecord
   belongs_to(:type, class_name: 'EncounterType', foreign_key: :encounter_type)
   belongs_to(:provider, class_name: 'User', foreign_key: :provider_id)
   belongs_to :patient
+  belongs_to :location
 
-  # TODO: this needs to account for current visit, which needs to account for
-  # possible retrospective entry
-  named_scope(:current,
-              conditions: 'DATE(encounter.encounter_datetime) = CURRENT_DATE()')
+  # # TODO: this needs to account for current visit, which needs to account for
+  # # possible retrospective entry
+  # named_scope(:current,
+  #             conditions: 'DATE(encounter.encounter_datetime) = CURRENT_DATE()')
+
+  def as_json(options = {})
+    super(options.merge(
+      include: {
+        type: {},
+        patient: {},
+        location: {},
+        provider: {
+          except: %i[
+            password salt secret_question secret_answer
+            authentication_token token_expiry_time
+          ]
+        }
+      }
+    ))
+  end
 
   def before_save
     self.provider = User.current_user if provider.blank?
