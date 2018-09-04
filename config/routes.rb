@@ -14,6 +14,7 @@ Rails.application.routes.draw do
       end
 
       resources :encounters
+      resources :observations
     end
   end
 
