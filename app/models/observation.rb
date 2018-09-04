@@ -4,33 +4,38 @@ class Observation < ActiveRecord::Base
   self.table_name = :obs
   self.primary_key = :obs_id
 
-  belongs_to :encounter, conditions: { voided: 0 }
-  belongs_to :order, conditions: { voided: 0 }
-  belongs_to :concept, conditions: { retired: 0 }
-  belongs_to(:concept_name, class_name: 'ConceptName',
-                            foreign_key: 'concept_name',
-                            conditions: { voided: 0 })
-  belongs_to(:answer_concept, class_name: 'Concept',
-                              foreign_key: 'value_coded',
-                              conditions: { retired: 0 })
+  belongs_to :encounter
+  belongs_to :order
+  belongs_to :concept
+  belongs_to :concept_name, class_name: 'ConceptName', foreign_key: 'concept_name'
+  belongs_to :answer_concept, class_name: 'Concept', foreign_key: 'value_coded'
   belongs_to(:answer_concept_name, class_name: 'ConceptName',
-                                   foreign_key: 'value_coded_name_id',
-                                   conditions: { voided: 0 })
+                                   foreign_key: 'value_coded_name_id')
+
   has_many :concept_names, through: :concept
 
-  named_scope :recent, ->(number) { { order: 'obs_datetime DESC,date_created DESC', limit: number } }
-  named_scope :old, ->(number) { { order: 'obs_datetime ASC,date_created ASC', limit: number } }
-  named_scope :question, lambda { |concept|
-    concept_id = concept.to_i
-    if concept_id == 0
-      concept_id = begin
-                     ConceptName.first(conditions: { name: concept }).concept_id
-                   rescue StandardError
-                     0
-                   end
-    end
-    { conditions: { concept_id: concept_id } }
-  }
+  def as_json(options = {})
+    super(options.merge(
+      include: {
+        concept: {},
+        concept_name: {}
+      }
+    ))
+  end
+
+  # named_scope :recent, ->(number) { { order: 'obs_datetime DESC,date_created DESC', limit: number } }
+  # named_scope :old, ->(number) { { order: 'obs_datetime ASC,date_created ASC', limit: number } }
+  # named_scope :question, lambda { |concept|
+  #   concept_id = concept.to_i
+  #   if concept_id == 0
+  #     concept_id = begin
+  #                    ConceptName.first(conditions: { name: concept }).concept_id
+  #                  rescue StandardError
+  #                    0
+  #                  end
+  #   end
+  #   { conditions: { concept_id: concept_id } }
+  # }
 
   # def validate
   #   if (value_numeric != '0.0' && value_numeric != '0' && !value_numeric.blank?)

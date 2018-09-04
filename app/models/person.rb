@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Person < ApplicationRecord
+class Person < VoidableRecord
   after_void :void_related_models
 
   self.table_name = 'person'

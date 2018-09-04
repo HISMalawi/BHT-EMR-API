@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Location < ActiveRecord::Base
+class Location < RetirableRecord
   self.table_name = :location
   self.primary_key = :location_id
 

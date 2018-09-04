@@ -1,4 +1,4 @@
-class Encounter < ApplicationRecord
+class Encounter < VoidableRecord
   self.table_name = :encounter
   self.primary_key = :encounter_id
 
@@ -9,8 +9,9 @@ class Encounter < ApplicationRecord
   has_many :observations, dependent: :destroy
   has_many :drug_orders, through: :orders, foreign_key: 'order_id'
   has_many :orders, dependent: :destroy
-  belongs_to(:type, class_name: 'EncounterType', foreign_key: :encounter_type)
-  belongs_to(:provider, class_name: 'User', foreign_key: :provider_id)
+
+  belongs_to :type, class_name: 'EncounterType', foreign_key: :encounter_type
+  belongs_to :provider, class_name: 'User', foreign_key: :provider_id
   belongs_to :patient
   belongs_to :location
 
@@ -30,7 +31,8 @@ class Encounter < ApplicationRecord
             password salt secret_question secret_answer
             authentication_token token_expiry_time
           ]
-        }
+        },
+        observations: {}
       }
     ))
   end

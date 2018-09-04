@@ -11,6 +11,11 @@
 class RetirableRecord < ApplicationRecord
   self.abstract_class = true
 
+  include Auditable
+  include Voidable
+
+  default_scope { where(retired: 0) }
+
   remap_voidable_interface(
     voided: :retired, date_voided: :date_retired,
     void_reason: :retire_reason, voided_by: :retired_by

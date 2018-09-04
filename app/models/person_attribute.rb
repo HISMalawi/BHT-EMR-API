@@ -1,4 +1,4 @@
-class PersonAttribute < ActiveRecord::Base
+class PersonAttribute < VoidableRecord
   self.table_name = 'person_attribute'
   self.primary_key = 'person_attribute_id'
 

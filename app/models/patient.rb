@@ -1,4 +1,4 @@
-class Patient < ApplicationRecord
+class Patient < VoidableRecord
   after_void :void_related_models
 
   self.table_name = 'patient'

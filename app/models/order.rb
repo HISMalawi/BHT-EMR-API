@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Order < ActiveRecord::Base
+class Order < Voidable
   self.table_name = :orders
   self.primary_key = :order_id
 

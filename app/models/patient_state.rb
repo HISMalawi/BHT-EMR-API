@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class PatientState < ApplicationRecord
+class PatientState < VoidableRecord
   self.table_name = 'patient_state'
   self.primary_key = 'patient_state_id'
 

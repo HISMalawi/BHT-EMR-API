@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class PatientIdentifierType < ActiveRecord::Base
+class PatientIdentifierType < RetirableRecord
   self.table_name = :patient_identifier_type
   self.primary_key = :patient_identifier_type_id
 
