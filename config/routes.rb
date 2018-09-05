@@ -13,6 +13,7 @@ Rails.application.routes.draw do
         get '/traditional_authorities' => 'locations#traditional_authorities'
       end
 
+      get '/encounters/_types' => 'encounter_types#index'
       resources :encounters
       resources :observations
     end
