@@ -1,3 +1,5 @@
+require 'utils/hash'
+
 class Api::V1::EncountersController < ApplicationController
   # Retrieve a list of encounters
   #
@@ -109,13 +111,6 @@ class Api::V1::EncountersController < ApplicationController
   # etc and then surprise our clients with encounter_type as another
   # form of an id.
   def remap_encounter_type_id!(hash)
-    hash_remap_field! hash, :encounter_type_id, :encounter_type
-  end
-
-  def hash_remap_field!(hash, old, new)
-    return unless hash.include? old
-    value = hash.delete old
-    hash[new] = value
-    hash
+    hash.remap_field! :encounter_type_id, :encounter_type
   end
 end
