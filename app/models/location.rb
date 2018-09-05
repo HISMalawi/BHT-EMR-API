@@ -4,7 +4,14 @@ class Location < RetirableRecord
   self.table_name = :location
   self.primary_key = :location_id
 
-  cattr_accessor :current_location
+  def self.current
+    # TODO: Fetch location from Global properties
+    (Class.new do
+      def id
+        700
+      end
+    end).new
+  end
 
   def site_id
     Location.current_health_center.location_id.to_s

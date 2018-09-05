@@ -48,7 +48,7 @@ class Api::V1::PatientsController < ApplicationController
       patient: patient,
       date_created: Time.now,
       uuid: SecureRandom.uuid,
-      location_id: 700 # TODO: Retrieve current location from Global properties
+      location_id: Location.current
     )
 
     patient.patient_identifiers << patient_identifier
