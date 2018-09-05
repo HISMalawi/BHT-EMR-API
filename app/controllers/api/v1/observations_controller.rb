@@ -1,4 +1,4 @@
-require 'utils/hash'
+require 'utils/remappable_hash'
 
 class Api::V1::ObservationsController < ApplicationController
   # Retrieve specific observation

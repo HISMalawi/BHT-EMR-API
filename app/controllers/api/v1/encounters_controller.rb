@@ -1,4 +1,4 @@
-require 'utils/hash'
+require 'utils/remappable_hash'
 
 class Api::V1::EncountersController < ApplicationController
   # Retrieve a list of encounters
@@ -39,16 +39,25 @@ class Api::V1::EncountersController < ApplicationController
   # Required parameters:
   #   encounter_type_id: Encounter's type
   #   patient_id: Patient involved in the encounter
+  #
+  # Optional parameters:
+  #   provider_id: user_id of surrogate doing the data entry defaults to current user 
   def create
-    create_params, errors = required_params required: %i[encounter_type_id patient_id]
+    create_params, errors = required_params required: %i[encounter_type_id patient_id],
+                                            optional: %i[provider_id]
     return render json: { errors: create_params }, status: :bad_request if errors
 
     remap_encounter_type_id! create_params
     validation_errors = validate_create_params create_params
     return render json: { errors: validation_errors } if validation_errors
 
+    create_params[:location_id] = Location.current.id
+    create_params[:provider_id] ||= User.current.id
+    create_params[:creator] = User.current.id
+    create_params[:encounter_datetime] = create_params[:date_created] = Time.now
     encounter = Encounter.create create_params
-    return render json: encounter.errors, status: :bad_request if encounter.errors
+
+    return render json: encounter.errors, status: :bad_request unless encounter.errors.empty?
 
     render json: encounter, status: :created
   end
@@ -89,8 +98,8 @@ class Api::V1::EncountersController < ApplicationController
 
   private
 
-  def validate_create_params?(params)
-    encounter_type = params[:encounter_type]
+  def validate_create_params(params)
+    encounter_type_id = params[:encounter_type_id]
     if encounter_type_id && !EncounterType.exists?(encounter_type)
       return ["Encounter type ##{encounter_type} not found"]
     end

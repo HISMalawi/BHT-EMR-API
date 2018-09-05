@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'rails_helper'
-require 'utils/hash'
+require 'utils/remappable_hash'
 
 describe Hash do
   describe 'remap_field' do
