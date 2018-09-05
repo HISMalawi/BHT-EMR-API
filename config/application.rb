@@ -33,12 +33,5 @@ module BHTEmrApi
     config.api_only = true
     # Stores a DDE Connection to be used in between requests
     config.dde_connection = nil
-
-    config.middleware.insert_before 0, Rack::Cors do
-      allow do
-        origins '*'
-        resource '*', headers: :any, methods: %i[get post options]
-      end
-    end
   end
 end
