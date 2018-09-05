@@ -6,8 +6,7 @@ class Api::V1::PeopleController < ApplicationController
   include PersonService
 
   def index
-    # TODO: Add pagination
-    render json: Person.all.limit(10)
+    render json: paginate(Person)
   end
 
   def show

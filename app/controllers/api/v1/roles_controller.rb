@@ -2,8 +2,7 @@
 
 class Api::V1::RolesController < ApplicationController
   def index
-    # TODO: Add pagination
-    render json: Role.all
+    render json: paginate(Role)
   end
 
   def show

@@ -8,7 +8,7 @@ class Api::V1::UsersController < ApplicationController
   skip_before_action :authenticate, only: [:login]
 
   def index
-    render json: User.all.limit(10), status: :ok
+    render json: paginate(User), status: :ok
   end
 
   def show
