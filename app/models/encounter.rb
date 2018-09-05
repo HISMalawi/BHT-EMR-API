@@ -2,8 +2,8 @@ class Encounter < VoidableRecord
   self.table_name = :encounter
   self.primary_key = :encounter_id
 
-  before_save :before_save
-  after_save :after_save
+  # before_save :before_save
+  # after_save :after_save
   after_void :after_void
 
   has_many :observations, dependent: :destroy
@@ -41,16 +41,16 @@ class Encounter < VoidableRecord
     ))
   end
 
-  def before_save
-    self.provider = User.current_user if provider.blank?
-    # TODO, this needs to account for current visit, which needs to account for
-    # possible retrospective entry
-    self.encounter_datetime = Time.now if encounter_datetime.blank?
-  end
+  # def before_save
+  #   self.provider = User.current_user if provider.blank?
+  #   # TODO, this needs to account for current visit, which needs to account for
+  #   # possible retrospective entry
+  #   self.encounter_datetime = Time.now if encounter_datetime.blank?
+  # end
 
-  def after_save
-    add_location_obs
-  end
+  # def after_save
+  #   add_location_obs
+  # end
 
   def after_void(reason)
     orders.each do |row|
