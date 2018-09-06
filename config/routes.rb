@@ -2,10 +2,15 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       resources :users
+
       get '/people/_names' => 'person_names#index'
-      resources :people
+      resources :people do
+        get '/names', to: redirect('/api/v1/people/_names?person_id=%{person_id}')
+      end
+
       resources :roles
       resources :patients
+      resources :concepts, only: %i[index show]
 
       get '/locations/_districts' => 'locations#districts'
       get '/locations/_villages' => 'locations#villages'

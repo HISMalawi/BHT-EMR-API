@@ -8,10 +8,10 @@ class Api::V1::PersonNamesController < ApplicationController
 
     # TODO: Paginate!!!
     if filters.empty?
-      render json: PersonName.all
+      render json: paginate(PersonName)
     else
       conds = params_to_query_conditions filters
-      render json: PersonName.where(conds[0].join(' AND '), *conds[1])
+      render json: paginate(PersonName.where(conds[0].join(' AND '), *conds[1]))
     end
   end
 
