@@ -2,6 +2,7 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       resources :users
+      get '/people/_names' => 'person_names#index'
       resources :people
       resources :roles
       resources :patients
