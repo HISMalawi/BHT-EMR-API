@@ -1,6 +1,3 @@
-require 'auditable'
-require 'voidable'
-
 class VoidableRecord < ApplicationRecord
   self.abstract_class = true
 

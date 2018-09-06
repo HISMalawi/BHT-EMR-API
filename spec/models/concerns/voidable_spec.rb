@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'rails_helper'
-require 'voidable'
 
 describe Voidable do
   # DB schema is tinyint not bool for voided
