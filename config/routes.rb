@@ -18,7 +18,9 @@ Rails.application.routes.draw do
       resources :locations
 
       get '/encounters/_types' => 'encounter_types#index'
-      resources :encounters
+      resources :encounters do
+        get '/observations', to: redirect('/api/v1/observations?encounter_id=%{encounter_id}')
+      end
 
       resources :observations
     end
