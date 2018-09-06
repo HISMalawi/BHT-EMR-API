@@ -30,7 +30,7 @@ class Api::V1::ObservationsController < ApplicationController
     if filters.empty?
       render json: paginate(Observation)
     else
-      render json: paginate(Observation.find(filters))
+      render json: paginate(Observation.where(filters))
     end
   end
 
