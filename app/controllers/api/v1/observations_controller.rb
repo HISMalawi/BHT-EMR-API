@@ -58,6 +58,8 @@ class Api::V1::ObservationsController < ApplicationController
 
     return unless remap_value_to_typed_value create_params
 
+    create_params[:obs_datetime] ||= Time.now
+
     observation = Observation.create(create_params)
     if observation.errors.empty?
       render json: observation, status: :created
@@ -131,11 +133,10 @@ class Api::V1::ObservationsController < ApplicationController
 
   # Remap plain `value` to typed `value_*`
   def remap_value_to_typed_value(params)
-    typed_value, required_extras = obs_typed_value_field params[:value_type]
+    typed_value, required_extras = OBS_VALUE_MAP[params[:value_type]]
 
-    # Remap `value` to typed name
-    create_params.remap_field :value, typed_value
-    create_params.delete :value_type
+    params.remap_field! :value, typed_value # Remap `value` to typed name
+    params.delete :value_type # Remove value_type field
 
     return true if required_extras.empty?
 
@@ -145,7 +146,7 @@ class Api::V1::ObservationsController < ApplicationController
       return false
     end
 
-    create_params.merge! extra_params
+    params.merge! extra_params
     true
   end
 end

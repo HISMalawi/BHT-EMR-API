@@ -1,26 +1,21 @@
 # frozen_string_literal: true
 
-class Observation < ActiveRecord::Base
+class Observation < VoidableRecord
   self.table_name = :obs
   self.primary_key = :obs_id
 
   belongs_to :encounter
-  belongs_to :order
+  # belongs_to :order
   belongs_to :concept
-  belongs_to :concept_name, class_name: 'ConceptName', foreign_key: 'concept_name'
-  belongs_to :answer_concept, class_name: 'Concept', foreign_key: 'value_coded'
-  belongs_to(:answer_concept_name, class_name: 'ConceptName',
-                                   foreign_key: 'value_coded_name_id')
+  # belongs_to :concept_name, class_name: 'ConceptName', foreign_key: 'concept_name'
+  # belongs_to :answer_concept, class_name: 'Concept', foreign_key: 'value_coded'
+  # belongs_to(:answer_concept_name, class_name: 'ConceptName',
+                                  #  foreign_key: 'value_coded_name_id')
 
   has_many :concept_names, through: :concept
 
   def as_json(options = {})
-    super(options.merge(
-      include: {
-        concept: {},
-        concept_name: {}
-      }
-    ))
+    super(options.merge(include: { concept: {}, concept_names: {} }))
   end
 
   # named_scope :recent, ->(number) { { order: 'obs_datetime DESC,date_created DESC', limit: number } }
