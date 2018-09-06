@@ -1,3 +1,5 @@
+require "set"
+
 class Api::V1::PersonNamesController < ApplicationController
   def show
     render json: PersonName.find(params[:id])
@@ -13,6 +15,36 @@ class Api::V1::PersonNamesController < ApplicationController
       conds = params_to_query_conditions filters
       render json: paginate(PersonName.where(conds[0].join(' AND '), *conds[1]))
     end
+  end
+
+  def search_given_name
+    search_string = params.require('search_string')
+
+    names = paginate(PersonName.where('given_name like ?', "#{search_string}%")).collect do |person_name|
+      person_name.given_name
+    end
+
+    render json: Set.new(names)
+  end
+
+  def search_family_name
+    search_string = params.require('search_string')
+
+    names = paginate(PersonName.where('family_name like ?', "#{search_string}%")).collect do |person_name|
+      person_name.family_name
+    end
+
+    render json: Set.new(names)
+  end
+
+  def search_middle_name
+    search_string = params.require('search_string')
+
+    names = paginate(PersonName.where('middle_name like ?', "#{search_string}%")).collect do |person_name|
+      person_name.middle_name
+    end
+
+    render json: Set.new(names)
   end
 
   private

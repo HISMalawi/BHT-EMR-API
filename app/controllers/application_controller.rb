@@ -9,7 +9,7 @@ class ApplicationController < ActionController::API
 
   include RequireParams
 
-  DEFAULT_PAGE_SIZE = 12
+  DEFAULT_PAGE_SIZE = 10
 
   def authenticate
     authentication_token = request.headers['Authorization']
