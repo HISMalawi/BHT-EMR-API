@@ -7,14 +7,14 @@ Rails.application.routes.draw do
       resources :roles
       resources :patients
 
-      resources :locations do
-        get '/districts' => 'locations#districts'
-        get '/villages' => 'locations#villages'
-        get '/traditional_authorities' => 'locations#traditional_authorities'
-      end
+      get '/locations/_districts' => 'locations#districts'
+      get '/locations/_villages' => 'locations#villages'
+      get '/locations/_traditional_authorities' => 'locations#traditional_authorities'
+      resources :locations
 
       get '/encounters/_types' => 'encounter_types#index'
       resources :encounters
+
       resources :observations
     end
   end
