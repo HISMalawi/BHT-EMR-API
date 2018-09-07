@@ -5,8 +5,24 @@ require 'person_service'
 class Api::V1::PeopleController < ApplicationController
   include PersonService
 
+  SEARCH_LIMIT = 20
+
   def index
     render json: paginate(Person)
+  end
+
+  # Search for patients by name and gender
+  #
+  # GET /search/people?given_name={value}&family_name={value}&gender={value}
+  def search
+    given_name, family_name, gender = params.require([:given_name, :family_name, :gender])
+
+    people = Person.joins(:names).where(
+      'person.gender like ? AND person_name.given_name LIKE ?
+                            AND person_name.family_name LIKE ?',
+      "#{gender}%", "#{given_name}%", "#{family_name}%"
+    ).limit(SEARCH_LIMIT)
+    render json: people
   end
 
   def show
