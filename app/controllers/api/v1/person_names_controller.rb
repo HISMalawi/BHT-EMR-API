@@ -1,5 +1,3 @@
-require "set"
-
 class Api::V1::PersonNamesController < ApplicationController
   def show
     render json: PersonName.find(params[:id])
@@ -18,36 +16,27 @@ class Api::V1::PersonNamesController < ApplicationController
   end
 
   def search_given_name
-    search_string = params.require('search_string')
-
-    names = paginate(PersonName.where('given_name like ?', "#{search_string}%")).collect do |person_name|
-      person_name.given_name
-    end
-
-    render json: Set.new(names)
+    search_partial_name :given_name
   end
 
   def search_family_name
-    search_string = params.require('search_string')
-
-    names = paginate(PersonName.where('family_name like ?', "#{search_string}%")).collect do |person_name|
-      person_name.family_name
-    end
-
-    render json: Set.new(names)
+    search_partial_name :family_name
   end
 
   def search_middle_name
-    search_string = params.require('search_string')
-
-    names = paginate(PersonName.where('middle_name like ?', "#{search_string}%")).collect do |person_name|
-      person_name.middle_name
-    end
-
-    render json: Set.new(names)
+    search_partial_name :middle_name
   end
 
   private
+
+  def search_partial_name(field)
+    search_string = params.require('search_string')
+
+    query = PersonName.select(field).distinct.where("#{field} like ?", "#{search_string}%")
+    query = paginate(query)
+
+    render json: query.collect(&field)
+  end
 
   def params_to_query_conditions(params)
     params.to_hash.each_with_object([[], []]) do |kv_pair, query_conds|
