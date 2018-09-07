@@ -6,7 +6,6 @@ class Api::V1::PersonNamesController < ApplicationController
   def index
     filters = params.permit(%i[given_name middle_name family_name person_id])
 
-    # TODO: Paginate!!!
     if filters.empty?
       render json: paginate(PersonName)
     else
