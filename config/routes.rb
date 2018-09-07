@@ -12,10 +12,22 @@ Rails.application.routes.draw do
       resources :patients
       resources :concepts, only: %i[index show]
 
-      get '/locations/_districts' => 'locations#districts'
-      get '/locations/_villages' => 'locations#villages'
-      get '/locations/_traditional_authorities' => 'locations#traditional_authorities'
+      # Locations
       resources :locations
+
+      resources :regions, only: %i[index] do
+        get '/districts', to: redirect('/api/v1/districts?region_id=%{region_id}')
+      end
+
+      resources :districts, only: %i[index] do
+        get '/traditional_authorities', to: redirect('/api/v1/traditional_authorities?district_id=%{district_id}')
+      end
+
+      resources :traditional_authorities, only: %i[index] do
+        get '/villages', to: redirect('/api/v1/villages?traditional_authority_id=%{traditional_authority_id}')
+      end
+
+      resources :villages, only: %i[index]
 
       get '/encounters/_types' => 'encounter_types#index'
       resources :encounters do
