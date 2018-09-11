@@ -3,9 +3,9 @@ class Api::V1::DistrictsController < ApplicationController
     filters = params.permit(:region_id)
 
     if filters.empty?
-      render json: paginate(District)
+      render json: paginate(District.order(:name))
     else
-      render json: paginate(District.where(filters))
+      render json: paginate(District.where(filters).order(:name))
     end
   end
 end

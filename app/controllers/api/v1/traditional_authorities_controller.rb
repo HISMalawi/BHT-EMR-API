@@ -3,9 +3,9 @@ class Api::V1::TraditionalAuthoritiesController < ApplicationController
     filters = params.permit(:district_id)
 
     if filters.empty?
-      render json: paginate(TraditionalAuthority)
+      render json: paginate(TraditionalAuthority.order(:name))
     else
-      render json: paginate(TraditionalAuthority.where(filters))
+      render json: paginate(TraditionalAuthority.where(filters).order(:name))
     end
   end
 end
