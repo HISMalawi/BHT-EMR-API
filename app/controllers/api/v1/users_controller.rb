@@ -16,23 +16,29 @@ class Api::V1::UsersController < ApplicationController
   end
 
   def create
-    create_params, error = get_create_params
-    return render json: { errors: create_params }, status: :bad_request if error
+    create_params = params.require(%i[username password given_name family_name role])
+    username, password, given_name, family_name, role = create_params
 
-    if UserService.check_user(create_params[:username])
+    logger.debug create_params
+
+    if UserService.check_user(username)
       errors = ['User already exists']
-      return render json: { errors: errors }, status: :conflict
+      render json: { errors: errors }, status: :conflict
+      return
     end
 
     user = UserService.create_user(
-      create_params[:username], create_params[:password],
-      create_params[:person], create_params[:role]
+      username: username, password: password, given_name: given_name,
+      family_name: family_name, role: role
     )
-    if !user.errors.empty?
-      render json: { errors: user.errors }, status: :bad_request
-    else
+
+    if user.errors.empty?
       render json: { user: user }, status: :created
+    else
+      render json: { errors: user.errors }, status: :bad_request
     end
+  rescue UserService::UserCreateError => e
+    render json: { errors: e }, status: :internal_server_error
   end
 
   def update

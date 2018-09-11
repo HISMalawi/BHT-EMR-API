@@ -3,8 +3,6 @@
 require 'person_service'
 
 class Api::V1::PeopleController < ApplicationController
-  include PersonService
-
   def index
     render json: paginate(Person)
   end
@@ -37,9 +35,9 @@ class Api::V1::PeopleController < ApplicationController
     create_params, errors = required_params required: PERSON_FIELDS
     return render json: create_params, status: :bad_request if errors
 
-    person = create_person(create_params)
-    create_person_name(person, create_params)
-    create_person_address(person, create_params)
+    person = PersonService.create_person(create_params)
+    PersonService.create_person_name(person, create_params)
+    PersonService.create_person_address(person, create_params)
 
     # create_person_attributes person, person_attributes(create_params)
     render json: person, status: :created
@@ -51,9 +49,9 @@ class Api::V1::PeopleController < ApplicationController
 
     person = People.find(params[:id])
 
-    update_person person, update_params
-    update_person_name person, update_params
-    update_person_address person, update_params
+    PersonService.update_person person, update_params
+    PersonService.update_person_name person, update_params
+    PersonService.update_person_address person, update_params
 
     # TODO: Send person to DDE service in a fire and forget fashion
 

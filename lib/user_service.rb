@@ -3,11 +3,25 @@
 require 'logger'
 require 'securerandom'
 
+require_relative 'person_service'
+
 module UserService
   AUTHENTICATION_TOKEN_VALIDITY_PERIOD = 24.hours
   LOGGER = Logger.new STDOUT
 
-  def self.create_user(username, password, person, role)
+  class UserCreateError < StandardError; end
+
+  def self.create_user(username:, password:, given_name:, family_name:, role:)
+    person = PersonService.create_person(
+      birthdate: nil, birthdate_estimated: false, gender: nil
+    )
+    raise UserCreateError, "Person: #{person.errors}" unless person.errors.empty?
+
+    person_name = PersonService.create_person_name(
+      person, given_name: given_name, family_name: family_name
+    )
+    raise UserCreateError, "Person name: #{person_name.errors}" unless person_name.errors
+
     salt = SecureRandom.base64
 
     user = User.create(
@@ -16,9 +30,9 @@ module UserService
       password: Digest::SHA1.hexdigest("#{password}#{salt}"),
       salt: salt,
       person: person,
-      creator: User.current.id,
+      creator: User.current.id
     )
-    UserRole.create(role: role, user: user)
+    UserRole.create(role: Role.find(role), user: user)
     user
   end
 

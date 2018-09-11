@@ -10,7 +10,7 @@ module PersonService
                              home_traditional_authority home_village].freeze
   PERSON_FIELDS = (PERSON_TRUNK_FIELDS + PERSON_NAME_FIELDS + PERSON_ADDRESS_FIELDS).freeze
 
-  def create_person(params)
+  def self.create_person(params)
     Person.create(
       gender: params[:gender],
       birthdate: params[:birthdate],
@@ -19,12 +19,12 @@ module PersonService
     )
   end
 
-  def update_person(person, params)
+  def self.update_person(person, params)
     params = params.select { |k, _| PERSON_TRUNK_FIELDS.include? k }
     person.update params unless params.empty?
   end
 
-  def create_person_name(person, params)
+  def self.create_person_name(person, params)
     PersonName.create(
       person: person,
       given_name: params[:given_name],
@@ -36,12 +36,12 @@ module PersonService
     )
   end
 
-  def update_person_name(person, params)
+  def self.update_person_name(person, params)
     params = params.select { |k, _| PERSON_NAME_FIELDS.include? k }
     create_person_name person, params unless params.empty?
   end
 
-  def create_person_address(person, params)
+  def self.create_person_address(person, params)
     PersonAddress.create(
       person: person,
       state_province: params[:current_district],
@@ -54,12 +54,12 @@ module PersonService
     )
   end
 
-  def update_person_address(person, params)
+  def self.update_person_address(person, params)
     params = params.select { |k, _| PERSON_ADDRESS_FIELDS.include? k }
     create_person_address(person, params) unless params.empty?
   end
 
-  # def create_person_attributes(person, person_attributes)
+  # def self.create_person_attributes(person, person_attributes)
   #   person_attributes.collect do |attr, value|
   #     s_attr = attr.to_s.gsub(/_+/, ' ')
   #     attr_type = PersonAttributeType.where(name: s_attr).first
