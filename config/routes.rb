@@ -11,6 +11,7 @@ Rails.application.routes.draw do
         url
       end
 
+      # Routes down here ... Best we move everything above into own modules
       resources :users
 
       get '/people/_names' => 'person_names#index'
@@ -26,7 +27,6 @@ Rails.application.routes.draw do
 
       # Locations
       resources :locations
-      resources :workstations
 
       resources :regions, only: %i[index] do
         get('/districts', to: redirect do |params, request|
@@ -34,21 +34,21 @@ Rails.application.routes.draw do
         end)
       end
 
-      resources :districts, only: %i[index] do
+      resources :districts, only: %i[create index] do
         get('/traditional_authorities', to: redirect do |params, request|
           redirect_url = "/api/v1/traditional_authorities?district_id=#{params[:district_id]}"
           paginate_url redirect_url, request.params
         end)
       end
 
-      resources :traditional_authorities, only: %i[index] do
+      resources :traditional_authorities, only: %i[create index] do
         get('/villages', to: redirect do |params, request|
           redirect_url = "/api/v1/villages?traditional_authority_id=#{params[:traditional_authority_id]}"
           paginate_url redirect_url, request.params
         end)
       end
 
-      resources :villages, only: %i[index]
+      resources :villages, only: %i[create index]
 
       get '/encounters/_types' => 'encounter_types#index'
       resources :encounters do

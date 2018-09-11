@@ -1,6 +1,17 @@
 # frozen_string_literal: true
 
 class Api::V1::DistrictsController < ApplicationController
+  def create
+    params = params.require(%i[name region_id])
+
+    district = District.create(params)
+    if districts.errors.empty?
+      render json: district, status: :created
+    else
+      render json: district.errors, status: :bad_request
+    end
+  end
+
   def index
     filters = params.permit(%i[region_id name])
 

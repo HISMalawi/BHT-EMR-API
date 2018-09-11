@@ -1,4 +1,15 @@
 class Api::V1::TraditionalAuthoritiesController < ApplicationController
+  def create
+    params = params.require(%i[name district_id])
+
+    trad_auth = TraditionalAuthority.create(params)
+    if trad_auth.errors.empty?
+      render json: trad_auth, status: :created
+    else
+      render json: trad_auth.errors, status: :bad_request
+    end
+  end
+
   def index
     filters = params.permit(%i[district_id name])
 
