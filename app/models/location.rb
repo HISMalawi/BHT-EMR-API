@@ -4,6 +4,14 @@ class Location < RetirableRecord
   self.table_name = :location
   self.primary_key = :location_id
 
+  belongs_to :parent
+  has_one :parent, class_name: 'Location', foreign_key: :parent_location
+  has_many :tag_maps, class_name: 'LocationTagMap', foreign_key: :location_id
+
+  def as_json(options = {})
+    super(options.merge(include: { parent: {} }))
+  end
+
   def self.current
     # TODO: Fetch location from Global properties
     (Class.new do
