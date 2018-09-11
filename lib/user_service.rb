@@ -12,6 +12,7 @@ module UserService
 
     user = User.create(
       username: username,
+      # WARNING: Consider using bcrypt (not SHA1 or SHA512) for better security
       password: Digest::SHA1.hexdigest("#{password}#{salt}"),
       salt: salt,
       person: person,
