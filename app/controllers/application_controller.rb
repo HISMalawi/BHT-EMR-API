@@ -45,8 +45,6 @@ class ApplicationController < ActionController::API
     inexact_filters = filters.to_hash.each_with_object([[], []]) do |kv_pair, inexact_filters|
       k, v = kv_pair
 
-      logger.debug kv_pair
-
       if fields.include? k.to_sym
         inexact_filters[0] << "#{k} like ?"
         inexact_filters[1] << "%#{v}%"
@@ -55,7 +53,7 @@ class ApplicationController < ActionController::API
         inexact_filters[1] << v
       end
     end
-    logger.debug inexact_filters
+
     [inexact_filters[0].join(' AND ')] + inexact_filters[1]
   end
 end
