@@ -1,0 +1,4252 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>BHT EMR API</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/monokai-sublime.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+    <script>
+        hljs.configure({
+            tabReplace: '    ',
+        });
+        hljs.initHighlightingOnLoad();
+    </script>
+    <style>body {
+    position: relative;
+}
+
+h1 {
+    margin-top: 5px;
+}
+
+h1, h2, h3, h4 {
+    color: #2b2b2b;
+}
+
+h2:after {
+    content: ' ';
+}
+
+h5 {
+    font-weight: bold;
+}
+
+h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
+    display: none;
+    position: absolute;
+    margin-left: 8px;
+}
+
+h1:hover a, h2:hover a, h3:hover a, h4:hover a, h5:hover a, h6:hover a {
+    color: #a5a5a5;
+    display: initial;
+}
+
+.nav.nav-tabs > li > a {
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+.tab-content {
+    padding-top: 8px;
+}
+
+.table {
+    margin-bottom: 8px;
+}
+
+pre {
+    border-radius: 0px;
+    border: none;
+}
+
+pre code {
+    margin: -9.5px;
+}
+
+.request {
+    margin-top: 12px;
+    margin-bottom: 24px;
+}
+
+.response-text-sample {
+    padding: 0px !important;
+}
+
+.response-text-sample pre {
+    margin-bottom: 0px;
+}
+
+
+#sidebar-wrapper {
+    z-index: 1000;
+    position: fixed;
+    left: 250px;
+    width: 250px;
+    height: 100%;
+    margin-left: -250px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: #2b2b2b;
+    padding-top: 20px;
+}
+
+#sidebar-wrapper ul {
+    width: 250px;
+}
+
+#sidebar-wrapper ul li {
+    margin-right: 10px;
+}
+
+#sidebar-wrapper ul li a:hover {
+    background: inherit;
+    text-decoration: none;
+}
+
+#sidebar-wrapper ul li a {
+    display: block;
+    color: #ECF0F1;
+    padding: 6px 15px;
+}
+
+#sidebar-wrapper ul li ul {
+    padding-left: 25px;
+}
+
+#sidebar-wrapper ul li ul li a {
+    padding: 1px 0px;
+}
+
+#sidebar-wrapper ul li a:hover,
+#sidebar-wrapper ul li a:focus {
+    color: #e0c46c;
+    border-right: solid 1px #e0c46c;
+}
+
+#sidebar-wrapper ul li.active > a {
+    color: #e0c46c;
+    border-right: solid 3px #e0c46c;
+}
+
+#sidebar-wrapper ul li:not(.active) ul {
+    display: none;
+}
+
+#page-content-wrapper {
+    width: 100%;
+    position: absolute;
+    padding: 15px 15px 15px 250px;
+}
+</style>
+</head>
+<body data-spy="scroll" data-target=".scrollspy">
+<div id="sidebar-wrapper">
+    <div class="scrollspy">
+    <ul id="main-menu" data-spy="affix" class="nav">
+        <li>
+            <a href="#doc-general-notes">General notes</a>
+        </li>
+        
+        <li>
+            <a href="#doc-api-detail">API detail</a>
+        </li>
+        
+        <li>
+            <a href="#request-log-in">Log in</a>
+        </li>
+        
+        <li>
+            <a href="#request-creating-a-person">Creating a Person</a>
+        </li>
+        
+        <li>
+            <a href="#request-retrieve-registered-people">Retrieve registered people</a>
+        </li>
+        
+        <li>
+            <a href="#request-retrieve-specific-person-names">Retrieve specific person names</a>
+        </li>
+        
+        <li>
+            <a href="#request-creating-users">Creating users</a>
+        </li>
+        
+        <li>
+            <a href="#request-retrieving-all-users">Retrieving all users</a>
+        </li>
+        
+        <li>
+            <a href="#request-retrieving-all-roles">Retrieving all roles</a>
+        </li>
+        
+        <li>
+            <a href="#request-creating-encounters">Creating encounters</a>
+        </li>
+        
+        <li>
+            <a href="#request-retrieve-encounters">Retrieve encounters</a>
+        </li>
+        
+        <li>
+            <a href="#request-people-search">People search</a>
+        </li>
+        
+        <li>
+            <a href="#request-retrieve-encounter-types">Retrieve encounter types</a>
+        </li>
+        
+        <li>
+            <a href="#request-searching-encounter-types">Searching encounter types</a>
+        </li>
+        
+        <li>
+            <a href="#request-creating-new-observations">Creating new observations</a>
+        </li>
+        
+        <li>
+            <a href="#request-retrieve-observations">Retrieve observations</a>
+        </li>
+        
+        
+    </ul>
+</div>
+
+</div>
+<div id="page-content-wrapper">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-lg-12">
+                <h1>BHT EMR API</h1>
+
+                <h2 id="doc-general-notes">
+                    General notes
+                    <a href="#doc-general-notes"><i class="glyphicon glyphicon-link"></i></a>
+                </h2>
+
+                <p>The BHT EMR API is a
+<a href="https://en.wikipedia.org/wiki/Representational_state_transfer">RESTful</a>
+API providing an abstraction layer to a customised
+<a href="https://openmrs.org/">OpenMRS 1.7</a> database and application engine
+for EMRs &hellip; FIXME.</p>
+
+<h1>Authentication</h1>
+
+<p>The API makes use of API keys for authentication. Almost all requests
+to the API must be accompanied by an API key. API keys are generated
+by logging into the API [see Logging in]. Keys are valid for 24 hours
+and a user can only have one valid key at a given point in time.
+Generating a new key invalidates any existing key.</p>
+
+<h1>Request/Response Structure</h1>
+
+<p>The API primarily consumes and spits out JSON. It makes use of a number
+of HTTP verbs for manipulating and access  resources. All POST and PUT requests
+must be accompanied by a JSON payload and a <code>Content-type=application/json</code>
+header. Below is a summary of the verbs the API recognises.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Verb</th>
+      <th>Interpretation</th>
+      <th>Expected Response Status</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <tr>
+      <td>GET</td>
+      <td>Retrieve some resource.<br/>
+          eg. GET /api/v1/patients to retrieve patients
+      </td>
+      <td>200 - Ok</td>
+    </tr>
+    <tr>
+        <td>POST</td>
+        <td>Create a resource.</td>
+        <td>201 - Created</td>
+    </tr>
+    <tr>
+        <td>PUT</td>
+        <td>Update a resource.</td>
+        <td>200 - Ok</td>
+    </tr>
+    <tr>
+        <td>DELETE</td>
+        <td>Destroy some resource.</td>
+        <td>204 - No Content</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Successful requests get a response with a status code of either 200, 201,
+or 204. For 200 and 201 responses a response body is always available. The body is the object (or list of objects) that was being accessed.</p>
+
+<p>Failed requests are flagged by 4XX status codes. Errors in this range
+generally have a response body of the following structure:</p>
+
+<pre><code class="language-json">    {
+        &quot;errors&quot;: [
+            &quot;Error message&quot;,
+            &quot;Another error message&quot;,
+            ...,
+            &quot;More error messages&quot;
+        ]
+    }
+</code></pre>
+
+<p>However a 400 error for POST and PUT requests come as:</p>
+
+<pre><code class="language-json">    {
+        &quot;errors&quot;: {
+            &quot;field&quot;: &quot;This field is required&quot;
+            ...
+            &quot;some_other_field&quot;: &quot;This field too is required&quot;
+        }
+    }
+</code></pre>
+
+<h2>Response status codes</h2>
+
+<p>Below is a description the response codes the API returns:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Status Code</th>
+      <th>Status Text</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <tr>
+      <td>200</td>
+      <td>Ok</td>
+      <td>Request was successful</td>
+    </tr>
+    <tr>
+        <td>201</td>
+        <td>Created</td>
+        <td>Resource has been created</td>
+    </tr>
+    <tr>
+        <td>204</td>
+        <td>No Content</td>
+        <td>Resource has been deleted</td>
+    </tr>
+    <tr>
+        <td>400</td>
+        <td>Bad Request</td>
+        <td>Received a malformed request from client</td>
+    </tr>
+    <tr>
+        <td>401</td>
+        <td>Unauthorized</td>
+        <td>A valid API key is required</td>
+    </tr>
+    <tr>
+        <td>403</td>
+        <td>Forbidden</td>
+        <td>Logged in user is not allowed to perform request</td>
+    </tr>
+    <tr>
+        <td>500</td>
+        <td>Internal Server Error</td>
+        <td>API is ill, only thing that can be done is contacting the
+            system administrator</td>
+    </tr>
+  </tbody>
+</table>
+
+
+                
+
+                <h2 id="doc-api-detail">
+                    API detail
+                    <a href="#doc-api-detail"><i class="glyphicon glyphicon-link"></i></a>
+                </h2>
+
+                
+                
+                <div class="request">
+
+                    <h3 id="request-log-in">
+                        Log in
+                        <a href="#request-log-in"><i class="glyphicon glyphicon-link"></i></a>
+                    </h3>
+
+                    <div><p>Logging in is a way of generating an API key which must be used in subsequent requests to the API that require authorisation. The generated api key is valid for 24 hours.</p>
+
+<p>NOTE: Clients are limited to one API key at a time. A log in replaces any existing api key.</p>
+</div>
+
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li role="presentation" class="active"><a href="#request-log-in-example-curl" data-toggle="tab">Curl</a></li>
+                            <li role="presentation"><a href="#request-log-in-example-http" data-toggle="tab">HTTP</a></li>
+                        </ul>
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="request-log-in-example-curl">
+                                <pre><code class="hljs curl">curl -X POST -H "Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW" -H "Content-Type: application/json" "http://127.0.0.1:3000/api/v1/auth/login"</code></pre>
+                            </div>
+                            <div class="tab-pane" id="request-log-in-example-http">
+                                <pre><code class="hljs http">POST /api/v1/auth/login HTTP/1.1
+Host: 127.0.0.1:3000
+Content-Type: application/json</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            
+                            <li role="presentation" class="active">
+                                <a href="#request-log-in-responses-fd9749d7-781c-e591-8888-cf6874b034aa" data-toggle="tab">
+                                    
+                                    Response
+                                    
+                                </a>
+                            </li>
+                            
+                        </ul>
+                        <div class="tab-content">
+                            
+                            <div class="tab-pane active" id="request-log-in-responses-fd9749d7-781c-e591-8888-cf6874b034aa">
+                                <table class="table table-bordered">
+                                    <tr><th style="width: 20%;">Status</th><td>200 </td></tr>
+                                    
+                                    <tr><th style="width: 20%;">cache-control</th><td>max-age=0, private, must-revalidate</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">content-type</th><td>application/json; charset=utf-8</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">etag</th><td>W/"1acf444dc3c9ac18d899b530b1547d34"</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">transfer-encoding</th><td>chunked</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-request-id</th><td>16dca6d6-790f-43e8-bcce-0c795571b9c3</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-runtime</th><td>0.168806</td></tr>
+                                    
+                                    
+                                    
+                                    <tr><td class="response-text-sample" colspan="2">
+                                        <pre><code>{
+    "authorization": {
+        "token": "AiJViSpF3spb",
+        "expiry_time": "2018-08-28T11:01:55.501+02:00"
+    }
+}</code></pre>
+                                    </td></tr>
+                                    
+                                    
+                                </table>
+                            </div>
+                            
+                        </div>
+                    </div>
+                    
+
+                    <hr>
+                </div>
+                
+                
+                <div class="request">
+
+                    <h3 id="request-creating-a-person">
+                        Creating a Person
+                        <a href="#request-creating-a-person"><i class="glyphicon glyphicon-link"></i></a>
+                    </h3>
+
+                    <div></div>
+
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li role="presentation" class="active"><a href="#request-creating-a-person-example-curl" data-toggle="tab">Curl</a></li>
+                            <li role="presentation"><a href="#request-creating-a-person-example-http" data-toggle="tab">HTTP</a></li>
+                        </ul>
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="request-creating-a-person-example-curl">
+                                <pre><code class="hljs curl">curl -X POST -H "Authorization: qTt9Wg2zs3oC" -H "Content-Type: application/json" -d '{
+	"given_name": "Foobar",
+	"middle_name": "J.",
+	"family_name": "Random",
+	"gender": "F",
+	"birthdate": "2000-01-01",
+	"birthdate_estimated": false,
+	"home_district": "Blantyre",
+	"home_village": "Chatha",
+	"home_traditional_authority": "Chatha",
+	"current_district": "Lilongwe",
+	"current_village": "Area 15",
+	"current_traditional_authority": "Area 15"
+}' "http://127.0.0.1:3000/api/v1/people"</code></pre>
+                            </div>
+                            <div class="tab-pane" id="request-creating-a-person-example-http">
+                                <pre><code class="hljs http">POST /api/v1/people HTTP/1.1
+Host: 127.0.0.1:3000
+Authorization: qTt9Wg2zs3oC
+Content-Type: application/json
+
+{
+	"given_name": "Foobar",
+	"middle_name": "J.",
+	"family_name": "Random",
+	"gender": "F",
+	"birthdate": "2000-01-01",
+	"birthdate_estimated": false,
+	"home_district": "Blantyre",
+	"home_village": "Chatha",
+	"home_traditional_authority": "Chatha",
+	"current_district": "Lilongwe",
+	"current_village": "Area 15",
+	"current_traditional_authority": "Area 15"
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            
+                            <li role="presentation" class="active">
+                                <a href="#request-creating-a-person-responses-c1731df1-924d-b567-a16b-45928f6165e0" data-toggle="tab">
+                                    
+                                    Creating a Person
+                                    
+                                </a>
+                            </li>
+                            
+                            <li role="presentation">
+                                <a href="#request-creating-a-person-responses-33ae2fad-75df-b752-f2d4-9aa788397d2f" data-toggle="tab">
+                                    
+                                    Creating a Person
+                                    
+                                </a>
+                            </li>
+                            
+                        </ul>
+                        <div class="tab-content">
+                            
+                            <div class="tab-pane active" id="request-creating-a-person-responses-c1731df1-924d-b567-a16b-45928f6165e0">
+                                <table class="table table-bordered">
+                                    <tr><th style="width: 20%;">Status</th><td>201 </td></tr>
+                                    
+                                    <tr><th style="width: 20%;">cache-control</th><td>max-age=0, private, must-revalidate</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">content-type</th><td>application/json; charset=utf-8</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">etag</th><td>W/"3dae89d68c703c915edd04345a869383"</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">transfer-encoding</th><td>chunked</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-request-id</th><td>f71702d6-27e9-4032-910e-083640c5b194</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-runtime</th><td>0.389695</td></tr>
+                                    
+                                    
+                                    
+                                    <tr><td class="response-text-sample" colspan="2">
+                                        <pre><code>{
+    "person_id": 63499,
+    "gender": "F",
+    "birthdate": "2000-01-01",
+    "birthdate_estimated": 0,
+    "dead": 0,
+    "death_date": null,
+    "cause_of_death": null,
+    "creator": 1,
+    "date_created": null,
+    "changed_by": 1,
+    "date_changed": "2018-08-28T03:35:43.000Z",
+    "voided": 0,
+    "voided_by": null,
+    "date_voided": null,
+    "void_reason": null,
+    "uuid": "4c436a52-fc72-4962-a15b-af3c4292879d",
+    "names": [
+        {
+            "person_name_id": 63324,
+            "preferred": 0,
+            "person_id": 63499,
+            "prefix": null,
+            "given_name": "Foobar",
+            "middle_name": "J.",
+            "family_name_prefix": null,
+            "family_name": "Random",
+            "family_name2": null,
+            "family_name_suffix": null,
+            "degree": null,
+            "creator": 1,
+            "date_created": "2018-08-28T05:35:43.000Z",
+            "voided": 0,
+            "voided_by": null,
+            "date_voided": null,
+            "void_reason": null,
+            "changed_by": null,
+            "date_changed": null,
+            "uuid": "06548f0d-9f74-42ed-b39c-638d60e9f6fb"
+        }
+    ],
+    "addresses": [],
+    "person_attributes": [
+        {
+            "person_attribute_id": 240428,
+            "person_id": 63499,
+            "value": "Chatha",
+            "person_attribute_type_id": 10,
+            "creator": 1,
+            "date_created": "2018-08-28T05:35:44.000Z",
+            "changed_by": null,
+            "date_changed": null,
+            "voided": 0,
+            "voided_by": null,
+            "date_voided": null,
+            "void_reason": null,
+            "uuid": "131c9acc-dc93-4256-bcb3-4cbd633768e0"
+        }
+    ]
+}</code></pre>
+                                    </td></tr>
+                                    
+                                    
+                                </table>
+                            </div>
+                            
+                            <div class="tab-pane" id="request-creating-a-person-responses-33ae2fad-75df-b752-f2d4-9aa788397d2f">
+                                <table class="table table-bordered">
+                                    <tr><th style="width: 20%;">Status</th><td>201 </td></tr>
+                                    
+                                    <tr><th style="width: 20%;">access-control-allow-methods</th><td>GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">access-control-allow-origin</th><td>*</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">access-control-expose-headers</th><td></td></tr>
+                                    
+                                    <tr><th style="width: 20%;">access-control-max-age</th><td>1728000</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">cache-control</th><td>max-age=0, private, must-revalidate</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">content-type</th><td>application/json; charset=utf-8</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">etag</th><td>W/"456b825d3728d17b92628454065c3bf0"</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">transfer-encoding</th><td>chunked</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">vary</th><td>Origin</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-request-id</th><td>8f691901-8f86-4fef-b723-fcb683e6598c</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-runtime</th><td>0.528628</td></tr>
+                                    
+                                    
+                                    
+                                    <tr><td class="response-text-sample" colspan="2">
+                                        <pre><code>{
+    "person_id": 63477,
+    "gender": "F",
+    "birthdate": "2000-01-01",
+    "birthdate_estimated": 0,
+    "dead": 0,
+    "death_date": null,
+    "cause_of_death": null,
+    "creator": 1,
+    "date_created": "2018-09-07T12:13:37.000Z",
+    "changed_by": 1,
+    "date_changed": "2018-09-07T12:13:37.000Z",
+    "voided": 0,
+    "voided_by": null,
+    "date_voided": null,
+    "void_reason": null,
+    "uuid": "4b7c1c78-1e43-4923-8fe1-8247d729d86a",
+    "names": [
+        {
+            "person_name_id": 63307,
+            "preferred": 0,
+            "person_id": 63477,
+            "prefix": null,
+            "given_name": "Foobar",
+            "middle_name": "J.",
+            "family_name_prefix": null,
+            "family_name": "Random",
+            "family_name2": null,
+            "family_name_suffix": null,
+            "degree": null,
+            "creator": 1,
+            "date_created": "2018-09-07T12:13:38.000Z",
+            "voided": 0,
+            "voided_by": null,
+            "date_voided": null,
+            "void_reason": null,
+            "changed_by": 1,
+            "date_changed": "2018-09-07T12:13:38.000Z",
+            "uuid": "24efa5fa-6872-4ad9-a9d8-c36bd743308d"
+        }
+    ],
+    "addresses": [
+        {
+            "person_address_id": 60063,
+            "person_id": 63477,
+            "preferred": 0,
+            "address1": null,
+            "address2": "Blantyre",
+            "city_village": "Area 15",
+            "state_province": "Lilongwe",
+            "postal_code": null,
+            "country": null,
+            "latitude": null,
+            "longitude": null,
+            "creator": 1,
+            "date_created": "2018-09-07T12:13:38.000Z",
+            "voided": 0,
+            "voided_by": null,
+            "date_voided": null,
+            "void_reason": null,
+            "county_district": "Chatha",
+            "neighborhood_cell": "Chatha",
+            "region": null,
+            "subregion": null,
+            "township_division": "Area 15",
+            "uuid": "b42f86c0-0272-466a-b801-94e083b52169"
+        }
+    ],
+    "person_attributes": []
+}</code></pre>
+                                    </td></tr>
+                                    
+                                    
+                                </table>
+                            </div>
+                            
+                        </div>
+                    </div>
+                    
+
+                    <hr>
+                </div>
+                
+                
+                <div class="request">
+
+                    <h3 id="request-retrieve-registered-people">
+                        Retrieve registered people
+                        <a href="#request-retrieve-registered-people"><i class="glyphicon glyphicon-link"></i></a>
+                    </h3>
+
+                    <div><h1>/api/v1/people</h1>
+
+<p>This endpoint returns a list of people registered as either patients or users. By default only 10 random people are returned. Pagination is supported through the use of the parameters page and page_size as follows:</p>
+
+<pre><code>http://&lt;host&gt;:&lt;port&gt;/api/v1/people?page=0&amp;page_size
+</code></pre>
+
+<p>The example above retrieve the first 50 people.</p>
+</div>
+
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li role="presentation" class="active"><a href="#request-retrieve-registered-people-example-curl" data-toggle="tab">Curl</a></li>
+                            <li role="presentation"><a href="#request-retrieve-registered-people-example-http" data-toggle="tab">HTTP</a></li>
+                        </ul>
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="request-retrieve-registered-people-example-curl">
+                                <pre><code class="hljs curl">curl -X GET -H "Authorization: lQUitqOlCOo6" "http://127.0.0.1:3000/api/v1/people/1?page=0&page_size=2"</code></pre>
+                            </div>
+                            <div class="tab-pane" id="request-retrieve-registered-people-example-http">
+                                <pre><code class="hljs http">GET /api/v1/people/1?page=0&page_size=2 HTTP/1.1
+Host: 127.0.0.1:3000
+Authorization: lQUitqOlCOo6</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            
+                            <li role="presentation" class="active">
+                                <a href="#request-retrieve-registered-people-responses-dfc591b3-dd68-9495-e155-ee503f6ce63d" data-toggle="tab">
+                                    
+                                    Retrieve a list of registered people
+                                    
+                                </a>
+                            </li>
+                            
+                            <li role="presentation">
+                                <a href="#request-retrieve-registered-people-responses-cc930f1e-df60-83c8-7033-b16b4da1579e" data-toggle="tab">
+                                    
+                                    Retrieve registered people
+                                    
+                                </a>
+                            </li>
+                            
+                        </ul>
+                        <div class="tab-content">
+                            
+                            <div class="tab-pane active" id="request-retrieve-registered-people-responses-dfc591b3-dd68-9495-e155-ee503f6ce63d">
+                                <table class="table table-bordered">
+                                    <tr><th style="width: 20%;">Status</th><td>200 </td></tr>
+                                    
+                                    <tr><th style="width: 20%;">cache-control</th><td>max-age=0, private, must-revalidate</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">content-type</th><td>application/json; charset=utf-8</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">etag</th><td>W/"dfa1fa3bd078b49122c992cc9d721dbf"</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">transfer-encoding</th><td>chunked</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-request-id</th><td>47647e92-6594-4012-98dd-fdfd4817253e</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-runtime</th><td>0.314544</td></tr>
+                                    
+                                    
+                                    
+                                    <tr><td class="response-text-sample" colspan="2">
+                                        <pre><code>[
+    {
+        "person_id": 1,
+        "gender": "M",
+        "birthdate": null,
+        "birthdate_estimated": 0,
+        "dead": 0,
+        "death_date": null,
+        "cause_of_death": null,
+        "creator": 1,
+        "date_created": "2005-01-01T00:00:00.000Z",
+        "changed_by": 1,
+        "date_changed": "2009-09-04T16:37:23.000Z",
+        "voided": 0,
+        "voided_by": null,
+        "date_voided": null,
+        "void_reason": null,
+        "uuid": "10661cb8-b6c1-11e0-bc9e-544249e32ba2",
+        "names": [
+            {
+                "person_name_id": 1,
+                "preferred": 1,
+                "person_id": 1,
+                "prefix": null,
+                "given_name": "Super",
+                "middle_name": "",
+                "family_name_prefix": null,
+                "family_name": "User",
+                "family_name2": null,
+                "family_name_suffix": null,
+                "degree": null,
+                "creator": 1,
+                "date_created": "2005-01-01T00:00:00.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "changed_by": null,
+                "date_changed": null,
+                "uuid": "109f4cb8-b6c1-11e0-bc9e-544249e32ba2"
+            },
+            {
+                "person_name_id": 104,
+                "preferred": 0,
+                "person_id": 1,
+                "prefix": null,
+                "given_name": "tionge",
+                "middle_name": null,
+                "family_name_prefix": null,
+                "family_name": "banda",
+                "family_name2": null,
+                "family_name_suffix": null,
+                "degree": null,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "changed_by": null,
+                "date_changed": null,
+                "uuid": "350af0d9-59ca-11e3-b7e9-003018a9e11f"
+            }
+        ],
+        "addresses": [
+            {
+                "person_address_id": 24,
+                "person_id": 1,
+                "preferred": 0,
+                "address1": "Unknown",
+                "address2": null,
+                "city_village": "Area 10",
+                "state_province": null,
+                "postal_code": null,
+                "country": null,
+                "latitude": null,
+                "longitude": null,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "county_district": null,
+                "neighborhood_cell": null,
+                "region": null,
+                "subregion": null,
+                "township_division": null,
+                "uuid": "350b0426-59ca-11e3-b7e9-003018a9e11f"
+            }
+        ],
+        "person_attributes": [
+            {
+                "person_attribute_id": 271,
+                "person_id": 1,
+                "value": "Area 10",
+                "person_attribute_type_id": 18,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "changed_by": null,
+                "date_changed": null,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "350b0502-59ca-11e3-b7e9-003018a9e11f"
+            },
+            {
+                "person_attribute_id": 272,
+                "person_id": 1,
+                "value": "Unknown",
+                "person_attribute_type_id": 19,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "changed_by": null,
+                "date_changed": null,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "350b0426-59ca-11e3-b7e9-003018a9e11f"
+            },
+            {
+                "person_attribute_id": 273,
+                "person_id": 1,
+                "value": "Other",
+                "person_attribute_type_id": 13,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "changed_by": null,
+                "date_changed": null,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "350b0fab-59ca-11e3-b7e9-003018a9e11f"
+            },
+            {
+                "person_attribute_id": 274,
+                "person_id": 1,
+                "value": "Not Available",
+                "person_attribute_type_id": 14,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "changed_by": null,
+                "date_changed": null,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "350b11b7-59ca-11e3-b7e9-003018a9e11f"
+            }
+        ]
+    },
+    {
+        "person_id": 2,
+        "gender": "F",
+        "birthdate": null,
+        "birthdate_estimated": 0,
+        "dead": 0,
+        "death_date": null,
+        "cause_of_death": null,
+        "creator": 1,
+        "date_created": "2011-09-14T00:00:00.000Z",
+        "changed_by": null,
+        "date_changed": null,
+        "voided": 0,
+        "voided_by": null,
+        "date_voided": null,
+        "void_reason": null,
+        "uuid": "3536add6-59ca-11e3-b7e9-003018a9e11f",
+        "names": [
+            {
+                "person_name_id": 105,
+                "preferred": 0,
+                "person_id": 2,
+                "prefix": null,
+                "given_name": "tionge",
+                "middle_name": null,
+                "family_name_prefix": null,
+                "family_name": "binali",
+                "family_name2": null,
+                "family_name_suffix": null,
+                "degree": null,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "changed_by": null,
+                "date_changed": null,
+                "uuid": "3536b15b-59ca-11e3-b7e9-003018a9e11f"
+            }
+        ],
+        "addresses": [],
+        "person_attributes": []
+    },
+    {
+        "person_id": 3,
+        "gender": "F",
+        "birthdate": "1988-07-01",
+        "birthdate_estimated": 1,
+        "dead": 0,
+        "death_date": null,
+        "cause_of_death": null,
+        "creator": 1,
+        "date_created": "2011-09-14T00:00:00.000Z",
+        "changed_by": null,
+        "date_changed": null,
+        "voided": 0,
+        "voided_by": null,
+        "date_voided": null,
+        "void_reason": null,
+        "uuid": "355b1384-59ca-11e3-b7e9-003018a9e11f",
+        "names": [
+            {
+                "person_name_id": 106,
+                "preferred": 0,
+                "person_id": 3,
+                "prefix": null,
+                "given_name": "tionge",
+                "middle_name": null,
+                "family_name_prefix": null,
+                "family_name": "binali",
+                "family_name2": null,
+                "family_name_suffix": null,
+                "degree": null,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "changed_by": null,
+                "date_changed": null,
+                "uuid": "355b16b4-59ca-11e3-b7e9-003018a9e11f"
+            }
+        ],
+        "addresses": [
+            {
+                "person_address_id": 25,
+                "person_id": 3,
+                "preferred": 0,
+                "address1": "Unknown",
+                "address2": null,
+                "city_village": "Amidu",
+                "state_province": null,
+                "postal_code": null,
+                "country": null,
+                "latitude": null,
+                "longitude": null,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "county_district": null,
+                "neighborhood_cell": null,
+                "region": null,
+                "subregion": null,
+                "township_division": null,
+                "uuid": "355b23ae-59ca-11e3-b7e9-003018a9e11f"
+            }
+        ],
+        "person_attributes": [
+            {
+                "person_attribute_id": 275,
+                "person_id": 3,
+                "value": "Amidu",
+                "person_attribute_type_id": 18,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "changed_by": null,
+                "date_changed": null,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "355b24cb-59ca-11e3-b7e9-003018a9e11f"
+            },
+            {
+                "person_attribute_id": 276,
+                "person_id": 3,
+                "value": "Unknown",
+                "person_attribute_type_id": 19,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "changed_by": null,
+                "date_changed": null,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "355b23ae-59ca-11e3-b7e9-003018a9e11f"
+            },
+            {
+                "person_attribute_id": 277,
+                "person_id": 3,
+                "value": "Farmer",
+                "person_attribute_type_id": 13,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "changed_by": null,
+                "date_changed": null,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "355b2d7f-59ca-11e3-b7e9-003018a9e11f"
+            },
+            {
+                "person_attribute_id": 278,
+                "person_id": 3,
+                "value": "Not Available",
+                "person_attribute_type_id": 14,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "changed_by": null,
+                "date_changed": null,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "355b2f51-59ca-11e3-b7e9-003018a9e11f"
+            }
+        ]
+    },
+    {
+        "person_id": 4,
+        "gender": "F",
+        "birthdate": null,
+        "birthdate_estimated": 0,
+        "dead": 0,
+        "death_date": null,
+        "cause_of_death": null,
+        "creator": 1,
+        "date_created": "2011-09-14T00:00:00.000Z",
+        "changed_by": null,
+        "date_changed": null,
+        "voided": 0,
+        "voided_by": null,
+        "date_voided": null,
+        "void_reason": null,
+        "uuid": "357fe29b-59ca-11e3-b7e9-003018a9e11f",
+        "names": [
+            {
+                "person_name_id": 107,
+                "preferred": 0,
+                "person_id": 4,
+                "prefix": null,
+                "given_name": "tionge",
+                "middle_name": null,
+                "family_name_prefix": null,
+                "family_name": "binali",
+                "family_name2": null,
+                "family_name_suffix": null,
+                "degree": null,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "changed_by": null,
+                "date_changed": null,
+                "uuid": "357fe617-59ca-11e3-b7e9-003018a9e11f"
+            }
+        ],
+        "addresses": [],
+        "person_attributes": []
+    },
+    {
+        "person_id": 5,
+        "gender": "M",
+        "birthdate": "2010-07-01",
+        "birthdate_estimated": 1,
+        "dead": 0,
+        "death_date": null,
+        "cause_of_death": null,
+        "creator": 1,
+        "date_created": "2011-09-14T00:00:00.000Z",
+        "changed_by": null,
+        "date_changed": null,
+        "voided": 0,
+        "voided_by": null,
+        "date_voided": null,
+        "void_reason": null,
+        "uuid": "35a3e4e4-59ca-11e3-b7e9-003018a9e11f",
+        "names": [
+            {
+                "person_name_id": 108,
+                "preferred": 0,
+                "person_id": 5,
+                "prefix": null,
+                "given_name": "dan",
+                "middle_name": null,
+                "family_name_prefix": null,
+                "family_name": "lewis",
+                "family_name2": null,
+                "family_name_suffix": null,
+                "degree": null,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "changed_by": null,
+                "date_changed": null,
+                "uuid": "35a3e814-59ca-11e3-b7e9-003018a9e11f"
+            }
+        ],
+        "addresses": [
+            {
+                "person_address_id": 26,
+                "person_id": 5,
+                "preferred": 0,
+                "address1": "Unknown",
+                "address2": null,
+                "city_village": "Area 12",
+                "state_province": null,
+                "postal_code": null,
+                "country": null,
+                "latitude": null,
+                "longitude": null,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "county_district": null,
+                "neighborhood_cell": null,
+                "region": null,
+                "subregion": null,
+                "township_division": null,
+                "uuid": "35a3f542-59ca-11e3-b7e9-003018a9e11f"
+            }
+        ],
+        "person_attributes": [
+            {
+                "person_attribute_id": 279,
+                "person_id": 5,
+                "value": "Area 12",
+                "person_attribute_type_id": 18,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "changed_by": null,
+                "date_changed": null,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "35a3f5fd-59ca-11e3-b7e9-003018a9e11f"
+            },
+            {
+                "person_attribute_id": 280,
+                "person_id": 5,
+                "value": "Unknown",
+                "person_attribute_type_id": 19,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "changed_by": null,
+                "date_changed": null,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "35a3f542-59ca-11e3-b7e9-003018a9e11f"
+            },
+            {
+                "person_attribute_id": 281,
+                "person_id": 5,
+                "value": "Other",
+                "person_attribute_type_id": 13,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "changed_by": null,
+                "date_changed": null,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "35a3fe9a-59ca-11e3-b7e9-003018a9e11f"
+            },
+            {
+                "person_attribute_id": 282,
+                "person_id": 5,
+                "value": "Not Available",
+                "person_attribute_type_id": 14,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "changed_by": null,
+                "date_changed": null,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "35a40550-59ca-11e3-b7e9-003018a9e11f"
+            }
+        ]
+    },
+    {
+        "person_id": 6,
+        "gender": "F",
+        "birthdate": null,
+        "birthdate_estimated": 0,
+        "dead": 0,
+        "death_date": null,
+        "cause_of_death": null,
+        "creator": 1,
+        "date_created": "2011-09-14T00:00:00.000Z",
+        "changed_by": null,
+        "date_changed": null,
+        "voided": 0,
+        "voided_by": null,
+        "date_voided": null,
+        "void_reason": null,
+        "uuid": "35c8b4b1-59ca-11e3-b7e9-003018a9e11f",
+        "names": [
+            {
+                "person_name_id": 109,
+                "preferred": 0,
+                "person_id": 6,
+                "prefix": null,
+                "given_name": "tionge",
+                "middle_name": null,
+                "family_name_prefix": null,
+                "family_name": "banda",
+                "family_name2": null,
+                "family_name_suffix": null,
+                "degree": null,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "changed_by": null,
+                "date_changed": null,
+                "uuid": "35c8b77d-59ca-11e3-b7e9-003018a9e11f"
+            }
+        ],
+        "addresses": [],
+        "person_attributes": []
+    },
+    {
+        "person_id": 7,
+        "gender": "M",
+        "birthdate": "1985-05-04",
+        "birthdate_estimated": 1,
+        "dead": 0,
+        "death_date": null,
+        "cause_of_death": null,
+        "creator": 1,
+        "date_created": "2011-09-14T00:00:00.000Z",
+        "changed_by": null,
+        "date_changed": null,
+        "voided": 0,
+        "voided_by": null,
+        "date_voided": null,
+        "void_reason": null,
+        "uuid": "35ecf73d-59ca-11e3-b7e9-003018a9e11f",
+        "names": [
+            {
+                "person_name_id": 110,
+                "preferred": 0,
+                "person_id": 7,
+                "prefix": null,
+                "given_name": "Chikafa",
+                "middle_name": null,
+                "family_name_prefix": null,
+                "family_name": "Kalima",
+                "family_name2": null,
+                "family_name_suffix": null,
+                "degree": null,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "changed_by": null,
+                "date_changed": null,
+                "uuid": "35ecfaa0-59ca-11e3-b7e9-003018a9e11f"
+            }
+        ],
+        "addresses": [
+            {
+                "person_address_id": 27,
+                "person_id": 7,
+                "preferred": 0,
+                "address1": "Unknown",
+                "address2": null,
+                "city_village": "Area 10",
+                "state_province": null,
+                "postal_code": null,
+                "country": null,
+                "latitude": null,
+                "longitude": null,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "county_district": null,
+                "neighborhood_cell": null,
+                "region": null,
+                "subregion": null,
+                "township_division": null,
+                "uuid": "35ed07bf-59ca-11e3-b7e9-003018a9e11f"
+            }
+        ],
+        "person_attributes": [
+            {
+                "person_attribute_id": 283,
+                "person_id": 7,
+                "value": "Area 10",
+                "person_attribute_type_id": 18,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "changed_by": null,
+                "date_changed": null,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "35ed0875-59ca-11e3-b7e9-003018a9e11f"
+            },
+            {
+                "person_attribute_id": 284,
+                "person_id": 7,
+                "value": "Unknown",
+                "person_attribute_type_id": 19,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "changed_by": null,
+                "date_changed": null,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "35ed07bf-59ca-11e3-b7e9-003018a9e11f"
+            },
+            {
+                "person_attribute_id": 285,
+                "person_id": 7,
+                "value": "Other",
+                "person_attribute_type_id": 13,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "changed_by": null,
+                "date_changed": null,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "35ed1137-59ca-11e3-b7e9-003018a9e11f"
+            },
+            {
+                "person_attribute_id": 286,
+                "person_id": 7,
+                "value": "Not Available",
+                "person_attribute_type_id": 14,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "changed_by": null,
+                "date_changed": null,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "35ed131a-59ca-11e3-b7e9-003018a9e11f"
+            }
+        ]
+    },
+    {
+        "person_id": 8,
+        "gender": "F",
+        "birthdate": "1978-02-17",
+        "birthdate_estimated": 1,
+        "dead": 0,
+        "death_date": null,
+        "cause_of_death": null,
+        "creator": 1,
+        "date_created": "2011-09-14T00:00:00.000Z",
+        "changed_by": null,
+        "date_changed": null,
+        "voided": 0,
+        "voided_by": null,
+        "date_voided": null,
+        "void_reason": null,
+        "uuid": "361106f8-59ca-11e3-b7e9-003018a9e11f",
+        "names": [
+            {
+                "person_name_id": 111,
+                "preferred": 0,
+                "person_id": 8,
+                "prefix": null,
+                "given_name": "Chikafa",
+                "middle_name": null,
+                "family_name_prefix": null,
+                "family_name": "Binauli",
+                "family_name2": null,
+                "family_name_suffix": null,
+                "degree": null,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "changed_by": null,
+                "date_changed": null,
+                "uuid": "36110a36-59ca-11e3-b7e9-003018a9e11f"
+            }
+        ],
+        "addresses": [
+            {
+                "person_address_id": 28,
+                "person_id": 8,
+                "preferred": 0,
+                "address1": "Kauma",
+                "address2": null,
+                "city_village": "Lilongwe City",
+                "state_province": null,
+                "postal_code": null,
+                "country": null,
+                "latitude": null,
+                "longitude": null,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "county_district": null,
+                "neighborhood_cell": null,
+                "region": null,
+                "subregion": null,
+                "township_division": null,
+                "uuid": "36111746-59ca-11e3-b7e9-003018a9e11f"
+            }
+        ],
+        "person_attributes": [
+            {
+                "person_attribute_id": 287,
+                "person_id": 8,
+                "value": "Lilongwe City",
+                "person_attribute_type_id": 18,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "changed_by": null,
+                "date_changed": null,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "36111801-59ca-11e3-b7e9-003018a9e11f"
+            },
+            {
+                "person_attribute_id": 288,
+                "person_id": 8,
+                "value": "Kauma",
+                "person_attribute_type_id": 19,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "changed_by": null,
+                "date_changed": null,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "36111746-59ca-11e3-b7e9-003018a9e11f"
+            },
+            {
+                "person_attribute_id": 289,
+                "person_id": 8,
+                "value": "Other",
+                "person_attribute_type_id": 13,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "changed_by": null,
+                "date_changed": null,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "361120b9-59ca-11e3-b7e9-003018a9e11f"
+            },
+            {
+                "person_attribute_id": 290,
+                "person_id": 8,
+                "value": "0999252525",
+                "person_attribute_type_id": 14,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "changed_by": null,
+                "date_changed": null,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "36112294-59ca-11e3-b7e9-003018a9e11f"
+            }
+        ]
+    },
+    {
+        "person_id": 9,
+        "gender": "M",
+        "birthdate": "2010-07-01",
+        "birthdate_estimated": 1,
+        "dead": 0,
+        "death_date": null,
+        "cause_of_death": null,
+        "creator": 1,
+        "date_created": "2011-09-14T00:00:00.000Z",
+        "changed_by": null,
+        "date_changed": null,
+        "voided": 0,
+        "voided_by": null,
+        "date_voided": null,
+        "void_reason": null,
+        "uuid": "363571e1-59ca-11e3-b7e9-003018a9e11f",
+        "names": [
+            {
+                "person_name_id": 112,
+                "preferred": 0,
+                "person_id": 9,
+                "prefix": null,
+                "given_name": "simon",
+                "middle_name": null,
+                "family_name_prefix": null,
+                "family_name": "lewis",
+                "family_name2": null,
+                "family_name_suffix": null,
+                "degree": null,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "changed_by": null,
+                "date_changed": null,
+                "uuid": "36357461-59ca-11e3-b7e9-003018a9e11f"
+            }
+        ],
+        "addresses": [
+            {
+                "person_address_id": 29,
+                "person_id": 9,
+                "preferred": 0,
+                "address1": "Unknown",
+                "address2": null,
+                "city_village": "Area 11",
+                "state_province": null,
+                "postal_code": null,
+                "country": null,
+                "latitude": null,
+                "longitude": null,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "county_district": null,
+                "neighborhood_cell": null,
+                "region": null,
+                "subregion": null,
+                "township_division": null,
+                "uuid": "363580c5-59ca-11e3-b7e9-003018a9e11f"
+            }
+        ],
+        "person_attributes": [
+            {
+                "person_attribute_id": 291,
+                "person_id": 9,
+                "value": "Area 11",
+                "person_attribute_type_id": 18,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "changed_by": null,
+                "date_changed": null,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "3635818b-59ca-11e3-b7e9-003018a9e11f"
+            },
+            {
+                "person_attribute_id": 292,
+                "person_id": 9,
+                "value": "Unknown",
+                "person_attribute_type_id": 19,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "changed_by": null,
+                "date_changed": null,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "363580c5-59ca-11e3-b7e9-003018a9e11f"
+            },
+            {
+                "person_attribute_id": 293,
+                "person_id": 9,
+                "value": "Other",
+                "person_attribute_type_id": 13,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "changed_by": null,
+                "date_changed": null,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "36358a85-59ca-11e3-b7e9-003018a9e11f"
+            },
+            {
+                "person_attribute_id": 294,
+                "person_id": 9,
+                "value": "Not Available",
+                "person_attribute_type_id": 14,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "changed_by": null,
+                "date_changed": null,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "36358c5e-59ca-11e3-b7e9-003018a9e11f"
+            }
+        ]
+    },
+    {
+        "person_id": 10,
+        "gender": "F",
+        "birthdate": null,
+        "birthdate_estimated": 0,
+        "dead": 0,
+        "death_date": null,
+        "cause_of_death": null,
+        "creator": 1,
+        "date_created": "2011-09-14T00:00:00.000Z",
+        "changed_by": null,
+        "date_changed": null,
+        "voided": 0,
+        "voided_by": null,
+        "date_voided": null,
+        "void_reason": null,
+        "uuid": "365a39a9-59ca-11e3-b7e9-003018a9e11f",
+        "names": [
+            {
+                "person_name_id": 113,
+                "preferred": 0,
+                "person_id": 10,
+                "prefix": null,
+                "given_name": "tionge",
+                "middle_name": null,
+                "family_name_prefix": null,
+                "family_name": "lewis",
+                "family_name2": null,
+                "family_name_suffix": null,
+                "degree": null,
+                "creator": 1,
+                "date_created": "2011-09-14T00:00:00.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "changed_by": null,
+                "date_changed": null,
+                "uuid": "365a3d26-59ca-11e3-b7e9-003018a9e11f"
+            }
+        ],
+        "addresses": [],
+        "person_attributes": []
+    }
+]</code></pre>
+                                    </td></tr>
+                                    
+                                    
+                                </table>
+                            </div>
+                            
+                            <div class="tab-pane" id="request-retrieve-registered-people-responses-cc930f1e-df60-83c8-7033-b16b4da1579e">
+                                <table class="table table-bordered">
+                                    <tr><th style="width: 20%;">Status</th><td>200 </td></tr>
+                                    
+                                    <tr><th style="width: 20%;">cache-control</th><td>max-age=0, private, must-revalidate</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">content-type</th><td>application/json; charset=utf-8</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">etag</th><td>W/"31a7b8b0ac7e454b390651bdd39dd495"</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">transfer-encoding</th><td>chunked</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">vary</th><td>Origin</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-request-id</th><td>68a1a4cd-c71c-4168-9798-c4f6411d9535</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-runtime</th><td>0.102691</td></tr>
+                                    
+                                    
+                                    
+                                    <tr><td class="response-text-sample" colspan="2">
+                                        <pre><code>{
+    "person_id": 1,
+    "gender": "M",
+    "birthdate": null,
+    "birthdate_estimated": 0,
+    "dead": 0,
+    "death_date": null,
+    "cause_of_death": null,
+    "creator": 1,
+    "date_created": "2005-01-01T00:00:00.000Z",
+    "changed_by": 1,
+    "date_changed": "2009-09-04T16:37:23.000Z",
+    "voided": 0,
+    "voided_by": null,
+    "date_voided": null,
+    "void_reason": null,
+    "uuid": "10661cb8-b6c1-11e0-bc9e-544249e32ba2",
+    "names": [
+        {
+            "person_name_id": 1,
+            "preferred": 1,
+            "person_id": 1,
+            "prefix": null,
+            "given_name": "Super",
+            "middle_name": "",
+            "family_name_prefix": null,
+            "family_name": "User",
+            "family_name2": null,
+            "family_name_suffix": null,
+            "degree": null,
+            "creator": 1,
+            "date_created": "2005-01-01T00:00:00.000Z",
+            "voided": 0,
+            "voided_by": null,
+            "date_voided": null,
+            "void_reason": null,
+            "changed_by": null,
+            "date_changed": null,
+            "uuid": "109f4cb8-b6c1-11e0-bc9e-544249e32ba2"
+        },
+        {
+            "person_name_id": 104,
+            "preferred": 0,
+            "person_id": 1,
+            "prefix": null,
+            "given_name": "tionge",
+            "middle_name": null,
+            "family_name_prefix": null,
+            "family_name": "banda",
+            "family_name2": null,
+            "family_name_suffix": null,
+            "degree": null,
+            "creator": 1,
+            "date_created": "2011-09-14T00:00:00.000Z",
+            "voided": 0,
+            "voided_by": null,
+            "date_voided": null,
+            "void_reason": null,
+            "changed_by": null,
+            "date_changed": null,
+            "uuid": "350af0d9-59ca-11e3-b7e9-003018a9e11f"
+        }
+    ],
+    "addresses": [
+        {
+            "person_address_id": 24,
+            "person_id": 1,
+            "preferred": 0,
+            "address1": "Unknown",
+            "address2": null,
+            "city_village": "Area 10",
+            "state_province": null,
+            "postal_code": null,
+            "country": null,
+            "latitude": null,
+            "longitude": null,
+            "creator": 1,
+            "date_created": "2011-09-14T00:00:00.000Z",
+            "voided": 0,
+            "voided_by": null,
+            "date_voided": null,
+            "void_reason": null,
+            "county_district": null,
+            "neighborhood_cell": null,
+            "region": null,
+            "subregion": null,
+            "township_division": null,
+            "uuid": "350b0426-59ca-11e3-b7e9-003018a9e11f"
+        }
+    ],
+    "person_attributes": [
+        {
+            "person_attribute_id": 271,
+            "person_id": 1,
+            "value": "Area 10",
+            "person_attribute_type_id": 18,
+            "creator": 1,
+            "date_created": "2011-09-14T00:00:00.000Z",
+            "changed_by": null,
+            "date_changed": null,
+            "voided": 0,
+            "voided_by": null,
+            "date_voided": null,
+            "void_reason": null,
+            "uuid": "350b0502-59ca-11e3-b7e9-003018a9e11f"
+        },
+        {
+            "person_attribute_id": 272,
+            "person_id": 1,
+            "value": "Unknown",
+            "person_attribute_type_id": 19,
+            "creator": 1,
+            "date_created": "2011-09-14T00:00:00.000Z",
+            "changed_by": null,
+            "date_changed": null,
+            "voided": 0,
+            "voided_by": null,
+            "date_voided": null,
+            "void_reason": null,
+            "uuid": "350b0426-59ca-11e3-b7e9-003018a9e11f"
+        },
+        {
+            "person_attribute_id": 273,
+            "person_id": 1,
+            "value": "Other",
+            "person_attribute_type_id": 13,
+            "creator": 1,
+            "date_created": "2011-09-14T00:00:00.000Z",
+            "changed_by": null,
+            "date_changed": null,
+            "voided": 0,
+            "voided_by": null,
+            "date_voided": null,
+            "void_reason": null,
+            "uuid": "350b0fab-59ca-11e3-b7e9-003018a9e11f"
+        },
+        {
+            "person_attribute_id": 274,
+            "person_id": 1,
+            "value": "Not Available",
+            "person_attribute_type_id": 14,
+            "creator": 1,
+            "date_created": "2011-09-14T00:00:00.000Z",
+            "changed_by": null,
+            "date_changed": null,
+            "voided": 0,
+            "voided_by": null,
+            "date_voided": null,
+            "void_reason": null,
+            "uuid": "350b11b7-59ca-11e3-b7e9-003018a9e11f"
+        }
+    ]
+}</code></pre>
+                                    </td></tr>
+                                    
+                                    
+                                </table>
+                            </div>
+                            
+                        </div>
+                    </div>
+                    
+
+                    <hr>
+                </div>
+                
+                
+                <div class="request">
+
+                    <h3 id="request-retrieve-specific-person-names">
+                        Retrieve specific person names
+                        <a href="#request-retrieve-specific-person-names"><i class="glyphicon glyphicon-link"></i></a>
+                    </h3>
+
+                    <div><p>GET localhost:3000/api/v1/people/18904/names</p>
+</div>
+
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li role="presentation" class="active"><a href="#request-retrieve-specific-person-names-example-curl" data-toggle="tab">Curl</a></li>
+                            <li role="presentation"><a href="#request-retrieve-specific-person-names-example-http" data-toggle="tab">HTTP</a></li>
+                        </ul>
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="request-retrieve-specific-person-names-example-curl">
+                                <pre><code class="hljs curl">curl -X GET -H "Authorization: lQUitqOlCOo6" -H "//Content-Type: application/json" "localhost:3000/api/v1/people/18904/names"</code></pre>
+                            </div>
+                            <div class="tab-pane" id="request-retrieve-specific-person-names-example-http">
+                                <pre><code class="hljs http">GET 3000/api/v1/people/18904/names HTTP/1.1
+Host: 
+Authorization: lQUitqOlCOo6
+//Content-Type: application/json</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            
+                            <li role="presentation" class="active">
+                                <a href="#request-retrieve-specific-person-names-responses-bf6cb84a-1da6-0d1d-cb99-76c4b9591dee" data-toggle="tab">
+                                    
+                                    Response
+                                    
+                                </a>
+                            </li>
+                            
+                        </ul>
+                        <div class="tab-content">
+                            
+                            <div class="tab-pane active" id="request-retrieve-specific-person-names-responses-bf6cb84a-1da6-0d1d-cb99-76c4b9591dee">
+                                <table class="table table-bordered">
+                                    <tr><th style="width: 20%;">Status</th><td>200 </td></tr>
+                                    
+                                    <tr><th style="width: 20%;">cache-control</th><td>max-age=0, private, must-revalidate</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">content-type</th><td>application/json; charset=utf-8</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">etag</th><td>W/"a479514f8b17c5a0591b89b465dbbc0a"</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">transfer-encoding</th><td>chunked</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">vary</th><td>Origin</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-request-id</th><td>c5cfde6c-96af-43cf-894f-29bf7e7a5775</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-runtime</th><td>0.054193</td></tr>
+                                    
+                                    
+                                    
+                                    <tr><td class="response-text-sample" colspan="2">
+                                        <pre><code>[
+    {
+        "person_name_id": 18872,
+        "preferred": 0,
+        "person_id": 18904,
+        "prefix": null,
+        "given_name": "William",
+        "middle_name": null,
+        "family_name_prefix": null,
+        "family_name": "Kabamkena",
+        "family_name2": null,
+        "family_name_suffix": null,
+        "degree": null,
+        "creator": 26,
+        "date_created": "2012-02-20T00:00:00.000Z",
+        "voided": 0,
+        "voided_by": null,
+        "date_voided": null,
+        "void_reason": null,
+        "changed_by": null,
+        "date_changed": null,
+        "uuid": "ba0fd78b-59d5-11e3-b7e9-003018a9e11f"
+    }
+]</code></pre>
+                                    </td></tr>
+                                    
+                                    
+                                </table>
+                            </div>
+                            
+                        </div>
+                    </div>
+                    
+
+                    <hr>
+                </div>
+                
+                
+                <div class="request">
+
+                    <h3 id="request-creating-users">
+                        Creating users
+                        <a href="#request-creating-users"><i class="glyphicon glyphicon-link"></i></a>
+                    </h3>
+
+                    <div><p>User creation requires an existing person to be associated with the new user. Thus it is mandatory that a <code>person_id</code> be specified in the request body.</p>
+
+<p>See: (Retrieving user roles)[#Retrieving-user-roles] for valid roles.</p>
+</div>
+
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li role="presentation" class="active"><a href="#request-creating-users-example-curl" data-toggle="tab">Curl</a></li>
+                            <li role="presentation"><a href="#request-creating-users-example-http" data-toggle="tab">HTTP</a></li>
+                        </ul>
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="request-creating-users-example-curl">
+                                <pre><code class="hljs curl">curl -X POST -H "Content-type: application/json" -H "Authorization: qTt9Wg2zs3oC" -d '{
+	"username": "user1",
+	"password": "tio",
+	"person_id": 7,
+	"role": "Superuser"
+}' "http://127.0.0.1:3000/api/v1/users/"</code></pre>
+                            </div>
+                            <div class="tab-pane" id="request-creating-users-example-http">
+                                <pre><code class="hljs http">POST /api/v1/users/ HTTP/1.1
+Host: 127.0.0.1:3000
+Content-type: application/json
+Authorization: qTt9Wg2zs3oC
+
+{
+	"username": "user1",
+	"password": "tio",
+	"person_id": 7,
+	"role": "Superuser"
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            
+                            <li role="presentation" class="active">
+                                <a href="#request-creating-users-responses-74dbd3ce-2ae0-c1f6-32c2-9ba4422b579d" data-toggle="tab">
+                                    
+                                    Registering users
+                                    
+                                </a>
+                            </li>
+                            
+                            <li role="presentation">
+                                <a href="#request-creating-users-responses-bd0e0561-df3f-4a12-0d3a-4f00004e77ce" data-toggle="tab">
+                                    
+                                    Creating users
+                                    
+                                </a>
+                            </li>
+                            
+                        </ul>
+                        <div class="tab-content">
+                            
+                            <div class="tab-pane active" id="request-creating-users-responses-74dbd3ce-2ae0-c1f6-32c2-9ba4422b579d">
+                                <table class="table table-bordered">
+                                    <tr><th style="width: 20%;">Status</th><td>201 </td></tr>
+                                    
+                                    <tr><th style="width: 20%;">cache-control</th><td>max-age=0, private, must-revalidate</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">content-type</th><td>application/json; charset=utf-8</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">etag</th><td>W/"90d5f6142f1f9ee1ec277b99c5ddd0d8"</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">transfer-encoding</th><td>chunked</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-request-id</th><td>b93a0b8c-2487-4a4a-8a3a-a4e95016765c</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-runtime</th><td>0.261925</td></tr>
+                                    
+                                    
+                                    
+                                    <tr><td class="response-text-sample" colspan="2">
+                                        <pre><code>{
+    "user": {
+        "user_id": 84,
+        "system_id": "",
+        "username": "user1",
+        "creator": 1,
+        "date_created": null,
+        "changed_by": 1,
+        "date_changed": "2018-08-28T01:48:40.000Z",
+        "person_id": 7,
+        "retired": 0,
+        "retired_by": null,
+        "date_retired": null,
+        "retire_reason": null,
+        "uuid": "85cf587a-b968-4958-a606-12f3571d544d",
+        "roles": [
+            {
+                "role": "Superuser",
+                "description": "This is a user who has access to all Baobab developed applications' functionality",
+                "uuid": "0d3b5ff0-d65e-11d6-b7af-0024217bb78e"
+            }
+        ]
+    }
+}</code></pre>
+                                    </td></tr>
+                                    
+                                    
+                                </table>
+                            </div>
+                            
+                            <div class="tab-pane" id="request-creating-users-responses-bd0e0561-df3f-4a12-0d3a-4f00004e77ce">
+                                <table class="table table-bordered">
+                                    <tr><th style="width: 20%;">Status</th><td>201 </td></tr>
+                                    
+                                    <tr><th style="width: 20%;">access-control-allow-methods</th><td>GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">access-control-allow-origin</th><td>*</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">access-control-expose-headers</th><td></td></tr>
+                                    
+                                    <tr><th style="width: 20%;">access-control-max-age</th><td>1728000</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">cache-control</th><td>max-age=0, private, must-revalidate</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">content-type</th><td>application/json; charset=utf-8</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">etag</th><td>W/"b928690aa42e4b08d0cc288a44428a7a"</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">transfer-encoding</th><td>chunked</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">vary</th><td>Origin</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-request-id</th><td>b188d46f-6ce7-4018-914f-aa078430d38e</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-runtime</th><td>0.404553</td></tr>
+                                    
+                                    
+                                    
+                                    <tr><td class="response-text-sample" colspan="2">
+                                        <pre><code>{
+    "user": {
+        "user_id": 82,
+        "system_id": "",
+        "username": "user1",
+        "creator": 1,
+        "date_created": "2018-09-07T13:25:57.000Z",
+        "changed_by": 1,
+        "date_changed": "2018-09-07T13:25:57.000Z",
+        "person_id": 7,
+        "retired": 0,
+        "retired_by": null,
+        "date_retired": null,
+        "retire_reason": null,
+        "uuid": "c6f3a5b5-bd62-47f4-8c04-0a012dfb54ee",
+        "roles": [
+            {
+                "role": "Superuser",
+                "description": "This is a user who has access to all Baobab developed applications' functionality",
+                "uuid": "0d3b5ff0-d65e-11d6-b7af-0024217bb78e"
+            }
+        ]
+    }
+}</code></pre>
+                                    </td></tr>
+                                    
+                                    
+                                </table>
+                            </div>
+                            
+                        </div>
+                    </div>
+                    
+
+                    <hr>
+                </div>
+                
+                
+                <div class="request">
+
+                    <h3 id="request-retrieving-all-users">
+                        Retrieving all users
+                        <a href="#request-retrieving-all-users"><i class="glyphicon glyphicon-link"></i></a>
+                    </h3>
+
+                    <div><p>GET /api/v1/users</p>
+
+<p>Lorem Ipsum&hellip;</p>
+</div>
+
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li role="presentation" class="active"><a href="#request-retrieving-all-users-example-curl" data-toggle="tab">Curl</a></li>
+                            <li role="presentation"><a href="#request-retrieving-all-users-example-http" data-toggle="tab">HTTP</a></li>
+                        </ul>
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="request-retrieving-all-users-example-curl">
+                                <pre><code class="hljs curl">curl -X GET -H "Authorization: qTt9Wg2zs3oC" "127.0.0.1:3000/api/v1/users"</code></pre>
+                            </div>
+                            <div class="tab-pane" id="request-retrieving-all-users-example-http">
+                                <pre><code class="hljs http">failed to parse url
+parse 127.0.0.1:3000/api/v1/users: first path segment in URL cannot contain colon</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            
+                            <li role="presentation" class="active">
+                                <a href="#request-retrieving-all-users-responses-12a2dfbd-c4da-a5d8-06d8-c159295477b0" data-toggle="tab">
+                                    
+                                    Retrieving all users
+                                    
+                                </a>
+                            </li>
+                            
+                            <li role="presentation">
+                                <a href="#request-retrieving-all-users-responses-1598b1ae-615f-34e6-60e3-369a505b5f27" data-toggle="tab">
+                                    
+                                    Retrieving all users
+                                    
+                                </a>
+                            </li>
+                            
+                        </ul>
+                        <div class="tab-content">
+                            
+                            <div class="tab-pane active" id="request-retrieving-all-users-responses-12a2dfbd-c4da-a5d8-06d8-c159295477b0">
+                                <table class="table table-bordered">
+                                    <tr><th style="width: 20%;">Status</th><td>200 </td></tr>
+                                    
+                                    <tr><th style="width: 20%;">cache-control</th><td>max-age=0, private, must-revalidate</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">content-type</th><td>application/json; charset=utf-8</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">etag</th><td>W/"377423c6e4abf996b13db79549f86929"</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">transfer-encoding</th><td>chunked</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-request-id</th><td>0e5f61ef-973c-49cc-9a4e-a21874611234</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-runtime</th><td>0.073981</td></tr>
+                                    
+                                    
+                                    
+                                    <tr><td class="response-text-sample" colspan="2">
+                                        <pre><code>[
+    {
+        "user_id": 1,
+        "system_id": "1-8",
+        "username": "admin",
+        "creator": 1,
+        "date_created": "2005-01-01T00:00:00.000Z",
+        "changed_by": null,
+        "date_changed": "2018-08-28T01:07:03.000Z",
+        "person_id": 1,
+        "retired": 0,
+        "retired_by": null,
+        "date_retired": null,
+        "retire_reason": "",
+        "uuid": "3206f1ac-59ca-11e3-b7e9-003018a9e11f",
+        "roles": [
+            {
+                "role": "Superuser",
+                "description": "This is a user who has access to all Baobab developed applications' functionality",
+                "uuid": "0d3b5ff0-d65e-11d6-b7af-0024217bb78e"
+            },
+            {
+                "role": "System Developer",
+                "description": "Developers of the OpenMRS .. have additional access to change fundamental structure of the database model.",
+                "uuid": "8d94f852-c2cc-11de-8d13-0010c6dffd0f"
+            }
+        ]
+    },
+    {
+        "user_id": 2,
+        "system_id": "",
+        "username": "vicman",
+        "creator": 1,
+        "date_created": "2011-09-16T00:00:00.000Z",
+        "changed_by": null,
+        "date_changed": null,
+        "person_id": 63397,
+        "retired": 0,
+        "retired_by": null,
+        "date_retired": null,
+        "retire_reason": null,
+        "uuid": "34797f51-59ca-11e3-b7e9-003018a9e11f",
+        "roles": [
+            {
+                "role": "Superuser",
+                "description": "This is a user who has access to all Baobab developed applications' functionality",
+                "uuid": "0d3b5ff0-d65e-11d6-b7af-0024217bb78e"
+            }
+        ]
+    },
+    {
+        "user_id": 3,
+        "system_id": "",
+        "username": "melani",
+        "creator": 1,
+        "date_created": "2011-09-16T00:00:00.000Z",
+        "changed_by": null,
+        "date_changed": null,
+        "person_id": 63398,
+        "retired": 0,
+        "retired_by": null,
+        "date_retired": null,
+        "retire_reason": null,
+        "uuid": "3479cb90-59ca-11e3-b7e9-003018a9e11f",
+        "roles": [
+            {
+                "role": "Provider",
+                "description": "Health care provider",
+                "uuid": "8d94f280-c2cc-11de-8d13-0010c6dffd0f"
+            },
+            {
+                "role": "Superuser",
+                "description": "This is a user who has access to all Baobab developed applications' functionality",
+                "uuid": "0d3b5ff0-d65e-11d6-b7af-0024217bb78e"
+            }
+        ]
+    },
+    {
+        "user_id": 4,
+        "system_id": "",
+        "username": "belita",
+        "creator": 1,
+        "date_created": "2011-09-16T00:00:00.000Z",
+        "changed_by": null,
+        "date_changed": null,
+        "person_id": 63399,
+        "retired": 0,
+        "retired_by": null,
+        "date_retired": null,
+        "retire_reason": null,
+        "uuid": "347a1a8f-59ca-11e3-b7e9-003018a9e11f",
+        "roles": [
+            {
+                "role": "Superuser",
+                "description": "This is a user who has access to all Baobab developed applications' functionality",
+                "uuid": "0d3b5ff0-d65e-11d6-b7af-0024217bb78e"
+            }
+        ]
+    },
+    {
+        "user_id": 5,
+        "system_id": "",
+        "username": "beatrice",
+        "creator": 1,
+        "date_created": "2011-09-16T00:00:00.000Z",
+        "changed_by": null,
+        "date_changed": null,
+        "person_id": 63400,
+        "retired": 0,
+        "retired_by": null,
+        "date_retired": null,
+        "retire_reason": null,
+        "uuid": "347a51b4-59ca-11e3-b7e9-003018a9e11f",
+        "roles": [
+            {
+                "role": "Provider",
+                "description": "Health care provider",
+                "uuid": "8d94f280-c2cc-11de-8d13-0010c6dffd0f"
+            },
+            {
+                "role": "Superuser",
+                "description": "This is a user who has access to all Baobab developed applications' functionality",
+                "uuid": "0d3b5ff0-d65e-11d6-b7af-0024217bb78e"
+            }
+        ]
+    },
+    {
+        "user_id": 6,
+        "system_id": "",
+        "username": "monaph",
+        "creator": 1,
+        "date_created": "2011-09-16T00:00:00.000Z",
+        "changed_by": null,
+        "date_changed": null,
+        "person_id": 63401,
+        "retired": 0,
+        "retired_by": null,
+        "date_retired": null,
+        "retire_reason": null,
+        "uuid": "347b1e0c-59ca-11e3-b7e9-003018a9e11f",
+        "roles": [
+            {
+                "role": "Provider",
+                "description": "Health care provider",
+                "uuid": "8d94f280-c2cc-11de-8d13-0010c6dffd0f"
+            },
+            {
+                "role": "Superuser",
+                "description": "This is a user who has access to all Baobab developed applications' functionality",
+                "uuid": "0d3b5ff0-d65e-11d6-b7af-0024217bb78e"
+            }
+        ]
+    },
+    {
+        "user_id": 7,
+        "system_id": "",
+        "username": "georgina",
+        "creator": 1,
+        "date_created": "2011-09-16T00:00:00.000Z",
+        "changed_by": null,
+        "date_changed": null,
+        "person_id": 63402,
+        "retired": 0,
+        "retired_by": null,
+        "date_retired": null,
+        "retire_reason": null,
+        "uuid": "347b61f2-59ca-11e3-b7e9-003018a9e11f",
+        "roles": [
+            {
+                "role": "Superuser",
+                "description": "This is a user who has access to all Baobab developed applications' functionality",
+                "uuid": "0d3b5ff0-d65e-11d6-b7af-0024217bb78e"
+            }
+        ]
+    },
+    {
+        "user_id": 8,
+        "system_id": "",
+        "username": "barate",
+        "creator": 1,
+        "date_created": "2011-09-16T00:00:00.000Z",
+        "changed_by": null,
+        "date_changed": null,
+        "person_id": 63403,
+        "retired": 0,
+        "retired_by": null,
+        "date_retired": null,
+        "retire_reason": null,
+        "uuid": "347ba89a-59ca-11e3-b7e9-003018a9e11f",
+        "roles": [
+            {
+                "role": "Superuser",
+                "description": "This is a user who has access to all Baobab developed applications' functionality",
+                "uuid": "0d3b5ff0-d65e-11d6-b7af-0024217bb78e"
+            }
+        ]
+    },
+    {
+        "user_id": 9,
+        "system_id": "",
+        "username": "anenji",
+        "creator": 1,
+        "date_created": "2011-09-16T00:00:00.000Z",
+        "changed_by": null,
+        "date_changed": null,
+        "person_id": 63404,
+        "retired": 0,
+        "retired_by": null,
+        "date_retired": null,
+        "retire_reason": null,
+        "uuid": "347be4e6-59ca-11e3-b7e9-003018a9e11f",
+        "roles": [
+            {
+                "role": "Superuser",
+                "description": "This is a user who has access to all Baobab developed applications' functionality",
+                "uuid": "0d3b5ff0-d65e-11d6-b7af-0024217bb78e"
+            }
+        ]
+    },
+    {
+        "user_id": 10,
+        "system_id": "",
+        "username": "malumbo",
+        "creator": 1,
+        "date_created": "2011-09-16T00:00:00.000Z",
+        "changed_by": null,
+        "date_changed": null,
+        "person_id": 63405,
+        "retired": 0,
+        "retired_by": null,
+        "date_retired": null,
+        "retire_reason": null,
+        "uuid": "347c6932-59ca-11e3-b7e9-003018a9e11f",
+        "roles": [
+            {
+                "role": "Superuser",
+                "description": "This is a user who has access to all Baobab developed applications' functionality",
+                "uuid": "0d3b5ff0-d65e-11d6-b7af-0024217bb78e"
+            }
+        ]
+    }
+]</code></pre>
+                                    </td></tr>
+                                    
+                                    
+                                </table>
+                            </div>
+                            
+                            <div class="tab-pane" id="request-retrieving-all-users-responses-1598b1ae-615f-34e6-60e3-369a505b5f27">
+                                <table class="table table-bordered">
+                                    <tr><th style="width: 20%;">Status</th><td>200 </td></tr>
+                                    
+                                    <tr><th style="width: 20%;">cache-control</th><td>max-age=0, private, must-revalidate</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">content-type</th><td>application/json; charset=utf-8</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">etag</th><td>W/"2623bee04094441efc16150aa5abd6d9"</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">transfer-encoding</th><td>chunked</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">vary</th><td>Origin</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-request-id</th><td>2895cb54-49eb-4494-9d6e-22a35f471435</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-runtime</th><td>0.006852</td></tr>
+                                    
+                                    
+                                    
+                                    <tr><td class="response-text-sample" colspan="2">
+                                        <pre><code>[
+    {
+        "user_id": 1,
+        "system_id": "1-8",
+        "username": "admin",
+        "creator": 1,
+        "date_created": "2005-01-01T00:00:00.000Z",
+        "changed_by": null,
+        "date_changed": "2018-09-07T12:57:33.000Z",
+        "person_id": 1,
+        "retired": 0,
+        "retired_by": null,
+        "date_retired": null,
+        "retire_reason": "",
+        "uuid": "3206f1ac-59ca-11e3-b7e9-003018a9e11f",
+        "roles": [
+            {
+                "role": "Superuser",
+                "description": "This is a user who has access to all Baobab developed applications' functionality",
+                "uuid": "0d3b5ff0-d65e-11d6-b7af-0024217bb78e"
+            },
+            {
+                "role": "System Developer",
+                "description": "Developers of the OpenMRS .. have additional access to change fundamental structure of the database model.",
+                "uuid": "8d94f852-c2cc-11de-8d13-0010c6dffd0f"
+            }
+        ]
+    },
+    {
+        "user_id": 2,
+        "system_id": "",
+        "username": "vicman",
+        "creator": 1,
+        "date_created": "2011-09-16T00:00:00.000Z",
+        "changed_by": null,
+        "date_changed": null,
+        "person_id": 63397,
+        "retired": 0,
+        "retired_by": null,
+        "date_retired": null,
+        "retire_reason": null,
+        "uuid": "34797f51-59ca-11e3-b7e9-003018a9e11f",
+        "roles": [
+            {
+                "role": "Superuser",
+                "description": "This is a user who has access to all Baobab developed applications' functionality",
+                "uuid": "0d3b5ff0-d65e-11d6-b7af-0024217bb78e"
+            }
+        ]
+    }
+]</code></pre>
+                                    </td></tr>
+                                    
+                                    
+                                </table>
+                            </div>
+                            
+                        </div>
+                    </div>
+                    
+
+                    <hr>
+                </div>
+                
+                
+                <div class="request">
+
+                    <h3 id="request-retrieving-all-roles">
+                        Retrieving all roles
+                        <a href="#request-retrieving-all-roles"><i class="glyphicon glyphicon-link"></i></a>
+                    </h3>
+
+                    <div><p>GET /api/v1/roles</p>
+</div>
+
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li role="presentation" class="active"><a href="#request-retrieving-all-roles-example-curl" data-toggle="tab">Curl</a></li>
+                            <li role="presentation"><a href="#request-retrieving-all-roles-example-http" data-toggle="tab">HTTP</a></li>
+                        </ul>
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="request-retrieving-all-roles-example-curl">
+                                <pre><code class="hljs curl">curl -X GET -H "Authorization: qTt9Wg2zs3oC" "http://127.0.0.1:3000/api/v1/roles"</code></pre>
+                            </div>
+                            <div class="tab-pane" id="request-retrieving-all-roles-example-http">
+                                <pre><code class="hljs http">GET /api/v1/roles HTTP/1.1
+Host: 127.0.0.1:3000
+Authorization: qTt9Wg2zs3oC</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            
+                            <li role="presentation" class="active">
+                                <a href="#request-retrieving-all-roles-responses-5fb42807-7509-6509-3d70-1d4e3f0899ef" data-toggle="tab">
+                                    
+                                    Retrieving all roles
+                                    
+                                </a>
+                            </li>
+                            
+                            <li role="presentation">
+                                <a href="#request-retrieving-all-roles-responses-6d078446-48e7-8913-fc4f-9de50b0af467" data-toggle="tab">
+                                    
+                                    Retrieving all roles
+                                    
+                                </a>
+                            </li>
+                            
+                        </ul>
+                        <div class="tab-content">
+                            
+                            <div class="tab-pane active" id="request-retrieving-all-roles-responses-5fb42807-7509-6509-3d70-1d4e3f0899ef">
+                                <table class="table table-bordered">
+                                    <tr><th style="width: 20%;">Status</th><td>200 </td></tr>
+                                    
+                                    <tr><th style="width: 20%;">cache-control</th><td>max-age=0, private, must-revalidate</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">content-type</th><td>application/json; charset=utf-8</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">etag</th><td>W/"3d041ef82972d83658bf4058bc5f0303"</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">transfer-encoding</th><td>chunked</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-request-id</th><td>375aa3d5-ea42-4933-8169-8e208e037ddb</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-runtime</th><td>0.074712</td></tr>
+                                    
+                                    
+                                    
+                                    <tr><td class="response-text-sample" colspan="2">
+                                        <pre><code>[
+    {
+        "role": "Accompagnateur",
+        "description": "Community health worker",
+        "uuid": "0d3b28c8-d65e-11d6-b7af-0024217bb78e"
+    },
+    {
+        "role": "Accompagnateur Leader",
+        "description": "Responsible for overseeing up to 30 Accompagnateurs",
+        "uuid": "0d3b2c1a-d65e-11d6-b7af-0024217bb78e"
+    },
+    {
+        "role": "Adults",
+        "description": "OPD user group for adults entries",
+        "uuid": "0d3b2e04-d65e-11d6-b7af-0024217bb78e"
+    },
+    {
+        "role": "Anonymous",
+        "description": "Privileges for non-authenticated users.",
+        "uuid": "774b2af3-6437-4e5a-a310-547554c7c65c"
+    },
+    {
+        "role": "Authenticated",
+        "description": "Privileges gained once authentication has been established.",
+        "uuid": "f7fd42ef-880e-40c5-972d-e4ae7c990de2"
+    },
+    {
+        "role": "Clinician",
+        "description": "Users who are a part of direct patient care.",
+        "uuid": "0d3b3372-d65e-11d6-b7af-0024217bb78e"
+    },
+    {
+        "role": "Data Assistant",
+        "description": "Clerks who perform data entry.",
+        "uuid": "0d3b353e-d65e-11d6-b7af-0024217bb78e"
+    },
+    {
+        "role": "Data Element Contributor",
+        "description": "Role for users who contribute to the management of data elements in OpenMRS.",
+        "uuid": "0d3b3728-d65e-11d6-b7af-0024217bb78e"
+    },
+    {
+        "role": "Data Manager",
+        "description": "User who maintains clinical data stored within the OpenMRS repository.",
+        "uuid": "0d3b38f4-d65e-11d6-b7af-0024217bb78e"
+    },
+    {
+        "role": "Doctor",
+        "description": "People in direct care of patient. According to the Malawian context, this is a user who has acquired medical training to level of MBBS.",
+        "uuid": "0d3b3ac0-d65e-11d6-b7af-0024217bb78e"
+    },
+    {
+        "role": "General Registration Clerk",
+        "description": "A General Registration Clerk",
+        "uuid": "0d3b4876-d65e-11d6-b7af-0024217bb78e"
+    },
+    {
+        "role": "HMIS lab order",
+        "description": "OPD user group for HMIS lab order clerk entries",
+        "uuid": "0d3b4a6a-d65e-11d6-b7af-0024217bb78e"
+    },
+    {
+        "role": "Informatics Manager",
+        "description": "User who maintains the local installation of the OpenMRS repository.",
+        "uuid": "0d3b4c40-d65e-11d6-b7af-0024217bb78e"
+    },
+    {
+        "role": "Lab",
+        "description": "Lab technicians and assistants",
+        "uuid": "0d3b4e0c-d65e-11d6-b7af-0024217bb78e"
+    },
+    {
+        "role": "Medical Assistant",
+        "description": "Medical Assistants",
+        "uuid": "0d3b4fce-d65e-11d6-b7af-0024217bb78e"
+    },
+    {
+        "role": "Nurse",
+        "description": "Nursing Officers and Technicians",
+        "uuid": "0d3b51a4-d65e-11d6-b7af-0024217bb78e"
+    },
+    {
+        "role": "Paediatrics",
+        "description": "OPD user group for paediatrics entries",
+        "uuid": "0d3b5352-d65e-11d6-b7af-0024217bb78e"
+    },
+    {
+        "role": "Pharmacist",
+        "description": "A Pharmacist",
+        "uuid": "0d3b551e-d65e-11d6-b7af-0024217bb78e"
+    },
+    {
+        "role": "Program Manager",
+        "description": "Has permission to view most/all data, but no permission for entry or editing.",
+        "uuid": "0d3b56e0-d65e-11d6-b7af-0024217bb78e"
+    },
+    {
+        "role": "Provider",
+        "description": "Health care provider",
+        "uuid": "8d94f280-c2cc-11de-8d13-0010c6dffd0f"
+    },
+    {
+        "role": "Registration Clerk",
+        "description": "This is a user responsible for registering patients at the patient registration station. mostly used in Baobab applications. This is probably an equivalent of Data Assistant.",
+        "uuid": "0d3b5a6e-d65e-11d6-b7af-0024217bb78e"
+    },
+    {
+        "role": "Social Worker",
+        "description": "Social Worker",
+        "uuid": "0d3b5c4e-d65e-11d6-b7af-0024217bb78e"
+    },
+    {
+        "role": "SPINE clinician",
+        "description": "OPD user group for SPINE clinician entries",
+        "uuid": "0d3b5e24-d65e-11d6-b7af-0024217bb78e"
+    },
+    {
+        "role": "Superuser",
+        "description": "This is a user who has access to all Baobab developed applications' functionality",
+        "uuid": "0d3b5ff0-d65e-11d6-b7af-0024217bb78e"
+    },
+    {
+        "role": "Superuser,Superuser,",
+        "description": "Superuser",
+        "uuid": "0d3b61b2-d65e-11d6-b7af-0024217bb78e"
+    },
+    {
+        "role": "System Developer",
+        "description": "Developers of the OpenMRS .. have additional access to change fundamental structure of the database model.",
+        "uuid": "8d94f852-c2cc-11de-8d13-0010c6dffd0f"
+    },
+    {
+        "role": "Therapeutic Feeding Clerk",
+        "description": "A clerk who just enters therapeutic feeding data.",
+        "uuid": "0d3b6554-d65e-11d6-b7af-0024217bb78e"
+    },
+    {
+        "role": "Vitals Clerk",
+        "description": "A user who just enters vitals for patients. ",
+        "uuid": "0d3b6734-d65e-11d6-b7af-0024217bb78e"
+    }
+]</code></pre>
+                                    </td></tr>
+                                    
+                                    
+                                </table>
+                            </div>
+                            
+                            <div class="tab-pane" id="request-retrieving-all-roles-responses-6d078446-48e7-8913-fc4f-9de50b0af467">
+                                <table class="table table-bordered">
+                                    <tr><th style="width: 20%;">Status</th><td>200 </td></tr>
+                                    
+                                    <tr><th style="width: 20%;">cache-control</th><td>max-age=0, private, must-revalidate</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">content-type</th><td>application/json; charset=utf-8</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">etag</th><td>W/"da618fe41814df4aef1c6cfa83628306"</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">transfer-encoding</th><td>chunked</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">vary</th><td>Origin</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-request-id</th><td>d82d8ba7-b581-4851-9ebd-c0e30c965de6</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-runtime</th><td>0.004273</td></tr>
+                                    
+                                    
+                                    
+                                    <tr><td class="response-text-sample" colspan="2">
+                                        <pre><code>[
+    {
+        "role": "Accompagnateur",
+        "description": "Community health worker",
+        "uuid": "0d3b28c8-d65e-11d6-b7af-0024217bb78e"
+    },
+    {
+        "role": "Accompagnateur Leader",
+        "description": "Responsible for overseeing up to 30 Accompagnateurs",
+        "uuid": "0d3b2c1a-d65e-11d6-b7af-0024217bb78e"
+    },
+    {
+        "role": "Adults",
+        "description": "OPD user group for adults entries",
+        "uuid": "0d3b2e04-d65e-11d6-b7af-0024217bb78e"
+    },
+    {
+        "role": "Anonymous",
+        "description": "Privileges for non-authenticated users.",
+        "uuid": "774b2af3-6437-4e5a-a310-547554c7c65c"
+    },
+    {
+        "role": "Authenticated",
+        "description": "Privileges gained once authentication has been established.",
+        "uuid": "f7fd42ef-880e-40c5-972d-e4ae7c990de2"
+    }
+]</code></pre>
+                                    </td></tr>
+                                    
+                                    
+                                </table>
+                            </div>
+                            
+                        </div>
+                    </div>
+                    
+
+                    <hr>
+                </div>
+                
+                
+                <div class="request">
+
+                    <h3 id="request-creating-encounters">
+                        Creating encounters
+                        <a href="#request-creating-encounters"><i class="glyphicon glyphicon-link"></i></a>
+                    </h3>
+
+                    <div><p>Creating encounters requires 2 parameters namely <code>encounter_type_id</code> and <code>patient_id</code>. A third optional parameter <code>provider_id</code> may be specified. This however defaults to the current user.</p>
+
+<p>NOTE: Encounters currently aren&rsquo;t linked to orders but will soon be thus expect an additional optional <code>order_id</code> to be included soon.</p>
+</div>
+
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li role="presentation" class="active"><a href="#request-creating-encounters-example-curl" data-toggle="tab">Curl</a></li>
+                            <li role="presentation"><a href="#request-creating-encounters-example-http" data-toggle="tab">HTTP</a></li>
+                        </ul>
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="request-creating-encounters-example-curl">
+                                <pre><code class="hljs curl">curl -X POST -H "Authorization: JDIt0GpZyR3I" -H "Content-Type: application/json" -d '{
+	"encounter_type_id": 6,
+	"patient_id": 100
+}' "localhost:3000/api/v1/encounters"</code></pre>
+                            </div>
+                            <div class="tab-pane" id="request-creating-encounters-example-http">
+                                <pre><code class="hljs http">POST 3000/api/v1/encounters HTTP/1.1
+Host: 
+Authorization: JDIt0GpZyR3I
+Content-Type: application/json
+
+{
+	"encounter_type_id": 6,
+	"patient_id": 100
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            
+                            <li role="presentation" class="active">
+                                <a href="#request-creating-encounters-responses-3be1e6d5-877e-9b83-388b-d30ce2157c59" data-toggle="tab">
+                                    
+                                    Response
+                                    
+                                </a>
+                            </li>
+                            
+                        </ul>
+                        <div class="tab-content">
+                            
+                            <div class="tab-pane active" id="request-creating-encounters-responses-3be1e6d5-877e-9b83-388b-d30ce2157c59">
+                                <table class="table table-bordered">
+                                    <tr><th style="width: 20%;">Status</th><td>201 </td></tr>
+                                    
+                                    <tr><th style="width: 20%;">access-control-allow-methods</th><td>GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">access-control-allow-origin</th><td>*</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">access-control-expose-headers</th><td></td></tr>
+                                    
+                                    <tr><th style="width: 20%;">access-control-max-age</th><td>1728000</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">cache-control</th><td>max-age=0, private, must-revalidate</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">content-type</th><td>application/json; charset=utf-8</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">etag</th><td>W/"01a3c5dd3d367460a3f1646f37246454"</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">transfer-encoding</th><td>chunked</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">vary</th><td>Origin</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-request-id</th><td>32c60109-5b55-40e6-bacc-4ad624f15f79</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-runtime</th><td>0.614633</td></tr>
+                                    
+                                    
+                                    
+                                    <tr><td class="response-text-sample" colspan="2">
+                                        <pre><code>{
+    "encounter_id": 373036,
+    "encounter_type": 6,
+    "patient_id": 100,
+    "provider_id": 1,
+    "location_id": 700,
+    "form_id": null,
+    "encounter_datetime": "2018-09-07T13:33:54.000Z",
+    "creator": 1,
+    "date_created": "2018-09-07T13:33:54.000Z",
+    "voided": 0,
+    "voided_by": null,
+    "date_voided": null,
+    "void_reason": null,
+    "uuid": "affb4728-d31d-4d86-ac62-1f5e5654c332",
+    "changed_by": 1,
+    "date_changed": "2018-09-07T13:33:54.000Z",
+    "type": {
+        "encounter_type_id": 6,
+        "name": "VITALS",
+        "description": "Vitals encounter",
+        "creator": 1,
+        "date_created": "2008-05-02T16:04:05.000Z",
+        "retired": 0,
+        "retired_by": null,
+        "date_retired": null,
+        "retire_reason": null,
+        "uuid": "0cd2f672-d65e-11d6-b7af-0024217bb78e"
+    },
+    "patient": {
+        "patient_id": 100,
+        "tribe": null,
+        "creator": 2,
+        "date_created": "2011-09-16T00:00:00.000Z",
+        "changed_by": null,
+        "date_changed": null,
+        "voided": 0,
+        "voided_by": null,
+        "date_voided": null,
+        "void_reason": null
+    },
+    "location": {
+        "location_id": 700,
+        "name": "Martin Preuss Centre",
+        "description": "arv code:MPC",
+        "address1": "",
+        "address2": "",
+        "city_village": "Lilongwe",
+        "state_province": null,
+        "postal_code": "",
+        "country": "Malawi",
+        "latitude": null,
+        "longitude": null,
+        "creator": 1,
+        "date_created": "2011-07-25T14:16:52.000Z",
+        "county_district": null,
+        "neighborhood_cell": null,
+        "region": null,
+        "subregion": null,
+        "township_division": null,
+        "retired": false,
+        "retired_by": null,
+        "date_retired": null,
+        "retire_reason": null,
+        "location_type_id": null,
+        "parent_location": null,
+        "uuid": "0d087afe-d65e-11d6-b7af-0024217bb78e"
+    },
+    "provider": {
+        "user_id": 1,
+        "system_id": "1-8",
+        "username": "admin",
+        "creator": 1,
+        "date_created": "2005-01-01T00:00:00.000Z",
+        "changed_by": null,
+        "date_changed": "2018-09-07T12:57:33.000Z",
+        "person_id": 1,
+        "retired": 0,
+        "retired_by": null,
+        "date_retired": null,
+        "retire_reason": "",
+        "uuid": "3206f1ac-59ca-11e3-b7e9-003018a9e11f"
+    },
+    "observations": []
+}</code></pre>
+                                    </td></tr>
+                                    
+                                    
+                                </table>
+                            </div>
+                            
+                        </div>
+                    </div>
+                    
+
+                    <hr>
+                </div>
+                
+                
+                <div class="request">
+
+                    <h3 id="request-retrieve-encounters">
+                        Retrieve encounters
+                        <a href="#request-retrieve-encounters"><i class="glyphicon glyphicon-link"></i></a>
+                    </h3>
+
+                    <div><p>localhost:3000/api/v1/encounters?page=0&amp;page_size=5&amp;encounter_type_id=6</p>
+</div>
+
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li role="presentation" class="active"><a href="#request-retrieve-encounters-example-curl" data-toggle="tab">Curl</a></li>
+                            <li role="presentation"><a href="#request-retrieve-encounters-example-http" data-toggle="tab">HTTP</a></li>
+                        </ul>
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="request-retrieve-encounters-example-curl">
+                                <pre><code class="hljs curl">curl -X GET -H "Authorization: HEuJIXf7doFv" -H "Accept: application/json" "localhost:3000/api/v1/encounters?page=0&page_size=5&encounter_type_id=6"</code></pre>
+                            </div>
+                            <div class="tab-pane" id="request-retrieve-encounters-example-http">
+                                <pre><code class="hljs http">GET 3000/api/v1/encounters?page=0&page_size=5&encounter_type_id=6 HTTP/1.1
+Host: 
+Authorization: HEuJIXf7doFv
+Accept: application/json</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            
+                            <li role="presentation" class="active">
+                                <a href="#request-retrieve-encounters-responses-337c8f2e-3187-43ba-9a40-9aa6f086a9b0" data-toggle="tab">
+                                    
+                                    Response
+                                    
+                                </a>
+                            </li>
+                            
+                        </ul>
+                        <div class="tab-content">
+                            
+                            <div class="tab-pane active" id="request-retrieve-encounters-responses-337c8f2e-3187-43ba-9a40-9aa6f086a9b0">
+                                <table class="table table-bordered">
+                                    <tr><th style="width: 20%;">Status</th><td>200 </td></tr>
+                                    
+                                    <tr><th style="width: 20%;">cache-control</th><td>max-age=0, private, must-revalidate</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">content-type</th><td>application/json; charset=utf-8</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">etag</th><td>W/"6876da5cf8b99db7ed04eaf3703e7c21"</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">transfer-encoding</th><td>chunked</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">vary</th><td>Origin</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-request-id</th><td>51cd7439-4792-495d-a55a-2f5e07ab109f</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-runtime</th><td>0.478436</td></tr>
+                                    
+                                    
+                                    
+                                    <tr><td class="response-text-sample" colspan="2">
+                                        <pre><code>[
+    {
+        "obs_id": 8,
+        "person_id": 1,
+        "concept_id": 5089,
+        "encounter_id": 3,
+        "order_id": null,
+        "obs_datetime": "2011-09-14T14:14:54.000Z",
+        "location_id": 148,
+        "obs_group_id": null,
+        "accession_number": null,
+        "value_group_id": null,
+        "value_boolean": null,
+        "value_coded": null,
+        "value_coded_name_id": null,
+        "value_drug": null,
+        "value_datetime": null,
+        "value_numeric": 11.0,
+        "value_modifier": null,
+        "value_text": null,
+        "date_started": null,
+        "date_stopped": null,
+        "comments": null,
+        "creator": 1,
+        "date_created": "2011-09-14T14:18:03.000Z",
+        "voided": 0,
+        "voided_by": null,
+        "date_voided": null,
+        "void_reason": null,
+        "value_complex": null,
+        "uuid": "350fd0f5-59ca-11e3-b7e9-003018a9e11f",
+        "concept": {
+            "concept_id": 5089,
+            "retired": 0,
+            "short_name": "WT",
+            "description": "",
+            "form_text": null,
+            "datatype_id": 1,
+            "class_id": 1,
+            "is_set": 0,
+            "creator": 1,
+            "date_created": "2004-08-12T00:00:00.000Z",
+            "default_charge": null,
+            "version": "",
+            "changed_by": 1,
+            "date_changed": "2002-01-30T09:32:15.000Z",
+            "retired_by": null,
+            "date_retired": null,
+            "retire_reason": null,
+            "uuid": "0b9c2a1c-d65e-11d6-b7af-0024217bb78e"
+        },
+        "concept_names": [
+            {
+                "concept_id": 5089,
+                "name": "Weight (kg)",
+                "locale": "en",
+                "creator": 1,
+                "date_created": "2004-08-12T00:00:00.000Z",
+                "concept_name_id": 3455,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "0c572394-d65e-11d6-b7af-0024217bb78e",
+                "concept_name_type": "FULLY_SPECIFIED",
+                "locale_preferred": 0
+            },
+            {
+                "concept_id": 5089,
+                "name": "WT",
+                "locale": "en",
+                "creator": 1,
+                "date_created": "2004-08-12T00:00:00.000Z",
+                "concept_name_id": 6171,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "0c7083a2-d65e-11d6-b7af-0024217bb78e",
+                "concept_name_type": "SHORT",
+                "locale_preferred": 0
+            },
+            {
+                "concept_id": 5089,
+                "name": "Weight",
+                "locale": "en",
+                "creator": 1,
+                "date_created": "2002-01-30T09:32:15.000Z",
+                "concept_name_id": 9998,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "0c9167f2-d65e-11d6-b7af-0024217bb78e",
+                "concept_name_type": null,
+                "locale_preferred": 0
+            }
+        ]
+    },
+    {
+        "obs_id": 9,
+        "person_id": 1,
+        "concept_id": 5090,
+        "encounter_id": 3,
+        "order_id": null,
+        "obs_datetime": "2011-09-14T14:14:54.000Z",
+        "location_id": 148,
+        "obs_group_id": null,
+        "accession_number": null,
+        "value_group_id": null,
+        "value_boolean": null,
+        "value_coded": null,
+        "value_coded_name_id": null,
+        "value_drug": null,
+        "value_datetime": null,
+        "value_numeric": 70.0,
+        "value_modifier": null,
+        "value_text": null,
+        "date_started": null,
+        "date_stopped": null,
+        "comments": null,
+        "creator": 1,
+        "date_created": "2011-09-14T14:18:03.000Z",
+        "voided": 0,
+        "voided_by": null,
+        "date_voided": null,
+        "void_reason": null,
+        "value_complex": null,
+        "uuid": "350fd7cb-59ca-11e3-b7e9-003018a9e11f",
+        "concept": {
+            "concept_id": 5090,
+            "retired": 0,
+            "short_name": "HT",
+            "description": "",
+            "form_text": null,
+            "datatype_id": 1,
+            "class_id": 1,
+            "is_set": 0,
+            "creator": 1,
+            "date_created": "2004-08-12T00:00:00.000Z",
+            "default_charge": null,
+            "version": "",
+            "changed_by": 1,
+            "date_changed": "2005-02-25T11:43:34.000Z",
+            "retired_by": null,
+            "date_retired": null,
+            "retire_reason": null,
+            "uuid": "0b9c2bde-d65e-11d6-b7af-0024217bb78e"
+        },
+        "concept_names": [
+            {
+                "concept_id": 5090,
+                "name": "Height (cm)",
+                "locale": "en",
+                "creator": 1,
+                "date_created": "2004-08-12T00:00:00.000Z",
+                "concept_name_id": 3457,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "0c5724ca-d65e-11d6-b7af-0024217bb78e",
+                "concept_name_type": "FULLY_SPECIFIED",
+                "locale_preferred": 0
+            },
+            {
+                "concept_id": 5090,
+                "name": "HT",
+                "locale": "en",
+                "creator": 1,
+                "date_created": "2004-08-12T00:00:00.000Z",
+                "concept_name_id": 6173,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "0c7084ce-d65e-11d6-b7af-0024217bb78e",
+                "concept_name_type": "SHORT",
+                "locale_preferred": 0
+            }
+        ]
+    },
+    {
+        "obs_id": 10,
+        "person_id": 1,
+        "concept_id": 2137,
+        "encounter_id": 3,
+        "order_id": null,
+        "obs_datetime": "2011-09-14T14:14:54.000Z",
+        "location_id": 148,
+        "obs_group_id": null,
+        "accession_number": null,
+        "value_group_id": null,
+        "value_boolean": null,
+        "value_coded": null,
+        "value_coded_name_id": null,
+        "value_drug": null,
+        "value_datetime": null,
+        "value_numeric": 22.4,
+        "value_modifier": null,
+        "value_text": null,
+        "date_started": null,
+        "date_stopped": null,
+        "comments": null,
+        "creator": 1,
+        "date_created": "2011-09-14T14:18:03.000Z",
+        "voided": 0,
+        "voided_by": null,
+        "date_voided": null,
+        "void_reason": null,
+        "value_complex": null,
+        "uuid": "350fdca2-59ca-11e3-b7e9-003018a9e11f",
+        "concept": {
+            "concept_id": 2137,
+            "retired": 0,
+            "short_name": null,
+            "description": null,
+            "form_text": null,
+            "datatype_id": 1,
+            "class_id": 7,
+            "is_set": 0,
+            "creator": 1,
+            "date_created": "2007-05-12T10:29:11.000Z",
+            "default_charge": null,
+            "version": "",
+            "changed_by": 1,
+            "date_changed": "2007-12-29T15:53:40.000Z",
+            "retired_by": null,
+            "date_retired": null,
+            "retire_reason": null,
+            "uuid": "0b85e4dc-d65e-11d6-b7af-0024217bb78e"
+        },
+        "concept_names": [
+            {
+                "concept_id": 2137,
+                "name": "Body mass index, measured",
+                "locale": "en",
+                "creator": 1,
+                "date_created": "2007-05-12T10:29:11.000Z",
+                "concept_name_id": 2306,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "0c4f2ec8-d65e-11d6-b7af-0024217bb78e",
+                "concept_name_type": "FULLY_SPECIFIED",
+                "locale_preferred": 0
+            },
+            {
+                "concept_id": 2137,
+                "name": "BMI",
+                "locale": "en",
+                "creator": 1,
+                "date_created": "2007-05-12T10:29:11.000Z",
+                "concept_name_id": 5833,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "0c6dff6a-d65e-11d6-b7af-0024217bb78e",
+                "concept_name_type": "SHORT",
+                "locale_preferred": 0
+            }
+        ]
+    }
+]</code></pre>
+                                    </td></tr>
+                                    
+                                    
+                                </table>
+                            </div>
+                            
+                        </div>
+                    </div>
+                    
+
+                    <hr>
+                </div>
+                
+                
+                <div class="request">
+
+                    <h3 id="request-people-search">
+                        People search
+                        <a href="#request-people-search"><i class="glyphicon glyphicon-link"></i></a>
+                    </h3>
+
+                    <div><p>localhost:3000/api/v1/search/people?given_name=Julius&amp;family_name=Phiri&amp;gender=M&amp;page_size=20&amp;page=0</p>
+</div>
+
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li role="presentation" class="active"><a href="#request-people-search-example-curl" data-toggle="tab">Curl</a></li>
+                            <li role="presentation"><a href="#request-people-search-example-http" data-toggle="tab">HTTP</a></li>
+                        </ul>
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="request-people-search-example-curl">
+                                <pre><code class="hljs curl">curl -X GET -H "Authorization: p6GLbZKqf0Fj" "localhost:3000/api/v1/search/people?given_name=Julius&family_name=Phiri&gender=M&page_size=20&page=0"</code></pre>
+                            </div>
+                            <div class="tab-pane" id="request-people-search-example-http">
+                                <pre><code class="hljs http">GET 3000/api/v1/search/people?given_name=Julius&family_name=Phiri&gender=M&page_size=20&page=0 HTTP/1.1
+Host: 
+Authorization: p6GLbZKqf0Fj</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            
+                            <li role="presentation" class="active">
+                                <a href="#request-people-search-responses-382e1511-4edb-92cd-20a5-2a9fdde5124d" data-toggle="tab">
+                                    
+                                    Response
+                                    
+                                </a>
+                            </li>
+                            
+                        </ul>
+                        <div class="tab-content">
+                            
+                            <div class="tab-pane active" id="request-people-search-responses-382e1511-4edb-92cd-20a5-2a9fdde5124d">
+                                <table class="table table-bordered">
+                                    <tr><th style="width: 20%;">Status</th><td>200 </td></tr>
+                                    
+                                    <tr><th style="width: 20%;">cache-control</th><td>max-age=0, private, must-revalidate</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">content-type</th><td>application/json; charset=utf-8</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">etag</th><td>W/"78a1d38faf8ab140822f822ee1fd1d15"</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">transfer-encoding</th><td>chunked</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">vary</th><td>Origin</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-request-id</th><td>e56ee22a-1911-4d82-984e-bd2e80827e5f</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-runtime</th><td>0.189721</td></tr>
+                                    
+                                    
+                                    
+                                    <tr><td class="response-text-sample" colspan="2">
+                                        <pre><code>[
+    {
+        "person_id": 2304,
+        "gender": "M",
+        "birthdate": "1989-07-01",
+        "birthdate_estimated": 1,
+        "dead": 0,
+        "death_date": null,
+        "cause_of_death": null,
+        "creator": 6,
+        "date_created": "2011-09-17T00:00:00.000Z",
+        "changed_by": null,
+        "date_changed": null,
+        "voided": 0,
+        "voided_by": null,
+        "date_voided": null,
+        "void_reason": null,
+        "uuid": "0d8c03de-59cc-11e3-b7e9-003018a9e11f",
+        "names": [
+            {
+                "person_name_id": 2383,
+                "preferred": 0,
+                "person_id": 2304,
+                "prefix": null,
+                "given_name": "Julius",
+                "middle_name": null,
+                "family_name_prefix": null,
+                "family_name": "Phiri",
+                "family_name2": null,
+                "family_name_suffix": null,
+                "degree": null,
+                "creator": 6,
+                "date_created": "2011-09-17T00:00:00.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "changed_by": null,
+                "date_changed": null,
+                "uuid": "0d8c0771-59cc-11e3-b7e9-003018a9e11f"
+            }
+        ],
+        "addresses": [
+            {
+                "person_address_id": 1195,
+                "person_id": 2304,
+                "preferred": 0,
+                "address1": "School",
+                "address2": null,
+                "city_village": "Chileka",
+                "state_province": null,
+                "postal_code": null,
+                "country": null,
+                "latitude": null,
+                "longitude": null,
+                "creator": 6,
+                "date_created": "2011-09-17T00:00:00.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "county_district": null,
+                "neighborhood_cell": null,
+                "region": null,
+                "subregion": null,
+                "township_division": null,
+                "uuid": "0d8c153d-59cc-11e3-b7e9-003018a9e11f"
+            }
+        ],
+        "person_attributes": [
+            {
+                "person_attribute_id": 4954,
+                "person_id": 2304,
+                "value": "Chileka",
+                "person_attribute_type_id": 18,
+                "creator": 6,
+                "date_created": "2011-09-17T00:00:00.000Z",
+                "changed_by": null,
+                "date_changed": null,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "0d8c15f6-59cc-11e3-b7e9-003018a9e11f"
+            },
+            {
+                "person_attribute_id": 4955,
+                "person_id": 2304,
+                "value": "School",
+                "person_attribute_type_id": 19,
+                "creator": 6,
+                "date_created": "2011-09-17T00:00:00.000Z",
+                "changed_by": null,
+                "date_changed": null,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "0d8c153d-59cc-11e3-b7e9-003018a9e11f"
+            },
+            {
+                "person_attribute_id": 4956,
+                "person_id": 2304,
+                "value": "Other",
+                "person_attribute_type_id": 13,
+                "creator": 6,
+                "date_created": "2011-09-17T00:00:00.000Z",
+                "changed_by": null,
+                "date_changed": null,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "0d8c1eeb-59cc-11e3-b7e9-003018a9e11f"
+            },
+            {
+                "person_attribute_id": 4957,
+                "person_id": 2304,
+                "value": "Not Available",
+                "person_attribute_type_id": 14,
+                "creator": 6,
+                "date_created": "2011-09-17T00:00:00.000Z",
+                "changed_by": null,
+                "date_changed": null,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "0d8c20be-59cc-11e3-b7e9-003018a9e11f"
+            }
+        ]
+    },
+    {
+        "person_id": 4956,
+        "gender": "M",
+        "birthdate": "1980-07-21",
+        "birthdate_estimated": 1,
+        "dead": 0,
+        "death_date": null,
+        "cause_of_death": null,
+        "creator": 1,
+        "date_created": "2011-12-06T00:00:00.000Z",
+        "changed_by": null,
+        "date_changed": null,
+        "voided": 0,
+        "voided_by": null,
+        "date_voided": null,
+        "void_reason": null,
+        "uuid": "a844a1ea-59cd-11e3-b7e9-003018a9e11f",
+        "names": [
+            {
+                "person_name_id": 5001,
+                "preferred": 0,
+                "person_id": 4956,
+                "prefix": null,
+                "given_name": "Julius",
+                "middle_name": null,
+                "family_name_prefix": null,
+                "family_name": "Phiri",
+                "family_name2": null,
+                "family_name_suffix": null,
+                "degree": null,
+                "creator": 1,
+                "date_created": "2011-12-06T00:00:00.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "changed_by": null,
+                "date_changed": null,
+                "uuid": "a844a4d1-59cd-11e3-b7e9-003018a9e11f"
+            }
+        ],
+        "addresses": [
+            {
+                "person_address_id": 2959,
+                "person_id": 4956,
+                "preferred": 0,
+                "address1": "School",
+                "address2": null,
+                "city_village": "Dowa",
+                "state_province": null,
+                "postal_code": null,
+                "country": null,
+                "latitude": null,
+                "longitude": null,
+                "creator": 1,
+                "date_created": "2011-12-06T00:00:00.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "county_district": null,
+                "neighborhood_cell": null,
+                "region": null,
+                "subregion": null,
+                "township_division": null,
+                "uuid": "a844b56a-59cd-11e3-b7e9-003018a9e11f"
+            }
+        ],
+        "person_attributes": [
+            {
+                "person_attribute_id": 12010,
+                "person_id": 4956,
+                "value": "Dowa",
+                "person_attribute_type_id": 18,
+                "creator": 1,
+                "date_created": "2011-12-06T00:00:00.000Z",
+                "changed_by": null,
+                "date_changed": null,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "a844b62b-59cd-11e3-b7e9-003018a9e11f"
+            },
+            {
+                "person_attribute_id": 12011,
+                "person_id": 4956,
+                "value": "School",
+                "person_attribute_type_id": 19,
+                "creator": 1,
+                "date_created": "2011-12-06T00:00:00.000Z",
+                "changed_by": null,
+                "date_changed": null,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "a844b56a-59cd-11e3-b7e9-003018a9e11f"
+            },
+            {
+                "person_attribute_id": 12012,
+                "person_id": 4956,
+                "value": "Farmer",
+                "person_attribute_type_id": 13,
+                "creator": 1,
+                "date_created": "2011-12-06T00:00:00.000Z",
+                "changed_by": null,
+                "date_changed": null,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "a844beeb-59cd-11e3-b7e9-003018a9e11f"
+            },
+            {
+                "person_attribute_id": 12013,
+                "person_id": 4956,
+                "value": "Not Available",
+                "person_attribute_type_id": 14,
+                "creator": 1,
+                "date_created": "2011-12-06T00:00:00.000Z",
+                "changed_by": null,
+                "date_changed": null,
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "a844c0b6-59cd-11e3-b7e9-003018a9e11f"
+            }
+        ]
+    }
+]</code></pre>
+                                    </td></tr>
+                                    
+                                    
+                                </table>
+                            </div>
+                            
+                        </div>
+                    </div>
+                    
+
+                    <hr>
+                </div>
+                
+                
+                <div class="request">
+
+                    <h3 id="request-retrieve-encounter-types">
+                        Retrieve encounter types
+                        <a href="#request-retrieve-encounter-types"><i class="glyphicon glyphicon-link"></i></a>
+                    </h3>
+
+                    <div><p>localhost:3000/api/v1/encounters/_types</p>
+</div>
+
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li role="presentation" class="active"><a href="#request-retrieve-encounter-types-example-curl" data-toggle="tab">Curl</a></li>
+                            <li role="presentation"><a href="#request-retrieve-encounter-types-example-http" data-toggle="tab">HTTP</a></li>
+                        </ul>
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="request-retrieve-encounter-types-example-curl">
+                                <pre><code class="hljs curl">curl -X GET -H "Authorization: JDIt0GpZyR3I" "localhost:3000/api/v1/encounters/_types"</code></pre>
+                            </div>
+                            <div class="tab-pane" id="request-retrieve-encounter-types-example-http">
+                                <pre><code class="hljs http">GET 3000/api/v1/encounters/_types HTTP/1.1
+Host: 
+Authorization: JDIt0GpZyR3I</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            
+                            <li role="presentation" class="active">
+                                <a href="#request-retrieve-encounter-types-responses-a63b6666-0d66-33d9-bdbc-2c69e37a987a" data-toggle="tab">
+                                    
+                                    Response
+                                    
+                                </a>
+                            </li>
+                            
+                        </ul>
+                        <div class="tab-content">
+                            
+                            <div class="tab-pane active" id="request-retrieve-encounter-types-responses-a63b6666-0d66-33d9-bdbc-2c69e37a987a">
+                                <table class="table table-bordered">
+                                    <tr><th style="width: 20%;">Status</th><td>200 </td></tr>
+                                    
+                                    <tr><th style="width: 20%;">cache-control</th><td>max-age=0, private, must-revalidate</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">content-type</th><td>application/json; charset=utf-8</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">etag</th><td>W/"005bba8e049fa83df0cdad28cdae54b8"</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">transfer-encoding</th><td>chunked</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">vary</th><td>Origin</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-request-id</th><td>500b6369-7fc8-4232-aa36-6c2aa7d1b8ea</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-runtime</th><td>0.004969</td></tr>
+                                    
+                                    
+                                    
+                                    <tr><td class="response-text-sample" colspan="2">
+                                        <pre><code>[
+    {
+        "encounter_type_id": 1,
+        "name": "ADULTINITIAL",
+        "description": "Outpatient Adult Initial Visit",
+        "creator": 1,
+        "date_created": "2005-02-24T00:00:00.000Z",
+        "retired": 0,
+        "retired_by": null,
+        "date_retired": null,
+        "retire_reason": null,
+        "uuid": "8d5b27bc-c2cc-11de-8d13-0010c6dffd0f"
+    },
+    {
+        "encounter_type_id": 2,
+        "name": "ADULTRETURN",
+        "description": "Outpatient Adult Return Visit",
+        "creator": 1,
+        "date_created": "2005-02-24T00:00:00.000Z",
+        "retired": 0,
+        "retired_by": null,
+        "date_retired": null,
+        "retire_reason": null,
+        "uuid": "8d5b2be0-c2cc-11de-8d13-0010c6dffd0f"
+    }
+]</code></pre>
+                                    </td></tr>
+                                    
+                                    
+                                </table>
+                            </div>
+                            
+                        </div>
+                    </div>
+                    
+
+                    <hr>
+                </div>
+                
+                
+                <div class="request">
+
+                    <h3 id="request-searching-encounter-types">
+                        Searching encounter types
+                        <a href="#request-searching-encounter-types"><i class="glyphicon glyphicon-link"></i></a>
+                    </h3>
+
+                    <div><p>localhost:3000/api/v1/encounters/_types?name=VITALS</p>
+</div>
+
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li role="presentation" class="active"><a href="#request-searching-encounter-types-example-curl" data-toggle="tab">Curl</a></li>
+                            <li role="presentation"><a href="#request-searching-encounter-types-example-http" data-toggle="tab">HTTP</a></li>
+                        </ul>
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="request-searching-encounter-types-example-curl">
+                                <pre><code class="hljs curl">curl -X GET -H "Authorization: JDIt0GpZyR3I" "localhost:3000/api/v1/encounters/_types?name=VITALS"</code></pre>
+                            </div>
+                            <div class="tab-pane" id="request-searching-encounter-types-example-http">
+                                <pre><code class="hljs http">GET 3000/api/v1/encounters/_types?name=VITALS HTTP/1.1
+Host: 
+Authorization: JDIt0GpZyR3I</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+
+                    <hr>
+                </div>
+                
+                
+                <div class="request">
+
+                    <h3 id="request-creating-new-observations">
+                        Creating new observations
+                        <a href="#request-creating-new-observations"><i class="glyphicon glyphicon-link"></i></a>
+                    </h3>
+
+                    <div><p><a href="http://localhost:3000/api/v1/observations">http://localhost:3000/api/v1/observations</a></p>
+</div>
+
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li role="presentation" class="active"><a href="#request-creating-new-observations-example-curl" data-toggle="tab">Curl</a></li>
+                            <li role="presentation"><a href="#request-creating-new-observations-example-http" data-toggle="tab">HTTP</a></li>
+                        </ul>
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="request-creating-new-observations-example-curl">
+                                <pre><code class="hljs curl">curl -X POST -H "Authorization: 5CIpaXv524te" -H "Content-Type: application/json" -d '{
+	"person_id": 1000 ,
+	"concept_id": 2552,
+	"encounter_id": 373035,
+	"value": 50,
+	"value_type": "numeric"
+}' "http://localhost:3000/api/v1/observations"</code></pre>
+                            </div>
+                            <div class="tab-pane" id="request-creating-new-observations-example-http">
+                                <pre><code class="hljs http">POST /api/v1/observations HTTP/1.1
+Host: localhost:3000
+Authorization: 5CIpaXv524te
+Content-Type: application/json
+
+{
+	"person_id": 1000 ,
+	"concept_id": 2552,
+	"encounter_id": 373035,
+	"value": 50,
+	"value_type": "numeric"
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+
+                    <hr>
+                </div>
+                
+                
+                <div class="request">
+
+                    <h3 id="request-retrieve-observations">
+                        Retrieve observations
+                        <a href="#request-retrieve-observations"><i class="glyphicon glyphicon-link"></i></a>
+                    </h3>
+
+                    <div><p><a href="http://localhost:3000/api/v1/observations?page=0&amp;page_size=3">http://localhost:3000/api/v1/observations?page=0&amp;page_size=3</a></p>
+</div>
+
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li role="presentation" class="active"><a href="#request-retrieve-observations-example-curl" data-toggle="tab">Curl</a></li>
+                            <li role="presentation"><a href="#request-retrieve-observations-example-http" data-toggle="tab">HTTP</a></li>
+                        </ul>
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="request-retrieve-observations-example-curl">
+                                <pre><code class="hljs curl">curl -X GET -H "Authorization: JDIt0GpZyR3I" "http://localhost:3000/api/v1/observations?page=0&page_size=3"</code></pre>
+                            </div>
+                            <div class="tab-pane" id="request-retrieve-observations-example-http">
+                                <pre><code class="hljs http">GET /api/v1/observations?page=0&page_size=3 HTTP/1.1
+Host: localhost:3000
+Authorization: JDIt0GpZyR3I</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            
+                            <li role="presentation" class="active">
+                                <a href="#request-retrieve-observations-responses-26358244-1034-cfe5-102f-d101efe58a42" data-toggle="tab">
+                                    
+                                    Response
+                                    
+                                </a>
+                            </li>
+                            
+                        </ul>
+                        <div class="tab-content">
+                            
+                            <div class="tab-pane active" id="request-retrieve-observations-responses-26358244-1034-cfe5-102f-d101efe58a42">
+                                <table class="table table-bordered">
+                                    <tr><th style="width: 20%;">Status</th><td>200 </td></tr>
+                                    
+                                    <tr><th style="width: 20%;">cache-control</th><td>max-age=0, private, must-revalidate</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">content-type</th><td>application/json; charset=utf-8</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">etag</th><td>W/"44c41455fa64717814e2ccf9597cdcf8"</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">transfer-encoding</th><td>chunked</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-request-id</th><td>a2f983be-be4d-41d2-aeef-3638c1b3be26</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-runtime</th><td>0.009961</td></tr>
+                                    
+                                    
+                                    
+                                    <tr><td class="response-text-sample" colspan="2">
+                                        <pre><code>[
+    {
+        "obs_id": 1,
+        "person_id": 1,
+        "concept_id": 2552,
+        "encounter_id": 2,
+        "order_id": null,
+        "obs_datetime": "2011-09-14T14:14:54.000Z",
+        "location_id": 148,
+        "obs_group_id": null,
+        "accession_number": null,
+        "value_group_id": null,
+        "value_boolean": null,
+        "value_coded": 1066,
+        "value_coded_name_id": 1103,
+        "value_drug": null,
+        "value_datetime": null,
+        "value_numeric": null,
+        "value_modifier": null,
+        "value_text": null,
+        "date_started": null,
+        "date_stopped": null,
+        "comments": null,
+        "creator": 1,
+        "date_created": "2011-09-14T14:17:16.000Z",
+        "voided": 0,
+        "voided_by": null,
+        "date_voided": null,
+        "void_reason": null,
+        "value_complex": null,
+        "uuid": "350c168e-59ca-11e3-b7e9-003018a9e11f",
+        "concept": {
+            "concept_id": 2552,
+            "retired": 0,
+            "short_name": null,
+            "description": null,
+            "form_text": null,
+            "datatype_id": 2,
+            "class_id": 7,
+            "is_set": 0,
+            "creator": 1,
+            "date_created": "2007-08-07T09:23:32.000Z",
+            "default_charge": null,
+            "version": "",
+            "changed_by": 1,
+            "date_changed": "2009-08-25T13:07:06.000Z",
+            "retired_by": null,
+            "date_retired": null,
+            "retire_reason": null,
+            "uuid": "0b89adf6-d65e-11d6-b7af-0024217bb78e"
+        }
+    },
+    {
+        "obs_id": 2,
+        "person_id": 1,
+        "concept_id": 7437,
+        "encounter_id": 2,
+        "order_id": null,
+        "obs_datetime": "2011-09-14T14:14:54.000Z",
+        "location_id": 148,
+        "obs_group_id": null,
+        "accession_number": null,
+        "value_group_id": null,
+        "value_boolean": false,
+        "value_coded": null,
+        "value_coded_name_id": null,
+        "value_drug": null,
+        "value_datetime": null,
+        "value_numeric": null,
+        "value_modifier": null,
+        "value_text": null,
+        "date_started": null,
+        "date_stopped": null,
+        "comments": null,
+        "creator": 1,
+        "date_created": "2011-09-14T14:17:16.000Z",
+        "voided": 0,
+        "voided_by": null,
+        "date_voided": null,
+        "void_reason": null,
+        "value_complex": null,
+        "uuid": "350c1bea-59ca-11e3-b7e9-003018a9e11f",
+        "concept": {
+            "concept_id": 7437,
+            "retired": 0,
+            "short_name": null,
+            "description": null,
+            "form_text": null,
+            "datatype_id": 4,
+            "class_id": 11,
+            "is_set": 0,
+            "creator": 1,
+            "date_created": "2010-11-03T10:42:20.000Z",
+            "default_charge": null,
+            "version": "",
+            "changed_by": null,
+            "date_changed": null,
+            "retired_by": null,
+            "date_retired": null,
+            "retire_reason": null,
+            "uuid": "0bb64c58-d65e-11d6-b7af-0024217bb78e"
+        }
+    },
+    {
+        "obs_id": 3,
+        "person_id": 1,
+        "concept_id": 7881,
+        "encounter_id": 2,
+        "order_id": null,
+        "obs_datetime": "2011-09-14T14:14:54.000Z",
+        "location_id": 148,
+        "obs_group_id": null,
+        "accession_number": null,
+        "value_group_id": null,
+        "value_boolean": null,
+        "value_coded": null,
+        "value_coded_name_id": null,
+        "value_drug": null,
+        "value_datetime": null,
+        "value_numeric": null,
+        "value_modifier": null,
+        "value_text": "Unknown",
+        "date_started": null,
+        "date_stopped": null,
+        "comments": null,
+        "creator": 1,
+        "date_created": "2011-09-14T14:17:16.000Z",
+        "voided": 0,
+        "voided_by": null,
+        "date_voided": null,
+        "void_reason": null,
+        "value_complex": null,
+        "uuid": "350c2079-59ca-11e3-b7e9-003018a9e11f",
+        "concept": {
+            "concept_id": 7881,
+            "retired": 0,
+            "short_name": null,
+            "description": null,
+            "form_text": null,
+            "datatype_id": 3,
+            "class_id": 1,
+            "is_set": 0,
+            "creator": 1,
+            "date_created": "2011-06-23T14:22:29.000Z",
+            "default_charge": null,
+            "version": "",
+            "changed_by": 1,
+            "date_changed": "2011-08-02T09:45:05.000Z",
+            "retired_by": null,
+            "date_retired": null,
+            "retire_reason": null,
+            "uuid": "0bb9f0b0-d65e-11d6-b7af-0024217bb78e"
+        }
+    }
+]</code></pre>
+                                    </td></tr>
+                                    
+                                    
+                                </table>
+                            </div>
+                            
+                        </div>
+                    </div>
+                    
+
+                    <hr>
+                </div>
+                
+
+
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-2.2.2.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $("table:not(.table)").addClass('table table-bordered');
+    });
+</script>
+</body>
+</html>

@@ -67,8 +67,8 @@ Rails.application.routes.draw do
     end
   end
 
+  root to: 'static#index'
+  get '/api/v1/_health' => 'healthcheck#index'
   post '/api/v1/auth/login' => 'api/v1/users#login'
   post '/api/v1/auth/verify_token' => 'api/v1/users#check_token_validity'
-
-  # route '/' => nil
 end
