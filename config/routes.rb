@@ -1,11 +1,23 @@
 Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
+      # Helper for creating dynamic redirect urls with redirect blocks
+      def paginate_url(url, params)
+        page = params[:page]
+        page_size = params[:page_size]
+
+        url += "&page=#{page}" if page
+        url += "&page_size=#{page_size}" if page_size
+        url
+      end
+
       resources :users
 
       get '/people/_names' => 'person_names#index'
       resources :people do
-        get '/names', to: redirect('/api/v1/people/_names?person_id=%{person_id}')
+        get('/names', to: redirect do |params, request|
+          paginate_url "/api/v1/people/_names?person_id=#{params[:person_id]}", request.params
+        end)
       end
 
       resources :roles
@@ -14,24 +26,36 @@ Rails.application.routes.draw do
 
       # Locations
       resources :locations
+      resources :workstations
 
       resources :regions, only: %i[index] do
-        get '/districts', to: redirect('/api/v1/districts?region_id=%{region_id}')
+        get('/districts', to: redirect do |params, request|
+          paginate_url "/api/v1/districts?region_id=#{params[:region_id]}", request.params
+        end)
       end
 
       resources :districts, only: %i[index] do
-        get '/traditional_authorities', to: redirect('/api/v1/traditional_authorities?district_id=%{district_id}')
+        get('/traditional_authorities', to: redirect do |params, request|
+          redirect_url = "/api/v1/traditional_authorities?district_id=#{params[:district_id]}"
+          paginate_url redirect_url, request.params
+        end)
       end
 
       resources :traditional_authorities, only: %i[index] do
-        get '/villages', to: redirect('/api/v1/villages?traditional_authority_id=%{traditional_authority_id}')
+        get('/villages', to: redirect do |params, request|
+          redirect_url = "/api/v1/villages?traditional_authority_id=#{params[:traditional_authority_id]}"
+          paginate_url redirect_url, request.params
+        end)
       end
 
       resources :villages, only: %i[index]
 
       get '/encounters/_types' => 'encounter_types#index'
       resources :encounters do
-        get '/observations', to: redirect('/api/v1/observations?encounter_id=%{encounter_id}')
+        get('/observations', to: redirect do |params, request|
+          redirect_url = "/api/v1/observations?encounter_id=#{params[:encounter_id]}"
+          paginate_url redirect_url, request.params
+        end)
       end
 
       resources :observations
@@ -45,4 +69,6 @@ Rails.application.routes.draw do
 
   post '/api/v1/auth/login' => 'api/v1/users#login'
   post '/api/v1/auth/verify_token' => 'api/v1/users#check_token_validity'
+
+  # route '/' => nil
 end

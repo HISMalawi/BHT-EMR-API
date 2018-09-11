@@ -31,7 +31,6 @@ class ApplicationController < ActionController::API
   end
 
   def paginate(queryset)
-    # TODO: Check if page and page_size are integers
     limit = (params[:page_size] || DEFAULT_PAGE_SIZE).to_i
     offset = (params[:page] || 0).to_i * DEFAULT_PAGE_SIZE
 
