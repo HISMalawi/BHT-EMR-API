@@ -37,10 +37,10 @@ class ApplicationController < ActionController::API
     queryset.offset(offset).limit(limit)
   end
 
-  # Takes district search filters and converts to expression containing
+  # Takes search filters and converts them to an expression containing
   # inexact glob matchers that can be passed to `where` expressins.
   def make_inexact_filters(filters, fields=nil)
-    fields = filters.keys unless fields
+    fields ||= filters.keys
 
     inexact_filters = filters.to_hash.each_with_object([[], []]) do |kv_pair, inexact_filters|
       k, v = kv_pair
