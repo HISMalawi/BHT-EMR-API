@@ -22,7 +22,9 @@ Rails.application.routes.draw do
       end
 
       resources :roles
-      resources :patients
+      resources :patients do
+        get '/labels/national_health_id' => 'patients#print_national_health_id_label'
+      end
       resources :concepts, only: %i[index show]
 
       # Locations

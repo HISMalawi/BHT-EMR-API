@@ -2,6 +2,7 @@
 
 require 'securerandom'
 require 'dde_client'
+require 'zebra_printer/init'
 
 class Api::V1::PatientsController < ApplicationController
   before_action :load_dde_client
@@ -39,7 +40,9 @@ class Api::V1::PatientsController < ApplicationController
       return
     end
 
-    patient = Patient.create patient_id: person.id, creator: User.current.id, date_created: Time.now
+    patient = Patient.create patient_id: person.id,
+                             creator: User.current.id,
+                             date_created: Time.now
 
     patient_identifier = PatientIdentifier.create(
       identifier: response['npid'],
@@ -60,6 +63,16 @@ class Api::V1::PatientsController < ApplicationController
     end
 
     render json: patient, status: :created
+  end
+
+  def print_national_health_id_label
+    patient = Patient.find(params[:patient_id])
+
+    label = generate_national_id_label patient
+    send_data label, type: 'application/label;charset=utf-8',
+                     stream: false,
+                     filename: "#{params[:patient_id]}-#{SecureRandom.hex(12)}.lbl",
+                     disposition: 'inline'
   end
 
   private
@@ -136,5 +149,25 @@ class Api::V1::PatientsController < ApplicationController
 
   def find_patient(npid)
     @dde_service.find_patient(npid)
+  end
+
+  def generate_national_id_label(patient)
+    person = patient.person
+
+    national_id = patient.national_id
+    return nil unless national_id
+
+    sex =  "(#{person.gender})"
+    address = person.addresses.first.to_s.strip[0..24].humanize
+    label = ZebraPrinter::StandardLabel.new
+    label.font_size = 2
+    label.font_horizontal_multiplier = 2
+    label.font_vertical_multiplier = 2
+    label.left_margin = 50
+    label.draw_barcode(50, 180, 0, 1, 5, 15, 120, false, national_id)
+    label.draw_multi_text(person.name.titleize)
+    label.draw_multi_text("#{patient.national_id_with_dashes} #{person.birthdate}#{sex}")
+    label.draw_multi_text(address)
+    label.print(1)
   end
 end

@@ -1,6 +1,8 @@
 class Patient < VoidableRecord
   after_void :void_related_models
 
+  NATIONAL_ID_NAME = 'National id'
+
   self.table_name = 'patient'
   self.primary_key = 'patient_id'
 
@@ -28,6 +30,18 @@ class Patient < VoidableRecord
         orders: {}
       }
     }))
+  end
+
+  def national_id
+    id_type = PatientIdentifierType.find_by name: NATIONAL_ID_NAME
+    id_obj = patient_identifiers.find_by(identifier_type: id_type)
+    id_obj ? (id_obj.identifier || '') : ''
+  end
+
+  def national_id_with_dashes
+    id = national_id
+    return nil if id.blank?
+    id[0..4] + '-' + id[5..8] + '-' + id[9..-1]
   end
 
   def void_related_models(reason)

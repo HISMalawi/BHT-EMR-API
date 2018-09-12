@@ -34,6 +34,11 @@ class Person < VoidableRecord
     end
   end
 
+  def name
+    name = names.first
+    "#{name.given_name} #{name.family_name}"
+  end
+
   def as_json(options = {})
     super(options.merge(
       include: {
