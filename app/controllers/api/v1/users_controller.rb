@@ -12,7 +12,7 @@ class Api::V1::UsersController < ApplicationController
   end
 
   def show
-    render json: User.find(id: params[:id]), status: :ok
+    render json: User.find(params[:id]), status: :ok
   end
 
   def create
