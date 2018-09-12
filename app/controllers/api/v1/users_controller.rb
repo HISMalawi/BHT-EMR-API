@@ -42,35 +42,15 @@ class Api::V1::UsersController < ApplicationController
   end
 
   def update
-    #
-    #   params = {
-    #     username": "", password: "", first_name: "", last_name:  "", gender: "", role:   "Admin|Nurse|Clinician|Doctor",  birthdate: ""
-    #   }
+    username = params.require(:username)
+    update_params = params.permit(%i[password given_name family_name])
 
-    if UserService.update_user(params)
-
-      details = UserService.compute_expiry_time
-      response = {
-        status: 200,
-        error: false,
-        message: 'account updated successfuly',
-        data: {
-          token: details[:token],
-          expiry_time: details[:expiry_time]
-        }
-      }
+    user = UserService.update_user User.find_by(username: username), update_params
+    if user.errrors.empty?
+      render json: user, status: :ok
     else
-      response = {
-        status: 401,
-        error: true,
-        message: 'failed to update user',
-        data: {
-
-        }
-      }
+      render json: user.errors, status: :bad_request
     end
-
-    render json: response
   end
 
   def login

@@ -36,32 +36,28 @@ module UserService
     user
   end
 
-  def self.update_user(params)
-    user = User.where(username: params[:username]).first
-    return false if user.blank?
+  def self.update_user(user, params)
+    # Update person name if specified
+    if params.include(:given_name) || params.include(:family_name)
+      name.given_name = params[:given_name] if params[:given_name]
+      name.family_name = params[:family_name] if params[:family_name]
+      name.save
+    end
 
-    details = compute_expiry_time
+    # Update password if any
+    if params[:password]
+      user.password = Digest::SHA1.hexdigest "#{params[:password]}#{user.salt}"
+      user.save
+    end
 
-    person = Person.find(user.person_id)
-    name   = PersonName.where(person_id: user.person_id).last
+    # Update role if any
+    if params[:role]
+      role = Role.find(params[:role])
+      user.roles.delete_all # Should we be appending not replacing?
+      UserRole.create(role: role, user: user)
+    end
 
-    return false if name.blank? || person.blank?
-
-    user.authentication_token = details[:token]
-    user.token_expiry_time = details[:expiry_time]
-    user.password = Digest::SHA1.hexdigest("#{params[:password]}#{user.salt}") if params[:password].present?
-
-    person.gender       = params[:gender] if params[:gender].present?
-    person.birthdate    = params[:birthdate].to_date.to_s(:db) if params[:birthdate].present?
-
-    name.given_name = params[:first_name] if params[:first_name].present?
-    name.family_name = params[:last_name] if params[:last_name].present?
-
-    user.save
-    person.save
-    name.save
-
-    true
+    user
   end
 
   def self.new_authentication_token(user)
