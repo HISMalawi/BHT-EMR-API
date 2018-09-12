@@ -16,20 +16,14 @@ class Api::V1::UsersController < ApplicationController
   end
 
   def create
-    create_params = params.require(%i[username password given_name family_name role])
-    username, password, given_name, family_name, role = create_params
+    create_params = params.require(%i[username password given_name family_name roles])
+    username, password, given_name, family_name, roles = create_params
 
-    logger.debug create_params
-
-    if UserService.check_user(username)
-      errors = ['User already exists']
-      render json: { errors: errors }, status: :conflict
-      return
-    end
+    return unless validate_roles(roles) & validate_username(username)
 
     user = UserService.create_user(
       username: username, password: password, given_name: given_name,
-      family_name: family_name, role: role
+      family_name: family_name, roles: roles
     )
 
     if user.errors.empty?
@@ -42,7 +36,10 @@ class Api::V1::UsersController < ApplicationController
   end
 
   def update
-    update_params = params.permit(%i[password given_name family_name])
+    update_params = params.permit(%i[password given_name family_name roles])
+
+    # Makes sure roles are an array if provided
+    return unless validate_roles(update_params[:roles])
 
     user = UserService.update_user User.find(params[:id]), update_params
     if user.errors.empty?
@@ -149,21 +146,22 @@ class Api::V1::UsersController < ApplicationController
 
   private
 
-  CREATE_PARAMS = %i[username password person_id role].freeze
+  def validate_roles(roles)
+    if roles && !roles.respond_to?(:each)
+      render json: ['`roles` must be an array'], status: :bad_request
+      return false
+    end
 
-  def get_create_params
-    create_params, error = required_params required: CREATE_PARAMS
-    # raise create_params.inspect
-    return create_params, error if error
+    true
+  end
 
-    role = Role.find(create_params[:role])
-    puts role
-    return { role: "Invalid role ##{role}" }, true unless role
-    create_params[:role] = role # Replace id with actual role
+  def validate_username(username)
+    if UserService.check_user(username)
+      errors = ['User already exists']
+      render json: { errors: errors }, status: :conflict
+      return false
+    end
 
-    create_params[:person] = person = Person.find(create_params[:person_id])
-    return { person_id: "Invalid person_id ##{person_id}" }, true unless person
-
-    create_params
+    true
   end
 end

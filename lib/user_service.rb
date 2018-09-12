@@ -11,7 +11,7 @@ module UserService
 
   class UserCreateError < StandardError; end
 
-  def self.create_user(username:, password:, given_name:, family_name:, role:)
+  def self.create_user(username:, password:, given_name:, family_name:, roles:)
     person = PersonService.create_person(
       birthdate: nil, birthdate_estimated: false, gender: nil
     )
@@ -32,7 +32,10 @@ module UserService
       person: person,
       creator: User.current.id
     )
-    UserRole.create(role: Role.find(role), user: user)
+    roles.each do |rolename|
+      role = Role.find rolename
+      UserRole.create role: role, user: user
+    end
     user
   end
 
@@ -52,10 +55,12 @@ module UserService
     end
 
     # Update role if any
-    if params[:role]
-      role = Role.find(params[:role])
-      user.roles.delete_all # Should we be appending not replacing?
-      UserRole.create(role: role, user: user)
+    if params[:roles]&.respond_to?(:each)
+      user.roles.delete_all
+      params[:roles].each do |rolename|
+        role = Role.find rolename
+        UserRole.create role: role, user: user
+      end
     end
 
     user
