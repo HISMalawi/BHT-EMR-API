@@ -44,7 +44,7 @@ class Api::V1::EncountersController < ApplicationController
   #   provider_id: user_id of surrogate doing the data entry defaults to current user 
   def create
     create_params, errors = required_params required: %i[encounter_type_id patient_id],
-                                            optional: %i[provider_id]
+                                            optional: %i[provider_id encounter_datetime]
     return render json: { errors: create_params }, status: :bad_request if errors
 
     remap_encounter_type_id! create_params
@@ -54,7 +54,8 @@ class Api::V1::EncountersController < ApplicationController
     create_params[:location_id] = Location.current.id
     create_params[:provider_id] ||= User.current.id
     create_params[:creator] = User.current.id
-    create_params[:encounter_datetime] = create_params[:date_created] = Time.now
+    create_params[:encounter_datetime] ||= Time.now
+    create_params[:date_created] = Time.now
     encounter = Encounter.create create_params
 
     return render json: encounter.errors, status: :bad_request unless encounter.errors.empty?
