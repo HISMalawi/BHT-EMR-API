@@ -5,7 +5,7 @@ class Api::V1::DistrictsController < ApplicationController
     params = params.require(%i[name region_id])
 
     district = District.create(params)
-    if districts.errors.empty?
+    if district.errors.empty?
       render json: district, status: :created
     else
       render json: district.errors, status: :bad_request
