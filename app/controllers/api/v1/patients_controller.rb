@@ -32,11 +32,13 @@ class Api::V1::PatientsController < ApplicationController
     return render json: { errors: create_params }, status: :bad_request if errors
 
     person = Person.find(create_params[:person_id])
-    response, status = @dde_client.post 'add_person', openmrs_to_dde_person(person)
+    dde_person = openmrs_to_dde_person(person)
+    dde_response, dde_status = @dde_client.post 'add_person', dde_person
 
-    if status != 200
-      errors = ['Failed to create person in DDE']
-      render json: { errors: errors, dde_response: response }, status: :internal_server_error
+    if dde_status != 200
+      logger.error "Failed to create person in DDE: #{dde_response}"
+      render json: { errors: 'Failed to create person in DDE' },
+             status: :internal_server_error
       return
     end
 
@@ -65,6 +67,31 @@ class Api::V1::PatientsController < ApplicationController
     render json: patient, status: :created
   end
 
+  def update
+    patient = Patient.find(params[:id])
+
+    new_person_id = params.permit(:person_id)[:person_id]
+    if new_person_id
+      patient.person_id = new_person_id
+      unless patient.save
+        render json: patient.errors, status: :bad_request
+        return
+      end
+    end
+
+    dde_person = openmrs_to_dde_person(patient.person)
+    dde_response, dde_status = @dde_client.post 'update_person', dde_person
+
+    unless dde_status == 200
+      logger.error "Failed to update person in DDE: #{dde_response}"
+      render json: { errors: 'Failed to update person in DDE'},
+             status: :internal_server_error
+      return
+    end
+
+    render json: person, status: :ok
+  end
+
   def print_national_health_id_label
     patient = Patient.find(params[:patient_id])
 
@@ -84,10 +111,7 @@ class Api::V1::PatientsController < ApplicationController
 
     logger.debug 'Searching for a stored DDE connection'
     connection = Rails.application.config.dde_connection
-    if connection
-      logger.debug 'Stored DDE connection found'
-      @dde_client.connect connection: connection
-    else
+    unless connection
       logger.debug 'No stored DDE connection found... Loading config...'
       app_config = YAML.load_file DDE_CONFIG_PATH
       Rails.application.config.dde_connection = @dde_client.connect(
@@ -97,7 +121,11 @@ class Api::V1::PatientsController < ApplicationController
           base_url: app_config['dde_url']
         }
       )
+      return
     end
+
+    logger.debug 'Stored DDE connection found'
+    @dde_client.connect connection: connection
   end
 
   # Converts an openmrs person structure to a DDE person structure

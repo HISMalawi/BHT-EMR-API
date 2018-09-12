@@ -53,7 +53,9 @@ class Api::V1::PeopleController < ApplicationController
     PersonService.update_person_name person, update_params
     PersonService.update_person_address person, update_params
 
-    # TODO: Send person to DDE service in a fire and forget fashion
+    # ASIDE: Person we just updated may be linked to DDE, if this is the
+    # case, do we notify DDE of the update right now or do we force client
+    # to trigger an update in DDE by calling POST /patient/:patient_id?
 
     render json: person, status: :created
   end
