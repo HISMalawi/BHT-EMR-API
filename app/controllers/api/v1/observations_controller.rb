@@ -50,22 +50,26 @@ class Api::V1::ObservationsController < ApplicationController
   # Optional parameters
   #   order_id, comments
   def create
-    create_params, errors = required_params(
-      required: %i[person_id concept_id encounter_id concept_id value value_type],
-      optional: %i[order_id comments]
-    )
-    return render json: create_params, status: :bad_request if errors
+    encounter_id, plain_observations = params.require(%i[encounter_id observations])
 
-    return unless remap_value_to_typed_value create_params
+    encounter = Encounter.find(encounter_id)
+    observations = []
 
-    create_params[:obs_datetime] ||= Time.now
-
-    observation = Observation.create(create_params)
-    if observation.errors.empty?
-      render json: observation, status: :created
-    else
-      render json: observation.errors, status: :bad_request
+    plain_observations.each do |plain_obs|
+      plain_obs.permit!
+      plain_obs[:obs_datetime] ||= Time.now
+      plain_obs[:person_id] = encounter.patient.person.id
+      observation = Observation.new(plain_obs)
+      encounter.observations << observation
+      observations << observation
     end
+
+    unless encounter.save
+      render json: encounter.errors, status: :bad_request
+      return
+    end
+
+    render json: observations, status: :ok
   end
 
   # Update existing observation
