@@ -4,7 +4,7 @@ class Location < RetirableRecord
   self.table_name = :location
   self.primary_key = :location_id
 
-  attr_accessor :current
+  cattr_accessor :current
 
   belongs_to :parent
   has_one :parent, class_name: 'Location', foreign_key: :parent_location

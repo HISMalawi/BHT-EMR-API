@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'require_params'
+require 'user_service'
 
 class ApplicationController < ActionController::API
   before_action :check_location
@@ -33,13 +34,13 @@ class ApplicationController < ActionController::API
   end
 
   def check_location
-    location_id = GlobalProperty.where(property: CURRENT_LOCATION_PROPERTY).first
+    location_id = GlobalProperty.where(property: CURRENT_LOCATION_PROPERTY).first.property_value
     unless location_id
       render json: { errors: ['Current location not set'] }, status: :service_unavailable
       return false
     end
 
-    Location.current_location = Location.find(location_id)
+    Location.current = Location.find(location_id)
     true
   end
 
