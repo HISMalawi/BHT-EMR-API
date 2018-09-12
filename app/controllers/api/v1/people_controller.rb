@@ -44,7 +44,7 @@ class Api::V1::PeopleController < ApplicationController
   end
 
   def update
-    update_params, errors = required_params optional: PERSON_FIELDS
+    update_params, errors = required_params optional: PersonService::PERSON_FIELDS
     return render json: { errors: errors }, status: :bad_request if errors
 
     person = People.find(params[:id])
