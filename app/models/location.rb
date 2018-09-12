@@ -4,6 +4,8 @@ class Location < RetirableRecord
   self.table_name = :location
   self.primary_key = :location_id
 
+  attr_accessor :current
+
   belongs_to :parent
   has_one :parent, class_name: 'Location', foreign_key: :parent_location
   has_many :tag_maps, class_name: 'LocationTagMap', foreign_key: :location_id
@@ -12,13 +14,16 @@ class Location < RetirableRecord
     super(options.merge(include: { parent: {} }))
   end
 
-  def self.current
-    # TODO: Fetch location from Global properties
-    (Class.new do
-      def id
-        700
-      end
-    end).new
+  def self.current_health_center
+    unless @current_health_center
+      property = GlobalProperty.find_by_property('current_health_center_id')
+      @current_health_center = Location.find(property.property_value)
+    end
+
+    @current_health_center
+  rescue StandardError => e
+    logger.warn "Property current_health_center not set: #{e}"
+    nil
   end
 
   def site_id
@@ -72,13 +77,7 @@ class Location < RetirableRecord
     site_name == location.site_name
   end
 
-  def self.current_health_center
-    property = GlobalProperty.find_by_property('current_health_center_id')
-    @@current_health_center ||= Location.find(property.property_value)
-  rescue StandardError => e
-    logger.warn "Suppressed error: #{e}"
-    current_location
-  end
+
 
   def self.current_arv_code
     current_health_center.neighborhood_cell

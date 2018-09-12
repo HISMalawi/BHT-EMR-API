@@ -3,12 +3,14 @@
 require 'require_params'
 
 class ApplicationController < ActionController::API
+  before_action :check_location
   before_action :authenticate
 
   protected
 
   include RequireParams
 
+  CURRENT_LOCATION_PROPERTY = 'current_health_center_id'
   DEFAULT_PAGE_SIZE = 10
 
   def authenticate
@@ -27,6 +29,17 @@ class ApplicationController < ActionController::API
     end
 
     User.current = user
+    true
+  end
+
+  def check_location
+    location_id = GlobalProperty.where(property: CURRENT_LOCATION_PROPERTY).first
+    unless location_id
+      render json: { errors: ['Current location not set'] }, status: :service_unavailable
+      return false
+    end
+
+    Location.current_location = Location.find(location_id)
     true
   end
 
