@@ -38,7 +38,8 @@ module UserService
 
   def self.update_user(user, params)
     # Update person name if specified
-    if params.include(:given_name) || params.include(:family_name)
+    if params.include?(:given_name) || params.include?(:family_name)
+      name = user.person.names.first
       name.given_name = params[:given_name] if params[:given_name]
       name.family_name = params[:family_name] if params[:family_name]
       name.save

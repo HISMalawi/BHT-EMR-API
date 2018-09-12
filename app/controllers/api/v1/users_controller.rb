@@ -42,11 +42,10 @@ class Api::V1::UsersController < ApplicationController
   end
 
   def update
-    username = params.require(:username)
     update_params = params.permit(%i[password given_name family_name])
 
-    user = UserService.update_user User.find_by(username: username), update_params
-    if user.errrors.empty?
+    user = UserService.update_user User.find(params[:id]), update_params
+    if user.errors.empty?
       render json: user, status: :ok
     else
       render json: user.errors, status: :bad_request
