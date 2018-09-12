@@ -23,13 +23,13 @@ class User < RetirableRecord
                  authentication_token token_expiry_time],
       include: {
         roles: { include: {} },
-        # person: {
-        #   # include: {
-        #   #   person_names: {},
-        #   #   person_attributes: {},
-        #   #   person_addresses: {}
-        #   # }
-        # }
+        person: {
+          include: {
+            names: {},
+            # person_attributes: {},
+            # addresses: {}
+          }
+        }
       }
     ))
   end
