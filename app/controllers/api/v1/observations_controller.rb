@@ -56,7 +56,7 @@ class Api::V1::ObservationsController < ApplicationController
     observations = []
 
     plain_observations.each do |plain_obs|
-      plain_obs.permit!
+      plain_obs.permit! # Oops...
       plain_obs[:obs_datetime] ||= Time.now
       plain_obs[:person_id] = encounter.patient.person.id
       observation = Observation.new(plain_obs)
@@ -69,7 +69,7 @@ class Api::V1::ObservationsController < ApplicationController
       return
     end
 
-    render json: observations, status: :ok
+    render json: observations, status: :created
   end
 
   # Update existing observation
