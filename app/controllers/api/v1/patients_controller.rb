@@ -48,7 +48,7 @@ class Api::V1::PatientsController < ApplicationController
       patient: patient,
       date_created: Time.now,
       uuid: SecureRandom.uuid,
-      location_id: Location.current
+      location_id: Location.current.id
     )
 
     patient.patient_identifiers << patient_identifier
