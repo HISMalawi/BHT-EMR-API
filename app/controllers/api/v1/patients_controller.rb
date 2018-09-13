@@ -8,23 +8,7 @@ class Api::V1::PatientsController < ApplicationController
   before_action :load_dde_client
 
   def show
-    response, status = @dde_client.post 'search_by_npid', { npid: params[:id] }
-    if status == 200
-      render json: response
-    else
-      logger.error "DDE Error: Status - #{status} - #{response}"
-      render json: { errors: ['Unable to communicate with DDE'] }, status: :internal_server_error
-    end
-  end
-
-  def get
-    patient = find_patient params[:id]
-    unless patient
-      errors = ["Patient ##{params[:id]} not found"]
-      render json: { errors: errors }, status: :bad_request
-      return
-    end
-    render json: patient
+    render json: Patient.find(params[:id])
   end
 
   def create
@@ -47,8 +31,8 @@ class Api::V1::PatientsController < ApplicationController
                              date_created: Time.now
 
     patient_identifier = PatientIdentifier.create(
-      identifier: response['npid'],
-      identifier_type: PatientIdentifierType.find_by_name('National id').id,
+      identifier: dde_response['npid'],
+      identifier_type: npid_identifier_type.id,
       creator: User.current.id,
       patient: patient,
       date_created: Time.now,
@@ -89,7 +73,7 @@ class Api::V1::PatientsController < ApplicationController
       return
     end
 
-    render json: person, status: :ok
+    render json: patient, status: :ok
   end
 
   def print_national_health_id_label
@@ -197,5 +181,9 @@ class Api::V1::PatientsController < ApplicationController
     label.draw_multi_text("#{patient.national_id_with_dashes} #{person.birthdate}#{sex}")
     label.draw_multi_text(address)
     label.print(1)
+  end
+
+  def npid_identifier_type
+    PatientIdentifierType.find_by_name('National id')
   end
 end
