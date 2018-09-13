@@ -1,0 +1,2261 @@
+{
+	"id": "666fd3ae-c41c-b4b3-e1a2-8e1f5b3572ff",
+	"name": "BHT EMR API",
+	"description": "The BHT EMR API is a\n[RESTful](https://en.wikipedia.org/wiki/Representational_state_transfer)\nAPI providing an abstraction layer to a customised\n[OpenMRS 1.7](https://openmrs.org/) database and application engine\nfor EMRs ... FIXME.\n\n# Authentication\n\nThe API makes use of API keys for authentication. Almost all requests\nto the API must be accompanied by an API key. API keys are generated\nby logging into the API [see Logging in]. Keys are valid for 24 hours\nand a user can only have one valid key at a given point in time.\nGenerating a new key invalidates any existing key. \n\n# Request/Response Structure\n\nThe API primarily consumes and spits out JSON. It makes use of a number\nof HTTP verbs for manipulating and access  resources. All POST and PUT requests\nmust be accompanied by a JSON payload and a `Content-type=application/json`\nheader. Below is a summary of the verbs the API recognises.\n\n<table>\n  <thead>\n    <tr>\n      <th>Verb</th>\n      <th>Interpretation</th>\n      <th>Expected Response Status</th>\n    </tr>\n  </thead>\n\n  <tbody>\n    <tr>\n      <td>GET</td>\n      <td>Retrieve some resource.<br/>\n          eg. GET /api/v1/patients to retrieve patients\n      </td>\n      <td>200 - Ok</td>\n    </tr>\n    <tr>\n        <td>POST</td>\n        <td>Create a resource.</td>\n        <td>201 - Created</td>\n    </tr>\n    <tr>\n        <td>PUT</td>\n        <td>Update a resource.</td>\n        <td>200 - Ok</td>\n    </tr>\n    <tr>\n        <td>DELETE</td>\n        <td>Destroy some resource.</td>\n        <td>204 - No Content</td>\n    </tr>\n  </tbody>\n</table>\n\nSuccessful requests get a response with a status code of either 200, 201,\nor 204. For 200 and 201 responses a response body is always available. The body is the object (or list of objects) that was being accessed.\n\nFailed requests are flagged by 4XX status codes. Errors in this range\ngenerally have a response body of the following structure:\n\n```json\n    {\n        \"errors\": [\n            \"Error message\",\n            \"Another error message\",\n            ...,\n            \"More error messages\"\n        ]\n    }\n```\n\nHowever a 400 error for POST and PUT requests come as:\n\n```json\n    {\n        \"errors\": {\n            \"field\": \"This field is required\"\n            ...\n            \"some_other_field\": \"This field too is required\"\n        }\n    }\n```\n\n## Response status codes\n\nBelow is a description the response codes the API returns:\n\n<table>\n  <thead>\n    <tr>\n      <th>Status Code</th>\n      <th>Status Text</th>\n      <th>Description</th>\n    </tr>\n  </thead>\n\n  <tbody>\n    <tr>\n      <td>200</td>\n      <td>Ok</td>\n      <td>Request was successful</td>\n    </tr>\n    <tr>\n        <td>201</td>\n        <td>Created</td>\n        <td>Resource has been created</td>\n    </tr>\n    <tr>\n        <td>204</td>\n        <td>No Content</td>\n        <td>Resource has been deleted</td>\n    </tr>\n    <tr>\n        <td>400</td>\n        <td>Bad Request</td>\n        <td>Received a malformed request from client</td>\n    </tr>\n    <tr>\n        <td>401</td>\n        <td>Unauthorized</td>\n        <td>A valid API key is required</td>\n    </tr>\n    <tr>\n        <td>403</td>\n        <td>Forbidden</td>\n        <td>Logged in user is not allowed to perform request</td>\n    </tr>\n    <tr>\n        <td>500</td>\n        <td>Internal Server Error</td>\n        <td>API is ill, only thing that can be done is contacting the\n            system administrator</td>\n    </tr>\n  </tbody>\n</table>",
+	"order": [
+		"23bb8b7b-3cb1-6071-feca-3a7e364604f1",
+		"d429aa6f-d505-972c-1944-4e67592f546a",
+		"66c3f9d7-ad77-c9a4-58ff-2ae15fe1334e",
+		"e3fd434e-5d49-ba80-6b89-99e68cf1f6ea",
+		"298e202e-47e7-28f6-b4ec-8e3eaad87b8d",
+		"b9c3b425-ca42-41d5-37b0-6fcd529ef76c",
+		"8e8e9b14-ca44-6615-9c1a-8eb17822227a",
+		"3c6a0b84-a131-6cf5-7967-48ca17476571",
+		"1734a808-f736-0fce-a135-32d1967930e1",
+		"8e34cdfd-f83b-23c8-369a-5add8aee1ca9",
+		"5cb7ed86-5d93-babc-8d97-d0cbc70c23fe",
+		"f8c02203-4d0f-3f38-268c-63a18dff674e",
+		"7d67a0e6-d8c1-31ba-d2b5-1fa369c62e0a",
+		"ef344437-f3e7-5611-d219-89ad9dbfbedf",
+		"0b8f94e3-719c-2e4c-c57a-b192873d76e9"
+	],
+	"folders": [],
+	"folders_order": [],
+	"timestamp": 1535359987114,
+	"owner": "5200656",
+	"public": false,
+	"requests": [
+		{
+			"id": "0b8f94e3-719c-2e4c-c57a-b192873d76e9",
+			"headers": "Authorization: 42YGdA9CGoID\nContent-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Authorization",
+					"value": "42YGdA9CGoID",
+					"description": "",
+					"enabled": true
+				},
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "http://127.0.0.1:3000/api/v1/programs?page_size=4",
+			"queryParams": [
+				{
+					"key": "page_size",
+					"value": "4",
+					"equals": true,
+					"description": "",
+					"enabled": true
+				}
+			],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "GET",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1536845671501,
+			"name": "Retrieve programs",
+			"description": "Endpoint provides access to available programs. Specific programs can be searched for specifying the `name` parameter.",
+			"collectionId": "666fd3ae-c41c-b4b3-e1a2-8e1f5b3572ff",
+			"responses": [
+				{
+					"status": "",
+					"responseCode": {
+						"code": 200,
+						"name": "OK",
+						"detail": "Standard response for successful HTTP requests. The actual response will depend on the request method used. In a GET request, the response will contain an entity corresponding to the requested resource. In a POST request the response will contain an entity describing or containing the result of the action."
+					},
+					"time": 33,
+					"headers": [
+						{
+							"name": "cache-control",
+							"key": "cache-control",
+							"value": "max-age=0, private, must-revalidate",
+							"description": "Tells all caching mechanisms from server to client whether they may cache this object. It is measured in seconds"
+						},
+						{
+							"name": "content-type",
+							"key": "content-type",
+							"value": "application/json; charset=utf-8",
+							"description": "The mime type of this content"
+						},
+						{
+							"name": "etag",
+							"key": "etag",
+							"value": "W/\"d570b5744d158128972b8a0d6a366b7b\"",
+							"description": "An identifier for a specific version of a resource, often a message digest"
+						},
+						{
+							"name": "transfer-encoding",
+							"key": "transfer-encoding",
+							"value": "chunked",
+							"description": "The form of encoding used to safely transfer the entity to the user. Currently defined methods are: chunked, compress, deflate, gzip, identity."
+						},
+						{
+							"name": "vary",
+							"key": "vary",
+							"value": "Origin",
+							"description": "Tells downstream proxies how to match future request headers to decide whether the cached response can be used rather than requesting a fresh one from the origin server."
+						},
+						{
+							"name": "x-request-id",
+							"key": "x-request-id",
+							"value": "f38c019b-af85-4a31-85ee-2610e36369a5",
+							"description": "Custom header"
+						},
+						{
+							"name": "x-runtime",
+							"key": "x-runtime",
+							"value": "0.012831",
+							"description": "Custom header"
+						}
+					],
+					"cookies": [],
+					"mime": "",
+					"text": "[{\"program_id\":1,\"concept_id\":1482,\"creator\":1,\"date_created\":\"2007-12-19T11:55:28.000Z\",\"changed_by\":1,\"date_changed\":\"2012-02-06T18:05:08.000Z\",\"retired\":0,\"name\":\"HIV PROGRAM\",\"description\":\"\",\"uuid\":\"0d2c19c8-d65e-11d6-b7af-0024217bb78e\"},{\"program_id\":2,\"concept_id\":1648,\"creator\":1,\"date_created\":\"2008-07-23T07:42:38.000Z\",\"changed_by\":1,\"date_changed\":\"2011-08-30T21:15:05.000Z\",\"retired\":0,\"name\":\"TB PROGRAM\",\"description\":\"Tuberculosis Program\",\"uuid\":\"0d2c1d10-d65e-11d6-b7af-0024217bb78e\"},{\"program_id\":3,\"concept_id\":3568,\"creator\":1,\"date_created\":\"2008-08-18T18:42:19.000Z\",\"changed_by\":1,\"date_changed\":\"2009-11-03T16:27:34.000Z\",\"retired\":0,\"name\":\"VHW PROGRAM\",\"description\":\"\",\"uuid\":\"0d31c15c-d65e-11d6-b7af-0024217bb78e\"},{\"program_id\":4,\"concept_id\":3594,\"creator\":1,\"date_created\":\"2008-09-17T21:54:32.000Z\",\"changed_by\":1,\"date_changed\":\"2013-01-10T17:10:10.000Z\",\"retired\":0,\"name\":\"EARLY INFANT DIAGNOSIS PROGRAM\",\"description\":\"\",\"uuid\":\"0d31c47c-d65e-11d6-b7af-0024217bb78e\"}]",
+					"language": "json",
+					"rawDataType": "text",
+					"previewType": "text",
+					"searchResultScrolledTo": -1,
+					"forceNoPretty": false,
+					"write": true,
+					"empty": false,
+					"failed": false,
+					"name": "Retrieve all programs",
+					"id": "c74fb713-6dd2-b726-0087-0a7d483165c4",
+					"request": {
+						"url": "http://127.0.0.1:3000/api/v1/programs?page_size=4",
+						"pathVariables": {},
+						"pathVariableData": [],
+						"queryParams": [
+							{
+								"key": "page_size",
+								"value": "4",
+								"equals": true,
+								"description": "",
+								"enabled": true
+							}
+						],
+						"headerData": [
+							{
+								"key": "Authorization",
+								"value": "42YGdA9CGoID",
+								"description": "",
+								"enabled": true,
+								"warning": ""
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": "",
+								"enabled": true,
+								"warning": ""
+							}
+						],
+						"headers": "Authorization: 42YGdA9CGoID\nContent-Type: application/json\n",
+						"data": "{\n\t\"given_name\": \"Foobar\",\n\t\"middle_name\": \"J.\",\n\t\"family_name\": \"Random\",\n\t\"gender\": \"F\",\n\t\"birthdate\": \"2000-01-01\",\n\t\"birthdate_estimated\": false,\n\t\"home_district\": \"Blantyre\",\n\t\"home_village\": \"Chatha\",\n\t\"home_traditional_authority\": \"Chatha\",\n\t\"current_district\": \"Lilongwe\",\n\t\"current_village\": \"Area 15\",\n\t\"current_traditional_authority\": \"Area 15\"\n}",
+						"method": "GET",
+						"dataMode": "raw"
+					}
+				},
+				{
+					"status": "",
+					"responseCode": {
+						"code": 200,
+						"name": "OK",
+						"detail": "Standard response for successful HTTP requests. The actual response will depend on the request method used. In a GET request, the response will contain an entity corresponding to the requested resource. In a POST request the response will contain an entity describing or containing the result of the action."
+					},
+					"time": 28,
+					"headers": [
+						{
+							"name": "cache-control",
+							"key": "cache-control",
+							"value": "max-age=0, private, must-revalidate",
+							"description": "Tells all caching mechanisms from server to client whether they may cache this object. It is measured in seconds"
+						},
+						{
+							"name": "content-type",
+							"key": "content-type",
+							"value": "application/json; charset=utf-8",
+							"description": "The mime type of this content"
+						},
+						{
+							"name": "etag",
+							"key": "etag",
+							"value": "W/\"d570b5744d158128972b8a0d6a366b7b\"",
+							"description": "An identifier for a specific version of a resource, often a message digest"
+						},
+						{
+							"name": "transfer-encoding",
+							"key": "transfer-encoding",
+							"value": "chunked",
+							"description": "The form of encoding used to safely transfer the entity to the user. Currently defined methods are: chunked, compress, deflate, gzip, identity."
+						},
+						{
+							"name": "vary",
+							"key": "vary",
+							"value": "Origin",
+							"description": "Tells downstream proxies how to match future request headers to decide whether the cached response can be used rather than requesting a fresh one from the origin server."
+						},
+						{
+							"name": "x-request-id",
+							"key": "x-request-id",
+							"value": "3f673876-ed77-4757-979d-6489f8e294c3",
+							"description": "Custom header"
+						},
+						{
+							"name": "x-runtime",
+							"key": "x-runtime",
+							"value": "0.006430",
+							"description": "Custom header"
+						}
+					],
+					"cookies": [],
+					"mime": "",
+					"text": "[{\"program_id\":1,\"concept_id\":1482,\"creator\":1,\"date_created\":\"2007-12-19T11:55:28.000Z\",\"changed_by\":1,\"date_changed\":\"2012-02-06T18:05:08.000Z\",\"retired\":0,\"name\":\"HIV PROGRAM\",\"description\":\"\",\"uuid\":\"0d2c19c8-d65e-11d6-b7af-0024217bb78e\"},{\"program_id\":2,\"concept_id\":1648,\"creator\":1,\"date_created\":\"2008-07-23T07:42:38.000Z\",\"changed_by\":1,\"date_changed\":\"2011-08-30T21:15:05.000Z\",\"retired\":0,\"name\":\"TB PROGRAM\",\"description\":\"Tuberculosis Program\",\"uuid\":\"0d2c1d10-d65e-11d6-b7af-0024217bb78e\"},{\"program_id\":3,\"concept_id\":3568,\"creator\":1,\"date_created\":\"2008-08-18T18:42:19.000Z\",\"changed_by\":1,\"date_changed\":\"2009-11-03T16:27:34.000Z\",\"retired\":0,\"name\":\"VHW PROGRAM\",\"description\":\"\",\"uuid\":\"0d31c15c-d65e-11d6-b7af-0024217bb78e\"},{\"program_id\":4,\"concept_id\":3594,\"creator\":1,\"date_created\":\"2008-09-17T21:54:32.000Z\",\"changed_by\":1,\"date_changed\":\"2013-01-10T17:10:10.000Z\",\"retired\":0,\"name\":\"EARLY INFANT DIAGNOSIS PROGRAM\",\"description\":\"\",\"uuid\":\"0d31c47c-d65e-11d6-b7af-0024217bb78e\"}]",
+					"language": "json",
+					"rawDataType": "text",
+					"previewType": "text",
+					"searchResultScrolledTo": -1,
+					"forceNoPretty": false,
+					"write": true,
+					"empty": false,
+					"failed": false,
+					"name": "Retrieve all programs",
+					"id": "88654e60-80f2-1190-ebba-1eb23ef75a34",
+					"request": {
+						"url": "http://127.0.0.1:3000/api/v1/programs?page_size=4",
+						"pathVariables": {},
+						"pathVariableData": [],
+						"queryParams": [
+							{
+								"key": "page_size",
+								"value": "4",
+								"equals": true,
+								"description": "",
+								"enabled": true
+							}
+						],
+						"headerData": [
+							{
+								"key": "Authorization",
+								"value": "42YGdA9CGoID",
+								"description": "",
+								"enabled": true,
+								"warning": ""
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": "",
+								"enabled": true,
+								"warning": ""
+							}
+						],
+						"headers": "Authorization: 42YGdA9CGoID\nContent-Type: application/json\n",
+						"data": "{\n\t\"given_name\": \"Foobar\",\n\t\"middle_name\": \"J.\",\n\t\"family_name\": \"Random\",\n\t\"gender\": \"F\",\n\t\"birthdate\": \"2000-01-01\",\n\t\"birthdate_estimated\": false,\n\t\"home_district\": \"Blantyre\",\n\t\"home_village\": \"Chatha\",\n\t\"home_traditional_authority\": \"Chatha\",\n\t\"current_district\": \"Lilongwe\",\n\t\"current_village\": \"Area 15\",\n\t\"current_traditional_authority\": \"Area 15\"\n}",
+						"method": "GET",
+						"dataMode": "raw"
+					}
+				}
+			],
+			"rawModeData": "{\n\t\"given_name\": \"Foobar\",\n\t\"middle_name\": \"J.\",\n\t\"family_name\": \"Random\",\n\t\"gender\": \"F\",\n\t\"birthdate\": \"2000-01-01\",\n\t\"birthdate_estimated\": false,\n\t\"home_district\": \"Blantyre\",\n\t\"home_village\": \"Chatha\",\n\t\"home_traditional_authority\": \"Chatha\",\n\t\"current_district\": \"Lilongwe\",\n\t\"current_village\": \"Area 15\",\n\t\"current_traditional_authority\": \"Area 15\"\n}"
+		},
+		{
+			"id": "1734a808-f736-0fce-a135-32d1967930e1",
+			"headers": "Authorization: HEuJIXf7doFv\nAccept: application/json\n",
+			"headerData": [
+				{
+					"key": "Authorization",
+					"value": "HEuJIXf7doFv",
+					"description": "",
+					"enabled": true
+				},
+				{
+					"key": "Accept",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "localhost:3000/api/v1/encounters?page=0&page_size=5&encounter_type_id=6",
+			"queryParams": [
+				{
+					"key": "page",
+					"value": "0",
+					"equals": true,
+					"description": "",
+					"enabled": true
+				},
+				{
+					"key": "page_size",
+					"value": "5",
+					"equals": true,
+					"description": "",
+					"enabled": true
+				},
+				{
+					"key": "encounter_type_id",
+					"value": "6",
+					"equals": true,
+					"description": "",
+					"enabled": true
+				}
+			],
+			"pathVariables": {},
+			"pathVariableData": [],
+			"preRequestScript": null,
+			"method": "GET",
+			"collectionId": "666fd3ae-c41c-b4b3-e1a2-8e1f5b3572ff",
+			"data": null,
+			"dataMode": "params",
+			"name": "Retrieve encounters",
+			"description": "localhost:3000/api/v1/encounters?page=0&page_size=5&encounter_type_id=6",
+			"descriptionFormat": "html",
+			"time": 1536060410183,
+			"version": 2,
+			"responses": [
+				{
+					"status": "",
+					"responseCode": {
+						"code": 200,
+						"name": "OK",
+						"detail": "Standard response for successful HTTP requests. The actual response will depend on the request method used. In a GET request, the response will contain an entity corresponding to the requested resource. In a POST request the response will contain an entity describing or containing the result of the action."
+					},
+					"time": 508,
+					"headers": [
+						{
+							"name": "cache-control",
+							"key": "cache-control",
+							"value": "max-age=0, private, must-revalidate",
+							"description": "Tells all caching mechanisms from server to client whether they may cache this object. It is measured in seconds"
+						},
+						{
+							"name": "content-type",
+							"key": "content-type",
+							"value": "application/json; charset=utf-8",
+							"description": "The mime type of this content"
+						},
+						{
+							"name": "etag",
+							"key": "etag",
+							"value": "W/\"6876da5cf8b99db7ed04eaf3703e7c21\"",
+							"description": "An identifier for a specific version of a resource, often a message digest"
+						},
+						{
+							"name": "transfer-encoding",
+							"key": "transfer-encoding",
+							"value": "chunked",
+							"description": "The form of encoding used to safely transfer the entity to the user. Currently defined methods are: chunked, compress, deflate, gzip, identity."
+						},
+						{
+							"name": "vary",
+							"key": "vary",
+							"value": "Origin",
+							"description": "Tells downstream proxies how to match future request headers to decide whether the cached response can be used rather than requesting a fresh one from the origin server."
+						},
+						{
+							"name": "x-request-id",
+							"key": "x-request-id",
+							"value": "51cd7439-4792-495d-a55a-2f5e07ab109f",
+							"description": "Custom header"
+						},
+						{
+							"name": "x-runtime",
+							"key": "x-runtime",
+							"value": "0.478436",
+							"description": "Custom header"
+						}
+					],
+					"cookies": [],
+					"mime": "",
+					"text": "[{\"obs_id\":8,\"person_id\":1,\"concept_id\":5089,\"encounter_id\":3,\"order_id\":null,\"obs_datetime\":\"2011-09-14T14:14:54.000Z\",\"location_id\":148,\"obs_group_id\":null,\"accession_number\":null,\"value_group_id\":null,\"value_boolean\":null,\"value_coded\":null,\"value_coded_name_id\":null,\"value_drug\":null,\"value_datetime\":null,\"value_numeric\":11.0,\"value_modifier\":null,\"value_text\":null,\"date_started\":null,\"date_stopped\":null,\"comments\":null,\"creator\":1,\"date_created\":\"2011-09-14T14:18:03.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"value_complex\":null,\"uuid\":\"350fd0f5-59ca-11e3-b7e9-003018a9e11f\",\"concept\":{\"concept_id\":5089,\"retired\":0,\"short_name\":\"WT\",\"description\":\"\",\"form_text\":null,\"datatype_id\":1,\"class_id\":1,\"is_set\":0,\"creator\":1,\"date_created\":\"2004-08-12T00:00:00.000Z\",\"default_charge\":null,\"version\":\"\",\"changed_by\":1,\"date_changed\":\"2002-01-30T09:32:15.000Z\",\"retired_by\":null,\"date_retired\":null,\"retire_reason\":null,\"uuid\":\"0b9c2a1c-d65e-11d6-b7af-0024217bb78e\"},\"concept_names\":[{\"concept_id\":5089,\"name\":\"Weight (kg)\",\"locale\":\"en\",\"creator\":1,\"date_created\":\"2004-08-12T00:00:00.000Z\",\"concept_name_id\":3455,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"0c572394-d65e-11d6-b7af-0024217bb78e\",\"concept_name_type\":\"FULLY_SPECIFIED\",\"locale_preferred\":0},{\"concept_id\":5089,\"name\":\"WT\",\"locale\":\"en\",\"creator\":1,\"date_created\":\"2004-08-12T00:00:00.000Z\",\"concept_name_id\":6171,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"0c7083a2-d65e-11d6-b7af-0024217bb78e\",\"concept_name_type\":\"SHORT\",\"locale_preferred\":0},{\"concept_id\":5089,\"name\":\"Weight\",\"locale\":\"en\",\"creator\":1,\"date_created\":\"2002-01-30T09:32:15.000Z\",\"concept_name_id\":9998,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"0c9167f2-d65e-11d6-b7af-0024217bb78e\",\"concept_name_type\":null,\"locale_preferred\":0}]},{\"obs_id\":9,\"person_id\":1,\"concept_id\":5090,\"encounter_id\":3,\"order_id\":null,\"obs_datetime\":\"2011-09-14T14:14:54.000Z\",\"location_id\":148,\"obs_group_id\":null,\"accession_number\":null,\"value_group_id\":null,\"value_boolean\":null,\"value_coded\":null,\"value_coded_name_id\":null,\"value_drug\":null,\"value_datetime\":null,\"value_numeric\":70.0,\"value_modifier\":null,\"value_text\":null,\"date_started\":null,\"date_stopped\":null,\"comments\":null,\"creator\":1,\"date_created\":\"2011-09-14T14:18:03.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"value_complex\":null,\"uuid\":\"350fd7cb-59ca-11e3-b7e9-003018a9e11f\",\"concept\":{\"concept_id\":5090,\"retired\":0,\"short_name\":\"HT\",\"description\":\"\",\"form_text\":null,\"datatype_id\":1,\"class_id\":1,\"is_set\":0,\"creator\":1,\"date_created\":\"2004-08-12T00:00:00.000Z\",\"default_charge\":null,\"version\":\"\",\"changed_by\":1,\"date_changed\":\"2005-02-25T11:43:34.000Z\",\"retired_by\":null,\"date_retired\":null,\"retire_reason\":null,\"uuid\":\"0b9c2bde-d65e-11d6-b7af-0024217bb78e\"},\"concept_names\":[{\"concept_id\":5090,\"name\":\"Height (cm)\",\"locale\":\"en\",\"creator\":1,\"date_created\":\"2004-08-12T00:00:00.000Z\",\"concept_name_id\":3457,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"0c5724ca-d65e-11d6-b7af-0024217bb78e\",\"concept_name_type\":\"FULLY_SPECIFIED\",\"locale_preferred\":0},{\"concept_id\":5090,\"name\":\"HT\",\"locale\":\"en\",\"creator\":1,\"date_created\":\"2004-08-12T00:00:00.000Z\",\"concept_name_id\":6173,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"0c7084ce-d65e-11d6-b7af-0024217bb78e\",\"concept_name_type\":\"SHORT\",\"locale_preferred\":0}]},{\"obs_id\":10,\"person_id\":1,\"concept_id\":2137,\"encounter_id\":3,\"order_id\":null,\"obs_datetime\":\"2011-09-14T14:14:54.000Z\",\"location_id\":148,\"obs_group_id\":null,\"accession_number\":null,\"value_group_id\":null,\"value_boolean\":null,\"value_coded\":null,\"value_coded_name_id\":null,\"value_drug\":null,\"value_datetime\":null,\"value_numeric\":22.4,\"value_modifier\":null,\"value_text\":null,\"date_started\":null,\"date_stopped\":null,\"comments\":null,\"creator\":1,\"date_created\":\"2011-09-14T14:18:03.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"value_complex\":null,\"uuid\":\"350fdca2-59ca-11e3-b7e9-003018a9e11f\",\"concept\":{\"concept_id\":2137,\"retired\":0,\"short_name\":null,\"description\":null,\"form_text\":null,\"datatype_id\":1,\"class_id\":7,\"is_set\":0,\"creator\":1,\"date_created\":\"2007-05-12T10:29:11.000Z\",\"default_charge\":null,\"version\":\"\",\"changed_by\":1,\"date_changed\":\"2007-12-29T15:53:40.000Z\",\"retired_by\":null,\"date_retired\":null,\"retire_reason\":null,\"uuid\":\"0b85e4dc-d65e-11d6-b7af-0024217bb78e\"},\"concept_names\":[{\"concept_id\":2137,\"name\":\"Body mass index, measured\",\"locale\":\"en\",\"creator\":1,\"date_created\":\"2007-05-12T10:29:11.000Z\",\"concept_name_id\":2306,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"0c4f2ec8-d65e-11d6-b7af-0024217bb78e\",\"concept_name_type\":\"FULLY_SPECIFIED\",\"locale_preferred\":0},{\"concept_id\":2137,\"name\":\"BMI\",\"locale\":\"en\",\"creator\":1,\"date_created\":\"2007-05-12T10:29:11.000Z\",\"concept_name_id\":5833,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"0c6dff6a-d65e-11d6-b7af-0024217bb78e\",\"concept_name_type\":\"SHORT\",\"locale_preferred\":0}]}]",
+					"language": "json",
+					"rawDataType": "text",
+					"previewType": "text",
+					"searchResultScrolledTo": -1,
+					"forceNoPretty": false,
+					"write": true,
+					"empty": false,
+					"failed": false,
+					"name": "Retrieve encounters",
+					"id": "337c8f2e-3187-43ba-9a40-9aa6f086a9b0",
+					"request": {
+						"url": "localhost:3000/api/v1/encounters/3/observations",
+						"pathVariables": {},
+						"pathVariableData": [],
+						"queryParams": [],
+						"headerData": [
+							{
+								"key": "Authorization",
+								"value": "lQUitqOlCOo6",
+								"description": "",
+								"enabled": true,
+								"warning": ""
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"description": "",
+								"enabled": true,
+								"warning": ""
+							}
+						],
+						"headers": "Authorization: lQUitqOlCOo6\nAccept: application/json\n",
+						"data": null,
+						"method": "GET",
+						"dataMode": "params"
+					}
+				}
+			],
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {}
+		},
+		{
+			"id": "23bb8b7b-3cb1-6071-feca-3a7e364604f1",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "http://127.0.0.1:3000/api/v1/auth/login",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": null,
+			"dataMode": "params",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1535363288464,
+			"name": "Log in",
+			"description": "Logging in is a way of generating an API key which must be used in subsequent requests to the API that require authorisation. The generated api key is valid for 24 hours.\n\nNOTE: Clients are limited to one API key at a time. A log in replaces any existing api key.",
+			"collectionId": "666fd3ae-c41c-b4b3-e1a2-8e1f5b3572ff",
+			"responses": [
+				{
+					"status": "",
+					"responseCode": {
+						"code": 200,
+						"name": "OK",
+						"detail": "Standard response for successful HTTP requests. The actual response will depend on the request method used. In a GET request, the response will contain an entity corresponding to the requested resource. In a POST request the response will contain an entity describing or containing the result of the action."
+					},
+					"time": 184,
+					"headers": [
+						{
+							"name": "cache-control",
+							"key": "cache-control",
+							"value": "max-age=0, private, must-revalidate",
+							"description": "Tells all caching mechanisms from server to client whether they may cache this object. It is measured in seconds"
+						},
+						{
+							"name": "content-type",
+							"key": "content-type",
+							"value": "application/json; charset=utf-8",
+							"description": "The mime type of this content"
+						},
+						{
+							"name": "etag",
+							"key": "etag",
+							"value": "W/\"1acf444dc3c9ac18d899b530b1547d34\"",
+							"description": "An identifier for a specific version of a resource, often a message digest"
+						},
+						{
+							"name": "transfer-encoding",
+							"key": "transfer-encoding",
+							"value": "chunked",
+							"description": "The form of encoding used to safely transfer the entity to the user. Currently defined methods are: chunked, compress, deflate, gzip, identity."
+						},
+						{
+							"name": "x-request-id",
+							"key": "x-request-id",
+							"value": "16dca6d6-790f-43e8-bcce-0c795571b9c3",
+							"description": "Custom header"
+						},
+						{
+							"name": "x-runtime",
+							"key": "x-runtime",
+							"value": "0.168806",
+							"description": "Custom header"
+						}
+					],
+					"cookies": [],
+					"mime": "",
+					"text": "{\"authorization\":{\"token\":\"AiJViSpF3spb\",\"expiry_time\":\"2018-08-28T11:01:55.501+02:00\"}}",
+					"language": "json",
+					"rawDataType": "text",
+					"previewType": "text",
+					"searchResultScrolledTo": -1,
+					"forceNoPretty": false,
+					"write": true,
+					"empty": false,
+					"failed": false,
+					"name": "Log in",
+					"id": "fd9749d7-781c-e591-8888-cf6874b034aa",
+					"request": {
+						"url": "http://127.0.0.1:3000/api/v1/auth/login",
+						"pathVariables": {},
+						"pathVariableData": [],
+						"queryParams": [],
+						"headerData": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"description": "",
+								"enabled": true
+							}
+						],
+						"headers": "Content-Type: application/json\n",
+						"data": "{\n\t\"username\": \"Your username\",\n\t\"password\": \"Your password\"\n}",
+						"method": "POST",
+						"dataMode": "raw"
+					}
+				}
+			]
+		},
+		{
+			"id": "298e202e-47e7-28f6-b4ec-8e3eaad87b8d",
+			"headers": "Content-type: application/json\nAuthorization: qTt9Wg2zs3oC\n",
+			"headerData": [
+				{
+					"key": "Content-type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				},
+				{
+					"key": "Authorization",
+					"value": "qTt9Wg2zs3oC",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "http://127.0.0.1:3000/api/v1/users/",
+			"queryParams": [],
+			"pathVariables": {},
+			"pathVariableData": [],
+			"preRequestScript": null,
+			"method": "POST",
+			"collectionId": "666fd3ae-c41c-b4b3-e1a2-8e1f5b3572ff",
+			"data": [],
+			"dataMode": "raw",
+			"name": "Creating users",
+			"description": "User creation requires an existing person to be associated with the new user. Thus it is mandatory that a `person_id` be specified in the request body.\n\nSee: (Retrieving user roles)[#Retrieving-user-roles] for valid roles.",
+			"descriptionFormat": "html",
+			"time": 1535423466606,
+			"version": 2,
+			"responses": [
+				{
+					"status": "",
+					"responseCode": {
+						"code": 201,
+						"name": "Created",
+						"detail": "The request has been fulfilled and resulted in a new resource being created."
+					},
+					"time": 279,
+					"headers": [
+						{
+							"name": "cache-control",
+							"key": "cache-control",
+							"value": "max-age=0, private, must-revalidate",
+							"description": "Tells all caching mechanisms from server to client whether they may cache this object. It is measured in seconds"
+						},
+						{
+							"name": "content-type",
+							"key": "content-type",
+							"value": "application/json; charset=utf-8",
+							"description": "The mime type of this content"
+						},
+						{
+							"name": "etag",
+							"key": "etag",
+							"value": "W/\"90d5f6142f1f9ee1ec277b99c5ddd0d8\"",
+							"description": "An identifier for a specific version of a resource, often a message digest"
+						},
+						{
+							"name": "transfer-encoding",
+							"key": "transfer-encoding",
+							"value": "chunked",
+							"description": "The form of encoding used to safely transfer the entity to the user. Currently defined methods are: chunked, compress, deflate, gzip, identity."
+						},
+						{
+							"name": "x-request-id",
+							"key": "x-request-id",
+							"value": "b93a0b8c-2487-4a4a-8a3a-a4e95016765c",
+							"description": "Custom header"
+						},
+						{
+							"name": "x-runtime",
+							"key": "x-runtime",
+							"value": "0.261925",
+							"description": "Custom header"
+						}
+					],
+					"cookies": [],
+					"mime": "",
+					"text": "{\"user\":{\"user_id\":84,\"system_id\":\"\",\"username\":\"user1\",\"creator\":1,\"date_created\":null,\"changed_by\":1,\"date_changed\":\"2018-08-28T01:48:40.000Z\",\"person_id\":7,\"retired\":0,\"retired_by\":null,\"date_retired\":null,\"retire_reason\":null,\"uuid\":\"85cf587a-b968-4958-a606-12f3571d544d\",\"roles\":[{\"role\":\"Superuser\",\"description\":\"This is a user who has access to all Baobab developed applications' functionality\",\"uuid\":\"0d3b5ff0-d65e-11d6-b7af-0024217bb78e\"}]}}",
+					"language": "json",
+					"rawDataType": "text",
+					"previewType": "text",
+					"searchResultScrolledTo": -1,
+					"forceNoPretty": false,
+					"write": true,
+					"empty": false,
+					"failed": false,
+					"name": "Registering users",
+					"id": "74dbd3ce-2ae0-c1f6-32c2-9ba4422b579d",
+					"request": {
+						"url": "http://127.0.0.1:3000/api/v1/users/",
+						"pathVariables": {},
+						"pathVariableData": [],
+						"queryParams": [],
+						"headerData": [
+							{
+								"key": "Content-type",
+								"value": "application/json",
+								"description": "",
+								"enabled": true,
+								"warning": ""
+							},
+							{
+								"key": "Authorization",
+								"value": "qTt9Wg2zs3oC",
+								"description": "",
+								"enabled": true,
+								"warning": ""
+							}
+						],
+						"headers": "Content-type: application/json\nAuthorization: qTt9Wg2zs3oC\n",
+						"data": "{\n\t\"username\": \"user1\",\n\t\"password\": \"tio\",\n\t\"person_id\": 7,\n\t\"role\": \"Superuser\"\n}",
+						"method": "POST",
+						"dataMode": "raw"
+					}
+				},
+				{
+					"status": "",
+					"responseCode": {
+						"code": 201,
+						"name": "Created",
+						"detail": "The request has been fulfilled and resulted in a new resource being created."
+					},
+					"time": 424,
+					"headers": [
+						{
+							"name": "access-control-allow-methods",
+							"key": "access-control-allow-methods",
+							"value": "GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD",
+							"description": "Specifies the method or methods allowed when accessing the resource. This is used in response to a preflight request."
+						},
+						{
+							"name": "access-control-allow-origin",
+							"key": "access-control-allow-origin",
+							"value": "*",
+							"description": "Specifies a URI that may access the resource. For requests without credentials, the server may specify '*' as a wildcard, thereby allowing any origin to access the resource."
+						},
+						{
+							"name": "access-control-expose-headers",
+							"key": "access-control-expose-headers",
+							"value": "",
+							"description": "Lets a server whitelist headers that browsers are allowed to access."
+						},
+						{
+							"name": "access-control-max-age",
+							"key": "access-control-max-age",
+							"value": "1728000",
+							"description": "Indicates how long the results of a preflight request can be cached in seconds."
+						},
+						{
+							"name": "cache-control",
+							"key": "cache-control",
+							"value": "max-age=0, private, must-revalidate",
+							"description": "Tells all caching mechanisms from server to client whether they may cache this object. It is measured in seconds"
+						},
+						{
+							"name": "content-type",
+							"key": "content-type",
+							"value": "application/json; charset=utf-8",
+							"description": "The mime type of this content"
+						},
+						{
+							"name": "etag",
+							"key": "etag",
+							"value": "W/\"b928690aa42e4b08d0cc288a44428a7a\"",
+							"description": "An identifier for a specific version of a resource, often a message digest"
+						},
+						{
+							"name": "transfer-encoding",
+							"key": "transfer-encoding",
+							"value": "chunked",
+							"description": "The form of encoding used to safely transfer the entity to the user. Currently defined methods are: chunked, compress, deflate, gzip, identity."
+						},
+						{
+							"name": "vary",
+							"key": "vary",
+							"value": "Origin",
+							"description": "Tells downstream proxies how to match future request headers to decide whether the cached response can be used rather than requesting a fresh one from the origin server."
+						},
+						{
+							"name": "x-request-id",
+							"key": "x-request-id",
+							"value": "b188d46f-6ce7-4018-914f-aa078430d38e",
+							"description": "Custom header"
+						},
+						{
+							"name": "x-runtime",
+							"key": "x-runtime",
+							"value": "0.404553",
+							"description": "Custom header"
+						}
+					],
+					"cookies": [],
+					"mime": "",
+					"text": "{\"user\":{\"user_id\":82,\"system_id\":\"\",\"username\":\"user1\",\"creator\":1,\"date_created\":\"2018-09-07T13:25:57.000Z\",\"changed_by\":1,\"date_changed\":\"2018-09-07T13:25:57.000Z\",\"person_id\":7,\"retired\":0,\"retired_by\":null,\"date_retired\":null,\"retire_reason\":null,\"uuid\":\"c6f3a5b5-bd62-47f4-8c04-0a012dfb54ee\",\"roles\":[{\"role\":\"Superuser\",\"description\":\"This is a user who has access to all Baobab developed applications' functionality\",\"uuid\":\"0d3b5ff0-d65e-11d6-b7af-0024217bb78e\"}]}}",
+					"language": "json",
+					"rawDataType": "text",
+					"previewType": "text",
+					"searchResultScrolledTo": -1,
+					"forceNoPretty": false,
+					"write": true,
+					"empty": false,
+					"failed": false,
+					"name": "Creating users",
+					"id": "bd0e0561-df3f-4a12-0d3a-4f00004e77ce",
+					"request": {
+						"url": "http://127.0.0.1:3000/api/v1/users/",
+						"pathVariables": {},
+						"pathVariableData": [],
+						"queryParams": [],
+						"headerData": [
+							{
+								"key": "Content-type",
+								"value": "application/json",
+								"description": "",
+								"enabled": true,
+								"warning": ""
+							},
+							{
+								"key": "Authorization",
+								"value": "lQUitqOlCOo6",
+								"description": "",
+								"enabled": true,
+								"warning": ""
+							}
+						],
+						"headers": "Content-type: application/json\nAuthorization: lQUitqOlCOo6\n",
+						"data": "{\n\t\"username\": \"user1\",\n\t\"password\": \"tio\",\n\t\"person_id\": 7,\n\t\"role\": \"Superuser\"\n}",
+						"method": "POST",
+						"dataMode": "raw"
+					}
+				}
+			],
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"rawModeData": "{\n\t\"username\": \"user1\",\n\t\"password\": \"tio\",\n\t\"person_id\": 7,\n\t\"role\": \"Superuser\"\n}"
+		},
+		{
+			"id": "3c6a0b84-a131-6cf5-7967-48ca17476571",
+			"headers": "Authorization: JDIt0GpZyR3I\nContent-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Authorization",
+					"value": "JDIt0GpZyR3I",
+					"description": "",
+					"enabled": true
+				},
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "localhost:3000/api/v1/encounters",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1536157392209,
+			"name": "Creating encounters",
+			"description": "Creating encounters requires 2 parameters namely `encounter_type_id` and `patient_id`. A third optional parameter `provider_id` may be specified. This however defaults to the current user.\n\nNOTE: Encounters currently aren't linked to orders but will soon be thus expect an additional optional `order_id` to be included soon.",
+			"collectionId": "666fd3ae-c41c-b4b3-e1a2-8e1f5b3572ff",
+			"responses": [
+				{
+					"status": "",
+					"responseCode": {
+						"code": 201,
+						"name": "Created",
+						"detail": "The request has been fulfilled and resulted in a new resource being created."
+					},
+					"time": 635,
+					"headers": [
+						{
+							"name": "access-control-allow-methods",
+							"key": "access-control-allow-methods",
+							"value": "GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD",
+							"description": "Specifies the method or methods allowed when accessing the resource. This is used in response to a preflight request."
+						},
+						{
+							"name": "access-control-allow-origin",
+							"key": "access-control-allow-origin",
+							"value": "*",
+							"description": "Specifies a URI that may access the resource. For requests without credentials, the server may specify '*' as a wildcard, thereby allowing any origin to access the resource."
+						},
+						{
+							"name": "access-control-expose-headers",
+							"key": "access-control-expose-headers",
+							"value": "",
+							"description": "Lets a server whitelist headers that browsers are allowed to access."
+						},
+						{
+							"name": "access-control-max-age",
+							"key": "access-control-max-age",
+							"value": "1728000",
+							"description": "Indicates how long the results of a preflight request can be cached in seconds."
+						},
+						{
+							"name": "cache-control",
+							"key": "cache-control",
+							"value": "max-age=0, private, must-revalidate",
+							"description": "Tells all caching mechanisms from server to client whether they may cache this object. It is measured in seconds"
+						},
+						{
+							"name": "content-type",
+							"key": "content-type",
+							"value": "application/json; charset=utf-8",
+							"description": "The mime type of this content"
+						},
+						{
+							"name": "etag",
+							"key": "etag",
+							"value": "W/\"01a3c5dd3d367460a3f1646f37246454\"",
+							"description": "An identifier for a specific version of a resource, often a message digest"
+						},
+						{
+							"name": "transfer-encoding",
+							"key": "transfer-encoding",
+							"value": "chunked",
+							"description": "The form of encoding used to safely transfer the entity to the user. Currently defined methods are: chunked, compress, deflate, gzip, identity."
+						},
+						{
+							"name": "vary",
+							"key": "vary",
+							"value": "Origin",
+							"description": "Tells downstream proxies how to match future request headers to decide whether the cached response can be used rather than requesting a fresh one from the origin server."
+						},
+						{
+							"name": "x-request-id",
+							"key": "x-request-id",
+							"value": "32c60109-5b55-40e6-bacc-4ad624f15f79",
+							"description": "Custom header"
+						},
+						{
+							"name": "x-runtime",
+							"key": "x-runtime",
+							"value": "0.614633",
+							"description": "Custom header"
+						}
+					],
+					"cookies": [],
+					"mime": "",
+					"text": "{\"encounter_id\":373036,\"encounter_type\":6,\"patient_id\":100,\"provider_id\":1,\"location_id\":700,\"form_id\":null,\"encounter_datetime\":\"2018-09-07T13:33:54.000Z\",\"creator\":1,\"date_created\":\"2018-09-07T13:33:54.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"affb4728-d31d-4d86-ac62-1f5e5654c332\",\"changed_by\":1,\"date_changed\":\"2018-09-07T13:33:54.000Z\",\"type\":{\"encounter_type_id\":6,\"name\":\"VITALS\",\"description\":\"Vitals encounter\",\"creator\":1,\"date_created\":\"2008-05-02T16:04:05.000Z\",\"retired\":0,\"retired_by\":null,\"date_retired\":null,\"retire_reason\":null,\"uuid\":\"0cd2f672-d65e-11d6-b7af-0024217bb78e\"},\"patient\":{\"patient_id\":100,\"tribe\":null,\"creator\":2,\"date_created\":\"2011-09-16T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null},\"location\":{\"location_id\":700,\"name\":\"Martin Preuss Centre\",\"description\":\"arv code:MPC\",\"address1\":\"\",\"address2\":\"\",\"city_village\":\"Lilongwe\",\"state_province\":null,\"postal_code\":\"\",\"country\":\"Malawi\",\"latitude\":null,\"longitude\":null,\"creator\":1,\"date_created\":\"2011-07-25T14:16:52.000Z\",\"county_district\":null,\"neighborhood_cell\":null,\"region\":null,\"subregion\":null,\"township_division\":null,\"retired\":false,\"retired_by\":null,\"date_retired\":null,\"retire_reason\":null,\"location_type_id\":null,\"parent_location\":null,\"uuid\":\"0d087afe-d65e-11d6-b7af-0024217bb78e\"},\"provider\":{\"user_id\":1,\"system_id\":\"1-8\",\"username\":\"admin\",\"creator\":1,\"date_created\":\"2005-01-01T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":\"2018-09-07T12:57:33.000Z\",\"person_id\":1,\"retired\":0,\"retired_by\":null,\"date_retired\":null,\"retire_reason\":\"\",\"uuid\":\"3206f1ac-59ca-11e3-b7e9-003018a9e11f\"},\"observations\":[]}",
+					"language": "json",
+					"rawDataType": "text",
+					"previewType": "text",
+					"searchResultScrolledTo": -1,
+					"forceNoPretty": false,
+					"write": true,
+					"empty": false,
+					"failed": false,
+					"name": "Creating encounters",
+					"id": "3be1e6d5-877e-9b83-388b-d30ce2157c59",
+					"request": {
+						"url": "localhost:3000/api/v1/encounters",
+						"pathVariables": {},
+						"pathVariableData": [],
+						"queryParams": [],
+						"headerData": [
+							{
+								"key": "Authorization",
+								"value": "lQUitqOlCOo6",
+								"description": "",
+								"enabled": true,
+								"warning": ""
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": "",
+								"enabled": true,
+								"warning": ""
+							}
+						],
+						"headers": "Authorization: lQUitqOlCOo6\nContent-Type: application/json\n",
+						"data": "{\n\t\"encounter_type_id\": 6,\n\t\"patient_id\": 100\n}",
+						"method": "POST",
+						"dataMode": "raw"
+					}
+				}
+			],
+			"rawModeData": "{\n\t\"encounter_type_id\": 6,\n\t\"patient_id\": 100\n}"
+		},
+		{
+			"id": "5cb7ed86-5d93-babc-8d97-d0cbc70c23fe",
+			"headers": "Authorization: JDIt0GpZyR3I\n",
+			"headerData": [
+				{
+					"key": "Authorization",
+					"value": "JDIt0GpZyR3I",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "localhost:3000/api/v1/encounters/_types",
+			"queryParams": [],
+			"pathVariables": {},
+			"pathVariableData": [],
+			"preRequestScript": null,
+			"method": "GET",
+			"collectionId": "666fd3ae-c41c-b4b3-e1a2-8e1f5b3572ff",
+			"data": null,
+			"dataMode": "params",
+			"name": "Retrieve encounter types",
+			"description": "localhost:3000/api/v1/encounters/_types",
+			"descriptionFormat": "html",
+			"time": 1536129510838,
+			"version": 2,
+			"responses": [
+				{
+					"status": "",
+					"responseCode": {
+						"code": 200,
+						"name": "OK"
+					},
+					"time": 24,
+					"headers": [
+						{
+							"name": "cache-control",
+							"key": "cache-control",
+							"value": "max-age=0, private, must-revalidate",
+							"description": "Tells all caching mechanisms from server to client whether they may cache this object. It is measured in seconds"
+						},
+						{
+							"name": "content-type",
+							"key": "content-type",
+							"value": "application/json; charset=utf-8",
+							"description": "The mime type of this content"
+						},
+						{
+							"name": "etag",
+							"key": "etag",
+							"value": "W/\"005bba8e049fa83df0cdad28cdae54b8\"",
+							"description": "An identifier for a specific version of a resource, often a message digest"
+						},
+						{
+							"name": "transfer-encoding",
+							"key": "transfer-encoding",
+							"value": "chunked",
+							"description": "The form of encoding used to safely transfer the entity to the user. Currently defined methods are: chunked, compress, deflate, gzip, identity."
+						},
+						{
+							"name": "vary",
+							"key": "vary",
+							"value": "Origin",
+							"description": "Tells downstream proxies how to match future request headers to decide whether the cached response can be used rather than requesting a fresh one from the origin server."
+						},
+						{
+							"name": "x-request-id",
+							"key": "x-request-id",
+							"value": "500b6369-7fc8-4232-aa36-6c2aa7d1b8ea",
+							"description": "Custom header"
+						},
+						{
+							"name": "x-runtime",
+							"key": "x-runtime",
+							"value": "0.004969",
+							"description": "Custom header"
+						}
+					],
+					"cookies": [],
+					"mime": "",
+					"text": "[{\"encounter_type_id\":1,\"name\":\"ADULTINITIAL\",\"description\":\"Outpatient Adult Initial Visit\",\"creator\":1,\"date_created\":\"2005-02-24T00:00:00.000Z\",\"retired\":0,\"retired_by\":null,\"date_retired\":null,\"retire_reason\":null,\"uuid\":\"8d5b27bc-c2cc-11de-8d13-0010c6dffd0f\"},{\"encounter_type_id\":2,\"name\":\"ADULTRETURN\",\"description\":\"Outpatient Adult Return Visit\",\"creator\":1,\"date_created\":\"2005-02-24T00:00:00.000Z\",\"retired\":0,\"retired_by\":null,\"date_retired\":null,\"retire_reason\":null,\"uuid\":\"8d5b2be0-c2cc-11de-8d13-0010c6dffd0f\"}]",
+					"language": "json",
+					"rawDataType": "text",
+					"previewType": "text",
+					"searchResultScrolledTo": -1,
+					"forceNoPretty": false,
+					"write": true,
+					"empty": false,
+					"failed": false,
+					"name": "Retrieve all encounter types",
+					"id": "a63b6666-0d66-33d9-bdbc-2c69e37a987a",
+					"isSample": true,
+					"scrollToResult": false,
+					"runTests": false,
+					"request": {
+						"url": "localhost:3000/api/v1/encounters/_types?page_size=2",
+						"pathVariables": {},
+						"pathVariableData": [],
+						"queryParams": [
+							{
+								"key": "page_size",
+								"value": "2",
+								"equals": true,
+								"description": "",
+								"enabled": true
+							}
+						],
+						"headerData": [
+							{
+								"key": "Authorization",
+								"value": "lQUitqOlCOo6",
+								"enabled": true,
+								"description": ""
+							}
+						],
+						"headers": "Authorization: lQUitqOlCOo6\n",
+						"data": null,
+						"method": "GET",
+						"dataMode": "params"
+					}
+				}
+			],
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {}
+		},
+		{
+			"id": "66c3f9d7-ad77-c9a4-58ff-2ae15fe1334e",
+			"headers": "Authorization: lQUitqOlCOo6\n",
+			"headerData": [
+				{
+					"key": "Authorization",
+					"value": "lQUitqOlCOo6",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "http://127.0.0.1:3000/api/v1/people/1?page=0&page_size=2",
+			"queryParams": [
+				{
+					"key": "page",
+					"value": "0",
+					"equals": true,
+					"description": "",
+					"enabled": true
+				},
+				{
+					"key": "page_size",
+					"value": "2",
+					"equals": true,
+					"description": "",
+					"enabled": true
+				}
+			],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "GET",
+			"data": null,
+			"dataMode": "params",
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1536325967783,
+			"name": "Retrieve registered people",
+			"description": "# /api/v1/people\n\nThis endpoint returns a list of people registered as either patients or users. By default only 10 random people are returned. Pagination is supported through the use of the parameters page and page_size as follows:\n\n\thttp://<host>:<port>/api/v1/people?page=0&page_size\n\t\nThe example above retrieve the first 50 people.",
+			"collectionId": "666fd3ae-c41c-b4b3-e1a2-8e1f5b3572ff",
+			"responses": [
+				{
+					"status": "",
+					"responseCode": {
+						"code": 200,
+						"name": "OK",
+						"detail": "Standard response for successful HTTP requests. The actual response will depend on the request method used. In a GET request, the response will contain an entity corresponding to the requested resource. In a POST request the response will contain an entity describing or containing the result of the action."
+					},
+					"time": 330,
+					"headers": [
+						{
+							"name": "cache-control",
+							"key": "cache-control",
+							"value": "max-age=0, private, must-revalidate",
+							"description": "Tells all caching mechanisms from server to client whether they may cache this object. It is measured in seconds"
+						},
+						{
+							"name": "content-type",
+							"key": "content-type",
+							"value": "application/json; charset=utf-8",
+							"description": "The mime type of this content"
+						},
+						{
+							"name": "etag",
+							"key": "etag",
+							"value": "W/\"dfa1fa3bd078b49122c992cc9d721dbf\"",
+							"description": "An identifier for a specific version of a resource, often a message digest"
+						},
+						{
+							"name": "transfer-encoding",
+							"key": "transfer-encoding",
+							"value": "chunked",
+							"description": "The form of encoding used to safely transfer the entity to the user. Currently defined methods are: chunked, compress, deflate, gzip, identity."
+						},
+						{
+							"name": "x-request-id",
+							"key": "x-request-id",
+							"value": "47647e92-6594-4012-98dd-fdfd4817253e",
+							"description": "Custom header"
+						},
+						{
+							"name": "x-runtime",
+							"key": "x-runtime",
+							"value": "0.314544",
+							"description": "Custom header"
+						}
+					],
+					"cookies": [],
+					"mime": "",
+					"text": "[{\"person_id\":1,\"gender\":\"M\",\"birthdate\":null,\"birthdate_estimated\":0,\"dead\":0,\"death_date\":null,\"cause_of_death\":null,\"creator\":1,\"date_created\":\"2005-01-01T00:00:00.000Z\",\"changed_by\":1,\"date_changed\":\"2009-09-04T16:37:23.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"10661cb8-b6c1-11e0-bc9e-544249e32ba2\",\"names\":[{\"person_name_id\":1,\"preferred\":1,\"person_id\":1,\"prefix\":null,\"given_name\":\"Super\",\"middle_name\":\"\",\"family_name_prefix\":null,\"family_name\":\"User\",\"family_name2\":null,\"family_name_suffix\":null,\"degree\":null,\"creator\":1,\"date_created\":\"2005-01-01T00:00:00.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"changed_by\":null,\"date_changed\":null,\"uuid\":\"109f4cb8-b6c1-11e0-bc9e-544249e32ba2\"},{\"person_name_id\":104,\"preferred\":0,\"person_id\":1,\"prefix\":null,\"given_name\":\"tionge\",\"middle_name\":null,\"family_name_prefix\":null,\"family_name\":\"banda\",\"family_name2\":null,\"family_name_suffix\":null,\"degree\":null,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"changed_by\":null,\"date_changed\":null,\"uuid\":\"350af0d9-59ca-11e3-b7e9-003018a9e11f\"}],\"addresses\":[{\"person_address_id\":24,\"person_id\":1,\"preferred\":0,\"address1\":\"Unknown\",\"address2\":null,\"city_village\":\"Area 10\",\"state_province\":null,\"postal_code\":null,\"country\":null,\"latitude\":null,\"longitude\":null,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"county_district\":null,\"neighborhood_cell\":null,\"region\":null,\"subregion\":null,\"township_division\":null,\"uuid\":\"350b0426-59ca-11e3-b7e9-003018a9e11f\"}],\"person_attributes\":[{\"person_attribute_id\":271,\"person_id\":1,\"value\":\"Area 10\",\"person_attribute_type_id\":18,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"350b0502-59ca-11e3-b7e9-003018a9e11f\"},{\"person_attribute_id\":272,\"person_id\":1,\"value\":\"Unknown\",\"person_attribute_type_id\":19,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"350b0426-59ca-11e3-b7e9-003018a9e11f\"},{\"person_attribute_id\":273,\"person_id\":1,\"value\":\"Other\",\"person_attribute_type_id\":13,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"350b0fab-59ca-11e3-b7e9-003018a9e11f\"},{\"person_attribute_id\":274,\"person_id\":1,\"value\":\"Not Available\",\"person_attribute_type_id\":14,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"350b11b7-59ca-11e3-b7e9-003018a9e11f\"}]},{\"person_id\":2,\"gender\":\"F\",\"birthdate\":null,\"birthdate_estimated\":0,\"dead\":0,\"death_date\":null,\"cause_of_death\":null,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"3536add6-59ca-11e3-b7e9-003018a9e11f\",\"names\":[{\"person_name_id\":105,\"preferred\":0,\"person_id\":2,\"prefix\":null,\"given_name\":\"tionge\",\"middle_name\":null,\"family_name_prefix\":null,\"family_name\":\"binali\",\"family_name2\":null,\"family_name_suffix\":null,\"degree\":null,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"changed_by\":null,\"date_changed\":null,\"uuid\":\"3536b15b-59ca-11e3-b7e9-003018a9e11f\"}],\"addresses\":[],\"person_attributes\":[]},{\"person_id\":3,\"gender\":\"F\",\"birthdate\":\"1988-07-01\",\"birthdate_estimated\":1,\"dead\":0,\"death_date\":null,\"cause_of_death\":null,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"355b1384-59ca-11e3-b7e9-003018a9e11f\",\"names\":[{\"person_name_id\":106,\"preferred\":0,\"person_id\":3,\"prefix\":null,\"given_name\":\"tionge\",\"middle_name\":null,\"family_name_prefix\":null,\"family_name\":\"binali\",\"family_name2\":null,\"family_name_suffix\":null,\"degree\":null,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"changed_by\":null,\"date_changed\":null,\"uuid\":\"355b16b4-59ca-11e3-b7e9-003018a9e11f\"}],\"addresses\":[{\"person_address_id\":25,\"person_id\":3,\"preferred\":0,\"address1\":\"Unknown\",\"address2\":null,\"city_village\":\"Amidu\",\"state_province\":null,\"postal_code\":null,\"country\":null,\"latitude\":null,\"longitude\":null,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"county_district\":null,\"neighborhood_cell\":null,\"region\":null,\"subregion\":null,\"township_division\":null,\"uuid\":\"355b23ae-59ca-11e3-b7e9-003018a9e11f\"}],\"person_attributes\":[{\"person_attribute_id\":275,\"person_id\":3,\"value\":\"Amidu\",\"person_attribute_type_id\":18,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"355b24cb-59ca-11e3-b7e9-003018a9e11f\"},{\"person_attribute_id\":276,\"person_id\":3,\"value\":\"Unknown\",\"person_attribute_type_id\":19,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"355b23ae-59ca-11e3-b7e9-003018a9e11f\"},{\"person_attribute_id\":277,\"person_id\":3,\"value\":\"Farmer\",\"person_attribute_type_id\":13,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"355b2d7f-59ca-11e3-b7e9-003018a9e11f\"},{\"person_attribute_id\":278,\"person_id\":3,\"value\":\"Not Available\",\"person_attribute_type_id\":14,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"355b2f51-59ca-11e3-b7e9-003018a9e11f\"}]},{\"person_id\":4,\"gender\":\"F\",\"birthdate\":null,\"birthdate_estimated\":0,\"dead\":0,\"death_date\":null,\"cause_of_death\":null,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"357fe29b-59ca-11e3-b7e9-003018a9e11f\",\"names\":[{\"person_name_id\":107,\"preferred\":0,\"person_id\":4,\"prefix\":null,\"given_name\":\"tionge\",\"middle_name\":null,\"family_name_prefix\":null,\"family_name\":\"binali\",\"family_name2\":null,\"family_name_suffix\":null,\"degree\":null,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"changed_by\":null,\"date_changed\":null,\"uuid\":\"357fe617-59ca-11e3-b7e9-003018a9e11f\"}],\"addresses\":[],\"person_attributes\":[]},{\"person_id\":5,\"gender\":\"M\",\"birthdate\":\"2010-07-01\",\"birthdate_estimated\":1,\"dead\":0,\"death_date\":null,\"cause_of_death\":null,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"35a3e4e4-59ca-11e3-b7e9-003018a9e11f\",\"names\":[{\"person_name_id\":108,\"preferred\":0,\"person_id\":5,\"prefix\":null,\"given_name\":\"dan\",\"middle_name\":null,\"family_name_prefix\":null,\"family_name\":\"lewis\",\"family_name2\":null,\"family_name_suffix\":null,\"degree\":null,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"changed_by\":null,\"date_changed\":null,\"uuid\":\"35a3e814-59ca-11e3-b7e9-003018a9e11f\"}],\"addresses\":[{\"person_address_id\":26,\"person_id\":5,\"preferred\":0,\"address1\":\"Unknown\",\"address2\":null,\"city_village\":\"Area 12\",\"state_province\":null,\"postal_code\":null,\"country\":null,\"latitude\":null,\"longitude\":null,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"county_district\":null,\"neighborhood_cell\":null,\"region\":null,\"subregion\":null,\"township_division\":null,\"uuid\":\"35a3f542-59ca-11e3-b7e9-003018a9e11f\"}],\"person_attributes\":[{\"person_attribute_id\":279,\"person_id\":5,\"value\":\"Area 12\",\"person_attribute_type_id\":18,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"35a3f5fd-59ca-11e3-b7e9-003018a9e11f\"},{\"person_attribute_id\":280,\"person_id\":5,\"value\":\"Unknown\",\"person_attribute_type_id\":19,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"35a3f542-59ca-11e3-b7e9-003018a9e11f\"},{\"person_attribute_id\":281,\"person_id\":5,\"value\":\"Other\",\"person_attribute_type_id\":13,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"35a3fe9a-59ca-11e3-b7e9-003018a9e11f\"},{\"person_attribute_id\":282,\"person_id\":5,\"value\":\"Not Available\",\"person_attribute_type_id\":14,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"35a40550-59ca-11e3-b7e9-003018a9e11f\"}]},{\"person_id\":6,\"gender\":\"F\",\"birthdate\":null,\"birthdate_estimated\":0,\"dead\":0,\"death_date\":null,\"cause_of_death\":null,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"35c8b4b1-59ca-11e3-b7e9-003018a9e11f\",\"names\":[{\"person_name_id\":109,\"preferred\":0,\"person_id\":6,\"prefix\":null,\"given_name\":\"tionge\",\"middle_name\":null,\"family_name_prefix\":null,\"family_name\":\"banda\",\"family_name2\":null,\"family_name_suffix\":null,\"degree\":null,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"changed_by\":null,\"date_changed\":null,\"uuid\":\"35c8b77d-59ca-11e3-b7e9-003018a9e11f\"}],\"addresses\":[],\"person_attributes\":[]},{\"person_id\":7,\"gender\":\"M\",\"birthdate\":\"1985-05-04\",\"birthdate_estimated\":1,\"dead\":0,\"death_date\":null,\"cause_of_death\":null,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"35ecf73d-59ca-11e3-b7e9-003018a9e11f\",\"names\":[{\"person_name_id\":110,\"preferred\":0,\"person_id\":7,\"prefix\":null,\"given_name\":\"Chikafa\",\"middle_name\":null,\"family_name_prefix\":null,\"family_name\":\"Kalima\",\"family_name2\":null,\"family_name_suffix\":null,\"degree\":null,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"changed_by\":null,\"date_changed\":null,\"uuid\":\"35ecfaa0-59ca-11e3-b7e9-003018a9e11f\"}],\"addresses\":[{\"person_address_id\":27,\"person_id\":7,\"preferred\":0,\"address1\":\"Unknown\",\"address2\":null,\"city_village\":\"Area 10\",\"state_province\":null,\"postal_code\":null,\"country\":null,\"latitude\":null,\"longitude\":null,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"county_district\":null,\"neighborhood_cell\":null,\"region\":null,\"subregion\":null,\"township_division\":null,\"uuid\":\"35ed07bf-59ca-11e3-b7e9-003018a9e11f\"}],\"person_attributes\":[{\"person_attribute_id\":283,\"person_id\":7,\"value\":\"Area 10\",\"person_attribute_type_id\":18,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"35ed0875-59ca-11e3-b7e9-003018a9e11f\"},{\"person_attribute_id\":284,\"person_id\":7,\"value\":\"Unknown\",\"person_attribute_type_id\":19,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"35ed07bf-59ca-11e3-b7e9-003018a9e11f\"},{\"person_attribute_id\":285,\"person_id\":7,\"value\":\"Other\",\"person_attribute_type_id\":13,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"35ed1137-59ca-11e3-b7e9-003018a9e11f\"},{\"person_attribute_id\":286,\"person_id\":7,\"value\":\"Not Available\",\"person_attribute_type_id\":14,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"35ed131a-59ca-11e3-b7e9-003018a9e11f\"}]},{\"person_id\":8,\"gender\":\"F\",\"birthdate\":\"1978-02-17\",\"birthdate_estimated\":1,\"dead\":0,\"death_date\":null,\"cause_of_death\":null,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"361106f8-59ca-11e3-b7e9-003018a9e11f\",\"names\":[{\"person_name_id\":111,\"preferred\":0,\"person_id\":8,\"prefix\":null,\"given_name\":\"Chikafa\",\"middle_name\":null,\"family_name_prefix\":null,\"family_name\":\"Binauli\",\"family_name2\":null,\"family_name_suffix\":null,\"degree\":null,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"changed_by\":null,\"date_changed\":null,\"uuid\":\"36110a36-59ca-11e3-b7e9-003018a9e11f\"}],\"addresses\":[{\"person_address_id\":28,\"person_id\":8,\"preferred\":0,\"address1\":\"Kauma\",\"address2\":null,\"city_village\":\"Lilongwe City\",\"state_province\":null,\"postal_code\":null,\"country\":null,\"latitude\":null,\"longitude\":null,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"county_district\":null,\"neighborhood_cell\":null,\"region\":null,\"subregion\":null,\"township_division\":null,\"uuid\":\"36111746-59ca-11e3-b7e9-003018a9e11f\"}],\"person_attributes\":[{\"person_attribute_id\":287,\"person_id\":8,\"value\":\"Lilongwe City\",\"person_attribute_type_id\":18,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"36111801-59ca-11e3-b7e9-003018a9e11f\"},{\"person_attribute_id\":288,\"person_id\":8,\"value\":\"Kauma\",\"person_attribute_type_id\":19,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"36111746-59ca-11e3-b7e9-003018a9e11f\"},{\"person_attribute_id\":289,\"person_id\":8,\"value\":\"Other\",\"person_attribute_type_id\":13,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"361120b9-59ca-11e3-b7e9-003018a9e11f\"},{\"person_attribute_id\":290,\"person_id\":8,\"value\":\"0999252525\",\"person_attribute_type_id\":14,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"36112294-59ca-11e3-b7e9-003018a9e11f\"}]},{\"person_id\":9,\"gender\":\"M\",\"birthdate\":\"2010-07-01\",\"birthdate_estimated\":1,\"dead\":0,\"death_date\":null,\"cause_of_death\":null,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"363571e1-59ca-11e3-b7e9-003018a9e11f\",\"names\":[{\"person_name_id\":112,\"preferred\":0,\"person_id\":9,\"prefix\":null,\"given_name\":\"simon\",\"middle_name\":null,\"family_name_prefix\":null,\"family_name\":\"lewis\",\"family_name2\":null,\"family_name_suffix\":null,\"degree\":null,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"changed_by\":null,\"date_changed\":null,\"uuid\":\"36357461-59ca-11e3-b7e9-003018a9e11f\"}],\"addresses\":[{\"person_address_id\":29,\"person_id\":9,\"preferred\":0,\"address1\":\"Unknown\",\"address2\":null,\"city_village\":\"Area 11\",\"state_province\":null,\"postal_code\":null,\"country\":null,\"latitude\":null,\"longitude\":null,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"county_district\":null,\"neighborhood_cell\":null,\"region\":null,\"subregion\":null,\"township_division\":null,\"uuid\":\"363580c5-59ca-11e3-b7e9-003018a9e11f\"}],\"person_attributes\":[{\"person_attribute_id\":291,\"person_id\":9,\"value\":\"Area 11\",\"person_attribute_type_id\":18,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"3635818b-59ca-11e3-b7e9-003018a9e11f\"},{\"person_attribute_id\":292,\"person_id\":9,\"value\":\"Unknown\",\"person_attribute_type_id\":19,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"363580c5-59ca-11e3-b7e9-003018a9e11f\"},{\"person_attribute_id\":293,\"person_id\":9,\"value\":\"Other\",\"person_attribute_type_id\":13,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"36358a85-59ca-11e3-b7e9-003018a9e11f\"},{\"person_attribute_id\":294,\"person_id\":9,\"value\":\"Not Available\",\"person_attribute_type_id\":14,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"36358c5e-59ca-11e3-b7e9-003018a9e11f\"}]},{\"person_id\":10,\"gender\":\"F\",\"birthdate\":null,\"birthdate_estimated\":0,\"dead\":0,\"death_date\":null,\"cause_of_death\":null,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"365a39a9-59ca-11e3-b7e9-003018a9e11f\",\"names\":[{\"person_name_id\":113,\"preferred\":0,\"person_id\":10,\"prefix\":null,\"given_name\":\"tionge\",\"middle_name\":null,\"family_name_prefix\":null,\"family_name\":\"lewis\",\"family_name2\":null,\"family_name_suffix\":null,\"degree\":null,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"changed_by\":null,\"date_changed\":null,\"uuid\":\"365a3d26-59ca-11e3-b7e9-003018a9e11f\"}],\"addresses\":[],\"person_attributes\":[]}]",
+					"language": "json",
+					"rawDataType": "text",
+					"previewType": "text",
+					"searchResultScrolledTo": -1,
+					"forceNoPretty": false,
+					"write": true,
+					"empty": false,
+					"failed": false,
+					"name": "Retrieve a list of registered people",
+					"id": "dfc591b3-dd68-9495-e155-ee503f6ce63d",
+					"request": {
+						"url": "http://127.0.0.1:3000/api/v1/people/",
+						"pathVariables": {},
+						"pathVariableData": [],
+						"queryParams": [],
+						"headerData": [
+							{
+								"key": "Authorization",
+								"value": "qTt9Wg2zs3oC",
+								"description": "",
+								"enabled": true,
+								"warning": ""
+							}
+						],
+						"headers": "Authorization: qTt9Wg2zs3oC\n",
+						"data": null,
+						"method": "GET",
+						"dataMode": "params"
+					}
+				},
+				{
+					"status": "",
+					"responseCode": {
+						"code": 200,
+						"name": "OK",
+						"detail": "Standard response for successful HTTP requests. The actual response will depend on the request method used. In a GET request, the response will contain an entity corresponding to the requested resource. In a POST request the response will contain an entity describing or containing the result of the action."
+					},
+					"time": 118,
+					"headers": [
+						{
+							"name": "cache-control",
+							"key": "cache-control",
+							"value": "max-age=0, private, must-revalidate",
+							"description": "Tells all caching mechanisms from server to client whether they may cache this object. It is measured in seconds"
+						},
+						{
+							"name": "content-type",
+							"key": "content-type",
+							"value": "application/json; charset=utf-8",
+							"description": "The mime type of this content"
+						},
+						{
+							"name": "etag",
+							"key": "etag",
+							"value": "W/\"31a7b8b0ac7e454b390651bdd39dd495\"",
+							"description": "An identifier for a specific version of a resource, often a message digest"
+						},
+						{
+							"name": "transfer-encoding",
+							"key": "transfer-encoding",
+							"value": "chunked",
+							"description": "The form of encoding used to safely transfer the entity to the user. Currently defined methods are: chunked, compress, deflate, gzip, identity."
+						},
+						{
+							"name": "vary",
+							"key": "vary",
+							"value": "Origin",
+							"description": "Tells downstream proxies how to match future request headers to decide whether the cached response can be used rather than requesting a fresh one from the origin server."
+						},
+						{
+							"name": "x-request-id",
+							"key": "x-request-id",
+							"value": "68a1a4cd-c71c-4168-9798-c4f6411d9535",
+							"description": "Custom header"
+						},
+						{
+							"name": "x-runtime",
+							"key": "x-runtime",
+							"value": "0.102691",
+							"description": "Custom header"
+						}
+					],
+					"cookies": [],
+					"mime": "",
+					"text": "{\"person_id\":1,\"gender\":\"M\",\"birthdate\":null,\"birthdate_estimated\":0,\"dead\":0,\"death_date\":null,\"cause_of_death\":null,\"creator\":1,\"date_created\":\"2005-01-01T00:00:00.000Z\",\"changed_by\":1,\"date_changed\":\"2009-09-04T16:37:23.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"10661cb8-b6c1-11e0-bc9e-544249e32ba2\",\"names\":[{\"person_name_id\":1,\"preferred\":1,\"person_id\":1,\"prefix\":null,\"given_name\":\"Super\",\"middle_name\":\"\",\"family_name_prefix\":null,\"family_name\":\"User\",\"family_name2\":null,\"family_name_suffix\":null,\"degree\":null,\"creator\":1,\"date_created\":\"2005-01-01T00:00:00.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"changed_by\":null,\"date_changed\":null,\"uuid\":\"109f4cb8-b6c1-11e0-bc9e-544249e32ba2\"},{\"person_name_id\":104,\"preferred\":0,\"person_id\":1,\"prefix\":null,\"given_name\":\"tionge\",\"middle_name\":null,\"family_name_prefix\":null,\"family_name\":\"banda\",\"family_name2\":null,\"family_name_suffix\":null,\"degree\":null,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"changed_by\":null,\"date_changed\":null,\"uuid\":\"350af0d9-59ca-11e3-b7e9-003018a9e11f\"}],\"addresses\":[{\"person_address_id\":24,\"person_id\":1,\"preferred\":0,\"address1\":\"Unknown\",\"address2\":null,\"city_village\":\"Area 10\",\"state_province\":null,\"postal_code\":null,\"country\":null,\"latitude\":null,\"longitude\":null,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"county_district\":null,\"neighborhood_cell\":null,\"region\":null,\"subregion\":null,\"township_division\":null,\"uuid\":\"350b0426-59ca-11e3-b7e9-003018a9e11f\"}],\"person_attributes\":[{\"person_attribute_id\":271,\"person_id\":1,\"value\":\"Area 10\",\"person_attribute_type_id\":18,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"350b0502-59ca-11e3-b7e9-003018a9e11f\"},{\"person_attribute_id\":272,\"person_id\":1,\"value\":\"Unknown\",\"person_attribute_type_id\":19,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"350b0426-59ca-11e3-b7e9-003018a9e11f\"},{\"person_attribute_id\":273,\"person_id\":1,\"value\":\"Other\",\"person_attribute_type_id\":13,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"350b0fab-59ca-11e3-b7e9-003018a9e11f\"},{\"person_attribute_id\":274,\"person_id\":1,\"value\":\"Not Available\",\"person_attribute_type_id\":14,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"350b11b7-59ca-11e3-b7e9-003018a9e11f\"}]}",
+					"language": "json",
+					"rawDataType": "text",
+					"previewType": "text",
+					"searchResultScrolledTo": -1,
+					"forceNoPretty": false,
+					"write": true,
+					"empty": false,
+					"failed": false,
+					"name": "Retrieve registered people",
+					"id": "cc930f1e-df60-83c8-7033-b16b4da1579e",
+					"request": {
+						"url": "http://127.0.0.1:3000/api/v1/people/1?page=0&page_size=2",
+						"pathVariables": {},
+						"pathVariableData": [],
+						"queryParams": [
+							{
+								"key": "page",
+								"value": "0",
+								"equals": true,
+								"description": "",
+								"enabled": true
+							},
+							{
+								"key": "page_size",
+								"value": "2",
+								"equals": true,
+								"description": "",
+								"enabled": true
+							}
+						],
+						"headerData": [
+							{
+								"key": "Authorization",
+								"value": "lQUitqOlCOo6",
+								"description": "",
+								"enabled": true,
+								"warning": ""
+							}
+						],
+						"headers": "Authorization: lQUitqOlCOo6\n",
+						"data": null,
+						"method": "GET",
+						"dataMode": "params"
+					}
+				}
+			]
+		},
+		{
+			"id": "7d67a0e6-d8c1-31ba-d2b5-1fa369c62e0a",
+			"headers": "Authorization: 5CIpaXv524te\nContent-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Authorization",
+					"value": "5CIpaXv524te",
+					"description": "",
+					"enabled": true
+				},
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "http://localhost:3000/api/v1/observations",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1536242328391,
+			"name": "Creating new observations",
+			"description": "http://localhost:3000/api/v1/observations",
+			"collectionId": "666fd3ae-c41c-b4b3-e1a2-8e1f5b3572ff",
+			"responses": [],
+			"rawModeData": "{\n\t\"person_id\": 1000 ,\n\t\"concept_id\": 2552,\n\t\"encounter_id\": 373035,\n\t\"value\": 50,\n\t\"value_type\": \"numeric\"\n}"
+		},
+		{
+			"id": "8e34cdfd-f83b-23c8-369a-5add8aee1ca9",
+			"headers": "Authorization: p6GLbZKqf0Fj\n",
+			"headerData": [
+				{
+					"key": "Authorization",
+					"value": "p6GLbZKqf0Fj",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "localhost:3000/api/v1/search/people?given_name=Julius&family_name=Phiri&gender=M&page_size=20&page=0",
+			"queryParams": [
+				{
+					"key": "given_name",
+					"value": "Julius",
+					"equals": true,
+					"description": "",
+					"enabled": true
+				},
+				{
+					"key": "family_name",
+					"value": "Phiri",
+					"equals": true,
+					"description": "",
+					"enabled": true
+				},
+				{
+					"key": "gender",
+					"value": "M",
+					"equals": true,
+					"description": "",
+					"enabled": true
+				},
+				{
+					"key": "page_size",
+					"value": "20",
+					"equals": true,
+					"description": "",
+					"enabled": true
+				},
+				{
+					"key": "page",
+					"value": "0",
+					"equals": true,
+					"description": "",
+					"enabled": true
+				}
+			],
+			"pathVariables": {},
+			"pathVariableData": [],
+			"preRequestScript": null,
+			"method": "GET",
+			"collectionId": "666fd3ae-c41c-b4b3-e1a2-8e1f5b3572ff",
+			"data": null,
+			"dataMode": "params",
+			"name": "People search",
+			"description": "localhost:3000/api/v1/search/people?given_name=Julius&family_name=Phiri&gender=M&page_size=20&page=0",
+			"descriptionFormat": "html",
+			"time": 1536320359388,
+			"version": 2,
+			"responses": [
+				{
+					"status": "",
+					"responseCode": {
+						"code": 200,
+						"name": "OK"
+					},
+					"time": 207,
+					"headers": [
+						{
+							"name": "cache-control",
+							"key": "cache-control",
+							"value": "max-age=0, private, must-revalidate",
+							"description": "Tells all caching mechanisms from server to client whether they may cache this object. It is measured in seconds"
+						},
+						{
+							"name": "content-type",
+							"key": "content-type",
+							"value": "application/json; charset=utf-8",
+							"description": "The mime type of this content"
+						},
+						{
+							"name": "etag",
+							"key": "etag",
+							"value": "W/\"78a1d38faf8ab140822f822ee1fd1d15\"",
+							"description": "An identifier for a specific version of a resource, often a message digest"
+						},
+						{
+							"name": "transfer-encoding",
+							"key": "transfer-encoding",
+							"value": "chunked",
+							"description": "The form of encoding used to safely transfer the entity to the user. Currently defined methods are: chunked, compress, deflate, gzip, identity."
+						},
+						{
+							"name": "vary",
+							"key": "vary",
+							"value": "Origin",
+							"description": "Tells downstream proxies how to match future request headers to decide whether the cached response can be used rather than requesting a fresh one from the origin server."
+						},
+						{
+							"name": "x-request-id",
+							"key": "x-request-id",
+							"value": "e56ee22a-1911-4d82-984e-bd2e80827e5f",
+							"description": "Custom header"
+						},
+						{
+							"name": "x-runtime",
+							"key": "x-runtime",
+							"value": "0.189721",
+							"description": "Custom header"
+						}
+					],
+					"cookies": [],
+					"mime": "",
+					"text": "[{\"person_id\":2304,\"gender\":\"M\",\"birthdate\":\"1989-07-01\",\"birthdate_estimated\":1,\"dead\":0,\"death_date\":null,\"cause_of_death\":null,\"creator\":6,\"date_created\":\"2011-09-17T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"0d8c03de-59cc-11e3-b7e9-003018a9e11f\",\"names\":[{\"person_name_id\":2383,\"preferred\":0,\"person_id\":2304,\"prefix\":null,\"given_name\":\"Julius\",\"middle_name\":null,\"family_name_prefix\":null,\"family_name\":\"Phiri\",\"family_name2\":null,\"family_name_suffix\":null,\"degree\":null,\"creator\":6,\"date_created\":\"2011-09-17T00:00:00.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"changed_by\":null,\"date_changed\":null,\"uuid\":\"0d8c0771-59cc-11e3-b7e9-003018a9e11f\"}],\"addresses\":[{\"person_address_id\":1195,\"person_id\":2304,\"preferred\":0,\"address1\":\"School\",\"address2\":null,\"city_village\":\"Chileka\",\"state_province\":null,\"postal_code\":null,\"country\":null,\"latitude\":null,\"longitude\":null,\"creator\":6,\"date_created\":\"2011-09-17T00:00:00.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"county_district\":null,\"neighborhood_cell\":null,\"region\":null,\"subregion\":null,\"township_division\":null,\"uuid\":\"0d8c153d-59cc-11e3-b7e9-003018a9e11f\"}],\"person_attributes\":[{\"person_attribute_id\":4954,\"person_id\":2304,\"value\":\"Chileka\",\"person_attribute_type_id\":18,\"creator\":6,\"date_created\":\"2011-09-17T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"0d8c15f6-59cc-11e3-b7e9-003018a9e11f\"},{\"person_attribute_id\":4955,\"person_id\":2304,\"value\":\"School\",\"person_attribute_type_id\":19,\"creator\":6,\"date_created\":\"2011-09-17T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"0d8c153d-59cc-11e3-b7e9-003018a9e11f\"},{\"person_attribute_id\":4956,\"person_id\":2304,\"value\":\"Other\",\"person_attribute_type_id\":13,\"creator\":6,\"date_created\":\"2011-09-17T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"0d8c1eeb-59cc-11e3-b7e9-003018a9e11f\"},{\"person_attribute_id\":4957,\"person_id\":2304,\"value\":\"Not Available\",\"person_attribute_type_id\":14,\"creator\":6,\"date_created\":\"2011-09-17T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"0d8c20be-59cc-11e3-b7e9-003018a9e11f\"}]},{\"person_id\":4956,\"gender\":\"M\",\"birthdate\":\"1980-07-21\",\"birthdate_estimated\":1,\"dead\":0,\"death_date\":null,\"cause_of_death\":null,\"creator\":1,\"date_created\":\"2011-12-06T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"a844a1ea-59cd-11e3-b7e9-003018a9e11f\",\"names\":[{\"person_name_id\":5001,\"preferred\":0,\"person_id\":4956,\"prefix\":null,\"given_name\":\"Julius\",\"middle_name\":null,\"family_name_prefix\":null,\"family_name\":\"Phiri\",\"family_name2\":null,\"family_name_suffix\":null,\"degree\":null,\"creator\":1,\"date_created\":\"2011-12-06T00:00:00.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"changed_by\":null,\"date_changed\":null,\"uuid\":\"a844a4d1-59cd-11e3-b7e9-003018a9e11f\"}],\"addresses\":[{\"person_address_id\":2959,\"person_id\":4956,\"preferred\":0,\"address1\":\"School\",\"address2\":null,\"city_village\":\"Dowa\",\"state_province\":null,\"postal_code\":null,\"country\":null,\"latitude\":null,\"longitude\":null,\"creator\":1,\"date_created\":\"2011-12-06T00:00:00.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"county_district\":null,\"neighborhood_cell\":null,\"region\":null,\"subregion\":null,\"township_division\":null,\"uuid\":\"a844b56a-59cd-11e3-b7e9-003018a9e11f\"}],\"person_attributes\":[{\"person_attribute_id\":12010,\"person_id\":4956,\"value\":\"Dowa\",\"person_attribute_type_id\":18,\"creator\":1,\"date_created\":\"2011-12-06T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"a844b62b-59cd-11e3-b7e9-003018a9e11f\"},{\"person_attribute_id\":12011,\"person_id\":4956,\"value\":\"School\",\"person_attribute_type_id\":19,\"creator\":1,\"date_created\":\"2011-12-06T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"a844b56a-59cd-11e3-b7e9-003018a9e11f\"},{\"person_attribute_id\":12012,\"person_id\":4956,\"value\":\"Farmer\",\"person_attribute_type_id\":13,\"creator\":1,\"date_created\":\"2011-12-06T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"a844beeb-59cd-11e3-b7e9-003018a9e11f\"},{\"person_attribute_id\":12013,\"person_id\":4956,\"value\":\"Not Available\",\"person_attribute_type_id\":14,\"creator\":1,\"date_created\":\"2011-12-06T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"a844c0b6-59cd-11e3-b7e9-003018a9e11f\"}]}]",
+					"language": "json",
+					"rawDataType": "text",
+					"previewType": "text",
+					"searchResultScrolledTo": -1,
+					"forceNoPretty": false,
+					"write": true,
+					"empty": false,
+					"failed": false,
+					"name": "Search for people by name and gender",
+					"id": "382e1511-4edb-92cd-20a5-2a9fdde5124d",
+					"isSample": true,
+					"scrollToResult": false,
+					"runTests": false,
+					"request": {
+						"url": "localhost:3000/api/v1/search/people?given_name=Julius&family_name=Phiri&gender=M&page_size=2&page=0",
+						"pathVariables": {},
+						"pathVariableData": [],
+						"queryParams": [
+							{
+								"key": "given_name",
+								"value": "Julius",
+								"equals": true,
+								"description": "",
+								"enabled": true
+							},
+							{
+								"key": "family_name",
+								"value": "Phiri",
+								"equals": true,
+								"description": "",
+								"enabled": true
+							},
+							{
+								"key": "gender",
+								"value": "M",
+								"equals": true,
+								"description": "",
+								"enabled": true
+							},
+							{
+								"key": "page_size",
+								"value": "2",
+								"equals": true,
+								"description": "",
+								"enabled": true
+							},
+							{
+								"key": "page",
+								"value": "0",
+								"equals": true,
+								"description": "",
+								"enabled": true
+							}
+						],
+						"headerData": [
+							{
+								"key": "Authorization",
+								"value": "lQUitqOlCOo6",
+								"enabled": true,
+								"description": ""
+							}
+						],
+						"headers": "Authorization: lQUitqOlCOo6\n",
+						"data": null,
+						"method": "GET",
+						"dataMode": "params"
+					}
+				}
+			],
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {}
+		},
+		{
+			"id": "8e8e9b14-ca44-6615-9c1a-8eb17822227a",
+			"headers": "Authorization: qTt9Wg2zs3oC\n",
+			"headerData": [
+				{
+					"key": "Authorization",
+					"value": "qTt9Wg2zs3oC",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "http://127.0.0.1:3000/api/v1/roles",
+			"queryParams": [],
+			"pathVariables": {},
+			"pathVariableData": [],
+			"preRequestScript": null,
+			"method": "GET",
+			"collectionId": "666fd3ae-c41c-b4b3-e1a2-8e1f5b3572ff",
+			"data": null,
+			"dataMode": "params",
+			"name": "Retrieving all roles",
+			"description": "GET /api/v1/roles",
+			"descriptionFormat": "html",
+			"time": 1535423545932,
+			"version": 2,
+			"responses": [
+				{
+					"status": "",
+					"responseCode": {
+						"code": 200,
+						"name": "OK",
+						"detail": "Standard response for successful HTTP requests. The actual response will depend on the request method used. In a GET request, the response will contain an entity corresponding to the requested resource. In a POST request the response will contain an entity describing or containing the result of the action."
+					},
+					"time": 93,
+					"headers": [
+						{
+							"name": "cache-control",
+							"key": "cache-control",
+							"value": "max-age=0, private, must-revalidate",
+							"description": "Tells all caching mechanisms from server to client whether they may cache this object. It is measured in seconds"
+						},
+						{
+							"name": "content-type",
+							"key": "content-type",
+							"value": "application/json; charset=utf-8",
+							"description": "The mime type of this content"
+						},
+						{
+							"name": "etag",
+							"key": "etag",
+							"value": "W/\"3d041ef82972d83658bf4058bc5f0303\"",
+							"description": "An identifier for a specific version of a resource, often a message digest"
+						},
+						{
+							"name": "transfer-encoding",
+							"key": "transfer-encoding",
+							"value": "chunked",
+							"description": "The form of encoding used to safely transfer the entity to the user. Currently defined methods are: chunked, compress, deflate, gzip, identity."
+						},
+						{
+							"name": "x-request-id",
+							"key": "x-request-id",
+							"value": "375aa3d5-ea42-4933-8169-8e208e037ddb",
+							"description": "Custom header"
+						},
+						{
+							"name": "x-runtime",
+							"key": "x-runtime",
+							"value": "0.074712",
+							"description": "Custom header"
+						}
+					],
+					"cookies": [],
+					"mime": "",
+					"text": "[{\"role\":\"Accompagnateur\",\"description\":\"Community health worker\",\"uuid\":\"0d3b28c8-d65e-11d6-b7af-0024217bb78e\"},{\"role\":\"Accompagnateur Leader\",\"description\":\"Responsible for overseeing up to 30 Accompagnateurs\",\"uuid\":\"0d3b2c1a-d65e-11d6-b7af-0024217bb78e\"},{\"role\":\"Adults\",\"description\":\"OPD user group for adults entries\",\"uuid\":\"0d3b2e04-d65e-11d6-b7af-0024217bb78e\"},{\"role\":\"Anonymous\",\"description\":\"Privileges for non-authenticated users.\",\"uuid\":\"774b2af3-6437-4e5a-a310-547554c7c65c\"},{\"role\":\"Authenticated\",\"description\":\"Privileges gained once authentication has been established.\",\"uuid\":\"f7fd42ef-880e-40c5-972d-e4ae7c990de2\"},{\"role\":\"Clinician\",\"description\":\"Users who are a part of direct patient care.\",\"uuid\":\"0d3b3372-d65e-11d6-b7af-0024217bb78e\"},{\"role\":\"Data Assistant\",\"description\":\"Clerks who perform data entry.\",\"uuid\":\"0d3b353e-d65e-11d6-b7af-0024217bb78e\"},{\"role\":\"Data Element Contributor\",\"description\":\"Role for users who contribute to the management of data elements in OpenMRS.\",\"uuid\":\"0d3b3728-d65e-11d6-b7af-0024217bb78e\"},{\"role\":\"Data Manager\",\"description\":\"User who maintains clinical data stored within the OpenMRS repository.\",\"uuid\":\"0d3b38f4-d65e-11d6-b7af-0024217bb78e\"},{\"role\":\"Doctor\",\"description\":\"People in direct care of patient. According to the Malawian context, this is a user who has acquired medical training to level of MBBS.\",\"uuid\":\"0d3b3ac0-d65e-11d6-b7af-0024217bb78e\"},{\"role\":\"General Registration Clerk\",\"description\":\"A General Registration Clerk\",\"uuid\":\"0d3b4876-d65e-11d6-b7af-0024217bb78e\"},{\"role\":\"HMIS lab order\",\"description\":\"OPD user group for HMIS lab order clerk entries\",\"uuid\":\"0d3b4a6a-d65e-11d6-b7af-0024217bb78e\"},{\"role\":\"Informatics Manager\",\"description\":\"User who maintains the local installation of the OpenMRS repository.\",\"uuid\":\"0d3b4c40-d65e-11d6-b7af-0024217bb78e\"},{\"role\":\"Lab\",\"description\":\"Lab technicians and assistants\",\"uuid\":\"0d3b4e0c-d65e-11d6-b7af-0024217bb78e\"},{\"role\":\"Medical Assistant\",\"description\":\"Medical Assistants\",\"uuid\":\"0d3b4fce-d65e-11d6-b7af-0024217bb78e\"},{\"role\":\"Nurse\",\"description\":\"Nursing Officers and Technicians\",\"uuid\":\"0d3b51a4-d65e-11d6-b7af-0024217bb78e\"},{\"role\":\"Paediatrics\",\"description\":\"OPD user group for paediatrics entries\",\"uuid\":\"0d3b5352-d65e-11d6-b7af-0024217bb78e\"},{\"role\":\"Pharmacist\",\"description\":\"A Pharmacist\",\"uuid\":\"0d3b551e-d65e-11d6-b7af-0024217bb78e\"},{\"role\":\"Program Manager\",\"description\":\"Has permission to view most/all data, but no permission for entry or editing.\",\"uuid\":\"0d3b56e0-d65e-11d6-b7af-0024217bb78e\"},{\"role\":\"Provider\",\"description\":\"Health care provider\",\"uuid\":\"8d94f280-c2cc-11de-8d13-0010c6dffd0f\"},{\"role\":\"Registration Clerk\",\"description\":\"This is a user responsible for registering patients at the patient registration station. mostly used in Baobab applications. This is probably an equivalent of Data Assistant.\",\"uuid\":\"0d3b5a6e-d65e-11d6-b7af-0024217bb78e\"},{\"role\":\"Social Worker\",\"description\":\"Social Worker\",\"uuid\":\"0d3b5c4e-d65e-11d6-b7af-0024217bb78e\"},{\"role\":\"SPINE clinician\",\"description\":\"OPD user group for SPINE clinician entries\",\"uuid\":\"0d3b5e24-d65e-11d6-b7af-0024217bb78e\"},{\"role\":\"Superuser\",\"description\":\"This is a user who has access to all Baobab developed applications' functionality\",\"uuid\":\"0d3b5ff0-d65e-11d6-b7af-0024217bb78e\"},{\"role\":\"Superuser,Superuser,\",\"description\":\"Superuser\",\"uuid\":\"0d3b61b2-d65e-11d6-b7af-0024217bb78e\"},{\"role\":\"System Developer\",\"description\":\"Developers of the OpenMRS .. have additional access to change fundamental structure of the database model.\",\"uuid\":\"8d94f852-c2cc-11de-8d13-0010c6dffd0f\"},{\"role\":\"Therapeutic Feeding Clerk\",\"description\":\"A clerk who just enters therapeutic feeding data.\",\"uuid\":\"0d3b6554-d65e-11d6-b7af-0024217bb78e\"},{\"role\":\"Vitals Clerk\",\"description\":\"A user who just enters vitals for patients. \",\"uuid\":\"0d3b6734-d65e-11d6-b7af-0024217bb78e\"}]",
+					"language": "json",
+					"rawDataType": "text",
+					"previewType": "text",
+					"searchResultScrolledTo": -1,
+					"forceNoPretty": false,
+					"write": true,
+					"empty": false,
+					"failed": false,
+					"name": "Retrieving all roles",
+					"id": "5fb42807-7509-6509-3d70-1d4e3f0899ef",
+					"request": {
+						"url": "http://127.0.0.1:3000/api/v1/roles",
+						"pathVariables": {},
+						"pathVariableData": [],
+						"queryParams": [],
+						"headerData": [
+							{
+								"key": "Authorization",
+								"value": "qTt9Wg2zs3oC",
+								"description": "",
+								"enabled": true,
+								"warning": ""
+							}
+						],
+						"headers": "Authorization: qTt9Wg2zs3oC\n",
+						"data": null,
+						"method": "GET",
+						"dataMode": "params"
+					}
+				},
+				{
+					"status": "",
+					"responseCode": {
+						"code": 200,
+						"name": "OK",
+						"detail": "Standard response for successful HTTP requests. The actual response will depend on the request method used. In a GET request, the response will contain an entity corresponding to the requested resource. In a POST request the response will contain an entity describing or containing the result of the action."
+					},
+					"time": 22,
+					"headers": [
+						{
+							"name": "cache-control",
+							"key": "cache-control",
+							"value": "max-age=0, private, must-revalidate",
+							"description": "Tells all caching mechanisms from server to client whether they may cache this object. It is measured in seconds"
+						},
+						{
+							"name": "content-type",
+							"key": "content-type",
+							"value": "application/json; charset=utf-8",
+							"description": "The mime type of this content"
+						},
+						{
+							"name": "etag",
+							"key": "etag",
+							"value": "W/\"da618fe41814df4aef1c6cfa83628306\"",
+							"description": "An identifier for a specific version of a resource, often a message digest"
+						},
+						{
+							"name": "transfer-encoding",
+							"key": "transfer-encoding",
+							"value": "chunked",
+							"description": "The form of encoding used to safely transfer the entity to the user. Currently defined methods are: chunked, compress, deflate, gzip, identity."
+						},
+						{
+							"name": "vary",
+							"key": "vary",
+							"value": "Origin",
+							"description": "Tells downstream proxies how to match future request headers to decide whether the cached response can be used rather than requesting a fresh one from the origin server."
+						},
+						{
+							"name": "x-request-id",
+							"key": "x-request-id",
+							"value": "d82d8ba7-b581-4851-9ebd-c0e30c965de6",
+							"description": "Custom header"
+						},
+						{
+							"name": "x-runtime",
+							"key": "x-runtime",
+							"value": "0.004273",
+							"description": "Custom header"
+						}
+					],
+					"cookies": [],
+					"mime": "",
+					"text": "[{\"role\":\"Accompagnateur\",\"description\":\"Community health worker\",\"uuid\":\"0d3b28c8-d65e-11d6-b7af-0024217bb78e\"},{\"role\":\"Accompagnateur Leader\",\"description\":\"Responsible for overseeing up to 30 Accompagnateurs\",\"uuid\":\"0d3b2c1a-d65e-11d6-b7af-0024217bb78e\"},{\"role\":\"Adults\",\"description\":\"OPD user group for adults entries\",\"uuid\":\"0d3b2e04-d65e-11d6-b7af-0024217bb78e\"},{\"role\":\"Anonymous\",\"description\":\"Privileges for non-authenticated users.\",\"uuid\":\"774b2af3-6437-4e5a-a310-547554c7c65c\"},{\"role\":\"Authenticated\",\"description\":\"Privileges gained once authentication has been established.\",\"uuid\":\"f7fd42ef-880e-40c5-972d-e4ae7c990de2\"}]",
+					"language": "json",
+					"rawDataType": "text",
+					"previewType": "text",
+					"searchResultScrolledTo": -1,
+					"forceNoPretty": false,
+					"write": true,
+					"empty": false,
+					"failed": false,
+					"name": "Retrieving all roles",
+					"id": "6d078446-48e7-8913-fc4f-9de50b0af467",
+					"request": {
+						"url": "http://127.0.0.1:3000/api/v1/roles?page=0&page_size=5",
+						"pathVariables": {},
+						"pathVariableData": [],
+						"queryParams": [
+							{
+								"key": "page",
+								"value": "0",
+								"equals": true,
+								"description": "",
+								"enabled": true
+							},
+							{
+								"key": "page_size",
+								"value": "5",
+								"equals": true,
+								"description": "",
+								"enabled": true
+							}
+						],
+						"headerData": [
+							{
+								"key": "Authorization",
+								"value": "lQUitqOlCOo6",
+								"description": "",
+								"enabled": true,
+								"warning": ""
+							}
+						],
+						"headers": "Authorization: lQUitqOlCOo6\n",
+						"data": null,
+						"method": "GET",
+						"dataMode": "params"
+					}
+				}
+			],
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {}
+		},
+		{
+			"id": "b9c3b425-ca42-41d5-37b0-6fcd529ef76c",
+			"headers": "Authorization: qTt9Wg2zs3oC\n",
+			"headerData": [
+				{
+					"key": "Authorization",
+					"value": "qTt9Wg2zs3oC",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "127.0.0.1:3000/api/v1/users",
+			"queryParams": [],
+			"pathVariables": {},
+			"pathVariableData": [],
+			"preRequestScript": null,
+			"method": "GET",
+			"collectionId": "666fd3ae-c41c-b4b3-e1a2-8e1f5b3572ff",
+			"data": null,
+			"dataMode": "params",
+			"name": "Retrieving all users",
+			"description": "GET /api/v1/users\n\nLorem Ipsum...",
+			"descriptionFormat": "html",
+			"time": 1535423422817,
+			"version": 2,
+			"responses": [
+				{
+					"status": "",
+					"responseCode": {
+						"code": 200,
+						"name": "OK",
+						"detail": "Standard response for successful HTTP requests. The actual response will depend on the request method used. In a GET request, the response will contain an entity corresponding to the requested resource. In a POST request the response will contain an entity describing or containing the result of the action."
+					},
+					"time": 96,
+					"headers": [
+						{
+							"name": "cache-control",
+							"key": "cache-control",
+							"value": "max-age=0, private, must-revalidate",
+							"description": "Tells all caching mechanisms from server to client whether they may cache this object. It is measured in seconds"
+						},
+						{
+							"name": "content-type",
+							"key": "content-type",
+							"value": "application/json; charset=utf-8",
+							"description": "The mime type of this content"
+						},
+						{
+							"name": "etag",
+							"key": "etag",
+							"value": "W/\"377423c6e4abf996b13db79549f86929\"",
+							"description": "An identifier for a specific version of a resource, often a message digest"
+						},
+						{
+							"name": "transfer-encoding",
+							"key": "transfer-encoding",
+							"value": "chunked",
+							"description": "The form of encoding used to safely transfer the entity to the user. Currently defined methods are: chunked, compress, deflate, gzip, identity."
+						},
+						{
+							"name": "x-request-id",
+							"key": "x-request-id",
+							"value": "0e5f61ef-973c-49cc-9a4e-a21874611234",
+							"description": "Custom header"
+						},
+						{
+							"name": "x-runtime",
+							"key": "x-runtime",
+							"value": "0.073981",
+							"description": "Custom header"
+						}
+					],
+					"cookies": [],
+					"mime": "",
+					"text": "[{\"user_id\":1,\"system_id\":\"1-8\",\"username\":\"admin\",\"creator\":1,\"date_created\":\"2005-01-01T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":\"2018-08-28T01:07:03.000Z\",\"person_id\":1,\"retired\":0,\"retired_by\":null,\"date_retired\":null,\"retire_reason\":\"\",\"uuid\":\"3206f1ac-59ca-11e3-b7e9-003018a9e11f\",\"roles\":[{\"role\":\"Superuser\",\"description\":\"This is a user who has access to all Baobab developed applications' functionality\",\"uuid\":\"0d3b5ff0-d65e-11d6-b7af-0024217bb78e\"},{\"role\":\"System Developer\",\"description\":\"Developers of the OpenMRS .. have additional access to change fundamental structure of the database model.\",\"uuid\":\"8d94f852-c2cc-11de-8d13-0010c6dffd0f\"}]},{\"user_id\":2,\"system_id\":\"\",\"username\":\"vicman\",\"creator\":1,\"date_created\":\"2011-09-16T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"person_id\":63397,\"retired\":0,\"retired_by\":null,\"date_retired\":null,\"retire_reason\":null,\"uuid\":\"34797f51-59ca-11e3-b7e9-003018a9e11f\",\"roles\":[{\"role\":\"Superuser\",\"description\":\"This is a user who has access to all Baobab developed applications' functionality\",\"uuid\":\"0d3b5ff0-d65e-11d6-b7af-0024217bb78e\"}]},{\"user_id\":3,\"system_id\":\"\",\"username\":\"melani\",\"creator\":1,\"date_created\":\"2011-09-16T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"person_id\":63398,\"retired\":0,\"retired_by\":null,\"date_retired\":null,\"retire_reason\":null,\"uuid\":\"3479cb90-59ca-11e3-b7e9-003018a9e11f\",\"roles\":[{\"role\":\"Provider\",\"description\":\"Health care provider\",\"uuid\":\"8d94f280-c2cc-11de-8d13-0010c6dffd0f\"},{\"role\":\"Superuser\",\"description\":\"This is a user who has access to all Baobab developed applications' functionality\",\"uuid\":\"0d3b5ff0-d65e-11d6-b7af-0024217bb78e\"}]},{\"user_id\":4,\"system_id\":\"\",\"username\":\"belita\",\"creator\":1,\"date_created\":\"2011-09-16T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"person_id\":63399,\"retired\":0,\"retired_by\":null,\"date_retired\":null,\"retire_reason\":null,\"uuid\":\"347a1a8f-59ca-11e3-b7e9-003018a9e11f\",\"roles\":[{\"role\":\"Superuser\",\"description\":\"This is a user who has access to all Baobab developed applications' functionality\",\"uuid\":\"0d3b5ff0-d65e-11d6-b7af-0024217bb78e\"}]},{\"user_id\":5,\"system_id\":\"\",\"username\":\"beatrice\",\"creator\":1,\"date_created\":\"2011-09-16T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"person_id\":63400,\"retired\":0,\"retired_by\":null,\"date_retired\":null,\"retire_reason\":null,\"uuid\":\"347a51b4-59ca-11e3-b7e9-003018a9e11f\",\"roles\":[{\"role\":\"Provider\",\"description\":\"Health care provider\",\"uuid\":\"8d94f280-c2cc-11de-8d13-0010c6dffd0f\"},{\"role\":\"Superuser\",\"description\":\"This is a user who has access to all Baobab developed applications' functionality\",\"uuid\":\"0d3b5ff0-d65e-11d6-b7af-0024217bb78e\"}]},{\"user_id\":6,\"system_id\":\"\",\"username\":\"monaph\",\"creator\":1,\"date_created\":\"2011-09-16T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"person_id\":63401,\"retired\":0,\"retired_by\":null,\"date_retired\":null,\"retire_reason\":null,\"uuid\":\"347b1e0c-59ca-11e3-b7e9-003018a9e11f\",\"roles\":[{\"role\":\"Provider\",\"description\":\"Health care provider\",\"uuid\":\"8d94f280-c2cc-11de-8d13-0010c6dffd0f\"},{\"role\":\"Superuser\",\"description\":\"This is a user who has access to all Baobab developed applications' functionality\",\"uuid\":\"0d3b5ff0-d65e-11d6-b7af-0024217bb78e\"}]},{\"user_id\":7,\"system_id\":\"\",\"username\":\"georgina\",\"creator\":1,\"date_created\":\"2011-09-16T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"person_id\":63402,\"retired\":0,\"retired_by\":null,\"date_retired\":null,\"retire_reason\":null,\"uuid\":\"347b61f2-59ca-11e3-b7e9-003018a9e11f\",\"roles\":[{\"role\":\"Superuser\",\"description\":\"This is a user who has access to all Baobab developed applications' functionality\",\"uuid\":\"0d3b5ff0-d65e-11d6-b7af-0024217bb78e\"}]},{\"user_id\":8,\"system_id\":\"\",\"username\":\"barate\",\"creator\":1,\"date_created\":\"2011-09-16T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"person_id\":63403,\"retired\":0,\"retired_by\":null,\"date_retired\":null,\"retire_reason\":null,\"uuid\":\"347ba89a-59ca-11e3-b7e9-003018a9e11f\",\"roles\":[{\"role\":\"Superuser\",\"description\":\"This is a user who has access to all Baobab developed applications' functionality\",\"uuid\":\"0d3b5ff0-d65e-11d6-b7af-0024217bb78e\"}]},{\"user_id\":9,\"system_id\":\"\",\"username\":\"anenji\",\"creator\":1,\"date_created\":\"2011-09-16T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"person_id\":63404,\"retired\":0,\"retired_by\":null,\"date_retired\":null,\"retire_reason\":null,\"uuid\":\"347be4e6-59ca-11e3-b7e9-003018a9e11f\",\"roles\":[{\"role\":\"Superuser\",\"description\":\"This is a user who has access to all Baobab developed applications' functionality\",\"uuid\":\"0d3b5ff0-d65e-11d6-b7af-0024217bb78e\"}]},{\"user_id\":10,\"system_id\":\"\",\"username\":\"malumbo\",\"creator\":1,\"date_created\":\"2011-09-16T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"person_id\":63405,\"retired\":0,\"retired_by\":null,\"date_retired\":null,\"retire_reason\":null,\"uuid\":\"347c6932-59ca-11e3-b7e9-003018a9e11f\",\"roles\":[{\"role\":\"Superuser\",\"description\":\"This is a user who has access to all Baobab developed applications' functionality\",\"uuid\":\"0d3b5ff0-d65e-11d6-b7af-0024217bb78e\"}]}]",
+					"language": "json",
+					"rawDataType": "text",
+					"previewType": "text",
+					"searchResultScrolledTo": -1,
+					"forceNoPretty": false,
+					"write": true,
+					"empty": false,
+					"failed": false,
+					"name": "Retrieving all users",
+					"id": "12a2dfbd-c4da-a5d8-06d8-c159295477b0",
+					"request": {
+						"url": "127.0.0.1:3000/api/v1/users",
+						"pathVariables": {},
+						"pathVariableData": [],
+						"queryParams": [],
+						"headerData": [
+							{
+								"key": "Authorization",
+								"value": "qTt9Wg2zs3oC",
+								"description": "",
+								"enabled": true,
+								"warning": ""
+							}
+						],
+						"headers": "Authorization: qTt9Wg2zs3oC\n",
+						"data": null,
+						"method": "GET",
+						"dataMode": "params"
+					}
+				},
+				{
+					"status": "",
+					"responseCode": {
+						"code": 200,
+						"name": "OK",
+						"detail": "Standard response for successful HTTP requests. The actual response will depend on the request method used. In a GET request, the response will contain an entity corresponding to the requested resource. In a POST request the response will contain an entity describing or containing the result of the action."
+					},
+					"time": 27,
+					"headers": [
+						{
+							"name": "cache-control",
+							"key": "cache-control",
+							"value": "max-age=0, private, must-revalidate",
+							"description": "Tells all caching mechanisms from server to client whether they may cache this object. It is measured in seconds"
+						},
+						{
+							"name": "content-type",
+							"key": "content-type",
+							"value": "application/json; charset=utf-8",
+							"description": "The mime type of this content"
+						},
+						{
+							"name": "etag",
+							"key": "etag",
+							"value": "W/\"2623bee04094441efc16150aa5abd6d9\"",
+							"description": "An identifier for a specific version of a resource, often a message digest"
+						},
+						{
+							"name": "transfer-encoding",
+							"key": "transfer-encoding",
+							"value": "chunked",
+							"description": "The form of encoding used to safely transfer the entity to the user. Currently defined methods are: chunked, compress, deflate, gzip, identity."
+						},
+						{
+							"name": "vary",
+							"key": "vary",
+							"value": "Origin",
+							"description": "Tells downstream proxies how to match future request headers to decide whether the cached response can be used rather than requesting a fresh one from the origin server."
+						},
+						{
+							"name": "x-request-id",
+							"key": "x-request-id",
+							"value": "2895cb54-49eb-4494-9d6e-22a35f471435",
+							"description": "Custom header"
+						},
+						{
+							"name": "x-runtime",
+							"key": "x-runtime",
+							"value": "0.006852",
+							"description": "Custom header"
+						}
+					],
+					"cookies": [],
+					"mime": "",
+					"text": "[{\"user_id\":1,\"system_id\":\"1-8\",\"username\":\"admin\",\"creator\":1,\"date_created\":\"2005-01-01T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":\"2018-09-07T12:57:33.000Z\",\"person_id\":1,\"retired\":0,\"retired_by\":null,\"date_retired\":null,\"retire_reason\":\"\",\"uuid\":\"3206f1ac-59ca-11e3-b7e9-003018a9e11f\",\"roles\":[{\"role\":\"Superuser\",\"description\":\"This is a user who has access to all Baobab developed applications' functionality\",\"uuid\":\"0d3b5ff0-d65e-11d6-b7af-0024217bb78e\"},{\"role\":\"System Developer\",\"description\":\"Developers of the OpenMRS .. have additional access to change fundamental structure of the database model.\",\"uuid\":\"8d94f852-c2cc-11de-8d13-0010c6dffd0f\"}]},{\"user_id\":2,\"system_id\":\"\",\"username\":\"vicman\",\"creator\":1,\"date_created\":\"2011-09-16T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"person_id\":63397,\"retired\":0,\"retired_by\":null,\"date_retired\":null,\"retire_reason\":null,\"uuid\":\"34797f51-59ca-11e3-b7e9-003018a9e11f\",\"roles\":[{\"role\":\"Superuser\",\"description\":\"This is a user who has access to all Baobab developed applications' functionality\",\"uuid\":\"0d3b5ff0-d65e-11d6-b7af-0024217bb78e\"}]}]",
+					"language": "json",
+					"rawDataType": "text",
+					"previewType": "text",
+					"searchResultScrolledTo": -1,
+					"forceNoPretty": false,
+					"write": true,
+					"empty": false,
+					"failed": false,
+					"name": "Retrieving all users",
+					"id": "1598b1ae-615f-34e6-60e3-369a505b5f27",
+					"request": {
+						"url": "127.0.0.1:3000/api/v1/users?page=0&page_size=2",
+						"pathVariables": {},
+						"pathVariableData": [],
+						"queryParams": [
+							{
+								"key": "page",
+								"value": "0",
+								"equals": true,
+								"description": "",
+								"enabled": true
+							},
+							{
+								"key": "page_size",
+								"value": "2",
+								"equals": true,
+								"description": "",
+								"enabled": true
+							}
+						],
+						"headerData": [
+							{
+								"key": "Authorization",
+								"value": "lQUitqOlCOo6",
+								"description": "",
+								"enabled": true,
+								"warning": ""
+							}
+						],
+						"headers": "Authorization: lQUitqOlCOo6\n",
+						"data": null,
+						"method": "GET",
+						"dataMode": "params"
+					}
+				}
+			],
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {}
+		},
+		{
+			"id": "d429aa6f-d505-972c-1944-4e67592f546a",
+			"headers": "Authorization: qTt9Wg2zs3oC\nContent-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Authorization",
+					"value": "qTt9Wg2zs3oC",
+					"description": "",
+					"enabled": true
+				},
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "http://127.0.0.1:3000/api/v1/people",
+			"queryParams": [],
+			"pathVariables": {},
+			"pathVariableData": [],
+			"preRequestScript": null,
+			"method": "POST",
+			"collectionId": "666fd3ae-c41c-b4b3-e1a2-8e1f5b3572ff",
+			"data": [],
+			"dataMode": "raw",
+			"name": "Creating a Person",
+			"description": "",
+			"descriptionFormat": "html",
+			"time": 1535427821642,
+			"version": 2,
+			"responses": [],
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"rawModeData": "{\n\t\"given_name\": \"Foobar\",\n\t\"middle_name\": \"J.\",\n\t\"family_name\": \"Random\",\n\t\"gender\": \"F\",\n\t\"birthdate\": \"2000-01-01\",\n\t\"birthdate_estimated\": false,\n\t\"home_district\": \"Blantyre\",\n\t\"home_village\": \"Chatha\",\n\t\"home_traditional_authority\": \"Chatha\",\n\t\"current_district\": \"Lilongwe\",\n\t\"current_village\": \"Area 15\",\n\t\"current_traditional_authority\": \"Area 15\"\n}"
+		},
+		{
+			"id": "e3fd434e-5d49-ba80-6b89-99e68cf1f6ea",
+			"headers": "Authorization: lQUitqOlCOo6\n//Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Authorization",
+					"value": "lQUitqOlCOo6",
+					"description": "",
+					"enabled": true
+				},
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": false
+				}
+			],
+			"url": "localhost:3000/api/v1/people/18904/names",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "GET",
+			"data": [],
+			"dataMode": "raw",
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1536326048277,
+			"name": "Retrieve specific person names",
+			"description": "GET localhost:3000/api/v1/people/18904/names",
+			"collectionId": "666fd3ae-c41c-b4b3-e1a2-8e1f5b3572ff",
+			"responses": [
+				{
+					"status": "",
+					"responseCode": {
+						"code": 200,
+						"name": "OK",
+						"detail": "Standard response for successful HTTP requests. The actual response will depend on the request method used. In a GET request, the response will contain an entity corresponding to the requested resource. In a POST request the response will contain an entity describing or containing the result of the action."
+					},
+					"time": 81,
+					"headers": [
+						{
+							"name": "cache-control",
+							"key": "cache-control",
+							"value": "max-age=0, private, must-revalidate",
+							"description": "Tells all caching mechanisms from server to client whether they may cache this object. It is measured in seconds"
+						},
+						{
+							"name": "content-type",
+							"key": "content-type",
+							"value": "application/json; charset=utf-8",
+							"description": "The mime type of this content"
+						},
+						{
+							"name": "etag",
+							"key": "etag",
+							"value": "W/\"a479514f8b17c5a0591b89b465dbbc0a\"",
+							"description": "An identifier for a specific version of a resource, often a message digest"
+						},
+						{
+							"name": "transfer-encoding",
+							"key": "transfer-encoding",
+							"value": "chunked",
+							"description": "The form of encoding used to safely transfer the entity to the user. Currently defined methods are: chunked, compress, deflate, gzip, identity."
+						},
+						{
+							"name": "vary",
+							"key": "vary",
+							"value": "Origin",
+							"description": "Tells downstream proxies how to match future request headers to decide whether the cached response can be used rather than requesting a fresh one from the origin server."
+						},
+						{
+							"name": "x-request-id",
+							"key": "x-request-id",
+							"value": "c5cfde6c-96af-43cf-894f-29bf7e7a5775",
+							"description": "Custom header"
+						},
+						{
+							"name": "x-runtime",
+							"key": "x-runtime",
+							"value": "0.054193",
+							"description": "Custom header"
+						}
+					],
+					"cookies": [],
+					"mime": "",
+					"text": "[{\"person_name_id\":18872,\"preferred\":0,\"person_id\":18904,\"prefix\":null,\"given_name\":\"William\",\"middle_name\":null,\"family_name_prefix\":null,\"family_name\":\"Kabamkena\",\"family_name2\":null,\"family_name_suffix\":null,\"degree\":null,\"creator\":26,\"date_created\":\"2012-02-20T00:00:00.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"changed_by\":null,\"date_changed\":null,\"uuid\":\"ba0fd78b-59d5-11e3-b7e9-003018a9e11f\"}]",
+					"language": "json",
+					"rawDataType": "text",
+					"previewType": "text",
+					"searchResultScrolledTo": -1,
+					"forceNoPretty": false,
+					"write": true,
+					"empty": false,
+					"failed": false,
+					"name": "Retrieve specific person names",
+					"id": "bf6cb84a-1da6-0d1d-cb99-76c4b9591dee",
+					"request": {
+						"url": "localhost:3000/api/v1/people/18904/names",
+						"pathVariables": {},
+						"pathVariableData": [],
+						"queryParams": [],
+						"headerData": [
+							{
+								"key": "Authorization",
+								"value": "lQUitqOlCOo6",
+								"description": "",
+								"enabled": true,
+								"warning": ""
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": "",
+								"enabled": false,
+								"warning": ""
+							}
+						],
+						"headers": "Authorization: lQUitqOlCOo6\n//Content-Type: application/json\n",
+						"data": "{\n\t\"person_id\": 1000\n}",
+						"method": "GET",
+						"dataMode": "raw"
+					}
+				}
+			],
+			"rawModeData": "{\n\t\"person_id\": 1000\n}"
+		},
+		{
+			"id": "ef344437-f3e7-5611-d219-89ad9dbfbedf",
+			"headers": "Authorization: JDIt0GpZyR3I\n",
+			"headerData": [
+				{
+					"key": "Authorization",
+					"value": "JDIt0GpZyR3I",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "http://localhost:3000/api/v1/observations?page=0&page_size=3",
+			"queryParams": [
+				{
+					"key": "page",
+					"value": "0",
+					"equals": true,
+					"description": "",
+					"enabled": true
+				},
+				{
+					"key": "page_size",
+					"value": "3",
+					"equals": true,
+					"description": "",
+					"enabled": true
+				}
+			],
+			"pathVariables": {},
+			"pathVariableData": [],
+			"preRequestScript": null,
+			"method": "GET",
+			"collectionId": "666fd3ae-c41c-b4b3-e1a2-8e1f5b3572ff",
+			"data": null,
+			"dataMode": "params",
+			"name": "Retrieve observations",
+			"description": "http://localhost:3000/api/v1/observations?page=0&page_size=3",
+			"descriptionFormat": "html",
+			"time": 1536129615975,
+			"version": 2,
+			"responses": [
+				{
+					"status": "",
+					"responseCode": {
+						"code": 200,
+						"name": "OK",
+						"detail": "Standard response for successful HTTP requests. The actual response will depend on the request method used. In a GET request, the response will contain an entity corresponding to the requested resource. In a POST request the response will contain an entity describing or containing the result of the action."
+					},
+					"time": 27,
+					"headers": [
+						{
+							"name": "cache-control",
+							"key": "cache-control",
+							"value": "max-age=0, private, must-revalidate",
+							"description": "Tells all caching mechanisms from server to client whether they may cache this object. It is measured in seconds"
+						},
+						{
+							"name": "content-type",
+							"key": "content-type",
+							"value": "application/json; charset=utf-8",
+							"description": "The mime type of this content"
+						},
+						{
+							"name": "etag",
+							"key": "etag",
+							"value": "W/\"44c41455fa64717814e2ccf9597cdcf8\"",
+							"description": "An identifier for a specific version of a resource, often a message digest"
+						},
+						{
+							"name": "transfer-encoding",
+							"key": "transfer-encoding",
+							"value": "chunked",
+							"description": "The form of encoding used to safely transfer the entity to the user. Currently defined methods are: chunked, compress, deflate, gzip, identity."
+						},
+						{
+							"name": "x-request-id",
+							"key": "x-request-id",
+							"value": "a2f983be-be4d-41d2-aeef-3638c1b3be26",
+							"description": "Custom header"
+						},
+						{
+							"name": "x-runtime",
+							"key": "x-runtime",
+							"value": "0.009961",
+							"description": "Custom header"
+						}
+					],
+					"cookies": [],
+					"mime": "",
+					"text": "[{\"obs_id\":1,\"person_id\":1,\"concept_id\":2552,\"encounter_id\":2,\"order_id\":null,\"obs_datetime\":\"2011-09-14T14:14:54.000Z\",\"location_id\":148,\"obs_group_id\":null,\"accession_number\":null,\"value_group_id\":null,\"value_boolean\":null,\"value_coded\":1066,\"value_coded_name_id\":1103,\"value_drug\":null,\"value_datetime\":null,\"value_numeric\":null,\"value_modifier\":null,\"value_text\":null,\"date_started\":null,\"date_stopped\":null,\"comments\":null,\"creator\":1,\"date_created\":\"2011-09-14T14:17:16.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"value_complex\":null,\"uuid\":\"350c168e-59ca-11e3-b7e9-003018a9e11f\",\"concept\":{\"concept_id\":2552,\"retired\":0,\"short_name\":null,\"description\":null,\"form_text\":null,\"datatype_id\":2,\"class_id\":7,\"is_set\":0,\"creator\":1,\"date_created\":\"2007-08-07T09:23:32.000Z\",\"default_charge\":null,\"version\":\"\",\"changed_by\":1,\"date_changed\":\"2009-08-25T13:07:06.000Z\",\"retired_by\":null,\"date_retired\":null,\"retire_reason\":null,\"uuid\":\"0b89adf6-d65e-11d6-b7af-0024217bb78e\"}},{\"obs_id\":2,\"person_id\":1,\"concept_id\":7437,\"encounter_id\":2,\"order_id\":null,\"obs_datetime\":\"2011-09-14T14:14:54.000Z\",\"location_id\":148,\"obs_group_id\":null,\"accession_number\":null,\"value_group_id\":null,\"value_boolean\":false,\"value_coded\":null,\"value_coded_name_id\":null,\"value_drug\":null,\"value_datetime\":null,\"value_numeric\":null,\"value_modifier\":null,\"value_text\":null,\"date_started\":null,\"date_stopped\":null,\"comments\":null,\"creator\":1,\"date_created\":\"2011-09-14T14:17:16.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"value_complex\":null,\"uuid\":\"350c1bea-59ca-11e3-b7e9-003018a9e11f\",\"concept\":{\"concept_id\":7437,\"retired\":0,\"short_name\":null,\"description\":null,\"form_text\":null,\"datatype_id\":4,\"class_id\":11,\"is_set\":0,\"creator\":1,\"date_created\":\"2010-11-03T10:42:20.000Z\",\"default_charge\":null,\"version\":\"\",\"changed_by\":null,\"date_changed\":null,\"retired_by\":null,\"date_retired\":null,\"retire_reason\":null,\"uuid\":\"0bb64c58-d65e-11d6-b7af-0024217bb78e\"}},{\"obs_id\":3,\"person_id\":1,\"concept_id\":7881,\"encounter_id\":2,\"order_id\":null,\"obs_datetime\":\"2011-09-14T14:14:54.000Z\",\"location_id\":148,\"obs_group_id\":null,\"accession_number\":null,\"value_group_id\":null,\"value_boolean\":null,\"value_coded\":null,\"value_coded_name_id\":null,\"value_drug\":null,\"value_datetime\":null,\"value_numeric\":null,\"value_modifier\":null,\"value_text\":\"Unknown\",\"date_started\":null,\"date_stopped\":null,\"comments\":null,\"creator\":1,\"date_created\":\"2011-09-14T14:17:16.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"value_complex\":null,\"uuid\":\"350c2079-59ca-11e3-b7e9-003018a9e11f\",\"concept\":{\"concept_id\":7881,\"retired\":0,\"short_name\":null,\"description\":null,\"form_text\":null,\"datatype_id\":3,\"class_id\":1,\"is_set\":0,\"creator\":1,\"date_created\":\"2011-06-23T14:22:29.000Z\",\"default_charge\":null,\"version\":\"\",\"changed_by\":1,\"date_changed\":\"2011-08-02T09:45:05.000Z\",\"retired_by\":null,\"date_retired\":null,\"retire_reason\":null,\"uuid\":\"0bb9f0b0-d65e-11d6-b7af-0024217bb78e\"}}]",
+					"language": "json",
+					"rawDataType": "text",
+					"previewType": "text",
+					"searchResultScrolledTo": -1,
+					"forceNoPretty": false,
+					"write": true,
+					"empty": false,
+					"failed": false,
+					"name": "Retrieve observations",
+					"id": "26358244-1034-cfe5-102f-d101efe58a42",
+					"request": {
+						"url": "http://localhost:3000/api/v1/observations?page=0&page_size=3",
+						"pathVariables": {},
+						"pathVariableData": [],
+						"queryParams": [
+							{
+								"key": "page",
+								"value": "0",
+								"equals": true,
+								"description": "",
+								"enabled": true
+							},
+							{
+								"key": "page_size",
+								"value": "3",
+								"equals": true,
+								"description": "",
+								"enabled": true
+							}
+						],
+						"headerData": [
+							{
+								"key": "Authorization",
+								"value": "JDIt0GpZyR3I",
+								"description": "",
+								"enabled": true,
+								"warning": ""
+							}
+						],
+						"headers": "Authorization: JDIt0GpZyR3I\n",
+						"data": null,
+						"method": "GET",
+						"dataMode": "params"
+					}
+				}
+			],
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {}
+		},
+		{
+			"id": "f8c02203-4d0f-3f38-268c-63a18dff674e",
+			"headers": "Authorization: JDIt0GpZyR3I\n",
+			"headerData": [
+				{
+					"key": "Authorization",
+					"value": "JDIt0GpZyR3I",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "localhost:3000/api/v1/encounters/_types?name=VITALS",
+			"queryParams": [
+				{
+					"key": "name",
+					"value": "VITALS",
+					"equals": true,
+					"description": "",
+					"enabled": true
+				}
+			],
+			"pathVariables": {},
+			"pathVariableData": [],
+			"preRequestScript": null,
+			"method": "GET",
+			"collectionId": "666fd3ae-c41c-b4b3-e1a2-8e1f5b3572ff",
+			"data": null,
+			"dataMode": "params",
+			"name": "Searching encounter types",
+			"description": "localhost:3000/api/v1/encounters/_types?name=VITALS",
+			"descriptionFormat": "html",
+			"time": 1536157425287,
+			"version": 2,
+			"responses": [],
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {}
+		}
+	]
+}
