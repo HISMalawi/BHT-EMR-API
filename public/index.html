@@ -215,6 +215,10 @@ pre code {
             <a href="#request-retrieve-programs">Retrieve programs</a>
         </li>
         
+        <li>
+            <a href="#request-retrieve-program-workflows-and-states">Retrieve program workflows and states</a>
+        </li>
+        
         
     </ul>
 </div>
@@ -515,221 +519,6 @@ Content-Type: application/json
                         </div>
                     </div>
 
-                    
-                    <div>
-                        <ul class="nav nav-tabs" role="tablist">
-                            
-                            <li role="presentation" class="active">
-                                <a href="#request-creating-a-person-responses-c1731df1-924d-b567-a16b-45928f6165e0" data-toggle="tab">
-                                    
-                                    Creating a Person
-                                    
-                                </a>
-                            </li>
-                            
-                            <li role="presentation">
-                                <a href="#request-creating-a-person-responses-33ae2fad-75df-b752-f2d4-9aa788397d2f" data-toggle="tab">
-                                    
-                                    Creating a Person
-                                    
-                                </a>
-                            </li>
-                            
-                        </ul>
-                        <div class="tab-content">
-                            
-                            <div class="tab-pane active" id="request-creating-a-person-responses-c1731df1-924d-b567-a16b-45928f6165e0">
-                                <table class="table table-bordered">
-                                    <tr><th style="width: 20%;">Status</th><td>201 </td></tr>
-                                    
-                                    <tr><th style="width: 20%;">cache-control</th><td>max-age=0, private, must-revalidate</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">content-type</th><td>application/json; charset=utf-8</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">etag</th><td>W/"3dae89d68c703c915edd04345a869383"</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">transfer-encoding</th><td>chunked</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">x-request-id</th><td>f71702d6-27e9-4032-910e-083640c5b194</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">x-runtime</th><td>0.389695</td></tr>
-                                    
-                                    
-                                    
-                                    <tr><td class="response-text-sample" colspan="2">
-                                        <pre><code>{
-    "person_id": 63499,
-    "gender": "F",
-    "birthdate": "2000-01-01",
-    "birthdate_estimated": 0,
-    "dead": 0,
-    "death_date": null,
-    "cause_of_death": null,
-    "creator": 1,
-    "date_created": null,
-    "changed_by": 1,
-    "date_changed": "2018-08-28T03:35:43.000Z",
-    "voided": 0,
-    "voided_by": null,
-    "date_voided": null,
-    "void_reason": null,
-    "uuid": "4c436a52-fc72-4962-a15b-af3c4292879d",
-    "names": [
-        {
-            "person_name_id": 63324,
-            "preferred": 0,
-            "person_id": 63499,
-            "prefix": null,
-            "given_name": "Foobar",
-            "middle_name": "J.",
-            "family_name_prefix": null,
-            "family_name": "Random",
-            "family_name2": null,
-            "family_name_suffix": null,
-            "degree": null,
-            "creator": 1,
-            "date_created": "2018-08-28T05:35:43.000Z",
-            "voided": 0,
-            "voided_by": null,
-            "date_voided": null,
-            "void_reason": null,
-            "changed_by": null,
-            "date_changed": null,
-            "uuid": "06548f0d-9f74-42ed-b39c-638d60e9f6fb"
-        }
-    ],
-    "addresses": [],
-    "person_attributes": [
-        {
-            "person_attribute_id": 240428,
-            "person_id": 63499,
-            "value": "Chatha",
-            "person_attribute_type_id": 10,
-            "creator": 1,
-            "date_created": "2018-08-28T05:35:44.000Z",
-            "changed_by": null,
-            "date_changed": null,
-            "voided": 0,
-            "voided_by": null,
-            "date_voided": null,
-            "void_reason": null,
-            "uuid": "131c9acc-dc93-4256-bcb3-4cbd633768e0"
-        }
-    ]
-}</code></pre>
-                                    </td></tr>
-                                    
-                                    
-                                </table>
-                            </div>
-                            
-                            <div class="tab-pane" id="request-creating-a-person-responses-33ae2fad-75df-b752-f2d4-9aa788397d2f">
-                                <table class="table table-bordered">
-                                    <tr><th style="width: 20%;">Status</th><td>201 </td></tr>
-                                    
-                                    <tr><th style="width: 20%;">access-control-allow-methods</th><td>GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">access-control-allow-origin</th><td>*</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">access-control-expose-headers</th><td></td></tr>
-                                    
-                                    <tr><th style="width: 20%;">access-control-max-age</th><td>1728000</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">cache-control</th><td>max-age=0, private, must-revalidate</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">content-type</th><td>application/json; charset=utf-8</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">etag</th><td>W/"456b825d3728d17b92628454065c3bf0"</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">transfer-encoding</th><td>chunked</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">vary</th><td>Origin</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">x-request-id</th><td>8f691901-8f86-4fef-b723-fcb683e6598c</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">x-runtime</th><td>0.528628</td></tr>
-                                    
-                                    
-                                    
-                                    <tr><td class="response-text-sample" colspan="2">
-                                        <pre><code>{
-    "person_id": 63477,
-    "gender": "F",
-    "birthdate": "2000-01-01",
-    "birthdate_estimated": 0,
-    "dead": 0,
-    "death_date": null,
-    "cause_of_death": null,
-    "creator": 1,
-    "date_created": "2018-09-07T12:13:37.000Z",
-    "changed_by": 1,
-    "date_changed": "2018-09-07T12:13:37.000Z",
-    "voided": 0,
-    "voided_by": null,
-    "date_voided": null,
-    "void_reason": null,
-    "uuid": "4b7c1c78-1e43-4923-8fe1-8247d729d86a",
-    "names": [
-        {
-            "person_name_id": 63307,
-            "preferred": 0,
-            "person_id": 63477,
-            "prefix": null,
-            "given_name": "Foobar",
-            "middle_name": "J.",
-            "family_name_prefix": null,
-            "family_name": "Random",
-            "family_name2": null,
-            "family_name_suffix": null,
-            "degree": null,
-            "creator": 1,
-            "date_created": "2018-09-07T12:13:38.000Z",
-            "voided": 0,
-            "voided_by": null,
-            "date_voided": null,
-            "void_reason": null,
-            "changed_by": 1,
-            "date_changed": "2018-09-07T12:13:38.000Z",
-            "uuid": "24efa5fa-6872-4ad9-a9d8-c36bd743308d"
-        }
-    ],
-    "addresses": [
-        {
-            "person_address_id": 60063,
-            "person_id": 63477,
-            "preferred": 0,
-            "address1": null,
-            "address2": "Blantyre",
-            "city_village": "Area 15",
-            "state_province": "Lilongwe",
-            "postal_code": null,
-            "country": null,
-            "latitude": null,
-            "longitude": null,
-            "creator": 1,
-            "date_created": "2018-09-07T12:13:38.000Z",
-            "voided": 0,
-            "voided_by": null,
-            "date_voided": null,
-            "void_reason": null,
-            "county_district": "Chatha",
-            "neighborhood_cell": "Chatha",
-            "region": null,
-            "subregion": null,
-            "township_division": "Area 15",
-            "uuid": "b42f86c0-0272-466a-b801-94e083b52169"
-        }
-    ],
-    "person_attributes": []
-}</code></pre>
-                                    </td></tr>
-                                    
-                                    
-                                </table>
-                            </div>
-                            
-                        </div>
-                    </div>
                     
 
                     <hr>
@@ -4271,9 +4060,17 @@ Content-Type: application/json</code></pre>
                         <ul class="nav nav-tabs" role="tablist">
                             
                             <li role="presentation" class="active">
-                                <a href="#request-retrieve-programs-responses-c5682fcb-7772-37ed-a4b4-2593e1d63a29" data-toggle="tab">
+                                <a href="#request-retrieve-programs-responses-c74fb713-6dd2-b726-0087-0a7d483165c4" data-toggle="tab">
                                     
-                                    Response
+                                    Retrieve all programs
+                                    
+                                </a>
+                            </li>
+                            
+                            <li role="presentation">
+                                <a href="#request-retrieve-programs-responses-88654e60-80f2-1190-ebba-1eb23ef75a34" data-toggle="tab">
+                                    
+                                    Retrieve all programs
                                     
                                 </a>
                             </li>
@@ -4281,7 +4078,7 @@ Content-Type: application/json</code></pre>
                         </ul>
                         <div class="tab-content">
                             
-                            <div class="tab-pane active" id="request-retrieve-programs-responses-c5682fcb-7772-37ed-a4b4-2593e1d63a29">
+                            <div class="tab-pane active" id="request-retrieve-programs-responses-c74fb713-6dd2-b726-0087-0a7d483165c4">
                                 <table class="table table-bordered">
                                     <tr><th style="width: 20%;">Status</th><td>200 </td></tr>
                                     
@@ -4289,15 +4086,15 @@ Content-Type: application/json</code></pre>
                                     
                                     <tr><th style="width: 20%;">content-type</th><td>application/json; charset=utf-8</td></tr>
                                     
-                                    <tr><th style="width: 20%;">etag</th><td>W/"23139f7a34931897106cc813b1f3d1fb"</td></tr>
+                                    <tr><th style="width: 20%;">etag</th><td>W/"d570b5744d158128972b8a0d6a366b7b"</td></tr>
                                     
                                     <tr><th style="width: 20%;">transfer-encoding</th><td>chunked</td></tr>
                                     
                                     <tr><th style="width: 20%;">vary</th><td>Origin</td></tr>
                                     
-                                    <tr><th style="width: 20%;">x-request-id</th><td>4565b0f2-8989-4a04-8845-cd8e03562115</td></tr>
+                                    <tr><th style="width: 20%;">x-request-id</th><td>f38c019b-af85-4a31-85ee-2610e36369a5</td></tr>
                                     
-                                    <tr><th style="width: 20%;">x-runtime</th><td>0.007647</td></tr>
+                                    <tr><th style="width: 20%;">x-runtime</th><td>0.012831</td></tr>
                                     
                                     
                                     
@@ -4314,6 +4111,342 @@ Content-Type: application/json</code></pre>
         "name": "HIV PROGRAM",
         "description": "",
         "uuid": "0d2c19c8-d65e-11d6-b7af-0024217bb78e"
+    },
+    {
+        "program_id": 2,
+        "concept_id": 1648,
+        "creator": 1,
+        "date_created": "2008-07-23T07:42:38.000Z",
+        "changed_by": 1,
+        "date_changed": "2011-08-30T21:15:05.000Z",
+        "retired": 0,
+        "name": "TB PROGRAM",
+        "description": "Tuberculosis Program",
+        "uuid": "0d2c1d10-d65e-11d6-b7af-0024217bb78e"
+    },
+    {
+        "program_id": 3,
+        "concept_id": 3568,
+        "creator": 1,
+        "date_created": "2008-08-18T18:42:19.000Z",
+        "changed_by": 1,
+        "date_changed": "2009-11-03T16:27:34.000Z",
+        "retired": 0,
+        "name": "VHW PROGRAM",
+        "description": "",
+        "uuid": "0d31c15c-d65e-11d6-b7af-0024217bb78e"
+    },
+    {
+        "program_id": 4,
+        "concept_id": 3594,
+        "creator": 1,
+        "date_created": "2008-09-17T21:54:32.000Z",
+        "changed_by": 1,
+        "date_changed": "2013-01-10T17:10:10.000Z",
+        "retired": 0,
+        "name": "EARLY INFANT DIAGNOSIS PROGRAM",
+        "description": "",
+        "uuid": "0d31c47c-d65e-11d6-b7af-0024217bb78e"
+    }
+]</code></pre>
+                                    </td></tr>
+                                    
+                                    
+                                </table>
+                            </div>
+                            
+                            <div class="tab-pane" id="request-retrieve-programs-responses-88654e60-80f2-1190-ebba-1eb23ef75a34">
+                                <table class="table table-bordered">
+                                    <tr><th style="width: 20%;">Status</th><td>200 </td></tr>
+                                    
+                                    <tr><th style="width: 20%;">cache-control</th><td>max-age=0, private, must-revalidate</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">content-type</th><td>application/json; charset=utf-8</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">etag</th><td>W/"d570b5744d158128972b8a0d6a366b7b"</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">transfer-encoding</th><td>chunked</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">vary</th><td>Origin</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-request-id</th><td>3f673876-ed77-4757-979d-6489f8e294c3</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-runtime</th><td>0.006430</td></tr>
+                                    
+                                    
+                                    
+                                    <tr><td class="response-text-sample" colspan="2">
+                                        <pre><code>[
+    {
+        "program_id": 1,
+        "concept_id": 1482,
+        "creator": 1,
+        "date_created": "2007-12-19T11:55:28.000Z",
+        "changed_by": 1,
+        "date_changed": "2012-02-06T18:05:08.000Z",
+        "retired": 0,
+        "name": "HIV PROGRAM",
+        "description": "",
+        "uuid": "0d2c19c8-d65e-11d6-b7af-0024217bb78e"
+    },
+    {
+        "program_id": 2,
+        "concept_id": 1648,
+        "creator": 1,
+        "date_created": "2008-07-23T07:42:38.000Z",
+        "changed_by": 1,
+        "date_changed": "2011-08-30T21:15:05.000Z",
+        "retired": 0,
+        "name": "TB PROGRAM",
+        "description": "Tuberculosis Program",
+        "uuid": "0d2c1d10-d65e-11d6-b7af-0024217bb78e"
+    },
+    {
+        "program_id": 3,
+        "concept_id": 3568,
+        "creator": 1,
+        "date_created": "2008-08-18T18:42:19.000Z",
+        "changed_by": 1,
+        "date_changed": "2009-11-03T16:27:34.000Z",
+        "retired": 0,
+        "name": "VHW PROGRAM",
+        "description": "",
+        "uuid": "0d31c15c-d65e-11d6-b7af-0024217bb78e"
+    },
+    {
+        "program_id": 4,
+        "concept_id": 3594,
+        "creator": 1,
+        "date_created": "2008-09-17T21:54:32.000Z",
+        "changed_by": 1,
+        "date_changed": "2013-01-10T17:10:10.000Z",
+        "retired": 0,
+        "name": "EARLY INFANT DIAGNOSIS PROGRAM",
+        "description": "",
+        "uuid": "0d31c47c-d65e-11d6-b7af-0024217bb78e"
+    }
+]</code></pre>
+                                    </td></tr>
+                                    
+                                    
+                                </table>
+                            </div>
+                            
+                        </div>
+                    </div>
+                    
+
+                    <hr>
+                </div>
+                
+                
+                <div class="request">
+
+                    <h3 id="request-retrieve-program-workflows-and-states">
+                        Retrieve program workflows and states
+                        <a href="#request-retrieve-program-workflows-and-states"><i class="glyphicon glyphicon-link"></i></a>
+                    </h3>
+
+                    <div><p>From this endpoint you get access to a program&rsquo;s workflows. Each workflow contains a list of workflow states in it under the field <code>states</code>.</p>
+</div>
+
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li role="presentation" class="active"><a href="#request-retrieve-program-workflows-and-states-example-curl" data-toggle="tab">Curl</a></li>
+                            <li role="presentation"><a href="#request-retrieve-program-workflows-and-states-example-http" data-toggle="tab">HTTP</a></li>
+                        </ul>
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="request-retrieve-program-workflows-and-states-example-curl">
+                                <pre><code class="hljs curl">curl -X GET -H "Authorization: 42YGdA9CGoID" -H "Accept: application/json" "localhost:3000/api/v1/programs/1/workflows"</code></pre>
+                            </div>
+                            <div class="tab-pane" id="request-retrieve-program-workflows-and-states-example-http">
+                                <pre><code class="hljs http">GET 3000/api/v1/programs/1/workflows HTTP/1.1
+Host: 
+Authorization: 42YGdA9CGoID
+Accept: application/json</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            
+                            <li role="presentation" class="active">
+                                <a href="#request-retrieve-program-workflows-and-states-responses-b42c8846-72d6-3007-4ebe-37362d8d5243" data-toggle="tab">
+                                    
+                                    Response
+                                    
+                                </a>
+                            </li>
+                            
+                        </ul>
+                        <div class="tab-content">
+                            
+                            <div class="tab-pane active" id="request-retrieve-program-workflows-and-states-responses-b42c8846-72d6-3007-4ebe-37362d8d5243">
+                                <table class="table table-bordered">
+                                    <tr><th style="width: 20%;">Status</th><td>200 </td></tr>
+                                    
+                                    <tr><th style="width: 20%;">cache-control</th><td>max-age=0, private, must-revalidate</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">content-type</th><td>application/json; charset=utf-8</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">etag</th><td>W/"6a1cfdb275d30d6ffdb6bc90dec52396"</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">transfer-encoding</th><td>chunked</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">vary</th><td>Origin</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-request-id</th><td>be42cce5-6fc2-4ad4-aed7-e2fba502d6c2</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-runtime</th><td>0.133593</td></tr>
+                                    
+                                    
+                                    
+                                    <tr><td class="response-text-sample" colspan="2">
+                                        <pre><code>[
+    {
+        "program_workflow_id": 1,
+        "program_id": 1,
+        "concept_id": 1484,
+        "creator": 1,
+        "date_created": "2007-12-19T11:59:17.000Z",
+        "retired": 0,
+        "changed_by": 1,
+        "date_changed": "2012-02-06T18:05:08.000Z",
+        "uuid": "0d32e744-d65e-11d6-b7af-0024217bb78e",
+        "states": [
+            {
+                "program_workflow_state_id": 1,
+                "program_workflow_id": 1,
+                "concept_id": 1490,
+                "initial": 1,
+                "terminal": 0,
+                "creator": 1,
+                "date_created": "2007-12-19T12:09:08.000Z",
+                "retired": 0,
+                "changed_by": 1,
+                "date_changed": "2012-02-06T18:05:08.000Z",
+                "uuid": "0d3413a8-d65e-11d6-b7af-0024217bb78e"
+            },
+            {
+                "program_workflow_state_id": 2,
+                "program_workflow_id": 1,
+                "concept_id": 1744,
+                "initial": 0,
+                "terminal": 1,
+                "creator": 1,
+                "date_created": "2007-12-19T12:09:08.000Z",
+                "retired": 0,
+                "changed_by": 1,
+                "date_changed": "2012-02-06T18:05:08.000Z",
+                "uuid": "0d341718-d65e-11d6-b7af-0024217bb78e"
+            },
+            {
+                "program_workflow_state_id": 3,
+                "program_workflow_id": 1,
+                "concept_id": 1742,
+                "initial": 0,
+                "terminal": 1,
+                "creator": 1,
+                "date_created": "2007-12-19T12:09:08.000Z",
+                "retired": 0,
+                "changed_by": 1,
+                "date_changed": "2012-02-06T18:05:08.000Z",
+                "uuid": "0d341920-d65e-11d6-b7af-0024217bb78e"
+            },
+            {
+                "program_workflow_state_id": 6,
+                "program_workflow_id": 1,
+                "concept_id": 1579,
+                "initial": 0,
+                "terminal": 1,
+                "creator": 1,
+                "date_created": "2007-12-19T12:09:08.000Z",
+                "retired": 0,
+                "changed_by": 1,
+                "date_changed": "2012-02-06T18:05:08.000Z",
+                "uuid": "0d341ee8-d65e-11d6-b7af-0024217bb78e"
+            },
+            {
+                "program_workflow_state_id": 7,
+                "program_workflow_id": 1,
+                "concept_id": 1577,
+                "initial": 1,
+                "terminal": 0,
+                "creator": 1,
+                "date_created": "2007-12-19T12:09:08.000Z",
+                "retired": 0,
+                "changed_by": 1,
+                "date_changed": "2012-02-06T18:05:08.000Z",
+                "uuid": "0d3420d2-d65e-11d6-b7af-0024217bb78e"
+            },
+            {
+                "program_workflow_state_id": 8,
+                "program_workflow_id": 1,
+                "concept_id": 1574,
+                "initial": 0,
+                "terminal": 1,
+                "creator": 1,
+                "date_created": "2007-12-19T12:09:08.000Z",
+                "retired": 0,
+                "changed_by": 1,
+                "date_changed": "2012-02-06T18:05:08.000Z",
+                "uuid": "0d3422b2-d65e-11d6-b7af-0024217bb78e"
+            },
+            {
+                "program_workflow_state_id": 87,
+                "program_workflow_id": 1,
+                "concept_id": 7373,
+                "initial": 0,
+                "terminal": 0,
+                "creator": 1,
+                "date_created": "2010-10-11T19:43:38.000Z",
+                "retired": 0,
+                "changed_by": 1,
+                "date_changed": "2012-02-06T18:05:08.000Z",
+                "uuid": "0d34bd80-d65e-11d6-b7af-0024217bb78e"
+            },
+            {
+                "program_workflow_state_id": 119,
+                "program_workflow_id": 1,
+                "concept_id": 8016,
+                "initial": 0,
+                "terminal": 1,
+                "creator": 1,
+                "date_created": "2011-09-07T16:19:10.000Z",
+                "retired": 0,
+                "changed_by": 1,
+                "date_changed": "2012-02-06T18:05:08.000Z",
+                "uuid": "0d3502ae-d65e-11d6-b7af-0024217bb78e"
+            },
+            {
+                "program_workflow_state_id": 120,
+                "program_workflow_id": 1,
+                "concept_id": 8017,
+                "initial": 1,
+                "terminal": 0,
+                "creator": 1,
+                "date_created": "2011-09-07T16:19:10.000Z",
+                "retired": 0,
+                "changed_by": 1,
+                "date_changed": "2012-02-06T18:05:08.000Z",
+                "uuid": "0d3503f8-d65e-11d6-b7af-0024217bb78e"
+            },
+            {
+                "program_workflow_state_id": 136,
+                "program_workflow_id": 1,
+                "concept_id": 8365,
+                "initial": 1,
+                "terminal": 0,
+                "creator": 1,
+                "date_created": "2012-02-06T18:05:08.000Z",
+                "retired": 0,
+                "changed_by": null,
+                "date_changed": null,
+                "uuid": "0d3542aa-d65e-11d6-b7af-0024217bb78e"
+            }
+        ]
     }
 ]</code></pre>
                                     </td></tr>

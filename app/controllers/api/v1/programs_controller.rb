@@ -1,6 +1,6 @@
 class Api::V1::ProgramsController < ApplicationController
   def show
-    render json: Programs.find(programs[:id])
+    render json: Program.find(params[:id])
   end
 
   def index

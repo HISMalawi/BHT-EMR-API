@@ -62,7 +62,9 @@ Rails.application.routes.draw do
 
       resources :observations
 
-      resources :programs
+      resources :programs do
+        resources :program_workflows, path: 'workflows'
+      end
 
       get '/search/given_name' => 'person_names#search_given_name'
       get '/search/middle_name' => 'person_names#search_middle_name'

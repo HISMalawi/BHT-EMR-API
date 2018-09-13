@@ -27,6 +27,12 @@ class Concept < RetirableRecord
     Concept.find(:first, joins: 'INNER JOIN concept_name on concept_name.concept_id = concept.concept_id', conditions: ['concept.retired = 0 AND concept_name.voided = 0 AND concept_name.name =?', concept_name.to_s])
   end
 
+  def as_json(options = {})
+    super(options.merge(
+      include: :concept_names
+    ))
+  end
+
   #   def shortname
   # =begin
   #     ConceptName.find(:first, :conditions => ["concept_id = ? AND concept_name_id IN (?)",
