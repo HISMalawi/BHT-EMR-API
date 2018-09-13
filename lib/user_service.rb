@@ -54,9 +54,9 @@ module UserService
       user.save
     end
 
-    # Update role if any
+    # Update roles if any
     if params[:roles]&.respond_to?(:each)
-      user.roles.delete_all
+      user.user_roles.destroy_all
       params[:roles].each do |rolename|
         role = Role.find rolename
         UserRole.create role: role, user: user

@@ -36,7 +36,8 @@ class Api::V1::UsersController < ApplicationController
   end
 
   def update
-    update_params = params.permit(%i[password given_name family_name roles])
+    update_params = params.permit :password, :given_name, :family_name,
+                                  roles: []
 
     # Makes sure roles are an array if provided
     return unless validate_roles(update_params[:roles])
