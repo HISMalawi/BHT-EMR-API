@@ -62,6 +62,8 @@ Rails.application.routes.draw do
 
       resources :observations
 
+      resources :programs
+
       get '/search/given_name' => 'person_names#search_given_name'
       get '/search/middle_name' => 'person_names#search_middle_name'
       get '/search/family_name' => 'person_names#search_family_name'
