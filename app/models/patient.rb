@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Patient < VoidableRecord
   after_void :void_related_models
 
@@ -21,19 +23,25 @@ class Patient < VoidableRecord
   end
 
   def as_json(options = {})
-    super(options.merge({
+    super(options.merge(
       include: {
         person: {
-          include: { 
-            names: {}
+          include: {
+            names: {},
+            addresses: {},
+            person_attributes: {}
           }
         },
         # programs: {},
-        patient_identifiers: {},
+        patient_identifiers: {
+          include: {
+            type: {}
+          }
+        },
         encounters: {},
         orders: {}
       }
-    }))
+    ))
   end
 
   def national_id
