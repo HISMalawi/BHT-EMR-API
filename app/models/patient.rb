@@ -23,7 +23,11 @@ class Patient < VoidableRecord
   def as_json(options = {})
     super(options.merge({
       include: {
-        person: {},
+        person: {
+          include: { 
+            names: {}
+          }
+        },
         # programs: {},
         patient_identifiers: {},
         encounters: {},
