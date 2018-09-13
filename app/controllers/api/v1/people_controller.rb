@@ -35,23 +35,22 @@ class Api::V1::PeopleController < ApplicationController
     create_params, errors = required_params required: PersonService::PERSON_FIELDS
     return render json: create_params, status: :bad_request if errors
 
-    person = PersonService.create_person(create_params)
-    PersonService.create_person_name(person, create_params)
-    PersonService.create_person_address(person, create_params)
+    person = PersonService.create_person create_params
+    PersonService.create_person_name person, create_params
+    PersonService.create_person_address person, create_params
+    PersonService.create_person_attributes person, params.permit!
 
-    # create_person_attributes person, person_attributes(create_params)
     render json: person, status: :created
   end
 
   def update
-    update_params, errors = required_params optional: PersonService::PERSON_FIELDS
-    return render json: { errors: errors }, status: :bad_request if errors
-
     person = People.find(params[:id])
+    update_params = params.permit!
 
     PersonService.update_person person, update_params
     PersonService.update_person_name person, update_params
     PersonService.update_person_address person, update_params
+    PersonService.update_person_attributes person, update_params
 
     # ASIDE: Person we just updated may be linked to DDE, if this is the
     # case, do we notify DDE of the update right now or do we force client
