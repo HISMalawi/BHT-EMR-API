@@ -1,0 +1,4 @@
+#!/bin/sh
+
+postmanerator -collection=doc/src/index.json -output=public/index.html
+
