@@ -10,6 +10,18 @@ class ProgramWorkflow < RetirableRecord
   has_many :states, class_name: 'ProgramWorkflowState'
 
   def as_json(options = {})
-    super(options.merge(include: :states))
+    super(options.merge(
+      include: {
+        states: {
+          include: {
+            concept: {
+              include: {
+                concept_names: {}
+              }
+            }
+          }
+        }
+      }
+    ))
   end
 end
