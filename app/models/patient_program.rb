@@ -9,17 +9,18 @@ class PatientProgram < VoidableRecord
   belongs_to :location
   has_many :patient_states, class_name: 'PatientState', dependent: :destroy
 
-  named_scope :current, conditions: [
-    'date_enrolled < NOW() AND (date_completed IS NULL OR date_completed > NOW())'
-  ]
-  named_scope :local, lambda do
-    {
-      conditions: [
-        'location_id IN (?)',
-        Location.current_health_center.children.map{ |l| l.id } + [Location.current_health_center.id]
-      ]
-    }
-  end
+  # named_scope :current, conditions: [
+  #   'date_enrolled < NOW() AND (date_completed IS NULL OR date_completed > NOW())'
+  # ]
+  # named_scope :local, lambda do
+  #   {
+  #     conditions: [
+  #       'location_id IN (?)',
+  #       Location.current_health_center.children.map{ |l| l.id } + [Location.current_health_center.id]
+  #     ]
+  #   }
+  # end
+
   validates_presence_of :date_enrolled, :program_id
 
   def after_void(reason)

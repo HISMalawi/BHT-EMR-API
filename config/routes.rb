@@ -22,9 +22,13 @@ Rails.application.routes.draw do
       end
 
       resources :roles
+
+      # Patients
       resources :patients do
         get '/labels/national_health_id' => 'patients#print_national_health_id_label'
+        resources :patient_programs, path: :programs
       end
+
       resources :concepts, only: %i[index show]
 
       # Locations
@@ -70,6 +74,10 @@ Rails.application.routes.draw do
       resources :drug_orders
       resources :orders
 
+      # Workflow engine
+      get '/workflows/:program_id/:patient_id' => 'workflows#next_encounter'
+
+      # Search
       get '/search/given_name' => 'person_names#search_given_name'
       get '/search/middle_name' => 'person_names#search_middle_name'
       get '/search/family_name' => 'person_names#search_family_name'
