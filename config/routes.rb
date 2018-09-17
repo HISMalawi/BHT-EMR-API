@@ -70,6 +70,7 @@ Rails.application.routes.draw do
       get '/search/middle_name' => 'person_names#search_middle_name'
       get '/search/family_name' => 'person_names#search_family_name'
       get '/search/people' => 'people#search'
+      get '/search/patients/by_npid' => 'patients#search_by_npid'
     end
   end
 
