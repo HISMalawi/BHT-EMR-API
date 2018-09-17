@@ -2,6 +2,7 @@
 
 require 'securerandom'
 require 'dde_client'
+require 'person_service'
 require 'zebra_printer/init'
 
 class Api::V1::PatientsController < ApplicationController
@@ -9,6 +10,29 @@ class Api::V1::PatientsController < ApplicationController
 
   def show
     render json: Patient.find(params[:id])
+  end
+
+  def search_by_npid
+    npid = params.require(:npid)
+    patients = Patient.joins(:patient_identifiers).where(
+      'patient_identifier.identifier_type = ? AND patient_identifier.identifier = ?',
+      npid_identifier_type.patient_identifier_type_id, npid
+    )
+
+    render(json: paginate(patients)) && return unless patients.empty?
+
+    # Ignore response status, DDE almost always returns 200 even for bad requests
+    # and 404s on this endpoint. Only way to check for an is to check whether we
+    # received a hash and the hash contains an error... Not pretty. 
+    response, = @dde_client.post 'search_by_npid', npid: npid
+
+    unless response.class = Array
+      logger.error "Failed to search for patient in DDE by npid: #{response}"
+      render json: { errors: 'DDE is unreachable...' }, status: :internal_server_error
+      return
+    end
+
+    render json: response.collect { |dde_person| dde_person_to_openmrs dde_person }
   end
 
   def create
@@ -138,6 +162,41 @@ class Api::V1::PatientsController < ApplicationController
 
     logger.debug "Converted openmrs person to dde_person: #{dde_person}"
     dde_person
+  end
+
+  # Convert a DDE person to an openmrs person.
+  #
+  # NOTE: This creates a person on the database.
+  def dde_person_to_openmrs(dde_person)
+    logger.debug "Converting DDE person to openmrs: #{dde_person}"
+
+    person = PersonService.create_person(
+      birthdate: dde_person['birthdate'],
+      birthdate_estimated: dde_person['birthdate_estimated'],
+      gender: dde_person['gender']
+    )
+
+    PersonService.create_person_name(
+      person, given_name: dde_person['given_name'],
+              family_name: dde_person['family_name'],
+              middle_name: dde_person['middle_name']
+    )
+
+    PersonService.create_person_address(
+      person, home_village: dde_person['home_village'],
+              home_traditional_authority: dde_person['home_traditional_authority'],
+              home_district: dde_person['home_district'],
+              current_village: dde_person['current_village'],
+              current_traditional_authority: dde_person['current_traditional_authority'],
+              current_district: dde_person['current_district']
+    )
+
+    PersonService.create_person_attributes(
+      person, cell_phone_number: dde_person['cellphone_number'],
+              occupation: dde_person['occupation']
+    )
+
+    person
   end
 
   def filter_person_attributes(person_attributes)
