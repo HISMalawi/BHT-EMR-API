@@ -10,6 +10,9 @@ class Order < VoidableRecord
   belongs_to :patient
   belongs_to :provider, foreign_key: 'orderer', class_name: 'User'
 
+  validates_presence_of :concept, :concept, :encounter, :patient,
+                        :provider
+
   # has_many :observations
   has_one :drug_order # no default scope
 

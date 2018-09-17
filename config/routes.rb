@@ -66,6 +66,10 @@ Rails.application.routes.draw do
         resources :program_workflows, path: 'workflows'
       end
 
+      resources :drugs
+      resources :drug_orders
+      resources :orders
+
       get '/search/given_name' => 'person_names#search_given_name'
       get '/search/middle_name' => 'person_names#search_middle_name'
       get '/search/family_name' => 'person_names#search_family_name'
