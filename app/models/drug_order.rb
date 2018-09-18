@@ -5,9 +5,14 @@ class DrugOrder < ActiveRecord::Base
   self.primary_key = :order_id
 
   belongs_to :drug, foreign_key: :drug_inventory_id
+  belongs_to :order
 
   validates_presence_of :drug_inventory_id, :dose, :equivalent_daily_dose,
                         :units, :frequency, :prn
+
+  def as_json(options = {})
+    super(options.merge(include: { order: {} }))
+  end
 
   # def order
   #   @order ||= Order.find(order_id)
