@@ -219,6 +219,22 @@ pre code {
             <a href="#request-retrieve-program-workflows-and-states">Retrieve program workflows and states</a>
         </li>
         
+        <li>
+            <a href="#request-creating-drug-orders">Creating drug orders</a>
+        </li>
+        
+        <li>
+            <a href="#request-retrieve-search-for-drugs">Retrieve/search  for drugs</a>
+        </li>
+        
+        <li>
+            <a href="#request-creating-prescriptions">Creating prescriptions</a>
+        </li>
+        
+        <li>
+            <a href="#request-retrieve-prescriptions">Retrieve prescriptions</a>
+        </li>
+        
         
     </ul>
 </div>
@@ -4889,6 +4905,2206 @@ Accept: application/json</code></pre>
                             "locale_preferred": 0
                         }
                     ]
+                }
+            }
+        ]
+    }
+]</code></pre>
+                                    </td></tr>
+                                    
+                                    
+                                </table>
+                            </div>
+                            
+                        </div>
+                    </div>
+                    
+
+                    <hr>
+                </div>
+                
+                
+                <div class="request">
+
+                    <h3 id="request-creating-drug-orders">
+                        Creating drug orders
+                        <a href="#request-creating-drug-orders"><i class="glyphicon glyphicon-link"></i></a>
+                    </h3>
+
+                    <div></div>
+
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li role="presentation" class="active"><a href="#request-creating-drug-orders-example-curl" data-toggle="tab">Curl</a></li>
+                            <li role="presentation"><a href="#request-creating-drug-orders-example-http" data-toggle="tab">HTTP</a></li>
+                        </ul>
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="request-creating-drug-orders-example-curl">
+                                <pre><code class="hljs curl">curl -X POST -H "Content-Type: application/json" -H "Authorization: wUO8OFXAoZZT" -d '{
+	"drug_inventory_id": 3,
+	"patient_id": 20,
+	"start_date": "2018-09-18",
+	"auto_expire_date": "2019-01-01",
+	"encounter_id": 1,
+	"dose": 2,
+	"equivalent_daily_dose": 6,
+	"frequency": "Evening-Noon-Night-Morning"
+}' "localhost:3000/api/v1/drug_orders/"</code></pre>
+                            </div>
+                            <div class="tab-pane" id="request-creating-drug-orders-example-http">
+                                <pre><code class="hljs http">POST 3000/api/v1/drug_orders/ HTTP/1.1
+Host: 
+Content-Type: application/json
+Authorization: wUO8OFXAoZZT
+
+{
+	"drug_inventory_id": 3,
+	"patient_id": 20,
+	"start_date": "2018-09-18",
+	"auto_expire_date": "2019-01-01",
+	"encounter_id": 1,
+	"dose": 2,
+	"equivalent_daily_dose": 6,
+	"frequency": "Evening-Noon-Night-Morning"
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            
+                            <li role="presentation" class="active">
+                                <a href="#request-creating-drug-orders-responses-e482aa2b-db5f-64fa-20d7-019189cbd8d2" data-toggle="tab">
+                                    
+                                    Response
+                                    
+                                </a>
+                            </li>
+                            
+                        </ul>
+                        <div class="tab-content">
+                            
+                            <div class="tab-pane active" id="request-creating-drug-orders-responses-e482aa2b-db5f-64fa-20d7-019189cbd8d2">
+                                <table class="table table-bordered">
+                                    <tr><th style="width: 20%;">Status</th><td>201 </td></tr>
+                                    
+                                    <tr><th style="width: 20%;">access-control-allow-methods</th><td>GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">access-control-allow-origin</th><td>*</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">access-control-expose-headers</th><td></td></tr>
+                                    
+                                    <tr><th style="width: 20%;">access-control-max-age</th><td>1728000</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">cache-control</th><td>max-age=0, private, must-revalidate</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">content-type</th><td>application/json; charset=utf-8</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">etag</th><td>W/"502a8eec0e8d4aa72f83c2d9efed79b1"</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">transfer-encoding</th><td>chunked</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">vary</th><td>Origin</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-request-id</th><td>a2f4ddd6-bbcb-4765-b069-dc52edc056bc</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-runtime</th><td>0.291377</td></tr>
+                                    
+                                    
+                                    
+                                    <tr><td class="response-text-sample" colspan="2">
+                                        <pre><code>{
+    "order_id": 56768,
+    "drug_inventory_id": 3,
+    "dose": 2.0,
+    "equivalent_daily_dose": 6.0,
+    "units": "per day",
+    "frequency": "Evening-Noon-Night-Morning",
+    "prn": 0,
+    "complex": 0,
+    "quantity": null,
+    "order": {
+        "order_id": 56768,
+        "order_type_id": 1,
+        "concept_id": 792,
+        "orderer": 82,
+        "encounter_id": 1,
+        "instructions": null,
+        "start_date": "2018-09-18T00:00:00.000Z",
+        "auto_expire_date": "2019-01-01T00:00:00.000Z",
+        "discontinued": 0,
+        "discontinued_date": null,
+        "discontinued_by": null,
+        "discontinued_reason": null,
+        "creator": 82,
+        "date_created": "2018-09-18T10:53:49.000Z",
+        "voided": 0,
+        "voided_by": null,
+        "date_voided": null,
+        "void_reason": null,
+        "patient_id": 20,
+        "accession_number": null,
+        "obs_id": null,
+        "uuid": "00f5558d-f5a7-4f43-a3bd-d12cfb61c0aa",
+        "discontinued_reason_non_coded": null
+    }
+}</code></pre>
+                                    </td></tr>
+                                    
+                                    
+                                </table>
+                            </div>
+                            
+                        </div>
+                    </div>
+                    
+
+                    <hr>
+                </div>
+                
+                
+                <div class="request">
+
+                    <h3 id="request-retrieve-search-for-drugs">
+                        Retrieve/search  for drugs
+                        <a href="#request-retrieve-search-for-drugs"><i class="glyphicon glyphicon-link"></i></a>
+                    </h3>
+
+                    <div><p><a href="http://127.0.0.1:3000/api/v1/drugs?name=F">http://127.0.0.1:3000/api/v1/drugs?name=F</a></p>
+</div>
+
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li role="presentation" class="active"><a href="#request-retrieve-search-for-drugs-example-curl" data-toggle="tab">Curl</a></li>
+                            <li role="presentation"><a href="#request-retrieve-search-for-drugs-example-http" data-toggle="tab">HTTP</a></li>
+                        </ul>
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="request-retrieve-search-for-drugs-example-curl">
+                                <pre><code class="hljs curl">curl -X GET -H "Authorization: wUO8OFXAoZZT" -H "Content-Type: application/json" "http://127.0.0.1:3000/api/v1/drugs?name=F"</code></pre>
+                            </div>
+                            <div class="tab-pane" id="request-retrieve-search-for-drugs-example-http">
+                                <pre><code class="hljs http">GET /api/v1/drugs?name=F HTTP/1.1
+Host: 127.0.0.1:3000
+Authorization: wUO8OFXAoZZT
+Content-Type: application/json</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+
+                    <hr>
+                </div>
+                
+                
+                <div class="request">
+
+                    <h3 id="request-creating-prescriptions">
+                        Creating prescriptions
+                        <a href="#request-creating-prescriptions"><i class="glyphicon glyphicon-link"></i></a>
+                    </h3>
+
+                    <div><p>This is a convinience end point for creating prescriptions. The sole parameter required is an array of drug order ids.</p>
+
+<p>NOTE: It is required that all the orders specified be attached to the same patient, otherwise a 400 - Bad request error is raise.</p>
+</div>
+
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li role="presentation" class="active"><a href="#request-creating-prescriptions-example-curl" data-toggle="tab">Curl</a></li>
+                            <li role="presentation"><a href="#request-creating-prescriptions-example-http" data-toggle="tab">HTTP</a></li>
+                        </ul>
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="request-creating-prescriptions-example-curl">
+                                <pre><code class="hljs curl">curl -X POST -H "Authorization: wUO8OFXAoZZT" -H "Content-Type: application/json" -d '{
+	"orders":  [56768]
+}' "localhost:3000/api/v1/prescriptions"</code></pre>
+                            </div>
+                            <div class="tab-pane" id="request-creating-prescriptions-example-http">
+                                <pre><code class="hljs http">POST 3000/api/v1/prescriptions HTTP/1.1
+Host: 
+Authorization: wUO8OFXAoZZT
+Content-Type: application/json
+
+{
+	"orders":  [56768]
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            
+                            <li role="presentation" class="active">
+                                <a href="#request-creating-prescriptions-responses-8bfd8237-5891-fb5a-6ab1-d24cbe8c6b70" data-toggle="tab">
+                                    
+                                    Response
+                                    
+                                </a>
+                            </li>
+                            
+                        </ul>
+                        <div class="tab-content">
+                            
+                            <div class="tab-pane active" id="request-creating-prescriptions-responses-8bfd8237-5891-fb5a-6ab1-d24cbe8c6b70">
+                                <table class="table table-bordered">
+                                    <tr><th style="width: 20%;">Status</th><td>201 </td></tr>
+                                    
+                                    <tr><th style="width: 20%;">access-control-allow-methods</th><td>GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">access-control-allow-origin</th><td>*</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">access-control-expose-headers</th><td></td></tr>
+                                    
+                                    <tr><th style="width: 20%;">access-control-max-age</th><td>1728000</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">cache-control</th><td>max-age=0, private, must-revalidate</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">content-type</th><td>application/json; charset=utf-8</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">etag</th><td>W/"ac009a2f264ed39d768527dbca9c849f"</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">transfer-encoding</th><td>chunked</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">vary</th><td>Origin</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-request-id</th><td>af474fa8-f7a1-41fc-a27a-c11600c03544</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-runtime</th><td>0.381803</td></tr>
+                                    
+                                    
+                                    
+                                    <tr><td class="response-text-sample" colspan="2">
+                                        <pre><code>{
+    "encounter_id": 373047,
+    "encounter_type": 25,
+    "patient_id": 20,
+    "provider_id": 82,
+    "location_id": 148,
+    "form_id": null,
+    "encounter_datetime": "2018-09-18T15:06:38.000Z",
+    "creator": 82,
+    "date_created": "2018-09-18T15:06:38.000Z",
+    "voided": 0,
+    "voided_by": null,
+    "date_voided": null,
+    "void_reason": null,
+    "uuid": "3aab93cc-7faf-4f48-b898-df8d70ac5577",
+    "changed_by": 82,
+    "date_changed": "2018-09-18T15:06:38.000Z",
+    "type": {
+        "encounter_type_id": 25,
+        "name": "TREATMENT",
+        "description": "Treatment encounter",
+        "creator": 1,
+        "date_created": "2008-12-18T10:23:27.000Z",
+        "retired": 0,
+        "retired_by": null,
+        "date_retired": null,
+        "retire_reason": null,
+        "uuid": "0cd30d42-d65e-11d6-b7af-0024217bb78e"
+    },
+    "patient": {
+        "patient_id": 20,
+        "tribe": null,
+        "creator": 1,
+        "date_created": "2011-09-14T00:00:00.000Z",
+        "changed_by": null,
+        "date_changed": null,
+        "voided": 0,
+        "voided_by": null,
+        "date_voided": null,
+        "void_reason": null
+    },
+    "location": {
+        "location_id": 148,
+        "name": "Dowa District Hospital",
+        "description": "District Hospital , Public Health Facility",
+        "address1": null,
+        "address2": null,
+        "city_village": null,
+        "state_province": null,
+        "postal_code": null,
+        "country": null,
+        "latitude": null,
+        "longitude": null,
+        "creator": 1,
+        "date_created": "2011-07-25T14:16:52.000Z",
+        "county_district": null,
+        "neighborhood_cell": null,
+        "region": null,
+        "subregion": null,
+        "township_division": null,
+        "retired": false,
+        "retired_by": null,
+        "date_retired": null,
+        "retire_reason": null,
+        "location_type_id": null,
+        "parent_location": null,
+        "uuid": "0cfa8fa2-d65e-11d6-b7af-0024217bb78e"
+    },
+    "provider": {
+        "user_id": 82,
+        "system_id": "",
+        "username": "user1",
+        "creator": 1,
+        "date_created": "2018-09-07T13:25:57.000Z",
+        "changed_by": null,
+        "date_changed": "2018-09-18T09:55:29.000Z",
+        "person_id": 7,
+        "retired": 0,
+        "retired_by": null,
+        "date_retired": null,
+        "retire_reason": null,
+        "uuid": "c6f3a5b5-bd62-47f4-8c04-0a012dfb54ee"
+    },
+    "observations": [
+        {
+            "obs_id": 886909,
+            "person_id": 20,
+            "concept_id": 2834,
+            "encounter_id": 373047,
+            "order_id": 56768,
+            "obs_datetime": "2018-09-18T15:06:38.000Z",
+            "location_id": 148,
+            "obs_group_id": null,
+            "accession_number": null,
+            "value_group_id": null,
+            "value_boolean": null,
+            "value_coded": null,
+            "value_coded_name_id": null,
+            "value_drug": 3,
+            "value_datetime": null,
+            "value_numeric": null,
+            "value_modifier": null,
+            "value_text": null,
+            "date_started": null,
+            "date_stopped": null,
+            "comments": "Prescription made  ",
+            "creator": 82,
+            "date_created": "2018-09-18T15:06:38.000Z",
+            "voided": 0,
+            "voided_by": null,
+            "date_voided": null,
+            "void_reason": null,
+            "value_complex": null,
+            "uuid": "47cb2bbc-49e5-49c8-98c1-b21f019b9bcd",
+            "concept": {
+                "concept_id": 2834,
+                "retired": 0,
+                "short_name": null,
+                "description": null,
+                "form_text": null,
+                "datatype_id": 1,
+                "class_id": 7,
+                "is_set": 0,
+                "creator": 1,
+                "date_created": "2007-11-02T11:32:03.000Z",
+                "default_charge": null,
+                "version": "",
+                "changed_by": 1,
+                "date_changed": "2010-01-10T21:36:29.000Z",
+                "retired_by": null,
+                "date_retired": null,
+                "retire_reason": null,
+                "uuid": "0b8cfb6e-d65e-11d6-b7af-0024217bb78e"
+            }
+        }
+    ]
+}</code></pre>
+                                    </td></tr>
+                                    
+                                    
+                                </table>
+                            </div>
+                            
+                        </div>
+                    </div>
+                    
+
+                    <hr>
+                </div>
+                
+                
+                <div class="request">
+
+                    <h3 id="request-retrieve-prescriptions">
+                        Retrieve prescriptions
+                        <a href="#request-retrieve-prescriptions"><i class="glyphicon glyphicon-link"></i></a>
+                    </h3>
+
+                    <div><p>This is a convinience end point for retrieving &lsquo;Treatment&rsquo; encounters (A.K.A prescriptions).</p>
+</div>
+
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li role="presentation" class="active"><a href="#request-retrieve-prescriptions-example-curl" data-toggle="tab">Curl</a></li>
+                            <li role="presentation"><a href="#request-retrieve-prescriptions-example-http" data-toggle="tab">HTTP</a></li>
+                        </ul>
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="request-retrieve-prescriptions-example-curl">
+                                <pre><code class="hljs curl">curl -X GET -H "Authorization: wUO8OFXAoZZT" "localhost:3000/api/v1/prescriptions"</code></pre>
+                            </div>
+                            <div class="tab-pane" id="request-retrieve-prescriptions-example-http">
+                                <pre><code class="hljs http">GET 3000/api/v1/prescriptions HTTP/1.1
+Host: 
+Authorization: wUO8OFXAoZZT</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            
+                            <li role="presentation" class="active">
+                                <a href="#request-retrieve-prescriptions-responses-5ce7429e-1fcc-f5c5-b875-afaf25cbce3a" data-toggle="tab">
+                                    
+                                    Response
+                                    
+                                </a>
+                            </li>
+                            
+                        </ul>
+                        <div class="tab-content">
+                            
+                            <div class="tab-pane active" id="request-retrieve-prescriptions-responses-5ce7429e-1fcc-f5c5-b875-afaf25cbce3a">
+                                <table class="table table-bordered">
+                                    <tr><th style="width: 20%;">Status</th><td>200 </td></tr>
+                                    
+                                    <tr><th style="width: 20%;">cache-control</th><td>max-age=0, private, must-revalidate</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">content-type</th><td>application/json; charset=utf-8</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">etag</th><td>W/"7f42b407bc96c015c198b7512283a41d"</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">transfer-encoding</th><td>chunked</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">vary</th><td>Origin</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-request-id</th><td>bc430403-ff40-46e6-92b0-034025ff59ab</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">x-runtime</th><td>1.212452</td></tr>
+                                    
+                                    
+                                    
+                                    <tr><td class="response-text-sample" colspan="2">
+                                        <pre><code>[
+    {
+        "encounter_id": 73,
+        "encounter_type": 25,
+        "patient_id": 27,
+        "provider_id": 63400,
+        "location_id": null,
+        "form_id": null,
+        "encounter_datetime": "2008-04-28T00:00:01.000Z",
+        "creator": 5,
+        "date_created": "2011-09-16T09:41:16.000Z",
+        "voided": 0,
+        "voided_by": null,
+        "date_voided": null,
+        "void_reason": null,
+        "uuid": "38ec761f-59ca-11e3-b7e9-003018a9e11f",
+        "changed_by": null,
+        "date_changed": null,
+        "type": {
+            "encounter_type_id": 25,
+            "name": "TREATMENT",
+            "description": "Treatment encounter",
+            "creator": 1,
+            "date_created": "2008-12-18T10:23:27.000Z",
+            "retired": 0,
+            "retired_by": null,
+            "date_retired": null,
+            "retire_reason": null,
+            "uuid": "0cd30d42-d65e-11d6-b7af-0024217bb78e"
+        },
+        "patient": {
+            "patient_id": 27,
+            "tribe": null,
+            "creator": 5,
+            "date_created": "2011-09-16T00:00:00.000Z",
+            "changed_by": null,
+            "date_changed": null,
+            "voided": 0,
+            "voided_by": null,
+            "date_voided": null,
+            "void_reason": null
+        },
+        "observations": [
+            {
+                "obs_id": 684,
+                "person_id": 27,
+                "concept_id": 6882,
+                "encounter_id": 73,
+                "order_id": null,
+                "obs_datetime": "2008-04-28T00:00:01.000Z",
+                "location_id": null,
+                "obs_group_id": null,
+                "accession_number": null,
+                "value_group_id": null,
+                "value_boolean": null,
+                "value_coded": 2833,
+                "value_coded_name_id": null,
+                "value_drug": null,
+                "value_datetime": null,
+                "value_numeric": null,
+                "value_modifier": null,
+                "value_text": null,
+                "date_started": null,
+                "date_stopped": null,
+                "comments": null,
+                "creator": 5,
+                "date_created": "2011-09-16T09:41:16.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "value_complex": null,
+                "uuid": "38ec7d85-59ca-11e3-b7e9-003018a9e11f",
+                "concept": {
+                    "concept_id": 6882,
+                    "retired": 0,
+                    "short_name": null,
+                    "description": null,
+                    "form_text": null,
+                    "datatype_id": 2,
+                    "class_id": 7,
+                    "is_set": 0,
+                    "creator": 1,
+                    "date_created": "2010-02-17T22:04:14.000Z",
+                    "default_charge": null,
+                    "version": "",
+                    "changed_by": null,
+                    "date_changed": null,
+                    "retired_by": null,
+                    "date_retired": null,
+                    "retire_reason": null,
+                    "uuid": "0bb0776a-d65e-11d6-b7af-0024217bb78e"
+                }
+            },
+            {
+                "obs_id": 685,
+                "person_id": 27,
+                "concept_id": 6882,
+                "encounter_id": 73,
+                "order_id": null,
+                "obs_datetime": "2008-04-28T00:00:01.000Z",
+                "location_id": null,
+                "obs_group_id": null,
+                "accession_number": null,
+                "value_group_id": null,
+                "value_boolean": null,
+                "value_coded": 792,
+                "value_coded_name_id": null,
+                "value_drug": null,
+                "value_datetime": null,
+                "value_numeric": null,
+                "value_modifier": null,
+                "value_text": null,
+                "date_started": null,
+                "date_stopped": null,
+                "comments": null,
+                "creator": 5,
+                "date_created": "2011-09-16T09:41:16.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "value_complex": null,
+                "uuid": "38ec9529-59ca-11e3-b7e9-003018a9e11f",
+                "concept": {
+                    "concept_id": 6882,
+                    "retired": 0,
+                    "short_name": null,
+                    "description": null,
+                    "form_text": null,
+                    "datatype_id": 2,
+                    "class_id": 7,
+                    "is_set": 0,
+                    "creator": 1,
+                    "date_created": "2010-02-17T22:04:14.000Z",
+                    "default_charge": null,
+                    "version": "",
+                    "changed_by": null,
+                    "date_changed": null,
+                    "retired_by": null,
+                    "date_retired": null,
+                    "retire_reason": null,
+                    "uuid": "0bb0776a-d65e-11d6-b7af-0024217bb78e"
+                }
+            },
+            {
+                "obs_id": 686,
+                "person_id": 27,
+                "concept_id": 8375,
+                "encounter_id": 73,
+                "order_id": null,
+                "obs_datetime": "2008-04-28T00:00:01.000Z",
+                "location_id": null,
+                "obs_group_id": null,
+                "accession_number": null,
+                "value_group_id": null,
+                "value_boolean": null,
+                "value_coded": null,
+                "value_coded_name_id": null,
+                "value_drug": null,
+                "value_datetime": null,
+                "value_numeric": null,
+                "value_modifier": null,
+                "value_text": "1A",
+                "date_started": null,
+                "date_stopped": null,
+                "comments": null,
+                "creator": 5,
+                "date_created": "2011-09-16T09:41:16.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "value_complex": null,
+                "uuid": "38ecb3df-59ca-11e3-b7e9-003018a9e11f",
+                "concept": {
+                    "concept_id": 8375,
+                    "retired": 0,
+                    "short_name": null,
+                    "description": null,
+                    "form_text": null,
+                    "datatype_id": 4,
+                    "class_id": 11,
+                    "is_set": 0,
+                    "creator": 1,
+                    "date_created": "2012-03-12T19:10:27.000Z",
+                    "default_charge": null,
+                    "version": "",
+                    "changed_by": null,
+                    "date_changed": null,
+                    "retired_by": null,
+                    "date_retired": null,
+                    "retire_reason": null,
+                    "uuid": "0bbd1470-d65e-11d6-b7af-0024217bb78e"
+                }
+            }
+        ]
+    },
+    {
+        "encounter_id": 74,
+        "encounter_type": 25,
+        "patient_id": 28,
+        "provider_id": 63399,
+        "location_id": null,
+        "form_id": null,
+        "encounter_datetime": "2009-07-03T00:00:01.000Z",
+        "creator": 4,
+        "date_created": "2011-09-16T09:41:30.000Z",
+        "voided": 0,
+        "voided_by": null,
+        "date_voided": null,
+        "void_reason": null,
+        "uuid": "391d69b8-59ca-11e3-b7e9-003018a9e11f",
+        "changed_by": null,
+        "date_changed": null,
+        "type": {
+            "encounter_type_id": 25,
+            "name": "TREATMENT",
+            "description": "Treatment encounter",
+            "creator": 1,
+            "date_created": "2008-12-18T10:23:27.000Z",
+            "retired": 0,
+            "retired_by": null,
+            "date_retired": null,
+            "retire_reason": null,
+            "uuid": "0cd30d42-d65e-11d6-b7af-0024217bb78e"
+        },
+        "patient": {
+            "patient_id": 28,
+            "tribe": null,
+            "creator": 4,
+            "date_created": "2011-09-16T00:00:00.000Z",
+            "changed_by": null,
+            "date_changed": null,
+            "voided": 0,
+            "voided_by": null,
+            "date_voided": null,
+            "void_reason": null
+        },
+        "observations": [
+            {
+                "obs_id": 937,
+                "person_id": 28,
+                "concept_id": 6882,
+                "encounter_id": 74,
+                "order_id": null,
+                "obs_datetime": "2009-07-03T00:00:01.000Z",
+                "location_id": null,
+                "obs_group_id": null,
+                "accession_number": null,
+                "value_group_id": null,
+                "value_boolean": null,
+                "value_coded": 2833,
+                "value_coded_name_id": null,
+                "value_drug": null,
+                "value_datetime": null,
+                "value_numeric": null,
+                "value_modifier": null,
+                "value_text": null,
+                "date_started": null,
+                "date_stopped": null,
+                "comments": null,
+                "creator": 4,
+                "date_created": "2011-09-16T09:41:30.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "value_complex": null,
+                "uuid": "391d784a-59ca-11e3-b7e9-003018a9e11f",
+                "concept": {
+                    "concept_id": 6882,
+                    "retired": 0,
+                    "short_name": null,
+                    "description": null,
+                    "form_text": null,
+                    "datatype_id": 2,
+                    "class_id": 7,
+                    "is_set": 0,
+                    "creator": 1,
+                    "date_created": "2010-02-17T22:04:14.000Z",
+                    "default_charge": null,
+                    "version": "",
+                    "changed_by": null,
+                    "date_changed": null,
+                    "retired_by": null,
+                    "date_retired": null,
+                    "retire_reason": null,
+                    "uuid": "0bb0776a-d65e-11d6-b7af-0024217bb78e"
+                }
+            },
+            {
+                "obs_id": 938,
+                "person_id": 28,
+                "concept_id": 6882,
+                "encounter_id": 74,
+                "order_id": null,
+                "obs_datetime": "2009-07-03T00:00:01.000Z",
+                "location_id": null,
+                "obs_group_id": null,
+                "accession_number": null,
+                "value_group_id": null,
+                "value_boolean": null,
+                "value_coded": 792,
+                "value_coded_name_id": null,
+                "value_drug": null,
+                "value_datetime": null,
+                "value_numeric": null,
+                "value_modifier": null,
+                "value_text": null,
+                "date_started": null,
+                "date_stopped": null,
+                "comments": null,
+                "creator": 4,
+                "date_created": "2011-09-16T09:41:30.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "value_complex": null,
+                "uuid": "391d9067-59ca-11e3-b7e9-003018a9e11f",
+                "concept": {
+                    "concept_id": 6882,
+                    "retired": 0,
+                    "short_name": null,
+                    "description": null,
+                    "form_text": null,
+                    "datatype_id": 2,
+                    "class_id": 7,
+                    "is_set": 0,
+                    "creator": 1,
+                    "date_created": "2010-02-17T22:04:14.000Z",
+                    "default_charge": null,
+                    "version": "",
+                    "changed_by": null,
+                    "date_changed": null,
+                    "retired_by": null,
+                    "date_retired": null,
+                    "retire_reason": null,
+                    "uuid": "0bb0776a-d65e-11d6-b7af-0024217bb78e"
+                }
+            },
+            {
+                "obs_id": 939,
+                "person_id": 28,
+                "concept_id": 8375,
+                "encounter_id": 74,
+                "order_id": null,
+                "obs_datetime": "2009-07-03T00:00:01.000Z",
+                "location_id": null,
+                "obs_group_id": null,
+                "accession_number": null,
+                "value_group_id": null,
+                "value_boolean": null,
+                "value_coded": null,
+                "value_coded_name_id": null,
+                "value_drug": null,
+                "value_datetime": null,
+                "value_numeric": null,
+                "value_modifier": null,
+                "value_text": "1A",
+                "date_started": null,
+                "date_stopped": null,
+                "comments": null,
+                "creator": 4,
+                "date_created": "2011-09-16T09:41:30.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "value_complex": null,
+                "uuid": "391dadd7-59ca-11e3-b7e9-003018a9e11f",
+                "concept": {
+                    "concept_id": 8375,
+                    "retired": 0,
+                    "short_name": null,
+                    "description": null,
+                    "form_text": null,
+                    "datatype_id": 4,
+                    "class_id": 11,
+                    "is_set": 0,
+                    "creator": 1,
+                    "date_created": "2012-03-12T19:10:27.000Z",
+                    "default_charge": null,
+                    "version": "",
+                    "changed_by": null,
+                    "date_changed": null,
+                    "retired_by": null,
+                    "date_retired": null,
+                    "retire_reason": null,
+                    "uuid": "0bbd1470-d65e-11d6-b7af-0024217bb78e"
+                }
+            }
+        ]
+    },
+    {
+        "encounter_id": 88,
+        "encounter_type": 25,
+        "patient_id": 27,
+        "provider_id": 63400,
+        "location_id": null,
+        "form_id": null,
+        "encounter_datetime": "2011-07-14T00:00:01.000Z",
+        "creator": 5,
+        "date_created": "2011-09-16T09:43:03.000Z",
+        "voided": 0,
+        "voided_by": null,
+        "date_voided": null,
+        "void_reason": null,
+        "uuid": "38ecea7c-59ca-11e3-b7e9-003018a9e11f",
+        "changed_by": null,
+        "date_changed": null,
+        "type": {
+            "encounter_type_id": 25,
+            "name": "TREATMENT",
+            "description": "Treatment encounter",
+            "creator": 1,
+            "date_created": "2008-12-18T10:23:27.000Z",
+            "retired": 0,
+            "retired_by": null,
+            "date_retired": null,
+            "retire_reason": null,
+            "uuid": "0cd30d42-d65e-11d6-b7af-0024217bb78e"
+        },
+        "patient": {
+            "patient_id": 27,
+            "tribe": null,
+            "creator": 5,
+            "date_created": "2011-09-16T00:00:00.000Z",
+            "changed_by": null,
+            "date_changed": null,
+            "voided": 0,
+            "voided_by": null,
+            "date_voided": null,
+            "void_reason": null
+        },
+        "observations": [
+            {
+                "obs_id": 687,
+                "person_id": 27,
+                "concept_id": 6882,
+                "encounter_id": 88,
+                "order_id": null,
+                "obs_datetime": "2011-07-14T00:00:01.000Z",
+                "location_id": null,
+                "obs_group_id": null,
+                "accession_number": null,
+                "value_group_id": null,
+                "value_boolean": null,
+                "value_coded": 792,
+                "value_coded_name_id": null,
+                "value_drug": null,
+                "value_datetime": null,
+                "value_numeric": null,
+                "value_modifier": null,
+                "value_text": null,
+                "date_started": null,
+                "date_stopped": null,
+                "comments": null,
+                "creator": 5,
+                "date_created": "2011-09-16T09:43:03.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "value_complex": null,
+                "uuid": "38ecf3c1-59ca-11e3-b7e9-003018a9e11f",
+                "concept": {
+                    "concept_id": 6882,
+                    "retired": 0,
+                    "short_name": null,
+                    "description": null,
+                    "form_text": null,
+                    "datatype_id": 2,
+                    "class_id": 7,
+                    "is_set": 0,
+                    "creator": 1,
+                    "date_created": "2010-02-17T22:04:14.000Z",
+                    "default_charge": null,
+                    "version": "",
+                    "changed_by": null,
+                    "date_changed": null,
+                    "retired_by": null,
+                    "date_retired": null,
+                    "retire_reason": null,
+                    "uuid": "0bb0776a-d65e-11d6-b7af-0024217bb78e"
+                }
+            },
+            {
+                "obs_id": 688,
+                "person_id": 27,
+                "concept_id": 8375,
+                "encounter_id": 88,
+                "order_id": null,
+                "obs_datetime": "2011-07-14T00:00:01.000Z",
+                "location_id": null,
+                "obs_group_id": null,
+                "accession_number": null,
+                "value_group_id": null,
+                "value_boolean": null,
+                "value_coded": null,
+                "value_coded_name_id": null,
+                "value_drug": null,
+                "value_datetime": null,
+                "value_numeric": null,
+                "value_modifier": null,
+                "value_text": "1A",
+                "date_started": null,
+                "date_stopped": null,
+                "comments": null,
+                "creator": 5,
+                "date_created": "2011-09-16T09:43:03.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "value_complex": null,
+                "uuid": "38ed135a-59ca-11e3-b7e9-003018a9e11f",
+                "concept": {
+                    "concept_id": 8375,
+                    "retired": 0,
+                    "short_name": null,
+                    "description": null,
+                    "form_text": null,
+                    "datatype_id": 4,
+                    "class_id": 11,
+                    "is_set": 0,
+                    "creator": 1,
+                    "date_created": "2012-03-12T19:10:27.000Z",
+                    "default_charge": null,
+                    "version": "",
+                    "changed_by": null,
+                    "date_changed": null,
+                    "retired_by": null,
+                    "date_retired": null,
+                    "retire_reason": null,
+                    "uuid": "0bbd1470-d65e-11d6-b7af-0024217bb78e"
+                }
+            }
+        ]
+    },
+    {
+        "encounter_id": 91,
+        "encounter_type": 25,
+        "patient_id": 31,
+        "provider_id": 63402,
+        "location_id": null,
+        "form_id": null,
+        "encounter_datetime": "2007-06-01T00:00:01.000Z",
+        "creator": 7,
+        "date_created": "2011-09-16T09:43:12.000Z",
+        "voided": 0,
+        "voided_by": null,
+        "date_voided": null,
+        "void_reason": null,
+        "uuid": "399dffbd-59ca-11e3-b7e9-003018a9e11f",
+        "changed_by": null,
+        "date_changed": null,
+        "type": {
+            "encounter_type_id": 25,
+            "name": "TREATMENT",
+            "description": "Treatment encounter",
+            "creator": 1,
+            "date_created": "2008-12-18T10:23:27.000Z",
+            "retired": 0,
+            "retired_by": null,
+            "date_retired": null,
+            "retire_reason": null,
+            "uuid": "0cd30d42-d65e-11d6-b7af-0024217bb78e"
+        },
+        "patient": {
+            "patient_id": 31,
+            "tribe": null,
+            "creator": 7,
+            "date_created": "2011-09-16T00:00:00.000Z",
+            "changed_by": null,
+            "date_changed": null,
+            "voided": 0,
+            "voided_by": null,
+            "date_voided": null,
+            "void_reason": null
+        },
+        "observations": [
+            {
+                "obs_id": 1290,
+                "person_id": 31,
+                "concept_id": 6882,
+                "encounter_id": 91,
+                "order_id": null,
+                "obs_datetime": "2007-06-01T00:00:01.000Z",
+                "location_id": null,
+                "obs_group_id": null,
+                "accession_number": null,
+                "value_group_id": null,
+                "value_boolean": null,
+                "value_coded": 2833,
+                "value_coded_name_id": null,
+                "value_drug": null,
+                "value_datetime": null,
+                "value_numeric": null,
+                "value_modifier": null,
+                "value_text": null,
+                "date_started": null,
+                "date_stopped": null,
+                "comments": null,
+                "creator": 7,
+                "date_created": "2011-09-16T09:43:12.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "value_complex": null,
+                "uuid": "399e0766-59ca-11e3-b7e9-003018a9e11f",
+                "concept": {
+                    "concept_id": 6882,
+                    "retired": 0,
+                    "short_name": null,
+                    "description": null,
+                    "form_text": null,
+                    "datatype_id": 2,
+                    "class_id": 7,
+                    "is_set": 0,
+                    "creator": 1,
+                    "date_created": "2010-02-17T22:04:14.000Z",
+                    "default_charge": null,
+                    "version": "",
+                    "changed_by": null,
+                    "date_changed": null,
+                    "retired_by": null,
+                    "date_retired": null,
+                    "retire_reason": null,
+                    "uuid": "0bb0776a-d65e-11d6-b7af-0024217bb78e"
+                }
+            },
+            {
+                "obs_id": 1291,
+                "person_id": 31,
+                "concept_id": 6882,
+                "encounter_id": 91,
+                "order_id": null,
+                "obs_datetime": "2007-06-01T00:00:01.000Z",
+                "location_id": null,
+                "obs_group_id": null,
+                "accession_number": null,
+                "value_group_id": null,
+                "value_boolean": null,
+                "value_coded": 792,
+                "value_coded_name_id": null,
+                "value_drug": null,
+                "value_datetime": null,
+                "value_numeric": null,
+                "value_modifier": null,
+                "value_text": null,
+                "date_started": null,
+                "date_stopped": null,
+                "comments": null,
+                "creator": 7,
+                "date_created": "2011-09-16T09:43:12.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "value_complex": null,
+                "uuid": "399e2010-59ca-11e3-b7e9-003018a9e11f",
+                "concept": {
+                    "concept_id": 6882,
+                    "retired": 0,
+                    "short_name": null,
+                    "description": null,
+                    "form_text": null,
+                    "datatype_id": 2,
+                    "class_id": 7,
+                    "is_set": 0,
+                    "creator": 1,
+                    "date_created": "2010-02-17T22:04:14.000Z",
+                    "default_charge": null,
+                    "version": "",
+                    "changed_by": null,
+                    "date_changed": null,
+                    "retired_by": null,
+                    "date_retired": null,
+                    "retire_reason": null,
+                    "uuid": "0bb0776a-d65e-11d6-b7af-0024217bb78e"
+                }
+            },
+            {
+                "obs_id": 1292,
+                "person_id": 31,
+                "concept_id": 8375,
+                "encounter_id": 91,
+                "order_id": null,
+                "obs_datetime": "2007-06-01T00:00:01.000Z",
+                "location_id": null,
+                "obs_group_id": null,
+                "accession_number": null,
+                "value_group_id": null,
+                "value_boolean": null,
+                "value_coded": null,
+                "value_coded_name_id": null,
+                "value_drug": null,
+                "value_datetime": null,
+                "value_numeric": null,
+                "value_modifier": null,
+                "value_text": "1A",
+                "date_started": null,
+                "date_stopped": null,
+                "comments": null,
+                "creator": 7,
+                "date_created": "2011-09-16T09:43:12.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "value_complex": null,
+                "uuid": "399e3fb5-59ca-11e3-b7e9-003018a9e11f",
+                "concept": {
+                    "concept_id": 8375,
+                    "retired": 0,
+                    "short_name": null,
+                    "description": null,
+                    "form_text": null,
+                    "datatype_id": 4,
+                    "class_id": 11,
+                    "is_set": 0,
+                    "creator": 1,
+                    "date_created": "2012-03-12T19:10:27.000Z",
+                    "default_charge": null,
+                    "version": "",
+                    "changed_by": null,
+                    "date_changed": null,
+                    "retired_by": null,
+                    "date_retired": null,
+                    "retire_reason": null,
+                    "uuid": "0bbd1470-d65e-11d6-b7af-0024217bb78e"
+                }
+            }
+        ]
+    },
+    {
+        "encounter_id": 97,
+        "encounter_type": 25,
+        "patient_id": 28,
+        "provider_id": 63399,
+        "location_id": null,
+        "form_id": null,
+        "encounter_datetime": "2009-08-28T00:00:01.000Z",
+        "creator": 4,
+        "date_created": "2011-09-16T09:43:33.000Z",
+        "voided": 0,
+        "voided_by": null,
+        "date_voided": null,
+        "void_reason": null,
+        "uuid": "391de4a9-59ca-11e3-b7e9-003018a9e11f",
+        "changed_by": null,
+        "date_changed": null,
+        "type": {
+            "encounter_type_id": 25,
+            "name": "TREATMENT",
+            "description": "Treatment encounter",
+            "creator": 1,
+            "date_created": "2008-12-18T10:23:27.000Z",
+            "retired": 0,
+            "retired_by": null,
+            "date_retired": null,
+            "retire_reason": null,
+            "uuid": "0cd30d42-d65e-11d6-b7af-0024217bb78e"
+        },
+        "patient": {
+            "patient_id": 28,
+            "tribe": null,
+            "creator": 4,
+            "date_created": "2011-09-16T00:00:00.000Z",
+            "changed_by": null,
+            "date_changed": null,
+            "voided": 0,
+            "voided_by": null,
+            "date_voided": null,
+            "void_reason": null
+        },
+        "observations": [
+            {
+                "obs_id": 940,
+                "person_id": 28,
+                "concept_id": 6882,
+                "encounter_id": 97,
+                "order_id": null,
+                "obs_datetime": "2009-08-28T00:00:01.000Z",
+                "location_id": null,
+                "obs_group_id": null,
+                "accession_number": null,
+                "value_group_id": null,
+                "value_boolean": null,
+                "value_coded": 792,
+                "value_coded_name_id": null,
+                "value_drug": null,
+                "value_datetime": null,
+                "value_numeric": null,
+                "value_modifier": null,
+                "value_text": null,
+                "date_started": null,
+                "date_stopped": null,
+                "comments": null,
+                "creator": 4,
+                "date_created": "2011-09-16T09:43:33.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "value_complex": null,
+                "uuid": "391de9fa-59ca-11e3-b7e9-003018a9e11f",
+                "concept": {
+                    "concept_id": 6882,
+                    "retired": 0,
+                    "short_name": null,
+                    "description": null,
+                    "form_text": null,
+                    "datatype_id": 2,
+                    "class_id": 7,
+                    "is_set": 0,
+                    "creator": 1,
+                    "date_created": "2010-02-17T22:04:14.000Z",
+                    "default_charge": null,
+                    "version": "",
+                    "changed_by": null,
+                    "date_changed": null,
+                    "retired_by": null,
+                    "date_retired": null,
+                    "retire_reason": null,
+                    "uuid": "0bb0776a-d65e-11d6-b7af-0024217bb78e"
+                }
+            },
+            {
+                "obs_id": 941,
+                "person_id": 28,
+                "concept_id": 8375,
+                "encounter_id": 97,
+                "order_id": null,
+                "obs_datetime": "2009-08-28T00:00:01.000Z",
+                "location_id": null,
+                "obs_group_id": null,
+                "accession_number": null,
+                "value_group_id": null,
+                "value_boolean": null,
+                "value_coded": null,
+                "value_coded_name_id": null,
+                "value_drug": null,
+                "value_datetime": null,
+                "value_numeric": null,
+                "value_modifier": null,
+                "value_text": "1A",
+                "date_started": null,
+                "date_stopped": null,
+                "comments": null,
+                "creator": 4,
+                "date_created": "2011-09-16T09:43:33.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "value_complex": null,
+                "uuid": "391e0af1-59ca-11e3-b7e9-003018a9e11f",
+                "concept": {
+                    "concept_id": 8375,
+                    "retired": 0,
+                    "short_name": null,
+                    "description": null,
+                    "form_text": null,
+                    "datatype_id": 4,
+                    "class_id": 11,
+                    "is_set": 0,
+                    "creator": 1,
+                    "date_created": "2012-03-12T19:10:27.000Z",
+                    "default_charge": null,
+                    "version": "",
+                    "changed_by": null,
+                    "date_changed": null,
+                    "retired_by": null,
+                    "date_retired": null,
+                    "retire_reason": null,
+                    "uuid": "0bbd1470-d65e-11d6-b7af-0024217bb78e"
+                }
+            }
+        ]
+    },
+    {
+        "encounter_id": 102,
+        "encounter_type": 25,
+        "patient_id": 27,
+        "provider_id": 63400,
+        "location_id": null,
+        "form_id": null,
+        "encounter_datetime": "2011-08-26T00:00:01.000Z",
+        "creator": 5,
+        "date_created": "2011-09-16T09:44:01.000Z",
+        "voided": 0,
+        "voided_by": null,
+        "date_voided": null,
+        "void_reason": null,
+        "uuid": "38ed4a57-59ca-11e3-b7e9-003018a9e11f",
+        "changed_by": null,
+        "date_changed": null,
+        "type": {
+            "encounter_type_id": 25,
+            "name": "TREATMENT",
+            "description": "Treatment encounter",
+            "creator": 1,
+            "date_created": "2008-12-18T10:23:27.000Z",
+            "retired": 0,
+            "retired_by": null,
+            "date_retired": null,
+            "retire_reason": null,
+            "uuid": "0cd30d42-d65e-11d6-b7af-0024217bb78e"
+        },
+        "patient": {
+            "patient_id": 27,
+            "tribe": null,
+            "creator": 5,
+            "date_created": "2011-09-16T00:00:00.000Z",
+            "changed_by": null,
+            "date_changed": null,
+            "voided": 0,
+            "voided_by": null,
+            "date_voided": null,
+            "void_reason": null
+        },
+        "observations": [
+            {
+                "obs_id": 689,
+                "person_id": 27,
+                "concept_id": 6882,
+                "encounter_id": 102,
+                "order_id": null,
+                "obs_datetime": "2011-08-26T00:00:01.000Z",
+                "location_id": null,
+                "obs_group_id": null,
+                "accession_number": null,
+                "value_group_id": null,
+                "value_boolean": null,
+                "value_coded": 792,
+                "value_coded_name_id": null,
+                "value_drug": null,
+                "value_datetime": null,
+                "value_numeric": null,
+                "value_modifier": null,
+                "value_text": null,
+                "date_started": null,
+                "date_stopped": null,
+                "comments": null,
+                "creator": 5,
+                "date_created": "2011-09-16T09:44:01.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "value_complex": null,
+                "uuid": "38ed4f93-59ca-11e3-b7e9-003018a9e11f",
+                "concept": {
+                    "concept_id": 6882,
+                    "retired": 0,
+                    "short_name": null,
+                    "description": null,
+                    "form_text": null,
+                    "datatype_id": 2,
+                    "class_id": 7,
+                    "is_set": 0,
+                    "creator": 1,
+                    "date_created": "2010-02-17T22:04:14.000Z",
+                    "default_charge": null,
+                    "version": "",
+                    "changed_by": null,
+                    "date_changed": null,
+                    "retired_by": null,
+                    "date_retired": null,
+                    "retire_reason": null,
+                    "uuid": "0bb0776a-d65e-11d6-b7af-0024217bb78e"
+                }
+            },
+            {
+                "obs_id": 690,
+                "person_id": 27,
+                "concept_id": 8375,
+                "encounter_id": 102,
+                "order_id": null,
+                "obs_datetime": "2011-08-26T00:00:01.000Z",
+                "location_id": null,
+                "obs_group_id": null,
+                "accession_number": null,
+                "value_group_id": null,
+                "value_boolean": null,
+                "value_coded": null,
+                "value_coded_name_id": null,
+                "value_drug": null,
+                "value_datetime": null,
+                "value_numeric": null,
+                "value_modifier": null,
+                "value_text": "1A",
+                "date_started": null,
+                "date_stopped": null,
+                "comments": null,
+                "creator": 5,
+                "date_created": "2011-09-16T09:44:01.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "value_complex": null,
+                "uuid": "38ed6e3a-59ca-11e3-b7e9-003018a9e11f",
+                "concept": {
+                    "concept_id": 8375,
+                    "retired": 0,
+                    "short_name": null,
+                    "description": null,
+                    "form_text": null,
+                    "datatype_id": 4,
+                    "class_id": 11,
+                    "is_set": 0,
+                    "creator": 1,
+                    "date_created": "2012-03-12T19:10:27.000Z",
+                    "default_charge": null,
+                    "version": "",
+                    "changed_by": null,
+                    "date_changed": null,
+                    "retired_by": null,
+                    "date_retired": null,
+                    "retire_reason": null,
+                    "uuid": "0bbd1470-d65e-11d6-b7af-0024217bb78e"
+                }
+            }
+        ]
+    },
+    {
+        "encounter_id": 109,
+        "encounter_type": 25,
+        "patient_id": 35,
+        "provider_id": 63397,
+        "location_id": null,
+        "form_id": null,
+        "encounter_datetime": "2010-10-05T00:00:01.000Z",
+        "creator": 2,
+        "date_created": "2011-09-16T09:45:05.000Z",
+        "voided": 0,
+        "voided_by": null,
+        "date_voided": null,
+        "void_reason": null,
+        "uuid": "3a540044-59ca-11e3-b7e9-003018a9e11f",
+        "changed_by": null,
+        "date_changed": null,
+        "type": {
+            "encounter_type_id": 25,
+            "name": "TREATMENT",
+            "description": "Treatment encounter",
+            "creator": 1,
+            "date_created": "2008-12-18T10:23:27.000Z",
+            "retired": 0,
+            "retired_by": null,
+            "date_retired": null,
+            "retire_reason": null,
+            "uuid": "0cd30d42-d65e-11d6-b7af-0024217bb78e"
+        },
+        "patient": {
+            "patient_id": 35,
+            "tribe": null,
+            "creator": 2,
+            "date_created": "2011-09-16T00:00:00.000Z",
+            "changed_by": null,
+            "date_changed": null,
+            "voided": 0,
+            "voided_by": null,
+            "date_voided": null,
+            "void_reason": null
+        },
+        "observations": [
+            {
+                "obs_id": 1947,
+                "person_id": 35,
+                "concept_id": 6882,
+                "encounter_id": 109,
+                "order_id": null,
+                "obs_datetime": "2010-10-05T00:00:01.000Z",
+                "location_id": null,
+                "obs_group_id": null,
+                "accession_number": null,
+                "value_group_id": null,
+                "value_boolean": null,
+                "value_coded": 2833,
+                "value_coded_name_id": null,
+                "value_drug": null,
+                "value_datetime": null,
+                "value_numeric": null,
+                "value_modifier": null,
+                "value_text": null,
+                "date_started": null,
+                "date_stopped": null,
+                "comments": null,
+                "creator": 2,
+                "date_created": "2011-09-16T09:45:05.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "value_complex": null,
+                "uuid": "3a540809-59ca-11e3-b7e9-003018a9e11f",
+                "concept": {
+                    "concept_id": 6882,
+                    "retired": 0,
+                    "short_name": null,
+                    "description": null,
+                    "form_text": null,
+                    "datatype_id": 2,
+                    "class_id": 7,
+                    "is_set": 0,
+                    "creator": 1,
+                    "date_created": "2010-02-17T22:04:14.000Z",
+                    "default_charge": null,
+                    "version": "",
+                    "changed_by": null,
+                    "date_changed": null,
+                    "retired_by": null,
+                    "date_retired": null,
+                    "retire_reason": null,
+                    "uuid": "0bb0776a-d65e-11d6-b7af-0024217bb78e"
+                }
+            },
+            {
+                "obs_id": 1948,
+                "person_id": 35,
+                "concept_id": 6882,
+                "encounter_id": 109,
+                "order_id": null,
+                "obs_datetime": "2010-10-05T00:00:01.000Z",
+                "location_id": null,
+                "obs_group_id": null,
+                "accession_number": null,
+                "value_group_id": null,
+                "value_boolean": null,
+                "value_coded": 792,
+                "value_coded_name_id": null,
+                "value_drug": null,
+                "value_datetime": null,
+                "value_numeric": null,
+                "value_modifier": null,
+                "value_text": null,
+                "date_started": null,
+                "date_stopped": null,
+                "comments": null,
+                "creator": 2,
+                "date_created": "2011-09-16T09:45:05.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "value_complex": null,
+                "uuid": "3a5423a9-59ca-11e3-b7e9-003018a9e11f",
+                "concept": {
+                    "concept_id": 6882,
+                    "retired": 0,
+                    "short_name": null,
+                    "description": null,
+                    "form_text": null,
+                    "datatype_id": 2,
+                    "class_id": 7,
+                    "is_set": 0,
+                    "creator": 1,
+                    "date_created": "2010-02-17T22:04:14.000Z",
+                    "default_charge": null,
+                    "version": "",
+                    "changed_by": null,
+                    "date_changed": null,
+                    "retired_by": null,
+                    "date_retired": null,
+                    "retire_reason": null,
+                    "uuid": "0bb0776a-d65e-11d6-b7af-0024217bb78e"
+                }
+            },
+            {
+                "obs_id": 1949,
+                "person_id": 35,
+                "concept_id": 8375,
+                "encounter_id": 109,
+                "order_id": null,
+                "obs_datetime": "2010-10-05T00:00:01.000Z",
+                "location_id": null,
+                "obs_group_id": null,
+                "accession_number": null,
+                "value_group_id": null,
+                "value_boolean": null,
+                "value_coded": null,
+                "value_coded_name_id": null,
+                "value_drug": null,
+                "value_datetime": null,
+                "value_numeric": null,
+                "value_modifier": null,
+                "value_text": "1A",
+                "date_started": null,
+                "date_stopped": null,
+                "comments": null,
+                "creator": 2,
+                "date_created": "2011-09-16T09:45:05.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "value_complex": null,
+                "uuid": "3a5442fa-59ca-11e3-b7e9-003018a9e11f",
+                "concept": {
+                    "concept_id": 8375,
+                    "retired": 0,
+                    "short_name": null,
+                    "description": null,
+                    "form_text": null,
+                    "datatype_id": 4,
+                    "class_id": 11,
+                    "is_set": 0,
+                    "creator": 1,
+                    "date_created": "2012-03-12T19:10:27.000Z",
+                    "default_charge": null,
+                    "version": "",
+                    "changed_by": null,
+                    "date_changed": null,
+                    "retired_by": null,
+                    "date_retired": null,
+                    "retire_reason": null,
+                    "uuid": "0bbd1470-d65e-11d6-b7af-0024217bb78e"
+                }
+            }
+        ]
+    },
+    {
+        "encounter_id": 115,
+        "encounter_type": 25,
+        "patient_id": 32,
+        "provider_id": 63401,
+        "location_id": null,
+        "form_id": null,
+        "encounter_datetime": "2011-08-22T00:00:01.000Z",
+        "creator": 6,
+        "date_created": "2011-09-16T09:45:58.000Z",
+        "voided": 0,
+        "voided_by": null,
+        "date_voided": null,
+        "void_reason": null,
+        "uuid": "39d59ea1-59ca-11e3-b7e9-003018a9e11f",
+        "changed_by": null,
+        "date_changed": null,
+        "type": {
+            "encounter_type_id": 25,
+            "name": "TREATMENT",
+            "description": "Treatment encounter",
+            "creator": 1,
+            "date_created": "2008-12-18T10:23:27.000Z",
+            "retired": 0,
+            "retired_by": null,
+            "date_retired": null,
+            "retire_reason": null,
+            "uuid": "0cd30d42-d65e-11d6-b7af-0024217bb78e"
+        },
+        "patient": {
+            "patient_id": 32,
+            "tribe": null,
+            "creator": 6,
+            "date_created": "2011-09-16T00:00:00.000Z",
+            "changed_by": null,
+            "date_changed": null,
+            "voided": 0,
+            "voided_by": null,
+            "date_voided": null,
+            "void_reason": null
+        },
+        "observations": [
+            {
+                "obs_id": 1657,
+                "person_id": 32,
+                "concept_id": 6882,
+                "encounter_id": 115,
+                "order_id": null,
+                "obs_datetime": "2011-08-22T00:00:01.000Z",
+                "location_id": null,
+                "obs_group_id": null,
+                "accession_number": null,
+                "value_group_id": null,
+                "value_boolean": null,
+                "value_coded": 792,
+                "value_coded_name_id": null,
+                "value_drug": null,
+                "value_datetime": null,
+                "value_numeric": null,
+                "value_modifier": null,
+                "value_text": null,
+                "date_started": null,
+                "date_stopped": null,
+                "comments": null,
+                "creator": 6,
+                "date_created": "2011-09-16T09:45:58.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "value_complex": null,
+                "uuid": "39d5a438-59ca-11e3-b7e9-003018a9e11f",
+                "concept": {
+                    "concept_id": 6882,
+                    "retired": 0,
+                    "short_name": null,
+                    "description": null,
+                    "form_text": null,
+                    "datatype_id": 2,
+                    "class_id": 7,
+                    "is_set": 0,
+                    "creator": 1,
+                    "date_created": "2010-02-17T22:04:14.000Z",
+                    "default_charge": null,
+                    "version": "",
+                    "changed_by": null,
+                    "date_changed": null,
+                    "retired_by": null,
+                    "date_retired": null,
+                    "retire_reason": null,
+                    "uuid": "0bb0776a-d65e-11d6-b7af-0024217bb78e"
+                }
+            },
+            {
+                "obs_id": 1658,
+                "person_id": 32,
+                "concept_id": 8375,
+                "encounter_id": 115,
+                "order_id": null,
+                "obs_datetime": "2011-08-22T00:00:01.000Z",
+                "location_id": null,
+                "obs_group_id": null,
+                "accession_number": null,
+                "value_group_id": null,
+                "value_boolean": null,
+                "value_coded": null,
+                "value_coded_name_id": null,
+                "value_drug": null,
+                "value_datetime": null,
+                "value_numeric": null,
+                "value_modifier": null,
+                "value_text": "1A",
+                "date_started": null,
+                "date_stopped": null,
+                "comments": null,
+                "creator": 6,
+                "date_created": "2011-09-16T09:45:58.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "value_complex": null,
+                "uuid": "39d5c6d9-59ca-11e3-b7e9-003018a9e11f",
+                "concept": {
+                    "concept_id": 8375,
+                    "retired": 0,
+                    "short_name": null,
+                    "description": null,
+                    "form_text": null,
+                    "datatype_id": 4,
+                    "class_id": 11,
+                    "is_set": 0,
+                    "creator": 1,
+                    "date_created": "2012-03-12T19:10:27.000Z",
+                    "default_charge": null,
+                    "version": "",
+                    "changed_by": null,
+                    "date_changed": null,
+                    "retired_by": null,
+                    "date_retired": null,
+                    "retire_reason": null,
+                    "uuid": "0bbd1470-d65e-11d6-b7af-0024217bb78e"
+                }
+            }
+        ]
+    },
+    {
+        "encounter_id": 118,
+        "encounter_type": 25,
+        "patient_id": 28,
+        "provider_id": 63399,
+        "location_id": null,
+        "form_id": null,
+        "encounter_datetime": "2011-09-06T00:00:01.000Z",
+        "creator": 4,
+        "date_created": "2011-09-16T09:46:14.000Z",
+        "voided": 0,
+        "voided_by": null,
+        "date_voided": null,
+        "void_reason": null,
+        "uuid": "391e41b9-59ca-11e3-b7e9-003018a9e11f",
+        "changed_by": null,
+        "date_changed": null,
+        "type": {
+            "encounter_type_id": 25,
+            "name": "TREATMENT",
+            "description": "Treatment encounter",
+            "creator": 1,
+            "date_created": "2008-12-18T10:23:27.000Z",
+            "retired": 0,
+            "retired_by": null,
+            "date_retired": null,
+            "retire_reason": null,
+            "uuid": "0cd30d42-d65e-11d6-b7af-0024217bb78e"
+        },
+        "patient": {
+            "patient_id": 28,
+            "tribe": null,
+            "creator": 4,
+            "date_created": "2011-09-16T00:00:00.000Z",
+            "changed_by": null,
+            "date_changed": null,
+            "voided": 0,
+            "voided_by": null,
+            "date_voided": null,
+            "void_reason": null
+        },
+        "observations": [
+            {
+                "obs_id": 942,
+                "person_id": 28,
+                "concept_id": 6882,
+                "encounter_id": 118,
+                "order_id": null,
+                "obs_datetime": "2011-09-06T00:00:01.000Z",
+                "location_id": null,
+                "obs_group_id": null,
+                "accession_number": null,
+                "value_group_id": null,
+                "value_boolean": null,
+                "value_coded": 792,
+                "value_coded_name_id": null,
+                "value_drug": null,
+                "value_datetime": null,
+                "value_numeric": null,
+                "value_modifier": null,
+                "value_text": null,
+                "date_started": null,
+                "date_stopped": null,
+                "comments": null,
+                "creator": 4,
+                "date_created": "2011-09-16T09:46:14.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "value_complex": null,
+                "uuid": "391e46fe-59ca-11e3-b7e9-003018a9e11f",
+                "concept": {
+                    "concept_id": 6882,
+                    "retired": 0,
+                    "short_name": null,
+                    "description": null,
+                    "form_text": null,
+                    "datatype_id": 2,
+                    "class_id": 7,
+                    "is_set": 0,
+                    "creator": 1,
+                    "date_created": "2010-02-17T22:04:14.000Z",
+                    "default_charge": null,
+                    "version": "",
+                    "changed_by": null,
+                    "date_changed": null,
+                    "retired_by": null,
+                    "date_retired": null,
+                    "retire_reason": null,
+                    "uuid": "0bb0776a-d65e-11d6-b7af-0024217bb78e"
+                }
+            },
+            {
+                "obs_id": 943,
+                "person_id": 28,
+                "concept_id": 8375,
+                "encounter_id": 118,
+                "order_id": null,
+                "obs_datetime": "2011-09-06T00:00:01.000Z",
+                "location_id": null,
+                "obs_group_id": null,
+                "accession_number": null,
+                "value_group_id": null,
+                "value_boolean": null,
+                "value_coded": null,
+                "value_coded_name_id": null,
+                "value_drug": null,
+                "value_datetime": null,
+                "value_numeric": null,
+                "value_modifier": null,
+                "value_text": "1A",
+                "date_started": null,
+                "date_stopped": null,
+                "comments": null,
+                "creator": 4,
+                "date_created": "2011-09-16T09:46:14.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "value_complex": null,
+                "uuid": "391e66d3-59ca-11e3-b7e9-003018a9e11f",
+                "concept": {
+                    "concept_id": 8375,
+                    "retired": 0,
+                    "short_name": null,
+                    "description": null,
+                    "form_text": null,
+                    "datatype_id": 4,
+                    "class_id": 11,
+                    "is_set": 0,
+                    "creator": 1,
+                    "date_created": "2012-03-12T19:10:27.000Z",
+                    "default_charge": null,
+                    "version": "",
+                    "changed_by": null,
+                    "date_changed": null,
+                    "retired_by": null,
+                    "date_retired": null,
+                    "retire_reason": null,
+                    "uuid": "0bbd1470-d65e-11d6-b7af-0024217bb78e"
+                }
+            }
+        ]
+    },
+    {
+        "encounter_id": 127,
+        "encounter_type": 25,
+        "patient_id": 38,
+        "provider_id": 63400,
+        "location_id": null,
+        "form_id": null,
+        "encounter_datetime": "2008-05-02T00:00:01.000Z",
+        "creator": 5,
+        "date_created": "2011-09-16T09:47:51.000Z",
+        "voided": 0,
+        "voided_by": null,
+        "date_voided": null,
+        "void_reason": null,
+        "uuid": "3ad012e5-59ca-11e3-b7e9-003018a9e11f",
+        "changed_by": null,
+        "date_changed": null,
+        "type": {
+            "encounter_type_id": 25,
+            "name": "TREATMENT",
+            "description": "Treatment encounter",
+            "creator": 1,
+            "date_created": "2008-12-18T10:23:27.000Z",
+            "retired": 0,
+            "retired_by": null,
+            "date_retired": null,
+            "retire_reason": null,
+            "uuid": "0cd30d42-d65e-11d6-b7af-0024217bb78e"
+        },
+        "patient": {
+            "patient_id": 38,
+            "tribe": null,
+            "creator": 5,
+            "date_created": "2011-09-16T00:00:00.000Z",
+            "changed_by": null,
+            "date_changed": null,
+            "voided": 0,
+            "voided_by": null,
+            "date_voided": null,
+            "void_reason": null
+        },
+        "observations": [
+            {
+                "obs_id": 2197,
+                "person_id": 38,
+                "concept_id": 6882,
+                "encounter_id": 127,
+                "order_id": null,
+                "obs_datetime": "2008-05-02T00:00:01.000Z",
+                "location_id": null,
+                "obs_group_id": null,
+                "accession_number": null,
+                "value_group_id": null,
+                "value_boolean": null,
+                "value_coded": 2833,
+                "value_coded_name_id": null,
+                "value_drug": null,
+                "value_datetime": null,
+                "value_numeric": null,
+                "value_modifier": null,
+                "value_text": null,
+                "date_started": null,
+                "date_stopped": null,
+                "comments": null,
+                "creator": 5,
+                "date_created": "2011-09-16T09:47:51.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "value_complex": null,
+                "uuid": "3ad01a9a-59ca-11e3-b7e9-003018a9e11f",
+                "concept": {
+                    "concept_id": 6882,
+                    "retired": 0,
+                    "short_name": null,
+                    "description": null,
+                    "form_text": null,
+                    "datatype_id": 2,
+                    "class_id": 7,
+                    "is_set": 0,
+                    "creator": 1,
+                    "date_created": "2010-02-17T22:04:14.000Z",
+                    "default_charge": null,
+                    "version": "",
+                    "changed_by": null,
+                    "date_changed": null,
+                    "retired_by": null,
+                    "date_retired": null,
+                    "retire_reason": null,
+                    "uuid": "0bb0776a-d65e-11d6-b7af-0024217bb78e"
+                }
+            },
+            {
+                "obs_id": 2198,
+                "person_id": 38,
+                "concept_id": 6882,
+                "encounter_id": 127,
+                "order_id": null,
+                "obs_datetime": "2008-05-02T00:00:01.000Z",
+                "location_id": null,
+                "obs_group_id": null,
+                "accession_number": null,
+                "value_group_id": null,
+                "value_boolean": null,
+                "value_coded": 792,
+                "value_coded_name_id": null,
+                "value_drug": null,
+                "value_datetime": null,
+                "value_numeric": null,
+                "value_modifier": null,
+                "value_text": null,
+                "date_started": null,
+                "date_stopped": null,
+                "comments": null,
+                "creator": 5,
+                "date_created": "2011-09-16T09:47:51.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "value_complex": null,
+                "uuid": "3ad034cb-59ca-11e3-b7e9-003018a9e11f",
+                "concept": {
+                    "concept_id": 6882,
+                    "retired": 0,
+                    "short_name": null,
+                    "description": null,
+                    "form_text": null,
+                    "datatype_id": 2,
+                    "class_id": 7,
+                    "is_set": 0,
+                    "creator": 1,
+                    "date_created": "2010-02-17T22:04:14.000Z",
+                    "default_charge": null,
+                    "version": "",
+                    "changed_by": null,
+                    "date_changed": null,
+                    "retired_by": null,
+                    "date_retired": null,
+                    "retire_reason": null,
+                    "uuid": "0bb0776a-d65e-11d6-b7af-0024217bb78e"
+                }
+            },
+            {
+                "obs_id": 2199,
+                "person_id": 38,
+                "concept_id": 8375,
+                "encounter_id": 127,
+                "order_id": null,
+                "obs_datetime": "2008-05-02T00:00:01.000Z",
+                "location_id": null,
+                "obs_group_id": null,
+                "accession_number": null,
+                "value_group_id": null,
+                "value_boolean": null,
+                "value_coded": null,
+                "value_coded_name_id": null,
+                "value_drug": null,
+                "value_datetime": null,
+                "value_numeric": null,
+                "value_modifier": null,
+                "value_text": "1A",
+                "date_started": null,
+                "date_stopped": null,
+                "comments": null,
+                "creator": 5,
+                "date_created": "2011-09-16T09:47:51.000Z",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "value_complex": null,
+                "uuid": "3ad054c5-59ca-11e3-b7e9-003018a9e11f",
+                "concept": {
+                    "concept_id": 8375,
+                    "retired": 0,
+                    "short_name": null,
+                    "description": null,
+                    "form_text": null,
+                    "datatype_id": 4,
+                    "class_id": 11,
+                    "is_set": 0,
+                    "creator": 1,
+                    "date_created": "2012-03-12T19:10:27.000Z",
+                    "default_charge": null,
+                    "version": "",
+                    "changed_by": null,
+                    "date_changed": null,
+                    "retired_by": null,
+                    "date_retired": null,
+                    "retire_reason": null,
+                    "uuid": "0bbd1470-d65e-11d6-b7af-0024217bb78e"
                 }
             }
         ]
