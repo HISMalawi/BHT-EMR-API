@@ -12,6 +12,9 @@ Rails.application.routes.draw do
       end
 
       # Routes down here ... Best we move everything above into own modules
+
+      resources :prescriptions
+
       resources :users
 
       get '/people/_names' => 'person_names#index'
