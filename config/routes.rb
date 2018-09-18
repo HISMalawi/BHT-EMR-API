@@ -13,8 +13,6 @@ Rails.application.routes.draw do
 
       # Routes down here ... Best we move everything above into own modules
 
-      resources :prescriptions
-
       resources :users
 
       get '/people/_names' => 'person_names#index'
@@ -80,10 +78,9 @@ Rails.application.routes.draw do
       # Workflow engine
       get '/workflows/:program_id/:patient_id' => 'workflows#next_encounter'
 
-      # Search
       resources :drugs
       resources :drug_orders
-      resources :orders
+     resources :orders
 
       # Workflow engine
       get '/workflows/:program_id/:patient_id' => 'workflows#next_encounter'

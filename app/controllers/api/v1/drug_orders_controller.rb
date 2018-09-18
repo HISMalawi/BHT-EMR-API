@@ -5,34 +5,37 @@ require 'utils/remappable_hash'
 class Api::V1::DrugOrdersController < ApplicationController
   # POST /drug_orders
   #
+  # Create drug orders in bulk
+  #
   # Required params:
   def create
-    create_params = params.permit(
-      :drug_inventory_id, :encounter_id, :patient_id, :start_date,
-      :auto_expire_date, :frequency, :prn, :instructions,
-      :equivalent_daily_dose, :dose, :units, :quantity
-    )
+    encounter_id, drug_orders = params.require(%i[encounter_id drug_orders])
 
-    create_params[:encounter] = current_treatment_encounter(create_params[:patient_id])
-    create_params[:units] = 'per day'
-    create_params[:prn] = 0
-    drug_order, error = create_drug_order(create_params)
+    encounter = Encounter.find(encounter_id)
+    unless encounter.type.name == 'TREATMENT'
+      return render json: { errors: "Not a treatment encounter ##{encounter.encounter_id}" },
+                    status: :bad_request
+    end
 
-    if error
-      render json: drug_order, status: :bad_request
+    orders, errors = create_drug_orders encounter: encounter,
+                                        drug_orders: drug_orders
+    if errors
+      render json: orders, status: :bad_request
     else
-      render json: drug_order, status: :created
+      render json: orders, status: :created
     end
   end
 
   def update
-    update_params = params.permit(
-      :drug_inventory_id, :encounter_id, :patient_id, :start_date,
-      :auto_expire_date, :frequency, :prn, :instructions,
-      :equivalent_daily_dose, :dose, :units, :quantity
-    )
+    quantity_updates = params.require :drug_orders
 
-    raise :not_implemented_error
+    orders, error = update_drug_orders quantity_updates
+
+    if error
+      render json: error, status: :bad_request if error
+    else
+      render json: orders, status: :created
+    end
   end
 
   def destroy
@@ -49,42 +52,64 @@ class Api::V1::DrugOrdersController < ApplicationController
 
   # Creates a new drug order.
   #
-  # Returns [drug_order, false] if successful else [errors, true]
-  def create_drug_order(create_params)
+  # Returns null if successful else an error object
+  def create_drug_orders(encounter:, drug_orders:)
     ActiveRecord::Base.transaction do
-      order = Order.create(
-        order_type_id: OrderType.find_by_name('Drug Order').order_type_id,
-        concept_id: Drug.find(create_params[:drug_inventory_id]).concept_id,
-        encounter_id: create_params[:encounter_id],
-        orderer: User.current.user_id,
-        patient_id: create_params[:patient_id],
-        start_date: create_params[:start_date],
-        auto_expire_date: create_params[:auto_expire_date],
-        obs_id: create_params[:obs_id],
-        instructions: create_params[:instructions]
-      )
+      order_type = OrderType.find_by_name('Drug Order')
 
-      break [order.errors, true] unless order.errors.empty?
+      drug_orders = drug_orders.collect do |drug_order|
+        order = create_order encounter: encounter, create_params: drug_order,
+                             order_type: order_type
+        return [order.errors, true] unless order.errors.empty?
 
-      drug_order = DrugOrder.create(
-        drug_inventory_id: create_params[:drug_inventory_id],
-        order_id: order.id,
-        dose: create_params[:dose],
-        frequency: create_params[:frequency],
-        prn: create_params[:prn],
-        units: create_params[:units],
-        equivalent_daily_dose: create_params[:equivalent_daily_dose]
-      )
+        drug_order = create_drug_order order: order, create_params: drug_order
+        return [drug_order.errors, true] unless drug_order.errors.empty?
 
-      drug_order.errors.empty? ? [drug_order, false] : [drug_order.errors, true]
+        drug_order
+      end
+
+      [drug_orders, false]
     end
   end
 
-  # Similar to create_drug_order above but updates rather than create
-  def update_drug_order(drug_order, update_params)
+  def create_order(encounter:, create_params:, order_type:)
+    Order.create(
+      order_type_id: order_type.order_type_id,
+      concept_id: Drug.find(create_params[:drug_inventory_id]).concept_id,
+      encounter_id: encounter.encounter_id,
+      patient_id: encounter.patient_id,
+      orderer: User.current.user_id,
+      start_date: create_params[:start_date],
+      auto_expire_date: create_params[:auto_expire_date],
+      obs_id: create_params[:obs_id],
+      instructions: create_params[:instructions]
+    )
+  end
+
+  def create_drug_order(order:, create_params:)
+    DrugOrder.create(
+      drug_inventory_id: create_params[:drug_inventory_id],
+      order_id: order.id,
+      dose: create_params[:dose],
+      frequency: create_params[:frequency],
+      prn: create_params[:prn] || 0,
+      units: create_params[:units] || 'per day',
+      equivalent_daily_dose: create_params[:equivalent_daily_dose],
+      quantity: create_params[:quantity] || 0
+    )
+  end
+
+  def update_drug_orders(quantity_updates)
+    # TODO: Update more than just quantity
     ActiveRecord::Base.transaction do
-      order = drug_order.order
-      # order.updae
+      orders = quantity_updates.collect do |update|
+        order = DrugOrder.find(update[:order_id])
+        order.quantity = update[:quantity].to_i
+        order.save! # Any errors here aren't of our doing...
+        order
+      end
+
+      return orders, false
     end
   end
 
