@@ -6,7 +6,8 @@ class DrugOrder < ActiveRecord::Base
 
   belongs_to :drug, foreign_key: :drug_inventory_id
 
-  validates_presence_of :drug_inventory_id
+  validates_presence_of :drug_inventory_id, :dose, :equivalent_daily_dose,
+                        :units, :frequency, :prn
 
   # def order
   #   @order ||= Order.find(order_id)
