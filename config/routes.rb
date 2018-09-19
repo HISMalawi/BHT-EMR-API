@@ -71,16 +71,12 @@ Rails.application.routes.draw do
         resources :program_workflows, path: 'workflows'
       end
 
-      resources :drugs
-      resources :drug_orders
-      resources :orders
-
       # Workflow engine
       get '/workflows/:program_id/:patient_id' => 'workflows#next_encounter'
 
       resources :drugs
       resources :drug_orders
-     resources :orders
+      resources :orders
 
       # Workflow engine
       get '/workflows/:program_id/:patient_id' => 'workflows#next_encounter'

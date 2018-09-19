@@ -22,11 +22,11 @@ class Api::V1::PatientsController < ApplicationController
     render(json: paginate(patients)) && return unless patients.empty?
 
     # Ignore response status, DDE almost always returns 200 even for bad requests
-    # and 404s on this endpoint. Only way to check for an is to check whether we
+    # and 404s on this endpoint. Only way to check for an error is to check whether we
     # received a hash and the hash contains an error... Not pretty. 
     response, = @dde_client.post 'search_by_npid', npid: npid
 
-    unless response.class = Array
+    unless response.class == Array
       logger.error "Failed to search for patient in DDE by npid: #{response}"
       render json: { errors: 'DDE is unreachable...' }, status: :internal_server_error
       return
