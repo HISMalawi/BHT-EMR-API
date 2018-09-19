@@ -94,6 +94,13 @@ To build the documentation do the following:
 postmanerator --collection=doc/src/index.json --output=public/index.html
 ```
 
+A wrapper script for the above command is provided to make life easier.
+Execute it like so:
+
+```sh
+bin/make_docs
+```
+
 You can view the documentation by opening `public/index.html` or hitting
 `/index.html` on a running instance of the API.
 
