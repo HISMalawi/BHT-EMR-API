@@ -67,8 +67,7 @@ class Encounter < VoidableRecord
       row.void(reason)
     end
 
-    query = 'SELECT * FROM encounter ORDER BY encounter_datetime DESC LIMIT 1'
-    find_by_sql(query).orders.each { |row| row.void(reason) }
+    orders.each { |row| row.void(reason) }
   end
 
   def encounter_type_name=(encounter_type_name)

@@ -7,15 +7,16 @@ class Drug < ActiveRecord::Base
   belongs_to :concept
   belongs_to :form, foreign_key: 'dosage_form', class_name: 'Concept'
 
-  # def arv?
-  #   Drug.arv_drugs.map(&:concept_id).include?(self.concept_id)
-  # end
+  def arv?
+    Drug.arv_drugs.map(&:concept_id).include?(concept_id)
+  end
 
-  # def self.arv_drugs
-  #   arv_concept       = ConceptName.find_by_name("ANTIRETROVIRAL DRUGS").concept_id
-  #   arv_drug_concepts = ConceptSet.all(:conditions => ['concept_set = ?', arv_concept])
-  #   arv_drug_concepts
-  # end
+  def self.arv_drugs
+    arv_concept = ConceptName.find_by(name: 'ANTIRETROVIRAL DRUGS').concept_id
+    concepts = ConceptSet.where('concept_set = ?', arv_concept).map(&:concept_id)
+    concepts_placeholders = '(' + (['?'] * concepts.size).join(', ') + ')'
+    Drug.where("concept_id in #{concepts_placeholders}", *concepts)
+  end
 
   # def tb_medication?
   #   Drug.tb_drugs.map(&:concept_id).include?(self.concept_id)

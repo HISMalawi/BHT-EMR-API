@@ -14,6 +14,19 @@ class DrugOrder < ActiveRecord::Base
     super(options.merge(include: { order: {} }))
   end
 
+  def duration
+    interval = order.auto_expire_date.to_date - order.start_date.to_date
+    interval.to_i
+  end
+
+  def amount_needed
+    (duration * equivalent_daily_dose) - (quantity || 0)
+  end
+
+  def total_required
+    (duration * equivalent_daily_dose)
+  end
+
   # def order
   #   @order ||= Order.find(order_id)
   # end
@@ -30,10 +43,6 @@ class DrugOrder < ActiveRecord::Base
   #   s = "#{drug.name}: #{self.dose} #{self.units} #{frequency} for #{duration||'some'} days"
   #   s << " (prn)" if prn == 1
   #   s
-  # end
-
-  # def duration
-  #   (order.auto_expire_date.to_date - order.start_date.to_date).to_i rescue nil
   # end
 
   # def self.find_common_orders(diagnosis_concept_id)
@@ -153,11 +162,5 @@ class DrugOrder < ActiveRecord::Base
   #   amounts_dispensed
   # end
 
-  # def amount_needed
-  #   (duration * equivalent_daily_dose) - (quantity || 0)
-  # end
 
-  # def total_required
-  #   (duration * equivalent_daily_dose)
-  # end
 end

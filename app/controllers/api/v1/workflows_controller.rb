@@ -4,7 +4,7 @@ class Api::V1::WorkflowsController < ApplicationController
   # Retrieves patient's next encounter given previous encounters
   # and enrolled program
   def next_encounter
-    date = params.permit(:date)[:date] || Time.now
+    # date = params.permit(:date)[:date] || Time.now
 
     program_id = params[:program_id]
     patient_id = params[:patient_id]
@@ -22,30 +22,12 @@ class Api::V1::WorkflowsController < ApplicationController
       return
     end
 
-    state = INITIAL_STATE
-    while state != END_STATE
-      state = next_state state
+    encounter = current_encounter patient_id
 
-      logger.debug "Current state is: #{state}"
-      render(status: :no_content) && return if state == END_STATE
-
-      encounter_type = EncounterType.find_by(name: state)
-
-      next if encounter_exists?(state, encounter_type, patient_id)
-
-      logger.debug "Encounter type (#{encounter_type.name}) not found"
-
-      case state
-      when VITALS
-        render json: encounter_type && return if patient_checked_in? patient_id
-      when DISPENSING
-        render json: encounter_type && return if patient_got_treatment? patient_id
-      when APPOINTMENT
-        # render json: encounter_type && return if DISPENSING is complete
-        raise 'Dont know how to handle APPOINTMENT'
-      else
-        render(json: encounter_type) && return
-      end
+    if encounter
+      render json: encounter
+    else
+      render status: :no_content
     end
   end
 
@@ -81,6 +63,37 @@ class Api::V1::WorkflowsController < ApplicationController
   # Concepts
   PATIENT_PRESENT = 'Patient present'
 
+  def current_encounter(patient_id)
+    state = INITIAL_STATE
+    loop do
+      state = next_state state
+      break if state == END_STATE
+
+      logger.debug "Loading encounter type: #{state}"
+      encounter_type = EncounterType.find_by(name: state)
+
+      logger.debug "Checking existence of #{state} encounter"
+      next if encounter_exists?(state, encounter_type, patient_id)
+
+      logger.debug "Checking eligibility of #{state} encounter"
+
+      case state
+      when VITALS
+        return encounter_type if patient_checked_in?(patient_id)
+      when ART_ADHERENCE
+        return encounter_type if patient_received_art?(patient_id)
+      when DISPENSING
+        return encounter_type if patient_got_treatment?(patient_id)
+      when APPOINTMENT
+        return encounter_type if dispensing_complete?(patient_id)
+      else
+        return encounter_type
+      end
+    end
+
+    nil
+  end
+
   def next_state(current_state)
     ENCOUNTER_SM[current_state]
   end
@@ -98,11 +111,11 @@ class Api::V1::WorkflowsController < ApplicationController
       # Interested in today's encounters only
       search_params = [
         'encounter_type = ? AND patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
-        encounter_type.id, patient_id, Time.now
+        encounter_type.encounter_type_id, patient_id, Time.now
       ]
     end
 
-    Encounter.exists?(search_params)
+    Encounter.where(*search_params).exists?
   end
 
   # Checks if patient has checked in today
@@ -110,9 +123,9 @@ class Api::V1::WorkflowsController < ApplicationController
   # Pre-condition for VITALS encounter
   def patient_checked_in?(patient_id)
     encounter_type = EncounterType.select('encounter_type_id').find_by(name: HIV_RECEPTION)
-    encounter = Encounter.select('encounter_id').find_by(
+    encounter = Encounter.select('encounter_id').where(
       patient_id: patient_id, encounter_type: encounter_type.encounter_type_id
-    )
+    ).order(:encounter_datetime).last
     raise "Can't check if patient checked in due to missing HIV_RECEPTION encounter" if encounter.nil?
     obs_concept = concept PATIENT_PRESENT
     encounter.observations.exists?(concept_id: obs_concept.id)
@@ -131,8 +144,37 @@ class Api::V1::WorkflowsController < ApplicationController
     encounter.observations.exists?(concept_id: obs_concept.id)
   end
 
+  # Check if patient received A.R.T.s on previous visit
+  def patient_received_art?(patient_id)
+    # This code just looks suspect... It does the job and I understand
+    # how it does what it does but I just don't trust it somehow.
+    # Needs revision, this. Should be a correct or better way of
+    # achieving the desired effect.
+    arv_ids = Drug.arv_drugs.map(&:drug_id)
+    arv_ids_placeholders = "(#{(['?'] * arv_ids.size).join(', ')})"
+    Observation.where(
+      "person_id = ? AND value_drug in #{arv_ids_placeholders}", patient_id,
+      *arv_ids
+    ).exists?
+  end
+
   def dispensing_complete?(patient_id)
-    false
+    prescription_type = EncounterType.find_by(name: TREATMENT).encounter_type_id
+    prescription = Encounter.find_by(encounter_type: prescription_type,
+                                     patient_id: patient_id)
+
+    complete = false
+
+    prescription.orders.each do |order|
+      complete = order.drug_order.amount_needed <= 0
+      break unless complete
+    end
+
+    # TODO: Implement this regimen thingy below...
+    # if complete
+    #   dispension_completed = patient.set_received_regimen(encounter, prescription)
+    # end
+    complete
   end
 
   # Retrieve concept by its name
