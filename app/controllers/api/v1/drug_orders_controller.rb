@@ -5,15 +5,13 @@ require 'utils/remappable_hash'
 class Api::V1::DrugOrdersController < ApplicationController
   def index
     patient_id = params.require(%i[patient_id])
-    date = params[:date] ? Date.strptime(params[:date]) : Time.now 
+    date = params[:date] ? Date.strptime(params[:date]) : Time.now
 
     encounter_type = EncounterType.find_by(name: 'Treatment').encounter_type_id
     treatment = Encounter.where(
       'DATE(encounter_datetime) = DATE(?) and patient_id = ? and encounter_type = ?',
       date, patient_id, encounter_type
     )[0]
-
-    logger.debug "Treatment: #{treatment}"
 
     drug_orders = treatment ? treatment.orders.map(&:drug_order).reject(&:nil?) : []
 
