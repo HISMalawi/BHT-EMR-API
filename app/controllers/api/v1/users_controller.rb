@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'user_service'
-
 class Api::V1::UsersController < ApplicationController
   DEFAULT_ROLENAME = 'clerk'
 

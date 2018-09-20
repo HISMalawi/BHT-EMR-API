@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'person_service'
-
 class Api::V1::PeopleController < ApplicationController
   def index
     render json: paginate(Person)
