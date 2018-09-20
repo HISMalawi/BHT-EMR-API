@@ -4,14 +4,19 @@ require 'utils/remappable_hash'
 
 class Api::V1::DrugOrdersController < ApplicationController
   def index
-    patient_id = params.require(%i[patient_id])
-    date = params[:date] ? Date.strptime(params[:date]) : Time.now
+    patient_id = params.require %i[patient_id]
 
-    treatment = EncounterService.recent_encounter encounter_type_name: 'Treatment',
-                                                  patient_id: patient_id,
-                                                  date: date
+    if params[:date]
+      date = params[:date] ? Date.strptime(params[:date]) : Time.now
+      treatment = EncounterService.recent_encounter encounter_type_name: 'Treatment',
+                                                    patient_id: patient_id,
+                                                    date: date
+      orders = treatment ? treatment.orders : []
+    else
+      orders = Order.where(patient_id: patient_id).order(date_created: :desc)
+    end
 
-    drug_orders = treatment ? treatment.orders.map(&:drug_order).reject(&:nil?) : []
+    drug_orders = orders.map(&:drug_order).reject(&:nil?)
 
     render json: drug_orders
   end
