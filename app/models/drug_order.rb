@@ -11,7 +11,7 @@ class DrugOrder < ActiveRecord::Base
                         :units, :frequency, :prn
 
   def as_json(options = {})
-    super(options.merge(include: { order: {} }))
+    super(options.merge(include: { order: {}, drug: {} }))
   end
 
   def duration
