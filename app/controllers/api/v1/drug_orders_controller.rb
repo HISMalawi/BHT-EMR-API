@@ -112,20 +112,4 @@ class Api::V1::DrugOrdersController < ApplicationController
       return orders, false
     end
   end
-
-  def current_treatment_encounter(patient_id, date: Time.now)
-    type = EncounterType.find_by_name('TREATMENT')
-    encounter = Encounter.where(
-      [
-        'patient_id = ? AND DATE(encounter_datetime) = DATE(?) AND encounter_type = ?',
-        patient_id, date, type.id
-      ]
-    )
-
-    if encounter.nil?
-      return encounters.create encounter_type: type.id, encounter_datetime: date
-    end
-
-    encounter
-  end
 end
