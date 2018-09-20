@@ -7,7 +7,7 @@ class Api::V1::DrugOrdersController < ApplicationController
     patient_id = params.require(%i[patient_id])
     date = params[:date] ? Date.strptime(params[:date]) : Time.now
 
-    encounter_type = EncounterType.find_by(name: 'Treatment').encounter_type_id
+    encounter_type = EncounterType.where(name: 'Treatment').order(:date_created).last.encounter_type_id
     treatment = Encounter.where(
       'DATE(encounter_datetime) = DATE(?) and patient_id = ? and encounter_type = ?',
       date, patient_id, encounter_type
