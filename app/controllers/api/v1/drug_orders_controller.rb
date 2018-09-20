@@ -115,8 +115,15 @@ class Api::V1::DrugOrdersController < ApplicationController
       prn: create_params[:prn] || 0,
       units: create_params[:units] || drug.units,
       equivalent_daily_dose: create_params[:equivalent_daily_dose],
-      quantity: create_params[:quantity] || 0
+      quantity: create_params[:quantity] || drug_quantity(drug, create_params)
     )
+  end
+
+  def drug_quantity(_drug, create_params)
+    auto_expire_date = Date.strptime(create_params[:auto_expire_date])
+    start_date = Date.strptime(create_params[:start_date])
+    duration = auto_expire_date - start_date
+    duration.to_i * create_params[:equivalent_daily_dose].to_i
   end
 
   def update_drug_orders(quantity_updates)
