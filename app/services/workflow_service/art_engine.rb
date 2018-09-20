@@ -3,7 +3,7 @@
 require 'logger'
 require_relative 'exceptions/patient_not_registered_error'
 
-module Workflows
+module WorkflowService
   class ARTEngine
     def initialize(program, patient)
       unless PatientProgram.exists? patient_id: patient.patient_id,

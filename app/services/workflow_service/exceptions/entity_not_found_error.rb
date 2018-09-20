@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Workflows
+module WorkflowService
   module Exceptions
     class EntityNotFoundError < WorkflowError; end
   end

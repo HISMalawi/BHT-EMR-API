@@ -3,7 +3,7 @@
 require_relative 'art_engine'
 require_relative 'exceptions/entity_not_found_error'
 
-module Workflows
+module WorkflowService
   # A factory for workflow engines.
   module EngineLoader
     ENGINES = {
@@ -30,14 +30,14 @@ module Workflows
 
       def load_program(program_id)
         program = Program.find_by program_id: program_id
-        raise Workflows::Exceptions::EntityNotFoundError,
+        raise Exceptions::EntityNotFoundError,
               "Program ##{program_id} not found" unless program
         program
       end
 
       def load_patient(patient_id)
         patient = Patient.find_by patient_id: patient_id
-        raise Workflows::Exceptions::EntityNotFoundError,
+        raise Exceptions::EntityNotFoundError,
               "Patient ##{patient_id} not found" unless patient
         patient
       end

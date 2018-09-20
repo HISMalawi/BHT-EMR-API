@@ -4,8 +4,8 @@ class Api::V1::WorkflowsController < ApplicationController
   # Retrieves patient's next encounter given previous encounters
   # and enrolled program
   def next_encounter
-    engine = Workflows::EngineLoader.load_engine params[:program_id],
-                                                 params[:patient_id]
+    engine = WorkflowService::EngineLoader.load_engine params[:program_id],
+                                                       params[:patient_id]
 
     encounter = engine.next_encounter
 
@@ -14,7 +14,7 @@ class Api::V1::WorkflowsController < ApplicationController
     else
       render status: :no_content
     end
-  rescue Workflows::Exceptions::WorkflowError => e
+  rescue WorkflowService::Exceptions::WorkflowError => e
     render json: { errors: e.to_s }, status: :bad_request
   end
 end
