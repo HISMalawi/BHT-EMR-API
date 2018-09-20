@@ -4,17 +4,8 @@ class Api::V1::WorkflowsController < ApplicationController
   # Retrieves patient's next encounter given previous encounters
   # and enrolled program
   def next_encounter
-    # date = params.permit(:date)[:date] || Time.now
-
     program_id = params[:program_id]
     patient_id = params[:patient_id]
-
-    # if patient has encounter HIV CLINIC REGISTRATION:
-    #   if patient has encounter HIV RECEPTION:
-    #     if patient present in HIV RECEPTION obs:
-    #       if patient has VITALS encounter:
-    #          if patient has encounter HIV STAGING:
-    # else
 
     unless PatientProgram.exists?(patient_id: patient_id, program_id: program_id)
       render json: "Patient ##{patient_id} not enrolled in program ##{program_id}",
