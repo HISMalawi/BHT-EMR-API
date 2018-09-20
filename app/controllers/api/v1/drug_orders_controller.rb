@@ -87,13 +87,15 @@ class Api::V1::DrugOrdersController < ApplicationController
   end
 
   def create_drug_order(order:, create_params:)
+    drug = Drug.find(create_params[:drug_inventory_id])
+
     DrugOrder.create(
-      drug_inventory_id: create_params[:drug_inventory_id],
+      drug_inventory_id: drug.drug_id,
       order_id: order.id,
       dose: create_params[:dose],
       frequency: create_params[:frequency],
       prn: create_params[:prn] || 0,
-      units: create_params[:units] || 'per day',
+      units: create_params[:units] || drug.units,
       equivalent_daily_dose: create_params[:equivalent_daily_dose],
       quantity: create_params[:quantity] || 0
     )
