@@ -9,8 +9,11 @@ class Api::V1::DrugOrdersController < ApplicationController
 
     encounter_type = EncounterType.where(name: 'Treatment').order(:date_created).last.encounter_type_id
     treatment = Encounter.where(
-      'DATE(encounter_datetime) = DATE(?) and patient_id = ? and encounter_type = ?',
-      date, patient_id, encounter_type
+      'encounter_datetime = (
+        SELECT MAX(encounter_datetime) FROM encounter
+        WHERE DATE(encounter_datetime) = DATE(?) AND patient_id = ?
+              AND encounter_type = ?
+       )', date, patient_id, encounter_type
     )[0]
 
     drug_orders = treatment ? treatment.orders.map(&:drug_order).reject(&:nil?) : []
