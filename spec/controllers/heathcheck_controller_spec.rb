@@ -1,5 +1,5 @@
 require 'rails_helper'
 
-RSpec.describe HeathcheckController, type: :controller do
+RSpec.describe HealthcheckController, type: :controller do
 
 end

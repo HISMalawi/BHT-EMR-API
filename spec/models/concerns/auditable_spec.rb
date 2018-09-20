@@ -5,11 +5,15 @@ require 'rails_helper'
 describe Auditable do
   before do
     @auditable = (Class.new do
-      cattr_reader :before_save_callback
+      cattr_reader :before_save_callback, :before_create_callback
       attr_accessor :changed_by, :date_changed
 
       def self.before_save(callback)
         @@before_save_callback = callback
+      end
+
+      def self.before_create(callback)
+        @@before_create_callback = callback
       end
 
       include Auditable
@@ -18,6 +22,10 @@ describe Auditable do
 
   it 'sets before_save callback' do
     expect(@auditable.before_save_callback).not_to be_nil
+  end
+
+  it 'sets before_create callback' do
+    expect(@auditable.before_create_callback).not_to be_nil
   end
 
   describe 'before_save callback' do
