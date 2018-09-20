@@ -7,14 +7,9 @@ class Api::V1::DrugOrdersController < ApplicationController
     patient_id = params.require(%i[patient_id])
     date = params[:date] ? Date.strptime(params[:date]) : Time.now
 
-    encounter_type = EncounterType.where(name: 'Treatment').order(:date_created).last.encounter_type_id
-    treatment = Encounter.where(
-      'encounter_datetime = (
-        SELECT MAX(encounter_datetime) FROM encounter
-        WHERE DATE(encounter_datetime) = DATE(?) AND patient_id = ?
-              AND encounter_type = ?
-       )', date, patient_id, encounter_type
-    )[0]
+    treatment = EncounterService.recent_encounter encounter_type_name: 'Treatment',
+                                                  patient_id: patient_id,
+                                                  date: date
 
     drug_orders = treatment ? treatment.orders.map(&:drug_order).reject(&:nil?) : []
 
@@ -35,8 +30,8 @@ class Api::V1::DrugOrdersController < ApplicationController
                     status: :bad_request
     end
 
-    orders, errors = create_drug_orders encounter: encounter,
-                                        drug_orders: drug_orders
+    orders, errors = DrugOrderService.create_drug_orders encounter: encounter,
+                                                         drug_orders: drug_orders
     if errors
       render json: orders, status: :bad_request
     else
@@ -47,7 +42,7 @@ class Api::V1::DrugOrdersController < ApplicationController
   def update
     quantity_updates = params.require :drug_orders
 
-    orders, error = update_drug_orders quantity_updates
+    orders, error = DrugOrderService.update_drug_orders quantity_updates
 
     if error
       render json: error, status: :bad_request if error
@@ -63,80 +58,6 @@ class Api::V1::DrugOrdersController < ApplicationController
       render status: :no_content
     else
       render json: drug_order.errors, status: :internal_server_error
-    end
-  end
-
-  private
-
-  # Creates a new drug order.
-  #
-  # Returns null if successful else an error object
-  def create_drug_orders(encounter:, drug_orders:)
-    ActiveRecord::Base.transaction do
-      order_type = OrderType.find_by_name('Drug Order')
-
-      drug_orders = drug_orders.collect do |drug_order|
-        order = create_order encounter: encounter, create_params: drug_order,
-                             order_type: order_type
-        return [order.errors, true] unless order.errors.empty?
-
-        drug_order = create_drug_order order: order, create_params: drug_order
-        return [drug_order.errors, true] unless drug_order.errors.empty?
-
-        drug_order
-      end
-
-      [drug_orders, false]
-    end
-  end
-
-  def create_order(encounter:, create_params:, order_type:)
-    Order.create(
-      order_type_id: order_type.order_type_id,
-      concept_id: Drug.find(create_params[:drug_inventory_id]).concept_id,
-      encounter_id: encounter.encounter_id,
-      patient_id: encounter.patient_id,
-      orderer: User.current.user_id,
-      start_date: create_params[:start_date],
-      auto_expire_date: create_params[:auto_expire_date],
-      obs_id: create_params[:obs_id],
-      instructions: create_params[:instructions]
-    )
-  end
-
-  def create_drug_order(order:, create_params:)
-    drug = Drug.find(create_params[:drug_inventory_id])
-
-    DrugOrder.create(
-      drug_inventory_id: drug.drug_id,
-      order_id: order.id,
-      dose: create_params[:dose],
-      frequency: create_params[:frequency],
-      prn: create_params[:prn] || 0,
-      units: create_params[:units] || drug.units,
-      equivalent_daily_dose: create_params[:equivalent_daily_dose],
-      quantity: create_params[:quantity] || drug_quantity(drug, create_params)
-    )
-  end
-
-  def drug_quantity(_drug, create_params)
-    auto_expire_date = Date.strptime(create_params[:auto_expire_date])
-    start_date = Date.strptime(create_params[:start_date])
-    duration = auto_expire_date - start_date
-    duration.to_i * create_params[:equivalent_daily_dose].to_i
-  end
-
-  def update_drug_orders(quantity_updates)
-    # TODO: Update more than just quantity
-    ActiveRecord::Base.transaction do
-      orders = quantity_updates.collect do |update|
-        order = DrugOrder.find(update[:order_id])
-        order.quantity = update[:quantity].to_i
-        order.save! # Any errors here aren't of our doing...
-        order
-      end
-
-      return orders, false
     end
   end
 end
