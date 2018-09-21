@@ -4,16 +4,18 @@ module DispensationService
       obs_list = plain_dispensations.map do |dispensation|
         order_id = dispensation[:drug_order_id]
         quantity = dispensation[:quantity]
-        obs = dispense_drug order_id, quantity
+        date = dispensation[:date] ? Time.strptime(dispensation[:date]) : nil
+        obs = dispense_drug order_id, quantity, date: date
         unless obs.errors.empty?
-          return  ["Failed to dispense order ##{order_id}", obs.errors], true
+          return ["Failed to dispense order ##{order_id}", obs.errors], true
         end
         obs
       end
 
       [obs_list, false]
     end
-    def dispense_drug(order_id, quantity)
+    def dispense_drug(order_id, quantity, date: nil)
+      date ||= Time.now
       drug_order = DrugOrder.find(order_id)
       # NOTE: Some caching below would be helpful
       patient = drug_order.order.patient
@@ -26,7 +28,7 @@ module DispensationService
         encounter_id: encounter.encounter_id,
         value_drug: drug_order.drug_inventory_id,
         value_numeric: quantity,
-        obs_datetime: Time.now # TODO: Prefer date passed by user
+        obs_datetime: date # TODO: Prefer date passed by user
       )
     end
 
