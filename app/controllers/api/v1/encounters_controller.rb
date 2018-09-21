@@ -147,7 +147,9 @@ class Api::V1::EncountersController < ApplicationController
     filters[:creator] = User.current.user_id unless params[:all]
 
     queryset = Encounter.where(filters)
-    queryset.joins(:person).where('person.gender = ?', gender)
+    queryset = queryset.joins(
+      'INNER JOIN person ON encounter.patient_id = person.person_id'
+    ).where('person.gender = ?', gender)
     if params[:date]
       date = Date.strptime params[:date]
       queryset = queryset.where 'DATE(encounter_datetime) = DATE(?)', date
