@@ -10,6 +10,7 @@ class Api::V1::LocationsController < ApplicationController
   #   tag - Filter locations having a tag matching this
   def index
     filters = params.permit(%i[name tag])
+    filters.delete(:name) if filters[:name].blank?
 
     tag = filters.delete :tag
     locations = filters.empty? ? Location : Location.where(filters)
