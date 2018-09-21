@@ -38,19 +38,6 @@ $ cp config/database.yml.example config/database.yml
 $ vim config/database.yml   # Edit configuration
 ...
 ```
-
-#### DDE
-
-Copy `config/application.yml.example` to `config/application.yml`. Edit all the
-`dde_*` parameters to point to a running DDE instance.
-
-```sh
-$ cp config/application.yml.example config/application.yml
-...
-$ vim config/application.yml
-...
-```
-
 ### Setting up rails
 
 Install the required gems like so:
@@ -65,6 +52,57 @@ by errors that is your problem, fix them before proceeding.
 
 ```sh
 bin/rails server
+```
+
+#### DDE
+
+- Configuration
+
+Copy `config/application.yml.example` to `config/application.yml`. Edit all the
+`dde_*` parameters to point to a running DDE instance.
+
+```sh
+$ cp config/application.yml.example config/application.yml
+...
+$ vim config/application.yml
+...
+```
+
+- Enabling DDE
+
+To enable DDE you have to set the global_property `dde_enabled` to 1. Global
+properties can be updated through the `properties` end-point or directly in
+the database on the global_property table. Below is how you can do it on
+a UNIX terminal.
+
+First log into the API:
+
+```sh
+curl -X POST -H "Content-Type: application/json" -d '{
+    "username": "admin",
+    "password": "test"
+}' "http://127.0.0.1:3000/api/v1/auth/login"
+```
+
+The command above should give a response similar to the following:
+
+```json
+    {
+        "authorization": {
+            "token": "AiJViSpF3spb",
+            "expiry_time": "2018-08-28T11:01:55.501+02:00"
+        }
+    }
+```
+
+Take token above and use it the following command as a parameter to
+the Authorization header as:
+
+```sh
+curl -X POST -H "Authorization: AiJViSpF3spb" -H "Content-Type: application/json" -d '{
+    "property": "dde_enabled",
+    "value": "true"
+}' "http://127.0.0.1:3000/api/v1/properties"
 ```
 
 ### Setting up documentation tools

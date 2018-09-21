@@ -6,6 +6,8 @@ require 'person_service'
 require 'zebra_printer/init'
 
 class Api::V1::PatientsController < ApplicationController
+  # TODO: Refactor the business logic here into a service class
+
   before_action :load_dde_client
 
   def show
@@ -19,17 +21,17 @@ class Api::V1::PatientsController < ApplicationController
       npid_identifier_type.patient_identifier_type_id, npid
     )
 
-    render(json: paginate(patients)) && return unless patients.empty?
+    return render(json: paginate(patients)) unless patients.empty? && dde_enabled?
 
     # Ignore response status, DDE almost always returns 200 even for bad requests
     # and 404s on this endpoint. Only way to check for an error is to check whether we
-    # received a hash and the hash contains an error... Not pretty. 
+    # received a hash and the hash contains an error... Not pretty.
     response, = @dde_client.post 'search_by_npid', npid: npid
 
     unless response.class == Array
       logger.error "Failed to search for patient in DDE by npid: #{response}"
-      render json: { errors: 'DDE is unreachable...' }, status: :internal_server_error
-      return
+      return render json: { errors: 'DDE is unreachable...' },
+                    status: :internal_server_error
     end
 
     render json: response.collect { |dde_person| dde_person_to_openmrs dde_person }
@@ -40,22 +42,14 @@ class Api::V1::PatientsController < ApplicationController
     return render json: { errors: create_params }, status: :bad_request if errors
 
     person = Person.find(create_params[:person_id])
-    dde_person = openmrs_to_dde_person(person)
-    dde_response, dde_status = @dde_client.post 'add_person', dde_person
-
-    if dde_status != 200
-      logger.error "Failed to create person in DDE: #{dde_response}"
-      render json: { errors: 'Failed to create person in DDE' },
-             status: :internal_server_error
-      return
-    end
+    npid = dde_enabled? ? register_dde_patient(person) : gen_v3_npid(person)
 
     patient = Patient.create patient_id: person.id,
                              creator: User.current.id,
                              date_created: Time.now
 
     patient_identifier = PatientIdentifier.create(
-      identifier: dde_response['npid'],
+      identifier: npid,
       identifier_type: npid_identifier_type.id,
       creator: User.current.id,
       patient: patient,
@@ -81,11 +75,10 @@ class Api::V1::PatientsController < ApplicationController
     new_person_id = params.permit(:person_id)[:person_id]
     if new_person_id
       patient.person_id = new_person_id
-      unless patient.save
-        render json: patient.errors, status: :bad_request
-        return
-      end
+      return render json: patient.errors, status: :bad_request unless patient.save
     end
+
+    render json: patient unless dde_enabled?
 
     dde_person = openmrs_to_dde_person(patient.person)
     dde_response, dde_status = @dde_client.post 'update_person', dde_person
@@ -115,6 +108,8 @@ class Api::V1::PatientsController < ApplicationController
   DDE_CONFIG_PATH = 'config/application.yml'
 
   def load_dde_client
+    return unless dde_enabled?
+
     @dde_client = DDEClient.new
 
     logger.debug 'Searching for a stored DDE connection'
@@ -134,6 +129,16 @@ class Api::V1::PatientsController < ApplicationController
 
     logger.debug 'Stored DDE connection found'
     @dde_client.connect connection: connection
+  end
+
+  def dde_enabled?
+    property = GlobalProperty.find_by(property: 'dde_enabled')
+    return false unless property
+    value = (property.property_value || '0').strip
+    enabled = property && !['0', 'false', 'f', ''].include?(value)
+    logger.debug "DDE Enabled: #{enabled}"
+    logger.info 'DDE is not enabled' unless enabled
+    enabled
   end
 
   # Converts an openmrs person structure to a DDE person structure
@@ -197,6 +202,21 @@ class Api::V1::PatientsController < ApplicationController
     )
 
     person
+  end
+
+  def register_dde_patient(person)
+    dde_person = openmrs_to_dde_person(person)
+    dde_response, dde_status = @dde_client.post 'add_person', dde_person
+
+    if dde_status != 200
+      logger.error "Failed to create person in DDE: #{dde_response}"
+      raise 'Failed to register person in DDE'
+    end
+
+    dde_response['npid']
+  end
+
+  def gen_v3_npid(person)
   end
 
   def filter_person_attributes(person_attributes)
