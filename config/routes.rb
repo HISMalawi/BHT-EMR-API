@@ -72,12 +72,11 @@ Rails.application.routes.draw do
         resources :program_workflows, path: 'workflows'
       end
 
-      # Workflow engine
-      get '/workflows/:program_id/:patient_id' => 'workflows#next_encounter'
-
       resources :drugs
       resources :drug_orders
       resources :orders
+
+      resource :properties # Yes... It's a singleton resource
 
       # Workflow engine
       get '/workflows/:program_id/:patient_id' => 'workflows#next_encounter'
@@ -88,6 +87,7 @@ Rails.application.routes.draw do
       get '/search/family_name' => 'person_names#search_family_name'
       get '/search/people' => 'people#search'
       get '/search/patients/by_npid' => 'patients#search_by_npid'
+      get '/search/properties' => 'properties#search'
     end
   end
 
