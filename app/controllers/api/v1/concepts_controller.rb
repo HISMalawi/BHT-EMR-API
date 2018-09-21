@@ -4,6 +4,8 @@ class Api::V1::ConceptsController < ApplicationController
   end
 
   def index
-    render json: paginate(Concept)
+    name = params.permit(:name)[:name]
+    concepts = name ? Concept.joins(:concept_names).where('name like ?', name) : Concept
+    render json: paginate(concepts)
   end
 end
