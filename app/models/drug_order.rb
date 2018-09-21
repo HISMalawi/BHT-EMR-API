@@ -4,8 +4,6 @@ class DrugOrder < ActiveRecord::Base
   self.table_name = :drug_order
   self.primary_key = :order_id
 
-  attr_accessor :amount_needed
-
   belongs_to :drug, foreign_key: :drug_inventory_id
   belongs_to :order
 
@@ -19,6 +17,7 @@ class DrugOrder < ActiveRecord::Base
   end
 
   def duration
+    return 0 if order.auto_expire_date.nil? || order.start_date.nil?
     interval = order.auto_expire_date.to_date - order.start_date.to_date
     interval.to_i
   end
