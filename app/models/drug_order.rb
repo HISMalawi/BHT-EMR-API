@@ -4,6 +4,8 @@ class DrugOrder < ActiveRecord::Base
   self.table_name = :drug_order
   self.primary_key = :order_id
 
+  attr_accessor :amount_needed
+
   belongs_to :drug, foreign_key: :drug_inventory_id
   belongs_to :order
 
@@ -11,7 +13,9 @@ class DrugOrder < ActiveRecord::Base
                         :units, :frequency, :prn
 
   def as_json(options = {})
-    super(options.merge(include: { order: {}, drug: {} }))
+    super(options.merge(amount_needed: {}, include: { order: {}, drug: {} })).tap do | hash |
+      hash[:amount_needed] = amount_needed
+    end
   end
 
   def duration

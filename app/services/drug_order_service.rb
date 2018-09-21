@@ -84,7 +84,7 @@ module DrugOrderService
         prn: create_params[:prn] || 0,
         units: create_params[:units] || drug.units,
         equivalent_daily_dose: create_params[:equivalent_daily_dose],
-        quantity: create_params[:quantity] || drug_quantity(drug, create_params)
+        quantity: create_params[:quantity] || 0
       )
     end
 
