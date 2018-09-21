@@ -25,6 +25,24 @@ class Api::V1::EncountersController < ApplicationController
     end
   end
 
+  # Generate a report on counts of various encounters
+  # 
+  # POST /reports/encounters
+  #
+  # Optional parameters:
+  #    all - Retrieves all encounters not just those created by current user
+  def count
+    encounter_types, = params.require(%i[encounter_types])
+
+    complete_report = encounter_types.each_with_object({}) do |type_id, report|
+      male_count = count_by_gender(type_id, 'M', params[:date])
+      fem_count = count_by_gender(type_id, 'F', params[:date])
+      report[type_id] = { 'M': male_count, 'F': fem_count }
+    end
+
+    render json: complete_report
+  end
+
   # Retrieve single encounter.
   #
   # GET /encounter/:id
@@ -122,5 +140,19 @@ class Api::V1::EncountersController < ApplicationController
   # form of an id.
   def remap_encounter_type_id!(hash)
     hash.remap_field! :encounter_type_id, :encounter_type
+  end
+
+  def count_by_gender(type_id, gender, date = nil)
+    filters = { encounter_type: type_id }
+    filters[:creator] = User.current.user_id unless params[:all]
+
+    queryset = Encounter.where(filters)
+    queryset.joins(:person).where('person.gender = ?', gender)
+    if params[:date]
+      date = Date.strptime params[:date]
+      queryset = queryset.where 'DATE(encounter_datetime) = DATE(?)', date
+    end
+
+    queryset.count
   end
 end
