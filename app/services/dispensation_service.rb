@@ -22,6 +22,7 @@ module DispensationService
       patient = drug_order.order.patient
       encounter = current_encounter patient, create: true
 
+      drug_order.quantity ||= 0
       drug_order.quantity += quantity
       drug_order.save
 
