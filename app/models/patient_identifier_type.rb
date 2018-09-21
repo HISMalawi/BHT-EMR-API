@@ -5,15 +5,14 @@ class PatientIdentifierType < RetirableRecord
   self.primary_key = :patient_identifier_type_id
 
   def next_identifier(options = {})
-    return nil unless options[:patient] && name == 'National id'
-
+    return nil unless name == 'National id'
     new_national_id = use_moh_national_id ? new_national_id : new_v1_id
 
     patient_identifier = PatientIdentifier.new
     patient_identifier.type = self
     patient_identifier.identifier = new_national_id
     patient_identifier.patient = options[:patient]
-    patient_identifier.save!
+    patient_identifier.location_id = Location.current.location_id
     patient_identifier
   end
 
@@ -42,7 +41,7 @@ class PatientIdentifierType < RetirableRecord
   end
 
   def v1_id_prefix
-    health_center_id = Location.current_location.site_id.rjust 3, '0'
+    health_center_id = Location.current.site_id.rjust 3, '0'
     "P1#{health_center_id}"
   end
 

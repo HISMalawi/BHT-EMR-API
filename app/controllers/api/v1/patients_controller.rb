@@ -42,21 +42,11 @@ class Api::V1::PatientsController < ApplicationController
     return render json: { errors: create_params }, status: :bad_request if errors
 
     person = Person.find(create_params[:person_id])
-    npid = dde_enabled? ? register_dde_patient(person) : gen_v3_npid(person)
+    patient_identifier = dde_enabled? ? register_dde_patient(person) : gen_v3_npid(person)
 
     patient = Patient.create patient_id: person.id,
                              creator: User.current.id,
                              date_created: Time.now
-
-    patient_identifier = PatientIdentifier.create(
-      identifier: npid,
-      identifier_type: npid_identifier_type.id,
-      creator: User.current.id,
-      patient: patient,
-      date_created: Time.now,
-      uuid: SecureRandom.uuid,
-      location_id: Location.current.id
-    )
 
     patient.patient_identifiers << patient_identifier
 
@@ -213,10 +203,19 @@ class Api::V1::PatientsController < ApplicationController
       raise 'Failed to register person in DDE'
     end
 
-    dde_response['npid']
+    PatientIdentifier.new(
+      identifier: dde_response['npid'],
+      identifier_type: npid_identifier_type.id,
+      creator: User.current.id,
+      date_created: Time.now,
+      uuid: SecureRandom.uuid,
+      location_id: Location.current.id
+    )
   end
 
   def gen_v3_npid(person)
+    identifier_type = PatientIdentifierType.find_by name: 'National id'
+    identifier_type.next_identifier person
   end
 
   def filter_person_attributes(person_attributes)
