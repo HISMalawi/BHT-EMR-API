@@ -23,7 +23,7 @@ module DispensationService
       encounter = current_encounter patient, create: true
 
       drug_order.quantity ||= 0
-      drug_order.quantity += quantity
+      drug_order.quantity += quantity.to_f
       drug_order.save
 
       Observation.create(
