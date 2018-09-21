@@ -14,6 +14,18 @@ class Observation < VoidableRecord
 
   has_many :concept_names, through: :concept
 
+  def as_json(options = {})
+    super(options.merge({
+      include: {
+        concept: {
+          include: {
+            concept_names: {}
+          }
+        }
+      }
+    }))
+  end
+
   # named_scope :recent, ->(number) { { order: 'obs_datetime DESC,date_created DESC', limit: number } }
   # named_scope :old, ->(number) { { order: 'obs_datetime ASC,date_created ASC', limit: number } }
   # named_scope :question, lambda { |concept|
