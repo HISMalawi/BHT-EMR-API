@@ -14,12 +14,16 @@ module DispensationService
 
       [obs_list, false]
     end
+
     def dispense_drug(order_id, quantity, date: nil)
       date ||= Time.now
       drug_order = DrugOrder.find(order_id)
       # NOTE: Some caching below would be helpful
       patient = drug_order.order.patient
       encounter = current_encounter patient, create: true
+
+      drug_order.quantity += quantity
+      drug_order.save
 
       Observation.create(
         concept_id: concept('AMOUNT DISPENSED').concept_id,
