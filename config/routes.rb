@@ -77,6 +77,7 @@ Rails.application.routes.draw do
       resources :orders
 
       resource :properties # Yes... It's a singleton resource
+      resource :user_properties
 
       # Workflow engine
       get '/workflows/:program_id/:patient_id' => 'workflows#next_encounter'
