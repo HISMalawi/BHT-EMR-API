@@ -16,14 +16,15 @@ module WorkflowService
       #
       # Throws: PatientNotRegisteredError if engine requires patient to be registered in program
       #         EntityNotFoundError if either program or patient is not found
-      def load_engine(program_id, patient_id)
+      def load_engine(program_id:, patient_id:, date: nil)
         program = load_program program_id
         patient = load_patient patient_id
+        date = date ? Date.strptime(date) : Date.today
 
         engine_name = program.concept.concept_names[0].name
         engine_clazz = ENGINES[engine_name]
         raise "'#{engine_name}' engine not found" unless engine_clazz
-        engine_clazz.new program, patient
+        engine_clazz.new program: program, patient: patient, date: date
       end
 
       private

@@ -5,15 +5,16 @@ require_relative 'exceptions/patient_not_registered_error'
 
 module WorkflowService
   class ARTEngine
-    def initialize(program, patient)
-      unless PatientProgram.exists? patient_id: patient.patient_id,
-                                    program_id: program.program_id
-        # raise Exceptions::PatientNotRegisteredError,
-        #       "Patient ##{patient.patient_id} not enrolled in program ##{program.program_id}"
-      end
+    def initialize(program:, patient:, date:)
+      # unless PatientProgram.exists? patient_id: patient.patient_id,
+      #                               program_id: program.program_id,
+      #   # raise Exceptions::PatientNotRegisteredError,
+      #   #       "Patient ##{patient.patient_id} not enrolled in program ##{program.program_id}"
+      # end
 
       @patient = patient
       @program = program
+      @date = date
     end
 
     # Retrieves the next encounter for bound patient
@@ -92,14 +93,15 @@ module WorkflowService
     # what encounter the patient should go for in this present time.
     def encounter_exists?(state, encounter_type)
       if state == HIV_CLINIC_REGISTRATION
-        search_params = ['encounter_type = ? AND patient_id = ?',
-                         encounter_type.id, @patient.patient_id]
+        search_params = ['encounter_type = ? AND patient_id = ?
+                          AND DATE(encounter_datetime) <= DATE(?)',
+                         encounter_type.id, @patient.patient_id, @date]
       else
         # Interested in today's encounters only
         search_params = ['encounter_type = ? AND patient_id = ?
                           AND DATE(encounter_datetime) = DATE(?)',
                          encounter_type.encounter_type_id,
-                         @patient.patient_id, Time.now]
+                         @patient.patient_id, @date]
       end
 
       Encounter.where(*search_params).exists?
@@ -111,8 +113,8 @@ module WorkflowService
     def patient_checked_in?
       encounter_type = EncounterType.select('encounter_type_id').find_by(name: HIV_RECEPTION)
       encounter = Encounter.select('encounter_id').where(
-        patient_id: @patient.patient_id,
-        encounter_type: encounter_type.encounter_type_id
+        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
+        @patient.patient_id, encounter_type.encounter_type_id, @date 
       ).order(:encounter_datetime).last
       raise "Can't check if patient checked in due to missing HIV_RECEPTION encounter" if encounter.nil?
       obs_concept = concept PATIENT_PRESENT
@@ -124,10 +126,10 @@ module WorkflowService
     # Pre-condition for DISPENSING encounter
     def patient_got_treatment?
       encounter_type = EncounterType.select('encounter_type_id').find_by(name: TREATMENT)
-      encounter = Encounter.select('encounter_id').find_by(
-        patient_id: @patient.patient_id,
-        encounter_type: encounter_type.encounter_type_id
-      )
+      encounter = Encounter.select('encounter_id').where(
+        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
+        @patient.patient_id, encounter_type.encounter_type_id, @date
+      ).order(encounter_datetime: :desc).first
       raise "Can't check if patient got treatment due to missing TREATMENT encounter" if encounter.nil?
       obs_concept = concept TREATMENT
       encounter.observations.exists?(concept_id: obs_concept.id)
