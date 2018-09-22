@@ -9,11 +9,12 @@ class Api::V1::LocationsController < ApplicationController
   #   name - Filter locations having this name
   #   tag - Filter locations having a tag matching this
   def index
-    filters = params.permit(%i[name tag])
-    filters.delete(:name) if filters[:name].blank?
-
+    filters = params.permit %i[name tag]
+    name  = filters.delete :name
     tag = filters.delete :tag
-    locations = filters.empty? ? Location : Location.where(filters)
+
+    locations = Location.order(:name)
+    locations = locations.where('name like ?', "%#{name}%") unless name.blank?
     locations = filter_locations_by_tag locations, tag if tag
 
     render json: paginate(locations)
@@ -27,9 +28,8 @@ class Api::V1::LocationsController < ApplicationController
   end
 
   def create
-    params.permit(%i[
-      name description address1 address2 district
-    ])
+    params.permit %i[name description address1 address2 district]
+
     location = Location.create(
       name: name,
       creator: User.current_user.id,
@@ -46,7 +46,6 @@ class Api::V1::LocationsController < ApplicationController
   private
 
   def filter_locations_by_tag(locations, tag)
-    logger.debug tag
     location_tag_id = LocationTag.where('name like ?', "%#{tag}%")[0].id
     location_tag_maps = LocationTagMap.where location_tag_id: location_tag_id
     locations = locations.joins(:tag_maps).merge(location_tag_maps)
