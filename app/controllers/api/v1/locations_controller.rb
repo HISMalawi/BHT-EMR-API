@@ -9,9 +9,8 @@ class Api::V1::LocationsController < ApplicationController
   #   name - Filter locations having this name
   #   tag - Filter locations having a tag matching this
   def index
-    filters = params.permit %i[name tag]
-    name  = filters.delete :name
-    tag = filters.delete :tag
+    name = params[:name]
+    tag = params[:tag]
 
     locations = Location.order(:name)
     locations = locations.where('name like ?', "%#{name}%") unless name.blank?
