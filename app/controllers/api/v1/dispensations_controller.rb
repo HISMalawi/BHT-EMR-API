@@ -15,19 +15,7 @@ class Api::V1::DispensationsController < ApplicationController
   def index
     patient_id = params.require %i[patient_id]
 
-    if params[:date]
-      date = params[:date] ? Date.strptime(params[:date]) : Time.now
-      dispensing = EncounterService.recent_encounter encounter_type_name: 'Dispensing',
-                                                     patient_id: patient_id,
-                                                     date: date
-      obs_list = dispensing ? dispensing.observations : []
-    else
-      obs_list = Observation.where(person_id: patient_id).order(date_created: :desc)
-    end
-
-    drug_orders = obs_list.map { |obs| obs.order ? obs.order.drug_order : nil }
-    drug_orders = drug_orders.reject(&:nil?)
-
-    render json: drug_orders
+    obs_list = DispensationService.dispensations patient_id, params[:date]
+    render json: paginate(obs_list)
   end
 end

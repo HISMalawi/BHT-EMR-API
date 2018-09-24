@@ -2,6 +2,24 @@ module DispensationService
   class << self
     include ModelUtils
 
+    def dispensations(patient_id, date = nil)
+      concept_id = concept('AMOUNT DISPENSED').concept_id
+
+      if date
+        date = Date.strptime(params[:date])
+
+        Observation.where(
+          person_id: patient_id, concept_id: concept_id
+        ).where(
+          'DATE(date_created) = DATE(?)', date
+        ).order(date_created: :desc)
+      else
+        Observation.where(
+          person_id: patient_id, concept_id: concept_id
+        ).order(date_created: :desc)
+      end
+    end
+
     def create(plain_dispensations)
       obs_list = plain_dispensations.map do |dispensation|
         order_id = dispensation[:drug_order_id]

@@ -21,6 +21,11 @@ class Observation < VoidableRecord
           include: {
             concept_names: {}
           }
+        },
+        order: {
+          include: {
+            drug_order: {}
+          }
         }
       }
     }))
