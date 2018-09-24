@@ -20,12 +20,13 @@ class Api::V1::DispensationsController < ApplicationController
       dispensing = EncounterService.recent_encounter encounter_type_name: 'Dispensing',
                                                      patient_id: patient_id,
                                                      date: date
-      obs = dispensing ? dispensing.observations : []
+      obs_list = dispensing ? dispensing.observations : []
     else
-      obs = Observation.where(patient_id: patient_id).order(date_created: :desc)
+      obs_list = Observation.where(person_id: patient_id).order(date_created: :desc)
     end
 
-    drug_orders = obs.map(&:drug_order).reject(&:nil?)
+    drug_orders = obs_list.map { |obs| obs.order ? obs.order.drug_order : nil }
+    drug_orders = drug_orders.reject(&:nil?)
 
     render json: drug_orders
   end

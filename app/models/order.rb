@@ -13,7 +13,7 @@ class Order < VoidableRecord
   validates_presence_of :patient_id, :concept_id, :encounter_id,
                         :provider, :orderer
 
-  # has_many :observations
+  has_many :observations
   has_one :drug_order # no default scope
 
   # named_scope(

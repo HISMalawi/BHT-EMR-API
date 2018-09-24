@@ -1,5 +1,7 @@
 module DispensationService
   class << self
+    include ModelUtils
+
     def create(plain_dispensations)
       obs_list = plain_dispensations.map do |dispensation|
         order_id = dispensation[:drug_order_id]
@@ -63,14 +65,6 @@ module DispensationService
         'encounter_type = ? AND patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
         encounter_type, patient.patient_id, date
       ).order(date_created: :desc).first
-    end
-
-    private
-
-    def concept(name)
-      concept_name = ConceptName.find_by(name: name)
-      return nil unless concept_name
-      Concept.find(concept_name.concept_id)
     end
   end
 end
