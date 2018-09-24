@@ -76,7 +76,7 @@ Rails.application.routes.draw do
       resources :drug_orders
       resources :orders
 
-      resource :properties # Yes... It's a singleton resource
+      resource :global_properties
       resource :user_properties
 
       # Workflow engine

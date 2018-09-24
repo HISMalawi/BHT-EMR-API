@@ -1,4 +1,4 @@
-class Api::V1::PropertiesController < ApplicationController
+class Api::V1::GlobalPropertiesController < ApplicationController
   def search
     name, = params.require %i[property]
 
