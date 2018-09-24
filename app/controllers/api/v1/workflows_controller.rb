@@ -4,9 +4,12 @@ class Api::V1::WorkflowsController < ApplicationController
   # Retrieves patient's next encounter given previous encounters
   # and enrolled program
   def next_encounter
-    engine = WorkflowService::EngineLoader.load_engine program_id: params[:program_id],
-                                                       patient_id: params[:patient_id],
-                                                       date: params[:date]
+    program_id, patient_id = params.require(%i[program_id patient_id])
+    date = params[:date]
+
+    engine = WorkflowService::EngineLoader.load_engine program_id: program_id,
+                                                       patient_id: patient_id,
+                                                       date: date
 
     encounter = engine.next_encounter
 
