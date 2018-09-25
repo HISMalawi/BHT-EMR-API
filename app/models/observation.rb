@@ -5,8 +5,9 @@ class Observation < VoidableRecord
   self.primary_key = :obs_id
 
   belongs_to :encounter
-  belongs_to :order
+  belongs_to :order, optional: true
   belongs_to :concept
+  belongs_to :person
   # belongs_to :concept_name, class_name: 'ConceptName', foreign_key: 'concept_name'
   # belongs_to :answer_concept, class_name: 'Concept', foreign_key: 'value_coded'
   # belongs_to(:answer_concept_name, class_name: 'ConceptName',
@@ -15,7 +16,7 @@ class Observation < VoidableRecord
   has_many :concept_names, through: :concept
 
   def as_json(options = {})
-    super(options.merge({
+    super(options.merge(
       include: {
         concept: {
           include: {
@@ -28,7 +29,7 @@ class Observation < VoidableRecord
           }
         }
       }
-    }))
+    ))
   end
 
   # named_scope :recent, ->(number) { { order: 'obs_datetime DESC,date_created DESC', limit: number } }

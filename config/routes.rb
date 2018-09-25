@@ -13,6 +13,7 @@ Rails.application.routes.draw do
 
       # Routes down here ... Best we move everything above into own modules
 
+      resources :appointments
       resources :dispensations, only: %i[index create]
       resources :users
 
