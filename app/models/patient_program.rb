@@ -9,6 +9,23 @@ class PatientProgram < VoidableRecord
   belongs_to :location
   has_many :patient_states, class_name: 'PatientState', dependent: :destroy
 
+  def as_json(options = {})
+    super(options.merge(
+      include: {
+        patient_states: {},
+        program: {
+          include: {
+            concept: {
+              include: {
+                concept_names: {}
+              }
+            }
+          }
+        }
+      }
+    ))
+  end
+
   # named_scope :current, conditions: [
   #   'date_enrolled < NOW() AND (date_completed IS NULL OR date_completed > NOW())'
   # ]

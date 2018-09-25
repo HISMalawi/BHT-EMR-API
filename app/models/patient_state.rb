@@ -10,13 +10,13 @@ class PatientState < VoidableRecord
 
   after_save :end_program
 
-  SCOPE_QUERY = <<EOF
-    start_date IS NOT NULL
-      AND DATE(start_date) <= CURRENT_DATE()
-      AND (end_date IS NULL OR DATE(end_date) > CURRENT_DATE())
-EOF
+#   SCOPE_QUERY = <<EOF
+#     start_date IS NOT NULL
+#       AND DATE(start_date) <= CURRENT_DATE()
+#       AND (end_date IS NULL OR DATE(end_date) > CURRENT_DATE())
+# EOF
 
-  named_scope :current, conditions: [SCOPE_QUERY]
+#   named_scope :current, conditions: [SCOPE_QUERY]
 
   def end_program
     # If this is the only state and it is not initial, oh well
