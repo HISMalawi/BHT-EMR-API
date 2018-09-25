@@ -13,15 +13,16 @@ class Api::V1::EncountersController < ApplicationController
   def index
     # Ignoring error value as required_params never errors when
     # retrieving optional parameters only
-    filters, = required_params optional: %i[
-      patient_id location_id encounter_type_id
-    ]
+    filters = params.permit %i[patient_id location_id encounter_type_id date]
 
     if filters.empty?
       render json: paginate(Encounter)
     else
-      remap_encounter_type_id! filters
-      render json: paginate(Encounter.where(filters))
+      remap_encounter_type_id! filters if filters[:encounter_type_id]
+      date = filters.delete :date
+      queryset = Encounter.where filters
+      queryset = queryset.where 'DATE(encounter_datetime) = DATE(?)', date if date
+      render json: paginate(queryset)
     end
   end
 
