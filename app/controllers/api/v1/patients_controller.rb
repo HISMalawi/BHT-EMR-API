@@ -93,9 +93,25 @@ class Api::V1::PatientsController < ApplicationController
                      disposition: 'inline'
   end
 
+  def visits
+    patient_id = params[:patient_id]
+
+    sql_stmnt = ActiveRecord::Base.connection.raw_connection.prepare VISIT_DATES_SQL
+    visits = sql_stmnt.execute(patient_id).collect { |visit| visit[0] }
+
+    render json: visits
+  end
+
   private
 
   DDE_CONFIG_PATH = 'config/application.yml'
+
+  VISIT_DATES_SQL = <<END_QUERY
+    SELECT DISTINCT DATE(encounter_datetime)
+    FROM encounter WHERE patient_id = ?
+    GROUP BY encounter_datetime
+    ORDER BY encounter_datetime DESC
+END_QUERY
 
   def load_dde_client
     return unless dde_enabled?
