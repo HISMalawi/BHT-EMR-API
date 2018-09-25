@@ -11,6 +11,14 @@ class Program < RetirableRecord
 
   validates_presence_of :concept_id, :name
 
+  def as_json(options = {})
+    super(options.merge(
+      include: {
+        concept: {}
+      }
+    ))
+  end
+
   # # Actually returns +Concept+s of suitable +Regimen+s for the given +weight+
   # # and this +Program+
   # def regimens(weight=nil)
