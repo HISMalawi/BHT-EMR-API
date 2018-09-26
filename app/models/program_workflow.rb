@@ -20,6 +20,11 @@ class ProgramWorkflow < RetirableRecord
               }
             }
           }
+        },
+        concept: {
+          include: {
+            concept_names: {}
+          }
         }
       }
     ))
