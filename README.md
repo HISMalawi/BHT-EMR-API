@@ -7,6 +7,10 @@ The following are required to run the API:
 - Ruby 2.5+
 - Rails 5.2
 - MySQL 5.5+
+
+The following dependencies are also required for some operations,
+however the API can do without:
+
 - DDE3 - Grab it from [here](https://github.com/BaobabHealthTrust/Demographics-Data-Exchange)
 
 In addition to the requirements above, you need the following for development.
@@ -38,12 +42,20 @@ $ cp config/database.yml.example config/database.yml
 $ vim config/database.yml   # Edit configuration
 ...
 ```
+
 ### Setting up rails
 
 Install the required gems like so:
 
 ```sh
 bundle install
+```
+
+With that done you need to run migrations. For this to work you need to
+have your database set up see [Database configuration](#database) above.
+
+```sh
+bin/rails db:migrate
 ```
 
 With that done you can run the following and test your API by
@@ -105,13 +117,6 @@ curl -X POST -H "Authorization: AiJViSpF3spb" -H "Content-Type: application/json
 }' "http://127.0.0.1:3000/api/v1/properties"
 ```
 
-### Setting up documentation tools
-
-If you need to build the documentation then you have to set up postman and
-postmanerator. Set up postman by following the instructions provided
-[here](https://www.getpostman.com). For postmanerator grab a binary for
-your operating system from [here](https://github.com/aubm/postmanerator/releases).
-
 ## Running the API
 
 You can do the following (don't run it like this in production):
@@ -120,6 +125,14 @@ You can do the following (don't run it like this in production):
 bin/rails server
 ```
 
+## For developers
+
+### Documentation
+
+If you need to build the documentation then you have to set up postman and
+postmanerator. Set up postman by following the instructions provided
+[here](https://www.getpostman.com). For postmanerator grab a binary for
+your operating system from [here](https://github.com/aubm/postmanerator/releases).
 ## Building the Documentation
 
 To edit the documentation, fire up postman and then import the collection at
@@ -142,7 +155,36 @@ bin/make_docs
 You can view the documentation by opening `public/index.html` or hitting
 `/index.html` on a running instance of the API.
 
+## Testing
 
-## Running the test suite
+[RSpec](http://rspec.info) and [RSpec-rails](https://github.com/rspec/rspec-rails)
+are used for unit/integration testing. Primarily tests are written as feature
+tests, however in some cases unit tests are done for small pieces that looks suspect.
 
-As simple as running `bin/rspec` in the project directory.
+To run the tests, navigate to the project directory and run `bin/rspec`. You can
+target a specific test by running `bin/rspec <path-to-test>`.
+
+## Coding style/standards
+
+At a minimum try to stick to the following:
+
+- Use 2 spaces (not tab configured to take 2 spaces) for indentation
+- Methods should normally not exceed 12 lines (you can go beyond this with good reason)
+- Prefer `&&/||` over `and/or`
+- Error should never pass silently, if you handle an exception, log the error you just handled
+- Related to the point above, avoid inline rescue statements
+- Use guard statements when validating a variable, if you can't, consider moving the validation logic to a method
+- Services, we love those, but if you are going to write them try to keep them [SOLID](https://en.wikipedia.org/wiki/SOLID). These must be placed in `app/services` not `lib`.
+- If you know it's a hack please leave a useful comment
+- If what you wrote doesn't make sense, revise until it does else leave useful comments and a unit test
+- If a file exceeds 120 lines, you better have a good reason as to why it is so
+- This is Ruby, it shouldn't read like Java, see [Writing Beautiful Ruby](https://medium.com/the-renaissance-developer/idiomatic-ruby-1b5fa1445098)
+
+See the following for more:
+
+- [Rubocop style guide](https://github.com/rubocop-hq/ruby-style-guide)
+
+## Useful tools
+
+- Rubocop - you can use this to format your code and find/fix various [defect attractors](http://esr.ibiblio.org/?p=8042)
+- If you use VSCode check out the following plugins [Ruby](https://marketplace.visualstudio.com/search?term=Ruby&target=VSCode), [Ruby-Rubocop](https://marketplace.visualstudio.com/search?term=Rubocop&target=VSCode&category=All%20categories&sortBy=Relevance), and [Rufo](https://marketplace.visualstudio.com/search?term=Rufo&target=VSCode&category=All%20categories&sortBy=Relevance)
