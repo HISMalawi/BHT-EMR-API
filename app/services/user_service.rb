@@ -74,7 +74,7 @@ module UserService
     user.token_expiry_time = expires
     user.save
 
-    { token: token, expiry_time: expires }
+    { token: token, expiry_time: expires, user: user }
   end
 
   def self.create_token
