@@ -34,7 +34,11 @@ class Encounter < VoidableRecord
         },
         observations: {
           include: {
-            concept: {}
+            concept: {
+              include: {
+                concept_names: {}
+              }
+            }
           }
         }
       }
