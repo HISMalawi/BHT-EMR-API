@@ -22,7 +22,7 @@ CREATE TABLE `drug_substance` (
   `route` int(11) DEFAULT NULL,
   `units` varchar(50) DEFAULT NULL,
   `creator` int(11) NOT NULL DEFAULT '0',
-  `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `date_created` datetime NOT NULL DEFAULT 'NOW()',
   `retired` tinyint(1) NOT NULL DEFAULT '0',
   `retired_by` int(11) DEFAULT NULL,
   `date_retired` datetime DEFAULT NULL,
