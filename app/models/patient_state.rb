@@ -5,10 +5,19 @@ class PatientState < VoidableRecord
   self.primary_key = 'patient_state_id'
 
   belongs_to :patient_program
-  belongs_to(:program_workflow_state, foreign_key: :state,
-                                      class_name: 'ProgramWorkflowState')
+  belongs_to :program_workflow_state, foreign_key: :state,
+                                      class_name: 'ProgramWorkflowState'
 
   after_save :end_program
+
+  def as_json(options = {})
+    super(options.merge(
+      include: {
+        patient_program: {},
+        program_workflow_state: {}
+      }
+    ))
+  end
 
 #   SCOPE_QUERY = <<EOF
 #     start_date IS NOT NULL

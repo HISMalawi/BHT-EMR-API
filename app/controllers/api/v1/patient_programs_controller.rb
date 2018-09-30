@@ -3,6 +3,10 @@ class Api::V1::PatientProgramsController < ApplicationController
     render json: PatientProgram.where(patient_id: params[:patient_id])
   end
 
+  def show
+    render json: PatientProgram.find(params[:id])
+  end
+
   def create
     create_params = params.require(:patient_program).permit(:program_id, :date_enrolled)
     create_params[:date_enrolled] ||= Time.now
