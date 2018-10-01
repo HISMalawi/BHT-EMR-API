@@ -51,6 +51,15 @@ class ApplicationController < ActionController::API
     queryset.offset(offset).limit(limit)
   end
 
+  def parse_date(str_date)
+    logger.debug str_date
+    Date.strptime(str_date)
+  rescue ArgumentError => e
+    render json: { errors: ["Failed to parse date: #{e}"] },
+           status: :bad_request
+    nil
+  end
+
   # Takes search filters and converts them to an expression containing
   # inexact glob matchers that can be passed to `where` expressins.
   def make_inexact_filters(filters, fields=nil)

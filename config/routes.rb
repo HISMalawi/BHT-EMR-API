@@ -20,7 +20,8 @@ Rails.application.routes.draw do
       get '/people/_names' => 'person_names#index'
       resources :people do
         get('/names', to: redirect do |params, request|
-          paginate_url "/api/v1/people/_names?person_id=#{params[:person_id]}", request.params
+          paginate_url "/api/v1/people/_names?person_id=#{params[:person_id]}",
+                       request.params
         end)
       end
 
@@ -30,6 +31,10 @@ Rails.application.routes.draw do
       resources :patients do
         get '/labels/national_health_id' => 'patients#print_national_health_id_label'
         get '/visits' => 'patients#visits'
+        get('/appointments', to: redirect do |params, request|
+          paginate_url "/api/v1/appointments?patient_id=#{params[:patient_id]}",
+                       request.params
+        end)
         resources :patient_programs, path: :programs
       end
 

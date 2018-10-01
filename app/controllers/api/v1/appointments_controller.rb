@@ -1,52 +1,47 @@
 class Api::V1::AppointmentsController < ApplicationController
-  include ModelUtils
-
   def show
-    appointment = Encounter.find params[:id]
-    render json: appointment
+    appointment = AppointmentService.appointment params[:id]
+    if appointment
+      render json: appointment
+    else
+      render json: { errors: "Appointment ##{params[:id]} not found" },
+             status: :not_found
+    end
   end
 
   def index
-    encounters = encounter.joins(:type).where(
-      'type.name = ?', 'APPOINTMENT'
-    ).order(date_created: :desc)
-
-    render json: paginate(encounters)
+    filters = params.permit %i[patient_id encounter_datetime]
+    appointments = AppointmentService.appointments filters
+    render json: paginate(appointments)
   end
 
   def create
-    patient_id, date = params.require %i[patient_id date]
+    patient = Patient.find params.require(%i[patient_id])[0]
+    date = parse_date params.require(%i[date])[0]
 
-    begin
-      date = Date.strptime(date)
-      patient = Patient.find patient_id
-    rescue ArgumentError => e
-      return render json: { errors: [e.to_s] }, status: :bad_request
-    end
+    return unless date
 
-    appointment = Encounter.new type: encounter_type('APPOINTMENT'),
-                                patient: patient,
-                                encounter_datetime: Time.now,
-                                location_id: Location.current.location_id,
-                                provider: User.current
-    obs = Observation.new concept: concept('Appointment date'),
-                          value_datetime: date,
-                          person: patient.person,
-                          obs_datetime: Time.now
-
-    appointment.observations << obs
-    saved = appointment.save
-
-    if saved
+    appointment = AppointmentService.create_appointment patient, date
+    if appointment.errors.empty?
       render json: appointment, status: :created
     else
-      logger.debug "Errors: #{obs.errors.as_json}"
+      logger.error "Failed to create appointment: #{appointment.errors.as_json}"
       render json: appointment.errors, status: :internal_server_error
     end
   end
 
+  def update
+    # TODO: Implement me
+    render json: { errors: ['Not implemented'] }, status: :not_found
+  end
+
   def destroy
     appointment = Encounter.find params[:id]
-    appointment.obs.destroy && appointment.destroy
+    if appointment.obs.destroy && appointment.destroy
+      render status: :no_content
+    else
+      render json: { errors: [appointment.errors, appointment.obs.errors] },
+             status: :internal_server_error
+    end
   end
 end
