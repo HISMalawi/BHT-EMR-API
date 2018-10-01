@@ -1,4 +1,4 @@
-class Api::V1::PatientProgramStateController < ApplicationController
+class Api::V1::PatientStatesController < ApplicationController
   def index
     patient_id = params.require %i[patient_id]
 

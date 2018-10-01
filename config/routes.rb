@@ -86,8 +86,7 @@ Rails.application.routes.draw do
       resource :global_properties
       resource :user_properties
 
-      get '/patient_states' => 'patient_program_state#index'
-      post '/patient_states' => 'patient_program_state#create'
+      resources :patient_states
 
       # Workflow engine
       get '/workflows/:program_id/:patient_id' => 'workflows#next_encounter'
