@@ -52,6 +52,10 @@ class Api::V1::ObservationsController < ApplicationController
 
     plain_observations.each do |plain_obs|
       plain_obs.permit! # Oops...
+      unless validate_presence_of_obs_value plain_obs
+        logger.warn "Not saving obs without value: #{plain_obs}"
+        next
+      end
       plain_obs[:obs_datetime] ||= Time.now
       plain_obs[:person_id] = encounter.patient.person.id
       observation = Observation.new(plain_obs)
@@ -102,5 +106,17 @@ class Api::V1::ObservationsController < ApplicationController
       error = { errors: "Failed to delete observation ##{params[:id]}" }
       render json: error, status: :internal_server_error
     end
+  end
+
+  private
+
+  OBS_VALUE_FIELDS = %i[
+    value_boolean value_numeric value_drug value_coded value_datetime
+    value_text
+  ].freeze
+
+  def validate_presence_of_obs_value(obs_param)
+    OBS_VALUE_FIELDS.each { |value| return true unless obs_param[value].blank? }
+    false
   end
 end
