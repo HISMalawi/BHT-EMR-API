@@ -77,6 +77,7 @@ Rails.application.routes.draw do
 
       resources :programs do
         resources :program_workflows, path: 'workflows'
+        resources :program_regimens, path: 'regimens'
       end
 
       resources :drugs
