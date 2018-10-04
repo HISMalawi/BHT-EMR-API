@@ -8,7 +8,7 @@ module WorkflowService
   module EngineLoader
     ENGINES = {
       # Table mapping program concept name to engine
-      'HIV program' => ARTEngine
+      'HIV PROGRAM' => ARTEngine
     }.freeze
 
     class << self
@@ -22,7 +22,7 @@ module WorkflowService
         date = date ? Date.strptime(date) : Date.today
 
         engine_name = program.concept.concept_names[0].name
-        engine_clazz = ENGINES[engine_name]
+        engine_clazz = ENGINES[engine_name.upcase]
         raise "'#{engine_name}' engine not found" unless engine_clazz
         engine_clazz.new program: program, patient: patient, date: date
       end
