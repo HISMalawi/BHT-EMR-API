@@ -103,7 +103,7 @@ module RegimenService
         combos.each { |combo| return regimen_category if combo == drug_combo }
       end
 
-      Rails.logger.warn "Failed to Interpret regimen: #{medication_ids}"
+      Rails.logger.warn "Failed to Interpret regimen: #{drug_combo}"
 
       nil
     end
