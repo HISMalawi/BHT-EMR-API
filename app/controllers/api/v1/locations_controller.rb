@@ -12,11 +12,11 @@ class Api::V1::LocationsController < ApplicationController
     name = params[:name]
     tag = params[:tag]
 
-    locations = Location.order(:name)
+    locations = paginate(Location.order(:name))
     locations = locations.where('name like ?', "%#{name}%") unless name.blank?
     locations = filter_locations_by_tag locations, tag if tag
 
-    render json: paginate(locations)
+    render json: locations
   end
 
   # Retrieve single location by its id
