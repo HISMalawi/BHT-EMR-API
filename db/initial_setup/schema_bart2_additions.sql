@@ -911,62 +911,62 @@ CREATE TABLE `village` (
 ) ENGINE=InnoDB AUTO_INCREMENT=34162 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
-SET FOREIGN_KEY_CHECKS = 0;
-DROP TABLE IF EXISTS `users`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `users` (
-  `user_id` int(11) NOT NULL AUTO_INCREMENT,
-  `system_id` varchar(50) NOT NULL DEFAULT '',
-  `username` varchar(50) DEFAULT NULL,
-  `password` varchar(128) DEFAULT NULL,
-  `salt` varchar(128) DEFAULT NULL,
-  `secret_question` varchar(255) DEFAULT NULL,
-  `secret_answer` varchar(255) DEFAULT NULL,
-  `creator` int(11) NOT NULL DEFAULT '0',
-  `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `changed_by` int(11) DEFAULT NULL,
-  `date_changed` datetime DEFAULT NULL,
-  `person_id` int(11) DEFAULT NULL,
-  `retired` tinyint(4) NOT NULL DEFAULT '0',
-  `retired_by` int(11) DEFAULT NULL,
-  `date_retired` datetime DEFAULT NULL,
-  `retire_reason` varchar(255) DEFAULT NULL,
-  `uuid` char(38) NOT NULL,
-  `authentication_token` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`user_id`),
-  KEY `user_creator` (`creator`),
-  KEY `user_who_changed_user` (`changed_by`),
-  KEY `person_id_for_user` (`person_id`),
-  KEY `user_who_retired_this_user` (`retired_by`),
-  CONSTRAINT `person_id_for_user` FOREIGN KEY (`person_id`) REFERENCES `person` (`person_id`),
-  CONSTRAINT `user_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
-  CONSTRAINT `user_who_changed_user` FOREIGN KEY (`changed_by`) REFERENCES `users` (`user_id`),
-  CONSTRAINT `user_who_retired_this_user` FOREIGN KEY (`retired_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
+-- SET FOREIGN_KEY_CHECKS = 0;
+-- DROP TABLE IF EXISTS `users`;
+-- /*!40101 SET @saved_cs_client     = @@character_set_client */;
+-- /*!40101 SET character_set_client = utf8 */;
+-- CREATE TABLE `users` (
+--   `user_id` int(11) NOT NULL AUTO_INCREMENT,
+--   `system_id` varchar(50) NOT NULL DEFAULT '',
+--   `username` varchar(50) DEFAULT NULL,
+--   `password` varchar(128) DEFAULT NULL,
+--   `salt` varchar(128) DEFAULT NULL,
+--   `secret_question` varchar(255) DEFAULT NULL,
+--   `secret_answer` varchar(255) DEFAULT NULL,
+--   `creator` int(11) NOT NULL DEFAULT '0',
+--   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+--   `changed_by` int(11) DEFAULT NULL,
+--   `date_changed` datetime DEFAULT NULL,
+--   `person_id` int(11) DEFAULT NULL,
+--   `retired` tinyint(4) NOT NULL DEFAULT '0',
+--   `retired_by` int(11) DEFAULT NULL,
+--   `date_retired` datetime DEFAULT NULL,
+--   `retire_reason` varchar(255) DEFAULT NULL,
+--   `uuid` char(38) NOT NULL,
+--   `authentication_token` varchar(255) DEFAULT NULL,
+--   PRIMARY KEY (`user_id`),
+--   KEY `user_creator` (`creator`),
+--   KEY `user_who_changed_user` (`changed_by`),
+--   KEY `person_id_for_user` (`person_id`),
+--   KEY `user_who_retired_this_user` (`retired_by`),
+--   CONSTRAINT `person_id_for_user` FOREIGN KEY (`person_id`) REFERENCES `person` (`person_id`),
+--   CONSTRAINT `user_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
+--   CONSTRAINT `user_who_changed_user` FOREIGN KEY (`changed_by`) REFERENCES `users` (`user_id`),
+--   CONSTRAINT `user_who_retired_this_user` FOREIGN KEY (`retired_by`) REFERENCES `users` (`user_id`)
+-- ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+-- /*!40101 SET character_set_client = @saved_cs_client */;
 
 
-DROP TABLE IF EXISTS `user_property`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `user_property` (
-  `user_id` int(11) NOT NULL DEFAULT '0',
-  `property` varchar(100) NOT NULL DEFAULT '',
-  `property_value` varchar(600) NOT NULL DEFAULT '',
-  PRIMARY KEY (`user_id`,`property`),
-  CONSTRAINT `user_property` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
+-- DROP TABLE IF EXISTS `user_property`;
+-- /*!40101 SET @saved_cs_client     = @@character_set_client */;
+-- /*!40101 SET character_set_client = utf8 */;
+-- CREATE TABLE `user_property` (
+--   `user_id` int(11) NOT NULL DEFAULT '0',
+--   `property` varchar(100) NOT NULL DEFAULT '',
+--   `property_value` varchar(600) NOT NULL DEFAULT '',
+--   PRIMARY KEY (`user_id`,`property`),
+--   CONSTRAINT `user_property` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`)
+-- ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+-- /*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `user_property`
---
+-- --
+-- -- Dumping data for table `user_property`
+-- --
 
-LOCK TABLES `user_property` WRITE;
-/*!40000 ALTER TABLE `user_property` DISABLE KEYS */;
-INSERT INTO `user_property` VALUES (1,'loginAttempts','0');
-/*!40000 ALTER TABLE `user_property` ENABLE KEYS */;
-UNLOCK TABLES;
+-- LOCK TABLES `user_property` WRITE;
+-- /*!40000 ALTER TABLE `user_property` DISABLE KEYS */;
+-- INSERT INTO `user_property` VALUES (1,'loginAttempts','0');
+-- /*!40000 ALTER TABLE `user_property` ENABLE KEYS */;
+-- UNLOCK TABLES;
 
-SET FOREIGN_KEY_CHECKS = 1;
+-- SET FOREIGN_KEY_CHECKS = 1;
