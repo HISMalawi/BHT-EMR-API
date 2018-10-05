@@ -26,7 +26,7 @@ module Auditable
     user = User.current
     Rails.logger.warn 'Auditable::update_change_trail called outside login' unless user
 
-    self.changed_by = user ? user.id : nil
+    self.changed_by ||= user ? user.id : nil
     self.date_changed = Time.now
   end
 
@@ -36,7 +36,7 @@ module Auditable
     user = User.current
     Rails.logger.warn 'Auditable::update_create_trail called outside login' unless user
 
-    self.creator = user ? user.id : nil
+    self.creator ||= user ? user.id : nil
     self.date_created = Time.now
   end
 
