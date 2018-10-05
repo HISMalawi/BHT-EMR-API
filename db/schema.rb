@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2018_08_27_062036) do
+ActiveRecord::Schema.define(version: 2018_10_05_113001) do
 
   create_table "active_list", primary_key: "active_list_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
     t.integer "active_list_type_id", null: false
@@ -784,7 +784,7 @@ ActiveRecord::Schema.define(version: 2018_08_27_062036) do
     t.string "latitude", limit: 50
     t.string "longitude", limit: 50
     t.integer "creator", default: 0, null: false
-    t.datetime "date_created", null: false
+    t.datetime "date_created", default: -> { "CURRENT_TIMESTAMP" }, null: false
     t.string "county_district", limit: 50
     t.string "neighborhood_cell", limit: 50
     t.string "region", limit: 50
@@ -794,11 +794,9 @@ ActiveRecord::Schema.define(version: 2018_08_27_062036) do
     t.integer "retired_by"
     t.datetime "date_retired"
     t.string "retire_reason"
-    t.integer "location_type_id"
     t.integer "parent_location"
     t.string "uuid", limit: 38, null: false
     t.index ["creator"], name: "user_who_created_location"
-    t.index ["location_type_id"], name: "type_of_location"
     t.index ["name"], name: "name_of_location"
     t.index ["parent_location"], name: "parent_location"
     t.index ["retired"], name: "retired_status"
@@ -901,6 +899,87 @@ ActiveRecord::Schema.define(version: 2018_08_27_062036) do
     t.string "mime_type", limit: 75, default: "", null: false
     t.text "description"
     t.index ["mime_type_id"], name: "mime_type_id"
+  end
+
+  create_table "moh_other_medications", primary_key: "medication_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.integer "drug_inventory_id", null: false
+    t.integer "dose_id", null: false
+    t.float "min_weight", null: false
+    t.float "max_weight", null: false
+    t.string "category", limit: 1, null: false
+  end
+
+  create_table "moh_regimen_doses", primary_key: "dose_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.float "am"
+    t.float "pm"
+    t.datetime "date_created"
+    t.datetime "date_updated"
+    t.integer "creator"
+    t.boolean "voided", default: false, null: false
+    t.integer "voided_by"
+  end
+
+  create_table "moh_regimen_ingredient", primary_key: "ingredient_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.integer "regimen_id"
+    t.integer "drug_inventory_id"
+    t.integer "dose_id"
+    t.float "min_weight"
+    t.float "max_weight"
+    t.datetime "date_created"
+    t.datetime "date_updated"
+    t.integer "creator"
+    t.boolean "voided", default: false, null: false
+    t.integer "voided_by"
+    t.integer "min_age"
+    t.integer "max_age"
+  end
+
+  create_table "moh_regimen_ingredient_starter_packs", primary_key: "ingredient_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.integer "regimen_id"
+    t.integer "drug_inventory_id"
+    t.integer "dose_id"
+    t.float "min_weight"
+    t.float "max_weight"
+    t.datetime "date_created"
+    t.datetime "date_updated"
+    t.integer "creator"
+    t.boolean "voided", default: false, null: false
+    t.integer "voided_by"
+  end
+
+  create_table "moh_regimen_ingredient_tb_treatment", id: false, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.integer "ingredient_id", default: 0, null: false
+    t.integer "regimen_id"
+    t.integer "drug_inventory_id"
+    t.integer "dose_id"
+    t.float "min_weight"
+    t.float "max_weight"
+    t.datetime "date_created"
+    t.datetime "date_updated"
+    t.integer "creator"
+    t.boolean "voided", default: false, null: false
+    t.integer "voided_by"
+  end
+
+  create_table "moh_regimen_lookup", primary_key: "regimen_lookup_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.integer "num_of_drug_combination"
+    t.string "regimen_name", limit: 5, null: false
+    t.integer "drug_inventory_id"
+    t.datetime "date_created"
+    t.datetime "date_updated"
+    t.integer "creator"
+    t.boolean "voided", default: false, null: false
+    t.integer "voided_by"
+  end
+
+  create_table "moh_regimens", primary_key: "regimen_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.integer "regimen_index", null: false
+    t.text "description"
+    t.datetime "date_created"
+    t.datetime "date_updated"
+    t.integer "creator", null: false
+    t.boolean "voided", default: false, null: false
+    t.integer "voided_by"
   end
 
   create_table "national_id", id: :integer, options: "ENGINE=MyISAM DEFAULT CHARSET=latin1", force: :cascade do |t|
@@ -1130,7 +1209,7 @@ ActiveRecord::Schema.define(version: 2018_08_27_062036) do
     t.date "start_date"
     t.date "end_date"
     t.date "defaulted_date"
-    t.date "date_created", default: "2018-08-24"
+    t.date "date_created", default: "2018-09-28"
   end
 
   create_table "patient_identifier", primary_key: "patient_identifier_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
@@ -1276,7 +1355,7 @@ ActiveRecord::Schema.define(version: 2018_08_27_062036) do
     t.datetime "death_date"
     t.integer "cause_of_death"
     t.integer "creator", default: 0, null: false
-    t.datetime "date_created", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.datetime "date_created", null: false
     t.integer "changed_by"
     t.datetime "date_changed"
     t.integer "voided", limit: 2, default: 0, null: false
@@ -1474,19 +1553,6 @@ ActiveRecord::Schema.define(version: 2018_08_27_062036) do
     t.index ["concept_id"], name: "program_concept"
     t.index ["creator"], name: "program_creator"
     t.index ["uuid"], name: "program_uuid_index", unique: true
-  end
-
-  create_table "program_encounter", primary_key: "program_encounter_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci", force: :cascade do |t|
-    t.integer "patient_id"
-    t.datetime "date_time"
-    t.integer "program_id"
-  end
-
-  create_table "program_encounter_details", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci", force: :cascade do |t|
-    t.integer "encounter_id"
-    t.integer "program_encounter_id"
-    t.integer "program_id"
-    t.integer "voided", default: 0
   end
 
   create_table "program_encounter_type_map", primary_key: "program_encounter_type_map_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
@@ -2110,7 +2176,6 @@ ActiveRecord::Schema.define(version: 2018_08_27_062036) do
   add_foreign_key "htmlformentry_html_form", "users", column: "changed_by", primary_key: "user_id", name: "User who changed htmlformentry_htmlform"
   add_foreign_key "htmlformentry_html_form", "users", column: "creator", primary_key: "user_id", name: "User who created htmlformentry_htmlform"
   add_foreign_key "location", "location", column: "parent_location", primary_key: "location_id", name: "parent_location"
-  add_foreign_key "location", "location_type", primary_key: "location_type_id", name: "location_type"
   add_foreign_key "location", "users", column: "creator", primary_key: "user_id", name: "user_who_created_location"
   add_foreign_key "location", "users", column: "retired_by", primary_key: "user_id", name: "user_who_retired_location"
   add_foreign_key "location_tag", "users", column: "creator", primary_key: "user_id", name: "location_tag_creator"

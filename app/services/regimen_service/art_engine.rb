@@ -9,11 +9,22 @@ module RegimenService
     end
 
     def find_regimens_by_weight(weight, paginator: nil)
-      ingredients = MohRegimenIngredient.where 'min_weight <= ? and max_weight >= ?',
-                                               weight, weight
+      find_regimens weight: weight, age: nil, paginator: paginator
+    end
+
+    def find_regimens_by_age(age, paginator: nil)
+      find_regimens age: age, weight: nil, paginator: paginator
+    end
+
+    def find_regimens(weight:, age:, paginator: nil)
+      raise ArgumentError, 'weight or age expected' if weight.nil? && age.nil?
+
+      ingredients = MohRegimenIngredient
+      ingredients = ingredients.where 'min_weight <= ? and max_weight >= ?', weight, weight if weight
+      ingredients = ingredients.where 'min_age <= ? and max_age >= ?', age, age if age
       ingredients = paginator.call ingredients if paginator
-      regimens = regimens_from_ingredients ingredients
-      categorise_regimens regimens
+
+      categorise_regimens(regimens_from_ingredients(ingredients))
     end
 
     private
