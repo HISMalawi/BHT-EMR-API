@@ -2,7 +2,7 @@
 
 FactoryBot.define do
   factory :encounter_type do
-    creator { 0 }
+    creator { 1 }
     date_created { Time.now }
   end
 end

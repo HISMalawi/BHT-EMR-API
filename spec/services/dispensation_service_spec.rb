@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
-RSpec.describe DispensationService, type: :feature do
+require 'rails_helper'
+
+RSpec.describe DispensationService do
   # Dispensation involves all 3 models below
   let(:patient) { create :patient }
 
