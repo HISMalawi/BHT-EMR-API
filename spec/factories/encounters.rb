@@ -7,6 +7,10 @@ FactoryBot.define do
 
     factory :encounter_dispensing do
       association :type, factory: :encounter_type, name: 'Dispensing'
+      association :patient
+      provider_id { 1 }
+      patient_id { 1 }
+      location_id { 700 }
     end
   end
 end
