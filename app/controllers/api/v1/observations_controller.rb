@@ -45,30 +45,19 @@ class Api::V1::ObservationsController < ApplicationController
   # Optional parameters
   #   order_id, comments
   def create
-    encounter_id, plain_observations = params.require(%i[encounter_id observations])
+    encounter_id, obs_archetypes = params.require %i[encounter_id observations]
 
     encounter = Encounter.find(encounter_id)
-    observations = []
 
-    plain_observations.each do |plain_obs|
-      plain_obs.permit! # Oops...
-      unless validate_presence_of_obs_value plain_obs
-        logger.warn "Not saving obs without value: #{plain_obs}"
-        next
-      end
-      plain_obs[:obs_datetime] ||= Time.now
-      plain_obs[:person_id] = encounter.patient.person.id
-      observation = Observation.new(plain_obs)
-      encounter.observations << observation
-      observations << observation
+    observations = obs_archetypes.collect do |archetype|
+      create_observation(archetype, encounter)[0]
     end
 
-    unless encounter.save
+    if encounter.save
+      render json: observations, status: :created
+    else
       render json: encounter.errors, status: :bad_request
-      return
     end
-
-    render json: observations, status: :created
   end
 
   # Update existing observation
@@ -118,5 +107,30 @@ class Api::V1::ObservationsController < ApplicationController
   def validate_presence_of_obs_value(obs_param)
     OBS_VALUE_FIELDS.each { |value| return true unless obs_param[value].blank? }
     false
+  end
+
+  def create_observation(archetype, encounter)
+    logger.debug "Creating observation: #{archetype}"
+    child_archetype = archetype.delete :child
+
+    archetype.permit! # Oops...
+    unless validate_presence_of_obs_value archetype
+      return nil, "Empty obs: #{archetype}"
+    end
+
+    archetype[:obs_datetime] ||= Time.now
+    archetype[:person_id] = encounter.patient.person.id
+    observation = Observation.create archetype
+    return nil, observation.errors unless observation
+
+    encounter.observations << observation
+
+    return observation, nil unless child_archetype
+
+    logger.debug "Creating child observation for obs ##{observation.obs_id}"
+    child_archetype[:obs_group_id] = observation.obs_id
+    child_archetype[:person_id] ||= archetype[:person_id]
+    create_observation child_archetype, encounter
+    [observation, nil]
   end
 end

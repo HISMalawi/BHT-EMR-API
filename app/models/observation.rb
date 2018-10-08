@@ -1,35 +1,39 @@
 # frozen_string_literal: true
 
 class Observation < VoidableRecord
+  ORDER_SERIALIZE_OPTIONS = { drug_order: {} }.freeze
+  CONCEPT_SERIALIZE_OPTIONS = { concept_names: {} }.freeze
+  SERIALIZE_OPTIONS = {
+    include: {
+      concept: { include: CONCEPT_SERIALIZE_OPTIONS },
+      order: { include: ORDER_SERIALIZE_OPTIONS },
+      children: {
+        include: {
+          concept: { include: CONCEPT_SERIALIZE_OPTIONS },
+          order: { include: ORDER_SERIALIZE_OPTIONS }
+        }
+      }
+    }
+  }.freeze
+
   self.table_name = :obs
   self.primary_key = :obs_id
 
-  belongs_to :encounter
+  belongs_to :encounter, optional: true
   belongs_to :order, optional: true
   belongs_to :concept
   belongs_to :person
+  belongs_to :parent, class_name: 'Observation', optional: true
+  has_many :children, class_name: 'Observation', foreign_key: :obs_group_id
   # belongs_to :concept_name, class_name: 'ConceptName', foreign_key: 'concept_name'
   # belongs_to :answer_concept, class_name: 'Concept', foreign_key: 'value_coded'
   # belongs_to(:answer_concept_name, class_name: 'ConceptName',
-                                  #  foreign_key: 'value_coded_name_id')
+  #  foreign_key: 'value_coded_name_id')
 
   has_many :concept_names, through: :concept
 
   def as_json(options = {})
-    super(options.merge(
-      include: {
-        concept: {
-          include: {
-            concept_names: {}
-          }
-        },
-        order: {
-          include: {
-            drug_order: {}
-          }
-        }
-      }
-    ))
+    super(options.merge(SERIALIZE_OPTIONS))
   end
 
   # named_scope :recent, ->(number) { { order: 'obs_datetime DESC,date_created DESC', limit: number } }
