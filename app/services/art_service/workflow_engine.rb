@@ -1,14 +1,13 @@
 # frozen_string_literal: true
 
 require 'logger'
-require_relative 'exceptions/patient_not_registered_error'
 
-module WorkflowService
-  class ARTEngine
+module ARTService
+  class WorkflowEngine
     def initialize(program:, patient:, date:)
       # unless PatientProgram.exists? patient_id: patient.patient_id,
       #                               program_id: program.program_id,
-      #   # raise Exceptions::PatientNotRegisteredError,
+      #   # raise WorkflowService::Exceptions::PatientNotRegisteredError,
       #   #       "Patient ##{patient.patient_id} not enrolled in program ##{program.program_id}"
       # end
 

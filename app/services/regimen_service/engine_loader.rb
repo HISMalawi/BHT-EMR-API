@@ -3,7 +3,7 @@
 module RegimenService
   module EngineLoader
     ENGINES = {
-      'HIV PROGRAM' => RegimenService::ARTEngine
+      'HIV PROGRAM' => ARTService::RegimenEngine
     }.freeze
 
     def self.load_engine(program_id)

@@ -2,8 +2,8 @@
 
 require 'set'
 
-module RegimenService
-  class ARTEngine
+module ARTService
+  class RegimenEngine
     def initialize(program:)
       @program = program
     end

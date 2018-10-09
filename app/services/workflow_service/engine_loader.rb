@@ -1,14 +1,11 @@
 # frozen_string_literal: true
 
-require_relative 'art_engine'
-require_relative 'exceptions/entity_not_found_error'
-
 module WorkflowService
   # A factory for workflow engines.
   module EngineLoader
     ENGINES = {
       # Table mapping program concept name to engine
-      'HIV program' => ARTEngine
+      'HIV PROGRAM' => ARTService::WorkflowEngine
     }.freeze
 
     class << self
@@ -21,7 +18,7 @@ module WorkflowService
         patient = load_patient patient_id
         date = date ? Date.strptime(date) : Date.today
 
-        engine_name = program.concept.concept_names[0].name
+        engine_name = program.concept.concept_names[0].name.upcase
         engine_clazz = ENGINES[engine_name]
         raise "'#{engine_name}' engine not found" unless engine_clazz
         engine_clazz.new program: program, patient: patient, date: date
@@ -31,14 +28,14 @@ module WorkflowService
 
       def load_program(program_id)
         program = Program.find_by program_id: program_id
-        raise Exceptions::EntityNotFoundError,
+        raise WorkflowService::Exceptions::EntityNotFoundError,
               "Program ##{program_id} not found" unless program
         program
       end
 
       def load_patient(patient_id)
         patient = Patient.find_by patient_id: patient_id
-        raise Exceptions::EntityNotFoundError,
+        raise WorkflowService::Exceptions::EntityNotFoundError,
               "Patient ##{patient_id} not found" unless patient
         patient
       end
