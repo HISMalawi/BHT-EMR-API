@@ -76,8 +76,9 @@ Rails.application.routes.draw do
       resources :observations
 
       resources :programs do
-        resources :program_workflows, path: 'workflows'
-        resources :program_regimens, path: 'regimens'
+        resources :program_workflows, path: :workflows
+        resources :program_regimens, path: :regimens
+        resources :program_patients, path: :patients
       end
 
       resources :drugs
