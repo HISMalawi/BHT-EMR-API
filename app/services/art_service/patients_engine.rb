@@ -114,7 +114,7 @@ module ARTService
       return 'N/A', 'N/A' unless obs
 
       duration = (Time.now - obs.value_datetime) / SECONDS_IN_MONTH
-      [obs.value_datetime.strftime('%d/%M/%y'), duration]
+      [obs.value_datetime.strftime('%d/%b/%y'), duration]
     end
   end
 end
