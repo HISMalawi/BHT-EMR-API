@@ -13,7 +13,7 @@ class Encounter < VoidableRecord
   belongs_to :type, class_name: 'EncounterType', foreign_key: :encounter_type
   belongs_to :provider, class_name: 'User', foreign_key: :provider_id
   belongs_to :patient
-  belongs_to :location
+  belongs_to :location, optional: true
 
   # # TODO: this needs to account for current visit, which needs to account for
   # # possible retrospective entry

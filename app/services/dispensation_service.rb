@@ -6,12 +6,10 @@ module DispensationService
       concept_id = concept('AMOUNT DISPENSED').concept_id
 
       if date
-        date = Date.strptime(params[:date])
-
         Observation.where(
           person_id: patient_id, concept_id: concept_id
         ).where(
-          'DATE(date_created) = DATE(?)', date
+          'DATE(obs_datetime) = DATE(?)', date
         ).order(date_created: :desc)
       else
         Observation.where(
