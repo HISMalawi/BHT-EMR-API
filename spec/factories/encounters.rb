@@ -7,6 +7,7 @@ FactoryBot.define do
     date_created { Time.now }
     creator { 1 }
     provider_id { 1 }
+    location_id { 700 }
 
     factory :encounter_dispensing do
       type { EncounterType.find_by_name('Dispensing') }
