@@ -2,6 +2,7 @@
 
 FactoryBot.define do
   factory :patient do
-    association :person
+    patient_id { create(:person).person_id }
+    creator { 1 }
   end
 end
