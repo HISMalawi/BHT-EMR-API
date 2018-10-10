@@ -28,9 +28,8 @@ project directory. Navigate to that if you are some place else.
 #### Database
 
 The API uses an [Openmrs 1.7](https://openmrs.org/2010/11/openmrs-1-7-now-available/)
-compatible database as a base for its own database. Grab the schema and
-initialise your database. If you have an ART database schema
-dump available you can (should) use that. The API was designed to hook
+compatible database as a base for its own database. If you have an ART database
+dump available you can (and should) use that. The API was designed to hook
 into an already existing database.
 
 Copy the configuration file from `config/database.yml.example` to
@@ -42,6 +41,21 @@ $ cp config/database.yml.example config/database.yml
 $ vim config/database.yml   # Edit configuration
 ...
 ```
+
+Run the following commands to set up your development and test databases.
+
+```sh
+$ chmod +x bin/initial_database_setup.sh
+...
+$ bin/initial_database_setup.sh development mpc
+...
+
+```
+
+The commands above will initialise an empty development database for you with
+a single user with a username, admin and password, test. If you are deploying
+to production you should replace 'development' with 'production' in the last
+command.
 
 ### Setting up rails
 
@@ -159,10 +173,29 @@ You can view the documentation by opening `public/index.html` or hitting
 
 [RSpec](http://rspec.info) and [RSpec-rails](https://github.com/rspec/rspec-rails)
 are used for unit/integration testing. Primarily tests are written as feature
-tests, however in some cases unit tests are done for small pieces that looks suspect.
+tests for services (See coding style below), however in some cases unit tests are
+done for small pieces that looks suspect.
+
+A test database is require before anything else. Run the following to set up the
+test database.
+
+```sh
+$ bin/initial_database_setup.sh test moh
+...
+```
+
+WARNING: The command above will clobber the database set up for testing the
+database configuration.
 
 To run the tests, navigate to the project directory and run `bin/rspec`. You can
 target a specific test by running `bin/rspec <path-to-test>`.
+
+```sh
+$ bin/rspec     # To run all tests
+...
+$ bin/rspec path/to/test    # To run specific test
+...
+```
 
 ## Coding style/standards
 
@@ -174,7 +207,8 @@ At a minimum try to stick to the following:
 - Error should never pass silently, if you handle an exception, log the error you just handled
 - Related to the point above, avoid inline rescue statements
 - Use guard statements when validating a variable, if you can't, consider moving the validation logic to a method
-- Services, we love those, but if you are going to write them try to keep them [SOLID](https://en.wikipedia.org/wiki/SOLID). These must be placed in `app/services` not `lib`.
+- Package your business logic in services where possible. These are located in `app/services` directory.
+  Try to keep them [SOLID](https://en.wikipedia.org/wiki/SOLID) please.
 - If you know it's a hack please leave a useful comment
 - If what you wrote doesn't make sense, revise until it does else leave useful comments and a unit test
 - If a file exceeds 120 lines, you better have a good reason as to why it is so
@@ -184,7 +218,8 @@ See the following for more:
 
 - [Rubocop style guide](https://github.com/rubocop-hq/ruby-style-guide)
 
-## Useful tools
+## Useful (recommended) tools for development
 
+- [Vscode](https://code.visualstudio.com/download) for editing
 - Rubocop - you can use this to format your code and find/fix various [defect attractors](http://esr.ibiblio.org/?p=8042)
 - If you use VSCode check out the following plugins [Ruby](https://marketplace.visualstudio.com/search?term=Ruby&target=VSCode), [Ruby-Rubocop](https://marketplace.visualstudio.com/search?term=Rubocop&target=VSCode&category=All%20categories&sortBy=Relevance), and [Rufo](https://marketplace.visualstudio.com/search?term=Rufo&target=VSCode&category=All%20categories&sortBy=Relevance)
