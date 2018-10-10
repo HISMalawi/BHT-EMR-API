@@ -1,34 +1,36 @@
 # frozen_string_literal: true
 
 require 'rails_helper'
+require 'set'
 
 RSpec.describe DispensationService do
-  # Dispensation involves all 3 models below
   let(:patient) { create :patient }
 
   describe :dispensations do
     it 'retrieves all dispensations for a given patient' do
-      created = (1..10).collect { |i| create :dispensation, obs_datetime: i.days.ago }
+      created = (1...10).collect do |i|
+        create :dispensation, person: patient.person,
+                              obs_datetime: Time.now - i.days
+      end
 
-      retrieved = DispensationService.find_dispensations patient.patient_id
+      retrieved = DispensationService.dispensations patient.patient_id
 
-      expect(created.map(&:obs_datetime).sort).to eq(retrieved.map(&:obs_datetime).sort)
-      created.each(&:delete)
+      expect(Set.new(retrieved)).to eq(Set.new(created))
     end
 
     it 'retrieves dispensations for a given patient and date' do
       retro_date = 5.days.ago.to_date
+      created = (1...10).collect do
+        create :dispensation, person: patient.person, obs_datetime: retro_date
+      end
 
-      created = (1..10).collect { create :dispensation, obs_datetime: retro_date }
+      retrieved = DispensationService.dispensations patient.patient_id, retro_date
 
-      retrieved = DispensationService.find_dispensations patient.patient_id, retro_date
-
-      expect(created.map(&:obs_id).sort).to eq(retrieved.map(&:obs_id).sort)
-      created.each(&:delete)
+      expect(Set.new(retrieved)).to eq(Set.new(created))
     end
   end
 
-  describe :dispense do
+  describe :dispense_drug do
     # it 'updates order quantity' do
     #   obs = DispensationService.dispense drug_order, 10
     # end
