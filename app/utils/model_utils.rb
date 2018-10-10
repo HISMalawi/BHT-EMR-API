@@ -9,6 +9,11 @@ module ModelUtils
     concept_name ? concept_name.concept : nil
   end
 
+  def program(name)
+    program_name = concept name
+    Program.find_by_concept_id program_name.concept_id
+  end
+
   def encounter_type(name)
     EncounterType.find_by name: name
   end
