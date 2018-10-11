@@ -33,10 +33,10 @@ describe Voidable do
     end).new
 
     @user = (Class.new do
-      attr_accessor :id
+      attr_accessor :user_id
 
       def initialize
-        @id = :user
+        @user_id = :user
       end
     end).new
   end
@@ -48,7 +48,7 @@ describe Voidable do
     expect(@voidable.voided).to be VOIDED
     # A 5 minutes delay in execution seems reasonable
     expect(@voidable.date_voided).to be > (Time.now - 5.minutes)
-    expect(@voidable.voided_by).to eq(@user.id)
+    expect(@voidable.voided_by).to eq(@user.user_id)
     expect(@voidable.void_reason).to eq(:pumbwa)
   end
 
@@ -81,7 +81,7 @@ describe Voidable do
     retirable.void(:pumbwa)
     expect(retirable.retired).to eq(1)
     expect(retirable.date_retired).to be > (Time.now - 5.minutes)
-    expect(retirable.retired_by).to eq(@user.id)
+    expect(retirable.retired_by).to eq(@user.user_id)
     expect(retirable.retire_reason).to eq(:pumbwa)
   end
 

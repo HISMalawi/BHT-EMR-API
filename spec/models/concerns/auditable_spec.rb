@@ -31,10 +31,10 @@ describe Auditable do
   describe 'before_save callback' do
     it 'attaches logged in user to model updates' do
       User.current = (Class.new do
-        attr_accessor :id
+        attr_accessor :user_id
       end).new
 
-      User.current.id = :user
+      User.current.user_id = :user
 
       # Triggers before_save callback
       @auditable.method(@auditable.before_save_callback).call
