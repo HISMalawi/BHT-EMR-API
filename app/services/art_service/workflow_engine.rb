@@ -4,6 +4,8 @@ require 'logger'
 
 module ARTService
   class WorkflowEngine
+    include ModelUtils
+
     def initialize(program:, patient:, date:)
       # unless PatientProgram.exists? patient_id: patient.patient_id,
       #                               program_id: program.program_id,
@@ -167,14 +169,6 @@ module ARTService
       #   dispension_completed = patient.set_received_regimen(encounter, prescription)
       # end
       complete
-    end
-
-    # Retrieve concept by its name
-    #
-    # Parameters:
-    #  name - A string repr of the concept name
-    def concept(name)
-      ConceptName.find_by(name: name).concept
     end
   end
 end
