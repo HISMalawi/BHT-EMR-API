@@ -23,11 +23,11 @@ describe ARTService::WorkflowEngine do
                        patient: patient
   end
 
-  def receive_patient(patient, gurdian_only: false)
+  def receive_patient(patient, guardian_only: false)
     register_patient patient
     reception = create :encounter, type: encounter_type('HIV RECEPTION'),
                                    patient: patient
-    if gurdian_only
+    if guardian_only
       create :observation, concept: concept('PATIENT PRESENT'),
                            encounter: reception,
                            value_coded: concept('No').concept_id,
@@ -47,7 +47,7 @@ describe ARTService::WorkflowEngine do
   end
 
   def record_vitals(patient)
-    receive_patient patient, gurdian_only: false
+    receive_patient patient, guardian_only: false
     create :encounter, type: encounter_type('VITALS'),
                        patient: patient
   end
@@ -77,13 +77,13 @@ describe ARTService::WorkflowEngine do
     end
 
     it 'returns HIV STAGING after HIV RECEIPTION without patient' do
-      receive_patient patient, gurdian_only: true
+      receive_patient patient, guardian_only: true
       encounter_type = engine.next_encounter
       expect(encounter_type.name.upcase).to eq('HIV STAGING')
     end
 
     it 'returns VITALS after HIV RECEPTION with patient' do
-      receive_patient patient, gurdian_only: false
+      receive_patient patient, guardian_only: false
       encounter_type = engine.next_encounter
       expect(encounter_type.name.upcase).to eq('VITALS')
     end
