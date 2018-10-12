@@ -110,28 +110,30 @@ module ARTService
     #
     # Pre-condition for VITALS encounter
     def patient_checked_in?
-      encounter_type = EncounterType.select('encounter_type_id').find_by(name: HIV_RECEPTION)
-      encounter = Encounter.select('encounter_id').where(
+      encounter_type = EncounterType.find_by name: HIV_RECEPTION
+      encounter = Encounter.where(
         'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
-        @patient.patient_id, encounter_type.encounter_type_id, @date 
-      ).order(:encounter_datetime).last
-      raise "Can't check if patient checked in due to missing HIV_RECEPTION encounter" if encounter.nil?
-      obs_concept = concept PATIENT_PRESENT
-      encounter.observations.exists?(concept_id: obs_concept.id)
+        @patient.patient_id, encounter_type.encounter_type_id, @date
+      ).order(encounter_datetime: :desc).first
+      raise "Can't check if patient checked in due to missing HIV_RECEPTION" if encounter.nil?
+      patient_present_concept = concept PATIENT_PRESENT
+      yes_concept = concept 'YES'
+      encounter.observations.exists? concept_id: patient_present_concept.concept_id,
+                                     value_coded: yes_concept.concept_id
     end
 
     # Check if patient has got treatment.
     #
     # Pre-condition for DISPENSING encounter
     def patient_got_treatment?
-      encounter_type = EncounterType.select('encounter_type_id').find_by(name: TREATMENT)
+      encounter_type = EncounterType.find_by name: TREATMENT
       encounter = Encounter.select('encounter_id').where(
         'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
         @patient.patient_id, encounter_type.encounter_type_id, @date
       ).order(encounter_datetime: :desc).first
       raise "Can't check if patient got treatment due to missing TREATMENT encounter" if encounter.nil?
       obs_concept = concept TREATMENT
-      encounter.observations.exists?(concept_id: obs_concept.id)
+      encounter.observations.exists? concept_id: obs_concept.id
     end
 
     # Check if patient received A.R.T.s on previous visit

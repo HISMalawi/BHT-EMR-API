@@ -32,7 +32,11 @@ RSpec.describe DispensationService do
 
   describe :dispense_drug do
     # it 'updates order quantity' do
+    #   drug_order = create :drug_order
     #   obs = DispensationService.dispense drug_order, 10
+
+    #   expect(obs.concept_id).to eq(concept('AMOUNT DISPENSED').concept_id)
+    #   expect(drug_order.quantity).to eq(10)
     # end
 
     # it 'creates a new observation' do
