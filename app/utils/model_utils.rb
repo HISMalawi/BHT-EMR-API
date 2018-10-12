@@ -5,8 +5,7 @@ module ModelUtils
   # Parameters:
   #  name - A string repr of the concept name
   def concept(name)
-    concept_name = ConceptName.find_by name: name
-    concept_name ? concept_name.concept : nil
+    Concept.joins(:concept_names).where('concept_name.name = ?', name).first
   end
 
   def program(name)
