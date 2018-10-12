@@ -17,6 +17,9 @@ module ARTService
       summarise_patient Patient.find(patient_id)
     end
 
+    # Returns a patient's last received drugs.
+    #
+    # NOTE: This method is customised to return only ARVs.
     def patient_last_drugs_received(patient_id, ref_date: nil)
       ref_date = ref_date ? Date.strptime(ref_date) : Date.today
 
@@ -28,14 +31,16 @@ module ARTService
 
       return [] unless dispensing_encounter
 
-      dispensing_encounter.observations.each_with_object([]) do |obs, drugs|
-        next unless obs.value_drug
+      # HACK: Group orders in a map first to eliminate duplicates which can
+      # be created when a drug is scanned twice.
+      (dispensing_encounter.observations.each_with_object({}) do |obs, drug_map|
+        next unless obs.value_drug || drug_map.key?(obs.value_drug)
 
         order = obs.order
         next unless order.drug_order
 
-        drugs << order.drug_order if order.drug_order.drug.arv?
-      end
+        drug_map[obs.value_drug] = order.drug_order if order.drug_order.drug.arv?
+      end).values
     end
 
     def all_patients(paginator: nil)
