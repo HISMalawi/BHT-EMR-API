@@ -78,7 +78,9 @@ Rails.application.routes.draw do
       resources :programs do
         resources :program_workflows, path: :workflows
         resources :program_regimens, path: :regimens
-        resources :program_patients, path: :patients
+        resources :program_patients, path: :patients do
+          get '/last_drugs_received' => 'program_patients#last_drugs_received'
+        end
       end
 
       resources :drugs

@@ -17,6 +17,27 @@ module ARTService
       summarise_patient Patient.find(patient_id)
     end
 
+    def patient_last_drugs_received(patient_id, ref_date: nil)
+      ref_date = ref_date ? Date.strptime(ref_date) : Date.today
+
+      dispensing_encounter = Encounter.joins(:type).where(
+        'encounter_type.name = ? AND encounter.patient_id = ?
+         AND DATE(encounter_datetime) <= DATE(?)',
+        'DISPENSING', patient_id, ref_date
+      ).order(encounter_datetime: :desc).first
+
+      return [] unless dispensing_encounter
+
+      dispensing_encounter.observations.each_with_object([]) do |obs, drugs|
+        next unless obs.value_drug
+
+        order = obs.order
+        next unless order.drug_order
+
+        drugs << order.drug_order if order.drug_order.drug.arv?
+      end
+    end
+
     def all_patients(paginator: nil)
       # TODO: Retrieve all patients
       []
