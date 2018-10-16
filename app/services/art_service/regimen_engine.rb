@@ -80,6 +80,7 @@ module ARTService
         drug_name: ingredient.drug.name,
         am: ingredient.dose.am,
         pm: ingredient.dose.pm,
+        units: ingredient.drug.units,
         concept_name: ingredient.drug.concept.concept_names[0].name
       }
     end
