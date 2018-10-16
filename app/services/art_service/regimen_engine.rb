@@ -65,8 +65,7 @@ module ARTService
             regimen_name = classify_regimen_combo(trial_regimen.map { |t| t[:drug_id] })
             next unless regimen_name
 
-            categorised_regimens[regimen_name] ||= []
-            categorised_regimens[regimen_name] << trial_regimen
+            categorised_regimens[regimen_name] = trial_regimen
 
             # Avoid interpreting entire drug list twice at the end of the iteration:
             break if tail.empty?
