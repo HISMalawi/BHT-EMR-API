@@ -134,7 +134,7 @@ module ARTService
         @patient.patient_id, encounter_type.encounter_type_id, @date
       ).order(encounter_datetime: :desc).first
       raise "Can't check if patient got treatment due to missing TREATMENT encounter" if encounter.nil?
-      encounter.drug_orders.exists?
+      encounter.orders.exists?
     end
 
     # Check if patient received A.R.T.s on previous visit
