@@ -79,7 +79,8 @@ module ARTService
         drug_id: ingredient.drug.drug_id,
         drug_name: ingredient.drug.name,
         am: ingredient.dose.am,
-        pm: ingredient.dose.pm
+        pm: ingredient.dose.pm,
+        concept_name: ingredient.drug.concept.concept_names[0].name
       }
     end
 
