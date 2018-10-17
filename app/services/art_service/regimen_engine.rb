@@ -53,22 +53,15 @@ module ARTService
 
     def categorise_regimens(regimens)
       regimens.values.each_with_object({}) do |drugs, categorised_regimens|
-        Rails.logger.debug "Interpreting drug list: #{drugs}"
-        (0...(drugs.size - 1)).each do |i|
-          ((i + 1)...(drugs.size)).each do |j|
-            head = drugs[i...j]
-            tail = [drugs[j]]
+        Rails.logger.debug "Interpreting drug list: #{drugs.collect { |drug| drug[:drug_id]}}"
+        (0..(drugs.size - 1)).each do |i|
+          ((i + 1)..(drugs.size)).each do |j|
+            trial_regimen = drugs[i...j]
 
-            trial_regimen = head + tail
-
-            # regimen_name = regimen_interpreter(trial_regimen.map { |t| t[:drug_id] })
             regimen_name = classify_regimen_combo(trial_regimen.map { |t| t[:drug_id] })
             next unless regimen_name
 
             categorised_regimens[regimen_name] = trial_regimen
-
-            # Avoid interpreting entire drug list twice at the end of the iteration:
-            break if tail.empty?
           end
         end
       end
@@ -107,7 +100,7 @@ module ARTService
       regimen_name
     end
 
-    # An alternative to the regimen_interpreter method below...
+    # An alternative to the regimen_interpreter method above...
     # This achieves the same as that method without hitting the database
     def classify_regimen_combo(drug_combo)
       Rails.logger.debug "Interpreting regimen: #{drug_combo}"
