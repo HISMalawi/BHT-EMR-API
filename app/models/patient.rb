@@ -56,6 +56,27 @@ class Patient < VoidableRecord
     id[0..4] + '-' + id[5..8] + '-' + id[9..-1]
   end
 
+  def age(today: Date.today)
+    return nil if person.birthdate.nil?
+
+    # This code which better accounts for leap years
+    patient_age = (today.year - person.birthdate.year) + ((today.month -
+          person.birthdate.month) + ((today.day - person.birthdate.day) < 0 ? -1 : 0) < 0 ? -1 : 0)
+
+    # If the birthdate was estimated this year, we round up the age, that way if
+    # it is March and the patient says they are 25, they stay 25 (not become 24)
+    birth_date = person.birthdate
+    if person.birthdate_estimated == 1\
+      && birth_date.month == 7\
+      && birth_date.day == 1\
+      && today.month < birth_date.month\
+      && person.date_created.year == today.year
+      patient_age + 1
+    else
+      patient_age
+    end
+  end
+
   def void_related_models(reason)
     person.void(reason)
     patient_identifiers.each { |row| row.void(reason) }

@@ -42,6 +42,13 @@ class AppointmentService
     encounter
   end
 
+  def next_appointment_date(patient, ref_date = nil)
+    date = earliest_appointment_date(patient, ref_date || Date.today)[1]
+    puts "DATE: #{date}"
+    return nil unless date
+    revised_suggested_date patient, date
+  end
+
   private
 
   def make_appointment_date(patient, date)
@@ -62,5 +69,115 @@ class AppointmentService
                   encounter_datetime: Time.now,
                   location_id: Location.current.location_id,
                   provider: User.current
+  end
+
+  #######################################################################################
+  # WARNING: There be dragons here... The code below is quite hairy. This was copied
+  #          from ART and slightly tweaked to work here. What it does in short is
+  #          to retrieve the next possible appointment date. From what I have been
+  #          told it retrieves the most recent date at which one of the drugs
+  #          prescribed to a patient will run out. From that it tries to adjust
+  #          the date to fall under a clinic day (ie a day when the clinic will be
+  #          open and not fully booked). Take this as gospel truth, don't ask questions,
+  #          don't try to understand it and it would be wise if you don't try to modify it.
+  ########################################################################################
+
+  def earliest_appointment_date(patient, date)
+    encounter_type = EncounterType.find_by_name('TREATMENT').id
+    start_date = date.strftime('%Y-%m-%d 00:00:00')
+    end_date = date.strftime('%Y-%m-%d 23:59:59')
+
+    arv_drug_concepts = Drug.arv_drugs.map(&:concept_id)
+
+    orders = Order.joins("INNER JOIN drug_order d ON d.order_id = orders.order_id
+      INNER JOIN encounter e ON e.encounter_id = orders.encounter_id AND e.encounter_type = #{encounter_type}
+      INNER JOIN drug ON drug.drug_id = d.drug_inventory_id").where(
+        ['e.patient_id = ? AND (encounter_datetime BETWEEN ? AND ?) AND drug.concept_id IN(?)',
+         patient.patient_id, start_date, end_date, arv_drug_concepts]
+      ).order('e.encounter_datetime')
+
+    return [] if orders.blank?
+    amount_dispensed = {}
+
+    (orders || []).each do |order|
+      auto_expire_date = begin
+                            order.discontinued_date.to_date
+                          rescue StandardError
+                            order.auto_expire_date.to_date
+                          end
+      original_auto_expire_date = begin
+                                    order.void_reason.to_date
+                                  rescue StandardError
+                                    nil
+                                  end
+
+      if (order.start_date.to_date == order.auto_expire_date.to_date) && !original_auto_expire_date.blank?
+        auto_expire_date = original_auto_expire_date
+      end
+      amount_dispensed[order.drug_order.drug_inventory_id] = auto_expire_date
+    end
+
+    amount_dispensed.min_by { |_drug_id, auto_expire_date| auto_expire_date.to_date }
+  end
+
+  def revised_suggested_date(patient, expiry_date)
+    clinic_appointment_limit = global_property('clinic.appointment.limit').to_i
+    clinic_appointment_limit = 200 if clinic_appointment_limit < 1
+
+    peads_clinic_days = global_property 'peads.clinic.days'
+    if patient.age(today: @retro_date) <= 14 && !peads_clinic_days.blank?
+      clinic_days = peads_clinic_days
+    else
+      clinic_days = global_property('clinic.days') || 'Monday,Tuesday,Wednesday,Thursday,Friday'
+    end
+    clinic_days = clinic_days.split(',')
+
+    clinic_holidays = global_property 'clinic.holidays'
+    clinic_holidays = begin
+                        clinic_holidays.split(',').map { |day| day.to_date.strftime('%d %B') }.join(',').split(',')
+                      rescue StandardError
+                        []
+                      end
+
+    recommended_date = expiry_date.to_date
+
+    expiry_date -= 2.days
+
+    start_date = (expiry_date - 5.days).strftime('%Y-%m-%d 00:00:00')
+    end_date = expiry_date.strftime('%Y-%m-%d 23:59:59')
+
+    encounter_type = EncounterType.find_by_name('APPOINTMENT')
+    concept_id = ConceptName.find_by_name('APPOINTMENT DATE').concept_id
+
+    appointments = {}; sdate = (end_date.to_date + 1.day)
+    1.upto(4).each do |num|
+      appointments[(sdate - num.day)] = 0
+    end
+
+    Observation.find_by_sql("SELECT value_datetime appointment_date, count(value_datetime) AS count FROM obs
+      INNER JOIN encounter e USING(encounter_id) WHERE concept_id = #{concept_id}
+      AND encounter_type = #{encounter_type.id} AND value_datetime BETWEEN '#{start_date}'
+      AND '#{end_date}' AND obs.voided = 0 GROUP BY value_datetime").each do |appointment|
+      appointments[appointment.appointment_date.to_date] = appointment.count.to_i
+    end
+
+    (appointments || {}).sort_by { |x, _y| x.to_date }.reverse_each do |date, count|
+      next unless clinic_days.include?(date.to_date.strftime('%A'))
+      next unless clinic_holidays.include?(date.to_date.strftime('%d %B')).blank?
+
+      return date if count < clinic_appointment_limit
+    end
+
+    #     the following block of code will only run if the recommended date is full
+    #     Its a hack, we need to find a better way of cleaning up the code but it works :)
+    (appointments || {}).sort_by { |_x, y| y.to_i }.each do |date, _count|
+      next unless clinic_days.include?(date.to_date.strftime('%A'))
+      next unless clinic_holidays.include?(date.to_date.strftime('%d %B')).blank?
+
+      recommended_date = date
+      break
+    end
+
+    recommended_date
   end
 end

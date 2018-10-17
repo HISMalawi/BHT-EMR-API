@@ -35,6 +35,7 @@ Rails.application.routes.draw do
           paginate_url "/api/v1/appointments?patient_id=#{params[:patient_id]}",
                        request.params
         end)
+        get '/next_appointment_date', to: 'patient_appointments#next_appointment_date'
         resources :patient_programs, path: :programs
       end
 
