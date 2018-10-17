@@ -75,13 +75,15 @@ module ARTService
     end
 
     def ingredient_to_drug(ingredient)
+      drug = ingredient.drug
       {
-        drug_id: ingredient.drug.drug_id,
-        drug_name: ingredient.drug.name,
+        drug_id: drug.drug_id,
+        drug_name: drug.name,
         am: ingredient.dose.am,
         pm: ingredient.dose.pm,
-        units: ingredient.drug.units,
-        concept_name: ingredient.drug.concept.concept_names[0].name
+        units: drug.units,
+        concept_name: drug.concept.concept_names[0].name,
+        pack_size: drug.drug_cms ? drug.drug_cms.pack_size : nil
       }
     end
 

@@ -7,6 +7,16 @@ class Drug < ActiveRecord::Base
   belongs_to :concept
   belongs_to :form, foreign_key: 'dosage_form', class_name: 'Concept'
 
+  has_one :drug_cms, foreign_key: :drug_inventory_id
+
+  def as_json(options = {})
+    super(options.merge(
+      include: {
+        concept: {}
+      }
+    ))
+  end
+
   def arv?
     Drug.arv_drugs.map(&:concept_id).include?(concept_id)
   end
