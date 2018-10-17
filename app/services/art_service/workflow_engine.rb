@@ -130,7 +130,7 @@ module ARTService
     def patient_got_treatment?
       encounter_type = EncounterType.find_by name: TREATMENT
       encounter = Encounter.select('encounter_id').where(
-        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
+        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) < DATE(?)',
         @patient.patient_id, encounter_type.encounter_type_id, @date
       ).order(encounter_datetime: :desc).first
       raise "Can't check if patient got treatment due to missing TREATMENT encounter" if encounter.nil?
