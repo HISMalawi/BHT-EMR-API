@@ -1,6 +1,6 @@
 class Api::V1::AppointmentsController < ApplicationController
   def show
-    appointment = AppointmentService.appointment params[:id]
+    appointment = appointment_service.appointment params[:id]
     if appointment
       render json: appointment
     else
@@ -11,7 +11,7 @@ class Api::V1::AppointmentsController < ApplicationController
 
   def index
     filters = params.permit %i[patient_id encounter_datetime]
-    appointments = AppointmentService.appointments filters
+    appointments = appointment_service.appointments filters
     render json: paginate(appointments)
   end
 
@@ -21,7 +21,7 @@ class Api::V1::AppointmentsController < ApplicationController
 
     return unless date
 
-    appointment = AppointmentService.create_appointment patient, date
+    appointment = appointment_service.create_appointment patient, date
     if appointment.errors.empty?
       render json: appointment, status: :created
     else
@@ -43,5 +43,16 @@ class Api::V1::AppointmentsController < ApplicationController
       render json: { errors: [appointment.errors, appointment.obs.errors] },
              status: :internal_server_error
     end
+  end
+
+  protected
+
+  def appointment_service
+    return @appointment_service if @appointment_service
+
+    date = headers['SESSION_DATE'] ? Date.strptime(headers['SESSION_DATE']) : Date.today
+    @appointment_service = AppointmentService.new retro_date: date
+
+    @appointment_service
   end
 end

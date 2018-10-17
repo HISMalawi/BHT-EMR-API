@@ -14,5 +14,9 @@ FactoryBot.define do
       # patient_id { 1 }
       # location_id { 700 }
     end
+
+    factory :encounter_appointment do
+      type { EncounterType.find_by_name('Appointment') }
+    end
   end
 end

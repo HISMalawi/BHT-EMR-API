@@ -23,6 +23,7 @@ class Api::V1::ObservationsController < ApplicationController
   def index
     filters, = required_params optional: %i[
       person_id concept_id encounter_id order_id date_started date_stopped
+      obs_datetime
     ]
 
     if filters.empty?
