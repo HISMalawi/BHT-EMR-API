@@ -68,7 +68,7 @@ module DispensationService
       Encounter.create(
         encounter_type: EncounterType.find_by(name: 'DISPENSING').encounter_type_id,
         patient_id: patient.patient_id,
-        location_id: Location.current.id,
+        location_id: Location.current.location_id,
         encounter_datetime: date,
         provider: User.current
       )
