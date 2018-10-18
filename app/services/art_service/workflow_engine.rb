@@ -150,8 +150,9 @@ module ARTService
       arv_ids = Drug.arv_drugs.map(&:drug_id)
       arv_ids_placeholders = "(#{(['?'] * arv_ids.size).join(', ')})"
       Observation.where(
-        "person_id = ? AND value_drug in #{arv_ids_placeholders}",
-        @patient.patient_id, *arv_ids
+        "person_id = ? AND value_drug in #{arv_ids_placeholders} AND
+         obs_datetime < ?",
+        @patient.patient_id, *arv_ids, @date
       ).exists?
     end
 
