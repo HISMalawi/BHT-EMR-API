@@ -11,13 +11,17 @@ FactoryBot.define do
     location_id { 700 }
 
     factory :encounter_dispensing do
-      type { EncounterType.find_by_name('Dispensing') }
+      type { EncounterType.find_by_name 'Dispensing' }
       # patient_id { 1 }
       # location_id { 700 }
     end
 
     factory :encounter_appointment do
-      type { EncounterType.find_by_name('Appointment') }
+      type { EncounterType.find_by_name 'Appointment' }
+    end
+
+    factory :encounter_treatment do
+      type { EncounterType.find_by_name 'TREATMENT' }
     end
   end
 end

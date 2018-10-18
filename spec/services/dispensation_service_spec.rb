@@ -32,19 +32,20 @@ RSpec.describe DispensationService do
 
   describe :dispense_drug do
     it 'updates order quantity' do
-      drug_order = create :drug_order
-      obs = DispensationService.dispense drug_order, 10
+      encounter = create :encounter_treatment, patient: patient
+      drug = Drug.arv_drugs[0]
+      order = create :order, encounter: encounter, patient: patient,
+                             concept: drug.concept
+      drug_order = create :drug_order, order: order, drug: drug
+
+      # Following are used during drug dispensation
+      Location.current = Location.find(700)
+      User.current = User.find(1)
+      obs = DispensationService.dispense_drug drug_order.order_id, 10
 
       expect(obs.concept_id).to eq(concept('AMOUNT DISPENSED').concept_id)
-      expect(drug_order.quantity).to eq(10)
+      expect(obs.order).to eq(order)
+      expect(obs.order.drug_order.quantity).to eq(10)
     end
-
-    # it 'creates a new observation' do
-    # end
-
-    # order_1 = create :order, patient: patient
-    # amount_dispensed_concept = create :amount_dispensed_concept
-
-    # amount_dispensed_concept.destroy
   end
 end

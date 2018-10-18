@@ -2,8 +2,9 @@
 
 FactoryBot.define do
   factory :drug_order do
-    # association :drug
+    association :drug
     association :order
+
     dose { 10 }
     equivalent_daily_dose { 2 }
     units { 'pills' }
