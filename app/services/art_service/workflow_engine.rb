@@ -29,11 +29,13 @@ module ARTService
         encounter_type = EncounterType.find_by(name: state)
 
         LOGGER.debug "Checking existence of #{state} encounter"
-        next if encounter_exists?(state, encounter_type)
+        next if encounter_exists?(encounter_type)
 
         LOGGER.debug "Checking eligibility of #{state} encounter"
 
         case state
+        when HIV_CLINIC_REGISTRATION
+          return encounter_type unless patient_registered?
         when VITALS
           return encounter_type if patient_checked_in?
         when ART_ADHERENCE
@@ -92,20 +94,14 @@ module ARTService
     #
     # NOTE: By `relevant` above we mean encounters that matter in deciding
     # what encounter the patient should go for in this present time.
-    def encounter_exists?(state, encounter_type)
-      if state == HIV_CLINIC_REGISTRATION
-        search_params = ['encounter_type = ? AND patient_id = ?
-                          AND DATE(encounter_datetime) <= DATE(?)',
-                         encounter_type.id, @patient.patient_id, @date]
-      else
-        # Interested in today's encounters only
-        search_params = ['encounter_type = ? AND patient_id = ?
-                          AND DATE(encounter_datetime) = DATE(?)',
-                         encounter_type.encounter_type_id,
-                         @patient.patient_id, @date]
-      end
-
-      Encounter.where(*search_params).exists?
+    def encounter_exists?(encounter_type)
+      Encounter.where(
+        'encounter_type = ? AND patient_id = ?
+         AND DATE(encounter_datetime) = DATE(?)',
+        encounter_type.encounter_type_id,
+        @patient.patient_id,
+        @date
+      ).exists?
     end
 
     # Checks if patient has checked in today
@@ -124,13 +120,21 @@ module ARTService
                                      value_coded: yes_concept.concept_id
     end
 
+    def patient_registered?
+      Encounter.joins(:type).where(
+        'encounter_type.name = ? AND encounter.patient_id = ?',
+        HIV_CLINIC_REGISTRATION,
+        @patient.patient_id
+      ).exists?
+    end
+
     # Check if patient has got treatment.
     #
     # Pre-condition for DISPENSING encounter
     def patient_got_treatment?
       encounter_type = EncounterType.find_by name: TREATMENT
       encounter = Encounter.select('encounter_id').where(
-        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) < DATE(?)',
+        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
         @patient.patient_id, encounter_type.encounter_type_id, @date
       ).order(encounter_datetime: :desc).first
       raise "Can't check if patient got treatment due to missing TREATMENT encounter" if encounter.nil?
