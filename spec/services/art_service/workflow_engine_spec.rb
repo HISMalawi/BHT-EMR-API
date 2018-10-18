@@ -3,24 +3,108 @@
 require 'rails_helper'
 
 describe ARTService::WorkflowEngine do
+  let(:epoch) { Time.now }
   let(:art_program) { program 'HIV Program' }
   let(:patient) { create :patient }
   let(:engine) do
     ARTService::WorkflowEngine.new program: art_program,
                                    patient: patient,
-                                   date: Time.now
+                                   date: epoch
   end
   let(:constrained_engine) { raise :not_implemented }
 
+  describe :next_encounter do
+    it 'returns HIV CLINIC REGISTRATION for patient not in ART programme' do
+      encounter_type = engine.next_encounter
+      expect(encounter_type.name.upcase).to eq('HIV CLINIC REGISTRATION')
+    end
+
+    it 'returns HIV CLINIC REGISTRATION for new ART patient' do
+      enroll_patient patient
+      encounter_type = engine.next_encounter
+      expect(encounter_type.name.upcase).to eq('HIV CLINIC REGISTRATION')
+    end
+
+    it 'skips HIV CLINIC REGISTRATION for previously registered patient on new visit' do
+      register_patient patient, epoch - 100.days
+      encounter_type = engine.next_encounter
+      expect(encounter_type.name.upcase).to eq('HIV RECEPTION')
+    end
+
+    it 'returns HIV_RECEPTION after HIV CLINIC REGISTRATION' do
+      register_patient patient
+      encounter_type = engine.next_encounter
+      expect(encounter_type.name.upcase).to eq('HIV RECEPTION')
+    end
+
+    it 'skips VITALS and returns HIV STAGING after HIV RECEIPTION without patient' do
+      receive_patient patient, guardian_only: true
+      encounter_type = engine.next_encounter
+      expect(encounter_type.name.upcase).to eq('HIV STAGING')
+    end
+
+    it 'returns VITALS after HIV RECEPTION with patient' do
+      receive_patient patient, guardian_only: false
+      encounter_type = engine.next_encounter
+      expect(encounter_type.name.upcase).to eq('VITALS')
+    end
+
+    it 'returns HIV_STAGING for patients with VITALS' do
+      record_vitals patient
+      encounter_type = engine.next_encounter
+      expect(encounter_type.name.upcase).to eq('HIV STAGING')
+    end
+
+    it 'returns HIV CLINIC CONSULTATION for patients with HIV STAGING' do
+      record_staging patient
+      encounter_type = engine.next_encounter
+      expect(encounter_type.name.upcase).to eq('HIV CLINIC CONSULTATION')
+    end
+
+    it 'skips ART ADHERENCE and returns TREATMENT for new patient after HIV CLINIC CONSULTATION' do
+      record_hiv_clinic_consultation patient
+      encounter_type = engine.next_encounter
+      expect(encounter_type.name.upcase).to eq('TREATMENT')
+    end
+
+    it 'returns ART ADHERENCE after HIV CLINIC CONSULTATION for patient with previously received medication' do
+      record_hiv_clinic_consultation patient
+      prescribe_arv patient, epoch - 1000.days
+      encounter_type = engine.next_encounter
+      expect(encounter_type.name.upcase).to eq('ART ADHERENCE')
+    end
+
+    it 'returns DISPENSING after TREATMENT' do
+      record_treatment patient
+      encounter_type = engine.next_encounter
+      expect(encounter_type.name.upcase).to eq('DISPENSING')
+    end
+
+    it 'returns APPOINTMENT after DISPENSING' do
+      record_dispensing patient
+      encounter_type = engine.next_encounter
+      expect(encounter_type.name.upcase).to eq('APPOINTMENT')
+    end
+
+    it 'returns nil after APPOINTMENT' do
+      record_appointment patient
+      encounter_type = engine.next_encounter
+      expect(encounter_type).to be_nil
+    end
+  end
+
+  # Helpers methods
   def enroll_patient(patient)
     create :patient_program, patient: patient,
                              program: art_program
   end
 
-  def register_patient(patient)
+  def register_patient(patient, date = nil)
+    date ||= Time.now
     enroll_patient patient
     create :encounter, type: encounter_type('HIV CLINIC REGISTRATION'),
-                       patient: patient
+                       patient: patient,
+                       date_created: date
   end
 
   def receive_patient(patient, guardian_only: false)
@@ -52,46 +136,48 @@ describe ARTService::WorkflowEngine do
                        patient: patient
   end
 
-  describe :next_encounter do
-    it 'returns HIV CLINIC REGISTRATION for patient not in ART programme' do
-      encounter_type = engine.next_encounter
-      expect(encounter_type.name.upcase).to eq('HIV CLINIC REGISTRATION')
-    end
+  def record_staging(patient)
+    record_vitals patient
+    create :encounter, type: encounter_type('HIV STAGING'),
+                       patient: patient
+  end
 
-    it 'returns HIV CLINIC REGISTRATION for new ART patient' do
-      enroll_patient patient
-      encounter_type = engine.next_encounter
-      expect(encounter_type.name.upcase).to eq('HIV CLINIC REGISTRATION')
-    end
+  def record_hiv_clinic_consultation(patient)
+    record_staging patient
+    create :encounter, type: encounter_type('HIV CLINIC CONSULTATION'),
+                       patient: patient
+  end
 
-    it 'returns HIV_RECEPTION after HIV CLINIC REGISTRATION' do
-      # Enroll patient in program...
-      create :patient_program, patient: patient,
-                               program: art_program
+  def record_treatment(patient)
+    record_hiv_clinic_consultation patient
+    encounter = create :encounter, type: encounter_type('TREATMENT'),
+                                   patient: patient
 
-      create :encounter, type: encounter_type('HIV CLINIC REGISTRATION'),
-                         patient: patient
+    arv = Drug.arv_drugs[0]
+    order = create :order, concept: arv.concept, patient: patient,
+                           encounter: encounter
+    create :drug_order, order: order, drug: arv
+  end
 
-      encounter_type = engine.next_encounter
-      expect(encounter_type.name.upcase).to eq('HIV RECEPTION')
-    end
+  def record_dispensing(patient)
+    record_treatment patient
+    create :encounter, type: encounter_type('DISPENSING'),
+                       patient: patient
+  end
 
-    it 'returns HIV STAGING after HIV RECEIPTION without patient' do
-      receive_patient patient, guardian_only: true
-      encounter_type = engine.next_encounter
-      expect(encounter_type.name.upcase).to eq('HIV STAGING')
-    end
+  def record_appointment(patient)
+    record_dispensing patient
+    create :encounter, type: encounter_type('APPOINTMENT'),
+                       patient: patient
+  end
 
-    it 'returns VITALS after HIV RECEPTION with patient' do
-      receive_patient patient, guardian_only: false
-      encounter_type = engine.next_encounter
-      expect(encounter_type.name.upcase).to eq('VITALS')
-    end
+  def prescribe_arv(patient, date = nil)
+    date ||= Time.now
 
-    it 'returns HIV_STAGING for patients with VITALS' do
-      record_vitals patient
-      encounter_type = engine.next_encounter
-      expect(encounter_type.name.upcase).to eq('HIV STAGING')
-    end
+    create :observation, person: patient.person,
+                         encounter: create(:encounter_dispensing, patient: patient),
+                         concept: concept('AMOUNT DISPENSED'),
+                         value_drug: Drug.arv_drugs[0].drug_id,
+                         obs_datetime: date
   end
 end

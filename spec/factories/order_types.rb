@@ -3,10 +3,9 @@
 require 'securerandom'
 
 FactoryBot.define do
-  factory :encounter_type do
+  factory :order_type do
     name { SecureRandom.hex }
-    description { 'foobar' }
     creator { 1 }
-    date_created { Time.now }
+    uuid { 'foobar' }
   end
 end

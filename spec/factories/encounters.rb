@@ -3,6 +3,7 @@
 FactoryBot.define do
   factory :encounter do
     association :patient
+
     encounter_datetime { Time.now }
     date_created { Time.now }
     creator { 1 }
