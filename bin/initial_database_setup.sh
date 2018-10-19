@@ -69,6 +69,12 @@ mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/initial_
 # mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/sql/bart2_views_schema_additions.sql
 mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/sql/revised_regimens.sql
 
+bundle exec rake db:migrate
+
+# The following must run after all migrations have been run
+
+mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/sql/add_regimens_13_and_above.sql
+
 echo "After completing database setup, you are advised to run the following:"
 echo "rake test"
 echo "rake cucumber"
