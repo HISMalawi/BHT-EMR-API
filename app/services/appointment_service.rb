@@ -8,7 +8,7 @@ class AppointmentService
   LOGGER = Logger.new STDOUT
 
   def initialize(retro_date: Date.today)
-    @retro_date = retro_date
+    @retro_date = retro_date.respond_to?(:to_date) ? retro_date.to_date : date
   end
 
   def appointment(id)
@@ -28,6 +28,8 @@ class AppointmentService
   end
 
   def create_appointment(patient, date)
+    date = date.to_date if date.respond_to?(:to_date)
+
     if date < @retro_date
       raise ArgumentError, "Can't set appointment date, #{date}, to date before visit date, #{@retro_date}"
     end
