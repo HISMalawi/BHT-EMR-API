@@ -3,10 +3,12 @@
 require 'rails_helper'
 
 RSpec.describe AppointmentService do
+  MINUTE = 60
+
   let(:patient) { create :patient }
-  let(:appointment_service) { AppointmentService.new retro_date: Time.now }
+  let(:epoch) { Date.today }
+  let(:appointment_service) { AppointmentService.new retro_date: epoch }
   let(:person) { create :person }
-  let(:epoch) { Time.now }
 
   describe :appointments do
     it 'retrieves all appointments' do
@@ -44,21 +46,55 @@ RSpec.describe AppointmentService do
   end
 
   describe :create_appointment do
-    it 'creates encounter if one is by date for each appointment' do
+    it 'uses existing appointment encounter for new appointments' do
+      encounter = create :encounter_appointment, encounter_datetime: epoch,
+                                                 patient: patient
+      created = appointment_service.create_appointment patient, epoch
+      expect(created.encounter).to eq(encounter)
+    end
+
+    it 'creates appointment encounter if one on given date does not exist' do
+      get_appointment_encounter = proc do
+        Encounter.where(
+          type: encounter_type('Appointment'), patient: patient
+        ).where(
+          'DATE(encounter_datetime) = DATE(?)', epoch
+        )[0]
+      end
+
+      expect(get_appointment_encounter.call).to be_nil
+
+      appointment_service.create_appointment patient, epoch
+      encounter = get_appointment_encounter.call
+      expect(encounter.encounter_datetime.to_date).to eq(epoch)
     end
 
     it 'creates appointment for given date and patient' do
+      (1...10).each do |dt|
+        appointment_date = epoch + dt.days
+        created = appointment_service.create_appointment patient, appointment_date
+        expect(created.person).to be(patient.person)
+        expect(created.value_datetime.to_date).to eq(appointment_date)
+      end
     end
 
-    it 'creates appointment on bound date' do
+    it 'creates appointment on bound retro date' do
       created = appointment_service.create_appointment patient, epoch + 10.days
       retrieved = Observation.where concept: concept('Appointment date')
 
       expect(retrieved.size).to be(1)
       expect(created.value_datetime).to be(created.value_datetime)
+
+      retro_date = created.encounter.encounter_datetime.to_date
+      expect((epoch - retro_date).abs).to be < MINUTE
     end
 
     it 'can not create if given date is before bound date' do
+      create_routine = proc do
+        appointment_service.create_appointment patient, epoch - 1.day
+      end
+
+      expect(&create_routine).to raise_error(ArgumentError)
     end
   end
 
