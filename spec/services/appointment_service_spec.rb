@@ -99,7 +99,45 @@ RSpec.describe AppointmentService do
   end
 
   describe :next_appointment do
+    # TODO: Refactor the following test into smaller tests. We are
+    # testing multiple functionality:
+    #     1. Shortest expiry date is selected from a number available
+    #     2. The shortest expiry date is adjusted back by 2 days
+    #     3. The date is adjusted even further if the adjusted date
+    #        above falls on a non-clinic day
     it 'selects shortest expiry date among available drug orders' do
+      epoch = Date.strptime '2018-10-23' # Was a tuesday...
+
+      treatment_encounter = create :encounter_treatment, patient: patient,
+                                                         encounter_datetime: epoch
+      arvs = Drug.arv_drugs
+
+      drug_orders = (0...5).collect do |i|
+        drug = arvs[i]
+        order = create :order, auto_expire_date: epoch + i.days,
+                               start_date: epoch,
+                               patient: patient,
+                               concept: drug.concept,
+                               encounter: treatment_encounter
+
+        create :drug_order, order: order, drug: drug
+      end
+
+      logger = ActiveRecord::Base.logger
+      ActiveRecord::Base.logger = Logger.new STDOUT
+
+      # NOTE: An appointment is at minimum set to 2 days before
+      # auto expire date, but since by default Saturday and Sunday are being
+      # treated as non-clinic days, and we have set our epoch to a tuesday,
+      # we expect a 4 day backward movement (ie -2 to sunday and then another
+      # -2 to friday)
+      expected_date = (drug_orders[0].order.auto_expire_date - 4.days).to_date
+
+      appointment_service = AppointmentService.new retro_date: epoch
+      date = appointment_service.next_appointment_date patient
+      expect(date).to eq(expected_date)
+
+      ActiveRecord::Base.logger = logger
     end
   end
 end

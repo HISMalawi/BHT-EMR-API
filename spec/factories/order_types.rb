@@ -6,6 +6,6 @@ FactoryBot.define do
   factory :order_type do
     name { SecureRandom.hex }
     creator { 1 }
-    uuid { 'foobar' }
+    uuid { SecureRandom.uuid }
   end
 end

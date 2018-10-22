@@ -47,9 +47,10 @@ class AppointmentService
   end
 
   def next_appointment_date(patient, ref_date = nil)
-    date = earliest_appointment_date(patient, ref_date || Date.today)[1]
-    puts "DATE: #{date}"
+    ref_date ||= @retro_date
+    _drug_id, date = earliest_appointment_date(patient, ref_date)
     return nil unless date
+    puts "Date: #{date}"
     revised_suggested_date patient, date
   end
 
@@ -87,41 +88,46 @@ class AppointmentService
   ########################################################################################
 
   def earliest_appointment_date(patient, date)
-    encounter_type = EncounterType.find_by_name('TREATMENT').id
-    start_date = date.strftime('%Y-%m-%d 00:00:00')
-    end_date = date.strftime('%Y-%m-%d 23:59:59')
+    orders = patient_arv_prescriptions patient, date
+    return [] if orders.empty?
 
-    arv_drug_concepts = Drug.arv_drugs.map(&:concept_id)
-
-    orders = Order.joins("INNER JOIN drug_order d ON d.order_id = orders.order_id
-      INNER JOIN encounter e ON e.encounter_id = orders.encounter_id AND e.encounter_type = #{encounter_type}
-      INNER JOIN drug ON drug.drug_id = d.drug_inventory_id").where(
-        ['e.patient_id = ? AND (encounter_datetime BETWEEN ? AND ?) AND drug.concept_id IN(?)',
-         patient.patient_id, start_date, end_date, arv_drug_concepts]
-      ).order('e.encounter_datetime')
-
-    return [] if orders.blank?
     amount_dispensed = {}
 
-    (orders || []).each do |order|
-      auto_expire_date = begin
-                            order.discontinued_date.to_date
-                          rescue StandardError
-                            order.auto_expire_date.to_date
-                          end
+    orders.each do |order|
       original_auto_expire_date = begin
-                                    order.void_reason.to_date
+                                    order.void_reason ? order.void_reason.to_date : nil
                                   rescue StandardError
                                     nil
                                   end
 
-      if (order.start_date.to_date == order.auto_expire_date.to_date) && !original_auto_expire_date.blank?
+      if order.start_date.to_date == order.auto_expire_date.to_date\
+        && original_auto_expire_date
         auto_expire_date = original_auto_expire_date
+      else
+        auto_expire_date = (order.discontinued_date || order.auto_expire_date).to_date
       end
+
       amount_dispensed[order.drug_order.drug_inventory_id] = auto_expire_date
     end
 
-    amount_dispensed.min_by { |_drug_id, auto_expire_date| auto_expire_date.to_date }
+    amount_dispensed.min_by { |_drug_id, auto_expire_date| puts auto_expire_date; auto_expire_date }
+  end
+
+  # Retrieves all prescriptions of ARVs to patient on date
+  def patient_arv_prescriptions(patient, date)
+    encounter_type_id = encounter_type('TREATMENT').encounter_type_id
+    arv_drug_concepts = Drug.arv_drugs.map(&:concept_id)
+
+    Order.joins(
+      'INNER JOIN drug_order ON drug_order.order_id = orders.order_id
+       INNER JOIN encounter ON encounter.encounter_id = orders.encounter_id
+       INNER JOIN drug ON drug.drug_id = drug_order.drug_inventory_id'
+    ).where(
+      'encounter.encounter_type = ? AND encounter.patient_id = ?
+       AND DATE(encounter.encounter_datetime) = DATE(?)
+       AND drug.concept_id IN (?)',
+      encounter_type_id, patient.patient_id, date, arv_drug_concepts
+    ).order('encounter.encounter_datetime')
   end
 
   def revised_suggested_date(patient, expiry_date)
@@ -153,7 +159,9 @@ class AppointmentService
     encounter_type = EncounterType.find_by_name('APPOINTMENT')
     concept_id = ConceptName.find_by_name('APPOINTMENT DATE').concept_id
 
-    appointments = {}; sdate = (end_date.to_date + 1.day)
+    appointments = {}
+    sdate = (end_date.to_date + 1.day)
+
     1.upto(4).each do |num|
       appointments[(sdate - num.day)] = 0
     end
