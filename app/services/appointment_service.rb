@@ -33,13 +33,15 @@ class AppointmentService
     end
 
     encounter = appointment_encounter patient, @retro_date
-    encounter.observations << make_appointment_date(date)
+    appointment = make_appointment_date patient, date
+
+    encounter.observations << appointment
     unless encounter.save
       LOGGER.error "Failed to create appointment\n\t#{encounter.errors}"
       raise "Failed to create appointment, #{date}"
     end
 
-    encounter
+    appointment
   end
 
   def next_appointment_date(patient, ref_date = nil)
