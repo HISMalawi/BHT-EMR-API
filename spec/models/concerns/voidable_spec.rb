@@ -6,7 +6,9 @@ describe Voidable do
   # DB schema is tinyint not bool for voided
   VOIDED = 1
 
-  before do
+  current_user = User.current
+
+  before(:context) do
     @voidable = (Class.new do
       include Voidable
 
@@ -39,11 +41,17 @@ describe Voidable do
         @user_id = :user
       end
     end).new
+
+    @original_user = User.current
+    User.current = @user
+  end
+
+  after(:context) do
+    Rails.logger.info "Resetting User.current: #{current_user}"
+    User.current = current_user
   end
 
   it 'sets void fields on `void`' do
-    User.current = @user
-
     expect(@voidable.void(:pumbwa)).to be true
     expect(@voidable.voided).to be VOIDED
     # A 5 minutes delay in execution seems reasonable

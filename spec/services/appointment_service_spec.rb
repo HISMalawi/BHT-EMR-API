@@ -8,7 +8,7 @@ RSpec.describe AppointmentService do
   let(:person) { create :person }
   let(:epoch) { Time.now }
 
-  describe 'appointments' do
+  describe :appointments do
     it 'retrieves all appointments' do
       encounter = create :encounter_appointment, encounter_datetime: epoch
 
@@ -43,7 +43,7 @@ RSpec.describe AppointmentService do
     end
   end
 
-  describe 'create_appointment' do
+  describe :create_appointment do
     it 'creates encounter if one is by date for each appointment' do
     end
 
@@ -51,13 +51,18 @@ RSpec.describe AppointmentService do
     end
 
     it 'creates appointment on bound date' do
+      created = appointment_service.create_appointment patient, epoch + 10.days
+      retrieved = Observation.where concept: concept('Appointment date')
+
+      expect(retrieved.size).to be(1)
+      expect(created.value_datetime).to be(created.value_datetime)
     end
 
     it 'can not create if given date is before bound date' do
     end
   end
 
-  describe 'next_appointment' do
+  describe :next_appointment do
     it 'selects shortest expiry date among available drug orders' do
     end
   end

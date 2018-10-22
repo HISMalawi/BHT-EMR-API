@@ -62,3 +62,7 @@ RSpec.configure do |config|
   config.include FactoryBot::Syntax::Methods
   config.include ModelUtils
 end
+
+# Required by Auditable model concern...
+Location.current = Location.find(700)
+User.current = User.find(1)

@@ -38,9 +38,6 @@ RSpec.describe DispensationService do
                              concept: drug.concept
       drug_order = create :drug_order, order: order, drug: drug
 
-      # Following are used during drug dispensation
-      Location.current = Location.find(700)
-      User.current = User.find(1)
       obs = DispensationService.dispense_drug drug_order.order_id, 10
 
       expect(obs.concept_id).to eq(concept('AMOUNT DISPENSED').concept_id)
