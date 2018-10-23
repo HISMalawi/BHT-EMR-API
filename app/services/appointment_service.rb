@@ -50,7 +50,6 @@ class AppointmentService
     ref_date ||= @retro_date
     _drug_id, date = earliest_appointment_date(patient, ref_date)
     return nil unless date
-    puts "Date: #{date}"
     revised_suggested_date patient, date
   end
 
@@ -110,7 +109,7 @@ class AppointmentService
       amount_dispensed[order.drug_order.drug_inventory_id] = auto_expire_date
     end
 
-    amount_dispensed.min_by { |_drug_id, auto_expire_date| puts auto_expire_date; auto_expire_date }
+    amount_dispensed.min_by { |_drug_id, auto_expire_date| auto_expire_date }
   end
 
   # Retrieves all prescriptions of ARVs to patient on date
