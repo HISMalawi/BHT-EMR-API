@@ -24,7 +24,7 @@ class AppointmentService
     appointments = Observation.joins(:concept)\
                               .where(concept: concept('Appointment date'))
     appointments = appointments.where(filters) unless appointments.empty?
-    appointments.order(date_created: :desc)
+    appointments.order(obs_datetime: :desc)
   end
 
   def create_appointment(patient, date)
