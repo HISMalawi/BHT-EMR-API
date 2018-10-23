@@ -239,6 +239,10 @@ pre code {
             <a href="#request-retrieve-dispensations">Retrieve dispensations</a>
         </li>
         
+        <li>
+            <a href="#request-retrieve-appointments">Retrieve appointments</a>
+        </li>
+        
         
     </ul>
 </div>
@@ -390,6 +394,46 @@ generally have a response body of the following structure:</p>
     </tr>
   </tbody>
 </table>
+
+<h1>Pagination</h1>
+
+<p>All endpoints (except a few) that return a list of values are paginated.
+Pagination by default limits results to 10 items.</p>
+
+<p>A number of parameters are provided that control the pagination. Following
+is a table describing them:</p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Parameter</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>page</td>
+            <td>Specifies the page to retrieve (defaults to 0). Pages start from 0.</td>
+        </tr>
+        <tr>
+            <td>page_size</td>
+            <td>Specifies number of results per page (defaults to 10).</td>
+        </tr>
+        <tr>
+            <td>paginate</td>
+            <td>Switches off pagination. Only `false` is accepted as a value, anything else       is ignored.</td>
+        </tr>
+    </tbody>
+</table>
+
+<h2>Pagination examples</h2>
+
+<pre><code class="language-bash"># Retrieve page 5 of 20 items per page
+curl 'http://localhost/api/v1/observations?page=5&amp;page_size=20'
+
+// Retrieve all items without paginating
+curl 'http://localhost/api/v1/observations?pagination=false'
+</code></pre>
 
 
                 
@@ -6879,6 +6923,193 @@ Authorization: fbRRafA9Y2Gc</code></pre>
                 "quantity": 2150
             }
         }
+    }
+]</code></pre>
+                                    </td></tr>
+                                    
+                                    
+                                </table>
+                            </div>
+                            
+                        </div>
+                    </div>
+                    
+
+                    <hr>
+                </div>
+                
+                
+                <div class="request">
+
+                    <h3 id="request-retrieve-appointments">
+                        Retrieve appointments
+                        <a href="#request-retrieve-appointments"><i class="glyphicon glyphicon-link"></i></a>
+                    </h3>
+
+                    <div><p>This endpoint provides access to all appointments ever created. Appointments are basically just Observations having a concept of &lsquo;Appointment&rsquo;. They are returned in descending order of obs_datetime.</p>
+
+<h3>Available filters</h3>
+
+<ul>
+<li>obs_datetime: Limit results to appointments that fall on this date</li>
+<li>person_id: Limit results to appointments belonging to this person</li>
+<li>location_id: Limit results to appointments made at this location</li>
+<li>encounter_id: Limit results to appointments belonging to this encounter (NOTE: there is no validation of whether the encounter is an appointment encounter)</li>
+</ul>
+</div>
+
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li role="presentation" class="active"><a href="#request-retrieve-appointments-example-curl" data-toggle="tab">Curl</a></li>
+                            <li role="presentation"><a href="#request-retrieve-appointments-example-http" data-toggle="tab">HTTP</a></li>
+                        </ul>
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="request-retrieve-appointments-example-curl">
+                                <pre><code class="hljs curl">curl -X GET -H "Authorization: c2t0QXtnOWEB" "localhost:3000/api/v1/appointments?person_id=1000&page_size=1"</code></pre>
+                            </div>
+                            <div class="tab-pane" id="request-retrieve-appointments-example-http">
+                                <pre><code class="hljs http">GET 3000/api/v1/appointments?person_id=1000&page_size=1 HTTP/1.1
+Host: 
+Authorization: c2t0QXtnOWEB</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            
+                            <li role="presentation" class="active">
+                                <a href="#request-retrieve-appointments-responses-0a6c8622-a17c-4c3c-8511-f56343de7e21" data-toggle="tab">
+                                    
+                                    Response
+                                    
+                                </a>
+                            </li>
+                            
+                        </ul>
+                        <div class="tab-content">
+                            
+                            <div class="tab-pane active" id="request-retrieve-appointments-responses-0a6c8622-a17c-4c3c-8511-f56343de7e21">
+                                <table class="table table-bordered">
+                                    <tr><th style="width: 20%;">Status</th><td>200 </td></tr>
+                                    
+                                    <tr><th style="width: 20%;">Cache-Control</th><td>max-age=0, private, must-revalidate</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">Content-Type</th><td>application/json; charset=utf-8</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">ETag</th><td>W/"50c6a476f18c26c45e52c1dc2a51019c"</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">Transfer-Encoding</th><td>chunked</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">Vary</th><td>Origin</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">X-Request-Id</th><td>5103322a-27fa-4c61-9c15-46f126a83004</td></tr>
+                                    
+                                    <tr><th style="width: 20%;">X-Runtime</th><td>0.013925</td></tr>
+                                    
+                                    
+                                    
+                                    <tr><td class="response-text-sample" colspan="2">
+                                        <pre><code>[
+    {
+        "obs_id": 886903,
+        "person_id": 1000,
+        "concept_id": 5096,
+        "encounter_id": 373031,
+        "order_id": null,
+        "obs_datetime": "2018-10-01T13:14:41.000Z",
+        "location_id": null,
+        "obs_group_id": null,
+        "accession_number": null,
+        "value_group_id": null,
+        "value_boolean": null,
+        "value_coded": null,
+        "value_coded_name_id": null,
+        "value_drug": null,
+        "value_datetime": "2018-09-30T00:00:00.000Z",
+        "value_numeric": null,
+        "value_modifier": null,
+        "value_text": null,
+        "date_started": null,
+        "date_stopped": null,
+        "comments": null,
+        "creator": 1,
+        "date_created": "2018-10-01T13:14:41.000Z",
+        "voided": 0,
+        "voided_by": null,
+        "date_voided": null,
+        "void_reason": null,
+        "value_complex": null,
+        "uuid": "ab18459e-c702-4fee-a46d-31360c33935a",
+        "concept": {
+            "concept_id": 5096,
+            "retired": 0,
+            "short_name": "",
+            "description": "",
+            "form_text": null,
+            "datatype_id": 6,
+            "class_id": 7,
+            "is_set": 0,
+            "creator": 1,
+            "date_created": "2004-08-11T23:00:00.000Z",
+            "default_charge": null,
+            "version": "",
+            "changed_by": 1,
+            "date_changed": "2010-01-10T22:37:57.000Z",
+            "retired_by": null,
+            "date_retired": null,
+            "retire_reason": null,
+            "uuid": "b8ee958a-8d80-11d8-abbb-0024217bb78e",
+            "concept_names": [
+                {
+                    "concept_id": 5096,
+                    "name": "Appointment date",
+                    "locale": "en",
+                    "creator": 1,
+                    "date_created": "2004-08-12T00:00:00.000Z",
+                    "concept_name_id": 3463,
+                    "voided": 0,
+                    "voided_by": null,
+                    "date_voided": null,
+                    "void_reason": null,
+                    "uuid": "b9aff504-8d80-11d8-abbb-0024217bb78e",
+                    "concept_name_type": "FULLY_SPECIFIED",
+                    "locale_preferred": 0
+                },
+                {
+                    "concept_id": 5096,
+                    "name": "Next scheduled visit",
+                    "locale": "en",
+                    "creator": 1,
+                    "date_created": "2008-10-16T09:43:38.000Z",
+                    "concept_name_id": 7287,
+                    "voided": 0,
+                    "voided_by": null,
+                    "date_voided": null,
+                    "void_reason": null,
+                    "uuid": "b9c3e1e0-8d80-11d8-abbb-0024217bb78e",
+                    "concept_name_type": null,
+                    "locale_preferred": 0
+                },
+                {
+                    "concept_id": 5096,
+                    "name": "Return visit date",
+                    "locale": "en",
+                    "creator": 1,
+                    "date_created": "2010-01-10T22:37:57.000Z",
+                    "concept_name_id": 9356,
+                    "voided": 0,
+                    "voided_by": null,
+                    "date_voided": null,
+                    "void_reason": null,
+                    "uuid": "b9cd52a2-8d80-11d8-abbb-0024217bb78e",
+                    "concept_name_type": null,
+                    "locale_preferred": 0
+                }
+            ]
+        },
+        "children": []
     }
 ]</code></pre>
                                     </td></tr>

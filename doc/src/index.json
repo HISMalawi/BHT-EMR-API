@@ -1,7 +1,7 @@
 {
 	"id": "666fd3ae-c41c-b4b3-e1a2-8e1f5b3572ff",
 	"name": "BHT EMR API",
-	"description": "The BHT EMR API is a\n[RESTful](https://en.wikipedia.org/wiki/Representational_state_transfer)\nAPI providing an abstraction layer to a customised\n[OpenMRS 1.7](https://openmrs.org/) database and application engine\nfor EMRs ... FIXME.\n\n# Authentication\n\nThe API makes use of API keys for authentication. Almost all requests\nto the API must be accompanied by an API key. API keys are generated\nby logging into the API [see Logging in]. Keys are valid for 24 hours\nand a user can only have one valid key at a given point in time.\nGenerating a new key invalidates any existing key. \n\n# Request/Response Structure\n\nThe API primarily consumes and spits out JSON. It makes use of a number\nof HTTP verbs for manipulating and access  resources. All POST and PUT requests\nmust be accompanied by a JSON payload and a `Content-type=application/json`\nheader. Below is a summary of the verbs the API recognises.\n\n<table>\n  <thead>\n    <tr>\n      <th>Verb</th>\n      <th>Interpretation</th>\n      <th>Expected Response Status</th>\n    </tr>\n  </thead>\n\n  <tbody>\n    <tr>\n      <td>GET</td>\n      <td>Retrieve some resource.<br/>\n          eg. GET /api/v1/patients to retrieve patients\n      </td>\n      <td>200 - Ok</td>\n    </tr>\n    <tr>\n        <td>POST</td>\n        <td>Create a resource.</td>\n        <td>201 - Created</td>\n    </tr>\n    <tr>\n        <td>PUT</td>\n        <td>Update a resource.</td>\n        <td>200 - Ok</td>\n    </tr>\n    <tr>\n        <td>DELETE</td>\n        <td>Destroy some resource.</td>\n        <td>204 - No Content</td>\n    </tr>\n  </tbody>\n</table>\n\nSuccessful requests get a response with a status code of either 200, 201,\nor 204. For 200 and 201 responses a response body is always available. The body is the object (or list of objects) that was being accessed.\n\nFailed requests are flagged by 4XX status codes. Errors in this range\ngenerally have a response body of the following structure:\n\n```json\n    {\n        \"errors\": [\n            \"Error message\",\n            \"Another error message\",\n            ...,\n            \"More error messages\"\n        ]\n    }\n```\n\nHowever a 400 error for POST and PUT requests come as:\n\n```json\n    {\n        \"errors\": {\n            \"field\": \"This field is required\"\n            ...\n            \"some_other_field\": \"This field too is required\"\n        }\n    }\n```\n\n## Response status codes\n\nBelow is a description the response codes the API returns:\n\n<table>\n  <thead>\n    <tr>\n      <th>Status Code</th>\n      <th>Status Text</th>\n      <th>Description</th>\n    </tr>\n  </thead>\n\n  <tbody>\n    <tr>\n      <td>200</td>\n      <td>Ok</td>\n      <td>Request was successful</td>\n    </tr>\n    <tr>\n        <td>201</td>\n        <td>Created</td>\n        <td>Resource has been created</td>\n    </tr>\n    <tr>\n        <td>204</td>\n        <td>No Content</td>\n        <td>Resource has been deleted</td>\n    </tr>\n    <tr>\n        <td>400</td>\n        <td>Bad Request</td>\n        <td>Received a malformed request from client</td>\n    </tr>\n    <tr>\n        <td>401</td>\n        <td>Unauthorized</td>\n        <td>A valid API key is required</td>\n    </tr>\n    <tr>\n        <td>403</td>\n        <td>Forbidden</td>\n        <td>Logged in user is not allowed to perform request</td>\n    </tr>\n    <tr>\n        <td>500</td>\n        <td>Internal Server Error</td>\n        <td>API is ill, only thing that can be done is contacting the\n            system administrator</td>\n    </tr>\n  </tbody>\n</table>",
+	"description": "The BHT EMR API is a\n[RESTful](https://en.wikipedia.org/wiki/Representational_state_transfer)\nAPI providing an abstraction layer to a customised\n[OpenMRS 1.7](https://openmrs.org/) database and application engine\nfor EMRs ... FIXME.\n\n# Authentication\n\nThe API makes use of API keys for authentication. Almost all requests\nto the API must be accompanied by an API key. API keys are generated\nby logging into the API [see Logging in]. Keys are valid for 24 hours\nand a user can only have one valid key at a given point in time.\nGenerating a new key invalidates any existing key. \n\n# Request/Response Structure\n\nThe API primarily consumes and spits out JSON. It makes use of a number\nof HTTP verbs for manipulating and access  resources. All POST and PUT requests\nmust be accompanied by a JSON payload and a `Content-type=application/json`\nheader. Below is a summary of the verbs the API recognises.\n\n<table>\n  <thead>\n    <tr>\n      <th>Verb</th>\n      <th>Interpretation</th>\n      <th>Expected Response Status</th>\n    </tr>\n  </thead>\n\n  <tbody>\n    <tr>\n      <td>GET</td>\n      <td>Retrieve some resource.<br/>\n          eg. GET /api/v1/patients to retrieve patients\n      </td>\n      <td>200 - Ok</td>\n    </tr>\n    <tr>\n        <td>POST</td>\n        <td>Create a resource.</td>\n        <td>201 - Created</td>\n    </tr>\n    <tr>\n        <td>PUT</td>\n        <td>Update a resource.</td>\n        <td>200 - Ok</td>\n    </tr>\n    <tr>\n        <td>DELETE</td>\n        <td>Destroy some resource.</td>\n        <td>204 - No Content</td>\n    </tr>\n  </tbody>\n</table>\n\nSuccessful requests get a response with a status code of either 200, 201,\nor 204. For 200 and 201 responses a response body is always available. The body is the object (or list of objects) that was being accessed.\n\nFailed requests are flagged by 4XX status codes. Errors in this range\ngenerally have a response body of the following structure:\n\n```json\n    {\n        \"errors\": [\n            \"Error message\",\n            \"Another error message\",\n            ...,\n            \"More error messages\"\n        ]\n    }\n```\n\nHowever a 400 error for POST and PUT requests come as:\n\n```json\n    {\n        \"errors\": {\n            \"field\": \"This field is required\"\n            ...\n            \"some_other_field\": \"This field too is required\"\n        }\n    }\n```\n\n## Response status codes\n\nBelow is a description the response codes the API returns:\n\n<table>\n  <thead>\n    <tr>\n      <th>Status Code</th>\n      <th>Status Text</th>\n      <th>Description</th>\n    </tr>\n  </thead>\n\n  <tbody>\n    <tr>\n      <td>200</td>\n      <td>Ok</td>\n      <td>Request was successful</td>\n    </tr>\n    <tr>\n        <td>201</td>\n        <td>Created</td>\n        <td>Resource has been created</td>\n    </tr>\n    <tr>\n        <td>204</td>\n        <td>No Content</td>\n        <td>Resource has been deleted</td>\n    </tr>\n    <tr>\n        <td>400</td>\n        <td>Bad Request</td>\n        <td>Received a malformed request from client</td>\n    </tr>\n    <tr>\n        <td>401</td>\n        <td>Unauthorized</td>\n        <td>A valid API key is required</td>\n    </tr>\n    <tr>\n        <td>403</td>\n        <td>Forbidden</td>\n        <td>Logged in user is not allowed to perform request</td>\n    </tr>\n    <tr>\n        <td>500</td>\n        <td>Internal Server Error</td>\n        <td>API is ill, only thing that can be done is contacting the\n            system administrator</td>\n    </tr>\n  </tbody>\n</table>\n\n# Pagination\n\nAll endpoints (except a few) that return a list of values are paginated.\nPagination by default limits results to 10 items.\n\nA number of parameters are provided that control the pagination. Following\nis a table describing them:\n\n<table>\n    <thead>\n        <tr>\n            <th>Parameter</th>\n            <th>Description</th>\n        </tr>\n    </thead>\n    <tbody>\n        <tr>\n            <td>page</td>\n            <td>Specifies the page to retrieve (defaults to 0). Pages start from 0.</td>\n        </tr>\n        <tr>\n            <td>page_size</td>\n            <td>Specifies number of results per page (defaults to 10).</td>\n        </tr>\n        <tr>\n            <td>paginate</td>\n            <td>Switches off pagination. Only `false` is accepted as a value, anything else       is ignored.</td>\n        </tr>\n    </tbody>\n</table>\n\n## Pagination examples\n\n```bash\n# Retrieve page 5 of 20 items per page\ncurl 'http://localhost/api/v1/observations?page=5&page_size=20'\n\n// Retrieve all items without paginating\ncurl 'http://localhost/api/v1/observations?pagination=false'\n```",
 	"auth": null,
 	"events": null,
 	"variables": null,
@@ -26,7 +26,8 @@
 		"2e6d6f92-50c9-9a4f-e95c-07086fb611f1",
 		"03ee219c-798d-7545-33a6-d2c14d730ee9",
 		"06e05cfc-3188-4c40-9acd-b551b1f38ed6",
-		"4701e570-e2be-4c9c-bdce-c4bad8ba0370"
+		"4701e570-e2be-4c9c-bdce-c4bad8ba0370",
+		"e01bfa97-af04-4ef3-98df-a66874115d11"
 	],
 	"folders_order": [],
 	"folders": [],
@@ -2296,6 +2297,139 @@
 			"folder": null,
 			"rawModeData": "{\n\t\"given_name\": \"Foobar\",\n\t\"middle_name\": \"J.\",\n\t\"family_name\": \"Random\",\n\t\"gender\": \"F\",\n\t\"birthdate\": \"2000-01-01\",\n\t\"birthdate_estimated\": false,\n\t\"home_district\": \"Blantyre\",\n\t\"home_village\": \"Chatha\",\n\t\"home_traditional_authority\": \"Chatha\",\n\t\"current_district\": \"Lilongwe\",\n\t\"current_village\": \"Area 15\",\n\t\"current_traditional_authority\": \"Area 15\"\n}",
 			"headers": "Authorization: qTt9Wg2zs3oC\nContent-Type: application/json\n",
+			"pathVariables": {}
+		},
+		{
+			"id": "e01bfa97-af04-4ef3-98df-a66874115d11",
+			"name": "Retrieve appointments",
+			"url": "localhost:3000/api/v1/appointments?person_id=1000&page_size=1",
+			"description": "This endpoint provides access to all appointments ever created. Appointments are basically just Observations having a concept of 'Appointment'. They are returned in descending order of obs_datetime.\n\n### Available filters\n\n- obs_datetime: Limit results to appointments that fall on this date\n- person_id: Limit results to appointments belonging to this person\n- location_id: Limit results to appointments made at this location\n- encounter_id: Limit results to appointments belonging to this encounter (NOTE: there is no validation of whether the encounter is an appointment encounter)\n",
+			"data": null,
+			"dataMode": "params",
+			"headerData": [
+				{
+					"key": "Authorization",
+					"value": "c2t0QXtnOWEB",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"method": "GET",
+			"pathVariableData": [],
+			"queryParams": [
+				{
+					"key": "person_id",
+					"value": "1000",
+					"equals": true,
+					"description": "",
+					"enabled": true
+				},
+				{
+					"key": "page_size",
+					"value": "1",
+					"equals": true,
+					"description": "",
+					"enabled": true
+				}
+			],
+			"auth": null,
+			"events": [],
+			"folder": null,
+			"responses": [
+				{
+					"id": "0a6c8622-a17c-4c3c-8511-f56343de7e21",
+					"name": "Retrieve appointments",
+					"status": "",
+					"mime": "",
+					"language": "json",
+					"text": "[{\"obs_id\":886903,\"person_id\":1000,\"concept_id\":5096,\"encounter_id\":373031,\"order_id\":null,\"obs_datetime\":\"2018-10-01T13:14:41.000Z\",\"location_id\":null,\"obs_group_id\":null,\"accession_number\":null,\"value_group_id\":null,\"value_boolean\":null,\"value_coded\":null,\"value_coded_name_id\":null,\"value_drug\":null,\"value_datetime\":\"2018-09-30T00:00:00.000Z\",\"value_numeric\":null,\"value_modifier\":null,\"value_text\":null,\"date_started\":null,\"date_stopped\":null,\"comments\":null,\"creator\":1,\"date_created\":\"2018-10-01T13:14:41.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"value_complex\":null,\"uuid\":\"ab18459e-c702-4fee-a46d-31360c33935a\",\"concept\":{\"concept_id\":5096,\"retired\":0,\"short_name\":\"\",\"description\":\"\",\"form_text\":null,\"datatype_id\":6,\"class_id\":7,\"is_set\":0,\"creator\":1,\"date_created\":\"2004-08-11T23:00:00.000Z\",\"default_charge\":null,\"version\":\"\",\"changed_by\":1,\"date_changed\":\"2010-01-10T22:37:57.000Z\",\"retired_by\":null,\"date_retired\":null,\"retire_reason\":null,\"uuid\":\"b8ee958a-8d80-11d8-abbb-0024217bb78e\",\"concept_names\":[{\"concept_id\":5096,\"name\":\"Appointment date\",\"locale\":\"en\",\"creator\":1,\"date_created\":\"2004-08-12T00:00:00.000Z\",\"concept_name_id\":3463,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"b9aff504-8d80-11d8-abbb-0024217bb78e\",\"concept_name_type\":\"FULLY_SPECIFIED\",\"locale_preferred\":0},{\"concept_id\":5096,\"name\":\"Next scheduled visit\",\"locale\":\"en\",\"creator\":1,\"date_created\":\"2008-10-16T09:43:38.000Z\",\"concept_name_id\":7287,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"b9c3e1e0-8d80-11d8-abbb-0024217bb78e\",\"concept_name_type\":null,\"locale_preferred\":0},{\"concept_id\":5096,\"name\":\"Return visit date\",\"locale\":\"en\",\"creator\":1,\"date_created\":\"2010-01-10T22:37:57.000Z\",\"concept_name_id\":9356,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"b9cd52a2-8d80-11d8-abbb-0024217bb78e\",\"concept_name_type\":null,\"locale_preferred\":0}]},\"children\":[]}]",
+					"responseCode": {
+						"code": 200,
+						"name": "OK",
+						"detail": "Standard response for successful HTTP requests. The actual response will depend on the request method used. In a GET request, the response will contain an entity corresponding to the requested resource. In a POST request the response will contain an entity describing or containing the result of the action."
+					},
+					"requestObject": {
+						"url": "localhost:3000/api/v1/appointments?person_id=1000&page_size=1",
+						"pathVariableData": [],
+						"queryParams": [
+							{
+								"key": "person_id",
+								"value": "1000",
+								"equals": true,
+								"description": "",
+								"enabled": true
+							},
+							{
+								"key": "page_size",
+								"value": "1",
+								"equals": true,
+								"description": "",
+								"enabled": true
+							}
+						],
+						"headerData": [
+							{
+								"key": "Authorization",
+								"value": "c2t0QXtnOWEB",
+								"description": "",
+								"enabled": true,
+								"disabled": false
+							}
+						],
+						"data": null,
+						"method": "POST",
+						"dataMode": "params"
+					},
+					"headers": [
+						{
+							"key": "Cache-Control",
+							"value": "max-age=0, private, must-revalidate",
+							"name": "Cache-Control",
+							"description": "Tells all caching mechanisms from server to client whether they may cache this object. It is measured in seconds"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8",
+							"name": "Content-Type",
+							"description": "The mime type of this content"
+						},
+						{
+							"key": "ETag",
+							"value": "W/\"50c6a476f18c26c45e52c1dc2a51019c\"",
+							"name": "ETag",
+							"description": "An identifier for a specific version of a resource, often a message digest"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked",
+							"name": "Transfer-Encoding",
+							"description": "The form of encoding used to safely transfer the entity to the user. Currently defined methods are: chunked, compress, deflate, gzip, identity."
+						},
+						{
+							"key": "Vary",
+							"value": "Origin",
+							"name": "Vary",
+							"description": "Tells downstream proxies how to match future request headers to decide whether the cached response can be used rather than requesting a fresh one from the origin server."
+						},
+						{
+							"key": "X-Request-Id",
+							"value": "5103322a-27fa-4c61-9c15-46f126a83004",
+							"name": "X-Request-Id",
+							"description": "Custom header"
+						},
+						{
+							"key": "X-Runtime",
+							"value": "0.013925",
+							"name": "X-Runtime",
+							"description": "Custom header"
+						}
+					],
+					"cookies": [],
+					"request": "e01bfa97-af04-4ef3-98df-a66874115d11",
+					"collection": "666fd3ae-c41c-b4b3-e1a2-8e1f5b3572ff"
+				}
+			],
+			"headers": "Authorization: c2t0QXtnOWEB\n",
 			"pathVariables": {}
 		},
 		{
