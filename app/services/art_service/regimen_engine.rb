@@ -8,15 +8,7 @@ module ARTService
       @program = program
     end
 
-    def find_regimens_by_weight(weight, paginator: nil)
-      find_regimens weight: weight, age: nil, paginator: paginator
-    end
-
-    def find_regimens_by_age(age, paginator: nil)
-      find_regimens age: age, weight: nil, paginator: paginator
-    end
-
-    def find_regimens(weight:, age:, paginator: nil)
+    def find_regimens(weight: nil, age: nil, paginator: nil)
       raise ArgumentError, 'weight or age expected' if weight.nil? && age.nil?
 
       ingredients = MohRegimenIngredient
