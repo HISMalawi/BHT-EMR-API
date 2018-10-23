@@ -22,15 +22,14 @@ class Api::V1::ObservationsController < ApplicationController
   #       AND-d together.
   def index
     filters, = required_params optional: %i[
-      person_id concept_id encounter_id order_id date_started date_stopped
-      obs_datetime
+      person_id concept_id encounter_id order_id date_started
+      date_stopped obs_datetime
     ]
 
-    if filters.empty?
-      render json: paginate(Observation)
-    else
-      render json: paginate(Observation.where(filters))
-    end
+    query = filters.empty? ? Observation : Observation.where(filters)
+    query = paginate(query.order(obs_datetime: :desc))
+
+    render json: query
   end
 
   # Create new observation
