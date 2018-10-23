@@ -3,6 +3,7 @@
 FactoryBot.define do
   factory :observation do
     association :encounter
+    association :person
     creator { 1 }
 
     factory :obs_appointment do

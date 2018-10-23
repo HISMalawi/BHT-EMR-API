@@ -39,9 +39,33 @@ RSpec.describe AppointmentService do
     end
 
     it 'retrieves all appointments for a given person' do
+      encounter = create :encounter_appointment, encounter_datetime: epoch
+
+      created = (1..10).collect do |i|
+        create :obs_appointment, encounter: encounter,
+                                 obs_datetime: epoch + i.days
+      end
+
+      retrieved = appointment_service.appointments person: created[0].person
+      expect(retrieved.size).to be(1)
+      expect(retrieved[0].obs_id).to eq(created[0].obs_id)
     end
 
     it 'retrieves all appointments for a given date and person' do
+      encounter = create :encounter_appointment, encounter_datetime: epoch
+
+      created = (0..9).collect do |i|
+        params = { encounter: encounter, obs_datetime: epoch + i.days }
+        params[:person] = person if i.odd?
+        create :obs_appointment, params
+      end
+
+      # Odd numbered appointments in created belong to our `person`
+      retrieved = appointment_service.appointments person: created[1].person,
+                                                   obs_datetime: created[1].obs_datetime.to_date
+      expect(retrieved.size).to be(1)
+      expect(retrieved[0].person_id).to eq(created[1].person_id)
+      expect(retrieved[0].obs_id).to eq(created[1].obs_id)
     end
   end
 
