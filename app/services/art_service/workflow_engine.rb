@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'logger'
-
 module ARTService
   class WorkflowEngine
     include ModelUtils
@@ -54,7 +52,7 @@ module ARTService
 
     private
 
-    LOGGER = Logger.new STDOUT
+    LOGGER = Rails.logger
 
     # Encounter types
     INITIAL_STATE = 0 # Start terminal for encounters graph
