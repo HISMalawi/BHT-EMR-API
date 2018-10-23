@@ -9,7 +9,7 @@ class Api::V1::PeopleController < ApplicationController
   #
   # GET /search/people?given_name={value}&family_name={value}&gender={value}
   def search
-    given_name, family_name, gender = params.require(%i[given_name family_name gender])
+    given_name, family_name, gender = params.require %i[given_name family_name gender]
 
     people = paginate(Person.joins(:names).where(
       'person.gender like ? AND person_name.given_name LIKE ?
@@ -30,7 +30,8 @@ class Api::V1::PeopleController < ApplicationController
   end
 
   def create
-    create_params, errors = required_params required: PersonService::PERSON_FIELDS
+    create_params, errors = required_params required: PersonService::PERSON_FIELDS,
+                                            optional: [:middle_name]
     return render json: create_params, status: :bad_request if errors
 
     person = PersonService.create_person create_params
