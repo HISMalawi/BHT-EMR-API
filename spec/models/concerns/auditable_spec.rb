@@ -9,11 +9,11 @@ describe Auditable do
       attr_accessor :changed_by, :date_changed
 
       def self.before_save(callback)
-        @@before_save_callback = callback
+        class_variable_set :@@before_save_callback, callback
       end
 
       def self.before_create(callback)
-        @@before_create_callback = callback
+        class_variable_set :@@before_create_callback, callback
       end
 
       include Auditable
