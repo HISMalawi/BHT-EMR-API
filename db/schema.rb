@@ -229,12 +229,6 @@ ActiveRecord::Schema.define(version: 2018_10_05_113001) do
     t.index ["voided_by"], name: "user_who_voided_name"
   end
 
-  create_table "concept_name_map", id: false, options: "ENGINE=MyISAM DEFAULT CHARSET=latin1", force: :cascade do |t|
-    t.integer "drug_id"
-    t.string "bart_one_concept_name"
-    t.string "bart_two_concept_name"
-  end
-
   create_table "concept_name_tag", primary_key: "concept_name_tag_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.string "tag", limit: 50, null: false
     t.text "description", null: false
@@ -385,7 +379,7 @@ ActiveRecord::Schema.define(version: 2018_10_05_113001) do
     t.index ["retired_by"], name: "user_who_retired_district"
   end
 
-  create_table "districts", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+  create_table "districts", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
@@ -415,7 +409,7 @@ ActiveRecord::Schema.define(version: 2018_10_05_113001) do
     t.index ["uuid"], name: "drug_uuid_index", unique: true
   end
 
-  create_table "drug_cms", primary_key: "drug_inventory_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+  create_table "drug_cms", primary_key: "drug_inventory_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.string "name", null: false
     t.string "code"
     t.string "short_name", limit: 225
@@ -437,16 +431,9 @@ ActiveRecord::Schema.define(version: 2018_10_05_113001) do
     t.index ["concept_id"], name: "combination_drug"
   end
 
-  create_table "drug_ingredients", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+  create_table "drug_ingredients", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-  end
-
-  create_table "drug_map", id: false, options: "ENGINE=MyISAM DEFAULT CHARSET=latin1", force: :cascade do |t|
-    t.integer "drug_id"
-    t.string "bart_one_name"
-    t.string "bart2_two_name"
-    t.integer "new_drug_id"
   end
 
   create_table "drug_order", primary_key: "order_id", id: :integer, default: 0, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
@@ -461,7 +448,7 @@ ActiveRecord::Schema.define(version: 2018_10_05_113001) do
     t.index ["drug_inventory_id"], name: "inventory_item"
   end
 
-  create_table "drug_order_barcodes", primary_key: "drug_order_barcode_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+  create_table "drug_order_barcodes", primary_key: "drug_order_barcode_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.integer "drug_id"
     t.integer "tabs"
     t.datetime "created_at", null: false
@@ -669,7 +656,7 @@ ActiveRecord::Schema.define(version: 2018_10_05_113001) do
     t.index ["form_id"], name: "Form with which this xsn is related"
   end
 
-  create_table "general_sets", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+  create_table "general_sets", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
@@ -681,7 +668,7 @@ ActiveRecord::Schema.define(version: 2018_10_05_113001) do
     t.index ["uuid"], name: "global_property_uuid_index", unique: true
   end
 
-  create_table "heart_beat", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+  create_table "heart_beat", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.string "ip", limit: 20
     t.string "property", limit: 200
     t.string "value", limit: 200
@@ -749,7 +736,7 @@ ActiveRecord::Schema.define(version: 2018_10_05_113001) do
     t.index ["form_id"], name: "Form with which this htmlform is related"
   end
 
-  create_table "labs", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+  create_table "labs", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
@@ -784,7 +771,7 @@ ActiveRecord::Schema.define(version: 2018_10_05_113001) do
     t.string "latitude", limit: 50
     t.string "longitude", limit: 50
     t.integer "creator", default: 0, null: false
-    t.datetime "date_created", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.timestamp "date_created", default: -> { "CURRENT_TIMESTAMP" }, null: false
     t.string "county_district", limit: 50
     t.string "neighborhood_cell", limit: 50
     t.string "region", limit: 50
@@ -825,7 +812,7 @@ ActiveRecord::Schema.define(version: 2018_10_05_113001) do
     t.index ["location_tag_id"], name: "location_tag_map_tag"
   end
 
-  create_table "location_tag_maps", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+  create_table "location_tag_maps", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
@@ -991,7 +978,7 @@ ActiveRecord::Schema.define(version: 2018_10_05_113001) do
     t.text "issued_to"
   end
 
-  create_table "national_ids", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+  create_table "national_ids", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
@@ -1054,7 +1041,7 @@ ActiveRecord::Schema.define(version: 2018_10_05_113001) do
     t.index ["uuid"], name: "notification_template_uuid_index", unique: true
   end
 
-  create_table "notification_tracker", primary_key: "tracker_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+  create_table "notification_tracker", primary_key: "tracker_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.string "notification_name", null: false
     t.text "description"
     t.string "notification_response", null: false
@@ -1063,7 +1050,7 @@ ActiveRecord::Schema.define(version: 2018_10_05_113001) do
     t.integer "user_id", null: false
   end
 
-  create_table "notification_tracker_user_activities", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+  create_table "notification_tracker_user_activities", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.integer "user_id", null: false
     t.datetime "login_datetime", null: false
     t.text "selected_activities"
@@ -1178,7 +1165,7 @@ ActiveRecord::Schema.define(version: 2018_10_05_113001) do
     t.index ["voided_by"], name: "user_who_voided_order"
   end
 
-  create_table "outpatients", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+  create_table "outpatients", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
@@ -1199,7 +1186,7 @@ ActiveRecord::Schema.define(version: 2018_10_05_113001) do
     t.index ["voided_by"], name: "user_who_voided_patient"
   end
 
-  create_table "patient_defaulted_dates", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+  create_table "patient_defaulted_dates", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.integer "patient_id"
     t.integer "order_id"
     t.integer "drug_id"
@@ -1209,7 +1196,7 @@ ActiveRecord::Schema.define(version: 2018_10_05_113001) do
     t.date "start_date"
     t.date "end_date"
     t.date "defaulted_date"
-    t.date "date_created", default: "2018-09-28"
+    t.date "date_created", default: "2018-10-23"
   end
 
   create_table "patient_identifier", primary_key: "patient_identifier_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
@@ -1494,7 +1481,7 @@ ActiveRecord::Schema.define(version: 2018_10_05_113001) do
     t.index ["person_name_id"], name: "name_for_patient"
   end
 
-  create_table "pharmacies", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+  create_table "pharmacies", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
@@ -1519,6 +1506,8 @@ ActiveRecord::Schema.define(version: 2018_10_05_113001) do
     t.integer "pharmacy_encounter_type", default: 0, null: false
     t.integer "drug_id", default: 0, null: false
     t.float "value_numeric", limit: 53
+    t.float "expiring_units", limit: 53
+    t.integer "pack_size"
     t.integer "value_coded"
     t.string "value_text", limit: 15
     t.date "expiry_date"
@@ -1553,6 +1542,19 @@ ActiveRecord::Schema.define(version: 2018_10_05_113001) do
     t.index ["concept_id"], name: "program_concept"
     t.index ["creator"], name: "program_creator"
     t.index ["uuid"], name: "program_uuid_index", unique: true
+  end
+
+  create_table "program_encounter", primary_key: "program_encounter_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci", force: :cascade do |t|
+    t.integer "patient_id"
+    t.datetime "date_time"
+    t.integer "program_id"
+  end
+
+  create_table "program_encounter_details", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci", force: :cascade do |t|
+    t.integer "encounter_id"
+    t.integer "program_encounter_id"
+    t.integer "program_id"
+    t.integer "voided", default: 0
   end
 
   create_table "program_encounter_type_map", primary_key: "program_encounter_type_map_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
@@ -1627,8 +1629,8 @@ ActiveRecord::Schema.define(version: 2018_10_05_113001) do
   create_table "regimen", primary_key: "regimen_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.integer "concept_id", default: 0, null: false
     t.string "regimen_index", limit: 5
-    t.integer "min_weight", default: 0, null: false
-    t.integer "max_weight", default: 200, null: false
+    t.float "min_weight", default: 0.0, null: false
+    t.float "max_weight", default: 200.0, null: false
     t.integer "creator", default: 0, null: false
     t.datetime "date_created", null: false
     t.integer "retired", limit: 2, default: 0, null: false
@@ -1676,7 +1678,7 @@ ActiveRecord::Schema.define(version: 2018_10_05_113001) do
     t.index ["retired_by"], name: "user_who_retired_region"
   end
 
-  create_table "regions", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+  create_table "regions", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
@@ -1846,7 +1848,7 @@ ActiveRecord::Schema.define(version: 2018_10_05_113001) do
     t.integer "version"
   end
 
-  create_table "send_results_to_couchdbs", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+  create_table "send_results_to_couchdbs", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
@@ -1915,7 +1917,7 @@ ActiveRecord::Schema.define(version: 2018_10_05_113001) do
     t.index ["voided_by"], name: "user_who_voided_task"
   end
 
-  create_table "traditional_authorities", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+  create_table "traditional_authorities", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
@@ -1943,7 +1945,7 @@ ActiveRecord::Schema.define(version: 2018_10_05_113001) do
   create_table "user_property", primary_key: ["user_id", "property"], options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.integer "user_id", default: 0, null: false
     t.string "property", limit: 100, default: "", null: false
-    t.string "property_value", limit: 600, default: "", null: false
+    t.string "property_value", default: "", null: false
   end
 
   create_table "user_role", primary_key: ["role", "user_id"], options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
@@ -1960,7 +1962,7 @@ ActiveRecord::Schema.define(version: 2018_10_05_113001) do
     t.string "secret_question"
     t.string "secret_answer"
     t.integer "creator", default: 0, null: false
-    t.datetime "date_created", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.timestamp "date_created", default: -> { "CURRENT_TIMESTAMP" }, null: false
     t.integer "changed_by"
     t.datetime "date_changed"
     t.integer "person_id"
@@ -1977,7 +1979,7 @@ ActiveRecord::Schema.define(version: 2018_10_05_113001) do
     t.index ["retired_by"], name: "user_who_retired_this_user"
   end
 
-  create_table "validation_results", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+  create_table "validation_results", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.integer "rule_id"
     t.integer "failures"
     t.date "date_checked"
@@ -1985,7 +1987,7 @@ ActiveRecord::Schema.define(version: 2018_10_05_113001) do
     t.datetime "updated_at", null: false
   end
 
-  create_table "validation_rules", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+  create_table "validation_rules", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.string "expr"
     t.text "desc"
     t.integer "type_id"
@@ -2008,7 +2010,7 @@ ActiveRecord::Schema.define(version: 2018_10_05_113001) do
     t.index ["traditional_authority_id"], name: "ta_for_village"
   end
 
-  create_table "villages", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+  create_table "villages", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
