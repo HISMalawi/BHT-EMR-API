@@ -2329,6 +2329,93 @@
 			"auth": null,
 			"events": [],
 			"folder": null,
+			"responses": [
+				{
+					"id": "ae7d44e0-a050-47be-9e63-049d2ba6e143",
+					"name": "Retrieve relationship types",
+					"status": "",
+					"mime": "",
+					"language": "json",
+					"text": "[{\"relationship_type_id\":4,\"a_is_to_b\":\"Aunt/Uncle\",\"b_is_to_a\":\"Niece/Nephew\",\"preferred\":0,\"weight\":0,\"description\":\"\",\"creator\":1,\"date_created\":\"2007-11-28T08:11:37.000Z\",\"uuid\":\"8d91a3dc-c2cc-11de-8d13-0010c6dffd0f\",\"retired\":false,\"retired_by\":null,\"date_retired\":null,\"retire_reason\":null}]",
+					"responseCode": {
+						"code": 200,
+						"name": "OK",
+						"detail": "Standard response for successful HTTP requests. The actual response will depend on the request method used. In a GET request, the response will contain an entity corresponding to the requested resource. In a POST request the response will contain an entity describing or containing the result of the action."
+					},
+					"requestObject": {
+						"url": "localhost:3000/api/v1/types/relationships?page_size=1",
+						"pathVariableData": [],
+						"queryParams": [
+							{
+								"key": "page_size",
+								"value": "1",
+								"equals": true,
+								"description": "",
+								"enabled": true
+							}
+						],
+						"headerData": [
+							{
+								"key": "Authorization",
+								"value": "kqpBzH1K6rYN",
+								"description": "",
+								"enabled": true,
+								"disabled": false
+							}
+						],
+						"data": null,
+						"method": "GET",
+						"dataMode": "params"
+					},
+					"headers": [
+						{
+							"key": "Cache-Control",
+							"value": "max-age=0, private, must-revalidate",
+							"name": "Cache-Control",
+							"description": "Tells all caching mechanisms from server to client whether they may cache this object. It is measured in seconds"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8",
+							"name": "Content-Type",
+							"description": "The mime type of this content"
+						},
+						{
+							"key": "ETag",
+							"value": "W/\"72d4e07f93046a1c7387a9dce56273c0\"",
+							"name": "ETag",
+							"description": "An identifier for a specific version of a resource, often a message digest"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked",
+							"name": "Transfer-Encoding",
+							"description": "The form of encoding used to safely transfer the entity to the user. Currently defined methods are: chunked, compress, deflate, gzip, identity."
+						},
+						{
+							"key": "Vary",
+							"value": "Origin",
+							"name": "Vary",
+							"description": "Tells downstream proxies how to match future request headers to decide whether the cached response can be used rather than requesting a fresh one from the origin server."
+						},
+						{
+							"key": "X-Request-Id",
+							"value": "56b05979-4612-42da-99df-97f1cc0de3c7",
+							"name": "X-Request-Id",
+							"description": "Custom header"
+						},
+						{
+							"key": "X-Runtime",
+							"value": "0.009414",
+							"name": "X-Runtime",
+							"description": "Custom header"
+						}
+					],
+					"cookies": [],
+					"request": "da3d4544-815e-4d45-abd5-b7f649ed68f3",
+					"collection": "666fd3ae-c41c-b4b3-e1a2-8e1f5b3572ff"
+				}
+			],
 			"headers": "Authorization: kqpBzH1K6rYN\n",
 			"pathVariables": {}
 		},
