@@ -82,10 +82,13 @@ Rails.application.routes.draw do
         resources :program_patients, path: :patients do
           get '/last_drugs_received' => 'program_patients#last_drugs_received'
         end
+        resources :lab_test_types, path: 'lab_tests/types'
+        resources :lab_test_orders, path: 'lab_tests/orders'
       end
 
       namespace :types do
         resources :relationships
+        resources :lab_tests
       end
 
       resources :drugs
