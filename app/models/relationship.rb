@@ -11,7 +11,7 @@ class Relationship < VoidableRecord
   belongs_to :type, class_name: 'RelationshipType', foreign_key: :relationship,
                     optional: true
 
-  scope :guardian,  lambda do
+  scope :guardian, (lambda do
     where(['relationship_type.b_is_to_a = ?', 'Guardian']).joins(:type)
-  end
+  end)
 end
