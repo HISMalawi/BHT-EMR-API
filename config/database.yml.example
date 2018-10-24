@@ -17,3 +17,11 @@ test:
 production:
   <<: *default
   database: mlambe_api_production
+
+healthdata:
+  adapter: mysql2
+  username: root
+  database: healthdata
+  password: password
+  host: localhost
+  pool: 500

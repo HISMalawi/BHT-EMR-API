@@ -8,4 +8,10 @@ class ApplicationRecord < ActiveRecord::Base
       self.uuid = SecureRandom.uuid
     end
   end
+
+  class << self
+    def use_healthdata_db
+      establish_connection Rails.application.config.healthdata_db
+    end
+  end
 end
