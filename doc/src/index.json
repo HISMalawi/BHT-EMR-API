@@ -27,7 +27,8 @@
 		"03ee219c-798d-7545-33a6-d2c14d730ee9",
 		"06e05cfc-3188-4c40-9acd-b551b1f38ed6",
 		"4701e570-e2be-4c9c-bdce-c4bad8ba0370",
-		"e01bfa97-af04-4ef3-98df-a66874115d11"
+		"e01bfa97-af04-4ef3-98df-a66874115d11",
+		"da3d4544-815e-4d45-abd5-b7f649ed68f3"
 	],
 	"folders_order": [],
 	"folders": [],
@@ -2297,6 +2298,38 @@
 			"folder": null,
 			"rawModeData": "{\n\t\"given_name\": \"Foobar\",\n\t\"middle_name\": \"J.\",\n\t\"family_name\": \"Random\",\n\t\"gender\": \"F\",\n\t\"birthdate\": \"2000-01-01\",\n\t\"birthdate_estimated\": false,\n\t\"home_district\": \"Blantyre\",\n\t\"home_village\": \"Chatha\",\n\t\"home_traditional_authority\": \"Chatha\",\n\t\"current_district\": \"Lilongwe\",\n\t\"current_village\": \"Area 15\",\n\t\"current_traditional_authority\": \"Area 15\"\n}",
 			"headers": "Authorization: qTt9Wg2zs3oC\nContent-Type: application/json\n",
+			"pathVariables": {}
+		},
+		{
+			"id": "da3d4544-815e-4d45-abd5-b7f649ed68f3",
+			"name": "Retrieve relationship types",
+			"url": "localhost:3000/api/v1/types/relationships?page_size=1",
+			"description": "This endpoint provides access to all relationship types in store. Filtering is supported through the `search_string` parameters. For example to retrieve all relationships containing the term 'doctor' use `<address>/api/v1/types/relationships?search_string=doctor`.",
+			"data": null,
+			"dataMode": "params",
+			"headerData": [
+				{
+					"key": "Authorization",
+					"value": "kqpBzH1K6rYN",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"method": "GET",
+			"pathVariableData": [],
+			"queryParams": [
+				{
+					"key": "page_size",
+					"value": "1",
+					"equals": true,
+					"description": "",
+					"enabled": true
+				}
+			],
+			"auth": null,
+			"events": [],
+			"folder": null,
+			"headers": "Authorization: kqpBzH1K6rYN\n",
 			"pathVariables": {}
 		},
 		{

@@ -243,6 +243,10 @@ pre code {
             <a href="#request-retrieve-appointments">Retrieve appointments</a>
         </li>
         
+        <li>
+            <a href="#request-retrieve-relationship-types">Retrieve relationship types</a>
+        </li>
+        
         
     </ul>
 </div>
@@ -273,11 +277,6 @@ pre code {
     body > #page-content-wrapper h6 {
         color: #FFAA00;
         font-weight: bold;
-    }
-    
-    body > #sidebar-wrapper {
-        background-color: #FFAA00
-        color: black;
     }
 </style>
 
@@ -7142,6 +7141,39 @@ Authorization: c2t0QXtnOWEB</code></pre>
                             
                         </div>
                     </div>
+                    
+
+                    <hr>
+                </div>
+                
+                
+                <div class="request">
+
+                    <h3 id="request-retrieve-relationship-types">
+                        Retrieve relationship types
+                        <a href="#request-retrieve-relationship-types"><i class="glyphicon glyphicon-link"></i></a>
+                    </h3>
+
+                    <div><p>This endpoint provides access to all relationship types in store. Filtering is supported through the <code>search_string</code> parameters. For example to retrieve all relationships containing the term &lsquo;doctor&rsquo; use <code>&lt;address&gt;/api/v1/types/relationships?search_string=doctor</code>.</p>
+</div>
+
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li role="presentation" class="active"><a href="#request-retrieve-relationship-types-example-curl" data-toggle="tab">Curl</a></li>
+                            <li role="presentation"><a href="#request-retrieve-relationship-types-example-http" data-toggle="tab">HTTP</a></li>
+                        </ul>
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="request-retrieve-relationship-types-example-curl">
+                                <pre><code class="hljs curl">curl -X GET -H "Authorization: kqpBzH1K6rYN" "localhost:3000/api/v1/types/relationships?page_size=1"</code></pre>
+                            </div>
+                            <div class="tab-pane" id="request-retrieve-relationship-types-example-http">
+                                <pre><code class="hljs http">GET 3000/api/v1/types/relationships?page_size=1 HTTP/1.1
+Host: 
+Authorization: kqpBzH1K6rYN</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
                     
 
                     <hr>
