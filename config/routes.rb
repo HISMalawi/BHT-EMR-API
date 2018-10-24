@@ -84,6 +84,10 @@ Rails.application.routes.draw do
         end
       end
 
+      namespace :types do
+        resources :relationships
+      end
+
       resources :drugs
       resources :drug_orders
       resources :orders
