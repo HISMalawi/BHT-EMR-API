@@ -24,4 +24,8 @@ module ModelUtils
   def user_property(user_id, name)
     UserProperty.find_by user_id: user_id, property: name
   end
+
+  def order_type(name)
+    OrderType.find_by_name(name)
+  end
 end
