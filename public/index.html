@@ -259,13 +259,35 @@ pre code {
                     <a href="#doc-general-notes"><i class="glyphicon glyphicon-link"></i></a>
                 </h2>
 
-                <p>The BHT EMR API is a
+                <style>
+    body > #page-content-wrapper {
+        max-width: 1024px;
+        margin: 5%;
+    }
+    
+    body > #page-content-wrapper h1,
+    body > #page-content-wrapper h2,
+    body > #page-content-wrapper h3,
+    body > #page-content-wrapper h4,
+    body > #page-content-wrapper h5,
+    body > #page-content-wrapper h6 {
+        color: #FFAA00;
+        font-weight: bold;
+    }
+    
+    body > #sidebar-wrapper {
+        background-color: #FFAA00
+        color: black;
+    }
+</style>
+
+<p>The BHT EMR API is a
 <a href="https://en.wikipedia.org/wiki/Representational_state_transfer">RESTful</a>
 API providing an abstraction layer to a customised
 <a href="https://openmrs.org/">OpenMRS 1.7</a> database and application engine
 for EMRs &hellip; FIXME.</p>
 
-<h1>Authentication</h1>
+<h2>Authentication</h2>
 
 <p>The API makes use of API keys for authentication. Almost all requests
 to the API must be accompanied by an API key. API keys are generated
@@ -273,7 +295,7 @@ by logging into the API [see Logging in]. Keys are valid for 24 hours
 and a user can only have one valid key at a given point in time.
 Generating a new key invalidates any existing key.</p>
 
-<h1>Request/Response Structure</h1>
+<h2>Request/Response Structure</h2>
 
 <p>The API primarily consumes and spits out JSON. It makes use of a number
 of HTTP verbs for manipulating and access  resources. All POST and PUT requests
@@ -342,7 +364,7 @@ generally have a response body of the following structure:</p>
     }
 </code></pre>
 
-<h2>Response status codes</h2>
+<h3>Response status codes</h3>
 
 <p>Below is a description the response codes the API returns:</p>
 
@@ -395,7 +417,7 @@ generally have a response body of the following structure:</p>
   </tbody>
 </table>
 
-<h1>Pagination</h1>
+<h2>Pagination</h2>
 
 <p>All endpoints (except a few) that return a list of values are paginated.
 Pagination by default limits results to 10 items.</p>
@@ -426,7 +448,7 @@ is a table describing them:</p>
     </tbody>
 </table>
 
-<h2>Pagination examples</h2>
+<h3>Pagination examples</h3>
 
 <pre><code class="language-bash"># Retrieve page 5 of 20 items per page
 curl 'http://localhost/api/v1/observations?page=5&amp;page_size=20'
