@@ -1,3 +1,3 @@
 # frozen_string_literal: true
 
-class NotFoundError < ApplicationException; end
+class NotFoundError < ApplicationError; end

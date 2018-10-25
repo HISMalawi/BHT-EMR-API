@@ -19,6 +19,10 @@ Rails.application.routes.draw do
 
       get '/people/_names' => 'person_names#index'
       resources :people do
+        resources :person_relationships, path: :relationships
+
+        get '/guardians', to: 'person_relationships#guardians'
+
         get('/names', to: redirect do |params, request|
           paginate_url "/api/v1/people/_names?person_id=#{params[:person_id]}",
                        request.params
