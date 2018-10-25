@@ -10,6 +10,7 @@ class ApplicationController < ActionController::API
   protected
 
   include RequireParams
+  include ExceptionHandler
 
   CURRENT_LOCATION_PROPERTY = 'current_health_center_id'
   DEFAULT_PAGE_SIZE = 10
