@@ -37,7 +37,7 @@ class ARTService::LabTestsEngine
   def create_local_order(patient, encounter)
     Order.create patient: patient,
                  encounter: encounter,
-                 concept: concept('Lab tests for adults'),
+                 concept: concept('Laboratory tests ordered'),
                  order_type: order_type('Lab'),
                  provider: User.current
   end
