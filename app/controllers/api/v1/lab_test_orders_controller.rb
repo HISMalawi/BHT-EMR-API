@@ -3,9 +3,14 @@
 class Api::V1::LabTestOrdersController < ApplicationController
   def index
     if params[:accession_number]
-      render json: engine.find_orders_by_accession_number(params[:accession_number])
+      orders = engine.find_orders_by_accession_number params[:accession_number]
+      render json: paginate(orders)
     elsif params[:patient_id]
-      render json: engine.find_orders_by_patient_id(params[:patient_id])
+      patient = Patient.find params[:patient_id]
+      orders = engine.find_orders_by_patient patient
+      # NOTE: orders can't be paginated here as it is just an ordinary array
+      # not a queryset
+      render json: orders
     else
       render json: { errors: ['accession_number or patient_id required'] },
              status: :bad_request

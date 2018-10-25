@@ -21,24 +21,38 @@ class ARTService::LabTestsEngine
     patient ||= encounter.patient
     date ||= encounter.encounter_datetime
 
-    local_order = create_local_order patient, encounter
+    local_order = create_local_order patient, encounter, date
     local_order.accession_number = next_id local_order.order_id
     local_order.save!
 
     lab_order = create_lab_order type, local_order, date
-    lab_sample = create_lab_sample lab_order
+    create_lab_sample lab_order
 
-    { order: local_order, lab_test_table: lab_order, lab_sample: lab_sample }
+    { order: local_order, lab_test_table: lab_order.as_json }
+  end
+
+  def find_orders_by_patient(patient, paginate_func: nil)
+    local_orders = Order.where patient: patient
+    local_orders = paginate_func.call(local_orders) if paginate_func
+    local_orders.each_with_object([]) do |local_order, collected_orders|
+      orders = find_orders_by_accession_number local_order.accession_number
+      collected_orders.push(*orders)
+    end
+  end
+
+  def find_orders_by_accession_number(accession_number)
+    LabTestTable.where(Pat_ID: accession_number).order('DATE(OrderDate), TIME(OrderTime)')
   end
 
   private
 
   # Creates an Order in the primary openmrs database
-  def create_local_order(patient, encounter)
+  def create_local_order(patient, encounter, date)
     Order.create patient: patient,
                  encounter: encounter,
                  concept: concept('Laboratory tests ordered'),
                  order_type: order_type('Lab'),
+                 start_date: date,
                  provider: User.current
   end
 
