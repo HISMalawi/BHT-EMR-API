@@ -87,6 +87,7 @@ Rails.application.routes.draw do
           get '/last_drugs_received' => 'program_patients#last_drugs_received'
         end
         resources :lab_test_types, path: 'lab_tests/types'
+        get '/lab_tests/panels' => 'lab_test_types#panels'
         resources :lab_test_orders, path: 'lab_tests/orders'
       end
 

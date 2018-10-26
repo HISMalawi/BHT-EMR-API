@@ -17,6 +17,15 @@ class ARTService::LabTestsEngine
     query.order('TestName')
   end
 
+  def panels(search_string: nil)
+    query = if search_string
+              LabPanel.where('name like ?', "%#{search_string}%")
+            else
+              LabPanel
+            end
+    query.order(:name)
+  end
+
   def create_order(type:, encounter:, patient: nil, date: nil)
     patient ||= encounter.patient
     date ||= encounter.encounter_datetime
