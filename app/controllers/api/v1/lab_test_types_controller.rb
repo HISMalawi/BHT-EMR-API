@@ -7,7 +7,7 @@ class Api::V1::LabTestTypesController < ApplicationController
   end
 
   def panels
-    query = engine.types(search_string: params[:search_string])
+    query = engine.panels(search_string: params[:search_string])
     render json: paginate(query)
   end
 

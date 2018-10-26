@@ -23,7 +23,7 @@ class ARTService::LabTestsEngine
             else
               LabPanel
             end
-    query.order(:name)
+    query.order(:name).group(:rec_id)
   end
 
   def create_order(type:, encounter:, patient: nil, date: nil)
