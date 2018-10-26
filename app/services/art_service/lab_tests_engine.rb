@@ -11,15 +11,12 @@ class ARTService::LabTestsEngine
     query = LabTestType
     query = query.where('TestName like ?', "%#{search_string}%") if search_string
     query = query.where(Panel_ID: panel_id) if panel_id
-    query.order('TestName')
+    query.order(:TestName)
   end
 
   def panels(search_string: nil)
-    query = if search_string
-              LabPanel.where('name like ?', "%#{search_string}%")
-            else
-              LabPanel
-            end
+    query = LabPanel.joins(:types)
+    query = query.where('name like ?', "%#{search_string}%") if search_string
     query.order(:name).group(:rec_id)
   end
 

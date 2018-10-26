@@ -6,6 +6,8 @@ class LabPanel < ApplicationRecord
 
   use_healthdata_db
 
+  has_many :types, class_name: 'LabTestType', foreign_key: :Panel_ID
+
   # def self.test_name(test_types=nil)
   #   return self.where(["rec_id IN (?)",test_types]).group("rec_id").collect{|n|n.short_name} rescue nil
   # end

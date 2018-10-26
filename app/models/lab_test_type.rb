@@ -1,9 +1,13 @@
 # frozen_string_literal: true
 
 class LabTestType < ApplicationRecord
+  self.table_name = :codes_TestType
+  self.primary_key = :ID
+
   use_healthdata_db
 
-  self.table_name = 'codes_TestType'
+
+  belongs_to :lab_panel, foreign_key: :Panel_ID
 
   # def self.test_name(test_type)
   #   LabTestType.where(['TESTTYPE=?', test_type.to_i]).first.TestName
