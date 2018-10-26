@@ -7,13 +7,10 @@ class ARTService::LabTestsEngine
     @program = program
   end
 
-  def types(search_string: nil)
-    query = if search_string
-              LabTestType.where('TestName like ?', "%#{search_string}%")
-            else
-              LabTestType
-            end
-
+  def types(search_string: nil, panel_id: nil)
+    query = LabTestType
+    query = query.where('TestName like ?', "%#{search_string}%") if search_string
+    query = query.where(Panel_ID: panel_id) if panel_id
     query.order('TestName')
   end
 
