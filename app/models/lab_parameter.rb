@@ -8,6 +8,12 @@ class LabParameter < ApplicationRecord
 
   belongs_to :lab_sample, foreign_key: :sample_id, optional: true
 
+  validates_each :Range do |record, field, value|
+    unless %w[< > =].include?(value)
+      record.errors.add field, 'Range must be one of <, >, or ='
+    end
+  end
+
   # def self.find_by_sample_id(sample_id)
   #   return LabParameter.where(["sample_id =?", sample_id])
   # end
