@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class Api::V1::LabTestOrdersController < ApplicationController
+  include LabTestsEngineLoader
+
   def index
     if params[:accession_number]
       orders = engine.find_orders_by_accession_number params[:accession_number]
@@ -32,12 +34,5 @@ class Api::V1::LabTestOrdersController < ApplicationController
     order = engine.create_order type: type, encounter: encounter, date: date
 
     render json: order, status: :created
-  end
-
-  private
-
-  def engine
-    # TODO: Access the engine from a factory not directly like this
-    @engine ||= ARTService::LabTestsEngine.new program: nil
   end
 end
