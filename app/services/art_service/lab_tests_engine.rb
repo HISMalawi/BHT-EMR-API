@@ -47,6 +47,16 @@ class ARTService::LabTestsEngine
     LabTestTable.where(Pat_ID: accession_number).order('DATE(OrderDate), TIME(OrderTime)')
   end
 
+
+  def create_result(accession_number:, test_type:, test_value:)
+    modifier, value = split_test_value test_value
+    lab_sample = LabSample.find_by AccessionNum: accession_number
+    LabParameter.create Sample_ID: lab_sample.Sample_ID,
+                        TESTTYPE: test_type.TestType,
+                        TESTVALUE: value,
+                        Range: modifier
+  end
+
   private
 
   # Creates an Order in the primary openmrs database
@@ -90,5 +100,12 @@ class ARTService::LabTestsEngine
     format '%<site_id>s%<seed_id>s%<local_id>d', site_id: site_id,
                                                  seed_id: seed_id,
                                                  local_id: local_id
+  end
+
+  # Splits a test_value into its parts [modifier, value]
+  def split_test_value(test_value)
+    match = test_value.match(/^\s*(?<mod>[=<>])?\s*(?<value>\d+(.\d*)?\s*\w*)\s*$/)
+    raise InvalidParameterError, "Invalid test value: #{test_value}" unless test_value
+    [match[:mod] || '=', match[:value]]
   end
 end

@@ -11,5 +11,9 @@ module ExceptionHandler
     rescue_from ApplicationError do |e|
       render json: { errors: [e.message] }, status: :internal_server_error
     end
+
+    rescue_from InvalidParameterError do |e|
+      render json: { errors: [e.message] }, status: :bad_request
+    end
   end
 end
