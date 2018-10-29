@@ -7,6 +7,10 @@ class ARTService::LabTestsEngine
     @program = program
   end
 
+  def type(type_id)
+    LabTestType.find(type_id)
+  end
+
   def types(search_string: nil, panel_id: nil)
     query = LabTestType
     query = query.where('TestName like ?', "%#{search_string}%") if search_string
@@ -18,6 +22,12 @@ class ARTService::LabTestsEngine
     query = LabPanel.joins(:types)
     query = query.where('name like ?', "%#{search_string}%") if search_string
     query.order(:name).group(:rec_id)
+  end
+
+  def results(accession_number)
+    LabParameter.joins(:lab_sample)\
+                .where('Lab_Sample.AccessionNum = ?', accession_number)\
+                .order(Arel.sql('DATE(Lab_Sample.TimeStamp) DESC'))
   end
 
   def create_order(type:, encounter:, patient: nil, date: nil)
@@ -35,7 +45,7 @@ class ARTService::LabTestsEngine
   end
 
   def find_orders_by_patient(patient, paginate_func: nil)
-    local_orders = Order.where patient: patient
+    local_orders = local_orders(patient)
     local_orders = paginate_func.call(local_orders) if paginate_func
     local_orders.each_with_object([]) do |local_order, collected_orders|
       orders = find_orders_by_accession_number local_order.accession_number
@@ -47,13 +57,13 @@ class ARTService::LabTestsEngine
     LabTestTable.where(Pat_ID: accession_number).order('DATE(OrderDate), TIME(OrderTime)')
   end
 
-
   def create_result(accession_number:, test_type:, test_value:)
     modifier, value = split_test_value test_value
     lab_sample = LabSample.find_by AccessionNum: accession_number
     LabParameter.create Sample_ID: lab_sample.Sample_ID,
                         TESTTYPE: test_type.TestType,
                         TESTVALUE: value,
+                        TimeStamp: Time.now,
                         Range: modifier
   end
 
@@ -107,5 +117,11 @@ class ARTService::LabTestsEngine
     match = test_value.match(/^\s*(?<mod>[=<>])?\s*(?<value>\d+(.\d*)?\s*\w*)\s*$/)
     raise InvalidParameterError, "Invalid test value: #{test_value}" unless test_value
     [match[:mod] || '=', match[:value]]
+  end
+
+  def local_orders(patient)
+    Order.where patient: patient,
+                order_type: order_type('Lab'),
+                concept: concept('Laboratory tests ordered')
   end
 end
