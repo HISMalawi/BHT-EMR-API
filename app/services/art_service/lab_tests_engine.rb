@@ -112,11 +112,24 @@ class ARTService::LabTestsEngine
                                                  local_id: local_id
   end
 
+  TESTVALUE_SPLIT_REGEX = /^\s*(?<mod>[=<>])?\s*(?<value>\d+(.\d*)?\s*\w*|Positive|Negative)\s*$/i
+
   # Splits a test_value into its parts [modifier, value]
   def split_test_value(test_value)
-    match = test_value.match(/^\s*(?<mod>[=<>])?\s*(?<value>\d+(.\d*)?\s*\w*)\s*$/)
+    match = test_value.match TESTVALUE_SPLIT_REGEX
     raise InvalidParameterError, "Invalid test value: #{test_value}" unless test_value
-    [match[:mod] || '=', match[:value]]
+    [match[:mod] || '=', translate_test_value(match[:value])]
+  end
+
+  def translate_test_value(value)
+    case value.upcase
+    when 'POSITIVE'
+      '1.0'
+    when 'NEGATIVE'
+      '-1.0'
+    else
+      value
+    end
   end
 
   def local_orders(patient)
