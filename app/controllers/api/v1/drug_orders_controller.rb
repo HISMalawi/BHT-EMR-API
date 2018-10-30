@@ -35,13 +35,9 @@ class Api::V1::DrugOrdersController < ApplicationController
                     status: :bad_request
     end
 
-    orders, errors = DrugOrderService.create_drug_orders encounter: encounter,
-                                                         drug_orders: drug_orders
-    if errors
-      render json: orders, status: :bad_request
-    else
-      render json: orders, status: :created
-    end
+    orders = DrugOrderService.create_drug_orders encounter: encounter,
+                                                 drug_orders: drug_orders
+    render json: orders, status: :created
   end
 
   def update

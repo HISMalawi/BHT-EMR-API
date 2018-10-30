@@ -28,18 +28,24 @@ module DrugOrderService
       ActiveRecord::Base.transaction do
         order_type = OrderType.find_by_name('Drug Order')
 
-        drug_orders = drug_orders.collect do |drug_order|
+        saved_drug_orders = []
+
+        drug_orders.each_with_index do |drug_order, i|
           order = create_order encounter: encounter, create_params: drug_order,
                                order_type: order_type
-          return [order.errors, true] unless order.errors.empty?
+          unless order.errors.empty?
+            raise_model_error(order, "Unable to create order #{i}")
+          end
 
           drug_order = create_drug_order order: order, create_params: drug_order
-          return [drug_order.errors, true] unless drug_order.errors.empty?
+          unless drug_order.errors.empty?
+            raise_model_error(drug_order, "Unable to create drug order #{i}")
+          end
 
-          drug_order
+          saved_drug_orders << drug_order
         end
 
-        [drug_orders, false]
+        saved_drug_orders
       end
     end
 
@@ -93,6 +99,11 @@ module DrugOrderService
       start_date = Date.strptime(create_params[:start_date])
       duration = auto_expire_date - start_date
       duration.to_i * create_params[:equivalent_daily_dose].to_i
+    end
+
+    def raise_model_error(model, prefix)
+      errors = model.errors.map { |k, v| "#{k}: #{v}" }.join(', ')
+      raise InvalidParameterError, "#{prefix}: #{errors}"
     end
   end
 end
