@@ -25,6 +25,14 @@ project directory. Navigate to that if you are some place else.
 
 ### Configuration
 
+### Setting up rails
+
+Install the required gems like so:
+
+```sh
+bundle install
+```
+
 #### Database
 
 The API uses an [Openmrs 1.7](https://openmrs.org/2010/11/openmrs-1-7-now-available/)
@@ -42,43 +50,51 @@ $ vim config/database.yml   # Edit configuration
 ...
 ```
 
-Run the following commands to set up your development and test databases.
+##### Using an existing database
 
-```sh
-$ chmod +x bin/initial_database_setup.sh
-...
-$ bin/initial_database_setup.sh development mpc
-...
+1. Load metadata into your mysql database as follows:
 
-```
+    ```bash
+    cat db/sql/openmrs_metadata_1_7.sql | mysql -u <username> -p <database_name>
+    ```
 
-The commands above will initialise an empty development database for you with
-a single user with a username, admin and password, test. If you are deploying
-to production you should replace 'development' with 'production' in the last
-command.
+2. Run migrations:
 
-### Setting up rails
+    ```bash
+    bin/rails db:migrate
+    ```
 
-Install the required gems like so:
+3. Load moh regimen tables into your database:
 
-```sh
-bundle install
-```
+    ```bash
+    cat db/sql/add_regimens_13_and_above.sql | mysql -u <username> -p <database>
+    ```
 
-With that done you need to run migrations. For this to work you need to
-have your database set up see [Database configuration](#database) above.
+4. Set up the test database as follows:
 
-```sh
-bin/rails db:migrate
-```
+    ```bash
+    bin/initial_database_setup.sh test mpc
+    ```
 
-With that done you can run the following and test your API by
-hitting `localhost:3000` in your browser. If you are greeted
-by errors that is your problem, fix them before proceeding.
+5. Run the following to run tests (if all goes well you are good to go):
 
-```sh
-bin/rails server
-```
+    ```bash
+    bin/rspec
+    ```
+
+##### Using an empty database
+
+1. Run the following commands to set up your development and test databases.
+
+    ```bash
+    bin/initial_database_setup.sh development mpc && bin/initial_database_setup.sh test mpc
+    ```
+
+2. Run test suite as follows:
+
+    ```bash
+    bin/rspec
+    ```
 
 #### DDE
 
