@@ -146,7 +146,7 @@ module ARTService
       '11A' => [Set.new([39, 73]), Set.new([39, 74])],
       '12A' => [Set.new([976, 977, 978, 954])],
       '13A' => [Set.new([983])],
-      '14A' => [Set.new([39, 982])],
+      '14A' => [Set.new([984, 982])],
       '15A' => [Set.new([969, 982])]
     }.freeze
   end
