@@ -5,12 +5,6 @@ module ARTService
     include ModelUtils
 
     def initialize(program:, patient:, date:)
-      # unless PatientProgram.exists? patient_id: patient.patient_id,
-      #                               program_id: program.program_id,
-      #   # raise WorkflowService::Exceptions::PatientNotRegisteredError,
-      #   #       "Patient ##{patient.patient_id} not enrolled in program ##{program.program_id}"
-      # end
-
       @patient = patient
       @program = program
       @date = date
