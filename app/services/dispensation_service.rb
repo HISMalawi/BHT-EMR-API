@@ -23,20 +23,21 @@ module DispensationService
         order_id = dispensation[:drug_order_id]
         quantity = dispensation[:quantity]
         date = dispensation[:date] ? Time.strptime(dispensation[:date]) : nil
-        obs = dispense_drug order_id, quantity, date: date
+        drug_order = DrugOrder.find(order_id)
+        obs = dispense_drug drug_order, quantity, date: date
+
         unless obs.errors.empty?
           return ["Failed to dispense order ##{order_id}", obs.errors], true
         end
-        obs
+
+        obs.to_hash.tap { |hash| hash[:amount_needed] = drug_order.amount_needed }
       end
 
       [obs_list, false]
     end
 
-    def dispense_drug(order_id, quantity, date: nil)
+    def dispense_drug(drug_order, quantity, date: nil)
       date ||= Time.now
-      drug_order = DrugOrder.find(order_id)
-      # NOTE: Some caching below would be helpful
       patient = drug_order.order.patient
       encounter = current_encounter patient, create: true
 
