@@ -30,7 +30,7 @@ module DispensationService
           return ["Failed to dispense order ##{order_id}", obs.errors], true
         end
 
-        obs.to_hash.tap { |hash| hash[:amount_needed] = drug_order.amount_needed }
+        obs.as_json.tap { |hash| hash[:amount_needed] = drug_order.amount_needed }
       end
 
       [obs_list, false]
