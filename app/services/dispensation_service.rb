@@ -47,7 +47,7 @@ module DispensationService
 
       Observation.create(
         concept_id: concept('AMOUNT DISPENSED').concept_id,
-        order_id: order_id,
+        order_id: drug_order.order_id,
         person_id: patient.patient_id,
         encounter_id: encounter.encounter_id,
         value_drug: drug_order.drug_inventory_id,

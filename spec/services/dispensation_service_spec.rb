@@ -38,7 +38,7 @@ RSpec.describe DispensationService do
                              concept: drug.concept
       drug_order = create :drug_order, order: order, drug: drug
 
-      obs = DispensationService.dispense_drug drug_order.order_id, 10
+      obs = DispensationService.dispense_drug drug_order, 10
 
       expect(obs.concept_id).to eq(concept('AMOUNT DISPENSED').concept_id)
       expect(obs.order).to eq(order)
