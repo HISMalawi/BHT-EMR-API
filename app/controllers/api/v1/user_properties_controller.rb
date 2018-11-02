@@ -23,8 +23,6 @@ class Api::V1::UserPropertiesController < ApplicationController
     property ||= UserProperty.new property: name, user_id: User.current.user_id
     property.property_value = value
 
-    logger.debug property.as_json
-
     if property.save
       render json: property, status: success_response_status
     else

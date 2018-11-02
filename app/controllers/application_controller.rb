@@ -55,7 +55,6 @@ class ApplicationController < ActionController::API
   end
 
   def parse_date(str_date)
-    logger.debug str_date
     Date.strptime(str_date)
   rescue ArgumentError => e
     render json: { errors: ["Failed to parse date: #{e}"] },
