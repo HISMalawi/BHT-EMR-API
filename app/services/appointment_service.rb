@@ -137,9 +137,11 @@ class AppointmentService
     if patient.age(today: @retro_date) <= 14 && !peads_clinic_days.blank?
       clinic_days = peads_clinic_days
     else
-      clinic_days = global_property('clinic.days').property_value || 'Monday,Tuesday,Wednesday,Thursday,Friday'
+      property = global_property('clinic.days')
+      clinic_days = property ? property.property_value : nil
+      clinic_days ||= 'Monday,Tuesday,Wednesday,Thursday,Friday'
     end
-    clinic_days = clinic_days.split(',')
+    clinic_days = clinic_days.split(',').collect(&:strip)
 
     clinic_holidays = global_property 'clinic.holidays'
     clinic_holidays = begin
