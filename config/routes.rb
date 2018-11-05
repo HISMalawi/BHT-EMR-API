@@ -116,6 +116,7 @@ Rails.application.routes.draw do
       get '/search/people' => 'people#search'
       get '/search/patients/by_npid' => 'patients#search_by_npid'
       get '/search/properties' => 'properties#search'
+      get '/search/landmarks' => 'landmarks#search'
 
       post '/reports/encounters' => 'encounters#count'
     end
