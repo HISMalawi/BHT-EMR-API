@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class Patient < VoidableRecord
+  include ModelUtils
+
   after_void :void_related_models
 
   NATIONAL_ID_NAME = 'National id'
@@ -77,11 +79,25 @@ class Patient < VoidableRecord
     end
   end
 
+  def weight(today: Date.today)
+    obs = Observation.where(person: person, concept: concept('Weight'))\
+                     .where('obs_datetime <= DATE(?)', today)\
+                     .order(obs_datetime: :desc)\
+                     .limit(1)\
+                     .first
+    return nil unless obs
+    obs.value_numeric
+  end
+
   def void_related_models(reason)
     person.void(reason)
     patient_identifiers.each { |row| row.void(reason) }
     patient_programs.each { |row| row.void(reason) }
     orders.each { |row| row.void(reason) }
     encounters.each { |row| row.void(reason) }
+  end
+
+  def gender
+    person.gender
   end
 end

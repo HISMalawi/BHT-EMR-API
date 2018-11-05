@@ -8,13 +8,15 @@ module ARTService
       @program = program
     end
 
-    def find_regimens(weight: nil, age: nil, paginator: nil)
-      raise ArgumentError, 'weight or age expected' if weight.nil? && age.nil?
+    def find_regimens(patient_age:, patient_weight:, patient_gender:)
+      patient_gender = patient_gender.strip[0]
 
-      ingredients = MohRegimenIngredient
-      ingredients = ingredients.where 'min_weight <= ? and max_weight >= ?', weight, weight if weight
-      ingredients = ingredients.where 'min_age <= ? and max_age >= ?', age, age if age
-      ingredients = paginator.call ingredients if paginator
+      ingredients = MohRegimenIngredient.where(
+        '(min_weight <= :weight and max_weight >= :weight)
+         AND (min_age <= :age AND max_age >= :age)
+         AND (gender LIKE :gender)',
+        weight: patient_weight, age: patient_age, gender: "%#{patient_gender}%"
+      )
 
       categorise_regimens(regimens_from_ingredients(ingredients))
     end
@@ -45,7 +47,7 @@ module ARTService
 
     def categorise_regimens(regimens)
       regimens.values.each_with_object({}) do |drugs, categorised_regimens|
-        Rails.logger.debug "Interpreting drug list: #{drugs.collect { |drug| drug[:drug_id]}}"
+        Rails.logger.debug "Interpreting drug list: #{drugs.collect { |drug| drug[:drug_id] }}"
         (0..(drugs.size - 1)).each do |i|
           ((i + 1)..(drugs.size)).each do |j|
             trial_regimen = drugs[i...j]

@@ -1,25 +1,26 @@
 class Api::V1::ProgramRegimensController < ApplicationController
   def index
-    weight = params[:weight]
-    age = params[:age]
-    validate_params weight: weight, age: age
-
-    regimens = service.find_regimens weight: weight, age: age
-
+    weight, age, gender = find_regimen_params
+    regimens = service.find_regimens patient_weight: weight,
+                                     patient_age: age,
+                                     patient_gender: gender
     render json: regimens
   end
 
   private
 
-  def validate_params(age:, weight:)
-    raise InvalidParameterError, 'weight or age required' unless weight || age
+  def find_regimen_params
+    patient_id = params[:patient_id]
+    return params.require(%i[weight age gender]) unless patient_id
+
+    patient = Patient.find patient_id
+    [params[:weight] || patient.weight, patient.age, patient.gender]
   end
 
   def service
     return @service if @service
 
     program_id, = params.require %i[program_id]
-
     @service = RegimenService.new program_id: program_id
   end
 end
