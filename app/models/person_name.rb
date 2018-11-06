@@ -1,9 +1,25 @@
+# frozen_string_literal: true
+
 class PersonName < VoidableRecord
   self.table_name = 'person_name'
   self.primary_key = 'person_name_id'
 
   belongs_to :person, foreign_key: :person_id
   has_one :person_name_code, foreign_key: :person_name_id
+
+  def self.validate_name_record(record, attr, value)
+    return if /^\s*(!?\w+(\w[-']\w)*){2,20}\s*$/.match?(value)
+    record.errors.add attr, 'Must be at least 2 and at most 20 alphanumeric character long'
+  end
+
+  validates_each :given_name, :family_name do |record, attr, value|
+    validate_name_record record, attr, value
+  end
+
+  validates_each :middle_name do |record, attr, value|
+    # Validate value if set
+    value && validate_name_record(record, attr, value)
+  end
 
   # def before_save
   #   self.build_person_name_code(
