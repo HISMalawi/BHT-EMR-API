@@ -8,15 +8,15 @@ class Api::V1::PersonRelationshipsController < ApplicationController
   end
 
   def guardians
-    render json: paginate(service.find_guardians)
+    render json: paginate(service.find_guardians).collect(&:relation)
   end
 
   def create
-    relationship_type_id, person_id = params.require %i[relationship_type_id person_id]
+    relationship_type_id, relation_id = params.require %i[relationship_type_id relation_id]
 
     begin
       relationship_type = RelationshipType.find relationship_type_id
-      person = Person.find person_id
+      person = Person.find relation_id
     rescue ActiveRecord::RecordNotFound => e
       return render json: { errors: e.message }, status: :bad_request
     end
