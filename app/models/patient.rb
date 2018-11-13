@@ -81,7 +81,7 @@ class Patient < VoidableRecord
 
   def weight(today: Date.today)
     obs = Observation.where(person: person, concept: concept('Weight'))\
-                     .where('obs_datetime <= DATE(?)', today)\
+                     .where('DATE(obs_datetime) <= DATE(?)', today)\
                      .order(obs_datetime: :desc)\
                      .limit(1)\
                      .first
