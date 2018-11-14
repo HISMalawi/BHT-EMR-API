@@ -28,4 +28,8 @@ module ModelUtils
   def order_type(name)
     OrderType.find_by_name(name)
   end
+
+  def report_type(name)
+    ReportType.find_by_name(name)
+  end
 end
