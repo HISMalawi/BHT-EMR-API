@@ -90,6 +90,7 @@ Rails.application.routes.draw do
         get '/lab_tests/panels' => 'lab_test_types#panels' # TODO: Move this into own controller
         resources :lab_test_orders, path: 'lab_tests/orders'
         resources :lab_test_results, path: 'lab_tests/results'
+        resources :program_reports, path: 'reports'
       end
 
       namespace :types do
