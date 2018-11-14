@@ -11,7 +11,7 @@ class ReportService
     @program = Program.find(program_id)
   end
 
-  def report(name, date = Date.today, kwargs = {})
+  def generate_report(name, date = Date.today, kwargs = {})
     LOGGER.debug "Retrieving report, #{name}, for period starting #{date}"
     type = report_type(name)
 

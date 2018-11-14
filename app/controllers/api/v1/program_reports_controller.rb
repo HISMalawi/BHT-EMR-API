@@ -2,7 +2,7 @@
 
 class Api::V1::ProgramReportsController < ApplicationController
   def show
-    report = engine.report('cohort')
+    report = service.generate_report('cohort')
     if report
       render json: report
     else
@@ -12,7 +12,7 @@ class Api::V1::ProgramReportsController < ApplicationController
 
   private
 
-  def engine
+  def service
     ReportService.new(program_id: params[:program_id])
   end
 end
