@@ -7,7 +7,7 @@ class ReportJob < ApplicationJob
     logger.debug("Running report job #{clazzname}(#{kwargs})")
 
     clazz = clazzname.constantize
-    report_generator = clazz.new
-    report_generator.generate_report(**kwargs)
+    report_engine = clazz.new
+    report_engine.generate_report(**kwargs)
   end
 end
