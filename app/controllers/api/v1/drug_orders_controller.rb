@@ -11,7 +11,7 @@ class Api::V1::DrugOrdersController < ApplicationController
       treatment = EncounterService.recent_encounter encounter_type_name: 'Treatment',
                                                     patient_id: patient_id,
                                                     date: date
-      orders = treatment ? paginate(treatment.orders) : []
+      orders = treatment ? paginate(treatment.orders.order(date_created: :desc)) : []
     else
       orders = paginate(Order.where(patient_id: patient_id).order(date_created: :desc))
     end
