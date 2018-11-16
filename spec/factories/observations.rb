@@ -5,6 +5,7 @@ FactoryBot.define do
     association :encounter
     association :person
     creator { 1 }
+    obs_datetime { Time.now }
 
     factory :obs_appointment do
       concept do
@@ -12,7 +13,6 @@ FactoryBot.define do
                .where('concept_name.name = ?', 'Appointment Date')\
                .first
       end
-      obs_datetime { Time.now }
       value_datetime { Time.now }
     end
   end

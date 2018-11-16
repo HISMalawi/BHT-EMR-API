@@ -20,25 +20,7 @@ module ARTService
         LOGGER.debug "Loading encounter type: #{state}"
         encounter_type = EncounterType.find_by(name: state)
 
-        LOGGER.debug "Checking existence of #{state} encounter"
-        next if encounter_exists?(encounter_type)
-
-        LOGGER.debug "Checking eligibility of #{state} encounter"
-
-        case state
-        when HIV_CLINIC_REGISTRATION
-          return encounter_type unless patient_registered?
-        when VITALS
-          return encounter_type if patient_checked_in?
-        when ART_ADHERENCE
-          return encounter_type if patient_received_art?
-        when DISPENSING
-          return encounter_type if patient_got_treatment?
-        when APPOINTMENT
-          return encounter_type if dispensing_complete?
-        else
-          return encounter_type
-        end
+        return encounter_type if valid_state?(state)
       end
 
       nil
@@ -75,6 +57,14 @@ module ARTService
       APPOINTMENT => END_STATE
     }.freeze
 
+    STATE_CONDITIONS = {
+      HIV_CLINIC_REGISTRATION => %i[patient_not_registered? patient_not_visiting?],
+      VITALS => %i[patient_checked_in?],
+      ART_ADHERENCE => %i[patient_received_art?],
+      DISPENSING => %i[patient_got_treatment?],
+      APPOINTMENT => %i[dispensing_complete?]
+    }.freeze
+
     # Concepts
     PATIENT_PRESENT = 'Patient present'
 
@@ -96,6 +86,14 @@ module ARTService
       ).exists?
     end
 
+    def valid_state?(state)
+      return false if encounter_exists?(encounter_type(state))
+
+      (STATE_CONDITIONS[state] || []).reduce(true) do |status, condition|
+        status && method(condition).call
+      end
+    end
+
     # Checks if patient has checked in today
     #
     # Pre-condition for VITALS encounter
@@ -112,12 +110,26 @@ module ARTService
                                      value_coded: yes_concept.concept_id
     end
 
-    def patient_registered?
-      Encounter.joins(:type).where(
+    # Check if patient is not registered
+    def patient_not_registered?
+      is_registered = Encounter.joins(:type).where(
         'encounter_type.name = ? AND encounter.patient_id = ?',
         HIV_CLINIC_REGISTRATION,
         @patient.patient_id
       ).exists?
+
+      !is_registered
+    end
+
+    # Check if patient is not a visiting patient
+    def patient_not_visiting?
+      visiting_patient_concept = concept('Visiting patient')
+      raise '"Visiting patient" concept not found' unless visiting_patient_concept
+
+      is_visiting_patient = Observation.where(concept: visiting_patient_concept,
+                                              person: @patient.person)\
+                                       .exists?
+      !is_visiting_patient
     end
 
     # Check if patient has got treatment.
