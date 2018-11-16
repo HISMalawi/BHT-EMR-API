@@ -37,6 +37,13 @@ describe ARTService::WorkflowEngine do
       expect(encounter_type.name.upcase).to eq('HIV RECEPTION')
     end
 
+    it 'starts with HIV_RECEPTION for visiting patients' do
+      register_patient patient
+      Observation.create(person: patient.person, concept: concept('Visiting patient'))
+      encounter_type = engine.next_encounter
+      expect(encounter_type.name.upcase).to eq('HIV RECEPTION')
+    end
+
     it 'skips VITALS and returns HIV STAGING after HIV RECEIPTION without patient' do
       receive_patient patient, guardian_only: true
       encounter_type = engine.next_encounter
