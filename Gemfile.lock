@@ -92,6 +92,9 @@ GEM
     nio4r (2.3.1)
     nokogiri (1.8.4)
       mini_portile2 (~> 2.3.0)
+    passenger (5.3.6)
+      rack
+      rake (>= 0.8.1)
     puma (3.12.0)
     rack (2.0.5)
     rack-cors (1.0.2)
@@ -184,6 +187,7 @@ DEPENDENCIES
   factory_bot_rails
   listen (>= 3.0.5, < 3.2)
   mysql2
+  passenger
   puma (~> 3.11)
   rack-cors
   rails (~> 5.2.1)
@@ -195,7 +199,7 @@ DEPENDENCIES
   tzinfo-data
 
 RUBY VERSION
-   ruby 2.5.0p0
+   ruby 2.5.1p57
 
 BUNDLED WITH
    1.16.4
