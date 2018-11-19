@@ -2,78 +2,92 @@
 
 module ARTService
   module Reports
-    module CohortTools
-      def build_report(start_date, end_date)
+    class CohortBuilder
+      QUARTER_LENGTH = 3.months
+
+      def build(cohort_struct, start_date, end_date)
+        # load_tmp_patient_table(cohort_struct)
+        create_tmp_patient_table_2(end_date)
+
         time_started = Time.now.strftime('%Y-%m-%d %H:%M:%S')
 
-        create_temp_earliest_start_date_table(end_date)
+        # create_temp_earliest_start_date_table(end_date)
+        quarter_start_date = end_date.to_date - QUARTER_LENGTH
 
         # Get earliest date enrolled
         cum_start_date = get_cum_start_date
 
         cum_start_date = start_date if cum_start_date.blank?
 
-        cohort = CohortService.new(cum_start_date)
-
-        # Total registered
-        cohort.total_registered = total_registered(start_date, end_date)
-        cohort.cum_total_registered = total_registered(cum_start_date, end_date)
+        # Total registeres
+        cohort_struct.total_registered = total_registered(start_date, end_date)
+        cohort_struct.cum_total_registered = total_registered(cum_start_date, end_date)
+        cohort_struct.quarterly_total_registered = total_registered(quarter_start_date, end_date)
 
         # Patients initiated on ART first time
-        cohort.initiated_on_art_first_time = initiated_on_art_first_time(start_date, end_date)
-        cohort.cum_initiated_on_art_first_time = initiated_on_art_first_time(cum_start_date, end_date)
+        cohort_struct.initiated_on_art_first_time = initiated_on_art_first_time(start_date, end_date)
+        cohort_struct.cum_initiated_on_art_first_time = initiated_on_art_first_time(cum_start_date, end_date)
+        cohort_struct.quarterly_initiated_on_art_first_time = initiated_on_art_first_time(quarter_start_date, end_date)
 
         # Patients re-initiated on ART
-        cohort.re_initiated_on_art = re_initiated_on_art(start_date, end_date)
-        cohort.cum_re_initiated_on_art = re_initiated_on_art(cum_start_date, end_date)
+        cohort_struct.re_initiated_on_art = re_initiated_on_art(start_date, end_date)
+        cohort_struct.cum_re_initiated_on_art = re_initiated_on_art(cum_start_date, end_date)
+        cohort_struct.quarterly_re_initiated_on_art = re_initiated_on_art(quarter_start_date, end_date)
 
         # Patients transferred in on ART
-        cohort.transfer_in = transfer_in(start_date, end_date)
-        cohort.cum_transfer_in = transfer_in(cum_start_date, end_date)
+        cohort_struct.transfer_in = transfer_in(start_date, end_date)
+        cohort_struct.cum_transfer_in = transfer_in(cum_start_date, end_date)
+        cohort_struct.quarterly_transfer_in = transfer_in(quarter_start_date, end_date)
 
         # All males
-        cohort.all_males = males(start_date, end_date)
-        cohort.cum_all_males = males(cum_start_date, end_date)
+        cohort_struct.all_males = males(start_date, end_date)
+        cohort_struct.cum_all_males = males(cum_start_date, end_date)
+        cohort_struct.quarterly_all_males = males(quarter_start_date, end_date)
 
         # Pregnant females (all ages)
-        cohort.pregnant_females_all_ages = pregnant_females_all_ages(start_date, end_date)
-        cohort.cum_pregnant_females_all_ages = pregnant_females_all_ages(cum_start_date, end_date)
+        cohort_struct.pregnant_females_all_ages = pregnant_females_all_ages(start_date, end_date)
+        cohort_struct.cum_pregnant_females_all_ages = pregnant_females_all_ages(cum_start_date, end_date)
+        cohort_struct.quarterly_pregnant_females_all_ages = pregnant_females_all_ages(quarter_start_date, end_date)
 
         # Non-pregnant females (all ages)
         # Unique PatientProgram entries at the current location for those patients with at least one state ON ARVs
         # and earliest start date of the 'ON ARVs' state within the quarter and having gender of
         # related PERSON entry as F for female and no entries of 'IS PATIENT PREGNANT?' observation answered 'YES'
         # in related HIV CLINIC CONSULTATION encounters not within 28 days from earliest registration date
-        cohort.non_pregnant_females = non_pregnant_females(start_date, end_date, cohort.pregnant_females_all_ages)
-        cohort.cum_non_pregnant_females = non_pregnant_females(cum_start_date, end_date, cohort.cum_pregnant_females_all_ages)
+        cohort_struct.non_pregnant_females = non_pregnant_females(start_date, end_date, cohort_struct.pregnant_females_all_ages)
+        cohort_struct.cum_non_pregnant_females = non_pregnant_females(cum_start_date, end_date, cohort_struct.cum_pregnant_females_all_ages)
+        cohort_struct.quarterly_non_pregnant_females = non_pregnant_females(quarter_start_date, end_date, cohort_struct.cum_pregnant_females_all_ages)
 
         # Children below 24 months at ART initiation
-        cohort.children_below_24_months_at_art_initiation = children_below_24_months_at_art_initiation(start_date, end_date)
-        cohort.cum_children_below_24_months_at_art_initiation = children_below_24_months_at_art_initiation(cum_start_date, end_date)
+        cohort_struct.children_below_24_months_at_art_initiation = children_below_24_months_at_art_initiation(start_date, end_date)
+        cohort_struct.cum_children_below_24_months_at_art_initiation = children_below_24_months_at_art_initiation(cum_start_date, end_date)
+        cohort_struct.quarterly_children_below_24_months_at_art_initiation = children_below_24_months_at_art_initiation(quarter_start_date, end_date)
 
         # Children 24 months – 14 years at ART initiation
-        cohort.children_24_months_14_years_at_art_initiation = children_24_months_14_years_at_art_initiation(start_date, end_date)
-        cohort.cum_children_24_months_14_years_at_art_initiation = children_24_months_14_years_at_art_initiation(cum_start_date, end_date)
+        cohort_struct.children_24_months_14_years_at_art_initiation = children_24_months_14_years_at_art_initiation(start_date, end_date)
+        cohort_struct.cum_children_24_months_14_years_at_art_initiation = children_24_months_14_years_at_art_initiation(cum_start_date, end_date)
+        cohort_struct.quarterly_children_24_months_14_years_at_art_initiation = children_24_months_14_years_at_art_initiation(quarter_start_date, end_date)
 
         # Adults at ART initiation
-        cohort.adults_at_art_initiation = adults_at_art_initiation(start_date, end_date)
-        cohort.cum_adults_at_art_initiation = adults_at_art_initiation(cum_start_date, end_date)
+        cohort_struct.adults_at_art_initiation = adults_at_art_initiation(start_date, end_date)
+        cohort_struct.cum_adults_at_art_initiation = adults_at_art_initiation(cum_start_date, end_date)
+        cohort_struct.quarterly_adults_at_art_initiation = adults_at_art_initiation(quarter_start_date, end_date)
 
         # Unknown age
-        cohort.unknown_age = unknown_age(start_date, end_date)
-        cohort.cum_unknown_age = unknown_age(cum_start_date, end_date)
+        cohort_struct.unknown_age = unknown_age(start_date, end_date)
+        cohort_struct.cum_unknown_age = unknown_age(cum_start_date, end_date)
+        cohort_struct.quarterly_unknown_age = unknown_age(quarter_start_date, end_date)
 
         # The following block - we are calculating all reason for starting for Quarter and Cumulative
         initiated_reason_on_art_concept = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept
 
-        reason_for_starting = ActiveRecord::Base.connection.select_all(
+        @reason_for_starting = ActiveRecord::Base.connection.select_all(
           "SELECT e.*, patient_reason_for_starting_art(e.patient_id) reason_for_starting_concept_id
            FROM temp_earliest_start_date e
            WHERE e.date_enrolled <= '#{end_date}'
            GROUP BY e.patient_id"
-        )
-        (reason_for_starting || []).each do |data|
-          @reason_for_starting << {
+        ).collect do |data|
+          {
             patient_id: data['patient_id'].to_i,
             gender: data['gender'],
             birthdate: data['birthdate'] ? data['birthdate'].to_date : nil,
@@ -82,7 +96,7 @@ module ARTService
             reason_for_starting: data['reason'],
             age_at_initiation: data['age_at_initiation'] ? data['age_at_initiation'].to_i : nil,
             age_in_days: data['age_in_days'].to_i,
-            reason_for_starting_concept_id: data['reason_for_starting_concept_id'] ? data['reason_for_starting_concept_id'].to_i : nil_
+            reason_for_starting_concept_id: data['reason_for_starting_concept_id'] ? data['reason_for_starting_concept_id'].to_i : nil
           }
         end
 
@@ -90,53 +104,60 @@ module ARTService
         # patients with at least one state ON ARVs and earliest start date
         # of the 'ON ARVs' state within the quarter and having a
         # REASON FOR ELIGIBILITY observation with an answer as PRESUMED SEVERE HIV
-        cohort.presumed_severe_hiv_disease_in_infants = presumed_severe_hiv_disease_in_infants(start_date, end_date)
-        cohort.cum_presumed_severe_hiv_disease_in_infants = presumed_severe_hiv_disease_in_infants(cum_start_date, end_date)
+        cohort_struct.presumed_severe_hiv_disease_in_infants = presumed_severe_hiv_disease_in_infants(start_date, end_date)
+        cohort_struct.cum_presumed_severe_hiv_disease_in_infants = presumed_severe_hiv_disease_in_infants(cum_start_date, end_date)
+        cohort_struct.quarterly_presumed_severe_hiv_disease_in_infants = presumed_severe_hiv_disease_in_infants(quarter_start_date, end_date)
 
         # Confirmed HIV infection in infants (PCR)
 
         # Unique PatientProgram entries at the current location for those patients with at least one state ON ARVs
         # and earliest start date of the 'ON ARVs' state within the quarter and
         # having a REASON FOR ELIGIBILITY observation with an answer as HIV PCR
-        cohort.confirmed_hiv_infection_in_infants_pcr = confirmed_hiv_infection_in_infants_pcr(start_date, end_date)
-        cohort.cum_confirmed_hiv_infection_in_infants_pcr = confirmed_hiv_infection_in_infants_pcr(cum_start_date, end_date)
+        cohort_struct.confirmed_hiv_infection_in_infants_pcr = confirmed_hiv_infection_in_infants_pcr(start_date, end_date)
+        cohort_struct.cum_confirmed_hiv_infection_in_infants_pcr = confirmed_hiv_infection_in_infants_pcr(cum_start_date, end_date)
+        cohort_struct.quarterly_confirmed_hiv_infection_in_infants_pcr = confirmed_hiv_infection_in_infants_pcr(quarter_start_date, end_date)
 
         # WHO stage 1 or 2, CD4 below threshold
         # Unique PatientProgram entries at the current location for those patients with at least one state ON ARVs
         # and earliest start date of the 'ON ARVs' state within the quarter and having a REASON FOR ELIGIBILITY
         # observation with an answer as CD4 COUNT LESS THAN OR EQUAL TO 350 or CD4 COUNT LESS THAN OR EQUAL TO 750
-        cohort.who_stage_two = who_stage_two(start_date, end_date)
-        cohort.cum_who_stage_two = who_stage_two(cum_start_date, end_date)
+        cohort_struct.who_stage_two = who_stage_two(start_date, end_date)
+        cohort_struct.cum_who_stage_two = who_stage_two(cum_start_date, end_date)
+        cohort_struct.quarterly_who_stage_two = who_stage_two(quarter_start_date, end_date)
 
         # Breastfeeding mothers
 
         # Unique PatientProgram entries at the current location for those patients with at least one state
         # ON ARVs and earliest start date of the 'ON ARVs' state within the quarter
         # and having a REASON FOR ELIGIBILITY observation with an answer as BREASTFEEDING
-        cohort.breastfeeding_mothers = breastfeeding_mothers(start_date, end_date)
-        cohort.cum_breastfeeding_mothers = breastfeeding_mothers(cum_start_date, end_date)
+        cohort_struct.breastfeeding_mothers = breastfeeding_mothers(start_date, end_date)
+        cohort_struct.cum_breastfeeding_mothers = breastfeeding_mothers(cum_start_date, end_date)
+        cohort_struct.quarterly_breastfeeding_mothers = breastfeeding_mothers(quarter_start_date, end_date)
 
         # Pregnant women
 
         # Unique PatientProgram entries at the current location for those patients with at least one state ON ARVs
         # and earliest start date of the 'ON ARVs' state within the quarter
         # and having a REASON FOR ELIGIBILITY observation with an answer as PATIENT PREGNANT
-        cohort.pregnant_women = pregnant_women(start_date, end_date)
-        cohort.cum_pregnant_women = pregnant_women(cum_start_date, end_date)
+        cohort_struct.pregnant_women = pregnant_women(start_date, end_date)
+        cohort_struct.cum_pregnant_women = pregnant_women(cum_start_date, end_date)
+        cohort_struct.quarterly_pregnant_women = pregnant_women(quarter_start_date, end_date)
 
         # WHO STAGE 3
         # Unique PatientProgram entries at the current location for those patients with at least
         # one state ON ARVs and earliest start date of the 'ON ARVs' state within the quarter
         # and having a REASON FOR ELIGIBILITY observation with an answer as WHO STAGE III
-        cohort.who_stage_three = who_stage_three(start_date, end_date)
-        cohort.cum_who_stage_three = who_stage_three(cum_start_date, end_date)
+        cohort_struct.who_stage_three = who_stage_three(start_date, end_date)
+        cohort_struct.cum_who_stage_three = who_stage_three(cum_start_date, end_date)
+        cohort_struct.quarterly_who_stage_three = who_stage_three(quarter_start_date, end_date)
 
         # WHO STAGE 4
         # Unique PatientProgram entries at the current location for those patients with at least
         # one state ON ARVs and earliest start date of the 'ON ARVs' state within the quarter
         # and having a REASON FOR ELIGIBILITY observation with an answer as WHO STAGE IV
-        cohort.who_stage_four = who_stage_four(start_date, end_date)
-        cohort.cum_who_stage_four = who_stage_four(cum_start_date, end_date)
+        cohort_struct.who_stage_four = who_stage_four(start_date, end_date)
+        cohort_struct.cum_who_stage_four = who_stage_four(cum_start_date, end_date)
+        cohort_struct.quarterly_who_stage_four = who_stage_four(quarter_start_date, end_date)
 
         # Asymptomatic
         # Unique PatientProgram entries at the current location for those patients with at least
@@ -146,52 +167,59 @@ module ARTService
 
         # For all those patients with WHO stage 1 and 2, only those that were enrolled
         # after or on 2016-04-01 revised_guidelines_start_date = "2016-04-01"
-        cohort.asymptomatic = asymptomatic(start_date, end_date)
-        cohort.cum_asymptomatic = asymptomatic(cum_start_date, end_date)
+        cohort_struct.asymptomatic = asymptomatic(start_date, end_date)
+        cohort_struct.cum_asymptomatic = asymptomatic(cum_start_date, end_date)
+        cohort_struct.quarterly_asymptomatic = asymptomatic(quarter_start_date, end_date)
 
         # Unknown / other reason outside guidelines
         # Unique PatientProgram entries at the current location for those patients with at least one state ON ARVs
         # and earliest start date of the 'ON ARVs' state within the quarter
         # and having a REASON FOR ELIGIBILITY observation with an answer as UNKNOWN
-        cohort.unknown_other_reason_outside_guidelines = unknown_other_reason_outside_guidelines(start_date, end_date)
-        cohort.cum_unknown_other_reason_outside_guidelines = unknown_other_reason_outside_guidelines(cum_start_date, end_date)
+        cohort_struct.unknown_other_reason_outside_guidelines = unknown_other_reason_outside_guidelines(start_date, end_date)
+        cohort_struct.cum_unknown_other_reason_outside_guidelines = unknown_other_reason_outside_guidelines(cum_start_date, end_date)
+        cohort_struct.quarterly_unknown_other_reason_outside_guidelines = unknown_other_reason_outside_guidelines(quarter_start_date, end_date)
 
         # Children 12-23 months
 
         # Unique PatientProgram entries at the current location for those patients with at least one state
         # ON ARVs and earliest start date of the 'ON ARVs' state within the quarter and having
         # Confirmed HIV Infection (HIV Rapid antibody test or DNA-PCR), regardless of WHO stage and CD4 Count
-        cohort.children_12_23_months = children_12_23_months(start_date, end_date)
-        cohort.cum_children_12_23_months = children_12_23_months(cum_start_date, end_date)
+        cohort_struct.children_12_59_months = children_12_59_months(start_date, end_date)
+        cohort_struct.cum_children_12_59_months = children_12_59_months(cum_start_date, end_date)
+        cohort_struct.quarterly_children_12_59_months = children_12_59_months(quarter_start_date, end_date)
 
         # Current EPISODE OF TB
 
         # Unique PatientProgram entries at the current location for those patients with at least one state
         # ON ARVs and earliest start date of the 'ON ARVs' state within the quarter and having a
         # CURRENT EPISODE OF TB observation at the HIV staging encounter on the initiation date
-        cohort.current_episode_of_tb = current_episode_of_tb(start_date, end_date)
-        cohort.cum_current_episode_of_tb = current_episode_of_tb(cum_start_date, end_date)
+        cohort_struct.current_episode_of_tb = current_episode_of_tb(start_date, end_date)
+        cohort_struct.cum_current_episode_of_tb = current_episode_of_tb(cum_start_date, end_date)
+        cohort_struct.quarterly_current_episode_of_tb = current_episode_of_tb(quarter_start_date, end_date)
 
         # TB within the last 2 years
 
         # Unique PatientProgram entries at the current location for those patients with at least one state ON ARVs
         # and earliest start date of the 'ON ARVs' state within the quarter
         # and having a TB WITHIN THE LAST 2 YEARS observation at the HIV staging encounter on the initiation date
-        cohort.tb_within_the_last_two_years = tb_within_the_last_two_years(cohort.current_episode_of_tb, start_date, end_date)
-        cohort.cum_tb_within_the_last_two_years = tb_within_the_last_two_years(cohort.cum_current_episode_of_tb, cum_start_date, end_date)
+        cohort_struct.tb_within_the_last_two_years = tb_within_the_last_two_years(cohort_struct.current_episode_of_tb, start_date, end_date)
+        cohort_struct.cum_tb_within_the_last_two_years = tb_within_the_last_two_years(cohort_struct.cum_current_episode_of_tb, cum_start_date, end_date)
+        cohort_struct.quarterly_tb_within_the_last_two_years = tb_within_the_last_two_years(cohort_struct.quarterly_current_episode_of_tb, quarter_start_date, end_date)
 
         # No TB
         # total_registered - (current_episode - tb_within_the_last_two_years)
-        cohort.no_tb = no_tb(cohort.total_registered, cohort.tb_within_the_last_two_years, cohort.current_episode_of_tb)
-        cohort.cum_no_tb = cum_no_tb(cohort.cum_total_registered, cohort.cum_tb_within_the_last_two_years, cohort.cum_current_episode_of_tb)
+        cohort_struct.no_tb = no_tb(cohort_struct.total_registered, cohort_struct.tb_within_the_last_two_years, cohort_struct.current_episode_of_tb)
+        cohort_struct.cum_no_tb = cum_no_tb(cohort_struct.cum_total_registered, cohort_struct.cum_tb_within_the_last_two_years, cohort_struct.cum_current_episode_of_tb)
+        cohort_struct.quarterly_no_tb = cum_no_tb(cohort_struct.quarterly_total_registered, cohort_struct.quarterly_tb_within_the_last_two_years, cohort_struct.quarterly_current_episode_of_tb)
 
         # Kaposis Sarcoma
         #
         # Unique PatientProgram entries at the current location for those patients with at least one state ON ARVs
         # and earliest start date of the 'ON ARVs' state within the quarter and having a KAPOSIS SARCOMA observation
         # at the HIV staging encounter on the initiation date
-        cohort.kaposis_sarcoma = kaposis_sarcoma(start_date, end_date)
-        cohort.cum_kaposis_sarcoma = kaposis_sarcoma(cum_start_date, end_date)
+        cohort_struct.kaposis_sarcoma = kaposis_sarcoma(start_date, end_date)
+        cohort_struct.cum_kaposis_sarcoma = kaposis_sarcoma(cum_start_date, end_date)
+        cohort_struct.quarterly_kaposis_sarcoma = kaposis_sarcoma(quarter_start_date, end_date)
 
         # From this point going down: we update temp_earliest_start_date cum_outcome field to have the latest Cumulative outcome
         update_cum_outcome(end_date)
@@ -200,62 +228,62 @@ module ARTService
         # Unique PatientProgram entries at the current location for those patients with at least one state
         # ON ARVs and earliest start date of the 'ON ARVs' state less than or equal to end date of quarter
         # and latest state is ON ARVs  (Excluding defaulters)
-        cohort.total_alive_and_on_art                      = get_outcome('On antiretrovirals')
-        cohort.died_within_the_1st_month_of_art_initiation = died_in('1st month')
-        cohort.died_within_the_2nd_month_of_art_initiation = died_in('2nd month')
-        cohort.died_within_the_3rd_month_of_art_initiation = died_in('3rd month')
-        cohort.died_after_the_3rd_month_of_art_initiation  = died_in('4+ months')
-        cohort.died_total                                  = get_outcome('Patient died')
-        cohort.defaulted                                   = get_outcome('Defaulted')
-        cohort.stopped_art                                 = get_outcome('Treatment stopped')
-        cohort.transfered_out                              = get_outcome('Patient transferred out')
-        cohort.unknown_outcome                             = get_outcome('Pre-ART (Continue)')
+        cohort_struct.total_alive_and_on_art                      = get_outcome('On antiretrovirals')
+        cohort_struct.died_within_the_1st_month_of_art_initiation = died_in('1st month')
+        cohort_struct.died_within_the_2nd_month_of_art_initiation = died_in('2nd month')
+        cohort_struct.died_within_the_3rd_month_of_art_initiation = died_in('3rd month')
+        cohort_struct.died_after_the_3rd_month_of_art_initiation  = died_in('4+ months')
+        cohort_struct.died_total                                  = get_outcome('Patient died')
+        cohort_struct.defaulted                                   = get_outcome('Defaulted')
+        cohort_struct.stopped_art                                 = get_outcome('Treatment stopped')
+        cohort_struct.transfered_out                              = get_outcome('Patient transferred out')
+        cohort_struct.unknown_outcome                             = get_outcome('Pre-ART (Continue)')
 
         # ARV Regimen category
         # Alive and On ART and Value Coded of the latest 'Regimen Category' Observation
         # of each patient that is linked to the Dispensing encounter in the reporting period
 
-        @regimen_categories = cal_regimem_category(cohort.total_alive_and_on_art, end_date)
+        @regimen_categories = cal_regimem_category(cohort_struct.total_alive_and_on_art, end_date)
 
-        cohort.zero_a           = get_regimen_category('0A')
-        cohort.one_a            = get_regimen_category('1A')
-        cohort.zero_p           = get_regimen_category('0P')
-        cohort.one_p            = get_regimen_category('1P')
-        cohort.two_a            = get_regimen_category('2A')
-        cohort.two_p            = get_regimen_category('2P')
-        cohort.three_a          = get_regimen_category('3A')
-        cohort.three_p          = get_regimen_category('3P')
-        cohort.four_a           = get_regimen_category('4A')
-        cohort.four_p           = get_regimen_category('4P')
-        cohort.five_a           = get_regimen_category('5A')
-        cohort.six_a            = get_regimen_category('6A')
-        cohort.seven_a          = get_regimen_category('7A')
-        cohort.eight_a          = get_regimen_category('8A')
-        cohort.nine_a           = get_regimen_category('9A')
-        cohort.nine_p           = get_regimen_category('9P')
-        cohort.ten_a            = get_regimen_category('10A')
-        cohort.elleven_a        = get_regimen_category('11A')
-        cohort.elleven_p        = get_regimen_category('11P')
-        cohort.twelve_a         = get_regimen_category('12A')
-        cohort.unknown_regimen  = get_regimen_category('unknown_regimen')
+        cohort_struct.zero_a           = get_regimen_category('0A')
+        cohort_struct.one_a            = get_regimen_category('1A')
+        cohort_struct.zero_p           = get_regimen_category('0P')
+        cohort_struct.one_p            = get_regimen_category('1P')
+        cohort_struct.two_a            = get_regimen_category('2A')
+        cohort_struct.two_p            = get_regimen_category('2P')
+        cohort_struct.three_a          = get_regimen_category('3A')
+        cohort_struct.three_p          = get_regimen_category('3P')
+        cohort_struct.four_a           = get_regimen_category('4A')
+        cohort_struct.four_p           = get_regimen_category('4P')
+        cohort_struct.five_a           = get_regimen_category('5A')
+        cohort_struct.six_a            = get_regimen_category('6A')
+        cohort_struct.seven_a          = get_regimen_category('7A')
+        cohort_struct.eight_a          = get_regimen_category('8A')
+        cohort_struct.nine_a           = get_regimen_category('9A')
+        cohort_struct.nine_p           = get_regimen_category('9P')
+        cohort_struct.ten_a            = get_regimen_category('10A')
+        cohort_struct.elleven_a        = get_regimen_category('11A')
+        cohort_struct.elleven_p        = get_regimen_category('11P')
+        cohort_struct.twelve_a         = get_regimen_category('12A')
+        cohort_struct.unknown_regimen  = get_regimen_category('unknown_regimen')
 
         # Total patients with side effects:
         # Alive and On ART patients with DRUG INDUCED observations during their last HIV CLINIC CONSULTATION encounter up to the reporting period
-        cohort.total_patients_with_side_effects = total_patients_with_side_effects(cohort, cohort.total_alive_and_on_art, start_date, end_date)
-        # cohort.total_patients_without_side_effects = self.total_patients_without_side_effects(cohort.total_alive_and_on_art, cohort.total_patients_with_side_effects)
-        # cohort.unknown_side_effects = self.unknown_side_effects(cohort.total_alive_and_on_art, start_date, end_date)
+        # cohort_struct.total_patients_with_side_effects = total_patients_with_side_effects(cohort_struct, cohort_struct.total_alive_and_on_art, start_date, end_date)
+        # cohort_struct.total_patients_without_side_effects = cohort_struct.total_patients_without_side_effects(cohort_struct.total_alive_and_on_art, cohort_struct.total_patients_with_side_effects)
+        # cohort_struct.unknown_side_effects = cohort_struct.unknown_side_effects(cohort_struct.total_alive_and_on_art, start_date, end_date)
 
         # TB Status
         # Alive and On ART with 'TB Status' observation value of 'TB not Suspected' or 'TB Suspected'
         # or 'TB confirmed and on Treatment', or 'TB confirmed and not on Treatment' or 'Unknown TB status'
         # during their latest HIV Clinic Consultaiton encounter in the reporting period
-        @tb_status = cal_tb_status(cohort.total_alive_and_on_art, end_date)
+        @tb_status = cal_tb_status(cohort_struct.total_alive_and_on_art, end_date)
 
-        cohort.tb_suspected = get_tb_status('TB suspected')
-        cohort.tb_not_suspected = get_tb_status('TB NOT suspected')
-        cohort.tb_confirmed_on_tb_treatment = get_tb_status('Confirmed TB on treatment')
-        cohort.tb_confirmed_currently_not_yet_on_tb_treatment = get_tb_status('Confirmed TB NOT on treatment')
-        cohort.unknown_tb_status = get_tb_status('unknown_tb_status')
+        cohort_struct.tb_suspected = get_tb_status('TB suspected')
+        cohort_struct.tb_not_suspected = get_tb_status('TB NOT suspected')
+        cohort_struct.tb_confirmed_on_tb_treatment = get_tb_status('Confirmed TB on treatment')
+        cohort_struct.tb_confirmed_currently_not_yet_on_tb_treatment = get_tb_status('Confirmed TB NOT on treatment')
+        cohort_struct.unknown_tb_status = get_tb_status('unknown_tb_status')
 
         # The following block of code make sure the patients that were screened for TB and
         # those not but are on ART should add up to Total Alive and on ART
@@ -263,33 +291,33 @@ module ARTService
         unknown_tb_status = []
         unknow_tb_status_patient_ids = []
 
-        (cohort.total_alive_and_on_art || []).each do |row|
+        (cohort_struct.total_alive_and_on_art || []).each do |row|
           patient_id = row['patient_id'].to_i; patient_id_found = []
 
-          (cohort.tb_suspected || []).each do |s|
+          (cohort_struct.tb_suspected || []).each do |s|
             patient_id_found << s[:patient_id] if s[:patient_id] == patient_id
           end
 
           if patient_id_found.blank?
-            (cohort.tb_not_suspected || []).each do |s|
+            (cohort_struct.tb_not_suspected || []).each do |s|
               patient_id_found << s[:patient_id] if s[:patient_id] == patient_id
             end
           end
 
           if patient_id_found.blank?
-            (cohort.tb_confirmed_on_tb_treatment || []).each do |s|
+            (cohort_struct.tb_confirmed_on_tb_treatment || []).each do |s|
               patient_id_found << s[:patient_id] if s[:patient_id] == patient_id
             end
           end
 
           if patient_id_found.blank?
-            (cohort.tb_confirmed_currently_not_yet_on_tb_treatment || []).each do |s|
+            (cohort_struct.tb_confirmed_currently_not_yet_on_tb_treatment || []).each do |s|
               patient_id_found << s[:patient_id] if s[:patient_id] == patient_id
             end
           end
 
           if patient_id_found.blank?
-            (cohort.unknown_tb_status || []).each do |s|
+            (cohort_struct.unknown_tb_status || []).each do |s|
               patient_id_found << s[:patient_id] if s[:patient_id] == patient_id
             end
           end
@@ -297,40 +325,40 @@ module ARTService
           unknown_tb_status << { patient_id: patient_id, tb_status: 'unknown_tb_status' } if patient_id_found.blank?
         end
 
-        cohort.unknown_tb_status = (cohort.unknown_tb_status + unknown_tb_status) unless unknown_tb_status.blank?
+        cohort_struct.unknown_tb_status = (cohort_struct.unknown_tb_status + unknown_tb_status) unless unknown_tb_status.blank?
         #===============================================================================================================
 
         # ART adherence
         #
         # Alive and On ART with value of their 'Drug order adherence" observation during their latest Adherence
         # encounter in the reporting period  between 95 and 105
-        adherent, not_adherent, unknown_adherence = latest_art_adherence(cohort.total_alive_and_on_art, end_date)
-        cohort.patients_with_0_6_doses_missed_at_their_last_visit = adherent
-        cohort.patients_with_7_plus_doses_missed_at_their_last_visit = not_adherent
-        cohort.patients_with_unknown_adhrence = unknown_adherence
+        adherent, not_adherent, unknown_adherence = latest_art_adherence(cohort_struct.total_alive_and_on_art, end_date)
+        cohort_struct.patients_with_0_6_doses_missed_at_their_last_visit = adherent
+        cohort_struct.patients_with_7_plus_doses_missed_at_their_last_visit = not_adherent
+        cohort_struct.patients_with_unknown_adhrence = unknown_adherence
 
         # Pregnant and breastfeeding status during Consultaiton
-        cohort.total_pregnant_women = total_pregnant_women(cohort.total_alive_and_on_art, start_date, end_date)
-        cohort.total_breastfeeding_women = total_breastfeeding_women(cohort.total_alive_and_on_art, start_date, end_date)
-        cohort.total_other_patients = total_other_patients(cohort.total_alive_and_on_art, cohort.total_breastfeeding_women, cohort.total_pregnant_women)
+        cohort_struct.total_pregnant_women = total_pregnant_women(cohort_struct.total_alive_and_on_art, start_date, end_date)
+        cohort_struct.total_breastfeeding_women = total_breastfeeding_women(cohort_struct.total_alive_and_on_art, start_date, end_date)
+        cohort_struct.total_other_patients = total_other_patients(cohort_struct.total_alive_and_on_art, cohort_struct.total_breastfeeding_women, cohort_struct.total_pregnant_women)
 
         # Patients with CPT dispensed at least once before end of quarter and on ARVs
-        cohort.total_patients_on_arvs_and_cpt = total_patients_on_arvs_and_cpt(cohort.total_alive_and_on_art, start_date, end_date)
+        cohort_struct.total_patients_on_arvs_and_cpt = total_patients_on_arvs_and_cpt(cohort_struct.total_alive_and_on_art, start_date, end_date)
 
         # Patients with IPT dispensed at least once before end of quarter and on ARVS
-        cohort.total_patients_on_arvs_and_ipt = total_patients_on_arvs_and_ipt(cohort.total_alive_and_on_art, start_date, end_date)
+        cohort_struct.total_patients_on_arvs_and_ipt = total_patients_on_arvs_and_ipt(cohort_struct.total_alive_and_on_art, start_date, end_date)
 
         # Patients on family planning methods at least once before end of quarter and on ARVs
-        cohort.total_patients_on_family_planning = total_patients_on_family_planning(cohort.total_alive_and_on_art, start_date, end_date)
+        cohort_struct.total_patients_on_family_planning = total_patients_on_family_planning(cohort_struct.total_alive_and_on_art, start_date, end_date)
 
         # Patients whose BP was screened and are above 30 years least once before end of quarter and on ARVs
-        cohort.total_patients_with_screened_bp = total_patients_with_screened_bp(cohort.total_alive_and_on_art, start_date, end_date)
+        cohort_struct.total_patients_with_screened_bp = total_patients_with_screened_bp(cohort_struct.total_alive_and_on_art, start_date, end_date)
 
         puts "Started at: #{time_started}. Finished at: #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}"
-        cohort
+        cohort_struct
       end
 
-      private
+      # private
 
       def get_disaggregated_cohort(start_date, end_date, gender, ag)
         if ag == '50+ years'
@@ -430,12 +458,12 @@ module ARTService
           data[patient.patient_id] = {
             arv_number: patient.arv_number,
             earliest_start_date: (begin
-                                      p['earliest_start_date'].to_date
+                                    p['earliest_start_date'].to_date
                                   rescue StandardError
                                     nil
                                   end),
             date_enrolled: (begin
-                                p['date_enrolled'].to_date
+                              p['date_enrolled'].to_date
                             rescue StandardError
                               nil
                             end),
@@ -979,7 +1007,6 @@ module ARTService
             ON o.value_coded = cn.concept_id AND cn.concept_name_type = 'FULLY_SPECIFIED'
           WHERE o.voided = 0 AND o.concept_id = #{tb_status_concept_id}
             AND o.person_id IN(#{patient_ids.join(',')})
-            AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
             AND o.obs_datetime = (
               SELECT max(obs_datetime) FROM obs WHERE concept_id = #{tb_status_concept_id}
               AND voided = 0 AND person_id = o.person_id AND
@@ -1009,8 +1036,10 @@ module ARTService
         registered
       end
 
-      def total_patients_with_side_effects(cohort, patients_alive_and_on_art, _start_date, end_date)
-        patient_ids = []; patients_with_unknown_side_effects = []; results = []
+      def total_patients_with_side_effects(cohort_struct, patients_alive_and_on_art, _start_date, end_date)
+        patient_ids = []
+        patients_with_unknown_side_effects = []
+        results = []
         patient_id_of_those_without_side_effects = []
 
         (patients_alive_and_on_art || []).each do |row|
@@ -1028,7 +1057,7 @@ module ARTService
         malawi_side_effects_ids = ActiveRecord::Base.connection.select_all(
           "SELECT patient_id, date_enrolled, t1.obs_id, value_coded,
                   e.earliest_start_date, t1.obs_datetime
-          FROM temp_earliest_start_date e] INNER JOIN obs t1 ON e.patient_id = t1.person_id
+          FROM temp_earliest_start_date e INNER JOIN obs t1 ON e.patient_id = t1.person_id
           WHERE t1.person_id IN(#{patient_ids.join(',')})
             AND DATE(t1.obs_datetime) = (
               SELECT DATE(MAX(encounter_datetime))
@@ -1087,8 +1116,8 @@ module ARTService
         patient_id_of_those_with_unknown_side_effects = patient_ids - \
                                                         (patient_id_of_those_with_side_effects + patient_id_of_those_without_side_effects)
 
-        cohort.total_patients_without_side_effects = patient_id_of_those_without_side_effects
-        cohort.unknown_side_effects = patient_id_of_those_with_unknown_side_effects
+        cohort_struct.total_patients_without_side_effects = patient_id_of_those_without_side_effects
+        cohort_struct.unknown_side_effects = patient_id_of_those_with_unknown_side_effects
 
         results
       end
@@ -1208,13 +1237,15 @@ module ARTService
       end
 
       def update_cum_outcome(end_date)
-        ActiveRecord::Base.connection.execute
-        'DROP TABLE IF EXISTS `temp_patient_outcomes`'
+        ActiveRecord::Base.connection.execute(
+          'DROP TABLE IF EXISTS `temp_patient_outcomes`'
+        )
 
         ActiveRecord::Base.connection.execute(
-          "CREATE TABLE temp_patient_outcomes
+          "CREATE TABLE temp_patient_outcomes ENGINE=MEMORY AS (
             SELECT e.patient_id, patient_outcome(e.patient_id, '#{end_date} 23:59:59') AS cum_outcome
-          FROM temp_earliest_start_date e WHERE e.date_enrolled <= '#{end_date}'"
+            FROM temp_earliest_start_date e WHERE e.date_enrolled <= '#{end_date}'
+          )"
         )
       end
 
@@ -1224,7 +1255,7 @@ module ARTService
         yes_concept_id = ConceptName.find_by_name('Yes').concept_id
         who_stages_criteria = ConceptName.find_by_name('Who stages criteria present').concept_id
 
-        total_registered = ActiveRecord::Base.connection.select_all(
+        ActiveRecord::Base.connection.select_all(
           "SELECT * FROM temp_earliest_start_date t
           INNER JOIN obs ON t.patient_id = obs.person_id
           WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
@@ -1232,10 +1263,6 @@ module ARTService
           OR (concept_id = #{concept_id}) AND value_coded = #{yes_concept_id} )
           AND voided = 0 AND DATE(obs_datetime) <= DATE(date_enrolled) GROUP BY patient_id"
         )
-
-        (total_registered || []).each do |patient|
-          registered << patient
-        end
       end
 
       def current_episode_of_tb(start_date, end_date)
@@ -1246,9 +1273,8 @@ module ARTService
         current_ptb_concept_id = ConceptName.find_by_name('PULMONARY TUBERCULOSIS (CURRENT)').concept_id
 
         who_stages_criteria = ConceptName.find_by_name('Who stages criteria present').concept_id
-        registered = []
 
-        total_registered = ActiveRecord::Base.connection.select_all(
+        ActiveRecord::Base.connection.select_all(
           "SELECT * FROM temp_earliest_start_date t
           INNER JOIN obs ON t.patient_id = obs.person_id
           WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
@@ -1256,10 +1282,6 @@ module ARTService
           OR (concept_id IN (#{eptb_concept_id}, #{pulmonary_tb_concept_id}, #{current_ptb_concept_id}) AND value_coded = #{yes_concept_id}))
           AND voided = 0 AND DATE(obs_datetime) <= DATE(date_enrolled) GROUP BY patient_id"
         )
-
-        (total_registered || []).each do |patient|
-          registered << patient
-        end
       end
 
       def tb_within_the_last_two_years(patients_with_current_tb, start_date, end_date)
@@ -1276,9 +1298,8 @@ module ARTService
         ptb_within_the_past_two_yrs_concept_id = ConceptName.find_by_name('Ptb within the past two years').concept_id
         who_stages_criteria = ConceptName.find_by_name('Who stages criteria present').concept_id
         yes_concept_id = ConceptName.find_by_name('Yes').concept_id
-        registered = []
 
-        total_registered = ActiveRecord::Base.connection.select_all(
+        ActiveRecord::Base.connection.select_all(
           "SELECT * FROM temp_earliest_start_date t
           INNER JOIN obs ON t.patient_id = obs.person_id
           WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
@@ -1288,11 +1309,6 @@ module ARTService
             AND patient_id NOT IN (#{patients_with_current_tb_episode.join(',')})
             AND voided = 0 AND DATE(obs_datetime) <= DATE(date_enrolled) GROUP BY patient_id"
         )
-        EOF
-
-        (total_registered || []).each do |patient|
-          registered << patient
-        end
       end
 
       def no_tb(total_registered, tb_within_the_last_two_years, current_episode_of_tb)
@@ -1340,7 +1356,7 @@ module ARTService
         result
       end
 
-      def children_12_23_months(start_date, end_date)
+      def children_12_59_months(start_date, end_date)
         reason_concept_id = ConceptName.find_by_name('HIV Infected').concept_id
 
         registered = []
@@ -1403,7 +1419,7 @@ module ARTService
 
         registered = []
 
-        (@reason_for_starting || []).each do |r|
+        @reason_for_starting.each do |r|
           next unless reason_concept_ids.include?(r[:reason_for_starting_concept_id])
           next unless (r[:date_enrolled] >= start_date.to_date) && (r[:date_enrolled] <= end_date.to_date)
 
@@ -1421,9 +1437,9 @@ module ARTService
 
         registered = []
 
-        (@reason_for_starting || []).each do |r|
+        @reason_for_starting.each do |r|
           next unless reason_concept_ids.include?(r[:reason_for_starting_concept_id])
-          next unless (r[:date_enrolled] >= start_date.to_date) && (r[:date_enrolled] <= end_date.to_date)
+          next unless r[:date_enrolled] >= start_date.to_date && r[:date_enrolled] <= end_date.to_date
 
           registered << r
         end
@@ -1440,7 +1456,7 @@ module ARTService
 
         registered = []
 
-        (@reason_for_starting || []).each do |r|
+        @reason_for_starting.each do |r|
           next unless reason_concept_ids.include?(r[:reason_for_starting_concept_id])
           next unless (r[:date_enrolled] >= start_date.to_date) && (r[:date_enrolled] <= end_date.to_date)
 
@@ -1455,7 +1471,7 @@ module ARTService
 
         registered = []
 
-        (@reason_for_starting || []).each do |r|
+        @reason_for_starting.each do |r|
           next unless reason_concept_id == r[:reason_for_starting_concept_id]
           next unless (r[:date_enrolled] >= start_date.to_date) && (r[:date_enrolled] <= end_date.to_date)
 
@@ -1470,7 +1486,8 @@ module ARTService
         # be enrolled on HIV program after 2016-04-01
 
         revised_art_guidelines_date = '2016-04-01'.to_date
-        reason_concept_ids = []; asymptomatic_concept_ids = []
+        reason_concept_ids = []
+        asymptomatic_concept_ids = []
         asymptomatic_concept_ids << ConceptName.find_by_name('ASYMPTOMATIC').concept_id
         reason_concept_ids << ConceptName.find_by_name('WHO stage I adult').concept_id
         reason_concept_ids << ConceptName.find_by_name('WHO stage I peds').concept_id
@@ -1482,7 +1499,7 @@ module ARTService
         reason_concept_ids << ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2').concept_id
 
         registered = []
-        (@reason_for_starting || []).each do |r|
+        @reason_for_starting.each do |r|
           next unless asymptomatic_concept_ids.include?(r[:reason_for_starting_concept_id])
 
           next unless (r[:date_enrolled] >= start_date.to_date) && (r[:date_enrolled] <= end_date.to_date)
@@ -1496,7 +1513,7 @@ module ARTService
                        revised_art_guidelines_date
                      end
 
-        (@reason_for_starting || []).each do |r|
+        @reason_for_starting.each do |r|
           next unless reason_concept_ids.include?(r[:reason_for_starting_concept_id])
 
           next unless (r[:date_enrolled] >= start_date.to_date) && (r[:date_enrolled] <= end_date.to_date)
@@ -1516,7 +1533,7 @@ module ARTService
 
         registered = []
 
-        (@reason_for_starting || []).each do |r|
+        @reason_for_starting.each do |r|
           next unless reason_concept_ids.include?(r[:reason_for_starting_concept_id])
           next unless (r[:date_enrolled] >= start_date.to_date) && (r[:date_enrolled] <= end_date.to_date)
 
@@ -1531,9 +1548,9 @@ module ARTService
 
         registered = []
 
-        (@reason_for_starting || []).each do |r|
+        @reason_for_starting.each do |r|
           next unless r[:reason_for_starting_concept_id] == reason_concept_id
-          next unless (r[:date_enrolled] >= start_date.to_date) && (r[:date_enrolled] <= end_date.to_date)
+          next unless r[:date_enrolled].to_date >= start_date.to_date && r[:date_enrolled].to_date <= end_date.to_date
 
           registered << r
         end
@@ -1548,7 +1565,7 @@ module ARTService
 
         registered = []
 
-        (@reason_for_starting || []).each do |r|
+        @reason_for_starting.each do |r|
           next unless reason_concept_ids.include?(r[:reason_for_starting_concept_id])
           next unless (r[:date_enrolled] >= start_date.to_date) && (r[:date_enrolled] <= end_date.to_date)
 
@@ -1615,13 +1632,12 @@ module ARTService
         preg_at_initiation_concept_id = ConceptName.find_by_name('PREGNANT AT INITIATION?').concept_id
 
         # (patient_id_plus_date_enrolled || []).each do |patient_id, date_enrolled|
-        ActiveRecord::Base.connection.select_all(
+        registered = ActiveRecord::Base.connection.select_all(
           "SELECT t.* , o.value_coded FROM temp_earliest_start_date t
             INNER JOIN obs o ON o.person_id = t.patient_id AND o.voided = 0
           WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
             AND (gender = 'F' OR gender = 'Female')
             AND o.concept_id IN (#{preg_concept_id} , #{patient_preg_concept_id}, #{preg_at_initiation_concept_id})
-            AND (gender = 'F' OR gender = 'Female')
             AND DATE(o.obs_datetime) = DATE(t.earliest_start_date)
           GROUP BY patient_id
           HAVING value_coded = #{yes_concept_id}"
@@ -1713,10 +1729,10 @@ module ARTService
         )
 
         begin
-         return cum_start_date.to_date
+          return cum_start_date.to_date
         rescue StandardError
           nil
-       end
+        end
       end
 
       def total_registered(start_date, end_date)
@@ -1725,6 +1741,212 @@ module ARTService
           WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
           GROUP BY patient_id"
         )
+      end
+
+      def load_tmp_patient_table(cohort_struct)
+        arv_orders.each_with_object({}) do |order, patient_tab|
+          next if patient_tab.include?(order.patient_id)
+
+          person = Person.find(order.patient_id)
+          next unless person.birthdate # && patient_in_program?(person.patient)
+
+          add_patient_record(person, order, cohort_struct)
+
+          patient_tab[order.patient_id] = person
+        end
+      end
+
+        def create_tmp_patient_table_2(end_date)
+
+    ##########################################################
+    ActiveRecord::Base.connection.execute <<EOF
+      DROP FUNCTION IF EXISTS patient_date_enrolled;
+EOF
+
+    arv_concept_ids = Drug.arv_drugs.map(&:concept_id)
+
+    ActiveRecord::Base.connection.execute <<EOF
+CREATE FUNCTION patient_date_enrolled(my_patient_id int) RETURNS DATE
+DETERMINISTIC
+BEGIN
+DECLARE my_start_date DATE;
+DECLARE min_start_date DATETIME;
+DECLARE arv_concept_id INT(11);
+
+SET arv_concept_id = (SELECT concept_id FROM concept_name WHERE name ='ANTIRETROVIRAL DRUGS' LIMIT 1);
+
+SET my_start_date = (SELECT DATE(o.start_date) FROM drug_order d INNER JOIN orders o ON d.order_id = o.order_id AND o.voided = 0 WHERE o.patient_id = my_patient_id AND drug_inventory_id IN(SELECT drug_id FROM drug WHERE concept_id IN(SELECT concept_id FROM concept_set WHERE concept_set = arv_concept_id)) AND d.quantity > 0 AND o.start_date = (SELECT min(start_date) FROM drug_order d INNER JOIN orders o ON d.order_id = o.order_id AND o.voided = 0 WHERE d.quantity > 0 AND o.patient_id = my_patient_id AND drug_inventory_id IN(SELECT drug_id FROM drug WHERE concept_id IN(SELECT concept_id FROM concept_set WHERE concept_set = arv_concept_id))) LIMIT 1);
+
+
+RETURN my_start_date;
+END;
+EOF
+    ##########################################################
+
+
+
+
+    ActiveRecord::Base.connection.execute <<EOF
+      DROP TABLE IF EXISTS `temp_earliest_start_date`;
+EOF
+
+    ActiveRecord::Base.connection.execute <<EOF
+      CREATE TABLE temp_earliest_start_date
+        select
+            `p`.`patient_id` AS `patient_id`,
+            `pe`.`gender` AS `gender`,
+            `pe`.`birthdate`,
+            date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`,
+            cast(patient_date_enrolled(`p`.`patient_id`) as date) AS `date_enrolled`,
+            `person`.`death_date` AS `death_date`,
+            (select timestampdiff(year, `pe`.`birthdate`, min(`s`.`start_date`))) AS `age_at_initiation`,
+            (select timestampdiff(day, `pe`.`birthdate`, min(`s`.`start_date`))) AS `age_in_days`
+        from
+            ((`patient_program` `p`
+            left join `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
+            left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
+            left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
+        where
+            ((`p`.`voided` = 0)
+                and (`s`.`voided` = 0)
+                and (`p`.`program_id` = 1)
+                and (`s`.`state` = 7))
+        group by `p`.`patient_id`;
+EOF
+
+  end
+
+      def create_tmp_patient_table
+        ActiveRecord::Base.connection.execute('DROP TABLE IF EXISTS temp_earliest_start_date')
+        ActiveRecord::Base.connection.execute(
+          'CREATE TABLE IF NOT EXISTS temp_earliest_start_date (
+             patient_id INTEGER PRIMARY KEY,
+             date_enrolled DATE NOT NULL,
+             earliest_start_date DATETIME NOT NULL,
+             birthdate DATE NOT NULL,
+             birthdate_estimated BOOLEAN,
+             death_date DATE,
+             gender VARCHAR(32),
+             age_at_initiation INT NOT NULL,
+             age_in_days INT NOT NULL
+          ) ENGINE=MEMORY;'
+        )
+        ActiveRecord::Base.connection.execute(
+          'CREATE INDEX patient_id_index ON temp_earliest_start_date (patient_id)'
+        )
+        ActiveRecord::Base.connection.execute(
+          'CREATE INDEX date_enrolled_index ON temp_earliest_start_date (date_enrolled)'
+        )
+
+        ActiveRecord::Base.connection.execute(
+          'CREATE INDEX patient_id__date_enrolled_index ON temp_earliest_start_date (patient_id, date_enrolled)'
+        )
+
+        ActiveRecord::Base.connection.execute(
+          'CREATE INDEX earliest_start_date_index ON temp_earliest_start_date (earliest_start_date)'
+        )
+        ActiveRecord::Base.connection.execute(
+          'CREATE INDEX earliest_start_date__date_enrolled_index ON temp_earliest_start_date (earliest_start_date, date_enrolled)'
+        )
+      end
+
+      def arv_orders
+        Order.joins(:drug_order).where(
+          'drug_order.drug_inventory_id in (?)', Drug.arv_drugs.collect(&:drug_id)
+        ).order(:start_date)
+      end
+
+      def add_patient_record(person, order, cohort_struct)
+        date_enrolled = order.start_date.to_date
+        art_earliest_start_date = patient_earliest_start_date(order.patient_id, date_enrolled)
+
+        if date_enrolled == art_earliest_start_date
+          cohort_struct.cum_initiated_on_art_first_time ||= 0
+          cohort_struct.cum_initiated_on_art_first_time += 1
+        end
+
+        age_in_months_when_starting = (art_earliest_start_date - person.birthdate).to_i
+        age_when_starting = (age_in_months_when_starting / 365).to_i
+        # latest_outcome = patient_latest_outcome(order.patient_id, @cut_off_date)
+        deathdate = person.death_date ? "'#{person.death_date.to_date}'" : 'NULL'
+
+        ActiveRecord::Base.connection.execute(
+          "INSERT INTO temp_earliest_start_date (
+              patient_id,
+              date_enrolled,
+              earliest_start_date,
+              gender,
+              birthdate,
+              birthdate_estimated,
+              death_date,
+              age_at_initiation,
+              age_in_days
+           ) VALUES (
+              #{order.patient_id},
+              '#{order.start_date.to_date}',
+              '#{art_earliest_start_date.to_date}',
+              '#{person.gender}',
+              '#{person.birthdate}',
+              '#{person.birthdate_estimated}',
+              #{deathdate},
+              '#{age_when_starting}',
+              '#{age_in_months_when_starting}'
+           )"
+        )
+      end
+
+      # Retrieve the earliest (clinic?) start date for a patient
+      def patient_earliest_start_date(patient_id, min_start_date)
+        result = ActiveRecord::Base.connection.select_one(
+          "SELECT date_antiretrovirals_started(
+            #{patient_id}, '#{min_start_date.to_date}'
+           ) AS date"
+        )
+        result['date'].to_date
+      end
+
+      # Returns latest outcome for given patient relative to report date.
+      def patient_latest_outcome(patient_id, report_date = Time.now)
+        result = ActiveRecord::Base.connection.select_one(
+          "SELECT patient_outcome(#{patient_id}, '#{report_date}') AS outcome"
+        )
+        result['outcome']
+      end
+
+      # Returns a list of reasons for starting ART for each patient.
+      def patients_art_start_reason(patient_ids)
+        ActiveRecord::Base.connection.execute(
+          "SELECT person_id as patient_id, name, obs_datetime
+           FROM reason_for_art_eligibility_obs
+           WHERE person_id IN (#{patient_ids.join(',')})"
+        )
+      end
+
+      def patient_death_date(patient)
+        PatientState.find_by(program: program('HIV Program'), patient: patient)
+      end
+
+      # Filter out patients with given start causes from patient_ids
+      def filter_patients_with_start_cause(patient_ids, start_cause_concept_ids)
+        obs_concepts = start_cause_concept_ids.push(concept('WHO STAGES CRITERIA PRESENT').concept_id)
+        obs_values = start_cause_concept_ids.push(concept('YES').concept_id)
+
+        ActiveRecord::Base.connection.execute(
+          "SELECT * FROM hiv_staging_conditions_obs
+           WHERE concept_id IN (#{obs_concepts.join(',')})
+            AND value_coded IN (#{obs_values.join(',')})
+            AND person_id IN (#{patient_ids.join(',')})
+           GROUP BY person_id"
+        )
+      end
+
+      def patient_in_program?(patient)
+        return false unless patient
+
+        pprogram = PatientProgram.find_by(program: program('HIV Program'), patient: patient)
+        return false unless pprogram
+
+        PatientState.where(patient_program: pprogram, state: 7).exists?
       end
     end
   end
