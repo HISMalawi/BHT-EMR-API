@@ -8,13 +8,13 @@ module ARTService
 
     REPORTS = {
       'COHORT' => ARTService::Reports::Cohort
-    }
+    }.freeze
 
     def generate_report(type:, **kwargs)
       LOGGER.debug("Generating report(#{kwargs})")
       type = ReportType.find(type)
       report_builder = REPORTS[type.name.upcase].new(type: type, **kwargs)
-      report_builder.start_build_report
+      report_builder.build_report
     end
   end
 end

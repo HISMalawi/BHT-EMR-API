@@ -7,19 +7,23 @@ class ReportService
 
   LOGGER = Rails.logger
 
-  def initialize(program_id:)
+  def initialize(program_id:, immediate_mode: false, overwrite_mode: false)
     @program = Program.find(program_id)
+    @immediate_mode = immediate_mode
+    @overwrite_mode = overwrite_mode
   end
 
-  def generate_report(name, date = Date.today, kwargs = {})
-    LOGGER.debug "Retrieving report, #{name}, for period starting #{date}"
-    type = report_type(name)
+  def generate_report(name:, type:, start_date: Date.strptime('1900-01-01'),
+                      end_date: Date.today, overwrite: false, kwargs: {})
+    LOGGER.debug "Retrieving report, #{name}, for period #{start_date} to #{end_date}"
+    type = report_type(type)
 
-    report = find_report(type, date)
-    return report if report
+    report = find_report(type, name, start_date, end_date)
+    return report if report && !@overwrite_mode
 
     LOGGER.debug("#{name} report not found... Queueing one...")
-    queue_report(type: type, date: date, **kwargs)
+    queue_report(name: name, type: type, start_date: start_date,
+                 end_date: end_date, **kwargs)
     nil
   end
 
@@ -37,23 +41,28 @@ class ReportService
   end
 
   def report_type(name)
-    report_type = ReportType.find_by(name: name) # TODO: Also filter by program idt
+    report_type = ReportType.find_by(name: name) # TODO: Also filter by program id
     raise NotFoundError, "Report type, #{name}, not found" unless report_type
 
     report_type
   end
 
-  def find_report(type, date)
-    Report.where(type: type)\
-          .where('DATE(report_datetime) >= DATE(?)', date)\
-          .order(:report_datetime)\
-          .limit(1)[0]
+  def find_report(type, name, start_date, end_date)
+    Report.where(type: type, name: name, start_date: start_date, end_date: end_date)\
+          .order(date_created: :desc)\
+          .first
   end
 
-  def queue_report(date:, type:, **kwargs)
-    kwargs[:date] = date.to_s
+  def queue_report(start_date:, end_date:, type:, **kwargs)
+    kwargs[:start_date] = start_date.to_s
+    kwargs[:end_date] = end_date.to_s
     kwargs[:type] = type.id
+
     LOGGER.debug("Queueing #{type.name} report with arguments: #{kwargs}")
-    ReportJob.perform_later(engine(@program).to_s, kwargs)
+    if @immediate_mode
+      ReportJob.perform_now(engine(@program).to_s, **kwargs)
+    else
+      ReportJob.perform_later(engine(@program).to_s, **kwargs)
+    end
   end
 end
