@@ -35,7 +35,7 @@ class Api::V1::ProgramReportsController < ApplicationController
     start_date = quarter_to_date(match[:quarter], match[:year])
     end_date = quarter_to_date(match[:quarter].to_i + 1, match[:year]) - 1.days
 
-    [match[type], start_date, end_date]
+    [match[:type], start_date, end_date]
   end
 
   def quarter_to_date(index, year)
