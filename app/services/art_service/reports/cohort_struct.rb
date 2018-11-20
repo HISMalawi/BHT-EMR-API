@@ -41,7 +41,7 @@ module ARTService
         tb_within_the_last_two_years: 'Last 2 Years: TB within the last 2 years',
         cum_tb_within_the_last_two_years: 'Last 2 Years: TB within the last 2 years (Cumulative)',
         quarterly_tb_within_the_last_two_years: 'Last 2 Years: TB within the last 2 years (Quarterly)',
-        total_patients_without_side_effects: 'Side Effects:as of the last visit before end of quarter',
+        total_patients_without_side_effects: 'Side Effects (as of the last visit before end of quarter)',
         current_episode_of_tb: 'Curr: Current episode of TB',
         cum_current_episode_of_tb: 'Curr: Current episode of TB (Cumulative)',
         quarterly_current_episode_of_tb: 'Curr: Current episode of TB (Quarterly)',
