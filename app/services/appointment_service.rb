@@ -130,7 +130,7 @@ class AppointmentService
   end
 
   def revised_suggested_date(patient, expiry_date)
-    clinic_appointment_limit = global_property('clinic.appointment.limit').to_i
+    clinic_appointment_limit = global_property('clinic.appointment.limit').property_value.to_i
     clinic_appointment_limit = 200 if clinic_appointment_limit < 1
 
     peads_clinic_days = global_property 'peads.clinic.days'
