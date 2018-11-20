@@ -5,6 +5,8 @@ module ARTService
     class CohortBuilder
       QUARTER_LENGTH = 3.months
 
+      include ModelUtils
+
       def build(cohort_struct, start_date, end_date)
         # load_tmp_patient_table(cohort_struct)
         create_tmp_patient_table_2(end_date)
@@ -270,8 +272,8 @@ module ARTService
         # Total patients with side effects:
         # Alive and On ART patients with DRUG INDUCED observations during their last HIV CLINIC CONSULTATION encounter up to the reporting period
         cohort_struct.total_patients_with_side_effects = total_patients_with_side_effects(cohort_struct, cohort_struct.total_alive_and_on_art, start_date, end_date)
-        cohort_struct.total_patients_without_side_effects = cohort_struct.total_patients_without_side_effects(cohort_struct.total_alive_and_on_art, cohort_struct.total_patients_with_side_effects)
-        cohort_struct.unknown_side_effects = cohort_struct.unknown_side_effects(cohort_struct.total_alive_and_on_art, start_date, end_date)
+        cohort_struct.total_patients_without_side_effects = total_patients_without_side_effects(cohort_struct.total_alive_and_on_art, cohort_struct.total_patients_with_side_effects)
+        cohort_struct.unknown_side_effects = unknown_side_effects(cohort_struct.total_alive_and_on_art, start_date, end_date)
 
         # TB Status
         # Alive and On ART with 'TB Status' observation value of 'TB not Suspected' or 'TB Suspected'
@@ -1036,96 +1038,134 @@ module ARTService
         registered
       end
 
-      def total_patients_with_side_effects(cohort_struct, patients_alive_and_on_art, _start_date, end_date)
-        patient_ids = []
-        patients_with_unknown_side_effects = []
-        results = []
-        patient_id_of_those_without_side_effects = []
-
-        (patients_alive_and_on_art || []).each do |row|
-          patient_ids << row['patient_id'].to_i
+      def total_patients_with_side_effects(_cohort_struct, patients_alive_and_on_art, start_date, end_date)
+        patients_alive_and_on_art.select do |record|
+          patient_has_art_side_effect?(record['patient_id'], start_date, end_date)
         end
-
-        return [] if patient_ids.blank?
-
-        drug_induced_concept_id = ConceptName.find_by_name('Drug induced').concept_id
-        malawi_art_side_effects_concept_id = ConceptName.find_by_name('Malawi ART side effects').concept_id
-        no_side_effects_concept_id = ConceptName.find_by_name('No').concept_id
-        yes_side_effects_concept_id = ConceptName.find_by_name('Yes').concept_id
-        encounter_type = EncounterType.find_by_name('HIV clinic consultation').encounter_type_id
-
-        malawi_side_effects_ids = ActiveRecord::Base.connection.select_all(
-          "SELECT patient_id, date_enrolled, t1.obs_id, value_coded,
-                  e.earliest_start_date, t1.obs_datetime
-          FROM temp_earliest_start_date e INNER JOIN obs t1 ON e.patient_id = t1.person_id
-          WHERE t1.person_id IN(#{patient_ids.join(',')})
-            AND DATE(t1.obs_datetime) = (
-              SELECT DATE(MAX(encounter_datetime))
-              FROM encounter e
-              WHERE e.encounter_type = #{encounter_type} AND e.patient_id = t1.person_id AND e.voided = 0
-                AND e.encounter_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-            )
-            AND t1.voided = 0
-            AND concept_id IN(#{malawi_art_side_effects_concept_id}, #{drug_induced_concept_id})
-            AND t1.obs_datetime = (
-              SELECT max(obs_datetime)
-              FROM obs t2
-              WHERE t2.voided = 0
-                AND t2.person_id = t1.person_id
-                AND t2.concept_id IN(#{malawi_art_side_effects_concept_id}, #{drug_induced_concept_id})
-                AND t2.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-            )
-          GROUP BY t1.person_id, t1.value_coded
-          HAVING DATE(obs_datetime) != DATE(earliest_start_date)"
-        )
-
-        patient_id_of_those_with_side_effects = []
-        patient_id_of_those_without_side_effects = []
-
-        (malawi_side_effects_ids || []).each do |row|
-          obs_group = begin
-                        Observation.where(
-                          ['concept_id = ? AND obs_group_id = ?',
-                           row['value_coded'].to_i, row['obs_id'].to_i]
-                        ).first
-                      rescue StandardError
-                        nil
-                      end
-
-          if obs_group.blank?
-            unless patient_id_of_those_with_side_effects.include?(row['patient_id'].to_i)
-              next if no_side_effects_concept_id == row['value_coded'].to_i
-
-              results << row
-              patient_id_of_those_with_side_effects << row['patient_id'].to_i
-            end
-          elsif obs_group.value_coded == yes_side_effects_concept_id
-            unless patient_id_of_those_with_side_effects.include?(row['patient_id'].to_i)
-              results << row
-              patient_id_of_those_with_side_effects << row['patient_id'].to_i
-            end
-          end
-        end
-
-        (patient_ids || []).each do |id|
-          next if patient_id_of_those_with_side_effects.include?(id)
-
-          patient_id_of_those_without_side_effects << id
-        end
-
-        patient_id_of_those_with_unknown_side_effects = patient_ids - \
-                                                        (patient_id_of_those_with_side_effects + patient_id_of_those_without_side_effects)
-
-        cohort_struct.total_patients_without_side_effects = patient_id_of_those_without_side_effects
-        cohort_struct.unknown_side_effects = patient_id_of_those_with_unknown_side_effects
-
-        results
       end
 
-      def total_patients_without_side_effects(patients_alive_and_or_art, patients_with_side_effects)
-        patient_ids = []; drug_induced_ids = []; with_side_effects = []; result = []
+      def patient_has_art_side_effect?(patient_id, start_date, end_date)
+        encounter = EncounterService.recent_encounter(
+          encounter_type_name: 'HIV CLINIC CONSULTATION',
+          patient_id: patient_id,
+          date: end_date,
+          start_date: start_date
+        )
+        return false unless encounter
 
-        (patients_alive_and_or_art || []).each do |row|
+        art_side_effects_concept = concept('Malawi ART Side Effects')
+        yes_concept = concept('Yes')
+
+        # Unfortunately side effects may be collected on the first day under
+        # the same 'Malawi ART Side Effects concept. We don't want any
+        # side effects captured on the first day.
+        patient_start_date = patient_earliest_start_date(patient_id, end_date)
+
+        records = ActiveRecord::Base.connection.select_all(
+          "SELECT concept_id, value_coded FROM obs
+           WHERE obs_group_id IN (
+             SELECT obs_id FROM obs
+             WHERE concept_id = #{art_side_effects_concept.concept_id}
+                AND person_id = #{patient_id}
+                AND DATE(obs_datetime) = DATE('#{encounter.encounter_datetime}')
+                AND DATE(obs_datetime) != DATE('#{patient_start_date}')
+           ) GROUP BY concept_id HAVING value_coded = '#{yes_concept.concept_id}'
+           LIMIT 1"
+        )
+
+        records.length.positive?
+      end
+
+      # def total_patients_with_side_effects(cohort_struct, patients_alive_and_on_art, _start_date, end_date)
+      #   patient_ids = []
+      #   patients_with_unknown_side_effects = []
+      #   results = []
+      #   patient_id_of_those_without_side_effects = []
+
+      #   (patients_alive_and_on_art || []).each do |row|
+      #     patient_ids << row['patient_id'].to_i
+      #   end
+
+      #   return [] if patient_ids.blank?
+
+      #   drug_induced_concept_id = ConceptName.find_by_name('Drug induced').concept_id
+      #   malawi_art_side_effects_concept_id = ConceptName.find_by_name('Malawi ART side effects').concept_id
+      #   no_side_effects_concept_id = ConceptName.find_by_name('No').concept_id
+      #   yes_side_effects_concept_id = ConceptName.find_by_name('Yes').concept_id
+      #   encounter_type = EncounterType.find_by_name('HIV clinic consultation').encounter_type_id
+
+      #   malawi_side_effects_ids = ActiveRecord::Base.connection.select_all(
+      #     "SELECT patient_id, date_enrolled, t1.obs_id, value_coded,
+      #             e.earliest_start_date, t1.obs_datetime
+      #     FROM temp_earliest_start_date e INNER JOIN obs t1 ON e.patient_id = t1.person_id
+      #     WHERE t1.person_id IN(#{patient_ids.join(',')})
+      #       AND DATE(t1.obs_datetime) = (
+      #         SELECT DATE(MAX(encounter_datetime))
+      #         FROM encounter e
+      #         WHERE e.encounter_type = #{encounter_type} AND e.patient_id = t1.person_id AND e.voided = 0
+      #           AND e.encounter_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+      #       )
+      #       AND t1.voided = 0
+      #       AND concept_id IN(#{malawi_art_side_effects_concept_id}, #{drug_induced_concept_id})
+      #       AND t1.obs_datetime = (
+      #         SELECT max(obs_datetime)
+      #         FROM obs t2
+      #         WHERE t2.voided = 0
+      #           AND t2.person_id = t1.person_id
+      #           AND t2.concept_id IN(#{malawi_art_side_effects_concept_id}, #{drug_induced_concept_id})
+      #           AND t2.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+      #       )
+      #     GROUP BY t1.person_id, t1.value_coded
+      #     HAVING DATE(obs_datetime) != DATE(earliest_start_date)"
+      #   )
+
+      #   patient_id_of_those_with_side_effects = []
+      #   patient_id_of_those_without_side_effects = []
+
+      #   (malawi_side_effects_ids || []).each do |row|
+      #     obs_group = begin
+      #                   Observation.where(
+      #                     ['concept_id = ? AND obs_group_id = ?',
+      #                      row['value_coded'].to_i, row['obs_id'].to_i]
+      #                   ).first
+      #                 rescue StandardError
+      #                   nil
+      #                 end
+
+      #     if obs_group.blank?
+      #       unless patient_id_of_those_with_side_effects.include?(row['patient_id'].to_i)
+      #         next if no_side_effects_concept_id == row['value_coded'].to_i
+
+      #         results << row
+      #         patient_id_of_those_with_side_effects << row['patient_id'].to_i
+      #       end
+      #     elsif obs_group.value_coded == yes_side_effects_concept_id
+      #       unless patient_id_of_those_with_side_effects.include?(row['patient_id'].to_i)
+      #         results << row
+      #         patient_id_of_those_with_side_effects << row['patient_id'].to_i
+      #       end
+      #     end
+      #   end
+
+      #   (patient_ids || []).each do |id|
+      #     next if patient_id_of_those_with_side_effects.include?(id)
+
+      #     patient_id_of_those_without_side_effects << id
+      #   end
+
+      #   patient_id_of_those_with_unknown_side_effects = patient_ids - \
+      #                                                   (patient_id_of_those_with_side_effects + patient_id_of_those_without_side_effects)
+
+      #   cohort_struct.total_patients_without_side_effects = patient_id_of_those_without_side_effects
+      #   cohort_struct.unknown_side_effects = patient_id_of_those_with_unknown_side_effects
+
+      #   results
+      # end
+
+      def total_patients_without_side_effects(patients_alive_and_on_art, patients_with_side_effects)
+        patient_ids = []; with_side_effects = []; result = []
+
+        (patients_alive_and_on_art || []).each do |row|
           patient_ids << row['patient_id'].to_i
         end
 
@@ -1218,22 +1258,15 @@ module ARTService
       end
 
       def get_outcome(outcome)
-        registered = []
-
         sql_patch = if outcome == 'Pre-ART (Continue)'
                       "cum_outcome = '#{outcome}' OR cum_outcome = 'Unknown'"
                     else
                       "cum_outcome = '#{outcome}'"
                     end
 
-        total_alive_and_on_art = ActiveRecord::Base.connection.select_all(
+        ActiveRecord::Base.connection.select_all(
           "SELECT * FROM temp_patient_outcomes WHERE #{sql_patch} GROUP BY patient_id"
         )
-        (total_alive_and_on_art || []).each do |patient|
-          registered << patient
-        end
-
-        registered
       end
 
       def update_cum_outcome(end_date)
