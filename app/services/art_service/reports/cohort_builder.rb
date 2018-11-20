@@ -269,9 +269,9 @@ module ARTService
 
         # Total patients with side effects:
         # Alive and On ART patients with DRUG INDUCED observations during their last HIV CLINIC CONSULTATION encounter up to the reporting period
-        # cohort_struct.total_patients_with_side_effects = total_patients_with_side_effects(cohort_struct, cohort_struct.total_alive_and_on_art, start_date, end_date)
-        # cohort_struct.total_patients_without_side_effects = cohort_struct.total_patients_without_side_effects(cohort_struct.total_alive_and_on_art, cohort_struct.total_patients_with_side_effects)
-        # cohort_struct.unknown_side_effects = cohort_struct.unknown_side_effects(cohort_struct.total_alive_and_on_art, start_date, end_date)
+        cohort_struct.total_patients_with_side_effects = total_patients_with_side_effects(cohort_struct, cohort_struct.total_alive_and_on_art, start_date, end_date)
+        cohort_struct.total_patients_without_side_effects = cohort_struct.total_patients_without_side_effects(cohort_struct.total_alive_and_on_art, cohort_struct.total_patients_with_side_effects)
+        cohort_struct.unknown_side_effects = cohort_struct.unknown_side_effects(cohort_struct.total_alive_and_on_art, start_date, end_date)
 
         # TB Status
         # Alive and On ART with 'TB Status' observation value of 'TB not Suspected' or 'TB Suspected'
