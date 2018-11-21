@@ -1,18 +1,20 @@
 # frozen_string_literal: true
 
 class Api::V1::ProgramReportsController < ApplicationController
+  include ModelUtils
+
   def show
-    name = params.require(%i[name])
+    name = params.require(%i[name])[0]
     type, start_date, end_date = parse_report_name(name)
-    type ||= params.require(%i[type])
-    start_date ||= params.require(%i[start_date])
+    type ||= params[:id]
+    start_date ||= params.require(%i[start_date])[0]
     end_date ||= (params[:end_date] || Date.today.strftime('%Y-%m-%d'))
 
     report = service.generate_report(
       name: name,
-      type: report_type(type),
-      start_date: Date.strptime(start_date),
-      end_date: Date.strptime(end_date)
+      type: type,
+      start_date: Date.strptime(start_date.to_s),
+      end_date: Date.strptime(end_date.to_s)
     )
 
     if report
@@ -29,7 +31,7 @@ class Api::V1::ProgramReportsController < ApplicationController
   end
 
   def parse_report_name(name)
-    match = name.match(/(?<type>\w+)\s+Q(?<quarter>[1234])\s+(?<year>\d{4})/)
+    match = name.match(/(?<type>\w+\s+)?Q(?<quarter>[1234])\s+(?<year>\d{4})/)
     return [nil, nil, nil] unless match
 
     start_date = quarter_to_date(match[:quarter], match[:year])
@@ -39,8 +41,12 @@ class Api::V1::ProgramReportsController < ApplicationController
   end
 
   def quarter_to_date(index, year)
-    sdate = [nil, "#{year}-01-01", "#{year}-04-01", "#{year}-07-01",
-             "#{year}-10-01", "#{year.to_i + 1}-01-01"][index]
+    index = index.to_i
+    year = year.to_i
+    sdate = [
+      nil, "#{year}-01-01", "#{year}-04-01", "#{year}-07-01", "#{year}-10-01",
+      "#{year + 1}-01-01"
+    ][index]
     Date.strptime(sdate)
   end
 end
