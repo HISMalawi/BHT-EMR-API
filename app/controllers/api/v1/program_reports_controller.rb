@@ -27,7 +27,8 @@ class Api::V1::ProgramReportsController < ApplicationController
   private
 
   def service
-    ReportService.new(program_id: params[:program_id])
+    ReportService.new(program_id: params[:program_id],
+                      overwrite_mode: params[:regenerate]&.upcase == 'TRUE')
   end
 
   def parse_report_name(name)
