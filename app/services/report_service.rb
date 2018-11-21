@@ -14,7 +14,7 @@ class ReportService
   end
 
   def generate_report(name:, type:, start_date: Date.strptime('1900-01-01'),
-                      end_date: Date.today, overwrite: false, kwargs: {})
+                      end_date: Date.today, kwargs: {})
     LOGGER.debug "Retrieving report, #{name}, for period #{start_date} to #{end_date}"
     type = report_type(type)
 
