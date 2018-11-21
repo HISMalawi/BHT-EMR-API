@@ -264,9 +264,12 @@ module ARTService
         cohort_struct.nine_a           = get_regimen_category('9A')
         cohort_struct.nine_p           = get_regimen_category('9P')
         cohort_struct.ten_a            = get_regimen_category('10A')
-        cohort_struct.elleven_a        = get_regimen_category('11A')
-        cohort_struct.elleven_p        = get_regimen_category('11P')
+        cohort_struct.eleven_a        = get_regimen_category('11A')
+        cohort_struct.eleven_p        = get_regimen_category('11P')
         cohort_struct.twelve_a         = get_regimen_category('12A')
+        cohort_struct.thirteen_a       = get_regimen_category('13A')
+        cohort_struct.fourteen_a       = get_regimen_category('14A')
+        cohort_struct.fifteen_a       = get_regimen_category('15A')
         cohort_struct.unknown_regimen  = get_regimen_category('unknown_regimen')
 
         # Total patients with side effects:
@@ -280,55 +283,6 @@ module ARTService
         # or 'TB confirmed and on Treatment', or 'TB confirmed and not on Treatment' or 'Unknown TB status'
         # during their latest HIV Clinic Consultaiton encounter in the reporting period
         write_tb_status_indicators(cohort_struct, cohort_struct.total_alive_and_on_art, start_date, end_date)
-
-        # cohort_struct.tb_suspected = get_tb_status('TB suspected')
-        # cohort_struct.tb_not_suspected = get_tb_status('TB NOT suspected')
-        # cohort_struct.tb_confirmed_on_tb_treatment = get_tb_status('Confirmed TB on treatment')
-        # cohort_struct.tb_confirmed_currently_not_yet_on_tb_treatment = get_tb_status('Confirmed TB NOT on treatment')
-        # cohort_struct.unknown_tb_status = get_tb_status('unknown_tb_status')
-
-        # The following block of code make sure the patients that were screened for TB and
-        # those not but are on ART should add up to Total Alive and on ART
-        #===============================================================================================================
-        # unknown_tb_status = []
-        # unknow_tb_status_patient_ids = []
-
-        # (cohort_struct.total_alive_and_on_art || []).each do |row|
-        #   patient_id = row['patient_id'].to_i; patient_id_found = []
-
-        #   (cohort_struct.tb_suspected || []).each do |s|
-        #     patient_id_found << s[:patient_id] if s[:patient_id] == patient_id
-        #   end
-
-        #   if patient_id_found.blank?
-        #     (cohort_struct.tb_not_suspected || []).each do |s|
-        #       patient_id_found << s[:patient_id] if s[:patient_id] == patient_id
-        #     end
-        #   end
-
-        #   if patient_id_found.blank?
-        #     (cohort_struct.tb_confirmed_on_tb_treatment || []).each do |s|
-        #       patient_id_found << s[:patient_id] if s[:patient_id] == patient_id
-        #     end
-        #   end
-
-        #   if patient_id_found.blank?
-        #     (cohort_struct.tb_confirmed_currently_not_yet_on_tb_treatment || []).each do |s|
-        #       patient_id_found << s[:patient_id] if s[:patient_id] == patient_id
-        #     end
-        #   end
-
-        #   if patient_id_found.blank?
-        #     (cohort_struct.unknown_tb_status || []).each do |s|
-        #       patient_id_found << s[:patient_id] if s[:patient_id] == patient_id
-        #     end
-        #   end
-
-        #   unknown_tb_status << { patient_id: patient_id, tb_status: 'unknown_tb_status' } if patient_id_found.blank?
-        # end
-
-        # cohort_struct.unknown_tb_status = (cohort_struct.unknown_tb_status + unknown_tb_status) unless unknown_tb_status.blank?
-        #===============================================================================================================
 
         # ART adherence
         #
