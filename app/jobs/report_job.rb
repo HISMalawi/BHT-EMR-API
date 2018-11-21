@@ -6,12 +6,14 @@ class ReportJob < ApplicationJob
   def perform(clazzname, kwargs)
     logger.debug("Running report job #{clazzname}(#{kwargs})")
 
-    user_id = kwargs[:user]
-    kwargs.delete(:user)
-    User.current = User.find(user_id)
+    lock = kwargs.delete(:lock)
+
+    User.current = User.find(kwargs.delete(:user))
 
     clazz = clazzname.constantize
     report_engine = clazz.new
     report_engine.generate_report(**kwargs)
+  ensure
+    ReportService.release_report_lock(lock)
   end
 end
