@@ -123,12 +123,18 @@ module ARTService
 
     # Check if patient is not a visiting patient
     def patient_not_visiting?
+      patient_type_concept = concept('Type of patient')
+      raise '"Type of patient" concept not found' unless patient_type_concept
+
       visiting_patient_concept = concept('Visiting patient')
       raise '"Visiting patient" concept not found' unless visiting_patient_concept
 
-      is_visiting_patient = Observation.where(concept: visiting_patient_concept,
-                                              person: @patient.person)\
-                                       .exists?
+      is_visiting_patient = Observation.where(
+        concept: patient_type_concept,
+        person: @patient.person,
+        value_coded: visiting_patient_concept.concept_id
+      ).exists?
+
       !is_visiting_patient
     end
 
