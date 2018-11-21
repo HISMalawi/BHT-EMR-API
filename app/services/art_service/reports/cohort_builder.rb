@@ -279,13 +279,13 @@ module ARTService
         # Alive and On ART with 'TB Status' observation value of 'TB not Suspected' or 'TB Suspected'
         # or 'TB confirmed and on Treatment', or 'TB confirmed and not on Treatment' or 'Unknown TB status'
         # during their latest HIV Clinic Consultaiton encounter in the reporting period
-        @tb_status = cal_tb_status(cohort_struct.total_alive_and_on_art, end_date)
+        write_tb_status(cohort_struct, cohort_struct.total_alive_and_on_art, start_date, end_date)
 
-        cohort_struct.tb_suspected = get_tb_status('TB suspected')
-        cohort_struct.tb_not_suspected = get_tb_status('TB NOT suspected')
-        cohort_struct.tb_confirmed_on_tb_treatment = get_tb_status('Confirmed TB on treatment')
-        cohort_struct.tb_confirmed_currently_not_yet_on_tb_treatment = get_tb_status('Confirmed TB NOT on treatment')
-        cohort_struct.unknown_tb_status = get_tb_status('unknown_tb_status')
+        # cohort_struct.tb_suspected = get_tb_status('TB suspected')
+        # cohort_struct.tb_not_suspected = get_tb_status('TB NOT suspected')
+        # cohort_struct.tb_confirmed_on_tb_treatment = get_tb_status('Confirmed TB on treatment')
+        # cohort_struct.tb_confirmed_currently_not_yet_on_tb_treatment = get_tb_status('Confirmed TB NOT on treatment')
+        # cohort_struct.unknown_tb_status = get_tb_status('unknown_tb_status')
 
         # The following block of code make sure the patients that were screened for TB and
         # those not but are on ART should add up to Total Alive and on ART
@@ -991,41 +991,90 @@ module ARTService
         result
       end
 
-      def cal_tb_status(patient_list, end_date)
-        patient_ids = []
-        tb_status = []
+      def write_tb_status(cohort_struct, patients_alive_and_on_art, start_date, end_date)
+        cohort_struct.tb_suspected = []
+        cohort_struct.tb_not_suspected = []
+        cohort_struct.tb_confirmed_on_tb_treatment = []
+        cohort_struct.tb_confirmed_currently_not_yet_on_tb_treatment = []
+        cohort_struct.unknown_tb_status = []
 
-        (patient_list || []).each do |row|
-          patient_ids << row['patient_id'].to_i
+        tb_suspected_concept = concept('TB Suspected')
+        tb_not_suspected_concept = concept('TB Not Suspected')
+        tb_confirmed_but_not_on_treatment = concept('Confirmed TB NOT on Treatment')
+        tb_confirmed_and_on_treatment = concept('Confirmed TB on Treatment')
+
+        patients_alive_and_on_art.each do |patient|
+          tb_status = patient_tb_status(patient['patient_id'], start_date, end_date)
+
+          tb_status_value = tb_status ? tb_status.value_coded.to_i : nil
+
+          case tb_status_value
+          when tb_suspected_concept.concept_id
+            cohort_struct.tb_suspected << patient
+          when tb_not_suspected_concept.concept_id
+            cohort_struct.tb_not_suspected << patient
+          when tb_confirmed_and_on_treatment.concept_id
+            cohort_struct.tb_confirmed_on_tb_treatment << patient
+          when tb_confirmed_but_not_on_treatment.concept_id
+            cohort_struct.tb_confirmed_currently_not_yet_on_tb_treatment << patient
+          else
+            cohort_struct.unknown_tb_status << patient
+          end
         end
-
-        return [] if patient_ids.blank?
-
-        tb_status_concept_id = ConceptName.find_by_name('TB STATUS').concept_id
-
-        data = ActiveRecord::Base.connection.select_all(
-          "SELECT person_id, value_coded, value_coded_name_id,  cn.name as tb_status
-          FROM obs o LEFT JOIN concept_name cn
-            ON o.value_coded = cn.concept_id AND cn.concept_name_type = 'FULLY_SPECIFIED'
-          WHERE o.voided = 0 AND o.concept_id = #{tb_status_concept_id}
-            AND o.person_id IN(#{patient_ids.join(',')})
-            AND o.obs_datetime = (
-              SELECT max(obs_datetime) FROM obs WHERE concept_id = #{tb_status_concept_id}
-              AND voided = 0 AND person_id = o.person_id AND
-              obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-            ) GROUP BY person_id"
-        )
-
-        (data || []).each do |patient_tb_status|
-          status = patient_tb_status['tb_status']
-          status = 'unknown_tb_status' if status.blank?
-          tb_status << {
-            patient_id: patient_tb_status['person_id'].to_i,
-            tb_status: status
-          }
-        end
-        tb_status
       end
+
+      def patient_tb_status(patient_id, start_date, end_date)
+        tb_status_concept = concept('TB Status')
+
+        encounter = EncounterService.recent_encounter(
+          encounter_type_name: 'HIV CLINIC CONSULTATION',
+          patient_id: patient_id,
+          date: end_date,
+          start_date: start_date
+        )
+        return false unless encounter
+
+        Observation.where(
+          'person_id = ? AND concept_id = ? AND DATE(obs_datetime) = DATE(?)',
+          patient_id, tb_status_concept.concept_id, encounter.encounter_datetime
+        ).first
+      end
+
+      # def cal_tb_status(patient_list, end_date)
+      #   patient_ids = []
+      #   tb_status = []
+
+      #   (patient_list || []).each do |row|
+      #     patient_ids << row['patient_id'].to_i
+      #   end
+
+      #   return [] if patient_ids.blank?
+
+      #   tb_status_concept_id = ConceptName.find_by_name('TB STATUS').concept_id
+
+      #   data = ActiveRecord::Base.connection.select_all(
+      #     "SELECT person_id, value_coded, value_coded_name_id,  cn.name as tb_status
+      #     FROM obs o LEFT JOIN concept_name cn
+      #       ON o.value_coded = cn.concept_id AND cn.concept_name_type = 'FULLY_SPECIFIED'
+      #     WHERE o.voided = 0 AND o.concept_id = #{tb_status_concept_id}
+      #       AND o.person_id IN(#{patient_ids.join(',')})
+      #       AND o.obs_datetime = (
+      #         SELECT max(obs_datetime) FROM obs WHERE concept_id = #{tb_status_concept_id}
+      #         AND voided = 0 AND person_id = o.person_id AND
+      #         obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+      #       ) GROUP BY person_id"
+      #   )
+
+      #   (data || []).each do |patient_tb_status|
+      #     status = patient_tb_status['tb_status']
+      #     status = 'unknown_tb_status' if status.blank?
+      #     tb_status << {
+      #       patient_id: patient_tb_status['person_id'].to_i,
+      #       tb_status: status
+      #     }
+      #   end
+      #   tb_status
+      # end
 
       def get_tb_status(tb_status)
         registered = []
