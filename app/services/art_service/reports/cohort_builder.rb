@@ -279,7 +279,7 @@ module ARTService
         # Alive and On ART with 'TB Status' observation value of 'TB not Suspected' or 'TB Suspected'
         # or 'TB confirmed and on Treatment', or 'TB confirmed and not on Treatment' or 'Unknown TB status'
         # during their latest HIV Clinic Consultaiton encounter in the reporting period
-        write_tb_status(cohort_struct, cohort_struct.total_alive_and_on_art, start_date, end_date)
+        write_tb_status_indicators(cohort_struct, cohort_struct.total_alive_and_on_art, start_date, end_date)
 
         # cohort_struct.tb_suspected = get_tb_status('TB suspected')
         # cohort_struct.tb_not_suspected = get_tb_status('TB NOT suspected')
@@ -290,51 +290,51 @@ module ARTService
         # The following block of code make sure the patients that were screened for TB and
         # those not but are on ART should add up to Total Alive and on ART
         #===============================================================================================================
-        unknown_tb_status = []
-        unknow_tb_status_patient_ids = []
+        # unknown_tb_status = []
+        # unknow_tb_status_patient_ids = []
 
-        (cohort_struct.total_alive_and_on_art || []).each do |row|
-          patient_id = row['patient_id'].to_i; patient_id_found = []
+        # (cohort_struct.total_alive_and_on_art || []).each do |row|
+        #   patient_id = row['patient_id'].to_i; patient_id_found = []
 
-          (cohort_struct.tb_suspected || []).each do |s|
-            patient_id_found << s[:patient_id] if s[:patient_id] == patient_id
-          end
+        #   (cohort_struct.tb_suspected || []).each do |s|
+        #     patient_id_found << s[:patient_id] if s[:patient_id] == patient_id
+        #   end
 
-          if patient_id_found.blank?
-            (cohort_struct.tb_not_suspected || []).each do |s|
-              patient_id_found << s[:patient_id] if s[:patient_id] == patient_id
-            end
-          end
+        #   if patient_id_found.blank?
+        #     (cohort_struct.tb_not_suspected || []).each do |s|
+        #       patient_id_found << s[:patient_id] if s[:patient_id] == patient_id
+        #     end
+        #   end
 
-          if patient_id_found.blank?
-            (cohort_struct.tb_confirmed_on_tb_treatment || []).each do |s|
-              patient_id_found << s[:patient_id] if s[:patient_id] == patient_id
-            end
-          end
+        #   if patient_id_found.blank?
+        #     (cohort_struct.tb_confirmed_on_tb_treatment || []).each do |s|
+        #       patient_id_found << s[:patient_id] if s[:patient_id] == patient_id
+        #     end
+        #   end
 
-          if patient_id_found.blank?
-            (cohort_struct.tb_confirmed_currently_not_yet_on_tb_treatment || []).each do |s|
-              patient_id_found << s[:patient_id] if s[:patient_id] == patient_id
-            end
-          end
+        #   if patient_id_found.blank?
+        #     (cohort_struct.tb_confirmed_currently_not_yet_on_tb_treatment || []).each do |s|
+        #       patient_id_found << s[:patient_id] if s[:patient_id] == patient_id
+        #     end
+        #   end
 
-          if patient_id_found.blank?
-            (cohort_struct.unknown_tb_status || []).each do |s|
-              patient_id_found << s[:patient_id] if s[:patient_id] == patient_id
-            end
-          end
+        #   if patient_id_found.blank?
+        #     (cohort_struct.unknown_tb_status || []).each do |s|
+        #       patient_id_found << s[:patient_id] if s[:patient_id] == patient_id
+        #     end
+        #   end
 
-          unknown_tb_status << { patient_id: patient_id, tb_status: 'unknown_tb_status' } if patient_id_found.blank?
-        end
+        #   unknown_tb_status << { patient_id: patient_id, tb_status: 'unknown_tb_status' } if patient_id_found.blank?
+        # end
 
-        cohort_struct.unknown_tb_status = (cohort_struct.unknown_tb_status + unknown_tb_status) unless unknown_tb_status.blank?
+        # cohort_struct.unknown_tb_status = (cohort_struct.unknown_tb_status + unknown_tb_status) unless unknown_tb_status.blank?
         #===============================================================================================================
 
         # ART adherence
         #
         # Alive and On ART with value of their 'Drug order adherence" observation during their latest Adherence
         # encounter in the reporting period  between 95 and 105
-        adherent, not_adherent, unknown_adherence = latest_art_adherence(cohort_struct.total_alive_and_on_art, end_date)
+        adherent, not_adherent, unknown_adherence = latest_art_adherence(cohort_struct.total_alive_and_on_art, start_date, end_date)
         cohort_struct.patients_with_0_6_doses_missed_at_their_last_visit = adherent
         cohort_struct.patients_with_7_plus_doses_missed_at_their_last_visit = not_adherent
         cohort_struct.patients_with_unknown_adhrence = unknown_adherence
@@ -906,55 +906,54 @@ module ARTService
         results
       end
 
-      def latest_art_adherence(patient_list, end_date)
-        patient_ids = []
+      ART_ADHERENCE_THRESHOLD = 95.0 # Those below are not adherent
 
-        (patient_list || []).each do |row|
-          patient_ids << row['patient_id'].to_i
+      # Groups patients list into three groups based on the adherence rates
+      #
+      # Returns: A list of 3 lists as follows:
+      #    [
+      #       [adherent patients],
+      #       [inadherent patients],
+      #       [patients whose adherence rate is unknown]
+      #    ]
+      def latest_art_adherence(patients_alive_and_on_art, start_date, end_date)
+        adherent = []
+        not_adherent = []
+        unknown_adherence = []
+
+        patients_alive_and_on_art.each do |patient|
+          adherence = patient_latest_art_adherence(patient['patient_id'], start_date, end_date)
+
+          unless adherence
+            unknown_adherence << patient
+            next
+          end
+
+          adherence_rate = (adherence.value_numeric || adherence.value_text).to_f
+
+          if adherence_rate >= ART_ADHERENCE_THRESHOLD
+            adherent << patient
+          else
+            not_adherent << patient
+          end
         end
-        return [[], [], []] if patient_ids.blank?
 
-        adherence = ActiveRecord::Base.connection.select_all(
-          "SELECT person_id, value_numeric, value_text FROM obs t WHERE concept_id = 6987 AND voided = 0
-          AND obs_datetime BETWEEN (SELECT CONCAT(date(max(obs_datetime)),' 00:00:00') FROM obs
-            WHERE concept_id = 6987 AND voided = 0 AND person_id = t.person_id
-            AND obs_datetime <= '#{end_date} 23:59:59'
-          ) AND (SELECT CONCAT(date(max(obs_datetime)),' 23:59:59') FROM obs
-            WHERE concept_id = 6987 AND voided = 0 AND person_id = t.person_id
-            AND obs_datetime <= '#{end_date} 23:59:59'
-          ) AND person_id IN (#{patient_ids.join(',')})
-          AND obs_datetime <= '#{end_date} 23:59:59'"
+        [adherent, not_adherent, unknown_adherence]
+      end
+
+      # Retrieve patient's latest adherence observation
+      def patient_latest_art_adherence(patient_id, start_date, end_date)
+        encounter = EncounterService.recent_encounter(
+          encounter_type_name: 'ART ADHERENCE',
+          patient_id: patient_id,
+          date: end_date,
+          start_date: start_date
         )
+        return nil unless encounter
 
-        adherent = []; not_adherent = []; unknown_adherence = []
-
-        (adherence || []).each do |ad|
-          unless ad['value_text'].blank?
-            if /unknown/i.match?(ad['value_text'])
-              unknown_adherence << ad['person_id'].to_i; unknown_adherence = unknown_adherence.uniq
-              next
-            end
-          end
-
-          rate = ad['value_text'].to_f unless ad['value_text'].blank?
-          rate = ad['value_numeric'].to_f unless ad['value_numeric'].blank?
-          rate = 0 if rate.blank?
-
-          if rate >= 95
-            adherent << ad['person_id'].to_i; adherent = adherent.uniq
-          elsif rate < 95
-            not_adherent << ad['person_id'].to_i; not_adherent = not_adherent.uniq
-          end
-        end
-
-        found_in_both = (adherent & not_adherent)
-        found_in_both = [] if found_in_both.blank?
-
-        adherent = (adherent - found_in_both)
-        new_patients_with_no_adherence_done = (patient_ids.uniq - (adherent + not_adherent))
-        unknown_adherence = (new_patients_with_no_adherence_done + unknown_adherence).uniq
-
-        [adherent, not_adherent.uniq, unknown_adherence]
+        encounter.observations.where(
+          concept: concept('Drug order adherence')
+        ).order(obs_datetime: :desc).first
       end
 
       def unknown_side_effects(data, _start_date, end_date)
@@ -991,7 +990,7 @@ module ARTService
         result
       end
 
-      def write_tb_status(cohort_struct, patients_alive_and_on_art, start_date, end_date)
+      def write_tb_status_indicators(cohort_struct, patients_alive_and_on_art, start_date, end_date)
         cohort_struct.tb_suspected = []
         cohort_struct.tb_not_suspected = []
         cohort_struct.tb_confirmed_on_tb_treatment = []
@@ -1039,42 +1038,6 @@ module ARTService
           patient_id, tb_status_concept.concept_id, encounter.encounter_datetime
         ).first
       end
-
-      # def cal_tb_status(patient_list, end_date)
-      #   patient_ids = []
-      #   tb_status = []
-
-      #   (patient_list || []).each do |row|
-      #     patient_ids << row['patient_id'].to_i
-      #   end
-
-      #   return [] if patient_ids.blank?
-
-      #   tb_status_concept_id = ConceptName.find_by_name('TB STATUS').concept_id
-
-      #   data = ActiveRecord::Base.connection.select_all(
-      #     "SELECT person_id, value_coded, value_coded_name_id,  cn.name as tb_status
-      #     FROM obs o LEFT JOIN concept_name cn
-      #       ON o.value_coded = cn.concept_id AND cn.concept_name_type = 'FULLY_SPECIFIED'
-      #     WHERE o.voided = 0 AND o.concept_id = #{tb_status_concept_id}
-      #       AND o.person_id IN(#{patient_ids.join(',')})
-      #       AND o.obs_datetime = (
-      #         SELECT max(obs_datetime) FROM obs WHERE concept_id = #{tb_status_concept_id}
-      #         AND voided = 0 AND person_id = o.person_id AND
-      #         obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-      #       ) GROUP BY person_id"
-      #   )
-
-      #   (data || []).each do |patient_tb_status|
-      #     status = patient_tb_status['tb_status']
-      #     status = 'unknown_tb_status' if status.blank?
-      #     tb_status << {
-      #       patient_id: patient_tb_status['person_id'].to_i,
-      #       tb_status: status
-      #     }
-      #   end
-      #   tb_status
-      # end
 
       def get_tb_status(tb_status)
         registered = []
@@ -1124,92 +1087,6 @@ module ARTService
 
         records.length.positive?
       end
-
-      # def total_patients_with_side_effects(cohort_struct, patients_alive_and_on_art, _start_date, end_date)
-      #   patient_ids = []
-      #   patients_with_unknown_side_effects = []
-      #   results = []
-      #   patient_id_of_those_without_side_effects = []
-
-      #   (patients_alive_and_on_art || []).each do |row|
-      #     patient_ids << row['patient_id'].to_i
-      #   end
-
-      #   return [] if patient_ids.blank?
-
-      #   drug_induced_concept_id = ConceptName.find_by_name('Drug induced').concept_id
-      #   malawi_art_side_effects_concept_id = ConceptName.find_by_name('Malawi ART side effects').concept_id
-      #   no_side_effects_concept_id = ConceptName.find_by_name('No').concept_id
-      #   yes_side_effects_concept_id = ConceptName.find_by_name('Yes').concept_id
-      #   encounter_type = EncounterType.find_by_name('HIV clinic consultation').encounter_type_id
-
-      #   malawi_side_effects_ids = ActiveRecord::Base.connection.select_all(
-      #     "SELECT patient_id, date_enrolled, t1.obs_id, value_coded,
-      #             e.earliest_start_date, t1.obs_datetime
-      #     FROM temp_earliest_start_date e INNER JOIN obs t1 ON e.patient_id = t1.person_id
-      #     WHERE t1.person_id IN(#{patient_ids.join(',')})
-      #       AND DATE(t1.obs_datetime) = (
-      #         SELECT DATE(MAX(encounter_datetime))
-      #         FROM encounter e
-      #         WHERE e.encounter_type = #{encounter_type} AND e.patient_id = t1.person_id AND e.voided = 0
-      #           AND e.encounter_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-      #       )
-      #       AND t1.voided = 0
-      #       AND concept_id IN(#{malawi_art_side_effects_concept_id}, #{drug_induced_concept_id})
-      #       AND t1.obs_datetime = (
-      #         SELECT max(obs_datetime)
-      #         FROM obs t2
-      #         WHERE t2.voided = 0
-      #           AND t2.person_id = t1.person_id
-      #           AND t2.concept_id IN(#{malawi_art_side_effects_concept_id}, #{drug_induced_concept_id})
-      #           AND t2.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-      #       )
-      #     GROUP BY t1.person_id, t1.value_coded
-      #     HAVING DATE(obs_datetime) != DATE(earliest_start_date)"
-      #   )
-
-      #   patient_id_of_those_with_side_effects = []
-      #   patient_id_of_those_without_side_effects = []
-
-      #   (malawi_side_effects_ids || []).each do |row|
-      #     obs_group = begin
-      #                   Observation.where(
-      #                     ['concept_id = ? AND obs_group_id = ?',
-      #                      row['value_coded'].to_i, row['obs_id'].to_i]
-      #                   ).first
-      #                 rescue StandardError
-      #                   nil
-      #                 end
-
-      #     if obs_group.blank?
-      #       unless patient_id_of_those_with_side_effects.include?(row['patient_id'].to_i)
-      #         next if no_side_effects_concept_id == row['value_coded'].to_i
-
-      #         results << row
-      #         patient_id_of_those_with_side_effects << row['patient_id'].to_i
-      #       end
-      #     elsif obs_group.value_coded == yes_side_effects_concept_id
-      #       unless patient_id_of_those_with_side_effects.include?(row['patient_id'].to_i)
-      #         results << row
-      #         patient_id_of_those_with_side_effects << row['patient_id'].to_i
-      #       end
-      #     end
-      #   end
-
-      #   (patient_ids || []).each do |id|
-      #     next if patient_id_of_those_with_side_effects.include?(id)
-
-      #     patient_id_of_those_without_side_effects << id
-      #   end
-
-      #   patient_id_of_those_with_unknown_side_effects = patient_ids - \
-      #                                                   (patient_id_of_those_with_side_effects + patient_id_of_those_without_side_effects)
-
-      #   cohort_struct.total_patients_without_side_effects = patient_id_of_those_without_side_effects
-      #   cohort_struct.unknown_side_effects = patient_id_of_those_with_unknown_side_effects
-
-      #   results
-      # end
 
       def total_patients_without_side_effects(patients_alive_and_on_art, patients_with_side_effects)
         patient_ids = []; with_side_effects = []; result = []
@@ -1328,6 +1205,21 @@ module ARTService
             SELECT e.patient_id, patient_outcome(e.patient_id, '#{end_date} 23:59:59') AS cum_outcome
             FROM temp_earliest_start_date e WHERE e.date_enrolled <= '#{end_date}'
           )"
+        )
+
+        ActiveRecord::Base.connection.execute(
+          'ALTER TABLE temp_patient_outcomes
+           ADD INDEX patient_id_index (patient_id)'
+        )
+
+        ActiveRecord::Base.connection.execute(
+          'ALTER TABLE temp_patient_outcomes
+           ADD INDEX cum_outcome_index (cum_outcome)'
+        )
+
+        ActiveRecord::Base.connection.execute(
+          'ALTER TABLE temp_patient_outcomes
+           ADD INDEX patient_id_cum_outcome_index (patient_id, cum_outcome)'
         )
       end
 
