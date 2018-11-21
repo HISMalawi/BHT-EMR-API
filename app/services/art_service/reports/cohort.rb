@@ -62,11 +62,14 @@ module ARTService
       end
 
       def value_contents_to_json(value_contents)
-        if value_contents.respond_to?(:length) && !value_contents.is_a?(String)
-          puts "VALUE: #{value_contents.length}"
-          value_contents.length
-        elsif value_contents.respond_to?(:size) && !value_contents.is_a?(String)
-          value_contents.size
+        if value_contents.respond_to?(:each) && !value_contents.is_a?(String)
+          if value_contents.respond_to?(:length)
+            value_contents.length
+          elsif value_contents.respond_to?(:size)
+            value_contents.size
+          else
+            value_contents
+          end
         else
           value_contents
         end

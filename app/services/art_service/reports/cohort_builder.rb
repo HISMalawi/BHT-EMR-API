@@ -305,7 +305,7 @@ module ARTService
         cohort_struct.total_patients_on_arvs_and_ipt = total_patients_on_arvs_and_ipt(cohort_struct.total_alive_and_on_art, start_date, end_date)
 
         # Patients on family planning methods at least once before end of quarter and on ARVs
-        cohort_struct.total_patients_on_family_planning = total_patients_on_family_planning(cohort_struct.total_alive_and_on_art, start_date, end_date)
+        cohort_struct.total_patients_on_family_planning = total_patients_on_family_planning(cohort_struct.total_alive_and_on_art, quarter_start_date, end_date)
 
         # Patients whose BP was screened and are above 30 years least once before end of quarter and on ARVs
         cohort_struct.total_patients_with_screened_bp = total_patients_with_screened_bp(cohort_struct.total_alive_and_on_art, start_date, end_date)
@@ -717,8 +717,6 @@ module ARTService
         end
 
         return [] if patient_ids.blank?
-
-        result = []
 
         results = ActiveRecord::Base.connection.select_all(
           "SELECT ods.patient_id FROM orders ods
