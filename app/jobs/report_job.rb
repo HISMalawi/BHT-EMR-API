@@ -6,6 +6,9 @@ class ReportJob < ApplicationJob
   def perform(clazzname, kwargs)
     logger.debug("Running report job #{clazzname}(#{kwargs})")
 
+    user_id = kwargs['user']
+    User.current = User.find(user_id)
+
     clazz = clazzname.constantize
     report_engine = clazz.new
     report_engine.generate_report(**kwargs)
