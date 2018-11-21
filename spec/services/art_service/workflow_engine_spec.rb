@@ -39,7 +39,9 @@ describe ARTService::WorkflowEngine do
 
     it 'starts with HIV_RECEPTION for visiting patients' do
       register_patient patient
-      Observation.create(person: patient.person, concept: concept('Visiting patient'))
+      Observation.create(person: patient.person,
+                         concept: concept('Type of patient'),
+                         value_coded: concept('Visiting patient').concept_id)
       encounter_type = engine.next_encounter
       expect(encounter_type.name.upcase).to eq('HIV RECEPTION')
     end
