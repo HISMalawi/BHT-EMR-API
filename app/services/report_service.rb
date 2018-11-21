@@ -57,6 +57,7 @@ class ReportService
     kwargs[:start_date] = start_date.to_s
     kwargs[:end_date] = end_date.to_s
     kwargs[:type] = type.id
+    kwargs[:user] = User.current.user_id
 
     LOGGER.debug("Queueing #{type.name} report with arguments: #{kwargs}")
     if @immediate_mode
