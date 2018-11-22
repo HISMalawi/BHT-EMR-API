@@ -81,7 +81,7 @@ module ARTService
         cohort_struct.quarterly_unknown_age = unknown_age(quarter_start_date, end_date)
 
         # The following block - we are calculating all reason for starting for Quarter and Cumulative
-        initiated_reason_on_art_concept = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept
+        initiated_reason_on_art_concept = concept('REASON FOR ART ELIGIBILITY')
 
         @reason_for_starting = ActiveRecord::Base.connection.select_all(
           "SELECT e.*, patient_reason_for_starting_art(e.patient_id) reason_for_starting_concept_id
@@ -358,7 +358,7 @@ module ARTService
         )
 
         dispensing_encounter_id = EncounterType.find_by_name('DISPENSING').id
-        amount_dispensed = ConceptName.find_by_name('Amount dispensed').concept_id
+        amount_dispensed = concept('Amount dispensed').concept_id
         ipt_drug_ids = Drug.find_all_by_concept_id(656).map(&:drug_id)
 
         patient_ids = []
@@ -462,7 +462,7 @@ module ARTService
           raise 'Try running the revised cohort before this report'
         end
 
-        reason_for_starting = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept
+        reason_for_starting = concept('REASON FOR ART ELIGIBILITY')
         data = {}
 
         (patients || []).each do |p|
@@ -631,8 +631,8 @@ module ARTService
 
         result = []
 
-        systolic_blood_presssure_concept_id = ConceptName.find_by_name('Systolic blood pressure').concept_id
-        diastolic_pressure_concept_id = ConceptName.find_by_name('Diastolic blood pressure').concept_id
+        systolic_blood_presssure_concept_id = concept('Systolic blood pressure').concept_id
+        diastolic_pressure_concept_id = concept('Diastolic blood pressure').concept_id
 
         results = ActiveRecord::Base.connection.select_all(
           "SELECT o.person_id
@@ -677,9 +677,9 @@ module ARTService
         return 0 if patient_list.blank?
 
         hiv_clinic_consultation_encounter_type_id = EncounterType.find_by_name('HIV CLINIC CONSULTATION').encounter_type_id
-        method_of_family_planning_concept_id = ConceptName.find_by_name('Method of family planning').concept_id
-        family_planning_action_to_take_concept_id = ConceptName.find_by_name('Family planning, action to take').concept_id
-        none_concept_id = [ConceptName.find_by_name('None').concept_id, ConceptName.find_by_name('No').concept_id]
+        method_of_family_planning_concept_id = concept('Method of family planning').concept_id
+        family_planning_action_to_take_concept_id = concept('Family planning, action to take').concept_id
+        none_concept_id = [concept('None').concept_id, concept('No').concept_id]
 
         results = ActiveRecord::Base.connection.select_all(
           "SELECT o.person_id
@@ -708,8 +708,8 @@ module ARTService
       end
 
       def total_patients_on_arvs_and_ipt(patients_list, start_date, end_date)
-        isoniazid_concept_id = ConceptName.find_by_name('Isoniazid').concept_id
-        pyridoxine_concept_id = ConceptName.find_by_name('Pyridoxine').concept_id
+        isoniazid_concept_id = concept('Isoniazid').concept_id
+        pyridoxine_concept_id = concept('Pyridoxine').concept_id
 
         patient_ids = []
         (patients_list || []).each do |row|
@@ -741,7 +741,7 @@ module ARTService
       end
 
       def total_patients_on_arvs_and_cpt(patients_list, start_date, end_date)
-        cpt_concept_id = ConceptName.find_by_name('Cotrimoxazole').concept_id
+        cpt_concept_id = concept('Cotrimoxazole').concept_id
 
         patient_ids = []
         (patients_list || []).each do |row|
@@ -749,8 +749,6 @@ module ARTService
         end
 
         return [] if patient_ids.blank?
-
-        result = []
 
         results = ActiveRecord::Base.connection.select_all(
           "SELECT ods.patient_id FROM orders ods
@@ -793,7 +791,7 @@ module ARTService
         total_pregnant_females = [0] if total_pregnant_females.blank?
 
         hiv_clinic_consultation_encounter_type_id = EncounterType.find_by_name('HIV CLINIC CONSULTATION').encounter_type_id
-        breastfeeding_concept_id = ConceptName.find_by_name('Breast feeding?').concept_id
+        breastfeeding_concept_id = concept('Breast feeding?').concept_id
 
         results = ActiveRecord::Base.connection.select_all(
           "SELECT person_id  FROM obs obs
@@ -822,7 +820,7 @@ module ARTService
         result = []
 
         hiv_clinic_consultation_encounter_type_id = EncounterType.find_by_name('HIV CLINIC CONSULTATION').encounter_type_id
-        pregnant_concept_id = ConceptName.find_by_name('Is patient pregnant?').concept_id
+        pregnant_concept_id = concept('Is patient pregnant?').concept_id
 
         results = ActiveRecord::Base.connection.select_all(
           "SELECT person_id FROM obs obs
@@ -918,9 +916,9 @@ module ARTService
 
         result = []
 
-        drug_induced_concept_id = ConceptName.find_by_name('Drug induced').concept_id
-        malawi_art_side_effects_concept_id = ConceptName.find_by_name('Malawi ART side effects').concept_id
-        unknown_side_effects_concept_id = ConceptName.find_by_name('Unknown').concept_id
+        drug_induced_concept_id = concept('Drug induced').concept_id
+        malawi_art_side_effects_concept_id = concept('Malawi ART side effects').concept_id
+        unknown_side_effects_concept_id = concept('Unknown').concept_id
 
         malawi_art_side_effects = ActiveRecord::Base.connection.select_all(
           "SELECT * FROM obs o
@@ -1069,9 +1067,9 @@ module ARTService
         return [] if patient_ids.blank?
 
         dispensing_encounter_id = EncounterType.find_by_name('DISPENSING').id
-        regimen_category = ConceptName.find_by_name('REGIMEN CATEGORY').concept_id
-        regimem_given_concept = ConceptName.find_by_name('ARV REGIMENS RECEIVED ABSTRACTED CONSTRUCT').concept_id
-        unknown_regimen_given = ConceptName.find_by_name('UNKNOWN ANTIRETROVIRAL DRUG').concept_id
+        regimen_category = concept('REGIMEN CATEGORY').concept_id
+        regimem_given_concept = concept('ARV REGIMENS RECEIVED ABSTRACTED CONSTRUCT').concept_id
+        unknown_regimen_given = concept('UNKNOWN ANTIRETROVIRAL DRUG').concept_id
 
         data = ActiveRecord::Base.connection.select_all(
           "SELECT e.patient_id, patient_current_regimen(e.patient_id, DATE('#{end_date.to_date}')) regimen_category
@@ -1177,9 +1175,9 @@ module ARTService
 
       def kaposis_sarcoma(start_date, end_date)
         # KAPOSIS SARCOMA
-        concept_id = ConceptName.find_by_name('KAPOSIS SARCOMA').concept_id
-        yes_concept_id = ConceptName.find_by_name('Yes').concept_id
-        who_stages_criteria = ConceptName.find_by_name('Who stages criteria present').concept_id
+        concept_id = concept('KAPOSIS SARCOMA').concept_id
+        yes_concept_id = concept('Yes').concept_id
+        who_stages_criteria = concept('Who stages criteria present').concept_id
 
         ActiveRecord::Base.connection.select_all(
           "SELECT * FROM temp_earliest_start_date t
@@ -1193,12 +1191,12 @@ module ARTService
 
       def current_episode_of_tb(start_date, end_date)
         # CURRENT EPISODE OF TB
-        eptb_concept_id = ConceptName.find_by_name('EXTRAPULMONARY TUBERCULOSIS (EPTB)').concept_id
-        yes_concept_id = ConceptName.find_by_name('Yes').concept_id
-        pulmonary_tb_concept_id = ConceptName.find_by_name('PULMONARY TUBERCULOSIS').concept_id
-        current_ptb_concept_id = ConceptName.find_by_name('PULMONARY TUBERCULOSIS (CURRENT)').concept_id
+        eptb_concept_id = concept('EXTRAPULMONARY TUBERCULOSIS (EPTB)').concept_id
+        yes_concept_id = concept('Yes').concept_id
+        pulmonary_tb_concept_id = concept('PULMONARY TUBERCULOSIS').concept_id
+        current_ptb_concept_id = concept('PULMONARY TUBERCULOSIS (CURRENT)').concept_id
 
-        who_stages_criteria = ConceptName.find_by_name('Who stages criteria present').concept_id
+        who_stages_criteria = concept('Who stages criteria present').concept_id
 
         ActiveRecord::Base.connection.select_all(
           "SELECT * FROM temp_earliest_start_date t
@@ -1220,10 +1218,10 @@ module ARTService
         patients_with_current_tb_episode = [0] if patients_with_current_tb_episode.blank?
 
         # Pulmonary tuberculosis within the last 2 years
-        pulmonary_tb_within_last_2yrs_concept_id = ConceptName.find_by_name('Pulmonary tuberculosis within the last 2 years').concept_id
-        ptb_within_the_past_two_yrs_concept_id = ConceptName.find_by_name('Ptb within the past two years').concept_id
-        who_stages_criteria = ConceptName.find_by_name('Who stages criteria present').concept_id
-        yes_concept_id = ConceptName.find_by_name('Yes').concept_id
+        pulmonary_tb_within_last_2yrs_concept_id = concept('Pulmonary tuberculosis within the last 2 years').concept_id
+        ptb_within_the_past_two_yrs_concept_id = concept('Ptb within the past two years').concept_id
+        who_stages_criteria = concept('Who stages criteria present').concept_id
+        yes_concept_id = concept('Yes').concept_id
 
         ActiveRecord::Base.connection.select_all(
           "SELECT * FROM temp_earliest_start_date t
@@ -1283,7 +1281,7 @@ module ARTService
       end
 
       def children_12_59_months(start_date, end_date)
-        reason_concept_id = ConceptName.find_by_name('HIV Infected').concept_id
+        reason_concept_id = concept('HIV Infected').concept_id
 
         registered = []
 
@@ -1301,8 +1299,8 @@ module ARTService
         # All WHO stage 1 and 2 patients that were enrolled before '2016-04-01'
         # should be included in this group.
         reason_concept_ids = []
-        reason_concept_ids << ConceptName.find_by_name('Unknown').concept_id
-        reason_concept_ids << ConceptName.find_by_name('None').concept_id
+        reason_concept_ids << concept('Unknown').concept_id
+        reason_concept_ids << concept('None').concept_id
 
         registered = []
 
@@ -1315,14 +1313,14 @@ module ARTService
 
         revised_art_guidelines_date = '2016-04-01'.to_date
         who_stage_1_and_2_concept_ids = []
-        who_stage_1_and_2_concept_ids << ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 1').concept_id
-        who_stage_1_and_2_concept_ids << ConceptName.find_by_name('LYMPHOCYTES').concept_id
-        who_stage_1_and_2_concept_ids << ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2').concept_id
-        who_stage_1_and_2_concept_ids << ConceptName.find_by_name('WHO stage I adult').concept_id
-        who_stage_1_and_2_concept_ids << ConceptName.find_by_name('WHO stage I peds').concept_id
-        who_stage_1_and_2_concept_ids << ConceptName.find_by_name('WHO stage 1').concept_id
-        who_stage_1_and_2_concept_ids << ConceptName.find_by_name('WHO stage II adult').concept_id
-        who_stage_1_and_2_concept_ids << ConceptName.find_by_name('WHO stage II peds').concept_id
+        who_stage_1_and_2_concept_ids << concept('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 1').concept_id
+        who_stage_1_and_2_concept_ids << concept('LYMPHOCYTES').concept_id
+        who_stage_1_and_2_concept_ids << concept('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2').concept_id
+        who_stage_1_and_2_concept_ids << concept('WHO stage I adult').concept_id
+        who_stage_1_and_2_concept_ids << concept('WHO stage I peds').concept_id
+        who_stage_1_and_2_concept_ids << concept('WHO stage 1').concept_id
+        who_stage_1_and_2_concept_ids << concept('WHO stage II adult').concept_id
+        who_stage_1_and_2_concept_ids << concept('WHO stage II peds').concept_id
 
         if start_date.to_date < revised_art_guidelines_date.to_date
           end_date = revised_art_guidelines_date
@@ -1339,9 +1337,9 @@ module ARTService
 
       def who_stage_four(start_date, end_date)
         reason_concept_ids = []
-        reason_concept_ids << ConceptName.find_by_name('WHO stage IV adult').concept_id
-        reason_concept_ids << ConceptName.find_by_name('WHO stage IV peds').concept_id
-        reason_concept_ids << ConceptName.find_by_name('WHO STAGE 4').concept_id
+        reason_concept_ids << concept('WHO stage IV adult').concept_id
+        reason_concept_ids << concept('WHO stage IV peds').concept_id
+        reason_concept_ids << concept('WHO STAGE 4').concept_id
 
         registered = []
 
@@ -1357,14 +1355,14 @@ module ARTService
 
       def who_stage_three(start_date, end_date)
         reason_concept_ids = []
-        reason_concept_ids << ConceptName.find_by_name('WHO stage III adult').concept_id
-        reason_concept_ids << ConceptName.find_by_name('WHO stage III peds').concept_id
-        reason_concept_ids << ConceptName.find_by_name('WHO STAGE 3').concept_id
+        reason_concept_ids << concept('WHO stage III adult').concept_id
+        reason_concept_ids << concept('WHO stage III peds').concept_id
+        reason_concept_ids << concept('WHO STAGE 3').concept_id
 
         registered = []
 
         @reason_for_starting.each do |r|
-          next unless reason_concept_ids.include?(r[:reason_for_starting_concept_id])
+          next unless reason_concept_ids.include?(r[:reason_for_starting_concept_id].to_i)
           next unless r[:date_enrolled] >= start_date.to_date && r[:date_enrolled] <= end_date.to_date
 
           registered << r
@@ -1375,10 +1373,10 @@ module ARTService
 
       def pregnant_women(start_date, end_date)
         reason_concept_ids = []
-        reason_concept_ids << ConceptName.find_by_name('PATIENT PREGNANT').concept_id
-        reason_concept_ids << ConceptName.find_by_name('Is patient pregnant at initiation?').concept_id
-        reason_concept_ids << ConceptName.find_by_name('Patient pregnant state').concept_id
-        reason_concept_ids << ConceptName.find_by_name('Is patient pregnant?').concept_id
+        reason_concept_ids << concept('PATIENT PREGNANT').concept_id
+        reason_concept_ids << concept('Is patient pregnant at initiation?').concept_id
+        reason_concept_ids << concept('Patient pregnant state').concept_id
+        reason_concept_ids << concept('Is patient pregnant?').concept_id
 
         registered = []
 
@@ -1393,7 +1391,7 @@ module ARTService
       end
 
       def breastfeeding_mothers(start_date, end_date)
-        reason_concept_id = ConceptName.find_by_name('BREASTFEEDING').concept_id
+        reason_concept_id = concept('BREASTFEEDING').concept_id
 
         registered = []
 
@@ -1414,15 +1412,15 @@ module ARTService
         revised_art_guidelines_date = '2016-04-01'.to_date
         reason_concept_ids = []
         asymptomatic_concept_ids = []
-        asymptomatic_concept_ids << ConceptName.find_by_name('ASYMPTOMATIC').concept_id
-        reason_concept_ids << ConceptName.find_by_name('WHO stage I adult').concept_id
-        reason_concept_ids << ConceptName.find_by_name('WHO stage I peds').concept_id
-        reason_concept_ids << ConceptName.find_by_name('WHO stage 1').concept_id
-        reason_concept_ids << ConceptName.find_by_name('WHO stage II adult').concept_id
-        reason_concept_ids << ConceptName.find_by_name('WHO stage II peds').concept_id
-        reason_concept_ids << ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 1').concept_id
-        reason_concept_ids << ConceptName.find_by_name('LYMPHOCYTES').concept_id
-        reason_concept_ids << ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2').concept_id
+        asymptomatic_concept_ids << concept('ASYMPTOMATIC').concept_id
+        reason_concept_ids << concept('WHO stage I adult').concept_id
+        reason_concept_ids << concept('WHO stage I peds').concept_id
+        reason_concept_ids << concept('WHO stage 1').concept_id
+        reason_concept_ids << concept('WHO stage II adult').concept_id
+        reason_concept_ids << concept('WHO stage II peds').concept_id
+        reason_concept_ids << concept('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 1').concept_id
+        reason_concept_ids << concept('LYMPHOCYTES').concept_id
+        reason_concept_ids << concept('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2').concept_id
 
         registered = []
         @reason_for_starting.each do |r|
@@ -1452,10 +1450,10 @@ module ARTService
 
       def who_stage_two(start_date, end_date)
         reason_concept_ids = []
-        reason_concept_ids << ConceptName.find_by_name('CD4 COUNT LESS THAN OR EQUAL TO 750').concept_id
-        reason_concept_ids << ConceptName.find_by_name('CD4 count less than or equal to 500').concept_id
-        reason_concept_ids << ConceptName.find_by_name('CD4 COUNT LESS THAN OR EQUAL TO 350').concept_id
-        reason_concept_ids << ConceptName.find_by_name('CD4 COUNT LESS THAN OR EQUAL TO 250').concept_id
+        reason_concept_ids << concept('CD4 COUNT LESS THAN OR EQUAL TO 750').concept_id
+        reason_concept_ids << concept('CD4 count less than or equal to 500').concept_id
+        reason_concept_ids << concept('CD4 COUNT LESS THAN OR EQUAL TO 350').concept_id
+        reason_concept_ids << concept('CD4 COUNT LESS THAN OR EQUAL TO 250').concept_id
 
         registered = []
 
@@ -1470,7 +1468,7 @@ module ARTService
       end
 
       def confirmed_hiv_infection_in_infants_pcr(start_date, end_date)
-        reason_concept_id = ConceptName.find_by_name('HIV PCR').concept_id
+        reason_concept_id = concept('HIV PCR').concept_id
 
         registered = []
 
@@ -1486,8 +1484,8 @@ module ARTService
 
       def presumed_severe_hiv_disease_in_infants(start_date, end_date)
         reason_concept_ids = []
-        reason_concept_ids << ConceptName.find_by_name('PRESUMED SEVERE HIV').concept_id
-        reason_concept_ids << ConceptName.find_by_name('PRESUMED SEVERE HIV CRITERIA IN INFANTS').concept_id
+        reason_concept_ids << concept('PRESUMED SEVERE HIV').concept_id
+        reason_concept_ids << concept('PRESUMED SEVERE HIV CRITERIA IN INFANTS').concept_id
 
         registered = []
 
@@ -1552,10 +1550,10 @@ module ARTService
       def pregnant_females_all_ages(start_date, end_date)
         registered = []; patient_id_plus_date_enrolled = []
 
-        yes_concept_id = ConceptName.find_by_name('Yes').concept_id
-        preg_concept_id = ConceptName.find_by_name('IS PATIENT PREGNANT?').concept_id
-        patient_preg_concept_id = ConceptName.find_by_name('PATIENT PREGNANT').concept_id
-        preg_at_initiation_concept_id = ConceptName.find_by_name('PREGNANT AT INITIATION?').concept_id
+        yes_concept_id = concept('Yes').concept_id
+        preg_concept_id = concept('IS PATIENT PREGNANT?').concept_id
+        patient_preg_concept_id = concept('PATIENT PREGNANT').concept_id
+        preg_at_initiation_concept_id = concept('PREGNANT AT INITIATION?').concept_id
 
         # (patient_id_plus_date_enrolled || []).each do |patient_id, date_enrolled|
         registered = ActiveRecord::Base.connection.select_all(
