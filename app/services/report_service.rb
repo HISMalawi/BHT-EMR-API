@@ -56,7 +56,7 @@ class ReportService
   private
 
   def engine(program)
-    ENGINES[program_name(program)]
+    ENGINES[program_name(program)].new
   end
 
   def program_name(program)
@@ -74,9 +74,8 @@ class ReportService
   end
 
   def find_report(type, name, start_date, end_date)
-    Report.where(type: type, name: name, start_date: start_date, end_date: end_date)\
-          .order(date_created: :desc)\
-          .first
+    engine(@program).find_report(type: type, name: name,
+                                 start_date: start_date, end_date: end_date)
   end
 
   def queue_report(start_date:, end_date:, type:, lock:, **kwargs)
