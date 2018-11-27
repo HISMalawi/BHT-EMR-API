@@ -56,7 +56,7 @@ class ARTService::LabTestsEngine
   end
 
   def find_orders_by_accession_number(accession_number)
-    LabTestTable.where(Pat_ID: accession_number).order('DATE(OrderDate), TIME(OrderTime)')
+    LabTestTable.where(Pat_ID: accession_number).order(Arel.sql('DATE(OrderDate), TIME(OrderTime)'))
   end
 
   def save_result(accession_number:, test_value:)
@@ -85,7 +85,7 @@ class ARTService::LabTestsEngine
     Order.create patient: patient,
                  encounter: encounter,
                  concept: concept('Laboratory tests ordered'),
-                order_type: order_type('Lab'),
+                 order_type: order_type('Lab'),
                  start_date: date,
                  provider: User.current
   end
@@ -131,7 +131,7 @@ class ARTService::LabTestsEngine
                                                  local_id: local_id
   end
 
-  TESTVALUE_SPLIT_REGEX = /^\s*(?<mod>[=<>])?\s*(?<value>\d+(.\d*)?\s*\w*|Positive|Negative)\s*$/i
+  TESTVALUE_SPLIT_REGEX = /^\s*(?<mod>[=<>])?\s*(?<value>\d+(.\d*)?\s*\w*|Positive|Negative)\s*$/i.freeze
 
   # Splits a test_value into its parts [modifier, value]
   def split_test_value(test_value)
