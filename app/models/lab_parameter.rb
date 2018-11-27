@@ -6,7 +6,8 @@ class LabParameter < ApplicationRecord
 
   use_healthdata_db
 
-  belongs_to :lab_sample, foreign_key: :sample_id, optional: true
+  belongs_to :lab_sample, foreign_key: :Sample_ID, optional: true
+  belongs_to :test_type, class_name: 'LabTestType', foreign_key: 'TESTTYPE'
 
   validates_each :Range do |record, field, value|
     unless %w[< > =].include?(value)

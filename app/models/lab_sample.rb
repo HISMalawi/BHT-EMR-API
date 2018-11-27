@@ -7,7 +7,7 @@ class LabSample < ApplicationRecord
   use_healthdata_db
 
   belongs_to :lab_test_table, foreign_key: :AccessionNum
-  has_many :lab_parameters, foreign_key: :Sample_ID
+  has_one :lab_parameter, foreign_key: :Sample_ID
 
   # def self.cd4_trail(patient_identifier)
   #   # sample_ids_and_test_dates = self.lab_samples(patient_identifier)
