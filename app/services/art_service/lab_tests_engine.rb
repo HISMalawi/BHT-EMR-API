@@ -39,7 +39,9 @@ class ARTService::LabTestsEngine
     local_order.save!
 
     lab_order = create_lab_order type, local_order, date
-    create_lab_sample lab_order
+    lab_sample = create_lab_sample lab_order
+
+    create_result lab_sample: lab_sample, test_type: type
 
     { order: local_order, lab_test_table: lab_order.as_json }
   end
@@ -57,14 +59,23 @@ class ARTService::LabTestsEngine
     LabTestTable.where(Pat_ID: accession_number).order('DATE(OrderDate), TIME(OrderTime)')
   end
 
-  def create_result(accession_number:, test_type:, test_value:)
-    modifier, value = split_test_value test_value
-    lab_sample = LabSample.find_by AccessionNum: accession_number
-    LabParameter.create Sample_ID: lab_sample.Sample_ID,
-                        TESTTYPE: test_type.TestType,
-                        TESTVALUE: value,
-                        TimeStamp: Time.now,
-                        Range: modifier
+  def save_result(accession_number:, test_value:)
+    sample = LabSample.find_by(AccessionNum: accession_number)
+    unless sample
+      raise InvalidParameterError,
+            "Couldn't find Lab parameter associated with accession number: #{accession_number}"
+    end
+
+    result = LabParameter.find_by(Sample_ID: sample.Sample_ID)
+    unless result
+      raise InvalidParameterError,
+            "Couldn't find Lab parameter associated with accession number: #{accession_number}"
+    end
+
+    modifier, value = split_test_value(test_value)
+    result.Range = modifier
+    result.TESTVALUE = value
+    result.save
   end
 
   private
@@ -74,7 +85,7 @@ class ARTService::LabTestsEngine
     Order.create patient: patient,
                  encounter: encounter,
                  concept: concept('Laboratory tests ordered'),
-                 order_type: order_type('Lab'),
+                order_type: order_type('Lab'),
                  start_date: date,
                  provider: User.current
   end
@@ -104,6 +115,14 @@ class ARTService::LabTestsEngine
                      TimeStamp: Time.now
   end
 
+  def create_result(lab_sample:, test_type:)
+    LabParameter.create Sample_ID: lab_sample.Sample_ID,
+                        TESTTYPE: test_type.TestType,
+                        TESTVALUE: nil,
+                        TimeStamp: Time.now,
+                        Range: '='
+  end
+
   def next_id(seed_id)
     site_id = global_property('moh_site_id').property_value
     local_id = Order.where(order_type: order_type('Lab')).count + 1
@@ -117,7 +136,8 @@ class ARTService::LabTestsEngine
   # Splits a test_value into its parts [modifier, value]
   def split_test_value(test_value)
     match = test_value.match TESTVALUE_SPLIT_REGEX
-    raise InvalidParameterError, "Invalid test value: #{test_value}" unless test_value
+    raise InvalidParameterError, "Invalid test value: #{test_value}" unless match
+
     [match[:mod] || '=', translate_test_value(match[:value])]
   end
 
