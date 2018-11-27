@@ -31,3 +31,5 @@ config/*.yml
 #Ignoring files created by passenger (if using passenger to run app)
 *.pid.lock
 *.pid
+#Ignoring Gemfile.lock
+Gemfile.lock

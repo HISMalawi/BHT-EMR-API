@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2018_11_01_135712) do
+ActiveRecord::Schema.define(version: 2018_11_20_072351) do
 
   create_table "active_list", primary_key: "active_list_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
     t.integer "active_list_type_id", null: false
@@ -503,6 +503,13 @@ ActiveRecord::Schema.define(version: 2018_11_01_135712) do
     t.index ["retired"], name: "retired_status"
     t.index ["retired_by"], name: "user_who_retired_encounter_type"
     t.index ["uuid"], name: "encounter_type_uuid_index", unique: true
+  end
+
+  create_table "encounters_missed", primary_key: "missed_encounter_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.integer "ppi_id", null: false
+    t.integer "missed_encounter_type_id", null: false
+    t.integer "user_activities_id", null: false
+    t.index ["missed_encounter_id"], name: "ID_UNIQUE", unique: true
   end
 
   create_table "external_source", primary_key: "external_source_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
@@ -1372,7 +1379,7 @@ ActiveRecord::Schema.define(version: 2018_11_01_135712) do
     t.string "latitude", limit: 50
     t.string "longitude", limit: 50
     t.integer "creator", default: 0, null: false
-    t.timestamp "date_created", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.datetime "date_created", null: false
     t.string "county_district", limit: 50
     t.string "neighborhood_cell", limit: 50
     t.string "region", limit: 50
@@ -1382,9 +1389,11 @@ ActiveRecord::Schema.define(version: 2018_11_01_135712) do
     t.integer "retired_by"
     t.datetime "date_retired"
     t.string "retire_reason"
+    t.integer "location_type_id"
     t.integer "parent_location"
     t.string "uuid", limit: 38, null: false
     t.index ["creator"], name: "user_who_created_location"
+    t.index ["location_type_id"], name: "type_of_location"
     t.index ["name"], name: "name_of_location"
     t.index ["parent_location"], name: "parent_location"
     t.index ["retired"], name: "retired_status"
@@ -1777,6 +1786,12 @@ ActiveRecord::Schema.define(version: 2018_11_01_135712) do
     t.datetime "updated_at"
   end
 
+  create_table "overall_record_complete_status", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.integer "patient_seen_id", null: false
+    t.integer "complete", limit: 2, default: 0, null: false
+    t.index ["id"], name: "ID_UNIQUE", unique: true
+  end
+
   create_table "patient", primary_key: "patient_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.integer "tribe"
     t.integer "creator", default: 0, null: false
@@ -1870,6 +1885,11 @@ ActiveRecord::Schema.define(version: 2018_11_01_135712) do
     t.index ["program_id"], name: "program_for_patient"
     t.index ["uuid"], name: "patient_program_uuid_index", unique: true
     t.index ["voided_by"], name: "user_who_voided_patient_program"
+  end
+
+  create_table "patient_seen", primary_key: "patient_seen_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.integer "patient_id", null: false
+    t.date "visit_date", null: false
   end
 
   create_table "patient_state", primary_key: "patient_state_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
@@ -2241,6 +2261,25 @@ ActiveRecord::Schema.define(version: 2018_11_01_135712) do
     t.index ["uuid"], name: "program_workflow_state_uuid_index", unique: true
   end
 
+  create_table "provider_patient_interactions", primary_key: "ppi_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.integer "pi_id", null: false
+    t.integer "patient_id", null: false
+    t.index ["ppi_id"], name: "ID_UNIQUE", unique: true
+  end
+
+  create_table "provider_record_complete_status", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.integer "patient_seen_id", null: false
+    t.integer "provider_id", null: false
+    t.integer "complete", limit: 2, default: 0, null: false
+    t.index ["id"], name: "ID_UNIQUE", unique: true
+  end
+
+  create_table "providers_who_interacted_with_patients", primary_key: "pi_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.date "visit_date", null: false
+    t.index ["pi_id"], name: "ID_UNIQUE", unique: true
+  end
+
   create_table "regimen", primary_key: "regimen_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.integer "concept_id", default: 0, null: false
     t.string "regimen_index", limit: 5
@@ -2386,6 +2425,8 @@ ActiveRecord::Schema.define(version: 2018_11_01_135712) do
     t.integer "retired_by"
     t.datetime "date_retired"
     t.string "retire_reason"
+    t.date "start_date"
+    t.date "end_date"
     t.index ["changed_by"], name: "changed_by for reporting_report_design"
     t.index ["creator"], name: "creator for reporting_report_design"
     t.index ["report_definition_id"], name: "report_definition_id for reporting_report_design"
@@ -2408,6 +2449,8 @@ ActiveRecord::Schema.define(version: 2018_11_01_135712) do
     t.integer "retired_by"
     t.datetime "date_retired"
     t.string "retire_reason"
+    t.string "indicator_name", null: false
+    t.string "indicator_short_name"
     t.index ["changed_by"], name: "changed_by for reporting_report_design_resource"
     t.index ["creator"], name: "creator for reporting_report_design_resource"
     t.index ["report_design_id"], name: "report_design_id for reporting_report_design_resource"
@@ -2528,9 +2571,9 @@ ActiveRecord::Schema.define(version: 2018_11_01_135712) do
     t.index ["voided_by"], name: "user_who_voided_task"
   end
 
-  create_table "temp_earliest_start_date", id: false, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+  create_table "temp_earliest_start_date", id: false, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.integer "patient_id", default: 0, null: false
-    t.string "gender", limit: 50, default: "", collation: "utf8_general_ci"
+    t.string "gender", limit: 50, default: ""
     t.date "birthdate"
     t.date "earliest_start_date"
     t.date "date_enrolled"
@@ -2570,9 +2613,9 @@ ActiveRecord::Schema.define(version: 2018_11_01_135712) do
     t.string "cum_outcome", limit: 25
   end
 
-  create_table "temp_patient_outcomes", id: false, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+  create_table "temp_patient_outcomes", id: false, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.integer "patient_id", default: 0, null: false
-    t.string "cum_outcome", limit: 25
+    t.string "cum_outcome", limit: 25, collation: "latin1_swedish_ci"
   end
 
   create_table "traditional_authorities", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
@@ -2843,6 +2886,7 @@ ActiveRecord::Schema.define(version: 2018_11_01_135712) do
   add_foreign_key "htmlformentry_html_form", "users", column: "changed_by", primary_key: "user_id", name: "User who changed htmlformentry_htmlform"
   add_foreign_key "htmlformentry_html_form", "users", column: "creator", primary_key: "user_id", name: "User who created htmlformentry_htmlform"
   add_foreign_key "location", "location", column: "parent_location", primary_key: "location_id", name: "parent_location"
+  add_foreign_key "location", "location_type", primary_key: "location_type_id", name: "location_type"
   add_foreign_key "location", "users", column: "creator", primary_key: "user_id", name: "user_who_created_location"
   add_foreign_key "location", "users", column: "retired_by", primary_key: "user_id", name: "user_who_retired_location"
   add_foreign_key "location_tag", "users", column: "creator", primary_key: "user_id", name: "location_tag_creator"
@@ -2975,7 +3019,7 @@ ActiveRecord::Schema.define(version: 2018_11_01_135712) do
   add_foreign_key "report_object", "users", column: "changed_by", primary_key: "user_id", name: "user_who_changed_report_object"
   add_foreign_key "report_object", "users", column: "creator", primary_key: "user_id", name: "report_object_creator"
   add_foreign_key "report_object", "users", column: "voided_by", primary_key: "user_id", name: "user_who_voided_report_object"
-  add_foreign_key "reporting_report_design", "serialized_object", column: "report_definition_id", primary_key: "serialized_object_id", name: "report_definition_id for reporting_report_design"
+  add_foreign_key "reporting_report_design", "report_def", column: "report_definition_id", primary_key: "report_def_id", name: "report_definition_id for reporting_report_design"
   add_foreign_key "reporting_report_design", "users", column: "changed_by", primary_key: "user_id", name: "changed_by for reporting_report_design"
   add_foreign_key "reporting_report_design", "users", column: "creator", primary_key: "user_id", name: "creator for reporting_report_design"
   add_foreign_key "reporting_report_design", "users", column: "retired_by", primary_key: "user_id", name: "retired_by for reporting_report_design"
