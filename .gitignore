@@ -33,3 +33,4 @@ config/*.yml
 *.pid
 #Ignoring Gemfile.lock
 Gemfile.lock
+db/schema.rb
