@@ -153,7 +153,8 @@ class Api::V1::EncountersController < ApplicationController
     ).where('person.gender = ?', gender)
     if params[:date]
       date = Date.strptime params[:date]
-      queryset = queryset.where 'DATE(encounter_datetime) = DATE(?)', date
+      queryset = queryset.where '(encounter_datetime BETWEEN (?) AND (?))', 
+        date.strftime('%Y-%m-%d 00:00:00'), date.strftime('%Y-%m-%d 23:59:59')
     end
 
     queryset.count
