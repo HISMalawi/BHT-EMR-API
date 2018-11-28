@@ -30,10 +30,14 @@ class Person < VoidableRecord
     end
   end
 
-  validates_presence_of :birthdate, :gender
+  # In an ideal situtation we should be validating birthdate, and gender but
+  # unfortunately this same model is used for users. Users do not have these
+  # fields set.
+  #
+  # validates_presence_of :birthdate, :gender
 
   validates_each :birthdate do |record, attr, value|
-    if value < TimeUtils.date_epoch || value > Date.today
+    if value && (value < TimeUtils.date_epoch || value > Date.today)
       record.errors.add attr, "#{value} not in range [1920, #{Date.today}]"
     end
   end
