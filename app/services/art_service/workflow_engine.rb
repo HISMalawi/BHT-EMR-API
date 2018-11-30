@@ -60,6 +60,7 @@ module ARTService
     STATE_CONDITIONS = {
       HIV_CLINIC_REGISTRATION => %i[patient_not_registered? patient_not_visiting?],
       VITALS => %i[patient_checked_in?],
+      HIV_STAGING => %i[patient_not_already_staged?],
       ART_ADHERENCE => %i[patient_received_art?],
       DISPENSING => %i[patient_got_treatment?],
       APPOINTMENT => %i[dispensing_complete?]
@@ -164,6 +165,16 @@ module ARTService
          obs_datetime < ?",
         @patient.patient_id, *arv_ids, @date
       ).exists?
+    end
+
+    # Checks if patient has not undergone staging before
+    def patient_not_already_staged?
+      encounter_type = EncounterType.find_by name: 'HIV Staging'
+      patient_staged = Encounter.where(
+        'patient_id = ? AND encounter_type = ? AND encounter_datetime < ?',
+        @patient.patient_id, encounter_type.encounter_type_id, @date.to_date + 1.days
+      ).exists?
+      !patient_staged
     end
 
     def dispensing_complete?

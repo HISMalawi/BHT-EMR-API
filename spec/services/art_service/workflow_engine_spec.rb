@@ -64,6 +64,15 @@ describe ARTService::WorkflowEngine do
       expect(encounter_type.name.upcase).to eq('HIV STAGING')
     end
 
+    it 'skips HIV STAGING for patients who have undergone staging before' do
+      record_vitals patient
+      create :encounter, encounter_type: encounter_type('HIV Staging').encounter_type_id,
+                         encounter_datetime: epoch - 100.days,
+                         patient_id: patient.patient_id
+      encounter_type =  engine.next_encounter
+      expect(encounter_type.name.upcase).to eq('HIV CLINIC CONSULTATION')
+    end
+
     it 'returns HIV CLINIC CONSULTATION for patients with HIV STAGING' do
       record_staging patient
       encounter_type = engine.next_encounter
