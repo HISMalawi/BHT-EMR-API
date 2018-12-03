@@ -127,4 +127,5 @@ Rails.application.routes.draw do
   get '/api/v1/_health' => 'healthcheck#index'
   post '/api/v1/auth/login' => 'api/v1/users#login'
   post '/api/v1/auth/verify_token' => 'api/v1/users#check_token_validity'
+  get '/api/v1/fast_track_assessment' => 'api/v1/fast_track#assessment'
 end
