@@ -92,6 +92,19 @@ describe ARTService::WorkflowEngine do
       expect(encounter_type.name.upcase).to eq('ART ADHERENCE')
     end
 
+    it 'returns TREATMENT after ART ADHERENCE' do
+      record_art_adherence patient
+      encounter_type = engine.next_encounter
+      expect(encounter_type.name.upcase).to eq('TREATMENT')
+    end
+
+    it 'terminates workflow for patients not getting any treatment' do
+      record_art_adherence patient
+      record_patient_not_receiving_treatment patient
+      encounter_type = engine.next_encounter
+      expect(encounter_type).to be_nil
+    end
+
     it 'returns DISPENSING after TREATMENT' do
       record_treatment patient
       encounter_type = engine.next_encounter
@@ -166,8 +179,14 @@ describe ARTService::WorkflowEngine do
                        patient: patient
   end
 
-  def record_treatment(patient)
+  def record_art_adherence(patient)
     record_hiv_clinic_consultation patient
+    create :encounter, type: encounter_type('ART ADHERENCE'),
+                       patient: patient
+  end
+
+  def record_treatment(patient)
+    record_art_adherence patient
     encounter = create :encounter, type: encounter_type('TREATMENT'),
                                    patient: patient
 
@@ -197,5 +216,12 @@ describe ARTService::WorkflowEngine do
                          concept: concept('AMOUNT DISPENSED'),
                          value_drug: Drug.arv_drugs[0].drug_id,
                          obs_datetime: date
+  end
+
+  def record_patient_not_receiving_treatment(patient)
+    create :observation, person: patient.person,
+                         encounter: create(:encounter_vitals, patient: patient),
+                         concept: concept('Prescribe drugs'),
+                         value_coded: concept('No').concept_id
   end
 end

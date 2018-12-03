@@ -23,5 +23,9 @@ FactoryBot.define do
     factory :encounter_treatment do
       type { EncounterType.find_by_name 'TREATMENT' }
     end
+
+    factory :encounter_vitals do
+      type { EncounterType.find_by_name 'VITALS' }
+    end
   end
 end

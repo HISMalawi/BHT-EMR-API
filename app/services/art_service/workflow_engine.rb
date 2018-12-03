@@ -7,7 +7,7 @@ module ARTService
     def initialize(program:, patient:, date:)
       @patient = patient
       @program = program
-      @date = date
+      @date = date.to_date  # We need a date (not datetime or something else)
     end
 
     # Retrieves the next encounter for bound patient
@@ -62,8 +62,9 @@ module ARTService
       VITALS => %i[patient_checked_in?],
       HIV_STAGING => %i[patient_not_already_staged?],
       ART_ADHERENCE => %i[patient_received_art?],
+      TREATMENT => %i[patient_should_get_treatment?],
       DISPENSING => %i[patient_got_treatment?],
-      APPOINTMENT => %i[dispensing_complete?]
+      APPOINTMENT => %i[patient_got_treatment? dispensing_complete?]
     }.freeze
 
     # Concepts
@@ -139,6 +140,21 @@ module ARTService
       !is_visiting_patient
     end
 
+    # Check if patient is receiving any drugs today
+    #
+    # Pre-condition for TREATMENT encounter and onwards
+    def patient_should_get_treatment?
+      prescribe_drugs_concept = concept('Prescribe drugs')
+      no_concept = concept('No')
+      start_time, end_time = TimeUtils.day_bounds(@date)
+      !Observation.where(
+        'concept_id = ? AND value_coded = ? AND person_id = ?
+         AND obs_datetime BETWEEN ? AND ?',
+        prescribe_drugs_concept.concept_id, no_concept.concept_id,
+        @patient.patient_id, start_time, end_time
+      ).exists?
+    end
+
     # Check if patient has got treatment.
     #
     # Pre-condition for DISPENSING encounter
@@ -148,8 +164,7 @@ module ARTService
         'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
         @patient.patient_id, encounter_type.encounter_type_id, @date
       ).order(encounter_datetime: :desc).first
-      raise "Can't check if patient got treatment due to missing TREATMENT encounter" if encounter.nil?
-      encounter.orders.exists?
+      !encounter.nil? && encounter.orders.exists?
     end
 
     # Check if patient received A.R.T.s on previous visit
