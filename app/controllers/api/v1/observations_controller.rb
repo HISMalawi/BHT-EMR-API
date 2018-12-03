@@ -22,14 +22,19 @@ class Api::V1::ObservationsController < ApplicationController
   #       AND-d together.
   def index
     filters, = required_params optional: %i[
-      person_id concept_id encounter_id order_id date_started
-      date_stopped obs_datetime
+      person_id concept_id encounter_id order_id date_started date_stopped
     ]
 
     query = filters.empty? ? Observation : Observation.where(filters)
-    query = paginate(query.order(obs_datetime: :desc))
 
-    render json: query
+    if params[:obs_datetime]
+      query = query.where('obs_datetime BETWEEN ? AND ?',
+                          *TimeUtils.day_bounds(params[:obs_datetime].to_date))
+    end
+
+    query = query.order(obs_datetime: :desc)
+
+    render json: paginate(query)
   end
 
   # Create new observation
