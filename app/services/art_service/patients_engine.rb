@@ -93,14 +93,13 @@ module ARTService
       "#{district}, #{village}"
     end
 
-    def patient_current_regimen(patient)
-      concept = concept('Regimen Category')
-      return 'UNKNOWN' unless concept
+    def patient_current_regimen(patient, date = Date.today)
+      patient_id = ActiveRecord::Base.connection.quote(patient.patient_id)
+      date = ActiveRecord::Base.connection.quote(date)
 
-      regimens = Observation.where person_id: patient.patient_id,
-                                   concept_id: concept.concept_id
-      regimens = regimens.order date_created: :desc
-      regimens[0] ? regimens[0].value_text : 'N/A'
+      ActiveRecord::Base.connection.select_one(
+        "SELECT patient_current_regimen(#{patient_id}, #{date}) as regimen"
+      )['regimen'] || 'N/A'
     end
 
     def patient_current_outcome(patient)
@@ -147,9 +146,9 @@ module ARTService
 
     # source: NART/lib/patient_service#patient_initiated
     def patient_initiated(patient_id, session_date)
-      ans = ActiveRecord::Base.connection.select_value <<-EOF
+      ans = ActiveRecord::Base.connection.select_value <<-SQL
         SELECT re_initiated_check(#{patient_id}, '#{session_date.to_date}')
-      EOF
+      SQL
 
       return ans if ans == 'Re-initiated'
 
