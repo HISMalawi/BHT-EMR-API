@@ -1,7 +1,21 @@
 # frozen_string_literal: true
 
 module DrugOrderService
+  ORDER_PARAMS = %i[order_type_id concept_id orderer encounter_id start_date
+                    auto_expire_date discontinued_date patient_id
+                    accession_number obs_id].freeze
+
+  DRUG_ORDER_PARAMS = %i[drug_inventory_id].freeze
+
+  FIND_FILTERS = ORDER_PARAMS + DRUG_ORDER_PARAMS
+
+  DATETIME_FIELDS = %i[start_date auto_expire_date discontinued_date].freeze
+
   class << self
+    def find(filters)
+      DrugOrder.joins(:order).where(*parse_search_filters(filters))
+    end
+
     # Creates drug orders in bulk.
     #
     # Returns [drug_order, false] if successful else [null, true]
@@ -64,6 +78,30 @@ module DrugOrderService
     end
 
     private
+
+    def parse_search_filters(filters)
+      query_cond = []
+      query_params = []
+
+      filters.each do |k, v|
+        if ORDER_PARAMS.include?(k)
+          if DATETIME_FIELDS.include?(k.to_sym)
+            query_cond << "`orders`.`#{k}` BETWEEN ? AND ?"
+            query_params.concat(TimeUtils.day_bounds(v.to_date))
+          else
+            query_cond << "`orders`.`#{k}` = ?"
+            query_params << v
+          end
+        elsif DRUG_ORDER_PARAMS.include?(k)
+          query_cond << "`drug_order`.`#{k}` = ?"
+          query_params << v
+        else
+          raise InvalidParameterError, "Invalid parameter for drug order: #{k}"
+        end
+      end
+
+      [query_cond.join(' AND ')] + query_params
+    end
 
     def create_order(encounter:, create_params:, order_type:)
       Order.create(

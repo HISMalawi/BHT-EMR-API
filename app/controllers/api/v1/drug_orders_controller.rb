@@ -4,21 +4,20 @@ require 'utils/remappable_hash'
 
 class Api::V1::DrugOrdersController < ApplicationController
   def index
-    patient_id = params.require %i[patient_id]
+    filters = params.permit DrugOrderService::FIND_FILTERS
 
     if params[:date]
-      date = params[:date] ? Date.strptime(params[:date]) : Time.now
       treatment = EncounterService.recent_encounter encounter_type_name: 'Treatment',
                                                     patient_id: patient_id,
-                                                    date: date
-      orders = treatment ? paginate(treatment.orders.order(date_created: :desc)) : []
-    else
-      orders = paginate(Order.where(patient_id: patient_id).order(date_created: :desc))
+                                                    date: Date.strptime(params[:date])
+      return render json: [] unless treatment
+
+      filters[:encounter_id] = treatment.encounter_id
     end
 
-    drug_orders = orders.map(&:drug_order).reject(&:nil?)
+    drug_orders = DrugOrderService.find(filters).order(Arel.sql('`orders`.`date_created`'))
 
-    render json: drug_orders
+    render json: paginate(drug_orders)
   end
 
   # POST /drug_orders
