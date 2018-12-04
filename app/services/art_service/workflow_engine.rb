@@ -40,6 +40,7 @@ module ARTService
     HIV_CLINIC_CONSULTATION = 'HIV CLINIC CONSULTATION'
     ART_ADHERENCE = 'ART ADHERENCE'
     TREATMENT = 'TREATMENT'
+    FAST_TRACK = 'FAST TRACK ASSESMENT' # ASSESMENT[sic] - It's how its named in the db
     DISPENSING = 'DISPENSING'
     APPOINTMENT = 'APPOINTMENT'
 
@@ -52,7 +53,8 @@ module ARTService
       HIV_STAGING => HIV_CLINIC_CONSULTATION,
       HIV_CLINIC_CONSULTATION => ART_ADHERENCE,
       ART_ADHERENCE => TREATMENT,
-      TREATMENT => DISPENSING,
+      TREATMENT => FAST_TRACK,
+      FAST_TRACK => DISPENSING,
       DISPENSING => APPOINTMENT,
       APPOINTMENT => END_STATE
     }.freeze
@@ -63,6 +65,7 @@ module ARTService
       HIV_STAGING => %i[patient_not_already_staged?],
       ART_ADHERENCE => %i[patient_received_art?],
       TREATMENT => %i[patient_should_get_treatment?],
+      FAST_TRACK => %i[patient_got_treatment?],
       DISPENSING => %i[patient_got_treatment?],
       APPOINTMENT => %i[patient_got_treatment? dispensing_complete?]
     }.freeze
