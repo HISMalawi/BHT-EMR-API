@@ -178,7 +178,7 @@ class AppointmentService
     Observation.find_by_sql("SELECT value_datetime appointment_date, count(value_datetime) AS count FROM obs
       INNER JOIN encounter e USING(encounter_id) WHERE concept_id = #{concept_id}
       AND encounter_type = #{encounter_type.id} AND value_datetime BETWEEN '#{start_date}'
-      AND '#{end_date}' AND obs.voided = 0 GROUP BY value_datetime").each do |appointment|
+      AND '#{end_date}' AND obs.voided = 0 GROUP BY DATE(value_datetime)").each do |appointment|
       appointments[appointment.appointment_date.to_date] = appointment.count.to_i
     end
 
