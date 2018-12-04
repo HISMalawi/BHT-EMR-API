@@ -34,3 +34,5 @@ config/*.yml
 #Ignoring Gemfile.lock
 Gemfile.lock
 db/schema.rb
+
+.ruby-version
