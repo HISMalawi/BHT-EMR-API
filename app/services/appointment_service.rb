@@ -16,6 +16,8 @@ class AppointmentService
   end
 
   def appointments(filters = {})
+    date = Date.strptime(filters.delete(:date) || filters.delete(:obs_datetime) || Date.today.to_s)
+
     filters = filters.to_hash.each_with_object({}) do |kv_pair, transformed_hash|
       key, value = kv_pair
       transformed_hash["obs.#{key}"] = value
@@ -23,6 +25,7 @@ class AppointmentService
 
     appointments = Observation.joins(:concept)\
                               .where(concept: concept('Appointment date'))
+                              .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
     appointments = appointments.where(filters) unless appointments.empty?
     appointments.order(obs_datetime: :desc)
   end
@@ -125,8 +128,8 @@ class AppointmentService
       'encounter.encounter_type = ? AND encounter.patient_id = ?
        AND (encounter.encounter_datetime BETWEEN ? AND ?)
        AND drug.concept_id IN (?)',
-      encounter_type_id, patient.patient_id, 
-      date.to_date.strftime("%Y-%m-%d 00:00:00"),date.to_date.strftime("%Y-%m-%d 23:59:59"), 
+      encounter_type_id, patient.patient_id,
+      date.to_date.strftime("%Y-%m-%d 00:00:00"),date.to_date.strftime("%Y-%m-%d 23:59:59"),
       arv_drug_concepts).order('encounter.encounter_datetime')
   end
 
