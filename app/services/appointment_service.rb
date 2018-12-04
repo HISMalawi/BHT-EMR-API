@@ -138,8 +138,8 @@ class AppointmentService
   end
 
   def revised_suggested_date(patient, expiry_date)
-    clinic_appointment_limit = global_property('clinic.appointment.limit').property_value.to_i
-    clinic_appointment_limit = 200 if clinic_appointment_limit < 1
+    clinic_appointment_limit = global_property('clinic.appointment.limit')&.property_value&.to_i
+    clinic_appointment_limit = 200 if clinic_appointment_limit.nil? || clinic_appointment_limit < 1
 
     peads_clinic_days = global_property 'peads.clinic.days'
     if patient.age(today: @retro_date) <= 14 && !peads_clinic_days.blank?
