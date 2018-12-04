@@ -16,7 +16,7 @@ class AppointmentService
   end
 
   def appointments(filters = {})
-    date = Date.strptime(filters.delete(:date) || filters.delete(:obs_datetime) || Date.today.to_s)
+    date = filters.delete(:date) || filters.delete(:obs_datetime)
 
     filters = filters.to_hash.each_with_object({}) do |kv_pair, transformed_hash|
       key, value = kv_pair
@@ -25,7 +25,11 @@ class AppointmentService
 
     appointments = Observation.joins(:concept)\
                               .where(concept: concept('Appointment date'))
-                              .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
+    if date
+      appointments = appointments.where('obs_datetime BETWEEN ? AND ?',
+                                        *TimeUtils.day_bounds(date))
+    end
+
     appointments = appointments.where(filters) unless appointments.empty?
     appointments.order(obs_datetime: :desc)
   end
