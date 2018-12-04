@@ -123,10 +123,11 @@ class AppointmentService
        INNER JOIN drug ON drug.drug_id = drug_order.drug_inventory_id'
     ).where(
       'encounter.encounter_type = ? AND encounter.patient_id = ?
-       AND DATE(encounter.encounter_datetime) = DATE(?)
+       AND (encounter.encounter_datetime BETWEEN ? AND ?)
        AND drug.concept_id IN (?)',
-      encounter_type_id, patient.patient_id, date, arv_drug_concepts
-    ).order('encounter.encounter_datetime')
+      encounter_type_id, patient.patient_id, 
+      date.to_date.strftime("%Y-%m-%d 00:00:00"),date.to_date.strftime("%Y-%m-%d 23:59:59"), 
+      arv_drug_concepts).order('encounter.encounter_datetime')
   end
 
   def revised_suggested_date(patient, expiry_date)
