@@ -65,7 +65,7 @@ module ARTService
       HIV_STAGING => %i[patient_not_already_staged?],
       ART_ADHERENCE => %i[patient_received_art?],
       TREATMENT => %i[patient_should_get_treatment?],
-      FAST_TRACK => %i[patient_got_treatment?],
+      FAST_TRACK => %i[patient_got_treatment? assess_for_fast_track?],
       DISPENSING => %i[patient_got_treatment?],
       APPOINTMENT => %i[patient_got_treatment? dispensing_complete?]
     }.freeze
@@ -81,11 +81,14 @@ module ARTService
     #
     # NOTE: By `relevant` above we mean encounters that matter in deciding
     # what encounter the patient should go for in this present time.
-    def encounter_exists?(encounter_type)
+    def encounter_exists?(type)
+      # HACK: Pretend Fast Track does not exist
+      return false if type.encounter_type_id == encounter_type(FAST_TRACK).encounter_type_id
+
       Encounter.where(
         'encounter_type = ? AND patient_id = ?
          AND DATE(encounter_datetime) = DATE(?)',
-        encounter_type.encounter_type_id,
+        type.encounter_type_id,
         @patient.patient_id,
         @date
       ).exists?
@@ -212,6 +215,33 @@ module ARTService
       #   dispension_completed = patient.set_received_regimen(encounter, prescription)
       # end
       complete
+    end
+
+    def assess_for_fast_track?
+      encounter = Encounter.where(encounter_type: encounter_type(FAST_TRACK),
+                                  patient: @patient)\
+                           .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))
+                           .order(encounter_datetime: :desc)
+                           .first
+
+      # HACK: In an ideal situation we should be returning true here to
+      # trigger creation of a new encounter on client side however
+      # client-side at this point normally already has an encounter
+      # created with 'assess for fast track either set to yes or no'
+      return false unless encounter
+
+      assess_for_fast_track_concept = concept('Assess for fast track?')
+
+      skip_fast_track = encounter.observations\
+                                 .where(concept: assess_for_fast_track_concept,
+                                        value_coded: concept('No').concept_id)\
+                                 .exists?
+
+      return false unless skip_fast_track
+
+      !encounter.observations.where(
+        'concept_id != ?', assess_for_fast_track_concept.concept_id
+      ).exists?
     end
   end
 end
