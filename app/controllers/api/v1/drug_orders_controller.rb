@@ -7,6 +7,7 @@ class Api::V1::DrugOrdersController < ApplicationController
     filters = params.permit DrugOrderService::FIND_FILTERS
 
     if params[:date]
+      patient_id = params.require(:patient_id)
       treatment = EncounterService.recent_encounter encounter_type_name: 'Treatment',
                                                     patient_id: patient_id,
                                                     date: Date.strptime(params[:date])

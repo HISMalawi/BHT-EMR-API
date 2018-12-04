@@ -84,8 +84,9 @@ module DrugOrderService
       query_params = []
 
       filters.each do |k, v|
+        k = k.to_sym
         if ORDER_PARAMS.include?(k)
-          if DATETIME_FIELDS.include?(k.to_sym)
+          if DATETIME_FIELDS.include?(k)
             query_cond << "`orders`.`#{k}` BETWEEN ? AND ?"
             query_params.concat(TimeUtils.day_bounds(v.to_date))
           else
