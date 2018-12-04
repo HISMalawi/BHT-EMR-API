@@ -9,6 +9,13 @@ class Api::V1::ProgramPatientsController < ApplicationController
     render json: @engine.patient_last_drugs_received(params[:program_patient_id])
   end
 
+  def find_dosages
+    service = RegimenService.new(program_id: params[:program_id])
+    dosage = service.find_dosages Patient.find(params[:program_patient_id]),
+                                  Date.strptime(params[:date] || Date.today.to_s)
+    render json: dosage
+  end
+
   protected
 
   def load_engine

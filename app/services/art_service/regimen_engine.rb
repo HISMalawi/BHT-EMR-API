@@ -52,10 +52,19 @@ module ARTService
 
         drugs = Drug.where(concept: drug_concept)
 
-        ingredients = MohRegimenIngredient.where(drug: drugs)\
-                                          .where('min_weight <= :weight AND max_weight >= :weight',
-                                                 weight: patient.weight)
-        dosages[drug_concept.concept_names.first.name] = ingredients.collect(&:dose)
+        ingredient = MohRegimenIngredient.where(drug: drugs)\
+                                         .where('min_weight <= :weight AND max_weight >= :weight',
+                                                weight: patient.weight)
+                                         .order(:drug_inventory_id)
+                                         .last
+        dosages[drug_concept.concept_names.first.name] = {
+          drug_id: ingredient.drug.drug_id,
+          concept_id: ingredient.drug.concept_id,
+          name: ingredient.drug.name,
+          units: ingredient.drug.units,
+          am: ingredient.dose.am,
+          pm: ingredient.dose.pm
+        }
       end
     end
 

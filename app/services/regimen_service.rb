@@ -15,6 +15,10 @@ class RegimenService
                           patient_gender: patient_gender
   end
 
+  def find_dosages(patient, date)
+    @engine.find_dosages patient, date
+  end
+
   private
 
   def load_engine(program_id)
