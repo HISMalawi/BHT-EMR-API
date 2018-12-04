@@ -4,6 +4,8 @@ require 'set'
 
 module ARTService
   class RegimenEngine
+    include ModelUtils
+
     def initialize(program:)
       @program = program
     end
@@ -19,6 +21,42 @@ module ARTService
       )
 
       categorise_regimens(regimens_from_ingredients(ingredients))
+    end
+
+    # Returns dosages for patients prescribed ARVs
+    def find_dosages(patient, date = Date.today)
+      # TODO: Refactor this into smaller functions
+
+      # Make sure it has been stated explicitly that drug are getting prescribed
+      # to this patient
+      prescribe_drugs = Observation.where(person_id: patient.patient_id,
+                                          concept: concept('Prescribe drugs'),
+                                          value_coded: concept('Yes').concept_id)\
+                                   .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
+                                   .order(obs_datetime: :desc)
+                                   .first
+
+      return {} unless prescribe_drugs
+
+      arv_extras_concepts = [concept('CPT'), concept('INH')]
+
+      orders = Observation.where(concept: concept('Medication orders'))
+                          .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
+
+      orders.each_with_object({}) do |order, dosages|
+        next unless order.value_coded # Raise a warning here
+
+        drug_concept = Concept.find(order.value_coded)
+
+        next unless arv_extras_concepts.include?(drug_concept)
+
+        drugs = Drug.where(concept: drug_concept)
+
+        ingredients = MohRegimenIngredient.where(drug: drugs)\
+                                          .where('min_weight <= :weight AND max_weight >= :weight',
+                                                 weight: patient.weight)
+        dosages[drug_concept.concept_names.first.name] = ingredients.collect(&:dose)
+      end
     end
 
     private
