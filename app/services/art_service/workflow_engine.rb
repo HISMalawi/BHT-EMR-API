@@ -232,16 +232,10 @@ module ARTService
 
       assess_for_fast_track_concept = concept('Assess for fast track?')
 
-      skip_fast_track = encounter.observations\
-                                 .where(concept: assess_for_fast_track_concept,
-                                        value_coded: concept('No').concept_id)\
-                                 .exists?
-
-      return false unless skip_fast_track
-
-      !encounter.observations.where(
-        'concept_id != ?', assess_for_fast_track_concept.concept_id
-      ).exists?
+      encounter.observations\
+               .where(concept: assess_for_fast_track_concept,
+                      value_coded: concept('Yes').concept_id)\
+               .exists?
     end
   end
 end

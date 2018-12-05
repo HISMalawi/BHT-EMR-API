@@ -105,8 +105,14 @@ describe ARTService::WorkflowEngine do
       expect(encounter_type).to be_nil
     end
 
-    it 'returns DISPENSING after TREATMENT' do
+    it 'returns FAST TRACK ASSESMENT after TREATMENT' do
       record_treatment patient
+      encounter_type = engine.next_encounter
+      expect(encounter_type.name.upcase).to eq('FAST TRACK ASSESMENT')
+    end
+
+    it 'returns DISPENSING after FAST TRACK ASSESMENT' do
+      record_fast_track patient
       encounter_type = engine.next_encounter
       expect(encounter_type.name.upcase).to eq('DISPENSING')
     end
@@ -196,8 +202,14 @@ describe ARTService::WorkflowEngine do
     create :drug_order, order: order, drug: arv
   end
 
-  def record_dispensing(patient)
+  def record_fast_track(patient)
     record_treatment patient
+    create :encounter, type: encounter_type('FAST TRACK ASSESMENT'),
+                       patient: patient
+  end
+
+  def record_dispensing(patient)
+    record_fast_track patient
     create :encounter, type: encounter_type('DISPENSING'),
                        patient: patient
   end
