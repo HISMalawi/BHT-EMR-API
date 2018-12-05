@@ -1,12 +1,10 @@
 class Api::V1::ProgramPatientsController < ApplicationController
-  before_action :load_engine
-
   def show
-    render json: @engine.patient(params[:id])
+    render json: service.patient(params[:id])
   end
 
   def last_drugs_received
-    render json: @engine.patient_last_drugs_received(params[:program_patient_id])
+    render json: service.patient_last_drugs_received(params[:program_patient_id])
   end
 
   def find_dosages
@@ -16,9 +14,15 @@ class Api::V1::ProgramPatientsController < ApplicationController
     render json: dosage
   end
 
+  def status
+    status = service.find_status(Patient.find(params[:program_patient_id]),
+                                 Date.strptime(params[:date] || Date.today.to_s))
+    render json: status
+  end
+
   protected
 
-  def load_engine
-    @engine = ProgramPatientsService.load_engine params[:program_id]
+  def service
+    ProgramPatientsService.load_engine params[:program_id]
   end
 end

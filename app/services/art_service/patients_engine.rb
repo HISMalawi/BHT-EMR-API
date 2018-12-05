@@ -43,6 +43,12 @@ module ARTService
       end).values
     end
 
+    def find_status(patient, date = Date.today)
+      {
+        status: patient_initiated(patient.patient_id, date)
+      }
+    end
+
     def all_patients(paginator: nil)
       # TODO: Retrieve all patients
       []
@@ -155,57 +161,48 @@ module ARTService
       end_date = session_date.strftime('%Y-%m-%d 23:59:59')
       concept_id = ConceptName.find_by_name('Amount dispensed').concept_id
 
-      hiv_clinic_registration = Encounter.where([
-        "encounter_type = ? AND patient_id = ? AND (encounter_datetime BETWEEN ? AND ?)",
+      hiv_clinic_registration = Encounter.where(
+        'encounter_type = ? AND patient_id = ? AND (encounter_datetime BETWEEN ? AND ?)',
         EncounterType.find_by_name('HIV CLINIC REGISTRATION').id, patient_id,
         end_date.to_date.strftime('%Y-%m-%d 00:00:00'),
         end_date
-      ]).last
+      ).last
 
-      unless hiv_clinic_registration.blank?
-        (hiv_clinic_registration.observations || []).map do |obs|
-          concept_name = begin
-                          obs.to_s.split(':')[0].strip
-                         rescue StandardError
-                           nil
-                         end
-          next if concept_name.blank?
+      return nil unless hiv_clinic_registration
 
-          case concept_name
-          when 'Date ART last taken'
-            last_art_drugs_date_taken = begin
-                                          obs.value_datetime.to_date
-                                        rescue StandardError
-                                          nil
-                                        end
-            unless last_art_drugs_date_taken.blank?
-              days = ActiveRecord::Base.connection.select_value <<-EOF
-                SELECT timestampdiff(
-                  day, '#{last_art_drugs_date_taken.to_date}', '#{session_date.to_date}'
-                ) AS days;
-              EOF
+      hiv_clinic_registration.observations.map do |obs|
+        concept_name = obs.concept.concept_names.first.name
 
-              return 'Re-initiated' if days.to_i > 14
-              return 'Continuing' if days.to_i <= 14
-            end
-          end
-        end
+        next unless concept_name == 'Date ART last taken'
+
+        last_art_drugs_date_taken = obs&.value_datetime&.to_date
+
+        next unless last_art_drugs_date_taken
+
+        days = ActiveRecord::Base.connection.select_value <<-SQL
+              SELECT timestampdiff(
+                day, '#{last_art_drugs_date_taken}', '#{session_date.to_date}'
+              ) AS days;
+        SQL
+
+        return days.to_i > 14 ? 'Re-initiated' : 'Continuing'
       end
 
-      dispensed_arvs = Observation.where([
+      dispensed_arvs = Observation.where(
         'person_id = ? AND concept_id = ? AND obs_datetime <= ?',
         patient_id, concept_id, end_date
-      ]).map(&:value_drug)
+      ).map(&:value_drug)
 
-      return 'Initiation' if dispensed_arvs.blank?
+      return 'Initiation' if dispensed_arvs.empty?
 
-      arv_drug_concepts = MedicationService.arv_drugs.map(&:concept_id)
-      arvs_found = ActiveRecord::Base.connection.select_all <<-EOF
+      arv_drug_concepts = Drug.arv_drugs.map(&:concept_id)
+
+      arvs_found = ActiveRecord::Base.connection.select_all <<-SQL
         SELECT * FROM drug WHERE concept_id IN(#{arv_drug_concepts.join(',')})
         AND drug_id IN(#{dispensed_arvs.join(',')});
-      EOF
+      SQL
 
-      arvs_found.blank? == true ? 'Initiation' : 'Continuing'
+      arvs_found ? 'Continuing' : 'Initiation'
     end
   end
 end
