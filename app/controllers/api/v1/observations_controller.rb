@@ -142,7 +142,7 @@ class Api::V1::ObservationsController < ApplicationController
 
     if params.include?(:start_date) || params.include?(:end_date)
       start_date, end_date = params.require(%i[start_date end_date])
-      period = [Date.strptime(start_date), Date.strptime(end_date)]
+      period = [start_date.to_datetime, end_date.to_datetime + (24.hours - 1.second)]
     elsif params[:obs_datetime]
       period = TimeUtils.day_bounds(params[:obs_datetime])
     end
