@@ -106,7 +106,7 @@ describe ARTService::WorkflowEngine do
     end
 
     it 'returns FAST TRACK ASSESMENT after TREATMENT' do
-      record_treatment patient
+      record_treatment patient, assess_fast_track: true
       encounter_type = engine.next_encounter
       expect(encounter_type.name.upcase).to eq('FAST TRACK ASSESMENT')
     end
@@ -191,7 +191,7 @@ describe ARTService::WorkflowEngine do
                        patient: patient
   end
 
-  def record_treatment(patient)
+  def record_treatment(patient, assess_fast_track: false)
     record_art_adherence patient
     encounter = create :encounter, type: encounter_type('TREATMENT'),
                                    patient: patient
@@ -200,12 +200,31 @@ describe ARTService::WorkflowEngine do
     order = create :order, concept: arv.concept, patient: patient,
                            encounter: encounter
     create :drug_order, order: order, drug: arv
+
+    # HACK: Fast track encounter's requirement is the existence of a
+    # fast track encounter with an observation of 'Assess for fast track?'
+    # bound to a 'Yes' concept.
+    encounter = create :encounter, type: encounter_type('FAST TRACK ASSESMENT'),
+                                   patient: patient
+
+    value_coded = assess_fast_track ? concept('Yes').concept_id : concept('No').concept_id
+    create :observation, concept: concept('Assess for fast track?'),
+                         encounter: encounter,
+                         person: patient.person,
+                         value_coded: value_coded
   end
 
   def record_fast_track(patient)
-    record_treatment patient
-    create :encounter, type: encounter_type('FAST TRACK ASSESMENT'),
-                       patient: patient
+    record_treatment patient, assess_fast_track: true
+
+    # record_treatment creates a fast track encounter for us,
+    # all we need to do is add additional observations for the
+    # assessment
+    encounter = Encounter.find_by type: encounter_type('FAST TRACK ASSESMENT'),
+                                  patient: patient
+    create :observation, concept: concept('Adult 18 years +'),
+                         person: patient.person,
+                         encounter: encounter
   end
 
   def record_dispensing(patient)

@@ -168,8 +168,6 @@ module ARTService
         end_date
       ).last
 
-      return nil unless hiv_clinic_registration
-
       hiv_clinic_registration.observations.map do |obs|
         concept_name = obs.concept.concept_names.first.name
 
@@ -186,7 +184,7 @@ module ARTService
         SQL
 
         return days.to_i > 14 ? 'Re-initiated' : 'Continuing'
-      end
+      end unless hiv_clinic_registration.blank?
 
       dispensed_arvs = Observation.where(
         'person_id = ? AND concept_id = ? AND obs_datetime <= ?',
