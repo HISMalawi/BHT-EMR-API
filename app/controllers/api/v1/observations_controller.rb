@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Api::V1::ObservationsController < ApplicationController
   # Retrieve specific observation
   #
@@ -21,16 +23,12 @@ class Api::V1::ObservationsController < ApplicationController
   # NOTE: When multiple parameters are specified they are
   #       AND-d together.
   def index
-    filters, = required_params optional: %i[
-      person_id concept_id encounter_id order_id date_started date_stopped
-    ]
+    filters = params.permit(%i[person_id concept_id encounter_id order_id])
 
     query = filters.empty? ? Observation : Observation.where(filters)
 
-    if params[:obs_datetime]
-      query = query.where('obs_datetime BETWEEN ? AND ?',
-                          *TimeUtils.day_bounds(params[:obs_datetime].to_date))
-    end
+    filter_period = index_filter_period
+    query = query.where('obs_datetime BETWEEN ? AND ?', *filter_period) if filter_period
 
     query = query.order(obs_datetime: :desc)
 
@@ -137,5 +135,18 @@ class Api::V1::ObservationsController < ApplicationController
     child_archetype[:person_id] ||= archetype[:person_id]
     create_observation child_archetype, encounter
     [observation, nil]
+  end
+
+  def index_filter_period
+    period = nil
+
+    if params.include?(:start_date) || params.include?(:end_date)
+      start_date, end_date = params.require(%i[start_date end_date])
+      period = [Date.strptime(start_date), Date.strptime(end_date)]
+    elsif params[:obs_datetime]
+      period = TimeUtils.day_bounds(params[:obs_datetime])
+    end
+
+    period
   end
 end
