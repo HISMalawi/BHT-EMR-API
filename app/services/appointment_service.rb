@@ -26,7 +26,7 @@ class AppointmentService
     appointments = Observation.joins(:concept)\
                               .where(concept: concept('Appointment date'))
     if date
-      appointments = appointments.where('obs_datetime BETWEEN ? AND ?',
+      appointments = appointments.where('value_datetime BETWEEN ? AND ?',
                                         *TimeUtils.day_bounds(date))
     end
 
