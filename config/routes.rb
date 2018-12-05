@@ -86,6 +86,7 @@ Rails.application.routes.draw do
         resources :program_patients, path: :patients do
           get '/last_drugs_received' => 'program_patients#last_drugs_received'
           get '/dosages' => 'program_patients#find_dosages'
+          get '/status' => 'program_patients#status'
         end
         resources :lab_test_types, path: 'lab_tests/types'
         get '/lab_tests/panels' => 'lab_test_types#panels' # TODO: Move this into own controller
