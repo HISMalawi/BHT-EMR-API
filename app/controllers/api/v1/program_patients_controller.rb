@@ -1,6 +1,7 @@
 class Api::V1::ProgramPatientsController < ApplicationController
   def show
-    render json: service.patient(params[:id])
+    date = params[:date]&.to_date || Date.today
+    render json: service.patient(params[:id], date)
   end
 
   def last_drugs_received
