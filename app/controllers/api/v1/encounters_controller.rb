@@ -1,6 +1,8 @@
 require 'utils/remappable_hash'
 
 class Api::V1::EncountersController < ApplicationController
+  # TODO: Move pretty much all CRUD ops in this module to EncounterService
+
   # Retrieve a list of encounters
   #
   # GET /encounter
@@ -27,7 +29,7 @@ class Api::V1::EncountersController < ApplicationController
   end
 
   # Generate a report on counts of various encounters
-  # 
+  #
   # POST /reports/encounters
   #
   # Optional parameters:
@@ -60,24 +62,16 @@ class Api::V1::EncountersController < ApplicationController
   #   patient_id: Patient involved in the encounter
   #
   # Optional parameters:
-  #   provider_id: user_id of surrogate doing the data entry defaults to current user 
+  #   provider_id: user_id of surrogate doing the data entry defaults to current user
   def create
-    create_params, errors = required_params required: %i[encounter_type_id patient_id],
-                                            optional: %i[provider_id encounter_datetime]
-    return render json: { errors: create_params }, status: :bad_request if errors
+    type_id, patient_id = params.require(%i[encounter_type_id patient_id])
 
-    remap_encounter_type_id! create_params
-    validation_errors = validate_create_params create_params
-    return render json: { errors: validation_errors } if validation_errors
-
-    create_params[:location_id] = Location.current.id
-    create_params[:provider_id] ||= User.current.id
-    create_params[:creator] = User.current.id
-    create_params[:encounter_datetime] ||= Time.now
-    create_params[:date_created] = Time.now
-    encounter = Encounter.create create_params
-
-    return render json: encounter.errors, status: :bad_request unless encounter.errors.empty?
+    encounter = encounter_service.create(
+      type: EncounterType.find(type_id),
+      patient: Patient.find(patient_id),
+      provider: params[:provider_id] && User.find(params[:provider_id]),
+      encounter_datetime: params[:encounter_datetime]&.to_datetime || Time.now
+    )
 
     render json: encounter, status: :created
   end
@@ -90,47 +84,25 @@ class Api::V1::EncountersController < ApplicationController
   #   encounter_type_id: Encounter's type
   #   patient_id: Patient involved in the encounter
   def update
-    update_params, errors = required_params optional: %i[type_id patient_id]
-    return render json: { errors: update_params }, status: :bad_request if errors
+    encounter = Encounter.find(params[:id])
+    type = params[:type_id] && EncounterType.find(params[:type_id])
+    patient = params[:patient_id] && Patient.find(params[:patient_id])
+    provider = params[:provider_id] && User.find(params[:provider_id])
+    encounter_datetime = params[:encounter_datetime]&.to_datetime || Time.now
 
-    remap_encounter_type_id! update_params
-    validation_errors = validate_create_params update_params
-    return render json: { errors: validation_errors } if validation_errors
-
-    encounter = Encounter.update update_params
-    return render json: encounter.errors, status: :bad_request if encounter.errors
-
-    render json: encounter, status: :ok
+    encounter_service.update(encounter, type: type, patient: patient,
+                                        provider: provider,
+                                        encounter_datetime: encounter_datetime)
   end
 
   # Void an existing encounter
   #
   # DELETE /encounter/:id
   def destroy
-    encounter = Encounter.find params[:id]
-    if encounter.void "Voided by #{User.current}"
-      render status: :no_content
-    else
-      # Not supposed to happen...
-      render json: encounter.errors, status: :internal_serval_error
-    end
+    encounter_service.void encounter, "Voided by #{User.current}"
   end
 
   private
-
-  def validate_create_params(params)
-    encounter_type_id = params[:encounter_type_id]
-    if encounter_type_id && !EncounterType.exists?(encounter_type)
-      return ["Encounter type ##{encounter_type} not found"]
-    end
-
-    patient_id = params[:patient_id]
-    if patient_id && !Patient.exists?(patient_id)
-      return ["Patient ##{patient_id} not found"]
-    end
-
-    nil
-  end
 
   # HACK: Have to rename encounter_type_id because in the model
   # underneath it is unfortunately named encounter_type not
@@ -153,10 +125,14 @@ class Api::V1::EncountersController < ApplicationController
     ).where('person.gender = ?', gender)
     if params[:date]
       date = Date.strptime params[:date]
-      queryset = queryset.where '(encounter_datetime BETWEEN (?) AND (?))', 
+      queryset = queryset.where '(encounter_datetime BETWEEN (?) AND (?))',
         date.strftime('%Y-%m-%d 00:00:00'), date.strftime('%Y-%m-%d 23:59:59')
     end
 
     queryset.count
+  end
+
+  def encounter_service
+    EncounterService.new
   end
 end
