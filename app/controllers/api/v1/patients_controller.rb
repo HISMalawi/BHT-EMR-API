@@ -102,6 +102,11 @@ class Api::V1::PatientsController < ApplicationController
     render json: visits
   end
 
+  def find_median_weight_and_height
+    weight, height = service.find_patient_median_weight_and_height(patient)
+    render json: { weight: weight, height: height }
+  end
+
   private
 
   DDE_CONFIG_PATH = 'config/application.yml'
@@ -112,6 +117,10 @@ class Api::V1::PatientsController < ApplicationController
     GROUP BY encounter_datetime
     ORDER BY encounter_datetime DESC
 END_QUERY
+
+  def patient
+    Patient.find(params[:patient_id])
+  end
 
   def load_dde_client
     return unless dde_enabled?
@@ -279,5 +288,9 @@ END_QUERY
 
   def npid_identifier_type
     PatientIdentifierType.find_by_name('National id')
+  end
+
+  def service
+    @service ||= PatientService.new
   end
 end

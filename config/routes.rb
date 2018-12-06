@@ -40,6 +40,7 @@ Rails.application.routes.draw do
                        request.params
         end)
         get '/next_appointment_date', to: 'patient_appointments#next_appointment_date'
+        get '/median_weight_height', to: 'patients#find_median_weight_and_height'
         resources :patient_programs, path: :programs
       end
 
