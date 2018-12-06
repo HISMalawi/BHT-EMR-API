@@ -19,6 +19,10 @@ class RegimenService
     @engine.find_dosages patient, date
   end
 
+  def find_starter_pack(regimen, weight)
+    @engine.find_starter_pack(regimen, weight)
+  end
+
   private
 
   def load_engine(program_id)

@@ -10,6 +10,13 @@ module ARTService
       @program = program
     end
 
+    def find_starter_pack(regimen, weight)
+      ingredients = MohRegimenIngredientStarterPack.joins(:regimen).where(
+        moh_regimens: { regimen_index: regimen }
+      ).where('min_weight <= :weight AND max_weight >= :weight', weight: weight)
+      ingredients.collect { |ingredient| ingredient_to_drug(ingredient) }
+    end
+
     def find_regimens(patient_age:, patient_weight:, patient_gender:)
       patient_gender = patient_gender.strip[0]
 

@@ -15,6 +15,8 @@ class Encounter < VoidableRecord
   belongs_to :patient
   belongs_to :location, optional: true
 
+  validates_presence_of :encounter_datetime
+
   # # TODO: this needs to account for current visit, which needs to account for
   # # possible retrospective entry
   # named_scope(:current,
@@ -99,7 +101,7 @@ class Encounter < VoidableRecord
 
   # def to_s
   #   if name == 'REGISTRATION'
-  #     "Patient was seen at the registration desk at #{encounter_datetime.strftime('%I:%M')}" 
+  #     "Patient was seen at the registration desk at #{encounter_datetime.strftime('%I:%M')}"
   #   elsif name == 'TREATMENT'
   #     o = orders.collect{|order| order.to_s}.join("\n")
   #     o = "No prescriptions have been made" if o.blank?
@@ -111,14 +113,14 @@ class Encounter < VoidableRecord
   #     vitals = [weight_str = weight.first.answer_string + 'KG' rescue 'UNKNOWN WEIGHT',
   #               height_str = height.first.answer_string + 'CM' rescue 'UNKNOWN HEIGHT']
   #     temp_str = temp.first.answer_string + '°C' rescue nil
-  #     vitals << temp_str if temp_str                          
+  #     vitals << temp_str if temp_str
   #     vitals.join(', ')
-  #   else  
+  #   else
   #     observations.collect{|observation| "<b>#{(observation.concept.concept_names.last.name) rescue ""}</b>: #{observation.answer_string}"}.join(", ")
-  #   end  
+  #   end
   # end
 
-  # def self.count_by_type_for_date(date)  
+  # def self.count_by_type_for_date(date)
   #   # This query can be very time consuming, because of this we will not consider
   #   # that some of the encounters on the specific date may have been voided
   #   ActiveRecord::Base.connection.select_all("SELECT count(*) as number, encounter_type FROM encounter GROUP BY encounter_type")
@@ -136,11 +138,11 @@ class Encounter < VoidableRecord
   #   encounter_types_hash = encounter_types.inject({}) {|result, row| result[row.encounter_type_id] = row.name; result }
   #   with_scope(:find => opts) do
   #     rows = self.all(
-  #        :select => 'count(*) as number, encounter_type', 
+  #        :select => 'count(*) as number, encounter_type',
   #        :group => 'encounter.encounter_type',
-  #        :conditions => ['encounter_type IN (?)', encounter_types.map(&:encounter_type_id)]) 
+  #        :conditions => ['encounter_type IN (?)', encounter_types.map(&:encounter_type_id)])
   #     return rows.inject({}) {|result, row| result[encounter_types_hash[row['encounter_type']]] = row['number']; result }
-  #   end     
+  #   end
   # end
 
   # def self.visits_by_day(start_date,end_date)
@@ -330,9 +332,9 @@ class Encounter < VoidableRecord
 
   #   return previous_encounters
   # end
-  
+
   # #form art
-  
+
   # def self.lab_activities
   #   lab_activities = [
   #     ['Lab Orders', 'lab_orders'],
