@@ -18,17 +18,27 @@ class Api::V1::ProgramPatientsController < ApplicationController
     render json: status
   end
 
+  def find_earliest_start_date
+    date_enrolled = service.find_patient_date_enrolled(patient)
+    earliest_start_date = service.find_patient_earliest_start_date(patient, date_enrolled)
+
+    render json: {
+      date_enrolled: date_enrolled,
+      earliest_start_date: earliest_start_date
+    }
+  end
+
   protected
 
   def service
-    ProgramPatientsService.new program: program
+    @service ||= ProgramPatientsService.new program: program
   end
 
   def program
-    Program.find(params[:program_id])
+    @program ||= Program.find(params[:program_id])
   end
 
   def patient
-    Patient.find(params[:program_patient_id])
+    @patient ||= Patient.find(params[:program_patient_id])
   end
 end

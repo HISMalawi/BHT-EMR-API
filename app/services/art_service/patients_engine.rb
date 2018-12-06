@@ -20,13 +20,13 @@ module ARTService
     # Returns a patient's last received drugs.
     #
     # NOTE: This method is customised to return only ARVs.
-    def patient_last_drugs_received(patient_id, ref_date: nil)
+    def patient_last_drugs_received(patient, ref_date: nil)
       ref_date = ref_date ? Date.strptime(ref_date) : Date.today
 
       dispensing_encounter = Encounter.joins(:type).where(
         'encounter_type.name = ? AND encounter.patient_id = ?
          AND DATE(encounter_datetime) <= DATE(?)',
-        'DISPENSING', patient_id, ref_date
+        'DISPENSING', patient.patient_id, ref_date
       ).order(encounter_datetime: :desc).first
 
       return [] unless dispensing_encounter
@@ -41,6 +41,31 @@ module ARTService
 
         drug_map[obs.value_drug] = order.drug_order if order.drug_order.drug.arv?
       end).values
+    end
+
+    # Returns patient's ART start date at current facility
+    def find_patient_date_enrolled(patient)
+      order = Order.joins(:encounter, :drug_order)\
+                   .where(encounter: { patient: patient },
+                          drug_order: { drug: Drug.arv_drugs })\
+                   .order(:start_date)\
+                   .first
+
+      order&.start_date&.to_date
+    end
+
+    # Returns patient's actual ART start date.
+    def find_patient_earliest_start_date(patient, date_enrolled = nil)
+      date_enrolled ||= find_patient_date_enrolled(patient)
+
+      patient_id = ActiveRecord::Base.connection.quote(patient.patient_id)
+      date_enrolled = ActiveRecord::Base.connection.quote(date_enrolled)
+
+      result = ActiveRecord::Base.connection.select_one(
+        "SELECT date_antiretrovirals_started(#{patient_id}, #{date_enrolled}) AS date"
+      )
+
+      result['date']&.to_date
     end
 
     def find_status(patient, date = Date.today)
