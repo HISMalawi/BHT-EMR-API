@@ -64,14 +64,8 @@ module ARTService
                                                 weight: patient.weight)
                                          .order(:drug_inventory_id)
                                          .last
-        dosages[drug_concept.concept_names.first.name] = {
-          drug_id: ingredient.drug.drug_id,
-          concept_id: ingredient.drug.concept_id,
-          name: ingredient.drug.name,
-          units: ingredient.drug.units,
-          am: ingredient.dose.am,
-          pm: ingredient.dose.pm
-        }
+
+        dosages[drug_concept.concept_names.first.name] = ingredient_to_drug(ingredient)
       end
     end
 
@@ -119,8 +113,10 @@ module ARTService
       drug = ingredient.drug
       {
         drug_id: drug.drug_id,
+        concept_id: drug.concept_id,
         drug_name: drug.name,
         am: ingredient.dose.am,
+        noon: 0, # Requested by the frontenders
         pm: ingredient.dose.pm,
         units: drug.units,
         concept_name: drug.concept.concept_names[0].name,
