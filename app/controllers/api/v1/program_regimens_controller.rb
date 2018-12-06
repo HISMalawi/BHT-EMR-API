@@ -7,6 +7,11 @@ class Api::V1::ProgramRegimensController < ApplicationController
     render json: regimens
   end
 
+  def find_starter_pack
+    regimen, weight = params.require(%i[regimen weight])
+    render json: service.find_starter_pack(regimen, weight)
+  end
+
   private
 
   def find_regimen_params
