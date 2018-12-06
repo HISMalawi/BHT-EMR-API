@@ -4,25 +4,31 @@ class Api::V1::ProgramPatientsController < ApplicationController
   end
 
   def last_drugs_received
-    render json: service.patient_last_drugs_received(params[:program_patient_id])
+    render json: service.patient_last_drugs_received(patient)
   end
 
   def find_dosages
     service = RegimenService.new(program_id: params[:program_id])
-    dosage = service.find_dosages Patient.find(params[:program_patient_id]),
-                                  Date.strptime(params[:date] || Date.today.to_s)
+    dosage = service.find_dosages patient, (params[:date]&.to_date || Date.today)
     render json: dosage
   end
 
   def status
-    status = service.find_status(Patient.find(params[:program_patient_id]),
-                                 Date.strptime(params[:date] || Date.today.to_s))
+    status = service.find_status patient, (params[:date]&.to_date || Date.today)
     render json: status
   end
 
   protected
 
   def service
-    ProgramPatientsService.load_engine params[:program_id]
+    ProgramPatientsService.new program: program
+  end
+
+  def program
+    Program.find(params[:program_id])
+  end
+
+  def patient
+    Patient.find(params[:program_patient_id])
   end
 end
