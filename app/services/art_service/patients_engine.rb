@@ -13,8 +13,8 @@ module ARTService
     #
     # The info is just what you would get on a patient information
     # confirmation page in an ART application.
-    def patient(patient_id)
-      summarise_patient Patient.find(patient_id)
+    def patient(patient_id, date)
+      summarise_patient Patient.find(patient_id), date
     end
 
     # Returns a patient's last received drugs.
@@ -89,7 +89,7 @@ module ARTService
 
     include ModelUtils
 
-    def summarise_patient(patient)
+    def summarise_patient(patient, date)
       art_start_date, art_duration = patient_art_period(patient)
       {
         patient_id: patient.patient_id,
@@ -99,7 +99,7 @@ module ARTService
         current_outcome: patient_current_outcome(patient),
         residence: patient_residence(patient),
         art_duration: art_duration,
-        current_regimen: patient_current_regimen(patient),
+        current_regimen: patient_current_regimen(patient, date),
         art_start_date: art_start_date,
         reason_for_art: patient_art_reason(patient)
       }
