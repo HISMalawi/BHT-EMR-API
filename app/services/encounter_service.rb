@@ -8,8 +8,8 @@ class EncounterService
     Encounter.where(
       'DATE(encounter_datetime) <= DATE(?)
         AND DATE(encounter_datetime) >= DATE(?)
-        AND patient_id = ? AND type = ?',
-      date, start_date, patient_id, type.type_id
+        AND patient_id = ? AND encounter_type = ?',
+      date, start_date, patient_id, type.id
     ).order(encounter_datetime: :desc).first
   end
 
