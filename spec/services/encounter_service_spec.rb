@@ -82,4 +82,17 @@ RSpec.describe EncounterService do
       expect(&delete_encounter).to change(&encounter_count).from(1).to(0)
     end
   end
+
+  describe :recent_encounter do
+    it 'retrieves the most recent encounter for a given patient and type' do
+      created = encounter_service.create(patient: patient, type: type,
+                                         encounter_datetime: encounter_datetime,
+                                         provider: provider)
+
+      retrieved = EncounterService.recent_encounter(encounter_type_name: created.type.name,
+                                                    patient_id: created.patient_id)
+
+      expect(retrieved).to eq(created)
+    end
+  end
 end
