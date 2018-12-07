@@ -16,7 +16,7 @@ class AppointmentService
   end
 
   def appointments(filters = {})
-    date = filters.delete(:date) || filters.delete(:obs_datetime)
+    date = filters.delete(:date) || filters.delete(:value_datetime)
 
     filters = filters.to_hash.each_with_object({}) do |kv_pair, transformed_hash|
       key, value = kv_pair

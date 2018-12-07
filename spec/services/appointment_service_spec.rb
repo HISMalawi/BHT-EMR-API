@@ -16,7 +16,7 @@ RSpec.describe AppointmentService do
 
       created = (1..10).collect do |i|
         create :obs_appointment, encounter: encounter,
-                                 obs_datetime: epoch + i.days,
+                                 value_datetime: epoch + i.days,
                                  person: person
       end
 
@@ -29,11 +29,11 @@ RSpec.describe AppointmentService do
 
       created = (1..10).collect do |i|
         create :obs_appointment, encounter: encounter,
-                                 obs_datetime: epoch + i.days,
+                                 value_datetime: epoch + i.days,
                                  person: person
       end
 
-      retrieved = appointment_service.appointments obs_datetime: epoch + 2.days
+      retrieved = appointment_service.appointments value_datetime: epoch + 2.days
       expect(retrieved.size).to be(1)
       expect(retrieved[0].obs_id).to eq(created[1].obs_id)
     end
@@ -43,7 +43,7 @@ RSpec.describe AppointmentService do
 
       created = (1..10).collect do |i|
         create :obs_appointment, encounter: encounter,
-                                 obs_datetime: epoch + i.days
+                                 value_datetime: epoch + i.days
       end
 
       retrieved = appointment_service.appointments person: created[0].person
@@ -55,14 +55,14 @@ RSpec.describe AppointmentService do
       encounter = create :encounter_appointment, encounter_datetime: epoch
 
       created = (0..9).collect do |i|
-        params = { encounter: encounter, obs_datetime: epoch + i.days }
+        params = { encounter: encounter, value_datetime: epoch + i.days }
         params[:person] = person if i.odd?
         create :obs_appointment, params
       end
 
       # Odd numbered appointments in created belong to our `person`
       retrieved = appointment_service.appointments person: created[1].person,
-                                                   obs_datetime: created[1].obs_datetime.to_date
+                                                   value_datetime: created[1].value_datetime.to_date
       expect(retrieved.size).to be(1)
       expect(retrieved[0].person_id).to eq(created[1].person_id)
       expect(retrieved[0].obs_id).to eq(created[1].obs_id)
