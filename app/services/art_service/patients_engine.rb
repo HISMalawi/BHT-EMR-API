@@ -158,7 +158,9 @@ module ARTService
       return 'N/A' if obs_list.empty?
 
       obs = obs_list[0]
-      Concept.find(obs.value_coded.to_i).concept_names[-1].name
+      
+      Concept.find(obs.value_coded.to_i).concept_names[-1].name \
+      unless obs.value_coded.blank?
     end
 
     def patient_art_period(patient)
