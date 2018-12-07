@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
 class EncounterService
-  def self.recent_encounter(type_name:, patient_id:, date: nil, start_date: nil)
+  def self.recent_encounter(encounter_type_name:, patient_id:, date: nil, start_date: nil)
     start_date ||= Date.strptime('1900-01-01')
     date ||= Date.today
-    type = EncounterType.find_by(name: type_name)
+    type = EncounterType.find_by(name: encounter_type_name)
     Encounter.where(
       'DATE(encounter_datetime) <= DATE(?)
         AND DATE(encounter_datetime) >= DATE(?)

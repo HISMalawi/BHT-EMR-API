@@ -79,6 +79,12 @@ class Patient < VoidableRecord
     end
   end
 
+  def age_in_months(today = Date.today)
+    years = (today.year - person.birthdate.year)
+    months = (today.month - person.birthdate.month)
+    (years * 12) + months
+  end
+
   def weight(today: Date.today)
     obs = Observation.where(person: person, concept: concept('Weight'))\
                      .where('DATE(obs_datetime) <= DATE(?)', today)\

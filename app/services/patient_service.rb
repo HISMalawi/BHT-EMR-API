@@ -11,7 +11,7 @@ class PatientService
   end
 
   def find_patient_median_weight_and_height(patient)
-    median_weight_height(patient.age / 12, patient.person.gender)
+    median_weight_height(patient.age_in_months, patient.person.gender)
   end
 
   def median_weight_height(age_in_months, gender)
