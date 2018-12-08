@@ -48,7 +48,7 @@ module ARTService
 
       return {} unless prescribe_drugs
 
-      arv_extras_concepts = [concept('CPT'), concept('INH')]
+      arv_extras_concepts = [concept('CPT'), concept('Pyridoxine')]
 
       orders = Observation.where(concept: concept('Medication orders'))
                           .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
