@@ -13,7 +13,9 @@ module ARTService
     def find_starter_pack(regimen, weight)
       ingredients = MohRegimenIngredientStarterPack.joins(:regimen).where(
         moh_regimens: { regimen_index: regimen }
-      ).where('min_weight <= :weight AND max_weight >= :weight', weight: weight)
+      ).where('CAST(min_weight AS DECIMAL(4, 1)) <= :weight
+               AND CAST(max_weight AS DECIMAL(4, 1)) >= :weight',
+              weight: weight.to_f.round(1))
       ingredients.collect { |ingredient| ingredient_to_drug(ingredient) }
     end
 
@@ -21,10 +23,11 @@ module ARTService
       patient_gender = patient_gender.strip[0]
 
       ingredients = MohRegimenIngredient.where(
-        '(min_weight <= :weight and max_weight >= :weight)
+        '(CAST(min_weight AS DECIMAL(4, 1)) <= :weight
+         AND CAST(max_weight AS DECIMAL(4, 1)) >= :weight)
          AND (min_age <= :age AND max_age >= :age)
          AND (gender LIKE :gender)',
-        weight: patient_weight, age: patient_age, gender: "%#{patient_gender}%"
+        weight: patient_weight.to_f.round(1), age: patient_age, gender: "%#{patient_gender}%"
       )
 
       categorise_regimens(regimens_from_ingredients(ingredients))
@@ -60,8 +63,9 @@ module ARTService
         drugs = Drug.where(concept: drug_concept)
 
         ingredient = MohRegimenIngredient.where(drug: drugs)\
-                                         .where('min_weight <= :weight AND max_weight >= :weight',
-                                                weight: patient.weight)
+                                         .where('CAST(min_weight AS DECIMAL(4, 1)) <= :weight
+                                                 AND CAST(max_weight AS DECIMAL(4, 1)) >= :weight',
+                                                weight: patient.weight.to_f.round(1))
                                          .order(:drug_inventory_id)
                                          .last
 
