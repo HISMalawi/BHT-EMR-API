@@ -48,7 +48,7 @@ module ARTService
 
       return {} unless prescribe_drugs
 
-      arv_extras_concepts = [concept('CPT'), concept('Pyridoxine')]
+      arv_extras_concepts = [concept('CPT'), concept('INH')]
 
       orders = Observation.where(concept: concept('Medication orders'))
                           .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
@@ -56,7 +56,11 @@ module ARTService
       orders.each_with_object({}) do |order, dosages|
         next unless order.value_coded # Raise a warning here
 
-        drug_concept = Concept.find(order.value_coded)
+        drug_concept = Concept.find_by(concept_id: order.value_coded)
+        unless drug_concept
+          Rails.logger.warn "Couldn't find drug concept using value_coded ##{order.value_coded} of order ##{order.order_id}"
+          next
+        end
 
         next unless arv_extras_concepts.include?(drug_concept)
 
