@@ -92,6 +92,11 @@ module ARTService
     #   }
     def regimens_from_ingredients(ingredients)
       ingredients.each_with_object({}) do |ingredient, regimens|
+        # Have some CPT & INH that do not belong to any regimen
+        # but have a weight - dosage mapping hence being lumped
+        # together with the regimen ingredients
+        next unless ingredient.regimen
+
         regimen_index = ingredient.regimen.regimen_index
         regimen = regimens[regimen_index] || []
 
