@@ -29,7 +29,7 @@ class Api::V1::LabTestOrdersController < ApplicationController
       return render json: { errors: [error] }, status: :bad_request
     end
 
-    type = LabTestType.find lab_test_type_id
+    type = LabTestType.find_by_TestType lab_test_type_id
     encounter = Encounter.find encounter_id
     order = engine.create_order type: type, encounter: encounter, date: date
 
