@@ -74,6 +74,7 @@ bundle exec rake db:migrate
 # The following must run after all migrations have been run
 
 mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/sql/add_regimens_13_and_above.sql
+mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/sql/add_cpt_and_inh_to_regimen_ingredients.sql
 
 echo "After completing database setup, you are advised to run the following:"
 echo "rake test"

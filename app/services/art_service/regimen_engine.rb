@@ -56,7 +56,11 @@ module ARTService
       orders.each_with_object({}) do |order, dosages|
         next unless order.value_coded # Raise a warning here
 
-        drug_concept = Concept.find(order.value_coded)
+        drug_concept = Concept.find_by(concept_id: order.value_coded)
+        unless drug_concept
+          Rails.logger.warn "Couldn't find drug concept using value_coded ##{order.value_coded} of order ##{order.order_id}"
+          next
+        end
 
         next unless arv_extras_concepts.include?(drug_concept)
 
@@ -88,6 +92,11 @@ module ARTService
     #   }
     def regimens_from_ingredients(ingredients)
       ingredients.each_with_object({}) do |ingredient, regimens|
+        # Have some CPT & INH that do not belong to any regimen
+        # but have a weight - dosage mapping hence being lumped
+        # together with the regimen ingredients
+        next unless ingredient.regimen
+
         regimen_index = ingredient.regimen.regimen_index
         regimen = regimens[regimen_index] || []
 
