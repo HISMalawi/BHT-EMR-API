@@ -8,6 +8,7 @@ class Drug < ActiveRecord::Base
   belongs_to :form, foreign_key: 'dosage_form', class_name: 'Concept'
 
   has_one :drug_cms, foreign_key: :drug_inventory_id
+  has_many :barcodes, class_name: 'DrugOrderBarcode'
 
   def as_json(options = {})
     super(options.merge(

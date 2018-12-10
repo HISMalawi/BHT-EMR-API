@@ -133,7 +133,8 @@ module ARTService
         pm: ingredient.dose.pm,
         units: drug.units,
         concept_name: drug.concept.concept_names[0].name,
-        pack_size: drug.drug_cms ? drug.drug_cms.pack_size : nil
+        pack_size: drug.drug_cms ? drug.drug_cms.pack_size : nil,
+        barcodes: drug.barcodes.collect { |barcode| { tabs: barcode.tabs } }
       }
     end
 
