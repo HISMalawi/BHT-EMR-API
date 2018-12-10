@@ -22,9 +22,19 @@ module ARTService
     private
 
     def call_report_manager(method, type:, **kwargs)
-      report_manager = REPORTS[type.name.upcase].new(type: type, **kwargs)
+      start_date = kwargs.delete(:start_date)
+      end_date = kwargs.delete(:end_date)
+      name = kwargs.delete(:name)
+
+      report_manager = REPORTS[type.name.upcase].new(
+        type: type, name: name, start_date: start_date, end_date: end_date
+      )
       method = report_manager.method(method)
-      method.call
+      if kwargs.empty?
+        method.call
+      else
+        method.call(**kwargs)
+      end
     end
   end
 end

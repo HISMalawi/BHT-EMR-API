@@ -87,9 +87,9 @@ class ReportService
 
     LOGGER.debug("Queueing #{type.name} report with arguments: #{kwargs}")
     if @immediate_mode
-      ReportJob.perform_now(engine(@program).to_s, **kwargs)
+      ReportJob.perform_now(engine(@program).class.to_s, **kwargs)
     else
-      ReportJob.perform_later(engine(@program).to_s, **kwargs)
+      ReportJob.perform_later(engine(@program).class.to_s, **kwargs)
     end
   end
 

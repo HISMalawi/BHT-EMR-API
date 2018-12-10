@@ -26,8 +26,9 @@ module ARTService
         save_report
       end
 
-      def find_report(type, name, start_date, end_date)
-        Report.where(type: type, name: name, start_date: start_date, end_date: end_date)\
+      def find_report
+        Report.where(type: @type, name: @name,
+                     start_date: @start_date, end_date: @end_date)\
               .order(date_created: :desc)\
               .first
       end
