@@ -11,7 +11,7 @@ class DrugOrder < ActiveRecord::Base
                         :units, :frequency, :prn
 
   def as_json(options = {})
-    super(options.merge(amount_needed: {}, include: { order: {}, drug: {} })).tap do |hash|
+    super(options.merge(include: { order: {}, drug: {} })).tap do |hash|
       hash[:amount_needed] = amount_needed
       hash[:barcodes] = drug.barcodes
     end
