@@ -11,13 +11,15 @@ class DrugOrder < ActiveRecord::Base
                         :units, :frequency, :prn
 
   def as_json(options = {})
-    super(options.merge(amount_needed: {}, include: { order: {}, drug: {} })).tap do | hash |
+    super(options.merge(amount_needed: {}, include: { order: {}, drug: {} })).tap do |hash|
       hash[:amount_needed] = amount_needed
+      hash[:barcodes] = drug.barcodes
     end
   end
 
   def duration
     return 0 if order.auto_expire_date.nil? || order.start_date.nil?
+
     interval = order.auto_expire_date.to_date - order.start_date.to_date
     interval.to_i
   end
