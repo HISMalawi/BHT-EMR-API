@@ -19,15 +19,17 @@ module ARTService
       ingredients.collect { |ingredient| ingredient_to_drug(ingredient) }
     end
 
-    def find_regimens(patient_age:, patient_weight:, patient_gender:)
-      patient_gender = patient_gender.strip[0]
+    def find_regimens(patient)
+      age = adjusted_patient_age(patient)
+      gender = patient.gender
+      weight = patient.weight.to_f
 
       ingredients = MohRegimenIngredient.where(
         '(CAST(min_weight AS DECIMAL(4, 1)) <= :weight
          AND CAST(max_weight AS DECIMAL(4, 1)) >= :weight)
          AND (min_age <= :age AND max_age >= :age)
          AND (gender LIKE :gender)',
-        weight: patient_weight.to_f.round(1), age: patient_age, gender: "%#{patient_gender}%"
+        weight: weight.round(1), age: age, gender: "%#{gender}%"
       )
 
       categorise_regimens(regimens_from_ingredients(ingredients))
@@ -171,6 +173,43 @@ module ARTService
       Rails.logger.warn "Failed to Interpret regimen: #{drug_combo}"
 
       nil
+    end
+
+    # Age at which we assuming women lose their child bearing capability
+    FEMALE_INFECUNDITY_ONSET_AGE = 45
+
+    # Retrieves an adjusted patient age for look up into MohRegimenIngredients table.
+    #
+    # NOTE: Method pushes age up to 45 for women on permanent family planning
+    # method and adjusts it downwards to 44 for women above 45 and pregnant.
+    def adjusted_patient_age(patient)
+      return patient.age if patient.gender.upcase.start_with?('M')
+
+      return FEMALE_INFECUNDITY_ONSET_AGE if patient_on_permanent_fp_method?(patient)
+
+      return FEMALE_INFECUNDITY_ONSET_AGE - 1 if patient_is_pregnant?(patient)
+
+      patient.age
+    end
+
+    # Checks if patient is on permanent family planning method.
+    #
+    # NOTE: Only applies to females
+    def patient_on_permanent_fp_method?(patient)
+      permanent_fp_concepts = [concept('Hysterectomy'), concept('Tubal ligation')]
+      Observation.where(concept: permanent_fp_concepts, person: patient.person).exists?
+    end
+
+    def patient_is_pregnant?(patient)
+      pregnant_concept = concept('Patient pregnant')
+      obs = Observation.where(
+        concept: pregnant_concept,
+        person: patient.person
+      ).order(obs_datetime: :desc).first
+
+      return false unless obs
+
+      obs.value_coded == concept('Yes').concept_id
     end
 
     REGIMEN_CODES = {

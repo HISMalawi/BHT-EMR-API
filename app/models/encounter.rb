@@ -59,21 +59,9 @@ class Encounter < VoidableRecord
   # end
 
   def after_void(reason)
-    orders.each do |row|
-      Pharmacy.voided_stock_adjustment(order) if row.order_type_id == 1
-    end
+    orders.each { |order| order.void(reason) }
 
-    observations.each do |row|
-      unless row.order_id.blank?
-        query = "UPDATE drug_order SET quantity = NULL\n
-                 WHERE order_id = #{row.order_id}"
-        ActiveRecord::Base.connection.execute query
-      end
-
-      row.void(reason)
-    end
-
-    orders.each { |row| row.void(reason) }
+    observations.each { |observation| observation.void(reason) }
   end
 
   def encounter_type_name=(encounter_type_name)
