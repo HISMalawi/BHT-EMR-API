@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 module ARTService
+  include ModelUtils
+
   # Patients sub service.
   #
   # Basically provides ART specific patient-centric functionality
@@ -72,6 +74,38 @@ module ARTService
       {
         status: patient_initiated(patient.patient_id, date)
       }
+    end
+
+    def find_next_available_arv_number
+      current_arv_code = global_property('site_prefix').property_value
+      type = PatientIdentifierType.find_by_name('ARV Number')
+      current_arv_number_identifiers = PatientIdentifier.where(identifier_type: type)
+
+      unless current_arv_number_identifiers.nil?
+        assigned_arv_ids = current_arv_number_identifiers.collect do |identifier|
+          Regexp.last_match(1).to_i if identifier.identifier =~ /#{current_arv_code}-ARV- *(\d+)/
+        end.compact
+      end
+
+      next_available_number = nil
+
+      if assigned_arv_ids.empty?
+        next_available_number = 1
+      else
+        # Check for unused ARV idsV Suggest the next arv_id based on unused ARV
+        # ids that are within 10 of the current_highest arv id. This makes sure
+        # that we don't get holes unless we really want them and also means that our
+        # suggestions aren't broken by holes
+        # array_of_unused_arv_ids = (1..highest_arv_id).to_a - assigned_arv_ids
+        assigned_numbers = assigned_arv_ids.sort
+
+        possible_number_range = global_property('arv_number_range')&.property_value&.to_i || 100_000
+
+        possible_identifiers = Array.new(possible_number_range) { |i| (i + 1) }
+        next_available_number = (possible_identifiers - assigned_numbers).first
+      end
+
+      "#{current_arv_code} #{next_available_number}"
     end
 
     def all_patients(paginator: nil)
@@ -201,23 +235,25 @@ module ARTService
         end_date
       ).last
 
-      hiv_clinic_registration.observations.map do |obs|
-        concept_name = obs.concept.concept_names.first.name
+      unless hiv_clinic_registration.blank?
+        hiv_clinic_registration.observations.map do |obs|
+          concept_name = obs.concept.concept_names.first.name
 
-        next unless concept_name == 'Date ART last taken'
+          next unless concept_name == 'Date ART last taken'
 
-        last_art_drugs_date_taken = obs&.value_datetime&.to_date
+          last_art_drugs_date_taken = obs&.value_datetime&.to_date
 
-        next unless last_art_drugs_date_taken
+          next unless last_art_drugs_date_taken
 
-        days = ActiveRecord::Base.connection.select_value <<-SQL
-              SELECT timestampdiff(
-                day, '#{last_art_drugs_date_taken}', '#{session_date.to_date}'
-              ) AS days;
-        SQL
+          days = ActiveRecord::Base.connection.select_value <<-SQL
+                SELECT timestampdiff(
+                  day, '#{last_art_drugs_date_taken}', '#{session_date.to_date}'
+                ) AS days;
+          SQL
 
-        return days.to_i > 14 ? 'Re-initiated' : 'Continuing'
-      end unless hiv_clinic_registration.blank?
+          return days.to_i > 14 ? 'Re-initiated' : 'Continuing'
+        end
+      end
 
       dispensed_arvs = Observation.where(
         'person_id = ? AND concept_id = ? AND obs_datetime <= ?',

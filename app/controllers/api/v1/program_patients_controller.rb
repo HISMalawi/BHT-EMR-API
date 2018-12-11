@@ -29,6 +29,10 @@ class Api::V1::ProgramPatientsController < ApplicationController
     }
   end
 
+  def find_next_available_arv_number
+    render json: { arv_number: service.find_next_available_arv_number }
+  end
+
   protected
 
   def service
