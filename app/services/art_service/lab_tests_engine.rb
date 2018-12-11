@@ -60,7 +60,7 @@ class ARTService::LabTestsEngine
   end
 
   def save_result(accession_number:, test_value:, time:)
-    sample = LabSample.find_by(AccessionNum: accession_number)
+    sample = LabSample.find_by(PATIENTID: accession_number)
     unless sample
       raise InvalidParameterError,
             "Couldn't find Lab parameter associated with accession number: #{accession_number}"
@@ -75,8 +75,14 @@ class ARTService::LabTestsEngine
     modifier, value = split_test_value(test_value)
     result.Range = modifier
     result.TESTVALUE = value
-    result.TimeStamp = time || Time.now
-    result.save
+    raise "Coun't save lab result #{test_value} to param ##{accession_number}" unless result.save
+
+    time ||= Time.now
+    sample.TIME = time.strftime('%2H:%2M')
+    sample.DATE = time.strftime('%Y-%m-%d')
+    return result if sample.save
+
+    raise "Couldn't save lab parameter bound to accession number: ##{find_orders_by_accession_number}"
   end
 
   private
@@ -93,13 +99,14 @@ class ARTService::LabTestsEngine
 
   # Creates a lab order in the secondary healthdata database
   def create_lab_order(type, local_order, date)
+    date ||= Time.now
     panel = LabPanel.find type.Panel_ID
     accession_number = next_id(local_order.order_id)
     LabTestTable.create TestOrdered: panel.name,
                         Pat_ID: accession_number,
                         OrderedBy: User.current.user_id,
-                        OrderDate: date.respond_to?(:to_date) ? date.to_date : date,
-                        OrderTime: Time.now.strftime('%2H:%2M'),
+                        OrderDate: date.strftime('%Y-%m-%d'),
+                        OrderTime: date.strftime('%2H:%2M'),
                         Location: Location.current.location_id
   end
 

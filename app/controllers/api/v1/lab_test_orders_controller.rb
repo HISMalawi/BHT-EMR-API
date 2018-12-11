@@ -23,7 +23,7 @@ class Api::V1::LabTestOrdersController < ApplicationController
     lab_test_type_id, encounter_id = params.require %i[test_type_id encounter_id]
 
     begin
-      date = params[:date] ? params[:date].to_date : nil
+      date = params[:date]&.to_datetime || Time.now
     rescue ArgumentError => e
       error = "Failed to parse date(#{params[:date]}): #{e}"
       return render json: { errors: [error] }, status: :bad_request

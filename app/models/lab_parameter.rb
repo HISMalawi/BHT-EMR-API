@@ -15,6 +15,15 @@ class LabParameter < ApplicationRecord
     end
   end
 
+  def as_json(options = {})
+    super(options.merge(
+      include: {
+        lab_sample: {},
+        test_type: {}
+      }
+    ))
+  end
+
   # def self.find_by_sample_id(sample_id)
   #   return LabParameter.where(["sample_id =?", sample_id])
   # end
