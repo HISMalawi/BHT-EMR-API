@@ -59,7 +59,7 @@ class ARTService::LabTestsEngine
     LabTestTable.where(Pat_ID: accession_number).order(Arel.sql('DATE(OrderDate), TIME(OrderTime)'))
   end
 
-  def save_result(accession_number:, test_value:)
+  def save_result(accession_number:, test_value:, time:)
     sample = LabSample.find_by(AccessionNum: accession_number)
     unless sample
       raise InvalidParameterError,
@@ -75,6 +75,7 @@ class ARTService::LabTestsEngine
     modifier, value = split_test_value(test_value)
     result.Range = modifier
     result.TESTVALUE = value
+    result.TimeStamp = time || Time.now
     result.save
   end
 
