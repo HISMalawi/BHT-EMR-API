@@ -1,9 +1,6 @@
 class Api::V1::ProgramRegimensController < ApplicationController
   def index
-    weight, age, gender = find_regimen_params
-    regimens = service.find_regimens patient_weight: weight,
-                                     patient_age: age,
-                                     patient_gender: gender
+    regimens = service.find_regimens patient
     render json: regimens
   end
 
@@ -14,12 +11,8 @@ class Api::V1::ProgramRegimensController < ApplicationController
 
   private
 
-  def find_regimen_params
-    patient_id = params[:patient_id]
-    return params.require(%i[weight age gender]) unless patient_id
-
-    patient = Patient.find patient_id
-    [params[:weight] || patient.weight, patient.age, patient.gender]
+  def patient
+    Patient.find(params[:patient_id])
   end
 
   def service

@@ -9,18 +9,16 @@ class RegimenService
     @engine = load_engine program_id
   end
 
-  def find_regimens(patient_weight:, patient_age:, patient_gender:)
-    @engine.find_regimens patient_weight: patient_weight,
-                          patient_age: patient_age,
-                          patient_gender: patient_gender
+  def method_missing(method, *args, &block)
+    Rails.logger.debug "Executing missing method: #{method}"
+    return @engine.send(method, *args, &block) if respond_to_missing?(method)
+
+    super(method, *args, &block)
   end
 
-  def find_dosages(patient, date)
-    @engine.find_dosages patient, date
-  end
-
-  def find_starter_pack(regimen, weight)
-    @engine.find_starter_pack(regimen, weight)
+  def respond_to_missing?(method)
+    Rails.logger.debug "Engine responds to #{method}? #{@engine.respond_to?(method)}"
+    @engine.respond_to?(method)
   end
 
   private
