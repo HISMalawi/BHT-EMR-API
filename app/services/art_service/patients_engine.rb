@@ -158,9 +158,15 @@ module ARTService
       return 'N/A' if obs_list.empty?
 
       obs = obs_list[0]
-      
-      Concept.find(obs.value_coded.to_i).concept_names[-1].name \
-      unless obs.value_coded.blank?
+
+      reason_concept = Concept.find_by_concept_id(obs.value_coded.to_i)
+      return 'N/A' unless reason_concept
+
+      reason_concept\
+        .concept_names\
+        .where(concept_name_type: 'FULLY_SPECIFIED')\
+        .first\
+        .name
     end
 
     def patient_art_period(patient)
