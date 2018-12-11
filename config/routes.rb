@@ -33,6 +33,7 @@ Rails.application.routes.draw do
 
       # Patients
       resources :patients do
+        resources :patient_identifiers
         get '/labels/national_health_id' => 'patients#print_national_health_id_label'
         get '/visits' => 'patients#visits'
         get('/appointments', to: redirect do |params, request|
