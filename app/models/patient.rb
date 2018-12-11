@@ -40,7 +40,6 @@ class Patient < VoidableRecord
             type: {}
           }
         },
-        encounters: {},
         orders: {}
       }
     ))
