@@ -108,6 +108,15 @@ module ARTService
       "#{current_arv_code} #{next_available_number}"
     end
 
+    #function to check if an arv number already exists
+    def arv_number_already_exists(arv_number)
+      identifier_type = PatientIdentifierType.find_by_name('ARV Number')
+      identifiers = PatientIdentifier.all.where(
+        identifier: arv_number,
+        identifier_type: identifier_type.id
+      ).exists?
+    end
+
     def all_patients(paginator: nil)
       # TODO: Retrieve all patients
       []

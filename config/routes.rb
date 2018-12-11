@@ -85,6 +85,7 @@ Rails.application.routes.draw do
         resources :program_workflows, path: :workflows
         resources :program_regimens, path: :regimens
         get 'next_available_arv_number' => 'program_patients#find_next_available_arv_number'
+        get 'lookup_arv_number/:arv_number' => 'program_patients#lookup_arv_number'
         get 'regimen_starter_packs' => 'program_regimens#find_starter_pack'
         resources :program_patients, path: :patients do
           get '/last_drugs_received' => 'program_patients#last_drugs_received'

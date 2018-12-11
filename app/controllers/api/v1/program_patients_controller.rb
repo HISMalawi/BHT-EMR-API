@@ -33,6 +33,14 @@ class Api::V1::ProgramPatientsController < ApplicationController
     render json: { arv_number: service.find_next_available_arv_number }
   end
 
+  def lookup_arv_number
+    if (service.arv_number_already_exists(params[:arv_number]))
+      render json: { exists: true }
+    else
+      render nothing: true, status: 404
+    end
+  end
+
   protected
 
   def service
