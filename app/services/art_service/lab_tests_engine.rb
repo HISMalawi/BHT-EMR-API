@@ -30,13 +30,15 @@ class ARTService::LabTestsEngine
                 .order(Arel.sql('DATE(Lab_Sample.TimeStamp) DESC'))
   end
 
-  def create_order(type:, encounter:, patient: nil, date: nil)
+  def create_order(type:, encounter:, reason:, patient: nil, date: nil)
     patient ||= encounter.patient
     date ||= encounter.encounter_datetime
 
     local_order = create_local_order patient, encounter, date
     local_order.accession_number = next_id local_order.order_id
     local_order.save!
+
+    save_reason_for_test(encounter, local_order, reason)
 
     lab_order = create_lab_order type, local_order, date
     lab_sample = create_lab_sample lab_order
@@ -95,6 +97,16 @@ class ARTService::LabTestsEngine
                  order_type: order_type('Lab'),
                  start_date: date,
                  provider: User.current
+  end
+
+  def save_reason_for_test(encounter, order, reason)
+    Observation.create(
+      order: order,
+      encounter: encounter,
+      concept: concept('Reason for test'),
+      person: encounter.patient.person,
+      value_text: reason
+    )
   end
 
   # Creates a lab order in the secondary healthdata database
