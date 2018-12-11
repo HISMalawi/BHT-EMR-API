@@ -9,14 +9,14 @@ class ProgramPatientsService
   end
 
   def method_missing(method, *args, &block)
-    puts "Executing missing method: #{method}"
+    Rails.logger.debug "Executing missing method: #{method}"
     return @engine.send(method, *args, &block) if respond_to_missing?(method)
 
     super(method, *args, &block)
   end
 
   def respond_to_missing?(method)
-    puts "Engine responds to #{method}? #{@engine.respond_to?(method)}"
+    Rails.logger.debug "Engine responds to #{method}? #{@engine.respond_to?(method)}"
     @engine.respond_to?(method)
   end
 end
