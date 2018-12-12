@@ -201,7 +201,7 @@ module ARTService
     end
 
     def patient_is_pregnant?(patient)
-      pregnant_concept = concept('Patient pregnant')
+      pregnant_concept = concept('Is Patient Pregnant?')
       obs = Observation.where(
         concept: pregnant_concept,
         person: patient.person

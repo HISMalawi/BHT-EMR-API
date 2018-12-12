@@ -96,7 +96,7 @@ RSpec.describe ARTService::RegimenEngine do
 
     it 'skips regimens 13A, 14A, and 15A for women above 45 years but pregnant' do
       patient = create_patient(age: 50, weight: 60, gender: 'F')
-      Observation.create(concept: concept('Patient pregnant'), encounter: vitals_encounter,
+      Observation.create(concept: concept('Is patient pregnant?'), encounter: vitals_encounter,
                          person: patient.person, value_coded: concept('Yes').concept_id)
 
       regimens = regimen_service.find_regimens(patient)
