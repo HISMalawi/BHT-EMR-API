@@ -7,7 +7,7 @@ module ARTService
     def initialize(program:, patient:, date:)
       @patient = patient
       @program = program
-      @date = date.to_date  # We need a date (not datetime or something else)
+      @date = date
     end
 
     # Retrieves the next encounter for bound patient
@@ -85,13 +85,9 @@ module ARTService
       # HACK: Pretend Fast Track does not exist
       return false if type.encounter_type_id == encounter_type(FAST_TRACK).encounter_type_id
 
-      Encounter.where(
-        'encounter_type = ? AND patient_id = ?
-         AND DATE(encounter_datetime) = DATE(?)',
-        type.encounter_type_id,
-        @patient.patient_id,
-        @date
-      ).exists?
+      Encounter.where(type: type, patient: @patient)\
+               .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
+               .exists?
     end
 
     def valid_state?(state)

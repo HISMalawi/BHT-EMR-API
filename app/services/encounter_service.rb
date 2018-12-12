@@ -43,7 +43,7 @@ class EncounterService
   def find_encounter(type:, patient:, encounter_datetime:, provider:)
     Encounter.where(type: type, patient: patient, provider: provider)\
              .where('encounter_datetime BETWEEN ? AND ?',
-                    *TimeUtils.day_bounds(encounter_datetime.to_date))\
+                    *TimeUtils.day_bounds(encounter_datetime))\
              .order(encounter_datetime: :desc)
              .first
   end
