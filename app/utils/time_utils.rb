@@ -11,9 +11,9 @@ module TimeUtils
     end
 
     # Returns a 24 hour period (day) containing the date
-    def day_bounds(date)
-      date = date.to_date
-      [date.to_datetime, (date + (1.days - 1.second)).to_datetime]
+    def day_bounds(datetime)
+      [datetime.strftime('%Y-%m-%d 00:00:00').to_time,
+       datetime.strftime('%Y-%m-%d 23:59:59').to_time]
     end
   end
 end
