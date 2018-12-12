@@ -8,8 +8,8 @@ module ARTService
       include ModelUtils
 
       def build(cohort_struct, start_date, end_date)
-        # load_tmp_patient_table(cohort_struct)
-        create_tmp_patient_table_2(end_date)
+        load_tmp_patient_table(cohort_struct)
+        # create_tmp_patient_table_2(end_date)
 
         time_started = Time.now.strftime('%Y-%m-%d %H:%M:%S')
 
@@ -1668,6 +1668,8 @@ module ARTService
       end
 
       def load_tmp_patient_table(cohort_struct)
+        create_tmp_patient_table
+
         arv_orders.each_with_object({}) do |order, patient_tab|
           next if patient_tab.include?(order.patient_id)
 
