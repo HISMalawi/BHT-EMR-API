@@ -20,16 +20,10 @@ module ARTService
     end
 
     def find_regimens(patient)
-      age = adjusted_patient_age(patient)
-      gender = patient.gender
-      weight = patient.weight.to_f
-
       ingredients = MohRegimenIngredient.where(
         '(CAST(min_weight AS DECIMAL(4, 1)) <= :weight
-         AND CAST(max_weight AS DECIMAL(4, 1)) >= :weight)
-         AND (min_age <= :age AND max_age >= :age)
-         AND (gender LIKE :gender)',
-        weight: weight.round(1), age: age, gender: "%#{gender}%"
+         AND CAST(max_weight AS DECIMAL(4, 1)) >= :weight)',
+        weight: patient.weight.to_f.round(1)
       )
 
       categorise_regimens(regimens_from_ingredients(ingredients))

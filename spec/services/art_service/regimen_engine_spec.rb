@@ -45,16 +45,22 @@ RSpec.describe ARTService::RegimenEngine do
       }.call).not_to be false
     end
 
-    it 'retrieves regimens up to 12A for women under 45 years' do
+    it 'retrieves all regimens for women under 45 years' do
+      # NOTE: Initially women under 45 were limited to regimens 12A,
+      # however based on DHA's recommendation it was suggested that
+      # no regimens must be filtered out. This test was modified
+      # to ensure that this recommendation is being followed. Don't
+      # be surprised when you another test that is very similar to
+      # this one... It's not a duplicate.
       patient = create_patient(age: 30, weight: 50, gender: 'F')
       regimens = regimen_service.find_regimens patient
-      expected_regimens = %w[0A 2A 4A 5A 6A 7A 8A 9A 10A 11A 12A]
+      expected_regimens = %w[0A 2A 4A 5A 6A 7A 8A 9A 10A 11A 12A 13A 14A 15A]
 
       expect(regimens.size).to be expected_regimens.size
       regimens.keys.each { |k| expect(expected_regimens).to include k }
     end
 
-    it 'retrieves regimens up to 15A for women above 45 years' do
+    it 'retrieves all regimens for women above 45 years' do
       patient = create_patient(age: 45, weight: 50, gender: 'F')
       regimens = regimen_service.find_regimens patient
       expected_regimens = %w[0A 2A 4A 5A 6A 7A 8A 9A 10A 11A 12A 13A 14A 15A]
@@ -72,38 +78,14 @@ RSpec.describe ARTService::RegimenEngine do
       regimens.keys.each { |k| expect(expected_regimens).to include k }
     end
 
-    it 'retrieves all regimens below 12A for women below 35 years and between at least 35 kilos' do
+    it 'retrieves all regimens for women above 35 kilos' do
       patient = create_patient(age: 30, weight: 35, gender: 'F')
       regimens = regimen_service.find_regimens(patient)
 
-      expected_regimens = %w[0A 2A 4A 5A 6A 7A 8A 9A 10A 11A 12A]
+      expected_regimens = %w[0A 2A 4A 5A 6A 7A 8A 9A 10A 11A 12A 13A 14A 15A]
 
       expect(regimens.size).to be expected_regimens.size
       regimens.keys.each { |k| expect(expected_regimens).to include k }
-    end
-
-    it 'retrieves regimens 13A, 14A, 15A for women below 45 years but under a permanent family planning method' do
-      patient = create_patient(age: 30, weight: 60, gender: 'F')
-      Observation.create(concept: concept('Tubal ligation'), encounter: vitals_encounter,
-                         person: patient.person, value_coded: concept('Yes').concept_id)
-
-      regimens = regimen_service.find_regimens(patient)
-
-      expected_regimens = %w[13A 14A 15A]
-
-      expected_regimens.each { |k| expect(regimens).to include(k) }
-    end
-
-    it 'skips regimens 13A, 14A, and 15A for women above 45 years but pregnant' do
-      patient = create_patient(age: 50, weight: 60, gender: 'F')
-      Observation.create(concept: concept('Is patient pregnant?'), encounter: vitals_encounter,
-                         person: patient.person, value_coded: concept('Yes').concept_id)
-
-      regimens = regimen_service.find_regimens(patient)
-
-      expected_regimens = %w[13A 14A 15A]
-
-      expected_regimens.each { |k| expect(regimens).not_to include(k) }
     end
 
     it 'retrieves regimens [0A 2A 4A 9A 11A] for men under 30 kilos' do
