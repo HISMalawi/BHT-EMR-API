@@ -669,7 +669,8 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.datetime "updated_at", null: false
   end
 
-  create_table "global_property", primary_key: "property", id: :binary, limit: 255, default: "", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
+  create_table "global_property", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.string "property", default: "", null: false
     t.text "property_value", limit: 16777215
     t.text "description"
     t.string "uuid", limit: 38, null: false
@@ -800,7 +801,7 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
   end
 
   create_table "location_tag", primary_key: "location_tag_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
-    t.string "name", limit: 50
+    t.string "tag", limit: 50
     t.string "description"
     t.integer "creator", null: false
     t.datetime "date_created", null: false
@@ -1205,7 +1206,7 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.date "start_date"
     t.date "end_date"
     t.date "defaulted_date"
-    t.date "date_created", default: "2018-12-11"
+    t.date "date_created", default: "2018-12-13"
   end
 
   create_table "patient_identifier", primary_key: "patient_identifier_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
@@ -1392,7 +1393,7 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.string "township_division", limit: 50
     t.string "uuid", limit: 38, null: false
     t.index ["creator"], name: "patient_address_creator"
-    t.index ["date_created"], name: "index_date_created_on_person_address"
+    t.index ["date_created"], name: "index_date_created_on_person_address", order: :desc
     t.index ["person_id"], name: "patient_addresses"
     t.index ["uuid"], name: "person_address_uuid_index", unique: true
     t.index ["voided_by"], name: "patient_address_void"
