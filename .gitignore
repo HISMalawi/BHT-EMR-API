@@ -36,3 +36,5 @@ Gemfile.lock
 db/schema.rb
 
 .ruby-version
+
+*.DS_Store
