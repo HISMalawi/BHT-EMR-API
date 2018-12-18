@@ -111,12 +111,12 @@ class Api::V1::PatientsController < ApplicationController
 
   DDE_CONFIG_PATH = 'config/application.yml'
 
-  VISIT_DATES_SQL = <<END_QUERY
+  VISIT_DATES_SQL = <<-SQL
     SELECT DISTINCT DATE(encounter_datetime) AS encounter_datetime
     FROM encounter WHERE patient_id = ?
     GROUP BY encounter_datetime
     ORDER BY encounter_datetime DESC
-END_QUERY
+  SQL
 
   def patient
     Patient.find(params[:patient_id])
