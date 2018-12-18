@@ -5,7 +5,8 @@ class Api::V1::ProgramPatientsController < ApplicationController
   end
 
   def last_drugs_received
-    render json: service.patient_last_drugs_received(patient)
+    date = params[:date]&.to_date || Date.today
+    render json: service.patient_last_drugs_received(patient, date)
   end
 
   def find_dosages
