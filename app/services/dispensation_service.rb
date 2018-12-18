@@ -39,7 +39,7 @@ module DispensationService
     def dispense_drug(drug_order, quantity, date: nil)
       date ||= Time.now
       patient = drug_order.order.patient
-      encounter = current_encounter patient, create: true
+      encounter = current_encounter patient, date: date, create: true
 
       drug_order.quantity ||= 0
       drug_order.quantity += quantity.to_f
