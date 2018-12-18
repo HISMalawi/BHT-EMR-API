@@ -40,6 +40,7 @@ Rails.application.routes.draw do
           paginate_url "/api/v1/appointments?patient_id=#{params[:patient_id]}",
                        request.params
         end)
+        get '/drugs_received', to: 'patients#drugs_received'
         get '/next_appointment_date', to: 'patient_appointments#next_appointment_date'
         get '/median_weight_height', to: 'patients#find_median_weight_and_height'
         resources :patient_programs, path: :programs
