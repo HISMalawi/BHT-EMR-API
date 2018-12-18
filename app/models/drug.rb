@@ -31,14 +31,4 @@ class Drug < ActiveRecord::Base
     concepts_placeholders = '(' + (['?'] * concepts.size).join(', ') + ')'
     Drug.where("concept_id in #{concepts_placeholders}", *concepts)
   end
-
-  # def tb_medication?
-  #   Drug.tb_drugs.map(&:concept_id).include?(self.concept_id)
-  # end
-
-  # def self.tb_drugs
-  #   tb_medication_concept       = ConceptName.find_by_name("Tuberculosis treatment drugs").concept_id
-  #   tb_medication_drug_concepts = ConceptSet.all(:conditions => ['concept_set = ?', tb_medication_concept])
-  #   tb_medication_drug_concepts
-  # end
 end

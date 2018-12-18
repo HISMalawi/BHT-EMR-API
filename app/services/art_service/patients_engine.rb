@@ -22,9 +22,7 @@ module ARTService
     # Returns a patient's last received drugs.
     #
     # NOTE: This method is customised to return only ARVs.
-    def patient_last_drugs_received(patient, ref_date: nil)
-      ref_date = ref_date ? Date.strptime(ref_date) : Date.today
-
+    def patient_last_drugs_received(patient, ref_date)
       dispensing_encounter = Encounter.joins(:type).where(
         'encounter_type.name = ? AND encounter.patient_id = ?
          AND DATE(encounter_datetime) <= DATE(?)',
