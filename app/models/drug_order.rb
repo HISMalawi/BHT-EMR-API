@@ -5,7 +5,7 @@ class DrugOrder < ActiveRecord::Base
   self.primary_key = :order_id
 
   belongs_to :drug, foreign_key: :drug_inventory_id
-  belongs_to :order
+  belongs_to :order, foreign_key: :order_id
 
   validates_presence_of :drug_inventory_id, :dose, :equivalent_daily_dose,
                         :units, :frequency, :prn

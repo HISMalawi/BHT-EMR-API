@@ -107,6 +107,13 @@ class Api::V1::PatientsController < ApplicationController
     render json: { weight: weight, height: height }
   end
 
+  def drugs_received
+    cut_off_date = params[:date]&.to_date || Date.today
+    drugs_orders = paginate(service.drugs_orders(patient, cut_off_date))
+
+    render json: drugs_orders
+  end
+
   private
 
   DDE_CONFIG_PATH = 'config/application.yml'

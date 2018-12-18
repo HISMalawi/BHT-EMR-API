@@ -19,4 +19,11 @@ class PatientService
     values = WeightHeightForAge.where(['age_in_months = ? and sex = ?', age_in_months, gender]).first
     [values.median_weight, values.median_height] if values
   end
+
+  def drugs_orders(patient, date)
+    DrugOrder.joins(:order).where(
+      'orders.start_date <= ? AND patient_id = ?',
+      TimeUtils.day_bounds(date)[1], patient.patient_id
+    ).order('orders.start_date DESC')
+  end
 end
