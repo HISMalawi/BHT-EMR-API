@@ -5,12 +5,12 @@ class EncounterService
     start_date ||= Date.strptime('1900-01-01')
     date ||= Date.today
     type = EncounterType.find_by(name: encounter_type_name)
-    Encounter.where(
-      'DATE(encounter_datetime) <= DATE(?)
-        AND DATE(encounter_datetime) >= DATE(?)
-        AND patient_id = ? AND encounter_type = ?',
-      date, start_date, patient_id, type.id
-    ).order(encounter_datetime: :desc).first
+
+    Encounter.where(type: type, patient_id: patient_id)\
+             .where('encounter_datetime BETWEEN ? AND ?',
+                    start_date.to_datetime, TimeUtils.day_bounds(date)[1])\
+             .order(encounter_datetime: :desc)\
+             .first
   end
 
   def create(type:, patient:, encounter_datetime: nil, provider: nil)
@@ -41,7 +41,7 @@ class EncounterService
   end
 
   def find_encounter(type:, patient:, encounter_datetime:, provider:)
-    Encounter.where(type: type, patient: patient, provider: provider)\
+    Encounter.where(type: type, patient: patient)\
              .where('encounter_datetime BETWEEN ? AND ?',
                     *TimeUtils.day_bounds(encounter_datetime))\
              .order(encounter_datetime: :desc)
