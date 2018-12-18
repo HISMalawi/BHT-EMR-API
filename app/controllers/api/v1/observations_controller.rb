@@ -123,7 +123,7 @@ class Api::V1::ObservationsController < ApplicationController
       return nil, "Empty obs: #{archetype}"
     end
 
-    archetype[:obs_datetime] ||= Time.now
+    archetype[:obs_datetime] ||= encounter.encounter_datetime
     archetype[:person_id] = encounter.patient.person.id
     observation = Observation.create archetype
     return nil, observation.errors unless observation
