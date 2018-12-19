@@ -19,7 +19,7 @@ module ARTService
       ingredients.collect { |ingredient| ingredient_to_drug(ingredient) }
     end
 
-    def find_regimens(patient)
+    def find_regimens(patient, pellets: false)
       ingredients = MohRegimenIngredient.where(
         '(CAST(min_weight AS DECIMAL(4, 1)) <= :weight
          AND CAST(max_weight AS DECIMAL(4, 1)) >= :weight)',
@@ -27,6 +27,18 @@ module ARTService
       )
 
       categorise_regimens(regimens_from_ingredients(ingredients))
+    end
+
+    def pellets_regimen(patient, regimen_index)
+      ingredients = MohRegimenIngredient.joins(:regimen)\
+                                        .where(moh_regimens: { regimen_index: regimen_index })\
+                                        .where(
+                                          '(CAST(min_weight AS DECIMAL(4, 1)) <= :weight
+                                           AND CAST(max_weight AS DECIMAL(4, 1)) >= :weight)',
+                                          weight: patient.weight.to_f.round(1)
+                                        )
+
+      regimens_from_ingredients(ingredients, use_pellets: true)
     end
 
     # Returns dosages for patients prescribed ARVs
@@ -86,7 +98,7 @@ module ARTService
     #     pm: xx,
     #     category: xx
     #   }
-    def regimens_from_ingredients(ingredients)
+    def regimens_from_ingredients(ingredients, use_pellets: false)
       ingredients.each_with_object({}) do |ingredient, regimens|
         # Have some CPT & INH that do not belong to any regimen
         # but have a weight - dosage mapping hence being lumped
@@ -95,6 +107,12 @@ module ARTService
 
         regimen_index = ingredient.regimen.regimen_index
         regimen = regimens[regimen_index] || []
+
+        drug_name = ingredient.drug.name
+        if /^LPV\/r/.match?(drug_name)
+          includes_pellets = drug_name.match?(/pellets/i)
+          next if (use_pellets && !includes_pellets) || (!use_pellets && includes_pellets)
+        end
 
         regimen << ingredient_to_drug(ingredient)
         regimens[regimen_index] = regimen
@@ -239,7 +257,7 @@ module ARTService
       '6A' => [Set.new([734, 22])],
       '7A' => [Set.new([734, 932])],
       '8A' => [Set.new([39, 932])],
-      '9P' => [Set.new([733, 74]), Set.new([733, 73]), Set.new([733, 979])],
+      '9P' => [Set.new([733, 979]), Set.new([733, 74]), Set.new([733, 73])],
       '9A' => [Set.new([969, 73]), Set.new([969, 74])],
       '10A' => [Set.new([734, 73])],
       '11P' => [Set.new([736, 74]), Set.new([736, 73])],

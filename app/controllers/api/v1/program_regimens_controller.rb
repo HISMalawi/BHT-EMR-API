@@ -9,10 +9,16 @@ class Api::V1::ProgramRegimensController < ApplicationController
     render json: service.find_starter_pack(regimen, weight)
   end
 
+  def pellets_regimen
+    regimen, = params.require(%i[regimen])
+    render json: service.pellets_regimen(patient, regimen)
+  end
+
   private
 
   def patient
-    Patient.find(params[:patient_id])
+    patient_id, = params.require(%i[patient_id])
+    Patient.find(patient_id)
   end
 
   def service
