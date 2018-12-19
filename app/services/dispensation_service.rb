@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module DispensationService
   class << self
     include ModelUtils
@@ -45,6 +47,14 @@ module DispensationService
       drug_order.quantity += quantity.to_f
       drug_order.save
 
+      # HACK: Change state of patient in HIV Program to 'On anteretrovirals'
+      # once ARV's are detected. This should be moved away from here.
+      # It is behaviour that could potentially be surprising to our clients...
+      # Let's avoid surprises, clients must explicitly trigger the state change.
+      # Besides this service is open to different clients, some (actually most)
+      # are not even interested in the HIV Program... So...
+      mark_patient_as_on_antiretrovirals(patient) if drug_order.drug.arv?
+
       Observation.create(
         concept_id: concept('AMOUNT DISPENSED').concept_id,
         order_id: drug_order.order_id,
@@ -82,6 +92,43 @@ module DispensationService
         'encounter_type = ? AND patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
         encounter_type, patient.patient_id, date
       ).order(date_created: :desc).first
+    end
+
+    private
+
+    # HACK: See dispense_drug methods
+    def mark_patient_as_on_antiretrovirals(patient)
+      program, patient_program = patient_hiv_program(patient)
+      return unless program && patient_program
+
+      program_workflow = program.program_workflows.first
+      return unless program_workflow
+
+      on_arvs_concept = concept('On antiretrovirals')
+      on_arvs_state = program_workflow.states.where(concept: on_arvs_concept).first
+      raise "'On antiretrovirals' state for HIV Program not found" unless on_arvs_state
+
+      return if patient_has_state?(patient_program, on_arvs_state)
+
+      PatientState.create(
+        patient_program: patient_program,
+        program_workflow_state: on_arvs_state,
+        start_date: Date.today
+      )
+    end
+
+    def patient_hiv_program(patient)
+      program = patient.programs.where(name: 'HIV Program').first
+      return [nil, nil] unless program
+
+      patient_program = patient.patient_programs.where(program: program).first
+      [program, patient_program]
+    end
+
+    def patient_has_state?(patient_program, workflow_state)
+      patient_program.patient_states.where(
+        program_workflow_state: workflow_state
+      ).exists?
     end
   end
 end
