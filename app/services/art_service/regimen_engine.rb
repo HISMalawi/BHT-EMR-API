@@ -124,7 +124,7 @@ module ARTService
         drug_id: drug.drug_id,
         concept_id: drug.concept_id,
         drug_name: drug.name,
-        alternative_drug_name: drug.alternative_names.first&.name,
+        alternative_drug_name: drug.alternative_names.first&.short_name,
         am: ingredient.dose.am,
         noon: 0, # Requested by the frontenders
         pm: ingredient.dose.pm,
