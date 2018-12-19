@@ -417,7 +417,7 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.index ["uuid"], name: "drug_uuid_index", unique: true
   end
 
-  create_table "drug_cms", primary_key: "drug_inventory_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
+  create_table "drug_cms", primary_key: "drug_inventory_id", id: :integer, default: nil, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
     t.string "name", null: false
     t.string "code"
     t.string "short_name", limit: 225
@@ -429,8 +429,8 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.integer "voided_by"
     t.datetime "date_voided"
     t.string "void_reason", limit: 225
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at"
+    t.datetime "updated_at"
   end
 
   create_table "drug_ingredient", primary_key: ["ingredient_id", "concept_id"], options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
@@ -780,7 +780,7 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.string "latitude", limit: 50
     t.string "longitude", limit: 50
     t.integer "creator", default: 0, null: false
-    t.timestamp "date_created", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.datetime "date_created", null: false
     t.string "county_district", limit: 50
     t.string "neighborhood_cell", limit: 50
     t.string "region", limit: 50
@@ -790,9 +790,11 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.integer "retired_by"
     t.datetime "date_retired"
     t.string "retire_reason"
+    t.integer "location_type_id"
     t.integer "parent_location"
     t.string "uuid", limit: 38, null: false
     t.index ["creator"], name: "user_who_created_location"
+    t.index ["location_type_id"], name: "type_of_location"
     t.index ["name"], name: "name_of_location"
     t.index ["parent_location"], name: "parent_location"
     t.index ["retired"], name: "retired_status"
@@ -1638,9 +1640,8 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
 
   create_table "regimen", primary_key: "regimen_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.integer "concept_id", default: 0, null: false
-    t.string "regimen_index", limit: 5
-    t.float "min_weight", default: 0.0, null: false
-    t.float "max_weight", default: 200.0, null: false
+    t.integer "min_weight", default: 0, null: false
+    t.integer "max_weight", default: 200, null: false
     t.integer "creator", default: 0, null: false
     t.datetime "date_created", null: false
     t.integer "retired", limit: 2, default: 0, null: false
@@ -1781,8 +1782,6 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.integer "retired_by"
     t.datetime "date_retired"
     t.string "retire_reason"
-    t.date "start_date"
-    t.date "end_date"
     t.index ["changed_by"], name: "changed_by for reporting_report_design"
     t.index ["creator"], name: "creator for reporting_report_design"
     t.index ["report_definition_id"], name: "report_definition_id for reporting_report_design"
@@ -1805,8 +1804,6 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.integer "retired_by"
     t.datetime "date_retired"
     t.string "retire_reason"
-    t.string "indicator_name"
-    t.string "indicator_short_name"
     t.index ["changed_by"], name: "changed_by for reporting_report_design_resource"
     t.index ["creator"], name: "creator for reporting_report_design_resource"
     t.index ["report_design_id"], name: "report_design_id for reporting_report_design_resource"
@@ -1908,13 +1905,11 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.datetime "has_obs_value_datetime"
     t.float "has_obs_value_numeric", limit: 53
     t.text "has_obs_value_text"
-    t.text "has_obs_scope"
     t.integer "has_program_id"
     t.integer "has_program_workflow_state_id"
     t.integer "has_identifier_type_id"
     t.integer "has_relationship_type_id"
     t.integer "has_order_type_id"
-    t.string "has_encounter_type_today"
     t.integer "skip_if_has", limit: 2, default: 0
     t.float "sort_weight", limit: 53
     t.integer "creator", null: false
@@ -2038,12 +2033,9 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.string "heightsex", limit: 5
   end
 
-  create_table "weight_for_heights", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
-    t.float "supine_cm"
-    t.float "median_weight_height"
-    t.float "standard_low_weight_height"
-    t.float "standard_high_weight_height"
-    t.integer "sex"
+  create_table "weight_for_heights", id: false, options: "ENGINE=MyISAM DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.float "supinecm", limit: 53, null: false
+    t.float "median_weight_height", limit: 53, null: false
   end
 
   create_table "weight_height_for_age", id: false, options: "ENGINE=MyISAM DEFAULT CHARSET=latin1", force: :cascade do |t|
@@ -2192,6 +2184,7 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
   add_foreign_key "htmlformentry_html_form", "users", column: "changed_by", primary_key: "user_id", name: "User who changed htmlformentry_htmlform"
   add_foreign_key "htmlformentry_html_form", "users", column: "creator", primary_key: "user_id", name: "User who created htmlformentry_htmlform"
   add_foreign_key "location", "location", column: "parent_location", primary_key: "location_id", name: "parent_location"
+  add_foreign_key "location", "location_type", primary_key: "location_type_id", name: "location_type"
   add_foreign_key "location", "users", column: "creator", primary_key: "user_id", name: "user_who_created_location"
   add_foreign_key "location", "users", column: "retired_by", primary_key: "user_id", name: "user_who_retired_location"
   add_foreign_key "location_tag", "users", column: "creator", primary_key: "user_id", name: "location_tag_creator"
@@ -2324,7 +2317,7 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
   add_foreign_key "report_object", "users", column: "changed_by", primary_key: "user_id", name: "user_who_changed_report_object"
   add_foreign_key "report_object", "users", column: "creator", primary_key: "user_id", name: "report_object_creator"
   add_foreign_key "report_object", "users", column: "voided_by", primary_key: "user_id", name: "user_who_voided_report_object"
-  add_foreign_key "reporting_report_design", "report_def", column: "report_definition_id", primary_key: "report_def_id", name: "report_definition_id for reporting_report_design"
+  add_foreign_key "reporting_report_design", "serialized_object", column: "report_definition_id", primary_key: "serialized_object_id", name: "report_definition_id for reporting_report_design"
   add_foreign_key "reporting_report_design", "users", column: "changed_by", primary_key: "user_id", name: "changed_by for reporting_report_design"
   add_foreign_key "reporting_report_design", "users", column: "creator", primary_key: "user_id", name: "creator for reporting_report_design"
   add_foreign_key "reporting_report_design", "users", column: "retired_by", primary_key: "user_id", name: "retired_by for reporting_report_design"
