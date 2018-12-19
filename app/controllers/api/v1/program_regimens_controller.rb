@@ -10,8 +10,9 @@ class Api::V1::ProgramRegimensController < ApplicationController
   end
 
   def pellets_regimen
-    regimen, = params.require(%i[regimen])
-    render json: service.pellets_regimen(patient, regimen)
+    regimen, use_pellets = params.require(%i[regimen use_pellets])
+    use_pellets = use_pellets.match?(/true/i)
+    render json: service.pellets_regimen(patient, regimen, use_pellets)
   end
 
   private

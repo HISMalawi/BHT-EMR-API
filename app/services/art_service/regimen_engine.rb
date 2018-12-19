@@ -29,7 +29,7 @@ module ARTService
       categorise_regimens(regimens_from_ingredients(ingredients))
     end
 
-    def pellets_regimen(patient, regimen_index)
+    def pellets_regimen(patient, regimen_index, use_pellets)
       ingredients = MohRegimenIngredient.joins(:regimen)\
                                         .where(moh_regimens: { regimen_index: regimen_index })\
                                         .where(
@@ -38,7 +38,7 @@ module ARTService
                                           weight: patient.weight.to_f.round(1)
                                         )
 
-      regimens_from_ingredients(ingredients, use_pellets: true)
+      regimens_from_ingredients(ingredients, use_pellets: use_pellets)
     end
 
     # Returns dosages for patients prescribed ARVs
