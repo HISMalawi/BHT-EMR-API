@@ -13,11 +13,8 @@ class ARTService::LabTestsEngine
     LabTestType.find(type_id)
   end
 
-  def types(search_string: nil, panel_id: nil)
-    query = LabTestType
-    query = query.where('TestName like ?', "%#{search_string}%") if search_string
-    query = query.where(Panel_ID: panel_id) if panel_id
-    query.order(:TestName)
+  def types(specimen_type:, search_string: nil)
+    nlims.test_types(specimen_type)
   end
 
   def panels(search_string: nil)
