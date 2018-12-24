@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative '../nlims'
+
 class ARTService::LabTestsEngine
   include ModelUtils
 
@@ -19,9 +21,7 @@ class ARTService::LabTestsEngine
   end
 
   def panels(search_string: nil)
-    query = LabPanel.joins(:types)
-    query = query.where('name like ?', "%#{search_string}%") if search_string
-    query.order(:name).group(:rec_id)
+    nlims.specimen_types
   end
 
   def results(accession_number)
@@ -176,5 +176,9 @@ class ARTService::LabTestsEngine
     Order.where patient: patient,
                 order_type: order_type('Lab'),
                 concept: concept('Laboratory tests ordered')
+  end
+
+  def nlims
+    ::NLims.new
   end
 end
