@@ -27,22 +27,18 @@ class ARTService::LabTestsEngine
                 .order(Arel.sql('DATE(Lab_Sample.TimeStamp) DESC'))
   end
 
-  def create_order(type:, encounter:, reason:, patient: nil, date: nil)
+  def create_order(encounter:, date:, reason:, **kwargs)
     patient ||= encounter.patient
     date ||= encounter.encounter_datetime
 
-    local_order = create_local_order patient, encounter, date
-    local_order.accession_number = next_id local_order.order_id
-    local_order.save!
+    lims_order = nlims.order_test(patient: patient, user: User.current, date: date,
+                                  reason: reason, **kwargs)
+    accession_number = lims_order[:tracking_number]
 
+    local_order = create_local_order(patient, encounter, date, accession_number)
     save_reason_for_test(encounter, local_order, reason)
 
-    lab_order = create_lab_order type, local_order, date
-    lab_sample = create_lab_sample lab_order
-
-    create_result lab_sample: lab_sample, test_type: type
-
-    { order: local_order, lab_test_table: lab_order.as_json }
+    { order: local_order, lims_order: lims_order }
   end
 
   def find_orders_by_patient(patient, paginate_func: nil)
@@ -87,12 +83,13 @@ class ARTService::LabTestsEngine
   private
 
   # Creates an Order in the primary openmrs database
-  def create_local_order(patient, encounter, date)
+  def create_local_order(patient, encounter, date, accession_number)
     Order.create patient: patient,
                  encounter: encounter,
                  concept: concept('Laboratory tests ordered'),
                  order_type: order_type('Lab'),
                  start_date: date,
+                 accession_number: accession_number,
                  provider: User.current
   end
 

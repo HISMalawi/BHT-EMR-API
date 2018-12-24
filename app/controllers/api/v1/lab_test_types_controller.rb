@@ -4,10 +4,15 @@ class Api::V1::LabTestTypesController < ApplicationController
   include LabTestsEngineLoader
 
   def index
-    query = engine.types search_string: params[:search_string],
-                         specimen_type: params[:specimen_type]
+    response = engine.types search_string: params[:search_string],
+                            specimen_type: params[:specimen_type]
 
-    render json: query
+    if response
+      render json: response
+    else
+      render json: { message: "Specimen type not found: #{params[:specimen_type]}" },
+             status: :not_found
+    end
   end
 
   def panels
