@@ -3,11 +3,11 @@
 require 'rest-client'
 
 class NLims
-  API_HOST = '10.42.0.24'
+  API_HOST = '192.168.41.207'
   API_PORT = '3010'
   API_PREFIX = 'api/v1'
 
-  def order_test(patient, user, specimen_type:, tests:, date:, reason_for_test:)
+  def order_test(patient:, user:, specimen_type:, test_types:, date:, reason:, target_lab:)
     patient_name = patient.person.names.first
     user_name = user.person.names.first
 
@@ -27,9 +27,9 @@ class NLims
       order_location: 'ART',
       sample_type: specimen_type,
       date_sample_drawn: date,
-      tests: tests,
-      sample_priority: reason_for_test,
-      target_lab: '',
+      tests: test_types,
+      sample_priority: reason,
+      target_lab: target_lab,
       art_start_date: 'unknown',
       requesting_clinician: ''
     })

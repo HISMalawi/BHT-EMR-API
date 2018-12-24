@@ -20,7 +20,9 @@ class Api::V1::LabTestOrdersController < ApplicationController
   end
 
   def create
-    lab_test_type_id, encounter_id, reason = params.require %i[test_type_id encounter_id reason]
+    specimen_type, test_types, encounter_id, reason, target_lab = params.require %i[
+      specimen_type test_types encounter_id reason target_lab
+    ]
 
     begin
       date = params[:date]&.to_datetime || Time.now
@@ -29,9 +31,13 @@ class Api::V1::LabTestOrdersController < ApplicationController
       return render json: { errors: [error] }, status: :bad_request
     end
 
-    type = LabTestType.find_by_TestType lab_test_type_id
     encounter = Encounter.find encounter_id
-    order = engine.create_order type: type, encounter: encounter, date: date, reason: reason
+
+    order = engine.create_order specimen_type: specimen_type,
+                                test_types: test_types,
+                                encounter: encounter,
+                                date: date, reason: reason,
+                                target_lab: target_lab
 
     render json: order, status: :created
   end
