@@ -3,8 +3,8 @@
 require 'rest-client'
 
 class NLims
-  API_HOST = '192.168.41.207'
-  API_PORT = '3010'
+  API_HOST = '127.0.0.1'
+  API_PORT = '3002'
   API_PREFIX = 'api/v1'
 
   def order_test(patient:, user:, specimen_type:, test_types:, date:, reason:, target_lab:)

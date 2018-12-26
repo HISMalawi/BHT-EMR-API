@@ -12,6 +12,276 @@
 
 ActiveRecord::Schema.define(version: 2018_12_10_122430) do
 
+  create_table "ART_eligibilty", id: false, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.integer "person_id", null: false
+    t.datetime "obs_datetime", null: false
+  end
+
+  create_table "HIV_diagnosis_dates", id: false, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.integer "person_id", null: false
+    t.date "record_date"
+    t.integer "value_coded"
+    t.integer "voided", limit: 2, default: 0, null: false
+    t.string "name", default: "", null: false, collation: "utf8_general_ci"
+    t.datetime "HIV_diag_date"
+  end
+
+  create_table "Obs_Clinic", id: false, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.integer "obs_id", default: 0, null: false
+    t.integer "person_id", null: false
+    t.integer "concept_id", default: 0, null: false
+    t.integer "encounter_id"
+    t.integer "order_id"
+    t.datetime "obs_datetime", null: false
+    t.integer "location_id"
+    t.integer "obs_group_id"
+    t.string "accession_number", collation: "utf8_general_ci"
+    t.integer "value_group_id"
+    t.boolean "value_boolean"
+    t.integer "value_coded"
+    t.integer "value_coded_name_id"
+    t.integer "value_drug"
+    t.datetime "value_datetime"
+    t.float "value_numeric", limit: 53
+    t.string "value_modifier", limit: 2, collation: "utf8_general_ci"
+    t.text "value_text", collation: "utf8_general_ci"
+    t.datetime "date_started"
+    t.datetime "date_stopped"
+    t.string "comments", collation: "utf8_general_ci"
+    t.integer "creator", default: 0, null: false
+    t.datetime "date_created", null: false
+    t.integer "voided", limit: 2, default: 0, null: false
+    t.integer "voided_by"
+    t.datetime "date_voided"
+    t.string "void_reason", collation: "utf8_general_ci"
+    t.string "value_complex", collation: "utf8_general_ci"
+    t.string "uuid", limit: 38, null: false, collation: "utf8_general_ci"
+  end
+
+  create_table "Obs_Concept", id: false, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.integer "obs_id", default: 0, null: false
+    t.integer "person_id", null: false
+    t.integer "concept_id", default: 0, null: false
+    t.integer "encounter_id"
+    t.integer "order_id"
+    t.datetime "obs_datetime", null: false
+    t.integer "location_id"
+    t.integer "obs_group_id"
+    t.string "accession_number", collation: "utf8_general_ci"
+    t.integer "value_group_id"
+    t.boolean "value_boolean"
+    t.integer "value_coded"
+    t.integer "value_coded_name_id"
+    t.integer "value_drug"
+    t.datetime "value_datetime"
+    t.float "value_numeric", limit: 53
+    t.string "value_modifier", limit: 2, collation: "utf8_general_ci"
+    t.text "value_text", collation: "utf8_general_ci"
+    t.datetime "date_started"
+    t.datetime "date_stopped"
+    t.string "comments", collation: "utf8_general_ci"
+    t.integer "creator", default: 0, null: false
+    t.datetime "date_created", null: false
+    t.integer "voided", limit: 2, default: 0, null: false
+    t.integer "voided_by"
+    t.datetime "date_voided"
+    t.string "void_reason", collation: "utf8_general_ci"
+    t.string "value_complex", collation: "utf8_general_ci"
+    t.string "uuid", limit: 38, null: false, collation: "utf8_general_ci"
+  end
+
+  create_table "Obs_HTN", id: false, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.integer "obs_id", default: 0, null: false
+    t.integer "person_id", null: false
+    t.integer "concept_id", default: 0, null: false
+    t.integer "encounter_id"
+    t.integer "order_id"
+    t.datetime "obs_datetime", null: false
+    t.integer "location_id"
+    t.integer "obs_group_id"
+    t.string "accession_number", collation: "utf8_general_ci"
+    t.integer "value_group_id"
+    t.boolean "value_boolean"
+    t.integer "value_coded"
+    t.integer "value_coded_name_id"
+    t.integer "value_drug"
+    t.datetime "value_datetime"
+    t.float "value_numeric", limit: 53
+    t.string "value_modifier", limit: 2, collation: "utf8_general_ci"
+    t.text "value_text", collation: "utf8_general_ci"
+    t.datetime "date_started"
+    t.datetime "date_stopped"
+    t.string "comments", collation: "utf8_general_ci"
+    t.integer "creator", default: 0, null: false
+    t.datetime "date_created", null: false
+    t.integer "voided", limit: 2, default: 0, null: false
+    t.integer "voided_by"
+    t.datetime "date_voided"
+    t.string "void_reason", collation: "utf8_general_ci"
+    t.string "value_complex", collation: "utf8_general_ci"
+    t.string "uuid", limit: 38, null: false, collation: "utf8_general_ci"
+  end
+
+  create_table "Obs_artvisit_FP_side_effects_a", id: false, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.integer "obs_id", default: 0, null: false
+    t.integer "person_id", null: false
+    t.integer "concept_id", default: 0, null: false
+    t.integer "encounter_id"
+    t.integer "order_id"
+    t.datetime "obs_datetime", null: false
+    t.integer "location_id"
+    t.integer "obs_group_id"
+    t.string "accession_number", collation: "utf8_general_ci"
+    t.integer "value_group_id"
+    t.boolean "value_boolean"
+    t.integer "value_coded"
+    t.integer "value_coded_name_id"
+    t.integer "value_drug"
+    t.datetime "value_datetime"
+    t.float "value_numeric", limit: 53
+    t.string "value_modifier", limit: 2, collation: "utf8_general_ci"
+    t.text "value_text", collation: "utf8_general_ci"
+    t.datetime "date_started"
+    t.datetime "date_stopped"
+    t.string "comments", collation: "utf8_general_ci"
+    t.integer "creator", default: 0, null: false
+    t.datetime "date_created", null: false
+    t.integer "voided", limit: 2, default: 0, null: false
+    t.integer "voided_by"
+    t.datetime "date_voided"
+    t.string "void_reason", collation: "utf8_general_ci"
+    t.string "value_complex", collation: "utf8_general_ci"
+    t.string "uuid", limit: 38, null: false, collation: "utf8_general_ci"
+  end
+
+  create_table "Obs_artvisit_FP_side_effects_b", id: false, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.integer "obs_id", default: 0, null: false
+    t.integer "person_id", null: false
+    t.integer "concept_id", default: 0, null: false
+    t.integer "encounter_id"
+    t.integer "order_id"
+    t.datetime "obs_datetime", null: false
+    t.integer "location_id"
+    t.integer "obs_group_id"
+    t.string "accession_number", collation: "utf8_general_ci"
+    t.integer "value_group_id"
+    t.boolean "value_boolean"
+    t.integer "value_coded"
+    t.integer "value_coded_name_id"
+    t.integer "value_drug"
+    t.datetime "value_datetime"
+    t.float "value_numeric", limit: 53
+    t.string "value_modifier", limit: 2, collation: "utf8_general_ci"
+    t.text "value_text", collation: "utf8_general_ci"
+    t.datetime "date_started"
+    t.datetime "date_stopped"
+    t.string "comments", collation: "utf8_general_ci"
+    t.integer "creator", default: 0, null: false
+    t.datetime "date_created", null: false
+    t.integer "voided", limit: 2, default: 0, null: false
+    t.integer "voided_by"
+    t.datetime "date_voided"
+    t.string "void_reason", collation: "utf8_general_ci"
+    t.string "value_complex", collation: "utf8_general_ci"
+    t.string "uuid", limit: 38, null: false, collation: "utf8_general_ci"
+  end
+
+  create_table "Obs_artvisit_FP_side_effects_c", id: false, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.integer "obs_id", default: 0, null: false
+    t.integer "person_id", null: false
+    t.integer "concept_id", default: 0, null: false
+    t.integer "encounter_id"
+    t.integer "order_id"
+    t.datetime "obs_datetime", null: false
+    t.integer "location_id"
+    t.integer "obs_group_id"
+    t.string "accession_number", collation: "utf8_general_ci"
+    t.integer "value_group_id"
+    t.boolean "value_boolean"
+    t.integer "value_coded"
+    t.integer "value_coded_name_id"
+    t.integer "value_drug"
+    t.datetime "value_datetime"
+    t.float "value_numeric", limit: 53
+    t.string "value_modifier", limit: 2, collation: "utf8_general_ci"
+    t.text "value_text", collation: "utf8_general_ci"
+    t.datetime "date_started"
+    t.datetime "date_stopped"
+    t.string "comments", collation: "utf8_general_ci"
+    t.integer "creator", default: 0, null: false
+    t.datetime "date_created", null: false
+    t.integer "voided", limit: 2, default: 0, null: false
+    t.integer "voided_by"
+    t.datetime "date_voided"
+    t.string "void_reason", collation: "utf8_general_ci"
+    t.string "value_complex", collation: "utf8_general_ci"
+    t.string "uuid", limit: 38, null: false, collation: "utf8_general_ci"
+  end
+
+  create_table "Obs_artvisit_FP_side_effects_d", id: false, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.integer "obs_id", default: 0, null: false
+    t.integer "person_id", null: false
+    t.integer "concept_id", default: 0, null: false
+    t.integer "encounter_id"
+    t.integer "order_id"
+    t.datetime "obs_datetime", null: false
+    t.integer "location_id"
+    t.integer "obs_group_id"
+    t.string "accession_number", collation: "utf8_general_ci"
+    t.integer "value_group_id"
+    t.boolean "value_boolean"
+    t.integer "value_coded"
+    t.integer "value_coded_name_id"
+    t.integer "value_drug"
+    t.datetime "value_datetime"
+    t.float "value_numeric", limit: 53
+    t.string "value_modifier", limit: 2, collation: "utf8_general_ci"
+    t.text "value_text", collation: "utf8_general_ci"
+    t.datetime "date_started"
+    t.datetime "date_stopped"
+    t.string "comments", collation: "utf8_general_ci"
+    t.integer "creator", default: 0, null: false
+    t.datetime "date_created", null: false
+    t.integer "voided", limit: 2, default: 0, null: false
+    t.integer "voided_by"
+    t.datetime "date_voided"
+    t.string "void_reason", collation: "utf8_general_ci"
+    t.string "value_complex", collation: "utf8_general_ci"
+    t.string "uuid", limit: 38, null: false, collation: "utf8_general_ci"
+  end
+
+  create_table "Obs_artvisit_FP_side_effects_e", id: false, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.integer "obs_id", default: 0, null: false
+    t.integer "person_id", null: false
+    t.integer "concept_id", default: 0, null: false
+    t.integer "encounter_id"
+    t.integer "order_id"
+    t.datetime "obs_datetime", null: false
+    t.integer "location_id"
+    t.integer "obs_group_id"
+    t.string "accession_number", collation: "utf8_general_ci"
+    t.integer "value_group_id"
+    t.boolean "value_boolean"
+    t.integer "value_coded"
+    t.integer "value_coded_name_id"
+    t.integer "value_drug"
+    t.datetime "value_datetime"
+    t.float "value_numeric", limit: 53
+    t.string "value_modifier", limit: 2, collation: "utf8_general_ci"
+    t.text "value_text", collation: "utf8_general_ci"
+    t.datetime "date_started"
+    t.datetime "date_stopped"
+    t.string "comments", collation: "utf8_general_ci"
+    t.integer "creator", default: 0, null: false
+    t.datetime "date_created", null: false
+    t.integer "voided", limit: 2, default: 0, null: false
+    t.integer "voided_by"
+    t.datetime "date_voided"
+    t.string "void_reason", collation: "utf8_general_ci"
+    t.string "value_complex", collation: "utf8_general_ci"
+    t.string "uuid", limit: 38, null: false, collation: "utf8_general_ci"
+  end
+
   create_table "active_list", primary_key: "active_list_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
     t.integer "active_list_type_id", null: false
     t.integer "person_id", null: false
@@ -63,12 +333,130 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.index ["retired_by"], name: "user_who_retired_active_list_type"
   end
 
+  create_table "all_patient_identifiers", id: false, options: "ENGINE=MyISAM DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.integer "patient_id", limit: 1, null: false
+    t.integer "openmrs_ident_type", limit: 1, null: false
+    t.integer "national_id", limit: 1, null: false
+    t.integer "arv_number", limit: 1, null: false
+    t.integer "legacy_id", limit: 1, null: false
+    t.integer "prev_art_number", limit: 1, null: false
+    t.integer "tb_number", limit: 1, null: false
+    t.integer "filing_number", limit: 1, null: false
+    t.integer "archived_filing_number", limit: 1, null: false
+    t.integer "pre_art_number", limit: 1, null: false
+  end
+
+  create_table "all_patients_attributes", id: false, options: "ENGINE=MyISAM DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.integer "person_id", limit: 1, null: false
+    t.integer "occupation", limit: 1, null: false
+    t.integer "cell_phone", limit: 1, null: false
+    t.integer "home_phone", limit: 1, null: false
+    t.integer "office_phone", limit: 1, null: false
+  end
+
+  create_table "all_person_addresses", id: false, options: "ENGINE=MyISAM DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.integer "person_address_id", limit: 1, null: false
+    t.integer "person_id", limit: 1, null: false
+    t.integer "preferred", limit: 1, null: false
+    t.integer "address1", limit: 1, null: false
+    t.integer "address2", limit: 1, null: false
+    t.integer "city_village", limit: 1, null: false
+    t.integer "state_province", limit: 1, null: false
+    t.integer "postal_code", limit: 1, null: false
+    t.integer "country", limit: 1, null: false
+    t.integer "latitude", limit: 1, null: false
+    t.integer "longitude", limit: 1, null: false
+    t.integer "creator", limit: 1, null: false
+    t.integer "date_created", limit: 1, null: false
+    t.integer "voided", limit: 1, null: false
+    t.integer "voided_by", limit: 1, null: false
+    t.integer "date_voided", limit: 1, null: false
+    t.integer "void_reason", limit: 1, null: false
+    t.integer "county_district", limit: 1, null: false
+    t.integer "neighborhood_cell", limit: 1, null: false
+    t.integer "region", limit: 1, null: false
+    t.integer "subregion", limit: 1, null: false
+    t.integer "township_division", limit: 1, null: false
+    t.integer "uuid", limit: 1, null: false
+  end
+
   create_table "alternative_drug_names", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.string "name", null: false
     t.string "short_name"
     t.integer "drug_inventory_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "amount_brought_back_obs", id: false, options: "ENGINE=MyISAM DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.integer "person_id", limit: 1, null: false
+    t.integer "encounter_id", limit: 1, null: false
+    t.integer "order_id", limit: 1, null: false
+    t.integer "obs_datetime", limit: 1, null: false
+    t.integer "drug_inventory_id", limit: 1, null: false
+    t.integer "equivalent_daily_dose", limit: 1, null: false
+    t.integer "value_numeric", limit: 1, null: false
+    t.integer "quantity", limit: 1, null: false
+  end
+
+  create_table "amount_dispensed_obs", id: false, options: "ENGINE=MyISAM DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.integer "person_id", limit: 1, null: false
+    t.integer "encounter_id", limit: 1, null: false
+    t.integer "order_id", limit: 1, null: false
+    t.integer "obs_datetime", limit: 1, null: false
+    t.integer "drug_inventory_id", limit: 1, null: false
+    t.integer "equivalent_daily_dose", limit: 1, null: false
+    t.integer "start_date", limit: 1, null: false
+    t.integer "value_numeric", limit: 1, null: false
+  end
+
+  create_table "arv_drug", id: false, options: "ENGINE=MyISAM DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.integer "drug_id", limit: 1, null: false
+  end
+
+  create_table "arv_drugs_orders", id: false, options: "ENGINE=MyISAM DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.integer "patient_id", limit: 1, null: false
+    t.integer "encounter_id", limit: 1, null: false
+    t.integer "concept_id", limit: 1, null: false
+    t.integer "start_date", limit: 1, null: false
+  end
+
+  create_table "clinic_consultation_encounter", id: false, options: "ENGINE=MyISAM DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.integer "encounter_id", limit: 1, null: false
+    t.integer "encounter_type", limit: 1, null: false
+    t.integer "patient_id", limit: 1, null: false
+    t.integer "provider_id", limit: 1, null: false
+    t.integer "location_id", limit: 1, null: false
+    t.integer "form_id", limit: 1, null: false
+    t.integer "encounter_datetime", limit: 1, null: false
+    t.integer "creator", limit: 1, null: false
+    t.integer "date_created", limit: 1, null: false
+    t.integer "voided", limit: 1, null: false
+    t.integer "voided_by", limit: 1, null: false
+    t.integer "date_voided", limit: 1, null: false
+    t.integer "void_reason", limit: 1, null: false
+    t.integer "uuid", limit: 1, null: false
+    t.integer "changed_by", limit: 1, null: false
+    t.integer "date_changed", limit: 1, null: false
+  end
+
+  create_table "clinic_registration_encounter", id: false, options: "ENGINE=MyISAM DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.integer "encounter_id", limit: 1, null: false
+    t.integer "encounter_type", limit: 1, null: false
+    t.integer "patient_id", limit: 1, null: false
+    t.integer "provider_id", limit: 1, null: false
+    t.integer "location_id", limit: 1, null: false
+    t.integer "form_id", limit: 1, null: false
+    t.integer "encounter_datetime", limit: 1, null: false
+    t.integer "creator", limit: 1, null: false
+    t.integer "date_created", limit: 1, null: false
+    t.integer "voided", limit: 1, null: false
+    t.integer "voided_by", limit: 1, null: false
+    t.integer "date_voided", limit: 1, null: false
+    t.integer "void_reason", limit: 1, null: false
+    t.integer "uuid", limit: 1, null: false
+    t.integer "changed_by", limit: 1, null: false
+    t.integer "date_changed", limit: 1, null: false
   end
 
   create_table "cohort", primary_key: "cohort_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
@@ -237,6 +625,12 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.index ["voided_by"], name: "user_who_voided_name"
   end
 
+  create_table "concept_name_map", id: false, options: "ENGINE=MyISAM DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.integer "concept_id"
+    t.string "bart_one_concept_name"
+    t.string "bart_two_concept_name"
+  end
+
   create_table "concept_name_tag", primary_key: "concept_name_tag_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.string "tag", limit: 50, null: false
     t.text "description", null: false
@@ -372,6 +766,74 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.index ["word"], name: "word_in_concept_name"
   end
 
+  create_table "dde_country", primary_key: "country_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.string "name", limit: 125
+    t.integer "weight"
+  end
+
+  create_table "dde_district", primary_key: "district_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.string "name", default: "", null: false
+    t.integer "region_id", default: 0, null: false
+    t.integer "creator", default: 0, null: false
+    t.datetime "date_created", null: false
+    t.boolean "retired", default: false, null: false
+    t.integer "retired_by"
+    t.datetime "date_retired"
+    t.string "retire_reason"
+    t.index ["creator"], name: "user_who_created_district"
+    t.index ["region_id"], name: "region_for_district"
+    t.index ["retired"], name: "retired_status"
+    t.index ["retired_by"], name: "user_who_retired_district"
+  end
+
+  create_table "dde_nationality", primary_key: "nationality_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.string "name", limit: 125
+    t.integer "weight"
+  end
+
+  create_table "dde_region", primary_key: "region_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.string "name", default: "", null: false
+    t.integer "creator", default: 0, null: false
+    t.datetime "date_created", null: false
+    t.boolean "retired", default: false, null: false
+    t.integer "retired_by"
+    t.datetime "date_retired"
+    t.string "retire_reason"
+    t.index ["creator"], name: "user_who_created_region"
+    t.index ["retired"], name: "retired_status"
+    t.index ["retired_by"], name: "user_who_retired_region"
+  end
+
+  create_table "dde_traditional_authority", primary_key: "traditional_authority_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.string "name", default: "", null: false
+    t.integer "district_id", default: 0, null: false
+    t.integer "creator", default: 0, null: false
+    t.datetime "date_created", null: false
+    t.boolean "retired", default: false, null: false
+    t.integer "retired_by"
+    t.datetime "date_retired"
+    t.string "retire_reason"
+    t.index ["creator"], name: "user_who_created_traditional_authority"
+    t.index ["district_id"], name: "district_for_ta"
+    t.index ["retired"], name: "retired_status"
+    t.index ["retired_by"], name: "user_who_retired_traditional_authority"
+  end
+
+  create_table "dde_village", primary_key: "village_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.string "name", default: "", null: false
+    t.integer "traditional_authority_id", default: 0, null: false
+    t.integer "creator", default: 0, null: false
+    t.datetime "date_created", null: false
+    t.boolean "retired", default: false, null: false
+    t.integer "retired_by"
+    t.datetime "date_retired"
+    t.string "retire_reason"
+    t.index ["creator"], name: "user_who_created_village"
+    t.index ["retired"], name: "retired_status"
+    t.index ["retired_by"], name: "user_who_retired_village"
+    t.index ["traditional_authority_id"], name: "ta_for_village"
+  end
+
   create_table "district", primary_key: "district_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.string "name", default: "", null: false
     t.integer "region_id", default: 0, null: false
@@ -387,9 +849,9 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.index ["retired_by"], name: "user_who_retired_district"
   end
 
-  create_table "districts", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+  create_table "districts", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.datetime "created_at"
+    t.datetime "updated_at"
   end
 
   create_table "drug", primary_key: "drug_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
@@ -439,9 +901,16 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.index ["concept_id"], name: "combination_drug"
   end
 
-  create_table "drug_ingredients", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+  create_table "drug_ingredients", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  create_table "drug_map", id: false, options: "ENGINE=MyISAM DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.integer "drug_id"
+    t.string "bart_one_name"
+    t.string "bart2_two_name"
+    t.integer "new_drug_id"
   end
 
   create_table "drug_order", primary_key: "order_id", id: :integer, default: 0, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
@@ -456,11 +925,22 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.index ["drug_inventory_id"], name: "inventory_item"
   end
 
-  create_table "drug_order_barcodes", primary_key: "drug_order_barcode_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
+  create_table "drug_order_barcodes", primary_key: "drug_order_barcode_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
     t.integer "drug_id"
     t.integer "tabs"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  create_table "earliest_start_date", id: false, options: "ENGINE=MyISAM DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.integer "patient_id", limit: 1, null: false
+    t.integer "gender", limit: 1, null: false
+    t.integer "birthdate", limit: 1, null: false
+    t.integer "earliest_start_date", limit: 1, null: false
+    t.integer "date_enrolled", limit: 1, null: false
+    t.integer "death_date", limit: 1, null: false
+    t.integer "age_at_initiation", limit: 1, null: false
+    t.integer "age_in_days", limit: 1, null: false
   end
 
   create_table "encounter", primary_key: "encounter_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
@@ -507,6 +987,50 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.index ["uuid"], name: "encounter_type_uuid_index", unique: true
   end
 
+  create_table "encounters_missed", primary_key: "missed_encounter_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.integer "ppi_id", null: false
+    t.integer "missed_encounter_type_id", null: false
+    t.integer "user_activities_id", null: false
+    t.index ["missed_encounter_id"], name: "ID_UNIQUE", unique: true
+  end
+
+  create_table "encouter_vw", id: false, options: "ENGINE=MyISAM DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.integer "encounter_id", limit: 1, null: false
+    t.integer "name", limit: 1, null: false
+  end
+
+  create_table "ever_registered_obs", id: false, options: "ENGINE=MyISAM DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.integer "obs_id", limit: 1, null: false
+    t.integer "person_id", limit: 1, null: false
+    t.integer "concept_id", limit: 1, null: false
+    t.integer "encounter_id", limit: 1, null: false
+    t.integer "order_id", limit: 1, null: false
+    t.integer "obs_datetime", limit: 1, null: false
+    t.integer "location_id", limit: 1, null: false
+    t.integer "obs_group_id", limit: 1, null: false
+    t.integer "accession_number", limit: 1, null: false
+    t.integer "value_group_id", limit: 1, null: false
+    t.integer "value_boolean", limit: 1, null: false
+    t.integer "value_coded", limit: 1, null: false
+    t.integer "value_coded_name_id", limit: 1, null: false
+    t.integer "value_drug", limit: 1, null: false
+    t.integer "value_datetime", limit: 1, null: false
+    t.integer "value_numeric", limit: 1, null: false
+    t.integer "value_modifier", limit: 1, null: false
+    t.integer "value_text", limit: 1, null: false
+    t.integer "date_started", limit: 1, null: false
+    t.integer "date_stopped", limit: 1, null: false
+    t.integer "comments", limit: 1, null: false
+    t.integer "creator", limit: 1, null: false
+    t.integer "date_created", limit: 1, null: false
+    t.integer "voided", limit: 1, null: false
+    t.integer "voided_by", limit: 1, null: false
+    t.integer "date_voided", limit: 1, null: false
+    t.integer "void_reason", limit: 1, null: false
+    t.integer "value_complex", limit: 1, null: false
+    t.integer "uuid", limit: 1, null: false
+  end
+
   create_table "external_source", primary_key: "external_source_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.integer "source", default: 0, null: false
     t.string "source_code", null: false
@@ -515,6 +1039,70 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.datetime "date_created", null: false
     t.index ["creator"], name: "map_ext_creator"
     t.index ["source"], name: "map_ext_source"
+  end
+
+  create_table "fast_track", id: false, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.integer "obs_id", default: 0, null: false
+    t.integer "person_id", null: false
+    t.integer "concept_id", default: 0, null: false
+    t.integer "encounter_id"
+    t.integer "order_id"
+    t.datetime "obs_datetime", null: false
+    t.integer "location_id"
+    t.integer "obs_group_id"
+    t.string "accession_number", collation: "utf8_general_ci"
+    t.integer "value_group_id"
+    t.boolean "value_boolean"
+    t.integer "value_coded"
+    t.integer "value_coded_name_id"
+    t.integer "value_drug"
+    t.datetime "value_datetime"
+    t.float "value_numeric", limit: 53
+    t.string "value_modifier", limit: 2, collation: "utf8_general_ci"
+    t.text "value_text", collation: "utf8_general_ci"
+    t.datetime "date_started"
+    t.datetime "date_stopped"
+    t.string "comments", collation: "utf8_general_ci"
+    t.integer "creator", default: 0, null: false
+    t.datetime "date_created", null: false
+    t.integer "voided", limit: 2, default: 0, null: false
+    t.integer "voided_by"
+    t.datetime "date_voided"
+    t.string "void_reason", collation: "utf8_general_ci"
+    t.string "value_complex", collation: "utf8_general_ci"
+    t.string "uuid", limit: 38, null: false, collation: "utf8_general_ci"
+  end
+
+  create_table "fast_track1", id: false, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.integer "obs_id", default: 0, null: false
+    t.integer "person_id", null: false
+    t.integer "concept_id", default: 0, null: false
+    t.integer "encounter_id"
+    t.integer "order_id"
+    t.datetime "obs_datetime", null: false
+    t.integer "location_id"
+    t.integer "obs_group_id"
+    t.string "accession_number", collation: "utf8_general_ci"
+    t.integer "value_group_id"
+    t.boolean "value_boolean"
+    t.integer "value_coded"
+    t.integer "value_coded_name_id"
+    t.integer "value_drug"
+    t.datetime "value_datetime"
+    t.float "value_numeric", limit: 53
+    t.string "value_modifier", limit: 2, collation: "utf8_general_ci"
+    t.text "value_text", collation: "utf8_general_ci"
+    t.datetime "date_started"
+    t.datetime "date_stopped"
+    t.string "comments", collation: "utf8_general_ci"
+    t.integer "creator", default: 0, null: false
+    t.datetime "date_created", null: false
+    t.integer "voided", limit: 2, default: 0, null: false
+    t.integer "voided_by"
+    t.datetime "date_voided"
+    t.string "void_reason", collation: "utf8_general_ci"
+    t.string "value_complex", collation: "utf8_general_ci"
+    t.string "uuid", limit: 38, null: false, collation: "utf8_general_ci"
   end
 
   create_table "field", primary_key: "field_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
@@ -567,117 +1155,602 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.index ["uuid"], name: "field_type_uuid_index", unique: true
   end
 
-  create_table "form", primary_key: "form_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
-    t.string "name", default: "", null: false
-    t.string "version", limit: 50, default: "", null: false
-    t.integer "build"
-    t.integer "published", limit: 2, default: 0, null: false
-    t.text "description"
-    t.integer "encounter_type"
-    t.text "template", limit: 16777215
-    t.text "xslt", limit: 16777215
-    t.integer "creator", default: 0, null: false
-    t.datetime "date_created", null: false
-    t.integer "changed_by"
-    t.datetime "date_changed"
-    t.integer "retired", limit: 2, default: 0, null: false
-    t.integer "retired_by"
-    t.datetime "date_retired"
-    t.string "retired_reason"
-    t.string "uuid", limit: 38, null: false
-    t.index ["changed_by"], name: "user_who_last_changed_form"
-    t.index ["creator"], name: "user_who_created_form"
-    t.index ["encounter_type"], name: "encounter_type"
-    t.index ["retired_by"], name: "user_who_retired_form"
-    t.index ["uuid"], name: "form_uuid_index", unique: true
+  create_table "flat_cohort_table", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.integer "patient_id"
+    t.string "gender", limit: 45
+    t.date "birthdate"
+    t.date "earliest_start_date"
+    t.date "date_enrolled"
+    t.integer "age_at_initiation"
+    t.integer "age_in_days"
+    t.date "death_date"
+    t.string "hiv_program_state", limit: 45
+    t.date "hiv_program_start_date"
+    t.string "patient_re_initiated", limit: 45
+    t.string "patient_died_month", limit: 45
+    t.string "reason_for_starting"
+    t.string "who_stage"
+    t.string "who_stages_criteria_present"
+    t.string "malawi_art_side_effects"
+    t.string "ever_registered_at_art_clinic"
+    t.date "date_art_last_taken"
+    t.string "taken_art_in_last_two_months"
+    t.string "patient_pregnant"
+    t.string "pregnant_at_initiation"
+    t.string "patient_breastfeeding"
+    t.string "drug_induced_blurry_vision"
+    t.string "drug_induced_abdominal_pain"
+    t.string "drug_induced_anorexia"
+    t.string "drug_induced_diarrhea"
+    t.string "drug_induced_jaundice"
+    t.string "drug_induced_leg_pain_numbness"
+    t.string "drug_induced_vomiting"
+    t.string "drug_induced_peripheral_neuropathy"
+    t.string "drug_induced_hepatitis"
+    t.string "drug_induced_anemia"
+    t.string "drug_induced_lactic_acidosis"
+    t.string "drug_induced_lipodystrophy"
+    t.string "drug_induced_skin_rash"
+    t.string "drug_induced_other"
+    t.string "drug_induced_fever"
+    t.string "drug_induced_cough"
+    t.string "drug_induced_kidney_failure"
+    t.string "drug_induced_nightmares"
+    t.string "drug_induced_diziness"
+    t.string "drug_induced_psychosis"
+    t.string "side_effects_present"
+    t.string "side_effects_abdominal_pain"
+    t.string "side_effects_anemia"
+    t.string "side_effects_anorexia"
+    t.string "side_effects_blurry_vision"
+    t.string "side_effects_cough"
+    t.string "side_effects_diarrhea"
+    t.string "side_effects_diziness"
+    t.string "side_effects_fever"
+    t.string "side_effects_hepatitis"
+    t.string "side_effects_jaundice"
+    t.string "side_effects_kidney_failure"
+    t.string "side_effects_lactic_acidosis"
+    t.string "side_effects_leg_pain_numbness"
+    t.string "side_effects_lipodystrophy"
+    t.string "side_effects_no"
+    t.string "side_effects_other"
+    t.string "side_effects_peripheral_neuropathy"
+    t.string "side_effects_psychosis"
+    t.string "side_effects_renal_failure"
+    t.string "side_effects_skin_rash"
+    t.string "side_effects_vomiting"
+    t.string "side_effects_gynaecomastia"
+    t.string "side_effects_nightmares"
+    t.string "tb_status"
+    t.string "tb_not_suspected"
+    t.string "tb_suspected"
+    t.string "confirmed_tb_not_on_treatment"
+    t.string "confirmed_tb_on_treatment"
+    t.string "unknown_tb_status"
+    t.string "extrapulmonary_tuberculosis"
+    t.string "pulmonary_tuberculosis"
+    t.string "pulmonary_tuberculosis_last_2_years"
+    t.string "kaposis_sarcoma"
+    t.string "what_was_the_patient_adherence_for_this_drug1"
+    t.string "what_was_the_patient_adherence_for_this_drug2"
+    t.string "what_was_the_patient_adherence_for_this_drug3"
+    t.string "what_was_the_patient_adherence_for_this_drug4"
+    t.string "what_was_the_patient_adherence_for_this_drug5"
+    t.string "regimen_category_treatment"
+    t.string "regimen_category_dispensed"
+    t.string "type_of_ARV_regimen_given"
+    t.string "arv_regimens_received_construct"
+    t.string "drug_name1"
+    t.string "drug_name2"
+    t.string "drug_name3"
+    t.string "drug_name4"
+    t.string "drug_name5"
+    t.integer "drug_inventory_id1"
+    t.integer "drug_inventory_id2"
+    t.integer "drug_inventory_id3"
+    t.integer "drug_inventory_id4"
+    t.integer "drug_inventory_id5"
+    t.date "drug_auto_expire_date1"
+    t.date "drug_auto_expire_date2"
+    t.date "drug_auto_expire_date3"
+    t.date "drug_auto_expire_date4"
+    t.date "drug_auto_expire_date5"
+    t.date "hiv_program_state_v_date"
+    t.date "hiv_program_start_date_v_date"
+    t.date "current_tb_status_v_date"
+    t.date "reason_for_starting_v_date"
+    t.date "who_stage_v_date"
+    t.date "who_stages_criteria_present_v_date"
+    t.date "ever_registered_at_art_clinic_v_date"
+    t.date "date_art_last_taken_v_date"
+    t.date "taken_art_in_last_two_months_v_date"
+    t.date "drug_induced_abdominal_pain_v_date"
+    t.date "drug_induced_anorexia_v_date"
+    t.date "drug_induced_diarrhea_v_date"
+    t.date "drug_induced_jaundice_v_date"
+    t.date "drug_induced_leg_pain_numbness_v_date"
+    t.date "drug_induced_vomiting_v_date"
+    t.date "drug_induced_peripheral_neuropathy_v_date"
+    t.date "drug_induced_hepatitis_v_date"
+    t.date "drug_induced_anemia_v_date"
+    t.date "drug_induced_lactic_acidosis_v_date"
+    t.date "drug_induced_lipodystrophy_v_date"
+    t.date "drug_induced_skin_rash_v_date"
+    t.date "drug_induced_other_v_date"
+    t.date "drug_induced_fever_v_date"
+    t.date "drug_induced_cough_v_date"
+    t.date "tb_status_v_date"
+    t.date "tb_not_suspected_v_date"
+    t.date "tb_suspected_v_date"
+    t.date "confirmed_tb_not_on_treatment_v_date"
+    t.date "confirmed_tb_on_treatment_v_date"
+    t.date "unknown_tb_status_v_date"
+    t.date "extrapulmonary_tuberculosis_v_date"
+    t.date "pulmonary_tuberculosis_v_date"
+    t.date "pulmonary_tuberculosis_last_2_years_v_date"
+    t.date "kaposis_sarcoma_v_date"
+    t.date "what_was_the_patient_adherence_for_this_drug1_v_date"
+    t.date "what_was_the_patient_adherence_for_this_drug2_v_date"
+    t.date "what_was_the_patient_adherence_for_this_drug3_v_date"
+    t.date "what_was_the_patient_adherence_for_this_drug4_v_date"
+    t.date "what_was_the_patient_adherence_for_this_drug5_v_date"
+    t.date "regimen_category_treatment_v_date"
+    t.date "regimen_category_dispensed_v_date"
+    t.date "type_of_ARV_regimen_given_v_date"
+    t.date "arv_regimens_received_construct_v_date"
+    t.date "drug_name1_v_date"
+    t.date "drug_name2_v_date"
+    t.date "drug_name3_v_date"
+    t.date "drug_name4_v_date"
+    t.date "drug_name5_v_date"
+    t.date "drug_inventory_id1_v_date"
+    t.date "drug_inventory_id2_v_date"
+    t.date "drug_inventory_id3_v_date"
+    t.date "drug_inventory_id4_v_date"
+    t.date "drug_inventory_id5_v_date"
+    t.date "drug_auto_expire_date1_v_date"
+    t.date "drug_auto_expire_date2_v_date"
+    t.date "drug_auto_expire_date3_v_date"
+    t.date "drug_auto_expire_date4_v_date"
+    t.date "drug_auto_expire_date5_v_date"
+    t.date "patient_pregnant_v_date"
+    t.date "pregnant_at_initiation_v_date"
+    t.date "patient_breastfeeding_v_date"
+    t.string "current_location"
+    t.index ["patient_id"], name: "ID_UNIQUE", unique: true
   end
 
-  create_table "form2program_map", primary_key: ["program", "encounter_type"], options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
-    t.integer "program", null: false
-    t.integer "encounter_type", null: false
-    t.integer "creator", null: false
-    t.datetime "date_created", null: false
-    t.integer "changed_by", null: false
-    t.datetime "date_changed", null: false
-    t.boolean "applied", default: false, null: false
-    t.index ["changed_by"], name: "user_who_changed_form2program"
-    t.index ["creator"], name: "user_who_created_form2program"
-    t.index ["encounter_type"], name: "encounter_type"
+  create_table "flat_table1", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.integer "patient_id", null: false
+    t.string "given_name", limit: 50
+    t.string "middle_name", limit: 50
+    t.string "family_name", limit: 50
+    t.string "gender", limit: 50
+    t.date "dob"
+    t.integer "dob_estimated"
+    t.date "death_date"
+    t.date "earliest_start_date"
+    t.date "date_enrolled"
+    t.string "age_at_initiation", limit: 25
+    t.integer "age_in_days"
+    t.string "ta", limit: 50
+    t.string "current_address"
+    t.string "home_district"
+    t.string "landmark"
+    t.string "cellphone_number"
+    t.string "home_phone_number"
+    t.string "office_phone_number"
+    t.string "occupation"
+    t.string "nat_id"
+    t.string "arv_number"
+    t.string "pre_art_number"
+    t.string "tb_number"
+    t.string "legacy_id"
+    t.string "legacy_id2"
+    t.string "legacy_id3"
+    t.string "new_nat_id"
+    t.string "prev_art_number"
+    t.string "filing_number"
+    t.string "archived_filing_number"
+    t.integer "guardian_to_which_patient1"
+    t.integer "guardian_to_which_patient2"
+    t.integer "guardian_to_which_patient3"
+    t.integer "guardian_to_which_patient4"
+    t.integer "guardian_to_which_patient5"
+    t.integer "guardian_person_id1"
+    t.integer "guardian_person_id2"
+    t.integer "guardian_person_id3"
+    t.integer "guardian_person_id4"
+    t.integer "guardian_person_id5"
+    t.string "ever_received_art"
+    t.string "send_sms"
+    t.string "agrees_to_followup"
+    t.datetime "date_art_last_taken"
+    t.string "taken_art_in_last_two_months"
+    t.string "taken_art_in_last_two_weeks"
+    t.string "last_art_drugs_taken"
+    t.string "ever_registered_at_art_clinic"
+    t.string "has_transfer_letter"
+    t.string "location_of_art_initialization"
+    t.string "art_start_date_estimation"
+    t.date "date_started_art"
+    t.string "type_of_confirmatory_hiv_test"
+    t.string "confirmatory_hiv_test_location"
+    t.string "confirmatory_hiv_test_date"
+    t.string "patient_pregnant"
+    t.string "pregnant_at_initiation"
+    t.string "patient_breastfeeding"
+    t.string "cd4_count_location"
+    t.integer "cd4_count"
+    t.string "cd4_count_modifier"
+    t.string "cd4_count_percent", limit: 45
+    t.date "cd4_count_datetime"
+    t.string "cd4_percent_less_than_25"
+    t.string "cd4_count_less_than_250"
+    t.string "cd4_count_less_than_350"
+    t.date "lymphocyte_count_date"
+    t.integer "lymphocyte_count"
+    t.string "asymptomatic"
+    t.string "persistent_generalized_lymphadenopathy"
+    t.string "unspecified_stage_1_cond"
+    t.string "molluscumm_contagiosum"
+    t.string "wart_virus_infection_extensive"
+    t.string "oral_ulcerations_recurrent"
+    t.string "parotid_enlargement_persistent_unexplained"
+    t.string "lineal_gingival_erythema"
+    t.string "herpes_zoster"
+    t.string "respiratory_tract_infections_recurrent"
+    t.string "unspecified_stage2_condition"
+    t.string "angular_chelitis"
+    t.string "papular_pruritic_eruptions"
+    t.string "hepatosplenomegaly_unexplained"
+    t.string "oral_hairy_leukoplakia"
+    t.string "severe_weight_loss"
+    t.string "fever_persistent_unexplained"
+    t.string "pulmonary_tuberculosis"
+    t.string "pulmonary_tuberculosis_last_2_years"
+    t.string "severe_bacterial_infection"
+    t.string "bacterial_pnuemonia"
+    t.string "symptomatic_lymphoid_interstitial_pnuemonitis"
+    t.string "chronic_hiv_assoc_lung_disease"
+    t.string "unspecified_stage3_condition"
+    t.string "aneamia"
+    t.string "neutropaenia"
+    t.string "thrombocytopaenia_chronic"
+    t.string "diarhoea"
+    t.string "oral_candidiasis"
+    t.string "acute_necrotizing_ulcerative_gingivitis"
+    t.string "lymph_node_tuberculosis"
+    t.string "toxoplasmosis_of_the_brain"
+    t.string "cryptococcal_meningitis"
+    t.string "progressive_multifocal_leukoencephalopathy"
+    t.string "disseminated_mycosis"
+    t.string "candidiasis_of_oesophagus"
+    t.string "extrapulmonary_tuberculosis"
+    t.string "cerebral_non_hodgkin_lymphoma"
+    t.string "hiv_encephalopathy"
+    t.string "bacterial_infections_severe_recurrent"
+    t.string "unspecified_stage_4_condition"
+    t.string "pnuemocystis_pnuemonia"
+    t.string "disseminated_non_tuberculosis_mycobacterial_infection"
+    t.string "cryptosporidiosis"
+    t.string "isosporiasis"
+    t.string "symptomatic_hiv_associated_nephropathy"
+    t.string "chronic_herpes_simplex_infection"
+    t.string "cytomegalovirus_infection"
+    t.string "toxoplasomis_of_the_brain_1month"
+    t.string "recto_vaginal_fitsula"
+    t.string "moderate_weight_loss_less_than_or_equal_to_10_percent_unexpl"
+    t.string "seborrhoeic_dermatitis"
+    t.string "hepatitis_b_or_c_infection"
+    t.string "kaposis_sarcoma"
+    t.string "non_typhoidal_salmonella_bacteraemia_recurrent"
+    t.string "leishmaniasis_atypical_disseminated"
+    t.string "cerebral_or_b_cell_non_hodgkin_lymphoma"
+    t.string "invasive_cancer_of_cervix"
+    t.string "cryptococcal_meningitis_or_other_eptb_cryptococcosis"
+    t.string "severe_unexplained_wasting_malnutrition"
+    t.string "diarrhoea_chronic_less_1_month_unexplained"
+    t.string "moderate_weight_loss_10_unexplained"
+    t.string "cd4_percentage_available"
+    t.string "acute_necrotizing_ulcerative_stom_ging_or_period"
+    t.string "moderate_unexplained_wasting_malnutrition"
+    t.string "diarrhoea_persistent_unexplained_14_days_or_more"
+    t.string "acute_ulcerative_mouth_infections"
+    t.string "anaemia_unexplained_8_g_dl"
+    t.string "atypical_mycobacteriosis_disseminated_or_lung"
+    t.string "bacterial_infections_sev_recurrent_excluding_pneumonia"
+    t.string "cancer_cervix"
+    t.string "chronic_herpes_simplex_infection_genital"
+    t.string "cryptosporidiosis_chronic_with_diarrhoea"
+    t.string "cytomegalovirus_infection_retinitis_or_other_organ"
+    t.string "cytomegalovirus_of_an_organ_other_than_liver"
+    t.string "fungal_nail_infections"
+    t.string "herpes_simplex_infection_mucocutaneous_visceral"
+    t.string "hiv_associated_cardiomyopathy"
+    t.string "hiv_associated_nephropathy"
+    t.string "invasive_cancer_cervix"
+    t.string "isosporiasis_1_month"
+    t.string "minor_mucocutaneous_manifestations_seborrheic_dermatitis"
+    t.string "moderate_unexplained_malnutrition"
+    t.string "molluscum_contagiosum_extensive"
+    t.string "oral_candidiasis_from_age_2_months"
+    t.string "oral_thrush"
+    t.string "perform_extended_staging"
+    t.string "pneumocystis_carinii_pneumonia"
+    t.string "pneumonia_severe"
+    t.string "recurrent_bacteraemia_or_sepsis_with_nts"
+    t.string "recurrent_severe_presumed_pneumonia"
+    t.string "recurrent_upper_respiratory_tract_bac_sinusitis"
+    t.string "sepsis_severe"
+    t.string "tb_lymphadenopathy"
+    t.string "unexplained_anaemia_neutropenia_or_thrombocytopenia"
+    t.string "visceral_leishmaniasis"
+    t.string "reason_for_eligibility"
+    t.string "who_stage"
+    t.string "who_stages_criteria_present"
+    t.integer "ever_received_art_enc_id"
+    t.integer "send_sms_enc_id"
+    t.integer "agrees_to_followup_enc_id"
+    t.integer "date_art_last_taken_enc_id"
+    t.integer "taken_art_in_last_two_months_enc_id"
+    t.integer "taken_art_in_last_two_weeks_enc_id"
+    t.integer "last_art_drugs_taken_enc_id"
+    t.integer "ever_registered_at_art_clinic_enc_id"
+    t.integer "has_transfer_letter_enc_id"
+    t.integer "location_of_art_initialization_enc_id"
+    t.integer "art_start_date_estimation_enc_id"
+    t.integer "date_started_art_enc_id"
+    t.integer "type_of_confirmatory_hiv_test_enc_id"
+    t.integer "confirmatory_hiv_test_location_enc_id"
+    t.integer "confirmatory_hiv_test_date_enc_id"
+    t.integer "patient_pregnant_enc_id"
+    t.integer "pregnant_at_initiation_enc_id"
+    t.integer "patient_breastfeeding_enc_id"
+    t.integer "cd4_count_location_enc_id"
+    t.integer "cd4_count_enc_id"
+    t.integer "cd4_count_modifier_enc_id"
+    t.integer "cd4_count_percent_enc_id"
+    t.integer "cd4_count_datetime_enc_id"
+    t.integer "cd4_percent_less_than_25_enc_id"
+    t.integer "cd4_count_less_than_250_enc_id"
+    t.integer "cd4_count_less_than_350_enc_id"
+    t.integer "lymphocyte_count_date_enc_id"
+    t.integer "lymphocyte_count_enc_id"
+    t.integer "asymptomatic_enc_id"
+    t.integer "persistent_generalized_lymphadenopathy_enc_id"
+    t.integer "unspecified_stage_1_cond_enc_id"
+    t.integer "molluscumm_contagiosum_enc_id"
+    t.integer "wart_virus_infection_extensive_enc_id"
+    t.integer "oral_ulcerations_recurrent_enc_id"
+    t.integer "parotid_enlargement_persistent_unexplained_enc_id"
+    t.integer "lineal_gingival_erythema_enc_id"
+    t.integer "herpes_zoster_enc_id"
+    t.integer "respiratory_tract_infections_recurrent_enc_id"
+    t.integer "unspecified_stage2_condition_enc_id"
+    t.integer "angular_chelitis_enc_id"
+    t.integer "papular_pruritic_eruptions_enc_id"
+    t.integer "hepatosplenomegaly_unexplained_enc_id"
+    t.integer "oral_hairy_leukoplakia_enc_id"
+    t.integer "severe_weight_loss_enc_id"
+    t.integer "fever_persistent_unexplained_enc_id"
+    t.integer "pulmonary_tuberculosis_enc_id"
+    t.integer "pulmonary_tuberculosis_last_2_years_enc_id"
+    t.integer "severe_bacterial_infection_enc_id"
+    t.integer "bacterial_pnuemonia_enc_id"
+    t.integer "symptomatic_lymphoid_interstitial_pnuemonitis_enc_id"
+    t.integer "chronic_hiv_assoc_lung_disease_enc_id"
+    t.integer "unspecified_stage3_condition_enc_id"
+    t.integer "aneamia_enc_id"
+    t.integer "neutropaenia_enc_id"
+    t.integer "thrombocytopaenia_chronic_enc_id"
+    t.integer "diarhoea_enc_id"
+    t.integer "oral_candidiasis_enc_id"
+    t.integer "acute_necrotizing_ulcerative_gingivitis_enc_id"
+    t.integer "lymph_node_tuberculosis_enc_id"
+    t.integer "toxoplasmosis_of_the_brain_enc_id"
+    t.integer "cryptococcal_meningitis_enc_id"
+    t.integer "progressive_multifocal_leukoencephalopathy_enc_id"
+    t.integer "disseminated_mycosis_enc_id"
+    t.integer "candidiasis_of_oesophagus_enc_id"
+    t.integer "extrapulmonary_tuberculosis_enc_id"
+    t.integer "cerebral_non_hodgkin_lymphoma_enc_id"
+    t.integer "hiv_encephalopathy_enc_id"
+    t.integer "bacterial_infections_severe_recurrent_enc_id"
+    t.integer "unspecified_stage_4_condition_enc_id"
+    t.integer "pnuemocystis_pnuemonia_enc_id"
+    t.integer "disseminated_non_tuberculosis_mycobacterial_infection_enc_id"
+    t.integer "cryptosporidiosis_enc_id"
+    t.integer "isosporiasis_enc_id"
+    t.integer "symptomatic_hiv_associated_nephropathy_enc_id"
+    t.integer "chronic_herpes_simplex_infection_enc_id"
+    t.integer "cytomegalovirus_infection_enc_id"
+    t.integer "toxoplasomis_of_the_brain_1month_enc_id"
+    t.integer "recto_vaginal_fitsula_enc_id"
+    t.integer "moderate_weight_loss_less_than_or_equal_to_10_unexpl_enc_id"
+    t.integer "seborrhoeic_dermatitis_enc_id"
+    t.integer "hepatitis_b_or_c_infection_enc_id"
+    t.integer "kaposis_sarcoma_enc_id"
+    t.integer "non_typhoidal_salmonella_bacteraemia_recurrent_enc_id"
+    t.integer "leishmaniasis_atypical_disseminated_enc_id"
+    t.integer "cerebral_or_b_cell_non_hodgkin_lymphoma_enc_id"
+    t.integer "invasive_cancer_of_cervix_enc_id"
+    t.integer "cryptococcal_meningitis_or_other_eptb_cryptococcosis_enc_id"
+    t.integer "severe_unexplained_wasting_malnutrition_enc_id"
+    t.integer "diarrhoea_chronic_less_1_month_unexplained_enc_id"
+    t.integer "moderate_weight_loss_10_unexplained_enc_id"
+    t.integer "cd4_percentage_available_enc_id"
+    t.integer "acute_necrotizing_ulcerative_stom_ging_or_period_enc_id"
+    t.integer "moderate_unexplained_wasting_malnutrition_enc_id"
+    t.integer "diarrhoea_persistent_unexplained_14_days_or_more_enc_id"
+    t.integer "acute_ulcerative_mouth_infections_enc_id"
+    t.integer "anaemia_unexplained_8_g_dl_enc_id"
+    t.integer "atypical_mycobacteriosis_disseminated_or_lung_enc_id"
+    t.integer "bacterial_infections_sev_recurrent_excluding_pneumonia_enc_id"
+    t.integer "cancer_cervix_enc_id"
+    t.integer "chronic_herpes_simplex_infection_genital_enc_id"
+    t.integer "cryptosporidiosis_chronic_with_diarrhoea_enc_id"
+    t.integer "cytomegalovirus_infection_retinitis_or_other_organ_enc_id"
+    t.integer "cytomegalovirus_of_an_organ_other_than_liver_enc_id"
+    t.integer "fungal_nail_infections_enc_id"
+    t.integer "herpes_simplex_infection_mucocutaneous_visceral_enc_id"
+    t.integer "hiv_associated_cardiomyopathy_enc_id"
+    t.integer "hiv_associated_nephropathy_enc_id"
+    t.integer "invasive_cancer_cervix_enc_id"
+    t.integer "isosporiasis_1_month_enc_id"
+    t.integer "minor_mucocutaneous_manifestations_seborrheic_dermatitis_enc_id"
+    t.integer "moderate_unexplained_malnutrition_enc_id"
+    t.integer "molluscum_contagiosum_extensive_enc_id"
+    t.integer "oral_candidiasis_from_age_2_months_enc_id"
+    t.integer "oral_thrush_enc_id"
+    t.integer "perform_extended_staging_enc_id"
+    t.integer "pneumocystis_carinii_pneumonia_enc_id"
+    t.integer "pneumonia_severe_enc_id"
+    t.integer "recurrent_bacteraemia_or_sepsis_with_nts_enc_id"
+    t.integer "recurrent_severe_presumed_pneumonia_enc_id"
+    t.integer "recurrent_upper_respiratory_tract_bac_sinusitis_enc_id"
+    t.integer "sepsis_severe_enc_id"
+    t.integer "tb_lymphadenopathy_enc_id"
+    t.integer "unexplained_anaemia_neutropenia_or_thrombocytopenia_enc_id"
+    t.integer "visceral_leishmaniasis_enc_id"
+    t.integer "reason_for_eligibility_enc_id"
+    t.integer "who_stage_enc_id"
+    t.integer "who_stages_criteria_present_enc_id"
+    t.date "ever_received_art_v_date"
+    t.date "send_sms_v_date"
+    t.date "agrees_to_followup_v_date"
+    t.date "date_art_last_taken_v_date"
+    t.date "taken_art_in_last_two_months_v_date"
+    t.date "taken_art_in_last_two_weeks_v_date"
+    t.date "last_art_drugs_taken_v_date"
+    t.date "ever_registered_at_art_clinic_v_date"
+    t.date "has_transfer_letter_v_date"
+    t.date "location_of_art_initialization_v_date"
+    t.date "art_start_date_estimation_v_date"
+    t.date "date_started_art_v_date"
+    t.date "type_of_confirmatory_hiv_test_v_date"
+    t.date "confirmatory_hiv_test_location_v_date"
+    t.date "confirmatory_hiv_test_date_v_date"
+    t.date "patient_pregnant_v_date"
+    t.date "pregnant_at_initiation_v_date"
+    t.date "patient_breastfeeding_v_date"
+    t.date "cd4_count_location_v_date"
+    t.date "cd4_count_v_date"
+    t.date "cd4_count_modifier_v_date"
+    t.date "cd4_count_percent_v_date"
+    t.date "cd4_count_datetime_v_date"
+    t.date "cd4_percent_less_than_25_v_date"
+    t.date "cd4_count_less_than_250_v_date"
+    t.date "cd4_count_less_than_350_v_date"
+    t.date "lymphocyte_count_date_v_date"
+    t.date "lymphocyte_count_v_date"
+    t.date "asymptomatic_v_date"
+    t.date "persistent_generalized_lymphadenopathy_v_date"
+    t.date "unspecified_stage_1_cond_v_date"
+    t.date "molluscumm_contagiosum_v_date"
+    t.date "wart_virus_infection_extensive_v_date"
+    t.date "oral_ulcerations_recurrent_v_date"
+    t.date "parotid_enlargement_persistent_unexplained_v_date"
+    t.date "lineal_gingival_erythema_v_date"
+    t.date "herpes_zoster_v_date"
+    t.date "respiratory_tract_infections_recurrent_v_date"
+    t.date "unspecified_stage2_condition_v_date"
+    t.date "angular_chelitis_v_date"
+    t.date "papular_pruritic_eruptions_v_date"
+    t.date "hepatosplenomegaly_unexplained_v_date"
+    t.date "oral_hairy_leukoplakia_v_date"
+    t.date "severe_weight_loss_v_date"
+    t.date "fever_persistent_unexplained_v_date"
+    t.date "pulmonary_tuberculosis_v_date"
+    t.date "pulmonary_tuberculosis_last_2_years_v_date"
+    t.date "severe_bacterial_infection_v_date"
+    t.date "bacterial_pnuemonia_v_date"
+    t.date "symptomatic_lymphoid_interstitial_pnuemonitis_v_date"
+    t.date "chronic_hiv_assoc_lung_disease_v_date"
+    t.date "unspecified_stage3_condition_v_date"
+    t.date "aneamia_v_date"
+    t.date "neutropaenia_v_date"
+    t.date "thrombocytopaenia_chronic_v_date"
+    t.date "diarhoea_v_date"
+    t.date "oral_candidiasis_v_date"
+    t.date "acute_necrotizing_ulcerative_gingivitis_v_date"
+    t.date "lymph_node_tuberculosis_v_date"
+    t.date "toxoplasmosis_of_the_brain_v_date"
+    t.date "cryptococcal_meningitis_v_date"
+    t.date "progressive_multifocal_leukoencephalopathy_v_date"
+    t.date "disseminated_mycosis_v_date"
+    t.date "candidiasis_of_oesophagus_v_date"
+    t.date "extrapulmonary_tuberculosis_v_date"
+    t.date "cerebral_non_hodgkin_lymphoma_v_date"
+    t.date "hiv_encephalopathy_v_date"
+    t.date "bacterial_infections_severe_recurrent_v_date"
+    t.date "unspecified_stage_4_condition_v_date"
+    t.date "pnuemocystis_pnuemonia_v_date"
+    t.date "disseminated_non_tuberculosis_mycobacterial_infection_v_date"
+    t.date "cryptosporidiosis_v_date"
+    t.date "isosporiasis_v_date"
+    t.date "symptomatic_hiv_associated_nephropathy_v_date"
+    t.date "chronic_herpes_simplex_infection_v_date"
+    t.date "cytomegalovirus_infection_v_date"
+    t.date "toxoplasomis_of_the_brain_1month_v_date"
+    t.date "recto_vaginal_fitsula_v_date"
+    t.date "moderate_weight_loss_less_than_or_equal_to_10_unexpl_v_date"
+    t.date "seborrhoeic_dermatitis_v_date"
+    t.date "hepatitis_b_or_c_infection_v_date"
+    t.date "kaposis_sarcoma_v_date"
+    t.date "non_typhoidal_salmonella_bacteraemia_recurrent_v_date"
+    t.date "leishmaniasis_atypical_disseminated_v_date"
+    t.date "cerebral_or_b_cell_non_hodgkin_lymphoma_v_date"
+    t.date "invasive_cancer_of_cervix_v_date"
+    t.date "cryptococcal_meningitis_or_other_eptb_cryptococcosis_v_date"
+    t.date "severe_unexplained_wasting_malnutrition_v_date"
+    t.date "diarrhoea_chronic_less_1_month_unexplained_v_date"
+    t.date "moderate_weight_loss_10_unexplained_v_date"
+    t.date "cd4_percentage_available_v_date"
+    t.date "acute_necrotizing_ulcerative_stom_ging_or_period_v_date"
+    t.date "moderate_unexplained_wasting_malnutrition_v_date"
+    t.date "diarrhoea_persistent_unexplained_14_days_or_more_v_date"
+    t.date "acute_ulcerative_mouth_infections_v_date"
+    t.date "anaemia_unexplained_8_g_dl_v_date"
+    t.date "atypical_mycobacteriosis_disseminated_or_lung_v_date"
+    t.date "bacterial_infections_sev_recurrent_excluding_pneumonia_v_date"
+    t.date "cancer_cervix_v_date"
+    t.date "chronic_herpes_simplex_infection_genital_v_date"
+    t.date "cryptosporidiosis_chronic_with_diarrhoea_v_date"
+    t.date "cytomegalovirus_infection_retinitis_or_other_organ_v_date"
+    t.date "cytomegalovirus_of_an_organ_other_than_liver_v_date"
+    t.date "fungal_nail_infections_v_date"
+    t.date "herpes_simplex_infection_mucocutaneous_visceral_v_date"
+    t.date "hiv_associated_cardiomyopathy_v_date"
+    t.date "hiv_associated_nephropathy_v_date"
+    t.date "invasive_cancer_cervix_v_date"
+    t.date "isosporiasis_1_month_v_date"
+    t.date "minor_mucocutaneous_manifestations_seborrheic_dermatitis_v_date"
+    t.date "moderate_unexplained_malnutrition_v_date"
+    t.date "molluscum_contagiosum_extensive_v_date"
+    t.date "oral_candidiasis_from_age_2_months_v_date"
+    t.date "oral_thrush_v_date"
+    t.date "perform_extended_staging_v_date"
+    t.date "pneumocystis_carinii_pneumonia_v_date"
+    t.date "pneumonia_severe_v_date"
+    t.date "recurrent_bacteraemia_or_sepsis_with_nts_v_date"
+    t.date "recurrent_severe_presumed_pneumonia_v_date"
+    t.date "recurrent_upper_respiratory_tract_bac_sinusitis_v_date"
+    t.date "sepsis_severe_v_date"
+    t.date "tb_lymphadenopathy_v_date"
+    t.date "unexplained_anaemia_neutropenia_or_thrombocytopenia_v_date"
+    t.date "visceral_leishmaniasis_v_date"
+    t.date "reason_for_eligibility_v_date"
+    t.date "who_stage_v_date"
+    t.date "who_stages_criteria_present_v_date"
+    t.date "date_created"
+    t.string "creator"
+    t.string "current_location"
+    t.index ["patient_id"], name: "ID_UNIQUE", unique: true
   end
 
-  create_table "form_field", primary_key: "form_field_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
-    t.integer "form_id", default: 0, null: false
-    t.integer "field_id", default: 0, null: false
-    t.integer "field_number"
-    t.string "field_part", limit: 5
-    t.integer "page_number"
-    t.integer "parent_form_field"
-    t.integer "min_occurs"
-    t.integer "max_occurs"
-    t.integer "required", limit: 2, default: 0, null: false
-    t.integer "changed_by"
-    t.datetime "date_changed"
-    t.integer "creator", default: 0, null: false
-    t.datetime "date_created", null: false
-    t.float "sort_weight"
-    t.string "uuid", limit: 38, null: false
-    t.index ["changed_by"], name: "user_who_last_changed_form_field"
-    t.index ["creator"], name: "user_who_created_form_field"
-    t.index ["field_id"], name: "field_within_form"
-    t.index ["form_id"], name: "form_containing_field"
-    t.index ["parent_form_field"], name: "form_field_hierarchy"
-    t.index ["uuid"], name: "form_field_uuid_index", unique: true
-  end
-
-  create_table "formentry_archive", primary_key: "formentry_archive_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
-    t.text "form_data", limit: 16777215, null: false
-    t.datetime "date_created", null: false
-    t.integer "creator", default: 0, null: false
-    t.index ["creator"], name: "User who created formentry_archive"
-  end
-
-  create_table "formentry_error", primary_key: "formentry_error_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
-    t.text "form_data", limit: 16777215, null: false
-    t.string "error", default: "", null: false
-    t.text "error_details"
-    t.integer "creator", default: 0, null: false
-    t.datetime "date_created", null: false
-    t.index ["creator"], name: "User who created formentry_error"
-  end
-
-  create_table "formentry_queue", primary_key: "formentry_queue_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
-    t.text "form_data", limit: 16777215, null: false
-    t.integer "creator", default: 0, null: false
-    t.datetime "date_created", null: false
-  end
-
-  create_table "formentry_xsn", primary_key: "formentry_xsn_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
-    t.integer "form_id", null: false
-    t.binary "xsn_data", limit: 4294967295, null: false
-    t.integer "creator", default: 0, null: false
-    t.datetime "date_created", null: false
-    t.integer "archived", default: 0, null: false
-    t.integer "archived_by"
-    t.datetime "date_archived"
-    t.index ["archived_by"], name: "User who archived formentry_xsn"
-    t.index ["creator"], name: "User who created formentry_xsn"
-    t.index ["form_id"], name: "Form with which this xsn is related"
-  end
-
-  create_table "general_sets", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  create_table "global_property", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
-    t.string "property", default: "", null: false
-    t.text "property_value", limit: 16777215
-    t.text "description"
-    t.string "uuid", limit: 38, null: false
-    t.index ["uuid"], name: "global_property_uuid_index", unique: true
-  end
-
-  create_table "heart_beat", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
+  create_table "heart_beat", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
     t.string "ip", limit: 20
     t.string "property", limit: 200
     t.string "value", limit: 200
@@ -745,9 +1818,9 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.index ["form_id"], name: "Form with which this htmlform is related"
   end
 
-  create_table "labs", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+  create_table "labs", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.datetime "created_at"
+    t.datetime "updated_at"
   end
 
   create_table "liquibasechangelog", primary_key: ["ID", "AUTHOR", "FILENAME"], options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
@@ -780,7 +1853,7 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.string "latitude", limit: 50
     t.string "longitude", limit: 50
     t.integer "creator", default: 0, null: false
-    t.datetime "date_created", null: false
+    t.timestamp "date_created", default: -> { "CURRENT_TIMESTAMP" }, null: false
     t.string "county_district", limit: 50
     t.string "neighborhood_cell", limit: 50
     t.string "region", limit: 50
@@ -790,11 +1863,9 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.integer "retired_by"
     t.datetime "date_retired"
     t.string "retire_reason"
-    t.integer "location_type_id"
     t.integer "parent_location"
     t.string "uuid", limit: 38, null: false
     t.index ["creator"], name: "user_who_created_location"
-    t.index ["location_type_id"], name: "type_of_location"
     t.index ["name"], name: "name_of_location"
     t.index ["parent_location"], name: "parent_location"
     t.index ["retired"], name: "retired_status"
@@ -803,7 +1874,7 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
   end
 
   create_table "location_tag", primary_key: "location_tag_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
-    t.string "tag", limit: 50
+    t.string "name", limit: 50
     t.string "description"
     t.integer "creator", null: false
     t.datetime "date_created", null: false
@@ -823,9 +1894,14 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.index ["location_tag_id"], name: "location_tag_map_tag"
   end
 
-  create_table "location_tag_maps", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+  create_table "location_tag_maps", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  create_table "location_tags", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.datetime "created_at"
+    t.datetime "updated_at"
   end
 
   create_table "logic_rule_definition", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
@@ -990,9 +2066,9 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.text "issued_to"
   end
 
-  create_table "national_ids", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+  create_table "national_ids", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.datetime "created_at"
+    t.datetime "updated_at"
   end
 
   create_table "note", primary_key: "note_id", id: :integer, default: 0, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
@@ -1053,7 +2129,7 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.index ["uuid"], name: "notification_template_uuid_index", unique: true
   end
 
-  create_table "notification_tracker", primary_key: "tracker_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
+  create_table "notification_tracker", primary_key: "tracker_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
     t.string "notification_name", null: false
     t.text "description"
     t.string "notification_response", null: false
@@ -1062,7 +2138,7 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.integer "user_id", null: false
   end
 
-  create_table "notification_tracker_user_activities", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
+  create_table "notification_tracker_user_activities", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
     t.integer "user_id", null: false
     t.datetime "login_datetime", null: false
     t.text "selected_activities"
@@ -1110,6 +2186,18 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.index ["value_coded_name_id"], name: "obs_name_of_coded_value"
     t.index ["value_drug"], name: "answer_concept_drug"
     t.index ["voided_by"], name: "user_who_voided_obs"
+  end
+
+  create_table "obs_preg", id: false, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.integer "person_id", null: false
+    t.datetime "obs_datetime", null: false
+    t.integer "encounter_type", null: false
+  end
+
+  create_table "obs_vw", id: false, options: "ENGINE=MyISAM DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.integer "concept_id", limit: 1, null: false
+    t.integer "encounter_id", limit: 1, null: false
+    t.integer "value_datetime", limit: 1, null: false
   end
 
   create_table "order_extension", primary_key: "order_extension_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
@@ -1177,9 +2265,15 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.index ["voided_by"], name: "user_who_voided_order"
   end
 
-  create_table "outpatients", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+  create_table "outpatients", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  create_table "overall_record_complete_status", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.integer "patient_seen_id", null: false
+    t.integer "complete", limit: 2, default: 0, null: false
+    t.index ["id"], name: "ID_UNIQUE", unique: true
   end
 
   create_table "patient", primary_key: "patient_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
@@ -1198,7 +2292,7 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.index ["voided_by"], name: "user_who_voided_patient"
   end
 
-  create_table "patient_defaulted_dates", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
+  create_table "patient_defaulted_dates", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
     t.integer "patient_id"
     t.integer "order_id"
     t.integer "drug_id"
@@ -1208,7 +2302,26 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.date "start_date"
     t.date "end_date"
     t.date "defaulted_date"
-    t.date "date_created", default: "2018-12-13"
+    t.date "date_created", default: "2015-06-19"
+  end
+
+  create_table "patient_first_arv_amount_dispensed", id: false, options: "ENGINE=MyISAM DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.integer "encounter_id", limit: 1, null: false
+    t.integer "encounter_type", limit: 1, null: false
+    t.integer "patient_id", limit: 1, null: false
+    t.integer "provider_id", limit: 1, null: false
+    t.integer "location_id", limit: 1, null: false
+    t.integer "form_id", limit: 1, null: false
+    t.integer "encounter_datetime", limit: 1, null: false
+    t.integer "creator", limit: 1, null: false
+    t.integer "date_created", limit: 1, null: false
+    t.integer "voided", limit: 1, null: false
+    t.integer "voided_by", limit: 1, null: false
+    t.integer "date_voided", limit: 1, null: false
+    t.integer "void_reason", limit: 1, null: false
+    t.integer "uuid", limit: 1, null: false
+    t.integer "changed_by", limit: 1, null: false
+    t.integer "date_changed", limit: 1, null: false
   end
 
   create_table "patient_identifier", primary_key: "patient_identifier_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
@@ -1254,6 +2367,38 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.index ["uuid"], name: "patient_identifier_type_uuid_index", unique: true
   end
 
+  create_table "patient_pregnant_obs", id: false, options: "ENGINE=MyISAM DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.integer "obs_id", limit: 1, null: false
+    t.integer "person_id", limit: 1, null: false
+    t.integer "concept_id", limit: 1, null: false
+    t.integer "encounter_id", limit: 1, null: false
+    t.integer "order_id", limit: 1, null: false
+    t.integer "obs_datetime", limit: 1, null: false
+    t.integer "location_id", limit: 1, null: false
+    t.integer "obs_group_id", limit: 1, null: false
+    t.integer "accession_number", limit: 1, null: false
+    t.integer "value_group_id", limit: 1, null: false
+    t.integer "value_boolean", limit: 1, null: false
+    t.integer "value_coded", limit: 1, null: false
+    t.integer "value_coded_name_id", limit: 1, null: false
+    t.integer "value_drug", limit: 1, null: false
+    t.integer "value_datetime", limit: 1, null: false
+    t.integer "value_numeric", limit: 1, null: false
+    t.integer "value_modifier", limit: 1, null: false
+    t.integer "value_text", limit: 1, null: false
+    t.integer "date_started", limit: 1, null: false
+    t.integer "date_stopped", limit: 1, null: false
+    t.integer "comments", limit: 1, null: false
+    t.integer "creator", limit: 1, null: false
+    t.integer "date_created", limit: 1, null: false
+    t.integer "voided", limit: 1, null: false
+    t.integer "voided_by", limit: 1, null: false
+    t.integer "date_voided", limit: 1, null: false
+    t.integer "void_reason", limit: 1, null: false
+    t.integer "value_complex", limit: 1, null: false
+    t.integer "uuid", limit: 1, null: false
+  end
+
   create_table "patient_program", primary_key: "patient_program_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.integer "patient_id", default: 0, null: false
     t.integer "program_id", default: 0, null: false
@@ -1277,6 +2422,19 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.index ["voided_by"], name: "user_who_voided_patient_program"
   end
 
+  create_table "patient_seen", primary_key: "patient_seen_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.integer "patient_id", null: false
+    t.date "visit_date", null: false
+  end
+
+  create_table "patient_service_waiting_time", id: false, options: "ENGINE=MyISAM DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.integer "patient_id", limit: 1, null: false
+    t.integer "visit_date", limit: 1, null: false
+    t.integer "start_time", limit: 1, null: false
+    t.integer "finish_time", limit: 1, null: false
+    t.integer "service_time", limit: 1, null: false
+  end
+
   create_table "patient_state", primary_key: "patient_state_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.integer "patient_program_id", default: 0, null: false
     t.integer "state", default: 0, null: false
@@ -1297,6 +2455,23 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.index ["state"], name: "state_for_patient"
     t.index ["uuid"], name: "patient_state_uuid_index", unique: true
     t.index ["voided_by"], name: "patient_state_voider"
+  end
+
+  create_table "patient_state_on_arvs", id: false, options: "ENGINE=MyISAM DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.integer "patient_state_id", limit: 1, null: false
+    t.integer "patient_program_id", limit: 1, null: false
+    t.integer "state", limit: 1, null: false
+    t.integer "start_date", limit: 1, null: false
+    t.integer "end_date", limit: 1, null: false
+    t.integer "creator", limit: 1, null: false
+    t.integer "date_created", limit: 1, null: false
+    t.integer "changed_by", limit: 1, null: false
+    t.integer "date_changed", limit: 1, null: false
+    t.integer "voided", limit: 1, null: false
+    t.integer "voided_by", limit: 1, null: false
+    t.integer "date_voided", limit: 1, null: false
+    t.integer "void_reason", limit: 1, null: false
+    t.integer "uuid", limit: 1, null: false
   end
 
   create_table "patientflags_flag", primary_key: "flag_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
@@ -1338,12 +2513,50 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.string "uuid", limit: 38, null: false
   end
 
+  create_table "patients_demographics", id: false, options: "ENGINE=MyISAM DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.integer "patient_id", limit: 1, null: false
+    t.integer "given_name", limit: 1, null: false
+    t.integer "family_name", limit: 1, null: false
+    t.integer "middle_name", limit: 1, null: false
+    t.integer "gender", limit: 1, null: false
+    t.integer "birthdate_estimated", limit: 1, null: false
+    t.integer "birthdate", limit: 1, null: false
+    t.integer "home_district", limit: 1, null: false
+    t.integer "current_district", limit: 1, null: false
+    t.integer "landmark", limit: 1, null: false
+    t.integer "current_residence", limit: 1, null: false
+    t.integer "traditional_authority", limit: 1, null: false
+    t.integer "date_enrolled", limit: 1, null: false
+    t.integer "earliest_start_date", limit: 1, null: false
+    t.integer "death_date", limit: 1, null: false
+    t.integer "age_at_initiation", limit: 1, null: false
+    t.integer "age_in_days", limit: 1, null: false
+  end
+
   create_table "patients_for_location", primary_key: "patient_id", id: :integer, default: nil, options: "ENGINE=MyISAM DEFAULT CHARSET=utf8", force: :cascade do |t|
+  end
+
+  create_table "patients_on_arvs", id: false, options: "ENGINE=MyISAM DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.integer "patient_id", limit: 1, null: false
+    t.integer "birthdate", limit: 1, null: false
+    t.integer "earliest_start_date", limit: 1, null: false
+    t.integer "death_date", limit: 1, null: false
+    t.integer "gender", limit: 1, null: false
+    t.integer "age_at_initiation", limit: 1, null: false
+    t.integer "age_in_days", limit: 1, null: false
   end
 
   create_table "patients_to_merge", id: false, options: "ENGINE=MyISAM DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.integer "patient_id"
     t.integer "to_merge_to_id"
+  end
+
+  create_table "patients_with_has_transfer_letter_yes", id: false, options: "ENGINE=MyISAM DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.integer "person_id", limit: 1, null: false
+    t.integer "gender", limit: 1, null: false
+    t.integer "obs_datetime", limit: 1, null: false
+    t.integer "date_created", limit: 1, null: false
+    t.integer "earliest_start_date", limit: 1, null: false
   end
 
   create_table "person", primary_key: "person_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
@@ -1395,7 +2608,7 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.string "township_division", limit: 50
     t.string "uuid", limit: 38, null: false
     t.index ["creator"], name: "patient_address_creator"
-    t.index ["date_created"], name: "index_date_created_on_person_address", order: :desc
+    t.index ["date_created"], name: "index_date_created_on_person_address"
     t.index ["person_id"], name: "patient_addresses"
     t.index ["uuid"], name: "person_address_uuid_index", unique: true
     t.index ["voided_by"], name: "patient_address_void"
@@ -1493,9 +2706,9 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.index ["person_name_id"], name: "name_for_patient"
   end
 
-  create_table "pharmacies", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+  create_table "pharmacies", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.datetime "created_at"
+    t.datetime "updated_at"
   end
 
   create_table "pharmacy_encounter_type", primary_key: "pharmacy_encounter_type_id", id: :integer, options: "ENGINE=MyISAM DEFAULT CHARSET=latin1", force: :cascade do |t|
@@ -1638,10 +2851,45 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.index ["uuid"], name: "program_workflow_state_uuid_index", unique: true
   end
 
+  create_table "provider_patient_interactions", primary_key: "ppi_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.integer "pi_id", null: false
+    t.integer "patient_id", null: false
+    t.index ["ppi_id"], name: "ID_UNIQUE", unique: true
+  end
+
+  create_table "provider_record_complete_status", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.integer "patient_seen_id", null: false
+    t.integer "provider_id", null: false
+    t.integer "complete", limit: 2, default: 0, null: false
+    t.index ["id"], name: "ID_UNIQUE", unique: true
+  end
+
+  create_table "providers_who_interacted_with_patients", primary_key: "pi_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.date "visit_date", null: false
+    t.index ["pi_id"], name: "ID_UNIQUE", unique: true
+  end
+
+  create_table "reason_for_art_eligibility_obs", id: false, options: "ENGINE=MyISAM DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.integer "person_id", limit: 1, null: false
+    t.integer "concept_id", limit: 1, null: false
+    t.integer "obs_datetime", limit: 1, null: false
+    t.integer "name", limit: 1, null: false
+  end
+
+  create_table "reason_for_eligibility_obs", id: false, options: "ENGINE=MyISAM DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.integer "patient_id", limit: 1, null: false
+    t.integer "reason_for_eligibility", limit: 1, null: false
+    t.integer "obs_datetime", limit: 1, null: false
+    t.integer "earliest_start_date", limit: 1, null: false
+    t.integer "date_enrolled", limit: 1, null: false
+  end
+
   create_table "regimen", primary_key: "regimen_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.integer "concept_id", default: 0, null: false
-    t.integer "min_weight", default: 0, null: false
-    t.integer "max_weight", default: 200, null: false
+    t.string "regimen_index", limit: 5
+    t.float "min_weight", default: 0.0, null: false
+    t.float "max_weight", default: 200.0, null: false
     t.integer "creator", default: 0, null: false
     t.datetime "date_created", null: false
     t.integer "retired", limit: 2, default: 0, null: false
@@ -1676,6 +2924,38 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.index ["voided_by"], name: "user_who_voided_regimen_drug_order"
   end
 
+  create_table "regimen_observation", id: false, options: "ENGINE=MyISAM DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.integer "obs_id", limit: 1, null: false
+    t.integer "person_id", limit: 1, null: false
+    t.integer "concept_id", limit: 1, null: false
+    t.integer "encounter_id", limit: 1, null: false
+    t.integer "order_id", limit: 1, null: false
+    t.integer "obs_datetime", limit: 1, null: false
+    t.integer "location_id", limit: 1, null: false
+    t.integer "obs_group_id", limit: 1, null: false
+    t.integer "accession_number", limit: 1, null: false
+    t.integer "value_group_id", limit: 1, null: false
+    t.integer "value_boolean", limit: 1, null: false
+    t.integer "value_coded", limit: 1, null: false
+    t.integer "value_coded_name_id", limit: 1, null: false
+    t.integer "value_drug", limit: 1, null: false
+    t.integer "value_datetime", limit: 1, null: false
+    t.integer "value_numeric", limit: 1, null: false
+    t.integer "value_modifier", limit: 1, null: false
+    t.integer "value_text", limit: 1, null: false
+    t.integer "date_started", limit: 1, null: false
+    t.integer "date_stopped", limit: 1, null: false
+    t.integer "comments", limit: 1, null: false
+    t.integer "creator", limit: 1, null: false
+    t.integer "date_created", limit: 1, null: false
+    t.integer "voided", limit: 1, null: false
+    t.integer "voided_by", limit: 1, null: false
+    t.integer "date_voided", limit: 1, null: false
+    t.integer "void_reason", limit: 1, null: false
+    t.integer "value_complex", limit: 1, null: false
+    t.integer "uuid", limit: 1, null: false
+  end
+
   create_table "region", primary_key: "region_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.string "name", default: "", null: false
     t.integer "creator", default: 0, null: false
@@ -1689,9 +2969,9 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.index ["retired_by"], name: "user_who_retired_region"
   end
 
-  create_table "regions", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+  create_table "regions", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.datetime "created_at"
+    t.datetime "updated_at"
   end
 
   create_table "relationship", primary_key: "relationship_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
@@ -1775,13 +3055,15 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.string "renderer_type", null: false
     t.text "properties"
     t.integer "creator", default: 0, null: false
-    t.datetime "date_created", null: false
+    t.datetime "date_created", default: "1900-01-01 23:59:59", null: false
     t.integer "changed_by"
     t.datetime "date_changed"
     t.boolean "retired", default: false, null: false
     t.integer "retired_by"
     t.datetime "date_retired"
     t.string "retire_reason"
+    t.date "start_date"
+    t.date "end_date"
     t.index ["changed_by"], name: "changed_by for reporting_report_design"
     t.index ["creator"], name: "creator for reporting_report_design"
     t.index ["report_definition_id"], name: "report_definition_id for reporting_report_design"
@@ -1797,13 +3079,15 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.string "extension", limit: 20
     t.binary "contents", limit: 4294967295
     t.integer "creator", default: 0, null: false
-    t.datetime "date_created", null: false
+    t.datetime "date_created", default: "1900-01-01 23:59:59", null: false
     t.integer "changed_by"
     t.datetime "date_changed"
     t.boolean "retired", default: false, null: false
     t.integer "retired_by"
     t.datetime "date_retired"
     t.string "retire_reason"
+    t.string "indicator_name"
+    t.string "indicator_short_name"
     t.index ["changed_by"], name: "changed_by for reporting_report_design_resource"
     t.index ["creator"], name: "creator for reporting_report_design_resource"
     t.index ["report_design_id"], name: "report_design_id for reporting_report_design_resource"
@@ -1859,9 +3143,9 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.integer "version"
   end
 
-  create_table "send_results_to_couchdbs", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+  create_table "send_results_to_couchdbs", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.datetime "created_at"
+    t.datetime "updated_at"
   end
 
   create_table "serialized_object", primary_key: "serialized_object_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
@@ -1891,6 +3175,12 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.text "data"
     t.datetime "updated_at"
     t.index ["session_id"], name: "sessions_session_id_index"
+  end
+
+  create_table "start_date_observation", id: false, options: "ENGINE=MyISAM DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.integer "person_id", limit: 1, null: false
+    t.integer "obs_datetime", limit: 1, null: false
+    t.integer "value_datetime", limit: 1, null: false
   end
 
   create_table "task", primary_key: "task_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
@@ -1926,9 +3216,138 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.index ["voided_by"], name: "user_who_voided_task"
   end
 
-  create_table "traditional_authorities", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+  create_table "tb_status_observations", id: false, options: "ENGINE=MyISAM DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.integer "obs_id", limit: 1, null: false
+    t.integer "person_id", limit: 1, null: false
+    t.integer "concept_id", limit: 1, null: false
+    t.integer "encounter_id", limit: 1, null: false
+    t.integer "order_id", limit: 1, null: false
+    t.integer "obs_datetime", limit: 1, null: false
+    t.integer "location_id", limit: 1, null: false
+    t.integer "obs_group_id", limit: 1, null: false
+    t.integer "accession_number", limit: 1, null: false
+    t.integer "value_group_id", limit: 1, null: false
+    t.integer "value_boolean", limit: 1, null: false
+    t.integer "value_coded", limit: 1, null: false
+    t.integer "value_coded_name_id", limit: 1, null: false
+    t.integer "value_drug", limit: 1, null: false
+    t.integer "value_datetime", limit: 1, null: false
+    t.integer "value_numeric", limit: 1, null: false
+    t.integer "value_modifier", limit: 1, null: false
+    t.integer "value_text", limit: 1, null: false
+    t.integer "date_started", limit: 1, null: false
+    t.integer "date_stopped", limit: 1, null: false
+    t.integer "comments", limit: 1, null: false
+    t.integer "creator", limit: 1, null: false
+    t.integer "date_created", limit: 1, null: false
+    t.integer "voided", limit: 1, null: false
+    t.integer "voided_by", limit: 1, null: false
+    t.integer "date_voided", limit: 1, null: false
+    t.integer "void_reason", limit: 1, null: false
+    t.integer "value_complex", limit: 1, null: false
+    t.integer "uuid", limit: 1, null: false
+  end
+
+  create_table "temp_bp_screen_patient_details", id: false, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.integer "patient_id", default: 0, null: false
+    t.string "gender", limit: 50, default: "", collation: "utf8_general_ci"
+    t.date "birthdate"
+    t.date "earliest_start_date"
+    t.date "date_enrolled"
+    t.datetime "death_date"
+    t.bigint "age_at_initiation"
+    t.bigint "age_in_days"
+    t.date "obs_datetime"
+    t.integer "concept_id", default: 0, null: false
+    t.integer "value_coded"
+    t.integer "value_coded_name_id"
+    t.text "value_text", collation: "utf8_general_ci"
+    t.bigint "age"
+  end
+
+  create_table "temp_earliest_start_date", id: false, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.integer "patient_id", default: 0, null: false
+    t.string "gender", limit: 50, default: "", collation: "utf8_general_ci"
+    t.date "birthdate"
+    t.integer "birthdate_estimated", limit: 2, default: 0
+    t.date "earliest_start_date"
+    t.date "date_enrolled"
+    t.datetime "death_date"
+    t.bigint "age_at_initiation"
+    t.bigint "age_in_days"
+    t.index ["patient_id"], name: "patient_id"
+  end
+
+  create_table "temp_encounter", primary_key: "encounter_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.integer "encounter_type", null: false
+    t.integer "patient_id", default: 0, null: false
+    t.integer "provider_id", default: 0, null: false
+    t.integer "location_id"
+    t.integer "form_id"
+    t.datetime "encounter_datetime", null: false
+    t.integer "creator", default: 0, null: false
+    t.datetime "date_created", null: false
+    t.integer "voided", limit: 2, default: 0, null: false
+    t.integer "voided_by"
+    t.datetime "date_voided"
+    t.string "void_reason"
+    t.string "uuid", limit: 38, null: false
+    t.integer "changed_by"
+    t.datetime "date_changed"
+  end
+
+  create_table "temp_ipt_patient_details", id: false, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.integer "patient_id", default: 0, null: false
+    t.string "gender", limit: 50, default: "", collation: "utf8_general_ci"
+    t.date "birthdate"
+    t.date "earliest_start_date"
+    t.date "date_enrolled"
+    t.datetime "death_date"
+    t.bigint "age_at_initiation"
+    t.bigint "age_in_days"
+    t.date "obs_datetime"
+    t.bigint "age"
+  end
+
+  create_table "temp_obs", primary_key: "obs_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.integer "person_id", null: false
+    t.integer "concept_id", default: 0, null: false
+    t.integer "encounter_id"
+    t.integer "order_id"
+    t.datetime "obs_datetime", null: false
+    t.integer "location_id"
+    t.integer "obs_group_id"
+    t.string "accession_number"
+    t.integer "value_group_id"
+    t.boolean "value_boolean"
+    t.integer "value_coded"
+    t.integer "value_coded_name_id"
+    t.integer "value_drug"
+    t.datetime "value_datetime"
+    t.float "value_numeric", limit: 53
+    t.string "value_modifier", limit: 2
+    t.text "value_text"
+    t.datetime "date_started"
+    t.datetime "date_stopped"
+    t.string "comments"
+    t.integer "creator", default: 0, null: false
+    t.datetime "date_created", null: false
+    t.integer "voided", limit: 2, default: 0, null: false
+    t.integer "voided_by"
+    t.datetime "date_voided"
+    t.string "void_reason"
+    t.string "value_complex"
+    t.string "uuid", limit: 38, null: false
+  end
+
+  create_table "temp_patient_outcomes", id: false, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.integer "patient_id", default: 0, null: false
+    t.string "cum_outcome", limit: 25
+  end
+
+  create_table "traditional_authorities", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.datetime "created_at"
+    t.datetime "updated_at"
   end
 
   create_table "traditional_authority", primary_key: "traditional_authority_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
@@ -1954,7 +3373,7 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
   create_table "user_property", primary_key: ["user_id", "property"], options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.integer "user_id", default: 0, null: false
     t.string "property", limit: 100, default: "", null: false
-    t.string "property_value", default: "", null: false
+    t.string "property_value", limit: 600, default: "", null: false
   end
 
   create_table "user_role", primary_key: ["role", "user_id"], options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
@@ -1988,20 +3407,20 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.index ["retired_by"], name: "user_who_retired_this_user"
   end
 
-  create_table "validation_results", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
+  create_table "validation_results", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
     t.integer "rule_id"
     t.integer "failures"
     t.date "date_checked"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at"
+    t.datetime "updated_at"
   end
 
-  create_table "validation_rules", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
+  create_table "validation_rules", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
     t.string "expr"
     t.text "desc"
     t.integer "type_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at"
+    t.datetime "updated_at"
   end
 
   create_table "village", primary_key: "village_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
@@ -2019,9 +3438,9 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.index ["traditional_authority_id"], name: "ta_for_village"
   end
 
-  create_table "villages", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+  create_table "villages", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.datetime "created_at"
+    t.datetime "updated_at"
   end
 
   create_table "weight_for_height", id: false, options: "ENGINE=MyISAM DEFAULT CHARSET=latin1", force: :cascade do |t|
@@ -2033,9 +3452,12 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
     t.string "heightsex", limit: 5
   end
 
-  create_table "weight_for_heights", id: false, options: "ENGINE=MyISAM DEFAULT CHARSET=latin1", force: :cascade do |t|
-    t.float "supinecm", limit: 53, null: false
-    t.float "median_weight_height", limit: 53, null: false
+  create_table "weight_for_heights", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
+    t.float "supine_cm"
+    t.float "median_weight_height"
+    t.float "standard_low_weight_height"
+    t.float "standard_high_weight_height"
+    t.integer "sex"
   end
 
   create_table "weight_height_for_age", id: false, options: "ENGINE=MyISAM DEFAULT CHARSET=latin1", force: :cascade do |t|
@@ -2160,31 +3582,12 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
   add_foreign_key "field_answer", "field", primary_key: "field_id", name: "answers_for_field"
   add_foreign_key "field_answer", "users", column: "creator", primary_key: "user_id", name: "user_who_created_field_answer"
   add_foreign_key "field_type", "users", column: "creator", primary_key: "user_id", name: "user_who_created_field_type"
-  add_foreign_key "form", "encounter_type", column: "encounter_type", primary_key: "encounter_type_id", name: "form_encounter_type"
-  add_foreign_key "form", "users", column: "changed_by", primary_key: "user_id", name: "user_who_last_changed_form"
-  add_foreign_key "form", "users", column: "creator", primary_key: "user_id", name: "user_who_created_form"
-  add_foreign_key "form", "users", column: "retired_by", primary_key: "user_id", name: "user_who_retired_form"
-  add_foreign_key "form2program_map", "encounter_type", column: "encounter_type", primary_key: "encounter_type_id", name: "form2program_map_ibfk_2"
-  add_foreign_key "form2program_map", "program", column: "program", primary_key: "program_id", name: "form2program_map_ibfk_1"
-  add_foreign_key "form2program_map", "users", column: "changed_by", primary_key: "user_id", name: "user_who_changed_form2program"
-  add_foreign_key "form2program_map", "users", column: "creator", primary_key: "user_id", name: "user_who_created_form2program"
-  add_foreign_key "form_field", "field", primary_key: "field_id", name: "field_within_form"
-  add_foreign_key "form_field", "form", primary_key: "form_id", name: "form_containing_field"
-  add_foreign_key "form_field", "form_field", column: "parent_form_field", primary_key: "form_field_id", name: "form_field_hierarchy"
-  add_foreign_key "form_field", "users", column: "changed_by", primary_key: "user_id", name: "user_who_last_changed_form_field"
-  add_foreign_key "form_field", "users", column: "creator", primary_key: "user_id", name: "user_who_created_form_field"
-  add_foreign_key "formentry_archive", "users", column: "creator", primary_key: "user_id", name: "User who created formentry_archive"
-  add_foreign_key "formentry_error", "users", column: "creator", primary_key: "user_id", name: "User who created formentry_error"
-  add_foreign_key "formentry_xsn", "form", primary_key: "form_id", name: "Form with which this xsn is related"
-  add_foreign_key "formentry_xsn", "users", column: "archived_by", primary_key: "user_id", name: "User who archived formentry_xsn"
-  add_foreign_key "formentry_xsn", "users", column: "creator", primary_key: "user_id", name: "User who created formentry_xsn"
   add_foreign_key "hl7_in_queue", "hl7_source", column: "hl7_source", primary_key: "hl7_source_id", name: "hl7_source"
   add_foreign_key "hl7_source", "users", column: "creator", primary_key: "user_id", name: "creator"
   add_foreign_key "htmlformentry_html_form", "form", primary_key: "form_id", name: "Form with which this htmlform is related"
   add_foreign_key "htmlformentry_html_form", "users", column: "changed_by", primary_key: "user_id", name: "User who changed htmlformentry_htmlform"
   add_foreign_key "htmlformentry_html_form", "users", column: "creator", primary_key: "user_id", name: "User who created htmlformentry_htmlform"
   add_foreign_key "location", "location", column: "parent_location", primary_key: "location_id", name: "parent_location"
-  add_foreign_key "location", "location_type", primary_key: "location_type_id", name: "location_type"
   add_foreign_key "location", "users", column: "creator", primary_key: "user_id", name: "user_who_created_location"
   add_foreign_key "location", "users", column: "retired_by", primary_key: "user_id", name: "user_who_retired_location"
   add_foreign_key "location_tag", "users", column: "creator", primary_key: "user_id", name: "location_tag_creator"
@@ -2317,7 +3720,7 @@ ActiveRecord::Schema.define(version: 2018_12_10_122430) do
   add_foreign_key "report_object", "users", column: "changed_by", primary_key: "user_id", name: "user_who_changed_report_object"
   add_foreign_key "report_object", "users", column: "creator", primary_key: "user_id", name: "report_object_creator"
   add_foreign_key "report_object", "users", column: "voided_by", primary_key: "user_id", name: "user_who_voided_report_object"
-  add_foreign_key "reporting_report_design", "serialized_object", column: "report_definition_id", primary_key: "serialized_object_id", name: "report_definition_id for reporting_report_design"
+  add_foreign_key "reporting_report_design", "report_def", column: "report_definition_id", primary_key: "report_def_id", name: "report_definition_id for reporting_report_design"
   add_foreign_key "reporting_report_design", "users", column: "changed_by", primary_key: "user_id", name: "changed_by for reporting_report_design"
   add_foreign_key "reporting_report_design", "users", column: "creator", primary_key: "user_id", name: "creator for reporting_report_design"
   add_foreign_key "reporting_report_design", "users", column: "retired_by", primary_key: "user_id", name: "retired_by for reporting_report_design"
