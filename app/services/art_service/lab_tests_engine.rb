@@ -17,6 +17,14 @@ class ARTService::LabTestsEngine
     nlims.test_types(specimen_type)
   end
 
+  def lab_locations
+    nlims.locations
+  end
+
+  def labs
+    nlims.labs
+  end
+
   def panels(search_string: nil)
     nlims.specimen_types
   end
@@ -51,7 +59,7 @@ class ARTService::LabTestsEngine
   end
 
   def find_orders_by_accession_number(accession_number)
-    LabTestTable.where(Pat_ID: accession_number).order(Arel.sql('DATE(OrderDate), TIME(OrderTime)'))
+    nlims.patient_orders(accession_number)
   end
 
   def save_result(accession_number:, test_value:, time:)
@@ -173,6 +181,11 @@ class ARTService::LabTestsEngine
   end
 
   def nlims
-    ::NLims.new
+    return @nlims if @nlims
+
+    config = YAML.load_file "#{Rails.root}/config/application.yml"
+    @nlims = ::NLims.new config
+    @nlims.auth config['lims_username'], config['lims_password']
+    @nlims
   end
 end

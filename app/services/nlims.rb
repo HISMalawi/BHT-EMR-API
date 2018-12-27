@@ -1,55 +1,67 @@
 # frozen_string_literal: true
 
+require 'ostruct'
 require 'rest-client'
 
 class NLims
-  API_HOST = '192.168.41.207'
-  API_PORT = '3010'
-  API_PREFIX = 'api/v1'
+  def initialize(config)
+    @api_url = config['lims_url']
+    @connection = nil
+  end
+
+  # We initially require a temporary authentication for user creation.
+  # All other requests must start with an auth
+  def temp_auth(username, password)
+    response = get "authenticate/#{username}/#{password}"
+
+    @connection = OpenStruct.new token: response['token']
+  end
+
+  def auth(username, password)
+    response = get "re_authenticate/#{username}/#{password}"
+
+    @connection = OpenStruct.new token: response['token']
+  end
 
   def order_test(patient:, user:, specimen_type:, test_types:, date:, reason:, target_lab:)
     patient_name = patient.person.names.first
     user_name = user.person.names.first
 
-    response = post('create_order', {
-      district: 'Lilongwe',
-      health_facility_name: 'LL',
-      first_name: patient_name.given_name,
-      last_name: patient_name.family_name,
-      middle_name: '',
-      date_of_birth: patient.person.birthdate,
-      gender: patient.person.gender,
-      national_patient_id: patient.national_id,
-      phone_number: '',
-      who_order_test_last_name: user_name.family_name,
-      who_order_test_first_name: user_name.given_name,
-      who_order_test_id: user.id,
-      order_location: 'ART',
-      sample_type: specimen_type,
-      date_sample_drawn: date,
-      tests: test_types,
-      sample_priority: reason,
-      target_lab: target_lab,
-      art_start_date: 'unknown',
-      requesting_clinician: ''
-    })
-
-    response.to_hash
+    post 'create_order', district: 'Lilongwe',
+                         health_facility_name: 'LL',
+                         first_name: patient_name.given_name,
+                         last_name: patient_name.family_name,
+                         middle_name: '',
+                         date_of_birth: patient.person.birthdate,
+                         gender: patient.person.gender,
+                         national_patient_id: patient.national_id,
+                         phone_number: '',
+                         who_order_test_last_name: user_name.family_name,
+                         who_order_test_first_name: user_name.given_name,
+                         who_order_test_id: user.id,
+                         order_location: 'ART',
+                         sample_type: specimen_type,
+                         date_sample_drawn: date,
+                         tests: test_types,
+                         sample_priority: reason,
+                         target_lab: target_lab,
+                         art_start_date: 'unknown',
+                         requesting_clinician: ''
   end
 
   def patient_results(accession_number)
     get("query_results_by_tracking_number/#{accession_number}")
   end
 
-  def all_patient_results(patient)
+  def all_results(patient)
     get("query_results_by_npid/#{patient.national_id}")
   end
 
-  def results_trail(accession_number)
+  def patient_orders(accession_number)
     get("query_order_by_tracking_number/#{accession_number}")
   end
 
-  def all_results_trail(patient)
+  def all_orders(patient)
     get("query_order_by_npid/#{patient.national_id}")
   end
 
@@ -61,31 +73,51 @@ class NLims
     tests[specimen_type]
   end
 
+  def locations
+    get('retrieve_order_location')
+  end
+
+  def labs
+    get('retrieve_target_labs')
+  end
+
+  # Call temp_auth before this
+  def create_user(body)
+    post 'create_user', body
+  end
+
   private
 
   def tests
-    @tests ||= get('retrieve_test_Catelog')['data']
+    @tests ||= get('retrieve_test_Catelog')
   end
 
   def get(path)
-    headers = { token: '2Ucgn6jvDhtx', content_type: 'application/json' }
-    content = RestClient.get(expand_path(path), headers)
-    handle_response(JSON.parse(content))
+    exec_request(path) do |full_path, headers|
+      RestClient.get(full_path, headers)
+    end
   end
 
   def post(path, body)
-    headers = { token: '2Ucgn6jvDhtx', content_type: 'application/json' }
-    content = RestClient.post(expand_path(path), body, headers)
-    handle_response(JSON.parse(content))
+    puts body.as_json
+    exec_request(path) do |full_path, headers|
+      RestClient.post(full_path, body.as_json, headers)
+    end
   end
 
-  def expand_path(path)
-    "http://#{API_HOST}:#{API_PORT}/#{API_PREFIX}/#{path}"
+  def exec_request(path)
+    response = yield expand_url(path), token: @connection&.token,
+                                       content_type: 'application/json'
+
+    response = JSON.parse(response)
+    raise "Failed to communicate with LIMS: #{response['message']}" if response['error'] == true
+
+    puts response['data']
+
+    response['data']
   end
 
-  def handle_response(response)
-    raise "Failed to communicate with LIMS: #{response['message']}" if response[:error]
-
-    response
+  def expand_url(path)
+    "#{@api_url}/#{path}"
   end
 end
