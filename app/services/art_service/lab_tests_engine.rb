@@ -63,14 +63,14 @@ class ARTService::LabTestsEngine
   def find_orders_by_accession_number(accession_number)
     order = nlims.patient_orders(accession_number)
 
-    {
+    [{
       sample_type: order['other']['sample_type'],
       date_ordered: order['other']['date_created'],
       order_location: order['other']['order_location'],
       specimen_status: order['other']['specimen_status'],
       accession_number: accession_number,
       tests: order['tests'].collect { |k, v| { test_type: k, test_status: v } }
-    }
+    }]
   end
 
   def save_result(accession_number:, test_value:, time:)
