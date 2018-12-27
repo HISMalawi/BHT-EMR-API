@@ -65,9 +65,8 @@ class ARTService::LabTestsEngine
     begin
       result = nlims.patient_results(accession_number)['results']
     rescue StandardError => e
-      unless e.message.include?('results not available')
-        raise e
-      end
+      raise e unless e.message.include?('results not available')
+
       result = {}
     end
 
