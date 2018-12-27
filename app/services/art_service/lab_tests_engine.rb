@@ -41,7 +41,7 @@ class ARTService::LabTestsEngine
 
     lims_order = nlims.order_test(patient: patient, user: User.current, date: date,
                                   reason: reason, **kwargs)
-    accession_number = lims_order[:tracking_number]
+    accession_number = lims_order['tracking_number']
 
     local_order = create_local_order(patient, encounter, date, accession_number)
     save_reason_for_test(encounter, local_order, reason)
@@ -53,6 +53,8 @@ class ARTService::LabTestsEngine
     local_orders = local_orders(patient)
     local_orders = paginate_func.call(local_orders) if paginate_func
     local_orders.each_with_object([]) do |local_order, collected_orders|
+      next unless local_order.accession_number
+
       orders = find_orders_by_accession_number local_order.accession_number
       collected_orders.push(*orders)
     end
