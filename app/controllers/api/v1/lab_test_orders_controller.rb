@@ -43,10 +43,24 @@ class Api::V1::LabTestOrdersController < ApplicationController
   end
 
   def locations
-    render json: engine.lab_locations
+    search_name = params[:search_name]
+
+    locations_list = engine.lab_locations
+    if search_name
+      locations_list = locations_list.select { |location| location.include?(search_name) }
+    end
+
+    render json: locations_list
   end
 
   def labs
-    render json: engine.labs
+    search_name = params[:search_name]
+
+    labs_list = engine.labs
+    if search_name
+      labs_list = labs_list.select { |labs| labs.include?(search_name) }
+    end
+
+    render json: labs_list
   end
 end
