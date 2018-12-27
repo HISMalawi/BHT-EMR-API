@@ -6,7 +6,7 @@ class Api::V1::LabTestOrdersController < ApplicationController
   def index
     if params[:accession_number]
       orders = engine.find_orders_by_accession_number params[:accession_number]
-      render json: paginate(orders)
+      render json: orders
     elsif params[:patient_id]
       patient = Patient.find params[:patient_id]
       orders = engine.find_orders_by_patient patient
@@ -40,5 +40,13 @@ class Api::V1::LabTestOrdersController < ApplicationController
                                 target_lab: target_lab
 
     render json: order, status: :created
+  end
+
+  def locations
+    render json: engine.lab_locations
+  end
+
+  def labs
+    render json: engine.labs
   end
 end
