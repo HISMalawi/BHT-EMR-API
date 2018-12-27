@@ -62,6 +62,7 @@ class ARTService::LabTestsEngine
 
   def find_orders_by_accession_number(accession_number)
     order = nlims.patient_orders(accession_number)
+    result = nlims.patient_results(accession_number)['results']
 
     [{
       sample_type: order['other']['sample_type'],
@@ -69,7 +70,13 @@ class ARTService::LabTestsEngine
       order_location: order['other']['order_location'],
       specimen_status: order['other']['specimen_status'],
       accession_number: accession_number,
-      tests: order['tests'].collect { |k, v| { test_type: k, test_status: v } }
+      tests: order['tests'].collect do |k, v|
+        test_values = result[k].collect do |indicator, value|
+          { indicator: indicator, value: value }
+        end
+
+        { test_type: k, test_status: v, test_values: test_values }
+      end
     }]
   end
 
