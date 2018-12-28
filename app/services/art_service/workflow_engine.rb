@@ -214,38 +214,36 @@ module ARTService
     end
 
     def assess_for_fast_track?
-      false # Disable fast track until DHA approves
+      encounter = Encounter.where(encounter_type: encounter_type(FAST_TRACK),
+                                  patient: @patient)\
+                           .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))
+                           .order(encounter_datetime: :desc)
+                           .first
 
-      # encounter = Encounter.where(encounter_type: encounter_type(FAST_TRACK),
-      #                             patient: @patient)\
-      #                      .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))
-      #                      .order(encounter_datetime: :desc)
-      #                      .first
+      # HACK: In an ideal situation we should be returning true here to
+      # trigger creation of a new encounter on client side however
+      # client-side at this point normally already has an encounter
+      # created with 'assess for fast track either set to yes or no'
+      return false unless encounter
 
-      # # HACK: In an ideal situation we should be returning true here to
-      # # trigger creation of a new encounter on client side however
-      # # client-side at this point normally already has an encounter
-      # # created with 'assess for fast track either set to yes or no'
-      # return false unless encounter
+      assess_for_fast_track_concept = concept('Assess for fast track?')
 
-      # assess_for_fast_track_concept = concept('Assess for fast track?')
+      # Should we assess fast track?
+      assess_fast_track = encounter.observations.where(
+        concept: assess_for_fast_track_concept,
+        value_coded: concept('Yes').concept_id
+      ).exists?
 
-      # # Should we assess fast track?
-      # assess_fast_track = encounter.observations.where(
-      #   concept: assess_for_fast_track_concept,
-      #   value_coded: concept('Yes').concept_id
-      # ).exists?
+      return false unless assess_fast_track
 
-      # return false unless assess_fast_track
+      # Have we already assessed fast track?
+      # We check for this condiition by looking for any observations other
+      # 'Assess for fast track' which we are assuming are
+      fast_track_assessed = encounter.observations.where.not(
+        concept: assess_for_fast_track_concept
+      ).exists?
 
-      # # Have we already assessed fast track?
-      # # We check for this condiition by looking for any observations other
-      # # 'Assess for fast track' which we are assuming are
-      # fast_track_assessed = encounter.observations.where.not(
-      #   concept: assess_for_fast_track_concept
-      # ).exists?
-
-      # !fast_track_assessed
+      !fast_track_assessed
     end
   end
 end
