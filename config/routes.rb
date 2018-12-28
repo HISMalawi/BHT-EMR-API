@@ -108,6 +108,7 @@ Rails.application.routes.draw do
       namespace :types do
         resources :relationships
         resources :lab_tests
+        resources :patient_identifiers
       end
 
       resources :drugs
