@@ -41,7 +41,7 @@ describe ARTService::WorkflowEngine do
       register_patient patient
       Observation.create(person: patient.person,
                          concept: concept('Type of patient'),
-                         value_coded: concept('Visiting patient').concept_id)
+                         value_coded: concept('External consultation').concept_id)
       encounter_type = engine.next_encounter
       expect(encounter_type.name.upcase).to eq('HIV RECEPTION')
     end
