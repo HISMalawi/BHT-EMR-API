@@ -43,6 +43,7 @@ Rails.application.routes.draw do
         get '/drugs_received', to: 'patients#drugs_received'
         get '/next_appointment_date', to: 'patient_appointments#next_appointment_date'
         get '/median_weight_height', to: 'patients#find_median_weight_and_height'
+        post '/filing_number', to: 'patients#assign_filing_number'
         resources :patient_programs, path: :programs
       end
 

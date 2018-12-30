@@ -114,6 +114,11 @@ class Api::V1::PatientsController < ApplicationController
     render json: drugs_orders
   end
 
+  def assign_filing_number
+    filing_number = params[:filing_number]
+    render json: service.assign_patient_filing_number(patient, filing_number)
+  end
+
   private
 
   DDE_CONFIG_PATH = 'config/application.yml'

@@ -32,4 +32,8 @@ module ModelUtils
   def report_type(name)
     ReportType.find_by_name(name)
   end
+
+  def patient_identifier_type(name)
+    PatientIdentifierType.find_by_name(name)
+  end
 end
