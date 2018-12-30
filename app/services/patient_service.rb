@@ -39,8 +39,8 @@ class PatientService
     end
 
     {
-      restored_patient: restore_patient(patient, filing_number).patient,
-      archived_patient: archived_patient
+      new_identifier: restore_patient(patient, filing_number),
+      archived_identifier: nil
     }
   end
 
