@@ -114,6 +114,10 @@ class Api::V1::PatientsController < ApplicationController
     render json: drugs_orders
   end
 
+  def bp_readings_trail
+    render json: service.patient_bp_readings_trail(patient, Date.today)
+  end
+
   private
 
   DDE_CONFIG_PATH = 'config/application.yml'
