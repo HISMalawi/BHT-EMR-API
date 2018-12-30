@@ -35,10 +35,13 @@ class PatientService
     if filing_number
       archived_patient = archive_patient_by_filing_number(filing_number)
     else
-      filing_number ||= available_filing_number 'Filing'
+      filing_number ||= find_available_filing_number 'Filing'
     end
 
-    [restore_patient(patient, filing_number), archived_patient]
+    {
+      restored_patient: restore_patient(patient, filing_number).patient,
+      archived_patient: archived_patient
+    }
   end
 
   private
