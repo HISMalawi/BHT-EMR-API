@@ -30,18 +30,18 @@ class PatientService
   end
 
   def assign_patient_filing_number(patient, filing_number = nil)
-    archived_patient = nil
+    archived_identifier = nil
 
     if filing_number
-      archived_patient = archive_patient_by_filing_number(filing_number)
+      archived_identifier = archive_patient_by_filing_number(filing_number)
     else
-      filing_number ||= find_available_filing_number 'Filing'
+      filing_number ||= find_available_filing_number 'Filing number'
     end
 
-    {
-      new_identifier: restore_patient(patient, filing_number),
-      archived_identifier: nil
-    }
+    new_identifier = restore_patient(patient, filing_number)
+    return nil unless new_identifier
+
+    { new_identifier: new_identifier, archived_identifier: archived_identifier }
   end
 
   private
@@ -97,7 +97,6 @@ class PatientService
   # Source: NART#app/models/patient_identifiers and NART#lib/patient_service
   def find_available_filing_number(type)
     filing_number_type = patient_identifier_type(type)
-    available_numbers = PatientIdentifier.where(type: filing_number_type).map(&:identifier)
 
     filing_number_prefix = global_property('filing.number.prefix')&.property_value
     filing_number_prefix ||= 'FN101,FN102'
@@ -112,7 +111,8 @@ class PatientService
       "#{prefix}#{num.to_s.rjust(5, '0')}"
     end
 
-    (possible_identifiers - available_numbers.compact.uniq).min
+    used_identifiers = PatientIdentifier.where(type: filing_number_type).map(&:identifier)
+    (possible_identifiers - used_identifiers.compact.uniq).min
   end
 
   # Archives patient with given filing number
@@ -124,8 +124,9 @@ class PatientService
     identifier.void('Filing number re-assigned to another patient')
 
     PatientIdentifier.create type: patient_identifier_type('Archived Filing Number'),
-                             identifier: find_available_filing_number('Archived'),
-                             patient: identifier.patient
+                             identifier: find_available_filing_number('Archived filing number'),
+                             patient: identifier.patient,
+                             location_id: Location.current.location_id
   end
 
   # Restores a patient onto the filing system by assigning the patient a new filing number
@@ -136,11 +137,11 @@ class PatientService
   #         be_archived.
   def restore_patient(patient, filing_number)
     ActiveRecord::Base.transaction do
-      filing_number_limit = global_property('filing.number.limit')&.property_value&.to_i
-      filing_number_limit ||= 10_000
-
       active_filing_number_identifier_type = patient_identifier_type('Filing Number')
       dormant_filing_number_identifier_type = patient_identifier_type('Archived filing number')
+
+      filing_number_limit = global_property('filing.number.limit')&.property_value&.to_i
+      filing_number_limit ||= 10_000
 
       return nil if filing_number[5..-1].to_i > filing_number_limit
 

@@ -116,8 +116,12 @@ class Api::V1::PatientsController < ApplicationController
 
   def assign_filing_number
     filing_number = params[:filing_number]
-    render json: service.assign_patient_filing_number(patient, filing_number),
-           status: :created
+    response = service.assign_patient_filing_number(patient, filing_number)
+    if response
+      render json: response, status: :created
+    else
+      render status: :no_content
+    end
   end
 
   private
