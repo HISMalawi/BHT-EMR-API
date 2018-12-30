@@ -28,6 +28,43 @@ class Api::V1::FastTrackController < ApplicationController
     render json: patient_assessment
   end
 
+  def on_fast_track
+    patient_id  = params[:person_id]
+    date        = params[:date].to_date
+
+    previous_ft = Observation.where("person_id = ? AND obs_datetime <= ? 
+      AND concept_id = ?", patient_id, date.strftime('%Y-%m-%d 23:59:59'),
+      ConceptName.find_by_name('FAST').concept_id).order('obs_datetime DESC').first
+ 
+    ans = false if previous_ft.blank?
+    unless previous_ft.blank?
+      yes = ConceptName.find_by_name('Yes').concept_id
+      ans = previous_ft.value_coded.to_i == yes ? true : false 
+    end
+
+    render json: {'continue FT': ans}
+  end
+  
+  def cancel
+    patient_id  = params[:person_id]
+    date        = params[:date].to_date
+      
+    time = Time.now().strftime('%H:%M:%S')
+    obs_datetime = date.strftime('%Y-%m-%d')
+
+    encounter_id = Observation.where("person_id = ? AND obs_datetime <= ? 
+      AND concept_id = ?", patient_id, date.strftime('%Y-%m-%d 23:59:59'),
+      ConceptName.find_by_name('FAST').concept_id).order('obs_datetime DESC').first.encounter_id
+ 
+    obs = Observation.create(person_id: patient_id, 
+      obs_datetime: "#{date} #{time}",
+      location_id: Location.current.id,
+      concept_id: ConceptName.find_by_name('FAST').concept_id,
+      value_coded: ConceptName.find_by_name('No').concept_id,
+      encounter_id: encounter_id)
+    
+    render json: obs  
+  end
 
   private
 

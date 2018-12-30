@@ -142,4 +142,6 @@ Rails.application.routes.draw do
   post '/api/v1/auth/login' => 'api/v1/users#login'
   post '/api/v1/auth/verify_token' => 'api/v1/users#check_token_validity'
   get '/api/v1/fast_track_assessment' => 'api/v1/fast_track#assessment'
+  post '/api/v1/cancel_fast_track' => 'api/v1/fast_track#cancel'
+  get '/api/v1/on_fast_track' => 'api/v1/fast_track#on_fast_track'
 end
