@@ -39,8 +39,7 @@ class Patient < VoidableRecord
           include: {
             type: {}
           }
-        },
-        orders: {}
+        }
       }
     ))
   end
