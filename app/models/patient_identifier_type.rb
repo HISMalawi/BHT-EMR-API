@@ -32,6 +32,7 @@ class PatientIdentifierType < RetirableRecord
 
   def new_v1_id
     id_prefix = v1_id_prefix
+    puts "Last id number: #{last_id_number(id_prefix)}"
     next_number = (last_id_number(id_prefix)[5..-2].to_i + 1).to_s.rjust(7, '0')
     new_national_id_no_check_digit = "#{id_prefix}#{next_number}"
     check_digit = PatientIdentifier.calculate_checkdigit(
@@ -46,16 +47,10 @@ class PatientIdentifierType < RetirableRecord
   end
 
   def last_id_number(id_prefix)
-    PatientIdentifier.first(
-      order: 'identifier desc',
-      conditions: [
-        'identifier_type = ? AND left(identifier, 5) = ?',
-        patient_identifier_type_id,
-        id_prefix
-      ]
-    ).number
-  rescue StandardError => e
-    Rails.logger.warn "Suppressed error #{e}"
-    '0'
+    PatientIdentifier.where(
+      'identifier_type = ? AND left(identifier, 5) = ?',
+      patient_identifier_type_id,
+      id_prefix
+    ).order(identifier: :desc).first&.identifier || '0'
   end
 end
