@@ -139,6 +139,7 @@ Rails.application.routes.draw do
   end
 
   root to: 'static#index'
+  get '/api/v1/archiving_candidates' => 'api/v1/patients#find_archiving_candidates'
   get '/api/v1/_health' => 'healthcheck#index'
   post '/api/v1/auth/login' => 'api/v1/users#login'
   post '/api/v1/auth/verify_token' => 'api/v1/users#check_token_validity'

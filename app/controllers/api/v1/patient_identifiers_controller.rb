@@ -15,7 +15,9 @@ class Api::V1::PatientIdentifiersController < ApplicationController
 
   # POST /patient_identifiers
   def create
-    @patient_identifier = PatientIdentifier.new(patient_identifier_params).tap { |hash| hash[:location_id] = Location.current.id }
+    @patient_identifier = PatientIdentifier.new(patient_identifier_params).tap do |hash|
+      hash[:location_id] = Location.current.id
+    end
 
     if @patient_identifier.save
       render json: @patient_identifier, status: :created
@@ -39,13 +41,14 @@ class Api::V1::PatientIdentifiersController < ApplicationController
   end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
-    def set_patient_identifier
-      @patient_identifier = PatientIdentifier.find(params[:id])
-    end
 
-    # Only allow a trusted parameter "white list" through.
-    def patient_identifier_params
-      params.permit(:patient_id, :identifier, :identifier_type)
-    end
+  # Use callbacks to share common setup or constraints between actions.
+  def set_patient_identifier
+    @patient_identifier = PatientIdentifier.find(params[:id])
+  end
+
+  # Only allow a trusted parameter "white list" through.
+  def patient_identifier_params
+    params.permit(:patient_id, :identifier, :identifier_type)
+  end
 end

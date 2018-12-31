@@ -124,6 +124,13 @@ class Api::V1::PatientsController < ApplicationController
     end
   end
 
+  def find_archiving_candidates
+    page = params[:page]&.to_i || 0
+    page_size = params[:page_size]&.to_i || DEFAULT_PAGE_SIZE
+    patients = filing_number_service.find_archiving_candidates(page * page_size, page_size)
+    render json: patients
+  end
+
   private
 
   DDE_CONFIG_PATH = 'config/application.yml'
@@ -309,5 +316,9 @@ class Api::V1::PatientsController < ApplicationController
 
   def service
     @service ||= PatientService.new
+  end
+
+  def filing_number_service
+    @filing_number_service ||= FilingNumberService.new
   end
 end
