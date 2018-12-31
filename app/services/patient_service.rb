@@ -38,7 +38,7 @@ class PatientService
       filing_number ||= filing_number_service.find_available_filing_number('Filing number')
     end
 
-    new_identifier = filing_number_service.restore_patient(patient, filing_number)
+    new_identifier = filing_number_service.restore_patient(patient, filing_number) if filing_number
     return nil unless new_identifier
 
     { new_identifier: new_identifier, archived_identifier: archived_identifier }
