@@ -14,7 +14,6 @@ class Drug < ActiveRecord::Base
   def as_json(options = {})
     super(options.merge(
       include: {
-        concept: {},
         alternative_names: {},
         barcodes: {}
       }
