@@ -63,7 +63,10 @@ class AppointmentService
     _drug_id, date = earliest_appointment_date(patient, ref_date)
     return nil unless date
 
-    revised_suggested_date patient, date
+    {
+      drugs_run_out_date: date,
+      appointment_date: revised_suggested_date(patient, date)
+    }
   end
 
   private
@@ -106,11 +109,7 @@ class AppointmentService
     amount_dispensed = {}
 
     orders.each do |order|
-      original_auto_expire_date = begin
-                                    order.void_reason ? order.void_reason.to_date : nil
-                                  rescue StandardError
-                                    nil
-                                  end
+      original_auto_expire_date = order.void_reason&.to_date
 
       if order.start_date.to_date == order.auto_expire_date.to_date\
         && original_auto_expire_date

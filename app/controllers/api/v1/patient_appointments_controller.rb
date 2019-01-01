@@ -10,7 +10,7 @@ class Api::V1::PatientAppointmentsController < ApplicationController
     if appointment_date
       render json: appointment_date
     else
-      render status: :no_content
+      render status: :not_found
     end
   end
 end
