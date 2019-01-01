@@ -17,7 +17,7 @@ class PatientIdentifierType < RetirableRecord
     patient_identifier.identifier = new_national_id
     patient_identifier.patient = options[:patient]
     patient_identifier.location_id = Location.current.location_id
-    patient_identifier.save!
+    patient_identifier.save if patient_identifier.patient
     patient_identifier
   end
 

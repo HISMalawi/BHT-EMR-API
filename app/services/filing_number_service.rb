@@ -16,6 +16,9 @@ class FilingNumberService
     build_archive_candidates patients
   end
 
+  # Current filing number format does not allow numbers exceeding this value
+  PHYSICAL_FILING_NUMBER_LIMIT = 999_999
+
   # Search for an available filing number
   #
   # Source: NART#app/models/patient_identifiers and NART#lib/patient_service
@@ -25,12 +28,20 @@ class FilingNumberService
     prefix = filing_number_prefixes[0][0..4] if type.match?(/(Filing)/i)
     prefix = filing_number_prefixes[1][0..4] if type.match?(/Archived/i)
 
-    possible_identifiers = 1.upto(filing_number_limit).collect do |num|
-      "#{prefix}#{num.to_s.rjust(5, '0')}"
+    last_identifier = PatientIdentifier.where(type: filing_number_type)\
+                                       .order(identifier: :desc)\
+                                       .first\
+                                       &.identifier
+    next_id = last_identifier[5..-1].to_i + 1
+
+    # HACK: Ensure we are not exceeding filing number limits
+    if type.match?(/^Filing.*/i) && next_id > filing_number_limit
+      return nil
+    elsif next_id > PHYSICAL_FILING_NUMBER_LIMIT
+      raise "At physical filing number limit: #{next_id} > #{PHYSICAL_FILING_NUMBER_LIMIT}"
     end
 
-    used_identifiers = PatientIdentifier.where(type: filing_number_type).map(&:identifier)
-    (possible_identifiers - used_identifiers.compact.uniq).min
+    prefix + next_id.to_s.rjust(6, '0')
   end
 
   # Archives patient with given filing number
