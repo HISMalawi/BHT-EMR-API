@@ -44,6 +44,22 @@ class PatientService
     { new_identifier: new_identifier, archived_identifier: archived_identifier }
   end
 
+  def assign_npid(patient)
+    national_id_type = patient_identifier_type(PatientIdentifierType::NPID_TYPE_NAME)
+    existing_identifiers = patient_identifiers(patient, national_id_type)
+    existing_identifiers[0]
+
+    # Force immediate execution of query. We don't want it executing after saving
+    # the new identifier below
+    new_identifier = next_available_npid(patient, national_id_type)
+
+    existing_identifiers.each do |identifier|
+      identifier.void("Re-assigned to new national identifier: #{new_identifier.identifier}")
+    end
+
+    { new_identifier: new_identifier, voided_identifiers: existing_identifiers }
+  end
+
   def current_bp_drugs(patient, date = Date.today)
     medication_concept = concept('HYPERTENSION DRUGS').concept_id
     drug_concept_ids = ConceptSet.where('concept_set = ?', medication_concept).map(&:concept_id)
@@ -77,7 +93,35 @@ class PatientService
 
   private
 
+  def use_dde_service?
+    false
+  end
+
+  def dde_service
+    @dde_service ||= DDEService.new
+  end
+
   def filing_number_service
     @filing_number_service ||= FilingNumberService.new
+  end
+
+  # Returns all of patient's identifiers of given identifier_type
+  def patient_identifiers(patient, identifier_type)
+    PatientIdentifier.where(patient: patient, type: identifier_type)
+  end
+
+  # Returns the next available patient identifier for assignment
+  def next_available_npid(patient, identifier_type)
+    unless identifier_type.name.match?(/#{PatientIdentifierType::NPID_TYPE_NAME}/i)
+      raise "Unknown identifier type: #{identifier_type.name}"
+    end
+
+    return identifier_type.next_identifier(patient: patient) unless use_dde_service?
+
+    dde_patient_id_type = patient_identifier_type(PatientIdentifierType::DDE_ID_TYPE)
+    dde_patient_id = patient_identifiers(patient, dde_patient_id_type).first&.identifier
+    return dde_service.re_assign_npid(dde_patient_id) if dde_patient_id
+
+    dde_service.register_patient(patient)
   end
 end

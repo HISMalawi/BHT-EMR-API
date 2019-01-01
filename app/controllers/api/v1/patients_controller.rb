@@ -8,6 +8,8 @@ require 'zebra_printer/init'
 class Api::V1::PatientsController < ApplicationController
   # TODO: Refactor the business logic here into a service class
 
+  include ModelUtils
+
   before_action :load_dde_client
 
   def show
@@ -122,6 +124,10 @@ class Api::V1::PatientsController < ApplicationController
     else
       render status: :no_content
     end
+  end
+
+  def assign_npid
+    render json: service.assign_npid(patient), status: :created
   end
 
   def find_archiving_candidates
@@ -256,6 +262,12 @@ class Api::V1::PatientsController < ApplicationController
       logger.error "Failed to create person in DDE: #{dde_response}"
       raise 'Failed to register person in DDE'
     end
+
+    PatientIdentifier.create(
+      identifier: dde_response['doc_id'],
+      type: person_identifier_type('DDE person document ID'),
+      location_id: Location.current.id
+    )
 
     PatientIdentifier.new(
       identifier: dde_response['npid'],

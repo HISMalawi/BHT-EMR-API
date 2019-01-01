@@ -4,8 +4,12 @@ class PatientIdentifierType < RetirableRecord
   self.table_name = :patient_identifier_type
   self.primary_key = :patient_identifier_type_id
 
+  NPID_TYPE_NAME = 'National id'
+  DDE_ID_TYPE_NAME = 'DDE person document id'
+
   def next_identifier(options = {})
     return nil unless name == 'National id'
+
     new_national_id = use_moh_national_id ? new_national_id : new_v1_id
 
     patient_identifier = PatientIdentifier.new
@@ -13,6 +17,7 @@ class PatientIdentifierType < RetirableRecord
     patient_identifier.identifier = new_national_id
     patient_identifier.patient = options[:patient]
     patient_identifier.location_id = Location.current.location_id
+    patient_identifier.save!
     patient_identifier
   end
 
@@ -49,8 +54,7 @@ class PatientIdentifierType < RetirableRecord
   def last_id_number(id_prefix)
     PatientIdentifier.where(
       'identifier_type = ? AND left(identifier, 5) = ?',
-      patient_identifier_type_id,
-      id_prefix
+      patient_identifier_type_id, id_prefix
     ).order(identifier: :desc).first&.identifier || '0'
   end
 end
