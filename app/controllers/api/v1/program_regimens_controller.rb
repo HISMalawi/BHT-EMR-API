@@ -15,6 +15,10 @@ class Api::V1::ProgramRegimensController < ApplicationController
     render json: service.pellets_regimen(patient, regimen, use_pellets).values[0]
   end
 
+  def custom_regimen_ingredients
+    render json: service.custom_regimen_ingredients
+  end
+
   private
 
   def patient

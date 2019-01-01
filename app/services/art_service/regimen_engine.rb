@@ -10,6 +10,14 @@ module ARTService
       @program = program
     end
 
+    # Returns all drugs that can be combined to form custom ART regimens
+    def custom_regimen_ingredients
+      arv_extras_concepts = Concept.joins(:concept_names).where(
+        concept_name: { name: %w[INH CPT] }
+      )
+      Drug.where(concept: arv_extras_concepts) + Drug.arv_drugs.order(name: :desc)
+    end
+
     def find_starter_pack(regimen, weight)
       ingredients = MohRegimenIngredientStarterPack.joins(:regimen).where(
         moh_regimens: { regimen_index: regimen }

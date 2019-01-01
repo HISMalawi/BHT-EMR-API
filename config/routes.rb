@@ -41,9 +41,12 @@ Rails.application.routes.draw do
                        request.params
         end)
         get '/drugs_received', to: 'patients#drugs_received'
+        get '/current_bp_drugs', to: 'patients#current_bp_drugs'
         get '/next_appointment_date', to: 'patient_appointments#next_appointment_date'
         get '/median_weight_height', to: 'patients#find_median_weight_and_height'
         get '/bp_trail', to: 'patients#bp_readings_trail'
+        post '/filing_number', to: 'patients#assign_filing_number'
+        post '/npid', to: 'patients#assign_npid'
         resources :patient_programs, path: :programs
       end
 
@@ -91,6 +94,7 @@ Rails.application.routes.draw do
         get 'next_available_arv_number' => 'program_patients#find_next_available_arv_number'
         get 'lookup_arv_number/:arv_number' => 'program_patients#lookup_arv_number'
         get 'regimen_starter_packs' => 'program_regimens#find_starter_pack'
+        get 'custom_regimen_ingredients' => 'program_regimens#custom_regimen_ingredients'
         resources :program_patients, path: :patients do
           get '/last_drugs_received' => 'program_patients#last_drugs_received'
           get '/dosages' => 'program_patients#find_dosages'
@@ -101,12 +105,15 @@ Rails.application.routes.draw do
         get '/lab_tests/panels' => 'lab_test_types#panels' # TODO: Move this into own controller
         resources :lab_test_orders, path: 'lab_tests/orders'
         resources :lab_test_results, path: 'lab_tests/results'
+        get '/lab_tests/locations' => 'lab_test_orders#locations'
+        get '/lab_tests/labs' => 'lab_test_orders#labs'
         resources :program_reports, path: 'reports'
       end
 
       namespace :types do
         resources :relationships
         resources :lab_tests
+        resources :patient_identifiers
       end
 
       resources :drugs
@@ -135,8 +142,11 @@ Rails.application.routes.draw do
   end
 
   root to: 'static#index'
+  get '/api/v1/archiving_candidates' => 'api/v1/patients#find_archiving_candidates'
   get '/api/v1/_health' => 'healthcheck#index'
   post '/api/v1/auth/login' => 'api/v1/users#login'
   post '/api/v1/auth/verify_token' => 'api/v1/users#check_token_validity'
   get '/api/v1/fast_track_assessment' => 'api/v1/fast_track#assessment'
+  post '/api/v1/cancel_fast_track' => 'api/v1/fast_track#cancel'
+  get '/api/v1/on_fast_track' => 'api/v1/fast_track#on_fast_track'
 end

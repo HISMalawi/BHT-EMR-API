@@ -8,6 +8,8 @@ require 'zebra_printer/init'
 class Api::V1::PatientsController < ApplicationController
   # TODO: Refactor the business logic here into a service class
 
+  include ModelUtils
+
   before_action :load_dde_client
 
   def show
@@ -41,16 +43,21 @@ class Api::V1::PatientsController < ApplicationController
     create_params, errors = required_params required: %i[person_id]
     return render json: { errors: create_params }, status: :bad_request if errors
 
-    person = Person.find(create_params[:person_id])
-    patient_identifier = dde_enabled? ? register_dde_patient(person) : gen_v3_npid(person)
+    patient = ActiveRecord::Base.transaction do
+      person = Person.find(create_params[:person_id])
+      patient = Patient.create patient_id: person.id,
+                               creator: User.current.id,
+                               date_created: Time.now
+      identifier = dde_enabled? ? register_dde_patient(person) : gen_v3_npid(patient)
+      identifier.patient = patient
+      unless identifier.save
+        raise "Could not create patient identifier: #{identifier.errors.as_json}"
+      end
 
-    patient = Patient.create patient_id: person.id,
-                             creator: User.current.id,
-                             date_created: Time.now
+      patient
+    end
 
-    patient.patient_identifiers << patient_identifier
-
-    unless patient.save
+    unless patient.errors.empty?
       logger.error "Failed to create patient: #{patient.errors.as_json}"
       render json: { errors: ['Failed to create person'] }, status: :internal_server_error
       return
@@ -116,6 +123,32 @@ class Api::V1::PatientsController < ApplicationController
 
   def bp_readings_trail
     render json: service.patient_bp_readings_trail(patient, Date.today)
+  end
+
+  def assign_filing_number
+    filing_number = params[:filing_number]
+    response = service.assign_patient_filing_number(patient, filing_number)
+    if response
+      render json: response, status: :created
+    else
+      render status: :no_content
+    end
+  end
+
+  def assign_npid
+    render json: service.assign_npid(patient), status: :created
+  end
+
+  def find_archiving_candidates
+    page = params[:page]&.to_i || 0
+    page_size = params[:page_size]&.to_i || DEFAULT_PAGE_SIZE
+    patients = filing_number_service.find_archiving_candidates(page * page_size, page_size)
+    render json: patients
+  end
+
+  def current_bp_drugs
+    date = params[:date]&.to_date || Date.today
+    render json: service.current_bp_drugs(patient, date)
   end
 
   private
@@ -239,6 +272,12 @@ class Api::V1::PatientsController < ApplicationController
       raise 'Failed to register person in DDE'
     end
 
+    PatientIdentifier.create(
+      identifier: dde_response['doc_id'],
+      type: person_identifier_type('DDE person document ID'),
+      location_id: Location.current.id
+    )
+
     PatientIdentifier.new(
       identifier: dde_response['npid'],
       identifier_type: npid_identifier_type.id,
@@ -249,9 +288,9 @@ class Api::V1::PatientsController < ApplicationController
     )
   end
 
-  def gen_v3_npid(person)
+  def gen_v3_npid(patient)
     identifier_type = PatientIdentifierType.find_by name: 'National id'
-    identifier_type.next_identifier person
+    identifier_type.next_identifier patient: patient
   end
 
   def filter_person_attributes(person_attributes)
@@ -303,5 +342,9 @@ class Api::V1::PatientsController < ApplicationController
 
   def service
     @service ||= PatientService.new
+  end
+
+  def filing_number_service
+    @filing_number_service ||= FilingNumberService.new
   end
 end

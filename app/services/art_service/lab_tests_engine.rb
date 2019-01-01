@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative '../nlims'
+
 class ARTService::LabTestsEngine
   include ModelUtils
 
@@ -11,17 +13,20 @@ class ARTService::LabTestsEngine
     LabTestType.find(type_id)
   end
 
-  def types(search_string: nil, panel_id: nil)
-    query = LabTestType
-    query = query.where('TestName like ?', "%#{search_string}%") if search_string
-    query = query.where(Panel_ID: panel_id) if panel_id
-    query.order(:TestName)
+  def types(specimen_type:, search_string: nil)
+    nlims.test_types(specimen_type)
+  end
+
+  def lab_locations
+    nlims.locations
+  end
+
+  def labs
+    nlims.labs
   end
 
   def panels(search_string: nil)
-    query = LabPanel.joins(:types)
-    query = query.where('name like ?', "%#{search_string}%") if search_string
-    query.order(:name).group(:rec_id)
+    nlims.specimen_types
   end
 
   def results(accession_number)
@@ -30,35 +35,55 @@ class ARTService::LabTestsEngine
                 .order(Arel.sql('DATE(Lab_Sample.TimeStamp) DESC'))
   end
 
-  def create_order(type:, encounter:, reason:, patient: nil, date: nil)
+  def create_order(encounter:, date:, reason:, **kwargs)
     patient ||= encounter.patient
     date ||= encounter.encounter_datetime
 
-    local_order = create_local_order patient, encounter, date
-    local_order.accession_number = next_id local_order.order_id
-    local_order.save!
+    lims_order = nlims.order_test(patient: patient, user: User.current, date: date,
+                                  reason: reason, **kwargs)
+    accession_number = lims_order['tracking_number']
 
+    local_order = create_local_order(patient, encounter, date, accession_number)
     save_reason_for_test(encounter, local_order, reason)
 
-    lab_order = create_lab_order type, local_order, date
-    lab_sample = create_lab_sample lab_order
-
-    create_result lab_sample: lab_sample, test_type: type
-
-    { order: local_order, lab_test_table: lab_order.as_json }
+    { order: local_order, lims_order: lims_order }
   end
 
   def find_orders_by_patient(patient, paginate_func: nil)
     local_orders = local_orders(patient)
     local_orders = paginate_func.call(local_orders) if paginate_func
     local_orders.each_with_object([]) do |local_order, collected_orders|
+      next unless local_order.accession_number
+
       orders = find_orders_by_accession_number local_order.accession_number
       collected_orders.push(*orders)
     end
   end
 
   def find_orders_by_accession_number(accession_number)
-    LabTestTable.where(Pat_ID: accession_number).order(Arel.sql('DATE(OrderDate), TIME(OrderTime)'))
+    order = nlims.patient_orders(accession_number)
+    begin
+      result = nlims.patient_results(accession_number)['results']
+    rescue StandardError => e
+      raise e unless e.message.include?('results not available')
+
+      result = {}
+    end
+
+    [{
+      sample_type: order['other']['sample_type'],
+      date_ordered: order['other']['date_created'],
+      order_location: order['other']['order_location'],
+      specimen_status: order['other']['specimen_status'],
+      accession_number: accession_number,
+      tests: order['tests'].collect do |k, v|
+        test_values = result[k]&.collect do |indicator, value|
+          { indicator: indicator, value: value }
+        end || []
+
+        { test_type: k, test_status: v, test_values: test_values }
+      end
+    }]
   end
 
   def save_result(accession_number:, test_value:, time:)
@@ -90,12 +115,13 @@ class ARTService::LabTestsEngine
   private
 
   # Creates an Order in the primary openmrs database
-  def create_local_order(patient, encounter, date)
+  def create_local_order(patient, encounter, date, accession_number)
     Order.create patient: patient,
                  encounter: encounter,
                  concept: concept('Laboratory tests ordered'),
                  order_type: order_type('Lab'),
                  start_date: date,
+                 accession_number: accession_number,
                  provider: User.current
   end
 
@@ -176,5 +202,14 @@ class ARTService::LabTestsEngine
     Order.where patient: patient,
                 order_type: order_type('Lab'),
                 concept: concept('Laboratory tests ordered')
+  end
+
+  def nlims
+    return @nlims if @nlims
+
+    config = YAML.load_file "#{Rails.root}/config/application.yml"
+    @nlims = ::NLims.new config
+    @nlims.auth config['lims_username'], config['lims_password']
+    @nlims
   end
 end

@@ -24,7 +24,8 @@ class EncounterService
 
     Encounter.create(
       type: type, patient: patient, provider: provider,
-      encounter_datetime: encounter_datetime
+      encounter_datetime: encounter_datetime,
+      location_id: Location.current.id
     )
   end
 
