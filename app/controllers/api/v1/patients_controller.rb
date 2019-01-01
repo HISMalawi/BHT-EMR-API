@@ -43,16 +43,21 @@ class Api::V1::PatientsController < ApplicationController
     create_params, errors = required_params required: %i[person_id]
     return render json: { errors: create_params }, status: :bad_request if errors
 
-    person = Person.find(create_params[:person_id])
-    patient_identifier = dde_enabled? ? register_dde_patient(person) : gen_v3_npid(person)
+    patient = ActiveRecord::Base.transaction do
+      person = Person.find(create_params[:person_id])
+      patient = Patient.create patient_id: person.id,
+                               creator: User.current.id,
+                               date_created: Time.now
+      identifier = dde_enabled? ? register_dde_patient(person) : gen_v3_npid(patient)
+      identifier.patient = patient
+      unless identifier.save
+        raise "Could not create patient identifier: #{identifier.errors.as_json}"
+      end
 
-    patient = Patient.create patient_id: person.id,
-                             creator: User.current.id,
-                             date_created: Time.now
+      patient
+    end
 
-    patient.patient_identifiers << patient_identifier
-
-    unless patient.save
+    unless patient.errors.empty?
       logger.error "Failed to create patient: #{patient.errors.as_json}"
       render json: { errors: ['Failed to create person'] }, status: :internal_server_error
       return
@@ -279,9 +284,9 @@ class Api::V1::PatientsController < ApplicationController
     )
   end
 
-  def gen_v3_npid(person)
+  def gen_v3_npid(patient)
     identifier_type = PatientIdentifierType.find_by name: 'National id'
-    identifier_type.next_identifier person
+    identifier_type.next_identifier patient: patient
   end
 
   def filter_person_attributes(person_attributes)
