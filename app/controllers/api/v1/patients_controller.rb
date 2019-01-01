@@ -131,6 +131,11 @@ class Api::V1::PatientsController < ApplicationController
     render json: patients
   end
 
+  def current_bp_drugs
+    date = params[:date]&.to_date || Date.today
+    render json: service.current_bp_drugs(patient, date)
+  end
+
   private
 
   DDE_CONFIG_PATH = 'config/application.yml'

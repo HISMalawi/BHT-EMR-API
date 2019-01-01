@@ -44,6 +44,37 @@ class PatientService
     { new_identifier: new_identifier, archived_identifier: archived_identifier }
   end
 
+  def current_bp_drugs(patient, date = Date.today)
+    medication_concept = concept('HYPERTENSION DRUGS').concept_id
+    drug_concept_ids = ConceptSet.where('concept_set = ?', medication_concept).map(&:concept_id)
+    drugs = Drug.where('concept_id IN (?)', drug_concept_ids)
+    drug_ids = drugs.collect(&:drug_id)
+    dispensing_encounter = encounter_type('DISPENSING')
+
+    prev_date = Encounter.joins(
+      'INNER JOIN obs ON encounter.encounter_id = obs.encounter_id'
+    ).where(
+      "encounter.patient_id = ?
+        AND value_drug IN (?) AND encounter.encounter_datetime < ?
+        AND encounter.encounter_type = ?",
+      patient.id, drug_ids, (date + 1.day).to_date, dispensing_encounter.id
+    ).select(['encounter_datetime']).last&.encounter_datetime&.to_date
+
+    return [] if prev_date.blank?
+
+    dispensing_concept = concept('AMOUNT DISPENSED').concept_id
+    result = Encounter.find_by_sql(
+      ["SELECT obs.value_drug FROM encounter
+          INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
+        WHERE encounter.voided = 0 AND encounter.patient_id = ?
+          AND obs.value_drug IN (?) AND obs.concept_id = ?
+          AND encounter.encounter_type = ? AND DATE(encounter.encounter_datetime) = ?",
+       patient.id, drug_ids, dispensing_concept, dispensing_encounter.id, prev_date]
+    )&.map(&:value_drug)&.uniq || []
+
+    result.collect { |drug_id| Drug.find(drug_id) }
+  end
+
   private
 
   def filing_number_service
