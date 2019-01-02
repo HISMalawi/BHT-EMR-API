@@ -66,7 +66,8 @@ module ARTService
 
       arv_extras_concepts = [concept('CPT'), concept('INH')]
 
-      orders = Observation.where(concept: concept('Medication orders'))
+      orders = Observation.where(concept: concept('Medication orders'),
+                                 person: patient.person)
                           .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
 
       orders.each_with_object({}) do |order, dosages|
