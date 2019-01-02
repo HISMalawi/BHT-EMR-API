@@ -130,6 +130,7 @@ class ARTService::LabTestsEngine
       order: order,
       encounter: encounter,
       concept: concept('Reason for test'),
+      obs_datetime: encounter.encounter_datetime,
       person: encounter.patient.person,
       value_text: reason
     )
