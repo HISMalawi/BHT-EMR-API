@@ -48,6 +48,7 @@ Rails.application.routes.draw do
         get '/bp_trail', to: 'patients#bp_readings_trail'
         post '/filing_number', to: 'patients#assign_filing_number'
         post '/npid', to: 'patients#assign_npid'
+        post '/remaining_bp_drugs', to: 'patients#remaining_bp_drugs'
         resources :patient_programs, path: :programs
       end
 
