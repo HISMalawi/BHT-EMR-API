@@ -23,7 +23,8 @@ class NLims
     @connection = OpenStruct.new token: response['token']
   end
 
-  def order_test(patient:, user:, specimen_type:, test_types:, date:, reason:, target_lab:)
+  def order_test(patient:, user:, specimen_type:, test_types:, date:, reason:,
+                 target_lab:, requesting_clinician:)
     patient_name = patient.person.names.first
     user_name = user.person.names.first
 
@@ -46,7 +47,7 @@ class NLims
                          sample_priority: reason,
                          target_lab: target_lab,
                          art_start_date: 'unknown',
-                         requesting_clinician: ''
+                         requesting_clinician: requesting_clinician
   end
 
   def patient_results(accession_number)
