@@ -182,7 +182,7 @@ module ARTService
       Observation.where(
         "person_id = ? AND value_drug in #{arv_ids_placeholders} AND
          obs_datetime < ?",
-        @patient.patient_id, *arv_ids, (@date + 1.days).to_date
+        @patient.patient_id, *arv_ids, @date.to_date
       ).exists?
     end
 
