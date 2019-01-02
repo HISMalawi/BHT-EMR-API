@@ -52,6 +52,12 @@ describe ARTService::WorkflowEngine do
       expect(encounter_type.name.upcase).to eq('HIV STAGING')
     end
 
+    it 'skips VITALS when on FAST TRACK' do
+      receive_patient patient, on_fast_track: true
+      encounter_type = engine.next_encounter
+      expect(encounter_type.name.upcase).to eq('HIV STAGING')
+    end
+
     it 'returns VITALS after HIV RECEPTION with patient' do
       receive_patient patient, guardian_only: false
       encounter_type = engine.next_encounter
@@ -77,6 +83,16 @@ describe ARTService::WorkflowEngine do
       record_staging patient
       encounter_type = engine.next_encounter
       expect(encounter_type.name.upcase).to eq('HIV CLINIC CONSULTATION')
+    end
+
+    it 'skips HIV CLINIC CONSULTATION for patients on fast track' do
+      staging = record_staging patient
+      Observation.create person: patient.person, encounter: staging,
+                         concept: concept('Fast'), obs_datetime: Time.now,
+                         value_coded: concept('Yes').concept_id
+      prescribe_arv patient, epoch - 1000.days
+      encounter_type = engine.next_encounter
+      expect(encounter_type.name.upcase).to eq('ART ADHERENCE')
     end
 
     it 'skips ART ADHERENCE and returns TREATMENT for new patient after HIV CLINIC CONSULTATION' do
@@ -109,6 +125,14 @@ describe ARTService::WorkflowEngine do
       record_treatment patient, assess_fast_track: true
       encounter_type = engine.next_encounter
       expect(encounter_type.name.upcase).to eq('FAST TRACK ASSESMENT')
+    end
+
+    it 'skips FAST TRACK ASSESSMENT for patients on fast track' do
+      treatment = record_treatment patient, assess_fast_track: true
+      Observation.create person: patient.person, encounter: treatment,
+                         concept: concept('Fast'), obs_datetime: Time.now,
+                         value_coded: concept('Yes').concept_id
+      expect(engine.next_encounter.name.upcase).to eq('DISPENSING')
     end
 
     it 'returns DISPENSING after FAST TRACK ASSESMENT' do
@@ -144,7 +168,7 @@ describe ARTService::WorkflowEngine do
                        date_created: date
   end
 
-  def receive_patient(patient, guardian_only: false)
+  def receive_patient(patient, guardian_only: false, on_fast_track: false)
     register_patient patient
     reception = create :encounter, type: encounter_type('HIV RECEPTION'),
                                    patient: patient
@@ -158,6 +182,13 @@ describe ARTService::WorkflowEngine do
                            encounter: reception,
                            value_coded: concept('Yes').concept_id,
                            person: patient.person
+    end
+
+    if on_fast_track
+      create :observation, concept: concept('Fast'),
+                           encounter: reception,
+                           person: patient.person,
+                           value_coded: concept('Yes').concept_id
     end
 
     create :observation, concept: concept('Guardian present'),
@@ -212,6 +243,8 @@ describe ARTService::WorkflowEngine do
                          encounter: encounter,
                          person: patient.person,
                          value_coded: value_coded
+
+    encounter
   end
 
   def record_fast_track(patient)
