@@ -81,6 +81,10 @@ class PatientService
     last_htn_drugs_received(patient, date)
   end
 
+  def update_remaining_bp_drugs
+    update_remaining_drugs
+  end
+
   private
 
   # Takes a list of BP readings and groups them into a visit trail.
