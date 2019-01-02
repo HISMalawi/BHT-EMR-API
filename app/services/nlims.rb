@@ -99,7 +99,6 @@ class NLims
   end
 
   def post(path, body)
-    puts body.as_json
     exec_request(path) do |full_path, headers|
       RestClient.post(full_path, body.as_json, headers)
     end
@@ -111,8 +110,6 @@ class NLims
 
     response = JSON.parse(response)
     raise "Failed to communicate with LIMS: #{response['message']}" if response['error'] == true
-
-    puts response['data']
 
     response['data']
   end
