@@ -1,5 +1,5 @@
 class Api::V1::FastTrackController < ApplicationController
-  
+
   def assessment
     patient_id  = params[:patient_id]
     date        = params[:date].to_date
@@ -30,40 +30,40 @@ class Api::V1::FastTrackController < ApplicationController
 
   def on_fast_track
     patient_id  = params[:person_id]
-    date        = params[:date].to_date
+    date        = params[:date]&.to_date || Date.today
 
-    previous_ft = Observation.where("person_id = ? AND obs_datetime <= ? 
+    previous_ft = Observation.where("person_id = ? AND obs_datetime <= ?
       AND concept_id = ?", patient_id, date.strftime('%Y-%m-%d 23:59:59'),
       ConceptName.find_by_name('FAST').concept_id).order('obs_datetime DESC').first
- 
+
     ans = false if previous_ft.blank?
     unless previous_ft.blank?
       yes = ConceptName.find_by_name('Yes').concept_id
-      ans = previous_ft.value_coded.to_i == yes ? true : false 
+      ans = previous_ft.value_coded.to_i == yes ? true : false
     end
 
     render json: {'continue FT': ans}
   end
-  
+
   def cancel
     patient_id  = params[:person_id]
     date        = params[:date].to_date
-      
+
     time = Time.now().strftime('%H:%M:%S')
     obs_datetime = date.strftime('%Y-%m-%d')
 
-    encounter_id = Observation.where("person_id = ? AND obs_datetime <= ? 
+    encounter_id = Observation.where("person_id = ? AND obs_datetime <= ?
       AND concept_id = ?", patient_id, date.strftime('%Y-%m-%d 23:59:59'),
       ConceptName.find_by_name('FAST').concept_id).order('obs_datetime DESC').first.encounter_id
- 
-    obs = Observation.create(person_id: patient_id, 
+
+    obs = Observation.create(person_id: patient_id,
       obs_datetime: "#{date} #{time}",
       location_id: Location.current.id,
       concept_id: ConceptName.find_by_name('FAST').concept_id,
       value_coded: ConceptName.find_by_name('No').concept_id,
       encounter_id: encounter_id)
-    
-    render json: obs  
+
+    render json: obs
   end
 
   private
@@ -81,7 +81,7 @@ class Api::V1::FastTrackController < ApplicationController
     patient_age += (estimate && birth_date.month == 7 && birth_date.day == 1  \
       && today.month < birth_date.month && \
         person.date_created.year == today.year) ? 1 : 0
-    
+
     patient_age
   end
 
@@ -90,31 +90,31 @@ class Api::V1::FastTrackController < ApplicationController
     patient_breastfeed_concept  = concept "IS PATIENT BREAST FEEDING?"
     yes_concept                 = concept "Yes"
 
-    latest_clinical_consultation = Encounter.where('encounter_type = ? 
-      AND patient_id = ? AND (encounter_datetime BETWEEN ? AND ?)', 
+    latest_clinical_consultation = Encounter.where('encounter_type = ?
+      AND patient_id = ? AND (encounter_datetime BETWEEN ? AND ?)',
         EncounterType.find_by_name('HIV CLINIC CONSULTATION').id,
         patient_id, passed_date.strftime('%Y-%m-%d 00:00:00'),
         passed_date.strftime('%Y-%m-%d 23:59:59'))\
         .order('encounter_datetime DESC').first
-    
+
     return false if latest_clinical_consultation.blank?
 
-    pregnant_breastfeeding = Observation.where('person_id = ? 
-      AND (obs_datetime BETWEEN ? AND ?)  AND concept_id IN(?) 
-      AND encounter_id = ?', patient_id, 
+    pregnant_breastfeeding = Observation.where('person_id = ?
+      AND (obs_datetime BETWEEN ? AND ?)  AND concept_id IN(?)
+      AND encounter_id = ?', patient_id,
       passed_date.strftime('%Y-%m-%d 00:00:00'),
-      passed_date.strftime('%Y-%m-%d 23:59:59'), 
-        [patient_pregnant_concept.concept_id, 
-        patient_breastfeed_concept.concept_id], 
+      passed_date.strftime('%Y-%m-%d 23:59:59'),
+        [patient_pregnant_concept.concept_id,
+        patient_breastfeed_concept.concept_id],
         latest_clinical_consultation.encounter_id).order('obs_datetime DESC')
 
     yes_no = false
-    
+
     (pregnant_breastfeeding || []).each do |ob|
       yes_no = true if ob.value_coded = yes_concept.concept_id
     end
-        
-    yes_no    
+
+    yes_no
   end
 
   def on_art_for_12_plus_months(patient_id, passed_date)
@@ -136,7 +136,7 @@ EOF
 
     begin
       regimen_num = query['regimen'].gsub(/[^\d]/, '')
-      return false if regimen_num.blank? 
+      return false if regimen_num.blank?
       return regimen_num <= 6
     rescue
       false
@@ -146,21 +146,21 @@ EOF
   def good_adherence?(patient_id, passed_date)
     art_adherence_concept = concept 'What was the patients adherence for this drug order'
 
-    latest_art_adherence = Encounter.where('encounter_type = ? 
+    latest_art_adherence = Encounter.where('encounter_type = ?
       AND patient_id = ? AND (encounter_datetime BETWEEN ? AND ?)',
-      EncounterType.find_by_name("ART ADHERENCE").id, 
+      EncounterType.find_by_name("ART ADHERENCE").id,
       patient_id,passed_date.strftime('%Y-%m-%d 00:00:00'),
       passed_date.strftime('%Y-%m-%d 23:59:59'))  \
       .order('encounter_datetime DESC').first
-    
+
     return false if latest_art_adherence.blank?
 
-    art_adherence_obs = Observation.where('person_id = ? 
-      AND (obs_datetime BETWEEN ? AND ?) AND concept_id IN(?) 
-      AND encounter_id = ?', patient_id, 
+    art_adherence_obs = Observation.where('person_id = ?
+      AND (obs_datetime BETWEEN ? AND ?) AND concept_id IN(?)
+      AND encounter_id = ?', patient_id,
       passed_date.strftime('%Y-%m-%d 00:00:00'),
-      passed_date.strftime('%Y-%m-%d 23:59:59'), 
-      [art_adherence_concept.concept_id], 
+      passed_date.strftime('%Y-%m-%d 23:59:59'),
+      [art_adherence_concept.concept_id],
       latest_art_adherence.encounter_id).order('obs_datetime DESC')
 
     adherence_good = true;
@@ -173,7 +173,7 @@ EOF
       next if rate >= 95 && rate <= 105
 
       adherence_good = false
-    end  
+    end
 
     adherence_good
   end
@@ -188,10 +188,10 @@ EOF
       concept_ids << concept(name).concept_id
     end
 
-    tb_signs_obs = Observation.where('person_id = ? 
-      AND (obs_datetime BETWEEN ? AND ?) AND concept_id IN(?)', 
+    tb_signs_obs = Observation.where('person_id = ?
+      AND (obs_datetime BETWEEN ? AND ?) AND concept_id IN(?)',
       patient_id, passed_date.strftime('%Y-%m-%d 00:00:00'),
-      passed_date.strftime('%Y-%m-%d 23:59:59'), 
+      passed_date.strftime('%Y-%m-%d 23:59:59'),
       concept_ids).order('obs_datetime DESC')
 
     sign_available = false
@@ -207,7 +207,7 @@ EOF
     drugs = Drug.where('combination = 0 AND name LIKE ?', '%Isoniazid%')
     drug_ids = drugs.map{|d| d.id}
 
-    order = DrugOrder.where('drug_order.drug_inventory_id IN(?) 
+    order = DrugOrder.where('drug_order.drug_inventory_id IN(?)
       AND o.patient_id = ? AND start_date <= ?', \
       drug_ids, patient_id, passed_date.strftime('%Y-%m-%d 23:59:59')). \
       joins("INNER JOIN orders o USING(order_id)") \
@@ -215,7 +215,7 @@ EOF
       .select('o.*')
 
    return false if order.blank?
-   
+
    start_date = order.first.start_date.to_date
    (passed_date - start_date).to_i < 1
   end
@@ -234,8 +234,8 @@ EOF
     end
 
     side_effects = Observation  \
-                  .where('person_id = ? 
-        AND (obs_datetime BETWEEN ? AND ?) AND concept_id IN(?)', patient_id, 
+                  .where('person_id = ?
+        AND (obs_datetime BETWEEN ? AND ?) AND concept_id IN(?)', patient_id,
           passed_date.strftime('%Y-%m-%d 00:00:00'),
             passed_date.strftime('%Y-%m-%d 23:59:59'), concept_ids)  \
                    .order('obs_datetime DESC')
