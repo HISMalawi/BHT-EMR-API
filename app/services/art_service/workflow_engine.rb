@@ -61,11 +61,12 @@ module ARTService
 
     STATE_CONDITIONS = {
       HIV_CLINIC_REGISTRATION => %i[patient_not_registered? patient_not_visiting?],
-      VITALS => %i[patient_checked_in?],
+      VITALS => %i[patient_checked_in? patient_not_on_fast_track?],
       HIV_STAGING => %i[patient_not_already_staged?],
+      HIV_CLINIC_CONSULTATION => %i[patient_not_on_fast_track?],
       ART_ADHERENCE => %i[patient_received_art?],
       TREATMENT => %i[patient_should_get_treatment?],
-      FAST_TRACK => %i[patient_got_treatment? assess_for_fast_track?],
+      FAST_TRACK => %i[patient_got_treatment? patient_not_on_fast_track? assess_for_fast_track?],
       DISPENSING => %i[patient_got_treatment?],
       APPOINTMENT => %i[patient_got_treatment? dispensing_complete?]
     }.freeze
@@ -108,6 +109,7 @@ module ARTService
         @patient.patient_id, encounter_type.encounter_type_id, @date
       ).order(encounter_datetime: :desc).first
       raise "Can't check if patient checked in due to missing HIV_RECEPTION" if encounter.nil?
+
       patient_present_concept = concept PATIENT_PRESENT
       yes_concept = concept 'YES'
       encounter.observations.exists? concept_id: patient_present_concept.concept_id,
@@ -180,7 +182,7 @@ module ARTService
       Observation.where(
         "person_id = ? AND value_drug in #{arv_ids_placeholders} AND
          obs_datetime < ?",
-        @patient.patient_id, *arv_ids, @date
+        @patient.patient_id, *arv_ids, (@date + 1.days).to_date
       ).exists?
     end
 
@@ -244,6 +246,20 @@ module ARTService
       ).exists?
 
       !fast_track_assessed
+    end
+
+    # Checks whether current patient is on a fast track visit
+    def patient_not_on_fast_track?
+      on_fast_track = Observation.where(concept: concept('Fast'), person: @patient.person)\
+                                 .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
+                                 .order(obs_datetime: :desc)\
+                                 .first
+                                 &.value_coded
+
+      no_concept = concept('No').concept_id
+      on_fast_track = on_fast_track ? on_fast_track&.to_i : no_concept
+
+      on_fast_track == no_concept
     end
   end
 end
