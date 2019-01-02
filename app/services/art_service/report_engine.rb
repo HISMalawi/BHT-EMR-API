@@ -8,7 +8,8 @@ module ARTService
 
     REPORTS = {
       'COHORT' => ARTService::Reports::Cohort,
-      'COHORT_DISAGGREGATED' => ARTService::Reports::CohortDisaggregated
+      'COHORT_DISAGGREGATED' => ARTService::Reports::CohortDisaggregated,
+      'VISITS' => ARTService::Reports::VisitsReport
     }.freeze
 
     def generate_report(type:, **kwargs)
