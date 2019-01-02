@@ -148,7 +148,7 @@ class Api::V1::PatientsController < ApplicationController
 
   def current_bp_drugs
     date = params[:date]&.to_date || Date.today
-    render json: service.current_bp_drugs(patient, date)
+    render json: service.current_htn_drugs_summary(patient, date)
   end
 
   private

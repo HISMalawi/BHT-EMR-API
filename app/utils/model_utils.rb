@@ -36,4 +36,8 @@ module ModelUtils
   def patient_identifier_type(name)
     PatientIdentifierType.find_by_name(name)
   end
+
+  def drug(name)
+    Drug.find_by_name(name)
+  end
 end

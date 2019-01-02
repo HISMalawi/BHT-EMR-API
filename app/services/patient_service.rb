@@ -70,35 +70,11 @@ class PatientService
     { new_identifier: new_identifier, voided_identifiers: existing_identifiers }
   end
 
-  def current_bp_drugs(patient, date = Date.today)
-    medication_concept = concept('HYPERTENSION DRUGS').concept_id
-    drug_concept_ids = ConceptSet.where('concept_set = ?', medication_concept).map(&:concept_id)
-    drugs = Drug.where('concept_id IN (?)', drug_concept_ids)
-    drug_ids = drugs.collect(&:drug_id)
-    dispensing_encounter = encounter_type('DISPENSING')
-
-    prev_date = Encounter.joins(
-      'INNER JOIN obs ON encounter.encounter_id = obs.encounter_id'
-    ).where(
-      "encounter.patient_id = ?
-        AND value_drug IN (?) AND encounter.encounter_datetime < ?
-        AND encounter.encounter_type = ?",
-      patient.id, drug_ids, (date + 1.day).to_date, dispensing_encounter.id
-    ).select(['encounter_datetime']).last&.encounter_datetime&.to_date
-
-    return [] if prev_date.blank?
-
-    dispensing_concept = concept('AMOUNT DISPENSED').concept_id
-    result = Encounter.find_by_sql(
-      ["SELECT obs.value_drug FROM encounter
-          INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
-        WHERE encounter.voided = 0 AND encounter.patient_id = ?
-          AND obs.value_drug IN (?) AND obs.concept_id = ?
-          AND encounter.encounter_type = ? AND DATE(encounter.encounter_datetime) = ?",
-       patient.id, drug_ids, dispensing_concept, dispensing_encounter.id, prev_date]
-    )&.map(&:value_drug)&.uniq || []
-
-    result.collect { |drug_id| Drug.find(drug_id) }
+  def current_htn_drugs_summary(patient, date)
+    {
+      drugs: current_htn_drugs(patient, date),
+      notes: htn_drug_notes(patient, date)
+    }
   end
 
   private
@@ -166,7 +142,6 @@ class PatientService
                &.value_text
   end
 
-
   def use_dde_service?
     false
   end
@@ -197,5 +172,97 @@ class PatientService
     return dde_service.re_assign_npid(dde_patient_id) if dde_patient_id
 
     dde_service.register_patient(patient)
+  end
+
+  # The two methods that follow were sourced somewhere from NART/lib/patient_service.
+  # They have something to do with HTN medication... That's all I know as of writing
+  # this...
+
+  def current_htn_drugs(patient, date = Date.today)
+    medication_concept = concept('HYPERTENSION DRUGS').concept_id
+    drug_concept_ids = ConceptSet.where('concept_set = ?', medication_concept).map(&:concept_id)
+    drugs = Drug.where('concept_id IN (?)', drug_concept_ids)
+    drug_ids = drugs.collect(&:drug_id)
+    dispensing_encounter = encounter_type('DISPENSING')
+
+    prev_date = Encounter.joins(
+      'INNER JOIN obs ON encounter.encounter_id = obs.encounter_id'
+    ).where(
+      "encounter.patient_id = ?
+        AND value_drug IN (?) AND encounter.encounter_datetime < ?
+        AND encounter.encounter_type = ?",
+      patient.id, drug_ids, (date + 1.day).to_date, dispensing_encounter.id
+    ).select(['encounter_datetime']).last&.encounter_datetime&.to_date
+
+    return [] if prev_date.blank?
+
+    dispensing_concept = concept('AMOUNT DISPENSED').concept_id
+    result = Encounter.find_by_sql(
+      ["SELECT obs.value_drug FROM encounter
+          INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
+        WHERE encounter.voided = 0 AND encounter.patient_id = ?
+          AND obs.value_drug IN (?) AND obs.concept_id = ?
+          AND encounter.encounter_type = ? AND DATE(encounter.encounter_datetime) = ?",
+       patient.id, drug_ids, dispensing_concept, dispensing_encounter.id, prev_date]
+    )&.map(&:value_drug)&.uniq || []
+
+    result.collect { |drug_id| Drug.find(drug_id) }
+  end
+
+  HTN_DRUG_NAMES = [
+    'HCZ (25mg tablet)', 'Amlodipine (5mg tablet)', 'Amlodipine (10mg tablet)',
+    'Enalapril (5mg tablet)', 'Enalapril (10mg tablet)', 'Atenolol (50mg tablet)',
+    'Atenolol (100mg tablet)'
+  ].freeze
+
+  def htn_drug_notes(patient, date = Date.today)
+    notes_concept = concept('Notes').concept_id
+
+    drug_ids = HTN_DRUG_NAMES.collect { |name| drug(name).drug_id }
+
+    data = Observation.find_by_sql(
+      [
+        "SELECT value_text, value_drug, obs_datetime
+        FROM encounter INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
+          WHERE encounter.encounter_type = (
+            SELECT encounter_type_id
+            FROM encounter_type
+            WHERE name = 'HYPERTENSION MANAGEMENT' LIMIT 1
+          )
+          AND encounter.patient_id = ?
+          AND encounter.encounter_datetime < ?
+          AND obs.concept_id = ?
+          AND obs.value_drug IN (?)
+          AND encounter.voided = 0",
+        patient.id, (date + 1.days).to_date, notes_concept, drug_ids
+      ]
+    )
+
+    result = {}
+
+    map = {
+      'HCZ (25mg tablet)' => 'HCZ',
+      'Amlodipine (5mg tablet)' => 'Amlodipine',
+      'Amlodipine (10mg tablet)' => 'Amlodipine',
+      'Enalapril (5mg tablet)' => 'Enalapril',
+      'Enalapril (10mg tablet)' => 'Enalapril',
+      'Atenolol (50mg tablet)' => 'Atenolol',
+      'Atenolol (100mg tablet)' => 'Atenolol'
+    }
+
+    data.each do |obj|
+      drug_name = Drug.find(obj.value_drug).name
+      name = map[drug_name]
+      next if drug_name.blank? || name.blank?
+
+      notes = obj.value_text
+      date = obj.obs_datetime.to_date
+
+      result[name] = {} if result[name].blank?
+      result[name][date] = [] if result[name][date].blank?
+      result[name][date] << notes
+    end
+
+    result
   end
 end
