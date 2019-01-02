@@ -251,7 +251,7 @@ module ARTService
     # Checks whether current patient is on a fast track visit
     def patient_not_on_fast_track?
       on_fast_track = Observation.where(concept: concept('Fast'), person: @patient.person)\
-                                 .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
+                                 .where('obs_datetime <= ?', TimeUtils.day_bounds(@date)[1])\
                                  .order(obs_datetime: :desc)\
                                  .first
                                  &.value_coded
