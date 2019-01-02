@@ -77,6 +77,10 @@ class PatientService
     }
   end
 
+  def last_htn_drugs_received_summary(patient, date)
+    last_htn_drugs_received(patient, date)
+  end
+
   private
 
   # Takes a list of BP readings and groups them into a visit trail.
@@ -264,5 +268,48 @@ class PatientService
     end
 
     result
+  end
+
+  def last_htn_drugs_received(patient, date)
+    current_drugs = current_htn_drugs(patient, date)
+
+    dispensed_concept_id = concept('AMOUNT DISPENSED')&.concept_id || -1
+    last_dispensation = {}
+    current_drugs.each_with_object({}) do |drug, hash|
+      last_dispensation = Encounter.find_by_sql(
+        [
+          "SELECT SUM(obs.value_numeric) AS value_numeric, MAX(obs_datetime) AS obs_datetime, 0 AS remaining
+           FROM encounter INNER JOIN obs ON obs.encounter_id = encounter.encounter_id AND encounter.voided = 0
+            WHERE obs.value_drug = ? AND encounter.encounter_type = ? AND
+                  encounter.patient_id = ? AND DATE(encounter.encounter_datetime) < ?
+             AND obs.concept_id = ?
+           GROUP BY DATE(obs_datetime)
+           ORDER BY obs.obs_datetime DESC
+           LIMIT 1",
+          drug.id, encounter_type('DISPENSING').id, patient.id, date, dispensed_concept_id
+        ]
+      ).last
+
+      remaining_last_time = Observation.where(
+        [
+          'concept_id = ? AND person_id = ? AND value_drug = ? AND DATE(obs_datetime) = ?',
+          ConceptName.find_by_name('Amount of drug remaining at home').concept_id,
+          patient.patient_id, drug.id, last_dispensation.obs_datetime.to_date
+        ]
+      ).last&.value_numeric || 0
+
+      last_dispensation.remaining = (
+        (last_dispensation.value_numeric.to_i + remaining_last_time.to_i)\
+          - (date - last_dispensation.obs_datetime.to_date).to_i
+      ) rescue nil # == days for a pill per day
+
+      next unless last_dispensation
+
+      hash[drug.name] = {
+        value_numeric: last_dispensation.value_numeric,
+        obs_datetime: last_dispensation.obs_datetime,
+        remaining: last_dispensation.remaining
+      }
+    end
   end
 end
