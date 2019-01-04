@@ -106,7 +106,7 @@ module ARTService
       htn_activated = global_property('activate.htn.enhancement')&.property_value&.downcase == 'true'
       return encounter_type unless htn_activated
 
-      htn_workflow.next_htn_encounter(@patient, enconter_type, @date)
+      htn_workflow.next_htn_encounter(@patient, encounter_type, @date)
     end
 
     # Checks if patient has checked in today

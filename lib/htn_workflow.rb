@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class HtnWorkflow
+  include ModelUtils
+
   def next_htn_encounter(patient, current_encounter, date)
     encounter = check_htn_workflow patient, current_encounter, date
     return encounter unless encounter.is_a?(String)
@@ -12,7 +14,7 @@ class HtnWorkflow
   private
 
   def check_htn_workflow(patient, task, date)
-    if !task.name.match(/VITALS/i) && !task.name.match(/REGIMENS/i) && !(task.name.match(/SHOW/i) && task.encounter_type == "NONE")
+    if !task.name.match(/VITALS/i) && !task.name.match(/TREATMENT/i) && !(task.encounter_type == nil)
       return task
     end
 
@@ -31,15 +33,15 @@ class HtnWorkflow
                                         ]).last&.answer_string&.downcase&.strip || nil) == "yes"
 
     todays_encounters = patient.encounters.find_by_date(date)
-    sbp_threshold = CoreService.get_global_property_value("htn.systolic.threshold").to_i
-    dbp_threshold = CoreService.get_global_property_value("htn.diastolic.threshold").to_i
+    sbp_threshold = global_property("htn.systolic.threshold")&.property_value&.to_i
+    dbp_threshold = get_global_property("htn.diastolic.threshold")&.property_value&.to_i
     if task.present? && task.name.present?
       #patients eligible for HTN will have their vitals taken with HTN module
       if task.name.match(/VITALS/i)
         return "htn_vitals"
-      elsif task.name.match(/REGIMENS/i) || (task.name.match(/SHOW/i) && task.encounter_type == "NONE")
+      elsif task.name.match(/TREATMENT/i) || task.encounter_type == nil
         #Alert and BP mgmt for patients on HTN or with two high BP readings
-        bp = patient.current_bp((session[:datetime] || Time.now()))
+        bp = patient.current_bp(patient, date)
         bp_management_done = todays_encounters.map {|e| e.name}.include?("HYPERTENSION MANAGEMENT")
         medical_history = todays_encounters.map {|e| e.name}.include?("MEDICAL HISTORY")
 
@@ -113,5 +115,17 @@ class HtnWorkflow
     end
 
     task
+  end
+
+  def current_bp(patient, date = Date.today)
+    encounter_id = patient.encounters.where("encounter_type = ? AND DATE(encounter_datetime) = ?",
+      EncounterType.find_by_name("VITALS").id, date.to_date).last.id rescue nil
+
+    ans = [(Observation.where("encounter_id = ? AND concept_id = ?", encounter_id,
+          ConceptName.find_by_name("SYSTOLIC BLOOD PRESSURE").concept_id).last.answer_string.to_i rescue nil),
+      (Observation.where("encounter_id = ? AND concept_id = ?", encounter_id,
+          ConceptName.find_by_name("DIASTOLIC BLOOD PRESSURE").concept_id).last.answer_string.to_i rescue nil)
+    ]
+    ans = ans.reject(&:blank?)
   end
 end
