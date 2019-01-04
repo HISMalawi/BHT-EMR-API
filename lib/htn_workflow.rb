@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module HtnWorkflow
+class HtnWorkflow
   def next_htn_encounter(patient, current_encounter, date)
     encounter = check_htn_workflow patient, current_encounter, date
     return encounter unless encounter.is_a?(String)
