@@ -34,7 +34,7 @@ class HtnWorkflow
 
     todays_encounters = patient.encounters.where('DATE(encounter_datetime) = ?', date)
     sbp_threshold = global_property("htn.systolic.threshold")&.property_value&.to_i
-    dbp_threshold = get_global_property("htn.diastolic.threshold")&.property_value&.to_i
+    dbp_threshold = global_property("htn.diastolic.threshold")&.property_value&.to_i
     if task.present? && task.name.present?
       #patients eligible for HTN will have their vitals taken with HTN module
       if task.name.match(/VITALS/i)
