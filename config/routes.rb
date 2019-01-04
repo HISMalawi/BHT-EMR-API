@@ -102,6 +102,7 @@ Rails.application.routes.draw do
           get '/dosages' => 'program_patients#find_dosages'
           get '/status' => 'program_patients#status'
           get '/earliest_start_date' => 'program_patients#find_earliest_start_date'
+          resources :patient_states, path: :states
         end
         resources :lab_test_types, path: 'lab_tests/types'
         get '/lab_tests/panels' => 'lab_test_types#panels' # TODO: Move this into own controller
@@ -124,8 +125,6 @@ Rails.application.routes.draw do
 
       resource :global_properties
       resource :user_properties
-
-      resources :patient_states
 
       # Workflow engine
       get '/workflows/:program_id/:patient_id' => 'workflows#next_encounter'

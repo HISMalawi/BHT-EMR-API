@@ -11,21 +11,10 @@ class PatientState < VoidableRecord
   after_save :end_program
 
   def as_json(options = {})
-    super(options.merge(
-      include: {
-        patient_program: {},
-        program_workflow_state: {}
-      }
-    ))
+    super(options).tap do |serialized_patient_state|
+      serialized_patient_state[:name] = program_workflow_state.concept.concept_names.first.name
+    end
   end
-
-#   SCOPE_QUERY = <<EOF
-#     start_date IS NOT NULL
-#       AND DATE(start_date) <= CURRENT_DATE()
-#       AND (end_date IS NULL OR DATE(end_date) > CURRENT_DATE())
-# EOF
-
-#   named_scope :current, conditions: [SCOPE_QUERY]
 
   def end_program
     # If this is the only state and it is not initial, oh well
