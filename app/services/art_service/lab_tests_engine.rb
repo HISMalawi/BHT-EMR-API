@@ -13,8 +13,12 @@ class ARTService::LabTestsEngine
     LabTestType.find(type_id)
   end
 
-  def types(specimen_type:, search_string: nil)
-    nlims.test_types(specimen_type)
+  def types(search_string:)
+    test_types = nlims.test_types
+
+    return test_types unless search_string
+
+    test_types.select { |test_type| test_type.start_with?(search_string) }
   end
 
   def lab_locations
@@ -25,8 +29,8 @@ class ARTService::LabTestsEngine
     nlims.labs
   end
 
-  def panels(search_string: nil)
-    nlims.specimen_types
+  def panels(test_type)
+    nlims.specimen_types(test_type)
   end
 
   def results(accession_number)
@@ -35,18 +39,20 @@ class ARTService::LabTestsEngine
                 .order(Arel.sql('DATE(Lab_Sample.TimeStamp) DESC'))
   end
 
-  def create_order(encounter:, date:, reason:, **kwargs)
+  def create_order(encounter:, date:, reason:, test_types:, **kwargs)
     patient ||= encounter.patient
     date ||= encounter.encounter_datetime
 
-    lims_order = nlims.order_test(patient: patient, user: User.current, date: date,
-                                  reason: reason, **kwargs)
-    accession_number = lims_order['tracking_number']
+    test_types.collect do |test_type|
+      lims_order = nlims.order_test(patient: patient, user: User.current, date: date,
+                                    reason: reason, test_type: [test_type], **kwargs)
+      accession_number = lims_order['tracking_number']
 
-    local_order = create_local_order(patient, encounter, date, accession_number)
-    save_reason_for_test(encounter, local_order, reason)
+      local_order = create_local_order(patient, encounter, date, accession_number)
+      save_reason_for_test(encounter, local_order, reason)
 
-    { order: local_order, lims_order: lims_order }
+      { order: local_order, lims_order: lims_order }
+    end
   end
 
   def find_orders_by_patient(patient, paginate_func: nil)
