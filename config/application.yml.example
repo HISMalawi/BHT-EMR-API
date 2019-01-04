@@ -2,7 +2,10 @@ dde_url: http://localhost:8000
 dde_username: admin
 dde_password: bht.dde3!
 
-lims_url: http://localhost:5000
+lims_protocol: http
+lims_prefix: api/v1
+lims_host: 10.42.0.24
+lims_port: 3010
 lims_username: bht_emr_api_1
 lims_password: 123456789
 lims_default_user: 'admin'
