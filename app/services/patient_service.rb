@@ -81,8 +81,8 @@ class PatientService
     last_htn_drugs_received(patient, date)
   end
 
-  def update_remaining_bp_drugs
-    update_remaining_drugs
+  def update_remaining_bp_drugs(patient, date, drug, pills)
+    update_remaining_drugs(patient, date, drug, pills)
   end
 
   private
@@ -344,7 +344,7 @@ class PatientService
         ConceptName.find_by_name('Amount of drug remaining at home').concept_id,
         patient.id, drug.id, last_dispensation.obs_datetime.to_date
       ]
-    ).last.value_numeric
+    ).last&.value_numeric || 0
 
     adherence = nil
     expected_amount_remaining = nil
@@ -360,7 +360,7 @@ class PatientService
     obs = Observation.where(
       'person_id = ? AND concept_id = ? AND encounter_id = ? AND
        value_drug = ? AND DATE(obs_datetime) = ?',
-      patient.id, adherence_concept_id, encounter.id, drug_id, session_date
+      patient.id, adherence_concept_id, encounter.id, drug.id, date
     ).last
 
     unless adherence.blank?
@@ -371,12 +371,12 @@ class PatientService
           person_id: patient.id,
           location_id: Location.current.id,
           concept_id: adherence_concept_id,
-          order_id: order_id,
+          order_id: order.id,
           creator: User.current.id,
           value_numeric: adherence,
           value_modifier: '%',
           value_text: '',
-          value_drug: drug_id
+          value_drug: drug.id
         )
       else
         obs.update_attributes(value_numeric: adherence)
