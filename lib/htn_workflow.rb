@@ -32,7 +32,7 @@ class HtnWorkflow
                                           date.strftime('%Y-%m-%d 23:59:59')
                                         ]).last&.answer_string&.downcase&.strip || nil) == "yes"
 
-    todays_encounters = patient.encounters.find_by_date(date)
+    todays_encounters = patient.encounters.where('DATE(encounter_datetime) = ?', date)
     sbp_threshold = global_property("htn.systolic.threshold")&.property_value&.to_i
     dbp_threshold = get_global_property("htn.diastolic.threshold")&.property_value&.to_i
     if task.present? && task.name.present?
