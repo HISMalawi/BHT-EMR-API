@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'htn_workflow'
+
 module ARTService
   class WorkflowEngine
     include ModelUtils
@@ -20,7 +22,7 @@ module ARTService
         LOGGER.debug "Loading encounter type: #{state}"
         encounter_type = EncounterType.find_by(name: state)
 
-        return encounter_type if valid_state?(state)
+        return htn_transform(encounter_type) if valid_state?(state)
       end
 
       nil
@@ -97,6 +99,14 @@ module ARTService
       (STATE_CONDITIONS[state] || []).reduce(true) do |status, condition|
         status && method(condition).call
       end
+    end
+
+    # Takes an ART encounter_type and remaps it to a corresponding HTN encounter
+    def htn_transform(encounter_type)
+      htn_activated = global_property('activate.htn.enhancement')&.property_value&.downcase == 'true'
+      return encounter_type unless htn_activated
+
+      htn_workflow.next_htn_encounter(@patient, enconter_type, @date)
     end
 
     # Checks if patient has checked in today
@@ -260,6 +270,10 @@ module ARTService
       on_fast_track = on_fast_track ? on_fast_track&.to_i : no_concept
 
       on_fast_track == no_concept
+    end
+
+    def htn_workflow
+      HtnWorkflow.new
     end
   end
 end
