@@ -7,8 +7,8 @@ class HtnWorkflow
     encounter = check_htn_workflow patient, current_encounter, date
     return encounter unless encounter.is_a?(String)
 
-    Encounter.new name: encounter,
-                  description: 'HTN temporary encounter'
+    EncounterType.new name: encounter,
+                      description: 'HTN temporary encounter'
   end
 
   private
