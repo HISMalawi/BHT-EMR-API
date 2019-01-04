@@ -3,7 +3,7 @@
 class AddVisitsReportType < ActiveRecord::Migration[5.2]
   def up
     ReportType.create name: 'visits',
-                      creator: User.first,
+                      creator: User.first.id,
                       date_created: Time.now
   rescue StandardError => e
     Rails.logger.error "Unhandled exception: #{e}"
