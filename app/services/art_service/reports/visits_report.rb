@@ -6,8 +6,8 @@ class ARTService::Reports::VisitsReport
   def initialize(name:, type:, start_date:, end_date:)
     @name = name
     @type = type
-    @start_date = start_date
-    @end_date = end_date
+    @start_date = start_date.to_date
+    @end_date = end_date.to_date
   end
 
   def build_report
