@@ -14,7 +14,7 @@ class HtnWorkflow
   private
 
   def check_htn_workflow(patient, task, date)
-    if !task.name.match(/VITALS/i) && !task.name.match(/TREATMENT/i) && !(task.encounter_type == nil)
+    if !task.name.match(/VITALS/i) && !task.name.match(/TREATMENT/i) && !(task.encounter_type_id == nil)
       return task
     end
 
@@ -39,7 +39,7 @@ class HtnWorkflow
       #patients eligible for HTN will have their vitals taken with HTN module
       if task.name.match(/VITALS/i)
         return "htn_vitals"
-      elsif task.name.match(/TREATMENT/i) || task.encounter_type == nil
+      elsif task.name.match(/TREATMENT/i) || task.encounter_type_id == nil
         #Alert and BP mgmt for patients on HTN or with two high BP readings
         bp = patient.current_bp(patient, date)
         bp_management_done = todays_encounters.map {|e| e.name}.include?("HYPERTENSION MANAGEMENT")
