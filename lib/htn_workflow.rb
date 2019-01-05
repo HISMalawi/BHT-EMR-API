@@ -62,8 +62,10 @@ class HtnWorkflow
         #>>>>>>>>>>>>>>>>>END>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
         #Check if latest BP was high for alert
-        todays_observations = Observation.where(concept: Concept.find_by_name('SBP'))\
-                    .where('DATE(obs_datetime) = DATE(?)', date).count
+        todays_observations = Observation.where(concept: Concept.find_by_name('SBP'),
+                                                person: patient.person)\
+                                         .where('DATE(obs_datetime) = DATE(?)', date)\
+                                         .count
         if !bp.blank? && todays_observations == 1
           if !bp_management_done && !medical_history && ((!bp[0].blank? && bp[0] > sbp_threshold) || (!bp[1].blank? && bp[1] > dbp_threshold))
             return "bp_alert"
