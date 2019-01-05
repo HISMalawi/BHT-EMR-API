@@ -12,6 +12,13 @@ class Api::V1::PatientsController < ApplicationController
 
   before_action :load_dde_client
 
+  VISIT_DATES_SQL = <<-SQL
+    SELECT DISTINCT DATE(encounter_datetime) AS encounter_datetime
+    FROM encounter WHERE patient_id = ? AND voided = 0
+    GROUP BY encounter_datetime
+    ORDER BY encounter_datetime DESC
+  SQL
+
   def show
     render json: Patient.find(params[:id])
   end
@@ -165,13 +172,6 @@ class Api::V1::PatientsController < ApplicationController
   private
 
   DDE_CONFIG_PATH = 'config/application.yml'
-
-  VISIT_DATES_SQL = <<-SQL
-    SELECT DISTINCT DATE(encounter_datetime) AS encounter_datetime
-    FROM encounter WHERE patient_id = ?
-    GROUP BY encounter_datetime
-    ORDER BY encounter_datetime DESC
-  SQL
 
   def patient
     Patient.find(params[:patient_id])
