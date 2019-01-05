@@ -83,9 +83,9 @@ class Encounter < VoidableRecord
   #   (!voided_orders.empty?) ? voided_orders : nil
   # end
 
-  # def name
-  #   self.type.name rescue "N/A"
-  # end
+  def name
+    self.type&.name || 'N/A'
+  end
 
   # def to_s
   #   if name == 'REGISTRATION'
