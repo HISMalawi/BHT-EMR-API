@@ -33,8 +33,8 @@ class HtnWorkflow
                                         ]).last&.answer_string&.downcase&.strip || nil) == "yes"
 
     todays_encounters = patient.encounters.where('DATE(encounter_datetime) = ?', date)
-    sbp_threshold = global_property("htn.systolic.threshold")&.property_value&.to_i
-    dbp_threshold = global_property("htn.diastolic.threshold")&.property_value&.to_i
+    sbp_threshold = global_property("htn.systolic.threshold")&.property_value&.to_i || 0
+    dbp_threshold = global_property("htn.diastolic.threshold")&.property_value&.to_i || 0
     if task.present? && task.name.present?
       #patients eligible for HTN will have their vitals taken with HTN module
       if task.name.match(/VITALS/i)
@@ -62,7 +62,9 @@ class HtnWorkflow
         #>>>>>>>>>>>>>>>>>END>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
         #Check if latest BP was high for alert
-        if !bp.blank? && todays_encounters.map {|e| e.name}.count("VITALS") == 1
+        todays_observations = Observation.where(concept: Concept.find_by_name('SBP'))\
+                    .where('DATE(obs_datetime) = DATE(?)', date).count
+        if !bp.blank? && todays_observations == 1
           if !bp_management_done && !medical_history && ((!bp[0].blank? && bp[0] > sbp_threshold) || (!bp[1].blank? && bp[1] > dbp_threshold))
             return "bp_alert"
           elsif !bp_management_done && medical_history && ((!bp[0].blank? && bp[0] > sbp_threshold) || (!bp[1].blank? && bp[1] > dbp_threshold))
@@ -127,5 +129,11 @@ class HtnWorkflow
           ConceptName.find_by_name("DIASTOLIC BLOOD PRESSURE").concept_id).last.answer_string.to_i rescue nil)
     ]
     ans = ans.reject(&:blank?)
+  end
+
+  def current_user_roles
+    user_roles = UserRole.where(["user_id = ?", current_user.id]).collect{|r|r.role}
+    RoleRole.where(["child_role IN (?)", user_roles]).collect{|r|user_roles << r.parent_role}
+    return user_roles.uniq
   end
 end
