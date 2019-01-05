@@ -58,11 +58,7 @@ class Api::V1::ObservationsController < ApplicationController
       create_observation(archetype, encounter)[0]
     end
 
-    if encounter.save
-      render json: observations, status: :created
-    else
-      render json: encounter.errors, status: :bad_request
-    end
+    render json: observations, status: :created
   end
 
   # Update existing observation
@@ -115,28 +111,29 @@ class Api::V1::ObservationsController < ApplicationController
   end
 
   def create_observation(archetype, encounter)
-    logger.debug "Creating observation: #{archetype}"
-    child_archetype = archetype.delete :child
+    ActiveRecord::Base.transaction do
+      logger.debug "Creating observation: #{archetype}"
+      child_archetype = archetype.delete :child
 
-    archetype.permit! # Oops...
-    unless validate_presence_of_obs_value archetype
-      return nil, "Empty obs: #{archetype}"
+      archetype.permit! # Oops...
+      unless validate_presence_of_obs_value archetype
+        return nil, "Empty obs: #{archetype}"
+      end
+
+      archetype[:obs_datetime] ||= encounter.encounter_datetime
+      archetype[:person_id] = encounter.patient.person.id
+      archetype[:encounter_id] = encounter.id
+      observation = Observation.create archetype
+      raise InvalidParameterError, observation.errors.as_json.to_s unless observation.errors.empty?
+
+      return observation, nil unless child_archetype
+
+      logger.debug "Creating child observation for obs ##{observation.obs_id}"
+      child_archetype[:obs_group_id] = observation.obs_id
+      child_archetype[:person_id] ||= archetype[:person_id]
+      create_observation child_archetype, encounter
+      [observation, nil]
     end
-
-    archetype[:obs_datetime] ||= encounter.encounter_datetime
-    archetype[:person_id] = encounter.patient.person.id
-    observation = Observation.create archetype
-    return nil, observation.errors unless observation
-
-    encounter.observations << observation
-
-    return observation, nil unless child_archetype
-
-    logger.debug "Creating child observation for obs ##{observation.obs_id}"
-    child_archetype[:obs_group_id] = observation.obs_id
-    child_archetype[:person_id] ||= archetype[:person_id]
-    create_observation child_archetype, encounter
-    [observation, nil]
   end
 
   def index_filter_period
