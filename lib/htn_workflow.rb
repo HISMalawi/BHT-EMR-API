@@ -136,4 +136,21 @@ class HtnWorkflow
     RoleRole.where(["child_role IN (?)", user_roles]).collect{|r|user_roles << r.parent_role}
     return user_roles.uniq
   end
+
+  def is_patient_on_htn_treatment?(patient, date)
+    if patient.programs.map{|x| x.name}.include?("HYPERTENSION PROGRAM")
+      htn_program_id = Program.find_by_name("HYPERTENSION PROGRAM").id
+      program = PatientProgram.where(["patient_id = ? AND program_id = ? AND date_enrolled <= ?",
+          patient.id,htn_program_id, date]).last
+      unless program.blank?
+        state = PatientState.where(["patient_program_id = ? AND start_date <= ? ", program.id, date]
+        ).last rescue nil
+        current_state = ConceptName.find_by_concept_id(state.program_workflow_state.concept_id).name rescue ""
+        if current_state.upcase == "ON TREATMENT"
+          return true
+        end
+      end
+    end
+    return false
+  end
 end
