@@ -32,7 +32,8 @@ class FilingNumberService
                                        .order(identifier: :desc)\
                                        .first\
                                        &.identifier
-    next_id = last_identifier[5..-1].to_i + 1
+    
+    next_id = last_identifier.blank? ? 1 : last_identifier[5..-1].to_i + 1
 
     # HACK: Ensure we are not exceeding filing number limits
     if type.match?(/^Filing.*/i) && next_id > filing_number_limit
