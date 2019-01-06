@@ -21,21 +21,24 @@ module DispensationService
     end
 
     def create(plain_dispensations)
-      obs_list = plain_dispensations.map do |dispensation|
-        order_id = dispensation[:drug_order_id]
-        quantity = dispensation[:quantity]
-        date = dispensation[:date] ? dispensation[:date].to_time.strftime('%Y-%m-%d %H:%M:%S') : nil
-        drug_order = DrugOrder.find(order_id)
-        obs = dispense_drug drug_order, quantity, date: date
+      ActiveRecord::Base.transaction do
+        obs_list = plain_dispensations.map do |dispensation|
+          order_id = dispensation[:drug_order_id]
+          quantity = dispensation[:quantity]
+          date = dispensation[:date] ? dispensation[:date].to_time.strftime('%Y-%m-%d %H:%M:%S') : nil
+          drug_order = DrugOrder.find(order_id)
+          obs = dispense_drug drug_order, quantity, date: date
 
-        unless obs.errors.empty?
-          return ["Failed to dispense order ##{order_id}", obs.errors], true
+          unless obs.errors.empty?
+            raise InvalidParameterErrors.new("Failed to dispense order ##{order_id}")\
+                                        .add_model_errors(model_errors)
+          end
+
+          obs.as_json.tap { |hash| hash[:amount_needed] = drug_order.amount_needed }
         end
 
-        obs.as_json.tap { |hash| hash[:amount_needed] = drug_order.amount_needed }
+        obs_list
       end
-
-      [obs_list, false]
     end
 
     def dispense_drug(drug_order, quantity, date: nil)
@@ -53,7 +56,7 @@ module DispensationService
       # Let's avoid surprises, clients must explicitly trigger the state change.
       # Besides this service is open to different clients, some (actually most)
       # are not even interested in the HIV Program... So...
-      mark_patient_as_on_antiretrovirals(patient) if drug_order.drug.arv?
+      mark_patient_as_on_antiretrovirals(patient, date) if drug_order.drug.arv?
 
       Observation.create(
         concept_id: concept('AMOUNT DISPENSED').concept_id,
@@ -97,7 +100,7 @@ module DispensationService
     private
 
     # HACK: See dispense_drug methods
-    def mark_patient_as_on_antiretrovirals(patient)
+    def mark_patient_as_on_antiretrovirals(patient, date)
       program, patient_program = patient_hiv_program(patient)
       return unless program && patient_program
 
@@ -110,10 +113,12 @@ module DispensationService
 
       return if patient_has_state?(patient_program, on_arvs_state)
 
+      mark_patient_art_start_date(patient, date)
+
       PatientState.create(
         patient_program: patient_program,
         program_workflow_state: on_arvs_state,
-        start_date: Date.today
+        start_date: date
       )
     end
 
@@ -129,6 +134,16 @@ module DispensationService
       patient_program.patient_states.where(
         program_workflow_state: workflow_state
       ).exists?
+    end
+
+    def mark_patient_art_start_date(patient, date)
+      art_start_date_concept = concept('ART start date')
+      return if Observation.where(person_id: patient.patient_id, concept: art_start_date_concept).exists?
+
+      Observation.create person_id: patient.patient_id,
+                         concept: art_start_date_concept,
+                         value_datetime: date,
+                         obs_datetime: TimeUtils.retro_timestamp(date)
     end
   end
 end

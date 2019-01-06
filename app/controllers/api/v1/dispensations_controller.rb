@@ -4,12 +4,9 @@ class Api::V1::DispensationsController < ApplicationController
   def create
     dispensations = params.require(:dispensations)
 
-    obs_list, error = DispensationService.create dispensations
-    if error
-      render json: obs_list, status: :bad_request
-    else
-      render json: obs_list, status: :created
-    end
+    render json: DispensationService.create(dispensations), status: :created
+  rescue InvalidParameterError => e
+    render json: { errors: [e.getMessage, e.model_errors] }, status: :bad_request
   end
 
   def index
