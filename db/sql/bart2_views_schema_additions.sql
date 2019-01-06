@@ -1481,7 +1481,13 @@ BEGIN
   SET @regimen_eleven_a_one   := ('39,73');
   SET @regimen_eleven_a_two   := ('39,74');
 
-  SET @regimen_twelve_a       := ('954,976,977,978');
+  SET @regimen_twelve_a       := ('976,977,982');
+
+  SET @regimen_thirteen_a     := ('983');
+
+  SET @regimen_fourteen_a     := ('984,982');
+
+  SET @regimen_fifteen_a      := ('969,982');
 
   /* Regimen ZERO ............................................................................. */
   IF @drug_ids IN(@regimen_zero_p_one) AND (length(@drug_ids) = length(@regimen_zero_p_one)) THEN
@@ -1628,6 +1634,24 @@ BEGIN
     SET regimen_cat = ('12A');
   END IF;
   /* Regimen TWELVE ENDS............................................................................. */
+
+  /* Regimen THIRTEEN............................................................................. */
+  IF @drug_ids IN(@regimen_thirteen_a) AND (length(@drug_ids) = length(@regimen_thirteen_a)) THEN
+    SET regimen_cat = ('13A');
+  END IF;
+  /* Regimen THIRTEEN ENDS............................................................................. */
+
+  /* Regimen FOURTEEN............................................................................. */
+  IF @drug_ids IN(@regimen_fourteen_a) AND (length(@drug_ids) = length(@regimen_fourteen_a)) THEN
+    SET regimen_cat = ('14A');
+  END IF;
+  /* Regimen FOURTEEN ENDS............................................................................. */
+
+  /* Regimen FIFTEEN............................................................................. */
+  IF @drug_ids IN(@regimen_fifteen_a) AND (length(@drug_ids) = length(@regimen_fifteen_a)) THEN
+    SET regimen_cat = ('15A');
+  END IF;
+  /* Regimen FIFTEEN ENDS............................................................................. */
 
 
 
