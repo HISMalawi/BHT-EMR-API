@@ -34,7 +34,7 @@ class PatientStateService
 
     unless patient_program
       raise NotFoundError,
-            "PatientProgram(patient_id = #{patient&.id}, program_id = #{program&.id}, date_enrolled <= #{date}) not found"
+            "PatientProgram(patient_id = #{patient&.id}, program_id = #{program&.id}, date_enrolled <= #{ref_date}) not found"
     end
 
     patient_program
