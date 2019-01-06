@@ -13,8 +13,14 @@ module TimeUtils
     # Returns a 24 hour period (day) containing the date
     def day_bounds(datetime)
       datetime = datetime&.to_time || datetime
-      [datetime.strftime('%Y-%m-%d 00:00:00').to_datetime,
-       datetime.strftime('%Y-%m-%d 23:59:59').to_datetime]
+      [datetime.strftime('%Y-%m-%d 00:00:00').to_time,
+       datetime.strftime('%Y-%m-%d 23:59:59').to_time]
+    end
+
+    # Returns a time object comprising the given date plus the current time.
+    def retro_timestamp(date)
+      date = date.to_time
+      "#{date.strftime('%Y-%m-%d')} #{Time.now.strftime('%H:%M')}".to_time
     end
   end
 end
