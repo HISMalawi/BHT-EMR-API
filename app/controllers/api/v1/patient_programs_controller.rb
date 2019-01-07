@@ -1,4 +1,6 @@
 class Api::V1::PatientProgramsController < ApplicationController
+  # TODO: Refactor much of the logic in this controller into a service
+
   def index
     render json: PatientProgram.where(patient_id: params[:patient_id])
   end
@@ -12,6 +14,13 @@ class Api::V1::PatientProgramsController < ApplicationController
     create_params[:date_enrolled] ||= Time.now
     create_params[:location_id] = Location.current.id
     create_params[:patient_id] = params[:patient_id]
+
+    p_program = PatientProgram.find_by(patient_id: create_params[:patient_id],
+                                       program_id: create_params[:program_id])
+    if p_program
+      return render json: { errors: ['Patient already enrolled in program'] },
+                    status: :conflict
+    end
 
     p_program = PatientProgram.create create_params
 
