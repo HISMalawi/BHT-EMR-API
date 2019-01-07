@@ -5,7 +5,11 @@ require 'rest-client'
 
 class NLims
   def initialize(config)
+    @api_prefix = config['lims_prefix'] || 'v1'
+    @api_protocol = config['lims_protocol'] || 'http'
+    @api_host = config['lims_host']
     @api_url = config['lims_url']
+    @api_port = config['lims_port']
     @connection = nil
   end
 
@@ -23,31 +27,35 @@ class NLims
     @connection = OpenStruct.new token: response['token']
   end
 
-  def order_test(patient:, user:, specimen_type:, test_types:, date:, reason:,
-                 target_lab:, requesting_clinician:)
+  def order_test(patient:, user:, test_type:, date:, reason:, requesting_clinician:)
     patient_name = patient.person.names.first
     user_name = user.person.names.first
 
-    post 'create_order', district: 'Lilongwe',
-                         health_facility_name: 'LL',
-                         first_name: patient_name.given_name,
-                         last_name: patient_name.family_name,
-                         middle_name: '',
-                         date_of_birth: patient.person.birthdate,
-                         gender: patient.person.gender,
-                         national_patient_id: patient.national_id,
-                         phone_number: '',
-                         who_order_test_last_name: user_name.family_name,
-                         who_order_test_first_name: user_name.given_name,
-                         who_order_test_id: user.id,
-                         order_location: 'ART',
-                         sample_type: specimen_type,
-                         date_sample_drawn: date,
-                         tests: test_types,
-                         sample_priority: reason,
-                         target_lab: target_lab,
-                         art_start_date: 'unknown',
-                         requesting_clinician: requesting_clinician
+    temp_prefix = @api_prefix
+    @api_prefix = 'api/v2'
+
+    response = post 'request_order', district: 'Lilongwe',
+                                     health_facility_name: 'LL',
+                                     first_name: patient_name.given_name,
+                                     last_name: patient_name.family_name,
+                                     middle_name: '',
+                                     date_of_birth: patient.person.birthdate,
+                                     gender: patient.person.gender,
+                                     national_patient_id: patient.national_id,
+                                     phone_number: '',
+                                     who_order_test_last_name: user_name.family_name,
+                                     who_order_test_first_name: user_name.given_name,
+                                     who_order_test_id: user.id,
+                                     order_location: 'ART',
+                                     date_sample_drawn: date,
+                                     tests: test_type,
+                                     sample_priority: reason,
+                                     art_start_date: 'unknown',
+                                     requesting_clinician: requesting_clinician
+
+    @api_prefix = temp_prefix
+
+    response
   end
 
   def patient_results(accession_number)
@@ -66,12 +74,12 @@ class NLims
     get("query_order_by_npid/#{patient.national_id}")
   end
 
-  def specimen_types
-    tests.keys
+  def specimen_types(test_type)
+    tests[test_type]
   end
 
-  def test_types(specimen_type)
-    tests[specimen_type]
+  def test_types
+    tests.keys.sort
   end
 
   def locations
@@ -116,6 +124,6 @@ class NLims
   end
 
   def expand_url(path)
-    "#{@api_url}/#{path}"
+    "#{@api_protocol}://#{@api_host}:#{@api_port}/#{@api_prefix}/#{path}"
   end
 end
