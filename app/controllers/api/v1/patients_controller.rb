@@ -169,6 +169,13 @@ class Api::V1::PatientsController < ApplicationController
     render json: service.update_remaining_bp_drugs(patient, date, Drug.find(drug_id), pills)
   end
 
+  def eligible_for_htn_screening
+    date = params[:date]&.to_time || Time.now
+    render json: {
+      eligible: service.patient_eligible_for_htn_screening(patient, date)
+    }
+  end
+
   private
 
   DDE_CONFIG_PATH = 'config/application.yml'

@@ -85,6 +85,57 @@ class PatientService
     update_remaining_drugs(patient, date, drug, pills)
   end
 
+  # Source: NART/models/patients#patient_eligible_for_htn_screening
+  def patient_eligible_for_htn_screening(patient, date = Date.today)
+    threshold = global_property("htn.screening.age.threshold")&.property_value&.to_i || 0
+    sbp_threshold = global_property("htn.systolic.threshold")&.property_value&.to_i || 0
+    dbp_threshold = global_property("htn.diastolic.threshold")&.property_value&.to_i || 0
+
+    if (patient.age(today: date) >= threshold || patient.programs.map{|x| x.name}.include?("HYPERTENSION PROGRAM"))
+
+      htn_program = Program.find_by_name("HYPERTENSION PROGRAM")
+
+      patient_program = enrolled_on_program(patient, htn_program.id, date, false)
+
+      if patient_program.blank?
+        #When patient has no HTN program
+        last_check = last_htn_drugs_received(patient, date)
+
+        if last_check.blank?
+          return true #patient has never had their BP checked
+        elsif ((last_check[:sbp].to_i >= sbp_threshold || last_check[:dbp].to_i >= dbp_threshold))
+          return true #patient had high BP readings at last visit
+        elsif((date.to_date - last_check[:max_date].to_date).to_i >= 365 )
+          return true # 1 Year has passed since last check
+        else
+          return false
+        end
+      else
+        #Get plan
+
+        plan_concept = Concept.find_by_name('Plan').id
+        plan = Observation.where(["person_id = ? AND concept_id = ? AND obs_datetime <= ?",self.id, plan_concept,
+            date.strftime('%Y-%m-%d 23:59:59').to_time]).order("obs_datetime DESC").first
+        if plan.blank?
+          return true
+        else
+          if plan.value_text.match(/ANNUAL/i)
+            if ((date.to_date - plan.obs_datetime.to_date).to_i >= 365 )
+              return true #patient on annual screening and time has elapsed
+            else
+              return false #patient was screen but a year has not passed
+            end
+          else
+            return true #patient requires active screening
+          end
+        end
+
+      end
+    else
+      return false
+    end
+  end
+
   private
 
   # Takes a list of BP readings and groups them into a visit trail.
@@ -437,5 +488,23 @@ class PatientService
       value_numeric: pills,
       value_drug: drug.id
     )
+  end
+
+  def enrolled_on_program(patient, program_id, date = DateTime.now, create = false)
+    #patient_id
+    program = PatientProgram.where(["patient_id = ? AND program_id = ? AND date_enrolled <= ?",
+        patient.id, program_id, date.strftime("%Y-%m-%d 23:59:59")]).last
+    alive_concept_id = ConceptName.where(["name =?", "Alive"]).first.concept_id
+    if program.blank? and create
+      ActiveRecord::Base.transaction do
+        program = PatientProgram.create({:program_id => program_id, :date_enrolled => date,
+            :patient_id => self.id})
+        alive_state = ProgramWorkflowState.where(["program_workflow_id = ? AND concept_id = ?",
+            ProgramWorkflow.where(["program_id = ?", program_id]).first.id, alive_concept_id]).first.id
+        PatientState.create(:patient_program_id => program.id, :start_date => date,:state => alive_state )
+      end
+    end
+
+    program
   end
 end
