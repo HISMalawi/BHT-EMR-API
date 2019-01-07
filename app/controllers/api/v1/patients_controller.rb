@@ -176,6 +176,12 @@ class Api::V1::PatientsController < ApplicationController
     }
   end
 
+  def update_or_create_htn_state
+    state, = params.require %i[state]
+    date = params[:date]&.to_time || Time.now
+    render json: { updated: service.update_or_create_htn_state(patient, state, date) }
+  end
+
   private
 
   DDE_CONFIG_PATH = 'config/application.yml'

@@ -136,6 +136,39 @@ class PatientService
     end
   end
 
+  # Source: NART/controllers/htn_encounter_controller#create
+  def update_or_create_htn_state(patient, state, date)
+    htn_program = Program.find_by_name("HYPERTENSION PROGRAM")
+    # get state id
+    state = ProgramWorkflowState.where(["program_workflow_id = ? AND concept_id in (?)",
+        ProgramWorkflow.where(["program_id = ?", htn_program.id]).first.id,
+        ConceptName.where(name: state).collect(&:concept_id)]).first.id
+    unless state.blank?
+      patient_program = PatientProgram.where(["patient_id = ? AND program_id = ? AND date_enrolled <= ?",
+          patient.patient_id, htn_program.id, date]).first
+
+      state_within_range = PatientState.where(["patient_program_id = ? AND state = ? AND start_date <= ? AND end_date >= ?",
+          patient_program.id, state, date, date]).first
+
+      if state_within_range.blank?
+        last_state = PatientState.where(["patient_program_id = ? AND start_date <= ? ",
+            patient_program.id, date]).order("start_date ASC").last
+        if ! last_state.blank?
+          last_state.end_date = date
+          last_state.save
+        end
+
+        state_after = PatientState.where(["patient_program_id = ? AND start_date >= ? ",
+            patient_program.id, date]).order("start_date ASC").last
+
+        new_state = PatientState.new(patient_program_id: patient_program.id,
+                                     start_date: date, state: state )
+        new_state.end_date = state_after.start_date if !state_after.blank?
+        new_state.save
+      end
+    end
+  end
+
   private
 
   # Takes a list of BP readings and groups them into a visit trail.
