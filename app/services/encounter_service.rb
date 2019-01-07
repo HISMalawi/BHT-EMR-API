@@ -8,7 +8,7 @@ class EncounterService
 
     Encounter.where(type: type, patient_id: patient_id)\
              .where('encounter_datetime BETWEEN ? AND ?',
-                    start_date.to_datetime, TimeUtils.day_bounds(date)[1])\
+                    *TimeUtils.day_bounds(date))\
              .order(encounter_datetime: :desc)\
              .first
   end
