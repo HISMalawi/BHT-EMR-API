@@ -56,7 +56,7 @@ RSpec.describe EncounterService do
     let(:new_patient) { create :patient }
     let(:new_type) { EncounterType.last }
     let(:new_encounter_datetime) { Time.now + 10.days }
-    let(:new_provider) { User.first }
+    let(:new_provider) { User.first.person }
 
     it 'updates patient' do
       created = encounter_service.create(patient: patient, type: type,

@@ -88,7 +88,7 @@ class AppointmentService
                   patient: patient,
                   encounter_datetime: Time.now,
                   location_id: Location.current.location_id,
-                  provider: User.current
+                  provider: User.current.person
   end
 
   #######################################################################################
