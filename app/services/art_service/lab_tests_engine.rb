@@ -63,6 +63,8 @@ class ARTService::LabTestsEngine
 
       orders = find_orders_by_accession_number local_order.accession_number
       collected_orders.push(*orders)
+    rescue LimsError => e
+      Rails.logger.error("Error finding LIMS order: #{e}")
     end
   end
 

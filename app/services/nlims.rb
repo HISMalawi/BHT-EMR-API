@@ -118,7 +118,9 @@ class NLims
                                        content_type: 'application/json'
 
     response = JSON.parse(response)
-    raise "Failed to communicate with LIMS: #{response['message']}" if response['error'] == true
+    if response['error'] == true
+      raise LimsError, "Failed to communicate with LIMS: #{response['message']}"
+    end
 
     response['data']
   end
