@@ -69,7 +69,7 @@ class Api::V1::EncountersController < ApplicationController
     encounter = encounter_service.create(
       type: EncounterType.find(type_id),
       patient: Patient.find(patient_id),
-      provider: params[:provider_id] && User.find(params[:provider_id]),
+      provider: params[:provider_id] ? Person.find(params[:provider_id]) : User.current.person,
       encounter_datetime: params[:encounter_datetime]&.to_datetime || Time.now
     )
 
@@ -87,7 +87,7 @@ class Api::V1::EncountersController < ApplicationController
     encounter = Encounter.find(params[:id])
     type = params[:type_id] && EncounterType.find(params[:type_id])
     patient = params[:patient_id] && Patient.find(params[:patient_id])
-    provider = params[:provider_id] && User.find(params[:provider_id])
+    provider = params[:provider_id] ? Person.find(params[:provider_id]) : User.current.person
     encounter_datetime = params[:encounter_datetime]&.to_datetime || Time.now
 
     encounter_service.update(encounter, type: type, patient: patient,
