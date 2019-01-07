@@ -14,7 +14,7 @@ class HtnWorkflow
   private
 
   def check_htn_workflow(patient, task, date)
-    return task unless htn_client?(patient)
+    return task unless htn_client?(patient, date)
 
     if !task.name.match(/VITALS/i) && !task.name.match(/TREATMENT/i) && !(task.encounter_type_id == nil)
       return task
@@ -159,10 +159,10 @@ class HtnWorkflow
   end
 
 
-  def htn_client?(patient)
+  def htn_client?(patient, date)
     #    link_to_htn = CoreService.get_global_property_value("activate.htn.enhancement")
-    htn_min_age = CoreService.get_global_property_value("htn.screening.age.threshold")
-    age = patient.person.age((session[:datetime].to_date rescue Date.today)) rescue 0
+    htn_min_age = global_property("htn.screening.age.threshold")&.property_value
+    age = patient.person.age(date) rescue 0
     htn_patient = false
 
     if ((htn_min_age.to_i <= age.to_i) rescue false) || patient.programs.map{|x| x.name}.include?("HYPERTENSION PROGRAM")
