@@ -151,4 +151,5 @@ Rails.application.routes.draw do
   get '/api/v1/fast_track_assessment' => 'api/v1/fast_track#assessment'
   post '/api/v1/cancel_fast_track' => 'api/v1/fast_track#cancel'
   get '/api/v1/on_fast_track' => 'api/v1/fast_track#on_fast_track'
+  get '/api/v1/patient_weight_for_height_values' => 'api/v1/weight_for_height#index'
 end
