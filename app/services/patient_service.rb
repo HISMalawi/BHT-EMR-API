@@ -99,7 +99,7 @@ class PatientService
 
       if patient_program.blank?
         #When patient has no HTN program
-        last_check = last_htn_drugs_received(patient, date)
+        last_check = last_bp_readings(patient, date)
 
         if last_check.blank?
           return true #patient has never had their BP checked
@@ -354,7 +354,7 @@ class PatientService
       ).last&.value_numeric || 0
 
       last_dispensation.remaining = ((last_dispensation.value_numeric.to_i + remaining_last_time.to_i)\
-                                      - (date - last_dispensation.obs_datetime.to_date).to_i) # == days for a pill per day
+                                      - (date.to_date - last_dispensation.obs_datetime.to_date).to_i) # == days for a pill per day
 
       next unless last_dispensation
 
@@ -506,5 +506,39 @@ class PatientService
     end
 
     program
+  end
+
+  def last_bp_readings(patient, date)
+    sbp_concept = Concept.find_by_name('Systolic blood pressure').id
+    dbp_concept = Concept.find_by_name('Diastolic blood pressure').id
+    patient_id = patient.id
+
+    latest_date = Observation.find_by_sql("
+      SELECT MAX(obs_datetime) AS date FROM obs
+      WHERE person_id = #{patient_id}
+        AND voided = 0
+        AND concept_id IN (#{sbp_concept}, #{dbp_concept})
+        AND obs_datetime <= '#{date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+      ").last.date.to_date rescue nil
+
+    return nil if latest_date.blank?
+
+    sbp = Observation.find_by_sql("
+        SELECT * FROM obs
+        WHERE person_id = #{patient_id}
+          AND voided = 0
+          AND concept_id = #{sbp_concept}
+          AND obs_datetime BETWEEN '#{latest_date.to_date.strftime('%Y-%m-%d 00:00:00')}' AND '#{latest_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+      ").last.value_numeric rescue nil
+
+    dbp = Observation.find_by_sql("
+        SELECT * FROM obs
+        WHERE person_id = #{patient_id}
+          AND voided = 0
+          AND concept_id = #{dbp_concept}
+          AND obs_datetime BETWEEN '#{latest_date.to_date.strftime('%Y-%m-%d 00:00:00')}' AND '#{latest_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+      ").last.value_numeric rescue nil
+
+    return {:patient_id => patient_id, :max_date => latest_date, :sbp => sbp, :dbp => dbp}
   end
 end
