@@ -50,7 +50,13 @@ class PersonService
 
   def update_person_name(person, params)
     params = params.select { |k, _| PERSON_NAME_FIELDS.include? k.to_sym }
-    create_person_name person, params unless params.empty?
+    return nil if params.empty?
+
+    person.names.each do |name|
+      name.void("Updated to `#{params[:given_name]} #{params[:family_name]}` by #{User.current.username}")
+    end
+
+    create_person_name person, params
   end
 
   def create_person_address(person, params)
