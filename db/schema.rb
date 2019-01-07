@@ -1224,7 +1224,9 @@ ActiveRecord::Schema.define(version: 2019_01_04_084511) do
     t.string "void_reason"
     t.string "uuid", limit: 38, null: false
     t.index ["creator"], name: "identifier_creator"
+    t.index ["identifier"], name: "identifier"
     t.index ["identifier"], name: "identifier_name"
+    t.index ["identifier"], name: "indentifier"
     t.index ["identifier_type"], name: "defines_identifier_type"
     t.index ["location_id"], name: "identifier_location"
     t.index ["patient_id"], name: "idx_patient_identifier_patient"
@@ -1394,6 +1396,7 @@ ActiveRecord::Schema.define(version: 2019_01_04_084511) do
     t.string "township_division", limit: 50
     t.string "uuid", limit: 38, null: false
     t.index ["creator"], name: "patient_address_creator"
+    t.index ["date_created"], name: "index_date_created_on_person_address"
     t.index ["person_id"], name: "patient_addresses"
     t.index ["uuid"], name: "person_address_uuid_index", unique: true
     t.index ["voided_by"], name: "patient_address_void"

@@ -15,7 +15,7 @@ class EncounterService
 
   def create(type:, patient:, encounter_datetime: nil, provider: nil)
     encounter_datetime ||= Time.now
-    provider ||= User.current
+    provider ||= User.current.person
 
     encounter = find_encounter(type: type, patient: patient, provider: provider,
                                encounter_datetime: encounter_datetime)

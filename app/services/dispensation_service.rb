@@ -84,7 +84,7 @@ module DispensationService
         patient_id: patient.patient_id,
         location_id: Location.current.location_id,
         encounter_datetime: date,
-        provider_id: User.current.person_id
+        provider: User.current.person
       )
     end
 

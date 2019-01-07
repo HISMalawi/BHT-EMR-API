@@ -7,4 +7,8 @@ class ProgramWorkflowState < RetirableRecord
   belongs_to :program_workflow
   belongs_to :concept
   has_many :patient_states, foreign_key: :state
+
+  def name
+    ConceptName.find_by(concept_id: concept_id)&.name
+  end
 end

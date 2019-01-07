@@ -19,7 +19,8 @@ class ProgramWorkflow < RetirableRecord
                 concept_names: {}
               }
             }
-          }
+          },
+          methods: [:name]
         },
         concept: {
           include: {
