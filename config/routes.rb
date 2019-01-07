@@ -46,6 +46,7 @@ Rails.application.routes.draw do
         get '/next_appointment_date', to: 'patient_appointments#next_appointment_date'
         get '/median_weight_height', to: 'patients#find_median_weight_and_height'
         get '/bp_trail', to: 'patients#bp_readings_trail'
+        get '/eligible_for_htn_screening', to: 'patients#eligible_for_htn_screening'
         post '/filing_number', to: 'patients#assign_filing_number'
         post '/npid', to: 'patients#assign_npid'
         post '/remaining_bp_drugs', to: 'patients#remaining_bp_drugs'
@@ -150,4 +151,5 @@ Rails.application.routes.draw do
   get '/api/v1/fast_track_assessment' => 'api/v1/fast_track#assessment'
   post '/api/v1/cancel_fast_track' => 'api/v1/fast_track#cancel'
   get '/api/v1/on_fast_track' => 'api/v1/fast_track#on_fast_track'
+  get '/api/v1/patient_weight_for_height_values' => 'api/v1/weight_for_height#index'
 end
