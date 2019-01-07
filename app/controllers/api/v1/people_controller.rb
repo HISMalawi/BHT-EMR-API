@@ -30,7 +30,7 @@ class Api::V1::PeopleController < ApplicationController
   end
 
   def create
-    create_params, errors = required_params required: person_service::PERSON_FIELDS,
+    create_params, errors = required_params required: PersonService::PERSON_FIELDS,
                                             optional: [:middle_name]
     return render json: create_params, status: :bad_request if errors
 

@@ -12,12 +12,12 @@ module UserService
   class UserCreateError < StandardError; end
 
   def self.create_user(username:, password:, given_name:, family_name:, roles:)
-    person = PersonService.create_person(
+    person = person_service.create_person(
       birthdate: nil, birthdate_estimated: false, gender: nil
     )
     raise UserCreateError, "Person: #{person.errors}" unless person.errors.empty?
 
-    person_name = PersonService.create_person_name(
+    person_name = person_service.create_person_name(
       person, given_name: given_name, family_name: family_name
     )
     raise UserCreateError, "Person name: #{person_name.errors}" unless person_name.errors
@@ -156,5 +156,9 @@ module UserService
     else
       return false
     end
+  end
+
+  def self.person_service
+    PersonService.new
   end
 end

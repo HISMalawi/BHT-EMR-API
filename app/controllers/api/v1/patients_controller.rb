@@ -252,19 +252,19 @@ class Api::V1::PatientsController < ApplicationController
   def dde_person_to_openmrs(dde_person)
     logger.debug "Converting DDE person to openmrs: #{dde_person}"
 
-    person = PersonService.create_person(
+    person = person_service.create_person(
       birthdate: dde_person['birthdate'],
       birthdate_estimated: dde_person['birthdate_estimated'],
       gender: dde_person['gender']
     )
 
-    PersonService.create_person_name(
+    person_service.create_person_name(
       person, given_name: dde_person['given_name'],
               family_name: dde_person['family_name'],
               middle_name: dde_person['middle_name']
     )
 
-    PersonService.create_person_address(
+    person_service.create_person_address(
       person, home_village: dde_person['home_village'],
               home_traditional_authority: dde_person['home_traditional_authority'],
               home_district: dde_person['home_district'],
@@ -273,7 +273,7 @@ class Api::V1::PatientsController < ApplicationController
               current_district: dde_person['current_district']
     )
 
-    PersonService.create_person_attributes(
+    person_service.create_person_attributes(
       person, cell_phone_number: dde_person['cellphone_number'],
               occupation: dde_person['occupation']
     )
@@ -364,5 +364,9 @@ class Api::V1::PatientsController < ApplicationController
 
   def filing_number_service
     @filing_number_service ||= FilingNumberService.new
+  end
+
+  def person_service
+    PersonService.new
   end
 end
