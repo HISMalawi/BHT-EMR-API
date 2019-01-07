@@ -3,7 +3,7 @@
 require 'logger'
 require 'securerandom'
 
-module PersonService
+class PersonService
   LOGGER = Logger.new STDOUT
 
   PERSON_TRUNK_FIELDS = %i[gender birthdate birthdate_estimated].freeze
@@ -22,7 +22,7 @@ module PersonService
     occupation: 'Occupation'
   }.freeze
 
-  def self.create_person(params)
+  def create_person(params)
     Person.create(
       gender: params[:gender],
       birthdate: params[:birthdate],
@@ -31,12 +31,12 @@ module PersonService
     )
   end
 
-  def self.update_person(person, params)
-    params = params.select { |k, _| PERSON_TRUNK_FIELDS.include? k }
+  def update_person(person, params)
+    params = params.select { |k, _| PERSON_TRUNK_FIELDS.include? k.to_sym }
     person.update params unless params.empty?
   end
 
-  def self.create_person_name(person, params)
+  def create_person_name(person, params)
     PersonName.create(
       person: person,
       given_name: params[:given_name],
@@ -48,12 +48,12 @@ module PersonService
     )
   end
 
-  def self.update_person_name(person, params)
-    params = params.select { |k, _| PERSON_NAME_FIELDS.include? k }
+  def update_person_name(person, params)
+    params = params.select { |k, _| PERSON_NAME_FIELDS.include? k.to_sym }
     create_person_name person, params unless params.empty?
   end
 
-  def self.create_person_address(person, params)
+  def create_person_address(person, params)
     PersonAddress.create(
       person: person,
       state_province: params[:current_district],
@@ -66,16 +66,16 @@ module PersonService
     )
   end
 
-  def self.update_person_address(person, params)
-    params = params.select { |k, _| PERSON_ADDRESS_FIELDS.include? k }
+  def update_person_address(person, params)
+    params = params.select { |k, _| PERSON_ADDRESS_FIELDS.include? k.to_sym }
     create_person_address(person, params) unless params.empty?
   end
 
-  def self.create_person_attributes(person, person_attributes)
+  def create_person_attributes(person, person_attributes)
     person_attributes.each do |field, value|
       field = field.to_sym
 
-      next unless PERSON_ATTRIBUTES_FIELDS.include? field
+      next unless PERSON_ATTRIBUTES_FIELDS.include? field.to_sym
 
       LOGGER.debug "Creating attr #{field} = #{value}"
 
@@ -92,13 +92,13 @@ module PersonService
     end
   end
 
-  def self.update_person_attributes(person, person_attributes)
+  def update_person_attributes(person, person_attributes)
     LOGGER.debug person_attributes
 
     person_attributes.each do |field, value|
       field = field.to_sym
 
-      next unless PERSON_ATTRIBUTES_FIELDS.include? field
+      next unless PERSON_ATTRIBUTES_FIELDS.include? field.to_sym
 
       LOGGER.debug "Updating attr #{field} = #{value}"
 
