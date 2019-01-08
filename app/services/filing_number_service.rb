@@ -32,7 +32,7 @@ class FilingNumberService
                                        .order(identifier: :desc)\
                                        .first\
                                        &.identifier
-    
+
     next_id = last_identifier.blank? ? 1 : last_identifier[5..-1].to_i + 1
 
     # HACK: Ensure we are not exceeding filing number limits
@@ -42,7 +42,7 @@ class FilingNumberService
       raise "At physical filing number limit: #{next_id} > #{PHYSICAL_FILING_NUMBER_LIMIT}"
     end
 
-    prefix + next_id.to_s.rjust(6, '0')
+    prefix + next_id.to_s.rjust(5, '0')
   end
 
   # Archives patient with given filing number
