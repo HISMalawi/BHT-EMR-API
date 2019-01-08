@@ -111,8 +111,8 @@ module DrugOrderService
         encounter_id: encounter.encounter_id,
         patient_id: encounter.patient_id,
         orderer: User.current.user_id,
-        start_date: create_params[:start_date],
-        auto_expire_date: create_params[:auto_expire_date],
+        start_date: TimeUtils.retro_timestamp(create_params[:start_date].to_date),
+        auto_expire_date: TimeUtils.retro_timestamp(create_params[:auto_expire_date].to_date),
         obs_id: create_params[:obs_id],
         instructions: create_params[:instructions]
       )
