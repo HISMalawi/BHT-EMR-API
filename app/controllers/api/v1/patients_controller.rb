@@ -8,6 +8,8 @@ require 'zebra_printer/init'
 class Api::V1::PatientsController < ApplicationController
   # TODO: Refactor the business logic here into a service class
 
+  before_action :authenticate, except: %i[print_national_health_id_label]
+
   include ModelUtils
 
   before_action :load_dde_client
@@ -104,7 +106,8 @@ class Api::V1::PatientsController < ApplicationController
     send_data label, type: 'application/label;charset=utf-8',
                      stream: false,
                      filename: "#{params[:patient_id]}-#{SecureRandom.hex(12)}.lbl",
-                     disposition: 'inline'
+                     disposition: 'inline',
+                     refresh: "1; url=#{params[:redirect_to]}"
   end
 
   def visits
@@ -174,6 +177,12 @@ class Api::V1::PatientsController < ApplicationController
     render json: {
       eligible: service.patient_eligible_for_htn_screening(patient, date)
     }
+  end
+
+  def update_or_create_htn_state
+    state, = params.require %i[state]
+    date = params[:date]&.to_time || Time.now
+    render json: { updated: service.update_or_create_htn_state(patient, state, date) }
   end
 
   private
