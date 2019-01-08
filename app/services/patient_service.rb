@@ -114,7 +114,7 @@ class PatientService
         #Get plan
 
         plan_concept = Concept.find_by_name('Plan').id
-        plan = Observation.where(["person_id = ? AND concept_id = ? AND obs_datetime <= ?",self.id, plan_concept,
+        plan = Observation.where(["person_id = ? AND concept_id = ? AND obs_datetime <= ?", patient.id, plan_concept,
             date.strftime('%Y-%m-%d 23:59:59').to_time]).order("obs_datetime DESC").first
         if plan.blank?
           return true
@@ -531,7 +531,7 @@ class PatientService
     if program.blank? and create
       ActiveRecord::Base.transaction do
         program = PatientProgram.create({:program_id => program_id, :date_enrolled => date,
-            :patient_id => self.id})
+            :patient_id => patient.id})
         alive_state = ProgramWorkflowState.where(["program_workflow_id = ? AND concept_id = ?",
             ProgramWorkflow.where(["program_id = ?", program_id]).first.id, alive_concept_id]).first.id
         PatientState.create(:patient_program_id => program.id, :start_date => date,:state => alive_state )
