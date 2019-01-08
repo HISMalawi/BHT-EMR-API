@@ -86,7 +86,7 @@ module ARTService
         case activity
         when /ART adherence/i
           ART_ADHERENCE
-        when /HIV clinic consulations/i
+        when /HIV clinic consultations/i
           HIV_CLINIC_CONSULTATION
         when /HIV first visits/i
           HIV_CLINIC_REGISTRATION
