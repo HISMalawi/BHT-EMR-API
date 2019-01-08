@@ -10,10 +10,8 @@ class PatientState < VoidableRecord
 
   after_save :end_program
 
-  def as_json(options = {})
-    super(options).tap do |serialized_patient_state|
-      serialized_patient_state[:name] = program_workflow_state.concept.concept_names.first.name
-    end
+  def name
+    program_workflow_state&.concept&.concept_names&.first&.name
   end
 
   def end_program

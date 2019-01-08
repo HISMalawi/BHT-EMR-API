@@ -12,7 +12,9 @@ class PatientProgram < VoidableRecord
   def as_json(options = {})
     super(options.merge(
       include: {
-        patient_states: {},
+        patient_states: {
+          methods: :name
+        },
         program: {
           include: {
             concept: {
@@ -52,7 +54,7 @@ class PatientProgram < VoidableRecord
   #     end
   #   }
   # end
- 
+
   # def transition(params)
   #   ActiveRecord::Base.transaction do
   #     # Find the state by name
@@ -67,18 +69,18 @@ class PatientProgram < VoidableRecord
   #       if (state && state.end_date.blank?)
   #         state.end_date = params[:start_date]
   #         state.save!
-  #       end    
-  #       # Create the new state      
+  #       end
+  #       # Create the new state
   #       state = self.patient_states.new({
   #         :state => selected_state.program_workflow_state_id,
   #         :start_date => params[:start_date] || Date.today,
   #         :end_date => params[:end_date]
   #       })
   #       state.save!
-  #     end  
+  #     end
   #   end
   # end
- 
+
   # # This is a pretty clumsy way of finding which regimen the patient is on.
   # # Eventually it would be good to have a way to associate a program with a
   # # regimen type without doing it manually. Note, the location of the regimen
@@ -97,5 +99,5 @@ class PatientProgram < VoidableRecord
   # def closed?
   #   (self.date_completed.blank? == false)
   # end
-        
+
 end
