@@ -21,8 +21,9 @@ module ModelUtils
     GlobalProperty.find_by property: name
   end
 
-  def user_property(user_id, name)
-    UserProperty.find_by user_id: user_id, property: name
+  def user_property(name, user_id: nil)
+    user_id ||= User.current.user_id
+    UserProperty.find_by(user_id: user_id, property: name)
   end
 
   def order_type(name)
