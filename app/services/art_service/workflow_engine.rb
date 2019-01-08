@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'htn_workflow'
+require 'set'
 
 module ARTService
   class WorkflowEngine
@@ -10,6 +11,7 @@ module ARTService
       @patient = patient
       @program = program
       @date = date
+      @activities = load_user_activities
     end
 
     # Retrieves the next encounter for bound patient
@@ -76,6 +78,38 @@ module ARTService
     # Concepts
     PATIENT_PRESENT = 'Patient present'
 
+    def load_user_activities
+      activities = user_property('Activities')&.property_value
+      encounters = (activities&.split(',') || []).collect do |activity|
+        # Re-map activities to encounters
+        puts activity
+        case activity
+        when /ART adherence/i
+          ART_ADHERENCE
+        when /HIV clinic consulations/i
+          HIV_CLINIC_CONSULTATION
+        when /HIV first visits/i
+          HIV_CLINIC_REGISTRATION
+        when /HIV reception visits/i
+          HIV_RECEPTION
+        when /HIV staging visits/i
+          HIV_STAGING
+        when /Appointments/i
+          APPOINTMENT
+        when /Drug Dispensations/
+          DISPENSING
+        when /Prescriptions/i
+          TREATMENT
+        when /Vitals/i
+          VITALS
+        else
+          Rails.logger.warn "Invalid ART activity in user properties: #{activity}"
+        end
+      end
+
+      Set.new encounters
+    end
+
     def next_state(current_state)
       ENCOUNTER_SM[current_state]
     end
@@ -94,7 +128,7 @@ module ARTService
     end
 
     def valid_state?(state)
-      return false if encounter_exists?(encounter_type(state))
+      return false if encounter_exists?(encounter_type(state)) || !@activities.include?(state)
 
       (STATE_CONDITIONS[state] || []).reduce(true) do |status, condition|
         status && method(condition).call
