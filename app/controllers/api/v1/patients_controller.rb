@@ -110,6 +110,21 @@ class Api::V1::PatientsController < ApplicationController
                      refresh: "1; url=#{params[:redirect_to]}"
   end
 
+  def print_filing_number
+    archived = params[:archived]&.downcase == 'true'
+
+    label_commands = if archived
+                       generate_archived_filing_number_label(patient)
+                     else
+                       generate_filing_number_label(patient)
+                     end
+
+    send_data label_commands, type: 'application/label; charset=utf-8',
+                              stream: false,
+                              filename: "#{patient.id}#{rand(10_000)}.lbl",
+                              disposition: 'inline'
+  end
+
   def visits
     patient_id = params[:patient_id]
 
@@ -361,6 +376,42 @@ class Api::V1::PatientsController < ApplicationController
     label.draw_multi_text("#{patient.national_id_with_dashes} #{person.birthdate}#{sex}")
     label.draw_multi_text(address)
     label.print(1)
+  end
+
+  def generate_filing_number_label(patient, num = 1)
+    identifier = patient.identifier('Filing number')
+    raise NotFoundError, "Filing number for patient #{patient.id} not found" unless identifier
+
+    file = identifier.identifier
+    file_type = file.strip[3..4]
+    version_number = file.strip[2..2]
+    number = file
+    len = number.length - 5
+    number = number[len..len] + '   ' + number[(len + 1)..(len + 2)] + ' ' + number[(len + 3)..(number.length)]
+
+    label = ZebraPrinter::StandardLabel.new
+    label.draw_text(number, 75, 30, 0, 4, 4, 4, false)
+    label.draw_text("Filing area #{file_type}", 75, 150, 0, 2, 2, 2, false)
+    label.draw_text("Version number: #{version_number}", 75, 200, 0, 2, 2, 2, false)
+    label.print(num)
+  end
+
+  def generate_archived_filing_number_label(patient, num = 1)
+    identifier = patient.identifier('Archived filing number')
+    raise NotFoundError, "Archived filing number for patient #{patient.id} not found" unless identifier
+
+    file = identifier.identifier
+    file_type = file.strip[3..4]
+    version_number = file.strip[2..2]
+    number = file[5..-1]
+
+    number = number[0..1] + ' ' + number[2..3] + ' ' + number[4..-1]
+
+    label = ZebraPrinter::StandardLabel.new
+    label.draw_text(number, 75, 30, 0, 4, 4, 4, false)
+    label.draw_text("Filing area #{file_type}", 75, 150, 0, 2, 2, 2, false)
+    label.draw_text("Version number: #{version_number}", 75, 200, 0, 2, 2, 2, false)
+    label.print(num)
   end
 
   def npid_identifier_types
