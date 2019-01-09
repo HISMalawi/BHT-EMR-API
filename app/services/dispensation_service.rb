@@ -25,7 +25,7 @@ module DispensationService
         obs_list = plain_dispensations.map do |dispensation|
           order_id = dispensation[:drug_order_id]
           quantity = dispensation[:quantity]
-          date = dispensation[:date] ? dispensation[:date].to_time.strftime('%Y-%m-%d %H:%M:%S') : nil
+          date = TimeUtils.retro_timestamp(dispensation[:date]&.to_time || Time.now)
           drug_order = DrugOrder.find(order_id)
           obs = dispense_drug drug_order, quantity, date: date
 

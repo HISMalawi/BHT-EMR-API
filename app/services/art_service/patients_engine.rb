@@ -139,7 +139,7 @@ module ARTService
         npid: patient_identifier(patient, NPID_TYPE),
         arv_number: patient_identifier(patient, ARV_NO_TYPE),
         filing_number: patient_identifier(patient, FILING_NUMBER),
-        current_outcome: patient_current_outcome(patient),
+        current_outcome: patient_current_outcome(patient, date),
         residence: patient_residence(patient),
         art_duration: art_duration,
         current_regimen: patient_current_regimen(patient, date),
@@ -176,19 +176,13 @@ module ARTService
       )['regimen'] || 'N/A'
     end
 
-    def patient_current_outcome(patient)
-      patient_program = PatientProgram.find_by patient_id: patient.patient_id,
-                                               program_id: @program.program_id
-      return 'UNKNOWN' unless patient_program
+    def patient_current_outcome(patient, date)
+      patient_id = ActiveRecord::Base.connection.quote(patient.patient_id)
+      date = ActiveRecord::Base.connection.quote(date)
 
-      program_states = ProgramWorkflowState.joins(:patient_states).where(
-        'patient_state.patient_program_id = ?',
-        patient_program.patient_program_id
-      ).order('patient_state.date_created')
-
-      return 'N/A' if program_states.empty?
-
-      program_states[0].concept.concept_names[0].name
+      ActiveRecord::Base.connection.select_one(
+        "SELECT patient_outcome(#{patient_id}, #{date}) as outcome"
+      )['outcome'] || 'UNKNOWN'
     end
 
     def patient_art_reason(patient)

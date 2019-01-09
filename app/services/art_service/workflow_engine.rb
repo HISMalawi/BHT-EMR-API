@@ -86,7 +86,7 @@ module ARTService
         case activity
         when /ART adherence/i
           ART_ADHERENCE
-        when /HIV clinic consulations/i
+        when /HIV clinic consultations/i
           HIV_CLINIC_CONSULTATION
         when /HIV first visits/i
           HIV_CLINIC_REGISTRATION
@@ -107,7 +107,7 @@ module ARTService
         end
       end
 
-      Set.new encounters
+      Set.new(encounters + [FAST_TRACK])
     end
 
     def next_state(current_state)
@@ -128,11 +128,17 @@ module ARTService
     end
 
     def valid_state?(state)
-      return false if encounter_exists?(encounter_type(state)) || !@activities.include?(state)
+      return false if encounter_exists?(encounter_type(state)) || !art_activity_enabled?(state)
 
       (STATE_CONDITIONS[state] || []).reduce(true) do |status, condition|
         status && method(condition).call
       end
+    end
+
+    def art_activity_enabled?(state)
+      return true if state == FAST_TRACK
+
+      @activities.include?(state)
     end
 
     # Takes an ART encounter_type and remaps it to a corresponding HTN encounter

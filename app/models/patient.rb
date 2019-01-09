@@ -52,8 +52,17 @@ class Patient < VoidableRecord
 
   def national_id_with_dashes
     id = national_id
-    return nil if id.blank?
-    id[0..4] + '-' + id[5..8] + '-' + id[9..-1]
+    length = id.length
+    case length
+    when 13
+      id[0..4] + "-" + id[5..8] + "-" + id[9..-1] rescue id
+    when 9
+      id[0..2] + "-" + id[3..6] + "-" + id[7..-1] rescue id
+    when 6
+      id[0..2] + "-" + id[3..-1] rescue id
+    else
+      id
+    end
   end
 
   def age(today: Date.today)
@@ -103,5 +112,14 @@ class Patient < VoidableRecord
 
   def gender
     person.gender
+  end
+
+  def identifier(type_name)
+    type = PatientIdentifierType.find_by_name(type_name)
+    return nil unless type
+
+    PatientIdentifier.where(patient: self, type: type)\
+                     .order(:date_created)\
+                     .last
   end
 end
