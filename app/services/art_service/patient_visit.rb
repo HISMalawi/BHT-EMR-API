@@ -48,7 +48,7 @@ module ARTService
                  .where(person: patient.person)\
                  .order(:obs_datetime)\
                  .last\
-                 &.value_datetime || 'N/A'
+                 &.value_datetime
     end
 
     def tb_status

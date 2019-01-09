@@ -20,7 +20,7 @@ module ARTService
       label = ZebraPrinter::StandardLabel.new
       # label.draw_text("Printed: #{Date.today.strftime('%b %d %Y')}",597,280,0,1,1,1,false)
       label.draw_text(seen_by(patient, date).to_s, 597, 250, 0, 1, 1, 1, false)
-      label.draw_text(date.strftime('%B %d %Y').upcase.to_s, 25, 30, 0, 3, 1, 1, false)
+      label.draw_text(date&.strftime('%B %d %Y').upcase, 25, 30, 0, 3, 1, 1, false)
       label.draw_text(arv_number.to_s, 565, 30, 0, 3, 1, 1, true)
       label.draw_text("#{patient.person.name}(#{patient.gender}) #{owner}", 25, 60, 0, 3, 1, 1, false)
       label.draw_text(('(' + visit.visit_by + ')' unless visit.visit_by.blank?).to_s, 255, 30, 0, 2, 1, 1, false)
@@ -37,8 +37,8 @@ module ARTService
       label.draw_text(visit.tb_status.to_s, 110, 160, 0, 2, 1, 1, false)
       label.draw_text(adherence_to_show(visit.adherence)&.gsub('%', '\\\\%').to_s, 185, 160, 0, 2, 1, 1, false)
       label.draw_text(visit.outcome.to_s, 577, 160, 0, 2, 1, 1, false)
-      label.draw_text(visit.outcome_date.strftime('%d/%b/%Y'), 655, 130, 0, 2, 1, 1, false)
-      label.draw_text(visit.next_appointment.strftime('%d/%b/%Y'), 577, 190, 0, 2, 1, 1, false) if visit.next_appointment
+      label.draw_text(visit.outcome_date&.strftime('%d/%b/%Y') || 'N/A', 655, 130, 0, 2, 1, 1, false)
+      label.draw_text(visit.next_appointment&.strftime('%d/%b/%Y') || 'N/A', 577, 190, 0, 2, 1, 1, false) if visit.next_appointment
       starting_index = 25
       start_line = 160
 
@@ -87,7 +87,7 @@ module ARTService
         encounter_type_ids = EncounterType.where(['name IN (?)', clinic_encounters]).collect(&:id)
         encounter = Encounter.where(['patient_id = ? AND encounter_type In (?)', patient.id, encounter_type_ids]).order('encounter_datetime DESC').first
         provider_username = begin
-                              ('Recorded by: ' + User.find(encounter.creator).username).to_s
+                              ('Seen by: ' + User.find(encounter.creator).username).to_s
                             rescue StandardError
                               nil
                             end
