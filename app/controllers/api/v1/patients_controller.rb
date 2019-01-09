@@ -28,8 +28,8 @@ class Api::V1::PatientsController < ApplicationController
   def search_by_npid
     npid = params.require(:npid)
     patients = Patient.joins(:patient_identifiers).where(
-      'patient_identifier.identifier_type = ? AND patient_identifier.identifier = ?',
-      npid_identifier_type.patient_identifier_type_id, npid
+      'patient_identifier.identifier_type IN (?) AND patient_identifier.identifier = ?',
+      npid_identifier_types.values.collect(&:id), npid
     )
 
     return render(json: paginate(patients)) unless patients.empty? && dde_enabled?
@@ -363,8 +363,11 @@ class Api::V1::PatientsController < ApplicationController
     label.print(1)
   end
 
-  def npid_identifier_type
-    PatientIdentifierType.find_by_name('National id')
+  def npid_identifier_types
+    {
+      npid: PatientIdentifierType.find_by_name('National id'),
+      legacy_npid: PatientIdentifierType.find_by_name('Old Identification Number')
+    }
   end
 
   def service
