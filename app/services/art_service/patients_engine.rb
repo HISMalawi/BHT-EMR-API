@@ -122,6 +122,10 @@ module ARTService
       []
     end
 
+    def visit_summary_label(patient, date)
+      ARTService::PatientVisitLabel.new patient, date
+    end
+
     private
 
     NPID_TYPE = 'National id'
