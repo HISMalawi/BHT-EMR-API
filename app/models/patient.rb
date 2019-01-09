@@ -113,4 +113,13 @@ class Patient < VoidableRecord
   def gender
     person.gender
   end
+
+  def identifier(type_name)
+    type = PatientIdentifierType.find_by_name(type_name)
+    return nil unless type
+
+    PatientIdentifier.where(patient: self, type: type)\
+                     .order(:date_created)\
+                     .last
+  end
 end

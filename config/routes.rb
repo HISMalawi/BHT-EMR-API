@@ -35,6 +35,7 @@ Rails.application.routes.draw do
       resources :patients do
         resources :patient_identifiers
         get '/labels/national_health_id' => 'patients#print_national_health_id_label'
+        get '/labels/filing_number' => 'patients#print_filing_number'
         get '/visits' => 'patients#visits'
         get('/appointments', to: redirect do |params, request|
           paginate_url "/api/v1/appointments?patient_id=#{params[:patient_id]}",
