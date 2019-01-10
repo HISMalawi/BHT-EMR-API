@@ -33,25 +33,19 @@ class Concept < RetirableRecord
     ))
   end
 
-  #   def shortname
-  # =begin
-  #     ConceptName.find(:first, :conditions => ["concept_id = ? AND concept_name_id IN (?)",
-  #         self.concept_id, ConceptNameTagMap.find(:all, :conditions => ["concept_name_tag_id = ?", 2]).collect{|id|
-  #           id.concept_name_id
-  #         }]).name rescue ""
-  # =end
-  #     ConceptName.find(:first,
-  #       :joins => "INNER JOIN concept c ON concept_name.concept_id = c.concept_id
-  #                 INNER JOIN concept_name_tag_map cnt ON cnt.concept_name_id = concept_name.concept_name_id",
-  #       :conditions => ["c.concept_id = ? AND cnt.concept_name_tag_id = ?",self.concept_id,2]).name rescue ''
-  #   end
+    def shortname
+      ConceptName.find(:first,
+        :joins => "INNER JOIN concept c ON concept_name.concept_id = c.concept_id
+                  INNER JOIN concept_name_tag_map cnt ON cnt.concept_name_id = concept_name.concept_name_id",
+        :conditions => ["c.concept_id = ? AND cnt.concept_name_tag_id = ?",self.concept_id,2]).name rescue ''
+    end
 
-  #   def fullname
-  #     name = ConceptName.find(:first,
-  #       :joins => "INNER JOIN concept c ON concept_name.concept_id = c.concept_id
-  #                 INNER JOIN concept_name_tag_map cnt ON cnt.concept_name_id = concept_name.concept_name_id",
-  #       :conditions => ["c.concept_id = ? AND cnt.concept_name_tag_id = ?",self.concept_id,4]).name rescue nil
-  #     return name unless name.blank?
-  #     return self.concept_names.first.name rescue nil
-  #   end
+    def fullname
+      name = ConceptName.find(:first,
+        :joins => "INNER JOIN concept c ON concept_name.concept_id = c.concept_id
+                  INNER JOIN concept_name_tag_map cnt ON cnt.concept_name_id = concept_name.concept_name_id",
+        :conditions => ["c.concept_id = ? AND cnt.concept_name_tag_id = ?",self.concept_id,4]).name rescue nil
+      return name unless name.blank?
+      return self.concept_names.first.name rescue nil
+    end
 end

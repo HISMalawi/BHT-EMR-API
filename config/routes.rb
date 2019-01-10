@@ -105,6 +105,7 @@ Rails.application.routes.draw do
           get '/dosages' => 'program_patients#find_dosages'
           get '/status' => 'program_patients#status'
           get '/earliest_start_date' => 'program_patients#find_earliest_start_date'
+          get '/labels/visits', to: 'program_patients#print_visit_label'
           resources :patient_states, path: :states
         end
         resources :lab_test_types, path: 'lab_tests/types'

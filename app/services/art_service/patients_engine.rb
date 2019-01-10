@@ -122,11 +122,16 @@ module ARTService
       []
     end
 
+    def visit_summary_label(patient, date)
+      ARTService::PatientVisitLabel.new patient, date
+    end
+
     private
 
     NPID_TYPE = 'National id'
     ARV_NO_TYPE = 'ARV Number'
     FILING_NUMBER = 'Filing number'
+    ARCHIVED_FILING_NUMBER = 'Archived filing number'
 
     SECONDS_IN_MONTH = 2_592_000
 
@@ -138,7 +143,7 @@ module ARTService
         patient_id: patient.patient_id,
         npid: patient_identifier(patient, NPID_TYPE),
         arv_number: patient_identifier(patient, ARV_NO_TYPE),
-        filing_number: patient_identifier(patient, FILING_NUMBER),
+        filing_number: patient_filing_number(patient),
         current_outcome: patient_current_outcome(patient, date),
         residence: patient_residence(patient),
         art_duration: art_duration,
@@ -146,6 +151,12 @@ module ARTService
         art_start_date: art_start_date,
         reason_for_art: patient_art_reason(patient)
       }
+    end
+
+    def patient_filing_number(patient)
+      filing_number = patient_identifier(patient, FILING_NUMBER)
+      return patient_identifier(patient, ARCHIVED_FILING_NUMBER) if filing_number.casecmp?('N/A')
+      filing_number
     end
 
     def patient_identifier(patient, identifier_type_name)

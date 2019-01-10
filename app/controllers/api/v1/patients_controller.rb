@@ -8,7 +8,7 @@ require 'zebra_printer/init'
 class Api::V1::PatientsController < ApplicationController
   # TODO: Refactor the business logic here into a service class
 
-  before_action :authenticate, except: %i[print_national_health_id_label]
+  before_action :authenticate, except: %i[print_national_health_id_label print_filing_number]
 
   include ModelUtils
 

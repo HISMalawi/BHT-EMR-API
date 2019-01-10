@@ -1,4 +1,8 @@
+require 'zebra_printer/init'
+
 class Api::V1::ProgramPatientsController < ApplicationController
+  before_action :authenticate, except: %i[print_visit_label]
+
   def show
     date = params[:date]&.to_date || Date.today
     render json: service.patient(params[:id], date)
@@ -40,6 +44,15 @@ class Api::V1::ProgramPatientsController < ApplicationController
     else
       render json: { exists: false }
     end
+  end
+
+  def print_visit_label
+    date = params[:date]&.to_time || Time.now
+    label_commands = service.visit_summary_label(patient, date).print
+    send_data label_commands, type: 'application/label; charset=utf-8',
+                              stream: false,
+                              filename: "#{params[:patient_id]}#{rand(10_000)}.lbl",
+                              disposition: 'inline'
   end
 
   protected

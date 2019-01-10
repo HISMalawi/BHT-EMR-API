@@ -5,7 +5,8 @@ class Patient < VoidableRecord
 
   after_void :void_related_models
 
-  NATIONAL_ID_NAME = 'National id'
+  NPID_NAME = 'National id'
+  LEGACY_NPID_NAME = 'Old national id'
 
   self.table_name = 'patient'
   self.primary_key = 'patient_id'
@@ -45,8 +46,8 @@ class Patient < VoidableRecord
   end
 
   def national_id
-    id_type = PatientIdentifierType.find_by name: NATIONAL_ID_NAME
-    id_obj = patient_identifiers.find_by(identifier_type: id_type)
+    id_types = PatientIdentifierType.where(name: [NPID_NAME, LEGACY_NPID_NAME])
+    id_obj = patient_identifiers.find_by(identifier_type: id_types)
     id_obj ? (id_obj.identifier || '') : ''
   end
 
