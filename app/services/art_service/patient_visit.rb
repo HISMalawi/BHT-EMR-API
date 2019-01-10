@@ -130,7 +130,8 @@ module ARTService
         drug = observation&.order&.drug_order&.drug
         next unless drug
 
-        name = drug.name.match(/^(.+)\(.*\).*$/)[1]
+        match = drug.name.match(/^(.+)\(.*\).*$/)
+        name = match.nil? ? drug.name : match[1]
 
         name = 'CPT' if name.match?('Cotrimoxazole')
         name = 'INH' if name.match?('INH')
