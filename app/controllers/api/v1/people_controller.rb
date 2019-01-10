@@ -55,6 +55,8 @@ class Api::V1::PeopleController < ApplicationController
     # case, do we notify DDE of the update right now or do we force client
     # to trigger an update in DDE by calling POST /patient/:patient_id?
 
+    person.reload
+
     render json: person, status: :ok
   end
 
