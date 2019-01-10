@@ -31,12 +31,11 @@ module ARTService
     def outcome
       return @outcome if @outcome
 
-      date = ActiveRecord::Base.connection.quote(date)
       outcome = ActiveRecord::Base.connection.select_one(
-        "SELECT patient_outcome(#{patient.id}, DATE(#{date})) as outcome"
+        "SELECT patient_outcome(#{patient.id}, DATE('#{date.to_date}')) as outcome"
       )['outcome']
 
-      @outcome = outcome.casecmp('UNKNOWN').zero? ? 'Unk' : outcome
+      @outcome = outcome.casecmp?('UNKNOWN') ? 'Unk' : outcome
     end
 
     def outcome_date
