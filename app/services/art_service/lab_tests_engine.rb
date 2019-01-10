@@ -129,6 +129,7 @@ class ARTService::LabTestsEngine
                  encounter: encounter,
                  concept: concept('Laboratory tests ordered'),
                  order_type: order_type('Lab'),
+                 orderer: User.current.user_id,
                  start_date: date,
                  accession_number: accession_number,
                  provider: User.current.person
