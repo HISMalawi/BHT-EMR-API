@@ -25,7 +25,7 @@ class Api::V1::LabTestOrdersController < ApplicationController
     ]
 
     begin
-      date = params[:date]&.to_datetime || Time.now
+      date = TimeUtils.retro_timestamp(params[:date]&.to_time || Time.now)
     rescue ArgumentError => e
       error = "Failed to parse date(#{params[:date]}): #{e}"
       return render json: { errors: [error] }, status: :bad_request

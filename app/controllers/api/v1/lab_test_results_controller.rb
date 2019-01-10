@@ -12,7 +12,7 @@ class Api::V1::LabTestResultsController < ApplicationController
 
     result = engine.save_result accession_number: accession_number,
                                 test_value: test_value,
-                                time: params[:time]&.to_datetime || Time.now
+                                time: TimeUtils.retro_timestamp(params[:time]&.to_time || Time.now)
     render json: result, status: :created
   end
 end
