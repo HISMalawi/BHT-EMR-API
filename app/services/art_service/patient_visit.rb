@@ -110,12 +110,7 @@ module ARTService
         drug = observation&.order&.drug_order&.drug
         next unless drug
 
-        match = drug.name.match(/^(.+)\(.*\).*$/)
-        name = match.nil? ? drug.name : match[1]
-
-        name = 'CPT' if name.match?('Cotrimoxazole')
-        name = 'INH' if name.match?('INH')
-        [name, observation.value_numeric]
+        [format_drug_name(drug), observation.value_numeric]
       end
     end
 
@@ -130,12 +125,7 @@ module ARTService
         drug = observation&.order&.drug_order&.drug
         next unless drug
 
-        match = drug.name.match(/^(.+)\(.*\).*$/)
-        name = match.nil? ? drug.name : match[1]
-
-        name = 'CPT' if name.match?('Cotrimoxazole')
-        name = 'INH' if name.match?('INH')
-        [name, observation.value_numeric]
+        [format_drug_name(drug), observation.value_numeric]
       end
     end
 
@@ -174,6 +164,15 @@ module ARTService
       return 'N/A' if weight.zero? || height.zero?
 
       (weight / (height * height) * 10_000).round(1)
+    end
+
+    def format_drug_name(drug)
+      match = drug.name.match(/^(.+)\s*\(.*$/)
+      name = match.nil? ? drug.name : match[1]
+
+      name = 'CPT' if name.match?('Cotrimoxazole')
+      name = 'INH' if name.match?('INH')
+      name
     end
   end
 end
