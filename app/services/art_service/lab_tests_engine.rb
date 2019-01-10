@@ -131,7 +131,7 @@ class ARTService::LabTestsEngine
                  order_type: order_type('Lab'),
                  start_date: date,
                  accession_number: accession_number,
-                 provider: User.current.person
+                 provider: User.current
   end
 
   def save_reason_for_test(encounter, order, reason)
