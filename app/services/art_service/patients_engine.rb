@@ -227,7 +227,7 @@ module ARTService
       obs = obs_list[0]
       return 'N/A', 'N/A' unless obs
 
-      duration = (Time.now - obs.value_datetime) / SECONDS_IN_MONTH
+      duration = ((Time.now - obs.value_datetime) / SECONDS_IN_MONTH).to_i # Round off to preceeding integer
       [obs.value_datetime.strftime('%d/%b/%y'), duration]
     end
 
