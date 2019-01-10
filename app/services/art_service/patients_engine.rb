@@ -130,11 +130,68 @@ module ARTService
       ARTService::PatientTransferOutLabel.new patient, date
     end
 
+    private
+
+    NPID_TYPE = 'National id'
+    ARV_NO_TYPE = 'ARV Number'
+    FILING_NUMBER = 'Filing number'
+    ARCHIVED_FILING_NUMBER = 'Archived filing number'
+
+    SECONDS_IN_MONTH = 2_592_000
+
+    include ModelUtils
+
+    def summarise_patient(patient, date)
+      art_start_date, art_duration = patient_art_period(patient)
+      {
+        patient_id: patient.patient_id,
+        npid: patient_identifier(patient, NPID_TYPE),
+        arv_number: patient_identifier(patient, ARV_NO_TYPE),
+        filing_number: patient_filing_number(patient),
+        current_outcome: patient_current_outcome(patient, date),
+        residence: patient_residence(patient),
+        art_duration: art_duration,
+        current_regimen: patient_current_regimen(patient, date),
+        art_start_date: art_start_date,
+        reason_for_art: patient_art_reason(patient)
+      }
+    end
+
+    def patient_filing_number(patient)
+      filing_number = patient_identifier(patient, FILING_NUMBER)
+
+      if filing_number.casecmp?('N/A')
+        return {
+          number: patient_identifier(patient, ARCHIVED_FILING_NUMBER),
+          type: ARCHIVED_FILING_NUMBER
+        }
+      end
+
+      { number: filing_number, type: FILING_NUMBER }
+    end
+
+    def patient_identifier(patient, identifier_type_name)
+      identifier_type = PatientIdentifierType.find_by_name(identifier_type_name)
+      return 'UNKNOWN' unless identifier_type
+
+      identifiers = patient.patient_identifiers.where(
+        identifier_type: identifier_type.patient_identifier_type_id
+      )
+      identifiers[0] ? identifiers[0].identifier : 'N/A'
+    end
+
+    def patient_residence(patient)
+      address = patient.person.addresses[0]
+      return 'N/A' unless address
+
+      district = address.state_province || 'Unknown District'
+      village = address.city_village || 'Unknown Village'
+      "#{district}, #{village}"
+    end
+
     def mastercard_data(patient, date)
       ARTService::PatientMastercard.new(patient, date).data
     end
-
-    private
 
     def patient_summary(patient, date)
       PatientSummary.new patient, date
