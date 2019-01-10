@@ -12,7 +12,7 @@ class DrugOrder < ActiveRecord::Base
 
   def as_json(options = {})
     super(options.merge(
-      include: { order: {}, drug: {} }, methods: %i[dosage_struct amount_needed]
+      include: { order: {}, drug: {} }, methods: %i[dosage_struct amount_needed barcodes]
     ))
   end
 
