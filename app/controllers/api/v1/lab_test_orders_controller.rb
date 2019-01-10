@@ -20,8 +20,8 @@ class Api::V1::LabTestOrdersController < ApplicationController
   end
 
   def create
-    test_types, encounter_id, reason, requesting_clinician = params.require %i[
-      test_types encounter_id reason requesting_clinician
+    tests, encounter_id, requesting_clinician = params.require %i[
+      tests encounter_id requesting_clinician
     ]
 
     begin
@@ -33,10 +33,9 @@ class Api::V1::LabTestOrdersController < ApplicationController
 
     encounter = Encounter.find encounter_id
 
-    order = engine.create_order test_types: test_types,
+    order = engine.create_order tests: tests,
                                 encounter: encounter,
                                 date: date,
-                                reason: reason,
                                 requesting_clinician: requesting_clinician
 
     render json: order, status: :created
