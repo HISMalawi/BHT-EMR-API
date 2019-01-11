@@ -42,6 +42,7 @@ Rails.application.routes.draw do
                        request.params
         end)
         get '/drugs_received', to: 'patients#drugs_received'
+        get '/last_drugs_received', to: 'patients#last_drugs_received'
         get '/current_bp_drugs', to: 'patients#current_bp_drugs'
         get '/last_bp_drugs_dispensation', to: 'patients#last_bp_drugs'
         get '/next_appointment_date', to: 'patient_appointments#next_appointment_date'
