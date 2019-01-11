@@ -81,16 +81,22 @@ module ARTService
 
         next unless arv_extras_concepts.include?(drug_concept)
 
-        drugs = Drug.where(concept: drug_concept)
+        # HACK: Retrieve Pyridoxine 25 mg in addition to Isoniazed when
+        # we detect INH drug concept
+        drugs = if drug_concept.concept_id == arv_extras_concepts[1].concept_id
+                  Drug.where(concept: [drug_concept, concept('Pyridoxine')])
+                else
+                  Drug.where(concept: drug_concept)
+                end
 
-        ingredient = MohRegimenIngredient.where(drug: drugs)\
-                                         .where('CAST(min_weight AS DECIMAL(4, 1)) <= :weight
-                                                 AND CAST(max_weight AS DECIMAL(4, 1)) >= :weight',
-                                                weight: patient.weight.to_f.round(1))
-                                         .order(:drug_inventory_id)
-                                         .last
+        ingredients = MohRegimenIngredient.where(drug: drugs)\
+                                          .where('CAST(min_weight AS DECIMAL(4, 1)) <= :weight
+                                                  AND CAST(max_weight AS DECIMAL(4, 1)) >= :weight',
+                                                 weight: patient.weight.to_f.round(1))
 
-        dosages[drug_concept.concept_names.first.name] = ingredient_to_drug(ingredient)
+        ingredients.each do |ingredient|
+          dosages[ingredient.drug.concept.concept_names.first.name] = ingredient_to_drug(ingredient)
+        end
       end
     end
 
