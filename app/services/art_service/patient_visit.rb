@@ -151,7 +151,7 @@ module ARTService
 
       @side_effects = parent_obs.children\
                                 .where(value_coded: concept('Yes'))\
-                                .collect { |side_effect| side_effect.concept.full_name }
+                                .collect { |side_effect| side_effect.concept.fullname }
                                 .compact
     end
 
