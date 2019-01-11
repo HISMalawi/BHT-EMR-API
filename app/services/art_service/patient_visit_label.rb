@@ -38,7 +38,9 @@ module ARTService
       label.draw_text(adherence_to_show(visit.adherence)&.gsub('%', '\\\\%').to_s, 185, 160, 0, 2, 1, 1, false)
       label.draw_text(visit.outcome.to_s, 577, 160, 0, 2, 1, 1, false)
       label.draw_text(visit.outcome_date&.strftime('%d/%b/%Y') || 'N/A', 655, 130, 0, 2, 1, 1, false)
-      label.draw_text('Next: ' + visit.next_appointment&.strftime('%d/%b/%Y') || 'N/A', 577, 190, 0, 2, 1, 1, false) if visit.next_appointment
+      unless visit.next_appointment.blank?
+        label.draw_text('Next: ' + visit.next_appointment&.strftime('%d/%b/%Y'), 577, 190, 0, 2, 1, 1, false)
+      end
       starting_index = 25
       start_line = 160
 

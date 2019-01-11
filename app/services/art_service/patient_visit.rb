@@ -43,10 +43,9 @@ module ARTService
     end
 
     def next_appointment
-      Observation.where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))\
-                 .where(person: patient.person)\
-                 .order(:obs_datetime)\
-                 .last\
+      Observation.where(person: patient.person, concept: concept('Appointment date'))\
+                 .order(obs_datetime: :desc)\
+                 .first\
                  &.value_datetime
     end
 
