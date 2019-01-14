@@ -308,7 +308,8 @@ module ARTService
     def patient_has_not_completed_fast_track_visit?
       return !@fast_track_completed if @fast_track_completed
 
-      @fast_track_completed = Observation.where(concept: concept('Fast track visit'))\
+      @fast_track_completed = Observation.where(concept: concept('Fast track visit'),
+                                                person: @patient.person)\
                                          .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))
                                          .order(obs_datetime: :desc)\
                                          .first
