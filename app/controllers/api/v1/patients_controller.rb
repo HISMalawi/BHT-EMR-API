@@ -181,6 +181,12 @@ class Api::V1::PatientsController < ApplicationController
     render json: service.last_htn_drugs_received_summary(patient, date)
   end
 
+  # Returns all drugs received on last dispensation
+  def last_drugs_received
+    date = params[:date]&.to_date || Date.today
+    render json: service.patient_last_drugs_received(patient, date)
+  end
+
   def remaining_bp_drugs
     pills, drug_id = params.require(%i[pills drug_id])
     date = params[:date]&.to_date || Date.today

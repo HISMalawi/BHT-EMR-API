@@ -39,17 +39,18 @@ class ARTService::LabTestsEngine
                 .order(Arel.sql('DATE(Lab_Sample.TimeStamp) DESC'))
   end
 
-  def create_order(encounter:, date:, reason:, test_types:, **kwargs)
+  def create_order(encounter:, date:, tests:, **kwargs)
     patient ||= encounter.patient
     date ||= encounter.encounter_datetime
 
-    test_types.collect do |test_type|
+    tests.collect do |test|
       lims_order = nlims.order_test(patient: patient, user: User.current, date: date,
-                                    reason: reason, test_type: [test_type], **kwargs)
+                                    reason: test['reason'], test_type: [test['test_type']],
+                                    **kwargs)
       accession_number = lims_order['tracking_number']
 
       local_order = create_local_order(patient, encounter, date, accession_number)
-      save_reason_for_test(encounter, local_order, reason)
+      save_reason_for_test(encounter, local_order, test['reason'])
 
       { order: local_order, lims_order: lims_order }
     end
@@ -128,9 +129,10 @@ class ARTService::LabTestsEngine
                  encounter: encounter,
                  concept: concept('Laboratory tests ordered'),
                  order_type: order_type('Lab'),
+                 orderer: User.current.user_id,
                  start_date: date,
                  accession_number: accession_number,
-                 provider: User.current.person
+                 provider: User.current
   end
 
   def save_reason_for_test(encounter, order, reason)

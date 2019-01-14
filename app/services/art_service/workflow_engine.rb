@@ -64,15 +64,27 @@ module ARTService
     }.freeze
 
     STATE_CONDITIONS = {
-      HIV_CLINIC_REGISTRATION => %i[patient_not_registered? patient_not_visiting?],
-      VITALS => %i[patient_checked_in? patient_not_on_fast_track?],
-      HIV_STAGING => %i[patient_not_already_staged?],
-      HIV_CLINIC_CONSULTATION => %i[patient_not_on_fast_track?],
-      ART_ADHERENCE => %i[patient_received_art?],
-      TREATMENT => %i[patient_should_get_treatment?],
-      FAST_TRACK => %i[patient_got_treatment? patient_not_on_fast_track? assess_for_fast_track?],
-      DISPENSING => %i[patient_got_treatment?],
-      APPOINTMENT => %i[patient_got_treatment? dispensing_complete?]
+      HIV_CLINIC_REGISTRATION => %i[patient_not_registered?
+                                    patient_not_visiting?],
+      VITALS => %i[patient_checked_in?
+                   patient_not_on_fast_track?
+                   patient_has_not_completed_fast_track_visit?],
+      HIV_STAGING => %i[patient_not_already_staged?
+                        patient_has_not_completed_fast_track_visit?],
+      HIV_CLINIC_CONSULTATION => %i[patient_not_on_fast_track?
+                                    patient_has_not_completed_fast_track_visit?],
+      ART_ADHERENCE => %i[patient_received_art?
+                          patient_has_not_completed_fast_track_visit?],
+      TREATMENT => %i[patient_should_get_treatment?
+                      patient_has_not_completed_fast_track_visit?],
+      FAST_TRACK => %i[patient_got_treatment?
+                       patient_not_on_fast_track?
+                       assess_for_fast_track?
+                       patient_has_not_completed_fast_track_visit?],
+      DISPENSING => %i[patient_got_treatment?
+                       patient_has_not_completed_fast_track_visit?],
+      APPOINTMENT => %i[patient_got_treatment?
+                        dispensing_complete?]
     }.freeze
 
     # Concepts
@@ -119,9 +131,6 @@ module ARTService
     # NOTE: By `relevant` above we mean encounters that matter in deciding
     # what encounter the patient should go for in this present time.
     def encounter_exists?(type)
-      # HACK: Pretend Fast Track does not exist
-      return false if type.encounter_type_id == encounter_type(FAST_TRACK).encounter_type_id
-
       Encounter.where(type: type, patient: @patient)\
                .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
                .exists?
@@ -266,36 +275,16 @@ module ARTService
     end
 
     def assess_for_fast_track?
-      encounter = Encounter.where(encounter_type: encounter_type(FAST_TRACK),
-                                  patient: @patient)\
-                           .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))
-                           .order(encounter_datetime: :desc)
-                           .first
-
-      # HACK: In an ideal situation we should be returning true here to
-      # trigger creation of a new encounter on client side however
-      # client-side at this point normally already has an encounter
-      # created with 'assess for fast track either set to yes or no'
-      return false unless encounter
-
       assess_for_fast_track_concept = concept('Assess for fast track?')
 
       # Should we assess fast track?
-      assess_fast_track = encounter.observations.where(
+      Observation.where(
         concept: assess_for_fast_track_concept,
-        value_coded: concept('Yes').concept_id
+        value_coded: concept('Yes').concept_id,
+        person_id: @patient.patient_id
+      ).where(
+        'obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date)
       ).exists?
-
-      return false unless assess_fast_track
-
-      # Have we already assessed fast track?
-      # We check for this condiition by looking for any observations other
-      # 'Assess for fast track' which we are assuming are
-      fast_track_assessed = encounter.observations.where.not(
-        concept: assess_for_fast_track_concept
-      ).exists?
-
-      !fast_track_assessed
     end
 
     # Checks whether current patient is on a fast track visit
@@ -310,6 +299,22 @@ module ARTService
       on_fast_track = on_fast_track ? on_fast_track&.to_i : no_concept
 
       on_fast_track == no_concept
+    end
+
+    # Checks whether fast track visit has been completed
+    #
+    # This is meant to stop the workflow from restarting after completion of
+    # a fast track visit.
+    def patient_has_not_completed_fast_track_visit?
+      return !@fast_track_completed if @fast_track_completed
+
+      @fast_track_completed = Observation.where(concept: concept('Fast track visit'))\
+                                         .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))
+                                         .order(obs_datetime: :desc)\
+                                         .first
+                                         &.value_coded&.to_i == concept('Yes').concept_id
+
+      !@fast_track_completed
     end
 
     def htn_workflow

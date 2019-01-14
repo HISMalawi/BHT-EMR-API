@@ -31,12 +31,11 @@ module ARTService
     def outcome
       return @outcome if @outcome
 
-      date = ActiveRecord::Base.connection.quote(date)
       outcome = ActiveRecord::Base.connection.select_one(
-        "SELECT patient_outcome(#{patient.id}, DATE(#{date})) as outcome"
+        "SELECT patient_outcome(#{patient.id}, DATE('#{date.to_date}')) as outcome"
       )['outcome']
 
-      @outcome = outcome.casecmp('UNKNOWN').zero? ? 'Unk' : outcome
+      @outcome = outcome.casecmp?('UNKNOWN') ? 'Unk' : outcome
     end
 
     def outcome_date
@@ -44,10 +43,9 @@ module ARTService
     end
 
     def next_appointment
-      Observation.where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))\
-                 .where(person: patient.person)\
-                 .order(:obs_datetime)\
-                 .last\
+      Observation.where(person: patient.person, concept: concept('Appointment date'))\
+                 .order(obs_datetime: :desc)\
+                 .first\
                  &.value_datetime
     end
 
@@ -111,12 +109,7 @@ module ARTService
         drug = observation&.order&.drug_order&.drug
         next unless drug
 
-        match = drug.name.match(/^(.+)\(.*\).*$/)
-        name = match.nil? ? drug.name : match[1]
-
-        name = 'CPT' if name.match?('Cotrimoxazole')
-        name = 'INH' if name.match?('INH')
-        [name, observation.value_numeric]
+        [format_drug_name(drug), observation.value_numeric]
       end
     end
 
@@ -131,12 +124,7 @@ module ARTService
         drug = observation&.order&.drug_order&.drug
         next unless drug
 
-        match = drug.name.match(/^(.+)\(.*\).*$/)
-        name = match.nil? ? drug.name : match[1]
-
-        name = 'CPT' if name.match?('Cotrimoxazole')
-        name = 'INH' if name.match?('INH')
-        [name, observation.value_numeric]
+        [format_drug_name(drug), observation.value_numeric]
       end
     end
 
@@ -163,7 +151,7 @@ module ARTService
 
       @side_effects = parent_obs.children\
                                 .where(value_coded: concept('Yes'))\
-                                .collect { |side_effect| side_effect.concept.full_name }
+                                .collect { |side_effect| side_effect.concept.fullname }
                                 .compact
     end
 
@@ -175,6 +163,15 @@ module ARTService
       return 'N/A' if weight.zero? || height.zero?
 
       (weight / (height * height) * 10_000).round(1)
+    end
+
+    def format_drug_name(drug)
+      match = drug.name.match(/^(.+)\s*\(.*$/)
+      name = match.nil? ? drug.name : match[1]
+
+      name = 'CPT' if name.match?('Cotrimoxazole')
+      name = 'INH' if name.match?('INH')
+      name
     end
   end
 end

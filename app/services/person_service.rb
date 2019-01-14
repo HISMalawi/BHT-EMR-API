@@ -37,8 +37,7 @@ class PersonService
   end
 
   def create_person_name(person, params)
-    PersonName.create(
-      person: person,
+    person.names << PersonName.new(
       given_name: params[:given_name],
       family_name: params[:family_name],
       middle_name: params[:middle_name],

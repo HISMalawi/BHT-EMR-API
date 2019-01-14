@@ -46,6 +46,7 @@ class Observation < VoidableRecord
     return unless drug_order
 
     drug_order.quantity = nil
+    drug_order.save
   end
 
   def answer_string(tags=[])

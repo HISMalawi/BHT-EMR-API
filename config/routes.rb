@@ -16,6 +16,8 @@ Rails.application.routes.draw do
       resources :appointments
       resources :dispensations, only: %i[index create]
       resources :users
+      # Not placed under users urls to allow crud on current user's roles
+      resources :user_roles, only: %i[index create destroy]
 
       get '/people/_names' => 'person_names#index'
       resources :people do
@@ -42,6 +44,7 @@ Rails.application.routes.draw do
                        request.params
         end)
         get '/drugs_received', to: 'patients#drugs_received'
+        get '/last_drugs_received', to: 'patients#last_drugs_received'
         get '/current_bp_drugs', to: 'patients#current_bp_drugs'
         get '/last_bp_drugs_dispensation', to: 'patients#last_bp_drugs'
         get '/next_appointment_date', to: 'patient_appointments#next_appointment_date'

@@ -10,7 +10,7 @@ class Order < VoidableRecord
   belongs_to :concept
   belongs_to :encounter
   belongs_to :patient
-  belongs_to :provider, foreign_key: 'orderer', class_name: 'Person'
+  belongs_to :provider, foreign_key: 'orderer', class_name: 'User', optional: true
 
   validates_presence_of :patient_id, :concept_id, :encounter_id,
                         :provider, :orderer

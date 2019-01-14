@@ -11,10 +11,13 @@ class DrugOrder < ActiveRecord::Base
                         :units, :frequency, :prn
 
   def as_json(options = {})
-    super(options.merge(include: { order: {}, drug: {} })).tap do |hash|
-      hash[:amount_needed] = amount_needed
-      hash[:barcodes] = drug.barcodes
-    end
+    super(options.merge(
+      include: { order: {}, drug: {} }, methods: %i[dosage_struct amount_needed barcodes]
+    ))
+  end
+
+  def barcodes
+    drug.barcodes
   end
 
   def duration
@@ -31,6 +34,19 @@ class DrugOrder < ActiveRecord::Base
 
   def total_required
     (duration * equivalent_daily_dose)
+  end
+
+  # Construct
+  def dosage_struct
+    ingredient = MohRegimenIngredient.find_by(drug: drug)
+    {
+      drug_id: drug.drug_id,
+      drug_name: drug.name,
+      am: ingredient&.dose&.am || 0,
+      noon: 0, # Requested by the frontenders
+      pm: ingredient&.dose&.pm || 0,
+      units: drug.units
+    }
   end
 
   # def order

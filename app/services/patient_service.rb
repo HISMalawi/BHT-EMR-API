@@ -30,6 +30,28 @@ class PatientService
     ).order('orders.start_date DESC')
   end
 
+  # Last drugs received
+  def patient_last_drugs_received(patient, ref_date)
+    dispensing_encounter = Encounter.joins(:type).where(
+      'encounter_type.name = ? AND encounter.patient_id = ?
+        AND DATE(encounter_datetime) <= DATE(?)',
+      'DISPENSING', patient.patient_id, ref_date
+    ).order(encounter_datetime: :desc).first
+
+    return [] unless dispensing_encounter
+
+    # HACK: Group orders in a map first to eliminate duplicates which can
+    # be created when a drug is scanned twice.
+    (dispensing_encounter.observations.each_with_object({}) do |obs, drug_map|
+      next unless obs.value_drug || drug_map.key?(obs.value_drug)
+
+      order = obs.order
+      next unless order.drug_order
+
+      drug_map[obs.value_drug] = order.drug_order
+    end).values
+  end
+
   # Retrieves a patient's bp trail
   def patient_bp_readings_trail(patient, max_date)
     concepts = [concept('SBP'), concept('DBP')]

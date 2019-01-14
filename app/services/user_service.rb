@@ -158,6 +158,10 @@ module UserService
     end
   end
 
+  def self.user_roles(user)
+    user.roles
+  end
+
   def self.person_service
     PersonService.new
   end
