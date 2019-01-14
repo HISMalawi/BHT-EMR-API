@@ -157,17 +157,17 @@ class AppointmentService
     clinic_appointment_limit = global_property('clinic.appointment.limit')&.property_value&.to_i
     clinic_appointment_limit = 200 if clinic_appointment_limit.nil? || clinic_appointment_limit < 1
 
-    peads_clinic_days = global_property 'peads.clinic.days'
+    peads_clinic_days = global_property('peads.clinic.days')&.property_value
     if patient.age(today: @retro_date) <= 14 && !peads_clinic_days.blank?
       clinic_days = peads_clinic_days
     else
-      property = global_property('clinic.days')
+      property = global_property('clinic.days')&.property_value
       clinic_days = property ? property.property_value : nil
       clinic_days ||= 'Monday,Tuesday,Wednesday,Thursday,Friday'
     end
     clinic_days = clinic_days.split(',').collect(&:strip)
 
-    clinic_holidays = global_property 'clinic.holidays'
+    clinic_holidays = global_property('clinic.holidays')&.property_value
     clinic_holidays = begin
                         clinic_holidays.split(',').map { |day| day.to_date.strftime('%d %B') }.join(',').split(',')
                       rescue StandardError
