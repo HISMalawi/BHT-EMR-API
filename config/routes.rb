@@ -16,6 +16,8 @@ Rails.application.routes.draw do
       resources :appointments
       resources :dispensations, only: %i[index create]
       resources :users
+      # Not placed under users urls to allow crud on current user's roles
+      resources :user_roles, only: %i[index create destroy]
 
       get '/people/_names' => 'person_names#index'
       resources :people do
