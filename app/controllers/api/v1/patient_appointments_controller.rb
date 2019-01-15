@@ -13,4 +13,14 @@ class Api::V1::PatientAppointmentsController < ApplicationController
       render status: :not_found
     end
   end
+
+  def booked_appointments
+    date = params[:date] ? Date.strptime(params[:date]) : Date.today
+
+    appointment_service = AppointmentService.new
+    list = appointment_service.booked_appointments date
+
+    render json: list
+  end
+
 end
