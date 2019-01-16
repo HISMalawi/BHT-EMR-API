@@ -55,6 +55,14 @@ class Api::V1::ProgramPatientsController < ApplicationController
                               disposition: 'inline'
   end
 
+  def defaulter_list
+    start_date  = params[:start_date].to_date
+    end_date    = params[:end_date].to_date
+    defaulters  = service.defaulter_list start_date, end_date
+     
+    render json: defaulters
+  end
+
   protected
 
   def service
