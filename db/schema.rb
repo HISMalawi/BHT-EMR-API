@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_01_04_084511) do
+ActiveRecord::Schema.define(version: 2019_01_14_091823) do
 
   create_table "active_list", primary_key: "active_list_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1", force: :cascade do |t|
     t.integer "active_list_type_id", null: false
@@ -1207,7 +1207,7 @@ ActiveRecord::Schema.define(version: 2019_01_04_084511) do
     t.date "start_date"
     t.date "end_date"
     t.date "defaulted_date"
-    t.date "date_created", default: "2018-12-30"
+    t.date "date_created", default: "2019-01-07"
   end
 
   create_table "patient_identifier", primary_key: "patient_identifier_id", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
@@ -1934,22 +1934,6 @@ ActiveRecord::Schema.define(version: 2019_01_04_084511) do
     t.index ["voided_by"], name: "user_who_voided_task"
   end
 
-  create_table "temp_earliest_start_date", primary_key: "patient_id", id: :integer, default: nil, options: "ENGINE=MEMORY DEFAULT CHARSET=utf8", force: :cascade do |t|
-    t.date "date_enrolled", null: false
-    t.datetime "earliest_start_date", null: false
-    t.date "birthdate", null: false
-    t.boolean "birthdate_estimated"
-    t.date "death_date"
-    t.string "gender", limit: 32
-    t.integer "age_at_initiation", null: false
-    t.integer "age_in_days", null: false
-    t.index ["date_enrolled"], name: "date_enrolled_index", using: :hash
-    t.index ["earliest_start_date", "date_enrolled"], name: "earliest_start_date__date_enrolled_index", using: :hash
-    t.index ["earliest_start_date"], name: "earliest_start_date_index", using: :hash
-    t.index ["patient_id", "date_enrolled"], name: "patient_id__date_enrolled_index", using: :hash
-    t.index ["patient_id"], name: "patient_id_index", using: :hash
-  end
-
   create_table "traditional_authorities", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -1978,7 +1962,7 @@ ActiveRecord::Schema.define(version: 2019_01_04_084511) do
   create_table "user_property", primary_key: ["user_id", "property"], options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.integer "user_id", default: 0, null: false
     t.string "property", limit: 100, default: "", null: false
-    t.string "property_value", default: "", null: false
+    t.string "property_value", limit: 600, default: "", null: false
   end
 
   create_table "user_role", primary_key: ["role", "user_id"], options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
@@ -1995,7 +1979,7 @@ ActiveRecord::Schema.define(version: 2019_01_04_084511) do
     t.string "secret_question"
     t.string "secret_answer"
     t.integer "creator", default: 0, null: false
-    t.timestamp "date_created", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.datetime "date_created", default: "1900-01-01 00:00:00", null: false
     t.integer "changed_by"
     t.datetime "date_changed"
     t.integer "person_id"
@@ -2004,8 +1988,8 @@ ActiveRecord::Schema.define(version: 2019_01_04_084511) do
     t.datetime "date_retired"
     t.string "retire_reason"
     t.string "uuid", limit: 38, null: false
+    t.string "authentication_token"
     t.date "token_expiry_time"
-    t.string "authentication_token", limit: 225
     t.index ["changed_by"], name: "user_who_changed_user"
     t.index ["creator"], name: "user_creator"
     t.index ["person_id"], name: "person_id_for_user"
