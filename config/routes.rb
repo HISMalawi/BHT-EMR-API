@@ -142,6 +142,7 @@ Rails.application.routes.draw do
       get '/search/family_name' => 'person_names#search_family_name'
       get '/search/people' => 'people#search'
       get '/search/patients/by_npid' => 'patients#search_by_npid'
+      get '/search/patients/by_identifier' => 'patients#search_by_identifier'
       get '/search/properties' => 'properties#search'
       get '/search/landmarks' => 'landmarks#search'
 
