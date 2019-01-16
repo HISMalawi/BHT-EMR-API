@@ -385,7 +385,7 @@ class Api::V1::PatientsController < ApplicationController
   end
 
   def generate_filing_number_label(patient, num = 1)
-    identifier = patient.identifier('Filing number')
+    identifier = patient.identifier('Filing number') || patient.identifier('Archived filing number')
     raise NotFoundError, "Filing number for patient #{patient.id} not found" unless identifier
 
     file = identifier.identifier
