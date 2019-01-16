@@ -21,7 +21,7 @@ class ProgramPatientsService
   end
 
   def defaulter_list(start_date, end_date)
-=begin 
+#=begin 
     ActiveRecord::Base.connection.execute <<EOF
       DROP TABLE IF EXISTS `temp_earliest_start_date`;
 EOF
@@ -49,7 +49,7 @@ EOF
                 and (`s`.`state` = 7))
         group by `p`.`patient_id`;
 EOF
-=end
+#=end
 
     data = ActiveRecord::Base.connection.select_all("SELECT e.patient_id, 
     patient_outcome(e.patient_id, DATE('#{end_date}')) outcome, 
