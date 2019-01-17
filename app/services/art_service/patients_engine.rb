@@ -16,7 +16,7 @@ module ARTService
     # The info is just what you would get on a patient information
     # confirmation page in an ART application.
     def patient(patient_id, date)
-      summarise_patient Patient.find(patient_id), date
+      patient_summary(Patient.find(patient_id), date).full_summary
     end
 
     # Returns a patient's last received drugs.
@@ -128,107 +128,8 @@ module ARTService
 
     private
 
-    NPID_TYPE = 'National id'
-    ARV_NO_TYPE = 'ARV Number'
-    FILING_NUMBER = 'Filing number'
-    ARCHIVED_FILING_NUMBER = 'Archived filing number'
-
-    SECONDS_IN_MONTH = 2_592_000
-
-    include ModelUtils
-
-    def summarise_patient(patient, date)
-      art_start_date, art_duration = patient_art_period(patient)
-      {
-        patient_id: patient.patient_id,
-        npid: patient_identifier(patient, NPID_TYPE),
-        arv_number: patient_identifier(patient, ARV_NO_TYPE),
-        filing_number: patient_filing_number(patient),
-        current_outcome: patient_current_outcome(patient, date),
-        residence: patient_residence(patient),
-        art_duration: art_duration,
-        current_regimen: patient_current_regimen(patient, date),
-        art_start_date: art_start_date,
-        reason_for_art: patient_art_reason(patient)
-      }
-    end
-
-    def patient_filing_number(patient)
-      filing_number = patient_identifier(patient, FILING_NUMBER)
-      return patient_identifier(patient, ARCHIVED_FILING_NUMBER) if filing_number.casecmp?('N/A')
-      filing_number
-    end
-
-    def patient_identifier(patient, identifier_type_name)
-      identifier_type = PatientIdentifierType.find_by_name(identifier_type_name)
-      return 'UNKNOWN' unless identifier_type
-
-      identifiers = patient.patient_identifiers.where(
-        identifier_type: identifier_type.patient_identifier_type_id
-      )
-      identifiers[0] ? identifiers[0].identifier : 'N/A'
-    end
-
-    def patient_residence(patient)
-      address = patient.person.addresses[0]
-      return 'N/A' unless address
-
-      district = address.state_province || 'Unknown District'
-      village = address.city_village || 'Unknown Village'
-      "#{district}, #{village}"
-    end
-
-    def patient_current_regimen(patient, date = Date.today)
-      patient_id = ActiveRecord::Base.connection.quote(patient.patient_id)
-      date = ActiveRecord::Base.connection.quote(date)
-
-      ActiveRecord::Base.connection.select_one(
-        "SELECT patient_current_regimen(#{patient_id}, #{date}) as regimen"
-      )['regimen'] || 'N/A'
-    end
-
-    def patient_current_outcome(patient, date)
-      patient_id = ActiveRecord::Base.connection.quote(patient.patient_id)
-      date = ActiveRecord::Base.connection.quote(date)
-
-      ActiveRecord::Base.connection.select_one(
-        "SELECT patient_outcome(#{patient_id}, #{date}) as outcome"
-      )['outcome'] || 'UNKNOWN'
-    end
-
-    def patient_art_reason(patient)
-      concept = concept('Reason for ART eligibility')
-      return 'UNKNOWN' unless concept
-
-      obs_list = Observation.where concept_id: concept.concept_id,
-                                   person_id: patient.patient_id
-      obs_list = obs_list.order(date_created: :desc).limit(1)
-      return 'N/A' if obs_list.empty?
-
-      obs = obs_list[0]
-
-      reason_concept = Concept.find_by_concept_id(obs.value_coded.to_i)
-      return 'N/A' unless reason_concept
-
-      reason_concept\
-        .concept_names\
-        .where(concept_name_type: 'FULLY_SPECIFIED')\
-        .first\
-        .name
-    end
-
-    def patient_art_period(patient)
-      concept = concept('ART start date')
-      return 'UNKNOWN', 'UNKNOWN' unless concept
-
-      obs_list = Observation.where concept_id: concept.concept_id,
-                                   person_id: patient.patient_id
-      obs_list = obs_list.order(date_created: :desc).limit(1)
-      obs = obs_list[0]
-      return 'N/A', 'N/A' unless obs
-
-      duration = ((Time.now - obs.value_datetime) / SECONDS_IN_MONTH).to_i # Round off to preceeding integer
-      [obs.value_datetime.strftime('%d/%b/%y'), duration]
+    def patient_summary(patient, date)
+      PatientSummary.new patient, date
     end
 
     # source: NART/lib/patient_service#patient_initiated
