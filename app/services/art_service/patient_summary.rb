@@ -111,7 +111,7 @@ module ARTService
       return ['N/A', 'N/A'] unless start_date
 
       duration = ((Time.now - start_date) / SECONDS_IN_MONTH).to_i # Round off to preceeding integer
-      [start_date.strftime('%d/%b/%y'), duration] # Reformat the date for the lazy frontenders
+      [start_date.strftime('%d/%b/%Y'), duration] # Reformat the date for the lazy frontenders
     end
 
     # Returns the most recent value_datetime for patient's observations of the

@@ -123,4 +123,9 @@ class Patient < VoidableRecord
                      .order(:date_created)\
                      .last
   end
+
+  def name
+    name_obj = PersonName.find_by_person_id(patient_id)
+    "#{name_obj.given_name} #{name_obj.family_name}"
+  end
 end

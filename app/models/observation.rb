@@ -49,6 +49,10 @@ class Observation < VoidableRecord
     drug_order.save
   end
 
+  def name
+    ConceptName.find(concept_id).name
+  end
+
   def answer_string(tags=[])
     coded_answer_name = self.answer_concept.concept_names.typed(tags).first.name rescue nil
     coded_answer_name ||= self.answer_concept.concept_names.first.name rescue nil

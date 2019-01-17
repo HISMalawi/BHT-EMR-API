@@ -126,6 +126,10 @@ module ARTService
       ARTService::PatientVisitLabel.new patient, date
     end
 
+    def transfer_out_label(patient, date)
+      ARTService::PatientTransferOutLabel.new patient, date
+    end
+
     private
 
     def patient_summary(patient, date)
