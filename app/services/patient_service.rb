@@ -17,6 +17,13 @@ class PatientService
     median_weight_height(patient.age_in_months, patient.person.gender)
   end
 
+  def find_patients_by_identifier(identifier_type, identifier)
+    Patient.joins(:patient_identifiers).where(
+      '`patient_identifier`.identifier_type = ? AND `patient_identifier`.identifier = ?',
+      identifier_type.id, identifier
+    )
+  end
+
   def median_weight_height(age_in_months, gender)
     gender = (gender == 'M' ? '0' : '1')
     values = WeightHeightForAge.where(['age_in_months = ? and sex = ?', age_in_months, gender]).first

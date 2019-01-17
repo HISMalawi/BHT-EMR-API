@@ -134,6 +134,8 @@ Rails.application.routes.draw do
       resource :global_properties
       resource :user_properties
 
+      resource :session_stats, path: 'stats/session'
+
       # Workflow engine
       get '/workflows/:program_id/:patient_id' => 'workflows#next_encounter'
 
@@ -143,6 +145,7 @@ Rails.application.routes.draw do
       get '/search/family_name' => 'person_names#search_family_name'
       get '/search/people' => 'people#search'
       get '/search/patients/by_npid' => 'patients#search_by_npid'
+      get '/search/patients/by_identifier' => 'patients#search_by_identifier'
       get '/search/properties' => 'properties#search'
       get '/search/landmarks' => 'landmarks#search'
 

@@ -48,6 +48,12 @@ class Api::V1::PatientsController < ApplicationController
     render json: response.collect { |dde_person| dde_person_to_openmrs dde_person }
   end
 
+  def search_by_identifier
+    identifier_type_id, identifier = params.require %i[type_id identifier]
+    identifier_type = PatientIdentifierType.find(identifier_type_id)
+    render json: service.find_patients_by_identifier(identifier_type, identifier)
+  end
+
   def create
     create_params, errors = required_params required: %i[person_id]
     return render json: { errors: create_params }, status: :bad_request if errors
@@ -385,7 +391,7 @@ class Api::V1::PatientsController < ApplicationController
   end
 
   def generate_filing_number_label(patient, num = 1)
-    identifier = patient.identifier('Filing number')
+    identifier = patient.identifier('Filing number') || patient.identifier('Archived filing number')
     raise NotFoundError, "Filing number for patient #{patient.id} not found" unless identifier
 
     file = identifier.identifier
