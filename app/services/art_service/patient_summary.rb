@@ -106,7 +106,7 @@ module ARTService
     def art_period
       start_date = (recent_value_datetime('ART start date')\
                     || recent_value_datetime('Date antiretrovirals started')\
-                    || patient_earliest_start_date_at_clinic)
+                    || earliest_start_date_at_clinic)
 
       return ['N/A', 'N/A'] unless start_date
 
@@ -131,7 +131,7 @@ module ARTService
     # Method of last resort in finding a patient's earliest start date.
     #
     # Uses some cryptic SQL to come up with the value
-    def earliest_start_date_at_clinic(patient)
+    def earliest_start_date_at_clinic
       patient_id = ActiveRecord::Base.connection.quote(patient.patient_id)
 
       row = ActiveRecord::Base.connection.select_one <<~SQL
