@@ -97,8 +97,12 @@ class AppointmentService
     obs.person_id, p.birthdate_estimated;")
 
     clients_formatted = [];
+    already_counted = []
 
     (clients || []).each do |c|
+      next if already_counted.include? c['person_id']
+      already_counted << c['person_id']
+
       clients_formatted << {
         given_name: c['given_name'], family_name: c['family_name'],
         birthdate: c['birthdate'], gender: c['gender'], person_id: c['person_id'],
