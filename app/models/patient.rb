@@ -32,14 +32,14 @@ class Patient < VoidableRecord
           include: {
             names: {},
             addresses: {},
-            person_attributes: {}
+            person_attributes: {
+              methods: %i[type]
+            }
           }
         },
         # programs: {},
         patient_identifiers: {
-          include: {
-            type: {}
-          }
+          methods: %i[type]
         }
       }
     ))
