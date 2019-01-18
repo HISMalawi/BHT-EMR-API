@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ConceptName < VoidableRecord
   self.table_name = :concept_name
   self.primary_key = :concept_name_id
@@ -7,11 +9,6 @@ class ConceptName < VoidableRecord
 
   belongs_to :concept
 
-  scope :tagged, lambda { |tags|
-    tags.blank? ? {} : { include: :tags, conditions: ['concept_name_tag.tag IN (?)', Array(tags)] }
-  }
-
-  scope :typed, lambda { |tags|
-    tags.blank? ? {} : { conditions: ['concept_name_type IN (?)', Array(tags)] }
-  }
+  scope :tagged, ->(tags) { tags.blank? ? {} : joins(:tags).where('concept_name_tag.tag IN (?)', Array(tags)) }
+  scope :typed, ->(tags) { tags.blank? ? {} : where('concept_name_type IN (?)', Array(tags)) }
 end
