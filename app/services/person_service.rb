@@ -59,6 +59,10 @@ class PersonService
   end
 
   def create_person_address(person, params)
+    person.addresses.each do |address|
+      address.void('Address updated')
+    end
+
     PersonAddress.create(
       person: person,
       state_province: params[:current_district],
