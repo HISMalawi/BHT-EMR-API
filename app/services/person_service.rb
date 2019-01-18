@@ -111,10 +111,10 @@ class PersonService
 
       LOGGER.debug "Updating attr #{field} = #{value}"
 
-      type = PersonAttribute.find_by name: PERSON_ATTRIBUTES_FIELDS[field]
+      type = PersonAttributeType.find_by name: PERSON_ATTRIBUTES_FIELDS[field]
       attr = PersonAttribute.find_by person_attribute_type_id: type.id,
                                      person_id: person.id
-      saved = attr.update(field => value)
+      saved = attr.update(value: value)
 
       unless saved
         raise "Failed to save attr: #{field} = #{value} due to #{attr.errors}"
