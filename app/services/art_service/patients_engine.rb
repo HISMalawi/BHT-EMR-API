@@ -130,6 +130,10 @@ module ARTService
       ARTService::PatientTransferOutLabel.new patient, date
     end
 
+    def mastercard_data(patient, date)
+      ARTService::PatientMastercard.new(patient, date).data
+    end
+
     private
 
     def patient_summary(patient, date)
