@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
 module ARTService
-  include ModelUtils
-
   # Patients sub service.
   #
   # Basically provides ART specific patient-centric functionality
   class PatientsEngine
+    include ModelUtils
+
     def initialize(program:)
       @program = program
     end
