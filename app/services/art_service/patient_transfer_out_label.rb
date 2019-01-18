@@ -33,7 +33,7 @@ module ARTService
       # Patient personanl data
       label.draw_multi_text("#{Location.current_health_center.name} transfer out label", font_reverse: true)
       label.draw_multi_text("To #{destination}", font_reverse: false) unless destination.blank?
-      label.draw_multi_text("ARV number: #{patient.identifier('ARV Number')}", font_reverse: true)
+      label.draw_multi_text("ARV number: #{patient.identifier('ARV Number')&.identifier}", font_reverse: true)
       label.draw_multi_text("Name: #{patient.name} (#{patient.gender.first})\nAge: #{patient.age}", font_reverse: false)
 
       # Print information on Diagnosis!
