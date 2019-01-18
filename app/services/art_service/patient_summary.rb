@@ -60,10 +60,10 @@ module ARTService
 
     def current_regimen
       patient_id = ActiveRecord::Base.connection.quote(patient.patient_id)
-      date = ActiveRecord::Base.connection.quote(date)
+      quoted_date = ActiveRecord::Base.connection.quote(date.to_date)
 
       ActiveRecord::Base.connection.select_one(
-        "SELECT patient_current_regimen(#{patient_id}, #{date}) as regimen"
+        "SELECT patient_current_regimen(#{patient_id}, #{quoted_date}) as regimen"
       )['regimen'] || 'N/A'
     rescue ActiveRecord::StatementInvalid => e
       Rails.logger.error("Failed tor retrieve patient current regimen: #{e}:")
@@ -72,10 +72,10 @@ module ARTService
 
     def current_outcome
       patient_id = ActiveRecord::Base.connection.quote(patient.patient_id)
-      date = ActiveRecord::Base.connection.quote(date)
+      quoted_date = ActiveRecord::Base.connection.quote(date)
 
       ActiveRecord::Base.connection.select_one(
-        "SELECT patient_outcome(#{patient_id}, #{date}) as outcome"
+        "SELECT patient_outcome(#{patient_id}, #{quoted_date}) as outcome"
       )['outcome'] || 'UNKNOWN'
     rescue ActiveRecord::StatementInvalid => e
       Rails.logger.error("Failed tor retrieve patient current outcome: #{e}:")
