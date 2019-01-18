@@ -64,9 +64,7 @@ module ARTService
     end
 
     def date_antiretrovirals_started
-      # Patient summary returns a string but our main caller is expecting
-      # a date (our main caller is PatientTransferOutLabel).
-      patient_summary.art_period[0].to_date
+      patient_summary.art_period[0]
     end
 
     private

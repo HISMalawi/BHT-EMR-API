@@ -102,7 +102,7 @@ module ARTService
       label.draw_multi_text('Current ART drugs', font_reverse: true)
       label.draw_multi_text(reg, font_reverse: false)
       label.draw_multi_text('Transfer out date:', font_reverse: true)
-      label.draw_multi_text(date.strftime('%d-%b-%Y').to_s, font_reverse: false)
+      label.draw_multi_text(date, font_reverse: false)
 
       label.print(1)
     end
