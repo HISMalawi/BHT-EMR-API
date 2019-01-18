@@ -13,7 +13,6 @@ module ARTService
       @transfer_out_note = ARTService::PatientTransferOut.new patient, date
     end
 
-    # Source: NART/app/controllers/#generic_patients_controller#print_transfer_out_label
     def print
       who_stage = transfer_out_note.reason_for_art_eligibility
       initial_staging_conditions = transfer_out_note.who_clinical_conditions
@@ -102,7 +101,7 @@ module ARTService
       label.draw_multi_text('Current ART drugs', font_reverse: true)
       label.draw_multi_text(reg, font_reverse: false)
       label.draw_multi_text('Transfer out date:', font_reverse: true)
-      label.draw_multi_text(date, font_reverse: false)
+      label.draw_multi_text(date.strftime('%d-%b-%Y').to_s, font_reverse: false)
 
       label.print(1)
     end

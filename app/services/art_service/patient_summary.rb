@@ -31,7 +31,7 @@ module ARTService
         residence: residence,
         art_duration: art_duration,
         current_regimen: current_regimen,
-        art_start_date: art_start_date,
+        art_start_date: art_start_date.strftime('%d/%m/%Y'),
         reason_for_art: art_reason
       }
     end
@@ -111,7 +111,7 @@ module ARTService
       return ['N/A', 'N/A'] unless start_date
 
       duration = ((Time.now - start_date) / SECONDS_IN_MONTH).to_i # Round off to preceeding integer
-      [start_date.strftime('%d/%b/%Y'), duration] # Reformat the date for the lazy frontenders
+      [start_date, duration] # Reformat the date for the lazy frontenders
     end
 
     # Returns the most recent value_datetime for patient's observations of the
