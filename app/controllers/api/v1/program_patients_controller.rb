@@ -70,6 +70,10 @@ class Api::V1::ProgramPatientsController < ApplicationController
     render json: defaulters
   end
 
+  def mastercard_data
+    render json: service.mastercard_data(patient, date)
+  end
+
   protected
 
   def service
