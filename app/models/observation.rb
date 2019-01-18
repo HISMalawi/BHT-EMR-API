@@ -50,7 +50,7 @@ class Observation < VoidableRecord
   end
 
   def name
-    ConceptName.find(concept_id).name
+    ConceptName.find_by_concept_id(concept_id).name
   end
 
   def answer_string(tags=[])
