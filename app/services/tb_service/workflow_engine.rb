@@ -66,6 +66,8 @@ module TBService
         # Re-map activities to encounters
         puts activity
         case activity
+        when /TB reception/
+          TB_RECEPTION
         when /TB first visits/i
           TB_REGISTRATION
         when /TB registered suspect/i
