@@ -17,10 +17,10 @@ module UserService
     )
     raise UserCreateError, "Person: #{person.errors}" unless person.errors.empty?
 
-    person_name = person_service.create_person_name(
+    person_service.create_person_name(
       person, given_name: given_name, family_name: family_name
     )
-    raise UserCreateError, "Person name: #{person_name.errors}" unless person_name.errors
+    raise UserCreateError, "Person: #{person.errors}" unless person.errors.empty?
 
     salt = SecureRandom.base64
 
