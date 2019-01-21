@@ -36,10 +36,6 @@ module ARTService
       }
     end
 
-    def filing_number
-      identifier(FILING_NUMBER) || identifier(ARCHIVED_FILING_NUMBER)
-    end
-
     def identifier(identifier_type_name)
       identifier_type = PatientIdentifierType.find_by_name(identifier_type_name)
 
@@ -142,6 +138,17 @@ module ARTService
     rescue ActiveRecord::StatementInvalid => e
       Rails.logger.error("Failed to retrieve patient earliest_start_date_at_clinic: #{e}:")
       nil
+    end
+
+    def filing_number
+      filing_number = identifier(FILING_NUMBER)
+
+      return { number: filing_number || 'N/A', type: FILING_NUMBER } if filing_number
+
+      {
+        number: identifier(ARCHIVED_FILING_NUMBER) || 'N/A',
+        type: ARCHIVED_FILING_NUMBER
+      }
     end
   end
 end
