@@ -29,9 +29,9 @@ module ARTService
         filing_number: filing_number || 'N/A',
         current_outcome: current_outcome,
         residence: residence,
-        art_duration: art_duration,
+        art_duration: art_duration || 'N/A',
         current_regimen: current_regimen,
-        art_start_date: art_start_date.strftime('%d/%m/%Y'),
+        art_start_date: art_start_date&.strftime('%d/%m/%Y') || 'N/A',
         reason_for_art: art_reason
       }
     end
@@ -108,7 +108,7 @@ module ARTService
                     || recent_value_datetime('Date antiretrovirals started')\
                     || earliest_start_date_at_clinic)
 
-      return ['N/A', 'N/A'] unless start_date
+      return [nil, nil] unless start_date
 
       duration = ((Time.now - start_date) / SECONDS_IN_MONTH).to_i # Round off to preceeding integer
       [start_date, duration] # Reformat the date for the lazy frontenders
