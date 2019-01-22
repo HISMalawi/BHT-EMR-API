@@ -8,7 +8,10 @@ class Api::V1::SessionStatsController < ApplicationController
   private
 
   def service
-    date = params.permit(%i[date])[:date]&.to_date || Date.today
-    SessionStatsService.new User.current, date
+    permitted_params = params.permit %i[date user_id]
+    date = permitted_params[:date]&.to_date || Date.today
+    user = permitted_params[:user_id] ? User.find(permitted_params[:user_id]) : User.current
+
+    SessionStatsService.new user, date
   end
 end
