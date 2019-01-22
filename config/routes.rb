@@ -35,7 +35,6 @@ Rails.application.routes.draw do
 
       # Patients
       resources :patients do
-        resources :patient_identifiers
         get '/labels/national_health_id' => 'patients#print_national_health_id_label'
         get '/labels/filing_number' => 'patients#print_filing_number'
         get '/visits' => 'patients#visits'
@@ -57,6 +56,8 @@ Rails.application.routes.draw do
         post '/update_or_create_htn_state', to: 'patients#update_or_create_htn_state'
         resources :patient_programs, path: :programs
       end
+
+      resources :patient_identifiers
 
       resources :concepts, only: %i[index show]
 
