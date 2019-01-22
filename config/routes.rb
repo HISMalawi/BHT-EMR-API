@@ -141,6 +141,8 @@ Rails.application.routes.draw do
       # Workflow engine
       get '/workflows/:program_id/:patient_id' => 'workflows#next_encounter'
 
+      get '/current_time', to: 'time#current_time'
+
       # Search
       get '/search/given_name' => 'person_names#search_given_name'
       get '/search/middle_name' => 'person_names#search_middle_name'
