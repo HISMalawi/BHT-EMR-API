@@ -142,13 +142,12 @@ module ARTService
 
     def filing_number
       filing_number = identifier(FILING_NUMBER)
-
       return { number: filing_number || 'N/A', type: FILING_NUMBER } if filing_number
 
-      {
-        number: identifier(ARCHIVED_FILING_NUMBER) || 'N/A',
-        type: ARCHIVED_FILING_NUMBER
-      }
+      filing_number = identifier(ARCHIVED_FILING_NUMBER)
+      return { number: filing_number, type: ARCHIVED_FILING_NUMBER } if filing_number
+
+      { number: 'N/A', type: 'N/A' }
     end
   end
 end
