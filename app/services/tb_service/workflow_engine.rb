@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'htn_workflow'
 require 'set'
 
 module TBService
@@ -24,7 +23,8 @@ module TBService
         LOGGER.debug "Loading encounter type: #{state}"
         encounter_type = EncounterType.find_by(name: state)
 
-        return htn_transform(encounter_type) if valid_state?(state)
+        return encounter_type if valid_state?(state)
+
       end
 
       nil
@@ -64,7 +64,7 @@ module TBService
       activities = user_property('Activities')&.property_value
       encounters = (activities&.split(',') || []).collect do |activity|
         # Re-map activities to encounters
-        puts activity
+        puts activityh
         case activity
         when /TB reception/
           TB_RECEPTION
@@ -103,14 +103,6 @@ module TBService
         status && method(condition).call
       end
     end
-
-    # Takes an TB encounter_type and remaps it to a corresponding HTN encounter
-    def htn_transform(encounter_type)
-      htn_activated = global_property('activate.htn.enhancement')&.property_value&.downcase == 'true'
-      return encounter_type unless htn_activated
-
-      htn_workflow.next_htn_encounter(@patient, encounter_type, @date)
-    end #what is HTN?
 
     # Checks if patient has checked in today
     #
@@ -167,8 +159,5 @@ module TBService
       !encounter.nil? && encounter.orders.exists?
     end
 
-    def htn_workflow
-      HtnWorkflow.new
-    end
   end
 end
