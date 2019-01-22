@@ -4,7 +4,8 @@ class WorkflowService
   # A factory for workflow engines.
   ENGINES = {
     # Table mapping program concept name to engine
-    'HIV PROGRAM' => ARTService::WorkflowEngine
+    'HIV PROGRAM' => ARTService::WorkflowEngine,
+    'ANC PROGRAM' => ANCService::WorkflowEngine
   }.freeze
 
   def initialize(program_id:, patient_id:, date: nil)
@@ -23,7 +24,7 @@ class WorkflowService
     patient = Patient.find patient_id
     date = date ? Date.strptime(date) : Date.today
 
-    engine_name = program.concept.concept_names[0].name.upcase
+    engine_name = program.name.upcase
     engine_clazz = ENGINES[engine_name]
     raise "'#{engine_name}' engine not found" unless engine_clazz
     engine_clazz.new program: program, patient: patient, date: date
