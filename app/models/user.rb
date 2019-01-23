@@ -17,6 +17,10 @@ class User < RetirableRecord
            foreign_key: :person_id,
            dependent: :destroy)
 
+  def active?
+    deactivated_on.nil?
+  end
+
   def as_json(options = {})
     super(options.merge(
       except: %i[password salt secret_question secret_answer

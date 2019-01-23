@@ -108,11 +108,12 @@ module UserService
 
   def self.login(username, password)
     user = User.where(username: username).first
-    unless user && \
+    unless user&.active? && \
            (bart_authenticate(user, password) || \
             new_arch_authenticate(user, password))
       return nil
     end
+
     new_authentication_token user
   end
 
@@ -136,6 +137,16 @@ module UserService
 
   def self.user_roles(user)
     user.roles
+  end
+
+  def self.activate_user(user)
+    user.deactivated_on = nil
+    user.save
+  end
+
+  def self.deactivate_user(user)
+    user.deactivated_on = Time.now
+    user.save
   end
 
   def self.person_service

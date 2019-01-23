@@ -15,7 +15,11 @@ Rails.application.routes.draw do
 
       resources :appointments
       resources :dispensations, only: %i[index create]
-      resources :users
+      resources :users do
+        post '/activate', to: 'users#activate'
+        post '/deactivate', to: 'users#deactivate'
+      end
+
       # Not placed under users urls to allow crud on current user's roles
       resources :user_roles, only: %i[index create destroy]
 
