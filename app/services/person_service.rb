@@ -114,10 +114,11 @@ class PersonService
       type = PersonAttributeType.find_by name: PERSON_ATTRIBUTES_FIELDS[field]
       attr = PersonAttribute.find_by person_attribute_type_id: type.id,
                                      person_id: person.id
-      saved = attr.update(value: value)
-
-      unless saved
-        raise "Failed to save attr: #{field} = #{value} due to #{attr.errors}"
+      if attr
+        saved = attr.update(value: value)
+        raise "Failed to save attr: #{field} = #{value} due to #{attr.errors}" unless saved
+      else
+        PersonAttribute.create type: type, person: person, value: value
       end
     end
   end

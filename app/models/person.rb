@@ -53,7 +53,7 @@ class Person < VoidableRecord
         names: {},
         addresses: {},
         # relationships: {},
-        person_attributes: {}
+        person_attributes: { methods: %i[type] }
       }
     ))
   end
