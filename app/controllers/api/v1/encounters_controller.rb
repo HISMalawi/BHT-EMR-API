@@ -64,13 +64,16 @@ class Api::V1::EncountersController < ApplicationController
   # Optional parameters:
   #   provider_id: user_id of surrogate doing the data entry defaults to current user
   def create
-    type_id, patient_id = params.require(%i[encounter_type_id patient_id])
+    #Add program_id
+    type_id, patient_id, program_id = params.require(%i[encounter_type_id patient_id program_id])
 
     encounter = encounter_service.create(
       type: EncounterType.find(type_id),
       patient: Patient.find(patient_id),
       provider: params[:provider_id] ? Person.find(params[:provider_id]) : User.current.person,
-      encounter_datetime: TimeUtils.retro_timestamp(params[:encounter_datetime]&.to_time || Time.now)
+      encounter_datetime: TimeUtils.retro_timestamp(params[:encounter_datetime]&.to_time || Time.now),
+      program: Program.find(program_id)
+      
     )
 
     render json: encounter, status: :created
