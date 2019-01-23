@@ -16,6 +16,20 @@ describe TBService::WorkflowEngine do
   let(:constrained_engine) { raise :not_implemented }
 
   describe :next_encounter do
+
+    #initial state for suspect is 'suspect_state'
+    it 'returns TB_INITIAL for patient not in TB programme' do
+      
+      encounter_type = engine.next_encounter
+      expect(encounter_type.name.upcase).to eq('TB INITIAL')
+    end
+
+    it 'returns LAB_ORDERS for patient not in TB programme' do
+      
+      encounter_type = engine.next_encounter
+      expect(encounter_type.name.upcase).to eq('LAB ORDERS')
+    end
+
     it 'returns TB REGISTRATION for patient not in TB programme' do
       
       encounter_type = engine.next_encounter

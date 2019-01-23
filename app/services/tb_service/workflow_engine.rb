@@ -37,6 +37,8 @@ module TBService
     # Encounter types TB_INITIAL, TB_FOLLOWUP, TB RECEPTION, TB REGISTRATION
     INITIAL_STATE = 0 # Start terminal for encounters graph
     END_STATE = 1 # End terminal for encounters graph
+    TB_SCREENING = 'TB SCREENING' #This should be added
+    TB_INITIAL = 'TB INITIAL'
     TB_REGISTRATION  = 'TB REGISTRATION'
     TB_RECEPTION = 'TB RECEPTION'
 		VITALS = 'VITALS'
@@ -44,17 +46,19 @@ module TBService
     
     # Encounters graph
     ENCOUNTER_SM = {
-			INITIAL_STATE => TB_REGISTRATION,
+      INITIAL_STATE => TB_INITIAL,
+      TB_INITIAL => LAB_ORDERS,
+      LAB_ORDERS => TB_REGISTRATION,
       TB_REGISTRATION => TB_RECEPTION,
       TB_RECEPTION => VITALS,
-      VITALS => LAB_ORDERS,
-      LAB_ORDERS => END_STATE
+      VITALS => END_STATE
     }.freeze
 
     STATE_CONDITIONS = {
+      TB_INITIAL => %i[],
+			LAB_ORDERS => %i[patient_lab_ordered?],
     	TB_REGISTRATION => %i[patient_not_registered? patient_not_visiting?],
-			VITALS => %i[patient_checked_in?],
-			LAB_ORDERS => %i[patient_lab_ordered?]
+			VITALS => %i[patient_checked_in?]
     }.freeze   
 
     # Concepts
@@ -65,7 +69,9 @@ module TBService
       encounters = (activities&.split(',') || []).collect do |activity|
         # Re-map activities to encounters
         puts activityh
-        case activity
+      case activity
+        when /TB initial/
+          TB_INITIAL
         when /TB reception/
           TB_RECEPTION
         when /TB first visits/i
