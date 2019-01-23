@@ -130,6 +130,10 @@ module ARTService
       ARTService::PatientTransferOutLabel.new patient, date
     end
 
+    def mastercard_data(patient, date)
+      ARTService::PatientMastercard.new(patient, date).data
+    end
+
     private
 
     NPID_TYPE = 'National id'
@@ -160,9 +164,6 @@ module ARTService
       "#{district}, #{village}"
     end
 
-    def mastercard_data(patient, date)
-      ARTService::PatientMastercard.new(patient, date).data
-    end
 
     def patient_summary(patient, date)
       PatientSummary.new patient, date
