@@ -91,11 +91,11 @@ module UserService
 
   def self.set_token(username, token, expiry_time)
     u = User.where(username: username).first
-    if u.present?
-      u.authentication_token = token
-      u.token_expiry_time    = expiry_time
-      u.save
-    end
+    return unless u.present?
+
+    u.authentication_token = token
+    u.token_expiry_time    = expiry_time
+    u.save
   end
 
   def self.authenticate(token)
@@ -131,31 +131,7 @@ module UserService
   end
 
   def self.check_user(username)
-    user = User.where(username: username).first
-    if user
-      return true
-    else
-      return false
-    end
-  end
-
-  def self.re_authenticate(username, password)
-    user = User.where(username: username).first
-    token = create_token
-    expiry_time = compute_expiry_time
-    if user
-      salt = user.salt
-      if Digest::SHA1.hexdigest("#{password}#{salt}") == user.password	||
-         Digest::SHA512.hexdigest("#{password}#{salt}") == user.password
-
-        User.update(user.id, authentication_token: token, token_expiry_time: expiry_time[:expiry_time])
-        return { token: token, expiry_time: expiry_time[:expiry_time] }
-      else
-        return false
-      end
-    else
-      return false
-    end
+    !User.where(username: username).empty?
   end
 
   def self.user_roles(user)
