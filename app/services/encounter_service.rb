@@ -13,7 +13,6 @@ class EncounterService
              .first
   end
 
-  #program added to encounter
   def create(type:, patient:, encounter_datetime: nil, provider: nil, program:)
     encounter_datetime ||= Time.now
     provider ||= User.current.person
@@ -43,8 +42,8 @@ class EncounterService
     encounter
   end
 
-  def find_encounter(type:, patient:, encounter_datetime:, provider:)
-    Encounter.where(type: type, patient: patient)\
+  def find_encounter(type:, patient:, encounter_datetime:, provider:, program:)
+    Encounter.where(type: type, patient: patient, program: program)\
              .where('encounter_datetime BETWEEN ? AND ?',
                     *TimeUtils.day_bounds(encounter_datetime))\
              .order(encounter_datetime: :desc)
