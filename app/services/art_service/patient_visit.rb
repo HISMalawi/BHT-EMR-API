@@ -83,7 +83,10 @@ module ARTService
     end
 
     def bmi
-      @bmi ||= calculate_bmi(weight, height)
+      Observation.where(concept: concept('BMI'), person_id: patient.patient_id)\
+                 .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))\
+                 .first\
+                 &.value_numeric
     end
 
     def adherence
