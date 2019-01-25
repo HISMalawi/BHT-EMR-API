@@ -38,7 +38,7 @@ module TBService
     INITIAL_STATE = 0 # Start terminal for encounters graph
     END_STATE = 1 # End terminal for encounters graph
     TB_SCREENING = 'TB SCREENING' #This should be added
-    TB_INITIAL = 'TB INITIAL'
+    TB_INITIAL = 'TB_INITIAL'
     TB_REGISTRATION  = 'TB REGISTRATION'
     TB_RECEPTION = 'TB RECEPTION'
 		VITALS = 'VITALS'
@@ -55,8 +55,8 @@ module TBService
     }.freeze
 
     STATE_CONDITIONS = {
-      TB_INITIAL => %i[],
-			LAB_ORDERS => %i[patient_lab_ordered?],
+      TB_INITIAL => %i[tb_suspect_not_enrolled? patient_not_visiting? patient_not_registered?],
+			LAB_ORDERS => %i[patient_labs_not_ordered?],
     	TB_REGISTRATION => %i[patient_not_registered? patient_not_visiting?],
 			VITALS => %i[patient_checked_in?]
     }.freeze   
@@ -156,13 +156,25 @@ module TBService
     end
     
     # Check if patient LAB_ORDERS has been made
-    def patient_lab_ordered?
-      encounter_type = EncounterType.find_by name: VITALS
-      encounter = Encounter.select('encounter_id').where(
-        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
-        @patient.patient_id, encounter_type.encounter_type_id, @date
-      ).order(encounter_datetime: :desc).first
-      !encounter.nil? && encounter.orders.exists?
+    #newly added
+    def tb_suspect_not_enrolled?
+      is_suspect_enrolled = Encounter.joins(:type).where(
+        'encounter_type.name = ? AND encounter.patient_id = ?',
+        TB_INITIAL,
+        @patient.patient_id
+      ).exists?
+
+      !is_suspect_enrolled
+    end
+
+    def patient_labs_not_ordered? 
+      is_lab_ordered = Encounter.joins(:type).where(
+        'encounter_type.name = ? AND encounter.patient_id = ?',
+        LAB_ORDERS,
+        @patient.patient_id
+      ).exists?
+
+      !is_lab_ordered
     end
 
   end
