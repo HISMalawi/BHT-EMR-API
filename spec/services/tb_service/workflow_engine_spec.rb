@@ -17,65 +17,42 @@ describe TBService::WorkflowEngine do
 
   describe :next_encounter do
 
-    #initial state for suspect is 'suspect_state'
-    it 'returns TB_INITIAL for patient not in TB programme' do
-      
+    #Return TB initial if patient does not exist in
+
+    it 'returns TB_INITIAL REGISTRATION for a patient not a TB suspect in the TB programme' do
+  
       encounter_type = engine.next_encounter
       expect(encounter_type.name.upcase).to eq('TB INITIAL')
     end
 
-    it 'returns LAB_ORDERS for patient not in TB programme' do
-      
-      encounter_type = engine.next_encounter
-      expect(encounter_type.name.upcase).to eq('LAB ORDERS')
-    end
-
-    it 'returns TB REGISTRATION for patient not in TB programme' do
-      
-      encounter_type = engine.next_encounter
-      expect(encounter_type.name.upcase).to eq('TB REGISTRATION')
-    end
-
-    it 'returns TB REGISTRATION for new TB patient' do
+    it 'returns TB_INITIAL REGISTRATION for a new TB suspect' do
       enroll_patient patient
       encounter_type = engine.next_encounter
-      expect(encounter_type.name.upcase).to eq('TB REGISTRATION')
+      expect(encounter_type.name.upcase).to eq('TB INITIAL')
     end
 
-    it 'skips TB REGISTRATION for previously registered patient on new visit' do
-      register_patient patient, epoch - 100.days
+    it 'returns LAB ORDERS for TB suspect with no Lab Request in the TB Programme' do
+      lab_request patient
       encounter_type = engine.next_encounter
-      expect(encounter_type.name.upcase).to eq('TB RECEPTION')
-    end
-
-    it 'returns TB RECEPTION after TB REGISTRATION' do
-      register_patient patient
-      encounter_type = engine.next_encounter
-      expect(encounter_type.name.upcase).to eq('TB RECEPTION')
-    end
-
-    it 'starts with TB RECEPTION for visiting patients' do
-      register_patient patient
-      Observation.create(person: patient.person,
-                         concept: concept('Type of patient'),
-                         value_coded: concept('External consultation').concept_id)
-      encounter_type = engine.next_encounter
-      expect(encounter_type.name.upcase).to eq('TB RECEPTION')
-    end
-
-    it 'returns VITALS after TB RECEPTION with patient' do
-      receive_patient patient, guardian_only: false
-      encounter_type = engine.next_encounter
-      p encounter_type
-      expect(encounter_type.name.upcase).to eq('VITALS')
+      expect(encounter_type.name.upcase).to eq('LAB ORDERS')
     end
 
   end
 
   # Helpers methods
+
   def enroll_patient(patient)
     create :patient_program, patient: patient,
                              program: tb_program
+  end
+
+  def lab_request(patient)
+
+    program = Program.find_by(name: "TB PROGRAM")
+
+    tb_initial = create :encounter, type: encounter_type('TB_INITIAL'),
+                                   patient: patient, program_id: program.program_id 
+    tb_initial
   end
 
   def register_patient(patient, date = nil)
