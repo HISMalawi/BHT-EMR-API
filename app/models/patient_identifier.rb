@@ -6,6 +6,10 @@ class PatientIdentifier < VoidableRecord
                     foreign_key: :identifier_type)
   belongs_to(:patient, class_name: 'Patient', foreign_key: :patient_id)
 
+  def as_json(options = {})
+    super(options.merge(methods: %i[type]))
+  end
+
   def self.calculate_checkdigit(number)
     # This is Luhn's algorithm for checksums
     # http://en.wikipedia.org/wiki/Luhn_algorithm
@@ -91,8 +95,8 @@ class PatientIdentifier < VoidableRecord
 #     available_numbers = self.find(:all,
 #                                   :conditions => ['identifier_type = ?',
 #                                   PatientIdentifierType.find_by_name(type).id]).map{ | i | i.identifier }
-    
-#     filing_number_prefix = GlobalProperty.find_by_property("filing.number.prefix").property_value rescue "FN101,FN102" 
+
+#     filing_number_prefix = GlobalProperty.find_by_property("filing.number.prefix").property_value rescue "FN101,FN102"
 #     prefix = filing_number_prefix.split(",")[0][0..3] if type.match(/filing/i)
 #     prefix = filing_number_prefix.split(",")[1][0..3] if type.match(/Archived/i)
 

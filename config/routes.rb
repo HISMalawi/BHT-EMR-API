@@ -55,6 +55,7 @@ Rails.application.routes.draw do
         get '/bp_trail', to: 'patients#bp_readings_trail'
         get '/eligible_for_htn_screening', to: 'patients#eligible_for_htn_screening'
         post '/filing_number', to: 'patients#assign_filing_number'
+        get '/past_filing_numbers' => 'patients#filing_number_history'
         post '/npid', to: 'patients#assign_npid'
         post '/remaining_bp_drugs', to: 'patients#remaining_bp_drugs'
         post '/update_or_create_htn_state', to: 'patients#update_or_create_htn_state'

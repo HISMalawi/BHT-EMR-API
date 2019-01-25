@@ -212,6 +212,10 @@ class Api::V1::PatientsController < ApplicationController
     render json: { updated: service.update_or_create_htn_state(patient, state, date) }
   end
 
+  def filing_number_history
+    render json: service.filing_number_history(patient)
+  end
+
   private
 
   DDE_CONFIG_PATH = 'config/application.yml'

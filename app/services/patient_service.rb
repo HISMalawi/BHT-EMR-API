@@ -83,6 +83,16 @@ class PatientService
     { new_identifier: new_identifier, archived_identifier: archived_identifier }
   end
 
+  # Returns a patient's past filing numbers
+  def filing_number_history(patient)
+    PatientIdentifier.unscoped.where(
+      voided: true,
+      patient: patient,
+      type: [patient_identifier_type('Filing number'),
+             patient_identifier_type('Archived filing number')]
+    )
+  end
+
   def assign_npid(patient)
     national_id_type = patient_identifier_type(PatientIdentifierType::NPID_TYPE_NAME)
     existing_identifiers = patient_identifiers(patient, national_id_type)
