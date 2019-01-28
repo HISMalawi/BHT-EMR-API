@@ -84,7 +84,7 @@ class PersonService
     person_attributes.each do |field, value|
       field = field.to_sym
 
-      next unless PERSON_ATTRIBUTES_FIELDS.include? field.to_sym
+      next unless PERSON_ATTRIBUTES_FIELDS.include?(field.to_sym) && value
 
       LOGGER.debug "Creating attr #{field} = #{value}"
 

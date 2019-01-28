@@ -33,7 +33,7 @@ class PatientService
   end
 
   def find_patients_by_npid(npid)
-    patients = find_patients_by_identifier(npid, *npid_identifier_types.values.to_a)
+    patients = find_patients_by_identifier(npid, *npid_identifier_types.to_a)
     return patients unless patients.empty? && use_dde_service?
 
     dde_service.find_patients_by_npid(npid)

@@ -178,4 +178,8 @@ class DDEService
       end
     end
   end
+
+  def person_service
+    PersonService.new
+  end
 end
