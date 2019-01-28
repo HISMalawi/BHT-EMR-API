@@ -31,10 +31,10 @@ class EncounterService
   end
 
   def update(encounter, patient: nil, type: nil, encounter_datetime: nil,
-             provider: nil)
+             provider: nil, program:)
     updates = {
       patient: patient, type: type, provider: provider,
-      encounter_datetime: encounter_datetime
+      program: program, encounter_datetime: encounter_datetime
     }
     updates = updates.keep_if { |_, v| !v.nil? }
 
@@ -43,7 +43,7 @@ class EncounterService
   end
 
   def find_encounter(type:, patient:, encounter_datetime:, provider:, program:)
-    Encounter.where(type: type, patient: patient, program: program)\
+    Encounter.where(type: type, patient: patient)\
              .where('encounter_datetime BETWEEN ? AND ?',
                     *TimeUtils.day_bounds(encounter_datetime))\
              .order(encounter_datetime: :desc)

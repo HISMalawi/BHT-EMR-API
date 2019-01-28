@@ -52,6 +52,20 @@ RSpec.describe EncounterService do
       expect(encounters.size).to eq(1)
       expect(encounters[0].encounter_datetime).to be > Time.now - 1.minute
     end
+
+    it 'will Update From one Encounter to another' do
+
+      created_encounter = encounter_service.create(patient: patient, type: type,
+                               encounter_datetime: nil,
+                               provider: provider, program: fetch_program('HIV PROGRAM'))
+      updated = encounter_service.update(created_encounter, patient: patient,type: type,
+                                encounter_datetime: nil,
+                                provider: provider, program: fetch_program('TB PROGRAM'))
+
+      program = Program.find(updated.program_id)
+      expect(program.name).to eq(fetch_program('TB PROGRAM').name)
+    end
+
   end
 
   describe :update do
@@ -98,4 +112,11 @@ RSpec.describe EncounterService do
       expect(retrieved).to eq(created)
     end
   end
+end
+
+#Helpers
+
+def fetch_program(name)
+  program = Program.find_by(name: name)
+  program
 end
