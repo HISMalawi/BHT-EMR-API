@@ -67,7 +67,11 @@ Rails.application.routes.draw do
       resources :concepts, only: %i[index show]
 
       # Locations
-      resources :locations
+      resources :locations do
+        get('/label', to: redirect do |params, request|
+          "/api/v1/labels/location?location_id=#{params[:location_id]}"
+        end)
+      end
 
       resources :regions, only: %i[index] do
         get('/districts', to: redirect do |params, request|
@@ -148,6 +152,8 @@ Rails.application.routes.draw do
       get '/workflows/:program_id/:patient_id' => 'workflows#next_encounter'
 
       get '/current_time', to: 'time#current_time'
+
+      get '/labels/location', to: 'locations#print_label'
 
       # Search
       get '/search/given_name' => 'person_names#search_given_name'

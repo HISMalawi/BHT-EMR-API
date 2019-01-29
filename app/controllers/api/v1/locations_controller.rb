@@ -1,6 +1,11 @@
+# frozen_string_literal: true
+
 require 'utils/remappable_hash'
+require 'zebra_printer/init'
 
 class Api::V1::LocationsController < ApplicationController
+  skip_before_action :authenticate, only: %i[print_label]
+
   # Retrieve all locations
   #
   # GET /locations
@@ -42,6 +47,20 @@ class Api::V1::LocationsController < ApplicationController
     end
   end
 
+  def print_label
+    location = location_to_print
+
+    unless location
+      return render json: 'location_id or location_name required', status: :bad_request
+    end
+
+    commands = service.print_location_label(location)
+    send_data(commands, type: 'application/label; charset=utf-8',
+                        stream: false,
+                        filename: "#{params[:id]}#{rand(10_000)}.lbl",
+                        disposition: 'inline')
+  end
+
   private
 
   def filter_locations_by_tag(locations, tag)
@@ -49,5 +68,22 @@ class Api::V1::LocationsController < ApplicationController
     location_tag_maps = LocationTagMap.where location_tag_id: location_tag_id
     locations = locations.joins(:tag_maps).merge(location_tag_maps)
     locations
+  end
+
+  def location
+    Location.find(params[:id])
+  end
+
+  def service
+    LocationService.new
+  end
+
+  # Helper for print label method that returns a location to be printed
+  def location_to_print
+    if params[:location_id]
+      Location.find(params[:location_id])
+    elsif params[:location_name]
+      Location.find_by_name(params[:location_name])
+    end
   end
 end
