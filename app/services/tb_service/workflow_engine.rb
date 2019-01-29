@@ -70,9 +70,9 @@ module TBService
         # Re-map activities to encounters
         puts activityh
       case activity
-        when /TB initial/
+        when /TB initial/i
           TB_INITIAL
-        when /TB reception/
+        when /TB reception/i
           TB_RECEPTION
         when /TB first visits/i
           TB_REGISTRATION
