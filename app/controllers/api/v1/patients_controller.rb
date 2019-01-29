@@ -145,7 +145,7 @@ class Api::V1::PatientsController < ApplicationController
   private
 
   def patient
-    Patient.find(params[:id])
+    Patient.find(params[:patient_id])
   end
 
   def generate_national_id_label(patient)
