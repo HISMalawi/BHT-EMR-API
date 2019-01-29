@@ -139,7 +139,10 @@ Rails.application.routes.draw do
         resources :patient_identifiers
       end
 
-      resources :drugs
+      resources :drugs do
+        get '/barcode', to: 'drugs#print_barcode'
+      end
+
       resources :drug_orders
       resources :orders
 
