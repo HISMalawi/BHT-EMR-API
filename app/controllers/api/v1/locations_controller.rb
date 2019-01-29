@@ -1,6 +1,11 @@
+# frozen_string_literal: true
+
 require 'utils/remappable_hash'
+require 'zebra_printer/init'
 
 class Api::V1::LocationsController < ApplicationController
+  skip_before_action :authenticate, only: %i[print_label]
+
   # Retrieve all locations
   #
   # GET /locations
@@ -42,6 +47,20 @@ class Api::V1::LocationsController < ApplicationController
     end
   end
 
+  def print_label
+    location = location_to_print
+
+    unless location
+      return render json: 'location_id or location_name required', status: :bad_request
+    end
+
+    commands = service.print_location_label(location)
+    send_data(commands, type: 'application/label; charset=utf-8',
+                        stream: false,
+                        filename: "#{params[:id]}#{rand(10_000)}.lbl",
+                        disposition: 'inline')
+  end
+
   private
 
   def filter_locations_by_tag(locations, tag)
@@ -51,90 +70,20 @@ class Api::V1::LocationsController < ApplicationController
     locations
   end
 
-  # def regions
+  def location
+    Location.find(params[:id])
+  end
 
-  #   regions = Region.all.collect{|d|
-  #     [d.id, d.name]}
+  def service
+    LocationService.new
+  end
 
-  #   if !regions.blank?
-  #     render json: {
-  #         status: 200,
-  #         error: false,
-  #         message: 'found',
-  #         data: regions
-  #     }
-  #   else
-  #     render json: {
-  #         status: 401,
-  #         error: true,
-  #         message: 'regions could not be found',
-  #         data: {}
-  #     }
-  #   end
-  # end
-
-  # def districts
-
-  #   districts = District.where(region_id: params[:region_id]).order("name").collect{|d|
-  #     [d.id, d.name]}
-
-  #   if !districts.blank?
-  #     render json: {
-  #         status: 200,
-  #         error: false,
-  #         message: 'found',
-  #         data: districts
-  #     }
-  #   else
-  #     render json: {
-  #         status: 401,
-  #         error: true,
-  #         message: 'districts could not be found',
-  #         data: {}
-  #     }
-  #   end
-  # end
-
-  # def tas
-  #   tas = TraditionalAuthority.where(district_id: params[:district_id]).order('name').collect{|t|
-  #     [t.id, t.name]}
-
-  #   if !tas.blank?
-  #     render json: {
-  #         status: 200,
-  #         error: false,
-  #         message: 'found',
-  #         data: tas
-  #     }
-  #   else
-  #     render json: {
-  #         status: 401,
-  #         error: true,
-  #         message: 'traditional authorities could not be found',
-  #         data: {}
-  #     }
-  #   end
-  # end
-
-  # def villages
-
-  #   villages = Village.where(traditional_authority_id: params[:ta_id]).order('name').collect{|v|
-  #     [v.id, v.name]}
-
-  #   if !villages.blank?
-  #     render json: {
-  #         status: 200,
-  #         error: false,
-  #         message: 'found',
-  #         data: villages
-  #     }
-  #   else
-  #     render json: {
-  #         status: 401,
-  #         error: true,
-  #         message: 'villages could not be found',
-  #         data: {}
-  #     }
-  #   end
-  # end
+  # Helper for print label method that returns a location to be printed
+  def location_to_print
+    if params[:location_id]
+      Location.find(params[:location_id])
+    elsif params[:location_name]
+      Location.find_by_name(params[:location_name])
+    end
+  end
 end

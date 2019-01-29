@@ -16,6 +16,7 @@ class DDEClient
   # @return A Connection object that can be used to re-connect to DDE
   def connect(config: nil, connection: nil)
     raise ArgumentError, 'config or connection required' unless config || connection
+
     @connection = reload_connection connection if connection
     @connection = establish_connection config: config if config && !@connection
     @connection
@@ -109,13 +110,14 @@ class DDEClient
   end
 
   def exec_request(resource)
-    LOGGER.debug "Executing DDE request using: #{@connection}"
+    LOGGER.debug "Executing DDE request (#{resource})"
     response = yield build_uri(resource), headers
     LOGGER.debug "Handling DDE response:\n\tStatus - #{response.code}\n\tBody - #{response.body}"
     handle_response response
   rescue RestClient::Unauthorized => e
     LOGGER.error "DDEClient suppressed exception: #{e}"
     return handle_response e.response unless @auto_login
+
     LOGGER.debug 'Auto-logging into DDE...'
     establish_connection @connection
     LOGGER.debug "Reset connection: #{@connection}"
@@ -138,7 +140,12 @@ class DDEClient
     #   return nil, 0
     # end
 
-    [JSON.parse(response.body), response.code.to_i]
+    # DDE is somewhat undecided on how it reports back its status code.
+    # Sometimes we get a proper HTTP status code and sometimes it is within
+    # the response body.
+    response_status = response.body['status'] || response.code
+
+    [JSON.parse(response.body), response_status&.to_i]
   rescue JSON::ParserError, StandardError => e
     # NOTE: Catch all as Net::HTTP throws a plethora of exceptions whose
     # sole relationship derives from they being derivatives of StandardError.

@@ -55,6 +55,7 @@ Rails.application.routes.draw do
         get '/bp_trail', to: 'patients#bp_readings_trail'
         get '/eligible_for_htn_screening', to: 'patients#eligible_for_htn_screening'
         post '/filing_number', to: 'patients#assign_filing_number'
+        get '/past_filing_numbers' => 'patients#filing_number_history'
         post '/npid', to: 'patients#assign_npid'
         post '/remaining_bp_drugs', to: 'patients#remaining_bp_drugs'
         post '/update_or_create_htn_state', to: 'patients#update_or_create_htn_state'
@@ -66,7 +67,11 @@ Rails.application.routes.draw do
       resources :concepts, only: %i[index show]
 
       # Locations
-      resources :locations
+      resources :locations do
+        get('/label', to: redirect do |params, request|
+          "/api/v1/labels/location?location_id=#{params[:location_id]}"
+        end)
+      end
 
       resources :regions, only: %i[index] do
         get('/districts', to: redirect do |params, request|
@@ -147,6 +152,8 @@ Rails.application.routes.draw do
       get '/workflows/:program_id/:patient_id' => 'workflows#next_encounter'
 
       get '/current_time', to: 'time#current_time'
+
+      get '/labels/location', to: 'locations#print_label'
 
       # Search
       get '/search/given_name' => 'person_names#search_given_name'

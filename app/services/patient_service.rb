@@ -4,24 +4,63 @@ class PatientService
   include ModelUtils
   include TimeUtils
 
-  def find_by_identifier(identifier, identifier_type: nil)
-    identifier_type ||= IdentifierType.find_by('National id')
+  def create_patient(person)
+    ActiveRecord::Base.transaction do
+      patient = Patient.create(patient_id: person.id)
+      unless patient.errors.empty?
+        raise "Could not create patient for person ##{person.id} due to #{patient.errors.as_json}"
+      end
 
-    Patient.joins(:patient_identifiers).where(
-      'patient_identifier.identifier_type = ? AND patient_identifier.identifier = ?',
-      identifier_type.patient_identifier_type_id, identifier
-    ).first
+      return patient unless use_dde_service?
+
+      dde_service.create_patient(patient)
+      patient
+    end
+  end
+
+  # Change patient's person id
+  #
+  # WARNING: THIS IS A DANGEROUS OPERATION...
+  def update_patient(patient, person_id)
+    patient.person_id = person_id
+    unless patient.save
+      raise "Could not update patient ##{patient_id} to person id ##{person_id} due to #{patient.errors.as_json}"
+    end
+
+    dde_service.update_patient(patient) if use_dde_service?
+
+    patient
+  end
+
+  def find_patients_by_npid(npid)
+    patients = find_patients_by_identifier(npid, *npid_identifier_types.to_a)
+    return patients unless patients.empty? && use_dde_service?
+
+    dde_service.find_patients_by_npid(npid)
   end
 
   def find_patient_median_weight_and_height(patient)
     median_weight_height(patient.age_in_months, patient.person.gender)
   end
 
-  def find_patients_by_identifier(identifier_type, identifier)
+  def find_patients_by_identifier(identifier, *identifier_types)
     Patient.joins(:patient_identifiers).where(
-      '`patient_identifier`.identifier_type = ? AND `patient_identifier`.identifier = ?',
-      identifier_type.id, identifier
+      '`patient_identifier`.identifier_type in (?) AND `patient_identifier`.identifier = ?',
+      identifier_types.collect(&:id), identifier
     )
+  end
+
+  def find_patient_visit_dates(patient)
+    patient_id = ActiveRecord::Base.connection.quote(patient.id)
+
+    rows = ActiveRecord::Base.connection.select_all <<-SQL
+      SELECT DISTINCT DATE(encounter_datetime) AS visit_date
+      FROM encounter WHERE patient_id = #{patient_id} AND voided = 0
+      GROUP BY encounter_datetime
+      ORDER BY encounter_datetime DESC
+    SQL
+
+    rows.collect { |row| row['visit_date'] }
   end
 
   def median_weight_height(age_in_months, gender)
@@ -81,6 +120,16 @@ class PatientService
     return nil unless new_identifier
 
     { new_identifier: new_identifier, archived_identifier: archived_identifier }
+  end
+
+  # Returns a patient's past filing numbers
+  def filing_number_history(patient)
+    PatientIdentifier.unscoped.where(
+      voided: true,
+      patient: patient,
+      type: [patient_identifier_type('Filing number'),
+             patient_identifier_type('Archived filing number')]
+    )
   end
 
   def assign_npid(patient)
@@ -200,6 +249,29 @@ class PatientService
 
   private
 
+  def npid_identifier_types
+    @npid_identifier_types = [patient_identifier_type('National id'),
+                              patient_identifier_type('Old identification number')]
+  end
+
+  def use_dde_service?
+    property = global_property('dde_enabled')
+    return false unless property
+
+    value = (property.property_value || 'true').strip
+    %w[1 true].include?(value)
+  end
+
+  def dde_service
+    DDEService.new
+  end
+
+  # Creates an ART version 3 'National id' for the patient
+  def create_national_patient_identifier(patient)
+    identifier_type = PatientIdentifierType.find_by(name: 'National id')
+    identifier_type.next_identifier(patient: patient)
+  end
+
   # Takes a list of BP readings and groups them into a visit trail.
   #
   # A visit trail is just a map of a day to that days most recent
@@ -261,14 +333,6 @@ class PatientService
                .order(obs_datetime: :desc)
                .first
                &.value_text
-  end
-
-  def use_dde_service?
-    false
-  end
-
-  def dde_service
-    @dde_service ||= DDEService.new
   end
 
   def filing_number_service
