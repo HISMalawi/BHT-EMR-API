@@ -25,7 +25,8 @@ class WorkflowService
 
     engine_name = program.concept.concept_names[0].name.upcase
     engine_clazz = ENGINES[engine_name]
-    raise "'#{engine_name}' engine not found" unless engine_clazz
+    raise NotFoundError, "'#{engine_name}' engine not found" unless engine_clazz
+
     engine_clazz.new program: program, patient: patient, date: date
   end
 end

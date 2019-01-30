@@ -23,12 +23,14 @@ class PersonService
   }.freeze
 
   def create_person(params)
-    Person.create(
-      gender: params[:gender],
-      birthdate: params[:birthdate],
-      birthdate_estimated: params[:birthdate_estimated],
-      creator: User.current.id
-    )
+    handle_model_errors do
+      Person.create(
+        gender: params[:gender],
+        birthdate: params[:birthdate],
+        birthdate_estimated: params[:birthdate_estimated],
+        creator: User.current.id
+      )
+    end
   end
 
   def update_person(person, params)
@@ -37,14 +39,17 @@ class PersonService
   end
 
   def create_person_name(person, params)
-    person.names << PersonName.new(
-      given_name: params[:given_name],
-      family_name: params[:family_name],
-      middle_name: params[:middle_name],
-      creator: User.current.id,
-      # HACK: Manually set uuid because db requires it but has no default
-      uuid: SecureRandom.uuid
-    )
+    handle_model_errors do
+      PersonName.create(
+        person: person,
+        given_name: params[:given_name],
+        family_name: params[:family_name],
+        middle_name: params[:middle_name],
+        creator: User.current.id,
+        # HACK: Manually set uuid because db requires it but has no default
+        uuid: SecureRandom.uuid
+      )
+    end
   end
 
   def update_person_name(person, params)
@@ -59,20 +64,22 @@ class PersonService
   end
 
   def create_person_address(person, params)
-    person.addresses.each do |address|
-      address.void('Address updated')
-    end
+    handle_model_errors do
+      person.addresses.each do |address|
+        address.void('Address updated')
+      end
 
-    PersonAddress.create(
-      person: person,
-      state_province: params[:current_district],
-      city_village: params[:current_village],
-      township_division: params[:current_traditional_authority],
-      address2: params[:home_district],
-      neighborhood_cell: params[:home_village],
-      county_district: params[:home_traditional_authority],
-      creator: User.current.id
-    )
+      PersonAddress.create(
+        person: person,
+        state_province: params[:current_district],
+        city_village: params[:current_village],
+        township_division: params[:current_traditional_authority],
+        address2: params[:home_district],
+        neighborhood_cell: params[:home_village],
+        county_district: params[:home_traditional_authority],
+        creator: User.current.id
+      )
+    end
   end
 
   def update_person_address(person, params)
@@ -121,5 +128,14 @@ class PersonService
         PersonAttribute.create type: type, person: person, value: value
       end
     end
+  end
+
+  def handle_model_errors
+    model_instance = yield
+    return model_instance if model_instance.errors.empty?
+
+    error = InvalidParameterError.new('Invalid parameter(s)')
+    error.model_errors = model_instance.errors
+    raise error
   end
 end
