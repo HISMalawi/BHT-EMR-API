@@ -11,9 +11,13 @@ class PatientService
         raise "Could not create patient for person ##{person.id} due to #{patient.errors.as_json}"
       end
 
-      return patient unless use_dde_service?
+      if use_dde_service?
+        assign_patient_dde_npid(patient)
+      else
+        assign_patient_v3_npid(patient)
+      end
 
-      dde_service.create_patient(patient)
+      patient.reload
       patient
     end
   end
@@ -266,10 +270,15 @@ class PatientService
     DDEService.new
   end
 
-  # Creates an ART version 3 'National id' for the patient
-  def create_national_patient_identifier(patient)
+  # Blesses patient with a v3 npid
+  def assign_patient_v3_npid(patient)
     identifier_type = PatientIdentifierType.find_by(name: 'National id')
     identifier_type.next_identifier(patient: patient)
+  end
+
+  # Blesses patient with a DDE npid
+  def assign_patient_dde_npid(patient)
+    dde_service.create_patient(patient)
   end
 
   # Takes a list of BP readings and groups them into a visit trail.
