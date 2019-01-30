@@ -22,13 +22,13 @@ describe TBService::WorkflowEngine do
     it 'returns TB_INITIAL REGISTRATION for a patient not a TB suspect in the TB programme' do
   
       encounter_type = engine.next_encounter
-      expect(encounter_type.name.upcase).to eq('TB INITIAL')
+      expect(encounter_type.name.upcase).to eq('TB_INITIAL')
     end
 
     it 'returns TB_INITIAL REGISTRATION for a new TB suspect' do
       enroll_patient patient
       encounter_type = engine.next_encounter
-      expect(encounter_type.name.upcase).to eq('TB INITIAL')
+      expect(encounter_type.name.upcase).to eq('TB_INITIAL')
     end
 
     it 'returns LAB ORDERS for TB suspect with no Lab Request in the TB Programme' do
