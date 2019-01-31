@@ -68,7 +68,7 @@ module TBService
       activities = user_property('Activities')&.property_value
       encounters = (activities&.split(',') || []).collect do |activity|
         # Re-map activities to encounters
-        puts activityh
+        puts activity
       case activity
         when /TB initial/i
           TB_INITIAL
