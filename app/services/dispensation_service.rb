@@ -107,19 +107,18 @@ module DispensationService
       program_workflow = program.program_workflows.first
       return unless program_workflow
 
-      on_arvs_concept = concept('On antiretrovirals')
-      on_arvs_state = program_workflow.states.where(concept: on_arvs_concept).first
-      raise "'On antiretrovirals' state for HIV Program not found" unless on_arvs_state
+      on_arvs_state = program_state(program_workflow, 'On antiretrovirals')
+      transferred_out_state = program_state(program_workflow, 'Patient transferred out')
 
-      return if patient_has_state?(patient_program, on_arvs_state)
+      current_patient_state = patient_current_state(patient_program, date)
+      if patient_has_state?(patient_program, on_arvs_state)\
+         && current_patient_state&.state != transferred_out_state.id
+        return
+      end
 
       mark_patient_art_start_date(patient, date)
 
-      PatientState.create(
-        patient_program: patient_program,
-        program_workflow_state: on_arvs_state,
-        start_date: date
-      )
+      create_patient_state(patient_program, on_arvs_state, date, current_patient_state)
     end
 
     def patient_hiv_program(patient)
@@ -128,6 +127,20 @@ module DispensationService
 
       patient_program = patient.patient_programs.where(program: program).first
       [program, patient_program]
+    end
+
+    def program_state(program_workflow, name)
+      state_concept = concept(name)
+      state = program_workflow.states.where(concept: state_concept).first
+      raise "'#{name}' state for HIV Program not found" unless state
+
+      state
+    end
+
+    def patient_current_state(patient_program, ref_date)
+      PatientState.where(patient_program: patient_program)\
+                  .where('start_date <= DATE(?)', ref_date.to_date)\
+                  .last
     end
 
     def patient_has_state?(patient_program, workflow_state)
@@ -144,6 +157,21 @@ module DispensationService
                          concept: art_start_date_concept,
                          value_datetime: date,
                          obs_datetime: TimeUtils.retro_timestamp(date)
+    end
+
+    def create_patient_state(patient_program, program_workflow_state, date, previous_state = nil)
+      ActiveRecord::Base.transaction do
+        if previous_state
+          previous_state.end_date = date
+          previous_state.save
+        end
+
+        PatientState.create(
+          patient_program: patient_program,
+          program_workflow_state: program_workflow_state,
+          start_date: date
+        )
+      end
     end
   end
 end
