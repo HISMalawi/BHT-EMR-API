@@ -23,7 +23,7 @@ class WorkflowService
     patient = Patient.find patient_id
     date = date ? Date.strptime(date) : Date.today
 
-    engine_name = program.concept.concept_names[0].name.upcase
+    engine_name = program.name.upcase
     engine_clazz = ENGINES[engine_name]
     raise NotFoundError, "'#{engine_name}' engine not found" unless engine_clazz
 
