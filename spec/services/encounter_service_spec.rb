@@ -78,7 +78,7 @@ RSpec.describe EncounterService do
       created = encounter_service.create(patient: patient, type: type,
                                          encounter_datetime: encounter_datetime,
                                          provider: provider, program: program)
-      updated = encounter_service.update(created, patient: new_patient)
+      updated = encounter_service.update(created, patient: new_patient, program: program)
 
       encounters = Encounter.all
       expect(encounters.size).to eq(1)
