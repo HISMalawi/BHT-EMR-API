@@ -36,7 +36,7 @@ class DDEService
   # Imports patients from DDE to the local database
   def import_patients_by_npid(npid)
     remote_patient = find_patients_by_npid(npid)[:remotes].first
-    raise NotFoundError, "DDE patient with npid, #{npid}, not found" unless remote_patient
+    raise InvalidParameterError, 'Patient already exists on local or does not exist on DDE' unless remote_patient
 
     save_remote_patient(remote_patient)
   end
@@ -44,7 +44,7 @@ class DDEService
   # Similar to import_patients_by_npid but uses name and gender instead of npid
   def import_patients_by_name_and_gender(given_name, family_name, gender)
     remote_patient = find_patients_by_name_and_gender(given_name, family_name, gender)[:remotes].first
-    raise NotFoundError, 'Failed to find patient by demographics' unless remote_patient
+    raise InvalidParameterError, 'Patient already exists on local or does not exist on DDE' unless remote_patient
 
     save_remote_patient(remote_patient)
   end
@@ -161,6 +161,10 @@ class DDEService
       end
     end
 
+    remote_patients = remote_patients.collect do |remote_patient|
+      localise_remote_patient(remote_patient)
+    end
+
     { locals: resolved_patients, remotes: remote_patients }
   end
 
@@ -183,41 +187,41 @@ class DDEService
     link_local_to_dde_patient(patient, response)
   end
 
-  # # Converts a remote patient coming from DDE into a structure similar
-  # # to that of a local patient
-  # def localise_remote_patient(patient)
-  #   Patient.new(
-  #     patient_identifiers: localise_remote_patient_identifiers(patient),
-  #     person: Person.new(
-  #       names: localise_remote_patient_names(patient),
-  #       addresses: localise_remote_patient_addresses(patient)
-  #     )
-  #   )
-  # end
+  # Converts a remote patient coming from DDE into a structure similar
+  # to that of a local patient
+  def localise_remote_patient(patient)
+    Patient.new(
+      patient_identifiers: localise_remote_patient_identifiers(patient),
+      person: Person.new(
+        names: localise_remote_patient_names(patient),
+        addresses: localise_remote_patient_addresses(patient)
+      )
+    )
+  end
 
-  # def localise_remote_patient_identifiers(remote_patient)
-  #   [PatientIdentifier.new(identifier: remote_patient['npid'],
-  #                          type: patient_identifier_type('National ID')),
-  #    PatientIdentifier.new(identifier: remote_patient['doc_id'],
-  #                          type: patient_identifier_type('DDE Person Document ID'))]
-  # end
+  def localise_remote_patient_identifiers(remote_patient)
+    [PatientIdentifier.new(identifier: remote_patient['npid'],
+                           type: patient_identifier_type('National ID')),
+     PatientIdentifier.new(identifier: remote_patient['doc_id'],
+                           type: patient_identifier_type('DDE Person Document ID'))]
+  end
 
-  # def localise_remote_patient_names(remote_patient)
-  #   [PersonName.new(given_name: remote_patient['given_name'],
-  #                   family_name: remote_patient['family_name'],
-  #                   middle_name: remote_patient['middle_name'])]
-  # end
+  def localise_remote_patient_names(remote_patient)
+    [PersonName.new(given_name: remote_patient['given_name'],
+                    family_name: remote_patient['family_name'],
+                    middle_name: remote_patient['middle_name'])]
+  end
 
-  # def localise_remote_patient_addresses(remote_patient)
-  #   address = PersonAddress.new
-  #   address.home_village = remote_patient['attributes']['home_village']
-  #   address.home_traditional_authority = remote_patient['attributes']['home_traditional_authority']
-  #   address.home_district = remote_patient['attributes']['home_district']
-  #   address.current_village = remote_patient['attributes']['current_village']
-  #   address.current_traditional_authority = remote_patient['attributes']['current_traditional_authority']
-  #   address.current_district = remote_patient['attributes']['current_district']
-  #   [address]
-  # end
+  def localise_remote_patient_addresses(remote_patient)
+    address = PersonAddress.new
+    address.home_village = remote_patient['attributes']['home_village']
+    address.home_traditional_authority = remote_patient['attributes']['home_traditional_authority']
+    address.home_district = remote_patient['attributes']['home_district']
+    address.current_village = remote_patient['attributes']['current_village']
+    address.current_traditional_authority = remote_patient['attributes']['current_traditional_authority']
+    address.current_district = remote_patient['attributes']['current_district']
+    [address]
+  end
 
   def dde_client
     return @dde_client if @dde_client
@@ -293,18 +297,19 @@ class DDEService
               middle_name: dde_patient['middle_name']
     )
 
+    dde_patient_attributes = dde_patient['attributes']
     person_service.create_person_address(
-      person, home_village: dde_patient['home_village'],
-              home_traditional_authority: dde_patient['home_traditional_authority'],
-              home_district: dde_patient['home_district'],
-              current_village: dde_patient['current_village'],
-              current_traditional_authority: dde_patient['current_traditional_authority'],
-              current_district: dde_patient['current_district']
+      person, home_village: dde_patient_attributes['home_village'],
+              home_traditional_authority: dde_patient_attributes['home_traditional_authority'],
+              home_district: dde_patient_attributes['home_district'],
+              current_village: dde_patient_attributes['current_village'],
+              current_traditional_authority: dde_patient_attributes['current_traditional_authority'],
+              current_district: dde_patient_attributes['current_district']
     )
 
     person_service.create_person_attributes(
-      person, cell_phone_number: dde_patient['cellphone_number'],
-              occupation: dde_patient['occupation']
+      person, cell_phone_number: dde_patient_attributes['cellphone_number'],
+              occupation: dde_patient_attributes['occupation']
     )
 
     patient = Patient.create(patient_id: person.id)
