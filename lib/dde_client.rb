@@ -146,10 +146,5 @@ class DDEClient
     response_status = response.body['status'] || response.code
 
     [JSON.parse(response.body), response_status&.to_i]
-  rescue JSON::ParserError, StandardError => e
-    # NOTE: Catch all as Net::HTTP throws a plethora of exceptions whose
-    # sole relationship derives from they being derivatives of StandardError.
-    LOGGER.error "Failed to communicate with DDE: #{e}"
-    [nil, 0]
   end
 end
