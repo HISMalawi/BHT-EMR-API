@@ -156,6 +156,9 @@ Rails.application.routes.draw do
 
       get '/current_time', to: 'time#current_time'
 
+      get '/dde/patients/find_by_npid', to: 'dde#find_patients_by_npid'
+      get '/dde/patients/find_by_name_and_gender', to: 'dde#find_patients_by_name_and_gender'
+
       get '/labels/location', to: 'locations#print_label'
 
       # Search
