@@ -15,7 +15,9 @@ module ExceptionHandler
     end
 
     rescue_from InvalidParameterError do |e|
-      render json: { errors: [e.message, e.model_errors] }, status: :bad_request
+      errors = [e.message]
+      errors << e.model_errors if e.model_errors
+      render json: { errors: errors }, status: :bad_request
     end
   end
 end
