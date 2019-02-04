@@ -227,6 +227,10 @@ class DDEService
       return { locals: [save_remote_patient(remote_patients[0])], remotes: [] }
     end
 
+    remote_patients = remote_patients.collect do |remote_patient|
+      localise_remote_patient(remote_patient)
+    end
+
     { locals: resolved_patients, remotes: remote_patients }
   end
 
@@ -271,44 +275,41 @@ class DDEService
                            type: patient_identifier_type('DDE Person Document ID'))]
   end
 
-    link_local_to_dde_patient(patient, response)
+  # Converts a remote patient coming from DDE into a structure similar
+  # to that of a local patient
+  def localise_remote_patient(patient)
+    Patient.new(
+      patient_identifiers: localise_remote_patient_identifiers(patient),
+      person: Person.new(
+        names: localise_remote_patient_names(patient),
+        addresses: localise_remote_patient_addresses(patient)
+      )
+    )
   end
 
-  # # Converts a remote patient coming from DDE into a structure similar
-  # # to that of a local patient
-  # def localise_remote_patient(patient)
-  #   Patient.new(
-  #     patient_identifiers: localise_remote_patient_identifiers(patient),
-  #     person: Person.new(
-  #       names: localise_remote_patient_names(patient),
-  #       addresses: localise_remote_patient_addresses(patient)
-  #     )
-  #   )
-  # end
+  def localise_remote_patient_identifiers(remote_patient)
+    [PatientIdentifier.new(identifier: remote_patient['npid'],
+                           type: patient_identifier_type('National ID')),
+     PatientIdentifier.new(identifier: remote_patient['doc_id'],
+                           type: patient_identifier_type('DDE Person Document ID'))]
+  end
 
-  # def localise_remote_patient_identifiers(remote_patient)
-  #   [PatientIdentifier.new(identifier: remote_patient['npid'],
-  #                          type: patient_identifier_type('National ID')),
-  #    PatientIdentifier.new(identifier: remote_patient['doc_id'],
-  #                          type: patient_identifier_type('DDE Person Document ID'))]
-  # end
+  def localise_remote_patient_names(remote_patient)
+    [PersonName.new(given_name: remote_patient['given_name'],
+                    family_name: remote_patient['family_name'],
+                    middle_name: remote_patient['middle_name'])]
+  end
 
-  # def localise_remote_patient_names(remote_patient)
-  #   [PersonName.new(given_name: remote_patient['given_name'],
-  #                   family_name: remote_patient['family_name'],
-  #                   middle_name: remote_patient['middle_name'])]
-  # end
-
-  # def localise_remote_patient_addresses(remote_patient)
-  #   address = PersonAddress.new
-  #   address.home_village = remote_patient['attributes']['home_village']
-  #   address.home_traditional_authority = remote_patient['attributes']['home_traditional_authority']
-  #   address.home_district = remote_patient['attributes']['home_district']
-  #   address.current_village = remote_patient['attributes']['current_village']
-  #   address.current_traditional_authority = remote_patient['attributes']['current_traditional_authority']
-  #   address.current_district = remote_patient['attributes']['current_district']
-  #   [address]
-  # end
+  def localise_remote_patient_addresses(remote_patient)
+    address = PersonAddress.new
+    address.home_village = remote_patient['attributes']['home_village']
+    address.home_traditional_authority = remote_patient['attributes']['home_traditional_authority']
+    address.home_district = remote_patient['attributes']['home_district']
+    address.current_village = remote_patient['attributes']['current_village']
+    address.current_traditional_authority = remote_patient['attributes']['current_traditional_authority']
+    address.current_district = remote_patient['attributes']['current_district']
+    [address]
+  end
 
   def dde_client
     return @dde_client if @dde_client
