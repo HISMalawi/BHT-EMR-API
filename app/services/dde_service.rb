@@ -10,18 +10,45 @@ class DDEService
 
   include ModelUtils
 
+  # Imports patients from DDE to the local database
+  def import_patient
+  end
+
   def find_patients_by_npid(npid)
     # Ignore response status, DDE almost always returns 200 even for bad
     # requests and 404s on this endpoint. Only way to check for an error
     # is to check whether we received a hash and the hash contains an
     # error... Not pretty.
-    response, _status = dde_client.post('search_by_npid', npid: npid)
+    resolve_patients(
+      local_patients: patient_service.find_patients_by_npid(npid),
+      remote_patients: find_remote_patients_by_npid(npid)
+    )
+  end
 
-    unless response.class == Array
-      raise "Patient search failed: DDE is unreachable: DDE Response => #{response}"
-    end
+  def find_patients_by_name_and_gender(given_name, family_name, gender)
+    resolve_patients(
+      local_patients: patient_service.find_patients_by_name_and_gender(given_name, family_name, gender),
+      remote_patients: find_remote_patients_by_name_and_gender(given_name, family_name, gender)
+    )
+  end
 
-    response.collect { |dde_person| dde_person_to_openmrs(dde_person) }
+  # Matches patients using a bunch of demographics
+  def match_patients(family_name:, given_name:, birthdate:, gender:,
+                     home_district:, home_traditional_authority:, home_village:)
+    response, status = dde_client.post(
+      'search/people', family_name: family_name,
+                       given_name: given_name,
+                       gender: gender,
+                       attributes: {
+                         home_district: home_district,
+                         home_traditional_authority: home_traditional_authority,
+                         home_village: home_village
+                       }
+    )
+
+    raise "DDE patient search failed: #{status} - #{response}" unless status == 200
+
+    response
   end
 
   # Registers local OpenMRS patient in DDE
@@ -60,6 +87,104 @@ class DDEService
   end
 
   private
+
+  def find_remote_patients_by_npid(npid)
+    response, _status = dde_client.post('search_by_npid', npid: npid)
+
+    unless response.class == Array
+      raise "Patient search failed: DDE Response => #{response}"
+    end
+
+    response
+  end
+
+  def find_remote_patients_by_name_and_gender(given_name, family_name, gender)
+    response, _status = dde_client.post('search_by_name_and_gender', given_name: given_name,
+                                                                     family_name: family_name,
+                                                                     gender: gender)
+    unless response.class == Array
+      raise "Patient search failed: DDE Response => #{response}"
+    end
+
+    response
+  end
+
+  # Filters out @{param remote_patients} that exist in @{param local_patients}.
+  #
+  # Returns a hash with all resolved and unresolved remote patients:
+  #
+  #   { resolved: [..,], locals: [...], remotes: [...] }
+  #
+  # NOTE: All resolved patients are available in the local database
+  def resolve_patients(local_patients:, remote_patients:)
+    remote_patients = remote_patients.dup # Will be modifying this copy
+
+    # Match all locals to remotes, popping out the matching patients from
+    # the list of remotes. The remaining remotes are considered unresolved
+    # remotes.
+    { resolved: [], locals: [] }.tap do |patients|
+      local_patients.each do |local_patient|
+        remote_patient = remote_patients.select do |patient|
+          same_patient?(local_patient: local_patient, remote_patient: patient)
+        end
+
+        if remote_patient.size.positive?
+          patients[:resolved] << local_patient
+          remote_patients.delete(remote_patient[0])
+        else
+          patients[:locals] << local_patient
+        end
+      end
+
+      patients[:remotes] = remote_patients
+    end
+  end
+
+  # Matches local and remote patient
+  def same_patient?(local_patient:, remote_patient:)
+    local_npid = local_patient.identifier('National id')&.identifier
+    local_doc_id = local_patient.identifier('DDE person document id')&.identifier
+
+    return false unless local_npid && local_doc_id
+
+    local_npid == remote_patient['npid'] && local_doc_id == remote_patient['doc_id']
+  end
+
+  # Converts a remote patient coming from DDE into a structure similar
+  # to that of a local patient
+  def localise_remote_patient(patient)
+    Patient.new(
+      patient_identifiers: localise_remote_patient_identifiers(patient),
+      person: Person.new(
+        names: localise_remote_patient_names(patient),
+        addresses: localise_remote_patient_addresses(patient)
+      )
+    )
+  end
+
+  def localise_remote_patient_identifiers(remote_patient)
+    [PatientIdentifier.new(identifier: remote_patient['npid'],
+                           type: patient_identifier_type('National ID')),
+     PatientIdentifier.new(identifier: remote_patient['doc_id'],
+                           type: patient_identifier_type('DDE Person Document ID'))]
+  end
+
+  def localise_remote_patient_names(remote_patient)
+    [PersonName.new(given_name: remote_patient['given_name'],
+                    family_name: remote_patient['family_name'],
+                    middle_name: remote_patient['middle_name'])]
+  end
+
+  def localise_remote_patient_addresses(remote_patient)
+    address = PersonAddress.new
+    address.home_village = remote_patient['attributes']['home_village']
+    address.home_traditional_authority = remote_patient['attributes']['home_traditional_authority']
+    address.home_district = remote_patient['attributes']['home_district']
+    address.current_village = remote_patient['attributes']['current_village']
+    address.current_traditional_authority = remote_patient['attributes']['current_traditional_authority']
+    address.current_district = remote_patient['attributes']['current_district']
+    [address]
+  end
 
   def dde_client
     return @dde_client if @dde_client
@@ -181,5 +306,9 @@ class DDEService
 
   def person_service
     PersonService.new
+  end
+
+  def patient_service
+    PatientService.new
   end
 end
