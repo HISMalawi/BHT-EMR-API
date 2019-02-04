@@ -43,6 +43,14 @@ class PatientService
     dde_service.find_patients_by_npid(npid)
   end
 
+  def find_patients_by_name_and_gender(given_name, family_name, gender)
+    Patient.joins(:person).merge(
+      Person.joins(:names).where('gender like ?', "#{gender}%").merge(
+        PersonName.where(given_name: given_name, family_name: family_name)
+      )
+    )
+  end
+
   def find_patient_median_weight_and_height(patient)
     median_weight_height(patient.age_in_months, patient.person.gender)
   end
