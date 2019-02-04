@@ -18,8 +18,8 @@ class Api::V1::DdeController < ApplicationController
   # GET /api/v1/dde/match
   #
   # Returns DDE patients matching demographics passed
-  def matching_patients
-    render json: service.find_matching_patients(match_params)
+  def match_patients_by_demographics
+    render json: service.match_patients_by_demographics(match_params)
   end
 
   private
@@ -29,7 +29,7 @@ class Api::V1::DdeController < ApplicationController
 
   def match_params
     MATCH_PARAMS.each_with_object({}) do |param, params_hash|
-      raise "param #{param} is required" if params[param].empty?
+      raise "param #{param} is required" if params[param].blank?
 
       params_hash[param] = params[param]
     end
