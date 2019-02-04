@@ -14,6 +14,7 @@ class Encounter < VoidableRecord
   belongs_to :provider, class_name: 'Person', foreign_key: :provider_id
   belongs_to :patient
   belongs_to :location, optional: true
+  belongs_to :program
 
   validates_presence_of :encounter_datetime
 
