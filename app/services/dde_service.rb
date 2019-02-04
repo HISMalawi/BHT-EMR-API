@@ -143,7 +143,7 @@ class DDEService
     response, _status = dde_client.post('search_by_npid', npid: npid)
 
     unless response.class == Array
-      raise "Patient search by failed: DDE Response => #{response}"
+      raise "Patient search by npid failed: DDE Response => #{response}"
     end
 
     response
