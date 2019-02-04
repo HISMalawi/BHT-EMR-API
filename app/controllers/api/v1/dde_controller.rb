@@ -10,6 +10,11 @@ class Api::V1::DdeController < ApplicationController
     render json: service.find_patients_by_name_and_gender(given_name, family_name, gender)
   end
 
+  def import_patients_by_npid
+    npid = params.require(:npid)
+    render json: service.import_patients_by_npid(npid)
+  end
+
   # GET /api/v1/dde/match
   #
   # Returns DDE patients matching demographics passed
