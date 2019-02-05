@@ -197,4 +197,5 @@ Rails.application.routes.draw do
     get '/api/v1/start_date' => 'api/v1/cleaning#startDate'
     get '/api/v1/male' => 'api/v1/cleaning#male'
     get '/api/v1/incomplete_visits' => 'api/v1/cleaning#incompleteVisits'
+  get '/api/v1/dashboard_stats' => 'api/v1/reports#index'
 end
