@@ -35,7 +35,11 @@ class DDEService
 
   # Imports patients from DDE to the local database
   def import_patients_by_npid(npid)
-    remote_patient = find_patients_by_npid(npid)[:remotes].first
+    remote_patient = resolve_patients(
+      local_patients: patient_service.find_patients_by_npid(npid),
+      remote_patients: find_remote_patients_by_npid(npid)
+    )[:remotes].first
+
     raise InvalidParameterError, 'Patient already exists on local or does not exist on DDE' unless remote_patient
 
     save_remote_patient(remote_patient)
@@ -54,17 +58,25 @@ class DDEService
     # requests and 404s on this endpoint. Only way to check for an error
     # is to check whether we received a hash and the hash contains an
     # error... Not pretty.
-    resolve_patients(
+    patients = resolve_patients(
       local_patients: patient_service.find_patients_by_npid(npid),
       remote_patients: find_remote_patients_by_npid(npid)
     )
+
+    patients[:remotes] = patients[:remotes].collect { |patient| localise_remote_patient(patient) }
+
+    patients
   end
 
   def find_patients_by_name_and_gender(given_name, family_name, gender)
-    resolve_patients(
+    patients = resolve_patients(
       local_patients: patient_service.find_patients_by_name_and_gender(given_name, family_name, gender),
       remote_patients: find_remote_patients_by_name_and_gender(given_name, family_name, gender)
     )
+
+    patients[:remotes] = patients[:remotes].collect { |patient| localise_remote_patient(patient) }
+
+    patients
   end
 
   # Matches patients using a bunch of demographics
@@ -84,11 +96,57 @@ class DDEService
 
     raise "DDE patient search failed: #{status} - #{response}" unless status == 200
 
-    response
+    response.collect do |match|
+      doc_id = match['person']['id']
+      patient = patient_service.find_patients_by_identifier(
+        doc_id, patient_identifier_type('DDE person document id')
+      ).first
+      match['person']['patient_id'] = patient&.id
+      match
+    end
   end
 
-  def re_assign_npid(dde_patient_id)
-    dde_client.post('assign_npid', doc_id: dde_patient_id)
+  # Trigger a merge of patients in DDE
+  def merge_remote_patients(primary, secondary)
+    if remote_local_merge?(primary, secondary)
+      merge_remote_and_local_patients(primary, secondary)
+    elsif remote_remote_merge(primary, secondary)
+      merge_remote_remote(primary, secondary)
+    else # local - local merge
+      raise 'local - local merge not implemented'
+    end
+  end
+
+  def merge_remote_and_local_patients(patient, secondary)
+    response, status = dde_client.post('search_by_doc', primary_patient_doc_id: patient['doc_id'],
+                                                        secondary_patient_doc_id: patient[])
+
+    raise 'Merge remote and local patient failed' unless status == 200
+
+    patient_service.find_patients_by_identifier()
+
+    link_local_to_dde_patient(local_patient, response)
+  end
+
+  def reassign_patient_npid(dde_patient_doc_id)
+    response, status = dde_client.post('assign_npid', doc_id: dde_patient_doc_id)
+
+    raise "Failed to reassign npid: DDE Response => #{status} - #{response}" unless status == 200
+
+    patient = patient_service.find_patients_by_identifier(
+      dde_patient_doc_id,
+      patient_identifier_type('DDE person document id')
+    ).first
+
+    if patient
+      patient.identifier('National id')&.void('NPID Reassigned')
+      create_local_patient_identifier(patient, response['npid'], 'National id')
+      patient.reload
+    else
+      patient = save_remote_patient(response)
+    end
+
+    patient
   end
 
   private
@@ -158,12 +216,8 @@ class DDEService
         resolved_patients << local_patient
         remote_patients.delete(remote_patient)
       else
-        resolved_patients[:locals] << push_local_patient_to_dde(local_patient)
+        resolved_patients << push_local_patient_to_dde(local_patient)
       end
-    end
-
-    remote_patients = remote_patients.collect do |remote_patient|
-      localise_remote_patient(remote_patient)
     end
 
     { locals: resolved_patients, remotes: remote_patients }
@@ -195,7 +249,10 @@ class DDEService
       patient_identifiers: localise_remote_patient_identifiers(patient),
       person: Person.new(
         names: localise_remote_patient_names(patient),
-        addresses: localise_remote_patient_addresses(patient)
+        addresses: localise_remote_patient_addresses(patient),
+        birthdate: patient['birthdate'],
+        birthdate_estimated: patient['birthdate_estimated'],
+        gender: patient['gender']
       )
     )
   end
@@ -259,7 +316,7 @@ class DDEService
     person_address = person.addresses[0]
     person_attributes = filter_person_attributes(person.person_attributes)
 
-    dde_patient = {
+    dde_patient = HashWithIndifferentAccess.new(
       given_name: person_name.given_name,
       family_name: person_name.family_name,
       gender: person.gender,
@@ -274,7 +331,7 @@ class DDEService
         home_traditional_authority: person_address ? person_address.county_district : nil,
         occupation: person_attributes ? person_attributes[:occupation] : nil
       }
-    }
+    )
 
     LOGGER.debug "Converted openmrs person to dde_patient: #{dde_patient}"
     dde_patient
