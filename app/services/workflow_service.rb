@@ -4,7 +4,8 @@ class WorkflowService
   # A factory for workflow engines.
   ENGINES = {
     # Table mapping program concept name to engine
-    'HIV PROGRAM' => ARTService::WorkflowEngine
+    'HIV PROGRAM' => ARTService::WorkflowEngine,
+    'OPD PROGRAM' => OPDService::WorkflowEngine
   }.freeze
 
   def initialize(program_id:, patient_id:, date: nil)
