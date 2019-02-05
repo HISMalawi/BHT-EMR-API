@@ -227,10 +227,6 @@ class DDEService
       return { locals: [save_remote_patient(remote_patients[0])], remotes: [] }
     end
 
-    remote_patients = remote_patients.collect do |remote_patient|
-      localise_remote_patient(remote_patient)
-    end
-
     { locals: resolved_patients, remotes: remote_patients }
   end
 
@@ -282,7 +278,10 @@ class DDEService
       patient_identifiers: localise_remote_patient_identifiers(patient),
       person: Person.new(
         names: localise_remote_patient_names(patient),
-        addresses: localise_remote_patient_addresses(patient)
+        addresses: localise_remote_patient_addresses(patient),
+        birthdate: patient['birthdate'],
+        birthdate_estimated: patient['birthdate_estimated'],
+        gender: patient['gender']
       )
     )
   end
