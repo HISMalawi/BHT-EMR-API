@@ -73,7 +73,11 @@ class Api::V1::EncountersController < ApplicationController
       encounter_datetime: TimeUtils.retro_timestamp(params[:encounter_datetime]&.to_time || Time.now)
     )
 
-    render json: encounter, status: :created
+    if encounter.errors.empty?
+      render json: encounter, status: :created
+    else
+      render json: encounter.errors, status: :bad_request
+    end
   end
 
   # Update an existing encounter
