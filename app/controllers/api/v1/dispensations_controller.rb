@@ -2,9 +2,11 @@
 
 class Api::V1::DispensationsController < ApplicationController
   def create
-    dispensations = params.require(:dispensations)
+    dispensations, program_id = params.require(%i[dispensations program_id])
 
-    render json: DispensationService.create(dispensations), status: :created
+    program = Program.find(program_id)
+
+    render json: DispensationService.create(program, dispensations), status: :created
   rescue InvalidParameterError => e
     render json: { errors: [e.getMessage, e.model_errors] }, status: :bad_request
   end
