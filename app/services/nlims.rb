@@ -58,6 +58,37 @@ class NLims
     response
   end
 
+  def order_tb_test(patient:, user:, test_type:, date:, reason:, requesting_clinician:)
+    patient_name = patient.person.names.first
+    user_name = user.person.names.first
+    #p g = requesting_clinician
+
+    temp_prefix = @api_prefix
+    @api_prefix = 'api/v2'
+
+    response = post 'request_order', district: 'Lilongwe', #health facility district
+                                     health_facility_name: 'LL', #healh facility name
+                                     first_name: patient_name.given_name,
+                                     last_name: patient_name.family_name,
+                                     middle_name: '',
+                                     date_of_birth: patient.person.birthdate,
+                                     gender: patient.person.gender,
+                                     national_patient_id: patient.national_id,
+                                     phone_number: '',
+                                     who_order_test_last_name: user_name.family_name,
+                                     who_order_test_first_name: user_name.given_name,
+                                     who_order_test_id: user.id,
+                                     order_location: 'TB', #find out about order_location
+                                     date_sample_drawn: date,
+                                     tests: test_type,
+                                     sample_priority: reason,
+                                     requesting_clinician: requesting_clinician
+
+    @api_prefix = temp_prefix
+
+    response
+  end
+
   def patient_results(accession_number)
     get("query_results_by_tracking_number/#{accession_number}")
   end
