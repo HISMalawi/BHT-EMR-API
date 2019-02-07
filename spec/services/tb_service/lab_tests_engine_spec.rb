@@ -16,7 +16,7 @@ describe TBService::LabTestsEngine do
     PersonName.create(person_id: person.person_id, given_name: 'John', 
       family_name: 'Doe')
   end
-  let(:patient) { Patient.create( patient_id: person.person_id, ) }
+  let(:patient) { Patient.create( patient_id: person.person_id ) }
   let(:patient_identifier_type) { PatientIdentifierType.find_by_name('national id').id }
 	let(:patient_identifier) do 
 		PatientIdentifier.create(patient_id: patient.patient_id, identifier: 'P170000001234', 
@@ -60,11 +60,13 @@ describe TBService::LabTestsEngine do
       patient_identifier_type
       patient_identifier
       encounter
-      test_types = engine.all_tests_types
-      test_type = test_types.select {|e| e == 'TB Tests'}.first
-      tests = [{"test_type" => test_type, "reason" => "Patient a TB Suspect"}]
+      test_type = engine.types(search_string: 'TB Tests').first
+      tests = [
+        {"test_type" => test_type, "reason" => "Patient a TB Suspect"},
+        {"test_type" => test_type, "reason" => "Another Test"}
+      ]
       user = person 
-      engine.create_order(encounter: encounter, date: date, tests: tests, requesting_clinician: user.person_id)		
+      p engine.create_order(encounter: encounter, date: date, tests: tests, requesting_clinician: user.person_id)		
 		end
     
 		it 'returns lab order created in local db' do
