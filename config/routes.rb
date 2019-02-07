@@ -158,8 +158,9 @@ Rails.application.routes.draw do
 
       get '/dde/patients/find_by_npid', to: 'dde#find_patients_by_npid'
       get '/dde/patients/find_by_name_and_gender', to: 'dde#find_patients_by_name_and_gender'
-      get '/dde/patients/import_by_npid', to: 'dde#import_patients_by_npid'
+      get '/dde/patients/import_by_doc_id', to: 'dde#import_patients_by_doc_id'
       get '/dde/patients/import_by_name_and_gender', to: 'dde#import_patients_by_name_and_gender'
+      get '/dde/patients/import_by_npid', to: 'dde#import_patients_by_npid'
       get '/dde/patients/match_by_demographics', to: 'dde#match_patients_by_demographics'
 
       get '/labels/location', to: 'locations#print_label'

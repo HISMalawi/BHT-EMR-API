@@ -33,50 +33,44 @@ class DDEService
     patient
   end
 
+  # Import patients from DDE using doc id
+  def import_patients_by_doc_id(doc_id)
+    doc_id_type = patient_identifier_type('DDE person document id')
+    locals = patient_service.find_patients_by_identifier(doc_id, doc_id_type)
+    remotes = find_remote_patients_by_doc_id(doc_id)
+
+    import_remote_patient(locals, remotes)
+  end
+
   # Imports patients from DDE to the local database
   def import_patients_by_npid(npid)
-    remote_patient = resolve_patients(
-      local_patients: patient_service.find_patients_by_npid(npid),
-      remote_patients: find_remote_patients_by_npid(npid)
-    )[:remotes].first
+    doc_id_type = patient_identifier_type('National id')
+    locals = patient_service.find_patients_by_identifier(npid, doc_id_type)
+    remotes = find_remote_patients_by_npid(npid)
 
-    raise InvalidParameterError, 'Patient already exists on local or does not exist on DDE' unless remote_patient
-
-    save_remote_patient(remote_patient)
+    import_remote_patient(locals, remotes)
   end
 
   # Similar to import_patients_by_npid but uses name and gender instead of npid
   def import_patients_by_name_and_gender(given_name, family_name, gender)
-    remote_patient = find_patients_by_name_and_gender(given_name, family_name, gender)[:remotes].first
-    raise InvalidParameterError, 'Patient already exists on local or does not exist on DDE' unless remote_patient
+    locals = patient_service.find_patients_by_name_and_gender(given_name, family_name, gender)
+    remotes = find_remote_patients_by_name_and_gender(given_name, family_name, gender)
 
-    save_remote_patient(remote_patient)
+    import_remote_patient(locals, remotes)
   end
 
   def find_patients_by_npid(npid)
-    # Ignore response status, DDE almost always returns 200 even for bad
-    # requests and 404s on this endpoint. Only way to check for an error
-    # is to check whether we received a hash and the hash contains an
-    # error... Not pretty.
-    patients = resolve_patients(
-      local_patients: patient_service.find_patients_by_npid(npid),
-      remote_patients: find_remote_patients_by_npid(npid)
-    )
+    locals = patient_service.find_patients_by_npid(npid)
+    remotes = find_remote_patients_by_npid(npid)
 
-    patients[:remotes] = patients[:remotes].collect { |patient| localise_remote_patient(patient) }
-
-    patients
+    package_patients(locals, remotes)
   end
 
   def find_patients_by_name_and_gender(given_name, family_name, gender)
-    patients = resolve_patients(
-      local_patients: patient_service.find_patients_by_name_and_gender(given_name, family_name, gender),
-      remote_patients: find_remote_patients_by_name_and_gender(given_name, family_name, gender)
-    )
+    locals = patient_service.find_patients_by_name_and_gender(given_name, family_name, gender)
+    remotes = find_remote_patients_by_name_and_gender(given_name, family_name, gender)
 
-    patients[:remotes] = patients[:remotes].collect { |patient| localise_remote_patient(patient) }
-
-    patients
+    package_patients(locals, remotes)
   end
 
   # Matches patients using a bunch of demographics
@@ -107,25 +101,33 @@ class DDEService
   end
 
   # Trigger a merge of patients in DDE
-  def merge_remote_patients(primary, secondary)
+  def merge_patients(primary, secondary)
     if remote_local_merge?(primary, secondary)
       merge_remote_and_local_patients(primary, secondary)
-    elsif remote_remote_merge(primary, secondary)
-      merge_remote_remote(primary, secondary)
+    elsif remote_only_merge?(primary, secondary)
+      merge_remote_patients(primary, secondary)
     else # local - local merge
       raise 'local - local merge not implemented'
     end
   end
 
-  def merge_remote_and_local_patients(patient, secondary)
-    response, status = dde_client.post('search_by_doc', primary_patient_doc_id: patient['doc_id'],
-                                                        secondary_patient_doc_id: patient[])
+  def merge_remote_and_local_patients(primary, secondary)
+    response, status = dde_client.post('search_by_doc_id', doc_id: patient['doc_id'])
 
-    raise 'Merge remote and local patient failed' unless status == 200
+    raise "Failed to search for patient on remote: #{status} - #{response}" unless status == 200
 
-    patient_service.find_patients_by_identifier()
+    local_patient = patient_service.find_patients_by_identifier('National id', primary['npid'])
 
     link_local_to_dde_patient(local_patient, response)
+  end
+
+  def merge_remote_patients(primary, secondary)
+    response, status = dde_client.post('merge_people', primary_person_doc_id: primary['doc_id'],
+                                                       secondary_person_doc_id: secondary['doc_id'])
+
+    raise "Failed to search for patient on remote: #{status} - #{response}" unless status == 200
+
+    raise "Don't know what to do after this"
   end
 
   def reassign_patient_npid(dde_patient_doc_id)
@@ -155,7 +157,7 @@ class DDEService
     response, _status = dde_client.post('search_by_npid', npid: npid)
 
     unless response.class == Array
-      raise "Patient search failed: DDE Response => #{response}"
+      raise "Patient search by failed: DDE Response => #{response}"
     end
 
     response
@@ -166,10 +168,46 @@ class DDEService
                                                                      family_name: family_name,
                                                                      gender: gender)
     unless response.class == Array
-      raise "Patient search failed: DDE Response => #{response}"
+      raise "Patient search by name and gender failed: DDE Response => #{response}"
     end
 
     response
+  end
+
+  def find_remote_patients_by_doc_id(doc_id)
+    response, _status = dde_client.post('search_by_doc_id', doc_id: doc_id)
+
+    unless response.class == Array
+      raise "Patient search by doc_id failed: DDE Response => #{response}"
+    end
+
+    response
+  end
+
+  # Resolves local and remote patients and post processes the remote
+  # patients to take on a structure similar to that of local
+  # patients.
+  def package_patients(local_patients, remote_patients)
+    patients = resolve_patients(local_patients: local_patients, remote_patients: remote_patients)
+
+    patients[:remotes] = patients[:remotes].collect { |patient| localise_remote_patient(patient) }
+
+    patients
+  end
+
+  # Locally saves the first unresolved remote patient.
+  #
+  # Method internally calls resolve_patients on the passed arguments then
+  # attempts to save the first unresolved patient in the local database.
+  #
+  # Returns: The imported patient (or nil if no local and remote patients are
+  #          present).
+  def import_remote_patient(local_patients, remote_patients)
+    patients = resolve_patients(local_patients: local_patients, remote_patients: remote_patients)
+
+    return patients[:locals].first if patients[:remotes].empty?
+
+    save_remote_patient(patients[:remotes].first)
   end
 
   def link_local_to_dde_patient(local_patient, dde_patient)
