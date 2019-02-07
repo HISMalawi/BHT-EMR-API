@@ -3,7 +3,8 @@
 class LabTestService
   class << self
     ENGINES = {
-      'HIV PROGRAM' => ARTService::LabTestsEngine
+      'HIV PROGRAM' => ARTService::LabTestsEngine,
+      'TB PROGRAM' => TBService::LabTestsEngine
     }.freeze
 
     def load_engine(program_id)

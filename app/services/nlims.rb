@@ -61,7 +61,6 @@ class NLims
   def order_tb_test(patient:, user:, test_type:, date:, reason:, requesting_clinician:)
     patient_name = patient.person.names.first
     user_name = user.person.names.first
-    #p g = requesting_clinician
 
     temp_prefix = @api_prefix
     @api_prefix = 'api/v2'

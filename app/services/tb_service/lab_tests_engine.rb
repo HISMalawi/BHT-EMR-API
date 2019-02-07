@@ -15,7 +15,7 @@ class TBService::LabTestsEngine
 
   def all_tests_types
     test_types = nlims.test_types
-  end
+  end #consider removing this
 
   def types(search_string:)
     test_types = nlims.test_types
