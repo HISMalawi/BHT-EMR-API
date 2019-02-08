@@ -112,6 +112,8 @@ Rails.application.routes.draw do
           get '/labels/visits', to: 'program_patients#print_visit_label'
           get '/labels/transfer_out', to: 'program_patients#print_transfer_out_label'
           get '/mastercard_data', to: 'program_patients#mastercard_data'
+          #ANC
+          get '/anc_visit', to: 'program_patients#anc_visit'
           resources :patient_states, path: :states
         end
         resources :lab_test_types, path: 'lab_tests/types'

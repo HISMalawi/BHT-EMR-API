@@ -74,6 +74,11 @@ class Api::V1::ProgramPatientsController < ApplicationController
     render json: service.mastercard_data(patient, date)
   end
 
+  # Get patient's last ANC Visit number
+  def anc_visit
+    render json: service.anc_visit(patient, date)
+  end
+
   protected
 
   def service
