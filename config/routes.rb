@@ -127,6 +127,7 @@ Rails.application.routes.draw do
         resources :lab_test_types, path: 'lab_tests/types'
         get '/lab_tests/panels' => 'lab_test_types#panels' # TODO: Move this into own controller
         get '/lab_tests/tb_panels' => 'lab_test_types#tb_panels'   #TB
+        get '/lab_tests/tb_tests' => 'lab_test_types#tb_tests' #TB
         resources :lab_test_orders, path: 'lab_tests/orders'
         resources :lab_test_results, path: 'lab_tests/results'
         get '/lab_tests/locations' => 'lab_test_orders#locations'

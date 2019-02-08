@@ -13,9 +13,9 @@ class TBService::LabTestsEngine
     LabTestType.find(type_id) #health data schema
   end
 
-  def types(search_string: nil)
+  def tb_tests
     test_types = nlims.test_types
-    test_type = test_types.select {|type| type == 'TB Tests'}.first
+    tb_tests = test_types.select {|type| type == 'TB Tests'}
   end
 
   def lab_locations
@@ -26,8 +26,8 @@ class TBService::LabTestsEngine
     nlims.labs
   end
 
-  def panels(test_type = nil)
-    nlims.specimen_types(types)
+  def panels
+    nlims.specimen_types(tb_tests.first)
   end
 
   def results(accession_number)
