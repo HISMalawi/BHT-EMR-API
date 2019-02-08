@@ -18,4 +18,13 @@ class Api::V1::LabTestTypesController < ApplicationController
       render json: { message: "test type not found: #{test_type}" }, status: :not_found
     end
   end
+
+  def tb_panels
+    response = engine.panels
+    if response
+      render json: response
+    else
+      render json: { message: "test type not found" }, status: :not_found
+    end
+  end
 end

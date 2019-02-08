@@ -126,11 +126,14 @@ Rails.application.routes.draw do
         end
         resources :lab_test_types, path: 'lab_tests/types'
         get '/lab_tests/panels' => 'lab_test_types#panels' # TODO: Move this into own controller
+        get '/lab_tests/tb_panels' => 'lab_test_types#tb_panels'   #TB
         resources :lab_test_orders, path: 'lab_tests/orders'
         resources :lab_test_results, path: 'lab_tests/results'
         get '/lab_tests/locations' => 'lab_test_orders#locations'
         get '/lab_tests/labs' => 'lab_test_orders#labs'
         resources :program_reports, path: 'reports'
+
+       
       end
 
       namespace :types do
