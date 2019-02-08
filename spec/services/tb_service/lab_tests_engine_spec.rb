@@ -44,10 +44,9 @@ describe TBService::LabTestsEngine do
       
     end
     
-    it 'returns a specific test type specimen from LIMS' do
+    it 'returns specimen types for particular test type from LIMS' do
       
-      #test_type = test_types.select {|e| e == 'TB Tests'}.first
-      specimen_types = engine.panels
+      specimen_types = engine.panels(engine.types)
       expect(specimen_types.include?('Sputum')).to eq(true)
       
     end
@@ -59,7 +58,8 @@ describe TBService::LabTestsEngine do
       patient_identifier_type
       patient_identifier
       encounter
-      test_type = engine.panels.first
+      test_type = engine.types
+      specimen_types = engine.panels(test_type)
       tests = [
         {"test_type" => test_type, "reason" => "Patient a TB Suspect"},
         {"test_type" => test_type, "reason" => "Another Test"}

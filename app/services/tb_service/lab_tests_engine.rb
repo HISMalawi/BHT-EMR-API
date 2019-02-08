@@ -26,9 +26,7 @@ class TBService::LabTestsEngine
     nlims.labs
   end
 
-  def panels(test_type = nil)
-    test_types = nlims.test_types
-    test_type = test_types.select {|type| type == 'TB Tests'}.first
+  def panels(test_type)
     nlims.specimen_types(test_type)
   end
 
