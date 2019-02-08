@@ -33,22 +33,21 @@ describe TBService::LabTestsEngine do
 
     it 'returns all tests types from LIMS' do
 			
-      test_types = engine.all_tests_types
+      test_types = engine.types
       expect(test_types.include?('TB Tests')).to eq(true)
       
     end
 
     it 'returns a specific test type' do
-      test_type = engine.types(search_string: 'TB Tests').first
+      test_type = engine.types
       expect(test_type).to eq('TB Tests')
       
     end
     
     it 'returns a specific test type specimen from LIMS' do
       
-      test_types = engine.all_tests_types
-      test_type = test_types.select {|e| e == 'TB Tests'}.first
-      specimen_types = engine.panels(test_type)
+      #test_type = test_types.select {|e| e == 'TB Tests'}.first
+      specimen_types = engine.panels
       expect(specimen_types.include?('Sputum')).to eq(true)
       
     end
@@ -60,13 +59,13 @@ describe TBService::LabTestsEngine do
       patient_identifier_type
       patient_identifier
       encounter
-      test_type = engine.types(search_string: 'TB Tests').first
+      test_type = engine.panels.first
       tests = [
         {"test_type" => test_type, "reason" => "Patient a TB Suspect"},
         {"test_type" => test_type, "reason" => "Another Test"}
       ]
       user = person 
-      p engine.create_order(encounter: encounter, date: date, tests: tests, requesting_clinician: user.person_id)		
+      engine.create_order(encounter: encounter, date: date, tests: tests, requesting_clinician: user.person_id)		
 		end
     
 		it 'returns lab order created in local db' do

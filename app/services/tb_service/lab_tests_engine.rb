@@ -13,16 +13,9 @@ class TBService::LabTestsEngine
     LabTestType.find(type_id) #health data schema
   end
 
-  def all_tests_types
+  def types(search_string: nil)
     test_types = nlims.test_types
-  end #consider removing this
-
-  def types(search_string:)
-    test_types = nlims.test_types
-
-    return test_types unless search_string
-
-    test_types.select { |test_type| test_type.start_with?(search_string) }
+    test_type = test_types.select {|type| type == 'TB Tests'}.first
   end
 
   def lab_locations
@@ -33,7 +26,9 @@ class TBService::LabTestsEngine
     nlims.labs
   end
 
-  def panels(test_type)
+  def panels(test_type = nil)
+    test_types = nlims.test_types
+    test_type = test_types.select {|type| type == 'TB Tests'}.first
     nlims.specimen_types(test_type)
   end
 
