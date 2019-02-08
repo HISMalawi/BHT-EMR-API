@@ -26,8 +26,8 @@ class TBService::LabTestsEngine
     nlims.labs
   end
 
-  def panels(test_type)
-    nlims.specimen_types(test_type)
+  def panels(test_type = nil)
+    nlims.specimen_types(types)
   end
 
   def results(accession_number)
