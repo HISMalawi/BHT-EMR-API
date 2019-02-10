@@ -27,6 +27,25 @@ class Api::V1::DdeController < ApplicationController
     render json: service.match_patients_by_demographics(match_params)
   end
 
+  def reassign_patient_npid
+    dde_person_doc_id = params.require(:dde_person_doc_id)
+    render json: service.reassign_patient_npid(dde_person_doc_id)
+  end
+
+  def merge_patients
+    primary_patient_ids = params.require(:primary)
+    secondary_patient_ids = params.require(:secondary)
+
+    render json: service.merge_patients(
+      # NOTE: We could directly pass down the objects, however we are
+      # doing it like this for the purpose of documentation.
+      { 'doc_id' => primary_patient_ids['doc_id'],
+        'patient_id' => primary_patient_ids['patient_id'] },
+      { 'doc_id' => secondary_patient_ids['doc_id'],
+        'patient_id' => secondary_patient_ids['patient_id'] }
+    )
+  end
+
   private
 
   MATCH_PARAMS = %i[given_name family_name gender birthdate home_village

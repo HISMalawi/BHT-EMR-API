@@ -101,53 +101,23 @@ class DDEService
   end
 
   # Trigger a merge of patients in DDE
-  def merge_patients(primary, secondary)
-    if remote_local_merge?(primary, secondary)
-      merge_remote_and_local_patients(primary, secondary)
-    elsif remote_only_merge?(primary, secondary)
-      merge_remote_patients(primary, secondary)
-    else # local - local merge
-      raise 'local - local merge not implemented'
-    end
+  def merge_patients(primary_patients_ids, secondary_patient_ids)
+    merging_service.merge_patients(primary_patients_ids, secondary_patient_ids)
   end
 
-  def merge_remote_and_local_patients(primary, secondary)
-    response, status = dde_client.post('search_by_doc_id', doc_id: patient['doc_id'])
+  def reassign_remote_patient_npid(doc_id)
+    patient = patient_service.find_patients_by_identifier(
+      doc_id, patient_identifier_type('DDE person document id')
+    ).first
 
-    raise "Failed to search for patient on remote: #{status} - #{response}" unless status == 200
+    raise NotFoundError, "Patient with doc_id, #{doc_id}, not found" unless patient
 
-    local_patient = patient_service.find_patients_by_identifier('National id', primary['npid'])
-
-    link_local_to_dde_patient(local_patient, response)
-  end
-
-  def merge_remote_patients(primary, secondary)
-    response, status = dde_client.post('merge_people', primary_person_doc_id: primary['doc_id'],
-                                                       secondary_person_doc_id: secondary['doc_id'])
-
-    raise "Failed to search for patient on remote: #{status} - #{response}" unless status == 200
-
-    raise "Don't know what to do after this"
-  end
-
-  def reassign_patient_npid(dde_patient_doc_id)
-    response, status = dde_client.post('assign_npid', doc_id: dde_patient_doc_id)
+    response, status = dde_client.post('assign_npid', doc_id: doc_id)
 
     raise "Failed to reassign npid: DDE Response => #{status} - #{response}" unless status == 200
 
-    patient = patient_service.find_patients_by_identifier(
-      dde_patient_doc_id,
-      patient_identifier_type('DDE person document id')
-    ).first
-
-    if patient
-      patient.identifier('National id')&.void('NPID Reassigned')
-      create_local_patient_identifier(patient, response['npid'], 'National id')
-      patient.reload
-    else
-      patient = save_remote_patient(response)
-    end
-
+    patient.identifier('National id')&.void('NPID Reassigned')
+    create_local_patient_identifier(patient, response['npid'], 'National id')
     patient
   end
 
@@ -210,27 +180,6 @@ class DDEService
     save_remote_patient(patients[:remotes].first)
   end
 
-  def link_local_to_dde_patient(local_patient, dde_patient)
-    local_patient.identifier('DDE person document id')&.void("Assigned new id: #{dde_patient['doc_id']}")
-    local_patient.identifier('National id')&.void("Assigned new id: #{dde_patient['npid']}")
-
-    create_local_patient_identifier(local_patient, dde_patient['doc_id'], 'DDE person document id')
-    create_local_patient_identifier(local_patient, dde_patient['npid'], 'National id')
-
-    local_patient.reload
-    local_patient
-  end
-
-  def create_local_patient_identifier(patient, value, type_name)
-    identifier = PatientIdentifier.create(identifier: value,
-                                          type: patient_identifier_type(type_name),
-                                          location_id: Location.current.id,
-                                          patient: patient)
-    return identifier if identifier.errors.empty?
-
-    raise "Could not save DDE identifier: #{type_name} due to #{identifier.errors.as_json}"
-  end
-
   # Filters out @{param remote_patients} that exist in @{param local_patients}.
   #
   # Returns a hash with all resolved and unresolved remote patients:
@@ -258,6 +207,13 @@ class DDEService
       end
     end
 
+    if resolved_patients.size.zero? && remote_patients.size == 1
+      # HACK: Frontenders requested that if only a single patient exists
+      # remotely and locally none exists, the remote patient should be
+      # imported.
+      return { locals: [save_remote_patient(remote_patients[0])], remotes: [] }
+    end
+
     { locals: resolved_patients, remotes: remote_patients }
   end
 
@@ -277,7 +233,7 @@ class DDEService
     response, status = dde_client.post('add_person', openmrs_to_dde_patient(patient))
     raise "Failed to create patient in DDE: #{response}" if status != 200
 
-    link_local_to_dde_patient(patient, response)
+    merging_service.link_local_to_remote_patient(patient, response)
   end
 
   # Converts a remote patient coming from DDE into a structure similar
@@ -378,38 +334,38 @@ class DDEService
   # Convert a DDE person to an openmrs person.
   #
   # NOTE: This creates a person on the database.
-  def save_remote_patient(dde_patient)
-    LOGGER.debug "Converting DDE person to openmrs: #{dde_patient}"
+  def save_remote_patient(remote_patient)
+    LOGGER.debug "Converting DDE person to openmrs: #{remote_patient}"
 
     person = person_service.create_person(
-      birthdate: dde_patient['birthdate'],
-      birthdate_estimated: dde_patient['birthdate_estimated'],
-      gender: dde_patient['gender']
+      birthdate: remote_patient['birthdate'],
+      birthdate_estimated: remote_patient['birthdate_estimated'],
+      gender: remote_patient['gender']
     )
 
     person_service.create_person_name(
-      person, given_name: dde_patient['given_name'],
-              family_name: dde_patient['family_name'],
-              middle_name: dde_patient['middle_name']
+      person, given_name: remote_patient['given_name'],
+              family_name: remote_patient['family_name'],
+              middle_name: remote_patient['middle_name']
     )
 
-    dde_patient_attributes = dde_patient['attributes']
+    remote_patient_attributes = remote_patient['attributes']
     person_service.create_person_address(
-      person, home_village: dde_patient_attributes['home_village'],
-              home_traditional_authority: dde_patient_attributes['home_traditional_authority'],
-              home_district: dde_patient_attributes['home_district'],
-              current_village: dde_patient_attributes['current_village'],
-              current_traditional_authority: dde_patient_attributes['current_traditional_authority'],
-              current_district: dde_patient_attributes['current_district']
+      person, home_village: remote_patient_attributes['home_village'],
+              home_traditional_authority: remote_patient_attributes['home_traditional_authority'],
+              home_district: remote_patient_attributes['home_district'],
+              current_village: remote_patient_attributes['current_village'],
+              current_traditional_authority: remote_patient_attributes['current_traditional_authority'],
+              current_district: remote_patient_attributes['current_district']
     )
 
     person_service.create_person_attributes(
-      person, cell_phone_number: dde_patient_attributes['cellphone_number'],
-              occupation: dde_patient_attributes['occupation']
+      person, cell_phone_number: remote_patient_attributes['cellphone_number'],
+              occupation: remote_patient_attributes['occupation']
     )
 
     patient = Patient.create(patient_id: person.id)
-    link_local_to_dde_patient(patient, dde_patient)
+    merging_service.link_local_to_remote_patient(patient, remote_patient)
   end
 
   def filter_person_attributes(person_attributes)
@@ -437,5 +393,9 @@ class DDEService
 
   def patient_service
     PatientService.new
+  end
+
+  def merging_service
+    DDEMergingService.new(dde_client)
   end
 end
