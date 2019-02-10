@@ -25,10 +25,12 @@ class PatientService
   # Change patient's person id
   #
   # WARNING: THIS IS A DANGEROUS OPERATION...
-  def update_patient(patient, person_id)
-    patient.person_id = person_id
-    unless patient.save
-      raise "Could not update patient ##{patient_id} to person id ##{person_id} due to #{patient.errors.as_json}"
+  def update_patient(patient, person_id = nil)
+    if person_id
+      patient.person_id = person_id
+      unless patient.save
+        raise "Could not update patient patient_id ##{patient_id} due to #{patient.errors.as_json}"
+      end
     end
 
     dde_service.update_patient(patient) if use_dde_service?
