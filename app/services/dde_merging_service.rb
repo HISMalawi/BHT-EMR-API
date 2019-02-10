@@ -5,11 +5,10 @@
 class DDEMergingService
   include ModelUtils
 
-  attr_accessor :dde_client, :patient_service
+  attr_accessor :dde_client
 
   def initialize(dde_client)
     @dde_client = dde_client
-    @patient_service = patient_service
   end
 
   def merge_patients(primary_patient_ids, secondary_patient_ids)
@@ -30,6 +29,10 @@ class DDEMergingService
       primary_patient = Patient.find(primary_patient_ids['patient_id'])
       secondary_patient = Patient.find(secondary_patient_ids['patient_id'])
 
+      merge_name(primary_patient, secondary_patient)
+      merge_identifiers(primary_patient, secondary_patient)
+      merge_attributes(primary_patient, secondary_patient)
+      merge_address(primary_patient, secondary_patient)
       merge_orders(primary_patient, secondary_patient)
       merge_observations(primary_patient, secondary_patient)
       merge_encounters(primary_patient, secondary_patient)
@@ -106,6 +109,104 @@ class DDEMergingService
     return patient.reload && identifier if identifier.errors.empty?
 
     raise "Could not save DDE identifier: #{type_name} due to #{identifier.errors.as_json}"
+  end
+
+  # Patch primary_patient missing name data using secondary_patient
+  def merge_name(primary_patient, secondary_patient)
+    primary_name = primary_patient.person.names.first
+    secondary_name = secondary_patient.person.names.first
+
+    return unless secondary_name
+
+    secondary_name_hash = secondary_name.as_json
+
+    # primary patient doesn't have a name, so just copy secondary patient's
+    unless primary_name
+      secondary_name_hash.delete('uuid')
+      secondary_name_hash.delete('person_name_id')
+      secondary_name_hash.delete('creator')
+      secondary_name_hash['person_id'] = primary_patient.patient_id
+      primary_name = PersonName.create(secondary_name_hash)
+      raise "Could not merge patient name: #{primary_name.errors.as_json}" unless primary_name.errors.empty?
+
+      secondary_name.void("Merged into patient ##{primary_patient.patient_id}")
+      return
+    end
+
+    params = primary_name.as_json.each_with_object({}) do |(field, value), params|
+      secondary_value = secondary_name_hash[field]
+
+      next unless value.blank? && !secondary_value.blank?
+
+      params[field] = secondary_value
+    end
+
+    primary_name.update(params)
+    secondary_name.void("Merged into person ##{primary_patient.patient_id}")
+  end
+
+  # Bless primary_patient with identifiers available only to the secondary patient
+  def merge_identifiers(primary_patient, secondary_patient)
+    secondary_patient.patient_identifiers.each do |identifier|
+      next if primary_patient.patient_identifiers.where(identifier_type: identifier.identifier_type).exists?
+
+      new_identifier = PatientIdentifier.create(patient_id: primary_patient.patient_id,
+                                                identifier_type: identifier.identifier_type,
+                                                identifier: identifier.identifier,
+                                                location_id: identifier.location_id)
+      raise "Could not merge patient identifier: #{new_identifier.errors.as_json}" unless new_identifier.errors.empty?
+
+      identifier.void("Merged into patient ##{primary_patient.patient_id}")
+    end
+  end
+
+  # Patch primary_patient missing attributes using secondary patient data
+  def merge_attributes(primary_patient, secondary_patient)
+    secondary_patient.person.person_attributes.each do |attribute|
+      next if primary_patient.person.person_attributes.where(
+        person_attribute_type_id: attribute.person_attribute_type_id
+      ).exists?
+
+      new_attribute = PersonAttribute.create(person_id: primary_patient.patient_id,
+                                             person_attribute_type_id: attribute.person_attribute_type_id,
+                                             value: attribute.value)
+      raise "Could not merge patient attribute: #{new_attribute.errors.as_json}" unless new_attribute.errors.empty?
+
+      attribute.void("Merged into patient ##{primary_patient.patient_id}")
+    end
+  end
+
+  # Patch primary missing patient address data using from secondary patient address
+  def merge_address(primary_patient, secondary_patient)
+    primary_address = primary_patient.person.addresses.first
+    secondary_address = secondary_patient.person.addresses.first
+
+    return unless secondary_address
+
+    secondary_address_hash = secondary_address.as_json
+
+    unless primary_address
+      secondary_address_hash.delete('uuid')
+      secondary_address_hash.delete('person_address_id')
+      secondary_address_hash.delete('creator')
+      secondary_address_hash['person_id'] = primary_patient.patient_id
+      primary_address = PersonAddress.create(secondary_address_hash)
+      raise "Could not merge patient address: #{primary_address.errors.as_json}" unless primary_address.errors.empty?
+
+      secondary_address.void("Merged into patient ##{primary_patient.patient_id}")
+      return
+    end
+
+    params = primary_address.as_json.each_with_object({}) do |(field, value), params|
+      secondary_value = secondary_address_hash[field]
+
+      next unless value.blank? && !secondary_value.blank?
+
+      params[field] = secondary_value
+    end
+
+    primary_address.update(params)
+    secondary_address.void("Merged into person ##{primary_patient.patient_id}")
   end
 
   # Strips off secondary_patient all orders and blesses primary patient
