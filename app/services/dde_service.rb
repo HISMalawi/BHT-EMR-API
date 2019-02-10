@@ -327,6 +327,9 @@ class DDEService
       }
     )
 
+    doc_id = patient.patient_identifiers.where(type: patient_identifier_type('DDE person document id')).first
+    dde_patient[:doc_id] = doc_id.identifier if doc_id
+
     LOGGER.debug "Converted openmrs person to dde_patient: #{dde_patient}"
     dde_patient
   end
