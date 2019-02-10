@@ -29,9 +29,6 @@ class Api::V1::PeopleController < ApplicationController
     person_service.create_person_address(person, create_params)
     person_service.create_person_attributes(person, params.permit!)
 
-    # Hack trigger a patient update to force a DDE push if DDE is active
-    patient_service.update_patient(person.patient) if person.patient
-
     render json: person, status: :created
   end
 
