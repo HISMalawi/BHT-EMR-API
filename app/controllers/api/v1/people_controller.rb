@@ -24,10 +24,13 @@ class Api::V1::PeopleController < ApplicationController
                                             optional: [:middle_name]
     return render json: create_params, status: :bad_request if errors
 
-    person = person_service.create_person create_params
-    person_service.create_person_name person, create_params
-    person_service.create_person_address person, create_params
-    person_service.create_person_attributes person, params.permit!
+    person = person_service.create_person(create_params)
+    person_service.create_person_name(person, create_params)
+    person_service.create_person_address(person, create_params)
+    person_service.create_person_attributes(person, params.permit!)
+
+    # Hack trigger a patient update to force a DDE push if DDE is active
+    patient_service.update_patient(person.patient) if person.patient
 
     render json: person, status: :created
   end
@@ -74,5 +77,9 @@ class Api::V1::PeopleController < ApplicationController
 
   def person_service
     PersonService.new
+  end
+
+  def patient_service
+    PatientService.new
   end
 end
