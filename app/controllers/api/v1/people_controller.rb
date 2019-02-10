@@ -11,22 +11,12 @@ class Api::V1::PeopleController < ApplicationController
   def search
     given_name, family_name, gender = params.require %i[given_name family_name gender]
 
-    people = paginate(Person.joins(:names).where(
-      'person.gender like ? AND person_name.given_name LIKE ?
-                            AND person_name.family_name LIKE ?',
-      "#{gender}%", "#{given_name}%", "#{family_name}%"
-    ))
-    render json: people
+    people = person_service.find_people_by_gender_and_name(given_name, family_name, gender)
+    render json: paginate(people)
   end
 
   def show
-    person = Person.find(params[:id])
-    unless person
-      errors = ["Person ##{params[:id]} not found"]
-      render json: { errors: errors }, status: :not_found
-      return
-    end
-    render json: person
+    render json: Person.find(params[:id])
   end
 
   def create
