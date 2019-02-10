@@ -227,6 +227,13 @@ class DDEService
       return { locals: [save_remote_patient(remote_patients[0])], remotes: [] }
     end
 
+    if resolved_patients.size.zero? && remote_patients.size == 1
+      # HACK: Frontenders requested that if only a single patient exists
+      # remotely and locally none exists, the remote patient should be
+      # imported.
+      return { locals: [save_remote_patient(remote_patients[0])], remotes: [] }
+    end
+
     { locals: resolved_patients, remotes: remote_patients }
   end
 
