@@ -38,6 +38,14 @@ class PersonService
     person.update params unless params.empty?
   end
 
+  def find_people_by_name_and_gender(given_name, family_name, gender)
+    Person.joins(:names).where(
+      'person.gender like ? AND person_name.given_name LIKE ?
+                            AND person_name.family_name LIKE ?',
+      "#{gender}%", "#{given_name}%", "#{family_name}%"
+    )
+  end
+
   def create_person_name(person, params)
     handle_model_errors do
       PersonName.create(
