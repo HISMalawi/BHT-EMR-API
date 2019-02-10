@@ -16,7 +16,7 @@ class Person < VoidableRecord
                                                         foreign_key: :person_id
   has_many :addresses, class_name: 'PersonAddress', foreign_key: :person_id,
                        dependent: :destroy
-  # has_many :relationships, class_name: "Relationship", foreign_key: :person_a
+  has_many :relationships, class_name: 'Relationship', foreign_key: :person_a
   has_many :person_attributes, class_name: 'PersonAttribute', foreign_key: :person_id
   has_many :observations, class_name: 'Observation', foreign_key: :person_id,
                           dependent: :destroy do
@@ -59,7 +59,6 @@ class Person < VoidableRecord
   end
 
   def void_related_models(reason)
-    patient.void(reason)
     names.each { |name| name.void(reason) }
     addresses.each { |address| address.void(reason) }
     relationships.each { |relationship| relationship.void(reason) }
