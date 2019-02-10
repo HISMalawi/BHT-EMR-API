@@ -29,9 +29,6 @@ class Api::V1::PeopleController < ApplicationController
     person_service.create_person_address(person, create_params)
     person_service.create_person_attributes(person, params.permit!)
 
-    # Hack trigger a patient update to force a DDE push if DDE is active
-    patient_service.update_patient(person.patient) if person.patient
-
     render json: person, status: :created
   end
 
@@ -39,16 +36,15 @@ class Api::V1::PeopleController < ApplicationController
     person = Person.find(params[:id])
     update_params = params.permit!
 
-    person_service.update_person person, update_params
-    person_service.update_person_name person, update_params
-    person_service.update_person_address person, update_params
-    person_service.update_person_attributes person, update_params
-
-    # ASIDE: Person we just updated may be linked to DDE, if this is the
-    # case, do we notify DDE of the update right now or do we force client
-    # to trigger an update in DDE by calling POST /patient/:patient_id?
+    person_service.update_person(person, update_params)
+    person_service.update_person_name(person, update_params)
+    person_service.update_person_address(person, update_params)
+    person_service.update_person_attributes(person, update_params)
 
     person.reload
+
+    # Hack trigger a patient update to force a DDE push if DDE is active
+    patient_service.update_patient(person.patient) if person.patient
 
     render json: person, status: :ok
   end

@@ -266,11 +266,7 @@ class PatientService
   end
 
   def use_dde_service?
-    property = global_property('dde_enabled')
-    return false unless property
-
-    value = (property.property_value || 'true').strip
-    %w[1 true].include?(value)
+    global_property('dde_enabled').property_value&.strip == 'true'
   end
 
   def dde_service

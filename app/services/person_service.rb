@@ -64,12 +64,24 @@ class PersonService
     params = params.select { |k, _| PERSON_NAME_FIELDS.include? k.to_sym }
     return nil if params.empty?
 
-    person.names.each do |name|
-      name.void("Updated to `#{params[:given_name]} #{params[:family_name]}` by #{User.current.username}")
-    end
+    name = person.names.first
 
-    create_person_name person, params
+    return create_person_name(person, params) unless name
+
+    handle_model_errors do
+      name.update(params)
+      name
+    end
   end
+
+  PERSON_ADDRESS_FIELD_MAP = {
+    current_district: :state_province,
+    current_village: :city_village,
+    current_traditional_authority: :township_division,
+    home_district: :address2,
+    home_village: :neighborhood_cell,
+    home_traditional_authority: :county_district,
+  }
 
   def create_person_address(person, params)
     handle_model_errors do
@@ -91,8 +103,22 @@ class PersonService
   end
 
   def update_person_address(person, params)
-    params = params.select { |k, _| PERSON_ADDRESS_FIELDS.include? k.to_sym }
-    create_person_address(person, params) unless params.empty?
+    filtered_params = {}
+    params.each do |param, value|
+      param = param.to_sym
+      next unless PERSON_ADDRESS_FIELDS.include?(param)
+
+      filtered_params[PERSON_ADDRESS_FIELD_MAP[param]] = value
+    end
+
+    address = person.addresses.first
+
+    return create_person_address(filtered_params) unless address
+
+    handle_model_errors do
+      address.update(filtered_params)
+      address
+    end
   end
 
   def create_person_attributes(person, person_attributes)
@@ -104,14 +130,12 @@ class PersonService
       LOGGER.debug "Creating attr #{field} = #{value}"
 
       type = PersonAttributeType.find_by name: PERSON_ATTRIBUTES_FIELDS[field]
-      attr = PersonAttribute.create(
-        person_id: person.id,
-        person_attribute_type_id: type.person_attribute_type_id,
-        value: value
-      )
-
-      unless attr.errors.empty?
-        raise "Failed to save attr: #{field} = #{value} due to #{attr.errors}"
+      handle_model_errors do
+        PersonAttribute.create(
+          person_id: person.id,
+          person_attribute_type_id: type.person_attribute_type_id,
+          value: value
+        )
       end
     end
   end
@@ -129,11 +153,12 @@ class PersonService
       type = PersonAttributeType.find_by name: PERSON_ATTRIBUTES_FIELDS[field]
       attr = PersonAttribute.find_by person_attribute_type_id: type.id,
                                      person_id: person.id
-      if attr
-        saved = attr.update(value: value)
-        raise "Failed to save attr: #{field} = #{value} due to #{attr.errors}" unless saved
-      else
-        PersonAttribute.create type: type, person: person, value: value
+
+      return PersonAttribute.create(type: type, person: person, value: value) unless attr
+
+      handle_model_errors do
+        attr.update(value: value)
+        attr
       end
     end
   end
