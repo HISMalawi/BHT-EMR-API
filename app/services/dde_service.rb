@@ -105,20 +105,33 @@ class DDEService
     merging_service.merge_patients(primary_patients_ids, secondary_patient_ids)
   end
 
-  def reassign_remote_patient_npid(doc_id)
-    patient = patient_service.find_patients_by_identifier(
-      doc_id, patient_identifier_type('DDE person document id')
-    ).first
+  def reassign_patient_npid(patient_ids)
+    patient_id = patient_ids['patient_id']
+    doc_id = patient_ids['doc_id']
 
-    raise NotFoundError, "Patient with doc_id, #{doc_id}, not found" unless patient
+    raise InvalidParameterError, 'patient_id and/or doc_id required' if patient_id.blank? && doc_id.blank?
 
-    response, status = dde_client.post('assign_npid', doc_id: doc_id)
+    if doc_id.blank?
+      # Only have patient id thus we have patient locally only
+      return push_local_patient_to_dde(Patient.find(patient_ids['patient_id']))
+    end
 
-    raise "Failed to reassign npid: DDE Response => #{status} - #{response}" unless status == 200
+    # NOTE: Fail patient retrieval as early as possible before making any
+    # changes to DDE (ie if patient_id does not exist)
+    patient = patient_id.blank? ? nil : Patient.find(patient_id)
 
-    patient.identifier('National id')&.void('NPID Reassigned')
-    create_local_patient_identifier(patient, response['npid'], 'National id')
-    patient
+    # We have a doc_id thus we can re-assign npid in DDE
+    response, status = dde_client.post('reassign_npid', doc_id: doc_id)
+
+    unless status == 200 && !response.empty?
+      # The DDE's reassign_npid end point responds with a 200 - OK but returns
+      # an empty object when patient with given doc_id is not found.
+      raise "Failed to reassign npid: DDE Response => #{status} - #{response}"
+    end
+
+    return save_remote_patient(response) unless patient
+
+    merging_service.link_local_to_remote_patient(patient, response)
   end
 
   private
