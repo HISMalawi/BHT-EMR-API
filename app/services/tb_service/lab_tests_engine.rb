@@ -40,13 +40,13 @@ class TBService::LabTestsEngine
   end #health data
 
   #Create test with lims
-  def create_order(encounter:, date:, tests:, **kwargs)
+  def create_order(encounter:, date:, tests:, sample_type:, **kwargs)
     patient ||= encounter.patient
     date ||= encounter.encounter_datetime
 
     tests.collect do |test|
       lims_order = nlims.order_tb_test(patient: patient, user: User.current, date: date, #changed this line
-                                    reason: test['reason'], test_type: [test['test_type']],
+                                    reason: test['reason'], test_type: [test['test_type']], sample_type: sample_type,
                                     **kwargs)
       accession_number = lims_order['tracking_number']
 

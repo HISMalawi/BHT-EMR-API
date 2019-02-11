@@ -58,14 +58,14 @@ class NLims
     response
   end
 
-  def order_tb_test(patient:, user:, test_type:, date:, reason:, requesting_clinician:)
+  def order_tb_test(patient:, user:, test_type:, date:, reason:, sample_type:, requesting_clinician:)
     patient_name = patient.person.names.first
     user_name = user.person.names.first
 
     temp_prefix = @api_prefix
-    @api_prefix = 'api/v2'
+    @api_prefix = 'api/v1'
 
-    response = post 'request_order', district: 'Lilongwe', #health facility district
+    response = post 'create_order', district: 'Lilongwe', #health facility district
                                      health_facility_name: 'LL', #healh facility name
                                      first_name: patient_name.given_name,
                                      last_name: patient_name.family_name,
@@ -81,6 +81,9 @@ class NLims
                                      date_sample_drawn: date,
                                      tests: test_type,
                                      sample_priority: reason,
+                                     sample_type: sample_type, #Added
+                                     sample_status: 'unknown', #Added
+                                     target_lab: 'unknown', #Added
                                      requesting_clinician: requesting_clinician
 
     @api_prefix = temp_prefix

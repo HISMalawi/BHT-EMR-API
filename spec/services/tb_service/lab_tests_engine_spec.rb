@@ -54,15 +54,17 @@ describe TBService::LabTestsEngine do
       patient_identifier
       encounter
       test_types = engine.types(search_string: "TB Tests")
-      specimen_types = engine.panels(test_types.first)
+      specimen_types = engine.panels(test_types.first) #specimen type
+
+      sample_type = specimen_types.select { |type| type == 'Sputum'  }
       tests = [
         {"test_type" => test_types.first, "reason" => "Patient a TB Suspect"},
         {"test_type" => test_types.first, "reason" => "Another Test"}
       ]
       user = person 
-      engine.create_order(encounter: encounter, date: date, tests: tests, requesting_clinician: user.person_id)	
-      #expect(response).to have_http_status(:created) # 200
-      
+      order = engine.create_order(encounter: encounter, date: date, tests: tests, sample_type: sample_type, requesting_clinician: user.person_id)	
+      expect(order)
+
 		end
 
   end
