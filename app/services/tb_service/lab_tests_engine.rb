@@ -13,9 +13,12 @@ class TBService::LabTestsEngine
     LabTestType.find(type_id) #health data schema
   end
 
-  def tb_tests
+  def types(search_string:)
     test_types = nlims.test_types
-    tb_tests = test_types.select {|type| type == 'TB Tests'}
+
+    return test_types unless search_string
+
+    test_types.select { |test_type| test_type.start_with?(search_string) }
   end
 
   def lab_locations
@@ -26,8 +29,8 @@ class TBService::LabTestsEngine
     nlims.labs
   end
 
-  def panels
-    nlims.specimen_types(tb_tests.first)
+  def panels(test_type)
+    nlims.specimen_types(test_type)
   end
 
   def results(accession_number)

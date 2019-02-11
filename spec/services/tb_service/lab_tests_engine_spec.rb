@@ -33,20 +33,15 @@ describe TBService::LabTestsEngine do
 
     it 'returns all tests types from LIMS' do
 			
-      test_types = engine.tb_tests
-      p expect(test_types.include?('TB Tests')).to eq(true)
-      
-    end
-
-    it 'returns a specific test type' do
-      test_type = engine.tb_tests
-      expect(test_type).to eq('TB Tests')
+      test_types = engine.types(search_string: "TB Tests")
+      expect(test_types.include?('TB Tests')).to eq(true)
       
     end
     
     it 'returns specimen types for particular test type from LIMS' do
       
-      specimen_types = engine.panels
+      test_types = engine.types(search_string: "TB Tests")
+      specimen_types = engine.panels(test_types.first)
       expect(specimen_types.include?('Sputum')).to eq(true)
       
     end
@@ -58,18 +53,16 @@ describe TBService::LabTestsEngine do
       patient_identifier_type
       patient_identifier
       encounter
-      test_type = engine.tb_tests
-      p specimen_types = engine.panels
+      test_types = engine.types(search_string: "TB Tests")
+      specimen_types = engine.panels(test_types.first)
       tests = [
-        {"test_type" => "TB Tests", "reason" => "Patient a TB Suspect"},
-        {"test_type" => "TB Tests", "reason" => "Another Test"}
+        {"test_type" => test_types.first, "reason" => "Patient a TB Suspect"},
+        {"test_type" => test_types.first, "reason" => "Another Test"}
       ]
       user = person 
-      engine.create_order(encounter: encounter, date: date, tests: tests, requesting_clinician: user.person_id)		
-		end
-    
-		it 'returns lab order created in local db' do
-			
+      engine.create_order(encounter: encounter, date: date, tests: tests, requesting_clinician: user.person_id)	
+      #expect(response).to have_http_status(:created) # 200
+      
 		end
 
   end
