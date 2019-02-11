@@ -28,8 +28,8 @@ class Api::V1::DdeController < ApplicationController
   end
 
   def reassign_patient_npid
-    dde_person_doc_id = params.require(:dde_person_doc_id)
-    render json: service.reassign_patient_npid(dde_person_doc_id)
+    patient_ids = params.permit(:doc_id, :patient_id)
+    render json: service.reassign_patient_npid(patient_ids)
   end
 
   def merge_patients
