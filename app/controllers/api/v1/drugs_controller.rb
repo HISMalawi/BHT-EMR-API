@@ -8,4 +8,27 @@ class Api::V1::DrugsController < ApplicationController
     query = name ? Drug.where('name like ?', "#{name}%") : Drug
     render json: paginate(query)
   end
+
+  def drug_sets
+    drug_sets = {}
+    GeneralSet.where(["status =?", "active"]).each do |set|
+
+      drug_sets[set.set_id] = {}
+      set_names[set.set_id] = set.name
+      set_descriptions[set.set_id] = set.description
+
+      dsets = DrugSet.where(["set_id =? AND voided =?", set.set_id, 0])
+      dsets.each do |d_set|
+
+        drug_sets[set.set_id][d_set.drug_inventory_id] = {}
+        drug = Drug.find(d_set.drug_inventory_id)
+        drug_sets[set.set_id][d_set.drug_inventory_id]["drug_name"] = drug.name
+        drug_sets[set.set_id][d_set.drug_inventory_id]["units"] = drug.units
+        drug_sets[set.set_id][d_set.drug_inventory_id]["duration"] = d_set.duration
+        drug_sets[set.set_id][d_set.drug_inventory_id]["frequency"] = d_set.frequency
+      end
+    end 
+    render json: drug_sets
+  end
+
 end

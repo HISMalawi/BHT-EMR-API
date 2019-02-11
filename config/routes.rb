@@ -134,6 +134,7 @@ Rails.application.routes.draw do
       resources :drugs
       resources :drug_orders
       resources :orders
+      get '/drug_sets', to: 'drugs#drug_sets' # ANC get drug sets
 
       resource :global_properties
       resource :user_properties
