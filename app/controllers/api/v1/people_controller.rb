@@ -11,7 +11,7 @@ class Api::V1::PeopleController < ApplicationController
   def search
     given_name, family_name, gender = params.require %i[given_name family_name gender]
 
-    people = person_service.find_people_by_gender_and_name(given_name, family_name, gender)
+    people = person_service.find_people_by_name_and_gender(given_name, family_name, gender)
     render json: paginate(people)
   end
 
