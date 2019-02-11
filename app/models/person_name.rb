@@ -10,7 +10,7 @@ class PersonName < VoidableRecord
   def self.validate_name_record(record, attr, value)
     if !(value && value.size.between?(2, 20))
       record.errors.add attr, 'Must be at least 2 and at most 20 characters long'
-    elsif !value.match?(/^\s*(!?\w+([-']\w+)*)+\s*$/)
+    elsif !(value.match?(/^\s*(!?\w+([-']\w+)*)+\s*$/) || value.match?('N/A'))
       record.errors.add attr, 'Does not look like a valid name'
     end
   end
