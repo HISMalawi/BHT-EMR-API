@@ -264,13 +264,6 @@ describe ARTService::WorkflowEngine do
                            encounter: encounter
     create :drug_order, order: order, drug: arv
 
-    # HACK: Fast track encounter's requirement is the existence of a
-    # fast track encounter with an observation of 'Assess for fast track?'
-    # bound to a 'Yes' concept.
-    encounter = create :encounter, type: encounter_type('FAST TRACK ASSESMENT'),
-                                   patient: patient,
-                                   program_id: HIV_PROGRAM_ID
-
     value_coded = assess_fast_track ? concept('Yes').concept_id : concept('No').concept_id
     create :observation, concept: concept('Assess for fast track?'),
                          encounter: encounter,
@@ -283,12 +276,9 @@ describe ARTService::WorkflowEngine do
   def record_fast_track(patient)
     record_treatment patient, assess_fast_track: true
 
-    # record_treatment creates a fast track encounter for us,
-    # all we need to do is add additional observations for the
-    # assessment
-    encounter = Encounter.find_by type: encounter_type('FAST TRACK ASSESMENT'),
-                                  patient: patient,
-                                  program_id: HIV_PROGRAM_ID
+    encounter = create :encounter, type: encounter_type('FAST TRACK ASSESMENT'),
+                                   patient: patient,
+                                   program_id: HIV_PROGRAM_ID
     create :observation, concept: concept('Adult 18 years +'),
                          person: patient.person,
                          encounter: encounter
