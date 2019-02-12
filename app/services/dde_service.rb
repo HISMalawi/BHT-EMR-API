@@ -6,6 +6,9 @@ class DDEService
   DDE_CONFIG_PATH = 'config/application.yml'
   LOGGER = Logger.new(STDOUT)
 
+  # Limit all find queries for local patients to this
+  PATIENT_SEARCH_RESULTS_LIMIT = 10
+
   cattr_accessor :connection # Holds current (shared) connection to DDE
 
   include ModelUtils
@@ -36,7 +39,7 @@ class DDEService
   # Import patients from DDE using doc id
   def import_patients_by_doc_id(doc_id)
     doc_id_type = patient_identifier_type('DDE person document id')
-    locals = patient_service.find_patients_by_identifier(doc_id, doc_id_type)
+    locals = patient_service.find_patients_by_identifier(doc_id, doc_id_type).limit(PATIENT_SEARCH_RESULTS_LIMIT)
     remotes = find_remote_patients_by_doc_id(doc_id)
 
     import_remote_patient(locals, remotes)
@@ -45,7 +48,7 @@ class DDEService
   # Imports patients from DDE to the local database
   def import_patients_by_npid(npid)
     doc_id_type = patient_identifier_type('National id')
-    locals = patient_service.find_patients_by_identifier(npid, doc_id_type)
+    locals = patient_service.find_patients_by_identifier(npid, doc_id_type).limit(PATIENT_SEARCH_RESULTS_LIMIT)
     remotes = find_remote_patients_by_npid(npid)
 
     import_remote_patient(locals, remotes)
@@ -53,21 +56,21 @@ class DDEService
 
   # Similar to import_patients_by_npid but uses name and gender instead of npid
   def import_patients_by_name_and_gender(given_name, family_name, gender)
-    locals = patient_service.find_patients_by_name_and_gender(given_name, family_name, gender)
+    locals = patient_service.find_patients_by_name_and_gender(given_name, family_name, gender).limit(PATIENT_SEARCH_RESULTS_LIMIT)
     remotes = find_remote_patients_by_name_and_gender(given_name, family_name, gender)
 
     import_remote_patient(locals, remotes)
   end
 
   def find_patients_by_npid(npid)
-    locals = patient_service.find_patients_by_npid(npid)
+    locals = patient_service.find_patients_by_npid(npid).limit(PATIENT_SEARCH_RESULTS_LIMIT)
     remotes = find_remote_patients_by_npid(npid)
 
     package_patients(locals, remotes)
   end
 
   def find_patients_by_name_and_gender(given_name, family_name, gender)
-    locals = patient_service.find_patients_by_name_and_gender(given_name, family_name, gender)
+    locals = patient_service.find_patients_by_name_and_gender(given_name, family_name, gender).limit(PATIENT_SEARCH_RESULTS_LIMIT)
     remotes = find_remote_patients_by_name_and_gender(given_name, family_name, gender)
 
     package_patients(locals, remotes)
@@ -212,12 +215,9 @@ class DDEService
         same_patient?(local_patient: local_patient, remote_patient: patient)
       end
 
-      if remote_patient
-        resolved_patients << local_patient
-        remote_patients.delete(remote_patient)
-      else
-        resolved_patients << push_local_patient_to_dde(local_patient)
-      end
+      remote_patients.delete(remote_patient) if remote_patient
+
+      resolved_patients << local_patient
     end
 
     if resolved_patients.size.zero? && remote_patients.size == 1
