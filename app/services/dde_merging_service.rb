@@ -45,8 +45,18 @@ class DDEMergingService
   # Binds the remote patient to the local patient by blessing the local patient
   # with the remotes npid and doc_id
   def link_local_to_remote_patient(local_patient, remote_patient)
-    local_patient.identifier('DDE person document id')&.void("Assigned new id: #{remote_patient['doc_id']}")
-    local_patient.identifier('National id')&.void("Assigned new id: #{remote_patient['npid']}")
+    national_id_type = patient_identifier_type('National id')
+    doc_id_type = patient_identifier_type('DDE person document id')
+
+    local_patient.patient_identifiers.where(type: [national_id_type, doc_id_type]) .each do |identifier|
+      print [identifier.id, identifier.identifier]
+      if identifier.identifier_type == national_id_type.id && identifier.identifier.match?(/^\s*P\d{12}\s*$/i)
+        # We have a v3 NPID that should get demoted to legacy national id
+        create_local_patient_identifier(local_patient, identifier.identifier, 'Old Identification Number')
+      end
+
+      identifier.void("Assigned new id: #{remote_patient['doc_id']}")
+    end
 
     create_local_patient_identifier(local_patient, remote_patient['doc_id'], 'DDE person document id')
     create_local_patient_identifier(local_patient, remote_patient['npid'], 'National id')
