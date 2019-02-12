@@ -9,6 +9,7 @@ FactoryBot.define do
     creator { 1 }
     provider_id { 1 }
     location_id { 700 }
+    program_id { 1 }
 
     factory :encounter_dispensing do
       type { EncounterType.find_by_name 'Dispensing' }
