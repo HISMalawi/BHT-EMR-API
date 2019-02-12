@@ -94,7 +94,6 @@ module ARTService
       activities = user_property('Activities')&.property_value
       encounters = (activities&.split(',') || []).collect do |activity|
         # Re-map activities to encounters
-        puts activity
         case activity
         when /ART adherence/i
           ART_ADHERENCE
@@ -119,7 +118,7 @@ module ARTService
         end
       end
 
-      Set.new(encounters + [FAST_TRACK])
+      Set.new(encounters + [FAST_TRACK]) # Fast track is not selected as user activity
     end
 
     def next_state(current_state)
