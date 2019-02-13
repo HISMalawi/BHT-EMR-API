@@ -11,16 +11,27 @@ class DDEMergingService
     @dde_client = dde_client
   end
 
-  def merge_patients(primary_patient_ids, secondary_patient_ids)
-    if remote_merge?(primary_patient_ids, secondary_patient_ids)
-      merge_remote_patients(primary_patient_ids, secondary_patient_ids)
-    elsif remote_local_merge?(primary_patient_ids, secondary_patient_ids)
-      merge_remote_and_local_patients(primary_patient_ids, secondary_patient_ids)
-    elsif local_merge?(primary_patient_ids, secondary_patient_ids)
-      merge_local_patients(primary_patient_ids, secondary_patient_ids)
-    else
-      raise "Invalid merge parameters: primary => #{primary_patient_ids}, secondary => #{secondary_patient_ids}"
-    end
+  # Merge secondary patient(s) into primary patient.
+  #
+  # Parameters:
+  #   primary_patient_ids - An object of them form { 'patient_id' => xxx, 'doc_id' }.
+  #                         One of 'patient_id' and 'doc_id' must be present else an
+  #                         InvalidParametersError be thrown.
+  #   secondary_patient_ids_list - An array of objects like that for 'primary_patient_ids'
+  #                                above
+  def merge_patients(primary_patient_ids, secondary_patient_ids_list)
+    secondary_patient_ids_list.collect do |secondary_patient_ids|
+      if remote_merge?(primary_patient_ids, secondary_patient_ids)
+        merge_remote_patients(primary_patient_ids, secondary_patient_ids)
+      elsif remote_local_merge?(primary_patient_ids, secondary_patient_ids)
+        merge_remote_and_local_patients(primary_patient_ids, secondary_patient_ids)
+      elsif local_merge?(primary_patient_ids, secondary_patient_ids)
+        merge_local_patients(primary_patient_ids, secondary_patient_ids)
+      else
+        raise InvalidParametersError,
+              "Invalid merge parameters: primary => #{primary_patient_ids}, secondary => #{secondary_patient_ids}"
+      end
+    end.first
   end
 
   # Merges @{param secondary_patient} into @{param primary_patient}.
@@ -93,7 +104,7 @@ class DDEMergingService
     local_patient = link_local_to_remote_patient(local_patient, remote_patient)
     return local_patient if secondary_patient_ids['patient_id'].blank?
 
-    merge_local_patients(local_patient, Patient.find(secondary_patient_ids['patient_id']))
+    merge_local_patients(primary_patient_ids, secondary_patient_ids)
   end
 
   # Merge patients in DDE and update local records if need be

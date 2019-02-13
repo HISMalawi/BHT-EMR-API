@@ -34,16 +34,9 @@ class Api::V1::DdeController < ApplicationController
 
   def merge_patients
     primary_patient_ids = params.require(:primary)
-    secondary_patient_ids = params.require(:secondary)
+    secondary_patient_ids_list = params.require(:secondary)
 
-    render json: service.merge_patients(
-      # NOTE: We could directly pass down the objects, however we are
-      # doing it like this for the purpose of documentation.
-      { 'doc_id' => primary_patient_ids['doc_id'],
-        'patient_id' => primary_patient_ids['patient_id'] },
-      { 'doc_id' => secondary_patient_ids['doc_id'],
-        'patient_id' => secondary_patient_ids['patient_id'] }
-    )
+    render json: service.merge_patients(primary_patient_ids, secondary_patient_ids_list)
   end
 
   private
