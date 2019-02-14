@@ -290,12 +290,12 @@ class DDEMergingService
   end
 
   def find_remote_patient_npid(remote_patient)
-    doc_id = remote_patient['npid']
-    return doc_id unless doc_id.blank?
+    npid = remote_patient['npid']
+    return npid unless npid.blank?
 
     remote_patient['identifiers'].each do |identifier|
-      doc_id = identifier['National patient identifier']
-      return doc_id unless doc_id.blank?
+      npid = identifier['National patient identifier']
+      return npid unless npid.blank?
     end
 
     nil
