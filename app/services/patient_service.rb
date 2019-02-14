@@ -67,8 +67,8 @@ class PatientService
     rows = ActiveRecord::Base.connection.select_all <<-SQL
       SELECT DISTINCT DATE(encounter_datetime) AS visit_date
       FROM encounter WHERE patient_id = #{patient_id} AND voided = 0
-      GROUP BY encounter_datetime
-      ORDER BY encounter_datetime DESC
+      GROUP BY visit_date
+      ORDER BY visit_date DESC
     SQL
 
     rows.collect { |row| row['visit_date'] }
@@ -88,8 +88,10 @@ class PatientService
   end
 
   # Last drugs received
-  def patient_last_drugs_received(patient, ref_date)
-    dispensing_encounter = Encounter.joins(:type).where(
+  def patient_last_drugs_received(patient, ref_date, program_id: nil)
+    dispensing_encounter_query = Encounter.joins(:type)
+    dispensing_encounter_query.where(program_id: program_id) if program_id
+    dispensing_encounter = dispensing_encounter_query.where(
       'encounter_type.name = ? AND encounter.patient_id = ?
         AND DATE(encounter_datetime) <= DATE(?)',
       'DISPENSING', patient.patient_id, ref_date
