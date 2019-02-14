@@ -72,7 +72,7 @@ class DDEMergingService
     end
 
     create_local_patient_identifier(local_patient, remote_patient['doc_id'], 'DDE person document id')
-    create_local_patient_identifier(local_patient, remote_patient['npid'], 'National id')
+    create_local_patient_identifier(local_patient, find_remote_patient_npid(remote_patient), 'National id')
 
     local_patient.reload
     local_patient
@@ -287,6 +287,18 @@ class DDEMergingService
     end
 
     response
+  end
+
+  def find_remote_patient_npid(remote_patient)
+    doc_id = remote_patient['doc_id']
+    return doc_id unless doc_id.blank?
+
+    remote_patient['identifiers'].each do |identifier|
+      doc_id = identifier['National patient identifier']
+      return doc_id unless doc_id.blank?
+    end
+
+    nil
   end
 
   def patient_service
