@@ -28,7 +28,7 @@ class DDEMergingService
       elsif local_merge?(primary_patient_ids, secondary_patient_ids)
         merge_local_patients(primary_patient_ids, secondary_patient_ids)
       else
-        raise InvalidParametersError,
+        raise InvalidParameterError,
               "Invalid merge parameters: primary => #{primary_patient_ids}, secondary => #{secondary_patient_ids}"
       end
     end.first
