@@ -25,6 +25,8 @@ class DDEMergingService
         merge_remote_patients(primary_patient_ids, secondary_patient_ids)
       elsif remote_local_merge?(primary_patient_ids, secondary_patient_ids)
         merge_remote_and_local_patients(primary_patient_ids, secondary_patient_ids)
+      elsif inverted_remote_local_merge?(primary_patient_ids, secondary_patient_ids)
+        merge_remote_and_local_patients(secondary_patient_ids, primary_patient_ids)
       elsif local_merge?(primary_patient_ids, secondary_patient_ids)
         merge_local_patients(primary_patient_ids, secondary_patient_ids)
       else
@@ -89,6 +91,11 @@ class DDEMergingService
   # Is a merge of a remote patient into a local patient possible?
   def remote_local_merge?(primary_patient_ids, secondary_patient_ids)
     !(primary_patient_ids['patient_id'].blank? || secondary_patient_ids['doc_id'].blank?)
+  end
+
+  # Like `remote_local_merge` but primary is remote and secondary is local
+  def inverted_remote_local_merge?(primary_patient_ids, secondary_patient_ids)
+    !(primary_patient_ids['doc_id'].blank? || secondary_patient_ids['patient_id'].blank?)
   end
 
   # Is a merge of local patients possible?
