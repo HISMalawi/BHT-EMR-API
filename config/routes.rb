@@ -192,4 +192,5 @@ Rails.application.routes.draw do
   get '/api/v1/patient_weight_for_height_values' => 'api/v1/weight_for_height#index'
   get '/api/v1/booked_appointments' => 'api/v1/patient_appointments#booked_appointments'
   get '/api/v1/concept_set' => 'api/v1/concept_sets#show'
+  get '/api/v1/dashboard_stats' => 'api/v1/reports#index'
 end
