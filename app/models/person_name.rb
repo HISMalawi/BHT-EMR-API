@@ -8,7 +8,9 @@ class PersonName < VoidableRecord
   has_one :person_name_code, foreign_key: :person_name_id
 
   def self.validate_name_record(record, attr, value)
-    if !(value && value.size.between?(2, 20))
+    return if value.empty?
+
+    if !value.size.between?(2, 20)
       record.errors.add attr, 'Must be at least 2 and at most 20 characters long'
     elsif !(value.match?(/^\s*(!?\w+([-']\w+)*)+\s*$/) || value.match?('N/A'))
       record.errors.add attr, 'Does not look like a valid name'
