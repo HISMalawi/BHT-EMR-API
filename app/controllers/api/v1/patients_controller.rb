@@ -63,7 +63,8 @@ class Api::V1::PatientsController < ApplicationController
   end
 
   def visits
-    render json: service.find_patient_visit_dates(patient)
+    program = params[:program_id] ? Program.find(params[:program_id]) : nil
+    render json: service.find_patient_visit_dates(patient, program)
   end
 
   def find_median_weight_and_height
@@ -116,7 +117,8 @@ class Api::V1::PatientsController < ApplicationController
   # Returns all drugs received on last dispensation
   def last_drugs_received
     date = params[:date]&.to_date || Date.today
-    render json: service.patient_last_drugs_received(patient, date)
+    program_id = params[:program_id]
+    render json: service.patient_last_drugs_received(patient, date, program_id)
   end
 
   def remaining_bp_drugs
