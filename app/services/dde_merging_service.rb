@@ -5,9 +5,15 @@
 class DDEMergingService
   include ModelUtils
 
-  attr_accessor :dde_client
+  attr_accessor :parent, :dde_client
 
-  def initialize(dde_client)
+  # Initialise DDE's merging service.
+  #
+  # Parameters:
+  #   parent: Is the parent DDE service
+  #   dde_client: Is a configured DDE client
+  def initialize(parent, dde_client)
+    @parent = parent
     @dde_client = dde_client
   end
 
@@ -121,7 +127,7 @@ class DDEMergingService
 
     raise "Failed to merge patients on remote: #{status} - #{response}" unless status == 200
 
-    return save_remote_patient(response) if primary_patient_ids['patient_id'].blank?
+    return parent.save_remote_patient(response) if primary_patient_ids['patient_id'].blank?
 
     local_patient = link_local_to_remote_patient(Patient.find(primary_patient_ids['patient_id']), response)
     return local_patient if secondary_patient_ids['patient_id'].blank?
@@ -299,6 +305,43 @@ class DDEMergingService
     end
 
     nil
+  end
+
+  # Convert a DDE person to an openmrs person.
+  #
+  # NOTE: This creates a person on the database.
+  def save_remote_patient(remote_patient)
+    LOGGER.debug "Converting DDE person to openmrs: #{remote_patient}"
+
+    person = person_service.create_person(
+      birthdate: remote_patient['birthdate'],
+      birthdate_estimated: remote_patient['birthdate_estimated'],
+      gender: remote_patient['gender']
+    )
+
+    person_service.create_person_name(
+      person, given_name: remote_patient['given_name'],
+              family_name: remote_patient['family_name'],
+              middle_name: remote_patient['middle_name']
+    )
+
+    remote_patient_attributes = remote_patient['attributes']
+    person_service.create_person_address(
+      person, home_village: remote_patient_attributes['home_village'],
+              home_traditional_authority: remote_patient_attributes['home_traditional_authority'],
+              home_district: remote_patient_attributes['home_district'],
+              current_village: remote_patient_attributes['current_village'],
+              current_traditional_authority: remote_patient_attributes['current_traditional_authority'],
+              current_district: remote_patient_attributes['current_district']
+    )
+
+    person_service.create_person_attributes(
+      person, cell_phone_number: remote_patient_attributes['cellphone_number'],
+              occupation: remote_patient_attributes['occupation']
+    )
+
+    patient = Patient.create(patient_id: person.id)
+    merging_service.link_local_to_remote_patient(patient, remote_patient)
   end
 
   def patient_service

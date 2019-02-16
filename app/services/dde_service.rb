@@ -412,6 +412,6 @@ class DDEService
   end
 
   def merging_service
-    DDEMergingService.new(dde_client)
+    DDEMergingService.new(self, dde_client)
   end
 end
