@@ -137,6 +137,43 @@ class DDEService
     merging_service.link_local_to_remote_patient(patient, response)
   end
 
+  # Convert a DDE person to an openmrs person.
+  #
+  # NOTE: This creates a person on the database.
+  def save_remote_patient(remote_patient)
+    LOGGER.debug "Converting DDE person to openmrs: #{remote_patient}"
+
+    person = person_service.create_person(
+      birthdate: remote_patient['birthdate'],
+      birthdate_estimated: remote_patient['birthdate_estimated'],
+      gender: remote_patient['gender']
+    )
+
+    person_service.create_person_name(
+      person, given_name: remote_patient['given_name'],
+              family_name: remote_patient['family_name'],
+              middle_name: remote_patient['middle_name']
+    )
+
+    remote_patient_attributes = remote_patient['attributes']
+    person_service.create_person_address(
+      person, home_village: remote_patient_attributes['home_village'],
+              home_traditional_authority: remote_patient_attributes['home_traditional_authority'],
+              home_district: remote_patient_attributes['home_district'],
+              current_village: remote_patient_attributes['current_village'],
+              current_traditional_authority: remote_patient_attributes['current_traditional_authority'],
+              current_district: remote_patient_attributes['current_district']
+    )
+
+    person_service.create_person_attributes(
+      person, cell_phone_number: remote_patient_attributes['cellphone_number'],
+              occupation: remote_patient_attributes['occupation']
+    )
+
+    patient = Patient.create(patient_id: person.id)
+    merging_service.link_local_to_remote_patient(patient, remote_patient)
+  end
+
   private
 
   def find_remote_patients_by_npid(npid)
@@ -347,42 +384,6 @@ class DDEService
     dde_patient
   end
 
-  # Convert a DDE person to an openmrs person.
-  #
-  # NOTE: This creates a person on the database.
-  def save_remote_patient(remote_patient)
-    LOGGER.debug "Converting DDE person to openmrs: #{remote_patient}"
-
-    person = person_service.create_person(
-      birthdate: remote_patient['birthdate'],
-      birthdate_estimated: remote_patient['birthdate_estimated'],
-      gender: remote_patient['gender']
-    )
-
-    person_service.create_person_name(
-      person, given_name: remote_patient['given_name'],
-              family_name: remote_patient['family_name'],
-              middle_name: remote_patient['middle_name']
-    )
-
-    remote_patient_attributes = remote_patient['attributes']
-    person_service.create_person_address(
-      person, home_village: remote_patient_attributes['home_village'],
-              home_traditional_authority: remote_patient_attributes['home_traditional_authority'],
-              home_district: remote_patient_attributes['home_district'],
-              current_village: remote_patient_attributes['current_village'],
-              current_traditional_authority: remote_patient_attributes['current_traditional_authority'],
-              current_district: remote_patient_attributes['current_district']
-    )
-
-    person_service.create_person_attributes(
-      person, cell_phone_number: remote_patient_attributes['cellphone_number'],
-              occupation: remote_patient_attributes['occupation']
-    )
-
-    patient = Patient.create(patient_id: person.id)
-    merging_service.link_local_to_remote_patient(patient, remote_patient)
-  end
 
   def filter_person_attributes(person_attributes)
     return nil unless person_attributes
