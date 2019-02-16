@@ -25,8 +25,8 @@ module ARTService
     def patient_last_drugs_received(patient, ref_date)
       dispensing_encounter = Encounter.joins(:type).where(
         'encounter_type.name = ? AND encounter.patient_id = ?
-         AND DATE(encounter_datetime) <= DATE(?)',
-        'DISPENSING', patient.patient_id, ref_date
+         AND DATE(encounter_datetime) <= DATE(?) AND program_id = ?',
+        'DISPENSING', patient.patient_id, ref_date, program('HIV Program').id
       ).order(encounter_datetime: :desc).first
 
       return [] unless dispensing_encounter

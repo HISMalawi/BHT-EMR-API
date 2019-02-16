@@ -61,12 +61,14 @@ class PatientService
     )
   end
 
-  def find_patient_visit_dates(patient)
+  def find_patient_visit_dates(patient, program = nil)
     patient_id = ActiveRecord::Base.connection.quote(patient.id)
+    program_id = program ? ActiveRecord::Base.connection.quote(program.id) : nil
 
     rows = ActiveRecord::Base.connection.select_all <<-SQL
       SELECT DISTINCT DATE(encounter_datetime) AS visit_date
-      FROM encounter WHERE patient_id = #{patient_id} AND voided = 0
+      FROM encounter
+      WHERE patient_id = #{patient_id} AND voided = 0 #{"AND program_id = #{program_id}" if program_id}
       GROUP BY visit_date
       ORDER BY visit_date DESC
     SQL
