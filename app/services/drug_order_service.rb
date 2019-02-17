@@ -13,7 +13,15 @@ module DrugOrderService
 
   class << self
     def find(filters)
-      DrugOrder.joins(:order, :encounter).where(*parse_search_filters(filters))
+      program_id = filters.delete(:program_id)
+      query = DrugOrder.joins(:order).where(*parse_search_filters(filters))
+
+      if program_id
+        query = query.merge(Order.joins(:encounter)\
+                                 .where(encounter: { program_id: program_id }))
+      end
+
+      query
     end
 
     # Creates drug orders in bulk.
