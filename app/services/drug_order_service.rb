@@ -3,7 +3,7 @@
 module DrugOrderService
   ORDER_PARAMS = %i[order_type_id concept_id orderer encounter_id start_date
                     auto_expire_date discontinued_date patient_id
-                    accession_number obs_id].freeze
+                    accession_number obs_id program_id].freeze
 
   DRUG_ORDER_PARAMS = %i[drug_inventory_id].freeze
 
@@ -13,7 +13,7 @@ module DrugOrderService
 
   class << self
     def find(filters)
-      DrugOrder.joins(:order).where(*parse_search_filters(filters))
+      DrugOrder.joins(:order, :encounter).where(*parse_search_filters(filters))
     end
 
     # Creates drug orders in bulk.
