@@ -16,7 +16,7 @@ module ANCService
     # The info is just what you would get on a patient information
     # confirmation page in an ANC application.
     def patient(patient_id, date)
-      #patient_summary(Patient.find(patient_id), date).full_summary
+      patient_summary(Patient.find(patient_id), date).full_summary
     end
 
     def anc_visit(patient, date)
@@ -38,6 +38,12 @@ module ANCService
             }.compact
         }.flatten rescue []
 
+    end
+
+    private
+
+    def patient_summary(patient, date)
+      PatientSummary.new patient, date
     end
     
   end

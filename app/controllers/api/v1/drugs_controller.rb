@@ -11,6 +11,8 @@ class Api::V1::DrugsController < ApplicationController
 
   def drug_sets
     drug_sets = {}
+    set_names = {}
+    set_descriptions = {}
     GeneralSet.where(["status =?", "active"]).each do |set|
 
       drug_sets[set.set_id] = {}
@@ -26,9 +28,12 @@ class Api::V1::DrugsController < ApplicationController
         drug_sets[set.set_id][d_set.drug_inventory_id]["units"] = drug.units
         drug_sets[set.set_id][d_set.drug_inventory_id]["duration"] = d_set.duration
         drug_sets[set.set_id][d_set.drug_inventory_id]["frequency"] = d_set.frequency
+        drug_sets[set.set_id][d_set.drug_inventory_id]["dose"] = drug.dose_strength
       end
     end 
-    render json: drug_sets
+    render json: {drug_sets: drug_sets, 
+      set_names: set_names, 
+      set_descriptions: set_descriptions}
   end
 
 end
