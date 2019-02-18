@@ -40,14 +40,26 @@ class TBService::LabTestsEngine
   end #health data
 
   #Create test with lims
-  def create_order(encounter:, date:, tests:, sample_type:, **kwargs)
+  def create_order(encounter:, date:, tests:, **kwargs)
     patient ||= encounter.patient
     date ||= encounter.encounter_datetime
 
+    #test will take TB specific parameters
+
     tests.collect do |test|
-      lims_order = nlims.order_tb_test(patient: patient, user: User.current, date: date, #changed this line
-                                    reason: test['reason'], test_type: [test['test_type']], sample_type: sample_type,
-                                    **kwargs)
+      lims_order = nlims.order_tb_test(patient: patient, 
+                                      user: User.current, 
+                                      date: date, 
+                                      reason: test['reason'], 
+                                      test_type: [test['test_type']],
+                                      sample_type: test['sample_type'],
+                                      sample_status: test['sample_status'],
+                                      target_lab: test['target_lab'],
+                                      recommended_examination: test['recommended_examination'],
+                                      treatment_history: test['treatment_history'],
+                                      sample_date: test['sample_date'],
+                                      sending_facility: test['sending_facility'],
+                                      **kwargs)
       accession_number = lims_order['tracking_number']
 
       #creation happening here

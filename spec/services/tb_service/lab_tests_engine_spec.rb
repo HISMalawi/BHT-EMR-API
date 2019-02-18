@@ -19,7 +19,7 @@ describe TBService::LabTestsEngine do
   let(:patient) { Patient.create( patient_id: person.person_id ) }
   let(:patient_identifier_type) { PatientIdentifierType.find_by_name('national id').id }
 	let(:patient_identifier) do 
-		PatientIdentifier.create(patient_id: patient.patient_id, identifier: 'P170000001234', 
+		PatientIdentifier.create(patient_id: patient.patient_id, identifier: 'P170000000013', 
 			identifier_type: patient_identifier_type, 
 			date_created: Time.now, creator: 1, location_id: 700) 
 	end
@@ -58,12 +58,21 @@ describe TBService::LabTestsEngine do
 
       sample_type = specimen_types.select { |type| type == 'Sputum'  }
       tests = [
-        {"test_type" => test_types.first, "reason" => "Patient a TB Suspect"},
-        {"test_type" => test_types.first, "reason" => "Another Test"}
+        {
+          "test_type" => test_types.first, 
+          "reason" => "Patient a TB Suspect",
+          "sample_type" => sample_type,
+          "sample_status" => "Spec Sample Status",
+          "target_lab" => "Spec TB Lab 1",
+          "recommended_examination" => "Spec GeneXpert",
+          "treatment_history" => "Spec New",
+          "sample_date" => Time.now,
+          "sending_facility" => "Spec TB Reception" #remove this
+        }
       ]
       user = person 
-      order = engine.create_order(encounter: encounter, date: date, tests: tests, sample_type: sample_type, requesting_clinician: user.person_id)	
-      expect(order)
+      order = engine.create_order(encounter: encounter, date: date, tests: tests, requesting_clinician: user.person_id)	
+      p expect(order)
 
 		end
 
