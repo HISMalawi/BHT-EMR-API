@@ -75,7 +75,7 @@ class PatientService
 
   def drugs_orders(patient, date)
     DrugOrder.joins(:order).where(
-      'orders.start_date <= ? AND patient_id = ?',
+      'orders.start_date <= ? AND patient_id = ? AND quantity IS NOT NULL',
       TimeUtils.day_bounds(date)[1], patient.patient_id
     ).order('orders.start_date DESC')
   end
@@ -96,7 +96,7 @@ class PatientService
       next unless obs.value_drug || drug_map.key?(obs.value_drug)
 
       order = obs.order
-      next unless order.drug_order
+      next unless order&.drug_order&.quantity
 
       drug_map[obs.value_drug] = order.drug_order
     end).values

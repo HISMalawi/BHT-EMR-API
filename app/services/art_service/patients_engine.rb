@@ -37,7 +37,7 @@ module ARTService
         next unless obs.value_drug || drug_map.key?(obs.value_drug)
 
         order = obs.order
-        next unless order.drug_order
+        next unless order&.drug_order&.quantity
 
         drug_map[obs.value_drug] = order.drug_order if order.drug_order.drug.arv?
       end).values
