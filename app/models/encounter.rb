@@ -62,7 +62,13 @@ class Encounter < VoidableRecord
   def after_void(reason)
     orders.each { |order| order.void(reason) }
 
-    observations.each { |observation| observation.void(reason) }
+    if encounter_type == EncounterType.find_by_name('ART ADHERENCE').id
+      # Hack for ART ADHERENCE that blocks observation from voiding any attached
+      # orders
+      observations.each { |observation| observation.void(reason, skip_after_void: true) }
+    else
+      observations.each { |observation| observation.void(reason) }
+    end
   end
 
   def encounter_type_name=(encounter_type_name)
