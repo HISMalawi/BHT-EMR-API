@@ -19,6 +19,10 @@ module ANCService
       patient_summary(Patient.find(patient_id), date).full_summary
     end
 
+    def visit_summary_label(patient, date)
+      ANCService::PatientVisitLabel.new patient, date
+    end
+
     def anc_visit(patient, date)
       last_lmp = patient.encounters.joins([:observations])
                   .where(['encounter_type = ? AND obs.concept_id = ?',
