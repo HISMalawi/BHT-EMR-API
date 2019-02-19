@@ -73,7 +73,9 @@ module DispensationService
       drug_order.quantity ||= 0
       drug_order.quantity += quantity.to_f
 
-      quantity_duration = drug_order.quantity_duration
+      # We assume patient start taking drugs on same day he/she receives them
+      # thus we subtract 1 from the duration.
+      quantity_duration = drug_order.quantity_duration - 1
       if quantity_duration > drug_order.duration
         order = drug_order.order
         order.auto_expire_date = order.start_date + quantity_duration.days
