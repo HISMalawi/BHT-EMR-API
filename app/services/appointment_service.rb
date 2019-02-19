@@ -151,6 +151,8 @@ class AppointmentService
     amount_dispensed = {}
 
     orders.each do |order|
+      next unless order.drug_order
+
       original_auto_expire_date = order.void_reason&.to_date
 
       if order.start_date.to_date == order.auto_expire_date.to_date\
@@ -277,9 +279,9 @@ class AppointmentService
     auto_expire_date = orders.last.auto_expire_date.to_date
 
     orders.each do |order|
-      drug = order.drug_order.drug
+      drug = order.drug_order&.drug
 
-      next unless drug.arv? && optimized_hanging_pills[drug.id]
+      next unless drug&.arv? && optimized_hanging_pills[drug.id]
 
       hanging_pills = optimized_hanging_pills[drug.id].to_f
 
@@ -324,10 +326,10 @@ class AppointmentService
     orders = Order.where(order_id: orders.map(&:id)) # Why?
 
     orders.each do |order|
-      drug = order.drug_order.drug
+      drug = order.drug_order&.drug
       drug_order = order.drug_order
 
-      next unless drug.arv?
+      next unless drug&.arv?
 
       hanging_pills = optimized_hanging_pills[drug.id].to_f
       additional_days = (hanging_pills / (order.drug_order.equivalent_daily_dose.to_f))
