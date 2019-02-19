@@ -288,8 +288,8 @@ class AppointmentService
       next unless additional_days >= 1
 
       order.void_reason = order.auto_expire_date
-      order.auto_expire_date += additional_days.days
-      drug_order.quantity += hanging_pills
+      # We assume the patient starts taking drugs today thus we subtract one day
+      order.auto_expire_date = order.start_date + (additional_days + drug_order.quantity_duration - 1).days
 
       order.save
       drug_order.save
@@ -372,19 +372,19 @@ class AppointmentService
     SQL
 
     (amounts_brought_to_clinic || []).each do |amount|
-      @amounts_brought_to_clinic[amount['drug_inventory_id'].to_i] += (amount['value_numeric'].to_f rescue 0)
+      @amounts_brought_to_clinic[amount['drug_inventory_id'].to_i] = amount['value_numeric'].to_f rescue 0
     end
 
-    amounts_brought_to_clinic = ActiveRecord::Base.connection.select_all <<-SQL
-      SELECT obs.*, d.* FROM obs INNER JOIN drug d ON d.concept_id = obs.concept_id AND obs.voided = 0
-      WHERE obs.obs_datetime BETWEEN '#{session_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
-      AND '#{session_date.to_date.strftime('%Y-%m-%d 23:59:59')}' AND person_id = #{patient.id}
-      AND value_numeric IS NOT NULL AND obs.voided = 0;
-    SQL
+    # amounts_brought_to_clinic = ActiveRecord::Base.connection.select_all <<-SQL
+    #   SELECT obs.*, d.* FROM obs INNER JOIN drug d ON d.concept_id = obs.concept_id AND obs.voided = 0
+    #   WHERE obs.obs_datetime BETWEEN '#{session_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
+    #   AND '#{session_date.to_date.strftime('%Y-%m-%d 23:59:59')}' AND person_id = #{patient.id}
+    #   AND value_numeric IS NOT NULL AND obs.voided = 0;
+    # SQL
 
-    (amounts_brought_to_clinic || []).each do |amount|
-      @amounts_brought_to_clinic[amount['drug_id'].to_i] += (amount['value_numeric'].to_f rescue 0)
-    end
+    # (amounts_brought_to_clinic || []).each do |amount|
+    #   @amounts_brought_to_clinic[amount['drug_id'].to_i] += (amount['value_numeric'].to_f rescue 0)
+    # end
 
     @amounts_brought_to_clinic
   end
