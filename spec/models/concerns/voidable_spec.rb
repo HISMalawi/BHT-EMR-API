@@ -8,7 +8,7 @@ describe Voidable do
 
   current_user = User.current
 
-  before(:context) do
+  before(:each) do
     @voidable = (Class.new do
       include Voidable
 
@@ -96,5 +96,10 @@ describe Voidable do
   it 'triggers after_void callbacks' do
     @voidable.void :pumbwa
     expect(@voidable.after_void).to be :pumbwa
+  end
+
+  it 'does not trigger after_void callback if skip_after_void is true' do
+    @voidable.void :pumbwa, skip_after_void: true
+    expect(@voidable.after_void).to be_nil
   end
 end
