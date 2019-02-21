@@ -156,15 +156,6 @@ Rails.application.routes.draw do
 
       get '/current_time', to: 'time#current_time'
 
-      get '/dde/patients/find_by_npid', to: 'dde#find_patients_by_npid'
-      get '/dde/patients/find_by_name_and_gender', to: 'dde#find_patients_by_name_and_gender'
-      get '/dde/patients/import_by_doc_id', to: 'dde#import_patients_by_doc_id'
-      get '/dde/patients/import_by_name_and_gender', to: 'dde#import_patients_by_name_and_gender'
-      get '/dde/patients/import_by_npid', to: 'dde#import_patients_by_npid'
-      get '/dde/patients/match_by_demographics', to: 'dde#match_patients_by_demographics'
-      post '/dde/patients/reassign_npid', to: 'dde#reassign_patient_npid'
-      post '/dde/patients/merge', to: 'dde#merge_patients'
-
       get '/labels/location', to: 'locations#print_label'
 
       # Search
@@ -192,5 +183,12 @@ Rails.application.routes.draw do
   get '/api/v1/patient_weight_for_height_values' => 'api/v1/weight_for_height#index'
   get '/api/v1/booked_appointments' => 'api/v1/patient_appointments#booked_appointments'
   get '/api/v1/concept_set' => 'api/v1/concept_sets#show'
-  get '/api/v1/dashboard_stats' => 'api/v1/reports#index'
+
+    #sqa controller
+    get '/api/v1/dead_encounters' => 'api/v1/cleaning#index'
+    get '/api/v1/date_enrolled' => 'api/v1/cleaning#dateEnrolled'
+    get '/api/v1/start_date' => 'api/v1/cleaning#startDate'
+    get '/api/v1/male' => 'api/v1/cleaning#male'
+    get '/api/v1/incomplete_visits' => 'api/v1/cleaning#incompleteVisits'
+    
 end
