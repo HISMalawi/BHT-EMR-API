@@ -104,6 +104,9 @@ module ANCService
     # NOTE: By `relevant` above we mean encounters that matter in deciding
     # what encounter the patient should go for in this present time.
     def encounter_exists?(type)
+      if (type == encounter_type("TREATMENT"))
+        return patient_has_been_given_drugs?
+      end
       Encounter.where(type: type, patient: @patient)\
                .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
                .exists?
@@ -129,6 +132,30 @@ module ANCService
         .order(encounter_datetime: :desc).first.blank?
 
       ttv_order
+    end
+
+    def patient_has_been_given_drugs?
+      ttv_drug = Drug.find_by name: "TTV (0.5ml)"
+      drugs = []
+
+      drug_order = ActiveRecord::Base.connection.select_all(
+        "SELECT drug_order.drug_inventory_id FROM encounter INNER JOIN orders 
+          ON orders.encounter_id = encounter.encounter_id 
+          AND orders.voided = 0 
+        INNER JOIN drug_order ON drug_order.order_id = orders.order_id 
+        WHERE encounter.voided = 0 
+        AND (encounter.patient_id = #{@patient.patient_id} 
+          AND DATE(encounter.encounter_datetime) = DATE('#{@date}')) 
+          ORDER BY encounter.encounter_datetime DESC"
+      ).rows.collect{|d| drugs << d[0]}.compact
+      
+      drugs.delete(ttv_drug.id)
+
+      if drugs.length > 0
+        return true
+      else
+        return false
+      end
     end
 
     # Check if surgical history has been collected
