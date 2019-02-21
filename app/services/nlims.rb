@@ -58,6 +58,45 @@ class NLims
     response
   end
 
+  def order_tb_test(patient:, user:, test_type:, date:, reason:, sample_type:, sample_status:, 
+    target_lab:, recommended_examination:, treatment_history:, sample_date:, sending_facility:, requesting_clinician:)
+    patient_name = patient.person.names.first
+    user_name = user.person.names.first
+
+    temp_prefix = @api_prefix
+    @api_prefix = 'api/v3' #TB testing
+
+    response = post 'request_order', district: 'Lilongwe', #health facility district
+                                     health_facility_name: sending_facility, #healh facility name
+                                     first_name: patient_name.given_name,
+                                     last_name: patient_name.family_name,
+                                     middle_name: '',
+                                     date_of_birth: patient.person.birthdate,
+                                     gender: patient.person.gender,
+                                     national_patient_id: patient.national_id,
+                                     phone_number: '',
+                                     who_order_test_last_name: user_name.family_name,
+                                     who_order_test_first_name: user_name.given_name,
+                                     who_order_test_id: user.id,
+                                     order_location: 'TB',
+                                     date_sample_drawn: date,
+                                     tests: test_type,
+                                     sample_priority: reason,
+                                     art_start_date: 'not_applicable', #not applicable
+                                     sample_type: sample_type, #Added to satify for TB 
+                                     sample_status: sample_status, #Added to satify for TB 
+                                     target_lab: target_lab, #Added to satify for TB 
+                                     recommended_examination: recommended_examination, #Added to satify for TB
+                                     treatment_history: treatment_history, #Added to satify for TB 
+                                     sample_date: sample_date, #Mofified 'Add an actual one' Removed this
+                                     sending_facility: sending_facility,
+                                     requesting_clinician: requesting_clinician
+
+    @api_prefix = temp_prefix
+
+    response
+  end
+
   def patient_results(accession_number)
     get("query_results_by_tracking_number/#{accession_number}")
   end

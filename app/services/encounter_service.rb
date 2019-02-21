@@ -13,27 +13,28 @@ class EncounterService
              .first
   end
 
-  def create(type:, patient:, encounter_datetime: nil, provider: nil)
+  def create(type:, patient:, encounter_datetime: nil, provider: nil, program:)
     encounter_datetime ||= Time.now
     provider ||= User.current.person
 
     encounter = find_encounter(type: type, patient: patient, provider: provider,
-                               encounter_datetime: encounter_datetime)
+                               encounter_datetime: encounter_datetime, program: program)
 
     return encounter if encounter
 
     Encounter.create(
       type: type, patient: patient, provider: provider,
       encounter_datetime: encounter_datetime,
-      location_id: Location.current.id
+      location_id: Location.current.id,
+      program: program
     )
   end
 
   def update(encounter, patient: nil, type: nil, encounter_datetime: nil,
-             provider: nil)
+             provider: nil, program:)
     updates = {
       patient: patient, type: type, provider: provider,
-      encounter_datetime: encounter_datetime
+      program: program, encounter_datetime: encounter_datetime
     }
     updates = updates.keep_if { |_, v| !v.nil? }
 
@@ -41,7 +42,7 @@ class EncounterService
     encounter
   end
 
-  def find_encounter(type:, patient:, encounter_datetime:, provider:)
+  def find_encounter(type:, patient:, encounter_datetime:, provider:, program:)
     Encounter.where(type: type, patient: patient)\
              .where('encounter_datetime BETWEEN ? AND ?',
                     *TimeUtils.day_bounds(encounter_datetime))\

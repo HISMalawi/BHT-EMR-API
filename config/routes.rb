@@ -131,6 +131,8 @@ Rails.application.routes.draw do
         get '/lab_tests/locations' => 'lab_test_orders#locations'
         get '/lab_tests/labs' => 'lab_test_orders#labs'
         resources :program_reports, path: 'reports'
+
+       
       end
 
       namespace :types do
