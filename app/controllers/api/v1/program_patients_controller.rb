@@ -79,6 +79,11 @@ class Api::V1::ProgramPatientsController < ApplicationController
     render json: service.anc_visit(patient, date)
   end
 
+  # Get patient's HIV status from ART Program.
+  def art_hiv_status
+    render json: service.art_hiv_status(patient)
+  end
+
   protected
 
   def service

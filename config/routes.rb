@@ -114,6 +114,7 @@ Rails.application.routes.draw do
           get '/mastercard_data', to: 'program_patients#mastercard_data'
           #ANC
           get '/anc_visit', to: 'program_patients#anc_visit'
+          get '/art_hiv_status', to: 'program_patients#art_hiv_status'
           resources :patient_states, path: :states
         end
         resources :lab_test_types, path: 'lab_tests/types'
