@@ -9,9 +9,14 @@ class DDEService
   # Limit all find queries for local patients to this
   PATIENT_SEARCH_RESULTS_LIMIT = 10
 
+  attr_accessor :program
   cattr_accessor :connection # Holds current (shared) connection to DDE
 
   include ModelUtils
+
+  def initialize(program)
+    @program = program
+  end
 
   # Registers local OpenMRS patient in DDE
   #
@@ -348,28 +353,31 @@ class DDEService
   end
 
   def dde_client
-    return @dde_client if @dde_client
+    client = DDEClient.new
 
-    @dde_client = DDEClient.new
+    connection = @dde_connections[program.id]
 
-    LOGGER.debug 'Searching for a stored DDE connection'
-    if DDEService.connection
-      LOGGER.debug 'Stored DDE connection found'
-      @dde_client.connect(connection: DDEService.connection)
-      return @dde_client
-    end
+    @dde_connections[program.id] = if connection
+                                     client.restore_connection(connection)
+                                   else
+                                     client.connect(dde_config)
+                                   end
 
-    LOGGER.debug 'No stored DDE connection found... Loading config...'
-    DDEService.connection = @dde_client.connect(config: config)
-    @dde_client
+    client
   end
 
-  def config
-    app_config = YAML.load_file(DDE_CONFIG_PATH)
+  # Loads a dde client into the dde_clients_cache for the
+  def dde_config
+    main_config = YAML.load_file(DDE_CONFIG_PATH)['dde']
+    raise 'No configuration for DDE found' unless main_config
+
+    program_config = main_config[program.name.downcase]
+    raise "No DDE config for program #{program.name} found" unless program_config
+
     {
-      username: app_config['dde_username'],
-      password: app_config['dde_password'],
-      base_url: app_config['dde_url']
+      url: main_config['url'],
+      username: program_config['username'],
+      password: program_config['password']
     }
   end
 
@@ -405,7 +413,6 @@ class DDEService
     LOGGER.debug "Converted openmrs person to dde_patient: #{dde_patient}"
     dde_patient
   end
-
 
   def filter_person_attributes(person_attributes)
     return nil unless person_attributes
