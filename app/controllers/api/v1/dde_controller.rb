@@ -53,6 +53,10 @@ class Api::V1::DdeController < ApplicationController
   end
 
   def service
-    DDEService.new
+    DDEService.new(program: program)
+  end
+
+  def program
+    Program.find(params.require(:program_id))
   end
 end

@@ -4,7 +4,7 @@ class PatientService
   include ModelUtils
   include TimeUtils
 
-  def create_patient(person)
+  def create_patient(program, person)
     ActiveRecord::Base.transaction do
       patient = Patient.create(patient_id: person.id)
       unless patient.errors.empty?
@@ -12,7 +12,7 @@ class PatientService
       end
 
       if use_dde_service?
-        assign_patient_dde_npid(patient)
+        assign_patient_dde_npid(patient, program)
       else
         assign_patient_v3_npid(patient)
       end
@@ -25,7 +25,7 @@ class PatientService
   # Change patient's person id
   #
   # WARNING: THIS IS A DANGEROUS OPERATION...
-  def update_patient(patient, person_id = nil)
+  def update_patient(program, patient, person_id = nil)
     if person_id
       patient.person_id = person_id
       unless patient.save
@@ -33,7 +33,7 @@ class PatientService
       end
     end
 
-    dde_service.update_patient(patient) if use_dde_service?
+    dde_service(program).update_patient(patient) if use_dde_service?
 
     patient
   end
@@ -273,8 +273,8 @@ class PatientService
     global_property('dde_enabled').property_value&.strip == 'true'
   end
 
-  def dde_service
-    DDEService.new
+  def dde_service(program)
+    DDEService.new(program: program)
   end
 
   # Blesses patient with a v3 npid
@@ -284,8 +284,8 @@ class PatientService
   end
 
   # Blesses patient with a DDE npid
-  def assign_patient_dde_npid(patient)
-    dde_service.create_patient(patient)
+  def assign_patient_dde_npid(patient, program)
+    dde_service(program).create_patient(patient)
   end
 
   # Takes a list of BP readings and groups them into a visit trail.
