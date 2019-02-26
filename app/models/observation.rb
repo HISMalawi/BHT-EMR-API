@@ -34,6 +34,21 @@ class Observation < VoidableRecord
 
   has_many :concept_names, through: :concept
 
+  scope(:recent, lambda { |number|
+    joins(:encounter).order('obs_datetime DESC,date_created DESC').limit(number)
+  })
+  scope(:before, lambda { |date|
+    where(['obs_datetime < ? ', date]).order('obs_datetime DESC,date_created DESC').limit(1)
+  })
+  scope(:old, lambda { |number|
+    order('obs_datetime DESC,date_created DESC').limit(number)
+  })
+  scope(:question, lambda { |concept|
+    concept_id = concept.to_i
+    concept_id = ConceptName.where('name = ?', concept).first&.concept_id || 0 if concept_id == 0
+    where('concept_id = ?', concept_id)
+  })
+
   def as_json(options = {})
     super(options.merge(SERIALIZE_OPTIONS))
   end
