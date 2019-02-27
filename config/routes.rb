@@ -184,11 +184,11 @@ Rails.application.routes.draw do
   get '/api/v1/booked_appointments' => 'api/v1/patient_appointments#booked_appointments'
   get '/api/v1/concept_set' => 'api/v1/concept_sets#show'
 
-    #sqa controller
-    get '/api/v1/dead_encounters' => 'api/v1/cleaning#index'
-    get '/api/v1/date_enrolled' => 'api/v1/cleaning#dateEnrolled'
-    get '/api/v1/start_date' => 'api/v1/cleaning#startDate'
-    get '/api/v1/male' => 'api/v1/cleaning#male'
-    get '/api/v1/incomplete_visits' => 'api/v1/cleaning#incompleteVisits'
-    
+  #sqa controller
+  get '/api/v1/dead_encounters' => 'api/v1/cleaning#index'
+  get '/api/v1/date_enrolled' => 'api/v1/cleaning#dateEnrolled'
+  get '/api/v1/start_date' => 'api/v1/cleaning#startDate'
+  get '/api/v1/male' => 'api/v1/cleaning#male'
+  get '/api/v1/incomplete_visits' => 'api/v1/cleaning#incompleteVisits'
+  
 end
