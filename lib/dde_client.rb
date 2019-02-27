@@ -14,7 +14,7 @@ class DDEClient
   # or an old Connection.
   #
   # @return A Connection object that can be used to re-connect to DDE
-  def connect(url, username, password)
+  def connect(url:, username:, password:)
     @connection = establish_connection(url: url, username: username, password: password)
   end
 

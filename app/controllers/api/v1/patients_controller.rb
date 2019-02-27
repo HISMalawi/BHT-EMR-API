@@ -28,8 +28,9 @@ class Api::V1::PatientsController < ApplicationController
 
   def create
     person = Person.find(params.require(:person_id))
+    program = Program.find(params.require(:program_id))
 
-    render json: service.create_patient(person), status: :created
+    render json: service.create_patient(program, person), status: :created
   end
 
   def update
@@ -147,6 +148,7 @@ class Api::V1::PatientsController < ApplicationController
   private
 
   def patient
+    program = Program.find(params.require(:program_id))
     Patient.find(params[:id] || params[:patient_id])
   end
 
