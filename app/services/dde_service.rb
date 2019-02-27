@@ -10,11 +10,12 @@ class DDEService
   PATIENT_SEARCH_RESULTS_LIMIT = 10
 
   attr_accessor :program
-  cattr_accessor :connection # Holds current (shared) connection to DDE
 
   include ModelUtils
 
-  def initialize(program)
+  def initialize(program:)
+    raise InvalidParameterError, 'Program (program_id) is required' unless program
+
     @program = program
   end
 
@@ -355,13 +356,13 @@ class DDEService
   def dde_client
     client = DDEClient.new
 
-    connection = @dde_connections[program.id]
+    connection = dde_connections[program.id]
 
-    @dde_connections[program.id] = if connection
-                                     client.restore_connection(connection)
-                                   else
-                                     client.connect(dde_config)
-                                   end
+    dde_connections[program.id] = if connection
+                                    client.restore_connection(connection)
+                                  else
+                                    client.connect(dde_config)
+                                  end
 
     client
   end
@@ -443,5 +444,10 @@ class DDEService
 
   def merging_service
     DDEMergingService.new(self, dde_client)
+  end
+
+  # A cache for all connections to dde (indexed by program id)
+  def dde_connections
+    @@dde_connections ||= {}
   end
 end
