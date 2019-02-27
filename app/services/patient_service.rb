@@ -270,7 +270,11 @@ class PatientService
   end
 
   def use_dde_service?
-    global_property('dde_enabled').property_value&.strip == 'true'
+    begin
+      global_property('dde_enabled').property_value&.strip == 'true'
+    rescue
+      false
+    end
   end
 
   def dde_service(program)

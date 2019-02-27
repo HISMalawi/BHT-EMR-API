@@ -1485,7 +1485,7 @@ BEGIN
 
   SET @regimen_thirteen_a     := ('983');
 
-  SET @regimen_fourteen_a     := ('984,982');
+  SET @regimen_fourteen_a     := ('982,984');
 
   SET @regimen_fifteen_a      := ('969,982');
 
