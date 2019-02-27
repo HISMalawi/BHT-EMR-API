@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 class ReportService
  ENGINES = {
-  'HIV PROGRAM' => ARTService::ReportEngine
+  'HIV PROGRAM' => ARTService::ReportEngine,
+  'OPD PROGRAM' => OPDService::ReportEngine
  }.freeze
  LOGGER = Rails.logger
  
@@ -51,48 +52,52 @@ class ReportService
   File.unlink(path)
  end
 
+  def dashboard_stats(date)
+    engine(@program).dashboard_stats(date)
+  end
+
  private
 
- def engine(program)
-  ENGINES[program_name(program)].new
- end
-
- def program_name(program)
-  program.concept.concept_names.each do |concept_name|
-   name = concept_name.name.upcase
-   return name if ENGINES.include?(name)
+  def engine(program)
+    ENGINES[program_name(program)].new
   end
- end
 
- def report_type(name)
-  report_type = ReportType.find_by(name: name) # TODO: Also filter by program id
-  raise NotFoundError, "Report type, #{name}, not found" unless report_type
-
-  report_type
- end
-
- def find_report(type, name, start_date, end_date)
-  engine(@program).find_report(type: type, name: name,
-                 start_date: start_date, end_date: end_date)
- end
-
- def queue_report(start_date:, end_date:, type:, lock:, **kwargs)
-  kwargs[:start_date] = start_date.to_s
-  kwargs[:end_date] = end_date.to_s
-  kwargs[:type] = type.id
-  kwargs[:user] = User.current.user_id
-  kwargs[:lock] = lock.to_s
-
-  LOGGER.debug("Queueing #{type.name} report with arguments: #{kwargs}")
-  if @immediate_mode
-   ReportJob.perform_now(engine(@program).class.to_s, **kwargs)
-  else
-   ReportJob.perform_later(engine(@program).class.to_s, **kwargs)
+  def program_name(program)
+    program.concept.concept_names.each do |concept_name|
+      name = concept_name.name.upcase
+      return name if ENGINES.include?(name)
+    end
   end
- end
 
- def self.lock_file_path(report_type_name, start_date, end_date)
-  Rails.root.join('tmp', "#{report_type_name}-report-#{start_date}-to-#{end_date}.lock")
- end
+  def report_type(name)
+    report_type = ReportType.find_by(name: name) # TODO: Also filter by program id
+    raise NotFoundError, "Report type, #{name}, not found" unless report_type
+
+    report_type
+  end
+
+  def find_report(type, name, start_date, end_date)
+    engine(@program).find_report(type: type, name: name,
+                   start_date: start_date, end_date: end_date)
+  end
+
+  def queue_report(start_date:, end_date:, type:, lock:, **kwargs)
+    kwargs[:start_date] = start_date.to_s
+    kwargs[:end_date] = end_date.to_s
+    kwargs[:type] = type.id
+    kwargs[:user] = User.current.user_id
+    kwargs[:lock] = lock.to_s
+
+    LOGGER.debug("Queueing #{type.name} report with arguments: #{kwargs}")
+    if @immediate_mode
+     ReportJob.perform_now(engine(@program).class.to_s, **kwargs)
+    else
+     ReportJob.perform_later(engine(@program).class.to_s, **kwargs)
+    end
+  end
+
+  def self.lock_file_path(report_type_name, start_date, end_date)
+    Rails.root.join('tmp', "#{report_type_name}-report-#{start_date}-to-#{end_date}.lock")
+  end
 
 end

@@ -1,6 +1,7 @@
 class Api::V1::ReportsController < ApplicationController
   def index
-    stats = service.dashboard_stats
+    date = params.require %i[date]
+    stats = service.dashboard_stats(date.first)
 
     if stats
       render json: stats
@@ -14,10 +15,9 @@ class Api::V1::ReportsController < ApplicationController
   def service
     return @service if @service
 
-    program_id, date  = params.require %i[program_id date]
+    program_id, date = params.require %i[program_id date]
 
-    @service = ReportService.new program_id: program_id,
-                                 date: date
+    @service = ReportService.new program_id: program_id
     @service
   end
 end
