@@ -148,7 +148,6 @@ class Api::V1::PatientsController < ApplicationController
   private
 
   def patient
-    program = Program.find(params.require(:program_id))
     Patient.find(params[:id] || params[:patient_id])
   end
 
