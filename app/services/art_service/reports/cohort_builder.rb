@@ -1080,6 +1080,7 @@ module ARTService
         current_cohort_regimens = %w[
           0P 2P 4P 9P 11P 0A 2A 4A
           5A 6A 7A 8A 9A 10A 11A 12A
+          13A 14A 15A
         ]
 
         (data || []).each do |regimen_attr|
