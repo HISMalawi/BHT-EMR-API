@@ -46,7 +46,9 @@ module DispensationService
       patient = drug_order.order.patient
       encounter = current_encounter program, patient, date: date, create: true
 
-      update_quantity_dispensed(drug_order, quantity)
+      drug_order.quantity ||= 0
+      drug_order.quantity += quantity.to_f
+      drug_order.save
 
       # HACK: Change state of patient in HIV Program to 'On anteretrovirals'
       # once ARV's are detected. This should be moved away from here.
@@ -63,26 +65,8 @@ module DispensationService
         encounter_id: encounter.encounter_id,
         value_drug: drug_order.drug_inventory_id,
         value_numeric: quantity,
-        obs_datetime: date
+        obs_datetime: date # TODO: Prefer date passed by user
       )
-    end
-
-    # Updates the quantity dispensed of the drug_order and adjusts
-    # the auto_expiry_date if necessary
-    def update_quantity_dispensed(drug_order, quantity)
-      drug_order.quantity ||= 0
-      drug_order.quantity += quantity.to_f
-
-      # We assume patient start taking drugs on same day he/she receives them
-      # thus we subtract 1 from the duration.
-      quantity_duration = drug_order.quantity_duration - 1
-      if quantity_duration > drug_order.duration
-        order = drug_order.order
-        order.auto_expire_date = order.start_date + quantity_duration.days
-        order.save
-      end
-
-      drug_order.save
     end
 
     # Finds the most recent encounter for the given patient
