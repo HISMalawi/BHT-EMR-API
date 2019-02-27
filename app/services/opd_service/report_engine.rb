@@ -5,13 +5,12 @@ module OPDService
   class ReportEngine
     include ModelUtils
 
-    def initialize(program:, date:)
-      @program = program
-      @date = date
+    def initialize
     end
 
     # Retrieves the next encounter for bound patient
-    def dashboard_stats
+    def dashboard_stats(date)
+      @date = date.to_date
       stats = {}
       stats[:top] = {
         registered_today: registered_today('New patient'), 
