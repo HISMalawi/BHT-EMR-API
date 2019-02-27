@@ -43,8 +43,10 @@ class Api::V1::PeopleController < ApplicationController
 
     person.reload
 
-    # Hack trigger a patient update to force a DDE push if DDE is active
-    patient_service.update_patient(person.patient) if person.patient
+    if params[:program_id]
+      # Hack trigger a patient update to force a DDE push if DDE is active
+      patient_service.update_patient(program, person.patient) if person.patient
+    end
 
     render json: person, status: :ok
   end

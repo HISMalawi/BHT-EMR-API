@@ -9,9 +9,14 @@ class DDEService
   # Limit all find queries for local patients to this
   PATIENT_SEARCH_RESULTS_LIMIT = 10
 
+  attr_accessor :program
   cattr_accessor :connection # Holds current (shared) connection to DDE
 
   include ModelUtils
+
+  def initialize(program)
+    @program = program
+  end
 
   # Registers local OpenMRS patient in DDE
   #
@@ -135,6 +140,43 @@ class DDEService
     return save_remote_patient(response) unless patient
 
     merging_service.link_local_to_remote_patient(patient, response)
+  end
+
+  # Convert a DDE person to an openmrs person.
+  #
+  # NOTE: This creates a person on the database.
+  def save_remote_patient(remote_patient)
+    LOGGER.debug "Converting DDE person to openmrs: #{remote_patient}"
+
+    person = person_service.create_person(
+      birthdate: remote_patient['birthdate'],
+      birthdate_estimated: remote_patient['birthdate_estimated'],
+      gender: remote_patient['gender']
+    )
+
+    person_service.create_person_name(
+      person, given_name: remote_patient['given_name'],
+              family_name: remote_patient['family_name'],
+              middle_name: remote_patient['middle_name']
+    )
+
+    remote_patient_attributes = remote_patient['attributes']
+    person_service.create_person_address(
+      person, home_village: remote_patient_attributes['home_village'],
+              home_traditional_authority: remote_patient_attributes['home_traditional_authority'],
+              home_district: remote_patient_attributes['home_district'],
+              current_village: remote_patient_attributes['current_village'],
+              current_traditional_authority: remote_patient_attributes['current_traditional_authority'],
+              current_district: remote_patient_attributes['current_district']
+    )
+
+    person_service.create_person_attributes(
+      person, cell_phone_number: remote_patient_attributes['cellphone_number'],
+              occupation: remote_patient_attributes['occupation']
+    )
+
+    patient = Patient.create(patient_id: person.id)
+    merging_service.link_local_to_remote_patient(patient, remote_patient)
   end
 
   private
@@ -289,28 +331,31 @@ class DDEService
   end
 
   def dde_client
-    return @dde_client if @dde_client
+    client = DDEClient.new
 
-    @dde_client = DDEClient.new
+    connection = @dde_connections[program.id]
 
-    LOGGER.debug 'Searching for a stored DDE connection'
-    if DDEService.connection
-      LOGGER.debug 'Stored DDE connection found'
-      @dde_client.connect(connection: DDEService.connection)
-      return @dde_client
-    end
+    @dde_connections[program.id] = if connection
+                                     client.restore_connection(connection)
+                                   else
+                                     client.connect(dde_config)
+                                   end
 
-    LOGGER.debug 'No stored DDE connection found... Loading config...'
-    DDEService.connection = @dde_client.connect(config: config)
-    @dde_client
+    client
   end
 
-  def config
-    app_config = YAML.load_file(DDE_CONFIG_PATH)
+  # Loads a dde client into the dde_clients_cache for the
+  def dde_config
+    main_config = YAML.load_file(DDE_CONFIG_PATH)['dde']
+    raise 'No configuration for DDE found' unless main_config
+
+    program_config = main_config[program.name.downcase]
+    raise "No DDE config for program #{program.name} found" unless program_config
+
     {
-      username: app_config['dde_username'],
-      password: app_config['dde_password'],
-      base_url: app_config['dde_url']
+      url: main_config['url'],
+      username: program_config['username'],
+      password: program_config['password']
     }
   end
 
@@ -347,43 +392,6 @@ class DDEService
     dde_patient
   end
 
-  # Convert a DDE person to an openmrs person.
-  #
-  # NOTE: This creates a person on the database.
-  def save_remote_patient(remote_patient)
-    LOGGER.debug "Converting DDE person to openmrs: #{remote_patient}"
-
-    person = person_service.create_person(
-      birthdate: remote_patient['birthdate'],
-      birthdate_estimated: remote_patient['birthdate_estimated'],
-      gender: remote_patient['gender']
-    )
-
-    person_service.create_person_name(
-      person, given_name: remote_patient['given_name'],
-              family_name: remote_patient['family_name'],
-              middle_name: remote_patient['middle_name']
-    )
-
-    remote_patient_attributes = remote_patient['attributes']
-    person_service.create_person_address(
-      person, home_village: remote_patient_attributes['home_village'],
-              home_traditional_authority: remote_patient_attributes['home_traditional_authority'],
-              home_district: remote_patient_attributes['home_district'],
-              current_village: remote_patient_attributes['current_village'],
-              current_traditional_authority: remote_patient_attributes['current_traditional_authority'],
-              current_district: remote_patient_attributes['current_district']
-    )
-
-    person_service.create_person_attributes(
-      person, cell_phone_number: remote_patient_attributes['cellphone_number'],
-              occupation: remote_patient_attributes['occupation']
-    )
-
-    patient = Patient.create(patient_id: person.id)
-    merging_service.link_local_to_remote_patient(patient, remote_patient)
-  end
-
   def filter_person_attributes(person_attributes)
     return nil unless person_attributes
 
@@ -412,6 +420,6 @@ class DDEService
   end
 
   def merging_service
-    DDEMergingService.new(dde_client)
+    DDEMergingService.new(self, dde_client)
   end
 end
