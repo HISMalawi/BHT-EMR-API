@@ -34,6 +34,7 @@ class Api::V1::PeopleController < ApplicationController
 
   def update
     person = Person.find(params[:id])
+    program = Program.find_by_program_id(params[:program_id])
     update_params = params.permit!
 
     person_service.update_person(person, update_params)
@@ -43,10 +44,8 @@ class Api::V1::PeopleController < ApplicationController
 
     person.reload
 
-    if params[:program_id]
-      # Hack trigger a patient update to force a DDE push if DDE is active
-      patient_service.update_patient(program, person.patient) if person.patient
-    end
+    # Hack trigger a patient update to force a DDE push if DDE is active
+    patient_service.update_patient(program, person.patient) if person.patient
 
     render json: person, status: :ok
   end
