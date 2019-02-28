@@ -72,7 +72,7 @@ class DDEService
     locals = patient_service.find_patients_by_npid(npid).limit(PATIENT_SEARCH_RESULTS_LIMIT)
     remotes = find_remote_patients_by_npid(npid)
 
-    package_patients(locals, remotes)
+    package_patients(locals, remotes, auto_push_singular_local: true)
   end
 
   def find_patients_by_name_and_gender(given_name, family_name, gender)
@@ -216,8 +216,10 @@ class DDEService
   # Resolves local and remote patients and post processes the remote
   # patients to take on a structure similar to that of local
   # patients.
-  def package_patients(local_patients, remote_patients)
-    patients = resolve_patients(local_patients: local_patients, remote_patients: remote_patients)
+  def package_patients(local_patients, remote_patients, auto_push_singular_local: false)
+    patients = resolve_patients(local_patients: local_patients,
+                                remote_patients: remote_patients,
+                                auto_push_singular_local: auto_push_singular_local)
 
     patients[:remotes] = patients[:remotes].collect { |patient| localise_remote_patient(patient) }
 
@@ -246,7 +248,7 @@ class DDEService
   #   { resolved: [..,], locals: [...], remotes: [...] }
   #
   # NOTE: All resolved patients are available in the local database
-  def resolve_patients(local_patients:, remote_patients:)
+  def resolve_patients(local_patients:, remote_patients:, auto_push_singular_local: false)
     remote_patients = remote_patients.dup # Will be modifying this copy
 
     # Match all locals to remotes, popping out the matching patients from
@@ -267,10 +269,21 @@ class DDEService
       # HACK: Frontenders requested that if only a single patient exists
       # remotely and locally none exists, the remote patient should be
       # imported.
-      return { locals: [save_remote_patient(remote_patients[0])], remotes: [] }
+      resolved_patients = [save_remote_patient(remote_patients[0])]
+      remote_patients = []
+    elsif auto_push_singular_local && resolved_patients.size == 1\
+         && remote_patients.size.zero? && local_only_patient?(resolved_patients.first)
+      # ANOTHER HACK: Push local only patient to DDE
+      resolved_patients = [push_local_patient_to_dde(resolved_patients[0])]
     end
 
     { locals: resolved_patients, remotes: remote_patients }
+  end
+
+  # Checks if patient only exists on local database
+  def local_only_patient?(patient)
+    !(patient.patient_identifiers.where(type: patient_identifier_type('National id')).exists?\
+      && patient.patient_identifiers.where(type: patient_identifier_type('DDE person document id')).exists?)
   end
 
   # Matches local and remote patient
