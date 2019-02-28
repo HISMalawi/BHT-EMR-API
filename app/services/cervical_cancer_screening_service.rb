@@ -232,6 +232,46 @@ class CervicalCancerScreeningService
       end
     end
 
+    #>>>>>>>>>VIA DONE LOGIC>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    screening_report[:via_results_expired] = true
+
+    via_done_date_answer_string = patient.person.observations.recent(1).question("VIA DONE DATE").last.answer_string.squish.to_date rescue nil
+    unless via_done_date_answer_string.blank?
+      #@cervical_cancer_first_visit_patient = false
+      days_gone_after_via_done = (Date.today - via_done_date_answer_string).to_i #Total days Between Two Dates
+      if (days_gone_after_via_done < three_years)
+        screening_report[:via_referred] = true
+        screening_report[:via_results_expired] = false
+        screening_report[:remaining_days] = three_years - days_gone_after_via_done
+      end
+    end
+    screening_report[:via_results_expired] = true
+
+    via_done_date_answer_string = patient.person.observations.recent(1).question("VIA DONE DATE").last.answer_string.squish.to_date rescue nil
+    unless via_done_date_answer_string.blank?
+      #@cervical_cancer_first_visit_patient = false
+      days_gone_after_via_done = (Date.today - via_done_date_answer_string).to_i #Total days Between Two Dates
+      if (days_gone_after_via_done < three_years)
+        screening_report[:via_referred] = true
+        screening_report[:via_results_expired] = false
+        screening_report[:remaining_days] = three_years - days_gone_after_via_done
+      end
+    end
+
+    #>>>>>>>>VIA LOGIC END>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    via_referral_outcome_answers = Observation.joins([:encounter]).where(
+      ["person_id =? AND encounter_type =? AND concept_id =?",
+        patient.id, cervical_cancer_screening_encounter_type_id, via_referral_outcome_concept_id]
+    ).collect{|o|o.answer_string.squish.upcase}
+
+    via_referral_outcome_answers.each do |outcome|
+      if terminal_referral_outcomes.include?(outcome)
+        screening_report[:lesion_size_too_big] = false
+        screening_report[:terminal] = true
+        break
+      end
+    end
+
     screening_report
   end
 end
