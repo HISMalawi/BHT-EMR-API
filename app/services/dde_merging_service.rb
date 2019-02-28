@@ -68,7 +68,6 @@ class DDEMergingService
     doc_id_type = patient_identifier_type('DDE person document id')
 
     local_patient.patient_identifiers.where(type: [national_id_type, doc_id_type]) .each do |identifier|
-      print [identifier.id, identifier.identifier]
       if identifier.identifier_type == national_id_type.id && identifier.identifier.match?(/^\s*P\d{12}\s*$/i)
         # We have a v3 NPID that should get demoted to legacy national id
         create_local_patient_identifier(local_patient, identifier.identifier, 'Old Identification Number')
