@@ -162,6 +162,25 @@ module ARTService
                                 .compact
     end
 
+    def viral_load_result
+      lab_tests_engine.find_orders_by_patient(patient).each do |order|
+        order.tests.each do |test|
+          next unless test[:test_type].match?(/viral load/i)
+
+          values = test[:test_values].collect do |test_value|
+            next if test_value[:indicator].match?(/result_date/i)
+
+            test_value[:value]
+          end
+
+          values.join(', ')
+        end
+      end
+    rescue StandardError => e
+      Rails.logger.error "Failed to retrieve viral load result from LIMS: #{e}"
+      'N/A'
+    end
+
     def cpt; end
 
     private
