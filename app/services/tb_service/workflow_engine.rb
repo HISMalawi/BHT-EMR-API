@@ -48,17 +48,16 @@ module TBService
     ENCOUNTER_SM = {
       INITIAL_STATE => TB_INITIAL,
       TB_INITIAL => LAB_ORDERS,
-      LAB_ORDERS => TB_REGISTRATION,
-      TB_REGISTRATION => TB_RECEPTION,
-      TB_RECEPTION => VITALS,
+      LAB_ORDERS => VITALS,
       VITALS => END_STATE
     }.freeze
 
+    #For TB Initial == patient_not_visiting? patient_not_registered?
+    #for TB Registration == patient_not_visiting?
     STATE_CONDITIONS = {
-      TB_INITIAL => %i[tb_suspect_not_enrolled? patient_not_visiting? patient_not_registered?],
+      TB_INITIAL => %i[tb_suspect_not_enrolled?],
 			LAB_ORDERS => %i[patient_labs_not_ordered?],
-    	TB_REGISTRATION => %i[patient_not_registered? patient_not_visiting?],
-			VITALS => %i[patient_checked_in?]
+    	VITALS => %i[patient_checked_in?]
     }.freeze   
 
     # Concepts
@@ -72,11 +71,7 @@ module TBService
       case activity
         when /TB initial/i
           TB_INITIAL
-        when /TB reception/i
-          TB_RECEPTION
-        when /TB first visits/i
-          TB_REGISTRATION
-        when /TB registered suspect/i
+        when /TB lab orders/i
           LAB_ORDERS
         when /Vitals/i
           VITALS
