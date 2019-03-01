@@ -1440,23 +1440,23 @@ BEGIN
 
   SET @regimen_zero_p_one     := ('733,968');
   SET @regimen_zero_p_two     := ('22,733');
+  SET @regimen_zero_p_three   := ('969,968');
 
   SET @regimen_zero_a_one     := ('22,969');
-  SET @regimen_zero_a_two     := ('969,968');
 
   SET @regimen_two_p_one      := ('732');
   SET @regimen_two_p_two      := ('732,736');
   SET @regimen_two_p_three    := ('39,732');
+  SET @regimen_two_p_four     := ('731,736');
 
   SET @regimen_two_a_one      := ('731');
   SET @regimen_two_a_two      := ('39,731');
-  SET @regimen_two_a_three    := ('731,736');
 
   SET @regimen_four_p_one     := ('30,736');
   SET @regimen_four_p_two     := ('11,736');
+  SET @regimen_four_p_three   := ('30,39');
 
   SET @regimen_four_a_one     := ('11,39');
-  SET @regimen_four_a_two     := ('30,39');
 
   SET @regimen_five_a         := ('735');
 
@@ -1469,17 +1469,17 @@ BEGIN
   SET @regimen_nine_p_one     := ('74,733');
   SET @regimen_nine_p_two     := ('73,733');
   SET @regimen_nine_p_three   := ('733,979');
+  SET @regimen_nine_p_four    := ('74,969');
 
   SET @regimen_nine_a_one     := ('73,969');
-  SET @regimen_nine_a_two     := ('74,969');
 
   SET @regimen_ten_a          := ('73,734');
 
   SET @regimen_eleven_p_one   := ('74,736');
   SET @regimen_eleven_p_two   := ('73,736');
+  SET @regimen_eleven_p_three := ('39,74');
 
   SET @regimen_eleven_a_one   := ('39,73');
-  SET @regimen_eleven_a_two   := ('39,74');
 
   SET @regimen_twelve_a       := ('976,977,982');
 
@@ -1490,6 +1490,14 @@ BEGIN
   SET @regimen_fifteen_a      := ('969,982');
 
   /* Regimen ZERO ............................................................................. */
+  IF @drug_ids IN(@regimen_zero_a_one) AND (length(@drug_ids) = length(@regimen_zero_a_one)) THEN
+    SET regimen_cat = ('0A');
+  END IF;
+
+  IF @drug_ids IN(@regimen_zero_p_three) AND (length(@drug_ids) = length(@regimen_zero_p_three)) THEN
+    SET regimen_cat = ('0P');
+  END IF;
+  
   IF @drug_ids IN(@regimen_zero_p_one) AND (length(@drug_ids) = length(@regimen_zero_p_one)) THEN
     SET regimen_cat = ('0P');
   END IF;
@@ -1498,17 +1506,22 @@ BEGIN
     SET regimen_cat = ('0P');
   END IF;
 
-  IF @drug_ids IN(@regimen_zero_a_one) AND (length(@drug_ids) = length(@regimen_zero_a_one)) THEN
-    SET regimen_cat = ('0A');
-  END IF;
-
-  IF @drug_ids IN(@regimen_zero_a_two) AND (length(@drug_ids) = length(@regimen_zero_a_two)) THEN
-    SET regimen_cat = ('0A');
-  END IF;
   /* Regimen ZERO ENDS ............................................................................. */
 
 
   /* Regimen TWO ............................................................................. */
+  IF @drug_ids IN(@regimen_two_a_one) AND (length(@drug_ids) = length(@regimen_two_a_one)) THEN
+    SET regimen_cat = ('2A');
+  END IF;
+
+  IF @drug_ids IN(@regimen_two_a_two) AND (length(@drug_ids) = length(@regimen_two_a_two)) THEN
+    SET regimen_cat = ('2A');
+  END IF;
+
+  IF @drug_ids IN(@regimen_two_p_four) AND (length(@drug_ids) = length(@regimen_two_p_four)) THEN
+    SET regimen_cat = ('2P');
+  END IF;
+  
   IF @drug_ids IN(@regimen_two_p_one) AND (length(@drug_ids) = length(@regimen_two_p_one)) THEN
     SET regimen_cat = ('2P');
   END IF;
@@ -1521,22 +1534,19 @@ BEGIN
     SET regimen_cat = ('2P');
   END IF;
 
-  IF @drug_ids IN(@regimen_two_a_one) AND (length(@drug_ids) = length(@regimen_two_a_one)) THEN
-    SET regimen_cat = ('2A');
-  END IF;
-
-  IF @drug_ids IN(@regimen_two_a_two) AND (length(@drug_ids) = length(@regimen_two_a_two)) THEN
-    SET regimen_cat = ('2A');
-  END IF;
-
-  IF @drug_ids IN(@regimen_two_a_three) AND (length(@drug_ids) = length(@regimen_two_a_three)) THEN
-    SET regimen_cat = ('2A');
-  END IF;
   /* Regimen TWO ENDS............................................................................. */
 
 
 
   /* Regimen FOUR ............................................................................. */
+  IF @drug_ids IN(@regimen_four_a_one) AND (length(@drug_ids) = length(@regimen_four_a_one)) THEN
+    SET regimen_cat = ('4A');
+  END IF;
+
+  IF @drug_ids IN(@regimen_four_p_three) AND (length(@drug_ids) = length(@regimen_four_p_three)) THEN
+    SET regimen_cat = ('4P');
+  END IF;
+  
   IF @drug_ids IN(@regimen_four_p_one) AND (length(@drug_ids) = length(@regimen_four_p_one)) THEN
     SET regimen_cat = ('4P');
   END IF;
@@ -1545,13 +1555,6 @@ BEGIN
     SET regimen_cat = ('4P');
   END IF;
 
-  IF @drug_ids IN(@regimen_four_a_one) AND (length(@drug_ids) = length(@regimen_four_a_one)) THEN
-    SET regimen_cat = ('4A');
-  END IF;
-
-  IF @drug_ids IN(@regimen_four_a_two) AND (length(@drug_ids) = length(@regimen_four_a_two)) THEN
-    SET regimen_cat = ('4A');
-  END IF;
   /* Regimen FOUR ENDS............................................................................. */
 
 
@@ -1581,6 +1584,14 @@ BEGIN
 
 
   /* Regimen NINE............................................................................. */
+  IF @drug_ids IN(@regimen_nine_a_one) AND (length(@drug_ids) = length(@regimen_nine_a_one)) THEN
+    SET regimen_cat = ('9A');
+  END IF;
+
+  IF @drug_ids IN(@regimen_nine_p_four) AND (length(@drug_ids) = length(@regimen_nine_p_four)) THEN
+    SET regimen_cat = ('9P');
+  END IF;
+  
   IF @drug_ids IN(@regimen_nine_p_one) AND (length(@drug_ids) = length(@regimen_nine_p_one)) THEN
     SET regimen_cat = ('9P');
   END IF;
@@ -1593,13 +1604,6 @@ BEGIN
     SET regimen_cat = ('9P');
   END IF;
 
-  IF @drug_ids IN(@regimen_nine_a_one) AND (length(@drug_ids) = length(@regimen_nine_a_one)) THEN
-    SET regimen_cat = ('9A');
-  END IF;
-
-  IF @drug_ids IN(@regimen_nine_a_two) AND (length(@drug_ids) = length(@regimen_nine_a_two)) THEN
-    SET regimen_cat = ('9A');
-  END IF;
   /* Regimen NINE ENDS............................................................................. */
 
 
@@ -1618,12 +1622,12 @@ BEGIN
   IF @drug_ids IN(@regimen_eleven_p_two) AND (length(@drug_ids) = length(@regimen_eleven_p_two)) THEN
     SET regimen_cat = ('11P');
   END IF;
-
-  IF @drug_ids IN(@regimen_eleven_a_one) AND (length(@drug_ids) = length(@regimen_eleven_a_one)) THEN
-    SET regimen_cat = ('11A');
+  
+  IF @drug_ids IN(@regimen_eleven_p_three) AND (length(@drug_ids) = length(@regimen_eleven_p_three)) THEN
+    SET regimen_cat = ('11P');
   END IF;
 
-  IF @drug_ids IN(@regimen_eleven_a_two) AND (length(@drug_ids) = length(@regimen_eleven_a_two)) THEN
+  IF @drug_ids IN(@regimen_eleven_a_one) AND (length(@drug_ids) = length(@regimen_eleven_a_one)) THEN
     SET regimen_cat = ('11A');
   END IF;
   /* Regimen ELEVEN ENDS............................................................................. */
