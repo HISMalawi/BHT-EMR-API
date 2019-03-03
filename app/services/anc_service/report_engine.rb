@@ -7,8 +7,8 @@ module ANCService
     LOGGER = Rails.logger
 
     REPORTS = {
-      'COHORT' => ARTService::Reports::Cohort,
-      'COHORT_DISAGGREGATED' => ARTService::Reports::CohortDisaggregated,
+      'COHORT' => ANCService::Reports::Cohort,
+      #'COHORT_DISAGGREGATED' => ANCService::Reports::CohortDisaggregated,
       'VISITS' => ANCService::Reports::VisitsReport
     }.freeze
 
