@@ -8,6 +8,7 @@ module ANCService
 
     REPORTS = {
       'COHORT' => ANCService::Reports::Cohort,
+      'MONTHLY' => ANCService::Reports::Monthly,
       #'COHORT_DISAGGREGATED' => ANCService::Reports::CohortDisaggregated,
       'VISITS' => ANCService::Reports::VisitsReport
     }.freeze
