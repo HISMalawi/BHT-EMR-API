@@ -10,8 +10,30 @@ module ANCService
           # A fields description is simply "Indicator: Human Readable Name",
           # or "Human Readable Name". The former is for fields with an indicator
           # label and the latter is for fields without.
-          
-          
+
+          total_number_of_anc_visits: "Total number of Antenatal Visits",
+          new_visits: "New registered visits",
+          subsequent_visits: "Subsequent visits",
+          first_trimester: "Women visited in first trimester",
+          second_trimester: "Women visited in second trimester",
+          third_trimester: "Women visited in third trimester",
+          teeneger_pregnancies: "Teeneger pregnancies",
+          women_attending_all_anc_visits: "Women who attended all the ANC visits",
+          women_screened_for_syphilis: "Women checked for syphilis",
+          women_checked_hb: "Women checked for HB",
+          women_received_sp_one: "Women given one dose of SP",
+          women_received_sp_two: "Women given two SP doses",
+          women_received_sp_three: "Women given three SP doses",
+          women_received_ttv: "Women received TTV",
+          women_received_one_twenty_iron_tabs: "Women received 120 iron tablets",
+          women_received_albendazole: "Women receiced albendazole",
+          women_received_itn: "Women given bed nets",
+          women_tested_hiv_positive: "Women tested HIV Positive",
+          women_prev_hiv_positive: "Women previously tested HIV positive",
+          women_on_cpt: "Women on CPT",
+          women_on_art: "Women on ART",
+          total_number_of_outreach_clinic: "Total number of outreach clinics",
+          total_number_of_outreach_clinic_attended: "Total number of outreach clinics attended"
         }.freeze
   
         def initialize
