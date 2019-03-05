@@ -27,6 +27,42 @@ module OPDService
       return stats
     end
 
+    def diagnosis_by_address(start_date, end_date)
+      type = EncounterType.find_by_name 'Outpatient diagnosis'
+       
+      data = Encounter.where('encounter_datetime BETWEEN ? AND ?
+        AND encounter_type = ? AND value_coded IS NOT NULL
+        AND concept_id IN(6543, 6542)', 
+        start_date.to_date.strftime('%Y-%m-%d 00:00:00'), 
+        end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id).\
+        joins('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
+        INNER JOIN person p ON p.person_id = encounter.patient_id
+        RIGHT JOIN person_address a ON a.person_id = encounter.patient_id').\
+        select('encounter.encounter_type, obs.value_coded, p.*, 
+        a.state_province district, a.township_division ta, a.city_village village')
+    
+      stats = {}
+      
+      (data || []).each do |record|
+        concept = ConceptName.find_by_concept_id record['value_coded']
+        district  = record['district']
+        ta  = record['ta']
+        village = record['village']
+
+        address = "#{district}, #{ta}, #{village}"
+        if stats[concept.name].blank?
+          stats[concept.name] = {}
+          stats[concept.name][address] = 0
+        elsif stats[concept.name][address].blank?
+          stats[concept.name][address] = 0
+        end
+
+        stats[concept.name][address] += 1
+      end
+
+      return stats
+    end
+
     def registration(start_date, end_date)
       type = EncounterType.find_by_name 'PATIENT REGISTRATION'
        visit_type = ConceptName.find_by_name 'Type of visit'

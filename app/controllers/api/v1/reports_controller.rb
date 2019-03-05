@@ -24,6 +24,13 @@ class Api::V1::ReportsController < ApplicationController
     render json: stats
   end
 
+  def diagnosis_by_address
+    start_date, end_date = params.require %i[start_date end_date]
+    stats = service.diagnosis_by_address(start_date, end_date)
+
+    render json: stats
+  end
+
   private
 
   def service

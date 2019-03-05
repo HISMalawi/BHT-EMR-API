@@ -204,4 +204,5 @@ Rails.application.routes.draw do
   #OPD reports
   get '/api/v1/diagnosis' => 'api/v1/reports#diagnosis'
   get '/api/v1/registration' => 'api/v1/reports#registration'
+  get '/api/v1/diagnosis_by_address' => 'api/v1/reports#diagnosis_by_address'
 end
