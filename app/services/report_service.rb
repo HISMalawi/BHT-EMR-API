@@ -60,6 +60,10 @@ class ReportService
     engine(@program).diagnosis(start_date, end_date)
   end
 
+  def registration(start_date, end_date)
+    engine(@program).registration(start_date, end_date)
+  end
+
  private
 
   def engine(program)

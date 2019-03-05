@@ -27,6 +27,35 @@ module OPDService
       return stats
     end
 
+    def registration(start_date, end_date)
+      type = EncounterType.find_by_name 'PATIENT REGISTRATION'
+       visit_type = ConceptName.find_by_name 'Type of visit'
+
+      data = Encounter.where('encounter_datetime BETWEEN ? AND ?
+        AND encounter_type = ? AND value_coded IS NOT NULL
+        AND obs.concept_id = ?', start_date.to_date.strftime('%Y-%m-%d 00:00:00'), 
+        end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id, visit_type.concept_id).\
+        joins('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
+        INNER JOIN person p ON p.person_id = encounter.patient_id
+        INNER JOIN concept_name c ON c.concept_id = obs.value_coded').\
+        select('encounter.encounter_type, obs.value_coded, obs.obs_datetime, p.*, c.name visit_type')
+
+      stats = []
+      (data || []).each do |record| 
+        person = Person.find record['person_id']
+        stats << {
+          given_name: (person.names[0].given_name rescue nil),
+          family_name: (person.names[0].family_name rescue nil),
+          visit_type: record['visit_type'],
+          birthdate: record['birthdate'],
+          gender: record['gender'],
+          date: record['obs_datetime'].to_date
+        }
+      end
+
+      return stats
+    end
+
     def diagnosis(start_date, end_date)
       type = EncounterType.find_by_name 'Outpatient diagnosis'
        
