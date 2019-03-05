@@ -68,6 +68,10 @@ class ReportService
     engine(@program).diagnosis_by_address(start_date, end_date)
   end
 
+  def with_nids
+    engine(@program).with_nids
+  end
+
  private
 
   def engine(program)
