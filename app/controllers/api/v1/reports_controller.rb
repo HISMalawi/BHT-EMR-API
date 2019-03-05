@@ -10,6 +10,13 @@ class Api::V1::ReportsController < ApplicationController
     end
   end
 
+  def diagnosis
+    start_date, end_date = params.require %i[start_date end_date]
+    stats = service.diagnosis(start_date, end_date)
+
+    render json: stats
+  end
+
   private
 
   def service

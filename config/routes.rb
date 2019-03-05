@@ -194,11 +194,15 @@ Rails.application.routes.draw do
   get '/api/v1/concept_set' => 'api/v1/concept_sets#show'
   get '/api/v1/cervical_cancer_screening' => 'api/v1/cervical_cancer_screening#show'
 
-    #sqa controller
-    get '/api/v1/dead_encounters' => 'api/v1/cleaning#index'
-    get '/api/v1/date_enrolled' => 'api/v1/cleaning#dateEnrolled'
-    get '/api/v1/start_date' => 'api/v1/cleaning#startDate'
-    get '/api/v1/male' => 'api/v1/cleaning#male'
-    get '/api/v1/incomplete_visits' => 'api/v1/cleaning#incompleteVisits'
   get '/api/v1/dashboard_stats' => 'api/v1/reports#index'
+
+  # SQA controller
+  get '/api/v1/dead_encounters' => 'api/v1/cleaning#index'
+  get '/api/v1/date_enrolled' => 'api/v1/cleaning#dateEnrolled'
+  get '/api/v1/start_date' => 'api/v1/cleaning#startDate'
+  get '/api/v1/male' => 'api/v1/cleaning#male'
+  get '/api/v1/incomplete_visits' => 'api/v1/cleaning#incompleteVisits'
+
+  # OPD reports
+  get '/api/v1/diagnosis' => 'api/v1/reports#diagnosis'
 end

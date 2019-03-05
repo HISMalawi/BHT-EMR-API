@@ -56,6 +56,10 @@ class ReportService
     engine(@program).dashboard_stats(date)
   end
 
+  def diagnosis(start_date, end_date)
+    engine(@program).diagnosis(start_date, end_date)
+  end
+
  private
 
   def engine(program)
