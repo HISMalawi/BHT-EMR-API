@@ -5,7 +5,7 @@ class ReportService
   'OPD PROGRAM' => OPDService::ReportEngine
  }.freeze
  LOGGER = Rails.logger
- 
+
  def initialize(program_id:, immediate_mode: false, overwrite_mode: false)
   @program = Program.find(program_id)
   @immediate_mode = immediate_mode
@@ -58,6 +58,14 @@ class ReportService
 
   def diagnosis(start_date, end_date)
     engine(@program).diagnosis(start_date, end_date)
+  end
+
+  def registration(start_date, end_date)
+    engine(@program).registration(start_date, end_date)
+  end
+
+  def diagnosis_by_address(start_date, end_date)
+    engine(@program).diagnosis_by_address(start_date, end_date)
   end
 
  private
