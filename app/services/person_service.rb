@@ -39,9 +39,10 @@ class PersonService
   end
 
   def find_people_by_name_and_gender(given_name, family_name, gender)
-    Person.joins(:names).where(
+    Person.joins([:patient, :names]).where(
       'person.gender like ? AND person_name.given_name LIKE ?
-                            AND person_name.family_name LIKE ?',
+                            AND person_name.family_name LIKE ?
+       AND patient.patient_id = person.person_id',
       "#{gender}%", "#{given_name}%", "#{family_name}%"
     )
   end
