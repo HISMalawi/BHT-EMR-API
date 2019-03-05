@@ -201,4 +201,6 @@ Rails.application.routes.draw do
   get '/api/v1/male' => 'api/v1/cleaning#male'
   get '/api/v1/incomplete_visits' => 'api/v1/cleaning#incompleteVisits'
 
+  #OPD reports
+  get '/api/v1/diagnosis' => 'api/v1/reports#diagnosis'
 end

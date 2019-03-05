@@ -27,8 +27,102 @@ module OPDService
       return stats
     end
 
+    def diagnosis(start_date, end_date)
+      type = EncounterType.find_by_name 'Outpatient diagnosis'
+       
+      data = Encounter.where('encounter_datetime BETWEEN ? AND ?
+        AND encounter_type = ? AND value_coded IS NOT NULL
+        AND concept_id IN(6543, 6542)', 
+        start_date.to_date.strftime('%Y-%m-%d 00:00:00'), 
+        end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id).\
+        joins('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
+        INNER JOIN person p ON p.person_id = encounter.patient_id').\
+        select('encounter.encounter_type, obs.value_coded, p.*')
+      
+      stats = {}
+      (data || []).each do |record| 
+        age_group = get_age_group(record['birthdate'], end_date)
+        gender = record['gender']
+        concept = ConceptName.find_by_concept_id record['value_coded']
+        
+        next if gender.blank?
+
+        if stats[concept.name].blank?
+          stats[concept.name] = {
+            female_less_than_six_months: 0,
+            male_less_than_six_months: 0,
+            female_six_months_to_less_than_five_yrs: 0,
+            male_six_months_to_less_than_five_yrs: 0,
+            female_five_yrs_to_fourteen_years: 0,
+            male_five_yrs_to_fourteen_years: 0,
+            female_over_fourteen_years: 0,
+            male_over_fourteen_years: 0,
+            female_unknowns: 0,
+            male_unknowns: 0
+          }
+        end
+
+        if age_group == 'months < 6' && gender == 'F'
+          stats[concept.name][:female_less_than_six_months] += 1
+        elsif age_group == 'months < 6' && gender == 'M'
+          stats[concept.name][:male_less_than_six_months] += 1
+        elsif age_group == '6 months < 5 yrs' && gender == 'F'
+          stats[concept.name][:female_six_months_to_less_than_five_yrs] += 1
+        elsif age_group == '6 months < 5 yrs' && gender == 'M'
+          stats[concept.name][:male_six_months_to_less_than_five_yrs] += 1
+        elsif age_group == '5 yrs to 14 yrs' && gender == 'F'
+          stats[concept.name][:female_five_yrs_to_fourteen_years] += 1
+        elsif age_group == '5 yrs to 14 yrs' && gender == 'M'
+          stats[concept.name][:male_five_yrs_to_fourteen_years] += 1
+        elsif age_group == '> 14 yrs' && gender == 'F'
+          stats[concept.name][:female_over_fourteen_years] += 1
+        elsif age_group == '> 14 yrs' && gender == 'M'
+          stats[concept.name][:male_over_fourteen_years] += 1
+        elsif age_group == 'Unknown' && gender == 'F'
+          stats[concept.name][:female_unknowns] += 1
+        elsif age_group == 'Unknown' && gender == 'M'
+          stats[concept.name][:male_unknowns] += 1
+        end  
+      
+      end
+
+      return stats
+    end
+
     private
     
+    def get_age_group(birthdate, end_date)
+      begin
+        birthdate = birthdate.to_date
+        end_date  = end_date.to_date
+        months = age_in_months(birthdate, end_date) 
+      rescue
+        months = 'Unknown'
+      end
+         
+      if months < 6
+        return '< 6 months'
+      elsif months >= 6 && months < 56
+        return '6 months < 5 yrs'
+      elsif months >= 56 && months <= 168
+        return '5 yrs to 14 yrs'
+      elsif months > 168
+        return '> 14 yrs'
+      else
+        return 'Unknown'
+      end
+    end
+
+    def age_in_months(birthdate, today)
+      begin
+        years = (today.year - birthdate.year)
+        months = (today.month - birthdate.month)
+        return (years * 12) + months
+      rescue
+        return ''
+      end
+    end
+
     def registered_today(visit_type)
       type = EncounterType.find_by_name 'Patient registration'
       concept = ConceptName.find_by_name 'Type of visit'
