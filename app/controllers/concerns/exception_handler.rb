@@ -19,5 +19,9 @@ module ExceptionHandler
       errors << e.model_errors if e.model_errors
       render json: { errors: errors }, status: :bad_request
     end
+
+    rescue_from UnprocessableEntityError do |e|
+      render json: { errors: [e.message], entity: e.entity }, status: :unprocessable_entity
+    end
   end
 end
