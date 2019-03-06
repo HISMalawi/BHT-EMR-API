@@ -56,8 +56,7 @@ module TBService
     #for TB Registration == patient_not_visiting?
     STATE_CONDITIONS = {
       TB_INITIAL => %i[tb_suspect_not_enrolled? patient_labs_not_ordered?],
-			LAB_ORDERS => %i[patient_labs_not_ordered?],
-    	VITALS => %i[patient_checked_in?]
+			LAB_ORDERS => %i[patient_labs_not_ordered?]
     }.freeze   
 
     # Concepts

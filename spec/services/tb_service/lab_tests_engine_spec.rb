@@ -67,7 +67,8 @@ describe TBService::LabTestsEngine do
           "recommended_examination" => "Spec GeneXpert",
           "treatment_history" => "Spec New",
           "sample_date" => Time.now,
-          "sending_facility" => "Spec TB Reception" #remove this
+          "sending_facility" => "Spec TB Reception", #remove this
+          "time_line" => "NA" #could be follow
         }
       ]
       user = person 

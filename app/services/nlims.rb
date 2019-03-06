@@ -59,7 +59,7 @@ class NLims
   end
 
   def order_tb_test(patient:, user:, test_type:, date:, reason:, sample_type:, sample_status:, 
-    target_lab:, recommended_examination:, treatment_history:, sample_date:, sending_facility:, requesting_clinician:)
+    target_lab:, recommended_examination:, treatment_history:, sample_date:, sending_facility:, time_line: 'NA', requesting_clinician:)
     patient_name = patient.person.names.first
     user_name = user.person.names.first
 
@@ -90,6 +90,7 @@ class NLims
                                      treatment_history: treatment_history, #Added to satify for TB 
                                      sample_date: sample_date, #Mofified 'Add an actual one' Removed this
                                      sending_facility: sending_facility,
+                                     time_line: time_line,
                                      requesting_clinician: requesting_clinician
 
     @api_prefix = temp_prefix

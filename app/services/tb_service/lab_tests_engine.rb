@@ -59,6 +59,7 @@ class TBService::LabTestsEngine
                                       treatment_history: test['treatment_history'],
                                       sample_date: test['sample_date'],
                                       sending_facility: test['sending_facility'],
+                                      time_line: test['time_line'],
                                       **kwargs)
       accession_number = lims_order['tracking_number']
 
