@@ -7,6 +7,7 @@ module ANCService
       @program = program
       @date = date
       @user_activities = ""
+      @activities = load_user_activities
     end
 
     # Retrieves the next encounter for bound patient
@@ -46,6 +47,7 @@ module ANCService
     TREATMENT = 'TREATMENT'
     HIV_RECEPTION = 'HIV RECEPTION'
     ART_FOLLOWUP = 'ART_FOLLOWUP'
+    HIV_CLINIC_REGISTRATION = 'HIV CLINIC REGISTRATION'
 
     ONE_TIME_ENCOUNTERS = [
       OBSTETRIC_HISTORY,MEDICAL_HISTORY,
@@ -67,7 +69,8 @@ module ANCService
       ANC_EXAMINATION => APPOINTMENT,
       APPOINTMENT => TREATMENT,
       TREATMENT => ART_FOLLOWUP,
-      ART_FOLLOWUP => END_STATE
+      ART_FOLLOWUP => HIV_CLINIC_REGISTRATION,
+      HIV_CLINIC_REGISTRATION => END_STATE
     }.freeze
 
     STATE_CONDITIONS = {
@@ -93,6 +96,54 @@ module ANCService
 =end
     }.freeze
 
+    def load_user_activities
+      activities = user_property('Activities')&.property_value
+      encounters = (activities&.split(',') || []).collect do |activity|
+        # Re-map activities to encounters
+        puts activity
+        case activity
+        when /vitals/i
+          VITALS
+        when /dispensing/i
+          DISPENSING
+        when /anc visit type/i
+          ANC_VISIT_TYPE
+        when /obstetric history/i
+          OBSTETRIC_HISTORY
+        when /medical history/i
+          MEDICAL_HISTORY
+        when /surgical history/i
+          SURGICAL_HISTORY
+        when /social history/i
+          SOCIAL_HISTORY
+        when /lab results/i
+          LAB_RESULTS
+        when /current pregnancy/i
+          CURRENT_PREGNANCY
+        when /anc examination/i
+          ANC_EXAMINATION
+        when /hiv reception/i
+          HIV_RECEPTION
+        when /art_followup/i
+          ART_FOLLOWUP
+        when /HIV clinic consultations/i
+          HIV_CLINIC_CONSULTATION
+        when /appointment/i
+          APPOINTMENT
+        when /dispensation/
+          DISPENSING
+        when /treatment/i
+          TREATMENT
+        when /vitals/i
+          VITALS
+        else
+          Rails.logger.warn "Invalid ART activity in user properties: #{activity}"
+        end
+      end
+
+      Set.new(encounters)
+    end
+
     def next_state(current_state)
       ENCOUNTER_SM[current_state]
     end
@@ -111,6 +162,10 @@ module ANCService
     end
 
     def valid_state?(state)
+       if !@activities.include?(state)
+        return false
+      end
+
       if is_not_a_subsequent_visit? || !ONE_TIME_ENCOUNTERS.include?(state)
         return false if encounter_exists?(encounter_type(state))
       end

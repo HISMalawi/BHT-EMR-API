@@ -7,25 +7,39 @@ module ANCService
         LAB_RESULTS = EncounterType.find_by name: "LAB RESULTS"
         CURRENT_PREGNANCY = EncounterType.find_by name: "CURRENT PREGNANCY"
         YES = ConceptName.find_by name: "Yes"
+        NO  = ConceptName.find_by name: "No"
         WEEK_OF_FIRST_VISIT = ConceptName.find_by name: "Week of first visit"
         LMP = ConceptName.find_by name: "Date of Last Menstrual Period"
+        PREV_HIV_TEST = ConceptName.find_by name: "Previous HIV Test Results"
+        HIV_STATUS    = ConceptName.find_by name: "HIV Status"
+        NEGATIVE = ConceptName.find_by name: "Negative"
+        POSITIVE = ConceptName.find_by name: "Positive"
   
         include ModelUtils
   
         def build(cohort_struct, start_date, end_date)
           
           # Indicators for monthly patients in cohort report.
-          @monthly_patients = total_patients(start_date, 'monthly')
+          @monthly_patients = registrations(start_date.beginning_of_month, start_date.end_of_month)
           @patients_done_pregnancy_test = pregnancy_test_done(start_date)
+          @pregnancy_test_done_in_first_trim = pregnancy_test_done_in_first_trimester(start_date)
+          @first_new_hiv_negative = new_hiv_negative_first_visit(start_date)
+          @first_new_hiv_positive = new_hiv_positive_first_visit(start_date)
+          @prev_hiv_pos_first_visit = prev_hiv_positive_first_visit(start_date)
+
           cohort_struct.monthly_patient = @monthly_patients
           cohort_struct.pregnancy_test_done = @patients_done_pregnancy_test
-          cohort_struct.pregnancy_test_done_in_first_trimester = pregnancy_test_done_in_first_trimester(start_date)
+          cohort_struct.pregnancy_test_not_done = (@monthly_patients.uniq - @patients_done_pregnancy_test.uniq).uniq
+          cohort_struct.pregnancy_test_done_in_first_trimester = @pregnancy_test_done_in_first_trim
+          cohort_struct.pregnancy_test_not_done_in_first_trimester = (@patients_done_pregnancy_test - @pregnancy_test_done_in_first_trim).uniq
           cohort_struct.week_of_first_visit_zero_to_twelve = week_of_first_visit_zero_to_twelve(start_date)
-          cohort_struct.new_hiv_negative_first_visit = new_hiv_negative_first_visit(start_date)
-          cohort_struct.new_hiv_positive_first_visit = new_hiv_positive_first_visit(start_date)
-          cohort_struct.prev_hiv_positive_first_visit = prev_hiv_positive_first_visit(start_date)
+          cohort_struct.week_of_first_visit_plus_thirteen = week_of_first_visit_plus_thirteen(start_date)
+          cohort_struct.new_hiv_negative_first_visit = @first_new_hiv_negative
+          cohort_struct.new_hiv_positive_first_visit = @first_new_hiv_positive
+          cohort_struct.prev_hiv_positive_first_visit = @prev_hiv_pos_first_visit
           cohort_struct.pre_hiv_negative_first_visit = pre_hiv_negative_first_visit(start_date)
           cohort_struct.not_done_hiv_test_first_visit = not_done_hiv_test_first_visit(start_date)
+          cohort_struct.total_hiv_positive_first_visit = @first_new_hiv_positive + @prev_hiv_pos_first_visit
           cohort_struct.not_on_art_first_visit = not_on_art_first_visit(start_date)
           cohort_struct.on_art_before_anc_first_visit = on_art_before_anc_first_visit(start_date)
           cohort_struct.start_art_zero_to_twenty_seven_for_first_visit = start_art_zero_to_twenty_seven_for_first_visit(start_date)
@@ -71,6 +85,18 @@ module ANCService
   
         # private
 
+        # Get women registered within a specified period
+        def registrations(start_dt, end_dt)
+    
+          Encounter.joins(['INNER JOIN obs ON obs.person_id = encounter.patient_id'])
+            .where(['encounter_type = ? AND obs.concept_id = ? AND DATE(encounter_datetime) >= ? 
+              AND DATE(encounter_datetime) <= ? AND encounter.voided = 0',
+              CURRENT_PREGNANCY.id, LMP.concept_id, start_dt.to_date,end_dt.to_date])
+            .select(['MAX(value_datetime) lmp, patient_id'])
+            .group([:patient_id]).collect { |e| e.patient_id }.uniq
+
+        end
+
         def total_patients(date, type)
             anc_program = Program.find_by name: "ANC PROGRAM"
 
@@ -90,7 +116,7 @@ module ANCService
             Encounter.joins(:observations).where("encounter.encounter_type = ? AND obs.concept_id = ? 
                 AND value_coded = ? AND encounter.patient_id in (?)", 
                 LAB_RESULTS.id, preg_test.concept_id,YES.concept_id, 
-                @monthly_patients).collect{|e| e.patient_id }
+                @monthly_patients).collect{|e| e.patient_id }.compact.uniq
         end
 
         def pregnancy_test_done_in_first_trimester(date)
@@ -147,12 +173,9 @@ module ANCService
         def new_hiv_negative_first_visit(date)
             Encounter.find_by_sql(["SELECT e.patient_id FROM encounter e INNER JOIN obs o ON 
                   o.encounter_id = e.encounter_id AND e.voided = 0 
-                  WHERE o.concept_id = (SELECT concept_id FROM concept_name WHERE
-                    name = 'HIV status' LIMIT 1) AND (
-                    (o.value_coded = (SELECT concept_id FROM concept_name 
-                      WHERE name = 'Negative' LIMIT 1)) OR (o.value_text = 'Negative')) 
+                  WHERE o.concept_id = ? AND ((o.value_coded = ?) OR (o.value_text = 'Negative')) 
                   AND e.patient_id IN (?) AND e.encounter_datetime >= ? AND 
-                  e.encounter_datetime <= ?",
+                  e.encounter_datetime <= ?", HIV_STATUS.concept_id, NEGATIVE.concept_id,
                 @monthly_patients, date.to_date.beginning_of_month.strftime('%Y-%m-%d 00:00:00'),
                 date.to_date.end_of_month.strftime('%Y-%m-%d 23:59:59')]).map(&:patient_id).uniq
         end
@@ -192,11 +215,28 @@ module ANCService
         end
 
         def prev_hiv_positive_first_visit(date)
-            return []
+            
+          Encounter.find_by_sql(["SELECT e.patient_id FROM encounter e INNER JOIN obs o ON 
+                o.encounter_id = e.encounter_id AND e.voided = 0 
+                WHERE o.concept_id = ? AND ((o.value_coded = ?) OR (o.value_text = 'Negative')) 
+                AND e.patient_id IN (?) AND e.encounter_datetime >= ? AND 
+                e.encounter_datetime <= ?", PREV_HIV_TEST.concept_id, POSITIVE.concept_id,
+                @monthly_patients,
+                date.to_date.beginning_of_month.strftime('%Y-%m-%d 00:00:00'),
+                date.to_date.end_of_month.strftime('%Y-%m-%d 23:59:59')]).map(&:patient_id)
         end
 
         def pre_hiv_negative_first_visit(date)
-            return []
+          prev_neg = Encounter.find_by_sql(["SELECT e.patient_id FROM encounter e 
+                        INNER JOIN obs o ON o.encounter_id = e.encounter_id AND e.voided = 0 
+                        WHERE o.concept_id = ? AND ((o.value_coded = ?) OR (o.value_text = 'Negative')) 
+                        AND e.patient_id IN (?) AND e.encounter_datetime >= ? AND 
+                        e.encounter_datetime <= ?", PREV_HIV_TEST.concept_id, NEGATIVE.concept_id,
+                        @monthly_patients,
+                        date.to_date.beginning_of_month.strftime('%Y-%m-%d 00:00:00'),
+                        date.to_date.end_of_month.strftime('%Y-%m-%d 23:59:59')]).map(&:patient_id)
+          (prev_neg - @first_new_hiv_negative)
+
         end
 
         def not_done_hiv_test_first_visit(date)

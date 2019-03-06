@@ -13,7 +13,9 @@ module ANCService
           
           monthly_patient: "Monthly: New women registered within the reporting month",
           pregnancy_test_done: "Monthly: Patients undergone pregnancy test",
+          pregnancy_test_not_done: "Monthly: Patients who did not undergo pregnancy test",
           pregnancy_test_done_in_first_trimester: "Monthly: Patients undergone pregnancy test in the first trimester",
+          pregnancy_test_not_done_in_first_trimester: "Monthly: Patients who did not undergo pregnancy test in the first trimester",
           week_of_first_visit_zero_to_twelve: "Monthly: Patients visit in between 0 to 12 weeks of their pregnancy",
           week_of_first_visit_plus_thirteen: "Monthly: Patients visit in between 13 plus weeks of their pregnancy",
           new_hiv_negative_first_visit: "Monthly: New tested negative",
@@ -21,6 +23,7 @@ module ANCService
           prev_hiv_positive_first_visit: "Monthly: Previously tested positive",
           pre_hiv_negative_first_visit: "Monthly: Previously tested negative",
           not_done_hiv_test_first_visit: "Monthly: Patients not undergone HIV test",
+          total_hiv_positive_first_visit: "Monthly: Total number of patients with HIV positive",
           not_on_art_first_visit: "Monthly: Patients with HIV positive but not on ART treatment",
           on_art_before_anc_first_visit: "Monthly: Patients with HIV but started ART treatment before ANC visit",
           start_art_zero_to_twenty_seven_for_first_visit: "Monthy: Patients with HIV and started ART treatment between 0-27 weeks",
