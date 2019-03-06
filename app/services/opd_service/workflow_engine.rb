@@ -38,7 +38,7 @@ module OPDService
     END_STATE = 1 # End terminal for encounters graph
     SOCIAL_HISTORY = 'SOCIAL HISTORY'
     PATIENT_REGISTRATION = 'PATIENT REGISTRATION'
-
+=begin
     # Encounters graph
     ENCOUNTER_SM = {
       INITIAL_STATE => PATIENT_REGISTRATION,
@@ -50,9 +50,19 @@ module OPDService
       PATIENT_REGISTRATION => %i[patient_not_registered_today?],
       SOCIAL_HISTORY => %i[social_history_not_collected?]
     }.freeze
+=end
+    # Encounters graph
+    ENCOUNTER_SM = {
+      INITIAL_STATE => PATIENT_REGISTRATION
+    }.freeze
+
+    STATE_CONDITIONS = {
+      PATIENT_REGISTRATION => %i[patient_not_registered_today?]
+    }.freeze
 
     def load_user_activities
-      activities = ['Patient registration,Social history']
+      #activities = ['Patient registration,Social history']
+      activities = ['Patient registration']
       encounters = (activities&.split(',') || []).collect do |activity|
         # Re-map activities to encounters
         puts activity
