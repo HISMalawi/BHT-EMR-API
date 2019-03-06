@@ -1306,7 +1306,7 @@ module ARTService
         registered = []
 
         (@reason_for_starting || []).each do |r|
-          next unless reason_concept_ids.include?(r[:reason_for_starting_concept_id])
+          next unless reason_concept_ids.include?(r[:reason_for_starting_concept_id]) && !r[:reason_for_starting_concept_id].blank?
           next unless (r[:date_enrolled] >= start_date.to_date) && (r[:date_enrolled] <= end_date.to_date)
 
           registered << r
