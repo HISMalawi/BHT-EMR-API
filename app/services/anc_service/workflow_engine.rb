@@ -85,14 +85,11 @@ module ANCService
                           social_history_not_collected?],
       CURRENT_PREGNANCY => %i[is_not_a_subsequent_visit?
                       current_pregnancy_not_collected?],
-      ART_FOLLOWUP => %i[patient_is_not_hiv_positive?
-                      art_follow_up_not_collected?
-                      is_not_a_subsequent_visit?],
 =begin
-      DISPENSING => %i[patient_got_treatment?
-                       patient_has_not_completed_fast_track_visit?],
-      APPOINTMENT => %i[patient_got_treatment?
-                        dispensing_complete?]
+      ART_FOLLOWUP => %i[patient_is_not_hiv_positive?
+                      is_not_a_subsequent_visit?],
+      HIV_CLINIC_REGISTRATION => %i[patient_is_not_hiv_positive?
+                      is_not_a_subsequent_visit?],
 =end
     }.freeze
 
@@ -211,7 +208,7 @@ module ANCService
       end
     end
 
-    def patient_is_not_hiv_positive
+    def patient_is_not_hiv_positive?
       current_status = ConceptName.find_by name:'HIV Status'
       prev_test_done = Observation.where( person: @patient.person, concept: concept('Previous HIV Test Done'))\
           .order(obs_datetime: :desc)\
@@ -219,16 +216,12 @@ module ANCService
           &.value_coded || nil
       if (prev_test_done == 1065) #if value is Yes, check prev hiv status
         prev_hiv_test_res = Observation.where(["person_id = ? and concept_id = ? and obs_datetime > ?",
-            patient.person.id, ConceptName.find_by_name('Previous HIV Test Results').concept_id, date_of_lmp])\
+            @patient.person.id, ConceptName.find_by_name('Previous HIV Test Results').concept_id, date_of_lmp])\
           .order(obs_datetime: :desc)\
           .first\
           &.value_coded
         prev_status = ConceptName.find_by_concept_id(prev_hiv_test_res).name
         return false if prev_status.to_s.downcase == 'positive'
-      end
-
-      def art_follow_up_not_collected?
-        return false
       end
 
       hiv_test_res =  Observation.where(["person_id = ? and concept_id = ? and obs_datetime > ?",
@@ -243,6 +236,16 @@ module ANCService
         return false if hiv_status.downcase == 'positive'
         return true
     end
+
+    def date_of_lmp
+        last_lmp = @patient.encounters.joins([:observations])
+          .where(['encounter_type = ? AND obs.concept_id = ?',
+            EncounterType.find_by_name('Current pregnancy').id,
+            ConceptName.find_by_name('Last menstrual period').concept_id])
+          .last.observations.collect { 
+            |o| o.value_datetime 
+          }.compact.last.to_date rescue nil
+      end
 
     # Check if surgical history has been collected
 

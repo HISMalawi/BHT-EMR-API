@@ -28,20 +28,22 @@ class ANCService::Reports::VisitsReport
 
     reason_for_visit = ConceptName.find_by name: "Reason for visit"
     
-    Encounter.joins([:observations])
+    results = Encounter.joins([:observations])
         .where(["encounter_type = ? AND concept_id = ? 
             AND (DATE(encounter_datetime) BETWEEN (?) AND (?))",
             anc_visit_type.id, reason_for_visit.concept_id,
-            @start_date.strftime("%d/%m/%Y 00:00:00"), 
-            @start_date.strftime("%d/%m/%Y 23:59:59")])
+            @start_date.strftime("%Y-%m-%d 00:00:00"), 
+            @start_date.strftime("%Y-%m-%d 23:59:59")])
         .group(["person_id"])
         .select(["encounter.creator, encounter_datetime AS date, 
-            MAX(value_numeric) form_id"]).each do |data|
+            MAX(value_numeric) form_id"])
+
+    results.each do |data|
 
       cat = data.form_id.to_i
 
       cat = cat > 4 ? ">5" : cat.to_s
-      
+
       if data.creator.to_i == User.current.id.to_i
 
         @me["#{cat}"] += 1
