@@ -1,56 +1,57 @@
 # frozen_string_literal: true
+
 class ReportService
- ENGINES = {
-  'HIV PROGRAM' => ARTService::ReportEngine,
-  'OPD PROGRAM' => OPDService::ReportEngine
- }.freeze
- LOGGER = Rails.logger
+  ENGINES = {
+    'HIV PROGRAM' => ARTService::ReportEngine,
+    'OPD PROGRAM' => OPDService::ReportEngine
+  }.freeze
+  LOGGER = Rails.logger
 
- def initialize(program_id:, immediate_mode: false, overwrite_mode: false)
-  @program = Program.find(program_id)
-  @immediate_mode = immediate_mode
-  @overwrite_mode = overwrite_mode
- end
-
- def generate_report(name:, type:, start_date: Date.strptime('1900-01-01'),
-           end_date: Date.today, kwargs: {})
-  LOGGER.debug "Retrieving report, #{name}, for period #{start_date} to #{end_date}"
-  type = report_type(type)
-
-  report = @overwrite_mode ? nil : find_report(type, name, start_date, end_date)
-  return report if report
-
-  lock = self.class.acquire_report_lock(type.name, start_date, end_date)
-  return nil unless lock
-
-  LOGGER.debug("#{name} report not found... Queueing one...")
-  queue_report(name: name, type: type, start_date: start_date,
-         end_date: end_date, lock: lock, **kwargs)
-  nil
- end
-
- def self.acquire_report_lock(report_type_name, start_date, end_date)
-  path = lock_file_path(report_type_name, start_date, end_date)
-
-  if path.exist? && (File.stat(path).mtime + 12.hours) > Time.now
-   LOGGER.debug("Report is locked: #{path}")
-   return nil
+  def initialize(program_id:, immediate_mode: false, overwrite_mode: false)
+    @program = Program.find(program_id)
+    @immediate_mode = immediate_mode
+    @overwrite_mode = overwrite_mode
   end
 
-  File.open(path, 'w') do |fout|
-   fout << "Locked by #{User.current.username} @ #{Time.now}"
+  def generate_report(name:, type:, start_date: Date.strptime('1900-01-01'),
+                      end_date: Date.today, kwargs: {})
+    LOGGER.debug "Retrieving report, #{name}, for period #{start_date} to #{end_date}"
+    type = report_type(type)
+
+    report = @overwrite_mode ? nil : find_report(type, name, start_date, end_date)
+    return report if report
+
+    lock = self.class.acquire_report_lock(type.name, start_date, end_date)
+    return nil unless lock
+
+    LOGGER.debug("#{name} report not found... Queueing one...")
+    queue_report(name: name, type: type, start_date: start_date,
+                 end_date: end_date, lock: lock, **kwargs)
+    nil
   end
 
-  LOGGER.debug("Report lock file created: #{path}")
-  path
- end
+  def self.acquire_report_lock(report_type_name, start_date, end_date)
+    path = lock_file_path(report_type_name, start_date, end_date)
 
- def self.release_report_lock(path)
-  path = Pathname.new(path)
-  return unless path.exist?
+    if path.exist? && (File.stat(path).mtime + 12.hours) > Time.now
+      LOGGER.debug("Report is locked: #{path}")
+      return nil
+    end
 
-  File.unlink(path)
- end
+    File.open(path, 'w') do |fout|
+      fout << "Locked by #{User.current.username} @ #{Time.now}"
+    end
+
+    LOGGER.debug("Report lock file created: #{path}")
+    path
+  end
+
+  def self.release_report_lock(path)
+    path = Pathname.new(path)
+    return unless path.exist?
+
+    File.unlink(path)
+  end
 
   def dashboard_stats(date)
     engine(@program).dashboard_stats(date)
@@ -72,7 +73,7 @@ class ReportService
     engine(@program).with_nids
   end
 
- private
+  private
 
   def engine(program)
     ENGINES[program_name(program)].new
@@ -94,7 +95,7 @@ class ReportService
 
   def find_report(type, name, start_date, end_date)
     engine(@program).find_report(type: type, name: name,
-                   start_date: start_date, end_date: end_date)
+                                 start_date: start_date, end_date: end_date)
   end
 
   def queue_report(start_date:, end_date:, type:, lock:, **kwargs)
@@ -106,14 +107,13 @@ class ReportService
 
     LOGGER.debug("Queueing #{type.name} report with arguments: #{kwargs}")
     if @immediate_mode
-     ReportJob.perform_now(engine(@program).class.to_s, **kwargs)
+      ReportJob.perform_now(engine(@program).class.to_s, **kwargs)
     else
-     ReportJob.perform_later(engine(@program).class.to_s, **kwargs)
+      ReportJob.perform_later(engine(@program).class.to_s, **kwargs)
     end
   end
 
   def self.lock_file_path(report_type_name, start_date, end_date)
     Rails.root.join('tmp', "#{report_type_name}-report-#{start_date}-to-#{end_date}.lock")
   end
-
 end
