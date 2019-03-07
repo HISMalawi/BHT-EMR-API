@@ -51,21 +51,23 @@ class TBService::LabTestsEngine
                                       user: User.current, 
                                       date: date, 
                                       reason: test['reason'], 
-                                      test_type: [test['test_type']],
-                                      sample_type: test['sample_type'],
-                                      sample_status: test['sample_status'],
-                                      target_lab: test['target_lab'],
-                                      recommended_examination: test['recommended_examination'],
-                                      treatment_history: test['treatment_history'],
+                                      test_type: [test['test_type']], #observation
+                                      sample_type: test['sample_type'], #observation
+                                      sample_status: test['sample_status'], #observation
+                                      target_lab: test['target_lab'], #observation
+                                      recommended_examination: test['recommended_examination'], #observation
+                                      treatment_history: test['treatment_history'], #observation
                                       sample_date: test['sample_date'],
-                                      sending_facility: test['sending_facility'],
-                                      time_line: test['time_line'],
+                                      sending_facility: test['sending_facility'], #observation
+                                      time_line: test['time_line'], #observation
                                       **kwargs)
       accession_number = lims_order['tracking_number']
 
       #creation happening here
       local_order = create_local_order(patient, encounter, date, accession_number)
       save_reason_for_test(encounter, local_order, test['reason'])
+
+      #add other observations here
 
       { order: local_order, lims_order: lims_order }
     end
