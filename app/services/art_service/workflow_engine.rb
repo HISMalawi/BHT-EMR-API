@@ -77,7 +77,8 @@ module ARTService
                           patient_has_not_completed_fast_track_visit?],
       TREATMENT => %i[patient_should_get_treatment?
                       patient_has_not_completed_fast_track_visit?],
-      FAST_TRACK => %i[patient_got_treatment?
+      FAST_TRACK => %i[fast_track_activated?
+                       patient_got_treatment?
                        patient_not_on_fast_track?
                        patient_has_not_completed_fast_track_visit?],
       DISPENSING => %i[patient_got_treatment?
@@ -301,6 +302,11 @@ module ARTService
                                          .exists?
 
       !@fast_track_completed
+    end
+
+    # Check's whether fast track has been activated
+    def fast_track_activated?
+      global_property('enable.fast.track')&.property_value&.casecmp?('true')
     end
 
     def htn_workflow
