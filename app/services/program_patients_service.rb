@@ -1,6 +1,7 @@
 class ProgramPatientsService
   ENGINES = {
-    'HIV PROGRAM' => ARTService::PatientsEngine
+    'HIV PROGRAM' => ARTService::PatientsEngine,
+    'OPD PROGRAM' => OPDService::PatientsEngine
   }.freeze
 
   def initialize(program:)
