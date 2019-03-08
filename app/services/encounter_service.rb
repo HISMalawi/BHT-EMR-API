@@ -1,16 +1,17 @@
 # frozen_string_literal: true
 
 class EncounterService
-  def self.recent_encounter(encounter_type_name:, patient_id:, date: nil, start_date: nil)
+  def self.recent_encounter(encounter_type_name:, patient_id:, date: nil,
+                            start_date: nil, program_id: nil)
     start_date ||= Date.strptime('1900-01-01')
     date ||= Date.today
     type = EncounterType.find_by(name: encounter_type_name)
 
-    Encounter.where(type: type, patient_id: patient_id)\
-             .where('encounter_datetime BETWEEN ? AND ?',
-                    *TimeUtils.day_bounds(date))\
-             .order(encounter_datetime: :desc)\
-             .first
+    query = Encounter.where(type: type, patient_id: patient_id)\
+                     .where('encounter_datetime BETWEEN ? AND ?',
+                            *TimeUtils.day_bounds(date))
+    query = query.where(program_id: program_id) if program_id
+    query.order(encounter_datetime: :desc).first
   end
 
   def create(type:, patient:, program:, encounter_datetime: nil, provider: nil)

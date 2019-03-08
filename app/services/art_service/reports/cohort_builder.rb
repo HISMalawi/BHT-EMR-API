@@ -873,16 +873,11 @@ module ARTService
         unknown_adherence = []
 
         patients_alive_and_on_art.each do |patient|
-          adherence = patient_latest_art_adherence(patient['patient_id'], start_date, end_date)
+          adherence_rate = patient_latest_art_adherence(patient['patient_id'], start_date, end_date)
 
-          unless adherence
+          if adherence_rate.nil?
             unknown_adherence << patient
-            next
-          end
-
-          adherence_rate = (adherence.value_numeric || adherence.value_text).to_f
-
-          if adherence_rate >= ART_ADHERENCE_THRESHOLD
+          elsif adherence_rate >= ART_ADHERENCE_THRESHOLD
             adherent << patient
           else
             not_adherent << patient
@@ -898,13 +893,21 @@ module ARTService
           encounter_type_name: 'ART ADHERENCE',
           patient_id: patient_id,
           date: end_date,
-          start_date: start_date
+          start_date: start_date,
+          program_id: program('HIV Program').id
         )
         return nil unless encounter
 
-        encounter.observations.where(
-          concept: concept('Drug order adherence')
-        ).order(obs_datetime: :desc).first
+        lowest_adherence_rate = Float::MAX
+
+        encounter.observation.where(concept: concept('Drug order adherence')).each do |adherence|
+          adherence_rate = (adherence.value_numeric || adherence.value_text)&.to_f
+          next unless adherence_rate
+
+          lowest_adherence_rate = adherence_rate if adherence_rate < lowest_adherence_rate
+        end
+
+        lowest_adherence_rate
       end
 
       def unknown_side_effects(data, _start_date, end_date)
@@ -1682,7 +1685,7 @@ module ARTService
 
           patient_tab[order.patient_id] = person
         end
-=end      
+=end
       end
 
         def create_tmp_patient_table_2(end_date)
@@ -1815,26 +1818,26 @@ EOF
         data = ActiveRecord::Base.connection.select_all <<EOF
         SELECT e.patient_id  FROM temp_earliest_start_date e
         INNER JOIN orders o on e.patient_id = o.patient_id and o.voided = 0
-        INNER JOIN drug_order d on d.order_id = o.order_id 
-          AND d.drug_inventory_id IN(SELECT drug_id FROM drug 
+        INNER JOIN drug_order d on d.order_id = o.order_id
+          AND d.drug_inventory_id IN(SELECT drug_id FROM drug
           WHERE concept_id IN(SELECT concept_id FROM concept_set WHERE concept_set = 1085))
           WHERE date_enrolled <= '#{end_date.to_date}' and d.quantity >= 0
           AND o.start_date <= '#{end_date.to_date} 59:59:59'
         GROUP BY e.patient_id;
 EOF
 
-          
+
         patient_ids = []
         (data || []).each do |r|
           patient_ids << r['patient_id'].to_i
         end
-        
+
         ActiveRecord::Base.connection.execute <<EOF
           DELETE FROM temp_earliest_start_date WHERE patient_id NOT IN(#{patient_ids.join(',')});
 EOF
 
       end
-       
+
       def arv_orders
         Order.joins(:drug_order).where(
           'drug_order.drug_inventory_id in (?)', Drug.arv_drugs.collect(&:drug_id)
