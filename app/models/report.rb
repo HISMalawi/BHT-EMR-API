@@ -16,7 +16,6 @@ class Report < RetirableRecord
 
   def void_values(reason)
     values.each do |value|
-      print "#{value.class.superclass}\n"
       value.void(reason)
     end
   end
