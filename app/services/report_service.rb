@@ -18,7 +18,12 @@ class ReportService
     LOGGER.debug "Retrieving report, #{name}, for period #{start_date} to #{end_date}"
     type = report_type(type)
 
-    report = @overwrite_mode ? nil : find_report(type, name, start_date, end_date)
+    report = find_report(type, name, start_date, end_date)
+    if report && @overwrite_mode
+      report.void('Over-written by new report')
+      report = nil
+    end
+
     return report if report
 
     lock = self.class.acquire_report_lock(type.name, start_date, end_date)
