@@ -262,6 +262,7 @@ class AppointmentService
   end
 
   def exec_drug_order_adjustments(patient, date)
+    # TODO: filter recent encounter by program id
     encounter = EncounterService.recent_encounter(
       encounter_type_name: 'Treatment', patient_id: patient.patient_id,
       date: date
