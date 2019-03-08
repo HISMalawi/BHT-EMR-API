@@ -123,8 +123,8 @@ module ANCService
           HIV_RECEPTION
         when /art_followup/i
           ART_FOLLOWUP
-        when /HIV clinic consultations/i
-          HIV_CLINIC_CONSULTATION
+        when /hiv clinic registration/i
+          HIV_CLINIC_REGISTRATION
         when /appointment/i
           APPOINTMENT
         when /dispensation/
