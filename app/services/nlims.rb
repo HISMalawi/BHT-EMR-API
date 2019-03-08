@@ -64,9 +64,9 @@ class NLims
     user_name = user.person.names.first
 
     temp_prefix = @api_prefix
-    @api_prefix = 'api/v3' #TB testing
+    @api_prefix = 'api/v1' #TB testing
 
-    response = post 'request_order', district: 'Lilongwe', #health facility district
+    response = post 'create_order', district: 'Lilongwe', #health facility district
                                      health_facility_name: sending_facility, #healh facility name
                                      first_name: patient_name.given_name,
                                      last_name: patient_name.family_name,
