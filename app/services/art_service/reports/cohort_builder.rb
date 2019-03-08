@@ -887,22 +887,37 @@ module ARTService
         [adherent, not_adherent, unknown_adherence]
       end
 
+      def adherence_encounter
+        @adherence_encounter ||= encounter_type('ART ADHERENCE')
+      end
+
+      def hiv_program
+        @hiv_program ||= program('HIV PROGRAM')
+      end
+
+      def drug_order_adherence_concept
+        @drug_order_adherence_concept ||= concept('Drug order adherence')
+      end
+
       # Retrieve patient's latest adherence observation
       def patient_latest_art_adherence(patient_id, start_date, end_date)
-        encounter = EncounterService.recent_encounter(
-          encounter_type_name: 'ART ADHERENCE',
-          patient_id: patient_id,
-          date: end_date,
-          start_date: start_date,
-          program_id: program('HIV Program').id
-        )
+        encounter = Encounter.where(type: adherence_encounter, program: hiv_program,
+                                    patient_id: patient_id)\
+                             .where('encounter_datetime BETWEEN ? AND ?', start_date, end_date)\
+                             .order(:encounter_datetime)
+                             .last
+
         return nil unless encounter
 
         lowest_adherence_rate = Float::MAX
 
-        encounter.observation.where(concept: concept('Drug order adherence')).each do |adherence|
+        encounter.observation.where(concept: drug_order_adherence_concept).each do |adherence|
           adherence_rate = (adherence.value_numeric || adherence.value_text)&.to_f
           next unless adherence_rate
+
+          # TODO: Please optimise this... It's highly inefficient
+          drug = adherence.order&.drug_order&.drug
+          next if drug && !drug.arv?
 
           lowest_adherence_rate = adherence_rate if adherence_rate < lowest_adherence_rate
         end
