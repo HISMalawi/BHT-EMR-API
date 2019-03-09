@@ -217,4 +217,7 @@ Rails.application.routes.draw do
   get '/api/v1/registration' => 'api/v1/reports#registration'
   get '/api/v1/diagnosis_by_address' => 'api/v1/reports#diagnosis_by_address'
   get '/api/v1/with_nids' => 'api/v1/reports#with_nids'
+
+  
+  get '/api/v1/cohort_report_raw_data' => 'api/v1/reports#cohort_report_raw_data'
 end

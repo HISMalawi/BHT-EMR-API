@@ -78,6 +78,10 @@ class ReportService
     engine(@program).with_nids
   end
 
+  def cohort_report_raw_data(l1, l2)
+    engine(@program).cohort_report_raw_data(l1, l2)
+  end
+
   private
 
   def engine(program)

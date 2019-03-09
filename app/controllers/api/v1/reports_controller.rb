@@ -35,6 +35,13 @@ class Api::V1::ReportsController < ApplicationController
 
     render json: stats
   end
+  
+  def cohort_report_raw_data
+    limit, limit2 = params.require %i[limit limit2]
+    stats = service.cohort_report_raw_data(limit, limit2)
+
+    render json: stats
+  end
 
   private
 
