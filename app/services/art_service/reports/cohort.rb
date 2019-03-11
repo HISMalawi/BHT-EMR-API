@@ -58,7 +58,8 @@ EOF
             date_enrolled: record['date_enrolled'],
             earliest_start_date: record['earliest_start_date'],
             arv_number: record['arv_number'],
-            outcome:  record['cum_outcome']
+            outcome:  record['cum_outcome'],
+            art_reason: record['art_reason']
           }
         end
 
@@ -115,4 +116,6 @@ EOF
       end
     end
   end
+
+      
 end

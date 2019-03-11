@@ -82,6 +82,10 @@ class ReportService
     engine(@program).cohort_report_raw_data(l1, l2)
   end
 
+  def cohort_disaggregated(quarter, age_group)
+    engine(@program).cohort_disaggregated(quarter, age_group)
+  end
+
   private
 
   def engine(program)
