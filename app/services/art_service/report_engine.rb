@@ -21,36 +21,10 @@ module ARTService
     end
 
     def cohort_report_raw_data(l1, l2)
-      data = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT e.*, t2.cum_outcome,  
-      t3.identifier arv_number, t.birthdate,
-      t.gender, t4.given_name, t4.family_name
-      FROM temp_earliest_start_date e 
-      INNER JOIN person t ON t.person_id = e.patient_id
-      INNER JOIN temp_patient_outcomes t2 
-      ON t2.patient_id = e.patient_id
-      RIGHT JOIN patient_identifier t3 ON t3.patient_id = e.patient_id
-      AND t3.voided = 0 AND t3.identifier_type = 4 
-      RIGHT JOIN person_name t4 ON t4.person_id = e.patient_id
-      AND t4.voided = 0 GROUP BY t2.patient_id LIMIT #{l1}, #{l2};
-EOF
-
-      list = [];
-      (data || []).each do |record|
-        list << {
-          patient_id: record['patient_id'],
-          given_name: record['given_name'],
-          family_name: record['family_name'],
-          birthdate: record['birthdate'],
-          gender: record['gender'],
-          date_enrolled: record['date_enrolled'],
-          earliest_start_date: record['earliest_start_date'],
-          arv_number: record['arv_number'],
-          outcome:  record['cum_outcome']
-        }
-      end
-
-      return list
+      REPORTS['COHORT'].new(type: 'raw data', 
+        name: 'raw data', 
+        start_date: Date.today,
+        end_date: Date.today).raw_data(l1, l2)
     end
 
     private
