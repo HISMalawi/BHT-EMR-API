@@ -85,12 +85,10 @@ module ANCService
                           social_history_not_collected?],
       CURRENT_PREGNANCY => %i[is_not_a_subsequent_visit?
                       current_pregnancy_not_collected?],
-=begin
-      ART_FOLLOWUP => %i[patient_is_not_hiv_positive?
-                      is_not_a_subsequent_visit?],
-      HIV_CLINIC_REGISTRATION => %i[patient_is_not_hiv_positive?
-                      is_not_a_subsequent_visit?],
-=end
+      ART_FOLLOWUP => %i[patient_is_hiv_positive?],
+      HIV_CLINIC_REGISTRATION => %i[patient_is_hiv_positive?
+                      proceed_to_pmtct?],
+
     }.freeze
 
     def load_user_activities
@@ -119,8 +117,6 @@ module ANCService
           CURRENT_PREGNANCY
         when /anc examination/i
           ANC_EXAMINATION
-        when /hiv reception/i
-          HIV_RECEPTION
         when /art_followup/i
           ART_FOLLOWUP
         when /hiv clinic registration/i
@@ -208,7 +204,7 @@ module ANCService
       end
     end
 
-    def patient_is_not_hiv_positive?
+    def patient_is_hiv_positive?
       current_status = ConceptName.find_by name:'HIV Status'
       prev_test_done = Observation.where( person: @patient.person, concept: concept('Previous HIV Test Done'))\
           .order(obs_datetime: :desc)\
@@ -221,7 +217,7 @@ module ANCService
           .first\
           &.value_coded
         prev_status = ConceptName.find_by_concept_id(prev_hiv_test_res).name
-        return false if prev_status.to_s.downcase == 'positive'
+        return true if prev_status.to_s.downcase == 'positive'
       end
 
       hiv_test_res =  Observation.where(["person_id = ? and concept_id = ? and obs_datetime > ?",
@@ -233,8 +229,8 @@ module ANCService
         hiv_status = ConceptName.find_by_concept_id(hiv_test_res).name rescue nil
         
         hiv_status ||= prev_status
-        return false if hiv_status.downcase == 'positive'
-        return true
+        return true if hiv_status.downcase == 'positive'
+        return false
     end
 
     def date_of_lmp
@@ -336,6 +332,20 @@ module ANCService
       curr_preg
     end
 
+    def proceed_to_pmtct?
+      art_followup = EncounterType.find_by name: ART_FOLLOWUP
+      pmtct = ConceptName.find_by name: "PMTCT"
+      yes   = ConceptName.find_by name: "Yes"
+
+      proceed = Encounter.joins([:observations])
+          .where("encounter_type = ? AND obs.concept_id = ? AND patient_id = ?  
+            AND (value_coded = ? OR value_text = 'Yes')",art_followup.id,
+            @patient.patient_id, pmtct.concept_id, yes.concept_id)
+          .order(encounter_datetime: :desc).first.blank?
+
+      !proceed
+
+    end
 
     def date_of_lnmp
       lmp = ConceptName.find_by name: "Last menstrual period"

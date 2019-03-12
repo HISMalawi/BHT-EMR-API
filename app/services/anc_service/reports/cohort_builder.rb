@@ -4,23 +4,83 @@ module ANCService
     module Reports
       class CohortBuilder
         COHORT_LENGTH = 6.months
-        LAB_RESULTS = EncounterType.find_by name: "LAB RESULTS"
+        LAB_RESULTS =       EncounterType.find_by name: "LAB RESULTS"
         CURRENT_PREGNANCY = EncounterType.find_by name: "CURRENT PREGNANCY"
+        ANC_VISIT_TYPE =    EncounterType.find_by name: "ANC VISIT TYPE"
+
         YES = ConceptName.find_by name: "Yes"
         NO  = ConceptName.find_by name: "No"
-        WEEK_OF_FIRST_VISIT = ConceptName.find_by name: "Week of first visit"
         LMP = ConceptName.find_by name: "Date of Last Menstrual Period"
-        PREV_HIV_TEST = ConceptName.find_by name: "Previous HIV Test Results"
-        HIV_STATUS    = ConceptName.find_by name: "HIV Status"
-        NEGATIVE = ConceptName.find_by name: "Negative"
-        POSITIVE = ConceptName.find_by name: "Positive"
+        TTV = ConceptName.find_by name: "TT STATUS"
+        WEEK_OF_FIRST_VISIT = ConceptName.find_by name: "Week of first visit"
+        REASON_FOR_VISIT =    ConceptName.find_by name: "Reason for visit"
+        PREV_HIV_TEST =       ConceptName.find_by name: "Previous HIV Test Results"
+        HIV_STATUS    =       ConceptName.find_by name: "HIV Status"
+        NEGATIVE =            ConceptName.find_by name: "Negative"
+        POSITIVE =            ConceptName.find_by name: "Positive"
+        DIAGNOSIS =           ConceptName.find_by name: "DIAGNOSIS"
+        PRE_ECLAMPSIA =       ConceptName.find_by name: "PRE-ECLAMPSIA"
+        
   
         include ModelUtils
   
         def build(cohort_struct, start_date, end_date)
+
+          # Monthly date ranges
+          @m_start_date = start_date
+          @m_end_date = end_date
+
+          # Cohort date ranges
+          @c_start_date = (start_date.to_date - COHORT_LENGTH)
+          @c_end_date = (end_date.to_date - COHORT_LENGTH)
+    
+          @today = end_date.to_date
           
+          @start_date = "#{start_date} 00:00:00"
+          @end_date = "#{end_date} 23:59:59"
+
+          @m_pregnant_range = (((@m_end_date.to_time - @m_start_date.to_time).round/(3600*24)) + 1).days
+          @c_pregnant_range = 6.months
+          
+         # @monthly_patients = registrations(start_date.beginning_of_month, start_date.end_of_month)
+          #@cohort_patients = total_patients(start_date, 'cohort')
+
+          # women registered in a booking cohort
+          @cohort_patients = registrations(@c_start_date.to_date.beginning_of_month, 
+                                            @c_end_date.to_date.end_of_month)
+      
+          # women registered in a reporting month
+          @monthly_patients = registrations(@m_start_date.beginning_of_month, @m_end_date.end_of_month)
+    
+     
+          c_max_date = ((@c_start_date.to_date + @c_pregnant_range) - 1.day).to_date
+          c_min_date = @c_start_date.to_date - 10.months
+    
+          m_max_date = ((@m_start_date.to_date + @m_pregnant_range) - 1.day).to_date
+          m_min_date = @m_start_date.to_date - 10.months
+    
+          @m_lmp = "(SELECT (max_patient_lmp(encounter.patient_id, '#{m_max_date.to_s}', '#{m_min_date.to_s}')))"
+          
+          @c_lmp = "(SELECT (max_patient_lmp(encounter.patient_id, '#{c_max_date.to_s}', '#{m_min_date.to_s}')))"
+     
+          lmp = "(SELECT DATE(MAX(o.value_datetime)) FROM obs o WHERE o.person_id = enc.patient_id "\
+                "AND o.concept_id = #{LMP.concept_id} AND DATE(o.obs_datetime) <= '#{c_max_date.to_s}' "\
+                "AND DATE(o.obs_datetime) >= '#{c_min_date.to_s}')"
+
+          visits_query = "SELECT #{lmp} lmp, enc.patient_id patient_id, "\
+                          "MAX(ob.value_numeric) form_id FROM encounter enc INNER JOIN obs ob "\
+                          "ON ob.encounter_id = enc.encounter_id WHERE enc.patient_id IN (?) "\
+                          "AND enc.encounter_type = ? AND ob.concept_id = ? AND "\
+                          "DATE(enc.encounter_datetime) <= ? AND DATE(enc.encounter_datetime) >= #{lmp} "\
+                          "GROUP BY enc.patient_id"
+    
+          @anc_visits = Encounter.find_by_sql([visits_query, @cohort_patients,ANC_VISIT_TYPE.id,
+                          REASON_FOR_VISIT.concept_id, c_max_date]).collect { |e| 
+                          [e.patient_id, e.form_id] 
+                        }
+
+
           # Indicators for monthly patients in cohort report.
-          @monthly_patients = registrations(start_date.beginning_of_month, start_date.end_of_month)
           @patients_done_pregnancy_test = pregnancy_test_done(start_date)
           @pregnancy_test_done_in_first_trim = pregnancy_test_done_in_first_trimester(start_date)
           @first_new_hiv_negative = new_hiv_negative_first_visit(start_date)
@@ -46,15 +106,14 @@ module ANCService
           cohort_struct.start_art_plus_twenty_eight_for_first_visit = start_art_plus_twenty_eight_for_first_visit(start_date)
 
           # Indicators for the cohort block
-          @cohort_patients = total_patients(start_date, 'cohort')
           cohort_struct.total_women_in_cohort = @cohort_patients
-          cohort_struct.patients_with_total_of_one_visit = patients_with_total_of_one_visit(start_date)
-          cohort_struct.patients_with_total_of_two_visits = patients_with_total_of_two_visits(start_date)
-          cohort_struct.patients_with_total_of_three_visits = patients_with_total_of_three_visits(start_date)
-          cohort_struct.patients_with_total_of_four_visits = patients_with_total_of_four_visits(start_date)
-          cohort_struct.patients_with_total_of_five_plus_visits = patients_with_total_of_five_plus_visits(start_date)
-          cohort_struct.patients_with_pre_eclampsia = patients_with_pre_eclampsia(start_date)
-          cohort_struct.patients_without_pre_eclampsia = patients_without_pre_eclampsia(start_date)
+          cohort_struct.patients_with_total_of_one_visit = @anc_visits.reject { |x, y| y != 1 }.collect { |x, y| x }.uniq
+          cohort_struct.patients_with_total_of_two_visits = @anc_visits.reject { |x, y| y != 2 }.collect { |x, y| x }.uniq
+          cohort_struct.patients_with_total_of_three_visits = @anc_visits.reject { |x, y| y != 3 }.collect { |x, y| x }.uniq
+          cohort_struct.patients_with_total_of_four_visits = @anc_visits.reject { |x, y| y != 4 }.collect { |x, y| x }.uniq
+          cohort_struct.patients_with_total_of_five_plus_visits = @anc_visits.reject { |x, y| y < 5 }.collect { |x, y| x }.uniq
+          cohort_struct.patients_with_pre_eclampsia = patients_with_pre_eclampsia
+          cohort_struct.patients_without_pre_eclampsia = @cohort_patients - cohort_struct.patients_with_pre_eclampsia
           cohort_struct.patients_given_ttv_less_than_two_doses = patients_given_ttv_less_than_two_doses(start_date)
           cohort_struct.patients_given_ttv_at_least_two_doses = patients_given_ttv_at_least_two_doses(start_date)
           cohort_struct.patients_given_zero_to_two_sp_doses = patients_given_zero_to_two_sp_doses(start_date)
@@ -108,6 +167,28 @@ module ANCService
                 anc_program.id, date.beginning_of_month.strftime("%Y-%m-%d 00:00:00"), 
                 date.end_of_month.strftime("%Y-%m-%d 23:59:59")).order("date_enrolled DESC").collect{|p| 
                     p.patient_id}.compact.uniq
+        end
+
+        def anc_visits(date)
+            @lmp = "(SELECT (max_patient_lmp(encounter.patient_id, '#{e_date.to_s}', '#{min_date.to_s}')))"
+     
+    @monthly_lmp = "(SELECT (max_patient_lmp(encounter.patient_id, '#{@today.to_date.end_of_month}', '#{@today.to_date.beginning_of_month - 10.months}')))"
+
+    lmp = "(SELECT DATE(MAX(o.value_datetime)) FROM obs o WHERE o.person_id = enc.patient_id
+            AND o.concept_id = #{LMP_CONCEPT.concept_id} AND DATE(o.obs_datetime) <= '#{e_date.to_s}'
+            AND DATE(o.obs_datetime) >= '#{min_date.to_s}')"
+    
+    @anc_visits = Encounter.find_by_sql(["SELECT #{lmp} lmp, enc.patient_id patient_id, MAX(ob.value_numeric) form_id FROM encounter enc
+                                        INNER JOIN obs ob ON ob.encounter_id = enc.encounter_id
+                                        WHERE enc.patient_id IN (?) AND enc.encounter_type = ?
+                                        AND ob.concept_id = ? AND DATE(enc.encounter_datetime) <= ?
+                                        AND DATE(enc.encounter_datetime) >= #{lmp}
+                                        GROUP BY enc.patient_id",
+        @cohort_patients,
+        ANC_VISIT_TYPE_ENCOUNTER.id,
+        ConceptName.find_by_name("Reason for visit").concept_id,
+        e_date
+      ]).collect { |e| [e.patient_id, e.form_id] }
         end
         
         def pregnancy_test_done(date)
@@ -259,48 +340,77 @@ module ANCService
             return []
         end
 
-        def patients_with_total_of_one_visit(date)
-            return []
-        end
-
-        def patients_with_total_of_two_visits(date)
-            return []
-        end
-
-        def patients_with_total_of_three_visits(date)
-            return []
-        end
-
-        def patients_with_total_of_four_visits(date)
-            return []
-        end
-
-        def patients_with_total_of_five_plus_visits(date)
-            return []
-        end
-
-        def patients_with_pre_eclampsia(date)
-            return []
-        end
-        
-        def patients_without_pre_eclampsia(date)
+        def patients_with_pre_eclampsia
+            
+            Encounter.joins([:observations])
+                .where(["concept_id = ? AND value_coded = ? AND DATE(encounter_datetime) "\
+                  "BETWEEN (#{@c_lmp}) AND (?) AND encounter.patient_id IN (?)",
+                DIAGNOSIS.concept_id, PRE_ECLAMPSIA.concept_id,
+                (@c_start_date.to_date + @c_pregnant_range), 
+                @cohort_patients]).collect { |e| e.patient_id }.uniq
             return []
         end
 
         def patients_given_ttv_less_than_two_doses(date)
-            return []
+            patients = {}
+            
+            Order.joins([[:drug_order => :drug], :encounter])
+                .where(["drug.name LIKE ? AND (DATE(encounter_datetime) >= ? "\
+                  "AND DATE(encounter_datetime) <= ?) AND encounter.patient_id IN (?) "\
+                  "AND orders.voided = 0", "%TTV%",@c_lmp, 
+                  ((@c_start_date.to_date + @c_pregnant_range) - 1.day), 
+                  @cohort_patients])
+                .group([:patient_id])
+                .select(["encounter.patient_id, count(*) encounter_id"]).collect { |o|
+                    [o.patient_id, o.encounter_id] }.delete_if { |p, e|
+                    v = 0;
+                    v = patients[p] if patients[p]
+                    v.to_i + e.to_i < 2}.collect { |x, y| x }.uniq
         end
         
         def patients_given_ttv_at_least_two_doses(date)
-            return []
+            patients = {}
+            
+            Order.joins([[:drug_order => :drug], :encounter])
+                .where(["drug.name LIKE ? AND (DATE(encounter_datetime) >= ? "\
+                  "AND DATE(encounter_datetime) <= ?) AND encounter.patient_id IN (?) "\
+                  "AND orders.voided = 0", "%TTV%",@c_lmp, 
+                  ((@c_start_date.to_date + @c_pregnant_range) - 1.day), 
+                  @cohort_patients])
+                .group([:patient_id])
+                .select(["encounter.patient_id, count(*) encounter_id"]).collect { |o|
+                    [o.patient_id, o.encounter_id] }.delete_if { |p, e|
+                    v = 0;
+                    v = patients[p] if patients[p]
+                    v.to_i + e.to_i > 1}.collect { |x, y| x }.uniq
         end
         
         def patients_given_zero_to_two_sp_doses(date)
-            return []
+            
+            Order.where("(drug.name = ? OR drug.name = ?) AND DATE(encounter_datetime) <= ? "\
+                  "AND encounter.patient_id IN (?)",
+                  "Sulphadoxine and Pyrimenthane (25mg tablet)","SP (3 tablets)",
+                  ((@c_start_date.to_date + @c_pregnant_range) - 1.day), @cohort_patients)
+                .joins([[:drug_order => :drug], :encounter])
+                .select(["encounter.patient_id, count(encounter.encounter_id) as count, "\
+                  "encounter_datetime, drug.name instructions"])
+                .group([:patient_id]).collect { |o|
+                  [o.patient_id, o.count]
+                }.compact.delete_if { |x, y| y.to_i > 2 }.collect { |p, c| p }.uniq
         end
         
         def patients_given_at_least_three_sp_doses(date)
-            return []
+            
+            Order.where("(drug.name = ? OR drug.name = ?) AND DATE(encounter_datetime) <= ? "\
+                  "AND encounter.patient_id IN (?)",
+                  "Sulphadoxine and Pyrimenthane (25mg tablet)","SP (3 tablets)",
+                  ((@c_start_date.to_date + @c_pregnant_range) - 1.day), @cohort_patients)
+                .joins([[:drug_order => :drug], :encounter])
+                .select(["encounter.patient_id, count(encounter.encounter_id) as count, "\
+                  "encounter_datetime, drug.name instructions"])
+                .group([:patient_id]).collect { |o|
+                  [o.patient_id, o.count]
+                }.compact.delete_if { |x, y| y.to_i < 3 }.collect { |p, c| p }.uniq
         end
         
         def patients_given_less_than_one_twenty_fefol_tablets(date)
