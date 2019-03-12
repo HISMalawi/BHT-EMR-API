@@ -66,6 +66,8 @@ EOF
       defaulter_date[row['patient_id'].to_i] = row['outcome_date']
     end
 
+    patient_ids = (patient_ids.length > 0 ? patient_ids : [0])
+
     clients = ActiveRecord::Base.connection.select_all("SELECT
     i.identifier, p.birthdate, p.gender, n.given_name,
     n.family_name, p.person_id, p.birthdate_estimated
@@ -74,7 +76,7 @@ EOF
     RIGHT JOIN person_address a ON a.person_id = t.patient_id AND a.voided = 0
     RIGHT JOIN person_name n ON n.person_id = t.patient_id AND n.voided = 0
     RIGHT JOIN patient_identifier i ON i.patient_id = t.patient_id AND i.voided = 0
-    AND i.identifier_type IN(2,3)
+    AND i.identifier_type IN(4)
     WHERE p.person_id IN(#{patient_ids.join(',')})
     GROUP BY i.identifier, p.birthdate, p.gender,
     n.given_name, n.family_name,
@@ -86,7 +88,7 @@ EOF
       clients_formatted << {
         given_name: c['given_name'], family_name: c['family_name'],
         birthdate: c['birthdate'], gender: c['gender'], person_id: c['person_id'],
-        npid: c['identifier'], birthdate_estimated: c['birthdate_estimated'],
+        arv_number: c['identifier'], birthdate_estimated: c['birthdate_estimated'],
         defaulter_date: defaulter_date[c['person_id'].to_i]
       }
     end
