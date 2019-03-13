@@ -14,8 +14,8 @@ module ANCService
 
       def initialize(name:, type:, start_date:, end_date:)
         @name = name
-        @start_date = start_date
-        @end_date = end_date
+        @start_date = start_date.to_date.beginning_of_month
+        @end_date = end_date.to_date.end_of_month
         @type = type
         @cohort_builder = MonthlyBuilder.new
         @cohort_struct = MonthlyStruct.new

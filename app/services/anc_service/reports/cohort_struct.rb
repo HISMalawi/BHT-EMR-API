@@ -58,11 +58,15 @@ module ANCService
           prev_hiv_positive_final_visit: "Cohort: Previously tested positive",
           pre_hiv_negative_final_visit: "Cohort: Previously tested negative",
           not_done_hiv_test_final_visit: "Cohort: Patients not undergone HIV test",
+          c_total_hiv_positive: "Cohort: Total patients with HIV patients",
           not_on_art_final_visit: "Cohort: Patients with HIV positive but not on ART treatment",
           on_art_before_anc_final_visit: "Cohort: Patients with HIV but started ART treatment before ANC visit",
           start_art_zero_to_twenty_seven_for_final_visit: "Cohort: Patients with HIV and started ART treatment between 0-27 weeks",
           start_art_plus_twenty_eight_for_final_visit: "Cohort: Patients with HIV positive and started ART treatment after 27 weeks",
-
+          not_on_cpt: "HIV positive patients on CPT",
+          on_cpt: "HIV positive patients not on CPT",
+          nvp_not_given: "HIV positive patients not given NVP",
+          nvp_given: "HIV positive patients given NVP",
           
         }.freeze
   
