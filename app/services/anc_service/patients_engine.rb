@@ -86,10 +86,75 @@ module ANCService
 
     end
 
+    def subsequent_visit(patient)
+      anc_visit = false
+      preg_test = false
+
+      lmp_date = date_of_lnmp(patient)
+      return {subsequent_visit: false, pregnancy_test: false} if lmp_date.nil?
+
+      unless lmp_date.nil?
+        visit_type = EncounterType.find_by name: "ANC VISIT TYPE"
+        reason_for_visit = ConceptName.find_by name: "Reason for visit"
+
+        visit = Encounter.joins(:observations).where("encounter.encounter_type = ?
+            AND concept_id = ? AND encounter.patient_id = ? AND 
+            DATE(encounter.encounter_datetime) >= DATE(?)",
+            visit_type.id, reason_for_visit.concept_id, 
+            patient.patient_id, lmp_date)
+          .order(encounter_datetime: :desc).first.blank?
+
+        unless visit
+          anc_visit = true
+          preg_test = pregnancy_test_done?(patient, lmp_date)
+        end
+      end
+
+      return {subsequent_visit: anc_visit, pregnancy_test: preg_test}
+    end
+
+    # Verifies if the last visit patient undergo pregnancy test
+    def pregnancy_test_done?(patient, checked_date)
+
+      lab_encounter   = EncounterType.find_by_name("LAB RESULTS")
+      pregnancy_test  = ConceptName.find_by_name("Pregnancy test")
+      yes_concept     = ConceptName.find_by_name("Yes")
+
+      last_test_visit = patient.encounters.joins([:observations])
+        .where(["encounter.encounter_type = ? AND (obs.concept_id = ?) 
+          AND encounter.encounter_datetime > ?", 
+          lab_encounter.id, 
+          pregnancy_test.concept_id,checked_date.to_date])
+        .order([:encounter_datetime])
+        .select("value_coded")
+        .last.value_coded #rescue nil
+  
+      if last_test_visit == yes_concept.concept_id
+        return true
+      end
+
+      return false
+
+    end
+
+    
+
     private
 
     def patient_summary(patient, date)
       PatientSummary.new patient, date
+    end
+
+    def date_of_lnmp(patient)
+      lmp = ConceptName.find_by name: "Last menstrual period"
+      current_pregnancy = EncounterType.find_by name: "CURRENT PREGNANCY"
+
+      last_lmp = patient.encounters.joins([:observations])
+        .where(['encounter_type = ? AND obs.concept_id = ?',
+          current_pregnancy.id,lmp.concept_id])
+        .last.observations.collect { 
+          |o| o.value_datetime 
+        }.compact.last.to_date rescue nil
     end
     
   end

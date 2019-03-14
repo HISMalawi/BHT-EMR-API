@@ -340,7 +340,7 @@ module ANCService
       proceed = Encounter.joins([:observations])
           .where("encounter_type = ? AND obs.concept_id = ? AND patient_id = ?  
             AND (value_coded = ? OR value_text = 'Yes')",art_followup.id,
-            @patient.patient_id, pmtct.concept_id, yes.concept_id)
+            pmtct.concept_id, @patient.patient_id, yes.concept_id)
           .order(encounter_datetime: :desc).first.blank?
 
       !proceed

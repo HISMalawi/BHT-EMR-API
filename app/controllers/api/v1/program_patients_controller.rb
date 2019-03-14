@@ -84,6 +84,11 @@ class Api::V1::ProgramPatientsController < ApplicationController
     render json: service.art_hiv_status(patient)
   end
 
+  # Check if the visit is subsequent
+  def subsequent_visit
+    render json: service.subsequent_visit(patient)
+  end
+
   protected
 
   def service
