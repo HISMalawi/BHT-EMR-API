@@ -9,7 +9,8 @@ class EncounterService
 
     query = Encounter.where(type: type, patient_id: patient_id)\
                      .where('encounter_datetime BETWEEN ? AND ?',
-                            *TimeUtils.day_bounds(date))
+                      start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
+                      date.to_date.strftime('%Y-%m-%d 23:59:59'))
     query = query.where(program_id: program_id) if program_id
     query.order(encounter_datetime: :desc).first
   end

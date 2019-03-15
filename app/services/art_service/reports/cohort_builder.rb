@@ -8,8 +8,10 @@ module ARTService
       include ModelUtils
 
       def build(cohort_struct, start_date, end_date)
-        load_tmp_patient_table(cohort_struct)
-        filter_temp_earliest_start_date_table_by_end_date(end_date)
+        #load_tmp_patient_table(cohort_struct)
+        create_tmp_patient_table
+        load_data_into_temp_earliest_start_date(end_date.to_date)
+         
         # create_tmp_patient_table_2(end_date)
 
         time_started = Time.now.strftime('%Y-%m-%d %H:%M:%S')
@@ -1779,8 +1781,6 @@ EOF
           ) ENGINE=MEMORY;'
         )
 
-        load_data_into_temp_earliest_start_date
-
         ActiveRecord::Base.connection.execute(
           'CREATE INDEX patient_id_index ON temp_earliest_start_date (patient_id)'
         )
@@ -1800,10 +1800,11 @@ EOF
         )
       end
 
-      def load_data_into_temp_earliest_start_date
-            ActiveRecord::Base.connection.execute <<EOF
+      def load_data_into_temp_earliest_start_date(end_date)
+
+        ActiveRecord::Base.connection.execute <<EOF
         INSERT INTO temp_earliest_start_date
-        select
+          select
             `p`.`patient_id` AS `patient_id`,
             date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`,
             cast(patient_date_enrolled(`p`.`patient_id`) as date) AS `date_enrolled`,
@@ -1813,42 +1814,18 @@ EOF
             `pe`.`gender` AS `gender`,
             (select timestampdiff(year, `pe`.`birthdate`, min(`s`.`start_date`))) AS `age_at_initiation`,
             (select timestampdiff(day, `pe`.`birthdate`, min(`s`.`start_date`))) AS `age_in_days`
-        from
+          from
             ((`patient_program` `p`
             left join `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
             left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
             left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
-        where
+          where
             ((`p`.`voided` = 0)
                 and (`s`.`voided` = 0)
                 and (`p`.`program_id` = 1)
                 and (`s`.`state` = 7))
-        group by `p`.`patient_id`
-        HAVING date_enrolled IS NOT NULL;
-EOF
-
-      end
-
-      def filter_temp_earliest_start_date_table_by_end_date(end_date)
-        data = ActiveRecord::Base.connection.select_all <<EOF
-        SELECT e.patient_id  FROM temp_earliest_start_date e
-        INNER JOIN orders o on e.patient_id = o.patient_id and o.voided = 0
-        INNER JOIN drug_order d on d.order_id = o.order_id
-          AND d.drug_inventory_id IN(SELECT drug_id FROM drug
-          WHERE concept_id IN(SELECT concept_id FROM concept_set WHERE concept_set = 1085))
-          WHERE date_enrolled <= '#{end_date.to_date}' and d.quantity >= 0
-          AND o.start_date <= '#{end_date.to_date} 59:59:59'
-        GROUP BY e.patient_id;
-EOF
-
-
-        patient_ids = []
-        (data || []).each do |r|
-          patient_ids << r['patient_id'].to_i
-        end
-
-        ActiveRecord::Base.connection.execute <<EOF
-          DELETE FROM temp_earliest_start_date WHERE patient_id NOT IN(#{patient_ids.join(',')});
+          group by `p`.`patient_id`
+          HAVING date_enrolled IS NOT NULL;
 EOF
 
       end
