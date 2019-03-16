@@ -86,6 +86,14 @@ class ReportService
     engine(@program).cohort_disaggregated(quarter, age_group)
   end
 
+  def drugs_given_without_prescription(start_date, end_date)
+    engine(@program).drugs_given_without_prescription(start_date, end_date)
+  end
+
+  def drugs_given_with_prescription(start_date, end_date)
+    engine(@program).drugs_given_with_prescription(start_date, end_date)
+  end
+
   private
 
   def engine(program)
