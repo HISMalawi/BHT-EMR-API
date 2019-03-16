@@ -1338,11 +1338,18 @@ module ARTService
         who_stage_1_and_2_concept_ids << concept('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 1').concept_id
         who_stage_1_and_2_concept_ids << concept('LYMPHOCYTES').concept_id
         who_stage_1_and_2_concept_ids << concept('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2').concept_id
-        who_stage_1_and_2_concept_ids << concept('WHO stage I adult').concept_id
-        who_stage_1_and_2_concept_ids << concept('WHO stage I peds').concept_id
-        who_stage_1_and_2_concept_ids << concept('WHO stage 1').concept_id
-        who_stage_1_and_2_concept_ids << concept('WHO stage II adult').concept_id
-        who_stage_1_and_2_concept_ids << concept('WHO stage II peds').concept_id
+        #who_stage_1_and_2_concept_ids << concept('WHO stage I adult').concept_id
+        #who_stage_1_and_2_concept_ids << concept('WHO stage I peds').concept_id
+        #who_stage_1_and_2_concept_ids << concept('WHO stage 1').concept_id
+        #who_stage_1_and_2_concept_ids << concept('WHO stage II adult').concept_id
+        #who_stage_1_and_2_concept_ids << concept('WHO stage II peds').concept_id
+        
+        ConceptName.where(name: 'WHO stage I adult').map{|c| reason_concept_ids << c.concept_id}
+        ConceptName.where(name: 'WHO stage I peds').map{|c| reason_concept_ids << c.concept_id}
+        ConceptName.where(name: 'WHO STAGE 1').map{|c| reason_concept_ids << c.concept_id}
+        ConceptName.where(name: 'WHO stage II adult').map{|c| reason_concept_ids << c.concept_id}
+        ConceptName.where(name: 'WHO stage II peds').map{|c| reason_concept_ids << c.concept_id}
+        ConceptName.where(name: 'WHO STAGE 2').map{|c| reason_concept_ids << c.concept_id}
 
         if start_date.to_date < revised_art_guidelines_date.to_date
           end_date = revised_art_guidelines_date
@@ -1359,9 +1366,9 @@ module ARTService
 
       def who_stage_four(start_date, end_date)
         reason_concept_ids = []
-        reason_concept_ids << concept('WHO stage IV adult').concept_id
-        reason_concept_ids << concept('WHO stage IV peds').concept_id
-        reason_concept_ids << concept('WHO STAGE 4').concept_id
+        ConceptName.where(name: 'WHO stage IV adult').map{|c| reason_concept_ids << c.concept_id}
+        ConceptName.where(name: 'WHO stage IV peds').map{|c| reason_concept_ids << c.concept_id}
+        ConceptName.where(name: 'WHO STAGE 4').map{|c| reason_concept_ids << c.concept_id}
 
         registered = []
 
@@ -1377,9 +1384,12 @@ module ARTService
 
       def who_stage_three(start_date, end_date)
         reason_concept_ids = []
-        reason_concept_ids << concept('WHO stage III adult').concept_id
-        reason_concept_ids << concept('WHO stage III peds').concept_id
-        reason_concept_ids << concept('WHO STAGE 3').concept_id
+        #reason_concept_ids << concept('WHO stage III adult').concept_id
+        #reason_concept_ids << concept('WHO stage III peds').concept_id
+        #reason_concept_ids << concept('WHO STAGE 3').concept_id
+        ConceptName.where(name: 'WHO stage III adult').map{|c| reason_concept_ids << c.concept_id}
+        ConceptName.where(name: 'WHO stage III peds').map{|c| reason_concept_ids << c.concept_id}
+        ConceptName.where(name: 'WHO STAGE 3').map{|c| reason_concept_ids << c.concept_id}
 
         registered = []
 
@@ -1806,8 +1816,8 @@ EOF
         INSERT INTO temp_earliest_start_date
           select
             `p`.`patient_id` AS `patient_id`,
-            date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`,
             cast(patient_date_enrolled(`p`.`patient_id`) as date) AS `date_enrolled`,
+            date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`,
             `pe`.`birthdate`,
             `pe`.`birthdate_estimated`,
             `person`.`death_date` AS `death_date`,
