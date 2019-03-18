@@ -35,6 +35,10 @@ module ANCService
 
           @total_visits = total_number_of_anc_visits
           @new_monthly_visits = new_visits(@start_date, @end_date)
+          @on_art_in_nart = on_art_in_nart(@end_date)
+          @extra_on_art = extra_art_checks(@end_date)
+          @on_cpt = @on_art_in_nart["on_cpt"] 
+          @on_art = []#@extra_art_checks
 
           monthly_struct.total_number_of_anc_visits = @total_visits
           monthly_struct.new_visits = @new_monthly_visits
@@ -55,8 +59,8 @@ module ANCService
           monthly_struct.women_received_itn = women_received_itn
           monthly_struct.women_tested_hiv_positive = women_tested_hiv_positive
           monthly_struct.women_prev_hiv_positive = women_prev_hiv_positive
-          monthly_struct.women_on_cpt = women_on_cpt
-          monthly_struct.women_on_art = women_on_art
+          monthly_struct.women_on_cpt = @on_cpt
+          monthly_struct.women_on_art = @on_art
           monthly_struct.total_number_of_outreach_clinic = total_number_of_outreach_clinic
           monthly_struct.total_number_of_outreach_clinic_attended = total_number_of_outreach_clinic_attended
           monthly_struct
@@ -304,20 +308,6 @@ module ANCService
             
         end
         
-        def women_on_cpt
-            
-            cpt_drug_id = Drug.where(["name LIKE ?", "%Cotrimoxazole%"]).map(&:id)
-
-            querystmnt  = "SELECT * FROM encounter e INNER JOIN obs o ON e.encounter_id = o.encounter_id "
-            querystmnt += "AND e.voided = 0 WHERE e.encounter_type = ? AND o.value_drug IN (?) "
-            querystmnt += "AND e.patient_id IN (?) AND e.encounter_datetime <= ?"
-
-            cpt_ids = Encounter.find_by_sql([querystmnt, DISPENSING.id, 
-                cpt_drug_id.join(','), @cohort_patients, 
-                @end_date]).map(&:patient_id)
-            
-        end
-        
         def women_on_art
             
             return []
@@ -335,6 +325,129 @@ module ANCService
             return []
             
         end
+
+        def extra_art_checks(date)
+
+          concept_ids = ['Reason for exiting care', 'On ART'].collect{|c| ConceptName.find_by_name(c).concept_id}
+          encounter_types = ['LAB RESULTS', 'ART_FOLLOWUP'].collect{|t| EncounterType.find_by_name(t).id}
+          art_answers = ['Yes', 'Already on ART at another facility']
+
+          result = Encounter.find_by_sql(['SELECT e.patient_id FROM encounter e
+                                    INNER JOIN obs o on o.encounter_id = e.encounter_id
+                                    WHERE e.voided = 0 AND e.patient_id IN (?)
+                                    AND e.encounter_type IN (?) AND o.concept_id IN (?)
+                                    AND DATE(e.encounter_datetime) <= ? AND COALESCE(
+                                    (SELECT name FROM concept_name
+                                    WHERE concept_id = o.value_coded LIMIT 1),
+                                    o.value_text) IN (?)',
+            ([0] + @monthly_patients), encounter_types, concept_ids, date,
+            art_answers]).map(&:patient_id) rescue []
+
+          return result.uniq
+      
+        end
+
+        # Returns patient's ART start date at current facility
+        def find_patient_date_enrolled(patient)
+          order = Order.joins(:encounter, :drug_order)\
+                   .where(encounter: { patient: patient },
+                          drug_order: { drug: Drug.arv_drugs })\
+                   .order(:start_date)\
+                   .first
+
+          order&.start_date&.to_date
+        end
+
+        # Returns patient's actual ART start date.
+        def find_patient_earliest_start_date(patient, date_enrolled = nil)
+          date_enrolled ||= find_patient_date_enrolled(patient)
+
+          patient_id = ActiveRecord::Base.connection.quote(patient.patient_id)
+          date_enrolled = ActiveRecord::Base.connection.quote(date_enrolled)
+
+          result = ActiveRecord::Base.connection.select_one(
+            "SELECT date_antiretrovirals_started(#{patient_id}, #{date_enrolled}) AS date"
+          )
+
+          result['date']&.to_date
+        end
+
+        def on_art_in_nart(date)
+            
+            id_visit_map = []
+            
+            @new_monthly_visits.each do |id|
+              next if id.nil?
+  
+              date = Observation.find_by_sql(['SELECT MAX(value_datetime) as date FROM obs
+                      JOIN encounter ON obs.encounter_id = encounter.encounter_id
+                      WHERE encounter.encounter_type = ? AND person_id = ? AND concept_id = ?',
+                      CURRENT_PREGNANCY.id, id, LMP.concept_id])
+                    .first.date.strftime('%Y-%m-%d') rescue nil
+  
+                value = "#{id}|#{date}" unless date.nil?
+                id_visit_map << value unless date.nil?
+              
+            end
+            
+            anc_visit = Hash.new
+            id_visit_map.split(",").each do |map|
+              anc_visit["#{map.split('|').first}"] = map.split('|').last
+            end
+  
+            result = Hash.new
+            @patient_ids = []
+            b4_visit_one = []
+            no_art = []
+  
+            PatientProgram.find_by_sql("SELECT p.person_id patient_id, 
+              earliest_start_date_at_clinic(p.person_id) earliest_start_date,
+              current_state_for_program(p.person_id, 1, '#{date.to_date.end_of_month}') AS state
+                    FROM person p 
+              WHERE (p.gender = 'F' OR gender = 'Female') 
+              GROUP BY p.person_id").each do | patient |
+                @patient_ids << patient.patient_id
+                anc_patient = Patient.find(patient.patient_id)
+                earliest_start_date = find_patient_earliest_start_date(anc_patient)
+                result["#{patient.patient_id}"] = earliest_start_date
+              
+              if ((earliest_start_date.to_date < anc_visit["#{patient.patient_id}"].to_date) rescue false)
+                b4_visit_one << patient.patient_id
+              end
+      
+            end
+  
+            no_art = id_visit_map - result.keys
+            
+            dispensing_encounter_type = EncounterType.find_by_name('DISPENSING').id
+            cpt_drug_id = Drug.where(["name LIKE ?", "%Cotrimoxazole%"]).map(&:id)
+  
+            if @patient_ids.length > 0
+              
+              cpt_ids = Encounter.find_by_sql(["SELECT * FROM encounter e
+                INNER JOIN obs o ON e.encounter_id = o.encounter_id AND e.voided = 0
+                      WHERE e.encounter_type = (?)
+                      AND o.value_drug IN (?) AND e.patient_id IN (?) AND 
+                e.encounter_datetime <= ?", DISPENSING.id, cpt_drug_id.join(','),
+                @patient_ids.join(','),
+                date.to_date.end_of_month.strftime('%Y-%m-%d 23:59:59')]).map(&:patient_id)
+      
+              else
+      
+                cpt_ids = []
+      
+              end
+  
+              result["on_cpt"] = cpt_ids.blank? ? [] : cpt_ids.join(",")
+      
+              result["arv_before_visit_one"] = b4_visit_one.blank? ? [] : b4_visit_one.join(",")
+      
+              result["no_art"] = no_art.join(",")
+  
+              return result
+  
+          end
+
         
       end
 

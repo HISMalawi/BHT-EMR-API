@@ -482,18 +482,9 @@ module ANCService
 
         def on_art_in_nart(date)
           
-          national_id = PatientIdentifierType.find_by_name('National id').id
-          
-          patient_ids = PatientIdentifier.where(['identifier_type = ? AND patient_id IN (?)',
-              national_id, @total_hiv_positive_first_visit])
-            .select(['identifier, identifier_type']).collect { |ident| ident.identifier }.join(',')
-          
-          id_visit_map = []
           
           @total_hiv_positive_first_visit.each do |id|
             next if id.nil?
-
-            lmp_date = 
 
             date = Observation.find_by_sql(['SELECT MAX(value_datetime) as date FROM obs
                     JOIN encounter ON obs.encounter_id = encounter.encounter_id
@@ -562,10 +553,6 @@ module ANCService
 
             return result
 
-        end
-
-        def not_on_art_first_visit(date)
-            return []
         end
 
         def on_art_before_anc_first_visit(date)
