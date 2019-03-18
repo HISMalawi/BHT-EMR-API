@@ -16,7 +16,6 @@ module ANCService
       loop do
         state = next_state state
         break if state == END_STATE
-
         LOGGER.debug "Loading encounter type: #{state}"
         encounter_type = EncounterType.find_by(name: state)
 

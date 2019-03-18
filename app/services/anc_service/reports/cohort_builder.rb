@@ -92,6 +92,7 @@ module ANCService
           @first_new_hiv_negative = new_hiv_negative_first_visit(start_date)
           @first_new_hiv_positive = new_hiv_positive_first_visit(start_date)
           @prev_hiv_pos_first_visit = prev_hiv_positive_first_visit(start_date)
+          @total_hiv_positive_first_visit = @first_new_hiv_positive + @prev_hiv_pos_first_visit
 
           cohort_struct.monthly_patient = @monthly_patients
           cohort_struct.pregnancy_test_done = @patients_done_pregnancy_test
@@ -105,7 +106,7 @@ module ANCService
           cohort_struct.prev_hiv_positive_first_visit = @prev_hiv_pos_first_visit
           cohort_struct.pre_hiv_negative_first_visit = pre_hiv_negative_first_visit(start_date)
           cohort_struct.not_done_hiv_test_first_visit = not_done_hiv_test_first_visit(start_date)
-          cohort_struct.total_hiv_positive_first_visit = @first_new_hiv_positive + @prev_hiv_pos_first_visit
+          cohort_struct.total_hiv_positive_first_visit = @total_hiv_positive_first_visit
           cohort_struct.not_on_art_first_visit = not_on_art_first_visit(start_date)
           cohort_struct.on_art_before_anc_first_visit = on_art_before_anc_first_visit(start_date)
           cohort_struct.start_art_zero_to_twenty_seven_for_first_visit = start_art_zero_to_twenty_seven_for_first_visit(start_date)
@@ -115,6 +116,8 @@ module ANCService
           cohort_struct.total_women_in_cohort = @cohort_patients
           @c_new_hiv_pos = new_hiv_positive_final_visit
           @c_pre_hiv_pos = prev_hiv_positive_final_visit
+          @c_total_hiv_positive = @c_new_hiv_pos + @c_pre_hiv_pos
+
           cohort_struct.patients_with_total_of_one_visit = @anc_visits.reject { |x, y| y != 1 }.collect { |x, y| x }.uniq
           cohort_struct.patients_with_total_of_two_visits = @anc_visits.reject { |x, y| y != 2 }.collect { |x, y| x }.uniq
           cohort_struct.patients_with_total_of_three_visits = @anc_visits.reject { |x, y| y != 3 }.collect { |x, y| x }.uniq
@@ -144,7 +147,7 @@ module ANCService
           cohort_struct.prev_hiv_positive_final_visit = @c_pre_hiv_pos
           cohort_struct.pre_hiv_negative_final_visit = pre_hiv_negative_final_visit(start_date)
           cohort_struct.not_done_hiv_test_final_visit = not_done_hiv_test_final_visit(start_date)
-          cohort_struct.c_total_hiv_positive = @c_new_hiv_pos + @c_pre_hiv_pos
+          cohort_struct.c_total_hiv_positive = @c_total_hiv_positive
           cohort_struct.not_on_art_final_visit = not_on_art_final_visit(start_date)
           cohort_struct.on_art_before_anc_final_visit = on_art_before_anc_final_visit(start_date)
           cohort_struct.start_art_zero_to_twenty_seven_for_final_visit = start_art_zero_to_twenty_seven_for_final_visit(start_date)

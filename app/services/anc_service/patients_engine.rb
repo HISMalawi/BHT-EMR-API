@@ -107,10 +107,11 @@ module ANCService
         unless visit
           anc_visit = true
           preg_test = pregnancy_test_done?(patient, lmp_date)
+          prev_hiv_test = previous_hiv_test_results(patient, lmp_date)
         end
       end
 
-      return {subsequent_visit: anc_visit, pregnancy_test: preg_test}
+      return {subsequent_visit: anc_visit, pregnancy_test: preg_test, hiv_status: prev_hiv_test}
     end
 
     # Verifies if the last visit patient undergo pregnancy test
@@ -122,12 +123,12 @@ module ANCService
 
       last_test_visit = patient.encounters.joins([:observations])
         .where(["encounter.encounter_type = ? AND (obs.concept_id = ?) 
-          AND encounter.encounter_datetime > ?", 
+          AND encounter.encounter_datetime > ? AND e.voided = 0", 
           lab_encounter.id, 
           pregnancy_test.concept_id,checked_date.to_date])
         .order([:encounter_datetime])
         .select("value_coded")
-        .last.value_coded #rescue nil
+        .last.value_coded rescue nil
   
       if last_test_visit == yes_concept.concept_id
         return true
@@ -137,7 +138,44 @@ module ANCService
 
     end
 
-    
+    # Check previous hiv test results
+
+    def previous_hiv_test_results(patient, checked_date)
+
+      current_status =  ConceptName.find_by name:'HIV Status'
+      prev_hiv_status = ConceptName.find_by name: 'Previous HIV Test Results'
+
+      prev_test_done = Observation.where( person: patient.person, concept: concept('Previous HIV Test Done'))\
+          .order(obs_datetime: :desc)\
+          .first\
+          &.value_coded || nil
+      
+      if (prev_test_done == 1065) #if value is Yes, check prev hiv status
+
+        prev_hiv_test_res = Observation.where(["person_id = ? and concept_id = ? and obs_datetime > ?",
+            patient.patient_id, prev_hiv_status.concept_id, checked_date])\
+          .order(obs_datetime: :desc)\
+          .first\
+          &.value_coded
+
+        prev_status = ConceptName.find_by_concept_id(prev_hiv_test_res).name
+
+        return prev_status.to_s if prev_status.to_s.downcase == 'positive'
+      
+      end
+
+      hiv_test_res =  Observation.where(["person_id = ? and concept_id = ? and obs_datetime > ?",
+          patient.person.id, current_status.concept_id, checked_date])\
+        .order(obs_datetime: :desc)\
+        .first\
+        &.value_coded rescue nil
+
+        hiv_status = ConceptName.find_by_concept_id(hiv_test_res).name rescue nil
+        
+        hiv_status ||= prev_status
+
+        return hiv_status 
+    end
 
     private
 
