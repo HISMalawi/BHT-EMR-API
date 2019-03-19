@@ -27,7 +27,7 @@ module DispensationService
           quantity = dispensation[:quantity]
           date = TimeUtils.retro_timestamp(dispensation[:date]&.to_time || Time.now)
           drug_order = DrugOrder.find(order_id)
-          obs = dispense_drug program, drug_order, quantity, date: date
+          obs = dispense_drug(program, drug_order, quantity, date: date)
 
           unless obs.errors.empty?
             raise InvalidParameterErrors.new("Failed to dispense order ##{order_id}")\
@@ -94,11 +94,11 @@ module DispensationService
     # Creates a dispensing encounter
     def create_encounter(program, patient, date)
       Encounter.create(
-        program: program,
         encounter_type: EncounterType.find_by(name: 'DISPENSING').encounter_type_id,
         patient_id: patient.patient_id,
         location_id: Location.current.location_id,
         encounter_datetime: date,
+        program: program,
         provider: User.current.person
       )
     end
