@@ -482,7 +482,7 @@ module ANCService
 
         def on_art_in_nart(date)
           
-          
+          id_visit_map = [] 
           @total_hiv_positive_first_visit.each do |id|
             next if id.nil?
 
