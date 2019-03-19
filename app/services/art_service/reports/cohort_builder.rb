@@ -11,7 +11,7 @@ module ARTService
         #load_tmp_patient_table(cohort_struct)
         create_tmp_patient_table
         load_data_into_temp_earliest_start_date(end_date.to_date)
-         
+
         # create_tmp_patient_table_2(end_date)
 
         time_started = Time.now.strftime('%Y-%m-%d %H:%M:%S')
@@ -1385,15 +1385,17 @@ EOF
       def unknown_other_reason_outside_guidelines(start_date, end_date)
         # All WHO stage 1 and 2 patients that were enrolled before '2016-04-01'
         # should be included in this group.
-        reason_concept_ids = []
-        reason_concept_ids << concept('Unknown').concept_id
-        reason_concept_ids << concept('None').concept_id
+        reason_concept_ids = [concept('Unknown').concept_id, concept('None').concept_id]
 
         registered = []
 
         (@reason_for_starting || []).each do |r|
-          next unless reason_concept_ids.include?(r[:reason_for_starting_concept_id]) && !r[:reason_for_starting_concept_id].blank?
-          next unless (r[:date_enrolled] >= start_date.to_date) && (r[:date_enrolled] <= end_date.to_date)
+          concept_id = r[:reason_for_starting_concept_id]
+          # A blank concept_id => we do not know the reason
+          next unless concept_id.blank? || reason_concept_ids.include?(concept_id)
+
+          date_enrolled = r[:date_enrolled]&.to_date
+          next unless date_enrolled && date_enrolled >= start_date.to_date && date_enrolled <= end_date.to_date
 
           registered << r
         end
@@ -1403,18 +1405,13 @@ EOF
         who_stage_1_and_2_concept_ids << concept('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 1').concept_id
         who_stage_1_and_2_concept_ids << concept('LYMPHOCYTES').concept_id
         who_stage_1_and_2_concept_ids << concept('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2').concept_id
-        #who_stage_1_and_2_concept_ids << concept('WHO stage I adult').concept_id
-        #who_stage_1_and_2_concept_ids << concept('WHO stage I peds').concept_id
-        #who_stage_1_and_2_concept_ids << concept('WHO stage 1').concept_id
-        #who_stage_1_and_2_concept_ids << concept('WHO stage II adult').concept_id
-        #who_stage_1_and_2_concept_ids << concept('WHO stage II peds').concept_id
-        
-        ConceptName.where(name: 'WHO stage I adult').map{|c| reason_concept_ids << c.concept_id}
-        ConceptName.where(name: 'WHO stage I peds').map{|c| reason_concept_ids << c.concept_id}
-        ConceptName.where(name: 'WHO STAGE 1').map{|c| reason_concept_ids << c.concept_id}
-        ConceptName.where(name: 'WHO stage II adult').map{|c| reason_concept_ids << c.concept_id}
-        ConceptName.where(name: 'WHO stage II peds').map{|c| reason_concept_ids << c.concept_id}
-        ConceptName.where(name: 'WHO STAGE 2').map{|c| reason_concept_ids << c.concept_id}
+
+        # Following concepts are duplicated in the database... Can't be sure of which
+        # concept_id was used amongst the duplicates thus we just check all concept_ids
+        ['WHO stage I adult', 'WHO stage I peds', 'WHO STAGE 1', 'WHO stage II adult',
+         'WHO stage II peds', 'WHO STAGE 2'].each do |concept_name|
+          who_stage_1_and_2_concept_ids += ConceptName.where(name: concept_name).collect(&:concept_id)
+        end
 
         if start_date.to_date < revised_art_guidelines_date.to_date
           end_date = revised_art_guidelines_date
