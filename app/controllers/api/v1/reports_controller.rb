@@ -63,7 +63,14 @@ class Api::V1::ReportsController < ApplicationController
 
     render json: stats
   end
-  
+
+  def cohort_survival_analysis
+    quarter, age_group = params.require %i[quarter age_group]
+    stats = service.cohort_survival_analysis(quarter, age_group)
+
+    render json: stats
+  end
+    
   private
 
   def service

@@ -622,6 +622,99 @@ module ARTService
         data
       end
 
+      def load_data_into_temp_earliest_start_date(end_date)
+
+        ActiveRecord::Base.connection.execute <<EOF
+        INSERT INTO temp_earliest_start_date
+          select
+            `p`.`patient_id` AS `patient_id`,
+            cast(patient_date_enrolled(`p`.`patient_id`) as date) AS `date_enrolled`,
+            date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`,
+            `pe`.`birthdate`,
+            `pe`.`birthdate_estimated`,
+            `person`.`death_date` AS `death_date`,
+            `pe`.`gender` AS `gender`,
+            (select timestampdiff(year, `pe`.`birthdate`, min(`s`.`start_date`))) AS `age_at_initiation`,
+            (select timestampdiff(day, `pe`.`birthdate`, min(`s`.`start_date`))) AS `age_in_days`
+          from
+            ((`patient_program` `p`
+            left join `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
+            left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
+            left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
+          where
+            ((`p`.`voided` = 0)
+                and (`s`.`voided` = 0)
+                and (`p`.`program_id` = 1)
+                and (`s`.`state` = 7))
+          group by `p`.`patient_id`
+          HAVING date_enrolled IS NOT NULL;
+EOF
+
+      end
+
+      def create_tmp_patient_table
+        ActiveRecord::Base.connection.execute('DROP TABLE IF EXISTS temp_earliest_start_date')
+        ActiveRecord::Base.connection.execute(
+          'CREATE TABLE IF NOT EXISTS temp_earliest_start_date (
+             patient_id INTEGER PRIMARY KEY,
+             date_enrolled DATE NOT NULL,
+             earliest_start_date DATETIME,
+             birthdate DATE NOT NULL,
+             birthdate_estimated BOOLEAN,
+             death_date DATE,
+             gender VARCHAR(32),
+             age_at_initiation INT NOT NULL,
+             age_in_days INT NOT NULL
+          ) ENGINE=MEMORY;'
+        )
+
+        ActiveRecord::Base.connection.execute(
+          'CREATE INDEX patient_id_index ON temp_earliest_start_date (patient_id)'
+        )
+        ActiveRecord::Base.connection.execute(
+          'CREATE INDEX date_enrolled_index ON temp_earliest_start_date (date_enrolled)'
+        )
+
+        ActiveRecord::Base.connection.execute(
+          'CREATE INDEX patient_id__date_enrolled_index ON temp_earliest_start_date (patient_id, date_enrolled)'
+        )
+
+        ActiveRecord::Base.connection.execute(
+          'CREATE INDEX earliest_start_date_index ON temp_earliest_start_date (earliest_start_date)'
+        )
+        ActiveRecord::Base.connection.execute(
+          'CREATE INDEX earliest_start_date__date_enrolled_index ON temp_earliest_start_date (earliest_start_date, date_enrolled)'
+        )
+      end
+
+      def update_cum_outcome(end_date)
+        ActiveRecord::Base.connection.execute(
+          'DROP TABLE IF EXISTS `temp_patient_outcomes`'
+        )
+
+        ActiveRecord::Base.connection.execute(
+          "CREATE TABLE temp_patient_outcomes ENGINE=MEMORY AS (
+            SELECT e.patient_id, patient_outcome(e.patient_id, '#{end_date} 23:59:59') AS cum_outcome
+            FROM temp_earliest_start_date e WHERE e.date_enrolled <= '#{end_date}'
+          )"
+        )
+
+        ActiveRecord::Base.connection.execute(
+          'ALTER TABLE temp_patient_outcomes
+           ADD INDEX patient_id_index (patient_id)'
+        )
+
+        ActiveRecord::Base.connection.execute(
+          'ALTER TABLE temp_patient_outcomes
+           ADD INDEX cum_outcome_index (cum_outcome)'
+        )
+
+        ActiveRecord::Base.connection.execute(
+          'ALTER TABLE temp_patient_outcomes
+           ADD INDEX patient_id_cum_outcome_index (patient_id, cum_outcome)'
+        )
+      end
+      
       private
 
       def total_patients_with_screened_bp(patients_list, _start_date, end_date)
@@ -1164,34 +1257,6 @@ module ARTService
 
         ActiveRecord::Base.connection.select_all(
           "SELECT * FROM temp_patient_outcomes WHERE #{sql_patch} GROUP BY patient_id"
-        )
-      end
-
-      def update_cum_outcome(end_date)
-        ActiveRecord::Base.connection.execute(
-          'DROP TABLE IF EXISTS `temp_patient_outcomes`'
-        )
-
-        ActiveRecord::Base.connection.execute(
-          "CREATE TABLE temp_patient_outcomes ENGINE=MEMORY AS (
-            SELECT e.patient_id, patient_outcome(e.patient_id, '#{end_date} 23:59:59') AS cum_outcome
-            FROM temp_earliest_start_date e WHERE e.date_enrolled <= '#{end_date}'
-          )"
-        )
-
-        ActiveRecord::Base.connection.execute(
-          'ALTER TABLE temp_patient_outcomes
-           ADD INDEX patient_id_index (patient_id)'
-        )
-
-        ActiveRecord::Base.connection.execute(
-          'ALTER TABLE temp_patient_outcomes
-           ADD INDEX cum_outcome_index (cum_outcome)'
-        )
-
-        ActiveRecord::Base.connection.execute(
-          'ALTER TABLE temp_patient_outcomes
-           ADD INDEX patient_id_cum_outcome_index (patient_id, cum_outcome)'
         )
       end
 
@@ -1774,71 +1839,6 @@ EOF
 EOF
 
   end
-
-      def create_tmp_patient_table
-        ActiveRecord::Base.connection.execute('DROP TABLE IF EXISTS temp_earliest_start_date')
-        ActiveRecord::Base.connection.execute(
-          'CREATE TABLE IF NOT EXISTS temp_earliest_start_date (
-             patient_id INTEGER PRIMARY KEY,
-             date_enrolled DATE NOT NULL,
-             earliest_start_date DATETIME,
-             birthdate DATE NOT NULL,
-             birthdate_estimated BOOLEAN,
-             death_date DATE,
-             gender VARCHAR(32),
-             age_at_initiation INT NOT NULL,
-             age_in_days INT NOT NULL
-          ) ENGINE=MEMORY;'
-        )
-
-        ActiveRecord::Base.connection.execute(
-          'CREATE INDEX patient_id_index ON temp_earliest_start_date (patient_id)'
-        )
-        ActiveRecord::Base.connection.execute(
-          'CREATE INDEX date_enrolled_index ON temp_earliest_start_date (date_enrolled)'
-        )
-
-        ActiveRecord::Base.connection.execute(
-          'CREATE INDEX patient_id__date_enrolled_index ON temp_earliest_start_date (patient_id, date_enrolled)'
-        )
-
-        ActiveRecord::Base.connection.execute(
-          'CREATE INDEX earliest_start_date_index ON temp_earliest_start_date (earliest_start_date)'
-        )
-        ActiveRecord::Base.connection.execute(
-          'CREATE INDEX earliest_start_date__date_enrolled_index ON temp_earliest_start_date (earliest_start_date, date_enrolled)'
-        )
-      end
-
-      def load_data_into_temp_earliest_start_date(end_date)
-
-        ActiveRecord::Base.connection.execute <<EOF
-        INSERT INTO temp_earliest_start_date
-          select
-            `p`.`patient_id` AS `patient_id`,
-            cast(patient_date_enrolled(`p`.`patient_id`) as date) AS `date_enrolled`,
-            date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`,
-            `pe`.`birthdate`,
-            `pe`.`birthdate_estimated`,
-            `person`.`death_date` AS `death_date`,
-            `pe`.`gender` AS `gender`,
-            (select timestampdiff(year, `pe`.`birthdate`, min(`s`.`start_date`))) AS `age_at_initiation`,
-            (select timestampdiff(day, `pe`.`birthdate`, min(`s`.`start_date`))) AS `age_in_days`
-          from
-            ((`patient_program` `p`
-            left join `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
-            left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
-            left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
-          where
-            ((`p`.`voided` = 0)
-                and (`s`.`voided` = 0)
-                and (`p`.`program_id` = 1)
-                and (`s`.`state` = 7))
-          group by `p`.`patient_id`
-          HAVING date_enrolled IS NOT NULL;
-EOF
-
-      end
 
       def arv_orders
         Order.joins(:drug_order).where(
