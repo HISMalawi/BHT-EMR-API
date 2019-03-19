@@ -110,6 +110,8 @@ Rails.application.routes.draw do
           get '/status' => 'program_patients#status'
           get '/earliest_start_date' => 'program_patients#find_earliest_start_date'
           get '/labels/visits', to: 'program_patients#print_visit_label'
+          get '/labels/history', to: 'program_patients#print_history_label'
+          get '/labels/lab_results', to: 'program_patients#print_lab_results_label'
           get '/labels/transfer_out', to: 'program_patients#print_transfer_out_label'
           get '/mastercard_data', to: 'program_patients#mastercard_data'
           #ANC

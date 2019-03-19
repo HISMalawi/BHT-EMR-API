@@ -15,7 +15,7 @@ module ANCService
       def height
         @height ||= Observation.where(concept: concept('Height (cm)'), person: patient.person)
                       .order(obs_datetime: :desc)
-                      .first.value_numeric || 0
+                      .first.value_numeric rescue 0
       end
   
       def weight

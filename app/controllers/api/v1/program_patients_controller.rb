@@ -1,7 +1,7 @@
 require 'zebra_printer/init'
 
 class Api::V1::ProgramPatientsController < ApplicationController
-  before_action :authenticate, except: %i[print_visit_label print_transfer_out_label]
+  before_action :authenticate, except: %i[print_visit_label print_transfer_out_label print_history_label print_lab_results_label]
 
   def show
     date = params[:date]&.to_date || Date.today
@@ -48,6 +48,22 @@ class Api::V1::ProgramPatientsController < ApplicationController
 
   def print_visit_label
     label_commands = service.visit_summary_label(patient, date).print
+    send_data label_commands, type: 'application/label; charset=utf-8',
+                              stream: false,
+                              filename: "#{params[:patient_id]}#{rand(10_000)}.lbl",
+                              disposition: 'inline'
+  end
+
+  def print_history_label
+    label_commands = service.history_label(patient, date).print
+    send_data label_commands, type: 'application/label; charset=utf-8',
+                              stream: false,
+                              filename: "#{params[:patient_id]}#{rand(10_000)}.lbl",
+                              disposition: 'inline'
+  end
+
+  def print_lab_results_label
+    label_commands = service.lab_results_label(patient, date).print
     send_data label_commands, type: 'application/label; charset=utf-8',
                               stream: false,
                               filename: "#{params[:patient_id]}#{rand(10_000)}.lbl",
