@@ -228,7 +228,7 @@ module ANCService
         hiv_status = ConceptName.find_by_concept_id(hiv_test_res).name rescue nil
         
         hiv_status ||= prev_status
-        return true if hiv_status.downcase == 'positive'
+        return true if !hiv_status.nil? && hiv_status.downcase == 'positive'
         return false
     end
 

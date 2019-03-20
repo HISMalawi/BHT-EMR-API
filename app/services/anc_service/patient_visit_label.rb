@@ -8,164 +8,386 @@ module ANCService
         @patient = patient
         @date = date
       end
-  
+
       def print
+        self.print1 + self.print2
+      end
+  
+      def print1
         visit = ANCService::PatientVisit.new patient, date
         return unless visit
-        #owner = visit.guardian_present? && !visit.patient_present? ? ' :Guardian Visit' : ' :Patient visit'
-  
-        #arv_number = patient.identifier('ARV Number')&.identifier || patient.national_id
-  
-        label = ZebraPrinter::StandardLabel.new
-        label.draw_text("Printed: #{Date.today.strftime('%b %d %Y')}",597,280,0,1,1,1,false)
-        #label.draw_text(seen_by(patient, date).to_s, 597, 250, 0, 1, 1, 1, false)
-        label.draw_text(date&.strftime('%B %d %Y').upcase, 25, 30, 0, 3, 1, 1, false)
-        #label.draw_text(arv_number.to_s, 565, 30, 0, 3, 1, 1, true)
-        label.draw_text("#{patient.person.name}(#{patient.gender}) ", 25, 60, 0, 3, 1, 1, false)
-        #label.draw_text(('(' + visit.visit_by + ')' unless visit.visit_by.blank?).to_s, 255, 30, 0, 2, 1, 1, false)
-  
-        pill_count = visit.pills_brought.collect { |c| c.join(',') }&.join(' ') rescue nil
-        label.draw_text("#{visit.height.to_s + 'cm' unless visit.height.blank?}  #{visit.weight.to_s + 'kg' unless visit.weight.blank?}  #{'BMI:' + visit.bmi.to_s unless visit.bmi.blank?} #{'(PC:' + pill_count[0..24] + ')' unless pill_count.blank?}", 25, 95, 0, 2, 1, 1, false)
-  
-        #label.draw_text('SE', 25, 130, 0, 3, 1, 1, false)
-        label.draw_text('HIV', 110, 130, 0, 3, 1, 1, false)
-        label.draw_text('Preg. test', 185, 130, 0, 3, 1, 1, false)
-        #label.draw_text('Pregnancy test', 255, 130, 0, 3, 1, 1, false)
-        #label.draw_text('OUTC', 577, 130, 0, 3, 1, 1, false)
-        #label.draw_line(25, 150, 800, 5)
-        label.draw_text(visit.hiv_status.to_s, 110, 160, 0, 2, 1, 1, false)
-        label.draw_text(visit.pregnancy_test.to_s, 185, 160, 0, 2, 1, 1, false)
-        #label.draw_text(visit.outcome.to_s, 577, 160, 0, 2, 1, 1, false)
-        #label.draw_text(visit.outcome_date&.strftime('%d/%b/%Y') || 'N/A', 655, 130, 0, 2, 1, 1, false)
-        unless visit.next_appointment.blank?
-          label.draw_text('Next: ' + visit.next_appointment&.strftime('%d/%b/%Y'), 577, 190, 0, 2, 1, 1, false)
-        end
-        starting_index = 25
-        start_line = 160
-=begin
-        visit_extras(visit).each do |key, values|
-          data = values&.last
-  
-          next if data.blank?
-  
-          bold = false
-          # bold = true if key.include?("side_eff") and data !="None"
-          # bold = true if key.include?("arv_given")
-          starting_index = values.first.to_i
-          starting_line = start_line
-          starting_line = start_line + 30 if key.include?('2')
-          starting_line = start_line + 60 if key.include?('3')
-          starting_line = start_line + 90 if key.include?('4')
-          starting_line = start_line + 120 if key.include?('5')
-          starting_line = start_line + 150 if key.include?('6')
-          starting_line = start_line + 180 if key.include?('7')
-          starting_line = start_line + 210 if key.include?('8')
-          starting_line = start_line + 240 if key.include?('9')
-          next if starting_index.zero?
-  
-          label.draw_text(data.to_s, starting_index, starting_line, 0, 2, 1, 1, bold)
-        end
-=end
-  
-        label.print(2)
 
-      end
-  
-      def seen_by(patient, date = Date.today)
-        encounter_type = EncounterType.find_by_name('HIV CLINIC CONSULTATION').id
-        a = Encounter.find_by_sql("SELECT * FROM encounter WHERE encounter_type = '#{encounter_type}'
-                                    AND patient_id = #{patient.id}
-                                    AND encounter_datetime between '#{date} 00:00:00'
-                                    AND '#{date} 23:59:59'
-                                    ORDER BY date_created DESC")
-        provider = begin
-                    [a.first.name, a.first.creator]
-                   rescue StandardError
-                     nil
+        @current_range = visit.active_range(@date.to_date)
+
+        encounters = {}
+
+        @patient.encounters.where(["encounter_datetime >= ? AND encounter_datetime <= ?",
+          @current_range[0]["START"], @current_range[0]["END"]]).collect{|e|
+            encounters[e.encounter_datetime.strftime("%d/%b/%Y")] = {"USER" => User.find(e.creator).username }
+        }
+
+        @patient.encounters.where(["encounter_datetime >= ? AND encounter_datetime <= ?",
+          @current_range[0]["START"], @current_range[0]["END"]]).collect{|e|
+          encounters[e.encounter_datetime.strftime("%d/%b/%Y")][e.type.name.upcase] = ({} rescue "") if !e.type.nil?
+        }
+
+        @patient.encounters.where(["encounter_datetime >= ? AND encounter_datetime <= ?",
+          @current_range[0]["START"], @current_range[0]["END"]]).collect{|e|
+            if !e.type.nil?
+              e.observations.each{|o|
+                if o.to_a[0]
+                  if o.to_a[0].upcase == "DIAGNOSIS" && encounters[e.encounter_datetime.strftime("%d/%b/%Y")][e.type.name.upcase][o.to_a[0].upcase]
+                    encounters[e.encounter_datetime.strftime("%d/%b/%Y")][e.type.name.upcase][o.to_a[0].upcase] += "; " + o.to_a[1]
+                  else
+                    encounters[e.encounter_datetime.strftime("%d/%b/%Y")][e.type.name.upcase][o.to_a[0].upcase] = o.to_a[1]
+                    if o.to_a[0].upcase == "PLANNED DELIVERY PLACE"
+                      @current_range[0]["PLANNED DELIVERY PLACE"] = o.to_a[1]
+                    elsif o.to_a[0].upcase == "MOSQUITO NET"
+                      @current_range[0]["MOSQUITO NET"] = o.to_a[1]
+                    end
                   end
-        # provider = patient.encounters.find_by_date(date).collect{|e| next unless e.name == 'HIV CLINIC CONSULTATION' ; [e.name,e.creator]}.compact
-        provider_username = ('Seen by: ' + User.find(provider[1]).username).to_s unless provider.blank?
-        if provider_username.blank?
-          clinic_encounters = ['HIV CLINIC CONSULTATION', 'HIV STAGING', 'ART ADHERENCE', 'TREATMENT', 'DISPENSION', 'HIV RECEPTION']
-          encounter_type_ids = EncounterType.where(['name IN (?)', clinic_encounters]).collect(&:id)
-          encounter = Encounter.where(['patient_id = ? AND encounter_type In (?)', patient.id, encounter_type_ids]).order('encounter_datetime DESC').first
-          provider_username = begin
-                                ('Seen by: ' + User.find(encounter.creator).username).to_s
-                              rescue StandardError
-                                nil
-                              end
-        end
-        provider_username
-      end
-  
-      def adherence_to_show(adherence_data)
-        # For now we will only show the adherence of the drug with the lowest/highest adherence %
-        # i.e if a drug adherence is showing 86% and their is another drug with an adherence of 198%,then
-        # we will show the one with 198%.
-        # in future we are planning to show all available drug adherences
-  
-        adherence_to_show = 0
-        adherence_over_100 = 0
-        adherence_below_100 = 0
-        over_100_done = false
-        below_100_done = false
-  
-        adherence_data.each do |_drug, adh|
-          next if adh.blank?
-  
-          drug_adherence = adh.to_i
-          if drug_adherence <= 100
-            adherence_below_100 = adh.to_i if adherence_below_100 == 0
-            adherence_below_100 = adh.to_i if drug_adherence <= adherence_below_100
-            below_100_done = true
-          else
-            adherence_over_100 = adh.to_i if adherence_over_100 == 0
-            adherence_over_100 = adh.to_i if drug_adherence >= adherence_over_100
-            over_100_done = true
+                end
+              } rescue nil
+            end
+          }
+
+          @drugs = {};
+          @other_drugs = {};
+          main_drugs = ["TTV", "SP", "Fefol", "Albendazole"]
+
+          @patient.encounters.where(["(encounter_type = ? OR encounter_type = ?) AND encounter_datetime >= ? AND encounter_datetime <= ?",
+              EncounterType.find_by_name("TREATMENT").id, EncounterType.find_by_name("DISPENSING").id,
+              @current_range[0]["START"], @current_range[0]["END"]]).order("encounter_datetime DESC").each{|e|
+            @drugs[e.encounter_datetime.strftime("%d/%b/%Y")] = {} if !@drugs[e.encounter_datetime.strftime("%d/%b/%Y")];
+            @other_drugs[e.encounter_datetime.strftime("%d/%b/%Y")] = {} if !@other_drugs[e.encounter_datetime.strftime("%d/%b/%Y")];
+            e.orders.each{|o|
+
+              drug_name = o.drug_order.drug.name.match(/syrup|\d+\.*\d+mg|\d+\.*\d+\smg|\d+\.*\d+ml|\d+\.*\d+\sml/i) ?
+                (o.drug_order.drug.name[0, o.drug_order.drug.name.index(" ")].to_s + " " +
+                  o.drug_order.drug.name.match(/syrup|\d+\.*\d+mg|\d+\.*\d+\smg|\d+\.*\d+ml|\d+\.*\d+\sml/i)[0]) :
+                (o.drug_order.drug.name[0, o.drug_order.drug.name.index(" ")]) rescue o.drug_order.drug.name
+
+              if ((main_drugs.include?(o.drug_order.drug.name[0, o.drug_order.drug.name.index(" ")])) rescue false)
+
+                @drugs[e.encounter_datetime.strftime("%d/%b/%Y")][o.drug_order.drug.name[0,
+                    o.drug_order.drug.name.index(" ")]] = o.drug_order.amount_needed
+              else
+
+                @other_drugs[e.encounter_datetime.strftime("%d/%b/%Y")][drug_name] = o.drug_order.amount_needed
+              end
+            }
+          }
+
+          label = ZebraPrinter::StandardLabel.new
+
+          label.draw_line(20,25,800,2,0)
+          label.draw_line(20,25,2,280,0)
+          label.draw_line(20,305,800,2,0)
+          label.draw_line(805,25,2,280,0)
+          label.draw_text("Visit Summary",28,33,0,1,1,2,false)
+          label.draw_text("Last Menstrual Period: #{@current_range[0]["START"].to_date.strftime("%d/%b/%Y") rescue ""}",28,76,0,2,1,1,false)
+          label.draw_text("Expected Date of Delivery: #{(@current_range[0]["END"].to_date - 5.week).strftime("%d/%b/%Y") rescue ""}",28,99,0,2,1,1,false)
+          label.draw_line(28,60,132,1,0)
+          label.draw_line(20,130,800,2,0)
+          label.draw_line(20,190,800,2,0)
+          label.draw_text("Gest.",29,140,0,2,1,1,false)
+          label.draw_text("Fundal",99,140,0,2,1,1,false)
+          label.draw_text("Pos./",178,140,0,2,1,1,false)
+          label.draw_text("Fetal",259,140,0,2,1,1,false)
+          label.draw_text("Weight",339,140,0,2,1,1,false)
+          label.draw_text("(kg)",339,158,0,2,1,1,false)
+          label.draw_text("BP",435,140,0,2,1,1,false)
+          label.draw_text("Urine",499,138,0,2,1,1,false)
+          label.draw_text("Prote-",499,156,0,2,1,1,false)
+          label.draw_text("in",505,174,0,2,1,1,false)
+          label.draw_text("SP",595,140,0,2,1,1,false)
+          label.draw_text("(tabs)",575,158,0,2,1,1,false)
+          label.draw_text("FeFo",664,140,0,2,1,1,false)
+          label.draw_text("(tabs)",655,158,0,2,1,1,false)
+          label.draw_text("Albe.",740,140,0,2,1,1,false)
+          label.draw_text("(tabs)",740,156,0,2,1,1,false)
+          label.draw_text("Age",35,158,0,2,1,1,false)
+          label.draw_text("Height",99,158,0,2,1,1,false)
+          label.draw_text("Pres.",178,158,0,2,1,1,false)
+          label.draw_text("Heart",259,158,0,2,1,1,false)
+          label.draw_line(90,130,2,175,0)
+          label.draw_line(170,130,2,175,0)
+          label.draw_line(250,130,2,175,0)
+          label.draw_line(330,130,2,175,0)
+          label.draw_line(410,130,2,175,0)
+          label.draw_line(490,130,2,175,0)
+          label.draw_line(570,130,2,175,0)
+          label.draw_line(650,130,2,175,0)
+          label.draw_line(730,130,2,175,0)
+
+          @i = 0
+
+          out = []
+
+          encounters.each{|v,k|
+            out << [k["ANC VISIT TYPE"]["REASON FOR VISIT"].squish.to_i, v] rescue []
+          }
+          out = out.sort.compact
+
+          # raise out.to_yaml
+
+          out.each do |key, element|
+
+            encounter = encounters[element]
+
+            @i = @i + 1
+
+            if element == target_date.to_date.strftime("%d/%b/%Y")
+              visit = encounters[element]["ANC VISIT TYPE"]["REASON FOR VISIT"].to_i
+
+              label.draw_text("Visit No: #{visit}",250,33,0,1,1,2,false)
+              label.draw_text("Visit Date: #{element}",450,33,0,1,1,2,false)
+
+              gest = (((element.to_date - @current_range[0]["START"].to_date).to_i / 7) <= 0 ? "?" :
+                  (((element.to_date - @current_range[0]["START"].to_date).to_i / 7) - 1).to_s + "wks") rescue ""
+
+              label.draw_text(gest,29,200,0,2,1,1,false)
+
+              fund = (encounters[element]["OBSERVATIONS"]["FUNDUS"].to_i <= 0 ? "?" :
+                  encounters[element]["OBSERVATIONS"]["FUNDUS"].to_i.to_s + "(cm)") rescue ""
+
+              label.draw_text(fund,99,200,0,2,1,1,false)
+
+              posi = encounters[element]["OBSERVATIONS"]["POSITION"] rescue ""
+              pres = encounters[element]["OBSERVATIONS"]["PRESENTATION"] rescue ""
+
+              posipres = paragraphate(posi.to_s + pres.to_s,5, 5)
+
+              (0..(posipres.length)).each{|u|
+                label.draw_text(posipres[u].to_s,178,(200 + (13 * u)),0,2,1,1,false)
+              }
+
+              fet = (encounters[element]["OBSERVATIONS"]["FETAL HEART BEAT"].humanize == "Unknown" ? "?" :
+                  encounters[element]["OBSERVATIONS"]["FETAL HEART BEAT"].humanize).gsub(/Fetal\smovement\sfelt\s\(fmf\)/i,"FMF") rescue ""
+
+              fet = paragraphate(fet, 5, 5)
+
+              (0..(fet.length)).each{|f|
+                label.draw_text(fet[f].to_s,259,(200 + (13 * f)),0,2,1,1,false)
+              }
+
+              wei = (encounters[element]["VITALS"]["WEIGHT (KG)"].to_i <= 0 ? "?" :
+                  ((encounters[element]["VITALS"]["WEIGHT (KG)"].to_s.match(/\.[1-9]/) ?
+                      encounters[element]["VITALS"]["WEIGHT (KG)"] :
+                      encounters[element]["VITALS"]["WEIGHT (KG)"].to_i))) rescue ""
+
+              label.draw_text(wei,339,200,0,2,1,1,false)
+
+              sbp = (encounters[element]["VITALS"]["SYSTOLIC BLOOD PRESSURE"].to_i <= 0 ? "?" :
+                  encounters[element]["VITALS"]["SYSTOLIC BLOOD PRESSURE"].to_i) rescue "?"
+
+              dbp = (encounters[element]["VITALS"]["DIASTOLIC BLOOD PRESSURE"].to_i <= 0 ? "?" :
+                  encounters[element]["VITALS"]["DIASTOLIC BLOOD PRESSURE"].to_i) rescue "?"
+
+              bp = paragraphate(sbp.to_s + "/" + dbp.to_s, 4, 3)
+
+              (0..(bp.length)).each{|u|
+                label.draw_text(bp[u].to_s,420,(200 + (18 * u)),0,2,1,1,false)
+              }
+
+              uri = encounters[element]["LAB RESULTS"]["URINE PROTEIN"] rescue ""
+
+              uri = paragraphate(uri, 5, 5)
+
+              (0..(uri.length)).each{|u|
+                label.draw_text(uri[u].to_s,498,(200 + (18 * u)),0,2,1,1,false)
+              }
+
+              sp = (@drugs[element]["SP"].to_i > 0 ? @drugs[element]["SP"].to_i : "") rescue ""
+
+              label.draw_text(sp,595,200,0,2,1,1,false)
+
+              @ferrous_fefol =  @other_drugs.keys.collect{|date|
+                @other_drugs[date].keys.collect{|key|
+                  @other_drugs[date][key] if ((@other_drugs[date][key].to_i > 0 and key.downcase.strip == "ferrous") rescue false)
+                }
+              }.compact.first.to_s rescue ""
+
+              fefo = (@drugs[element]["Fefol"].to_i > 0 ? @drugs[element]["Fefol"].to_i : "") rescue ""
+
+              fefo = (fefo.to_i + @ferrous_fefol.to_i) rescue fefo
+              fefo = "" if (fefo.to_i == 0 rescue false)
+
+              label.draw_text(fefo.to_s,664,200,0,2,1,1,false)
+
+              albe = (@drugs[element]["Albendazole"].to_i > 0 ? @drugs[element]["Albendazole"].to_i : "") rescue ""
+
+              label.draw_text(albe.to_s,740,200,0,2,1,1,false)
+            end
+
           end
+
+          @encounters = encounters
+
+          label.print(1)
         end
-  
-        return if !over_100_done && !below_100_done
-  
-        over_100 = 0
-        below_100 = 0
-        over_100 = adherence_over_100 - 100 if over_100_done
-        below_100 = 100 - adherence_below_100 if below_100_done
-  
-        return "#{adherence_over_100}%" if (over_100 >= below_100) && over_100_done
-  
-        "#{adherence_below_100}%"
-      end
-  
-      def visit_extras(visit)
-        return unless visit
-  
-        data = {}
-  
-        count = 1
-        visit.side_effects.each do |side_eff|
-          data["side_eff#{count}"] = '25', side_eff[0..5]
-          count += 1
-        end
-  
-        count = 1
-        visit.pills_dispensed.each do |drug, pills|
-          string = "#{drug} (#{pills})"
-          if string.length > 26
-            line = string[0..25]
-            line2 = string[26..-1]
-            data["arv_given#{count}"] = '255', line
-            data["arv_given#{count += 1}"] = '255', line2
-          else
-            data["arv_given#{count}"] = '255', string
+
+        def print2
+          visit = ANCService::PatientVisit.new patient, date
+          return unless visit
+    
+          @current_range = visit.active_range(@date.to_date)
+    
+          # raise @current_range.to_yaml
+    
+          encounters = {}
+    
+          @patient.encounters.where(["encounter_datetime >= ? AND encounter_datetime <= ?",
+              @current_range[0]["START"], @current_range[0]["END"]]).collect{|e|
+            encounters[e.encounter_datetime.strftime("%d/%b/%Y")] = {"USER" => User.find(e.creator).username}
+          }
+    
+          @patient.encounters.where(["encounter_datetime >= ? AND encounter_datetime <= ?",
+              @current_range[0]["START"], @current_range[0]["END"]]).collect{|e|
+            encounters[e.encounter_datetime.strftime("%d/%b/%Y")][e.type.name.upcase] = ({} rescue "") if !e.type.nil?
+          }
+    
+          @patient.encounters.where(["encounter_datetime >= ? AND encounter_datetime <= ?",
+              @current_range[0]["START"], @current_range[0]["END"]]).collect{|e|
+            e.observations.each{|o|
+              if o.to_a[0]
+                if o.to_a[0].upcase == "DIAGNOSIS" && encounters[e.encounter_datetime.strftime("%d/%b/%Y")][e.type.name.upcase][o.to_a[0].upcase]
+                  encounters[e.encounter_datetime.strftime("%d/%b/%Y")][e.type.name.upcase][o.to_a[0].upcase] += "; " + o.to_a[1]
+                else
+                  encounters[e.encounter_datetime.strftime("%d/%b/%Y")][e.type.name.upcase][o.to_a[0].upcase] = (o.to_a[1] rescue "") if !e.type.nil?
+                  if o.to_a[0].upcase == "PLANNED DELIVERY PLACE"
+                    @current_range[0]["PLANNED DELIVERY PLACE"] = o.to_a[1]
+                  elsif o.to_a[0].upcase == "MOSQUITO NET"
+                    @current_range[0]["MOSQUITO NET"] = o.to_a[1]
+                  end
+                end
+              end
+            } rescue nil
+          }
+    
+          @drugs = {};
+          @other_drugs = {};
+          main_drugs = ["TTV", "SP", "Fefol", "Albendazole"]
+    
+          @patient.encounters.where(["(encounter_type = ? OR encounter_type = ?) AND encounter_datetime >= ? AND encounter_datetime <= ?",
+              EncounterType.find_by_name("TREATMENT").id, EncounterType.find_by_name("DISPENSING").id,
+              @current_range[0]["START"], @current_range[0]["END"]]).order("encounter_datetime DESC").each{|e|
+            @drugs[e.encounter_datetime.strftime("%d/%b/%Y")] = {} if !@drugs[e.encounter_datetime.strftime("%d/%b/%Y")];
+            @other_drugs[e.encounter_datetime.strftime("%d/%b/%Y")] = {} if !@other_drugs[e.encounter_datetime.strftime("%d/%b/%Y")];
+            e.orders.each{|o|
+    
+              drug_name = o.drug_order.drug.name.match(/syrup|\d+\.*\d+mg|\d+\.*\d+\smg|\d+\.*\d+ml|\d+\.*\d+\sml/i) ?
+                (o.drug_order.drug.name[0, o.drug_order.drug.name.index(" ")] + " " +
+                  o.drug_order.drug.name.match(/syrup|\d+\.*\d+mg|\d+\.*\d+\smg|\d+\.*\d+ml|\d+\.*\d+\sml/i)[0]) :
+                (o.drug_order.drug.name[0, o.drug_order.drug.name.index(" ")]) rescue o.drug_order.drug.name
+    
+              if ((main_drugs.include?(o.drug_order.drug.name[0, o.drug_order.drug.name.index(" ")])) rescue false)
+    
+                @drugs[e.encounter_datetime.strftime("%d/%b/%Y")][o.drug_order.drug.name[0,
+                    o.drug_order.drug.name.index(" ")]] = o.drug_order.amount_needed
+              else
+    
+                @other_drugs[e.encounter_datetime.strftime("%d/%b/%Y")][drug_name] = o.drug_order.amount_needed
+              end
+            }
+          }
+    
+          label = ZebraPrinter::StandardLabel.new
+    
+          label.draw_line(20,25,800,2,0)
+          label.draw_line(20,25,2,280,0)
+          label.draw_line(20,305,800,2,0)
+          label.draw_line(805,25,2,280,0)
+    
+          label.draw_line(20,130,800,2,0)
+          label.draw_line(20,190,800,2,0)
+    
+          label.draw_line(160,130,2,175,0)
+          label.draw_line(364,130,2,175,0)
+          label.draw_line(594,130,2,175,0)
+          label.draw_line(706,130,2,175,0)
+          label.draw_text("Planned Delivery Place: #{@current_range[0]["PLANNED DELIVERY PLACE"] rescue ""}",28,66,0,2,1,1,false)
+          label.draw_text("Bed Net Given: #{@current_range[0]["MOSQUITO NET"] rescue ""}",28,99,0,2,1,1,false)
+          label.draw_text("",28,138,0,2,1,1,false)
+          label.draw_text("TTV",75,156,0,2,1,1,false)
+    
+          label.draw_text("Diagnosis",170,140,0,2,1,1,false)
+          label.draw_text("Medication/Outcome",370,140,0,2,1,1,false)
+          label.draw_text("Next Vis.",600,140,0,2,1,1,false)
+          label.draw_text("Date",622,158,0,2,1,1,false)
+          label.draw_text("Provider",710,140,0,2,1,1,false)
+    
+          @i = 0
+    
+          out = []
+    
+          encounters.each{|v,k|
+            out << [k["ANC VISIT TYPE"]["REASON FOR VISIT"].squish.to_i, v] rescue []
+          }
+          out = out.sort.compact
+    
+          # raise out.to_yaml
+    
+          out.each do |key, element|
+    
+            encounter = encounters[element]
+            @i = @i + 1
+    
+            if element == target_date.to_date.strftime("%d/%b/%Y")
+    
+              ttv = (@drugs[element]["TTV"] > 0 ? 1 : "") rescue ""
+    
+              label.draw_text(ttv.to_s,28,200,0,2,1,1,false)
+    
+              sign = encounters[element]["OBSERVATIONS"]["DIAGNOSIS"].humanize rescue ""
+    
+              sign = paragraphate(sign.to_s, 13, 5)
+    
+              (0..(sign.length)).each{|m|
+                label.draw_text(sign[m].to_s,175,(200 + (25 * m)),0,2,1,1,false)
+              }
+    
+              med = encounters[element]["UPDATE OUTCOME"]["OUTCOME"].humanize + "; " rescue ""
+              oth = (@other_drugs[element].collect{|d, v|
+                  "#{d}: #{ (v.to_s.match(/\.[1-9]/) ? v : v.to_i) }"
+                }.join("; ")) if @other_drugs[element].length > 0 rescue ""
+    
+              med = paragraphate(med.to_s + oth.to_s, 17, 5)
+    
+              (0..(med.length)).each{|m|
+                label.draw_text(med[m].to_s,370,(200 + (18 * m)),0,2,1,1,false)
+              }
+    
+              nex = encounters[element]["APPOINTMENT"]["APPOINTMENT DATE"] rescue []
+    
+              if nex != []
+                date = nex.to_date
+                nex = []
+                nex << date.strftime("%d/")
+                nex << date.strftime("%b/")
+                nex << date.strftime("%Y")
+              end
+    
+              (0..(nex.length)).each{|m|
+                label.draw_text(nex[m].to_s,610,(200 + (18 * m)),0,2,1,1,false)
+              }
+    
+              use = (encounters[element]["USER"].split(" ") rescue []).collect{|n| n[0,1].upcase + "."}.join("")  rescue ""
+    
+              # use = paragraphate(use.to_s, 5, 5)
+    
+              # (0..(use.length)).each{|m|
+              #   label.draw_text(use[m],710,(200 + (18 * m)),0,2,1,1,false)
+              # }
+    
+              label.draw_text(use.to_s,710,200,0,2,1,1,false)
+    
+            end
           end
-          count += 1
-        end
-  
-        visit_cpt = visit.cpt || 0
-        data["arv_given#{count}"] = '255', "CPT (#{visit_cpt})" unless visit_cpt.zero?
-  
-        data
+    
+          label.print(1)
       end
+      
+      end
+
     end
-  end
