@@ -34,24 +34,37 @@ module ANCService
       ANCService::PatientLabLabel.new patient, date
     end
 
+    def gravida(patient, date)
+
+      gravida = patient.encounters.joins(:observations)
+          .where(["DATE(encounter_datetime) >= ? AND DATE(encounter_datetime) <= ? 
+            AND encounter_type = ? AND obs.concept_id = ?", (date.to_date - 4.months),
+            date,EncounterType.find_by_name("OBSTETRIC HISTORY").id,
+            ConceptName.find_by_name("Patient pregnant").concept_id]).order("encounter_datetime DESC")
+          .first.observations.collect{|o|
+            o.value_numeric
+          }.compact rescue 0
+          
+      return gravida[0] unless gravida == 0
+    end
+
     def anc_visit(patient, date)
-      last_lmp = patient.encounters.joins([:observations])
-                  .where(['encounter_type = ? AND obs.concept_id = ?',
-                    EncounterType.find_by_name('Current pregnancy').id,
-                    ConceptName.find_by_name('Last menstrual period').concept_id])
-                  .last.observations.collect { 
-                    |o| o.value_datetime 
-                }.compact.last.to_date #rescue nil
+      @visit = []
+      last_lmp = date_of_lnmp(patient)
 
-      return [] if last_lmp.blank?
+      unless last_lmp.blank?
 
-      patient.encounters.where(["DATE(encounter_datetime) >= ? 
-        AND DATE(encounter_datetime) <= ? AND encounter_type = ?",
-        last_lmp, date,EncounterType.find_by_name("ANC VISIT TYPE")]).collect{|e|
-          e.observations.collect{|o|
-            o.answer_string.to_i if o.concept.concept_names.first.name.downcase == "reason for visit"
-            }.compact
-        }.flatten rescue []
+        @visit =  patient.encounters.where(["DATE(encounter_datetime) >= ? 
+            AND DATE(encounter_datetime) <= ? AND encounter_type = ?",
+            last_lmp, date,EncounterType.find_by_name("ANC VISIT TYPE")]).collect{|e|
+              e.observations.collect{|o|
+                o.answer_string.to_i if o.concept.concept_names.first.name.downcase == "reason for visit"
+                }.compact
+            }.flatten rescue []
+
+      end
+
+      return {"visit_number": @visit, "gravida": gravida(patient, date)}
 
     end
 
