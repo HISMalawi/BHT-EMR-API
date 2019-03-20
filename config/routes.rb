@@ -115,6 +115,7 @@ Rails.application.routes.draw do
           get '/labels/transfer_out', to: 'program_patients#print_transfer_out_label'
           get '/mastercard_data', to: 'program_patients#mastercard_data'
           #ANC
+          get '/surgical_history', to: 'program_patients#surgical_history'
           get '/anc_visit', to: 'program_patients#anc_visit'
           get '/art_hiv_status', to: 'program_patients#art_hiv_status'
           get '/subsequent_visit', to: 'program_patients#subsequent_visit'

@@ -68,6 +68,27 @@ module ANCService
 
     end
 
+    def surgical_history(patient, date)
+      {hysterectomy: hysterectomy(patient)}
+    end
+
+    def hysterectomy(patient)
+
+      hysterectomy_conditions = ConceptName.where("name like '%hysterectomy%'").collect{|c| c.concept_id}
+
+      value = patient.encounters.joins([:observations]).where(["encounter_type = ? 
+        AND obs.concept_id in (?) AND obs.value_coded = ?", 
+        EncounterType.find_by_name("SURGICAL HISTORY").id,
+        hysterectomy_conditions, ConceptName.find_by_name("Yes").concept_id
+        ]).last
+      
+      unless value.blank?
+        return true
+      end
+
+      return false
+    end
+
     def art_hiv_status(patient)
 
       hiv_positive = PatientProgram.find_by_sql("SELECT pg.patient_id 

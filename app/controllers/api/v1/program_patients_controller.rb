@@ -105,6 +105,11 @@ class Api::V1::ProgramPatientsController < ApplicationController
     render json: service.subsequent_visit(patient)
   end
 
+  # Get surgical history for ANC
+  def surgical_history
+    render json: service.surgical_history(patient, date)
+  end
+
   protected
 
   def service
