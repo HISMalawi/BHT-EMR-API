@@ -3,7 +3,7 @@ require 'securerandom'
 class TbNumberService
   include ModelUtils
 
-  TB_NUMBER_IDENTIFIER_NAME = 'TB Number'
+  TB_NUMBER_IDENTIFIER_NAME = 'District TB Number'
   FACILITY_CODE_GLOBAL_PROPERTY_NAME = 'site_prefix'
 
   def assign_tb_number(patient_id)
