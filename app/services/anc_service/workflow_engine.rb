@@ -81,9 +81,9 @@ module ANCService
                         surgical_history_not_collected?],
       SOCIAL_HISTORY => %i[is_not_a_subsequent_visit?
                           social_history_not_collected?],
+      CURRENT_PREGNANCY => %i[is_not_a_subsequent_visit?
+                      current_pregnancy_not_collected?],
 =begin
-      TREATMENT => %i[patient_should_get_treatment?
-                      patient_has_not_completed_fast_track_visit?],
       FAST_TRACK => %i[patient_got_treatment?
                        patient_not_on_fast_track?
                        assess_for_fast_track?
@@ -110,7 +110,7 @@ module ANCService
     end
 
     def valid_state?(state)
-      if !ONE_TIME_ENCOUNTERS.include?(state)
+      if is_not_a_subsequent_visit? || !ONE_TIME_ENCOUNTERS.include?(state)
         return false if encounter_exists?(encounter_type(state))
       end
 
@@ -205,6 +205,21 @@ module ANCService
 
       social_history
     end
+    
+    def current_pregnancy_not_collected?
+      lmp_date = date_of_lnmp
+      return true if lmp_date.nil?
+
+      curr_preg_enc = EncounterType.find_by name: CURRENT_PREGNANCY
+
+      curr_preg = Encounter.where("encounter_type = ?
+          AND patient_id = ? AND DATE(encounter_datetime) >= DATE(?)",
+          curr_preg_enc.id, @patient.patient_id, lmp_date)
+        .order(encounter_datetime: :desc).first.blank?
+      
+      curr_preg
+    end
+
 
     def date_of_lnmp
       lmp = ConceptName.find_by name: "Last menstrual period"
