@@ -69,24 +69,27 @@ module ARTService
     end
 
     def height
-      @height ||= Observation.where(concept: concept('Height (cm)'), person: patient.person)\
-                             .order(obs_datetime: :desc)\
-                             .first\
-                             &.value_numeric || 0
+      obs = Observation.where(concept: concept('Height (cm)'), person: patient.person)\
+                       .order(obs_datetime: :desc)\
+                       .first
+
+      obs&.value_numeric || obs&.value_text || 0
     end
 
     def weight
-      @weight ||= Observation.where(concept: concept('Weight'), person: patient.person)\
-                             .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))\
-                             .last
-                             &.value_numeric || 0
+      obs = Observation.where(concept: concept('Weight'), person: patient.person)\
+                       .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))\
+                       .last
+
+      obs&.value_numeric || obs&.value_text || 0
     end
 
     def bmi
-      Observation.where(concept: concept('BMI'), person_id: patient.patient_id)\
-                 .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))\
-                 .first\
-                 &.value_numeric
+      obs = Observation.where(concept: concept('BMI'), person_id: patient.patient_id)\
+                       .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))\
+                       .first
+
+      obs&.value_numeric || obs&.value_text || 0
     end
 
     def adherence
