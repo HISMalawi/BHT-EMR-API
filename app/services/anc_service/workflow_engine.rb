@@ -47,6 +47,11 @@ module ANCService
     HIV_RECEPTION = 'HIV RECEPTION'
     ART_FOLLOWUP = 'ART_FOLLOWUP'
 
+    ONE_TIME_ENCOUNTERS = [
+      OBSTETRIC_HISTORY,MEDICAL_HISTORY,
+      SURGICAL_HISTORY,SOCIAL_HISTORY
+    ]
+
     # Encounters graph
     ENCOUNTER_SM = {
       INITIAL_STATE => DISPENSING,
@@ -61,19 +66,22 @@ module ANCService
       CURRENT_PREGNANCY => ANC_EXAMINATION,
       ANC_EXAMINATION => APPOINTMENT,
       APPOINTMENT => TREATMENT,
-      TREATMENT => => ART_FOLLOWUP,
+      TREATMENT => HIV_RECEPTION,
+      HIV_RECEPTION => ART_FOLLOWUP,
       ART_FOLLOWUP => END_STATE
     }.freeze
 
     STATE_CONDITIONS = {
-      DISPENSING => %i[patient_has_not_been_given_ttv?]
+      DISPENSING => %i[patient_has_not_been_given_ttv?],
+      OBSTETRIC_HISTORY => %i[is_not_a_subsequent_visit?
+                      obstetric_history_not_collected?],
+      MEDICAL_HISTORY => %i[is_not_a_subsequent_visit?
+                        medical_history_not_collected?],
+      SURGICAL_HISTORY => %i[is_not_a_subsequent_visit?
+                        surgical_history_not_collected?],
+      SOCIAL_HISTORY => %i[is_not_a_subsequent_visit?
+                          social_history_not_collected?],
 =begin
-      HIV_STAGING => %i[patient_not_already_staged?
-                        patient_has_not_completed_fast_track_visit?],
-      HIV_CLINIC_CONSULTATION => %i[patient_not_on_fast_track?
-                                    patient_has_not_completed_fast_track_visit?],
-      ART_ADHERENCE => %i[patient_received_art?
-                          patient_has_not_completed_fast_track_visit?],
       TREATMENT => %i[patient_should_get_treatment?
                       patient_has_not_completed_fast_track_visit?],
       FAST_TRACK => %i[patient_got_treatment?
@@ -102,7 +110,9 @@ module ANCService
     end
 
     def valid_state?(state)
-      return false if encounter_exists?(encounter_type(state))
+      if !ONE_TIME_ENCOUNTERS.include?(state)
+        return false if encounter_exists?(encounter_type(state))
+      end
 
       (STATE_CONDITIONS[state] || []).reduce(true) do |status, condition|
         status && method(condition).call
@@ -111,30 +121,101 @@ module ANCService
 
     # Check if patient is not been given ttv
     def patient_has_not_been_given_ttv?
-      dispensing_encounter_exist = Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ?',
-        DISPENSING,
-        @patient.patient_id
-      ).exists?
+      ttv_drug = Drug.find_by name: "TTV (0.5ml)"
+      ttv_order = Encounter.joins(:orders => [:drug_order])
+        .where("encounter.patient_id = ? AND drug_order.drug_inventory_id = ?
+          AND DATE(encounter.encounter_datetime) = DATE(?)",
+          @patient.patient_id, ttv_drug.id, @date)
+        .order(encounter_datetime: :desc).first.blank?
 
-      !dispensing_encounter_exist
+      ttv_order
     end
 
-    # Checks if patient has checked in today
-    #
-    # Pre-condition for VITALS encounter
-    def patient_checked_in?
-      encounter_type = EncounterType.find_by name: HIV_RECEPTION
-      encounter = Encounter.where(
-        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
-        @patient.patient_id, encounter_type.encounter_type_id, @date
-      ).order(encounter_datetime: :desc).first
-      raise "Can't check if patient checked in due to missing HIV_RECEPTION" if encounter.nil?
+    # Check if surgical history has been collected
 
-      patient_present_concept = concept PATIENT_PRESENT
-      yes_concept = concept 'YES'
-      encounter.observations.exists? concept_id: patient_present_concept.concept_id,
-                                     value_coded: yes_concept.concept_id
+    def surgical_history_not_collected?
+      lmp_date = date_of_lnmp
+      return true if lmp_date.nil?
+
+      surgical_history_enc = EncounterType.find_by name: SURGICAL_HISTORY
+      surg_history = Encounter.where("encounter_type = ?
+          AND patient_id = ? AND DATE(encounter_datetime) >= DATE(?)",
+          surgical_history_enc.id, @patient.patient_id, lmp_date).blank?
+          
+      surg_history
+    end
+
+    # Checks if this is the subsequent visit
+    #
+    def is_not_a_subsequent_visit?
+      lmp_date = date_of_lnmp
+      return true if lmp_date.nil?
+
+      visit_type = EncounterType.find_by name: ANC_VISIT_TYPE
+      reason_for_visit = ConceptName.find_by name: "Reason for visit"
+
+      anc_visit = Encounter.joins(:observations).where("encounter.encounter_type = ?
+          AND concept_id = ? AND encounter.patient_id = ? AND 
+          DATE(encounter.encounter_datetime) >= DATE(?)",
+          visit_type.id, reason_for_visit.concept_id, 
+          @patient.patient_id, lmp_date)
+        .order(encounter_datetime: :desc).first.blank?
+
+      anc_visit
+    end
+
+    def obstetric_history_not_collected?
+      lmp_date = date_of_lnmp
+      return true if lmp_date.nil?
+
+      obstetric_encounter = EncounterType.find_by name: OBSTETRIC_HISTORY
+      
+      obstetric = Encounter.where("encounter_type = ?
+          AND patient_id = ? AND DATE(encounter_datetime) >= DATE(?)",
+          obstetric_encounter.id, @patient.patient_id, lmp_date)
+        .order(encounter_datetime: :desc).first.blank?
+
+      obstetric
+    end
+
+    def medical_history_not_collected?
+      lmp_date = date_of_lnmp
+      return true if lmp_date.nil?
+
+      medical_history_enc = EncounterType.find_by name: MEDICAL_HISTORY
+
+      med_history = Encounter.where("encounter_type = ?
+          AND patient_id = ? AND DATE(encounter_datetime) >= DATE(?)",
+          medical_history_enc.id, @patient.patient_id, lmp_date)
+        .order(encounter_datetime: :desc).first.blank?
+
+      med_history
+    end
+
+    def social_history_not_collected?
+      lmp_date = date_of_lnmp
+      return true if lmp_date.nil?
+
+      social_history_enc = EncounterType.find_by name: SOCIAL_HISTORY
+
+      social_history = Encounter.where("encounter_type = ?
+          AND patient_id = ? AND DATE(encounter_datetime) >= DATE(?)",
+          social_history_enc.id, @patient.patient_id, lmp_date)
+        .order(encounter_datetime: :desc).first.blank?
+
+      social_history
+    end
+
+    def date_of_lnmp
+      lmp = ConceptName.find_by name: "Last menstrual period"
+      current_pregnancy = EncounterType.find_by name: CURRENT_PREGNANCY
+
+      last_lmp = @patient.encounters.joins([:observations])
+        .where(['encounter_type = ? AND obs.concept_id = ?',
+          current_pregnancy.id,lmp.concept_id])
+        .last.observations.collect { 
+          |o| o.value_datetime 
+        }.compact.last.to_date rescue nil
     end
 
   end
