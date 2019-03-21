@@ -92,7 +92,7 @@ module ARTService
     def adherence
       return @adherence if @adherence
 
-      observations = Observation.where(concept: concept('What was the ADHERENCE for this drug'),
+      observations = Observation.where(concept: concept('What was the patients adherence for this drug order'),
                                        person: patient.person)\
                                 .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
 
