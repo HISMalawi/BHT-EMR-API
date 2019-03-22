@@ -278,7 +278,10 @@ class PatientService
   end
 
   def dde_patient?(patient)
-    !patient.identifier('DDE person document id')&.identifier&.blank?
+    identifier = patient.identifier('DDE person document id')&.identifier
+    return false if identifier.nil?
+
+    !identifier.blank?
   end
 
   def dde_service(program)
