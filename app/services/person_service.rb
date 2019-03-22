@@ -114,7 +114,7 @@ class PersonService
 
     address = person.addresses.first
 
-    return create_person_address(filtered_params) unless address
+    return create_person_address(person, filtered_params) unless address
 
     handle_model_errors do
       address.update(filtered_params)
