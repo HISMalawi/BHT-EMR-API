@@ -57,6 +57,7 @@ Rails.application.routes.draw do
         post '/filing_number', to: 'patients#assign_filing_number'
         get '/past_filing_numbers' => 'patients#filing_number_history'
         get 'assign_tb_number', to: 'patients#assign_tb_number'
+        get 'get_tb_number', to: 'patients#get_tb_number'
         post '/npid', to: 'patients#assign_npid'
         post '/remaining_bp_drugs', to: 'patients#remaining_bp_drugs'
         post '/update_or_create_htn_state', to: 'patients#update_or_create_htn_state'

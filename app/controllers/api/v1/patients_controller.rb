@@ -98,6 +98,16 @@ class Api::V1::PatientsController < ApplicationController
     render json: tb_number, status: :created
   end
 
+  def get_tb_number
+    patient_id = params[:patient_id]
+    tb_number = service.get_tb_number(patient_id)
+    if tb_number
+      render json: tb_number, status: :ok
+    else
+      render :status => 404
+    end
+  end
+
   def assign_npid
     render json: service.assign_npid(patient), status: :created
   end

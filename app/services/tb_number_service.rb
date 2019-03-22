@@ -16,6 +16,15 @@ class TbNumberService
     )
   end
 
+  def get_tb_number(patient_id)
+    PatientIdentifier.where(
+      type: patient_identifier_type(TB_NUMBER_IDENTIFIER_NAME),
+      patient_id: patient_id 
+    )
+    .order(date_created: :desc)
+    .first
+  end
+
   private
   def generate_tb_number()
     "#{get_facility_code}-TB-#{SecureRandom.hex}"
