@@ -133,6 +133,8 @@ Rails.application.routes.draw do
         resources :program_reports, path: 'reports'
       end
 
+      resources :stock
+
       namespace :types do
         resources :relationships
         resources :lab_tests
@@ -220,7 +222,7 @@ Rails.application.routes.draw do
   get '/api/v1/drugs_given_without_prescription' => 'api/v1/reports#drugs_given_without_prescription'
   get '/api/v1/drugs_given_with_prescription' => 'api/v1/reports#drugs_given_with_prescription'
 
-  
+
   get '/api/v1/cohort_report_raw_data' => 'api/v1/reports#cohort_report_raw_data'
   get '/api/v1/cohort_disaggregated' => 'api/v1/reports#cohort_disaggregated'
 end
