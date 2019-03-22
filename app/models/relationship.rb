@@ -18,9 +18,8 @@ class Relationship < VoidableRecord
         relation: {
           include: {
             names: {},
-            person_attributes: {
-              include: :type
-            }
+            person_attributes: { include: :type },
+            addresses: {}
           }
         }
       }
