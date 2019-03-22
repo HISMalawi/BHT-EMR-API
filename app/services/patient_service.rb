@@ -33,7 +33,7 @@ class PatientService
       end
     end
 
-    dde_service(program).update_patient(patient) if use_dde_service?
+    dde_service(program).update_patient(patient) if use_dde_service? && dde_patient?(patient)
 
     patient
   end
@@ -275,6 +275,10 @@ class PatientService
     rescue
       false
     end
+  end
+
+  def dde_patient?(patient)
+    !patient.identifier('DDE person document id')&.identifier&.blank?
   end
 
   def dde_service(program)
