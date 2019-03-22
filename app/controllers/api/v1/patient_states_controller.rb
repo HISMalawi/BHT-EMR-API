@@ -12,7 +12,12 @@ class Api::V1::PatientStatesController < ApplicationController
     render json: patient_state, status: :created
   end
 
-  # TODO: Implement show, destroy and maybe update...
+  def destroy
+    state = PatientState.find(params[:id])
+    state.void("Voided by #{User.current.username}")
+    render status: :no_content
+  end
+  # TODO: Implement show, and maybe update...
 
   private
 
