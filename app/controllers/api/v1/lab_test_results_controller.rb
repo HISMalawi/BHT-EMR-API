@@ -8,11 +8,21 @@ class Api::V1::LabTestResultsController < ApplicationController
   end
 
   def create
-    accession_number, test_value = params.require %i[accession_number test_value]
-
-    result = engine.save_result accession_number: accession_number,
-                                test_value: test_value,
-                                time: TimeUtils.retro_timestamp(params[:time]&.to_time || Time.now)
+    result = engine.save_result(params[:lab_test_result])
     render json: result, status: :created
+  end
+
+  def create_order_and_results
+    order, result = params.require(%i[order result])
+
+    order = engine.create_legacy_order(patient, order)
+    result[:tracking_number] = order[:lims_order]['tracking_number']
+    result = engine.save_result(result)
+
+    render json: { order: order, result: result }, status: :created
+  end
+
+  def patient
+    Patient.find(params[:patient_id])
   end
 end

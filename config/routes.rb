@@ -121,6 +121,7 @@ Rails.application.routes.draw do
           get '/earliest_start_date' => 'program_patients#find_earliest_start_date'
           get '/labels/visits', to: 'program_patients#print_visit_label'
           get '/labels/transfer_out', to: 'program_patients#print_transfer_out_label'
+          get '/labels/patient_history', to: 'program_patients#print_patient_history_label'
           get '/mastercard_data', to: 'program_patients#mastercard_data'
           resources :patient_states, path: :states
         end
@@ -128,8 +129,11 @@ Rails.application.routes.draw do
         get '/lab_tests/panels' => 'lab_test_types#panels' # TODO: Move this into own controller
         resources :lab_test_orders, path: 'lab_tests/orders'
         resources :lab_test_results, path: 'lab_tests/results'
+        post '/lab_tests/order_and_results' => 'lab_test_results#create_order_and_results'
         get '/lab_tests/locations' => 'lab_test_orders#locations'
         get '/lab_tests/labs' => 'lab_test_orders#labs'
+        get '/lab_tests/orders_without_results' => 'lab_test_orders#orders_without_results'
+        get '/lab_tests/measures' => 'lab_test_types#measures'
         resources :program_reports, path: 'reports'
       end
 

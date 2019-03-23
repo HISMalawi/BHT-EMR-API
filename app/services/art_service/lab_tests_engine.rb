@@ -39,6 +39,21 @@ class ARTService::LabTestsEngine
                 .order(Arel.sql('DATE(Lab_Sample.TimeStamp) DESC'))
   end
 
+  def orders_without_results(patient)
+    npid = patient.identifier('National id')&.identifier
+    raise InvalidParameterError, 'Patient does not have an NPID' unless npid
+
+    nlims.tests_without_results(npid)
+  rescue LimsError => e
+    return [] if e.message.include?('no test pending for results')
+
+    raise e
+  end
+
+  def test_measures(test_name)
+    nlims.test_measures(test_name)
+  end
+
   def create_order(encounter:, date:, tests:, **kwargs)
     patient ||= encounter.patient
     date ||= encounter.encounter_datetime
@@ -54,6 +69,19 @@ class ARTService::LabTestsEngine
 
       { order: local_order, lims_order: lims_order }
     end
+  end
+
+  def create_legacy_order(patient, order)
+    date_sample_drawn = order['date_sample_drawn']
+    reason_for_test = order['reason_for_test']
+
+    lims_order = nlims.legacy_order_test(patient, order)
+
+    encounter = find_lab_encounter(patient, date_sample_drawn)
+    local_order = create_local_order(patient, encounter, date_sample_drawn, lims_order['tracking_number'])
+    save_reason_for_test(encounter, local_order, reason_for_test)
+
+    { order: local_order, lims_order: lims_order}
   end
 
   def find_orders_by_patient(patient, paginate_func: nil)
@@ -95,30 +123,8 @@ class ARTService::LabTestsEngine
     }]
   end
 
-  def save_result(accession_number:, test_value:, time:)
-    sample = LabSample.find_by(PATIENTID: accession_number)
-    unless sample
-      raise InvalidParameterError,
-            "Couldn't find Lab parameter associated with accession number: #{accession_number}"
-    end
-
-    result = LabParameter.find_by(Sample_ID: sample.Sample_ID)
-    unless result
-      raise InvalidParameterError,
-            "Couldn't find Lab parameter associated with accession number: #{accession_number}"
-    end
-
-    modifier, value = split_test_value(test_value)
-    result.Range = modifier
-    result.TESTVALUE = value
-    raise "Coun't save lab result #{test_value} to param ##{accession_number}" unless result.save
-
-    time ||= Time.now
-    sample.TIME = time.strftime('%2H:%2M')
-    sample.DATE = time.strftime('%Y-%m-%d')
-    return result if sample.save
-
-    raise "Couldn't save lab parameter bound to accession number: ##{find_orders_by_accession_number}"
+  def save_result(data)
+    nlims.update_test(data)
   end
 
   private
@@ -144,6 +150,16 @@ class ARTService::LabTestsEngine
       person: encounter.patient.person,
       value_text: reason
     )
+  end
+
+  def find_lab_encounter(patient, date)
+    encounter = Encounter.where(patient: patient, program: @program)\
+                         .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date.to_date))\
+                         .last
+    return encounter if encounter
+
+    Encounter.create(patient: patient, program: @program,
+                     encounter_datetime: TimeUtils.retro_timestamp(date))
   end
 
   # Creates a lab order in the secondary healthdata database
