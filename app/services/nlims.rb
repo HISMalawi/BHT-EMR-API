@@ -131,7 +131,7 @@ class NLims
   end
 
   def test_measures(test_name)
-    test_name = test_name.gsub!(/\s+/, '_')
+    test_name.gsub!(/\s+/, '_')
     get("query_test_measures/#{test_name}")
   end
 
