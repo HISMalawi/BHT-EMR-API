@@ -134,6 +134,10 @@ module ARTService
       ARTService::PatientMastercard.new(patient, date).data
     end
 
+    def patient_history_label(patient, date)
+      ARTService::PatientHistory.new(patient, date)
+    end
+
     private
 
     NPID_TYPE = 'National id'
