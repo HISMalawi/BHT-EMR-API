@@ -72,7 +72,7 @@ class ARTService::LabTestsEngine
   end
 
   def create_legacy_order(patient, order)
-    date_sample_drawn = order['date_sample_drawn']
+    date_sample_drawn = order['date_sample_drawn'].to_date
     reason_for_test = order['reason_for_test']
 
     lims_order = nlims.legacy_order_test(patient, order)
@@ -158,7 +158,8 @@ class ARTService::LabTestsEngine
                          .last
     return encounter if encounter
 
-    Encounter.create(patient: patient, program: @program,
+    Encounter.create(patient: patient, program: @program, type: encounter_type('Lab'),
+                     provider: User.current.person,
                      encounter_datetime: TimeUtils.retro_timestamp(date))
   end
 

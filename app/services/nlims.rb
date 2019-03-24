@@ -31,7 +31,7 @@ class NLims
     patient_name = patient.person.names.first
     user_name = User.current.person.names.first
     sample_type = order['sample_type']
-    tests = order['tests']
+    tests = [order['test_name']]
     reason_for_test = order['reason_for_test']
     sample_status = order['sample_status']
 
