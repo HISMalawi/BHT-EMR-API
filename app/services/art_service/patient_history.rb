@@ -132,7 +132,7 @@ module ARTService
     end
 
     def agrees_to_followup
-      observation_present?('Agrees to followup') ? 'Yes' : 'No'
+      recent_observation('Agrees to followup')&.answer_string || 'UNKNOWN'
     end
 
     def alt_first_line_drugs
@@ -348,7 +348,7 @@ module ARTService
     # Returns most recent observation for the current patient
     def recent_observation(concept_name, extra_filters = {})
       concept_id = ConceptName.find_by_name(concept_name).concept_id
-      program_id = Program.find_by_name('HIV Program').concept_id
+      program_id = Program.find_by_name('HIV Program').id
 
       obs_list = Observation.joins(:encounter)\
                             .merge(Encounter.where(program_id: program_id))
