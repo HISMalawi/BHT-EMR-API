@@ -61,7 +61,7 @@ class AppointmentService
     end
 
     _drug_id, date = earliest_appointment_date(patient, ref_date)
-    return nil unless date
+    return { drugs_run_out_date: date,appointment_date: ""} unless date
 
     {
       drugs_run_out_date: date,

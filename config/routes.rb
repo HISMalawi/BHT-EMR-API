@@ -120,16 +120,28 @@ Rails.application.routes.draw do
           get '/status' => 'program_patients#status'
           get '/earliest_start_date' => 'program_patients#find_earliest_start_date'
           get '/labels/visits', to: 'program_patients#print_visit_label'
+          get '/labels/history', to: 'program_patients#print_history_label'
+          get '/labels/lab_results', to: 'program_patients#print_lab_results_label'
           get '/labels/transfer_out', to: 'program_patients#print_transfer_out_label'
+          get '/labels/patient_history', to: 'program_patients#print_patient_history_label'
           get '/mastercard_data', to: 'program_patients#mastercard_data'
+          #ANC
+          get '/surgical_history', to: 'program_patients#surgical_history'
+          get '/anc_visit', to: 'program_patients#anc_visit'
+          get '/art_hiv_status', to: 'program_patients#art_hiv_status'
+          get '/subsequent_visit', to: 'program_patients#subsequent_visit'
+          get '/saved_encounters', to: 'program_patients#saved_encounters'
           resources :patient_states, path: :states
         end
         resources :lab_test_types, path: 'lab_tests/types'
         get '/lab_tests/panels' => 'lab_test_types#panels' # TODO: Move this into own controller
         resources :lab_test_orders, path: 'lab_tests/orders'
         resources :lab_test_results, path: 'lab_tests/results'
+        post '/lab_tests/order_and_results' => 'lab_test_results#create_order_and_results'
         get '/lab_tests/locations' => 'lab_test_orders#locations'
         get '/lab_tests/labs' => 'lab_test_orders#labs'
+        get '/lab_tests/orders_without_results' => 'lab_test_orders#orders_without_results'
+        get '/lab_tests/measures' => 'lab_test_types#measures'
         resources :program_reports, path: 'reports'
       end
 
@@ -147,6 +159,7 @@ Rails.application.routes.draw do
 
       resources :drug_orders
       resources :orders
+      get '/drug_sets', to: 'drugs#drug_sets' # ANC get drug sets
 
       resource :global_properties
       resource :user_properties
