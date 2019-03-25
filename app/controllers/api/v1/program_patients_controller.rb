@@ -1,7 +1,9 @@
 require 'zebra_printer/init'
 
 class Api::V1::ProgramPatientsController < ApplicationController
-  before_action :authenticate, except: %i[print_visit_label print_transfer_out_label print_history_label print_lab_results_label]
+  before_action :authenticate, except: %i[print_visit_label print_transfer_out_label
+                                          print_patient_history_label print_history_label
+                                          print_lab_results_label]
 
   def show
     date = params[:date]&.to_date || Date.today
