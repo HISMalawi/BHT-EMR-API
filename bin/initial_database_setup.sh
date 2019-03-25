@@ -33,6 +33,7 @@ mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/initial_
 
 echo "Schema additions ----------------------------------------------------------------------------------"
 mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/initial_setup/schema_bart2_additions.sql
+mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/initial_setup/anc2_schema_additions.sql
 mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/sql/bart2_views_schema_additions.sql
 echo "Defaults ------------------------------------------------------------------------------------"
 mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/initial_setup/defaults.sql

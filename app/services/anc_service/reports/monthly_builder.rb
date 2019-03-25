@@ -379,14 +379,14 @@ module ANCService
             @new_monthly_visits.each do |id|
               next if id.nil?
   
-              date = Observation.find_by_sql(['SELECT MAX(value_datetime) as date FROM obs
+              d = Observation.find_by_sql(['SELECT MAX(value_datetime) as date FROM obs
                       JOIN encounter ON obs.encounter_id = encounter.encounter_id
                       WHERE encounter.encounter_type = ? AND person_id = ? AND concept_id = ?',
                       CURRENT_PREGNANCY.id, id, LMP.concept_id])
                     .first.date.strftime('%Y-%m-%d') rescue nil
   
-                value = "#{id}|#{date}" unless date.nil?
-                id_visit_map << value unless date.nil?
+                value = "#{id}|#{d}" unless d.nil?
+                id_visit_map << value unless d.nil?
               
             end
             
