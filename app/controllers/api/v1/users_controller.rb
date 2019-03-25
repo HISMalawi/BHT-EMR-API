@@ -34,7 +34,7 @@ class Api::V1::UsersController < ApplicationController
   end
 
   def update
-    update_params = params.permit :password, :given_name, :family_name,
+    update_params = params.permit :password, :given_name, :family_name, :must_append_roles,
                                   roles: []
 
     # Makes sure roles are an array if provided
