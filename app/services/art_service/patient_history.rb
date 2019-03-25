@@ -300,7 +300,7 @@ module ARTService
     end
 
     def hiv_test_date
-      recent_observation('HIV test date')&.value_datetime&.strftime('%d/%b/%Y') || 'N/A'
+      recent_observation('Confirmatory HIV test date')&.value_datetime&.strftime('%d/%b/%Y') || 'N/A'
     end
 
     def load_hiv_staging_vars
