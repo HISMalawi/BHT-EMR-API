@@ -73,7 +73,7 @@ describe TBService::LabTestsEngine do
       ]
       user = person 
       order = engine.create_order(encounter: encounter, date: date, tests: tests, requesting_clinician: user.person_id)	
-      p expect(order)
+      expect(order)
 
 		end
 
