@@ -78,6 +78,14 @@ class Api::V1::ProgramPatientsController < ApplicationController
                               disposition: 'inline'
   end
 
+  def print_patient_history_label
+    label_commands = service.patient_history_label(patient, date).print
+    send_data label_commands, type: 'application/label; charset=utf-8',
+                              stream: false,
+                              filename: "#{params[:patient_id]}#{rand(10_000)}.lbl",
+                              disposition: 'inline'
+  end
+
   def defaulter_list
     start_date  = params[:start_date].to_date
     end_date    = params[:end_date].to_date
