@@ -1,6 +1,7 @@
 class ProgramPatientsService
   ENGINES = {
     'HIV PROGRAM' => ARTService::PatientsEngine,
+    'ANC' => ANCService::PatientsEngine,
     'OPD PROGRAM' => OPDService::PatientsEngine
   }.freeze
 
