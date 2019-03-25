@@ -10,6 +10,7 @@ class Drug < ActiveRecord::Base
   has_one :drug_cms, foreign_key: :drug_inventory_id
   has_many :barcodes, class_name: 'DrugOrderBarcode'
   has_many :alternative_names, class_name: 'AlternativeDrugName', foreign_key: 'drug_inventory_id'
+  has_many :ntp_regimens, class_name: 'NtpRegimen'
 
   def as_json(options = {})
     super(options.merge(

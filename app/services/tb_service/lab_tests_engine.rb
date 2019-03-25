@@ -65,12 +65,26 @@ class TBService::LabTestsEngine
 
       #creation happening here
       local_order = create_local_order(patient, encounter, date, accession_number)
-      save_reason_for_test(encounter, local_order, test['reason'])
+
+      #encounter observations shouldn't be save here
+      #save_reason_for_test(encounter, local_order, test['reason'])
 
       #add other observations here
 
       { order: local_order, lims_order: lims_order }
     end
+  end
+
+  #Add all observations
+  def save_reason_for_test(encounter, order, reason)
+    Observation.create(  
+      order: order,
+      encounter: encounter, 
+      concept: concept('Reason for test'),
+      obs_datetime: encounter.encounter_datetime,
+      person: encounter.patient.person,
+      value_text: reason
+    )
   end
 
   #find test with lims
@@ -128,17 +142,6 @@ class TBService::LabTestsEngine
                  provider: User.current
   end
   
-  def save_reason_for_test(encounter, order, reason)
-    Observation.create(
-      order: order,
-      encounter: encounter,
-      concept: concept('Reason for test'),
-      obs_datetime: encounter.encounter_datetime,
-      person: encounter.patient.person,
-      value_text: reason
-    )
-  end
-
   def next_id(seed_id)
     site_id = global_property('moh_site_id').property_value
     local_id = Order.where(order_type: order_type('Lab')).count + 1
