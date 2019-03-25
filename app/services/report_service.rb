@@ -3,7 +3,7 @@
 class ReportService
   ENGINES = {
     'HIV PROGRAM' => ARTService::ReportEngine,
-    'ANC PROGRAM' => ANCService::ReportEngine
+    'ANC PROGRAM' => ANCService::ReportEngine,
     'OPD PROGRAM' => OPDService::ReportEngine
   }.freeze
   LOGGER = Rails.logger
