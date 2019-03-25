@@ -8,6 +8,8 @@ class Api::V1::PeopleController < ApplicationController
   # Search for patients by name and gender
   #
   # GET /search/people?given_name={value}&family_name={value}&gender={value}
+  #
+  # @{deprecated}
   def search
     given_name, family_name, gender = params.require %i[given_name family_name gender]
 

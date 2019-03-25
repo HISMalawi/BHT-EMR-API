@@ -26,6 +26,12 @@ class Api::V1::PatientsController < ApplicationController
     render json: service.find_patients_by_identifier(identifier, identifier_type)
   end
 
+  # GET /api/v1/search/patients
+  def search_by_name_and_gender
+    given_name, family_name, gender = params.require(%i[given_name family_name gender])
+    render json: service.find_patients_by_name_and_gender(given_name, family_name, gender)
+  end
+
   def create
     person = Person.find(params.require(:person_id))
     program = Program.find(params.require(:program_id))
