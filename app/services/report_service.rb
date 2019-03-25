@@ -95,6 +95,10 @@ class ReportService
     engine(@program).drugs_given_with_prescription(start_date, end_date)
   end
 
+  def cohort_survival_analysis(quarter, age_group, regenerate)
+    engine(@program).cohort_survival_analysis(quarter, age_group, regenerate)
+  end
+
   private
 
   def engine(program)

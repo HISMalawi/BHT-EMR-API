@@ -9,6 +9,7 @@ module ARTService
     REPORTS = {
       'COHORT' => ARTService::Reports::Cohort,
       'COHORT_DISAGGREGATED' => ARTService::Reports::CohortDisaggregated,
+      'COHORT_SURVIVAL_ANALYSIS' => ARTService::Reports::CohortSurvivalAnalysis,
       'VISITS' => ARTService::Reports::VisitsReport
     }.freeze
 
@@ -31,6 +32,13 @@ module ARTService
         name: 'disaggregated', start_date: Date.today,
         end_date: Date.today)
       cohort.disaggregated(quarter, age_group)
+    end
+
+    def cohort_survival_analysis(quarter, age_group, regenerate)
+      cohort = REPORTS['COHORT_SURVIVAL_ANALYSIS'].new(type: 'survival_analysis', 
+        name: 'survival_analysis', start_date: Date.today,
+        end_date: Date.today, regenerate: regenerate)
+      cohort.survival_analysis(quarter, age_group)
     end
 
     private
