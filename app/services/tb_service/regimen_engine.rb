@@ -19,7 +19,6 @@ module TBService
     end 
 
     def custom_regimen_ingredients
-      #('Rifampicin isoniazid and pyrazinamide'), concept('Ethambutol'), concept('Rifampicin and isoniazid'), concept('Rifampicin Isoniazid Pyrazinamide Ethambutol')
       tb_extra_concepts = Concept.joins(:concept_names).where(concept_name: { name: %w[Isoniazid Rifampicin Pyrazinamide Ethambutol] } )
       drugs = Drug.where(concept: tb_extra_concepts)
       drugs
@@ -58,8 +57,6 @@ module TBService
 
       return {} unless prescribe_drugs
 
-      # Isoniazid(H) Rifampicin (R) Pyrazinamide (P) Ethambutol (E)
-      #RHZ 75/50/150, E 100, RH 75/50, RHZE - R150 H75 Z400 E275, RH - R150 H75
       tb_extras_concepts = [concept('Rifampicin isoniazid and pyrazinamide'), concept('Ethambutol'), concept('Rifampicin and isoniazid'), concept('Rifampicin Isoniazid Pyrazinamide Ethambutol')] #add TB concepts
 
       orders = Observation.where(concept: concept('Medication orders'),
