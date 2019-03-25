@@ -3,9 +3,11 @@ class Api::V1::PatientIdentifiersController < ApplicationController
 
   # GET /patient_identifiers
   def index
-    @patient_identifiers = PatientIdentifier.all
+    query = PatientIdentifier
+    query = query.where(identifier_type: params[:identifier_type]) if params[:identifier_type]
+    query = query.where(patient_id: params[:patient_id]) if params[:patient_id]
 
-    render json: @patient_identifiers
+    render json: paginate(query)
   end
 
   # GET /patient_identifiers/1

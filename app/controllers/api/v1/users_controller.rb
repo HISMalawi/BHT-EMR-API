@@ -69,78 +69,22 @@ class Api::V1::UsersController < ApplicationController
     end
   end
 
-  def check_token_validity
-    if params[:token]
-
-      status = UserService.check_token(params[:token])
-      response = if status == true
-                   {
-                     status: 200,
-                     error: false,
-                     message: 'token active',
-                     data: {
-                     }
-                   }
-                 else
-                   {
-                     status: 401,
-                     error: true,
-                     message: 'invalid_',
-                     data: {
-
-                     }
-                   }
-                 end
-
+  # GET
+  def activate
+    if UserService.activate_user(user)
+      render json: { message: ['User activated'], user: user }
     else
-      response = {
-        status: 401,
-        error: true,
-        message: 'token not provided',
-        data: {
-
-        }
-      }
+      render json: { errors: user.errors }
     end
-
-    render json: response
   end
 
-  def re_authenticate
-    if params[:username] && params[:password]
-      details = UserService.re_authenticate(params[:username], params[:password])
-      response = if details == false
-                   {
-                     status: 401,
-                     error: true,
-                     message: 'wrong password or username',
-                     data: {
-
-                     }
-                   }
-                 else
-                   {
-                     status: 200,
-                     error: false,
-                     message: 're authenticated successfuly',
-                     data: {
-                       token: details[:token],
-                       expiry_time: details[:expiry_time]
-                     }
-                   }
-                 end
-
+  # Deactivates user
+  def deactivate
+    if UserService.deactivate_user(user)
+      render json: { message: ['User de-activated'], user: user }
     else
-      response = {
-        status: 401,
-        error: true,
-        message: 'password or username not provided',
-        data: {
-
-        }
-      }
+      render json: { errors: user.errors }
     end
-    render json: response
   end
 
   private
@@ -162,5 +106,9 @@ class Api::V1::UsersController < ApplicationController
     end
 
     true
+  end
+
+  def user
+    User.find(params[:user_id])
   end
 end

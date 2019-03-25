@@ -4,24 +4,76 @@ class PatientService
   include ModelUtils
   include TimeUtils
 
-  def find_by_identifier(identifier, identifier_type: nil)
-    identifier_type ||= IdentifierType.find_by('National id')
+  def create_patient(program, person)
+    ActiveRecord::Base.transaction do
+      patient = Patient.create(patient_id: person.id)
+      unless patient.errors.empty?
+        raise "Could not create patient for person ##{person.id} due to #{patient.errors.as_json}"
+      end
 
-    Patient.joins(:patient_identifiers).where(
-      'patient_identifier.identifier_type = ? AND patient_identifier.identifier = ?',
-      identifier_type.patient_identifier_type_id, identifier
-    ).first
+      if use_dde_service?
+        assign_patient_dde_npid(patient, program)
+      else
+        assign_patient_v3_npid(patient)
+      end
+
+      patient.reload
+      patient
+    end
+  end
+
+  # Change patient's person id
+  #
+  # WARNING: THIS IS A DANGEROUS OPERATION...
+  def update_patient(program, patient, person_id = nil)
+    if person_id
+      patient.person_id = person_id
+      unless patient.save
+        raise "Could not update patient patient_id ##{patient_id} due to #{patient.errors.as_json}"
+      end
+    end
+
+    dde_service(program).update_patient(patient) if use_dde_service?
+
+    patient
+  end
+
+  def find_patients_by_npid(npid)
+    find_patients_by_identifier(npid, *npid_identifier_types.to_a)
+  end
+
+  def find_patients_by_name_and_gender(given_name, family_name, gender)
+    Patient.joins(:person).merge(
+      Person.joins(:names).where('gender like ?', "#{gender}%").merge(
+        PersonName.where(given_name: given_name, family_name: family_name)
+      )
+    )
   end
 
   def find_patient_median_weight_and_height(patient)
     median_weight_height(patient.age_in_months, patient.person.gender)
   end
 
-  def find_patients_by_identifier(identifier_type, identifier)
+  def find_patients_by_identifier(identifier, *identifier_types)
     Patient.joins(:patient_identifiers).where(
-      '`patient_identifier`.identifier_type = ? AND `patient_identifier`.identifier = ?',
-      identifier_type.id, identifier
+      '`patient_identifier`.identifier_type in (?) AND `patient_identifier`.identifier = ?',
+      identifier_types.collect(&:id), identifier
     )
+  end
+
+  def find_patient_visit_dates(patient, program = nil)
+    patient_id = ActiveRecord::Base.connection.quote(patient.id)
+    program_id = program ? ActiveRecord::Base.connection.quote(program.id) : nil
+
+    rows = ActiveRecord::Base.connection.select_all <<-SQL
+      SELECT DISTINCT DATE(encounter_datetime) AS visit_date
+      FROM encounter
+      WHERE patient_id = #{patient_id} AND voided = 0 #{"AND program_id = #{program_id}" if program_id}
+      GROUP BY visit_date
+      ORDER BY visit_date DESC
+    SQL
+
+    rows.collect { |row| row['visit_date'] }
   end
 
   def median_weight_height(age_in_months, gender)
@@ -32,14 +84,16 @@ class PatientService
 
   def drugs_orders(patient, date)
     DrugOrder.joins(:order).where(
-      'orders.start_date <= ? AND patient_id = ?',
+      'orders.start_date <= ? AND patient_id = ? AND quantity IS NOT NULL',
       TimeUtils.day_bounds(date)[1], patient.patient_id
     ).order('orders.start_date DESC')
   end
 
   # Last drugs received
-  def patient_last_drugs_received(patient, ref_date)
-    dispensing_encounter = Encounter.joins(:type).where(
+  def patient_last_drugs_received(patient, ref_date, program_id: nil)
+    dispensing_encounter_query = Encounter.joins(:type)
+    dispensing_encounter_query.where(program_id: program_id) if program_id
+    dispensing_encounter = dispensing_encounter_query.where(
       'encounter_type.name = ? AND encounter.patient_id = ?
         AND DATE(encounter_datetime) <= DATE(?)',
       'DISPENSING', patient.patient_id, ref_date
@@ -53,7 +107,7 @@ class PatientService
       next unless obs.value_drug || drug_map.key?(obs.value_drug)
 
       order = obs.order
-      next unless order.drug_order
+      next unless order&.drug_order&.quantity
 
       drug_map[obs.value_drug] = order.drug_order
     end).values
@@ -81,6 +135,16 @@ class PatientService
     return nil unless new_identifier
 
     { new_identifier: new_identifier, archived_identifier: archived_identifier }
+  end
+
+  # Returns a patient's past filing numbers
+  def filing_number_history(patient)
+    PatientIdentifier.unscoped.where(
+      voided: true,
+      patient: patient,
+      type: [patient_identifier_type('Filing number'),
+             patient_identifier_type('Archived filing number')]
+    )
   end
 
   def assign_npid(patient)
@@ -200,6 +264,34 @@ class PatientService
 
   private
 
+  def npid_identifier_types
+    @npid_identifier_types = [patient_identifier_type('National id'),
+                              patient_identifier_type('Old identification number')]
+  end
+
+  def use_dde_service?
+    begin
+      global_property('dde_enabled').property_value&.strip == 'true'
+    rescue
+      false
+    end
+  end
+
+  def dde_service(program)
+    DDEService.new(program: program)
+  end
+
+  # Blesses patient with a v3 npid
+  def assign_patient_v3_npid(patient)
+    identifier_type = PatientIdentifierType.find_by(name: 'National id')
+    identifier_type.next_identifier(patient: patient)
+  end
+
+  # Blesses patient with a DDE npid
+  def assign_patient_dde_npid(patient, program)
+    dde_service(program).create_patient(patient)
+  end
+
   # Takes a list of BP readings and groups them into a visit trail.
   #
   # A visit trail is just a map of a day to that days most recent
@@ -261,14 +353,6 @@ class PatientService
                .order(obs_datetime: :desc)
                .first
                &.value_text
-  end
-
-  def use_dde_service?
-    false
-  end
-
-  def dde_service
-    @dde_service ||= DDEService.new
   end
 
   def filing_number_service

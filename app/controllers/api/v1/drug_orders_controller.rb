@@ -6,6 +6,8 @@ class Api::V1::DrugOrdersController < ApplicationController
   def index
     filters = params.permit DrugOrderService::FIND_FILTERS
 
+    # DEPRECATED: encounter_id must be passed explicitly and not be
+    #             inferred from date
     if params[:date]
       patient_id = params.require(:patient_id)
       treatment = EncounterService.recent_encounter encounter_type_name: 'Treatment',

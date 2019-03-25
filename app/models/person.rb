@@ -6,20 +6,12 @@ class Person < VoidableRecord
   self.table_name = 'person'
   self.primary_key = 'person_id'
 
-  # cattr_accessor :session_datetime
-  # cattr_accessor :migrated_datetime
-  # cattr_accessor :migrated_creator
-  # cattr_accessor :migrated_location
-
-  has_one :patient, foreign_key: :patient_id, dependent: :destroy
-  has_many :names, -> { order('preferred' => 'DESC') }, class_name: 'PersonName',
-                                                        foreign_key: :person_id
-  has_many :addresses, class_name: 'PersonAddress', foreign_key: :person_id,
-                       dependent: :destroy
-  # has_many :relationships, class_name: "Relationship", foreign_key: :person_a
+  has_one :patient, foreign_key: :patient_id
+  has_many :names, class_name: 'PersonName', foreign_key: :person_id
+  has_many :addresses, class_name: 'PersonAddress', foreign_key: :person_id
+  has_many :relationships, class_name: 'Relationship', foreign_key: :person_a
   has_many :person_attributes, class_name: 'PersonAttribute', foreign_key: :person_id
-  has_many :observations, class_name: 'Observation', foreign_key: :person_id,
-                          dependent: :destroy do
+  has_many :observations, class_name: 'Observation', foreign_key: :person_id do
     def find_by_concept_name(name)
       concept_name = ConceptName.find_by_name(name)
       conditions = ['concept_id = ?', concept_name.concept_id]
@@ -53,13 +45,12 @@ class Person < VoidableRecord
         names: {},
         addresses: {},
         # relationships: {},
-        person_attributes: {}
+        person_attributes: { methods: %i[type] }
       }
     ))
   end
 
   def void_related_models(reason)
-    patient.void(reason)
     names.each { |name| name.void(reason) }
     addresses.each { |address| address.void(reason) }
     relationships.each { |relationship| relationship.void(reason) }

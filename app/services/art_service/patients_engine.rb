@@ -25,8 +25,8 @@ module ARTService
     def patient_last_drugs_received(patient, ref_date)
       dispensing_encounter = Encounter.joins(:type).where(
         'encounter_type.name = ? AND encounter.patient_id = ?
-         AND DATE(encounter_datetime) <= DATE(?)',
-        'DISPENSING', patient.patient_id, ref_date
+         AND DATE(encounter_datetime) <= DATE(?) AND program_id = ?',
+        'DISPENSING', patient.patient_id, ref_date, program('HIV Program').id
       ).order(encounter_datetime: :desc).first
 
       return [] unless dispensing_encounter
@@ -37,7 +37,7 @@ module ARTService
         next unless obs.value_drug || drug_map.key?(obs.value_drug)
 
         order = obs.order
-        next unless order.drug_order
+        next unless order&.drug_order&.quantity
 
         drug_map[obs.value_drug] = order.drug_order if order.drug_order.drug.arv?
       end).values
@@ -130,6 +130,10 @@ module ARTService
       ARTService::PatientTransferOutLabel.new patient, date
     end
 
+    def mastercard_data(patient, date)
+      ARTService::PatientMastercard.new(patient, date).data
+    end
+
     private
 
     NPID_TYPE = 'National id'
@@ -160,9 +164,6 @@ module ARTService
       "#{district}, #{village}"
     end
 
-    def mastercard_data(patient, date)
-      ARTService::PatientMastercard.new(patient, date).data
-    end
 
     def patient_summary(patient, date)
       PatientSummary.new patient, date

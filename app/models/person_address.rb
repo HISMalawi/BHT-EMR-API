@@ -4,6 +4,54 @@ class PersonAddress < VoidableRecord
 
   belongs_to :person, foreign_key: :person_id
 
+  def current_district
+    state_province
+  end
+
+  def current_district=(district)
+    self.state_province = district
+  end
+
+  def current_village
+    city_village
+  end
+
+  def current_village=(village)
+    self.city_village = village
+  end
+
+  def current_traditional_authority
+    township_division
+  end
+
+  def current_traditional_authority=(traditional_authority)
+    self.township_division = traditional_authority
+  end
+
+  def home_district
+    address2
+  end
+
+  def home_district=(district)
+    self.address2 = district
+  end
+
+  def home_village
+    neighborhood_cell
+  end
+
+  def home_village=(village)
+    self.neighborhood_cell = village
+  end
+
+  def home_traditional_authority
+    county_district
+  end
+
+  def home_traditional_authority=(traditional_authority)
+    self.county_district = traditional_authority
+  end
+
   def to_s
     [state_province, township_division, city_village].join ', '
   end

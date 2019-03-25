@@ -37,7 +37,7 @@ module ARTService
       label.draw_multi_text("Name: #{patient.name} (#{patient.gender.first})\nAge: #{patient.age}", font_reverse: false)
 
       # Print information on Diagnosis!
-      art_start_date = transfer_out_note.date_antiretrovirals_started.strftime('%d-%b-%Y')
+      art_start_date = transfer_out_note.date_antiretrovirals_started&.strftime('%d-%b-%Y')
       label.draw_multi_text('Stage defining conditions:', font_reverse: true)
       label.draw_multi_text("Reason for starting: #{who_stage}", font_reverse: false)
       label.draw_multi_text("ART start date: #{art_start_date}", font_reverse: false)

@@ -34,7 +34,7 @@ class ARTService::Reports::VisitsReport
         parsed_values[report_value.indicator_name] = report_value.contents.to_i
       end
 
-      return nil if parsed_values.empty?  # Force regeneration of report
+      break nil if parsed_values.empty? # Force regeneration of report
 
       parsed_report[date] = parsed_values
     end

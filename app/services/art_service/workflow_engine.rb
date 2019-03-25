@@ -77,9 +77,9 @@ module ARTService
                           patient_has_not_completed_fast_track_visit?],
       TREATMENT => %i[patient_should_get_treatment?
                       patient_has_not_completed_fast_track_visit?],
-      FAST_TRACK => %i[patient_got_treatment?
+      FAST_TRACK => %i[fast_track_activated?
+                       patient_got_treatment?
                        patient_not_on_fast_track?
-                       assess_for_fast_track?
                        patient_has_not_completed_fast_track_visit?],
       DISPENSING => %i[patient_got_treatment?
                        patient_has_not_completed_fast_track_visit?],
@@ -94,7 +94,6 @@ module ARTService
       activities = user_property('Activities')&.property_value
       encounters = (activities&.split(',') || []).collect do |activity|
         # Re-map activities to encounters
-        puts activity
         case activity
         when /ART adherence/i
           ART_ADHERENCE
@@ -119,7 +118,7 @@ module ARTService
         end
       end
 
-      Set.new(encounters + [FAST_TRACK])
+      Set.new(encounters + [FAST_TRACK]) # Fast track is not selected as user activity
     end
 
     def next_state(current_state)
@@ -274,19 +273,6 @@ module ARTService
       complete
     end
 
-    def assess_for_fast_track?
-      assess_for_fast_track_concept = concept('Assess for fast track?')
-
-      # Should we assess fast track?
-      Observation.where(
-        concept: assess_for_fast_track_concept,
-        value_coded: concept('Yes').concept_id,
-        person_id: @patient.patient_id
-      ).where(
-        'obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date)
-      ).exists?
-    end
-
     # Checks whether current patient is on a fast track visit
     def patient_not_on_fast_track?
       on_fast_track = Observation.where(concept: concept('Fast'), person: @patient.person)\
@@ -309,13 +295,18 @@ module ARTService
       return !@fast_track_completed if @fast_track_completed
 
       @fast_track_completed = Observation.where(concept: concept('Fast track visit'),
-                                                person: @patient.person)\
+                                                person: @patient.person,
+                                                value_coded: concept('Yes').concept_id)\
                                          .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))
                                          .order(obs_datetime: :desc)\
-                                         .first
-                                         &.value_coded&.to_i == concept('Yes').concept_id
+                                         .exists?
 
       !@fast_track_completed
+    end
+
+    # Check's whether fast track has been activated
+    def fast_track_activated?
+      global_property('enable.fast.track')&.property_value&.casecmp?('true')
     end
 
     def htn_workflow

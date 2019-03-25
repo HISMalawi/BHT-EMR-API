@@ -8,7 +8,10 @@ module ARTService
       include ModelUtils
 
       def build(cohort_struct, start_date, end_date)
-        load_tmp_patient_table(cohort_struct)
+        #load_tmp_patient_table(cohort_struct)
+        create_tmp_patient_table
+        load_data_into_temp_earliest_start_date(end_date.to_date)
+
         # create_tmp_patient_table_2(end_date)
 
         time_started = Time.now.strftime('%Y-%m-%d %H:%M:%S')
@@ -872,16 +875,11 @@ module ARTService
         unknown_adherence = []
 
         patients_alive_and_on_art.each do |patient|
-          adherence = patient_latest_art_adherence(patient['patient_id'], start_date, end_date)
+          adherence_rate = patient_latest_art_adherence(patient['patient_id'], start_date, end_date)
 
-          unless adherence
+          if adherence_rate.nil?
             unknown_adherence << patient
-            next
-          end
-
-          adherence_rate = (adherence.value_numeric || adherence.value_text).to_f
-
-          if adherence_rate >= ART_ADHERENCE_THRESHOLD
+          elsif adherence_rate >= ART_ADHERENCE_THRESHOLD
             adherent << patient
           else
             not_adherent << patient
@@ -891,19 +889,42 @@ module ARTService
         [adherent, not_adherent, unknown_adherence]
       end
 
+      def adherence_encounter
+        @adherence_encounter ||= encounter_type('ART ADHERENCE')
+      end
+
+      def hiv_program
+        @hiv_program ||= program('HIV PROGRAM')
+      end
+
+      def drug_order_adherence_concept
+        @drug_order_adherence_concept ||= concept('Drug order adherence')
+      end
+
       # Retrieve patient's latest adherence observation
       def patient_latest_art_adherence(patient_id, start_date, end_date)
-        encounter = EncounterService.recent_encounter(
-          encounter_type_name: 'ART ADHERENCE',
-          patient_id: patient_id,
-          date: end_date,
-          start_date: start_date
-        )
+        encounter = Encounter.where(type: adherence_encounter, program: hiv_program,
+                                    patient_id: patient_id)\
+                             .where('encounter_datetime BETWEEN ? AND ?', start_date, end_date)\
+                             .order(:encounter_datetime)
+                             .last
+
         return nil unless encounter
 
-        encounter.observations.where(
-          concept: concept('Drug order adherence')
-        ).order(obs_datetime: :desc).first
+        lowest_adherence_rate = Float::MAX
+
+        encounter.observations.where(concept: drug_order_adherence_concept).each do |adherence|
+          adherence_rate = (adherence.value_numeric || adherence.value_text)&.to_f
+          next unless adherence_rate
+
+          # TODO: Please optimise this... It's highly inefficient
+          drug = adherence.order&.drug_order&.drug
+          next if drug && !drug.arv?
+
+          lowest_adherence_rate = adherence_rate if adherence_rate < lowest_adherence_rate
+        end
+
+        lowest_adherence_rate
       end
 
       def unknown_side_effects(data, _start_date, end_date)
@@ -1080,6 +1101,7 @@ module ARTService
         current_cohort_regimens = %w[
           0P 2P 4P 9P 11P 0A 2A 4A
           5A 6A 7A 8A 9A 10A 11A 12A
+          13A 14A 15A
         ]
 
         (data || []).each do |regimen_attr|
@@ -1298,15 +1320,17 @@ module ARTService
       def unknown_other_reason_outside_guidelines(start_date, end_date)
         # All WHO stage 1 and 2 patients that were enrolled before '2016-04-01'
         # should be included in this group.
-        reason_concept_ids = []
-        reason_concept_ids << concept('Unknown').concept_id
-        reason_concept_ids << concept('None').concept_id
+        reason_concept_ids = [concept('Unknown').concept_id, concept('None').concept_id]
 
         registered = []
 
         (@reason_for_starting || []).each do |r|
-          next unless reason_concept_ids.include?(r[:reason_for_starting_concept_id])
-          next unless (r[:date_enrolled] >= start_date.to_date) && (r[:date_enrolled] <= end_date.to_date)
+          concept_id = r[:reason_for_starting_concept_id]
+          # A blank concept_id => we do not know the reason
+          next unless concept_id.blank? || reason_concept_ids.include?(concept_id)
+
+          date_enrolled = r[:date_enrolled]&.to_date
+          next unless date_enrolled && date_enrolled >= start_date.to_date && date_enrolled <= end_date.to_date
 
           registered << r
         end
@@ -1316,11 +1340,13 @@ module ARTService
         who_stage_1_and_2_concept_ids << concept('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 1').concept_id
         who_stage_1_and_2_concept_ids << concept('LYMPHOCYTES').concept_id
         who_stage_1_and_2_concept_ids << concept('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2').concept_id
-        who_stage_1_and_2_concept_ids << concept('WHO stage I adult').concept_id
-        who_stage_1_and_2_concept_ids << concept('WHO stage I peds').concept_id
-        who_stage_1_and_2_concept_ids << concept('WHO stage 1').concept_id
-        who_stage_1_and_2_concept_ids << concept('WHO stage II adult').concept_id
-        who_stage_1_and_2_concept_ids << concept('WHO stage II peds').concept_id
+
+        # Following concepts are duplicated in the database... Can't be sure of which
+        # concept_id was used amongst the duplicates thus we just check all concept_ids
+        ['WHO stage I adult', 'WHO stage I peds', 'WHO STAGE 1', 'WHO stage II adult',
+         'WHO stage II peds', 'WHO STAGE 2'].each do |concept_name|
+          who_stage_1_and_2_concept_ids += ConceptName.where(name: concept_name).collect(&:concept_id)
+        end
 
         if start_date.to_date < revised_art_guidelines_date.to_date
           end_date = revised_art_guidelines_date
@@ -1337,9 +1363,9 @@ module ARTService
 
       def who_stage_four(start_date, end_date)
         reason_concept_ids = []
-        reason_concept_ids << concept('WHO stage IV adult').concept_id
-        reason_concept_ids << concept('WHO stage IV peds').concept_id
-        reason_concept_ids << concept('WHO STAGE 4').concept_id
+        ConceptName.where(name: 'WHO stage IV adult').map{|c| reason_concept_ids << c.concept_id}
+        ConceptName.where(name: 'WHO stage IV peds').map{|c| reason_concept_ids << c.concept_id}
+        ConceptName.where(name: 'WHO STAGE 4').map{|c| reason_concept_ids << c.concept_id}
 
         registered = []
 
@@ -1355,9 +1381,12 @@ module ARTService
 
       def who_stage_three(start_date, end_date)
         reason_concept_ids = []
-        reason_concept_ids << concept('WHO stage III adult').concept_id
-        reason_concept_ids << concept('WHO stage III peds').concept_id
-        reason_concept_ids << concept('WHO STAGE 3').concept_id
+        #reason_concept_ids << concept('WHO stage III adult').concept_id
+        #reason_concept_ids << concept('WHO stage III peds').concept_id
+        #reason_concept_ids << concept('WHO STAGE 3').concept_id
+        ConceptName.where(name: 'WHO stage III adult').map{|c| reason_concept_ids << c.concept_id}
+        ConceptName.where(name: 'WHO stage III peds').map{|c| reason_concept_ids << c.concept_id}
+        ConceptName.where(name: 'WHO STAGE 3').map{|c| reason_concept_ids << c.concept_id}
 
         registered = []
 
@@ -1669,7 +1698,7 @@ module ARTService
 
       def load_tmp_patient_table(cohort_struct)
         create_tmp_patient_table
-
+=begin
         arv_orders.each_with_object({}) do |order, patient_tab|
           next if patient_tab.include?(order.patient_id)
 
@@ -1680,6 +1709,7 @@ module ARTService
 
           patient_tab[order.patient_id] = person
         end
+=end
       end
 
         def create_tmp_patient_table_2(end_date)
@@ -1748,7 +1778,7 @@ EOF
           'CREATE TABLE IF NOT EXISTS temp_earliest_start_date (
              patient_id INTEGER PRIMARY KEY,
              date_enrolled DATE NOT NULL,
-             earliest_start_date DATETIME NOT NULL,
+             earliest_start_date DATETIME,
              birthdate DATE NOT NULL,
              birthdate_estimated BOOLEAN,
              death_date DATE,
@@ -1757,6 +1787,7 @@ EOF
              age_in_days INT NOT NULL
           ) ENGINE=MEMORY;'
         )
+
         ActiveRecord::Base.connection.execute(
           'CREATE INDEX patient_id_index ON temp_earliest_start_date (patient_id)'
         )
@@ -1774,6 +1805,36 @@ EOF
         ActiveRecord::Base.connection.execute(
           'CREATE INDEX earliest_start_date__date_enrolled_index ON temp_earliest_start_date (earliest_start_date, date_enrolled)'
         )
+      end
+
+      def load_data_into_temp_earliest_start_date(end_date)
+
+        ActiveRecord::Base.connection.execute <<EOF
+        INSERT INTO temp_earliest_start_date
+          select
+            `p`.`patient_id` AS `patient_id`,
+            cast(patient_date_enrolled(`p`.`patient_id`) as date) AS `date_enrolled`,
+            date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`,
+            `pe`.`birthdate`,
+            `pe`.`birthdate_estimated`,
+            `person`.`death_date` AS `death_date`,
+            `pe`.`gender` AS `gender`,
+            (select timestampdiff(year, `pe`.`birthdate`, min(`s`.`start_date`))) AS `age_at_initiation`,
+            (select timestampdiff(day, `pe`.`birthdate`, min(`s`.`start_date`))) AS `age_in_days`
+          from
+            ((`patient_program` `p`
+            left join `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
+            left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
+            left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
+          where
+            ((`p`.`voided` = 0)
+                and (`s`.`voided` = 0)
+                and (`p`.`program_id` = 1)
+                and (`s`.`state` = 7))
+          group by `p`.`patient_id`
+          HAVING date_enrolled IS NOT NULL;
+EOF
+
       end
 
       def arv_orders

@@ -15,7 +15,11 @@ Rails.application.routes.draw do
 
       resources :appointments
       resources :dispensations, only: %i[index create]
-      resources :users
+      resources :users do
+        post '/activate', to: 'users#activate'
+        post '/deactivate', to: 'users#deactivate'
+      end
+
       # Not placed under users urls to allow crud on current user's roles
       resources :user_roles, only: %i[index create destroy]
 
@@ -35,7 +39,6 @@ Rails.application.routes.draw do
 
       # Patients
       resources :patients do
-        resources :patient_identifiers
         get '/labels/national_health_id' => 'patients#print_national_health_id_label'
         get '/labels/filing_number' => 'patients#print_filing_number'
         get '/visits' => 'patients#visits'
@@ -52,16 +55,23 @@ Rails.application.routes.draw do
         get '/bp_trail', to: 'patients#bp_readings_trail'
         get '/eligible_for_htn_screening', to: 'patients#eligible_for_htn_screening'
         post '/filing_number', to: 'patients#assign_filing_number'
+        get '/past_filing_numbers' => 'patients#filing_number_history'
         post '/npid', to: 'patients#assign_npid'
         post '/remaining_bp_drugs', to: 'patients#remaining_bp_drugs'
         post '/update_or_create_htn_state', to: 'patients#update_or_create_htn_state'
         resources :patient_programs, path: :programs
       end
 
+      resources :patient_identifiers
+
       resources :concepts, only: %i[index show]
 
       # Locations
-      resources :locations
+      resources :locations do
+        get('/label', to: redirect do |params, request|
+          "/api/v1/labels/location?location_id=#{params[:location_id]}"
+        end)
+      end
 
       resources :regions, only: %i[index] do
         get('/districts', to: redirect do |params, request|
@@ -131,13 +141,18 @@ Rails.application.routes.draw do
         resources :program_reports, path: 'reports'
       end
 
+      resources :stock
+
       namespace :types do
         resources :relationships
         resources :lab_tests
         resources :patient_identifiers
       end
 
-      resources :drugs
+      resources :drugs do
+        get '/barcode', to: 'drugs#print_barcode'
+      end
+
       resources :drug_orders
       resources :orders
       get '/drug_sets', to: 'drugs#drug_sets' # ANC get drug sets
@@ -152,6 +167,17 @@ Rails.application.routes.draw do
 
       get '/current_time', to: 'time#current_time'
 
+      get '/dde/patients/find_by_npid', to: 'dde#find_patients_by_npid'
+      get '/dde/patients/find_by_name_and_gender', to: 'dde#find_patients_by_name_and_gender'
+      get '/dde/patients/import_by_doc_id', to: 'dde#import_patients_by_doc_id'
+      get '/dde/patients/import_by_name_and_gender', to: 'dde#import_patients_by_name_and_gender'
+      get '/dde/patients/import_by_npid', to: 'dde#import_patients_by_npid'
+      get '/dde/patients/match_by_demographics', to: 'dde#match_patients_by_demographics'
+      post '/dde/patients/reassign_npid', to: 'dde#reassign_patient_npid'
+      post '/dde/patients/merge', to: 'dde#merge_patients'
+
+      get '/labels/location', to: 'locations#print_label'
+
       # Search
       get '/search/given_name' => 'person_names#search_given_name'
       get '/search/middle_name' => 'person_names#search_middle_name'
@@ -161,6 +187,15 @@ Rails.application.routes.draw do
       get '/search/patients/by_identifier' => 'patients#search_by_identifier'
       get '/search/properties' => 'properties#search'
       get '/search/landmarks' => 'landmarks#search'
+
+      get '/dde/patients/find_by_npid', to: 'dde#find_patients_by_npid'
+      get '/dde/patients/find_by_name_and_gender', to: 'dde#find_patients_by_name_and_gender'
+      get '/dde/patients/import_by_doc_id', to: 'dde#import_patients_by_doc_id'
+      get '/dde/patients/import_by_name_and_gender', to: 'dde#import_patients_by_name_and_gender'
+      get '/dde/patients/import_by_npid', to: 'dde#import_patients_by_npid'
+      get '/dde/patients/match_by_demographics', to: 'dde#match_patients_by_demographics'
+      post '/dde/patients/reassign_npid', to: 'dde#reassign_patient_npid'
+      post '/dde/patients/merge', to: 'dde#merge_patients'
 
       post '/reports/encounters' => 'encounters#count'
     end
@@ -176,4 +211,27 @@ Rails.application.routes.draw do
   get '/api/v1/on_fast_track' => 'api/v1/fast_track#on_fast_track'
   get '/api/v1/patient_weight_for_height_values' => 'api/v1/weight_for_height#index'
   get '/api/v1/booked_appointments' => 'api/v1/patient_appointments#booked_appointments'
+  get '/api/v1/concept_set' => 'api/v1/concept_sets#show'
+  get '/api/v1/cervical_cancer_screening' => 'api/v1/cervical_cancer_screening#show'
+
+  get '/api/v1/dashboard_stats' => 'api/v1/reports#index'
+
+  # SQA controller
+  get '/api/v1/dead_encounters' => 'api/v1/cleaning#index'
+  get '/api/v1/date_enrolled' => 'api/v1/cleaning#dateEnrolled'
+  get '/api/v1/start_date' => 'api/v1/cleaning#startDate'
+  get '/api/v1/male' => 'api/v1/cleaning#male'
+  get '/api/v1/incomplete_visits' => 'api/v1/cleaning#incompleteVisits'
+
+  #OPD reports
+  get '/api/v1/diagnosis' => 'api/v1/reports#diagnosis'
+  get '/api/v1/registration' => 'api/v1/reports#registration'
+  get '/api/v1/diagnosis_by_address' => 'api/v1/reports#diagnosis_by_address'
+  get '/api/v1/with_nids' => 'api/v1/reports#with_nids'
+  get '/api/v1/drugs_given_without_prescription' => 'api/v1/reports#drugs_given_without_prescription'
+  get '/api/v1/drugs_given_with_prescription' => 'api/v1/reports#drugs_given_with_prescription'
+
+
+  get '/api/v1/cohort_report_raw_data' => 'api/v1/reports#cohort_report_raw_data'
+  get '/api/v1/cohort_disaggregated' => 'api/v1/reports#cohort_disaggregated'
 end

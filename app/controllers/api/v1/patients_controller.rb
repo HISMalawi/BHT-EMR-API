@@ -12,97 +12,29 @@ class Api::V1::PatientsController < ApplicationController
 
   include ModelUtils
 
-  before_action :load_dde_client
-
-  VISIT_DATES_SQL = <<-SQL
-    SELECT DISTINCT DATE(encounter_datetime) AS encounter_datetime
-    FROM encounter WHERE patient_id = ? AND voided = 0
-    GROUP BY encounter_datetime
-    ORDER BY encounter_datetime DESC
-  SQL
-
   def show
-    render json: Patient.find(params[:id])
+    render json: patient
   end
 
   def search_by_npid
-    npid = params.require(:npid)
-    patients = Patient.joins(:patient_identifiers).where(
-      'patient_identifier.identifier_type IN (?) AND patient_identifier.identifier = ?',
-      npid_identifier_types.values.collect(&:id), npid
-    )
-
-    return render(json: paginate(patients)) unless patients.empty? && dde_enabled?
-
-    # Ignore response status, DDE almost always returns 200 even for bad requests
-    # and 404s on this endpoint. Only way to check for an error is to check whether we
-    # received a hash and the hash contains an error... Not pretty.
-    response, = @dde_client.post 'search_by_npid', npid: npid
-
-    unless response.class == Array
-      logger.error "Failed to search for patient in DDE by npid: #{response}"
-      return render json: { errors: 'DDE is unreachable...' },
-                    status: :internal_server_error
-    end
-
-    render json: response.collect { |dde_person| dde_person_to_openmrs dde_person }
+    render json: service.find_patients_by_npid(params.require(:npid))
   end
 
   def search_by_identifier
-    identifier_type_id, identifier = params.require %i[type_id identifier]
+    identifier_type_id, identifier = params.require(%i[type_id identifier])
     identifier_type = PatientIdentifierType.find(identifier_type_id)
-    render json: service.find_patients_by_identifier(identifier_type, identifier)
+    render json: service.find_patients_by_identifier(identifier, identifier_type)
   end
 
   def create
-    create_params, errors = required_params required: %i[person_id]
-    return render json: { errors: create_params }, status: :bad_request if errors
+    person = Person.find(params.require(:person_id))
+    program = Program.find(params.require(:program_id))
 
-    patient = ActiveRecord::Base.transaction do
-      person = Person.find(create_params[:person_id])
-      patient = Patient.create patient_id: person.id,
-                               creator: User.current.id,
-                               date_created: Time.now
-      identifier = dde_enabled? ? register_dde_patient(person) : gen_v3_npid(patient)
-      identifier.patient = patient
-      unless identifier.save
-        raise "Could not create patient identifier: #{identifier.errors.as_json}"
-      end
-
-      patient
-    end
-
-    unless patient.errors.empty?
-      logger.error "Failed to create patient: #{patient.errors.as_json}"
-      render json: { errors: ['Failed to create person'] }, status: :internal_server_error
-      return
-    end
-
-    render json: patient, status: :created
+    render json: service.create_patient(program, person), status: :created
   end
 
   def update
-    patient = Patient.find(params[:id])
-
-    new_person_id = params.permit(:person_id)[:person_id]
-    if new_person_id
-      patient.person_id = new_person_id
-      return render json: patient.errors, status: :bad_request unless patient.save
-    end
-
-    render json: patient unless dde_enabled?
-
-    dde_person = openmrs_to_dde_person(patient.person)
-    dde_response, dde_status = @dde_client.post 'update_person', dde_person
-
-    unless dde_status == 200
-      logger.error "Failed to update person in DDE: #{dde_response}"
-      render json: { errors: 'Failed to update person in DDE'},
-             status: :internal_server_error
-      return
-    end
-
-    render json: patient, status: :ok
+    render json: service.update_patient(patient, params.require(:person_id))
   end
 
   def print_national_health_id_label
@@ -132,12 +64,8 @@ class Api::V1::PatientsController < ApplicationController
   end
 
   def visits
-    patient_id = params[:patient_id]
-
-    sql_stmnt = ActiveRecord::Base.connection.raw_connection.prepare VISIT_DATES_SQL
-    visits = sql_stmnt.execute(patient_id).collect { |visit| visit[0] }
-
-    render json: visits
+    program = params[:program_id] ? Program.find(params[:program_id]) : nil
+    render json: service.find_patient_visit_dates(patient, program)
   end
 
   def find_median_weight_and_height
@@ -190,7 +118,8 @@ class Api::V1::PatientsController < ApplicationController
   # Returns all drugs received on last dispensation
   def last_drugs_received
     date = params[:date]&.to_date || Date.today
-    render json: service.patient_last_drugs_received(patient, date)
+    program_id = params[:program_id]
+    render json: service.patient_last_drugs_received(patient, date, program_id)
   end
 
   def remaining_bp_drugs
@@ -212,162 +141,14 @@ class Api::V1::PatientsController < ApplicationController
     render json: { updated: service.update_or_create_htn_state(patient, state, date) }
   end
 
+  def filing_number_history
+    render json: service.filing_number_history(patient)
+  end
+
   private
 
-  DDE_CONFIG_PATH = 'config/application.yml'
-
   def patient
-    Patient.find(params[:patient_id])
-  end
-
-  def load_dde_client
-    return unless dde_enabled?
-
-    @dde_client = DDEClient.new
-
-    logger.debug 'Searching for a stored DDE connection'
-    connection = Rails.application.config.dde_connection
-    unless connection
-      logger.debug 'No stored DDE connection found... Loading config...'
-      app_config = YAML.load_file DDE_CONFIG_PATH
-      Rails.application.config.dde_connection = @dde_client.connect(
-        config: {
-          username: app_config['dde_username'],
-          password: app_config['dde_password'],
-          base_url: app_config['dde_url']
-        }
-      )
-      return
-    end
-
-    logger.debug 'Stored DDE connection found'
-    @dde_client.connect connection: connection
-  end
-
-  def dde_enabled?
-    property = GlobalProperty.find_by(property: 'dde_enabled')
-    return false unless property
-    value = (property.property_value || '0').strip
-    enabled = property && !['0', 'false', 'f', ''].include?(value)
-    logger.debug "DDE Enabled: #{enabled}"
-    logger.info 'DDE is not enabled' unless enabled
-    enabled
-  end
-
-  # Converts an openmrs person structure to a DDE person structure
-  def openmrs_to_dde_person(person)
-    logger.debug "Converting OpenMRS person to dde_person: #{person}"
-    person_name = person.names[0]
-    person_address = person.addresses[0]
-    person_attributes = filter_person_attributes person.person_attributes
-
-    dde_person = {
-      given_name: person_name.given_name,
-      family_name: person_name.family_name,
-      gender: person.gender,
-      birthdate: person.birthdate,
-      birthdate_estimated: person.birthdate_estimated, # Convert to bool?
-      attributes: {
-        current_district: person_address ? person_address.state_province : nil,
-        current_traditional_authority: person_address ? person_address.township_division : nil,
-        current_village: person_address ? person_address.city_village : nil,
-        home_district: person_address ? person_address.address2 : nil,
-        home_village: person_address ? person_address.neighborhood_cell : nil,
-        home_traditional_authority: person_address ? person_address.county_district : nil,
-        occupation: person_attributes ? person_attributes[:occupation] : nil
-      }
-    }
-
-    logger.debug "Converted openmrs person to dde_person: #{dde_person}"
-    dde_person
-  end
-
-  # Convert a DDE person to an openmrs person.
-  #
-  # NOTE: This creates a person on the database.
-  def dde_person_to_openmrs(dde_person)
-    logger.debug "Converting DDE person to openmrs: #{dde_person}"
-
-    person = person_service.create_person(
-      birthdate: dde_person['birthdate'],
-      birthdate_estimated: dde_person['birthdate_estimated'],
-      gender: dde_person['gender']
-    )
-
-    person_service.create_person_name(
-      person, given_name: dde_person['given_name'],
-              family_name: dde_person['family_name'],
-              middle_name: dde_person['middle_name']
-    )
-
-    person_service.create_person_address(
-      person, home_village: dde_person['home_village'],
-              home_traditional_authority: dde_person['home_traditional_authority'],
-              home_district: dde_person['home_district'],
-              current_village: dde_person['current_village'],
-              current_traditional_authority: dde_person['current_traditional_authority'],
-              current_district: dde_person['current_district']
-    )
-
-    person_service.create_person_attributes(
-      person, cell_phone_number: dde_person['cellphone_number'],
-              occupation: dde_person['occupation']
-    )
-
-    person
-  end
-
-  def register_dde_patient(person)
-    dde_person = openmrs_to_dde_person(person)
-    dde_response, dde_status = @dde_client.post 'add_person', dde_person
-
-    if dde_status != 200
-      logger.error "Failed to create person in DDE: #{dde_response}"
-      raise 'Failed to register person in DDE'
-    end
-
-    PatientIdentifier.create(
-      identifier: dde_response['doc_id'],
-      type: person_identifier_type('DDE person document ID'),
-      location_id: Location.current.id
-    )
-
-    PatientIdentifier.new(
-      identifier: dde_response['npid'],
-      identifier_type: npid_identifier_type.id,
-      creator: User.current.id,
-      date_created: Time.now,
-      uuid: SecureRandom.uuid,
-      location_id: Location.current.id
-    )
-  end
-
-  def gen_v3_npid(patient)
-    identifier_type = PatientIdentifierType.find_by name: 'National id'
-    identifier_type.next_identifier patient: patient
-  end
-
-  def filter_person_attributes(person_attributes)
-    return nil unless person_attributes
-
-    person_attributes.each_with_object({}) do |attr, filtered|
-      case attr.type.name.downcase.gsub(/\s+/, '_')
-      when 'cell_phone_number'
-        filtered[:cell_phone_number] = attr.value
-      when 'occupation'
-        filtered[:occupation] = attr.value
-      when 'birthplace'
-        filtered[:home_district] = attr.value
-      when 'home_village'
-        filtered[:home_village] = attr.value
-      when 'ancestral_traditional_authority'
-        filtered[:home_traditional_authority] = attr.value
-      end
-    end
-  end
-
-  def find_patient(npid)
-    @dde_service.find_patient(npid)
+    Patient.find(params[:id] || params[:patient_id])
   end
 
   def generate_national_id_label(patient)
@@ -424,13 +205,6 @@ class Api::V1::PatientsController < ApplicationController
     label.draw_text("Filing area #{file_type}", 75, 150, 0, 2, 2, 2, false)
     label.draw_text("Version number: #{version_number}", 75, 200, 0, 2, 2, 2, false)
     label.print(num)
-  end
-
-  def npid_identifier_types
-    {
-      npid: PatientIdentifierType.find_by_name('National id'),
-      legacy_npid: PatientIdentifierType.find_by_name('Old Identification Number')
-    }
   end
 
   def service

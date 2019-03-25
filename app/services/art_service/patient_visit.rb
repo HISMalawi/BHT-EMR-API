@@ -69,27 +69,33 @@ module ARTService
     end
 
     def height
-      @height ||= Observation.where(concept: concept('Height (cm)'), person: patient.person)\
-                             .order(obs_datetime: :desc)\
-                             .first\
-                             &.value_numeric || 0
+      obs = Observation.where(concept: concept('Height (cm)'), person: patient.person)\
+                       .order(obs_datetime: :desc)\
+                       .first
+
+      obs&.value_numeric || obs&.value_text || 0
     end
 
     def weight
-      @weight ||= Observation.where(concept: concept('Weight'), person: patient.person)\
-                             .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))\
-                             .last
-                             &.value_numeric || 0
+      obs = Observation.where(concept: concept('Weight'), person: patient.person)\
+                       .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))\
+                       .last
+
+      obs&.value_numeric || obs&.value_text || 0
     end
 
     def bmi
-      @bmi ||= calculate_bmi(weight, height)
+      obs = Observation.where(concept: concept('BMI'), person_id: patient.patient_id)\
+                       .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))\
+                       .first
+
+      obs&.value_numeric || obs&.value_text || 0
     end
 
     def adherence
       return @adherence if @adherence
 
-      observations = Observation.where(concept: concept('What was the ADHERENCE for this drug'),
+      observations = Observation.where(concept: concept('What was the patients adherence for this drug order'),
                                        person: patient.person)\
                                 .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
 
@@ -157,6 +163,25 @@ module ARTService
                                 .where(value_coded: concept('Yes'))\
                                 .collect { |side_effect| side_effect.concept.fullname }
                                 .compact
+    end
+
+    def viral_load_result
+      lab_tests_engine.find_orders_by_patient(patient).each do |order|
+        order.tests.each do |test|
+          next unless test[:test_type].match?(/viral load/i)
+
+          values = test[:test_values].collect do |test_value|
+            next if test_value[:indicator].match?(/result_date/i)
+
+            test_value[:value]
+          end
+
+          values.join(', ')
+        end
+      end
+    rescue StandardError => e
+      Rails.logger.error "Failed to retrieve viral load result from LIMS: #{e}"
+      'N/A'
     end
 
     def cpt; end

@@ -4,8 +4,8 @@ class ReportService
   ENGINES = {
     'HIV PROGRAM' => ARTService::ReportEngine,
     'ANC PROGRAM' => ANCService::ReportEngine
+    'OPD PROGRAM' => OPDService::ReportEngine
   }.freeze
-
   LOGGER = Rails.logger
 
   def initialize(program_id:, immediate_mode: false, overwrite_mode: false)
@@ -19,7 +19,12 @@ class ReportService
     LOGGER.debug "Retrieving report, #{name}, for period #{start_date} to #{end_date}"
     type = report_type(type)
 
-    report = @overwrite_mode ? nil : find_report(type, name, start_date, end_date)
+    report = find_report(type, name, start_date, end_date)
+    if report && @overwrite_mode
+      report.void('Over-written by new report')
+      report = nil
+    end
+
     return report if report
 
     lock = self.class.acquire_report_lock(type.name, start_date, end_date)
@@ -52,6 +57,42 @@ class ReportService
     return unless path.exist?
 
     File.unlink(path)
+  end
+
+  def dashboard_stats(date)
+    engine(@program).dashboard_stats(date)
+  end
+
+  def diagnosis(start_date, end_date)
+    engine(@program).diagnosis(start_date, end_date)
+  end
+
+  def registration(start_date, end_date)
+    engine(@program).registration(start_date, end_date)
+  end
+
+  def diagnosis_by_address(start_date, end_date)
+    engine(@program).diagnosis_by_address(start_date, end_date)
+  end
+
+  def with_nids
+    engine(@program).with_nids
+  end
+
+  def cohort_report_raw_data(l1, l2)
+    engine(@program).cohort_report_raw_data(l1, l2)
+  end
+
+  def cohort_disaggregated(quarter, age_group)
+    engine(@program).cohort_disaggregated(quarter, age_group)
+  end
+
+  def drugs_given_without_prescription(start_date, end_date)
+    engine(@program).drugs_given_without_prescription(start_date, end_date)
+  end
+
+  def drugs_given_with_prescription(start_date, end_date)
+    engine(@program).drugs_given_with_prescription(start_date, end_date)
   end
 
   private

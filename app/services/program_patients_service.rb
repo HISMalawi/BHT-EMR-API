@@ -2,10 +2,11 @@ class ProgramPatientsService
   ENGINES = {
     'HIV PROGRAM' => ARTService::PatientsEngine,
     'ANC' => ANCService::PatientsEngine
+    'OPD PROGRAM' => OPDService::PatientsEngine
   }.freeze
 
   def initialize(program:)
-    clazz = ENGINES[program.concept.concept_names[0].name.upcase]
+    clazz = ENGINES[program.name.upcase]
     @engine = clazz.new(program: program)
   end
 
@@ -22,7 +23,7 @@ class ProgramPatientsService
   end
 
   def defaulter_list(start_date, end_date)
-#=begin 
+#=begin
     ActiveRecord::Base.connection.execute <<EOF
       DROP TABLE IF EXISTS `temp_earliest_start_date`;
 EOF
@@ -52,12 +53,12 @@ EOF
 EOF
 #=end
 
-    data = ActiveRecord::Base.connection.select_all("SELECT e.patient_id, 
-    patient_outcome(e.patient_id, DATE('#{end_date}')) outcome, 
+    data = ActiveRecord::Base.connection.select_all("SELECT e.patient_id,
+    patient_outcome(e.patient_id, DATE('#{end_date}')) outcome,
     current_defaulter_date(e.patient_id, DATE('#{end_date}')) outcome_date
     FROM temp_earliest_start_date e WHERE date_enrolled BETWEEN '#{start_date.strftime('%Y-%m-%d')}'
     AND '#{end_date.strftime('%Y-%m-%d')}' HAVING outcome LIKE '%defau%';")
- 
+
     patient_ids = [];
     defaulter_date = {}
 
@@ -65,19 +66,21 @@ EOF
       patient_ids << row['patient_id'].to_i
       defaulter_date[row['patient_id'].to_i] = row['outcome_date']
     end
-  
-    clients = ActiveRecord::Base.connection.select_all("SELECT 
-    i.identifier, p.birthdate, p.gender, n.given_name, 
+
+    patient_ids = (patient_ids.length > 0 ? patient_ids : [0])
+
+    clients = ActiveRecord::Base.connection.select_all("SELECT
+    i.identifier, p.birthdate, p.gender, n.given_name,
     n.family_name, p.person_id, p.birthdate_estimated
-    FROM temp_earliest_start_date t 
+    FROM temp_earliest_start_date t
     INNER JOIN person p ON p.person_id = t.patient_id AND p.voided = 0
     RIGHT JOIN person_address a ON a.person_id = t.patient_id AND a.voided = 0
     RIGHT JOIN person_name n ON n.person_id = t.patient_id AND n.voided = 0
-    RIGHT JOIN patient_identifier i ON i.patient_id = t.patient_id AND i.voided = 0 
-    AND i.identifier_type IN(2,3)
+    RIGHT JOIN patient_identifier i ON i.patient_id = t.patient_id AND i.voided = 0
+    AND i.identifier_type IN(4)
     WHERE p.person_id IN(#{patient_ids.join(',')})
-    GROUP BY i.identifier, p.birthdate, p.gender, 
-    n.given_name, n.family_name, 
+    GROUP BY i.identifier, p.birthdate, p.gender,
+    n.given_name, n.family_name,
     p.person_id, p.birthdate_estimated;")
 
     clients_formatted = [];
@@ -86,13 +89,13 @@ EOF
       clients_formatted << {
         given_name: c['given_name'], family_name: c['family_name'],
         birthdate: c['birthdate'], gender: c['gender'], person_id: c['person_id'],
-        npid: c['identifier'], birthdate_estimated: c['birthdate_estimated'],
+        arv_number: c['identifier'], birthdate_estimated: c['birthdate_estimated'],
         defaulter_date: defaulter_date[c['person_id'].to_i]
       }
     end
 
     return clients_formatted
-    
+
 
   end
 

@@ -27,6 +27,12 @@ class DrugOrder < ActiveRecord::Base
     interval.to_i
   end
 
+  # Calculates the duration which the current drugs may last
+  # given the equivalent daily dose
+  def quantity_duration
+    (quantity / equivalent_daily_dose).to_i
+  end
+
   def amount_needed
     value = (duration * (equivalent_daily_dose || 1)) - (quantity || 0)
     value.negative? ? 0 : value

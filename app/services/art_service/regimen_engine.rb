@@ -13,7 +13,7 @@ module ARTService
     # Returns all drugs that can be combined to form custom ART regimens
     def custom_regimen_ingredients
       arv_extras_concepts = Concept.joins(:concept_names).where(
-        concept_name: { name: %w[INH CPT] }
+        concept_name: { name: %w[INH CPT Pyridoxine] }
       )
       Drug.where(concept: arv_extras_concepts) + Drug.arv_drugs.order(name: :desc)
     end
@@ -153,6 +153,9 @@ module ARTService
 
     def ingredient_to_drug(ingredient)
       drug = ingredient.drug
+      regimen_category_lookup = MohRegimenLookup.find_by(drug_inventory_id: ingredient.drug_inventory_id)
+      regimen_category = regimen_category_lookup ? regimen_category_lookup.regimen_name[-1] : nil
+
       {
         drug_id: drug.drug_id,
         concept_id: drug.concept_id,
@@ -164,7 +167,8 @@ module ARTService
         units: drug.units,
         concept_name: drug.concept.concept_names[0].name,
         pack_size: drug.drug_cms ? drug.drug_cms.pack_size : nil,
-        barcodes: drug.barcodes.collect { |barcode| { tabs: barcode.tabs } }
+        barcodes: drug.barcodes.collect { |barcode| { tabs: barcode.tabs } },
+        regimen_category: regimen_category
       }
     end
 
@@ -194,13 +198,36 @@ module ARTService
       Rails.logger.debug "Interpreting regimen: #{drug_combo}"
 
       drug_combo = Set.new drug_combo
-      REGIMEN_CODES.each do |regimen_category, combos|
-        combos.each { |combo| return regimen_category if combo == drug_combo }
+      REGIMEN_CODES.each do |regimen_index, combos|
+        combos.each do |combo|
+          return regimen_category(drug_combo, regimen_index) if combo == drug_combo
+        end
       end
 
       Rails.logger.warn "Failed to Interpret regimen: #{drug_combo}"
 
       nil
+    end
+
+    # Analyses the drugs in list, @{param drug_combo}, and returns a regimen category
+    # the drugs belong to (eg. 9P or 9A).
+    #
+    # Example:
+    #   > regimen_category(drug_combo, '5') # For all adult drugs
+    #   => '5A'
+    #   > regimen_category(drug_combo, '2')  # At least one of the drugs is paed.
+    #   => '2P'
+    def regimen_category(drug_combo, prefix)
+      prefix = prefix.to_s
+
+      drug_combo.reduce(nil) do |category, drug|
+        return category if category && category[-1]&.casecmp?('P')
+
+        lookup = MohRegimenLookup.where(drug_inventory_id: drug).first
+        next category unless lookup
+
+        prefix + lookup.regimen_name[-1]
+      end
     end
 
     # Age at which we assuming women lose their child bearing capability
@@ -262,25 +289,20 @@ module ARTService
       # RAL (Raltegravir 400mg) = 954
       # NVP (Nevirapine 200 mg tablet) = 22
       # LPV/r pellets = 979
-      '0P' => [Set.new([733, 968]), Set.new([733, 22])],
-      '0A' => [Set.new([969, 22]), Set.new([969, 968])],
-      '2P' => [Set.new([732]), Set.new([732, 736]), Set.new([732, 39])],
-      '2A' => [Set.new([731]), Set.new([731, 39]), Set.new([731, 736])],
-      '4P' => [Set.new([736, 30]), Set.new([736, 11])],
-      '4A' => [Set.new([39, 11]), Set.new([39, 30])],
-      '5A' => [Set.new([735])],
-      '6A' => [Set.new([734, 22])],
-      '7A' => [Set.new([734, 932])],
-      '8A' => [Set.new([39, 932])],
-      '9P' => [Set.new([733, 979]), Set.new([733, 74]), Set.new([733, 73])],
-      '9A' => [Set.new([969, 73]), Set.new([969, 74])],
-      '10A' => [Set.new([734, 73])],
-      '11P' => [Set.new([736, 74]), Set.new([736, 73])],
-      '11A' => [Set.new([39, 73]), Set.new([39, 74])],
-      '12A' => [Set.new([976, 977, 982])],
-      '13A' => [Set.new([983])],
-      '14A' => [Set.new([984, 982])],
-      '15A' => [Set.new([969, 982])]
+      '0' => [Set.new([733, 968]), Set.new([733, 22]), Set.new([969, 22]), Set.new([969, 968])],
+      '2' => [Set.new([732]), Set.new([732, 736]), Set.new([732, 39]), Set.new([731]), Set.new([731, 39]), Set.new([731, 736])],
+      '4' => [Set.new([736, 30]), Set.new([736, 11]), Set.new([39, 11]), Set.new([39, 30])],
+      '5' => [Set.new([735])],
+      '6' => [Set.new([734, 22])],
+      '7' => [Set.new([734, 932])],
+      '8' => [Set.new([39, 932])],
+      '9' => [Set.new([733, 979]), Set.new([733, 74]), Set.new([733, 73]), Set.new([969, 73]), Set.new([969, 74])],
+      '10' => [Set.new([734, 73])],
+      '11' => [Set.new([736, 74]), Set.new([736, 73]), Set.new([39, 73]), Set.new([39, 74])],
+      '12' => [Set.new([976, 977, 982])],
+      '13' => [Set.new([983])],
+      '14' => [Set.new([984, 982])],
+      '15' => [Set.new([969, 982])]
     }.freeze
   end
 end
