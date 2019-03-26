@@ -34,6 +34,34 @@ class StockManagementService
     end
   end
 
+  def edit_stock_report(obs_list)
+    ActiveRecord::Base.transaction do
+      obs_list.collect do |obs|
+        drug = Drug.find(fetch_parameter(obs, :drug_id)) # Make sure drug exists
+        tins = fetch_parameter(obs, :amount)&.to_i
+        pack_size = fetch_parameter(obs, :pills_per_tin)&.to_i || 60
+
+        expiring_units = fetch_parameter(obs, :expire_amount).to_i
+        expiry_date = nil
+
+        expiring_units = nil if tins == 0
+        expiry_date = nil if tins == 0
+
+        expiry_date = fetch_parameter(obs, :date).to_date.end_of_month if tins.zero?
+
+        if tins == 0 && expiring_units == 0
+          pack_size = nil
+        end
+
+        delivery_date = fetch_parameter(obs, :delivery_date).to_date
+        type = fetch_parameter(obs, :type)
+        pills = tins && pack_size ? tins * pack_size : nil
+
+        verified_stock(drug.id, delivery_date, pills, expiry_date, expiring_units, type, pack_size)
+      end
+    end
+  end
+
   private
 
   def drug_comes_in_packs(drug, drug_short_names)
@@ -460,7 +488,7 @@ class StockManagementService
 
   def verified_stock(drug_id, date, pills, earliest_expiry = nil, units = nil, type = nil, pack_size = nil)
     encounter_type = PharmacyEncounterType.find_by_name('Tins currently in stock').id
-    encounter = new
+    encounter = Pharmacy.new
     encounter.pharmacy_encounter_type = encounter_type
     encounter.drug_id = drug_id
     encounter.encounter_date = date
@@ -476,6 +504,8 @@ class StockManagementService
 
     update_stock_record(drug_id, date)
     update_average_drug_consumption(drug_id)
+
+    encounter
   end
 
   def current_stock_after_dispensation(drug_id, start_date, end_date = Date.today)
