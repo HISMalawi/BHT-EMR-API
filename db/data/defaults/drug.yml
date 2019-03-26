@@ -1,0 +1,1711 @@
+--- 
+drug_00010: 
+  minimum_daily_dose: 
+  name: DDI (Didanosine 200mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799cedb8-bd81-11df-9b35-00248c09418a
+  creator: 2
+  dosage_form: 
+  dose_strength: 200.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 10
+  concept_id: 796
+  retired: false
+  date_created: 2005-02-24 10:00:00 +02:00
+drug_00009: 
+  minimum_daily_dose: 
+  name: DDI (Didanosine 125mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799d0992-bd81-11df-9b35-00248c09418a
+  creator: 2
+  dosage_form: 
+  dose_strength: 125.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 9
+  concept_id: 796
+  retired: false
+  date_created: 2005-02-24 10:00:00 +02:00
+drug_00031: 
+  minimum_daily_dose: 
+  name: d4T (Stavudine 20mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799d16a8-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 20.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 31
+  concept_id: 625
+  retired: false
+  date_created: 2006-08-11 00:16:05 +02:00
+drug_00052: 
+  minimum_daily_dose: 
+  name: CPX (Ciprofloxacin)
+  route: 
+  retire_reason: 
+  retired_by: 7
+  uuid: 799d21c0-bd81-11df-9b35-00248c09418a
+  creator: 1128
+  dosage_form: 
+  dose_strength: 
+  date_retired: 2008-04-23 22:29:00 +02:00
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 52
+  concept_id: 740
+  retired: true
+  date_created: 2007-09-04 20:39:55 +02:00
+drug_00073: 
+  minimum_daily_dose: 
+  name: LPV/r (Lopinavir and Ritonavir 200/50mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799d2c2e-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 1.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: tab(s)
+  combination: true
+  drug_id: 73
+  concept_id: 794
+  retired: false
+  date_created: 2008-04-18 02:34:23 +02:00
+drug_00094: 
+  minimum_daily_dose: 
+  name: LPV/r (Lopinavir and Ritonavir syrup)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799d4024-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 
+  date_retired: 
+  maximum_daily_dose: 
+  units: mL
+  combination: true
+  drug_id: 94
+  concept_id: 794
+  retired: false
+  date_created: 2008-08-14 01:22:47 +02:00
+drug_00011: 
+  minimum_daily_dose: 
+  name: EFV (Efavirenz 600mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799d556e-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 600.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 11
+  concept_id: 633
+  retired: false
+  date_created: 2006-08-09 20:53:33 +02:00
+drug_00032: 
+  minimum_daily_dose: 
+  name: d4T (Stavudine 15mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799d687e-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 15.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 32
+  concept_id: 625
+  retired: false
+  date_created: 2006-08-11 00:16:29 +02:00
+drug_00053: 
+  minimum_daily_dose: 
+  name: OFX (Ofloxacin)
+  route: 
+  retire_reason: 
+  retired_by: 7
+  uuid: 799d74ea-bd81-11df-9b35-00248c09418a
+  creator: 1128
+  dosage_form: 
+  dose_strength: 
+  date_retired: 2008-04-23 22:12:00 +02:00
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 53
+  concept_id: 1418
+  retired: true
+  date_created: 2007-09-04 20:39:55 +02:00
+drug_00074: 
+  minimum_daily_dose: 
+  name: LPV/r (Lopinavir and Ritonavir 100/25mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799d86f6-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 1.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: tab(s)
+  combination: true
+  drug_id: 74
+  concept_id: 794
+  retired: false
+  date_created: 2008-04-18 02:35:20 +02:00
+drug_00095: 
+  minimum_daily_dose: 
+  name: d4T (Stavudine syrup)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799dc210-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 
+  date_retired: 
+  maximum_daily_dose: 
+  units: mL
+  combination: false
+  drug_id: 95
+  concept_id: 625
+  retired: false
+  date_created: 2008-08-14 01:25:01 +02:00
+drug_00033: 
+  minimum_daily_dose: 0.25
+  name: TMP/SMX (Cotrimoxazole 800/160mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799dd34a-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 1.0
+  date_retired: 
+  maximum_daily_dose: 4.0
+  units: tab(s)
+  combination: true
+  drug_id: 33
+  concept_id: 916
+  retired: false
+  date_created: 2006-08-11 00:19:42 +02:00
+drug_00054: 
+  minimum_daily_dose: 
+  name: LFX (Levofloxacin)
+  route: 
+  retire_reason: 
+  retired_by: 7
+  uuid: 799de146-bd81-11df-9b35-00248c09418a
+  creator: 1128
+  dosage_form: 
+  dose_strength: 
+  date_retired: 2008-04-23 22:31:00 +02:00
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 54
+  concept_id: 755
+  retired: true
+  date_created: 2007-09-04 20:39:55 +02:00
+drug_00075: 
+  minimum_daily_dose: 
+  name: CFZ (Clofazimine 100mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799def88-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 100.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 75
+  concept_id: 1412
+  retired: false
+  date_created: 2008-04-23 19:40:00 +02:00
+drug_00096: 
+  minimum_daily_dose: 
+  name: Amitriptyline (25 mg)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799dfd0c-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 1.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: tab(s)
+  combination: false
+  drug_id: 96
+  concept_id: 931
+  retired: false
+  date_created: 2008-08-14 01:39:02 +02:00
+drug_00034: 
+  minimum_daily_dose: 
+  name: TMP/SMX (Cotrimoxazole 400/80mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799e0a7c-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 1.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: tab(s)
+  combination: true
+  drug_id: 34
+  concept_id: 916
+  retired: false
+  date_created: 2006-08-11 00:37:56 +02:00
+drug_00055: 
+  minimum_daily_dose: 
+  name: Moxi (Moxifloxacin 400mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799e1710-bd81-11df-9b35-00248c09418a
+  creator: 1128
+  dosage_form: 
+  dose_strength: 400.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 55
+  concept_id: 955
+  retired: false
+  date_created: 2007-09-04 20:39:55 +02:00
+drug_00076: 
+  minimum_daily_dose: 
+  name: B6 (Pyridoxine 50mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799e2386-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 50.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 76
+  concept_id: 766
+  retired: false
+  date_created: 2008-04-23 20:11:00 +02:00
+drug_00097: 
+  minimum_daily_dose: 
+  name: Chlorphenamine
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799e2f66-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 97
+  concept_id: 913
+  retired: false
+  date_created: 2008-08-14 01:43:47 +02:00
+drug_00035: 
+  minimum_daily_dose: 
+  name: TMP/SMX (Cotrimoxazole 200/40mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799e3b14-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 1.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: tab(s)
+  combination: true
+  drug_id: 35
+  concept_id: 916
+  retired: false
+  date_created: 2006-08-11 00:39:35 +02:00
+drug_00056: 
+  minimum_daily_dose: 
+  name: Gati (Gatifloxacin 400 mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799e48ac-bd81-11df-9b35-00248c09418a
+  creator: 1128
+  dosage_form: 
+  dose_strength: 400.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 56
+  concept_id: 1416
+  retired: false
+  date_created: 2007-09-04 20:39:55 +02:00
+drug_00077: 
+  minimum_daily_dose: 
+  name: B6 (Pyridoxine 100mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799e5dba-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 100.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 77
+  concept_id: 766
+  retired: false
+  date_created: 2008-04-23 20:06:22 +02:00
+drug_00098: 
+  minimum_daily_dose: 
+  name: Cloxacillin (tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799e769c-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 98
+  concept_id: 922
+  retired: false
+  date_created: 2008-08-14 01:45:52 +02:00
+drug_00014: 
+  minimum_daily_dose: 
+  name: TDF (Tenofavir 300 mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799e8862-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 300.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 14
+  concept_id: 802
+  retired: false
+  date_created: 2006-08-10 23:37:07 +02:00
+drug_00057: 
+  minimum_daily_dose: 
+  name: Ethio (Ethionamide 250 mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799e96c2-bd81-11df-9b35-00248c09418a
+  creator: 1128
+  dosage_form: 
+  dose_strength: 250.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 57
+  concept_id: 1414
+  retired: false
+  date_created: 2007-09-04 20:39:55 +02:00
+drug_00078: 
+  minimum_daily_dose: 
+  name: B6 (Pyridoxine 300mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799ea4d2-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 300.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 78
+  concept_id: 766
+  retired: false
+  date_created: 2008-04-23 20:09:50 +02:00
+drug_00099: 
+  minimum_daily_dose: 
+  name: Bactrim (Trimethoprim and Sulfamethoxazole liquid)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799eb29c-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 
+  date_retired: 
+  maximum_daily_dose: 
+  units: mL
+  combination: true
+  drug_id: 99
+  concept_id: 916
+  retired: false
+  date_created: 2008-08-14 01:50:29 +02:00
+drug_00015: 
+  minimum_daily_dose: 100.0
+  name: S (Streptomycin 1gm vial)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799ec57a-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 1.0
+  date_retired: 
+  maximum_daily_dose: 3000.0
+  units: g
+  combination: false
+  drug_id: 15
+  concept_id: 438
+  retired: false
+  date_created: 2006-08-10 23:38:33 +02:00
+drug_00036: 
+  minimum_daily_dose: 
+  name: AZT (Zidovudine syrup 10mg/mL from 100ml bottle)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799ed736-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 10.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg/mL
+  combination: false
+  drug_id: 36
+  concept_id: 797
+  retired: false
+  date_created: 2006-08-11 00:41:28 +02:00
+drug_00079: 
+  minimum_daily_dose: 
+  name: LFX (Levofloxacin 250mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799f0972-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 250.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 79
+  concept_id: 755
+  retired: false
+  date_created: 2008-04-23 21:52:57 +02:00
+drug_00016: 
+  minimum_daily_dose: 50.0
+  name: RIF or R (Rifampin 300mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799f38d4-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 300.0
+  date_retired: 
+  maximum_daily_dose: 1000.0
+  units: mg
+  combination: false
+  drug_id: 16
+  concept_id: 767
+  retired: false
+  date_created: 2006-08-10 23:47:33 +02:00
+drug_00037: 
+  minimum_daily_dose: 
+  name: AZT (Zidovudine 100mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799f4ad6-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 100.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 37
+  concept_id: 797
+  retired: false
+  date_created: 2006-08-11 00:41:51 +02:00
+drug_00080: 
+  minimum_daily_dose: 
+  name: OFX (Ofloxacin 200mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799f5a80-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 200.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 80
+  concept_id: 1418
+  retired: false
+  date_created: 2008-04-23 21:57:26 +02:00
+drug_00058: 
+  minimum_daily_dose: 
+  name: CS (Cycloserine 250mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799f6750-bd81-11df-9b35-00248c09418a
+  creator: 1128
+  dosage_form: 
+  dose_strength: 250.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 58
+  concept_id: 1413
+  retired: false
+  date_created: 2007-09-04 20:39:55 +02:00
+drug_00017: 
+  minimum_daily_dose: 
+  name: RHZ (Rifampin, Isoniazid and Pyrazinamide tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799f74d4-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 1.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: tab(s)
+  combination: true
+  drug_id: 17
+  concept_id: 768
+  retired: false
+  date_created: 2006-08-10 23:48:24 +02:00
+drug_00060: 
+  minimum_daily_dose: 
+  name: TRD (Terizidone 250mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799f925c-bd81-11df-9b35-00248c09418a
+  creator: 1128
+  dosage_form: 
+  dose_strength: 250.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 60
+  concept_id: 1634
+  retired: false
+  date_created: 2007-09-04 20:39:55 +02:00
+drug_00038: 
+  minimum_daily_dose: 
+  name: AZT (Zidovudine 300mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799fa512-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 300.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 38
+  concept_id: 797
+  retired: false
+  date_created: 2006-08-11 00:42:22 +02:00
+drug_00081: 
+  minimum_daily_dose: 
+  name: OFX (Ofloxacin 300mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799fb5e8-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 300.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 81
+  concept_id: 1418
+  retired: false
+  date_created: 2008-04-23 21:58:24 +02:00
+drug_00059: 
+  minimum_daily_dose: 
+  name: Prothio (Prothionamide 250 mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799fc574-bd81-11df-9b35-00248c09418a
+  creator: 1128
+  dosage_form: 
+  dose_strength: 250.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 59
+  concept_id: 1415
+  retired: false
+  date_created: 2007-09-04 20:39:55 +02:00
+drug_00040: 
+  minimum_daily_dose: 
+  name: ABC (Abacavir 300mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799fd4ec-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 300.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 40
+  concept_id: 814
+  retired: false
+  date_created: 2006-08-11 00:44:45 +02:00
+drug_00018: 
+  minimum_daily_dose: 
+  name: RHEZ (RIF, INH, Ethambutol and Pyrazinamide tab)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799fe3c4-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 1.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: tab(s)
+  combination: true
+  drug_id: 18
+  concept_id: 1131
+  retired: false
+  date_created: 2006-08-10 23:48:57 +02:00
+drug_00039: 
+  minimum_daily_dose: 
+  name: AZT+3TC (Zidovudine and Lamivudine tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 799ff328-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 1.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: tab(s)
+  combination: true
+  drug_id: 39
+  concept_id: 630
+  retired: false
+  date_created: 2006-08-11 00:43:32 +02:00
+drug_00061: 
+  minimum_daily_dose: 
+  name: PAS (P-aminosalyicylic acid 4g sachet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a00246-bd81-11df-9b35-00248c09418a
+  creator: 1128
+  dosage_form: 
+  dose_strength: 4.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: g
+  combination: false
+  drug_id: 61
+  concept_id: 1419
+  retired: false
+  date_created: 2007-09-04 20:39:55 +02:00
+drug_00082: 
+  minimum_daily_dose: 
+  name: OFX (Ofloxacin 400mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a01254-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 400.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 82
+  concept_id: 1418
+  retired: false
+  date_created: 2008-04-23 21:58:45 +02:00
+drug_00020: 
+  minimum_daily_dose: 100.0
+  name: Z (Pyrazinamide 500mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a02a5a-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 500.0
+  date_retired: 
+  maximum_daily_dose: 2000.0
+  units: mg
+  combination: false
+  drug_id: 20
+  concept_id: 5829
+  retired: false
+  date_created: 2006-08-10 23:51:55 +02:00
+drug_00019: 
+  minimum_daily_dose: 
+  name: RH (Rifampin and Isoniazid tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a03a4a-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 1.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: tab(s)
+  combination: true
+  drug_id: 19
+  concept_id: 1194
+  retired: false
+  date_created: 2006-08-10 23:49:37 +02:00
+drug_00041: 
+  minimum_daily_dose: 
+  name: 3TC (Lamivudine syrup 10mg/mL from 100mL bottle)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a04d46-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 10.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg/mL
+  combination: false
+  drug_id: 41
+  concept_id: 628
+  retired: false
+  date_created: 2006-08-11 01:04:40 +02:00
+drug_00062: 
+  minimum_daily_dose: 
+  name: CFZ (Clofazimine)
+  route: 
+  retire_reason: 
+  retired_by: 7
+  uuid: 79a05cfa-bd81-11df-9b35-00248c09418a
+  creator: 1128
+  dosage_form: 
+  dose_strength: 
+  date_retired: 2008-04-23 22:22:00 +02:00
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 62
+  concept_id: 1412
+  retired: true
+  date_created: 2007-09-04 20:39:55 +02:00
+drug_00083: 
+  minimum_daily_dose: 
+  name: B6 (Pyridoxine 25mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a06bd2-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 25.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 83
+  concept_id: 766
+  retired: false
+  date_created: 2008-04-23 22:12:15 +02:00
+drug_00021: 
+  minimum_daily_dose: 
+  name: NVP (Nevirapine susp 10mg/mL in 100mL bottle)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a07a82-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 10.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg/mL
+  combination: false
+  drug_id: 21
+  concept_id: 631
+  retired: false
+  date_created: 2006-08-10 23:53:14 +02:00
+drug_00042: 
+  minimum_daily_dose: 
+  name: 3TC (Lamivudine 150mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a302e8-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 150.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 42
+  concept_id: 628
+  retired: false
+  date_created: 2006-08-11 01:05:32 +02:00
+drug_00063: 
+  minimum_daily_dose: 
+  name: AMX/CLV (Amoxicillin/Clavulantic Acid 500/125mg )
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a310bc-bd81-11df-9b35-00248c09418a
+  creator: 1128
+  dosage_form: 
+  dose_strength: 1.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: tab(s)
+  combination: true
+  drug_id: 63
+  concept_id: 450
+  retired: false
+  date_created: 2007-09-04 20:39:55 +02:00
+drug_00084: 
+  minimum_daily_dose: 
+  name: CFZ (Clofazimine 50mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a31c1a-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 50.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 84
+  concept_id: 1412
+  retired: false
+  date_created: 2008-04-23 22:14:00 +02:00
+drug_00022: 
+  minimum_daily_dose: 
+  name: NVP (Nevirapine 200 mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a32778-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 200.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 22
+  concept_id: 631
+  retired: false
+  date_created: 2006-08-10 23:55:16 +02:00
+drug_00043: 
+  minimum_daily_dose: 
+  name: "INH or H (Isoniazid) no dose strength  "
+  route: 
+  retire_reason: 
+  retired_by: 7
+  uuid: 79a3310a-bd81-11df-9b35-00248c09418a
+  creator: 1128
+  dosage_form: 
+  dose_strength: 
+  date_retired: 2008-04-23 20:24:00 +02:00
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 43
+  concept_id: 656
+  retired: true
+  date_created: 2007-09-04 20:39:55 +02:00
+drug_00064: 
+  minimum_daily_dose: 
+  name: CLR (Clarithromycin 500 mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a339fc-bd81-11df-9b35-00248c09418a
+  creator: 1128
+  dosage_form: 
+  dose_strength: 500.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 64
+  concept_id: 2459
+  retired: false
+  date_created: 2007-09-04 20:39:55 +02:00
+drug_00085: 
+  minimum_daily_dose: 
+  name: CPX (Ciprofloxacin 250 mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a342bc-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 250.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 85
+  concept_id: 740
+  retired: false
+  date_created: 2008-04-23 22:18:34 +02:00
+drug_00002: 
+  minimum_daily_dose: 
+  name: Triomune-30
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a34b9a-bd81-11df-9b35-00248c09418a
+  creator: 2
+  dosage_form: 
+  dose_strength: 1.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: tab(s)
+  combination: true
+  drug_id: 2
+  concept_id: 792
+  retired: false
+  date_created: 2005-02-24 10:00:00 +02:00
+drug_00023: 
+  minimum_daily_dose: 
+  name: LPV/r (cold; Lopanavir and Ritonavir 166 mg tab)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a356c6-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 166.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: true
+  drug_id: 23
+  concept_id: 794
+  retired: false
+  date_created: 2006-08-10 23:57:49 +02:00
+drug_00044: 
+  minimum_daily_dose: 
+  name: RIF or R (Rifampin) no dose strength
+  route: 
+  retire_reason: 
+  retired_by: 7
+  uuid: 79a363be-bd81-11df-9b35-00248c09418a
+  creator: 1128
+  dosage_form: 
+  dose_strength: 
+  date_retired: 2008-04-23 20:24:00 +02:00
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 44
+  concept_id: 767
+  retired: true
+  date_created: 2007-09-04 20:39:55 +02:00
+drug_00065: 
+  minimum_daily_dose: 
+  name: RFB (Rifabutin 150mg tablet )
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a376a6-bd81-11df-9b35-00248c09418a
+  creator: 1128
+  dosage_form: 
+  dose_strength: 150.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 65
+  concept_id: 2460
+  retired: false
+  date_created: 2007-09-04 20:39:55 +02:00
+drug_00086: 
+  minimum_daily_dose: 
+  name: CPX (Ciprofloxacin 500 mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a3843e-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 500.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 86
+  concept_id: 740
+  retired: false
+  date_created: 2008-04-23 22:21:10 +02:00
+drug_00087: 
+  minimum_daily_dose: 
+  name: LFX (Levofloxacin 500mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a38f9c-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 500.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 87
+  concept_id: 755
+  retired: false
+  date_created: 2008-04-23 22:23:52 +02:00
+drug_00024: 
+  minimum_daily_dose: 50.0
+  name: INH or H (Isoniazid 100mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a398ca-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 100.0
+  date_retired: 
+  maximum_daily_dose: 500.0
+  units: mg
+  combination: false
+  drug_id: 24
+  concept_id: 656
+  retired: false
+  date_created: 2006-08-11 00:01:54 +02:00
+drug_00045: 
+  minimum_daily_dose: 
+  name: E (Ethambutol) no dose strength
+  route: 
+  retire_reason: 
+  retired_by: 7
+  uuid: 79a3a1bc-bd81-11df-9b35-00248c09418a
+  creator: 1128
+  dosage_form: 
+  dose_strength: 
+  date_retired: 2008-04-23 20:24:00 +02:00
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 45
+  concept_id: 745
+  retired: true
+  date_created: 2007-09-04 20:39:55 +02:00
+drug_00066: 
+  minimum_daily_dose: 
+  name: B6 (Pyridoxine)
+  route: 
+  retire_reason: 
+  retired_by: 7
+  uuid: 79a3aaa4-bd81-11df-9b35-00248c09418a
+  creator: 1128
+  dosage_form: 
+  dose_strength: 
+  date_retired: 2008-04-23 22:18:00 +02:00
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 66
+  concept_id: 766
+  retired: true
+  date_created: 2007-09-04 20:39:55 +02:00
+drug_00003: 
+  minimum_daily_dose: 
+  name: Triomune-40
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a3b44a-bd81-11df-9b35-00248c09418a
+  creator: 2
+  dosage_form: 
+  dose_strength: 1.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: tab(s)
+  combination: true
+  drug_id: 3
+  concept_id: 792
+  retired: false
+  date_created: 2005-02-24 10:00:00 +02:00
+drug_00088: 
+  minimum_daily_dose: 
+  name: RHE (Rifampicin Isoniazid and Ethambutol)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a3c070-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 1.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: tab(s)
+  combination: true
+  drug_id: 88
+  concept_id: 1614
+  retired: false
+  date_created: 2008-06-30 22:01:12 +02:00
+drug_00067: 
+  minimum_daily_dose: 
+  name: IDV (Indinavir 400mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a3cce6-bd81-11df-9b35-00248c09418a
+  creator: 1134
+  dosage_form: 
+  dose_strength: 400.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 67
+  concept_id: 749
+  retired: false
+  date_created: 2008-02-09 01:27:25 +02:00
+drug_00046: 
+  minimum_daily_dose: 
+  name: Z (Pyrazinamide mg ) no dose strength
+  route: 
+  retire_reason: 
+  retired_by: 7
+  uuid: 79a3d90c-bd81-11df-9b35-00248c09418a
+  creator: 1128
+  dosage_form: 
+  dose_strength: 
+  date_retired: 2008-04-18 21:00:00 +02:00
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 46
+  concept_id: 5829
+  retired: true
+  date_created: 2007-09-04 20:39:55 +02:00
+drug_00025: 
+  minimum_daily_dose: 
+  name: FCZ (Fluconazole 150mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a3e4c4-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 150.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 25
+  concept_id: 747
+  retired: false
+  date_created: 2006-08-11 00:05:26 +02:00
+drug_00100: 
+  minimum_daily_dose: 
+  name: Vincristine Sulphate Injection
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a3f1b2-bd81-11df-9b35-00248c09418a
+  creator: 15878
+  dosage_form: 
+  dose_strength: 1.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg/m2
+  combination: false
+  drug_id: 100
+  concept_id: 3624
+  retired: false
+  date_created: 2008-09-25 19:26:52 +02:00
+drug_00101: 
+  minimum_daily_dose: 
+  name: Bleomycin Injection
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a3fb8a-bd81-11df-9b35-00248c09418a
+  creator: 15878
+  dosage_form: 
+  dose_strength: 15.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg/m2
+  combination: false
+  drug_id: 101
+  concept_id: 3623
+  retired: false
+  date_created: 2008-09-25 19:28:14 +02:00
+drug_00089: 
+  minimum_daily_dose: 
+  name: Zidolam
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a4047c-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 1.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: tab(s)
+  combination: true
+  drug_id: 89
+  concept_id: 630
+  retired: false
+  date_created: 2008-06-30 22:04:21 +02:00
+drug_00026: 
+  minimum_daily_dose: 
+  name: FCZ (Fluconazole 200mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a40ddc-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 200.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 26
+  concept_id: 747
+  retired: false
+  date_created: 2006-08-11 00:06:17 +02:00
+drug_00005: 
+  minimum_daily_dose: 
+  name: d4T (Stavudine 30mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a41908-bd81-11df-9b35-00248c09418a
+  creator: 2
+  dosage_form: 
+  dose_strength: 30.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 5
+  concept_id: 625
+  retired: false
+  date_created: 2005-02-24 10:00:00 +02:00
+drug_00047: 
+  minimum_daily_dose: 
+  name: S (Streptomycin) no dose strength
+  route: 
+  retire_reason: 
+  retired_by: 7
+  uuid: 79a421e6-bd81-11df-9b35-00248c09418a
+  creator: 1128
+  dosage_form: 
+  dose_strength: 
+  date_retired: 2008-04-23 20:24:00 +02:00
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 47
+  concept_id: 438
+  retired: true
+  date_created: 2007-09-04 20:39:55 +02:00
+drug_00090: 
+  minimum_daily_dose: 
+  name: Coviro30 (Lamivudine 150 mg; Stavudine 30 mg)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a42b00-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 1.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: tab(s)
+  combination: false
+  drug_id: 90
+  concept_id: 2833
+  retired: false
+  date_created: 2008-06-30 22:06:59 +02:00
+drug_00091: 
+  minimum_daily_dose: 
+  name: Coviro40 (Lamivudine 150 mg; Stavudine 40 mg)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a433b6-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 1.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: tab(s)
+  combination: true
+  drug_id: 91
+  concept_id: 2833
+  retired: false
+  date_created: 2008-06-30 22:07:38 +02:00
+drug_00069: 
+  minimum_daily_dose: 
+  name: Standard tuberculosis treatment
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a43e88-bd81-11df-9b35-00248c09418a
+  creator: 15888
+  dosage_form: 
+  dose_strength: 
+  date_retired: 
+  maximum_daily_dose: 
+  units: ""
+  combination: false
+  drug_id: 69
+  concept_id: 2995
+  retired: false
+  date_created: 2008-03-26 23:12:15 +02:00
+drug_00027: 
+  minimum_daily_dose: 50.0
+  name: E (Ethambutol 400mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a44b44-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 400.0
+  date_retired: 
+  maximum_daily_dose: 2000.0
+  units: mg
+  combination: false
+  drug_id: 27
+  concept_id: 745
+  retired: false
+  date_created: 2006-08-11 00:07:28 +02:00
+drug_00006: 
+  minimum_daily_dose: 
+  name: d4T (Stavudine 40mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a4554e-bd81-11df-9b35-00248c09418a
+  creator: 2
+  dosage_form: 
+  dose_strength: 40.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 6
+  concept_id: 625
+  retired: false
+  date_created: 2005-02-24 10:00:00 +02:00
+drug_00070: 
+  minimum_daily_dose: 
+  name: LS30 (Stavudine and Lamivudine 30mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a46444-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 1.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: tab(s)
+  combination: true
+  drug_id: 70
+  concept_id: 2833
+  retired: false
+  date_created: 2008-04-09 00:00:37 +02:00
+drug_00048: 
+  minimum_daily_dose: 
+  name: KM (Kanamycin 1gm vial)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a47114-bd81-11df-9b35-00248c09418a
+  creator: 1128
+  dosage_form: 
+  dose_strength: 1.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: g
+  combination: false
+  drug_id: 48
+  concept_id: 1417
+  retired: false
+  date_created: 2007-09-04 20:39:55 +02:00
+drug_00102: 
+  minimum_daily_dose: 
+  name: Paclitaxel (Taxol) Injection
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a47a60-bd81-11df-9b35-00248c09418a
+  creator: 15878
+  dosage_form: 
+  dose_strength: 100.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg/m2
+  combination: false
+  drug_id: 102
+  concept_id: 3625
+  retired: false
+  date_created: 2008-09-25 19:29:04 +02:00
+drug_00049: 
+  minimum_daily_dose: 
+  name: AMK (Amikacin 500mg/2mL )
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a48456-bd81-11df-9b35-00248c09418a
+  creator: 1128
+  dosage_form: 
+  dose_strength: 500.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg/2mL
+  combination: false
+  drug_id: 49
+  concept_id: 1406
+  retired: false
+  date_created: 2007-09-04 20:39:55 +02:00
+drug_00050: 
+  minimum_daily_dose: 
+  name: CM (Capreomicin 1g vial )
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a48e2e-bd81-11df-9b35-00248c09418a
+  creator: 1128
+  dosage_form: 
+  dose_strength: 1.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: g
+  combination: false
+  drug_id: 50
+  concept_id: 1411
+  retired: false
+  date_created: 2007-09-04 20:39:55 +02:00
+drug_00028: 
+  minimum_daily_dose: 
+  name: EFV (Efavirenz 100mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a497ac-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 100.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 28
+  concept_id: 633
+  retired: false
+  date_created: 2006-08-11 00:13:24 +02:00
+drug_00071: 
+  minimum_daily_dose: 
+  name: Lamivir baby (Stavudine and Lamivudine 6/30mg)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a4a31e-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 1.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: tab(s)
+  combination: true
+  drug_id: 71
+  concept_id: 2833
+  retired: false
+  date_created: 2008-04-18 02:27:36 +02:00
+drug_00092: 
+  minimum_daily_dose: 
+  name: MVI (multivitamin liquid)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a4abc0-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 
+  date_retired: 
+  maximum_daily_dose: 
+  units: mL
+  combination: true
+  drug_id: 92
+  concept_id: 461
+  retired: false
+  date_created: 2008-08-14 01:15:50 +02:00
+drug_00093: 
+  minimum_daily_dose: 
+  name: MVI (multivitamin tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a4b4d0-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 1.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: tab(s)
+  combination: true
+  drug_id: 93
+  concept_id: 461
+  retired: false
+  date_created: 2008-08-14 01:17:02 +02:00
+drug_00072: 
+  minimum_daily_dose: 
+  name: Triomune baby (d4T + 3TC + NVP 6/30/50mg)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a4bd36-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 1.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: tab(s)
+  combination: true
+  drug_id: 72
+  concept_id: 792
+  retired: false
+  date_created: 2008-04-18 02:29:02 +02:00
+drug_00030: 
+  minimum_daily_dose: 
+  name: EFV (Efavirenz 200mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a4c664-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 200.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 30
+  concept_id: 633
+  retired: false
+  date_created: 2006-08-11 00:14:35 +02:00
+drug_00029: 
+  minimum_daily_dose: 
+  name: EFV (Efavirenz 50mg tablet)
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a4cf88-bd81-11df-9b35-00248c09418a
+  creator: 7
+  dosage_form: 
+  dose_strength: 50.0
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 29
+  concept_id: 633
+  retired: false
+  date_created: 2006-08-11 00:13:54 +02:00
+drug_00051: 
+  minimum_daily_dose: 
+  name: Vi (Viomycin )
+  route: 
+  retire_reason: 
+  retired_by: 
+  uuid: 79a4d7da-bd81-11df-9b35-00248c09418a
+  creator: 1128
+  dosage_form: 
+  dose_strength: 
+  date_retired: 
+  maximum_daily_dose: 
+  units: mg
+  combination: false
+  drug_id: 51
+  concept_id: 2457
+  retired: false
+  date_created: 2007-09-04 20:39:55 +02:00

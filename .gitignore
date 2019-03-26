@@ -25,3 +25,18 @@
 
 # Ignore master key for decrypting credentials and more.
 /config/master.key
+#Ignoring yml files under configuration
+config/*.yml
+
+#Ignoring files created by passenger (if using passenger to run app)
+*.pid.lock
+*.pid
+#Ignoring Gemfile.lock
+Gemfile.lock
+db/schema.rb
+
+.ruby-version
+
+*.DS_Store
+
+*.swp

@@ -1,10 +1,6 @@
-# SQLite version 3.x
-#   gem install sqlite3
-#
-#   Ensure the SQLite 3 gem is defined in your Gemfile
-#   gem 'sqlite3'
-#
+# Mysql configurations
 default: &default
+  host: localhost
   adapter: mysql2
   username: root
   password: password
@@ -13,15 +9,19 @@ default: &default
 
 development:
   <<: *default
-  database: bart2_db
-
-# Warning: The database defined as "test" will be erased and
-# re-generated from your development database when you run "rake".
-# Do not set this db to the same as development or production.
+  database: mlambe_api
 test:
   <<: *default
-  database: db/test.sqlite3
+  database: mlambe_api_test
 
 production:
   <<: *default
-  database: db/production.sqlite3
+  database: mlambe_api_production
+
+healthdata:
+  adapter: mysql2
+  username: root
+  database: healthdata
+  password: password
+  host: localhost
+  pool: 500
