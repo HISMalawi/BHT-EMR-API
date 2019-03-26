@@ -69,7 +69,7 @@ module ARTService
       label2.draw_line(25, 170, 795, 3)
       #label data
       label2.draw_text("STATUS AT ART INITIATION",25,30,0,3,1,1,false)
-      label2.draw_text("(DSA: #{art_start_date.strftime('%d-%b-%Y')})", 370, 30, 0, 2, 1, 1, false)
+      label2.draw_text("(DSA: #{art_start_date&.strftime('%d-%b-%Y') || 'N/A'})", 370, 30, 0, 2, 1, 1, false)
       label2.draw_text(arv_number, 580, 20, 0, 3, 1, 1, false)
       label2.draw_text("Printed on: #{Date.today.strftime('%A, %d-%b-%Y')}", 25, 300, 0, 1, 1, 1, false)
 
@@ -261,7 +261,7 @@ module ARTService
     def who_clinical_conditions
       who_clinical_conditions = ""
 
-      hiv_staging.observations.collect do |obs|
+      (hiv_staging&.observations || []).collect do |obs|
         if GlobalProperty.find_by_property('use.extended.staging.questions')&.property_value == 'true'
           name = obs.to_s.split(':')[0].strip rescue nil
           ans = obs.to_s.split(':')[1].strip rescue nil
@@ -304,7 +304,7 @@ module ARTService
     end
 
     def load_hiv_staging_vars
-      hiv_staging.observations.map do |obs|
+      (hiv_staging&.observations || []).map do |obs|
         case obs.name
         when 'CD4 COUNT DATETIME'
           @cd4_count_date = obs.value_datetime&.to_date
@@ -326,6 +326,8 @@ module ARTService
 
     def hiv_staging_observation_present?(concept_name)
       concept_id = ConceptName.find_by_name(concept_name)&.concept_id
+      return false unless hiv_staging
+
       hiv_staging.observations\
                  .where(concept_id: concept_id)\
                  .order(:obs_datetime)\

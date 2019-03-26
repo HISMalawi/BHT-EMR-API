@@ -14,6 +14,12 @@ class Api::V1::StockController < ApplicationController
     render json: stocks, status: :created
   end
 
+  def edit
+    stock_obs = params.require(:obs)
+
+    render json: service.edit_stock_report(stock_obs)
+  end
+
   private
 
   def service
