@@ -33,7 +33,7 @@ NtpRegimen.where(drug: Drug.find_by(name: 'RHZE (R150/H75/Z400/E275)'), am_dose:
 NtpRegimen.where(drug: Drug.find_by(name: 'RHZE (R150/H75/Z400/E275)'), am_dose: 4, min_weight: 55, max_weight: 74, creator: 1).first_or_create
 NtpRegimen.where(drug: Drug.find_by(name: 'RHZE (R150/H75/Z400/E275)'), am_dose: 5, min_weight: 75, max_weight: 1000, creator: 1).first_or_create
 
-NtpRegimen.where(drug: Drug.find_by(name: 'RH (R150/H75)'), am_dose: 2, min_weight: 30, max_weight: 37, creator: 1).first_or_create
+NtpRegimen.where(drug: Drug.find_by(name: 'RH (R150/H75)'), am_dose: 2, min_weight: 25, max_weight: 37, creator: 1).first_or_create
 NtpRegimen.where(drug: Drug.find_by(name: 'RH (R150/H75)'), am_dose: 3, min_weight: 38, max_weight: 54, creator: 1).first_or_create
 NtpRegimen.where(drug: Drug.find_by(name: 'RH (R150/H75)'), am_dose: 4, min_weight: 55, max_weight: 74, creator: 1).first_or_create
 NtpRegimen.where(drug: Drug.find_by(name: 'RH (R150/H75)'), am_dose: 5, min_weight: 75, max_weight: 1000, creator: 1).first_or_create
