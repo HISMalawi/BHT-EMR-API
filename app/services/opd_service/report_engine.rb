@@ -218,11 +218,13 @@ module OPDService
 
     def drugs_given_with_prescription(start_date, end_date)
       type = EncounterType.find_by_name 'TREATMENT'
+      concept_ids = ConceptSet.where(concept_set: 1085).map(&:concept_id)
 
       data = Encounter.where('encounter_datetime BETWEEN ? AND ?
-        AND encounter_type = ? AND i.quantity > 0', 
+        AND encounter_type = ? AND i.quantity > 0
+        AND d.concept_id NOT IN(?)', 
         start_date.to_date.strftime('%Y-%m-%d 00:00:00'), 
-        end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id).\
+        end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id, concept_ids).\
         joins('INNER JOIN orders o ON o.encounter_id = encounter.encounter_id
         INNER JOIN person p ON p.person_id = encounter.patient_id
         INNER JOIN drug_order i ON i.order_id = o.order_id
