@@ -27,10 +27,10 @@ module ARTService
         end_date: Date.today).raw_data(l1, l2)
     end
 
-    def cohort_disaggregated(quarter, age_group)
+    def cohort_disaggregated(quarter, age_group, start_date, end_date, rebuild)
       cohort = REPORTS['COHORT_DISAGGREGATED'].new(type: 'disaggregated', 
-        name: 'disaggregated', start_date: Date.today,
-        end_date: Date.today)
+        name: 'disaggregated', start_date: start_date,
+        end_date: end_date, rebuild: rebuild)
       cohort.disaggregated(quarter, age_group)
     end
 
