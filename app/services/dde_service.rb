@@ -461,7 +461,7 @@ class DDEService
   end
 
   def merging_service
-    DDEMergingService.new(self, dde_client)
+    DDEMergingService.new(self, -> { dde_client })
   end
 
   # A cache for all connections to dde (indexed by program id)

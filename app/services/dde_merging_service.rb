@@ -346,4 +346,15 @@ class DDEMergingService
   def patient_service
     PatientService.new
   end
+
+  def dde_client
+    if @dde_client.respond_to?(:call)
+      # HACK: Allows the dde_client to be passed in as a callable to be passed
+      #   in as a callable to enable lazy instantiation. The dde_client is
+      #   not required for local merges (thus no need to instantiate it).
+      @dde_client.call
+    else
+      @dde_client
+    end
+  end
 end

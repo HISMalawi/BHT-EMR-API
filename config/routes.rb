@@ -146,6 +146,7 @@ Rails.application.routes.draw do
       end
 
       resources :stock
+      post '/edit_stock_report', to: 'stock#edit'
 
       namespace :types do
         resources :relationships
@@ -189,6 +190,7 @@ Rails.application.routes.draw do
       get '/search/people' => 'people#search'
       get '/search/patients/by_npid' => 'patients#search_by_npid'
       get '/search/patients/by_identifier' => 'patients#search_by_identifier'
+      get '/search/patients' => 'patients#search_by_name_and_gender'
       get '/search/properties' => 'properties#search'
       get '/search/landmarks' => 'landmarks#search'
 
@@ -234,7 +236,6 @@ Rails.application.routes.draw do
   get '/api/v1/with_nids' => 'api/v1/reports#with_nids'
   get '/api/v1/drugs_given_without_prescription' => 'api/v1/reports#drugs_given_without_prescription'
   get '/api/v1/drugs_given_with_prescription' => 'api/v1/reports#drugs_given_with_prescription'
-
 
   get '/api/v1/cohort_report_raw_data' => 'api/v1/reports#cohort_report_raw_data'
   get '/api/v1/cohort_disaggregated' => 'api/v1/reports#cohort_disaggregated'
