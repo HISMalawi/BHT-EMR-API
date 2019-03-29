@@ -83,8 +83,8 @@ class ReportService
     engine(@program).cohort_report_raw_data(l1, l2)
   end
 
-  def cohort_disaggregated(quarter, age_group)
-    engine(@program).cohort_disaggregated(quarter, age_group)
+  def cohort_disaggregated(quarter, age_group, start_date, end_date, rebuild)
+    engine(@program).cohort_disaggregated(quarter, age_group, start_date, end_date, rebuild)
   end
 
   def drugs_given_without_prescription(start_date, end_date)
