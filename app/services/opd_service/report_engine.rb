@@ -218,7 +218,14 @@ module OPDService
 
     def drugs_given_with_prescription(start_date, end_date)
       type = EncounterType.find_by_name 'TREATMENT'
-      concept_ids = ConceptSet.where(concept_set: 1085).map(&:concept_id)
+      concept_ids = []
+      ConceptSet.where(concept_set: 1085).map do |c|
+        concept_ids << c.concept_id
+      end
+
+      ConceptName.where(name: 'Isoniazid').map do |c|
+        concept_ids << c.concept_id
+      end
 
       data = Encounter.where('encounter_datetime BETWEEN ? AND ?
         AND encounter_type = ? AND i.quantity > 0
@@ -235,6 +242,7 @@ module OPDService
         order('n.date_created DESC').group('n.person_id, o.order_id')
 
       stats = []
+
       (data || []).each do |record| 
         stats << {
           given_name: record['given_name'],

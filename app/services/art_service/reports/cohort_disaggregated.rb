@@ -33,7 +33,7 @@ EOF
           @rebuild = true
         end
 
-      create_mysql_age_group_function
+        create_mysql_age_group_function
 
         if quarter == 'pepfar'
           start_date = @start_date
