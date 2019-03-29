@@ -97,7 +97,7 @@ module ARTService
       end_date    = visit_date.to_date.strftime('%Y-%m-%d 23:59;59')
 
       orders = Order.joins(:encounter).where(
-        "patient_id = ? AND program_id = ? AND order_type_id = ? AND start_date BETWEEN ? AND ?",
+        "encounter.patient_id = ? AND program_id = ? AND order_type_id = ? AND start_date BETWEEN ? AND ?",
         patient_id, Program.find_by_name('HIV Program').id, order_type, start_date, end_date
       )
 
