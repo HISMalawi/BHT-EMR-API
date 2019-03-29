@@ -235,6 +235,7 @@ module OPDService
         order('n.date_created DESC').group('n.person_id, o.order_id')
 
       stats = []
+
       (data || []).each do |record| 
         stats << {
           given_name: record['given_name'],
