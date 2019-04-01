@@ -34,10 +34,12 @@ EOF
         end
 
         create_mysql_age_group_function
+        temp_outcome_table = 'temp_patient_outcomes'
 
         if quarter == 'pepfar'
           start_date = @start_date
           end_date = @end_date
+          temp_outcome_table = 'temp_pepfar_patient_outcomes'
           if @rebuild
             create_mysql_pepfar_current_defaulter
             create_mysql_pepfar_current_outcome
@@ -47,7 +49,7 @@ EOF
           start_date, end_date = generate_start_date_and_end_date(quarter)
         end
 
-        tmp = get_age_groups(age_group, start_date, end_date)
+        tmp = get_age_groups(age_group, start_date, end_date, temp_outcome_table)
 
         on_art = []
 
@@ -237,6 +239,7 @@ EOF
         begin
           esd = esd.to_date
           de  = de.to_date
+
           if de != esd 
             tx_curr = 1
           elsif de == esd && (de >= start_date.to_date && de <= end_date.to_date) 
@@ -254,14 +257,14 @@ EOF
         return [tx_new, tx_curr, tx_given_ipt, tx_screened_for_tb]
       end
 
-      def get_age_groups(age_group, start_date, end_date)
+      def get_age_groups(age_group, start_date, end_date, temp_outcome_table)
         if age_group != 'Pregnant' && age_group != 'FNP' && age_group != 'Not pregnant' && age_group != 'Breastfeeding'
          
           results = ActiveRecord::Base.connection.select_all <<EOF
             SELECT 
             e.*,  cohort_disaggregated_age_group(DATE(e.birthdate), DATE('#{end_date}')) AS age_group
             FROM temp_earliest_start_date e 
-            INNER JOIN temp_pepfar_patient_outcomes t2 ON t2.patient_id = e.patient_id
+            INNER JOIN #{temp_outcome_table} t2 ON t2.patient_id = e.patient_id
             WHERE cum_outcome = 'On antiretrovirals'
             GROUP BY e.patient_id HAVING age_group = '#{age_group}';
 EOF
@@ -272,7 +275,7 @@ EOF
             SELECT 
             e.*, female_maternal_status(e.patient_id, TIMESTAMP('#{end_date.strftime('%Y-%m-%d 23:59:59')}')) AS mstatus
             FROM temp_earliest_start_date e 
-            INNER JOIN temp_pepfar_patient_outcomes t2 ON t2.patient_id = e.patient_id
+            INNER JOIN #{temp_outcome_table} t2 ON t2.patient_id = e.patient_id
             WHERE cum_outcome = 'On antiretrovirals' AND gender = 'F'
             GROUP BY e.patient_id HAVING mstatus = 'FP';
 EOF
@@ -283,7 +286,7 @@ EOF
             SELECT 
             e.*, female_maternal_status(e.patient_id, TIMESTAMP('#{end_date.strftime('%Y-%m-%d 23:59:59')}')) AS mstatus
             FROM temp_earliest_start_date e 
-            INNER JOIN temp_pepfar_patient_outcomes t2 ON t2.patient_id = e.patient_id
+            INNER JOIN #{temp_outcome_table} t2 ON t2.patient_id = e.patient_id
             WHERE cum_outcome = 'On antiretrovirals' AND gender = 'F'
             GROUP BY e.patient_id HAVING mstatus = 'FBf';
 EOF
@@ -294,7 +297,7 @@ EOF
             SELECT 
             e.*, female_maternal_status(e.patient_id, TIMESTAMP('#{end_date.strftime('%Y-%m-%d 23:59:59')}')) AS mstatus
             FROM temp_earliest_start_date e 
-            INNER JOIN temp_pepfar_patient_outcomes t2 ON t2.patient_id = e.patient_id
+            INNER JOIN #{temp_outcome_table} t2 ON t2.patient_id = e.patient_id
             WHERE cum_outcome = 'On antiretrovirals' AND gender = 'F'
             GROUP BY e.patient_id HAVING mstatus = 'FNP';
 EOF
