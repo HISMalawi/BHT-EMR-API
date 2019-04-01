@@ -34,10 +34,12 @@ EOF
         end
 
         create_mysql_age_group_function
+        temp_outcome_table = 'temp_patient_outcomes'
 
         if quarter == 'pepfar'
           start_date = @start_date
           end_date = @end_date
+          temp_outcome_table = 'temp_pepfar_patient_outcomes'
           if @rebuild
             create_mysql_pepfar_current_defaulter
             create_mysql_pepfar_current_outcome
@@ -47,7 +49,7 @@ EOF
           start_date, end_date = generate_start_date_and_end_date(quarter)
         end
 
-        tmp = get_age_groups(age_group, start_date, end_date)
+        tmp = get_age_groups(age_group, start_date, end_date, temp_outcome_table)
 
         on_art = []
 
@@ -126,7 +128,6 @@ EOF
       def screened_for_tb(start_date, end_date, on_art_patient_ids)
         tb_treatment = ConceptName.find_by_name('TB treatment').concept_id
         tb_status_id = ConceptName.find_by_name('TB status').concept_id
-        clinical_consultation = EncounterType.find_by_name('HIV CLINIC CONSULTATION').id
 
         data = ActiveRecord::Base.connection.select_all <<EOF
           SELECT person_id, MAX(obs.obs_datetime) FROM obs 
@@ -135,8 +136,6 @@ EOF
           WHERE obs.concept_id IN(#{tb_treatment},#{tb_status_id}) AND obs.voided = 0
           AND obs.obs_datetime BETWEEN '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
           AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-          AND e.date_enrolled BETWEEN
-          '#{start_date.to_date}' AND '#{end_date.to_date}'
           AND obs.person_id IN(#{on_art_patient_ids.join(',')})
           GROUP BY obs.person_id;
 EOF
@@ -237,6 +236,7 @@ EOF
         begin
           esd = esd.to_date
           de  = de.to_date
+
           if de != esd 
             tx_curr = 1
           elsif de == esd && (de >= start_date.to_date && de <= end_date.to_date) 
@@ -254,14 +254,14 @@ EOF
         return [tx_new, tx_curr, tx_given_ipt, tx_screened_for_tb]
       end
 
-      def get_age_groups(age_group, start_date, end_date)
+      def get_age_groups(age_group, start_date, end_date, temp_outcome_table)
         if age_group != 'Pregnant' && age_group != 'FNP' && age_group != 'Not pregnant' && age_group != 'Breastfeeding'
          
           results = ActiveRecord::Base.connection.select_all <<EOF
             SELECT 
             e.*,  cohort_disaggregated_age_group(DATE(e.birthdate), DATE('#{end_date}')) AS age_group
             FROM temp_earliest_start_date e 
-            INNER JOIN temp_pepfar_patient_outcomes t2 ON t2.patient_id = e.patient_id
+            INNER JOIN #{temp_outcome_table} t2 ON t2.patient_id = e.patient_id
             WHERE cum_outcome = 'On antiretrovirals'
             GROUP BY e.patient_id HAVING age_group = '#{age_group}';
 EOF
@@ -272,7 +272,7 @@ EOF
             SELECT 
             e.*, female_maternal_status(e.patient_id, TIMESTAMP('#{end_date.strftime('%Y-%m-%d 23:59:59')}')) AS mstatus
             FROM temp_earliest_start_date e 
-            INNER JOIN temp_pepfar_patient_outcomes t2 ON t2.patient_id = e.patient_id
+            INNER JOIN #{temp_outcome_table} t2 ON t2.patient_id = e.patient_id
             WHERE cum_outcome = 'On antiretrovirals' AND gender = 'F'
             GROUP BY e.patient_id HAVING mstatus = 'FP';
 EOF
@@ -283,7 +283,7 @@ EOF
             SELECT 
             e.*, female_maternal_status(e.patient_id, TIMESTAMP('#{end_date.strftime('%Y-%m-%d 23:59:59')}')) AS mstatus
             FROM temp_earliest_start_date e 
-            INNER JOIN temp_pepfar_patient_outcomes t2 ON t2.patient_id = e.patient_id
+            INNER JOIN #{temp_outcome_table} t2 ON t2.patient_id = e.patient_id
             WHERE cum_outcome = 'On antiretrovirals' AND gender = 'F'
             GROUP BY e.patient_id HAVING mstatus = 'FBf';
 EOF
@@ -294,7 +294,7 @@ EOF
             SELECT 
             e.*, female_maternal_status(e.patient_id, TIMESTAMP('#{end_date.strftime('%Y-%m-%d 23:59:59')}')) AS mstatus
             FROM temp_earliest_start_date e 
-            INNER JOIN temp_pepfar_patient_outcomes t2 ON t2.patient_id = e.patient_id
+            INNER JOIN #{temp_outcome_table} t2 ON t2.patient_id = e.patient_id
             WHERE cum_outcome = 'On antiretrovirals' AND gender = 'F'
             GROUP BY e.patient_id HAVING mstatus = 'FNP';
 EOF
