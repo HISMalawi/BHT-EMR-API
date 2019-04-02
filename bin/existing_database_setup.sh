@@ -29,8 +29,8 @@ mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/sql/bart
 rails db:migrate
 
 mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/sql/add_regimens_13_and_above.sql
-mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/sql/add_cpt_and_inh_to_regimen_ingredients.sql
 mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/sql/alternative_drug_names.sql
 mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/sql/fix_weight_and_height_obs.sql
 mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/sql/index_obs_value_datetime.sql
 mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/sql/moh_regimens_v2018.sql
+mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/sql/add_cpt_and_inh_to_regimen_ingredients.sql
