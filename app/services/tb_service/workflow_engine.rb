@@ -202,5 +202,5 @@ module TBService
       ).order(encounter_datetime: :desc).first
       !encounter.nil? && encounter.orders.exists?
     end
-
+  end
 end
