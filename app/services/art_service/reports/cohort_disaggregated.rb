@@ -130,14 +130,17 @@ EOF
         tb_status_id = ConceptName.find_by_name('TB status').concept_id
 
         data = ActiveRecord::Base.connection.select_all <<EOF
-          SELECT person_id, MAX(obs.obs_datetime) FROM obs 
+          SELECT ob.person_id FROM obs ob 
           INNER JOIN temp_earliest_start_date e 
-          ON e.patient_id = obs.person_id
-          WHERE obs.concept_id IN(#{tb_treatment},#{tb_status_id}) AND obs.voided = 0
-          AND obs.obs_datetime BETWEEN '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
-          AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-          AND obs.person_id IN(#{on_art_patient_ids.join(',')})
-          GROUP BY obs.person_id;
+          ON e.patient_id = ob.person_id
+          WHERE ob.concept_id IN(#{tb_treatment},#{tb_status_id}) AND ob.voided = 0
+          AND ob.obs_datetime = (
+            SELECT MAX(t.obs_datetime) FROM obs t WHERE 
+            t.obs_datetime BETWEEN '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
+            AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+            AND t.person_id = ob.person_id AND t.concept_id IN(#{tb_treatment},#{tb_status_id})
+          ) AND ob.person_id IN(#{on_art_patient_ids.join(',')})
+          GROUP BY ob.person_id;
 EOF
 
         tb_screened = []
@@ -170,12 +173,14 @@ EOF
           ConceptName.where(name: 'Isoniazid').map(&:concept_id)).map(&:drug_id)
 
         data = ActiveRecord::Base.connection.select_all <<EOF
-        SELECT o.patient_id, max(o.start_date) FROM drug_order d
+        SELECT o.patient_id FROM drug_order d
         INNER JOIN orders o ON o.order_id = d.order_id
         WHERE d.drug_inventory_id IN(#{ipt_drug_ids.join(',')})
         AND o.patient_id IN(#{patient_ids.join(',')}) AND d.quantity > 0 
-        AND o.start_date BETWEEN '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}' 
-        AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}';
+        AND o.start_date = (SELECT MAX(start_date) FROM orders t WHERE t.patient_id = o.patient_id
+          AND t.start_date BETWEEN '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
+          AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+        ) GROUP BY o.patient_id;
 EOF
 
         patient_ids = []

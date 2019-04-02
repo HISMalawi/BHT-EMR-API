@@ -1485,12 +1485,12 @@ EOF
       end
 
       def breastfeeding_mothers(start_date, end_date)
-        reason_concept_id = concept('BREASTFEEDING').concept_id
+        reason_concept_ids = ConceptName.where(name: 'Breastfeeding').map(&:concept_id)
 
         registered = []
 
         @reason_for_starting.each do |r|
-          next unless reason_concept_id == r[:reason_for_starting_concept_id]
+          next unless reason_concept_ids.include?(r[:reason_for_starting_concept_id])
           next unless (r[:date_enrolled] >= start_date.to_date) && (r[:date_enrolled] <= end_date.to_date)
 
           registered << r
