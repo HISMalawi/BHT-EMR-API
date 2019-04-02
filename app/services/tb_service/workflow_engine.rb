@@ -43,20 +43,27 @@ module TBService
     TB_RECEPTION = 'TB RECEPTION'
 		VITALS = 'VITALS'
     LAB_ORDERS = 'LAB ORDERS'
-    
+    TREATMENT = 'TREATMENT'
+    DISPENSING = 'DISPENSING'
+   
     # Encounters graph
     ENCOUNTER_SM = {
       INITIAL_STATE => TB_INITIAL,
       TB_INITIAL => LAB_ORDERS,
       LAB_ORDERS => VITALS,
-      VITALS => END_STATE
+      VITALS => TREATMENT,
+      TREATMENT => DISPENSING,
+      DISPENSING => END_STATE
     }.freeze
 
     #For TB Initial == patient_not_visiting? patient_not_registered?
     #for TB Registration == patient_not_visiting?
     STATE_CONDITIONS = {
-      TB_INITIAL => %i[tb_suspect_not_enrolled? patient_labs_not_ordered?],
-			LAB_ORDERS => %i[patient_labs_not_ordered?]
+      TB_INITIAL => %i[tb_suspect_not_enrolled? 
+                        patient_labs_not_ordered?],
+      LAB_ORDERS => %i[patient_labs_not_ordered?],
+      TREATMENT => %i[patient_should_get_treatment?],
+      DISPENSING => %i[patient_got_treatment?]
     }.freeze   
 
     # Concepts
@@ -74,6 +81,10 @@ module TBService
           LAB_ORDERS
         when /Vitals/i
           VITALS
+        when /Treatment/i
+          TREATMENT
+        when /Dispensing/i
+          DISPENSING
         else
           Rails.logger.warn "Invalid TB activity in user properties: #{activity}"
         end
@@ -169,6 +180,40 @@ module TBService
       ).exists?
 
       !is_lab_ordered
+    end
+
+    def patient_should_get_treatment?
+      prescribe_drugs_concept = concept('Prescribe drugs')
+      no_concept = concept('No')
+      start_time, end_time = TimeUtils.day_bounds(@date)
+      !Observation.where(
+        'concept_id = ? AND value_coded = ? AND person_id = ?
+         AND obs_datetime BETWEEN ? AND ?',
+        prescribe_drugs_concept.concept_id, no_concept.concept_id,
+        @patient.patient_id, start_time, end_time
+      ).exists?
+    end
+
+    def patient_got_treatment?
+      encounter_type = EncounterType.find_by name: TREATMENT
+      encounter = Encounter.select('encounter_id').where(
+        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
+        @patient.patient_id, encounter_type.encounter_type_id, @date
+      ).order(encounter_datetime: :desc).first
+      !encounter.nil? && encounter.orders.exists?
+    end
+
+    def patient_has_not_completed_fast_track_visit?
+      return !@fast_track_completed if @fast_track_completed
+
+      @fast_track_completed = Observation.where(concept: concept('Fast track visit'),
+                                                person: @patient.person)\
+                                         .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))
+                                         .order(obs_datetime: :desc)\
+                                         .first
+                                         &.value_coded&.to_i == concept('Yes').concept_id
+
+      !@fast_track_completed
     end
 
   end
