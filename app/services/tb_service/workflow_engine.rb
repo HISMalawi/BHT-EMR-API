@@ -203,18 +203,4 @@ module TBService
       !encounter.nil? && encounter.orders.exists?
     end
 
-    def patient_has_not_completed_fast_track_visit?
-      return !@fast_track_completed if @fast_track_completed
-
-      @fast_track_completed = Observation.where(concept: concept('Fast track visit'),
-                                                person: @patient.person)\
-                                         .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))
-                                         .order(obs_datetime: :desc)\
-                                         .first
-                                         &.value_coded&.to_i == concept('Yes').concept_id
-
-      !@fast_track_completed
-    end
-
-  end
 end
