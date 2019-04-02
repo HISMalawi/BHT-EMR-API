@@ -27,6 +27,11 @@ class DDEMergingService
   #                                above
   def merge_patients(primary_patient_ids, secondary_patient_ids_list)
     secondary_patient_ids_list.collect do |secondary_patient_ids|
+      if primary_patient_ids['doc_id']&.strip&.casecmp?(secondary_patient_ids['doc_id']&.strip)\
+        || primary_patient_ids['patient_id']&.strip&.casecmp?(secondary_patient_ids['patient_id']&.strip)
+        raise InvalidParameterError, "Can't merge same patient"
+      end
+
       if remote_merge?(primary_patient_ids, secondary_patient_ids)
         merge_remote_patients(primary_patient_ids, secondary_patient_ids)
       elsif remote_local_merge?(primary_patient_ids, secondary_patient_ids)

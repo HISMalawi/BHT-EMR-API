@@ -3,11 +3,12 @@
 module ARTService
   module Reports
     class CohortDisaggregated
-      def initialize(name:, type:, start_date:, end_date:)
+      def initialize(name:, type:, start_date:, end_date:, rebuild:)
         @name = name
         @type = type
         @start_date = start_date
         @end_date = end_date
+        @rebuild = rebuild
       end
 
       def find_report
@@ -20,9 +21,35 @@ module ARTService
       end
 
       def disaggregated(quarter, age_group)
+        begin
+          ActiveRecord::Base.connection.select_all <<EOF
+          SELECT * FROM temp_earliest_start_date limit 10;
+EOF
+
+        rescue
+          art_service = ARTService::Reports::CohortBuilder.new()
+          art_service.create_tmp_patient_table
+          art_service.load_data_into_temp_earliest_start_date(@end_date)
+          @rebuild = true
+        end
+
         create_mysql_age_group_function
-        start_date, end_date = generate_start_date_and_end_date(quarter)
-        tmp = get_age_groups(age_group, start_date, end_date)
+        temp_outcome_table = 'temp_patient_outcomes'
+
+        if quarter == 'pepfar'
+          start_date = @start_date
+          end_date = @end_date
+          temp_outcome_table = 'temp_pepfar_patient_outcomes'
+          if @rebuild
+            create_mysql_pepfar_current_defaulter
+            create_mysql_pepfar_current_outcome
+            rebuild_outcomes 
+          end
+        else
+          start_date, end_date = generate_start_date_and_end_date(quarter)
+        end
+
+        tmp = get_age_groups(age_group, start_date, end_date, temp_outcome_table)
 
         on_art = []
 
@@ -47,7 +74,6 @@ module ARTService
         tb_screened = screened_for_tb(start_date, end_date, on_art)
         ipt_given = given_ipt(start_date, end_date, on_art)
         
-
         (tmp || []).each do |r|
           if list[age_group].blank?
             list[age_group] = {}
@@ -64,8 +90,6 @@ module ARTService
           tx_new, tx_curr, tx_screened_for_tb, tx_given_ipt = get_numbers(r['patient_id'].to_i,
             tb_screened, ipt_given, r['earliest_start_date'], r['date_enrolled'],
             start_date, end_date)
-
-          
 
           list[age_group][r['gender']][:tx_new] += tx_new
           list[age_group][r['gender']][:tx_curr] += tx_curr
@@ -104,7 +128,6 @@ module ARTService
       def screened_for_tb(start_date, end_date, on_art_patient_ids)
         tb_treatment = ConceptName.find_by_name('TB treatment').concept_id
         tb_status_id = ConceptName.find_by_name('TB status').concept_id
-        clinical_consultation = EncounterType.find_by_name('HIV CLINIC CONSULTATION').id
 
         data = ActiveRecord::Base.connection.select_all <<EOF
           SELECT person_id, MAX(obs.obs_datetime) FROM obs 
@@ -113,8 +136,6 @@ module ARTService
           WHERE obs.concept_id IN(#{tb_treatment},#{tb_status_id}) AND obs.voided = 0
           AND obs.obs_datetime BETWEEN '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
           AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-          AND e.date_enrolled BETWEEN
-          '#{start_date.to_date}' AND '#{end_date.to_date}'
           AND obs.person_id IN(#{on_art_patient_ids.join(',')})
           GROUP BY obs.person_id;
 EOF
@@ -145,17 +166,16 @@ EOF
 
         patient_ids = patient_ids.blank? ? [0] : patient_ids
 
-        ipt_drug_ids = Drug.where(concept_id: (ConceptName.find_by_name('Isoniazid').concept_id)).map(&:drug_id)
+        ipt_drug_ids = Drug.where('concept_id IN(?)', 
+          ConceptName.where(name: 'Isoniazid').map(&:concept_id)).map(&:drug_id)
 
         data = ActiveRecord::Base.connection.select_all <<EOF
-        SELECT o.patient_id FROM orders o
-        INNER JOIN drug_order d
-        WHERE d.drug_inventory_id IN(#{ipt_drug_ids.join(',')}) 
-        AND d.quantity >= 0 AND o.voided = 0
-        AND o.patient_id IN(#{on_art_patient_ids.join(',')})
-        AND o.start_date BETWEEN '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
-        AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-        GROUP BY o.patient_id;
+        SELECT o.patient_id, max(o.start_date) FROM drug_order d
+        INNER JOIN orders o ON o.order_id = d.order_id
+        WHERE d.drug_inventory_id IN(#{ipt_drug_ids.join(',')})
+        AND o.patient_id IN(#{patient_ids.join(',')}) AND d.quantity > 0 
+        AND o.start_date BETWEEN '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}' 
+        AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}';
 EOF
 
         patient_ids = []
@@ -216,6 +236,7 @@ EOF
         begin
           esd = esd.to_date
           de  = de.to_date
+
           if de != esd 
             tx_curr = 1
           elsif de == esd && (de >= start_date.to_date && de <= end_date.to_date) 
@@ -230,16 +251,17 @@ EOF
         tx_screened_for_tb = (tbs.include?(patient_id) == true ? 1 : 0)
         tx_given_ipt = (ipt.include?(patient_id) == true ? 1 : 0)
 
-        return [tx_new, tx_curr, tx_screened_for_tb, tx_given_ipt]
+        return [tx_new, tx_curr, tx_given_ipt, tx_screened_for_tb]
       end
 
-      def get_age_groups(age_group, start_date, end_date)
+      def get_age_groups(age_group, start_date, end_date, temp_outcome_table)
         if age_group != 'Pregnant' && age_group != 'FNP' && age_group != 'Not pregnant' && age_group != 'Breastfeeding'
+         
           results = ActiveRecord::Base.connection.select_all <<EOF
             SELECT 
             e.*,  cohort_disaggregated_age_group(DATE(e.birthdate), DATE('#{end_date}')) AS age_group
             FROM temp_earliest_start_date e 
-            INNER JOIN temp_patient_outcomes t2 ON t2.patient_id = e.patient_id
+            INNER JOIN #{temp_outcome_table} t2 ON t2.patient_id = e.patient_id
             WHERE cum_outcome = 'On antiretrovirals'
             GROUP BY e.patient_id HAVING age_group = '#{age_group}';
 EOF
@@ -250,7 +272,7 @@ EOF
             SELECT 
             e.*, female_maternal_status(e.patient_id, TIMESTAMP('#{end_date.strftime('%Y-%m-%d 23:59:59')}')) AS mstatus
             FROM temp_earliest_start_date e 
-            INNER JOIN temp_patient_outcomes t2 ON t2.patient_id = e.patient_id
+            INNER JOIN #{temp_outcome_table} t2 ON t2.patient_id = e.patient_id
             WHERE cum_outcome = 'On antiretrovirals' AND gender = 'F'
             GROUP BY e.patient_id HAVING mstatus = 'FP';
 EOF
@@ -261,7 +283,7 @@ EOF
             SELECT 
             e.*, female_maternal_status(e.patient_id, TIMESTAMP('#{end_date.strftime('%Y-%m-%d 23:59:59')}')) AS mstatus
             FROM temp_earliest_start_date e 
-            INNER JOIN temp_patient_outcomes t2 ON t2.patient_id = e.patient_id
+            INNER JOIN #{temp_outcome_table} t2 ON t2.patient_id = e.patient_id
             WHERE cum_outcome = 'On antiretrovirals' AND gender = 'F'
             GROUP BY e.patient_id HAVING mstatus = 'FBf';
 EOF
@@ -272,7 +294,7 @@ EOF
             SELECT 
             e.*, female_maternal_status(e.patient_id, TIMESTAMP('#{end_date.strftime('%Y-%m-%d 23:59:59')}')) AS mstatus
             FROM temp_earliest_start_date e 
-            INNER JOIN temp_patient_outcomes t2 ON t2.patient_id = e.patient_id
+            INNER JOIN #{temp_outcome_table} t2 ON t2.patient_id = e.patient_id
             WHERE cum_outcome = 'On antiretrovirals' AND gender = 'F'
             GROUP BY e.patient_id HAVING mstatus = 'FNP';
 EOF
@@ -307,11 +329,22 @@ DECLARE pregnant_date DATETIME;
 DECLARE maternal_status VARCHAR(20);
 DECLARE obs_value_coded INT(11);
 
+
+SET @reason_for_starting = (SELECT concept_id FROM concept_name WHERE name = 'Reason for ART eligibility' LIMIT 1);
+
 SET @pregnant_concepts := (SELECT GROUP_CONCAT(concept_id) FROM concept_name WHERE name IN('Is patient pregnant?','Patient pregnant'));
 SET @breastfeeding_concept := (SELECT GROUP_CONCAT(concept_id) FROM concept_name WHERE name = 'Breastfeeding');
 
 SET pregnant_date = (SELECT MAX(obs_datetime) FROM obs WHERE concept_id IN(@pregnant_concepts) AND voided = 0 AND person_id = my_patient_id AND obs_datetime <= end_datetime);
 SET breastfeeding_date = (SELECT MAX(obs_datetime) FROM obs WHERE concept_id IN(@breastfeeding_concept) AND voided = 0 AND person_id = my_patient_id AND obs_datetime <= end_datetime);
+
+IF pregnant_date IS NULL THEN
+  SET pregnant_date = (SELECT MAX(obs_datetime) FROM obs WHERE concept_id = @reason_for_starting AND voided = 0 AND person_id = my_patient_id AND obs_datetime <= end_datetime AND value_coded IN(1755));
+END IF;
+
+IF breastfeeding_date IS NULL THEN
+  SET breastfeeding_date = (SELECT MAX(obs_datetime) FROM obs WHERE concept_id = @reason_for_starting AND voided = 0 AND person_id = my_patient_id AND obs_datetime <= end_datetime AND value_coded IN(834,5632));
+END IF;
 
 IF pregnant_date IS NULL AND breastfeeding_date IS NULL THEN SET maternal_status = "FNP";
 ELSEIF pregnant_date IS NOT NULL AND breastfeeding_date IS NOT NULL THEN SET maternal_status = "Unknown";
@@ -350,6 +383,12 @@ IF maternal_status = 'Check FP' THEN
   ELSEIF obs_value_coded = 1066 THEN SET maternal_status = 'FNP';
   END IF;  
 
+  IF obs_value_coded IS NULL THEN
+    SET obs_value_coded = (SELECT GROUP_CONCAT(value_coded) FROM obs WHERE concept_id IN(7563) AND voided = 0 AND person_id = my_patient_id AND obs_datetime = pregnant_date);
+    IF obs_value_coded IN(1755) THEN SET maternal_status = 'FP';  
+    END IF;  
+  END IF;
+
   IF maternal_status = 'Check FP' THEN SET maternal_status = 'FNP';
   END IF;
 END IF;
@@ -361,6 +400,12 @@ IF maternal_status = 'Check BF' THEN
   ELSEIF obs_value_coded = 1066 THEN SET maternal_status = 'FNP';
   END IF;  
 
+  IF obs_value_coded IS NULL THEN
+    SET obs_value_coded = (SELECT GROUP_CONCAT(value_coded) FROM obs WHERE concept_id IN(7563) AND voided = 0 AND person_id = my_patient_id AND obs_datetime = breastfeeding_date);
+    IF obs_value_coded IN(834,5632) THEN SET maternal_status = 'FBf';  
+    END IF;  
+  END IF;
+
   IF maternal_status = 'Check BF' THEN SET maternal_status = 'FNP';
   END IF;
 END IF;
@@ -371,6 +416,204 @@ RETURN maternal_status;
 END;
 EOF
 
+      end
+  
+      def rebuild_outcomes
+        ActiveRecord::Base.connection.execute(
+          'DROP TABLE IF EXISTS `temp_pepfar_patient_outcomes`'
+        )
+
+        ActiveRecord::Base.connection.execute(
+          "CREATE TABLE temp_pepfar_patient_outcomes ENGINE=MEMORY AS (
+            SELECT e.patient_id, patient_pepfar_outcome(e.patient_id, '#{@end_date} 23:59:59') AS cum_outcome
+            FROM temp_earliest_start_date e WHERE e.date_enrolled <= '#{@end_date}'
+          )"
+        )
+
+        ActiveRecord::Base.connection.execute(
+          'ALTER TABLE temp_pepfar_patient_outcomes
+           ADD INDEX patient_id_index (patient_id)'
+        )
+
+        ActiveRecord::Base.connection.execute(
+          'ALTER TABLE temp_pepfar_patient_outcomes
+           ADD INDEX cum_outcome_index (cum_outcome)'
+        )
+
+        ActiveRecord::Base.connection.execute(
+          'ALTER TABLE temp_pepfar_patient_outcomes
+           ADD INDEX patient_id_cum_outcome_index (patient_id, cum_outcome)'
+        )
+
+      end
+
+      def create_mysql_pepfar_current_defaulter
+        ActiveRecord::Base.connection.execute <<EOF
+        DROP FUNCTION IF EXISTS current_pepfar_defaulter;
+EOF
+
+        ActiveRecord::Base.connection.execute <<EOF
+CREATE FUNCTION current_pepfar_defaulter(my_patient_id INT, my_end_date DATETIME) RETURNS int(1)
+DETERMINISTIC
+BEGIN
+
+  DECLARE done INT DEFAULT FALSE;
+  DECLARE my_start_date, my_expiry_date, my_obs_datetime DATETIME;
+  DECLARE my_daily_dose, my_quantity, my_pill_count, my_total_text, my_total_numeric DECIMAL;
+  DECLARE my_drug_id, flag INT;
+
+  DECLARE cur1 CURSOR FOR SELECT d.drug_inventory_id, o.start_date, d.equivalent_daily_dose daily_dose, d.quantity, o.start_date FROM drug_order d
+    INNER JOIN arv_drug ad ON d.drug_inventory_id = ad.drug_id
+    INNER JOIN orders o ON d.order_id = o.order_id
+      AND d.quantity > 0
+      AND o.voided = 0
+      AND o.start_date <= my_end_date
+      AND o.patient_id = my_patient_id;
+
+  DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
+  SELECT MAX(o.start_date) INTO @obs_datetime FROM drug_order d
+    INNER JOIN arv_drug ad ON d.drug_inventory_id = ad.drug_id
+    INNER JOIN orders o ON d.order_id = o.order_id
+      AND d.quantity > 0
+      AND o.voided = 0
+      AND o.start_date <= my_end_date
+      AND o.patient_id = my_patient_id
+    GROUP BY o.patient_id;
+
+  OPEN cur1;
+
+  SET flag = 0;
+
+  read_loop: LOOP
+    FETCH cur1 INTO my_drug_id, my_start_date, my_daily_dose, my_quantity, my_obs_datetime;
+
+    IF done THEN
+      CLOSE cur1;
+      LEAVE read_loop;
+    END IF;
+
+    IF DATE(my_obs_datetime) = DATE(@obs_datetime) THEN
+
+      IF my_daily_dose = 0 OR LENGTH(my_daily_dose) < 1 OR my_daily_dose IS NULL THEN
+        SET my_daily_dose = 1;
+      END IF;
+
+            SET my_pill_count = drug_pill_count(my_patient_id, my_drug_id, my_obs_datetime);
+
+            SET @expiry_date = ADDDATE(DATE_SUB(my_start_date, INTERVAL 2 DAY), ((my_quantity + my_pill_count)/my_daily_dose));
+
+      IF my_expiry_date IS NULL THEN
+        SET my_expiry_date = @expiry_date;
+      END IF;
+
+      IF @expiry_date < my_expiry_date THEN
+        SET my_expiry_date = @expiry_date;
+            END IF;
+        END IF;
+    END LOOP;
+
+    IF TIMESTAMPDIFF(day, my_expiry_date, my_end_date) > 30 THEN
+        SET flag = 1;
+    END IF;
+
+  RETURN flag;
+  END;
+EOF
+
+      
+      end
+
+      def create_mysql_pepfar_current_outcome
+        ActiveRecord::Base.connection.execute <<EOF
+        DROP FUNCTION IF EXISTS patient_pepfar_outcome;
+EOF
+
+        ActiveRecord::Base.connection.execute <<EOF
+CREATE FUNCTION patient_pepfar_outcome(patient_id INT, visit_date date) RETURNS varchar(25)
+DETERMINISTIC
+BEGIN
+
+DECLARE set_program_id INT;
+DECLARE set_patient_state INT;
+DECLARE set_outcome varchar(25);
+DECLARE set_date_started date;
+DECLARE set_patient_state_died INT;
+DECLARE set_died_concept_id INT;
+DECLARE set_timestamp DATETIME;
+
+SET set_program_id = (SELECT program_id FROM program WHERE name ="HIV PROGRAM" LIMIT 1);
+
+SET set_patient_state = (SELECT state FROM `patient_state` INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id AND p.program_id = set_program_id WHERE (patient_state.voided = 0 AND p.voided = 0 AND p.program_id = program_id AND DATE(start_date) <= visit_date AND p.patient_id = patient_id) AND (patient_state.voided = 0) ORDER BY start_date DESC, patient_state.patient_state_id DESC, patient_state.date_created DESC LIMIT 1);
+
+IF set_patient_state = 1 THEN
+  SET set_patient_state = current_pepfar_defaulter(patient_id, visit_date);
+
+  IF set_patient_state = 1 THEN
+    SET set_outcome = 'Defaulted';
+  ELSE
+    SET set_outcome = 'Pre-ART (Continue)';
+  END IF;
+END IF;
+
+IF set_patient_state = 2   THEN
+  SET set_outcome = 'Patient transferred out';
+END IF;
+
+IF set_patient_state = 3 OR set_patient_state = 127 THEN
+  SET set_outcome = 'Patient died';
+END IF;
+
+
+/* ............... This block of code checks if the patient has any state that is "died" */
+IF set_patient_state != 3 AND set_patient_state != 127 THEN
+  SET set_patient_state_died = (SELECT state FROM `patient_state` INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id AND p.program_id = set_program_id WHERE (patient_state.voided = 0 AND p.voided = 0 AND p.program_id = program_id AND DATE(start_date) <= visit_date AND p.patient_id = patient_id) AND          (patient_state.voided = 0) AND state = 3 ORDER BY patient_state.patient_state_id DESC, patient_state.date_created DESC, start_date DESC LIMIT 1);
+
+  SET set_died_concept_id = (SELECT concept_id FROM concept_name WHERE name = 'Patient died' LIMIT 1);
+
+  IF set_patient_state_died IN(SELECT program_workflow_state_id FROM program_workflow_state WHERE concept_id = set_died_concept_id AND retired = 0) THEN
+    SET set_outcome = 'Patient died';
+    SET set_patient_state = 3;
+  END IF;
+END IF;
+/* ....................  ends here .................... */
+
+
+
+IF set_patient_state = 6 THEN
+  SET set_outcome = 'Treatment stopped';
+END IF;
+
+IF set_patient_state = 7 THEN
+  SET set_patient_state = current_pepfar_defaulter(patient_id, set_timestamp);
+
+  IF set_patient_state = 1 THEN
+    SET set_outcome = 'Defaulted';
+  END IF;
+
+  IF set_patient_state = 0 THEN
+    SET set_outcome = 'On antiretrovirals';
+  END IF;
+END IF;
+
+IF set_outcome IS NULL THEN
+  SET set_patient_state = current_pepfar_defaulter(patient_id, set_timestamp);
+
+  IF set_patient_state = 1 THEN
+    SET set_outcome = 'Defaulted';
+  END IF;
+
+  IF set_outcome IS NULL THEN
+    SET set_outcome = 'Unknown';
+  END IF;
+
+END IF;
+
+
+
+RETURN set_outcome;
+END;
+EOF
       end
 
 

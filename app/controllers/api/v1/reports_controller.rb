@@ -44,9 +44,18 @@ class Api::V1::ReportsController < ApplicationController
   end
 
   def cohort_disaggregated
-    quarter, age_group = params.require %i[quarter age_group]
-    stats = service.cohort_disaggregated(quarter, age_group)
+    quarter, age_group, rebuild = params.require %i[quarter age_group rebuild_outcome]
+    start_date = Date.today
+    end_date = Date.today
+    rebuild_outcome = (rebuild == 'true' ? true : false)
 
+    if(quarter == 'pepfar')
+      start_date, end_date = params.require %i[start_date end_date]
+      start_date = start_date.to_date
+      end_date = end_date.to_date
+    end
+
+    stats = service.cohort_disaggregated(quarter, age_group, start_date, end_date, rebuild_outcome)
     render json: stats
   end
 
