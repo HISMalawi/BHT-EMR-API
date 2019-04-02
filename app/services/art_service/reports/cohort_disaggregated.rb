@@ -175,11 +175,11 @@ EOF
         data = ActiveRecord::Base.connection.select_all <<EOF
         SELECT o.patient_id FROM drug_order d
         INNER JOIN orders o ON o.order_id = d.order_id
-        WHERE d.drug_inventory_id IN(#{ipt_drug_ids.join(',')})
-        AND o.patient_id IN(#{patient_ids.join(',')}) AND d.quantity > 0 
+        WHERE d.drug_inventory_id IN(#{ipt_drug_ids.join(',')}) AND d.quantity > 0 
         AND o.start_date = (SELECT MAX(start_date) FROM orders t WHERE t.patient_id = o.patient_id
           AND t.start_date BETWEEN '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
           AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+          AND t.patient_id IN(#{patient_ids.join(',')}) 
         ) GROUP BY o.patient_id;
 EOF
 
