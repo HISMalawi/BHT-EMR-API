@@ -32,9 +32,23 @@ describe TBService::WorkflowEngine do
     end
 
     it 'returns LAB ORDERS for TB suspect with no Lab Request in the TB Programme' do
-      lab_request patient
+      tb_initial_encounter patient
       encounter_type = engine.next_encounter
       expect(encounter_type.name.upcase).to eq('LAB ORDERS')
+    end
+
+    #return treatment after VITALS
+    it 'returns TREATMENT for a TB patient' do
+      lab_orders_encounter patient
+      encounter_type = engine.next_encounter
+      expect(encounter_type.name.upcase).to eq('TREATMENT')
+    end
+
+    it 'returns DISPENSING for a TB patient' do
+      lab_orders_encounter patient
+      treatment_encounter patient
+      encounter_type = engine.next_encounter
+      expect(encounter_type).to eq(nil)
     end
 
   end
@@ -46,51 +60,29 @@ describe TBService::WorkflowEngine do
                              program: tb_program
   end
 
-  def lab_request(patient)
-
-    program = Program.find_by(name: "TB PROGRAM")
-
+  def tb_initial_encounter(patient)
     tb_initial = create :encounter, type: encounter_type('TB_INITIAL'),
-                                   patient: patient, program_id: program.program_id 
+                                   patient: patient, program_id: tb_program.program_id 
     tb_initial
   end
 
-  def register_patient(patient, date = nil)
-    date ||= Time.now
-    enroll_patient patient
-    create :encounter, type: encounter_type('TB REGISTRATION'),
-                       patient: patient,
-                       date_created: date
+  def record_vitals(patient)
+    vitals = create :encounter, type: encounter_type('VITALS'),
+                                   patient: patient, program_id: tb_program.program_id
+    vitals
   end
 
-  def receive_patient(patient, guardian_only: false, on_fast_track: false)
-    register_patient patient
-    reception = create :encounter, type: encounter_type('TB RECEPTION'),
-                                   patient: patient
-    if guardian_only
-      create :observation, concept: concept('PATIENT PRESENT'),
-                           encounter: reception,
-                           value_coded: concept('No').concept_id,
-                           person: patient.person
-    else
-      create :observation, concept: concept('PATIENT PRESENT'),
-                           encounter: reception,
-                           value_coded: concept('Yes').concept_id,
-                           person: patient.person
-    end
+  def lab_orders_encounter(patient)
+    record_vitals patient
+    lab_order = create :encounter, type: encounter_type('LAB ORDERS'),
+                                   patient: patient, program_id: tb_program.program_id 
+    lab_order
+  end
 
-    if on_fast_track
-      create :observation, concept: concept('Fast'),
-                           encounter: reception,
-                           person: patient.person,
-                           value_coded: concept('Yes').concept_id
-    end
-
-    create :observation, concept: concept('Guardian present'),
-                         encounter: reception,
-                         value_coded: concept('Yes'),
-                         person: patient.person
-    reception
+  def treatment_encounter(patient)
+    treatment = create :encounter, type: encounter_type('TREATMENT'),
+                                   patient: patient, program_id: tb_program.program_id 
+    treatment
   end
 
 end
