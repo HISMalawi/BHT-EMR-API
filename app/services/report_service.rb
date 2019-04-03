@@ -99,6 +99,10 @@ class ReportService
     engine(@program).cohort_survival_analysis(quarter, age_group, regenerate)
   end
 
+  def defaulter_list(start_date, end_date, pepfar)
+    engine(@program).defaulter_list(start_date, end_date, pepfar)
+  end
+
   private
 
   def engine(program)
