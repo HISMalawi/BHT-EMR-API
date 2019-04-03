@@ -108,7 +108,10 @@ module ARTService
                                 .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
 
       @adherence = observations.collect do |observation|
-        [observation&.order&.drug_order&.drug&.name || '', observation.value_numeric]
+        drug = observation.order&.drug_order&.drug
+        next unless drug&.arv?
+
+        [drug.name || '', observation.value_numeric]
       end
     end
 
@@ -209,6 +212,10 @@ module ARTService
       name = 'CPT' if name.match?('Cotrimoxazole')
       name = 'INH' if name.match?('INH')
       name
+    end
+
+    def observation(concept_name)
+
     end
   end
 end
