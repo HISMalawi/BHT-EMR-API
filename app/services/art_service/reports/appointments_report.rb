@@ -28,16 +28,20 @@ module ARTService
         program = Program.find_by_name 'HIV PROGRAM'
 
         encounter_ids = Encounter.where("encounter_type = ?
-          AND encounter_datetime BETWEEN ? AND ?
-          AND program_id = ?", encounter_type.id,
+          AND obs.value_datetime BETWEEN ? AND ?
+          AND program_id = ? AND obs.concept_id = ?", encounter_type.id,
           @start_date.strftime('%Y-%m-%d 00:00:00'),
           @end_date.strftime('%Y-%m-%d 23:59:59'), 
-          program.id).map(&:encounter_id) 
+          program.id, appointment_concept.concept_id).\
+          joins("INNER JOIN obs ON obs.encounter_id = encounter.encounter_id").map(&:encounter_id)
 
         encounter_ids = [0] if encounter_ids.blank?
 
         appointments = Observation.where("encounter_id IN(?)
-          AND concept_id = ?", encounter_ids, appointment_concept.concept_id) 
+          AND concept_id = ? AND value_datetime BETWEEN ? AND ?",
+          encounter_ids, appointment_concept.concept_id,
+           @start_date.strftime('%Y-%m-%d 00:00:00'),
+          @end_date.strftime('%Y-%m-%d 23:59:59')) 
 
         patients = []
 
