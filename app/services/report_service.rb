@@ -103,6 +103,10 @@ class ReportService
     engine(@program).defaulter_list(start_date, end_date, pepfar)
   end
 
+  def missed_appointments(start_date, end_date)
+    engine(@program).missed_appointments(start_date, end_date)
+  end
+
   private
 
   def engine(program)

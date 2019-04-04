@@ -10,7 +10,8 @@ module ARTService
       'COHORT' => ARTService::Reports::Cohort,
       'COHORT_DISAGGREGATED' => ARTService::Reports::CohortDisaggregated,
       'COHORT_SURVIVAL_ANALYSIS' => ARTService::Reports::CohortSurvivalAnalysis,
-      'VISITS' => ARTService::Reports::VisitsReport
+      'VISITS' => ARTService::Reports::VisitsReport,
+      'APPOINTMENTS' => ARTService::Reports::AppointmentsReport
     }.freeze
 
     def generate_report(type:, **kwargs)
@@ -45,6 +46,11 @@ module ARTService
       REPORTS['COHORT'].new(type: 'defaulter_list', 
         name: 'defaulter_list', start_date: start_date,
         end_date: end_date).defaulter_list(pepfar)
+    end
+
+    def missed_appointments(start_date, end_date)
+      REPORTS['APPOINTMENTS'].new(start_date: start_date.to_date,
+        end_date: end_date.to_date).missed_appointments
     end
 
     private
