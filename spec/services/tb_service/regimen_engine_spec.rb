@@ -34,13 +34,8 @@ describe TBService::RegimenEngine do
   end
   
 	describe 'TB Patient regimen' do
-		
-		#find_dosages(patient, date = Date.today)
-
 		it 'returns patient dosage' do
-			#need program and patient
-			#patient_current_state
-			
+		
 			program
 			person
       person_name
@@ -55,57 +50,11 @@ describe TBService::RegimenEngine do
 			prescribe_drugs_ob = prescribe_drugs(patient, encounter)
 			medication_order_ob = medication_orders(patient, encounter)
 			patient_weight_ob = patient_weight(patient, encounter)
-	
-			drug1 = {
-				drug_inventory_id: 985,
-				dose: '1',
-				frequency: '1',
-				prn: '1',
-				units: 'mg',
-				equivalent_daily_dose: '1',
-				quantity: 10,
-				start_date: Date.today,
-				auto_expire_date: Date.today
-			}
 
-			drug2 = {
-				drug_inventory_id: 986,
-				dose: '1',
-				frequency: '1',
-				prn: '1',
-				units: 'mg',
-				equivalent_daily_dose: '1',
-				quantity: 10,
-				start_date: Date.today,
-				auto_expire_date: Date.today
-			}
-
-			drug3 = {
-				drug_inventory_id: 987,
-				dose: '1',
-				frequency: '1',
-				prn: '1',
-				units: 'mg',
-				equivalent_daily_dose: '1',
-				quantity: 10,
-				start_date: Date.today,
-				auto_expire_date: Date.today
-			}
-
-			drugs = []
-			drugs << drug1
-			drugs << drug2
-			drugs << drug3
-			drugs
-
-
-			#create drug order
-			drug_order  = DrugOrderService.create_drug_orders(encounter: encounter, drug_orders: drugs)
-
-			p patient_dosages = engine.find_dosages(patient, date = Date.today)
-			
-      # test_types = engine.types(search_string: "TB Tests")
-      # expect(test_types.include?('TB Tests')).to eq(true)
+			#Drug concept name - Rifampicin and isoniazid
+			regimen = NtpRegimen.joins("INNER JOIN drug ON drug.drug_id = ntp_regimens.drug_id AND drug.name = 'RH (R150/H75)'").first 
+			patient_dosages = engine.find_dosages(patient, date = Date.today)
+			expect(patient_dosages['Rifampicin and isoniazid'][:drug_id]).to eq(regimen.drug_id)
       
     end
 
@@ -142,25 +91,11 @@ describe TBService::RegimenEngine do
                           value_coded: concept('Yes').concept_id
 	end
 
-	def medication_orders(patient, encounter)
-		#Isoniazid (H) Rifampicin (R) Pyrazinamide (Z)
-		create :observation, concept: concept('Medication orders'),
-                          encounter: encounter,
-                          person: patient.person,
-													value_coded: concept('Rifampicin isoniazid and pyrazinamide').concept_id
-												
-		create :observation, concept: concept('Medication orders'),
-                          encounter: encounter,
-                          person: patient.person,
-													value_coded: concept('Ethambutol').concept_id
+	def medication_orders(patient, encounter)										
 		create :observation, concept: concept('Medication orders'),
                           encounter: encounter,
                           person: patient.person,
 													value_coded: concept('Rifampicin and isoniazid').concept_id
-		create :observation, concept: concept('Medication orders'),
-                          encounter: encounter,
-                          person: patient.person,
-                          value_coded: concept('Rifampicin Isoniazid Pyrazinamide Ethambutol').concept_id
 	end
   
 	
