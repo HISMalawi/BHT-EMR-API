@@ -31,4 +31,15 @@ class Drug < ActiveRecord::Base
     concepts_placeholders = '(' + (['?'] * concepts.size).join(', ') + ')'
     Drug.where("concept_id in #{concepts_placeholders}", *concepts)
   end
+
+  def tb_drug?
+    Drug.tb_drugs.map(&:concept_id).include?(concept_id)
+  end
+
+  def self.tb_drugs
+    tb_concept = Concept.joins(:concept_names).where(concept_name: { name: ['Rifampicin isoniazid and pyrazinamide', 'Ethambutol', 'Rifampicin and isoniazid', 'Rifampicin Isoniazid Pyrazinamide Ethambutol'] } )
+    drugs = Drug.where(concept: tb_concept)
+    drugs
+  end
+
 end
