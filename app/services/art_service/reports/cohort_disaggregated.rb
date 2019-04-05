@@ -92,7 +92,7 @@ EOF
             start_date, end_date)
 
           list[age_group][r['gender']][:tx_new] += tx_new
-          list[age_group][r['gender']][:tx_curr] += tx_curr
+          list[age_group][r['gender']][:tx_curr] += (tx_curr + tx_new)
           list[age_group][r['gender']][:tx_screened_for_tb] += tx_screened_for_tb
           list[age_group][r['gender']][:tx_given_ipt] += tx_given_ipt
         
