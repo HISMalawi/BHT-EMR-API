@@ -20,7 +20,25 @@ module ARTService
         builder.build(nil, @start_date, @end_date)
       end
 
+      def initialize_disaggregated
+
+        ActiveRecord::Base.connection.execute('DROP TABLE IF EXISTS temp_disaggregated')
+        
+        ActiveRecord::Base.connection.execute(
+          'CREATE TABLE IF NOT EXISTS temp_disaggregated (
+             patient_id INTEGER PRIMARY KEY,
+             age_group VARCHAR(20),
+             maternal_status VARCHAR(10),
+             given_ipt INT(1),
+             screened_for_tb INT(1)
+          ) ENGINE=MEMORY;'
+        )
+
+        return {temp_disaggregated: 'created'}
+      end
+
       def disaggregated(quarter, age_group)
+
         begin
           ActiveRecord::Base.connection.select_all <<EOF
           SELECT * FROM temp_earliest_start_date limit 10;
@@ -33,14 +51,26 @@ EOF
           @rebuild = true
         end
 
-        create_mysql_age_group_function
         temp_outcome_table = 'temp_patient_outcomes'
 
         if quarter == 'pepfar'
           start_date = @start_date
           end_date = @end_date
           temp_outcome_table = 'temp_pepfar_patient_outcomes'
+
+
+          begin
+            ActiveRecord::Base.connection.select_all <<EOF
+            SELECT * FROM temp_pepfar_patient_outcomes limit 10;
+EOF
+
+          rescue
+            @rebuild = true
+          end
+
+
           if @rebuild
+            initialize_disaggregated
             create_mysql_pepfar_current_defaulter
             create_mysql_pepfar_current_outcome
             rebuild_outcomes 
@@ -71,33 +101,21 @@ EOF
            return {}
         end
 
-        tb_screened = screened_for_tb(start_date, end_date, on_art)
-        ipt_given = given_ipt(start_date, end_date, on_art)
-        
-        (tmp || []).each do |r|
-          if list[age_group].blank?
-            list[age_group] = {}
-          end
-
-          if list[age_group][r['gender']].blank?
-            list[age_group][r['gender']] = {
-              tx_new: 0, tx_curr: 0,
-              tx_screened_for_tb: 0,
-              tx_given_ipt: 0
-            }
-          end
-
-          tx_new, tx_curr, tx_screened_for_tb, tx_given_ipt = get_numbers(r['patient_id'].to_i,
-            tb_screened, ipt_given, r['earliest_start_date'], r['date_enrolled'],
-            start_date, end_date)
-
-          list[age_group][r['gender']][:tx_new] += tx_new
-          list[age_group][r['gender']][:tx_curr] += (tx_curr + tx_new)
-          list[age_group][r['gender']][:tx_screened_for_tb] += tx_screened_for_tb
-          list[age_group][r['gender']][:tx_given_ipt] += tx_given_ipt
-        
+        if age_group.match(/year|month/i)  
+          big_insert tmp, age_group
         end
 
+        (tmp || []).each do |r|
+
+          tx_new, tx_curr, tx_screened_for_tb, tx_given_ipt = get_numbers(r, age_group, start_date, end_date)
+
+          if r['gender'] == 'F'
+            insert_female_maternal_status(r['patient_id'], age_group, end_date)
+          end
+
+        end
+
+        arrangeGroups(age_group, list, start_date.to_date, end_date.to_date)
         return list
       end
 
@@ -125,138 +143,63 @@ EOF
         date_range = [quarter_beginning, quarter_ending]
       end
 
-      def screened_for_tb(start_date, end_date, on_art_patient_ids)
-        tb_treatment = ConceptName.find_by_name('TB treatment').concept_id
-        tb_status_id = ConceptName.find_by_name('TB status').concept_id
-
-        data = ActiveRecord::Base.connection.select_all <<EOF
-          SELECT ob.person_id FROM obs ob 
-          INNER JOIN temp_earliest_start_date e 
-          ON e.patient_id = ob.person_id
-          WHERE ob.concept_id IN(#{tb_treatment},#{tb_status_id}) AND ob.voided = 0
-          AND ob.obs_datetime = (
-            SELECT MAX(t.obs_datetime) FROM obs t WHERE 
-            t.obs_datetime BETWEEN '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
-            AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-            AND t.person_id = ob.person_id AND t.concept_id IN(#{tb_treatment},#{tb_status_id})
-          ) AND ob.person_id IN(#{on_art_patient_ids.join(',')})
-          GROUP BY ob.person_id;
+      def screened_for_tb(my_patient_id, age_group, start_date, end_date)
+        data = ActiveRecord::Base.connection.select_one <<EOF
+        SELECT patient_screened_for_tb(#{my_patient_id}, 
+          '#{start_date.to_date}', '#{end_date.to_date}') AS screened;
 EOF
 
-        tb_screened = []
-        (data || []).each do |r| 
-          tb_screened << r['person_id'].to_i
-        end
-
-        return tb_screened
-      end
-
-      def given_ipt(start_date, end_date, on_art_patient_ids)
-        
-        data = ActiveRecord::Base.connection.select_all <<EOF
-        SELECT est.patient_id FROM temp_earliest_start_date est
-        WHERE date_enrolled <= '#{end_date.to_date}'
-        AND est.patient_id IN(#{on_art_patient_ids.join(',')});
-EOF
-
-        return [] if data.blank?
-
-        patient_ids = []
-
-        (data || []).each do |d|
-          patient_ids << d['patient_id'].to_i
-        end
-
-        patient_ids = patient_ids.blank? ? [0] : patient_ids
-
-        ipt_drug_ids = Drug.where('concept_id IN(?)', 
-          ConceptName.where(name: 'Isoniazid').map(&:concept_id)).map(&:drug_id)
-
-        data = ActiveRecord::Base.connection.select_all <<EOF
-        SELECT o.patient_id FROM drug_order d
-        INNER JOIN orders o ON o.order_id = d.order_id
-        WHERE d.drug_inventory_id IN(#{ipt_drug_ids.join(',')}) AND d.quantity > 0 
-        AND o.start_date = (SELECT MAX(start_date) FROM orders t WHERE t.patient_id = o.patient_id
-          AND t.start_date BETWEEN '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
-          AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-          AND t.patient_id IN(#{patient_ids.join(',')}) 
-        ) GROUP BY o.patient_id;
-EOF
-
-        patient_ids = []
-
-        (data || []).each do |d|
-          patient_ids << d['patient_id'].to_i
-        end
-        
-        return patient_ids
-      end
-
-      def create_mysql_age_group_function
-        ActiveRecord::Base.connection.execute <<EOF
-        DROP FUNCTION IF EXISTS cohort_disaggregated_age_group;
-EOF
+        screened = data['screened'].to_i
 
         ActiveRecord::Base.connection.execute <<EOF
-CREATE FUNCTION cohort_disaggregated_age_group(birthdate date, end_date date) RETURNS VARCHAR(15)
-DETERMINISTIC
-BEGIN
-DECLARE age_in_months INT(11);
-DECLARE age_in_years INT(11);
-DECLARE age_group VARCHAR(15);
-
-SET age_in_months = (SELECT timestampdiff(month, birthdate, end_date));
-SET age_in_years  = (SELECT timestampdiff(year, birthdate, end_date));
-SET age_group = ('Unknown');          
-
-IF age_in_months >= 1 AND age_in_months <= 5 THEN SET age_group = "0-5 months";
-ELSEIF age_in_months > 5 AND age_in_months <= 11 THEN SET age_group = "6-11 months";
-ELSEIF age_in_months > 11 AND age_in_months <= 23 THEN SET age_group = "12-23 months";
-ELSEIF age_in_years >= 2 AND age_in_years <= 4 THEN SET age_group = "2-4 years";
-ELSEIF age_in_years >= 5 AND age_in_years <= 9 THEN SET age_group = "5-9 years";
-ELSEIF age_in_years >= 10 AND age_in_years <= 14 THEN SET age_group = "10-14 years";
-ELSEIF age_in_years >= 15 AND age_in_years <= 17 THEN SET age_group = "15-17 years";
-ELSEIF age_in_years >= 18 AND age_in_years <= 19 THEN SET age_group = "18-19 years";
-ELSEIF age_in_years >= 20 AND age_in_years <= 24 THEN SET age_group = "20-24 years";
-ELSEIF age_in_years >= 25 AND age_in_years <= 29 THEN SET age_group = "25-29 years";
-ELSEIF age_in_years >= 30 AND age_in_years <= 34 THEN SET age_group = "30-34 years";
-ELSEIF age_in_years >= 35 AND age_in_years <= 39 THEN SET age_group = "35-39 years";
-ELSEIF age_in_years >= 40 AND age_in_years <= 44 THEN SET age_group = "40-44 years";
-ELSEIF age_in_years >= 45 AND age_in_years <= 49 THEN SET age_group = "45-49 years";
-ELSEIF age_in_years >= 50 THEN SET age_group = "50 plus years";
-END IF;
-
-RETURN age_group;
-END;
+        UPDATE temp_disaggregated SET screened_for_tb =  #{screened}, 
+        age_group = '#{age_group}'
+        WHERE patient_id = #{my_patient_id};
 EOF
 
+        return screened
       end
 
-      def get_numbers(patient_id, tbs, ipt, esd, de, start_date, end_date)
+      def given_ipt(my_patient_id, age_group, start_date, end_date)
+        
+        data = ActiveRecord::Base.connection.select_one <<EOF
+        SELECT patient_given_ipt(#{my_patient_id}, 
+          '#{start_date.to_date}', '#{end_date.to_date}') AS given;
+EOF
+
+        given = data['given'].to_i
+
+        ActiveRecord::Base.connection.execute <<EOF
+        UPDATE temp_disaggregated SET given_ipt =  #{given} ,
+        age_group = '#{age_group}'
+        WHERE patient_id = #{my_patient_id};
+EOF
+      
+        return given
+      end
+
+      def get_numbers(data, age_group, start_date, end_date)
         tx_new = 0
         tx_curr = 0
         tx_screened_for_tb = 0
         tx_given_ipt  = 0
 
-        begin
-          esd = esd.to_date
-          de  = de.to_date
+        date_enrolled  = data['date_enrolled'].to_date
+        earliest_start_date = data['earliest_start_date'].to_date rescue date_enrolled
 
-          if de != esd 
-            tx_curr = 1
-          elsif de == esd && (de >= start_date.to_date && de <= end_date.to_date) 
+        if date_enrolled == earliest_start_date
+          if (date_enrolled >= start_date.to_date && date_enrolled <= end_date.to_date) 
             tx_new = 1
-          else
-            tx_curr = 1
           end
-        rescue
-          tx_curr = 1
         end
 
-        tx_screened_for_tb = (tbs.include?(patient_id) == true ? 1 : 0)
-        tx_given_ipt = (ipt.include?(patient_id) == true ? 1 : 0)
+        tx_curr = 1
 
-        return [tx_new, tx_curr, tx_given_ipt, tx_screened_for_tb]
+        patient_id = data['patient_id']
+        tx_screened_for_tb = screened_for_tb(patient_id, age_group, start_date, end_date)
+        tx_given_ipt = given_ipt(patient_id, age_group, start_date, end_date)
+
+        return [tx_new, (tx_curr + tx_new), tx_given_ipt, tx_screened_for_tb]
       end
 
       def get_age_groups(age_group, start_date, end_date, temp_outcome_table)
@@ -275,48 +218,39 @@ EOF
           create_mysql_female_maternal_status
           results = ActiveRecord::Base.connection.select_all <<EOF
             SELECT 
-            e.*, female_maternal_status(e.patient_id, TIMESTAMP('#{end_date.strftime('%Y-%m-%d 23:59:59')}')) AS mstatus
+              e.*, maternal_status AS mstatus
             FROM temp_earliest_start_date e 
-            INNER JOIN #{temp_outcome_table} t2 ON t2.patient_id = e.patient_id
-            WHERE cum_outcome = 'On antiretrovirals' AND gender = 'F'
-            GROUP BY e.patient_id HAVING mstatus = 'FP';
+            INNER JOIN temp_disaggregated t2 ON t2.patient_id = e.patient_id
+            WHERE maternal_status = 'FP'
+            GROUP BY e.patient_id;
 EOF
 
         elsif age_group == 'Breastfeeding'
           create_mysql_female_maternal_status
           results = ActiveRecord::Base.connection.select_all <<EOF
             SELECT 
-            e.*, female_maternal_status(e.patient_id, TIMESTAMP('#{end_date.strftime('%Y-%m-%d 23:59:59')}')) AS mstatus
+              e.*, maternal_status AS mstatus
             FROM temp_earliest_start_date e 
-            INNER JOIN #{temp_outcome_table} t2 ON t2.patient_id = e.patient_id
-            WHERE cum_outcome = 'On antiretrovirals' AND gender = 'F'
-            GROUP BY e.patient_id HAVING mstatus = 'FBf';
+            INNER JOIN temp_disaggregated t2 ON t2.patient_id = e.patient_id
+            WHERE maternal_status = 'FBf'
+            GROUP BY e.patient_id;
 EOF
 
         elsif age_group == 'FNP'
           create_mysql_female_maternal_status
           results = ActiveRecord::Base.connection.select_all <<EOF
             SELECT 
-            e.*, female_maternal_status(e.patient_id, TIMESTAMP('#{end_date.strftime('%Y-%m-%d 23:59:59')}')) AS mstatus
+              e.*, maternal_status AS mstatus
             FROM temp_earliest_start_date e 
-            INNER JOIN #{temp_outcome_table} t2 ON t2.patient_id = e.patient_id
-            WHERE cum_outcome = 'On antiretrovirals' AND gender = 'F'
-            GROUP BY e.patient_id HAVING mstatus = 'FNP';
+            INNER JOIN temp_disaggregated t2 ON t2.patient_id = e.patient_id
+            WHERE maternal_status = 'FNP'
+            GROUP BY e.patient_id;
 EOF
 
         end
 
         return results
         
-      end
-
-      def all_women(end_date)
-      end
-
-      def pregnant_women(end_date)
-      end
-      
-      def breastfeeding_women(end_date)
       end
 
       def create_mysql_female_maternal_status
@@ -620,6 +554,75 @@ RETURN set_outcome;
 END;
 EOF
       end
+
+      def insert_female_maternal_status(patient_id, age_group, end_date)
+
+      ActiveRecord::Base.connection.execute <<EOF
+      UPDATE temp_disaggregated SET maternal_status =  female_maternal_status(#{patient_id}, 
+      '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'), age_group = '#{age_group}'
+      WHERE patient_id = #{patient_id};
+EOF
+
+      end
+
+      def big_insert(data, age_group)
+        
+        (data || []).each do |r|
+          ActiveRecord::Base.connection.execute <<EOF
+            INSERT INTO temp_disaggregated (patient_id, age_group)
+            VALUES(#{r['patient_id']}, '#{age_group}');
+EOF
+
+        end
+
+      end
+      
+      def arrangeGroups(age_group, list, start_date, end_date)
+
+        data = ActiveRecord::Base.connection.select_all <<EOF
+          SELECT t.*, e.* FROM temp_disaggregated t
+          INNER JOIN temp_earliest_start_date e USING(patient_id)
+          WHERE age_group = '#{age_group}';
+EOF
+
+        (data || []).each do |r|
+          
+          list[age_group] = {} if list[age_group].blank?
+          gender = r['gender'].first.upcase
+
+          list[age_group][gender] = {
+            tx_new: 0, tx_curr: 0,
+            tx_screened_for_tb: 0,
+            tx_given_ipt: 0
+          } if list[age_group][gender].blank?
+      
+          date_enrolled = r['date_enrolled'].to_date
+          earliest_start_date = r['earliest_start_date'].to_date rescue date_enrolled
+          
+          tx_new = 0
+
+          if date_enrolled == earliest_start_date
+            if date_enrolled >= start_date && date_enrolled <= end_date
+              tx_new = 1
+            end
+          end
+
+          tx_screened_for_tb =  r['screened_for_tb'].to_i
+          tx_given_ipt = r['given_ipt'].to_i
+
+          list[age_group][gender][:tx_new] += tx_new
+          list[age_group][gender][:tx_curr] += 1
+          list[age_group][gender][:tx_screened_for_tb] += tx_screened_for_tb
+          list[age_group][gender][:tx_given_ipt] += tx_given_ipt
+        end
+
+      end
+
+
+
+
+
+
 
 
 
