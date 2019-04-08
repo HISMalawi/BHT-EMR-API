@@ -42,7 +42,7 @@ module TBService
 
     
     #prescribe drug is saved as an observation to the database
-    # Returns dosages for patients prescribed ARVs
+    # Returns dosages for patients prescribed TB drugs
     def find_dosages(patient, date = Date.today)
       # TODO: Refactor this into smaller functions
 
@@ -94,3 +94,6 @@ module TBService
 
   end
 end
+
+
+
