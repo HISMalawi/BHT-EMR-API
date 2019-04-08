@@ -125,7 +125,6 @@ describe TBService::PatientsEngine do
 			dispensed = DispensationService.create(plain_despenation)
 
 			patient_summary = engine.patient(patient.patient_id, epoch)
-			patient_summary
 			expect(patient_summary[:patient_id]).to eq(patient.patient_id)
     end
 
@@ -159,19 +158,6 @@ describe TBService::PatientsEngine do
                           encounter: encounter,
                           person: patient.person,
 													value_coded: concept('Rifampicin isoniazid and pyrazinamide').concept_id
-												
-		create :observation, concept: concept('Medication orders'),
-                          encounter: encounter,
-                          person: patient.person,
-													value_coded: concept('Ethambutol').concept_id
-		create :observation, concept: concept('Medication orders'),
-                          encounter: encounter,
-                          person: patient.person,
-													value_coded: concept('Rifampicin and isoniazid').concept_id
-		create :observation, concept: concept('Medication orders'),
-                          encounter: encounter,
-                          person: patient.person,
-                          value_coded: concept('Rifampicin Isoniazid Pyrazinamide Ethambutol').concept_id
 	end
 
 end
