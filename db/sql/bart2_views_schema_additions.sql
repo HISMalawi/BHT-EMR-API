@@ -2423,3 +2423,75 @@ END IF;
 
 RETURN maternal_status;
 END;
+
+
+
+DROP FUNCTION IF EXISTS `patient_tb_status`;
+
+CREATE FUNCTION `patient_tb_status`(my_patient_id INT, my_end_date DATE) RETURNS INT
+BEGIN
+	DECLARE screened INT DEFAULT FALSE;
+	DECLARE tb_status INT;
+  DECLARE tb_status_concept_id INT;
+
+  SET tb_status_concept_id = (SELECT concept_id FROM concept_name 
+    WHERE name IN('TB status') AND voided = 0 LIMIT 1);
+
+  SET tb_status = (SELECT ob.value_coded FROM obs ob 
+    INNER JOIN concept_name cn 
+    ON ob.value_coded = cn.concept_id
+    WHERE ob.concept_id = tb_status_concept_id AND ob.voided = 0
+    AND ob.obs_datetime = (
+    SELECT MAX(t.obs_datetime) FROM obs t WHERE 
+    t.obs_datetime <= DATE_FORMAT(DATE(my_end_date), '%Y-%m-%d 23:59:59')
+    AND t.voided = 0 AND t.person_id = ob.person_id AND t.concept_id = tb_status_concept_id) 
+    AND ob.person_id = my_patient_id
+    GROUP BY ob.person_id);
+
+	RETURN tb_status;
+END;
+
+
+
+/* *************** */
+/*
+DROP FUNCTION IF EXISTS `patient_latest_adherence`;
+
+CREATE FUNCTION `patient_latest_adherence`(my_patient_id INT, my_end_date DATE) RETURNS VARCHAR(100)
+BEGIN
+  DECLARE art_adherence_concept_id INT;
+  DECLARE latest_obs_datetime TIMESTAMP;
+
+  SET art_adherence_concept_id = (SELECT concept_id FROM concept_name 
+    WHERE name IN('What was the patients adherence for this drug order') AND voided = 0 LIMIT 1);
+
+  SET latest_obs_datetime = (SELECT MAX(t.obs_datetime) FROM obs t 
+        INNER JOIN orders t2 ON t.order_id = t.order_id AND t2.voided = 0 
+        INNER JOIN drug_order t3 ON t3.order_id = t2.order_id
+        INNER JOIN drug t4 ON t4.drug_id = t3.drug_inventory_id 
+        INNER JOIN concept_set t5 ON t5.concept_id = t4.concept_id
+        WHERE t.obs_datetime <= DATE_FORMAT(DATE(my_end_date), '%Y-%m-%d 23:59:59')
+        AND t.concept_id = art_adherence_concept_id AND t.voided = 0 
+        AND t.person_id = my_patient_id AND t5.concept_set = 1085);
+
+  IF latest_obs_datetime IS NULL THEN
+    return null; 
+  END IF;
+
+  SET @adherences := (SELECT GROUP_CONCAT(DISTINCT(ob.value_text) ORDER BY ob.value_text ASC) FROM obs ob 
+    INNER JOIN orders o ON o.order_id = ob.order_id AND o.voided = 0 
+    INNER JOIN drug_order od ON od.order_id = o.order_id
+    INNER JOIN drug d ON d.drug_id = od.drug_inventory_id
+    INNER JOIN concept_set s ON s.concept_id = d.concept_id
+    WHERE s.concept_set = 1085 AND ob.voided = 0
+    AND ob.concept_id = art_adherence_concept_id
+    AND ob.obs_datetime = latest_obs_datetime
+    AND ob.person_id = my_patient_id);
+
+
+	RETURN @adherences;
+END;
+
+*/
+
+

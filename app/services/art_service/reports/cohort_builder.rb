@@ -952,7 +952,8 @@ EOF
         results
       end
 
-      ART_ADHERENCE_THRESHOLD = 95.0 # Those below are not adherent
+      MIN_ART_ADHERENCE_THRESHOLD = 95.0 # Those below are not adherent
+      MAX_ART_ADHERENCE_THRESHOLD = 105.0 # Thoseabove are not adherent
 
       # Groups patients list into three groups based on the adherence rates
       #
@@ -972,7 +973,7 @@ EOF
 
           if adherence_rate.nil?
             unknown_adherence << patient
-          elsif adherence_rate >= ART_ADHERENCE_THRESHOLD
+          elsif adherence_rate >= MIN_ART_ADHERENCE_THRESHOLD && adherence_rate <= MAX_ART_ADHERENCE_THRESHOLD
             adherent << patient
           else
             not_adherent << patient
@@ -996,17 +997,32 @@ EOF
 
       # Retrieve patient's latest adherence observation
       def patient_latest_art_adherence(patient_id, start_date, end_date)
-        encounter = Encounter.where(type: adherence_encounter, program: hiv_program,
-                                    patient_id: patient_id)\
-                             .where('encounter_datetime BETWEEN ? AND ?', start_date, end_date)\
-                             .order(:encounter_datetime)
-                             .last
 
-        return nil unless encounter
+        adh = Encounter.where(type: adherence_encounter, 
+          program: hiv_program, patient_id: patient_id)\
+          .where('encounter_datetime <= ? AND obs.concept_id = ? 
+          AND s.concept_set = 1085', end_date.to_date.strftime('%Y-%m-%d 23:59:59'),
+          drug_order_adherence_concept.concept_id)\
+          .order(:encounter_datetime)\
+          .joins('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
+          INNER JOIN drug_order o ON o.order_id = obs.order_id
+          INNER JOIN drug d ON o.drug_inventory_id = d.drug_id
+          INNER JOIN concept_set s ON s.concept_id = d.concept_id')\
+          .select(:obs_datetime, :encounter_id)
+          
+        return nil unless adh
 
-        lowest_adherence_rate = Float::MAX
+        #lowest_adherence_rate = Float::MAX
+        adherence_rate = nil
+        obs_datetime  = adh.map(&:obs_datetime).max
+        encounter_ids = adh.map(&:encounter_id)
 
-        encounter.observations.where(concept: drug_order_adherence_concept).each do |adherence|
+        adherent = nil
+        not_adherent = nil
+
+
+        Observation.where(concept: drug_order_adherence_concept,
+          obs_datetime: obs_datetime, encounter_id: encounter_ids).each do |adherence|
           adherence_rate = (adherence.value_numeric || adherence.value_text)&.to_f
           next unless adherence_rate
 
@@ -1014,10 +1030,17 @@ EOF
           drug = adherence.order&.drug_order&.drug
           next if drug && !drug.arv?
 
-          lowest_adherence_rate = adherence_rate if adherence_rate < lowest_adherence_rate
+          if adherence_rate >= MIN_ART_ADHERENCE_THRESHOLD && adherence_rate <= MAX_ART_ADHERENCE_THRESHOLD
+            adherent = adherence_rate 
+          else
+            not_adherent = adherence_rate
+          end
+
+
         end
 
-        lowest_adherence_rate
+        return not_adherent unless not_adherent.blank?
+        return adherent
       end
 
       def unknown_side_effects(data, _start_date, end_date)
@@ -1069,7 +1092,7 @@ EOF
         patients_alive_and_on_art.each do |patient|
           tb_status = patient_tb_status(patient['patient_id'], start_date, end_date)
 
-          tb_status_value = tb_status ? tb_status.value_coded.to_i : nil
+          tb_status_value = tb_status ? tb_status[:tb_status].to_i : nil
 
           case tb_status_value
           when tb_suspected_concept.concept_id
@@ -1081,12 +1104,14 @@ EOF
           when tb_confirmed_but_not_on_treatment.concept_id
             cohort_struct.tb_confirmed_currently_not_yet_on_tb_treatment << patient
           else
+
             cohort_struct.unknown_tb_status << patient
           end
         end
       end
 
       def patient_tb_status(patient_id, start_date, end_date)
+=begin
         tb_status_concept = concept('TB Status')
 
         encounter = EncounterService.recent_encounter(
@@ -1101,6 +1126,12 @@ EOF
           'person_id = ? AND concept_id = ? AND DATE(obs_datetime) = DATE(?)',
           patient_id, tb_status_concept.concept_id, encounter.encounter_datetime
         ).first
+=end
+        tb_status = ActiveRecord::Base.connection.select_one("
+          SELECT patient_tb_status(#{patient_id}, DATE('#{end_date.to_date}')) AS concept_id;
+        ")
+
+        return {tb_status: tb_status['concept_id']} unless tb_status.blank?
       end
 
       def get_tb_status(tb_status)
