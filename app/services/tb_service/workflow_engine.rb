@@ -45,12 +45,17 @@ module TBService
     LAB_ORDERS = 'LAB ORDERS'
     TREATMENT = 'TREATMENT'
     DISPENSING = 'DISPENSING'
+    TB_ADHERENCE = 'TB ADHERENCE'
+
+    #Todo: TB_REGISTRATION, TB ADHERENCE, Refactor TB number
    
     # Encounters graph
     ENCOUNTER_SM = {
       INITIAL_STATE => TB_INITIAL,
       TB_INITIAL => LAB_ORDERS,
-      LAB_ORDERS => VITALS,
+      LAB_ORDERS => TB_REGISTRATION,
+      TB_REGISTRATION => TB_ADHERENCE,
+      TB_ADHERENCE => VITALS,
       VITALS => TREATMENT,
       TREATMENT => DISPENSING,
       DISPENSING => END_STATE
@@ -59,9 +64,12 @@ module TBService
     #For TB Initial == patient_not_visiting? patient_not_registered?
     #for TB Registration == patient_not_visiting?
     STATE_CONDITIONS = {
+      TB_REGISTRATION => %i[patient_not_registered?
+                                    patient_not_visiting?],
       TB_INITIAL => %i[tb_suspect_not_enrolled? 
                         patient_labs_not_ordered?],
       LAB_ORDERS => %i[patient_labs_not_ordered?],
+      TB_ADHERENCE => %i[patient_received_tb_drugs?],
       TREATMENT => %i[patient_should_get_treatment?],
       DISPENSING => %i[patient_got_treatment?]
     }.freeze   
@@ -202,5 +210,17 @@ module TBService
       ).order(encounter_datetime: :desc).first
       !encounter.nil? && encounter.orders.exists?
     end
+
+    def patient_received_tb_drugs?
+      drug_ids = Drug.tb_drugs.map(&:drug_id)
+      drug_ids_placeholders = "(#{(['?'] * drug_ids.size).join(', ')})"
+      Observation.where(
+        "person_id = ? AND value_drug in #{drug_ids_placeholders} AND
+         obs_datetime <= ?",
+        @patient.patient_id, *drug_ids, @date
+      ).exists?
+    end
+
+
   end
 end
