@@ -93,6 +93,10 @@ module TBService
           TREATMENT
         when /Dispensing/i
           DISPENSING
+        when /TB Registration/i
+          TB_REGISTRATION
+        when /TB Adherence/i
+          TB_ADHERENCE 
         else
           Rails.logger.warn "Invalid TB activity in user properties: #{activity}"
         end
