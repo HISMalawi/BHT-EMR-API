@@ -27,11 +27,21 @@ dde:
 
 # CouchDB configuration
 #
-# This is optional, it is required
+# This is optional, it is required only if you intend to sync data with
+# the RDS
 couchdb:
-  protocol: http
-  host: 127.0.0.1
-  port: 5984
-  database: rds
-  username: admin
-  password: password
+  local:
+    protocol: http
+    host: 127.0.0.1
+    port: 5984
+    database: rds
+    username: admin
+    password: password
+
+  master:
+    protocol: http
+    host: 127.0.0.1
+    port: 5984
+    database: rds
+    username: admin
+    password: password
