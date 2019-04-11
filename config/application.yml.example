@@ -24,3 +24,14 @@ dde:
   tb program:
     username: admin
     password: bht.dde3!
+
+# CouchDB configuration
+#
+# This is optional, it is required
+couchdb:
+  protocol: http
+  host: 127.0.0.1
+  port: 5984
+  database: rds
+  username: admin
+  password: password
