@@ -75,9 +75,7 @@ EOF
         INNER JOIN patient_program pp ON pp.patient_id = o.patient_id
         WHERE s.concept_set = 1085 AND od.quantity > 0
         AND pp.program_id = 1
-        GROUP BY o.patient_id HAVING start_date BETWEEN
-        '#{@start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
-        AND '#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}';
+        GROUP BY o.patient_id;
 EOF
 
         patients = []
@@ -101,16 +99,28 @@ EOF
           end
 
           if record['outcome'] == 'Defaulted'
+            defaulter_date = record['defaulter_date'].to_date rescue nil
+            next if defaulter_date.blank?
+            
+            date_within = (defaulter_date >= @start_date.to_date && defaulter_date <= @end_date.to_date)
+            next unless date_within
+
             person = ActiveRecord::Base.connection.select_one <<EOF
             SELECT i.identifier arv_number, p.birthdate,
               p.gender, n.given_name, n.family_name, p.person_id patient_id,
-              patient_reason_for_starting_art_text(p.person_id) art_reason
+              patient_reason_for_starting_art_text(p.person_id) art_reason,
+              a.value cell_number,
+              s.state_province district, s.county_district ta,
+              s.city_village village
             FROM person p
             LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
             AND i.voided = 0 AND i.identifier_type = 4 
-            INNER JOIN person_name n ON n.person_id = p.person_id
-            AND n.voided = 0 
-            WHERE p.person_id = #{patient_id} GROUP BY p.person_id;
+            INNER JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
+            LEFT JOIN person_attribute a ON a.person_id = p.person_id
+            AND a.voided = 0 AND a.person_attribute_type_id = 12
+            LEFT JOIN person_address s ON s.person_id = p.person_id  
+            WHERE p.person_id = #{patient_id} GROUP BY p.person_id
+            ORDER BY p.person_id, p.date_created;
 EOF
 
             next if person.blank?
@@ -124,7 +134,12 @@ EOF
               arv_number: person['arv_number'],
               outcome: 'Defaulted',
               defaulter_date: record['defaulter_date'],
-              art_reason: record['art_reason']
+              art_reason: record['art_reason'],
+              cell_number: person['cell_number'],
+              district: person['district'],
+              ta: person['ta'],
+              village: person['village'],
+              arv_number: person['arv_number']
             }
 
           end
