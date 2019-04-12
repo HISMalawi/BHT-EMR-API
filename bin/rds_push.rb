@@ -43,8 +43,9 @@ def main
     end
 
     save_delta(model, last_update_time)
-    initiate_couch_sync
   end
+
+  initiate_couch_sync
 end
 
 # Attempts to execute passed block with a lock file
@@ -178,7 +179,7 @@ def serialize_record(record)
   # (eg id on Person maps to person_id and on PersonAttribute to person_attribute_type)
   site_id = GlobalProperty.find_by_property('current_health_center_id').property_value
   record_id = record.id
-  record.id = "#{record_id}00#{site_id}".to_i
+  record.id = "#{record_id}00000#{site_id}".to_i
 
   serialized_record = record.as_json(ignore_includes: true)
   serialized_record['record_type'] = record.class.to_s
@@ -207,13 +208,13 @@ end
 # @see push_record
 def push_new_record(record)
   handle_couch_response do
-    RestClient.post(local_couch_url, record, content_type: :json)
+    RestClient.post(local_couch_database_url, record, content_type: :json)
   end
 end
 
 def push_existing_record(record, doc_id)
   handle_couch_response do
-    RestClient.put("#{local_couch_url}/#{doc_id}", record, content_type: :json)
+    RestClient.put("#{local_couch_database_url}/#{doc_id}", record, content_type: :json)
   end
 end
 
@@ -229,19 +230,26 @@ def local_couch_url
   password = couch_config['password']
   host = couch_config['host']
   port = couch_config['port']
-  database = couch_config['database']
 
-  "#{protocol}://#{username}:#{password}@#{host}:#{port}/#{database}"
+  "#{protocol}://#{username}:#{password}@#{host}:#{port}"
 end
 
-def local_bare_couch_url
+def local_couch_host_url
   couch_config = config['couchdb']['local']
   protocol = couch_config['protocol']
   host = couch_config['host']
   port = couch_config['port']
-  database = couch_config['database']
 
-  "#{protocol}://#{host}:#{port}/#{database}"
+  "#{protocol}://#{host}:#{port}"
+end
+
+def local_couch_database_url
+  "#{local_couch_url}/#{config['couchdb']['local']['database']}"
+end
+
+# Local couch url but without any auth information
+def bare_local_couch_database_url
+  "#{local_couch_host_url}/#{config['couchdb']['local']['database']}"
 end
 
 def master_couch_url
@@ -251,30 +259,60 @@ def master_couch_url
   password = couch_config['password']
   host = couch_config['host']
   port = couch_config['port']
-  database = couch_config['database']
 
-  "#{protocol}://#{username}:#{password}@#{host}:#{port}/#{database}"
+  "#{protocol}://#{username}:#{password}@#{host}:#{port}"
 end
 
-def master_bare_couch_url
+def master_couch_host_url
   couch_config = config['couchdb']['master']
   protocol = couch_config['protocol']
   host = couch_config['host']
   port = couch_config['port']
+
+  "#{protocol}://#{host}:#{port}"
+end
+
+def master_couch_database_url
+  "#{master_couch_url}/#{config['couchdb']['master']['database']}"
+end
+
+def bare_master_couch_database_url
+  couch_config = config['couchdb']['master']
   database = couch_config['database']
 
-  "#{protocol}://#{host}:#{port}/#{database}"
+  "#{master_couch_host_url}/#{database}"
 end
 
 def initiate_couch_sync
   request = {
-    source: local_bare_couch_url,
-    master: master_bare_couch_url
+    'source' => bare_local_couch_database_url,
+    'target' => bare_master_couch_database_url,
+    'continuous' => true
   }
 
-  RestClient.post("#{local_couch_url}/_replicate", request.to_json, content_type: :json, referer: 'http://127.0.0.1:5984')
-rescue StandardError => e
-  raise e.response.body.inspect
+  return if already_in_sync?(request)
+
+  url = "#{local_couch_url}/_replicate"
+
+  RestClient.post(url, request.to_json, content_type: :json,
+                                        referer: local_couch_host_url)
+end
+
+def already_in_sync?(sync_params)
+  response = RestClient.get("#{local_couch_url}/_active_tasks/replications")
+
+  JSON.parse(response.body).each do |replication|
+    LOGGER.debug([replication['source'], replication['target']])
+    is_in_sync = (replication['source'].include?(sync_params['source'])\
+                  && replication['target'].include?(sync_params['target']))
+
+    next unless is_in_sync
+
+    LOGGER.debug('Replication job already running in CouchDB')
+    return true
+  end
+
+  false
 end
 
 # Handle response from couch db
@@ -289,7 +327,7 @@ rescue RestClient::NotFound => e
 end
 
 with_lock do
-  config # Load configuration early to ensure it's sanity before doing anything
+  config # Load configuration early to ensure its sanity before doing anything
 
   main
 end
