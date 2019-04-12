@@ -241,4 +241,5 @@ Rails.application.routes.draw do
   get '/api/v1/cohort_survival_analysis' => 'api/v1/reports#cohort_survival_analysis'
   get '/api/v1/defaulter_list' => 'api/v1/reports#defaulter_list'
   get '/api/v1/missed_appointments' => 'api/v1/reports#missed_appointments'
+  post '/api/v1/addresses' => 'api/v1/person_addresses#create'
 end
