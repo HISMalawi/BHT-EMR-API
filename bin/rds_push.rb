@@ -3,9 +3,20 @@
 require 'logger'
 require 'rest-client'
 
-LOGGER = Logger.new(STDOUT)
-ActiveRecord::Base.logger = LOGGER
-RestClient.log = LOGGER
+LOGGER = Class.new do
+  # The 'logger' module does not provide a logger that can log
+  # to multiple streams hence rolling our own quick and dirty one.
+
+  LOGGERS = [Logger.new(Rails.root.join('log/rds-sync.log')), Logger.new(STDOUT)].freeze
+
+  def method_missing(method_name, *args)
+    LOGGERS.each { |logger| logger.method(method_name).call(*args) }
+  end
+end.new
+
+# Uncomment the following to log SQL queries and CouchDB queries
+# ActiveRecord::Base.logger = LOGGER
+# RestClient.log = LOGGER
 
 APPLICATION_CONFIG_PATH = Rails.root.join('config/application.yml')
 DATABASE_CONFIG_PATH = Rails.root.join('config/database.yml').to_s
@@ -27,7 +38,7 @@ def main
     last_update_time = delta(model)
 
     recent_records(model, last_update_time).each do |record|
-      LOGGER.debug("#{last_update_time} - #{model}: #{record}")
+      LOGGER.debug("Handling #{model} ##{record.id}")
 
       update_time = record_update_time(record)
       last_update_time = update_time if update_time > last_update_time
@@ -38,8 +49,8 @@ def main
       record_doc_id = push_record(record, sync_status&.record_doc_id)
 
       save_record_sync_status(sync_status, record, record_doc_id)
-    rescue StandardError => e
-      LOGGER.error("Failed to write `#{model}` record: #{record} due to exception: #{e}")
+    rescue RestClient::Exception => e
+      LOGGER.error("Failed to write #{model} ##{record.id} due to exception: #{e.class} - #{e}")
     end
 
     save_delta(model, last_update_time)
@@ -68,14 +79,15 @@ end
 def config
   return @config if @config
 
-  couchdb_config = YAML.load_file(APPLICATION_CONFIG_PATH)['couchdb']
+  application_config = YAML.load_file(APPLICATION_CONFIG_PATH)
   database_config = YAML.load_file(DATABASE_CONFIG_PATH)
 
-  raise 'couchdb config not found in in `application.yml`' unless couchdb_config
+  raise '[couchdb] config not found in in `application.yml`' unless application_config['couchdb']
 
   @config = {
     'database' => database_config['secondary'] || database_config['development'],
-    'couchdb' => couchdb_config
+    'couchdb' => application_config['couchdb'],
+    'program_name' => application_config['program_name']
   }
 end
 
@@ -161,9 +173,9 @@ end
 #
 # @returns  - A couch document id for the pushed record
 def push_record(record, doc_id = nil)
-  record = serialize_record(record)
+  LOGGER.debug("Pushing record to couch db: #{record.class} ##{record.id}(doc_id: #{doc_id} || 'N/A') ")
 
-  LOGGER.debug("Pushing record (#{doc_id}) to couch db: #{record}")
+  record = serialize_record(record)
 
   if doc_id
     push_existing_record(record, doc_id)
@@ -186,12 +198,12 @@ def serialize_record(record)
 
   record.id = record_id # Restore original id
 
-  if record.class == Encounter && record.program.nil?
+  if record.class == Encounter && record.respond_to?(:program_id) && record.program_id.nil?
     # HACK: Apparently this script may be run on old applications
     # that use the old openmrs standard that has no program
     # specific encounters. Thus we manually have to set the program
     # id using the value specified in the config file.
-    program_name = config['couchdb']['local']['program']
+    program_name = config['program_name']
     raise 'program_name not found in couch config: application.yml' unless program_name
 
     program = Program.find_by_name(program_name)

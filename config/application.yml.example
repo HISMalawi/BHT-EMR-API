@@ -28,7 +28,7 @@ dde:
 # CouchDB configuration
 #
 # This is optional, it is required only if you intend to sync data with
-# the RDS
+# the RDS (ie if you intend to `bin/rds_push`)
 couchdb:
   local:
     protocol: http
@@ -45,3 +45,7 @@ couchdb:
     database: rds
     username: admin
     password: password
+
+# Required for `bin/rds_push` when targeting databases that don't
+# have encounter_id (or is always nil) in encounters table.
+program_name: hiv program
