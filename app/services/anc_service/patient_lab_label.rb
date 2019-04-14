@@ -142,7 +142,7 @@ module ANCService
         @weight ||= Observation.where(concept_id: weight.concept_id, person_id: @patient.person.id)
                       .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
                       .last
-                      .value_numeric || 0
+                      .value_numeric rescue 0
       end
   
       def current_height
