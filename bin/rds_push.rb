@@ -22,9 +22,9 @@ APPLICATION_CONFIG_PATH = Rails.root.join('config/application.yml')
 DATABASE_CONFIG_PATH = Rails.root.join('config/database.yml').to_s
 DELTA_STATE_PATH = Rails.root.join('log/rds-sync-state.yml')
 
-MODELS = [Person, PersonAttribute, PersonAddress, PersonName, Patient,
-          PatientIdentifier, Encounter, Observation, Order, DrugOrder,
-          PatientProgram, PatientState].freeze
+MODELS = [Person, PersonAttribute, PersonAddress, PersonName, User, Patient,
+          PatientIdentifier, PatientState, PatientProgram, Encounter,
+          Observation, Order, DrugOrder].freeze
 
 TIME_EPOCH = '1970-01-01'.to_time
 
@@ -208,18 +208,23 @@ def serialize_record(record)
   serialized_record.to_json
 end
 
+SITE_CODE_MAX_WIDTH = 5
+
 # Transforms primary key and foreign keys on record to the format required in RDS
 def transform_record_keys(record)
   new_record = record.dup
 
-  site_id = GlobalProperty.find_by_property('current_health_center_id').property_value
-  new_record.id = "#{record.id}00000#{site_id}".to_i
+  site_id = GlobalProperty.find_by_property('current_health_center_id')\
+                          .property_value\
+                          .to_s\
+                          .rjust(SITE_CODE_MAX_WIDTH, '0')
+  new_record.id = "#{record.id}#{site_id}".to_i
 
   new_record.class.reflect_on_all_associations(:belongs_to).each do |association|
     next unless MODELS.include?(association.class_name.constantize)
 
     id = new_record.send(association.foreign_key.to_sym)
-    new_record.send("#{association.foreign_key}=".to_sym, "#{id}00000#{site_id}.to_i")
+    new_record.send("#{association.foreign_key}=".to_sym, "#{id}#{site_id}".to_i)
   end
 
   new_record
@@ -241,7 +246,7 @@ def push_existing_record(record, doc_id)
 end
 
 def create_couch_database
-  response = RestClient.put(local_couch_url, {})
+  response = RestClient.put(local_couch_database_url, {})
   LOGGER.debug(response)
 end
 
@@ -343,7 +348,11 @@ def handle_couch_response
   response['id']
 rescue RestClient::NotFound => e
   reason = JSON.parse(e.response.body)['reason']
-  return create_couch_database if reason.casecmp?('Database does not exist.')
+
+  if reason.casecmp?('Database does not exist.')
+    create_couch_database
+    retry
+  end
 
   raise e
 end
