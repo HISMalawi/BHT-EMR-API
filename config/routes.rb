@@ -119,6 +119,7 @@ Rails.application.routes.draw do
           get '/anc_visit', to: 'program_patients#anc_visit'
           get '/art_hiv_status', to: 'program_patients#art_hiv_status'
           get '/subsequent_visit', to: 'program_patients#subsequent_visit'
+          get '/saved_encounters', to: 'program_patients#saved_encounters'
           resources :patient_states, path: :states
         end
         resources :lab_test_types, path: 'lab_tests/types'

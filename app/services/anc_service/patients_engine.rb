@@ -72,6 +72,37 @@ module ANCService
       {hysterectomy: hysterectomy(patient)}
     end
 
+    def saved_encounters(patient, date)
+      last_lmp = date_of_lnmp(patient)
+      ontime_encounters = ["REGISTRATION", "SOCIAL HISTORY", "SURGICAL HISTORY",
+        "OBSTETRIC HISTORY", "MEDICAL HISTORY", "CURRENT PREGNANCY"]
+
+      x = Encounter.where(["DATE(encounter_datetime) = ? AND patient_id = ? AND voided = 0",
+          date.to_date.strftime("%Y-%m-%d"),patient.patient_id]).collect{|e| e.name}.uniq
+
+      if(last_lmp.blank?)
+
+        x.delete("TREATMENT") unless patient_given_drugs_today(patient, date)
+
+        return x
+
+      else
+
+        y = Encounter.where(["DATE(encounter_datetime) >= ? AND DATE(encounter_datetime) < ? 
+          AND patient_id = ? and voided = 0", last_lmp.to_date.strftime("%Y-%m-%d"),
+          date.to_date.strftime("%Y-%m-%d"),patient.patient_id]).collect{|e| 
+          e.name if ontime_encounters.include?(e.name)
+      }.uniq
+
+      z = (x + y).compact
+
+      z.delete("TREATMENT") unless patient_given_drugs_today(patient, date)
+
+      return z
+
+      end
+    end
+
     def hysterectomy(patient)
 
       hysterectomy_conditions = ConceptName.where("name like '%hysterectomy%'").collect{|c| c.concept_id}
@@ -235,6 +266,35 @@ module ANCService
         .last.observations.collect { 
           |o| o.value_datetime 
         }.compact.last.to_date rescue nil
+    end
+
+    # Check if patient has been given drugs 
+    # apart from TTV drugs.
+
+    def patient_given_drugs_today(patient, date)
+
+      ttv_drug = Drug.find_by name: "TTV (0.5ml)"
+      drugs = []
+
+      drug_order = ActiveRecord::Base.connection.select_all(
+        "SELECT drug_order.drug_inventory_id FROM encounter INNER JOIN orders 
+          ON orders.encounter_id = encounter.encounter_id 
+          AND orders.voided = 0 
+        INNER JOIN drug_order ON drug_order.order_id = orders.order_id 
+        WHERE encounter.voided = 0 
+        AND (encounter.patient_id = #{patient.patient_id} 
+          AND DATE(encounter.encounter_datetime) = DATE('#{date}')) 
+          ORDER BY encounter.encounter_datetime DESC"
+      ).rows.collect{|d| drugs << d[0]}.compact
+      
+      drugs.delete(ttv_drug.id)
+
+      if drugs.length > 0
+        return true
+      else
+        return false
+      end
+
     end
     
   end
