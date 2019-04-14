@@ -2495,3 +2495,51 @@ END;
 */
 
 
+DROP FUNCTION IF EXISTS `patient_has_side_effects`;
+
+CREATE FUNCTION `patient_has_side_effects`(my_patient_id INT, my_end_date DATE) RETURNS VARCHAR(7)
+BEGIN
+  DECLARE mw_side_effects_concept_id INT;
+  DECLARE yes_concept_id INT;
+  DECLARE no_concept_id INT;
+  DECLARE side_effect INT;
+  DECLARE latest_obs_date DATE;
+
+  SET mw_side_effects_concept_id = (SELECT concept_id FROM concept_name 
+    WHERE name IN('Malawi ART Side Effects') AND voided = 0 LIMIT 1);
+
+  SET yes_concept_id = (SELECT concept_id FROM concept_name WHERE name = 'YES' LIMIT 1);
+  SET no_concept_id = (SELECT concept_id FROM concept_name WHERE name = 'NO' LIMIT 1);
+
+  SET latest_obs_date = (SELECT DATE(MAX(t.obs_datetime)) FROM obs t 
+        WHERE t.obs_datetime <= DATE_FORMAT(DATE(my_end_date), '%Y-%m-%d 23:59:59')
+        AND t.concept_id = mw_side_effects_concept_id AND t.voided = 0 
+        AND t.person_id = my_patient_id);
+
+  IF latest_obs_date IS NULL THEN
+    return 'Unknown'; 
+  END IF;
+
+
+
+  SET side_effect = (SELECT value_coded FROM obs
+      INNER JOIN temp_earliest_start_date e ON e.patient_id = obs.person_id
+      WHERE obs_group_id IN (
+      SELECT obs_id FROM obs
+      WHERE concept_id = mw_side_effects_concept_id
+        AND person_id = my_patient_id
+        AND obs.obs_datetime BETWEEN DATE_FORMAT(DATE(latest_obs_date), '%Y-%m-%d 00:00:00')
+        AND DATE_FORMAT(DATE(latest_obs_date), '%Y-%m-%d 23:59:59')
+        AND DATE(obs_datetime) != DATE(e.date_enrolled)
+      )GROUP BY concept_id HAVING value_coded = yes_concept_id LIMIT 1);
+
+  IF side_effect IS NOT NULL THEN
+    return 'Yes'; 
+  END IF;
+
+
+	RETURN 'No';
+END;
+
+
+
