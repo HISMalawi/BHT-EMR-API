@@ -50,7 +50,7 @@ def main
 
       save_record_sync_status(sync_status, record, record_doc_id)
     rescue RestClient::Exception => e
-      LOGGER.error("Failed to write #{model} ##{record.id} due to exception: #{e.class} - #{e}")
+      LOGGER.error("Failed to write #{model} ##{record.id} due to exception: #{e.class} - #{e} - #{e.response.body}")
     end
 
     save_delta(model, last_update_time)
@@ -173,7 +173,7 @@ end
 #
 # @returns  - A couch document id for the pushed record
 def push_record(record, doc_id = nil)
-  LOGGER.debug("Pushing record to couch db: #{record.class} ##{record.id}(doc_id: #{doc_id} || 'N/A') ")
+  LOGGER.debug("Pushing record to couch db: #{record.class} ##{record.id}(doc_id: #{doc_id || 'N/A'}) ")
 
   record = serialize_record(record)
 
@@ -186,17 +186,10 @@ end
 
 # Convert record to JSON
 def serialize_record(record)
-  # HACK: Temporarily transform id on the record for the serialization
-  # process as we do not know what the id field actually maps to
-  # (eg id on Person maps to person_id and on PersonAttribute to person_attribute_type)
-  site_id = GlobalProperty.find_by_property('current_health_center_id').property_value
-  record_id = record.id
-  record.id = "#{record_id}00000#{site_id}".to_i
+  record = transform_record_keys(record)
 
   serialized_record = record.as_json(ignore_includes: true)
   serialized_record['record_type'] = record.class.to_s
-
-  record.id = record_id # Restore original id
 
   if record.class == Encounter && record.respond_to?(:program_id) && record.program_id.nil?
     # HACK: Apparently this script may be run on old applications
@@ -213,6 +206,23 @@ def serialize_record(record)
   end
 
   serialized_record.to_json
+end
+
+# Transforms primary key and foreign keys on record to the format required in RDS
+def transform_record_keys(record)
+  new_record = record.dup
+
+  site_id = GlobalProperty.find_by_property('current_health_center_id').property_value
+  new_record.id = "#{record.id}00000#{site_id}".to_i
+
+  new_record.class.reflect_on_all_associations(:belongs_to).each do |association|
+    next unless MODELS.include?(association.class_name.constantize)
+
+    id = new_record.send(association.foreign_key.to_sym)
+    new_record.send("#{association.foreign_key}=".to_sym, "#{id}00000#{site_id}.to_i")
+  end
+
+  new_record
 end
 
 # Push a new record to couch db
