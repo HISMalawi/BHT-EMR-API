@@ -25,7 +25,7 @@ class Observation < VoidableRecord
   belongs_to :order, optional: true
   belongs_to :concept
   belongs_to :person
-  belongs_to :parent, class_name: 'Observation', optional: true
+  belongs_to :parent, class_name: 'Observation', foreign_key: :obs_group_id, optional: true
   has_many :children, class_name: 'Observation', foreign_key: :obs_group_id
   # belongs_to :concept_name, class_name: 'ConceptName', foreign_key: 'concept_name'
   belongs_to :answer_concept, class_name: 'Concept', foreign_key: 'value_coded', optional: true
