@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class DrugOrder < ActiveRecord::Base
+class DrugOrder < ApplicationRecord
   self.table_name = :drug_order
   self.primary_key = :order_id
 
