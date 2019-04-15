@@ -9,7 +9,15 @@ describe TBService::WorkflowEngine do
 	
   let(:epoch) { Time.now }
   let(:tb_program) { program 'TB PROGRAM' } #look into this
-  let(:patient) { create :patient }
+  let(:person) do 
+		Person.create( birthdate: '1995-01-01', gender: 'M' )  
+  end
+  let(:person_name) do
+    PersonName.create(person_id: person.person_id, given_name: 'John', 
+      family_name: 'Doe')
+  end
+	let(:patient) { Patient.create( patient_id: person.person_id ) }
+	
   let(:engine) do
     TBService::WorkflowEngine.new program: tb_program,
                                    patient: patient,
@@ -21,34 +29,31 @@ describe TBService::WorkflowEngine do
 
   describe :next_encounter do
 
-    #Return TB initial if patient does not exist in
-
-    it 'returns TB_INITIAL REGISTRATION for a patient not a TB suspect in the TB programme' do
-  
+    it 'returns TB_INITIAL REGISTRATION for an Adult patient not a TB suspect in the TB programme' do
       encounter_type = engine.next_encounter
       expect(encounter_type.name.upcase).to eq('TB_INITIAL')
     end
 
-    it 'returns TB_INITIAL REGISTRATION for a new TB suspect' do
+    it 'returns TB_INITIAL REGISTRATION for a new an Adult TB suspect' do
+
       enroll_patient patient
       encounter_type = engine.next_encounter
       expect(encounter_type.name.upcase).to eq('TB_INITIAL')
     end
 
-    it 'returns LAB ORDERS for TB suspect with no Lab Request in the TB Programme' do
+    it 'returns LAB ORDERS for an Adult TB suspect with no Lab Request in the TB Programme' do
       tb_initial_encounter patient
       encounter_type = engine.next_encounter
       expect(encounter_type.name.upcase).to eq('LAB ORDERS')
     end
 
-    #return treatment after VITALS
-    it 'returns TB REGISTRATION for a TB patient' do
+    it 'returns TB REGISTRATION for an Adult TB patient' do
       lab_orders_encounter patient
       encounter_type = engine.next_encounter
       expect(encounter_type.name.upcase).to eq('TB REGISTRATION')
     end
 
-    it 'returns TB ADHERENCE for a TB patient' do
+    it 'returns TB ADHERENCE for an Adult TB patient' do
       patient
       lab_orders_encounter patient
       registration = tb_registration_encounter patient
@@ -86,7 +91,7 @@ describe TBService::WorkflowEngine do
       expect(encounter_type.name.upcase).to eq('TB ADHERENCE')
     end
 
-    it 'returns VITALS for a TB patient' do
+    it 'returns VITALS for an Adult TB patient' do
       lab_orders_encounter patient
       tb_registration_encounter patient
       adherence patient
@@ -94,7 +99,7 @@ describe TBService::WorkflowEngine do
       expect(encounter_type.name.upcase).to eq('VITALS')
     end
 
-    it 'returns DISPENSING for a TB patient' do
+    it 'returns DISPENSING for an Adult TB patient' do
       lab_orders_encounter patient
       tb_registration_encounter patient
       adherence patient
@@ -102,6 +107,19 @@ describe TBService::WorkflowEngine do
       treatment_encounter patient
       encounter_type = engine.next_encounter
       expect(encounter_type).to eq(nil)
+    end
+
+    it 'returns DIAGONIS for a minor patient not enrolled as a TB suspect in the TB programme' do
+      encounter_type = patient_engine(minor_patient).next_encounter
+      expect(encounter_type.name.upcase).to eq('DIAGNOSIS')
+    end
+
+    it 'returns TB_INITIAL REGISTRATION for a Minor found TB positive through DIAGNOSIS' do
+      patient = minor_patient
+      encounter = diagnosis_encounter(patient)
+      tb_status(patient, encounter)
+      encounter_type = patient_engine(patient).next_encounter
+      expect(encounter_type.name.upcase).to eq('TB_INITIAL')
     end
 
   end
@@ -143,6 +161,12 @@ describe TBService::WorkflowEngine do
     tb_registration
   end
 
+  def diagnosis_encounter(patient)
+    encounter = create :encounter, type: encounter_type('DIAGNOSIS'),
+                                   patient: patient, program_id: tb_program.program_id 
+    encounter
+  end
+
   def adherence(patient) #patient should recieve drugs
     adherence = create :encounter, type: encounter_type('TB ADHERENCE'),
                                    patient: patient, program_id: tb_program.program_id 
@@ -168,6 +192,28 @@ describe TBService::WorkflowEngine do
                           encounter: encounter,
                           person: patient.person,
 													value_coded: concept('Rifampicin isoniazid and pyrazinamide').concept_id
-	end
+  end
+  
+  def tb_status(patient, encounter)										
+		create :observation, concept: concept('TB status'),
+                          encounter: encounter,
+                          person: patient.person,
+													value_coded: concept('Yes').concept_id
+  end
+  
+  def minor_patient
+      person = Person.create( birthdate: Date.today, gender: 'F' ) 
+      PersonName.create(person_id: person.person_id, given_name: 'John', 
+        family_name: 'Doe')
+      patient = Patient.create( patient_id: person.person_id )
+    
+  end
+
+  def patient_engine(patient)
+    engine = TBService::WorkflowEngine.new program: tb_program,
+                                   patient: patient,
+                                   date: epoch
+    engine
+  end
 
 end
