@@ -205,9 +205,9 @@ module TBService
 
     def patient_should_get_treatment?
       prescribe_drugs_concept = concept('Prescribe drugs')
-      no_concept = concept('No')
+      no_concept = concept('Yes')
       start_time, end_time = TimeUtils.day_bounds(@date)
-      !Observation.where(
+      Observation.where(
         'concept_id = ? AND value_coded = ? AND person_id = ?
          AND obs_datetime BETWEEN ? AND ?',
         prescribe_drugs_concept.concept_id, no_concept.concept_id,
