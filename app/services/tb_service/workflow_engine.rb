@@ -239,14 +239,9 @@ module TBService
      (((Time.zone.now - person.birthdate.to_time) / 1.year.seconds).floor) <= 5
     end
 
-    def patient_is_not_a_minor? 
-      person = Person.find_by(person_id: @patient.patient_id)
-     (((Time.zone.now - person.birthdate.to_time) / 1.year.seconds).floor) >= 5
-    end
-
     def minor_tb_positive? 
       
-      return patient_is_not_a_minor? unless patient_is_a_minor?
+      return !patient_is_a_minor? unless patient_is_a_minor?
 
       encounter_type = EncounterType.find_by name: DIAGNOSIS
       encounter = Encounter.select('encounter_id').where(
