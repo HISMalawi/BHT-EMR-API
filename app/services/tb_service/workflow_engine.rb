@@ -46,12 +46,17 @@ module TBService
     TREATMENT = 'TREATMENT'
     DISPENSING = 'DISPENSING'
     TB_ADHERENCE = 'TB ADHERENCE'
+    DIAGNOSIS = 'DIAGNOSIS'
+
+    #CONCEPTS
+    YES = 1065
 
     #Todo: TB_REGISTRATION, TB ADHERENCE, Refactor TB number
    
     # Encounters graph
     ENCOUNTER_SM = {
-      INITIAL_STATE => TB_INITIAL,
+      INITIAL_STATE => DIAGNOSIS,
+      DIAGNOSIS => TB_INITIAL,
       TB_INITIAL => LAB_ORDERS,
       LAB_ORDERS => TB_REGISTRATION,
       TB_REGISTRATION => TB_ADHERENCE,
@@ -65,13 +70,17 @@ module TBService
     #for TB Registration == patient_not_visiting?
     STATE_CONDITIONS = {
       TB_REGISTRATION => %i[patient_not_registered?
-                                    patient_not_visiting?],
+                                    patient_not_visiting?
+                                    minor_tb_positive?],
       TB_INITIAL => %i[tb_suspect_not_enrolled? 
-                        patient_labs_not_ordered?],
-      LAB_ORDERS => %i[patient_labs_not_ordered?],
+                                    patient_labs_not_ordered? 
+                                    minor_tb_positive?],
+      LAB_ORDERS => %i[patient_labs_not_ordered? 
+                                    minor_tb_positive?],
       TB_ADHERENCE => %i[patient_received_tb_drugs?],
       TREATMENT => %i[patient_should_get_treatment?],
-      DISPENSING => %i[patient_got_treatment?]
+      DISPENSING => %i[patient_got_treatment?],
+      DIAGNOSIS => %i[patient_is_a_minor?]
     }.freeze   
 
     # Concepts
@@ -184,7 +193,7 @@ module TBService
       !is_suspect_enrolled
     end
 
-    def patient_labs_not_ordered? 
+    def patient_labs_not_ordered?
       is_lab_ordered = Encounter.joins(:type).where(
         'encounter_type.name = ? AND encounter.patient_id = ?',
         LAB_ORDERS,
@@ -225,6 +234,32 @@ module TBService
       ).exists?
     end
 
+    def patient_is_a_minor?
+     person = Person.find_by(person_id: @patient.patient_id)
+     (((Time.zone.now - person.birthdate.to_time) / 1.year.seconds).floor) <= 5
+    end
 
+    def patient_is_not_a_minor? 
+      person = Person.find_by(person_id: @patient.patient_id)
+     (((Time.zone.now - person.birthdate.to_time) / 1.year.seconds).floor) >= 5
+    end
+
+    def minor_tb_positive? 
+      
+      return patient_is_not_a_minor? unless patient_is_a_minor?
+
+      encounter_type = EncounterType.find_by name: DIAGNOSIS
+      encounter = Encounter.select('encounter_id').where(
+        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
+        @patient.patient_id, encounter_type.encounter_type_id, @date
+      ).order(encounter_datetime: :desc).first
+
+      concept_name = ConceptName.find_by(name: 'TB status')
+      Observation.where(
+        "encounter_id = ? AND person_id = ? AND concept_id = ? AND value_coded = ? ",
+        encounter.encounter_id, @patient.patient_id, concept_name.concept_id, YES
+      ).exists?
+
+    end
   end
 end
