@@ -4,7 +4,7 @@ class ApplicationRecord < ActiveRecord::Base
   before_create :check_uuid
 
   def as_json(options = {})
-    options.delete(:include) if options[:ignore_includes]
+    return super({}) if options[:ignore_includes]
 
     super(options)
   end
