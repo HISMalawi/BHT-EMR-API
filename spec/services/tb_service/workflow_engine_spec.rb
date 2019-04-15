@@ -29,12 +29,12 @@ describe TBService::WorkflowEngine do
 
   describe :next_encounter do
 
-    it 'returns TB_INITIAL REGISTRATION for an Adult patient not a TB suspect in the TB programme' do
+    it 'returns TB_INITIAL for an Adult patient not a TB suspect in the TB programme' do
       encounter_type = engine.next_encounter
       expect(encounter_type.name.upcase).to eq('TB_INITIAL')
     end
 
-    it 'returns TB_INITIAL REGISTRATION for a new an Adult TB suspect' do
+    it 'returns TB_INITIALq for a new an Adult TB suspect' do
 
       enroll_patient patient
       encounter_type = engine.next_encounter
@@ -47,20 +47,12 @@ describe TBService::WorkflowEngine do
       expect(encounter_type.name.upcase).to eq('LAB ORDERS')
     end
 
-    it 'returns TB REGISTRATION for an Adult TB patient' do
-      lab_orders_encounter patient
-      encounter_type = engine.next_encounter
-      expect(encounter_type.name.upcase).to eq('TB REGISTRATION')
-    end
-
     it 'returns TB ADHERENCE for an Adult TB patient' do
       patient
-      lab_orders_encounter patient
-      registration = tb_registration_encounter patient
-      registration
-      prescribe_drugs(patient, registration)
-      medication_orders(patient, registration)
-      patient_weight(patient, registration)
+      encounter = lab_orders_encounter patient
+      prescribe_drugs(patient, encounter)
+      medication_orders(patient, encounter)
+      patient_weight(patient, encounter)
 
       drug_quantity = 10
 			
@@ -93,7 +85,6 @@ describe TBService::WorkflowEngine do
 
     it 'returns VITALS for an Adult TB patient' do
       lab_orders_encounter patient
-      tb_registration_encounter patient
       adherence patient
       encounter_type = engine.next_encounter
       expect(encounter_type.name.upcase).to eq('VITALS')
@@ -101,7 +92,6 @@ describe TBService::WorkflowEngine do
 
     it 'returns DISPENSING for an Adult TB patient' do
       lab_orders_encounter patient
-      tb_registration_encounter patient
       adherence patient
       record_vitals patient
       treatment_encounter patient
@@ -114,7 +104,7 @@ describe TBService::WorkflowEngine do
       expect(encounter_type.name.upcase).to eq('DIAGNOSIS')
     end
 
-    it 'returns TB_INITIAL REGISTRATION for a Minor found TB positive through DIAGNOSIS' do
+    it 'returns TB_INITIAL for a Minor found TB positive through DIAGNOSIS' do
       patient = minor_patient
       encounter = diagnosis_encounter(patient)
       tb_status(patient, encounter)
@@ -153,12 +143,6 @@ describe TBService::WorkflowEngine do
     treatment = create :encounter, type: encounter_type('TREATMENT'),
                                    patient: patient, program_id: tb_program.program_id 
     treatment
-  end
-
-  def tb_registration_encounter(patient)
-    tb_registration = create :encounter, type: encounter_type('TB REGISTRATION'),
-                                   patient: patient, program_id: tb_program.program_id 
-    tb_registration
   end
 
   def diagnosis_encounter(patient)

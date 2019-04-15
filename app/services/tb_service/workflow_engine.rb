@@ -37,11 +37,8 @@ module TBService
     # Encounter types TB_INITIAL, TB_FOLLOWUP, TB RECEPTION, TB REGISTRATION
     INITIAL_STATE = 0 # Start terminal for encounters graph
     END_STATE = 1 # End terminal for encounters graph
-    TB_SCREENING = 'TB SCREENING' #This should be added
     TB_INITIAL = 'TB_INITIAL'
-    TB_REGISTRATION  = 'TB REGISTRATION'
-    TB_RECEPTION = 'TB RECEPTION'
-		VITALS = 'VITALS'
+    VITALS = 'VITALS'
     LAB_ORDERS = 'LAB ORDERS'
     TREATMENT = 'TREATMENT'
     DISPENSING = 'DISPENSING'
@@ -51,15 +48,12 @@ module TBService
     #CONCEPTS
     YES = 1065
 
-    #Todo: TB_REGISTRATION, TB ADHERENCE, Refactor TB number
-   
     # Encounters graph
     ENCOUNTER_SM = {
       INITIAL_STATE => DIAGNOSIS,
       DIAGNOSIS => TB_INITIAL,
       TB_INITIAL => LAB_ORDERS,
-      LAB_ORDERS => TB_REGISTRATION,
-      TB_REGISTRATION => TB_ADHERENCE,
+      LAB_ORDERS => TB_ADHERENCE,
       TB_ADHERENCE => VITALS,
       VITALS => TREATMENT,
       TREATMENT => DISPENSING,
@@ -69,9 +63,6 @@ module TBService
     #For TB Initial == patient_not_visiting? patient_not_registered?
     #for TB Registration == patient_not_visiting?
     STATE_CONDITIONS = {
-      TB_REGISTRATION => %i[patient_not_registered?
-                                    patient_not_visiting?
-                                    minor_tb_positive?],
       TB_INITIAL => %i[tb_suspect_not_enrolled? 
                                     patient_labs_not_ordered? 
                                     minor_tb_positive?],
@@ -102,8 +93,6 @@ module TBService
           TREATMENT
         when /Dispensing/i
           DISPENSING
-        when /TB Registration/i
-          TB_REGISTRATION
         when /TB Adherence/i
           TB_ADHERENCE 
         else
@@ -153,17 +142,6 @@ module TBService
                                      value_coded: yes_concept.concept_id
     end
 
-    # Check if patient is not registered TB_CLINIC_REGISTRATION
-    def patient_not_registered?
-      is_registered = Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ?',
-        TB_REGISTRATION,
-        @patient.patient_id
-      ).exists?
-
-      !is_registered
-    end
-
     # Check if patient is not a visiting patient TB_CLINIC_REGISTRATION
     def patient_not_visiting?
       patient_type_concept = concept('Type of patient')
@@ -184,30 +162,26 @@ module TBService
     # Check if patient LAB_ORDERS has been made
     #newly added
     def tb_suspect_not_enrolled?
-      is_suspect_enrolled = Encounter.joins(:type).where(
+      !is_suspect_enrolled = Encounter.joins(:type).where(
         'encounter_type.name = ? AND encounter.patient_id = ?',
         TB_INITIAL,
         @patient.patient_id
       ).exists?
-
-      !is_suspect_enrolled
     end
 
     def patient_labs_not_ordered?
-      is_lab_ordered = Encounter.joins(:type).where(
+      !is_lab_ordered = Encounter.joins(:type).where(
         'encounter_type.name = ? AND encounter.patient_id = ?',
         LAB_ORDERS,
         @patient.patient_id
       ).exists?
-
-      !is_lab_ordered
     end
 
     def patient_should_get_treatment?
       prescribe_drugs_concept = concept('Prescribe drugs')
-      no_concept = concept('No')
+      no_concept = concept('Yes')
       start_time, end_time = TimeUtils.day_bounds(@date)
-      !Observation.where(
+      Observation.where(
         'concept_id = ? AND value_coded = ? AND person_id = ?
          AND obs_datetime BETWEEN ? AND ?',
         prescribe_drugs_concept.concept_id, no_concept.concept_id,
