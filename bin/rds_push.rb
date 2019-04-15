@@ -224,6 +224,8 @@ def transform_record_keys(record)
     next unless MODELS.include?(association.class_name.constantize)
 
     id = new_record.send(association.foreign_key.to_sym)
+    next unless id
+
     new_record.send("#{association.foreign_key}=".to_sym, "#{id}#{site_id}".to_i)
   end
 
