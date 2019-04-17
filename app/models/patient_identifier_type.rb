@@ -38,7 +38,7 @@ class PatientIdentifierType < RetirableRecord
   def new_v1_id
     id_prefix = v1_id_prefix
     puts "Last id number: #{last_id_number(id_prefix)}"
-    next_number = (last_id_number(id_prefix)[5..-2].to_i + 1).to_s.rjust(7, '0')
+    next_number = (last_id_number(id_prefix)[id_prefix.size..-2].to_i + 1).to_s.rjust(7, '0')
     new_national_id_no_check_digit = "#{id_prefix}#{next_number}"
     check_digit = PatientIdentifier.calculate_checkdigit(
       new_national_id_no_check_digit[1..-1]
