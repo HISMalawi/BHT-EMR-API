@@ -44,9 +44,15 @@ module TBService
     DISPENSING = 'DISPENSING'
     TB_ADHERENCE = 'TB ADHERENCE'
     DIAGNOSIS = 'DIAGNOSIS'
+    LAB_RESULTS =  'LAB RESULTS'
+    APPOINTMENT = 'APPOINTMENT'
 
     #CONCEPTS
     YES = 1065
+
+    #Ask vitals when TB Positive
+    #Diagnosis is for minors under and equal to 5 and suspsets over who are TB on the first encounter negative
+    #
 
     # Encounters graph
     ENCOUNTER_SM = {
@@ -54,7 +60,8 @@ module TBService
       DIAGNOSIS => TB_INITIAL,
       TB_INITIAL => LAB_ORDERS,
       LAB_ORDERS => TB_ADHERENCE,
-      TB_ADHERENCE => VITALS,
+      TB_ADHERENCE => LAB_RESULTS,
+      LAB_RESULTS => VITALS,
       VITALS => TREATMENT,
       TREATMENT => DISPENSING,
       DISPENSING => END_STATE
@@ -64,15 +71,27 @@ module TBService
     #for TB Registration == patient_not_visiting?
     STATE_CONDITIONS = {
       TB_INITIAL => %i[tb_suspect_not_enrolled? 
-                                    patient_labs_not_ordered? 
-                                    minor_tb_positive?],
-      LAB_ORDERS => %i[patient_labs_not_ordered? 
-                                    minor_tb_positive?],
-      TB_ADHERENCE => %i[patient_received_tb_drugs?],
-      TREATMENT => %i[patient_should_get_treatment?],
-      DISPENSING => %i[patient_got_treatment?],
-      DIAGNOSIS => %i[patient_is_a_minor?]
+                                    minor_is_tb_positive?
+                                    patient_should_not_go_home?],
+      LAB_ORDERS => %i[patient_labs_not_ordered?
+                                    patient_should_not_go_home?],
+      TB_ADHERENCE => %i[patient_received_tb_drugs?
+                                    patient_should_not_go_home?],
+      TREATMENT => %i[patient_should_get_treatment? 
+                                    patient_has_tb?
+                                    patient_should_not_go_home?],
+      DISPENSING => %i[patient_got_treatment? 
+                                    patient_has_tb?
+                                    patient_should_not_go_home? ],
+      DIAGNOSIS => %i[patient_should_go_for_diagnosis?
+                                    patient_should_not_go_home?],
+      LAB_RESULTS => %i[patient_has_no_lab_results?
+                                    patient_should_not_go_home?],
+      VITALS => %i[patient_has_tb?
+                                    patient_should_not_go_home? ]
     }.freeze   
+
+    #patient found TB negative under diagnosis should go home
 
     # Concepts
     PATIENT_PRESENT = 'Patient present'
@@ -93,8 +112,12 @@ module TBService
           TREATMENT
         when /Dispensing/i
           DISPENSING
-        when /TB Adherence/i
+        when /Adherence/i
           TB_ADHERENCE 
+        when /Diagnosis/i
+          DIAGNOSIS 
+        when /Lab Results/i
+          LAB_RESULTS 
         else
           Rails.logger.warn "Invalid TB activity in user properties: #{activity}"
         end
@@ -125,23 +148,6 @@ module TBService
       end
     end
 
-    # Checks if patient has checked in today
-    #
-    # Pre-condition for VITALS encounter
-    def patient_checked_in?
-      encounter_type = EncounterType.find_by name: TB_RECEPTION
-      encounter = Encounter.where(
-        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
-        @patient.patient_id, encounter_type.encounter_type_id, @date
-      ).order(encounter_datetime: :desc).first
-      raise "Can't check if patient checked in due to missing TB_RECEPTION" if encounter.nil?
-
-      patient_present_concept = concept PATIENT_PRESENT
-      yes_concept = concept 'YES'
-      encounter.observations.exists? concept_id: patient_present_concept.concept_id,
-                                     value_coded: yes_concept.concept_id
-    end
-
     # Check if patient is not a visiting patient TB_CLINIC_REGISTRATION
     def patient_not_visiting?
       patient_type_concept = concept('Type of patient')
@@ -170,6 +176,7 @@ module TBService
     end
 
     def patient_labs_not_ordered?
+      return false unless !patient_is_a_minor?
       !is_lab_ordered = Encounter.joins(:type).where(
         'encounter_type.name = ? AND encounter.patient_id = ?',
         LAB_ORDERS,
@@ -179,9 +186,9 @@ module TBService
 
     def patient_should_get_treatment?
       prescribe_drugs_concept = concept('Prescribe drugs')
-      no_concept = concept('Yes')
+      no_concept = concept('No')
       start_time, end_time = TimeUtils.day_bounds(@date)
-      Observation.where(
+      !Observation.where(
         'concept_id = ? AND value_coded = ? AND person_id = ?
          AND obs_datetime BETWEEN ? AND ?',
         prescribe_drugs_concept.concept_id, no_concept.concept_id,
@@ -202,9 +209,8 @@ module TBService
       drug_ids = Drug.tb_drugs.map(&:drug_id)
       drug_ids_placeholders = "(#{(['?'] * drug_ids.size).join(', ')})"
       Observation.where(
-        "person_id = ? AND value_drug in #{drug_ids_placeholders} AND
-         obs_datetime <= ?",
-        @patient.patient_id, *drug_ids, @date
+        "person_id = ? AND value_drug in #{drug_ids_placeholders}",
+        @patient.patient_id, *drug_ids
       ).exists?
     end
 
@@ -213,22 +219,102 @@ module TBService
      (((Time.zone.now - person.birthdate.to_time) / 1.year.seconds).floor) <= 5
     end
 
-    def minor_tb_positive? 
-      
-      return !patient_is_a_minor? unless patient_is_a_minor?
-
+    def patient_test_through_diagnosis?
       encounter_type = EncounterType.find_by name: DIAGNOSIS
       encounter = Encounter.select('encounter_id').where(
         'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
         @patient.patient_id, encounter_type.encounter_type_id, @date
-      ).order(encounter_datetime: :desc).first
+      ).order(encounter_datetime: :desc).first 
 
-      concept_name = ConceptName.find_by(name: 'TB status')
+      return false unless encounter #Handle this with an expection
+
+      tb_status = concept('TB status')
+      positive = concept('Positive')
       Observation.where(
         "encounter_id = ? AND person_id = ? AND concept_id = ? AND value_coded = ? ",
-        encounter.encounter_id, @patient.patient_id, concept_name.concept_id, YES
+        encounter.encounter_id, @patient.patient_id, tb_status.concept_id, positive.concept_id
       ).exists?
-
     end
-  end
+
+    def patient_tb_negative_through_diagnosis? #consider removing this
+      encounter_type = EncounterType.find_by name: DIAGNOSIS
+      encounter = Encounter.select('encounter_id').where(
+        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
+        @patient.patient_id, encounter_type.encounter_type_id, @date
+      ).order(encounter_datetime: :desc).first 
+
+      return false unless encounter #Handle this with an expection
+
+      tb_status = concept('TB status')
+      positive = concept('Negative')
+      Observation.where(
+        "encounter_id = ? AND person_id = ? AND concept_id = ? AND value_coded = ? ",
+        encounter.encounter_id, @patient.patient_id, tb_status.concept_id, positive.concept_id
+      ).exists?
+    end
+
+    def patient_tb_positive? 
+      status_concept = concept('TB status')
+      negative = concept('Positive')
+      Observation.where(
+        'person_id = ? AND concept_id = ? AND value_coded = ?', 
+        @patient.patient_id, status_concept.concept_id, negative.concept_id
+      ).exists?
+    end
+
+    def patient_tb_negative? 
+      status_concept = concept('TB status')
+      negative = concept('Negative')
+      Observation.where(
+        'person_id = ? AND concept_id = ? AND value_coded = ?', 
+        @patient.patient_id, status_concept.concept_id, negative.concept_id
+      ).exists?
+    end
+
+    #patient is TB negative or minor TB positive
+    #(!patient_is_a_minor? && patient_test_through_diagnosis?)
+    def minor_is_tb_positive? 
+      return !patient_is_a_minor? unless patient_is_a_minor? 
+      patient_test_through_diagnosis?
+    end
+
+    #Carefully review this
+    #could replace this by negating: patient_tb_negative_through_diagnosis?
+    def patient_should_not_go_home? 
+      return true if !patient_tb_negative_through_diagnosis?
+    end
+
+    #NEEDS IMPROVEMENT
+    #could replace this with (!patient_is_a_minor? && patient_tb_positive?)
+    def adult_is_tb_positive?
+      return false unless !patient_is_a_minor?
+      patient_tb_positive?
+    end
+
+    #could replace this with (!patient_is_a_minor? && patient_tb_negative?)
+    def adult_is_tb_negative?
+      return false unless !patient_is_a_minor?
+      patient_tb_negative? 
+    end
+
+    def patient_should_go_for_diagnosis?
+      return !patient_test_through_diagnosis? if (patient_is_a_minor? || adult_is_tb_negative?)
+    end
+
+    #Check ask for minor vitals when TB + and lab results ready
+    def patient_has_tb?
+      return true if minor_is_tb_positive? || adult_is_tb_positive?
+    end
+
+    #exception for minors
+    def patient_has_no_lab_results?
+      return false unless !patient_is_a_minor?
+      !lab_results = Encounter.joins(:type).where(
+        'encounter_type.name = ? AND encounter.patient_id = ?',
+        LAB_RESULTS,
+        @patient.patient_id
+      ).first
+    end
+
+  end 
 end
