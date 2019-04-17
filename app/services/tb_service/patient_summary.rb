@@ -106,6 +106,7 @@ module TBService
                                             AND p.program_id = #{program_id} AND DATE(start_date) <= visit_date AND p.patient_id = #{patient_id}) 
                                             AND (patient_state.voided = 0) ORDER BY start_date DESC, patient_state.patient_state_id DESC, 
                                             patient_state.date_created DESC LIMIT 1`).first
+        return nil unless patient_state
         
         program_workflow_state = ProgramWorkflowState.find_by(program_workflow_state_id: patient_state.state)
         concept = ConceptName.find_by(concept_id: program_workflow_state.concept_id)
