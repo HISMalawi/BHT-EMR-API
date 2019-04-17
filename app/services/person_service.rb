@@ -104,10 +104,22 @@ class PersonService
   end
 
   def update_person_address(person, params)
-    # NOTE: Initially update_person_address behaved differently to
-    #       create_person_address... Kept this not to break any
-    #       existing code.
-    create_person_address(person, params)
+    filtered_params = {}
+    params.each do |param, value|
+      param = param.to_sym
+      next unless PERSON_ADDRESS_FIELDS.include?(param)
+
+      filtered_params[PERSON_ADDRESS_FIELD_MAP[param]] = value
+    end
+
+    address = person.addresses.first
+
+    return create_person_address(person, filtered_params) unless address
+
+    handle_model_errors do
+      address.update(filtered_params)
+      address
+    end
   end
 
   def create_person_attributes(person, person_attributes)
