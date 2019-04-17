@@ -113,6 +113,7 @@ Rails.application.routes.draw do
         get 'lookup_arv_number/:arv_number' => 'program_patients#lookup_arv_number'
         get 'regimen_starter_packs' => 'program_regimens#find_starter_pack'
         get 'custom_regimen_ingredients' => 'program_regimens#custom_regimen_ingredients'
+        get 'defaulter_list' => 'program_patients#defaulter_list'
         resources :program_patients, path: :patients do
           get '/last_drugs_received' => 'program_patients#last_drugs_received'
           get '/dosages' => 'program_patients#find_dosages'
@@ -239,7 +240,4 @@ Rails.application.routes.draw do
   get '/api/v1/cohort_report_raw_data' => 'api/v1/reports#cohort_report_raw_data'
   get '/api/v1/cohort_disaggregated' => 'api/v1/reports#cohort_disaggregated'
   get '/api/v1/cohort_survival_analysis' => 'api/v1/reports#cohort_survival_analysis'
-  get '/api/v1/defaulter_list' => 'api/v1/reports#defaulter_list'
-  get '/api/v1/missed_appointments' => 'api/v1/reports#missed_appointments'
-  post '/api/v1/addresses' => 'api/v1/person_addresses#create'
 end
