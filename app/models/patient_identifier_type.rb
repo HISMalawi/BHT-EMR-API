@@ -53,8 +53,8 @@ class PatientIdentifierType < RetirableRecord
 
   def last_id_number(id_prefix)
     PatientIdentifier.where(
-      'identifier_type = ? AND left(identifier, 5) = ?',
-      patient_identifier_type_id, id_prefix
+      'identifier_type = ? AND left(identifier, ?) = ?',
+      patient_identifier_type_id, id_prefix.size, id_prefix
     ).order(identifier: :desc).first&.identifier || '0'
   end
 end
