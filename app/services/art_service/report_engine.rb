@@ -10,8 +10,7 @@ module ARTService
       'COHORT' => ARTService::Reports::Cohort,
       'COHORT_DISAGGREGATED' => ARTService::Reports::CohortDisaggregated,
       'COHORT_SURVIVAL_ANALYSIS' => ARTService::Reports::CohortSurvivalAnalysis,
-      'VISITS' => ARTService::Reports::VisitsReport,
-      'APPOINTMENTS' => ARTService::Reports::AppointmentsReport
+      'VISITS' => ARTService::Reports::VisitsReport
     }.freeze
 
     def generate_report(type:, **kwargs)
@@ -28,13 +27,11 @@ module ARTService
         end_date: Date.today).raw_data(l1, l2)
     end
 
-    def cohort_disaggregated(quarter, age_group, start_date, end_date, rebuild, init)
+    def cohort_disaggregated(quarter, age_group)
       cohort = REPORTS['COHORT_DISAGGREGATED'].new(type: 'disaggregated', 
-        name: 'disaggregated', start_date: start_date,
-        end_date: end_date, rebuild: rebuild)
-      
-      return cohort.initialize_disaggregated if init
-      cohort.disaggregated(quarter, age_group) 
+        name: 'disaggregated', start_date: Date.today,
+        end_date: Date.today)
+      cohort.disaggregated(quarter, age_group)
     end
 
     def cohort_survival_analysis(quarter, age_group, regenerate)
@@ -42,17 +39,6 @@ module ARTService
         name: 'survival_analysis', start_date: Date.today,
         end_date: Date.today, regenerate: regenerate)
       cohort.survival_analysis(quarter, age_group)
-    end
-    
-    def defaulter_list(start_date, end_date, pepfar)
-      REPORTS['COHORT'].new(type: 'defaulter_list', 
-        name: 'defaulter_list', start_date: start_date,
-        end_date: end_date).defaulter_list(pepfar)
-    end
-
-    def missed_appointments(start_date, end_date)
-      REPORTS['APPOINTMENTS'].new(start_date: start_date.to_date,
-        end_date: end_date.to_date).missed_appointments
     end
 
     private

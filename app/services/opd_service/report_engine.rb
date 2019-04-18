@@ -218,20 +218,11 @@ module OPDService
 
     def drugs_given_with_prescription(start_date, end_date)
       type = EncounterType.find_by_name 'TREATMENT'
-      concept_ids = []
-      ConceptSet.where(concept_set: 1085).map do |c|
-        concept_ids << c.concept_id
-      end
-
-      ConceptName.where(name: 'Isoniazid').map do |c|
-        concept_ids << c.concept_id
-      end
 
       data = Encounter.where('encounter_datetime BETWEEN ? AND ?
-        AND encounter_type = ? AND i.quantity > 0
-        AND d.concept_id NOT IN(?)', 
+        AND encounter_type = ? AND i.quantity > 0', 
         start_date.to_date.strftime('%Y-%m-%d 00:00:00'), 
-        end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id, concept_ids).\
+        end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id).\
         joins('INNER JOIN orders o ON o.encounter_id = encounter.encounter_id
         INNER JOIN person p ON p.person_id = encounter.patient_id
         INNER JOIN drug_order i ON i.order_id = o.order_id
@@ -242,7 +233,6 @@ module OPDService
         order('n.date_created DESC').group('n.person_id, o.order_id')
 
       stats = []
-
       (data || []).each do |record| 
         stats << {
           given_name: record['given_name'],
