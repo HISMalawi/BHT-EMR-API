@@ -35,7 +35,7 @@ class Api::V1::ReportsController < ApplicationController
 
     render json: stats
   end
-  
+
   def cohort_report_raw_data
     limit, limit2 = params.require %i[limit limit2]
     stats = service.cohort_report_raw_data(limit, limit2)
@@ -44,7 +44,7 @@ class Api::V1::ReportsController < ApplicationController
   end
 
   def cohort_disaggregated
-    quarter, age_group, 
+    quarter, age_group,
       rebuild, init = params.require %i[quarter age_group rebuild_outcome initialize]
 
     init = (init == 'true' ? true : false)
@@ -58,7 +58,7 @@ class Api::V1::ReportsController < ApplicationController
       end_date = end_date.to_date
     end
 
-    stats = service.cohort_disaggregated(quarter, age_group, start_date, 
+    stats = service.cohort_disaggregated(quarter, age_group, start_date,
       end_date, rebuild_outcome, init)
     render json: stats
   end
@@ -69,7 +69,7 @@ class Api::V1::ReportsController < ApplicationController
 
     render json: stats
   end
-  
+
   def drugs_given_with_prescription
     start_date, end_date = params.require %i[start_date end_date]
     stats = service.drugs_given_with_prescription(start_date, end_date)
@@ -92,14 +92,21 @@ class Api::V1::ReportsController < ApplicationController
 
     render json: stats
   end
-      
+
   def missed_appointments
     start_date, end_date = params.require %i[start_date end_date]
     stats = service.missed_appointments(start_date, end_date)
 
     render json: stats
   end
-      
+
+  def anc_cohort_disaggregated
+    curr_date, start_date = params.require %i[date start_date]
+    stats = service.anc_cohort_disaggregated(curr_date, start_date)
+
+    render json: stats
+  end
+
   private
 
   def service

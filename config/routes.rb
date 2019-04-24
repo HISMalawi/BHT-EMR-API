@@ -238,6 +238,7 @@ Rails.application.routes.draw do
 
   get '/api/v1/cohort_report_raw_data' => 'api/v1/reports#cohort_report_raw_data'
   get '/api/v1/cohort_disaggregated' => 'api/v1/reports#cohort_disaggregated'
+  get '/api/v1/anc_cohort_disaggregated' => 'api/v1/reports#anc_cohort_disaggregated'
   get '/api/v1/cohort_survival_analysis' => 'api/v1/reports#cohort_survival_analysis'
   get '/api/v1/defaulter_list' => 'api/v1/reports#defaulter_list'
   get '/api/v1/missed_appointments' => 'api/v1/reports#missed_appointments'

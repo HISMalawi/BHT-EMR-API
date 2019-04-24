@@ -84,7 +84,7 @@ class ReportService
   end
 
   def cohort_disaggregated(quarter, age_group, start_date, end_date, rebuild, init)
-    engine(@program).cohort_disaggregated(quarter, age_group, 
+    engine(@program).cohort_disaggregated(quarter, age_group,
       start_date, end_date, rebuild, init)
   end
 
@@ -106,6 +106,10 @@ class ReportService
 
   def missed_appointments(start_date, end_date)
     engine(@program).missed_appointments(start_date, end_date)
+  end
+
+  def anc_cohort_disaggregated(date, start_date)
+    engine(@program).cohort_disaggregated(date, start_date)
   end
 
   private
