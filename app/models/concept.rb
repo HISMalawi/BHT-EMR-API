@@ -44,6 +44,4 @@ class Concept < RetirableRecord
     return name unless name.blank?
     return self.concept_names.first.name rescue nil
   end
-
-  alias name fullname
 end
