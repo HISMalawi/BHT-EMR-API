@@ -39,7 +39,11 @@ class Api::V1::PatientIdentifiersController < ApplicationController
 
   # DELETE /patient_identifiers/1
   def destroy
-    @patient_identifier.destroy
+    if @patient_identifier.void("Voided by #{User.current.username}")
+      render status: :no_content
+    else
+      render status: :internal_server_error, json: @patient_identifier.errors
+    end
   end
 
   private
