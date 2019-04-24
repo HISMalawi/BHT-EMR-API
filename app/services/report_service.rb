@@ -83,9 +83,8 @@ class ReportService
     engine(@program).cohort_report_raw_data(l1, l2)
   end
 
-  def cohort_disaggregated(quarter, age_group, start_date, end_date, rebuild, init)
-    engine(@program).cohort_disaggregated(quarter, age_group,
-      start_date, end_date, rebuild, init)
+  def cohort_disaggregated(quarter, age_group)
+    engine(@program).cohort_disaggregated(quarter, age_group)
   end
 
   def drugs_given_without_prescription(start_date, end_date)
@@ -100,18 +99,10 @@ class ReportService
     engine(@program).cohort_survival_analysis(quarter, age_group, regenerate)
   end
 
-  def defaulter_list(start_date, end_date, pepfar)
-    engine(@program).defaulter_list(start_date, end_date, pepfar)
-  end
-
-  def missed_appointments(start_date, end_date)
-    engine(@program).missed_appointments(start_date, end_date)
-  end
-
   def anc_cohort_disaggregated(date, start_date)
     engine(@program).cohort_disaggregated(date, start_date)
   end
-
+  
   private
 
   def engine(program)
