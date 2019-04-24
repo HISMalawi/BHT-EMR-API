@@ -66,6 +66,87 @@ EOF
         return list
       end
 
+      def defaulter_list(pepfar)
+        data = ActiveRecord::Base.connection.select_all <<EOF
+        SELECT o.patient_id, min(start_date) start_date FROM orders o                      
+        INNER JOIN drug_order od ON od.order_id = o.order_id AND o.voided = 0
+        INNER JOIN drug d ON d.drug_id = od.drug_inventory_id
+        INNER JOIN concept_set s ON s.concept_id = d.concept_id
+        INNER JOIN patient_program pp ON pp.patient_id = o.patient_id
+        WHERE s.concept_set = 1085 AND od.quantity > 0
+        AND pp.program_id = 1
+        GROUP BY o.patient_id;
+EOF
+
+        patients = []
+
+        (data || []).each do |r|
+          patient_id = r['patient_id'].to_i
+
+          if pepfar == false
+            record = ActiveRecord::Base.connection.select_one <<EOF
+            SELECT patient_outcome(#{patient_id}, DATE('#{@end_date}')) AS outcome,
+            current_defaulter_date(#{patient_id}, TIMESTAMP('#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')) AS defaulter_date;
+EOF
+
+          else
+            record = ActiveRecord::Base.connection.select_one <<EOF
+            SELECT current_pepfar_defaulter(#{patient_id}, TIMESTAMP('#{@end_date}')) AS outcome,
+            current_pepfar_defaulter_date(#{patient_id}, TIMESTAMP('#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')) AS defaulter_date;
+EOF
+
+            record['outcome'] = (record['outcome'].to_i == 1 ? 'Defaulted' : nil)
+          end
+
+          if record['outcome'] == 'Defaulted'
+            defaulter_date = record['defaulter_date'].to_date rescue nil
+            next if defaulter_date.blank?
+
+            date_within = (defaulter_date >= @start_date.to_date && defaulter_date <= @end_date.to_date)
+            next unless date_within
+
+            person = ActiveRecord::Base.connection.select_one <<EOF
+            SELECT i.identifier arv_number, p.birthdate,
+              p.gender, n.given_name, n.family_name, p.person_id patient_id,
+              patient_reason_for_starting_art_text(p.person_id) art_reason,
+              a.value cell_number,
+              s.state_province district, s.county_district ta,
+              s.city_village village
+            FROM person p
+            LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
+            AND i.voided = 0 AND i.identifier_type = 4 
+            INNER JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
+            LEFT JOIN person_attribute a ON a.person_id = p.person_id
+            AND a.voided = 0 AND a.person_attribute_type_id = 12
+            LEFT JOIN person_address s ON s.person_id = p.person_id  
+            WHERE p.person_id = #{patient_id} GROUP BY p.person_id
+            ORDER BY p.person_id, p.date_created;
+EOF
+
+            next if person.blank?
+
+            patients << {
+              person_id: patient_id,
+              given_name: person['given_name'],
+              family_name: person['family_name'],
+              birthdate: person['birthdate'],
+              gender: person['gender'],
+              arv_number: person['arv_number'],
+              outcome: 'Defaulted',
+              defaulter_date: record['defaulter_date'],
+              art_reason: record['art_reason'],
+              cell_number: person['cell_number'],
+              district: person['district'],
+              ta: person['ta'],
+              village: person['village'],
+              arv_number: person['arv_number']
+            }
+          end
+        end
+
+        return patients
+      end
+
       private
 
       LOGGER = Rails.logger
