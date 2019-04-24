@@ -127,6 +127,10 @@ class Api::V1::ProgramPatientsController < ApplicationController
     render json: service.surgical_history(patient, date)
   end
 
+  def medication_side_effects
+    render json: service.medication_side_effects(patient, date)
+  end
+
   protected
 
   def service
