@@ -50,25 +50,18 @@ module TBService
     #CONCEPTS
     YES = 1065
 
-<<<<<<< HEAD
     #Ask vitals when TB Positive
     #Diagnosis is for minors under and equal to 5 and suspsets over who are TB on the first encounter negative
     #
 
-=======
->>>>>>> b99ff9d82b17e520499d341fe75af1bc5b42a050
     # Encounters graph
     ENCOUNTER_SM = {
       INITIAL_STATE => DIAGNOSIS,
       DIAGNOSIS => TB_INITIAL,
       TB_INITIAL => LAB_ORDERS,
       LAB_ORDERS => TB_ADHERENCE,
-<<<<<<< HEAD
       TB_ADHERENCE => LAB_RESULTS,
       LAB_RESULTS => VITALS,
-=======
-      TB_ADHERENCE => VITALS,
->>>>>>> b99ff9d82b17e520499d341fe75af1bc5b42a050
       VITALS => TREATMENT,
       TREATMENT => DISPENSING,
       DISPENSING => END_STATE
@@ -119,11 +112,7 @@ module TBService
           TREATMENT
         when /Dispensing/i
           DISPENSING
-<<<<<<< HEAD
-        when /Adherence/i
-=======
         when /TB Adherence/i
->>>>>>> b99ff9d82b17e520499d341fe75af1bc5b42a050
           TB_ADHERENCE 
         when /Diagnosis/i
           DIAGNOSIS 
@@ -159,8 +148,6 @@ module TBService
       end
     end
 
-<<<<<<< HEAD
-=======
     # Checks if patient has checked in today
     #
     # Pre-condition for VITALS encounter
@@ -178,7 +165,6 @@ module TBService
                                      value_coded: yes_concept.concept_id
     end
 
->>>>>>> b99ff9d82b17e520499d341fe75af1bc5b42a050
     # Check if patient is not a visiting patient TB_CLINIC_REGISTRATION
     def patient_not_visiting?
       patient_type_concept = concept('Type of patient')
@@ -207,10 +193,7 @@ module TBService
     end
 
     def patient_labs_not_ordered?
-<<<<<<< HEAD
       return false unless !patient_is_a_minor?
-=======
->>>>>>> b99ff9d82b17e520499d341fe75af1bc5b42a050
       !is_lab_ordered = Encounter.joins(:type).where(
         'encounter_type.name = ? AND encounter.patient_id = ?',
         LAB_ORDERS,

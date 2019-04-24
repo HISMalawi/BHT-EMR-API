@@ -35,11 +35,7 @@ describe TBService::WorkflowEngine do
       expect(encounter_type.name.upcase).to eq('TB_INITIAL')
     end
 
-<<<<<<< HEAD
     it 'returns TB_INITIAL for a new an Adult TB suspect' do
-=======
-    it 'returns TB_INITIALq for a new an Adult TB suspect' do
->>>>>>> b99ff9d82b17e520499d341fe75af1bc5b42a050
 
       enroll_patient patient
       encounter_type = engine.next_encounter
@@ -53,12 +49,8 @@ describe TBService::WorkflowEngine do
     end
 
     it 'returns TB ADHERENCE for an Adult TB patient' do
-<<<<<<< HEAD
       enroll_patient patient
       tb_initial_encounter patient
-=======
-      patient
->>>>>>> b99ff9d82b17e520499d341fe75af1bc5b42a050
       encounter = lab_orders_encounter patient
       prescribe_drugs(patient, encounter)
       medication_orders(patient, encounter)
@@ -93,30 +85,20 @@ describe TBService::WorkflowEngine do
       expect(encounter_type.name.upcase).to eq('TB ADHERENCE')
     end
 
-<<<<<<< HEAD
     it 'returns VITALS after patient TB positive' do
       enroll_patient patient
       tb_initial_encounter patient
       encounter = lab_orders_encounter patient
       tb_status(patient, lab_result_encounter(patient))
-=======
-    it 'returns VITALS for an Adult TB patient' do
-      lab_orders_encounter patient
-      adherence patient
->>>>>>> b99ff9d82b17e520499d341fe75af1bc5b42a050
       encounter_type = engine.next_encounter
       expect(encounter_type.name.upcase).to eq('VITALS')
     end
 
     it 'returns DISPENSING for an Adult TB patient' do
-<<<<<<< HEAD
       enroll_patient patient
       tb_initial_encounter patient
       encounter = lab_orders_encounter patient
       tb_status(patient, lab_result_encounter(patient))
-=======
-      lab_orders_encounter patient
->>>>>>> b99ff9d82b17e520499d341fe75af1bc5b42a050
       adherence patient
       record_vitals patient
       treatment_encounter patient
@@ -130,7 +112,6 @@ describe TBService::WorkflowEngine do
     end
 
     it 'returns TB_INITIAL for a Minor found TB positive through DIAGNOSIS' do
-<<<<<<< HEAD
       encounter = diagnosis_encounter(minor_patient)
       tb_status(minor_patient, lab_result_encounter(minor_patient))
       encounter_type = patient_engine(minor_patient).next_encounter
@@ -143,13 +124,6 @@ describe TBService::WorkflowEngine do
       lab_orders_encounter patient
       encounter_type = engine.next_encounter
       expect(encounter_type.name.upcase).to eq('LAB RESULTS')
-=======
-      patient = minor_patient
-      encounter = diagnosis_encounter(patient)
-      tb_status(patient, encounter)
-      encounter_type = patient_engine(patient).next_encounter
-      expect(encounter_type.name.upcase).to eq('TB_INITIAL')
->>>>>>> b99ff9d82b17e520499d341fe75af1bc5b42a050
     end
 
   end
