@@ -50,18 +50,25 @@ module TBService
     #CONCEPTS
     YES = 1065
 
+<<<<<<< HEAD
     #Ask vitals when TB Positive
     #Diagnosis is for minors under and equal to 5 and suspsets over who are TB on the first encounter negative
     #
 
+=======
+>>>>>>> b99ff9d82b17e520499d341fe75af1bc5b42a050
     # Encounters graph
     ENCOUNTER_SM = {
       INITIAL_STATE => DIAGNOSIS,
       DIAGNOSIS => TB_INITIAL,
       TB_INITIAL => LAB_ORDERS,
       LAB_ORDERS => TB_ADHERENCE,
+<<<<<<< HEAD
       TB_ADHERENCE => LAB_RESULTS,
       LAB_RESULTS => VITALS,
+=======
+      TB_ADHERENCE => VITALS,
+>>>>>>> b99ff9d82b17e520499d341fe75af1bc5b42a050
       VITALS => TREATMENT,
       TREATMENT => DISPENSING,
       DISPENSING => END_STATE
@@ -112,7 +119,11 @@ module TBService
           TREATMENT
         when /Dispensing/i
           DISPENSING
+<<<<<<< HEAD
         when /Adherence/i
+=======
+        when /TB Adherence/i
+>>>>>>> b99ff9d82b17e520499d341fe75af1bc5b42a050
           TB_ADHERENCE 
         when /Diagnosis/i
           DIAGNOSIS 
@@ -148,6 +159,26 @@ module TBService
       end
     end
 
+<<<<<<< HEAD
+=======
+    # Checks if patient has checked in today
+    #
+    # Pre-condition for VITALS encounter
+    def patient_checked_in?
+      encounter_type = EncounterType.find_by name: TB_RECEPTION
+      encounter = Encounter.where(
+        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
+        @patient.patient_id, encounter_type.encounter_type_id, @date
+      ).order(encounter_datetime: :desc).first
+      raise "Can't check if patient checked in due to missing TB_RECEPTION" if encounter.nil?
+
+      patient_present_concept = concept PATIENT_PRESENT
+      yes_concept = concept 'YES'
+      encounter.observations.exists? concept_id: patient_present_concept.concept_id,
+                                     value_coded: yes_concept.concept_id
+    end
+
+>>>>>>> b99ff9d82b17e520499d341fe75af1bc5b42a050
     # Check if patient is not a visiting patient TB_CLINIC_REGISTRATION
     def patient_not_visiting?
       patient_type_concept = concept('Type of patient')
@@ -176,7 +207,10 @@ module TBService
     end
 
     def patient_labs_not_ordered?
+<<<<<<< HEAD
       return false unless !patient_is_a_minor?
+=======
+>>>>>>> b99ff9d82b17e520499d341fe75af1bc5b42a050
       !is_lab_ordered = Encounter.joins(:type).where(
         'encounter_type.name = ? AND encounter.patient_id = ?',
         LAB_ORDERS,
@@ -186,9 +220,9 @@ module TBService
 
     def patient_should_get_treatment?
       prescribe_drugs_concept = concept('Prescribe drugs')
-      no_concept = concept('No')
+      no_concept = concept('Yes')
       start_time, end_time = TimeUtils.day_bounds(@date)
-      !Observation.where(
+      Observation.where(
         'concept_id = ? AND value_coded = ? AND person_id = ?
          AND obs_datetime BETWEEN ? AND ?',
         prescribe_drugs_concept.concept_id, no_concept.concept_id,
