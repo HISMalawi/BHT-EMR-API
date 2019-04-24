@@ -9,7 +9,6 @@ class Api::V1::PersonAddressesController < ApplicationController
     render json: {name: address}
   end
 
-
   private 
 
   def addAddress(name, address_type, parent_location)
