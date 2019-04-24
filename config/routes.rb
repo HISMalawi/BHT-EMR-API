@@ -125,6 +125,7 @@ Rails.application.routes.draw do
           get '/labels/transfer_out', to: 'program_patients#print_transfer_out_label'
           get '/labels/patient_history', to: 'program_patients#print_patient_history_label'
           get '/mastercard_data', to: 'program_patients#mastercard_data'
+          get '/medication_side_effects', to: 'program_patients#medication_side_effects'
           #ANC
           get '/surgical_history', to: 'program_patients#surgical_history'
           get '/anc_visit', to: 'program_patients#anc_visit'
@@ -240,4 +241,8 @@ Rails.application.routes.draw do
   get '/api/v1/cohort_report_raw_data' => 'api/v1/reports#cohort_report_raw_data'
   get '/api/v1/cohort_disaggregated' => 'api/v1/reports#cohort_disaggregated'
   get '/api/v1/cohort_survival_analysis' => 'api/v1/reports#cohort_survival_analysis'
+  get '/api/v1/defaulter_list' => 'api/v1/reports#defaulter_list'
+  get '/api/v1/missed_appointments' => 'api/v1/reports#missed_appointments'
+  post '/api/v1/addresses' => 'api/v1/person_addresses#create'
+  get '/api/v1/person_attributes' => 'api/v1/person_attributes#index'
 end

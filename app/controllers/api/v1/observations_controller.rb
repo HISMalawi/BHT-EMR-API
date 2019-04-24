@@ -25,7 +25,7 @@ class Api::V1::ObservationsController < ApplicationController
   def index
     filters = params.permit(%i[person_id concept_id encounter_id order_id
                                value_coded value_datetime value_numeric
-                               value_text])
+                               accession_number value_text])
 
     query = filters.empty? ? Observation : Observation.where(filters)
 
