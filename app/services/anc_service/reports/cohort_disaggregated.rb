@@ -3,6 +3,14 @@
 module ANCService
   module Reports
     class CohortDisaggregated
+
+      CURRENT_PREGNANCY = EncounterType.find_by name: "CURRENT PREGNANCY"
+      LAB_RESULTS =       EncounterType.find_by name: "LAB RESULTS"
+
+      LMP = ConceptName.find_by name: "Date of Last Menstrual Period"
+      YES = ConceptName.find_by name: "Yes"
+      ART = ConceptName.find_by name: "On ART"
+
       def initialize(name:, type:, start_date:, end_date:, rebuild:)
         @name = name
         @type = type
@@ -12,6 +20,10 @@ module ANCService
         @age_groups = ["<10","10-14","15-19","20-24","25-29","30-34",
           "35-39","40-49","50+" ]
         @patients = monthly_registrations(@start_date, @end_date)
+
+        t = ARTService::Reports::CohortBuilder.new
+        t.create_tmp_patient_table
+        t.load_data_into_temp_earliest_start_date(@end_date.to_date)
       end
 
       def find_report
@@ -246,7 +258,83 @@ module ANCService
         obj["Unknown"] = []
         obj["All"] = []
 
+        id_visit_map = []
+        anc_visit = {}
+        result = Hash.new
+        @patient_ids = []
+        b4_visit_one = []
+        no_art = []
+
+        @patients.each do |id|
+          next if id.nil?
+
+          date = Observation.find_by_sql(['SELECT MAX(value_datetime) as date FROM obs
+                    JOIN encounter ON obs.encounter_id = encounter.encounter_id
+                    WHERE encounter.encounter_type = ? AND person_id = ? AND concept_id = ?',
+                    CURRENT_PREGNANCY.id, id, LMP.concept_id])
+                  .first.date.strftime('%Y-%m-%d') rescue nil
+
+          value = "#{id}|#{date}" unless date.nil?
+          id_visit_map << value unless date.nil?
+          anc_visit[id] = date unless date.nil?
+
+        end
+
+        art_patients = ActiveRecord::Base.connection.select_all <<EOF
+            SELECT patient_id, earliest_start_date FROM temp_earliest_start_date
+            WHERE gender = 'F' AND death_date IS NULL
+EOF
+        art_patients.each do |patient|
+          @patient_ids << patient["patient_id"]
+          earliest_start_date = patient["earliest_start_date"].to_date
+          result["#{patient["patient_id"]}"] = patient["earliest_start_date"].to_date.strftime("%Y-%m-%d")
+          if ((earliest_start_date.to_date < anc_visit[patient["patient_id"]].to_date rescue false))
+            b4_visit_one << patient["patient_id"]
+          end
+        end
+
+        @prev_hiv_patients = getPatientsAlreadyPositive()["All"]
+
+        prev_on_art = Encounter.find_by_sql(["SELECT e.patient_id FROM encounter e INNER JOIN obs o ON o.encounter_id = o.encounter_id
+            AND e.voided = 0 WHERE e.encounter_type = ? AND o.concept_id = ? AND ((o.value_coded = ?) OR (o.value_text = 'Yes'))
+            AND e.patient_id in (?)", LAB_RESULTS.id, ART.concept_id, YES.concept_id, @prev_hiv_patients]).collect{|e| e.patient_id}
+
+        on_art_before_patients = (b4_visit_one + prev_on_art).uniq
+
+        results = Person.find_by_sql(["SELECT *,
+          YEAR(date_created) - YEAR(birthdate) - IF(STR_TO_DATE(CONCAT(YEAR(date_created),
+          '-', MONTH(birthdate), '-', DAY(birthdate)) ,'%Y-%c-%e') > date_created, 1, 0) AS age
+          FROM person WHERE person_id IN (?)", on_art_before_patients]).collect{|p|
+          age = p.age.to_i rescue "unknown";
+          person_id = p.person_id
+
+          if (age < 10)
+            obj["<10"] << person_id
+          elsif (age >=10 && age <=14)
+            obj["10-14"] << person_id
+          elsif (age > 14 && age <= 19)
+            obj["15-19"] << person_id
+          elsif (age > 19 && age <= 24)
+            obj["20-24"] << person_id
+          elsif (age > 24 && age <= 29)
+            obj["25-29"] << person_id
+          elsif (age > 29 && age <= 34)
+            obj["30-34"] << person_id
+          elsif (age > 34 && age <= 39)
+            obj["35-39"] << person_id
+          elsif (age > 39 && age <= 49)
+            obj["40-49"] << person_id
+          elsif (age > 49)
+            obj["50+"] << person_id
+          elsif (age == "unknown")
+            obj["Unknown"] << person_id
+          end
+
+          obj["All"] << person_id
+        }
+
         return obj
+
       end
 
       def getPatientsNewlyNegative()
@@ -396,6 +484,79 @@ module ANCService
         obj["50+"] = []
         obj["Unknown"] = []
         obj["All"] = []
+
+        anc_visit = {}
+        result = Hash.new
+        @patient_ids = []
+        new_art_in_nart = []
+
+        @patients.each do |id|
+          next if id.nil?
+
+          date = Observation.find_by_sql(['SELECT MAX(value_datetime) as date FROM obs
+                    JOIN encounter ON obs.encounter_id = encounter.encounter_id
+                    WHERE encounter.encounter_type = ? AND person_id = ? AND concept_id = ?',
+                    CURRENT_PREGNANCY.id, id, LMP.concept_id])
+                  .first.date.strftime('%Y-%m-%d') rescue nil
+
+          anc_visit[id] = date unless date.nil?
+
+        end
+
+        art_patients = ActiveRecord::Base.connection.select_all <<EOF
+            SELECT patient_id, earliest_start_date FROM temp_earliest_start_date
+            WHERE gender = 'F' AND death_date IS NULL
+EOF
+
+        art_patients.each do |patient|
+          earliest_start_date = patient["earliest_start_date"].to_date
+          if ((earliest_start_date.to_date == anc_visit[patient["patient_id"]].to_date rescue false))
+            new_art_in_nart << patient["patient_id"]
+          end
+        end
+
+        new_hiv_patients = getPatientsNewlyPositive()["All"]
+
+        new_art_in_anc = Encounter.find_by_sql(["SELECT e.patient_id FROM encounter e INNER JOIN obs o ON o.encounter_id = e.encounter_id
+          AND e.encounter_id = 0 WHERE e.encounter_type = ? AND o.concept_id = ? AND ((o.value_coded = ?) OR (o.value_text = 'Yes'))
+          AND e.patient_id in (?)", LAB_RESULTS.id, ART.concept_id, YES.concept_id, new_hiv_patients]).collect{|e| e.patient_id}
+
+        new_on_art = (new_art_in_nart + new_art_in_anc).uniq
+
+        results = Person.find_by_sql(["SELECT *,
+          YEAR(date_created) - YEAR(birthdate) - IF(STR_TO_DATE(CONCAT(YEAR(date_created),
+          '-', MONTH(birthdate), '-', DAY(birthdate)) ,'%Y-%c-%e') > date_created, 1, 0) AS age
+          FROM person WHERE person_id IN (?)", new_on_art]).collect{|p|
+          age = p.age.to_i rescue "unknown";
+          person_id = p.person_id
+
+          if (age < 10)
+            obj["<10"] << person_id
+          elsif (age >=10 && age <=14)
+            obj["10-14"] << person_id
+          elsif (age > 14 && age <= 19)
+            obj["15-19"] << person_id
+          elsif (age > 19 && age <= 24)
+            obj["20-24"] << person_id
+          elsif (age > 24 && age <= 29)
+            obj["25-29"] << person_id
+          elsif (age > 29 && age <= 34)
+            obj["30-34"] << person_id
+          elsif (age > 34 && age <= 39)
+            obj["35-39"] << person_id
+          elsif (age > 39 && age <= 49)
+            obj["40-49"] << person_id
+          elsif (age > 49)
+            obj["50+"] << person_id
+          elsif (age == "unknown")
+            obj["Unknown"] << person_id
+          end
+
+          obj["All"] << person_id
+        }
+
+        return obj
+
 
         return obj
       end
