@@ -89,7 +89,7 @@ describe TBService::WorkflowEngine do
       enroll_patient patient
       tb_initial_encounter patient
       encounter = lab_orders_encounter patient
-      tb_status(patient, lab_result_encounter(patient))
+      tb_status(patient, lab_result_encounter(patient), "Positive")
       encounter_type = engine.next_encounter
       expect(encounter_type.name.upcase).to eq('VITALS')
     end
@@ -98,7 +98,7 @@ describe TBService::WorkflowEngine do
       enroll_patient patient
       tb_initial_encounter patient
       encounter = lab_orders_encounter patient
-      tb_status(patient, lab_result_encounter(patient))
+      tb_status(patient, lab_result_encounter(patient), "Positive")
       adherence patient
       record_vitals patient
       treatment_encounter patient
@@ -106,16 +106,14 @@ describe TBService::WorkflowEngine do
       expect(encounter_type).to eq(nil)
     end
 
-    it 'returns DIAGONISIS for a minor patient not enrolled as a TB suspect in the TB programme' do
-      encounter_type = patient_engine(minor_patient).next_encounter
-      expect(encounter_type.name.upcase).to eq('DIAGNOSIS')
-    end
-
-    it 'returns TB_INITIAL for a Minor found TB positive through DIAGNOSIS' do
-      encounter = diagnosis_encounter(minor_patient)
-      tb_status(minor_patient, lab_result_encounter(minor_patient))
-      encounter_type = patient_engine(minor_patient).next_encounter
-      expect(encounter_type).to eq(nil) #doesnt look right
+    it 'returns DIAGNOSIS' do
+      #encounter = diagnosis_encounter(patient)
+      enroll_patient patient
+      tb_initial_encounter patient
+      lab_orders_encounter patient
+      tb_status(patient, lab_result_encounter(patient), "Negative")
+      encounter_type = engine.next_encounter
+      expect(encounter_type.name.upcase).to eq("DIAGNOSIS")
     end
 
     it 'returns LAB RESULTS for a TB suspect after Lab Order' do
@@ -192,12 +190,12 @@ describe TBService::WorkflowEngine do
 													value_coded: concept('Rifampicin isoniazid and pyrazinamide').concept_id
   end
   
-  def tb_status(patient, encounter)
+  def tb_status(patient, encounter, status)
     								
 		create :observation, concept: concept('TB status'),
                           encounter: encounter,
                           person: patient.person,
-													value_coded: concept('Positive').concept_id
+													value_coded: concept(status).concept_id
   end
   
   def create_minor_patient
