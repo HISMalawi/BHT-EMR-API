@@ -246,4 +246,5 @@ Rails.application.routes.draw do
   get '/api/v1/missed_appointments' => 'api/v1/reports#missed_appointments'
   post '/api/v1/addresses' => 'api/v1/person_addresses#create'
   get '/api/v1/person_attributes' => 'api/v1/person_attributes#index'
+  get '/api/v1/archive_active_filing_number' => 'api/v1/patient_identifiers#archive_active_filing_number'
 end

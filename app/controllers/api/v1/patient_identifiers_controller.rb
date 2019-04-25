@@ -39,7 +39,29 @@ class Api::V1::PatientIdentifiersController < ApplicationController
 
   # DELETE /patient_identifiers/1
   def destroy
-    @patient_identifier.destroy
+    if @patient_identifier.void("Voided by #{User.current.username}")
+      render status: :no_content
+    else
+      render status: :internal_server_error, json: @patient_identifier.errors
+    end
+  end
+  
+  def archive_active_filing_number
+    itypes = PatientIdentifierType.where(name: ['Filing number','Archived filing number'])
+    identifier_types = itypes.map(&:id)
+
+    PatientIdentifier.where(patient_id: params[:patient_id],
+      identifier_type: identifier_types).select do |i|
+      i.void("Voided by #{User.current.username}")
+    end
+
+    filing_service = FilingNumberService.new
+    identifier = filing_service.find_available_filing_number('Archived filing number')
+    archive_number = PatientIdentifier.create(patient_id: params[:patient_id],
+      identifier_type: PatientIdentifierType.find_by_name('Archived filing number').id,
+      identifier: identifier, location_id: Location.current.id)
+
+    render json: archive_number, status: :created
   end
 
   private

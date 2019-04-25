@@ -98,6 +98,14 @@ class ReportService
   def cohort_survival_analysis(quarter, age_group, regenerate)
     engine(@program).cohort_survival_analysis(quarter, age_group, regenerate)
   end
+  
+  def defaulter_list(start_date, end_date, pepfar)
+    engine(@program).defaulter_list(start_date, end_date, pepfar)
+  end
+
+  def missed_appointments(start_date, end_date)
+    engine(@program).missed_appointments(start_date, end_date)
+  end
 
   def anc_cohort_disaggregated(date, start_date)
     engine(@program).cohort_disaggregated(date, start_date)
