@@ -221,7 +221,8 @@ def transform_record_keys(record)
   new_record.id = "#{record.id}#{site_id}".to_i
 
   new_record.class.reflect_on_all_associations(:belongs_to).each do |association|
-    next unless MODELS.include?(association.class_name.constantize)
+    next unless MODELS.include?(association.class_name.constantize)\
+                  && association.foreign_key.to_s != new_record.class.primary_key.to_s
 
     id = new_record.send(association.foreign_key.to_sym)
     next unless id
