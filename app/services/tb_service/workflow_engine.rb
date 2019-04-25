@@ -71,23 +71,22 @@ module TBService
     #for TB Registration == patient_not_visiting?
     STATE_CONDITIONS = {
       TB_INITIAL => %i[tb_suspect_not_enrolled? 
-                                    minor_is_tb_positive?
                                     patient_should_not_go_home?],
       LAB_ORDERS => %i[patient_labs_not_ordered?
                                     patient_should_not_go_home?],
       TB_ADHERENCE => %i[patient_received_tb_drugs?
                                     patient_should_not_go_home?],
       TREATMENT => %i[patient_should_get_treatment? 
-                                    patient_has_tb?
+                                    patient_tb_positive?
                                     patient_should_not_go_home?],
       DISPENSING => %i[patient_got_treatment? 
-                                    patient_has_tb?
+                                    patient_tb_positive?
                                     patient_should_not_go_home? ],
       DIAGNOSIS => %i[patient_should_go_for_diagnosis?
                                     patient_should_not_go_home?],
       LAB_RESULTS => %i[patient_has_no_lab_results?
                                     patient_should_not_go_home?],
-      VITALS => %i[patient_has_tb?
+      VITALS => %i[patient_tb_positive?
                                     patient_should_not_go_home? ]
     }.freeze   
 
@@ -288,44 +287,18 @@ module TBService
       ).exists?
     end
 
-    #patient is TB negative or minor TB positive
-    #(!patient_is_a_minor? && patient_test_through_diagnosis?)
-    def minor_is_tb_positive? 
-      return !patient_is_a_minor? unless patient_is_a_minor? 
-      patient_test_through_diagnosis?
-    end
-
     #Carefully review this
     #could replace this by negating: patient_tb_negative_through_diagnosis?
     def patient_should_not_go_home? 
       return true if !patient_tb_negative_through_diagnosis?
     end
 
-    #NEEDS IMPROVEMENT
-    #could replace this with (!patient_is_a_minor? && patient_tb_positive?)
-    def adult_is_tb_positive?
-      return false unless !patient_is_a_minor?
-      patient_tb_positive?
-    end
-
-    #could replace this with (!patient_is_a_minor? && patient_tb_negative?)
-    def adult_is_tb_negative?
-      return false unless !patient_is_a_minor?
-      patient_tb_negative? 
-    end
-
+    #patient tb negative
     def patient_should_go_for_diagnosis?
-      return !patient_test_through_diagnosis? if (patient_is_a_minor? || adult_is_tb_negative?)
+      return !patient_test_through_diagnosis? if patient_tb_negative? #OK
     end
 
-    #Check ask for minor vitals when TB + and lab results ready
-    def patient_has_tb?
-      return true if minor_is_tb_positive? || adult_is_tb_positive?
-    end
-
-    #exception for minors
     def patient_has_no_lab_results?
-      return false unless !patient_is_a_minor?
       !lab_results = Encounter.joins(:type).where(
         'encounter_type.name = ? AND encounter.patient_id = ?',
         LAB_RESULTS,
