@@ -260,7 +260,9 @@ module OPDService
         months = 'Unknown'
       end
          
-      if months < 6
+      if months == 'Unknown'
+        return 'Unknown'
+      elsif months < 6
         return '< 6 months'
       elsif months >= 6 && months < 56
         return '6 months < 5 yrs'
@@ -279,7 +281,7 @@ module OPDService
         months = (today.month - birthdate.month)
         return (years * 12) + months
       rescue
-        return ''
+        return 'Unknown'
       end
     end
 
