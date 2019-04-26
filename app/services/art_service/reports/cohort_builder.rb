@@ -649,6 +649,7 @@ module ARTService
                 and (`s`.`voided` = 0)
                 and (`p`.`program_id` = 1)
                 and (`s`.`state` = 7))
+                and (DATE(`s`.`start_date`) != '0000-00-00')
           group by `p`.`patient_id`
           HAVING date_enrolled IS NOT NULL;
 EOF
