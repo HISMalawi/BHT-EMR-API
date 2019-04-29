@@ -64,7 +64,8 @@ module TBService
       LAB_RESULTS => VITALS,
       VITALS => TREATMENT,
       TREATMENT => DISPENSING,
-      DISPENSING => END_STATE
+      DISPENSING => APPOINTMENT,
+      APPOINTMENT => END_STATE
     }.freeze
 
     #For TB Initial == patient_not_visiting? patient_not_registered?
@@ -87,7 +88,10 @@ module TBService
       LAB_RESULTS => %i[patient_has_no_lab_results?
                                     patient_should_not_go_home?],
       VITALS => %i[patient_tb_positive?
-                                    patient_should_not_go_home? ]
+                                    patient_should_not_go_home? 
+                                    patient_has_no_vitals?],
+      APPOINTMENT => %i[patient_got_treatment?
+                                    dispensing_complete?]
     }.freeze   
 
     #patient found TB negative under diagnosis should go home
@@ -117,6 +121,8 @@ module TBService
           DIAGNOSIS 
         when /Lab Results/i
           LAB_RESULTS 
+        when /Appointment/i
+          APPOINTMENT 
         else
           Rails.logger.warn "Invalid TB activity in user properties: #{activity}"
         end
@@ -194,9 +200,10 @@ module TBService
     def patient_labs_not_ordered?
       return false unless !patient_is_a_minor?
       !is_lab_ordered = Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ?',
+        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
         LAB_ORDERS,
-        @patient.patient_id
+        @patient.patient_id,
+        @date
       ).exists?
     end
 
@@ -290,7 +297,7 @@ module TBService
     #Carefully review this
     #could replace this by negating: patient_tb_negative_through_diagnosis?
     def patient_should_not_go_home? 
-      return true if !patient_tb_negative_through_diagnosis?
+      return true if !patient_tb_negative_through_diagnosis? #CLEAN THIS
     end
 
     #patient tb negative
@@ -300,9 +307,35 @@ module TBService
 
     def patient_has_no_lab_results?
       !lab_results = Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ?',
+        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
         LAB_RESULTS,
-        @patient.patient_id
+        @patient.patient_id,
+        @date
+      ).first
+    end
+
+    def dispensing_complete?
+      prescription = Encounter.joins(:type).where
+        ('encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?)'),
+        TREATMENT,
+        @patient.patient_id,
+        @date
+
+      complete = false
+
+      prescription.orders.each do |order|
+        complete = order.drug_order.amount_needed <= 0
+        break unless complete
+      end
+      complete
+    end
+
+    def patient_has_no_vitals?
+      !vitals = Encounter.joins(:type).where(
+        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
+        VITALS,
+        @patient.patient_id,
+        @date
       ).first
     end
 
