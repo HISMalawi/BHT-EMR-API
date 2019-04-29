@@ -19,7 +19,15 @@ module ANCService
         LOGGER.debug "Loading encounter type: #{state}"
         encounter_type = EncounterType.find_by(name: state)
 
-        return encounter_type if valid_state?(state)
+        if valid_state?(state)
+          if encounter_type.name == "TREATMENT"
+            return EncounterType.new(name: "ANC TREATMENT")
+          elsif encounter_type.name == "DISPENSING"
+            return EncounterType.new(name: "ANC DISPENSING")
+          else
+            return encounter_type
+          end
+        end
       end
 
       nil
@@ -33,7 +41,7 @@ module ANCService
     INITIAL_STATE = 0 # Start terminal for encounters graph
     END_STATE = 1 # End terminal for encounters graph
     VITALS = 'VITALS'
-    DISPENSING = 'ANC DISPENSING'
+    DISPENSING = 'DISPENSING'
     ANC_VISIT_TYPE = 'ANC VISIT TYPE'
     OBSTETRIC_HISTORY = 'OBSTETRIC HISTORY'
     MEDICAL_HISTORY = 'MEDICAL HISTORY'
@@ -43,7 +51,7 @@ module ANCService
     CURRENT_PREGNANCY = 'CURRENT PREGNANCY' # ASSESMENT[sic] - It's how its named in the db
     ANC_EXAMINATION = 'ANC EXAMINATION'
     APPOINTMENT = 'APPOINTMENT'
-    TREATMENT = 'ANC TREATMENT'
+    TREATMENT = 'TREATMENT'
     HIV_RECEPTION = 'HIV RECEPTION'
     ART_FOLLOWUP = 'ART_FOLLOWUP'
     HIV_CLINIC_REGISTRATION = 'HIV CLINIC REGISTRATION'
@@ -144,7 +152,7 @@ module ANCService
     # NOTE: By `relevant` above we mean encounters that matter in deciding
     # what encounter the patient should go for in this present time.
     def encounter_exists?(type)
-      if (type == encounter_type("ANC TREATMENT"))
+      if (type == encounter_type("TREATMENT"))
         return patient_has_been_given_drugs?
       end
       Encounter.where(type: type, patient: @patient)\

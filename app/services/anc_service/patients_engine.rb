@@ -82,7 +82,7 @@ module ANCService
 
       if(last_lmp.blank?)
 
-        x.delete("ANC TREATMENT") unless patient_given_drugs_today(patient, date)
+        x.delete("TREATMENT") unless patient_given_drugs_today(patient, date)
 
         return x
 
@@ -96,7 +96,7 @@ module ANCService
 
       z = (x + y).compact
 
-      z.delete("ANC TREATMENT") unless patient_given_drugs_today(patient, date)
+      z.delete("TREATMENT") unless patient_given_drugs_today(patient, date)
 
       return z
 

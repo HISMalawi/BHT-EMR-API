@@ -56,7 +56,7 @@ module ANCService
           main_drugs = ["TTV", "SP", "Fefol", "Albendazole"]
 
           @patient.encounters.where(["(encounter_type = ? OR encounter_type = ?) AND encounter_datetime >= ? AND encounter_datetime <= ?",
-              EncounterType.find_by_name("ANC TREATMENT").id, EncounterType.find_by_name("ANC DISPENSING").id,
+              EncounterType.find_by_name("TREATMENT").id, EncounterType.find_by_name("DISPENSING").id,
               @current_range[0]["START"], @current_range[0]["END"]]).order("encounter_datetime DESC").each{|e|
             @drugs[e.encounter_datetime.strftime("%d/%b/%Y")] = {} if !@drugs[e.encounter_datetime.strftime("%d/%b/%Y")];
             @other_drugs[e.encounter_datetime.strftime("%d/%b/%Y")] = {} if !@other_drugs[e.encounter_datetime.strftime("%d/%b/%Y")];
@@ -270,7 +270,7 @@ module ANCService
           main_drugs = ["TTV", "SP", "Fefol", "Albendazole"]
 
           @patient.encounters.where(["(encounter_type = ? OR encounter_type = ?) AND encounter_datetime >= ? AND encounter_datetime <= ?",
-              EncounterType.find_by_name("ANC TREATMENT").id, EncounterType.find_by_name("ANC DISPENSING").id,
+              EncounterType.find_by_name("TREATMENT").id, EncounterType.find_by_name("DISPENSING").id,
               @current_range[0]["START"], @current_range[0]["END"]]).order("encounter_datetime DESC").each{|e|
             @drugs[e.encounter_datetime.strftime("%d/%b/%Y")] = {} if !@drugs[e.encounter_datetime.strftime("%d/%b/%Y")];
             @other_drugs[e.encounter_datetime.strftime("%d/%b/%Y")] = {} if !@other_drugs[e.encounter_datetime.strftime("%d/%b/%Y")];
