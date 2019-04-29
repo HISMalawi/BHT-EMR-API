@@ -71,7 +71,22 @@ class Api::V1::ReportsController < ApplicationController
 
     render json: stats
   end
-    
+  
+  def defaulter_list
+    start_date, end_date, pepfar = params.require %i[start_date end_date pepfar]
+    pepfar = (pepfar == 'true' ? true : false)
+    stats = service.defaulter_list(start_date, end_date, pepfar)
+
+    render json: stats
+  end
+
+  def missed_appointments
+    start_date, end_date = params.require %i[start_date end_date]
+    stats = service.missed_appointments(start_date, end_date)
+
+    render json: stats
+  end
+
   private
 
   def service
