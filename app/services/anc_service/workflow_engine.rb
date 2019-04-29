@@ -33,7 +33,7 @@ module ANCService
     INITIAL_STATE = 0 # Start terminal for encounters graph
     END_STATE = 1 # End terminal for encounters graph
     VITALS = 'VITALS'
-    DISPENSING = 'DISPENSING'
+    DISPENSING = 'ANC DISPENSING'
     ANC_VISIT_TYPE = 'ANC VISIT TYPE'
     OBSTETRIC_HISTORY = 'OBSTETRIC HISTORY'
     MEDICAL_HISTORY = 'MEDICAL HISTORY'
@@ -43,7 +43,7 @@ module ANCService
     CURRENT_PREGNANCY = 'CURRENT PREGNANCY' # ASSESMENT[sic] - It's how its named in the db
     ANC_EXAMINATION = 'ANC EXAMINATION'
     APPOINTMENT = 'APPOINTMENT'
-    TREATMENT = 'TREATMENT'
+    TREATMENT = 'ANC TREATMENT'
     HIV_RECEPTION = 'HIV RECEPTION'
     ART_FOLLOWUP = 'ART_FOLLOWUP'
     HIV_CLINIC_REGISTRATION = 'HIV CLINIC REGISTRATION'
@@ -99,7 +99,7 @@ module ANCService
         case activity
         when /vitals/i
           VITALS
-        when /dispensing/i
+        when /TTV Vaccination/i
           DISPENSING
         when /anc visit type/i
           ANC_VISIT_TYPE
@@ -115,17 +115,15 @@ module ANCService
           LAB_RESULTS
         when /current pregnancy/i
           CURRENT_PREGNANCY
-        when /anc examination/i
+        when /ANC examination/i
           ANC_EXAMINATION
-        when /art_followup/i
+        when /ART Follow Up/i
           ART_FOLLOWUP
         when /hiv clinic registration/i
           HIV_CLINIC_REGISTRATION
-        when /appointment/i
+        when /manage appointment/i
           APPOINTMENT
-        when /dispensation/
-          DISPENSING
-        when /treatment/i
+        when /give drugs/i
           TREATMENT
         when /vitals/i
           VITALS
@@ -146,7 +144,7 @@ module ANCService
     # NOTE: By `relevant` above we mean encounters that matter in deciding
     # what encounter the patient should go for in this present time.
     def encounter_exists?(type)
-      if (type == encounter_type("TREATMENT"))
+      if (type == encounter_type("ANC TREATMENT"))
         return patient_has_been_given_drugs?
       end
       Encounter.where(type: type, patient: @patient)\
