@@ -33,6 +33,8 @@ TIME_EPOCH = '1970-01-01'.to_time
 IMMUTABLE_MODELS = [PersonAddress, PatientIdentifier, Observation, Order].freeze
 
 def main
+  initiate_couch_sync
+
   MODELS.each do |model|
     LOGGER.debug("Scanning model: #{model}")
     last_update_time = delta(model)
@@ -55,8 +57,6 @@ def main
 
     save_delta(model, last_update_time)
   end
-
-  initiate_couch_sync
 end
 
 # Attempts to execute passed block with a lock file
