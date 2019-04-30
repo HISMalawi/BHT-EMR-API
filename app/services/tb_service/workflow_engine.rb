@@ -59,12 +59,13 @@ module TBService
       INITIAL_STATE => DIAGNOSIS,
       DIAGNOSIS => TB_INITIAL,
       TB_INITIAL => LAB_ORDERS,
-      LAB_ORDERS => TB_ADHERENCE,
-      TB_ADHERENCE => LAB_RESULTS,
+      LAB_ORDERS => LAB_RESULTS,
       LAB_RESULTS => VITALS,
       VITALS => TREATMENT,
       TREATMENT => DISPENSING,
-      DISPENSING => END_STATE
+      DISPENSING => APPOINTMENT,
+      APPOINTMENT => TB_ADHERENCE,
+      TB_ADHERENCE => END_STATE
     }.freeze
 
     #For TB Initial == patient_not_visiting? patient_not_registered?
@@ -87,10 +88,14 @@ module TBService
       LAB_RESULTS => %i[patient_has_no_lab_results?
                                     patient_should_not_go_home?],
       VITALS => %i[patient_tb_positive?
-                                    patient_should_not_go_home? ]
+                                    patient_should_not_go_home? 
+                                    patient_has_no_vitals?],
+      APPOINTMENT => %i[dispensing_complete? appointment_complete?]
     }.freeze   
 
     #patient found TB negative under diagnosis should go home
+
+    #/api/v1/programs/:program_id/lab_tests/labs(.:format) 
 
     # Concepts
     PATIENT_PRESENT = 'Patient present'
@@ -117,6 +122,8 @@ module TBService
           DIAGNOSIS 
         when /Lab Results/i
           LAB_RESULTS 
+        when /Appointment/i
+          APPOINTMENT 
         else
           Rails.logger.warn "Invalid TB activity in user properties: #{activity}"
         end
@@ -153,8 +160,8 @@ module TBService
     def patient_checked_in?
       encounter_type = EncounterType.find_by name: TB_RECEPTION
       encounter = Encounter.where(
-        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
-        @patient.patient_id, encounter_type.encounter_type_id, @date
+        'patient_id = ? AND encounter_type = ?',
+        @patient.patient_id, encounter_type.encounter_type_id
       ).order(encounter_datetime: :desc).first
       raise "Can't check if patient checked in due to missing TB_RECEPTION" if encounter.nil?
 
@@ -185,18 +192,20 @@ module TBService
     #newly added
     def tb_suspect_not_enrolled?
       !is_suspect_enrolled = Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ?',
+        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
         TB_INITIAL,
-        @patient.patient_id
+        @patient.patient_id,
+        @date
       ).exists?
     end
 
     def patient_labs_not_ordered?
       return false unless !patient_is_a_minor?
       !is_lab_ordered = Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ?',
+        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
         LAB_ORDERS,
-        @patient.patient_id
+        @patient.patient_id,
+        @date
       ).exists?
     end
 
@@ -217,20 +226,30 @@ module TBService
       encounter = Encounter.select('encounter_id').where(
         'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
         @patient.patient_id, encounter_type.encounter_type_id, @date
-      ).order(encounter_datetime: :desc).first
-      !encounter.nil? && encounter.orders.exists?
+      ).order(encounter_datetime: :desc).exists?
     end
+
+    def patient_should_go_for_appointment?
+      encounter_type = EncounterType.find_by name: TREATMENT
+      encounter = Encounter.select('encounter_id').where(
+        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
+        @patient.patient_id, encounter_type.encounter_type_id, @date
+      ).order(encounter_datetime: :desc).exists?
+    end
+
+    
 
     def patient_received_tb_drugs?
       drug_ids = Drug.tb_drugs.map(&:drug_id)
       drug_ids_placeholders = "(#{(['?'] * drug_ids.size).join(', ')})"
       Observation.where(
-        "person_id = ? AND value_drug in #{drug_ids_placeholders}",
-        @patient.patient_id, *drug_ids
+        "person_id = ? AND value_drug in #{drug_ids_placeholders} AND DATE(obs_datetime) <= DATE(?)",
+        @patient.patient_id, *drug_ids, @date
       ).exists?
     end
 
-    def patient_is_a_minor?
+    #if minor found TB negative through DIAGONIS, give them ITP
+    def patient_is_a_minor? 
      person = Person.find_by(person_id: @patient.patient_id)
      (((Time.zone.now - person.birthdate.to_time) / 1.year.seconds).floor) <= 5
     end
@@ -290,7 +309,7 @@ module TBService
     #Carefully review this
     #could replace this by negating: patient_tb_negative_through_diagnosis?
     def patient_should_not_go_home? 
-      return true if !patient_tb_negative_through_diagnosis?
+      return true if !patient_tb_negative_through_diagnosis? #CLEAN THIS
     end
 
     #patient tb negative
@@ -300,10 +319,38 @@ module TBService
 
     def patient_has_no_lab_results?
       !lab_results = Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ?',
+        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
         LAB_RESULTS,
-        @patient.patient_id
+        @patient.patient_id,
+        @date
       ).first
+    end
+
+    def dispensing_complete?
+      dispensing = Encounter.joins(:type).where(
+      'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
+      DISPENSING,
+      @patient.patient_id,
+      @date
+    ).first
+    end
+
+    def patient_has_no_vitals?
+      !vitals = Encounter.joins(:type).where(
+        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
+        VITALS,
+        @patient.patient_id, 
+        @date
+      ).first 
+    end
+
+    def appointment_complete?
+      !appointment = Encounter.joins(:type).where(
+        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
+        APPOINTMENT,
+        @patient.patient_id, 
+        @date
+      ).first 
     end
 
   end 
