@@ -161,6 +161,7 @@ Rails.application.routes.draw do
       resources :orders
       get '/drug_sets', to: 'drugs#drug_sets' # ANC get drug sets
       post '/drug_sets', to: 'drugs#create_drug_sets' #ANC drug sets creation
+      delete '/drug_sets/:id', to: 'drugs#void_drug_sets'
 
       resource :global_properties
       resource :user_properties

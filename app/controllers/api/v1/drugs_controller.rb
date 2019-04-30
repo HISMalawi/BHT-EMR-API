@@ -105,6 +105,11 @@ class Api::V1::DrugsController < ApplicationController
 
   end
 
+  def void_drug_sets
+    drug_set = GeneralSet.find(params[:id])
+    drug_set.deactivate params[:date].to_date # User.current, "Voided by #{User.current.username}"
+  end
+
   def print_barcode
     quantity = params.require(:quantity)
     printer_commands = service.print_drug_barcode(drug, quantity)
