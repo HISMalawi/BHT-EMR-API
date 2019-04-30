@@ -3,12 +3,12 @@
 module ANCService
     class PatientLabLabel
       attr_accessor :patient, :date
-  
+
       def initialize(patient, date)
         @patient = patient
         @date = date
       end
-  
+
       def print
         syphil = {}
       @patient.encounters.where(["encounter_type IN (?)",EncounterType.find_by_name("LAB RESULTS").id]).each{|e|
@@ -27,13 +27,13 @@ module ANCService
 
       @malaria_date = syphil["MALARIA TEST RESULT"].match(/not done/i)? "" : syphil["DATE OF LABORATORY TEST"] rescue nil
 
-      hiv_test = syphil["HIV STATUS"].blank? ? syphil["PREVIOUS HIV TEST RESULTS"] : syphil["HIV STATUS"] 
+      hiv_test = syphil["HIV STATUS"].blank? ? syphil["PREVIOUS HIV TEST RESULTS"] : syphil["HIV STATUS"]
 
       @hiv_test = (hiv_test.downcase == "positive" ? "=" :
           (hiv_test.downcase == "negative" ? "-" : "")) rescue ""
 
       #@hiv_test_date = syphil["HIV STATUS"].match(/not done/i) ? "" : syphil["HIV TEST DATE"] rescue nil
-      
+
       hiv_test_date = syphil["HIV TEST DATE"].blank? ? syphil["PREVIOUS HIV TEST DATE"] :  syphil["HIV TEST DATE"] rescue nil
 
       @hiv_test_date = hiv_test_date.to_date.strftime("%Y-%m-%d") rescue ""
@@ -110,6 +110,7 @@ module ANCService
       label.draw_text(@height.to_s,270,56,0,2,1,1,false)
       label.draw_text(@weight.to_s,270,86,0,2,1,1,false)
       # label.draw_text(@who,270,136,0,2,1,1,false)
+      @date = @date.to_date.strftime("%Y-%m-%d")
 
       label.draw_text(@hiv_test_date.to_s,188,146,0,2,1,1,false)
       label.draw_text("#{@syphilis.blank? ? "N/A" : @date.to_s}",188,176,0,2,1,1,false)
@@ -136,7 +137,7 @@ module ANCService
         return if identifiers.blank?
         identifiers.map{|i|i.identifier}.join(' , ') rescue nil
       end
-  
+
       def current_weight
         weight = ConceptName.find_by name: "Weight"
         @weight ||= Observation.where(concept_id: weight.concept_id, person_id: @patient.person.id)
@@ -144,14 +145,14 @@ module ANCService
                       .last
                       .value_numeric rescue 0
       end
-  
+
       def current_height
         height = ConceptName.find_by name: "Height (cm)"
         @height ||= Observation.where(concept_id: height.concept_id, person_id: @patient.person.id)
                       .order(obs_datetime: :desc)
                       .first.value_numeric rescue 0
       end
-    
+
     end
 
 end
