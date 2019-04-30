@@ -47,6 +47,8 @@ module TBService
     LAB_RESULTS =  'LAB RESULTS'
     APPOINTMENT = 'APPOINTMENT'
 
+    #FOLLOW - TB INITIAL, LAB ORDERS. LAB RESULTs, VITALS, TREATMENT, DISPENSING, APPOINTMENT, TB ADHERENCE
+
     #CONCEPTS
     YES = 1065
 
@@ -90,7 +92,7 @@ module TBService
       VITALS => %i[patient_tb_positive?
                                     patient_should_not_go_home? 
                                     patient_has_no_vitals?],
-      APPOINTMENT => %i[dispensing_complete? appointment_complete?]
+      APPOINTMENT => %i[dispensing_complete? appointment_not_complete?]
     }.freeze   
 
     #patient found TB negative under diagnosis should go home
@@ -237,8 +239,6 @@ module TBService
       ).order(encounter_datetime: :desc).exists?
     end
 
-    
-
     def patient_received_tb_drugs?
       drug_ids = Drug.tb_drugs.map(&:drug_id)
       drug_ids_placeholders = "(#{(['?'] * drug_ids.size).join(', ')})"
@@ -323,7 +323,7 @@ module TBService
         LAB_RESULTS,
         @patient.patient_id,
         @date
-      ).first
+      ).exists?
     end
 
     def dispensing_complete?
@@ -332,7 +332,7 @@ module TBService
       DISPENSING,
       @patient.patient_id,
       @date
-    ).first
+    ).exists?
     end
 
     def patient_has_no_vitals?
@@ -341,16 +341,16 @@ module TBService
         VITALS,
         @patient.patient_id, 
         @date
-      ).first 
+      ).exists? 
     end
 
-    def appointment_complete?
+    def appointment_not_complete?
       !appointment = Encounter.joins(:type).where(
         'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
         APPOINTMENT,
         @patient.patient_id, 
         @date
-      ).first 
+      ).exists? 
     end
 
   end 
