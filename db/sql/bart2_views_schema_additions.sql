@@ -2297,7 +2297,7 @@ SET age_in_months = (SELECT timestampdiff(month, birthdate, end_date));
 SET age_in_years  = (SELECT timestampdiff(year, birthdate, end_date));
 SET age_group = ('Unknown');
 
-IF age_in_months >= 1 AND age_in_months <= 5 THEN SET age_group = "0-5 months";
+IF age_in_months >= 0 AND age_in_months <= 5 THEN SET age_group = "0-5 months";
 ELSEIF age_in_months > 5 AND age_in_months <= 11 THEN SET age_group = "6-11 months";
 ELSEIF age_in_months > 11 AND age_in_months <= 23 THEN SET age_group = "12-23 months";
 ELSEIF age_in_years >= 2 AND age_in_years <= 4 THEN SET age_group = "2-4 years";
