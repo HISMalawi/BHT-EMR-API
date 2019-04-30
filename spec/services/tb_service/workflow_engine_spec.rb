@@ -52,6 +52,87 @@ describe TBService::WorkflowEngine do
       enroll_patient patient
       tb_initial_encounter patient
       encounter = lab_orders_encounter patient
+      tb_status(patient, lab_result_encounter(patient), "Positive")
+      record_vitals patient
+      prescribe_drugs(patient, encounter)
+      medication_orders(patient, encounter)
+      patient_weight(patient, encounter)
+
+      drug_quantity = 10
+			
+			drugs = [
+				{
+				drug_inventory_id: 985,
+				dose: '1',
+				frequency: '1',
+				prn: '1',
+				units: 'mg',
+				equivalent_daily_dose: '1',
+				quantity: drug_quantity,
+				start_date: Date.today,
+				auto_expire_date: Date.today
+				}
+			]
+
+			drug_orders  = DrugOrderService.create_drug_orders(encounter: treatment_encounter(patient), drug_orders: drugs)
+			plain_despenation = [
+				{
+					drug_order_id: drug_orders[0][:order_id],
+          quantity: drug_quantity
+				}
+      ]
+
+      dispensed = DispensationService.create(plain_despenation)
+      appointment_encounter patient
+      encounter_type = engine.next_encounter
+      expect(encounter_type.name.upcase).to eq('TB ADHERENCE')
+    end
+
+    it 'returns VITALS after patient TB positive' do
+      enroll_patient patient
+      tb_initial_encounter patient
+      encounter = lab_orders_encounter patient
+      tb_status(patient, lab_result_encounter(patient), "Positive")
+      encounter_type = engine.next_encounter
+      expect(encounter_type.name.upcase).to eq('VITALS')
+    end
+
+    it 'returns DISPENSING for an Adult TB patient' do
+      enroll_patient patient
+      tb_initial_encounter patient
+      encounter = lab_orders_encounter patient
+      tb_status(patient, lab_result_encounter(patient), "Positive")
+      adherence patient
+      record_vitals patient
+      treatment_encounter patient
+      encounter_type = engine.next_encounter
+      expect(encounter_type.name.upcase).to eq('DISPENSING')
+    end
+
+    it 'returns DIAGNOSIS' do
+      #encounter = diagnosis_encounter(patient)
+      enroll_patient patient
+      tb_initial_encounter patient
+      lab_orders_encounter patient
+      tb_status(patient, lab_result_encounter(patient), "Negative")
+      encounter_type = engine.next_encounter
+      expect(encounter_type.name.upcase).to eq("DIAGNOSIS")
+    end
+
+    it 'returns LAB RESULTS for a TB suspect after Lab Order' do
+      enroll_patient patient
+      tb_initial_encounter patient
+      lab_orders_encounter patient
+      encounter_type = engine.next_encounter
+      expect(encounter_type.name.upcase).to eq('LAB RESULTS')
+    end
+
+    it 'returns APPOINTMENT for an Adult TB patient' do
+      enroll_patient patient
+      tb_initial_encounter patient
+      encounter = lab_orders_encounter patient
+      tb_status(patient, lab_result_encounter(patient), "Positive")
+      record_vitals patient
       prescribe_drugs(patient, encounter)
       medication_orders(patient, encounter)
       patient_weight(patient, encounter)
@@ -82,46 +163,59 @@ describe TBService::WorkflowEngine do
 
       dispensed = DispensationService.create(plain_despenation)
       encounter_type = engine.next_encounter
-      expect(encounter_type.name.upcase).to eq('TB ADHERENCE')
+      expect(encounter_type.name.upcase).to eq('APPOINTMENT')
     end
 
-    it 'returns VITALS after patient TB positive' do
+    it 'returns TREATMENT after recording TB Vitals' do
       enroll_patient patient
       tb_initial_encounter patient
       encounter = lab_orders_encounter patient
       tb_status(patient, lab_result_encounter(patient), "Positive")
-      encounter_type = engine.next_encounter
-      expect(encounter_type.name.upcase).to eq('VITALS')
-    end
-
-    it 'returns DISPENSING for an Adult TB patient' do
-      enroll_patient patient
-      tb_initial_encounter patient
-      encounter = lab_orders_encounter patient
-      tb_status(patient, lab_result_encounter(patient), "Positive")
-      adherence patient
+      prescribe_drugs(patient, encounter)
       record_vitals patient
-      treatment_encounter patient
       encounter_type = engine.next_encounter
-      expect(encounter_type).to eq(nil)
+      expect(encounter_type.name.upcase).to eq('TREATMENT')
     end
 
-    it 'returns DIAGNOSIS' do
-      #encounter = diagnosis_encounter(patient)
+    it 'returns TB INITIAL for an Follow up patient' do
       enroll_patient patient
       tb_initial_encounter patient
-      lab_orders_encounter patient
-      tb_status(patient, lab_result_encounter(patient), "Negative")
-      encounter_type = engine.next_encounter
-      expect(encounter_type.name.upcase).to eq("DIAGNOSIS")
-    end
+      encounter = lab_orders_encounter patient
+      tb_status(patient, lab_result_encounter(patient), "Positive")
+      record_vitals patient
+      prescribe_drugs(patient, encounter)
+      medication_orders(patient, encounter)
+      patient_weight(patient, encounter)
 
-    it 'returns LAB RESULTS for a TB suspect after Lab Order' do
-      enroll_patient patient
-      tb_initial_encounter patient
-      lab_orders_encounter patient
-      encounter_type = engine.next_encounter
-      expect(encounter_type.name.upcase).to eq('LAB RESULTS')
+      drug_quantity = 10
+			
+			drugs = [
+				{
+				drug_inventory_id: 985,
+				dose: '1',
+				frequency: '1',
+				prn: '1',
+				units: 'mg',
+				equivalent_daily_dose: '1',
+				quantity: drug_quantity,
+				start_date: Date.today,
+				auto_expire_date: Date.today
+				}
+			]
+
+			drug_orders  = DrugOrderService.create_drug_orders(encounter: treatment_encounter(patient), drug_orders: drugs)
+			plain_despenation = [
+				{
+					drug_order_id: drug_orders[0][:order_id],
+          quantity: drug_quantity
+				}
+      ]
+
+      dispensed = DispensationService.create(plain_despenation)
+      appointment_encounter patient
+      adherence patient
+      p encounter_type = engine.next_encounter
+      #expect(encounter_type.name.upcase).to eq('TB_INITIAL')
     end
 
   end
@@ -218,6 +312,11 @@ describe TBService::WorkflowEngine do
     patient: patient, program_id: tb_program.program_id 
     encounter
   end
-  
+
+  def appointment_encounter(patient)
+    encounter = create :encounter, type: encounter_type('APPOINTMENT'),
+    patient: patient, program_id: tb_program.program_id 
+    encounter
+  end
 
 end
