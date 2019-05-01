@@ -113,6 +113,7 @@ Rails.application.routes.draw do
         get 'lookup_arv_number/:arv_number' => 'program_patients#lookup_arv_number'
         get 'regimen_starter_packs' => 'program_regimens#find_starter_pack'
         get 'custom_regimen_ingredients' => 'program_regimens#custom_regimen_ingredients'
+        get 'defaulter_list' => 'program_patients#defaulter_list'
         resources :program_patients, path: :patients do
           get '/last_drugs_received' => 'program_patients#last_drugs_received'
           get '/dosages' => 'program_patients#find_dosages'
@@ -124,6 +125,7 @@ Rails.application.routes.draw do
           get '/labels/transfer_out', to: 'program_patients#print_transfer_out_label'
           get '/labels/patient_history', to: 'program_patients#print_patient_history_label'
           get '/mastercard_data', to: 'program_patients#mastercard_data'
+          get '/medication_side_effects', to: 'program_patients#medication_side_effects'
           #ANC
           get '/surgical_history', to: 'program_patients#surgical_history'
           get '/anc_visit', to: 'program_patients#anc_visit'
@@ -204,6 +206,8 @@ Rails.application.routes.draw do
       post '/dde/patients/reassign_npid', to: 'dde#reassign_patient_npid'
       post '/dde/patients/merge', to: 'dde#merge_patients'
 
+      get '/sequences/next_accession_number', to: 'sequences#next_accession_number'
+
       post '/reports/encounters' => 'encounters#count'
     end
   end
@@ -244,4 +248,6 @@ Rails.application.routes.draw do
   get '/api/v1/defaulter_list' => 'api/v1/reports#defaulter_list'
   get '/api/v1/missed_appointments' => 'api/v1/reports#missed_appointments'
   post '/api/v1/addresses' => 'api/v1/person_addresses#create'
+  get '/api/v1/person_attributes' => 'api/v1/person_attributes#index'
+  get '/api/v1/archive_active_filing_number' => 'api/v1/patient_identifiers#archive_active_filing_number'
 end

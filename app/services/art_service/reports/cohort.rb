@@ -82,7 +82,7 @@ EOF
 
         (data || []).each do |r|
           patient_id = r['patient_id'].to_i
-          
+
           if pepfar == false
             record = ActiveRecord::Base.connection.select_one <<EOF
             SELECT patient_outcome(#{patient_id}, DATE('#{@end_date}')) AS outcome,
@@ -101,7 +101,7 @@ EOF
           if record['outcome'] == 'Defaulted'
             defaulter_date = record['defaulter_date'].to_date rescue nil
             next if defaulter_date.blank?
-            
+
             date_within = (defaulter_date >= @start_date.to_date && defaulter_date <= @end_date.to_date)
             next unless date_within
 
@@ -141,9 +141,7 @@ EOF
               village: person['village'],
               arv_number: person['arv_number']
             }
-
           end
-           
         end
 
         return patients
