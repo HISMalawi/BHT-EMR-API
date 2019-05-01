@@ -359,18 +359,7 @@ module ANCService
         end
 
         def new_hiv_positive_first_visit(date)
-            Encounter.find_by_sql([
-                "SELECT
-                        e.patient_id,
-                        (select max(encounter_datetime) as date from encounter
-                        inner join obs on obs.person_id = encounter.patient_id
-                        where encounter_type = ? AND obs.concept_id = ? AND DATE(encounter_datetime) >= ?
-                        AND DATE(encounter_datetime) <= ? AND encounter.voided = 0 AND encounter.patient_id = e.patient_id)
-                        AS date,
-                        (SELECT value_datetime FROM obs
-                        WHERE encounter_id = e.encounter_id AND obs.concept_id =
-                        (SELECT concept_id FROM concept_name WHERE name = 'HIV test date' LIMIT 1)) AS test_date
-                        FROM encounter e
+            Encounter.find_by_sql(["SELECT e.patient_id FROM encounter e
                         INNER JOIN obs o ON o.encounter_id = e.encounter_id AND e.voided = 0
                         WHERE o.concept_id = (SELECT concept_id FROM concept_name WHERE name = 'HIV status' LIMIT 1)
                         AND ((o.value_coded = (SELECT concept_id FROM concept_name WHERE name = 'Positive' LIMIT 1))
@@ -378,17 +367,12 @@ module ANCService
                         AND e.patient_id IN (?)
                         AND e.encounter_id = (SELECT MAX(encounter.encounter_id) FROM encounter
                         INNER JOIN obs ON obs.encounter_id = encounter.encounter_id AND obs.concept_id =
-                        (SELECT concept_id FROM concept_name WHERE name = 'HIV test date' LIMIT 1)
+                        (SELECT concept_id FROM concept_name WHERE name = 'HIV Status' LIMIT 1)
                         WHERE encounter_type = e.encounter_type AND patient_id = e.patient_id
                         AND DATE(encounter.encounter_datetime) <= ?)
                         AND (DATE(e.encounter_datetime) <= ?)
-                        GROUP BY e.patient_id
-                        HAVING DATE(date) = DATE(test_date)
-                ",CURRENT_PREGNANCY.id,
-                LMP.concept_id,
-                date.to_date.beginning_of_month.strftime('%Y-%m-%d 00:00:00'),
-                date.to_date.end_of_month.strftime('%Y-%m-%d 23:59:59'),
-                @monthly_patients,(date.to_date - 1.day), (date.to_date - 1.day)
+                        GROUP BY e.patient_id",
+                @monthly_patients,date.to_date.end_of_month,date.to_date.end_of_month
               ]).map(&:patient_id).uniq
         end
 
@@ -483,6 +467,7 @@ module ANCService
         def on_art_in_nart(date)
 
           id_visit_map = []
+          anc_visit = {}
           @total_hiv_positive_first_visit.each do |id|
             next if id.nil?
 
@@ -494,12 +479,12 @@ module ANCService
 
               value = "#{id}|#{date}" unless date.nil?
               id_visit_map << value unless date.nil?
+              anc_visit[id] = date unless date.nil?
 
           end
 
-          anc_visit = Hash.new
           id_visit_map.split(",").each do |map|
-            anc_visit["#{map.split('|').first}"] = map.split('|').last
+            #anc_visit[map.split('|').first] = map.split('|').last
           end
 
           result = Hash.new
@@ -507,20 +492,26 @@ module ANCService
           b4_visit_one = []
           no_art = []
 
+          art_patients = ActiveRecord::Base.connection.select_all <<EOF
+            SELECT patient_id, earliest_start_date FROM temp_earliest_start_date
+            WHERE gender = 'F' AND death_date IS NULL
+EOF
+=begin          raise x.inspect
+
           PatientProgram.find_by_sql("SELECT p.person_id patient_id,
             earliest_start_date_at_clinic(p.person_id) earliest_start_date,
             current_state_for_program(p.person_id, 1, '#{date.to_date.end_of_month}') AS state
 			      FROM person p
             WHERE (p.gender = 'F' OR gender = 'Female')
-            GROUP BY p.person_id").each do | patient |
-              @patient_ids << patient.patient_id
-              anc_patient = Patient.find(patient.patient_id)
-              earliest_start_date = find_patient_earliest_start_date(anc_patient)
-              result["#{patient.patient_id}"] = earliest_start_date
-
-            if ((earliest_start_date.to_date < anc_visit["#{patient.patient_id}"].to_date) rescue false)
-              b4_visit_one << patient.patient_id
-            end
+            GROUP BY p.person_id")
+=end
+          art_patients.each do |patient|
+              @patient_ids << patient["patient_id"]
+              earliest_start_date = patient["earliest_start_date"].to_date
+              result["#{patient["patient_id"]}"] = patient["earliest_start_date"].to_date.strftime("%Y-%m-%d")
+              if ((earliest_start_date.to_date < anc_visit[patient["patient_id"]].to_date rescue false))
+                b4_visit_one << patient["patient_id"]
+              end
 
           end
 
@@ -547,7 +538,7 @@ module ANCService
 
             result["on_cpt"] = cpt_ids.blank? ? [] : cpt_ids.join(",")
 
-            result["arv_before_visit_one"] = b4_visit_one.blank? ? [] : b4_visit_one.join(",")
+            result["arv_before_visit_one"] = b4_visit_one.blank? ? [] : b4_visit_one #.join(",")
 
             result["no_art"] = no_art.join(",")
 
