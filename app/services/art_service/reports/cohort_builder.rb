@@ -17,7 +17,7 @@ module ARTService
         time_started = Time.now.strftime('%Y-%m-%d %H:%M:%S')
 
         # create_temp_earliest_start_date_table(end_date)
-        quarter_start_date = end_date.to_date - QUARTER_LENGTH
+        quarter_start_date = start_date.to_date
 
         # Get earliest date enrolled
         cum_start_date = get_cum_start_date
