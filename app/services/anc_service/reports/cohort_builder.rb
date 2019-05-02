@@ -18,7 +18,7 @@ module ANCService
         TTV = ConceptName.find_by name: "TT STATUS"
         HB  = ConceptName.find_by name: "HB TEST RESULT"
 
-        WEEK_OF_FIRST_VISIT = ConceptName.find_by name: "Week of first visit"
+        WEEK_OF_FIRST_VISIT = ConceptName.find_by name: "Week of First Visit"
         REASON_FOR_VISIT =    ConceptName.find_by name: "Reason for visit"
         HIV_TEST_DATE =       ConceptName.find_by name: "HIV test date"
         PREV_HIV_TEST =       ConceptName.find_by name: "Previous HIV Test Results"
@@ -56,7 +56,7 @@ module ANCService
 
           # women registered in a booking cohort
           @cohort_patients = registrations(@c_start_date.to_date.beginning_of_month,
-                                            @c_end_date.to_date.end_of_month)
+                                            @c_start_date.to_date.end_of_month)
 
           # women registered in a reporting month
           @monthly_patients = registrations(@m_start_date.beginning_of_month, @m_end_date.end_of_month)
@@ -292,7 +292,7 @@ module ANCService
               INNER JOIN obs o ON o.encounter_id = encounter.encounter_id AND o.concept_id = ?
               AND encounter.voided = 0 WHERE program_id = ? AND patient_id IN (?)
               AND DATE(encounter_datetime) BETWEEN (?) AND (?) GROUP BY patient_id HAVING wk < 13",
-              WEEK_OF_FIRST_VISIT.concept_id, PROGRAM.id, @patients_done_pregnancy_test,
+              WEEK_OF_FIRST_VISIT.concept_id, PROGRAM.id, @monthly_patients,
               date.to_date.beginning_of_month.strftime("%Y-%m-%d 00:00:00"),
               date.to_date.end_of_month.strftime("%Y-%m-%d 23:59:59")
             ]).collect { |e|
@@ -307,7 +307,7 @@ module ANCService
               INNER JOIN obs o ON o.encounter_id = encounter.encounter_id AND o.concept_id = ?
               AND encounter.voided = 0 WHERE program_id = ? AND patient_id IN (?) AND DATE(encounter_datetime)
               BETWEEN (?) AND (?) GROUP BY patient_id HAVING wk > 12",
-              WEEK_OF_FIRST_VISIT.concept_id, PROGRAM.id, @patients_done_pregnancy_test,
+              WEEK_OF_FIRST_VISIT.concept_id, PROGRAM.id, @monthly_patients,
               date.to_date.beginning_of_month.strftime("%Y-%m-%d 00:00:00"),
               date.to_date.end_of_month.strftime("%Y-%m-%d 23:59:59")
             ]).collect { |e|
