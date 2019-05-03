@@ -7,10 +7,10 @@ module ARTService
   class WorkflowEngine
     include ModelUtils
 
-    def initialize(program:, patient:, date:)
+    def initialize(patient:, date: nil, program: nil)
       @patient = patient
-      @program = program
-      @date = date
+      @program = program || load_hiv_program
+      @date = date || Date.today
       @activities = load_user_activities
     end
 
@@ -130,7 +130,7 @@ module ARTService
     # NOTE: By `relevant` above we mean encounters that matter in deciding
     # what encounter the patient should go for in this present time.
     def encounter_exists?(type)
-      Encounter.where(type: type, patient: @patient)\
+      Encounter.where(type: type, patient: @patient, program: @program)\
                .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
                .exists?
     end
@@ -162,24 +162,25 @@ module ARTService
     # Pre-condition for VITALS encounter
     def patient_checked_in?
       encounter_type = EncounterType.find_by name: HIV_RECEPTION
-      encounter = Encounter.where(
-        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
-        @patient.patient_id, encounter_type.encounter_type_id, @date
-      ).order(encounter_datetime: :desc).first
+      encounter = Encounter.where(patient: @patient, type: encounter_type, program: @program)\
+                           .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
+                           .order(encounter_datetime: :desc)\
+                           .first
       raise "Can't check if patient checked in due to missing HIV_RECEPTION" if encounter.nil?
 
       patient_present_concept = concept PATIENT_PRESENT
       yes_concept = concept 'YES'
-      encounter.observations.exists? concept_id: patient_present_concept.concept_id,
-                                     value_coded: yes_concept.concept_id
+      encounter.observations\
+               .where(concept_id: patient_present_concept.concept_id,
+                      value_coded: yes_concept.concept_id)\
+               .exists?
     end
 
     # Check if patient is not registered
     def patient_not_registered?
       is_registered = Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ?',
-        HIV_CLINIC_REGISTRATION,
-        @patient.patient_id
+        'encounter_type.name = ? AND encounter.patient_id = ? AND encounter.program_id = ?',
+        HIV_CLINIC_REGISTRATION, @patient.patient_id, @program.program_id
       ).exists?
 
       !is_registered
@@ -193,10 +194,13 @@ module ARTService
       visiting_patient_concept = concept('External consultation')
       raise '"External consultation" concept not found' unless visiting_patient_concept
 
-      is_visiting_patient = Observation.where(
+      is_visiting_patient = Observation.joins(:encounter).where(
         concept: patient_type_concept,
         person: @patient.person,
-        value_coded: visiting_patient_concept.concept_id
+        value_coded: visiting_patient_concept.concept_id,
+        encounter: { program_id: @program.program_id }
+      ).where(
+        'obs_datetime <= ?', TimeUtils.day_bounds(@date)[1]
       ).exists?
 
       !is_visiting_patient
@@ -209,11 +213,11 @@ module ARTService
       prescribe_drugs_concept = concept('Prescribe drugs')
       no_concept = concept('No')
       start_time, end_time = TimeUtils.day_bounds(@date)
-      !Observation.where(
+      !Observation.joins(:encounter).where(
         'concept_id = ? AND value_coded = ? AND person_id = ?
-         AND obs_datetime BETWEEN ? AND ?',
+         AND program_id = ? AND obs_datetime BETWEEN ? AND ?',
         prescribe_drugs_concept.concept_id, no_concept.concept_id,
-        @patient.patient_id, start_time, end_time
+        @patient.patient_id, @program.program_id, start_time, end_time
       ).exists?
     end
 
@@ -223,9 +227,12 @@ module ARTService
     def patient_got_treatment?
       encounter_type = EncounterType.find_by name: TREATMENT
       encounter = Encounter.select('encounter_id').where(
-        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
-        @patient.patient_id, encounter_type.encounter_type_id, @date
+        'patient_id = ? AND program_id = ? AND encounter_type = ?
+         AND encounter_datetime BETWEEN ? AND ?',
+        @patient.patient_id, @program.program_id, encounter_type.encounter_type_id,
+        *TimeUtils.day_bounds(@date)
       ).order(encounter_datetime: :desc).first
+
       !encounter.nil? && encounter.orders.exists?
     end
 
@@ -237,19 +244,20 @@ module ARTService
       # achieving the desired effect.
       arv_ids = Drug.arv_drugs.map(&:drug_id)
       arv_ids_placeholders = "(#{(['?'] * arv_ids.size).join(', ')})"
-      Observation.where(
+      Observation.joins(:encounter).where(
         "person_id = ? AND value_drug in #{arv_ids_placeholders} AND
-         obs_datetime < ?",
-        @patient.patient_id, *arv_ids, @date.to_date
+         obs_datetime < ? AND encounter.program_id = ?",
+        @patient.patient_id, *arv_ids, @date.to_date, @program.program_id
       ).exists?
     end
 
     # Checks if patient has not undergone staging before
     def patient_not_already_staged?
-      encounter_type = EncounterType.find_by name: 'HIV Staging'
+      encounter_type = EncounterType.find_by(name: 'HIV Staging')
       patient_staged = Encounter.where(
-        'patient_id = ? AND encounter_type = ? AND encounter_datetime < ?',
-        @patient.patient_id, encounter_type.encounter_type_id, @date.to_date + 1.days
+        'patient_id = ? AND program_id = ? AND encounter_type = ? AND encounter_datetime < ?',
+        @patient.patient_id, @program.program_id, encounter_type.encounter_type_id,
+        @date.to_date + 1.days
       ).exists?
       !patient_staged
     end
@@ -257,7 +265,10 @@ module ARTService
     def dispensing_complete?
       prescription_type = EncounterType.find_by(name: TREATMENT).encounter_type_id
       prescription = Encounter.find_by(encounter_type: prescription_type,
-                                       patient_id: @patient.patient_id)
+                                       patient_id: @patient.patient_id,
+                                       program_id: @program.program_id)
+
+      return false unless prescription
 
       complete = false
 
@@ -275,7 +286,9 @@ module ARTService
 
     # Checks whether current patient is on a fast track visit
     def patient_not_on_fast_track?
-      on_fast_track = Observation.where(concept: concept('Fast'), person: @patient.person)\
+      on_fast_track = Observation.joins(:encounter)\
+                                 .where(concept: concept('Fast'), person_id: @patient.patient_id,
+                                        encounter: { program_id: @program.program_id })\
                                  .where('obs_datetime <= ?', TimeUtils.day_bounds(@date)[1])\
                                  .order(obs_datetime: :desc)\
                                  .first
@@ -294,9 +307,11 @@ module ARTService
     def patient_has_not_completed_fast_track_visit?
       return !@fast_track_completed if @fast_track_completed
 
-      @fast_track_completed = Observation.where(concept: concept('Fast track visit'),
+      @fast_track_completed = Observation.joins(:encounter)\
+                                         .where(concept: concept('Fast track visit'),
                                                 person: @patient.person,
-                                                value_coded: concept('Yes').concept_id)\
+                                                value_coded: concept('Yes').concept_id,
+                                                encounter: { program_id: @program.program_id })\
                                          .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))
                                          .order(obs_datetime: :desc)\
                                          .exists?
@@ -311,6 +326,10 @@ module ARTService
 
     def htn_workflow
       HtnWorkflow.new
+    end
+
+    def load_hiv_program
+      program('HIV Program')
     end
   end
 end

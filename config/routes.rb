@@ -204,6 +204,8 @@ Rails.application.routes.draw do
       post '/dde/patients/reassign_npid', to: 'dde#reassign_patient_npid'
       post '/dde/patients/merge', to: 'dde#merge_patients'
 
+      get '/sequences/next_accession_number', to: 'sequences#next_accession_number'
+
       post '/reports/encounters' => 'encounters#count'
     end
   end
