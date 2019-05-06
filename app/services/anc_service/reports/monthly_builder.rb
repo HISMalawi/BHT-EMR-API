@@ -297,7 +297,7 @@ module ANCService
                 ON o.encounter_id = e.encounter_id AND e.voided = 0
                 WHERE o.concept_id = ? AND (o.value_coded = ? OR o.value_text = 'Positive')
                 AND e.patient_id IN (?)", HIV_STATUS.concept_id, POSITIVE.concept_id,
-                @new_monthly_visits]).map(&:patient_id)
+                @new_monthly_visits]).map(&:patient_id).uniq
 
         end
 
