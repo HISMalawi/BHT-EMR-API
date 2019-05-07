@@ -3,6 +3,9 @@
 module ANCService
     module Reports
       class MonthlyBuilder
+
+        PROGRAM = Program.find_by name: "ANC Program"
+
         LAB_RESULTS =       EncounterType.find_by name: "LAB RESULTS"
         CURRENT_PREGNANCY = EncounterType.find_by name: "CURRENT PREGNANCY"
         ANC_VISIT_TYPE =    EncounterType.find_by name: "ANC VISIT TYPE"
@@ -67,7 +70,7 @@ module ANCService
         end
 
         def total_number_of_anc_visits
-
+=begin
           all_anc_patients = Encounter.joins(['INNER JOIN obs ON obs.person_id = encounter.patient_id'])
             .where(['encounter_type = ? AND obs.concept_id = ?
               AND DATE(encounter_datetime) >= ? AND DATE(encounter_datetime) <= ?
@@ -75,6 +78,11 @@ module ANCService
               (@start_date.to_date - 9.months), @end_date])
             .select(['MAX(value_datetime) lmp, patient_id'])
             .group([:patient_id]).collect { |e| e.patient_id }.uniq
+=end
+          all_anc_patients = Encounter.joins(['INNER JOIN obs ON obs.person_id = encounter.patient_id']).where(['DATE(encounter_datetime) >= ?
+                              AND DATE(encounter_datetime) <= ? AND encounter.voided = 0 AND encounter.program_id = ?',
+                              @start_date.to_date, @end_date.to_date, PROGRAM.id]
+    ).group([:patient_id]).collect { |e| e.patient_id }.uniq
 
         end
 
