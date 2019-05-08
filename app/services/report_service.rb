@@ -130,7 +130,7 @@ class ReportService
     kwargs[:user] = User.current.user_id
     kwargs[:lock] = lock.to_s
 
-    LOGGER.debug("Queueing #{type.name} report with arguments: #{kwargs}")
+    LOGGER.debug("Queueing #{kwargs['type']} report: #{kwargs}")
     if @immediate_mode
       ReportJob.perform_now(engine(@program).class.to_s, **kwargs)
     else
