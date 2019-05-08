@@ -3,11 +3,12 @@
 module ARTService
   module Reports
     class CohortDisaggregated
-      def initialize(name:, type:, start_date:, end_date:)
+      def initialize(name:, type:, start_date:, end_date:, rebuild:)
         @name = name
         @type = type
         @start_date = start_date
         @end_date = end_date
+        @rebuild = rebuild
       end
 
       def find_report
