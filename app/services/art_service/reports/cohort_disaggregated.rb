@@ -114,15 +114,30 @@ EOF
 
         (tmp || []).each do |r|
           gender = r['gender'].first
-          tx_new, tx_curr, tx_screened_for_tb, tx_given_ipt = get_numbers(r, age_group, start_date, end_date, all_clients_outcomes)
+          patient_id = r['patient_id'].to_i
+          tx_new, tx_curr, tx_given_ipt, tx_screened_for_tb = get_numbers(r, age_group, start_date, end_date, all_clients_outcomes)
+
+          list[age_group] = {} if list[age_group].blank?
+
+          list[age_group][gender] = {
+            tx_new: 0, tx_curr: 0,
+            tx_screened_for_tb: 0,
+            tx_given_ipt: 0
+          } if list[age_group][gender].blank?
+
+
+          list[age_group][gender][:tx_new] += tx_new
+          list[age_group][gender][:tx_curr] += tx_curr
+          list[age_group][gender][:tx_given_ipt] += tx_given_ipt
+          list[age_group][gender][:tx_screened_for_tb] += tx_screened_for_tb
+
 
           if gender == 'F'
-            insert_female_maternal_status(r['patient_id'], age_group, end_date)
+            insert_female_maternal_status(patient_id, age_group, end_date)
           end
 
         end
 
-        arrangeGroups(age_group, list, start_date.to_date, end_date.to_date)
         return list
       end
 
@@ -590,57 +605,6 @@ EOF
 
       end
       
-      def arrangeGroups(age_group, list, start_date, end_date)
-
-        data = ActiveRecord::Base.connection.select_all <<EOF
-          SELECT t.*, e.* FROM temp_disaggregated t
-          INNER JOIN temp_earliest_start_date e USING(patient_id)
-          WHERE age_group = '#{age_group}';
-EOF
-
-        (data || []).each do |r|
-          
-          list[age_group] = {} if list[age_group].blank?
-          gender = r['gender'].first.upcase
-
-          list[age_group][gender] = {
-            tx_new: 0, tx_curr: 0,
-            tx_screened_for_tb: 0,
-            tx_given_ipt: 0
-          } if list[age_group][gender].blank?
-      
-          date_enrolled = r['date_enrolled'].to_date
-          earliest_start_date = r['earliest_start_date'].to_date rescue date_enrolled
-          
-          tx_new = 0
-
-          if date_enrolled == earliest_start_date
-            if date_enrolled >= start_date && date_enrolled <= end_date
-              tx_new = 1
-            end
-          end
-
-          tx_screened_for_tb =  r['screened_for_tb'].to_i
-          tx_given_ipt = r['given_ipt'].to_i
-
-          list[age_group][gender][:tx_new] += tx_new
-          list[age_group][gender][:tx_curr] += 1
-          list[age_group][gender][:tx_screened_for_tb] += tx_screened_for_tb
-          list[age_group][gender][:tx_given_ipt] += tx_given_ipt
-        end
-
-      end
-
-
-
-
-
-
-
-
-
-
-
     end
   end
 
