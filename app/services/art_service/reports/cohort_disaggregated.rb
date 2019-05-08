@@ -19,6 +19,23 @@ module ARTService
         builder = CohortDisaggregatedBuilder.new
         builder.build(nil, @start_date, @end_date)
       end
+      
+      def initialize_disaggregated
+
+        ActiveRecord::Base.connection.execute('DROP TABLE IF EXISTS temp_disaggregated')
+
+        ActiveRecord::Base.connection.execute(
+          'CREATE TABLE IF NOT EXISTS temp_disaggregated (
+             patient_id INTEGER PRIMARY KEY,
+             age_group VARCHAR(20),
+             maternal_status VARCHAR(10),
+             given_ipt INT(1),
+             screened_for_tb INT(1)
+          ) ENGINE=MEMORY;'
+        )
+
+        return {temp_disaggregated: 'created'}
+      end
 
       def disaggregated(quarter, age_group)
         create_mysql_age_group_function
