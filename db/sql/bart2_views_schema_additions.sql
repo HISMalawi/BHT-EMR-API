@@ -1340,7 +1340,7 @@ BEGIN
         END IF;
     END LOOP;
 
-    IF DATEDIFF(my_end_date, my_expiry_date) > 60 THEN
+    IF TIMESTAMPDIFF(day, my_expiry_date, my_end_date) >= 60 THEN
         SET my_defaulted_date = ADDDATE(my_expiry_date, 60);
     END IF;
 
@@ -1917,7 +1917,7 @@ DECLARE done INT DEFAULT FALSE;
       END IF;
     END LOOP;
 
-    IF DATEDIFF(my_end_date, my_expiry_date) > 60 THEN
+    IF TIMESTAMPDIFF(day, DATE(my_expiry_date), DATE(my_end_date)) >= 60 THEN
       SET my_defaulted_date = ADDDATE(my_expiry_date, 60);
     END IF;
 
@@ -2077,10 +2077,6 @@ END IF;
 
 RETURN set_outcome;
 END;
-<<<<<<< HEAD
-=======
-
-
 
 /*
 -- The following are PEPFAR functions, used for PEPFAR reports; Disagreggated report and Defaulter list
