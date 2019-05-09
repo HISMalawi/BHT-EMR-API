@@ -26,7 +26,7 @@ module ARTService
         if encounter_type.blank? && state == HIV_CLINIC_CONSULTATION_CLINICIAN
           encounter_type = EncounterType.find_by(name: HIV_CLINIC_CONSULTATION)
           encounter_type.name = HIV_CLINIC_CONSULTATION_CLINICIAN
-          return htn_transform(encounter_type) 
+          return encounter_type if referred_to_clinician?
         end
 
         return htn_transform(encounter_type) if valid_state?(state)
@@ -83,8 +83,7 @@ module ARTService
       ART_ADHERENCE => %i[patient_received_art?
                           patient_has_not_completed_fast_track_visit?],
       HIV_CLINIC_CONSULTATION_CLINICIAN => %i[patient_not_on_fast_track?
-                                    patient_has_not_completed_fast_track_visit?
-                                    referred_to_clinician?],
+                                    patient_has_not_completed_fast_track_visit?],
       TREATMENT => %i[patient_should_get_treatment?
                       patient_has_not_completed_fast_track_visit?],
       FAST_TRACK => %i[fast_track_activated?
@@ -342,12 +341,13 @@ module ARTService
       referred = Observation.joins(:encounter)\
                  .where(concept: concept('Refer to ART clinician'),
                         person: @patient.person,
-                        value_coded: concept('Yes').concept_id,
                         encounter: { program_id: @program.program_id })\
                  .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))
-                 .order(obs_datetime: :desc)\
-                 .exists?
-
+                 .order(date_created: :desc, obs_datetime: :desc).first
+    
+     return false if referred.blank?
+     return true if referred.value_coded == concept('Yes').concept_id
+     return false
     end
 
     def htn_workflow
