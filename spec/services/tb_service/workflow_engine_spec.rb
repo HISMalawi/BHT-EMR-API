@@ -76,7 +76,7 @@ describe TBService::WorkflowEngine do
 
     it 'returns LAB RESULTS for a TB suspect after Lab Order' do
       enroll_patient patient
-      tb_initial_encounter patient
+      test_procedure_type(patient, tb_initial_encounter(patient), "Laboratory examinations")
       lab_orders_encounter patient
       encounter_type = engine.next_encounter
       expect(encounter_type.name.upcase).to eq('LAB RESULTS')
@@ -160,8 +160,7 @@ describe TBService::WorkflowEngine do
 
   def lab_orders_encounter(patient)
     lab_order = create :encounter, type: encounter_type('LAB ORDERS'),
-                                   patient: patient, program_id: tb_program.program_id,
-                                   encounter_datetime: '2019-05-08 09:30:12'
+                                   patient: patient, program_id: tb_program.program_id
     lab_order
   end
 

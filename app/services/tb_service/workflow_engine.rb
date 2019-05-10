@@ -79,27 +79,27 @@ module TBService
       TB_ADHERENCE => %i[patient_received_tb_drugs?
                                     patient_not_tb_negative_through_diagnosis?
                                     patient_is_not_a_transfer_out?
-                                    patient_should_proceed_after_lab_order?],
+                                    patient_should_proceed_for_treatment?],
       TREATMENT => %i[patient_should_get_treatment? 
                                     patient_tb_positive?
                                     patient_not_tb_negative_through_diagnosis?
-                                    patient_should_proceed_after_lab_order?],
+                                    patient_should_proceed_for_treatment?],
       DISPENSING => %i[patient_got_treatment? 
                                     patient_tb_positive?
                                     patient_not_tb_negative_through_diagnosis?
-                                    patient_should_proceed_after_lab_order?],
+                                    patient_should_proceed_for_treatment?],
       DIAGNOSIS => %i[patient_not_tb_negative_through_diagnosis?
                                     patient_should_be_be_tested_through_diagnosis?],
       LAB_RESULTS => %i[patient_has_no_lab_results?
-                                    patient_not_tb_negative_through_diagnosis?
-                                    patient_should_proceed_after_lab_order?],
+                                    patient_should_be_be_tested_through_lab?
+                                    patient_should_proceed_for_treatment?],
       VITALS => %i[patient_tb_positive?
                                     patient_not_tb_negative_through_diagnosis?
-                                    patient_should_proceed_after_lab_order?],
+                                    patient_should_proceed_for_treatment?],
       APPOINTMENT => %i[dispensing_complete? 
                                     appointment_not_complete? 
                                     patient_is_not_a_transfer_out?
-                                    patient_should_proceed_after_lab_order?]
+                                    patient_should_proceed_for_treatment?]
     }.freeze   
 
     #patient found TB negative under diagnosis should go home
@@ -237,8 +237,8 @@ module TBService
       status_concept = concept('TB status')
       negative = concept('Positive')
       Observation.where(
-        'person_id = ? AND concept_id = ? AND value_coded = ?', 
-        @patient.patient_id, status_concept.concept_id, negative.concept_id
+        'person_id = ? AND concept_id = ? AND value_coded = ? AND DATE(obs_datetime) = DATE(?)', #Add Date
+        @patient.patient_id, status_concept.concept_id, negative.concept_id, @date
       ).order(obs_datetime: :desc).first.present?
     end
 
@@ -312,9 +312,10 @@ module TBService
     #return to the patient dashboard if patient lab test has been ordered within 1 hour
     def patient_should_proceed_after_lab_order?
       encounter = Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ?',
+        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
         LAB_ORDERS,
-        @patient.patient_id
+        @patient.patient_id,
+        @date
       ).order(encounter_datetime: :desc).first
 
       begin
@@ -324,6 +325,10 @@ module TBService
       rescue
         false          
       end
+    end
+
+    def patient_should_proceed_for_treatment?
+      patient_should_proceed_after_lab_order? || patient_tb_positive?
     end
 
     def patient_should_be_be_tested_through_lab?
