@@ -64,8 +64,14 @@ class StockManagementService
     batch
   end
 
-  def find_stock_items_by_drug_id(drug_id)
-    PharmacyBatchItem.where(drug_id: drug_id)
+  def find_batch_item_by_id(id)
+    PharmacyBatchItem.find(id)
+  end
+
+  def find_batch_items(filters = {})
+    query = PharmacyBatchItem
+    query = query.where(filters) unless filters.empty?
+    query.order(Arel.sql('date_created DESC, expiry_date ASC'))
   end
 
   def void_batch(batch_number, reason)
@@ -74,9 +80,9 @@ class StockManagementService
     batch.void(reason)
   end
 
-  def update_batch_item(batch_item_id, parameters)
+  def update_batch_item(batch_item_id, params)
     item = PharmacyBatchItem.find(batch_item_id)
-    item.update(parameters.permit(:delivery_date, :expiry_date, :quantity))
+    item.update(params)
     # create_stock_transaction(item, quantity, STOCK_EDIT, Date.today)
   end
 
@@ -85,7 +91,14 @@ class StockManagementService
     item.void(reason)
   end
 
-  def reallocate_drugs(reallocation_code, stock_item_id, quantity, destination)
+  def find_earliest_expiring_item(filters = {})
+    item = PharmacyBatchItem.where(filters).order(expiry_date: :asc).first
+    raise NotFoundError, 'No items found' unless item
+
+    item
+  end
+
+  def reallocate_items(reallocation_code, stock_item_id, quantity, destination)
     ActiveRecord::Base.transaction do
       activity = create_pharmacy_activity(STOCK_REALLOCATION)
       add_pharmacy_activity_property(activity, REALLOCATION_DRUG, stock_item_id: stock_item_id,
