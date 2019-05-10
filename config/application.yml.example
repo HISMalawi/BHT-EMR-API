@@ -25,27 +25,41 @@ dde:
     username: admin
     password: bht.dde3!
 
-# CouchDB configuration
-#
-# This is optional, it is required only if you intend to sync data with
-# the RDS (ie if you intend to `bin/rds_push`)
-couchdb:
-  local:
-    protocol: http
-    host: 127.0.0.1
-    port: 5984
-    database: rds
-    username: admin
-    password: password
+rds:
+  # CouchDB configuration
+  #
+  # This is optional, it is required only if you intend to sync data with
+  # the RDS (ie if you intend to `bin/rds_push`)
+  couchdb:
+    local:
+      protocol: http
+      host: 127.0.0.1
+      port: 5984
+      database: rds
+      username: admin
+      password: password
 
-  master:
-    protocol: http
-    host: 127.0.0.1
-    port: 5984
-    database: rds
-    username: admin
-    password: password
+    master:
+      protocol: http
+      host: 127.0.0.1
+      port: 5984
+      database: rds
+      username: admin
+      password: password
 
-# Required for `bin/rds_push` when targeting databases that don't
-# have encounter_id (or is always nil) in encounters table.
-program_name: hiv program
+  databases:
+    # The databases defined here must have a corresponding entry in the
+    # database.yml file that holds the database's connection parameters.
+
+    # NOTE: The program_names specified below will be overriden by
+    # encounter program if one exists.
+    development:
+      program_name: 'ART PROGRAM'
+
+    # Uncomment out the following to enable syncing from HTS and ANC
+    # databases.
+    #
+    # hts:
+    #   program_name: 'HYPERTENSION PROGRAM'
+    # anc:
+    #   program_name: 'ANC PROGRAM'

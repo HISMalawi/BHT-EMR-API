@@ -19,7 +19,6 @@ end.new
 # RestClient.log = LOGGER
 
 APPLICATION_CONFIG_PATH = Rails.root.join('config/application.yml')
-DATABASE_CONFIG_PATH = Rails.root.join('config/database.yml').to_s
 DELTA_STATE_PATH = Rails.root.join('log/rds-sync-state.yml')
 
 MODELS = [Person, PersonAttribute, PersonAddress, PersonName, User, Patient,
@@ -32,25 +31,26 @@ TIME_EPOCH = '1970-01-01'.to_time
 # They probably are not meant to be changed after creation.
 IMMUTABLE_MODELS = [PersonAddress, PatientIdentifier, Observation, Order].freeze
 
-def main
+def main(database, program_name)
+  LOGGER.info("Scraping database [#{database}, #{program_name}]")
   initiate_couch_sync
 
   MODELS.each do |model|
     LOGGER.debug("Scanning model: #{model}")
     last_update_time = delta(model)
 
-    recent_records(model, last_update_time).each do |record|
+    recent_records(model, last_update_time, database).each do |record|
       LOGGER.debug("Handling #{model} ##{record.id}")
 
       update_time = record_update_time(record)
       last_update_time = update_time if update_time > last_update_time
 
-      sync_status = find_record_sync_status(record)
+      sync_status = find_record_sync_status(record, database)
       next if record_already_synced?(record, sync_status)
 
-      record_doc_id = push_record(record, sync_status&.record_doc_id)
+      record_doc_id = push_record(record, sync_status&.record_doc_id, program_name)
 
-      save_record_sync_status(sync_status, record, record_doc_id)
+      save_record_sync_status(sync_status, record, record_doc_id, database)
     rescue RestClient::Exception => e
       LOGGER.error("Failed to write #{model} ##{record.id} due to exception: #{e.class} - #{e} - #{e.response.body}")
     end
@@ -79,16 +79,11 @@ end
 def config
   return @config if @config
 
-  application_config = YAML.load_file(APPLICATION_CONFIG_PATH)
-  database_config = YAML.load_file(DATABASE_CONFIG_PATH)
+  @config = YAML.load_file(APPLICATION_CONFIG_PATH)['rds']
 
-  raise '[couchdb] config not found in in `application.yml`' unless application_config['couchdb']
+  raise '[rds] config not found in `application.yml`' if @config.blank?
 
-  @config = {
-    'database' => database_config['secondary'] || database_config['development'],
-    'couchdb' => application_config['couchdb'],
-    'program_name' => application_config['program_name']
-  }
+  @config
 end
 
 def save_delta(model, time)
@@ -105,7 +100,10 @@ def save_delta(model, time)
   end
 end
 
-def recent_records(model, delta)
+def recent_records(model, delta, database)
+  LOGGER.info("Retrieving #{model}s from database '#{database}' starting at #{delta}")
+  model.establish_connection(database.to_sym)
+
   # HACK: person address seems to be missing `date_changed` field so we
   # fall back to the existing `date_created`
   return model.where('date_created > ?', delta) if immutable_model?(model)
@@ -136,9 +134,10 @@ def record_update_time(record)
   record.date_changed
 end
 
-def find_record_sync_status(record)
+def find_record_sync_status(record, database)
   RecordSyncStatus.where(record_type: RecordType.find_by_name(record.class.to_s),
-                         record_id: record.id)\
+                         record_id: record.id,
+                         database: database)\
                   .first
 end
 
@@ -148,7 +147,7 @@ def record_already_synced?(record, sync_status)
   record_update_time(record) <= sync_status.updated_at
 end
 
-def save_record_sync_status(sync_status, record, record_doc_id)
+def save_record_sync_status(sync_status, record, record_doc_id, database)
   time = Time.now
 
   if sync_status
@@ -160,6 +159,7 @@ def save_record_sync_status(sync_status, record, record_doc_id)
     record_type: RecordType.find_by_name(record.class.to_s),
     record_doc_id: record_doc_id,
     record_id: record.id,
+    database: database,
     created_at: time,
     updated_at: time
   )
@@ -172,10 +172,10 @@ end
 #                   an update of the couch document with record.
 #
 # @returns  - A couch document id for the pushed record
-def push_record(record, doc_id = nil)
+def push_record(record, doc_id = nil, program_name = nil)
   LOGGER.debug("Pushing record to couch db: #{record.class} ##{record.id}(doc_id: #{doc_id || 'N/A'}) ")
 
-  record = serialize_record(record)
+  record = serialize_record(record, program_name)
 
   if doc_id
     push_existing_record(record, doc_id)
@@ -185,7 +185,7 @@ def push_record(record, doc_id = nil)
 end
 
 # Convert record to JSON
-def serialize_record(record)
+def serialize_record(record, program_name = nil)
   record = transform_record_keys(record)
 
   serialized_record = record.as_json(ignore_includes: true)
@@ -196,11 +196,10 @@ def serialize_record(record)
     # that use the old openmrs standard that has no program
     # specific encounters. Thus we manually have to set the program
     # id using the value specified in the config file.
-    program_name = config['program_name']
-    raise 'program_name not found in couch config: application.yml' unless program_name
+    raise 'program_name required for encounters without program_id' if program_name.blank?
 
     program = Program.find_by_name(program_name)
-    raise 'Invalid program name in couch config: application.yml' unless program
+    raise "Invalid program name '#{program_name}' in rds config: application.yml" unless program
 
     serialized_record['program_id'] = program.id
   end
@@ -363,5 +362,7 @@ end
 with_lock do
   config # Load configuration early to ensure its sanity before doing anything
 
-  main
+  config['databases'].each do |database, database_config|
+    main(database, database_config['program_name'])
+  end
 end
