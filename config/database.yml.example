@@ -23,17 +23,15 @@ production:
 # you need to sync hts and anc to RDS.
 #
 # hts:
-#   adapter: mysql2
+#   <<: *default
+#   host: localhost
 #   username: root
 #   database: openmrs_anc
 #   password: password
-#   host: localhost
-#   pool: 500
 
 # anc:
-#   adapter: mysql2
-#   username: root
-#   database: openmrs_hts
-#   password: password
+#   <<: *default
 #   host: localhost
-#   pool: 500
+#   database: openmrs_hts
+#   username: root
+#   password: password
