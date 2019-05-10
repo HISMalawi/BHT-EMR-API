@@ -186,9 +186,9 @@ end
 
 # Convert record to JSON
 def serialize_record(record, program_name = nil)
-  record = transform_record_keys(record)
-
   serialized_record = record.as_json(ignore_includes: true)
+  record = transform_record_keys(record, serialized_record)
+
   serialized_record['record_type'] = record.class.to_s
 
   if record.class == Encounter && record.respond_to?(:program_id) && record.program_id.nil?
@@ -210,26 +210,24 @@ end
 SITE_CODE_MAX_WIDTH = 5
 
 # Transforms primary key and foreign keys on record to the format required in RDS
-def transform_record_keys(record)
-  new_record = record.dup
-
+def transform_record_keys(record, serialized_record)
   site_id = GlobalProperty.find_by_property('current_health_center_id')\
                           .property_value\
                           .to_s\
                           .rjust(SITE_CODE_MAX_WIDTH, '0')
-  new_record.id = "#{record.id}#{site_id}".to_i
+  serialized_record[record.class.primary_key.to_s] = "#{record.id}#{site_id}".to_i
 
-  new_record.class.reflect_on_all_associations(:belongs_to).each do |association|
+  record.class.reflect_on_all_associations(:belongs_to).each do |association|
     next unless MODELS.include?(association.class_name.constantize)\
-                  && association.foreign_key.to_s != new_record.class.primary_key.to_s
+                  && association.foreign_key.to_s != record.class.primary_key.to_s
 
-    id = new_record.send(association.foreign_key.to_sym)
+    id = record.send(association.foreign_key.to_sym)
     next unless id
 
-    new_record.send("#{association.foreign_key}=".to_sym, "#{id}#{site_id}".to_i)
+    serialized_record[association.foreign_key.to_s] = "#{id}#{site_id}".to_i
   end
 
-  new_record
+  serialized_record
 end
 
 # Push a new record to couch db
