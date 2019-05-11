@@ -18,10 +18,20 @@ production:
   <<: *default
   database: mlambe_api_production
 
-healthdata:
-  adapter: mysql2
-  username: root
-  database: healthdata
-  password: password
-  host: localhost
-  pool: 500
+
+# Uncomment out the following and update them accordingly if
+# you need to sync hts and anc to RDS.
+#
+# hts:
+#   <<: *default
+#   host: localhost
+#   username: root
+#   database: openmrs_anc
+#   password: password
+
+# anc:
+#   <<: *default
+#   host: localhost
+#   database: openmrs_hts
+#   username: root
+#   password: password
