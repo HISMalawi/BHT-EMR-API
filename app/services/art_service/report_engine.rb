@@ -11,7 +11,8 @@ module ARTService
       'COHORT_DISAGGREGATED' => ARTService::Reports::CohortDisaggregated,
       'COHORT_SURVIVAL_ANALYSIS' => ARTService::Reports::CohortSurvivalAnalysis,
       'VISITS' => ARTService::Reports::VisitsReport,
-      'APPOINTMENTS' => ARTService::Reports::AppointmentsReport
+      'APPOINTMENTS' => ARTService::Reports::AppointmentsReport,
+      'IPT' => ARTService::Reports::IPTReport
     }.freeze
 
     def generate_report(type:, **kwargs)
@@ -53,6 +54,11 @@ module ARTService
     def missed_appointments(start_date, end_date)
       REPORTS['APPOINTMENTS'].new(start_date: start_date.to_date,
         end_date: end_date.to_date).missed_appointments
+    end
+
+    def ipt_coverage(start_date, end_date)
+      REPORTS['IPT'].new(start_date: start_date.to_date,
+        end_date: end_date.to_date).ipt_coverage
     end
 
     private
