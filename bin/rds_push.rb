@@ -187,7 +187,7 @@ end
 # Convert record to JSON
 def serialize_record(record, program_name = nil)
   serialized_record = record.as_json(ignore_includes: true)
-  record = transform_record_keys(record, serialized_record)
+  transform_record_keys(record, serialized_record)
 
   serialized_record['record_type'] = record.class.to_s
 
