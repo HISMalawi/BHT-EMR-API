@@ -5,9 +5,36 @@ require 'set'
 module TBService
   class RegimenEngine
     include ModelUtils
+    include TimeUtils
 
     def initialize(program:)
       @program = program
+    end
+
+    def is_eligible_for_ipt? (person:)
+      return false if TimeUtils.get_person_age(birthdate: person.birthdate) > 5
+      person_is_tb_negative?(person: person)
+    end
+
+    def person_is_tb_negative? (person:)
+      Observation.where(person: person,
+        concept: concept('TB Status'),
+        value_coded: concept('Negative').concept_id).exists?
+    end
+
+    def find_ipt_drug (weight:)
+      drug = drug('INH or H (Isoniazid 100mg tablet)')
+      drug = drug('INH or H (Isoniazid 300mg tablet)') if weight > 25
+      remap_ipt_drug_to_regimen(ipt_drug: drug)
+    end
+
+    def remap_ipt_drug_to_regimen (ipt_drug:)
+      [{
+        am_dose: 1,
+        noon_dose: 0,
+        pm_dose: 0,
+        drug: ipt_drug
+      }]
     end
 
     def patient_state_service
@@ -22,12 +49,13 @@ module TBService
       tb_extra_concepts = Concept.joins(:concept_names).where(concept_name: { name: %w[Isoniazid Rifampicin Pyrazinamide Ethambutol] } )
       drugs = Drug.where(concept: tb_extra_concepts)
       drugs
-		end
+    end
 		
 		#NEED TO CHECK WHICH PATIENT ENCOUNTER OF PRESCRIPTION
 		#OBERVATION IF ON INTENSIVE OR CONTINOUS PHASE
 		#regimes based onw weight
     def find_regimens(patient, pellets: false)
+      return find_ipt_drug(weight: patient.weight) if is_eligible_for_ipt?(person: patient.person)
         regimens = NtpRegimen.where(
           '(CAST(min_weight AS DECIMAL(4, 1)) <= :weight
            AND CAST(max_weight AS DECIMAL(4, 1)) >= :weight)',

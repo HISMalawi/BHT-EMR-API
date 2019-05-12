@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 require 'rails_helper'
+
 require_relative '../../../app/services/drug_order_service'
 require_relative '../../../app/services/nlims'
 
@@ -33,7 +34,35 @@ describe TBService::RegimenEngine do
 		date_created: Time.now, creator: 1, provider_id: 1, location_id: 700) 
   end
   
-	describe 'TB Patient regimen' do
+	describe 'TB Patient Regimen' do
+		describe 'IPT Treatment Eligibility' do
+			let(:minor) { Person.create(birthdate: 4.years.ago) }
+			let(:adult) { Person.create(birthdate: 6.years.ago) }
+			let(:minor_patient) { Patient.create(patient_id: minor.person_id) }
+			it 'returns false when the person is not <= 5 years old' do
+				expect(engine.is_eligible_for_ipt?(person: adult)).to eq(false)
+			end
+			context 'Minor has been diagnosed' do
+				let(:diagnosis) { Encounter.create(type: encounter_type('Diagnosis'),
+																					 program: program,
+																					 creator: 1,
+																					 provider_id: 1,
+					                                 encounter_datetime: Time.now, 
+																			     patient: minor_patient) }
+				it 'returns true when minor does not have Tuberculosis' do
+					Observation.create(encounter: diagnosis,
+														 person: minor,
+														 concept: concept('TB status'),
+														 value_coded: concept('Negative').concept_id)
+	
+					expect(engine.is_eligible_for_ipt?(person: minor)).to eq(true)
+				end
+				it 'returns false other wise' do
+					expect(engine.is_eligible_for_ipt?(person: minor)).to eq(false)
+				end
+			end
+		end
+
 		it 'returns patient dosage' do
 		
 			program
