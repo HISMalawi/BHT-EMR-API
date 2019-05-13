@@ -77,8 +77,7 @@ module TBService
       TB_ADHERENCE => %i[patient_has_appointment?
                                     patient_has_no_adherence?
                                     patient_has_valid_test_results?],
-      TREATMENT => %i[patient_should_get_treatment?
-                                    patient_tb_positive?
+      TREATMENT => %i[patient_tb_positive?
                                     patient_should_proceed_for_treatment?
                                     patient_has_no_treatment?
                                     patient_has_valid_test_results?],
@@ -174,17 +173,6 @@ module TBService
         LAB_ORDERS,
         @patient.patient_id
       ).order(encounter_datetime: :desc).first.nil?
-    end
-
-    def patient_should_get_treatment?
-      prescribe_drugs_concept = concept('Prescribe drugs')
-      yes_concept = concept('Yes')
-      start_time, end_time = TimeUtils.day_bounds(@date)
-      Observation.where(
-        'concept_id = ? AND value_coded = ? AND person_id = ? AND obs_datetime BETWEEN ? AND ?',
-        prescribe_drugs_concept.concept_id, yes_concept.concept_id,
-        @patient.patient_id, start_time, end_time
-      ).order(obs_datetime: :desc).first.present?
     end
 
     def patient_got_treatment?
@@ -444,7 +432,7 @@ module TBService
     def patient_has_no_diagnosis?
       Encounter.joins(:type).where(
         'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
-        APPOINTMENT,
+        DIAGNOSIS,
         @patient.patient_id,
         @date
       ).order(encounter_datetime: :desc).first.nil?
