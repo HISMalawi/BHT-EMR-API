@@ -47,44 +47,27 @@ class TBService::LabTestsEngine
     #test will take TB specific parameters
 
     tests.collect do |test|
-      lims_order = nlims.order_tb_test(patient: patient, 
-                                      user: User.current, 
-                                      date: date, 
-                                      reason: test['reason'], 
-                                      test_type: [test['test_type']], #observation
-                                      sample_type: test['sample_type'], #observation
-                                      sample_status: test['sample_status'], #observation
-                                      target_lab: test['target_lab'], #observation
-                                      recommended_examination: test['recommended_examination'], #observation
-                                      treatment_history: test['treatment_history'], #observation
+      lims_order = nlims.order_tb_test(patient: patient,
+                                      user: User.current,
+                                      date: date,
+                                      reason: test['reason'],
+                                      test_type: [test['test_type']],
+                                      sample_type: test['sample_type'],
+                                      sample_status: test['sample_status'],
+                                      target_lab: test['target_lab'],
+                                      recommended_examination: test['recommended_examination'],
+                                      treatment_history: test['treatment_history'],
                                       sample_date: test['sample_date'],
-                                      sending_facility: test['sending_facility'], #observation
-                                      time_line: test['time_line'], #observation
+                                      sending_facility: test['sending_facility'],
                                       **kwargs)
       accession_number = lims_order['tracking_number']
 
       #creation happening here
       local_order = create_local_order(patient, encounter, date, accession_number)
-
-      #encounter observations shouldn't be save here
-      #save_reason_for_test(encounter, local_order, test['reason'])
-
-      #add other observations here
+      save_reason_for_test(encounter, local_order, test['reason'])
 
       { order: local_order, lims_order: lims_order }
     end
-  end
-
-  #Add all observations
-  def save_reason_for_test(encounter, order, reason)
-    Observation.create(  
-      order: order,
-      encounter: encounter, 
-      concept: concept('Reason for test'),
-      obs_datetime: encounter.encounter_datetime,
-      person: encounter.patient.person,
-      value_text: reason
-    )
   end
 
   #find test with lims
@@ -100,7 +83,7 @@ class TBService::LabTestsEngine
       Rails.logger.error("Error finding LIMS order: #{e}")
     end
   end
-  
+
   #create test with lims
   def find_orders_by_accession_number(accession_number)
     order = nlims.patient_orders(accession_number)
@@ -141,7 +124,18 @@ class TBService::LabTestsEngine
                  accession_number: accession_number,
                  provider: User.current
   end
-  
+
+  def save_reason_for_test(encounter, order, reason)
+    Observation.create(
+      order: order,
+      encounter: encounter,
+      concept: concept('Reason for test'),
+      obs_datetime: encounter.encounter_datetime,
+      person: encounter.patient.person,
+      value_text: reason
+    )
+  end
+
   def next_id(seed_id)
     site_id = global_property('moh_site_id').property_value
     local_id = Order.where(order_type: order_type('Lab')).count + 1
@@ -185,7 +179,7 @@ class TBService::LabTestsEngine
     config = YAML.load_file "#{Rails.root}/config/application.yml"
     @nlims = ::NLims.new config
     @nlims.auth config['lims_default_user'], config['lims_default_password']
-    
+
     #@nlims.auth config['lims_username'], config['lims_password']
     @nlims
   end
