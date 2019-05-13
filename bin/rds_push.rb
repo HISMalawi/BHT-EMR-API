@@ -69,7 +69,8 @@ end
 def with_lock
   File.open('/tmp/rds_push.lock', File::RDWR | File::CREAT) do |lock_file|
     unless lock_file.flock(File::LOCK_EX | File::LOCK_NB)
-      raise 'Another instance is already is running'
+      LOGGER.warn 'Another instance is already is running'
+      exit 255
     end
 
     yield
