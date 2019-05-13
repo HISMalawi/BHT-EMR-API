@@ -35,6 +35,15 @@ module Voidable
   # subclasses.
   class_methods do
     # Re-map void interface
+    #
+    # For example if you have a class that uses retired, and date_retired
+    # instead of voided and voided_by, you can:
+    #
+    #    class Retirable
+    #       include Voidable
+    #
+    #       remap_voidable_interface(voided: :retired, date_voided: :date_retired)
+    #    end
     def remap_voidable_interface(voided: :voided, date_voided: :date_voided,
                                  void_reason: :void_reason,
                                  voided_by: :voided_by)
@@ -87,7 +96,7 @@ module Voidable
     end
 
     def _update_voidable_field(instance, field, value)
-      remap_voidable_interface unless @interface # Initialise default interface
+      # remap_voidable_interface unless @interface # Initialise default interface
       setter = (_voidable_field(field).to_s + '=').to_sym
       instance.method(setter).call(value)
     end

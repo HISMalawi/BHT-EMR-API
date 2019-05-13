@@ -18,4 +18,9 @@ class Api::V1::LabTestTypesController < ApplicationController
       render json: { message: "test type not found: #{test_type}" }, status: :not_found
     end
   end
+
+  def measures
+    test_name = params.require(:test_name)
+    render json: engine.test_measures(test_name)
+  end
 end

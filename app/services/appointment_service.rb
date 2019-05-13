@@ -61,7 +61,7 @@ class AppointmentService
     end
 
     _drug_id, date = earliest_appointment_date(patient, ref_date)
-    return nil unless date
+    return { drugs_run_out_date: date,appointment_date: ""} unless date
 
     {
       drugs_run_out_date: date,
@@ -88,7 +88,7 @@ class AppointmentService
     RIGHT JOIN person_address a ON a.person_id = e.patient_id AND a.voided = 0
     RIGHT JOIN person_name n ON n.person_id = e.patient_id AND n.voided = 0
     RIGHT JOIN patient_identifier i ON i.patient_id = e.patient_id AND i.voided = 0
-    AND i.identifier_type IN(2,3)
+    AND i.identifier_type IN(4)
     WHERE obs.concept_id = #{concept('Appointment date').concept_id}
     AND value_datetime BETWEEN '#{date.strftime('%Y-%m-%d 00:00:00')}'
     AND '#{date.strftime('%Y-%m-%d 23:59:59')}'
@@ -262,6 +262,7 @@ class AppointmentService
   end
 
   def exec_drug_order_adjustments(patient, date)
+    # TODO: filter recent encounter by program id
     encounter = EncounterService.recent_encounter(
       encounter_type_name: 'Treatment', patient_id: patient.patient_id,
       date: date

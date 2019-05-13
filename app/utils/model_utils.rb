@@ -9,8 +9,7 @@ module ModelUtils
   end
 
   def program(name)
-    program_name = concept name
-    Program.find_by_concept_id program_name.concept_id
+    Program.find_by_name(name)
   end
 
   def encounter_type(name)

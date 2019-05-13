@@ -4,7 +4,7 @@ class PatientService
   include ModelUtils
   include TimeUtils
 
-  def create_patient(person)
+  def create_patient(program, person)
     ActiveRecord::Base.transaction do
       patient = Patient.create(patient_id: person.id)
       unless patient.errors.empty?
@@ -12,7 +12,7 @@ class PatientService
       end
 
       if use_dde_service?
-        assign_patient_dde_npid(patient)
+        assign_patient_dde_npid(patient, program)
       else
         assign_patient_v3_npid(patient)
       end
@@ -25,22 +25,29 @@ class PatientService
   # Change patient's person id
   #
   # WARNING: THIS IS A DANGEROUS OPERATION...
-  def update_patient(patient, person_id)
-    patient.person_id = person_id
-    unless patient.save
-      raise "Could not update patient ##{patient_id} to person id ##{person_id} due to #{patient.errors.as_json}"
+  def update_patient(program, patient, person_id = nil)
+    if person_id
+      patient.person_id = person_id
+      unless patient.save
+        raise "Could not update patient patient_id ##{patient_id} due to #{patient.errors.as_json}"
+      end
     end
 
-    dde_service.update_patient(patient) if use_dde_service?
+    dde_service(program).update_patient(patient) if use_dde_service? && dde_patient?(patient)
 
     patient
   end
 
   def find_patients_by_npid(npid)
-    patients = find_patients_by_identifier(npid, *npid_identifier_types.to_a)
-    return patients unless patients.empty? && use_dde_service?
+    find_patients_by_identifier(npid, *npid_identifier_types.to_a)
+  end
 
-    dde_service.find_patients_by_npid(npid)
+  def find_patients_by_name_and_gender(given_name, family_name, gender)
+    Patient.joins(:person).merge(
+      Person.joins(:names).where('gender like ?', "#{gender}%").merge(
+        PersonName.where(given_name: given_name, family_name: family_name)
+      )
+    )
   end
 
   def find_patient_median_weight_and_height(patient)
@@ -54,14 +61,16 @@ class PatientService
     )
   end
 
-  def find_patient_visit_dates(patient)
+  def find_patient_visit_dates(patient, program = nil)
     patient_id = ActiveRecord::Base.connection.quote(patient.id)
+    program_id = program ? ActiveRecord::Base.connection.quote(program.id) : nil
 
     rows = ActiveRecord::Base.connection.select_all <<-SQL
       SELECT DISTINCT DATE(encounter_datetime) AS visit_date
-      FROM encounter WHERE patient_id = #{patient_id} AND voided = 0
-      GROUP BY encounter_datetime
-      ORDER BY encounter_datetime DESC
+      FROM encounter
+      WHERE patient_id = #{patient_id} AND voided = 0 #{"AND program_id = #{program_id}" if program_id}
+      GROUP BY visit_date
+      ORDER BY visit_date DESC
     SQL
 
     rows.collect { |row| row['visit_date'] }
@@ -81,8 +90,10 @@ class PatientService
   end
 
   # Last drugs received
-  def patient_last_drugs_received(patient, ref_date)
-    dispensing_encounter = Encounter.joins(:type).where(
+  def patient_last_drugs_received(patient, ref_date, program_id: nil)
+    dispensing_encounter_query = Encounter.joins(:type)
+    dispensing_encounter_query.where(program_id: program_id) if program_id
+    dispensing_encounter = dispensing_encounter_query.where(
       'encounter_type.name = ? AND encounter.patient_id = ?
         AND DATE(encounter_datetime) <= DATE(?)',
       'DISPENSING', patient.patient_id, ref_date
@@ -267,15 +278,22 @@ class PatientService
   end
 
   def use_dde_service?
-    property = global_property('dde_enabled')
-    return false unless property
-
-    value = (property.property_value || 'true').strip
-    %w[1 true].include?(value)
+    begin
+      global_property('dde_enabled').property_value&.strip == 'true'
+    rescue
+      false
+    end
   end
 
-  def dde_service
-    DDEService.new
+  def dde_patient?(patient)
+    identifier = patient.identifier('DDE person document id')&.identifier
+    return false if identifier.nil?
+
+    !identifier.blank?
+  end
+
+  def dde_service(program)
+    DDEService.new(program: program)
   end
 
   # Blesses patient with a v3 npid
@@ -285,8 +303,8 @@ class PatientService
   end
 
   # Blesses patient with a DDE npid
-  def assign_patient_dde_npid(patient)
-    dde_service.create_patient(patient)
+  def assign_patient_dde_npid(patient, program)
+    dde_service(program).create_patient(patient)
   end
 
   # Takes a list of BP readings and groups them into a visit trail.

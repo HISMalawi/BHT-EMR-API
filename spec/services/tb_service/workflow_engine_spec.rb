@@ -306,7 +306,7 @@ describe TBService::WorkflowEngine do
   end
 
   def dispensation
-      encounter = lab_orders_encounter(patient, '2019-05-13 07:50:00')
+      encounter = lab_orders_encounter(patient, Time.now - 2.hour)
       tb_status(patient, lab_result_encounter(patient, Time.now), "Positive")
       record_vitals(patient, Time.now)
       prescribe_drugs(patient, encounter)
@@ -315,7 +315,7 @@ describe TBService::WorkflowEngine do
 
       drug_orders  = DrugOrderService.create_drug_orders(encounter: treatment_encounter(patient, Time.now), drug_orders: drugs())
 			plain_despenation = dispense(drug_orders)
-      DispensationService.create(plain_despenation)
+      DispensationService.create(tb_program, plain_despenation)
   end
 
   def dispensing_encounter(patient, datetime)

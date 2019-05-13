@@ -1440,23 +1440,23 @@ BEGIN
 
   SET @regimen_zero_p_one     := ('733,968');
   SET @regimen_zero_p_two     := ('22,733');
+  SET @regimen_zero_p_three   := ('969,968');
 
   SET @regimen_zero_a_one     := ('22,969');
-  SET @regimen_zero_a_two     := ('969,968');
 
   SET @regimen_two_p_one      := ('732');
   SET @regimen_two_p_two      := ('732,736');
   SET @regimen_two_p_three    := ('39,732');
+  SET @regimen_two_p_four     := ('731,736');
 
   SET @regimen_two_a_one      := ('731');
   SET @regimen_two_a_two      := ('39,731');
-  SET @regimen_two_a_three    := ('731,736');
 
   SET @regimen_four_p_one     := ('30,736');
   SET @regimen_four_p_two     := ('11,736');
+  SET @regimen_four_p_three   := ('30,39');
 
   SET @regimen_four_a_one     := ('11,39');
-  SET @regimen_four_a_two     := ('30,39');
 
   SET @regimen_five_a         := ('735');
 
@@ -1469,27 +1469,35 @@ BEGIN
   SET @regimen_nine_p_one     := ('74,733');
   SET @regimen_nine_p_two     := ('73,733');
   SET @regimen_nine_p_three   := ('733,979');
+  SET @regimen_nine_p_four    := ('74,969');
 
   SET @regimen_nine_a_one     := ('73,969');
-  SET @regimen_nine_a_two     := ('74,969');
 
   SET @regimen_ten_a          := ('73,734');
 
   SET @regimen_eleven_p_one   := ('74,736');
   SET @regimen_eleven_p_two   := ('73,736');
+  SET @regimen_eleven_p_three := ('39,74');
 
   SET @regimen_eleven_a_one   := ('39,73');
-  SET @regimen_eleven_a_two   := ('39,74');
 
   SET @regimen_twelve_a       := ('976,977,982');
 
   SET @regimen_thirteen_a     := ('983');
 
-  SET @regimen_fourteen_a     := ('984,982');
+  SET @regimen_fourteen_a     := ('982,984');
 
   SET @regimen_fifteen_a      := ('969,982');
 
   /* Regimen ZERO ............................................................................. */
+  IF @drug_ids IN(@regimen_zero_a_one) AND (length(@drug_ids) = length(@regimen_zero_a_one)) THEN
+    SET regimen_cat = ('0A');
+  END IF;
+
+  IF @drug_ids IN(@regimen_zero_p_three) AND (length(@drug_ids) = length(@regimen_zero_p_three)) THEN
+    SET regimen_cat = ('0P');
+  END IF;
+  
   IF @drug_ids IN(@regimen_zero_p_one) AND (length(@drug_ids) = length(@regimen_zero_p_one)) THEN
     SET regimen_cat = ('0P');
   END IF;
@@ -1498,17 +1506,22 @@ BEGIN
     SET regimen_cat = ('0P');
   END IF;
 
-  IF @drug_ids IN(@regimen_zero_a_one) AND (length(@drug_ids) = length(@regimen_zero_a_one)) THEN
-    SET regimen_cat = ('0A');
-  END IF;
-
-  IF @drug_ids IN(@regimen_zero_a_two) AND (length(@drug_ids) = length(@regimen_zero_a_two)) THEN
-    SET regimen_cat = ('0A');
-  END IF;
   /* Regimen ZERO ENDS ............................................................................. */
 
 
   /* Regimen TWO ............................................................................. */
+  IF @drug_ids IN(@regimen_two_a_one) AND (length(@drug_ids) = length(@regimen_two_a_one)) THEN
+    SET regimen_cat = ('2A');
+  END IF;
+
+  IF @drug_ids IN(@regimen_two_a_two) AND (length(@drug_ids) = length(@regimen_two_a_two)) THEN
+    SET regimen_cat = ('2A');
+  END IF;
+
+  IF @drug_ids IN(@regimen_two_p_four) AND (length(@drug_ids) = length(@regimen_two_p_four)) THEN
+    SET regimen_cat = ('2P');
+  END IF;
+  
   IF @drug_ids IN(@regimen_two_p_one) AND (length(@drug_ids) = length(@regimen_two_p_one)) THEN
     SET regimen_cat = ('2P');
   END IF;
@@ -1521,22 +1534,19 @@ BEGIN
     SET regimen_cat = ('2P');
   END IF;
 
-  IF @drug_ids IN(@regimen_two_a_one) AND (length(@drug_ids) = length(@regimen_two_a_one)) THEN
-    SET regimen_cat = ('2A');
-  END IF;
-
-  IF @drug_ids IN(@regimen_two_a_two) AND (length(@drug_ids) = length(@regimen_two_a_two)) THEN
-    SET regimen_cat = ('2A');
-  END IF;
-
-  IF @drug_ids IN(@regimen_two_a_three) AND (length(@drug_ids) = length(@regimen_two_a_three)) THEN
-    SET regimen_cat = ('2A');
-  END IF;
   /* Regimen TWO ENDS............................................................................. */
 
 
 
   /* Regimen FOUR ............................................................................. */
+  IF @drug_ids IN(@regimen_four_a_one) AND (length(@drug_ids) = length(@regimen_four_a_one)) THEN
+    SET regimen_cat = ('4A');
+  END IF;
+
+  IF @drug_ids IN(@regimen_four_p_three) AND (length(@drug_ids) = length(@regimen_four_p_three)) THEN
+    SET regimen_cat = ('4P');
+  END IF;
+  
   IF @drug_ids IN(@regimen_four_p_one) AND (length(@drug_ids) = length(@regimen_four_p_one)) THEN
     SET regimen_cat = ('4P');
   END IF;
@@ -1545,13 +1555,6 @@ BEGIN
     SET regimen_cat = ('4P');
   END IF;
 
-  IF @drug_ids IN(@regimen_four_a_one) AND (length(@drug_ids) = length(@regimen_four_a_one)) THEN
-    SET regimen_cat = ('4A');
-  END IF;
-
-  IF @drug_ids IN(@regimen_four_a_two) AND (length(@drug_ids) = length(@regimen_four_a_two)) THEN
-    SET regimen_cat = ('4A');
-  END IF;
   /* Regimen FOUR ENDS............................................................................. */
 
 
@@ -1581,6 +1584,14 @@ BEGIN
 
 
   /* Regimen NINE............................................................................. */
+  IF @drug_ids IN(@regimen_nine_a_one) AND (length(@drug_ids) = length(@regimen_nine_a_one)) THEN
+    SET regimen_cat = ('9A');
+  END IF;
+
+  IF @drug_ids IN(@regimen_nine_p_four) AND (length(@drug_ids) = length(@regimen_nine_p_four)) THEN
+    SET regimen_cat = ('9P');
+  END IF;
+  
   IF @drug_ids IN(@regimen_nine_p_one) AND (length(@drug_ids) = length(@regimen_nine_p_one)) THEN
     SET regimen_cat = ('9P');
   END IF;
@@ -1593,13 +1604,6 @@ BEGIN
     SET regimen_cat = ('9P');
   END IF;
 
-  IF @drug_ids IN(@regimen_nine_a_one) AND (length(@drug_ids) = length(@regimen_nine_a_one)) THEN
-    SET regimen_cat = ('9A');
-  END IF;
-
-  IF @drug_ids IN(@regimen_nine_a_two) AND (length(@drug_ids) = length(@regimen_nine_a_two)) THEN
-    SET regimen_cat = ('9A');
-  END IF;
   /* Regimen NINE ENDS............................................................................. */
 
 
@@ -1618,12 +1622,12 @@ BEGIN
   IF @drug_ids IN(@regimen_eleven_p_two) AND (length(@drug_ids) = length(@regimen_eleven_p_two)) THEN
     SET regimen_cat = ('11P');
   END IF;
-
-  IF @drug_ids IN(@regimen_eleven_a_one) AND (length(@drug_ids) = length(@regimen_eleven_a_one)) THEN
-    SET regimen_cat = ('11A');
+  
+  IF @drug_ids IN(@regimen_eleven_p_three) AND (length(@drug_ids) = length(@regimen_eleven_p_three)) THEN
+    SET regimen_cat = ('11P');
   END IF;
 
-  IF @drug_ids IN(@regimen_eleven_a_two) AND (length(@drug_ids) = length(@regimen_eleven_a_two)) THEN
+  IF @drug_ids IN(@regimen_eleven_a_one) AND (length(@drug_ids) = length(@regimen_eleven_a_one)) THEN
     SET regimen_cat = ('11A');
   END IF;
   /* Regimen ELEVEN ENDS............................................................................. */
@@ -2021,16 +2025,20 @@ DECLARE taken_arvs_concept INT;
 set yes_concept = (SELECT concept_id FROM concept_name WHERE name ='YES' LIMIT 1);
 set no_concept = (SELECT concept_id FROM concept_name WHERE name ='NO' LIMIT 1);
 set date_art_last_taken_concept = (SELECT concept_id FROM concept_name WHERE name ='DATE ART LAST TAKEN' LIMIT 1);
-set taken_arvs_concept = (SELECT concept_id FROM concept_name WHERE name ='HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS' LIMIT 1);
 
-set check_one = (SELECT e.patient_id FROM clinic_registration_encounter e INNER JOIN ever_registered_obs AS ero ON e.encounter_id = ero.encounter_id INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.concept_id = date_art_last_taken_concept AND o.voided = 0 WHERE ((o.concept_id = date_art_last_taken_concept AND (DATEDIFF(o.obs_datetime,o.value_datetime)) > 14)) AND patient_date_enrolled(e.patient_id) = set_date_enrolled AND e.patient_id = set_patient_id GROUP BY e.patient_id);
-
-set check_two = (SELECT e.patient_id FROM clinic_registration_encounter e INNER JOIN ever_registered_obs AS ero ON e.encounter_id = ero.encounter_id INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.concept_id = taken_arvs_concept AND o.voided = 0 WHERE  ((o.concept_id = taken_arvs_concept AND o.value_coded = no_concept)) AND patient_date_enrolled(e.patient_id) = set_date_enrolled AND e.patient_id = set_patient_id GROUP BY e.patient_id);
+set check_one = (SELECT e.patient_id FROM clinic_registration_encounter e INNER JOIN ever_registered_obs AS ero ON e.encounter_id = ero.encounter_id INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.concept_id = date_art_last_taken_concept AND o.voided = 0 WHERE ((o.concept_id = date_art_last_taken_concept AND (TIMESTAMPDIFF(day, o.value_datetime, o.obs_datetime)) > 14)) AND patient_date_enrolled(e.patient_id) = set_date_enrolled AND e.patient_id = set_patient_id GROUP BY e.patient_id);
 
 if check_one >= 1 then set re_initiated ="Re-initiated";
 elseif check_two >= 1 then set re_initiated ="Re-initiated";
 end if;
 
+if check_one = 'N/A' then 
+  set taken_arvs_concept = (SELECT concept_id FROM concept_name WHERE name ='HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS' LIMIT 1);
+  set check_two = (SELECT e.patient_id FROM clinic_registration_encounter e INNER JOIN ever_registered_obs AS ero ON e.encounter_id = ero.encounter_id INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.concept_id = taken_arvs_concept AND o.voided = 0 WHERE  ((o.concept_id = taken_arvs_concept AND o.value_coded = no_concept)) AND patient_date_enrolled(e.patient_id) = set_date_enrolled AND e.patient_id = set_patient_id GROUP BY e.patient_id);
+
+  if check_two >= 1 then set re_initiated ="Re-initiated";
+  end if;
+end if;
 
 RETURN re_initiated;
 END;

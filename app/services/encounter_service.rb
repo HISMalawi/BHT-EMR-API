@@ -1,19 +1,21 @@
 # frozen_string_literal: true
 
 class EncounterService
-  def self.recent_encounter(encounter_type_name:, patient_id:, date: nil, start_date: nil)
+  def self.recent_encounter(encounter_type_name:, patient_id:, date: nil,
+                            start_date: nil, program_id: nil)
     start_date ||= Date.strptime('1900-01-01')
     date ||= Date.today
     type = EncounterType.find_by(name: encounter_type_name)
 
-    Encounter.where(type: type, patient_id: patient_id)\
-             .where('encounter_datetime BETWEEN ? AND ?',
-                    *TimeUtils.day_bounds(date))\
-             .order(encounter_datetime: :desc)\
-             .first
+    query = Encounter.where(type: type, patient_id: patient_id)\
+                     .where('encounter_datetime BETWEEN ? AND ?',
+                      start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
+                      date.to_date.strftime('%Y-%m-%d 23:59:59'))
+    query = query.where(program_id: program_id) if program_id
+    query.order(encounter_datetime: :desc).first
   end
 
-  def create(type:, patient:, encounter_datetime: nil, provider: nil, program:)
+  def create(type:, patient:, program:, encounter_datetime: nil, provider: nil)
     encounter_datetime ||= Time.now
     provider ||= User.current.person
 
@@ -24,9 +26,8 @@ class EncounterService
 
     Encounter.create(
       type: type, patient: patient, provider: provider,
-      encounter_datetime: encounter_datetime,
-      location_id: Location.current.id,
-      program: program
+      encounter_datetime: encounter_datetime, program: program,
+      location_id: Location.current.id
     )
   end
 
@@ -43,7 +44,7 @@ class EncounterService
   end
 
   def find_encounter(type:, patient:, encounter_datetime:, provider:, program:)
-    Encounter.where(type: type, patient: patient)\
+    Encounter.where(type: type, patient: patient, program: program)\
              .where('encounter_datetime BETWEEN ? AND ?',
                     *TimeUtils.day_bounds(encounter_datetime))\
              .order(encounter_datetime: :desc)

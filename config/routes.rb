@@ -122,20 +122,36 @@ Rails.application.routes.draw do
           get '/status' => 'program_patients#status'
           get '/earliest_start_date' => 'program_patients#find_earliest_start_date'
           get '/labels/visits', to: 'program_patients#print_visit_label'
+          get '/labels/history', to: 'program_patients#print_history_label'
+          get '/labels/lab_results', to: 'program_patients#print_lab_results_label'
           get '/labels/transfer_out', to: 'program_patients#print_transfer_out_label'
+          get '/labels/patient_history', to: 'program_patients#print_patient_history_label'
           get '/mastercard_data', to: 'program_patients#mastercard_data'
+          get '/medication_side_effects', to: 'program_patients#medication_side_effects'
+          #ANC
+          get '/surgical_history', to: 'program_patients#surgical_history'
+          get '/anc_visit', to: 'program_patients#anc_visit'
+          get '/art_hiv_status', to: 'program_patients#art_hiv_status'
+          get '/subsequent_visit', to: 'program_patients#subsequent_visit'
+          get '/saved_encounters', to: 'program_patients#saved_encounters'
           resources :patient_states, path: :states
         end
         resources :lab_test_types, path: 'lab_tests/types'
         get '/lab_tests/panels' => 'lab_test_types#panels' # TODO: Move this into own controller
         resources :lab_test_orders, path: 'lab_tests/orders'
         resources :lab_test_results, path: 'lab_tests/results'
+        post '/lab_tests/order_and_results' => 'lab_test_results#create_order_and_results'
         get '/lab_tests/locations' => 'lab_test_orders#locations'
         get '/lab_tests/labs' => 'lab_test_orders#labs'
+        get '/lab_tests/orders_without_results' => 'lab_test_orders#orders_without_results'
+        get '/lab_tests/measures' => 'lab_test_types#measures'
         resources :program_reports, path: 'reports'
 
        
       end
+
+      resources :stock
+      post '/edit_stock_report', to: 'stock#edit'
 
       namespace :types do
         resources :relationships
@@ -149,6 +165,7 @@ Rails.application.routes.draw do
 
       resources :drug_orders
       resources :orders
+      get '/drug_sets', to: 'drugs#drug_sets' # ANC get drug sets
 
       resource :global_properties
       resource :user_properties
@@ -160,6 +177,15 @@ Rails.application.routes.draw do
 
       get '/current_time', to: 'time#current_time'
 
+      get '/dde/patients/find_by_npid', to: 'dde#find_patients_by_npid'
+      get '/dde/patients/find_by_name_and_gender', to: 'dde#find_patients_by_name_and_gender'
+      get '/dde/patients/import_by_doc_id', to: 'dde#import_patients_by_doc_id'
+      get '/dde/patients/import_by_name_and_gender', to: 'dde#import_patients_by_name_and_gender'
+      get '/dde/patients/import_by_npid', to: 'dde#import_patients_by_npid'
+      get '/dde/patients/match_by_demographics', to: 'dde#match_patients_by_demographics'
+      post '/dde/patients/reassign_npid', to: 'dde#reassign_patient_npid'
+      post '/dde/patients/merge', to: 'dde#merge_patients'
+
       get '/labels/location', to: 'locations#print_label'
 
       # Search
@@ -169,8 +195,20 @@ Rails.application.routes.draw do
       get '/search/people' => 'people#search'
       get '/search/patients/by_npid' => 'patients#search_by_npid'
       get '/search/patients/by_identifier' => 'patients#search_by_identifier'
+      get '/search/patients' => 'patients#search_by_name_and_gender'
       get '/search/properties' => 'properties#search'
       get '/search/landmarks' => 'landmarks#search'
+
+      get '/dde/patients/find_by_npid', to: 'dde#find_patients_by_npid'
+      get '/dde/patients/find_by_name_and_gender', to: 'dde#find_patients_by_name_and_gender'
+      get '/dde/patients/import_by_doc_id', to: 'dde#import_patients_by_doc_id'
+      get '/dde/patients/import_by_name_and_gender', to: 'dde#import_patients_by_name_and_gender'
+      get '/dde/patients/import_by_npid', to: 'dde#import_patients_by_npid'
+      get '/dde/patients/match_by_demographics', to: 'dde#match_patients_by_demographics'
+      post '/dde/patients/reassign_npid', to: 'dde#reassign_patient_npid'
+      post '/dde/patients/merge', to: 'dde#merge_patients'
+
+      get '/sequences/next_accession_number', to: 'sequences#next_accession_number'
 
       post '/reports/encounters' => 'encounters#count'
     end
@@ -187,12 +225,31 @@ Rails.application.routes.draw do
   get '/api/v1/patient_weight_for_height_values' => 'api/v1/weight_for_height#index'
   get '/api/v1/booked_appointments' => 'api/v1/patient_appointments#booked_appointments'
   get '/api/v1/concept_set' => 'api/v1/concept_sets#show'
+  get '/api/v1/cervical_cancer_screening' => 'api/v1/cervical_cancer_screening#show'
 
-    #sqa controller
-    get '/api/v1/dead_encounters' => 'api/v1/cleaning#index'
-    get '/api/v1/date_enrolled' => 'api/v1/cleaning#dateEnrolled'
-    get '/api/v1/start_date' => 'api/v1/cleaning#startDate'
-    get '/api/v1/male' => 'api/v1/cleaning#male'
-    get '/api/v1/incomplete_visits' => 'api/v1/cleaning#incompleteVisits'
-    
+  get '/api/v1/dashboard_stats' => 'api/v1/reports#index'
+
+  # SQA controller
+  get '/api/v1/dead_encounters' => 'api/v1/cleaning#index'
+  get '/api/v1/date_enrolled' => 'api/v1/cleaning#dateEnrolled'
+  get '/api/v1/start_date' => 'api/v1/cleaning#startDate'
+  get '/api/v1/male' => 'api/v1/cleaning#male'
+  get '/api/v1/incomplete_visits' => 'api/v1/cleaning#incompleteVisits'
+
+  #OPD reports
+  get '/api/v1/diagnosis' => 'api/v1/reports#diagnosis'
+  get '/api/v1/registration' => 'api/v1/reports#registration'
+  get '/api/v1/diagnosis_by_address' => 'api/v1/reports#diagnosis_by_address'
+  get '/api/v1/with_nids' => 'api/v1/reports#with_nids'
+  get '/api/v1/drugs_given_without_prescription' => 'api/v1/reports#drugs_given_without_prescription'
+  get '/api/v1/drugs_given_with_prescription' => 'api/v1/reports#drugs_given_with_prescription'
+
+  get '/api/v1/cohort_report_raw_data' => 'api/v1/reports#cohort_report_raw_data'
+  get '/api/v1/cohort_disaggregated' => 'api/v1/reports#cohort_disaggregated'
+  get '/api/v1/cohort_survival_analysis' => 'api/v1/reports#cohort_survival_analysis'
+  get '/api/v1/defaulter_list' => 'api/v1/reports#defaulter_list'
+  get '/api/v1/missed_appointments' => 'api/v1/reports#missed_appointments'
+  post '/api/v1/addresses' => 'api/v1/person_addresses#create'
+  get '/api/v1/person_attributes' => 'api/v1/person_attributes#index'
+  get '/api/v1/archive_active_filing_number' => 'api/v1/patient_identifiers#archive_active_filing_number'
 end

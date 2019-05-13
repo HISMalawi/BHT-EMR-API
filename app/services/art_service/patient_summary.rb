@@ -24,8 +24,8 @@ module ARTService
       art_start_date, art_duration = art_period
       {
         patient_id: patient.patient_id,
-        npid: identifier(NPID_TYPE) || 'N/A',
-        arv_number: identifier(ARV_NO_TYPE) || 'N/A',
+        npid: npid || 'N/A',
+        arv_number: arv_number || 'N/A',
         filing_number: filing_number || 'N/A',
         current_outcome: current_outcome,
         residence: residence,
@@ -43,6 +43,14 @@ module ARTService
         identifier_type: identifier_type.patient_identifier_type_id,
         patient_id: patient.patient_id
       ).first&.identifier
+    end
+
+    def npid
+      identifier(NPID_TYPE)
+    end
+
+    def arv_number
+      identifier(ARV_NO_TYPE)
     end
 
     def residence
@@ -148,6 +156,20 @@ module ARTService
       return { number: filing_number, type: ARCHIVED_FILING_NUMBER } if filing_number
 
       { number: 'N/A', type: 'N/A' }
+    end
+
+    def art_start_date
+      art_period[0]
+    end
+
+    def name
+      name = PersonName.where(person_id: patient.id)\
+                       .order(:date_created)\
+                       .first
+
+      given_name = na
+
+      "#{name.given_name} #{name.family_name}"
     end
   end
 end

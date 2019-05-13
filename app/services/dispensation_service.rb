@@ -20,14 +20,14 @@ module DispensationService
       end
     end
 
-    def create(plain_dispensations)
+    def create(program, plain_dispensations)
       ActiveRecord::Base.transaction do
         obs_list = plain_dispensations.map do |dispensation|
           order_id = dispensation[:drug_order_id]
           quantity = dispensation[:quantity]
           date = TimeUtils.retro_timestamp(dispensation[:date]&.to_time || Time.now)
           drug_order = DrugOrder.find(order_id)
-          obs = dispense_drug drug_order, quantity, date: date
+          obs = dispense_drug(program, drug_order, quantity, date: date)
 
           unless obs.errors.empty?
             raise InvalidParameterErrors.new("Failed to dispense order ##{order_id}")\
@@ -41,10 +41,10 @@ module DispensationService
       end
     end
 
-    def dispense_drug(drug_order, quantity, date: nil)
+    def dispense_drug(program, drug_order, quantity, date: nil)
       date ||= Time.now
       patient = drug_order.order.patient
-      encounter = current_encounter(patient, date: date, create: true)
+      encounter = current_encounter(program, patient, date: date, create: true)
 
       update_quantity_dispensed(drug_order, quantity)
 
@@ -73,43 +73,42 @@ module DispensationService
       drug_order.quantity ||= 0
       drug_order.quantity += quantity.to_f
 
+      order = drug_order.order
       # We assume patient start taking drugs on same day he/she receives them
       # thus we subtract 1 from the duration.
       quantity_duration = drug_order.quantity_duration - 1
-      if quantity_duration > drug_order.duration
-        order = drug_order.order
-        order.auto_expire_date = order.start_date + quantity_duration.days
-        order.save
-      end
+      order.auto_expire_date = order.start_date + quantity_duration.days
+      order.save
 
       drug_order.save
     end
 
     # Finds the most recent encounter for the given patient
-    def current_encounter(patient, date: nil, create: false)
+    def current_encounter(program, patient, date: nil, create: false)
       date ||= Time.now
-      encounter = find_encounter(patient, date)
-      encounter ||= create_encounter(patient, date) if create
+      encounter = find_encounter(program, patient, date)
+      encounter ||= create_encounter(program, patient, date) if create
       encounter
     end
 
     # Creates a dispensing encounter
-    def create_encounter(patient, date)
+    def create_encounter(program, patient, date)
       Encounter.create(
         encounter_type: EncounterType.find_by(name: 'DISPENSING').encounter_type_id,
         patient_id: patient.patient_id,
         location_id: Location.current.location_id,
         encounter_datetime: date,
+        program: program,
         provider: User.current.person
       )
     end
 
     # Finds a dispensing encounter for the given patient on the given date
-    def find_encounter(patient, date)
+    def find_encounter(program, patient, date)
       encounter_type = EncounterType.find_by(name: 'DISPENSING').encounter_type_id
       Encounter.where(
-        'encounter_type = ? AND patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
-        encounter_type, patient.patient_id, date
+        'program_id = ? AND encounter_type = ? AND patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
+        program.id, encounter_type, patient.patient_id, date
       ).order(date_created: :desc).first
     end
 
