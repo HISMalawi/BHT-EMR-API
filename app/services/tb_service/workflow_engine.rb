@@ -79,25 +79,21 @@ module TBService
                                     patient_has_valid_test_results?],
       TREATMENT => %i[patient_should_get_treatment?
                                     patient_tb_positive?
-                                    patient_not_tb_negative_through_diagnosis?
                                     patient_should_proceed_for_treatment?
                                     patient_has_no_treatment?
                                     patient_has_valid_test_results?],
       DISPENSING => %i[patient_got_treatment?
                                     patient_tb_positive?
-                                    patient_not_tb_negative_through_diagnosis?
                                     patient_should_proceed_for_treatment?
                                     patient_has_no_dispensation?
                                     patient_has_valid_test_results?],
-      DIAGNOSIS => %i[patient_not_tb_negative_through_diagnosis?
-                                    should_patient_tested_through_diagnosis?
+      DIAGNOSIS => %i[should_patient_tested_through_diagnosis?
                                     patient_has_no_diagnosis?
                                     patient_should_proceed_for_treatment?],
       LAB_RESULTS => %i[patient_has_no_lab_results?
                                     patient_should_proceed_after_lab_order?],
       VITALS => %i[patient_has_no_vitals?
                                     patient_tb_positive?
-                                    patient_not_tb_negative_through_diagnosis?
                                     patient_should_proceed_for_treatment?
                                     patient_has_valid_test_results?],
       APPOINTMENT => %i[dispensing_complete?
@@ -215,23 +211,6 @@ module TBService
      (((Time.zone.now - person.birthdate.to_time) / 1.year.seconds).floor) <= 5
     end
 
-    def patient_not_tb_negative_through_diagnosis?
-      encounter = Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ?',
-        DIAGNOSIS,
-        @patient.patient_id
-      ).order(encounter_datetime: :desc).first
-
-      return true unless encounter #Handle this with an expection
-
-      tb_status = concept('TB status')
-      positive = concept('Negative')
-      Observation.where(
-        "encounter_id = ? AND person_id = ? AND concept_id = ? AND value_coded = ? ",
-        encounter.encounter_id, @patient.patient_id, tb_status.concept_id, positive.concept_id
-      ).order(obs_datetime: :desc).first.nil?
-    end
-
     def patient_tb_positive?
       status_concept = concept('TB status')
       negative = concept('Positive')
@@ -250,12 +229,11 @@ module TBService
       ).order(obs_datetime: :desc).first.present?
     end
 
-    def patient_has_no_lab_results? #LOOK into this
+    def patient_has_no_lab_results?
       Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
+        'encounter_type.name = ? AND encounter.patient_id = ?',
         LAB_RESULTS,
-        @patient.patient_id,
-        @date
+        @patient.patient_id
       ).order(encounter_datetime: :desc).first.nil?
     end
 
@@ -357,7 +335,7 @@ module TBService
     end
 
     def patient_should_go_for_lab_order?
-      (patient_not_tb_negative_through_diagnosis? && should_patient_be_tested_through_lab? && patient_has_no_lab_results?) || (should_patient_be_tested_through_lab? && should_patient_go_lab_examination_at_followup? && patient_recent_lab_order_has_results? && patient_has_no_lab_results?)
+      (should_patient_be_tested_through_lab? && patient_has_no_lab_results?) || (patient_tb_positive? && should_patient_go_lab_examination_at_followup? && patient_recent_lab_order_has_results?)
     end
 
     def patient_recent_lab_order_has_results?
