@@ -46,18 +46,18 @@ describe TBService::WorkflowEngine do
 
     it 'returns VITALS after patient TB positive' do
       enroll_patient patient
-      tb_initial_encounter(patient, Time.now)
-      encounter = lab_orders_encounter(patient, Time.now)
-      tb_status(patient, lab_result_encounter(patient, Time.now), "Positive")
+      tb_initial_encounter(patient, Time.now - 2.hour)
+      encounter = lab_orders_encounter(patient, Time.now - 2.hour)
+      tb_status(patient, lab_result_encounter(patient, Time.now + 1.hour), "Positive")
       encounter_type = engine.next_encounter
       expect(encounter_type.name.upcase).to eq('VITALS')
     end
 
     it 'returns DISPENSING for an Adult TB patient' do
       enroll_patient patient
-      tb_initial_encounter(patient, Time.now)
-      encounter = lab_orders_encounter(patient, Time.now)
-      tb_status(patient, lab_result_encounter(patient, Time.now), "Positive")
+      tb_initial_encounter(patient, Time.now - 2.hour)
+      encounter = lab_orders_encounter(patient, Time.now - 2.hour)
+      tb_status(patient, lab_result_encounter(patient, Time.now + 1.hour), "Positive")
       adherence(patient, Time.now)
       record_vitals(patient, Time.now)
       treatment_encounter(patient, Time.now)
@@ -67,15 +67,16 @@ describe TBService::WorkflowEngine do
 
     it 'returns LAB RESULTS for a TB suspect after 1 hour prior a Lab Order' do
       enroll_patient patient
-      test_procedure_type(patient, tb_initial_encounter(patient, '2019-05-12 16:00:00'), "Laboratory examinations")
-      lab_orders_encounter(patient, '2019-05-12 16:00:00')
+      test_procedure_type(patient, tb_initial_encounter(patient, Time.now - 2.hour), "Laboratory examinations", Time.now - 2.hour)
+      lab_orders_encounter(patient, Time.now - 2.hour)
       encounter_type = engine.next_encounter
       expect(encounter_type.name.upcase).to eq('LAB RESULTS')
     end
 
     it 'returns APPOINTMENT for a TB patient' do
       enroll_patient patient
-      tb_initial_encounter(patient, Time.now)
+      tb_initial_encounter(patient, Time.now - 2.hour)
+      dispensing_encounter(patient, Time.now - 2.hour)
       dispensation()
       encounter_type = engine.next_encounter
       expect(encounter_type.name.upcase).to eq('APPOINTMENT')
@@ -83,8 +84,8 @@ describe TBService::WorkflowEngine do
 
     it 'returns TREATMENT after recording TB Vitals' do
       enroll_patient patient
-      tb_initial_encounter(patient, Time.now)
-      encounter = lab_orders_encounter(patient, Time.now)
+      tb_initial_encounter(patient, Time.now - 2.hour)
+      encounter = lab_orders_encounter(patient, Time.now - 2.hour)
       tb_status(patient, lab_result_encounter(patient, Time.now), "Positive")
       prescribe_drugs(patient, encounter)
       record_vitals(patient, Time.now)
@@ -95,33 +96,39 @@ describe TBService::WorkflowEngine do
     #After patient transferred out it will go dashboard
     it 'returns nil for a patient transferred out after dispensation' do
       enroll_patient patient
-      initial_encounter = tb_initial_encounter(patient, Time.now)
+      initial_encounter = tb_initial_encounter(patient, Time.now - 2.hour)
+      dispensing_encounter(patient, Time.now - 2.hour)
       dispensation()
-      transfer_out_observation(patient, initial_encounter)
+      transfer_out_observation(patient, initial_encounter, 'YES')
       encounter_type = engine.next_encounter
       expect(encounter_type).to eq(nil)
     end
 
     it 'returns LAB ORDER after test procedure type LAB ORDER' do
       enroll_patient patient
-      encounter = tb_initial_encounter(patient, Time.now)
-      test_procedure_type(patient, encounter, "Laboratory examinations")
+      encounter = tb_initial_encounter(patient, Time.now - 20.minutes)
+      test_procedure_type(patient, encounter, "Laboratory examinations", Time.now - 20.minutes)
       encounter_type = engine.next_encounter
       expect(encounter_type.name.upcase).to eq('LAB ORDERS')
     end
 
+    #proceed to Diagnosis 10 minutes after TB screening
     it 'returns DIAGNOSIS after procedure type Clinical or XRay' do
       enroll_patient patient
-      encounter = tb_initial_encounter(patient, Time.now)
-      test_procedure_type(patient, encounter, "Clinical")
+      encounter = tb_initial_encounter(patient, Time.now - 20.minutes)
+      test_procedure_type(patient, encounter, "Clinical", Time.now - 20.minutes)
       encounter_type = engine.next_encounter
       expect(encounter_type.name.upcase).to eq('DIAGNOSIS')
     end
 
     it 'returns TB Adherence for a follow up patient' do
       enroll_patient patient
-      encounter = tb_initial_encounter(patient, '2019-05-11 12:12:12')
-      appointment_encounter(patient, '2019-05-11 12:12:12')
+      encounter = tb_initial_encounter(patient, Time.now - 2.day)
+      test_procedure_type(patient, tb_initial_encounter(patient, Time.now - 2.day), "Laboratory examinations", Time.now - 2.day)
+      lab_orders_encounter(patient, Time.now - 2.day)
+      tb_status(patient, lab_result_encounter(patient, Time.now), "Positive")
+      record_vitals(patient, Time.now)
+      appointment_encounter(patient, Time.now - 1.day)
       encounter_type = engine.next_encounter
       expect(encounter_type.name.upcase).to eq('TB ADHERENCE')
     end
@@ -129,8 +136,13 @@ describe TBService::WorkflowEngine do
     #this test may fail based on the time difference for a required lab order
     it 'returns LAB ORDERS for a follow up patient' do
       enroll_patient patient
-      encounter = tb_initial_encounter(patient, '2019-03-17 12:12:12')
-      dispensing_encounter(patient, '2019-03-17 12:12:12')
+      test_procedure_type(patient, tb_initial_encounter(patient, Time.now - 2.day), "Laboratory examinations", Time.now - 2.day)
+      lab_orders_encounter(patient, Time.now - 2.day)
+      tb_status(patient, lab_result_encounter(patient, Time.now), "Positive")
+      record_vitals(patient, Time.now)
+      dispensing_encounter(patient, Time.now - 56.day)
+      appointment_encounter(patient, Time.now - 56.day)
+      adherence(patient, Time.now)
       encounter_type = engine.next_encounter
       expect(encounter_type.name.upcase).to eq('LAB ORDERS')
     end
@@ -244,12 +256,12 @@ describe TBService::WorkflowEngine do
     tb_initial
   end
 
-  def transfer_out_observation(patient, encounter)
+  def transfer_out_observation(patient, encounter, answer)
 
 		create :observation, concept: concept('Transfer out'),
                           encounter: encounter,
                           person: patient.person,
-													value_coded: concept('YES').concept_id
+													value_coded: concept(answer).concept_id
   end
 
   def tb_status_through_diagnosis(patient, encounter, status)
@@ -260,11 +272,12 @@ describe TBService::WorkflowEngine do
 													value_coded: concept(status).concept_id
   end
 
-  def test_procedure_type(patient, encounter, procedure)
+  def test_procedure_type(patient, encounter, procedure, datetime)
     create :observation, concept: concept('Procedure type'),
                           encounter: encounter,
                           person: patient.person,
-													value_coded: concept(procedure).concept_id
+                          value_coded: concept(procedure).concept_id,
+                          obs_datetime: datetime
   end
 
   def drugs
@@ -293,7 +306,7 @@ describe TBService::WorkflowEngine do
   end
 
   def dispensation
-      encounter = lab_orders_encounter(patient, Time.now)
+      encounter = lab_orders_encounter(patient, '2019-05-13 07:50:00')
       tb_status(patient, lab_result_encounter(patient, Time.now), "Positive")
       record_vitals(patient, Time.now)
       prescribe_drugs(patient, encounter)
