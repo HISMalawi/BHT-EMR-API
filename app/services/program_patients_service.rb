@@ -1,10 +1,11 @@
 class ProgramPatientsService
   ENGINES = {
-    'HIV PROGRAM' => ARTService::PatientsEngine
+    'HIV PROGRAM' => ARTService::PatientsEngine,
+    'TB PROGRAM' => TBService::PatientsEngine
   }.freeze
 
   def initialize(program:)
-    clazz = ENGINES[program.concept.concept_names[0].name.upcase]
+    clazz = ENGINES[program.name.upcase]
     @engine = clazz.new(program: program)
   end
 
