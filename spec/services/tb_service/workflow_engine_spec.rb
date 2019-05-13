@@ -87,7 +87,6 @@ describe TBService::WorkflowEngine do
       tb_initial_encounter(patient, Time.now - 2.hour)
       encounter = lab_orders_encounter(patient, Time.now - 2.hour)
       tb_status(patient, lab_result_encounter(patient, Time.now), "Positive")
-      prescribe_drugs(patient, encounter)
       record_vitals(patient, Time.now)
       encounter_type = engine.next_encounter
       expect(encounter_type.name.upcase).to eq('TREATMENT')
@@ -123,12 +122,15 @@ describe TBService::WorkflowEngine do
 
     it 'returns TB Adherence for a follow up patient' do
       enroll_patient patient
+      appointment_encounter(patient, Time.now - 1.day) #appointment for previous visit
       encounter = tb_initial_encounter(patient, Time.now - 2.day)
       test_procedure_type(patient, tb_initial_encounter(patient, Time.now - 2.day), "Laboratory examinations", Time.now - 2.day)
       lab_orders_encounter(patient, Time.now - 2.day)
       tb_status(patient, lab_result_encounter(patient, Time.now), "Positive")
       record_vitals(patient, Time.now)
-      appointment_encounter(patient, Time.now - 1.day)
+      treatment_encounter(patient, Time.now)
+      dispensing_encounter(patient, Time.now)
+      appointment_encounter(patient, Time.now) #Seet appointment for next visit
       encounter_type = engine.next_encounter
       expect(encounter_type.name.upcase).to eq('TB ADHERENCE')
     end
@@ -197,13 +199,6 @@ describe TBService::WorkflowEngine do
                           encounter: encounter,
                           person: patient.person,
                           value_numeric: 13
-	end
-
-	def prescribe_drugs(patient, encounter)
-		create :observation, concept: concept('Prescribe drugs'),
-                          encounter: encounter,
-                          person: patient.person,
-                          value_coded: concept('Yes').concept_id
 	end
 
 	def medication_orders(patient, encounter)
@@ -309,7 +304,6 @@ describe TBService::WorkflowEngine do
       encounter = lab_orders_encounter(patient, Time.now - 2.hour)
       tb_status(patient, lab_result_encounter(patient, Time.now), "Positive")
       record_vitals(patient, Time.now)
-      prescribe_drugs(patient, encounter)
       medication_orders(patient, encounter)
       patient_weight(patient, encounter)
 
