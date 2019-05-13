@@ -28,7 +28,9 @@ describe TBService::PatientsEngine do
     TBService::PatientsEngine.new program: tb_program
 	end
 
-	let(:drug_quantity) {10}
+  let(:drug_quantity) {10}
+
+  let(:tb_number_service) {TbNumberService.new}
 
 
   let(:constrained_engine) { raise :not_implemented }
@@ -47,12 +49,13 @@ describe TBService::PatientsEngine do
 		end
 
 		it 'returns patient summary' do
-			patient
-			epoch = Time.now
+      patient
+      epoch = Time.now
 			patient_state_service = PatientStateService.new
 			patient_program = PatientProgram.create(patient_id: patient.patient_id , program_id: tb_program.program_id, date_enrolled: Date.today, creator: 1, uuid: "a", location_id: 701 )
 			patient_state = patient_state_service.create_patient_state(tb_program, patient, 92, Time.now)
-			dispensation()
+      dispensation()
+      tb_number_service.assign_tb_number(patient.patient_id)
 			patient_summary = engine.patient(patient.patient_id, epoch)
 			expect(patient_summary[:patient_id]).to eq(patient.patient_id)
     end
