@@ -112,11 +112,11 @@ def recent_records(model, database_offset, database)
 
   # HACK: person address seems to be missing `date_changed` field so we
   # fall back to the existing `date_created`
-  return model.where('date_created > ?', database_offset) if immutable_model?(model)
+  return model.unscoped.where('date_created > ?', database_offset) if immutable_model?(model)
 
-  return model.joins(:order).where('date_created > ?', database_offset) if model == DrugOrder
+  return model.unscoped.joins(:order).where('date_created > ?', database_offset) if model == DrugOrder
 
-  model.where('date_changed > ?', database_offset)
+  model.unscoped.where('date_changed > ?', database_offset)
 end
 
 def model(name)
