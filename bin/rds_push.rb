@@ -9,6 +9,12 @@ LOGGER = Class.new do
 
   LOGGERS = [Logger.new(Rails.root.join('log/rds-sync.log')), Logger.new(STDOUT)].freeze
 
+  def initialize
+    LOGGERS.each do |logger|
+      logger.level = Logger::INFO
+    end
+  end
+
   def method_missing(method_name, *args)
     LOGGERS.each { |logger| logger.method(method_name).call(*args) }
   end
@@ -173,7 +179,7 @@ end
 #
 # @returns  - A couch document id for the pushed record
 def push_record(record, doc_id = nil, program_name = nil)
-  LOGGER.debug("Pushing record to couch db: #{record.class} ##{record.id}(doc_id: #{doc_id || 'N/A'}) ")
+  LOGGER.info("Pushing record to couch db: #{record.class} ##{record.id}(doc_id: #{doc_id || 'N/A'}) ")
 
   record = serialize_record(record, program_name)
 
