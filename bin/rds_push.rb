@@ -43,7 +43,7 @@ def main(database, program_name)
 
   MODELS.each do |model|
     LOGGER.debug("Scanning model: #{model}")
-    last_update_time = delta(model)
+    last_update_time = database_offset(model, database)
 
     recent_records(model, last_update_time, database).each do |record|
       LOGGER.debug("Handling #{model} ##{record.id}")
@@ -61,7 +61,7 @@ def main(database, program_name)
       LOGGER.error("Failed to write #{model} ##{record.id} due to exception: #{e.class} - #{e} - #{e.response.body}")
     end
 
-    save_delta(model, last_update_time)
+    save_database_offset(model, last_update_time, database)
   end
 end
 
@@ -76,9 +76,9 @@ def with_lock
   end
 end
 
-def delta(model)
-  @delta ||= DELTA_STATE_PATH.exist? ? YAML.load_file(DELTA_STATE_PATH) : {}
-  @delta[model.to_s] || TIME_EPOCH
+def database_offset(model, database)
+  @database_offset ||= DELTA_STATE_PATH.exist? ? YAML.load_file(DELTA_STATE_PATH) : {}
+  @database_offset["#{database}.#{model}"] || TIME_EPOCH
 end
 
 # Load database configuration
@@ -92,31 +92,31 @@ def config
   @config
 end
 
-def save_delta(model, time)
-  return if delta(model) == time
+def save_database_offset(model, time, database)
+  return if database_offset(model, database) == time
 
-  @delta[model.to_s] = time
+  @database_offset["#{database}.#{model}"] = time
 
   Dir.mkdir(DELTA_STATE_PATH.parent) unless DELTA_STATE_PATH.parent.exist?
 
-  LOGGER.debug("Saving delta, #{time}, for model: #{model}")
+  LOGGER.debug("Saving database_offset, #{time}, for model: #{database}.#{model}")
 
   File.open(DELTA_STATE_PATH, 'w') do |fin|
-    fin.write(@delta.to_yaml)
+    fin.write(@database_offset.to_yaml)
   end
 end
 
-def recent_records(model, delta, database)
-  LOGGER.info("Retrieving #{model}s from database '#{database}' starting at #{delta}")
+def recent_records(model, database_offset, database)
+  LOGGER.info("Retrieving #{model}s from database '#{database}' starting at #{database_offset}")
   model.establish_connection(database.to_sym)
 
   # HACK: person address seems to be missing `date_changed` field so we
   # fall back to the existing `date_created`
-  return model.where('date_created > ?', delta) if immutable_model?(model)
+  return model.where('date_created > ?', database_offset) if immutable_model?(model)
 
-  return model.joins(:order).where('date_created > ?', delta) if model == DrugOrder
+  return model.joins(:order).where('date_created > ?', database_offset) if model == DrugOrder
 
-  model.where('date_changed > ?', delta)
+  model.where('date_changed > ?', database_offset)
 end
 
 def model(name)
