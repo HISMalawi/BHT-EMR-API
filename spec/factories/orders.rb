@@ -4,7 +4,7 @@ FactoryBot.define do
   factory :order do
     association :concept
     association :order_type
-    provider { User.find(1).person }
+    provider { User.first }
     creator { 1 }
   end
 end

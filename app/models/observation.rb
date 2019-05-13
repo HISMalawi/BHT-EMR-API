@@ -25,7 +25,7 @@ class Observation < VoidableRecord
   belongs_to :order, optional: true
   belongs_to :concept
   belongs_to :person
-  belongs_to :parent, class_name: 'Observation', optional: true
+  belongs_to :parent, class_name: 'Observation', foreign_key: :obs_group_id, primary_key: :obs_id, optional: true
   has_many :children, class_name: 'Observation', foreign_key: :obs_group_id
   # belongs_to :concept_name, class_name: 'ConceptName', foreign_key: 'concept_name'
   belongs_to :answer_concept, class_name: 'Concept', foreign_key: 'value_coded', optional: true
@@ -33,6 +33,21 @@ class Observation < VoidableRecord
   #  foreign_key: 'value_coded_name_id')
 
   has_many :concept_names, through: :concept
+
+  scope(:recent, lambda { |number|
+    joins(:encounter).order('obs_datetime DESC,date_created DESC').limit(number)
+  })
+  scope(:before, lambda { |date|
+    where(['obs_datetime < ? ', date]).order('obs_datetime DESC,date_created DESC').limit(1)
+  })
+  scope(:old, lambda { |number|
+    order('obs_datetime DESC,date_created DESC').limit(number)
+  })
+  scope(:question, lambda { |concept|
+    concept_id = concept.to_i
+    concept_id = ConceptName.where('name = ?', concept).first&.concept_id || 0 if concept_id == 0
+    where('concept_id = ?', concept_id)
+  })
 
   def as_json(options = {})
     super(options.merge(SERIALIZE_OPTIONS))

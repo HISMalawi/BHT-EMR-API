@@ -15,15 +15,15 @@ class Api::V1::EncountersController < ApplicationController
   def index
     # Ignoring error value as required_params never errors when
     # retrieving optional parameters only
-    filters = params.permit %i[patient_id location_id encounter_type_id date]
+    filters = params.permit(%i[patient_id location_id encounter_type_id date program_id])
 
     if filters.empty?
       render json: paginate(Encounter)
     else
       remap_encounter_type_id! filters if filters[:encounter_type_id]
-      date = filters.delete :date
-      queryset = Encounter.where filters
-      queryset = queryset.where 'DATE(encounter_datetime) = DATE(?)', date if date
+      date = filters.delete(:date)
+      queryset = Encounter.where(filters)
+      queryset = queryset.where('DATE(encounter_datetime) = DATE(?)', date) if date
       render json: paginate(queryset)
     end
   end
@@ -64,19 +64,23 @@ class Api::V1::EncountersController < ApplicationController
   # Optional parameters:
   #   provider_id: user_id of surrogate doing the data entry defaults to current user
   def create
-    #Add program_id
     type_id, patient_id, program_id = params.require(%i[encounter_type_id patient_id program_id])
 
     encounter = encounter_service.create(
       type: EncounterType.find(type_id),
       patient: Patient.find(patient_id),
+      program: Program.find(program_id),
       provider: params[:provider_id] ? Person.find(params[:provider_id]) : User.current.person,
       encounter_datetime: TimeUtils.retro_timestamp(params[:encounter_datetime]&.to_time || Time.now),
       program: Program.find(program_id)
-      
+
     )
 
-    render json: encounter, status: :created
+    if encounter.errors.empty?
+      render json: encounter, status: :created
+    else
+      render json: encounter.errors, status: :bad_request
+    end
   end
 
   # Update an existing encounter

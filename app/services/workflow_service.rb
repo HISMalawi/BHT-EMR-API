@@ -5,11 +5,10 @@ class WorkflowService
   ENGINES = {
     # Table mapping program concept name to engine
     'HIV PROGRAM' => ARTService::WorkflowEngine,
-
     'OPD PROGRAM' => OPDService::WorkflowEngine,
-
-    'TB PROGRAM' => TBService::WorkflowEngine
-    
+    'TB PROGRAM' => TBService::WorkflowEngine,
+    'ANC PROGRAM' => ANCService::WorkflowEngine,
+    'OPD PROGRAM' => OPDService::WorkflowEngine
   }.freeze
 
   def initialize(program_id:, patient_id:, date: nil)

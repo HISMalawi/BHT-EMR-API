@@ -3,6 +3,8 @@
 class HtnWorkflow
   include ModelUtils
 
+  HTN_SCREENING_MIN_AGE = 30 # Used in case no value is set in global properties
+
   def next_htn_encounter(patient, current_encounter, date)
     encounter = check_htn_workflow patient, current_encounter, date
     return encounter unless encounter.is_a?(String)
@@ -158,16 +160,12 @@ class HtnWorkflow
     return false
   end
 
-
   def htn_client?(patient, date)
-    #    link_to_htn = CoreService.get_global_property_value("activate.htn.enhancement")
-    htn_min_age = global_property("htn.screening.age.threshold")&.property_value
-    age = patient.person.age(date) rescue 0
-    htn_patient = false
+    htn_min_age = global_property('htn.screening.age.threshold')&.property_value&.to_i
+    htn_min_age ||= HTN_SCREENING_MIN_AGE
 
-    if ((htn_min_age.to_i <= age.to_i) rescue false) || patient.programs.map{|x| x.name}.include?("HYPERTENSION PROGRAM")
-      htn_patient = true
-    end
-    return htn_patient
+    age = patient.age(today: date)
+
+    htn_min_age <= age || patient.programs.collect(&:name).include?('HYPERTENSION PROGRAM')
   end
 end

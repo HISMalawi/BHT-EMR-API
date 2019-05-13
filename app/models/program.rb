@@ -7,10 +7,7 @@ class Program < RetirableRecord
   belongs_to :concept
   has_many :patient_programs
   has_many :program_workflows
-  has_many :user_programs #User programs
-  has_many :users, through: :user_programs #User programs
   has_many :encounters
-
 
   validates_presence_of :concept_id, :name
 

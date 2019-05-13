@@ -62,4 +62,14 @@ class Api::V1::LabTestOrdersController < ApplicationController
 
     render json: labs_list
   end
+
+  def orders_without_results
+    render json: engine.orders_without_results(patient)
+  end
+
+  private
+
+  def patient
+    Patient.find(params[:patient_id])
+  end
 end

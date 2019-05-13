@@ -1,7 +1,9 @@
 require 'zebra_printer/init'
 
 class Api::V1::ProgramPatientsController < ApplicationController
-  before_action :authenticate, except: %i[print_visit_label print_transfer_out_label]
+  before_action :authenticate, except: %i[print_visit_label print_transfer_out_label
+                                          print_patient_history_label print_history_label
+                                          print_lab_results_label]
 
   def show
     date = params[:date]&.to_date || Date.today
@@ -54,8 +56,32 @@ class Api::V1::ProgramPatientsController < ApplicationController
                               disposition: 'inline'
   end
 
+  def print_history_label
+    label_commands = service.history_label(patient, date).print
+    send_data label_commands, type: 'application/label; charset=utf-8',
+                              stream: false,
+                              filename: "#{params[:patient_id]}#{rand(10_000)}.lbl",
+                              disposition: 'inline'
+  end
+
+  def print_lab_results_label
+    label_commands = service.lab_results_label(patient, date).print
+    send_data label_commands, type: 'application/label; charset=utf-8',
+                              stream: false,
+                              filename: "#{params[:patient_id]}#{rand(10_000)}.lbl",
+                              disposition: 'inline'
+  end
+
   def print_transfer_out_label
     label_commands = service.transfer_out_label(patient, date).print
+    send_data label_commands, type: 'application/label; charset=utf-8',
+                              stream: false,
+                              filename: "#{params[:patient_id]}#{rand(10_000)}.lbl",
+                              disposition: 'inline'
+  end
+
+  def print_patient_history_label
+    label_commands = service.patient_history_label(patient, date).print
     send_data label_commands, type: 'application/label; charset=utf-8',
                               stream: false,
                               filename: "#{params[:patient_id]}#{rand(10_000)}.lbl",
@@ -72,6 +98,37 @@ class Api::V1::ProgramPatientsController < ApplicationController
 
   def mastercard_data
     render json: service.mastercard_data(patient, date)
+  end
+
+  # Get patient's last ANC Visit number
+  def anc_visit
+    render json: service.anc_visit(patient, date)
+  end
+
+  # Get the list of saved encounters
+
+  def saved_encounters
+    render json: service.saved_encounters(patient, date)
+  end
+
+
+  # Get patient's HIV status from ART Program.
+  def art_hiv_status
+    render json: service.art_hiv_status(patient)
+  end
+
+  # Check if the visit is subsequent
+  def subsequent_visit
+    render json: service.subsequent_visit(patient)
+  end
+
+  # Get surgical history for ANC
+  def surgical_history
+    render json: service.surgical_history(patient, date)
+  end
+
+  def medication_side_effects
+    render json: service.medication_side_effects(patient, date)
   end
 
   protected

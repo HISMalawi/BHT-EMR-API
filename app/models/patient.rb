@@ -100,7 +100,8 @@ class Patient < VoidableRecord
                      .limit(1)\
                      .first
     return nil unless obs
-    obs.value_numeric
+
+    obs.value_numeric || obs.value_text&.to_f
   end
 
   def void_related_models(reason)
@@ -125,7 +126,6 @@ class Patient < VoidableRecord
   end
 
   def name
-    name_obj = PersonName.find_by_person_id(patient_id)
-    "#{name_obj.given_name} #{name_obj.family_name}"
+    PersonName.where(person_id: patient_id).order(:date_created).last&.to_s
   end
 end
