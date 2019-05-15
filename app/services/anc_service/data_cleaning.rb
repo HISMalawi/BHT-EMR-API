@@ -25,7 +25,8 @@ module ANCService
 		(SELECT COUNT(DISTINCT(DATE(encounter_datetime))) FROM encounter
 			WHERE patient_id = e.patient_id
         AND voided = 0
-				AND DATE(encounter_datetime) <= DATE(e.encounter_datetime)
+        AND DATE(encounter_datetime) <= DATE(e.encounter_datetime)
+        AND program_id = 12
 			) visit_no
         FROM encounter e WHERE Date(e.encounter_datetime) >= '#{@start_date}'
         AND Date(e.encounter_datetime) <= '#{@end_date}'

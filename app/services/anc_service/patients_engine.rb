@@ -8,6 +8,7 @@ module ANCService
     include ModelUtils
 
     ART_PROGRAM =  Program.find_by name: 'HIV PROGRAM'
+    ANC_PROGRAM =  Program.find_by name: 'ANC PROGRAM'
     ARV_NUMBER = PatientIdentifierType.find_by name: 'ARV Number'
 
     def initialize(program:)
@@ -74,13 +75,15 @@ module ANCService
 
     def saved_encounters(patient, date)
       last_lmp = date_of_lnmp(patient)
+      date_diff = (date.to_date.year * 12 + date.to_date.month) - (last_lmp.to_date.year * 12 + last_lmp.to_date.month)
       ontime_encounters = ["REGISTRATION", "SOCIAL HISTORY", "SURGICAL HISTORY",
         "OBSTETRIC HISTORY", "MEDICAL HISTORY", "CURRENT PREGNANCY"]
 
-      x = Encounter.where(["DATE(encounter_datetime) = ? AND patient_id = ? AND voided = 0",
-          date.to_date.strftime("%Y-%m-%d"),patient.patient_id]).collect{|e| e.name}.uniq
+      x = Encounter.where(["DATE(encounter_datetime) = ? AND patient_id = ? AND voided = 0
+          AND program_id = ?", date.to_date.strftime("%Y-%m-%d"),
+          patient.patient_id, ANC_PROGRAM.id]).collect{|e| e.name}.uniq
 
-      if(last_lmp.blank?)
+      if(last_lmp.blank? || date_diff.to_i > 9)
 
         x.delete("TREATMENT") unless patient_given_drugs_today(patient, date)
 
