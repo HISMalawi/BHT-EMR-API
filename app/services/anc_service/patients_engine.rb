@@ -53,11 +53,13 @@ module ANCService
       @visit = []
       last_lmp = date_of_lnmp(patient)
 
-      unless last_lmp.blank?
+      date_diff = (date.to_date.year * 12 + date.to_date.month) - (last_lmp.to_date.year * 12 + last_lmp.to_date.month)
+
+      unless last_lmp.blank? && date_diff.to_date > 9
 
         @visit =  patient.encounters.where(["DATE(encounter_datetime) >= ?
-            AND DATE(encounter_datetime) <= ? AND encounter_type = ?",
-            last_lmp, date,EncounterType.find_by_name("ANC VISIT TYPE")]).collect{|e|
+            AND DATE(encounter_datetime) <= ? AND encounter_type = ? AND program_id = ?",
+            last_lmp, date,EncounterType.find_by_name("ANC VISIT TYPE"), ANC_PROGRAM.id]).collect{|e|
               e.observations.collect{|o|
                 o.answer_string.to_i if o.concept.concept_names.first.name.downcase == "reason for visit"
                 }.compact
