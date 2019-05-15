@@ -11,7 +11,7 @@ LOGGER = Class.new do
 
   def initialize
     LOGGERS.each do |logger|
-      logger.level = Logger::DEBUG
+      logger.level = Logger::INFO
     end
   end
 
