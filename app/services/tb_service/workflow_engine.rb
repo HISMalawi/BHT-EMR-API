@@ -219,9 +219,10 @@ module TBService
 
     def patient_has_no_lab_results?
       Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ?',
+        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
         LAB_RESULTS,
-        @patient.patient_id
+        @patient.patient_id,
+        @date
       ).order(encounter_datetime: :desc).first.nil?
     end
 
