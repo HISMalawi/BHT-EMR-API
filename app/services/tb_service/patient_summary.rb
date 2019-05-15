@@ -22,7 +22,7 @@ module TBService
         {
           patient_id: patient.patient_id,
           npid: identifier(NPID_TYPE) || 'N/A',
-          tb_number: tb_number || 'N/A',
+          tb_number: tb_number,
           program_start_date: patient_program_start_date || 'N/A',
           current_outcome: current_outcome || 'N/A',
           current_drugs: current_drugs,
@@ -139,7 +139,8 @@ module TBService
 
       def tb_number
         number = tb_number_service.get_tb_number(patient.patient_id)
-        return 'N/A'unless number[:identifier]
+        return 'N/A' unless number
+        number[:identifier]
       end
 
       def patient_program_start_date
