@@ -11,7 +11,7 @@ LOGGER = Class.new do
 
   def initialize
     LOGGERS.each do |logger|
-      logger.level = Logger::INFO
+      logger.level = Logger::DEBUG
     end
   end
 
@@ -23,6 +23,8 @@ end.new
 # Uncomment the following to log SQL queries and CouchDB queries
 # ActiveRecord::Base.logger = LOGGER
 # RestClient.log = LOGGER
+
+ActiveRecord::Base.logger = LOGGER
 
 APPLICATION_CONFIG_PATH = Rails.root.join('config/application.yml')
 DELTA_STATE_PATH = Rails.root.join('log/rds-sync-state.yml')
@@ -37,6 +39,9 @@ TIME_EPOCH = '1970-01-01'.to_time
 # They probably are not meant to be changed after creation.
 IMMUTABLE_MODELS = [PersonAddress, PatientIdentifier, Observation, Order].freeze
 
+# Maximum number of records to be fetched from database per request
+RECORDS_BATCH_SIZE = 1000
+
 def main(database, program_name)
   LOGGER.info("Scraping database [#{database}, #{program_name}]")
   initiate_couch_sync
@@ -46,13 +51,16 @@ def main(database, program_name)
     last_update_time = database_offset(model, database)
 
     recent_records(model, last_update_time, database).each do |record|
-      LOGGER.debug("Handling #{model} ##{record.id}")
+      LOGGER.debug("Handling #{model}(##{record.id})")
 
       update_time = record_update_time(record)
       last_update_time = update_time if update_time > last_update_time
 
       sync_status = find_record_sync_status(record, database)
-      next if record_already_synced?(record, sync_status)
+      if record_already_synced?(record, sync_status)
+        LOGGER.debug("Skipping already synced record #{model}(##{record.id})")
+        next
+      end
 
       record_doc_id = push_record(record, sync_status&.record_doc_id, program_name)
 
@@ -108,16 +116,32 @@ def save_database_offset(model, time, database)
 end
 
 def recent_records(model, database_offset, database)
-  LOGGER.info("Retrieving #{model}s from database '#{database}' starting at #{database_offset}")
-  model.establish_connection(database.to_sym)
+  Enumerator.new do |enum|
+    offset = 0
 
-  # HACK: person address seems to be missing `date_changed` field so we
-  # fall back to the existing `date_created`
-  return model.unscoped.where('date_created > ?', database_offset) if immutable_model?(model)
+    loop do
+      LOGGER.info("Retrieving #{model}s from database '#{database}' having [time >= #{database_offset}, index >= #{offset}]")
+      model.establish_connection(database.to_sym)
 
-  return model.unscoped.joins(:order).where('date_created > ?', database_offset) if model == DrugOrder
+      records = if immutable_model?(model)
+                  # HACK: person address seems to be missing `date_changed` field so we
+                  # fall back to the existing `date_created`
+                  model.unscoped.where('date_created > ?', database_offset)
+                elsif model == DrugOrder
+                  model.unscoped.joins(:order).where('date_created > ?', database_offset)
+                else
+                  model.unscoped.where('date_changed > ?', database_offset)
+                end
 
-  model.unscoped.where('date_changed > ?', database_offset)
+      records = records.order(model.primary_key.to_s).offset(offset).limit(RECORDS_BATCH_SIZE)
+
+      break if records.empty?
+
+      records.each { |record| enum.yield(record) }
+
+      offset = records.last.send(model.primary_key.to_sym) + 1
+    end
+  end
 end
 
 def model(name)
@@ -180,7 +204,7 @@ end
 #
 # @returns  - A couch document id for the pushed record
 def push_record(record, doc_id = nil, program_name = nil)
-  LOGGER.info("Pushing record to couch db: #{record.class} ##{record.id}(doc_id: #{doc_id || 'N/A'}) ")
+  LOGGER.info("Pushing record to couch db: #{record.class}(##{record.id}, doc_id: #{doc_id || 'N/A'}) ")
 
   record = serialize_record(record, program_name)
 
