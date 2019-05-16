@@ -95,7 +95,7 @@ class AppointmentEngine
   # Retrieves all prescriptions of ARVs to patient on date
   def patient_tb_prescriptions(patient, date)
     encounter_type_id = encounter_type('TREATMENT').encounter_type_id
-    arv_drug_concepts = Drug.tb_drugs.map(&:concept_id)
+    tb_drug_concepts = Drug.tb_drugs.map(&:concept_id)
 
     Order.joins(
       'INNER JOIN drug_order ON drug_order.order_id = orders.order_id
@@ -107,7 +107,7 @@ class AppointmentEngine
        AND drug.concept_id IN (?)',
       encounter_type_id, patient.patient_id,
       date.to_date.strftime("%Y-%m-%d 00:00:00"),date.to_date.strftime("%Y-%m-%d 23:59:59"),
-      arv_drug_concepts).order('encounter.encounter_datetime')
+      tb_drug_concepts).order('encounter.encounter_datetime')
   end
 
   def revised_suggested_date(patient, expiry_date)
