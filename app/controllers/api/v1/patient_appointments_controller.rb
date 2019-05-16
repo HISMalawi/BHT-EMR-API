@@ -2,11 +2,7 @@
 
 class Api::V1::PatientAppointmentsController < ApplicationController
   def next_appointment_date
-    patient = Patient.find params[:patient_id]
-    date = params[:date] ? Date.strptime(params[:date]) : Date.today
-
-    appointment_service = AppointmentService.new
-    appointment_date = appointment_service.next_appointment_date patient, date
+    appointment_date = service.next_appointment_date
     if appointment_date
       render json: appointment_date
     else
@@ -14,13 +10,18 @@ class Api::V1::PatientAppointmentsController < ApplicationController
     end
   end
 
-  def booked_appointments
-    date = params[:date] ? Date.strptime(params[:date]) : Date.today
+  protected
 
-    appointment_service = AppointmentService.new
-    list = appointment_service.booked_appointments date
+  def service
+    return @service if @service
 
-    render json: list
+    program_id, program_patient_id, date = appointment_params
+    @service = AppointmentService.new program_id: program_id, patient_id: program_patient_id, retro_date: date
+
+    @service
   end
 
+  def appointment_params
+    params.require([:program_id, :program_patient_id, :date])
+  end
 end

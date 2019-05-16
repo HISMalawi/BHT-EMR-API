@@ -110,6 +110,7 @@ Rails.application.routes.draw do
       resources :programs do
         resources :program_workflows, path: :workflows
         resources :program_regimens, path: :regimens
+        get 'booked_appointments' => 'programs#booked_appointments'
         get 'pellets_regimen' => 'program_regimens#pellets_regimen'
         get 'next_available_arv_number' => 'program_patients#find_next_available_arv_number'
         get 'lookup_arv_number/:arv_number' => 'program_patients#lookup_arv_number'
@@ -117,6 +118,7 @@ Rails.application.routes.draw do
         get 'custom_regimen_ingredients' => 'program_regimens#custom_regimen_ingredients'
         get 'defaulter_list' => 'program_patients#defaulter_list'
         resources :program_patients, path: :patients do
+          get '/next_appointment_date' => 'patient_appointments#next_appointment_date'
           get '/last_drugs_received' => 'program_patients#last_drugs_received'
           get '/dosages' => 'program_patients#find_dosages'
           get '/status' => 'program_patients#status'
@@ -147,7 +149,7 @@ Rails.application.routes.draw do
         get '/lab_tests/measures' => 'lab_test_types#measures'
         resources :program_reports, path: 'reports'
 
-       
+
       end
 
       resources :stock
