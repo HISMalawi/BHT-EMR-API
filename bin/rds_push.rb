@@ -217,8 +217,10 @@ end
 
 # Convert record to JSON
 def serialize_record(record, program_name = nil)
+  program = program_name.blank? ? nil : Program.find_by_name(program_name)
+
   serialized_record = record.as_json(ignore_includes: true)
-  transform_record_keys(record, serialized_record)
+  transform_record_keys(record, serialized_record, program)
 
   serialized_record['record_type'] = record.class.to_s
 
@@ -227,10 +229,7 @@ def serialize_record(record, program_name = nil)
     # that use the old openmrs standard that has no program
     # specific encounters. Thus we manually have to set the program
     # id using the value specified in the config file.
-    raise 'program_name required for encounters without program_id' if program_name.blank?
-
-    program = Program.find_by_name(program_name)
-    raise "Invalid program name '#{program_name}' in rds config: application.yml" unless program
+    raise "Invalid or missing program name '#{program_name}' in rds config: application.yml" unless program
 
     serialized_record['program_id'] = program.id
   end
@@ -239,14 +238,18 @@ def serialize_record(record, program_name = nil)
 end
 
 SITE_CODE_MAX_WIDTH = 5
+PROGRAM_ID_MAX_WIDTH = 2
 
 # Transforms primary key and foreign keys on record to the format required in RDS
-def transform_record_keys(record, serialized_record)
+def transform_record_keys(record, serialized_record, program)
   site_id = GlobalProperty.find_by_property('current_health_center_id')\
                           .property_value\
                           .to_s\
                           .rjust(SITE_CODE_MAX_WIDTH, '0')
-  serialized_record[record.class.primary_key.to_s] = "#{record.id}#{site_id}".to_i
+
+  program_id = program&.id&.to_s&.rjust(PROGRAM_ID_MAX_WIDTH, '0') || '00'
+
+  serialized_record[record.class.primary_key.to_s] = "#{record.id}#{program_id}#{site_id}".to_i
 
   record.class.reflect_on_all_associations(:belongs_to).each do |association|
     next unless MODELS.include?(association.class_name.constantize)\
@@ -255,7 +258,7 @@ def transform_record_keys(record, serialized_record)
     id = record.send(association.foreign_key.to_sym)
     next unless id
 
-    serialized_record[association.foreign_key.to_s] = "#{id}#{site_id}".to_i
+    serialized_record[association.foreign_key.to_s] = "#{id}#{program_id}#{site_id}".to_i
   end
 
   serialized_record
