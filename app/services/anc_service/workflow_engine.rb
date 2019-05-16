@@ -125,7 +125,7 @@ module ANCService
           CURRENT_PREGNANCY
         when /ANC examination/i
           ANC_EXAMINATION
-        when /ART Follow Up/i
+        when /ARV Follow Up/i
           ART_FOLLOWUP
         when /hiv clinic registration/i
           HIV_CLINIC_REGISTRATION

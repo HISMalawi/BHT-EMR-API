@@ -130,7 +130,7 @@ module ANCService
       hiv_positive = PatientProgram.find_by_sql("SELECT pg.patient_id
         FROM patient_program pg
         WHERE pg.patient_id = #{patient.patient_id}
-        AND pg.program_id = #{ART_PROGRAM.id}")
+        AND pg.program_id = #{ART_PROGRAM.id} AND pg.voided = 0")
 
       if !hiv_positive.blank?
         hiv_status = 'Positive'
@@ -177,9 +177,9 @@ module ANCService
 
         visit = Encounter.joins(:observations).where("encounter.encounter_type = ?
             AND concept_id = ? AND encounter.patient_id = ? AND
-            DATE(encounter.encounter_datetime) >= DATE(?)",
+            DATE(encounter.encounter_datetime) >= DATE(?) AND program_id = ?",
             visit_type.id, reason_for_visit.concept_id,
-            patient.patient_id, lmp_date)
+            patient.patient_id, lmp_date, ANC_PROGRAM.id)
           .order(encounter_datetime: :desc).first.blank?
 
         unless visit
