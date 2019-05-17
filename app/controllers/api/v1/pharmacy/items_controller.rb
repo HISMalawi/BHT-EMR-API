@@ -8,7 +8,7 @@ class Api::V1::Pharmacy::ItemsController < ApplicationController
   end
 
   def show
-    render json: service.find_batch_item_by_id(params[:id])
+    render json: item
   end
 
   def update
@@ -34,9 +34,21 @@ class Api::V1::Pharmacy::ItemsController < ApplicationController
     render json: item
   end
 
+  # Reallocate item to some other facility
+  def reallocate
+    code, quantity, location_id = params.require(%i[reallocation_code quantity location_id])
+    reallocation = service.reallocate_items(code, params[:item_id], quantity, location_id)
+
+    render json: reallocation, status: :created
+  end
+
   private
 
   def service
     StockManagementService.new
+  end
+
+  def item
+    service.find_batch_item_by_id(params[:id])
   end
 end

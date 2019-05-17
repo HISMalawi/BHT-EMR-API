@@ -162,7 +162,9 @@ Rails.application.routes.draw do
 
       namespace :pharmacy do
         resources :batches
-        resources :items
+        resources :items do
+          post '/reallocate', to: 'items#reallocate'
+        end
         get 'earliest_expiring_item', to: 'items#earliest_expiring'
       end
 
