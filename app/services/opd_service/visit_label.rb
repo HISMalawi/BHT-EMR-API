@@ -274,4 +274,21 @@ class OPDService::VisitLabel
 
     label.print(1)
   end
+
+  def treatment_not_done(patient, date)
+    current_treatment_encounter(patient, date).first.observations.where(
+      'obs.concept_id = ?', ConceptName.find_by_name('TREATMENT').concept_id
+    ).last rescue false
+  end
+
+  def current_treatment_encounter(patient, date, force = false)
+    type = EncounterType.find_by_name('TREATMENT')
+    program_id = Program.find_by_name('OPD Program').program_id
+
+    encounter = patient.encounters.find_by(
+      'program_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = ?', program_id, type, date
+    )
+
+    return encounter
+  end
 end
