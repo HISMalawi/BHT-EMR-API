@@ -4,7 +4,7 @@ class Api::V1::ProgramReportsController < ApplicationController
   include ModelUtils
 
   def show
-    name = params.require(%i[name])[0]
+    name = params[:name]
     type, start_date, end_date = parse_report_name(name)
     type ||= params[:id]
     start_date ||= params.require(%i[start_date])[0]
