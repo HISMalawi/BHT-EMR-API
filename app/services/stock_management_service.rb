@@ -38,6 +38,8 @@ class StockManagementService
 
         item = create_batch_item(batch, drug_id, quantity, delivery_date, expiry_date)
         validate_activerecord_object(item)
+
+        commit_transaction(item, STOCK_ADD, quantity, delivery_date)
       rescue StandardError => e
         raise e.class, "Failed to parse stock item ##{i} due to `#{e.message}`"
       end
@@ -77,7 +79,11 @@ class StockManagementService
   def update_batch_item(batch_item_id, params)
     item = PharmacyBatchItem.find(batch_item_id)
     item.update(params)
-    # create_stock_transaction(item, quantity, STOCK_EDIT, Date.today)
+
+    delivery_event = Pharmacy.find_by(item: item, type: pharmacy_event_type(STOCK_ADD))
+    delivery_event.void("#{User.current.username} edited batch details")
+
+    commit_transaction(item, STOCK_ADD, item.quantity, item.delivery_date)
   end
 
   def void_batch_item(batch_item_id, reason)
@@ -97,7 +103,7 @@ class StockManagementService
       item = PharmacyBatchItem.find(batch_item_id)
       quantity = quantity.abs
 
-      commit_transaction(item, STOCK_EDIT, -quantity)
+      commit_transaction(item, STOCK_EDIT, -quantity, update_item: true)
 
       destination = Location.find(destination_location_id)
 
@@ -134,7 +140,7 @@ class StockManagementService
     PharmacyActivity.create(type: type, date: date)
   end
 
-  def commit_transaction(batch_item, event_name, quantity, date = nil)
+  def commit_transaction(batch_item, event_name, quantity, date = nil, update_item: false)
     ActiveRecord::Base.transaction do
       date ||= Date.today
 
@@ -150,28 +156,13 @@ class StockManagementService
         raise InvalidParameterError, "Quantity (#{quantity}) exceeds current quantity on item ##{batch_item.id}"
       end
 
-      batch_item.save
-      validate_activerecord_object(batch_item)
+      if update_item
+        batch_item.save
+        validate_activerecord_object(batch_item)
+      end
 
       { event: event, target_item: batch_item }
     end
-  end
-
-  def add_pharmacy_activity_property(activity, property_name, values)
-    concept_id = ConceptName.find_by_name(property_name)
-    PharmacyActivityProperty.create(activity: activity, concept_id: concept_id, **values)
-  end
-
-  def add_stock_item_quantity(stock_item_id, quantity)
-    stock_item = PharmacyStockItem.find(stock_item_id)
-    stock_item.quantity += quantity
-
-    if stock_item.quantity.negative?
-      raise InvalidParameterError, 'Chosen quantity exceeds available quantity'
-    end
-
-    stock_item.save
-    stock_item
   end
 
   def pharmacy_event_type(event_name)
