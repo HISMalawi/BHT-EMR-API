@@ -146,8 +146,11 @@ Rails.application.routes.draw do
         resources :program_reports, path: 'reports'
       end
 
-      resources :stock
-      post '/edit_stock_report', to: 'stock#edit'
+      namespace :pharmacy do
+        resources :batches
+        resources :items
+        get 'earliest_expiring_item', to: 'items#earliest_expiring'
+      end
 
       namespace :types do
         resources :relationships

@@ -48,6 +48,11 @@ class Api::V1::DrugsController < ApplicationController
                                 disposition: 'inline')
   end
 
+  def stock_levels
+    levels = service.stock_levels(params[:classification])
+    render json: levels
+  end
+
   private
 
   def drug
