@@ -108,6 +108,10 @@ class ReportService
     engine(@program).missed_appointments(start_date, end_date)
   end
 
+  def ipt_coverage(start_date, end_date)
+    engine(@program).ipt_coverage(start_date, end_date)
+  end
+
   private
 
   def engine(program)
