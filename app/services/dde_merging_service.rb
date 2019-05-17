@@ -5,22 +5,41 @@
 class DDEMergingService
   include ModelUtils
 
-  attr_accessor :dde_client
+  attr_accessor :parent, :dde_client
 
-  def initialize(dde_client)
+  # Initialise DDE's merging service.
+  #
+  # Parameters:
+  #   parent: Is the parent DDE service
+  #   dde_client: Is a configured DDE client
+  def initialize(parent, dde_client)
+    @parent = parent
     @dde_client = dde_client
   end
 
-  def merge_patients(primary_patient_ids, secondary_patient_ids)
-    if remote_merge?(primary_patient_ids, secondary_patient_ids)
-      merge_remote_patients(primary_patient_ids, secondary_patient_ids)
-    elsif remote_local_merge?(primary_patient_ids, secondary_patient_ids)
-      merge_remote_and_local_patients(primary_patient_ids, secondary_patient_ids)
-    elsif local_merge?(primary_patient_ids, secondary_patient_ids)
-      merge_local_patients(primary_patient_ids, secondary_patient_ids)
-    else
-      raise "Invalid merge parameters: primary => #{primary_patient_ids}, secondary => #{secondary_patient_ids}"
-    end
+  # Merge secondary patient(s) into primary patient.
+  #
+  # Parameters:
+  #   primary_patient_ids - An object of them form { 'patient_id' => xxx, 'doc_id' }.
+  #                         One of 'patient_id' and 'doc_id' must be present else an
+  #                         InvalidParametersError be thrown.
+  #   secondary_patient_ids_list - An array of objects like that for 'primary_patient_ids'
+  #                                above
+  def merge_patients(primary_patient_ids, secondary_patient_ids_list)
+    secondary_patient_ids_list.collect do |secondary_patient_ids|
+      if remote_merge?(primary_patient_ids, secondary_patient_ids)
+        merge_remote_patients(primary_patient_ids, secondary_patient_ids)
+      elsif remote_local_merge?(primary_patient_ids, secondary_patient_ids)
+        merge_remote_and_local_patients(primary_patient_ids, secondary_patient_ids)
+      elsif inverted_remote_local_merge?(primary_patient_ids, secondary_patient_ids)
+        merge_remote_and_local_patients(secondary_patient_ids, primary_patient_ids)
+      elsif local_merge?(primary_patient_ids, secondary_patient_ids)
+        merge_local_patients(primary_patient_ids, secondary_patient_ids)
+      else
+        raise InvalidParameterError,
+              "Invalid merge parameters: primary => #{primary_patient_ids}, secondary => #{secondary_patient_ids}"
+      end
+    end.first
   end
 
   # Merges @{param secondary_patient} into @{param primary_patient}.
@@ -45,11 +64,20 @@ class DDEMergingService
   # Binds the remote patient to the local patient by blessing the local patient
   # with the remotes npid and doc_id
   def link_local_to_remote_patient(local_patient, remote_patient)
-    local_patient.identifier('DDE person document id')&.void("Assigned new id: #{remote_patient['doc_id']}")
-    local_patient.identifier('National id')&.void("Assigned new id: #{remote_patient['npid']}")
+    national_id_type = patient_identifier_type('National id')
+    doc_id_type = patient_identifier_type('DDE person document id')
+
+    local_patient.patient_identifiers.where(type: [national_id_type, doc_id_type]) .each do |identifier|
+      if identifier.identifier_type == national_id_type.id && identifier.identifier.match?(/^\s*P\d{12}\s*$/i)
+        # We have a v3 NPID that should get demoted to legacy national id
+        create_local_patient_identifier(local_patient, identifier.identifier, 'Old Identification Number')
+      end
+
+      identifier.void("Assigned new id: #{remote_patient['doc_id']}")
+    end
 
     create_local_patient_identifier(local_patient, remote_patient['doc_id'], 'DDE person document id')
-    create_local_patient_identifier(local_patient, remote_patient['npid'], 'National id')
+    create_local_patient_identifier(local_patient, find_remote_patient_npid(remote_patient), 'National id')
 
     local_patient.reload
     local_patient
@@ -62,17 +90,22 @@ class DDEMergingService
   # The precondition for a remote merge is the presence of a doc_id
   # in both primary and secondary patient ids.
   def remote_merge?(primary_patient_ids, secondary_patient_ids)
-    primary_patient_ids['doc_id'] && secondary_patient_ids['doc_id']
+    !(primary_patient_ids['doc_id'].blank? || secondary_patient_ids['doc_id'].blank?)
   end
 
   # Is a merge of a remote patient into a local patient possible?
   def remote_local_merge?(primary_patient_ids, secondary_patient_ids)
-    primary_patient_ids['patient_id'] && secondary_patient_ids['doc_id']
+    !(primary_patient_ids['patient_id'].blank? || secondary_patient_ids['doc_id'].blank?)
+  end
+
+  # Like `remote_local_merge` but primary is remote and secondary is local
+  def inverted_remote_local_merge?(primary_patient_ids, secondary_patient_ids)
+    !(primary_patient_ids['doc_id'].blank? || secondary_patient_ids['patient_id'].blank?)
   end
 
   # Is a merge of local patients possible?
   def local_merge?(primary_patient_ids, secondary_patient_ids)
-    primary_patient_ids['patient_id'] && secondary_patient_ids['patient_id']
+    !(primary_patient_ids['patient_id'].blank? || secondary_patient_ids['patient_id'].blank?)
   end
 
   # Merge remote secondary patient into local primary patient
@@ -83,7 +116,7 @@ class DDEMergingService
     local_patient = link_local_to_remote_patient(local_patient, remote_patient)
     return local_patient if secondary_patient_ids['patient_id'].blank?
 
-    merge_local_patients(local_patient, Patient.find(secondary_patient_ids['patient_id']))
+    merge_local_patients(primary_patient_ids, secondary_patient_ids)
   end
 
   # Merge patients in DDE and update local records if need be
@@ -93,7 +126,7 @@ class DDEMergingService
 
     raise "Failed to merge patients on remote: #{status} - #{response}" unless status == 200
 
-    return save_remote_patient(response) if primary_patient_ids['patient_id'].blank?
+    return parent.save_remote_patient(response) if primary_patient_ids['patient_id'].blank?
 
     local_patient = link_local_to_remote_patient(Patient.find(primary_patient_ids['patient_id']), response)
     return local_patient if secondary_patient_ids['patient_id'].blank?
@@ -261,7 +294,67 @@ class DDEMergingService
     response
   end
 
+  def find_remote_patient_npid(remote_patient)
+    npid = remote_patient['npid']
+    return npid unless npid.blank?
+
+    remote_patient['identifiers'].each do |identifier|
+      npid = identifier['National patient identifier']
+      return npid unless npid.blank?
+    end
+
+    nil
+  end
+
+  # Convert a DDE person to an openmrs person.
+  #
+  # NOTE: This creates a person on the database.
+  def save_remote_patient(remote_patient)
+    LOGGER.debug "Converting DDE person to openmrs: #{remote_patient}"
+
+    person = person_service.create_person(
+      birthdate: remote_patient['birthdate'],
+      birthdate_estimated: remote_patient['birthdate_estimated'],
+      gender: remote_patient['gender']
+    )
+
+    person_service.create_person_name(
+      person, given_name: remote_patient['given_name'],
+              family_name: remote_patient['family_name'],
+              middle_name: remote_patient['middle_name']
+    )
+
+    remote_patient_attributes = remote_patient['attributes']
+    person_service.create_person_address(
+      person, home_village: remote_patient_attributes['home_village'],
+              home_traditional_authority: remote_patient_attributes['home_traditional_authority'],
+              home_district: remote_patient_attributes['home_district'],
+              current_village: remote_patient_attributes['current_village'],
+              current_traditional_authority: remote_patient_attributes['current_traditional_authority'],
+              current_district: remote_patient_attributes['current_district']
+    )
+
+    person_service.create_person_attributes(
+      person, cell_phone_number: remote_patient_attributes['cellphone_number'],
+              occupation: remote_patient_attributes['occupation']
+    )
+
+    patient = Patient.create(patient_id: person.id)
+    merging_service.link_local_to_remote_patient(patient, remote_patient)
+  end
+
   def patient_service
     PatientService.new
+  end
+
+  def dde_client
+    if @dde_client.respond_to?(:call)
+      # HACK: Allows the dde_client to be passed in as a callable to be passed
+      #   in as a callable to enable lazy instantiation. The dde_client is
+      #   not required for local merges (thus no need to instantiate it).
+      @dde_client.call
+    else
+      @dde_client
+    end
   end
 end

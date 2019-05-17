@@ -6,6 +6,8 @@ class CreateAlternativeDrugNames < ActiveRecord::Migration[5.2]
       t.integer :drug_inventory_id, null: false
 
       t.timestamps
+    rescue StandardError => e
+      Rails.logger.warn("CreateAlternativeDrugNames migration failed: #{e}")
     end
   end
 end

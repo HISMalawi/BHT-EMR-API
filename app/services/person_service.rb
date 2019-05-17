@@ -39,9 +39,10 @@ class PersonService
   end
 
   def find_people_by_name_and_gender(given_name, family_name, gender)
-    Person.joins(:names).where(
+    Person.joins([:patient, :names]).where(
       'person.gender like ? AND person_name.given_name LIKE ?
-                            AND person_name.family_name LIKE ?',
+                            AND person_name.family_name LIKE ?
+       AND patient.patient_id = person.person_id',
       "#{gender}%", "#{given_name}%", "#{family_name}%"
     )
   end
@@ -103,22 +104,7 @@ class PersonService
   end
 
   def update_person_address(person, params)
-    filtered_params = {}
-    params.each do |param, value|
-      param = param.to_sym
-      next unless PERSON_ADDRESS_FIELDS.include?(param)
-
-      filtered_params[PERSON_ADDRESS_FIELD_MAP[param]] = value
-    end
-
-    address = person.addresses.first
-
-    return create_person_address(filtered_params) unless address
-
-    handle_model_errors do
-      address.update(filtered_params)
-      address
-    end
+    return create_person_address(person, params)
   end
 
   def create_person_attributes(person, person_attributes)

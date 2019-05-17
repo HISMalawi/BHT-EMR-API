@@ -6,9 +6,18 @@ class DDEService
   DDE_CONFIG_PATH = 'config/application.yml'
   LOGGER = Logger.new(STDOUT)
 
-  cattr_accessor :connection # Holds current (shared) connection to DDE
+  # Limit all find queries for local patients to this
+  PATIENT_SEARCH_RESULTS_LIMIT = 10
+
+  attr_accessor :program
 
   include ModelUtils
+
+  def initialize(program:)
+    raise InvalidParameterError, 'Program (program_id) is required' unless program
+
+    @program = program
+  end
 
   # Registers local OpenMRS patient in DDE
   #
@@ -36,7 +45,7 @@ class DDEService
   # Import patients from DDE using doc id
   def import_patients_by_doc_id(doc_id)
     doc_id_type = patient_identifier_type('DDE person document id')
-    locals = patient_service.find_patients_by_identifier(doc_id, doc_id_type)
+    locals = patient_service.find_patients_by_identifier(doc_id, doc_id_type).limit(PATIENT_SEARCH_RESULTS_LIMIT)
     remotes = find_remote_patients_by_doc_id(doc_id)
 
     import_remote_patient(locals, remotes)
@@ -45,7 +54,7 @@ class DDEService
   # Imports patients from DDE to the local database
   def import_patients_by_npid(npid)
     doc_id_type = patient_identifier_type('National id')
-    locals = patient_service.find_patients_by_identifier(npid, doc_id_type)
+    locals = patient_service.find_patients_by_identifier(npid, doc_id_type).limit(PATIENT_SEARCH_RESULTS_LIMIT)
     remotes = find_remote_patients_by_npid(npid)
 
     import_remote_patient(locals, remotes)
@@ -53,21 +62,21 @@ class DDEService
 
   # Similar to import_patients_by_npid but uses name and gender instead of npid
   def import_patients_by_name_and_gender(given_name, family_name, gender)
-    locals = patient_service.find_patients_by_name_and_gender(given_name, family_name, gender)
+    locals = patient_service.find_patients_by_name_and_gender(given_name, family_name, gender).limit(PATIENT_SEARCH_RESULTS_LIMIT)
     remotes = find_remote_patients_by_name_and_gender(given_name, family_name, gender)
 
     import_remote_patient(locals, remotes)
   end
 
   def find_patients_by_npid(npid)
-    locals = patient_service.find_patients_by_npid(npid)
+    locals = patient_service.find_patients_by_npid(npid).limit(PATIENT_SEARCH_RESULTS_LIMIT)
     remotes = find_remote_patients_by_npid(npid)
 
-    package_patients(locals, remotes)
+    package_patients(locals, remotes, auto_push_singular_local: true)
   end
 
   def find_patients_by_name_and_gender(given_name, family_name, gender)
-    locals = patient_service.find_patients_by_name_and_gender(given_name, family_name, gender)
+    locals = patient_service.find_patients_by_name_and_gender(given_name, family_name, gender).limit(PATIENT_SEARCH_RESULTS_LIMIT)
     remotes = find_remote_patients_by_name_and_gender(given_name, family_name, gender)
 
     package_patients(locals, remotes)
@@ -134,13 +143,50 @@ class DDEService
     merging_service.link_local_to_remote_patient(patient, response)
   end
 
+  # Convert a DDE person to an openmrs person.
+  #
+  # NOTE: This creates a person on the database.
+  def save_remote_patient(remote_patient)
+    LOGGER.debug "Converting DDE person to openmrs: #{remote_patient}"
+
+    person = person_service.create_person(
+      birthdate: remote_patient['birthdate'],
+      birthdate_estimated: remote_patient['birthdate_estimated'],
+      gender: remote_patient['gender']
+    )
+
+    person_service.create_person_name(
+      person, given_name: remote_patient['given_name'],
+              family_name: remote_patient['family_name'],
+              middle_name: remote_patient['middle_name']
+    )
+
+    remote_patient_attributes = remote_patient['attributes']
+    person_service.create_person_address(
+      person, home_village: remote_patient_attributes['home_village'],
+              home_traditional_authority: remote_patient_attributes['home_traditional_authority'],
+              home_district: remote_patient_attributes['home_district'],
+              current_village: remote_patient_attributes['current_village'],
+              current_traditional_authority: remote_patient_attributes['current_traditional_authority'],
+              current_district: remote_patient_attributes['current_district']
+    )
+
+    person_service.create_person_attributes(
+      person, cell_phone_number: remote_patient_attributes['cellphone_number'],
+              occupation: remote_patient_attributes['occupation']
+    )
+
+    patient = Patient.create(patient_id: person.id)
+    merging_service.link_local_to_remote_patient(patient, remote_patient)
+  end
+
   private
 
   def find_remote_patients_by_npid(npid)
     response, _status = dde_client.post('search_by_npid', npid: npid)
 
     unless response.class == Array
-      raise "Patient search by failed: DDE Response => #{response}"
+      raise "Patient search by npid failed: DDE Response => #{response}"
     end
 
     response
@@ -170,8 +216,10 @@ class DDEService
   # Resolves local and remote patients and post processes the remote
   # patients to take on a structure similar to that of local
   # patients.
-  def package_patients(local_patients, remote_patients)
-    patients = resolve_patients(local_patients: local_patients, remote_patients: remote_patients)
+  def package_patients(local_patients, remote_patients, auto_push_singular_local: false)
+    patients = resolve_patients(local_patients: local_patients,
+                                remote_patients: remote_patients,
+                                auto_push_singular_local: auto_push_singular_local)
 
     patients[:remotes] = patients[:remotes].collect { |patient| localise_remote_patient(patient) }
 
@@ -200,7 +248,7 @@ class DDEService
   #   { resolved: [..,], locals: [...], remotes: [...] }
   #
   # NOTE: All resolved patients are available in the local database
-  def resolve_patients(local_patients:, remote_patients:)
+  def resolve_patients(local_patients:, remote_patients:, auto_push_singular_local: false)
     remote_patients = remote_patients.dup # Will be modifying this copy
 
     # Match all locals to remotes, popping out the matching patients from
@@ -212,22 +260,30 @@ class DDEService
         same_patient?(local_patient: local_patient, remote_patient: patient)
       end
 
-      if remote_patient
-        resolved_patients << local_patient
-        remote_patients.delete(remote_patient)
-      else
-        resolved_patients << push_local_patient_to_dde(local_patient)
-      end
+      remote_patients.delete(remote_patient) if remote_patient
+
+      resolved_patients << local_patient
     end
 
     if resolved_patients.size.zero? && remote_patients.size == 1
       # HACK: Frontenders requested that if only a single patient exists
       # remotely and locally none exists, the remote patient should be
       # imported.
-      return { locals: [save_remote_patient(remote_patients[0])], remotes: [] }
+      resolved_patients = [save_remote_patient(remote_patients[0])]
+      remote_patients = []
+    elsif auto_push_singular_local && resolved_patients.size == 1\
+         && remote_patients.size.zero? && local_only_patient?(resolved_patients.first)
+      # ANOTHER HACK: Push local only patient to DDE
+      resolved_patients = [push_local_patient_to_dde(resolved_patients[0])]
     end
 
     { locals: resolved_patients, remotes: remote_patients }
+  end
+
+  # Checks if patient only exists on local database
+  def local_only_patient?(patient)
+    !(patient.patient_identifiers.where(type: patient_identifier_type('National id')).exists?\
+      && patient.patient_identifiers.where(type: patient_identifier_type('DDE person document id')).exists?)
   end
 
   # Matches local and remote patient
@@ -244,9 +300,36 @@ class DDEService
   # generated by DDE.
   def push_local_patient_to_dde(patient)
     response, status = dde_client.post('add_person', openmrs_to_dde_patient(patient))
-    raise "Failed to create patient in DDE: #{response}" if status != 200
+
+    if status != 200
+      error = UnprocessableEntityError.new("Failed to create patient in DDE: #{response.to_json}")
+      error.add_entity(patient)
+      raise error
+    end
 
     merging_service.link_local_to_remote_patient(patient, response)
+  end
+
+  # Converts a remote patient coming from DDE into a structure similar
+  # to that of a local patient
+  def localise_remote_patient(patient)
+    Patient.new(
+      patient_identifiers: localise_remote_patient_identifiers(patient),
+      person: Person.new(
+        names: localise_remote_patient_names(patient),
+        addresses: localise_remote_patient_addresses(patient),
+        birthdate: patient['birthdate'],
+        birthdate_estimated: patient['birthdate_estimated'],
+        gender: patient['gender']
+      )
+    )
+  end
+
+  def localise_remote_patient_identifiers(remote_patient)
+    [PatientIdentifier.new(identifier: remote_patient['npid'],
+                           type: patient_identifier_type('National ID')),
+     PatientIdentifier.new(identifier: remote_patient['doc_id'],
+                           type: patient_identifier_type('DDE Person Document ID'))]
   end
 
   # Converts a remote patient coming from DDE into a structure similar
@@ -289,28 +372,31 @@ class DDEService
   end
 
   def dde_client
-    return @dde_client if @dde_client
+    client = DDEClient.new
 
-    @dde_client = DDEClient.new
+    connection = dde_connections[program.id]
 
-    LOGGER.debug 'Searching for a stored DDE connection'
-    if DDEService.connection
-      LOGGER.debug 'Stored DDE connection found'
-      @dde_client.connect(connection: DDEService.connection)
-      return @dde_client
-    end
+    dde_connections[program.id] = if connection
+                                    client.restore_connection(connection)
+                                  else
+                                    client.connect(dde_config)
+                                  end
 
-    LOGGER.debug 'No stored DDE connection found... Loading config...'
-    DDEService.connection = @dde_client.connect(config: config)
-    @dde_client
+    client
   end
 
-  def config
-    app_config = YAML.load_file(DDE_CONFIG_PATH)
+  # Loads a dde client into the dde_clients_cache for the
+  def dde_config
+    main_config = YAML.load_file(DDE_CONFIG_PATH)['dde']
+    raise 'No configuration for DDE found' unless main_config
+
+    program_config = main_config[program.name.downcase]
+    raise "No DDE config for program #{program.name} found" unless program_config
+
     {
-      username: app_config['dde_username'],
-      password: app_config['dde_password'],
-      base_url: app_config['dde_url']
+      url: main_config['url'],
+      username: program_config['username'],
+      password: program_config['password']
     }
   end
 
@@ -347,43 +433,6 @@ class DDEService
     dde_patient
   end
 
-  # Convert a DDE person to an openmrs person.
-  #
-  # NOTE: This creates a person on the database.
-  def save_remote_patient(remote_patient)
-    LOGGER.debug "Converting DDE person to openmrs: #{remote_patient}"
-
-    person = person_service.create_person(
-      birthdate: remote_patient['birthdate'],
-      birthdate_estimated: remote_patient['birthdate_estimated'],
-      gender: remote_patient['gender']
-    )
-
-    person_service.create_person_name(
-      person, given_name: remote_patient['given_name'],
-              family_name: remote_patient['family_name'],
-              middle_name: remote_patient['middle_name']
-    )
-
-    remote_patient_attributes = remote_patient['attributes']
-    person_service.create_person_address(
-      person, home_village: remote_patient_attributes['home_village'],
-              home_traditional_authority: remote_patient_attributes['home_traditional_authority'],
-              home_district: remote_patient_attributes['home_district'],
-              current_village: remote_patient_attributes['current_village'],
-              current_traditional_authority: remote_patient_attributes['current_traditional_authority'],
-              current_district: remote_patient_attributes['current_district']
-    )
-
-    person_service.create_person_attributes(
-      person, cell_phone_number: remote_patient_attributes['cellphone_number'],
-              occupation: remote_patient_attributes['occupation']
-    )
-
-    patient = Patient.create(patient_id: person.id)
-    merging_service.link_local_to_remote_patient(patient, remote_patient)
-  end
-
   def filter_person_attributes(person_attributes)
     return nil unless person_attributes
 
@@ -412,6 +461,11 @@ class DDEService
   end
 
   def merging_service
-    DDEMergingService.new(dde_client)
+    DDEMergingService.new(self, -> { dde_client })
+  end
+
+  # A cache for all connections to dde (indexed by program id)
+  def dde_connections
+    @@dde_connections ||= {}
   end
 end

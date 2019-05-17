@@ -61,7 +61,7 @@ class AppointmentService
     end
 
     _drug_id, date = earliest_appointment_date(patient, ref_date)
-    return nil unless date
+    return { drugs_run_out_date: date,appointment_date: ""} unless date
 
     {
       drugs_run_out_date: date,
@@ -71,32 +71,32 @@ class AppointmentService
 
   def booked_appointments(ref_date)
     ref_date ||= @retro_date
-    appointments_made(ref_date) 
+    appointments_made(ref_date)
   end
 
   private
 
   def appointments_made(date)
-    clients = ActiveRecord::Base.connection.select_all("SELECT 
-    i.identifier, p.birthdate, p.gender, n.given_name, 
+    clients = ActiveRecord::Base.connection.select_all("SELECT
+    i.identifier, p.birthdate, p.gender, n.given_name,
     n.family_name, obs.person_id, p.birthdate_estimated
-    FROM obs 
+    FROM obs
     INNER JOIN encounter e ON e.encounter_id = obs.encounter_id
-    AND e.voided = 0 AND obs.voided = 0 
+    AND e.voided = 0 AND obs.voided = 0
     AND e.encounter_type = #{encounter_type('APPOINTMENT').id}
     RIGHT JOIN person p ON p.person_id = e.patient_id AND p.voided = 0
     RIGHT JOIN person_address a ON a.person_id = e.patient_id AND a.voided = 0
     RIGHT JOIN person_name n ON n.person_id = e.patient_id AND n.voided = 0
-    RIGHT JOIN patient_identifier i ON i.patient_id = e.patient_id AND i.voided = 0 
-    AND i.identifier_type IN(2,3)
+    RIGHT JOIN patient_identifier i ON i.patient_id = e.patient_id AND i.voided = 0
+    AND i.identifier_type IN(4)
     WHERE obs.concept_id = #{concept('Appointment date').concept_id}
     AND value_datetime BETWEEN '#{date.strftime('%Y-%m-%d 00:00:00')}'
     AND '#{date.strftime('%Y-%m-%d 23:59:59')}'
-    GROUP BY i.identifier, p.birthdate, p.gender, 
-    n.given_name, n.family_name, 
+    GROUP BY i.identifier, p.birthdate, p.gender,
+    n.given_name, n.family_name,
     obs.person_id, p.birthdate_estimated;")
 
-    clients_formatted = [];
+    clients_formatted = []
     already_counted = []
 
     (clients || []).each do |c|
@@ -151,6 +151,8 @@ class AppointmentService
     amount_dispensed = {}
 
     orders.each do |order|
+      next unless order.drug_order
+
       original_auto_expire_date = order.void_reason&.to_date
 
       if order.start_date.to_date == order.auto_expire_date.to_date\
@@ -228,7 +230,7 @@ class AppointmentService
     appointments = {}
     sdate = (end_date.to_date + 1.day)
 
-    1.upto(4).each do |num|
+    1.upto(10).each do |num|
       appointments[(sdate - num.day)] = 0
     end
 
@@ -260,108 +262,83 @@ class AppointmentService
   end
 
   def exec_drug_order_adjustments(patient, date)
+    # TODO: filter recent encounter by program id
     encounter = EncounterService.recent_encounter(
       encounter_type_name: 'Treatment', patient_id: patient.patient_id,
       date: date
     )
     return nil unless encounter
 
-    adjust_order_end_dates(encounter.orders, amounts_brought_to_clinic(patient, date))
+    adjust_order_end_dates(patient, encounter.orders, amounts_brought_to_clinic(patient, date))
   end
 
   # WARNING: Dragons be here
 
   # source: NART/lib/medication_service.rb
-  def adjust_order_end_dates(orders, optimized_hanging_pills)
-    start_date = orders.last.start_date.to_date
-    auto_expire_date = orders.last.auto_expire_date.to_date
-
+  def adjust_order_end_dates(patient, orders, optimized_hanging_pills)
     orders.each do |order|
-      drug = order.drug_order.drug
-
-      next unless drug.arv? && optimized_hanging_pills[drug.id]
-
-      hanging_pills = optimized_hanging_pills[drug.id].to_f
-
-      additional_days = (hanging_pills / order.drug_order.equivalent_daily_dose).to_i
-      next if additional_days < 1
-
-      next if (start_date + additional_days.day).to_date < auto_expire_date
-
-      order.update(auto_expire_date: start_date.to_date, void_reason: auto_expire_date.to_date)
-
-      encounter_service = EncounterService.new
-      encounter = encounter_service.create(
-        patient: order.patient, type: encounter_type('DISPENSING'),
-        encounter_datetime: order.encounter.encounter_datetime
-      )
-
-      # Patient has enough pills to last to next visit so dispense zero
-      Observation.create(
-        concept: concept('AMOUNT DISPENSED'), order: order, person: patient.person,
-        encounter: encounter, value_drug: drug.id, value_numeric: 0,
-        value_text: 'Pills remaining enough to last to next visit',
-        obs_datetime: obs_datetime
-      )
-
-      order.drug_order.update(quantity: hanging_pills.to_f)
-
-      current_state = ActiveRecord::Base.connection.select_one <<-SQL
-        SELECT current_state_for_program(#{order.patient_id}, 1, '#{obs_datetime.to_date}') state;
-      SQL
-
-      next if current_state['state'].to_i == 7
-
-      patient_programs = order.patient.patient_programs
-      patient_programs.where(program: program('HIV PROGRAM'))\
-                      .last\
-                      .transition(state: 'On antiretrovirals',
-                                  start_date: obs_datetime.to_time)
-    end
-
-    exact_discontinued_dates = []
-
-    orders = Order.where(order_id: orders.map(&:id)) # Why?
-
-    orders.each do |order|
-      drug = order.drug_order.drug
       drug_order = order.drug_order
+      drug = drug_order&.drug
+      next unless drug_order && drug
 
-      next unless drug.arv?
+      next unless drug&.arv? && optimized_hanging_pills[drug.id]
 
-      hanging_pills = optimized_hanging_pills[drug.id].to_f
-      additional_days = (hanging_pills / (order.drug_order.equivalent_daily_dose.to_f))
-      additional_days = additional_days&.to_i || 0
+      hanging_pills = optimized_hanging_pills[drug.id]&.to_f
 
-      units = (drug_order.equivalent_daily_dose.to_f * (order.auto_expire_date.to_date - start_date.to_date).to_i)
-      pack_size = calculate_complete_pack(drug, units)
-      consumption_days = (pack_size.to_f / drug_order.equivalent_daily_dose.to_f).to_i - 1
+      additional_days = (hanging_pills / order.drug_order&.equivalent_daily_dose || 0).to_i
+      next unless additional_days >= 1
 
-      if additional_days > 1 && order.start_date.to_date != order.auto_expire_date.to_date
-        consumption_days += additional_days
-      elsif additional_days > 1 && order.start_date.to_date == order.auto_expire_date.to_date
-        # The assumption is;we subtruct 3 days from the additional_days because
-        # the patient is going start taking the drugs on the visit day (1 day)
-        # plus the 2 day buffer
-        consumption_days = (additional_days - 3)
-      elsif additional_days < 1
-        next
-      end
+      order.void_reason = order.auto_expire_date
+      # We assume the patient starts taking drugs today thus we subtract one day
+      order.auto_expire_date = order.start_date + (additional_days + drug_order.quantity_duration - 1).days
 
-      exact_discontinued_dates << (start_date + consumption_days.day).to_date
+      order.save
+      drug_order.save
     end
 
-    exact_discontinued_date = exact_discontinued_dates.sort.first unless exact_discontinued_dates.blank?
+    # exact_discontinued_dates = []
 
-    unless exact_discontinued_date.blank?
-      ActiveRecord::Base.connection.execute <<-SQL
-        UPDATE orders SET discontinued_date = '#{exact_discontinued_date.to_date}'
-        WHERE order_id IN(#{orders.map(&:order_id).join(',')});
-      SQL
+    # orders = Order.where(order_id: orders.map(&:id)) # Why?
 
-    end
+    # orders.each do |order|
+    #   drug = order.drug_order&.drug
+    #   drug_order = order.drug_order
 
-    nil
+    #   next unless drug&.arv?
+
+    #   hanging_pills = optimized_hanging_pills[drug.id].to_f
+    #   additional_days = (hanging_pills / (order.drug_order.equivalent_daily_dose.to_f))
+    #   additional_days = additional_days&.to_i || 0
+
+    #   units = (drug_order.equivalent_daily_dose.to_f * (order.auto_expire_date.to_date - start_date.to_date).to_i)
+    #   pack_size = calculate_complete_pack(drug, units)
+    #   consumption_days = (pack_size.to_f / drug_order.equivalent_daily_dose.to_f).to_i - 1
+
+    #   if additional_days > 1 && order.start_date.to_date != order.auto_expire_date.to_date
+    #     consumption_days += additional_days
+    #   elsif additional_days > 1 && order.start_date.to_date == order.auto_expire_date.to_date
+    #     # The assumption is;we subtruct 3 days from the additional_days because
+    #     # the patient is going start taking the drugs on the visit day (1 day)
+    #     # plus the 2 day buffer
+    #     consumption_days = (additional_days - 3)
+    #   elsif additional_days < 1
+    #     next
+    #   end
+
+    #   exact_discontinued_dates << (start_date + consumption_days.day).to_date
+    # end
+
+    # exact_discontinued_date = exact_discontinued_dates.sort.first unless exact_discontinued_dates.blank?
+
+    # unless exact_discontinued_date.blank?
+    #   ActiveRecord::Base.connection.execute <<-SQL
+    #     UPDATE orders SET discontinued_date = '#{exact_discontinued_date.to_date}'
+    #     WHERE order_id IN(#{orders.map(&:order_id).join(',')});
+    #   SQL
+
+    # end
+
+    # nil
   end
 
   def calculate_complete_pack(drug, units)
@@ -396,19 +373,19 @@ class AppointmentService
     SQL
 
     (amounts_brought_to_clinic || []).each do |amount|
-      @amounts_brought_to_clinic[amount['drug_inventory_id'].to_i] += (amount['value_numeric'].to_f rescue 0)
+      @amounts_brought_to_clinic[amount['drug_inventory_id'].to_i] = amount['value_numeric'].to_f rescue 0
     end
 
-    amounts_brought_to_clinic = ActiveRecord::Base.connection.select_all <<-SQL
-      SELECT obs.*, d.* FROM obs INNER JOIN drug d ON d.concept_id = obs.concept_id AND obs.voided = 0
-      WHERE obs.obs_datetime BETWEEN '#{session_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
-      AND '#{session_date.to_date.strftime('%Y-%m-%d 23:59:59')}' AND person_id = #{patient.id}
-      AND value_numeric IS NOT NULL AND obs.voided = 0;
-    SQL
+    # amounts_brought_to_clinic = ActiveRecord::Base.connection.select_all <<-SQL
+    #   SELECT obs.*, d.* FROM obs INNER JOIN drug d ON d.concept_id = obs.concept_id AND obs.voided = 0
+    #   WHERE obs.obs_datetime BETWEEN '#{session_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
+    #   AND '#{session_date.to_date.strftime('%Y-%m-%d 23:59:59')}' AND person_id = #{patient.id}
+    #   AND value_numeric IS NOT NULL AND obs.voided = 0;
+    # SQL
 
-    (amounts_brought_to_clinic || []).each do |amount|
-      @amounts_brought_to_clinic[amount['drug_id'].to_i] += (amount['value_numeric'].to_f rescue 0)
-    end
+    # (amounts_brought_to_clinic || []).each do |amount|
+    #   @amounts_brought_to_clinic[amount['drug_id'].to_i] += (amount['value_numeric'].to_f rescue 0)
+    # end
 
     @amounts_brought_to_clinic
   end

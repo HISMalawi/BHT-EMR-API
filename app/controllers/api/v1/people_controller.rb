@@ -8,6 +8,8 @@ class Api::V1::PeopleController < ApplicationController
   # Search for patients by name and gender
   #
   # GET /search/people?given_name={value}&family_name={value}&gender={value}
+  #
+  # @{deprecated}
   def search
     given_name, family_name, gender = params.require %i[given_name family_name gender]
 
@@ -34,6 +36,7 @@ class Api::V1::PeopleController < ApplicationController
 
   def update
     person = Person.find(params[:id])
+    program = Program.find_by_program_id(params[:program_id])
     update_params = params.permit!
 
     person_service.update_person(person, update_params)
@@ -44,7 +47,7 @@ class Api::V1::PeopleController < ApplicationController
     person.reload
 
     # Hack trigger a patient update to force a DDE push if DDE is active
-    patient_service.update_patient(person.patient) if person.patient
+    patient_service.update_patient(program, person.patient) if person.patient
 
     render json: person, status: :ok
   end

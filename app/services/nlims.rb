@@ -27,6 +27,37 @@ class NLims
     @connection = OpenStruct.new token: response['token']
   end
 
+  def legacy_order_test(patient, order)
+    patient_name = patient.person.names.first
+    user_name = User.current.person.names.first
+    sample_type = order['sample_type']
+    tests = [order['test_name']]
+    reason_for_test = order['reason_for_test']
+    sample_status = order['sample_status']
+
+    post 'create_order', district: 'Unknown',
+                         health_facility_name: Location.current.name,
+                         first_name: patient_name.given_name,
+                         last_name: patient_name.family_name,
+                         middle_name: patient_name.middle_name,
+                         date_of_birth: patient.person.birthdate,
+                         gender: patient.person.gender,
+                         national_patient_id: patient.national_id,
+                         phone_number: '',
+                         who_order_test_last_name: user_name.family_name,
+                         who_order_test_first_name: user_name.given_name,
+                         who_order_test_id: User.current.id,
+                         order_location: 'ART',
+                         sample_type: sample_type,
+                         tests: tests,
+                         date_sample_drawn: order['date_sample_drawn'],
+                         sample_priority: reason_for_test,
+                         sample_status: sample_status,
+                         art_start_date: 'unknown',
+                         requesting_clinician: '',
+                         target_lab: Location.current.name
+  end
+
   def order_test(patient:, user:, test_type:, date:, reason:, requesting_clinician:)
     patient_name = patient.person.names.first
     user_name = user.person.names.first
@@ -34,8 +65,8 @@ class NLims
     temp_prefix = @api_prefix
     @api_prefix = 'api/v2'
 
-    response = post 'request_order', district: 'Lilongwe',
-                                     health_facility_name: 'LL',
+    response = post 'request_order', district: 'Unknown',
+                                     health_facility_name: Location.current.name,
                                      first_name: patient_name.given_name,
                                      last_name: patient_name.family_name,
                                      middle_name: '',
@@ -93,6 +124,19 @@ class NLims
   # Call temp_auth before this
   def create_user(body)
     post 'create_user', body
+  end
+
+  def tests_without_results(npid)
+    get("query_tests_with_no_results_by_npid/#{npid}")
+  end
+
+  def test_measures(test_name)
+    test_name.gsub!(/\s+/, '_')
+    get("query_test_measures/#{test_name}")
+  end
+
+  def update_test(values)
+    post('update_test', values)
   end
 
   private
