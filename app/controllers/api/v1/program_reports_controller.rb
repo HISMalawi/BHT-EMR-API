@@ -32,6 +32,8 @@ class Api::V1::ProgramReportsController < ApplicationController
   end
 
   def parse_report_name(name)
+    return [nil, nil, nil] unless name
+
     match = name.match(/(?<type>\w+\s+)?Q(?<quarter>[1234])\s+(?<year>\d{4})/)
     return [nil, nil, nil] unless match
 
