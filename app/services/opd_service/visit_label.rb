@@ -21,22 +21,22 @@ class OPDService::VisitLabel
     title_font_top_bottom = {:font_reverse => false, :font_size => 4, :font_horizontal_multiplier => 1, :font_vertical_multiplier => 1}
     title_font_bottom = {:font_reverse => false, :font_size => 2, :font_horizontal_multiplier => 1, :font_vertical_multiplier => 1}
     units = {"WEIGHT"=>"kg", "HT"=>"cm"}
-    opd_program = program('OPD Program')
-    encs = patient.encounters.where('DATE(encounter_datetime) = ? AND program_id = ?', date.to_date, opd_program.id).order('encounter_datetime ASC')
+    encs = patient.encounters.where('DATE(encounter_datetime) = ?', date).order(Arel.sql('encounter_datetime ASC'))
     return nil if encs.blank?
     label.draw_multi_text("Visit: #{encs.first.encounter_datetime.strftime("%d/%b/%Y %H:%M")}" +
-  " - #{encs.last.encounter_datetime.strftime("%d/%b/%Y %H:%M")}", title_font_top_bottom)
-    label.draw_line(20,60,800,2,0)
+      " - #{encs.last.encounter_datetime.strftime("%d/%b/%Y %H:%M")}", title_font_top_bottom)
+    label.draw_line(20, 60, 800, 2, 0)
     outcomes = []
     vitals = []
     notes = []
     check_vitals = encs.map(&:name).include?('VITALS')
     check_notes = encs.map(&:name).include?('NOTES')
     encs.each {|encounter|
-        if encounter.name.upcase.include?('DRUGS GIVEN')
+        if encounter.name.upcase.include?('TREATMENT')
           encounter_datetime = encounter.encounter_datetime.strftime('%H:%M')
-          o = encounter.observations.collect{|obs| obs.answer_string.squish}.join("\n")
+          o = encounter.orders.collect{|order| order.to_s if order.order_type_id == OrderType.find_by_name('Drug Order').order_type_id}.join("\n")
           o = "No prescriptions have been made" if o.blank?
+          o = "TREATMENT NOT DONE" if treatment_not_done(encounter.patient, date)
           label.draw_multi_text("Prescriptions at #{encounter_datetime}", title_header_font)
           label.draw_multi_text("#{o}", concepts_font)
 
@@ -50,8 +50,8 @@ class OPDService::VisitLabel
         elsif encounter.name.upcase.include?('UPDATE HIV STATUS')
           hiv_status = []
           encounter.observations.each do |observation|
-            next if !observation.concept.fullname.match(/HIV STATUS/i)
-            hiv_status << 'HIV Status - ' + (observation.answer_string&.to_s || '')
+          next if !observation.concept.fullname.match(/HIV STATUS/i)
+          hiv_status << 'HIV Status - ' + observation.answer_string.to_s rescue ''
           end
           label.draw_multi_text("#{hiv_status}", :font_reverse => false)
 
@@ -60,9 +60,9 @@ class OPDService::VisitLabel
           encounter.observations.each do |observation|
           concept_name = observation.concept.fullname
           next if concept_name.match(/Workstation location/i)
-              lab_orders << observation.answer_string.to_s
-            end
-            label.draw_multi_text("Lab orders: #{lab_orders.join(',')}", concepts_font)
+            lab_orders << observation.answer_string.to_s
+          end
+          label.draw_multi_text("Lab orders: #{lab_orders.join(',')}", concepts_font)
 
         elsif encounter.name.upcase.include?('DIAGNOSIS')
           encounter_datetime = encounter.encounter_datetime.strftime('%H:%M')
@@ -113,7 +113,7 @@ class OPDService::VisitLabel
             next if concept_name.match(/specific presenting complaint/i)
             next if !observation.obs_group_id.blank?
 
-            child_obs = Observation.find(:all, :conditions => ["obs_group_id = ?", observation.obs_id])
+            child_obs = Observation.where('obs_group_id = ?', observation.obs_id)
 
             if !child_obs.empty?
               text = observation.answer_string.to_s + " - "
@@ -161,7 +161,7 @@ class OPDService::VisitLabel
           string << 'Specialist clinic : ' + obs.last
           label.draw_multi_text("Referral at #{encounter_datetime}", title_header_font)
           string.each { | observation |
-              label.draw_multi_text("#{observation}", concepts_font)
+            label.draw_multi_text("#{observation}", concepts_font)
           }
 
         elsif encounter.name.upcase.include?("VITALS")
@@ -178,7 +178,7 @@ class OPDService::VisitLabel
           bp = []
           encounter.observations.each { | observation |
 
-            # if (observation.concept_id == 8578)
+          # if (observation.concept_id == 8578)
             concept_name = observation.concept.concept_names.last.name
             #next if concept_name.match(/Detailed presenting complaint/i)
             next if concept_name.match(/Workstation location/i)
@@ -266,14 +266,11 @@ class OPDService::VisitLabel
           label.draw_multi_text("Outcomes : #{outcomes.uniq.join(',')}", concepts_font)
         end
     end
-
-    last_user = User.find(encs.last.creator)
-
-    initial = last_user.person.names.last.given_name.first + "."
-    last_name = last_user.person.names.last.family_name
-
+    initial = User.current.person.names.last.given_name.first + "."
+    last_name = User.current.person.names.last.family_name
     label.draw_multi_text("___________________________________________________", concepts_font)
-    label.draw_multi_text("Seen by: #{initial + last_name} at " + " #{Location.current.name}", title_font_bottom)
+    label.draw_multi_text("Seen by: #{initial + last_name} at " +
+      " #{Location.current.name}", title_font_bottom)
 
     label.print(1)
   end
