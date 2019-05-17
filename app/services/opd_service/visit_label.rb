@@ -34,7 +34,7 @@ class OPDService::VisitLabel
     encs.each {|encounter|
         if encounter.name.upcase.include?('TREATMENT')
           encounter_datetime = encounter.encounter_datetime.strftime('%H:%M')
-          o = encounter.orders.collect{|order| order.to_s if order.order_type_id == OrderType.find_by_name('Drug Order').order_type_id}.join("\n")
+          o = encounter.orders.collect{ |order| order.drug_order.to_s if order.order_type_id == OrderType.find_by_name('Drug Order').order_type_id }.join("\n")
           o = "No prescriptions have been made" if o.blank?
           o = "TREATMENT NOT DONE" if treatment_not_done(encounter.patient, date)
           label.draw_multi_text("Prescriptions at #{encounter_datetime}", title_header_font)
