@@ -53,9 +53,9 @@ module ANCService
       @visit = []
       last_lmp = date_of_lnmp(patient)
 
-      date_diff = (date.to_date.year * 12 + date.to_date.month) - (last_lmp.to_date.year * 12 + last_lmp.to_date.month)
+      date_diff = (date.to_date.year * 12 + date.to_date.month) - (last_lmp.to_date.year * 12 + last_lmp.to_date.month) rescue nil
 
-      unless last_lmp.blank? && date_diff.to_date > 9
+      unless last_lmp.blank? && (!(date_diff.blank?) && date_diff.to_i > 9)
 
         @visit =  patient.encounters.where(["DATE(encounter_datetime) >= ?
             AND DATE(encounter_datetime) <= ? AND encounter_type = ? AND program_id = ?",
@@ -77,7 +77,7 @@ module ANCService
 
     def saved_encounters(patient, date)
       last_lmp = date_of_lnmp(patient)
-      date_diff = (date.to_date.year * 12 + date.to_date.month) - (last_lmp.to_date.year * 12 + last_lmp.to_date.month)
+      date_diff = (date.to_date.year * 12 + date.to_date.month) - (last_lmp.to_date.year * 12 + last_lmp.to_date.month) rescue nil
       ontime_encounters = ["REGISTRATION", "SOCIAL HISTORY", "SURGICAL HISTORY",
         "OBSTETRIC HISTORY", "MEDICAL HISTORY", "CURRENT PREGNANCY"]
 
@@ -85,7 +85,7 @@ module ANCService
           AND program_id = ?", date.to_date.strftime("%Y-%m-%d"),
           patient.patient_id, ANC_PROGRAM.id]).collect{|e| e.name}.uniq
 
-      if(last_lmp.blank? || date_diff.to_i > 9)
+      if(last_lmp.blank? || (!(date_diff.blank?) && date_diff.to_i > 9)
 
         x.delete("TREATMENT") unless patient_given_drugs_today(patient, date)
 
