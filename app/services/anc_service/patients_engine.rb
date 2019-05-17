@@ -85,7 +85,7 @@ module ANCService
           AND program_id = ?", date.to_date.strftime("%Y-%m-%d"),
           patient.patient_id, ANC_PROGRAM.id]).collect{|e| e.name}.uniq
 
-      if(last_lmp.blank? || (!(date_diff.blank?) && date_diff.to_i > 9)
+      if(last_lmp.blank? || (!(date_diff.blank?) && date_diff.to_i > 9))
 
         x.delete("TREATMENT") unless patient_given_drugs_today(patient, date)
 
