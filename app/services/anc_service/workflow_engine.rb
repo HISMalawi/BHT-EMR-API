@@ -2,6 +2,8 @@ module ANCService
   class WorkflowEngine
     include ModelUtils
 
+    HIV_PROGRAM = Program.find_by name: "HIV PROGRAM"
+
     def initialize(program:, patient:, date:)
       @patient = patient
       @program = program
@@ -78,7 +80,8 @@ module ANCService
       APPOINTMENT => TREATMENT,
       TREATMENT => ART_FOLLOWUP,
       ART_FOLLOWUP => HIV_CLINIC_REGISTRATION,
-      HIV_CLINIC_REGISTRATION => END_STATE
+      HIV_CLINIC_REGISTRATION => HIV_RECEPTION,
+      HIV_RECEPTION => END_STATE
     }.freeze
 
     STATE_CONDITIONS = {
@@ -95,7 +98,10 @@ module ANCService
                       current_pregnancy_not_collected?],
       ART_FOLLOWUP => %i[patient_is_hiv_positive?],
       HIV_CLINIC_REGISTRATION => %i[patient_is_hiv_positive?
-                      proceed_to_pmtct?],
+                      proceed_to_pmtct?
+                      patient_is_not_enrolled_in_art?],
+      HIV_RECEPTION => %i[patient_is_hiv_positive?
+                      proceed_to_pmtct?]
 
     }.freeze
 
@@ -129,12 +135,12 @@ module ANCService
           ART_FOLLOWUP
         when /hiv clinic registration/i
           HIV_CLINIC_REGISTRATION
+        when /hiv reception visits/i
+          HIV_RECEPTION
         when /manage appointment/i
           APPOINTMENT
         when /give drugs/i
           TREATMENT
-        when /vitals/i
-          VITALS
         else
           Rails.logger.warn "Invalid ART activity in user properties: #{activity}"
         end
@@ -218,7 +224,7 @@ module ANCService
           &.value_coded || nil
       if (prev_test_done == 1065) #if value is Yes, check prev hiv status
         prev_hiv_test_res = Observation.where(["person_id = ? and concept_id = ? and obs_datetime > ?",
-            @patient.person.id, ConceptName.find_by_name('Previous HIV Test Results').concept_id, date_of_lmp])\
+            @patient.person.id, ConceptName.find_by_name('Previous HIV Test Results').concept_id, date_of_lnmp])\
           .order(obs_datetime: :desc)\
           .first\
           &.value_coded
@@ -227,7 +233,7 @@ module ANCService
       end
 
       hiv_test_res =  Observation.where(["person_id = ? and concept_id = ? and obs_datetime > ?",
-          @patient.person.id, ConceptName.find_by_name('HIV Status').concept_id, date_of_lmp])\
+          @patient.person.id, ConceptName.find_by_name('HIV Status').concept_id, date_of_lnmp])\
         .order(obs_datetime: :desc)\
         .first\
         &.value_coded #rescue nil
@@ -239,15 +245,10 @@ module ANCService
         return false
     end
 
-    def date_of_lmp
-        last_lmp = @patient.encounters.joins([:observations])
-          .where(['encounter_type = ? AND obs.concept_id = ?',
-            EncounterType.find_by_name('Current pregnancy').id,
-            ConceptName.find_by_name('Last menstrual period').concept_id])
-          .last.observations.collect {
-            |o| o.value_datetime
-          }.compact.last.to_date rescue nil
-      end
+    def patient_is_not_enrolled_in_art?
+      PatientProgram.where("program_id = ? AND patient_id = ?",
+        HIV_PROGRAM.id, @patient.id).blank?
+    end
 
     # Check if surgical history has been collected
 
