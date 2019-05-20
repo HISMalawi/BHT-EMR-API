@@ -222,9 +222,11 @@ module ANCService
           .order(obs_datetime: :desc)\
           .first\
           &.value_coded || nil
+      date_of_last_mp = date_of_lnmp
+      lmp = date_of_last_mp.blank? ? (@date - 45.week) : date_of_last_mp
       if (prev_test_done == 1065) #if value is Yes, check prev hiv status
         prev_hiv_test_res = Observation.where(["person_id = ? and concept_id = ? and obs_datetime > ?",
-            @patient.person.id, ConceptName.find_by_name('Previous HIV Test Results').concept_id, date_of_lnmp])\
+            @patient.person.id, ConceptName.find_by_name('Previous HIV Test Results').concept_id, lmp])\
           .order(obs_datetime: :desc)\
           .first\
           &.value_coded
@@ -233,7 +235,7 @@ module ANCService
       end
 
       hiv_test_res =  Observation.where(["person_id = ? and concept_id = ? and obs_datetime > ?",
-          @patient.person.id, ConceptName.find_by_name('HIV Status').concept_id, date_of_lnmp])\
+          @patient.person.id, ConceptName.find_by_name('HIV Status').concept_id, lmp])\
         .order(obs_datetime: :desc)\
         .first\
         &.value_coded #rescue nil
