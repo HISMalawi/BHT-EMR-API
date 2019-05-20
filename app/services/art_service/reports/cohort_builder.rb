@@ -17,7 +17,7 @@ module ARTService
         time_started = Time.now.strftime('%Y-%m-%d %H:%M:%S')
 
         # create_temp_earliest_start_date_table(end_date)
-        quarter_start_date = end_date.to_date - QUARTER_LENGTH
+        quarter_start_date = start_date.to_date
 
         # Get earliest date enrolled
         cum_start_date = get_cum_start_date
@@ -277,9 +277,12 @@ module ARTService
 
         # Total patients with side effects:
         # Alive and On ART patients with DRUG INDUCED observations during their last HIV CLINIC CONSULTATION encounter up to the reporting period
-        cohort_struct.total_patients_with_side_effects = total_patients_with_side_effects(cohort_struct, cohort_struct.total_alive_and_on_art, start_date, end_date)
-        cohort_struct.total_patients_without_side_effects = total_patients_without_side_effects(cohort_struct.total_alive_and_on_art, cohort_struct.total_patients_with_side_effects)
-        cohort_struct.unknown_side_effects = unknown_side_effects(cohort_struct.total_alive_and_on_art, start_date, end_date)
+        
+        with_se, without_se, se_unknowns = patients_side_effects_status(cohort_struct.total_alive_and_on_art, end_date)
+        cohort_struct.total_patients_with_side_effects = with_se
+        cohort_struct.total_patients_without_side_effects = without_se
+        cohort_struct.unknown_side_effects = se_unknowns
+
 
         # TB Status
         # Alive and On ART with 'TB Status' observation value of 'TB not Suspected' or 'TB Suspected'
@@ -646,6 +649,7 @@ module ARTService
                 and (`s`.`voided` = 0)
                 and (`p`.`program_id` = 1)
                 and (`s`.`state` = 7))
+                and (DATE(`s`.`start_date`) != '0000-00-00')
           group by `p`.`patient_id`
           HAVING date_enrolled IS NOT NULL;
 EOF
@@ -952,7 +956,8 @@ EOF
         results
       end
 
-      ART_ADHERENCE_THRESHOLD = 95.0 # Those below are not adherent
+      MIN_ART_ADHERENCE_THRESHOLD = 95.0 # Those below are not adherent
+      MAX_ART_ADHERENCE_THRESHOLD = 105.0 # Thoseabove are not adherent
 
       # Groups patients list into three groups based on the adherence rates
       #
@@ -972,7 +977,7 @@ EOF
 
           if adherence_rate.nil?
             unknown_adherence << patient
-          elsif adherence_rate >= ART_ADHERENCE_THRESHOLD
+          elsif adherence_rate >= MIN_ART_ADHERENCE_THRESHOLD && adherence_rate <= MAX_ART_ADHERENCE_THRESHOLD
             adherent << patient
           else
             not_adherent << patient
@@ -996,17 +1001,32 @@ EOF
 
       # Retrieve patient's latest adherence observation
       def patient_latest_art_adherence(patient_id, start_date, end_date)
-        encounter = Encounter.where(type: adherence_encounter, program: hiv_program,
-                                    patient_id: patient_id)\
-                             .where('encounter_datetime BETWEEN ? AND ?', start_date, end_date)\
-                             .order(:encounter_datetime)
-                             .last
 
-        return nil unless encounter
+        adh = Encounter.where(type: adherence_encounter, 
+          program: hiv_program, patient_id: patient_id)\
+          .where('encounter_datetime <= ? AND obs.concept_id = ? 
+          AND s.concept_set = 1085', end_date.to_date.strftime('%Y-%m-%d 23:59:59'),
+          drug_order_adherence_concept.concept_id)\
+          .order(:encounter_datetime)\
+          .joins('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
+          INNER JOIN drug_order o ON o.order_id = obs.order_id
+          INNER JOIN drug d ON o.drug_inventory_id = d.drug_id
+          INNER JOIN concept_set s ON s.concept_id = d.concept_id')\
+          .select(:obs_datetime, :encounter_id)
+          
+        return nil unless adh
 
-        lowest_adherence_rate = Float::MAX
+        #lowest_adherence_rate = Float::MAX
+        adherence_rate = nil
+        obs_datetime  = adh.map(&:obs_datetime).max
+        encounter_ids = adh.map(&:encounter_id)
 
-        encounter.observations.where(concept: drug_order_adherence_concept).each do |adherence|
+        adherent = nil
+        not_adherent = nil
+
+
+        Observation.where(concept: drug_order_adherence_concept,
+          obs_datetime: obs_datetime, encounter_id: encounter_ids).each do |adherence|
           adherence_rate = (adherence.value_numeric || adherence.value_text)&.to_f
           next unless adherence_rate
 
@@ -1014,44 +1034,17 @@ EOF
           drug = adherence.order&.drug_order&.drug
           next if drug && !drug.arv?
 
-          lowest_adherence_rate = adherence_rate if adherence_rate < lowest_adherence_rate
+          if adherence_rate >= MIN_ART_ADHERENCE_THRESHOLD && adherence_rate <= MAX_ART_ADHERENCE_THRESHOLD
+            adherent = adherence_rate 
+          else
+            not_adherent = adherence_rate
+          end
+
+
         end
 
-        lowest_adherence_rate
-      end
-
-      def unknown_side_effects(data, _start_date, end_date)
-        patient_ids = []
-        (data || []).each do |row|
-          patient_ids << row['patient_id'].to_i
-        end
-
-        return [] if patient_ids.blank?
-
-        result = []
-
-        drug_induced_concept_id = concept('Drug induced').concept_id
-        malawi_art_side_effects_concept_id = concept('Malawi ART side effects').concept_id
-        unknown_side_effects_concept_id = concept('Unknown').concept_id
-
-        malawi_art_side_effects = ActiveRecord::Base.connection.select_all(
-          "SELECT * FROM obs o
-          WHERE o.voided = 0
-            AND o.concept_id IN (#{malawi_art_side_effects_concept_id}, #{drug_induced_concept_id} )
-            AND o.value_coded = #{unknown_side_effects_concept_id}
-            AND (o.person_id IN (#{patient_ids.join(',')}))
-            AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-            AND o.obs_datetime = (
-              SELECT min(obs_datetime) FROM obs WHERE concept_id IN (#{malawi_art_side_effects_concept_id}, #{drug_induced_concept_id})
-              AND voided = 0 AND person_id = o.person_id
-              AND obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-            ) GROUP BY person_id"
-        )
-
-        (malawi_art_side_effects || []).each do |row|
-          result << row
-        end
-        result
+        return not_adherent unless not_adherent.blank?
+        return adherent
       end
 
       def write_tb_status_indicators(cohort_struct, patients_alive_and_on_art, start_date, end_date)
@@ -1069,7 +1062,7 @@ EOF
         patients_alive_and_on_art.each do |patient|
           tb_status = patient_tb_status(patient['patient_id'], start_date, end_date)
 
-          tb_status_value = tb_status ? tb_status.value_coded.to_i : nil
+          tb_status_value = tb_status ? tb_status[:tb_status].to_i : nil
 
           case tb_status_value
           when tb_suspected_concept.concept_id
@@ -1081,12 +1074,14 @@ EOF
           when tb_confirmed_but_not_on_treatment.concept_id
             cohort_struct.tb_confirmed_currently_not_yet_on_tb_treatment << patient
           else
+
             cohort_struct.unknown_tb_status << patient
           end
         end
       end
 
       def patient_tb_status(patient_id, start_date, end_date)
+=begin
         tb_status_concept = concept('TB Status')
 
         encounter = EncounterService.recent_encounter(
@@ -1101,6 +1096,12 @@ EOF
           'person_id = ? AND concept_id = ? AND DATE(obs_datetime) = DATE(?)',
           patient_id, tb_status_concept.concept_id, encounter.encounter_datetime
         ).first
+=end
+        tb_status = ActiveRecord::Base.connection.select_one("
+          SELECT patient_tb_status(#{patient_id}, DATE('#{end_date.to_date}')) AS concept_id;
+        ")
+
+        return {tb_status: tb_status['concept_id']} unless tb_status.blank?
       end
 
       def get_tb_status(tb_status)
@@ -1114,59 +1115,26 @@ EOF
         registered
       end
 
-      def total_patients_with_side_effects(_cohort_struct, patients_alive_and_on_art, start_date, end_date)
+      def patients_side_effects_status(patients_alive_and_on_art, end_date)
+        with_side_effects = 0
+        without_side_effects = 0
+        unknowns = 0
+
         patients_alive_and_on_art.select do |record|
-          patient_has_art_side_effect?(record['patient_id'], start_date, end_date)
-        end
-      end
+          data = ActiveRecord::Base.connection.select_one <<EOF
+            SELECT patient_has_side_effects(#{record['patient_id']}, DATE('#{end_date}')) has_se;
+EOF
 
-      def patient_has_art_side_effect?(patient_id, start_date, end_date)
-        encounter = EncounterService.recent_encounter(
-          encounter_type_name: 'HIV CLINIC CONSULTATION',
-          patient_id: patient_id,
-          date: end_date,
-          start_date: start_date
-        )
-        return false unless encounter
-
-        art_side_effects_concept = concept('Malawi ART Side Effects')
-        yes_concept = concept('Yes')
-
-        # Unfortunately side effects may be collected on the first day under
-        # the same 'Malawi ART Side Effects concept. We don't want any
-        # side effects captured on the first day.
-        patient_start_date = patient_earliest_start_date(patient_id, end_date)
-
-        records = ActiveRecord::Base.connection.select_all(
-          "SELECT concept_id, value_coded FROM obs
-           WHERE obs_group_id IN (
-             SELECT obs_id FROM obs
-             WHERE concept_id = #{art_side_effects_concept.concept_id}
-                AND person_id = #{patient_id}
-                AND DATE(obs_datetime) = DATE('#{encounter.encounter_datetime}')
-                AND DATE(obs_datetime) != DATE('#{patient_start_date}')
-           ) GROUP BY concept_id HAVING value_coded = '#{yes_concept.concept_id}'
-           LIMIT 1"
-        )
-
-        records.length.positive?
-      end
-
-      def total_patients_without_side_effects(patients_alive_and_on_art, patients_with_side_effects)
-        patient_ids = []; with_side_effects = []; result = []
-
-        (patients_alive_and_on_art || []).each do |row|
-          patient_ids << row['patient_id'].to_i
+          if data['has_se'] == 'Yes'
+            with_side_effects += 1
+          elsif data['has_se'] == 'No'
+            without_side_effects += 1
+          else
+            unknowns += 1
+          end
         end
 
-        # get all patients with side effects
-        (patients_with_side_effects || []).each do |row|
-          with_side_effects << row['patient_id'].to_i
-        end
-
-        # get all patients with unknown_side_effects
-        result = patient_ids - with_side_effects
-        result
+        return [with_side_effects, without_side_effects, unknowns]
       end
 
       def cal_regimem_category(patient_list, end_date)
@@ -1485,12 +1453,12 @@ EOF
       end
 
       def breastfeeding_mothers(start_date, end_date)
-        reason_concept_id = concept('BREASTFEEDING').concept_id
+        reason_concept_ids = ConceptName.where(name: 'Breastfeeding').map(&:concept_id)
 
         registered = []
 
         @reason_for_starting.each do |r|
-          next unless reason_concept_id == r[:reason_for_starting_concept_id]
+          next unless reason_concept_ids.include?(r[:reason_for_starting_concept_id])
           next unless (r[:date_enrolled] >= start_date.to_date) && (r[:date_enrolled] <= end_date.to_date)
 
           registered << r

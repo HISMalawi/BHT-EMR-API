@@ -23,6 +23,11 @@ module ARTService
 
         LOGGER.debug "Loading encounter type: #{state}"
         encounter_type = EncounterType.find_by(name: state)
+        if encounter_type.blank? && state == HIV_CLINIC_CONSULTATION_CLINICIAN
+          encounter_type = EncounterType.find_by(name: HIV_CLINIC_CONSULTATION)
+          encounter_type.name = HIV_CLINIC_CONSULTATION_CLINICIAN
+          return encounter_type if referred_to_clinician?
+        end
 
         return htn_transform(encounter_type) if valid_state?(state)
       end
@@ -43,6 +48,7 @@ module ARTService
     HIV_STAGING = 'HIV STAGING'
     HIV_CLINIC_CONSULTATION = 'HIV CLINIC CONSULTATION'
     ART_ADHERENCE = 'ART ADHERENCE'
+    HIV_CLINIC_CONSULTATION_CLINICIAN = 'HIV CLINIC CONSULTATION (clinician)'
     TREATMENT = 'TREATMENT'
     FAST_TRACK = 'FAST TRACK ASSESMENT' # ASSESMENT[sic] - It's how its named in the db
     DISPENSING = 'DISPENSING'
@@ -56,7 +62,8 @@ module ARTService
       VITALS => HIV_STAGING,
       HIV_STAGING => HIV_CLINIC_CONSULTATION,
       HIV_CLINIC_CONSULTATION => ART_ADHERENCE,
-      ART_ADHERENCE => TREATMENT,
+      ART_ADHERENCE => HIV_CLINIC_CONSULTATION_CLINICIAN,
+      HIV_CLINIC_CONSULTATION_CLINICIAN => TREATMENT,
       TREATMENT => FAST_TRACK,
       FAST_TRACK => DISPENSING,
       DISPENSING => APPOINTMENT,
@@ -75,6 +82,8 @@ module ARTService
                                     patient_has_not_completed_fast_track_visit?],
       ART_ADHERENCE => %i[patient_received_art?
                           patient_has_not_completed_fast_track_visit?],
+      HIV_CLINIC_CONSULTATION_CLINICIAN => %i[patient_not_on_fast_track?
+                                    patient_has_not_completed_fast_track_visit?],
       TREATMENT => %i[patient_should_get_treatment?
                       patient_has_not_completed_fast_track_visit?],
       FAST_TRACK => %i[fast_track_activated?
@@ -210,6 +219,10 @@ module ARTService
     #
     # Pre-condition for TREATMENT encounter and onwards
     def patient_should_get_treatment?
+      if referred_to_clinician?
+        return false
+      end
+
       prescribe_drugs_concept = concept('Prescribe drugs')
       no_concept = concept('No')
       start_time, end_time = TimeUtils.day_bounds(@date)
@@ -322,6 +335,19 @@ module ARTService
     # Check's whether fast track has been activated
     def fast_track_activated?
       global_property('enable.fast.track')&.property_value&.casecmp?('true')
+    end
+
+    def referred_to_clinician?
+      referred = Observation.joins(:encounter)\
+                 .where(concept: concept('Refer to ART clinician'),
+                        person: @patient.person,
+                        encounter: { program_id: @program.program_id })\
+                 .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))
+                 .order(date_created: :desc, obs_datetime: :desc).first
+    
+     return false if referred.blank?
+     return true if referred.value_coded == concept('Yes').concept_id
+     return false
     end
 
     def htn_workflow
