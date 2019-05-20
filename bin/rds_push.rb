@@ -130,7 +130,7 @@ def recent_records(model, database_offset, database)
                 elsif model == DrugOrder
                   model.unscoped.joins(:order).where('date_created > ?', database_offset)
                 else
-                  model.unscoped.where('date_changed > ?', database_offset)
+                  model.unscoped.where('date_changed > ? OR date_created > ?', database_offset, database_offset)
                 end
 
       records = records.order(model.primary_key.to_s).offset(offset).limit(RECORDS_BATCH_SIZE)
@@ -162,7 +162,7 @@ def record_update_time(record)
 
   return record.order.date_created if record.class == DrugOrder
 
-  record.date_changed
+  record.date_changed || record.date_created
 end
 
 def find_record_sync_status(record, database)
