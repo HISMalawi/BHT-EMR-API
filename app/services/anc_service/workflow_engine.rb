@@ -358,8 +358,9 @@ module ANCService
       current_pregnancy = EncounterType.find_by name: CURRENT_PREGNANCY
 
       last_lmp = @patient.encounters.joins([:observations])
-        .where(['encounter_type = ? AND obs.concept_id = ?',
-          current_pregnancy.id,lmp.concept_id])
+        .where(['encounter_type = ? AND obs.concept_id = ? AND DATE(encounter_datetime) > ?
+          AND DATE(encounter_datetime) < ?',current_pregnancy.id,lmp.concept_id,
+          (@date - 45.week), @date])
         .last.observations.collect {
           |o| o.value_datetime
         }.compact.last.to_date rescue nil
