@@ -1484,6 +1484,7 @@ BEGIN
   SET @regimen_twelve_a       := ('976,977,982');
 
   SET @regimen_thirteen_a     := ('983');
+  SET @regimen_thirteen_a_two := ('734,982');
 
   SET @regimen_fourteen_a     := ('982,984');
 
@@ -1641,6 +1642,10 @@ BEGIN
 
   /* Regimen THIRTEEN............................................................................. */
   IF @drug_ids IN(@regimen_thirteen_a) AND (length(@drug_ids) = length(@regimen_thirteen_a)) THEN
+    SET regimen_cat = ('13A');
+  END IF;
+  
+  IF @drug_ids IN(@regimen_thirteen_a_two) AND (length(@drug_ids) = length(@regimen_thirteen_a_two)) THEN
     SET regimen_cat = ('13A');
   END IF;
   /* Regimen THIRTEEN ENDS............................................................................. */
