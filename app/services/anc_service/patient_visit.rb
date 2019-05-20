@@ -97,7 +97,8 @@ module ANCService
             pregnancies[e.encounter_datetime.strftime("%Y-%m-%d")] = {}
 
             e.observations.each{|o|
-              concept = o.concept.name rescue nil
+              concept = ConceptName.find(o.concept_id) #rescue nil
+              #raise concept.name.inspect
               if concept
                 # if !active_years[e.encounter_datetime.beginning_of_quarter.strftime("%Y-%m-%d")]
                 if o.concept_id == (ConceptName.find_by_name("DATE OF LAST MENSTRUAL PERIOD").concept_id rescue nil)
@@ -115,10 +116,10 @@ module ANCService
         pregnancies.each{|preg|
           if preg[1]["DATE OF LAST MENSTRUAL PERIOD"]
             preg[1]["START"] = preg[1]["DATE OF LAST MENSTRUAL PERIOD"].to_date
-            preg[1]["END"] = preg[1]["DATE OF LAST MENSTRUAL PERIOD"].to_date + 7.day + 45.week # 9.month
+            preg[1]["END"] = preg[1]["DATE OF LAST MENSTRUAL PERIOD"].to_date + 45.week # + 7.day + 45.week # 9.month
           else
             preg[1]["START"] = preg[0].to_date
-            preg[1]["END"] = preg[0].to_date + 7.day + 45.week # 9.month
+            preg[1]["END"] = preg[0].to_date + 45.week # 7.day + 45.week # 9.month
           end
 
           if active_date >= preg[1]["START"] && active_date <= preg[1]["END"]
@@ -129,16 +130,16 @@ module ANCService
 
         if recent_lmp.present?
           current_range["START"] = recent_lmp
-          current_range["END"] = current_range["START"] + 9.months
+          current_range["END"] = current_range["START"] + 45.week # + 7.day + 45.week #+ 9.months
         end
 
         if (abortion_check_encounter.present? && aborted && date_aborted.present? && current_range["START"].to_date < date_aborted.to_date rescue false)
 
       		current_range["START"] = date_aborted.to_date + 10.days
-      		current_range["END"] = current_range["START"] + 9.months
+      		current_range["END"] = current_range["START"] + 45.week # + 7.day + 45.week #+ 9.months
         end
 
-        current_range["END"] = current_range["START"] + 7.day + 45.week unless ((current_range["START"]).to_date.blank? rescue true)
+        current_range["END"] = current_range["START"] + 45.week unless ((current_range["START"]).to_date.blank? rescue true)
 
         return [current_range, pregnancies]
       end

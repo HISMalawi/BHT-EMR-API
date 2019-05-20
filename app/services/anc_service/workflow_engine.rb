@@ -179,8 +179,8 @@ module ANCService
       ttv_drug = Drug.find_by name: "TTV (0.5ml)"
       ttv_order = Encounter.joins(:orders => [:drug_order])
         .where("encounter.patient_id = ? AND drug_order.drug_inventory_id = ?
-          AND DATE(encounter.encounter_datetime) = DATE(?)",
-          @patient.patient_id, ttv_drug.id, @date)
+          AND DATE(encounter.encounter_datetime) = DATE(?) AND program_id = ?",
+          @patient.patient_id, ttv_drug.id, @date, @program.id)
         .order(encounter_datetime: :desc).first.blank?
 
       ttv_order
@@ -195,7 +195,7 @@ module ANCService
           ON orders.encounter_id = encounter.encounter_id
           AND orders.voided = 0
         INNER JOIN drug_order ON drug_order.order_id = orders.order_id
-        WHERE encounter.voided = 0
+        WHERE encounter.voided = 0 AND encounter.program_id = #{@program.id}
         AND (encounter.patient_id = #{@patient.patient_id}
           AND DATE(encounter.encounter_datetime) = DATE('#{@date}'))
           ORDER BY encounter.encounter_datetime DESC"

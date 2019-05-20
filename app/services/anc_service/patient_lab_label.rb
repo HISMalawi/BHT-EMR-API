@@ -4,6 +4,9 @@ module ANCService
     class PatientLabLabel
       attr_accessor :patient, :date
 
+      LAB_RESULTS = EncounterType.find_by name: "LAB RESULTS"
+      ANC_PROGRAM = Program.find_by name: "ANC PROGRAM"
+
       def initialize(patient, date)
         @patient = patient
         @date = date
@@ -11,11 +14,15 @@ module ANCService
 
       def print
         syphil = {}
-      @patient.encounters.where(["encounter_type IN (?)",EncounterType.find_by_name("LAB RESULTS").id]).each{|e|
-        e.observations.each{|o|
-          syphil[o.concept.concept_names.map(& :name).last.upcase] = o.answer_string.squish.upcase
-        }
+        @patient.encounters.where(["encounter_type IN (?) AND program_id = ?",
+          LAB_RESULTS.id, ANC_PROGRAM.id]).each{|e|
+            e.observations.each{|o|
+              syphil[o.concept.concept_names.map(& :name).last.upcase] = o.answer_string.squish.upcase
+              syphil["encounter_date"] = e.encounter_datetime.to_date.strftime("%Y-%m-%d")
+            }
       }
+
+      @encounter_datetime = syphil["encounter_date"]
 
       @syphilis = syphil["SYPHILIS TEST RESULT"].titleize rescue ""
 
@@ -59,9 +66,9 @@ module ANCService
 
       @cd4_date = syphil['CD4 COUNT DATETIME'] rescue nil
 
-      @height = current_height.to_i # rescue nil
+      @height = current_height.to_f # rescue nil
 
-      @weight = current_weight.to_i
+      @weight = current_weight.to_f
 
       @multiple = Observation.where(["person_id = ? AND encounter_id IN (?) AND concept_id = ?",
           @patient.id, Encounter.where(["encounter_type = ?",
@@ -107,12 +114,12 @@ module ANCService
       label.draw_line(180,230,250,1,0)
       label.draw_line(180,260,250,1,0)
 
-      label.draw_text(@height.to_s,270,56,0,2,1,1,false)
-      label.draw_text(@weight.to_s,270,86,0,2,1,1,false)
+      label.draw_text(@height.blank? ? "N/A" : "#{@height.to_s} CM",270,56,0,2,1,1,false)
+      label.draw_text(@weight.blank? ? "N/A" : "#{@weight.to_s} KG",270,86,0,2,1,1,false)
       # label.draw_text(@who,270,136,0,2,1,1,false)
-      @date = @date.to_date.strftime("%Y-%m-%d")
+      @date = (@encounter_datetime.blank? ? (@date.to_date.strftime("%Y-%m-%d") rescue "") : @encounter_datetime )
 
-      label.draw_text(@hiv_test_date.to_s,188,146,0,2,1,1,false)
+      label.draw_text((@hiv_test_date.blank? ? @encounter_datetime : @hiv_test_date.to_s),188,146,0,2,1,1,false)
       label.draw_text("#{@syphilis.blank? ? "N/A" : @date.to_s}",188,176,0,2,1,1,false)
       label.draw_text("#{@hb.blank? ? "N/A" : @date.to_s}",188,206,0,2,1,1,false)
       label.draw_text("#{@malaria.blank? ? "N/A" : @date.to_s}",188,236,0,2,1,1,false)
@@ -143,7 +150,7 @@ module ANCService
         @weight ||= Observation.where(concept_id: weight.concept_id, person_id: @patient.person.id)
                       .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
                       .last
-                      .value_numeric rescue 0
+                      .value_numeric #rescue 0
       end
 
       def current_height

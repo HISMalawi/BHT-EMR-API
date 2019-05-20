@@ -131,7 +131,7 @@ module ANCService
           #raise encounters.inspect
 
           encounters.each{|v,k|
-            out << [k["ANC VISIT TYPE"]["REASON FOR VISIT"].to_i, v] #rescue []
+            out << [k["ANC VISIT TYPE"]["REASON FOR VISIT"].to_i, v] rescue []
           }
           out = out.sort.compact
 
@@ -292,7 +292,7 @@ module ANCService
               if ((main_drugs.include?(o.drug_order.drug.name[0, o.drug_order.drug.name.index(" ")]))) #rescue false)
 
                 @drugs[e.encounter_datetime.strftime("%d/%b/%Y")][o.drug_order.drug.name[0,
-                    o.drug_order.drug.name.index(" ")]] = o.drug_order.amount_needed
+                    o.drug_order.drug.name.index(" ")]] = o.drug_order.quantity
               else
 
                 @other_drugs[e.encounter_datetime.strftime("%d/%b/%Y")][drug_name] = o.drug_order.quantity #amount_needed
@@ -347,7 +347,22 @@ module ANCService
 
               label.draw_text(ttv.to_s,28,200,0,2,1,1,false)
 
-              sign = encounters[element]["ANC EXAMINATION"]["DIAGNOSIS"].humanize rescue ""
+              #raise encounters[element]["ANC EXAMINATION"].inspect
+              sign = encounters[element]["ANC EXAMINATION"] #.humanize rescue ""
+
+              sign = "";
+              diagnosis = ["malaria", "anaemia", "pre-eclampsia", "vaginal bleeding", "early rupture of membranes",
+                "premature labour","pneumonia", "verruca planus, extensive"]
+
+              encounters[element]["ANC EXAMINATION"].each do |key, value|
+                if diagnosis.include?(key.downcase)
+                  sign += "#{key.downcase}, "
+                end
+              end
+
+              #raise sign.inspect
+
+
 
               sign = paragraphate(sign.to_s, 13, 5)
 
