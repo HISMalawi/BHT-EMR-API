@@ -39,14 +39,6 @@ module ARTService
     end
 
     def outcome_date
-      return date if outcome.match?('Unk')
-
-      PatientProgram.where(program: program('HIV Program'), patient: patient).each do |program|
-        program.patient_states.where('start_date <= ?', date).order(start_date: :desc).each do |state|
-          return state.start_date if state.name.casecmp?(outcome)
-        end
-      end
-
       date
     end
 

@@ -1,8 +1,8 @@
-class ProgramPatientsService
+# frozen_string_literal: true
+
+class ProgramBarcodeService
   ENGINES = {
-    'HIV PROGRAM' => ARTService::PatientsEngine,
-    'ANC' => ANCService::PatientsEngine,
-    'OPD PROGRAM' => OPDService::PatientsEngine
+    'OPD PROGRAM' => OPDService::BarcodeEngine
   }.freeze
 
   def initialize(program:)
@@ -21,5 +21,4 @@ class ProgramPatientsService
     Rails.logger.debug "Engine responds to #{method}? #{@engine.respond_to?(method)}"
     @engine.respond_to?(method)
   end
-
 end

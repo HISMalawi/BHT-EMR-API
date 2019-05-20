@@ -10,7 +10,8 @@ module ARTService
       'COHORT' => ARTService::Reports::Cohort,
       'COHORT_DISAGGREGATED' => ARTService::Reports::CohortDisaggregated,
       'COHORT_SURVIVAL_ANALYSIS' => ARTService::Reports::CohortSurvivalAnalysis,
-      'VISITS' => ARTService::Reports::VisitsReport
+      'VISITS' => ARTService::Reports::VisitsReport,
+      'APPOINTMENTS' => ARTService::Reports::AppointmentsReport
     }.freeze
 
     def generate_report(type:, **kwargs)
@@ -22,23 +23,34 @@ module ARTService
     end
 
     def cohort_report_raw_data(l1, l2)
-      REPORTS['COHORT'].new(type: 'raw data', 
+      REPORTS['COHORT'].new(type: 'raw data',
         name: 'raw data', start_date: Date.today,
         end_date: Date.today).raw_data(l1, l2)
     end
 
-    def cohort_disaggregated(quarter, age_group, start_date, end_date, rebuild)
-      cohort = REPORTS['COHORT_DISAGGREGATED'].new(type: 'disaggregated', 
-        name: 'disaggregated', start_date: start_date,
-        end_date: end_date, rebuild: rebuild)
+    def cohort_disaggregated(quarter, age_group)
+      cohort = REPORTS['COHORT_DISAGGREGATED'].new(type: 'disaggregated',
+        name: 'disaggregated', start_date: Date.today,
+        end_date: Date.today)
       cohort.disaggregated(quarter, age_group)
     end
 
     def cohort_survival_analysis(quarter, age_group, regenerate)
-      cohort = REPORTS['COHORT_SURVIVAL_ANALYSIS'].new(type: 'survival_analysis', 
+      cohort = REPORTS['COHORT_SURVIVAL_ANALYSIS'].new(type: 'survival_analysis',
         name: 'survival_analysis', start_date: Date.today,
         end_date: Date.today, regenerate: regenerate)
       cohort.survival_analysis(quarter, age_group)
+    end
+
+    def defaulter_list(start_date, end_date, pepfar)
+      REPORTS['COHORT'].new(type: 'defaulter_list',
+        name: 'defaulter_list', start_date: start_date,
+        end_date: end_date).defaulter_list(pepfar)
+    end
+
+    def missed_appointments(start_date, end_date)
+      REPORTS['APPOINTMENTS'].new(start_date: start_date.to_date,
+        end_date: end_date.to_date).missed_appointments
     end
 
     private
@@ -47,6 +59,7 @@ module ARTService
       start_date = kwargs.delete(:start_date)
       end_date = kwargs.delete(:end_date)
       name = kwargs.delete(:name)
+      type = report_type(type)
 
       report_manager = REPORTS[type.name.upcase].new(
         type: type, name: name, start_date: start_date, end_date: end_date
@@ -57,6 +70,13 @@ module ARTService
       else
         method.call(**kwargs)
       end
+    end
+
+    def report_type(name)
+      type = ReportType.find_by_name(name)
+      raise NotFoundError, "Report, #{name}, not found" unless type
+
+      type
     end
   end
 end

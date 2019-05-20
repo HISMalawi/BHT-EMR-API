@@ -9,11 +9,10 @@ class ReportJob < ApplicationJob
     lock = kwargs.delete(:lock)
 
     User.current = User.find(kwargs.delete(:user))
-    type = ReportType.find(kwargs.delete(:type))
 
     clazz = clazzname.constantize
     report_engine = clazz.new
-    report_engine.generate_report(type: type, **kwargs)
+    report_engine.generate_report(**kwargs)
   ensure
     ReportService.release_report_lock(lock)
   end
