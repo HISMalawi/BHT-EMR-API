@@ -209,9 +209,13 @@ EOF
         outcome = outcomes[patient_id]
 
         date_enrolled  = data['date_enrolled'].to_date
+        earliest_start_date  = data['earliest_start_date'].to_date rescue nil
 
         if date_enrolled >= start_date && date_enrolled <= end_date
-          tx_new = 1
+          if date_enrolled == earliest_start_date
+            tx_new = 1
+          end unless earliest_start_date.blank?
+          
           if outcome == 'On antiretrovirals'
             tx_curr = 1
           end
