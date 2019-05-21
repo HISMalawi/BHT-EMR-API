@@ -211,7 +211,7 @@ end
 def push_record(record, doc_id = nil, program_name = nil)
   LOGGER.info("Pushing record to couch db: #{record.class}(##{record.id}, doc_id: #{doc_id || 'N/A'}) ")
 
-  record = serialize_record(record, program_name)
+  record = serialize_record(record, program_name).to_json
 
   if doc_id
     push_existing_record(record, doc_id)
@@ -239,18 +239,19 @@ def serialize_record(record, program_name = nil)
     serialized_record['program_id'] = program.id
   end
 
-  serialized_record.to_json
+  serialized_record
 end
 
 SITE_CODE_MAX_WIDTH = 5
 PROGRAM_ID_MAX_WIDTH = 2
+CURRENT_HEALTH_CENTER_ID = GlobalProperty.find_by_property('current_health_center_id')\
+                                         .property_value\
+                                         .to_s\
+                                         .rjust(SITE_CODE_MAX_WIDTH, '0')
 
 # Transforms primary key and foreign keys on record to the format required in RDS
 def transform_record_keys(record, serialized_record, program)
-  site_id = GlobalProperty.find_by_property('current_health_center_id')\
-                          .property_value\
-                          .to_s\
-                          .rjust(SITE_CODE_MAX_WIDTH, '0')
+  site_id = CURRENT_HEALTH_CENTER_ID
 
   program_id = program&.id&.to_s&.rjust(PROGRAM_ID_MAX_WIDTH, '0') || '00'
 
@@ -396,10 +397,12 @@ rescue RestClient::NotFound => e
   raise e
 end
 
-with_lock do
-  config # Load configuration early to ensure its sanity before doing anything
+if $PROGRAM_NAME == __FILE__ # HACK: Enables importing of this as a module
+  with_lock do
+    config # Load configuration early to ensure its sanity before doing anything
 
-  config['databases'].each do |database, database_config|
-    main(database, database_config['program_name'])
+    config['databases'].each do |database, database_config|
+      main(database, database_config['program_name'])
+    end
   end
 end
