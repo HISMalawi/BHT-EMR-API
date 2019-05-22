@@ -130,10 +130,7 @@ def recent_records(model, database_offset, database)
                 elsif model == DrugOrder
                   # DrugOrder lacks date_changed and date_created fields. We instead use
                   # the parent Order's date_created.
-                  model.unscoped.joins(:order)\
-                       .select(%w[order_id drug_inventory_id dose equivalent_daily_dose units
-                                  frequency prn complex quantity date_created])\
-                       .where('date_created > ?', database_offset)
+                  model.unscoped.joins(:order).where('date_created > ?', database_offset)
                 else
                   model.unscoped.where('date_changed > ? OR date_created > ?', database_offset, database_offset)
                 end
