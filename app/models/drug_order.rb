@@ -63,6 +63,10 @@ class DrugOrder < ApplicationRecord
     str
   end
 
+  def date_created
+    order.date_created
+  end
+
   # def order
   #   @order ||= Order.find(order_id)
   # end
