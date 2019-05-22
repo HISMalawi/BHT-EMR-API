@@ -159,4 +159,8 @@ SET foreign_key_checks = 1;
 
 EOF
 
+./bin/anc_patients_only_patient_merge_script.sh development
+
+mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $ANCDATABASE < bin/ANC_remaining_patients.sql > ~/ANC_remaining_patients.csv
+
 echo "Finished merging the data"
