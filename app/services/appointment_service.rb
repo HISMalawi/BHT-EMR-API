@@ -18,19 +18,18 @@ class AppointmentService
   def appointments(filters = {})
     date = filters.delete(:date) || filters.delete(:value_datetime)
 
-    filters = filters.to_hash.each_with_object({}) do |kv_pair, transformed_hash|
-      key, value = kv_pair
-      transformed_hash["obs.#{key}"] = value
-    end
+    program_id = filters.require(:program_id) && filters.delete(:program_id)
+    concept_id = ConceptName.find_by_name('Appointment date').concept_id
+    filters[:concept_id] = concept_id
 
-    appointments = Observation.joins(:concept)\
-                              .where(concept: concept('Appointment date'))
+    appointments = Observation.joins(:encounter)\
+                              .where('program_id = ?', program_id)\
+                              .where(filters)
     if date
       appointments = appointments.where('value_datetime BETWEEN ? AND ?',
                                         *TimeUtils.day_bounds(date))
     end
 
-    appointments = appointments.where(filters) unless appointments.empty?
     appointments.order(obs_datetime: :desc)
   end
 
