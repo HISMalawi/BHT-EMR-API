@@ -67,6 +67,7 @@ module ARTService
       start_date = kwargs.delete(:start_date)
       end_date = kwargs.delete(:end_date)
       name = kwargs.delete(:name)
+      type  = report_type(type)
 
       report_manager = REPORTS[type.name.upcase].new(
         type: type, name: name, start_date: start_date, end_date: end_date
@@ -78,5 +79,14 @@ module ARTService
         method.call(**kwargs)
       end
     end
+
+    def report_type(name)
+      type  = ReportType.find_by_name(name)
+      raise NotFoundError, "Report, #{name}, not found" unless type
+
+      type
+    end
+
+
   end
 end
