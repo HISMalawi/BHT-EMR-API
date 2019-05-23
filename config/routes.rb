@@ -128,7 +128,7 @@ Rails.application.routes.draw do
           get '/labels/patient_history', to: 'program_patients#print_patient_history_label'
           get '/mastercard_data', to: 'program_patients#mastercard_data'
           get '/medication_side_effects', to: 'program_patients#medication_side_effects'
-          #ANC
+          # ANC
           get '/surgical_history', to: 'program_patients#surgical_history'
           get '/anc_visit', to: 'program_patients#anc_visit'
           get '/art_hiv_status', to: 'program_patients#art_hiv_status'
@@ -145,6 +145,7 @@ Rails.application.routes.draw do
         get '/lab_tests/labs' => 'lab_test_orders#labs'
         get '/lab_tests/orders_without_results' => 'lab_test_orders#orders_without_results'
         get '/lab_tests/measures' => 'lab_test_types#measures'
+        get '/labs/:resource', to: 'lab#dispatch_request'
         resources :program_reports, path: 'reports'
       end
 
