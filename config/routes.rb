@@ -148,8 +148,11 @@ Rails.application.routes.draw do
         resources :program_reports, path: 'reports'
       end
 
-      resources :stock
-      post '/edit_stock_report', to: 'stock#edit'
+      namespace :pharmacy do
+        resources :batches
+        resources :items
+        get 'earliest_expiring_item', to: 'items#earliest_expiring'
+      end
 
       namespace :types do
         resources :relationships
@@ -250,4 +253,5 @@ Rails.application.routes.draw do
   post '/api/v1/addresses' => 'api/v1/person_addresses#create'
   get '/api/v1/person_attributes' => 'api/v1/person_attributes#index'
   get '/api/v1/archive_active_filing_number' => 'api/v1/patient_identifiers#archive_active_filing_number'
+  get '/api/v1/ipt_coverage' => 'api/v1/reports#ipt_coverage'
 end
