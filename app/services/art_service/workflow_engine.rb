@@ -90,6 +90,7 @@ module ARTService
 
     # Concepts
     PATIENT_PRESENT = 'Patient present'
+    MINOR_AGE_LIMIT = 18  # Above this age, patient is considered an adult.
 
     def load_user_activities
       activities = user_property('Activities')&.property_value
