@@ -159,8 +159,11 @@ SET foreign_key_checks = 1;
 
 EOF
 
+echo "Running another script to merge patients in ANC and not in ART"
+
 ./bin/anc_patients_only_patient_merge_script.sh development
 
+echo "Dumping ANC_remaining_patients.csv file for patients that were not migrated"
 mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $ANCDATABASE < bin/ANC_remaining_patients.sql > ~/ANC_remaining_patients.csv
 
 echo "Finished merging the data"
