@@ -34,7 +34,7 @@ module ARTService
         weight: patient.weight.to_f.round(1)
       )
 
-      categorise_regimens(regimens_from_ingredients(ingredients))
+      categorise_regimens(regimens_from_ingredients(ingredients, patient: patient))
     end
 
     def pellets_regimen(patient, regimen_index, use_pellets)
@@ -46,7 +46,7 @@ module ARTService
                                           weight: patient.weight.to_f.round(1)
                                         )
 
-      regimens_from_ingredients(ingredients, use_pellets: use_pellets)
+      regimens_from_ingredients(ingredients, use_pellets: use_pellets, patient: patient)
     end
 
     # Returns dosages for patients prescribed ARVs
@@ -95,7 +95,7 @@ module ARTService
                                                  weight: patient.weight.to_f.round(1))
 
         ingredients.each do |ingredient|
-          dosages[ingredient.drug.concept.concept_names.first.name] = ingredient_to_drug(ingredient)
+          dosages[ingredient.drug.concept.concept_names.first.name] = ingredient_to_drug(ingredient, patient)
         end
       end
     end
@@ -113,7 +113,7 @@ module ARTService
     #     pm: xx,
     #     category: xx
     #   }
-    def regimens_from_ingredients(ingredients, use_pellets: false)
+    def regimens_from_ingredients(ingredients, use_pellets: false, patient: nil)
       ingredients.each_with_object({}) do |ingredient, regimens|
         # Have some CPT & INH that do not belong to any regimen
         # but have a weight - dosage mapping hence being lumped
@@ -129,7 +129,7 @@ module ARTService
           next if (use_pellets && !includes_pellets) || (!use_pellets && includes_pellets)
         end
 
-        regimen << ingredient_to_drug(ingredient)
+        regimen << ingredient_to_drug(ingredient, patient)
         regimens[regimen_index] = regimen
         # add_category_to_regimen! regimen, ingredient
       end
@@ -151,25 +151,43 @@ module ARTService
       end
     end
 
-    def ingredient_to_drug(ingredient)
+    def ingredient_to_drug(ingredient, patient = nil)
       drug = ingredient.drug
       regimen_category_lookup = MohRegimenLookup.find_by(drug_inventory_id: ingredient.drug_inventory_id)
       regimen_category = regimen_category_lookup ? regimen_category_lookup.regimen_name[-1] : nil
+      use_tb_patient_dosage = patient && use_tb_patient_dosage?(drug, patient)
 
       {
         drug_id: drug.drug_id,
         concept_id: drug.concept_id,
         drug_name: drug.name,
         alternative_drug_name: drug.alternative_names.first&.short_name,
-        am: ingredient.dose.am,
+        am: use_tb_patient_dosage ? 1 : ingredient.dose.am,
         noon: 0, # Requested by the frontenders
-        pm: ingredient.dose.pm,
+        pm: use_tb_patient_dosage ? 1 : ingredient.dose.pm,
         units: drug.units,
         concept_name: drug.concept.concept_names[0].name,
         pack_size: drug.drug_cms ? drug.drug_cms.pack_size : nil,
         barcodes: drug.barcodes.collect { |barcode| { tabs: barcode.tabs } },
         regimen_category: regimen_category
       }
+    end
+
+    def use_tb_patient_dosage?(drug, patient)
+      tb_status_concept_id = ConceptName.find_by_name('TB Status').concept_id
+      on_tb_treatment_concept_ids = ConceptName.where(name: 'RX').collect(&:concept_id)
+
+      patient_is_on_tb_treatment = Observation.joins(:encounter)\
+                                              .where(person_id: patient.id,
+                                                     concept_id: tb_status_concept_id,
+                                                     value_coded: on_tb_treatment_concept_ids)\
+                                              .exists?
+
+      return false unless patient_is_on_tb_treatment
+
+      dtg_concept_id = ConceptName.find_by_name('Dolutegravir').concept_id
+
+      patient_is_on_tb_treatment && drug.concept_id == dtg_concept_id
     end
 
     def regimen_interpreter(medication_ids = [])
