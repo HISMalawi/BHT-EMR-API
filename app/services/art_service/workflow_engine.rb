@@ -361,7 +361,7 @@ module ARTService
     end
 
     def patient_is_a_minor?
-      patient.age(today: @date) < MINOR_AGE_LIMIT
+      @patient.age(today: @date) < MINOR_AGE_LIMIT
     end
 
     def htn_workflow
