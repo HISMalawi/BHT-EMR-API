@@ -3,16 +3,16 @@ default: &default
   host: localhost
   adapter: mysql2
   username: root
-  password: password
+  password: P@ch321!
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   timeout: 5000
 
 development:
   <<: *default
-  database: mlambe_api
+  database: openmrs_likuni
 test:
   <<: *default
-  database: mlambe_api_test
+  database: openmrs_test
 
 production:
   <<: *default
@@ -22,6 +22,6 @@ healthdata:
   adapter: mysql2
   username: root
   database: healthdata
-  password: password
+  password: P@ch321!
   host: localhost
   pool: 500

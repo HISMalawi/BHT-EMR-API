@@ -85,6 +85,12 @@ class PersonService
   }
 
   def create_person_address(person, params)
+    params = PERSON_ADDRESS_FIELDS.each_with_object({}) do |field, address_params|
+      address_params[field] = params[field] if params[field]
+    end
+
+    return nil if params.empty?
+
     handle_model_errors do
       person.addresses.each do |address|
         address.void('Address updated')
@@ -104,7 +110,7 @@ class PersonService
   end
 
   def update_person_address(person, params)
-    return create_person_address(person, params)
+    create_person_address(person, params)
   end
 
   def create_person_attributes(person, person_attributes)
