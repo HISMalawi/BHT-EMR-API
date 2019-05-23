@@ -147,6 +147,14 @@ class PatientService
     )
   end
 
+  def assign_tb_number(patient_id)
+    tb_number_service.assign_tb_number(patient_id)
+  end
+
+  def get_tb_number(patient_id)
+    tb_number_service.get_tb_number(patient_id)
+  end
+
   def assign_npid(patient)
     national_id_type = patient_identifier_type(PatientIdentifierType::NPID_TYPE_NAME)
     existing_identifiers = patient_identifiers(patient, national_id_type)
@@ -364,6 +372,10 @@ class PatientService
 
   def filing_number_service
     @filing_number_service ||= FilingNumberService.new
+  end
+
+  def tb_number_service
+    @tb_number_service = TbNumberService.new
   end
 
   # Returns all of patient's identifiers of given identifier_type

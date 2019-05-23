@@ -32,10 +32,10 @@ class EncounterService
   end
 
   def update(encounter, patient: nil, type: nil, encounter_datetime: nil,
-             provider: nil)
+             provider: nil, program:)
     updates = {
       patient: patient, type: type, provider: provider,
-      encounter_datetime: encounter_datetime
+      program: program, encounter_datetime: encounter_datetime
     }
     updates = updates.keep_if { |_, v| !v.nil? }
 

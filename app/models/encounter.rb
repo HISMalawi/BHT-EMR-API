@@ -35,6 +35,7 @@ class Encounter < VoidableRecord
             authentication_token token_expiry_time
           ]
         },
+        program: {},
         observations: {
           include: {
             concept: {
