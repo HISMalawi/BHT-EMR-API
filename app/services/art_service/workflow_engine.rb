@@ -90,6 +90,7 @@ module ARTService
 
     # Concepts
     PATIENT_PRESENT = 'Patient present'
+    MINOR_AGE_LIMIT = 18  # Above this age, patient is considered an adult.
 
     def load_user_activities
       activities = user_property('Activities')&.property_value
@@ -346,21 +347,21 @@ module ARTService
     end
 
     def patient_has_no_height?
-      concept_id = ConceptName.find_by_name('Height').concept_id
+      concept_id = ConceptName.find_by_name('Height (cm)').concept_id
       !Observation.where(concept_id: concept_id, person_id: @patient.id)\
                   .where('obs_datetime < ?', TimeUtils.day_bounds(@date)[1])\
                   .exists?
     end
 
     def patient_has_no_height_today?
-      concept_id = ConceptName.find_by_name('Height').concept_id
+      concept_id = ConceptName.find_by_name('Height (cm)').concept_id
       !Observation.where(concept_id: concept_id, person_id: @patient.id)\
                   .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
                   .exists?
     end
 
     def patient_is_a_minor?
-      patient.age(today: @date) < MINOR_AGE_LIMIT
+      @patient.age(today: @date) < MINOR_AGE_LIMIT
     end
 
     def htn_workflow
