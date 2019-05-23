@@ -27,6 +27,7 @@ module ARTService
           encounter_type = EncounterType.find_by(name: HIV_CLINIC_CONSULTATION)
           encounter_type.name = HIV_CLINIC_CONSULTATION_CLINICIAN
           return encounter_type if referred_to_clinician?
+          next
         end
 
         return htn_transform(encounter_type) if valid_state?(state)
