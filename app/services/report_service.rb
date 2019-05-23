@@ -82,8 +82,9 @@ class ReportService
     engine(@program).cohort_report_raw_data(l1, l2)
   end
 
-  def cohort_disaggregated(quarter, age_group)
-    engine(@program).cohort_disaggregated(quarter, age_group)
+  def cohort_disaggregated(quarter, age_group, start_date, end_date, rebuild, init)
+    engine(@program).cohort_disaggregated(quarter, age_group,
+      start_date, end_date, rebuild, init)
   end
 
   def drugs_given_without_prescription(start_date, end_date)
@@ -110,6 +111,10 @@ class ReportService
     engine(@program).cohort_disaggregated(date, start_date)
   end
   
+  def ipt_coverage(start_date, end_date)
+    engine(@program).ipt_coverage(start_date, end_date)
+  end
+
   private
 
   def engine(program)

@@ -38,7 +38,7 @@ module ANCService
       end_date = kwargs.delete(:end_date)
       name = kwargs.delete(:name)
 
-      report_manager = REPORTS[type.name.upcase].new(
+      report_manager = REPORTS[type.upcase].new(
         type: type, name: name, start_date: start_date, end_date: end_date
       )
       method = report_manager.method(method)
