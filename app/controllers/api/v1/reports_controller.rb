@@ -35,7 +35,7 @@ class Api::V1::ReportsController < ApplicationController
 
     render json: stats
   end
-  
+
   def cohort_report_raw_data
     limit, limit2 = params.require %i[limit limit2]
     stats = service.cohort_report_raw_data(limit, limit2)
@@ -69,7 +69,7 @@ class Api::V1::ReportsController < ApplicationController
 
     render json: stats
   end
-  
+
   def drugs_given_with_prescription
     start_date, end_date = params.require %i[start_date end_date]
     stats = service.drugs_given_with_prescription(start_date, end_date)
@@ -81,6 +81,13 @@ class Api::V1::ReportsController < ApplicationController
     quarter, age_group, reg = params.require %i[quarter age_group regenerate]
     reg = (reg == 'true' ? true : false)
     stats = service.cohort_survival_analysis(quarter, age_group, reg)
+
+    render json: stats
+  end
+
+  def anc_cohort_disaggregated
+    curr_date, start_date = params.require %i[date start_date]
+    stats = service.anc_cohort_disaggregated(curr_date, start_date)
 
     render json: stats
   end

@@ -107,6 +107,10 @@ class ReportService
     engine(@program).missed_appointments(start_date, end_date)
   end
 
+  def anc_cohort_disaggregated(date, start_date)
+    engine(@program).cohort_disaggregated(date, start_date)
+  end
+  
   def ipt_coverage(start_date, end_date)
     engine(@program).ipt_coverage(start_date, end_date)
   end
