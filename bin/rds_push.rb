@@ -9,6 +9,12 @@ LOGGER = Class.new do
 
   LOGGERS = [Logger.new(Rails.root.join('log/rds-sync.log')), Logger.new(STDOUT)].freeze
 
+  def initialize
+    LOGGERS.each do |logger|
+      logger.level = Logger::INFO
+    end
+  end
+
   def method_missing(method_name, *args)
     LOGGERS.each { |logger| logger.method(method_name).call(*args) }
   end
@@ -17,6 +23,8 @@ end.new
 # Uncomment the following to log SQL queries and CouchDB queries
 # ActiveRecord::Base.logger = LOGGER
 # RestClient.log = LOGGER
+
+ActiveRecord::Base.logger = LOGGER
 
 APPLICATION_CONFIG_PATH = Rails.root.join('config/application.yml')
 DELTA_STATE_PATH = Rails.root.join('log/rds-sync-state.yml')
@@ -31,22 +39,28 @@ TIME_EPOCH = '1970-01-01'.to_time
 # They probably are not meant to be changed after creation.
 IMMUTABLE_MODELS = [PersonAddress, PatientIdentifier, Observation, Order].freeze
 
+# Maximum number of records to be fetched from database per request
+RECORDS_BATCH_SIZE = 1000
+
 def main(database, program_name)
   LOGGER.info("Scraping database [#{database}, #{program_name}]")
   initiate_couch_sync
 
   MODELS.each do |model|
     LOGGER.debug("Scanning model: #{model}")
-    last_update_time = delta(model)
+    last_update_time = database_offset(model, database)
 
     recent_records(model, last_update_time, database).each do |record|
-      LOGGER.debug("Handling #{model} ##{record.id}")
+      LOGGER.debug("Handling #{model}(##{record.id})")
 
       update_time = record_update_time(record)
       last_update_time = update_time if update_time > last_update_time
 
       sync_status = find_record_sync_status(record, database)
-      next if record_already_synced?(record, sync_status)
+      if record_already_synced?(record, sync_status)
+        LOGGER.debug("Skipping already synced record #{model}(##{record.id})")
+        next
+      end
 
       record_doc_id = push_record(record, sync_status&.record_doc_id, program_name)
 
@@ -55,7 +69,7 @@ def main(database, program_name)
       LOGGER.error("Failed to write #{model} ##{record.id} due to exception: #{e.class} - #{e} - #{e.response.body}")
     end
 
-    save_delta(model, last_update_time)
+    save_database_offset(model, last_update_time, database)
   end
 end
 
@@ -63,16 +77,17 @@ end
 def with_lock
   File.open('/tmp/rds_push.lock', File::RDWR | File::CREAT) do |lock_file|
     unless lock_file.flock(File::LOCK_EX | File::LOCK_NB)
-      raise 'Another instance is already is running'
+      LOGGER.warn 'Another instance is already is running'
+      exit 255
     end
 
     yield
   end
 end
 
-def delta(model)
-  @delta ||= DELTA_STATE_PATH.exist? ? YAML.load_file(DELTA_STATE_PATH) : {}
-  @delta[model.to_s] || TIME_EPOCH
+def database_offset(model, database)
+  @database_offset ||= DELTA_STATE_PATH.exist? ? YAML.load_file(DELTA_STATE_PATH) : {}
+  @database_offset["#{database}.#{model}"] || TIME_EPOCH
 end
 
 # Load database configuration
@@ -86,31 +101,47 @@ def config
   @config
 end
 
-def save_delta(model, time)
-  return if delta(model) == time
+def save_database_offset(model, time, database)
+  return if database_offset(model, database) == time
 
-  @delta[model.to_s] = time
+  @database_offset["#{database}.#{model}"] = time
 
   Dir.mkdir(DELTA_STATE_PATH.parent) unless DELTA_STATE_PATH.parent.exist?
 
-  LOGGER.debug("Saving delta, #{time}, for model: #{model}")
+  LOGGER.debug("Saving database_offset, #{time}, for model: #{database}.#{model}")
 
   File.open(DELTA_STATE_PATH, 'w') do |fin|
-    fin.write(@delta.to_yaml)
+    fin.write(@database_offset.to_yaml)
   end
 end
 
-def recent_records(model, delta, database)
-  LOGGER.info("Retrieving #{model}s from database '#{database}' starting at #{delta}")
-  model.establish_connection(database.to_sym)
+def recent_records(model, database_offset, database)
+  Enumerator.new do |enum|
+    offset = 0
 
-  # HACK: person address seems to be missing `date_changed` field so we
-  # fall back to the existing `date_created`
-  return model.where('date_created > ?', delta) if immutable_model?(model)
+    loop do
+      LOGGER.info("Retrieving #{model}s from database '#{database}' having [time >= #{database_offset}, index >= #{offset}]")
+      model.establish_connection(database.to_sym)
 
-  return model.joins(:order).where('date_created > ?', delta) if model == DrugOrder
+      records = if immutable_model?(model)
+                  # HACK: person address seems to be missing `date_changed` field so we
+                  # fall back to the existing `date_created`
+                  model.unscoped.where('date_created > ?', database_offset)
+                elsif model == DrugOrder
+                  model.unscoped.joins(:order).where('date_created > ?', database_offset)
+                else
+                  model.unscoped.where('date_changed > ?', database_offset)
+                end
 
-  model.where('date_changed > ?', delta)
+      records = records.order(model.primary_key.to_s).offset(offset).limit(RECORDS_BATCH_SIZE)
+
+      break if records.empty?
+
+      records.each { |record| enum.yield(record) }
+
+      offset = records.last.send(model.primary_key.to_sym) + 1
+    end
+  end
 end
 
 def model(name)
@@ -173,7 +204,7 @@ end
 #
 # @returns  - A couch document id for the pushed record
 def push_record(record, doc_id = nil, program_name = nil)
-  LOGGER.debug("Pushing record to couch db: #{record.class} ##{record.id}(doc_id: #{doc_id || 'N/A'}) ")
+  LOGGER.info("Pushing record to couch db: #{record.class}(##{record.id}, doc_id: #{doc_id || 'N/A'}) ")
 
   record = serialize_record(record, program_name)
 
@@ -186,8 +217,10 @@ end
 
 # Convert record to JSON
 def serialize_record(record, program_name = nil)
+  program = program_name.blank? ? nil : Program.find_by_name(program_name)
+
   serialized_record = record.as_json(ignore_includes: true)
-  transform_record_keys(record, serialized_record)
+  transform_record_keys(record, serialized_record, program)
 
   serialized_record['record_type'] = record.class.to_s
 
@@ -196,10 +229,7 @@ def serialize_record(record, program_name = nil)
     # that use the old openmrs standard that has no program
     # specific encounters. Thus we manually have to set the program
     # id using the value specified in the config file.
-    raise 'program_name required for encounters without program_id' if program_name.blank?
-
-    program = Program.find_by_name(program_name)
-    raise "Invalid program name '#{program_name}' in rds config: application.yml" unless program
+    raise "Invalid or missing program name '#{program_name}' in rds config: application.yml" unless program
 
     serialized_record['program_id'] = program.id
   end
@@ -208,14 +238,18 @@ def serialize_record(record, program_name = nil)
 end
 
 SITE_CODE_MAX_WIDTH = 5
+PROGRAM_ID_MAX_WIDTH = 2
 
 # Transforms primary key and foreign keys on record to the format required in RDS
-def transform_record_keys(record, serialized_record)
+def transform_record_keys(record, serialized_record, program)
   site_id = GlobalProperty.find_by_property('current_health_center_id')\
                           .property_value\
                           .to_s\
                           .rjust(SITE_CODE_MAX_WIDTH, '0')
-  serialized_record[record.class.primary_key.to_s] = "#{record.id}#{site_id}".to_i
+
+  program_id = program&.id&.to_s&.rjust(PROGRAM_ID_MAX_WIDTH, '0') || '00'
+
+  serialized_record[record.class.primary_key.to_s] = "#{record.id}#{program_id}#{site_id}".to_i
 
   record.class.reflect_on_all_associations(:belongs_to).each do |association|
     next unless MODELS.include?(association.class_name.constantize)\
@@ -224,7 +258,7 @@ def transform_record_keys(record, serialized_record)
     id = record.send(association.foreign_key.to_sym)
     next unless id
 
-    serialized_record[association.foreign_key.to_s] = "#{id}#{site_id}".to_i
+    serialized_record[association.foreign_key.to_s] = "#{id}#{program_id}#{site_id}".to_i
   end
 
   serialized_record

@@ -117,6 +117,8 @@ Rails.application.routes.draw do
         get 'regimen_starter_packs' => 'program_regimens#find_starter_pack'
         get 'custom_regimen_ingredients' => 'program_regimens#custom_regimen_ingredients'
         get 'defaulter_list' => 'program_patients#defaulter_list'
+        get '/barcodes/:barcode_name', to: 'program_barcodes#print_barcode'
+
         resources :program_patients, path: :patients do
           get '/next_appointment_date' => 'patient_appointments#next_appointment_date'
           get '/last_drugs_received' => 'program_patients#last_drugs_received'
