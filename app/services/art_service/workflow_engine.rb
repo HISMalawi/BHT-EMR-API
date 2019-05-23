@@ -68,7 +68,8 @@ module ARTService
                                     patient_not_visiting?],
       VITALS => %i[patient_checked_in?
                    patient_not_on_fast_track?
-                   patient_has_not_completed_fast_track_visit?],
+                   patient_has_not_completed_fast_track_visit?
+                   patient_does_not_have_height_and_weight?],
       HIV_STAGING => %i[patient_not_already_staged?
                         patient_has_not_completed_fast_track_visit?],
       HIV_CLINIC_CONSULTATION => %i[patient_not_on_fast_track?
@@ -130,6 +131,11 @@ module ARTService
     # NOTE: By `relevant` above we mean encounters that matter in deciding
     # what encounter the patient should go for in this present time.
     def encounter_exists?(type)
+      # Vitals may be collected from a different program so don't check
+      # for existence of an encounter rather check for the existence
+      # of the actual vitals.
+      return false if type.name == VITALS
+
       Encounter.where(type: type, patient: @patient, program: @program)\
                .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
                .exists?
@@ -322,6 +328,39 @@ module ARTService
     # Check's whether fast track has been activated
     def fast_track_activated?
       global_property('enable.fast.track')&.property_value&.casecmp?('true')
+    end
+
+    def patient_does_not_have_height_and_weight?
+      return true if patient_has_no_weight_today?
+
+      return true if patient_has_no_height?
+
+      patient_has_no_height_today? && patient_is_a_minor?
+    end
+
+    def patient_has_no_weight_today?
+      concept_id = ConceptName.find_by_name('Weight').concept_id
+      !Observation.where(concept_id: concept_id, person_id: @patient.id)\
+                  .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
+                  .exists?
+    end
+
+    def patient_has_no_height?
+      concept_id = ConceptName.find_by_name('Height').concept_id
+      !Observation.where(concept_id: concept_id, person_id: @patient.id)\
+                  .where('obs_datetime < ?', TimeUtils.day_bounds(@date)[1])\
+                  .exists?
+    end
+
+    def patient_has_no_height_today?
+      concept_id = ConceptName.find_by_name('Height').concept_id
+      !Observation.where(concept_id: concept_id, person_id: @patient.id)\
+                  .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
+                  .exists?
+    end
+
+    def patient_is_a_minor?
+      patient.age(today: @date) < MINOR_AGE_LIMIT
     end
 
     def htn_workflow
