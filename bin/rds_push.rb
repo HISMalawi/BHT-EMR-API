@@ -234,6 +234,9 @@ def serialize_record(record, program_name = nil)
     raise "Invalid or missing program name '#{program_name}' in rds config: application.yml" unless program
 
     serialized_record['program_id'] = program.id
+
+    # HACK: Another hack to handle HTS program encounters
+    serialized_record.delete('patient_program_id') if serialized_record.key?('patient_program_id')
   end
 
   serialized_record
