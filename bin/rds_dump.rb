@@ -12,6 +12,8 @@ end
 
 # Dump database in an RDS compatible format into given file.
 def dump(database, program_name, file)
+  file.write("SET foreign_key_checks = 0;\n")
+
   MODELS.each do |model|
     records = recent_records(model, TIME_EPOCH, database)
 
@@ -42,6 +44,8 @@ def dump(database, program_name, file)
       file.write(sql_statement)
     end
   end
+
+  file.write("SET foreign_key_checks = 1;\n")
 end
 
 # Converts an enumerator (generator) of records into an enumerator
