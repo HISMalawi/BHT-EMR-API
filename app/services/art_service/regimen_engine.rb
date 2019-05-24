@@ -162,9 +162,9 @@ module ARTService
         concept_id: drug.concept_id,
         drug_name: drug.name,
         alternative_drug_name: drug.alternative_names.first&.short_name,
-        am: use_tb_patient_dosage ? 1 : ingredient.dose.am,
+        am: ingredient.dose.am,
         noon: 0, # Requested by the frontenders
-        pm: use_tb_patient_dosage ? 1 : ingredient.dose.pm,
+        pm: use_tb_patient_dosage ? ingredient.dose.am : ingredient.dose.pm,
         units: drug.units,
         concept_name: drug.concept.concept_names[0].name,
         pack_size: drug.drug_cms ? drug.drug_cms.pack_size : nil,
