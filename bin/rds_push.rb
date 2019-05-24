@@ -226,7 +226,7 @@ def serialize_record(record, program_name = nil)
 
   serialized_record['record_type'] = record.class.to_s
 
-  if record.class == Encounter && record.respond_to?(:program_id) && record.program_id.nil?
+  if record.class == Encounter && (!record.respond_to?(:program_id) || record.program_id.nil?)
     # HACK: Apparently this script may be run on old applications
     # that use the old openmrs standard that has no program
     # specific encounters. Thus we manually have to set the program
