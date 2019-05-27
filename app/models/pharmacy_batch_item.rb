@@ -9,4 +9,12 @@ class PharmacyBatchItem < VoidableRecord
   validates_each :delivered_quantity, :current_quantity do |record, attr, value|
     record.errors.add(attr, "Quantity can't be less than 0") if value.negative?
   end
+
+  def as_json(options = {})
+    super(options.merge(methods: %i[drug_name]))
+  end
+
+  def drug_name
+    drug.name
+  end
 end

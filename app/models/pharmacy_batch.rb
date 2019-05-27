@@ -6,7 +6,13 @@ class PharmacyBatch < VoidableRecord
   after_void :void_items
 
   def as_json(options = {})
-    super(options.merge(methods: %i[items]))
+    super(options.merge(
+      include: {
+        items: {
+          methods: %i[drug_name]
+        }
+      }
+    ))
   end
 
   def void_items(reason)
