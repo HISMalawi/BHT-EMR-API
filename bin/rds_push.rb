@@ -237,6 +237,12 @@ def serialize_record(record, program_name = nil)
 
     # HACK: Another hack to handle HTS program encounters
     serialized_record.delete('patient_program_id') if serialized_record.key?('patient_program_id')
+  elsif [User, Person, PersonName].include?(record.class)
+    # HACK: On setup of most BHT applications, a default set of users is seeded.
+    # These retain the same UUIDs across space. We need to remap these UUIDs
+    # since they all will be loaded into the same database that holds unique
+    # constraints on all UUID fields.
+    serialized_record['uuid'] = SecureRandom.uuid
   end
 
   serialized_record
