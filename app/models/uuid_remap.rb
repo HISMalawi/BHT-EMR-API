@@ -1,0 +1,2 @@
+class UuidRemap < ApplicationRecord
+end

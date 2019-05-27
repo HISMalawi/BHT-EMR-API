@@ -237,12 +237,13 @@ def serialize_record(record, program_name = nil)
 
     # HACK: Another hack to handle HTS program encounters
     serialized_record.delete('patient_program_id') if serialized_record.key?('patient_program_id')
-  elsif [User, Person, PersonName].include?(record.class)
+  elsif [User, Person, PersonName].include?(record.class) && !record_uuid_was_remapped?(record)
     # HACK: On setup of most BHT applications, a default set of users is seeded.
     # These retain the same UUIDs across space. We need to remap these UUIDs
     # since they all will be loaded into the same database that holds unique
     # constraints on all UUID fields.
-    serialized_record['uuid'] = SecureRandom.uuid
+    remap = remap_record_uuid(record)
+    serialized_record['uuid'] = remap.new_uuid
   end
 
   serialized_record
@@ -274,6 +275,29 @@ def transform_record_keys(record, serialized_record, program)
   end
 
   serialized_record
+end
+
+def remap_record_uuid(record)
+  new_uuid = ActiveRecord::Base.connection.select_one('SELECT UUID() as uuid')['uuid']
+  old_uuid = record.uuid
+
+  model = record.class
+  ActiveRecord::Base.connection.execute(
+    <<~SQL
+      UPDATE #{model.table_name}
+      SET uuid = '#{new_uuid}'
+      WHERE #{model.primary_key} = '#{record.id}'
+    SQL
+  )
+
+  UuidRemap.create(model: record.class.to_s,
+                   database: record.class.connection.current_database,
+                   old_uuid: old_uuid,
+                   new_uuid: record.uuid)
+end
+
+def record_uuid_was_remapped?(record)
+  UuidRemap.where(model: record.class.to_s, old_uuid: record.uuid).exists?
 end
 
 # Push a new record to couch db
