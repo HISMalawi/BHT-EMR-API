@@ -56,17 +56,22 @@ module ARTService
 		        additional_sql += ' AND gender = "F"'
 		      end
 
-          data = ActiveRecord::Base.connection.select_all <<EOF
-          SELECT 
-            cum_outcome, timestampdiff(month, DATE('#{qend_date}'), DATE('#{end_date}')) qinterval,
-            timestampdiff(year, DATE(e.birthdate), DATE('#{end_date}')) AS patient_age,
-            e.gender 
-          FROM temp_earliest_start_date e
-          INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
-          WHERE date_enrolled BETWEEN '#{qstart_date.strftime('%Y-%m-%d')}'
-          AND '#{qend_date.strftime('%Y-%m-%d')}'
-          #{additional_sql};
+          begin 
+            data = ActiveRecord::Base.connection.select_all <<EOF
+            SELECT 
+              cum_outcome, timestampdiff(month, DATE('#{qend_date}'), DATE('#{end_date}')) qinterval,
+              timestampdiff(year, DATE(e.birthdate), DATE('#{end_date}')) AS patient_age,
+              e.gender 
+            FROM temp_earliest_start_date e
+            INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
+            WHERE date_enrolled BETWEEN '#{qstart_date.strftime('%Y-%m-%d')}'
+            AND '#{qend_date.strftime('%Y-%m-%d')}'
+            #{additional_sql};
 EOF
+
+          rescue
+            return results
+          end
 
           (data || []).each do |r|
             outcome = r['cum_outcome']
