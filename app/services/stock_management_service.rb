@@ -101,9 +101,12 @@ class StockManagementService
   def reallocate_items(reallocation_code, batch_item_id, quantity, destination_location_id)
     ActiveRecord::Base.transaction do
       item = PharmacyBatchItem.find(batch_item_id)
-      quantity = quantity.abs
 
-      commit_transaction(item, STOCK_EDIT, -quantity, update_item: true)
+      # A negative sign would result in addition of quantity thus
+      # get rid of it as early as possible
+      quantity = quantity.to_f.abs
+
+      commit_transaction(item, STOCK_EDIT, -quantity.to_f, update_item: true)
 
       destination = Location.find(destination_location_id)
 
@@ -124,8 +127,8 @@ class StockManagementService
   def create_batch_item(batch, drug_id, quantity, delivery_date, expiry_date)
     PharmacyBatchItem.create(
       batch: batch,
-      drug_id: drug_id,
-      delivered_quantity: quantity,
+      drug_id: drug_id.to_i,
+      delivered_quantity: quantity.to_f,
       current_quantity: 0,
       delivery_date: delivery_date,
       expiry_date: expiry_date
@@ -150,7 +153,7 @@ class StockManagementService
                         encounter_date: date)
       )
 
-      batch_item.current_quantity += quantity
+      batch_item.current_quantity += quantity.to_f
 
       if batch_item.current_quantity.negative?
         raise InvalidParameterError, "Quantity (#{quantity}) exceeds current quantity on item ##{batch_item.id}"
