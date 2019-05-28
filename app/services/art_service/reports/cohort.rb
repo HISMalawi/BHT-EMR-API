@@ -157,7 +157,7 @@ EOF
         INNER JOIN cohort_drill_down c ON c.patient_id = p.person_id
         LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
         AND i.voided = 0 AND i.identifier_type = 4 
-        INNER JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
+        LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
         WHERE c.reporting_report_design_resource_id = #{id} 
         GROUP BY p.person_id ORDER BY p.person_id, p.date_created;
 EOF
