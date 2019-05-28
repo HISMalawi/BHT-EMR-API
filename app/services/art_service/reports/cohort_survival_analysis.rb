@@ -14,7 +14,8 @@ module ARTService
 
       def survival_analysis(quarter, age_group)
         art_service = ARTService::Reports::CohortDisaggregated.new(name: 'survival_analysis', 
-          type: 'survival_analysis', start_date: Date.today, end_date: Date.today)
+          type: 'survival_analysis', start_date: Date.today, 
+            end_date: Date.today, rebuild: @regenerate)
         
         start_date, end_date = art_service.generate_start_date_and_end_date(quarter) 
         art_service = ARTService::Reports::CohortBuilder.new()
@@ -27,7 +28,9 @@ module ARTService
         quarters = []
         no_data = false
         art_service = ARTService::Reports::CohortDisaggregated.new(name: 'survival_analysis', 
-          type: 'survival_analysis', start_date: Date.today, end_date: Date.today)
+          type: 'survival_analysis', start_date: @start_date.to_date, 
+            end_date: @end_date.to_date, rebuild: @regenerate)
+        
         
         qtr = quarter.split(' ')[0]
         results = {}
