@@ -1116,9 +1116,9 @@ EOF
       end
 
       def patients_side_effects_status(patients_alive_and_on_art, end_date)
-        with_side_effects = 0
-        without_side_effects = 0
-        unknowns = 0
+        with_side_effects = []
+        without_side_effects = []
+        unknowns = []
 
         patients_alive_and_on_art.select do |record|
           data = ActiveRecord::Base.connection.select_one <<EOF
@@ -1126,11 +1126,11 @@ EOF
 EOF
 
           if data['has_se'] == 'Yes'
-            with_side_effects += 1
+            with_side_effects << record['patient_id']
           elsif data['has_se'] == 'No'
-            without_side_effects += 1
+            without_side_effects << record['patient_id']
           else
-            unknowns += 1
+            unknowns << record['patient_id']
           end
         end
 
@@ -1616,6 +1616,7 @@ EOF
         preg_concept_id = concept('IS PATIENT PREGNANT?').concept_id
         patient_preg_concept_id = concept('PATIENT PREGNANT').concept_id
         preg_at_initiation_concept_id = concept('PREGNANT AT INITIATION?').concept_id
+        reason_for_starting_concept_id = concept('Reason for ART eligibility').concept_id
 
         # (patient_id_plus_date_enrolled || []).each do |patient_id, date_enrolled|
         registered = ActiveRecord::Base.connection.select_all(
@@ -1623,10 +1624,11 @@ EOF
             INNER JOIN obs o ON o.person_id = t.patient_id AND o.voided = 0
           WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
             AND (gender = 'F' OR gender = 'Female')
-            AND o.concept_id IN (#{preg_concept_id} , #{patient_preg_concept_id}, #{preg_at_initiation_concept_id})
+            AND o.concept_id IN (#{preg_concept_id} , #{patient_preg_concept_id}, #{preg_at_initiation_concept_id},#{reason_for_starting_concept_id})
             AND DATE(o.obs_datetime) = DATE(t.earliest_start_date)
           GROUP BY patient_id
-          HAVING value_coded = #{yes_concept_id}"
+          HAVING value_coded = #{yes_concept_id} 
+          OR value_coded = #{patient_preg_concept_id};"
         )
 
         pregnant_at_initiation = ActiveRecord::Base.connection.select_all(
@@ -1635,7 +1637,7 @@ EOF
           WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
             AND (gender = 'F' OR gender = 'Female')
           GROUP BY patient_id
-          HAVING reason_concept_id IN (1755, 7972, 6131)"
+          HAVING reason_concept_id IN (1755, 7972, 6131);"
         )
         pregnant_at_initiation_ids = []
         (pregnant_at_initiation || []).each do |patient|

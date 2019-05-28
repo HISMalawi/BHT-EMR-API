@@ -176,6 +176,8 @@ EOF
           report_value_saved = report_value.errors.empty?
           unless report_value_saved
             raise "Failed to save report value: #{report_value.errors.as_json}"
+          else
+            save_patients(report_value, value_contents_to_json(value).contents)
           end
 
           report_value
@@ -195,6 +197,46 @@ EOF
           value_contents
         end
       end
+
+      def save_patients(r, values)
+        return if values.blank?
+        patient_ids = []
+
+        begin
+          
+          (values.rows || []).each do |v|  
+            patient_ids << v[0]
+          end  
+        
+        rescue
+          
+          begin 
+            if values.first.include?(:patient_id)
+              values.select do |obj|
+                patient_ids << obj[:patient_id]
+              end
+            end
+          rescue
+            begin
+              values.select do |patient_id|
+                patient_ids << patient_id
+              end
+            rescue
+              puts "#{r.name} +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #{values.inspect}"
+              return
+            end
+          end
+
+        end
+    
+        patient_ids.select do |patient_id|
+        ActiveRecord::Base.connection.execute <<EOF
+        INSERT INTO cohort_drill_down VALUES(NULL, #{r.id}, #{patient_id});
+EOF
+
+        end
+      end
+
     end
   end
 
