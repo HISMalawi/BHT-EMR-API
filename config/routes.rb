@@ -264,4 +264,5 @@ Rails.application.routes.draw do
   get '/api/v1/person_attributes' => 'api/v1/person_attributes#index'
   get '/api/v1/archive_active_filing_number' => 'api/v1/patient_identifiers#archive_active_filing_number'
   get '/api/v1/ipt_coverage' => 'api/v1/reports#ipt_coverage'
+  get '/api/v1/cohort_report_drill_down' => 'api/v1/reports#cohort_report_drill_down'
 end

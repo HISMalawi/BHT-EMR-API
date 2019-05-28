@@ -115,6 +115,10 @@ class ReportService
     engine(@program).ipt_coverage(start_date, end_date)
   end
 
+  def cohort_report_drill_down(id)
+    engine(@program).cohort_report_drill_down(id)
+  end
+
   private
 
   def engine(program)

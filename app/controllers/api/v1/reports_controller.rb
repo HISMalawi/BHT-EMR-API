@@ -114,6 +114,10 @@ class Api::V1::ReportsController < ApplicationController
     render json: stats
   end
 
+  def cohort_report_drill_down
+    render json: service.cohort_report_drill_down(params[:id])
+  end
+
   private
 
   def service

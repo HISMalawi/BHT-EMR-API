@@ -147,6 +147,37 @@ EOF
         return patients
       end
 
+      def cohort_report_drill_down(id)
+        people = []
+
+        patients = ActiveRecord::Base.connection.select_all <<EOF
+        SELECT i.identifier arv_number, p.birthdate,
+          p.gender, n.given_name, n.family_name, p.person_id patient_id
+        FROM person p
+        INNER JOIN cohort_drill_down c ON c.patient_id = p.person_id
+        LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
+        AND i.voided = 0 AND i.identifier_type = 4 
+        INNER JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
+        WHERE c.reporting_report_design_resource_id = #{id} 
+        GROUP BY p.person_id ORDER BY p.person_id, p.date_created;
+EOF
+
+        return {} if patients.blank?
+        
+        patients.select do |person|
+          people << {
+            person_id: person['patient_id'],
+            given_name: person['given_name'],
+            family_name: person['family_name'],
+            birthdate: person['birthdate'],
+            gender: person['gender'],
+            arv_number: person['arv_number']
+          }
+        end
+
+        return people
+      end
+
       private
 
       LOGGER = Rails.logger
