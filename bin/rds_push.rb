@@ -293,7 +293,7 @@ def remap_record_uuid(record)
   UuidRemap.create(model: record.class.to_s,
                    database: record.class.connection.current_database,
                    old_uuid: old_uuid,
-                   new_uuid: record.uuid)
+                   new_uuid: new_uuid)
 end
 
 def record_uuid_was_remapped?(record)
