@@ -33,7 +33,7 @@ MODELS = [Person, PersonAttribute, PersonAddress, PersonName, User, Patient,
           PatientIdentifier, PatientState, PatientProgram, Encounter,
           Observation, Order, DrugOrder].freeze
 
-TIME_EPOCH = '1970-01-01'.to_time
+TIME_EPOCH = '0000-00-00 00:00:00'
 
 # These models are missing a `date_changed` field...
 # They probably are not meant to be changed after creation.
@@ -126,13 +126,13 @@ def recent_records(model, database_offset, database)
       records = if immutable_model?(model)
                   # HACK: person address seems to be missing `date_changed` field so we
                   # fall back to the existing `date_created`
-                  model.unscoped.where('date_created > ?', database_offset)
+                  model.unscoped.where('date_created >= ?', database_offset.to_s)
                 elsif model == DrugOrder
                   # DrugOrder lacks date_changed and date_created fields. We instead use
                   # the parent Order's date_created.
-                  model.unscoped.joins(:order).where('date_created > ?', database_offset)
+                  model.unscoped.joins(:order).where('date_created >= ?', database_offset.to_s)
                 else
-                  model.unscoped.where('date_changed > ? OR date_created > ?', database_offset, database_offset)
+                  model.unscoped.where('date_changed >= :time OR date_created >= :time', time: database_offset)
                 end
 
       records = records.order(model.primary_key.to_s).offset(offset).limit(RECORDS_BATCH_SIZE)
