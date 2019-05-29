@@ -976,11 +976,11 @@ EOF
           adherence_rate = patient_latest_art_adherence(patient['patient_id'], start_date, end_date)
 
           if adherence_rate.nil?
-            unknown_adherence << patient
+            unknown_adherence << patient['patient_id']
           elsif adherence_rate >= MIN_ART_ADHERENCE_THRESHOLD && adherence_rate <= MAX_ART_ADHERENCE_THRESHOLD
-            adherent << patient
+            adherent << patient['patient_id']
           else
-            not_adherent << patient
+            not_adherent << patient['patient_id']
           end
         end
 
@@ -1066,16 +1066,15 @@ EOF
 
           case tb_status_value
           when tb_suspected_concept.concept_id
-            cohort_struct.tb_suspected << patient
+            cohort_struct.tb_suspected << patient['patient_id']
           when tb_not_suspected_concept.concept_id
-            cohort_struct.tb_not_suspected << patient
+            cohort_struct.tb_not_suspected << patient['patient_id']
           when tb_confirmed_and_on_treatment.concept_id
-            cohort_struct.tb_confirmed_on_tb_treatment << patient
+            cohort_struct.tb_confirmed_on_tb_treatment << patient['patient_id']
           when tb_confirmed_but_not_on_treatment.concept_id
-            cohort_struct.tb_confirmed_currently_not_yet_on_tb_treatment << patient
+            cohort_struct.tb_confirmed_currently_not_yet_on_tb_treatment << patient['patient_id']
           else
-
-            cohort_struct.unknown_tb_status << patient
+            cohort_struct.unknown_tb_status << patient['patient_id']
           end
         end
       end
