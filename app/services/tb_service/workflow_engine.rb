@@ -263,7 +263,7 @@ module TBService
     end
 
     def patient_is_not_a_transfer_out?
-      transfer_out = concept 'Transfer out'
+      transfer_out = concept 'Patient transferred(external facility)'
       yes_concept = concept 'YES'
       Observation.where(
         "person_id = ? AND concept_id = ? AND value_coded = ? ",
