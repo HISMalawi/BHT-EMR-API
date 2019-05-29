@@ -149,7 +149,8 @@ EOF
 
       def append_last_six_months(quarter, results, end_date)
         art_service = ARTService::Reports::CohortDisaggregated.new(name: 'survival_analysis', 
-          type: 'survival_analysis', start_date: Date.today, end_date: Date.today)
+          type: 'survival_analysis', start_date: @start_date.to_date, 
+            end_date: @end_date.to_date, rebuild: @regenerate)
         
         qstart_date, qend_date = art_service.generate_start_date_and_end_date(quarter)
         qstart_date = qstart_date - 6.month
