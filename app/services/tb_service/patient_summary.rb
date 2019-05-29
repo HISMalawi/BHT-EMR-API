@@ -141,11 +141,13 @@ module TBService
         number = tb_number_service.get_tb_number(patient.patient_id)
         return 'N/A' unless number
         number[:identifier]
+
       end
 
       def patient_program_start_date
         program = Program.find_by(name: 'TB PROGRAM')
         patient_program = PatientProgram.find_by(patient_id: patient.patient_id, program_id: program.program_id)
+        return 'N/A' unless patient_program
         patient_program.date_enrolled.to_date
       end
 
