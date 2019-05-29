@@ -141,7 +141,7 @@ def recent_records(model, database_offset, database)
 
       records.each { |record| enum.yield(record) }
 
-      offset = records.last.send(model.primary_key.to_sym) + 1
+      offset = records.last.send(model.primary_key.to_sym)
     end
   end
 end
