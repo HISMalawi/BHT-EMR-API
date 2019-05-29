@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'ostruct'
+
 require_relative 'rds_push'
 
 def main
@@ -17,8 +19,12 @@ def dump(database, program_name, file)
   MODELS.each do |model|
     records = recent_records(model, TIME_EPOCH, database)
 
+    last_record_container = OpenStruct.new
+
     # Chunk retrieved records while converting them to JSON at the same time.
     record_chunks = chunk_records(records, RECORDS_BATCH_SIZE) do |record|
+      last_record_container.record = record
+
       record = serialize_record(record, program_name)
       record.delete('record_type')
       record
@@ -43,6 +49,10 @@ def dump(database, program_name, file)
 
       file.write(sql_statement)
     end
+
+    next unless last_record_container.record
+
+    save_database_offset(model, record_update_time(last_record_container.record), database)
   end
 
   file.write("SET foreign_key_checks = 1;\n")
