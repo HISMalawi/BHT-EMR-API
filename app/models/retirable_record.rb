@@ -16,6 +16,8 @@ class RetirableRecord < ApplicationRecord
 
   default_scope { where(retired: 0) }
 
+  belongs_to :creator_user, foreign_key: 'creator', class_name: 'User'
+
   def void(*args, **kwargs)
     # HACK: This should normally be called within the top most scope of
     # a class but we are calling it here as it seems not work through
