@@ -47,6 +47,7 @@ module TBService
     LAB_RESULTS =  'LAB RESULTS'
     APPOINTMENT = 'APPOINTMENT'
     TB_REGISTRATION = 'TB REGISTRATION'
+    TB_RECEPTION = 'TB RECEPTION'
 
     #FOLLOW - TB INITIAL, LAB ORDERS. LAB RESULTs, VITALS, TREATMENT, DISPENSING, APPOINTMENT, TB ADHERENCE
 
@@ -63,7 +64,8 @@ module TBService
       TB_INITIAL => LAB_ORDERS,
       LAB_ORDERS => DIAGNOSIS,
       DIAGNOSIS => LAB_RESULTS,
-      LAB_RESULTS => TB_REGISTRATION,
+      LAB_RESULTS => TB_RECEPTION,
+      TB_RECEPTION => TB_REGISTRATION,
       TB_REGISTRATION => VITALS,
       VITALS => TREATMENT,
       TREATMENT => DISPENSING,
@@ -97,8 +99,12 @@ module TBService
       LAB_RESULTS => %i[patient_has_no_lab_results?
                                     patient_should_proceed_after_lab_order?
                                     patient_recent_lab_order_has_no_results?],
+      TB_RECEPTION => %i[patient_has_no_tb_reception?
+                                    patient_should_proceed_for_treatment?
+                                    should_treat_patient?],
       TB_REGISTRATION => %i[patient_has_no_tb_registration?
-                                    patient_tb_positive?
+                                    patient_should_proceed_for_treatment?
+                                    should_treat_patient?
                                     patient_is_not_a_transfer_out?],
       VITALS => %i[patient_has_no_vitals?
                                     patient_should_get_treated?
@@ -512,6 +518,15 @@ module TBService
         'encounter_type.name = ? AND encounter.patient_id = ?',
         TB_REGISTRATION,
         @patient.patient_id
+      ).order(encounter_datetime: :desc).first.nil?
+    end
+
+    def patient_has_no_tb_reception?
+      Encounter.joins(:type).where(
+        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
+        TB_RECEPTION,
+        @patient.patient_id,
+        @date
       ).order(encounter_datetime: :desc).first.nil?
     end
 
