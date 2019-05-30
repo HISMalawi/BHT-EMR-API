@@ -49,6 +49,7 @@ describe TBService::WorkflowEngine do
       tb_initial_encounter(patient, Time.now - 2.hour)
       encounter = lab_orders_encounter(patient, Time.now - 2.hour)
       tb_status(patient, lab_result_encounter(patient, Time.now + 1.hour), "Positive")
+      tb_reception(patient, Time.now + 1.hour)
       encounter_type = engine.next_encounter
       expect(encounter_type.name.upcase).to eq('VITALS')
     end
@@ -58,6 +59,7 @@ describe TBService::WorkflowEngine do
       tb_initial_encounter(patient, Time.now - 2.hour)
       encounter = lab_orders_encounter(patient, Time.now - 2.hour)
       tb_status(patient, lab_result_encounter(patient, Time.now + 1.hour), "Positive")
+      tb_reception(patient, Time.now + 1.hour)
       adherence(patient, Time.now)
       record_vitals(patient, Time.now)
       treatment_encounter(patient, Time.now)
@@ -87,6 +89,7 @@ describe TBService::WorkflowEngine do
       tb_initial_encounter(patient, Time.now - 2.hour)
       encounter = lab_orders_encounter(patient, Time.now - 2.hour)
       tb_status(patient, lab_result_encounter(patient, Time.now), "Positive")
+      tb_reception(patient, Time.now)
       record_vitals(patient, Time.now)
       encounter_type = engine.next_encounter
       expect(encounter_type.name.upcase).to eq('TREATMENT')
@@ -251,13 +254,13 @@ describe TBService::WorkflowEngine do
     tb_initial
   end
 
-  def transfer_out_observation(patient, encounter, answer)
-
-		create :observation, concept: concept('Transfer out'),
-                          encounter: encounter,
-                          person: patient.person,
-													value_coded: concept(answer).concept_id
+  def tb_reception(patient, datetime)
+    encounter = create :encounter, type: encounter_type('TB RECEPTION'),
+                                   patient: patient, program_id: tb_program.program_id,
+                                   encounter_datetime: datetime
+    encounter
   end
+
 
   def tb_status_through_diagnosis(patient, encounter, status)
 
@@ -303,6 +306,7 @@ describe TBService::WorkflowEngine do
   def dispensation
       encounter = lab_orders_encounter(patient, Time.now - 2.hour)
       tb_status(patient, lab_result_encounter(patient, Time.now), "Positive")
+      tb_reception(patient, Time.now)
       record_vitals(patient, Time.now)
       medication_orders(patient, encounter)
       patient_weight(patient, encounter)
