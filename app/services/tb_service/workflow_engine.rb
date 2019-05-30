@@ -46,6 +46,8 @@ module TBService
     DIAGNOSIS = 'DIAGNOSIS'
     LAB_RESULTS =  'LAB RESULTS'
     APPOINTMENT = 'APPOINTMENT'
+    TB_REGISTRATION = 'TB REGISTRATION'
+    TB_RECEPTION = 'TB RECEPTION'
 
     #FOLLOW - TB INITIAL, LAB ORDERS. LAB RESULTs, VITALS, TREATMENT, DISPENSING, APPOINTMENT, TB ADHERENCE
 
@@ -62,7 +64,9 @@ module TBService
       TB_INITIAL => LAB_ORDERS,
       LAB_ORDERS => DIAGNOSIS,
       DIAGNOSIS => LAB_RESULTS,
-      LAB_RESULTS => VITALS,
+      LAB_RESULTS => TB_RECEPTION,
+      TB_RECEPTION => TB_REGISTRATION,
+      TB_REGISTRATION => VITALS,
       VITALS => TREATMENT,
       TREATMENT => DISPENSING,
       DISPENSING => APPOINTMENT,
@@ -95,6 +99,13 @@ module TBService
       LAB_RESULTS => %i[patient_has_no_lab_results?
                                     patient_should_proceed_after_lab_order?
                                     patient_recent_lab_order_has_no_results?],
+      TB_RECEPTION => %i[patient_has_no_tb_reception?
+                                    patient_should_proceed_for_treatment?
+                                    should_treat_patient?],
+      TB_REGISTRATION => %i[patient_should_go_for_tb_registration?
+                                    patient_should_proceed_for_treatment?
+                                    should_treat_patient?
+                                    patient_is_not_a_transfer_out?],
       VITALS => %i[patient_has_no_vitals?
                                     patient_should_get_treated?
                                     patient_should_proceed_for_treatment?
@@ -212,7 +223,7 @@ module TBService
       status_concept = concept('TB status')
       negative = concept('Positive')
       Observation.where(
-        'person_id = ? AND concept_id = ? AND value_coded = ?', #Add Date
+        'person_id = ? AND concept_id = ? AND value_coded = ?',
         @patient.patient_id, status_concept.concept_id, negative.concept_id
       ).order(obs_datetime: :desc).first.present?
     end
@@ -263,7 +274,7 @@ module TBService
     end
 
     def patient_is_not_a_transfer_out?
-      transfer_out = concept 'Transfer out'
+      transfer_out = concept 'Patient transferred(external facility)'
       yes_concept = concept 'YES'
       Observation.where(
         "person_id = ? AND concept_id = ? AND value_coded = ? ",
@@ -318,7 +329,7 @@ module TBService
       x_ray = concept 'Xray'
       clinical = concept 'Clinical'
       observation = Observation.where(
-        "person_id = ? AND concept_id = ? AND (value_coded = ? || value_coded = ?)", #add session date
+        "person_id = ? AND concept_id = ? AND (value_coded = ? || value_coded = ?)",
         @patient.patient_id, procedure_type.concept_id, x_ray.concept_id, clinical.concept_id
       ).order(obs_datetime: :desc).first
 
@@ -356,7 +367,9 @@ module TBService
     end
 
     def patient_should_go_for_lab_order?
-      (should_patient_be_tested_through_lab? && patient_has_no_lab_results?) || (patient_tb_positive? && should_patient_go_lab_examination_at_followup? && patient_recent_lab_order_has_results?)
+      (should_patient_be_tested_through_lab? && patient_has_no_lab_results?)\
+        || (patient_tb_positive? && should_patient_go_lab_examination_at_followup?\
+        && patient_recent_lab_order_has_results?)
     end
 
     def patient_recent_lab_order_has_results?
@@ -385,7 +398,7 @@ module TBService
       x_ray = concept 'Xray'
       clinical = concept 'Clinical'
       observation = Observation.where(
-        "person_id = ? AND concept_id = ? AND (value_coded = ? || value_coded = ?)", #add session date
+        "person_id = ? AND concept_id = ? AND (value_coded = ? || value_coded = ?)",
         @patient.patient_id, procedure_type.concept_id, x_ray.concept_id, clinical.concept_id
       ).order(obs_datetime: :desc).first
 
@@ -421,7 +434,7 @@ module TBService
       x_ray = concept 'Xray'
       clinical = concept 'Clinical'
       Observation.where(
-        "person_id = ? AND concept_id = ? AND (value_coded = ? || value_coded = ?) AND DATE(obs_datetime) = DATE(?)", #add session date
+        "person_id = ? AND concept_id = ? AND (value_coded = ? || value_coded = ?) AND DATE(obs_datetime) = DATE(?)",
         @patient.patient_id, procedure_type.concept_id, x_ray.concept_id, clinical.concept_id, @date
       ).order(obs_datetime: :desc).first.present?
     end
@@ -500,6 +513,38 @@ module TBService
 
     def should_treat_patient?
       patient_is_new? || patient_has_adherence?
+    end
+
+    def patient_has_no_tb_registration?
+      Encounter.joins(:type).where(
+        'encounter_type.name = ? AND encounter.patient_id = ?',
+        TB_REGISTRATION,
+        @patient.patient_id
+      ).order(encounter_datetime: :desc).first.nil?
+    end
+
+    def patient_has_no_tb_reception?
+      Encounter.joins(:type).where(
+        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
+        TB_RECEPTION,
+        @patient.patient_id,
+        @date
+      ).order(encounter_datetime: :desc).first.nil?
+    end
+
+    def patient_has_no_tb_registration_today?
+      Encounter.joins(:type).where(
+        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
+        TB_REGISTRATION,
+        @patient.patient_id,
+        @date
+      ).order(encounter_datetime: :desc).first.nil?
+    end
+
+    #register patient to current facility,
+    #if no longer a transfer out
+    def patient_should_go_for_tb_registration?
+      patient_has_no_tb_registration? || (patient_is_not_a_transfer_out? && patient_has_no_tb_registration_today?)
     end
 
   end
