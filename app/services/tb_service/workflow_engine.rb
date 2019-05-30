@@ -102,7 +102,7 @@ module TBService
       TB_RECEPTION => %i[patient_has_no_tb_reception?
                                     patient_should_proceed_for_treatment?
                                     should_treat_patient?],
-      TB_REGISTRATION => %i[patient_has_no_tb_registration?
+      TB_REGISTRATION => %i[patient_should_go_for_tb_registration?
                                     patient_should_proceed_for_treatment?
                                     should_treat_patient?
                                     patient_is_not_a_transfer_out?],
@@ -528,6 +528,21 @@ module TBService
         @patient.patient_id,
         @date
       ).order(encounter_datetime: :desc).first.nil?
+    end
+
+    def patient_has_no_tb_registration_today?
+      Encounter.joins(:type).where(
+        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
+        TB_REGISTRATION,
+        @patient.patient_id,
+        @date
+      ).order(encounter_datetime: :desc).first.nil?
+    end
+
+    #register patient to current facility,
+    #if no longer a transfer out
+    def patient_should_go_for_tb_registration?
+      patient_has_no_tb_registration? || (patient_is_not_a_transfer_out? && patient_has_no_tb_registration_today?)
     end
 
   end
