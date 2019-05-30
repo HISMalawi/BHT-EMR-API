@@ -46,6 +46,7 @@ module TBService
     DIAGNOSIS = 'DIAGNOSIS'
     LAB_RESULTS =  'LAB RESULTS'
     APPOINTMENT = 'APPOINTMENT'
+    TB_REGISTRATION = 'TB REGISTRATION'
 
     #FOLLOW - TB INITIAL, LAB ORDERS. LAB RESULTs, VITALS, TREATMENT, DISPENSING, APPOINTMENT, TB ADHERENCE
 
@@ -62,7 +63,8 @@ module TBService
       TB_INITIAL => LAB_ORDERS,
       LAB_ORDERS => DIAGNOSIS,
       DIAGNOSIS => LAB_RESULTS,
-      LAB_RESULTS => VITALS,
+      LAB_RESULTS => TB_REGISTRATION,
+      TB_REGISTRATION => VITALS,
       VITALS => TREATMENT,
       TREATMENT => DISPENSING,
       DISPENSING => APPOINTMENT,
@@ -95,6 +97,9 @@ module TBService
       LAB_RESULTS => %i[patient_has_no_lab_results?
                                     patient_should_proceed_after_lab_order?
                                     patient_recent_lab_order_has_no_results?],
+      TB_REGISTRATION => %i[patient_has_no_tb_registration?
+                                    patient_tb_positive?
+                                    patient_is_not_a_transfer_out?],
       VITALS => %i[patient_has_no_vitals?
                                     patient_should_get_treated?
                                     patient_should_proceed_for_treatment?
@@ -212,7 +217,7 @@ module TBService
       status_concept = concept('TB status')
       negative = concept('Positive')
       Observation.where(
-        'person_id = ? AND concept_id = ? AND value_coded = ?', #Add Date
+        'person_id = ? AND concept_id = ? AND value_coded = ?',
         @patient.patient_id, status_concept.concept_id, negative.concept_id
       ).order(obs_datetime: :desc).first.present?
     end
@@ -500,6 +505,14 @@ module TBService
 
     def should_treat_patient?
       patient_is_new? || patient_has_adherence?
+    end
+
+    def patient_has_no_tb_registration?
+      Encounter.joins(:type).where(
+        'encounter_type.name = ? AND encounter.patient_id = ?',
+        TB_REGISTRATION,
+        @patient.patient_id
+      ).order(encounter_datetime: :desc).first.nil?
     end
 
   end
