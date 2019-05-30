@@ -291,7 +291,7 @@ module TBService
       ).order(encounter_datetime: :desc).first
 
       begin
-        time_diff = (Time.current - encounter.encounter_datetime)
+        time_diff = (@date - encounter.encounter_datetime)
         hours = (time_diff / 1.hour)
         (hours >= 1/60/60)
       rescue
@@ -334,7 +334,7 @@ module TBService
       ).order(obs_datetime: :desc).first
 
       begin
-        time_diff = (Time.current - observation.obs_datetime)
+        time_diff = (@date - observation.obs_datetime)
         minutes = (time_diff / 60)
         (minutes >= 1/60)
       rescue
@@ -353,7 +353,7 @@ module TBService
 
       begin
         first_dispensation_date = first_dispensation.encounter_datetime
-        number_of_days = (Time.now.to_date - first_dispensation_date.to_date).to_i
+        number_of_days = (@date.to_date - first_dispensation_date.to_date).to_i
         (number_of_days == 56 || number_of_days == 84 || number_of_days == 140 || number_of_days == 168)
       rescue
         false
