@@ -287,6 +287,14 @@ describe TBService::WorkflowEngine do
                           obs_datetime: datetime
   end
 
+  def transfer_out_observation(patient, encounter, answer)
+
+		create :observation, concept: concept('Patient transferred(external facility)'),
+                          encounter: encounter,
+                          person: patient.person,
+													value_coded: concept(answer).concept_id
+  end
+
   def drugs
     [
       {
