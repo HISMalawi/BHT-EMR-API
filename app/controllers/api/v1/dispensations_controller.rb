@@ -19,8 +19,8 @@ class Api::V1::DispensationsController < ApplicationController
   end
 
   def destroy
-    dispensation = Observation.find(params[:id])
-    service.void_dispensation(dispensation)
+    order = DrugOrder.find(params[:id])
+    service.void_dispensations(order)
 
     render status: :no_content
   end

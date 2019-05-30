@@ -67,19 +67,20 @@ module DispensationService
       )
     end
 
-    def void_dispensation(observation)
+    def void_dispensations(drug_order)
       ActiveRecord::Base.transaction do
-        unless observation.concept_id == ConceptName.find_by_name('Amount dispensed').concept_id
-          raise InvalidParameterError, 'Amount dispensed observation required'
+        dispensations = drug_order.order\
+                                  .observations\
+                                  .where(concept_id: ConceptName.find_by_name('Amount dispensed').concept_id)
+
+        dispensations.each do |dispensation|
+          dispensation.void("Dispensation reversed by #{User.current.username}", skip_after_void: true)
         end
 
-        drug_order = DrugOrder.find(observation.order_id)
-        drug_order.quantity -= observation.value_numeric
+        drug_order.quantity = 0
         unless drug_order.save
-          raise 'Failed to subtract amount dispensed from drug order'
+          raise "Failed to void dispensations due to #{drug_order.errors.to_json}"
         end
-
-        observation.void("Dispensation reversed by #{User.current.username}")
       end
     end
 
