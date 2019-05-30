@@ -329,7 +329,7 @@ module TBService
       x_ray = concept 'Xray'
       clinical = concept 'Clinical'
       observation = Observation.where(
-        "person_id = ? AND concept_id = ? AND (value_coded = ? || value_coded = ?)", #add session date
+        "person_id = ? AND concept_id = ? AND (value_coded = ? || value_coded = ?)",
         @patient.patient_id, procedure_type.concept_id, x_ray.concept_id, clinical.concept_id
       ).order(obs_datetime: :desc).first
 
@@ -367,7 +367,9 @@ module TBService
     end
 
     def patient_should_go_for_lab_order?
-      (should_patient_be_tested_through_lab? && patient_has_no_lab_results?) || (patient_tb_positive? && should_patient_go_lab_examination_at_followup? && patient_recent_lab_order_has_results?)
+      (should_patient_be_tested_through_lab? && patient_has_no_lab_results?)\
+        || (patient_tb_positive? && should_patient_go_lab_examination_at_followup?\
+        && patient_recent_lab_order_has_results?)
     end
 
     def patient_recent_lab_order_has_results?
@@ -396,7 +398,7 @@ module TBService
       x_ray = concept 'Xray'
       clinical = concept 'Clinical'
       observation = Observation.where(
-        "person_id = ? AND concept_id = ? AND (value_coded = ? || value_coded = ?)", #add session date
+        "person_id = ? AND concept_id = ? AND (value_coded = ? || value_coded = ?)",
         @patient.patient_id, procedure_type.concept_id, x_ray.concept_id, clinical.concept_id
       ).order(obs_datetime: :desc).first
 
@@ -432,7 +434,7 @@ module TBService
       x_ray = concept 'Xray'
       clinical = concept 'Clinical'
       Observation.where(
-        "person_id = ? AND concept_id = ? AND (value_coded = ? || value_coded = ?) AND DATE(obs_datetime) = DATE(?)", #add session date
+        "person_id = ? AND concept_id = ? AND (value_coded = ? || value_coded = ?) AND DATE(obs_datetime) = DATE(?)",
         @patient.patient_id, procedure_type.concept_id, x_ray.concept_id, clinical.concept_id, @date
       ).order(obs_datetime: :desc).first.present?
     end
