@@ -99,49 +99,19 @@ EOF
       end
 
       def pregnant_and_breastfeeding_women(start_date, end_date)
-				breastfeeding_concept_ids = [ConceptName.find_by_name('Breastfeeding').concept_id,
-                  ConceptName.find_by_name('Is patient breast feeding?').concept_id,
-                  ConceptName.find_by_name('Breast feeding?').concept_id]
+        patient_ids = []
 
-				yes_concept_id = ConceptName.find_by_name('Yes').concept_id
-
-    		breastfeeding_women = ActiveRecord::Base.connection.select_all <<EOF
-			    SELECT * FROM temp_earliest_start_date t
-						INNER JOIN obs o ON o.person_id = t.patient_id AND o.voided = 0
-			    WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-			    AND (o.concept_id IN (#{breastfeeding_concept_ids.join(', ')}) AND o.value_coded = #{yes_concept_id})
-			    AND (gender = 'F' OR gender = 'Female') GROUP BY patient_id;
+        patients = ActiveRecord::Base.connection.select_all <<EOF
+        SELECT 
+          e.*, patient_reason_for_starting_art_text(e.patient_id) reason 
+        FROM temp_earliest_start_date e
+        WHERE date_enrolled BETWEEN '#{start_date.to_date}' AND '#{end_date.to_date}'
+        GROUP BY e.patient_id HAVING reason LIKE '%pregnant%'
+        OR reason LIKE '%breast%';
 EOF
 
-			  #pregnant women
-			  pregnant_concept_ids =[ConceptName.find_by_name('IS PATIENT PREGNANT?').concept_id,
-				        ConceptName.find_by_name('PATIENT PREGNANT').concept_id,
-				        ConceptName.find_by_name('PREGNANT AT INITIATION?').concept_id]
-
-			   pregnant_women = ActiveRecord::Base.connection.select_all <<EOF
-				    SELECT t.* , o.value_coded FROM temp_earliest_start_date t
-				      INNER JOIN obs o ON o.person_id = t.patient_id AND o.voided = 0
-				    WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-				    AND (gender = 'F' OR gender = 'Female')
-				    AND o.concept_id IN (#{pregnant_concept_ids.join(', ')})
-				    AND (gender = 'F' OR gender = 'Female')
-				    AND DATE(o.obs_datetime) = DATE(t.earliest_start_date)
-				    GROUP BY patient_id
-				    HAVING value_coded = #{yes_concept_id};
-EOF
-				patient_id_plus_date_enrolled = []
-
-				(pregnant_women || []).each do |patient|
-				  patient_id_plus_date_enrolled << [patient['patient_id'].to_i, patient['date_enrolled'].to_date]
-				end
-
-				patient_ids = []
-				(patient_id_plus_date_enrolled || []).each do |patient_id, patient_date_enrolled|
-				  patient_ids << patient_id.to_i
-				end
-
-				(breastfeeding_women || []).each do |aRow|
-				  patient_ids << aRow['person_id'].to_i
+				(patients || []).each do |aRow|
+				  patient_ids << aRow['patient_id'].to_i
 				end
 
 				return patient_ids
@@ -197,7 +167,7 @@ EOF
         
         return results      
       end
-
+    
     end
   end
 

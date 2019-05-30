@@ -890,18 +890,25 @@ EOF
 
         total_pregnant_females = [0] if total_pregnant_females.blank?
 
-        hiv_clinic_consultation_encounter_type_id = EncounterType.find_by_name('HIV CLINIC CONSULTATION').encounter_type_id
-        breastfeeding_concept_id = concept('Breast feeding?').concept_id
+        encounter_types = []
+        encounter_types << EncounterType.find_by_name('HIV CLINIC CONSULTATION').encounter_type_id
+        encounter_types << EncounterType.find_by_name('HIV STAGING').encounter_type_id
+
+        breastfeeding_concepts = []
+        breastfeeding_concepts <<  concept('Breast feeding?').concept_id
+        breastfeeding_concepts <<  concept('Breast feeding').concept_id
+        breastfeeding_concepts <<  concept('Breastfeeding').concept_id
 
         results = ActiveRecord::Base.connection.select_all(
           "SELECT person_id  FROM obs obs
             INNER JOIN encounter enc ON enc.encounter_id = obs.encounter_id AND enc.voided = 0
           WHERE obs.person_id IN (#{patient_ids.join(',')})
           AND obs.person_id NOT IN (#{total_pregnant_females.join(',')})
-          AND obs.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}' AND obs.concept_id = #{breastfeeding_concept_id} AND obs.value_coded = 1065
-          AND obs.voided = 0 AND enc.encounter_type = #{hiv_clinic_consultation_encounter_type_id}
+          AND obs.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}' 
+          AND obs.concept_id IN(#{breastfeeding_concepts.join(',')}) AND obs.value_coded = 1065
+          AND obs.voided = 0 AND enc.encounter_type IN(#{encounter_types.join(',')})
           AND DATE(obs.obs_datetime) = (SELECT MAX(DATE(o.obs_datetime)) FROM obs o
-                        WHERE o.concept_id = #{breastfeeding_concept_id} AND voided = 0
+                        WHERE o.concept_id IN(#{breastfeeding_concepts.join(',')}) AND voided = 0
                         AND o.person_id = obs.person_id AND o.obs_datetime <='#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
           GROUP BY obs.person_id"
         )
@@ -919,17 +926,23 @@ EOF
 
         result = []
 
-        hiv_clinic_consultation_encounter_type_id = EncounterType.find_by_name('HIV CLINIC CONSULTATION').encounter_type_id
-        pregnant_concept_id = concept('Is patient pregnant?').concept_id
+        encounter_types = []
+        encounter_types << EncounterType.find_by_name('HIV CLINIC CONSULTATION').encounter_type_id
+        encounter_types << EncounterType.find_by_name('HIV STAGING').encounter_type_id
+
+        pregnant_concepts = []
+        pregnant_concepts << concept('Is patient pregnant?').concept_id
+        pregnant_concepts << concept('patient pregnant').concept_id
 
         results = ActiveRecord::Base.connection.select_all(
           "SELECT person_id FROM obs obs
             INNER JOIN encounter enc ON enc.encounter_id = obs.encounter_id AND enc.voided = 0
           WHERE obs.person_id IN (#{patient_ids.join(',')})
-          AND obs.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}' AND obs.concept_id = #{pregnant_concept_id} AND obs.value_coded = '1065'
-          AND obs.voided = 0 AND enc.encounter_type = #{hiv_clinic_consultation_encounter_type_id}
+          AND obs.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}' 
+          AND obs.concept_id IN(#{pregnant_concepts.join(',')}) AND obs.value_coded = '1065'
+          AND obs.voided = 0 AND enc.encounter_type IN(#{encounter_types.join(',')})
           AND DATE(obs.obs_datetime) = (SELECT MAX(DATE(o.obs_datetime)) FROM obs o
-                        WHERE o.concept_id = #{pregnant_concept_id} AND voided = 0
+                        WHERE o.concept_id IN(#{pregnant_concepts.join(',')}) AND voided = 0
                         AND o.person_id = obs.person_id AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
           GROUP BY obs.person_id"
         )
@@ -1209,7 +1222,7 @@ EOF
         end
 
         (data || []).each do |patient|
-          registered << patient
+          registered << patient['patient_id']
         end
 
         registered
