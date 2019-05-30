@@ -67,6 +67,22 @@ module DispensationService
       )
     end
 
+    def void_dispensation(observation)
+      ActiveRecord::Base.transaction do
+        unless observation.concept_id == ConceptName.find_by_name('Amount dispensed').concept_id
+          raise InvalidParameterError, 'Amount dispensed observation required'
+        end
+
+        drug_order = DrugOrder.find(observation.order_id)
+        drug_order.quantity -= observation.value_numeric
+        unless drug_order.save
+          raise 'Failed to subtract amount dispensed from drug order'
+        end
+
+        observation.void("Dispensation reversed by #{User.current.username}")
+      end
+    end
+
     # Updates the quantity dispensed of the drug_order and adjusts
     # the auto_expiry_date if necessary
     def update_quantity_dispensed(drug_order, quantity)

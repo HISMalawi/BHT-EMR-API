@@ -17,4 +17,17 @@ class Api::V1::DispensationsController < ApplicationController
     obs_list = DispensationService.dispensations patient_id, params[:date]
     render json: paginate(obs_list)
   end
+
+  def destroy
+    dispensation = Observation.find(params[:id])
+    service.void_dispensation(dispensation)
+
+    render status: :no_content
+  end
+
+  private
+
+  def service
+    DispensationService
+  end
 end
