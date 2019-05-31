@@ -61,6 +61,12 @@ module ARTService
         end_date: end_date.to_date).ipt_coverage
     end
 
+    def cohort_report_drill_down(id)
+      REPORTS['COHORT'].new(type: 'drill_down',
+        name: 'drill_down', start_date: Date.today,
+        end_date: Date.today).cohort_report_drill_down(id)
+    end
+
     private
 
     def call_report_manager(method, type:, **kwargs)
