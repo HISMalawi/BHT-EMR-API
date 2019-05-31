@@ -201,12 +201,13 @@ module ANCService
 
       last_test_visit = patient.encounters.joins([:observations])
         .where(["encounter.encounter_type = ? AND (obs.concept_id = ?)
-          AND encounter.encounter_datetime > ? AND e.voided = 0",
-          lab_encounter.id,
-          pregnancy_test.concept_id,checked_date.to_date])
+          AND encounter.encounter_datetime > ? AND encounter.voided = 0
+          AND encounter.program_id = ?", lab_encounter.id,
+          pregnancy_test.concept_id,checked_date.to_date,
+        ANC_PROGRAM.id])
         .order([:encounter_datetime])
         .select("value_coded")
-        .last.value_coded rescue nil
+        .last.value_coded #rescue nil
 
       if last_test_visit == yes_concept.concept_id
         return true
