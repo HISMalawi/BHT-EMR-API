@@ -328,9 +328,10 @@ module TBService
       procedure_type = concept 'Procedure type'
       x_ray = concept 'Xray'
       clinical = concept 'Clinical'
+      ultrasound = concept 'Ultrasound'
       observation = Observation.where(
-        "person_id = ? AND concept_id = ? AND (value_coded = ? || value_coded = ?)",
-        @patient.patient_id, procedure_type.concept_id, x_ray.concept_id, clinical.concept_id
+        "person_id = ? AND concept_id = ? AND (value_coded = ? || value_coded = ? || value_coded = ?)",
+        @patient.patient_id, procedure_type.concept_id, x_ray.concept_id, clinical.concept_id, ultrasound.concept_id
       ).order(obs_datetime: :desc).first
 
       begin
@@ -432,9 +433,10 @@ module TBService
       procedure_type = concept 'Procedure type'
       x_ray = concept 'Xray'
       clinical = concept 'Clinical'
+      ultrasound = concept 'Ultrasound'
       Observation.where(
-        "person_id = ? AND concept_id = ? AND (value_coded = ? || value_coded = ?) AND DATE(obs_datetime) = DATE(?)",
-        @patient.patient_id, procedure_type.concept_id, x_ray.concept_id, clinical.concept_id, @date
+        "person_id = ? AND concept_id = ? AND (value_coded = ? || value_coded = ? || value_coded = ?) AND DATE(obs_datetime) = DATE(?)",
+        @patient.patient_id, procedure_type.concept_id, x_ray.concept_id, clinical.concept_id, ultrasound.concept_id, @date
       ).order(obs_datetime: :desc).first.present?
     end
 
