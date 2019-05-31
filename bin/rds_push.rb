@@ -145,7 +145,7 @@ def recent_records(model, database_offset, database)
 
       records.each { |record| enum.yield(record) }
 
-      offset = offset + RECORDS_BATCH_SIZE + 1
+      offset += RECORDS_BATCH_SIZE
     end
   end
 end
