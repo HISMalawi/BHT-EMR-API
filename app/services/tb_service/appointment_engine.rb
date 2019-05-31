@@ -38,6 +38,10 @@ class AppointmentEngine
   end
 
   def next_appointment_date
+    if optimise_appointment?(@patient, @retro_date)
+      exec_drug_order_adjustments(@patient, @retro_date)
+    end
+
     _drug_id, date = earliest_appointment_date(@patient, @retro_date)
     return nil unless date
 
@@ -90,6 +94,17 @@ class AppointmentEngine
     end
 
     amount_dispensed.min_by { |_drug_id, auto_expire_date| auto_expire_date }
+  end
+
+  def optimise_appointment?(patient, date)
+    Observation.joins(:encounter).where(
+      encounter: { type: encounter_type('Treatment') },
+      concept: concept('Appointment reason'),
+      person: patient.person,
+      value_text: 'Optimize - including hanging pills'
+    ).where(
+      'obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date)
+    ).exists?
   end
 
   # Retrieves all prescriptions of ARVs to patient on date
@@ -173,6 +188,61 @@ class AppointmentEngine
 
     recommended_date
   end
+
+  def exec_drug_order_adjustments(patient, date)
+    encounter = EncounterService.recent_encounter(
+      encounter_type_name: 'Treatment', patient_id: patient.patient_id,
+      date: date, program_id: @program.program_id
+    )
+    return nil unless encounter
+
+    adjust_order_end_dates(patient, encounter.orders, amounts_brought_to_clinic(patient, date))
+  end
+
+  # WARNING: Dragons be here
+
+  # source: NART/lib/medication_service.rb
+  def adjust_order_end_dates(patient, orders, optimized_hanging_pills)
+    orders.each do |order|
+      drug_order = order.drug_order
+      drug = drug_order&.drug
+      next unless drug_order && drug
+
+      next unless drug&.tb_drug? && optimized_hanging_pills[drug.id]
+
+      hanging_pills = optimized_hanging_pills[drug.id]&.to_f
+
+      additional_days = (hanging_pills / order.drug_order&.equivalent_daily_dose || 0).to_i
+      next unless additional_days >= 1
+
+      order.void_reason = order.auto_expire_date
+      # We assume the patient starts taking drugs today thus we subtract one day
+      order.auto_expire_date = order.start_date + (additional_days + drug_order.quantity_duration - 1).days
+
+      order.save
+      drug_order.save
+    end
+  end
+
+    # Source: NART/lib/medication_service.rb
+    def amounts_brought_to_clinic(patient, session_date)
+      @amounts_brought_to_clinic = Hash.new(0)
+
+      amounts_brought_to_clinic = ActiveRecord::Base.connection.select_all <<-SQL
+        SELECT obs.*, drug_order.* FROM obs INNER JOIN drug_order ON obs.order_id = drug_order.order_id
+        INNER JOIN encounter e ON e.encounter_id = obs.encounter_id AND e.voided = 0
+        AND e.encounter_type = #{EncounterType.find_by_name('TB ADHERENCE').id}
+        WHERE obs.concept_id = #{ConceptName.find_by_name('AMOUNT OF DRUG BROUGHT TO CLINIC').concept_id}
+        AND obs.obs_datetime >= '#{session_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
+        AND obs.obs_datetime <= '#{session_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+        AND person_id = #{patient.id} AND obs.voided = 0 AND value_numeric IS NOT NULL;
+      SQL
+
+      (amounts_brought_to_clinic || []).each do |amount|
+        @amounts_brought_to_clinic[amount['drug_inventory_id'].to_i] = amount['value_numeric'].to_f rescue 0
+      end
+      @amounts_brought_to_clinic
+    end
 
   def calculate_complete_pack(drug, units)
     return units if drug.barcodes.blank? || units.to_f == 0.0
