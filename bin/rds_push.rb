@@ -125,18 +125,20 @@ def recent_records(model, database_offset, database)
       LOGGER.info("Retrieving #{model}s from database '#{database}' having [time >= #{database_offset}, index >= #{offset}]")
       model.establish_connection(database.to_sym)
 
-      records = if immutable_model?(model)
+      records = if model == User
+                  model.unscoped.where('date_created >= :time OR date_changed >= :time OR date_retired >= :time', time: database_offset.to_s)
+                elsif immutable_model?(model)
                   # HACK: person address seems to be missing `date_changed` field so we
                   # fall back to the existing `date_created`
-                  model.unscoped.where('date_created >= ?', database_offset.to_s)
+                  model.unscoped.where('date_created >= :time OR date_voided >= :time', time: database_offset.to_s)
                 elsif model == DrugOrder
                   # DrugOrder lacks date_changed and date_created fields. We instead use
                   # the parent Order's date_created.
                   model.unscoped\
                        .joins('INNER JOIN orders ON orders.order_id = drug_order.order_id')\
-                       .where('date_created >= ?', database_offset.to_s)
+                       .where('date_created >= :time OR date_voided >= :time', time: database_offset.to_s)
                 else
-                  model.unscoped.where('date_changed >= :time OR date_created >= :time', time: database_offset)
+                  model.unscoped.where('date_changed >= :time OR date_created >= :time OR date_voided >= :time', time: database_offset)
                 end
 
       records = records.order(model.primary_key.to_s).offset(offset).limit(RECORDS_BATCH_SIZE)
@@ -164,11 +166,20 @@ end
 def record_update_time(record)
   # HACK: Models like PersonAddress are missing the preferred
   #   `date_changed` field thus we are falling back to date_created
-  return record.date_created if immutable_model?(record, true)
+  if immutable_model?(record, true)
+    return record_date_voided(record) || record.date_created
+  end
 
-  return Order.unscoped.find(record.order_id).date_created if record.class == DrugOrder
+  if record.class == DrugOrder
+    order = Order.unscoped.find(record.order_id)
+    return order.date_voided || order.date_created
+  end
 
-  record.date_changed || record.date_created
+  record_date_voided(record) || record.date_changed || record.date_created
+end
+
+def record_date_voided(record)
+  record.respond_to?(:date_retired) ? record.date_retired : record.date_voided
 end
 
 def find_record_sync_status(record, database)
