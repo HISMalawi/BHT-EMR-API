@@ -53,4 +53,12 @@ rds:
     # NOTE: The program_names specified below will be overriden by
     # encounter program if one exists.
     development:
-      program_name: 'HIV PROGRAM
+      program_name: 'HIV PROGRAM'
+
+    # Uncomment out the following to enable syncing from HTS and ANC
+    # databases.
+    #
+    # hts:
+    #   program_name: 'HTC PROGRAM'
+    # anc:
+    #   program_name: 'ANC PROGRAM'
