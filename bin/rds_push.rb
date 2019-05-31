@@ -132,7 +132,9 @@ def recent_records(model, database_offset, database)
                 elsif model == DrugOrder
                   # DrugOrder lacks date_changed and date_created fields. We instead use
                   # the parent Order's date_created.
-                  model.unscoped.joins(:order).where('date_created >= ?', database_offset.to_s)
+                  model.unscoped\
+                       .joins('INNER JOIN orders ON orders.order_id = drug_order.order_id')\
+                       .where('date_created >= ?', database_offset.to_s)
                 else
                   model.unscoped.where('date_changed >= :time OR date_created >= :time', time: database_offset)
                 end
@@ -164,7 +166,7 @@ def record_update_time(record)
   #   `date_changed` field thus we are falling back to date_created
   return record.date_created if immutable_model?(record, true)
 
-  return record.order.date_created if record.class == DrugOrder
+  return Order.unscoped.find(record.order_id).date_created if record.class == DrugOrder
 
   record.date_changed || record.date_created
 end
