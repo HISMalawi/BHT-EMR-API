@@ -118,10 +118,10 @@ describe TBService::WorkflowEngine do
     end
 
     #proceed to Diagnosis 10 minutes after TB screening
-    it 'returns DIAGNOSIS after procedure type Clinical or XRay' do
+    it 'returns DIAGNOSIS after procedure type Clinical or XRay or Ultrasound' do
       enroll_patient patient
       encounter = tb_initial_encounter(patient, Time.now - 20.minutes)
-      test_procedure_type(patient, encounter, "Clinical", Time.now - 20.minutes)
+      test_procedure_type(patient, encounter, "Ultrasound", Time.now - 20.minutes)
       encounter_type = engine.next_encounter
       expect(encounter_type.name.upcase).to eq('DIAGNOSIS')
     end
