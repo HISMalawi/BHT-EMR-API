@@ -5,6 +5,7 @@ class CreateUuidRemaps < ActiveRecord::Migration[5.2]
       t.string :new_uuid
       t.string :database
       t.string :model
+      t.integer :record_id
 
       t.timestamps
       t.index :old_uuid

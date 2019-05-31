@@ -40,7 +40,7 @@ TIME_EPOCH = '0000-00-00 00:00:00'
 IMMUTABLE_MODELS = [PersonAddress, PatientIdentifier, Observation, Order].freeze
 
 # Maximum number of records to be fetched from database per request
-RECORDS_BATCH_SIZE = 1000
+RECORDS_BATCH_SIZE = 50_000
 
 def main(database, program_name)
   LOGGER.info("Scraping database [#{database}, #{program_name}]")
@@ -283,10 +283,13 @@ def remap_record_uuid(record)
   new_uuid = ActiveRecord::Base.connection.select_one('SELECT UUID() as uuid')['uuid']
   old_uuid = record.uuid
 
+  record.uuid = new_uuid
   model = record.class
+  database = model.connection.current_database
+
   ActiveRecord::Base.connection.execute(
     <<~SQL
-      UPDATE #{model.table_name}
+      UPDATE `#{database}`.`#{model.table_name}`
       SET uuid = '#{new_uuid}'
       WHERE #{model.primary_key} = '#{record.id}'
     SQL
@@ -295,11 +298,14 @@ def remap_record_uuid(record)
   UuidRemap.create(model: record.class.to_s,
                    database: record.class.connection.current_database,
                    old_uuid: old_uuid,
-                   new_uuid: new_uuid)
+                   new_uuid: new_uuid,
+                   record_id: record.id)
 end
 
 def record_uuid_was_remapped?(record)
-  UuidRemap.where(model: record.class.to_s, old_uuid: record.uuid).exists?
+  UuidRemap.where(model: record.class.to_s,
+                  database: record.class.connection.current_database,
+                  new_uuid: record.uuid).exists?
 end
 
 # Push a new record to couch db
