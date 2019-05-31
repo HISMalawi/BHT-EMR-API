@@ -82,40 +82,40 @@ module TBService
                                     patient_has_no_adherence?
                                     patient_has_valid_test_results?],
       TREATMENT => %i[patient_should_get_treated?
-                                    patient_examined?
+                                    patient_diagnosed?
                                     patient_has_no_treatment?
                                     patient_has_valid_test_results?
-                                    should_treat_patient?],
+                                    patient_examined?],
       DISPENSING => %i[patient_got_treatment?
                                     patient_should_get_treated?
-                                    patient_examined?
+                                    patient_diagnosed?
                                     patient_has_no_dispensation?
                                     patient_has_valid_test_results?
-                                    should_treat_patient?],
+                                    patient_examined?],
       DIAGNOSIS => %i[should_patient_tested_through_diagnosis?
                                     patient_has_no_diagnosis?
-                                    patient_examined?
-                                    should_treat_patient?],
+                                    patient_diagnosed?
+                                    patient_examined?],
       LAB_RESULTS => %i[patient_has_no_lab_results?
                                     patient_should_proceed_after_lab_order?
                                     patient_recent_lab_order_has_no_results?],
       TB_RECEPTION => %i[patient_has_no_tb_reception?
-                                    patient_examined?
-                                    should_treat_patient?],
+                                    patient_diagnosed?
+                                    patient_examined?],
       TB_REGISTRATION => %i[patient_should_go_for_tb_registration?
+                                    patient_diagnosed?
                                     patient_examined?
-                                    should_treat_patient?
                                     patient_is_not_a_transfer_out?],
       VITALS => %i[patient_has_no_vitals?
                                     patient_should_get_treated?
-                                    patient_examined?
+                                    patient_diagnosed?
                                     patient_has_valid_test_results?],
       APPOINTMENT => %i[dispensing_complete?
                                     patient_is_not_a_transfer_out?
-                                    patient_examined?
+                                    patient_diagnosed?
                                     patient_has_no_appointment?
                                     patient_has_valid_test_results?
-                                    should_treat_patient?]
+                                    patient_examined?]
     }.freeze
 
     # Concepts
@@ -362,7 +362,7 @@ module TBService
 
     end
 
-    def patient_examined?
+    def patient_diagnosed?
       patient_should_proceed_after_lab_order? || patient_should_proceed_after_diagnosis?
     end
 
@@ -494,7 +494,7 @@ module TBService
       ).order(encounter_datetime: :desc).first.present?
     end
 
-    def patient_is_new?
+    def patient_is_new? #NEED to fiix this, patient might not return same day for results
       Encounter.joins(:type).where(
         'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
         TB_INITIAL,
@@ -512,7 +512,7 @@ module TBService
       ).order(encounter_datetime: :desc).first.present?
     end
 
-    def should_treat_patient?
+    def patient_examined? #NEED to fix this
       patient_is_new? || patient_has_adherence?
     end
 
