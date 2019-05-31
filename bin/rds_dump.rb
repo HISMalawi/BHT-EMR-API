@@ -16,6 +16,8 @@ end
 def dump(database, program_name, file)
   file.write("SET foreign_key_checks = 0;\n")
 
+  program = Program.find_by_name(program_name)
+
   MODELS.each do |model|
     records = recent_records(model, TIME_EPOCH, database)
 
@@ -25,7 +27,7 @@ def dump(database, program_name, file)
     record_chunks = chunk_records(records, RECORDS_BATCH_SIZE) do |record|
       last_record_container.record = record
 
-      record = serialize_record(record, program_name)
+      record = serialize_record(record, program)
       record.delete('record_type')
       record
     end
