@@ -11,7 +11,7 @@ LOGGER = Class.new do
 
   def initialize
     LOGGERS.each do |logger|
-      logger.level = Logger::INFO
+      logger.level = Logger::DEBUG
     end
   end
 
@@ -46,6 +46,8 @@ def main(database, program_name)
   LOGGER.info("Scraping database [#{database}, #{program_name}]")
   initiate_couch_sync
 
+  program = Program.find_by_name(program_name)
+
   MODELS.each do |model|
     LOGGER.debug("Scanning model: #{model}")
     last_update_time = database_offset(model, database)
@@ -62,7 +64,7 @@ def main(database, program_name)
         next
       end
 
-      record_doc_id = push_record(record, sync_status&.record_doc_id, program_name)
+      record_doc_id = push_record(record, sync_status&.record_doc_id, program)
 
       save_record_sync_status(sync_status, record, record_doc_id, database)
     rescue RestClient::Exception => e
@@ -205,10 +207,10 @@ end
 #                   an update of the couch document with record.
 #
 # @returns  - A couch document id for the pushed record
-def push_record(record, doc_id = nil, program_name = nil)
+def push_record(record, doc_id = nil, program = nil)
   LOGGER.info("Pushing record to couch db: #{record.class}(##{record.id}, doc_id: #{doc_id || 'N/A'}) ")
 
-  record = serialize_record(record, program_name).to_json
+  record = serialize_record(record, program).to_json
 
   if doc_id
     push_existing_record(record, doc_id)
@@ -218,9 +220,7 @@ def push_record(record, doc_id = nil, program_name = nil)
 end
 
 # Convert record to JSON
-def serialize_record(record, program_name = nil)
-  program = program_name.blank? ? nil : Program.find_by_name(program_name)
-
+def serialize_record(record, program)
   serialized_record = record.as_json(ignore_includes: true)
   transform_record_keys(record, serialized_record, program)
 
@@ -231,7 +231,7 @@ def serialize_record(record, program_name = nil)
     # that use the old openmrs standard that has no program
     # specific encounters. Thus we manually have to set the program
     # id using the value specified in the config file.
-    raise "Invalid or missing program name '#{program_name}' in rds config: application.yml" unless program
+    raise "Invalid or missing program name '#{program&.name}' in rds config: application.yml" unless program
 
     serialized_record['program_id'] = program.id
 
@@ -432,7 +432,7 @@ if $PROGRAM_NAME == __FILE__ # HACK: Enables importing of this as a module
     config # Load configuration early to ensure its sanity before doing anything
 
     config['databases'].each do |database, database_config|
-      main(database, database_config['program_name'])
+      main(database, database_config['program&.name'])
     end
   end
 end
