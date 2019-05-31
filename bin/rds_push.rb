@@ -141,9 +141,9 @@ def recent_records(model, database_offset, database)
 
       records = records.order(model.primary_key.to_s).offset(offset).limit(RECORDS_BATCH_SIZE)
 
-      break if records.empty?
-
       records.each { |record| enum.yield(record) }
+
+      break if records.empty?
 
       offset += RECORDS_BATCH_SIZE
     end
