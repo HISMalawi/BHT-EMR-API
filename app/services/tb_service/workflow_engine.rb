@@ -94,8 +94,7 @@ module TBService
                                     patient_examined?],
       DIAGNOSIS => %i[should_patient_tested_through_diagnosis?
                                     patient_has_no_diagnosis?
-                                    patient_diagnosed?
-                                    patient_examined?],
+                                    patient_diagnosed?],
       LAB_RESULTS => %i[patient_has_no_lab_results?
                                     patient_should_proceed_after_lab_order?
                                     patient_recent_lab_order_has_no_results?],
@@ -397,9 +396,10 @@ module TBService
       procedure_type = concept 'Procedure type'
       x_ray = concept 'Xray'
       clinical = concept 'Clinical'
+      ultrasound = concept 'Ultrasound'
       observation = Observation.where(
-        "person_id = ? AND concept_id = ? AND (value_coded = ? || value_coded = ?)",
-        @patient.patient_id, procedure_type.concept_id, x_ray.concept_id, clinical.concept_id
+        "person_id = ? AND concept_id = ? AND (value_coded = ? || value_coded = ? || value_coded = ?)",
+        @patient.patient_id, procedure_type.concept_id, x_ray.concept_id, clinical.concept_id, ultrasound.concept_id
       ).order(obs_datetime: :desc).first
 
       diagnosis = Encounter.joins(:type).where(
@@ -494,13 +494,12 @@ module TBService
       ).order(encounter_datetime: :desc).first.present?
     end
 
-    def patient_is_new? #NEED to fiix this, patient might not return same day for results
-      Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
-        TB_INITIAL,
-        @patient.patient_id,
-        @date
-      ).order(encounter_datetime: :desc).first.present?
+    def patient_has_tb_results_today?
+      status_concept = concept('TB status')
+      Observation.where(
+        'person_id = ? AND concept_id = ? AND DATE(obs_datetime) = DATE(?)',
+        @patient.patient_id, status_concept.concept_id, @date
+      ).order(obs_datetime: :desc).first.present?
     end
 
     def patient_has_adherence?
@@ -512,8 +511,8 @@ module TBService
       ).order(encounter_datetime: :desc).first.present?
     end
 
-    def patient_examined? #NEED to fix this
-      patient_is_new? || patient_has_adherence?
+    def patient_examined?
+      patient_has_tb_results_today? || patient_has_adherence?
     end
 
     def patient_has_no_tb_registration?
