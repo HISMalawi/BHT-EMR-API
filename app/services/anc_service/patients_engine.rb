@@ -135,7 +135,7 @@ module ANCService
       if !hiv_positive.blank?
         hiv_status = 'Positive'
         query = "SELECT pg.date_enrolled, s2.start_date, s2.state
-            FROM patient_program
+            FROM patient_program pg
             INNER JOIN patient_state s2 ON s2.patient_state_id = s2.patient_state_id
 						AND pg.patient_program_id = s2.patient_program_id
 						AND s2.patient_state_id = (
@@ -169,7 +169,7 @@ module ANCService
       preg_test = false
 
       lmp_date = date_of_lnmp(patient)
-      return {subsequent_visit: false, pregnancy_test: false} if lmp_date.nil?
+      return {subsequent_visit: false, pregnancy_test: false, hiv_status: ""} if lmp_date.nil?
 
       unless lmp_date.nil?
         visit_type = EncounterType.find_by name: "ANC VISIT TYPE"
