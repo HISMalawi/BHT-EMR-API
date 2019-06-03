@@ -133,6 +133,8 @@ describe TBService::WorkflowEngine do
       test_procedure_type(patient, tb_initial_encounter(patient, Time.now - 2.day), "Laboratory examinations", Time.now - 2.day)
       lab_orders_encounter(patient, Time.now - 2.day)
       tb_status(patient, lab_result_encounter(patient, Time.now), "Positive")
+      tb_reception(patient, Time.now)
+      tb_registration(patient, Time.now)
       record_vitals(patient, Time.now)
       treatment_encounter(patient, Time.now)
       dispensing_encounter(patient, Time.now)
