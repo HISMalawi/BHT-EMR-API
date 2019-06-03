@@ -119,6 +119,10 @@ class ReportService
     engine(@program).cohort_report_drill_down(id)
   end
 
+  def regimen_switch(start_date, end_date, switch_date)
+    engine(@program).regimen_switch(start_date, end_date, switch_date)
+  end
+
   private
 
   def engine(program)

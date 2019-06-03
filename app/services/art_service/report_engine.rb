@@ -12,7 +12,8 @@ module ARTService
       'COHORT_SURVIVAL_ANALYSIS' => ARTService::Reports::CohortSurvivalAnalysis,
       'VISITS' => ARTService::Reports::VisitsReport,
       'APPOINTMENTS' => ARTService::Reports::AppointmentsReport,
-      'IPT' => ARTService::Reports::IPTReport
+      'IPT' => ARTService::Reports::IPTReport,
+      'REGIMEN_SWITCH' => ARTService::Reports::RegimenSwitch
     }.freeze
 
     def generate_report(type:, **kwargs)
@@ -65,6 +66,11 @@ module ARTService
       REPORTS['COHORT'].new(type: 'drill_down',
         name: 'drill_down', start_date: Date.today,
         end_date: Date.today).cohort_report_drill_down(id)
+    end
+    
+    def regimen_switch(start_date, end_date, switch_date)
+      REPORTS['REGIMEN_SWITCH'].new(start_date: start_date.to_date,
+        end_date: end_date.to_date, switch_date: switch_date.to_date).regimen_switch
     end
 
     private
