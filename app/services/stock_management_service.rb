@@ -153,10 +153,14 @@ class StockManagementService
                         encounter_date: date)
       )
 
+      initial_current_quantity = batch_item.current_quantity
+
       batch_item.current_quantity += quantity.to_f
 
       if batch_item.current_quantity.negative?
-        raise InvalidParameterError, "Quantity (#{quantity}) exceeds current quantity on item ##{batch_item.id}"
+        raise InvalidParameterError, <<~ERROR
+          Quantity (#{quantity.abs}) exceeds current quantity (#{initial_current_quantity}) on item ##{batch_item.id}
+        ERROR
       end
 
       if update_item
