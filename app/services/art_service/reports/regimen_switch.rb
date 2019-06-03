@@ -33,7 +33,7 @@ module ARTService
         INNER JOIN drug ON drug.drug_id = d.drug_inventory_id
         WHERE d.drug_inventory_id IN(#{drug_ids.join(',')})
         AND e.encounter_type = #{encounter_type_id}
-        AND d.quantity > 0 AND o.start_date = (
+        AND d.quantity > 0 AND o.voided = 0 AND o.start_date = (
           SELECT MAX(start_date) FROM orders 
           WHERE order_id = o.order_id 
           AND (start_date BETWEEN '#{@start_date.to_date.strftime('%Y-%m-%d 00:00:00')}' 
