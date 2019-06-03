@@ -34,6 +34,7 @@ MODELS = [Person, PersonAttribute, PersonAddress, PersonName, User, Patient,
           Observation, Order, DrugOrder].freeze
 
 TIME_EPOCH = '0000-00-00 00:00:00'
+DEST_TIME_EPOCH = '1000-01-01 00:00:00'
 
 # These models are missing a `date_changed` field...
 # They probably are not meant to be changed after creation.
@@ -257,6 +258,10 @@ def serialize_record(record, program)
     # constraints on all UUID fields.
     remap = remap_record_uuid(record)
     serialized_record['uuid'] = remap.new_uuid
+  end
+
+  if record.respond_to?('created_at') && record.created_at&.include?('0000-00-00')
+    serialized_record['created_at'] = DEST_TIME_EPOCH
   end
 
   serialized_record
