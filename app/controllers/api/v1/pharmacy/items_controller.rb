@@ -37,9 +37,20 @@ class Api::V1::Pharmacy::ItemsController < ApplicationController
   # Reallocate item to some other facility
   def reallocate
     code, quantity, location_id = params.require(%i[reallocation_code quantity location_id])
-    reallocation = service.reallocate_items(code, params[:item_id], quantity, location_id)
+    date = params[:date]&.to_date || Date.today
+
+    reallocation = service.reallocate_items(code, params[:item_id], quantity, location_id, date)
 
     render json: reallocation, status: :created
+  end
+
+  def dispose
+    code, quantity = params.require(%i[reallocation_code quantity])
+    date = params['date']&.to_date || Date.today
+
+    disposal = service.dispose_item(code, params[:item_id], quantity, date)
+
+    render json: disposal, status: :created
   end
 
   private
