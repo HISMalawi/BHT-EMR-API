@@ -16,14 +16,15 @@ RSpec.describe UserService do
 
         roles = ["Clinician", "Doctor", "Nurse"]
 
-        user_program = UserService.create_user(
+        user = UserService.create_user(
                               username: 'jdoe', 
                               password: 'test123',
                               given_name: 'John',
                               family_name: 'Doe',
                               roles: roles,
                               programs: program_ids)
-        p user_program
+        
+        expect(user)
         
     end
   end

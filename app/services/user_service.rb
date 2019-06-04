@@ -38,8 +38,6 @@ module UserService
     end
     #user programs
     programs.each do |program_id|
-      user_program = UserService.find_user_program(user.user_id, program_id)
-      return user_program if user_program
       user_programs = UserProgram.create user_id: user.user_id, program_id: program_id
     end
 
