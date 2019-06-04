@@ -185,9 +185,9 @@ module ARTService
 
       return false unless patient_is_on_tb_treatment
 
-      dtg_concept_id = ConceptName.find_by_name('Dolutegravir').concept_id
+      dtg_concept_ids = ConceptName.where(name: ['Dolutegravir', 'Tenofovir Lamivudine Dolutegravir']).collect(&:concept_id)
 
-      patient_is_on_tb_treatment && drug.concept_id == dtg_concept_id
+      patient_is_on_tb_treatment && dtg_concept_ids.include?(drug.concept_id)
     end
 
     def regimen_interpreter(medication_ids = [])
