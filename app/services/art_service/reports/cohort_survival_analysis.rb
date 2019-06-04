@@ -130,7 +130,7 @@ EOF
         INNER JOIN obs ON obs.person_id = e.patient_id
         WHERE date_enrolled BETWEEN '#{start_date.to_date}' AND '#{end_date.to_date}'
         AND gender IN('F','Female') AND obs.voided = 0
-        AND DATE(obs_datetime) = DATE(date_enrolled) 
+        AND DATE(obs_datetime) = DATE(earliest_start_date) 
         AND obs.concept_id IN(#{concept_ids.join(',')}) 
         AND value_coded = #{yes_concept_id} GROUP BY e.patient_id 
         HAVING reason LIKE '%Lymphocyte%' OR reason LIKE '%CD4%'
