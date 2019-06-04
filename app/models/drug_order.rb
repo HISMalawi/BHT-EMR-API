@@ -56,7 +56,7 @@ class DrugOrder < ApplicationRecord
   end
 
   def date_created
-    order.date_created
+    @date_created ||= Order.unscoped.find(order_id).date_created
   end
 
   # def order
