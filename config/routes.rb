@@ -150,6 +150,7 @@ Rails.application.routes.draw do
         resources :batches
         resources :items do
           post '/reallocate', to: 'items#reallocate'
+          post '/dispose', to: 'items#dispose'
         end
         get 'earliest_expiring_item', to: 'items#earliest_expiring'
       end
