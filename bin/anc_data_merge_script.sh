@@ -24,7 +24,7 @@ DATABASE=`ruby -ryaml -e "puts YAML::load_file('config/database.yml')['${ENV}'][
 ANCDATABASE=`ruby -ryaml -e "puts YAML::load_file('config/database.yml')['anc_database']['database']"`
 HOST=`ruby -ryaml -e "puts YAML::load_file('config/database.yml')['${ENV}']['host']"`
 
-echo "merge ANC data into ART database"
+echo "===========merge ANC data into ART database==============="
 
 mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE <<EOF
 
@@ -38,28 +38,28 @@ SET @max_order_id := (SELECT max(order_id) from $DATABASE.orders);
 SET @max_obs_id := (SELECT max(obs_id) FROM $DATABASE.obs);
 SET @max_user_id := (select max(user_id) from $DATABASE.users);
 
-/* update ANC admin user to admini */
+/* update ANC admin user to admini  */
 UPDATE $ANCDATABASE.users SET username = 'admini' WHERE user_id = 1;
 
-/* Create ANC back-up table */
+/* Create ANC back-up table  */
 drop table if exists $ANCDATABASE.user_bak;
 
 create table $ANCDATABASE.user_bak as
 SELECT user_id as ANC_user_id, (SELECT @max_user_id + user_id) AS ART_user_id,  system_id,  username,  password,  salt,  secret_question,  secret_answer,  (SELECT @max_user_id + creator) as creator,  date_created,  (SELECT @max_user_id + changed_by) as changed_by,  date_changed,  (SELECT @max_patient_id + person_id) as person_id,  retired,  (SELECT @max_user_id + retired_by) as retired_by,  date_retired,  retire_reason,  (SELECT UUID()),  authentication_token FROM $ANCDATABASE.users; 
 
-/* insert users person table into ART person table */
+/* insert users person table into ART person table  */
 INSERT INTO $DATABASE.person (person_id, gender, birthdate, birthdate_estimated, dead, death_date, cause_of_death, creator, date_created, changed_by, date_changed, voided, voided_by, date_voided, void_reason, uuid)
 select (select @max_patient_id + person_id) as person_id, gender, birthdate, birthdate_estimated, dead, death_date, cause_of_death, (SELECT @max_user_id + creator) as creator, date_created, (SELECT @max_user_id + changed_by) as changed_by, date_changed, voided, (SELECT @max_user_id + voided_by) as voided_by, date_voided, void_reason, (select uuid())  from $ANCDATABASE.person  where person_id in (select person_id from $ANCDATABASE.users);
 
-/* insert users names into ART */
+/* insert users names into ART  */
 INSERT INTO $DATABASE.person_name (preferred, person_id, prefix, given_name, middle_name, family_name_prefix, family_name, family_name2, family_name_suffix, degree, creator, date_created, voided, voided_by, date_voided, void_reason, changed_by, date_changed, uuid)
-select preferred, (select @max_patient_id + f.person_id) as person_id, prefix, given_name, middle_name, family_name_prefix, family_name, family_name2, family_name_suffix, degree, (SELECT @max_user_id + creator) as creator, date_created, voided, (SELECT @max_user_id + voided_by) as voided_by, date_voided, void_reason, (SELECT @max_user_id + changed_by) as changed_by, date_changed, (select uuid())  from $ANCDATABASE.person_name f where f.person_id IN (SELECT person_id FROM $DATABASE.users);
+select preferred, (select @max_patient_id + f.person_id) as person_id, prefix, given_name, middle_name, family_name_prefix, family_name, family_name2, family_name_suffix, degree, (SELECT @max_user_id + creator) as creator, date_created, voided, (SELECT @max_user_id + voided_by) as voided_by, date_voided, void_reason, (SELECT @max_user_id + changed_by) as changed_by, date_changed, (select uuid())  from $ANCDATABASE.person_name f where f.person_id IN (SELECT person_id FROM $ANCDATABASE.users);
 
-/* Insert ANC users */
+/* Insert ANC users  */
 INSERT INTO $DATABASE.users (user_id,  system_id,  username,  password,  salt,  secret_question,  secret_answer,  creator,  date_created,  changed_by,  date_changed,  person_id,  retired,  retired_by,  date_retired,  retire_reason,  uuid,  authentication_token)
 SELECT ART_user_id,  system_id,  username,  password,  salt,  secret_question,  secret_answer, creator,  date_created,  changed_by,  date_changed, person_id,  retired, retired_by,  date_retired,  retire_reason,  (SELECT UUID()),  authentication_token FROM $ANCDATABASE.user_bak; 
 
-/* dropping and creating patient_details */
+/* dropping and creating patient_details  */
 drop table if exists $ANCDATABASE.ANC_patient_details;
 
 create table $ANCDATABASE.ANC_patient_details As
@@ -72,36 +72,36 @@ AND anc_pi.patient_id NOT IN (SELECT u.person_id FROM $ANCDATABASE.users u)
 AND art_pa.gender = (SELECT anc_pa.gender FROM $ANCDATABASE.person anc_pa WHERE anc_pa.person_id = anc_pi.patient_id AND anc_pa.voided = 0)
 GROUP BY anc_pi.patient_id;
 
-/* creating encounters table back-up */
+/* creating encounters table back-up  */
 drop table if exists $ANCDATABASE.encounter_back;
 
 create table $ANCDATABASE.encounter_back as
 SELECT 
-    (SELECT @max_encounter_id + e.encounter_id) as encounter_id, e.encounter_type, a.ART_patient_id AS patient_id, (SELECT @max_user_id + e.provider_id) as provider_id, e.location_id, e.form_id, e.encounter_datetime, (SELECT @max_user_id + e.creator) as creator, e.date_created, e.voided, (SELECT @max_user_id + e.voided_by) as voided_by, e.date_voided, e.void_reason, e.uuid, (SELECT @max_user_id + e.changed_by) as changed_by, e.date_changed FROM $ANCDATABASE.ANC_patient_details a INNER JOIN $ANCDATABASE.encounter e ON e.patient_id = a.ANC_patient_id;
+    (SELECT @max_encounter_id + e.encounter_id) as encounter_id, e.encounter_type, a.ART_patient_id AS patient_id, (SELECT @max_user_id + e.provider_id) as provider_id, e.location_id, e.form_id, e.encounter_datetime, (SELECT @max_user_id + e.creator) as creator, e.date_created, e.voided, (SELECT @max_user_id + e.voided_by) as voided_by, e.date_voided, e.void_reason, e.uuid, (SELECT @max_user_id + e.changed_by) as changed_by, e.date_changed FROM $ANCDATABASE.ANC_patient_details a INNER JOIN $ANCDATABASE.encounter e ON e.patient_id = a.ANC_patient_id and e.voided = 0 ;
 
-/* insert ANC encounters into ART database */
+/* insert ANC encounters into ART database  */
 INSERT INTO $DATABASE.encounter (encounter_id, encounter_type, patient_id, provider_id, location_id, form_id, encounter_datetime, creator, date_created, voided, voided_by, date_voided, void_reason, uuid, changed_by, date_changed, program_id)
 select encounter_id, encounter_type, patient_id, provider_id, location_id, form_id, encounter_datetime, creator, date_created, voided, voided_by, date_voided, void_reason, (select uuid()), changed_by, date_changed, 12 from $ANCDATABASE.encounter_back order by patient_id;
 
-/* creating orders back-up */
+/* creating orders back-up  */
 drop table if exists $ANCDATABASE.orders_bak;
 
 create table $ANCDATABASE.orders_bak as
-SELECT (SELECT @max_order_id + o.order_id) as order_id, order_type_id, concept_id, orderer, (SELECT @max_encounter_id + o.encounter_id) as encounter_id, instructions, start_date, auto_expire_date, discontinued, discontinued_date, discontinued_by, discontinued_reason, (SELECT @max_user_id + creator) as creator, date_created, voided, (SELECT @max_user_id + voided_by) as voided_by, date_voided, void_reason, e.ART_patient_id AS patient_id, accession_number, (SELECT @max_obs_id + o.obs_id) as obs_id, uuid, discontinued_reason_non_coded FROM $ANCDATABASE.orders o inner join $ANCDATABASE.ANC_patient_details e on e.ANC_patient_id = o.patient_id;
+SELECT (SELECT @max_order_id + o.order_id) as ART_order_id, order_id as ANC_order_id, order_type_id, concept_id, orderer, (SELECT @max_encounter_id + o.encounter_id) as encounter_id, instructions, start_date, auto_expire_date, discontinued, discontinued_date, discontinued_by, discontinued_reason, (SELECT @max_user_id + creator) as creator, date_created, voided, (SELECT @max_user_id + voided_by) as voided_by, date_voided, void_reason, e.ART_patient_id AS patient_id, accession_number, (SELECT @max_obs_id + o.obs_id) as obs_id, uuid, discontinued_reason_non_coded FROM $ANCDATABASE.orders o inner join $ANCDATABASE.ANC_patient_details e on e.ANC_patient_id = o.patient_id and o.voided = 0;
 
-/* insert ANC orders into ART database */
+/* insert ANC orders into ART database  */
 INSERT INTO $DATABASE.orders (order_id,  order_type_id,  concept_id,  orderer,  encounter_id,  instructions,  start_date,  auto_expire_date,  discontinued,  discontinued_date,  discontinued_by,  discontinued_reason,  creator,  date_created,  voided,  voided_by,  date_voided,  void_reason, patient_id,  accession_number, obs_id,  uuid, discontinued_reason_non_coded)
-SELECT order_id,  order_type_id,  concept_id,  orderer, encounter_id,  instructions, start_date,  auto_expire_date,  discontinued,  discontinued_date,  discontinued_by,  discontinued_reason,  creator,  date_created,  voided,  voided_by,  date_voided,  void_reason, patient_id, accession_number, obs_id,  (SELECT UUID()),  discontinued_reason_non_coded FROM $ANCDATABASE.orders_bak;
+SELECT ART_order_id,  order_type_id,  concept_id,  orderer, encounter_id,  instructions, start_date,  auto_expire_date,  discontinued,  discontinued_date,  discontinued_by,  discontinued_reason,  creator,  date_created,  voided,  voided_by,  date_voided,  void_reason, patient_id, accession_number, obs_id,  (SELECT UUID()),  discontinued_reason_non_coded FROM $ANCDATABASE.orders_bak;
 
-/* insert ANC drug_orders into ART database*/
+/* insert ANC drug_orders into ART database */
 INSERT INTO $DATABASE.drug_order (order_id,  drug_inventory_id, dose, equivalent_daily_dose, units, frequency, prn, complex, quantity)
-SELECT (SELECT @max_order_id + order_id) as order_id, drug_inventory_id, dose, equivalent_daily_dose, units, frequency, prn, complex, quantity FROM $ANCDATABASE.drug_order; 
+SELECT ART_order_id, drug_inventory_id, dose, equivalent_daily_dose, units, frequency, prn, complex, quantity FROM $ANCDATABASE.drug_order d inner join $ANCDATABASE.orders_bak o on o.ANC_order_id = d.order_id; 
 
 /* creating obs back-up */
 drop table if exists $ANCDATABASE.obs_bak;
 
 create table $ANCDATABASE.obs_bak as
-SELECT (SELECT @max_obs_id + o.obs_id) as obs_id, e.ART_patient_id AS person_id,  concept_id,  (SELECT @max_encounter_id + o.encounter_id) AS encounter_id,  (SELECT @max_order_id + o.order_id) AS order_id,  obs_datetime,  location_id,  obs_group_id,  accession_number,  value_group_id,  value_boolean,  value_coded,  value_coded_name_id,  value_drug,  value_datetime,  value_numeric,  value_modifier,  value_text,  date_started,  date_stopped,  comments, (SELECT @max_user_id + creator) as creator,  date_created,  voided,  (SELECT @max_user_id + voided_by) as voided_by,  date_voided,  void_reason,  value_complex,  uuid FROM $ANCDATABASE.obs o inner join $ANCDATABASE.ANC_patient_details e on e.ANC_patient_id = o.person_id;
+SELECT (SELECT @max_obs_id + o.obs_id) as obs_id, e.ART_patient_id AS person_id,  concept_id,  (SELECT @max_encounter_id + o.encounter_id) AS encounter_id,  (SELECT @max_order_id + o.order_id) AS order_id,  obs_datetime,  location_id,  obs_group_id,  accession_number,  value_group_id,  value_boolean,  value_coded,  value_coded_name_id,  value_drug,  value_datetime,  value_numeric,  value_modifier,  value_text,  date_started,  date_stopped,  comments, (SELECT @max_user_id + creator) as creator,  date_created,  voided,  (SELECT @max_user_id + voided_by) as voided_by,  date_voided,  void_reason,  value_complex,  uuid FROM $ANCDATABASE.obs o inner join $ANCDATABASE.ANC_patient_details e on e.ANC_patient_id = o.person_id and o.voided = 0;
    
 /* insert ANC obs into ART database */
 INSERT INTO $DATABASE.obs (obs_id, person_id,  concept_id,  encounter_id,  order_id,  obs_datetime,  location_id,  obs_group_id,  accession_number,  value_group_id,  value_boolean,  value_coded,  value_coded_name_id,  value_drug,  value_datetime,  value_numeric,  value_modifier,  value_text,  date_started,  date_stopped,  comments,  creator,  date_created,  voided,  voided_by,  date_voided,  void_reason,  value_complex,  uuid)
@@ -111,7 +111,7 @@ SELECT obs_id, person_id,  concept_id, encounter_id,  order_id,  obs_datetime,  
 drop table if exists $ANCDATABASE.patient_program_bak;
 
 create table $ANCDATABASE.patient_program_bak as
-SELECT (SELECT @max_patient_program_id + patient_program_id) AS patient_program_id,   e.ART_patient_id AS patient_id,  program_id,  date_enrolled, date_completed, (SELECT @max_user_id + creator) as creator,  date_created, (SELECT @max_user_id + changed_by) as changed_by,  date_changed,  voided, (SELECT @max_user_id + voided_by) as voided_by,  date_voided,  void_reason,  uuid,  location_id FROM $ANCDATABASE.patient_program p INNER JOIN $ANCDATABASE.ANC_patient_details e on e.ANC_patient_id = p.patient_id;
+SELECT (SELECT @max_patient_program_id + patient_program_id) AS patient_program_id,   e.ART_patient_id AS patient_id,  program_id,  date_enrolled, date_completed, (SELECT @max_user_id + creator) as creator,  date_created, (SELECT @max_user_id + changed_by) as changed_by,  date_changed,  voided, (SELECT @max_user_id + voided_by) as voided_by,  date_voided,  void_reason,  uuid,  location_id FROM $ANCDATABASE.patient_program p INNER JOIN $ANCDATABASE.ANC_patient_details e on e.ANC_patient_id = p.patient_id and p.voided = 0;
 
 /* insert ANC patient_program into ART database */
 INSERT INTO $DATABASE.patient_program (patient_program_id,  patient_id,  program_id,  date_enrolled,  date_completed,  creator,  date_created, changed_by,  date_changed,  voided, voided_by,  date_voided,  void_reason,  uuid,  location_id)
@@ -159,8 +159,11 @@ SET foreign_key_checks = 1;
 
 EOF
 
+echo "Running another script to merge patients in ANC and not in ART"
+
 ./bin/anc_patients_only_patient_merge_script.sh development
 
+echo "Dumping ANC_remaining_patients.csv file for patients that were not migrated"
 mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $ANCDATABASE < bin/ANC_remaining_patients.sql > ~/ANC_remaining_patients.csv
 
 echo "Finished merging the data"

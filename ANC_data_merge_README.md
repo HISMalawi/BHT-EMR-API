@@ -19,3 +19,5 @@ anc_database:
 Note: The assumption is that the ART database is the one ART (based on the new architecture is running) and that the script of initializing the program_id was already done. If not so please do this
     ./bin/existing_database_setup.sh development 
 
+
+patient_identifier

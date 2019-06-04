@@ -1,3 +1,5 @@
+drop table if exists ANC_patients_merged_into_main_dbs;
+
 create table ANC_patients_merged_into_main_dbs as 
 select ANC_patient_id from ANC_patient_details
 union
