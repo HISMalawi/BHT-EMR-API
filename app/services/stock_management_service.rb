@@ -12,6 +12,10 @@ class StockManagementService
   REALLOCATION_DESTINATION = 'Transfer out to location'
   REALLOCATION_DRUG = 'Drug getting reallocated'
 
+  # Pharmacy reallocation types
+  STOCK_ITEM_DISPOSAL = 'Disposal'
+  STOCK_ITEM_REALLOCATION = 'Reallocation'
+
   # Add list of drugs to stock
   #
   # @param{batch_number} A batch number that came with the drugs package
@@ -98,20 +102,31 @@ class StockManagementService
     item
   end
 
-  def reallocate_items(reallocation_code, batch_item_id, quantity, destination_location_id)
+  def reallocate_items(reallocation_code, batch_item_id, quantity, destination_location_id, date)
     ActiveRecord::Base.transaction do
       item = PharmacyBatchItem.find(batch_item_id)
 
       # A negative sign would result in addition of quantity thus
       # get rid of it as early as possible
       quantity = quantity.to_f.abs
-
       commit_transaction(item, STOCK_EDIT, -quantity.to_f, update_item: true)
-
       destination = Location.find(destination_location_id)
-
       PharmacyBatchItemReallocation.create(reallocation_code: reallocation_code, item: item,
-                                           quantity: quantity, location: destination)
+                                           quantity: quantity, location: destination,
+                                           reallocation_type: STOCK_ITEM_REALLOCATION,
+                                           date: date, creator: User.current)
+    end
+  end
+
+  def dispose_item(reallocation_code, batch_item_id, quantity, date)
+    ActiveRecord::Base.transaction do
+      item = PharmacyBatchItem.find(batch_item_id)
+      quantity = quantity.to_f.abs
+      commit_transaction(item, STOCK_EDIT, -quantity.to_f, update_item: true)
+      PharmacyBatchItemReallocation.create(reallocation_code: reallocation_code, item: item,
+                                           quantity: quantity, date: date,
+                                           reallocation_type: STOCK_ITEM_DISPOSAL,
+                                           creator: User.current)
     end
   end
 
