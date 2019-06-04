@@ -125,11 +125,13 @@ class StockManagementService
   end
 
   def create_batch_item(batch, drug_id, quantity, delivery_date, expiry_date)
+    quantity = quantity.to_f
+
     PharmacyBatchItem.create(
       batch: batch,
       drug_id: drug_id.to_i,
-      delivered_quantity: quantity.to_f,
-      current_quantity: 0,
+      delivered_quantity: quantity,
+      current_quantity: quantity,
       delivery_date: delivery_date,
       expiry_date: expiry_date
     )
