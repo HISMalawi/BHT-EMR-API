@@ -4,10 +4,9 @@ module ARTService
   module Reports
 
     class RegimenSwitch
-      def initialize(start_date:, end_date:, switch_date:)
+      def initialize(start_date:, end_date:)
         @start_date = start_date
         @end_date = end_date
-        @switch_date = switch_date
       end
 
       def regimen_switch
@@ -53,7 +52,7 @@ EOF
           next unless outcome == 'On antiretrovirals'
            
           prev_reg = ActiveRecord::Base.connection.select_one <<EOF
-          SELECT patient_current_regimen(#{patient_id}, '#{(@switch_date - 1.day).to_date}') previous_regimen
+          SELECT patient_current_regimen(#{patient_id}, '#{(visit_date - 1.day).to_date}') previous_regimen
 EOF
 
           current_reg = ActiveRecord::Base.connection.select_one <<EOF
