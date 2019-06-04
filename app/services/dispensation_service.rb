@@ -67,6 +67,23 @@ module DispensationService
       )
     end
 
+    def void_dispensations(drug_order)
+      ActiveRecord::Base.transaction do
+        dispensations = drug_order.order\
+                                  .observations\
+                                  .where(concept_id: ConceptName.find_by_name('Amount dispensed').concept_id)
+
+        dispensations.each do |dispensation|
+          dispensation.void("Dispensation reversed by #{User.current.username}", skip_after_void: true)
+        end
+
+        drug_order.quantity = 0
+        unless drug_order.save
+          raise "Failed to void dispensations due to #{drug_order.errors.to_json}"
+        end
+      end
+    end
+
     # Updates the quantity dispensed of the drug_order and adjusts
     # the auto_expiry_date if necessary
     def update_quantity_dispensed(drug_order, quantity)
