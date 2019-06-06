@@ -4,6 +4,8 @@ require 'ostruct'
 
 require_relative 'rds_push'
 
+@rds_configuration[:mode] = MODE_DUMP
+
 def main
   File.open(Rails.root.join('log', 'rds_dump.sql'), 'w') do |fout|
     config['databases'].each do |database, database_config|
