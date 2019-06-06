@@ -133,7 +133,7 @@ EOF
         AND DATE(obs_datetime) = DATE(earliest_start_date) 
         AND obs.concept_id IN(#{concept_ids.join(',')}) 
         AND value_coded = #{yes_concept_id} GROUP BY e.patient_id 
-        HAVING reason LIKE '%Lymphocyte%' OR reason LIKE '%CD4%'
+        HAVING reason LIKE '%Lymphocyte count below threshold with who stage%'
         ORDER BY obs_datetime DESC;
 EOF
         
