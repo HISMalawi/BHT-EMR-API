@@ -39,4 +39,12 @@ class Api::V1::ProgramsController < ApplicationController
       render json: program.errors, status: :internal_server_error
     end
   end
+
+  def booked_appointments
+    program_id = params[:program_id]
+    date = params[:date].to_date
+
+    list = ProgramAppointmentService.booked_appointments program_id, date
+    render json: list
+  end
 end

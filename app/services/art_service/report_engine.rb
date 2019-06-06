@@ -11,7 +11,8 @@ module ARTService
       'COHORT_DISAGGREGATED' => ARTService::Reports::CohortDisaggregated,
       'COHORT_SURVIVAL_ANALYSIS' => ARTService::Reports::CohortSurvivalAnalysis,
       'VISITS' => ARTService::Reports::VisitsReport,
-      'APPOINTMENTS' => ARTService::Reports::AppointmentsReport
+      'APPOINTMENTS' => ARTService::Reports::AppointmentsReport,
+      'IPT' => ARTService::Reports::IPTReport
     }.freeze
 
     def generate_report(type:, **kwargs)
@@ -28,10 +29,12 @@ module ARTService
         end_date: Date.today).raw_data(l1, l2)
     end
 
-    def cohort_disaggregated(quarter, age_group)
-      cohort = REPORTS['COHORT_DISAGGREGATED'].new(type: 'disaggregated', 
-        name: 'disaggregated', start_date: Date.today,
-        end_date: Date.today)
+    def cohort_disaggregated(quarter, age_group, start_date, end_date, rebuild, init)
+      cohort = REPORTS['COHORT_DISAGGREGATED'].new(type: 'disaggregated',
+        name: 'disaggregated', start_date: start_date,
+        end_date: end_date, rebuild: rebuild)
+
+      return cohort.initialize_disaggregated if init
       cohort.disaggregated(quarter, age_group)
     end
 
@@ -53,12 +56,24 @@ module ARTService
         end_date: end_date.to_date).missed_appointments
     end
 
+    def ipt_coverage(start_date, end_date)
+      REPORTS['IPT'].new(start_date: start_date.to_date,
+        end_date: end_date.to_date).ipt_coverage
+    end
+
+    def cohort_report_drill_down(id)
+      REPORTS['COHORT'].new(type: 'drill_down',
+        name: 'drill_down', start_date: Date.today,
+        end_date: Date.today).cohort_report_drill_down(id)
+    end
+
     private
 
     def call_report_manager(method, type:, **kwargs)
       start_date = kwargs.delete(:start_date)
       end_date = kwargs.delete(:end_date)
       name = kwargs.delete(:name)
+      type  = report_type(type)
 
       report_manager = REPORTS[type.name.upcase].new(
         type: type, name: name, start_date: start_date, end_date: end_date
@@ -70,5 +85,14 @@ module ARTService
         method.call(**kwargs)
       end
     end
+
+    def report_type(name)
+      type  = ReportType.find_by_name(name)
+      raise NotFoundError, "Report, #{name}, not found" unless type
+
+      type
+    end
+
+
   end
 end

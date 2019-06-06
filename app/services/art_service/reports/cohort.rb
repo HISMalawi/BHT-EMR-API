@@ -147,6 +147,37 @@ EOF
         return patients
       end
 
+      def cohort_report_drill_down(id)
+        people = []
+
+        patients = ActiveRecord::Base.connection.select_all <<EOF
+        SELECT i.identifier arv_number, p.birthdate,
+          p.gender, n.given_name, n.family_name, p.person_id patient_id
+        FROM person p
+        INNER JOIN cohort_drill_down c ON c.patient_id = p.person_id
+        LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
+        AND i.voided = 0 AND i.identifier_type = 4 
+        LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
+        WHERE c.reporting_report_design_resource_id = #{id} 
+        GROUP BY p.person_id ORDER BY p.person_id, p.date_created;
+EOF
+
+        return {} if patients.blank?
+        
+        patients.select do |person|
+          people << {
+            person_id: person['patient_id'],
+            given_name: person['given_name'],
+            family_name: person['family_name'],
+            birthdate: person['birthdate'],
+            gender: person['gender'],
+            arv_number: person['arv_number']
+          }
+        end
+
+        return people
+      end
+
       private
 
       LOGGER = Rails.logger
@@ -176,6 +207,8 @@ EOF
           report_value_saved = report_value.errors.empty?
           unless report_value_saved
             raise "Failed to save report value: #{report_value.errors.as_json}"
+          else
+            save_patients(report_value, value_contents_to_json(value).contents)
           end
 
           report_value
@@ -195,6 +228,46 @@ EOF
           value_contents
         end
       end
+
+      def save_patients(r, values)
+        return if values.blank?
+        patient_ids = []
+
+        begin
+          
+          (values.rows || []).each do |v|  
+            patient_ids << v[0]
+          end  
+        
+        rescue
+          
+          begin 
+            if values.first.include?(:patient_id)
+              values.select do |obj|
+                patient_ids << obj[:patient_id]
+              end
+            end
+          rescue
+            begin
+              values.select do |patient_id|
+                patient_ids << patient_id
+              end
+            rescue
+              puts "#{r.name} +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #{values.inspect}"
+              return
+            end
+          end
+
+        end
+    
+        patient_ids.select do |patient_id|
+        ActiveRecord::Base.connection.execute <<EOF
+        INSERT INTO cohort_drill_down VALUES(NULL, #{r.id}, #{patient_id});
+EOF
+
+        end
+      end
+
     end
   end
 

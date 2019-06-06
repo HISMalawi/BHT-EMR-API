@@ -1,4 +1,9 @@
 class Api::V1::CleaningController < ApplicationController
+
+  SERVICES = {
+    'ANC PROGRAM' => ANCService::DataCleaning
+  }.freeze
+
   def index
     render json: ActiveRecord::Base.connection.select_all("SELECT DISTINCT concat(pn.given_name,' ',pn.family_name) AS name,p.identifier,tsd.death_date,e.encounter_datetime,tsd.gender,
     tsd.earliest_start_date,tsd.date_enrolled,tsd.birthdate,tsd.patient_id from temp_earliest_start_date tsd
@@ -13,7 +18,7 @@ class Api::V1::CleaningController < ApplicationController
   end
 
 
-  def dateEnrolled 
+  def dateEnrolled
    render json: ActiveRecord::Base.connection.select_all("SELECT DISTINCT concat(pn.given_name,' ',pn.family_name) AS name,p.identifier, tsd.gender,
    tsd.earliest_start_date,tsd.date_enrolled,tsd.birthdate,tsd.patient_id from temp_earliest_start_date tsd
    inner join patient_identifier p ON tsd.patient_id = p.patient_id
@@ -26,6 +31,13 @@ class Api::V1::CleaningController < ApplicationController
   end
 
   def incompleteVisits
+
+    unless params[:program_id].blank?
+      program = Program.find(params[:program_id])
+      service = SERVICES[program.name.upcase].new(params[:start_date], params[:end_date])
+      render json: service.incomplete_visits
+    else
+
     render json: ActiveRecord::Base.connection.select_all("    SELECT DISTINCT concat(pn.given_name,' ',pn.family_name) AS name,p.identifier, tsd.gender,
     tsd.earliest_start_date,tsd.date_enrolled,tsd.birthdate,tsd.patient_id from temp_earliest_start_date tsd
     inner join encounter enc on tsd.patient_id = enc.patient_id
@@ -38,9 +50,9 @@ class Api::V1::CleaningController < ApplicationController
     SELECT DISTINCT e.patient_id from encounter AS e
     where e.encounter_type = 6 AND 7 AND 25 AND 51 AND 54 AND 53 AND 68)
     AND p.identifier_type = 4
-    
+
     UNION
-    
+
     SELECT DISTINCT concat(pn.given_name,' ',pn.family_name) AS name,p.identifier, tsd.gender,
     tsd.earliest_start_date,tsd.date_enrolled,tsd.birthdate,tsd.patient_id from temp_earliest_start_date tsd
     inner join encounter AS e on tsd.patient_id = e.patient_id
@@ -52,6 +64,7 @@ class Api::V1::CleaningController < ApplicationController
     ) AND p.identifier_type = 4 order by CONVERT(SUBSTRING_INDEX(identifier,'-',-1),UNSIGNED INTEGER)").each do
     |rows| puts rows ['patient_id']
      end
+    end
    end
 
 
@@ -59,7 +72,7 @@ class Api::V1::CleaningController < ApplicationController
     render json: ActiveRecord::Base.connection.select_all('select COUNT(*)
      FROM (SELECT P.given_name,
      P.family_name, E.earliest_start_date,
-    E.date_enrolled FROM earliest_start_date AS E JOIN person_name AS P 
+    E.date_enrolled FROM earliest_start_date AS E JOIN person_name AS P
     ON P.person_id = E.patient_id
     WHERE E.date_enrolled < E.earliest_start_date
     group BY P.person_id order by CONVERT(SUBSTRING_INDEX(p.identifier,'-',-1),UNSIGNED INTEGER))').each do
@@ -67,7 +80,7 @@ class Api::V1::CleaningController < ApplicationController
      end
    end
 
-   
+
   def startDate
       render json: ActiveRecord::Base.connection.select_all("SELECT DISTINCT concat(pn.given_name,' ',pn.family_name) AS name,p.identifier, tsd.gender,
       tsd.earliest_start_date,tsd.date_enrolled,tsd.birthdate,tsd.patient_id FROM temp_earliest_start_date tsd
@@ -93,4 +106,4 @@ class Api::V1::CleaningController < ApplicationController
       |rows| puts rows ['gender']
       end
   end
-end 
+end

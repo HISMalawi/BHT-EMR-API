@@ -56,6 +56,8 @@ Rails.application.routes.draw do
         get '/eligible_for_htn_screening', to: 'patients#eligible_for_htn_screening'
         post '/filing_number', to: 'patients#assign_filing_number'
         get '/past_filing_numbers' => 'patients#filing_number_history'
+        get 'assign_tb_number', to: 'patients#assign_tb_number'
+        get 'get_tb_number', to: 'patients#get_tb_number'
         post '/npid', to: 'patients#assign_npid'
         post '/remaining_bp_drugs', to: 'patients#remaining_bp_drugs'
         post '/update_or_create_htn_state', to: 'patients#update_or_create_htn_state'
@@ -108,13 +110,17 @@ Rails.application.routes.draw do
       resources :programs do
         resources :program_workflows, path: :workflows
         resources :program_regimens, path: :regimens
+        get 'booked_appointments' => 'programs#booked_appointments'
         get 'pellets_regimen' => 'program_regimens#pellets_regimen'
         get 'next_available_arv_number' => 'program_patients#find_next_available_arv_number'
         get 'lookup_arv_number/:arv_number' => 'program_patients#lookup_arv_number'
         get 'regimen_starter_packs' => 'program_regimens#find_starter_pack'
         get 'custom_regimen_ingredients' => 'program_regimens#custom_regimen_ingredients'
         get 'defaulter_list' => 'program_patients#defaulter_list'
+        get '/barcodes/:barcode_name', to: 'program_barcodes#print_barcode'
+
         resources :program_patients, path: :patients do
+          get '/next_appointment_date' => 'patient_appointments#next_appointment_date'
           get '/last_drugs_received' => 'program_patients#last_drugs_received'
           get '/dosages' => 'program_patients#find_dosages'
           get '/status' => 'program_patients#status'
@@ -126,7 +132,7 @@ Rails.application.routes.draw do
           get '/labels/patient_history', to: 'program_patients#print_patient_history_label'
           get '/mastercard_data', to: 'program_patients#mastercard_data'
           get '/medication_side_effects', to: 'program_patients#medication_side_effects'
-          #ANC
+          # ANC
           get '/surgical_history', to: 'program_patients#surgical_history'
           get '/anc_visit', to: 'program_patients#anc_visit'
           get '/art_hiv_status', to: 'program_patients#art_hiv_status'
@@ -143,11 +149,17 @@ Rails.application.routes.draw do
         get '/lab_tests/labs' => 'lab_test_orders#labs'
         get '/lab_tests/orders_without_results' => 'lab_test_orders#orders_without_results'
         get '/lab_tests/measures' => 'lab_test_types#measures'
+        get '/labs/:resource', to: 'lab#dispatch_request'
         resources :program_reports, path: 'reports'
+
+
       end
 
-      resources :stock
-      post '/edit_stock_report', to: 'stock#edit'
+      namespace :pharmacy do
+        resources :batches
+        resources :items
+        get 'earliest_expiring_item', to: 'items#earliest_expiring'
+      end
 
       namespace :types do
         resources :relationships
@@ -162,6 +174,8 @@ Rails.application.routes.draw do
       resources :drug_orders
       resources :orders
       get '/drug_sets', to: 'drugs#drug_sets' # ANC get drug sets
+      post '/drug_sets', to: 'drugs#create_drug_sets' #ANC drug sets creation
+      delete '/drug_sets/:id', to: 'drugs#void_drug_sets'
 
       resource :global_properties
       resource :user_properties
@@ -242,10 +256,13 @@ Rails.application.routes.draw do
 
   get '/api/v1/cohort_report_raw_data' => 'api/v1/reports#cohort_report_raw_data'
   get '/api/v1/cohort_disaggregated' => 'api/v1/reports#cohort_disaggregated'
+  get '/api/v1/anc_cohort_disaggregated' => 'api/v1/reports#anc_cohort_disaggregated'
   get '/api/v1/cohort_survival_analysis' => 'api/v1/reports#cohort_survival_analysis'
   get '/api/v1/defaulter_list' => 'api/v1/reports#defaulter_list'
   get '/api/v1/missed_appointments' => 'api/v1/reports#missed_appointments'
   post '/api/v1/addresses' => 'api/v1/person_addresses#create'
   get '/api/v1/person_attributes' => 'api/v1/person_attributes#index'
   get '/api/v1/archive_active_filing_number' => 'api/v1/patient_identifiers#archive_active_filing_number'
+  get '/api/v1/ipt_coverage' => 'api/v1/reports#ipt_coverage'
+  get '/api/v1/cohort_report_drill_down' => 'api/v1/reports#cohort_report_drill_down'
 end

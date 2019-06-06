@@ -119,7 +119,8 @@ class Api::V1::ProgramPatientsController < ApplicationController
 
   # Check if the visit is subsequent
   def subsequent_visit
-    render json: service.subsequent_visit(patient)
+    date = params[:date]&.to_date || Date.today
+    render json: service.subsequent_visit(patient, date)
   end
 
   # Get surgical history for ANC
