@@ -14,7 +14,7 @@ Rails.application.routes.draw do
       # Routes down here ... Best we move everything above into own modules
 
       resources :appointments
-      resources :dispensations, only: %i[index create]
+      resources :dispensations, only: %i[index create destroy]
       resources :users do
         post '/activate', to: 'users#activate'
         post '/deactivate', to: 'users#deactivate'
@@ -265,4 +265,6 @@ Rails.application.routes.draw do
   get '/api/v1/archive_active_filing_number' => 'api/v1/patient_identifiers#archive_active_filing_number'
   get '/api/v1/ipt_coverage' => 'api/v1/reports#ipt_coverage'
   get '/api/v1/cohort_report_drill_down' => 'api/v1/reports#cohort_report_drill_down'
+  post '/api/v1/swap_active_number' => 'api/v1/patient_identifiers#swap_active_number'
+  get '/api/v1/regimen_switch' => 'api/v1/reports#regimen_switch'
 end
