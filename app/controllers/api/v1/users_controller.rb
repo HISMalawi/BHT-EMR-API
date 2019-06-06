@@ -20,9 +20,9 @@ class Api::V1::UsersController < ApplicationController
 
     return unless validate_roles(roles) & validate_username(username)
 
-    return unless programs && validate_programs(programs) # added this as a seperate return to prevent multiple redirects in case more than one validation fails
+    return if programs && !validate_programs(programs) # added this as a seperate return to prevent multiple redirects in case more than one validation fails
 
-    return unless programs && validate_programs_existance(programs) # added this as a seperate return to prevent multiple redirects in case more than one validation fails
+    return if programs && !validate_programs_existance(programs) # added this as a seperate return to prevent multiple redirects in case more than one validation fails
 
     user = UserService.create_user(
       username: username, password: password, given_name: given_name,

@@ -1470,6 +1470,7 @@ BEGIN
   SET @regimen_nine_p_two     := ('73,733');
   SET @regimen_nine_p_three   := ('733,979');
   SET @regimen_nine_p_four    := ('74,969');
+  SET @regimen_nine_p_five    := ('969,979');
 
   SET @regimen_nine_a_one     := ('73,969');
 
@@ -1602,6 +1603,10 @@ BEGIN
   END IF;
 
   IF @drug_ids IN(@regimen_nine_p_three) AND (length(@drug_ids) = length(@regimen_nine_p_three)) THEN
+    SET regimen_cat = ('9P');
+  END IF;
+
+  IF @drug_ids IN(@regimen_nine_p_five) AND (length(@drug_ids) = length(@regimen_nine_p_five)) THEN
     SET regimen_cat = ('9P');
   END IF;
 
