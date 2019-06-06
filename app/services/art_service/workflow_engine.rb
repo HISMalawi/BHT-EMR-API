@@ -385,7 +385,7 @@ module ARTService
                         encounter: { program_id: @program.program_id })\
                  .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))
                  .order(date_created: :desc, obs_datetime: :desc).first
-    
+
      return false if referred.blank?
      return true if referred.value_coded == concept('Yes').concept_id
      return false

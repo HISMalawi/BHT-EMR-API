@@ -3,7 +3,8 @@ class ProgramPatientsService
     'HIV PROGRAM' => ARTService::PatientsEngine,
     'TB PROGRAM' => TBService::PatientsEngine,
     'ANC PROGRAM' => ANCService::PatientsEngine,
-    'OPD PROGRAM' => OPDService::PatientsEngine
+    'OPD PROGRAM' => OPDService::PatientsEngine,
+    'VMMC PROGRAM' => VMMCService::PatientsEngine
   }.freeze
 
   def initialize(program:)
