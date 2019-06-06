@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class VMMCService::WorkflowEngine
+  include ModelUtils
+
   attr_reader :program, :patient
 
   def initialize(program:, patient:, date:)
@@ -21,126 +23,180 @@ class VMMCService::WorkflowEngine
     	LOGGER.debug "Loading encounter type: #{state}"
     	encounter_type = EncounterType.find_by(name: state)
 
-    	return encounter_type if valid_state(state)    		
-    	end
+    	return encounter_type if valid_state?(state)    		
   	end
   end
 
-    def valid_state?(state)
-       if !@activities.include?(state)
-        return false
+  def valid_state?(state)
+    # if state == POST_OP_REVIEW
+    #   raise encounter_exists?(encounter_type(state)).inspect
+    # end
+
+    if encounter_exists?(encounter_type(state)) || !@activities.include?(state)
+      return false
+    end
+
+    (STATE_CONDITIONS[state] || []).reduce(true) do |status, condition|
+      status && method(condition).call
+    end
+  end
+
+  private
+
+  LOGGER = Rails.logger
+
+  # Encounter types
+  INITIAL_STATE = 0 # Start terminal for encounters graph
+  END_STATE = 1 # End terminal for encounters graph
+  REGISTRATION_CONSENT = 'REGISTRATION CONSENT'
+  VITALS = 'VITALS'
+  MEDICAL_HISTORY = 'MEDICAL HISTORY'
+  HIV_STATUS = 'UPDATE HIV STATUS'
+  GENITAL_EXAMINATION = 'GENITAL EXAMINATION'
+  SUMMARY_ASSESSMENT = 'SUMMARY ASSESSMENT'
+  CIRCUMCISION = 'CIRCUMCISION'
+  POST_OP_REVIEW = 'POST-OP REVIEW'
+  APPOINTMENT = 'APPOINTMENT'
+  FOLLOW_UP = 'FOLLOW UP'
+
+  # Encounters graph
+  ENCOUNTER_SM = {
+    INITIAL_STATE => REGISTRATION_CONSENT,
+    REGISTRATION_CONSENT => VITALS,
+    VITALS => MEDICAL_HISTORY,
+    MEDICAL_HISTORY => HIV_STATUS,
+    HIV_STATUS => GENITAL_EXAMINATION,
+    GENITAL_EXAMINATION => SUMMARY_ASSESSMENT,
+    SUMMARY_ASSESSMENT => CIRCUMCISION,
+    CIRCUMCISION => POST_OP_REVIEW,
+    POST_OP_REVIEW => APPOINTMENT,
+    APPOINTMENT => FOLLOW_UP,
+    FOLLOW_UP => END_STATE
+  }.freeze
+
+  STATE_CONDITIONS = {
+    REGISTRATION_CONSENT => %i[patient_gives_consent?],
+    CIRCUMCISION => %i[circumcision_not_done?],
+    APPOINTMENT => %i[patient_ready_for_discharge?],
+    FOLLOW_UP => %i[patient_has_post_op_review_encounter?]
+
+  }.freeze
+
+  def load_user_activities
+    activities = user_property('Activities')&.property_value
+    encounters = (activities&.split(',') || []).collect do |activity|
+      # Re-map activities to encounters
+      case activity
+      when /vitals/i
+        VITALS
+      when /Registration Consent/i
+        REGISTRATION_CONSENT
+      when /medical history/i
+        MEDICAL_HISTORY
+      when /hiv status/i
+        HIV_STATUS
+      when /genital examination/i
+        GENITAL_EXAMINATION
+      when /summary assessment/i
+        SUMMARY_ASSESSMENT
+      when /circumcision/i
+        CIRCUMCISION
+      when /post-op review/i
+        POST_OP_REVIEW
+      when /Appointment/i
+        APPOINTMENT
+      when /follow up/i
+        FOLLOW_UP
+      else
+        Rails.logger.warn "Invalid VMMC activity in user properties: #{activity}"
       end
-
-      if is_not_a_subsequent_visit? || !ONE_TIME_ENCOUNTERS.include?(state)
-        return false if encounter_exists?(encounter_type(state))
-      end
-
-      (STATE_CONDITIONS[state] || []).reduce(true) do |status, condition|
-        status && method(condition).call
-      end
     end
 
-    private
+    encounters
+  end
 
-    LOGGER = Rails.logger
+  def next_state(current_state)
+    ENCOUNTER_SM[current_state]
+  end
 
-    # Encounter types
-    INITIAL_STATE = 0 # Start terminal for encounters graph
-    END_STATE = 1 # End terminal for encounters graph
-    REGISTRATION = 'REGISTRATION'
-    VITALS = 'VITALS'
-    MEDICAL_HISTORY = 'MEDICAL HISTORY'
-    HIV_STATUS = 'HIV_STATUS'
-    GENITAL_EXAMINATION = 'GENITAL_EXAMINATION'
-    SUMMARY_ASSESSMENT = 'SUMMARY_ASSESSMENT'
-    CIRCUMCISION = 'CIRCUMCISION'
-    POST_OP_REVIEW = 'POST_OP_REVIEW'
-    FOLLOW_UP = 'FOLLOW_UP'
+  def encounter_exists?(type)
+    Encounter.where(type: type, patient: @patient, program_id: vmmc_program.program_id)\
+             .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
+             .exists?
+  end
 
-    ONE_TIME_ENCOUNTERS = [
-      REGISTRATION,VITALS,HIV_STATUS,MEDICAL_HISTORY,
-      GENITAL_EXAMINATION,SUMMARY_ASSESSMENT,
-      CIRCUMCISION
-    ]
+  def vmmc_program
+    @vmmc_program ||= Program.find_by_name('VMMC Program')
+  end
 
-    # Encounters graph
-    ENCOUNTER_SM = {
-      INITIAL_STATE => REGISTRATION,
-      REGISTRATION => VITALS,
-      VITALS => MEDICAL_HISTORY,
-      MEDICAL_HISTORY => HIV_STATUS,
-      HIV_STATUS => GENITAL_EXAMINATION,
-      GENITAL_EXAMINATION => SUMMARY_ASSESSMENT,
-      SUMMARY_ASSESSMENT => CIRCUMCISION,
-      CIRCUMCISION => POST_OP_REVIEW,
-      POST_OP_REVIEW => FOLLOW_UP,
-      FOLLOW_UP => END_STATE
-    }.freeze
+  def yes_concept
+    @yes_concept ||= ConceptName.find_by_name('Yes')
+  end
 
-    STATE_CONDITIONS = {
-      REGISTRATION => %i[patient_gives_consent?],
-      MEDICAL_HISTORY => %i[is_not_a_subsequent_visit?
-                        medical_history_not_collected?],
-      HIV_STATUS => %i[is_not_a_subsequent_visit?
-      					patient_tested_for_hiv?],
-      GENITAL_EXAMINATION => %i[is_not_a_subsequent_visit?
-                        genital_examination_not_done?],
-      SUMMARY_ASSESSMENT => %i[is_not_a_subsequent_visit?
-                          genital_examination_done?],
-      CIRCUMCISION => %i[is_not_a_subsequent_visit?
-                      circumcision_not_done?],
-      POST_OP_REVIEW => %i[patient_has_circumcision_encounter?],
-      FOLLOW_UP => %i[patient_has_post_op_review_encounter?],
+  def patient_gives_consent?
+    consent_confirmation_concept_id = ConceptName.find_by_name('Consent Confirmation').concept_id
 
-    }.freeze
+    Observation.joins(:encounter)\
+               .where(person_id: @patient.id, concept_id: yes_concept.id,
+                      value_coded: yes_concept.concept_id)\
+               .merge(Encounter.where(program_id: vmmc_program.program_id))
+               .exists?
+  end
 
-    def load_user_activities
-      activities = user_property('Activities')&.property_value
-      encounters = (activities&.split(',') || []).collect do |activity|
-        # Re-map activities to encounters
-        puts activity
-        case activity
-        when /vitals/i
-          VITALS
-        when /registration/i
-          REGISTRATION
-        when /medical history/i
-          MEDICAL_HISTORY
-        when /hiv status/i
-          HIV_STATUS
-        when /genital examination/i
-          GENITAL_EXAMINATION
-        when /summary assessment/i
-          SUMMARY_ASSESSMENT
-        when /circumcision/i
-          CIRCUMCISION
-        when /post op review/i
-          POST_OP_REVIEW
-        when /followup/i
-          FOLLOW_UP
-        when /vitals/i
-          VITALS
-        else
-          Rails.logger.warn "Invalid VMMC activity in user properties: #{activity}"
-        end
+  def vmmc_registration_encounter_not_collected?
+    encounter = Encounter.joins(:type).where(
+      'encounter_type.name = ? AND encounter.patient_id = ?',
+      REGISTRATION, @patient.patient_id)
+
+    encounter.blank?
+  end
+
+  def post_op_review_encounter_not_collected?
+    encounter = Encounter.joins(:type).where(
+      'encounter_type.name = ? AND encounter.patient_id = ?',
+      POST_OP_REVIEW, @patient.patient_id)
+
+    encounter.blank?
+  end
+
+  def patient_ready_for_discharge?
+    ready_for_discharge_concept_id = ConceptName.find_by_name('Ready for discharge?').concept_id
+    yes_concept_id = ConceptName.find_by_name('Yes').concept_id
+
+    Observation.joins(:encounter)\
+               .where(concept_id: ready_for_discharge_concept_id,
+                      value_coded: yes_concept_id)\
+               .merge(Encounter.where(program: vmmc_program))
+               .exists?
+  end
+
+    def medical_history_not_collected?
+
+      medical_history_enc = EncounterType.find_by name: MEDICAL_HISTORY
+
+      med_history = Encounter.where("encounter_type = ?
+          AND patient_id = ? AND DATE(encounter_datetime) >= DATE(?)",
+          medical_history_enc.id, @patient.patient_id, @date)
+        .order(encounter_datetime: :desc).first.blank?
+
+      med_history
     end
 
-    def next_state(current_state)
-      ENCOUNTER_SM[current_state]
-    end
+  def patient_tested_for_hiv?
+          hiv_status_enc = EncounterType.find_by name: STATUS
 
-    def vmmc_registration_encounter_not_collected?
-      encounter = Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ?',
-        REGISTRATION, @patient.patient_id)
+      hiv_status = Encounter.where("encounter_type = ?
+          AND patient_id = ? AND DATE(encounter_datetime) >= DATE(?)",
+          hiv_status_enc.id, @patient.patient_id, @date)
+        .order(encounter_datetime: :desc).first.blank?
 
-      encounter.blank?
-    end
+      hiv_status
 
-    def post_op_review_encounter_not_collected?
-      encounter = Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ?',
-        POST_OP_REVIEW, @patient.patient_id)
+  end
 
-      encounter.blank?
-    end
+  def patient_has_post_op_review_encounter?
+
+
+  end
+
+end
