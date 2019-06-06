@@ -43,6 +43,13 @@ IMMUTABLE_MODELS = [PersonAddress, PatientIdentifier, Observation, Order].freeze
 # Maximum number of records to be fetched from database per request
 RECORDS_BATCH_SIZE = 50_000
 
+# Record retrieval mode
+MODE_DUMP = :mode_dump # Retrieves everything from database
+MODE_PUSH = :mode_push # Retrieves records based on recent update timestam
+
+# Global rds_configuration for script
+@rds_configuration = { mode: MODE_PUSH }
+
 def main(database, program_name)
   LOGGER.info("Scraping database [#{database}, #{program_name}]")
   initiate_couch_sync
@@ -93,7 +100,7 @@ def database_offset(model, database)
   @database_offset["#{database}.#{model}"] || TIME_EPOCH
 end
 
-# Load database configuration
+# Load database rds_configuration
 def config
   return @config if @config
 
@@ -126,20 +133,13 @@ def recent_records(model, database_offset, database)
       LOGGER.info("Retrieving #{model}s from database '#{database}' having [time >= #{database_offset}, index >= #{offset}]")
       model.establish_connection(database.to_sym)
 
-      records = if model == User
-                  model.unscoped.where('date_created >= :time OR date_changed >= :time OR date_retired >= :time', time: database_offset.to_s)
-                elsif immutable_model?(model)
-                  # HACK: person address seems to be missing `date_changed` field so we
-                  # fall back to the existing `date_created`
-                  model.unscoped.where('date_created >= :time OR date_voided >= :time', time: database_offset.to_s)
-                elsif model == DrugOrder
-                  # DrugOrder lacks date_changed and date_created fields. We instead use
-                  # the parent Order's date_created.
-                  model.unscoped\
-                       .joins('INNER JOIN orders ON orders.order_id = drug_order.order_id')\
-                       .where('date_created >= :time OR date_voided >= :time', time: database_offset.to_s)
+      records = case @rds_configuration[:mode]
+                when MODE_DUMP
+                  retrieve_records_for_dump(model, database_offset, database)
+                when MODE_PUSH
+                  retrieve_records_for_push(model, database_offset, database)
                 else
-                  model.unscoped.where('date_changed >= :time OR date_created >= :time OR date_voided >= :time', time: database_offset)
+                  raise "Invalid mode specified: #{@rds_configuration[:mode]}"
                 end
 
       records = records.order(model.primary_key.to_s).offset(offset).limit(RECORDS_BATCH_SIZE)
@@ -150,6 +150,60 @@ def recent_records(model, database_offset, database)
 
       offset += RECORDS_BATCH_SIZE
     end
+  end
+end
+
+# Only retrieves records with an update timestamp.
+def retrieve_records_for_push(model, database_offset, database)
+  if model == User
+    model.unscoped.where('date_created >= :time OR date_changed >= :time OR date_retired >= :time', time: database_offset.to_s)
+  elsif immutable_model?(model)
+    # HACK: person address seems to be missing `date_changed` field so we
+    # fall back to the existing `date_created`
+    model.unscoped.where('date_created >= :time OR date_voided >= :time', time: database_offset.to_s)
+  elsif model == DrugOrder
+    # DrugOrder lacks date_changed and date_created fields. We instead use
+    # the parent Order's date_created.
+    model.unscoped\
+         .joins('INNER JOIN orders ON orders.order_id = drug_order.order_id')\
+         .where('date_created >= :time OR date_voided >= :time', time: database_offset.to_s)
+  else
+    model.unscoped.where('date_changed >= :time OR date_created >= :time OR date_voided >= :time', time: database_offset)
+  end
+end
+
+# Retrieves all records even those without update timestamps
+def retrieve_records_for_dump(model, database_offset, database)
+  if model == User
+    where_conditions = <<~SQL
+      (date_created >= :time OR date_changed >= :time OR date_retired >= :time)
+        OR (date_created IS NULL AND date_changed IS NULL AND date_retired IS NULL)
+    SQL
+    model.unscoped.where(where_conditions, time: database_offset.to_s)
+  elsif immutable_model?(model)
+    # HACK: person address seems to be missing `date_changed` field so we
+    # fall back to the existing `date_created`
+    where_conditions = <<~SQL
+      (date_created >= :time OR date_voided >= :time)
+      OR (date_created IS NULL AND date_voided IS NULL)
+    SQL
+    model.unscoped.where(where_conditions, time: database_offset.to_s)
+  elsif model == DrugOrder
+    # DrugOrder lacks date_changed and date_created fields. We instead use
+    # the parent Order's date_created.
+    where_conditions = <<~SQL
+      (date_created >= :time OR date_voided >= :time)
+      OR (date_created IS NULL AND date_voided IS NULL)
+    SQL
+    model.unscoped\
+         .joins('INNER JOIN orders ON orders.order_id = drug_order.order_id')\
+         .where(where_conditions, time: database_offset.to_s)
+  else
+    where_conditions = <<~SQL
+      (date_changed >= :time OR date_created >= :time OR date_voided >= :time)
+      OR (date_changed IS NULL AND date_created IS NULL AND date_voided IS NULL)
+    SQL
+    model.unscoped.where(where_conditions, time: database_offset)
   end
 end
 
@@ -453,7 +507,7 @@ end
 
 if $PROGRAM_NAME == __FILE__ # HACK: Enables importing of this as a module
   with_lock do
-    config # Load configuration early to ensure its sanity before doing anything
+    config # Load rds_configuration early to ensure its sanity before doing anything
 
     config['databases'].each do |database, database_config|
       main(database, database_config['program&.name'])
