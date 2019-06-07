@@ -81,13 +81,27 @@ class StockManagementService
   end
 
   def update_batch_item(batch_item_id, params)
-    item = PharmacyBatchItem.find(batch_item_id)
-    item.update(params)
+    ActiveRecord::Base.transaction do
+      item = PharmacyBatchItem.find(batch_item_id)
 
-    delivery_event = Pharmacy.find_by(item: item, type: pharmacy_event_type(STOCK_ADD))
-    delivery_event.void("#{User.current.username} edited batch details")
+      if params[:current_quantity]
+        diff = params[:current_quantity].to_f - item.current_quantity
+        commit_transaction(item, STOCK_EDIT, diff, Date.today, update_item: false)
+      end
 
-    commit_transaction(item, STOCK_ADD, item.quantity, item.delivery_date)
+      if params[:delivered_quantity]
+        diff = params[:delivered_quantity].to_f - item.delivered_quantity
+        commit_transaction(item, STOCK_EDIT, diff, Date.today, update_item: true)
+      end
+
+      unless item.update(params)
+        error = InvalidParameterError.new('Failed to update batch item')
+        error.model_errors = item.errors
+        raise error
+      end
+
+      item
+    end
   end
 
   def void_batch_item(batch_item_id, reason)
@@ -109,7 +123,7 @@ class StockManagementService
       # A negative sign would result in addition of quantity thus
       # get rid of it as early as possible
       quantity = quantity.to_f.abs
-      commit_transaction(item, STOCK_EDIT, -quantity.to_f, update_item: true)
+      commit_transaction(item, STOCK_DEBIT, -quantity.to_f, update_item: true)
       destination = Location.find(destination_location_id)
       PharmacyBatchItemReallocation.create(reallocation_code: reallocation_code, item: item,
                                            quantity: quantity, location: destination,
@@ -122,7 +136,7 @@ class StockManagementService
     ActiveRecord::Base.transaction do
       item = PharmacyBatchItem.find(batch_item_id)
       quantity = quantity.to_f.abs
-      commit_transaction(item, STOCK_EDIT, -quantity.to_f, update_item: true)
+      commit_transaction(item, STOCK_DEBIT, -quantity.to_f, update_item: true)
       PharmacyBatchItemReallocation.create(reallocation_code: reallocation_code, item: item,
                                            quantity: quantity, date: date,
                                            reallocation_type: STOCK_ITEM_DISPOSAL,
@@ -170,20 +184,19 @@ class StockManagementService
                         encounter_date: date)
       )
 
-      initial_current_quantity = batch_item.current_quantity
+      return { event: event, target_item: batch_item } unless update_item
 
+      initial_current_quantity = batch_item.current_quantity
       batch_item.current_quantity += quantity.to_f
 
       if batch_item.current_quantity.negative?
         raise InvalidParameterError, <<~ERROR
-          Quantity (#{quantity.abs}) exceeds current quantity (#{initial_current_quantity}) on item ##{batch_item.id}
+          Debit quantity (#{quantity.abs}) exceeds current quantity (#{initial_current_quantity}) on item ##{batch_item.id}
         ERROR
       end
 
-      if update_item
-        batch_item.save
-        validate_activerecord_object(batch_item)
-      end
+      batch_item.save
+      validate_activerecord_object(batch_item)
 
       { event: event, target_item: batch_item }
     end
