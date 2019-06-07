@@ -82,7 +82,9 @@ module ANCService
           AND (patient_state.voided = 0)
           ORDER BY start_date DESC, patient_state.patient_state_id DESC,
           patient_state.date_created DESC LIMIT 1;"
-      )["state"]
+      )["state"] rescue nil
+
+      return "Unknown" if state.blank?
 
       outcome = ActiveRecord::Base.connection.select_one(
         "SELECT name FROM program_workflow_state INNER JOIN concept_name ON concept_name.concept_id = program_workflow_state.concept_id
