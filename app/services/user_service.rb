@@ -37,7 +37,7 @@ module UserService
       UserRole.create role: role, user: user
     end
     #user programs
-    programs.each do |program_id|
+    programs&.each do |program_id|
       user_programs = UserProgram.create user_id: user.user_id, program_id: program_id
     end
 
