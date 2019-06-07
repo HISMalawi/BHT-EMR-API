@@ -23,7 +23,7 @@ class VMMCService::WorkflowEngine
     	LOGGER.debug "Loading encounter type: #{state}"
     	encounter_type = EncounterType.find_by(name: state)
 
-    	return encounter_type if valid_state?(state)    		
+    	return encounter_type if valid_state?(state)
   	end
   end
 
@@ -75,8 +75,7 @@ class VMMCService::WorkflowEngine
   }.freeze
 
   STATE_CONDITIONS = {
-    REGISTRATION_CONSENT => %i[patient_gives_consent?],
-    CIRCUMCISION => %i[circumcision_not_done?],
+    CIRCUMCISION => %i[patient_gives_consent?],
     APPOINTMENT => %i[patient_ready_for_discharge?],
     FOLLOW_UP => %i[patient_has_post_op_review_encounter?]
 
@@ -137,7 +136,8 @@ class VMMCService::WorkflowEngine
     consent_confirmation_concept_id = ConceptName.find_by_name('Consent Confirmation').concept_id
 
     Observation.joins(:encounter)\
-               .where(person_id: @patient.id, concept_id: yes_concept.id,
+               .where(person_id: @patient.id,
+                      concept_id: consent_confirmation_concept_id,
                       value_coded: yes_concept.concept_id)\
                .merge(Encounter.where(program_id: vmmc_program.program_id))
                .exists?
