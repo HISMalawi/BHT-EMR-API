@@ -118,6 +118,10 @@ class Api::V1::ReportsController < ApplicationController
     render json: service.cohort_report_drill_down(params[:id])
   end
 
+  def regimen_switch
+    render json: service.regimen_switch(params[:start_date], params[:end_date])
+  end
+
   private
 
   def service

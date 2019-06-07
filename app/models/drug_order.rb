@@ -20,7 +20,8 @@ class DrugOrder < ApplicationRecord
   end
 
   def duration
-    return 0 if order.nil? || order&.auto_expire_date&.nil? || order&.start_date&.nil?
+    order = Order.unscoped.find_by_order_id(order_id)
+    return 0 if order&.auto_expire_date.blank? || order&.start_date.blank?
 
     interval = order.auto_expire_date.to_date - order.start_date.to_date
     interval.to_i

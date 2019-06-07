@@ -82,14 +82,21 @@ EOF
         tmp = get_age_groups(age_group, start_date, end_date, temp_outcome_table)
 
         on_art = []
+        all_clients = []
+        all_clients_outcomes = {}
 
         (tmp || []).each do |pat|
-          on_art << pat['patient_id'].to_i
+          patient_id = pat['patient_id'].to_i
+          outcome = pat['outcome']
+
+          on_art << patient_id if outcome == 'On antiretrovirals'
+          all_clients << patient_id
+          all_clients_outcomes[patient_id] = outcome
         end
 
         list = {}
         
-        if on_art.blank? && (age_group == 'Breastfeeding' || age_group == 'Pregnant')
+        if all_clients.blank? && (age_group == 'Breastfeeding' || age_group == 'Pregnant')
           list[age_group] = {}
           list[age_group]['F'] = {
             tx_new: 0, tx_curr: 0,
@@ -97,7 +104,7 @@ EOF
             tx_given_ipt: 0
           }
           return list
-        elsif on_art.blank?
+        elsif all_clients.blank?
            return {}
         end
 
@@ -106,16 +113,31 @@ EOF
         end
 
         (tmp || []).each do |r|
+          gender = r['gender'].first
+          patient_id = r['patient_id'].to_i
+          tx_new, tx_curr, tx_given_ipt, tx_screened_for_tb = get_numbers(r, age_group, start_date, end_date, all_clients_outcomes)
 
-          tx_new, tx_curr, tx_screened_for_tb, tx_given_ipt = get_numbers(r, age_group, start_date, end_date)
+          list[age_group] = {} if list[age_group].blank?
 
-          if r['gender'] == 'F'
-            insert_female_maternal_status(r['patient_id'], age_group, end_date)
+          list[age_group][gender] = {
+            tx_new: 0, tx_curr: 0,
+            tx_screened_for_tb: 0,
+            tx_given_ipt: 0
+          } if list[age_group][gender].blank?
+
+
+          list[age_group][gender][:tx_new] += tx_new
+          list[age_group][gender][:tx_curr] += tx_curr
+          list[age_group][gender][:tx_given_ipt] += tx_given_ipt
+          list[age_group][gender][:tx_screened_for_tb] += tx_screened_for_tb
+
+
+          if gender == 'F'
+            insert_female_maternal_status(patient_id, age_group, end_date)
           end
 
         end
 
-        arrangeGroups(age_group, list, start_date.to_date, end_date.to_date)
         return list
       end
 
@@ -178,28 +200,35 @@ EOF
         return given
       end
 
-      def get_numbers(data, age_group, start_date, end_date)
+      def get_numbers(data, age_group, start_date, end_date, outcomes)
+        patient_id = data['patient_id'].to_i
         tx_new = 0
         tx_curr = 0
         tx_screened_for_tb = 0
         tx_given_ipt  = 0
+        outcome = outcomes[patient_id]
 
         date_enrolled  = data['date_enrolled'].to_date
-        earliest_start_date = data['earliest_start_date'].to_date rescue date_enrolled
+        earliest_start_date  = data['earliest_start_date'].to_date rescue nil
 
-        if date_enrolled == earliest_start_date
-          if (date_enrolled >= start_date.to_date && date_enrolled <= end_date.to_date) 
+        if date_enrolled >= start_date && date_enrolled <= end_date
+          if date_enrolled == earliest_start_date
             tx_new = 1
+          end unless earliest_start_date.blank?
+          
+          if outcome == 'On antiretrovirals'
+            tx_curr = 1
           end
+        elsif outcome == 'On antiretrovirals'
+          tx_curr = 1
         end
 
-        tx_curr = 1
+        if outcome == 'On antiretrovirals'
+          tx_screened_for_tb = screened_for_tb(patient_id, age_group, start_date, end_date)
+          tx_given_ipt = given_ipt(patient_id, age_group, start_date, end_date)
+        end
 
-        patient_id = data['patient_id']
-        tx_screened_for_tb = screened_for_tb(patient_id, age_group, start_date, end_date)
-        tx_given_ipt = given_ipt(patient_id, age_group, start_date, end_date)
-
-        return [tx_new, (tx_curr + tx_new), tx_given_ipt, tx_screened_for_tb]
+        return [tx_new, tx_curr, tx_given_ipt, tx_screened_for_tb]
       end
 
       def get_age_groups(age_group, start_date, end_date, temp_outcome_table)
@@ -207,10 +236,10 @@ EOF
          
           results = ActiveRecord::Base.connection.select_all <<EOF
             SELECT 
-            e.*,  cohort_disaggregated_age_group(DATE(e.birthdate), DATE('#{end_date}')) AS age_group
+            e.*,  cohort_disaggregated_age_group(DATE(e.birthdate), DATE('#{end_date}')) AS age_group,
+            t2.cum_outcome AS outcome
             FROM temp_earliest_start_date e 
             INNER JOIN #{temp_outcome_table} t2 ON t2.patient_id = e.patient_id
-            WHERE cum_outcome = 'On antiretrovirals'
             GROUP BY e.patient_id HAVING age_group = '#{age_group}';
 EOF
 
@@ -218,9 +247,11 @@ EOF
           create_mysql_female_maternal_status
           results = ActiveRecord::Base.connection.select_all <<EOF
             SELECT 
-              e.*, maternal_status AS mstatus
+              e.*, maternal_status AS mstatus,
+              t3.cum_outcome AS outcome
             FROM temp_earliest_start_date e 
             INNER JOIN temp_disaggregated t2 ON t2.patient_id = e.patient_id
+            INNER JOIN #{temp_outcome_table} t3 ON t3.patient_id = e.patient_id
             WHERE maternal_status = 'FP'
             GROUP BY e.patient_id;
 EOF
@@ -229,9 +260,11 @@ EOF
           create_mysql_female_maternal_status
           results = ActiveRecord::Base.connection.select_all <<EOF
             SELECT 
-              e.*, maternal_status AS mstatus
+              e.*, maternal_status AS mstatus,
+              t3.cum_outcome AS outcome
             FROM temp_earliest_start_date e 
             INNER JOIN temp_disaggregated t2 ON t2.patient_id = e.patient_id
+            INNER JOIN #{temp_outcome_table} t3 ON t3.patient_id = e.patient_id
             WHERE maternal_status = 'FBf'
             GROUP BY e.patient_id;
 EOF
@@ -240,9 +273,11 @@ EOF
           create_mysql_female_maternal_status
           results = ActiveRecord::Base.connection.select_all <<EOF
             SELECT 
-              e.*, maternal_status AS mstatus
+              e.*, maternal_status AS mstatus,
+              t3.cum_outcome AS outcome
             FROM temp_earliest_start_date e 
             INNER JOIN temp_disaggregated t2 ON t2.patient_id = e.patient_id
+            INNER JOIN #{temp_outcome_table} t3 ON t3.patient_id = e.patient_id
             WHERE maternal_status = 'FNP'
             GROUP BY e.patient_id;
 EOF
@@ -576,57 +611,6 @@ EOF
 
       end
       
-      def arrangeGroups(age_group, list, start_date, end_date)
-
-        data = ActiveRecord::Base.connection.select_all <<EOF
-          SELECT t.*, e.* FROM temp_disaggregated t
-          INNER JOIN temp_earliest_start_date e USING(patient_id)
-          WHERE age_group = '#{age_group}';
-EOF
-
-        (data || []).each do |r|
-          
-          list[age_group] = {} if list[age_group].blank?
-          gender = r['gender'].first.upcase
-
-          list[age_group][gender] = {
-            tx_new: 0, tx_curr: 0,
-            tx_screened_for_tb: 0,
-            tx_given_ipt: 0
-          } if list[age_group][gender].blank?
-      
-          date_enrolled = r['date_enrolled'].to_date
-          earliest_start_date = r['earliest_start_date'].to_date rescue date_enrolled
-          
-          tx_new = 0
-
-          if date_enrolled == earliest_start_date
-            if date_enrolled >= start_date && date_enrolled <= end_date
-              tx_new = 1
-            end
-          end
-
-          tx_screened_for_tb =  r['screened_for_tb'].to_i
-          tx_given_ipt = r['given_ipt'].to_i
-
-          list[age_group][gender][:tx_new] += tx_new
-          list[age_group][gender][:tx_curr] += 1
-          list[age_group][gender][:tx_screened_for_tb] += tx_screened_for_tb
-          list[age_group][gender][:tx_given_ipt] += tx_given_ipt
-        end
-
-      end
-
-
-
-
-
-
-
-
-
-
-
     end
   end
 

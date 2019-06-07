@@ -14,14 +14,15 @@ class Api::V1::UsersController < ApplicationController
   end
 
   def create
-    create_params = params.require(%i[username password given_name family_name roles programs])
-    username, password, given_name, family_name, roles, programs = create_params
-    Rails.logger.debug create_params.inspect
-    return unless validate_roles(roles) & validate_username(username) 
+    create_params = params.require(%i[username password given_name family_name roles])
+    username, password, given_name, family_name, roles = create_params
+    programs = params[:programs]
 
-    return unless validate_programs(programs) # added this as a seperate return to prevent multiple redirects in case more than one validation fails
+    return unless validate_roles(roles) & validate_username(username)
 
-    return unless validate_programs_existance(programs) # added this as a seperate return to prevent multiple redirects in case more than one validation fails
+    return if programs && !validate_programs(programs) # added this as a seperate return to prevent multiple redirects in case more than one validation fails
+
+    return if programs && !validate_programs_existance(programs) # added this as a seperate return to prevent multiple redirects in case more than one validation fails
 
     user = UserService.create_user(
       username: username, password: password, given_name: given_name,
@@ -128,14 +129,14 @@ class Api::V1::UsersController < ApplicationController
 
   #validate program
   def validate_programs_existance(programs)
-    programs.each do |program_id| 
+    programs.each do |program_id|
       unless Program.find_by(program_id: program_id)
         errors = ['All Programs must exists']
         render json: { errors: errors }, status: :conflict
         return false
       end
-  
+
       true
-    end 
+    end
   end
 end
