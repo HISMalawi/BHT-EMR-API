@@ -76,9 +76,16 @@ class VMMCService::WorkflowEngine
 
   STATE_CONDITIONS = {
     CIRCUMCISION => %i[patient_gives_consent?],
-    APPOINTMENT => %i[patient_ready_for_discharge?],
+    VITALS => %i[patient_gives_consent?],
+    MEDICAL_HISTORY => %i[patient_gives_consent?],
+    HIV_STATUS => %i[patient_gives_consent?],
+    GENITAL_EXAMINATION => %i[patient_gives_consent?],
+    SUMMARY_ASSESSMENT => %i[patient_gives_consent?],
+    CIRCUMCISION => %i[patient_gives_consent?],
+    POST_OP_REVIEW => %i[patient_gives_consent?],
+    APPOINTMENT => %i[patient_gives_consent?],
+    APPOINTMENT => %i[patient_gives_consent patient_ready_for_discharge?],
     FOLLOW_UP => %i[patient_has_post_op_review_encounter?]
-
   }.freeze
 
   def load_user_activities
