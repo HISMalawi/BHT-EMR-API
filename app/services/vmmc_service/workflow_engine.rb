@@ -62,9 +62,9 @@ class VMMCService::WorkflowEngine
   # Encounters graph
   ENCOUNTER_SM = {
     INITIAL_STATE => REGISTRATION_CONSENT,
-    REGISTRATION_CONSENT => VITALS,
-    VITALS => MEDICAL_HISTORY,
-    MEDICAL_HISTORY => HIV_STATUS,
+    REGISTRATION_CONSENT => MEDICAL_HISTORY,
+    MEDICAL_HISTORY => VITALS,
+    VITALS => HIV_STATUS,
     HIV_STATUS => GENITAL_EXAMINATION,
     GENITAL_EXAMINATION => SUMMARY_ASSESSMENT,
     SUMMARY_ASSESSMENT => CIRCUMCISION,
@@ -87,12 +87,12 @@ class VMMCService::WorkflowEngine
     encounters = (activities&.split(',') || []).collect do |activity|
       # Re-map activities to encounters
       case activity
-      when /vitals/i
-        VITALS
       when /Registration Consent/i
         REGISTRATION_CONSENT
       when /medical history/i
         MEDICAL_HISTORY
+      when /vitals/i
+        VITALS
       when /hiv status/i
         HIV_STATUS
       when /genital examination/i
