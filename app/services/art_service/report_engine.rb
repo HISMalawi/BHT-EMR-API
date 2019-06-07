@@ -24,12 +24,6 @@ module ARTService
       call_report_manager(:find_report, type: type, **kwargs)
     end
 
-    def cohort_report_raw_data(l1, l2)
-      REPORTS['COHORT'].new(type: 'raw data', 
-        name: 'raw data', start_date: Date.today,
-        end_date: Date.today).raw_data(l1, l2)
-    end
-
     def cohort_disaggregated(quarter, age_group, start_date, end_date, rebuild, init)
       cohort = REPORTS['COHORT_DISAGGREGATED'].new(type: 'disaggregated',
         name: 'disaggregated', start_date: start_date,
