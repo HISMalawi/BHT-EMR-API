@@ -151,8 +151,16 @@ class PatientService
     tb_number_service.assign_tb_number(patient_id, date)
   end
 
+  def assign_ipt_number(patient_id, date)
+    tb_number_service.assign_ipt_number(patient_id, date)
+  end
+
   def get_tb_number(patient_id, date)
     tb_number_service.get_tb_number(patient_id, date)
+  end
+
+  def get_ipt_number(patient_id, date)
+    tb_number_service.get_ipt_number(patient_id, date)
   end
 
   def assign_npid(patient)

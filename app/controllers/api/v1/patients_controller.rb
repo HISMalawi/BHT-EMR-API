@@ -116,6 +116,22 @@ class Api::V1::PatientsController < ApplicationController
     end
   end
 
+  def assign_ipt_number(date)
+    patient_id = params[:patient_id]
+    ipt_number = service.assign_ipt_number(patient_id, date)
+    render json: ipt_number, status: :created
+  end
+
+  def get_ipt_number
+    patient_id = params[:patient_id]
+    ipt_number = service.get_ipt_number(patient_id)
+    if ipt_number
+      render json: ipt_number, status: :ok
+    else
+      render :status => 404
+    end
+  end
+
   def assign_npid
     render json: service.assign_npid(patient), status: :created
   end
