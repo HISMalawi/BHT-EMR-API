@@ -17,17 +17,18 @@ module ANCService
       @patient = patient
       @date = date
       @art_service = ARTService::PatientSummary
+      @patient_visit = PatientVisit.new(patient,date)
     end
 
     def full_summary
-
+      gest_age = ((@date.to_date - @patient_visit.active_range(@date)[0]["START"].to_date).to_i / 7) - 1 rescue nil
       {
         patient_id: patient.patient_id,
         current_outcome: getCurrentPatientOutcome,
-        residence: "",
         date_of_lnmp: date_of_lnmp,
         anc_visits: number_of_visits,
-        fundus: fundus
+        fundus: fundus,
+        gestation: gest_age
       }
     end
 
