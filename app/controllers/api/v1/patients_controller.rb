@@ -100,9 +100,9 @@ class Api::V1::PatientsController < ApplicationController
     end
   end
 
-  def assign_tb_number
+  def assign_tb_number(date)
     patient_id = params[:patient_id]
-    tb_number = service.assign_tb_number(patient_id)
+    tb_number = service.assign_tb_number(patient_id, date)
     render json: tb_number, status: :created
   end
 

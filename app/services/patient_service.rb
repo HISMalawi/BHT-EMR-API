@@ -147,12 +147,12 @@ class PatientService
     )
   end
 
-  def assign_tb_number(patient_id)
-    tb_number_service.assign_tb_number(patient_id)
+  def assign_tb_number(patient_id, date)
+    tb_number_service.assign_tb_number(patient_id, date)
   end
 
-  def get_tb_number(patient_id)
-    tb_number_service.get_tb_number(patient_id)
+  def get_tb_number(patient_id, date)
+    tb_number_service.get_tb_number(patient_id, date)
   end
 
   def assign_npid(patient)
