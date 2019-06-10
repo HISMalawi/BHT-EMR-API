@@ -73,29 +73,39 @@ EOF
     end
 
     def pre_art_or_unknown_outcomes
+      concept_set_id = concept('Antiretroviral drugs').concept_id
+      arvs = Drug.joins('INNER JOIN concept_set s ON s.concept_id = drug.concept_id').\
+      where("s.concept_set = ?", concept_set_id).map(&:drug_id)
+
       data = ActiveRecord::Base.connection.select_all <<EOF
       select
         p.patient_id, patient_outcome(p.patient_id, DATE('#{@end_date}')) outcome
       from
         ((`patient_program` `p`
+        inner join orders o ON o.patient_id = p.patient_id
+        inner join drug_order d ON d.order_id = o.order_id
+        and d.drug_inventory_id in(#{arvs.join(',')})
         left join `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
         left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
         left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
       where
         ((`p`.`voided` = 0)
             and (`s`.`voided` = 0)
+            and (`d`.`quantity` > 0)
+            and (`o`.`voided` = 0)
             and (`p`.`program_id` = 1)
             and (`s`.`state` = 7))
             and (`s`.`start_date`
             between '#{@start_date.strftime('%Y-%m-%d 00:00:00')}'
             and '#{@end_date.strftime('%Y-%m-%d 23:59:59')}')
-      group by `p`.`patient_id`
-      HAVING outcome LIKE '%Unknown%' OR outcome LIKE '%Pre%';
+      group by `p`.`patient_id` 
+      HAVING (outcome LIKE '%Pre%' OR outcome LIKE '%Unknown%')
+      ORDER BY s.start_date DESC;
 EOF
 
       return {} if data.blank?
       patient_ids = data.map{|d| d['patient_id'].to_i}
-
+      
       data = ActiveRecord::Base.connection.select_all <<EOF
       SELECT
         p.person_id, i.identifier arv_number, birthdate, gender, death_date,
@@ -177,7 +187,7 @@ EOF
       data = ActiveRecord::Base.connection.select_all <<EOF
       SELECT
         p.person_id, i.identifier arv_number, birthdate,
-        gender, start_date, quantity
+        gender, start_date, quantity, given_name, family_name
       FROM drug_order t
       INNER JOIN orders o ON o.order_id = t.order_id
       AND start_date BETWEEN '#{@start_date.strftime('%Y-%m-%d 00:00:00')}' 
@@ -211,7 +221,7 @@ EOF
       data = ActiveRecord::Base.connection.select_all <<EOF
       SELECT
         p.person_id, i.identifier arv_number, birthdate, 
-        gender, death_date, encounter_datetime
+        gender, death_date, encounter_datetime, given_name,family_name
       FROM person p
       INNER JOIN encounter e ON p.person_id = e.patient_id
       LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
