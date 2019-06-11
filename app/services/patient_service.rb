@@ -148,19 +148,19 @@ class PatientService
   end
 
   def assign_tb_number(patient_id, date)
-    tb_number_service.assign_tb_number(patient_id, date)
+    patient_engine.assign_tb_number(patient_id, date)
   end
 
   def assign_ipt_number(patient_id, date)
-    tb_number_service.assign_ipt_number(patient_id, date)
+    patient_engine.assign_ipt_number(patient_id, date)
   end
 
   def get_tb_number(patient_id, date)
-    tb_number_service.get_tb_number(patient_id, date)
+    patient_engine.get_tb_number(patient_id, date)
   end
 
   def get_ipt_number(patient_id, date)
-    tb_number_service.get_ipt_number(patient_id, date)
+    patient_engine.get_ipt_number(patient_id, date)
   end
 
   def assign_npid(patient)
@@ -382,8 +382,9 @@ class PatientService
     @filing_number_service ||= FilingNumberService.new
   end
 
-  def tb_number_service
-    @tb_number_service = TbNumberService.new
+  def patient_engine
+    program = Program.find_by(name: 'TB PROGRAM')
+    TBService::PatientsEngine.new program: program
   end
 
   # Returns all of patient's identifiers of given identifier_type
