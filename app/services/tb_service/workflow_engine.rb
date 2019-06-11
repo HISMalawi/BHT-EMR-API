@@ -75,7 +75,7 @@ module TBService
     }.freeze
 
     STATE_CONDITIONS = {
-      TB_INITIAL => %i[tb_suspect_not_enrolled?],
+      TB_INITIAL => %i[patient_should_go_for_screening?],
 
       LAB_ORDERS => %i[patient_should_go_for_lab_order?],
       TB_ADHERENCE => %i[patient_has_appointment?
@@ -100,11 +100,13 @@ module TBService
                                     patient_recent_lab_order_has_no_results?],
       TB_RECEPTION => %i[patient_has_no_tb_reception?
                                     patient_diagnosed?
-                                    patient_examined?],
+                                    patient_examined?
+                                    patient_current_tb_status_is_positive?],
       TB_REGISTRATION => %i[patient_should_go_for_tb_registration?
                                     patient_diagnosed?
                                     patient_examined?
-                                    patient_is_not_a_transfer_out?],
+                                    patient_is_not_a_transfer_out?
+                                    patient_current_tb_status_is_positive],
       VITALS => %i[patient_has_no_vitals?
                                     patient_should_get_treated?
                                     patient_diagnosed?
@@ -215,25 +217,7 @@ module TBService
     end
 
     def patient_should_get_treated?
-      (patient_is_a_minor? && patient_tb_negative?) || patient_tb_positive?
-    end
-
-    def patient_tb_positive?
-      status_concept = concept('TB status')
-      negative = concept('Positive')
-      Observation.where(
-        'person_id = ? AND concept_id = ? AND value_coded = ?',
-        @patient.patient_id, status_concept.concept_id, negative.concept_id
-      ).order(obs_datetime: :desc).first.present?
-    end
-
-    def patient_tb_negative?
-      status_concept = concept('TB status')
-      negative = concept('Negative')
-      Observation.where(
-        'person_id = ? AND concept_id = ? AND value_coded = ?',
-        @patient.patient_id, status_concept.concept_id, negative.concept_id
-      ).order(obs_datetime: :desc).first.present?
+      (patient_is_a_minor? && patient_current_tb_status_is_negative?) || patient_current_tb_status_is_positive?
     end
 
     def patient_has_no_lab_results?
@@ -367,7 +351,7 @@ module TBService
 
     def patient_should_go_for_lab_order?
       (should_patient_be_tested_through_lab? && patient_has_no_lab_results?)\
-        || (patient_tb_positive? && should_patient_go_lab_examination_at_followup?\
+        || (patient_current_tb_status_is_positive? && should_patient_go_lab_examination_at_followup?\
         && patient_recent_lab_order_has_results?)
     end
 
@@ -532,19 +516,40 @@ module TBService
       ).order(encounter_datetime: :desc).first.nil?
     end
 
-    def patient_has_no_tb_registration_today?
-      Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
-        TB_REGISTRATION,
-        @patient.patient_id,
-        @date
-      ).order(encounter_datetime: :desc).first.nil?
+    def patient_current_tb_status_is_negative?
+      status_concept = concept('TB status')
+      negative_concept = concept('Negative')
+      negative_status = Observation.where(
+        'person_id = ? AND concept_id = ?',
+        @patient.patient_id, status_concept.concept_id
+      ).order(obs_datetime: :desc).first
+
+      begin
+        (negative_status.value_coded == negative_concept.concept_id)
+      rescue
+        false
+      end
+
     end
 
-    #register patient to current facility,
-    #if no longer a transfer out
-    def patient_should_go_for_tb_registration?
-      patient_has_no_tb_registration? || (patient_is_not_a_transfer_out? && patient_has_no_tb_registration_today?)
+    def patient_current_tb_status_is_positive?
+      status_concept = concept('TB status')
+      positive_concept = concept('Positive')
+      positive_status = Observation.where(
+        'person_id = ? AND concept_id = ?',
+        @patient.patient_id, status_concept.concept_id
+      ).order(obs_datetime: :desc).first
+
+      begin
+        (positive_status.value_coded == positive_concept.concept_id)
+      rescue
+        false
+      end
+
+    end
+
+    def patient_should_go_for_screening?
+      (patient_current_tb_status_is_negative? || tb_suspect_not_enrolled?)
     end
 
   end
