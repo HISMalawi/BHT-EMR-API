@@ -37,7 +37,7 @@ class Drug < ActiveRecord::Base
   end
 
   def self.tb_drugs
-    tb_concept = Concept.joins(:concept_names).where(concept_name: { name: ['Rifampicin isoniazid and pyrazinamide', 'Ethambutol', 'Rifampicin and isoniazid', 'Rifampicin Isoniazid Pyrazinamide Ethambutol'] } )
+    tb_concept = Concept.joins(:concept_names).where(concept_name: { name: ['Rifampicin isoniazid and pyrazinamide', 'Ethambutol', 'Rifampicin and isoniazid', 'Rifampicin Isoniazid Pyrazinamide Ethambutol', 'Isoniazid'] } )
     Drug.where(concept: tb_concept)
   end
 
