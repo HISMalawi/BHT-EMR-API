@@ -132,8 +132,8 @@ module TBService
 
     #patient has tb meningitis and is not cured
     def patient_not_cured_with_tb_meningitis?(patient, date)
-      tb_type = concept 'Meningitis tuberculosis'
-      yes_concept = concept 'YES'
+      tb_type = concept 'Tuberculosis classification'
+      yes_concept = concept 'Meningitis tuberculosis'
       has_tb_meningitis = Observation.where(
         "person_id = ? AND concept_id = ? AND value_coded = ?",
         patient.patient_id, tb_type.concept_id, yes_concept.concept_id

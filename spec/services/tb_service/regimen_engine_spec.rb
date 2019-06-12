@@ -151,10 +151,10 @@ describe TBService::RegimenEngine do
 	end
 
 	def tb_meningitis(patient)
-		create :observation, concept: concept('Meningitis tuberculosis'),
+		create :observation, concept: concept('Tuberculosis classification'),
                           encounter: encounter,
                           person: patient.person,
-													value_coded: concept('Yes').concept_id
+													value_coded: concept('Meningitis tuberculosis').concept_id
 	end
 
 	def tb_meningitis_orders(patient, encounter)
