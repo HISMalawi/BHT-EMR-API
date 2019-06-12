@@ -101,12 +101,12 @@ module TBService
       TB_RECEPTION => %i[patient_has_no_tb_reception?
                                     patient_diagnosed?
                                     patient_examined?
-                                    patient_current_tb_status_is_positive?],
+                                    patient_should_get_treated?],
       TB_REGISTRATION => %i[patient_has_no_tb_registration?
                                     patient_diagnosed?
                                     patient_examined?
                                     patient_is_not_a_transfer_out?
-                                    patient_current_tb_status_is_positive?],
+                                    patient_should_get_treated?],
       VITALS => %i[patient_has_no_vitals?
                                     patient_should_get_treated?
                                     patient_diagnosed?
