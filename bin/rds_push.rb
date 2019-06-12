@@ -31,7 +31,8 @@ DELTA_STATE_PATH = Rails.root.join('log/rds-sync-state.yml')
 
 MODELS = [Person, PersonAttribute, PersonAddress, PersonName, User, Patient,
           PatientIdentifier, PatientState, PatientProgram, Encounter,
-          Observation, Order, DrugOrder].freeze
+          Observation, Order, DrugOrder, Pharmacy, PharmacyBatch,
+          PharmacyBatchItem, PharmacyBatchItemReallocation].freeze
 
 TIME_EPOCH = '0000-00-00 00:00:00'
 DEST_TIME_EPOCH = '1000-01-01 00:00:00'
@@ -64,7 +65,9 @@ def main(database, program_name)
       LOGGER.debug("Handling #{model}(##{record.id})")
 
       update_time = record_update_time(record)
-      last_update_time = update_time if update_time > last_update_time
+      # NOTE: Cast dates to string for comparison due to possible invalid
+      #       date '0000-00-00 00:00:00' that was being used in old ART issues.
+      last_update_time = update_time if update_time.to_s > last_update_time.to_s
 
       sync_status = find_record_sync_status(record, database)
       if record_already_synced?(record, sync_status)
@@ -133,6 +136,8 @@ def recent_records(model, database_offset, database)
       LOGGER.info("Retrieving #{model}s from database '#{database}' having [time >= #{database_offset}, index >= #{offset}]")
       model.establish_connection(database.to_sym)
 
+      break unless model_exists?(model)
+
       records = case @rds_configuration[:mode]
                 when MODE_DUMP
                   retrieve_records_for_dump(model, database_offset, database)
@@ -151,6 +156,15 @@ def recent_records(model, database_offset, database)
       offset += RECORDS_BATCH_SIZE
     end
   end
+end
+
+# Check if model exists in it's bound database
+def model_exists?(model)
+  model.exists? # Throws invalid ActiveRecord::StatementInvalid if doesn't exist
+rescue ActiveRecord::StatementInvalid => e
+  return false if e.message.match?(/Table .* doesn't exist/i)
+
+  raise e
 end
 
 # Only retrieves records with an update timestamp.
@@ -299,7 +313,7 @@ def serialize_record(record, program)
     # that use the old openmrs standard that has no program
     # specific encounters. Thus we manually have to set the program
     # id using the value specified in the config file.
-    raise "Invalid or missing program name '#{program&.name}' in rds config: application.yml" unless program
+    raise 'Invalid or missing program name in rds config: application.yml' unless program
 
     serialized_record['program_id'] = program.id
 
@@ -510,7 +524,7 @@ if $PROGRAM_NAME == __FILE__ # HACK: Enables importing of this as a module
     config # Load rds_configuration early to ensure its sanity before doing anything
 
     config['databases'].each do |database, database_config|
-      main(database, database_config['program&.name'])
+      main(database, database_config['program_name'])
     end
   end
 end
