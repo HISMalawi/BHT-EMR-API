@@ -350,7 +350,7 @@ module TBService
     end
 
     def patient_should_go_for_lab_order?
-      (should_patient_be_tested_through_lab? && patient_has_no_lab_results?)\
+      (should_patient_be_tested_through_lab? && patient_labs_not_ordered?)\
         || (patient_current_tb_status_is_positive? && should_patient_go_lab_examination_at_followup?\
         && patient_recent_lab_order_has_results?)
     end
