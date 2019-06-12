@@ -99,7 +99,7 @@ module TBService
       def current_outcome
         patient_id = ActiveRecord::Base.connection.quote(patient.patient_id)
         quoted_date = ActiveRecord::Base.connection.quote(date)
-        program_id = Program.find_by(name: 'TB PROGRAM').program_id
+        program_id = program('TB PROGRAM').program_id
         patient_state = PatientState.joins(`INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id
                                             AND p.program_id = #{program_id} WHERE (patient_state.voided = 0 AND p.voided = 0
                                             AND p.program_id = #{program_id} AND DATE(start_date) <= visit_date AND p.patient_id = #{patient_id})
@@ -145,15 +145,14 @@ module TBService
       end
 
       def patient_program_start_date
-        program = Program.find_by(name: 'TB PROGRAM')
-        patient_program = PatientProgram.find_by(patient_id: patient.patient_id, program_id: program.program_id)
+        patient_program = PatientProgram.find_by(patient_id: patient.patient_id, program_id: program('TB PROGRAM').program_id)
         return 'N/A' unless patient_program
         patient_program.date_enrolled.to_date
       end
 
       private
         def tb_number_service
-          TbNumberService.new
+          TBService::PatientsEngine.new program: program('TB PROGRAM')
         end
 
     end
