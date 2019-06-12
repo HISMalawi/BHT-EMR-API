@@ -248,6 +248,50 @@ pre code {
         </li>
         
         
+        
+        <li>
+            <a href="#folder-stock-management">Stock Management</a>
+            <ul>
+                
+                <li>
+                    <a href="#request-stock-management-retrieve-all-batches-in-pharmacy-stock">Retrieve all batches in pharmacy stock</a>
+                </li>
+                
+                <li>
+                    <a href="#request-stock-management-create-or-add-items-to-batch">Create or add items to batch</a>
+                </li>
+                
+                <li>
+                    <a href="#request-stock-management-retrieve-specific-pharmacy-batch-item">Retrieve specific pharmacy batch item</a>
+                </li>
+                
+                <li>
+                    <a href="#request-stock-management-retrieve-all-pharmacy-batch-items">Retrieve all pharmacy batch items</a>
+                </li>
+                
+                <li>
+                    <a href="#request-stock-management-update-batch">Update batch</a>
+                </li>
+                
+                <li>
+                    <a href="#request-stock-management-retrieve-batch-by-batch-number">Retrieve batch by batch number</a>
+                </li>
+                
+                <li>
+                    <a href="#request-stock-management-retrieve-earliest-expiring-item">Retrieve earliest expiring item</a>
+                </li>
+                
+                <li>
+                    <a href="#request-stock-management-delete-batch">Delete batch</a>
+                </li>
+                
+                <li>
+                    <a href="#request-stock-management-reallocate-batch-item-to-another-site">Reallocate batch item to another site</a>
+                </li>
+                
+            </ul>
+        </li>
+        
     </ul>
 </div>
 
@@ -7242,6 +7286,1175 @@ Authorization: kqpBzH1K6rYN</code></pre>
                 
 
 
+                
+                
+                <div class="endpoints-group">
+                    <h3 id="folder-stock-management">
+                        Stock Management
+                        <a href="#folder-stock-management"><i class="glyphicon glyphicon-link"></i></a>
+                    </h3>
+
+                    <div></div>
+
+                    
+                    
+                    <div class="request">
+
+                        <h4 id="request-stock-management-retrieve-all-batches-in-pharmacy-stock">
+                            Retrieve all batches in pharmacy stock
+                            <a href="#request-stock-management-retrieve-all-batches-in-pharmacy-stock"><i class="glyphicon glyphicon-link"></i></a>
+                        </h4>
+
+                        <div></div>
+
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                <li role="presentation" class="active"><a href="#request-stock-management-retrieve-all-batches-in-pharmacy-stock-example-curl" data-toggle="tab">Curl</a></li>
+                                <li role="presentation"><a href="#request-stock-management-retrieve-all-batches-in-pharmacy-stock-example-http" data-toggle="tab">HTTP</a></li>
+                            </ul>
+                            <div class="tab-content">
+                                <div class="tab-pane active" id="request-stock-management-retrieve-all-batches-in-pharmacy-stock-example-curl">
+                                    <pre><code class="hljs curl">curl -X GET -H "Authorization: M9mEO1jNftvs" -H "Content-Type: application/json" -H "//Referer: http://localhost:5984" "http://localhost:3000/api/v1/pharmacy/batches"</code></pre>
+                                </div>
+                                <div class="tab-pane" id="request-stock-management-retrieve-all-batches-in-pharmacy-stock-example-http">
+                                    <pre><code class="hljs http">GET /api/v1/pharmacy/batches HTTP/1.1
+Host: localhost:3000
+Authorization: M9mEO1jNftvs
+Content-Type: application/json
+//Referer: http://localhost:5984</code></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                
+                                <li role="presentation" class="active">
+                                    <a href="#request-stock-management-retrieve-all-batches-in-pharmacy-stock-responses-705c4243-8acd-410a-a5ff-47d66f1ccf44" data-toggle="tab">
+                                        
+                                            Response
+                                        
+                                    </a>
+                                </li>
+                                
+                            </ul>
+                            <div class="tab-content">
+                                
+                                <div class="tab-pane active" id="request-stock-management-retrieve-all-batches-in-pharmacy-stock-responses-705c4243-8acd-410a-a5ff-47d66f1ccf44">
+                                    <table class="table table-bordered">
+                                        <tr><th style="width: 20%;">Status</th><td>200 </td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>application/json; charset=utf-8</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>W/"c459a64a2f28f6d2b6e1aaccde88d2ae"</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>max-age=0, private, must-revalidate</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>3e42263f-d773-48b5-adc4-9c2669e83744</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>0.107010</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>Origin</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>chunked</td></tr>
+                                        
+                                        
+                                            
+                                            <tr><td class="response-text-sample" colspan="2">
+                                                <pre><code>[
+    {
+        "id": 1,
+        "batch_number": "1234567890",
+        "creator": 1,
+        "date_created": "2019-05-09T15:01:26.000+02:00",
+        "date_changed": null,
+        "voided": false,
+        "voided_by": null,
+        "void_reason": null,
+        "date_voided": null,
+        "items": [
+            {
+                "id": 1,
+                "pharmacy_batch_id": 1,
+                "drug_id": 901,
+                "delivered_quantity": 1000,
+                "current_quantity": 0,
+                "delivery_date": "2019-05-09",
+                "expiry_date": null,
+                "creator": 1,
+                "date_created": "2019-05-09T15:06:03.000+02:00",
+                "date_changed": "2019-05-09T15:06:03.000+02:00",
+                "voided": false,
+                "voided_by": null,
+                "void_reason": null,
+                "date_voided": null
+            },
+            {
+                "id": 2,
+                "pharmacy_batch_id": 1,
+                "drug_id": 901,
+                "delivered_quantity": 1000,
+                "current_quantity": 0,
+                "delivery_date": "2019-05-09",
+                "expiry_date": null,
+                "creator": 1,
+                "date_created": "2019-05-09T15:06:06.000+02:00",
+                "date_changed": "2019-05-09T15:06:06.000+02:00",
+                "voided": false,
+                "voided_by": null,
+                "void_reason": null,
+                "date_voided": null
+            },
+            {
+                "id": 3,
+                "pharmacy_batch_id": 1,
+                "drug_id": 901,
+                "delivered_quantity": 1000,
+                "current_quantity": 0,
+                "delivery_date": "2019-05-09",
+                "expiry_date": null,
+                "creator": 1,
+                "date_created": "2019-05-09T15:06:08.000+02:00",
+                "date_changed": "2019-05-09T15:06:08.000+02:00",
+                "voided": false,
+                "voided_by": null,
+                "void_reason": null,
+                "date_voided": null
+            },
+            {
+                "id": 4,
+                "pharmacy_batch_id": 1,
+                "drug_id": 901,
+                "delivered_quantity": 1000,
+                "current_quantity": 0,
+                "delivery_date": "2019-05-09",
+                "expiry_date": "2020-12-31",
+                "creator": 1,
+                "date_created": "2019-05-09T15:34:15.000+02:00",
+                "date_changed": "2019-05-09T15:34:15.000+02:00",
+                "voided": false,
+                "voided_by": null,
+                "void_reason": null,
+                "date_voided": null
+            },
+            {
+                "id": 5,
+                "pharmacy_batch_id": 1,
+                "drug_id": 901,
+                "delivered_quantity": 500,
+                "current_quantity": 0,
+                "delivery_date": "2019-05-09",
+                "expiry_date": "2020-12-31",
+                "creator": 1,
+                "date_created": "2019-05-10T01:57:07.000+02:00",
+                "date_changed": "2019-05-10T01:57:07.000+02:00",
+                "voided": false,
+                "voided_by": null,
+                "void_reason": null,
+                "date_voided": null
+            },
+            {
+                "id": 6,
+                "pharmacy_batch_id": 1,
+                "drug_id": 901,
+                "delivered_quantity": 500,
+                "current_quantity": 0,
+                "delivery_date": "2019-05-09",
+                "expiry_date": "2020-12-31",
+                "creator": 1,
+                "date_created": "2019-05-10T01:58:12.000+02:00",
+                "date_changed": "2019-05-10T01:58:12.000+02:00",
+                "voided": false,
+                "voided_by": null,
+                "void_reason": null,
+                "date_voided": null
+            },
+            {
+                "id": 7,
+                "pharmacy_batch_id": 1,
+                "drug_id": 901,
+                "delivered_quantity": 1000,
+                "current_quantity": 0,
+                "delivery_date": "2019-05-09",
+                "expiry_date": "2020-12-31",
+                "creator": 1,
+                "date_created": "2019-05-16T15:21:20.000+02:00",
+                "date_changed": "2019-05-16T15:21:20.000+02:00",
+                "voided": false,
+                "voided_by": null,
+                "void_reason": null,
+                "date_voided": null
+            }
+        ]
+    }
+]</code></pre>
+                                            </td></tr>
+                                            
+                                        
+                                    </table>
+                                </div>
+                                
+                            </div>
+                        </div>
+                        
+
+                        <hr>
+                    </div>
+                    
+                    
+                    <div class="request">
+
+                        <h4 id="request-stock-management-create-or-add-items-to-batch">
+                            Create or add items to batch
+                            <a href="#request-stock-management-create-or-add-items-to-batch"><i class="glyphicon glyphicon-link"></i></a>
+                        </h4>
+
+                        <div></div>
+
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                <li role="presentation" class="active"><a href="#request-stock-management-create-or-add-items-to-batch-example-curl" data-toggle="tab">Curl</a></li>
+                                <li role="presentation"><a href="#request-stock-management-create-or-add-items-to-batch-example-http" data-toggle="tab">HTTP</a></li>
+                            </ul>
+                            <div class="tab-content">
+                                <div class="tab-pane active" id="request-stock-management-create-or-add-items-to-batch-example-curl">
+                                    <pre><code class="hljs curl">curl -X POST -H "Authorization: M9mEO1jNftvs" -H "Content-Type: application/json" -d '{
+	"batch_number": "1234567890",
+	"items": [{"drug_id": 901, "quantity": 1000, "expiry_date": "2020-12-31", "delivery_date": "2019-05-09"}]
+}' "http://localhost:3000/api/v1/pharmacy/batches"</code></pre>
+                                </div>
+                                <div class="tab-pane" id="request-stock-management-create-or-add-items-to-batch-example-http">
+                                    <pre><code class="hljs http">POST /api/v1/pharmacy/batches HTTP/1.1
+Host: localhost:3000
+Authorization: M9mEO1jNftvs
+Content-Type: application/json
+
+{
+	"batch_number": "1234567890",
+	"items": [{"drug_id": 901, "quantity": 1000, "expiry_date": "2020-12-31", "delivery_date": "2019-05-09"}]
+}</code></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                
+                                <li role="presentation" class="active">
+                                    <a href="#request-stock-management-create-or-add-items-to-batch-responses-31bf38e7-1c8f-4e51-88ab-15f84aa273ac" data-toggle="tab">
+                                        
+                                            Response
+                                        
+                                    </a>
+                                </li>
+                                
+                            </ul>
+                            <div class="tab-content">
+                                
+                                <div class="tab-pane active" id="request-stock-management-create-or-add-items-to-batch-responses-31bf38e7-1c8f-4e51-88ab-15f84aa273ac">
+                                    <table class="table table-bordered">
+                                        <tr><th style="width: 20%;">Status</th><td>201 </td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>application/json; charset=utf-8</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>W/"9247348e0b615145b43e58086788fa2c"</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>max-age=0, private, must-revalidate</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>c20b8b6c-cac5-4db3-8a32-d881f429bff9</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>0.348698</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>Origin</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>chunked</td></tr>
+                                        
+                                        
+                                            
+                                            <tr><td class="response-text-sample" colspan="2">
+                                                <pre><code>{
+    "id": 2,
+    "batch_number": "1234567890",
+    "creator": 1,
+    "date_created": "2019-05-17T09:11:03.000+02:00",
+    "date_changed": null,
+    "voided": false,
+    "voided_by": null,
+    "void_reason": null,
+    "date_voided": null,
+    "items": [
+        {
+            "id": 9,
+            "pharmacy_batch_id": 2,
+            "drug_id": 901,
+            "delivered_quantity": 1000,
+            "current_quantity": 0,
+            "delivery_date": "2019-05-09",
+            "expiry_date": "2020-12-31",
+            "creator": 1,
+            "date_created": "2019-05-17T09:11:03.000+02:00",
+            "date_changed": "2019-05-17T09:11:03.000+02:00",
+            "voided": false,
+            "voided_by": null,
+            "void_reason": null,
+            "date_voided": null
+        }
+    ]
+}</code></pre>
+                                            </td></tr>
+                                            
+                                        
+                                    </table>
+                                </div>
+                                
+                            </div>
+                        </div>
+                        
+
+                        <hr>
+                    </div>
+                    
+                    
+                    <div class="request">
+
+                        <h4 id="request-stock-management-retrieve-specific-pharmacy-batch-item">
+                            Retrieve specific pharmacy batch item
+                            <a href="#request-stock-management-retrieve-specific-pharmacy-batch-item"><i class="glyphicon glyphicon-link"></i></a>
+                        </h4>
+
+                        <div></div>
+
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                <li role="presentation" class="active"><a href="#request-stock-management-retrieve-specific-pharmacy-batch-item-example-curl" data-toggle="tab">Curl</a></li>
+                                <li role="presentation"><a href="#request-stock-management-retrieve-specific-pharmacy-batch-item-example-http" data-toggle="tab">HTTP</a></li>
+                            </ul>
+                            <div class="tab-content">
+                                <div class="tab-pane active" id="request-stock-management-retrieve-specific-pharmacy-batch-item-example-curl">
+                                    <pre><code class="hljs curl">curl -X GET -H "Authorization: M9mEO1jNftvs" "http://localhost:3000/api/v1/pharmacy/items/9"</code></pre>
+                                </div>
+                                <div class="tab-pane" id="request-stock-management-retrieve-specific-pharmacy-batch-item-example-http">
+                                    <pre><code class="hljs http">GET /api/v1/pharmacy/items/9 HTTP/1.1
+Host: localhost:3000
+Authorization: M9mEO1jNftvs</code></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                
+                                <li role="presentation" class="active">
+                                    <a href="#request-stock-management-retrieve-specific-pharmacy-batch-item-responses-2acb4bf3-c37a-44ab-90ae-d179fdee675a" data-toggle="tab">
+                                        
+                                            Response
+                                        
+                                    </a>
+                                </li>
+                                
+                            </ul>
+                            <div class="tab-content">
+                                
+                                <div class="tab-pane active" id="request-stock-management-retrieve-specific-pharmacy-batch-item-responses-2acb4bf3-c37a-44ab-90ae-d179fdee675a">
+                                    <table class="table table-bordered">
+                                        <tr><th style="width: 20%;">Status</th><td>200 </td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>application/json; charset=utf-8</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>W/"86daa0fe67078d5d4f84c41a1bbb1339"</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>max-age=0, private, must-revalidate</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>0afb6b02-be72-47e4-b939-266e90e73db6</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>0.007616</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>Origin</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>chunked</td></tr>
+                                        
+                                        
+                                            
+                                            <tr><td class="response-text-sample" colspan="2">
+                                                <pre><code>{
+    "id": 9,
+    "pharmacy_batch_id": 2,
+    "drug_id": 901,
+    "delivered_quantity": 1000,
+    "current_quantity": 0,
+    "delivery_date": "2019-05-09",
+    "expiry_date": "2020-12-31",
+    "creator": 1,
+    "date_created": "2019-05-17T09:11:03.000+02:00",
+    "date_changed": "2019-05-17T09:11:03.000+02:00",
+    "voided": false,
+    "voided_by": null,
+    "void_reason": null,
+    "date_voided": null
+}</code></pre>
+                                            </td></tr>
+                                            
+                                        
+                                    </table>
+                                </div>
+                                
+                            </div>
+                        </div>
+                        
+
+                        <hr>
+                    </div>
+                    
+                    
+                    <div class="request">
+
+                        <h4 id="request-stock-management-retrieve-all-pharmacy-batch-items">
+                            Retrieve all pharmacy batch items
+                            <a href="#request-stock-management-retrieve-all-pharmacy-batch-items"><i class="glyphicon glyphicon-link"></i></a>
+                        </h4>
+
+                        <div></div>
+
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                <li role="presentation" class="active"><a href="#request-stock-management-retrieve-all-pharmacy-batch-items-example-curl" data-toggle="tab">Curl</a></li>
+                                <li role="presentation"><a href="#request-stock-management-retrieve-all-pharmacy-batch-items-example-http" data-toggle="tab">HTTP</a></li>
+                            </ul>
+                            <div class="tab-content">
+                                <div class="tab-pane active" id="request-stock-management-retrieve-all-pharmacy-batch-items-example-curl">
+                                    <pre><code class="hljs curl">curl -X GET -H "Authorization: M9mEO1jNftvs" "http://localhost:3000/api/v1/pharmacy/items?drug_id=901"</code></pre>
+                                </div>
+                                <div class="tab-pane" id="request-stock-management-retrieve-all-pharmacy-batch-items-example-http">
+                                    <pre><code class="hljs http">GET /api/v1/pharmacy/items?drug_id=901 HTTP/1.1
+Host: localhost:3000
+Authorization: M9mEO1jNftvs</code></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                
+                                <li role="presentation" class="active">
+                                    <a href="#request-stock-management-retrieve-all-pharmacy-batch-items-responses-12b7b296-4ac8-4736-87bf-8de256e309ef" data-toggle="tab">
+                                        
+                                            Retrieve all pharmacy batch items
+                                        
+                                    </a>
+                                </li>
+                                
+                                <li role="presentation">
+                                    <a href="#request-stock-management-retrieve-all-pharmacy-batch-items-responses-59455420-ebe3-4840-b26c-4db07e8456c6" data-toggle="tab">
+                                        
+                                            Retrieve all pharmacy batch items
+                                        
+                                    </a>
+                                </li>
+                                
+                                <li role="presentation">
+                                    <a href="#request-stock-management-retrieve-all-pharmacy-batch-items-responses-5b8adfa9-3acf-4489-9e9d-5a161a7dedef" data-toggle="tab">
+                                        
+                                            Retrieve all pharmacy batch items
+                                        
+                                    </a>
+                                </li>
+                                
+                            </ul>
+                            <div class="tab-content">
+                                
+                                <div class="tab-pane active" id="request-stock-management-retrieve-all-pharmacy-batch-items-responses-12b7b296-4ac8-4736-87bf-8de256e309ef">
+                                    <table class="table table-bordered">
+                                        <tr><th style="width: 20%;">Status</th><td>200 </td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>application/json; charset=utf-8</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>W/"6fff4b375c99204f2bc224f2c26661a5"</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>max-age=0, private, must-revalidate</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>db397909-6107-4f7b-89f0-69cfdb8ace9b</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>0.042295</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>Origin</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>chunked</td></tr>
+                                        
+                                        
+                                            
+                                            <tr><td class="response-text-sample" colspan="2">
+                                                <pre><code>[
+    {
+        "id": 10,
+        "pharmacy_batch_id": 2,
+        "drug_id": 901,
+        "delivered_quantity": 500,
+        "current_quantity": 0,
+        "delivery_date": "2019-05-09",
+        "expiry_date": "2020-12-31",
+        "creator": 1,
+        "date_created": "2019-05-17T09:11:58.000+02:00",
+        "date_changed": "2019-05-17T09:11:58.000+02:00",
+        "voided": false,
+        "voided_by": null,
+        "void_reason": null,
+        "date_voided": null
+    },
+    {
+        "id": 9,
+        "pharmacy_batch_id": 2,
+        "drug_id": 901,
+        "delivered_quantity": 1000,
+        "current_quantity": 0,
+        "delivery_date": "2019-05-09",
+        "expiry_date": "2020-12-31",
+        "creator": 1,
+        "date_created": "2019-05-17T09:11:03.000+02:00",
+        "date_changed": "2019-05-17T09:11:03.000+02:00",
+        "voided": false,
+        "voided_by": null,
+        "void_reason": null,
+        "date_voided": null
+    }
+]</code></pre>
+                                            </td></tr>
+                                            
+                                        
+                                    </table>
+                                </div>
+                                
+                                <div class="tab-pane" id="request-stock-management-retrieve-all-pharmacy-batch-items-responses-59455420-ebe3-4840-b26c-4db07e8456c6">
+                                    <table class="table table-bordered">
+                                        <tr><th style="width: 20%;">Status</th><td>200 </td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>application/json; charset=utf-8</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>W/"6fff4b375c99204f2bc224f2c26661a5"</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>max-age=0, private, must-revalidate</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>db397909-6107-4f7b-89f0-69cfdb8ace9b</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>0.042295</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>Origin</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>chunked</td></tr>
+                                        
+                                        
+                                            
+                                            <tr><td class="response-text-sample" colspan="2">
+                                                <pre><code>[
+    {
+        "id": 10,
+        "pharmacy_batch_id": 2,
+        "drug_id": 901,
+        "delivered_quantity": 500,
+        "current_quantity": 0,
+        "delivery_date": "2019-05-09",
+        "expiry_date": "2020-12-31",
+        "creator": 1,
+        "date_created": "2019-05-17T09:11:58.000+02:00",
+        "date_changed": "2019-05-17T09:11:58.000+02:00",
+        "voided": false,
+        "voided_by": null,
+        "void_reason": null,
+        "date_voided": null
+    },
+    {
+        "id": 9,
+        "pharmacy_batch_id": 2,
+        "drug_id": 901,
+        "delivered_quantity": 1000,
+        "current_quantity": 0,
+        "delivery_date": "2019-05-09",
+        "expiry_date": "2020-12-31",
+        "creator": 1,
+        "date_created": "2019-05-17T09:11:03.000+02:00",
+        "date_changed": "2019-05-17T09:11:03.000+02:00",
+        "voided": false,
+        "voided_by": null,
+        "void_reason": null,
+        "date_voided": null
+    }
+]</code></pre>
+                                            </td></tr>
+                                            
+                                        
+                                    </table>
+                                </div>
+                                
+                                <div class="tab-pane" id="request-stock-management-retrieve-all-pharmacy-batch-items-responses-5b8adfa9-3acf-4489-9e9d-5a161a7dedef">
+                                    <table class="table table-bordered">
+                                        <tr><th style="width: 20%;">Status</th><td>200 </td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>application/json; charset=utf-8</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>W/"6fff4b375c99204f2bc224f2c26661a5"</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>max-age=0, private, must-revalidate</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>db397909-6107-4f7b-89f0-69cfdb8ace9b</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>0.042295</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>Origin</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>chunked</td></tr>
+                                        
+                                        
+                                            
+                                            <tr><td class="response-text-sample" colspan="2">
+                                                <pre><code>[
+    {
+        "id": 10,
+        "pharmacy_batch_id": 2,
+        "drug_id": 901,
+        "delivered_quantity": 500,
+        "current_quantity": 0,
+        "delivery_date": "2019-05-09",
+        "expiry_date": "2020-12-31",
+        "creator": 1,
+        "date_created": "2019-05-17T09:11:58.000+02:00",
+        "date_changed": "2019-05-17T09:11:58.000+02:00",
+        "voided": false,
+        "voided_by": null,
+        "void_reason": null,
+        "date_voided": null
+    },
+    {
+        "id": 9,
+        "pharmacy_batch_id": 2,
+        "drug_id": 901,
+        "delivered_quantity": 1000,
+        "current_quantity": 0,
+        "delivery_date": "2019-05-09",
+        "expiry_date": "2020-12-31",
+        "creator": 1,
+        "date_created": "2019-05-17T09:11:03.000+02:00",
+        "date_changed": "2019-05-17T09:11:03.000+02:00",
+        "voided": false,
+        "voided_by": null,
+        "void_reason": null,
+        "date_voided": null
+    }
+]</code></pre>
+                                            </td></tr>
+                                            
+                                        
+                                    </table>
+                                </div>
+                                
+                            </div>
+                        </div>
+                        
+
+                        <hr>
+                    </div>
+                    
+                    
+                    <div class="request">
+
+                        <h4 id="request-stock-management-update-batch">
+                            Update batch
+                            <a href="#request-stock-management-update-batch"><i class="glyphicon glyphicon-link"></i></a>
+                        </h4>
+
+                        <div></div>
+
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                <li role="presentation" class="active"><a href="#request-stock-management-update-batch-example-curl" data-toggle="tab">Curl</a></li>
+                                <li role="presentation"><a href="#request-stock-management-update-batch-example-http" data-toggle="tab">HTTP</a></li>
+                            </ul>
+                            <div class="tab-content">
+                                <div class="tab-pane active" id="request-stock-management-update-batch-example-curl">
+                                    <pre><code class="hljs curl">curl -X PUT -H "Content-Type: application/json" -H "Authorization: M9mEO1jNftvs" -d '{
+	"items": [{"drug_id": 901, "quantity": 500, "expiry_date": "2020-12-31", "delivery_date": "2019-05-09"}]
+}' "http://localhost:3000/api/v1/pharmacy/batches/1234567890"</code></pre>
+                                </div>
+                                <div class="tab-pane" id="request-stock-management-update-batch-example-http">
+                                    <pre><code class="hljs http">PUT /api/v1/pharmacy/batches/1234567890 HTTP/1.1
+Host: localhost:3000
+Content-Type: application/json
+Authorization: M9mEO1jNftvs
+
+{
+	"items": [{"drug_id": 901, "quantity": 500, "expiry_date": "2020-12-31", "delivery_date": "2019-05-09"}]
+}</code></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                
+                                <li role="presentation" class="active">
+                                    <a href="#request-stock-management-update-batch-responses-c84df620-07df-44ce-9434-d94987698d92" data-toggle="tab">
+                                        
+                                            Response
+                                        
+                                    </a>
+                                </li>
+                                
+                            </ul>
+                            <div class="tab-content">
+                                
+                                <div class="tab-pane active" id="request-stock-management-update-batch-responses-c84df620-07df-44ce-9434-d94987698d92">
+                                    <table class="table table-bordered">
+                                        <tr><th style="width: 20%;">Status</th><td>201 </td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>application/json; charset=utf-8</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>W/"44875dbaf028a4f718ba3b86496ad641"</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>max-age=0, private, must-revalidate</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>e7ca64f5-c24b-4437-b5b8-db973b4870bf</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>0.036926</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>Origin</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>chunked</td></tr>
+                                        
+                                        
+                                            
+                                            <tr><td class="response-text-sample" colspan="2">
+                                                <pre><code>{
+    "id": 2,
+    "batch_number": "1234567890",
+    "creator": 1,
+    "date_created": "2019-05-17T09:11:03.000+02:00",
+    "date_changed": null,
+    "voided": false,
+    "voided_by": null,
+    "void_reason": null,
+    "date_voided": null,
+    "items": [
+        {
+            "id": 9,
+            "pharmacy_batch_id": 2,
+            "drug_id": 901,
+            "delivered_quantity": 1000,
+            "current_quantity": 0,
+            "delivery_date": "2019-05-09",
+            "expiry_date": "2020-12-31",
+            "creator": 1,
+            "date_created": "2019-05-17T09:11:03.000+02:00",
+            "date_changed": "2019-05-17T09:11:03.000+02:00",
+            "voided": false,
+            "voided_by": null,
+            "void_reason": null,
+            "date_voided": null
+        },
+        {
+            "id": 10,
+            "pharmacy_batch_id": 2,
+            "drug_id": 901,
+            "delivered_quantity": 500,
+            "current_quantity": 0,
+            "delivery_date": "2019-05-09",
+            "expiry_date": "2020-12-31",
+            "creator": 1,
+            "date_created": "2019-05-17T09:11:58.000+02:00",
+            "date_changed": "2019-05-17T09:11:58.000+02:00",
+            "voided": false,
+            "voided_by": null,
+            "void_reason": null,
+            "date_voided": null
+        }
+    ]
+}</code></pre>
+                                            </td></tr>
+                                            
+                                        
+                                    </table>
+                                </div>
+                                
+                            </div>
+                        </div>
+                        
+
+                        <hr>
+                    </div>
+                    
+                    
+                    <div class="request">
+
+                        <h4 id="request-stock-management-retrieve-batch-by-batch-number">
+                            Retrieve batch by batch number
+                            <a href="#request-stock-management-retrieve-batch-by-batch-number"><i class="glyphicon glyphicon-link"></i></a>
+                        </h4>
+
+                        <div></div>
+
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                <li role="presentation" class="active"><a href="#request-stock-management-retrieve-batch-by-batch-number-example-curl" data-toggle="tab">Curl</a></li>
+                                <li role="presentation"><a href="#request-stock-management-retrieve-batch-by-batch-number-example-http" data-toggle="tab">HTTP</a></li>
+                            </ul>
+                            <div class="tab-content">
+                                <div class="tab-pane active" id="request-stock-management-retrieve-batch-by-batch-number-example-curl">
+                                    <pre><code class="hljs curl">curl -X GET -H "Authorization: M9mEO1jNftvs" "http://localhost:3000/api/v1/pharmacy/batches/1234567890"</code></pre>
+                                </div>
+                                <div class="tab-pane" id="request-stock-management-retrieve-batch-by-batch-number-example-http">
+                                    <pre><code class="hljs http">GET /api/v1/pharmacy/batches/1234567890 HTTP/1.1
+Host: localhost:3000
+Authorization: M9mEO1jNftvs</code></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                
+                                <li role="presentation" class="active">
+                                    <a href="#request-stock-management-retrieve-batch-by-batch-number-responses-474545d6-fbf8-405f-bb13-048bbeb5bdc6" data-toggle="tab">
+                                        
+                                            Response
+                                        
+                                    </a>
+                                </li>
+                                
+                            </ul>
+                            <div class="tab-content">
+                                
+                                <div class="tab-pane active" id="request-stock-management-retrieve-batch-by-batch-number-responses-474545d6-fbf8-405f-bb13-048bbeb5bdc6">
+                                    <table class="table table-bordered">
+                                        <tr><th style="width: 20%;">Status</th><td>200 </td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>application/json; charset=utf-8</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>W/"9247348e0b615145b43e58086788fa2c"</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>max-age=0, private, must-revalidate</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>c075f4a2-d481-44c1-a607-a3306ad571d8</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>0.024095</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>Origin</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>chunked</td></tr>
+                                        
+                                        
+                                            
+                                            <tr><td class="response-text-sample" colspan="2">
+                                                <pre><code>{
+    "id": 2,
+    "batch_number": "1234567890",
+    "creator": 1,
+    "date_created": "2019-05-17T09:11:03.000+02:00",
+    "date_changed": null,
+    "voided": false,
+    "voided_by": null,
+    "void_reason": null,
+    "date_voided": null,
+    "items": [
+        {
+            "id": 9,
+            "pharmacy_batch_id": 2,
+            "drug_id": 901,
+            "delivered_quantity": 1000,
+            "current_quantity": 0,
+            "delivery_date": "2019-05-09",
+            "expiry_date": "2020-12-31",
+            "creator": 1,
+            "date_created": "2019-05-17T09:11:03.000+02:00",
+            "date_changed": "2019-05-17T09:11:03.000+02:00",
+            "voided": false,
+            "voided_by": null,
+            "void_reason": null,
+            "date_voided": null
+        }
+    ]
+}</code></pre>
+                                            </td></tr>
+                                            
+                                        
+                                    </table>
+                                </div>
+                                
+                            </div>
+                        </div>
+                        
+
+                        <hr>
+                    </div>
+                    
+                    
+                    <div class="request">
+
+                        <h4 id="request-stock-management-retrieve-earliest-expiring-item">
+                            Retrieve earliest expiring item
+                            <a href="#request-stock-management-retrieve-earliest-expiring-item"><i class="glyphicon glyphicon-link"></i></a>
+                        </h4>
+
+                        <div></div>
+
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                <li role="presentation" class="active"><a href="#request-stock-management-retrieve-earliest-expiring-item-example-curl" data-toggle="tab">Curl</a></li>
+                                <li role="presentation"><a href="#request-stock-management-retrieve-earliest-expiring-item-example-http" data-toggle="tab">HTTP</a></li>
+                            </ul>
+                            <div class="tab-content">
+                                <div class="tab-pane active" id="request-stock-management-retrieve-earliest-expiring-item-example-curl">
+                                    <pre><code class="hljs curl">curl -X GET -H "Authorization: 58L9eHzOh7Mi" "http://localhost:3000/api/v1/pharmacy/earliest_expiring_item "</code></pre>
+                                </div>
+                                <div class="tab-pane" id="request-stock-management-retrieve-earliest-expiring-item-example-http">
+                                    <pre><code class="hljs http">GET /api/v1/pharmacy/earliest_expiring_item%20 HTTP/1.1
+Host: localhost:3000
+Authorization: 58L9eHzOh7Mi</code></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                
+                                <li role="presentation" class="active">
+                                    <a href="#request-stock-management-retrieve-earliest-expiring-item-responses-fece7fef-9aa8-4062-a1f7-53114f1318c6" data-toggle="tab">
+                                        
+                                            Response
+                                        
+                                    </a>
+                                </li>
+                                
+                            </ul>
+                            <div class="tab-content">
+                                
+                                <div class="tab-pane active" id="request-stock-management-retrieve-earliest-expiring-item-responses-fece7fef-9aa8-4062-a1f7-53114f1318c6">
+                                    <table class="table table-bordered">
+                                        <tr><th style="width: 20%;">Status</th><td>200 </td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>application/json; charset=utf-8</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>W/"c72960b0169371af80f87b9f7f70972c"</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>max-age=0, private, must-revalidate</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>8effb353-b0d7-41e1-b4a3-3c76d2c525ce</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>0.048205</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>Origin</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>chunked</td></tr>
+                                        
+                                        
+                                            
+                                            <tr><td class="response-text-sample" colspan="2">
+                                                <pre><code>{
+    "id": 1,
+    "pharmacy_batch_id": 1,
+    "drug_id": 901,
+    "delivered_quantity": 1000,
+    "current_quantity": 0,
+    "delivery_date": "2019-05-09",
+    "expiry_date": null,
+    "creator": 1,
+    "date_created": "2019-05-09T15:06:03.000+02:00",
+    "date_changed": "2019-05-09T15:06:03.000+02:00",
+    "voided": false,
+    "voided_by": null,
+    "void_reason": null,
+    "date_voided": null
+}</code></pre>
+                                            </td></tr>
+                                            
+                                        
+                                    </table>
+                                </div>
+                                
+                            </div>
+                        </div>
+                        
+
+                        <hr>
+                    </div>
+                    
+                    
+                    <div class="request">
+
+                        <h4 id="request-stock-management-delete-batch">
+                            Delete batch
+                            <a href="#request-stock-management-delete-batch"><i class="glyphicon glyphicon-link"></i></a>
+                        </h4>
+
+                        <div></div>
+
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                <li role="presentation" class="active"><a href="#request-stock-management-delete-batch-example-curl" data-toggle="tab">Curl</a></li>
+                                <li role="presentation"><a href="#request-stock-management-delete-batch-example-http" data-toggle="tab">HTTP</a></li>
+                            </ul>
+                            <div class="tab-content">
+                                <div class="tab-pane active" id="request-stock-management-delete-batch-example-curl">
+                                    <pre><code class="hljs curl">curl -X DELETE -H "Authorization: M9mEO1jNftvs" "http://localhost:3000/api/v1/pharmacy/batches/1234567890?reason=I+Hate+This+Batch"</code></pre>
+                                </div>
+                                <div class="tab-pane" id="request-stock-management-delete-batch-example-http">
+                                    <pre><code class="hljs http">DELETE /api/v1/pharmacy/batches/1234567890?reason=I+Hate+This+Batch HTTP/1.1
+Host: localhost:3000
+Authorization: M9mEO1jNftvs</code></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+
+                        <hr>
+                    </div>
+                    
+                    
+                    <div class="request">
+
+                        <h4 id="request-stock-management-reallocate-batch-item-to-another-site">
+                            Reallocate batch item to another site
+                            <a href="#request-stock-management-reallocate-batch-item-to-another-site"><i class="glyphicon glyphicon-link"></i></a>
+                        </h4>
+
+                        <div></div>
+
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                <li role="presentation" class="active"><a href="#request-stock-management-reallocate-batch-item-to-another-site-example-curl" data-toggle="tab">Curl</a></li>
+                                <li role="presentation"><a href="#request-stock-management-reallocate-batch-item-to-another-site-example-http" data-toggle="tab">HTTP</a></li>
+                            </ul>
+                            <div class="tab-content">
+                                <div class="tab-pane active" id="request-stock-management-reallocate-batch-item-to-another-site-example-curl">
+                                    <pre><code class="hljs curl">curl -X POST -H "Content-Type: application/json" -H "Authorization: 58L9eHzOh7Mi" -d '{
+	"reallocation_code": "1234567890",
+	"quantity": 0,
+	"location_id": 701
+}' "http://localhost:3000/api/v1/pharmacy/items/5/reallocate"</code></pre>
+                                </div>
+                                <div class="tab-pane" id="request-stock-management-reallocate-batch-item-to-another-site-example-http">
+                                    <pre><code class="hljs http">POST /api/v1/pharmacy/items/5/reallocate HTTP/1.1
+Host: localhost:3000
+Content-Type: application/json
+Authorization: 58L9eHzOh7Mi
+
+{
+	"reallocation_code": "1234567890",
+	"quantity": 0,
+	"location_id": 701
+}</code></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                
+                                <li role="presentation" class="active">
+                                    <a href="#request-stock-management-reallocate-batch-item-to-another-site-responses-032bba4e-6782-4d7a-bc10-86b7a9030db4" data-toggle="tab">
+                                        
+                                            Reallocate batch item to another site
+                                        
+                                    </a>
+                                </li>
+                                
+                                <li role="presentation">
+                                    <a href="#request-stock-management-reallocate-batch-item-to-another-site-responses-df3cc829-f590-4bbb-9dd6-bcc6ffc15bc6" data-toggle="tab">
+                                        
+                                            Reallocate batch item to another site
+                                        
+                                    </a>
+                                </li>
+                                
+                            </ul>
+                            <div class="tab-content">
+                                
+                                <div class="tab-pane active" id="request-stock-management-reallocate-batch-item-to-another-site-responses-032bba4e-6782-4d7a-bc10-86b7a9030db4">
+                                    <table class="table table-bordered">
+                                        <tr><th style="width: 20%;">Status</th><td>201 </td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>application/json; charset=utf-8</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>W/"5bbbc83f4a4e5bf94f264e571548ab1e"</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>max-age=0, private, must-revalidate</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>f7441784-ef67-43e4-abad-acb865f3a1c2</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>0.843913</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>Origin</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>chunked</td></tr>
+                                        
+                                        
+                                            
+                                            <tr><td class="response-text-sample" colspan="2">
+                                                <pre><code>{
+    "id": 1,
+    "reallocation_code": "1234567890",
+    "batch_item_id": 5,
+    "quantity": 0,
+    "location_id": 701,
+    "created_at": "2019-05-16T15:56:16.000+02:00",
+    "updated_at": "2019-05-16T15:56:16.000+02:00"
+}</code></pre>
+                                            </td></tr>
+                                            
+                                        
+                                    </table>
+                                </div>
+                                
+                                <div class="tab-pane" id="request-stock-management-reallocate-batch-item-to-another-site-responses-df3cc829-f590-4bbb-9dd6-bcc6ffc15bc6">
+                                    <table class="table table-bordered">
+                                        <tr><th style="width: 20%;">Status</th><td>201 </td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>application/json; charset=utf-8</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>W/"5bbbc83f4a4e5bf94f264e571548ab1e"</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>max-age=0, private, must-revalidate</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>f7441784-ef67-43e4-abad-acb865f3a1c2</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>0.843913</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>Origin</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>chunked</td></tr>
+                                        
+                                        
+                                            
+                                            <tr><td class="response-text-sample" colspan="2">
+                                                <pre><code>{
+    "id": 1,
+    "reallocation_code": "1234567890",
+    "batch_item_id": 5,
+    "quantity": 0,
+    "location_id": 701,
+    "created_at": "2019-05-16T15:56:16.000+02:00",
+    "updated_at": "2019-05-16T15:56:16.000+02:00"
+}</code></pre>
+                                            </td></tr>
+                                            
+                                        
+                                    </table>
+                                </div>
+                                
+                            </div>
+                        </div>
+                        
+
+                        <hr>
+                    </div>
+                    
+
+                </div>
                 
             </div>
         </div>

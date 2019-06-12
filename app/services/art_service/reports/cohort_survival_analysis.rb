@@ -14,7 +14,7 @@ module ARTService
 
       def survival_analysis(quarter, age_group)
         art_service = ARTService::Reports::CohortDisaggregated.new(name: 'survival_analysis', 
-          type: 'survival_analysis', start_date: Date.today, end_date: Date.today, rebuild: false)
+          type: 'survival_analysis', start_date: Date.today, end_date: Date.today)
         
         start_date, end_date = art_service.generate_start_date_and_end_date(quarter) 
         art_service = ARTService::Reports::CohortBuilder.new()
@@ -27,7 +27,7 @@ module ARTService
         quarters = []
         no_data = false
         art_service = ARTService::Reports::CohortDisaggregated.new(name: 'survival_analysis', 
-          type: 'survival_analysis', start_date: Date.today, end_date: Date.today, rebuild: false)
+          type: 'survival_analysis', start_date: Date.today, end_date: Date.today)
         
         qtr = quarter.split(' ')[0]
         results = {}
@@ -88,7 +88,7 @@ EOF
 
       def append_last_six_months(quarter, results, end_date)
         art_service = ARTService::Reports::CohortDisaggregated.new(name: 'survival_analysis', 
-          type: 'survival_analysis', start_date: Date.today, end_date: Date.today, rebuild: false)
+          type: 'survival_analysis', start_date: Date.today, end_date: Date.today)
         
         qstart_date, qend_date = art_service.generate_start_date_and_end_date(quarter)
         qstart_date = qstart_date - 6.month
