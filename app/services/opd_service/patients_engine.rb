@@ -20,4 +20,5 @@ class OPDService::PatientsEngine
   def patient_summary(patient, date)
     PatientSummary.new patient, date
   end
+
 end
