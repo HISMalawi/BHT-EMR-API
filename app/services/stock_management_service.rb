@@ -144,36 +144,6 @@ class StockManagementService
     end
   end
 
-  private
-
-  def find_or_create_batch(batch_number)
-    batch = PharmacyBatch.find_by_batch_number(batch_number)
-    return batch if batch
-
-    PharmacyBatch.create(batch_number: batch_number)
-  end
-
-  def create_batch_item(batch, drug_id, quantity, delivery_date, expiry_date)
-    quantity = quantity.to_f
-
-    PharmacyBatchItem.create(
-      batch: batch,
-      drug_id: drug_id.to_i,
-      delivered_quantity: quantity,
-      current_quantity: quantity,
-      delivery_date: delivery_date,
-      expiry_date: expiry_date
-    )
-  end
-
-  def create_pharmacy_event(activity_name, date = nil)
-    date ||= Date.today
-    type = PharmacyActivityType.find_by_name(activity_name)
-    raise "Invalid pharmacy activity name: #{activity_name}" unless type
-
-    PharmacyActivity.create(type: type, date: date)
-  end
-
   def commit_transaction(batch_item, event_name, quantity, date = nil, update_item: false)
     ActiveRecord::Base.transaction do
       date ||= Date.today
@@ -200,6 +170,28 @@ class StockManagementService
 
       { event: event, target_item: batch_item }
     end
+  end
+
+  private
+
+  def find_or_create_batch(batch_number)
+    batch = PharmacyBatch.find_by_batch_number(batch_number)
+    return batch if batch
+
+    PharmacyBatch.create(batch_number: batch_number)
+  end
+
+  def create_batch_item(batch, drug_id, quantity, delivery_date, expiry_date)
+    quantity = quantity.to_f
+
+    PharmacyBatchItem.create(
+      batch: batch,
+      drug_id: drug_id.to_i,
+      delivered_quantity: quantity,
+      current_quantity: quantity,
+      delivery_date: delivery_date,
+      expiry_date: expiry_date
+    )
   end
 
   def pharmacy_event_type(event_name)
