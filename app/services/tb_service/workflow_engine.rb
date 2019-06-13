@@ -147,6 +147,12 @@ module TBService
         when /Appointment/i
           APPOINTMENT
         else
+        when /TB Registration/i
+          TB_REGISTRATION
+        else
+        when /TB Reception/i
+          TB_RECEPTION
+        else
           Rails.logger.warn "Invalid TB activity in user properties: #{activity}"
         end
       end
