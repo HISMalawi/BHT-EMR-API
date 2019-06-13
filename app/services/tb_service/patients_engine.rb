@@ -66,47 +66,52 @@ module TBService
       #TB registration
 
       def assign_tb_number(patient_id, date)
-        PatientIdentifier.create(
-          identifier: generate_tb_number(date),
-          type: patient_identifier_type(TB_NUMBER_IDENTIFIER_NAME),
-          patient_id: patient_id,
-          location_id: Location.current.location_id,
-          date_created: date
-        )
-      end
-
-      def assign_ipt_number(patient_id, date)
-        PatientIdentifier.create(
-          identifier: generate_ipt_number(date),
-          type: patient_identifier_type(IPT_NUMBER_IDENTIFIER_NAME),
-          patient_id: patient_id,
-          location_id: Location.current.location_id,
-          date_created: date
-        )
+        person = Person.find_by(person_id: patient_id)
+        if regimen_engine.is_eligible_for_ipt?(person: person)
+          PatientIdentifier.create(
+            identifier: generate_ipt_number(date),
+            type: patient_identifier_type(IPT_NUMBER_IDENTIFIER_NAME),
+            patient_id: patient_id,
+            location_id: Location.current.location_id,
+            date_created: date
+          )
+        else
+          PatientIdentifier.create(
+            identifier: generate_tb_number(date),
+            type: patient_identifier_type(TB_NUMBER_IDENTIFIER_NAME),
+            patient_id: patient_id,
+            location_id: Location.current.location_id,
+            date_created: date
+          )
+        end
       end
 
       def get_tb_number(patient_id)
-        patient_identifier = PatientIdentifier.where(
+        tb_number = PatientIdentifier.where(
           type: patient_identifier_type(TB_NUMBER_IDENTIFIER_NAME),
           patient_id: patient_id
         )
         .order(date_created: :desc)
         .first
-      end
 
-      def get_ipt_number(patient_id)
-        patient_identifier = PatientIdentifier.where(
+        ipt_number = PatientIdentifier.where(
           type: patient_identifier_type(IPT_NUMBER_IDENTIFIER_NAME),
           patient_id: patient_id
         )
         .order(date_created: :desc)
         .first
+
+        (tb_number || ipt_number)
       end
 
 			private
 
 			def patient_summary(patient, date)
 				TBService::PatientSummary.new patient, date
+      end
+
+      def regimen_engine
+				TBService::RegimenEngine.new program: program('TB PROGRAM')
       end
 
       #TB registration
