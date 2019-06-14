@@ -56,37 +56,33 @@ module ARTService
       # Make sure it has been stated explicitly that drug are getting prescribed
       # to this patient
       prescribe_drugs = Observation.where(person_id: patient.patient_id,
-                                          concept: concept('Prescribe drugs'),
-                                          value_coded: concept('Yes').concept_id)\
+                                          concept_id: ConceptName.find_by_name('Prescribe drugs').concept_id,
+                                          value_coded: ConceptName.find_by_name('Yes').concept_id)\
                                    .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
                                    .order(obs_datetime: :desc)
                                    .first
 
       return {} unless prescribe_drugs
 
-      arv_extras_concepts = [concept('CPT'), concept('INH')]
+      arv_extras_concept_ids = [ConceptName.find_by_name('CPT').concept_id, ConceptName.find_by_name('INH').concept_id]
 
-      orders = Observation.where(concept: concept('Medication orders'),
+      orders = Observation.where(concept: ConceptName.find_by_name('Medication orders').concept_id,
                                  person: patient.person)
                           .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
 
       orders.each_with_object({}) do |order, dosages|
         next unless order.value_coded # Raise a warning here
 
-        drug_concept = Concept.find_by(concept_id: order.value_coded)
-        unless drug_concept
-          Rails.logger.warn "Couldn't find drug concept using value_coded ##{order.value_coded} of order ##{order.order_id}"
-          next
-        end
+        drug_concept_id = order.value_coded.to_i
 
-        next unless arv_extras_concepts.include?(drug_concept)
+        next unless arv_extras_concept_ids.include?(drug_concept_id)
 
         # HACK: Retrieve Pyridoxine 25 mg in addition to Isoniazed when
         # we detect INH drug concept
-        drugs = if drug_concept.concept_id == arv_extras_concepts[1].concept_id
-                  Drug.where(concept: [drug_concept, concept('Pyridoxine')])
+        drugs = if drug_concept_id == arv_extras_concept_ids[1]
+                  Drug.where(concept: [drug_concept_id, ConceptName.find_by_name('Pyridoxine').concept_id])
                 else
-                  Drug.where(concept: drug_concept)
+                  Drug.where(concept: drug_concept_id)
                 end
 
         ingredients = MohRegimenIngredient.where(drug: drugs)\
@@ -95,7 +91,10 @@ module ARTService
                                                  weight: patient.weight.to_f.round(1))
 
         ingredients.each do |ingredient|
-          dosages[ingredient.drug.concept.concept_names.first.name] = ingredient_to_drug(ingredient, patient)
+          drug_name = ConceptName.where(concept_id: ingredient.drug.concept_id,
+                                        concept_name_type: 'FULLY_SPECIFIED')\
+                                 .first
+          dosages[drug_name.name] = ingredient_to_drug(ingredient, patient)
         end
       end
     end
