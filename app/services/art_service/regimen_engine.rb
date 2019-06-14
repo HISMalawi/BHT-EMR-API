@@ -3,6 +3,8 @@
 require 'set'
 
 module ARTService
+  # TODO: This module reads like noise, it needs a re-write or even better,
+  #       a complete rewrite.
   class RegimenEngine
     include ModelUtils
 
@@ -113,6 +115,10 @@ module ARTService
     #     category: xx
     #   }
     def regimens_from_ingredients(ingredients, use_pellets: false, patient: nil)
+      # Drug 13A has to be paired with an additional DTG50 for TB patients
+      regimen_13a_drug = Drug.find_by_name('TDF300/3TC300/DTG50')
+      dtg_drugs = Drug.where(concept: ConceptName.find_by_name('Dolutegravir'))
+
       ingredients.each_with_object({}) do |ingredient, regimens|
         # Have some CPT & INH that do not belong to any regimen
         # but have a weight - dosage mapping hence being lumped
@@ -129,8 +135,25 @@ module ARTService
         end
 
         regimen << ingredient_to_drug(ingredient, patient)
+
+        # Handle extra 13A DTG for TB patients if needed
+        if ingredient.drug_inventory_id == regimen_13a_drug.drug_id\
+            && use_tb_patient_dosage?(dtg_drugs[0], patient)
+          extra_ingredient = MohRegimenIngredient.where(
+            'drug_inventory_id IN (:drugs) AND CAST(min_weight AS DECIMAL(4, 1)) <= :weight
+             AND CAST(max_weight AS DECIMAL(4, 1)) >= :weight',
+            drugs: dtg_drugs.collect(&:drug_id),
+            weight: patient.weight.to_f
+          ).first
+
+          drug = ingredient_to_drug(extra_ingredient, check_tb_patient: false)
+          # Normally DTG is taken in the morning, it has to be inverted...
+          drug[:am], drug[:pm] = drug[:pm], drug[:am]
+
+          regimen << drug
+        end
+
         regimens[regimen_index] = regimen
-        # add_category_to_regimen! regimen, ingredient
       end
     end
 
@@ -150,11 +173,11 @@ module ARTService
       end
     end
 
-    def ingredient_to_drug(ingredient, patient = nil)
+    def ingredient_to_drug(ingredient, patient = nil, check_tb_patient: true)
       drug = ingredient.drug
       regimen_category_lookup = MohRegimenLookup.find_by(drug_inventory_id: ingredient.drug_inventory_id)
       regimen_category = regimen_category_lookup ? regimen_category_lookup.regimen_name[-1] : nil
-      use_tb_patient_dosage = patient && use_tb_patient_dosage?(drug, patient)
+      use_tb_patient_dosage = patient && check_tb_patient && use_tb_patient_dosage?(drug, patient)
 
       {
         drug_id: drug.drug_id,
@@ -173,6 +196,11 @@ module ARTService
     end
 
     def use_tb_patient_dosage?(drug, patient)
+      dtg_concept_id = ConceptName.find_by(name: 'Dolutegravir').concept_id
+
+      print "Use TB patient dosage: #{[patient, drug.as_json, dtg_concept_id]}\n"
+      return false unless patient && drug.concept_id == dtg_concept_id
+
       tb_status_concept_id = ConceptName.find_by_name('TB Status').concept_id
       on_tb_treatment_concept_ids = ConceptName.where(name: 'RX').collect(&:concept_id)
 
@@ -184,9 +212,7 @@ module ARTService
 
       return false unless patient_is_on_tb_treatment
 
-      dtg_concept_ids = ConceptName.where(name: ['Dolutegravir', 'Tenofovir Lamivudine Dolutegravir']).collect(&:concept_id)
-
-      patient_is_on_tb_treatment && dtg_concept_ids.include?(drug.concept_id)
+      patient_is_on_tb_treatment && drug.concept_id == dtg_concept_id
     end
 
     def regimen_interpreter(medication_ids = [])
@@ -317,7 +343,7 @@ module ARTService
       '10' => [Set.new([734, 73])],
       '11' => [Set.new([736, 74]), Set.new([736, 73]), Set.new([39, 73]), Set.new([39, 74])],
       '12' => [Set.new([976, 977, 982])],
-      '13' => [Set.new([983])],
+      '13' => [Set.new([983, 982]), Set.new([983])],
       '14' => [Set.new([984, 982])],
       '15' => [Set.new([969, 982])]
     }.freeze
