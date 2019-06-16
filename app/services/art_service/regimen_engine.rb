@@ -204,9 +204,18 @@ module ARTService
       tb_status_concept_id = ConceptName.find_by_name('TB Status').concept_id
       on_tb_treatment_concept_ids = ConceptName.where(name: 'RX').collect(&:concept_id)
 
-      patient_is_on_tb_treatment = Observation.joins(:encounter)\
+      tb_stutus_max = Observation.joins(:encounter)\
                                               .where(person_id: patient.id,
                                                      concept_id: tb_status_concept_id)\
+                                              .select('MAX(obs_datetime) AS obs_datetime')
+
+      return false if tb_stutus_max.blank?
+      tb_stutus_max_datetime = tb_stutus_max.first['obs_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S')
+
+      patient_is_on_tb_treatment = Observation.joins(:encounter)\
+                                              .where(person_id: patient.id,
+                                                     concept_id: tb_status_concept_id,
+                                                     obs_datetime: tb_stutus_max_datetime)\
                                               .order('obs_datetime DESC').group(:concept_id)
 
       return false if patient_is_on_tb_treatment.blank?
