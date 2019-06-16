@@ -206,13 +206,13 @@ module ARTService
 
       patient_is_on_tb_treatment = Observation.joins(:encounter)\
                                               .where(person_id: patient.id,
-                                                     concept_id: tb_status_concept_id,
-                                                     value_coded: on_tb_treatment_concept_ids)\
-                                              .exists?
+                                                     concept_id: tb_status_concept_id)\
+                                              .order('obs_datetime DESC').group(:concept_id)
 
-      return false unless patient_is_on_tb_treatment
+      return false if patient_is_on_tb_treatment.blank?
+      return false unless on_tb_treatment_concept_ids.include?(patient_is_on_tb_treatment.first.value_coded)
 
-      patient_is_on_tb_treatment && drug.concept_id == dtg_concept_id
+      return drug.concept_id == dtg_concept_id
     end
 
     def regimen_interpreter(medication_ids = [])
