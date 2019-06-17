@@ -164,7 +164,7 @@ module ANCService
 
     end
 
-    def subsequent_visit(patient)
+    def subsequent_visit(patient, date)
       anc_visit = false
       preg_test = false
 
@@ -176,13 +176,13 @@ module ANCService
         reason_for_visit = ConceptName.find_by name: "Reason for visit"
 
         visit = Encounter.joins(:observations).where("encounter.encounter_type = ?
-            AND concept_id = ? AND encounter.patient_id = ? AND
-            DATE(encounter.encounter_datetime) >= DATE(?) AND program_id = ?",
+            AND concept_id = ? AND encounter.patient_id = ? AND DATE(encounter.encounter_datetime) > DATE(?)
+            AND DATE(encounter.encounter_datetime) < DATE(?) AND program_id = ?",
             visit_type.id, reason_for_visit.concept_id,
-            patient.patient_id, lmp_date, ANC_PROGRAM.id)
-          .order(encounter_datetime: :desc).first.blank?
+            patient.patient_id, lmp_date, date.to_date, ANC_PROGRAM.id)
+          .order(encounter_datetime: :desc).first rescue nil
 
-        unless visit
+        unless visit.blank?
           anc_visit = true
           preg_test = pregnancy_test_done?(patient, lmp_date)
           prev_hiv_test = previous_hiv_test_results(patient, lmp_date)
