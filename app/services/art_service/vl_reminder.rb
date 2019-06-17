@@ -37,7 +37,7 @@ EOF
      }
 
     milestones.each do |m|
-      if months_gone >= m && months_gone <= (m + 2)
+      if months_gone >= m && months_gone <= (m + 3)
         value_coded  = ConceptName.find_by_name('Delayed milestones').concept_id
         value_coded2 = ConceptName.find_by_name('Tests ordered').concept_id
 
