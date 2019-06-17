@@ -204,15 +204,13 @@ module ARTService
       tb_status_concept_id = ConceptName.find_by_name('TB Status').concept_id
       on_tb_treatment_concept_ids = ConceptName.where(name: 'RX').collect(&:concept_id)
 
-      patient_is_on_tb_treatment = Observation.joins(:encounter)\
-                                              .where(person_id: patient.id,
-                                                     concept_id: tb_status_concept_id,
-                                                     value_coded: on_tb_treatment_concept_ids)\
-                                              .exists?
+      tb_status_observation = Observation.joins(:encounter)\
+                                         .where(person_id: patient.id,
+                                                concept_id: tb_status_concept_id)\
+                                         .order(:obs_datetime)
+                                         .last
 
-      return false unless patient_is_on_tb_treatment
-
-      patient_is_on_tb_treatment && drug.concept_id == dtg_concept_id
+      on_tb_treatment_concept_ids.include?(tb_status_observation.value_coded.to_i)
     end
 
     def regimen_interpreter(medication_ids = [])
