@@ -63,6 +63,14 @@ EOF
       end 
     end
 
+    if vl_eligibility[:eligibile] == false
+      milestones.each do |m|
+        if (months_gone == (m - 1))
+          vl_eligibility[:message] = 'VL is due in a month time.'
+          vl_eligibility[:message] += "<br /> Client's start date: #{@earliest_start_date.to_date.strftime('%d/%b/%Y')}"
+        end
+      end
+    end
 
     return vl_eligibility
   end
