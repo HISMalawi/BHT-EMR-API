@@ -269,4 +269,5 @@ Rails.application.routes.draw do
   get '/api/v1/cohort_report_drill_down' => 'api/v1/reports#cohort_report_drill_down'
   post '/api/v1/swap_active_number' => 'api/v1/patient_identifiers#swap_active_number'
   get '/api/v1/regimen_switch' => 'api/v1/reports#regimen_switch'
+  get '/api/v1/last_drugs_pill_count' => 'api/v1/patients#last_drugs_pill_count'
 end
