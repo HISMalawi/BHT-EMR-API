@@ -40,8 +40,18 @@ class StockManagementService
         delivery_date = fetch_parameter_as_date(item, :delivery_date, Date.today)
         expiry_date = fetch_parameter_as_date(item, :expiry_date)
 
-        item = create_batch_item(batch, drug_id, quantity, delivery_date, expiry_date)
-        validate_activerecord_object(item)
+        item = find_batch_items(pharmacy_batch_id: batch.id, drug_id: drug_id,
+                                delivery_date: delivery_date, expiry_date: expiry_date).first
+
+        if item
+          # Update existing item if already in batch
+          item.delivered_quantity += quantity
+          item.current_quantity += quantity
+          item.save
+        else
+          item = create_batch_item(batch, drug_id, quantity, delivery_date, expiry_date)
+          validate_activerecord_object(item)
+        end
 
         commit_transaction(item, STOCK_ADD, quantity, delivery_date)
       rescue StandardError => e
