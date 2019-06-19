@@ -4,9 +4,9 @@ class Api::V1::Types::PatientIdentifiersController < ApplicationController
     name = params[:name]
 
     query = PatientIdentifierType
-    query = query.where('name like ?', name) if name
+    query = query.where('name like ?', "#{name}%") if name
 
-    render json: paginate(query)
+    render json: query
   end
 
   # GET /types/patient_identifiers/1
