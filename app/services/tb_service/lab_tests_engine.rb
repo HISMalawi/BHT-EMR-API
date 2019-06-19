@@ -10,7 +10,7 @@ class TBService::LabTestsEngine
   end
 
   def type(type_id)
-    LabTestType.find(type_id) #health data schema
+    LabTestType.find(type_id) # health data schema
   end
 
   def types(search_string:)
@@ -37,32 +37,32 @@ class TBService::LabTestsEngine
     LabParameter.joins(:lab_sample)\
                 .where('Lab_Sample.AccessionNum = ?', accession_number)\
                 .order(Arel.sql('DATE(Lab_Sample.TimeStamp) DESC'))
-  end #health data
+  end # health data
 
-  #Create test with lims
+  # Create test with lims
   def create_order(encounter:, date:, tests:, **kwargs)
     patient ||= encounter.patient
     date ||= encounter.encounter_datetime
 
-    #test will take TB specific parameters
+    # test will take TB specific parameters
 
     tests.collect do |test|
       lims_order = nlims.order_tb_test(patient: patient,
-                                      user: User.current,
-                                      date: date,
-                                      reason: test['reason'],
-                                      test_type: [test['test_type']],
-                                      sample_type: test['sample_type'],
-                                      sample_status: test['sample_status'],
-                                      target_lab: test['target_lab'],
-                                      recommended_examination: test['recommended_examination'],
-                                      treatment_history: test['treatment_history'],
-                                      sample_date: test['sample_date'],
-                                      sending_facility: test['sending_facility'],
-                                      **kwargs)
+                                       user: User.current,
+                                       date: date,
+                                       reason: test['reason'],
+                                       test_type: [test['test_type']],
+                                       sample_type: test['sample_type'],
+                                       sample_status: test['sample_status'],
+                                       target_lab: test['target_lab'],
+                                       recommended_examination: test['recommended_examination'],
+                                       treatment_history: test['treatment_history'],
+                                       sample_date: test['sample_date'],
+                                       sending_facility: test['sending_facility'],
+                                       **kwargs)
       accession_number = lims_order['tracking_number']
 
-      #creation happening here
+      # creation happening here
       local_order = create_local_order(patient, encounter, date, accession_number)
       save_reason_for_test(encounter, local_order, test['reason'])
 
@@ -70,7 +70,7 @@ class TBService::LabTestsEngine
     end
   end
 
-  #find test with lims
+  # find test with lims
   def find_orders_by_patient(patient, paginate_func: nil)
     local_orders = local_orders(patient)
     local_orders = paginate_func.call(local_orders) if paginate_func
@@ -84,7 +84,7 @@ class TBService::LabTestsEngine
     end
   end
 
-  #create test with lims
+  # create test with lims
   def find_orders_by_accession_number(accession_number)
     order = nlims.patient_orders(accession_number)
     begin
@@ -165,14 +165,14 @@ class TBService::LabTestsEngine
     end
   end
 
-  #Local Order
+  # Local Order
   def local_orders(patient)
     Order.where patient: patient,
                 order_type: order_type('Lab'),
                 concept: concept('Laboratory tests ordered')
   end
 
-  #Dont't forget to put this back in order
+  # Dont't forget to put this back in order
   def nlims
     return @nlims if @nlims
 
@@ -180,7 +180,7 @@ class TBService::LabTestsEngine
     @nlims = ::NLims.new config
     @nlims.auth config['lims_default_user'], config['lims_default_password']
 
-    #@nlims.auth config['lims_username'], config['lims_password']
+    # @nlims.auth config['lims_username'], config['lims_password']
     @nlims
   end
 end

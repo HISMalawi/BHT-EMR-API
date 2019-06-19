@@ -107,7 +107,7 @@ module TBService
 
     def patient_summary(patient, date)
       TBService::PatientSummary.new patient, date
-  end
+    end
 
     def regimen_engine
       TBService::RegimenEngine.new program: program('TB PROGRAM')
