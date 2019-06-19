@@ -48,3 +48,17 @@ NtpRegimen.where(drug: Drug.find_by(name: 'RH (R150/H75)'), am_dose: 2, min_weig
 NtpRegimen.where(drug: Drug.find_by(name: 'RH (R150/H75)'), am_dose: 3, min_weight: 38, max_weight: 54, creator: 1).first_or_create
 NtpRegimen.where(drug: Drug.find_by(name: 'RH (R150/H75)'), am_dose: 4, min_weight: 55, max_weight: 74, creator: 1).first_or_create
 NtpRegimen.where(drug: Drug.find_by(name: 'RH (R150/H75)'), am_dose: 5, min_weight: 75, max_weight: 1000, creator: 1).first_or_create
+
+# Side effects Regimens
+NtpRegimen.where(drug: Drug.find_by(name: 'S (Streptomycin 0.50mgs)'), am_dose: 1, min_weight: 0, max_weight: 1000, creator: 1).first_or_create
+NtpRegimen.where(drug: Drug.find_by(name: 'S (Streptomycin 0.75mgs)'), am_dose: 1, min_weight: 0, max_weight: 1000, creator: 1).first_or_create
+NtpRegimen.where(drug: Drug.find_by(name: 'S (Streptomycin 1.00mgs)'), am_dose: 1, min_weight: 0, max_weight: 1000, creator: 1).first_or_create
+
+NtpRegimen.where(drug: Drug.find_by(name: 'Pyridoxine (25mgs)'), am_dose: 1, min_weight: 0, max_weight: 1000, creator: 1).first_or_create
+NtpRegimen.where(drug: Drug.find_by(name: 'Pyridoxine (50mgs)'), am_dose: 1, min_weight: 0, max_weight: 1000, creator: 1).first_or_create
+NtpRegimen.where(drug: Drug.find_by(name: 'Pyridoxine (150mgs)'), am_dose: 1, min_weight: 0, max_weight: 1000, creator: 1).first_or_create
+
+NtpRegimen.where(drug: Drug.find_by(name: 'Rifabutin (150mgs)'), am_dose: 1, min_weight: 0, max_weight: 1000, creator: 1).first_or_create
+
+
+
