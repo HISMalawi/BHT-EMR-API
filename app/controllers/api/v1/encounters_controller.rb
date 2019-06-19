@@ -107,7 +107,8 @@ class Api::V1::EncountersController < ApplicationController
   # DELETE /encounter/:id
   def destroy
     encounter = Encounter.find(params[:id])
-    encounter_service.void encounter, "Voided by #{User.current.username}"
+    reason = params[:reason] || "Voided by #{User.current.username}"
+    encounter_service.void encounter, reason
   end
 
   private
