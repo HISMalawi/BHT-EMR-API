@@ -33,7 +33,8 @@ module TBService
         am_dose: 1,
         noon_dose: 0,
         pm_dose: 0,
-        drug: ipt_drug
+        drug: ipt_drug,
+        id: ipt_drug['drug_id']
       }]
     end
 
@@ -43,14 +44,14 @@ module TBService
 
     def program_work_flow_state #might remove this
       ProgramWorkflowState.new
-    end 
+    end
 
     def custom_regimen_ingredients
       tb_extra_concepts = Concept.joins(:concept_names).where(concept_name: { name: %w[Isoniazid Rifampicin Pyrazinamide Ethambutol] } )
       drugs = Drug.where(concept: tb_extra_concepts)
       drugs
     end
-		
+
 		#NEED TO CHECK WHICH PATIENT ENCOUNTER OF PRESCRIPTION
 		#OBERVATION IF ON INTENSIVE OR CONTINOUS PHASE
 		#regimes based onw weight
@@ -68,7 +69,7 @@ module TBService
       all_states = patient_state_service.all_patient_states(program, patient, ref_date)
     end
 
-    
+
     #prescribe drug is saved as an observation to the database
     # Returns dosages for patients prescribed TB drugs
     def find_dosages(patient, date = Date.today)
@@ -102,11 +103,11 @@ module TBService
 
         next unless tb_extras_concepts.include?(drug_concept)
 
-       
+
         drugs = Drug.where(concept: drug_concept)
 
 
-        
+
         ingredients = NtpRegimen.where(drug: drugs)\
                                           .where('CAST(min_weight AS DECIMAL(4, 1)) <= :weight
                                                   AND CAST(max_weight AS DECIMAL(4, 1)) >= :weight',
