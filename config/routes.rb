@@ -169,7 +169,7 @@ Rails.application.routes.draw do
       resources :orders
       get '/drug_sets', to: 'drugs#drug_sets' # ANC get drug sets
 
-      get '/tb_drugs', to: 'drugs#tb_drugs' # fetch TB drugs
+      get '/tb_side_effects_drug', to: 'drugs#tb_side_effects_drug'
 
       resource :global_properties
       resource :user_properties

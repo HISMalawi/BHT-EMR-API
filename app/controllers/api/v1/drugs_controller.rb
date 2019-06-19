@@ -48,8 +48,8 @@ class Api::V1::DrugsController < ApplicationController
                                 disposition: 'inline')
   end
 
-  def tb_drugs
-    render json: Drug.tb_drugs
+  def tb_side_effects_drug
+    render json: Drug.tb_side_effects_drug
   end
 
   private
