@@ -101,12 +101,12 @@ module TBService
       TB_RECEPTION => %i[patient_has_no_tb_reception?
                                     patient_diagnosed?
                                     patient_examined?
-                                    patient_current_tb_status_is_positive?],
+                                    patient_should_get_treated?],
       TB_REGISTRATION => %i[patient_has_no_tb_registration?
                                     patient_diagnosed?
                                     patient_examined?
                                     patient_is_not_a_transfer_out?
-                                    patient_current_tb_status_is_positive?],
+                                    patient_should_get_treated?],
       VITALS => %i[patient_has_no_vitals?
                                     patient_should_get_treated?
                                     patient_diagnosed?
@@ -146,6 +146,10 @@ module TBService
           LAB_RESULTS
         when /Appointment/i
           APPOINTMENT
+        when /TB Registration/i
+          TB_REGISTRATION
+        when /TB Reception/i
+          TB_RECEPTION
         else
           Rails.logger.warn "Invalid TB activity in user properties: #{activity}"
         end
@@ -350,7 +354,7 @@ module TBService
     end
 
     def patient_should_go_for_lab_order?
-      (should_patient_be_tested_through_lab? && patient_has_no_lab_results?)\
+      (should_patient_be_tested_through_lab? && patient_labs_not_ordered?)\
         || (patient_current_tb_status_is_positive? && should_patient_go_lab_examination_at_followup?\
         && patient_recent_lab_order_has_results?)
     end

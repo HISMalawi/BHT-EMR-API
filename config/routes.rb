@@ -57,8 +57,6 @@ Rails.application.routes.draw do
         post '/filing_number', to: 'patients#assign_filing_number'
         get '/past_filing_numbers' => 'patients#filing_number_history'
         get 'assign_tb_number', to: 'patients#assign_tb_number'
-        get 'get_ipt_number', to: 'patients#get_ipt_number'
-        get 'assign_ipt_number', to: 'patients#assign_ipt_number'
         get 'get_tb_number', to: 'patients#get_tb_number'
         post '/npid', to: 'patients#assign_npid'
         post '/remaining_bp_drugs', to: 'patients#remaining_bp_drugs'
@@ -170,6 +168,8 @@ Rails.application.routes.draw do
       resources :drug_orders
       resources :orders
       get '/drug_sets', to: 'drugs#drug_sets' # ANC get drug sets
+
+      get '/tb_drugs', to: 'drugs#tb_drugs' # fetch TB drugs
 
       resource :global_properties
       resource :user_properties
