@@ -66,6 +66,8 @@ Rails.application.routes.draw do
 
       resources :patient_identifiers
 
+      resources :person_attributes
+
       resources :concepts, only: %i[index show]
 
       # Locations
@@ -263,7 +265,6 @@ Rails.application.routes.draw do
   get '/api/v1/defaulter_list' => 'api/v1/reports#defaulter_list'
   get '/api/v1/missed_appointments' => 'api/v1/reports#missed_appointments'
   post '/api/v1/addresses' => 'api/v1/person_addresses#create'
-  get '/api/v1/person_attributes' => 'api/v1/person_attributes#index'
   get '/api/v1/archive_active_filing_number' => 'api/v1/patient_identifiers#archive_active_filing_number'
   get '/api/v1/ipt_coverage' => 'api/v1/reports#ipt_coverage'
   get '/api/v1/cohort_report_drill_down' => 'api/v1/reports#cohort_report_drill_down'
