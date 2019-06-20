@@ -113,6 +113,18 @@ class PatientService
     end).values
   end
 
+  # lab orders made for a patient
+  def recent_lab_orders (patient_id:, program_id:, reference_date:)
+    lab_order_encounter = encounter_type('Lab Orders')
+    filter = "encounter_type = ? AND patient_id = ? AND encounter_datetime >= ? AND program_id = ?"
+    Encounter.where(filter,
+                    lab_order_encounter.encounter_type_id,
+                    patient_id,
+                    reference_date,
+                    program_id)
+             .order(encounter_datetime: :desc)
+  end
+
   # Retrieves a patient's bp trail
   def patient_bp_readings_trail(patient, max_date)
     concepts = [concept('SBP'), concept('DBP')]

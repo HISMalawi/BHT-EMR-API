@@ -48,6 +48,7 @@ Rails.application.routes.draw do
         end)
         get '/drugs_received', to: 'patients#drugs_received'
         get '/last_drugs_received', to: 'patients#last_drugs_received'
+        get '/recent_lab_orders', to: 'patients#recent_lab_orders'
         get '/current_bp_drugs', to: 'patients#current_bp_drugs'
         get '/last_bp_drugs_dispensation', to: 'patients#last_bp_drugs'
         get '/next_appointment_date', to: 'patient_appointments#next_appointment_date'

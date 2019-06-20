@@ -96,11 +96,13 @@ module TBService
       patient_id = ActiveRecord::Base.connection.quote(patient.patient_id)
       quoted_date = ActiveRecord::Base.connection.quote(date)
       program_id = program('TB PROGRAM').program_id
-      patient_state = PatientState.joins(`INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id
-                                          AND p.program_id = #{program_id} WHERE (patient_state.voided = 0 AND p.voided = 0
-                                          AND p.program_id = #{program_id} AND DATE(start_date) <= visit_date AND p.patient_id = #{patient_id})
-                                          AND (patient_state.voided = 0) ORDER BY start_date DESC, patient_state.patient_state_id DESC,
-                                          patient_state.date_created DESC LIMIT 1`).first
+
+      filter = "patient_program.patient_id = #{patient_id} AND patient_program.program_id = #{program_id} AND DATE(start_date) <= #{quoted_date}"
+      patient_state = PatientState.joins(:patient_program)
+                                  .where(filter)
+                                  .order(start_date: :desc)
+                                  .first
+
       return nil unless patient_state
 
       program_workflow_state = ProgramWorkflowState.find_by(program_workflow_state_id: patient_state.state)
