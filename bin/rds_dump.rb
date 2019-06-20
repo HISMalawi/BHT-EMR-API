@@ -39,9 +39,7 @@ def dump(database, program_name, file)
       record_fields = chunk.first.keys
 
       sql_values = chunk.map do |record|
-        values = record_fields.map do |field|
-          record[field] ? sql_quote(record[field]) : 'NULL'
-        end
+        values = record_fields.map { |field| sql_quote(record[field]) }
 
         "(#{values.join(', ')})"
       end
