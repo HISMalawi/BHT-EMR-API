@@ -164,6 +164,7 @@ class Api::V1::PatientsController < ApplicationController
 
   # Returns all lab orders made since a given date
   def recent_lab_orders
+    params.require([:patient_id, :program_id])
     reference_date = params[:reference_date]&.to_date || Date.today
     render json: service.recent_lab_orders(patient_id: params[:patient_id],
                                            program_id: params[:program_id],
