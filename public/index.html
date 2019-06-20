@@ -248,6 +248,66 @@ pre code {
         </li>
         
         
+        
+        <li>
+            <a href="#folder-search">Search</a>
+            <ul>
+                
+                <li>
+                    <a href="#request-search-find-duplicate-identifiers-of-a-given-type">Find duplicate identifiers of a given type</a>
+                </li>
+                
+                <li>
+                    <a href="#request-search-find-patients-by-identifier">Find patients by identifier</a>
+                </li>
+                
+            </ul>
+        </li>
+        
+        
+        <li>
+            <a href="#folder-stock-management">Stock Management</a>
+            <ul>
+                
+                <li>
+                    <a href="#request-stock-management-retrieve-all-batches-in-pharmacy-stock">Retrieve all batches in pharmacy stock</a>
+                </li>
+                
+                <li>
+                    <a href="#request-stock-management-create-or-add-items-to-batch">Create or add items to batch</a>
+                </li>
+                
+                <li>
+                    <a href="#request-stock-management-retrieve-specific-pharmacy-batch-item">Retrieve specific pharmacy batch item</a>
+                </li>
+                
+                <li>
+                    <a href="#request-stock-management-retrieve-all-pharmacy-batch-items">Retrieve all pharmacy batch items</a>
+                </li>
+                
+                <li>
+                    <a href="#request-stock-management-update-batch">Update batch</a>
+                </li>
+                
+                <li>
+                    <a href="#request-stock-management-retrieve-batch-by-batch-number">Retrieve batch by batch number</a>
+                </li>
+                
+                <li>
+                    <a href="#request-stock-management-retrieve-earliest-expiring-item">Retrieve earliest expiring item</a>
+                </li>
+                
+                <li>
+                    <a href="#request-stock-management-delete-batch">Delete batch</a>
+                </li>
+                
+                <li>
+                    <a href="#request-stock-management-reallocate-batch-item-to-another-site">Reallocate batch item to another site</a>
+                </li>
+                
+            </ul>
+        </li>
+        
     </ul>
 </div>
 
@@ -7242,6 +7302,2041 @@ Authorization: kqpBzH1K6rYN</code></pre>
                 
 
 
+                
+                
+                <div class="endpoints-group">
+                    <h3 id="folder-search">
+                        Search
+                        <a href="#folder-search"><i class="glyphicon glyphicon-link"></i></a>
+                    </h3>
+
+                    <div><p>This section contains endpoints for searching various entities in the database.
+These routes are meant to compliment the rudimentary search available for the
+various high level entities (eg /observations?encounter_id=query).</p>
+</div>
+
+                    
+                    
+                    <div class="request">
+
+                        <h4 id="request-search-find-duplicate-identifiers-of-a-given-type">
+                            Find duplicate identifiers of a given type
+                            <a href="#request-search-find-duplicate-identifiers-of-a-given-type"><i class="glyphicon glyphicon-link"></i></a>
+                        </h4>
+
+                        <div></div>
+
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                <li role="presentation" class="active"><a href="#request-search-find-duplicate-identifiers-of-a-given-type-example-curl" data-toggle="tab">Curl</a></li>
+                                <li role="presentation"><a href="#request-search-find-duplicate-identifiers-of-a-given-type-example-http" data-toggle="tab">HTTP</a></li>
+                            </ul>
+                            <div class="tab-content">
+                                <div class="tab-pane active" id="request-search-find-duplicate-identifiers-of-a-given-type-example-curl">
+                                    <pre><code class="hljs curl">curl -X GET -H "Authorization: 8Azu1BYHc2r0" "http://localhost:3000/api/v1/search/identifiers/duplicates?type=3"</code></pre>
+                                </div>
+                                <div class="tab-pane" id="request-search-find-duplicate-identifiers-of-a-given-type-example-http">
+                                    <pre><code class="hljs http">GET /api/v1/search/identifiers/duplicates?type=3 HTTP/1.1
+Host: localhost:3000
+Authorization: 8Azu1BYHc2r0</code></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                
+                                <li role="presentation" class="active">
+                                    <a href="#request-search-find-duplicate-identifiers-of-a-given-type-responses-1025855d-a213-4866-a8ff-837eba7189ca" data-toggle="tab">
+                                        
+                                            Response
+                                        
+                                    </a>
+                                </li>
+                                
+                            </ul>
+                            <div class="tab-content">
+                                
+                                <div class="tab-pane active" id="request-search-find-duplicate-identifiers-of-a-given-type-responses-1025855d-a213-4866-a8ff-837eba7189ca">
+                                    <table class="table table-bordered">
+                                        <tr><th style="width: 20%;">Status</th><td>200 </td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>application/json; charset=utf-8</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>W/"35c607667efb4c06f2f533ae6f9f1a90"</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>max-age=0, private, must-revalidate</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>f383cb2b-4157-44be-91d8-1a964fa4860b</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>0.938342</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>Origin</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>chunked</td></tr>
+                                        
+                                        
+                                            
+                                            <tr><td class="response-text-sample" colspan="2">
+                                                <pre><code>[
+    {
+        "count": 2,
+        "identifier": "P170100202393"
+    },
+    {
+        "count": 2,
+        "identifier": "P170100293696"
+    },
+    {
+        "count": 2,
+        "identifier": "P170100370503"
+    },
+    {
+        "count": 2,
+        "identifier": "P170100370674"
+    },
+    {
+        "count": 2,
+        "identifier": "P170100370692"
+    },
+    {
+        "count": 2,
+        "identifier": "P170100376570"
+    },
+    {
+        "count": 2,
+        "identifier": "P170100376669"
+    },
+    {
+        "count": 2,
+        "identifier": "P170100376678"
+    },
+    {
+        "count": 2,
+        "identifier": "P170100376703"
+    },
+    {
+        "count": 2,
+        "identifier": "P170100376712"
+    },
+    {
+        "count": 2,
+        "identifier": "P170100378934"
+    },
+    {
+        "count": 2,
+        "identifier": "P170100379014"
+    },
+    {
+        "count": 2,
+        "identifier": "P170100379381"
+    },
+    {
+        "count": 2,
+        "identifier": "P170100379390"
+    },
+    {
+        "count": 2,
+        "identifier": "P170100379620"
+    },
+    {
+        "count": 2,
+        "identifier": "P170100379648"
+    },
+    {
+        "count": 2,
+        "identifier": "P170100380191"
+    },
+    {
+        "count": 2,
+        "identifier": "P170100380583"
+    },
+    {
+        "count": 2,
+        "identifier": "P170100380592"
+    },
+    {
+        "count": 2,
+        "identifier": "P170100388460"
+    },
+    {
+        "count": 2,
+        "identifier": "P170100395005"
+    },
+    {
+        "count": 2,
+        "identifier": "P170100422100"
+    }
+]</code></pre>
+                                            </td></tr>
+                                            
+                                        
+                                    </table>
+                                </div>
+                                
+                            </div>
+                        </div>
+                        
+
+                        <hr>
+                    </div>
+                    
+                    
+                    <div class="request">
+
+                        <h4 id="request-search-find-patients-by-identifier">
+                            Find patients by identifier
+                            <a href="#request-search-find-patients-by-identifier"><i class="glyphicon glyphicon-link"></i></a>
+                        </h4>
+
+                        <div></div>
+
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                <li role="presentation" class="active"><a href="#request-search-find-patients-by-identifier-example-curl" data-toggle="tab">Curl</a></li>
+                                <li role="presentation"><a href="#request-search-find-patients-by-identifier-example-http" data-toggle="tab">HTTP</a></li>
+                            </ul>
+                            <div class="tab-content">
+                                <div class="tab-pane active" id="request-search-find-patients-by-identifier-example-curl">
+                                    <pre><code class="hljs curl">curl -X GET -H "Authorization: 8Azu1BYHc2r0" "http://localhost:3000/api/v1/search/patients/by_identifier?type_id=3&identifier=P170100202393"</code></pre>
+                                </div>
+                                <div class="tab-pane" id="request-search-find-patients-by-identifier-example-http">
+                                    <pre><code class="hljs http">GET /api/v1/search/patients/by_identifier?type_id=3&identifier=P170100202393 HTTP/1.1
+Host: localhost:3000
+Authorization: 8Azu1BYHc2r0</code></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                
+                                <li role="presentation" class="active">
+                                    <a href="#request-search-find-patients-by-identifier-responses-59e37c62-6053-4ce9-81f8-a363bf0dba6c" data-toggle="tab">
+                                        
+                                            Response
+                                        
+                                    </a>
+                                </li>
+                                
+                            </ul>
+                            <div class="tab-content">
+                                
+                                <div class="tab-pane active" id="request-search-find-patients-by-identifier-responses-59e37c62-6053-4ce9-81f8-a363bf0dba6c">
+                                    <table class="table table-bordered">
+                                        <tr><th style="width: 20%;">Status</th><td>200 </td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>application/json; charset=utf-8</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>W/"70d037c8c5948c69d35db15c4b184124"</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>max-age=0, private, must-revalidate</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>351f62da-180a-4a02-b563-6081ef32c926</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>0.513067</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>Origin</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>chunked</td></tr>
+                                        
+                                        
+                                            
+                                            <tr><td class="response-text-sample" colspan="2">
+                                                <pre><code>[
+    {
+        "patient_id": 20897,
+        "tribe": null,
+        "creator": 55,
+        "date_created": "2009-05-08T00:00:00.000+02:00",
+        "changed_by": null,
+        "date_changed": null,
+        "voided": 0,
+        "voided_by": null,
+        "date_voided": null,
+        "void_reason": null,
+        "person": {
+            "person_id": 20897,
+            "gender": "F",
+            "birthdate": "1972-10-29",
+            "birthdate_estimated": 1,
+            "dead": 0,
+            "death_date": null,
+            "cause_of_death": null,
+            "creator": 55,
+            "date_created": "2009-05-08T00:00:00.000+02:00",
+            "changed_by": null,
+            "date_changed": null,
+            "voided": 0,
+            "voided_by": null,
+            "date_voided": null,
+            "void_reason": null,
+            "uuid": "5f621ee8-03e6-11e5-8580-7877eb364ad2",
+            "names": [
+                {
+                    "person_name_id": 21428,
+                    "preferred": 0,
+                    "person_id": 20897,
+                    "prefix": null,
+                    "given_name": "Ida",
+                    "middle_name": null,
+                    "family_name_prefix": null,
+                    "family_name": "Zgambo",
+                    "family_name2": null,
+                    "family_name_suffix": null,
+                    "degree": null,
+                    "creator": 55,
+                    "date_created": "2009-05-08T00:00:00.000+02:00",
+                    "voided": 0,
+                    "voided_by": null,
+                    "date_voided": null,
+                    "void_reason": null,
+                    "changed_by": null,
+                    "date_changed": null,
+                    "uuid": "5f62623a-03e6-11e5-8580-7877eb364ad2"
+                }
+            ],
+            "addresses": [
+                {
+                    "person_address_id": 20250,
+                    "person_id": 20897,
+                    "preferred": 0,
+                    "address1": "NEARHEALTH CENTRE",
+                    "address2": null,
+                    "city_village": "Area 18 A",
+                    "state_province": null,
+                    "postal_code": null,
+                    "country": null,
+                    "latitude": null,
+                    "longitude": null,
+                    "creator": 55,
+                    "date_created": "2009-05-08T00:00:00.000+02:00",
+                    "voided": 0,
+                    "voided_by": null,
+                    "date_voided": null,
+                    "void_reason": null,
+                    "county_district": null,
+                    "neighborhood_cell": null,
+                    "region": null,
+                    "subregion": null,
+                    "township_division": null,
+                    "uuid": "5f62bba2-03e6-11e5-8580-7877eb364ad2"
+                }
+            ],
+            "person_attributes": [
+                {
+                    "person_attribute_id": 118837,
+                    "person_id": 20897,
+                    "value": "Area 18 A",
+                    "person_attribute_type_id": 18,
+                    "creator": 55,
+                    "date_created": "2009-05-08T00:00:00.000+02:00",
+                    "changed_by": null,
+                    "date_changed": null,
+                    "voided": 0,
+                    "voided_by": null,
+                    "date_voided": null,
+                    "void_reason": null,
+                    "uuid": "5f62bc55-03e6-11e5-8580-7877eb364ad2",
+                    "type": {
+                        "person_attribute_type_id": 18,
+                        "name": "Current Place Of Residence",
+                        "description": "Place of stay",
+                        "format": "java.lang.String",
+                        "foreign_key": null,
+                        "searchable": 0,
+                        "creator": 1,
+                        "date_created": "2010-11-02T11:19:13.000+02:00",
+                        "changed_by": null,
+                        "date_changed": null,
+                        "retired": 0,
+                        "retired_by": null,
+                        "date_retired": null,
+                        "retire_reason": null,
+                        "edit_privilege": null,
+                        "uuid": "ba35eba0-8d80-11d8-abbb-0024217bb78e",
+                        "sort_weight": 9
+                    }
+                },
+                {
+                    "person_attribute_id": 118838,
+                    "person_id": 20897,
+                    "value": "NEARHEALTH CENTRE",
+                    "person_attribute_type_id": 19,
+                    "creator": 55,
+                    "date_created": "2009-05-08T00:00:00.000+02:00",
+                    "changed_by": null,
+                    "date_changed": null,
+                    "voided": 0,
+                    "voided_by": null,
+                    "date_voided": null,
+                    "void_reason": null,
+                    "uuid": "5f62bba2-03e6-11e5-8580-7877eb364ad2",
+                    "type": {
+                        "person_attribute_type_id": 19,
+                        "name": "Landmark Or Plot Number",
+                        "description": "Landmark or plot number",
+                        "format": "java.lang.String",
+                        "foreign_key": null,
+                        "searchable": 0,
+                        "creator": 1,
+                        "date_created": "2010-11-02T11:19:43.000+02:00",
+                        "changed_by": 1,
+                        "date_changed": "2010-11-02T11:19:55.000+02:00",
+                        "retired": 0,
+                        "retired_by": null,
+                        "date_retired": null,
+                        "retire_reason": null,
+                        "edit_privilege": null,
+                        "uuid": "ba35ece0-8d80-11d8-abbb-0024217bb78e",
+                        "sort_weight": 16
+                    }
+                },
+                {
+                    "person_attribute_id": 118839,
+                    "person_id": 20897,
+                    "value": "Other",
+                    "person_attribute_type_id": 13,
+                    "creator": 55,
+                    "date_created": "2009-05-08T00:00:00.000+02:00",
+                    "changed_by": null,
+                    "date_changed": null,
+                    "voided": 0,
+                    "voided_by": null,
+                    "date_voided": null,
+                    "void_reason": null,
+                    "uuid": "5f632ae4-03e6-11e5-8580-7877eb364ad2",
+                    "type": {
+                        "person_attribute_type_id": 13,
+                        "name": "Occupation",
+                        "description": "This is the current patient occupation",
+                        "format": "java.lang.String",
+                        "foreign_key": null,
+                        "searchable": 0,
+                        "creator": 1,
+                        "date_created": "2009-10-09T15:45:21.000+02:00",
+                        "changed_by": null,
+                        "date_changed": null,
+                        "retired": 0,
+                        "retired_by": null,
+                        "date_retired": null,
+                        "retire_reason": null,
+                        "edit_privilege": null,
+                        "uuid": "ba35e506-8d80-11d8-abbb-0024217bb78e",
+                        "sort_weight": 24
+                    }
+                },
+                {
+                    "person_attribute_id": 118840,
+                    "person_id": 20897,
+                    "value": "08859320",
+                    "person_attribute_type_id": 12,
+                    "creator": 55,
+                    "date_created": "2009-05-08T00:00:00.000+02:00",
+                    "changed_by": null,
+                    "date_changed": null,
+                    "voided": 0,
+                    "voided_by": null,
+                    "date_voided": null,
+                    "void_reason": null,
+                    "uuid": "5f63373f-03e6-11e5-8580-7877eb364ad2",
+                    "type": {
+                        "person_attribute_type_id": 12,
+                        "name": "Cell Phone Number",
+                        "description": "Person primary cell phone number",
+                        "format": "java.lang.String",
+                        "foreign_key": null,
+                        "searchable": 0,
+                        "creator": 1,
+                        "date_created": "2009-10-07T15:44:33.000+02:00",
+                        "changed_by": 1,
+                        "date_changed": "2011-02-09T11:04:35.000+02:00",
+                        "retired": 0,
+                        "retired_by": null,
+                        "date_retired": null,
+                        "retire_reason": null,
+                        "edit_privilege": null,
+                        "uuid": "ba35e3da-8d80-11d8-abbb-0024217bb78e",
+                        "sort_weight": 5
+                    }
+                },
+                {
+                    "person_attribute_id": 118841,
+                    "person_id": 20897,
+                    "value": "Not Available",
+                    "person_attribute_type_id": 14,
+                    "creator": 55,
+                    "date_created": "2009-05-08T00:00:00.000+02:00",
+                    "changed_by": null,
+                    "date_changed": null,
+                    "voided": 0,
+                    "voided_by": null,
+                    "date_voided": null,
+                    "void_reason": null,
+                    "uuid": "5f6347dd-03e6-11e5-8580-7877eb364ad2",
+                    "type": {
+                        "person_attribute_type_id": 14,
+                        "name": "Home Phone Number",
+                        "description": "Person home phone number, usually fixed line phone number",
+                        "format": "",
+                        "foreign_key": null,
+                        "searchable": 0,
+                        "creator": 1,
+                        "date_created": "2009-11-11T11:43:28.000+02:00",
+                        "changed_by": null,
+                        "date_changed": null,
+                        "retired": 0,
+                        "retired_by": null,
+                        "date_retired": null,
+                        "retire_reason": null,
+                        "edit_privilege": null,
+                        "uuid": "ba35e63c-8d80-11d8-abbb-0024217bb78e",
+                        "sort_weight": 13
+                    }
+                }
+            ]
+        },
+        "patient_identifiers": [
+            {
+                "patient_identifier_id": 45749,
+                "patient_id": 20897,
+                "identifier": "FN10411808",
+                "identifier_type": 18,
+                "preferred": 0,
+                "location_id": 1,
+                "creator": 55,
+                "date_created": "2009-05-08T00:00:00.000+02:00",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "5f6371e4-03e6-11e5-8580-7877eb364ad2",
+                "type": {
+                    "patient_identifier_type_id": 18,
+                    "name": "Archived filing number",
+                    "description": "Number attached to a patient's file at a clinic",
+                    "format": "",
+                    "check_digit": 0,
+                    "creator": 1,
+                    "date_created": "2011-07-08T14:21:32.000+02:00",
+                    "required": 0,
+                    "format_description": "",
+                    "validator": "",
+                    "retired": 0,
+                    "retired_by": null,
+                    "date_retired": null,
+                    "retire_reason": null,
+                    "uuid": "ba2f8e40-8d80-11d8-abbb-0024217bb78e"
+                }
+            },
+            {
+                "patient_identifier_id": 45750,
+                "patient_id": 20897,
+                "identifier": "P170100202393",
+                "identifier_type": 3,
+                "preferred": 0,
+                "location_id": 1,
+                "creator": 55,
+                "date_created": "2009-05-08T00:00:00.000+02:00",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "5f63a9fc-03e6-11e5-8580-7877eb364ad2",
+                "type": {
+                    "patient_identifier_type_id": 3,
+                    "name": "National id",
+                    "description": "National ID number developed by Baobab",
+                    "format": "",
+                    "check_digit": 0,
+                    "creator": 1,
+                    "date_created": "2007-11-29T22:12:34.000+02:00",
+                    "required": 0,
+                    "format_description": "P-175-0000004-5",
+                    "validator": null,
+                    "retired": 0,
+                    "retired_by": null,
+                    "date_retired": null,
+                    "retire_reason": null,
+                    "uuid": "ba2f69d8-8d80-11d8-abbb-0024217bb78e"
+                }
+            }
+        ]
+    },
+    {
+        "patient_id": 20898,
+        "tribe": null,
+        "creator": 86,
+        "date_created": "2009-05-08T00:00:00.000+02:00",
+        "changed_by": null,
+        "date_changed": null,
+        "voided": 0,
+        "voided_by": null,
+        "date_voided": null,
+        "void_reason": null,
+        "person": {
+            "person_id": 20898,
+            "gender": "M",
+            "birthdate": null,
+            "birthdate_estimated": 0,
+            "dead": 0,
+            "death_date": null,
+            "cause_of_death": null,
+            "creator": 86,
+            "date_created": "2009-05-08T00:00:00.000+02:00",
+            "changed_by": null,
+            "date_changed": null,
+            "voided": 0,
+            "voided_by": null,
+            "date_voided": null,
+            "void_reason": null,
+            "uuid": "618421ea-03e6-11e5-8580-7877eb364ad2",
+            "names": [
+                {
+                    "person_name_id": 21429,
+                    "preferred": 0,
+                    "person_id": 20898,
+                    "prefix": null,
+                    "given_name": "Salimu",
+                    "middle_name": null,
+                    "family_name_prefix": null,
+                    "family_name": "James",
+                    "family_name2": null,
+                    "family_name_suffix": null,
+                    "degree": null,
+                    "creator": 86,
+                    "date_created": "2009-05-08T00:00:00.000+02:00",
+                    "voided": 0,
+                    "voided_by": null,
+                    "date_voided": null,
+                    "void_reason": null,
+                    "changed_by": null,
+                    "date_changed": null,
+                    "uuid": "61846401-03e6-11e5-8580-7877eb364ad2"
+                }
+            ],
+            "addresses": [
+                {
+                    "person_address_id": 20251,
+                    "person_id": 20898,
+                    "preferred": 0,
+                    "address1": "Next to the market",
+                    "address2": null,
+                    "city_village": "Mchesi (A8)",
+                    "state_province": null,
+                    "postal_code": null,
+                    "country": null,
+                    "latitude": null,
+                    "longitude": null,
+                    "creator": 86,
+                    "date_created": "2009-05-08T00:00:00.000+02:00",
+                    "voided": 0,
+                    "voided_by": null,
+                    "date_voided": null,
+                    "void_reason": null,
+                    "county_district": null,
+                    "neighborhood_cell": null,
+                    "region": null,
+                    "subregion": null,
+                    "township_division": null,
+                    "uuid": "6184bc11-03e6-11e5-8580-7877eb364ad2"
+                }
+            ],
+            "person_attributes": [
+                {
+                    "person_attribute_id": 118842,
+                    "person_id": 20898,
+                    "value": "Mchesi (A8)",
+                    "person_attribute_type_id": 18,
+                    "creator": 86,
+                    "date_created": "2009-05-08T00:00:00.000+02:00",
+                    "changed_by": null,
+                    "date_changed": null,
+                    "voided": 0,
+                    "voided_by": null,
+                    "date_voided": null,
+                    "void_reason": null,
+                    "uuid": "6184bcc5-03e6-11e5-8580-7877eb364ad2",
+                    "type": {
+                        "person_attribute_type_id": 18,
+                        "name": "Current Place Of Residence",
+                        "description": "Place of stay",
+                        "format": "java.lang.String",
+                        "foreign_key": null,
+                        "searchable": 0,
+                        "creator": 1,
+                        "date_created": "2010-11-02T11:19:13.000+02:00",
+                        "changed_by": null,
+                        "date_changed": null,
+                        "retired": 0,
+                        "retired_by": null,
+                        "date_retired": null,
+                        "retire_reason": null,
+                        "edit_privilege": null,
+                        "uuid": "ba35eba0-8d80-11d8-abbb-0024217bb78e",
+                        "sort_weight": 9
+                    }
+                },
+                {
+                    "person_attribute_id": 118843,
+                    "person_id": 20898,
+                    "value": "Next to the market",
+                    "person_attribute_type_id": 19,
+                    "creator": 86,
+                    "date_created": "2009-05-08T00:00:00.000+02:00",
+                    "changed_by": null,
+                    "date_changed": null,
+                    "voided": 0,
+                    "voided_by": null,
+                    "date_voided": null,
+                    "void_reason": null,
+                    "uuid": "6184bc11-03e6-11e5-8580-7877eb364ad2",
+                    "type": {
+                        "person_attribute_type_id": 19,
+                        "name": "Landmark Or Plot Number",
+                        "description": "Landmark or plot number",
+                        "format": "java.lang.String",
+                        "foreign_key": null,
+                        "searchable": 0,
+                        "creator": 1,
+                        "date_created": "2010-11-02T11:19:43.000+02:00",
+                        "changed_by": 1,
+                        "date_changed": "2010-11-02T11:19:55.000+02:00",
+                        "retired": 0,
+                        "retired_by": null,
+                        "date_retired": null,
+                        "retire_reason": null,
+                        "edit_privilege": null,
+                        "uuid": "ba35ece0-8d80-11d8-abbb-0024217bb78e",
+                        "sort_weight": 16
+                    }
+                },
+                {
+                    "person_attribute_id": 118844,
+                    "person_id": 20898,
+                    "value": "Other",
+                    "person_attribute_type_id": 13,
+                    "creator": 86,
+                    "date_created": "2009-05-08T00:00:00.000+02:00",
+                    "changed_by": null,
+                    "date_changed": null,
+                    "voided": 0,
+                    "voided_by": null,
+                    "date_voided": null,
+                    "void_reason": null,
+                    "uuid": "61851722-03e6-11e5-8580-7877eb364ad2",
+                    "type": {
+                        "person_attribute_type_id": 13,
+                        "name": "Occupation",
+                        "description": "This is the current patient occupation",
+                        "format": "java.lang.String",
+                        "foreign_key": null,
+                        "searchable": 0,
+                        "creator": 1,
+                        "date_created": "2009-10-09T15:45:21.000+02:00",
+                        "changed_by": null,
+                        "date_changed": null,
+                        "retired": 0,
+                        "retired_by": null,
+                        "date_retired": null,
+                        "retire_reason": null,
+                        "edit_privilege": null,
+                        "uuid": "ba35e506-8d80-11d8-abbb-0024217bb78e",
+                        "sort_weight": 24
+                    }
+                },
+                {
+                    "person_attribute_id": 118845,
+                    "person_id": 20898,
+                    "value": "Not Available",
+                    "person_attribute_type_id": 12,
+                    "creator": 86,
+                    "date_created": "2009-05-08T00:00:00.000+02:00",
+                    "changed_by": null,
+                    "date_changed": null,
+                    "voided": 0,
+                    "voided_by": null,
+                    "date_voided": null,
+                    "void_reason": null,
+                    "uuid": "61852377-03e6-11e5-8580-7877eb364ad2",
+                    "type": {
+                        "person_attribute_type_id": 12,
+                        "name": "Cell Phone Number",
+                        "description": "Person primary cell phone number",
+                        "format": "java.lang.String",
+                        "foreign_key": null,
+                        "searchable": 0,
+                        "creator": 1,
+                        "date_created": "2009-10-07T15:44:33.000+02:00",
+                        "changed_by": 1,
+                        "date_changed": "2011-02-09T11:04:35.000+02:00",
+                        "retired": 0,
+                        "retired_by": null,
+                        "date_retired": null,
+                        "retire_reason": null,
+                        "edit_privilege": null,
+                        "uuid": "ba35e3da-8d80-11d8-abbb-0024217bb78e",
+                        "sort_weight": 5
+                    }
+                },
+                {
+                    "person_attribute_id": 118846,
+                    "person_id": 20898,
+                    "value": "Not Available",
+                    "person_attribute_type_id": 14,
+                    "creator": 86,
+                    "date_created": "2009-05-08T00:00:00.000+02:00",
+                    "changed_by": null,
+                    "date_changed": null,
+                    "voided": 0,
+                    "voided_by": null,
+                    "date_voided": null,
+                    "void_reason": null,
+                    "uuid": "618533a8-03e6-11e5-8580-7877eb364ad2",
+                    "type": {
+                        "person_attribute_type_id": 14,
+                        "name": "Home Phone Number",
+                        "description": "Person home phone number, usually fixed line phone number",
+                        "format": "",
+                        "foreign_key": null,
+                        "searchable": 0,
+                        "creator": 1,
+                        "date_created": "2009-11-11T11:43:28.000+02:00",
+                        "changed_by": null,
+                        "date_changed": null,
+                        "retired": 0,
+                        "retired_by": null,
+                        "date_retired": null,
+                        "retire_reason": null,
+                        "edit_privilege": null,
+                        "uuid": "ba35e63c-8d80-11d8-abbb-0024217bb78e",
+                        "sort_weight": 13
+                    }
+                }
+            ]
+        },
+        "patient_identifiers": [
+            {
+                "patient_identifier_id": 45751,
+                "patient_id": 20898,
+                "identifier": "P170100202393",
+                "identifier_type": 3,
+                "preferred": 0,
+                "location_id": 1,
+                "creator": 86,
+                "date_created": "2009-05-08T00:00:00.000+02:00",
+                "voided": 0,
+                "voided_by": null,
+                "date_voided": null,
+                "void_reason": null,
+                "uuid": "61855d8b-03e6-11e5-8580-7877eb364ad2",
+                "type": {
+                    "patient_identifier_type_id": 3,
+                    "name": "National id",
+                    "description": "National ID number developed by Baobab",
+                    "format": "",
+                    "check_digit": 0,
+                    "creator": 1,
+                    "date_created": "2007-11-29T22:12:34.000+02:00",
+                    "required": 0,
+                    "format_description": "P-175-0000004-5",
+                    "validator": null,
+                    "retired": 0,
+                    "retired_by": null,
+                    "date_retired": null,
+                    "retire_reason": null,
+                    "uuid": "ba2f69d8-8d80-11d8-abbb-0024217bb78e"
+                }
+            }
+        ]
+    }
+]</code></pre>
+                                            </td></tr>
+                                            
+                                        
+                                    </table>
+                                </div>
+                                
+                            </div>
+                        </div>
+                        
+
+                        <hr>
+                    </div>
+                    
+
+                </div>
+                
+                
+                <div class="endpoints-group">
+                    <h3 id="folder-stock-management">
+                        Stock Management
+                        <a href="#folder-stock-management"><i class="glyphicon glyphicon-link"></i></a>
+                    </h3>
+
+                    <div></div>
+
+                    
+                    
+                    <div class="request">
+
+                        <h4 id="request-stock-management-retrieve-all-batches-in-pharmacy-stock">
+                            Retrieve all batches in pharmacy stock
+                            <a href="#request-stock-management-retrieve-all-batches-in-pharmacy-stock"><i class="glyphicon glyphicon-link"></i></a>
+                        </h4>
+
+                        <div></div>
+
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                <li role="presentation" class="active"><a href="#request-stock-management-retrieve-all-batches-in-pharmacy-stock-example-curl" data-toggle="tab">Curl</a></li>
+                                <li role="presentation"><a href="#request-stock-management-retrieve-all-batches-in-pharmacy-stock-example-http" data-toggle="tab">HTTP</a></li>
+                            </ul>
+                            <div class="tab-content">
+                                <div class="tab-pane active" id="request-stock-management-retrieve-all-batches-in-pharmacy-stock-example-curl">
+                                    <pre><code class="hljs curl">curl -X GET -H "Authorization: M9mEO1jNftvs" -H "Content-Type: application/json" -H "//Referer: http://localhost:5984" "http://localhost:3000/api/v1/pharmacy/batches"</code></pre>
+                                </div>
+                                <div class="tab-pane" id="request-stock-management-retrieve-all-batches-in-pharmacy-stock-example-http">
+                                    <pre><code class="hljs http">GET /api/v1/pharmacy/batches HTTP/1.1
+Host: localhost:3000
+Authorization: M9mEO1jNftvs
+Content-Type: application/json
+//Referer: http://localhost:5984</code></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                
+                                <li role="presentation" class="active">
+                                    <a href="#request-stock-management-retrieve-all-batches-in-pharmacy-stock-responses-705c4243-8acd-410a-a5ff-47d66f1ccf44" data-toggle="tab">
+                                        
+                                            Response
+                                        
+                                    </a>
+                                </li>
+                                
+                            </ul>
+                            <div class="tab-content">
+                                
+                                <div class="tab-pane active" id="request-stock-management-retrieve-all-batches-in-pharmacy-stock-responses-705c4243-8acd-410a-a5ff-47d66f1ccf44">
+                                    <table class="table table-bordered">
+                                        <tr><th style="width: 20%;">Status</th><td>200 </td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>application/json; charset=utf-8</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>W/"c459a64a2f28f6d2b6e1aaccde88d2ae"</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>max-age=0, private, must-revalidate</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>3e42263f-d773-48b5-adc4-9c2669e83744</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>0.107010</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>Origin</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>chunked</td></tr>
+                                        
+                                        
+                                            
+                                            <tr><td class="response-text-sample" colspan="2">
+                                                <pre><code>[
+    {
+        "id": 1,
+        "batch_number": "1234567890",
+        "creator": 1,
+        "date_created": "2019-05-09T15:01:26.000+02:00",
+        "date_changed": null,
+        "voided": false,
+        "voided_by": null,
+        "void_reason": null,
+        "date_voided": null,
+        "items": [
+            {
+                "id": 1,
+                "pharmacy_batch_id": 1,
+                "drug_id": 901,
+                "delivered_quantity": 1000,
+                "current_quantity": 0,
+                "delivery_date": "2019-05-09",
+                "expiry_date": null,
+                "creator": 1,
+                "date_created": "2019-05-09T15:06:03.000+02:00",
+                "date_changed": "2019-05-09T15:06:03.000+02:00",
+                "voided": false,
+                "voided_by": null,
+                "void_reason": null,
+                "date_voided": null
+            },
+            {
+                "id": 2,
+                "pharmacy_batch_id": 1,
+                "drug_id": 901,
+                "delivered_quantity": 1000,
+                "current_quantity": 0,
+                "delivery_date": "2019-05-09",
+                "expiry_date": null,
+                "creator": 1,
+                "date_created": "2019-05-09T15:06:06.000+02:00",
+                "date_changed": "2019-05-09T15:06:06.000+02:00",
+                "voided": false,
+                "voided_by": null,
+                "void_reason": null,
+                "date_voided": null
+            },
+            {
+                "id": 3,
+                "pharmacy_batch_id": 1,
+                "drug_id": 901,
+                "delivered_quantity": 1000,
+                "current_quantity": 0,
+                "delivery_date": "2019-05-09",
+                "expiry_date": null,
+                "creator": 1,
+                "date_created": "2019-05-09T15:06:08.000+02:00",
+                "date_changed": "2019-05-09T15:06:08.000+02:00",
+                "voided": false,
+                "voided_by": null,
+                "void_reason": null,
+                "date_voided": null
+            },
+            {
+                "id": 4,
+                "pharmacy_batch_id": 1,
+                "drug_id": 901,
+                "delivered_quantity": 1000,
+                "current_quantity": 0,
+                "delivery_date": "2019-05-09",
+                "expiry_date": "2020-12-31",
+                "creator": 1,
+                "date_created": "2019-05-09T15:34:15.000+02:00",
+                "date_changed": "2019-05-09T15:34:15.000+02:00",
+                "voided": false,
+                "voided_by": null,
+                "void_reason": null,
+                "date_voided": null
+            },
+            {
+                "id": 5,
+                "pharmacy_batch_id": 1,
+                "drug_id": 901,
+                "delivered_quantity": 500,
+                "current_quantity": 0,
+                "delivery_date": "2019-05-09",
+                "expiry_date": "2020-12-31",
+                "creator": 1,
+                "date_created": "2019-05-10T01:57:07.000+02:00",
+                "date_changed": "2019-05-10T01:57:07.000+02:00",
+                "voided": false,
+                "voided_by": null,
+                "void_reason": null,
+                "date_voided": null
+            },
+            {
+                "id": 6,
+                "pharmacy_batch_id": 1,
+                "drug_id": 901,
+                "delivered_quantity": 500,
+                "current_quantity": 0,
+                "delivery_date": "2019-05-09",
+                "expiry_date": "2020-12-31",
+                "creator": 1,
+                "date_created": "2019-05-10T01:58:12.000+02:00",
+                "date_changed": "2019-05-10T01:58:12.000+02:00",
+                "voided": false,
+                "voided_by": null,
+                "void_reason": null,
+                "date_voided": null
+            },
+            {
+                "id": 7,
+                "pharmacy_batch_id": 1,
+                "drug_id": 901,
+                "delivered_quantity": 1000,
+                "current_quantity": 0,
+                "delivery_date": "2019-05-09",
+                "expiry_date": "2020-12-31",
+                "creator": 1,
+                "date_created": "2019-05-16T15:21:20.000+02:00",
+                "date_changed": "2019-05-16T15:21:20.000+02:00",
+                "voided": false,
+                "voided_by": null,
+                "void_reason": null,
+                "date_voided": null
+            }
+        ]
+    }
+]</code></pre>
+                                            </td></tr>
+                                            
+                                        
+                                    </table>
+                                </div>
+                                
+                            </div>
+                        </div>
+                        
+
+                        <hr>
+                    </div>
+                    
+                    
+                    <div class="request">
+
+                        <h4 id="request-stock-management-create-or-add-items-to-batch">
+                            Create or add items to batch
+                            <a href="#request-stock-management-create-or-add-items-to-batch"><i class="glyphicon glyphicon-link"></i></a>
+                        </h4>
+
+                        <div></div>
+
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                <li role="presentation" class="active"><a href="#request-stock-management-create-or-add-items-to-batch-example-curl" data-toggle="tab">Curl</a></li>
+                                <li role="presentation"><a href="#request-stock-management-create-or-add-items-to-batch-example-http" data-toggle="tab">HTTP</a></li>
+                            </ul>
+                            <div class="tab-content">
+                                <div class="tab-pane active" id="request-stock-management-create-or-add-items-to-batch-example-curl">
+                                    <pre><code class="hljs curl">curl -X POST -H "Authorization: M9mEO1jNftvs" -H "Content-Type: application/json" -d '{
+	"batch_number": "1234567890",
+	"items": [{"drug_id": 901, "quantity": 1000, "expiry_date": "2020-12-31", "delivery_date": "2019-05-09"}]
+}' "http://localhost:3000/api/v1/pharmacy/batches"</code></pre>
+                                </div>
+                                <div class="tab-pane" id="request-stock-management-create-or-add-items-to-batch-example-http">
+                                    <pre><code class="hljs http">POST /api/v1/pharmacy/batches HTTP/1.1
+Host: localhost:3000
+Authorization: M9mEO1jNftvs
+Content-Type: application/json
+
+{
+	"batch_number": "1234567890",
+	"items": [{"drug_id": 901, "quantity": 1000, "expiry_date": "2020-12-31", "delivery_date": "2019-05-09"}]
+}</code></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                
+                                <li role="presentation" class="active">
+                                    <a href="#request-stock-management-create-or-add-items-to-batch-responses-31bf38e7-1c8f-4e51-88ab-15f84aa273ac" data-toggle="tab">
+                                        
+                                            Response
+                                        
+                                    </a>
+                                </li>
+                                
+                            </ul>
+                            <div class="tab-content">
+                                
+                                <div class="tab-pane active" id="request-stock-management-create-or-add-items-to-batch-responses-31bf38e7-1c8f-4e51-88ab-15f84aa273ac">
+                                    <table class="table table-bordered">
+                                        <tr><th style="width: 20%;">Status</th><td>201 </td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>application/json; charset=utf-8</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>W/"9247348e0b615145b43e58086788fa2c"</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>max-age=0, private, must-revalidate</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>c20b8b6c-cac5-4db3-8a32-d881f429bff9</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>0.348698</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>Origin</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>chunked</td></tr>
+                                        
+                                        
+                                            
+                                            <tr><td class="response-text-sample" colspan="2">
+                                                <pre><code>{
+    "id": 2,
+    "batch_number": "1234567890",
+    "creator": 1,
+    "date_created": "2019-05-17T09:11:03.000+02:00",
+    "date_changed": null,
+    "voided": false,
+    "voided_by": null,
+    "void_reason": null,
+    "date_voided": null,
+    "items": [
+        {
+            "id": 9,
+            "pharmacy_batch_id": 2,
+            "drug_id": 901,
+            "delivered_quantity": 1000,
+            "current_quantity": 0,
+            "delivery_date": "2019-05-09",
+            "expiry_date": "2020-12-31",
+            "creator": 1,
+            "date_created": "2019-05-17T09:11:03.000+02:00",
+            "date_changed": "2019-05-17T09:11:03.000+02:00",
+            "voided": false,
+            "voided_by": null,
+            "void_reason": null,
+            "date_voided": null
+        }
+    ]
+}</code></pre>
+                                            </td></tr>
+                                            
+                                        
+                                    </table>
+                                </div>
+                                
+                            </div>
+                        </div>
+                        
+
+                        <hr>
+                    </div>
+                    
+                    
+                    <div class="request">
+
+                        <h4 id="request-stock-management-retrieve-specific-pharmacy-batch-item">
+                            Retrieve specific pharmacy batch item
+                            <a href="#request-stock-management-retrieve-specific-pharmacy-batch-item"><i class="glyphicon glyphicon-link"></i></a>
+                        </h4>
+
+                        <div></div>
+
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                <li role="presentation" class="active"><a href="#request-stock-management-retrieve-specific-pharmacy-batch-item-example-curl" data-toggle="tab">Curl</a></li>
+                                <li role="presentation"><a href="#request-stock-management-retrieve-specific-pharmacy-batch-item-example-http" data-toggle="tab">HTTP</a></li>
+                            </ul>
+                            <div class="tab-content">
+                                <div class="tab-pane active" id="request-stock-management-retrieve-specific-pharmacy-batch-item-example-curl">
+                                    <pre><code class="hljs curl">curl -X GET -H "Authorization: M9mEO1jNftvs" "http://localhost:3000/api/v1/pharmacy/items/9"</code></pre>
+                                </div>
+                                <div class="tab-pane" id="request-stock-management-retrieve-specific-pharmacy-batch-item-example-http">
+                                    <pre><code class="hljs http">GET /api/v1/pharmacy/items/9 HTTP/1.1
+Host: localhost:3000
+Authorization: M9mEO1jNftvs</code></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                
+                                <li role="presentation" class="active">
+                                    <a href="#request-stock-management-retrieve-specific-pharmacy-batch-item-responses-2acb4bf3-c37a-44ab-90ae-d179fdee675a" data-toggle="tab">
+                                        
+                                            Response
+                                        
+                                    </a>
+                                </li>
+                                
+                            </ul>
+                            <div class="tab-content">
+                                
+                                <div class="tab-pane active" id="request-stock-management-retrieve-specific-pharmacy-batch-item-responses-2acb4bf3-c37a-44ab-90ae-d179fdee675a">
+                                    <table class="table table-bordered">
+                                        <tr><th style="width: 20%;">Status</th><td>200 </td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>application/json; charset=utf-8</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>W/"86daa0fe67078d5d4f84c41a1bbb1339"</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>max-age=0, private, must-revalidate</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>0afb6b02-be72-47e4-b939-266e90e73db6</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>0.007616</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>Origin</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>chunked</td></tr>
+                                        
+                                        
+                                            
+                                            <tr><td class="response-text-sample" colspan="2">
+                                                <pre><code>{
+    "id": 9,
+    "pharmacy_batch_id": 2,
+    "drug_id": 901,
+    "delivered_quantity": 1000,
+    "current_quantity": 0,
+    "delivery_date": "2019-05-09",
+    "expiry_date": "2020-12-31",
+    "creator": 1,
+    "date_created": "2019-05-17T09:11:03.000+02:00",
+    "date_changed": "2019-05-17T09:11:03.000+02:00",
+    "voided": false,
+    "voided_by": null,
+    "void_reason": null,
+    "date_voided": null
+}</code></pre>
+                                            </td></tr>
+                                            
+                                        
+                                    </table>
+                                </div>
+                                
+                            </div>
+                        </div>
+                        
+
+                        <hr>
+                    </div>
+                    
+                    
+                    <div class="request">
+
+                        <h4 id="request-stock-management-retrieve-all-pharmacy-batch-items">
+                            Retrieve all pharmacy batch items
+                            <a href="#request-stock-management-retrieve-all-pharmacy-batch-items"><i class="glyphicon glyphicon-link"></i></a>
+                        </h4>
+
+                        <div></div>
+
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                <li role="presentation" class="active"><a href="#request-stock-management-retrieve-all-pharmacy-batch-items-example-curl" data-toggle="tab">Curl</a></li>
+                                <li role="presentation"><a href="#request-stock-management-retrieve-all-pharmacy-batch-items-example-http" data-toggle="tab">HTTP</a></li>
+                            </ul>
+                            <div class="tab-content">
+                                <div class="tab-pane active" id="request-stock-management-retrieve-all-pharmacy-batch-items-example-curl">
+                                    <pre><code class="hljs curl">curl -X GET -H "Authorization: M9mEO1jNftvs" "http://localhost:3000/api/v1/pharmacy/items?drug_id=901"</code></pre>
+                                </div>
+                                <div class="tab-pane" id="request-stock-management-retrieve-all-pharmacy-batch-items-example-http">
+                                    <pre><code class="hljs http">GET /api/v1/pharmacy/items?drug_id=901 HTTP/1.1
+Host: localhost:3000
+Authorization: M9mEO1jNftvs</code></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                
+                                <li role="presentation" class="active">
+                                    <a href="#request-stock-management-retrieve-all-pharmacy-batch-items-responses-12b7b296-4ac8-4736-87bf-8de256e309ef" data-toggle="tab">
+                                        
+                                            Retrieve all pharmacy batch items
+                                        
+                                    </a>
+                                </li>
+                                
+                                <li role="presentation">
+                                    <a href="#request-stock-management-retrieve-all-pharmacy-batch-items-responses-59455420-ebe3-4840-b26c-4db07e8456c6" data-toggle="tab">
+                                        
+                                            Retrieve all pharmacy batch items
+                                        
+                                    </a>
+                                </li>
+                                
+                                <li role="presentation">
+                                    <a href="#request-stock-management-retrieve-all-pharmacy-batch-items-responses-5b8adfa9-3acf-4489-9e9d-5a161a7dedef" data-toggle="tab">
+                                        
+                                            Retrieve all pharmacy batch items
+                                        
+                                    </a>
+                                </li>
+                                
+                            </ul>
+                            <div class="tab-content">
+                                
+                                <div class="tab-pane active" id="request-stock-management-retrieve-all-pharmacy-batch-items-responses-12b7b296-4ac8-4736-87bf-8de256e309ef">
+                                    <table class="table table-bordered">
+                                        <tr><th style="width: 20%;">Status</th><td>200 </td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>application/json; charset=utf-8</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>W/"6fff4b375c99204f2bc224f2c26661a5"</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>max-age=0, private, must-revalidate</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>db397909-6107-4f7b-89f0-69cfdb8ace9b</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>0.042295</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>Origin</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>chunked</td></tr>
+                                        
+                                        
+                                            
+                                            <tr><td class="response-text-sample" colspan="2">
+                                                <pre><code>[
+    {
+        "id": 10,
+        "pharmacy_batch_id": 2,
+        "drug_id": 901,
+        "delivered_quantity": 500,
+        "current_quantity": 0,
+        "delivery_date": "2019-05-09",
+        "expiry_date": "2020-12-31",
+        "creator": 1,
+        "date_created": "2019-05-17T09:11:58.000+02:00",
+        "date_changed": "2019-05-17T09:11:58.000+02:00",
+        "voided": false,
+        "voided_by": null,
+        "void_reason": null,
+        "date_voided": null
+    },
+    {
+        "id": 9,
+        "pharmacy_batch_id": 2,
+        "drug_id": 901,
+        "delivered_quantity": 1000,
+        "current_quantity": 0,
+        "delivery_date": "2019-05-09",
+        "expiry_date": "2020-12-31",
+        "creator": 1,
+        "date_created": "2019-05-17T09:11:03.000+02:00",
+        "date_changed": "2019-05-17T09:11:03.000+02:00",
+        "voided": false,
+        "voided_by": null,
+        "void_reason": null,
+        "date_voided": null
+    }
+]</code></pre>
+                                            </td></tr>
+                                            
+                                        
+                                    </table>
+                                </div>
+                                
+                                <div class="tab-pane" id="request-stock-management-retrieve-all-pharmacy-batch-items-responses-59455420-ebe3-4840-b26c-4db07e8456c6">
+                                    <table class="table table-bordered">
+                                        <tr><th style="width: 20%;">Status</th><td>200 </td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>application/json; charset=utf-8</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>W/"6fff4b375c99204f2bc224f2c26661a5"</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>max-age=0, private, must-revalidate</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>db397909-6107-4f7b-89f0-69cfdb8ace9b</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>0.042295</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>Origin</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>chunked</td></tr>
+                                        
+                                        
+                                            
+                                            <tr><td class="response-text-sample" colspan="2">
+                                                <pre><code>[
+    {
+        "id": 10,
+        "pharmacy_batch_id": 2,
+        "drug_id": 901,
+        "delivered_quantity": 500,
+        "current_quantity": 0,
+        "delivery_date": "2019-05-09",
+        "expiry_date": "2020-12-31",
+        "creator": 1,
+        "date_created": "2019-05-17T09:11:58.000+02:00",
+        "date_changed": "2019-05-17T09:11:58.000+02:00",
+        "voided": false,
+        "voided_by": null,
+        "void_reason": null,
+        "date_voided": null
+    },
+    {
+        "id": 9,
+        "pharmacy_batch_id": 2,
+        "drug_id": 901,
+        "delivered_quantity": 1000,
+        "current_quantity": 0,
+        "delivery_date": "2019-05-09",
+        "expiry_date": "2020-12-31",
+        "creator": 1,
+        "date_created": "2019-05-17T09:11:03.000+02:00",
+        "date_changed": "2019-05-17T09:11:03.000+02:00",
+        "voided": false,
+        "voided_by": null,
+        "void_reason": null,
+        "date_voided": null
+    }
+]</code></pre>
+                                            </td></tr>
+                                            
+                                        
+                                    </table>
+                                </div>
+                                
+                                <div class="tab-pane" id="request-stock-management-retrieve-all-pharmacy-batch-items-responses-5b8adfa9-3acf-4489-9e9d-5a161a7dedef">
+                                    <table class="table table-bordered">
+                                        <tr><th style="width: 20%;">Status</th><td>200 </td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>application/json; charset=utf-8</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>W/"6fff4b375c99204f2bc224f2c26661a5"</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>max-age=0, private, must-revalidate</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>db397909-6107-4f7b-89f0-69cfdb8ace9b</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>0.042295</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>Origin</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>chunked</td></tr>
+                                        
+                                        
+                                            
+                                            <tr><td class="response-text-sample" colspan="2">
+                                                <pre><code>[
+    {
+        "id": 10,
+        "pharmacy_batch_id": 2,
+        "drug_id": 901,
+        "delivered_quantity": 500,
+        "current_quantity": 0,
+        "delivery_date": "2019-05-09",
+        "expiry_date": "2020-12-31",
+        "creator": 1,
+        "date_created": "2019-05-17T09:11:58.000+02:00",
+        "date_changed": "2019-05-17T09:11:58.000+02:00",
+        "voided": false,
+        "voided_by": null,
+        "void_reason": null,
+        "date_voided": null
+    },
+    {
+        "id": 9,
+        "pharmacy_batch_id": 2,
+        "drug_id": 901,
+        "delivered_quantity": 1000,
+        "current_quantity": 0,
+        "delivery_date": "2019-05-09",
+        "expiry_date": "2020-12-31",
+        "creator": 1,
+        "date_created": "2019-05-17T09:11:03.000+02:00",
+        "date_changed": "2019-05-17T09:11:03.000+02:00",
+        "voided": false,
+        "voided_by": null,
+        "void_reason": null,
+        "date_voided": null
+    }
+]</code></pre>
+                                            </td></tr>
+                                            
+                                        
+                                    </table>
+                                </div>
+                                
+                            </div>
+                        </div>
+                        
+
+                        <hr>
+                    </div>
+                    
+                    
+                    <div class="request">
+
+                        <h4 id="request-stock-management-update-batch">
+                            Update batch
+                            <a href="#request-stock-management-update-batch"><i class="glyphicon glyphicon-link"></i></a>
+                        </h4>
+
+                        <div></div>
+
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                <li role="presentation" class="active"><a href="#request-stock-management-update-batch-example-curl" data-toggle="tab">Curl</a></li>
+                                <li role="presentation"><a href="#request-stock-management-update-batch-example-http" data-toggle="tab">HTTP</a></li>
+                            </ul>
+                            <div class="tab-content">
+                                <div class="tab-pane active" id="request-stock-management-update-batch-example-curl">
+                                    <pre><code class="hljs curl">curl -X PUT -H "Content-Type: application/json" -H "Authorization: M9mEO1jNftvs" -d '{
+	"items": [{"drug_id": 901, "quantity": 500, "expiry_date": "2020-12-31", "delivery_date": "2019-05-09"}]
+}' "http://localhost:3000/api/v1/pharmacy/batches/1234567890"</code></pre>
+                                </div>
+                                <div class="tab-pane" id="request-stock-management-update-batch-example-http">
+                                    <pre><code class="hljs http">PUT /api/v1/pharmacy/batches/1234567890 HTTP/1.1
+Host: localhost:3000
+Content-Type: application/json
+Authorization: M9mEO1jNftvs
+
+{
+	"items": [{"drug_id": 901, "quantity": 500, "expiry_date": "2020-12-31", "delivery_date": "2019-05-09"}]
+}</code></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                
+                                <li role="presentation" class="active">
+                                    <a href="#request-stock-management-update-batch-responses-c84df620-07df-44ce-9434-d94987698d92" data-toggle="tab">
+                                        
+                                            Response
+                                        
+                                    </a>
+                                </li>
+                                
+                            </ul>
+                            <div class="tab-content">
+                                
+                                <div class="tab-pane active" id="request-stock-management-update-batch-responses-c84df620-07df-44ce-9434-d94987698d92">
+                                    <table class="table table-bordered">
+                                        <tr><th style="width: 20%;">Status</th><td>201 </td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>application/json; charset=utf-8</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>W/"44875dbaf028a4f718ba3b86496ad641"</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>max-age=0, private, must-revalidate</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>e7ca64f5-c24b-4437-b5b8-db973b4870bf</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>0.036926</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>Origin</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>chunked</td></tr>
+                                        
+                                        
+                                            
+                                            <tr><td class="response-text-sample" colspan="2">
+                                                <pre><code>{
+    "id": 2,
+    "batch_number": "1234567890",
+    "creator": 1,
+    "date_created": "2019-05-17T09:11:03.000+02:00",
+    "date_changed": null,
+    "voided": false,
+    "voided_by": null,
+    "void_reason": null,
+    "date_voided": null,
+    "items": [
+        {
+            "id": 9,
+            "pharmacy_batch_id": 2,
+            "drug_id": 901,
+            "delivered_quantity": 1000,
+            "current_quantity": 0,
+            "delivery_date": "2019-05-09",
+            "expiry_date": "2020-12-31",
+            "creator": 1,
+            "date_created": "2019-05-17T09:11:03.000+02:00",
+            "date_changed": "2019-05-17T09:11:03.000+02:00",
+            "voided": false,
+            "voided_by": null,
+            "void_reason": null,
+            "date_voided": null
+        },
+        {
+            "id": 10,
+            "pharmacy_batch_id": 2,
+            "drug_id": 901,
+            "delivered_quantity": 500,
+            "current_quantity": 0,
+            "delivery_date": "2019-05-09",
+            "expiry_date": "2020-12-31",
+            "creator": 1,
+            "date_created": "2019-05-17T09:11:58.000+02:00",
+            "date_changed": "2019-05-17T09:11:58.000+02:00",
+            "voided": false,
+            "voided_by": null,
+            "void_reason": null,
+            "date_voided": null
+        }
+    ]
+}</code></pre>
+                                            </td></tr>
+                                            
+                                        
+                                    </table>
+                                </div>
+                                
+                            </div>
+                        </div>
+                        
+
+                        <hr>
+                    </div>
+                    
+                    
+                    <div class="request">
+
+                        <h4 id="request-stock-management-retrieve-batch-by-batch-number">
+                            Retrieve batch by batch number
+                            <a href="#request-stock-management-retrieve-batch-by-batch-number"><i class="glyphicon glyphicon-link"></i></a>
+                        </h4>
+
+                        <div></div>
+
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                <li role="presentation" class="active"><a href="#request-stock-management-retrieve-batch-by-batch-number-example-curl" data-toggle="tab">Curl</a></li>
+                                <li role="presentation"><a href="#request-stock-management-retrieve-batch-by-batch-number-example-http" data-toggle="tab">HTTP</a></li>
+                            </ul>
+                            <div class="tab-content">
+                                <div class="tab-pane active" id="request-stock-management-retrieve-batch-by-batch-number-example-curl">
+                                    <pre><code class="hljs curl">curl -X GET -H "Authorization: M9mEO1jNftvs" "http://localhost:3000/api/v1/pharmacy/batches/1234567890"</code></pre>
+                                </div>
+                                <div class="tab-pane" id="request-stock-management-retrieve-batch-by-batch-number-example-http">
+                                    <pre><code class="hljs http">GET /api/v1/pharmacy/batches/1234567890 HTTP/1.1
+Host: localhost:3000
+Authorization: M9mEO1jNftvs</code></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                
+                                <li role="presentation" class="active">
+                                    <a href="#request-stock-management-retrieve-batch-by-batch-number-responses-474545d6-fbf8-405f-bb13-048bbeb5bdc6" data-toggle="tab">
+                                        
+                                            Response
+                                        
+                                    </a>
+                                </li>
+                                
+                            </ul>
+                            <div class="tab-content">
+                                
+                                <div class="tab-pane active" id="request-stock-management-retrieve-batch-by-batch-number-responses-474545d6-fbf8-405f-bb13-048bbeb5bdc6">
+                                    <table class="table table-bordered">
+                                        <tr><th style="width: 20%;">Status</th><td>200 </td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>application/json; charset=utf-8</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>W/"9247348e0b615145b43e58086788fa2c"</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>max-age=0, private, must-revalidate</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>c075f4a2-d481-44c1-a607-a3306ad571d8</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>0.024095</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>Origin</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>chunked</td></tr>
+                                        
+                                        
+                                            
+                                            <tr><td class="response-text-sample" colspan="2">
+                                                <pre><code>{
+    "id": 2,
+    "batch_number": "1234567890",
+    "creator": 1,
+    "date_created": "2019-05-17T09:11:03.000+02:00",
+    "date_changed": null,
+    "voided": false,
+    "voided_by": null,
+    "void_reason": null,
+    "date_voided": null,
+    "items": [
+        {
+            "id": 9,
+            "pharmacy_batch_id": 2,
+            "drug_id": 901,
+            "delivered_quantity": 1000,
+            "current_quantity": 0,
+            "delivery_date": "2019-05-09",
+            "expiry_date": "2020-12-31",
+            "creator": 1,
+            "date_created": "2019-05-17T09:11:03.000+02:00",
+            "date_changed": "2019-05-17T09:11:03.000+02:00",
+            "voided": false,
+            "voided_by": null,
+            "void_reason": null,
+            "date_voided": null
+        }
+    ]
+}</code></pre>
+                                            </td></tr>
+                                            
+                                        
+                                    </table>
+                                </div>
+                                
+                            </div>
+                        </div>
+                        
+
+                        <hr>
+                    </div>
+                    
+                    
+                    <div class="request">
+
+                        <h4 id="request-stock-management-retrieve-earliest-expiring-item">
+                            Retrieve earliest expiring item
+                            <a href="#request-stock-management-retrieve-earliest-expiring-item"><i class="glyphicon glyphicon-link"></i></a>
+                        </h4>
+
+                        <div></div>
+
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                <li role="presentation" class="active"><a href="#request-stock-management-retrieve-earliest-expiring-item-example-curl" data-toggle="tab">Curl</a></li>
+                                <li role="presentation"><a href="#request-stock-management-retrieve-earliest-expiring-item-example-http" data-toggle="tab">HTTP</a></li>
+                            </ul>
+                            <div class="tab-content">
+                                <div class="tab-pane active" id="request-stock-management-retrieve-earliest-expiring-item-example-curl">
+                                    <pre><code class="hljs curl">curl -X GET -H "Authorization: 58L9eHzOh7Mi" "http://localhost:3000/api/v1/pharmacy/earliest_expiring_item "</code></pre>
+                                </div>
+                                <div class="tab-pane" id="request-stock-management-retrieve-earliest-expiring-item-example-http">
+                                    <pre><code class="hljs http">GET /api/v1/pharmacy/earliest_expiring_item%20 HTTP/1.1
+Host: localhost:3000
+Authorization: 58L9eHzOh7Mi</code></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                
+                                <li role="presentation" class="active">
+                                    <a href="#request-stock-management-retrieve-earliest-expiring-item-responses-fece7fef-9aa8-4062-a1f7-53114f1318c6" data-toggle="tab">
+                                        
+                                            Response
+                                        
+                                    </a>
+                                </li>
+                                
+                            </ul>
+                            <div class="tab-content">
+                                
+                                <div class="tab-pane active" id="request-stock-management-retrieve-earliest-expiring-item-responses-fece7fef-9aa8-4062-a1f7-53114f1318c6">
+                                    <table class="table table-bordered">
+                                        <tr><th style="width: 20%;">Status</th><td>200 </td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>application/json; charset=utf-8</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>W/"c72960b0169371af80f87b9f7f70972c"</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>max-age=0, private, must-revalidate</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>8effb353-b0d7-41e1-b4a3-3c76d2c525ce</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>0.048205</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>Origin</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>chunked</td></tr>
+                                        
+                                        
+                                            
+                                            <tr><td class="response-text-sample" colspan="2">
+                                                <pre><code>{
+    "id": 1,
+    "pharmacy_batch_id": 1,
+    "drug_id": 901,
+    "delivered_quantity": 1000,
+    "current_quantity": 0,
+    "delivery_date": "2019-05-09",
+    "expiry_date": null,
+    "creator": 1,
+    "date_created": "2019-05-09T15:06:03.000+02:00",
+    "date_changed": "2019-05-09T15:06:03.000+02:00",
+    "voided": false,
+    "voided_by": null,
+    "void_reason": null,
+    "date_voided": null
+}</code></pre>
+                                            </td></tr>
+                                            
+                                        
+                                    </table>
+                                </div>
+                                
+                            </div>
+                        </div>
+                        
+
+                        <hr>
+                    </div>
+                    
+                    
+                    <div class="request">
+
+                        <h4 id="request-stock-management-delete-batch">
+                            Delete batch
+                            <a href="#request-stock-management-delete-batch"><i class="glyphicon glyphicon-link"></i></a>
+                        </h4>
+
+                        <div></div>
+
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                <li role="presentation" class="active"><a href="#request-stock-management-delete-batch-example-curl" data-toggle="tab">Curl</a></li>
+                                <li role="presentation"><a href="#request-stock-management-delete-batch-example-http" data-toggle="tab">HTTP</a></li>
+                            </ul>
+                            <div class="tab-content">
+                                <div class="tab-pane active" id="request-stock-management-delete-batch-example-curl">
+                                    <pre><code class="hljs curl">curl -X DELETE -H "Authorization: M9mEO1jNftvs" "http://localhost:3000/api/v1/pharmacy/batches/1234567890?reason=I+Hate+This+Batch"</code></pre>
+                                </div>
+                                <div class="tab-pane" id="request-stock-management-delete-batch-example-http">
+                                    <pre><code class="hljs http">DELETE /api/v1/pharmacy/batches/1234567890?reason=I+Hate+This+Batch HTTP/1.1
+Host: localhost:3000
+Authorization: M9mEO1jNftvs</code></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+
+                        <hr>
+                    </div>
+                    
+                    
+                    <div class="request">
+
+                        <h4 id="request-stock-management-reallocate-batch-item-to-another-site">
+                            Reallocate batch item to another site
+                            <a href="#request-stock-management-reallocate-batch-item-to-another-site"><i class="glyphicon glyphicon-link"></i></a>
+                        </h4>
+
+                        <div></div>
+
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                <li role="presentation" class="active"><a href="#request-stock-management-reallocate-batch-item-to-another-site-example-curl" data-toggle="tab">Curl</a></li>
+                                <li role="presentation"><a href="#request-stock-management-reallocate-batch-item-to-another-site-example-http" data-toggle="tab">HTTP</a></li>
+                            </ul>
+                            <div class="tab-content">
+                                <div class="tab-pane active" id="request-stock-management-reallocate-batch-item-to-another-site-example-curl">
+                                    <pre><code class="hljs curl">curl -X POST -H "Content-Type: application/json" -H "Authorization: 58L9eHzOh7Mi" -d '{
+	"reallocation_code": "1234567890",
+	"quantity": 0,
+	"location_id": 701
+}' "http://localhost:3000/api/v1/pharmacy/items/5/reallocate"</code></pre>
+                                </div>
+                                <div class="tab-pane" id="request-stock-management-reallocate-batch-item-to-another-site-example-http">
+                                    <pre><code class="hljs http">POST /api/v1/pharmacy/items/5/reallocate HTTP/1.1
+Host: localhost:3000
+Content-Type: application/json
+Authorization: 58L9eHzOh7Mi
+
+{
+	"reallocation_code": "1234567890",
+	"quantity": 0,
+	"location_id": 701
+}</code></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist">
+                                
+                                <li role="presentation" class="active">
+                                    <a href="#request-stock-management-reallocate-batch-item-to-another-site-responses-032bba4e-6782-4d7a-bc10-86b7a9030db4" data-toggle="tab">
+                                        
+                                            Reallocate batch item to another site
+                                        
+                                    </a>
+                                </li>
+                                
+                                <li role="presentation">
+                                    <a href="#request-stock-management-reallocate-batch-item-to-another-site-responses-df3cc829-f590-4bbb-9dd6-bcc6ffc15bc6" data-toggle="tab">
+                                        
+                                            Reallocate batch item to another site
+                                        
+                                    </a>
+                                </li>
+                                
+                            </ul>
+                            <div class="tab-content">
+                                
+                                <div class="tab-pane active" id="request-stock-management-reallocate-batch-item-to-another-site-responses-032bba4e-6782-4d7a-bc10-86b7a9030db4">
+                                    <table class="table table-bordered">
+                                        <tr><th style="width: 20%;">Status</th><td>201 </td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>application/json; charset=utf-8</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>W/"5bbbc83f4a4e5bf94f264e571548ab1e"</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>max-age=0, private, must-revalidate</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>f7441784-ef67-43e4-abad-acb865f3a1c2</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>0.843913</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>Origin</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>chunked</td></tr>
+                                        
+                                        
+                                            
+                                            <tr><td class="response-text-sample" colspan="2">
+                                                <pre><code>{
+    "id": 1,
+    "reallocation_code": "1234567890",
+    "batch_item_id": 5,
+    "quantity": 0,
+    "location_id": 701,
+    "created_at": "2019-05-16T15:56:16.000+02:00",
+    "updated_at": "2019-05-16T15:56:16.000+02:00"
+}</code></pre>
+                                            </td></tr>
+                                            
+                                        
+                                    </table>
+                                </div>
+                                
+                                <div class="tab-pane" id="request-stock-management-reallocate-batch-item-to-another-site-responses-df3cc829-f590-4bbb-9dd6-bcc6ffc15bc6">
+                                    <table class="table table-bordered">
+                                        <tr><th style="width: 20%;">Status</th><td>201 </td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>application/json; charset=utf-8</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>W/"5bbbc83f4a4e5bf94f264e571548ab1e"</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>max-age=0, private, must-revalidate</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>f7441784-ef67-43e4-abad-acb865f3a1c2</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>0.843913</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>Origin</td></tr>
+                                        
+                                        <tr><th style="width: 20%;"></th><td>chunked</td></tr>
+                                        
+                                        
+                                            
+                                            <tr><td class="response-text-sample" colspan="2">
+                                                <pre><code>{
+    "id": 1,
+    "reallocation_code": "1234567890",
+    "batch_item_id": 5,
+    "quantity": 0,
+    "location_id": 701,
+    "created_at": "2019-05-16T15:56:16.000+02:00",
+    "updated_at": "2019-05-16T15:56:16.000+02:00"
+}</code></pre>
+                                            </td></tr>
+                                            
+                                        
+                                    </table>
+                                </div>
+                                
+                            </div>
+                        </div>
+                        
+
+                        <hr>
+                    </div>
+                    
+
+                </div>
                 
             </div>
         </div>
