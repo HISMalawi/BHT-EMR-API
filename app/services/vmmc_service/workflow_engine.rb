@@ -150,6 +150,17 @@ class VMMCService::WorkflowEngine
                .exists?
   end
 
+  def continue_to_circumcision?
+    continue_to_circumcision_concept_id = ConceptName.find_by_name('Continue to circumcision?').concept_id
+
+    Observation.joins(:encounter)\
+               .where(person_id: @patient.id,
+                      concept_id: continue_to_circumcision_concept_id,
+                      value_coded: yes_concept.concept_id)\
+               .merge(Encounter.where(program_id: vmmc_program.program_id))
+               .exists?
+  end
+
   def vmmc_registration_encounter_not_collected?
     encounter = Encounter.joins(:type).where(
       'encounter_type.name = ? AND encounter.patient_id = ?',
@@ -162,6 +173,14 @@ class VMMCService::WorkflowEngine
     encounter = Encounter.joins(:type).where(
       'encounter_type.name = ? AND encounter.patient_id = ?',
       POST_OP_REVIEW, @patient.patient_id)
+
+    encounter.blank?
+  end
+
+  def summary_assessment_encounter_not_collected?
+    encounter = Encounter.joins(:type).where(
+      'encounter_type.name = ? AND encounter.patient_id = ?',
+      SUMMARY_ASSESSMENT, @patient.patient_id)
 
     encounter.blank?
   end
