@@ -48,9 +48,4 @@ class Drug < ActiveRecord::Base
     Drug.where(concept: tb_concept)
   end
 
-  def self.tb_side_effects_drug
-    tb_concept = Concept.joins(:concept_names)\
-                        .where(concept_name: { name: %w[Streptomycin Pyridoxine Rifabutin] })
-    Drug.where(concept: tb_concept)
-  end
 end
