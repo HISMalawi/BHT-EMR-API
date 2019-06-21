@@ -93,14 +93,11 @@ module TBService
     end
 
     def current_outcome
-      patient_id = ActiveRecord::Base.connection.quote(patient.patient_id)
-      quoted_date = ActiveRecord::Base.connection.quote(date)
       program_id = program('TB PROGRAM').program_id
 
-      filter = "patient_program.patient_id = #{patient_id} AND patient_program.program_id = #{program_id} AND DATE(start_date) <= #{quoted_date}"
-      patient_state = PatientState.joins(:patient_program)
-                                  .where(filter)
-                                  .order(start_date: :desc)
+      patient_state = PatientState.joins(:patient_program)\
+                                  .where('patient_program.patient_id = ? AND patient_program.program_id = ? AND start_date <= DATE(?) AND end_date is not null', patient.patient_id, program_id, date)\
+                                  .order(start_date: :desc)\
                                   .first
 
       return nil unless patient_state
