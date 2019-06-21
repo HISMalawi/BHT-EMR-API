@@ -10,7 +10,8 @@ module ARTService
       'MISSING START REASONS' => 'missing_start_reasons',
       'PRESCRIPTION WITHOUT DISPENSATION' => 'prescription_without_dispensation',
       'CLIENTS WITH ENCOUNTERS AFTER DECLARED DEAD' => 'client_with_encounters_after_declared_dead',
-      'MALE CLIENTS WITH FEMALE OBS' => 'male_clients_with_female_obs'
+      'MALE CLIENTS WITH FEMALE OBS' => 'male_clients_with_female_obs',
+      'DOB MORE THAN DATE ENROLLED' => 'dob_more_than_date_enrolled'
     }
 
 
@@ -29,6 +30,39 @@ module ARTService
     end
 
     private
+
+    def dob_more_than_date_enrolled
+      data = ActiveRecord::Base.connection.select_all <<EOF
+      select
+        `p`.`patient_id` AS `patient_id`, `pe`.`birthdate`,
+        cast(patient_date_enrolled(`p`.`patient_id`) as date) AS `date_enrolled`,
+        date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`,
+        n.given_name, n.family_name, pe.gender, i.identifier arv_number
+      from
+        ((`patient_program` `p`
+        left join `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
+        left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
+        left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
+        LEFT JOIN patient_identifier i ON i.patient_id = pe.person_id
+        AND i.identifier_type = 4 AND i.voided = 0
+        LEFT JOIN person_name n ON n.person_id = pe.person_id AND n.voided = 0
+      where
+        ((`p`.`voided` = 0)
+            and (`s`.`voided` = 0)
+            and (`p`.`program_id` = 1)
+            and (`s`.`state` = 7))
+            and (`s`.`start_date`
+            between '#{@start_date.strftime('%Y-%m-%d 00:00:00')}'
+            and '#{@end_date.strftime('%Y-%m-%d 23:59:59')}')
+      group by `p`.`patient_id`
+      HAVING (DATE(date_enrolled) < DATE(birthdate))
+      OR (DATE(earliest_start_date) < DATE(birthdate))
+      ORDER BY n.date_created DESC;
+EOF
+
+      return {} if data.blank?
+      return data
+    end
 
     def date_enrolled_less_than_earliest_start_date
       data = ActiveRecord::Base.connection.select_all <<EOF
@@ -79,7 +113,7 @@ EOF
 
       data = ActiveRecord::Base.connection.select_all <<EOF
       select
-        p.patient_id, patient_outcome(p.patient_id, DATE('#{@end_date}')) outcome
+        p.patient_id
       from
         ((`patient_program` `p`
         inner join orders o ON o.patient_id = p.patient_id
@@ -99,13 +133,25 @@ EOF
             between '#{@start_date.strftime('%Y-%m-%d 00:00:00')}'
             and '#{@end_date.strftime('%Y-%m-%d 23:59:59')}')
       group by `p`.`patient_id` 
-      HAVING (outcome LIKE '%Pre%' OR outcome LIKE '%Unknown%')
       ORDER BY s.start_date DESC;
 EOF
 
       return {} if data.blank?
-      patient_ids = data.map{|d| d['patient_id'].to_i}
+      patient_ids = []
+      data_patient_ids = data.collect{|d| d['patient_id'].to_i}
       
+      data_patient_ids.each do |patient_id|
+        outcome = ActiveRecord::Base.connection.select_one <<EOF
+        SELECT patient_outcome(#{patient_id}, DATE('#{@end_date}')) outcome;
+EOF
+
+        if outcome['outcome'].match(/Unknown/i) || outcome['outcome'].match(/Pre/i)
+          patient_ids << patient_id
+        end
+      end
+
+      return {} if patient_ids.blank?
+
       data = ActiveRecord::Base.connection.select_all <<EOF
       SELECT
         p.person_id, i.identifier arv_number, birthdate, gender, death_date,
@@ -192,6 +238,7 @@ EOF
       INNER JOIN orders o ON o.order_id = t.order_id
       AND start_date BETWEEN '#{@start_date.strftime('%Y-%m-%d 00:00:00')}' 
       AND '#{@end_date.strftime('%Y-%m-%d 23:59:59')}' 
+      INNER JOIN encounter e ON o.encounter_id = e.encounter_id AND e.program_id = 1
       INNER JOIN person p ON p.person_id = o.patient_id
       LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
       AND i.identifier_type = 4 AND i.voided = 0
