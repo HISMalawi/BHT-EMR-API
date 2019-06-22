@@ -47,6 +47,30 @@ module TBService
       end).values
   end
 
+        # assess whether a patient must go for a lab order
+        def due_lab_order? (patient:)
+          program_start_date = find_patient_date_enrolled(patient)
+          days = (Date.today - program_start_date).to_i
+          falls_within_ordering_period?(days: days, tolerance: 5) && no_orders_done?(patient: patient, time: 5.days.ago)
+        end
+
+        def no_orders_done? (patient:, time:)
+          lab_order = encounter_type('Lab Orders')
+          Encounter.where('patient_id = ? AND program_id = ? AND encounter_datetime >= ?',\
+                          patient.patient_id, @program.program_id, time).blank?
+        end
+
+        def falls_within_ordering_period? (days:, tolerance:)
+          # a lab order is supposed to be done after 56, 84, 140 and 260 days
+          intervals = [56, 84, 140, 260]
+
+          # the patient may come earlier or later so a tolerance must be added
+          intervals.each do |interval|
+            return true if (days.between?(interval - tolerance, interval + tolerance))
+          end
+          false
+        end
+
     # Returns patient's TB start date at current facility
     def find_patient_date_enrolled(patient)
       order = Order.joins(:encounter, :drug_order)\

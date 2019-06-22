@@ -131,6 +131,7 @@ Rails.application.routes.draw do
           get '/labels/patient_history', to: 'program_patients#print_patient_history_label'
           get '/mastercard_data', to: 'program_patients#mastercard_data'
           get '/medication_side_effects', to: 'program_patients#medication_side_effects'
+          get '/is_due_lab_order', to: 'program_patients#is_due_lab_order'
           #ANC
           get '/surgical_history', to: 'program_patients#surgical_history'
           get '/anc_visit', to: 'program_patients#anc_visit'
