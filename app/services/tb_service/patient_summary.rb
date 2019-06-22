@@ -96,7 +96,7 @@ module TBService
       program_id = program('TB PROGRAM').program_id
 
       patient_state = PatientState.joins(:patient_program)\
-                                  .where('patient_program.patient_id = ? AND patient_program.program_id = ? AND start_date <= DATE(?) AND end_date is not null', patient.patient_id, program_id, date)\
+                                  .where('patient_program.patient_id = ? AND patient_program.program_id = ? AND start_date <= DATE(?) AND end_date is null', patient.patient_id, program_id, date)\
                                   .order(start_date: :desc)\
                                   .first
 
