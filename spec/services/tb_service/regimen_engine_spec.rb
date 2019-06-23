@@ -92,7 +92,7 @@ describe TBService::RegimenEngine do
 		it 'return all TB drugs' do
 			tb_drugs = Drug.tb_drugs
 			drugs_names = tb_drugs.map {|name| name.name}
-      expect(drugs_names).to include('Rifabutin (150mgs)')
+      expect(drugs_names).to include('Rifabutin (300mg)')
     end
   end
 
