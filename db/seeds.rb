@@ -71,33 +71,7 @@ NtpRegimen.where(drug: Drug.find_by(name: 'Z (Pyrazinamide 400mg tablet)'), am_d
 NtpRegimen.where(drug: Drug.find_by(name: 'Z (Pyrazinamide 400mg tablet)'), am_dose: 4, min_weight: 56, max_weight: 70, creator: 1).first_or_create
 NtpRegimen.where(drug: Drug.find_by(name: 'Z (Pyrazinamide 500mg tablet)'), am_dose: 4, min_weight: 70, max_weight: 9000, creator: 1).first_or_create
 
-NtpRegimen.where(drug: Drug.find_by(name: 'E (Ethambutol 400mg tablet)'), am_dose: 1.5, min_weight: 30, max_weight: 35, creator: 1).first_or_create
-NtpRegimen.where(drug: Drug.find_by(name: 'E (Ethambutol 400mg tablet)'), am_dose: 2, min_weight: 36, max_weight: 45, creator: 1).first_or_create
-NtpRegimen.where(drug: Drug.find_by(name: 'E (Ethambutol 400mg tablet)'), am_dose: 2.5, min_weight: 46, max_weight: 55, creator: 1).first_or_create
-NtpRegimen.where(drug: Drug.find_by(name: 'E (Ethambutol 400mg tablet)'), am_dose: 4, min_weight: 56, max_weight: 9000, creator: 1).first_or_create
-
 NtpRegimen.where(drug: Drug.find_by(name: 'RFB (Rifabutin 150mg tablet )'), am_dose: 2, min_weight: 30, max_weight: 9000, creator: 1).first_or_create
-
-NtpRegimen.where(drug: Drug.find_by(name: 'Et(Ethionamide 250mg tablet)'), am_dose: 1, pm_dose: 1, min_weight: 30, max_weight: 45, creator: 1).first_or_create
-NtpRegimen.where(drug: Drug.find_by(name: 'Et(Ethionamide 250mg tablet)'), am_dose: 1, noon_dose: 1, pm_dose: 1, min_weight: 46, max_weight: 70, creator: 1).first_or_create
-NtpRegimen.where(drug: Drug.find_by(name: 'Et(Ethionamide 250mg tablet)'), am_dose: 2, pm_dose: 2, min_weight: 70, max_weight: 9000, creator: 1).first_or_create
-
-NtpRegimen.where(drug: Drug.find_by(name: 'Prothio (Prothionamide 250mg tablet)'), am_dose: 1, pm_dose: 1, min_weight: 30, max_weight: 45, creator: 1).first_or_create
-NtpRegimen.where(drug: Drug.find_by(name: 'Prothio (Prothionamide 250mg tablet)'), am_dose: 1, noon_dose: 1, pm_dose: 1, min_weight: 46, max_weight: 70, creator: 1).first_or_create
-NtpRegimen.where(drug: Drug.find_by(name: 'Prothio (Prothionamide 250mg tablet)'), am_dose: 2, pm_dose: 2, min_weight: 70, max_weight: 9000, creator: 1).first_or_create
-
-NtpRegimen.where(drug: Drug.find_by(name: 'CS (Cycloserine 250mg tablet)'), am_dose: 1, pm_dose: 1, min_weight: 30, max_weight: 55, creator: 1).first_or_create
-NtpRegimen.where(drug: Drug.find_by(name: 'CS (Cycloserine 250mg tablet)'), am_dose: 1, noon_dose: 1, pm_dose: 1, min_weight: 56, max_weight: 9000, creator: 1).first_or_create
-
-NtpRegimen.where(drug: Drug.find_by(name: 'CFZ (Clofazimine 100mg tablet)'), am_dose: 3, min_weight: 30, max_weight: 9000, creator: 1).first_or_create
-NtpRegimen.where(drug: Drug.find_by(name: 'CFZ (Clofazimine 100mg tablet)'), am_dose: 1, min_weight: 30, max_weight: 9000, creator: 1).first_or_create
-
-NtpRegimen.where(drug: Drug.find_by(name: 'S (Streptomycin 1gm vial)'), am_dose: 500, min_weight: 30, max_weight: 33, creator: 1).first_or_create
-NtpRegimen.where(drug: Drug.find_by(name: 'S (Streptomycin 1gm vial)'), am_dose: 600, min_weight: 34, max_weight: 40, creator: 1).first_or_create
-NtpRegimen.where(drug: Drug.find_by(name: 'S (Streptomycin 1gm vial)'), am_dose: 700, min_weight: 41, max_weight: 45, creator: 1).first_or_create
-NtpRegimen.where(drug: Drug.find_by(name: 'S (Streptomycin 1gm vial)'), am_dose: 800, min_weight: 46, max_weight: 50, creator: 1).first_or_create
-NtpRegimen.where(drug: Drug.find_by(name: 'S (Streptomycin 1gm vial)'), am_dose: 900, min_weight: 51, max_weight: 70, creator: 1).first_or_create
-NtpRegimen.where(drug: Drug.find_by(name: 'S (Streptomycin 1gm vial)'), am_dose: 1000, min_weight: 70, max_weight: 9000, creator: 1).first_or_create
 
 NtpRegimen.where(drug: Drug.find_by(name: 'LFX (Levofloxacin 500mg tablet)'), am_dose: 2, min_weight: 15, max_weight: 20, creator: 1).first_or_create
 

@@ -117,6 +117,7 @@ Rails.application.routes.draw do
         get 'lookup_arv_number/:arv_number' => 'program_patients#lookup_arv_number'
         get 'regimen_starter_packs' => 'program_regimens#find_starter_pack'
         get 'custom_regimen_ingredients' => 'program_regimens#custom_regimen_ingredients'
+        get 'custom_tb_ingredients' => 'program_regimens#custom_tb_ingredients'
         get 'defaulter_list' => 'program_patients#defaulter_list'
         resources :program_patients, path: :patients do
           get '/next_appointment_date' => 'patient_appointments#next_appointment_date'

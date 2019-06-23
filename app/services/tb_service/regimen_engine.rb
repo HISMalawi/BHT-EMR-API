@@ -14,8 +14,8 @@ module TBService
     def first_line_drugs (patient:)
       drug_set = Drug.first_line_tb_drugs().map(&:drug_id)
       drug_placeholders = '(' + (['?'] * drug_set.size).join(', ')
-      NtpRegimen.where(
-        "? BETWEEN CAST(min_weight AS DECIMAL(4, 1)) AND CAST(max_weight AS DECIMAL(4, 1))) AND drug_id IN #{drug_placeholders}",
+      NtpRegimen.joins(:drug).where(
+        "? BETWEEN CAST(min_weight AS DECIMAL(4, 1)) AND CAST(max_weight AS DECIMAL(4, 1))) AND ntp_regimens.drug_id IN #{drug_placeholders}",
         patient.weight.to_f.round(1),
         *drug_set
       )
@@ -24,8 +24,8 @@ module TBService
     def second_line_drugs (patient:)
       drug_set = Drug.second_line_tb_drugs().map(&:drug_id)
       drug_placeholders = '(' + (['?'] * drug_set.size).join(', ') + ')'
-      NtpRegimen.where(
-        "? BETWEEN CAST(min_weight AS DECIMAL(4, 1)) AND CAST(max_weight AS DECIMAL(4, 1)) AND drug_id IN #{drug_placeholders}",
+      NtpRegimen.joins(:drug).where(
+        "? BETWEEN CAST(min_weight AS DECIMAL(4, 1)) AND CAST(max_weight AS DECIMAL(4, 1)) AND ntp_regimens.drug_id IN #{drug_placeholders}",
         patient.weight.to_f.round(1),
         *drug_set
       )
@@ -111,8 +111,11 @@ module TBService
       }]
     end
 
-    def custom_regimen_ingredients
-      NtpRegimen.all
+    def custom_regimen_ingredients (patient:)
+      NtpRegimen.joins(:drug).where(
+        "? BETWEEN CAST(min_weight AS DECIMAL(4, 1)) AND CAST(max_weight AS DECIMAL(4, 1))",
+        patient.weight.to_f.round(1)
+      )
     end
 
     def find_regimens(patient)
