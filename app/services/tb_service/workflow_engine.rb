@@ -44,24 +44,22 @@ module TBService
     DISPENSING = 'DISPENSING'
     TB_ADHERENCE = 'TB ADHERENCE'
     DIAGNOSIS = 'DIAGNOSIS'
-    LAB_RESULTS =  'LAB RESULTS'
+    LAB_RESULTS = 'LAB RESULTS'
     APPOINTMENT = 'APPOINTMENT'
     TB_REGISTRATION = 'TB REGISTRATION'
     TB_RECEPTION = 'TB RECEPTION'
+    # FOLLOW - TB INITIAL, LAB ORDERS. LAB RESULTs, VITALS, TREATMENT, DISPENSING, APPOINTMENT, TB ADHERENCE
 
-    #FOLLOW - TB INITIAL, LAB ORDERS. LAB RESULTs, VITALS, TREATMENT, DISPENSING, APPOINTMENT, TB ADHERENCE
-
-    #CONCEPTS
+    # CONCEPTS
     YES = 1065
 
-    #Ask vitals when TB Positive
-    #Diagnosis is for minors under and equal to 5 and suspsets over who are TB on the first encounter negative
+    # Ask vitals when TB Positive
+    # Diagnosis is for minors under and equal to 5 and suspsets over who are TB on the first encounter negative
     #
 
     # Encounters graph
     ENCOUNTER_SM = {
-      INITIAL_STATE => CLINIC_VISIT
-      CLINIC_VISIT => TB_INITIAL,
+      INITIAL_STATE => TB_INITIAL,
       TB_INITIAL => LAB_ORDERS,
       LAB_ORDERS => DIAGNOSIS,
       DIAGNOSIS => LAB_RESULTS,
@@ -76,10 +74,11 @@ module TBService
     }.freeze
 
     STATE_CONDITIONS = {
-      CLINIC_VISIT => %i[no_previous_visit?],
-      TB_INITIAL => %i[patient_should_go_for_screening?],
+      TB_INITIAL => %i[patient_should_go_for_screening?
+                                    patient_not_transferred_in_today?],
 
-      LAB_ORDERS => %i[patient_should_go_for_lab_order?],
+      LAB_ORDERS => %i[patient_should_go_for_lab_order?
+                                    patient_not_transferred_in_today?],
       TB_ADHERENCE => %i[patient_has_appointment?
                                     patient_has_no_adherence?
                                     patient_has_valid_test_results?],
@@ -96,10 +95,12 @@ module TBService
                                     patient_examined?],
       DIAGNOSIS => %i[should_patient_tested_through_diagnosis?
                                     patient_has_no_diagnosis?
-                                    patient_diagnosed?],
+                                    patient_diagnosed?
+                                    patient_not_transferred_in_today?],
       LAB_RESULTS => %i[patient_has_no_lab_results?
                                     patient_should_proceed_after_lab_order?
-                                    patient_recent_lab_order_has_no_results?],
+                                    patient_recent_lab_order_has_no_results?
+                                    patient_not_transferred_in_today?],
       TB_RECEPTION => %i[patient_has_no_tb_reception?
                                     patient_diagnosed?
                                     patient_examined?
@@ -558,20 +559,13 @@ module TBService
       (patient_current_tb_status_is_negative? || tb_suspect_not_enrolled?)
     end
 
-    def not_transferred_in?
-      transferred_in_state = 108
-      PatientState.joins(:patient_program)\
-                  .where('patient_program.program_id = ? AND patient_program.patient_id = ? AND state = ? AND encounter_datetime BETWEEN ? AND ?',
-                         @program.program_id,
-                         @patient.patient_id,
-                         transferred_in_state).blank?
-    end
-
-    def no_previous_visit?
-      Encounter.where('patient_id = ? AND program_id = ? AND encounter_datetime <= ?',
-                      @patient.patient_id,
-                      @program.program_id,
-                      Time.now).blank?
+    def patient_not_transferred_in_today?
+      transfer_in_concept = concept('Transfer in')
+      yes_concept = concept 'YES'
+      Observation.where(
+        'person_id = ? AND concept_id = ? AND value_coded = ? AND DATE(obs_datetime) = DATE(?)',
+        @patient.patient_id, transfer_in_concept.concept_id, yes_concept.concept_id, @date
+      ).order(obs_datetime: :desc).first.nil?
     end
   end
 end
