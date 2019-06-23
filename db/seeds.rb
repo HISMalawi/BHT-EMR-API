@@ -152,22 +152,22 @@ NtpRegimen.where(drug: Drug.find_by(name: 'Ethambutol (1200mg)'), am_dose: 1, mi
 NtpRegimen.where(drug: Drug.find_by(name: 'Rifabutin (300mg)'), am_dose: 1, min_weight: 0, max_weight: 1000, creator: 1).first_or_create
 
 # Ethionamide
-NtpRegimen.where(drug: Drug.find_by(name: 'Ethionamide (500mg)'), am_dose: 2, min_weight: 30, max_weight: 45, creator: 1).first_or_create
-NtpRegimen.where(drug: Drug.find_by(name: 'Ethionamide (750mg)'), am_dose: 2, min_weight: 46, max_weight: 70, creator: 1).first_or_create
-NtpRegimen.where(drug: Drug.find_by(name: 'Ethionamide (1000mg)'), am_dose: 2, min_weight: 71, max_weight: 1000, creator: 1).first_or_create
+NtpRegimen.where(drug: Drug.find_by(name: 'Ethionamide (500mg)'), am_dose: 1, pm_dose: 1, min_weight: 30, max_weight: 45, creator: 1).first_or_create
+NtpRegimen.where(drug: Drug.find_by(name: 'Ethionamide (750mg)'), am_dose: 1, pm_dose: 1, min_weight: 46, max_weight: 70, creator: 1).first_or_create
+NtpRegimen.where(drug: Drug.find_by(name: 'Ethionamide (1000mg)'), am_dose: 1, pm_dose: 1, min_weight: 71, max_weight: 1000, creator: 1).first_or_create
 
 # Prothionamide
-NtpRegimen.where(drug: Drug.find_by(name: 'Prothionamide (500mg)'), am_dose: 2, min_weight: 30, max_weight: 45, creator: 1).first_or_create
-NtpRegimen.where(drug: Drug.find_by(name: 'Prothionamide (750mg)'), am_dose: 2, min_weight: 46, max_weight: 70, creator: 1).first_or_create
-NtpRegimen.where(drug: Drug.find_by(name: 'Prothionamide (1000mg)'), am_dose: 2, min_weight: 71, max_weight: 1000, creator: 1).first_or_create
+NtpRegimen.where(drug: Drug.find_by(name: 'Prothionamide (500mg)'), am_dose: 1, pm_dose: 1, min_weight: 30, max_weight: 45, creator: 1).first_or_create
+NtpRegimen.where(drug: Drug.find_by(name: 'Prothionamide (750mg)'), am_dose: 1, pm_dose: 1, min_weight: 46, max_weight: 70, creator: 1).first_or_create
+NtpRegimen.where(drug: Drug.find_by(name: 'Prothionamide (1000mg)'), am_dose: 1, pm_dose: 1, min_weight: 71, max_weight: 1000, creator: 1).first_or_create
 
 # Cycloserine
-NtpRegimen.where(drug: Drug.find_by(name: 'Cycloserine (500mg)'), am_dose: 2, min_weight: 30, max_weight: 55, creator: 1).first_or_create
-NtpRegimen.where(drug: Drug.find_by(name: 'Cycloserine (750mg)'), am_dose: 2, min_weight: 56, max_weight: 1000, creator: 1).first_or_create
+NtpRegimen.where(drug: Drug.find_by(name: 'Cycloserine (500mg)'), am_dose: 1, pm_dose: 1, min_weight: 30, max_weight: 55, creator: 1).first_or_create
+NtpRegimen.where(drug: Drug.find_by(name: 'Cycloserine (750mg)'), am_dose: 1, pm_dose: 1, min_weight: 56, max_weight: 1000, creator: 1).first_or_create
 
 # P-aminosalicylic acid
-NtpRegimen.where(drug: Drug.find_by(name: 'P-aminosalicylic acid (8g)'), am_dose: 2, min_weight: 30, max_weight: 70, creator: 1).first_or_create
-NtpRegimen.where(drug: Drug.find_by(name: 'P-aminosalicylic acid (8-12g)'), am_dose: 2, min_weight: 71, max_weight: 1000, creator: 1).first_or_create
+NtpRegimen.where(drug: Drug.find_by(name: 'P-aminosalicylic acid (8g)'), am_dose: 1, pm_dose: 1, min_weight: 30, max_weight: 70, creator: 1).first_or_create
+NtpRegimen.where(drug: Drug.find_by(name: 'P-aminosalicylic acid (8-12g)'), am_dose: 1, pm_dose: 1, min_weight: 71, max_weight: 1000, creator: 1).first_or_create
 
 # Clofazimine
 NtpRegimen.where(drug: Drug.find_by(name: 'Clofazimine (200mg)'), am_dose: 1, min_weight: 30, max_weight: 1000, creator: 1).first_or_create
@@ -202,9 +202,6 @@ NtpRegimen.where(drug: Drug.find_by(name: 'Capreomycin (600mg)'), am_dose: 1, mi
 NtpRegimen.where(drug: Drug.find_by(name: 'Capreomycin (750mg)'), am_dose: 1, min_weight: 41, max_weight: 45, creator: 1).first_or_create
 NtpRegimen.where(drug: Drug.find_by(name: 'Capreomycin (800mg)'), am_dose: 1, min_weight: 46, max_weight: 50, creator: 1).first_or_create
 NtpRegimen.where(drug: Drug.find_by(name: 'Capreomycin (1000mg)'), am_dose: 1, min_weight: 51, max_weight: 1000, creator: 1).first_or_create
-
-# Rifabutin
-NtpRegimen.where(drug: Drug.find_by(name: 'Rifabutin (300mg)'), am_dose: 1, min_weight: 0, max_weight: 1000, creator: 1).first_or_create
 
 # Pyridoxine
 NtpRegimen.where(drug: Drug.find_by(name: 'Pyridoxine (25mgs)'), am_dose: 1, min_weight: 0, max_weight: 1000, creator: 1).first_or_create
