@@ -56,4 +56,5 @@ class Drug < ActiveRecord::Base
     concepts_placeholders = '(' + (['?'] * concepts.size).join(', ') + ')'
     Drug.where("concept_id in #{concepts_placeholders}", *concepts)
   end
+
 end
