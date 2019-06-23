@@ -60,5 +60,22 @@ NtpRegimen.where(drug: Drug.find_by(name: 'Pyridoxine (150mgs)'), am_dose: 1, mi
 
 NtpRegimen.where(drug: Drug.find_by(name: 'Rifabutin (150mgs)'), am_dose: 1, min_weight: 0, max_weight: 1000, creator: 1).first_or_create
 
+# Second line tb regimens
+NtpRegimen.where(drug: Drug.find_by(name: 'INH or H (Isoniazid 150mg tablet)'), am_dose: 1, min_weight: 30, max_weight: 35, creator: 1).first_or_create
+NtpRegimen.where(drug: Drug.find_by(name: 'INH or H (Isoniazid 200mg tablet)'), am_dose: 1, min_weight: 36, max_weight: 45, creator: 1).first_or_create
+NtpRegimen.where(drug: Drug.find_by(name: 'INH or H (Isoniazid 300mg tablet)'), am_dose: 1, min_weight: 46, max_weight: 9000, creator: 1).first_or_create
+
+NtpRegimen.where(drug: Drug.find_by(name: 'Z (Pyrazinamide 400mg tablet)'), am_dose: 2, min_weight: 30, max_weight: 35, creator: 1).first_or_create
+NtpRegimen.where(drug: Drug.find_by(name: 'Z (Pyrazinamide 500mg tablet)'), am_dose: 2, min_weight: 36, max_weight: 45, creator: 1).first_or_create
+NtpRegimen.where(drug: Drug.find_by(name: 'Z (Pyrazinamide 400mg tablet)'), am_dose: 3, min_weight: 46, max_weight: 55, creator: 1).first_or_create
+NtpRegimen.where(drug: Drug.find_by(name: 'Z (Pyrazinamide 400mg tablet)'), am_dose: 4, min_weight: 56, max_weight: 70, creator: 1).first_or_create
+NtpRegimen.where(drug: Drug.find_by(name: 'Z (Pyrazinamide 500mg tablet)'), am_dose: 4, min_weight: 70, max_weight: 9000, creator: 1).first_or_create
+
+NtpRegimen.where(drug: Drug.find_by(name: 'RFB (Rifabutin 150mg tablet )'), am_dose: 2, min_weight: 30, max_weight: 9000, creator: 1).first_or_create
+
+NtpRegimen.where(drug: Drug.find_by(name: 'LFX (Levofloxacin 500mg tablet)'), am_dose: 2, min_weight: 15, max_weight: 20, creator: 1).first_or_create
+
+NtpRegimen.where(drug: Drug.find_by(name: 'Moxi (Moxifloxacin 400mg tablet)'), am_dose: 2, min_weight: 7.5, max_weight: 10, creator: 1).first_or_create
+
 
 

@@ -19,6 +19,10 @@ class Api::V1::ProgramRegimensController < ApplicationController
     render json: service.custom_regimen_ingredients
   end
 
+  def custom_tb_ingredients
+    render json: service.custom_regimen_ingredients(patient: patient)
+  end
+
   private
 
   def patient

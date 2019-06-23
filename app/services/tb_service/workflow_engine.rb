@@ -60,7 +60,8 @@ module TBService
 
     # Encounters graph
     ENCOUNTER_SM = {
-      INITIAL_STATE => TB_INITIAL,
+      INITIAL_STATE => CLINIC_VISIT
+      CLINIC_VISIT => TB_INITIAL,
       TB_INITIAL => LAB_ORDERS,
       LAB_ORDERS => DIAGNOSIS,
       DIAGNOSIS => LAB_RESULTS,
@@ -75,6 +76,7 @@ module TBService
     }.freeze
 
     STATE_CONDITIONS = {
+      CLINIC_VISIT => %i[no_previous_visit?],
       TB_INITIAL => %i[patient_should_go_for_screening?],
 
       LAB_ORDERS => %i[patient_should_go_for_lab_order?],
@@ -556,5 +558,20 @@ module TBService
       (patient_current_tb_status_is_negative? || tb_suspect_not_enrolled?)
     end
 
+    def not_transferred_in?
+      transferred_in_state = 108
+      PatientState.joins(:patient_program)\
+                  .where('patient_program.program_id = ? AND patient_program.patient_id = ? AND state = ? AND encounter_datetime BETWEEN ? AND ?',
+                         @program.program_id,
+                         @patient.patient_id,
+                         transferred_in_state).blank?
+    end
+
+    def no_previous_visit?
+      Encounter.where('patient_id = ? AND program_id = ? AND encounter_datetime <= ?',
+                      @patient.patient_id,
+                      @program.program_id,
+                      Time.now).blank?
+    end
   end
 end
