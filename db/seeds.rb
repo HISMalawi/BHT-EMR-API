@@ -207,3 +207,14 @@ NtpRegimen.where(drug: Drug.find_by(name: 'Capreomycin (1000mg)'), am_dose: 1, m
 NtpRegimen.where(drug: Drug.find_by(name: 'Pyridoxine (25mgs)'), am_dose: 1, min_weight: 0, max_weight: 1000, creator: 1).first_or_create
 NtpRegimen.where(drug: Drug.find_by(name: 'Pyridoxine (50mgs)'), am_dose: 1, min_weight: 0, max_weight: 1000, creator: 1).first_or_create
 NtpRegimen.where(drug: Drug.find_by(name: 'Pyridoxine (150mgs)'), am_dose: 1, min_weight: 0, max_weight: 1000, creator: 1).first_or_create
+
+# Temporarily usage | TO DO - should be added by Concept Server
+# intensive phase
+# RHZ (R75/H50/Z150) - Child
+ConceptSet.where(concept_id: ConceptName.find_by(name: 'Rifampicin isoniazid and pyrazinamide').concept_id, concept_set: ConceptName.find_by(name: 'First-line tuberculosis drugs').concept_id, sort_weight: 1, creator: 1, date_created: Time.now, uuid: SecureRandom.uuid).first_or_create
+# RHZE (R150/H75/Z400/E275) - Adult
+ConceptSet.where(concept_id: ConceptName.find_by(name: 'Rifampicin Isoniazid Pyrazinamide Ethambutol').concept_id, concept_set: ConceptName.find_by(name: 'First-line tuberculosis drugs').concept_id, sort_weight: 1, creator: 1, date_created: Time.now, uuid: SecureRandom.uuid).first_or_create
+
+# Continous phase - Child and Adult
+ConceptSet.where(concept_id: ConceptName.find_by(name: 'Rifampicin and isoniazid').concept_id, concept_set: ConceptName.find_by(name: 'First-line tuberculosis drugs').concept_id, sort_weight: 1, creator: 1, date_created: Time.now, uuid: SecureRandom.uuid).first_or_create
+
