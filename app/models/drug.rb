@@ -37,14 +37,23 @@ class Drug < ActiveRecord::Base
   end
 
   def self.tb_drugs
-    tb_concept = Concept.joins(:concept_names)\
-                        .where(concept_name: { name: ['Rifampicin isoniazid and pyrazinamide',
-                                                      'Ethambutol', 'Rifampicin and isoniazid',
-                                                      'Rifampicin Isoniazid Pyrazinamide Ethambutol',
-                                                      'Isoniazid',
-                                                      'Streptomycin',
-                                                      'Pyridoxine',
-                                                      'Rifabutin'] })
-    Drug.where(concept: tb_concept)
+    tb_drugs_concept = ConceptName.find_by(name: 'TUBERCULOSIS DRUGS').concept_id
+    concepts = ConceptSet.where('concept_set = ?', tb_drugs_concept).map(&:concept_id)
+    concepts_placeholders = '(' + (['?'] * concepts.size).join(', ') + ')'
+    Drug.where("concept_id in #{concepts_placeholders}", *concepts)
+  end
+
+  def self.first_line_tb_drugs
+    first_line_concept = ConceptName.find_by(name: 'First-line tuberculosis drugs').concept_id
+    concepts = ConceptSet.where('concept_set = ?', first_line_concept).map(&:concept_id)
+    concepts_placeholders = '(' + (['?'] * concepts.size).join(', ') + ')'
+    Drug.where("concept_id in #{concepts_placeholders}", *concepts)
+  end
+
+  def self.second_line_tb_drugs
+    second_line_concept = ConceptName.find_by(name: 'Second line TB drugs').concept_id
+    concepts = ConceptSet.where('concept_set = ?', second_line_concept).map(&:concept_id)
+    concepts_placeholders = '(' + (['?'] * concepts.size).join(', ') + ')'
+    Drug.where("concept_id in #{concepts_placeholders}", *concepts)
   end
 end
