@@ -67,6 +67,11 @@ module ARTService
         end_date: end_date.to_date).regimen_switch
     end
 
+    def regimen_report(start_date, end_date)
+      REPORTS['REGIMEN_SWITCH'].new(start_date: start_date.to_date,
+        end_date: end_date.to_date).regimen_report
+    end
+
     private
 
     def call_report_manager(method, type:, **kwargs)
