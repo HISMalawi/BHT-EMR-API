@@ -202,6 +202,7 @@ EOF
       data = ActiveRecord::Base.connection.select_all <<EOF
       SELECT o.patient_id FROM orders o 
       INNER JOIN drug_order d ON d.order_id = o.order_id AND drug_inventory_id IN(#{arvs.join(',')})
+      INNER JOIN encounter e ON e.patient_id = o.patient_id AND e.program_id = 1 AND e.voided = 0
       WHERE d.quantity > 0 AND o.voided = 0 GROUP BY o.patient_id;
 EOF
 
