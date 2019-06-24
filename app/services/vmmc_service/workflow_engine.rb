@@ -3,7 +3,7 @@
 class VMMCService::WorkflowEngine
   include ModelUtils
 
-  attr_reader :program, :patient
+  attr_reader :program, :patient, :date
 
   def initialize(program:, patient:, date:)
     @program = program
@@ -85,7 +85,7 @@ class VMMCService::WorkflowEngine
     POST_OP_REVIEW => %i[patient_gives_consent?],
     APPOINTMENT => %i[patient_gives_consent?],
     APPOINTMENT => %i[patient_gives_consent patient_ready_for_discharge?],
-    FOLLOW_UP => %i[patient_has_post_op_review_encounter?]
+    FOLLOW_UP => %i[patient_had_post_op_review_encounter?]
   }.freeze
 
   def load_user_activities
@@ -220,9 +220,16 @@ class VMMCService::WorkflowEngine
 
   end
 
-  def patient_has_post_op_review_encounter?
+  def patient_had_post_op_review_encounter?
+    encounter = Encounter.where(type: encounter_type(POST_OP_REVIEW),
+                                patient: patient,
+                                program: program.id)\
+                         .order(:encounter_datetime)\
+                         .last
 
+    return false unless encounter
 
+    # Only valid if encounter was not done today
+    encounter.obs_datetime.to_date != date.to_date
   end
-
 end
