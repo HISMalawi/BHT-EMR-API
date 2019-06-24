@@ -83,9 +83,8 @@ class VMMCService::WorkflowEngine
     SUMMARY_ASSESSMENT => %i[patient_gives_consent?],
     CIRCUMCISION => %i[patient_gives_consent?],
     POST_OP_REVIEW => %i[patient_gives_consent?],
-    APPOINTMENT => %i[patient_gives_consent?],
     APPOINTMENT => %i[patient_gives_consent patient_ready_for_discharge?],
-    FOLLOW_UP => %i[patient_had_post_op_review_encounter?]
+    FOLLOW_UP => %i[patient_had_post_op_review?]
   }.freeze
 
   def load_user_activities
@@ -140,14 +139,18 @@ class VMMCService::WorkflowEngine
   end
 
   def patient_gives_consent?
+    return @patient_gives_consent unless @patient_gives_consent.nil?
+
+    return false if patient_had_post_op_review?
+
     consent_confirmation_concept_id = ConceptName.find_by_name('Consent Confirmation').concept_id
 
-    Observation.joins(:encounter)\
-               .where(person_id: @patient.id,
-                      concept_id: consent_confirmation_concept_id,
-                      value_coded: yes_concept.concept_id)\
-               .merge(Encounter.where(program_id: vmmc_program.program_id))
-               .exists?
+    @patient_gives_consent = Observation.joins(:encounter)\
+                                        .where(person_id: @patient.id,
+                                               concept_id: consent_confirmation_concept_id,
+                                               value_coded: yes_concept.concept_id,
+                                               encounter: { program_id: vmmc_program.id })\
+                                        .exists?
   end
 
   def continue_to_circumcision?
@@ -220,16 +223,22 @@ class VMMCService::WorkflowEngine
 
   end
 
-  def patient_had_post_op_review_encounter?
+  def patient_has_never_had_post_op_review?
+    @patient_has_never_had_post_op_review ||= !patient_has_never_had_post_op_review?
+  end
+
+  def patient_had_post_op_review?
+    return @patient_had_post_op_review unless @patient_had_post_op_review.nil?
+
     encounter = Encounter.where(type: encounter_type(POST_OP_REVIEW),
                                 patient: patient,
                                 program: program.id)\
                          .order(:encounter_datetime)\
                          .last
 
-    return false unless encounter
+    return @patient_had_post_op_review = false unless encounter
 
     # Only valid if encounter was not done today
-    encounter.obs_datetime.to_date != date.to_date
+    @patient_had_post_op_review = encounter.obs_datetime.to_date != date.to_date
   end
 end
