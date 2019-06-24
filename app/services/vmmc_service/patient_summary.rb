@@ -22,13 +22,18 @@ module VMMCService
     def full_summary
     
         vitals_bp = "#{systolic_blood_pressure} / #{diastolic_blood_pressure}" 
+
+        postop_bp = "#{postop_systolic_blood_pressure} / #{postop_diastolic_blood_pressure}"
         
       {
         patient_id: patient.patient_id,
         vitals_temperature: vitals_temperature,
         vitals_bp: vitals_bp,
         vitals_weight: vitals_weight,
-        vitals_pulse: vitals_pulse
+        vitals_pulse: vitals_pulse,
+        postop_pulse_rate: postop_pulse_rate,
+        postop_bp: postop_bp,
+        vitals_bmi: vitals_bmi
       }
     end
 
@@ -75,6 +80,43 @@ module VMMCService
           patient.id,
           EncounterType.find_by_name('Vitals').id,
           ConceptName.find_by_name('Pulse').concept_id]
+        ).order(:obs_datetime).last&.value_numeric
+    end
+
+    def postop_pulse_rate
+
+      pulse = Observation.joins([:encounter])
+        .where(['person_id = ? AND encounter_type = ? AND obs.concept_id = ?',
+          patient.id,
+          EncounterType.find_by_name('Post-op review').id,
+          ConceptName.find_by_name('Pulse').concept_id]
+        ).order(:obs_datetime).last&.value_numeric
+    end
+
+    def postop_systolic_blood_pressure
+      postop_sbp = Observation.joins([:encounter])
+        .where(['person_id = ? AND encounter_type = ? AND obs.concept_id = ?',
+          patient.id,
+          EncounterType.find_by_name('Post-op review').id,
+          ConceptName.find_by_name('Systolic blood pressure').concept_id]
+        ).order(:obs_datetime).last&.value_numeric.to_i
+    end
+
+    def postop_diastolic_blood_pressure
+      postop_dbp = Observation.joins([:encounter])
+        .where(['person_id = ? AND encounter_type = ? AND obs.concept_id = ?',
+          patient.id,
+          EncounterType.find_by_name('Post-op review').id,
+          ConceptName.find_by_name('Diastolic blood pressure').concept_id]
+        ).order(:obs_datetime).last&.value_numeric.to_i
+    end
+
+    def vitals_bmi
+      bmi = Observation.joins([:encounter])
+        .where(['person_id = ? AND encounter_type = ? AND obs.concept_id = ?',
+          patient.id,
+          EncounterType.find_by_name('Vitals').id,
+          ConceptName.find_by_name('Body mass index, measured').concept_id]
         ).order(:obs_datetime).last&.value_numeric
     end
   
