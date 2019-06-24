@@ -74,52 +74,47 @@ module TBService
     }.freeze
 
     STATE_CONDITIONS = {
+
       TB_INITIAL => %i[patient_should_go_for_screening?
+                                    patient_not_transferred_in_today?],
+
+      DIAGNOSIS => %i[should_patient_tested_through_diagnosis?
+                                    patient_has_no_diagnosis?
                                     patient_not_transferred_in_today?],
 
       LAB_ORDERS => %i[patient_should_go_for_lab_order?
                                     patient_not_transferred_in_today?],
-      TB_ADHERENCE => %i[patient_has_appointment?
-                                    patient_has_no_adherence?
-                                    patient_has_valid_test_results?],
-      TREATMENT => %i[patient_should_get_treated?
-                                    patient_diagnosed?
-                                    patient_has_no_treatment?
-                                    patient_has_valid_test_results?
-                                    patient_examined?],
-      DISPENSING => %i[patient_got_treatment?
-                                    patient_should_get_treated?
-                                    patient_diagnosed?
-                                    patient_has_no_dispensation?
-                                    patient_has_valid_test_results?
-                                    patient_examined?],
-      DIAGNOSIS => %i[should_patient_tested_through_diagnosis?
-                                    patient_has_no_diagnosis?
-                                    patient_diagnosed?
-                                    patient_not_transferred_in_today?],
+
       LAB_RESULTS => %i[patient_has_no_lab_results?
                                     patient_should_proceed_after_lab_order?
                                     patient_recent_lab_order_has_no_results?
                                     patient_not_transferred_in_today?],
+
       TB_RECEPTION => %i[patient_has_no_tb_reception?
-                                    patient_diagnosed?
-                                    patient_examined?
-                                    patient_should_get_treated?],
+                                    patient_should_proceed_for_treatment?],
+
       TB_REGISTRATION => %i[patient_has_no_tb_registration?
-                                    patient_diagnosed?
-                                    patient_examined?
                                     patient_is_not_a_transfer_out?
-                                    patient_should_get_treated?],
+                                    patient_should_proceed_for_treatment?],
+
       VITALS => %i[patient_has_no_vitals?
-                                    patient_should_get_treated?
-                                    patient_diagnosed?
-                                    patient_has_valid_test_results?],
+                                    patient_should_proceed_for_treatment?],
+
+      TREATMENT => %i[patient_has_no_treatment?
+                                    patient_should_proceed_for_treatment?],
+
+      DISPENSING => %i[patient_got_treatment?
+                                    patient_has_no_dispensation?
+                                    patient_should_proceed_for_treatment?],
+
       APPOINTMENT => %i[dispensing_complete?
                                     patient_is_not_a_transfer_out?
-                                    patient_diagnosed?
                                     patient_has_no_appointment?
-                                    patient_has_valid_test_results?
-                                    patient_examined?]
+                                    patient_should_proceed_for_treatment?],
+
+      TB_ADHERENCE => %i[patient_has_appointment?
+                                    patient_has_no_adherence?]
+
     }.freeze
 
     # Concepts
@@ -560,12 +555,25 @@ module TBService
     end
 
     def patient_not_transferred_in_today?
-      transfer_in_concept = concept('Transfer in')
-      yes_concept = concept 'YES'
+      patient_type = concept('Type of patient')
+      referral = concept 'Referral'
       Observation.where(
         'person_id = ? AND concept_id = ? AND value_coded = ? AND DATE(obs_datetime) = DATE(?)',
-        @patient.patient_id, transfer_in_concept.concept_id, yes_concept.concept_id, @date
+        @patient.patient_id, patient_type.concept_id, referral.concept_id, @date
       ).order(obs_datetime: :desc).first.nil?
+    end
+
+    def patient_transferred_in_today?
+      patient_type = concept('Type of patient')
+      referral = concept 'Referral'
+      Observation.where(
+        'person_id = ? AND concept_id = ? AND value_coded = ? AND DATE(obs_datetime) = DATE(?)',
+        @patient.patient_id, patient_type.concept_id, referral.concept_id, @date
+      ).order(obs_datetime: :desc).first.present?
+    end
+
+    def patient_should_proceed_for_treatment?
+      (patient_diagnosed? && patient_examined? && patient_should_get_treated? && patient_has_valid_test_results?) || patient_transferred_in_today?
     end
   end
 end
