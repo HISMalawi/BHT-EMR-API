@@ -99,7 +99,7 @@ class VMMCService::WorkflowEngine
         MEDICAL_HISTORY
       when /vitals/i
         VITALS
-      when /hiv status/i
+      when /update hiv status/i
         HIV_STATUS
       when /genital examination/i
         GENITAL_EXAMINATION
