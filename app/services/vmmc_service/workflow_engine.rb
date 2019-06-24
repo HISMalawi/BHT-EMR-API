@@ -75,6 +75,7 @@ class VMMCService::WorkflowEngine
   }.freeze
 
   STATE_CONDITIONS = {
+    REGISTRATION_CONSENT => %i[patient_has_never_had_post_op_review?],
     CIRCUMCISION => %i[patient_gives_consent?],
     VITALS => %i[patient_gives_consent?],
     MEDICAL_HISTORY => %i[patient_gives_consent?],
@@ -83,7 +84,7 @@ class VMMCService::WorkflowEngine
     SUMMARY_ASSESSMENT => %i[patient_gives_consent?],
     CIRCUMCISION => %i[patient_gives_consent?],
     POST_OP_REVIEW => %i[patient_gives_consent?],
-    APPOINTMENT => %i[patient_gives_consent patient_ready_for_discharge?],
+    APPOINTMENT => %i[patient_gives_consent? patient_ready_for_discharge?],
     FOLLOW_UP => %i[patient_had_post_op_review?]
   }.freeze
 
@@ -224,7 +225,7 @@ class VMMCService::WorkflowEngine
   end
 
   def patient_has_never_had_post_op_review?
-    @patient_has_never_had_post_op_review ||= !patient_has_never_had_post_op_review?
+    @patient_has_never_had_post_op_review ||= !patient_had_post_op_review?
   end
 
   def patient_had_post_op_review?
@@ -239,6 +240,6 @@ class VMMCService::WorkflowEngine
     return @patient_had_post_op_review = false unless encounter
 
     # Only valid if encounter was not done today
-    @patient_had_post_op_review = encounter.obs_datetime.to_date != date.to_date
+    @patient_had_post_op_review = encounter.encounter_datetime.to_date != date.to_date
   end
 end
