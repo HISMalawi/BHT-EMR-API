@@ -11,6 +11,12 @@ module UserService
 
   class UserCreateError < StandardError; end
 
+  def self.find_users(role: nil)
+    query = User.all
+    query = User.joins(:roles).where(user_role: { role: role }) if role
+    query
+  end
+
   def self.create_user(username:, password:, given_name:, family_name:, roles:, programs:)
     person = person_service.create_person(
       birthdate: nil, birthdate_estimated: false, gender: nil
