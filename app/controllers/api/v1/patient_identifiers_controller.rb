@@ -45,7 +45,15 @@ class Api::V1::PatientIdentifiersController < ApplicationController
       render status: :internal_server_error, json: @patient_identifier.errors
     end
   end
-  
+
+  # Finds all duplicate identifiers of a given type.
+  #
+  # Renders a list of duplicate identifiers and their counts.
+  def duplicates
+    id_type = PatientIdentifierType.find(params.require(:type_id))
+    render json: service.find_duplicates(id_type)
+  end
+
   def archive_active_filing_number
     itypes = PatientIdentifierType.where(name: ['Filing number','Archived filing number'])
     identifier_types = itypes.map(&:id)
@@ -84,10 +92,10 @@ class Api::V1::PatientIdentifiersController < ApplicationController
 
 
 
-    # ........................ 
+    # ........................
 
     itype = PatientIdentifierType.find_by(name: 'Archived filing number')
-    [primary_patient_id, secondary_patient_id].each do |id|    
+    [primary_patient_id, secondary_patient_id].each do |id|
       PatientIdentifier.where(identifier_type: itype.id, patient_id: id).each do |i|
         i.void("Voided by #{User.current.username}")
       end
@@ -115,5 +123,9 @@ class Api::V1::PatientIdentifiersController < ApplicationController
   # Only allow a trusted parameter "white list" through.
   def patient_identifier_params
     params.permit(:patient_id, :identifier, :identifier_type)
+  end
+
+  def service
+    PatientIdentifierService
   end
 end

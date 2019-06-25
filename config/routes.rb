@@ -66,6 +66,8 @@ Rails.application.routes.draw do
 
       resources :patient_identifiers
 
+      resources :person_attributes
+
       resources :concepts, only: %i[index show]
 
       # Locations
@@ -132,6 +134,7 @@ Rails.application.routes.draw do
           get '/labels/patient_history', to: 'program_patients#print_patient_history_label'
           get '/mastercard_data', to: 'program_patients#mastercard_data'
           get '/medication_side_effects', to: 'program_patients#medication_side_effects'
+          get '/vl_info', to: 'lab_remainders#index'
           # ANC
           get '/surgical_history', to: 'program_patients#surgical_history'
           get '/anc_visit', to: 'program_patients#anc_visit'
@@ -208,6 +211,7 @@ Rails.application.routes.draw do
       get '/search/patients' => 'patients#search_by_name_and_gender'
       get '/search/properties' => 'properties#search'
       get '/search/landmarks' => 'landmarks#search'
+      get '/search/identifiers/duplicates' => 'patient_identifiers#duplicates'
 
       get '/dde/patients/find_by_npid', to: 'dde#find_patients_by_npid'
       get '/dde/patients/find_by_name_and_gender', to: 'dde#find_patients_by_name_and_gender'
@@ -245,6 +249,7 @@ Rails.application.routes.draw do
   get '/api/v1/start_date' => 'api/v1/cleaning#startDate'
   get '/api/v1/male' => 'api/v1/cleaning#male'
   get '/api/v1/incomplete_visits' => 'api/v1/cleaning#incompleteVisits'
+  get '/api/v1/art_data_cleaning_tools' => 'api/v1/cleaning#art_tools'
 
   #OPD reports
   get '/api/v1/diagnosis' => 'api/v1/reports#diagnosis'
@@ -261,10 +266,11 @@ Rails.application.routes.draw do
   get '/api/v1/defaulter_list' => 'api/v1/reports#defaulter_list'
   get '/api/v1/missed_appointments' => 'api/v1/reports#missed_appointments'
   post '/api/v1/addresses' => 'api/v1/person_addresses#create'
-  get '/api/v1/person_attributes' => 'api/v1/person_attributes#index'
   get '/api/v1/archive_active_filing_number' => 'api/v1/patient_identifiers#archive_active_filing_number'
   get '/api/v1/ipt_coverage' => 'api/v1/reports#ipt_coverage'
   get '/api/v1/cohort_report_drill_down' => 'api/v1/reports#cohort_report_drill_down'
   post '/api/v1/swap_active_number' => 'api/v1/patient_identifiers#swap_active_number'
   get '/api/v1/regimen_switch' => 'api/v1/reports#regimen_switch'
+  get '/api/v1/last_drugs_pill_count' => 'api/v1/patients#last_drugs_pill_count'
+  get '/api/v1/regimen_report' => 'api/v1/reports#regimen_report'
 end

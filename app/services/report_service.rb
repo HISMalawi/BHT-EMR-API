@@ -79,10 +79,6 @@ class ReportService
     engine(@program).with_nids
   end
 
-  def cohort_report_raw_data(l1, l2)
-    engine(@program).cohort_report_raw_data(l1, l2)
-  end
-
   def cohort_disaggregated(quarter, age_group, start_date, end_date, rebuild, init)
     engine(@program).cohort_disaggregated(quarter, age_group,
       start_date, end_date, rebuild, init)
@@ -122,6 +118,10 @@ class ReportService
 
   def regimen_switch(start_date, end_date)
     engine(@program).regimen_switch(start_date, end_date)
+  end
+
+  def regimen_report(start_date, end_date)
+    engine(@program).regimen_report(start_date, end_date)
   end
 
   private
