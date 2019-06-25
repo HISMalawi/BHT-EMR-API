@@ -20,14 +20,14 @@ module DispensationService
       end
     end
 
-    def create(program, plain_dispensations)
+    def create(program, plain_dispensations, provider = nil)
       ActiveRecord::Base.transaction do
         obs_list = plain_dispensations.map do |dispensation|
           order_id = dispensation[:drug_order_id]
           quantity = dispensation[:quantity]
           date = TimeUtils.retro_timestamp(dispensation[:date]&.to_time || Time.now)
           drug_order = DrugOrder.find(order_id)
-          obs = dispense_drug(program, drug_order, quantity, date: date)
+          obs = dispense_drug(program, drug_order, quantity, date: date, provider: provider)
 
           unless obs.errors.empty?
             raise InvalidParameterErrors.new("Failed to dispense order ##{order_id}")\
@@ -41,10 +41,10 @@ module DispensationService
       end
     end
 
-    def dispense_drug(program, drug_order, quantity, date: nil)
+    def dispense_drug(program, drug_order, quantity, date: nil, provider: nil)
       date ||= Time.now
       patient = drug_order.order.patient
-      encounter = current_encounter(program, patient, date: date, create: true)
+      encounter = current_encounter(program, patient, date: date, create: true, provider: provider)
 
       update_quantity_dispensed(drug_order, quantity)
 
@@ -101,22 +101,23 @@ module DispensationService
     end
 
     # Finds the most recent encounter for the given patient
-    def current_encounter(program, patient, date: nil, create: false)
+    def current_encounter(program, patient, date: nil, create: false, provider: nil)
       date ||= Time.now
       encounter = find_encounter(program, patient, date)
-      encounter ||= create_encounter(program, patient, date) if create
-      encounter
+      return encounter if encounter || !create
+
+      create_encounter(program, patient, date, provider)
     end
 
     # Creates a dispensing encounter
-    def create_encounter(program, patient, date)
+    def create_encounter(program, patient, date, provider = nil)
       Encounter.create(
         encounter_type: EncounterType.find_by(name: 'DISPENSING').encounter_type_id,
         patient_id: patient.patient_id,
         location_id: Location.current.location_id,
         encounter_datetime: date,
         program: program,
-        provider: User.current.person
+        provider: provider || User.current.person
       )
     end
 
