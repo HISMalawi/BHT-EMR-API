@@ -16,6 +16,11 @@ class StockManagementService
   STOCK_ITEM_DISPOSAL = 'Disposal'
   STOCK_ITEM_REALLOCATION = 'Reallocation'
 
+  # Stock update strategies
+  FEFO = 'FEFO' # First expired, first out
+  FIFO = 'FIFO' # First in, first out
+  LIFO = 'LIFO' # Last in, first out
+
   # Add list of drugs to stock
   #
   # @param{batch_number} A batch number that came with the drugs package
@@ -90,7 +95,7 @@ class StockManagementService
     batch.void(reason)
   end
 
-  def update_batch_item(batch_item_id, params)
+  def edit_batch_item(batch_item_id, params)
     ActiveRecord::Base.transaction do
       item = PharmacyBatchItem.find(batch_item_id)
 
@@ -182,7 +187,56 @@ class StockManagementService
     end
   end
 
+  def update_batch_items(activity, drug_id, quantity, date)
+    items = find_batch_items(drug_id: drug_id).where('expiry_date > ?', date)
+    stock_items_update_method(activity).call(items, quantity, date)
+  end
+
   private
+
+  STOCK_UPDATE_METHODS = {
+    # TODO: Refactor the objects defined here in own classes perhaps...
+    FEFO => Class.new do
+      def debit(stock_service, items, quantity, date)
+        items.sort_by(&:expiry_date).each do |item|
+          break if quantity.zero?
+
+          item_quantity = item.current_quantity
+          next if item_quantity.zero?
+
+          if item_quantity >= quantity
+            # No need to spread the quantity across multiple items...
+            # This item alone can satisfy the quantity.
+            stock_service.commit_transaction(item, StockManagementService::STOCK_DEBIT,
+                                             -quantity, date, update_item: true)
+            break
+          end
+
+          stock_service.commit_transaction(item, StockManagementService::STOCK_DEBIT,
+                                           -item_quantity, date, update_item: true)
+          quantity -= item_quantity
+        end
+
+        LOGGER.warn("Quantity (#{quantity}) could not be debited from items[0]&.drug_id") if quantity > 0
+      end
+
+      def credit(stock_service, items, quantity, date)
+        item = items.min_by(&:expiry_date)
+        stock_service.commit_transaction(item, StockManagementService::STOCK_ADD,
+                                         quantity, date, update_item: true)
+      end
+    end.new,
+    FIFO => Object.new do
+      def debit(stock_service, items, quantity, date); end
+
+      def credit(stock_service, items, quantity); end
+    end,
+    LIFO => Object.new do
+      def debit(stock_service, items, quantity, date); end
+
+      def credit(stock_service, items, quantity, date); end
+    end
+  }.freeze
 
   def find_or_create_batch(batch_number)
     batch = PharmacyBatch.find_by_batch_number(batch_number)
@@ -217,5 +271,26 @@ class StockManagementService
     error = InvalidParameterError.new('Failed to create or save object due to bad parameters')
     error.model_errors = object.errors
     raise error
+  end
+
+  # Returns a function that takes a list of stock items and quantity then
+  # updates the quantity as per configured strategy (ie: FIFO or LIFO or FEFO).
+  def stock_items_update_method(activity)
+    lambda do |items, quantity, date|
+      updater = STOCK_UPDATE_METHODS[configured_stock_maintenance_strategy]
+
+      if activity.match?(/#{STOCK_DEBIT}/i)
+        updater.debit(stock_service, items, quantity, date)
+      elsif activity.match?(/#{STOCK_ADD}/i)
+        updater.credit(stock_service, items, quantity, date)
+      else
+        raise "Invalid stock update method action: #{action}"
+      end
+    end
+  end
+
+  def configured_stock_maintenance_strategy
+    property = GlobalProperty.find_by_property('art.stock.maintenance_strategy')
+    property&.property_value&.strip&.upcase || FEFO
   end
 end

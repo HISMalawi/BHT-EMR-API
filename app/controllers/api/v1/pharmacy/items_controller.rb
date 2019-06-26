@@ -13,7 +13,7 @@ class Api::V1::Pharmacy::ItemsController < ApplicationController
 
   def update
     permitted_params = params.permit(%i[current_quantity delivered_quantity expiry_date delivery_date])
-    item = service.update_batch_item(params[:id], permitted_params)
+    item = service.edit_batch_item(params[:id], permitted_params)
 
     if item.errors.empty?
       render json: item
