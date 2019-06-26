@@ -226,13 +226,24 @@ EOF
           end
 
         end
-    
+   
+        sql_insert_statement = nil 
         patient_ids.select do |patient_id|
-        ActiveRecord::Base.connection.execute <<EOF
-        INSERT INTO cohort_drill_down VALUES(NULL, #{r.id}, #{patient_id});
+          if sql_insert_statement.blank?
+            sql_insert_statement = "(#{r.id}, #{patient_id})"
+          else
+            sql_insert_statement += ",(#{r.id}, #{patient_id})"
+          end
+        end
+        
+        unless sql_insert_statement.blank?
+          ActiveRecord::Base.connection.execute <<EOF
+          INSERT INTO cohort_drill_down (reporting_report_design_resource_id, patient_id)
+          VALUES #{sql_insert_statement};
 EOF
 
         end
+
       end
 
     end
