@@ -66,7 +66,6 @@ module DispensationService
         obs_datetime: date
       )
 
-      update_stock_ledgers(observation)
       observation
     end
 
@@ -208,11 +207,6 @@ module DispensationService
           start_date: date
         )
       end
-    end
-
-    def update_stock_ledgers(observation)
-      json_observation = observation.as_json(ignore_includes: true).to_json
-      StockUpdateJob.perform_later(json_observation)
     end
   end
 end
