@@ -67,6 +67,14 @@ class Api::V1::LabTestOrdersController < ApplicationController
     render json: engine.orders_without_results(patient)
   end
 
+  def create_external_order
+    patient_id, accession_number = params.require(%i[patient_id accession_number])
+    date = params[:date]&.to_date || Date.today
+    patient = Patient.find(patient_id)
+
+    render json: engine.create_external_order(patient, accession_number, date)
+  end
+
   private
 
   def patient

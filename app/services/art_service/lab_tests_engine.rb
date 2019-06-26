@@ -54,6 +54,13 @@ class ARTService::LabTestsEngine
     nlims.test_measures(test_name)
   end
 
+  def create_external_order(patient, accession_number, date)
+    ActiveRecord::Base.transaction do
+      encounter = find_lab_encounter(patient, date)
+      create_local_order(patient, encounter, date, accession_number)
+    end
+  end
+
   def create_order(encounter:, date:, tests:, **kwargs)
     patient ||= encounter.patient
     date ||= encounter.encounter_datetime
@@ -131,99 +138,35 @@ class ARTService::LabTestsEngine
 
   # Creates an Order in the primary openmrs database
   def create_local_order(patient, encounter, date, accession_number)
-    Order.create patient: patient,
+    Order.create(patient: patient,
                  encounter: encounter,
                  concept: concept('Laboratory tests ordered'),
                  order_type: order_type('Lab'),
                  orderer: User.current.user_id,
                  start_date: date,
                  accession_number: accession_number,
-                 provider: User.current
+                 provider: User.current)
   end
 
   def save_reason_for_test(encounter, order, reason)
-    Observation.create(
-      order: order,
-      encounter: encounter,
-      concept: concept('Reason for test'),
-      obs_datetime: encounter.encounter_datetime,
-      person: encounter.patient.person,
-      value_text: reason
-    )
+    Observation.create(order: order,
+                       encounter: encounter,
+                       concept: concept('Reason for test'),
+                       obs_datetime: encounter.encounter_datetime,
+                       person: encounter.patient.person,
+                       value_text: reason)
   end
 
   def find_lab_encounter(patient, date)
+    start_time, end_time = TimeUtils.day_bounds(date)
     encounter = Encounter.where(patient: patient, program: @program)\
-                         .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date.to_date))\
+                         .where('encounter_datetime BETWEEN ? AND ?', start_time, end_time)\
                          .last
     return encounter if encounter
 
     Encounter.create(patient: patient, program: @program, type: encounter_type('Lab'),
                      provider: User.current.person,
                      encounter_datetime: TimeUtils.retro_timestamp(date))
-  end
-
-  # Creates a lab order in the secondary healthdata database
-  def create_lab_order(type, local_order, date)
-    date ||= Time.now
-    panel = LabPanel.find type.Panel_ID
-    accession_number = next_id(local_order.order_id)
-    LabTestTable.create TestOrdered: panel.name,
-                        Pat_ID: accession_number,
-                        OrderedBy: User.current.user_id,
-                        OrderDate: date.strftime('%Y-%m-%d'),
-                        OrderTime: date.strftime('%2H:%2M'),
-                        Location: Location.current.location_id
-  end
-
-  def create_lab_sample(lab_order)
-    LabSample.create AccessionNum: lab_order.AccessionNum,
-                     USERID: User.current.user_id,
-                     TESTDATE: lab_order.OrderDate,
-                     PATIENTID: lab_order.Pat_ID,
-                     DATE: lab_order.OrderDate,
-                     TIME: Time.now.strftime('%H:%M:%S'),
-                     SOURCE: Location.current.location_id,
-                     DeleteYN: 0,
-                     Attribute: 'pass',
-                     TimeStamp: Time.now
-  end
-
-  def create_result(lab_sample:, test_type:)
-    LabParameter.create Sample_ID: lab_sample.Sample_ID,
-                        TESTTYPE: test_type.TestType,
-                        TESTVALUE: nil,
-                        TimeStamp: Time.now,
-                        Range: '='
-  end
-
-  def next_id(seed_id)
-    site_id = global_property('moh_site_id').property_value
-    local_id = Order.where(order_type: order_type('Lab')).count + 1
-    format '%<site_id>s%<seed_id>s%<local_id>d', site_id: site_id,
-                                                 seed_id: seed_id,
-                                                 local_id: local_id
-  end
-
-  TESTVALUE_SPLIT_REGEX = /^\s*(?<mod>[=<>])?\s*(?<value>\d+(.\d*)?\s*\w*|Positive|Negative)\s*$/i.freeze
-
-  # Splits a test_value into its parts [modifier, value]
-  def split_test_value(test_value)
-    match = test_value.match TESTVALUE_SPLIT_REGEX
-    raise InvalidParameterError, "Invalid test value: #{test_value}" unless match
-
-    [match[:mod] || '=', translate_test_value(match[:value])]
-  end
-
-  def translate_test_value(value)
-    case value.upcase
-    when 'POSITIVE'
-      '1.0'
-    when 'NEGATIVE'
-      '-1.0'
-    else
-      value
-    end
   end
 
   def local_orders(patient)

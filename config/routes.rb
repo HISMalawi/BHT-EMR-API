@@ -148,6 +148,7 @@ Rails.application.routes.draw do
         resources :lab_test_orders, path: 'lab_tests/orders'
         resources :lab_test_results, path: 'lab_tests/results'
         post '/lab_tests/order_and_results' => 'lab_test_results#create_order_and_results'
+        post '/lab_tests/orders/external' => 'lab_test_orders#create_external_order'
         get '/lab_tests/locations' => 'lab_test_orders#locations'
         get '/lab_tests/labs' => 'lab_test_orders#labs'
         get '/lab_tests/orders_without_results' => 'lab_test_orders#orders_without_results'
