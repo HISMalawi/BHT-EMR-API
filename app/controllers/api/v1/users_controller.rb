@@ -6,7 +6,8 @@ class Api::V1::UsersController < ApplicationController
   skip_before_action :authenticate, only: [:login]
 
   def index
-    render json: paginate(User), status: :ok
+    filters = params.permit(:role).to_hash.transform_keys(&:to_sym)
+    render json: service.find_users(**filters)
   end
 
   def show
@@ -138,5 +139,9 @@ class Api::V1::UsersController < ApplicationController
 
       true
     end
+  end
+
+  def service
+    UserService
   end
 end

@@ -119,6 +119,10 @@ class ReportService
     engine(@program).regimen_switch(start_date, end_date)
   end
 
+  def regimen_report(start_date, end_date)
+    engine(@program).regimen_report(start_date, end_date)
+  end
+
   private
 
   def engine(program)

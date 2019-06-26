@@ -115,6 +115,10 @@ class Api::V1::ReportsController < ApplicationController
     render json: service.regimen_switch(params[:start_date], params[:end_date])
   end
 
+  def regimen_report
+    render json: service.regimen_report(params[:start_date], params[:end_date])
+  end
+
   private
 
   def service

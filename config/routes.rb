@@ -272,7 +272,8 @@ Rails.application.routes.draw do
   post '/api/v1/swap_active_number' => 'api/v1/patient_identifiers#swap_active_number'
   get '/api/v1/regimen_switch' => 'api/v1/reports#regimen_switch'
   get '/api/v1/last_drugs_pill_count' => 'api/v1/patients#last_drugs_pill_count'
-
-  get '/api/v1/anc/deliveries', to: 'api/v1/anc#deliveries'
   get '/api/v1/anc/visits', to: 'api/v1/anc#visits'
+
+  get '/api/v1/regimen_report' => 'api/v1/reports#regimen_report'
+  get '/api/v1/anc/deliveries', to: 'api/v1/anc#deliveries'
 end
