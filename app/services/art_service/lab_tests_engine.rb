@@ -88,7 +88,7 @@ class ARTService::LabTestsEngine
     local_order = create_local_order(patient, encounter, date_sample_drawn, lims_order['tracking_number'])
     save_reason_for_test(encounter, local_order, reason_for_test)
 
-    { order: local_order, lims_order: lims_order}
+    { order: local_order, lims_order: lims_order }
   end
 
   def find_orders_by_patient(patient, paginate_func: nil)
