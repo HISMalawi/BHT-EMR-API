@@ -3,6 +3,9 @@
 module ARTService
   # A summary of a patient's ART clinic visit
   class PatientVisit
+    LOGGER = Rails.logger
+    TIME_EPOCH = '1970-01-01'.to_time
+
     include ModelUtils
 
     attr_reader :patient, :date
@@ -166,27 +169,24 @@ module ARTService
     end
 
     def viral_load_result
-      lab_tests_engine.find_orders_by_patient(patient).each do |order|
-        order.tests.each do |test|
-          next unless test[:test_type].match?(/viral load/i)
+      orders = lab_tests_engine.find_orders_by_patient(patient)
+      result = find_recent_viral_load_result(orders)
+      return 'N/A' unless result
 
-          values = test[:test_values].collect do |test_value|
-            next if test_value[:indicator].match?(/result_date/i)
-
-            test_value[:value]
-          end
-
-          values.join(', ')
-        end
-      end
-    rescue StandardError => e
-      Rails.logger.error "Failed to retrieve viral load result from LIMS: #{e}"
+      "#{result.value}(#{result.date.strftime('%d/%b/%y')})"
+    rescue RestClient::Exception => e
+      # Handle failed lims connections
+      LOGGER.error("Failed to communicate with LIMS: #{e}")
       'N/A'
     end
 
     def cpt; end
 
     private
+
+    def lab_tests_engine
+      @lab_tests_engine = ARTService::LabTestsEngine.new(program: program('HIV Program'))
+    end
 
     def calculate_bmi(weight, height)
       return 'N/A' if weight.zero? || height.zero?
@@ -201,6 +201,37 @@ module ARTService
       name = 'CPT' if name.match?('Cotrimoxazole')
       name = 'INH' if name.match?('INH')
       name
+    end
+
+    # Finds the most recent viral load among a bunch of LIMS orders
+    def find_recent_viral_load_result(orders)
+      recent_vl = OpenStruct.new(date: TIME_EPOCH, result: nil)
+
+      orders.each do |order|
+        order[:tests].each do |test|
+          result = parse_lims_viral_load_result(test[:test_values])
+          next if result.value.nil? || result.date < recent_vl.date
+
+          recent_vl.date = result.date
+          recent_vl.result = result
+        end
+      end
+
+      recent_vl.result
+    end
+
+    def parse_lims_viral_load_result(result_values)
+      LOGGER.debug("Parsing LIMS viral load result: #{result_values}")
+      result_values.each_with_object(OpenStruct.new) do |test_value, result|
+        case test_value[:indicator]
+        when /result_date/i
+          result.date = test_value[:value]&.to_date || Date.today
+        when /Viral Load/i
+          result.value = test_value[:value]
+        else
+          LOGGER.warn("Unknown indicator (#{test_value[:indicator]}) in viral load result")
+        end
+      end
     end
   end
 end
