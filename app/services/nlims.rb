@@ -9,10 +9,8 @@ class NLims
   def self.instance
     return @instance if @instance
 
-    @instance = new on_auth: ->(connection) { save_connection(connection) }
-    connection = load_connection
-    @instance.reconnect(connection) if connection
-
+    @instance = new
+    @instance.connect(load_connection, on_auth: ->(connection) { save_connection(connection) })
     @instance
   end
 
@@ -28,13 +26,15 @@ class NLims
     end
   end
 
-  def initialize(on_auth: nil)
+  def initialize
     @api_prefix = config['lims_prefix'] || 'v1'
     @api_protocol = config['lims_protocol'] || 'http'
     @api_host = config['lims_host']
     @api_url = config['lims_url']
     @api_port = config['lims_port']
-    @on_auth = on_auth
+    @username = config['lims_username']
+    @password = config['lims_password']
+    @on_auth = nil
   end
 
   # We initially require a temporary authentication for user creation.
@@ -42,20 +42,14 @@ class NLims
   def temp_auth
     response = get "authenticate/#{config['lims_default_user']}/#{config['lims_default_password']}"
 
-    @connection = OpenStruct.new(token: response['token'])
+    @connection = OpenStruct.new(user: config['lims_default_user'], token: response['token'])
   end
 
-  def auth
-    url = "re_authenticate/#{config['lims_username']}/#{config['lims_password']}"
-    response = get(url, auto_login: false)
+  def connect(connection, on_auth: nil)
+    @on_auth = on_auth if on_auth
 
-    @connection = OpenStruct.new(token: response['token'])
-    @on_auth&.call(@connection)
+    return auth unless connection&.user == @username # user has changed in config file
 
-    @connection
-  end
-
-  def reconnect(connection)
     @connection = connection
   end
 
@@ -221,6 +215,16 @@ class NLims
 
   def tests
     @tests ||= get('retrieve_test_Catelog')
+  end
+
+  def auth
+    url = "re_authenticate/#{@username}/#{@password}"
+    response = get(url, auto_login: false)
+
+    @connection = OpenStruct.new(user: @username, token: response['token'])
+    @on_auth&.call(@connection)
+
+    @connection
   end
 
   def get(path, auto_login: false)

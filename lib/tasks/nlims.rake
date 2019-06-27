@@ -8,7 +8,7 @@ namespace :nlims do
 
   desc 'Create NLIMS user for the application'
   task create_user: :environment do
-    lims = NLims.instance
+    lims = NLims.new
 
     connection = lims.temp_auth
     health_center_id = GlobalProperty.find_by(property: 'current_health_center_id').property_value
@@ -21,6 +21,10 @@ namespace :nlims do
                      token: connection.token,
                      partner: config['lims_partner'])
 
-    print 'Successfully created user'
+    print "Successfully created lims user: #{config['lims_username']}"
+  end
+
+  def config
+    @config ||= YAML.load_file(Rails.root.join('config', 'application.yml'))
   end
 end
