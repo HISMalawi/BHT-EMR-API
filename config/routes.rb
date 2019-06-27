@@ -146,6 +146,8 @@ Rails.application.routes.draw do
         resources :lab_test_types, path: 'lab_tests/types'
         get '/lab_tests/panels' => 'lab_test_types#panels' # TODO: Move this into own controller
         resources :lab_test_orders, path: 'lab_tests/orders'
+        post '/lab_tests/orders/external' => 'lab_test_orders#create_external_order'
+        post '/lab_tests/orders/lims-old' => 'lab_test_orders#create_legacy_order' # Temporary path for creating legacy LIMS orders
         resources :lab_test_results, path: 'lab_tests/results'
         post '/lab_tests/order_and_results' => 'lab_test_results#create_order_and_results'
         get '/lab_tests/locations' => 'lab_test_orders#locations'

@@ -34,6 +34,8 @@ class NLims
     tests = [order['test_name']]
     reason_for_test = order['reason_for_test']
     sample_status = order['sample_status']
+    target_lab = GlobalProperty.find_by_property('target.lab')&.property_value
+    raise InvalidParameterError, 'Global property `target.lab` is not set' unless target_lab
 
     post 'create_order', district: 'Unknown',
                          health_facility_name: Location.current.name,
@@ -55,7 +57,7 @@ class NLims
                          sample_status: sample_status,
                          art_start_date: 'unknown',
                          requesting_clinician: '',
-                         target_lab: Location.current.name
+                         target_lab: target_lab
   end
 
   def order_test(patient:, user:, test_type:, date:, reason:, requesting_clinician:)
@@ -89,7 +91,7 @@ class NLims
     response
   end
 
-  def order_tb_test(patient:, user:, test_type:, date:, reason:, sample_type:, sample_status:, 
+  def order_tb_test(patient:, user:, test_type:, date:, reason:, sample_type:, sample_status:,
     target_lab:, recommended_examination:, treatment_history:, sample_date:, sending_facility:, time_line: 'NA', requesting_clinician:)
     patient_name = patient.person.names.first
     user_name = user.person.names.first
@@ -114,11 +116,11 @@ class NLims
                                      tests: test_type,
                                      sample_priority: reason,
                                      art_start_date: 'not_applicable', #not applicable
-                                     sample_type: sample_type, #Added to satify for TB 
-                                     sample_status: sample_status, #Added to satify for TB 
-                                     target_lab: target_lab, #Added to satify for TB 
+                                     sample_type: sample_type, #Added to satify for TB
+                                     sample_status: sample_status, #Added to satify for TB
+                                     target_lab: target_lab, #Added to satify for TB
                                      recommended_examination: recommended_examination, #Added to satify for TB
-                                     treatment_history: treatment_history, #Added to satify for TB 
+                                     treatment_history: treatment_history, #Added to satify for TB
                                      sample_date: sample_date, #Mofified 'Add an actual one' Removed this
                                      sending_facility: sending_facility,
                                      time_line: time_line,
