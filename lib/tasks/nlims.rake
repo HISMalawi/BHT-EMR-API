@@ -8,11 +8,9 @@ namespace :nlims do
 
   desc 'Create NLIMS user for the application'
   task create_user: :environment do
-    lims = NLims.new(config)
+    lims = NLims.instance
 
-    connection = lims.temp_auth(config['lims_default_user'],
-                                config['lims_default_password'])
-
+    connection = lims.temp_auth
     health_center_id = GlobalProperty.find_by(property: 'current_health_center_id').property_value
     raise 'Global property current_health_center_id not set' unless health_center_id
 
@@ -22,9 +20,7 @@ namespace :nlims do
                      password: config['lims_password'],
                      token: connection.token,
                      partner: config['lims_partner'])
-  end
 
-  def config
-    @config ||= YAML.load_file("#{Rails.root}/config/application.yml")
+    print 'Successfully created user'
   end
 end

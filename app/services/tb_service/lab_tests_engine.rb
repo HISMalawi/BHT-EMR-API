@@ -174,13 +174,6 @@ class TBService::LabTestsEngine
 
   #Dont't forget to put this back in order
   def nlims
-    return @nlims if @nlims
-
-    config = YAML.load_file "#{Rails.root}/config/application.yml"
-    @nlims = ::NLims.new config
-    @nlims.auth config['lims_default_user'], config['lims_default_password']
-
-    #@nlims.auth config['lims_username'], config['lims_password']
-    @nlims
+    @nlims ||= NLims.instance
   end
 end

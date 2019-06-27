@@ -176,11 +176,6 @@ class ARTService::LabTestsEngine
   end
 
   def nlims
-    return @nlims if @nlims
-
-    config = YAML.load_file "#{Rails.root}/config/application.yml"
-    @nlims = ::NLims.new config
-    @nlims.auth config['lims_username'], config['lims_password']
-    @nlims
+    @nlims ||= ::NLims.instance
   end
 end
