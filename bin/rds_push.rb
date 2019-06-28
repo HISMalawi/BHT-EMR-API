@@ -29,7 +29,7 @@ ActiveRecord::Base.logger = LOGGER
 APPLICATION_CONFIG_PATH = Rails.root.join('config/application.yml')
 DELTA_STATE_PATH = Rails.root.join('log/rds-sync-state.yml')
 
-MODELS = [Person, PersonAttribute, PersonAddress, PersonName, User, Patient,
+MODELS = [Person, PersonAttribute, PersonAddress, PersonName, Relationship, User, Patient,
           PatientIdentifier, PatientState, PatientProgram, Encounter,
           Observation, Order, DrugOrder, Pharmacy, PharmacyBatch,
           PharmacyBatchItem, PharmacyBatchItemReallocation].freeze
@@ -39,7 +39,7 @@ DEST_TIME_EPOCH = '1000-01-01 00:00:00'
 
 # These models are missing a `date_changed` field...
 # They probably are not meant to be changed after creation.
-IMMUTABLE_MODELS = [PersonAddress, PatientIdentifier, Observation, Order].freeze
+IMMUTABLE_MODELS = [PersonAddress, PatientIdentifier, Observation, Order, Relationship].freeze
 
 # Maximum number of records to be fetched from database per request
 RECORDS_BATCH_SIZE = 50_000
