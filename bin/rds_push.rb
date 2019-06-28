@@ -48,6 +48,8 @@ RECORDS_BATCH_SIZE = 50_000
 MODE_DUMP = :mode_dump # Retrieves everything from database
 MODE_PUSH = :mode_push # Retrieves records based on recent update timestam
 
+MAX_DEFAULT_USER_ID = 50
+
 # Global rds_configuration for script
 @rds_configuration = { mode: MODE_PUSH }
 
@@ -319,7 +321,8 @@ def serialize_record(record, program)
 
     # HACK: Another hack to handle HTS program encounters
     serialized_record.delete('patient_program_id') if serialized_record.key?('patient_program_id')
-  elsif [User, Person, PersonName].include?(record.class) && !record_uuid_was_remapped?(record)
+  elsif [User, Person, PersonName].include?(record.class)\
+      && record.id <= MAX_DEFAULT_USER_ID && !record_uuid_was_remapped?(record)
     # HACK: On setup of most BHT applications, a default set of users is seeded.
     # These retain the same UUIDs across space. We need to remap these UUIDs
     # since they all will be loaded into the same database that holds unique
@@ -519,7 +522,7 @@ rescue RestClient::NotFound => e
   raise e
 end
 
-if $PROGRAM_NAME == __FILE__ # HACK: Enables importing of this as a module
+if @RDS_DUMP_RUNNING.blank? # HACK: Enables importing of this as a module in rds_dump script
   with_lock do
     config # Load rds_configuration early to ensure its sanity before doing anything
 
