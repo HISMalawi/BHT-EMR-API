@@ -4,27 +4,53 @@ require 'ostruct'
 require 'rest-client'
 
 class NLims
-  def initialize(config)
+  LIMS_TEMP_FILE = Rails.root.join('tmp/lims_connection.yml')
+
+  def self.instance
+    return @instance if @instance
+
+    @instance = new
+    @instance.connect(load_connection, on_auth: ->(connection) { save_connection(connection) })
+    @instance
+  end
+
+  def self.load_connection
+    YAML.load_file(LIMS_TEMP_FILE)
+  rescue Errno::ENOENT
+    nil
+  end
+
+  def self.save_connection(connection)
+    File.open(LIMS_TEMP_FILE, 'w') do |fout|
+      fout.write(connection.to_yaml)
+    end
+  end
+
+  def initialize
     @api_prefix = config['lims_prefix'] || 'v1'
     @api_protocol = config['lims_protocol'] || 'http'
     @api_host = config['lims_host']
     @api_url = config['lims_url']
     @api_port = config['lims_port']
-    @connection = nil
+    @username = config['lims_username']
+    @password = config['lims_password']
+    @on_auth = nil
   end
 
   # We initially require a temporary authentication for user creation.
   # All other requests must start with an auth
-  def temp_auth(username, password)
-    response = get "authenticate/#{username}/#{password}"
+  def temp_auth
+    response = get "authenticate/#{config['lims_default_user']}/#{config['lims_default_password']}"
 
-    @connection = OpenStruct.new token: response['token']
+    @connection = OpenStruct.new(user: config['lims_default_user'], token: response['token'])
   end
 
-  def auth(username, password)
-    response = get "re_authenticate/#{username}/#{password}"
+  def connect(connection, on_auth: nil)
+    @on_auth = on_auth if on_auth
 
-    @connection = OpenStruct.new token: response['token']
+    return auth unless connection&.user == @username # user has changed in config file
+
+    @connection = connection
   end
 
   def legacy_order_test(patient, order)
@@ -183,12 +209,26 @@ class NLims
 
   private
 
+  def config
+    @config ||= YAML.load_file("#{Rails.root}/config/application.yml")
+  end
+
   def tests
     @tests ||= get('retrieve_test_Catelog')
   end
 
-  def get(path)
-    exec_request(path) do |full_path, headers|
+  def auth
+    url = "re_authenticate/#{@username}/#{@password}"
+    response = get(url, auto_login: false)
+
+    @connection = OpenStruct.new(user: @username, token: response['token'])
+    @on_auth&.call(@connection)
+
+    @connection
+  end
+
+  def get(path, auto_login: false)
+    exec_request(path, auto_login: auto_login) do |full_path, headers|
       RestClient.get(full_path, headers)
     end
   end
@@ -199,12 +239,16 @@ class NLims
     end
   end
 
-  def exec_request(path)
+  def exec_request(path, auto_login: true, &block)
     response = yield expand_url(path), token: @connection&.token,
                                        content_type: 'application/json'
 
     response = JSON.parse(response)
     if response['error'] == true
+      if response['message'].match?(/token expired/i) && auto_login
+        return auth && exec_request(path, auto_login: false, &block)
+      end
+
       raise LimsError, "Failed to communicate with LIMS: #{response['message']}"
     end
 
