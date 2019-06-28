@@ -12,6 +12,10 @@ class StockManagementService
   REALLOCATION_DESTINATION = 'Transfer out to location'
   REALLOCATION_DRUG = 'Drug getting reallocated'
 
+  # Pharmacy reallocation types
+  STOCK_ITEM_DISPOSAL = 'Disposal'
+  STOCK_ITEM_REALLOCATION = 'Reallocation'
+
   # Add list of drugs to stock
   #
   # @param{batch_number} A batch number that came with the drugs package
@@ -33,19 +37,15 @@ class StockManagementService
         drug_id = fetch_parameter(item, :drug_id)
         quantity = fetch_parameter(item, :quantity)
 
-        begin
-          delivery_date = item[:delivery_date]&.to_date || Date.today
-          expiry_date = fetch_parameter(item, :expiry_date).to_date
-        rescue ArgumentError
-          raise InvalidParameterError, 'Invalid expiry or delivery date'
-        end
+        delivery_date = fetch_parameter_as_date(item, :delivery_date, Date.today)
+        expiry_date = fetch_parameter_as_date(item, :expiry_date)
 
-        saved_item = create_batch_item(batch, drug_id, quantity, delivery_date, expiry_date)
-        next if saved_item.errors.empty?
+        item = create_batch_item(batch, drug_id, quantity, delivery_date, expiry_date)
+        validate_activerecord_object(item)
 
-        exception = InvalidParameterError.new("Error on item no #{i}: #{item}")
-        exception.model_errors = saved_item.errors
-        raise exception
+        commit_transaction(item, STOCK_ADD, quantity, delivery_date)
+      rescue StandardError => e
+        raise e.class, "Failed to parse stock item ##{i} due to `#{e.message}`"
       end
 
       batch
@@ -81,9 +81,27 @@ class StockManagementService
   end
 
   def update_batch_item(batch_item_id, params)
-    item = PharmacyBatchItem.find(batch_item_id)
-    item.update(params)
-    # create_stock_transaction(item, quantity, STOCK_EDIT, Date.today)
+    ActiveRecord::Base.transaction do
+      item = PharmacyBatchItem.find(batch_item_id)
+
+      if params[:current_quantity]
+        diff = params[:current_quantity].to_f - item.current_quantity
+        commit_transaction(item, STOCK_EDIT, diff, Date.today, update_item: false)
+      end
+
+      if params[:delivered_quantity]
+        diff = params[:delivered_quantity].to_f - item.delivered_quantity
+        commit_transaction(item, STOCK_EDIT, diff, Date.today, update_item: true)
+      end
+
+      unless item.update(params)
+        error = InvalidParameterError.new('Failed to update batch item')
+        error.model_errors = item.errors
+        raise error
+      end
+
+      item
+    end
   end
 
   def void_batch_item(batch_item_id, reason)
@@ -98,16 +116,31 @@ class StockManagementService
     item
   end
 
-  def reallocate_items(reallocation_code, stock_item_id, quantity, destination)
+  def reallocate_items(reallocation_code, batch_item_id, quantity, destination_location_id, date)
     ActiveRecord::Base.transaction do
-      activity = create_pharmacy_activity(STOCK_REALLOCATION)
-      add_pharmacy_activity_property(activity, REALLOCATION_DRUG, stock_item_id: stock_item_id,
-                                                                  value_numeric: quantity)
-      add_pharmacy_activity_property(activity, REALLOCATION_DESTINATION, value_text: destination)
-      add_pharmacy_activity_property(activity, REALLOCATION_CODE, value_text: reallocation_code)
+      item = PharmacyBatchItem.find(batch_item_id)
 
-      add_stock_item_quantity(stock_item_id, quantity)
-      activity
+      # A negative sign would result in addition of quantity thus
+      # get rid of it as early as possible
+      quantity = quantity.to_f.abs
+      commit_transaction(item, STOCK_DEBIT, -quantity.to_f, update_item: true)
+      destination = Location.find(destination_location_id)
+      PharmacyBatchItemReallocation.create(reallocation_code: reallocation_code, item: item,
+                                           quantity: quantity, location: destination,
+                                           reallocation_type: STOCK_ITEM_REALLOCATION,
+                                           date: date, creator: User.current)
+    end
+  end
+
+  def dispose_item(reallocation_code, batch_item_id, quantity, date)
+    ActiveRecord::Base.transaction do
+      item = PharmacyBatchItem.find(batch_item_id)
+      quantity = quantity.to_f.abs
+      commit_transaction(item, STOCK_DEBIT, -quantity.to_f, update_item: true)
+      PharmacyBatchItemReallocation.create(reallocation_code: reallocation_code, item: item,
+                                           quantity: quantity, date: date,
+                                           reallocation_type: STOCK_ITEM_DISPOSAL,
+                                           creator: User.current)
     end
   end
 
@@ -121,17 +154,19 @@ class StockManagementService
   end
 
   def create_batch_item(batch, drug_id, quantity, delivery_date, expiry_date)
+    quantity = quantity.to_f
+
     PharmacyBatchItem.create(
       batch: batch,
-      drug_id: drug_id,
+      drug_id: drug_id.to_i,
       delivered_quantity: quantity,
-      current_quantity: 0,
+      current_quantity: quantity,
       delivery_date: delivery_date,
       expiry_date: expiry_date
     )
   end
 
-  def create_pharmacy_activity(activity_name, date = nil)
+  def create_pharmacy_event(activity_name, date = nil)
     date ||= Date.today
     type = PharmacyActivityType.find_by_name(activity_name)
     raise "Invalid pharmacy activity name: #{activity_name}" unless type
@@ -139,25 +174,46 @@ class StockManagementService
     PharmacyActivity.create(type: type, date: date)
   end
 
-  def add_pharmacy_activity_property(activity, property_name, values)
-    concept_id = ConceptName.find_by_name(property_name)
-    PharmacyActivityProperty.create(activity: activity, concept_id: concept_id, **values)
-  end
+  def commit_transaction(batch_item, event_name, quantity, date = nil, update_item: false)
+    ActiveRecord::Base.transaction do
+      date ||= Date.today
 
-  # Adds an
-  def add_stock_item_to_batch(batch, stock_item)
+      event = validate_activerecord_object(
+        Pharmacy.create(item: batch_item, value_numeric: quantity,
+                        type: pharmacy_event_type(event_name),
+                        encounter_date: date)
+      )
 
-  end
+      return { event: event, target_item: batch_item } unless update_item
 
-  def add_stock_item_quantity(stock_item_id, quantity)
-    stock_item = PharmacyStockItem.find(stock_item_id)
-    stock_item.quantity += quantity
+      initial_current_quantity = batch_item.current_quantity
+      batch_item.current_quantity += quantity.to_f
 
-    if stock_item.quantity.negative?
-      raise InvalidParameterError, 'Chosen quantity exceeds available quantity'
+      if batch_item.current_quantity.negative?
+        raise InvalidParameterError, <<~ERROR
+          Debit quantity (#{quantity.abs}) exceeds current quantity (#{initial_current_quantity}) on item ##{batch_item.id}
+        ERROR
+      end
+
+      batch_item.save
+      validate_activerecord_object(batch_item)
+
+      { event: event, target_item: batch_item }
     end
+  end
 
-    stock_item.save
-    stock_item
+  def pharmacy_event_type(event_name)
+    type = PharmacyEncounterType.find_by_name(event_name)
+    raise NotFoundError, "Pharmacy encounter type not found: #{event_name}" unless type
+
+    type
+  end
+
+  def validate_activerecord_object(object)
+    return object if object.errors.empty?
+
+    error = InvalidParameterError.new('Failed to create or save object due to bad parameters')
+    error.model_errors = object.errors
+    raise error
   end
 end
