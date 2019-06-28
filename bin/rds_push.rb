@@ -328,7 +328,7 @@ def serialize_record(record, program)
     serialized_record['uuid'] = remap.new_uuid
   end
 
-  if record.respond_to?('date_created') && record.date_created.blank?
+  if record.respond_to?(:date_created) && record.date_created.blank?
     serialized_record['date_created'] = DEST_TIME_EPOCH
   end
 

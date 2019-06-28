@@ -1752,6 +1752,9 @@
 					"enabled": true
 				}
 			],
+			"method": "POST",
+			"pathVariableData": [],
+			"queryParams": [],
 			"auth": null,
 			"events": null,
 			"folder": null,
@@ -1764,8 +1767,9 @@
 					"language": "json",
 					"text": "{\"person_id\":1,\"gender\":\"M\",\"birthdate\":null,\"birthdate_estimated\":0,\"dead\":0,\"death_date\":null,\"cause_of_death\":null,\"creator\":1,\"date_created\":\"2005-01-01T00:00:00.000Z\",\"changed_by\":1,\"date_changed\":\"2009-09-04T16:37:23.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"10661cb8-b6c1-11e0-bc9e-544249e32ba2\",\"names\":[{\"person_name_id\":1,\"preferred\":1,\"person_id\":1,\"prefix\":null,\"given_name\":\"Super\",\"middle_name\":\"\",\"family_name_prefix\":null,\"family_name\":\"User\",\"family_name2\":null,\"family_name_suffix\":null,\"degree\":null,\"creator\":1,\"date_created\":\"2005-01-01T00:00:00.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"changed_by\":null,\"date_changed\":null,\"uuid\":\"109f4cb8-b6c1-11e0-bc9e-544249e32ba2\"},{\"person_name_id\":104,\"preferred\":0,\"person_id\":1,\"prefix\":null,\"given_name\":\"tionge\",\"middle_name\":null,\"family_name_prefix\":null,\"family_name\":\"banda\",\"family_name2\":null,\"family_name_suffix\":null,\"degree\":null,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"changed_by\":null,\"date_changed\":null,\"uuid\":\"350af0d9-59ca-11e3-b7e9-003018a9e11f\"}],\"addresses\":[{\"person_address_id\":24,\"person_id\":1,\"preferred\":0,\"address1\":\"Unknown\",\"address2\":null,\"city_village\":\"Area 10\",\"state_province\":null,\"postal_code\":null,\"country\":null,\"latitude\":null,\"longitude\":null,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"county_district\":null,\"neighborhood_cell\":null,\"region\":null,\"subregion\":null,\"township_division\":null,\"uuid\":\"350b0426-59ca-11e3-b7e9-003018a9e11f\"}],\"person_attributes\":[{\"person_attribute_id\":271,\"person_id\":1,\"value\":\"Area 10\",\"person_attribute_type_id\":18,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"350b0502-59ca-11e3-b7e9-003018a9e11f\"},{\"person_attribute_id\":272,\"person_id\":1,\"value\":\"Unknown\",\"person_attribute_type_id\":19,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"350b0426-59ca-11e3-b7e9-003018a9e11f\"},{\"person_attribute_id\":273,\"person_id\":1,\"value\":\"Other\",\"person_attribute_type_id\":13,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"350b0fab-59ca-11e3-b7e9-003018a9e11f\"},{\"person_attribute_id\":274,\"person_id\":1,\"value\":\"Not Available\",\"person_attribute_type_id\":14,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"350b11b7-59ca-11e3-b7e9-003018a9e11f\"}]}",
 					"responseCode": {
-						"code": 200,
-						"name": "OK"
+						"code": 201,
+						"name": "Created",
+						"detail": "The request has been fulfilled and resulted in a new resource being created."
 					},
 					"requestObject": {
 						"url": "http://127.0.0.1:3000/api/v1/people/1?page=0&page_size=2",
@@ -2642,16 +2646,16 @@
 					},
 					"headers": [
 						{
-							"key": "cache-control",
+							"key": "Cache-Control",
 							"value": "max-age=0, private, must-revalidate",
-							"name": "cache-control",
-							"description": ""
+							"name": "Cache-Control",
+							"description": "Tells all caching mechanisms from server to client whether they may cache this object. It is measured in seconds"
 						},
 						{
-							"key": "content-type",
+							"key": "Content-Type",
 							"value": "application/json; charset=utf-8",
-							"name": "content-type",
-							"description": ""
+							"name": "Content-Type",
+							"description": "The mime type of this content"
 						},
 						{
 							"key": "etag",
