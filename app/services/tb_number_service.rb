@@ -17,12 +17,13 @@ class TbNumberService
   end
 
   def get_tb_number(patient_id)
-    PatientIdentifier.where(
+    patient_identifier = PatientIdentifier.where(
       type: patient_identifier_type(TB_NUMBER_IDENTIFIER_NAME),
       patient_id: patient_id
     )
     .order(date_created: :desc)
     .first
+    return 'N/A' unless patient_identifier
   end
 
   private
