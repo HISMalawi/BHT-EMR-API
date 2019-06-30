@@ -23,7 +23,6 @@ class TbNumberService
     )
     .order(date_created: :desc)
     .first
-    return 'N/A' unless patient_identifier
   end
 
   private
