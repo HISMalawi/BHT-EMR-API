@@ -228,6 +228,8 @@ module ARTService
 
         # From this point going down: we update temp_earliest_start_date cum_outcome field to have the latest Cumulative outcome
         update_cum_outcome(end_date)
+        update_tb_status(end_date)
+        update_patient_side_effects(end_date)
 
         # Total Alive and On ART
         # Unique PatientProgram entries at the current location for those patients with at least one state
@@ -719,6 +721,68 @@ EOF
         )
       end
       
+      def update_tb_status(end_date)
+        ActiveRecord::Base.connection.execute(
+          'DROP TABLE IF EXISTS `temp_patient_tb_status`'
+        )
+
+        ActiveRecord::Base.connection.execute(
+          "CREATE TABLE temp_patient_tb_status ENGINE=MEMORY AS (
+            SELECT e.patient_id, patient_tb_status(e.patient_id, '#{end_date} 23:59:59') AS tb_status
+            FROM temp_earliest_start_date e 
+            INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
+            WHERE e.date_enrolled <= '#{end_date}'
+            AND cum_outcome = 'On antiretrovirals'
+          )"
+        )
+
+        ActiveRecord::Base.connection.execute(
+          'ALTER TABLE temp_patient_tb_status
+           ADD INDEX patient_id_index (patient_id)'
+        )
+
+        ActiveRecord::Base.connection.execute(
+          'ALTER TABLE temp_patient_tb_status
+           ADD INDEX tb_status_index (tb_status)'
+        )
+
+        ActiveRecord::Base.connection.execute(
+          'ALTER TABLE temp_patient_tb_status
+           ADD INDEX patient_id_tb_status_index (patient_id, tb_status)'
+        )
+      end
+
+      def update_patient_side_effects(end_date)
+        ActiveRecord::Base.connection.execute(
+          'DROP TABLE IF EXISTS `temp_patient_side_effects`'
+        )
+        
+        ActiveRecord::Base.connection.execute(
+          "CREATE TABLE temp_patient_side_effects ENGINE=MEMORY AS (
+            SELECT e.patient_id, patient_has_side_effects(e.patient_id, DATE('#{end_date}')) AS has_se
+            FROM temp_earliest_start_date e 
+            INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
+            WHERE e.date_enrolled <= '#{end_date}'
+            AND cum_outcome = 'On antiretrovirals'
+          )"
+        )
+
+        ActiveRecord::Base.connection.execute(
+          'ALTER TABLE temp_patient_side_effects
+           ADD INDEX patient_id_index (patient_id)'
+        )
+
+        ActiveRecord::Base.connection.execute(
+          'ALTER TABLE temp_patient_side_effects
+           ADD INDEX has_se_index (has_se)'
+        )
+
+        ActiveRecord::Base.connection.execute(
+          'ALTER TABLE temp_patient_side_effects
+           ADD INDEX patient_id_has_se_index (patient_id, has_se)'
+       )
+      end
+
       private
 
       def total_patients_with_screened_bp(patients_list, _start_date, end_date)
@@ -1072,48 +1136,33 @@ EOF
         tb_confirmed_but_not_on_treatment = concept('Confirmed TB NOT on Treatment')
         tb_confirmed_and_on_treatment = concept('Confirmed TB on Treatment')
 
-        patients_alive_and_on_art.each do |patient|
-          tb_status = patient_tb_status(patient['patient_id'], start_date, end_date)
-
-          tb_status_value = tb_status ? tb_status[:tb_status].to_i : nil
+        #patients_alive_and_on_art
+        (all_tb_statuses(end_date) || []).each do |data|
+          tb_status_value = data['tb_status'].to_i rescue nil
 
           case tb_status_value
-          when tb_suspected_concept.concept_id
-            cohort_struct.tb_suspected << patient['patient_id']
-          when tb_not_suspected_concept.concept_id
-            cohort_struct.tb_not_suspected << patient['patient_id']
-          when tb_confirmed_and_on_treatment.concept_id
-            cohort_struct.tb_confirmed_on_tb_treatment << patient['patient_id']
-          when tb_confirmed_but_not_on_treatment.concept_id
-            cohort_struct.tb_confirmed_currently_not_yet_on_tb_treatment << patient['patient_id']
-          else
-            cohort_struct.unknown_tb_status << patient['patient_id']
+            when tb_suspected_concept.concept_id
+              cohort_struct.tb_suspected << data['patient_id']
+            when tb_not_suspected_concept.concept_id
+              cohort_struct.tb_not_suspected << data['patient_id']
+            when tb_confirmed_and_on_treatment.concept_id
+              cohort_struct.tb_confirmed_on_tb_treatment << data['patient_id']
+            when tb_confirmed_but_not_on_treatment.concept_id
+              cohort_struct.tb_confirmed_currently_not_yet_on_tb_treatment << data['patient_id']
+            else
+              cohort_struct.unknown_tb_status << data['patient_id']
           end
         end
       end
 
-      def patient_tb_status(patient_id, start_date, end_date)
-=begin
-        tb_status_concept = concept('TB Status')
-
-        encounter = EncounterService.recent_encounter(
-          encounter_type_name: 'HIV CLINIC CONSULTATION',
-          patient_id: patient_id,
-          date: end_date,
-          start_date: start_date
-        )
-        return false unless encounter
-
-        Observation.where(
-          'person_id = ? AND concept_id = ? AND DATE(obs_datetime) = DATE(?)',
-          patient_id, tb_status_concept.concept_id, encounter.encounter_datetime
-        ).first
-=end
-        tb_status = ActiveRecord::Base.connection.select_one("
-          SELECT patient_tb_status(#{patient_id}, DATE('#{end_date.to_date}')) AS concept_id;
+      def all_tb_statuses(end_date)
+        ActiveRecord::Base.connection.select_all("
+          SELECT e.*, tb_status FROM temp_earliest_start_date e
+          INNER JOIN temp_patient_tb_status s ON s.patient_id = e.patient_id
+          INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
+          WHERE o.cum_outcome = 'On antiretrovirals'
+          AND DATE(e.date_enrolled) <= '#{end_date.to_date}';
         ")
-
-        return {tb_status: tb_status['concept_id']} unless tb_status.blank?
       end
 
       def get_tb_status(tb_status)
@@ -1132,17 +1181,21 @@ EOF
         without_side_effects = []
         unknowns = []
 
-        patients_alive_and_on_art.select do |record|
-          data = ActiveRecord::Base.connection.select_one <<EOF
-            SELECT patient_has_side_effects(#{record['patient_id']}, DATE('#{end_date}')) has_se;
+        records = ActiveRecord::Base.connection.select_all <<EOF
+        SELECT e.*, s.has_se FROM temp_earliest_start_date e
+        INNER JOIN temp_patient_side_effects s ON s.patient_id = e.patient_id
+        INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
+        WHERE o.cum_outcome = 'On antiretrovirals'
+        AND DATE(e.date_enrolled) <= '#{end_date.to_date}';
 EOF
 
+        (records || []).each do |data|
           if data['has_se'] == 'Yes'
-            with_side_effects << record['patient_id']
+            with_side_effects << data['patient_id']
           elsif data['has_se'] == 'No'
-            without_side_effects << record['patient_id']
+            without_side_effects << data['patient_id']
           else
-            unknowns << record['patient_id']
+            unknowns << data['patient_id']
           end
         end
 

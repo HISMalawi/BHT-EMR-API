@@ -25,7 +25,7 @@ EOF
     milestones = [6]
     start_month = 0
 
-    1.upto(40).each do |y|
+    1.upto(100).each do |y|
       milestones << (start_month += 12)
     end
 
