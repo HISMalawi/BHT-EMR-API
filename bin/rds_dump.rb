@@ -46,7 +46,7 @@ def dump(database, program_name, file)
       end
 
       sql_statement = <<~SQL
-        INSERT IGNORE INTO #{model.table_name} (#{record_fields.join(', ')})
+        REPLACE INTO #{model.table_name} (#{record_fields.join(', ')})
         VALUES #{sql_values.join(', ')};
       SQL
 
