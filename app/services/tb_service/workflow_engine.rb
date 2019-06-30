@@ -77,12 +77,12 @@ module TBService
       TB_ADHERENCE => %i[patient_has_appointment?
                                     patient_has_no_adherence?
                                     patient_has_valid_test_results?],
-      TREATMENT => %i[patient_tb_positive?
+      TREATMENT => %i[patient_should_get_treated?
                                     patient_should_proceed_for_treatment?
                                     patient_has_no_treatment?
                                     patient_has_valid_test_results?],
       DISPENSING => %i[patient_got_treatment?
-                                    patient_tb_positive?
+                                    patient_should_get_treated?
                                     patient_should_proceed_for_treatment?
                                     patient_has_no_dispensation?
                                     patient_has_valid_test_results?],
@@ -90,9 +90,10 @@ module TBService
                                     patient_has_no_diagnosis?
                                     patient_should_proceed_for_treatment?],
       LAB_RESULTS => %i[patient_has_no_lab_results?
-                                    patient_should_proceed_after_lab_order?],
+                                    patient_should_proceed_after_lab_order?
+                                    patient_recent_lab_order_has_no_results?],
       VITALS => %i[patient_has_no_vitals?
-                                    patient_tb_positive?
+                                    patient_should_get_treated?
                                     patient_should_proceed_for_treatment?
                                     patient_has_valid_test_results?],
       APPOINTMENT => %i[dispensing_complete?
@@ -199,6 +200,10 @@ module TBService
      (((Time.zone.now - person.birthdate.to_time) / 1.year.seconds).floor) <= 5
     end
 
+    def patient_should_get_treated?
+      (patient_is_a_minor? && patient_tb_negative?) || patient_tb_positive?
+    end
+
     def patient_tb_positive?
       status_concept = concept('TB status')
       negative = concept('Positive')
@@ -274,6 +279,29 @@ module TBService
         time_diff = (Time.current - encounter.encounter_datetime)
         hours = (time_diff / 1.hour).round
         (hours >= 1)
+      rescue
+        false
+      end
+
+    end
+
+    def patient_recent_lab_order_has_no_results?
+      lab_order = Encounter.joins(:type).where(
+        'encounter_type.name = ? AND encounter.patient_id = ?',
+        LAB_ORDERS,
+        @patient.patient_id
+      ).order(encounter_datetime: :desc).first
+
+      lab_result = Encounter.joins(:type).where(
+        'encounter_type.name = ? AND encounter.patient_id = ?',
+        LAB_RESULTS,
+        @patient.patient_id
+      ).order(encounter_datetime: :desc).first
+
+      return true unless lab_result
+
+      begin
+        (lab_result.encounter_datetime < lab_order.encounter_datetime)
       rescue
         false
       end
