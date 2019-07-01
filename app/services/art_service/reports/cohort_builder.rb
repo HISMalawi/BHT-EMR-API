@@ -656,6 +656,19 @@ module ARTService
           HAVING date_enrolled IS NOT NULL;
 EOF
 
+        concept_id = ConceptName.find_by_name('Type of patient').concept_id
+        ext_concept_id = ConceptName.find_by_name('External consultation').concept_id
+
+        person_ids = Observation.where(concept_id: concept_id,
+          value_coded: ext_concept_id).group(:person_id).map(&:person_id)
+
+        unless person_ids.blank?
+          ActiveRecord::Base.connection.execute <<EOF
+          DELETE FROM temp_earliest_start_date WHERE patient_id IN(#{person_ids.join(',')});
+EOF
+
+        end
+
       end
 
       def create_tmp_patient_table
