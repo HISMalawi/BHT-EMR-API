@@ -153,6 +153,7 @@ EOF
       def save_report
         report = Report.create(name: @name, start_date: @start_date,
                                end_date: @end_date, type: @type,
+                               creator: User.current.id,
                                renderer_type: 'PDF')
 
         values = save_report_values(report)
@@ -168,6 +169,7 @@ EOF
                                             name: value.name,
                                             indicator_name: value.indicator_name,
                                             indicator_short_name: value.indicator_short_name,
+                                            creator: User.current.id,
                                             description: value.description,
                                             contents: value_contents_to_json(value.contents))
 
