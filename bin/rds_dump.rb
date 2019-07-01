@@ -2,6 +2,7 @@
 
 require 'ostruct'
 
+@RDS_DUMP_RUNNING = true
 require_relative 'rds_push'
 
 @rds_configuration[:mode] = MODE_DUMP
