@@ -32,7 +32,8 @@ class Api::V1::PersonNamesController < ApplicationController
     search_string = params.require('search_string')
     paginator = ->(query) { paginate(query) }
 
-    names = NameSearchService.search_partial_person_name(field, search_string, paginator: paginator)
+    names = NameSearchService.search_partial_person_name(field, search_string, use_soundex: false,
+                                                                               paginator: paginator)
 
     render json: names
   end
