@@ -5,6 +5,7 @@ require 'rest-client'
 
 class NLims
   LIMS_TEMP_FILE = Rails.root.join('tmp/lims_connection.yml')
+  LOGGER = Rails.logger
 
   def self.instance
     return @instance if @instance
@@ -227,7 +228,7 @@ class NLims
     @connection
   end
 
-  def get(path, auto_login: false)
+  def get(path, auto_login: true)
     exec_request(path, auto_login: auto_login) do |full_path, headers|
       RestClient.get(full_path, headers)
     end
@@ -246,7 +247,8 @@ class NLims
     response = JSON.parse(response)
     if response['error'] == true
       if response['message'].match?(/token expired/i) && auto_login
-        return auth && exec_request(path, auto_login: false, &block)
+        LOGGER.debug('LIMS token expired... Re-authenticating')
+        return (auth && exec_request(path, auto_login: false, &block))
       end
 
       raise LimsError, "Failed to communicate with LIMS: #{response['message']}"
