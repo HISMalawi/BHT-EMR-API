@@ -9,6 +9,10 @@ module VMMCService
 
     LOGGER = Rails.logger
 
+    REPORTS = {
+      'COHORT' => VMMCService::Reports::Cohort
+    }.freeze
+
     # def initialize(program:, date:)
     #   @program = program
     #   @date = date
@@ -26,6 +30,16 @@ module VMMCService
       end
 
       stats
+    end
+
+    def find_report(type:, name:, start_date:, end_date:)
+      report = REPORTS[type.upcase]
+      raise InvalidParameterError, "Report type (#{type}) not known" unless report
+
+      indicator = report.method(name.to_sym)
+      raise InvalidParameterError, "Report indicator (#{name}) not known" unless indicator
+
+      { name => indicator.call(start_date, end_date) }
     end
 
     private
