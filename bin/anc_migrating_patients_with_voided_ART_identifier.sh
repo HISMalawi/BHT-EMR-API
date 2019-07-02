@@ -39,13 +39,6 @@ SET @max_patient_program_id := (SELECT max(patient_program_id) from $DATABASE.pa
 SET @max_order_id := (SELECT max(order_id) from $DATABASE.orders);
 SET @max_obs_id := (SELECT max(obs_id) FROM $DATABASE.obs);
 
-DROP TABLE if exists $ANCDATABASE.ANC_patients_merged_into_main_dbs;
-
-CREATE TABLE $ANCDATABASE.ANC_patients_merged_into_main_dbs as 
-SELECT ANC_patient_id FROM $ANCDATABASE.ANC_patient_details
-UNION
-SELECT ANC_patient_id FROM $ANCDATABASE.ANC_only_patients_details;
-
 
 /* dropping and creating person_back_up  */
 DROP TABLE IF EXISTS $ANCDATABASE.anc_art_patients_with_voided_art_identifier;
