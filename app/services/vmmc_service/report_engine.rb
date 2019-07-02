@@ -1,110 +1,110 @@
+# frozen_string_literal: true
+
 require 'set'
 
 module VMMCService
-	class ReportEngine
-		attr_reader :program
-		include ModelUtils
+  class ReportEngine
+    attr_reader :program
+    include ModelUtils
 
-		    LOGGER = Rails.logger
+    LOGGER = Rails.logger
 
-		# def initialize(program:, date:)
-		# 	@program = program
-		# 	@date = date
-		# end
+    # def initialize(program:, date:)
+    #   @program = program
+    #   @date = date
+    # end
 
-	    def dashboard_stats(date)
-	      @date = date
+    def dashboard_stats(date)
+      @date = date
 
-	      stats = {}
+      stats = {}
 
-	      generic_encounters = ['registration','vitals','medical_history','update_hiv_status','genital_examination','circumcision']
+      generic_encounters = %w[registration vitals medical_history update_hiv_status genital_examination circumcision]
 
-	      (generic_encounters || []).each do |encounter|
-	        stats[encounter] = map_stats(encounter,true)
-	      end
+      (generic_encounters || []).each do |encounter|
+        stats[encounter] = map_stats(encounter, true)
+      end
 
-	      return stats
-	    end
+      stats
+    end
 
-	    private
+    private
 
-      # stats_mapping
-      def map_stats(stats_type,generic=false)
-
-        if generic == true
-          encounter_name = stats_type.titlecase
-          stats_by_user = generic_encounter_statistics(encounter_name,'by_user')
-          stats_today = generic_encounter_statistics(encounter_name,'today')
-          stats_this_year = generic_encounter_statistics(encounter_name,'this_year')
-          stats_total_to_date = generic_encounter_statistics(encounter_name,'total')
-
-        end
-
-        {
-            stats_by_user: stats_by_user,
-            stats_today: stats_today,
-            stats_this_year: stats_this_year,
-            stats_total_to_date: stats_total_to_date
-        }
+    # stats_mapping
+    def map_stats(stats_type, generic = false)
+      if generic == true
+        encounter_name = stats_type.titlecase
+        stats_by_user = generic_encounter_statistics(encounter_name, 'by_user')
+        stats_today = generic_encounter_statistics(encounter_name, 'today')
+        stats_this_year = generic_encounter_statistics(encounter_name, 'this_year')
+        stats_total_to_date = generic_encounter_statistics(encounter_name, 'total')
 
       end
 
-      def generic_encounter_statistics(encounter_name, stats_type)
-        type = EncounterType.find_by_name encounter_name
-        raise encounter_name.inspect unless type
+      {
+        stats_by_user: stats_by_user,
+        stats_today: stats_today,
+        stats_this_year: stats_this_year,
+        stats_total_to_date: stats_total_to_date
+      }
+    end
 
-        case stats_type
-        when 'by_user'
-          creator = User.current.user_id
+    def generic_encounter_statistics(encounter_name, stats_type)
+      type = EncounterType.find_by_name encounter_name
+      raise encounter_name.inspect unless type
 
-          count = Encounter.where('program_id = 21 AND encounter_type = ? AND encounter.creator = ?', type.id, creator).\
-        select('count(*) AS total')
-        when 'today'
-          count = Encounter.where('program_id = 21 AND encounter_datetime BETWEEN ? AND ?
-        AND encounter_type = ? ', *TimeUtils.day_bounds(@date), type.id).\
-        select('count(*) AS total')
-        when 'this_year'
+      case stats_type
+      when 'by_user'
+        creator = User.current.user_id
 
-          start_date = Date.today.beginning_of_year
-          end_date = Date.today.end_of_year
+        count = Encounter.where('program_id = 21 AND encounter_type = ? AND encounter.creator = ?', type.id, creator)\
+                         .select('count(*) AS total')
+      when 'today'
+        count = Encounter.where('program_id = 21 AND encounter_datetime BETWEEN ? AND ?
+      AND encounter_type = ? ', *TimeUtils.day_bounds(@date), type.id)\
+                         .select('count(*) AS total')
+      when 'this_year'
 
-          count = Encounter.where('program_id = 21 AND encounter_datetime BETWEEN ? AND ?
-        AND encounter_type = ? ', start_date, end_date, type.id).\
-        select('count(*) AS total')
-        when 'total'
+        start_date = Date.today.beginning_of_year
+        end_date = Date.today.end_of_year
 
-          count = Encounter.where('program_id = 21 AND encounter_type = ? ', type.id).\
-        select('count(*) AS total')
-        end
+        count = Encounter.where('program_id = 21 AND encounter_datetime BETWEEN ? AND ?
+      AND encounter_type = ? ', start_date, end_date, type.id)\
+                         .select('count(*) AS total')
+      when 'total'
 
-        return count[0]['total'].to_i
+        count = Encounter.where('program_id = 21 AND encounter_type = ? ', type.id)\
+                         .select('count(*) AS total')
       end
 
-      # observations
-      def observations(stats_type)
-        case stats_type
-        when 'by_user'
-          count = Observation.joins(:encounter).where('program_id = 21').select('count(*) AS total')
+      count[0]['total'].to_i
+    end
 
-        when 'today'
-          count = Observation.where('program_id = 21 AND obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date)).\
-          joins(:encounter)
+    # observations
+    def observations(stats_type)
+      case stats_type
+      when 'by_user'
+        count = Observation.joins(:encounter).where('program_id = 21').select('count(*) AS total')
+
+      when 'today'
+        count = Observation.where('program_id = 21 AND obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
+                           .joins(:encounter)
         select('count(*) AS total')
-        when 'this_year'
+      when 'this_year'
 
-          start_date = Date.today.beginning_of_year
-          end_date = Date.today.end_of_year
+        start_date = Date.today.beginning_of_year
+        end_date = Date.today.end_of_year
 
-          count = Observation.where('program_id = 21 AND obs_datetime BETWEEN ? AND ? ', start_date, end_date).\
-          joins(:encounter)
+        count = Observation.where('program_id = 21 AND obs_datetime BETWEEN ? AND ? ', start_date, end_date)\
+                           .joins(:encounter)
         select('count(*) AS total')
-        when 'total'
+      when 'total'
 
-          count = Observation.joins(:encounter).where('program_id = 21').select('count(*) AS total')
+        count = Observation.joins(:encounter).where('program_id = 21').select('count(*) AS total')
 
-        end
-
-        return count[0]['total'].to_i
       end
+
+      count[0]['total'].to_i
+    end
   end
 end
