@@ -48,17 +48,19 @@ module NameSearchService
               end
 
       query = paginator.call(query) if paginator
-      query.collect(&field)
+      query.order(field).collect(&field)
     end
 
     def search_full_person_name(given_name, family_name, use_soundex: true, paginator: nil)
       query = if use_soundex
-                sub_query = PersonNameCode.where('given_name_code LIKE ? AND family_name_code LIKE ?',
-                                                 "#{given_name.soundex}%", "#{family_name.soundex}%")
+                sub_query = PersonNameCode.where('given_name_code = ? AND family_name_code = ?',
+                                                 given_name.soundex, family_name.soundex)
                 PersonName.joins(:person_name_code).merge(sub_query)
               else
                 PersonName.where('given_name LIKE ? AND family_name LIKE ?', "#{given_name}%", "#{family_name}%")
               end
+
+      query = query.order(Arel.sql('given_name, family_name'))
 
       paginator ? paginator.call(query) : query
     end
