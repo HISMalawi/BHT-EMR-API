@@ -30,11 +30,12 @@ class Api::V1::PersonNamesController < ApplicationController
 
   def search_partial_name(field)
     search_string = params.require('search_string')
+    paginator = ->(query) { paginate(query) }
 
-    query = PersonName.select(field).distinct.where("#{field} like ?", "#{search_string}%")
-    query = paginate(query)
+    names = NameSearchService.search_partial_person_name(field, search_string, use_soundex: false,
+                                                                               paginator: paginator)
 
-    render json: query.collect(&field)
+    render json: names
   end
 
   def params_to_query_conditions(params)

@@ -38,27 +38,24 @@ class PersonService
     person.update params unless params.empty?
   end
 
-  def find_people_by_name_and_gender(given_name, family_name, gender)
-    Person.joins([:patient, :names]).where(
-      'person.gender like ? AND person_name.given_name LIKE ?
-                            AND person_name.family_name LIKE ?
-       AND patient.patient_id = person.person_id',
-      "#{gender}%", "#{given_name}%", "#{family_name}%"
-    )
+  def find_people_by_name_and_gender(given_name, family_name, gender, use_soundex: true)
+    name_sub_query = NameSearchService.search_full_person_name(given_name, family_name, use_soundex: use_soundex)
+
+    Person.joins(%i[patient names]).where(
+      'person.gender like ? AND patient.patient_id = person.person_id', "#{gender}%"
+    ).merge(name_sub_query)
   end
 
   def create_person_name(person, params)
-    handle_model_errors do
-      PersonName.create(
-        person: person,
-        given_name: params[:given_name],
-        family_name: params[:family_name],
-        middle_name: params[:middle_name],
-        creator: User.current.id,
-        # HACK: Manually set uuid because db requires it but has no default
-        uuid: SecureRandom.uuid
-      )
+    name = handle_model_errors do
+      PersonName.create(person: person, given_name: params[:given_name],
+                        family_name: params[:family_name], middle_name: params[:middle_name],
+                        creator: User.current.id, uuid: SecureRandom.uuid)
     end
+
+    NameSearchService.index_person_name(name)
+
+    name
   end
 
   def update_person_name(person, params)
@@ -69,10 +66,14 @@ class PersonService
 
     return create_person_name(person, params) unless name
 
-    handle_model_errors do
+    name = handle_model_errors do
       name.update(params)
       name
     end
+
+    NameSearchService.index_person_name(name)
+
+    name
   end
 
   PERSON_ADDRESS_FIELD_MAP = {
