@@ -6,7 +6,8 @@ class Api::V1::UsersController < ApplicationController
   skip_before_action :authenticate, only: [:login]
 
   def index
-    render json: paginate(User), status: :ok
+    filters = params.permit(:role).to_hash.transform_keys(&:to_sym)
+    render json: service.find_users(**filters)
   end
 
   def show
@@ -16,12 +17,17 @@ class Api::V1::UsersController < ApplicationController
   def create
     create_params = params.require(%i[username password given_name family_name roles])
     username, password, given_name, family_name, roles = create_params
+    programs = params[:programs]
 
     return unless validate_roles(roles) & validate_username(username)
 
+    return if programs && !validate_programs(programs) # added this as a seperate return to prevent multiple redirects in case more than one validation fails
+
+    return if programs && !validate_programs_existance(programs) # added this as a seperate return to prevent multiple redirects in case more than one validation fails
+
     user = UserService.create_user(
       username: username, password: password, given_name: given_name,
-      family_name: family_name, roles: roles
+      family_name: family_name, roles: roles, programs: programs
     )
 
     if user.errors.empty?
@@ -110,5 +116,32 @@ class Api::V1::UsersController < ApplicationController
 
   def user
     User.find(params[:user_id])
+  end
+
+  #validate user programs here
+  def validate_programs(programs)
+    if programs && !programs.respond_to?(:each)
+      render json: ['`programs` must be an array'], status: :bad_request
+      return false
+    end
+
+    true
+  end
+
+  #validate program
+  def validate_programs_existance(programs)
+    programs.each do |program_id|
+      unless Program.find_by(program_id: program_id)
+        errors = ['All Programs must exists']
+        render json: { errors: errors }, status: :conflict
+        return false
+      end
+
+      true
+    end
+  end
+
+  def service
+    UserService
   end
 end

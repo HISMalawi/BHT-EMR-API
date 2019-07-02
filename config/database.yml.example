@@ -3,35 +3,25 @@ default: &default
   host: localhost
   adapter: mysql2
   username: root
-  password: password
+  password: P@ch321!
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   timeout: 5000
 
 development:
   <<: *default
-  database: mlambe_api
+  database: openmrs_likuni
 test:
   <<: *default
-  database: mlambe_api_test
+  database: openmrs_test
 
 production:
   <<: *default
   database: mlambe_api_production
 
-
-# Uncomment out the following and update them accordingly if
-# you need to sync hts and anc to RDS.
-#
-# hts:
-#   <<: *default
-#   host: localhost
-#   username: root
-#   database: openmrs_anc
-#   password: password
-
-# anc:
-#   <<: *default
-#   host: localhost
-#   database: openmrs_hts
-#   username: root
-#   password: password
+healthdata:
+  adapter: mysql2
+  username: root
+  database: healthdata
+  password: P@ch321!
+  host: localhost
+  pool: 500

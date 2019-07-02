@@ -7,8 +7,7 @@ class DrugOrder < ApplicationRecord
   belongs_to :drug, foreign_key: :drug_inventory_id
   belongs_to :order, foreign_key: :order_id
 
-  validates_presence_of :drug_inventory_id, :dose, :equivalent_daily_dose,
-                        :units, :frequency, :prn
+  validates_presence_of :drug_inventory_id, :equivalent_daily_dose
 
   def as_json(options = {})
     super(options.merge(
@@ -21,7 +20,8 @@ class DrugOrder < ApplicationRecord
   end
 
   def duration
-    return 0 if order.nil? || order&.auto_expire_date&.nil? || order&.start_date&.nil?
+    order = Order.unscoped.find_by_order_id(order_id)
+    return 0 if order&.auto_expire_date.blank? || order&.start_date.blank?
 
     interval = order.auto_expire_date.to_date - order.start_date.to_date
     interval.to_i
@@ -53,6 +53,18 @@ class DrugOrder < ApplicationRecord
       pm: ingredient&.dose&.pm || 0,
       units: drug.units
     }
+  end
+
+  def to_s
+    return order.instructions unless order.instructions.blank? rescue nil
+
+    str = "#{drug.name}: #{self.dose} #{self.units} #{frequency} for #{duration||'some'} days"
+    str << ' (prn)' if prn == 1
+    str
+  end
+
+  def date_created
+    @date_created ||= Order.unscoped.find(order_id).date_created
   end
 
   # def order

@@ -1,9 +1,9 @@
-lims_host: 192.168.0.101
+lims_host: localhost
 lims_prefix: api/v1
 lims_protocol: http
 lims_port: 3010
-lims_username: bht_emr_api_1
-lims_password: 123456789
+lims_username: 'lab_user'
+lims_password: 'lab_user_password'
 lims_default_user: 'admin'
 lims_default_password: 'knock_knock'
 lims_partner: 'BHT'
@@ -50,16 +50,15 @@ rds:
   databases:
     # The databases defined here must have a corresponding entry in the
     # database.yml file that holds the database's connection parameters.
-
     # NOTE: The program_names specified below will be overriden by
     # encounter program if one exists.
     development:
-      program_name: 'ART PROGRAM'
+      program_name: 'HIV PROGRAM'
 
     # Uncomment out the following to enable syncing from HTS and ANC
     # databases.
     #
     # hts:
-    #   program_name: 'HYPERTENSION PROGRAM'
+    #   program_name: 'HTC PROGRAM'
     # anc:
     #   program_name: 'ANC PROGRAM'

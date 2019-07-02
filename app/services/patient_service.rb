@@ -113,6 +113,30 @@ class PatientService
     end).values
   end
 
+  # Last drugs pill count
+  def patient_last_drugs_pill_count(patient, ref_date, program_id: nil)
+    program = Program.find(program_id) if program_id
+    concept_name = ConceptName.find_by_name('Number of tablets brought to clinic')
+    return [] if program.blank?
+
+    pill_counts = Observation.joins(:encounter).where(
+      'program_id = ? AND encounter.patient_id = ?
+        AND DATE(encounter_datetime) = DATE(?) AND concept_id = ?',
+      program.id, patient.patient_id, ref_date, concept_name.concept_id
+    ).order(encounter_datetime: :desc)
+
+    return [] unless pill_counts
+    values = {}
+
+    (pill_counts).each do |obs|
+      order = obs.order
+      drug_order = obs.order.drug_order
+      values[drug_order.drug_inventory_id] = obs.value_numeric
+    end
+
+    return values
+  end
+  
   # Retrieves a patient's bp trail
   def patient_bp_readings_trail(patient, max_date)
     concepts = [concept('SBP'), concept('DBP')]
@@ -145,6 +169,14 @@ class PatientService
       type: [patient_identifier_type('Filing number'),
              patient_identifier_type('Archived filing number')]
     )
+  end
+
+  def assign_tb_number(patient_id)
+    tb_number_service.assign_tb_number(patient_id)
+  end
+
+  def get_tb_number(patient_id)
+    tb_number_service.get_tb_number(patient_id)
   end
 
   def assign_npid(patient)
@@ -364,6 +396,10 @@ class PatientService
 
   def filing_number_service
     @filing_number_service ||= FilingNumberService.new
+  end
+
+  def tb_number_service
+    @tb_number_service = TbNumberService.new
   end
 
   # Returns all of patient's identifiers of given identifier_type

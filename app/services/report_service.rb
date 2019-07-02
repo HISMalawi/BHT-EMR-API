@@ -17,9 +17,8 @@ class ReportService
   def generate_report(name:, type:, start_date: Date.strptime('1900-01-01'),
                       end_date: Date.today, kwargs: {})
     LOGGER.debug "Retrieving report, #{name}, for period #{start_date} to #{end_date}"
-    type = report_type(type)
-
     report = find_report(type, name, start_date, end_date)
+
     if report && @overwrite_mode
       report.void('Over-written by new report')
       report = nil
@@ -27,7 +26,7 @@ class ReportService
 
     return report if report
 
-    lock = self.class.acquire_report_lock(type.name, start_date, end_date)
+    lock = self.class.acquire_report_lock(type, start_date, end_date)
     return nil unless lock
 
     LOGGER.debug("#{name} report not found... Queueing one...")
@@ -79,12 +78,9 @@ class ReportService
     engine(@program).with_nids
   end
 
-  def cohort_report_raw_data(l1, l2)
-    engine(@program).cohort_report_raw_data(l1, l2)
-  end
-
-  def cohort_disaggregated(quarter, age_group)
-    engine(@program).cohort_disaggregated(quarter, age_group)
+  def cohort_disaggregated(quarter, age_group, start_date, end_date, rebuild, init)
+    engine(@program).cohort_disaggregated(quarter, age_group,
+      start_date, end_date, rebuild, init)
   end
 
   def drugs_given_without_prescription(start_date, end_date)
@@ -98,7 +94,7 @@ class ReportService
   def cohort_survival_analysis(quarter, age_group, regenerate)
     engine(@program).cohort_survival_analysis(quarter, age_group, regenerate)
   end
-  
+
   def defaulter_list(start_date, end_date, pepfar)
     engine(@program).defaulter_list(start_date, end_date, pepfar)
   end
@@ -111,6 +107,22 @@ class ReportService
     engine(@program).cohort_disaggregated(date, start_date)
   end
   
+  def ipt_coverage(start_date, end_date)
+    engine(@program).ipt_coverage(start_date, end_date)
+  end
+
+  def cohort_report_drill_down(id)
+    engine(@program).cohort_report_drill_down(id)
+  end
+
+  def regimen_switch(start_date, end_date)
+    engine(@program).regimen_switch(start_date, end_date)
+  end
+
+  def regimen_report(start_date, end_date)
+    engine(@program).regimen_report(start_date, end_date)
+  end
+
   private
 
   def engine(program)
@@ -124,26 +136,18 @@ class ReportService
     end
   end
 
-  def report_type(name)
-    report_type = ReportType.find_by(name: name) # TODO: Also filter by program id
-    raise NotFoundError, "Report type, #{name}, not found" unless report_type
-
-    report_type
-  end
-
   def find_report(type, name, start_date, end_date)
     engine(@program).find_report(type: type, name: name,
                                  start_date: start_date, end_date: end_date)
   end
 
-  def queue_report(start_date:, end_date:, type:, lock:, **kwargs)
+  def queue_report(start_date:, end_date:, lock:, **kwargs)
     kwargs[:start_date] = start_date.to_s
     kwargs[:end_date] = end_date.to_s
-    kwargs[:type] = type.id
     kwargs[:user] = User.current.user_id
     kwargs[:lock] = lock.to_s
 
-    LOGGER.debug("Queueing #{type.name} report with arguments: #{kwargs}")
+    LOGGER.debug("Queueing #{kwargs['type']} report: #{kwargs}")
     if @immediate_mode
       ReportJob.perform_now(engine(@program).class.to_s, **kwargs)
     else

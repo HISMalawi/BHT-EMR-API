@@ -128,8 +128,11 @@ FROM $ANCDATABASE.patient_state ps
 
 drop table if exists $ANCDATABASE.orders_bak;
 
+drop table if exists $ANCDATABASE.orders_bak;
+
 /* This query insert BDE orders into main orders */
 create table $ANCDATABASE.orders_bak as
+
 SELECT order_id AS ANC_order_id,(SELECT @max_order_id + order_id) as ART_order_id, order_type_id, concept_id, orderer, (SELECT @max_encounter_id + encounter_id) as encounter_id, instructions,  start_date,  auto_expire_date,  discontinued,  discontinued_date, discontinued_by,  discontinued_reason, c.ART_user_id as creator, p.date_created,  p.voided,  p.voided_by,  p.date_voided,  p.void_reason, pp.ART_patient_id as patient_id,  accession_number, (SELECT @max_obs_id + obs_id) as obs_id,  uuid, discontinued_reason_non_coded 
 FROM $ANCDATABASE.orders p 
 	inner join $ANCDATABASE.ANC_only_patients_details pp ON pp.ANC_patient_id = p.patient_id and p.voided = 0
@@ -150,6 +153,10 @@ SELECT (SELECT @max_obs_id + obs_id) as obs_id, pp.ART_patient_id,  concept_id, 
 FROM $ANCDATABASE.obs  p 
 	inner join $ANCDATABASE.ANC_only_patients_details pp ON pp.ANC_patient_id = p.person_id and p.voided = 0
 	left join $ANCDATABASE.user_bak c on c.ANC_user_id = p.creator;
+
+/* This query insert BDE obs into main obs */
+INSERT INTO $DATABASE.obs (obs_id, person_id,  concept_id,  encounter_id,  order_id,  obs_datetime,  location_id,  obs_group_id,  accession_number,  value_group_id,  value_boolean,  value_coded,  value_coded_name_id,  value_drug,  value_datetime,  value_numeric,  value_modifier,  value_text,  date_started,  date_stopped,  comments,  creator,  date_created,  voided,  voided_by,  date_voided,  void_reason,  value_complex,  uuid)
+SELECT (SELECT @max_obs_id + obs_id) as obs_id, (SELECT @max_patient_id + person_id) as person_id,  concept_id,  (SELECT @max_encounter_id + encounter_id) as encounter_id,  (SELECT @max_order_id + order_id) as order_id,  obs_datetime,  location_id,  obs_group_id,  accession_number,  value_group_id,  value_boolean,  value_coded,  value_coded_name_id,  value_drug,  value_datetime,  value_numeric,  value_modifier,  value_text,  date_started,  date_stopped,  comments,  creator,  date_created,  voided,   voided_by,  date_voided,  void_reason,  value_complex,  (SELECT UUID()) FROM $ANCDATABASE.obs  p inner join $ANCDATABASE.ANC_only_patients_details pp on pp.patient_id = p.person_id;
 
 /* Update Observation (61) encounter_type to ANC Examination (98) encounter_type */
 update $DATABASE.encounter set encounter_type = 98 where encounter_type = 61;

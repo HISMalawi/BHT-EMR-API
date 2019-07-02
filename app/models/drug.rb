@@ -10,6 +10,7 @@ class Drug < ActiveRecord::Base
   has_one :drug_cms, foreign_key: :drug_inventory_id
   has_many :barcodes, class_name: 'DrugOrderBarcode'
   has_many :alternative_names, class_name: 'AlternativeDrugName', foreign_key: 'drug_inventory_id'
+  has_many :ntp_regimens, class_name: 'NtpRegimen'
 
   def as_json(options = {})
     super(options.merge(
@@ -30,4 +31,14 @@ class Drug < ActiveRecord::Base
     concepts_placeholders = '(' + (['?'] * concepts.size).join(', ') + ')'
     Drug.where("concept_id in #{concepts_placeholders}", *concepts)
   end
+
+  def tb_drug?
+    Drug.tb_drugs.map(&:concept_id).include?(concept_id)
+  end
+
+  def self.tb_drugs
+    tb_concept = Concept.joins(:concept_names).where(concept_name: { name: ['Rifampicin isoniazid and pyrazinamide', 'Ethambutol', 'Rifampicin and isoniazid', 'Rifampicin Isoniazid Pyrazinamide Ethambutol', 'Isoniazid'] } )
+    Drug.where(concept: tb_concept)
+  end
+
 end

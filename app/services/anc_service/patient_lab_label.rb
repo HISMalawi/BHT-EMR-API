@@ -17,8 +17,11 @@ module ANCService
         @patient.encounters.where(["encounter_type IN (?) AND program_id = ?",
           LAB_RESULTS.id, ANC_PROGRAM.id]).each{|e|
             e.observations.each{|o|
-              syphil[o.concept.concept_names.map(& :name).last.upcase] = o.answer_string.squish.upcase
+              concept_name = o.concept.concept_names.map(& :name).last.upcase;
+              syphil[concept_name] = o.answer_string.squish.upcase
               syphil["encounter_date"] = e.encounter_datetime.to_date.strftime("%Y-%m-%d")
+
+              syphil["HIV TEST DATE"] = e.encounter_datetime.to_date.strftime("%Y-%m-%d") if (concept_name == "PREVIOUS HIV TEST RESULTS" || concept_name == "HIV STATUS")
             }
       }
 

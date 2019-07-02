@@ -1,7 +1,8 @@
 class Api::V1::CleaningController < ApplicationController
 
   SERVICES = {
-    'ANC PROGRAM' => ANCService::DataCleaning
+    'ANC PROGRAM' => ANCService::DataCleaning,
+    'HIV PROGRAM' => ARTService::DataCleaningTool
   }.freeze
 
   def index
@@ -106,4 +107,12 @@ class Api::V1::CleaningController < ApplicationController
       |rows| puts rows ['gender']
       end
   end
+
+  def art_tools
+    program = Program.find(params[:program_id])
+    service = SERVICES[program.name.upcase].new(start_date: params[:start_date], 
+      end_date: params[:end_date], tool_name: params[:report_name])
+    render json: service.results
+  end
+
 end

@@ -160,7 +160,6 @@ UPDATE $DATABASE.encounter SET provider_id = creator WHERE provider_id IS NULL;
 
 SET foreign_key_checks = 1;
 
-
 EOF
 echo "Start script 2 -----------------------------"
 echo "Running script to migrate patients that are only in ANC"

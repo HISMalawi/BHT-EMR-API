@@ -14,7 +14,7 @@ Rails.application.routes.draw do
       # Routes down here ... Best we move everything above into own modules
 
       resources :appointments
-      resources :dispensations, only: %i[index create]
+      resources :dispensations, only: %i[index create destroy]
       resources :users do
         post '/activate', to: 'users#activate'
         post '/deactivate', to: 'users#deactivate'
@@ -56,6 +56,8 @@ Rails.application.routes.draw do
         get '/eligible_for_htn_screening', to: 'patients#eligible_for_htn_screening'
         post '/filing_number', to: 'patients#assign_filing_number'
         get '/past_filing_numbers' => 'patients#filing_number_history'
+        get 'assign_tb_number', to: 'patients#assign_tb_number'
+        get 'get_tb_number', to: 'patients#get_tb_number'
         post '/npid', to: 'patients#assign_npid'
         post '/remaining_bp_drugs', to: 'patients#remaining_bp_drugs'
         post '/update_or_create_htn_state', to: 'patients#update_or_create_htn_state'
@@ -63,6 +65,8 @@ Rails.application.routes.draw do
       end
 
       resources :patient_identifiers
+
+      resources :person_attributes
 
       resources :concepts, only: %i[index show]
 
@@ -108,13 +112,17 @@ Rails.application.routes.draw do
       resources :programs do
         resources :program_workflows, path: :workflows
         resources :program_regimens, path: :regimens
+        get 'booked_appointments' => 'programs#booked_appointments'
         get 'pellets_regimen' => 'program_regimens#pellets_regimen'
         get 'next_available_arv_number' => 'program_patients#find_next_available_arv_number'
         get 'lookup_arv_number/:arv_number' => 'program_patients#lookup_arv_number'
         get 'regimen_starter_packs' => 'program_regimens#find_starter_pack'
         get 'custom_regimen_ingredients' => 'program_regimens#custom_regimen_ingredients'
         get 'defaulter_list' => 'program_patients#defaulter_list'
+        get '/barcodes/:barcode_name', to: 'program_barcodes#print_barcode'
+
         resources :program_patients, path: :patients do
+          get '/next_appointment_date' => 'patient_appointments#next_appointment_date'
           get '/last_drugs_received' => 'program_patients#last_drugs_received'
           get '/dosages' => 'program_patients#find_dosages'
           get '/status' => 'program_patients#status'
@@ -126,7 +134,8 @@ Rails.application.routes.draw do
           get '/labels/patient_history', to: 'program_patients#print_patient_history_label'
           get '/mastercard_data', to: 'program_patients#mastercard_data'
           get '/medication_side_effects', to: 'program_patients#medication_side_effects'
-          #ANC
+          get '/vl_info', to: 'lab_remainders#index'
+          # ANC
           get '/surgical_history', to: 'program_patients#surgical_history'
           get '/anc_visit', to: 'program_patients#anc_visit'
           get '/art_hiv_status', to: 'program_patients#art_hiv_status'
@@ -137,17 +146,28 @@ Rails.application.routes.draw do
         resources :lab_test_types, path: 'lab_tests/types'
         get '/lab_tests/panels' => 'lab_test_types#panels' # TODO: Move this into own controller
         resources :lab_test_orders, path: 'lab_tests/orders'
+        post '/lab_tests/orders/external' => 'lab_test_orders#create_external_order'
+        post '/lab_tests/orders/lims-old' => 'lab_test_orders#create_legacy_order' # Temporary path for creating legacy LIMS orders
         resources :lab_test_results, path: 'lab_tests/results'
         post '/lab_tests/order_and_results' => 'lab_test_results#create_order_and_results'
         get '/lab_tests/locations' => 'lab_test_orders#locations'
         get '/lab_tests/labs' => 'lab_test_orders#labs'
         get '/lab_tests/orders_without_results' => 'lab_test_orders#orders_without_results'
         get '/lab_tests/measures' => 'lab_test_types#measures'
+        get '/labs/:resource', to: 'lab#dispatch_request'
         resources :program_reports, path: 'reports'
+
+
       end
 
-      resources :stock
-      post '/edit_stock_report', to: 'stock#edit'
+      namespace :pharmacy do
+        resources :batches
+        resources :items do
+          post '/reallocate', to: 'items#reallocate'
+          post '/dispose', to: 'items#dispose'
+        end
+        get 'earliest_expiring_item', to: 'items#earliest_expiring'
+      end
 
       namespace :types do
         resources :relationships
@@ -196,6 +216,7 @@ Rails.application.routes.draw do
       get '/search/patients' => 'patients#search_by_name_and_gender'
       get '/search/properties' => 'properties#search'
       get '/search/landmarks' => 'landmarks#search'
+      get '/search/identifiers/duplicates' => 'patient_identifiers#duplicates'
 
       get '/dde/patients/find_by_npid', to: 'dde#find_patients_by_npid'
       get '/dde/patients/find_by_name_and_gender', to: 'dde#find_patients_by_name_and_gender'
@@ -233,6 +254,7 @@ Rails.application.routes.draw do
   get '/api/v1/start_date' => 'api/v1/cleaning#startDate'
   get '/api/v1/male' => 'api/v1/cleaning#male'
   get '/api/v1/incomplete_visits' => 'api/v1/cleaning#incompleteVisits'
+  get '/api/v1/art_data_cleaning_tools' => 'api/v1/cleaning#art_tools'
 
   #OPD reports
   get '/api/v1/diagnosis' => 'api/v1/reports#diagnosis'
@@ -249,6 +271,11 @@ Rails.application.routes.draw do
   get '/api/v1/defaulter_list' => 'api/v1/reports#defaulter_list'
   get '/api/v1/missed_appointments' => 'api/v1/reports#missed_appointments'
   post '/api/v1/addresses' => 'api/v1/person_addresses#create'
-  get '/api/v1/person_attributes' => 'api/v1/person_attributes#index'
   get '/api/v1/archive_active_filing_number' => 'api/v1/patient_identifiers#archive_active_filing_number'
+  get '/api/v1/ipt_coverage' => 'api/v1/reports#ipt_coverage'
+  get '/api/v1/cohort_report_drill_down' => 'api/v1/reports#cohort_report_drill_down'
+  post '/api/v1/swap_active_number' => 'api/v1/patient_identifiers#swap_active_number'
+  get '/api/v1/regimen_switch' => 'api/v1/reports#regimen_switch'
+  get '/api/v1/last_drugs_pill_count' => 'api/v1/patients#last_drugs_pill_count'
+  get '/api/v1/regimen_report' => 'api/v1/reports#regimen_report'
 end

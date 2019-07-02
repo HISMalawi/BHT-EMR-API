@@ -71,7 +71,9 @@ class Api::V1::EncountersController < ApplicationController
       patient: Patient.find(patient_id),
       program: Program.find(program_id),
       provider: params[:provider_id] ? Person.find(params[:provider_id]) : User.current.person,
-      encounter_datetime: TimeUtils.retro_timestamp(params[:encounter_datetime]&.to_time || Time.now)
+      encounter_datetime: TimeUtils.retro_timestamp(params[:encounter_datetime]&.to_time || Time.now),
+      program: Program.find(program_id)
+
     )
 
     if encounter.errors.empty?
@@ -105,7 +107,8 @@ class Api::V1::EncountersController < ApplicationController
   # DELETE /encounter/:id
   def destroy
     encounter = Encounter.find(params[:id])
-    encounter_service.void encounter, "Voided by #{User.current.username}"
+    reason = params[:reason] || "Voided by #{User.current.username}"
+    encounter_service.void encounter, reason
   end
 
   private

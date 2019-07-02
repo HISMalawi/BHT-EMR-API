@@ -100,6 +100,22 @@ class Api::V1::PatientsController < ApplicationController
     end
   end
 
+  def assign_tb_number
+    patient_id = params[:patient_id]
+    tb_number = service.assign_tb_number(patient_id)
+    render json: tb_number, status: :created
+  end
+
+  def get_tb_number
+    patient_id = params[:patient_id]
+    tb_number = service.get_tb_number(patient_id)
+    if tb_number
+      render json: tb_number, status: :ok
+    else
+      render :status => 404
+    end
+  end
+
   def assign_npid
     render json: service.assign_npid(patient), status: :created
   end
@@ -125,7 +141,7 @@ class Api::V1::PatientsController < ApplicationController
   def last_drugs_received
     date = params[:date]&.to_date || Date.today
     program_id = params[:program_id]
-    render json: service.patient_last_drugs_received(patient, date, program_id)
+    render json: service.patient_last_drugs_received(patient, date, program_id: program_id)
   end
 
   def remaining_bp_drugs
@@ -149,6 +165,13 @@ class Api::V1::PatientsController < ApplicationController
 
   def filing_number_history
     render json: service.filing_number_history(patient)
+  end
+
+  # Returns all drugs pill counts done on last visit
+  def last_drugs_pill_count
+    date = params[:date]&.to_date || Date.today
+    program_id = params[:program_id]
+    render json: service.patient_last_drugs_pill_count(patient, date, program_id: program_id)
   end
 
   private
