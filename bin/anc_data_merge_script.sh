@@ -162,11 +162,23 @@ SET foreign_key_checks = 1;
 
 
 EOF
-
-echo "Running another script to merge patients in ANC and not in ART"
-
+echo "Start script 2 -----------------------------"
+echo "Running script to migrate patients that are only in ANC"
 ./bin/anc_patients_only_patient_merge_script.sh development
 
+echo "Start script 3 -----------------------------"
+echo "Running script to migrate patients that have gender as the only difference"
+./bin/anc_migrating_remaining_patients.sh development
+
+echo "Start script 4 -----------------------------"
+echo "Running script to migrate patients that are voided in ART but are active in ART"
+./bin/anc_migrating_patients_with_voided_ART_identifier.sh development
+
+echo "Start script 5 -----------------------------"
+echo "Running script to migrate the remaining patient"
+./bin/migrating_anc_last_patients.sh development
+
+echo "Start script 6 -----------------------------"
 echo "Dumping ANC_remaining_patients.csv file for patients that were not migrated"
 mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $ANCDATABASE < bin/ANC_remaining_patients.sql > ~/ANC_remaining_patients.csv
 
