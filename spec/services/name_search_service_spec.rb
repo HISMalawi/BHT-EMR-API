@@ -25,7 +25,7 @@ RSpec.describe NameSearchService do
   describe :unindexed_person_names do
     it 'retrieves all person names that do not have person name codes' do
       initial_unindexed_names = NameSearchService.unindexed_person_names
-      initial_unindexed_names[0]  # Bypass ActiveRecord's lazy evaluation of queries
+      initial_unindexed_names[0] # Bypass ActiveRecord's lazy evaluation of queries
 
       unindexed_names = create_list(:person_name, 5)
 
