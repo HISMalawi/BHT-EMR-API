@@ -36,7 +36,7 @@ module VMMCService
       report = REPORTS[type.upcase]
       raise InvalidParameterError, "Report type (#{type}) not known" unless report
 
-      indicator = report.method(name.to_sym)
+      indicator = report.method(name.strip.to_sym)
       raise InvalidParameterError, "Report indicator (#{name}) not known" unless indicator
 
       { name => indicator.call(start_date, end_date) }
