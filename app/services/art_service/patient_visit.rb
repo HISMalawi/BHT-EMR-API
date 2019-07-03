@@ -114,11 +114,11 @@ module ARTService
                                        person: patient.person)\
                                 .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
 
-      @pills_brought = observations.collect do |observation|
+      @pills_brought = observations.each_with_object([]) do |observation, pills_brought|
         drug = observation&.order&.drug_order&.drug
         next unless drug
 
-        [format_drug_name(drug), observation.value_numeric]
+        pills_brought << [format_drug_name(drug), observation.value_numeric]
       end
     end
 
