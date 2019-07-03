@@ -89,12 +89,12 @@ module VMMCService::Reports::Cohort
         SQL
       )['total']
     end
-    def eligible_clients(start_date, end_date)
-      ActiveRecord::Base.connection.select_one(
-        <<~SQL
-          SELECT COUNT(DISTINCT(encounter.patient_id)) AS total FROM encounter WHERE encounter.patient_id IN (SELECT patient_id FROM patient_program where program_id = 21) AND encounter.encounter_type = 39 AND encounter.voided = 0 AND (encounter.encounter_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
-        SQL
-      )['total']
-    end
+    # def eligible_clients(start_date, end_date)
+    #   ActiveRecord::Base.connection.select_one(
+    #     <<~SQL
+    #       SELECT COUNT(DISTINCT(encounter.patient_id)) AS total FROM encounter WHERE encounter.patient_id IN (SELECT patient_id FROM patient_program where program_id = 21) AND encounter.encounter_type = 39 AND encounter.voided = 0 AND (encounter.encounter_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
+    #     SQL
+    #   )['total']
+    # end
   end
 end
