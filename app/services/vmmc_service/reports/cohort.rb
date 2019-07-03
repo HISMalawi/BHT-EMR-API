@@ -2,6 +2,7 @@
 
 module VMMCService::Reports::Cohort
   class << self
+  	#AGE CATEGORY
     def neonates(start_date, end_date)
       ActiveRecord::Base.connection.select_one(
         <<~SQL
@@ -41,6 +42,57 @@ module VMMCService::Reports::Cohort
       ActiveRecord::Base.connection.select_one(
         <<~SQL
           SELECT COUNT(DISTINCT(patient_program.patient_id)) AS total FROM patient_program LEFT OUTER JOIN person ON person.person_id = patient_program.patient_id LEFT OUTER JOIN program ON program.program_id = patient_program.program_id WHERE (year(patient_program.date_created) - year(person.birthdate)) >= 0 AND program.name = 'VMMC PROGRAM' AND patient_program.voided = 0 AND (patient_program.date_enrolled) BETWEEN '#{start_date}' AND '#{end_date}';
+        SQL
+      )['total']
+    end
+
+    #HIV AND ART STATUS
+    def positive_not_art(start_date, end_date)
+      ActiveRecord::Base.connection.select_one(
+        <<~SQL
+          SELECT COUNT(DISTINCT(obs.person_id)) AS total FROM obs LEFT OUTER JOIN concept_name ON concept_name.concept_id = obs.concept_id WHERE obs.person_id IN (SELECT patient_id FROM patient_program where program_id = 21) AND obs.concept_id = 9566 and value_coded = 1065 AND obs.person_id IN (select person_id from obs where concept_id = 9567 and value_coded = 1066 and voided = 0) AND obs.voided = 0 AND (obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
+        SQL
+      )['total']
+    end
+    def positive_on_art(start_date, end_date)
+      ActiveRecord::Base.connection.select_one(
+        <<~SQL
+          SELECT COUNT(DISTINCT(obs.person_id)) AS total FROM obs LEFT OUTER JOIN concept_name ON concept_name.concept_id = obs.concept_id WHERE obs.person_id IN (SELECT patient_id FROM patient_program where program_id = 21) AND obs.concept_id = 9566 and value_coded = 1065 AND obs.person_id IN (select person_id from obs where concept_id = 9567 and value_coded = 1065 and voided = 0) AND obs.voided = 0 AND (obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
+        SQL
+      )['total']
+    end
+    def negative(start_date, end_date)
+      ActiveRecord::Base.connection.select_one(
+        <<~SQL
+          SELECT COUNT(DISTINCT(obs.person_id)) AS total FROM obs LEFT OUTER JOIN concept_name ON concept_name.concept_id = obs.concept_id WHERE obs.person_id IN (SELECT patient_id FROM patient_program where program_id = 21) AND obs.concept_id = 9228 and obs.value_coded = 664 AND obs.voided = 0 AND (obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
+        SQL
+      )['total']
+    end
+    def positive(start_date, end_date)
+      ActiveRecord::Base.connection.select_one(
+        <<~SQL
+          SELECT COUNT(DISTINCT(obs.person_id)) AS total FROM obs LEFT OUTER JOIN concept_name ON concept_name.concept_id = obs.concept_id WHERE obs.person_id IN (SELECT patient_id FROM patient_program where program_id = 21) AND obs.concept_id = 9228 and obs.value_coded = 703 AND obs.voided = 0 AND (obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
+        SQL
+      )['total']
+    end
+    def testing_declined(start_date, end_date)
+      ActiveRecord::Base.connection.select_one(
+        <<~SQL
+          SELECT COUNT(DISTINCT(obs.person_id)) AS total FROM obs LEFT OUTER JOIN concept_name ON concept_name.concept_id = obs.concept_id WHERE obs.person_id IN (SELECT patient_id FROM patient_program where program_id = 21) AND obs.concept_id = 9568 and value_coded = 1066 AND obs.person_id IN (select person_id from obs where concept_id = 9569 and value_coded = 9601 and voided = 0) AND obs.voided = 0 AND (obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
+        SQL
+      )['total']
+    end
+    def testing_not_done(start_date, end_date)
+      ActiveRecord::Base.connection.select_one(
+        <<~SQL
+          SELECT COUNT(DISTINCT(obs.person_id)) AS total FROM obs LEFT OUTER JOIN concept_name ON concept_name.concept_id = obs.concept_id WHERE obs.person_id IN (SELECT patient_id FROM patient_program where program_id = 21) AND obs.concept_id = 9568 and value_coded = 1066 AND obs.voided = 0 AND (obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
+        SQL
+      )['total']
+    end
+    def eligible_clients(start_date, end_date)
+      ActiveRecord::Base.connection.select_one(
+        <<~SQL
+          SELECT COUNT(DISTINCT(encounter.patient_id)) AS total FROM encounter WHERE encounter.patient_id IN (SELECT patient_id FROM patient_program where program_id = 21) AND encounter.encounter_type = 39 AND encounter.voided = 0 AND (encounter.encounter_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
         SQL
       )['total']
     end
