@@ -1479,6 +1479,7 @@ BEGIN
   SET @regimen_eleven_p_one   := ('74,736');
   SET @regimen_eleven_p_two   := ('73,736');
   SET @regimen_eleven_p_three := ('39,74');
+  SET @regimen_eleven_p_four  := ('736,979');
 
   SET @regimen_eleven_a_one   := ('39,73');
 
@@ -1500,7 +1501,7 @@ BEGIN
   IF @drug_ids IN(@regimen_zero_p_three) AND (length(@drug_ids) = length(@regimen_zero_p_three)) THEN
     SET regimen_cat = ('0P');
   END IF;
-  
+
   IF @drug_ids IN(@regimen_zero_p_one) AND (length(@drug_ids) = length(@regimen_zero_p_one)) THEN
     SET regimen_cat = ('0P');
   END IF;
@@ -1524,7 +1525,7 @@ BEGIN
   IF @drug_ids IN(@regimen_two_p_four) AND (length(@drug_ids) = length(@regimen_two_p_four)) THEN
     SET regimen_cat = ('2P');
   END IF;
-  
+
   IF @drug_ids IN(@regimen_two_p_one) AND (length(@drug_ids) = length(@regimen_two_p_one)) THEN
     SET regimen_cat = ('2P');
   END IF;
@@ -1549,7 +1550,7 @@ BEGIN
   IF @drug_ids IN(@regimen_four_p_three) AND (length(@drug_ids) = length(@regimen_four_p_three)) THEN
     SET regimen_cat = ('4P');
   END IF;
-  
+
   IF @drug_ids IN(@regimen_four_p_one) AND (length(@drug_ids) = length(@regimen_four_p_one)) THEN
     SET regimen_cat = ('4P');
   END IF;
@@ -1594,7 +1595,7 @@ BEGIN
   IF @drug_ids IN(@regimen_nine_p_four) AND (length(@drug_ids) = length(@regimen_nine_p_four)) THEN
     SET regimen_cat = ('9P');
   END IF;
-  
+
   IF @drug_ids IN(@regimen_nine_p_one) AND (length(@drug_ids) = length(@regimen_nine_p_one)) THEN
     SET regimen_cat = ('9P');
   END IF;
@@ -1629,8 +1630,12 @@ BEGIN
   IF @drug_ids IN(@regimen_eleven_p_two) AND (length(@drug_ids) = length(@regimen_eleven_p_two)) THEN
     SET regimen_cat = ('11P');
   END IF;
-  
+
   IF @drug_ids IN(@regimen_eleven_p_three) AND (length(@drug_ids) = length(@regimen_eleven_p_three)) THEN
+    SET regimen_cat = ('11P');
+  END IF;
+
+  IF @drug_ids IN(@regimen_eleven_p_four) AND (length(@drug_ids) = length(@regimen_eleven_p_four)) THEN
     SET regimen_cat = ('11P');
   END IF;
 
@@ -1650,11 +1655,11 @@ BEGIN
   IF @drug_ids IN(@regimen_thirteen_a) AND (length(@drug_ids) = length(@regimen_thirteen_a)) THEN
     SET regimen_cat = ('13A');
   END IF;
-  
+
   IF @drug_ids IN(@regimen_thirteen_a_two) AND (length(@drug_ids) = length(@regimen_thirteen_a_two)) THEN
     SET regimen_cat = ('13A');
   END IF;
-  
+
   IF @drug_ids IN(@regimen_thirteen_a_three) AND (length(@drug_ids) = length(@regimen_thirteen_a_three)) THEN
     SET regimen_cat = ('13A');
   END IF;
@@ -2022,7 +2027,7 @@ RETURN set_outcome;
 END;
 
 
-    
+
 DROP FUNCTION IF EXISTS `re_initiated_check`;
 
 CREATE FUNCTION re_initiated_check(set_patient_id INT, set_date_enrolled DATE) RETURNS VARCHAR(15)
@@ -2047,7 +2052,7 @@ if check_one >= 1 then set re_initiated ="Re-initiated";
 elseif check_two >= 1 then set re_initiated ="Re-initiated";
 end if;
 
-if check_one = 'N/A' then 
+if check_one = 'N/A' then
   set taken_arvs_concept = (SELECT concept_id FROM concept_name WHERE name ='HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS' LIMIT 1);
   set check_two = (SELECT e.patient_id FROM clinic_registration_encounter e INNER JOIN ever_registered_obs AS ero ON e.encounter_id = ero.encounter_id INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.concept_id = taken_arvs_concept AND o.voided = 0 WHERE  ((o.concept_id = taken_arvs_concept AND o.value_coded = no_concept)) AND patient_date_enrolled(e.patient_id) = set_date_enrolled AND e.patient_id = set_patient_id GROUP BY e.patient_id);
 
@@ -2058,7 +2063,7 @@ end if;
 RETURN re_initiated;
 END;
 
-    
+
 DROP FUNCTION IF EXISTS `died_in`;
 
 
@@ -2238,19 +2243,19 @@ BEGIN
 	DECLARE screened INT DEFAULT FALSE;
 	DECLARE record_value INT;
 
-  SET @concept_ids := (SELECT GROUP_CONCAT(DISTINCT(concept_id) 
-    ORDER BY concept_id ASC) FROM concept_name 
+  SET @concept_ids := (SELECT GROUP_CONCAT(DISTINCT(concept_id)
+    ORDER BY concept_id ASC) FROM concept_name
     WHERE name IN('TB treatment','TB status') AND voided = 0);
 
-  SET record_value = (SELECT ob.person_id FROM obs ob 
-    INNER JOIN temp_earliest_start_date e 
+  SET record_value = (SELECT ob.person_id FROM obs ob
+    INNER JOIN temp_earliest_start_date e
     ON e.patient_id = ob.person_id
     WHERE ob.concept_id IN(@concept_ids) AND ob.voided = 0
     AND ob.obs_datetime = (
-    SELECT MAX(t.obs_datetime) FROM obs t WHERE 
+    SELECT MAX(t.obs_datetime) FROM obs t WHERE
     t.obs_datetime BETWEEN DATE_FORMAT(DATE(my_start_date), '%Y-%m-%d 00:00:00')
     AND DATE_FORMAT(DATE(my_end_date), '%Y-%m-%d 23:59:59')
-    AND t.person_id = ob.person_id AND t.concept_id IN(@concept_ids)) 
+    AND t.person_id = ob.person_id AND t.concept_id IN(@concept_ids))
     AND ob.person_id = my_patient_id
     GROUP BY ob.person_id);
 
@@ -2274,13 +2279,13 @@ BEGIN
 	DECLARE given INT DEFAULT FALSE;
 	DECLARE record_value INT;
 
-  SET @drug_ids := (SELECT GROUP_CONCAT(DISTINCT(drug_id) 
+  SET @drug_ids := (SELECT GROUP_CONCAT(DISTINCT(drug_id)
     ORDER BY drug_id ASC) FROM drug WHERE concept_id IN(
     SELECT concept_id FROM concept_name WHERE name IN('Isoniazid')));
 
   SET record_value = (SELECT o.patient_id FROM drug_order d
       INNER JOIN orders o ON o.order_id = d.order_id
-      WHERE d.drug_inventory_id IN(@drug_ids) AND d.quantity > 0 
+      WHERE d.drug_inventory_id IN(@drug_ids) AND d.quantity > 0
       AND o.start_date = (SELECT MAX(start_date) FROM orders t WHERE t.patient_id = o.patient_id
       AND t.start_date BETWEEN DATE_FORMAT(DATE(my_start_date), '%Y-%m-%d 00:00:00')
       AND DATE_FORMAT(DATE(my_end_date), '%Y-%m-%d 23:59:59')
@@ -2447,17 +2452,17 @@ BEGIN
 	DECLARE tb_status INT;
   DECLARE tb_status_concept_id INT;
 
-  SET tb_status_concept_id = (SELECT concept_id FROM concept_name 
+  SET tb_status_concept_id = (SELECT concept_id FROM concept_name
     WHERE name IN('TB status') AND voided = 0 LIMIT 1);
 
-  SET tb_status = (SELECT ob.value_coded FROM obs ob 
-    INNER JOIN concept_name cn 
+  SET tb_status = (SELECT ob.value_coded FROM obs ob
+    INNER JOIN concept_name cn
     ON ob.value_coded = cn.concept_id
     WHERE ob.concept_id = tb_status_concept_id AND ob.voided = 0
     AND ob.obs_datetime = (
-    SELECT MAX(t.obs_datetime) FROM obs t WHERE 
+    SELECT MAX(t.obs_datetime) FROM obs t WHERE
     t.obs_datetime <= DATE_FORMAT(DATE(my_end_date), '%Y-%m-%d 23:59:59')
-    AND t.voided = 0 AND t.person_id = ob.person_id AND t.concept_id = tb_status_concept_id) 
+    AND t.voided = 0 AND t.person_id = ob.person_id AND t.concept_id = tb_status_concept_id)
     AND ob.person_id = my_patient_id
     GROUP BY ob.person_id);
 
@@ -2475,24 +2480,24 @@ BEGIN
   DECLARE art_adherence_concept_id INT;
   DECLARE latest_obs_datetime TIMESTAMP;
 
-  SET art_adherence_concept_id = (SELECT concept_id FROM concept_name 
+  SET art_adherence_concept_id = (SELECT concept_id FROM concept_name
     WHERE name IN('What was the patients adherence for this drug order') AND voided = 0 LIMIT 1);
 
-  SET latest_obs_datetime = (SELECT MAX(t.obs_datetime) FROM obs t 
-        INNER JOIN orders t2 ON t.order_id = t.order_id AND t2.voided = 0 
+  SET latest_obs_datetime = (SELECT MAX(t.obs_datetime) FROM obs t
+        INNER JOIN orders t2 ON t.order_id = t.order_id AND t2.voided = 0
         INNER JOIN drug_order t3 ON t3.order_id = t2.order_id
-        INNER JOIN drug t4 ON t4.drug_id = t3.drug_inventory_id 
+        INNER JOIN drug t4 ON t4.drug_id = t3.drug_inventory_id
         INNER JOIN concept_set t5 ON t5.concept_id = t4.concept_id
         WHERE t.obs_datetime <= DATE_FORMAT(DATE(my_end_date), '%Y-%m-%d 23:59:59')
-        AND t.concept_id = art_adherence_concept_id AND t.voided = 0 
+        AND t.concept_id = art_adherence_concept_id AND t.voided = 0
         AND t.person_id = my_patient_id AND t5.concept_set = 1085);
 
   IF latest_obs_datetime IS NULL THEN
-    return null; 
+    return null;
   END IF;
 
-  SET @adherences := (SELECT GROUP_CONCAT(DISTINCT(ob.value_text) ORDER BY ob.value_text ASC) FROM obs ob 
-    INNER JOIN orders o ON o.order_id = ob.order_id AND o.voided = 0 
+  SET @adherences := (SELECT GROUP_CONCAT(DISTINCT(ob.value_text) ORDER BY ob.value_text ASC) FROM obs ob
+    INNER JOIN orders o ON o.order_id = ob.order_id AND o.voided = 0
     INNER JOIN drug_order od ON od.order_id = o.order_id
     INNER JOIN drug d ON d.drug_id = od.drug_inventory_id
     INNER JOIN concept_set s ON s.concept_id = d.concept_id
@@ -2518,19 +2523,19 @@ BEGIN
   DECLARE side_effect INT;
   DECLARE latest_obs_date DATE;
 
-  SET mw_side_effects_concept_id = (SELECT concept_id FROM concept_name 
+  SET mw_side_effects_concept_id = (SELECT concept_id FROM concept_name
     WHERE name IN('Malawi ART Side Effects') AND voided = 0 LIMIT 1);
 
   SET yes_concept_id = (SELECT concept_id FROM concept_name WHERE name = 'YES' LIMIT 1);
   SET no_concept_id = (SELECT concept_id FROM concept_name WHERE name = 'NO' LIMIT 1);
 
-  SET latest_obs_date = (SELECT DATE(MAX(t.obs_datetime)) FROM obs t 
+  SET latest_obs_date = (SELECT DATE(MAX(t.obs_datetime)) FROM obs t
         WHERE t.obs_datetime <= DATE_FORMAT(DATE(my_end_date), '%Y-%m-%d 23:59:59')
-        AND t.concept_id = mw_side_effects_concept_id AND t.voided = 0 
+        AND t.concept_id = mw_side_effects_concept_id AND t.voided = 0
         AND t.person_id = my_patient_id);
 
   IF latest_obs_date IS NULL THEN
-    return 'Unknown'; 
+    return 'Unknown';
   END IF;
 
 
@@ -2547,7 +2552,7 @@ BEGIN
       )GROUP BY concept_id HAVING value_coded = yes_concept_id LIMIT 1);
 
   IF side_effect IS NOT NULL THEN
-    return 'Yes'; 
+    return 'Yes';
   END IF;
 
 
