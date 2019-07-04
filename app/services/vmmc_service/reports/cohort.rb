@@ -96,5 +96,28 @@ module VMMCService::Reports::Cohort
     #     SQL
     #   )['total']
     # end
+
+    #Circumcision status
+    def circumcision_full(start_date, end_date)
+      ActiveRecord::Base.connection.select_one(
+        <<~SQL
+          SELECT COUNT(DISTINCT(obs.person_id)) AS total FROM obs LEFT OUTER JOIN encounter ON obs.encounter_id = encounter.encounter_id WHERE obs.person_id IN (SELECT patient_id FROM patient_program where program_id = 21) AND encounter.encounter_type = 157 AND obs.concept_id = 9579 and value_coded = 9582 AND obs.voided = 0 AND encounter.voided = 0 AND (obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
+        SQL
+      )['total']
+    end
+    def circumcision_partial(start_date, end_date)
+      ActiveRecord::Base.connection.select_one(
+        <<~SQL
+          SELECT COUNT(DISTINCT(obs.person_id)) AS total FROM obs LEFT OUTER JOIN encounter ON obs.encounter_id = encounter.encounter_id WHERE obs.person_id IN (SELECT patient_id FROM patient_program where program_id = 21) AND encounter.encounter_type = 157 AND obs.concept_id = 9579 and value_coded = 8512 AND obs.voided = 0 AND encounter.voided = 0 AND (obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
+        SQL
+      )['total']
+    end
+    def circumcision_none(start_date, end_date)
+      ActiveRecord::Base.connection.select_one(
+        <<~SQL
+          SELECT COUNT(DISTINCT(obs.person_id)) AS total FROM obs LEFT OUTER JOIN encounter ON obs.encounter_id = encounter.encounter_id WHERE obs.person_id IN (SELECT patient_id FROM patient_program where program_id = 21) AND encounter.encounter_type = 157 AND obs.concept_id = 9579 and value_coded = 1107 AND obs.voided = 0 AND encounter.voided = 0 AND (obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
+        SQL
+      )['total']
+    end
   end
 end
