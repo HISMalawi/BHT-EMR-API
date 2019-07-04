@@ -8,6 +8,8 @@ module ARTService
   class RegimenEngine
     include ModelUtils
 
+    LOGGER = Rails.logger
+
     def initialize(program:)
       @program = program
     end
@@ -131,6 +133,7 @@ module ARTService
         drug_name = ingredient.drug.name
         if /^LPV\/r/.match?(drug_name)
           includes_pellets = drug_name.match?(/pellets/i)
+          LOGGER.debug("LPV/r: #{drug_name}")
           next if (use_pellets && !includes_pellets) || (!use_pellets && includes_pellets)
         end
 
@@ -198,7 +201,6 @@ module ARTService
     def use_tb_patient_dosage?(drug, patient)
       dtg_concept_id = ConceptName.find_by(name: 'Dolutegravir').concept_id
 
-      print "Use TB patient dosage: #{[patient, drug.as_json, dtg_concept_id]}\n"
       return false unless patient && drug.concept_id == dtg_concept_id
 
       tb_status_concept_id = ConceptName.find_by_name('TB Status').concept_id
