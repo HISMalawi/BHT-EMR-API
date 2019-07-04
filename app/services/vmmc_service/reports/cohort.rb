@@ -141,5 +141,49 @@ module VMMCService::Reports::Cohort
         SQL
       )['total']
     end
+    #Consent status
+    def yes_consent(start_date, end_date)
+      ActiveRecord::Base.connection.select_one(
+        <<~SQL
+          SELECT COUNT(DISTINCT(obs.person_id)) AS total FROM obs LEFT OUTER JOIN encounter ON obs.encounter_id = encounter.encounter_id WHERE obs.person_id IN (SELECT patient_id FROM patient_program where program_id = 21) AND encounter.encounter_type = 162 AND obs.concept_id = 9420 AND obs.value_coded = 1065 AND obs.voided = 0 AND encounter.voided = 0 AND (obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
+        SQL
+      )['total']
+    end
+    def no_consent(start_date, end_date)
+      ActiveRecord::Base.connection.select_one(
+        <<~SQL
+          SELECT COUNT(DISTINCT(obs.person_id)) AS total FROM obs LEFT OUTER JOIN encounter ON obs.encounter_id = encounter.encounter_id WHERE obs.person_id IN (SELECT patient_id FROM patient_program where program_id = 21) AND encounter.encounter_type = 162 AND obs.concept_id = 9420 AND obs.value_coded = 1066 AND obs.voided = 0 AND encounter.voided = 0 AND (obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
+        SQL
+      )['total']
+    end
+    def total_consent(start_date, end_date)
+      ActiveRecord::Base.connection.select_one(
+        <<~SQL
+          SELECT COUNT(DISTINCT(obs.person_id)) AS total FROM obs LEFT OUTER JOIN encounter ON obs.encounter_id = encounter.encounter_id WHERE obs.person_id IN (SELECT patient_id FROM patient_program where program_id = 21) AND encounter.encounter_type = 162 AND obs.concept_id = 9420 AND obs.voided = 0 AND encounter.voided = 0 AND (obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
+        SQL
+      )['total']
+    end
+    #procedures used
+    def forceps_guided(start_date, end_date)
+      ActiveRecord::Base.connection.select_one(
+        <<~SQL
+          SELECT COUNT(DISTINCT(obs.person_id)) AS total FROM obs LEFT OUTER JOIN encounter ON obs.encounter_id = encounter.encounter_id WHERE obs.person_id IN (SELECT patient_id FROM patient_program where program_id = 21) AND encounter.encounter_type = 158 AND obs.concept_id = 9587 AND obs.value_coded = 9608 AND obs.voided = 0 AND encounter.voided = 0 AND (obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
+        SQL
+      )['total']
+    end
+    def device(start_date, end_date)
+      ActiveRecord::Base.connection.select_one(
+        <<~SQL
+          SELECT COUNT(DISTINCT(obs.person_id)) AS total FROM obs LEFT OUTER JOIN encounter ON obs.encounter_id = encounter.encounter_id WHERE obs.person_id IN (SELECT patient_id FROM patient_program where program_id = 21) AND encounter.encounter_type = 158 AND obs.concept_id = 9587 AND obs.value_coded = 9610 AND obs.voided = 0 AND encounter.voided = 0 AND (obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
+        SQL
+      )['total']
+    end
+    def others(start_date, end_date)
+      ActiveRecord::Base.connection.select_one(
+        <<~SQL
+          SELECT COUNT(DISTINCT(obs.person_id)) AS total FROM obs LEFT OUTER JOIN encounter ON obs.encounter_id = encounter.encounter_id WHERE obs.person_id IN (SELECT patient_id FROM patient_program where program_id = 21) AND encounter.encounter_type = 158 AND obs.concept_id = 9587 AND obs.value_coded = 6408 AND obs.voided = 0 AND encounter.voided = 0 AND (obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
+        SQL
+      )['total']
+    end
   end
 end
