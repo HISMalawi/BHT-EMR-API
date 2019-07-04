@@ -119,5 +119,27 @@ module VMMCService::Reports::Cohort
         SQL
       )['total']
     end
+    #Contraindications status
+    def contraindications_none(start_date, end_date)
+      ActiveRecord::Base.connection.select_one(
+        <<~SQL
+          SELECT COUNT(DISTINCT(obs.person_id)) AS total FROM obs LEFT OUTER JOIN encounter ON obs.encounter_id = encounter.encounter_id WHERE obs.person_id IN (SELECT patient_id FROM patient_program where program_id = 21) AND encounter.encounter_type = 161 AND obs.concept_id = 9641 and value_coded = 1066 AND obs.voided = 0 AND encounter.voided = 0 AND (obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
+        SQL
+      )['total']
+    end
+    def contraindications_yes(start_date, end_date)
+      ActiveRecord::Base.connection.select_one(
+        <<~SQL
+          SELECT COUNT(DISTINCT(obs.person_id)) AS total FROM obs LEFT OUTER JOIN encounter ON obs.encounter_id = encounter.encounter_id WHERE obs.person_id IN (SELECT patient_id FROM patient_program where program_id = 21) AND encounter.encounter_type = 161 AND obs.concept_id = 9641 and value_coded = 1065 AND obs.voided = 0 AND encounter.voided = 0 AND (obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
+        SQL
+      )['total']
+    end
+    def contraindications_total(start_date, end_date)
+      ActiveRecord::Base.connection.select_one(
+        <<~SQL
+          SELECT COUNT(DISTINCT(obs.person_id)) AS total FROM obs LEFT OUTER JOIN encounter ON obs.encounter_id = encounter.encounter_id WHERE obs.person_id IN (SELECT patient_id FROM patient_program where program_id = 21) AND encounter.encounter_type = 161 AND obs.concept_id = 9641 AND obs.voided = 0 AND encounter.voided = 0 AND (obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
+        SQL
+      )['total']
+    end
   end
 end
