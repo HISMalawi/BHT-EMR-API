@@ -8,6 +8,14 @@ module ModelUtils
     Concept.joins(:concept_names).where('concept_name.name = ?', name).first
   end
 
+  def concept_name(name)
+    ConceptName.find_by(name: name)
+  end
+
+  def concept_name_to_id(name)
+    concept_name(name)&.concept_id
+  end
+
   def program(name)
     Program.find_by_name(name)
   end
