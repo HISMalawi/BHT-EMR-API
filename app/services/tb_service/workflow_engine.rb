@@ -277,8 +277,8 @@ module TBService
 
       begin
         time_diff = (Time.current - encounter.encounter_datetime)
-        hours = (time_diff / 1.hour).round
-        (hours >= 1)
+        hours = (time_diff / 1.hour)
+        (hours >= 1/60/60)
       rescue
         false
       end
@@ -321,7 +321,7 @@ module TBService
       begin
         time_diff = (Time.current - observation.obs_datetime)
         minutes = (time_diff / 60)
-        (minutes >= 10)
+        (minutes >= 1/60)
       rescue
         false
       end
