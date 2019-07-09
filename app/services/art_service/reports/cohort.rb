@@ -153,6 +153,7 @@ EOF
       def save_report
         report = Report.create(name: @name, start_date: @start_date,
                                end_date: @end_date, type: @type,
+                               creator: User.current.id,
                                renderer_type: 'PDF')
 
         values = save_report_values(report)
@@ -168,6 +169,7 @@ EOF
                                             name: value.name,
                                             indicator_name: value.indicator_name,
                                             indicator_short_name: value.indicator_short_name,
+                                            creator: User.current.id,
                                             description: value.description,
                                             contents: value_contents_to_json(value.contents))
 
@@ -226,13 +228,24 @@ EOF
           end
 
         end
-    
+   
+        sql_insert_statement = nil 
         patient_ids.select do |patient_id|
-        ActiveRecord::Base.connection.execute <<EOF
-        INSERT INTO cohort_drill_down VALUES(NULL, #{r.id}, #{patient_id});
+          if sql_insert_statement.blank?
+            sql_insert_statement = "(#{r.id}, #{patient_id})"
+          else
+            sql_insert_statement += ",(#{r.id}, #{patient_id})"
+          end
+        end
+        
+        unless sql_insert_statement.blank?
+          ActiveRecord::Base.connection.execute <<EOF
+          INSERT INTO cohort_drill_down (reporting_report_design_resource_id, patient_id)
+          VALUES #{sql_insert_statement};
 EOF
 
         end
+
       end
 
     end

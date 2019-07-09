@@ -8,12 +8,12 @@ class Api::V1::Pharmacy::ItemsController < ApplicationController
   end
 
   def show
-    render json: service.find_batch_item_by_id(params[:id])
+    render json: item
   end
 
   def update
-    permitted_params = params.permit(%i[delivered_quantity expiry_date delivery_date])
-    item = service.update_batch_item(params[:id], permitted_params)
+    permitted_params = params.permit(%i[current_quantity delivered_quantity expiry_date delivery_date])
+    item = service.edit_batch_item(params[:id], permitted_params)
 
     if item.errors.empty?
       render json: item
@@ -34,9 +34,32 @@ class Api::V1::Pharmacy::ItemsController < ApplicationController
     render json: item
   end
 
+  # Reallocate item to some other facility
+  def reallocate
+    code, quantity, location_id = params.require(%i[reallocation_code quantity location_id])
+    date = params[:date]&.to_date || Date.today
+
+    reallocation = service.reallocate_items(code, params[:item_id], quantity, location_id, date)
+
+    render json: reallocation, status: :created
+  end
+
+  def dispose
+    code, quantity = params.require(%i[reallocation_code quantity])
+    date = params['date']&.to_date || Date.today
+
+    disposal = service.dispose_item(code, params[:item_id], quantity, date)
+
+    render json: disposal, status: :created
+  end
+
   private
 
   def service
     StockManagementService.new
+  end
+
+  def item
+    service.find_batch_item_by_id(params[:id])
   end
 end

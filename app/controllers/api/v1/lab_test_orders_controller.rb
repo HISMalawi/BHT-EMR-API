@@ -41,6 +41,27 @@ class Api::V1::LabTestOrdersController < ApplicationController
     render json: order, status: :created
   end
 
+  def create_external_order
+    patient_id, accession_number = params.require(%i[patient_id accession_number])
+    date = params[:date]&.to_date || Date.today
+    patient = Patient.find(patient_id)
+
+    render json: engine.create_external_order(patient, accession_number, date)
+  end
+
+  def create_legacy_order
+    specimen_type, test_type, reason = params.require(%i[specimen_type test_type reason])
+    date = params[:date]&.to_date || Date.today
+
+    order = engine.create_legacy_order(patient, 'test_name' => test_type,
+                                                'sample_type' => specimen_type,
+                                                'reason_for_test' => reason,
+                                                'sample_status' => 'specimen_collected',
+                                                'date_sample_drawn' => date)
+
+    render json: order, status: :created
+  end
+
   def locations
     search_name = params[:search_name]
 
