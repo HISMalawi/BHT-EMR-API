@@ -2,6 +2,7 @@
 
 require 'logger'
 require 'securerandom'
+require 'set'
 
 class PersonService
   LOGGER = Logger.new STDOUT
@@ -39,11 +40,11 @@ class PersonService
   end
 
   def find_people_by_name_and_gender(given_name, family_name, gender, use_soundex: true)
-    name_sub_query = NameSearchService.search_full_person_name(given_name, family_name, use_soundex: use_soundex)
-
-    Person.joins(%i[patient names]).where(
-      'person.gender like ? AND patient.patient_id = person.person_id', "#{gender}%"
-    ).merge(name_sub_query)
+    if use_soundex
+      soundex_person_search(given_name, family_name, gender)
+    else
+      glob_person_search(given_name, family_name, gender)
+    end
   end
 
   def create_person_name(person, params)
@@ -163,5 +164,30 @@ class PersonService
     error = InvalidParameterError.new('Invalid parameter(s)')
     error.model_errors = model_instance.errors
     raise error
+  end
+
+  private
+
+  # Search people by using the ART 1 & 2 soundex person search algorithm.
+  def soundex_person_search(given_name, family_name, gender)
+    exact_matches = NameSearchService.search_full_person_name(given_name, family_name, use_soundex: false)
+    soundex_matches = NameSearchService.search_full_person_name(given_name, family_name, use_soundex: true)
+
+    # Combine the two match groups and eliminate duplicate records
+    person_ids = Set.new | exact_matches.collect(&:person_id) | soundex_matches.collect(&:person_id)
+
+    # Join to patient to filter patients only
+    Person.joins(:patient)
+          .where('patient.patient_id = person.person_id AND person_id IN (?) AND gender like ?', person_ids, "#{gender}%")
+  end
+
+  # Search for people by matching using MySQL glob.
+  def glob_person_search(given_name, family_name, gender)
+    names_subquery = NameSearchService.search_full_person_name(given_name, family_name, use_soundex: true)
+
+    # Join to patient to filter patients only
+    Person.joins(%i[person_name patient])
+          .where('patient.patient_id = person.patient_id AND gender like ? AND ', "#{gender}%")
+          .merge(names_subquery)
   end
 end
