@@ -50,28 +50,28 @@ module VMMCService::Reports::Cohort
     def positive_not_art(start_date, end_date)
       ActiveRecord::Base.connection.select_one(
         <<~SQL
-          SELECT COUNT(DISTINCT(obs.person_id)) AS total FROM obs LEFT OUTER JOIN concept_name ON concept_name.concept_id = obs.concept_id WHERE obs.person_id IN (SELECT patient_id FROM patient_program where program_id = 21) AND obs.concept_id = 9566 and value_coded = 1065 AND obs.person_id IN (select person_id from obs where concept_id = 9567 and value_coded = 1066 and voided = 0) AND obs.voided = 0 AND (obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
+          SELECT COUNT(DISTINCT(obs.person_id)) AS total FROM obs LEFT OUTER JOIN concept_name ON concept_name.concept_id = obs.concept_id WHERE obs.person_id IN (SELECT patient_id FROM patient_program where program_id = 21) AND obs.concept_id = 9567 and value_coded = 1066 AND obs.person_id IN (select person_id from obs where concept_id = 9569 and value_coded = 9602 and voided = 0) AND obs.voided = 0 AND (obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
         SQL
       )['total']
     end
     def positive_on_art(start_date, end_date)
       ActiveRecord::Base.connection.select_one(
         <<~SQL
-          SELECT COUNT(DISTINCT(obs.person_id)) AS total FROM obs LEFT OUTER JOIN concept_name ON concept_name.concept_id = obs.concept_id WHERE obs.person_id IN (SELECT patient_id FROM patient_program where program_id = 21) AND obs.concept_id = 9566 and value_coded = 1065 AND obs.person_id IN (select person_id from obs where concept_id = 9567 and value_coded = 1065 and voided = 0) AND obs.voided = 0 AND (obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
+          SELECT COUNT(DISTINCT(obs.person_id)) AS total FROM obs LEFT OUTER JOIN concept_name ON concept_name.concept_id = obs.concept_id WHERE obs.person_id IN (SELECT patient_id FROM patient_program where program_id = 21) AND obs.concept_id = 9567 and value_coded = 1065 AND obs.person_id IN (select person_id from obs where concept_id = 9569 and value_coded = 9602 and voided = 0) AND obs.voided = 0 AND (obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
         SQL
       )['total']
     end
     def negative(start_date, end_date)
       ActiveRecord::Base.connection.select_one(
         <<~SQL
-          SELECT COUNT(DISTINCT(obs.person_id)) AS total FROM obs LEFT OUTER JOIN concept_name ON concept_name.concept_id = obs.concept_id WHERE obs.person_id IN (SELECT patient_id FROM patient_program where program_id = 21) AND obs.concept_id = 9228 and obs.value_coded = 664 AND obs.voided = 0 AND (obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
+          SELECT COUNT(DISTINCT(obs.person_id)) AS total FROM obs LEFT OUTER JOIN concept_name ON concept_name.concept_id = obs.concept_id WHERE obs.person_id IN (SELECT patient_id FROM patient_program where program_id = 21) AND obs.concept_id = 9567 and value_coded = 1066 AND obs.person_id IN (select person_id from obs where concept_id = 9228 and value_coded = 664 and voided = 0) AND obs.voided = 0 AND (obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
         SQL
       )['total']
     end
     def positive(start_date, end_date)
       ActiveRecord::Base.connection.select_one(
         <<~SQL
-          SELECT COUNT(DISTINCT(obs.person_id)) AS total FROM obs LEFT OUTER JOIN concept_name ON concept_name.concept_id = obs.concept_id WHERE obs.person_id IN (SELECT patient_id FROM patient_program where program_id = 21) AND obs.concept_id = 9228 and obs.value_coded = 703 AND obs.voided = 0 AND (obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
+          SELECT COUNT(DISTINCT(obs.person_id)) AS total FROM obs LEFT OUTER JOIN concept_name ON concept_name.concept_id = obs.concept_id WHERE obs.person_id IN (SELECT patient_id FROM patient_program where program_id = 21) AND obs.concept_id = 9567 and value_coded = 1066 AND obs.person_id IN (select person_id from obs where concept_id = 9228 and value_coded = 703 and voided = 0) AND obs.voided = 0 AND (obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
         SQL
       )['total']
     end
