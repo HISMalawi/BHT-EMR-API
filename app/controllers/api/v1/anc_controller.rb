@@ -90,4 +90,11 @@ class Api::V1::AncController < ApplicationController
                                    date: date
   end
 
+  def essentials
+    patient = params[:patientent_id]
+    date = params[:date]
+    anc_service = ANCService::PatientsEngine.new program: Program.find_by_name("ANC PROGRAM")
+    render json: anc_service.essentials(patient, date)
+  end
+
 end

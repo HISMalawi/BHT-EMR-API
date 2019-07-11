@@ -281,4 +281,5 @@ Rails.application.routes.draw do
 
   get '/api/v1/regimen_report' => 'api/v1/reports#regimen_report'
   get '/api/v1/anc/deliveries', to: 'api/v1/anc#deliveries'
+  get '/api/v1/anc/essentials', to: 'api/v1/anc#essentials'
 end
