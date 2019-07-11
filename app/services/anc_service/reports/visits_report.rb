@@ -39,16 +39,19 @@ class ANCService::Reports::VisitsReport
     results.each do |data|
 
       cat = data.form_id.to_i
+      #next unless Array(cat).include?@me.keys
 
       cat = cat > 4 ? ">5" : cat.to_s
 
-      if data.creator.to_i == User.current.id.to_i
+      if ((data.creator.to_i == User.current.id.to_i) && (Array(cat).include?@me.keys))
 
         @me["#{cat}"] += 1
 
       end
 
-      @today["#{cat}"] += 1
+      if ((Array(cat).include?@today.keys))
+        @today["#{cat}"] += 1
+      end
 
 
     end
