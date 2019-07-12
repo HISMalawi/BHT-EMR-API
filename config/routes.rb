@@ -112,7 +112,8 @@ Rails.application.routes.draw do
       resources :programs do
         resources :program_workflows, path: :workflows
         resources :program_regimens, path: :regimens
-        get 'booked_appointments' => 'programs#booked_appointments'
+        get 'booked_appointments' => 'program_appointments#booked_appointments'
+        get 'scheduled_appointments' => 'program_appointments#scheduled_appointments'
         get 'pellets_regimen' => 'program_regimens#pellets_regimen'
         get 'next_available_arv_number' => 'program_patients#find_next_available_arv_number'
         get 'lookup_arv_number/:arv_number' => 'program_patients#lookup_arv_number'
@@ -242,7 +243,6 @@ Rails.application.routes.draw do
   post '/api/v1/cancel_fast_track' => 'api/v1/fast_track#cancel'
   get '/api/v1/on_fast_track' => 'api/v1/fast_track#on_fast_track'
   get '/api/v1/patient_weight_for_height_values' => 'api/v1/weight_for_height#index'
-  get '/api/v1/booked_appointments' => 'api/v1/patient_appointments#booked_appointments'
   get '/api/v1/concept_set' => 'api/v1/concept_sets#show'
   get '/api/v1/cervical_cancer_screening' => 'api/v1/cervical_cancer_screening#show'
 
