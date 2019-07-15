@@ -23,6 +23,9 @@ module TBService
         LOGGER.debug "Loading encounter type: #{state}"
         encounter_type = EncounterType.find_by(name: state)
 
+        return EncounterType.new(name: SWITCH_TO_ART)\
+                if switch_program_to_art?
+
         return encounter_type if valid_state?(state)
 
       end
@@ -49,6 +52,9 @@ module TBService
     TB_REGISTRATION = 'TB REGISTRATION'
     TB_RECEPTION = 'TB RECEPTION'
     # FOLLOW - TB INITIAL, LAB ORDERS. LAB RESULTs, VITALS, TREATMENT, DISPENSING, APPOINTMENT, TB ADHERENCE
+
+    # ART Integration
+    SWITCH_TO_ART = 'SWITCH TO ART'
 
     # CONCEPTS
     YES = 1065
@@ -132,7 +138,7 @@ module TBService
           LAB_ORDERS
         when /Vitals/i
           VITALS
-        when /Treatment/i
+        when /TB Treatment/i
           TREATMENT
         when /Dispensing/i
           DISPENSING
@@ -575,5 +581,16 @@ module TBService
     def patient_should_proceed_for_treatment?
       (patient_diagnosed? && patient_examined? && patient_should_get_treated? && patient_has_valid_test_results?) || patient_transferred_in_today?
     end
+
+    def switch_program_to_art?
+      Encounter.joins(:type)\
+               .where(encounter_type: encounter_type(DISPENSING),
+                      patient: @patient,
+                      program_id: @program.program_id,
+                      encounter_datetime: @date)\
+               .order(encounter_datetime: :desc)\
+               .first.present?
+    end
+
   end
 end
