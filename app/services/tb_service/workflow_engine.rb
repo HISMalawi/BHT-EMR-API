@@ -18,6 +18,10 @@ module TBService
       state = INITIAL_STATE
       loop do
         state = next_state state
+
+        return EncounterType.new(name: SWITCH_TO_ART)\
+                if state == END_STATE && (patient_on_art_program? || patient_is_hiv_positive?)
+
         break if state == END_STATE
 
         LOGGER.debug "Loading encounter type: #{state}"
@@ -579,6 +583,23 @@ module TBService
 
     def patient_should_proceed_for_treatment?
       (patient_diagnosed? && patient_examined? && patient_should_get_treated? && patient_has_valid_test_results?) || patient_transferred_in_today?
+    end
+
+    def load_hiv_program
+      Program.find_by(name: 'HIV PROGRAM')
+    end
+
+    def patient_on_art_program?
+      PatientProgram.find_by(program_id: load_hiv_program.program_id, patient_id: @patient.patient_id).present?
+    end
+
+    def patient_is_hiv_positive?
+      hiv_status = concept('HIV status')
+      positive = concept('Positive')
+      Observation.where(
+        'person_id = ? AND concept_id = ? AND value_coded = ?',
+        @patient.patient_id, hiv_status.concept_id, positive.concept_id
+      ).order(obs_datetime: :desc).first.present?
     end
   end
 end
