@@ -4,27 +4,54 @@ require 'ostruct'
 require 'rest-client'
 
 class NLims
-  def initialize(config)
+  LIMS_TEMP_FILE = Rails.root.join('tmp/lims_connection.yml')
+  LOGGER = Rails.logger
+
+  def self.instance
+    return @instance if @instance
+
+    @instance = new
+    @instance.connect(load_connection, on_auth: ->(connection) { save_connection(connection) })
+    @instance
+  end
+
+  def self.load_connection
+    YAML.load_file(LIMS_TEMP_FILE)
+  rescue Errno::ENOENT
+    nil
+  end
+
+  def self.save_connection(connection)
+    File.open(LIMS_TEMP_FILE, 'w') do |fout|
+      fout.write(connection.to_yaml)
+    end
+  end
+
+  def initialize
     @api_prefix = config['lims_prefix'] || 'v1'
     @api_protocol = config['lims_protocol'] || 'http'
     @api_host = config['lims_host']
     @api_url = config['lims_url']
     @api_port = config['lims_port']
-    @connection = nil
+    @username = config['lims_username']
+    @password = config['lims_password']
+    @on_auth = nil
   end
 
   # We initially require a temporary authentication for user creation.
   # All other requests must start with an auth
-  def temp_auth(username, password)
-    response = get "authenticate/#{username}/#{password}"
+  def temp_auth
+    response = get "authenticate/#{config['lims_default_user']}/#{config['lims_default_password']}"
 
-    @connection = OpenStruct.new token: response['token']
+    @connection = OpenStruct.new(user: config['lims_default_user'], token: response['token'])
   end
 
-  def auth(username, password)
-    response = get "re_authenticate/#{username}/#{password}"
+  def connect(connection, on_auth: nil)
+    @on_auth = on_auth if on_auth
 
-    @connection = OpenStruct.new token: response['token']
+    return auth unless connection&.user == @username # user has changed in config file
+
+    @connection = connection
   end
 
   def legacy_order_test(patient, order)
@@ -34,6 +61,8 @@ class NLims
     tests = [order['test_name']]
     reason_for_test = order['reason_for_test']
     sample_status = order['sample_status']
+    target_lab = GlobalProperty.find_by_property('target.lab')&.property_value
+    raise InvalidParameterError, 'Global property `target.lab` is not set' unless target_lab
 
     post 'create_order', district: 'Unknown',
                          health_facility_name: Location.current.name,
@@ -55,47 +84,41 @@ class NLims
                          sample_status: sample_status,
                          art_start_date: 'unknown',
                          requesting_clinician: '',
-                         target_lab: Location.current.name
+                         target_lab: target_lab
   end
 
   def order_test(patient:, user:, test_type:, date:, reason:, requesting_clinician:)
     patient_name = patient.person.names.first
     user_name = user.person.names.first
 
-    temp_prefix = @api_prefix
-    @api_prefix = 'api/v2'
+    request_body = {
+      district: 'Unknown',
+      health_facility_name: Location.current.name,
+      first_name: patient_name.given_name,
+      last_name: patient_name.family_name,
+      middle_name: '',
+      date_of_birth: patient.person.birthdate,
+      gender: patient.person.gender,
+      national_patient_id: patient.national_id,
+      phone_number: '',
+      who_order_test_last_name: user_name.family_name,
+      who_order_test_first_name: user_name.given_name,
+      who_order_test_id: user.id,
+      order_location: 'ART',
+      date_sample_drawn: date,
+      tests: test_type,
+      sample_priority: reason,
+      art_start_date: 'unknown',
+      requesting_clinician: requesting_clinician
+    }
 
-    response = post 'request_order', district: 'Unknown',
-                                     health_facility_name: Location.current.name,
-                                     first_name: patient_name.given_name,
-                                     last_name: patient_name.family_name,
-                                     middle_name: '',
-                                     date_of_birth: patient.person.birthdate,
-                                     gender: patient.person.gender,
-                                     national_patient_id: patient.national_id,
-                                     phone_number: '',
-                                     who_order_test_last_name: user_name.family_name,
-                                     who_order_test_first_name: user_name.given_name,
-                                     who_order_test_id: user.id,
-                                     order_location: 'ART',
-                                     date_sample_drawn: date,
-                                     tests: test_type,
-                                     sample_priority: reason,
-                                     art_start_date: 'unknown',
-                                     requesting_clinician: requesting_clinician
-
-    @api_prefix = temp_prefix
-
-    response
+    post('request_order', request_body, api_version: 'api/v2') # Force version LIMS api version 2
   end
 
-  def order_tb_test(patient:, user:, test_type:, date:, reason:, sample_type:, sample_status:, 
+  def order_tb_test(patient:, user:, test_type:, date:, reason:, sample_type:, sample_status:,
     target_lab:, recommended_examination:, treatment_history:, sample_date:, sending_facility:, time_line: 'NA', requesting_clinician:)
     patient_name = patient.person.names.first
     user_name = user.person.names.first
-
-    temp_prefix = @api_prefix
-    @api_prefix = 'api/v1' #TB testing
 
     response = post 'create_order', district: 'Lilongwe', #health facility district
                                      health_facility_name: sending_facility, #healh facility name
@@ -114,17 +137,15 @@ class NLims
                                      tests: test_type,
                                      sample_priority: reason,
                                      art_start_date: 'not_applicable', #not applicable
-                                     sample_type: sample_type, #Added to satify for TB 
-                                     sample_status: sample_status, #Added to satify for TB 
-                                     target_lab: target_lab, #Added to satify for TB 
+                                     sample_type: sample_type, #Added to satify for TB
+                                     sample_status: sample_status, #Added to satify for TB
+                                     target_lab: target_lab, #Added to satify for TB
                                      recommended_examination: recommended_examination, #Added to satify for TB
-                                     treatment_history: treatment_history, #Added to satify for TB 
+                                     treatment_history: treatment_history, #Added to satify for TB
                                      sample_date: sample_date, #Mofified 'Add an actual one' Removed this
                                      sending_facility: sending_facility,
                                      time_line: time_line,
                                      requesting_clinician: requesting_clinician
-
-    @api_prefix = temp_prefix
 
     response
   end
@@ -181,35 +202,55 @@ class NLims
 
   private
 
+  def config
+    @config ||= YAML.load_file("#{Rails.root}/config/application.yml")
+  end
+
   def tests
     @tests ||= get('retrieve_test_Catelog')
   end
 
-  def get(path)
-    exec_request(path) do |full_path, headers|
+  def auth
+    url = "re_authenticate/#{@username}/#{@password}"
+    response = get(url, auto_login: false)
+
+    @connection = OpenStruct.new(user: @username, token: response['token'])
+    @on_auth&.call(@connection)
+
+    @connection
+  end
+
+  def get(path, auto_login: true, api_version: nil)
+    exec_request(path, auto_login: auto_login, api_version: api_version) do |full_path, headers|
       RestClient.get(full_path, headers)
     end
   end
 
-  def post(path, body)
-    exec_request(path) do |full_path, headers|
+  def post(path, body, api_version: nil)
+    exec_request(path, api_version: api_version) do |full_path, headers|
       RestClient.post(full_path, body.as_json, headers)
     end
   end
 
-  def exec_request(path)
-    response = yield expand_url(path), token: @connection&.token,
-                                       content_type: 'application/json'
+  def exec_request(path, auto_login: true, api_version: nil,  &block)
+    response = yield expand_url(path, api_version: api_version), token: @connection&.token,
+                                                                 content_type: 'application/json'
 
     response = JSON.parse(response)
     if response['error'] == true
+      if response['message'].match?(/token expired/i) && auto_login
+        LOGGER.debug('LIMS token expired... Re-authenticating')
+        return (auth && exec_request(path, auto_login: false, &block))
+      end
+
       raise LimsError, "Failed to communicate with LIMS: #{response['message']}"
     end
 
     response['data']
   end
 
-  def expand_url(path)
-    "#{@api_protocol}://#{@api_host}:#{@api_port}/#{@api_prefix}/#{path}"
+  def expand_url(path, api_version: nil)
+    api_prefix = api_version || @api_prefix
+    "#{@api_protocol}://#{@api_host}:#{@api_port}/#{api_prefix}/#{path}"
   end
 end

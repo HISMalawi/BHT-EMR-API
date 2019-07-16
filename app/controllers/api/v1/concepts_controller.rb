@@ -1,6 +1,8 @@
 class Api::V1::ConceptsController < ApplicationController
   def show
-    render json: Concept.find(params[:id])
+    # TODO: Remove unscoped modifier below. This was added to enable reading of retired
+    #       concepts some of which were still being used by existing applications.
+    render json: Concept.unscoped.find(params[:id])
   end
 
   def index

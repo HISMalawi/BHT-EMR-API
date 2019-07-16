@@ -14,7 +14,7 @@ Rails.application.routes.draw do
       # Routes down here ... Best we move everything above into own modules
 
       resources :appointments
-      resources :dispensations, only: %i[index create]
+      resources :dispensations, only: %i[index create destroy]
       resources :users do
         post '/activate', to: 'users#activate'
         post '/deactivate', to: 'users#deactivate'
@@ -67,6 +67,8 @@ Rails.application.routes.draw do
 
       resources :patient_identifiers
 
+      resources :person_attributes
+
       resources :concepts, only: %i[index show]
 
       # Locations
@@ -111,7 +113,8 @@ Rails.application.routes.draw do
       resources :programs do
         resources :program_workflows, path: :workflows
         resources :program_regimens, path: :regimens
-        get 'booked_appointments' => 'programs#booked_appointments'
+        get 'booked_appointments' => 'program_appointments#booked_appointments'
+        get 'scheduled_appointments' => 'program_appointments#scheduled_appointments'
         get 'pellets_regimen' => 'program_regimens#pellets_regimen'
         get 'next_available_arv_number' => 'program_patients#find_next_available_arv_number'
         get 'lookup_arv_number/:arv_number' => 'program_patients#lookup_arv_number'
@@ -119,6 +122,8 @@ Rails.application.routes.draw do
         get 'custom_regimen_ingredients' => 'program_regimens#custom_regimen_ingredients'
         get 'custom_tb_ingredients' => 'program_regimens#custom_tb_ingredients'
         get 'defaulter_list' => 'program_patients#defaulter_list'
+        get '/barcodes/:barcode_name', to: 'program_barcodes#print_barcode'
+
         resources :program_patients, path: :patients do
           get '/next_appointment_date' => 'patient_appointments#next_appointment_date'
           get '/last_drugs_received' => 'program_patients#last_drugs_received'
@@ -134,6 +139,8 @@ Rails.application.routes.draw do
           get '/medication_side_effects', to: 'program_patients#medication_side_effects'
           get '/is_due_lab_order', to: 'program_patients#is_due_lab_order'
           #ANC
+          get '/vl_info', to: 'lab_remainders#index'
+          # ANC
           get '/surgical_history', to: 'program_patients#surgical_history'
           get '/anc_visit', to: 'program_patients#anc_visit'
           get '/art_hiv_status', to: 'program_patients#art_hiv_status'
@@ -144,19 +151,28 @@ Rails.application.routes.draw do
         resources :lab_test_types, path: 'lab_tests/types'
         get '/lab_tests/panels' => 'lab_test_types#panels' # TODO: Move this into own controller
         resources :lab_test_orders, path: 'lab_tests/orders'
+        post '/lab_tests/orders/external' => 'lab_test_orders#create_external_order'
+        post '/lab_tests/orders/lims-old' => 'lab_test_orders#create_legacy_order' # Temporary path for creating legacy LIMS orders
         resources :lab_test_results, path: 'lab_tests/results'
         post '/lab_tests/order_and_results' => 'lab_test_results#create_order_and_results'
         get '/lab_tests/locations' => 'lab_test_orders#locations'
         get '/lab_tests/labs' => 'lab_test_orders#labs'
         get '/lab_tests/orders_without_results' => 'lab_test_orders#orders_without_results'
         get '/lab_tests/measures' => 'lab_test_types#measures'
+        get '/labs/:resource', to: 'lab#dispatch_request'
         resources :program_reports, path: 'reports'
 
 
       end
 
-      resources :stock
-      post '/edit_stock_report', to: 'stock#edit'
+      namespace :pharmacy do
+        resources :batches
+        resources :items do
+          post '/reallocate', to: 'items#reallocate'
+          post '/dispose', to: 'items#dispose'
+        end
+        get 'earliest_expiring_item', to: 'items#earliest_expiring'
+      end
 
       namespace :types do
         resources :relationships
@@ -171,6 +187,8 @@ Rails.application.routes.draw do
       resources :drug_orders
       resources :orders
       get '/drug_sets', to: 'drugs#drug_sets' # ANC get drug sets
+      post '/drug_sets', to: 'drugs#create_drug_sets' #ANC drug sets creation
+      delete '/drug_sets/:id', to: 'drugs#void_drug_sets'
 
       resource :global_properties
       resource :user_properties
@@ -203,6 +221,7 @@ Rails.application.routes.draw do
       get '/search/patients' => 'patients#search_by_name_and_gender'
       get '/search/properties' => 'properties#search'
       get '/search/landmarks' => 'landmarks#search'
+      get '/search/identifiers/duplicates' => 'patient_identifiers#duplicates'
 
       get '/dde/patients/find_by_npid', to: 'dde#find_patients_by_npid'
       get '/dde/patients/find_by_name_and_gender', to: 'dde#find_patients_by_name_and_gender'
@@ -228,7 +247,6 @@ Rails.application.routes.draw do
   post '/api/v1/cancel_fast_track' => 'api/v1/fast_track#cancel'
   get '/api/v1/on_fast_track' => 'api/v1/fast_track#on_fast_track'
   get '/api/v1/patient_weight_for_height_values' => 'api/v1/weight_for_height#index'
-  get '/api/v1/booked_appointments' => 'api/v1/patient_appointments#booked_appointments'
   get '/api/v1/concept_set' => 'api/v1/concept_sets#show'
   get '/api/v1/cervical_cancer_screening' => 'api/v1/cervical_cancer_screening#show'
 
@@ -240,6 +258,7 @@ Rails.application.routes.draw do
   get '/api/v1/start_date' => 'api/v1/cleaning#startDate'
   get '/api/v1/male' => 'api/v1/cleaning#male'
   get '/api/v1/incomplete_visits' => 'api/v1/cleaning#incompleteVisits'
+  get '/api/v1/art_data_cleaning_tools' => 'api/v1/cleaning#art_tools'
 
   #OPD reports
   get '/api/v1/diagnosis' => 'api/v1/reports#diagnosis'
@@ -251,10 +270,16 @@ Rails.application.routes.draw do
 
   get '/api/v1/cohort_report_raw_data' => 'api/v1/reports#cohort_report_raw_data'
   get '/api/v1/cohort_disaggregated' => 'api/v1/reports#cohort_disaggregated'
+  get '/api/v1/anc_cohort_disaggregated' => 'api/v1/reports#anc_cohort_disaggregated'
   get '/api/v1/cohort_survival_analysis' => 'api/v1/reports#cohort_survival_analysis'
   get '/api/v1/defaulter_list' => 'api/v1/reports#defaulter_list'
   get '/api/v1/missed_appointments' => 'api/v1/reports#missed_appointments'
   post '/api/v1/addresses' => 'api/v1/person_addresses#create'
-  get '/api/v1/person_attributes' => 'api/v1/person_attributes#index'
   get '/api/v1/archive_active_filing_number' => 'api/v1/patient_identifiers#archive_active_filing_number'
+  get '/api/v1/ipt_coverage' => 'api/v1/reports#ipt_coverage'
+  get '/api/v1/cohort_report_drill_down' => 'api/v1/reports#cohort_report_drill_down'
+  post '/api/v1/swap_active_number' => 'api/v1/patient_identifiers#swap_active_number'
+  get '/api/v1/regimen_switch' => 'api/v1/reports#regimen_switch'
+  get '/api/v1/last_drugs_pill_count' => 'api/v1/patients#last_drugs_pill_count'
+  get '/api/v1/regimen_report' => 'api/v1/reports#regimen_report'
 end

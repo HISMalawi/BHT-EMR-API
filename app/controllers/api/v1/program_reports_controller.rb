@@ -4,7 +4,7 @@ class Api::V1::ProgramReportsController < ApplicationController
   include ModelUtils
 
   def show
-    name = params.require(%i[name])[0]
+    name = params[:name]
     type, start_date, end_date = parse_report_name(name)
     type ||= params[:id]
     start_date ||= params.require(%i[start_date])[0]
@@ -32,6 +32,8 @@ class Api::V1::ProgramReportsController < ApplicationController
   end
 
   def parse_report_name(name)
+    return [nil, nil, nil] unless name
+
     match = name.match(/(?<type>\w+\s+)?Q(?<quarter>[1234])\s+(?<year>\d{4})/)
     return [nil, nil, nil] unless match
 

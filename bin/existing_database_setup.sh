@@ -33,7 +33,7 @@ mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/sql/alte
 mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/sql/fix_weight_and_height_obs.sql
 mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/sql/index_obs_value_datetime.sql
 mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/sql/moh_regimens_v2018.sql
-mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/sql/moh_regimens_2019.sql
+mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/sql/bart2_views_schema_additions.sql
 
 echo "Update program IDS"
 

@@ -159,7 +159,7 @@ class Api::V1::PatientsController < ApplicationController
   def last_drugs_received
     date = params[:date]&.to_date || Date.today
     program_id = params[:program_id]
-    render json: service.patient_last_drugs_received(patient, date, program_id)
+    render json: service.patient_last_drugs_received(patient, date, program_id: program_id)
   end
 
   # Returns all lab orders made since a given date
@@ -192,6 +192,13 @@ class Api::V1::PatientsController < ApplicationController
 
   def filing_number_history
     render json: service.filing_number_history(patient)
+  end
+
+  # Returns all drugs pill counts done on last visit
+  def last_drugs_pill_count
+    date = params[:date]&.to_date || Date.today
+    program_id = params[:program_id]
+    render json: service.patient_last_drugs_pill_count(patient, date, program_id: program_id)
   end
 
   private

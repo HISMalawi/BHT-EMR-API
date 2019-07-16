@@ -1,0 +1,64 @@
+lims_host: localhost
+lims_prefix: api/v1
+lims_protocol: http
+lims_port: 3010
+lims_username: 'lab_user'
+lims_password: 'lab_user_password'
+lims_default_user: 'admin'
+lims_default_password: 'knock_knock'
+lims_partner: 'BHT'
+lims_app_name: 'bht_emr_api'
+
+
+# Configuration for DDE
+dde:
+  url: http://localhost:5000
+
+  # This section has DDE username and password for various applications.
+  # The application's name must be the same as a program name in the
+  # program's table <em>but in lowercase</em>.
+  hiv program:
+    username: admin
+    password: bht.dde3!
+
+  tb program:
+    username: admin
+    password: bht.dde3!
+
+rds:
+  # CouchDB configuration
+  #
+  # This is optional, it is required only if you intend to sync data with
+  # the RDS (ie if you intend to `bin/rds_push`)
+  couchdb:
+    local:
+      protocol: http
+      host: 127.0.0.1
+      port: 5984
+      database: rds
+      username: admin
+      password: password
+
+    master:
+      protocol: http
+      host: 127.0.0.1
+      port: 5984
+      database: rds
+      username: admin
+      password: password
+
+  databases:
+    # The databases defined here must have a corresponding entry in the
+    # database.yml file that holds the database's connection parameters.
+    # NOTE: The program_names specified below will be overriden by
+    # encounter program if one exists.
+    development:
+      program_name: 'HIV PROGRAM'
+
+    # Uncomment out the following to enable syncing from HTS and ANC
+    # databases.
+    #
+    # hts:
+    #   program_name: 'HTC PROGRAM'
+    # anc:
+    #   program_name: 'ANC PROGRAM'
