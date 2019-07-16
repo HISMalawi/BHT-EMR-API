@@ -23,11 +23,10 @@ module TBService
         LOGGER.debug "Loading encounter type: #{state}"
         encounter_type = EncounterType.find_by(name: state)
 
-        return EncounterType.new(name: SWITCH_TO_ART)\
-                if switch_program_to_art?
+        return EncounterType.new(name: 'TB TREATMENT')\
+                if valid_state?(state) && encounter_type.name == 'TREATMENT'
 
         return encounter_type if valid_state?(state)
-
       end
 
       nil
@@ -581,16 +580,5 @@ module TBService
     def patient_should_proceed_for_treatment?
       (patient_diagnosed? && patient_examined? && patient_should_get_treated? && patient_has_valid_test_results?) || patient_transferred_in_today?
     end
-
-    def switch_program_to_art?
-      Encounter.joins(:type)\
-               .where(encounter_type: encounter_type(DISPENSING),
-                      patient: @patient,
-                      program_id: @program.program_id,
-                      encounter_datetime: @date)\
-               .order(encounter_datetime: :desc)\
-               .first.present?
-    end
-
   end
 end
