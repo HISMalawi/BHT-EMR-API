@@ -86,7 +86,7 @@ describe TBService::WorkflowEngine do
       expect(encounter_type.name.upcase).to eq('APPOINTMENT')
     end
 
-    it 'returns TREATMENT after recording TB Vitals' do
+    it 'returns TB TREATMENT after recording TB Vitals' do
       enroll_patient patient
       tb_initial_encounter(patient, Time.now - 2.hour)
       encounter = lab_orders_encounter(patient, Time.now - 2.hour)
@@ -95,7 +95,7 @@ describe TBService::WorkflowEngine do
       tb_registration(patient, Time.now + 1.hour)
       record_vitals(patient, Time.now)
       encounter_type = engine.next_encounter
-      expect(encounter_type.name.upcase).to eq('TREATMENT')
+      expect(encounter_type.name.upcase).to eq('TB TREATMENT')
     end
 
     #After patient transferred out it will go dashboard
