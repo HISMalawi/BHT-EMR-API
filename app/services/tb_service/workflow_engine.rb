@@ -450,6 +450,7 @@ module TBService
         TREATMENT,
         @patient.patient_id,
         @date
+
       ).order(encounter_datetime: :desc).first.nil?
     end
 
@@ -582,7 +583,9 @@ module TBService
     end
 
     def patient_should_proceed_for_treatment?
-      (patient_diagnosed? && patient_examined? && patient_should_get_treated? && patient_has_valid_test_results?) || patient_transferred_in_today?
+      (patient_diagnosed? && patient_examined? && patient_should_get_treated?\
+        && patient_has_valid_test_results?) || patient_examined?\
+        || patient_transferred_in_today?
     end
 
     def load_hiv_program
