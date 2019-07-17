@@ -3,9 +3,9 @@ class AddOpenmrsTimestampsToPharmacyBatchReallocations < ActiveRecord::Migration
     ActiveRecord::Base.connection.execute(
       <<~SQL
         ALTER TABLE pharmacy_batch_item_reallocations
-          ADD COLUMN date_created DATETIME NOT NULL DEFAULT NOW(),
+          ADD COLUMN date_created DATETIME NOT NULL,
           ADD COLUMN creator INTEGER NOT NULL,
-          ADD COLUMN date_changed DATETIME NOT NULL DEFAULT NOW(),
+          ADD COLUMN date_changed DATETIME NOT NULL,
           ADD COLUMN voided SMALLINT,
           ADD COLUMN date_voided DATETIME,
           ADD COLUMN voided_by INTEGER,
