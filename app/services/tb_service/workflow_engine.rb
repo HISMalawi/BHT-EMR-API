@@ -174,7 +174,7 @@ module TBService
     # NOTE: By `relevant` above we mean encounters that matter in deciding
     # what encounter the patient should go for in this present time.
     def encounter_exists?(type)
-      Encounter.where(type: type, patient: @patient)\
+      Encounter.where(type: type, patient: @patient, program: @program)\
                .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
                .exists?
     end
@@ -189,26 +189,29 @@ module TBService
 
     def tb_suspect_not_enrolled?
       Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ?',
+        'encounter_type.name = ? AND encounter.patient_id = ? AND encounter.program_id = ?',
         TB_INITIAL,
-        @patient.patient_id
+        @patient.patient_id,
+        @program.program_id
       ).order(encounter_datetime: :desc).first.nil?
     end
 
     def patient_labs_not_ordered?
       Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ?',
+        'encounter_type.name = ? AND encounter.patient_id = ? AND encounter.program_id = ?',
         LAB_ORDERS,
-        @patient.patient_id
+        @patient.patient_id,
+        @program.program_id
       ).order(encounter_datetime: :desc).first.nil?
     end
 
     def patient_got_treatment?
       Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
+        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?) AND encounter.program_id = ?',
         TREATMENT,
         @patient.patient_id,
-        @date
+        @date,
+        @program.program_id
       ).order(encounter_datetime: :desc).first.present?
     end
 
@@ -233,19 +236,21 @@ module TBService
 
     def patient_has_no_lab_results?
       Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
+        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?) AND encounter.program_id = ?',
         LAB_RESULTS,
         @patient.patient_id,
-        @date
+        @date,
+        @program.program_id
       ).order(encounter_datetime: :desc).first.nil?
     end
 
     def dispensing_complete? #Check
       Encounter.joins(:type).where(
-      'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
+      'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?) AND encounter.program_id = ?',
       DISPENSING,
       @patient.patient_id,
-      @date
+      @date,
+      @program.program_id
       ).order(encounter_datetime: :desc).first.present?
     end
 
@@ -260,10 +265,11 @@ module TBService
 
     def patient_has_appointment?
       Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) < DATE(?)',
+        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) < DATE(?) AND encounter.program_id = ?',
         APPOINTMENT,
         @patient.patient_id,
-        @date
+        @date,
+        @program.program_id
       ).order(encounter_datetime: :desc).first.present?
     end
 
@@ -279,9 +285,10 @@ module TBService
     #return to the patient dashboard if patient lab test has been ordered within 1 hour
     def patient_should_proceed_after_lab_order?
       encounter = Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ?',
+        'encounter_type.name = ? AND encounter.patient_id = ?, encounter.program_id = ?',
         LAB_ORDERS,
-        @patient.patient_id
+        @patient.patient_id,
+        @program.program_id
       ).order(encounter_datetime: :desc).first
 
       begin
@@ -296,15 +303,17 @@ module TBService
 
     def patient_recent_lab_order_has_no_results?
       lab_order = Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ?',
+        'encounter_type.name = ? AND encounter.patient_id = ? AND encounter.program_id = ?',
         LAB_ORDERS,
-        @patient.patient_id
+        @patient.patient_id,
+        @program.program_id
       ).order(encounter_datetime: :desc).first
 
       lab_result = Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ?',
+        'encounter_type.name = ? AND encounter.patient_id = ? AND encounter.program_id = ?',
         LAB_RESULTS,
-        @patient.patient_id
+        @patient.patient_id,
+        @program.program_id
       ).order(encounter_datetime: :desc).first
 
       return true unless lab_result
@@ -341,9 +350,10 @@ module TBService
     # Send the TB patient for a lab order on the 56th/84th/140th/168th day
     def should_patient_go_lab_examination_at_followup?
       first_dispensation = Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ?',
+        'encounter_type.name = ? AND encounter.patient_id = ? AND encounter.program_id = ?',
         DISPENSING,
-        @patient.patient_id
+        @patient.patient_id,
+        @program.program_id
         ).order(encounter_datetime: :asc).first
 
       begin
@@ -368,15 +378,17 @@ module TBService
 
     def patient_recent_lab_order_has_results?
       lab_order = Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ?',
+        'encounter_type.name = ? AND encounter.patient_id = ? AND encounter.program_id = ?',
         LAB_ORDERS,
-        @patient.patient_id
+        @patient.patient_id,
+        @program.program_id
       ).order(encounter_datetime: :desc).first
 
       lab_result = Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ?',
+        'encounter_type.name = ? AND encounter.patient_id = ? AND encounter.program_id = ?',
         LAB_RESULTS,
-        @patient.patient_id
+        @patient.patient_id,
+        @program.program_id
       ).order(encounter_datetime: :desc).first
 
       begin
@@ -398,9 +410,10 @@ module TBService
       ).order(obs_datetime: :desc).first
 
       diagnosis = Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ?',
+        'encounter_type.name = ? AND encounter.patient_id = ? AND encounter.program_id = ?',
         DIAGNOSIS,
-        @patient.patient_id
+        @patient.patient_id,
+        @program.program_id
       ).order(encounter_datetime: :desc).first
 
       begin
@@ -437,56 +450,61 @@ module TBService
 
     def patient_has_no_adherence?
       Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
+        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?) AND encounter.program_id = ?',
         TB_ADHERENCE,
         @patient.patient_id,
-        @date
+        @date,
+        @program.program_id
       ).order(encounter_datetime: :desc).first.nil?
     end
 
     def patient_has_no_treatment?
       Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
+        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?) AND encounter.program_id = ?',
         TREATMENT,
         @patient.patient_id,
-        @date
-
+        @date,
+        @program.program_id
       ).order(encounter_datetime: :desc).first.nil?
     end
 
     def patient_has_no_dispensation?
       Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
+        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?) AND encounter.program_id = ?',
         DISPENSING,
         @patient.patient_id,
-        @date
+        @date,
+        @program.program_id
       ).order(encounter_datetime: :desc).first.nil?
     end
 
     def patient_has_no_appointment?
       Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
+        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?) AND encounter.program_id = ?',
         APPOINTMENT,
         @patient.patient_id,
-        @date
+        @date,
+        @program.program_id
       ).order(encounter_datetime: :desc).first.nil?
     end
 
     def patient_has_no_diagnosis?
       Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
+        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?) AND encounter.program_id = ?',
         DIAGNOSIS,
         @patient.patient_id,
-        @date
+        @date,
+        @program.program_id
       ).order(encounter_datetime: :desc).first.nil?
     end
 
     def patient_has_lab_results?
       Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
+        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?) AND encounter.program_id = ?',
         LAB_RESULTS,
         @patient.patient_id,
-        @date
+        @date,
+        @program.program_id
       ).order(encounter_datetime: :desc).first.present?
     end
 
@@ -500,10 +518,11 @@ module TBService
 
     def patient_has_adherence?
       Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
+        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?) AND encounter.program_id = ?',
         TB_ADHERENCE,
         @patient.patient_id,
-        @date
+        @date,
+        @program.program_id
       ).order(encounter_datetime: :desc).first.present?
     end
 
@@ -513,18 +532,20 @@ module TBService
 
     def patient_has_no_tb_registration?
       Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ?',
+        'encounter_type.name = ? AND encounter.patient_id = ? AND encounter.program_id = ?',
         TB_REGISTRATION,
-        @patient.patient_id
+        @patient.patient_id,
+        @program.program_id
       ).order(encounter_datetime: :desc).first.nil?
     end
 
     def patient_has_no_tb_reception?
       Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
+        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?) AND encounter.program_id = ?',
         TB_RECEPTION,
         @patient.patient_id,
-        @date
+        @date,
+        @program.program_id
       ).order(encounter_datetime: :desc).first.nil?
     end
 
