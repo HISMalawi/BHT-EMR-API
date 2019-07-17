@@ -129,6 +129,10 @@ module TBService
     # Concepts
     PATIENT_PRESENT = 'Patient present'
 
+    MINOR_AGE_LIMIT = 18
+
+    UNDER_FIVE_AGE_LIMIT = 5
+
     def load_user_activities
       activities = user_property('Activities')&.property_value
       encounters = (activities&.split(',') || []).collect do |activity|
@@ -174,6 +178,11 @@ module TBService
     # NOTE: By `relevant` above we mean encounters that matter in deciding
     # what encounter the patient should go for in this present time.
     def encounter_exists?(type)
+      # Vitals may be collected from a different program so don't check
+      # for existence of an encounter rather check for the existence
+      # of the actual vitals.
+      return false if type.name == VITALS
+
       Encounter.where(type: type, patient: @patient, program: @program)\
                .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
                .exists?
@@ -225,13 +234,13 @@ module TBService
     end
 
     #if minor found TB negative through DIAGONIS, give them ITP
-    def patient_is_a_minor?
+    def patient_is_under_five?
      person = Person.find_by(person_id: @patient.patient_id)
-     (((Time.zone.now - person.birthdate.to_time) / 1.year.seconds).floor) <= 5
+     (((Time.zone.now - person.birthdate.to_time) / 1.year.seconds).floor) < UNDER_FIVE_AGE_LIMIT
     end
 
     def patient_should_get_treated?
-      (patient_is_a_minor? && patient_current_tb_status_is_negative?) || patient_current_tb_status_is_positive?
+      (patient_is_under_five? && patient_current_tb_status_is_negative?) || patient_current_tb_status_is_positive?
     end
 
     def patient_has_no_lab_results?
@@ -255,12 +264,36 @@ module TBService
     end
 
     def patient_has_no_vitals?
-      Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
-        VITALS,
-        @patient.patient_id,
-        @date
-      ).order(encounter_datetime: :desc).first.nil?
+      return true if patient_has_no_weight_today?
+
+      return true if patient_has_no_height?
+
+      patient_has_no_height_today? && patient_is_a_minor?
+    end
+
+    def patient_has_no_weight_today?
+      height_concept = concept('Weight')
+      Observation.where(concept_id: height_concept.concept_id, person_id: @patient.id)\
+                  .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
+                  .first.nil?
+    end
+
+    def patient_has_no_height?
+      height_concept = concept('Height (cm)')
+      Observation.where(concept_id: height_concept.concept_id, person_id: @patient.id)\
+                  .where('obs_datetime < ?', TimeUtils.day_bounds(@date)[1])\
+                  .first.nil?
+    end
+
+    def patient_has_no_height_today?
+      height_concept = concept('Height (cm)')
+      Observation.where(concept_id: height_concept.concept_id, person_id: @patient.id)\
+                  .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
+                  .first.nil?
+    end
+
+    def patient_is_a_minor?
+      @patient.age(today: @date) < MINOR_AGE_LIMIT
     end
 
     def patient_has_appointment?
@@ -285,7 +318,7 @@ module TBService
     #return to the patient dashboard if patient lab test has been ordered within 1 hour
     def patient_should_proceed_after_lab_order?
       encounter = Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ?, encounter.program_id = ?',
+        'encounter_type.name = ? AND encounter.patient_id = ? AND encounter.program_id = ?',
         LAB_ORDERS,
         @patient.patient_id,
         @program.program_id
