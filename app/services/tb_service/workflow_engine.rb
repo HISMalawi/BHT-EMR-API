@@ -19,7 +19,7 @@ module TBService
       loop do
         state = next_state state
 
-        return EncounterType.new(name: SWITCH_TO_ART)\
+        return EncounterType.new(name: ART_WORKFLOW)\
                 if state == END_STATE && (patient_on_art_program? || patient_is_hiv_positive?)
 
         break if state == END_STATE
@@ -57,7 +57,7 @@ module TBService
     # FOLLOW - TB INITIAL, LAB ORDERS. LAB RESULTs, VITALS, TREATMENT, DISPENSING, APPOINTMENT, TB ADHERENCE
 
     # ART Integration
-    SWITCH_TO_ART = 'SWITCH TO ART'
+    ART_WORKFLOW = 'ART WORKFLOW'
 
     # CONCEPTS
     YES = 1065
