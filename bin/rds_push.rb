@@ -486,8 +486,12 @@ def initiate_couch_sync
 
   url = "#{local_couch_url}/_replicate"
 
+begin
   RestClient.post(url, request.to_json, content_type: :json,
                                         referer: local_couch_host_url)
+rescue Exception => e 
+    File.write('log/app_sync_erros.log',e.message,mode: 'a')
+    puts "Handled Exception"
 end
 
 def already_in_sync?(sync_params)
