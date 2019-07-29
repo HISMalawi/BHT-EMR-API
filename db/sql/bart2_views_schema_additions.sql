@@ -620,6 +620,7 @@ DECLARE set_date_started date;
 DECLARE set_patient_state_died INT;
 DECLARE set_died_concept_id INT;
 DECLARE set_timestamp DATETIME;
+DECLARE dispensed_quantity INT;
 
 SET set_program_id = (SELECT program_id FROM program WHERE name ="HIV PROGRAM" LIMIT 1);
 
@@ -669,7 +670,19 @@ IF set_patient_state = 7 THEN
   END IF;
 
   IF set_patient_state = 0 THEN
-    SET set_outcome = 'On antiretrovirals';
+
+    SET dispensed_quantity = (SELECT d.quantity
+      FROM orders o
+      INNER JOIN drug_order d ON d.order_id = o.order_id
+      INNER JOIN drug ON drug.drug_id = d.drug_inventory_id
+      WHERE o.patient_id = patient_id AND d.drug_inventory_id IN(
+        SELECT DISTINCT(drug_id) FROM drug WHERE
+        concept_id IN(SELECT concept_id FROM concept_set WHERE concept_set = 1085)
+    ) AND DATE(o.start_date) <= visit_date AND d.quantity > 0 ORDER BY start_date DESC LIMIT 1);
+
+    IF dispensed_quantity > 0 THEN
+      SET set_outcome = 'On antiretrovirals';
+    END IF;
   END IF;
 END IF;
 
