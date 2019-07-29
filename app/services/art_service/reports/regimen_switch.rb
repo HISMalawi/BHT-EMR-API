@@ -20,15 +20,21 @@ module ARTService
       private 
       
       def regimen_data
-        art_service = ARTService::Reports::CohortBuilder.new()
-        art_service.create_tmp_patient_table
-        art_service.load_data_into_temp_earliest_start_date(@end_date) 
-        art_service.update_cum_outcome(@end_date)
-
        return ActiveRecord::Base.connection.select_all <<EOF
-       SELECT e.* FROM temp_earliest_start_date e
-       INNER JOIN temp_patient_outcomes USING(patient_id)
-       WHERE cum_outcome = 'On antiretrovirals';
+       select
+        `p`.`patient_id` AS `patient_id`
+       from
+          ((`patient_program` `p`
+          left join `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
+          left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
+          left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
+       where
+        ((`p`.`voided` = 0)
+        and (`s`.`voided` = 0)
+        and (`p`.`program_id` = 1)
+        and (`s`.`state` = 7))
+        and (DATE(`s`.`start_date`) BETWEEN '1900-01-01' AND '2019-06-30')
+      group by `p`.`patient_id`;
 EOF
 
       end
@@ -68,6 +74,12 @@ EOF
         clients = {}
         (data || []).each do |r|
           patient_id = r['patient_id'].to_i
+          outcome_status = ActiveRecord::Base.connection.select_one <<EOF
+          SELECT patient_outcome(#{patient_id}, '#{(@end_date).to_date}') outcome;
+EOF
+
+          next unless outcome_status['outcome'] == 'On antiretrovirals'
+          
           medications = arv_dispensention_data(patient_id)
           visit_date = medications.first['start_date'].to_date
           
@@ -117,8 +129,14 @@ EOF
         (data || []).each do |r|
           patient_id = r['patient_id'].to_i
           medications = arv_dispensention_data(patient_id)
-          visit_date = medications.first['start_date'].to_date
            
+          outcome_status = ActiveRecord::Base.connection.select_one <<EOF
+          SELECT patient_outcome(#{patient_id}, '#{(@end_date).to_date}') outcome;
+EOF
+
+          next unless outcome_status['outcome'] == 'On antiretrovirals'
+          visit_date = medications.first['start_date'].to_date
+
           prev_reg = ActiveRecord::Base.connection.select_one <<EOF
           SELECT patient_current_regimen(#{patient_id}, '#{(visit_date - 1.day).to_date}') previous_regimen
 EOF
