@@ -2255,7 +2255,10 @@ BEGIN
     SELECT MAX(t.obs_datetime) FROM obs t WHERE
     t.obs_datetime BETWEEN DATE_FORMAT(DATE(my_start_date), '%Y-%m-%d 00:00:00')
     AND DATE_FORMAT(DATE(my_end_date), '%Y-%m-%d 23:59:59')
-    AND t.person_id = ob.person_id AND t.concept_id IN(@concept_ids))
+    AND t.person_id = ob.person_id AND t.concept_id IN(
+      SELECT GROUP_CONCAT(DISTINCT(concept_id)
+      ORDER BY concept_id ASC) FROM concept_name
+      WHERE name IN('TB treatment','TB status') AND voided = 0))
     AND ob.person_id = my_patient_id
     GROUP BY ob.person_id);
 
