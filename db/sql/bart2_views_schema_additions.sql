@@ -2243,14 +2243,14 @@ BEGIN
 	DECLARE screened INT DEFAULT FALSE;
 	DECLARE record_value INT;
 
-  SET @concept_ids := (SELECT GROUP_CONCAT(DISTINCT(concept_id)
-    ORDER BY concept_id ASC) FROM concept_name
-    WHERE name IN('TB treatment','TB status') AND voided = 0);
-
   SET record_value = (SELECT ob.person_id FROM obs ob
     INNER JOIN temp_earliest_start_date e
     ON e.patient_id = ob.person_id
-    WHERE ob.concept_id IN(@concept_ids) AND ob.voided = 0
+    WHERE ob.concept_id IN(
+      SELECT GROUP_CONCAT(DISTINCT(concept_id)
+      ORDER BY concept_id ASC) FROM concept_name
+      WHERE name IN('TB treatment','TB status') AND voided = 0
+    ) AND ob.voided = 0
     AND ob.obs_datetime = (
     SELECT MAX(t.obs_datetime) FROM obs t WHERE
     t.obs_datetime BETWEEN DATE_FORMAT(DATE(my_start_date), '%Y-%m-%d 00:00:00')
@@ -2267,11 +2267,6 @@ BEGIN
 END;
 
 
-
-
-
-
-
 DROP FUNCTION IF EXISTS `patient_given_ipt`;
 
 CREATE FUNCTION `patient_given_ipt`(my_patient_id INT, my_start_date DATE, my_end_date DATE) RETURNS INT
@@ -2279,13 +2274,13 @@ BEGIN
 	DECLARE given INT DEFAULT FALSE;
 	DECLARE record_value INT;
 
-  SET @drug_ids := (SELECT GROUP_CONCAT(DISTINCT(drug_id)
-    ORDER BY drug_id ASC) FROM drug WHERE concept_id IN(
-    SELECT concept_id FROM concept_name WHERE name IN('Isoniazid')));
-
   SET record_value = (SELECT o.patient_id FROM drug_order d
       INNER JOIN orders o ON o.order_id = d.order_id
-      WHERE d.drug_inventory_id IN(@drug_ids) AND d.quantity > 0
+      WHERE d.drug_inventory_id IN(
+        SELECT GROUP_CONCAT(DISTINCT(drug_id)
+        ORDER BY drug_id ASC) FROM drug WHERE 
+        concept_id IN(SELECT concept_id FROM concept_name WHERE name IN('Isoniazid'))
+      ) AND d.quantity > 0
       AND o.start_date = (SELECT MAX(start_date) FROM orders t WHERE t.patient_id = o.patient_id
       AND t.start_date BETWEEN DATE_FORMAT(DATE(my_start_date), '%Y-%m-%d 00:00:00')
       AND DATE_FORMAT(DATE(my_end_date), '%Y-%m-%d 23:59:59')
