@@ -622,6 +622,7 @@ DECLARE set_died_concept_id INT;
 DECLARE set_timestamp DATETIME;
 DECLARE dispensed_quantity INT;
 
+SET set_timestamp = TIMESTAMP(CONCAT(DATE(visit_date), ' ', '23:59:59')); 
 SET set_program_id = (SELECT program_id FROM program WHERE name ="HIV PROGRAM" LIMIT 1);
 
 SET set_patient_state = (SELECT state FROM `patient_state` INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id AND p.program_id = set_program_id WHERE (patient_state.voided = 0 AND p.voided = 0 AND p.program_id = program_id AND DATE(start_date) <= visit_date AND p.patient_id = patient_id) AND (patient_state.voided = 0) ORDER BY start_date DESC, patient_state.patient_state_id DESC, patient_state.date_created DESC LIMIT 1);
@@ -1447,7 +1448,7 @@ BEGIN
   DECLARE max_obs_datetime DATETIME;
   DECLARE regimen_cat VARCHAR(10) DEFAULT 'N/A';
 
-  SET max_obs_datetime = (SELECT MAX(start_date) FROM orders o INNER JOIN obs ON obs.order_id = o.order_id INNER JOIN drug_order od ON od.order_id = o.order_id AND od.drug_inventory_id IN(SELECT * FROM arv_drug) AND obs.voided = 0 AND o.voided = 0 AND DATE(obs_datetime) <= DATE(my_date) WHERE obs.person_id = my_patient_id AND od.quantity > 0);
+  SET max_obs_datetime = (SELECT MAX(start_date) FROM orders o INNER JOIN drug_order od ON od.order_id = o.order_id AND od.drug_inventory_id IN(SELECT * FROM arv_drug) AND o.voided = 0 AND DATE(o.start_date) <= DATE(my_date) WHERE o.patient_id = my_patient_id AND od.quantity > 0);
 
   SET @drug_ids := (SELECT GROUP_CONCAT(DISTINCT(d.drug_inventory_id) ORDER BY d.drug_inventory_id ASC) FROM drug_order d INNER JOIN arv_drug ad ON d.drug_inventory_id = ad.drug_id INNER  JOIN orders o ON d.order_id = o.order_id AND d.quantity > 0 INNER JOIN encounter e ON e.encounter_id = o.encounter_id AND e.voided = 0 AND e.encounter_type = 25 WHERE o.voided = 0 AND date(o.start_date) = DATE(max_obs_datetime) AND e.patient_id = my_patient_id order by ad.drug_id ASC);
 
