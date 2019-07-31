@@ -9,6 +9,8 @@ module ARTService
         @start_date = start_date
         @end_date = end_date
         @rebuild = rebuild
+        @set_given_ipt = {}
+        @set_screened_for_tb = {}
       end
 
       def find_report
@@ -28,9 +30,7 @@ module ARTService
           'CREATE TABLE IF NOT EXISTS temp_disaggregated (
              patient_id INTEGER PRIMARY KEY,
              age_group VARCHAR(20),
-             maternal_status VARCHAR(10),
-             given_ipt INT(1),
-             screened_for_tb INT(1)
+             maternal_status VARCHAR(10)
           ) ENGINE=MEMORY;'
         )
 
@@ -165,41 +165,6 @@ EOF
         date_range = [quarter_beginning, quarter_ending]
       end
 
-      def screened_for_tb(my_patient_id, age_group, start_date, end_date)
-        data = ActiveRecord::Base.connection.select_one <<EOF
-        SELECT patient_screened_for_tb(#{my_patient_id}, 
-          '#{start_date.to_date}', '#{end_date.to_date}') AS screened;
-EOF
-
-        screened = data['screened'].to_i
-
-        ActiveRecord::Base.connection.execute <<EOF
-        UPDATE temp_disaggregated SET screened_for_tb =  #{screened}, 
-        age_group = '#{age_group}'
-        WHERE patient_id = #{my_patient_id};
-EOF
-
-        return screened
-      end
-
-      def given_ipt(my_patient_id, age_group, start_date, end_date)
-        
-        data = ActiveRecord::Base.connection.select_one <<EOF
-        SELECT patient_given_ipt(#{my_patient_id}, 
-          '#{start_date.to_date}', '#{end_date.to_date}') AS given;
-EOF
-
-        given = data['given'].to_i
-
-        ActiveRecord::Base.connection.execute <<EOF
-        UPDATE temp_disaggregated SET given_ipt =  #{given} ,
-        age_group = '#{age_group}'
-        WHERE patient_id = #{my_patient_id};
-EOF
-      
-        return given
-      end
-
       def get_numbers(data, age_group, start_date, end_date, outcomes)
         patient_id = data['patient_id'].to_i
         tx_new = 0
@@ -224,8 +189,8 @@ EOF
         end
 
         if outcome == 'On antiretrovirals'
-          tx_screened_for_tb = screened_for_tb(patient_id, age_group, date_enrolled, end_date)
-          tx_given_ipt = given_ipt(patient_id, age_group, date_enrolled, end_date)
+          tx_screened_for_tb = (@set_screened_for_tb[patient_id] == true ? 1 : 0)
+          tx_given_ipt = (@set_given_ipt[patient_id] == true ? 1 : 0)
         end
 
         return [tx_new, tx_curr, tx_given_ipt, tx_screened_for_tb]
@@ -284,6 +249,8 @@ EOF
 
         end
 
+        set_given_ipt(results)
+        set_screened_for_tb(results)
         return results
         
       end
@@ -610,7 +577,84 @@ EOF
         end
 
       end
+
+      def set_given_ipt(data)
+        clients_ids = []
+
+        (data || []).each do |pat|
+          patient_id = pat['patient_id'].to_i
+          outcome = pat['outcome']
+
+          next unless outcome == 'On antiretrovirals'
+          clients_ids << patient_id
+        end
+
+        return if clients_ids.blank?
       
+        return if clients_ids.blank?
+        data = ActiveRecord::Base.connection.select_all <<EOF
+        SELECT o.patient_id FROM drug_order d
+      INNER JOIN orders o ON o.order_id = d.order_id
+      WHERE o.patient_id IN(#{clients_ids.join(',')})
+      AND d.drug_inventory_id IN(
+        SELECT GROUP_CONCAT(DISTINCT(drug_id)
+        ORDER BY drug_id ASC) FROM drug WHERE
+        concept_id IN(SELECT concept_id FROM concept_name WHERE name IN('Isoniazid'))
+      ) AND d.quantity > 0 
+      AND o.start_date = (SELECT MAX(start_date) FROM orders t WHERE t.patient_id = o.patient_id
+        AND t.start_date BETWEEN DATE_FORMAT(DATE('1900-01-01'), '%Y-%m-%d 00:00:00')
+        AND DATE_FORMAT(DATE('#{@end_date.to_date}'), '%Y-%m-%d 23:59:59')
+      ) GROUP BY o.patient_id
+EOF
+
+        (data || []).each do |s|
+          @set_given_ipt[s['patient_id'].to_i] = true
+        end
+
+
+      end
+
+      def set_screened_for_tb(data)
+        clients_ids = []
+
+        (data || []).each do |pat|
+          patient_id = pat['patient_id'].to_i
+          outcome = pat['outcome']
+
+          next unless outcome == 'On antiretrovirals'
+          clients_ids << patient_id
+        end
+
+        return if clients_ids.blank?
+        data = ActiveRecord::Base.connection.select_all <<EOF
+        SELECT ob.person_id FROM obs ob
+        INNER JOIN encounter e
+        ON e.patient_id = ob.person_id
+        WHERE e.patient_id IN(#{clients_ids.join(',')})
+        AND ob.concept_id IN(
+          SELECT GROUP_CONCAT(DISTINCT(concept_id)
+          ORDER BY concept_id ASC) FROM concept_name
+          WHERE name IN('TB treatment','TB status') AND voided = 0
+        ) AND ob.voided = 0
+        AND ob.obs_datetime = (
+        SELECT MAX(t.obs_datetime) FROM obs t WHERE
+        t.obs_datetime BETWEEN DATE_FORMAT(DATE('1900-01-01'), '%Y-%m-%d 00:00:00')
+        AND DATE_FORMAT(DATE('#{@end_date.to_date}'), '%Y-%m-%d 23:59:59')
+        AND t.person_id = ob.person_id 
+        AND t.concept_id IN(
+          SELECT GROUP_CONCAT(DISTINCT(concept_id)
+          ORDER BY concept_id ASC) FROM concept_name
+          WHERE name IN('TB treatment','TB status') AND voided = 0))
+        GROUP BY ob.person_id;
+EOF
+
+        (data || []).each do |s|
+          @set_screened_for_tb[s['person_id'].to_i] = true
+        end
+
+      end
+     
+
     end
   end
 
