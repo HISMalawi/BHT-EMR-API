@@ -39,7 +39,7 @@ module TBQueries
 
     def defaulted (ids)
       states = @relation.where(state: STATES['DEFAULTED'],
-                               patient_program: { patient_id: patients },
+                               patient_program: { patient_id: ids },
                                end_date: nil)
 
       return [] if states.empty?
@@ -49,7 +49,7 @@ module TBQueries
 
     def treatment_failed (ids, start_date, end_date)
       states = @relation.where(state: STATES['TREATMENT_FAILED'],
-                               patient_program: { patient_id: patients },
+                               patient_program: { patient_id: ids },
                                'patient_state.date_created': start_date..end_date)
 
       return [] if states.empty?

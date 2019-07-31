@@ -60,6 +60,18 @@ module TBQueries
                                                   obs: { concept_id: concept.concept_id, value_coded: value.concept_id })
       end
 
+      def with_obs_before (encounter, name, answer, start_date)
+        type = encounter_type(encounter)
+        concept = concept(name)
+        value = concept(answer)
+        program = program('TB Program')
+
+        joins(:encounters => :observations).where(encounter: { encounter_type: type.encounter_type_id,
+                                                               program_id: program.program_id },
+                                                  obs: { concept_id: concept.concept_id, value_coded: value.concept_id })\
+                                           .where('encounter.encounter_datetime < ?', start_date)
+      end
+
       def with_obs_ignore_value (encounter, name, start_date, end_date)
         type = encounter_type(encounter)
         concept = concept(name)
