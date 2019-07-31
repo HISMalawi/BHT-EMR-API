@@ -81,7 +81,12 @@ EOF
           next unless outcome_status['outcome'] == 'On antiretrovirals'
           
           medications = arv_dispensention_data(patient_id)
-          visit_date = medications.first['start_date'].to_date
+          
+          begin
+            visit_date = medications.first['start_date'].to_date
+          rescue
+            next
+          end
           
           curr_reg = ActiveRecord::Base.connection.select_one <<EOF
           SELECT patient_current_regimen(#{patient_id}, '#{(@end_date).to_date}') current_regimen
@@ -135,7 +140,12 @@ EOF
 EOF
 
           next unless outcome_status['outcome'] == 'On antiretrovirals'
-          visit_date = medications.first['start_date'].to_date
+          
+          begin
+            visit_date = medications.first['start_date'].to_date
+          rescue
+            next
+          end
 
           prev_reg = ActiveRecord::Base.connection.select_one <<EOF
           SELECT patient_current_regimen(#{patient_id}, '#{(visit_date - 1.day).to_date}') previous_regimen
