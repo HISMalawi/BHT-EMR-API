@@ -61,7 +61,7 @@ module ARTService
         end
       end
 
-      label.draw_text("TI:    #{transfer_in ||= 'No'}",25,last_line+=30,0,3,1,1,false)
+      label.draw_text("TI:    #{transfer_in}",25,last_line+=30,0,3,1,1,false)
       label.draw_text("FUP:   (#{agrees_to_followup})",25,last_line+=30,0,3,1,1,false)
 
       label2 = ZebraPrinter::StandardLabel.new
@@ -244,7 +244,13 @@ module ARTService
     end
 
     def transfer_in
-      observation_present?('Has transfer letter') ? 'Yes' : 'No'
+      has_transfer_letter = observation_present?('Has transfer letter')
+      return 'Yes' if has_transfer_letter
+
+      date_art_last_taken = recent_observation('Date ART last taken')
+      return 'Yes' if date_art_last_taken&.value_datetime
+
+      'No'
     end
 
     def guardian
@@ -352,11 +358,11 @@ module ARTService
       concept_id = ConceptName.find_by_name(concept_name).concept_id
       program_id = Program.find_by_name('HIV Program').id
 
-      obs_list = Observation.joins(:encounter)\
-                            .merge(Encounter.where(program_id: program_id))
-                            .where(person_id: patient.id, concept_id: concept_id)
-      obs_list.where(**extra_filters) unless extra_filters.empty?
-      obs_list.order(:obs_datetime).last
+      Observation.joins(:encounter)
+                 .merge(Encounter.where(program_id: program_id))
+                 .where(person_id: patient.id, concept_id: concept_id, **extra_filters)
+                 .order(:obs_datetime)
+                 .last
     end
 
     # Checks whether the most recent observation of the given concept type
