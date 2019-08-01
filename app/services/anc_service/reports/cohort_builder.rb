@@ -37,7 +37,7 @@ module ANCService
 
           # Monthly date ranges
           @m_start_date = start_date
-          @m_end_date = end_date
+          @m_end_date = @m_start_date.to_date.end_of_month
 
           # Cohort date ranges
           @c_start_date = (start_date.to_date - COHORT_LENGTH)
