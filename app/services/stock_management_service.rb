@@ -192,6 +192,23 @@ class StockManagementService
     stock_items_update_method(activity).call(items, quantity, date)
   end
 
+  DAYS_IN_MONTH = 30
+
+  # Returns stats for time to drug depletion
+  def drug_consumption(drug_id)
+    consumption_rate = drug_consumption_rate(drug_id)
+    stock_level = drug_stock_level(drug_id)
+
+    stock_level_in_days = consumption_rate.zero? ? DAYS_IN_MONTH : stock_level / consumption_rate
+    stock_level_in_months = stock_level_in_days / DAYS_IN_MONTH
+
+    {
+      stock_level_in_months: stock_level_in_months,
+      stock_level: stock_level,
+      consumption_rate: drug_consumption_rate(drug_id)
+    }
+  end
+
   private
 
   STOCK_UPDATE_METHODS = {
@@ -292,5 +309,28 @@ class StockManagementService
   def configured_stock_maintenance_strategy
     property = GlobalProperty.find_by_property('art.stock.maintenance_strategy')
     property&.property_value&.strip&.upcase || FEFO
+  end
+
+  # Returns the total amount of drug currently in stock
+  def drug_stock_level(drug_id, as_of_date: nil)
+    as_of_date ||= Date.today
+    PharmacyBatchItem.where('drug_id = ? AND expiry_date >= ?', drug_id, as_of_date)\
+                     .sum(:current_quantity)
+  end
+
+  DRUG_CONSUMPTION_RATE_INTERVAL = 90 # Period in days to account for in drug consumption rate
+
+  # Returns rate at which drug is being used up.
+  def drug_consumption_rate(drug_id, as_of_date: nil)
+    # TODO: Implement some sort of caching for this method
+    as_of_date ||= DRUG_CONSUMPTION_RATE_INTERVAL.days.ago.to_date
+
+    total_drugs_consumed = Pharmacy.joins(:item)
+                                   .where('(pharmacy_obs.drug_id = :drug_id OR pharmacy_batch_items.drug_id = :drug_id)
+                                           AND pharmacy_encounter_type = :event_type AND encounter_date >= :date',
+                                          drug_id: drug_id, event_type: STOCK_DEBIT, date: as_of_date)\
+                                   .sum(:value_numeric)
+
+    (total_drugs_consumed || 0) / (Date.today - as_of_date).to_i
   end
 end
