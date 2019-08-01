@@ -40,13 +40,13 @@ module ANCService
           @m_end_date = @m_start_date.to_date.end_of_month
 
           # Cohort date ranges
-          @c_start_date = (start_date.to_date - COHORT_LENGTH)
-          @c_end_date = (end_date.to_date - COHORT_LENGTH)
+          @c_start_date = (@m_start_date.to_date - COHORT_LENGTH)
+          @c_end_date = (@m_end_date.to_date - COHORT_LENGTH)
 
-          @today = end_date.to_date
+          @today = @m_end_date.to_date
 
-          @start_date = "#{start_date} 00:00:00"
-          @end_date = "#{end_date} 23:59:59"
+          @start_date = "#{@m_start_date} 00:00:00"
+          @end_date = "#{@m_end_date} 23:59:59"
 
           @m_pregnant_range = (((@m_end_date.to_time - @m_start_date.to_time).round/(3600*24)) + 1).days
           @c_pregnant_range = 6.months
