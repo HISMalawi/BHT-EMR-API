@@ -56,6 +56,7 @@ class VMMCService::WorkflowEngine
   SUMMARY_ASSESSMENT = 'SUMMARY ASSESSMENT'
   CIRCUMCISION = 'CIRCUMCISION'
   POST_OP_REVIEW = 'POST-OP REVIEW'
+  TREATMENT = 'TREATMENT'
   APPOINTMENT = 'APPOINTMENT'
   FOLLOW_UP = 'FOLLOW UP'
 
@@ -69,7 +70,8 @@ class VMMCService::WorkflowEngine
     GENITAL_EXAMINATION => SUMMARY_ASSESSMENT,
     SUMMARY_ASSESSMENT => CIRCUMCISION,
     CIRCUMCISION => POST_OP_REVIEW,
-    POST_OP_REVIEW => APPOINTMENT,
+    POST_OP_REVIEW => TREATMENT,
+    TREATMENT => APPOINTMENT,
     APPOINTMENT => FOLLOW_UP,
     FOLLOW_UP => END_STATE
   }.freeze
@@ -84,6 +86,7 @@ class VMMCService::WorkflowEngine
     SUMMARY_ASSESSMENT => %i[patient_gives_consent?],
     CIRCUMCISION => %i[patient_gives_consent?],
     POST_OP_REVIEW => %i[patient_gives_consent?],
+    TREATMENT => %i[patient_gives_consent? meds_given?],
     APPOINTMENT => %i[patient_gives_consent? patient_ready_for_discharge?],
     FOLLOW_UP => %i[patient_had_post_op_review?]
   }.freeze
@@ -109,6 +112,8 @@ class VMMCService::WorkflowEngine
         CIRCUMCISION
       when /post-op review/i
         POST_OP_REVIEW
+      when /treatment/i
+        TREATMENT
       when /Appointment/i
         APPOINTMENT
       when /follow up/i
@@ -127,7 +132,7 @@ class VMMCService::WorkflowEngine
 
   def encounter_exists?(type)
     Encounter.where(type: type, patient: @patient, program_id: vmmc_program.program_id)\
-             .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
+             .where('encounter_datetime <= ?', @date.strftime("%Y-%m-%d 23:59:59"))\
              .exists?
   end
 
@@ -187,6 +192,17 @@ class VMMCService::WorkflowEngine
       SUMMARY_ASSESSMENT, @patient.patient_id)
 
     encounter.blank?
+  end
+
+  def meds_given?
+    meds_given_concept_id = ConceptName.find_by_name('Meds given?').concept_id
+    yes_concept_id = ConceptName.find_by_name('Yes').concept_id
+
+    Observation.joins(:encounter)\
+               .where(concept_id: meds_given_concept_id,
+                      value_coded: yes_concept_id)\
+               .merge(Encounter.where(program: vmmc_program))
+               .exists?
   end
 
   def patient_ready_for_discharge?
