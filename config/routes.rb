@@ -169,6 +169,7 @@ Rails.application.routes.draw do
           post '/dispose', to: 'items#dispose'
         end
         get 'earliest_expiring_item', to: 'items#earliest_expiring'
+        get 'drug_consumption', to: 'drugs#drug_consumption'
       end
 
       namespace :types do
