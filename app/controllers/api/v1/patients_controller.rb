@@ -162,6 +162,14 @@ class Api::V1::PatientsController < ApplicationController
     render json: service.patient_last_drugs_received(patient, date, program_id: program_id)
   end
 
+  def drugs_orders_by_program
+    cut_off_date = params[:date]&.to_date || Date.today
+    program_id = params[:program_id]
+    drugs_orders = paginate(service.drugs_orders_by_program(patient, cut_off_date, program_id: program_id))
+
+    render json: drugs_orders
+  end
+
   # Returns all lab orders made since a given date
   def recent_lab_orders
     patient_id, program_id = params.require([:patient_id, :program_id])
