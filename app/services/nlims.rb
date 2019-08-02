@@ -120,34 +120,37 @@ class NLims
     patient_name = patient.person.names.first
     user_name = user.person.names.first
 
-    response = post 'create_order', district: 'Lilongwe', #health facility district
-                                     health_facility_name: sending_facility, #healh facility name
-                                     first_name: patient_name.given_name,
-                                     last_name: patient_name.family_name,
-                                     middle_name: '',
-                                     date_of_birth: patient.person.birthdate,
-                                     gender: patient.person.gender,
-                                     national_patient_id: patient.national_id,
-                                     phone_number: '',
-                                     who_order_test_last_name: user_name.family_name,
-                                     who_order_test_first_name: user_name.given_name,
-                                     who_order_test_id: user.id,
-                                     order_location: 'TB',
-                                     date_sample_drawn: date,
-                                     tests: test_type,
-                                     sample_priority: reason,
-                                     art_start_date: 'not_applicable', #not applicable
-                                     sample_type: sample_type, #Added to satify for TB
-                                     sample_status: sample_status, #Added to satify for TB
-                                     target_lab: target_lab, #Added to satify for TB
-                                     recommended_examination: recommended_examination, #Added to satify for TB
-                                     treatment_history: treatment_history, #Added to satify for TB
-                                     sample_date: sample_date, #Mofified 'Add an actual one' Removed this
-                                     sending_facility: sending_facility,
-                                     time_line: time_line,
-                                     requesting_clinician: requesting_clinician
+    targeted_lab = GlobalProperty.find_by_property('target.lab')&.property_value
+    raise InvalidParameterError, 'Global property `target.lab` is not set' unless target_lab
 
-    response
+    response = post 'create_order', district: 'Lilongwe', #health facility district
+          health_facility_name: sending_facility, #healh facility name
+          first_name: patient_name.given_name,
+          last_name: patient_name.family_name,
+          middle_name: '',
+          date_of_birth: patient.person.birthdate,
+          gender: patient.person.gender,
+          national_patient_id: patient.national_id,
+          phone_number: '',
+          who_order_test_last_name: user_name.family_name,
+          who_order_test_first_name: user_name.given_name,
+          who_order_test_id: user.id,
+          order_location: 'TB',
+          date_sample_drawn: date,
+          tests: test_type,
+          sample_priority: reason,
+          art_start_date: 'not_applicable', #not applicable
+          sample_type: sample_type, #Added to satify for TB
+          sample_status: sample_status, #Added to satify for TB
+          target_lab: targeted_lab, #Added to satify for TB
+          recommended_examination: recommended_examination, #Added to satify for TB
+          treatment_history: treatment_history, #Added to satify for TB
+          sample_date: sample_date, #Mofified 'Add an actual one' Removed this
+          sending_facility: sending_facility,
+          time_line: time_line,
+          requesting_clinician: requesting_clinician
+
+          response
   end
 
   def patient_results(accession_number)
