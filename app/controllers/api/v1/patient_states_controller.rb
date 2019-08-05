@@ -14,7 +14,8 @@ class Api::V1::PatientStatesController < ApplicationController
 
   def destroy
     state = PatientState.find(params[:id])
-    state.void("Voided by #{User.current.username}")
+    reason = params[:reason] || "Voided by #{User.current.username}"
+    state.void(reason)
     render status: :no_content
   end
   # TODO: Implement show, and maybe update...

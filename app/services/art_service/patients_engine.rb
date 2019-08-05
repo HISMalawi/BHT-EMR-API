@@ -143,6 +143,10 @@ module ARTService
       service.side_effects
     end
 
+    def saved_encounters(patient, date)
+      return []
+    end
+
     private
 
     NPID_TYPE = 'National id'

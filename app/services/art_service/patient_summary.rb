@@ -97,14 +97,9 @@ module ARTService
 
       obs = obs_list[0]
 
-      reason_concept = Concept.find_by_concept_id(obs.value_coded.to_i)
-      return 'N/A' unless reason_concept
-
-      reason_concept\
-        .concept_names\
-        .where(concept_name_type: 'FULLY_SPECIFIED')\
-        .first\
-        .name
+      reason_concept = ConceptName.unscoped.find_by(concept_id: obs.value_coded.to_i,
+                                                    concept_name_type: 'FULLY_SPECIFIED')
+      reason_concept&.name || 'N/A'
     end
 
     def art_period

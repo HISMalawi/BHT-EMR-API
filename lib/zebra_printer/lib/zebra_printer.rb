@@ -181,7 +181,7 @@ module ZebraPrinter #:nodoc:
     #  +vertical_multiplier+ expand the text vertically (valid values 1-9)
     #  +reverse+ true/false, whether the text should be reversed
     def draw_text(data,x,y,r = 0,font_selection = 1,horizontal_multiplier = 1,vertical_multiplier = 1,reverse = false)
-      data = data.gsub("'", "\\\\'")
+      data = data.gsub("'", "\\\\'") rescue data
       @output << "A#{x},#{y},#{r},#{font_selection},#{horizontal_multiplier},#{vertical_multiplier},#{reverse ? 'R' : 'N'},\"#{data}\"\n"          
     end    
     

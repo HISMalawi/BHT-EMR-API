@@ -4,7 +4,7 @@
 	"description": "<style>\n\tbody > #page-content-wrapper {\n\t\tmax-width: 1024px;\n\t\tmargin: 5%;\n\t}\n\t\n\tbody > #page-content-wrapper h1,\n\tbody > #page-content-wrapper h2,\n\tbody > #page-content-wrapper h3,\n\tbody > #page-content-wrapper h4,\n\tbody > #page-content-wrapper h5,\n\tbody > #page-content-wrapper h6 {\n\t\tcolor: #FFAA00;\n\t\tfont-weight: bold;\n\t}\n</style>\n\nThe BHT EMR API is a\n[RESTful](https://en.wikipedia.org/wiki/Representational_state_transfer)\nAPI providing an abstraction layer to a customised\n[OpenMRS 1.7](https://openmrs.org/) database and application engine\nfor EMRs ... FIXME.\n\n## Authentication\n\nThe API makes use of API keys for authentication. Almost all requests\nto the API must be accompanied by an API key. API keys are generated\nby logging into the API [see Logging in]. Keys are valid for 24 hours\nand a user can only have one valid key at a given point in time.\nGenerating a new key invalidates any existing key. \n\n## Request/Response Structure\n\nThe API primarily consumes and spits out JSON. It makes use of a number\nof HTTP verbs for manipulating and access  resources. All POST and PUT requests\nmust be accompanied by a JSON payload and a `Content-type=application/json`\nheader. Below is a summary of the verbs the API recognises.\n\n<table>\n  <thead>\n    <tr>\n      <th>Verb</th>\n      <th>Interpretation</th>\n      <th>Expected Response Status</th>\n    </tr>\n  </thead>\n\n  <tbody>\n    <tr>\n      <td>GET</td>\n      <td>Retrieve some resource.<br/>\n          eg. GET /api/v1/patients to retrieve patients\n      </td>\n      <td>200 - Ok</td>\n    </tr>\n    <tr>\n        <td>POST</td>\n        <td>Create a resource.</td>\n        <td>201 - Created</td>\n    </tr>\n    <tr>\n        <td>PUT</td>\n        <td>Update a resource.</td>\n        <td>200 - Ok</td>\n    </tr>\n    <tr>\n        <td>DELETE</td>\n        <td>Destroy some resource.</td>\n        <td>204 - No Content</td>\n    </tr>\n  </tbody>\n</table>\n\nSuccessful requests get a response with a status code of either 200, 201,\nor 204. For 200 and 201 responses a response body is always available. The body is the object (or list of objects) that was being accessed.\n\nFailed requests are flagged by 4XX status codes. Errors in this range\ngenerally have a response body of the following structure:\n\n```json\n    {\n        \"errors\": [\n            \"Error message\",\n            \"Another error message\",\n            ...,\n            \"More error messages\"\n        ]\n    }\n```\n\nHowever a 400 error for POST and PUT requests come as:\n\n```json\n    {\n        \"errors\": {\n            \"field\": \"This field is required\"\n            ...\n            \"some_other_field\": \"This field too is required\"\n        }\n    }\n```\n\n### Response status codes\n\nBelow is a description the response codes the API returns:\n\n<table>\n  <thead>\n    <tr>\n      <th>Status Code</th>\n      <th>Status Text</th>\n      <th>Description</th>\n    </tr>\n  </thead>\n\n  <tbody>\n    <tr>\n      <td>200</td>\n      <td>Ok</td>\n      <td>Request was successful</td>\n    </tr>\n    <tr>\n        <td>201</td>\n        <td>Created</td>\n        <td>Resource has been created</td>\n    </tr>\n    <tr>\n        <td>204</td>\n        <td>No Content</td>\n        <td>Resource has been deleted</td>\n    </tr>\n    <tr>\n        <td>400</td>\n        <td>Bad Request</td>\n        <td>Received a malformed request from client</td>\n    </tr>\n    <tr>\n        <td>401</td>\n        <td>Unauthorized</td>\n        <td>A valid API key is required</td>\n    </tr>\n    <tr>\n        <td>403</td>\n        <td>Forbidden</td>\n        <td>Logged in user is not allowed to perform request</td>\n    </tr>\n    <tr>\n        <td>500</td>\n        <td>Internal Server Error</td>\n        <td>API is ill, only thing that can be done is contacting the\n            system administrator</td>\n    </tr>\n  </tbody>\n</table>\n\n## Pagination\n\nAll endpoints (except a few) that return a list of values are paginated.\nPagination by default limits results to 10 items.\n\nA number of parameters are provided that control the pagination. Following\nis a table describing them:\n\n<table>\n    <thead>\n        <tr>\n            <th>Parameter</th>\n            <th>Description</th>\n        </tr>\n    </thead>\n    <tbody>\n        <tr>\n            <td>page</td>\n            <td>Specifies the page to retrieve (defaults to 0). Pages start from 0.</td>\n        </tr>\n        <tr>\n            <td>page_size</td>\n            <td>Specifies number of results per page (defaults to 10).</td>\n        </tr>\n        <tr>\n            <td>paginate</td>\n            <td>Switches off pagination. Only `false` is accepted as a value, anything else       is ignored.</td>\n        </tr>\n    </tbody>\n</table>\n\n### Pagination examples\n\n```bash\n# Retrieve page 5 of 20 items per page\ncurl 'http://localhost/api/v1/observations?page=5&page_size=20'\n\n// Retrieve all items without paginating\ncurl 'http://localhost/api/v1/observations?pagination=false'\n```",
 	"auth": null,
 	"events": null,
-	"variables": null,
+	"variables": [],
 	"order": [
 		"23bb8b7b-3cb1-6071-feca-3a7e364604f1",
 		"d429aa6f-d505-972c-1944-4e67592f546a",
@@ -30,16 +30,144 @@
 		"e01bfa97-af04-4ef3-98df-a66874115d11",
 		"da3d4544-815e-4d45-abd5-b7f649ed68f3"
 	],
-	"folders_order": [],
-	"folders": [],
+	"folders_order": [
+		"a4f1f12d-26b9-4f12-9eb7-27ea67af805b",
+		"7180b759-b504-44b9-8763-f2e8624b9114"
+	],
+	"folders": [
+		{
+			"id": "7180b759-b504-44b9-8763-f2e8624b9114",
+			"name": "Search",
+			"description": "This section contains endpoints for searching various entities in the database.\nThese routes are meant to compliment the rudimentary search available for the\nvarious high level entities (eg /observations?encounter_id=query).",
+			"auth": null,
+			"events": null,
+			"collection": "666fd3ae-c41c-b4b3-e1a2-8e1f5b3572ff",
+			"folder": null,
+			"order": [
+				"7af664a7-b5bf-45f7-aa4c-38483337503f",
+				"bace4aa3-8a80-43f2-bb2f-2f6b5ebec68f"
+			],
+			"folders_order": []
+		},
+		{
+			"id": "a4f1f12d-26b9-4f12-9eb7-27ea67af805b",
+			"name": "Stock Management",
+			"description": "",
+			"auth": null,
+			"events": null,
+			"collection": "666fd3ae-c41c-b4b3-e1a2-8e1f5b3572ff",
+			"folder": null,
+			"order": [
+				"6c22b3e8-6c4e-4c40-af81-2c0f619a575b",
+				"97720100-6a3d-4996-bec9-4508d7e966e0",
+				"55507da6-02b1-4c75-b7bd-b38015f3274b",
+				"35e718e2-defc-4a2b-b2fa-cf742d0fd7aa",
+				"de46a070-eb95-4973-b8f9-62cbbf3da467",
+				"03ddcb89-80e9-481b-b021-06cf247af848",
+				"e5322114-28ac-4640-888b-a9d2b1356897",
+				"785c4a56-3da3-4f13-b8fc-3b58df65ea59",
+				"c1e09ef4-9628-47ec-a4f2-d773840db131"
+			],
+			"folders_order": []
+		}
+	],
 	"requests": [
+		{
+			"id": "03ddcb89-80e9-481b-b021-06cf247af848",
+			"name": "Retrieve batch by batch number",
+			"url": "http://localhost:3000/api/v1/pharmacy/batches/1234567890",
+			"description": "",
+			"data": null,
+			"dataMode": null,
+			"headerData": [
+				{
+					"key": "Authorization",
+					"value": "M9mEO1jNftvs",
+					"description": "",
+					"type": "text",
+					"enabled": true
+				}
+			],
+			"method": "GET",
+			"pathVariableData": [],
+			"queryParams": [],
+			"auth": null,
+			"events": null,
+			"folder": "a4f1f12d-26b9-4f12-9eb7-27ea67af805b",
+			"responses": [
+				{
+					"id": "474545d6-fbf8-405f-bb13-048bbeb5bdc6",
+					"name": "Retrieve batch by batch number",
+					"status": null,
+					"mime": null,
+					"language": "json",
+					"text": "{\n    \"id\": 2,\n    \"batch_number\": \"1234567890\",\n    \"creator\": 1,\n    \"date_created\": \"2019-05-17T09:11:03.000+02:00\",\n    \"date_changed\": null,\n    \"voided\": false,\n    \"voided_by\": null,\n    \"void_reason\": null,\n    \"date_voided\": null,\n    \"items\": [\n        {\n            \"id\": 9,\n            \"pharmacy_batch_id\": 2,\n            \"drug_id\": 901,\n            \"delivered_quantity\": 1000,\n            \"current_quantity\": 0,\n            \"delivery_date\": \"2019-05-09\",\n            \"expiry_date\": \"2020-12-31\",\n            \"creator\": 1,\n            \"date_created\": \"2019-05-17T09:11:03.000+02:00\",\n            \"date_changed\": \"2019-05-17T09:11:03.000+02:00\",\n            \"voided\": false,\n            \"voided_by\": null,\n            \"void_reason\": null,\n            \"date_voided\": null\n        }\n    ]\n}",
+					"responseCode": {
+						"code": 200,
+						"name": "OK"
+					},
+					"requestObject": {
+						"data": null,
+						"dataMode": null,
+						"headerData": [
+							{
+								"key": "Authorization",
+								"value": "M9mEO1jNftvs",
+								"description": "",
+								"type": "text",
+								"enabled": true
+							}
+						],
+						"method": "GET",
+						"pathVariableData": [],
+						"queryParams": [],
+						"url": "http://localhost:3000/api/v1/pharmacy/batches/1234567890"
+					},
+					"headers": [
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "ETag",
+							"value": "W/\"9247348e0b615145b43e58086788fa2c\""
+						},
+						{
+							"key": "Cache-Control",
+							"value": "max-age=0, private, must-revalidate"
+						},
+						{
+							"key": "X-Request-Id",
+							"value": "c075f4a2-d481-44c1-a607-a3306ad571d8"
+						},
+						{
+							"key": "X-Runtime",
+							"value": "0.024095"
+						},
+						{
+							"key": "Vary",
+							"value": "Origin"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						}
+					],
+					"cookies": null,
+					"request": "03ddcb89-80e9-481b-b021-06cf247af848",
+					"collection": "666fd3ae-c41c-b4b3-e1a2-8e1f5b3572ff"
+				}
+			],
+			"headers": "Authorization: M9mEO1jNftvs\n",
+			"pathVariables": {}
+		},
 		{
 			"id": "03ee219c-798d-7545-33a6-d2c14d730ee9",
 			"name": "Retrieve/search  for drugs",
 			"url": "http://127.0.0.1:3000/api/v1/drugs?name=F",
 			"description": "http://127.0.0.1:3000/api/v1/drugs?name=F",
-			"data": [],
-			"dataMode": "raw",
+			"data": null,
+			"dataMode": null,
 			"headerData": [
 				{
 					"key": "Authorization",
@@ -65,7 +193,6 @@
 			"auth": null,
 			"events": null,
 			"folder": null,
-			"rawModeData": "{\n\t\"person_id\": 63519\n}",
 			"headers": "Authorization: wUO8OFXAoZZT\nContent-Type: application/json\n",
 			"pathVariables": {}
 		},
@@ -92,7 +219,7 @@
 			"pathVariableData": [],
 			"queryParams": [],
 			"auth": null,
-			"events": [],
+			"events": null,
 			"folder": null,
 			"responses": [
 				{
@@ -187,8 +314,8 @@
 			"name": "Retrieve programs",
 			"url": "http://127.0.0.1:3000/api/v1/programs?page_size=4",
 			"description": "Endpoint provides access to available programs. Specific programs can be searched for specifying the `name` parameter.",
-			"data": [],
-			"dataMode": "raw",
+			"data": null,
+			"dataMode": null,
 			"headerData": [
 				{
 					"key": "Authorization",
@@ -257,9 +384,9 @@
 							}
 						],
 						"headers": "Authorization: 42YGdA9CGoID\nContent-Type: application/json\n",
-						"data": "{\n\t\"given_name\": \"Foobar\",\n\t\"middle_name\": \"J.\",\n\t\"family_name\": \"Random\",\n\t\"gender\": \"F\",\n\t\"birthdate\": \"2000-01-01\",\n\t\"birthdate_estimated\": false,\n\t\"home_district\": \"Blantyre\",\n\t\"home_village\": \"Chatha\",\n\t\"home_traditional_authority\": \"Chatha\",\n\t\"current_district\": \"Lilongwe\",\n\t\"current_village\": \"Area 15\",\n\t\"current_traditional_authority\": \"Area 15\"\n}",
+						"data": null,
 						"method": "GET",
-						"dataMode": "raw"
+						"dataMode": null
 					},
 					"headers": [
 						{
@@ -350,9 +477,9 @@
 							}
 						],
 						"headers": "Authorization: 42YGdA9CGoID\nContent-Type: application/json\n",
-						"data": "{\n\t\"given_name\": \"Foobar\",\n\t\"middle_name\": \"J.\",\n\t\"family_name\": \"Random\",\n\t\"gender\": \"F\",\n\t\"birthdate\": \"2000-01-01\",\n\t\"birthdate_estimated\": false,\n\t\"home_district\": \"Blantyre\",\n\t\"home_village\": \"Chatha\",\n\t\"home_traditional_authority\": \"Chatha\",\n\t\"current_district\": \"Lilongwe\",\n\t\"current_village\": \"Area 15\",\n\t\"current_traditional_authority\": \"Area 15\"\n}",
+						"data": null,
 						"method": "GET",
-						"dataMode": "raw"
+						"dataMode": null
 					},
 					"headers": [
 						{
@@ -403,7 +530,6 @@
 					"collection": "666fd3ae-c41c-b4b3-e1a2-8e1f5b3572ff"
 				}
 			],
-			"rawModeData": "{\n\t\"given_name\": \"Foobar\",\n\t\"middle_name\": \"J.\",\n\t\"family_name\": \"Random\",\n\t\"gender\": \"F\",\n\t\"birthdate\": \"2000-01-01\",\n\t\"birthdate_estimated\": false,\n\t\"home_district\": \"Blantyre\",\n\t\"home_village\": \"Chatha\",\n\t\"home_traditional_authority\": \"Chatha\",\n\t\"current_district\": \"Lilongwe\",\n\t\"current_village\": \"Area 15\",\n\t\"current_traditional_authority\": \"Area 15\"\n}",
 			"headers": "Authorization: 42YGdA9CGoID\nContent-Type: application/json\n",
 			"pathVariables": {}
 		},
@@ -412,8 +538,8 @@
 			"name": "Retrieve encounters",
 			"url": "localhost:3000/api/v1/encounters?page=0&page_size=5&encounter_type_id=6",
 			"description": "localhost:3000/api/v1/encounters?page=0&page_size=5&encounter_type_id=6",
-			"data": [],
-			"dataMode": "params",
+			"data": null,
+			"dataMode": null,
 			"headerData": [
 				{
 					"key": "Authorization",
@@ -487,7 +613,7 @@
 						"headers": "Authorization: lQUitqOlCOo6\nAccept: application/json\n",
 						"data": null,
 						"method": "GET",
-						"dataMode": "params"
+						"dataMode": null
 					},
 					"headers": [
 						{
@@ -891,6 +1017,251 @@
 			"pathVariables": {}
 		},
 		{
+			"id": "35e718e2-defc-4a2b-b2fa-cf742d0fd7aa",
+			"name": "Retrieve all pharmacy batch items",
+			"url": "http://localhost:3000/api/v1/pharmacy/items?drug_id=901",
+			"description": "",
+			"data": null,
+			"dataMode": null,
+			"headerData": [
+				{
+					"key": "Authorization",
+					"value": "M9mEO1jNftvs",
+					"description": "",
+					"type": "text",
+					"enabled": true
+				}
+			],
+			"method": "GET",
+			"pathVariableData": [],
+			"queryParams": [
+				{
+					"key": "drug_id",
+					"value": "901",
+					"equals": true,
+					"description": "",
+					"enabled": true
+				}
+			],
+			"auth": null,
+			"events": null,
+			"folder": "a4f1f12d-26b9-4f12-9eb7-27ea67af805b",
+			"responses": [
+				{
+					"id": "12b7b296-4ac8-4736-87bf-8de256e309ef",
+					"name": "Retrieve all pharmacy batch items",
+					"status": null,
+					"mime": null,
+					"language": "json",
+					"text": "[\n    {\n        \"id\": 10,\n        \"pharmacy_batch_id\": 2,\n        \"drug_id\": 901,\n        \"delivered_quantity\": 500,\n        \"current_quantity\": 0,\n        \"delivery_date\": \"2019-05-09\",\n        \"expiry_date\": \"2020-12-31\",\n        \"creator\": 1,\n        \"date_created\": \"2019-05-17T09:11:58.000+02:00\",\n        \"date_changed\": \"2019-05-17T09:11:58.000+02:00\",\n        \"voided\": false,\n        \"voided_by\": null,\n        \"void_reason\": null,\n        \"date_voided\": null\n    },\n    {\n        \"id\": 9,\n        \"pharmacy_batch_id\": 2,\n        \"drug_id\": 901,\n        \"delivered_quantity\": 1000,\n        \"current_quantity\": 0,\n        \"delivery_date\": \"2019-05-09\",\n        \"expiry_date\": \"2020-12-31\",\n        \"creator\": 1,\n        \"date_created\": \"2019-05-17T09:11:03.000+02:00\",\n        \"date_changed\": \"2019-05-17T09:11:03.000+02:00\",\n        \"voided\": false,\n        \"voided_by\": null,\n        \"void_reason\": null,\n        \"date_voided\": null\n    }\n]",
+					"responseCode": {
+						"code": 200,
+						"name": "OK"
+					},
+					"requestObject": {
+						"data": null,
+						"dataMode": null,
+						"headerData": [
+							{
+								"key": "Authorization",
+								"value": "M9mEO1jNftvs",
+								"description": "",
+								"type": "text",
+								"enabled": true
+							}
+						],
+						"method": "GET",
+						"pathVariableData": [],
+						"queryParams": [
+							{
+								"key": "drug_id",
+								"value": "901",
+								"equals": true,
+								"description": "",
+								"enabled": true
+							}
+						],
+						"url": "http://localhost:3000/api/v1/pharmacy/items?drug_id=901"
+					},
+					"headers": [
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "ETag",
+							"value": "W/\"6fff4b375c99204f2bc224f2c26661a5\""
+						},
+						{
+							"key": "Cache-Control",
+							"value": "max-age=0, private, must-revalidate"
+						},
+						{
+							"key": "X-Request-Id",
+							"value": "db397909-6107-4f7b-89f0-69cfdb8ace9b"
+						},
+						{
+							"key": "X-Runtime",
+							"value": "0.042295"
+						},
+						{
+							"key": "Vary",
+							"value": "Origin"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						}
+					],
+					"cookies": null,
+					"request": "35e718e2-defc-4a2b-b2fa-cf742d0fd7aa",
+					"collection": "666fd3ae-c41c-b4b3-e1a2-8e1f5b3572ff"
+				},
+				{
+					"id": "59455420-ebe3-4840-b26c-4db07e8456c6",
+					"name": "Retrieve all pharmacy batch items",
+					"status": null,
+					"mime": null,
+					"language": "json",
+					"text": "[\n    {\n        \"id\": 10,\n        \"pharmacy_batch_id\": 2,\n        \"drug_id\": 901,\n        \"delivered_quantity\": 500,\n        \"current_quantity\": 0,\n        \"delivery_date\": \"2019-05-09\",\n        \"expiry_date\": \"2020-12-31\",\n        \"creator\": 1,\n        \"date_created\": \"2019-05-17T09:11:58.000+02:00\",\n        \"date_changed\": \"2019-05-17T09:11:58.000+02:00\",\n        \"voided\": false,\n        \"voided_by\": null,\n        \"void_reason\": null,\n        \"date_voided\": null\n    },\n    {\n        \"id\": 9,\n        \"pharmacy_batch_id\": 2,\n        \"drug_id\": 901,\n        \"delivered_quantity\": 1000,\n        \"current_quantity\": 0,\n        \"delivery_date\": \"2019-05-09\",\n        \"expiry_date\": \"2020-12-31\",\n        \"creator\": 1,\n        \"date_created\": \"2019-05-17T09:11:03.000+02:00\",\n        \"date_changed\": \"2019-05-17T09:11:03.000+02:00\",\n        \"voided\": false,\n        \"voided_by\": null,\n        \"void_reason\": null,\n        \"date_voided\": null\n    }\n]",
+					"responseCode": {
+						"code": 200,
+						"name": "OK"
+					},
+					"requestObject": {
+						"data": null,
+						"dataMode": null,
+						"headerData": [
+							{
+								"key": "Authorization",
+								"value": "M9mEO1jNftvs",
+								"description": "",
+								"type": "text",
+								"enabled": true
+							}
+						],
+						"method": "GET",
+						"pathVariableData": [],
+						"queryParams": [
+							{
+								"key": "drug_id",
+								"value": "901",
+								"equals": true,
+								"description": "",
+								"enabled": true
+							}
+						],
+						"url": "http://localhost:3000/api/v1/pharmacy/items?drug_id=901"
+					},
+					"headers": [
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "ETag",
+							"value": "W/\"6fff4b375c99204f2bc224f2c26661a5\""
+						},
+						{
+							"key": "Cache-Control",
+							"value": "max-age=0, private, must-revalidate"
+						},
+						{
+							"key": "X-Request-Id",
+							"value": "db397909-6107-4f7b-89f0-69cfdb8ace9b"
+						},
+						{
+							"key": "X-Runtime",
+							"value": "0.042295"
+						},
+						{
+							"key": "Vary",
+							"value": "Origin"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						}
+					],
+					"cookies": null,
+					"request": "35e718e2-defc-4a2b-b2fa-cf742d0fd7aa",
+					"collection": "666fd3ae-c41c-b4b3-e1a2-8e1f5b3572ff"
+				},
+				{
+					"id": "5b8adfa9-3acf-4489-9e9d-5a161a7dedef",
+					"name": "Retrieve all pharmacy batch items",
+					"status": null,
+					"mime": null,
+					"language": "json",
+					"text": "[\n    {\n        \"id\": 10,\n        \"pharmacy_batch_id\": 2,\n        \"drug_id\": 901,\n        \"delivered_quantity\": 500,\n        \"current_quantity\": 0,\n        \"delivery_date\": \"2019-05-09\",\n        \"expiry_date\": \"2020-12-31\",\n        \"creator\": 1,\n        \"date_created\": \"2019-05-17T09:11:58.000+02:00\",\n        \"date_changed\": \"2019-05-17T09:11:58.000+02:00\",\n        \"voided\": false,\n        \"voided_by\": null,\n        \"void_reason\": null,\n        \"date_voided\": null\n    },\n    {\n        \"id\": 9,\n        \"pharmacy_batch_id\": 2,\n        \"drug_id\": 901,\n        \"delivered_quantity\": 1000,\n        \"current_quantity\": 0,\n        \"delivery_date\": \"2019-05-09\",\n        \"expiry_date\": \"2020-12-31\",\n        \"creator\": 1,\n        \"date_created\": \"2019-05-17T09:11:03.000+02:00\",\n        \"date_changed\": \"2019-05-17T09:11:03.000+02:00\",\n        \"voided\": false,\n        \"voided_by\": null,\n        \"void_reason\": null,\n        \"date_voided\": null\n    }\n]",
+					"responseCode": {
+						"code": 200,
+						"name": "OK"
+					},
+					"requestObject": {
+						"data": null,
+						"dataMode": null,
+						"headerData": [
+							{
+								"key": "Authorization",
+								"value": "M9mEO1jNftvs",
+								"description": "",
+								"type": "text",
+								"enabled": true
+							}
+						],
+						"method": "GET",
+						"pathVariableData": [],
+						"queryParams": [
+							{
+								"key": "drug_id",
+								"value": "901",
+								"equals": true,
+								"description": "",
+								"enabled": true
+							}
+						],
+						"url": "http://localhost:3000/api/v1/pharmacy/items?drug_id=901"
+					},
+					"headers": [
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "ETag",
+							"value": "W/\"6fff4b375c99204f2bc224f2c26661a5\""
+						},
+						{
+							"key": "Cache-Control",
+							"value": "max-age=0, private, must-revalidate"
+						},
+						{
+							"key": "X-Request-Id",
+							"value": "db397909-6107-4f7b-89f0-69cfdb8ace9b"
+						},
+						{
+							"key": "X-Runtime",
+							"value": "0.042295"
+						},
+						{
+							"key": "Vary",
+							"value": "Origin"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						}
+					],
+					"cookies": null,
+					"request": "35e718e2-defc-4a2b-b2fa-cf742d0fd7aa",
+					"collection": "666fd3ae-c41c-b4b3-e1a2-8e1f5b3572ff"
+				}
+			],
+			"headers": "Authorization: M9mEO1jNftvs\n",
+			"pathVariables": {}
+		},
+		{
 			"id": "3c6a0b84-a131-6cf5-7967-48ca17476571",
 			"name": "Creating encounters",
 			"url": "localhost:3000/api/v1/encounters",
@@ -1036,7 +1407,7 @@
 			"url": "localhost:3000/api/v1/dispensations?patient_id=1000",
 			"description": "Retrieve all dispensations belonging to a given patient. In addition results can be limited to a specific date (eg /dispensations?patient_id=xxx&date=2000-01-31).",
 			"data": null,
-			"dataMode": "params",
+			"dataMode": null,
 			"headerData": [
 				{
 					"key": "Authorization",
@@ -1057,7 +1428,7 @@
 				}
 			],
 			"auth": null,
-			"events": [],
+			"events": null,
 			"folder": null,
 			"responses": [
 				{
@@ -1095,7 +1466,7 @@
 						],
 						"data": null,
 						"method": "GET",
-						"dataMode": "params"
+						"dataMode": null
 					},
 					"headers": [
 						{
@@ -1150,12 +1521,101 @@
 			"pathVariables": {}
 		},
 		{
+			"id": "55507da6-02b1-4c75-b7bd-b38015f3274b",
+			"name": "Retrieve specific pharmacy batch item",
+			"url": "http://localhost:3000/api/v1/pharmacy/items/9",
+			"description": "",
+			"data": null,
+			"dataMode": null,
+			"headerData": [
+				{
+					"key": "Authorization",
+					"value": "M9mEO1jNftvs",
+					"description": "",
+					"type": "text",
+					"enabled": true
+				}
+			],
+			"method": "GET",
+			"pathVariableData": [],
+			"queryParams": [],
+			"auth": null,
+			"events": null,
+			"folder": "a4f1f12d-26b9-4f12-9eb7-27ea67af805b",
+			"responses": [
+				{
+					"id": "2acb4bf3-c37a-44ab-90ae-d179fdee675a",
+					"name": "Retrieve specific pharmacy batch item",
+					"status": null,
+					"mime": null,
+					"language": "json",
+					"text": "{\n    \"id\": 9,\n    \"pharmacy_batch_id\": 2,\n    \"drug_id\": 901,\n    \"delivered_quantity\": 1000,\n    \"current_quantity\": 0,\n    \"delivery_date\": \"2019-05-09\",\n    \"expiry_date\": \"2020-12-31\",\n    \"creator\": 1,\n    \"date_created\": \"2019-05-17T09:11:03.000+02:00\",\n    \"date_changed\": \"2019-05-17T09:11:03.000+02:00\",\n    \"voided\": false,\n    \"voided_by\": null,\n    \"void_reason\": null,\n    \"date_voided\": null\n}",
+					"responseCode": {
+						"code": 200,
+						"name": "OK"
+					},
+					"requestObject": {
+						"data": null,
+						"dataMode": null,
+						"headerData": [
+							{
+								"key": "Authorization",
+								"value": "M9mEO1jNftvs",
+								"description": "",
+								"type": "text",
+								"enabled": true
+							}
+						],
+						"method": "GET",
+						"pathVariableData": [],
+						"queryParams": [],
+						"url": "http://localhost:3000/api/v1/pharmacy/items/9"
+					},
+					"headers": [
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "ETag",
+							"value": "W/\"86daa0fe67078d5d4f84c41a1bbb1339\""
+						},
+						{
+							"key": "Cache-Control",
+							"value": "max-age=0, private, must-revalidate"
+						},
+						{
+							"key": "X-Request-Id",
+							"value": "0afb6b02-be72-47e4-b939-266e90e73db6"
+						},
+						{
+							"key": "X-Runtime",
+							"value": "0.007616"
+						},
+						{
+							"key": "Vary",
+							"value": "Origin"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						}
+					],
+					"cookies": null,
+					"request": "55507da6-02b1-4c75-b7bd-b38015f3274b",
+					"collection": "666fd3ae-c41c-b4b3-e1a2-8e1f5b3572ff"
+				}
+			],
+			"headers": "Authorization: M9mEO1jNftvs\n",
+			"pathVariables": {}
+		},
+		{
 			"id": "5cb7ed86-5d93-babc-8d97-d0cbc70c23fe",
 			"name": "Retrieve encounter types",
 			"url": "localhost:3000/api/v1/encounters/_types",
 			"description": "localhost:3000/api/v1/encounters/_types",
-			"data": [],
-			"dataMode": "params",
+			"data": null,
+			"dataMode": null,
 			"headerData": [
 				{
 					"key": "Authorization",
@@ -1205,7 +1665,7 @@
 						"headers": "Authorization: lQUitqOlCOo6\n",
 						"data": null,
 						"method": "GET",
-						"dataMode": "params"
+						"dataMode": null
 					},
 					"headers": [
 						{
@@ -1264,8 +1724,8 @@
 			"name": "Retrieve registered people",
 			"url": "http://127.0.0.1:3000/api/v1/people/1?page=0&page_size=2",
 			"description": "# /api/v1/people\n\nThis endpoint returns a list of people registered as either patients or users. By default only 10 random people are returned. Pagination is supported through the use of the parameters page and page_size as follows:\n\n\thttp://<host>:<port>/api/v1/people?page=0&page_size\n\t\nThe example above retrieve the first 50 people.",
-			"data": [],
-			"dataMode": "params",
+			"data": null,
+			"dataMode": null,
 			"headerData": [
 				{
 					"key": "Authorization",
@@ -1292,6 +1752,9 @@
 					"enabled": true
 				}
 			],
+			"method": "POST",
+			"pathVariableData": [],
+			"queryParams": [],
 			"auth": null,
 			"events": null,
 			"folder": null,
@@ -1304,8 +1767,9 @@
 					"language": "json",
 					"text": "{\"person_id\":1,\"gender\":\"M\",\"birthdate\":null,\"birthdate_estimated\":0,\"dead\":0,\"death_date\":null,\"cause_of_death\":null,\"creator\":1,\"date_created\":\"2005-01-01T00:00:00.000Z\",\"changed_by\":1,\"date_changed\":\"2009-09-04T16:37:23.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"10661cb8-b6c1-11e0-bc9e-544249e32ba2\",\"names\":[{\"person_name_id\":1,\"preferred\":1,\"person_id\":1,\"prefix\":null,\"given_name\":\"Super\",\"middle_name\":\"\",\"family_name_prefix\":null,\"family_name\":\"User\",\"family_name2\":null,\"family_name_suffix\":null,\"degree\":null,\"creator\":1,\"date_created\":\"2005-01-01T00:00:00.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"changed_by\":null,\"date_changed\":null,\"uuid\":\"109f4cb8-b6c1-11e0-bc9e-544249e32ba2\"},{\"person_name_id\":104,\"preferred\":0,\"person_id\":1,\"prefix\":null,\"given_name\":\"tionge\",\"middle_name\":null,\"family_name_prefix\":null,\"family_name\":\"banda\",\"family_name2\":null,\"family_name_suffix\":null,\"degree\":null,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"changed_by\":null,\"date_changed\":null,\"uuid\":\"350af0d9-59ca-11e3-b7e9-003018a9e11f\"}],\"addresses\":[{\"person_address_id\":24,\"person_id\":1,\"preferred\":0,\"address1\":\"Unknown\",\"address2\":null,\"city_village\":\"Area 10\",\"state_province\":null,\"postal_code\":null,\"country\":null,\"latitude\":null,\"longitude\":null,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"county_district\":null,\"neighborhood_cell\":null,\"region\":null,\"subregion\":null,\"township_division\":null,\"uuid\":\"350b0426-59ca-11e3-b7e9-003018a9e11f\"}],\"person_attributes\":[{\"person_attribute_id\":271,\"person_id\":1,\"value\":\"Area 10\",\"person_attribute_type_id\":18,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"350b0502-59ca-11e3-b7e9-003018a9e11f\"},{\"person_attribute_id\":272,\"person_id\":1,\"value\":\"Unknown\",\"person_attribute_type_id\":19,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"350b0426-59ca-11e3-b7e9-003018a9e11f\"},{\"person_attribute_id\":273,\"person_id\":1,\"value\":\"Other\",\"person_attribute_type_id\":13,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"350b0fab-59ca-11e3-b7e9-003018a9e11f\"},{\"person_attribute_id\":274,\"person_id\":1,\"value\":\"Not Available\",\"person_attribute_type_id\":14,\"creator\":1,\"date_created\":\"2011-09-14T00:00:00.000Z\",\"changed_by\":null,\"date_changed\":null,\"voided\":0,\"voided_by\":null,\"date_voided\":null,\"void_reason\":null,\"uuid\":\"350b11b7-59ca-11e3-b7e9-003018a9e11f\"}]}",
 					"responseCode": {
-						"code": 200,
-						"name": "OK"
+						"code": 201,
+						"name": "Created",
+						"detail": "The request has been fulfilled and resulted in a new resource being created."
 					},
 					"requestObject": {
 						"url": "http://127.0.0.1:3000/api/v1/people/1?page=0&page_size=2",
@@ -1339,7 +1803,7 @@
 						"headers": "Authorization: lQUitqOlCOo6\n",
 						"data": null,
 						"method": "GET",
-						"dataMode": "params"
+						"dataMode": null
 					},
 					"headers": [
 						{
@@ -1417,7 +1881,7 @@
 						"headers": "Authorization: qTt9Wg2zs3oC\n",
 						"data": null,
 						"method": "GET",
-						"dataMode": "params"
+						"dataMode": null
 					},
 					"headers": [
 						{
@@ -1470,8 +1934,8 @@
 			"name": "Retrieve program workflows and states",
 			"url": "localhost:3000/api/v1/programs/1/workflows",
 			"description": "From this endpoint you get access to a program's workflows. Each workflow contains a list of workflow states in it under the field `states`.",
-			"data": [],
-			"dataMode": "params",
+			"data": null,
+			"dataMode": null,
 			"headerData": [
 				{
 					"key": "Authorization",
@@ -1526,7 +1990,7 @@
 						"headers": "Authorization: 42YGdA9CGoID\nAccept: application/json\n",
 						"data": null,
 						"method": "GET",
-						"dataMode": "params"
+						"dataMode": null
 					},
 					"headers": [
 						{
@@ -1581,6 +2045,270 @@
 			"pathVariables": {}
 		},
 		{
+			"id": "6c22b3e8-6c4e-4c40-af81-2c0f619a575b",
+			"name": "Retrieve all batches in pharmacy stock",
+			"url": "http://localhost:3000/api/v1/pharmacy/batches",
+			"description": "",
+			"data": [],
+			"dataMode": "raw",
+			"headerData": [
+				{
+					"key": "Authorization",
+					"value": "M9mEO1jNftvs",
+					"description": "",
+					"type": "text",
+					"enabled": true
+				},
+				{
+					"key": "Content-Type",
+					"name": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"type": "text",
+					"enabled": true
+				},
+				{
+					"key": "Referer",
+					"value": "http://localhost:5984",
+					"description": "",
+					"type": "text",
+					"enabled": false
+				}
+			],
+			"method": "GET",
+			"pathVariableData": [],
+			"queryParams": [],
+			"auth": null,
+			"events": null,
+			"folder": "a4f1f12d-26b9-4f12-9eb7-27ea67af805b",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"responses": [
+				{
+					"id": "705c4243-8acd-410a-a5ff-47d66f1ccf44",
+					"name": "Retrieve all batches in pharmacy stock",
+					"status": null,
+					"mime": null,
+					"language": "json",
+					"text": "[\n    {\n        \"id\": 1,\n        \"batch_number\": \"1234567890\",\n        \"creator\": 1,\n        \"date_created\": \"2019-05-09T15:01:26.000+02:00\",\n        \"date_changed\": null,\n        \"voided\": false,\n        \"voided_by\": null,\n        \"void_reason\": null,\n        \"date_voided\": null,\n        \"items\": [\n            {\n                \"id\": 1,\n                \"pharmacy_batch_id\": 1,\n                \"drug_id\": 901,\n                \"delivered_quantity\": 1000,\n                \"current_quantity\": 0,\n                \"delivery_date\": \"2019-05-09\",\n                \"expiry_date\": null,\n                \"creator\": 1,\n                \"date_created\": \"2019-05-09T15:06:03.000+02:00\",\n                \"date_changed\": \"2019-05-09T15:06:03.000+02:00\",\n                \"voided\": false,\n                \"voided_by\": null,\n                \"void_reason\": null,\n                \"date_voided\": null\n            },\n            {\n                \"id\": 2,\n                \"pharmacy_batch_id\": 1,\n                \"drug_id\": 901,\n                \"delivered_quantity\": 1000,\n                \"current_quantity\": 0,\n                \"delivery_date\": \"2019-05-09\",\n                \"expiry_date\": null,\n                \"creator\": 1,\n                \"date_created\": \"2019-05-09T15:06:06.000+02:00\",\n                \"date_changed\": \"2019-05-09T15:06:06.000+02:00\",\n                \"voided\": false,\n                \"voided_by\": null,\n                \"void_reason\": null,\n                \"date_voided\": null\n            },\n            {\n                \"id\": 3,\n                \"pharmacy_batch_id\": 1,\n                \"drug_id\": 901,\n                \"delivered_quantity\": 1000,\n                \"current_quantity\": 0,\n                \"delivery_date\": \"2019-05-09\",\n                \"expiry_date\": null,\n                \"creator\": 1,\n                \"date_created\": \"2019-05-09T15:06:08.000+02:00\",\n                \"date_changed\": \"2019-05-09T15:06:08.000+02:00\",\n                \"voided\": false,\n                \"voided_by\": null,\n                \"void_reason\": null,\n                \"date_voided\": null\n            },\n            {\n                \"id\": 4,\n                \"pharmacy_batch_id\": 1,\n                \"drug_id\": 901,\n                \"delivered_quantity\": 1000,\n                \"current_quantity\": 0,\n                \"delivery_date\": \"2019-05-09\",\n                \"expiry_date\": \"2020-12-31\",\n                \"creator\": 1,\n                \"date_created\": \"2019-05-09T15:34:15.000+02:00\",\n                \"date_changed\": \"2019-05-09T15:34:15.000+02:00\",\n                \"voided\": false,\n                \"voided_by\": null,\n                \"void_reason\": null,\n                \"date_voided\": null\n            },\n            {\n                \"id\": 5,\n                \"pharmacy_batch_id\": 1,\n                \"drug_id\": 901,\n                \"delivered_quantity\": 500,\n                \"current_quantity\": 0,\n                \"delivery_date\": \"2019-05-09\",\n                \"expiry_date\": \"2020-12-31\",\n                \"creator\": 1,\n                \"date_created\": \"2019-05-10T01:57:07.000+02:00\",\n                \"date_changed\": \"2019-05-10T01:57:07.000+02:00\",\n                \"voided\": false,\n                \"voided_by\": null,\n                \"void_reason\": null,\n                \"date_voided\": null\n            },\n            {\n                \"id\": 6,\n                \"pharmacy_batch_id\": 1,\n                \"drug_id\": 901,\n                \"delivered_quantity\": 500,\n                \"current_quantity\": 0,\n                \"delivery_date\": \"2019-05-09\",\n                \"expiry_date\": \"2020-12-31\",\n                \"creator\": 1,\n                \"date_created\": \"2019-05-10T01:58:12.000+02:00\",\n                \"date_changed\": \"2019-05-10T01:58:12.000+02:00\",\n                \"voided\": false,\n                \"voided_by\": null,\n                \"void_reason\": null,\n                \"date_voided\": null\n            },\n            {\n                \"id\": 7,\n                \"pharmacy_batch_id\": 1,\n                \"drug_id\": 901,\n                \"delivered_quantity\": 1000,\n                \"current_quantity\": 0,\n                \"delivery_date\": \"2019-05-09\",\n                \"expiry_date\": \"2020-12-31\",\n                \"creator\": 1,\n                \"date_created\": \"2019-05-16T15:21:20.000+02:00\",\n                \"date_changed\": \"2019-05-16T15:21:20.000+02:00\",\n                \"voided\": false,\n                \"voided_by\": null,\n                \"void_reason\": null,\n                \"date_voided\": null\n            }\n        ]\n    }\n]",
+					"responseCode": {
+						"code": 200,
+						"name": "OK"
+					},
+					"requestObject": {
+						"data": "",
+						"dataMode": "raw",
+						"headerData": [
+							{
+								"key": "Authorization",
+								"value": "M9mEO1jNftvs",
+								"description": "",
+								"type": "text",
+								"enabled": true
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"description": "",
+								"type": "text",
+								"enabled": true
+							},
+							{
+								"key": "Referer",
+								"value": "http://localhost:5984",
+								"description": "",
+								"type": "text",
+								"enabled": false
+							}
+						],
+						"method": "GET",
+						"pathVariableData": [],
+						"queryParams": [],
+						"url": "http://localhost:3000/api/v1/pharmacy/batches",
+						"protocolProfileBehavior": {
+							"disableBodyPruning": true
+						}
+					},
+					"headers": [
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "ETag",
+							"value": "W/\"c459a64a2f28f6d2b6e1aaccde88d2ae\""
+						},
+						{
+							"key": "Cache-Control",
+							"value": "max-age=0, private, must-revalidate"
+						},
+						{
+							"key": "X-Request-Id",
+							"value": "3e42263f-d773-48b5-adc4-9c2669e83744"
+						},
+						{
+							"key": "X-Runtime",
+							"value": "0.107010"
+						},
+						{
+							"key": "Vary",
+							"value": "Origin"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						}
+					],
+					"cookies": null,
+					"request": "6c22b3e8-6c4e-4c40-af81-2c0f619a575b",
+					"collection": "666fd3ae-c41c-b4b3-e1a2-8e1f5b3572ff"
+				}
+			],
+			"rawModeData": "",
+			"headers": "Authorization: M9mEO1jNftvs\nContent-Type: application/json\n//Referer: http://localhost:5984\n",
+			"pathVariables": {}
+		},
+		{
+			"id": "785c4a56-3da3-4f13-b8fc-3b58df65ea59",
+			"name": "Delete batch",
+			"url": "http://localhost:3000/api/v1/pharmacy/batches/1234567890?reason=I+Hate+This+Batch",
+			"description": "",
+			"data": null,
+			"dataMode": null,
+			"headerData": [
+				{
+					"key": "Authorization",
+					"value": "M9mEO1jNftvs",
+					"description": "",
+					"type": "text",
+					"enabled": true
+				}
+			],
+			"method": "DELETE",
+			"pathVariableData": [],
+			"queryParams": [
+				{
+					"key": "reason",
+					"value": "I+Hate+This+Batch",
+					"equals": true,
+					"description": "",
+					"enabled": true
+				}
+			],
+			"auth": null,
+			"events": null,
+			"folder": "a4f1f12d-26b9-4f12-9eb7-27ea67af805b",
+			"headers": "Authorization: M9mEO1jNftvs\n",
+			"pathVariables": {}
+		},
+		{
+			"id": "7af664a7-b5bf-45f7-aa4c-38483337503f",
+			"name": "Find duplicate identifiers of a given type",
+			"url": "http://localhost:3000/api/v1/search/identifiers/duplicates?type=3",
+			"description": "",
+			"data": null,
+			"dataMode": null,
+			"headerData": [
+				{
+					"key": "Authorization",
+					"value": "8Azu1BYHc2r0",
+					"description": "",
+					"type": "text",
+					"enabled": true
+				}
+			],
+			"method": "GET",
+			"pathVariableData": [],
+			"queryParams": [
+				{
+					"key": "type",
+					"value": "3",
+					"equals": true,
+					"description": "",
+					"enabled": true
+				}
+			],
+			"auth": null,
+			"events": null,
+			"folder": "7180b759-b504-44b9-8763-f2e8624b9114",
+			"responses": [
+				{
+					"id": "1025855d-a213-4866-a8ff-837eba7189ca",
+					"name": "Find duplicate identifiers of a given type",
+					"status": null,
+					"mime": null,
+					"language": "json",
+					"text": "[\n    {\n        \"count\": 2,\n        \"identifier\": \"P170100202393\"\n    },\n    {\n        \"count\": 2,\n        \"identifier\": \"P170100293696\"\n    },\n    {\n        \"count\": 2,\n        \"identifier\": \"P170100370503\"\n    },\n    {\n        \"count\": 2,\n        \"identifier\": \"P170100370674\"\n    },\n    {\n        \"count\": 2,\n        \"identifier\": \"P170100370692\"\n    },\n    {\n        \"count\": 2,\n        \"identifier\": \"P170100376570\"\n    },\n    {\n        \"count\": 2,\n        \"identifier\": \"P170100376669\"\n    },\n    {\n        \"count\": 2,\n        \"identifier\": \"P170100376678\"\n    },\n    {\n        \"count\": 2,\n        \"identifier\": \"P170100376703\"\n    },\n    {\n        \"count\": 2,\n        \"identifier\": \"P170100376712\"\n    },\n    {\n        \"count\": 2,\n        \"identifier\": \"P170100378934\"\n    },\n    {\n        \"count\": 2,\n        \"identifier\": \"P170100379014\"\n    },\n    {\n        \"count\": 2,\n        \"identifier\": \"P170100379381\"\n    },\n    {\n        \"count\": 2,\n        \"identifier\": \"P170100379390\"\n    },\n    {\n        \"count\": 2,\n        \"identifier\": \"P170100379620\"\n    },\n    {\n        \"count\": 2,\n        \"identifier\": \"P170100379648\"\n    },\n    {\n        \"count\": 2,\n        \"identifier\": \"P170100380191\"\n    },\n    {\n        \"count\": 2,\n        \"identifier\": \"P170100380583\"\n    },\n    {\n        \"count\": 2,\n        \"identifier\": \"P170100380592\"\n    },\n    {\n        \"count\": 2,\n        \"identifier\": \"P170100388460\"\n    },\n    {\n        \"count\": 2,\n        \"identifier\": \"P170100395005\"\n    },\n    {\n        \"count\": 2,\n        \"identifier\": \"P170100422100\"\n    }\n]",
+					"responseCode": {
+						"code": 200,
+						"name": "OK"
+					},
+					"requestObject": {
+						"data": null,
+						"dataMode": null,
+						"headerData": [
+							{
+								"key": "Authorization",
+								"value": "8Azu1BYHc2r0",
+								"description": "",
+								"type": "text",
+								"enabled": true
+							}
+						],
+						"method": "GET",
+						"pathVariableData": [],
+						"queryParams": [
+							{
+								"key": "type_id",
+								"value": "3",
+								"equals": true,
+								"description": "",
+								"enabled": true
+							}
+						],
+						"url": "http://localhost:3000/api/v1/search/identifiers/duplicates?type_id=3"
+					},
+					"headers": [
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "ETag",
+							"value": "W/\"35c607667efb4c06f2f533ae6f9f1a90\""
+						},
+						{
+							"key": "Cache-Control",
+							"value": "max-age=0, private, must-revalidate"
+						},
+						{
+							"key": "X-Request-Id",
+							"value": "f383cb2b-4157-44be-91d8-1a964fa4860b"
+						},
+						{
+							"key": "X-Runtime",
+							"value": "0.938342"
+						},
+						{
+							"key": "Vary",
+							"value": "Origin"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						}
+					],
+					"cookies": null,
+					"request": "7af664a7-b5bf-45f7-aa4c-38483337503f",
+					"collection": "666fd3ae-c41c-b4b3-e1a2-8e1f5b3572ff"
+				}
+			],
+			"headers": "Authorization: 8Azu1BYHc2r0\n",
+			"pathVariables": {}
+		},
+		{
 			"id": "7d67a0e6-d8c1-31ba-d2b5-1fa369c62e0a",
 			"name": "Creating new observations",
 			"url": "http://localhost:3000/api/v1/observations",
@@ -1614,8 +2342,8 @@
 			"name": "People search",
 			"url": "localhost:3000/api/v1/search/people?given_name=Julius&family_name=Phiri&gender=M&page_size=20&page=0",
 			"description": "localhost:3000/api/v1/search/people?given_name=Julius&family_name=Phiri&gender=M&page_size=20&page=0",
-			"data": [],
-			"dataMode": "params",
+			"data": null,
+			"dataMode": null,
 			"headerData": [
 				{
 					"key": "Authorization",
@@ -1724,7 +2452,7 @@
 						"headers": "Authorization: lQUitqOlCOo6\n",
 						"data": null,
 						"method": "GET",
-						"dataMode": "params"
+						"dataMode": null
 					},
 					"headers": [
 						{
@@ -1783,8 +2511,8 @@
 			"name": "Retrieving all roles",
 			"url": "http://127.0.0.1:3000/api/v1/roles",
 			"description": "GET /api/v1/roles",
-			"data": [],
-			"dataMode": "params",
+			"data": null,
+			"dataMode": null,
 			"headerData": [
 				{
 					"key": "Authorization",
@@ -1827,7 +2555,7 @@
 						"headers": "Authorization: qTt9Wg2zs3oC\n",
 						"data": null,
 						"method": "GET",
-						"dataMode": "params"
+						"dataMode": null
 					},
 					"headers": [
 						{
@@ -1914,20 +2642,20 @@
 						"headers": "Authorization: lQUitqOlCOo6\n",
 						"data": null,
 						"method": "GET",
-						"dataMode": "params"
+						"dataMode": null
 					},
 					"headers": [
 						{
-							"key": "cache-control",
+							"key": "Cache-Control",
 							"value": "max-age=0, private, must-revalidate",
-							"name": "cache-control",
-							"description": ""
+							"name": "Cache-Control",
+							"description": "Tells all caching mechanisms from server to client whether they may cache this object. It is measured in seconds"
 						},
 						{
-							"key": "content-type",
+							"key": "Content-Type",
 							"value": "application/json; charset=utf-8",
-							"name": "content-type",
-							"description": ""
+							"name": "Content-Type",
+							"description": "The mime type of this content"
 						},
 						{
 							"key": "etag",
@@ -1969,10 +2697,114 @@
 			"pathVariables": {}
 		},
 		{
+			"id": "97720100-6a3d-4996-bec9-4508d7e966e0",
+			"name": "Create or add items to batch",
+			"url": "http://localhost:3000/api/v1/pharmacy/batches",
+			"description": "",
+			"data": [],
+			"dataMode": "raw",
+			"headerData": [
+				{
+					"key": "Authorization",
+					"value": "M9mEO1jNftvs",
+					"description": "",
+					"type": "text",
+					"enabled": true
+				},
+				{
+					"key": "Content-Type",
+					"name": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"type": "text"
+				}
+			],
+			"method": "POST",
+			"pathVariableData": [],
+			"queryParams": [],
+			"auth": null,
+			"events": null,
+			"folder": "a4f1f12d-26b9-4f12-9eb7-27ea67af805b",
+			"responses": [
+				{
+					"id": "31bf38e7-1c8f-4e51-88ab-15f84aa273ac",
+					"name": "Create or add items to batch",
+					"status": null,
+					"mime": null,
+					"language": "json",
+					"text": "{\n    \"id\": 2,\n    \"batch_number\": \"1234567890\",\n    \"creator\": 1,\n    \"date_created\": \"2019-05-17T09:11:03.000+02:00\",\n    \"date_changed\": null,\n    \"voided\": false,\n    \"voided_by\": null,\n    \"void_reason\": null,\n    \"date_voided\": null,\n    \"items\": [\n        {\n            \"id\": 9,\n            \"pharmacy_batch_id\": 2,\n            \"drug_id\": 901,\n            \"delivered_quantity\": 1000,\n            \"current_quantity\": 0,\n            \"delivery_date\": \"2019-05-09\",\n            \"expiry_date\": \"2020-12-31\",\n            \"creator\": 1,\n            \"date_created\": \"2019-05-17T09:11:03.000+02:00\",\n            \"date_changed\": \"2019-05-17T09:11:03.000+02:00\",\n            \"voided\": false,\n            \"voided_by\": null,\n            \"void_reason\": null,\n            \"date_voided\": null\n        }\n    ]\n}",
+					"responseCode": {
+						"code": 201,
+						"name": "Created"
+					},
+					"requestObject": {
+						"data": "{\n\t\"batch_number\": \"1234567890\",\n\t\"items\": [{\"drug_id\": 901, \"quantity\": 1000, \"expiry_date\": \"2020-12-31\", \"delivery_date\": \"2019-05-09\"}]\n}",
+						"dataMode": "raw",
+						"headerData": [
+							{
+								"key": "Authorization",
+								"value": "M9mEO1jNftvs",
+								"description": "",
+								"type": "text",
+								"enabled": true
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"description": "",
+								"type": "text"
+							}
+						],
+						"method": "POST",
+						"pathVariableData": [],
+						"queryParams": [],
+						"url": "http://localhost:3000/api/v1/pharmacy/batches"
+					},
+					"headers": [
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "ETag",
+							"value": "W/\"9247348e0b615145b43e58086788fa2c\""
+						},
+						{
+							"key": "Cache-Control",
+							"value": "max-age=0, private, must-revalidate"
+						},
+						{
+							"key": "X-Request-Id",
+							"value": "c20b8b6c-cac5-4db3-8a32-d881f429bff9"
+						},
+						{
+							"key": "X-Runtime",
+							"value": "0.348698"
+						},
+						{
+							"key": "Vary",
+							"value": "Origin"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						}
+					],
+					"cookies": null,
+					"request": "97720100-6a3d-4996-bec9-4508d7e966e0",
+					"collection": "666fd3ae-c41c-b4b3-e1a2-8e1f5b3572ff"
+				}
+			],
+			"rawModeData": "{\n\t\"batch_number\": \"1234567890\",\n\t\"items\": [{\"drug_id\": 901, \"quantity\": 1000, \"expiry_date\": \"2020-12-31\", \"delivery_date\": \"2019-05-09\"}]\n}",
+			"headers": "Authorization: M9mEO1jNftvs\nContent-Type: application/json\n",
+			"pathVariables": {}
+		},
+		{
 			"id": "aaf1ff44-8564-4d6b-9627-5ba950cd5f2d",
 			"name": "Create program",
 			"url": "localhost:3000/api/v1/programs",
-			"description": "",
+			"description": null,
 			"data": [],
 			"dataMode": "raw",
 			"headerData": [
@@ -1983,7 +2815,6 @@
 				{
 					"key": "Authorization",
 					"value": "LkBuS3be13tX",
-					"description": "",
 					"enabled": true
 				}
 			],
@@ -1991,7 +2822,7 @@
 			"pathVariableData": [],
 			"queryParams": [],
 			"auth": null,
-			"events": [],
+			"events": null,
 			"folder": null,
 			"responses": [
 				{
@@ -2086,8 +2917,8 @@
 			"name": "Retrieving all users",
 			"url": "127.0.0.1:3000/api/v1/users",
 			"description": "GET /api/v1/users\n\nLorem Ipsum...",
-			"data": [],
-			"dataMode": "params",
+			"data": null,
+			"dataMode": null,
 			"headerData": [
 				{
 					"key": "Authorization",
@@ -2130,7 +2961,7 @@
 						"headers": "Authorization: qTt9Wg2zs3oC\n",
 						"data": null,
 						"method": "GET",
-						"dataMode": "params"
+						"dataMode": null
 					},
 					"headers": [
 						{
@@ -2217,7 +3048,7 @@
 						"headers": "Authorization: lQUitqOlCOo6\n",
 						"data": null,
 						"method": "GET",
-						"dataMode": "params"
+						"dataMode": null
 					},
 					"headers": [
 						{
@@ -2272,6 +3103,298 @@
 			"pathVariables": {}
 		},
 		{
+			"id": "bace4aa3-8a80-43f2-bb2f-2f6b5ebec68f",
+			"name": "Find patients by identifier",
+			"url": "http://localhost:3000/api/v1/search/patients/by_identifier?type_id=3&identifier=P170100202393",
+			"description": "",
+			"data": null,
+			"dataMode": null,
+			"headerData": [
+				{
+					"key": "Authorization",
+					"value": "8Azu1BYHc2r0",
+					"description": "",
+					"type": "text",
+					"enabled": true
+				}
+			],
+			"method": "GET",
+			"pathVariableData": [],
+			"queryParams": [
+				{
+					"key": "type_id",
+					"value": "3",
+					"equals": true,
+					"description": "",
+					"enabled": true
+				},
+				{
+					"key": "identifier",
+					"value": "P170100202393",
+					"equals": true,
+					"description": "",
+					"enabled": true
+				}
+			],
+			"auth": null,
+			"events": null,
+			"folder": "7180b759-b504-44b9-8763-f2e8624b9114",
+			"responses": [
+				{
+					"id": "59e37c62-6053-4ce9-81f8-a363bf0dba6c",
+					"name": "Find patients by identifier",
+					"status": null,
+					"mime": null,
+					"language": "json",
+					"text": "[\n    {\n        \"patient_id\": 20897,\n        \"tribe\": null,\n        \"creator\": 55,\n        \"date_created\": \"2009-05-08T00:00:00.000+02:00\",\n        \"changed_by\": null,\n        \"date_changed\": null,\n        \"voided\": 0,\n        \"voided_by\": null,\n        \"date_voided\": null,\n        \"void_reason\": null,\n        \"person\": {\n            \"person_id\": 20897,\n            \"gender\": \"F\",\n            \"birthdate\": \"1972-10-29\",\n            \"birthdate_estimated\": 1,\n            \"dead\": 0,\n            \"death_date\": null,\n            \"cause_of_death\": null,\n            \"creator\": 55,\n            \"date_created\": \"2009-05-08T00:00:00.000+02:00\",\n            \"changed_by\": null,\n            \"date_changed\": null,\n            \"voided\": 0,\n            \"voided_by\": null,\n            \"date_voided\": null,\n            \"void_reason\": null,\n            \"uuid\": \"5f621ee8-03e6-11e5-8580-7877eb364ad2\",\n            \"names\": [\n                {\n                    \"person_name_id\": 21428,\n                    \"preferred\": 0,\n                    \"person_id\": 20897,\n                    \"prefix\": null,\n                    \"given_name\": \"Ida\",\n                    \"middle_name\": null,\n                    \"family_name_prefix\": null,\n                    \"family_name\": \"Zgambo\",\n                    \"family_name2\": null,\n                    \"family_name_suffix\": null,\n                    \"degree\": null,\n                    \"creator\": 55,\n                    \"date_created\": \"2009-05-08T00:00:00.000+02:00\",\n                    \"voided\": 0,\n                    \"voided_by\": null,\n                    \"date_voided\": null,\n                    \"void_reason\": null,\n                    \"changed_by\": null,\n                    \"date_changed\": null,\n                    \"uuid\": \"5f62623a-03e6-11e5-8580-7877eb364ad2\"\n                }\n            ],\n            \"addresses\": [\n                {\n                    \"person_address_id\": 20250,\n                    \"person_id\": 20897,\n                    \"preferred\": 0,\n                    \"address1\": \"NEARHEALTH CENTRE\",\n                    \"address2\": null,\n                    \"city_village\": \"Area 18 A\",\n                    \"state_province\": null,\n                    \"postal_code\": null,\n                    \"country\": null,\n                    \"latitude\": null,\n                    \"longitude\": null,\n                    \"creator\": 55,\n                    \"date_created\": \"2009-05-08T00:00:00.000+02:00\",\n                    \"voided\": 0,\n                    \"voided_by\": null,\n                    \"date_voided\": null,\n                    \"void_reason\": null,\n                    \"county_district\": null,\n                    \"neighborhood_cell\": null,\n                    \"region\": null,\n                    \"subregion\": null,\n                    \"township_division\": null,\n                    \"uuid\": \"5f62bba2-03e6-11e5-8580-7877eb364ad2\"\n                }\n            ],\n            \"person_attributes\": [\n                {\n                    \"person_attribute_id\": 118837,\n                    \"person_id\": 20897,\n                    \"value\": \"Area 18 A\",\n                    \"person_attribute_type_id\": 18,\n                    \"creator\": 55,\n                    \"date_created\": \"2009-05-08T00:00:00.000+02:00\",\n                    \"changed_by\": null,\n                    \"date_changed\": null,\n                    \"voided\": 0,\n                    \"voided_by\": null,\n                    \"date_voided\": null,\n                    \"void_reason\": null,\n                    \"uuid\": \"5f62bc55-03e6-11e5-8580-7877eb364ad2\",\n                    \"type\": {\n                        \"person_attribute_type_id\": 18,\n                        \"name\": \"Current Place Of Residence\",\n                        \"description\": \"Place of stay\",\n                        \"format\": \"java.lang.String\",\n                        \"foreign_key\": null,\n                        \"searchable\": 0,\n                        \"creator\": 1,\n                        \"date_created\": \"2010-11-02T11:19:13.000+02:00\",\n                        \"changed_by\": null,\n                        \"date_changed\": null,\n                        \"retired\": 0,\n                        \"retired_by\": null,\n                        \"date_retired\": null,\n                        \"retire_reason\": null,\n                        \"edit_privilege\": null,\n                        \"uuid\": \"ba35eba0-8d80-11d8-abbb-0024217bb78e\",\n                        \"sort_weight\": 9\n                    }\n                },\n                {\n                    \"person_attribute_id\": 118838,\n                    \"person_id\": 20897,\n                    \"value\": \"NEARHEALTH CENTRE\",\n                    \"person_attribute_type_id\": 19,\n                    \"creator\": 55,\n                    \"date_created\": \"2009-05-08T00:00:00.000+02:00\",\n                    \"changed_by\": null,\n                    \"date_changed\": null,\n                    \"voided\": 0,\n                    \"voided_by\": null,\n                    \"date_voided\": null,\n                    \"void_reason\": null,\n                    \"uuid\": \"5f62bba2-03e6-11e5-8580-7877eb364ad2\",\n                    \"type\": {\n                        \"person_attribute_type_id\": 19,\n                        \"name\": \"Landmark Or Plot Number\",\n                        \"description\": \"Landmark or plot number\",\n                        \"format\": \"java.lang.String\",\n                        \"foreign_key\": null,\n                        \"searchable\": 0,\n                        \"creator\": 1,\n                        \"date_created\": \"2010-11-02T11:19:43.000+02:00\",\n                        \"changed_by\": 1,\n                        \"date_changed\": \"2010-11-02T11:19:55.000+02:00\",\n                        \"retired\": 0,\n                        \"retired_by\": null,\n                        \"date_retired\": null,\n                        \"retire_reason\": null,\n                        \"edit_privilege\": null,\n                        \"uuid\": \"ba35ece0-8d80-11d8-abbb-0024217bb78e\",\n                        \"sort_weight\": 16\n                    }\n                },\n                {\n                    \"person_attribute_id\": 118839,\n                    \"person_id\": 20897,\n                    \"value\": \"Other\",\n                    \"person_attribute_type_id\": 13,\n                    \"creator\": 55,\n                    \"date_created\": \"2009-05-08T00:00:00.000+02:00\",\n                    \"changed_by\": null,\n                    \"date_changed\": null,\n                    \"voided\": 0,\n                    \"voided_by\": null,\n                    \"date_voided\": null,\n                    \"void_reason\": null,\n                    \"uuid\": \"5f632ae4-03e6-11e5-8580-7877eb364ad2\",\n                    \"type\": {\n                        \"person_attribute_type_id\": 13,\n                        \"name\": \"Occupation\",\n                        \"description\": \"This is the current patient occupation\",\n                        \"format\": \"java.lang.String\",\n                        \"foreign_key\": null,\n                        \"searchable\": 0,\n                        \"creator\": 1,\n                        \"date_created\": \"2009-10-09T15:45:21.000+02:00\",\n                        \"changed_by\": null,\n                        \"date_changed\": null,\n                        \"retired\": 0,\n                        \"retired_by\": null,\n                        \"date_retired\": null,\n                        \"retire_reason\": null,\n                        \"edit_privilege\": null,\n                        \"uuid\": \"ba35e506-8d80-11d8-abbb-0024217bb78e\",\n                        \"sort_weight\": 24\n                    }\n                },\n                {\n                    \"person_attribute_id\": 118840,\n                    \"person_id\": 20897,\n                    \"value\": \"08859320\",\n                    \"person_attribute_type_id\": 12,\n                    \"creator\": 55,\n                    \"date_created\": \"2009-05-08T00:00:00.000+02:00\",\n                    \"changed_by\": null,\n                    \"date_changed\": null,\n                    \"voided\": 0,\n                    \"voided_by\": null,\n                    \"date_voided\": null,\n                    \"void_reason\": null,\n                    \"uuid\": \"5f63373f-03e6-11e5-8580-7877eb364ad2\",\n                    \"type\": {\n                        \"person_attribute_type_id\": 12,\n                        \"name\": \"Cell Phone Number\",\n                        \"description\": \"Person primary cell phone number\",\n                        \"format\": \"java.lang.String\",\n                        \"foreign_key\": null,\n                        \"searchable\": 0,\n                        \"creator\": 1,\n                        \"date_created\": \"2009-10-07T15:44:33.000+02:00\",\n                        \"changed_by\": 1,\n                        \"date_changed\": \"2011-02-09T11:04:35.000+02:00\",\n                        \"retired\": 0,\n                        \"retired_by\": null,\n                        \"date_retired\": null,\n                        \"retire_reason\": null,\n                        \"edit_privilege\": null,\n                        \"uuid\": \"ba35e3da-8d80-11d8-abbb-0024217bb78e\",\n                        \"sort_weight\": 5\n                    }\n                },\n                {\n                    \"person_attribute_id\": 118841,\n                    \"person_id\": 20897,\n                    \"value\": \"Not Available\",\n                    \"person_attribute_type_id\": 14,\n                    \"creator\": 55,\n                    \"date_created\": \"2009-05-08T00:00:00.000+02:00\",\n                    \"changed_by\": null,\n                    \"date_changed\": null,\n                    \"voided\": 0,\n                    \"voided_by\": null,\n                    \"date_voided\": null,\n                    \"void_reason\": null,\n                    \"uuid\": \"5f6347dd-03e6-11e5-8580-7877eb364ad2\",\n                    \"type\": {\n                        \"person_attribute_type_id\": 14,\n                        \"name\": \"Home Phone Number\",\n                        \"description\": \"Person home phone number, usually fixed line phone number\",\n                        \"format\": \"\",\n                        \"foreign_key\": null,\n                        \"searchable\": 0,\n                        \"creator\": 1,\n                        \"date_created\": \"2009-11-11T11:43:28.000+02:00\",\n                        \"changed_by\": null,\n                        \"date_changed\": null,\n                        \"retired\": 0,\n                        \"retired_by\": null,\n                        \"date_retired\": null,\n                        \"retire_reason\": null,\n                        \"edit_privilege\": null,\n                        \"uuid\": \"ba35e63c-8d80-11d8-abbb-0024217bb78e\",\n                        \"sort_weight\": 13\n                    }\n                }\n            ]\n        },\n        \"patient_identifiers\": [\n            {\n                \"patient_identifier_id\": 45749,\n                \"patient_id\": 20897,\n                \"identifier\": \"FN10411808\",\n                \"identifier_type\": 18,\n                \"preferred\": 0,\n                \"location_id\": 1,\n                \"creator\": 55,\n                \"date_created\": \"2009-05-08T00:00:00.000+02:00\",\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"5f6371e4-03e6-11e5-8580-7877eb364ad2\",\n                \"type\": {\n                    \"patient_identifier_type_id\": 18,\n                    \"name\": \"Archived filing number\",\n                    \"description\": \"Number attached to a patient's file at a clinic\",\n                    \"format\": \"\",\n                    \"check_digit\": 0,\n                    \"creator\": 1,\n                    \"date_created\": \"2011-07-08T14:21:32.000+02:00\",\n                    \"required\": 0,\n                    \"format_description\": \"\",\n                    \"validator\": \"\",\n                    \"retired\": 0,\n                    \"retired_by\": null,\n                    \"date_retired\": null,\n                    \"retire_reason\": null,\n                    \"uuid\": \"ba2f8e40-8d80-11d8-abbb-0024217bb78e\"\n                }\n            },\n            {\n                \"patient_identifier_id\": 45750,\n                \"patient_id\": 20897,\n                \"identifier\": \"P170100202393\",\n                \"identifier_type\": 3,\n                \"preferred\": 0,\n                \"location_id\": 1,\n                \"creator\": 55,\n                \"date_created\": \"2009-05-08T00:00:00.000+02:00\",\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"5f63a9fc-03e6-11e5-8580-7877eb364ad2\",\n                \"type\": {\n                    \"patient_identifier_type_id\": 3,\n                    \"name\": \"National id\",\n                    \"description\": \"National ID number developed by Baobab\",\n                    \"format\": \"\",\n                    \"check_digit\": 0,\n                    \"creator\": 1,\n                    \"date_created\": \"2007-11-29T22:12:34.000+02:00\",\n                    \"required\": 0,\n                    \"format_description\": \"P-175-0000004-5\",\n                    \"validator\": null,\n                    \"retired\": 0,\n                    \"retired_by\": null,\n                    \"date_retired\": null,\n                    \"retire_reason\": null,\n                    \"uuid\": \"ba2f69d8-8d80-11d8-abbb-0024217bb78e\"\n                }\n            }\n        ]\n    },\n    {\n        \"patient_id\": 20898,\n        \"tribe\": null,\n        \"creator\": 86,\n        \"date_created\": \"2009-05-08T00:00:00.000+02:00\",\n        \"changed_by\": null,\n        \"date_changed\": null,\n        \"voided\": 0,\n        \"voided_by\": null,\n        \"date_voided\": null,\n        \"void_reason\": null,\n        \"person\": {\n            \"person_id\": 20898,\n            \"gender\": \"M\",\n            \"birthdate\": null,\n            \"birthdate_estimated\": 0,\n            \"dead\": 0,\n            \"death_date\": null,\n            \"cause_of_death\": null,\n            \"creator\": 86,\n            \"date_created\": \"2009-05-08T00:00:00.000+02:00\",\n            \"changed_by\": null,\n            \"date_changed\": null,\n            \"voided\": 0,\n            \"voided_by\": null,\n            \"date_voided\": null,\n            \"void_reason\": null,\n            \"uuid\": \"618421ea-03e6-11e5-8580-7877eb364ad2\",\n            \"names\": [\n                {\n                    \"person_name_id\": 21429,\n                    \"preferred\": 0,\n                    \"person_id\": 20898,\n                    \"prefix\": null,\n                    \"given_name\": \"Salimu\",\n                    \"middle_name\": null,\n                    \"family_name_prefix\": null,\n                    \"family_name\": \"James\",\n                    \"family_name2\": null,\n                    \"family_name_suffix\": null,\n                    \"degree\": null,\n                    \"creator\": 86,\n                    \"date_created\": \"2009-05-08T00:00:00.000+02:00\",\n                    \"voided\": 0,\n                    \"voided_by\": null,\n                    \"date_voided\": null,\n                    \"void_reason\": null,\n                    \"changed_by\": null,\n                    \"date_changed\": null,\n                    \"uuid\": \"61846401-03e6-11e5-8580-7877eb364ad2\"\n                }\n            ],\n            \"addresses\": [\n                {\n                    \"person_address_id\": 20251,\n                    \"person_id\": 20898,\n                    \"preferred\": 0,\n                    \"address1\": \"Next to the market\",\n                    \"address2\": null,\n                    \"city_village\": \"Mchesi (A8)\",\n                    \"state_province\": null,\n                    \"postal_code\": null,\n                    \"country\": null,\n                    \"latitude\": null,\n                    \"longitude\": null,\n                    \"creator\": 86,\n                    \"date_created\": \"2009-05-08T00:00:00.000+02:00\",\n                    \"voided\": 0,\n                    \"voided_by\": null,\n                    \"date_voided\": null,\n                    \"void_reason\": null,\n                    \"county_district\": null,\n                    \"neighborhood_cell\": null,\n                    \"region\": null,\n                    \"subregion\": null,\n                    \"township_division\": null,\n                    \"uuid\": \"6184bc11-03e6-11e5-8580-7877eb364ad2\"\n                }\n            ],\n            \"person_attributes\": [\n                {\n                    \"person_attribute_id\": 118842,\n                    \"person_id\": 20898,\n                    \"value\": \"Mchesi (A8)\",\n                    \"person_attribute_type_id\": 18,\n                    \"creator\": 86,\n                    \"date_created\": \"2009-05-08T00:00:00.000+02:00\",\n                    \"changed_by\": null,\n                    \"date_changed\": null,\n                    \"voided\": 0,\n                    \"voided_by\": null,\n                    \"date_voided\": null,\n                    \"void_reason\": null,\n                    \"uuid\": \"6184bcc5-03e6-11e5-8580-7877eb364ad2\",\n                    \"type\": {\n                        \"person_attribute_type_id\": 18,\n                        \"name\": \"Current Place Of Residence\",\n                        \"description\": \"Place of stay\",\n                        \"format\": \"java.lang.String\",\n                        \"foreign_key\": null,\n                        \"searchable\": 0,\n                        \"creator\": 1,\n                        \"date_created\": \"2010-11-02T11:19:13.000+02:00\",\n                        \"changed_by\": null,\n                        \"date_changed\": null,\n                        \"retired\": 0,\n                        \"retired_by\": null,\n                        \"date_retired\": null,\n                        \"retire_reason\": null,\n                        \"edit_privilege\": null,\n                        \"uuid\": \"ba35eba0-8d80-11d8-abbb-0024217bb78e\",\n                        \"sort_weight\": 9\n                    }\n                },\n                {\n                    \"person_attribute_id\": 118843,\n                    \"person_id\": 20898,\n                    \"value\": \"Next to the market\",\n                    \"person_attribute_type_id\": 19,\n                    \"creator\": 86,\n                    \"date_created\": \"2009-05-08T00:00:00.000+02:00\",\n                    \"changed_by\": null,\n                    \"date_changed\": null,\n                    \"voided\": 0,\n                    \"voided_by\": null,\n                    \"date_voided\": null,\n                    \"void_reason\": null,\n                    \"uuid\": \"6184bc11-03e6-11e5-8580-7877eb364ad2\",\n                    \"type\": {\n                        \"person_attribute_type_id\": 19,\n                        \"name\": \"Landmark Or Plot Number\",\n                        \"description\": \"Landmark or plot number\",\n                        \"format\": \"java.lang.String\",\n                        \"foreign_key\": null,\n                        \"searchable\": 0,\n                        \"creator\": 1,\n                        \"date_created\": \"2010-11-02T11:19:43.000+02:00\",\n                        \"changed_by\": 1,\n                        \"date_changed\": \"2010-11-02T11:19:55.000+02:00\",\n                        \"retired\": 0,\n                        \"retired_by\": null,\n                        \"date_retired\": null,\n                        \"retire_reason\": null,\n                        \"edit_privilege\": null,\n                        \"uuid\": \"ba35ece0-8d80-11d8-abbb-0024217bb78e\",\n                        \"sort_weight\": 16\n                    }\n                },\n                {\n                    \"person_attribute_id\": 118844,\n                    \"person_id\": 20898,\n                    \"value\": \"Other\",\n                    \"person_attribute_type_id\": 13,\n                    \"creator\": 86,\n                    \"date_created\": \"2009-05-08T00:00:00.000+02:00\",\n                    \"changed_by\": null,\n                    \"date_changed\": null,\n                    \"voided\": 0,\n                    \"voided_by\": null,\n                    \"date_voided\": null,\n                    \"void_reason\": null,\n                    \"uuid\": \"61851722-03e6-11e5-8580-7877eb364ad2\",\n                    \"type\": {\n                        \"person_attribute_type_id\": 13,\n                        \"name\": \"Occupation\",\n                        \"description\": \"This is the current patient occupation\",\n                        \"format\": \"java.lang.String\",\n                        \"foreign_key\": null,\n                        \"searchable\": 0,\n                        \"creator\": 1,\n                        \"date_created\": \"2009-10-09T15:45:21.000+02:00\",\n                        \"changed_by\": null,\n                        \"date_changed\": null,\n                        \"retired\": 0,\n                        \"retired_by\": null,\n                        \"date_retired\": null,\n                        \"retire_reason\": null,\n                        \"edit_privilege\": null,\n                        \"uuid\": \"ba35e506-8d80-11d8-abbb-0024217bb78e\",\n                        \"sort_weight\": 24\n                    }\n                },\n                {\n                    \"person_attribute_id\": 118845,\n                    \"person_id\": 20898,\n                    \"value\": \"Not Available\",\n                    \"person_attribute_type_id\": 12,\n                    \"creator\": 86,\n                    \"date_created\": \"2009-05-08T00:00:00.000+02:00\",\n                    \"changed_by\": null,\n                    \"date_changed\": null,\n                    \"voided\": 0,\n                    \"voided_by\": null,\n                    \"date_voided\": null,\n                    \"void_reason\": null,\n                    \"uuid\": \"61852377-03e6-11e5-8580-7877eb364ad2\",\n                    \"type\": {\n                        \"person_attribute_type_id\": 12,\n                        \"name\": \"Cell Phone Number\",\n                        \"description\": \"Person primary cell phone number\",\n                        \"format\": \"java.lang.String\",\n                        \"foreign_key\": null,\n                        \"searchable\": 0,\n                        \"creator\": 1,\n                        \"date_created\": \"2009-10-07T15:44:33.000+02:00\",\n                        \"changed_by\": 1,\n                        \"date_changed\": \"2011-02-09T11:04:35.000+02:00\",\n                        \"retired\": 0,\n                        \"retired_by\": null,\n                        \"date_retired\": null,\n                        \"retire_reason\": null,\n                        \"edit_privilege\": null,\n                        \"uuid\": \"ba35e3da-8d80-11d8-abbb-0024217bb78e\",\n                        \"sort_weight\": 5\n                    }\n                },\n                {\n                    \"person_attribute_id\": 118846,\n                    \"person_id\": 20898,\n                    \"value\": \"Not Available\",\n                    \"person_attribute_type_id\": 14,\n                    \"creator\": 86,\n                    \"date_created\": \"2009-05-08T00:00:00.000+02:00\",\n                    \"changed_by\": null,\n                    \"date_changed\": null,\n                    \"voided\": 0,\n                    \"voided_by\": null,\n                    \"date_voided\": null,\n                    \"void_reason\": null,\n                    \"uuid\": \"618533a8-03e6-11e5-8580-7877eb364ad2\",\n                    \"type\": {\n                        \"person_attribute_type_id\": 14,\n                        \"name\": \"Home Phone Number\",\n                        \"description\": \"Person home phone number, usually fixed line phone number\",\n                        \"format\": \"\",\n                        \"foreign_key\": null,\n                        \"searchable\": 0,\n                        \"creator\": 1,\n                        \"date_created\": \"2009-11-11T11:43:28.000+02:00\",\n                        \"changed_by\": null,\n                        \"date_changed\": null,\n                        \"retired\": 0,\n                        \"retired_by\": null,\n                        \"date_retired\": null,\n                        \"retire_reason\": null,\n                        \"edit_privilege\": null,\n                        \"uuid\": \"ba35e63c-8d80-11d8-abbb-0024217bb78e\",\n                        \"sort_weight\": 13\n                    }\n                }\n            ]\n        },\n        \"patient_identifiers\": [\n            {\n                \"patient_identifier_id\": 45751,\n                \"patient_id\": 20898,\n                \"identifier\": \"P170100202393\",\n                \"identifier_type\": 3,\n                \"preferred\": 0,\n                \"location_id\": 1,\n                \"creator\": 86,\n                \"date_created\": \"2009-05-08T00:00:00.000+02:00\",\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"61855d8b-03e6-11e5-8580-7877eb364ad2\",\n                \"type\": {\n                    \"patient_identifier_type_id\": 3,\n                    \"name\": \"National id\",\n                    \"description\": \"National ID number developed by Baobab\",\n                    \"format\": \"\",\n                    \"check_digit\": 0,\n                    \"creator\": 1,\n                    \"date_created\": \"2007-11-29T22:12:34.000+02:00\",\n                    \"required\": 0,\n                    \"format_description\": \"P-175-0000004-5\",\n                    \"validator\": null,\n                    \"retired\": 0,\n                    \"retired_by\": null,\n                    \"date_retired\": null,\n                    \"retire_reason\": null,\n                    \"uuid\": \"ba2f69d8-8d80-11d8-abbb-0024217bb78e\"\n                }\n            }\n        ]\n    }\n]",
+					"responseCode": {
+						"code": 200,
+						"name": "OK"
+					},
+					"requestObject": {
+						"data": null,
+						"dataMode": null,
+						"headerData": [
+							{
+								"key": "Authorization",
+								"value": "8Azu1BYHc2r0",
+								"description": "",
+								"type": "text",
+								"enabled": true
+							}
+						],
+						"method": "GET",
+						"pathVariableData": [],
+						"queryParams": [
+							{
+								"key": "type_id",
+								"value": "3",
+								"equals": true,
+								"description": "",
+								"enabled": true
+							},
+							{
+								"key": "identifier",
+								"value": "P170100202393",
+								"equals": true,
+								"description": "",
+								"enabled": true
+							}
+						],
+						"url": "http://localhost:3000/api/v1/search/patients/by_identifier?type_id=3&identifier=P170100202393"
+					},
+					"headers": [
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "ETag",
+							"value": "W/\"70d037c8c5948c69d35db15c4b184124\""
+						},
+						{
+							"key": "Cache-Control",
+							"value": "max-age=0, private, must-revalidate"
+						},
+						{
+							"key": "X-Request-Id",
+							"value": "351f62da-180a-4a02-b563-6081ef32c926"
+						},
+						{
+							"key": "X-Runtime",
+							"value": "0.513067"
+						},
+						{
+							"key": "Vary",
+							"value": "Origin"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						}
+					],
+					"cookies": null,
+					"request": "bace4aa3-8a80-43f2-bb2f-2f6b5ebec68f",
+					"collection": "666fd3ae-c41c-b4b3-e1a2-8e1f5b3572ff"
+				}
+			],
+			"headers": "Authorization: 8Azu1BYHc2r0\n",
+			"pathVariables": {}
+		},
+		{
+			"id": "c1e09ef4-9628-47ec-a4f2-d773840db131",
+			"name": "Reallocate batch item to another site",
+			"url": "http://localhost:3000/api/v1/pharmacy/items/5/reallocate",
+			"description": "",
+			"data": [],
+			"dataMode": "raw",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"name": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"type": "text"
+				},
+				{
+					"key": "Authorization",
+					"value": "58L9eHzOh7Mi",
+					"description": "",
+					"type": "text",
+					"enabled": true
+				}
+			],
+			"method": "POST",
+			"pathVariableData": [],
+			"queryParams": [],
+			"auth": null,
+			"events": null,
+			"folder": "a4f1f12d-26b9-4f12-9eb7-27ea67af805b",
+			"responses": [
+				{
+					"id": "032bba4e-6782-4d7a-bc10-86b7a9030db4",
+					"name": "Reallocate batch item to another site",
+					"status": null,
+					"mime": null,
+					"language": "json",
+					"text": "{\n    \"id\": 1,\n    \"reallocation_code\": \"1234567890\",\n    \"batch_item_id\": 5,\n    \"quantity\": 0,\n    \"location_id\": 701,\n    \"created_at\": \"2019-05-16T15:56:16.000+02:00\",\n    \"updated_at\": \"2019-05-16T15:56:16.000+02:00\"\n}",
+					"responseCode": {
+						"code": 201,
+						"name": "Created"
+					},
+					"requestObject": {
+						"data": "{\n\t\"reallocation_code\": \"1234567890\",\n\t\"quantity\": 0,\n\t\"location_id\": 701\n}",
+						"dataMode": "raw",
+						"headerData": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"description": "",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "58L9eHzOh7Mi",
+								"description": "",
+								"type": "text",
+								"enabled": true
+							}
+						],
+						"method": "POST",
+						"pathVariableData": [],
+						"queryParams": [],
+						"url": "http://localhost:3000/api/v1/pharmacy/items/5/reallocate"
+					},
+					"headers": [
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "ETag",
+							"value": "W/\"5bbbc83f4a4e5bf94f264e571548ab1e\""
+						},
+						{
+							"key": "Cache-Control",
+							"value": "max-age=0, private, must-revalidate"
+						},
+						{
+							"key": "X-Request-Id",
+							"value": "f7441784-ef67-43e4-abad-acb865f3a1c2"
+						},
+						{
+							"key": "X-Runtime",
+							"value": "0.843913"
+						},
+						{
+							"key": "Vary",
+							"value": "Origin"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						}
+					],
+					"cookies": null,
+					"request": "c1e09ef4-9628-47ec-a4f2-d773840db131",
+					"collection": "666fd3ae-c41c-b4b3-e1a2-8e1f5b3572ff"
+				},
+				{
+					"id": "df3cc829-f590-4bbb-9dd6-bcc6ffc15bc6",
+					"name": "Reallocate batch item to another site",
+					"status": null,
+					"mime": null,
+					"language": "json",
+					"text": "{\n    \"id\": 1,\n    \"reallocation_code\": \"1234567890\",\n    \"batch_item_id\": 5,\n    \"quantity\": 0,\n    \"location_id\": 701,\n    \"created_at\": \"2019-05-16T15:56:16.000+02:00\",\n    \"updated_at\": \"2019-05-16T15:56:16.000+02:00\"\n}",
+					"responseCode": {
+						"code": 201,
+						"name": "Created"
+					},
+					"requestObject": {
+						"data": "{\n\t\"reallocation_code\": \"1234567890\",\n\t\"quantity\": 0,\n\t\"location_id\": 701\n}",
+						"dataMode": "raw",
+						"headerData": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"description": "",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "58L9eHzOh7Mi",
+								"description": "",
+								"type": "text",
+								"enabled": true
+							}
+						],
+						"method": "POST",
+						"pathVariableData": [],
+						"queryParams": [],
+						"url": "http://localhost:3000/api/v1/pharmacy/items/5/reallocate"
+					},
+					"headers": [
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "ETag",
+							"value": "W/\"5bbbc83f4a4e5bf94f264e571548ab1e\""
+						},
+						{
+							"key": "Cache-Control",
+							"value": "max-age=0, private, must-revalidate"
+						},
+						{
+							"key": "X-Request-Id",
+							"value": "f7441784-ef67-43e4-abad-acb865f3a1c2"
+						},
+						{
+							"key": "X-Runtime",
+							"value": "0.843913"
+						},
+						{
+							"key": "Vary",
+							"value": "Origin"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						}
+					],
+					"cookies": null,
+					"request": "c1e09ef4-9628-47ec-a4f2-d773840db131",
+					"collection": "666fd3ae-c41c-b4b3-e1a2-8e1f5b3572ff"
+				}
+			],
+			"rawModeData": "{\n\t\"reallocation_code\": \"1234567890\",\n\t\"quantity\": 0,\n\t\"location_id\": 701\n}",
+			"headers": "Content-Type: application/json\nAuthorization: 58L9eHzOh7Mi\n",
+			"pathVariables": {}
+		},
+		{
 			"id": "d429aa6f-d505-972c-1944-4e67592f546a",
 			"name": "Creating a Person",
 			"url": "http://127.0.0.1:3000/api/v1/people",
@@ -2306,12 +3429,11 @@
 			"url": "localhost:3000/api/v1/types/relationships?page_size=1",
 			"description": "This endpoint provides access to all relationship types in store. Filtering is supported through the `search_string` parameters. For example to retrieve all relationships containing the term 'doctor' use `<address>/api/v1/types/relationships?search_string=doctor`.",
 			"data": null,
-			"dataMode": "params",
+			"dataMode": null,
 			"headerData": [
 				{
 					"key": "Authorization",
 					"value": "kqpBzH1K6rYN",
-					"description": "",
 					"enabled": true
 				}
 			],
@@ -2322,12 +3444,11 @@
 					"key": "page_size",
 					"value": "1",
 					"equals": true,
-					"description": "",
 					"enabled": true
 				}
 			],
 			"auth": null,
-			"events": [],
+			"events": null,
 			"folder": null,
 			"responses": [
 				{
@@ -2365,7 +3486,7 @@
 						],
 						"data": null,
 						"method": "GET",
-						"dataMode": "params"
+						"dataMode": null
 					},
 					"headers": [
 						{
@@ -2420,17 +3541,120 @@
 			"pathVariables": {}
 		},
 		{
+			"id": "de46a070-eb95-4973-b8f9-62cbbf3da467",
+			"name": "Update batch",
+			"url": "http://localhost:3000/api/v1/pharmacy/batches/1234567890",
+			"description": "",
+			"data": [],
+			"dataMode": "raw",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"name": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"type": "text"
+				},
+				{
+					"key": "Authorization",
+					"value": "M9mEO1jNftvs",
+					"description": "",
+					"type": "text",
+					"enabled": true
+				}
+			],
+			"method": "PUT",
+			"pathVariableData": [],
+			"queryParams": [],
+			"auth": null,
+			"events": null,
+			"folder": "a4f1f12d-26b9-4f12-9eb7-27ea67af805b",
+			"responses": [
+				{
+					"id": "c84df620-07df-44ce-9434-d94987698d92",
+					"name": "Update batch",
+					"status": null,
+					"mime": null,
+					"language": "json",
+					"text": "{\n    \"id\": 2,\n    \"batch_number\": \"1234567890\",\n    \"creator\": 1,\n    \"date_created\": \"2019-05-17T09:11:03.000+02:00\",\n    \"date_changed\": null,\n    \"voided\": false,\n    \"voided_by\": null,\n    \"void_reason\": null,\n    \"date_voided\": null,\n    \"items\": [\n        {\n            \"id\": 9,\n            \"pharmacy_batch_id\": 2,\n            \"drug_id\": 901,\n            \"delivered_quantity\": 1000,\n            \"current_quantity\": 0,\n            \"delivery_date\": \"2019-05-09\",\n            \"expiry_date\": \"2020-12-31\",\n            \"creator\": 1,\n            \"date_created\": \"2019-05-17T09:11:03.000+02:00\",\n            \"date_changed\": \"2019-05-17T09:11:03.000+02:00\",\n            \"voided\": false,\n            \"voided_by\": null,\n            \"void_reason\": null,\n            \"date_voided\": null\n        },\n        {\n            \"id\": 10,\n            \"pharmacy_batch_id\": 2,\n            \"drug_id\": 901,\n            \"delivered_quantity\": 500,\n            \"current_quantity\": 0,\n            \"delivery_date\": \"2019-05-09\",\n            \"expiry_date\": \"2020-12-31\",\n            \"creator\": 1,\n            \"date_created\": \"2019-05-17T09:11:58.000+02:00\",\n            \"date_changed\": \"2019-05-17T09:11:58.000+02:00\",\n            \"voided\": false,\n            \"voided_by\": null,\n            \"void_reason\": null,\n            \"date_voided\": null\n        }\n    ]\n}",
+					"responseCode": {
+						"code": 201,
+						"name": "Created"
+					},
+					"requestObject": {
+						"data": "{\n\t\"items\": [{\"drug_id\": 901, \"quantity\": 500, \"expiry_date\": \"2020-12-31\", \"delivery_date\": \"2019-05-09\"}]\n}",
+						"dataMode": "raw",
+						"headerData": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"description": "",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "M9mEO1jNftvs",
+								"description": "",
+								"type": "text",
+								"enabled": true
+							}
+						],
+						"method": "PUT",
+						"pathVariableData": [],
+						"queryParams": [],
+						"url": "http://localhost:3000/api/v1/pharmacy/batches/1234567890"
+					},
+					"headers": [
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "ETag",
+							"value": "W/\"44875dbaf028a4f718ba3b86496ad641\""
+						},
+						{
+							"key": "Cache-Control",
+							"value": "max-age=0, private, must-revalidate"
+						},
+						{
+							"key": "X-Request-Id",
+							"value": "e7ca64f5-c24b-4437-b5b8-db973b4870bf"
+						},
+						{
+							"key": "X-Runtime",
+							"value": "0.036926"
+						},
+						{
+							"key": "Vary",
+							"value": "Origin"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						}
+					],
+					"cookies": null,
+					"request": "de46a070-eb95-4973-b8f9-62cbbf3da467",
+					"collection": "666fd3ae-c41c-b4b3-e1a2-8e1f5b3572ff"
+				}
+			],
+			"rawModeData": "{\n\t\"items\": [{\"drug_id\": 901, \"quantity\": 500, \"expiry_date\": \"2020-12-31\", \"delivery_date\": \"2019-05-09\"}]\n}",
+			"headers": "Content-Type: application/json\nAuthorization: M9mEO1jNftvs\n",
+			"pathVariables": {}
+		},
+		{
 			"id": "e01bfa97-af04-4ef3-98df-a66874115d11",
 			"name": "Retrieve appointments",
 			"url": "localhost:3000/api/v1/appointments?person_id=1000&page_size=1",
 			"description": "This endpoint provides access to all appointments ever created. Appointments are basically just Observations having a concept of 'Appointment'. They are returned in descending order of obs_datetime.\n\n### Available filters\n\n- obs_datetime: Limit results to appointments that fall on this date\n- person_id: Limit results to appointments belonging to this person\n- location_id: Limit results to appointments made at this location\n- encounter_id: Limit results to appointments belonging to this encounter (NOTE: there is no validation of whether the encounter is an appointment encounter)\n",
 			"data": null,
-			"dataMode": "params",
+			"dataMode": null,
 			"headerData": [
 				{
 					"key": "Authorization",
 					"value": "c2t0QXtnOWEB",
-					"description": "",
 					"enabled": true
 				}
 			],
@@ -2441,19 +3665,17 @@
 					"key": "person_id",
 					"value": "1000",
 					"equals": true,
-					"description": "",
 					"enabled": true
 				},
 				{
 					"key": "page_size",
 					"value": "1",
 					"equals": true,
-					"description": "",
 					"enabled": true
 				}
 			],
 			"auth": null,
-			"events": [],
+			"events": null,
 			"folder": null,
 			"responses": [
 				{
@@ -2557,8 +3779,8 @@
 			"name": "Retrieve specific person names",
 			"url": "localhost:3000/api/v1/people/18904/names",
 			"description": "GET localhost:3000/api/v1/people/18904/names",
-			"data": [],
-			"dataMode": "raw",
+			"data": null,
+			"dataMode": null,
 			"headerData": [
 				{
 					"key": "Authorization",
@@ -2613,9 +3835,9 @@
 							}
 						],
 						"headers": "Authorization: lQUitqOlCOo6\n//Content-Type: application/json\n",
-						"data": "{\n\t\"person_id\": 1000\n}",
+						"data": null,
 						"method": "GET",
-						"dataMode": "raw"
+						"dataMode": null
 					},
 					"headers": [
 						{
@@ -2666,8 +3888,96 @@
 					"collection": "666fd3ae-c41c-b4b3-e1a2-8e1f5b3572ff"
 				}
 			],
-			"rawModeData": "{\n\t\"person_id\": 1000\n}",
 			"headers": "Authorization: lQUitqOlCOo6\n//Content-Type: application/json\n",
+			"pathVariables": {}
+		},
+		{
+			"id": "e5322114-28ac-4640-888b-a9d2b1356897",
+			"name": "Retrieve earliest expiring item",
+			"url": "http://localhost:3000/api/v1/pharmacy/earliest_expiring_item ",
+			"description": "",
+			"data": null,
+			"dataMode": null,
+			"headerData": [
+				{
+					"key": "Authorization",
+					"value": "58L9eHzOh7Mi",
+					"description": "",
+					"type": "text",
+					"enabled": true
+				}
+			],
+			"method": "GET",
+			"pathVariableData": [],
+			"queryParams": [],
+			"auth": null,
+			"events": null,
+			"folder": "a4f1f12d-26b9-4f12-9eb7-27ea67af805b",
+			"responses": [
+				{
+					"id": "fece7fef-9aa8-4062-a1f7-53114f1318c6",
+					"name": "Retrieve earliest expiring item",
+					"status": null,
+					"mime": null,
+					"language": "json",
+					"text": "{\n    \"id\": 1,\n    \"pharmacy_batch_id\": 1,\n    \"drug_id\": 901,\n    \"delivered_quantity\": 1000,\n    \"current_quantity\": 0,\n    \"delivery_date\": \"2019-05-09\",\n    \"expiry_date\": null,\n    \"creator\": 1,\n    \"date_created\": \"2019-05-09T15:06:03.000+02:00\",\n    \"date_changed\": \"2019-05-09T15:06:03.000+02:00\",\n    \"voided\": false,\n    \"voided_by\": null,\n    \"void_reason\": null,\n    \"date_voided\": null\n}",
+					"responseCode": {
+						"code": 200,
+						"name": "OK"
+					},
+					"requestObject": {
+						"data": null,
+						"dataMode": null,
+						"headerData": [
+							{
+								"key": "Authorization",
+								"value": "58L9eHzOh7Mi",
+								"description": "",
+								"type": "text",
+								"enabled": true
+							}
+						],
+						"method": "GET",
+						"pathVariableData": [],
+						"queryParams": [],
+						"url": "http://localhost:3000/api/v1/pharmacy/earliest_expiring_item "
+					},
+					"headers": [
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "ETag",
+							"value": "W/\"c72960b0169371af80f87b9f7f70972c\""
+						},
+						{
+							"key": "Cache-Control",
+							"value": "max-age=0, private, must-revalidate"
+						},
+						{
+							"key": "X-Request-Id",
+							"value": "8effb353-b0d7-41e1-b4a3-3c76d2c525ce"
+						},
+						{
+							"key": "X-Runtime",
+							"value": "0.048205"
+						},
+						{
+							"key": "Vary",
+							"value": "Origin"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						}
+					],
+					"cookies": null,
+					"request": "e5322114-28ac-4640-888b-a9d2b1356897",
+					"collection": "666fd3ae-c41c-b4b3-e1a2-8e1f5b3572ff"
+				}
+			],
+			"headers": "Authorization: 58L9eHzOh7Mi\n",
 			"pathVariables": {}
 		},
 		{
@@ -2675,8 +3985,8 @@
 			"name": "Retrieve observations",
 			"url": "http://localhost:3000/api/v1/observations?page=0&page_size=3",
 			"description": "http://localhost:3000/api/v1/observations?page=0&page_size=3",
-			"data": [],
-			"dataMode": "params",
+			"data": null,
+			"dataMode": null,
 			"headerData": [
 				{
 					"key": "Authorization",
@@ -2747,7 +4057,7 @@
 						"headers": "Authorization: JDIt0GpZyR3I\n",
 						"data": null,
 						"method": "GET",
-						"dataMode": "params"
+						"dataMode": null
 					},
 					"headers": [
 						{
@@ -2800,8 +4110,8 @@
 			"name": "Searching encounter types",
 			"url": "localhost:3000/api/v1/encounters/_types?name=VITALS",
 			"description": "localhost:3000/api/v1/encounters/_types?name=VITALS",
-			"data": [],
-			"dataMode": "params",
+			"data": null,
+			"dataMode": null,
 			"headerData": [
 				{
 					"key": "Authorization",

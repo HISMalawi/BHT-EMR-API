@@ -33,39 +33,6 @@ module ARTService
               .first
       end
 
-      def raw_data(l1, l2)
-        data = ActiveRecord::Base.connection.select_all <<EOF
-        SELECT e.*, t2.cum_outcome,  
-        t3.identifier arv_number, t.birthdate,
-        t.gender, t4.given_name, t4.family_name
-        FROM temp_earliest_start_date e 
-        INNER JOIN person t ON t.person_id = e.patient_id
-        INNER JOIN temp_patient_outcomes t2 ON t2.patient_id = e.patient_id
-        LEFT JOIN patient_identifier t3 ON t3.patient_id = e.patient_id
-        AND t3.voided = 0 AND t3.identifier_type = 4 
-        INNER JOIN person_name t4 ON t4.person_id = e.patient_id
-        AND t4.voided = 0 GROUP BY t2.patient_id LIMIT #{l1}, #{l2};
-EOF
-
-        list = [];
-        (data || []).each do |record|
-          list << {
-            patient_id: record['patient_id'],
-            given_name: record['given_name'],
-            family_name: record['family_name'],
-            birthdate: record['birthdate'],
-            gender: record['gender'],
-            date_enrolled: record['date_enrolled'],
-            earliest_start_date: record['earliest_start_date'],
-            arv_number: record['arv_number'],
-            outcome:  record['cum_outcome'],
-            art_reason: record['art_reason']
-          }
-        end
-
-        return list
-      end
-
       def defaulter_list(pepfar)
         data = ActiveRecord::Base.connection.select_all <<EOF
         SELECT o.patient_id, min(start_date) start_date FROM orders o                      
@@ -147,6 +114,37 @@ EOF
         return patients
       end
 
+      def cohort_report_drill_down(id)
+        people = []
+
+        patients = ActiveRecord::Base.connection.select_all <<EOF
+        SELECT i.identifier arv_number, p.birthdate,
+          p.gender, n.given_name, n.family_name, p.person_id patient_id
+        FROM person p
+        INNER JOIN cohort_drill_down c ON c.patient_id = p.person_id
+        LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
+        AND i.voided = 0 AND i.identifier_type = 4 
+        LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
+        WHERE c.reporting_report_design_resource_id = #{id} 
+        GROUP BY p.person_id ORDER BY p.person_id, p.date_created;
+EOF
+
+        return {} if patients.blank?
+        
+        patients.select do |person|
+          people << {
+            person_id: person['patient_id'],
+            given_name: person['given_name'],
+            family_name: person['family_name'],
+            birthdate: person['birthdate'],
+            gender: person['gender'],
+            arv_number: person['arv_number']
+          }
+        end
+
+        return people
+      end
+
       private
 
       LOGGER = Rails.logger
@@ -155,6 +153,7 @@ EOF
       def save_report
         report = Report.create(name: @name, start_date: @start_date,
                                end_date: @end_date, type: @type,
+                               creator: User.current.id,
                                renderer_type: 'PDF')
 
         values = save_report_values(report)
@@ -170,12 +169,15 @@ EOF
                                             name: value.name,
                                             indicator_name: value.indicator_name,
                                             indicator_short_name: value.indicator_short_name,
+                                            creator: User.current.id,
                                             description: value.description,
                                             contents: value_contents_to_json(value.contents))
 
           report_value_saved = report_value.errors.empty?
           unless report_value_saved
             raise "Failed to save report value: #{report_value.errors.as_json}"
+          else
+            save_patients(report_value, value_contents_to_json(value).contents)
           end
 
           report_value
@@ -195,6 +197,57 @@ EOF
           value_contents
         end
       end
+
+      def save_patients(r, values)
+        return if values.blank?
+        patient_ids = []
+
+        begin
+          
+          (values.rows || []).each do |v|  
+            patient_ids << v[0]
+          end  
+        
+        rescue
+          
+          begin 
+            if values.first.include?(:patient_id)
+              values.select do |obj|
+                patient_ids << obj[:patient_id]
+              end
+            end
+          rescue
+            begin
+              values.select do |patient_id|
+                patient_ids << patient_id
+              end
+            rescue
+              puts "#{r.name} +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #{values.inspect}"
+              return
+            end
+          end
+
+        end
+   
+        sql_insert_statement = nil 
+        patient_ids.select do |patient_id|
+          if sql_insert_statement.blank?
+            sql_insert_statement = "(#{r.id}, #{patient_id})"
+          else
+            sql_insert_statement += ",(#{r.id}, #{patient_id})"
+          end
+        end
+        
+        unless sql_insert_statement.blank?
+          ActiveRecord::Base.connection.execute <<EOF
+          INSERT INTO cohort_drill_down (reporting_report_design_resource_id, patient_id)
+          VALUES #{sql_insert_statement};
+EOF
+
+        end
+
+      end
+
     end
   end
 
