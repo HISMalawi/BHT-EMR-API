@@ -50,6 +50,8 @@ module TBService
         # assess whether a patient must go for a lab order
         def due_lab_order? (patient:)
           program_start_date = find_patient_date_enrolled(patient)
+          return false unless program_start_date
+
           days = (Date.today - program_start_date).to_i
           falls_within_ordering_period?(days: days, tolerance: 5) && no_orders_done?(patient: patient, time: 5.days.ago)
         end
