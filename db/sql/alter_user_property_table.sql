@@ -1,0 +1,1 @@
+ALTER TABLE `user_property` CHANGE `property_value` `property_value` TEXT;

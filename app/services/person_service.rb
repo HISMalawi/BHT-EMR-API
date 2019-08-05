@@ -2,6 +2,7 @@
 
 require 'logger'
 require 'securerandom'
+require 'set'
 
 class PersonService
   LOGGER = Logger.new STDOUT
@@ -38,27 +39,24 @@ class PersonService
     person.update params unless params.empty?
   end
 
-  def find_people_by_name_and_gender(given_name, family_name, gender)
-    Person.joins([:patient, :names]).where(
-      'person.gender like ? AND person_name.given_name LIKE ?
-                            AND person_name.family_name LIKE ?
-       AND patient.patient_id = person.person_id',
-      "#{gender}%", "#{given_name}%", "#{family_name}%"
-    )
+  def find_people_by_name_and_gender(given_name, family_name, gender, use_soundex: true)
+    if use_soundex
+      soundex_person_search(given_name, family_name, gender)
+    else
+      glob_person_search(given_name, family_name, gender)
+    end
   end
 
   def create_person_name(person, params)
-    handle_model_errors do
-      PersonName.create(
-        person: person,
-        given_name: params[:given_name],
-        family_name: params[:family_name],
-        middle_name: params[:middle_name],
-        creator: User.current.id,
-        # HACK: Manually set uuid because db requires it but has no default
-        uuid: SecureRandom.uuid
-      )
+    name = handle_model_errors do
+      PersonName.create(person: person, given_name: params[:given_name],
+                        family_name: params[:family_name], middle_name: params[:middle_name],
+                        creator: User.current.id, uuid: SecureRandom.uuid)
     end
+
+    NameSearchService.index_person_name(name)
+
+    name
   end
 
   def update_person_name(person, params)
@@ -69,10 +67,14 @@ class PersonService
 
     return create_person_name(person, params) unless name
 
-    handle_model_errors do
+    name = handle_model_errors do
       name.update(params)
       name
     end
+
+    NameSearchService.index_person_name(name)
+
+    name
   end
 
   PERSON_ADDRESS_FIELD_MAP = {
@@ -162,5 +164,30 @@ class PersonService
     error = InvalidParameterError.new('Invalid parameter(s)')
     error.model_errors = model_instance.errors
     raise error
+  end
+
+  private
+
+  # Search people by using the ART 1 & 2 soundex person search algorithm.
+  def soundex_person_search(given_name, family_name, gender)
+    exact_matches = NameSearchService.search_full_person_name(given_name, family_name, use_soundex: false)
+    soundex_matches = NameSearchService.search_full_person_name(given_name, family_name, use_soundex: true)
+
+    # Combine the two match groups and eliminate duplicate records
+    person_ids = Set.new | exact_matches.collect(&:person_id) | soundex_matches.collect(&:person_id)
+
+    # Join to patient to filter patients only
+    Person.joins(:patient)
+          .where('patient.patient_id = person.person_id AND person_id IN (?) AND gender like ?', person_ids, "#{gender}%")
+  end
+
+  # Search for people by matching using MySQL glob.
+  def glob_person_search(given_name, family_name, gender)
+    names_subquery = NameSearchService.search_full_person_name(given_name, family_name, use_soundex: true)
+
+    # Join to patient to filter patients only
+    Person.joins(%i[person_name patient])
+          .where('patient.patient_id = person.patient_id AND gender like ? AND ', "#{gender}%")
+          .merge(names_subquery)
   end
 end

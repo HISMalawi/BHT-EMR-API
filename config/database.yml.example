@@ -1,0 +1,27 @@
+# Mysql configurations
+default: &default
+  host: localhost
+  adapter: mysql2
+  username: root
+  password: P@ch321!
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  timeout: 5000
+
+development:
+  <<: *default
+  database: openmrs_likuni
+test:
+  <<: *default
+  database: openmrs_test
+
+production:
+  <<: *default
+  database: mlambe_api_production
+
+healthdata:
+  adapter: mysql2
+  username: root
+  database: healthdata
+  password: P@ch321!
+  host: localhost
+  pool: 500

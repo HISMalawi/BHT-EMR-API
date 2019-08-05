@@ -24,7 +24,7 @@ module TBService
         npid: identifier(NPID_TYPE) || 'N/A',
         tb_number: tb_number,
         program_start_date: patient_program_start_date || 'N/A',
-        current_outcome: current_outcome.name || 'N/A',
+        current_outcome: current_outcome || 'N/A',
         current_drugs: current_drugs,
         residence: residence,
         drug_duration: drug_duration || 'N/A',
@@ -100,10 +100,12 @@ module TBService
                                   .order(start_date: :desc)\
                                   .first
 
-      return nil unless patient_state
-
-      program_workflow_state = ProgramWorkflowState.find_by(program_workflow_state_id: patient_state.state)
-      concept = ConceptName.find_by(concept_id: program_workflow_state.concept_id)
+      begin
+        program_workflow_state = ProgramWorkflowState.find_by(program_workflow_state_id: patient_state.state)
+        ConceptName.find_by(concept_id: program_workflow_state.concept_id).name
+      rescue StandardError
+        nil
+      end
     end
 
     def drug_period

@@ -89,6 +89,13 @@ class PatientService
     ).order('orders.start_date DESC')
   end
 
+  def drugs_orders_by_program(patient, date, program_id: nil)
+    DrugOrder.joins(:order => :encounter).where(
+      'orders.start_date <= ? AND orders.patient_id = ? AND quantity IS NOT NULL AND encounter.program_id = ?',
+      TimeUtils.day_bounds(date)[1], patient.patient_id, program_id
+    ).order('orders.start_date DESC')
+  end
+
   # Last drugs received
   def patient_last_drugs_received(patient, ref_date, program_id: nil)
     dispensing_encounter_query = Encounter.joins(:type)
@@ -122,6 +129,30 @@ class PatientService
                     reference_date,
                     program_id)\
              .order(encounter_datetime: :desc)
+  end
+
+  # Last drugs pill count
+  def patient_last_drugs_pill_count(patient, ref_date, program_id: nil)
+    program = Program.find(program_id) if program_id
+    concept_name = ConceptName.find_by_name('Number of tablets brought to clinic')
+    return [] if program.blank?
+
+    pill_counts = Observation.joins(:encounter).where(
+      'program_id = ? AND encounter.patient_id = ?
+        AND DATE(encounter_datetime) = DATE(?) AND concept_id = ?',
+      program.id, patient.patient_id, ref_date, concept_name.concept_id
+    ).order(encounter_datetime: :desc)
+
+    return [] unless pill_counts
+    values = {}
+
+    (pill_counts).each do |obs|
+      order = obs.order
+      drug_order = obs.order.drug_order
+      values[drug_order.drug_inventory_id] = obs.value_numeric
+    end
+
+    return values
   end
 
   # Retrieves a patient's bp trail

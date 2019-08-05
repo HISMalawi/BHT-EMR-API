@@ -9,6 +9,12 @@ LOGGER = Class.new do
 
   LOGGERS = [Logger.new(Rails.root.join('log/rds-sync.log')), Logger.new(STDOUT)].freeze
 
+  def initialize
+    LOGGERS.each do |logger|
+      logger.level = Logger::DEBUG
+    end
+  end
+
   def method_missing(method_name, *args)
     LOGGERS.each { |logger| logger.method(method_name).call(*args) }
   end
@@ -18,44 +24,67 @@ end.new
 # ActiveRecord::Base.logger = LOGGER
 # RestClient.log = LOGGER
 
+ActiveRecord::Base.logger = LOGGER
+
 APPLICATION_CONFIG_PATH = Rails.root.join('config/application.yml')
 DELTA_STATE_PATH = Rails.root.join('log/rds-sync-state.yml')
 
-MODELS = [Person, PersonAttribute, PersonAddress, PersonName, User, Patient,
+MODELS = [Person, PersonAttribute, PersonAddress, PersonName, Relationship, User, Patient,
           PatientIdentifier, PatientState, PatientProgram, Encounter,
-          Observation, Order, DrugOrder].freeze
+          Observation, Order, DrugOrder, Pharmacy, PharmacyBatch,
+          PharmacyBatchItem, PharmacyBatchItemReallocation].freeze
 
-TIME_EPOCH = '1970-01-01'.to_time
+TIME_EPOCH = '0000-00-00 00:00:00'
+DEST_TIME_EPOCH = '1000-01-01 00:00:00'
 
 # These models are missing a `date_changed` field...
 # They probably are not meant to be changed after creation.
-IMMUTABLE_MODELS = [PersonAddress, PatientIdentifier, Observation, Order].freeze
+IMMUTABLE_MODELS = [PersonAddress, PatientIdentifier, Observation, Order, Relationship].freeze
+
+# Maximum number of records to be fetched from database per request
+RECORDS_BATCH_SIZE = 50_000
+
+# Record retrieval mode
+MODE_DUMP = :mode_dump # Retrieves everything from database
+MODE_PUSH = :mode_push # Retrieves records based on recent update timestam
+
+MAX_DEFAULT_USER_ID = 50
+
+# Global rds_configuration for script
+@rds_configuration = { mode: MODE_PUSH }
 
 def main(database, program_name)
   LOGGER.info("Scraping database [#{database}, #{program_name}]")
   initiate_couch_sync
 
+  program = Program.find_by_name(program_name)
+
   MODELS.each do |model|
     LOGGER.debug("Scanning model: #{model}")
-    last_update_time = delta(model)
+    last_update_time = database_offset(model, database)
 
     recent_records(model, last_update_time, database).each do |record|
-      LOGGER.debug("Handling #{model} ##{record.id}")
+      LOGGER.debug("Handling #{model}(##{record.id})")
 
       update_time = record_update_time(record)
-      last_update_time = update_time if update_time > last_update_time
+      # NOTE: Cast dates to string for comparison due to possible invalid
+      #       date '0000-00-00 00:00:00' that was being used in old ART issues.
+      last_update_time = update_time if update_time.to_s > last_update_time.to_s
 
       sync_status = find_record_sync_status(record, database)
-      next if record_already_synced?(record, sync_status)
+      if record_already_synced?(record, sync_status)
+        LOGGER.debug("Skipping already synced record #{model}(##{record.id})")
+        next
+      end
 
-      record_doc_id = push_record(record, sync_status&.record_doc_id, program_name)
+      record_doc_id = push_record(record, sync_status&.record_doc_id, program)
 
       save_record_sync_status(sync_status, record, record_doc_id, database)
     rescue RestClient::Exception => e
       LOGGER.error("Failed to write #{model} ##{record.id} due to exception: #{e.class} - #{e} - #{e.response.body}")
     end
 
-    save_delta(model, last_update_time)
+    save_database_offset(model, last_update_time, database)
   end
 end
 
@@ -63,19 +92,20 @@ end
 def with_lock
   File.open('/tmp/rds_push.lock', File::RDWR | File::CREAT) do |lock_file|
     unless lock_file.flock(File::LOCK_EX | File::LOCK_NB)
-      raise 'Another instance is already is running'
+      LOGGER.warn 'Another instance is already is running'
+      exit 255
     end
 
     yield
   end
 end
 
-def delta(model)
-  @delta ||= DELTA_STATE_PATH.exist? ? YAML.load_file(DELTA_STATE_PATH) : {}
-  @delta[model.to_s] || TIME_EPOCH
+def database_offset(model, database)
+  @database_offset ||= DELTA_STATE_PATH.exist? ? YAML.load_file(DELTA_STATE_PATH) : {}
+  @database_offset["#{database}.#{model}"] || TIME_EPOCH
 end
 
-# Load database configuration
+# Load database rds_configuration
 def config
   return @config if @config
 
@@ -86,31 +116,111 @@ def config
   @config
 end
 
-def save_delta(model, time)
-  return if delta(model) == time
+def save_database_offset(model, time, database)
+  return if database_offset(model, database) == time
 
-  @delta[model.to_s] = time
+  @database_offset["#{database}.#{model}"] = time
 
   Dir.mkdir(DELTA_STATE_PATH.parent) unless DELTA_STATE_PATH.parent.exist?
 
-  LOGGER.debug("Saving delta, #{time}, for model: #{model}")
+  LOGGER.debug("Saving database_offset, #{time}, for model: #{database}.#{model}")
 
   File.open(DELTA_STATE_PATH, 'w') do |fin|
-    fin.write(@delta.to_yaml)
+    fin.write(@database_offset.to_yaml)
   end
 end
 
-def recent_records(model, delta, database)
-  LOGGER.info("Retrieving #{model}s from database '#{database}' starting at #{delta}")
-  model.establish_connection(database.to_sym)
+def recent_records(model, database_offset, database)
+  Enumerator.new do |enum|
+    offset = 0
 
-  # HACK: person address seems to be missing `date_changed` field so we
-  # fall back to the existing `date_created`
-  return model.where('date_created > ?', delta) if immutable_model?(model)
+    loop do
+      LOGGER.info("Retrieving #{model}s from database '#{database}' having [time >= #{database_offset}, index >= #{offset}]")
+      model.establish_connection(database.to_sym)
 
-  return model.joins(:order).where('date_created > ?', delta) if model == DrugOrder
+      break unless model_exists?(model)
 
-  model.where('date_changed > ?', delta)
+      records = case @rds_configuration[:mode]
+                when MODE_DUMP
+                  retrieve_records_for_dump(model, database_offset, database)
+                when MODE_PUSH
+                  retrieve_records_for_push(model, database_offset, database)
+                else
+                  raise "Invalid mode specified: #{@rds_configuration[:mode]}"
+                end
+
+      records = records.order(model.primary_key.to_s).offset(offset).limit(RECORDS_BATCH_SIZE)
+
+      records.each { |record| enum.yield(record) }
+
+      break if records.empty?
+
+      offset += RECORDS_BATCH_SIZE
+    end
+  end
+end
+
+# Check if model exists in it's bound database
+def model_exists?(model)
+  model.exists? # Throws invalid ActiveRecord::StatementInvalid if doesn't exist
+rescue ActiveRecord::StatementInvalid => e
+  return false if e.message.match?(/Table .* doesn't exist/i)
+
+  raise e
+end
+
+# Only retrieves records with an update timestamp.
+def retrieve_records_for_push(model, database_offset, database)
+  if model == User
+    model.unscoped.where('date_created >= :time OR date_changed >= :time OR date_retired >= :time', time: database_offset.to_s)
+  elsif immutable_model?(model)
+    # HACK: person address seems to be missing `date_changed` field so we
+    # fall back to the existing `date_created`
+    model.unscoped.where('date_created >= :time OR date_voided >= :time', time: database_offset.to_s)
+  elsif model == DrugOrder
+    # DrugOrder lacks date_changed and date_created fields. We instead use
+    # the parent Order's date_created.
+    model.unscoped\
+         .joins('INNER JOIN orders ON orders.order_id = drug_order.order_id')\
+         .where('date_created >= :time OR date_voided >= :time', time: database_offset.to_s)
+  else
+    model.unscoped.where('date_changed >= :time OR date_created >= :time OR date_voided >= :time', time: database_offset)
+  end
+end
+
+# Retrieves all records even those without update timestamps
+def retrieve_records_for_dump(model, database_offset, database)
+  if model == User
+    where_conditions = <<~SQL
+      (date_created >= :time OR date_changed >= :time OR date_retired >= :time)
+        OR (date_created IS NULL AND date_changed IS NULL AND date_retired IS NULL)
+    SQL
+    model.unscoped.where(where_conditions, time: database_offset.to_s)
+  elsif immutable_model?(model)
+    # HACK: person address seems to be missing `date_changed` field so we
+    # fall back to the existing `date_created`
+    where_conditions = <<~SQL
+      (date_created >= :time OR date_voided >= :time)
+      OR (date_created IS NULL AND date_voided IS NULL)
+    SQL
+    model.unscoped.where(where_conditions, time: database_offset.to_s)
+  elsif model == DrugOrder
+    # DrugOrder lacks date_changed and date_created fields. We instead use
+    # the parent Order's date_created.
+    where_conditions = <<~SQL
+      (date_created >= :time OR date_voided >= :time)
+      OR (date_created IS NULL AND date_voided IS NULL)
+    SQL
+    model.unscoped\
+         .joins('INNER JOIN orders ON orders.order_id = drug_order.order_id')\
+         .where(where_conditions, time: database_offset.to_s)
+  else
+    where_conditions = <<~SQL
+      (date_changed >= :time OR date_created >= :time OR date_voided >= :time)
+      OR (date_changed IS NULL AND date_created IS NULL AND date_voided IS NULL)
+    SQL
+    model.unscoped.where(where_conditions, time: database_offset)
+  end
 end
 
 def model(name)
@@ -127,11 +237,20 @@ end
 def record_update_time(record)
   # HACK: Models like PersonAddress are missing the preferred
   #   `date_changed` field thus we are falling back to date_created
-  return record.date_created if immutable_model?(record, true)
+  if immutable_model?(record, true)
+    return record_date_voided(record) || record.date_created
+  end
 
-  return record.order.date_created if record.class == DrugOrder
+  if record.class == DrugOrder
+    order = Order.unscoped.find(record.order_id)
+    return order.date_voided || order.date_created
+  end
 
-  record.date_changed
+  record_date_voided(record) || record.date_changed || record.date_created
+end
+
+def record_date_voided(record)
+  record.respond_to?(:date_retired) ? record.date_retired : record.date_voided
 end
 
 def find_record_sync_status(record, database)
@@ -172,10 +291,10 @@ end
 #                   an update of the couch document with record.
 #
 # @returns  - A couch document id for the pushed record
-def push_record(record, doc_id = nil, program_name = nil)
-  LOGGER.debug("Pushing record to couch db: #{record.class} ##{record.id}(doc_id: #{doc_id || 'N/A'}) ")
+def push_record(record, doc_id = nil, program = nil)
+  LOGGER.info("Pushing record to couch db: #{record.class}(##{record.id}, doc_id: #{doc_id || 'N/A'}) ")
 
-  record = serialize_record(record, program_name)
+  record = serialize_record(record, program).to_json
 
   if doc_id
     push_existing_record(record, doc_id)
@@ -185,37 +304,54 @@ def push_record(record, doc_id = nil, program_name = nil)
 end
 
 # Convert record to JSON
-def serialize_record(record, program_name = nil)
+def serialize_record(record, program)
   serialized_record = record.as_json(ignore_includes: true)
-  transform_record_keys(record, serialized_record)
+  transform_record_keys(record, serialized_record, program)
 
   serialized_record['record_type'] = record.class.to_s
 
-  if record.class == Encounter && record.respond_to?(:program_id) && record.program_id.nil?
+  if record.class == Encounter && (!record.respond_to?(:program_id) || record.program_id.nil?)
     # HACK: Apparently this script may be run on old applications
     # that use the old openmrs standard that has no program
     # specific encounters. Thus we manually have to set the program
     # id using the value specified in the config file.
-    raise 'program_name required for encounters without program_id' if program_name.blank?
-
-    program = Program.find_by_name(program_name)
-    raise "Invalid program name '#{program_name}' in rds config: application.yml" unless program
+    raise 'Invalid or missing program name in rds config: application.yml' unless program
 
     serialized_record['program_id'] = program.id
+
+    # HACK: Another hack to handle HTS program encounters
+    serialized_record.delete('patient_program_id') if serialized_record.key?('patient_program_id')
+  elsif [User, Person, PersonName].include?(record.class)\
+      && record.id <= MAX_DEFAULT_USER_ID && !record_uuid_was_remapped?(record)
+    # HACK: On setup of most BHT applications, a default set of users is seeded.
+    # These retain the same UUIDs across space. We need to remap these UUIDs
+    # since they all will be loaded into the same database that holds unique
+    # constraints on all UUID fields.
+    remap = remap_record_uuid(record)
+    serialized_record['uuid'] = remap.new_uuid
   end
 
-  serialized_record.to_json
+  if record.respond_to?(:date_created) && record.date_created.blank?
+    serialized_record['date_created'] = DEST_TIME_EPOCH
+  end
+
+  serialized_record
 end
 
 SITE_CODE_MAX_WIDTH = 5
+PROGRAM_ID_MAX_WIDTH = 2
+CURRENT_HEALTH_CENTER_ID = GlobalProperty.find_by_property('current_health_center_id')\
+                                         .property_value\
+                                         .to_s\
+                                         .rjust(SITE_CODE_MAX_WIDTH, '0')
 
 # Transforms primary key and foreign keys on record to the format required in RDS
-def transform_record_keys(record, serialized_record)
-  site_id = GlobalProperty.find_by_property('current_health_center_id')\
-                          .property_value\
-                          .to_s\
-                          .rjust(SITE_CODE_MAX_WIDTH, '0')
-  serialized_record[record.class.primary_key.to_s] = "#{record.id}#{site_id}".to_i
+def transform_record_keys(record, serialized_record, program)
+  site_id = CURRENT_HEALTH_CENTER_ID
+
+  program_id = program&.id&.to_s&.rjust(PROGRAM_ID_MAX_WIDTH, '0') || '00'
+
+  serialized_record[record.class.primary_key.to_s] = "#{record.id}#{program_id}#{site_id}".to_i
 
   record.class.reflect_on_all_associations(:belongs_to).each do |association|
     next unless MODELS.include?(association.class_name.constantize)\
@@ -224,10 +360,39 @@ def transform_record_keys(record, serialized_record)
     id = record.send(association.foreign_key.to_sym)
     next unless id
 
-    serialized_record[association.foreign_key.to_s] = "#{id}#{site_id}".to_i
+    serialized_record[association.foreign_key.to_s] = "#{id}#{program_id}#{site_id}".to_i
   end
 
   serialized_record
+end
+
+def remap_record_uuid(record)
+  new_uuid = ActiveRecord::Base.connection.select_one('SELECT UUID() as uuid')['uuid']
+  old_uuid = record.uuid
+
+  record.uuid = new_uuid
+  model = record.class
+  database = model.connection.current_database
+
+  ActiveRecord::Base.connection.execute(
+    <<~SQL
+      UPDATE `#{database}`.`#{model.table_name}`
+      SET uuid = '#{new_uuid}'
+      WHERE #{model.primary_key} = '#{record.id}'
+    SQL
+  )
+
+  UuidRemap.create(model: record.class.to_s,
+                   database: record.class.connection.current_database,
+                   old_uuid: old_uuid,
+                   new_uuid: new_uuid,
+                   record_id: record.id)
+end
+
+def record_uuid_was_remapped?(record)
+  UuidRemap.where(model: record.class.to_s,
+                  database: record.class.connection.current_database,
+                  new_uuid: record.uuid).exists?
 end
 
 # Push a new record to couch db
@@ -357,10 +522,12 @@ rescue RestClient::NotFound => e
   raise e
 end
 
-with_lock do
-  config # Load configuration early to ensure its sanity before doing anything
+if @RDS_DUMP_RUNNING.blank? # HACK: Enables importing of this as a module in rds_dump script
+  with_lock do
+    config # Load rds_configuration early to ensure its sanity before doing anything
 
-  config['databases'].each do |database, database_config|
-    main(database, database_config['program_name'])
+    config['databases'].each do |database, database_config|
+      main(database, database_config['program_name'])
+    end
   end
 end

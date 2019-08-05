@@ -10,7 +10,7 @@ class Api::V1::AppointmentsController < ApplicationController
   end
 
   def index
-    filters = params.permit %i[person_id obs_datetime date]
+    filters = params.permit %i[person_id obs_datetime date program_id]
     appointments = appointment_service.appointments filters
     render json: paginate(appointments)
   end
