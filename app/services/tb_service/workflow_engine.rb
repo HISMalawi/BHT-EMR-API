@@ -80,15 +80,18 @@ module TBService
       TREATMENT => %i[patient_should_get_treated?
                                     patient_should_proceed_for_treatment?
                                     patient_has_no_treatment?
-                                    patient_has_valid_test_results?],
+                                    patient_has_valid_test_results?
+                                    should_treat_patient?],
       DISPENSING => %i[patient_got_treatment?
                                     patient_should_get_treated?
                                     patient_should_proceed_for_treatment?
                                     patient_has_no_dispensation?
-                                    patient_has_valid_test_results?],
+                                    patient_has_valid_test_results?
+                                    should_treat_patient?],
       DIAGNOSIS => %i[should_patient_tested_through_diagnosis?
                                     patient_has_no_diagnosis?
-                                    patient_should_proceed_for_treatment?],
+                                    patient_should_proceed_for_treatment?
+                                    should_treat_patient?],
       LAB_RESULTS => %i[patient_has_no_lab_results?
                                     patient_should_proceed_after_lab_order?
                                     patient_recent_lab_order_has_no_results?],
@@ -100,7 +103,8 @@ module TBService
                                     patient_is_not_a_transfer_out?
                                     patient_should_proceed_for_treatment?
                                     patient_has_no_appointment?
-                                    patient_has_valid_test_results?]
+                                    patient_has_valid_test_results?
+                                    should_treat_patient?]
     }.freeze
 
     # Concepts
@@ -483,6 +487,19 @@ module TBService
         @patient.patient_id,
         @date
       ).order(encounter_datetime: :desc).first.present?
+    end
+
+    def patient_has_adherence?
+      Encounter.joins(:type).where(
+        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
+        TB_ADHERENCE,
+        @patient.patient_id,
+        @date
+      ).order(encounter_datetime: :desc).first.present?
+    end
+
+    def should_treat_patient?
+      patient_is_new? || patient_has_adherence?
     end
 
   end
