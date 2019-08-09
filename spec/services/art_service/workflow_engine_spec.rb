@@ -227,9 +227,20 @@ describe ARTService::WorkflowEngine do
 
   def record_vitals(patient)
     receive_patient patient, guardian_only: false
-    create :encounter, type: encounter_type('VITALS'),
-                       patient: patient,
-                       program_id: HIV_PROGRAM_ID
+
+    encounter = create :encounter, type: encounter_type('VITALS'),
+                                   patient: patient,
+                                   program_id: HIV_PROGRAM_ID
+
+    create :observation, encounter: encounter,
+                         person_id: encounter.patient_id,
+                         concept_id: ConceptName.find_by_name('Weight').concept_id,
+                         value_numeric: 50
+
+    create :observation, encounter: encounter,
+                         person_id: encounter.patient_id,
+                         concept_id: ConceptName.find_by_name('Height (cm)').concept_id,
+                         value_numeric: 50
   end
 
   def record_staging(patient)
