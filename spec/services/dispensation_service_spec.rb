@@ -32,13 +32,15 @@ RSpec.describe DispensationService do
 
   describe :dispense_drug do
     it 'updates order quantity' do
+      program = create :program
       encounter = create :encounter_treatment, patient: patient
       drug = Drug.arv_drugs[0]
       order = create :order, encounter: encounter, patient: patient,
-                             concept: drug.concept
+                             concept: drug.concept, start_date: Date.today,
+                             auto_expire_date: 10.days.after
       drug_order = create :drug_order, order: order, drug: drug
 
-      obs = DispensationService.dispense_drug drug_order, 10
+      obs = DispensationService.dispense_drug(program, drug_order, 10)
 
       expect(obs.concept_id).to eq(concept('AMOUNT DISPENSED').concept_id)
       expect(obs.order).to eq(order)
