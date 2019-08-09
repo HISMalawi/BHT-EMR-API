@@ -2,10 +2,13 @@
 
 require 'ostruct'
 
-@RDS_DUMP_RUNNING = true
-require_relative 'rds_push'
+class << self
+  include RdsService
 
-@rds_configuration[:mode] = MODE_DUMP
+  def rds_configuration
+    @rds_configuration ||= { mode: RdsService::MODE_DUMP }
+  end
+end
 
 def main
   File.open(Rails.root.join('log', 'rds_dump.sql'), 'w') do |fout|
@@ -21,13 +24,13 @@ def dump(database, program_name, file)
 
   program = Program.find_by_name(program_name)
 
-  MODELS.each do |model|
-    records = recent_records(model, TIME_EPOCH, database)
+  RdsService::MODELS.each do |model|
+    records = recent_records(model, RdsService::TIME_EPOCH, database)
 
     last_record_container = OpenStruct.new
 
     # Chunk retrieved records while converting them to JSON at the same time.
-    record_chunks = chunk_records(records, RECORDS_BATCH_SIZE) do |record|
+    record_chunks = chunk_records(records, RdsService::RECORDS_BATCH_SIZE) do |record|
       last_record_container.record = record
 
       record = serialize_record(record, program)
