@@ -145,8 +145,8 @@ module RdsService
       # DrugOrder lacks date_changed and date_created fields. We instead use
       # the parent Order's date_created.
       model.unscoped\
-          .joins('INNER JOIN orders ON orders.order_id = drug_order.order_id')\
-          .where('date_created >= :time OR date_voided >= :time', time: database_offset.to_s)
+           .joins('INNER JOIN orders ON orders.order_id = drug_order.order_id')\
+           .where('date_created >= :time OR date_voided >= :time', time: database_offset.to_s)
     else
       model.unscoped.where('date_changed >= :time OR date_created >= :time OR date_voided >= :time', time: database_offset)
     end
@@ -238,7 +238,7 @@ module RdsService
       return sync_status
     end
 
-    print RecordSyncStatus.create(
+    RecordSyncStatus.create(
       record_type: RecordType.find_by_name(record.class.to_s),
       record_doc_id: record_doc_id,
       record_id: record.id,
@@ -246,7 +246,6 @@ module RdsService
       created_at: time,
       updated_at: time
     ).errors.as_json
-    print "\n"
   end
 
   # Pushes a record to couch db
@@ -305,14 +304,17 @@ module RdsService
 
   SITE_CODE_MAX_WIDTH = 5
   PROGRAM_ID_MAX_WIDTH = 2
-  CURRENT_HEALTH_CENTER_ID = GlobalProperty.find_by_property('current_health_center_id')\
-                                          .property_value\
-                                          .to_s\
-                                          .rjust(SITE_CODE_MAX_WIDTH, '0')
+
+  def current_health_center_id
+    GlobalProperty.find_by_property('current_health_center_id')\
+                  .property_value\
+                  .to_s\
+                  .rjust(SITE_CODE_MAX_WIDTH, '0')
+  end
 
   # Transforms primary key and foreign keys on record to the format required in RDS
   def transform_record_keys(record, serialized_record, program)
-    site_id = CURRENT_HEALTH_CENTER_ID
+    site_id = current_health_center_id
 
     program_id = program&.id&.to_s&.rjust(PROGRAM_ID_MAX_WIDTH, '0') || '00'
 

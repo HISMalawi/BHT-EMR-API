@@ -2,16 +2,15 @@
 
 FactoryBot.define do
   factory :encounter do
-    # association :patient
-    # association :program
+    association :patient
+    association :program
+    association :type, factory: :encounter_type
 
     encounter_datetime { Time.now }
     date_created { Time.now }
     creator { 1 }
     provider_id { 1 }
     location_id { 700 }
-    patient { create :patient }
-    program { create :program }
 
     factory :encounter_dispensing do
       type { EncounterType.find_by_name 'Dispensing' }
