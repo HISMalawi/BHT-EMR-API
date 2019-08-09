@@ -4,8 +4,8 @@ class Concept < RetirableRecord
   self.table_name = :concept
   self.primary_key = :concept_id
 
-  belongs_to :concept_class
-  belongs_to :concept_datatype
+  belongs_to :concept_class, foreign_key: :class_id
+  belongs_to :concept_datatype, foreign_key: :datatype_id
   has_one :concept_numeric, foreign_key: :concept_id, dependent: :destroy
   # has_one :name, :class_name => 'ConceptName'
   has_many :answer_concept_names, class_name: 'ConceptName'
