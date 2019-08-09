@@ -97,20 +97,16 @@ module TBService
       end
 
       def current_outcome
-        patient_id = ActiveRecord::Base.connection.quote(patient.patient_id)
-        quoted_date = ActiveRecord::Base.connection.quote(date)
-        program_id = Program.find_by(name: 'TB PROGRAM').program_id
-        patient_state = PatientState.joins(`INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id
-                                            AND p.program_id = #{program_id} WHERE (patient_state.voided = 0 AND p.voided = 0
-                                            AND p.program_id = #{program_id} AND DATE(start_date) <= visit_date AND p.patient_id = #{patient_id})
-                                            AND (patient_state.voided = 0) ORDER BY start_date DESC, patient_state.patient_state_id DESC,
-                                            patient_state.date_created DESC LIMIT 1`).first
-        return nil unless patient_state
+        program = Program.find_by(name: 'TB PROGRAM')
 
-        program_workflow_state = ProgramWorkflowState.find_by(program_workflow_state_id: patient_state.state)
-        concept = ConceptName.find_by(concept_id: program_workflow_state.concept_id)
-        concept.name
+        state = PatientState.joins(:patient_program)\
+                            .includes(:program_workflow_state)
+                            .where('start_date <= ?', date)\
+                            .merge(PatientProgram.where(program: program, patient: patient))\
+                            .order(start_date: :desc)\
+                            .last
 
+        state.program_workflow_state.name
       end
 
       def drug_period
