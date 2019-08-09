@@ -275,13 +275,24 @@ describe ARTService::WorkflowEngine do
                            encounter: encounter
     create :drug_order, order: order, drug: arv
 
-    value_coded = assess_fast_track ? concept('Yes').concept_id : concept('No').concept_id
+    setup_fast_track_assessment(encounter, patient, assess_fast_track)
+
+    encounter
+  end
+
+  def setup_fast_track_assessment(encounter, patient, assess_fast_track)
+    assess_fast_track_answer = if assess_fast_track
+                                 create :global_property, property: 'enable.fast.track',
+                                                          property_value: 'true'
+                                 concept('Yes').concept_id
+                               else
+                                 concept('No').concept_id
+                               end
+
     create :observation, concept: concept('Assess for fast track?'),
                          encounter: encounter,
                          person: patient.person,
-                         value_coded: value_coded
-
-    encounter
+                         value_coded: assess_fast_track_answer
   end
 
   def record_fast_track(patient)
