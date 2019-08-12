@@ -185,5 +185,37 @@ module VMMCService::Reports::Cohort
         SQL
       )['total']
     end
+
+    def none(start_date, end_date)
+      ActiveRecord::Base.connection.select_one(
+        <<~SQL
+          SELECT COUNT(DISTINCT(obs.person_id)) AS total FROM obs LEFT OUTER JOIN encounter ON obs.encounter_id = encounter.encounter_id WHERE obs.person_id IN (SELECT patient_id FROM patient_program where program_id = 21) AND encounter.encounter_type = 158 AND obs.concept_id = 9590 and value_coded = 1107 AND obs.voided = 0 AND encounter.voided = 0 AND (obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
+        SQL
+      )['total']
+    end
+
+    def mild(start_date, end_date)
+      ActiveRecord::Base.connection.select_one(
+        <<~SQL
+          SELECT COUNT(DISTINCT(obs.person_id)) AS total FROM obs LEFT OUTER JOIN encounter ON obs.encounter_id = encounter.encounter_id WHERE obs.person_id IN (SELECT patient_id FROM patient_program where program_id = 21) AND encounter.encounter_type = 158 AND obs.concept_id = 9590 and value_coded = 1901 AND obs.voided = 0 AND encounter.voided = 0 AND (obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
+        SQL
+      )['total']
+    end
+
+    def moderate(start_date, end_date)
+      ActiveRecord::Base.connection.select_one(
+        <<~SQL
+          SELECT COUNT(DISTINCT(obs.person_id)) AS total FROM obs LEFT OUTER JOIN encounter ON obs.encounter_id = encounter.encounter_id WHERE obs.person_id IN (SELECT patient_id FROM patient_program where program_id = 21) AND encounter.encounter_type = 158 AND obs.concept_id = 9590 and value_coded = 1900 AND obs.voided = 0 AND encounter.voided = 0 AND (obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
+        SQL
+      )['total']
+    end
+
+    def severe(start_date, end_date)
+      ActiveRecord::Base.connection.select_one(
+        <<~SQL
+          SELECT COUNT(DISTINCT(obs.person_id)) AS total FROM obs LEFT OUTER JOIN encounter ON obs.encounter_id = encounter.encounter_id WHERE obs.person_id IN (SELECT patient_id FROM patient_program where program_id = 21) AND encounter.encounter_type = 158 AND obs.concept_id = 9590 and value_coded = 1903 AND obs.voided = 0 AND encounter.voided = 0 AND (obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
+        SQL
+      )['total']
+    end
   end
 end
