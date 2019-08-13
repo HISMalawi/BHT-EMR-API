@@ -102,7 +102,8 @@ class Api::V1::PatientsController < ApplicationController
 
   def assign_tb_number
     patient_id = params[:patient_id]
-    tb_number = service.assign_tb_number(patient_id)
+    date = params[:date]&.to_date || Date.today
+    tb_number = service.assign_tb_number(patient_id, date)
     render json: tb_number, status: :created
   end
 
@@ -111,6 +112,23 @@ class Api::V1::PatientsController < ApplicationController
     tb_number = service.get_tb_number(patient_id)
     if tb_number
       render json: tb_number, status: :ok
+    else
+      render :status => 404
+    end
+  end
+
+  def assign_ipt_number
+    patient_id = params[:patient_id]
+    date = params[:date]&.to_date || Date.today
+    ipt_number = service.assign_ipt_number(patient_id, date)
+    render json: ipt_number, status: :created
+  end
+
+  def get_ipt_number
+    patient_id = params[:patient_id]
+    ipt_number = service.get_ipt_number(patient_id)
+    if ipt_number
+      render json: ipt_number, status: :ok
     else
       render :status => 404
     end
@@ -142,6 +160,23 @@ class Api::V1::PatientsController < ApplicationController
     date = params[:date]&.to_date || Date.today
     program_id = params[:program_id]
     render json: service.patient_last_drugs_received(patient, date, program_id: program_id)
+  end
+
+  def drugs_orders_by_program
+    cut_off_date = params[:date]&.to_date || Date.today
+    program_id = params[:program_id]
+    drugs_orders = paginate(service.drugs_orders_by_program(patient, cut_off_date, program_id: program_id))
+
+    render json: drugs_orders
+  end
+
+  # Returns all lab orders made since a given date
+  def recent_lab_orders
+    patient_id, program_id = params.require([:patient_id, :program_id])
+    reference_date = params[:reference_date]&.to_date || Date.today
+    render json: service.recent_lab_orders(patient_id: patient_id,
+                                           program_id: program_id,
+                                           reference_date: reference_date)
   end
 
   def remaining_bp_drugs

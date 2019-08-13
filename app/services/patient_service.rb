@@ -89,6 +89,13 @@ class PatientService
     ).order('orders.start_date DESC')
   end
 
+  def drugs_orders_by_program(patient, date, program_id: nil)
+    DrugOrder.joins(:order => :encounter).where(
+      'orders.start_date <= ? AND orders.patient_id = ? AND quantity IS NOT NULL AND encounter.program_id = ?',
+      TimeUtils.day_bounds(date)[1], patient.patient_id, program_id
+    ).order('orders.start_date DESC')
+  end
+
   # Last drugs received
   def patient_last_drugs_received(patient, ref_date, program_id: nil)
     dispensing_encounter_query = Encounter.joins(:type)
@@ -111,6 +118,17 @@ class PatientService
 
       drug_map[obs.value_drug] = order.drug_order
     end).values
+  end
+
+  # lab orders made for a patient
+  def recent_lab_orders (patient_id:, program_id:, reference_date:)
+    lab_order_encounter = encounter_type('Lab Orders')
+    Encounter.where('encounter_type = ? AND patient_id = ? AND encounter_datetime >= ? AND program_id = ?',
+                    lab_order_encounter.encounter_type_id,
+                    patient_id,
+                    reference_date,
+                    program_id)\
+             .order(encounter_datetime: :desc)
   end
 
   # Last drugs pill count
@@ -136,7 +154,7 @@ class PatientService
 
     return values
   end
-  
+
   # Retrieves a patient's bp trail
   def patient_bp_readings_trail(patient, max_date)
     concepts = [concept('SBP'), concept('DBP')]
@@ -171,12 +189,20 @@ class PatientService
     )
   end
 
-  def assign_tb_number(patient_id)
-    tb_number_service.assign_tb_number(patient_id)
+  def assign_tb_number(patient_id, date)
+    patient_engine.assign_tb_number(patient_id, date)
   end
 
-  def get_tb_number(patient_id)
-    tb_number_service.get_tb_number(patient_id)
+  def assign_ipt_number(patient_id, date)
+    patient_engine.assign_ipt_number(patient_id, date)
+  end
+
+  def get_tb_number(patient_id, date)
+    patient_engine.get_tb_number(patient_id, date)
+  end
+
+  def get_ipt_number(patient_id, date)
+    patient_engine.get_ipt_number(patient_id, date)
   end
 
   def assign_npid(patient)
@@ -398,8 +424,9 @@ class PatientService
     @filing_number_service ||= FilingNumberService.new
   end
 
-  def tb_number_service
-    @tb_number_service = TbNumberService.new
+  def patient_engine
+    program = Program.find_by(name: 'TB PROGRAM')
+    TBService::PatientsEngine.new program: program
   end
 
   # Returns all of patient's identifiers of given identifier_type

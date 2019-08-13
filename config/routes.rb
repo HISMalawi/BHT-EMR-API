@@ -48,6 +48,8 @@ Rails.application.routes.draw do
         end)
         get '/drugs_received', to: 'patients#drugs_received'
         get '/last_drugs_received', to: 'patients#last_drugs_received'
+        get '/drugs_orders_by_program', to: 'patients#drugs_orders_by_program'
+        get '/recent_lab_orders', to: 'patients#recent_lab_orders'
         get '/current_bp_drugs', to: 'patients#current_bp_drugs'
         get '/last_bp_drugs_dispensation', to: 'patients#last_bp_drugs'
         get '/next_appointment_date', to: 'patient_appointments#next_appointment_date'
@@ -119,6 +121,7 @@ Rails.application.routes.draw do
         get 'lookup_arv_number/:arv_number' => 'program_patients#lookup_arv_number'
         get 'regimen_starter_packs' => 'program_regimens#find_starter_pack'
         get 'custom_regimen_ingredients' => 'program_regimens#custom_regimen_ingredients'
+        get 'custom_tb_ingredients' => 'program_regimens#custom_tb_ingredients'
         get 'defaulter_list' => 'program_patients#defaulter_list'
         get '/barcodes/:barcode_name', to: 'program_barcodes#print_barcode'
 
@@ -135,6 +138,8 @@ Rails.application.routes.draw do
           get '/labels/patient_history', to: 'program_patients#print_patient_history_label'
           get '/mastercard_data', to: 'program_patients#mastercard_data'
           get '/medication_side_effects', to: 'program_patients#medication_side_effects'
+          get '/is_due_lab_order', to: 'program_patients#is_due_lab_order'
+          #ANC
           get '/vl_info', to: 'lab_remainders#index'
           # ANC
           get '/surgical_history', to: 'program_patients#surgical_history'
