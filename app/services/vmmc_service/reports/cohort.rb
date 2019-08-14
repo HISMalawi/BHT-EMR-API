@@ -223,4 +223,20 @@ class VMMCService::Reports::Cohort
       SQL
     )['total']
   end
+
+  def first_review_within_48_hours
+    ActiveRecord::Base.connection.select_one(
+      <<~SQL
+        SELECT COUNT(DISTINCT(t1.person_id)) AS total FROM obs t1 LEFT OUTER JOIN obs t2 ON t1.person_id = t2.person_id AND t1.voided = 0 AND t2.voided = 0 WHERE t1.concept_id = 9583 AND t2.concept_id = 9592 AND t1.voided = 0 AND t2.voided = 0 AND timestampdiff(hour, t1.obs_datetime, t2.obs_datetime) >= 0 AND timestampdiff(hour, t1.obs_datetime, t2.obs_datetime) <= 48 AND (t1.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
+      SQL
+    )['total']
+  end
+
+  def first_review_after_48_hours
+    ActiveRecord::Base.connection.select_one(
+      <<~SQL
+        SELECT COUNT(DISTINCT(t1.person_id)) AS total FROM obs t1 LEFT OUTER JOIN obs t2 ON t1.person_id = t2.person_id AND t1.voided = 0 AND t2.voided = 0 WHERE t1.concept_id = 9583 AND t2.concept_id = 9592 AND t1.voided = 0 AND t2.voided = 0 AND timestampdiff(hour, t1.obs_datetime, t2.obs_datetime) > 48 AND (t1.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
+      SQL
+    )['total']
+  end
 end
