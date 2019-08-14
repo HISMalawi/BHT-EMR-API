@@ -239,4 +239,36 @@ class VMMCService::Reports::Cohort
       SQL
     )['total']
   end
+  
+  def postop_none
+    ActiveRecord::Base.connection.select_one(
+      <<~SQL
+        SELECT COUNT(DISTINCT(obs.person_id)) AS total FROM obs LEFT OUTER JOIN encounter ON obs.encounter_id = encounter.encounter_id WHERE obs.person_id IN (SELECT patient_id FROM patient_program where program_id = 21) AND encounter.encounter_type = 159 AND obs.concept_id = 1643 and value_coded = 1107 AND obs.voided = 0 AND encounter.voided = 0 AND (obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
+      SQL
+    )['total']
+  end
+
+  def postop_mild
+    ActiveRecord::Base.connection.select_one(
+      <<~SQL
+        SELECT COUNT(DISTINCT(obs.person_id)) AS total FROM obs LEFT OUTER JOIN encounter ON obs.encounter_id = encounter.encounter_id WHERE obs.person_id IN (SELECT patient_id FROM patient_program where program_id = 21) AND encounter.encounter_type = 159 AND obs.concept_id = 1643 and value_coded = 1901 AND obs.voided = 0 AND encounter.voided = 0 AND (obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
+      SQL
+    )['total']
+  end
+
+  def postop_moderate
+    ActiveRecord::Base.connection.select_one(
+      <<~SQL
+        SELECT COUNT(DISTINCT(obs.person_id)) AS total FROM obs LEFT OUTER JOIN encounter ON obs.encounter_id = encounter.encounter_id WHERE obs.person_id IN (SELECT patient_id FROM patient_program where program_id = 21) AND encounter.encounter_type = 159 AND obs.concept_id = 1643 and value_coded = 1900 AND obs.voided = 0 AND encounter.voided = 0 AND (obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
+      SQL
+    )['total']
+  end
+
+  def postop_severe
+    ActiveRecord::Base.connection.select_one(
+      <<~SQL
+        SELECT COUNT(DISTINCT(obs.person_id)) AS total FROM obs LEFT OUTER JOIN encounter ON obs.encounter_id = encounter.encounter_id WHERE obs.person_id IN (SELECT patient_id FROM patient_program where program_id = 21) AND encounter.encounter_type = 159 AND obs.concept_id = 1643 and value_coded = 1903 AND obs.voided = 0 AND encounter.voided = 0 AND (obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}';
+      SQL
+    )['total']
+  end
 end
