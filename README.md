@@ -69,7 +69,7 @@ $ vim config/database.yml   # Edit configuration
     ```bash
     cat db/sql/add_regimens_13_and_above.sql | mysql -u <username> -p <database>
     ```
-4. Load ntp regimen tables into your database:
+4. For TB app: Load ntp regimen tables into your database:
 
     ```bash
     cat db/sql/ntp_regimens.sql | mysql -u <username> -p <database>
