@@ -69,14 +69,19 @@ $ vim config/database.yml   # Edit configuration
     ```bash
     cat db/sql/add_regimens_13_and_above.sql | mysql -u <username> -p <database>
     ```
+4. Load ntp regimen tables into your database:
 
-4. Set up the test database as follows:
+    ```bash
+    cat db/sql/ntp_regimens.sql | mysql -u <username> -p <database>
+    ```
+
+5. Set up the test database as follows:
 
     ```bash
     bin/initial_database_setup.sh test mpc
     ```
 
-5. Run the following to run tests (if all goes well you are good to go):
+6. Run the following to run tests (if all goes well you are good to go):
 
     ```bash
     bin/rspec
