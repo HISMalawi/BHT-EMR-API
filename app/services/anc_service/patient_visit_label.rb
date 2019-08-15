@@ -25,7 +25,7 @@ module ANCService
 
         @patient.encounters.where(["encounter_datetime >= ? AND encounter_datetime <= ? AND program_id = ?",
           @current_range[0]["START"], @current_range[0]["END"], PROGRAM.id]).collect{|e|
-            encounters[e.encounter_datetime.strftime("%d/%b/%Y")] = {"USER" => User.find(e.creator).username }
+          encounters[e.encounter_datetime.strftime("%d/%b/%Y")] = {"USER" => PersonName.find(e.creator) }
         }
 
         @patient.encounters.where(["encounter_datetime >= ? AND encounter_datetime <= ? AND program_id = ?",
@@ -245,7 +245,7 @@ module ANCService
 
           @patient.encounters.where(["encounter_datetime >= ? AND encounter_datetime <= ? AND program_id = ?",
               @current_range[0]["START"], @current_range[0]["END"], PROGRAM.id]).collect{|e|
-            encounters[e.encounter_datetime.strftime("%d/%b/%Y")] = {"USER" => User.find(e.creator).username}
+            encounters[e.encounter_datetime.strftime("%d/%b/%Y")] = {"USER" => PersonName.find(e.creator) }
           }
 
           @patient.encounters.where(["encounter_datetime >= ? AND encounter_datetime <= ? AND program_id = ?",
@@ -395,7 +395,9 @@ module ANCService
                 label.draw_text(nex[m].to_s,610,(200 + (18 * m)),0,2,1,1,false)
               }
 
-              use = (encounters[element]["USER"].split(" ") rescue []).collect{|n| n[0,1].upcase + "."}.join("")  rescue ""
+              user = "#{encounters[element]["USER"].given_name[0]} . #{encounters[element]["USER"].family_name[0]}" rescue ""
+
+              use = user #(encounters[element]["USER"].split(" ") rescue []).collect{|n| n[0,1].upcase + "."}.join("")  rescue ""
 
               # use = paragraphate(use.to_s, 5, 5)
 
