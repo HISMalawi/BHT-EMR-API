@@ -8,7 +8,7 @@ require 'zebra_printer/init'
 class Api::V1::PatientsController < ApplicationController
   # TODO: Refactor the business logic here into a service class
 
-  before_action :authenticate, except: %i[print_national_health_id_label print_filing_number]
+  before_action :authenticate, except: %i[print_national_health_id_label print_filing_number print_tb_number]
 
   include ModelUtils
 
@@ -117,21 +117,26 @@ class Api::V1::PatientsController < ApplicationController
     end
   end
 
+  def print_tb_number
+    patient_id = params[:patient_id]
+    number = service.get_tb_number(patient_id)
+    info = {
+      number: number.identifier,
+      type: number.type.name,
+      patient_id: patient_id
+    }
+    label = generate_tb_patient_id(info)
+    send_data label, type: 'application/label;charset=utf-8',
+                     stream: false,
+                     filename: "#{params[:patient_id]}-#{SecureRandom.hex(12)}.lbl",
+                     disposition: 'inline'
+  end
+
   def assign_ipt_number
     patient_id = params[:patient_id]
     date = params[:date]&.to_date || Date.today
     ipt_number = service.assign_ipt_number(patient_id, date)
     render json: ipt_number, status: :created
-  end
-
-  def get_ipt_number
-    patient_id = params[:patient_id]
-    ipt_number = service.get_ipt_number(patient_id)
-    if ipt_number
-      render json: ipt_number, status: :ok
-    else
-      render :status => 404
-    end
   end
 
   def assign_npid
@@ -269,6 +274,18 @@ class Api::V1::PatientsController < ApplicationController
     label.draw_text("Filing area #{file_type}", 75, 150, 0, 2, 2, 2, false)
     label.draw_text("Version number: #{version_number}", 75, 200, 0, 2, 2, 2, false)
     label.print(num)
+  end
+
+  def generate_tb_patient_id(info)
+    first_name = PersonName.find_by(person_id: info[:patient_id]).given_name
+    last_name = PersonName.find_by(person_id: info[:patient_id]).family_name
+    name = "#{first_name} #{last_name}"
+    label = ZebraPrinter::StandardLabel.new
+    label.draw_text(name, 40, 10, 0, 2, 2, 2, false)
+    label.draw_text(info[:type], 40, 60, 0, 2, 2, 2, false)
+    label.draw_text(info[:number], 40, 120, 0, 2, 2, 2, false)
+    label.draw_barcode(50, 180, 0, 1, 5, 15, 120, false, info[:number])
+    label.print(1)
   end
 
   def service

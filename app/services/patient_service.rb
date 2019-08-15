@@ -197,12 +197,8 @@ class PatientService
     patient_engine.assign_ipt_number(patient_id, date)
   end
 
-  def get_tb_number(patient_id, date)
-    patient_engine.get_tb_number(patient_id, date)
-  end
-
-  def get_ipt_number(patient_id, date)
-    patient_engine.get_ipt_number(patient_id, date)
+  def get_tb_number(patient_id)
+    patient_engine.get_tb_number(patient_id)
   end
 
   def assign_npid(patient)
