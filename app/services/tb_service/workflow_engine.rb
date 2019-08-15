@@ -644,8 +644,7 @@ module TBService
 
     def patient_should_proceed_for_treatment?
       (patient_diagnosed? && patient_examined? && patient_should_get_treated?\
-        && patient_has_valid_test_results?) || patient_examined?\
-        || patient_transferred_in_today?
+        && patient_has_valid_test_results?) || patient_transferred_in_today?
     end
 
     def load_hiv_program
@@ -724,7 +723,7 @@ module TBService
 
     def patient_should_go_for_appointment?
       (dispensing_complete? && patient_is_not_a_transfer_out?\
-      &&patient_has_no_appointment? && patient_should_proceed_for_treatment?)\
+      && patient_has_no_appointment? && patient_should_proceed_for_treatment?)\
       || (patient_has_art_appointment? && patient_has_no_appointment?)
     end
 
