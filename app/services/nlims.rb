@@ -142,7 +142,7 @@ class NLims
           art_start_date: 'not_applicable', #not applicable
           sample_type: sample_type, #Added to satify for TB
           sample_status: sample_status, #Added to satify for TB
-          target_lab: targeted_lab, #Added to satify for TB
+          target_lab: targeted_lab || target_lab, #Added to satify for TB
           recommended_examination: recommended_examination, #Added to satify for TB
           treatment_history: treatment_history, #Added to satify for TB
           sample_date: sample_date, #Mofified 'Add an actual one' Removed this
