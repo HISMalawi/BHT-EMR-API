@@ -197,12 +197,8 @@ class PatientService
     patient_engine.assign_ipt_number(patient_id, date)
   end
 
-  def get_tb_number(patient_id, date)
-    patient_engine.get_tb_number(patient_id, date)
-  end
-
-  def get_ipt_number(patient_id, date)
-    patient_engine.get_ipt_number(patient_id, date)
+  def get_tb_number(patient_id)
+    patient_engine.get_tb_number(patient_id)
   end
 
   def assign_npid(patient)
@@ -219,6 +215,18 @@ class PatientService
     end
 
     { new_identifier: new_identifier, voided_identifiers: existing_identifiers }
+  end
+
+  def generate_tb_patient_id(info)
+    first_name = PersonName.find_by(person_id: info[:patient_id]).given_name
+    last_name = PersonName.find_by(person_id: info[:patient_id]).family_name
+    name = "#{first_name} #{last_name}"
+    label = ZebraPrinter::StandardLabel.new
+    label.draw_text(name, 40, 10, 0, 2, 2, 2, false)
+    label.draw_text(info[:type], 40, 60, 0, 2, 2, 2, false)
+    label.draw_text(info[:number], 40, 120, 0, 2, 2, 2, false)
+    label.draw_barcode(50, 180, 0, 1, 5, 15, 120, false, info[:number])
+    label.print(1)
   end
 
   def current_htn_drugs_summary(patient, date)

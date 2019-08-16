@@ -8,7 +8,7 @@ require 'zebra_printer/init'
 class Api::V1::PatientsController < ApplicationController
   # TODO: Refactor the business logic here into a service class
 
-  before_action :authenticate, except: %i[print_national_health_id_label print_filing_number]
+  before_action :authenticate, except: %i[print_national_health_id_label print_filing_number print_tb_number]
 
   include ModelUtils
 
@@ -117,21 +117,26 @@ class Api::V1::PatientsController < ApplicationController
     end
   end
 
+  def print_tb_number
+    patient_id = params[:patient_id]
+    number = service.get_tb_number(patient_id)
+    info = {
+      number: number.identifier,
+      type: number.type.name,
+      patient_id: patient_id
+    }
+    label = service.generate_tb_patient_id(info)
+    send_data label, type: 'application/label;charset=utf-8',
+                     stream: false,
+                     filename: "#{params[:patient_id]}-#{SecureRandom.hex(12)}.lbl",
+                     disposition: 'inline'
+  end
+
   def assign_ipt_number
     patient_id = params[:patient_id]
     date = params[:date]&.to_date || Date.today
     ipt_number = service.assign_ipt_number(patient_id, date)
     render json: ipt_number, status: :created
-  end
-
-  def get_ipt_number
-    patient_id = params[:patient_id]
-    ipt_number = service.get_ipt_number(patient_id)
-    if ipt_number
-      render json: ipt_number, status: :ok
-    else
-      render :status => 404
-    end
   end
 
   def assign_npid
