@@ -23,4 +23,11 @@ class TBQueries::EncountersQuery
                     type: type)\
              .where('YEAR(encounter_datetime) = ?', year)
   end
+
+  def by_month (month, type)
+    type = encounter_type(type)
+    @relation.where(program: @program,
+                    type: type)\
+             .where('MONTH(encounter_datetime) = ?', month)
+  end
 end
