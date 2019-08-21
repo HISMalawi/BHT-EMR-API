@@ -229,6 +229,10 @@ class PatientService
     label.print(1)
   end
 
+  def print_patient_lab_order_summary(patient_info)
+    lab_tests_engine.generate_lab_order_summary(patient_info)
+  end
+
   def current_htn_drugs_summary(patient, date)
     {
       drugs: current_htn_drugs(patient, date),
@@ -435,6 +439,11 @@ class PatientService
   def patient_engine
     program = Program.find_by(name: 'TB PROGRAM')
     TBService::PatientsEngine.new program: program
+  end
+
+  def lab_tests_engine
+    program = Program.find_by(name: 'TB PROGRAM')
+    TBService::LabTestsEngine.new program: program
   end
 
   # Returns all of patient's identifiers of given identifier_type

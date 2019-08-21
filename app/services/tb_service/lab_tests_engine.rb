@@ -111,6 +111,63 @@ class TBService::LabTestsEngine
     }]
   end
 
+
+
+  def generate_lab_order_summary(order_info)
+
+    identifier_type = PatientIdentifierType.find_by(name: 'National id').id
+    identifier = PatientIdentifier.find_by(patient_id: order_info[:patient_id], identifier_type: identifier_type).identifier
+
+    logger = Rails.logger
+    logger.info "NATIONAL ID: #{identifier}"
+
+    label = ZebraPrinter::StandardLabel.new
+    label.draw_text('Lab Order Summary', 28, 9, 0, 1, 1, 2, false)
+    label.draw_line(25, 35, 115, 1, 0)
+    label.draw_line(180, 140, 600, 1, 0)
+
+    label.draw_text('Order Date', 28, 56, 0, 2, 1, 1, false)
+    label.draw_text('NPID', 28, 86, 0, 2, 1, 1, false)
+
+    label.draw_text('Lab Tests', 28, 111, 0, 1, 1, 2, false)
+    label.draw_text('Item', 190, 120, 0, 2, 1, 1, false)
+    label.draw_text('Test Type', 28, 146, 0, 2, 1, 1, false)
+    label.draw_text('Specimen', 28, 176, 0, 2, 1, 1, false)
+    label.draw_text('Examination', 28, 206, 0, 2, 1, 1, false)
+    label.draw_text('Target Lab', 28, 236, 0, 2, 1, 1, false)
+    label.draw_text('Reason', 28, 266, 0, 2, 1, 1, false)
+    label.draw_text('Previous TB', 28, 296, 0, 2, 1, 1, false)
+
+    label.draw_line(260, 50, 170, 1, 0)
+    label.draw_line(260, 50, 1, 60, 0)
+    label.draw_line(180, 286, 600, 1, 0)
+    label.draw_line(430, 50, 1, 60, 0) # NPID
+
+    label.draw_line(180, 140, 1, 145, 0)
+    label.draw_line(780, 140, 1, 145, 0) # Item end Close line
+
+    # Order Data and NPID
+    label.draw_line(260, 80, 170, 1, 0)
+    label.draw_line(260, 110, 170, 1, 0)
+    label.draw_line(260, 140, 170, 1, 0)
+
+    label.draw_line(180, 170, 600, 1, 0)
+    label.draw_line(180, 200, 600, 1, 0)
+    label.draw_line(180, 230, 600, 1, 0)
+    label.draw_line(180, 260, 600, 1, 0)
+
+    label.draw_text(order_info[:date], 270, 56, 0, 2, 1, 1, false)
+    label.draw_text(identifier, 270, 86, 0, 2, 1, 1, false)
+    label.draw_text((order_info[:test_type]), 188, 146, 0, 2, 1, 1, false)
+    label.draw_text(order_info[:specimen_type], 188, 176, 0, 2, 1, 1, false)
+    label.draw_text(order_info[:recommended_examination], 188, 206, 0, 2, 1, 1, false)
+    label.draw_text(order_info[:target_lab], 188, 236, 0, 2, 1, 1, false)
+    label.draw_text(order_info[:reason_for_examination], 188, 266, 0, 2, 1, 1, false)
+    label.draw_text(order_info[:previous_tb_patient], 188, 296, 0, 2, 1, 1, false)
+
+    label.print(1)
+  end
+
   private
 
   # Creates an Order in the primary openmrs database
