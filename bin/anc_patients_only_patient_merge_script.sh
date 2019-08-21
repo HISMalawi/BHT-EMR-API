@@ -154,10 +154,6 @@ FROM $ANCDATABASE.obs  p
 	inner join $ANCDATABASE.ANC_only_patients_details pp ON pp.ANC_patient_id = p.person_id and p.voided = 0
 	left join $ANCDATABASE.user_bak c on c.ANC_user_id = p.creator;
 
-/* This query insert BDE obs into main obs */
-INSERT INTO $DATABASE.obs (obs_id, person_id,  concept_id,  encounter_id,  order_id,  obs_datetime,  location_id,  obs_group_id,  accession_number,  value_group_id,  value_boolean,  value_coded,  value_coded_name_id,  value_drug,  value_datetime,  value_numeric,  value_modifier,  value_text,  date_started,  date_stopped,  comments,  creator,  date_created,  voided,  voided_by,  date_voided,  void_reason,  value_complex,  uuid)
-SELECT (SELECT @max_obs_id + obs_id) as obs_id, (SELECT @max_patient_id + person_id) as person_id,  concept_id,  (SELECT @max_encounter_id + encounter_id) as encounter_id,  (SELECT @max_order_id + order_id) as order_id,  obs_datetime,  location_id,  obs_group_id,  accession_number,  value_group_id,  value_boolean,  value_coded,  value_coded_name_id,  value_drug,  value_datetime,  value_numeric,  value_modifier,  value_text,  date_started,  date_stopped,  comments,  creator,  date_created,  voided,   voided_by,  date_voided,  void_reason,  value_complex,  (SELECT UUID()) FROM $ANCDATABASE.obs  p inner join $ANCDATABASE.ANC_only_patients_details pp on pp.ANC_patient_id = p.person_id;
-
 /* Update Observation (61) encounter_type to ANC Examination (98) encounter_type */
 update $DATABASE.encounter set encounter_type = 98 where encounter_type = 61;
 
