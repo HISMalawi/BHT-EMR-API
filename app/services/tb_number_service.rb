@@ -19,6 +19,14 @@ class TBNumberService
     )
   end
 
+  def self.get_patient_tb_number (patient_id:)
+    PatientIdentifier.where(type: patient_identifier_type(NORMAL_TYPE),
+                            patient_id: patient_id)\
+                     .or(PatientIdentifier.where(type: patient_identifier_type(IPT_TYPE), patient_id: patient_id))\
+                     .order(date_created: :desc)
+                     .first
+  end
+
   private
 
   def self.generate_tb_number (patient_id, date, number = nil)

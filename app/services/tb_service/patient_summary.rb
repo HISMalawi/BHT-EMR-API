@@ -133,7 +133,7 @@ module TBService
     end
 
     def tb_number
-      number = tb_number_service.get_tb_number(patient.patient_id)
+      number = TBNumberService.get_patient_tb_number(patient_id: patient.patient_id)
       return 'N/A' unless number
 
       number[:identifier]
@@ -147,9 +147,5 @@ module TBService
     end
 
     private
-
-    def tb_number_service
-      TBService::PatientsEngine.new program: program('TB PROGRAM')
-      end
   end
   end
