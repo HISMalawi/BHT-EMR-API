@@ -408,10 +408,6 @@ class PatientService
     @filing_number_service ||= FilingNumberService.new
   end
 
-  def tb_number_service
-    @tb_number_service ||= TBNumberService.new
-  end
-
   def patient_engine
     program = Program.find_by(name: 'TB PROGRAM')
     TBService::PatientsEngine.new program: program
