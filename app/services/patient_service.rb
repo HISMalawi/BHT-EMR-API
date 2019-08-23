@@ -189,22 +189,6 @@ class PatientService
     )
   end
 
-  def assign_tb_number(patient_id, date)
-    patient_engine.assign_tb_number(patient_id, date)
-  end
-
-  def assign_ipt_number(patient_id, date)
-    patient_engine.assign_ipt_number(patient_id, date)
-  end
-
-  def get_tb_number(patient_id, date)
-    patient_engine.get_tb_number(patient_id, date)
-  end
-
-  def get_ipt_number(patient_id, date)
-    patient_engine.get_ipt_number(patient_id, date)
-  end
-
   def assign_npid(patient)
     national_id_type = patient_identifier_type(PatientIdentifierType::NPID_TYPE_NAME)
     existing_identifiers = patient_identifiers(patient, national_id_type)

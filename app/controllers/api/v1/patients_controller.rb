@@ -103,34 +103,13 @@ class Api::V1::PatientsController < ApplicationController
   def assign_tb_number
     patient_id = params[:patient_id]
     date = params[:date]&.to_date || Date.today
-    tb_number = service.assign_tb_number(patient_id, date)
-    render json: tb_number, status: :created
-  end
+    number = params[:number]
 
-  def get_tb_number
-    patient_id = params[:patient_id]
-    tb_number = service.get_tb_number(patient_id)
-    if tb_number
-      render json: tb_number, status: :ok
-    else
-      render :status => 404
-    end
-  end
-
-  def assign_ipt_number
-    patient_id = params[:patient_id]
-    date = params[:date]&.to_date || Date.today
-    ipt_number = service.assign_ipt_number(patient_id, date)
-    render json: ipt_number, status: :created
-  end
-
-  def get_ipt_number
-    patient_id = params[:patient_id]
-    ipt_number = service.get_ipt_number(patient_id)
-    if ipt_number
-      render json: ipt_number, status: :ok
-    else
-      render :status => 404
+    begin
+      number = TBNumberService.assign_tb_number(patient_id, date, number)
+      render json: number, status: :created
+    rescue TBNumberService::TbNumberAlreadyExistsException
+      render status: :conflict
     end
   end
 
