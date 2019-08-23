@@ -8,7 +8,7 @@ require 'zebra_printer/init'
 class Api::V1::PatientsController < ApplicationController
   # TODO: Refactor the business logic here into a service class
 
-  before_action :authenticate, except: %i[print_national_health_id_label print_filing_number]
+  before_action :authenticate, except: %i[print_national_health_id_label print_filing_number print_tb_number print_tb_lab_order_summary]
 
   include ModelUtils
 
@@ -188,6 +188,22 @@ class Api::V1::PatientsController < ApplicationController
     render json: service.patient_last_drugs_pill_count(patient, date, program_id: program_id)
   end
 
+  def print_tb_lab_order_summary
+    label = lab_tests_engine.generate_lab_order_summary(tb_lab_order_params)
+    send_data label, type: 'application/label;charset=utf-8',
+                     stream: false,
+                     filename: "#{params[:patient_id]}-#{SecureRandom.hex(12)}.lbl",
+                     disposition: 'inline'
+  end
+
+  def print_tb_number
+    label = TBNumberService.generate_tb_patient_id(params[:patient_id])
+    send_data label, type: 'application/label;charset=utf-8',
+                     stream: false,
+                     filename: "#{params[:patient_id]}-#{SecureRandom.hex(12)}.lbl",
+                     disposition: 'inline'
+  end
+
   private
 
   def patient
@@ -261,4 +277,23 @@ class Api::V1::PatientsController < ApplicationController
   def person_service
     PersonService.new
   end
+
+  def tb_lab_order_params
+    {
+      patient_id: params[:patient_id],
+      date: params[:session_date],
+      test_type: params[:test_type],
+      specimen_type: params[:specimen_type],
+      recommended_examination: params[:recommended_examination],
+      target_lab: params[:target_lab],
+      reason_for_examination: params[:reason_for_examination],
+      previous_tb_patient: params[:previous_tb_patient]
+    }
+  end
+
+  def lab_tests_engine
+    program = Program.find_by(name: 'TB PROGRAM')
+    TBService::LabTestsEngine.new program: program
+  end
+
 end

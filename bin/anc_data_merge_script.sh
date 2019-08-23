@@ -178,6 +178,10 @@ echo "Running script to migrate the remaining patient"
 ./bin/migrating_anc_last_patients.sh development
 
 echo "Start script 6 -----------------------------"
+echo "Running script to migrate the remaining patient"
+./bin/anc_patients_with_duplicates_in_art.sh development
+
+echo "Start script 7 -----------------------------"
 echo "Dumping ANC_remaining_patients.csv file for patients that were not migrated"
 mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $ANCDATABASE < bin/ANC_remaining_patients.sql > ~/ANC_remaining_patients.csv
 

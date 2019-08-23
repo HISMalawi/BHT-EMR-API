@@ -224,8 +224,8 @@ EOF
         end
 
         if outcome == 'On antiretrovirals'
-          tx_screened_for_tb = screened_for_tb(patient_id, age_group, start_date, end_date)
-          tx_given_ipt = given_ipt(patient_id, age_group, start_date, end_date)
+          tx_screened_for_tb = screened_for_tb(patient_id, age_group, date_enrolled, end_date)
+          tx_given_ipt = given_ipt(patient_id, age_group, date_enrolled, end_date)
         end
 
         return [tx_new, tx_curr, tx_given_ipt, tx_screened_for_tb]

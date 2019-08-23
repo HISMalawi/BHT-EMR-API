@@ -6,15 +6,6 @@ SET @max_patient_program_id := (SELECT max(patient_program_id) from $DATABASE.pa
 SET @max_order_id := (SELECT max(order_id) from $DATABASE.orders);
 SET @max_obs_id := (SELECT max(obs_id) FROM $DATABASE.obs);
 
-
-DROP TABLE if exists $ANCDATABASE.ANC_patients_merged_into_main_dbs;
-
-CREATE TABLE $ANCDATABASE.ANC_patients_merged_into_main_dbs as 
-SELECT ANC_patient_id FROM $ANCDATABASE.ANC_patient_details
-UNION
-SELECT ANC_patient_id FROM $ANCDATABASE.ANC_only_patients_details;
-
-
 /* dropping and creating person_back_up  */
 DROP TABLE IF EXISTS $ANCDATABASE.anc_art_patients_with_voided_art_identifier;
 
@@ -54,10 +45,9 @@ SELECT (SELECT @max_encounter_id + e.encounter_id) AS encounter_id,
     e.form_id, e.encounter_datetime, c.ART_user_id AS creator, e.date_created,
     e.voided, e.voided_by, e.date_voided, e.void_reason, e.uuid, e.changed_by, e.date_changed
 FROM $ANCDATABASE.anc_art_patients_with_voided_art_identifier a
-	INNER JOIN $ANCDATABASE.encounter e ON e.patient_id = a.ANC_patient_id AND e.voided = 0
-	INNER JOIN $ANCDATABASE.user_bak c ON c.ANC_user_id = e.creator
+  INNER JOIN $ANCDATABASE.encounter e ON e.patient_id = a.ANC_patient_id AND e.voided = 0
+  INNER JOIN $ANCDATABASE.user_bak c ON c.ANC_user_id = e.creator
 WHERE a.pi_voided = 1 AND a.void_reason LIKE '% new ID:%';
-
 
 /* insert ANC encounters into ART database  */  
 INSERT INTO $DATABASE.encounter (encounter_id, encounter_type, patient_id, provider_id, location_id, form_id, encounter_datetime, creator, date_created, voided, voided_by, date_voided, void_reason, uuid, changed_by, date_changed, program_id)
@@ -76,8 +66,8 @@ SELECT (SELECT @max_order_id + o.order_id) AS ART_order_id,
     o.voided_by, o.date_voided, o.void_reason, a.ART_patient_id AS patient_id,
     o.accession_number, (SELECT @max_obs_id + o.obs_id) AS obs_id, o.uuid, o.discontinued_reason_non_coded
 FROM $ANCDATABASE.orders o
-	INNER JOIN $ANCDATABASE.anc_art_patients_with_voided_art_identifier a ON a.ANC_patient_id = o.patient_id AND o.voided = 0
-	INNER JOIN $ANCDATABASE.user_bak c ON c.ANC_user_id = o.creator
+  INNER JOIN $ANCDATABASE.anc_art_patients_with_voided_art_identifier a ON a.ANC_patient_id = o.patient_id AND o.voided = 0
+  INNER JOIN $ANCDATABASE.user_bak c ON c.ANC_user_id = o.creator
 WHERE a.pi_voided = 1 AND a.void_reason LIKE '% new ID:%';
 
 /* insert ANC orders into ART database  */
@@ -139,6 +129,7 @@ FROM $ANCDATABASE.patient_state f
   INNER JOIN $ANCDATABASE.patient_program_bak p ON p.ANC_patient_program_id = f.patient_program_id
   INNER JOIN $ANCDATABASE.user_bak c ON c.ANC_user_id = p.creator
 ORDER BY f.patient_program_id;
+
 
 /* UPDATE Observation (61) encounter_type to ANC Examination (98) encounter_type */
 UPDATE $DATABASE.encounter set encounter_type = 98 where encounter_type = 61;

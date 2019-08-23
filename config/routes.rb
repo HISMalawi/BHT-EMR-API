@@ -41,6 +41,8 @@ Rails.application.routes.draw do
       resources :patients do
         get '/labels/national_health_id' => 'patients#print_national_health_id_label'
         get '/labels/filing_number' => 'patients#print_filing_number'
+        get 'labels/print_tb_number', to: 'patients#print_tb_number'
+        get 'labels/print_tb_lab_order_summary', to: 'patients#print_tb_lab_order_summary'
         get '/visits' => 'patients#visits'
         get('/appointments', to: redirect do |params, request|
           paginate_url "/api/v1/appointments?patient_id=#{params[:patient_id]}",
@@ -153,6 +155,7 @@ Rails.application.routes.draw do
         resources :lab_test_orders, path: 'lab_tests/orders'
         post '/lab_tests/orders/external' => 'lab_test_orders#create_external_order'
         post '/lab_tests/orders/lims-old' => 'lab_test_orders#create_legacy_order' # Temporary path for creating legacy LIMS orders
+        get '/lab_tests/labels/order', to: 'lab_test_labels#print_order_label'
         resources :lab_test_results, path: 'lab_tests/results'
         post '/lab_tests/order_and_results' => 'lab_test_results#create_order_and_results'
         get '/lab_tests/locations' => 'lab_test_orders#locations'
@@ -172,6 +175,7 @@ Rails.application.routes.draw do
           post '/dispose', to: 'items#dispose'
         end
         get 'earliest_expiring_item', to: 'items#earliest_expiring'
+        get 'drug_consumption', to: 'drugs#drug_consumption'
       end
 
       namespace :types do
