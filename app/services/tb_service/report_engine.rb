@@ -24,5 +24,9 @@ module TBService
 
       { name => indicator.call(start_date, end_date) }
     end
+
+    def dashboard_stats(date)
+      TBService::Reports::Overview.statistics(date)
+    end
   end
 end

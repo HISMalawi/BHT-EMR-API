@@ -154,7 +154,7 @@ module TBService
           LAB_ORDERS
         when /Vitals/i
           VITALS
-        when /TB Treatment/i
+        when /Treatment/i
           TREATMENT
         when /Dispensing/i
           DISPENSING

@@ -103,50 +103,14 @@ class Api::V1::PatientsController < ApplicationController
   def assign_tb_number
     patient_id = params[:patient_id]
     date = params[:date]&.to_date || Date.today
-    tb_number = service.assign_tb_number(patient_id, date)
-    render json: tb_number, status: :created
-  end
+    number = params[:number]
 
-  def get_tb_number
-    patient_id = params[:patient_id]
-    tb_number = service.get_tb_number(patient_id)
-    if tb_number
-      render json: tb_number, status: :ok
-    else
-      render :status => 404
+    begin
+      number = TBNumberService.assign_tb_number(patient_id, date, number)
+      render json: number, status: :created
+    rescue TBNumberService::TbNumberAlreadyExistsException
+      render status: :conflict
     end
-  end
-
-  def print_tb_number
-    patient_id = params[:patient_id]
-    number = service.get_tb_number(patient_id)
-    info = {
-      number: number.identifier,
-      type: number.type.name,
-      patient_id: patient_id
-    }
-    label = service.generate_tb_patient_id(info)
-    send_data label, type: 'application/label;charset=utf-8',
-                     stream: false,
-                     filename: "#{params[:patient_id]}-#{SecureRandom.hex(12)}.lbl",
-                     disposition: 'inline'
-  end
-
-  def print_tb_lab_order_summary
-    logger = Rails.logger
-    logger.info tb_lab_order_params
-    label = service.print_patient_lab_order_summary(tb_lab_order_params)
-    send_data label, type: 'application/label;charset=utf-8',
-                     stream: false,
-                     filename: "#{params[:patient_id]}-#{SecureRandom.hex(12)}.lbl",
-                     disposition: 'inline'
-  end
-
-  def assign_ipt_number
-    patient_id = params[:patient_id]
-    date = params[:date]&.to_date || Date.today
-    ipt_number = service.assign_ipt_number(patient_id, date)
-    render json: ipt_number, status: :created
   end
 
   def assign_npid
