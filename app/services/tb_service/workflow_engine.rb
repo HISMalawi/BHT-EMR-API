@@ -24,20 +24,6 @@ module TBService
         LOGGER.debug "Loading encounter type: #{state}"
         encounter_type = EncounterType.find_by(name: state)
 
-        return EncounterType.new(name: 'TB TREATMENT')\
-                if valid_state?(state) && encounter_type.name == 'TREATMENT'
-
-        # ask ART question
-        return EncounterType.new(name: ART_QUESTION)\
-        if ((state == APPOINTMENT || state == TB_ADHERENCE) && valid_state?(state) && patient_art_question_is_available? && (patient_on_art_program?\
-           || patient_is_hiv_positive?) && patient_has_no_art_appointment?) && !ART_INTERGRATION_ENABLED
-
-        # switch to ART when allow, when dispensation is complete
-        # patient should get treated for ART
-        return EncounterType.new(name: ART_WORKFLOW)\
-        if (state == APPOINTMENT && patient_has_dispensation? && valid_state?(state) && patient_should_get_treated_for_art? && (patient_on_art_program?\
-          || patient_is_hiv_positive?) && patient_has_no_art_appointment?) && !ART_INTERGRATION_ENABLED
-
         return encounter_type if valid_state?(state)
       end
 
