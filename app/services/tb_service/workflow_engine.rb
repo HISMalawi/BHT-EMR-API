@@ -320,9 +320,8 @@ module TBService
       ).order(encounter_datetime: :desc).first
 
       begin
-        time_diff = (Time.current  - encounter.encounter_datetime)
-        hours = (time_diff / 1.hour)
-        (hours >= 1/60/60)
+        time_diff = ((Time.now - encounter.encounter_datetime.to_time)).to_i
+        (time_diff >= 3)
       rescue
         false
       end
