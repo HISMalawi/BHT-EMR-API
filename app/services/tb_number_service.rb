@@ -29,12 +29,13 @@ class TBNumberService
 
   def self.generate_tb_patient_id(patient_id)
     patient_identifier = get_patient_tb_number(patient_id: patient_id)
+    identifier_name = PatientIdentifierType.find_by(patient_identifier_type_id: patient_identifier.identifier_type).name
     first_name = PersonName.find_by(person_id: patient_id).given_name
     last_name = PersonName.find_by(person_id: patient_id).family_name
     name = "#{first_name} #{last_name}"
     label = ZebraPrinter::StandardLabel.new
     label.draw_text(name, 40, 10, 0, 2, 2, 2, false)
-    label.draw_text(patient_identifier.identifier_type, 40, 60, 0, 2, 2, 2, false)
+    label.draw_text(identifier_name, 40, 60, 0, 2, 2, 2, false)
     label.draw_text(patient_identifier.identifier, 40, 120, 0, 2, 2, 2, false)
     label.draw_barcode(50, 180, 0, 1, 5, 15, 120, false, patient_identifier.identifier)
     label.print(1)
