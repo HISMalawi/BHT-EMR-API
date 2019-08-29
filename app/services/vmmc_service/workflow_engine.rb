@@ -77,17 +77,17 @@ class VMMCService::WorkflowEngine
   }.freeze
 
   STATE_CONDITIONS = {
-    REGISTRATION_CONSENT => %i[patient_has_never_had_post_op_review? continue_to_circumcision?],
-    VITALS => %i[patient_gives_consent? continue_to_circumcision?],
-    MEDICAL_HISTORY => %i[patient_gives_consent? continue_to_circumcision?],
-    HIV_STATUS => %i[patient_gives_consent? continue_to_circumcision?],
-    GENITAL_EXAMINATION => %i[patient_gives_consent? continue_to_circumcision?],
-    SUMMARY_ASSESSMENT => %i[patient_gives_consent? continue_to_circumcision?],
+    REGISTRATION_CONSENT => %i[patient_has_never_had_post_op_review?],
+    VITALS => %i[patient_gives_consent?],
+    MEDICAL_HISTORY => %i[patient_gives_consent?],
+    HIV_STATUS => %i[patient_gives_consent?],
+    GENITAL_EXAMINATION => %i[patient_gives_consent?],
+    SUMMARY_ASSESSMENT => %i[patient_gives_consent?],
     CIRCUMCISION => %i[patient_gives_consent? continue_to_circumcision?],
     POST_OP_REVIEW => %i[patient_gives_consent? continue_to_circumcision?],
     TREATMENT => %i[patient_gives_consent? meds_given? continue_to_circumcision?],
-    APPOINTMENT => %i[patient_gives_consent? patient_ready_for_discharge?],
-    FOLLOW_UP => %i[patient_had_post_op_review? continue_to_circumcision?]
+    APPOINTMENT => %i[patient_gives_consent? patient_ready_for_discharge? continue_to_circumcision?],
+    FOLLOW_UP => %i[patient_had_post_op_review?]
   }.freeze
 
   def load_user_activities
@@ -155,16 +155,18 @@ class VMMCService::WorkflowEngine
                                                concept_id: consent_confirmation_concept_id,
                                                value_coded: yes_concept.concept_id,
                                                encounter: { program_id: vmmc_program.id })\
+                                        .where('encounter_datetime between ? AND ?', *TimeUtils.day_bounds(date))\
                                         .exists?
   end
 
   def continue_to_circumcision?
     continue_to_circumcision_concept_id = ConceptName.find_by_name('Continue to circumcision?').concept_id
 
-    Observation.joins(:encounter)\
+     Observation.joins(:encounter)\
                .where(person_id: @patient.id,
                       concept_id: continue_to_circumcision_concept_id,
                       value_coded: yes_concept.concept_id)\
+               .where('encounter_datetime between ? AND ?', *TimeUtils.day_bounds(date))\
                .merge(Encounter.where(program_id: vmmc_program.program_id))
                .exists?
   end
