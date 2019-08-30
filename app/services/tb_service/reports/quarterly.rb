@@ -50,15 +50,25 @@ module TBService::Reports::Quarterly
     end
 
     def new_mtb_detected_xpert (start_date, end_date)
-      patients = patients_query.with_encounters(['TB_Initial', 'Lab Orders', 'Lab Results'], start_date, end_date)\
-                               .with_obs('Lab Results', 'Type of Tuberculosis', 'Multidrug-resistant TB', start_date, end_date)\
-                               .with_obs('Lab Orders', 'Test requested', 'Tuberculosis smear microscopy method', start_date, end_date)
-
-      return [] if patients.empty?
-
+      patients = patients_query.with_encounters(['TB_Initial', 'Lab Orders', 'Lab Results'], start_date, end_date)
       ids = patients.map(&:patient_id)
 
-      map_outcomes(ids)
+      return [] if ids.empty?
+
+      sample_one = concept('Sample One GeneXpert Result')
+      sample_two = concept('Sample Two GeneXpert Result')
+      value = concept('MTB Detetcted')
+
+      mtb_detected_patients = Observation.where(concept: [sample_one, sample_two],
+                                                answer_concept: value,
+                                                person_id: ids,
+                                                obs_datetime: start_date..end_date)
+
+      return [] if mtb_detected_patients.empty?
+
+      mtb_ids = mtb_detected_patients.map(&:person_id)
+
+      map_outcomes(mtb_ids)
     end
 
     def relapse_bacteriologically_confirmed (start_date, end_date)
@@ -108,18 +118,14 @@ module TBService::Reports::Quarterly
 
       return [] if patients.empty?
 
-      concept = concept('Tuberculosis smear result')
-      value = [
-        concept('AFB Positive'),
-        concept('MTB Trace'),
-        concept('MTB Detected'),
-        concept('TB Drug Resistance')
-      ].map { |concept| concept&.concept_id }
+      sample_one = concept('Sample One Microscopy Result')
+      sample_two = concept('Sample Two Microscopy Result')
+      value = concept('AFB Positive')
 
       ids = patients.map(&:patient_id)
 
-      smear_positive_patients = Observation.where(concept: concept,
-                                                  value_coded: value,
+      smear_positive_patients = Observation.where(concept: [sample_one, sample_two],
+                                                  answer_concept: value,
                                                   person_id: ids,
                                                   obs_datetime: start_date..end_date)
 
@@ -184,7 +190,10 @@ module TBService::Reports::Quarterly
     def children_aged_zero_to_four (start_date, end_date)
       min = 4.years.ago
       max = Date.today
-      children = Person.where(birthdate: min..max)
+      type = encounter_type('TB_Initial')
+      children = Person.joins(:patient => :encounters)\
+                       .where(birthdate: min..max,
+                              encounter: { encounter_type: type , encounter_datetime: start_date..end_date })
 
       return [] if children.empty?
 
@@ -197,8 +206,13 @@ module TBService::Reports::Quarterly
       five_years_ago = 5.years.ago
       fourteen_years_ago = 14.years.ago
       max = Date.today
-      children = Person.where(birthdate: fourteen_years_ago..max)\
-                       .or(Person.where(birthdate: five_years_ago..max))
+      type = encounter_type('TB_Initial')
+      children = Person.joins(:patient => :encounters)\
+                       .where(birthdate: fourteen_years_ago..max,
+                              encounter: { encounter_type: type, encounter_datetime: start_date..end_date })\
+                       .or(Person.joins(:patient => :encounters)\
+                                 .where(birthdate: five_years_ago..max,
+                                        encounter: { encounter_type: type, encounter_datetime: start_date..end_date }))
 
       return [] if children.empty?
 
@@ -222,10 +236,12 @@ module TBService::Reports::Quarterly
 
     def number_of_cases (patient_ids, start_date, end_date)
       tb_number_type = patient_identifier_type('District TB Number')
+      ipt_number_type = patient_identifier_type('District IPT Number')
       PatientIdentifier.where(patient_id: patient_ids,
-                              type: tb_number_type,
+                              type: [tb_number_type, ipt_number_type],
                               date_created: start_date..end_date)\
                        .count
+                       .inspect
     end
 
     def patients_with_state (patient_ids, start_date, end_date, state)

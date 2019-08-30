@@ -56,7 +56,12 @@ module TBService::Reports::Tbhiv
       return [] if art_states.empty?
 
       patients_on_art_before_tb = art_states.select do |state|
-        common = tb_states.select { |s| s.date_created > state.date_created && s.patient_program.patient_id == state.patient_program.patient_id }
+        common = tb_states.select do |s|
+          if s.patient_program.nil? || state.patient_program.nil?
+            next
+          end
+          s.date_created > state.date_created && s.patient_program.patient_id == state.patient_program.patient_id
+        end
         common.size > 0
       end
 
@@ -77,7 +82,12 @@ module TBService::Reports::Tbhiv
       return [] if art_states.empty?
 
       patients_on_tb_before_art = tb_states.select do |state|
-        common = art_states.select { |s| s.date_created > state.date_created && s.patient_program.patient_id == state.patient_program.patient_id }
+        common = art_states.select do |s|
+          if s.patient_program.nil? || state.patient_program.nil?
+            next
+          end
+          s.date_created > state.date_created && s.patient_program.patient_id == state.patient_program.patient_id
+        end
         common.size > 0
       end
 
