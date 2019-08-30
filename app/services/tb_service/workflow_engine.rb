@@ -48,6 +48,7 @@ module TBService
     APPOINTMENT = 'APPOINTMENT'
     TB_REGISTRATION = 'TB REGISTRATION'
     TB_RECEPTION = 'TB RECEPTION'
+    REFERRAL = 'REFERRAL'
     # FOLLOW - TB INITIAL, LAB ORDERS. LAB RESULTs, VITALS, TREATMENT, DISPENSING, APPOINTMENT, TB ADHERENCE
 
     # ART Integration
@@ -67,7 +68,8 @@ module TBService
     # Encounters graph
     ENCOUNTER_SM = {
       INITIAL_STATE => TB_INITIAL,
-      TB_INITIAL => LAB_ORDERS,
+      TB_INITIAL => REFERRAL,
+      REFERRAL => LAB_ORDERS,
       LAB_ORDERS => DIAGNOSIS,
       DIAGNOSIS => LAB_RESULTS,
       LAB_RESULTS => TB_RECEPTION,
@@ -84,6 +86,8 @@ module TBService
 
       TB_INITIAL => %i[patient_should_go_for_screening?
                                     patient_not_transferred_in_today?],
+
+      REFERRAL => %i[patient_should_go_for_referral?],
 
       DIAGNOSIS => %i[should_patient_tested_through_diagnosis?
                                     patient_has_no_diagnosis?
@@ -102,7 +106,8 @@ module TBService
 
       TB_REGISTRATION => %i[patient_has_no_tb_registration?
                                     patient_is_not_a_transfer_out?
-                                    patient_should_proceed_for_treatment?],
+                                    patient_should_proceed_for_treatment?
+                                    patient_is_no_a_referral?],
 
       VITALS => %i[patient_has_no_vitals?
                                     patient_should_proceed_for_treatment?],
@@ -715,5 +720,40 @@ module TBService
       || (patient_has_art_appointment? && patient_has_no_appointment?)
     end
 
+    def patient_should_go_for_referral?
+      patient_is_a_referral? && has_no_referral?
+    end
+
+    def patient_is_a_referral?
+      type_of_patient = concept('Type of patient')
+      referral = concept('Referral')
+      start_time, end_time = TimeUtils.day_bounds(@date)
+      Observation.where(
+        'person_id = ? AND concept_id = ? AND value_coded = ? AND obs_datetime BETWEEN ? AND ?',
+        @patient.patient_id, type_of_patient.concept_id, referral.concept_id, start_time, end_time
+      ).order(obs_datetime: :desc).first.present?
+    end
+
+    def patient_is_no_a_referral?
+      type_of_patient = concept('Type of patient')
+      referral = concept('Referral')
+      start_time, end_time = TimeUtils.day_bounds(@date)
+      Observation.where(
+        'person_id = ? AND concept_id = ? AND value_coded = ? AND obs_datetime BETWEEN ? AND ?',
+        @patient.patient_id, type_of_patient.concept_id, referral.concept_id, start_time, end_time
+      ).order(obs_datetime: :desc).first.nil?
+    end
+
+    def has_no_referral?
+      start_time, end_time = TimeUtils.day_bounds(@date)
+      Encounter.joins(:type).where(
+        'encounter_type.name = ? AND encounter.patient_id = ? AND encounter.program_id = ? AND encounter.encounter_datetime BETWEEN ? AND ?',
+        REFERRAL,
+        @patient.patient_id,
+        @program.program_id,
+        start_time,
+        end_time
+      ).order(encounter_datetime: :desc).first.nil?
+    end
   end
 end
