@@ -53,8 +53,6 @@ module TBService::Reports::Quarterly
       patients = patients_query.with_encounters(['TB_Initial', 'Lab Orders', 'Lab Results'], start_date, end_date)
       ids = patients.map(&:patient_id)
 
-      raise ids.inspect
-
       return [] if ids.empty?
 
       sample_one = concept('Sample One GeneXpert Result')
