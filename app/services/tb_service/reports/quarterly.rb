@@ -50,15 +50,27 @@ module TBService::Reports::Quarterly
     end
 
     def new_mtb_detected_xpert (start_date, end_date)
-      patients = patients_query.with_encounters(['TB_Initial', 'Lab Orders', 'Lab Results'], start_date, end_date)\
-                               .with_obs('Lab Results', 'Type of Tuberculosis', 'Multidrug-resistant TB', start_date, end_date)\
-                               .with_obs('Lab Orders', 'Test requested', 'Tuberculosis smear microscopy method', start_date, end_date)
-
-      return [] if patients.empty?
-
+      patients = patients_query.with_encounters(['TB_Initial', 'Lab Orders', 'Lab Results'], start_date, end_date)
       ids = patients.map(&:patient_id)
 
-      map_outcomes(ids)
+      raise ids.inspect
+
+      return [] if ids.empty?
+
+      sample_one = concept('Sample One GeneXpert Result')
+      sample_two = concept('Sample Two GeneXpert Result')
+      value = concept('MTB Detetcted')
+
+      mtb_detected_patients = Observation.where(concept: [sample_one, sample_two],
+                                                answer_concept: value,
+                                                person_id: ids,
+                                                obs_datetime: start_date..end_date)
+
+      return [] if mtb_detected_patients.empty?
+
+      mtb_ids = mtb_detected_patients.map(&:person_id)
+
+      map_outcomes(mtb_ids)
     end
 
     def relapse_bacteriologically_confirmed (start_date, end_date)
@@ -108,18 +120,14 @@ module TBService::Reports::Quarterly
 
       return [] if patients.empty?
 
-      concept = concept('Tuberculosis smear result')
-      value = [
-        concept('AFB Positive'),
-        concept('MTB Trace'),
-        concept('MTB Detected'),
-        concept('TB Drug Resistance')
-      ].map { |concept| concept&.concept_id }
+      sample_one = concept('Sample One Microscopy Result')
+      sample_two = concept('Sample Two Microscopy Result')
+      value = concept('AFB Positive')
 
       ids = patients.map(&:patient_id)
 
-      smear_positive_patients = Observation.where(concept: concept,
-                                                  value_coded: value,
+      smear_positive_patients = Observation.where(concept: [sample_one, sample_two],
+                                                  answer_concept: value,
                                                   person_id: ids,
                                                   obs_datetime: start_date..end_date)
 
