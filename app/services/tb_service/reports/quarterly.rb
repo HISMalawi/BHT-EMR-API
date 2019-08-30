@@ -184,7 +184,10 @@ module TBService::Reports::Quarterly
     def children_aged_zero_to_four (start_date, end_date)
       min = 4.years.ago
       max = Date.today
-      children = Person.where(birthdate: min..max)
+      type = encounter_type('TB_Initial')
+      children = Person.joins(:patient => :encounters)\
+                       .where(birthdate: min..max,
+                              encounter: { encounter_type: type , encounter_datetime: start_date..end_date })
 
       return [] if children.empty?
 
@@ -197,8 +200,13 @@ module TBService::Reports::Quarterly
       five_years_ago = 5.years.ago
       fourteen_years_ago = 14.years.ago
       max = Date.today
-      children = Person.where(birthdate: fourteen_years_ago..max)\
-                       .or(Person.where(birthdate: five_years_ago..max))
+      type = encounter_type('TB_Initial')
+      children = Person.joins(:patient => :encounters)\
+                       .where(birthdate: fourteen_years_ago..max,
+                              encounter: { encounter_type: type, encounter_datetime: start_date..end_date })\
+                       .or(Person.joins(:patient => :encounters)\
+                                 .where(birthdate: five_years_ago..max,
+                                        encounter: { encounter_type: type, encounter_datetime: start_date..end_date }))
 
       return [] if children.empty?
 
@@ -222,10 +230,12 @@ module TBService::Reports::Quarterly
 
     def number_of_cases (patient_ids, start_date, end_date)
       tb_number_type = patient_identifier_type('District TB Number')
+      ipt_number_type = patient_identifier_type('District IPT Number')
       PatientIdentifier.where(patient_id: patient_ids,
-                              type: tb_number_type,
+                              type: [tb_number_type, ipt_number_type],
                               date_created: start_date..end_date)\
                        .count
+                       .inspect
     end
 
     def patients_with_state (patient_ids, start_date, end_date, state)
