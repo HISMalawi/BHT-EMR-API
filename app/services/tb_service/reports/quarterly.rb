@@ -68,7 +68,7 @@ module TBService::Reports::Quarterly
 
       mtb_ids = mtb_detected_patients.map(&:person_id)
 
-      map_outcomes(mtb_ids)
+      map_outcomes(mtb_ids, start_date, end_date)
     end
 
     def relapse_bacteriologically_confirmed (start_date, end_date)
