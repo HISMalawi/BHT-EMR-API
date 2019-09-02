@@ -83,10 +83,10 @@ class VMMCService::WorkflowEngine
     HIV_STATUS => %i[patient_gives_consent?],
     GENITAL_EXAMINATION => %i[patient_gives_consent?],
     SUMMARY_ASSESSMENT => %i[patient_gives_consent?],
-    CIRCUMCISION => %i[patient_gives_consent? patient_suitable_for_circumcision? continue_to_circumcision?],
-    POST_OP_REVIEW => %i[patient_gives_consent? patient_suitable_for_circumcision? continue_to_circumcision?],
-    TREATMENT => %i[patient_gives_consent? meds_given? patient_suitable_for_circumcision? continue_to_circumcision?],
-    APPOINTMENT => %i[patient_gives_consent? patient_ready_for_discharge? continue_to_circumcision?],
+    CIRCUMCISION => %i[patient_gives_consent? continue_to_circumcision?],
+    POST_OP_REVIEW => %i[patient_gives_consent? continue_to_circumcision?],
+    TREATMENT => %i[patient_gives_consent? meds_given? continue_to_circumcision?],
+    APPOINTMENT => %i[patient_gives_consent? patient_ready_for_discharge?],
     FOLLOW_UP => %i[patient_had_post_op_review?]
   }.freeze
 
@@ -160,6 +160,8 @@ class VMMCService::WorkflowEngine
   end
 
   def continue_to_circumcision?
+    return false unless patient_suitable_for_circumcision?
+
     continue_to_circumcision_concept_id = ConceptName.find_by_name('Continue to circumcision?').concept_id
 
      Observation.joins(:encounter)\
@@ -201,7 +203,8 @@ class VMMCService::WorkflowEngine
 
     Observation.joins(:encounter)\
                .where(concept_id: meds_given_concept_id,
-                      value_coded: yes_concept_id)\
+                      value_coded: yes_concept_id,
+                      person_id: patient.id)\
                .merge(Encounter.where(program: vmmc_program))
                .exists?
   end
