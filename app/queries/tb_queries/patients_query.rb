@@ -33,11 +33,11 @@ module TBQueries
 
       def with_encounters (encounters, start_date, end_date)
         program = program('TB Program')
-        filter = encounter_filter('GROUP_CONCAT(encounter_type)', encounters)
+        filter = encounters_filter(encounters)
 
         joins(:encounters).where(encounter: { encounter_datetime: start_date..end_date, program_id: program.program_id })\
                           .group(:patient_id)\
-                          .having(filter)
+                          .having('GROUP_CONCAT(encounter.encounter_type) LIKE ?', filter)
       end
 
       def or_with_encounters (first, second, start_date, end_date)
