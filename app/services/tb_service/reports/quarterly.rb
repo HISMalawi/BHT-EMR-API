@@ -130,29 +130,18 @@ module TBService::Reports::Quarterly
     end
 
     def hiv_positive_new_and_relapse (start_date, end_date)
-      tb_initial_encounter_type = encounter_type('TB_INITIAL')
-      hiv_status_concept = concept('HIV Status')
-      positive_concept = concept('Positive')
-      state = STATES['RELAPSE']
+      hiv_status = concept('HIV Status')
+      value = concept('Positive')
 
-      encounters = Encounter.joins(:observations)\
-                            .where(type: tb_initial_encounter_type,
-                                   'obs.concept_id': hiv_status_concept.concept_id,
-                                   'obs.value_coded': positive_concept.concept_id,
-                                   'obs.obs_datetime': start_date..end_date)
+      relapse = relapse_patients_query.with_hiv(start_date, end_date)
+      new_patients = patients_query.new_patients(start_date, end_date)
+      new_positive = Observation.where(person_id: new_patients.map(&:patient_id),
+                                       concept: hiv_status,
+                                       answer_concept: value)
 
-      return [] if encounters.empty?
+      return [] if relapse.empty? && new_positive.empty?
 
-      patient_ids = encounters.map { |encounter| encounter.patient_id }
-
-      relapsed = PatientState.includes(:patient_program)\
-                             .where('patient_program.patient_id': patient_ids,
-                                    state: state,
-                                    'patient_state.date_created': start_date..end_date)\
-
-      return [] if relapsed.empty?
-
-      ids = relapsed.map { |r| r.patient_program.patient_id }
+      ids = (relapse.map(&:patient_id) + new_positive.map(&:person_id)).uniq
 
       map_outcomes(ids, start_date, end_date)
     end
