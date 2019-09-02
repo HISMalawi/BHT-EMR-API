@@ -275,6 +275,7 @@ class VMMCService::WorkflowEngine
       Observation.joins(:encounter)\
                  .where(concept: concept('Suitable for circumcision'),
                         value_coded: concept('Yes').concept_id)\
+                 .where('DATE(obs_datetime) = ?', date.to_date)\
                  .merge(Encounter.where(patient: patient, program: program))\
                  .exists?
     end
