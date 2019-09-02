@@ -2,6 +2,10 @@ module TBQueries
   include ModelUtils
 
   class PatientsQuery
+    STATES = {
+      'CURRENTLY_IN_TREATMENT' => 92
+    }.freeze
+
     def initialize (relation = Patient.all)
       @relation = relation.extending(Scopes)
     end
@@ -11,13 +15,29 @@ module TBQueries
     end
 
     module Scopes
+      def new_patients (start_date, end_date)
+        initial = encounter_type('TB_Initial')
+        new_patient = concept('New TB Case')
+
+        joins(:encounters => :observations).where(:encounter => { program_id: tb_program.program_id,
+                                                                  encounter_type: initial.encounter_type_id },
+                                                  :obs => { value_coded: new_patient.concept_id,
+                                                            obs_datetime: start_date..end_date })
+      end
+
+      def age_range (min, max)
+        type = encounter_type('TB_Initial')
+        joins(:person, :encounters).where('TIMESTAMPDIFF(YEAR, birthdate, NOW()) BETWEEN ? AND ?', min, max)\
+                                   .where(encounter: { encounter_type: type })
+      end
+
       def with_encounters (encounters, start_date, end_date)
         program = program('TB Program')
-        filter = encounters_filter(encounters)
+        filter = encounter_filter('GROUP_CONCAT(encounter_type)', encounters)
 
         joins(:encounters).where(encounter: { encounter_datetime: start_date..end_date, program_id: program.program_id })\
                           .group(:patient_id)\
-                          .having('GROUP_CONCAT(encounter.encounter_type) LIKE ?', filter)
+                          .having(filter)
       end
 
       def or_with_encounters (first, second, start_date, end_date)
@@ -123,6 +143,12 @@ module TBQueries
           foo = encounter_type(encounter).encounter_type_id
           "%#{foo}%"
         }.join('')
+      end
+
+      private
+
+      def tb_program
+        program('TB Program')
       end
     end
   end
