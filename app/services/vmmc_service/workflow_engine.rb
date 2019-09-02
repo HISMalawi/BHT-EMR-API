@@ -83,9 +83,9 @@ class VMMCService::WorkflowEngine
     HIV_STATUS => %i[patient_gives_consent?],
     GENITAL_EXAMINATION => %i[patient_gives_consent?],
     SUMMARY_ASSESSMENT => %i[patient_gives_consent?],
-    CIRCUMCISION => %i[patient_gives_consent? continue_to_circumcision?],
-    POST_OP_REVIEW => %i[patient_gives_consent? continue_to_circumcision?],
-    TREATMENT => %i[patient_gives_consent? meds_given? continue_to_circumcision?],
+    CIRCUMCISION => %i[patient_gives_consent? patient_suitable_for_circumcision? continue_to_circumcision?],
+    POST_OP_REVIEW => %i[patient_gives_consent? patient_suitable_for_circumcision? continue_to_circumcision?],
+    TREATMENT => %i[patient_gives_consent? meds_given? patient_suitable_for_circumcision? continue_to_circumcision?],
     APPOINTMENT => %i[patient_gives_consent? patient_ready_for_discharge? continue_to_circumcision?],
     FOLLOW_UP => %i[patient_had_post_op_review?]
   }.freeze
@@ -258,5 +258,22 @@ class VMMCService::WorkflowEngine
 
     # Only valid if encounter was not done today
     @patient_had_post_op_review = encounter.encounter_datetime.to_date != date.to_date
+  end
+
+  # Checks if patient has passed summary assessment.
+  #
+  # Pre-condition for all encounters after summary assessment but `APPOINTMENT`.
+  def patient_suitable_for_circumcision?
+    # Memoize as this may be called a number of times within one request.
+    # It is a pre-condition to a number of encounters.
+    return @patient_suitable_for_circumcision unless @patient_suitable_for_circumcision.nil?
+
+    @patient_suitable_for_circumcision = begin
+      Observation.joins(:encounter)\
+                 .where(concept: concept('Suitable for circumcision'),
+                        value_coded: concept('Yes').concept_id)\
+                 .merge(Encounter.where(patient: patient, program: program))\
+                 .exists?
+    end
   end
 end
