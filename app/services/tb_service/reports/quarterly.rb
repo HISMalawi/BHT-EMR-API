@@ -17,123 +17,93 @@ module TBService::Reports::Quarterly
     }.freeze
 
     def new_pulmonary_clinically_diagnosed (start_date, end_date)
-      patients = patients_query.with_encounters(['TB_Initial', 'Diagnosis'], start_date, end_date)\
-                               .with_obs('Diagnosis', 'Type of Tuberculosis', 'Pulmonary Tuberculosis', start_date, end_date)
+      new_patients = patients_query.new_patients(start_date, end_date)
+      return [] if new_patients.empty?
+
+      ids = new_patients.map(&:patient_id)
+
+      new_pulm = clinically_diagnosed_patients_query.with_pulmonary_tuberculosis(ids, start_date, end_date)
+
+      return [] if new_pulm.empty?
+
+      patients = new_pulm.map(&:patient_id)
+
+      map_outcomes(patients, start_date, end_date)
+    end
+
+    def new_eptb (start_date, end_date)
+      new_patients = patients_query.new_patients(start_date, end_date)
+      return [] if new_patients.empty?
+
+      ids = new_patients.map(&:patient_id)
+
+      with_mtb = obs_query.with_answer(ids, 'Extrapulmonary tuberculosis (EPTB)', start_date, end_date)
+
+      return [] if with_mtb.empty?
+
+      persons = with_mtb.map(&:person_id)
+
+      map_outcomes(persons, start_date, end_date)
+    end
+
+    def new_mtb_detected_xpert (start_date, end_date)
+      new_patients = patients_query.new_patients(start_date, end_date)
+      return [] if new_patients.empty?
+
+      ids = new_patients.map(&:patient_id)
+
+      with_mtb = obs_query.with_answer(ids, 'MTB Detetcted', start_date, end_date)
+
+      return [] if with_mtb.empty?
+
+      persons = with_mtb.map(&:person_id)
+
+      map_outcomes(persons, start_date, end_date)
+    end
+
+    def new_smear_positive (start_date, end_date)
+      new_patients = patients_query.new_patients(start_date, end_date)
+      return [] if new_patients.empty?
+
+      ids = new_patients.map(&:patient_id)
+
+      with_mtb = obs_query.with_answer(ids, 'AFB Positive', start_date, end_date)
+
+      return [] if with_mtb.empty?
+
+      persons = with_mtb.map(&:person_id)
+
+      map_outcomes(persons, start_date, end_date)
+    end
+
+    def relapse_bacteriologically_confirmed (start_date, end_date)
+      patients = relapse_patients_query.bacteriologically_confirmed(start_date, end_date)
 
       return [] if patients.empty?
 
-      ids = patients.map(&:patient_id)
+      ids = patients.map { |patient| patient['patient_id'] }
 
       map_outcomes(ids, start_date, end_date)
     end
 
-    def new_eptb (start_date, end_date)
-      patients = patients_query.or_with_encounters(['TB_Initial', 'Lab Results'], ['TB_Initial', 'Diagnosis'], start_date, end_date)
-
-      return [] if patients.empty?
-
-      ids = patients.map(&:patient_id)
-
-      concept = concept('Type of tuberculosis')
-      value = concept('Extrapulmonary tuberculosis (EPTB)')
-
-      eptb_patients = Observation.where(concept: concept,
-                                        answer_concept: value,
-                                        person_id: ids,
-                                        obs_datetime: start_date..end_date)
-
-      return [] if eptb_patients.empty?
-
-      patient_ids = eptb_patients.map(&:person_id)
-
-      map_outcomes(patient_ids, start_date, end_date)
-    end
-
-    def new_mtb_detected_xpert (start_date, end_date)
-      patients = patients_query.with_encounters(['TB_Initial', 'Lab Orders', 'Lab Results'], start_date, end_date)
-      ids = patients.map(&:patient_id)
-
-      return [] if ids.empty?
-
-      sample_one = concept('Sample One GeneXpert Result')
-      sample_two = concept('Sample Two GeneXpert Result')
-      value = concept('MTB Detetcted')
-
-      mtb_detected_patients = Observation.where(concept: [sample_one, sample_two],
-                                                answer_concept: value,
-                                                person_id: ids,
-                                                obs_datetime: start_date..end_date)
-
-      return [] if mtb_detected_patients.empty?
-
-      mtb_ids = mtb_detected_patients.map(&:person_id)
-
-      map_outcomes(mtb_ids, start_date, end_date)
-    end
-
-    def relapse_bacteriologically_confirmed (start_date, end_date)
-      patients = patients_query.with_obs_before('Lab Results', 'TB Status', 'Positive', start_date)
-
-      return [] if patients.empty?
-
-      ids = patients.map(&:patient_id)
-
-      relapses = patient_states_query.relapse(ids, start_date, end_date)
-
-      return [] if relapses.empty?
-
-      map_outcomes(relapses, start_date, end_date)
-    end
-
     def relapse_clinical_pulmonary (start_date, end_date)
-      patients = patients_query.with_obs_before('Diagnosis', 'Type of tuberculosis', 'Pulmonary Tuberculosis', start_date)
+      patients = relapse_patients_query.clinical_pulmonary(start_date, end_date)
 
       return [] if patients.empty?
 
-      ids = patients.map(&:patient_id)
+      ids = patients.map { |patient| patient['patient_id'] }
 
-      relapses = patient_states_query.relapse(ids, start_date, end_date)
-
-      return [] if relapses.empty?
-
-      map_outcomes(relapses, start_date, end_date)
+      map_outcomes(ids, start_date, end_date)
     end
 
     def relapse_eptb (start_date, end_date)
-      patients = obs_query.with_timeless('Type of Tuberculosis', 'Extrapulmonary tuberculosis (EPTB)')
+      patients = relapse_patients_query.eptb(start_date, end_date)
 
       return [] if patients.empty?
 
-      ids = patients.map(&:person_id)
+      ids = patients.map { |patient| patient['patient_id'] }
 
-      relapses = patient_states_query.relapse(ids, start_date, end_date)
-
-      return [] if relapses.empty?
-
-      map_outcomes(relapses, start_date, end_date)
-    end
-
-    def new_smear_positive (start_date, end_date)
-      patients = patients_query.with_encounters(['TB_initial', 'Lab Orders', 'Lab Results'], start_date, end_date)
-
-      return [] if patients.empty?
-
-      sample_one = concept('Sample One Microscopy Result')
-      sample_two = concept('Sample Two Microscopy Result')
-      value = concept('AFB Positive')
-
-      ids = patients.map(&:patient_id)
-
-      smear_positive_patients = Observation.where(concept: [sample_one, sample_two],
-                                                  answer_concept: value,
-                                                  person_id: ids,
-                                                  obs_datetime: start_date..end_date)
-
-      return [] if smear_positive_patients.empty?
-
-      patient_ids = smear_positive_patients.map(&:person_id)
-
-      map_outcomes(patient_ids, start_date, end_date)
+      map_outcomes(ids, start_date, end_date)
     end
 
     def retreatment_excluding_relapse (start_date, end_date)
@@ -160,63 +130,38 @@ module TBService::Reports::Quarterly
     end
 
     def hiv_positive_new_and_relapse (start_date, end_date)
-      tb_initial_encounter_type = encounter_type('TB_INITIAL')
-      hiv_status_concept = concept('HIV Status')
-      positive_concept = concept('Positive')
-      state = STATES['RELAPSE']
+      hiv_status = concept('HIV Status')
+      value = concept('Positive')
 
-      encounters = Encounter.joins(:observations)\
-                            .where(type: tb_initial_encounter_type,
-                                   'obs.concept_id': hiv_status_concept.concept_id,
-                                   'obs.value_coded': positive_concept.concept_id,
-                                   'obs.obs_datetime': start_date..end_date)
+      relapse = relapse_patients_query.with_hiv(start_date, end_date)
+      new_patients = patients_query.new_patients(start_date, end_date)
+      new_positive = Observation.where(person_id: new_patients.map(&:patient_id),
+                                       concept: hiv_status,
+                                       answer_concept: value)
 
-      return [] if encounters.empty?
+      return [] if relapse.empty? && new_positive.empty?
 
-      patient_ids = encounters.map { |encounter| encounter.patient_id }
-
-      relapsed = PatientState.includes(:patient_program)\
-                             .where('patient_program.patient_id': patient_ids,
-                                    state: state,
-                                    'patient_state.date_created': start_date..end_date)\
-
-      return [] if relapsed.empty?
-
-      ids = relapsed.map { |r| r.patient_program.patient_id }
+      ids = (relapse.map(&:patient_id) + new_positive.map(&:person_id)).uniq
 
       map_outcomes(ids, start_date, end_date)
     end
 
     def children_aged_zero_to_four (start_date, end_date)
-      min = 4.years.ago
-      max = Date.today
-      type = encounter_type('TB_Initial')
-      children = Person.joins(:patient => :encounters)\
-                       .where(birthdate: min..max,
-                              encounter: { encounter_type: type , encounter_datetime: start_date..end_date })
+      children = patients_query.age_range(0, 4)
 
       return [] if children.empty?
 
-      patient_ids = children.map { |child| child.person_id }
+      patient_ids = children.map(&:patient_id)
 
       map_outcomes(patient_ids, start_date, end_date)
     end
 
     def children_aged_five_to_fourteen (start_date, end_date)
-      five_years_ago = 5.years.ago
-      fourteen_years_ago = 14.years.ago
-      max = Date.today
-      type = encounter_type('TB_Initial')
-      children = Person.joins(:patient => :encounters)\
-                       .where(birthdate: fourteen_years_ago..max,
-                              encounter: { encounter_type: type, encounter_datetime: start_date..end_date })\
-                       .or(Person.joins(:patient => :encounters)\
-                                 .where(birthdate: five_years_ago..max,
-                                        encounter: { encounter_type: type, encounter_datetime: start_date..end_date }))
+      children = patients_query.age_range(5, 14)
 
       return [] if children.empty?
 
-      patient_ids = children.map { |child| child.person_id }
+      patient_ids = children.map(&:patient_id)
 
       map_outcomes(patient_ids, start_date, end_date)
     end
@@ -235,13 +180,7 @@ module TBService::Reports::Quarterly
     end
 
     def number_of_cases (patient_ids, start_date, end_date)
-      tb_number_type = patient_identifier_type('District TB Number')
-      ipt_number_type = patient_identifier_type('District IPT Number')
-      PatientIdentifier.where(patient_id: patient_ids,
-                              type: [tb_number_type, ipt_number_type],
-                              date_created: start_date..end_date)\
-                       .count
-                       .inspect
+      patient_ids.size
     end
 
     def patients_with_state (patient_ids, start_date, end_date, state)
@@ -275,6 +214,14 @@ module TBService::Reports::Quarterly
 
     def obs_query
       TBQueries::ObservationsQuery.new
+    end
+
+    def clinically_diagnosed_patients_query
+      TBQueries::ClinicallyDiagnosedPatientsQuery.new
+    end
+
+    def relapse_patients_query
+      TBQueries::RelapsePatientsQuery.new
     end
   end
 end

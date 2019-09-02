@@ -3,124 +3,93 @@
 module TBService::Reports::CaseFinding
   class << self
     def new_pulmonary_clinically_diagnosed (start_date, end_date)
-      patients = patients_query.with_encounters(['TB_Initial', 'Diagnosis'], start_date, end_date)\
-                               .with_obs('Diagnosis', 'Type of Tuberculosis', 'Pulmonary Tuberculosis', start_date, end_date)
+      new_patients = patients_query.new_patients(start_date, end_date)
+      return [] if new_patients.empty?
+
+      ids = new_patients.map(&:patient_id)
+
+      new_pulm = clinically_diagnosed_patients.with_pulmonary_tuberculosis(ids, start_date, end_date)
+
+      return [] if new_pulm.empty?
+
+      patients = new_pulm.map(&:patient_id)
+
+      patients_query.ntp_age_groups(patients)
+    end
+
+    def new_eptb (start_date, end_date)
+      new_patients = patients_query.new_patients(start_date, end_date)
+      return [] if new_patients.empty?
+
+      ids = new_patients.map(&:patient_id)
+
+      with_mtb = obs_query.with_answer(ids, 'Extrapulmonary tuberculosis (EPTB)', start_date, end_date)
+
+      return [] if with_mtb.empty?
+
+      persons = with_mtb.map(&:person_id)
+
+      patients_query.ntp_age_groups(persons)
+    end
+
+    def new_mtb_detected_xpert (start_date, end_date)
+      new_patients = patients_query.new_patients(start_date, end_date)
+      return [] if new_patients.empty?
+
+      ids = new_patients.map(&:patient_id)
+
+      with_mtb = obs_query.with_answer(ids, 'MTB Detetcted', start_date, end_date)
+
+      return [] if with_mtb.empty?
+
+      persons = with_mtb.map(&:person_id)
+
+      patients_query.ntp_age_groups(persons)
+    end
+
+    def new_smear_positive (start_date, end_date)
+      new_patients = patients_query.new_patients(start_date, end_date)
+      return [] if new_patients.empty?
+
+      ids = new_patients.map(&:patient_id)
+
+      with_mtb = obs_query.with_answer(ids, 'AFB Positive', start_date, end_date)
+
+      return [] if with_mtb.empty?
+
+      persons = with_mtb.map(&:person_id)
+
+      patients_query.ntp_age_groups(persons)
+    end
+
+    def relapse_bacteriologically_confirmed (start_date, end_date)
+      patients = relapse_patients_query.bacteriologically_confirmed(start_date, end_date)
 
       return [] if patients.empty?
 
-      ids = patients.map(&:patient_id)
+      ids = patients.map { |patient| patient['patient_id'] }
 
       patients_query.ntp_age_groups(ids)
     end
 
-    def new_mtb_detected_xpert (start_date, end_date)
-      patients = patients_query.with_encounters(['TB_Initial', 'Lab Orders', 'Lab Results'], start_date, end_date)
-
-      ids = patients.map(&:patient_id)
-
-      sample_one = concept('Sample One GeneXpert Result')
-      sample_two = concept('Sample Two GeneXpert Result')
-      value = concept('MTB Detetcted')
-
-      ids = patients.map(&:patient_id)
-
-      mtb_detected_patients = Observation.where(concept: [sample_one, sample_two],
-                                                answer_concept: value,
-                                                person_id: ids,
-                                                obs_datetime: start_date..end_date)
-
-      return [] if mtb_detected_patients.empty?
-
-      mtb_ids = mtb_detected_patients.map(&:person_id)
-
-      patients_query.ntp_age_groups(mtb_ids)
-    end
-
-    def new_smear_positive (start_date, end_date)
-      patients = patients_query.with_encounters(['TB_initial', 'Lab Orders', 'Lab Results'], start_date, end_date)
-
-      return [] if patients.empty?
-
-      sample_one = concept('Sample One Microscopy Result')
-      sample_two = concept('Sample Two Microscopy Result')
-      value = concept('AFB Positive')
-
-      ids = patients.map(&:patient_id)
-
-      smear_positive_patients = Observation.where(concept: [sample_one, sample_two],
-                                                  answer_concept: value,
-                                                  person_id: ids,
-                                                  obs_datetime: start_date..end_date)
-
-      return [] if smear_positive_patients.empty?
-
-      patient_ids = smear_positive_patients.map(&:person_id)
-
-      patients_query.ntp_age_groups(patient_ids)
-    end
-
-    def new_eptb (start_date, end_date)
-      patients = patients_query.or_with_encounters(['TB_Initial', 'Lab Results'], ['TB_Initial', 'Diagnosis'], start_date, end_date)
-
-      return [] if patients.empty?
-
-      ids = patients.map(&:patient_id)
-
-      concept = concept('Type of tuberculosis')
-      value = concept('Extrapulmonary tuberculosis (EPTB)')
-
-      eptb_patients = Observation.where(concept: concept,
-                                        answer_concept: value,
-                                        person_id: ids,
-                                        obs_datetime: start_date..end_date)
-
-      return [] if eptb_patients.empty?
-
-      patient_ids = eptb_patients.map(&:person_id)
-
-      patients_query.ntp_age_groups(patient_ids)
-    end
-
-    def relapse_bacteriologically_confirmed (start_date, end_date)
-      patients = patients_query.with_obs_before('Lab Results', 'TB Status', 'Positive', start_date)
-
-      return [] if patients.empty?
-
-      ids = patients.map(&:patient_id)
-
-      relapses = patient_states_query.relapse(ids, start_date, end_date)
-
-      return [] if relapses.empty?
-
-      patients_query.ntp_age_groups(relapses)
-    end
-
     def relapse_clinical_pulmonary (start_date, end_date)
-      patients = patients_query.with_obs_before('Diagnosis', 'Type of tuberculosis', 'Pulmonary Tuberculosis', start_date)
+      patients = relapse_patients_query.clinical_pulmonary(start_date, end_date)
 
       return [] if patients.empty?
 
-      ids = patients.map(&:patient_id)
+      ids = patients.map { |patient| patient['patient_id'] }
 
-      relapses = patient_states_query.relapse(ids, start_date, end_date)
-
-      return [] if relapses.empty?
-
-      patients_query.ntp_age_groups(relapses)
+      patients_query.ntp_age_groups(ids)
     end
 
     def relapse_eptb (start_date, end_date)
-      patients = obs_query.with_timeless('Type of Tuberculosis', 'Extrapulmonary tuberculosis (EPTB)')
+      patients = relapse_patients_query.eptb(start_date, end_date)
 
       return [] if patients.empty?
 
-      ids = patients.map(&:person_id)
+      ids = patients.map { |patient| patient['patient_id'] }
 
-      relapses = patient_states_query.relapse(ids, start_date, end_date)
-
-      return [] if relapses.empty?
-
-      patients_query.ntp_age_groups(relapses)
+      patients_query.ntp_age_groups(ids)
     end
 
     def treatment_failure_bacteriologically_confirmed (start_date, end_date)
@@ -288,6 +257,14 @@ module TBService::Reports::CaseFinding
 
     def obs_query
       TBQueries::ObservationsQuery.new
+    end
+
+    def clinically_diagnosed_patients
+      TBQueries::ClinicallyDiagnosedPatientsQuery.new
+    end
+
+    def relapse_patients_query
+      TBQueries::RelapsePatientsQuery.new
     end
   end
 end
