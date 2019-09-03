@@ -16,13 +16,11 @@ module TBQueries
 
     module Scopes
       def new_patients (start_date, end_date)
-        initial = encounter_type('TB_Initial')
         new_patient = concept('New TB Case')
 
-        joins(:encounters => :observations).where(:encounter => { program_id: tb_program.program_id,
-                                                                  encounter_type: initial.encounter_type_id },
-                                                  :obs => { value_coded: new_patient.concept_id,
-                                                            obs_datetime: start_date..end_date })
+        joins(:encounters => :observations).where(:encounter => { program_id: tb_program,
+                                                                  encounter_datetime: start_date..end_date },
+                                                  :obs => { value_coded: new_patient })
       end
 
       def age_range (min, max)
