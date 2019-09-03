@@ -1,5 +1,5 @@
-module TBQueries
-  class PatientStatesQuery
+
+  class TBQueries::PatientStatesQuery
     STATES = {
       'TREATMENT_COMPLETE' => 93,
       'TREATMENT_FAILED' => 99,
@@ -99,4 +99,3 @@ module TBQueries
       states.map { |bar| bar.patient_program.patient_id }
     end
   end
-end
