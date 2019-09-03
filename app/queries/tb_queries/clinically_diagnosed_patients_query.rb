@@ -1,6 +1,4 @@
 class TBQueries::ClinicallyDiagnosedPatientsQuery
-  include ModelUtils
-
   def initialize (relation = Patient.all)
     @relation = relation
     @program = program('TB Program')
