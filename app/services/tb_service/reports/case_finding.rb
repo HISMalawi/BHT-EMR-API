@@ -192,7 +192,7 @@ module TBService::Reports::CaseFinding
 
     def unknown_previous_treatment_history_bacteriological (start_date, end_date)
       patients = patients_query.with_obs('Lab Results', 'TB Status', 'Positive', start_date, end_date)
-                               .without_encounters_ever(['Treatment'])
+                               .without_encounters(['Treatment'])
 
       return [] if patients.empty?
 
@@ -203,7 +203,7 @@ module TBService::Reports::CaseFinding
 
     def unknown_previous_treatment_history_pulmonary_clinical (start_date, end_date)
       patients = patients_query.with_obs('Diagnosis', 'Type of Tuberculosis', 'Pulmonary Tuberculosis', start_date, end_date)\
-                               .without_encounters_ever(['Treatment'])
+                               .without_encounters(['Treatment'])
 
       return [] if patients.empty?
 
@@ -214,7 +214,7 @@ module TBService::Reports::CaseFinding
 
     def unknown_previous_treatment_history_eptb (start_date, end_date)
       patients = patients_query.with_obs('Diagnosis', 'Type of Tuberculosis', 'Extrapulmonary Tuberculosis (EPTB)', start_date, end_date)\
-                               .without_encounters_ever(['Treatment'])
+                               .without_encounters(['Treatment'])
 
       return [] if patients.empty?
 
