@@ -1,11 +1,5 @@
-module TBQueries
-  include ModelUtils
 
-  class PatientsQuery
-    STATES = {
-      'CURRENTLY_IN_TREATMENT' => 92
-    }.freeze
-
+  class TBQueries::PatientsQuery
     def initialize (relation = Patient.all)
       @relation = relation.extending(Scopes)
     end
@@ -109,4 +103,3 @@ module TBQueries
       end
     end
   end
-end
