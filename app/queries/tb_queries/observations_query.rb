@@ -14,20 +14,14 @@
                       person_id: ids)
     end
 
-    def with (name, value, start_date, end_date)
+    def with (name, value, start_date = nil, end_date = nil)
       concept = concept(name)
       answer = concept(value)
 
-      @relation.where(concept: concept,
-                      answer_concept: answer,
-                      obs_datetime: start_date..end_date)
-    end
+      filter = { concept: concept, answer_concept: answer }
+      filter[:obs_datetime] = (start_date..end_date) if (start_date && end_date)
 
-    def with_timeless (name, value)
-      concept = concept(name)
-      answer = concept(value)
-
-      @relation.where(concept: concept,
-                      answer_concept: answer)
+      @relation.select(:person_id).distinct\
+               .where(filter)
     end
   end
