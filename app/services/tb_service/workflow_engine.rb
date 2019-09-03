@@ -462,22 +462,14 @@ module TBService
 
     def should_patient_be_tested_through_lab?
       procedure_type = concept 'Procedure type'
-      examination_type = concept 'Laboratory examinations'
-      Observation.where(
-        "person_id = ? AND concept_id = ? AND value_coded = ? AND DATE(obs_datetime) = DATE(?)",
-        @patient.patient_id, procedure_type.concept_id, examination_type.concept_id, @date
-      ).order(obs_datetime: :desc).first.present?
+      lab_exam = concept 'Laboratory examinations'
+      Observation.where(concept: procedure_type, answer_concept: lab_exam, obs_datetime: @date).exists?
     end
 
     def should_patient_tested_through_diagnosis?
       procedure_type = concept 'Procedure type'
-      x_ray = concept 'Xray'
       clinical = concept 'Clinical'
-      ultrasound = concept 'Ultrasound'
-      Observation.where(
-        "person_id = ? AND concept_id = ? AND (value_coded = ? || value_coded = ? || value_coded = ?) AND DATE(obs_datetime) = DATE(?)",
-        @patient.patient_id, procedure_type.concept_id, x_ray.concept_id, clinical.concept_id, ultrasound.concept_id, @date
-      ).order(obs_datetime: :desc).first.present?
+      Observation.where(concept: procedure_type, answer_concept: clinical, obs_datetime: @date).exists?
     end
 
     def patient_has_no_adherence?
