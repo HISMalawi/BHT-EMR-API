@@ -1,8 +1,6 @@
 include TimeUtils
 
 class TBQueries::EncountersQuery
-  include ModelUtils
-
   def initialize (relation = Encounter.all)
     @relation = relation
     @program = program('TB Program')
