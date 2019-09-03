@@ -1,7 +1,7 @@
-module TBQueries
-  include ModelUtils
 
-  class PersonDrugsQuery
+  class TBQueries::PersonDrugsQuery
+    include ModelUtils
+
     def initialize (relation = Person.all)
       @relation = relation.extending(Scopes)
     end
@@ -31,4 +31,3 @@ module TBQueries
       end
     end
   end
-end
