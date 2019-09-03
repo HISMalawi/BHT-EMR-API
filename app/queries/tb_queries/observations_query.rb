@@ -1,7 +1,5 @@
-module TBQueries
-  include ModelUtils
 
-  class ObservationsQuery
+  class TBQueries::ObservationsQuery
     def initialize (relation = Observation.all)
       @relation = relation
       @program = program('TB Program')
@@ -33,4 +31,3 @@ module TBQueries
                       answer_concept: answer)
     end
   end
-end
