@@ -93,7 +93,7 @@ module TBService::Reports::CaseFinding
     end
 
     def treatment_failure_bacteriologically_confirmed (start_date, end_date)
-      patients = obs_query.with_timeless('TB Status', 'Positive')
+      patients = obs_query.with('TB Status', 'Positive')
 
       return [] if patients.empty?
 
@@ -107,7 +107,7 @@ module TBService::Reports::CaseFinding
     end
 
     def treatment_ltf_bacteriologically_confirmed (start_date, end_date)
-      bact = obs_query.with_timeless('TB Status', 'Positive')
+      bact = obs_query.with('TB Status', 'Positive')
 
       return [] if bact.empty?
 
@@ -121,7 +121,7 @@ module TBService::Reports::CaseFinding
     end
 
     def treatment_ltf_clinically_diagnosed_pulmonary (start_date, end_date)
-      with_pulm = obs_query.with_timeless('Type of Tuberculosis', 'Pulmonary Tuberculosis')
+      with_pulm = obs_query.with('Type of Tuberculosis', 'Pulmonary Tuberculosis')
 
       return [] if with_pulm.empty?
 
@@ -135,7 +135,7 @@ module TBService::Reports::CaseFinding
     end
 
     def treatment_ltf_eptb (start_date, end_date)
-      with_eptb = obs_query.with_timeless('Type of Tuberculosis', 'Extrapulmonary Tuberculosis (EPTB)')
+      with_eptb = obs_query.with('Type of Tuberculosis', 'Extrapulmonary Tuberculosis (EPTB)')
 
       return [] if with_eptb.empty?
 
