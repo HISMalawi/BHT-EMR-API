@@ -68,7 +68,7 @@ class TBNumberService
                               .first
 
     return 1 if number.blank?
-    number.patient_identifier_id.next
+    number.identifier.split('/')[2].to_i.next
   end
 
   def self.number_type (patient_id:)
