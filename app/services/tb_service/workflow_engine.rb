@@ -463,13 +463,19 @@ module TBService
     def should_patient_be_tested_through_lab?
       procedure_type = concept 'Procedure type'
       lab_exam = concept 'Laboratory examinations'
-      Observation.where(concept: procedure_type, answer_concept: lab_exam, obs_datetime: @date).exists?
+      Observation.where(person_id: @patient.patient_id,
+                        concept: procedure_type,
+                        answer_concept: lab_exam,
+                        obs_datetime: @date).exists?
     end
 
     def should_patient_tested_through_diagnosis?
       procedure_type = concept 'Procedure type'
       clinical = concept 'Clinical'
-      Observation.where(concept: procedure_type, answer_concept: clinical, obs_datetime: @date).exists?
+      Observation.where(person_id: @patient.patient_id,
+                        concept: procedure_type,
+                        answer_concept: clinical,
+                        obs_datetime: @date).exists?
     end
 
     def patient_has_no_adherence?
