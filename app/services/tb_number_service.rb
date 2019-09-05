@@ -68,7 +68,7 @@ class TBNumberService
                               .first
 
     return 1 if number.blank?
-    number.identifier.split('/')[2].to_i.next
+    number.identifier.split('/')[-2].to_i.next
   end
 
   def self.number_type (patient_id:)
@@ -81,6 +81,6 @@ class TBNumberService
   end
 
   def self.facility_code
-    global_property('site_prefix')&.property_value
+    global_property('tb_site_prefix')&.property_value
   end
 end
