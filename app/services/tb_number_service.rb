@@ -63,12 +63,26 @@ class TBNumberService
   end
 
   def self.next_available_number (patient_id:)
-    number = PatientIdentifier.where(type: number_type(patient_id: patient_id))\
-                              .order(date_created: :desc)\
-                              .first
+    number = ipt_eligible?(patient_id: patient_id) ? last_ipt_number : last_tb_number
 
     return 1 if number.blank?
-    number.identifier.split('/')[-2].to_i.next
+    number.value_text.split('/')[-2].to_i.next
+  end
+
+  def self.last_ipt_number
+    type = concept('TB registration number')
+    Observation.where(concept: type)\
+               .where("value_text LIKE '%IPT%'")
+               .order(obs_datetime: :desc)\
+               .first
+  end
+
+  def self.last_tb_number
+    type = concept('TB registration number')
+    Observation.where(concept: type)\
+               .where("value_text LIKE '%TB%'")
+               .order(obs_datetime: :desc)\
+               .first
   end
 
   def self.number_type (patient_id:)
