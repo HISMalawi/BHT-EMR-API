@@ -5,29 +5,22 @@ module TBService::Reports::Overview
 
       {
         registration: {
-          today: query.by_date(date, 'TB Registration').count,
-          month: query.by_month(date.month, 'TB Registration').count,
-          year: query.by_year(date.year, 'TB Registration').count
+          today: query.by_date(date, 'TB Registration').count
         },
         diagnosis: {
-          today: query.by_date(date, 'Diagnosis').count,
-          month: query.by_month(date.month, 'Diagnosis').count,
-          year: query.by_year(date.year, 'Diagnosis').count
+          today: query.by_date(date, 'Diagnosis').count
         },
         initial_visit: {
-          today: query.by_date(date, 'TB_Initial').count,
-          month: query.by_month(date.month, 'TB_Initial').count,
-          year: query.by_year(date.year, 'TB_Initial').count
+          today: query.by_date(date, 'TB_Initial').count
         },
         lab_order: {
-          today: query.by_date(date, 'Lab Orders').count,
-          month: query.by_month(date.month, 'Lab Orders').count,
-          year: query.by_year(date.year, 'Lab Orders').count
+          today: query.by_date(date, 'Lab Orders').count
         },
         vitals: {
-          today: query.by_date(date, 'Vitals').count,
-          month: query.by_month(date.month, 'Vitals').count,
-          year: query.by_year(date.year,'Vitals').count
+          today: query.by_date(date, 'Vitals').count
+        },
+        treatment: {
+          today: query.by_date(date, 'Treatment').count
         }
       }
     end
