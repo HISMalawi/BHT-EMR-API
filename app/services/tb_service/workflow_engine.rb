@@ -198,12 +198,9 @@ module TBService
     end
 
     def tb_suspect_not_enrolled?
-      Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ? AND encounter.program_id = ?',
-        TB_INITIAL,
-        @patient.patient_id,
-        @program.program_id
-      ).order(encounter_datetime: :desc).first.nil?
+      type = encounter_type('TB_Initial')
+      Encounter.where(type: type, patient: @patient, program: @program)\
+               .blank?
     end
 
     def patient_labs_not_ordered?
@@ -581,19 +578,15 @@ module TBService
     end
 
     def patient_current_tb_status_is_negative?
-      status_concept = concept('TB status')
-      negative_concept = concept('Negative')
-      negative_status = Observation.where(
-        'person_id = ? AND concept_id = ?',
-        @patient.patient_id, status_concept.concept_id
-      ).order(obs_datetime: :desc).first
+      tb_status = concept('TB status')
+      negative = concept('Negative')
+      status = Observation.where(concept: tb_status,
+                                 person_id: @patient.patient_id)\
+                          .order(obs_datetime: :desc)
 
-      begin
-        (negative_status.value_coded == negative_concept.concept_id)
-      rescue
-        false
-      end
+      return true if status.empty?
 
+      status.first.value_coded == negative.concept_id
     end
 
     def patient_current_tb_status_is_positive?
@@ -756,11 +749,11 @@ module TBService
     end
 
     def patient_currently_not_on_treatment?
-      on_treatment_concept = concept('Currently in treatment')
-      patient_program_id = PatientProgram.find_by(patient_id: @patient.patient_id, program_id: @program.program_id).patient_program_id
-      program_workflow_id = ProgramWorkflow.find_by(program_id: @program.program_id).program_workflow_id
-      current_in_treatment = ProgramWorkflowState.find_by(concept_id: on_treatment_concept.concept_id, program_workflow_id: program_workflow_id).program_workflow_state_id
-      PatientState.find_by(state: current_in_treatment, patient_program_id: patient_program_id).nil?
+      tb_treatment_state = 92
+      PatientState.joins(:patient_program)\
+                  .where(:patient_program => { patient_id: @patient.patient_id },
+                         :patient_state => { state: tb_treatment_state })\
+                  .blank?
     end
   end
 end
