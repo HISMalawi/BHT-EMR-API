@@ -85,7 +85,8 @@ module TBService
     STATE_CONDITIONS = {
 
       TB_INITIAL => %i[patient_should_go_for_screening?
-                                    patient_not_transferred_in_today?],
+                                    patient_not_transferred_in_today?
+                                    patient_currently_not_on_treatment?],
 
       REFERRAL => %i[patient_should_go_for_referral?],
 
@@ -752,6 +753,14 @@ module TBService
         start_time,
         end_time
       ).order(encounter_datetime: :desc).first.nil?
+    end
+
+    def patient_currently_not_on_treatment?
+      on_treatment_concept = concept('Currently in treatment')
+      patient_program_id = PatientProgram.find_by(patient_id: @patient.patient_id, program_id: @program.program_id).patient_program_id
+      program_workflow_id = ProgramWorkflow.find_by(program_id: @program.program_id).program_workflow_id
+      current_in_treatment = ProgramWorkflowState.find_by(concept_id: on_treatment_concept.concept_id, program_workflow_id: program_workflow_id).program_workflow_state_id
+      PatientState.find_by(state: current_in_treatment, patient_program_id: patient_program_id).nil?
     end
   end
 end

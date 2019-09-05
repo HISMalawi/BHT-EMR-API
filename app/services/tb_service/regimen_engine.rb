@@ -53,17 +53,22 @@ module TBService
 
     def is_eligible_for_ipt?(person:)
       return false if TimeUtils.get_person_age(birthdate: person.birthdate) > 5
-      tb_negative?(person: person)
+      currently_tb_negative?(person: person)
     end
 
-    def tb_negative?(person:)
-      day_start, day_end = TimeUtils.day_bounds(Time.now)
-      Observation.where('person_id = ? AND concept_id = ? AND value_coded = ? AND obs_datetime BETWEEN ? AND ?',
-                        person.person_id,
-                        concept('TB Status').concept_id,
-                        concept('Negative').concept_id,
-                        day_start,
-                        day_end).exists?
+    # retrieve the most recent Negative TB status
+    def currently_tb_negative?(person:)
+      tb_status = concept('TB status')
+      negative = concept('Negative')
+      status = Observation.where(
+        'person_id = ? AND concept_id = ?',
+        person.person_id, tb_status.concept_id
+      ).order(obs_datetime: :desc).first
+      begin
+        (status.value_coded == negative.concept_id)
+      rescue StandardError
+        false
+      end
     end
 
     def tb_hiv_present? (patient:)
