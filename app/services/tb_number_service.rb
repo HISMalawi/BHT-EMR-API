@@ -73,16 +73,16 @@ class TBNumberService
     type = concept('TB registration number')
     Observation.where(concept: type)\
                .where("value_text LIKE '%IPT%'")
-               .order(obs_datetime: :desc)\
-               .first
+               .order('obs_datetime, value_text asc')\
+               .last
   end
 
   def self.last_tb_number
     type = concept('TB registration number')
     Observation.where(concept: type)\
                .where("value_text LIKE '%TB%'")
-               .order(obs_datetime: :desc)\
-               .first
+               .order('obs_datetime, value_text asc')\
+               .last
   end
 
   def self.number_type (patient_id:)
