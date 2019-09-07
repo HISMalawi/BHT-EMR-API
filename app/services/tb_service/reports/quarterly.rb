@@ -141,7 +141,7 @@ module TBService::Reports::Quarterly
 
       return [] if relapse.empty? && new_positive.empty?
 
-      ids = (relapse.map(&:patient_id) + new_positive.map(&:person_id)).uniq
+      ids = ((relapse.map { |patient| patient['patient_id'] }) + new_positive.map(&:person_id)).uniq
 
       map_outcomes(ids, start_date, end_date)
     end
