@@ -11,7 +11,7 @@ class PatientState < VoidableRecord
   after_save :end_program
 
   def name
-    program_workflow_state&.concept&.concept_names&.first&.name
+    program_workflow_state&.name
   end
 
   def end_program

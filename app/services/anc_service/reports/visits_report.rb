@@ -15,7 +15,7 @@ class ANCService::Reports::VisitsReport
     @types = ["1", "2", "3", "4", ">5"]
 
     session_date = session[:datetime].to_date rescue Date.today
-    
+
     @me = {"1" => 0, "2" => 0, "3" => 0, "4" => 0, ">5" => 0}
 
     @today = {"1" => 0, "2" => 0, "3" => 0, "4" => 0, ">5" => 0}
@@ -27,53 +27,54 @@ class ANCService::Reports::VisitsReport
     anc_visit_type = EncounterType.find_by name: "ANC VISIT TYPE"
 
     reason_for_visit = ConceptName.find_by name: "Reason for visit"
-    
+
     results = Encounter.joins([:observations])
-        .where(["encounter_type = ? AND concept_id = ? 
-            AND (DATE(encounter_datetime) BETWEEN (?) AND (?))",
-            anc_visit_type.id, reason_for_visit.concept_id,
-            @start_date.strftime("%Y-%m-%d 00:00:00"), 
+        .where(["(DATE(encounter_datetime) BETWEEN (?) AND (?))",
+            @start_date.strftime("%Y-%m-%d 00:00:00"),
             @start_date.strftime("%Y-%m-%d 23:59:59")])
         .group(["person_id"])
-        .select(["encounter.creator, encounter_datetime AS date, 
+        .select(["encounter.creator, encounter_datetime AS date,
             MAX(value_numeric) form_id"])
 
     results.each do |data|
 
       cat = data.form_id.to_i
+      #next unless Array(cat).include?@me.keys
 
       cat = cat > 4 ? ">5" : cat.to_s
 
-      if data.creator.to_i == User.current.id.to_i
+      if ((data.creator.to_i == User.current.id.to_i) && (Array(cat).include?@me.keys))
 
         @me["#{cat}"] += 1
 
       end
 
-      @today["#{cat}"] += 1      
+      if ((Array(cat).include?@today.keys))
+        @today["#{cat}"] += 1
+      end
 
 
     end
 
     Encounter.joins([:observations])
-        .where(["encounter_type = ? AND concept_id = ? 
+        .where(["encounter_type = ? AND concept_id = ?
             AND (DATE(encounter_datetime) BETWEEN (?) AND (?))",
             anc_visit_type.id, reason_for_visit.concept_id,
             @start_date.beginning_of_year, @start_date.end_of_year])
         .group(["person_id"])
-        .select(["encounter.creator, encounter_datetime AS date, 
+        .select(["encounter.creator, encounter_datetime AS date,
             MAX(value_numeric) form_id"]).each do |data|
 
       cat = data.form_id.to_i
-      
+
       cat = cat > 4 ? ">5" : cat.to_s
-      
+
       @year["#{cat}"] += 1
-    
+
     end
-    
+
     return {"user": @me, "today": @today, "year": @year, "ever": @ever}
-  
+
   end
 
   def build_report
