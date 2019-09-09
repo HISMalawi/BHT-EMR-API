@@ -24,6 +24,15 @@ module TBService
         LOGGER.debug "Loading encounter type: #{state}"
         encounter_type = EncounterType.find_by(name: state)
 
+        return EncounterType.new name: TB_INITIAL\
+          if patient_should_go_for_screening?
+
+        return EncounterType.new name: DIAGNOSIS\
+          if patient_should_go_for_diagnosis?
+
+        return EncounterType.new name: LAB_ORDERS\
+            if patient_should_go_for_lab_order?
+
         return encounter_type if valid_state?(state)
       end
 
@@ -84,46 +93,42 @@ module TBService
 
     STATE_CONDITIONS = {
 
-      TB_INITIAL => %i[patient_should_go_for_screening?
-                                    patient_not_transferred_in_today?
-                                    patient_currently_not_on_treatment?],
+      TB_INITIAL => %i[patient_should_go_for_screening?],
 
       REFERRAL => %i[patient_should_go_for_referral?],
 
-      DIAGNOSIS => %i[should_patient_tested_through_diagnosis?
-                                    patient_has_no_diagnosis?
-                                    patient_not_transferred_in_today?],
+      DIAGNOSIS => %i[patient_should_go_for_diagnosis?],
 
       LAB_ORDERS => %i[patient_should_go_for_lab_order?
-                                    patient_not_transferred_in_today?],
+                       patient_not_transferred_in_today?],
 
       LAB_RESULTS => %i[patient_has_no_lab_results?
-                                    patient_should_proceed_after_lab_order?
-                                    patient_recent_lab_order_has_no_results?
-                                    patient_not_transferred_in_today?],
+                        patient_should_proceed_after_lab_order?
+                        patient_recent_lab_order_has_no_results?
+                        patient_not_transferred_in_today?],
 
       TB_RECEPTION => %i[patient_has_no_tb_reception?
-                                    patient_should_proceed_for_treatment?],
+                         patient_should_proceed_for_treatment?],
 
       TB_REGISTRATION => %i[patient_has_no_tb_registration?
-                                    patient_is_not_a_transfer_out?
-                                    patient_should_proceed_for_treatment?
-                                    patient_is_no_a_referral?],
+                            patient_is_not_a_transfer_out?
+                            patient_should_proceed_for_treatment?
+                            patient_is_no_a_referral?],
 
       VITALS => %i[patient_has_no_vitals?
-                                    patient_should_proceed_for_treatment?],
+                   patient_should_proceed_for_treatment?],
 
       TREATMENT => %i[patient_has_no_treatment?
-                                    patient_should_proceed_for_treatment?],
+                      patient_should_proceed_for_treatment?],
 
       DISPENSING => %i[patient_got_treatment?
-                                    patient_has_no_dispensation?
-                                    patient_should_proceed_for_treatment?],
+                       patient_has_no_dispensation?
+                       patient_should_proceed_for_treatment?],
 
       APPOINTMENT => %i[patient_should_go_for_appointment?],
 
       TB_ADHERENCE => %i[patient_has_appointment?
-                                    patient_has_no_adherence?]
+                         patient_has_no_adherence?]
 
     }.freeze
 
@@ -139,7 +144,7 @@ module TBService
       encounters = (activities&.split(',') || []).collect do |activity|
         # Re-map activities to encounters
         puts activity
-      case activity
+        case activity
         when /TB initial/i
           TB_INITIAL
         when /TB lab orders/i
@@ -164,7 +169,7 @@ module TBService
           TB_RECEPTION
         else
           Rails.logger.warn "Invalid TB activity in user properties: #{activity}"
-        end
+          end
       end
 
       Set.new(encounters)
@@ -229,15 +234,15 @@ module TBService
       drug_ids = Drug.tb_drugs.map(&:drug_id)
       drug_ids_placeholders = "(#{(['?'] * drug_ids.size).join(', ')})"
       Observation.where(
-        "person_id = ? AND value_drug in #{drug_ids_placeholders} AND DATE(obs_datetime) <= DATE(?)",
+        "person_id = ? AND value_drug in #{drug_ids_placeholders} AND DATE(date_created) <= DATE(?)",
         @patient.patient_id, *drug_ids, @date
-      ).order(obs_datetime: :desc).first.present?
+      ).order(date_created: :desc).first.present?
     end
 
-    #if minor found TB negative through DIAGONIS, give them ITP
+    # if minor found TB negative through DIAGONIS, give them ITP
     def patient_is_under_five?
-     person = Person.find_by(person_id: @patient.patient_id)
-     (((Time.zone.now - person.birthdate.to_time) / 1.year.seconds).floor) < UNDER_FIVE_AGE_LIMIT
+      person = Person.find_by(person_id: @patient.patient_id)
+      ((Time.zone.now - person.birthdate.to_time) / 1.year.seconds).floor < UNDER_FIVE_AGE_LIMIT
     end
 
     def patient_should_get_treated?
@@ -254,13 +259,13 @@ module TBService
       ).order(encounter_datetime: :desc).first.nil?
     end
 
-    def dispensing_complete? #Check
+    def dispensing_complete? # Check
       Encounter.joins(:type).where(
-      'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?) AND encounter.program_id = ?',
-      DISPENSING,
-      @patient.patient_id,
-      @date,
-      @program.program_id
+        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?) AND encounter.program_id = ?',
+        DISPENSING,
+        @patient.patient_id,
+        @date,
+        @program.program_id
       ).order(encounter_datetime: :desc).first.present?
     end
 
@@ -275,22 +280,22 @@ module TBService
     def patient_has_no_weight_today?
       height_concept = concept('Weight')
       Observation.where(concept_id: height_concept.concept_id, person_id: @patient.id)\
-                  .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
-                  .first.nil?
+                 .where('date_created BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
+                 .first.nil?
     end
 
     def patient_has_no_height?
       height_concept = concept('Height (cm)')
       Observation.where(concept_id: height_concept.concept_id, person_id: @patient.id)\
-                  .where('obs_datetime < ?', TimeUtils.day_bounds(@date)[1])\
-                  .first.nil?
+                 .where('date_created < ?', TimeUtils.day_bounds(@date)[1])\
+                 .first.nil?
     end
 
     def patient_has_no_height_today?
       height_concept = concept('Height (cm)')
       Observation.where(concept_id: height_concept.concept_id, person_id: @patient.id)\
-                  .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
-                  .first.nil?
+                 .where('date_created BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
+                 .first.nil?
     end
 
     def patient_is_a_minor?
@@ -311,12 +316,12 @@ module TBService
       transfer_out = concept 'Patient transferred(external facility)'
       yes_concept = concept 'YES'
       Observation.where(
-        "person_id = ? AND concept_id = ? AND value_coded = ? ",
+        'person_id = ? AND concept_id = ? AND value_coded = ? ',
         @patient.patient_id, transfer_out.concept_id, yes_concept.concept_id
-      ).order(obs_datetime: :desc).first.nil?
+      ).order(date_created: :desc).first.nil?
     end
 
-    #return to the patient dashboard if patient lab test has been ordered within 1 hour
+    # return to the patient dashboard if patient lab test has been ordered within 1 hour
     def patient_should_proceed_after_lab_order?
       encounter = Encounter.joins(:type).where(
         'encounter_type.name = ? AND encounter.patient_id = ? AND encounter.program_id = ?',
@@ -328,10 +333,9 @@ module TBService
       begin
         time_diff = ((Time.now - encounter.encounter_datetime.to_time)).to_i
         (time_diff >= 3)
-      rescue
+      rescue StandardError
         false
       end
-
     end
 
     def patient_recent_lab_order_has_no_results?
@@ -353,31 +357,29 @@ module TBService
 
       begin
         (lab_result.encounter_datetime < lab_order.encounter_datetime)
-      rescue
+      rescue StandardError
         false
       end
-
     end
 
-    #patient worklow should proceed after 10 minutes
+    # patient worklow should proceed after 10 minutes
     def patient_should_proceed_after_diagnosis?
       procedure_type = concept 'Procedure type'
       x_ray = concept 'Xray'
       clinical = concept 'Clinical'
       ultrasound = concept 'Ultrasound'
       observation = Observation.where(
-        "person_id = ? AND concept_id = ? AND (value_coded = ? || value_coded = ? || value_coded = ?)",
+        'person_id = ? AND concept_id = ? AND (value_coded = ? || value_coded = ? || value_coded = ?)',
         @patient.patient_id, procedure_type.concept_id, x_ray.concept_id, clinical.concept_id, ultrasound.concept_id
-      ).order(obs_datetime: :desc).first
+      ).order(date_created: :desc).first
 
       begin
-        time_diff = (Time.current - observation.obs_datetime)
+        time_diff = (Time.current - observation.date_created)
         minutes = (time_diff / 60)
-        (minutes >= 1/60)
-      rescue
+        (minutes >= 1 / 60)
+      rescue StandardError
         false
       end
-
     end
 
     # Send the TB patient for a lab order on the 56th/84th/140th/168th day
@@ -387,16 +389,15 @@ module TBService
         DISPENSING,
         @patient.patient_id,
         @program.program_id
-        ).order(encounter_datetime: :asc).first
+      ).order(encounter_datetime: :asc).first
 
       begin
         first_dispensation_date = first_dispensation.encounter_datetime
         number_of_days = (Time.current.to_date - first_dispensation_date.to_date).to_i
         (number_of_days == 56 || number_of_days == 84 || number_of_days == 140 || number_of_days == 168)
-      rescue
+      rescue StandardError
         false
       end
-
     end
 
     def patient_diagnosed?
@@ -404,57 +405,68 @@ module TBService
     end
 
     def patient_should_go_for_lab_order?
-      (should_patient_be_tested_through_lab? && patient_labs_not_ordered?)\
-        || (patient_current_tb_status_is_positive? && should_patient_go_lab_examination_at_followup?\
-        && patient_recent_lab_order_has_results?)
+      ((patient_labs_not_ordered? || (patient_current_tb_status_is_positive?\
+      && should_patient_go_lab_examination_at_followup?\
+      && patient_recent_lab_order_has_results?)) || rediagnose_patient?)\
+      && should_patient_be_tested_through_lab?
     end
 
     def patient_recent_lab_order_has_results?
-      lab_order = Encounter.joins(:type).where(
+      (patient_recent_lab_result.date_created > patient_recent_lab_order.date_created)
+    rescue StandardError
+      false
+    end
+
+    def patient_recent_lab_order
+      Encounter.joins(:type).where(
         'encounter_type.name = ? AND encounter.patient_id = ? AND encounter.program_id = ?',
         LAB_ORDERS,
         @patient.patient_id,
         @program.program_id
       ).order(encounter_datetime: :desc).first
+    end
 
-      lab_result = Encounter.joins(:type).where(
+    def patient_recent_lab_result
+      Encounter.joins(:type).where(
         'encounter_type.name = ? AND encounter.patient_id = ? AND encounter.program_id = ?',
         LAB_RESULTS,
         @patient.patient_id,
         @program.program_id
       ).order(encounter_datetime: :desc).first
-
-      begin
-        (lab_result.encounter_datetime > lab_order.encounter_datetime)
-      rescue
-        false
-      end
-
     end
 
     def patient_recent_diagonis_has_results?
-      procedure_type = concept 'Procedure type'
-      x_ray = concept 'Xray'
-      clinical = concept 'Clinical'
-      ultrasound = concept 'Ultrasound'
-      observation = Observation.where(
-        "person_id = ? AND concept_id = ? AND (value_coded = ? || value_coded = ? || value_coded = ?)",
-        @patient.patient_id, procedure_type.concept_id, x_ray.concept_id, clinical.concept_id, ultrasound.concept_id
-      ).order(obs_datetime: :desc).first
-
-      diagnosis = Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ? AND encounter.program_id = ?',
-        DIAGNOSIS,
-        @patient.patient_id,
-        @program.program_id
-      ).order(encounter_datetime: :desc).first
-
       begin
-        (diagnosis.encounter_datetime > observation.obs_datetime)
-      rescue
+        (patient_recent_diagnosis_result.date_created > patient_recent_diagnosis.date_created)
+      rescue StandardError
         false
       end
+    end
 
+    def patient_recent_diagonis_has_no_results?
+      begin
+        (patient_recent_diagnosis.date_created > patient_recent_diagnosis_result.date_created)
+      rescue StandardError
+        false
+      end
+    end
+
+    def patient_recent_diagnosis
+      procedure_type = concept('Procedure type')
+      x_ray = concept('Xray')
+      clinical = concept('Clinical')
+      ultrasound = concept('Ultrasound')
+      Observation.where(
+        'person_id = ? AND concept_id = ? AND (value_coded = ? || value_coded = ? || value_coded = ?)',
+        @patient.patient_id, procedure_type.concept_id, x_ray.concept_id, clinical.concept_id, ultrasound.concept_id
+      ).order(date_created: :desc).first
+    end
+
+    def patient_recent_diagnosis_result
+      Observation.where(
+        'person_id = ? AND concept_id = ? AND value_coded = ?',
+        @patient.patient_id, concept('Clinically Diagnosed').concept_id, concept('Yes').concept_id
+      ).order(date_created: :desc).first
     end
 
     def patient_has_valid_test_results?
@@ -467,16 +479,18 @@ module TBService
       Observation.where(person_id: @patient.patient_id,
                         concept: procedure_type,
                         answer_concept: lab_exam,
-                        obs_datetime: @date).exists?
+                        date_created: @date).exists?
     end
 
     def should_patient_tested_through_diagnosis?
-      procedure_type = concept 'Procedure type'
-      clinical = concept 'Clinical'
-      Observation.where(person_id: @patient.patient_id,
-                        concept: procedure_type,
-                        answer_concept: clinical,
-                        obs_datetime: @date).exists?
+      procedure_type = concept('Procedure type')
+      x_ray = concept('Xray')
+      clinical = concept('Clinical')
+      ultrasound = concept('Ultrasound')
+      Observation.where(
+        'person_id = ? AND concept_id = ? AND (value_coded = ? || value_coded = ? || value_coded = ?)',
+        @patient.patient_id, procedure_type.concept_id, x_ray.concept_id, clinical.concept_id, ultrasound.concept_id
+      ).order(date_created: :desc).exists?
     end
 
     def patient_has_no_adherence?
@@ -542,9 +556,9 @@ module TBService
     def patient_has_tb_results_today?
       status_concept = concept('TB status')
       Observation.where(
-        'person_id = ? AND concept_id = ? AND DATE(obs_datetime) = DATE(?)',
+        'person_id = ? AND concept_id = ? AND DATE(date_created) = DATE(?)',
         @patient.patient_id, status_concept.concept_id, @date
-      ).order(obs_datetime: :desc).first.present?
+      ).order(date_created: :desc).first.present?
     end
 
     def patient_has_adherence?
@@ -580,20 +594,17 @@ module TBService
       ).order(encounter_datetime: :desc).first.nil?
     end
 
-    def patient_current_tb_status_is_negative?
-      status_concept = concept('TB status')
-      negative_concept = concept('Negative')
-      negative_status = Observation.where(
+    def patient_tb_negative
+      Observation.where(
         'person_id = ? AND concept_id = ?',
-        @patient.patient_id, status_concept.concept_id
-      ).order(obs_datetime: :desc).first
+        @patient.patient_id, concept('TB status').concept_id
+      ).order(date_created: :desc).first
+    end
 
-      begin
-        (negative_status.value_coded == negative_concept.concept_id)
-      rescue
-        false
-      end
-
+    def patient_current_tb_status_is_negative?
+      (patient_tb_negative.value_coded == concept('Negative').concept_id)
+    rescue StandardError
+      false
     end
 
     def patient_current_tb_status_is_positive?
@@ -602,36 +613,36 @@ module TBService
       positive_status = Observation.where(
         'person_id = ? AND concept_id = ?',
         @patient.patient_id, status_concept.concept_id
-      ).order(obs_datetime: :desc).first
+      ).order(date_created: :desc).first
 
       begin
         (positive_status.value_coded == positive_concept.concept_id)
-      rescue
+      rescue StandardError
         false
       end
-
     end
 
     def patient_should_go_for_screening?
-      (patient_current_tb_status_is_negative? || tb_suspect_not_enrolled?)
+      rescreen_patient? || (patient_not_transferred_in_today?\
+      && patient_currently_not_on_treatment? && tb_suspect_not_enrolled?)
     end
 
     def patient_not_transferred_in_today?
       patient_type = concept('Type of patient')
       referral = concept 'Referral'
       Observation.where(
-        'person_id = ? AND concept_id = ? AND value_coded = ? AND DATE(obs_datetime) = DATE(?)',
+        'person_id = ? AND concept_id = ? AND value_coded = ? AND DATE(date_created) = DATE(?)',
         @patient.patient_id, patient_type.concept_id, referral.concept_id, @date
-      ).order(obs_datetime: :desc).first.nil?
+      ).order(date_created: :desc).first.nil?
     end
 
     def patient_transferred_in_today?
       patient_type = concept('Type of patient')
       referral = concept 'Referral'
       Observation.where(
-        'person_id = ? AND concept_id = ? AND value_coded = ? AND DATE(obs_datetime) = DATE(?)',
+        'person_id = ? AND concept_id = ? AND value_coded = ? AND DATE(date_created) = DATE(?)',
         @patient.patient_id, patient_type.concept_id, referral.concept_id, @date
-      ).order(obs_datetime: :desc).first.present?
+      ).order(date_created: :desc).first.present?
     end
 
     def patient_should_proceed_for_treatment?
@@ -653,7 +664,7 @@ module TBService
       Observation.where(
         'person_id = ? AND concept_id = ? AND value_coded = ?',
         @patient.patient_id, hiv_status.concept_id, positive.concept_id
-      ).order(obs_datetime: :desc).first.present?
+      ).order(date_created: :desc).first.present?
     end
 
     def patient_art_question_is_available?
@@ -662,9 +673,9 @@ module TBService
       no_concept = concept('No')
       start_time, end_time = TimeUtils.day_bounds(@date)
       Observation.where(
-        'person_id = ? AND concept_id = ? AND (value_coded = ? || value_coded = ?) AND obs_datetime BETWEEN ? AND ?',
+        'person_id = ? AND concept_id = ? AND (value_coded = ? || value_coded = ?) AND date_created BETWEEN ? AND ?',
         @patient.patient_id, art_need.concept_id, no_concept.concept_id, yes_concept.concept_id, start_time, end_time
-      ).order(obs_datetime: :desc).first.nil?
+      ).order(date_created: :desc).first.nil?
     end
 
     def patient_should_get_treated_for_art?
@@ -672,9 +683,9 @@ module TBService
       yes_concept = concept('Yes')
       start_time, end_time = TimeUtils.day_bounds(@date)
       Observation.where(
-        'person_id = ? AND concept_id = ? AND value_coded = ? AND obs_datetime BETWEEN ? AND ?',
+        'person_id = ? AND concept_id = ? AND value_coded = ? AND date_created BETWEEN ? AND ?',
         @patient.patient_id, art_need.concept_id, yes_concept.concept_id, start_time, end_time
-      ).order(obs_datetime: :desc).first.present?
+      ).order(date_created: :desc).first.present?
     end
 
     def patient_has_art_appointment?
@@ -728,9 +739,9 @@ module TBService
       referral = concept('Referral')
       start_time, end_time = TimeUtils.day_bounds(@date)
       Observation.where(
-        'person_id = ? AND concept_id = ? AND value_coded = ? AND obs_datetime BETWEEN ? AND ?',
+        'person_id = ? AND concept_id = ? AND value_coded = ? AND date_created BETWEEN ? AND ?',
         @patient.patient_id, type_of_patient.concept_id, referral.concept_id, start_time, end_time
-      ).order(obs_datetime: :desc).first.present?
+      ).order(date_created: :desc).first.present?
     end
 
     def patient_is_no_a_referral?
@@ -738,9 +749,9 @@ module TBService
       referral = concept('Referral')
       start_time, end_time = TimeUtils.day_bounds(@date)
       Observation.where(
-        'person_id = ? AND concept_id = ? AND value_coded = ? AND obs_datetime BETWEEN ? AND ?',
+        'person_id = ? AND concept_id = ? AND value_coded = ? AND date_created BETWEEN ? AND ?',
         @patient.patient_id, type_of_patient.concept_id, referral.concept_id, start_time, end_time
-      ).order(obs_datetime: :desc).first.nil?
+      ).order(date_created: :desc).first.nil?
     end
 
     def has_no_referral?
@@ -762,5 +773,53 @@ module TBService
       current_in_treatment = ProgramWorkflowState.find_by(concept_id: on_treatment_concept.concept_id, program_workflow_id: program_workflow_id).program_workflow_state_id
       PatientState.find_by(state: current_in_treatment, patient_program_id: patient_program_id).nil?
     end
+
+    def rescreen_patient?
+      begin
+        patient_has_current_tb_results? && patient_current_tb_status_is_negative?
+      rescue StandardError
+        false
+      end
+    end
+
+    def rediagnose_patient?
+      patient_screened_with_results? && patient_current_tb_status_is_negative?
+    end
+
+    def patient_has_current_tb_results?
+      begin
+        (last_tb_status.date_created > last_tb_screening.date_created)
+      rescue StandardError
+        false
+      end
+    end
+
+    def patient_screened_with_results?
+      begin
+        (last_tb_screening.date_created > last_tb_status.date_created)
+      rescue StandardError
+        false
+      end
+    end
+
+    def last_tb_screening
+      Observation.where(
+        'person_id = ? AND concept_id = ?',
+        @patient.patient_id, concept('Type of patient').concept_id
+      ).order(date_created: :desc).first
+    end
+
+    def last_tb_status
+      Observation.where(
+        'person_id = ? AND concept_id = ?',
+        @patient.patient_id, concept('TB Status').concept_id
+      ).order(date_created: :desc).first
+    end
+
+    def patient_should_go_for_diagnosis?
+      ((patient_has_no_diagnosis? && patient_not_transferred_in_today?) || rediagnose_patient?)\
+      && should_patient_tested_through_diagnosis?
+    end
+
   end
 end
