@@ -30,19 +30,12 @@ RSpec.describe ARTService::RegimenEngine do
       (expect { regimen_service.find_regimens }).to raise_error(ArgumentError)
     end
 
-    it 'retrieves paed. regimens only for weights < 6' do
+    it 'retrieves [0P, 2P, 9P, 11P] regimens only for weights < 6' do
       created_patient = create_patient(weight: 5.9, age: 3, gender: 'M')
       regimens = regimen_service.find_regimens created_patient
 
-      expect(regimens.size).to eq(3)
-
-      expect(lambda {
-        regimens.each do |regimen, _drugs|
-          # TODO: This ought to be expanded to check if the correct drugs are
-          # being returned for each regimen
-          break false unless regimen =~ /^[029]{1}P$/i
-        end
-      }.call).not_to be false
+      expected_regimens = %w[0P 2P 9P 11P]
+      expect(regimens.keys).to eq(expected_regimens)
     end
 
     it 'retrieves all regimens for women under 45 years' do
@@ -69,13 +62,12 @@ RSpec.describe ARTService::RegimenEngine do
       regimens.keys.each { |k| expect(expected_regimens).to include k }
     end
 
-    it 'retrieves regimens [0A 2A 4A 9A 11A] for women under 30 kilos' do
+    it 'retrieves regimens [0A 2A 4P 9P 11P] for women under 30 kilos' do
       patient = create_patient(age: 30, weight: '29', gender: 'F')
       regimens = regimen_service.find_regimens patient
-      expected_regimens = %w[0A 2A 4A 9A 11A]
+      expected_regimens = Set.new(%w[0A 2A 4P 9P 11P])
 
-      expect(regimens.size).to be expected_regimens.size
-      regimens.keys.each { |k| expect(expected_regimens).to include k }
+      expect(Set.new(regimens.keys)).to eq(expected_regimens)
     end
 
     it 'retrieves all regimens for women above 35 kilos' do
@@ -88,13 +80,13 @@ RSpec.describe ARTService::RegimenEngine do
       regimens.keys.each { |k| expect(expected_regimens).to include k }
     end
 
-    it 'retrieves regimens [0A 2A 4A 9A 11A] for men under 30 kilos' do
+    it 'retrieves regimens [0A 2A 4P 9P 11P] for men under 30 kilos' do
       patient = create_patient(age: 30, weight: 29, gender: 'M')
       regimens = regimen_service.find_regimens(patient)
 
-      expected_regimens = %w[0A 2A 4A 9A 11A]
+      expected_regimens = Set.new(%w[0A 2A 4P 9P 11P])
 
-      expect(regimens.size).to be expected_regimens.size
+      expect(Set.new(regimens.keys)).to eq(expected_regimens)
       regimens.keys.each { |k| expect(expected_regimens).to include k }
     end
 
