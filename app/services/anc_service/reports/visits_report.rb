@@ -14,8 +14,6 @@ class ANCService::Reports::VisitsReport
 
     @types = ["1", "2", "3", "4", ">5"]
 
-    session_date = session[:datetime].to_date rescue Date.today
-
     @me = {"1" => 0, "2" => 0, "3" => 0, "4" => 0, ">5" => 0}
 
     @today = {"1" => 0, "2" => 0, "3" => 0, "4" => 0, ">5" => 0}
@@ -29,7 +27,9 @@ class ANCService::Reports::VisitsReport
     reason_for_visit = ConceptName.find_by name: "Reason for visit"
 
     results = Encounter.joins([:observations])
-        .where(["(DATE(encounter_datetime) BETWEEN (?) AND (?))",
+        .where(["encounter_type = ? AND concept_id = ?
+          AND (DATE(encounter_datetime) BETWEEN (?) AND (?))",
+            anc_visit_type.id, reason_for_visit.concept_id,
             @start_date.strftime("%Y-%m-%d 00:00:00"),
             @start_date.strftime("%Y-%m-%d 23:59:59")])
         .group(["person_id"])
@@ -43,15 +43,15 @@ class ANCService::Reports::VisitsReport
 
       cat = cat > 4 ? ">5" : cat.to_s
 
-      if ((data.creator.to_i == User.current.id.to_i) && (Array(cat).include?@me.keys))
+      if ((data.creator.to_i == User.current.id.to_i))# && (Array(cat).include?@me.keys))
 
         @me["#{cat}"] += 1
 
       end
 
-      if ((Array(cat).include?@today.keys))
+      #if ((Array(cat).include?@today.keys))
         @today["#{cat}"] += 1
-      end
+      #end
 
 
     end
