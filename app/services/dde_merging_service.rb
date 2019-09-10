@@ -299,6 +299,12 @@ class DDEMergingService
     return npid unless npid.blank?
 
     remote_patient['identifiers'].each do |identifier|
+      # NOTE: DDE returns identifiers as either a list of maps of
+      # identifier_type => identifier or simply a map of
+      # identifier_type => identifier. In the latter case the NPID is
+      # not included in the identifiers object hence returning nil.
+      return nil if identifier.class == Array
+
       npid = identifier['National patient identifier']
       return npid unless npid.blank?
     end
