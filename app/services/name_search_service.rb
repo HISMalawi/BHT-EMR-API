@@ -7,7 +7,7 @@ module NameSearchService
     def index_person_name(person_name)
       person_name_code = PersonNameCode.find_by_person_name_id(person_name.id)
       if person_name_code
-        update_person_name_code(person_name_code, person_name)
+        update_person_name_code(person_name, person_name_code)
         return person_name_code
       end
 

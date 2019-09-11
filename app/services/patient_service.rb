@@ -123,7 +123,7 @@ class PatientService
       'program_id = ? AND encounter.patient_id = ?
         AND DATE(encounter_datetime) = DATE(?) AND concept_id = ?',
       program.id, patient.patient_id, ref_date, concept_name.concept_id
-    ).order(encounter_datetime: :desc)
+    ).order('encounter.encounter_datetime DESC')
 
     return [] unless pill_counts
     values = {}

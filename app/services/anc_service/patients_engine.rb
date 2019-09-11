@@ -256,6 +256,69 @@ module ANCService
         return hiv_status
     end
 
+    def essentials(patient, date)
+      @hiv_test = true
+      hiv_status = ConceptName.find_by_name("HIV STATUS")
+      prev_hiv_status = ConceptName.find_by_name("Previous HIV Test Results")
+      last_known_hiv_test = Observation.where(["concept_id = ? OR concept_id = ?",
+        hiv_status.concept_id, prev_hiv_status.concept_id]).last
+
+      @hiv_test = false if !["unknown", "old_negative"].include?(
+      recent_hiv_status?(date.to_date, patient)) || last_known_hiv_test.blank? ||
+      last_known_hiv_test.obs_datetime.to_date < date.to_date
+      return {'hiv_test_done': @hiv_test}
+    end
+
+    def recent_hiv_status?(today = Date.today, patient)
+
+      return "positive" if self.hiv_positive?
+
+      lmp = date_of_lnmp(patient)
+
+      checked_date = lmp.present?? lmp : (today.to_date - 9.months)
+
+      hiv_test_date = self.encounters.joins([:observations])
+      .where(["encounter.encounter_type = ? AND obs.concept_id = ?
+        AND encounter.encounter_datetime > ?",
+        EncounterType.find_by_name("LAB RESULTS").id,
+        ConceptName.find_by_name("Hiv Test Date").concept_id,
+        checked_date.to_date])
+      .order([:encounter_datetime])
+      .select(["obs.value_text"])
+      .last.value_text.to_date  rescue nil
+
+      prev_hiv_test_date = self.encounters.joins([:observations])
+        .where(["encounter.encounter_type = ? AND obs.concept_id = ?
+          AND encounter.encounter_datetime > ?",
+          EncounterType.find_by_name("LAB RESULTS").id,
+          ConceptName.find_by_name("Previous HIV Test Date").concept_id,
+          checked_date.to_date])
+        .order([:encounter_datetime])
+        .select(["obs.value_datetime"])
+        .last.value_datetime.to_date  rescue nil
+
+      last_test_visit = hiv_test_date.blank? ? prev_hiv_test_date : hiv_test_date
+
+      return "old_negative" if (last_test_visit.to_date <= (today - 3.months) rescue false)
+      return "negative" if !last_test_visit.blank?
+      return "unknown"
+    end
+
+    def hiv_positive?
+
+    self.encounters.joins([:observations])
+      .where(["encounter.encounter_type = ? AND (obs.concept_id = ? OR
+        obs.concept_id = ?)",
+        EncounterType.find_by_name("LAB RESULTS").id,
+        ConceptName.find_by_name("HIV STATUS").concept_id,
+        ConceptName.find_by_name("Previous HIV Test Results").concept_id
+      ])
+      .select(["obs.value_coded, obs.value_text"])
+      .collect{|ob|
+        ((Concept.find(ob.value_coded).name.name.downcase.strip rescue nil) || ob.value_text.owncase.strip)}
+      .include?("positive") rescue false
+    end
+
     private
 
     def patient_summary(patient, date)

@@ -53,22 +53,24 @@ module ARTService
     end
 
     def tb_status
-      state = begin
-                Concept.find(Observation.where(['person_id = ? AND concept_id = ? AND DATE(obs_datetime) <= ? AND value_coded IS NOT NULL',
-                                                patient.id, ConceptName.find_by_name('TB STATUS').concept_id,
-                                                visit_date.to_date]).order('obs_datetime DESC, date_created DESC').first.value_coded).fullname
-              rescue StandardError
-                'Unk'
-              end
+      tb_status = PatientState.joins(:patient_program)\
+                              .merge(PatientProgram.where(patient: patient, program: program('tb_program')))\
+                              .where('start_date <= ?', date.to_date)\
+                              .order(:start_date)\
+                              .last\
+                              &.name
 
-      program_id = Program.find_by_name('TB PROGRAM').id
-      patient_state = PatientState.where(["patient_state.voided = 0 AND p.voided = 0
-         AND p.program_id = ? AND DATE(start_date) <= DATE('#{date}') AND p.patient_id =?",
-                                          program_id, patient.id]).joins('INNER JOIN patient_program p  ON p.patient_program_id = patient_state.patient_program_id').order('start_date DESC').first
+      return tb_status if tb_status
 
-      return state if patient_state.blank?
+      tb_status_value = Observation.where(person_id: patient.id, concept: concept('TB Status'))\
+                                   .where('DATE(obs_datetime) <= ? AND value_coded IS NOT NULL', date.to_date)\
+                                   .order(:obs_datetime)\
+                                   .last\
+                                   &.value_coded
 
-      ConceptName.find_by_concept_id(patient_state.program_workflow_state.concept_id).name
+      return 'Unk' unless tb_status_value
+
+      ConceptName.find_by(concept_id: tb_status_value, concept_name_type: 'SHORT')&.name || 'Unk'
     end
 
     def height
@@ -114,11 +116,11 @@ module ARTService
                                        person: patient.person)\
                                 .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
 
-      @pills_brought = observations.collect do |observation|
+      @pills_brought = observations.each_with_object([]) do |observation, pills_brought|
         drug = observation&.order&.drug_order&.drug
         next unless drug
 
-        [format_drug_name(drug), observation.value_numeric]
+        pills_brought << [format_drug_name(drug), observation.value_numeric]
       end
     end
 

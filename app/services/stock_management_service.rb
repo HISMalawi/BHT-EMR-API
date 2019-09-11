@@ -16,6 +16,11 @@ class StockManagementService
   STOCK_ITEM_DISPOSAL = 'Disposal'
   STOCK_ITEM_REALLOCATION = 'Reallocation'
 
+  # Stock update strategies
+  FEFO = 'FEFO' # First expired, first out
+  FIFO = 'FIFO' # First in, first out
+  LIFO = 'LIFO' # Last in, first out
+
   # Add list of drugs to stock
   #
   # @param{batch_number} A batch number that came with the drugs package
@@ -40,8 +45,18 @@ class StockManagementService
         delivery_date = fetch_parameter_as_date(item, :delivery_date, Date.today)
         expiry_date = fetch_parameter_as_date(item, :expiry_date)
 
-        item = create_batch_item(batch, drug_id, quantity, delivery_date, expiry_date)
-        validate_activerecord_object(item)
+        item = find_batch_items(pharmacy_batch_id: batch.id, drug_id: drug_id,
+                                delivery_date: delivery_date, expiry_date: expiry_date).first
+
+        if item
+          # Update existing item if already in batch
+          item.delivered_quantity += quantity
+          item.current_quantity += quantity
+          item.save
+        else
+          item = create_batch_item(batch, drug_id, quantity, delivery_date, expiry_date)
+          validate_activerecord_object(item)
+        end
 
         commit_transaction(item, STOCK_ADD, quantity, delivery_date)
       rescue StandardError => e
@@ -80,7 +95,7 @@ class StockManagementService
     batch.void(reason)
   end
 
-  def update_batch_item(batch_item_id, params)
+  def edit_batch_item(batch_item_id, params)
     ActiveRecord::Base.transaction do
       item = PharmacyBatchItem.find(batch_item_id)
 
@@ -144,36 +159,6 @@ class StockManagementService
     end
   end
 
-  private
-
-  def find_or_create_batch(batch_number)
-    batch = PharmacyBatch.find_by_batch_number(batch_number)
-    return batch if batch
-
-    PharmacyBatch.create(batch_number: batch_number)
-  end
-
-  def create_batch_item(batch, drug_id, quantity, delivery_date, expiry_date)
-    quantity = quantity.to_f
-
-    PharmacyBatchItem.create(
-      batch: batch,
-      drug_id: drug_id.to_i,
-      delivered_quantity: quantity,
-      current_quantity: quantity,
-      delivery_date: delivery_date,
-      expiry_date: expiry_date
-    )
-  end
-
-  def create_pharmacy_event(activity_name, date = nil)
-    date ||= Date.today
-    type = PharmacyActivityType.find_by_name(activity_name)
-    raise "Invalid pharmacy activity name: #{activity_name}" unless type
-
-    PharmacyActivity.create(type: type, date: date)
-  end
-
   def commit_transaction(batch_item, event_name, quantity, date = nil, update_item: false)
     ActiveRecord::Base.transaction do
       date ||= Date.today
@@ -202,6 +187,94 @@ class StockManagementService
     end
   end
 
+  def update_batch_items(activity, drug_id, quantity, date)
+    items = find_batch_items(drug_id: drug_id).where('expiry_date > ?', date)
+    stock_items_update_method(activity).call(items, quantity, date)
+  end
+
+  DAYS_IN_MONTH = 30
+
+  # Returns stats for time to drug depletion
+  def drug_consumption(drug_id)
+    consumption_rate = drug_consumption_rate(drug_id)
+    stock_level = drug_stock_level(drug_id)
+
+    stock_level_in_days = consumption_rate.zero? ? DAYS_IN_MONTH : stock_level / consumption_rate
+    stock_level_in_months = stock_level_in_days / DAYS_IN_MONTH
+
+    {
+      stock_level_in_months: stock_level_in_months,
+      stock_level: stock_level,
+      consumption_rate: drug_consumption_rate(drug_id)
+    }
+  end
+
+  private
+
+  STOCK_UPDATE_METHODS = {
+    # TODO: Refactor the objects defined here in own classes perhaps...
+    FEFO => Class.new do
+      def debit(stock_service, items, quantity, date)
+        items.sort_by(&:expiry_date).each do |item|
+          break if quantity.zero?
+
+          item_quantity = item.current_quantity
+          next if item_quantity.zero?
+
+          if item_quantity >= quantity
+            # No need to spread the quantity across multiple items...
+            # This item alone can satisfy the quantity.
+            stock_service.commit_transaction(item, StockManagementService::STOCK_DEBIT,
+                                             -quantity, date, update_item: true)
+            break
+          end
+
+          stock_service.commit_transaction(item, StockManagementService::STOCK_DEBIT,
+                                           -item_quantity, date, update_item: true)
+          quantity -= item_quantity
+        end
+
+        LOGGER.warn("Quantity (#{quantity}) could not be debited from items[0]&.drug_id") if quantity > 0
+      end
+
+      def credit(stock_service, items, quantity, date)
+        item = items.min_by(&:expiry_date)
+        stock_service.commit_transaction(item, StockManagementService::STOCK_ADD,
+                                         quantity, date, update_item: true)
+      end
+    end.new,
+    FIFO => Object.new do
+      def debit(stock_service, items, quantity, date); end
+
+      def credit(stock_service, items, quantity); end
+    end,
+    LIFO => Object.new do
+      def debit(stock_service, items, quantity, date); end
+
+      def credit(stock_service, items, quantity, date); end
+    end
+  }.freeze
+
+  def find_or_create_batch(batch_number)
+    batch = PharmacyBatch.find_by_batch_number(batch_number)
+    return batch if batch
+
+    PharmacyBatch.create(batch_number: batch_number)
+  end
+
+  def create_batch_item(batch, drug_id, quantity, delivery_date, expiry_date)
+    quantity = quantity.to_f
+
+    PharmacyBatchItem.create(
+      batch: batch,
+      drug_id: drug_id.to_i,
+      delivered_quantity: quantity,
+      current_quantity: quantity,
+      delivery_date: delivery_date,
+      expiry_date: expiry_date
+    )
+  end
+
   def pharmacy_event_type(event_name)
     type = PharmacyEncounterType.find_by_name(event_name)
     raise NotFoundError, "Pharmacy encounter type not found: #{event_name}" unless type
@@ -215,5 +288,49 @@ class StockManagementService
     error = InvalidParameterError.new('Failed to create or save object due to bad parameters')
     error.model_errors = object.errors
     raise error
+  end
+
+  # Returns a function that takes a list of stock items and quantity then
+  # updates the quantity as per configured strategy (ie: FIFO or LIFO or FEFO).
+  def stock_items_update_method(activity)
+    lambda do |items, quantity, date|
+      updater = STOCK_UPDATE_METHODS[configured_stock_maintenance_strategy]
+
+      if activity.match?(/#{STOCK_DEBIT}/i)
+        updater.debit(stock_service, items, quantity, date)
+      elsif activity.match?(/#{STOCK_ADD}/i)
+        updater.credit(stock_service, items, quantity, date)
+      else
+        raise "Invalid stock update method action: #{action}"
+      end
+    end
+  end
+
+  def configured_stock_maintenance_strategy
+    property = GlobalProperty.find_by_property('art.stock.maintenance_strategy')
+    property&.property_value&.strip&.upcase || FEFO
+  end
+
+  # Returns the total amount of drug currently in stock
+  def drug_stock_level(drug_id, as_of_date: nil)
+    as_of_date ||= Date.today
+    PharmacyBatchItem.where('drug_id = ? AND expiry_date >= ?', drug_id, as_of_date)\
+                     .sum(:current_quantity)
+  end
+
+  DRUG_CONSUMPTION_RATE_INTERVAL = 90 # Period in days to account for in drug consumption rate
+
+  # Returns rate at which drug is being used up.
+  def drug_consumption_rate(drug_id, as_of_date: nil)
+    # TODO: Implement some sort of caching for this method
+    as_of_date ||= DRUG_CONSUMPTION_RATE_INTERVAL.days.ago.to_date
+
+    total_drugs_consumed = Pharmacy.joins(:item)
+                                   .where('(pharmacy_obs.drug_id = :drug_id OR pharmacy_batch_items.drug_id = :drug_id)
+                                           AND pharmacy_encounter_type = :event_type AND encounter_date >= :date',
+                                          drug_id: drug_id, event_type: STOCK_DEBIT, date: as_of_date)\
+                                   .sum(:value_numeric)
+
+    (total_drugs_consumed || 0) / (Date.today - as_of_date).to_i
   end
 end

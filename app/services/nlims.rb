@@ -91,40 +91,34 @@ class NLims
     patient_name = patient.person.names.first
     user_name = user.person.names.first
 
-    temp_prefix = @api_prefix
-    @api_prefix = 'api/v2'
+    request_body = {
+      district: 'Unknown',
+      health_facility_name: Location.current.name,
+      first_name: patient_name.given_name,
+      last_name: patient_name.family_name,
+      middle_name: '',
+      date_of_birth: patient.person.birthdate,
+      gender: patient.person.gender,
+      national_patient_id: patient.national_id,
+      phone_number: '',
+      who_order_test_last_name: user_name.family_name,
+      who_order_test_first_name: user_name.given_name,
+      who_order_test_id: user.id,
+      order_location: 'ART',
+      date_sample_drawn: date,
+      tests: test_type,
+      sample_priority: reason,
+      art_start_date: 'unknown',
+      requesting_clinician: requesting_clinician
+    }
 
-    response = post 'request_order', district: 'Unknown',
-                                     health_facility_name: Location.current.name,
-                                     first_name: patient_name.given_name,
-                                     last_name: patient_name.family_name,
-                                     middle_name: '',
-                                     date_of_birth: patient.person.birthdate,
-                                     gender: patient.person.gender,
-                                     national_patient_id: patient.national_id,
-                                     phone_number: '',
-                                     who_order_test_last_name: user_name.family_name,
-                                     who_order_test_first_name: user_name.given_name,
-                                     who_order_test_id: user.id,
-                                     order_location: 'ART',
-                                     date_sample_drawn: date,
-                                     tests: test_type,
-                                     sample_priority: reason,
-                                     art_start_date: 'unknown',
-                                     requesting_clinician: requesting_clinician
-
-    @api_prefix = temp_prefix
-
-    response
+    post('request_order', request_body, api_version: 'api/v2') # Force version LIMS api version 2
   end
 
   def order_tb_test(patient:, user:, test_type:, date:, reason:, sample_type:, sample_status:,
     target_lab:, recommended_examination:, treatment_history:, sample_date:, sending_facility:, time_line: 'NA', requesting_clinician:)
     patient_name = patient.person.names.first
     user_name = user.person.names.first
-
-    temp_prefix = @api_prefix
-    @api_prefix = 'api/v1' #TB testing
 
     response = post 'create_order', district: 'Lilongwe', #health facility district
                                      health_facility_name: sending_facility, #healh facility name
@@ -152,8 +146,6 @@ class NLims
                                      sending_facility: sending_facility,
                                      time_line: time_line,
                                      requesting_clinician: requesting_clinician
-
-    @api_prefix = temp_prefix
 
     response
   end
@@ -228,21 +220,21 @@ class NLims
     @connection
   end
 
-  def get(path, auto_login: true)
-    exec_request(path, auto_login: auto_login) do |full_path, headers|
+  def get(path, auto_login: true, api_version: nil)
+    exec_request(path, auto_login: auto_login, api_version: api_version) do |full_path, headers|
       RestClient.get(full_path, headers)
     end
   end
 
-  def post(path, body)
-    exec_request(path) do |full_path, headers|
+  def post(path, body, api_version: nil)
+    exec_request(path, api_version: api_version) do |full_path, headers|
       RestClient.post(full_path, body.as_json, headers)
     end
   end
 
-  def exec_request(path, auto_login: true, &block)
-    response = yield expand_url(path), token: @connection&.token,
-                                       content_type: 'application/json'
+  def exec_request(path, auto_login: true, api_version: nil,  &block)
+    response = yield expand_url(path, api_version: api_version), token: @connection&.token,
+                                                                 content_type: 'application/json'
 
     response = JSON.parse(response)
     if response['error'] == true
@@ -257,7 +249,8 @@ class NLims
     response['data']
   end
 
-  def expand_url(path)
-    "#{@api_protocol}://#{@api_host}:#{@api_port}/#{@api_prefix}/#{path}"
+  def expand_url(path, api_version: nil)
+    api_prefix = api_version || @api_prefix
+    "#{@api_protocol}://#{@api_host}:#{@api_port}/#{api_prefix}/#{path}"
   end
 end

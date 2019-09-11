@@ -56,7 +56,7 @@ module DispensationService
       # are not even interested in the HIV Program... So...
       mark_patient_as_on_antiretrovirals(patient, date) if drug_order.drug.arv?
 
-      Observation.create(
+      observation = Observation.create(
         concept_id: concept('AMOUNT DISPENSED').concept_id,
         order_id: drug_order.order_id,
         person_id: patient.patient_id,
@@ -65,6 +65,8 @@ module DispensationService
         value_numeric: quantity,
         obs_datetime: date
       )
+
+      observation
     end
 
     def void_dispensations(drug_order)
@@ -205,6 +207,11 @@ module DispensationService
           start_date: date
         )
       end
+    end
+
+    def update_stock_ledgers(observation)
+      json_observation = observation.as_json(ignore_includes: true).to_json
+      StockUpdateJob.perform_later(json_observation)
     end
   end
 end

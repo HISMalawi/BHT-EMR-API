@@ -8,6 +8,8 @@ module ARTService
   class RegimenEngine
     include ModelUtils
 
+    LOGGER = Rails.logger
+
     def initialize(program:)
       @program = program
     end
@@ -131,6 +133,7 @@ module ARTService
         drug_name = ingredient.drug.name
         if /^LPV\/r/.match?(drug_name)
           includes_pellets = drug_name.match?(/pellets/i)
+          LOGGER.debug("LPV/r: #{drug_name}")
           next if (use_pellets && !includes_pellets) || (!use_pellets && includes_pellets)
         end
 
@@ -198,24 +201,23 @@ module ARTService
     def use_tb_patient_dosage?(drug, patient)
       dtg_concept_id = ConceptName.find_by(name: 'Dolutegravir').concept_id
 
-      print "Use TB patient dosage: #{[patient, drug.as_json, dtg_concept_id]}\n"
       return false unless patient && drug.concept_id == dtg_concept_id
 
       tb_status_concept_id = ConceptName.find_by_name('TB Status').concept_id
       on_tb_treatment_concept_ids = ConceptName.where(name: 'RX').collect(&:concept_id)
 
-      tb_stutus_max = Observation.joins(:encounter)\
+      tb_status_max = Observation.joins(:encounter)\
                                               .where(person_id: patient.id,
                                                      concept_id: tb_status_concept_id)\
                                               .select('MAX(obs_datetime) AS obs_datetime')
 
-      return false if tb_stutus_max.blank?
-      tb_stutus_max_datetime = tb_stutus_max.first['obs_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S')
+      tb_status_max_datetime = tb_status_max.first&.obs_datetime&.to_time
+      return false unless tb_status_max_datetime
 
       patient_is_on_tb_treatment = Observation.joins(:encounter)\
                                               .where(person_id: patient.id,
                                                      concept_id: tb_status_concept_id,
-                                                     obs_datetime: tb_stutus_max_datetime)\
+                                                     obs_datetime: tb_status_max_datetime)\
                                               .order('obs_datetime DESC').group(:concept_id)
 
       return false if patient_is_on_tb_treatment.blank?
@@ -352,7 +354,7 @@ module ARTService
       '10' => [Set.new([734, 73])],
       '11' => [Set.new([736, 74]), Set.new([736, 73]), Set.new([39, 73]), Set.new([39, 74])],
       '12' => [Set.new([976, 977, 982])],
-      '13' => [Set.new([983, 982]), Set.new([983])],
+      '13' => [Set.new([983])],
       '14' => [Set.new([984, 982])],
       '15' => [Set.new([969, 982])]
     }.freeze

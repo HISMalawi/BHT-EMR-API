@@ -31,18 +31,5 @@ RSpec.describe DrugOrderService do
       expect(created.size).to eq(1)
       expect(created[0].order).not_to be_nil
     end
-
-    it 'fails to create drug order when dose is missing' do
-      create_drug_orders = proc do
-        partial_archetypes = archetypes.map do |archetype|
-          archetype.tap { |hash| hash.delete :dose }
-        end
-
-        service.create_drug_orders encounter: treatment_encounter,
-                                   drug_orders: partial_archetypes
-      end
-
-      expect(&create_drug_orders).to raise_error(InvalidParameterError)
-    end
   end
 end

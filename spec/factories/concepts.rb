@@ -3,6 +3,9 @@
 FactoryBot.define do
   factory :concept do
     date_created { Time.now }
+    association :concept_datatype
+    association :concept_class
+    creator { 1 }
 
     factory :concept_amount_dispensed do
       after(:create) do

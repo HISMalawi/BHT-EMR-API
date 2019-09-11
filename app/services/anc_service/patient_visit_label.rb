@@ -25,7 +25,7 @@ module ANCService
 
         @patient.encounters.where(["encounter_datetime >= ? AND encounter_datetime <= ? AND program_id = ?",
           @current_range[0]["START"], @current_range[0]["END"], PROGRAM.id]).collect{|e|
-            encounters[e.encounter_datetime.strftime("%d/%b/%Y")] = {"USER" => User.find(e.creator).username }
+          encounters[e.encounter_datetime.strftime("%d/%b/%Y")] = {"USER" => PersonName.find(e.creator) }
         }
 
         @patient.encounters.where(["encounter_datetime >= ? AND encounter_datetime <= ? AND program_id = ?",
@@ -149,13 +149,15 @@ module ANCService
               label.draw_text("Visit No: #{visit}",250,33,0,1,1,2,false)
               label.draw_text("Visit Date: #{element}",450,33,0,1,1,2,false)
 
-              gest = (((element.to_date - @current_range[0]["START"].to_date).to_i / 7) <= 0 ? "?" :
-                  (((element.to_date - @current_range[0]["START"].to_date).to_i / 7) - 1).to_s + "wks") rescue ""
+              fundal_height = encounters[element]["ANC EXAMINATION"]["FUNDUS"].to_i rescue 0
+
+              gestation_weeks = getEquivFundalWeeks(fundal_height) rescue "";
+
+              gest = gestation_weeks.to_s + "wks" rescue ""
 
               label.draw_text(gest,29,200,0,2,1,1,false)
 
-              fund = (encounters[element]["ANC EXAMINATION"]["FUNDUS"].to_i <= 0 ? "?" :
-                  encounters[element]["ANC EXAMINATION"]["FUNDUS"].to_i.to_s + "(cm)") rescue ""
+              fund = (fundal_height <= 0 ? "?" : fundal_height.to_s + "(cm)") rescue ""
 
               label.draw_text(fund,99,200,0,2,1,1,false)
 
@@ -245,7 +247,7 @@ module ANCService
 
           @patient.encounters.where(["encounter_datetime >= ? AND encounter_datetime <= ? AND program_id = ?",
               @current_range[0]["START"], @current_range[0]["END"], PROGRAM.id]).collect{|e|
-            encounters[e.encounter_datetime.strftime("%d/%b/%Y")] = {"USER" => User.find(e.creator).username}
+            encounters[e.encounter_datetime.strftime("%d/%b/%Y")] = {"USER" => PersonName.find(e.creator) }
           }
 
           @patient.encounters.where(["encounter_datetime >= ? AND encounter_datetime <= ? AND program_id = ?",
@@ -395,7 +397,9 @@ module ANCService
                 label.draw_text(nex[m].to_s,610,(200 + (18 * m)),0,2,1,1,false)
               }
 
-              use = (encounters[element]["USER"].split(" ") rescue []).collect{|n| n[0,1].upcase + "."}.join("")  rescue ""
+              user = "#{encounters[element]["USER"].given_name[0]} . #{encounters[element]["USER"].family_name[0]}" rescue ""
+
+              use = user #(encounters[element]["USER"].split(" ") rescue []).collect{|n| n[0,1].upcase + "."}.join("")  rescue ""
 
               # use = paragraphate(use.to_s, 5, 5)
 
@@ -412,6 +416,122 @@ module ANCService
       end
 
       private
+
+      def getEquivFundalWeeks(fundal_height)
+
+        fundus_weeks = 0
+
+        if (fundal_height <= 12)
+
+          fundus_weeks = 13;
+
+        elsif (fundal_height == 13)
+
+          fundus_weeks = 14
+
+        elsif (fundal_height == 14)
+
+          fundus_weeks = 16
+
+        elsif (fundal_height == 15)
+
+          fundus_weeks = 17
+
+        elsif (fundal_height == 16)
+
+          fundus_weeks = 18
+
+        elsif (fundal_height == 17)
+
+          fundus_weeks = 19
+
+        elsif (fundal_height == 18)
+
+          fundus_weeks = 20
+
+        elsif (fundal_height == 19)
+
+          fundus_weeks = 21
+
+        elsif (fundal_height == 20)
+
+          fundus_weeks = 22
+
+        elsif (fundal_height == 21)
+
+          fundus_weeks = 24
+
+        elsif (fundal_height == 22)
+
+          fundus_weeks = 25
+
+        elsif (fundal_height == 23)
+
+          fundus_weeks = 26
+
+        elsif (fundal_height == 24)
+
+          fundus_weeks = 27
+
+        elsif (fundal_height == 25)
+
+          fundus_weeks = 28
+
+        elsif (fundal_height == 26)
+
+          fundus_weeks = 29
+
+        elsif (fundal_height == 27)
+
+          fundus_weeks = 30
+
+        elsif (fundal_height == 28)
+
+          fundus_weeks = 32
+
+        elsif (fundal_height == 29)
+
+          fundus_weeks = 33
+
+        elsif (fundal_height == 30)
+
+          fundus_weeks = 34
+
+        elsif (fundal_height == 31)
+
+          fundus_weeks = 35
+
+        elsif (fundal_height == 32)
+
+          fundus_weeks = 36
+
+        elsif (fundal_height == 33)
+
+          fundus_weeks = 37
+
+        elsif (fundal_height == 34)
+
+          fundus_weeks = 38
+
+        elsif (fundal_height == 35)
+
+          fundus_weeks = 39
+
+        elsif (fundal_height == 36)
+
+          fundus_weeks = 40
+
+        elsif (fundal_height == 37)
+
+          fundus_weeks = 42
+
+        elsif (fundal_height > 37)
+
+          fundus_weeks = 42
+
+        end
+        return fundus_weeks
+      end
 
       def getObsValue(obs)
         if !obs.value_coded.blank?
