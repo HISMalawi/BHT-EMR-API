@@ -21,7 +21,7 @@ module ObservationService
 
         Rails.logger.debug("Creating child observation for obs ##{observation.obs_id}")
         child_obs_parameters[:obs_group_id] = observation.obs_id
-        child_observation = create_observation(child_obs_parameters, encounter)
+        child_observation = create_observation(encounter, child_obs_parameters)
 
         [observation, child_observation]
       end

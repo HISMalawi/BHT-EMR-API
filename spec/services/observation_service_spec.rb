@@ -29,6 +29,22 @@ RSpec.describe ObservationService do
         .to raise_exception(InvalidParameterError, 'Could not create/update observation')
     end
 
+    it 'creates observation given valid parameters' do
+      obs = create_observation.call(obs_params)[0]
+      expect(obs.id).not_to be_nil
+      expect(obs.encounter_id).to eq(encounter.id)
+      obs_params.each { |param, value| expect(obs.send(param)).to eq(value) }
+    end
+
+    it 'creates parent and child observations' do
+      obs_params[:child] = obs_params.dup
+      parent, children = subject.create_observation(encounter, obs_params)
+
+      expect(parent.id).not_to be_nil
+      expect(children[0].id).not_to be_nil
+      expect(children[0].obs_group_id).to eq(parent.id)
+    end
+
     SECONDS_PER_MINUTE = 60
 
     it 'saves obs_datetime as retrospective timestamp when provided' do
