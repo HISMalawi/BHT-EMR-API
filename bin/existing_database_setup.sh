@@ -36,5 +36,3 @@ mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/sql/moh_
 mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/sql/bart2_views_schema_additions.sql
 
 echo "Update program IDS"
-
-mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/sql/set_opd_and_art_encounters_program_id.sql
