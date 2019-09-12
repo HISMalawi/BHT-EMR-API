@@ -84,7 +84,7 @@ module TBService
 
     STATE_CONDITIONS = {
 
-      TB_INITIAL => %i[patient_should_go_for_screening?
+      TB_INITIAL => %i[tb_suspect_not_enrolled?
                                     patient_not_transferred_in_today?
                                     patient_currently_not_on_treatment?],
 
@@ -605,9 +605,6 @@ module TBService
 
     end
 
-    def patient_should_go_for_screening?
-      (patient_current_tb_status_is_negative? || tb_suspect_not_enrolled?)
-    end
 
     def patient_not_transferred_in_today?
       patient_type = concept('Type of patient')
