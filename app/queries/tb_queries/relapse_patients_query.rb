@@ -145,4 +145,16 @@ class TBQueries::RelapsePatientsQuery
       SQL
     )
   end
+
+  def relapse_patients (start_date, end_date)
+    ActiveRecord::Base.connection.select_all(
+      <<~SQL
+        SELECT DISTINCT(patient_id), patient_state.date_created
+        FROM
+          patient JOIN patient_program USING(patient_id)
+          JOIN patient_state USING(patient_program_id)
+        WHERE patient_state.state = '#{STATES[:RP]}' AND patient_state.end_date IS NULL AND patient_state.voided = 0
+      SQL
+    )
+  end
 end
