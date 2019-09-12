@@ -37,16 +37,16 @@ module ANCService
 
           # Monthly date ranges
           @m_start_date = start_date
-          @m_end_date = end_date
+          @m_end_date = @m_start_date.to_date.end_of_month
 
           # Cohort date ranges
-          @c_start_date = (start_date.to_date - COHORT_LENGTH)
-          @c_end_date = (end_date.to_date - COHORT_LENGTH)
+          @c_start_date = (@m_start_date.to_date - COHORT_LENGTH)
+          @c_end_date = (@m_end_date.to_date - COHORT_LENGTH)
 
-          @today = end_date.to_date
+          @today = @m_end_date.to_date
 
-          @start_date = "#{start_date} 00:00:00"
-          @end_date = "#{end_date} 23:59:59"
+          @start_date = "#{@m_start_date} 00:00:00"
+          @end_date = "#{@m_end_date} 23:59:59"
 
           @m_pregnant_range = (((@m_end_date.to_time - @m_start_date.to_time).round/(3600*24)) + 1).days
           @c_pregnant_range = 6.months
@@ -94,9 +94,9 @@ module ANCService
           @pregnancy_test_done_in_first_trim = pregnancy_test_done_in_first_trimester(start_date)
           @first_new_hiv_negative = new_hiv_negative_first_visit(start_date)
           @prev_hiv_neg_first_visit = pre_hiv_negative_first_visit(start_date)
-          @first_new_hiv_positive = new_hiv_positive_first_visit(start_date)
           @prev_hiv_pos_first_visit = prev_hiv_positive_first_visit(start_date)
-          @total_hiv_positive_first_visit = @first_new_hiv_positive + @prev_hiv_pos_first_visit
+          @first_new_hiv_positive = new_hiv_positive_first_visit(start_date) - @prev_hiv_pos_first_visit
+          @total_hiv_positive_first_visit = (@first_new_hiv_positive + @prev_hiv_pos_first_visit).uniq
           @total_hiv_negative_first_visit = @first_new_hiv_negative + @prev_hiv_neg_first_visit
           @total_tested_in_first_visit = @total_hiv_negative_first_visit + @total_hiv_positive_first_visit
           @not_done_hiv_test_first_visit = @monthly_patients - @total_tested_in_first_visit
@@ -132,13 +132,13 @@ module ANCService
 
           # Indicators for the cohort block
           cohort_struct.total_women_in_cohort = @cohort_patients
-          @c_new_hiv_pos = new_hiv_positive_final_visit
           @c_pre_hiv_pos = prev_hiv_positive_final_visit
-          @c_total_hiv_positive = @c_new_hiv_pos + @c_pre_hiv_pos
+          @c_new_hiv_pos = new_hiv_positive_final_visit - @c_pre_hiv_pos
+          @c_total_hiv_positive = (@c_new_hiv_pos + @c_pre_hiv_pos).uniq
 
           @c_extra_art_checks = extra_art_checks("cohort", c_max_date)
           @c_on_art_in_nart = on_art_in_nart(@c_start_date)
-          @c_on_art_before  = @c_on_art_in_nart["arv_before_visit_one"]
+          @c_on_art_before  = (@c_on_art_in_nart["arv_before_visit_one"] - @monthly_patients).uniq
           @on_art_before_anc_final_visit = on_art_before_anc_final_visit
           @start_art_zero_to_twenty_seven_for_final_visit = start_art_zero_to_twenty_seven_for_final_visit
           @start_art_plus_twenty_eight_for_final_visit = start_art_plus_twenty_eight_for_final_visit
@@ -148,6 +148,9 @@ module ANCService
 
           @on_cpt = @c_on_art_in_nart["on_cpt"]
           @not_on_cpt = (@c_total_hiv_positive - @on_cpt).uniq
+
+          @nvp_given = nvp_given
+          @nvp_not_given = @c_total_hiv_positive - @nvp_given
 
           cohort_struct.patients_with_total_of_one_visit = @anc_visits.reject { |x, y| y != 1 }.collect { |x, y| x }.uniq
           cohort_struct.patients_with_total_of_two_visits = @anc_visits.reject { |x, y| y != 2 }.collect { |x, y| x }.uniq
@@ -212,8 +215,8 @@ module ANCService
           cohort_struct.start_art_plus_twenty_eight_for_final_visit = @start_art_plus_twenty_eight_for_final_visit
           cohort_struct.not_on_cpt = @not_on_cpt
           cohort_struct.on_cpt = @on_cpt
-          cohort_struct.nvp_not_given = nvp_not_given
-          cohort_struct.nvp_given = nvp_given
+          cohort_struct.nvp_not_given = @nvp_not_given
+          cohort_struct.nvp_given = @nvp_given
 
           cohort_struct
         end
@@ -671,8 +674,9 @@ EOF
                 .where(["encounter.program_id = ? AND drug.name REGEXP ? AND (DATE(encounter_datetime) >= #{@c_lmp}
                     AND DATE(encounter_datetime) <= ?) AND encounter.patient_id IN (?)",PROGRAM.id,
                     "Albendazole", (@c_start_date.to_date + @c_pregnant_range), @cohort_patients])
-                .select(["encounter.patient_id, count(*) encounter_id, drug.name instructions,
-                    SUM(DATEDIFF(auto_expire_date, start_date)) orderer"])
+                .select(["encounter.patient_id, encounter.encounter_id, drug.name instructions,
+                    DATEDIFF(orders.auto_expire_date, orders.start_date) orderer"])
+                .group("encounter.patient_id")
                 .collect { |o|
                   o.patient_id
                 }
@@ -683,11 +687,12 @@ EOF
             result = []
 
             data = Order.joins([[:drug_order => :drug], :encounter])
-                .where(["encounter.program_id = ? AND drug.name REGEXP ? AND (DATE(encounter_datetime) >= #{@c_lmp}
+                .where(["encounter.program_id = ? AND drug.name LIKE ? AND (DATE(encounter_datetime) >= #{@c_lmp}
                     AND DATE(encounter_datetime) <= ?) AND encounter.patient_id IN (?)",PROGRAM.id,
-                    "Albendazole", (@c_start_date.to_date + @c_pregnant_range), @cohort_patients])
-                .select(["encounter.patient_id, count(*) encounter_id, drug.name instructions,
-                    SUM(DATEDIFF(auto_expire_date, start_date)) orderer"])
+                    "%albendazole%", (@c_start_date.to_date + @c_pregnant_range), @cohort_patients])
+                .select(["encounter.patient_id, encounter.encounter_id, drug.name instructions,
+                    SUM(DATEDIFF(orders.auto_expire_date, orders.start_date)) orderer"])
+                .group("encounter.patient_id")
                 .collect { |o|
                   [o.patient_id, o.orderer]
                 }
@@ -708,10 +713,11 @@ EOF
                 .where(["program_id = ? AND encounter_type = ? AND concept_id = ?
                   AND (value_text = 'Yes' OR value_coded = ?
                   OR value_text IN ('Given Today', 'Given during previous ANC visit for current pregnancy'))
-                  AND ( DATE(encounter_datetime) >= #{@lmp} AND DATE(encounter_datetime) <= ?)
-                  AND encounter.patient_id IN (?)",PROGRAM.id, BED_NET.concept_id, YES.concept_id,
+                  AND ( DATE(encounter_datetime) >= #{@c_lmp} AND DATE(encounter_datetime) <= ?)
+                  AND encounter.patient_id IN (?)",PROGRAM.id, CURRENT_PREGNANCY.id,
+                  BED_NET.concept_id, YES.concept_id,
                   (@c_start_date.to_date + @c_pregnant_range), @cohort_patients])
-                .collect { |e| e.patient_id }.uniq rescue []
+                .collect { |e| e.patient_id }.uniq #rescue []
 
             return data
         end

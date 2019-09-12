@@ -2,32 +2,49 @@
 
 require 'ostruct'
 
-@RDS_DUMP_RUNNING = true
-require_relative 'rds_push'
+class << self
+  include RdsService
 
-@rds_configuration[:mode] = MODE_DUMP
+  def rds_configuration
+    @rds_configuration ||= { mode: RdsService::MODE_DUMP }
+  end
+end
+
+def load_flags
+  ARGV.each_with_object({}) do |arg, flags|
+    case arg
+    when '--all'
+      flags[:dump_all] = true
+    else
+      raise "Invalid command line argument: #{arg}"
+    end
+  end
+end
 
 def main
+  flags = load_flags
+
   File.open(Rails.root.join('log', 'rds_dump.sql'), 'w') do |fout|
     config['databases'].each do |database, database_config|
-      dump(database, database_config['program_name'], fout)
+      dump(database, database_config['program_name'], fout, **flags)
     end
   end
 end
 
 # Dump database in an RDS compatible format into given file.
-def dump(database, program_name, file)
+def dump(database, program_name, file, dump_all: false)
   file.write("SET foreign_key_checks = 0;\n")
 
   program = Program.find_by_name(program_name)
 
-  MODELS.each do |model|
-    records = recent_records(model, TIME_EPOCH, database)
+  RdsService::MODELS.each do |model|
+    offset = dump_all ? RdsService::TIME_EPOCH : database_offset(model, database)
+    records = recent_records(model, offset, database)
 
     last_record_container = OpenStruct.new
 
     # Chunk retrieved records while converting them to JSON at the same time.
-    record_chunks = chunk_records(records, RECORDS_BATCH_SIZE) do |record|
+    record_chunks = chunk_records(records, RdsService::RECORDS_BATCH_SIZE) do |record|
       last_record_container.record = record
 
       record = serialize_record(record, program)

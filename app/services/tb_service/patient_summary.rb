@@ -93,19 +93,16 @@ module TBService
     end
 
     def current_outcome
-      program_id = program('TB PROGRAM').program_id
+      program = Program.find_by(name: 'TB PROGRAM')
 
-      patient_state = PatientState.joins(:patient_program)\
-                                  .where('patient_program.patient_id = ? AND patient_program.program_id = ? AND start_date <= DATE(?) AND end_date is null', patient.patient_id, program_id, date)\
-                                  .order(start_date: :desc)\
-                                  .first
+      state = PatientState.joins(:patient_program)\
+                          .includes(:program_workflow_state)
+                          .where('start_date <= ?', date)\
+                          .merge(PatientProgram.where(program: program, patient: patient))\
+                          .order(start_date: :desc)\
+                          .last
 
-      begin
-        program_workflow_state = ProgramWorkflowState.find_by(program_workflow_state_id: patient_state.state)
-        ConceptName.find_by(concept_id: program_workflow_state.concept_id).name
-      rescue StandardError
-        nil
-      end
+      state.program_workflow_state.name
     end
 
     def drug_period

@@ -160,6 +160,11 @@ You can do the following (don't run it like this in production):
 bin/rails server
 ```
 
+## Raw Data Store
+
+The BHT-EMR-API is capable of pushing data to the Raw Data Store.
+More information on how to get it to do this can be found [here](./doc/rds/index.md)
+
 ## For developers
 
 ### Documentation
