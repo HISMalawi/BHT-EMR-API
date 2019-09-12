@@ -33,7 +33,6 @@ class Api::V1::ObservationsController < ApplicationController
     query = query.where('obs_datetime BETWEEN ? AND ?', *filter_period) if filter_period
 
     query = query.order(obs_datetime: :desc)
-    query = query.includes(:order, :concept).joins(:order, :concept)
 
     render json: paginate(query)
   end
