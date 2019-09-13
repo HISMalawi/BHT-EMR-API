@@ -31,7 +31,6 @@ module TBService
         return EncounterType.new name: DIAGNOSIS\
           if patient_should_go_for_diagnosis?
 
-
         return EncounterType.new name: LAB_ORDERS\
             if patient_should_go_for_lab_order?
 
@@ -332,7 +331,7 @@ module TBService
         @patient.patient_id, test_type.concept_id, tb_concept.concept_id
       ).order(date_created: :desc).first
       begin
-        time_diff = ((Time.now - observation.date_created.to_time)).to_i
+        time_diff = ((Time.now - observation.obs_datetime.to_time)).to_i
         (time_diff >= 12)
       rescue StandardError
         false
@@ -340,26 +339,10 @@ module TBService
     end
 
     def patient_recent_lab_order_has_no_results?
-      lab_order = Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ? AND encounter.program_id = ?',
-        LAB_ORDERS,
-        @patient.patient_id,
-        @program.program_id
-      ).order(encounter_datetime: :desc).first
-
-      lab_result = Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ? AND encounter.program_id = ?',
-        LAB_RESULTS,
-        @patient.patient_id,
-        @program.program_id
-      ).order(encounter_datetime: :desc).first
-
-      return true unless lab_result
-
       begin
-        (lab_result.encounter_datetime < lab_order.encounter_datetime)
+        (last_time_lab_order_selected.obs_datetime > last_lab_result.obs_datetime)
       rescue StandardError
-        false
+        return true unless last_lab_result
       end
     end
 
@@ -406,10 +389,10 @@ module TBService
     end
 
     def patient_should_go_for_lab_order?
-      ((patient_labs_not_ordered? || (patient_current_tb_status_is_positive?\
-      && should_patient_go_lab_examination_at_followup?\
-      && patient_recent_lab_order_has_results?) && should_patient_be_tested_through_lab?)\
-      || (rediagnose_patient? && should_patient_be_tested_through_lab?))
+      (patient_labs_not_ordered? && should_patient_be_tested_through_lab?)\
+      || (resend_patient_for_lab_order? && should_patient_be_tested_through_lab? && patient_current_tb_status_is_negative?)\
+      || (patient_current_tb_status_is_positive? && should_patient_go_lab_examination_at_followup?\
+      && patient_recent_lab_order_has_results? && should_patient_be_tested_through_lab?)
     end
 
     def patient_recent_lab_order_has_results?
@@ -477,12 +460,13 @@ module TBService
     def should_patient_be_tested_through_lab?
       procedure_type = concept 'Procedure type'
       lab_exam = concept 'Laboratory examinations'
-      Observation.where(person_id: @patient.patient_id,
-                        concept: procedure_type,
-                        answer_concept: lab_exam,
-                        date_created: @date).exists?
+      Observation.where(
+        'person_id = ? AND concept_id = ? AND value_coded = ? AND DATE(obs_datetime) = DATE(?)',
+        @patient.patient_id, procedure_type.concept_id, lab_exam.concept_id, @date
+      ).order(obs_datetime: :desc).exists?
     end
 
+    # CLEAN UP THIS ONE
     def should_patient_tested_through_diagnosis?
       procedure_type = concept('Procedure type')
       x_ray = concept('Xray')
@@ -491,7 +475,27 @@ module TBService
       Observation.where(
         'person_id = ? AND concept_id = ? AND (value_coded = ? || value_coded = ? || value_coded = ?)',
         @patient.patient_id, procedure_type.concept_id, x_ray.concept_id, clinical.concept_id, ultrasound.concept_id
-      ).order(date_created: :desc).exists?
+      ).order(obs_datetime: :desc).exists?
+    end
+
+    def last_diagnosis
+      procedure_type = concept('Procedure type')
+      x_ray = concept('Xray')
+      clinical = concept('Clinical')
+      ultrasound = concept('Ultrasound')
+      Observation.where(
+        'person_id = ? AND concept_id = ? AND (value_coded = ? || value_coded = ? || value_coded = ?)',
+        @patient.patient_id, procedure_type.concept_id, x_ray.concept_id, clinical.concept_id, ultrasound.concept_id
+      ).order(obs_datetime: :desc).first
+    end
+
+    def last_lab_order
+      procedure_type = concept 'Procedure type'
+      lab_exam = concept 'Laboratory examinations'
+      Observation.where(
+        'person_id = ? AND concept_id = ? AND value_coded = ?',
+        @patient.patient_id, procedure_type.concept_id, lab_exam.concept_id
+      ).order(obs_datetime: :desc)
     end
 
     def patient_has_no_adherence?
@@ -787,6 +791,22 @@ module TBService
       patient_screened_with_no_results? && patient_current_tb_status_is_negative?
     end
 
+    def last_time_procedure_selected
+      procedure_type = concept 'Procedure type'
+      Observation.where(
+        'person_id = ? AND concept_id = ?',
+        @patient.patient_id, procedure_type.concept_id
+      ).order(obs_datetime: :desc).first
+    end
+
+    def resend_patient_for_lab_order?
+      begin
+        last_time_procedure_selected.obs_datetime > last_time_test_type_selected.obs_datetime
+      rescue StandardError
+        false
+      end
+    end
+
     def patient_has_current_tb_results?
       begin
         (last_tb_status.date_created > last_tb_screening.date_created)
@@ -818,21 +838,25 @@ module TBService
     end
 
     def patient_should_go_for_diagnosis?
-      ((patient_has_no_diagnosis? && patient_not_transferred_in_today?) || rediagnose_patient?)\
-      && alternate_test_procedure_type
+      (patient_has_no_diagnosis? && patient_not_transferred_in_today? && should_patient_tested_through_diagnosis?)\
+      || (rediagnose_patient? && alternate_test_procedure_type)
+    end
+
+    def resend_patient_diagnosis?
+      last_diagnosis.obs_datetime > last_lab_order.obs_datetime
     end
 
     # patient should get diagnised through lab order
     def alternate_test_procedure_type
       begin
-        return true if last_last_order.date_created == nil\
-        || last_diagnosis.date_created > last_last_order.date_created
+        return true if last_time_lab_order_selected.date_created.nil?\
+        || last_time_diagnosis_selected.obs_datetime > last_time_lab_order_selected.obs_datetime
       rescue StandardError
         false
       end
     end
 
-    def last_diagnosis
+    def last_time_diagnosis_selected
       procedure_type = concept('Procedure type')
       x_ray = concept('Xray')
       clinical = concept('Clinical')
@@ -843,12 +867,37 @@ module TBService
       ).order(date_created: :desc).first
     end
 
-    def last_last_order
+    def last_time_lab_order_selected
       procedure_type = concept 'Procedure type'
       lab_exam = concept 'Laboratory examinations'
       Observation.where(
         'person_id = ? AND concept_id = ? AND value_coded = ?',
         @patient.patient_id, procedure_type.concept_id, lab_exam.concept_id
+      ).order(date_created: :desc).first
+    end
+
+    def last_time_test_type_selected
+      procedure_type = concept 'Test type'
+      Observation.where(
+        'person_id = ? AND concept_id = ?',
+        @patient.patient_id, procedure_type.concept_id
+      ).order(date_created: :desc).first
+    end
+
+    def last_lab_result
+      lab_result = Encounter.joins(:type).where(
+        'encounter_type.name = ? AND encounter.patient_id = ? AND encounter.program_id = ?',
+        LAB_RESULTS,
+        @patient.patient_id,
+        @program.program_id
+      ).order(encounter_datetime: :desc).first
+
+      return nil if lab_result.nil?
+
+      tb_status = concept 'TB status'
+      Observation.where(
+        'person_id = ? AND concept_id = ? AND encounter_id = ?',
+        @patient.patient_id, tb_status.concept_id, lab_result.encounter_id
       ).order(date_created: :desc).first
     end
 
