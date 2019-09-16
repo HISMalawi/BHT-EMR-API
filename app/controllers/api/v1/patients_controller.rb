@@ -108,7 +108,7 @@ class Api::V1::PatientsController < ApplicationController
     begin
       number = TBNumberService.assign_tb_number(patient_id, date, number)
       render json: number, status: :created
-    rescue TBNumberService::TbNumberAlreadyExistsException
+    rescue TBNumberService::DuplicateIdentifierError
       render status: :conflict
     end
   end
