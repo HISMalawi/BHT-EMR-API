@@ -33,6 +33,7 @@ module VMMCService
         vitals_pulse: vitals_pulse,
         postop_pulse_rate: postop_pulse_rate,
         postop_bp: postop_bp,
+        postop_spo: postop_spo,
         vitals_bmi: vitals_bmi
       }
     end
@@ -90,6 +91,16 @@ module VMMCService
           patient.id,
           EncounterType.find_by_name('Post-op review').id,
           ConceptName.find_by_name('Pulse').concept_id]
+        ).order(:obs_datetime).last&.value_numeric
+    end
+
+    def postop_spo
+
+      postop_spo = Observation.joins([:encounter])
+        .where(['person_id = ? AND encounter_type = ? AND obs.concept_id = ?',
+          patient.id,
+          EncounterType.find_by_name('Post-op review').id,
+          ConceptName.find_by_name('Blood oxygen saturation').concept_id]
         ).order(:obs_datetime).last&.value_numeric
     end
 
