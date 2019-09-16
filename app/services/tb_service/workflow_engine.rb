@@ -34,7 +34,6 @@ module TBService
 
     LOGGER = Rails.logger
 
-    # Encounter types TB_INITIAL, TB_FOLLOWUP, TB RECEPTION, TB REGISTRATION
     INITIAL_STATE = 0 # Start terminal for encounters graph
     END_STATE = 1 # End terminal for encounters graph
     TB_INITIAL = 'TB_INITIAL'
@@ -49,14 +48,6 @@ module TBService
     TB_REGISTRATION = 'TB REGISTRATION'
     TB_RECEPTION = 'TB RECEPTION'
     REFERRAL = 'REFERRAL'
-    # FOLLOW - TB INITIAL, LAB ORDERS. LAB RESULTs, VITALS, TREATMENT, DISPENSING, APPOINTMENT, TB ADHERENCE
-
-    # ART Integration
-    ART_WORKFLOW = 'ART WORKFLOW'
-    ART_QUESTION = 'ART QUESTION'
-
-    # enable
-    ART_INTERGRATION_ENABLED = true
 
     # CONCEPTS
     YES = 1065
@@ -102,7 +93,7 @@ module TBService
                                     patient_recent_lab_order_has_no_results?
                                     patient_not_transferred_in_today?],
 
-      TB_RECEPTION => %i[patient_has_no_tb_reception?
+      TB_RECEPTION => %i[no_tb_reception?
                                     patient_should_proceed_for_treatment?],
 
       TB_REGISTRATION => %i[patient_has_no_tb_registration?
@@ -110,15 +101,13 @@ module TBService
                                     patient_should_proceed_for_treatment?
                                     patient_is_no_a_referral?],
 
-      VITALS => %i[patient_has_no_vitals?
+      VITALS => %i[no_vitals_today?
                                     patient_should_proceed_for_treatment?],
 
       TREATMENT => %i[patient_has_no_treatment?
                                     patient_should_proceed_for_treatment?],
 
-      DISPENSING => %i[patient_got_treatment?
-                                    patient_has_no_dispensation?
-                                    patient_should_proceed_for_treatment?],
+      DISPENSING => %i[got_treatment? no_dispensation?],
 
       APPOINTMENT => %i[patient_should_go_for_appointment?],
 
@@ -140,9 +129,9 @@ module TBService
         # Re-map activities to encounters
         puts activity
       case activity
-        when /TB initial/i
+        when /Initial Visit/i
           TB_INITIAL
-        when /TB lab orders/i
+        when /Lab Orders/i
           LAB_ORDERS
         when /Vitals/i
           VITALS
@@ -150,7 +139,7 @@ module TBService
           TREATMENT
         when /Dispensing/i
           DISPENSING
-        when /TB Adherence/i
+        when /Adherence/i
           TB_ADHERENCE
         when /Diagnosis/i
           DIAGNOSIS
@@ -193,7 +182,7 @@ module TBService
       return false if encounter_exists?(encounter_type(state))
 
       (STATE_CONDITIONS[state] || []).reduce(true) do |status, condition|
-        status && method(condition).call
+        status && method(condition).call && @activities.include?(state)
       end
     end
 
@@ -212,14 +201,14 @@ module TBService
       ).order(encounter_datetime: :desc).first.nil?
     end
 
-    def patient_got_treatment?
-      Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?) AND encounter.program_id = ?',
-        TREATMENT,
-        @patient.patient_id,
-        @date,
-        @program.program_id
-      ).order(encounter_datetime: :desc).first.present?
+    def got_treatment?
+      type = encounter_type('Treatment')
+      start_time, end_time = TimeUtils.day_bounds(@date)
+      Encounter.where(type: type,
+                      program: @program,
+                      patient: @patient,
+                      encounter_datetime: start_time..end_time)\
+               .exists?
     end
 
     def patient_received_tb_drugs?
@@ -261,37 +250,14 @@ module TBService
       ).order(encounter_datetime: :desc).first.present?
     end
 
-    def patient_has_no_vitals?
-      return true if patient_has_no_weight_today?
-
-      return true if patient_has_no_height?
-
-      patient_has_no_height_today? && patient_is_a_minor?
-    end
-
-    def patient_has_no_weight_today?
-      height_concept = concept('Weight')
-      Observation.where(concept_id: height_concept.concept_id, person_id: @patient.id)\
-                  .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
-                  .first.nil?
-    end
-
-    def patient_has_no_height?
-      height_concept = concept('Height (cm)')
-      Observation.where(concept_id: height_concept.concept_id, person_id: @patient.id)\
-                  .where('obs_datetime < ?', TimeUtils.day_bounds(@date)[1])\
-                  .first.nil?
-    end
-
-    def patient_has_no_height_today?
-      height_concept = concept('Height (cm)')
-      Observation.where(concept_id: height_concept.concept_id, person_id: @patient.id)\
-                  .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
-                  .first.nil?
-    end
-
-    def patient_is_a_minor?
-      @patient.age(today: @date) < MINOR_AGE_LIMIT
+    def no_vitals_today?
+      vitals = encounter_type('Vitals')
+      start_time, end_time = TimeUtils.day_bounds(@date)
+      Encounter.where(program: @program,
+                      patient: @patient,
+                      type: vitals,
+                      encounter_datetime: start_time..end_time)\
+               .blank?
     end
 
     def patient_has_appointment?
@@ -496,14 +462,14 @@ module TBService
       ).order(encounter_datetime: :desc).first.nil?
     end
 
-    def patient_has_no_dispensation?
-      Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?) AND encounter.program_id = ?',
-        DISPENSING,
-        @patient.patient_id,
-        @date,
-        @program.program_id
-      ).order(encounter_datetime: :desc).first.nil?
+    def no_dispensation?
+      type = encounter_type('Dispensing')
+      start_time, end_time = TimeUtils.day_bounds(@date)
+      Encounter.where(type: type,
+                      program: @program,
+                      patient: @patient,
+                      encounter_datetime: start_time..end_time)\
+               .blank?
     end
 
     def patient_has_no_appointment?
@@ -567,14 +533,14 @@ module TBService
       ).order(encounter_datetime: :desc).first.nil?
     end
 
-    def patient_has_no_tb_reception?
-      Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?) AND encounter.program_id = ?',
-        TB_RECEPTION,
-        @patient.patient_id,
-        @date,
-        @program.program_id
-      ).order(encounter_datetime: :desc).first.nil?
+    def no_tb_reception?
+      type = encounter_type('TB Reception')
+      start_time, end_time = TimeUtils.day_bounds(@date)
+      Encounter.where(type: type,
+                      program: @program,
+                      patient: @patient,
+                      encounter_datetime: start_time..end_time)\
+               .blank?
     end
 
     def patient_current_tb_status_is_negative?
@@ -590,19 +556,14 @@ module TBService
     end
 
     def patient_current_tb_status_is_positive?
-      status_concept = concept('TB status')
-      positive_concept = concept('Positive')
-      positive_status = Observation.where(
-        'person_id = ? AND concept_id = ?',
-        @patient.patient_id, status_concept.concept_id
-      ).order(obs_datetime: :desc).first
-
-      begin
-        (positive_status.value_coded == positive_concept.concept_id)
-      rescue
-        false
-      end
-
+      status = concept('TB status')
+      positive = concept('Positive')
+      start_time, end_time = TimeUtils.day_bounds(@date)
+      Observation.where(concept: status,
+                        answer_concept: positive,
+                        person_id: @patient.patient_id,
+                        obs_datetime: start_time..end_time)\
+                 .exists?
     end
 
 
@@ -704,9 +665,7 @@ module TBService
     end
 
     def patient_should_go_for_appointment?
-      (dispensing_complete? && patient_is_not_a_transfer_out?\
-      && patient_has_no_appointment? && patient_should_proceed_for_treatment?)\
-      || (patient_has_art_appointment? && patient_has_no_appointment?)
+      (dispensing_complete? && patient_is_not_a_transfer_out? && patient_has_no_appointment? && patient_should_proceed_for_treatment?)
     end
 
     def patient_should_go_for_referral?
