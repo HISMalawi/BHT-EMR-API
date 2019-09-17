@@ -108,46 +108,56 @@ module TBService::Reports::Quarterly
 
     def retreatment_excluding_relapse (start_date, end_date)
       type = encounter_type('Treatment')
-      program = program('Program')
+      program = program('TB Program')
 
-      patients = PatientState.includes(:patient_program)\
-                             .where(state: [STATES['CURED'], STATES['TREATMENT_COMPLETE'], STATES['TREATMENT_FAILED'], STATES['DEFAULTED']])\
+      treated = PatientState.select('patient_program.patient_id').distinct\
+                            .joins(:patient_program)\
+                            .where(:patient_program => { program_id: program },
+                                   :patient_state => { state: STATES['CURRENTLY_IN_TREATMENT'], date_created: start_date..end_date })
+
+      return [] if treated.empty?
+
+      ids = treated.map(&:patient_id)
+
+      states = [STATES['CURED'], STATES['TREATMENT_COMPLETE'], STATES['TREATMENT_FAILED'], STATES['DEFAULTED']]
+
+      patients = PatientState.select('patient_program.patient_id').distinct\
+                             .joins(:patient_program)\
+                             .where(:patient_program => { program_id: program, patient_id: ids },
+                                    :patient_state => { state: states })\
                              .where('patient_state.date_created < ?', start_date)
 
       return [] if patients.empty?
 
-      ids = patients.map { |patient| patient.patient_program.patient_id }
+      retreated_ids = patients.map(&:patient_id)
 
-      retreated = Encounter.where(patient_id: ids,
-                                  program: program,
-                                  encounter_datetime: start_date..end_date)
-
-      return [] if retreated.empty?
-
-      retreated_patients = retreated.map { |r| r.patient_id }
-
-      map_outcomes(retreated_patients, start_date, end_date)
+      map_outcomes(retreated_ids, start_date, end_date)
     end
 
     def hiv_positive_new_and_relapse (start_date, end_date)
       hiv_status = concept('HIV Status')
       value = concept('Positive')
 
-      relapse = relapse_patients_query.with_hiv(start_date, end_date)
+      relapse = relapse_patients_query.relapse_patients(start_date, end_date)
       new_patients = patients_query.new_patients(start_date, end_date)
-      new_positive = Observation.where(person_id: new_patients.map(&:patient_id),
-                                       concept: hiv_status,
-                                       answer_concept: value)
 
-      return [] if relapse.empty? && new_positive.empty?
+      return [] if relapse.empty? && new_patients.empty?
 
-      ids = (relapse.map(&:patient_id) + new_positive.map(&:person_id)).uniq
+      ids = (relapse.map { |r| r['patient_id']} + new_patients.map(&:patient_id)).uniq
 
-      map_outcomes(ids, start_date, end_date)
+      positive = Observation.where(person_id: ids,
+                                   concept: hiv_status,
+                                   answer_concept: value)
+
+      return [] if positive.empty?
+
+      outcome_ids = positive.map(&:person_id)
+
+      map_outcomes(outcome_ids, start_date, end_date)
     end
 
     def children_aged_zero_to_four (start_date, end_date)
-      children = patients_query.age_range(0, 4)
+      children = patients_query.age_range(0, 4, start_date, end_date)
 
       return [] if children.empty?
 
@@ -157,7 +167,7 @@ module TBService::Reports::Quarterly
     end
 
     def children_aged_five_to_fourteen (start_date, end_date)
-      children = patients_query.age_range(5, 14)
+      children = patients_query.age_range(5, 14, start_date, end_date)
 
       return [] if children.empty?
 

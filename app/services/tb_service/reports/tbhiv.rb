@@ -20,37 +20,40 @@ module TBService::Reports::Tbhiv
     end
 
     def total_with_hiv_result_documented (start_date, end_date)
-      hiv_status = concept('HIV Status')
       type = encounter_type('TB_Initial')
+      program = program('TB Program')
+      hiv_status = concept('HIV Status')
 
-      patients = Observation.select(:person_id).distinct\
-                            .joins(:encounter)\
-                            .where(:encounter => { encounter_type: type,
-                                                   encounter_datetime: start_date..end_date },
-                                   :obs => { concept_id: hiv_status })
+      patients = Encounter.select(:patient_id).distinct\
+                          .joins(:observations)\
+                          .where(:encounter => { encounter_type: type,
+                                                 program_id: program,
+                                                 encounter_datetime: start_date..end_date },
+                                 :obs => { concept_id: hiv_status })
 
       return [] if patients.empty?
 
-      ids = patients.map(&:person_id)
+      ids = patients.map(&:patient_id)
 
       persons_query.group_by_gender(ids)
     end
 
     def total_tested_hiv_positive (start_date, end_date)
-      hiv_status = concept('HIV Status')
       type = encounter_type('TB_Initial')
+      program = program('TB Program')
+      hiv_status = concept('HIV Status')
       positive = concept('Positive')
 
-      patients = Observation.select(:person_id).distinct\
-                            .joins(:encounter)\
-                            .where(:encounter => { encounter_type: type,
-                                                   encounter_datetime: start_date..end_date },
-                                   :obs => { concept_id: hiv_status,
-                                             value_coded: positive})
+      patients = Encounter.select(:patient_id).distinct\
+                          .joins(:observations)\
+                          .where(:encounter => { encounter_type: type,
+                                                 program_id: program,
+                                                 encounter_datetime: start_date..end_date },
+                                 :obs => { concept_id: hiv_status, value_coded: positive })
 
       return [] if patients.empty?
 
-      ids = patients.map(&:person_id)
+      ids = patients.map(&:patient_id)
 
       persons_query.group_by_gender(ids)
     end
@@ -66,53 +69,13 @@ module TBService::Reports::Tbhiv
     end
 
     def started_art_before_tb_treatment (start_date, end_date)
-      tb_states = states_query.in_tb_treatment(start_date, end_date)
-
-      return [] if tb_states.empty?
-
-      art_states = states_query.in_art_treatment(start_date, end_date)
-
-      return [] if art_states.empty?
-
-      patients_on_art_before_tb = art_states.select do |state|
-        common = tb_states.select do |s|
-          if s.patient_program.nil? || state.patient_program.nil?
-            next
-          end
-          s.date_created > state.date_created && s.patient_program.patient_id == state.patient_program.patient_id
-        end
-        common.size > 0
-      end
-
-      return [] unless patients_on_art_before_tb
-
-      ids = patients_on_art_before_tb.map { |state| state.patient_program.patient_id }
+      ids = tb_treatment_query.started_after_art(start_date, end_date)
 
       persons_query.group_by_gender(ids)
     end
 
     def started_art_while_on_treatment (start_date, end_date)
-      tb_states = states_query.in_tb_treatment(start_date, end_date)
-
-      return [] if tb_states.empty?
-
-      art_states = states_query.in_art_treatment(start_date, end_date)
-
-      return [] if art_states.empty?
-
-      patients_on_tb_before_art = tb_states.select do |state|
-        common = art_states.select do |s|
-          if s.patient_program.nil? || state.patient_program.nil?
-            next
-          end
-          s.date_created > state.date_created && s.patient_program.patient_id == state.patient_program.patient_id
-        end
-        common.size > 0
-      end
-
-      return [] unless patients_on_tb_before_art
-
-      ids = patients_on_tb_before_art.map { |state| state.patient_program.patient_id }
+      ids = tb_treatment_query.started_before_art(start_date, end_date)
 
       persons_query.group_by_gender(ids)
     end
@@ -126,16 +89,16 @@ module TBService::Reports::Tbhiv
       TBQueries::PatientsQuery.new.search
     end
 
-    def states_query
-      TBQueries::PatientStatesQuery.new
-    end
-
     def persons_query
       TBQueries::PersonsQuery.new
     end
 
     def relapse_patients_query
       TBQueries::RelapsePatientsQuery.new
+    end
+
+    def tb_treatment_query
+      TBQueries::TbTreatmentQuery.new
     end
   end
 end

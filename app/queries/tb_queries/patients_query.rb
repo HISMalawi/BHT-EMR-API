@@ -17,10 +17,10 @@
                                                   :obs => { value_coded: new_patient })
       end
 
-      def age_range (min, max)
+      def age_range (min, max, start_date, end_date)
         type = encounter_type('TB_Initial')
         joins(:person, :encounters).where('TIMESTAMPDIFF(YEAR, birthdate, NOW()) BETWEEN ? AND ?', min, max)\
-                                   .where(encounter: { encounter_type: type })
+                                   .where(encounter: { encounter_type: type, encounter_datetime: start_date..end_date })
       end
 
       def with_encounters (encounters, start_date, end_date)

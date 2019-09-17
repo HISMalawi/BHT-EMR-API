@@ -149,11 +149,22 @@ module TBService::Reports::CaseFinding
     end
 
     def other_previuosly_treated_bacteriologically_confirmed (start_date, end_date)
+      type = encounter_type('Lab Results')
+      program = program('TB Program')
+      status = concept('TB Status')
+      positive = concept('Positive')
+
       unknowns = patient_states_query.other_previous_treatment()
 
       return [] if unknowns.empty?
 
-      patients = patients_query.some_with_obs('Lab Results', 'TB Status', 'Positive', unknowns)
+      patients = Encounter.select(:patient_id).distinct\
+                          .joins(:observations)\
+                          .where(:encounter => { encounter_type: type,
+                                                 program_id: program,
+                                                 patient_id: unknowns,
+                                                 encounter_datetime: start_date..end_date },
+                                 :obs => { concept_id: status, value_coded: positive })
 
       return [] if patients.empty?
 
@@ -163,11 +174,22 @@ module TBService::Reports::CaseFinding
     end
 
     def other_previuosly_treated_clinical_pulmonary (start_date, end_date)
+      type = encounter_type('Diagnosis')
+      program = program('TB Program')
+      status = concept('TB Status')
+      positive = concept('Positive')
+
       unknowns = patient_states_query.other_previous_treatment()
 
       return [] if unknowns.empty?
 
-      patients = patients_query.some_with_obs('Diagnosis', 'Type of Tuberculosis', 'Pulmonary Tuberculosis', unknowns)
+      patients = Encounter.select(:patient_id).distinct\
+                          .joins(:observations)\
+                          .where(:encounter => { encounter_type: type,
+                                                 program_id: program,
+                                                 patient_id: unknowns,
+                                                 encounter_datetime: start_date..end_date },
+                                 :obs => { concept_id: status, value_coded: positive })
 
       return [] if patients.empty?
 
@@ -177,11 +199,22 @@ module TBService::Reports::CaseFinding
     end
 
     def other_previuosly_treated_eptb (start_date, end_date)
+      type = encounter_type('Lab Results')
+      program = program('TB Program')
+      status = concept('Type of Tuberculosis')
+      tb_type = concept('Extrapulmonary Tuberculosis (EPTB)')
+
       unknowns = patient_states_query.other_previous_treatment()
 
       return [] if unknowns.empty?
 
-      patients = patients_query.some_with_obs('Diagnosis', 'Type of Tuberculosis', 'Extrapulmonary Tuberculosis (EPTB)', unknowns)
+      patients = Encounter.select(:patient_id).distinct\
+                          .joins(:observations)\
+                          .where(:encounter => { encounter_type: type,
+                                                 program_id: program,
+                                                 patient_id: unknowns,
+                                                 encounter_datetime: start_date..end_date },
+                                 :obs => { concept_id: status, value_coded: tb_type })
 
       return [] if patients.empty?
 

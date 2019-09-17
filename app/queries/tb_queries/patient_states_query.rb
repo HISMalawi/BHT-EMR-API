@@ -86,7 +86,12 @@
 
       return [] if states.empty?
 
-      states.map { |foo| foo.patient_program.patient_id }
+      states.map do |foo|
+        if (foo.patient_program.nil?)
+          next
+        end
+        foo.patient_program.patient_id
+      end
     end
 
     def still_open (state, patients)

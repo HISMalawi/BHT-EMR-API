@@ -1,17 +1,17 @@
 include ModelUtils
 
 class TBNumberService
-  class TbNumberAlreadyExistsException < StandardError; end
+  class DuplicateIdentifierError < StandardError; end
 
   NORMAL_TYPE = 'District TB Number'
   IPT_TYPE = 'District IPT Number'
 
-  def self.assign_tb_number (patient_id, date, number = nil)
-    suggested = generate_tb_number(patient_id, date, number)
-    raise TbNumberAlreadyExistsException if number && number_exists?(number: suggested)
+  def self.assign_tb_number (patient_id, date, number)
+    identifier = generate_tb_number(patient_id, date, number)
+    raise DuplicateIdentifierError if number_exists?(number: identifier)
 
     PatientIdentifier.create(
-      identifier: suggested,
+      identifier: identifier,
       type: number_type(patient_id: patient_id),
       patient_id: patient_id,
       location_id: Location.current.location_id,
@@ -43,14 +43,11 @@ class TBNumberService
 
   private
 
-  def self.generate_tb_number (patient_id, date, number = nil)
+  def self.generate_tb_number (patient_id, date, number)
     is_ipt_patient = ipt_eligible?(patient_id: patient_id)
     category = is_ipt_patient ? 'IPT' : 'TB'
 
-    next_number = number
-    next_number = next_available_number(patient_id: patient_id) if number == nil
-
-    "#{facility_code}/#{category}/#{next_number}/#{date.year}"
+    "#{facility_code}/#{category}/#{number}/#{date.year}"
   end
 
   def self.number_exists?(number:)
@@ -60,15 +57,6 @@ class TBNumberService
 
   def self.ipt_eligible? (patient_id:)
     regimen_engine.is_eligible_for_ipt?(person: Person.find(patient_id))
-  end
-
-  def self.next_available_number (patient_id:)
-    number = PatientIdentifier.where(type: number_type(patient_id: patient_id))\
-                              .order(date_created: :desc)\
-                              .first
-
-    return 1 if number.blank?
-    number.identifier.split('/')[2].to_i.next
   end
 
   def self.number_type (patient_id:)
@@ -81,6 +69,6 @@ class TBNumberService
   end
 
   def self.facility_code
-    global_property('site_prefix')&.property_value
+    global_property('tb_site_prefix')&.property_value
   end
 end
