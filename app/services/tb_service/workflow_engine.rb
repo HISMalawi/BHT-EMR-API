@@ -375,6 +375,8 @@ module TBService
     end
 
     def patient_recent_lab_order_has_results?
+      logger = Rails.logger
+      logger.info "PATIENT RECENT LAB ORDER HAS RESULTS:::::::::: #{(last_lab_result.obs_datetime > last_lab_order.obs_datetime)}"
       (last_lab_result.obs_datetime > last_lab_order.obs_datetime)
     rescue StandardError
       false
@@ -392,8 +394,8 @@ module TBService
       test_type = concept 'Test type'
       tb = concept 'Tuberculous'
       Observation.joins(:encounter).where(
-        'person_id = ? AND concept_id = ? AND encounter_id = ? AND encounter.encounter_type = ?',
-        @patient.patient_id, test_type.concept_id, tb.encounter_id, encounter_type(LAB_RESULTS).id
+        'person_id = ? AND concept_id = ? AND encounter.encounter_type = ?',
+        @patient.patient_id, test_type.concept_id, encounter_type(LAB_ORDERS).id
       ).order(obs_datetime: :desc).first
     end
 
