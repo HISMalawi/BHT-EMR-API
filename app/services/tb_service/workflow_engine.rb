@@ -140,11 +140,11 @@ module TBService
         # Re-map activities to encounters
         puts activity
         case activity
-        when /TB initial/i
+        when /tb_initial/i
           TB_INITIAL
-        when /TB examination/i
+        when /Examination/i
           EXAMINATION
-        when /TB lab orders/i
+        when /Lab Orders/i
           LAB_ORDERS
         when /Vitals/i
           VITALS
