@@ -55,7 +55,8 @@ class Api::V1::ObservationsController < ApplicationController
     encounter = Encounter.find(encounter_id)
 
     observations = obs_archetypes.collect do |archetype|
-      create_observation(archetype, encounter)[0]
+      obs, _child_obs = service.create_observation(encounter, archetype.permit!)
+      obs
     end
 
     render json: observations, status: :created
@@ -100,41 +101,6 @@ class Api::V1::ObservationsController < ApplicationController
 
   private
 
-  OBS_VALUE_FIELDS = %i[
-    value_boolean value_numeric value_drug value_coded value_datetime
-    value_text
-  ].freeze
-
-  def validate_presence_of_obs_value(obs_param)
-    OBS_VALUE_FIELDS.each { |value| return true unless obs_param[value].blank? }
-    false
-  end
-
-  def create_observation(archetype, encounter)
-    ActiveRecord::Base.transaction do
-      logger.debug "Creating observation: #{archetype}"
-      child_archetype = archetype.delete :child
-
-      archetype.permit! # Oops...
-      unless validate_presence_of_obs_value archetype
-        return nil, "Empty obs: #{archetype}"
-      end
-
-      archetype[:obs_datetime] ||= encounter.encounter_datetime
-      archetype[:person_id] = encounter.patient.person.id
-      archetype[:encounter_id] = encounter.id
-      observation = Observation.create archetype
-      raise InvalidParameterError, observation.errors.as_json.to_s unless observation.errors.empty?
-
-      return observation, nil unless child_archetype
-
-      logger.debug "Creating child observation for obs ##{observation.obs_id}"
-      child_archetype[:obs_group_id] = observation.obs_id
-      child_archetype[:person_id] ||= archetype[:person_id]
-      create_observation child_archetype, encounter
-      [observation, nil]
-    end
-  end
 
   def index_filter_period
     period = nil
@@ -147,5 +113,9 @@ class Api::V1::ObservationsController < ApplicationController
     end
 
     period
+  end
+
+  def service
+    ObservationService
   end
 end
