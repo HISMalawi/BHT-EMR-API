@@ -836,10 +836,9 @@ module TBService
     # patient should get diagnised through lab order
     def alternate_test_procedure_type
       begin
-        return true if last_time_lab_order_selected.obs_datetime.nil?\
-        || last_time_diagnosis_selected.obs_datetime > last_time_lab_order_selected.obs_datetime
+        last_time_diagnosis_selected.obs_datetime > last_time_lab_order_selected.obs_datetime
       rescue StandardError
-        false
+        return true if last_time_lab_order_selected.nil?
       end
     end
 
