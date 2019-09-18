@@ -153,23 +153,50 @@ module ANCService
           cohort_struct.patients_with_total_of_five_plus_visits = @anc_visits.reject { |x, y| y < 5 }.collect { |x, y| x }.uniq
           cohort_struct.patients_with_pre_eclampsia = patients_with_pre_eclampsia
           cohort_struct.patients_without_pre_eclampsia = @cohort_patients - cohort_struct.patients_with_pre_eclampsia
-          cohort_struct.patients_given_ttv_less_than_two_doses = patients_given_ttv_less_than_two_doses
-          cohort_struct.patients_given_ttv_at_least_two_doses = patients_given_ttv_at_least_two_doses
-          cohort_struct.patients_given_zero_to_two_sp_doses = patients_given_zero_to_two_sp_doses
-          cohort_struct.patients_given_at_least_three_sp_doses = patients_given_at_least_three_sp_doses
+
+          # TTV given
+          ttv_at_least_3 = patients_given_ttv_at_least_two_doses
+          ttv_less_than_2 = patients_given_ttv_less_than_two_doses
+          ttv_not_given = @cohort_patients - (ttv_at_least_3 + ttv_less_than_2)
+          cohort_struct.patients_given_ttv_less_than_two_doses = ttv_less_than_2 + ttv_not_given
+          cohort_struct.patients_given_ttv_at_least_two_doses = ttv_at_least_3
+
+          # SP Doses given
+          sp_less_than_3  = patients_given_zero_to_two_sp_doses
+          sp_at_least_3   = patients_given_at_least_three_sp_doses
+          sp_not_given = (@cohort_patients - (sp_at_least_3 + sp_less_than_3)).uniq
+          cohort_struct.patients_given_zero_to_two_sp_doses = sp_less_than_3 + sp_not_given 
+          cohort_struct.patients_given_at_least_three_sp_doses = sp_at_least_3 
+
+          # Fefol tablets given
           fefol_less_than_120, fefol_120_plus = patients_given_fefol_tablets 
           cohort_struct.patients_given_less_than_one_twenty_fefol_tablets = fefol_less_than_120
           cohort_struct.patients_given_one_twenty_plus_fefol_tablets = fefol_120_plus
+
+          # Albendazole
           cohort_struct.patients_not_given_albendazole_doses = patients_not_given_albendazole_doses
           cohort_struct.patients_given_one_albendazole_dose = patients_given_one_albendazole_dose
+
+          # Bed nets
           cohort_struct.patients_not_given_bed_net = patients_not_given_bed_net
           cohort_struct.patients_given_bed_net = patients_given_bed_net
-          cohort_struct.patients_have_hb_less_than_7_g_dl = patients_have_hb_less_than_7_g_dl
-          cohort_struct.patients_have_hb_greater_than_6_g_dl = patients_have_hb_greater_than_6_g_dl
-          cohort_struct.patients_hb_test_not_done = patients_hb_test_not_done(start_date)
-          cohort_struct.patients_with_negative_syphilis_status = patients_with_negative_syphilis_status
-          cohort_struct.patients_with_positive_syphilis_status = patients_with_positive_syphilis_status
-          cohort_struct.patients_with_unknown_syphilis_status = patients_with_unknown_syphilis_status(start_date)
+
+          # HB Tests
+          hb_less_than_7 = patients_have_hb_less_than_7_g_dl
+          hb_at_least_7 = patients_have_hb_greater_than_6_g_dl
+          cohort_struct.patients_have_hb_less_than_7_g_dl = hb_less_than_7
+          cohort_struct.patients_have_hb_greater_than_6_g_dl = hb_at_least_7
+          cohort_struct.patients_hb_test_not_done = @cohort_patients - (hb_at_least_7 + hb_less_than_7)
+
+          # Syphilis Tests
+          syphil_neg = patients_with_negative_syphilis_status
+          syphil_pos = patients_with_positive_syphilis_status
+          syphil_unk = @cohort_patients - (syphil_neg + syphil_pos)
+          cohort_struct.patients_with_negative_syphilis_status = syphil_neg
+          cohort_struct.patients_with_positive_syphilis_status = syphil_pos
+          cohort_struct.patients_with_unknown_syphilis_status = syphil_unk
+
+
           cohort_struct.new_hiv_negative_final_visit = new_hiv_negative_final_visit
           cohort_struct.new_hiv_positive_final_visit = @c_new_hiv_pos
           cohort_struct.prev_hiv_positive_final_visit = @c_pre_hiv_pos
@@ -779,10 +806,6 @@ module ANCService
             }.uniq
         end
 
-        def patients_hb_test_not_done(date)
-            return []
-        end
-
         def patients_with_negative_syphilis_status
             Encounter.joins([:observations])
               .where(["encounter_type = ? AND concept_id = ? 
@@ -807,10 +830,6 @@ module ANCService
               .select(["DISTINCT patient_id"]).collect { |e| e.patient_id }
         end
  
-        def patients_with_unknown_syphilis_status(date)
-            return []
-        end
-
         def new_hiv_negative_final_visit
             
             querystmnt  = "SELECT e.patient_id, e.encounter_datetime AS date, "
