@@ -38,7 +38,12 @@ module ARTService
         weight: patient.weight.to_f.round(1)
       )
 
-      categorise_regimens(regimens_from_ingredients(ingredients, patient: patient))
+      raw_regimens = regimens_from_ingredients(ingredients, patient: patient,
+                                                            use_pellets: pellets)
+      regimens = categorise_regimens(raw_regimens)
+      repackage_regimens_for_tb_patients!(regimens, patient)
+
+      regimens
     end
 
     def pellets_regimen(patient, regimen_index, use_pellets)
@@ -117,10 +122,6 @@ module ARTService
     #     category: xx
     #   }
     def regimens_from_ingredients(ingredients, use_pellets: false, patient: nil)
-      # Drug 13A has to be paired with an additional DTG50 for TB patients
-      regimen_13a_drug = Drug.find_by_name('TDF300/3TC300/DTG50')
-      dtg_drugs = Drug.where(concept: ConceptName.find_by_name('Dolutegravir'))
-
       ingredients.each_with_object({}) do |ingredient, regimens|
         # Have some CPT & INH that do not belong to any regimen
         # but have a weight - dosage mapping hence being lumped
@@ -137,24 +138,7 @@ module ARTService
           next if (use_pellets && !includes_pellets) || (!use_pellets && includes_pellets)
         end
 
-        regimen << ingredient_to_drug(ingredient, patient)
-
-        # Handle extra 13A DTG for TB patients if needed
-        if ingredient.drug_inventory_id == regimen_13a_drug.drug_id\
-            && use_tb_patient_dosage?(dtg_drugs[0], patient)
-          extra_ingredient = MohRegimenIngredient.where(
-            'drug_inventory_id IN (:drugs) AND CAST(min_weight AS DECIMAL(4, 1)) <= :weight
-             AND CAST(max_weight AS DECIMAL(4, 1)) >= :weight',
-            drugs: dtg_drugs.collect(&:drug_id),
-            weight: patient.weight.to_f
-          ).first
-
-          drug = ingredient_to_drug(extra_ingredient, check_tb_patient: false)
-          # Normally DTG is taken in the morning, it has to be inverted...
-          drug[:am], drug[:pm] = drug[:pm], drug[:am]
-
-          regimen << drug
-        end
+        regimen << ingredient_to_drug(ingredient)
 
         regimens[regimen_index] = regimen
       end
@@ -176,11 +160,10 @@ module ARTService
       end
     end
 
-    def ingredient_to_drug(ingredient, patient = nil, check_tb_patient: true)
+    def ingredient_to_drug(ingredient)
       drug = ingredient.drug
       regimen_category_lookup = MohRegimenLookup.find_by(drug_inventory_id: ingredient.drug_inventory_id)
       regimen_category = regimen_category_lookup ? regimen_category_lookup.regimen_name[-1] : nil
-      use_tb_patient_dosage = patient && check_tb_patient && use_tb_patient_dosage?(drug, patient)
 
       {
         drug_id: drug.drug_id,
@@ -189,7 +172,7 @@ module ARTService
         alternative_drug_name: drug.alternative_names.first&.short_name,
         am: ingredient.dose.am,
         noon: 0, # Requested by the frontenders
-        pm: use_tb_patient_dosage ? ingredient.dose.am : ingredient.dose.pm,
+        pm: ingredient.dose.pm,
         units: drug.units,
         concept_name: drug.concept.concept_names[0].name,
         pack_size: drug.drug_cms ? drug.drug_cms.pack_size : nil,
@@ -217,8 +200,12 @@ module ARTService
       patient_is_on_tb_treatment = Observation.joins(:encounter)\
                                               .where(person_id: patient.id,
                                                      concept_id: tb_status_concept_id,
-                                                     obs_datetime: tb_status_max_datetime)\
-                                              .order('obs_datetime DESC').group(:concept_id)
+                                                     obs_datetime: tb_status_max_datetime,
+                                                     encounter: {
+                                                       program_id: @program.program_id
+                                                     })\
+                                              .order('obs_datetime DESC')
+                                              .limit(1)
 
       return false if patient_is_on_tb_treatment.blank?
       return false unless on_tb_treatment_concept_ids.include?(patient_is_on_tb_treatment.first.value_coded)
@@ -319,6 +306,61 @@ module ARTService
       return false unless obs
 
       obs.value_coded == concept('Yes').concept_id
+    end
+
+    # Repackages some regimens for patients on TB treatment.
+    #
+    # Patient's on TB treatment require custom prescriptions for DTG
+    # than what is prescribed normally. This function takes a regimens
+    # structure and repackages the relevant regimens.
+    def repackage_regimens_for_tb_patients!(regimens, patient)
+      return unless use_tb_patient_dosage?(dtg_drugs.first, patient)
+
+      %w[13A 14A 15A].each do |regimen_name|
+        regimen = regimens[regimen_name]
+        next unless regimen
+
+        if regimen_name == '13A'
+          inject_dtg_into_regimen!(regimen, patient)
+        else
+          double_dose_dtg_in_regimen!(regimen)
+        end
+      end
+    end
+
+    def dtg_drugs
+      @dtg_drugs ||= Drug.where(concept: concept('Dolutegravir'))
+    end
+
+    # Doubles the daily dosage for DTG if present in the regimen.
+    def double_dose_dtg_in_regimen!(regimen)
+      @dtg_drug_ids ||= dtg_drugs.collect(&:drug_id)
+
+      regimen.each do |drug|
+        next unless @dtg_drug_ids.include?(drug[:drug_id])
+
+        drug[:pm] = drug[:am]
+      end
+    end
+
+    # Adds DTG to the regimen for the non-standard double dosing of
+    # drugs containing a DTG component (eg 13A).
+    def inject_dtg_into_regimen!(regimen, patient)
+      @dtg_drug_ids ||= dtg_drugs.collect(&:drug_id)
+
+      dtg_ingredient = MohRegimenIngredient.where(
+        'drug_inventory_id IN (:drugs) AND CAST(min_weight AS DECIMAL(4, 1)) <= :weight
+          AND CAST(max_weight AS DECIMAL(4, 1)) >= :weight',
+        drugs: @dtg_drug_ids,
+        weight: patient.weight.to_f
+      ).first
+
+      dtg = ingredient_to_drug(dtg_ingredient)
+
+      # Normally DTG is taken in the morning, it has to be inverted...
+      dtg[:am], dtg[:pm] = dtg[:pm], dtg[:am]
+
+      regimen << dtg
     end
 
     REGIMEN_CODES = {
