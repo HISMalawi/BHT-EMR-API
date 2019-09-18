@@ -5,7 +5,8 @@ class ReportService
     'HIV PROGRAM' => ARTService::ReportEngine,
     'ANC PROGRAM' => ANCService::ReportEngine,
     'OPD PROGRAM' => OPDService::ReportEngine,
-    'VMMC PROGRAM' => VMMCService::ReportEngine
+    'VMMC PROGRAM' => VMMCService::ReportEngine,
+    'TB PROGRAM' => TBService::ReportEngine
   }.freeze
   LOGGER = Rails.logger
 
@@ -107,7 +108,7 @@ class ReportService
   def anc_cohort_disaggregated(date, start_date)
     engine(@program).cohort_disaggregated(date, start_date)
   end
-  
+
   def ipt_coverage(start_date, end_date)
     engine(@program).ipt_coverage(start_date, end_date)
   end

@@ -1,12 +1,13 @@
 # frozen_string_literal: true
+
 require 'rails_helper'
 
 require_relative '../../../app/services/drug_order_service'
 require_relative '../../../app/services/nlims'
 
 describe TBService::RegimenEngine do
-	include ModelUtils
-	include DrugOrderService
+  include ModelUtils
+  include DrugOrderService
 
   let(:date) { Time.now }
   let(:program) { Program.find_by_name 'TB PROGRAM' }
@@ -20,7 +21,7 @@ describe TBService::RegimenEngine do
     PersonName.create(person_id: person.person_id, given_name: 'John',
       family_name: 'Doe')
   end
-  let(:patient) { Patient.create( patient_id: person.person_id ) }
+  let(:patient) { Patient.create(patient_id: person.person_id) }
   let(:patient_identifier_type) { PatientIdentifierType.find_by_name('national id').id }
 	let(:patient_identifier) do
 		PatientIdentifier.create(patient_id: patient.patient_id, identifier: 'P170000000013',
@@ -88,6 +89,11 @@ describe TBService::RegimenEngine do
 
     end
 
+		it 'return all TB drugs' do
+			tb_drugs = Drug.tb_drugs
+			drugs_names = tb_drugs.map {|name| name.name}
+      expect(drugs_names).to include('Rifabutin (300mg)')
+    end
   end
 
   # Helpers methods

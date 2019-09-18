@@ -8,7 +8,7 @@ require 'zebra_printer/init'
 class Api::V1::PatientsController < ApplicationController
   # TODO: Refactor the business logic here into a service class
 
-  before_action :authenticate, except: %i[print_national_health_id_label print_filing_number]
+  before_action :authenticate, except: %i[print_national_health_id_label print_filing_number print_tb_number print_tb_lab_order_summary]
 
   include ModelUtils
 
@@ -102,17 +102,14 @@ class Api::V1::PatientsController < ApplicationController
 
   def assign_tb_number
     patient_id = params[:patient_id]
-    tb_number = service.assign_tb_number(patient_id)
-    render json: tb_number, status: :created
-  end
+    date = params[:date]&.to_date || Date.today
+    number = params[:number]
 
-  def get_tb_number
-    patient_id = params[:patient_id]
-    tb_number = service.get_tb_number(patient_id)
-    if tb_number
-      render json: tb_number, status: :ok
-    else
-      render :status => 404
+    begin
+      number = TBNumberService.assign_tb_number(patient_id, date, number)
+      render json: number, status: :created
+    rescue TBNumberService::DuplicateIdentifierError
+      render status: :conflict
     end
   end
 
@@ -144,6 +141,23 @@ class Api::V1::PatientsController < ApplicationController
     render json: service.patient_last_drugs_received(patient, date, program_id: program_id)
   end
 
+  def drugs_orders_by_program
+    cut_off_date = params[:date]&.to_date || Date.today
+    program_id = params[:program_id]
+    drugs_orders = paginate(service.drugs_orders_by_program(patient, cut_off_date, program_id: program_id))
+
+    render json: drugs_orders
+  end
+
+  # Returns all lab orders made since a given date
+  def recent_lab_orders
+    patient_id, program_id = params.require([:patient_id, :program_id])
+    reference_date = params[:reference_date]&.to_date || Date.today
+    render json: service.recent_lab_orders(patient_id: patient_id,
+                                           program_id: program_id,
+                                           reference_date: reference_date)
+  end
+
   def remaining_bp_drugs
     pills, drug_id = params.require(%i[pills drug_id])
     date = params[:date]&.to_date || Date.today
@@ -172,6 +186,22 @@ class Api::V1::PatientsController < ApplicationController
     date = params[:date]&.to_date || Date.today
     program_id = params[:program_id]
     render json: service.patient_last_drugs_pill_count(patient, date, program_id: program_id)
+  end
+
+  def print_tb_lab_order_summary
+    label = lab_tests_engine.generate_lab_order_summary(tb_lab_order_params)
+    send_data label, type: 'application/label;charset=utf-8',
+                     stream: false,
+                     filename: "#{params[:patient_id]}-#{SecureRandom.hex(12)}.lbl",
+                     disposition: 'inline'
+  end
+
+  def print_tb_number
+    label = TBNumberService.generate_tb_patient_id(params[:patient_id])
+    send_data label, type: 'application/label;charset=utf-8',
+                     stream: false,
+                     filename: "#{params[:patient_id]}-#{SecureRandom.hex(12)}.lbl",
+                     disposition: 'inline'
   end
 
   private
@@ -247,4 +277,23 @@ class Api::V1::PatientsController < ApplicationController
   def person_service
     PersonService.new
   end
+
+  def tb_lab_order_params
+    {
+      patient_id: params[:patient_id],
+      date: params[:session_date],
+      test_type: params[:test_type],
+      specimen_type: params[:specimen_type],
+      recommended_examination: params[:recommended_examination],
+      target_lab: params[:target_lab],
+      reason_for_examination: params[:reason_for_examination],
+      previous_tb_patient: params[:previous_tb_patient]
+    }
+  end
+
+  def lab_tests_engine
+    program = Program.find_by(name: 'TB PROGRAM')
+    TBService::LabTestsEngine.new program: program
+  end
+
 end

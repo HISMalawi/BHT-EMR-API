@@ -132,6 +132,14 @@ class Api::V1::ProgramPatientsController < ApplicationController
     render json: service.medication_side_effects(patient, date)
   end
 
+  def is_due_lab_order
+    if (service.due_lab_order?(patient: patient))
+      render json: { message: true }
+    else
+      render json: { message: false }
+    end
+  end
+
   protected
 
   def service

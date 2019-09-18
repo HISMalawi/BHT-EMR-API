@@ -6,6 +6,7 @@ RSpec.describe ARTService::RegimenEngine do
   let(:regimen_service) { ARTService::RegimenEngine.new program: program('HIV Program') }
   let(:patient) { create :patient }
   let(:vitals_encounter) { create :encounter_vitals, patient: patient }
+  let(:dtg_ids) { Drug.where(concept_id: ConceptName.find_by_name('Dolutegravir').concept_id).collect(&:drug_id) }
 
   def set_patient_weight(patient, weight)
     Observation.create(
@@ -98,6 +99,87 @@ RSpec.describe ARTService::RegimenEngine do
 
       expect(regimens.size).to be expected_regimens.size
       regimens.keys.each { |k| expect(expected_regimens).to include k }
+    end
+
+    def put_patient_on_tb_treatment(patient)
+      tb_status_concept_id = ConceptName.find_by_name('TB Status').concept_id
+      rx_concept_id = concept('Rx').concept_id
+
+      encounter = create(:encounter, program_id: 1, patient: patient)
+
+      create(:observation, person_id: patient.id,
+                           concept_id: tb_status_concept_id,
+                           encounter_id: encounter.encounter_id,
+                           obs_datetime: Time.now,
+                           value_coded: rx_concept_id)
+    end
+
+    it 'does not double dose DTG for 13A patients not on TB treatment' do
+      patient = create_patient(age: 30, weight: 55, gender: 'M')
+      regimen = regimen_service.find_regimens(patient)['13A']
+
+      expect(regimen.size).to eq(1)
+      expect(dtg_ids).not_to include(regimen[0][:drug_id])
+    end
+
+    it 'double doses DTG for 13A patients on TB treatment' do
+      patient = create_patient(age: 30, weight: 55, gender: 'M')
+      put_patient_on_tb_treatment(patient)
+
+      regimen = regimen_service.find_regimens(patient)['13A']
+      expect(regimen.size).to eq(2)
+
+      regimen_dtgs = regimen.select { |drug| dtg_ids.include?(drug[:drug_id]) }
+
+      expect(regimen_dtgs.size).to eq(1)
+      expect(regimen_dtgs[0][:am]).to be_zero
+      expect(regimen_dtgs[0][:pm]).to be > 0
+    end
+
+    it 'does not double dose DTG for 14A patients not on TB treatment' do
+      patient = create_patient(age: 40, weight: 60, gender: 'F')
+      regimen = regimen_service.find_regimens(patient)['14A']
+      regimen_dtgs = regimen.select { |drug| dtg_ids.include?(drug[:drug_id]) }
+
+      expect(regimen_dtgs.size).to eq(1)
+      expect(regimen_dtgs[0][:am]).to be > 0
+      expect(regimen_dtgs[0][:pm]).to be_zero
+    end
+
+    it 'double doses DTG for 14A patients on TB treatment' do
+      patient = create_patient(age: 40, weight: 60, gender: 'F')
+      put_patient_on_tb_treatment(patient)
+
+      regimen = regimen_service.find_regimens(patient)['14A']
+      regimen_dtgs = regimen.select { |drug| dtg_ids.include?(drug[:drug_id]) }
+
+      expect(regimen_dtgs.size).to eq(1)
+      expect(regimen_dtgs[0][:am]).to eq(regimen_dtgs[0][:pm])
+      expect(regimen_dtgs[0][:am]).to be > 0
+      expect(regimen_dtgs[0][:pm]).to be > 0
+    end
+
+    it 'does not double dose DTG for 15A patients not on TB treatment' do
+      patient = create_patient(age: 40, weight: 60, gender: 'F')
+      regimen = regimen_service.find_regimens(patient)['15A']
+      regimen_dtgs = regimen.select { |drug| dtg_ids.include?(drug[:drug_id]) }
+
+      expect(regimen_dtgs.size).to eq(1)
+      expect(regimen_dtgs[0][:am]).to be > 0
+      expect(regimen_dtgs[0][:pm]).to be_zero
+    end
+
+    it 'double doses DTG for 15A patients on TB treatment' do
+      patient = create_patient(age: 40, weight: 60, gender: 'F')
+      put_patient_on_tb_treatment(patient)
+
+      regimen = regimen_service.find_regimens(patient)['15A']
+      regimen_dtgs = regimen.select { |drug| dtg_ids.include?(drug[:drug_id]) }
+
+      expect(regimen_dtgs.size).to eq(1)
+      expect(regimen_dtgs[0][:am]).to eq(regimen_dtgs[0][:pm])
+      expect(regimen_dtgs[0][:am]).to be > 0
+      expect(regimen_dtgs[0][:pm]).to be > 0
     end
   end
 end

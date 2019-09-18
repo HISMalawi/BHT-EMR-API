@@ -119,6 +119,10 @@ class Api::V1::DrugsController < ApplicationController
                                 disposition: 'inline')
   end
 
+  def tb_side_effects_drug
+    render json: Drug.tb_side_effects_drug
+  end
+
   def stock_levels
     levels = service.stock_levels(params[:classification])
     render json: levels
