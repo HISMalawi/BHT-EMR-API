@@ -10,7 +10,7 @@ class TBService::LabTestsEngine
   end
 
   def type(type_id)
-    LabTestType.find(type_id) #health data schema
+    LabTestType.find(type_id) # health data schema
   end
 
   def types(search_string:)
@@ -37,32 +37,32 @@ class TBService::LabTestsEngine
     LabParameter.joins(:lab_sample)\
                 .where('Lab_Sample.AccessionNum = ?', accession_number)\
                 .order(Arel.sql('DATE(Lab_Sample.TimeStamp) DESC'))
-  end #health data
+  end # health data
 
-  #Create test with lims
+  # Create test with lims
   def create_order(encounter:, date:, tests:, **kwargs)
     patient ||= encounter.patient
     date ||= encounter.encounter_datetime
 
-    #test will take TB specific parameters
+    # test will take TB specific parameters
 
     tests.collect do |test|
       lims_order = nlims.order_tb_test(patient: patient,
-                                      user: User.current,
-                                      date: date,
-                                      reason: test['reason'],
-                                      test_type: [test['test_type']],
-                                      sample_type: test['sample_type'],
-                                      sample_status: test['sample_status'],
-                                      target_lab: test['target_lab'],
-                                      recommended_examination: test['recommended_examination'],
-                                      treatment_history: test['treatment_history'],
-                                      sample_date: test['sample_date'],
-                                      sending_facility: test['sending_facility'],
-                                      **kwargs)
+                                       user: User.current,
+                                       date: date,
+                                       reason: test['reason'],
+                                       test_type: [test['test_type']],
+                                       sample_type: test['sample_type'],
+                                       sample_status: test['sample_status'],
+                                       target_lab: test['target_lab'],
+                                       recommended_examination: test['recommended_examination'],
+                                       treatment_history: test['treatment_history'],
+                                       sample_date: test['sample_date'],
+                                       sending_facility: test['sending_facility'],
+                                       **kwargs)
       accession_number = lims_order['tracking_number']
 
-      #creation happening here
+      # creation happening here
       local_order = create_local_order(patient, encounter, date, accession_number)
       save_reason_for_test(encounter, local_order, test['reason'])
 
@@ -70,7 +70,7 @@ class TBService::LabTestsEngine
     end
   end
 
-  #find test with lims
+  # find test with lims
   def find_orders_by_patient(patient, paginate_func: nil)
     local_orders = local_orders(patient)
     local_orders = paginate_func.call(local_orders) if paginate_func
@@ -84,7 +84,7 @@ class TBService::LabTestsEngine
     end
   end
 
-  #create test with lims
+  # create test with lims
   def find_orders_by_accession_number(accession_number)
     order = nlims.patient_orders(accession_number)
     begin
@@ -109,6 +109,63 @@ class TBService::LabTestsEngine
         { test_type: k, test_status: v, test_values: test_values }
       end
     }]
+  end
+
+
+
+  def generate_lab_order_summary(order_info)
+
+    identifier_type = PatientIdentifierType.find_by(name: 'National id').id
+    identifier = PatientIdentifier.find_by(patient_id: order_info[:patient_id], identifier_type: identifier_type).identifier
+
+    logger = Rails.logger
+    logger.info "NATIONAL ID: #{identifier}"
+
+    label = ZebraPrinter::StandardLabel.new
+    label.draw_text('Lab Order Summary', 28, 9, 0, 1, 1, 2, false)
+    label.draw_line(25, 35, 115, 1, 0)
+    label.draw_line(180, 140, 600, 1, 0)
+
+    label.draw_text('Order Date', 28, 56, 0, 2, 1, 1, false)
+    label.draw_text('NPID', 28, 86, 0, 2, 1, 1, false)
+
+    label.draw_text('Lab Tests', 28, 111, 0, 1, 1, 2, false)
+    label.draw_text('Item', 190, 120, 0, 2, 1, 1, false)
+    label.draw_text('Test Type', 28, 146, 0, 2, 1, 1, false)
+    label.draw_text('Specimen', 28, 176, 0, 2, 1, 1, false)
+    label.draw_text('Examination', 28, 206, 0, 2, 1, 1, false)
+    label.draw_text('Target Lab', 28, 236, 0, 2, 1, 1, false)
+    label.draw_text('Reason', 28, 266, 0, 2, 1, 1, false)
+    label.draw_text('Previous TB', 28, 296, 0, 2, 1, 1, false)
+
+    label.draw_line(260, 50, 170, 1, 0)
+    label.draw_line(260, 50, 1, 60, 0)
+    label.draw_line(180, 286, 600, 1, 0)
+    label.draw_line(430, 50, 1, 60, 0) # NPID
+
+    label.draw_line(180, 140, 1, 145, 0)
+    label.draw_line(780, 140, 1, 145, 0) # Item end Close line
+
+    # Order Data and NPID
+    label.draw_line(260, 80, 170, 1, 0)
+    label.draw_line(260, 110, 170, 1, 0)
+    label.draw_line(260, 140, 170, 1, 0)
+
+    label.draw_line(180, 170, 600, 1, 0)
+    label.draw_line(180, 200, 600, 1, 0)
+    label.draw_line(180, 230, 600, 1, 0)
+    label.draw_line(180, 260, 600, 1, 0)
+
+    label.draw_text(order_info[:date], 270, 56, 0, 2, 1, 1, false)
+    label.draw_text(identifier, 270, 86, 0, 2, 1, 1, false)
+    label.draw_text((order_info[:test_type]), 188, 146, 0, 2, 1, 1, false)
+    label.draw_text(order_info[:specimen_type], 188, 176, 0, 2, 1, 1, false)
+    label.draw_text(order_info[:recommended_examination], 188, 206, 0, 2, 1, 1, false)
+    label.draw_text(order_info[:target_lab], 188, 236, 0, 2, 1, 1, false)
+    label.draw_text(order_info[:reason_for_examination], 188, 266, 0, 2, 1, 1, false)
+    label.draw_text(order_info[:previous_tb_patient], 188, 296, 0, 2, 1, 1, false)
+
+    label.print(1)
   end
 
   private
@@ -165,14 +222,14 @@ class TBService::LabTestsEngine
     end
   end
 
-  #Local Order
+  # Local Order
   def local_orders(patient)
     Order.where patient: patient,
                 order_type: order_type('Lab'),
                 concept: concept('Laboratory tests ordered')
   end
 
-  #Dont't forget to put this back in order
+  # Dont't forget to put this back in order
   def nlims
     @nlims ||= NLims.instance
   end
