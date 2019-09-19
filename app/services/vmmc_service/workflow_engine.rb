@@ -86,7 +86,7 @@ class VMMCService::WorkflowEngine
     CIRCUMCISION => %i[patient_gives_consent? continue_to_circumcision?],
     POST_OP_REVIEW => %i[patient_gives_consent? continue_to_circumcision?],
     TREATMENT => %i[patient_gives_consent? meds_given? continue_to_circumcision?],
-    APPOINTMENT => %i[patient_gives_consent? patient_ready_for_discharge?],
+    APPOINTMENT => %i[patient_gives_consent? patient_not_ready_for_discharge?],
     FOLLOW_UP => %i[patient_had_post_op_review?]
   }.freeze
 
@@ -209,15 +209,16 @@ class VMMCService::WorkflowEngine
                .exists?
   end
 
-  def patient_ready_for_discharge?
+  def patient_not_ready_for_discharge?
     ready_for_discharge_concept_id = ConceptName.find_by_name('Ready for discharge?').concept_id
     yes_concept_id = ConceptName.find_by_name('Yes').concept_id
 
-    Observation.joins(:encounter)\
-               .where(concept_id: ready_for_discharge_concept_id,
-                      value_coded: yes_concept_id)\
-               .merge(Encounter.where(program: vmmc_program))
-               .exists?
+    !Observation.joins(:encounter)\
+                .where(concept_id: ready_for_discharge_concept_id,
+                       value_coded: yes_concept_id,
+                       person_id: patient.patient_id)\
+                .merge(Encounter.where(program: vmmc_program))
+                .exists?
   end
 
     def medical_history_not_collected?

@@ -19,7 +19,7 @@ module VMMCService
       label.draw_text(patient.national_id.to_s, 565, 30, 0, 3, 1, 1, true)
       label.draw_text("#{patient.person.name}(#{patient.gender})", 25, 60, 0, 3, 1, 1, false)
       label.draw_text(date&.strftime('%B %d %Y').upcase, 25, 30, 0, 3, 1, 1, false)
-      label.draw_text('Date of MC: ' + visit.circumcision_date&.strftime('%d/%b/%Y'), 25, 95, 0, 2, 1, 1, false)
+      label.draw_text('Date of MC: ' + (visit.circumcision_date&.strftime('%d/%b/%Y') || 'Not Available'), 25, 95, 0, 2, 1, 1, false)
       label.draw_text('Appointment', 255, 130, 0, 3, 1, 1, false)
       label.draw_text('OUTC', 577, 130, 0, 3, 1, 1, false)
       label.draw_line(25, 150, 800, 5)
