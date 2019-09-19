@@ -103,7 +103,7 @@ module ARTService
           drug_name = ConceptName.where(concept_id: ingredient.drug.concept_id,
                                         concept_name_type: 'FULLY_SPECIFIED')\
                                  .first
-          dosages[drug_name.name] = ingredient_to_drug(ingredient, patient)
+          dosages[drug_name.name] = ingredient_to_drug(ingredient)
         end
       end
     end
