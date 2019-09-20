@@ -29,6 +29,9 @@ class TBNumberService
 
   def self.generate_tb_patient_id(patient_id)
     patient_identifier = get_patient_tb_number(patient_id: patient_id)
+
+    return if patient_identifier.nil?
+
     identifier_name = PatientIdentifierType.find_by(patient_identifier_type_id: patient_identifier.identifier_type).name
     first_name = PersonName.find_by(person_id: patient_id).given_name
     last_name = PersonName.find_by(person_id: patient_id).family_name
