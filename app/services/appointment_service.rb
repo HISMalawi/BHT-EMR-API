@@ -2,7 +2,8 @@ class AppointmentService
   ENGINES = {
     'HIV PROGRAM' => ARTService::AppointmentEngine,
     'TB PROGRAM' => TBService::AppointmentEngine,
-    'ANC PROGRAM' => ANCService::AppointmentEngine
+    'ANC PROGRAM' => ANCService::AppointmentEngine,
+    'VMMC PROGRAM' => VMMCService::AppointmentEngine
   }.freeze
 
   def initialize(program_id:, patient_id:, retro_date:)
