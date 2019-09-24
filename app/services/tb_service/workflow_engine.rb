@@ -529,10 +529,9 @@ module TBService
 
     def patient_has_no_diagnosis?
       Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?) AND encounter.program_id = ?',
+        'encounter_type.name = ? AND encounter.patient_id = ? AND encounter.program_id = ?',
         DIAGNOSIS,
         @patient.patient_id,
-        @date,
         @program.program_id
       ).order(encounter_datetime: :desc).first.nil?
     end
