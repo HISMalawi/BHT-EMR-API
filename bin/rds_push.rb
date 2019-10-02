@@ -367,20 +367,10 @@ def transform_record_keys(record, serialized_record, program)
 end
 
 def remap_record_uuid(record)
-  new_uuid = ActiveRecord::Base.connection.select_one('SELECT UUID() as uuid')['uuid']
+  new_uuid = SecureRandom.uuid
   old_uuid = record.uuid
 
-  record.uuid = new_uuid
-  model = record.class
-  database = model.connection.current_database
-
-  ActiveRecord::Base.connection.execute(
-    <<~SQL
-      UPDATE `#{database}`.`#{model.table_name}`
-      SET uuid = '#{new_uuid}'
-      WHERE #{model.primary_key} = '#{record.id}'
-    SQL
-  )
+  record.update_attribute('uuid', new_uuid)
 
   UuidRemap.create(model: record.class.to_s,
                    database: record.class.connection.current_database,
@@ -493,7 +483,7 @@ def initiate_couch_sync
         File.write('log/app_sync_erros.log',e.message,mode: 'a')
         puts "Handled Exception"
     end
-end  
+end
 
 
 def already_in_sync?(sync_params)
