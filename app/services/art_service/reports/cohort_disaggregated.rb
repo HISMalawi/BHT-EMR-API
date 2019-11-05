@@ -39,18 +39,6 @@ module ARTService
 
       def disaggregated(quarter, age_group)
 
-        begin
-          ActiveRecord::Base.connection.select_all <<EOF
-          SELECT * FROM temp_earliest_start_date limit 10;
-EOF
-
-        rescue
-          art_service = ARTService::Reports::CohortBuilder.new()
-          art_service.create_tmp_patient_table
-          art_service.load_data_into_temp_earliest_start_date(@end_date)
-          @rebuild = true
-        end
-
         temp_outcome_table = 'temp_patient_outcomes'
 
         if quarter == 'pepfar'
@@ -58,16 +46,16 @@ EOF
           end_date = @end_date
           temp_outcome_table = 'temp_pepfar_patient_outcomes'
 
-
+          art_service = ARTService::Reports::CohortBuilder.new()
+          art_service.create_tmp_patient_table
+          art_service.load_data_into_temp_earliest_start_date(@end_date)
+          rebuild_outcomes 
+=begin          
           begin
-            ActiveRecord::Base.connection.select_all <<EOF
-            SELECT * FROM temp_pepfar_patient_outcomes limit 10;
-EOF
-
-          rescue
+            ActiveRecord::Base.connection.execute('SELECT * FROM temp_pepfar_patient_outcomes')
+          rescue 
             @rebuild = true
           end
-
 
           if @rebuild
             initialize_disaggregated
@@ -75,6 +63,8 @@ EOF
             create_mysql_pepfar_current_outcome
             rebuild_outcomes 
           end
+=end
+
         else
           start_date, end_date = generate_start_date_and_end_date(quarter)
         end
