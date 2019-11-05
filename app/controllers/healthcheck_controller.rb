@@ -11,4 +11,13 @@ class HealthcheckController < ApplicationController
     logger.error "Database unreachable: #{e}"
     render json: { status: 'Down', error: 'Database unreachable' }
   end
+
+  def temp_earliest_start_table_exisit
+    ActiveRecord::Base.connection.execute('SELECT * FROM temp_earliest_start_date')
+    render json: { status: 'Up' }
+  rescue StandardError => e
+    logger.error "Table unreachable: #{e}"
+    render json: { status: 'Down', error: 'Database table unreachable' }
+  end
+
 end
