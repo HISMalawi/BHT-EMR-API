@@ -73,14 +73,14 @@ module ARTService
         end_date: end_date.to_date).regimen_report
     end
 
-    def screened_for_tb(start_date, end_date, gender, age_group)
+    def screened_for_tb(start_date, end_date, gender, age_group, outcome_table)
       REPORTS['COHORT_DISAGGREGATED_ADDITIONS'].new(start_date: start_date.to_date,
-        end_date: end_date.to_date, age_group: age_group, gender: gender).screened_for_tb
+        end_date: end_date.to_date, age_group: age_group, gender: gender, outcome_table: outcome_table).screened_for_tb
     end
 
-    def clients_given_ipt(start_date, end_date, gender, age_group)
+    def clients_given_ipt(start_date, end_date, gender, age_group, outcome_table)
       REPORTS['COHORT_DISAGGREGATED_ADDITIONS'].new(start_date: start_date.to_date,
-        end_date: end_date.to_date, age_group: age_group, gender: gender).clients_given_ipt
+        end_date: end_date.to_date, age_group: age_group, gender: gender, outcome_table: outcome_table).clients_given_ipt
     end
 
     private

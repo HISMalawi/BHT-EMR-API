@@ -125,12 +125,12 @@ class ReportService
     engine(@program).regimen_report(start_date, end_date)
   end
 
-  def screened_for_tb(start_date, end_date, gender, age_group)
-    engine(@program).screened_for_tb(start_date, end_date, gender, age_group)
+  def screened_for_tb(start_date, end_date, gender, age_group, outcome_table)
+    engine(@program).screened_for_tb(start_date, end_date, gender, age_group, outcome_table)
   end
 
-  def clients_given_ipt(start_date, end_date, gender, age_group)
-    engine(@program).clients_given_ipt(start_date, end_date, gender, age_group)
+  def clients_given_ipt(start_date, end_date, gender, age_group, outcome_table)
+    engine(@program).clients_given_ipt(start_date, end_date, gender, age_group, outcome_table)
   end
 
   private

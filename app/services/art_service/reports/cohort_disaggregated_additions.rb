@@ -4,11 +4,12 @@ module ARTService
 
     class CohortDisaggregatedAdditions
       
-      def initialize(start_date:, end_date:, gender:, age_group:)
+      def initialize(start_date:, end_date:, gender:, age_group:, outcome_table:)
         @start_date = start_date
         @end_date = end_date
         @gender = gender
         @age_group = age_group
+        @patient_outcome_table = outcome_table
       end
 
       def screened_for_tb
@@ -21,7 +22,7 @@ module ARTService
         SELECT 
           e.patient_id, cohort_disaggregated_age_group(e.birthdate, DATE('#{@end_date}')) age_group
         FROM temp_earliest_start_date e 
-        INNER JOIN temp_patient_outcomes USING(patient_id)
+        INNER JOIN #{@patient_outcome_table} USING(patient_id)
         WHERE cum_outcome = 'On antiretrovirals' AND LEFT(gender,1) = '#{gender}'
         GROUP BY e.patient_id HAVING  age_group = '#{@age_group}';
 EOF
@@ -46,7 +47,7 @@ EOF
         SELECT 
           e.patient_id, cohort_disaggregated_age_group(e.birthdate, DATE('#{@end_date}')) age_group
         FROM temp_earliest_start_date e 
-        INNER JOIN temp_patient_outcomes USING(patient_id)
+        INNER JOIN #{@patient_outcome_table} USING(patient_id)
         WHERE cum_outcome = 'On antiretrovirals' AND LEFT(gender,1) = '#{gender}'
         GROUP BY e.patient_id HAVING  age_group = '#{@age_group}';
 EOF
@@ -99,7 +100,7 @@ EOF
         results = ActiveRecord::Base.connection.select_all <<EOF
         SELECT e.*, tb_status FROM temp_earliest_start_date e
           INNER JOIN temp_patient_tb_status s ON s.patient_id = e.patient_id
-          INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
+          INNER JOIN #{@patient_outcome_table} o ON o.patient_id = e.patient_id
           WHERE o.cum_outcome = 'On antiretrovirals' AND e.patient_id IN(#{patient_ids.join(',')})
           AND DATE(e.date_enrolled) <= '#{@end_date.to_date}';
 EOF

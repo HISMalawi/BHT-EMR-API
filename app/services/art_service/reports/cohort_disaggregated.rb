@@ -212,9 +212,9 @@ EOF
         earliest_start_date  = data['earliest_start_date'].to_date rescue nil
 
         if date_enrolled >= start_date && date_enrolled <= end_date
-          if date_enrolled == earliest_start_date
+          #if date_enrolled == earliest_start_date
             tx_new = 1
-          end unless earliest_start_date.blank?
+          #end unless earliest_start_date.blank?
           
           if outcome == 'On antiretrovirals'
             tx_curr = 1
@@ -399,8 +399,8 @@ EOF
 
         ActiveRecord::Base.connection.execute(
           "CREATE TABLE temp_pepfar_patient_outcomes ENGINE=MEMORY AS (
-            SELECT e.patient_id, patient_pepfar_outcome(e.patient_id, '#{@end_date} 23:59:59') AS cum_outcome
-            FROM temp_earliest_start_date e WHERE e.date_enrolled <= '#{@end_date}'
+            SELECT e.patient_id, patient_pepfar_outcome(e.patient_id, '#{@end_date.to_date} 23:59:59') AS cum_outcome
+            FROM temp_earliest_start_date e WHERE e.date_enrolled <= '#{@end_date.to_date}'
           )"
         )
 
@@ -514,13 +514,16 @@ DECLARE set_outcome varchar(25);
 DECLARE set_date_started date;
 DECLARE set_patient_state_died INT;
 DECLARE set_died_concept_id INT;
+DECLARE set_timestamp DATETIME;
+DECLARE dispensed_quantity INT;
 
+SET set_timestamp = TIMESTAMP(CONCAT(DATE(visit_date), ' ', '23:59:59'));
 SET set_program_id = (SELECT program_id FROM program WHERE name ="HIV PROGRAM" LIMIT 1);
 
 SET set_patient_state = (SELECT state FROM `patient_state` INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id AND p.program_id = set_program_id WHERE (patient_state.voided = 0 AND p.voided = 0 AND p.program_id = program_id AND DATE(start_date) <= visit_date AND p.patient_id = patient_id) AND (patient_state.voided = 0) ORDER BY start_date DESC, patient_state.patient_state_id DESC, patient_state.date_created DESC LIMIT 1);
 
 IF set_patient_state = 1 THEN
-  SET set_patient_state = current_pepfar_defaulter(patient_id, visit_date);
+  SET set_patient_state = current_pepfar_defaulter(patient_id, set_timestamp);
 
   IF set_patient_state = 1 THEN
     SET set_outcome = 'Defaulted';
@@ -538,9 +541,8 @@ IF set_patient_state = 3 OR set_patient_state = 127 THEN
 END IF;
 
 
-/* ............... This block of code checks if the patient has any state that is "died" */
 IF set_patient_state != 3 AND set_patient_state != 127 THEN
-  SET set_patient_state_died = (SELECT state FROM `patient_state` INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id AND p.program_id = set_program_id WHERE (patient_state.voided = 0 AND p.voided = 0 AND p.program_id = program_id AND DATE(start_date) <= visit_date AND p.patient_id = patient_id) AND          (patient_state.voided = 0) AND state = 3 ORDER BY patient_state.patient_state_id DESC, patient_state.date_created DESC, start_date DESC LIMIT 1);
+  SET set_patient_state_died = (SELECT state FROM `patient_state` INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id AND p.program_id = set_program_id WHERE (patient_state.voided = 0 AND p.voided = 0 AND p.program_id = program_id AND DATE(start_date) <= visit_date AND p.patient_id = patient_id) AND (patient_state.voided = 0) AND state = 3 ORDER BY patient_state.patient_state_id DESC, patient_state.date_created DESC, start_date DESC LIMIT 1);
 
   SET set_died_concept_id = (SELECT concept_id FROM concept_name WHERE name = 'Patient died' LIMIT 1);
 
@@ -549,7 +551,6 @@ IF set_patient_state != 3 AND set_patient_state != 127 THEN
     SET set_patient_state = 3;
   END IF;
 END IF;
-/* ....................  ends here .................... */
 
 
 
@@ -558,19 +559,31 @@ IF set_patient_state = 6 THEN
 END IF;
 
 IF set_patient_state = 7 THEN
-  SET set_patient_state = current_pepfar_defaulter(patient_id, visit_date);
+  SET set_patient_state = current_pepfar_defaulter(patient_id, set_timestamp);
 
   IF set_patient_state = 1 THEN
     SET set_outcome = 'Defaulted';
   END IF;
 
   IF set_patient_state = 0 THEN
-    SET set_outcome = 'On antiretrovirals';
+
+    SET dispensed_quantity = (SELECT d.quantity
+      FROM orders o
+      INNER JOIN drug_order d ON d.order_id = o.order_id
+      INNER JOIN drug ON drug.drug_id = d.drug_inventory_id
+      WHERE o.patient_id = patient_id AND d.drug_inventory_id IN(
+        SELECT DISTINCT(drug_id) FROM drug WHERE
+        concept_id IN(SELECT concept_id FROM concept_set WHERE concept_set = 1085)
+    ) AND DATE(o.start_date) <= visit_date AND d.quantity > 0 ORDER BY start_date DESC LIMIT 1);
+
+    IF dispensed_quantity > 0 THEN
+      SET set_outcome = 'On antiretrovirals';
+    END IF;
   END IF;
 END IF;
 
 IF set_outcome IS NULL THEN
-  SET set_patient_state = current_pepfar_defaulter(patient_id, visit_date);
+  SET set_patient_state = current_pepfar_defaulter(patient_id, set_timestamp);
 
   IF set_patient_state = 1 THEN
     SET set_outcome = 'Defaulted';
@@ -611,7 +624,6 @@ EOF
           GROUP BY obs.person_id"
         )
 
-        
        female_maternal_status = results.blank? ? 'FNP' : 'FP'
        
 
@@ -622,20 +634,20 @@ EOF
         breastfeeding_concepts <<  ConceptName.find_by_name('Breast feeding').concept_id
         breastfeeding_concepts <<  ConceptName.find_by_name('Breastfeeding').concept_id
 
-        results = ActiveRecord::Base.connection.select_all(
+        results2 = ActiveRecord::Base.connection.select_all(
           "SELECT person_id  FROM obs obs
             INNER JOIN encounter enc ON enc.encounter_id = obs.encounter_id AND enc.voided = 0
           WHERE obs.person_id =#{patient_id}
-          AND obs.obs_datetime <= '#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+          AND obs.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
           AND obs.concept_id IN(#{breastfeeding_concepts.join(',')}) AND obs.value_coded = 1065
           AND obs.voided = 0 AND enc.encounter_type IN(#{encounter_types.join(',')})
           AND DATE(obs.obs_datetime) = (SELECT MAX(DATE(o.obs_datetime)) FROM obs o
                         WHERE o.concept_id IN(#{breastfeeding_concepts.join(',')}) AND voided = 0
-                        AND o.person_id = obs.person_id AND o.obs_datetime <='#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
+                        AND o.person_id = obs.person_id AND o.obs_datetime <='#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
           GROUP BY obs.person_id;"
         )
       
-         female_maternal_status = results.blank? ? 'FNP' : 'FBf'
+         female_maternal_status = results2.blank? ? 'FNP' : 'FBf'
        end
 
 

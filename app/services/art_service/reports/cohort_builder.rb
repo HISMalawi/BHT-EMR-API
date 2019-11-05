@@ -303,7 +303,7 @@ module ARTService
 
         # Pregnant and breastfeeding status during Consultaiton
         cohort_struct.total_pregnant_women = total_pregnant_women(cohort_struct.total_alive_and_on_art, start_date, end_date)
-        cohort_struct.total_breastfeeding_women = total_breastfeeding_women(cohort_struct.total_alive_and_on_art, start_date, end_date)
+        cohort_struct.total_breastfeeding_women = total_breastfeeding_women(cohort_struct.total_alive_and_on_art, cohort_struct.total_pregnant_women, start_date, end_date)
         cohort_struct.total_other_patients = total_other_patients(cohort_struct.total_alive_and_on_art, cohort_struct.total_breastfeeding_women, cohort_struct.total_pregnant_women)
 
         # Patients with CPT dispensed at least once before end of quarter and on ARVs
@@ -950,7 +950,7 @@ EOF
         total_percent
       end
 
-      def total_breastfeeding_women(patients_list, start_date, end_date)
+      def total_breastfeeding_women(patients_list, total_preg_women, start_date, end_date)
         patient_ids = []
         (patients_list || []).each do |row|
           patient_ids << row['patient_id'].to_i
@@ -961,7 +961,7 @@ EOF
         result = []
 
         total_pregnant_females = []
-        (total_pregnant_women(patients_list, start_date, end_date) || []).each do |person|
+        (total_preg_women || []).each do |person|
           total_pregnant_females << person['person_id'].to_i
         end
 
@@ -979,6 +979,7 @@ EOF
         results = ActiveRecord::Base.connection.select_all(
           "SELECT person_id  FROM obs obs
             INNER JOIN encounter enc ON enc.encounter_id = obs.encounter_id AND enc.voided = 0
+            INNER JOIN temp_earliest_start_date e ON e.patient_id = enc.patient_id AND LEFT(e.gender,1) = 'F'
           WHERE obs.person_id IN (#{patient_ids.join(',')})
           AND obs.person_id NOT IN (#{total_pregnant_females.join(',')})
           AND obs.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
@@ -987,7 +988,7 @@ EOF
           AND DATE(obs.obs_datetime) = (SELECT MAX(DATE(o.obs_datetime)) FROM obs o
                         WHERE o.concept_id IN(#{breastfeeding_concepts.join(',')}) AND voided = 0
                         AND o.person_id = obs.person_id AND o.obs_datetime <='#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
-          GROUP BY obs.person_id"
+          GROUP BY obs.person_id;"
         )
 
         results
@@ -1014,6 +1015,7 @@ EOF
         results = ActiveRecord::Base.connection.select_all(
           "SELECT person_id FROM obs obs
             INNER JOIN encounter enc ON enc.encounter_id = obs.encounter_id AND enc.voided = 0
+            INNER JOIN temp_earliest_start_date e ON e.patient_id = enc.patient_id AND LEFT(e.gender,1) = 'F'
           WHERE obs.person_id IN (#{patient_ids.join(',')})
           AND obs.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
           AND obs.concept_id IN(#{pregnant_concepts.join(',')}) AND obs.value_coded = '1065'

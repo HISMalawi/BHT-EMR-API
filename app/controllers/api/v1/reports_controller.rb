@@ -121,11 +121,13 @@ class Api::V1::ReportsController < ApplicationController
   end
 
   def screened_for_tb
-    render json: service.screened_for_tb(params[:start_date], params[:end_date], params[:gender], params[:age_group])
+    render json: service.screened_for_tb(params[:start_date], params[:end_date], 
+      params[:gender], params[:age_group], params[:outcome_table])
   end
 
   def clients_given_ipt
-    render json: service.clients_given_ipt(params[:start_date], params[:end_date], params[:gender], params[:age_group])
+    render json: service.clients_given_ipt(params[:start_date], params[:end_date], 
+      params[:gender], params[:age_group], params[:outcome_table])
   end
 
   private
