@@ -598,8 +598,8 @@ EOF
         encounter_types << EncounterType.find_by_name('HIV STAGING').encounter_type_id
 
         pregnant_concepts = []
-        pregnant_concepts << concept('Is patient pregnant?').concept_id
-        pregnant_concepts << concept('patient pregnant').concept_id
+        pregnant_concepts << ConceptName.find_by_name('Is patient pregnant?').concept_id
+        pregnant_concepts << ConceptName.find_by_name('patient pregnant').concept_id
 
         results = ActiveRecord::Base.connection.select_all(
           "SELECT person_id FROM obs obs
