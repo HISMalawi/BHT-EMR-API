@@ -212,9 +212,9 @@ EOF
         earliest_start_date  = data['earliest_start_date'].to_date rescue nil
 
         if date_enrolled >= start_date && date_enrolled <= end_date
-          #if date_enrolled == earliest_start_date
+          if date_enrolled == earliest_start_date
             tx_new = 1
-          #end unless earliest_start_date.blank?
+          end unless earliest_start_date.blank?
           
           if outcome == 'On antiretrovirals'
             tx_curr = 1
