@@ -290,4 +290,6 @@ Rails.application.routes.draw do
   get '/api/v1/regimen_report' => 'api/v1/reports#regimen_report'
   get '/api/v1/anc/deliveries', to: 'api/v1/anc#deliveries'
   get '/api/v1/anc/essentials', to: 'api/v1/anc#essentials'
+  get '/api/v1/screened_for_tb', to: 'api/v1/reports#screened_for_tb'
+  get '/api/v1/clients_given_ipt', to: 'api/v1/reports#clients_given_ipt'
 end

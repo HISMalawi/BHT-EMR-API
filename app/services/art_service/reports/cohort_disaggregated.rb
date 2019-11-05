@@ -132,7 +132,7 @@ EOF
           list[age_group][gender][:tx_screened_for_tb] += tx_screened_for_tb
 
 
-          if gender == 'F'
+          if gender == 'F' && all_clients_outcomes[patient_id] == 'On antiretrovirals'
             insert_female_maternal_status(patient_id, age_group, end_date)
           end
 
@@ -224,8 +224,8 @@ EOF
         end
 
         if outcome == 'On antiretrovirals'
-          tx_screened_for_tb = screened_for_tb(patient_id, age_group, date_enrolled, end_date)
-          tx_given_ipt = given_ipt(patient_id, age_group, date_enrolled, end_date)
+          #tx_screened_for_tb = screened_for_tb(patient_id, age_group, date_enrolled, end_date)
+          #tx_given_ipt = given_ipt(patient_id, age_group, date_enrolled, end_date)
         end
 
         return [tx_new, tx_curr, tx_given_ipt, tx_screened_for_tb]
@@ -590,12 +590,60 @@ EOF
       end
 
       def insert_female_maternal_status(patient_id, age_group, end_date)
+        encounter_types = []
+        encounter_types << EncounterType.find_by_name('HIV CLINIC CONSULTATION').encounter_type_id
+        encounter_types << EncounterType.find_by_name('HIV STAGING').encounter_type_id
 
-      ActiveRecord::Base.connection.execute <<EOF
-      UPDATE temp_disaggregated SET maternal_status =  female_maternal_status(#{patient_id}, 
-      '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'), age_group = '#{age_group}'
-      WHERE patient_id = #{patient_id};
+        pregnant_concepts = []
+        pregnant_concepts << concept('Is patient pregnant?').concept_id
+        pregnant_concepts << concept('patient pregnant').concept_id
+
+        results = ActiveRecord::Base.connection.select_all(
+          "SELECT person_id FROM obs obs
+            INNER JOIN encounter enc ON enc.encounter_id = obs.encounter_id AND enc.voided = 0
+          WHERE obs.person_id = #{patient_id}
+          AND obs.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+          AND obs.concept_id IN(#{pregnant_concepts.join(',')}) AND obs.value_coded = '1065'
+          AND obs.voided = 0 AND enc.encounter_type IN(#{encounter_types.join(',')})
+          AND DATE(obs.obs_datetime) = (SELECT MAX(DATE(o.obs_datetime)) FROM obs o
+                        WHERE o.concept_id IN(#{pregnant_concepts.join(',')}) AND voided = 0
+                        AND o.person_id = obs.person_id AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
+          GROUP BY obs.person_id"
+        )
+
+        
+       female_maternal_status = results.blank? ? 'FNP' : 'FP'
+       
+
+       if female_maternal_status == 'FNP'
+          
+        breastfeeding_concepts = []
+        breastfeeding_concepts <<  ConceptName.find_by_name('Breast feeding?').concept_id
+        breastfeeding_concepts <<  ConceptName.find_by_name('Breast feeding').concept_id
+        breastfeeding_concepts <<  ConceptName.find_by_name('Breastfeeding').concept_id
+
+        results = ActiveRecord::Base.connection.select_all(
+          "SELECT person_id  FROM obs obs
+            INNER JOIN encounter enc ON enc.encounter_id = obs.encounter_id AND enc.voided = 0
+          WHERE obs.person_id =#{patient_id}
+          AND obs.obs_datetime <= '#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+          AND obs.concept_id IN(#{breastfeeding_concepts.join(',')}) AND obs.value_coded = 1065
+          AND obs.voided = 0 AND enc.encounter_type IN(#{encounter_types.join(',')})
+          AND DATE(obs.obs_datetime) = (SELECT MAX(DATE(o.obs_datetime)) FROM obs o
+                        WHERE o.concept_id IN(#{breastfeeding_concepts.join(',')}) AND voided = 0
+                        AND o.person_id = obs.person_id AND o.obs_datetime <='#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
+          GROUP BY obs.person_id;"
+        )
+      
+         female_maternal_status = results.blank? ? 'FNP' : 'FBf'
+       end
+
+
+       ActiveRecord::Base.connection.execute <<EOF
+        UPDATE temp_disaggregated SET maternal_status =  '#{female_maternal_status}', 
+           age_group = '#{age_group}' WHERE patient_id = #{patient_id};
 EOF
+
 
       end
 
