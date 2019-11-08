@@ -122,8 +122,11 @@ module ARTService
           list[age_group][gender][:tx_given_ipt] += tx_given_ipt
           list[age_group][gender][:tx_screened_for_tb] += tx_screened_for_tb
 
+          date_enrolled  = r['date_enrolled'].to_date
 
           if gender == 'F' && all_clients_outcomes[patient_id] == 'On antiretrovirals'
+            insert_female_maternal_status(patient_id, age_group, end_date)
+          elsif gender == 'F' && (date_enrolled >= start_date && date_enrolled <= end_date) 
             insert_female_maternal_status(patient_id, age_group, end_date)
           end
 
