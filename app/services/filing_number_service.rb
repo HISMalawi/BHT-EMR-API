@@ -217,7 +217,7 @@ class FilingNumberService
       encounter_patient_ids = [0] if encounter_patient_ids.blank?
 
       outcomes = ActiveRecord::Base.connection.select_all <<-SQL
-        SELECT p.patient_id, state, start_date, end_date, identifier
+        SELECT p.patient_id, patient_outcome(p.patient_id, DATE('#{Date.today.to_date}')) state, start_date, end_date, identifier
         FROM patient_state s
         INNER JOIN patient_program p ON p.patient_program_id = s.patient_program_id
         INNER JOIN patient_identifier i ON p.patient_id = i.patient_id
