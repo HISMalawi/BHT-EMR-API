@@ -24,4 +24,15 @@ class ProgramPatientsService
     @engine.respond_to?(method)
   end
 
+  def void_arv_number(arv_number)
+    identifiers = PatientIdentifier.where(identifier: arv_number, 
+      identifier_type: PatientIdentifierType.find_by_name('ARV number').id)
+
+    (identifiers || []).each do |identifier|
+      identifier.update_columns(voided: 1, void_reason: "Voided through the UI")
+    end
+
+    return "Voided #{identifiers.count} ARV number(s)"
+  end
+
 end

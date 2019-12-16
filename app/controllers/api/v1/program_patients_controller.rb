@@ -48,6 +48,10 @@ class Api::V1::ProgramPatientsController < ApplicationController
     end
   end
 
+  def void_arv_number
+    render json: service.void_arv_number(params[:arv_number])
+  end
+
   def print_visit_label
     label_commands = service.visit_summary_label(patient, date).print
     send_data label_commands, type: 'application/label; charset=utf-8',
