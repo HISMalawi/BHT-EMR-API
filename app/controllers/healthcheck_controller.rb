@@ -20,4 +20,13 @@ class HealthcheckController < ApplicationController
     render json: { status: 'Down', error: 'Database table unreachable' }
   end
 
+  def version
+    begin
+      render json: {'System version': File.read("#{Rails.root}/HEAD").gsub("\n","")}
+    rescue
+      render json: {status: 'Head not set. Please run: git describe --tags > HEAD in BHT-EMR-API root folder.', 
+        error: "No Head containing tag description found"}
+    end
+  end
+
 end

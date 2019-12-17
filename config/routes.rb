@@ -294,4 +294,5 @@ Rails.application.routes.draw do
   get '/api/v1/screened_for_tb', to: 'api/v1/reports#screened_for_tb'
   get '/api/v1/clients_given_ipt', to: 'api/v1/reports#clients_given_ipt'
   get '/api/v1/temp_earliest_start_table_exisit', to: 'healthcheck#temp_earliest_start_table_exisit'
+  get '/api/v1/version', to: 'healthcheck#version'
 end
