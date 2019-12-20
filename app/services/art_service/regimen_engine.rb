@@ -385,14 +385,14 @@ module ARTService
       # RAL (Raltegravir 400mg) = 954
       # NVP (Nevirapine 200 mg tablet) = 22
       # LPV/r pellets = 979
-      '0' => [Set.new([733, 968]), Set.new([733, 22]), Set.new([969, 22]), Set.new([969, 968])],
+      '0' => [Set.new([1044, 968]), Set.new([1044, 22]), Set.new([969, 22]), Set.new([969, 968])],
       '2' => [Set.new([732]), Set.new([732, 736]), Set.new([732, 39]), Set.new([731]), Set.new([731, 39]), Set.new([731, 736])],
       '4' => [Set.new([736, 30]), Set.new([736, 11]), Set.new([39, 11]), Set.new([39, 30])],
       '5' => [Set.new([735])],
       '6' => [Set.new([734, 22])],
       '7' => [Set.new([734, 932])],
       '8' => [Set.new([39, 932])],
-      '9' => [Set.new([733, 979]), Set.new([733, 74]), Set.new([733, 73]), Set.new([969, 73]), Set.new([969, 74])],
+      '9' => [Set.new([1044, 979]), Set.new([1044, 74]), Set.new([1044, 73]), Set.new([969, 73]), Set.new([969, 74])],
       '10' => [Set.new([734, 73])],
       '11' => [Set.new([736, 74]), Set.new([736, 73]), Set.new([39, 73]), Set.new([39, 74])],
       '12' => [Set.new([976, 977, 982])],
