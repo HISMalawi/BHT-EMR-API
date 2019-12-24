@@ -25,7 +25,7 @@ module ANCService
 
         @patient.encounters.where(["encounter_datetime >= ? AND encounter_datetime <= ? AND program_id = ?",
           @current_range[0]["START"], @current_range[0]["END"], PROGRAM.id]).collect{|e|
-          encounters[e.encounter_datetime.strftime("%d/%b/%Y")] = {"USER" => PersonName.find(e.creator) }
+          encounters[e.encounter_datetime.strftime("%d/%b/%Y")] = {"USER" => PersonName.find_by(person_id: e.creator) }
         }
 
         @patient.encounters.where(["encounter_datetime >= ? AND encounter_datetime <= ? AND program_id = ?",
@@ -247,7 +247,7 @@ module ANCService
 
           @patient.encounters.where(["encounter_datetime >= ? AND encounter_datetime <= ? AND program_id = ?",
               @current_range[0]["START"], @current_range[0]["END"], PROGRAM.id]).collect{|e|
-            encounters[e.encounter_datetime.strftime("%d/%b/%Y")] = {"USER" => PersonName.find(e.creator) }
+            encounters[e.encounter_datetime.strftime("%d/%b/%Y")] = {"USER" => PersonName.find_by(person_id: e.creator) }
           }
 
           @patient.encounters.where(["encounter_datetime >= ? AND encounter_datetime <= ? AND program_id = ?",
