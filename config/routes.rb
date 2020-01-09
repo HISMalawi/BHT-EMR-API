@@ -295,4 +295,6 @@ Rails.application.routes.draw do
   get '/api/v1/clients_given_ipt', to: 'api/v1/reports#clients_given_ipt'
   get '/api/v1/temp_earliest_start_table_exisit', to: 'healthcheck#temp_earliest_start_table_exisit'
   get '/api/v1/version', to: 'healthcheck#version'
+  get '/api/v1/database_backup_files', to: 'healthcheck#database_backup_files'
+  get '/api/v1/user_system_usage', to: 'healthcheck#user_system_usage'
 end

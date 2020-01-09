@@ -2604,3 +2604,20 @@ BEGIN
 	RETURN 'No';
 END;
 
+DROP FUNCTION IF EXISTS `patient_who_stage`;
+
+CREATE FUNCTION `patient_who_stage`(my_patient_id INT) RETURNS VARCHAR(50)
+BEGIN
+  DECLARE who_stage VARCHAR(255);
+  DECLARE reason_concept_id INT;
+  DECLARE coded_concept_id INT;
+  DECLARE max_obs_datetime DATETIME;
+
+  SET reason_concept_id = (SELECT concept_id FROM concept_name WHERE name = 'WHO stage' AND voided = 0 LIMIT 1);
+  SET max_obs_datetime = (SELECT MAX(obs_datetime) FROM obs WHERE person_id = my_patient_id AND concept_id = reason_concept_id AND voided = 0);
+  SET coded_concept_id = (SELECT value_coded FROM obs WHERE person_id = my_patient_id AND concept_id = reason_concept_id AND voided = 0 AND obs_datetime = max_obs_datetime  LIMIT 1);
+  SET who_stage = (SELECT name FROM concept_name WHERE concept_id = coded_concept_id AND LENGTH(name) > 0 LIMIT 1);
+
+  RETURN who_stage;
+END;
+
