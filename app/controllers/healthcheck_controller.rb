@@ -32,7 +32,7 @@ class HealthcheckController < ApplicationController
   def database_backup_files
     begin
       global_property =  GlobalProperty.find_by(property: 'backup.path')
-      files = %x|ls -lh #{global_property.property_value}/*.sql|
+      files = %x|ls -lh #{global_property.property_value}/*sql*|
       render json: {'Backup file(s)':  files.split("\n")}
     rescue
       render json: {status: 'Backup(s) not found.', 
