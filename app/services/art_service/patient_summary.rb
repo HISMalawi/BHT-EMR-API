@@ -103,9 +103,11 @@ module ARTService
     end
 
     def art_period
-      start_date = (recent_value_datetime('ART start date')\
-                    || recent_value_datetime('Date antiretrovirals started')\
-                    || earliest_start_date_at_clinic)
+      sdate = ActiveRecord::Base.connection.select_one <<EOF
+      SELECT date_antiretrovirals_started(#{patient.patient_id}, current_date()) AS earliest_date;
+EOF
+
+      start_date = sdate['earliest_date'].to_time rescue nil
 
       return [nil, nil] unless start_date
 
