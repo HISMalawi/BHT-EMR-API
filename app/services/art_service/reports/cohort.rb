@@ -41,7 +41,7 @@ module ARTService
         INNER JOIN concept_set s ON s.concept_id = d.concept_id
         INNER JOIN patient_program pp ON pp.patient_id = o.patient_id
         WHERE s.concept_set = 1085 AND od.quantity > 0
-        AND pp.program_id = 1
+        AND pp.program_id = 1 AND pp.voided = 0
         GROUP BY o.patient_id;
 EOF
 
