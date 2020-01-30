@@ -15,6 +15,7 @@ module ARTService
       'IPT' => ARTService::Reports::IPTReport,
       'REGIMEN_SWITCH' => ARTService::Reports::RegimenSwitch,
       'COHORT_DISAGGREGATED_ADDITIONS' => ARTService::Reports::CohortDisaggregatedAdditions,
+      'ARV_REFILL_PERIODS' => ARTService::Reports::ArvRefillPeriods
     }.freeze
 
     def generate_report(type:, **kwargs)
@@ -81,6 +82,11 @@ module ARTService
     def clients_given_ipt(start_date, end_date, gender, age_group, outcome_table)
       REPORTS['COHORT_DISAGGREGATED_ADDITIONS'].new(start_date: start_date.to_date,
         end_date: end_date.to_date, age_group: age_group, gender: gender, outcome_table: outcome_table).clients_given_ipt
+    end
+
+    def arv_refill_periods(start_date, end_date, min_age, max_age)
+      REPORTS['ARV_REFILL_PERIODS'].new(start_date: start_date.to_date,
+        end_date: end_date.to_date, min_age: min_age, max_age: max_age).arv_refill_periods
     end
 
     private

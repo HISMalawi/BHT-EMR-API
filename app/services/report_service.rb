@@ -133,6 +133,10 @@ class ReportService
     engine(@program).clients_given_ipt(start_date, end_date, gender, age_group, outcome_table)
   end
 
+  def arv_refill_periods(start_date, end_date, min_age, max_age)
+    engine(@program).arv_refill_periods(start_date, end_date, min_age, max_age)
+  end
+
   private
 
   def engine(program)
