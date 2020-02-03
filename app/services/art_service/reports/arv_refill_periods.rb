@@ -23,20 +23,31 @@ module ARTService
         encounter_type = EncounterType.find_by(name: 'DISPENSING').id
         
         if @min_age == 'Unknown' && @max_age == 'Unknown'
-          sql_path = "AND p.birthdate IS NULL"
+          sql_path = "AND pe.birthdate IS NULL"
+          sql_path += " AND patient_outcome(p.patient_id, DATE('#{@end_date}')) = 'On antiretrovirals'"
         else
-          sql_path = "AND TIMESTAMPDIFF(year, p.birthdate, DATE('#{@end_date}')) BETWEEN #{@min_age} AND #{@max_age}"
+          sql_path = "AND TIMESTAMPDIFF(year, pe.birthdate, DATE('#{@end_date}')) BETWEEN #{@min_age} AND #{@max_age}"
+          sql_path += " AND patient_outcome(p.patient_id, DATE('#{@end_date}')) = 'On antiretrovirals'"
         end
 
         patients = ActiveRecord::Base.connection.select_all <<EOF
-        SELECT 
-          p.person_id patient_id,
-          TIMESTAMPDIFF(year, p.birthdate, DATE('#{@end_date}')) age_in_year
-         FROM person p 
-         INNER JOIN encounter e ON e.patient_id = p.person_id
-         WHERE p.voided = 0 AND e.voided = 0 AND e.program_id = #{program_id} 
-         AND e.encounter_datetime BETWEEN '#{@start_date}' AND '#{@end_date}'
-        #{sql_path} GROUP BY p.person_id;
+        select
+            `p`.`patient_id` AS `patient_id`,
+             cast(patient_date_enrolled(`p`.`patient_id`) as date) AS `date_enrolled`
+          from
+            ((`patient_program` `p`
+            left join `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
+            left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
+            left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
+          where
+            ((`p`.`voided` = 0)
+                and (`s`.`voided` = 0)
+                and (`p`.`program_id` = 1)
+                and (`s`.`state` = 7))
+                and (DATE(`s`.`start_date`) <= '#{@end_date}')
+                #{sql_path}
+          group by `p`.`patient_id`
+          HAVING date_enrolled IS NOT NULL;
 EOF
 
         return {} if patients.blank?
