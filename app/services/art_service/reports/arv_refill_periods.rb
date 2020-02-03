@@ -30,6 +30,13 @@ module ARTService
           sql_path += " AND patient_outcome(p.patient_id, DATE('#{@end_date}')) = 'On antiretrovirals'"
         end
 
+        concept_id = ConceptName.find_by_name('Type of patient').concept_id
+        ext_concept_id = ConceptName.find_by_name('External consultation').concept_id
+
+        person_ids = Observation.where(concept_id: concept_id,
+          value_coded: ext_concept_id).group(:person_id).map(&:person_id)
+        person_ids = [0] if person_ids.blank?
+
         patients = ActiveRecord::Base.connection.select_all <<EOF
         select
             `p`.`patient_id` AS `patient_id`,
@@ -45,7 +52,7 @@ module ARTService
                 and (`p`.`program_id` = 1)
                 and (`s`.`state` = 7))
                 and (DATE(`s`.`start_date`) <= '#{@end_date}')
-                #{sql_path}
+                #{sql_path} AND p.patient_id NOT IN(#{person_ids.join(',')})
           group by `p`.`patient_id`
           HAVING date_enrolled IS NOT NULL;
 EOF
@@ -66,7 +73,7 @@ EOF
           WHERE s.concept_set = #{arv_concept_set} AND o.voided = 0
           AND DATE(o.start_date) = (
             SELECT DATE(MAX(o.start_date)) FROM orders t WHERE t.patient_id = o.patient_id
-            AND t.voided = 0 AND t.start_date BETWEEN '#{@start_date}' AND '#{@end_date}'
+            AND t.voided = 0 AND t.start_date <= '#{@end_date}'
           ) AND e.program_id = #{program_id} AND o.patient_id IN(#{patient_ids.join(',')})
           AND od.quantity > 0 AND e.encounter_type = #{encounter_type} 
           GROUP BY o.patient_id, d.drug_id;
