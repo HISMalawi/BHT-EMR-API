@@ -21,10 +21,16 @@ def load_flags
   end
 end
 
+def dump_file_name
+  facility_name = GlobalProperty.find_by_property('current_health_center_name')['property_value']
+  return facility_name.parameterize.underscore
+end
+
 def main
   flags = load_flags
+  rds_dump_file_name = 'rds_' + dump_file_name + '_dump.sql'
 
-  File.open(Rails.root.join('log', 'rds_dump.sql'), 'w') do |fout|
+  File.open(Rails.root.join('log', rds_dump_file_name), 'w') do |fout|
     config['databases'].each do |database, database_config|
       dump(database, database_config['program_name'], fout, **flags)
     end
