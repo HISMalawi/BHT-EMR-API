@@ -39,11 +39,11 @@ class PersonService
     person.update params unless params.empty?
   end
 
-  def find_people_by_name_and_gender(given_name, family_name, gender, use_soundex: true)
+  def find_people_by_name_and_gender(given_name, middle_name, family_name, gender, use_soundex: true)
     if use_soundex
-      soundex_person_search(given_name, family_name, gender)
+      soundex_person_search(given_name, middle_name, family_name, gender)
     else
-      glob_person_search(given_name, family_name, gender)
+      glob_person_search(given_name, middle_name, family_name, gender)
     end
   end
 
@@ -169,25 +169,37 @@ class PersonService
   private
 
   # Search people by using the ART 1 & 2 soundex person search algorithm.
-  def soundex_person_search(given_name, family_name, gender)
-    exact_matches = NameSearchService.search_full_person_name(given_name, family_name, use_soundex: false)
-    soundex_matches = NameSearchService.search_full_person_name(given_name, family_name, use_soundex: true)
+  def soundex_person_search(given_name, middle_name, family_name, gender)
+    people = Person.all
+    people = people.where('gender like ?', "#{gender}%") unless gender.blank?
 
-    # Combine the two match groups and eliminate duplicate records
-    person_ids = Set.new | exact_matches.collect(&:person_id) | soundex_matches.collect(&:person_id)
+    if given_name || family_name || middle_name
+      # We may get names that match with an exact match but don't match with
+      # soundex, vice-versa is also true, thus we capture both then combine them.
+      filters = { given_name: given_name, middle_name: middle_name, family_name: family_name }
+      raw_matches = NameSearchService.search_full_person_name(filters, use_soundex: false)
+      soundex_matches = NameSearchService.search_full_person_name(filters, use_soundex: true)
 
-    # Join to patient to filter patients only
-    Person.joins(:patient)
-          .where('patient.patient_id = person.person_id AND person_id IN (?) AND gender like ?', person_ids, "#{gender}%")
+      # Extract unique person_ids from the names matched above.
+      person_ids = Set.new | raw_matches.collect(&:person_id) | soundex_matches.collect(&:person_id)
+
+      people = people.where(person_id: person_ids)
+    end
+
+    people
   end
 
   # Search for people by matching using MySQL glob.
-  def glob_person_search(given_name, family_name, gender)
-    names_subquery = NameSearchService.search_full_person_name(given_name, family_name, use_soundex: true)
+  def glob_person_search(given_name, middle_name, family_name, gender)
+    people = Person.all
+    people = people.where('gender like ?', "#{gender}%") unless gender.blank?
 
-    # Join to patient to filter patients only
-    Person.joins(%i[person_name patient])
-          .where('patient.patient_id = person.patient_id AND gender like ? AND ', "#{gender}%")
-          .merge(names_subquery)
+    if given_name || family_name
+      filters = { given_name: gender, middle_name: middle_name, family_name: family_name }
+      names = NameSearchService.search_full_person_name(filters, use_soundex: true)
+      people = people.joins(:names).merge(names)
+    end
+
+    people
   end
 end
