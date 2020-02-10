@@ -22,6 +22,7 @@ def load_flags
 end
 
 def dump_file_name
+  #name rds dump with current_health_center_name
   facility_name = GlobalProperty.find_by_property('current_health_center_name')['property_value']
   return facility_name.parameterize.underscore
 end
