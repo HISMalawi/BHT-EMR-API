@@ -373,9 +373,9 @@ module ARTService
     end
 
     def find_drug_type(drug)
-      if drug.name.match?(/\s+pellets\s*/)
+      if drug.name.match?(/\s+pellets\s*/i)
         'pellets'
-      elsif drug.name.match?(/\s+granules\s*/)
+      elsif drug.name.match?(/\s+granules\s*/i)
         'granules'
       else
         'tabs'
@@ -413,7 +413,7 @@ module ARTService
       '8' => [Set.new([39, 932])],
       '9' => [Set.new([1044, 979]), Set.new([1044, 74]), Set.new([1044, 73]), Set.new([969, 73]), Set.new([969, 74])],
       '10' => [Set.new([734, 73])],
-      '11' => [Set.new([736, 74]), Set.new([736, 73]), Set.new([39, 73]), Set.new([39, 74])],
+      '11' => [Set.new([736, 74]), Set.new([736, 73]), Set.new([736, 1044]), Set.new([39, 73]), Set.new([39, 74])],
       '12' => [Set.new([976, 977, 982])],
       '13' => [Set.new([983])],
       '14' => [Set.new([984, 982])],
