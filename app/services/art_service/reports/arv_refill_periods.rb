@@ -23,20 +23,38 @@ module ARTService
         encounter_type = EncounterType.find_by(name: 'DISPENSING').id
         
         if @min_age == 'Unknown' && @max_age == 'Unknown'
-          sql_path = "AND p.birthdate IS NULL"
+          sql_path = "AND pe.birthdate IS NULL"
+          sql_path += " AND patient_outcome(p.patient_id, DATE('#{@end_date}')) = 'On antiretrovirals'"
         else
-          sql_path = "AND TIMESTAMPDIFF(year, p.birthdate, DATE('#{@end_date}')) BETWEEN #{@min_age} AND #{@max_age}"
+          sql_path = "AND TIMESTAMPDIFF(year, pe.birthdate, DATE('#{@end_date}')) BETWEEN #{@min_age} AND #{@max_age}"
+          sql_path += " AND patient_outcome(p.patient_id, DATE('#{@end_date}')) = 'On antiretrovirals'"
         end
 
+        concept_id = ConceptName.find_by_name('Type of patient').concept_id
+        ext_concept_id = ConceptName.find_by_name('External consultation').concept_id
+
+        person_ids = Observation.where(concept_id: concept_id,
+          value_coded: ext_concept_id).group(:person_id).map(&:person_id)
+        person_ids = [0] if person_ids.blank?
+
         patients = ActiveRecord::Base.connection.select_all <<EOF
-        SELECT 
-          p.person_id patient_id,
-          TIMESTAMPDIFF(year, p.birthdate, DATE('#{@end_date}')) age_in_year
-         FROM person p 
-         INNER JOIN encounter e ON e.patient_id = p.person_id
-         WHERE p.voided = 0 AND e.voided = 0 AND e.program_id = #{program_id} 
-         AND e.encounter_datetime BETWEEN '#{@start_date}' AND '#{@end_date}'
-        #{sql_path} GROUP BY p.person_id;
+        select
+            `p`.`patient_id` AS `patient_id`,
+             cast(patient_date_enrolled(`p`.`patient_id`) as date) AS `date_enrolled`
+          from
+            ((`patient_program` `p`
+            left join `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
+            left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
+            left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
+          where
+            ((`p`.`voided` = 0)
+                and (`s`.`voided` = 0)
+                and (`p`.`program_id` = 1)
+                and (`s`.`state` = 7))
+                and (DATE(`s`.`start_date`) <= '#{@end_date}')
+                #{sql_path} AND p.patient_id NOT IN(#{person_ids.join(',')})
+          group by `p`.`patient_id`
+          HAVING date_enrolled IS NOT NULL;
 EOF
 
         return {} if patients.blank?
@@ -55,7 +73,7 @@ EOF
           WHERE s.concept_set = #{arv_concept_set} AND o.voided = 0
           AND DATE(o.start_date) = (
             SELECT DATE(MAX(o.start_date)) FROM orders t WHERE t.patient_id = o.patient_id
-            AND t.voided = 0 AND t.start_date BETWEEN '#{@start_date}' AND '#{@end_date}'
+            AND t.voided = 0 AND t.start_date <= '#{@end_date}'
           ) AND e.program_id = #{program_id} AND o.patient_id IN(#{patient_ids.join(',')})
           AND od.quantity > 0 AND e.encounter_type = #{encounter_type} 
           GROUP BY o.patient_id, d.drug_id;
