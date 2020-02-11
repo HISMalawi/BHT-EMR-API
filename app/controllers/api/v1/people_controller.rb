@@ -13,11 +13,10 @@ class Api::V1::PeopleController < ApplicationController
   def search
     filters = params.permit(%i[given_name middle_name family_name gender])
 
-    patient_service = PatientService.new
-    people = patient_service.find_patients_by_name_and_gender(filters[:given_name],
-                                                              filters[:middle_name],
-                                                              filters[:family_name],
-                                                              filters[:gender])
+    people = person_service.find_people_by_name_and_gender(filters[:given_name],
+                                                           filters[:middle_name],
+                                                           filters[:family_name],
+                                                           filters[:gender])
     render json: paginate(people).sort_by(&:name)
   end
 
