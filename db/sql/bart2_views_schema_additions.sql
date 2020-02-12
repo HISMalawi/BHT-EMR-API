@@ -128,6 +128,7 @@ SET date_started = (SELECT LEFT(value_datetime,10) FROM obs WHERE concept_id = 2
 
 IF date_started IS NULL then
   SET estimated_art_date_months = (SELECT value_text FROM obs WHERE encounter_id > 0 AND concept_id = 2516 AND person_id = set_patient_id AND voided = 0 LIMIT 1);
+  SET min_state_date = (SELECT obs_datetime FROM obs WHERE encounter_id > 0 AND concept_id = 2516 AND person_id = set_patient_id AND voided = 0 LIMIT 1);
 
   IF estimated_art_date_months = "6 months" THEN set date_started = (SELECT DATE_SUB(min_state_date, INTERVAL 6 MONTH));
   ELSEIF estimated_art_date_months = "12 months" THEN set date_started = (SELECT DATE_SUB(min_state_date, INTERVAL 12 MONTH));
