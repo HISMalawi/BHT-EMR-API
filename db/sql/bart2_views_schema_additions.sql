@@ -134,6 +134,7 @@ IF date_started IS NULL then
   ELSEIF estimated_art_date_months = "18 months" THEN set date_started = (SELECT DATE_SUB(min_state_date, INTERVAL 18 MONTH));
   ELSEIF estimated_art_date_months = "24 months" THEN set date_started = (SELECT DATE_SUB(min_state_date, INTERVAL 24 MONTH));
   ELSEIF estimated_art_date_months = "48 months" THEN set date_started = (SELECT DATE_SUB(min_state_date, INTERVAL 48 MONTH));
+  ELSEIF estimated_art_date_months = "Over 2 years" THEN set date_started = (SELECT DATE_SUB(min_state_date, INTERVAL 60 MONTH));
   ELSE
     SET date_started = patient_start_date(set_patient_id);
   END IF;
