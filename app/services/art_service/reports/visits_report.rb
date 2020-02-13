@@ -75,7 +75,8 @@ class ARTService::Reports::VisitsReport
                            indicator_name: indicator,
                            contents: value,
                            content_type: 'integer',
-                           report: report
+                           report: report,
+                           creator: User.first.user_id
       end
     end
   end
@@ -93,7 +94,8 @@ class ARTService::Reports::VisitsReport
                   name: 'Daily visits',
                   start_date: date,
                   end_date: date,
-                  renderer_type: 'Plain text'
+                  renderer_type: 'Plain text',
+                  creator: User.first.user_id
   end
 
   def fetch_report_type
