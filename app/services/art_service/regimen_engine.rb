@@ -31,7 +31,7 @@ module ARTService
       ingredients.collect { |ingredient| ingredient_to_drug(ingredient) }
     end
 
-    def find_regimens(patient, pellets: false)
+    def find_regimens(patient, lpv_drug_type: 'tabs')
       ingredients = MohRegimenIngredient.where(
         '(CAST(min_weight AS DECIMAL(4, 1)) <= :weight
          AND CAST(max_weight AS DECIMAL(4, 1)) >= :weight)',
@@ -39,14 +39,14 @@ module ARTService
       )
 
       raw_regimens = regimens_from_ingredients(ingredients, patient: patient,
-                                                            use_pellets: pellets)
+                                                            lpv_drug_type: lpv_drug_type)
       regimens = categorise_regimens(raw_regimens)
       repackage_regimens_for_tb_patients!(regimens, patient)
 
       regimens
     end
 
-    def pellets_regimen(patient, regimen_index, use_pellets)
+    def regimen(patient, regimen_index, lpv_drug_type: 'tabs')
       ingredients = MohRegimenIngredient.joins(:regimen)\
                                         .where(moh_regimens: { regimen_index: regimen_index })\
                                         .where(
@@ -55,7 +55,7 @@ module ARTService
                                           weight: patient.weight.to_f.round(1)
                                         )
 
-      regimens_from_ingredients(ingredients, use_pellets: use_pellets, patient: patient)
+      regimens_from_ingredients(ingredients, lpv_drug_type: lpv_drug_type, patient: patient)
     end
 
     # Returns dosages for patients prescribed ARVs
@@ -121,21 +121,28 @@ module ARTService
     #     pm: xx,
     #     category: xx
     #   }
-    def regimens_from_ingredients(ingredients, use_pellets: false, patient: nil)
+    def regimens_from_ingredients(ingredients, lpv_drug_type: 'tabs', patient: nil)
+      LOGGER.debug(ingredients.collect{ |i| [i.drug.id, i.drug.name] }.as_json)
       ingredients.each_with_object({}) do |ingredient, regimens|
         # Have some CPT & INH that do not belong to any regimen
         # but have a weight - dosage mapping hence being lumped
         # together with the regimen ingredients
         next unless ingredient.regimen
 
+        LOGGER.debug([lpv_drug_type, ingredient.drug.name])
+
         regimen_index = ingredient.regimen.regimen_index
         regimen = regimens[regimen_index] || []
 
         drug_name = ingredient.drug.name
-        if /^LPV\/r/.match?(drug_name)
-          includes_pellets = drug_name.match?(/pellets/i)
-          LOGGER.debug("LPV/r: #{drug_name}")
-          next if (use_pellets && !includes_pellets) || (!use_pellets && includes_pellets)
+        if %r{^LPV/r}.match?(drug_name)\
+            && %w[pellets granules].include?(lpv_drug_type)\
+            && find_drug_type(ingredient.drug) != lpv_drug_type
+          LOGGER.debug(find_drug_type(ingredient.drug))
+          # For LPV/r there is the option of giving out pellets or granules
+          # instead of the usual tabs if clinician explicitly specifies it.
+          LOGGER.debug("Skipping non #{lpv_drug_type}, #{drug_name}...")
+          next
         end
 
         regimen << ingredient_to_drug(ingredient)
@@ -146,15 +153,17 @@ module ARTService
 
     def categorise_regimens(regimens)
       regimens.values.each_with_object({}) do |drugs, categorised_regimens|
-        Rails.logger.debug "Interpreting drug list: #{drugs.collect { |drug| drug[:drug_id] }}"
-        (0..(drugs.size - 1)).each do |i|
-          ((i + 1)..(drugs.size)).each do |j|
-            trial_regimen = drugs[i...j]
+        Rails.logger.debug "Interpreting drug list: #{drugs.collect { |drug| [drug[:drug_id], drug[:drug_name]] }}"
+        (0...drugs.size).each do |pivot|
+          (pivot...drugs.size).each do |combo_start|
+            (combo_start..drugs.size).each do |combo_end|
+              trial_regimen = [drugs[pivot], *drugs[combo_start...combo_end]]
 
-            regimen_name = classify_regimen_combo(trial_regimen.map { |t| t[:drug_id] })
-            next unless regimen_name
+              regimen_name = classify_regimen_combo(trial_regimen.map { |t| t[:drug_id] })
+              next unless regimen_name
 
-            categorised_regimens[regimen_name] = trial_regimen
+              categorised_regimens[regimen_name] = Set.new(trial_regimen)
+            end
           end
         end
       end
@@ -363,6 +372,16 @@ module ARTService
       regimen << dtg
     end
 
+    def find_drug_type(drug)
+      if drug.name.match?(/\s+pellets\s*/i)
+        'pellets'
+      elsif drug.name.match?(/\s+granules\s*/i)
+        'granules'
+      else
+        'tabs'
+      end
+    end
+
     REGIMEN_CODES = {
       # ABC/3TC (Abacavir and Lamivudine 60/30mg tablet) = 733
       # NVP (Nevirapine 50 mg tablet) = 968
@@ -394,7 +413,7 @@ module ARTService
       '8' => [Set.new([39, 932])],
       '9' => [Set.new([1044, 979]), Set.new([1044, 74]), Set.new([1044, 73]), Set.new([969, 73]), Set.new([969, 74])],
       '10' => [Set.new([734, 73])],
-      '11' => [Set.new([736, 74]), Set.new([736, 73]), Set.new([39, 73]), Set.new([39, 74])],
+      '11' => [Set.new([736, 74]), Set.new([736, 73]), Set.new([736, 1044]), Set.new([39, 73]), Set.new([39, 74])],
       '12' => [Set.new([976, 977, 982])],
       '13' => [Set.new([983])],
       '14' => [Set.new([984, 982])],
