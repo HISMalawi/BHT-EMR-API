@@ -20,7 +20,7 @@ module ARTService
       private 
       
       def regimen_data
-       return ActiveRecord::Base.connection.select_all <<EOF
+        return ActiveRecord::Base.connection.select_all <<EOF
        select
         `p`.`patient_id` AS `patient_id`
        from
@@ -33,7 +33,8 @@ module ARTService
         and (`s`.`voided` = 0)
         and (`p`.`program_id` = 1)
         and (`s`.`state` = 7))
-        and (DATE(`s`.`start_date`) BETWEEN '1900-01-01' AND '2019-06-30')
+        and (DATE(`s`.`start_date`) BETWEEN '#{@start_date.to_date.strftime('%Y-%m-%d 00:00:00')}' 
+        AND '#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
       group by `p`.`patient_id`;
 EOF
 
@@ -130,14 +131,23 @@ EOF
       def swicth_report(pepfar)
         clients = {}
         data = regimen_data
+        pepfar_outcome_builder if pepfar
 
         (data || []).each do |r|
           patient_id = r['patient_id'].to_i
           medications = arv_dispensention_data(patient_id)
-           
-          outcome_status = ActiveRecord::Base.connection.select_one <<EOF
+          
+          if pepfar
+            outcome_status = ActiveRecord::Base.connection.select_one <<EOF
+          SELECT patient_pepfar_outcome(#{patient_id}, '#{(@end_date).to_date}') outcome;
+EOF
+
+          else 
+            outcome_status = ActiveRecord::Base.connection.select_one <<EOF
           SELECT patient_outcome(#{patient_id}, '#{(@end_date).to_date}') outcome;
 EOF
+
+          end
 
           next unless outcome_status['outcome'] == 'On antiretrovirals'
           
@@ -155,10 +165,8 @@ EOF
           SELECT patient_current_regimen(#{patient_id}, '#{visit_date}') current_regimen
 EOF
 
-          unless pepfar
-            next if prev_reg['previous_regimen'] == current_reg['current_regimen']
-            next if prev_reg['previous_regimen'] == 'N/A'
-          end
+          next if prev_reg['previous_regimen'] == current_reg['current_regimen']
+          next if prev_reg['previous_regimen'] == 'N/A'
 
           if clients[patient_id].blank?
             demo = ActiveRecord::Base.connection.select_one <<EOF
@@ -203,6 +211,13 @@ EOF
         ext_id = ConceptName.find_by_name('External consultation').concept_id
         obs = Observation.where(concept_id: concept_id, value_coded: ext_id, person_id: patient_id)
         return (obs.blank? ? 'Resident' : 'External')
+      end
+
+      def pepfar_outcome_builder
+        cohort_builder = ARTService::Reports::CohortDisaggregated.new(name: 'Regimen switch', type: 'pepfar', 
+        start_date: @start_date.to_date, end_date: @end_date.to_date, rebuild: true)
+        cohort_builder.create_mysql_pepfar_current_defaulter
+        cohort_builder.create_mysql_pepfar_current_outcome
       end
 
     end
