@@ -28,8 +28,14 @@ class Api::V1::PatientsController < ApplicationController
 
   # GET /api/v1/search/patients
   def search_by_name_and_gender
-    given_name, family_name, gender = params.require(%i[given_name family_name gender])
-    render json: service.find_patients_by_name_and_gender(given_name, family_name, gender)
+    filters = params.permit(%i[given_name middle_name family_name birthdate gender])
+
+    patients = service.find_patients_by_name_and_gender(filters[:given_name],
+                                                        filters[:middle_name],
+                                                        filters[:family_name],
+                                                        filters[:gender])
+
+    render json: patients
   end
 
   def create
@@ -267,7 +273,7 @@ class Api::V1::PatientsController < ApplicationController
   end
 
   def service
-    @service ||= PatientService.new
+    PatientService.new
   end
 
   def filing_number_service
