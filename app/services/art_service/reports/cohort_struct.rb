@@ -69,8 +69,14 @@ module ARTService
         eleven_a: 'Regimen 11 A',
         twelve_a: 'Regimen 12 A',
         thirteen_a: 'Regimen 13 A',
+        fourteen_p: 'Regimen 14 P',
         fourteen_a: 'Regimen 14 A',
+        fifteen_p: 'Regimen 15 P',
         fifteen_a: 'Regimen 15 A',
+        sixteen_p: 'Regimen 16 P',
+        sixteen_a: 'Regimen 16 A',
+        seventeen_p: 'Regimen 17 P',
+        seventeen_a: 'Regimen 17 A',
         total_patients_with_side_effects: 'Any side effects',
         total_patients_on_family_planning: 'PIFP: Apprx. % of women who received Depo at ART in the last quarter',
         total_pregnant_women: 'Pregnant/BreastFeeding as of the last visit before end of quarter',
@@ -141,7 +147,15 @@ module ARTService
         quarterly_children_24_months_14_years_at_art_initiation: 'B: Children 24 months - 14 years at ART initiation (Quarterly)',
         adults_at_art_initiation: 'C: Adults 15 years or older at ART initiation',
         cum_adults_at_art_initiation: 'C: Adults 15 years or older at ART initiation (Cumulative)',
-        quarterly_adults_at_art_initiation: 'C: Adults 15 years or older at ART initiation (Quarterly)'
+        quarterly_adults_at_art_initiation: 'C: Adults 15 years or older at ART initiation (Quarterly)',
+        males_initiated_on_art_first_time: 'Newly initiated male patients',
+        cum_males_initiated_on_art_first_time: 'Newly initiated male patients (Cummulative)',
+        initial_pregnant_females_all_ages: 'Newly initiated pregnant females',
+        cum_initial_pregnant_females_all_ages: 'Newly initiated pregnant females (Cummulative)',
+        initial_non_pregnant_females_all_ages: 'Newly initiated non-pregnant females',
+        cum_initial_non_pregnant_females_all_ages: 'Newly initiated non-pregnant females (Cummulative)',
+        unknown_gender: 'All clients registered but has not gender specified',
+        cum_unknown_gender: 'All clients registered but has not gender specified (Cummulative)'
       }.freeze
 
       def initialize

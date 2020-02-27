@@ -34,6 +34,9 @@ module ARTService
         cohort_struct.cum_initiated_on_art_first_time = initiated_on_art_first_time(cum_start_date, end_date)
         cohort_struct.quarterly_initiated_on_art_first_time = initiated_on_art_first_time(quarter_start_date, end_date)
 
+        cohort_struct.males_initiated_on_art_first_time = males_initiated_on_art_first_time(start_date, end_date, cohort_struct.initiated_on_art_first_time)
+        cohort_struct.cum_males_initiated_on_art_first_time = males_initiated_on_art_first_time(cum_start_date, end_date, cohort_struct.cum_initiated_on_art_first_time)
+
         # Patients re-initiated on ART
         cohort_struct.re_initiated_on_art = re_initiated_on_art(start_date, end_date)
         cohort_struct.cum_re_initiated_on_art = re_initiated_on_art(cum_start_date, end_date)
@@ -54,6 +57,11 @@ module ARTService
         cohort_struct.cum_pregnant_females_all_ages = pregnant_females_all_ages(cum_start_date, end_date)
         cohort_struct.quarterly_pregnant_females_all_ages = pregnant_females_all_ages(quarter_start_date, end_date)
 
+        cohort_struct.initial_pregnant_females_all_ages = initial_females_all_ages(start_date, end_date, cohort_struct.pregnant_females_all_ages)
+        cohort_struct.cum_initial_pregnant_females_all_ages = initial_females_all_ages(cum_start_date, end_date, cohort_struct.cum_pregnant_females_all_ages)
+
+
+
         # Non-pregnant females (all ages)
         # Unique PatientProgram entries at the current location for those patients with at least one state ON ARVs
         # and earliest start date of the 'ON ARVs' state within the quarter and having gender of
@@ -62,6 +70,10 @@ module ARTService
         cohort_struct.non_pregnant_females = non_pregnant_females(start_date, end_date, cohort_struct.pregnant_females_all_ages)
         cohort_struct.cum_non_pregnant_females = non_pregnant_females(cum_start_date, end_date, cohort_struct.cum_pregnant_females_all_ages)
         cohort_struct.quarterly_non_pregnant_females = non_pregnant_females(quarter_start_date, end_date, cohort_struct.cum_pregnant_females_all_ages)
+
+        cohort_struct.initial_non_pregnant_females_all_ages = initial_females_all_ages(start_date, end_date, cohort_struct.non_pregnant_females.map{|a|a['patient_id']})
+        cohort_struct.cum_initial_non_pregnant_females_all_ages = initial_females_all_ages(cum_start_date, end_date, cohort_struct.cum_non_pregnant_females.map{|a|a['patient_id']})
+
 
         # Children below 24 months at ART initiation
         cohort_struct.children_below_24_months_at_art_initiation = children_below_24_months_at_art_initiation(start_date, end_date)
@@ -82,6 +94,11 @@ module ARTService
         cohort_struct.unknown_age = unknown_age(start_date, end_date)
         cohort_struct.cum_unknown_age = unknown_age(cum_start_date, end_date)
         cohort_struct.quarterly_unknown_age = unknown_age(quarter_start_date, end_date)
+
+        #Unknown gender
+        cohort_struct.unknown_gender = unknown_gender(start_date, end_date)
+        cohort_struct.cum_unknown_gender = unknown_gender(cum_start_date, end_date)
+
 
         # The following block - we are calculating all reason for starting for Quarter and Cumulative
         initiated_reason_on_art_concept = concept('REASON FOR ART ELIGIBILITY')
@@ -1650,6 +1667,14 @@ EOF
         )
       end
 
+      def unknown_gender(start_date, end_date)
+        ActiveRecord::Base.connection.select_all(
+          "SELECT * FROM temp_earliest_start_date
+          WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
+          AND gender IS NULL OR LENGTH(gender) < 1  GROUP BY patient_id;"
+        )
+      end
+
       def adults_at_art_initiation(start_date, end_date)
         ActiveRecord::Base.connection.select_all(
           "SELECT * FROM temp_earliest_start_date
@@ -1754,6 +1779,21 @@ EOF
         all_pregnant_females
       end
 
+      def initial_females_all_ages(start_date, end_date, data)
+        clients = []
+        women = ActiveRecord::Base.connection.select_all("
+        SELECT * FROM temp_earliest_start_date e
+        WHERE patient_id IN(#{(data.length > 0 ? data.join(',') : 0)})
+        AND date_enrolled BETWEEN '#{start_date.to_date}' AND '#{end_date.to_date}'
+        AND DATE(date_enrolled) = DATE(earliest_start_date);")
+
+        (women || []).each do |w|
+          clients << w
+        end
+
+        return clients
+      end
+
       def males(start_date, end_date)
         ActiveRecord::Base.connection.select_all(
           "SELECT * FROM temp_earliest_start_date t
@@ -1789,6 +1829,21 @@ EOF
             AND DATE(date_enrolled) = DATE(earliest_start_date)
           GROUP BY patient_id"
         )
+      end
+
+      def males_initiated_on_art_first_time(start_date, end_date, data)
+        clients = []
+        (data || []).each do |e|
+          gender = (e['gender'].length > 0 ? e['gender'].upcase.first : nil)
+          next if gender.blank?
+          next unless gender == 'M'
+          date_enrolled = e['date_enrolled'].to_date
+          start_date = start_date.to_date
+          end_date = end_date.to_date
+          (date_enrolled >= start_date && date_enrolled <= end_date) ? clients << e : next
+        end
+
+        return clients
       end
 
       def get_cum_start_date
