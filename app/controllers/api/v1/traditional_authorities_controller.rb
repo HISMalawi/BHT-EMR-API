@@ -11,7 +11,7 @@ class Api::V1::TraditionalAuthoritiesController < ApplicationController
   end
 
   def index
-    filters = params.permit(%i[district_id name])
+    filters = params.permit(%i[district_id name traditional_authority_id])
 
     if filters.empty?
       render json: paginate(TraditionalAuthority.order(:name))
