@@ -31,17 +31,25 @@ module ARTService
       ingredients.collect { |ingredient| ingredient_to_drug(ingredient) }
     end
 
-    def find_regimens(patient, lpv_drug_type: 'tabs')
+    def find_regimens_by_patient(patient, lpv_drug_type: 'tabs')
+      use_tb_dosage = use_tb_patient_dosage?(dtg_drugs.first, patient)
+      find_regimens(patient.weight, use_tb_dosage: use_tb_dosage,
+                                    lpv_drug_type: lpv_drug_type)
+    end
+
+    def find_regimens(patient_weight, use_tb_dosage: false, lpv_drug_type: 'tabs')
       ingredients = MohRegimenIngredient.where(
         '(CAST(min_weight AS DECIMAL(4, 1)) <= :weight
          AND CAST(max_weight AS DECIMAL(4, 1)) >= :weight)',
-        weight: patient.weight.to_f.round(1)
+        weight: patient_weight.to_f.round(1)
       )
 
-      raw_regimens = regimens_from_ingredients(ingredients, patient: patient,
-                                                            lpv_drug_type: lpv_drug_type)
+      raw_regimens = regimens_from_ingredients(ingredients, lpv_drug_type: lpv_drug_type)
       regimens = categorise_regimens(raw_regimens)
-      repackage_regimens_for_tb_patients!(regimens, patient)
+
+      if use_tb_dosage
+        repackage_regimens_for_tb_patients!(regimens, patient_weight)
+      end
 
       regimens
     end
@@ -322,15 +330,13 @@ module ARTService
     # Patient's on TB treatment require custom prescriptions for DTG
     # than what is prescribed normally. This function takes a regimens
     # structure and repackages the relevant regimens.
-    def repackage_regimens_for_tb_patients!(regimens, patient)
-      return unless use_tb_patient_dosage?(dtg_drugs.first, patient)
-
-      %w[13A 14A 15A].each do |regimen_name|
+    def repackage_regimens_for_tb_patients!(regimens, patient_weight)
+      %w[12A 13A 14A 15A].each do |regimen_name|
         regimen = regimens[regimen_name]
         next unless regimen
 
         if regimen_name == '13A'
-          inject_dtg_into_regimen!(regimen, patient)
+          inject_dtg_into_regimen!(regimen, patient_weight)
         else
           double_dose_dtg_in_regimen!(regimen)
         end
@@ -354,14 +360,14 @@ module ARTService
 
     # Adds DTG to the regimen for the non-standard double dosing of
     # drugs containing a DTG component (eg 13A).
-    def inject_dtg_into_regimen!(regimen, patient)
+    def inject_dtg_into_regimen!(regimen, patient_weight)
       @dtg_drug_ids ||= dtg_drugs.collect(&:drug_id)
 
       dtg_ingredient = MohRegimenIngredient.where(
         'drug_inventory_id IN (:drugs) AND CAST(min_weight AS DECIMAL(4, 1)) <= :weight
           AND CAST(max_weight AS DECIMAL(4, 1)) >= :weight',
         drugs: @dtg_drug_ids,
-        weight: patient.weight.to_f
+        weight: patient_weight
       ).first
 
       dtg = ingredient_to_drug(dtg_ingredient)
