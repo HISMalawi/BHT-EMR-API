@@ -76,7 +76,7 @@ bundle exec rake db:migrate
 
 # The following must run after all migrations have been run
 
-mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/sql/moh_regimens_v2018.sql
+mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/sql/moh_regimens_v2020.sql
 
 # For applications with long list of encounters e.g. ANC
 mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/sql/alter_user_property_table.sql
