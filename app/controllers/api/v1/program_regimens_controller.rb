@@ -26,6 +26,13 @@ class Api::V1::ProgramRegimensController < ApplicationController
     render json: service.custom_regimen_ingredients
   end
 
+  def regimen_extras
+    patient_weight = params.require(:weight)
+    name = params[:name]
+
+    render json: service.regimen_extras(patient_weight, name)
+  end
+
   def custom_tb_ingredients
     render json: service.custom_regimen_ingredients(patient: patient)
   end

@@ -115,6 +115,8 @@ Rails.application.routes.draw do
       resources :programs do
         resources :program_workflows, path: :workflows
         resources :program_regimens, path: :regimens
+        get 'regimen_extras' => 'program_regimens#regimen_extras'
+
         get 'booked_appointments' => 'program_appointments#booked_appointments'
         get 'scheduled_appointments' => 'program_appointments#scheduled_appointments'
         get 'next_available_arv_number' => 'program_patients#find_next_available_arv_number'

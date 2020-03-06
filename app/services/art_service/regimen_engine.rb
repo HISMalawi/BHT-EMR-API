@@ -22,6 +22,23 @@ module ARTService
       Drug.where(concept: arv_extras_concepts) + Drug.arv_drugs.order(name: :desc)
     end
 
+    def regimen_extras(patient_weight, name = nil)
+      name = %w[CPT INH] if %w[cpt cotrimoxazole].include?(name&.downcase) # CPT is always paired with INH
+      name ||= %w[Pyridoxine INH CPT]
+
+      drug_id ||= Drug.where(concept: Concept.joins(:concept_names)
+                                             .merge(ConceptName.where(name: name)))
+                      .select(:drug_id)
+                      .map(&:drug_id)
+
+      ingredients = MohRegimenIngredient.where(drug_inventory_id: drug_id)
+                                        .where('CAST(min_weight AS DECIMAL(4, 1)) <= :weight
+                                                AND CAST(max_weight AS DECIMAL(4, 1)) >= :weight',
+                                               weight: patient_weight.to_f)
+
+      ingredients.map { |ingredient| ingredient_to_drug(ingredient) }
+    end
+
     def find_starter_pack(regimen, weight)
       ingredients = MohRegimenIngredientStarterPack.joins(:regimen).where(
         moh_regimens: { regimen_index: regimen }
