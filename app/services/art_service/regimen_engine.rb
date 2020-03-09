@@ -23,7 +23,7 @@ module ARTService
     end
 
     def regimen_extras(patient_weight, name = nil)
-      name = %w[CPT INH] if %w[cpt cotrimoxazole].include?(name&.downcase) # CPT is always paired with INH
+      name = %w[INH Pyridoxine] if name&.casecmp?('INH') # INH is always paired with pyridoxine
       name ||= %w[Pyridoxine INH CPT]
 
       drug_id ||= Drug.where(concept: Concept.joins(:concept_names)
