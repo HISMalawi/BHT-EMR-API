@@ -36,7 +36,7 @@ module ARTService
     end
 
     def cohort_survival_analysis(quarter, age_group, regenerate)
-      cohort = REPORTS['COHORT_SURVIVAL_ANALYSIS'].new(type: 'survival_analysis', 
+      cohort = REPORTS['COHORT_SURVIVAL_ANALYSIS'].new(type: 'survival_analysis',
         name: 'survival_analysis', start_date: Date.today,
         end_date: Date.today, regenerate: regenerate)
       cohort.survival_analysis(quarter, age_group)
@@ -63,7 +63,7 @@ module ARTService
         name: 'drill_down', start_date: Date.today,
         end_date: Date.today).cohort_report_drill_down(id)
     end
-    
+
     def regimen_switch(start_date, end_date, pepfar)
       REPORTS['REGIMEN_SWITCH'].new(start_date: start_date.to_date,
         end_date: end_date.to_date).regimen_switch(pepfar)
@@ -84,9 +84,14 @@ module ARTService
         end_date: end_date.to_date, age_group: age_group, gender: gender, outcome_table: outcome_table).clients_given_ipt
     end
 
-    def arv_refill_periods(start_date, end_date, min_age, max_age)
+    def arv_refill_periods(start_date, end_date, min_age, max_age, org)
       REPORTS['ARV_REFILL_PERIODS'].new(start_date: start_date.to_date,
-        end_date: end_date.to_date, min_age: min_age, max_age: max_age).arv_refill_periods
+        end_date: end_date.to_date, min_age: min_age, max_age: max_age, org: org).arv_refill_periods
+    end
+
+    def tx_ml(start_date, end_date, age_group)
+      REPORTS['TX_ML'].new(start_date: start_date.to_date,
+        end_date: end_date.to_date, age_group: age_group).data
     end
 
     private

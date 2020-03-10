@@ -624,7 +624,7 @@ DECLARE set_died_concept_id INT;
 DECLARE set_timestamp DATETIME;
 DECLARE dispensed_quantity INT;
 
-SET set_timestamp = TIMESTAMP(CONCAT(DATE(visit_date), ' ', '23:59:59')); 
+SET set_timestamp = TIMESTAMP(CONCAT(DATE(visit_date), ' ', '23:59:59'));
 SET set_program_id = (SELECT program_id FROM program WHERE name ="HIV PROGRAM" LIMIT 1);
 
 SET set_patient_state = (SELECT state FROM `patient_state` INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id AND p.program_id = set_program_id WHERE (patient_state.voided = 0 AND p.voided = 0 AND p.program_id = program_id AND DATE(start_date) <= visit_date AND p.patient_id = patient_id) AND (patient_state.voided = 0) ORDER BY start_date DESC, patient_state.patient_state_id DESC, patient_state.date_created DESC LIMIT 1);
@@ -1515,7 +1515,7 @@ BEGIN
 
   SET @regimen_fifteen_a      := ('969,982');
 
-  
+
 
   SET @regimen_sixteen_p      := ('1043,1044');
   SET @regimen_sixteen_p_two  := ('954,1044');
@@ -1758,7 +1758,7 @@ BEGIN
     SET regimen_cat = ('16P');
   END IF;
   /* Regimen SIXTEEN ENDS............................................................................. */
-  
+
   /* Regimen SEVENTEEN............................................................................. */
   IF @drug_ids IN(@regimen_seventeen_a) AND (length(@drug_ids) = length(@regimen_seventeen_a)) THEN
     SET regimen_cat = ('17A');
@@ -2330,7 +2330,7 @@ BEGIN
       INNER JOIN orders o ON o.order_id = d.order_id
       WHERE d.drug_inventory_id IN(
         SELECT GROUP_CONCAT(DISTINCT(drug_id)
-        ORDER BY drug_id ASC) FROM drug WHERE 
+        ORDER BY drug_id ASC) FROM drug WHERE
         concept_id IN(SELECT concept_id FROM concept_name WHERE name IN('Isoniazid'))
       ) AND d.quantity > 0
       AND o.start_date = (SELECT MAX(start_date) FROM orders t WHERE t.patient_id = o.patient_id
@@ -2623,3 +2623,98 @@ BEGIN
   RETURN who_stage;
 END;
 
+
+/* ----------------- PEPFAR PATIENT OUTCOME ------------------------ */
+DROP FUNCTION IF EXISTS pepfar_patient_outcome;
+
+CREATE FUNCTION `pepfar_patient_outcome`(patient_id INT, visit_date date) RETURNS varchar(25)
+BEGIN
+DECLARE set_program_id INT;
+DECLARE set_patient_state INT;
+DECLARE set_outcome varchar(25);
+DECLARE set_date_started date;
+DECLARE set_patient_state_died INT;
+DECLARE set_died_concept_id INT;
+DECLARE set_timestamp DATETIME;
+DECLARE dispensed_quantity INT;
+
+SET set_timestamp = TIMESTAMP(CONCAT(DATE(visit_date), ' ', '23:59:59'));
+SET set_program_id = (SELECT program_id FROM program WHERE name ="HIV PROGRAM" LIMIT 1);
+
+SET set_patient_state = (SELECT state FROM `patient_state` INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id AND p.program_id = set_program_id WHERE (patient_state.voided = 0 AND p.voided = 0 AND p.program_id = program_id AND DATE(start_date) <= visit_date AND p.patient_id = patient_id) AND (patient_state.voided = 0) ORDER BY start_date DESC, patient_state.patient_state_id DESC, patient_state.date_created DESC LIMIT 1);
+
+IF set_patient_state = 1 THEN
+  SET set_patient_state = current_pepfar_defaulter(patient_id, set_timestamp);
+
+  IF set_patient_state = 1 THEN
+    SET set_outcome = 'Defaulted';
+  ELSE
+    SET set_outcome = 'Pre-ART (Continue)';
+  END IF;
+END IF;
+
+IF set_patient_state = 2   THEN
+  SET set_outcome = 'Patient transferred out';
+END IF;
+
+IF set_patient_state = 3 OR set_patient_state = 127 THEN
+  SET set_outcome = 'Patient died';
+END IF;
+
+/* ............... This block of code checks if the patient has any state that is "died" */
+IF set_patient_state != 3 AND set_patient_state != 127 THEN
+  SET set_patient_state_died = (SELECT state FROM `patient_state` INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id AND p.program_id = set_program_id WHERE (patient_state.voided = 0 AND p.voided = 0 AND p.program_id = program_id AND DATE(start_date) <= visit_date AND p.patient_id = patient_id) AND (patient_state.voided = 0) AND state = 3 ORDER BY patient_state.patient_state_id DESC, patient_state.date_created DESC, start_date DESC LIMIT 1);
+
+  SET set_died_concept_id = (SELECT concept_id FROM concept_name WHERE name = 'Patient died' LIMIT 1);
+
+  IF set_patient_state_died IN(SELECT program_workflow_state_id FROM program_workflow_state WHERE concept_id = set_died_concept_id AND retired = 0) THEN
+    SET set_outcome = 'Patient died';
+    SET set_patient_state = 3;
+  END IF;
+END IF;
+/* ....................  ends here .................... */
+
+
+IF set_patient_state = 6 THEN
+  SET set_outcome = 'Treatment stopped';
+END IF;
+
+IF set_patient_state = 7 THEN
+  SET set_patient_state = current_pepfar_defaulter(patient_id, set_timestamp);
+
+  IF set_patient_state = 1 THEN
+    SET set_outcome = 'Defaulted';
+  END IF;
+
+  IF set_patient_state = 0 THEN
+
+    SET dispensed_quantity = (SELECT d.quantity
+      FROM orders o
+      INNER JOIN drug_order d ON d.order_id = o.order_id
+      INNER JOIN drug ON drug.drug_id = d.drug_inventory_id
+      WHERE o.patient_id = patient_id AND d.drug_inventory_id IN(
+        SELECT DISTINCT(drug_id) FROM drug WHERE
+        concept_id IN(SELECT concept_id FROM concept_set WHERE concept_set = 1085)
+    ) AND DATE(o.start_date) <= visit_date AND d.quantity > 0 ORDER BY start_date DESC LIMIT 1);
+
+    IF dispensed_quantity > 0 THEN
+      SET set_outcome = 'On antiretrovirals';
+    END IF;
+  END IF;
+END IF;
+
+IF set_outcome IS NULL THEN
+  SET set_patient_state = current_pepfar_defaulter(patient_id, set_timestamp);
+
+  IF set_patient_state = 1 THEN
+    SET set_outcome = 'Defaulted';
+  END IF;
+
+  IF set_outcome IS NULL THEN
+    SET set_outcome = 'Unknown';
+  END IF;
+
+END IF;
+
+RETURN set_outcome;
+END;

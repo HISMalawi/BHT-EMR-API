@@ -297,4 +297,5 @@ Rails.application.routes.draw do
   get '/api/v1/database_backup_files', to: 'healthcheck#database_backup_files'
   get '/api/v1/user_system_usage', to: 'healthcheck#user_system_usage'
   get '/api/v1/arv_refill_periods', to: 'api/v1/reports#arv_refill_periods'
+  get '/api/v1/tx_ml', to: 'api/v1/reports#tx_ml'
 end

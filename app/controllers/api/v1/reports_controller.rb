@@ -84,7 +84,7 @@ class Api::V1::ReportsController < ApplicationController
 
     render json: stats
   end
-  
+
   def defaulter_list
     start_date, end_date, pepfar = params.require %i[start_date end_date pepfar]
     pepfar = (pepfar == 'true' ? true : false)
@@ -121,18 +121,23 @@ class Api::V1::ReportsController < ApplicationController
   end
 
   def screened_for_tb
-    render json: service.screened_for_tb(params[:start_date], params[:end_date], 
+    render json: service.screened_for_tb(params[:start_date], params[:end_date],
       params[:gender], params[:age_group], params[:outcome_table])
   end
 
   def clients_given_ipt
-    render json: service.clients_given_ipt(params[:start_date], params[:end_date], 
+    render json: service.clients_given_ipt(params[:start_date], params[:end_date],
       params[:gender], params[:age_group], params[:outcome_table])
   end
 
   def arv_refill_periods
-    render json: service.arv_refill_periods(params[:start_date], params[:end_date], 
-      params[:min_age], params[:max_age])
+    render json: service.arv_refill_periods(params[:start_date], params[:end_date],
+      params[:min_age], params[:max_age], params[:org])
+  end
+
+  def tx_ml
+    render json: service.tx_ml(params[:start_date], params[:end_date],
+      params[:age_group])
   end
 
   private
