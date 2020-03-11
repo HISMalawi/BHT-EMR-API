@@ -3507,6 +3507,220 @@
 			"protocolProfileBehavior": {}
 		},
 		{
+			"name": "Drugs",
+			"item": [
+				{
+					"name": "/api/v1/drugs (Retrieve drugs)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": ""
+						},
+						"description": "Retrieve all drugs or retrieve them by name and/or concept_set."
+					},
+					"response": [
+						{
+							"name": "Retrieve all drugs",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "nNcp7X6p60El",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:3000/api/v1/drugs",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"api",
+										"v1",
+										"drugs"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"592c59b6bf1dcb49eb1eca0ec160d443\""
+								},
+								{
+									"key": "Cache-Control",
+									"value": "max-age=0, private, must-revalidate"
+								},
+								{
+									"key": "X-Request-Id",
+									"value": "c9e93392-99b9-4c5c-8fe6-429599099790"
+								},
+								{
+									"key": "X-Runtime",
+									"value": "0.652381"
+								},
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"drug_id\": 611,\n        \"concept_id\": 2692,\n        \"name\": \"2RHZE+4RH\",\n        \"combination\": 0,\n        \"dosage_form\": null,\n        \"dose_strength\": null,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": null,\n        \"units\": \"\",\n        \"creator\": 1,\n        \"date_created\": \"2010-07-14T15:37:29.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9fb317c-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 610,\n        \"concept_id\": 7127,\n        \"name\": \"2SRHZ+7RH\",\n        \"combination\": 0,\n        \"dosage_form\": null,\n        \"dose_strength\": null,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": null,\n        \"units\": \"\",\n        \"creator\": 1,\n        \"date_created\": \"2010-07-14T15:29:52.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9fb30a0-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 612,\n        \"concept_id\": 2126,\n        \"name\": \"2SRHZE+1RHZE/5RHE\",\n        \"combination\": 0,\n        \"dosage_form\": null,\n        \"dose_strength\": null,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": null,\n        \"units\": \"\",\n        \"creator\": 1,\n        \"date_created\": \"2010-07-14T15:38:31.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9fb3258-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 42,\n        \"concept_id\": 628,\n        \"name\": \"3TC (Lamivudine 150mg tablet)\",\n        \"combination\": 0,\n        \"dosage_form\": 4020,\n        \"dose_strength\": 1,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": 3327,\n        \"units\": \"tab(s)\",\n        \"creator\": 1,\n        \"date_created\": \"2006-08-10T16:05:32.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9f5c39a-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [\n            {\n                \"id\": 37,\n                \"name\": \"3TC (Lamivudine 150mg tablet)\",\n                \"short_name\": \"3TC (Lamivudine 150mg tablet)\",\n                \"drug_inventory_id\": 42,\n                \"created_at\": \"2019-01-23T13:14:06.000+02:00\",\n                \"updated_at\": \"2019-01-23T13:14:06.000+02:00\"\n            }\n        ],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 41,\n        \"concept_id\": 628,\n        \"name\": \"3TC (Lamivudine syrup 10mg/mL from 100mL bottle)\",\n        \"combination\": 0,\n        \"dosage_form\": 4021,\n        \"dose_strength\": 10,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": 3327,\n        \"units\": \"ml\",\n        \"creator\": 1,\n        \"date_created\": \"2006-08-10T16:04:40.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9f5c2d2-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [\n            {\n                \"id\": 36,\n                \"name\": \"3TC (Lamivudine syrup 10mg / mL from 100mL bottle)\",\n                \"short_name\": \"3TC (Lamivudine syrup 10mg / mL from 100mL bottle)\",\n                \"drug_inventory_id\": 41,\n                \"created_at\": \"2019-01-23T13:14:06.000+02:00\",\n                \"updated_at\": \"2019-01-23T13:14:06.000+02:00\"\n            }\n        ],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 40,\n        \"concept_id\": 814,\n        \"name\": \"ABC (Abacavir 300mg tablet)\",\n        \"combination\": 0,\n        \"dosage_form\": 4020,\n        \"dose_strength\": 1,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": 3327,\n        \"units\": \"tab(s)\",\n        \"creator\": 1,\n        \"date_created\": \"2006-08-10T15:44:45.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9f5c200-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [\n            {\n                \"id\": 61,\n                \"name\": \"ABC (Abacavir 300mg tablet)\",\n                \"short_name\": \"ABC (Abacavir 300mg tablet)\",\n                \"drug_inventory_id\": 40,\n                \"created_at\": \"2019-01-23T13:14:06.000+02:00\",\n                \"updated_at\": \"2019-01-23T13:14:06.000+02:00\"\n            }\n        ],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 1044,\n        \"concept_id\": 7927,\n        \"name\": \"ABC/3TC (Abacavir and Lamivudine 120/60mg tablet)\",\n        \"combination\": 0,\n        \"dosage_form\": null,\n        \"dose_strength\": 1,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": null,\n        \"units\": \"tab(s)\",\n        \"creator\": 1,\n        \"date_created\": \"2019-12-12T14:00:33.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"02d4001c-1cd7-11ea-9843-caeb395e2aba\",\n        \"alternative_names\": [\n            {\n                \"id\": 80,\n                \"name\": \"ABC/3TC (Abacavir and Lamivudine 120/60mg tablet)\",\n                \"short_name\": \"ABC 120 / 3TC 60\",\n                \"drug_inventory_id\": 1044,\n                \"created_at\": \"2019-12-12T13:14:06.000+02:00\",\n                \"updated_at\": \"2019-12-12T13:14:06.000+02:00\"\n            }\n        ],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 733,\n        \"concept_id\": 7927,\n        \"name\": \"ABC/3TC (Abacavir and Lamivudine 60/30mg tablet)\",\n        \"combination\": 1,\n        \"dosage_form\": null,\n        \"dose_strength\": 1,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": null,\n        \"units\": \"tab(s)\",\n        \"creator\": 1,\n        \"date_created\": \"2011-07-01T11:32:34.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9fc7316-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [\n            {\n                \"id\": 15,\n                \"name\": \"Abacavir / Lamivudine 60 / 30mg\",\n                \"short_name\": \"ABC 60 / 3TC 30\",\n                \"drug_inventory_id\": 733,\n                \"created_at\": \"2018-12-19T09:13:49.000+02:00\",\n                \"updated_at\": \"2018-12-19T09:13:49.000+02:00\"\n            }\n        ],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 969,\n        \"concept_id\": 7927,\n        \"name\": \"ABC/3TC (Abacavir and Lamivudine 600/300mg tablet)\",\n        \"combination\": 0,\n        \"dosage_form\": null,\n        \"dose_strength\": 1,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": null,\n        \"units\": \"tab(s)\",\n        \"creator\": 1,\n        \"date_created\": \"2003-07-09T22:59:19.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9ff6e86-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [\n            {\n                \"id\": 24,\n                \"name\": \"Abacavir sulfate 600mg / Lamivudine 300mg\",\n                \"short_name\": \"ABC 600 / 3TC 300\",\n                \"drug_inventory_id\": 969,\n                \"created_at\": \"2018-12-19T09:13:49.000+02:00\",\n                \"updated_at\": \"2018-12-19T09:13:49.000+02:00\"\n            }\n        ],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 972,\n        \"concept_id\": 9523,\n        \"name\": \"ABC600/3TC300 + LPV/R 200/50\",\n        \"combination\": 1,\n        \"dosage_form\": null,\n        \"dose_strength\": 1,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": null,\n        \"units\": \"tabs\",\n        \"creator\": 1,\n        \"date_created\": \"2016-08-09T15:57:42.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"d77e2709-791d-48cd-b8ef-2e8335483f06\",\n        \"alternative_names\": [],\n        \"barcodes\": []\n    }\n]"
+						},
+						{
+							"name": "Retrieve drugs by concept set",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "nNcp7X6p60El",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:3000/api/v1/drugs?concept_set=Antiretroviral+drugs",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"api",
+										"v1",
+										"drugs"
+									],
+									"query": [
+										{
+											"key": "concept_set",
+											"value": "Antiretroviral+drugs"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"8167e9448516d03d78021c1dedbd1ad3\""
+								},
+								{
+									"key": "Cache-Control",
+									"value": "max-age=0, private, must-revalidate"
+								},
+								{
+									"key": "X-Request-Id",
+									"value": "b1213732-2f72-45e9-973e-0d35ab807515"
+								},
+								{
+									"key": "X-Runtime",
+									"value": "0.097636"
+								},
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"drug_id\": 42,\n        \"concept_id\": 628,\n        \"name\": \"3TC (Lamivudine 150mg tablet)\",\n        \"combination\": 0,\n        \"dosage_form\": 4020,\n        \"dose_strength\": 1,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": 3327,\n        \"units\": \"tab(s)\",\n        \"creator\": 1,\n        \"date_created\": \"2006-08-10T16:05:32.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9f5c39a-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [\n            {\n                \"id\": 37,\n                \"name\": \"3TC (Lamivudine 150mg tablet)\",\n                \"short_name\": \"3TC (Lamivudine 150mg tablet)\",\n                \"drug_inventory_id\": 42,\n                \"created_at\": \"2019-01-23T13:14:06.000+02:00\",\n                \"updated_at\": \"2019-01-23T13:14:06.000+02:00\"\n            }\n        ],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 41,\n        \"concept_id\": 628,\n        \"name\": \"3TC (Lamivudine syrup 10mg/mL from 100mL bottle)\",\n        \"combination\": 0,\n        \"dosage_form\": 4021,\n        \"dose_strength\": 10,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": 3327,\n        \"units\": \"ml\",\n        \"creator\": 1,\n        \"date_created\": \"2006-08-10T16:04:40.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9f5c2d2-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [\n            {\n                \"id\": 36,\n                \"name\": \"3TC (Lamivudine syrup 10mg / mL from 100mL bottle)\",\n                \"short_name\": \"3TC (Lamivudine syrup 10mg / mL from 100mL bottle)\",\n                \"drug_inventory_id\": 41,\n                \"created_at\": \"2019-01-23T13:14:06.000+02:00\",\n                \"updated_at\": \"2019-01-23T13:14:06.000+02:00\"\n            }\n        ],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 40,\n        \"concept_id\": 814,\n        \"name\": \"ABC (Abacavir 300mg tablet)\",\n        \"combination\": 0,\n        \"dosage_form\": 4020,\n        \"dose_strength\": 1,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": 3327,\n        \"units\": \"tab(s)\",\n        \"creator\": 1,\n        \"date_created\": \"2006-08-10T15:44:45.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9f5c200-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [\n            {\n                \"id\": 61,\n                \"name\": \"ABC (Abacavir 300mg tablet)\",\n                \"short_name\": \"ABC (Abacavir 300mg tablet)\",\n                \"drug_inventory_id\": 40,\n                \"created_at\": \"2019-01-23T13:14:06.000+02:00\",\n                \"updated_at\": \"2019-01-23T13:14:06.000+02:00\"\n            }\n        ],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 1044,\n        \"concept_id\": 7927,\n        \"name\": \"ABC/3TC (Abacavir and Lamivudine 120/60mg tablet)\",\n        \"combination\": 0,\n        \"dosage_form\": null,\n        \"dose_strength\": 1,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": null,\n        \"units\": \"tab(s)\",\n        \"creator\": 1,\n        \"date_created\": \"2019-12-12T14:00:33.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"02d4001c-1cd7-11ea-9843-caeb395e2aba\",\n        \"alternative_names\": [\n            {\n                \"id\": 80,\n                \"name\": \"ABC/3TC (Abacavir and Lamivudine 120/60mg tablet)\",\n                \"short_name\": \"ABC 120 / 3TC 60\",\n                \"drug_inventory_id\": 1044,\n                \"created_at\": \"2019-12-12T13:14:06.000+02:00\",\n                \"updated_at\": \"2019-12-12T13:14:06.000+02:00\"\n            }\n        ],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 733,\n        \"concept_id\": 7927,\n        \"name\": \"ABC/3TC (Abacavir and Lamivudine 60/30mg tablet)\",\n        \"combination\": 1,\n        \"dosage_form\": null,\n        \"dose_strength\": 1,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": null,\n        \"units\": \"tab(s)\",\n        \"creator\": 1,\n        \"date_created\": \"2011-07-01T11:32:34.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9fc7316-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [\n            {\n                \"id\": 15,\n                \"name\": \"Abacavir / Lamivudine 60 / 30mg\",\n                \"short_name\": \"ABC 60 / 3TC 30\",\n                \"drug_inventory_id\": 733,\n                \"created_at\": \"2018-12-19T09:13:49.000+02:00\",\n                \"updated_at\": \"2018-12-19T09:13:49.000+02:00\"\n            }\n        ],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 969,\n        \"concept_id\": 7927,\n        \"name\": \"ABC/3TC (Abacavir and Lamivudine 600/300mg tablet)\",\n        \"combination\": 0,\n        \"dosage_form\": null,\n        \"dose_strength\": 1,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": null,\n        \"units\": \"tab(s)\",\n        \"creator\": 1,\n        \"date_created\": \"2003-07-09T22:59:19.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9ff6e86-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [\n            {\n                \"id\": 24,\n                \"name\": \"Abacavir sulfate 600mg / Lamivudine 300mg\",\n                \"short_name\": \"ABC 600 / 3TC 300\",\n                \"drug_inventory_id\": 969,\n                \"created_at\": \"2018-12-19T09:13:49.000+02:00\",\n                \"updated_at\": \"2018-12-19T09:13:49.000+02:00\"\n            }\n        ],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 952,\n        \"concept_id\": 9232,\n        \"name\": \"ATV/(Atazanavir)\",\n        \"combination\": 0,\n        \"dosage_form\": null,\n        \"dose_strength\": 1,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": null,\n        \"units\": \"tab(s)\",\n        \"creator\": 1,\n        \"date_created\": \"2002-10-03T00:29:36.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9ff5f72-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [\n            {\n                \"id\": 74,\n                \"name\": \"ATV / (Atazanavir)\",\n                \"short_name\": \"ATV / (Atazanavir)\",\n                \"drug_inventory_id\": 952,\n                \"created_at\": \"2019-01-23T13:14:06.000+02:00\",\n                \"updated_at\": \"2019-01-23T13:14:06.000+02:00\"\n            }\n        ],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 932,\n        \"concept_id\": 9175,\n        \"name\": \"ATV/r (Atazanavir 300mg/Ritonavir 100mg)\",\n        \"combination\": 1,\n        \"dosage_form\": null,\n        \"dose_strength\": 1,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": null,\n        \"units\": \"tab(s)\",\n        \"creator\": 1,\n        \"date_created\": \"2013-06-06T09:13:40.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9fecec2-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [\n            {\n                \"id\": 21,\n                \"name\": \"Atazanavir / Ritonavir 300 / 100mg\",\n                \"short_name\": \"ATV/r 300/100\",\n                \"drug_inventory_id\": 932,\n                \"created_at\": \"2018-12-19T09:13:49.000+02:00\",\n                \"updated_at\": \"2018-12-19T09:13:49.000+02:00\"\n            }\n        ],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 37,\n        \"concept_id\": 797,\n        \"name\": \"AZT (Zidovudine 100mg tablet)\",\n        \"combination\": 0,\n        \"dosage_form\": 4020,\n        \"dose_strength\": 1,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": 3327,\n        \"units\": \"tab(s)\",\n        \"creator\": 1,\n        \"date_created\": \"2006-08-10T15:41:51.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9f5bfa8-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [\n            {\n                \"id\": 58,\n                \"name\": \"AZT (Zidovudine 100mg tablet)\",\n                \"short_name\": \"AZT (Zidovudine 100mg tablet)\",\n                \"drug_inventory_id\": 37,\n                \"created_at\": \"2019-01-23T13:14:06.000+02:00\",\n                \"updated_at\": \"2019-01-23T13:14:06.000+02:00\"\n            }\n        ],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 38,\n        \"concept_id\": 797,\n        \"name\": \"AZT (Zidovudine 300mg tablet)\",\n        \"combination\": 0,\n        \"dosage_form\": 4020,\n        \"dose_strength\": 1,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": 3327,\n        \"units\": \"tab(s)\",\n        \"creator\": 1,\n        \"date_created\": \"2006-08-10T15:42:22.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9f5c070-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [\n            {\n                \"id\": 59,\n                \"name\": \"AZT (Zidovudine 300mg tablet)\",\n                \"short_name\": \"AZT (Zidovudine 300mg tablet)\",\n                \"drug_inventory_id\": 38,\n                \"created_at\": \"2019-01-23T13:14:06.000+02:00\",\n                \"updated_at\": \"2019-01-23T13:14:06.000+02:00\"\n            }\n        ],\n        \"barcodes\": []\n    }\n]"
+						},
+						{
+							"name": "Retrieve drugs by name",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "nNcp7X6p60El",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:3000/api/v1/drugs?name=3TC",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"api",
+										"v1",
+										"drugs"
+									],
+									"query": [
+										{
+											"key": "name",
+											"value": "3TC"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"fe4db6e289af3ab6877b7201be585561\""
+								},
+								{
+									"key": "Cache-Control",
+									"value": "max-age=0, private, must-revalidate"
+								},
+								{
+									"key": "X-Request-Id",
+									"value": "efe1c6f7-eaf6-454c-989d-3864aa3b479d"
+								},
+								{
+									"key": "X-Runtime",
+									"value": "0.032211"
+								},
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"drug_id\": 42,\n        \"concept_id\": 628,\n        \"name\": \"3TC (Lamivudine 150mg tablet)\",\n        \"combination\": 0,\n        \"dosage_form\": 4020,\n        \"dose_strength\": 1,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": 3327,\n        \"units\": \"tab(s)\",\n        \"creator\": 1,\n        \"date_created\": \"2006-08-10T16:05:32.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9f5c39a-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [\n            {\n                \"id\": 37,\n                \"name\": \"3TC (Lamivudine 150mg tablet)\",\n                \"short_name\": \"3TC (Lamivudine 150mg tablet)\",\n                \"drug_inventory_id\": 42,\n                \"created_at\": \"2019-01-23T13:14:06.000+02:00\",\n                \"updated_at\": \"2019-01-23T13:14:06.000+02:00\"\n            }\n        ],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 41,\n        \"concept_id\": 628,\n        \"name\": \"3TC (Lamivudine syrup 10mg/mL from 100mL bottle)\",\n        \"combination\": 0,\n        \"dosage_form\": 4021,\n        \"dose_strength\": 10,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": 3327,\n        \"units\": \"ml\",\n        \"creator\": 1,\n        \"date_created\": \"2006-08-10T16:04:40.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9f5c2d2-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [\n            {\n                \"id\": 36,\n                \"name\": \"3TC (Lamivudine syrup 10mg / mL from 100mL bottle)\",\n                \"short_name\": \"3TC (Lamivudine syrup 10mg / mL from 100mL bottle)\",\n                \"drug_inventory_id\": 41,\n                \"created_at\": \"2019-01-23T13:14:06.000+02:00\",\n                \"updated_at\": \"2019-01-23T13:14:06.000+02:00\"\n            }\n        ],\n        \"barcodes\": []\n    }\n]"
+						}
+					]
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
 			"name": "Log in",
 			"request": {
 				"method": "POST",

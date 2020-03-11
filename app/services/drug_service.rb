@@ -26,6 +26,26 @@ class DrugService
     return classification == 'peads' ? stock_levels_graph_paeds : stock_levels_graph_adults
   end
 
+  def find_drugs(filters)
+    filters = filters.dup # May be modified
+    query = Drug.all
+
+    if filters.include?(:concept_set)
+      concept_set = filters.delete(:concept_set)
+      query = query.joins('INNER JOIN concept_set ON drug.concept_id = concept_set.concept_id')
+                   .joins('INNER JOIN concept_name ON concept_set.concept_set = concept_name.concept_id')
+                   .where('concept_name.name LIKE ?', concept_set)
+    end
+
+    if filters.include?(:name)
+      name = filters.delete(:name)
+      query = query.where('name LIKE ?', "#{name}%")
+    end
+
+    query = query.where(filters) unless filters.empty?
+    query.order(:name)
+  end
+
   private
 
   def save_drug_barcode(drug, quantity)
@@ -33,7 +53,7 @@ class DrugService
 
     DrugOrderBarcode.create(drug: drug, tabs: quantity)
   end
-  
+
   def stock_levels_graph_adults
   end
 
