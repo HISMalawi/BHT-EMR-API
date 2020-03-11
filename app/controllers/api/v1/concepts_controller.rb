@@ -6,8 +6,22 @@ class Api::V1::ConceptsController < ApplicationController
   end
 
   def index
-    name = params.permit(:name)[:name]
-    concepts = name ? Concept.joins(:concept_names).where('name like ?', name) : Concept
-    render json: paginate(concepts)
+    permitted_params = params.permit(:name, :set)
+    name = permitted_params[:name]
+    set = permitted_params[:set]
+
+    query = Concept.all
+
+    if name
+      query = query.joins(:concept_names)
+                   .merge(ConceptName.where(name: name))
+    end
+
+    if set
+      query = query.joins(:concept_sets)
+                   .merge(ConceptSet.where(concept_set: Concept.find_by_name(set)))
+    end
+
+    render json: paginate(query)
   end
 end
