@@ -66,6 +66,8 @@ module DispensationService
         obs_datetime: date
       )
 
+      update_stock_ledgers(observation)
+
       observation
     end
 
