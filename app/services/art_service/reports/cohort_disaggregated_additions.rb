@@ -3,7 +3,7 @@ module ARTService
   module Reports
 
     class CohortDisaggregatedAdditions
-      
+
       def initialize(start_date:, end_date:, gender:, age_group:, outcome_table:)
         @start_date = start_date
         @end_date = end_date
@@ -16,17 +16,17 @@ module ARTService
         return screened_for_tb_female_client('FP') if @gender == "pregnant"
         return screened_for_tb_female_client('FNP') if @gender == "fnp"
         return screened_for_tb_female_client('FBf') if @gender == "breastfeeding"
+        p @patient_outcome_table
+        gender = @gender.first.upcase
+        results = ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT
+            e.patient_id, cohort_disaggregated_age_group(e.birthdate, DATE('#{@end_date}')) age_group
+          FROM temp_earliest_start_date e
+          INNER JOIN #{@patient_outcome_table} USING(patient_id)
+          WHERE cum_outcome = 'On antiretrovirals' AND LEFT(gender,1) = '#{gender}'
+          GROUP BY e.patient_id HAVING  age_group = '#{@age_group}';
+        SQL
 
-        gender = @gender.first.upcase  
-        results = ActiveRecord::Base.connection.select_all <<EOF
-        SELECT 
-          e.patient_id, cohort_disaggregated_age_group(e.birthdate, DATE('#{@end_date}')) age_group
-        FROM temp_earliest_start_date e 
-        INNER JOIN #{@patient_outcome_table} USING(patient_id)
-        WHERE cum_outcome = 'On antiretrovirals' AND LEFT(gender,1) = '#{gender}'
-        GROUP BY e.patient_id HAVING  age_group = '#{@age_group}';
-EOF
-                                                    
         patient_ids = []
         (results || []).each do |r|
           patient_ids << r['patient_id'].to_i
@@ -34,24 +34,24 @@ EOF
 
         return tb_screened(patient_ids)
       end
-      
+
       def clients_given_ipt
         return female_clients_given_ipt('FP') if @gender == "pregnant"
         return female_clients_given_ipt('FNP') if @gender == "fnp"
         return female_clients_given_ipt('FBf') if @gender == "breastfeeding"
 
-        gender = @gender.first.upcase  
+        gender = @gender.first.upcase
 
         patient_ids = []
         results = ActiveRecord::Base.connection.select_all <<EOF
-        SELECT 
+        SELECT
           e.patient_id, cohort_disaggregated_age_group(e.birthdate, DATE('#{@end_date}')) age_group
-        FROM temp_earliest_start_date e 
+        FROM temp_earliest_start_date e
         INNER JOIN #{@patient_outcome_table} USING(patient_id)
         WHERE cum_outcome = 'On antiretrovirals' AND LEFT(gender,1) = '#{gender}'
         GROUP BY e.patient_id HAVING  age_group = '#{@age_group}';
 EOF
-                                                    
+
         (results || []).each do |row|
           patient_ids << row['patient_id'].to_i
         end
@@ -60,7 +60,7 @@ EOF
         return given_ipt(patient_ids)
       end
 
-      private 
+      private
 
       def given_ipt(patient_ids)
         return [] if patient_ids.blank?
@@ -105,43 +105,43 @@ EOF
           AND DATE(e.date_enrolled) <= '#{@end_date.to_date}';
 EOF
 
-        
+
         patient_ids = []
         (results || []).each do |r|
           patient_ids << r['patient_id'].to_i unless r['tb_status'].blank?
         end
 
         return patient_ids
-      end 
+      end
 
       def screened_for_tb_female_client(group)
         results = ActiveRecord::Base.connection.select_all <<EOF
         SELECT patient_id FROM temp_disaggregated
         WHERE maternal_status = "#{group}" GROUP BY patient_id;
 EOF
-                                                    
+
         patient_ids = []
         (results || []).each do |r|
           patient_ids << r['patient_id'].to_i
         end
-        
+
         return tb_screened(patient_ids)
       end
-      
+
       def female_clients_given_ipt(group)
         results = ActiveRecord::Base.connection.select_all <<EOF
         SELECT patient_id FROM temp_disaggregated
         WHERE maternal_status = "#{group}" GROUP BY patient_id;
 EOF
-                                                    
+
         patient_ids = []
         (results || []).each do |r|
           patient_ids << r['patient_id'].to_i
         end
-        
+
         return given_ipt(patient_ids)
       end
-      
+
     end
 
 

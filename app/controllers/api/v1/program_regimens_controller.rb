@@ -1,7 +1,13 @@
 class Api::V1::ProgramRegimensController < ApplicationController
   def index
-    regimens = service.find_regimens patient
-    render json: regimens
+    if params[:patient_id]
+      render json: service.find_regimens_by_patient(patient)
+    elsif params[:weight]
+      use_tb_dosage = params[:tb_dosage]&.casecmp?('true')
+      render json: service.find_regimens(params[:weight], use_tb_dosage: use_tb_dosage)
+    else
+      render json: { error: 'patient_id or weight required' }, status: :bad_request
+    end
   end
 
   def find_starter_pack
@@ -18,6 +24,13 @@ class Api::V1::ProgramRegimensController < ApplicationController
 
   def custom_regimen_ingredients
     render json: service.custom_regimen_ingredients
+  end
+
+  def regimen_extras
+    patient_weight = params.require(:weight)
+    name = params[:name]
+
+    render json: service.regimen_extras(patient_weight, name)
   end
 
   def custom_tb_ingredients

@@ -332,6 +332,14 @@ pre code {
             </ul>
         </li>
         
+        
+        <li>
+            <a href="#folder-programs">Programs</a>
+            <ul>
+                
+            </ul>
+        </li>
+        
     </ul>
 </div>
 
@@ -592,7 +600,7 @@ Content-Type: application/json
                         <ul class="nav nav-tabs" role="tablist">
                             
                             <li role="presentation" class="active">
-                                <a href="#request-log-in-responses-d0d35adc-604e-43f7-9360-be08512bf6f3" data-toggle="tab">
+                                <a href="#request-log-in-responses-3f624b0d-7521-48b3-b31d-91b764e4de5a" data-toggle="tab">
                                     
                                     Response
                                     
@@ -602,7 +610,7 @@ Content-Type: application/json
                         </ul>
                         <div class="tab-content">
                             
-                            <div class="tab-pane active" id="request-log-in-responses-d0d35adc-604e-43f7-9360-be08512bf6f3">
+                            <div class="tab-pane active" id="request-log-in-responses-3f624b0d-7521-48b3-b31d-91b764e4de5a">
                                 <table class="table table-bordered">
                                     <tr><th style="width: 20%;">Status</th><td>200 OK</td></tr>
                                     
@@ -737,1222 +745,6 @@ Authorization: lQUitqOlCOo6</code></pre>
                     </div>
 
                     
-                    <div>
-                        <ul class="nav nav-tabs" role="tablist">
-                            
-                            <li role="presentation" class="active">
-                                <a href="#request-retrieve-registered-people-responses-25a2c370-139f-44eb-87d8-994612fd1fb3" data-toggle="tab">
-                                    
-                                    Retrieve registered people
-                                    
-                                </a>
-                            </li>
-                            
-                            <li role="presentation">
-                                <a href="#request-retrieve-registered-people-responses-c7998ac8-d285-40ed-bad3-0bd865e26e14" data-toggle="tab">
-                                    
-                                    Retrieve a list of registered people
-                                    
-                                </a>
-                            </li>
-                            
-                        </ul>
-                        <div class="tab-content">
-                            
-                            <div class="tab-pane active" id="request-retrieve-registered-people-responses-25a2c370-139f-44eb-87d8-994612fd1fb3">
-                                <table class="table table-bordered">
-                                    <tr><th style="width: 20%;">Status</th><td>200 OK</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">cache-control</th><td>max-age=0, private, must-revalidate</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">content-type</th><td>application/json; charset=utf-8</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">etag</th><td>W/"31a7b8b0ac7e454b390651bdd39dd495"</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">transfer-encoding</th><td>chunked</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">vary</th><td>Origin</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">x-request-id</th><td>68a1a4cd-c71c-4168-9798-c4f6411d9535</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">x-runtime</th><td>0.102691</td></tr>
-                                    
-                                    
-                                    
-                                    <tr><td class="response-text-sample" colspan="2">
-                                        <pre><code>{
-    "person_id": 1,
-    "gender": "M",
-    "birthdate": null,
-    "birthdate_estimated": 0,
-    "dead": 0,
-    "death_date": null,
-    "cause_of_death": null,
-    "creator": 1,
-    "date_created": "2005-01-01T00:00:00.000Z",
-    "changed_by": 1,
-    "date_changed": "2009-09-04T16:37:23.000Z",
-    "voided": 0,
-    "voided_by": null,
-    "date_voided": null,
-    "void_reason": null,
-    "uuid": "10661cb8-b6c1-11e0-bc9e-544249e32ba2",
-    "names": [
-        {
-            "person_name_id": 1,
-            "preferred": 1,
-            "person_id": 1,
-            "prefix": null,
-            "given_name": "Super",
-            "middle_name": "",
-            "family_name_prefix": null,
-            "family_name": "User",
-            "family_name2": null,
-            "family_name_suffix": null,
-            "degree": null,
-            "creator": 1,
-            "date_created": "2005-01-01T00:00:00.000Z",
-            "voided": 0,
-            "voided_by": null,
-            "date_voided": null,
-            "void_reason": null,
-            "changed_by": null,
-            "date_changed": null,
-            "uuid": "109f4cb8-b6c1-11e0-bc9e-544249e32ba2"
-        },
-        {
-            "person_name_id": 104,
-            "preferred": 0,
-            "person_id": 1,
-            "prefix": null,
-            "given_name": "tionge",
-            "middle_name": null,
-            "family_name_prefix": null,
-            "family_name": "banda",
-            "family_name2": null,
-            "family_name_suffix": null,
-            "degree": null,
-            "creator": 1,
-            "date_created": "2011-09-14T00:00:00.000Z",
-            "voided": 0,
-            "voided_by": null,
-            "date_voided": null,
-            "void_reason": null,
-            "changed_by": null,
-            "date_changed": null,
-            "uuid": "350af0d9-59ca-11e3-b7e9-003018a9e11f"
-        }
-    ],
-    "addresses": [
-        {
-            "person_address_id": 24,
-            "person_id": 1,
-            "preferred": 0,
-            "address1": "Unknown",
-            "address2": null,
-            "city_village": "Area 10",
-            "state_province": null,
-            "postal_code": null,
-            "country": null,
-            "latitude": null,
-            "longitude": null,
-            "creator": 1,
-            "date_created": "2011-09-14T00:00:00.000Z",
-            "voided": 0,
-            "voided_by": null,
-            "date_voided": null,
-            "void_reason": null,
-            "county_district": null,
-            "neighborhood_cell": null,
-            "region": null,
-            "subregion": null,
-            "township_division": null,
-            "uuid": "350b0426-59ca-11e3-b7e9-003018a9e11f"
-        }
-    ],
-    "person_attributes": [
-        {
-            "person_attribute_id": 271,
-            "person_id": 1,
-            "value": "Area 10",
-            "person_attribute_type_id": 18,
-            "creator": 1,
-            "date_created": "2011-09-14T00:00:00.000Z",
-            "changed_by": null,
-            "date_changed": null,
-            "voided": 0,
-            "voided_by": null,
-            "date_voided": null,
-            "void_reason": null,
-            "uuid": "350b0502-59ca-11e3-b7e9-003018a9e11f"
-        },
-        {
-            "person_attribute_id": 272,
-            "person_id": 1,
-            "value": "Unknown",
-            "person_attribute_type_id": 19,
-            "creator": 1,
-            "date_created": "2011-09-14T00:00:00.000Z",
-            "changed_by": null,
-            "date_changed": null,
-            "voided": 0,
-            "voided_by": null,
-            "date_voided": null,
-            "void_reason": null,
-            "uuid": "350b0426-59ca-11e3-b7e9-003018a9e11f"
-        },
-        {
-            "person_attribute_id": 273,
-            "person_id": 1,
-            "value": "Other",
-            "person_attribute_type_id": 13,
-            "creator": 1,
-            "date_created": "2011-09-14T00:00:00.000Z",
-            "changed_by": null,
-            "date_changed": null,
-            "voided": 0,
-            "voided_by": null,
-            "date_voided": null,
-            "void_reason": null,
-            "uuid": "350b0fab-59ca-11e3-b7e9-003018a9e11f"
-        },
-        {
-            "person_attribute_id": 274,
-            "person_id": 1,
-            "value": "Not Available",
-            "person_attribute_type_id": 14,
-            "creator": 1,
-            "date_created": "2011-09-14T00:00:00.000Z",
-            "changed_by": null,
-            "date_changed": null,
-            "voided": 0,
-            "voided_by": null,
-            "date_voided": null,
-            "void_reason": null,
-            "uuid": "350b11b7-59ca-11e3-b7e9-003018a9e11f"
-        }
-    ]
-}</code></pre>
-                                    </td></tr>
-                                    
-                                    
-                                </table>
-                            </div>
-                            
-                            <div class="tab-pane" id="request-retrieve-registered-people-responses-c7998ac8-d285-40ed-bad3-0bd865e26e14">
-                                <table class="table table-bordered">
-                                    <tr><th style="width: 20%;">Status</th><td>200 OK</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">cache-control</th><td>max-age=0, private, must-revalidate</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">content-type</th><td>application/json; charset=utf-8</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">etag</th><td>W/"dfa1fa3bd078b49122c992cc9d721dbf"</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">transfer-encoding</th><td>chunked</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">x-request-id</th><td>47647e92-6594-4012-98dd-fdfd4817253e</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">x-runtime</th><td>0.314544</td></tr>
-                                    
-                                    
-                                    
-                                    <tr><td class="response-text-sample" colspan="2">
-                                        <pre><code>[
-    {
-        "person_id": 1,
-        "gender": "M",
-        "birthdate": null,
-        "birthdate_estimated": 0,
-        "dead": 0,
-        "death_date": null,
-        "cause_of_death": null,
-        "creator": 1,
-        "date_created": "2005-01-01T00:00:00.000Z",
-        "changed_by": 1,
-        "date_changed": "2009-09-04T16:37:23.000Z",
-        "voided": 0,
-        "voided_by": null,
-        "date_voided": null,
-        "void_reason": null,
-        "uuid": "10661cb8-b6c1-11e0-bc9e-544249e32ba2",
-        "names": [
-            {
-                "person_name_id": 1,
-                "preferred": 1,
-                "person_id": 1,
-                "prefix": null,
-                "given_name": "Super",
-                "middle_name": "",
-                "family_name_prefix": null,
-                "family_name": "User",
-                "family_name2": null,
-                "family_name_suffix": null,
-                "degree": null,
-                "creator": 1,
-                "date_created": "2005-01-01T00:00:00.000Z",
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "changed_by": null,
-                "date_changed": null,
-                "uuid": "109f4cb8-b6c1-11e0-bc9e-544249e32ba2"
-            },
-            {
-                "person_name_id": 104,
-                "preferred": 0,
-                "person_id": 1,
-                "prefix": null,
-                "given_name": "tionge",
-                "middle_name": null,
-                "family_name_prefix": null,
-                "family_name": "banda",
-                "family_name2": null,
-                "family_name_suffix": null,
-                "degree": null,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "changed_by": null,
-                "date_changed": null,
-                "uuid": "350af0d9-59ca-11e3-b7e9-003018a9e11f"
-            }
-        ],
-        "addresses": [
-            {
-                "person_address_id": 24,
-                "person_id": 1,
-                "preferred": 0,
-                "address1": "Unknown",
-                "address2": null,
-                "city_village": "Area 10",
-                "state_province": null,
-                "postal_code": null,
-                "country": null,
-                "latitude": null,
-                "longitude": null,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "county_district": null,
-                "neighborhood_cell": null,
-                "region": null,
-                "subregion": null,
-                "township_division": null,
-                "uuid": "350b0426-59ca-11e3-b7e9-003018a9e11f"
-            }
-        ],
-        "person_attributes": [
-            {
-                "person_attribute_id": 271,
-                "person_id": 1,
-                "value": "Area 10",
-                "person_attribute_type_id": 18,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "changed_by": null,
-                "date_changed": null,
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "uuid": "350b0502-59ca-11e3-b7e9-003018a9e11f"
-            },
-            {
-                "person_attribute_id": 272,
-                "person_id": 1,
-                "value": "Unknown",
-                "person_attribute_type_id": 19,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "changed_by": null,
-                "date_changed": null,
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "uuid": "350b0426-59ca-11e3-b7e9-003018a9e11f"
-            },
-            {
-                "person_attribute_id": 273,
-                "person_id": 1,
-                "value": "Other",
-                "person_attribute_type_id": 13,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "changed_by": null,
-                "date_changed": null,
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "uuid": "350b0fab-59ca-11e3-b7e9-003018a9e11f"
-            },
-            {
-                "person_attribute_id": 274,
-                "person_id": 1,
-                "value": "Not Available",
-                "person_attribute_type_id": 14,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "changed_by": null,
-                "date_changed": null,
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "uuid": "350b11b7-59ca-11e3-b7e9-003018a9e11f"
-            }
-        ]
-    },
-    {
-        "person_id": 2,
-        "gender": "F",
-        "birthdate": null,
-        "birthdate_estimated": 0,
-        "dead": 0,
-        "death_date": null,
-        "cause_of_death": null,
-        "creator": 1,
-        "date_created": "2011-09-14T00:00:00.000Z",
-        "changed_by": null,
-        "date_changed": null,
-        "voided": 0,
-        "voided_by": null,
-        "date_voided": null,
-        "void_reason": null,
-        "uuid": "3536add6-59ca-11e3-b7e9-003018a9e11f",
-        "names": [
-            {
-                "person_name_id": 105,
-                "preferred": 0,
-                "person_id": 2,
-                "prefix": null,
-                "given_name": "tionge",
-                "middle_name": null,
-                "family_name_prefix": null,
-                "family_name": "binali",
-                "family_name2": null,
-                "family_name_suffix": null,
-                "degree": null,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "changed_by": null,
-                "date_changed": null,
-                "uuid": "3536b15b-59ca-11e3-b7e9-003018a9e11f"
-            }
-        ],
-        "addresses": [],
-        "person_attributes": []
-    },
-    {
-        "person_id": 3,
-        "gender": "F",
-        "birthdate": "1988-07-01",
-        "birthdate_estimated": 1,
-        "dead": 0,
-        "death_date": null,
-        "cause_of_death": null,
-        "creator": 1,
-        "date_created": "2011-09-14T00:00:00.000Z",
-        "changed_by": null,
-        "date_changed": null,
-        "voided": 0,
-        "voided_by": null,
-        "date_voided": null,
-        "void_reason": null,
-        "uuid": "355b1384-59ca-11e3-b7e9-003018a9e11f",
-        "names": [
-            {
-                "person_name_id": 106,
-                "preferred": 0,
-                "person_id": 3,
-                "prefix": null,
-                "given_name": "tionge",
-                "middle_name": null,
-                "family_name_prefix": null,
-                "family_name": "binali",
-                "family_name2": null,
-                "family_name_suffix": null,
-                "degree": null,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "changed_by": null,
-                "date_changed": null,
-                "uuid": "355b16b4-59ca-11e3-b7e9-003018a9e11f"
-            }
-        ],
-        "addresses": [
-            {
-                "person_address_id": 25,
-                "person_id": 3,
-                "preferred": 0,
-                "address1": "Unknown",
-                "address2": null,
-                "city_village": "Amidu",
-                "state_province": null,
-                "postal_code": null,
-                "country": null,
-                "latitude": null,
-                "longitude": null,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "county_district": null,
-                "neighborhood_cell": null,
-                "region": null,
-                "subregion": null,
-                "township_division": null,
-                "uuid": "355b23ae-59ca-11e3-b7e9-003018a9e11f"
-            }
-        ],
-        "person_attributes": [
-            {
-                "person_attribute_id": 275,
-                "person_id": 3,
-                "value": "Amidu",
-                "person_attribute_type_id": 18,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "changed_by": null,
-                "date_changed": null,
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "uuid": "355b24cb-59ca-11e3-b7e9-003018a9e11f"
-            },
-            {
-                "person_attribute_id": 276,
-                "person_id": 3,
-                "value": "Unknown",
-                "person_attribute_type_id": 19,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "changed_by": null,
-                "date_changed": null,
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "uuid": "355b23ae-59ca-11e3-b7e9-003018a9e11f"
-            },
-            {
-                "person_attribute_id": 277,
-                "person_id": 3,
-                "value": "Farmer",
-                "person_attribute_type_id": 13,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "changed_by": null,
-                "date_changed": null,
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "uuid": "355b2d7f-59ca-11e3-b7e9-003018a9e11f"
-            },
-            {
-                "person_attribute_id": 278,
-                "person_id": 3,
-                "value": "Not Available",
-                "person_attribute_type_id": 14,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "changed_by": null,
-                "date_changed": null,
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "uuid": "355b2f51-59ca-11e3-b7e9-003018a9e11f"
-            }
-        ]
-    },
-    {
-        "person_id": 4,
-        "gender": "F",
-        "birthdate": null,
-        "birthdate_estimated": 0,
-        "dead": 0,
-        "death_date": null,
-        "cause_of_death": null,
-        "creator": 1,
-        "date_created": "2011-09-14T00:00:00.000Z",
-        "changed_by": null,
-        "date_changed": null,
-        "voided": 0,
-        "voided_by": null,
-        "date_voided": null,
-        "void_reason": null,
-        "uuid": "357fe29b-59ca-11e3-b7e9-003018a9e11f",
-        "names": [
-            {
-                "person_name_id": 107,
-                "preferred": 0,
-                "person_id": 4,
-                "prefix": null,
-                "given_name": "tionge",
-                "middle_name": null,
-                "family_name_prefix": null,
-                "family_name": "binali",
-                "family_name2": null,
-                "family_name_suffix": null,
-                "degree": null,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "changed_by": null,
-                "date_changed": null,
-                "uuid": "357fe617-59ca-11e3-b7e9-003018a9e11f"
-            }
-        ],
-        "addresses": [],
-        "person_attributes": []
-    },
-    {
-        "person_id": 5,
-        "gender": "M",
-        "birthdate": "2010-07-01",
-        "birthdate_estimated": 1,
-        "dead": 0,
-        "death_date": null,
-        "cause_of_death": null,
-        "creator": 1,
-        "date_created": "2011-09-14T00:00:00.000Z",
-        "changed_by": null,
-        "date_changed": null,
-        "voided": 0,
-        "voided_by": null,
-        "date_voided": null,
-        "void_reason": null,
-        "uuid": "35a3e4e4-59ca-11e3-b7e9-003018a9e11f",
-        "names": [
-            {
-                "person_name_id": 108,
-                "preferred": 0,
-                "person_id": 5,
-                "prefix": null,
-                "given_name": "dan",
-                "middle_name": null,
-                "family_name_prefix": null,
-                "family_name": "lewis",
-                "family_name2": null,
-                "family_name_suffix": null,
-                "degree": null,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "changed_by": null,
-                "date_changed": null,
-                "uuid": "35a3e814-59ca-11e3-b7e9-003018a9e11f"
-            }
-        ],
-        "addresses": [
-            {
-                "person_address_id": 26,
-                "person_id": 5,
-                "preferred": 0,
-                "address1": "Unknown",
-                "address2": null,
-                "city_village": "Area 12",
-                "state_province": null,
-                "postal_code": null,
-                "country": null,
-                "latitude": null,
-                "longitude": null,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "county_district": null,
-                "neighborhood_cell": null,
-                "region": null,
-                "subregion": null,
-                "township_division": null,
-                "uuid": "35a3f542-59ca-11e3-b7e9-003018a9e11f"
-            }
-        ],
-        "person_attributes": [
-            {
-                "person_attribute_id": 279,
-                "person_id": 5,
-                "value": "Area 12",
-                "person_attribute_type_id": 18,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "changed_by": null,
-                "date_changed": null,
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "uuid": "35a3f5fd-59ca-11e3-b7e9-003018a9e11f"
-            },
-            {
-                "person_attribute_id": 280,
-                "person_id": 5,
-                "value": "Unknown",
-                "person_attribute_type_id": 19,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "changed_by": null,
-                "date_changed": null,
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "uuid": "35a3f542-59ca-11e3-b7e9-003018a9e11f"
-            },
-            {
-                "person_attribute_id": 281,
-                "person_id": 5,
-                "value": "Other",
-                "person_attribute_type_id": 13,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "changed_by": null,
-                "date_changed": null,
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "uuid": "35a3fe9a-59ca-11e3-b7e9-003018a9e11f"
-            },
-            {
-                "person_attribute_id": 282,
-                "person_id": 5,
-                "value": "Not Available",
-                "person_attribute_type_id": 14,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "changed_by": null,
-                "date_changed": null,
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "uuid": "35a40550-59ca-11e3-b7e9-003018a9e11f"
-            }
-        ]
-    },
-    {
-        "person_id": 6,
-        "gender": "F",
-        "birthdate": null,
-        "birthdate_estimated": 0,
-        "dead": 0,
-        "death_date": null,
-        "cause_of_death": null,
-        "creator": 1,
-        "date_created": "2011-09-14T00:00:00.000Z",
-        "changed_by": null,
-        "date_changed": null,
-        "voided": 0,
-        "voided_by": null,
-        "date_voided": null,
-        "void_reason": null,
-        "uuid": "35c8b4b1-59ca-11e3-b7e9-003018a9e11f",
-        "names": [
-            {
-                "person_name_id": 109,
-                "preferred": 0,
-                "person_id": 6,
-                "prefix": null,
-                "given_name": "tionge",
-                "middle_name": null,
-                "family_name_prefix": null,
-                "family_name": "banda",
-                "family_name2": null,
-                "family_name_suffix": null,
-                "degree": null,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "changed_by": null,
-                "date_changed": null,
-                "uuid": "35c8b77d-59ca-11e3-b7e9-003018a9e11f"
-            }
-        ],
-        "addresses": [],
-        "person_attributes": []
-    },
-    {
-        "person_id": 7,
-        "gender": "M",
-        "birthdate": "1985-05-04",
-        "birthdate_estimated": 1,
-        "dead": 0,
-        "death_date": null,
-        "cause_of_death": null,
-        "creator": 1,
-        "date_created": "2011-09-14T00:00:00.000Z",
-        "changed_by": null,
-        "date_changed": null,
-        "voided": 0,
-        "voided_by": null,
-        "date_voided": null,
-        "void_reason": null,
-        "uuid": "35ecf73d-59ca-11e3-b7e9-003018a9e11f",
-        "names": [
-            {
-                "person_name_id": 110,
-                "preferred": 0,
-                "person_id": 7,
-                "prefix": null,
-                "given_name": "Chikafa",
-                "middle_name": null,
-                "family_name_prefix": null,
-                "family_name": "Kalima",
-                "family_name2": null,
-                "family_name_suffix": null,
-                "degree": null,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "changed_by": null,
-                "date_changed": null,
-                "uuid": "35ecfaa0-59ca-11e3-b7e9-003018a9e11f"
-            }
-        ],
-        "addresses": [
-            {
-                "person_address_id": 27,
-                "person_id": 7,
-                "preferred": 0,
-                "address1": "Unknown",
-                "address2": null,
-                "city_village": "Area 10",
-                "state_province": null,
-                "postal_code": null,
-                "country": null,
-                "latitude": null,
-                "longitude": null,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "county_district": null,
-                "neighborhood_cell": null,
-                "region": null,
-                "subregion": null,
-                "township_division": null,
-                "uuid": "35ed07bf-59ca-11e3-b7e9-003018a9e11f"
-            }
-        ],
-        "person_attributes": [
-            {
-                "person_attribute_id": 283,
-                "person_id": 7,
-                "value": "Area 10",
-                "person_attribute_type_id": 18,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "changed_by": null,
-                "date_changed": null,
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "uuid": "35ed0875-59ca-11e3-b7e9-003018a9e11f"
-            },
-            {
-                "person_attribute_id": 284,
-                "person_id": 7,
-                "value": "Unknown",
-                "person_attribute_type_id": 19,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "changed_by": null,
-                "date_changed": null,
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "uuid": "35ed07bf-59ca-11e3-b7e9-003018a9e11f"
-            },
-            {
-                "person_attribute_id": 285,
-                "person_id": 7,
-                "value": "Other",
-                "person_attribute_type_id": 13,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "changed_by": null,
-                "date_changed": null,
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "uuid": "35ed1137-59ca-11e3-b7e9-003018a9e11f"
-            },
-            {
-                "person_attribute_id": 286,
-                "person_id": 7,
-                "value": "Not Available",
-                "person_attribute_type_id": 14,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "changed_by": null,
-                "date_changed": null,
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "uuid": "35ed131a-59ca-11e3-b7e9-003018a9e11f"
-            }
-        ]
-    },
-    {
-        "person_id": 8,
-        "gender": "F",
-        "birthdate": "1978-02-17",
-        "birthdate_estimated": 1,
-        "dead": 0,
-        "death_date": null,
-        "cause_of_death": null,
-        "creator": 1,
-        "date_created": "2011-09-14T00:00:00.000Z",
-        "changed_by": null,
-        "date_changed": null,
-        "voided": 0,
-        "voided_by": null,
-        "date_voided": null,
-        "void_reason": null,
-        "uuid": "361106f8-59ca-11e3-b7e9-003018a9e11f",
-        "names": [
-            {
-                "person_name_id": 111,
-                "preferred": 0,
-                "person_id": 8,
-                "prefix": null,
-                "given_name": "Chikafa",
-                "middle_name": null,
-                "family_name_prefix": null,
-                "family_name": "Binauli",
-                "family_name2": null,
-                "family_name_suffix": null,
-                "degree": null,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "changed_by": null,
-                "date_changed": null,
-                "uuid": "36110a36-59ca-11e3-b7e9-003018a9e11f"
-            }
-        ],
-        "addresses": [
-            {
-                "person_address_id": 28,
-                "person_id": 8,
-                "preferred": 0,
-                "address1": "Kauma",
-                "address2": null,
-                "city_village": "Lilongwe City",
-                "state_province": null,
-                "postal_code": null,
-                "country": null,
-                "latitude": null,
-                "longitude": null,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "county_district": null,
-                "neighborhood_cell": null,
-                "region": null,
-                "subregion": null,
-                "township_division": null,
-                "uuid": "36111746-59ca-11e3-b7e9-003018a9e11f"
-            }
-        ],
-        "person_attributes": [
-            {
-                "person_attribute_id": 287,
-                "person_id": 8,
-                "value": "Lilongwe City",
-                "person_attribute_type_id": 18,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "changed_by": null,
-                "date_changed": null,
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "uuid": "36111801-59ca-11e3-b7e9-003018a9e11f"
-            },
-            {
-                "person_attribute_id": 288,
-                "person_id": 8,
-                "value": "Kauma",
-                "person_attribute_type_id": 19,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "changed_by": null,
-                "date_changed": null,
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "uuid": "36111746-59ca-11e3-b7e9-003018a9e11f"
-            },
-            {
-                "person_attribute_id": 289,
-                "person_id": 8,
-                "value": "Other",
-                "person_attribute_type_id": 13,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "changed_by": null,
-                "date_changed": null,
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "uuid": "361120b9-59ca-11e3-b7e9-003018a9e11f"
-            },
-            {
-                "person_attribute_id": 290,
-                "person_id": 8,
-                "value": "0999252525",
-                "person_attribute_type_id": 14,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "changed_by": null,
-                "date_changed": null,
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "uuid": "36112294-59ca-11e3-b7e9-003018a9e11f"
-            }
-        ]
-    },
-    {
-        "person_id": 9,
-        "gender": "M",
-        "birthdate": "2010-07-01",
-        "birthdate_estimated": 1,
-        "dead": 0,
-        "death_date": null,
-        "cause_of_death": null,
-        "creator": 1,
-        "date_created": "2011-09-14T00:00:00.000Z",
-        "changed_by": null,
-        "date_changed": null,
-        "voided": 0,
-        "voided_by": null,
-        "date_voided": null,
-        "void_reason": null,
-        "uuid": "363571e1-59ca-11e3-b7e9-003018a9e11f",
-        "names": [
-            {
-                "person_name_id": 112,
-                "preferred": 0,
-                "person_id": 9,
-                "prefix": null,
-                "given_name": "simon",
-                "middle_name": null,
-                "family_name_prefix": null,
-                "family_name": "lewis",
-                "family_name2": null,
-                "family_name_suffix": null,
-                "degree": null,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "changed_by": null,
-                "date_changed": null,
-                "uuid": "36357461-59ca-11e3-b7e9-003018a9e11f"
-            }
-        ],
-        "addresses": [
-            {
-                "person_address_id": 29,
-                "person_id": 9,
-                "preferred": 0,
-                "address1": "Unknown",
-                "address2": null,
-                "city_village": "Area 11",
-                "state_province": null,
-                "postal_code": null,
-                "country": null,
-                "latitude": null,
-                "longitude": null,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "county_district": null,
-                "neighborhood_cell": null,
-                "region": null,
-                "subregion": null,
-                "township_division": null,
-                "uuid": "363580c5-59ca-11e3-b7e9-003018a9e11f"
-            }
-        ],
-        "person_attributes": [
-            {
-                "person_attribute_id": 291,
-                "person_id": 9,
-                "value": "Area 11",
-                "person_attribute_type_id": 18,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "changed_by": null,
-                "date_changed": null,
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "uuid": "3635818b-59ca-11e3-b7e9-003018a9e11f"
-            },
-            {
-                "person_attribute_id": 292,
-                "person_id": 9,
-                "value": "Unknown",
-                "person_attribute_type_id": 19,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "changed_by": null,
-                "date_changed": null,
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "uuid": "363580c5-59ca-11e3-b7e9-003018a9e11f"
-            },
-            {
-                "person_attribute_id": 293,
-                "person_id": 9,
-                "value": "Other",
-                "person_attribute_type_id": 13,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "changed_by": null,
-                "date_changed": null,
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "uuid": "36358a85-59ca-11e3-b7e9-003018a9e11f"
-            },
-            {
-                "person_attribute_id": 294,
-                "person_id": 9,
-                "value": "Not Available",
-                "person_attribute_type_id": 14,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "changed_by": null,
-                "date_changed": null,
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "uuid": "36358c5e-59ca-11e3-b7e9-003018a9e11f"
-            }
-        ]
-    },
-    {
-        "person_id": 10,
-        "gender": "F",
-        "birthdate": null,
-        "birthdate_estimated": 0,
-        "dead": 0,
-        "death_date": null,
-        "cause_of_death": null,
-        "creator": 1,
-        "date_created": "2011-09-14T00:00:00.000Z",
-        "changed_by": null,
-        "date_changed": null,
-        "voided": 0,
-        "voided_by": null,
-        "date_voided": null,
-        "void_reason": null,
-        "uuid": "365a39a9-59ca-11e3-b7e9-003018a9e11f",
-        "names": [
-            {
-                "person_name_id": 113,
-                "preferred": 0,
-                "person_id": 10,
-                "prefix": null,
-                "given_name": "tionge",
-                "middle_name": null,
-                "family_name_prefix": null,
-                "family_name": "lewis",
-                "family_name2": null,
-                "family_name_suffix": null,
-                "degree": null,
-                "creator": 1,
-                "date_created": "2011-09-14T00:00:00.000Z",
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "changed_by": null,
-                "date_changed": null,
-                "uuid": "365a3d26-59ca-11e3-b7e9-003018a9e11f"
-            }
-        ],
-        "addresses": [],
-        "person_attributes": []
-    }
-]</code></pre>
-                                    </td></tr>
-                                    
-                                    
-                                </table>
-                            </div>
-                            
-                        </div>
-                    </div>
-                    
 
                     <hr>
                 </div>
@@ -1986,74 +778,6 @@ Content-Type: application/json</code></pre>
                         </div>
                     </div>
 
-                    
-                    <div>
-                        <ul class="nav nav-tabs" role="tablist">
-                            
-                            <li role="presentation" class="active">
-                                <a href="#request-retrieve-specific-person-names-responses-b289ec60-accb-4af4-84fe-1194a4fb21d9" data-toggle="tab">
-                                    
-                                    Response
-                                    
-                                </a>
-                            </li>
-                            
-                        </ul>
-                        <div class="tab-content">
-                            
-                            <div class="tab-pane active" id="request-retrieve-specific-person-names-responses-b289ec60-accb-4af4-84fe-1194a4fb21d9">
-                                <table class="table table-bordered">
-                                    <tr><th style="width: 20%;">Status</th><td>200 OK</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">cache-control</th><td>max-age=0, private, must-revalidate</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">content-type</th><td>application/json; charset=utf-8</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">etag</th><td>W/"a479514f8b17c5a0591b89b465dbbc0a"</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">transfer-encoding</th><td>chunked</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">vary</th><td>Origin</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">x-request-id</th><td>c5cfde6c-96af-43cf-894f-29bf7e7a5775</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">x-runtime</th><td>0.054193</td></tr>
-                                    
-                                    
-                                    
-                                    <tr><td class="response-text-sample" colspan="2">
-                                        <pre><code>[
-    {
-        "person_name_id": 18872,
-        "preferred": 0,
-        "person_id": 18904,
-        "prefix": null,
-        "given_name": "William",
-        "middle_name": null,
-        "family_name_prefix": null,
-        "family_name": "Kabamkena",
-        "family_name2": null,
-        "family_name_suffix": null,
-        "degree": null,
-        "creator": 26,
-        "date_created": "2012-02-20T00:00:00.000Z",
-        "voided": 0,
-        "voided_by": null,
-        "date_voided": null,
-        "void_reason": null,
-        "changed_by": null,
-        "date_changed": null,
-        "uuid": "ba0fd78b-59d5-11e3-b7e9-003018a9e11f"
-    }
-]</code></pre>
-                                    </td></tr>
-                                    
-                                    
-                                </table>
-                            </div>
-                            
-                        </div>
-                    </div>
                     
 
                     <hr>
@@ -2109,7 +833,7 @@ Authorization: pm93gA9WzEGB
                         <ul class="nav nav-tabs" role="tablist">
                             
                             <li role="presentation" class="active">
-                                <a href="#request-creating-users-responses-f8230fdd-96a6-404b-bdb5-3fb9563d023e" data-toggle="tab">
+                                <a href="#request-creating-users-responses-3b20152d-e410-4e8d-8c50-d87a6ea7a097" data-toggle="tab">
                                     
                                     Response
                                     
@@ -2119,7 +843,7 @@ Authorization: pm93gA9WzEGB
                         </ul>
                         <div class="tab-content">
                             
-                            <div class="tab-pane active" id="request-creating-users-responses-f8230fdd-96a6-404b-bdb5-3fb9563d023e">
+                            <div class="tab-pane active" id="request-creating-users-responses-3b20152d-e410-4e8d-8c50-d87a6ea7a097">
                                 <table class="table table-bordered">
                                     <tr><th style="width: 20%;">Status</th><td>201 Created</td></tr>
                                     
@@ -2253,7 +977,7 @@ parse 127.0.0.1:3000/api/v1/users: first path segment in URL cannot contain colo
                         <ul class="nav nav-tabs" role="tablist">
                             
                             <li role="presentation" class="active">
-                                <a href="#request-retrieving-all-users-responses-c0b5779b-3ac7-417a-8532-b6f4358cccfb" data-toggle="tab">
+                                <a href="#request-retrieving-all-users-responses-d31ead75-8667-48b3-a7ca-a8fe71c6f33c" data-toggle="tab">
                                     
                                     Retrieving all users
                                     
@@ -2261,7 +985,7 @@ parse 127.0.0.1:3000/api/v1/users: first path segment in URL cannot contain colo
                             </li>
                             
                             <li role="presentation">
-                                <a href="#request-retrieving-all-users-responses-404f3758-8eeb-4835-b0b2-eff33e2a7583" data-toggle="tab">
+                                <a href="#request-retrieving-all-users-responses-4f86338b-937e-4e33-8616-910a63bf15f5" data-toggle="tab">
                                     
                                     Retrieving all users
                                     
@@ -2271,7 +995,7 @@ parse 127.0.0.1:3000/api/v1/users: first path segment in URL cannot contain colo
                         </ul>
                         <div class="tab-content">
                             
-                            <div class="tab-pane active" id="request-retrieving-all-users-responses-c0b5779b-3ac7-417a-8532-b6f4358cccfb">
+                            <div class="tab-pane active" id="request-retrieving-all-users-responses-d31ead75-8667-48b3-a7ca-a8fe71c6f33c">
                                 <table class="table table-bordered">
                                     <tr><th style="width: 20%;">Status</th><td>200 OK</td></tr>
                                     
@@ -2538,7 +1262,7 @@ parse 127.0.0.1:3000/api/v1/users: first path segment in URL cannot contain colo
                                 </table>
                             </div>
                             
-                            <div class="tab-pane" id="request-retrieving-all-users-responses-404f3758-8eeb-4835-b0b2-eff33e2a7583">
+                            <div class="tab-pane" id="request-retrieving-all-users-responses-4f86338b-937e-4e33-8616-910a63bf15f5">
                                 <table class="table table-bordered">
                                     <tr><th style="width: 20%;">Status</th><td>200 OK</td></tr>
                                     
@@ -2656,7 +1380,7 @@ Authorization: qTt9Wg2zs3oC</code></pre>
                         <ul class="nav nav-tabs" role="tablist">
                             
                             <li role="presentation" class="active">
-                                <a href="#request-retrieving-all-roles-responses-eab25e2a-8fc0-4040-a6b4-943f9697c233" data-toggle="tab">
+                                <a href="#request-retrieving-all-roles-responses-0440c5a2-e233-4ccc-9a30-23224cc11b71" data-toggle="tab">
                                     
                                     Retrieving all roles
                                     
@@ -2664,7 +1388,7 @@ Authorization: qTt9Wg2zs3oC</code></pre>
                             </li>
                             
                             <li role="presentation">
-                                <a href="#request-retrieving-all-roles-responses-78491855-54e6-4a6f-b354-7f053808fdf0" data-toggle="tab">
+                                <a href="#request-retrieving-all-roles-responses-98f1357e-4246-4a49-8d07-2a65e38f555c" data-toggle="tab">
                                     
                                     Retrieving all roles
                                     
@@ -2674,7 +1398,7 @@ Authorization: qTt9Wg2zs3oC</code></pre>
                         </ul>
                         <div class="tab-content">
                             
-                            <div class="tab-pane active" id="request-retrieving-all-roles-responses-eab25e2a-8fc0-4040-a6b4-943f9697c233">
+                            <div class="tab-pane active" id="request-retrieving-all-roles-responses-0440c5a2-e233-4ccc-9a30-23224cc11b71">
                                 <table class="table table-bordered">
                                     <tr><th style="width: 20%;">Status</th><td>200 OK</td></tr>
                                     
@@ -2841,7 +1565,7 @@ Authorization: qTt9Wg2zs3oC</code></pre>
                                 </table>
                             </div>
                             
-                            <div class="tab-pane" id="request-retrieving-all-roles-responses-78491855-54e6-4a6f-b354-7f053808fdf0">
+                            <div class="tab-pane" id="request-retrieving-all-roles-responses-98f1357e-4246-4a49-8d07-2a65e38f555c">
                                 <table class="table table-bordered">
                                     <tr><th style="width: 20%;">Status</th><td>200 OK</td></tr>
                                     
@@ -2946,7 +1670,7 @@ Content-Type: application/json
                         <ul class="nav nav-tabs" role="tablist">
                             
                             <li role="presentation" class="active">
-                                <a href="#request-creating-encounters-responses-221c2bb0-b695-40e4-80dc-0e707dddd018" data-toggle="tab">
+                                <a href="#request-creating-encounters-responses-26f06b86-516c-4577-9f15-daef154d959d" data-toggle="tab">
                                     
                                     Response
                                     
@@ -2956,7 +1680,7 @@ Content-Type: application/json
                         </ul>
                         <div class="tab-content">
                             
-                            <div class="tab-pane active" id="request-creating-encounters-responses-221c2bb0-b695-40e4-80dc-0e707dddd018">
+                            <div class="tab-pane active" id="request-creating-encounters-responses-26f06b86-516c-4577-9f15-daef154d959d">
                                 <table class="table table-bordered">
                                     <tr><th style="width: 20%;">Status</th><td>201 Created</td></tr>
                                     
@@ -3117,7 +1841,7 @@ Accept: application/json</code></pre>
                         <ul class="nav nav-tabs" role="tablist">
                             
                             <li role="presentation" class="active">
-                                <a href="#request-retrieve-encounters-responses-32836b58-138c-4f4e-8d4f-6ea416d1d643" data-toggle="tab">
+                                <a href="#request-retrieve-encounters-responses-3062ccc0-febd-4e61-aa55-d2bb4ea6c752" data-toggle="tab">
                                     
                                     Response
                                     
@@ -3127,7 +1851,7 @@ Accept: application/json</code></pre>
                         </ul>
                         <div class="tab-content">
                             
-                            <div class="tab-pane active" id="request-retrieve-encounters-responses-32836b58-138c-4f4e-8d4f-6ea416d1d643">
+                            <div class="tab-pane active" id="request-retrieve-encounters-responses-3062ccc0-febd-4e61-aa55-d2bb4ea6c752">
                                 <table class="table table-bordered">
                                     <tr><th style="width: 20%;">Status</th><td>200 OK</td></tr>
                                     
@@ -3445,324 +2169,16 @@ Accept: application/json</code></pre>
                         </ul>
                         <div class="tab-content">
                             <div class="tab-pane active" id="request-people-search-example-curl">
-                                <pre><code class="hljs curl">curl -X GET -H "Authorization: p6GLbZKqf0Fj" "localhost:3000/api/v1/search/people?given_name=Julius&family_name=Phiri&gender=M&page_size=20&page=0"</code></pre>
+                                <pre><code class="hljs curl">curl -X GET -H "Authorization: MYqCMX507mcc" "localhost:3000/api/v1/search/people?middle_name=Test&gender=M&page_size=20&page=0"</code></pre>
                             </div>
                             <div class="tab-pane" id="request-people-search-example-http">
-                                <pre><code class="hljs http">GET 3000/api/v1/search/people?given_name=Julius&family_name=Phiri&gender=M&page_size=20&page=0 HTTP/1.1
+                                <pre><code class="hljs http">GET 3000/api/v1/search/people?middle_name=Test&gender=M&page_size=20&page=0 HTTP/1.1
 Host: 
-Authorization: p6GLbZKqf0Fj</code></pre>
+Authorization: MYqCMX507mcc</code></pre>
                             </div>
                         </div>
                     </div>
 
-                    
-                    <div>
-                        <ul class="nav nav-tabs" role="tablist">
-                            
-                            <li role="presentation" class="active">
-                                <a href="#request-people-search-responses-6730f83a-d82e-4a29-8fa9-d3e9a3ea07f1" data-toggle="tab">
-                                    
-                                    Response
-                                    
-                                </a>
-                            </li>
-                            
-                        </ul>
-                        <div class="tab-content">
-                            
-                            <div class="tab-pane active" id="request-people-search-responses-6730f83a-d82e-4a29-8fa9-d3e9a3ea07f1">
-                                <table class="table table-bordered">
-                                    <tr><th style="width: 20%;">Status</th><td>200 OK</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">cache-control</th><td>max-age=0, private, must-revalidate</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">content-type</th><td>application/json; charset=utf-8</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">etag</th><td>W/"78a1d38faf8ab140822f822ee1fd1d15"</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">transfer-encoding</th><td>chunked</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">vary</th><td>Origin</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">x-request-id</th><td>e56ee22a-1911-4d82-984e-bd2e80827e5f</td></tr>
-                                    
-                                    <tr><th style="width: 20%;">x-runtime</th><td>0.189721</td></tr>
-                                    
-                                    
-                                    
-                                    <tr><td class="response-text-sample" colspan="2">
-                                        <pre><code>[
-    {
-        "person_id": 2304,
-        "gender": "M",
-        "birthdate": "1989-07-01",
-        "birthdate_estimated": 1,
-        "dead": 0,
-        "death_date": null,
-        "cause_of_death": null,
-        "creator": 6,
-        "date_created": "2011-09-17T00:00:00.000Z",
-        "changed_by": null,
-        "date_changed": null,
-        "voided": 0,
-        "voided_by": null,
-        "date_voided": null,
-        "void_reason": null,
-        "uuid": "0d8c03de-59cc-11e3-b7e9-003018a9e11f",
-        "names": [
-            {
-                "person_name_id": 2383,
-                "preferred": 0,
-                "person_id": 2304,
-                "prefix": null,
-                "given_name": "Julius",
-                "middle_name": null,
-                "family_name_prefix": null,
-                "family_name": "Phiri",
-                "family_name2": null,
-                "family_name_suffix": null,
-                "degree": null,
-                "creator": 6,
-                "date_created": "2011-09-17T00:00:00.000Z",
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "changed_by": null,
-                "date_changed": null,
-                "uuid": "0d8c0771-59cc-11e3-b7e9-003018a9e11f"
-            }
-        ],
-        "addresses": [
-            {
-                "person_address_id": 1195,
-                "person_id": 2304,
-                "preferred": 0,
-                "address1": "School",
-                "address2": null,
-                "city_village": "Chileka",
-                "state_province": null,
-                "postal_code": null,
-                "country": null,
-                "latitude": null,
-                "longitude": null,
-                "creator": 6,
-                "date_created": "2011-09-17T00:00:00.000Z",
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "county_district": null,
-                "neighborhood_cell": null,
-                "region": null,
-                "subregion": null,
-                "township_division": null,
-                "uuid": "0d8c153d-59cc-11e3-b7e9-003018a9e11f"
-            }
-        ],
-        "person_attributes": [
-            {
-                "person_attribute_id": 4954,
-                "person_id": 2304,
-                "value": "Chileka",
-                "person_attribute_type_id": 18,
-                "creator": 6,
-                "date_created": "2011-09-17T00:00:00.000Z",
-                "changed_by": null,
-                "date_changed": null,
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "uuid": "0d8c15f6-59cc-11e3-b7e9-003018a9e11f"
-            },
-            {
-                "person_attribute_id": 4955,
-                "person_id": 2304,
-                "value": "School",
-                "person_attribute_type_id": 19,
-                "creator": 6,
-                "date_created": "2011-09-17T00:00:00.000Z",
-                "changed_by": null,
-                "date_changed": null,
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "uuid": "0d8c153d-59cc-11e3-b7e9-003018a9e11f"
-            },
-            {
-                "person_attribute_id": 4956,
-                "person_id": 2304,
-                "value": "Other",
-                "person_attribute_type_id": 13,
-                "creator": 6,
-                "date_created": "2011-09-17T00:00:00.000Z",
-                "changed_by": null,
-                "date_changed": null,
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "uuid": "0d8c1eeb-59cc-11e3-b7e9-003018a9e11f"
-            },
-            {
-                "person_attribute_id": 4957,
-                "person_id": 2304,
-                "value": "Not Available",
-                "person_attribute_type_id": 14,
-                "creator": 6,
-                "date_created": "2011-09-17T00:00:00.000Z",
-                "changed_by": null,
-                "date_changed": null,
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "uuid": "0d8c20be-59cc-11e3-b7e9-003018a9e11f"
-            }
-        ]
-    },
-    {
-        "person_id": 4956,
-        "gender": "M",
-        "birthdate": "1980-07-21",
-        "birthdate_estimated": 1,
-        "dead": 0,
-        "death_date": null,
-        "cause_of_death": null,
-        "creator": 1,
-        "date_created": "2011-12-06T00:00:00.000Z",
-        "changed_by": null,
-        "date_changed": null,
-        "voided": 0,
-        "voided_by": null,
-        "date_voided": null,
-        "void_reason": null,
-        "uuid": "a844a1ea-59cd-11e3-b7e9-003018a9e11f",
-        "names": [
-            {
-                "person_name_id": 5001,
-                "preferred": 0,
-                "person_id": 4956,
-                "prefix": null,
-                "given_name": "Julius",
-                "middle_name": null,
-                "family_name_prefix": null,
-                "family_name": "Phiri",
-                "family_name2": null,
-                "family_name_suffix": null,
-                "degree": null,
-                "creator": 1,
-                "date_created": "2011-12-06T00:00:00.000Z",
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "changed_by": null,
-                "date_changed": null,
-                "uuid": "a844a4d1-59cd-11e3-b7e9-003018a9e11f"
-            }
-        ],
-        "addresses": [
-            {
-                "person_address_id": 2959,
-                "person_id": 4956,
-                "preferred": 0,
-                "address1": "School",
-                "address2": null,
-                "city_village": "Dowa",
-                "state_province": null,
-                "postal_code": null,
-                "country": null,
-                "latitude": null,
-                "longitude": null,
-                "creator": 1,
-                "date_created": "2011-12-06T00:00:00.000Z",
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "county_district": null,
-                "neighborhood_cell": null,
-                "region": null,
-                "subregion": null,
-                "township_division": null,
-                "uuid": "a844b56a-59cd-11e3-b7e9-003018a9e11f"
-            }
-        ],
-        "person_attributes": [
-            {
-                "person_attribute_id": 12010,
-                "person_id": 4956,
-                "value": "Dowa",
-                "person_attribute_type_id": 18,
-                "creator": 1,
-                "date_created": "2011-12-06T00:00:00.000Z",
-                "changed_by": null,
-                "date_changed": null,
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "uuid": "a844b62b-59cd-11e3-b7e9-003018a9e11f"
-            },
-            {
-                "person_attribute_id": 12011,
-                "person_id": 4956,
-                "value": "School",
-                "person_attribute_type_id": 19,
-                "creator": 1,
-                "date_created": "2011-12-06T00:00:00.000Z",
-                "changed_by": null,
-                "date_changed": null,
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "uuid": "a844b56a-59cd-11e3-b7e9-003018a9e11f"
-            },
-            {
-                "person_attribute_id": 12012,
-                "person_id": 4956,
-                "value": "Farmer",
-                "person_attribute_type_id": 13,
-                "creator": 1,
-                "date_created": "2011-12-06T00:00:00.000Z",
-                "changed_by": null,
-                "date_changed": null,
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "uuid": "a844beeb-59cd-11e3-b7e9-003018a9e11f"
-            },
-            {
-                "person_attribute_id": 12013,
-                "person_id": 4956,
-                "value": "Not Available",
-                "person_attribute_type_id": 14,
-                "creator": 1,
-                "date_created": "2011-12-06T00:00:00.000Z",
-                "changed_by": null,
-                "date_changed": null,
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "uuid": "a844c0b6-59cd-11e3-b7e9-003018a9e11f"
-            }
-        ]
-    }
-]</code></pre>
-                                    </td></tr>
-                                    
-                                    
-                                </table>
-                            </div>
-                            
-                        </div>
-                    </div>
                     
 
                     <hr>
@@ -3801,7 +2217,7 @@ Authorization: JDIt0GpZyR3I</code></pre>
                         <ul class="nav nav-tabs" role="tablist">
                             
                             <li role="presentation" class="active">
-                                <a href="#request-retrieve-encounter-types-responses-e737b366-a6c3-4107-87a5-9ebbb67e784e" data-toggle="tab">
+                                <a href="#request-retrieve-encounter-types-responses-5c17b7af-c918-4e95-a5ea-74ce86156cbb" data-toggle="tab">
                                     
                                     Response
                                     
@@ -3811,7 +2227,7 @@ Authorization: JDIt0GpZyR3I</code></pre>
                         </ul>
                         <div class="tab-content">
                             
-                            <div class="tab-pane active" id="request-retrieve-encounter-types-responses-e737b366-a6c3-4107-87a5-9ebbb67e784e">
+                            <div class="tab-pane active" id="request-retrieve-encounter-types-responses-5c17b7af-c918-4e95-a5ea-74ce86156cbb">
                                 <table class="table table-bordered">
                                     <tr><th style="width: 20%;">Status</th><td>200 OK</td></tr>
                                     
@@ -3985,7 +2401,7 @@ Authorization: JDIt0GpZyR3I</code></pre>
                         <ul class="nav nav-tabs" role="tablist">
                             
                             <li role="presentation" class="active">
-                                <a href="#request-retrieve-observations-responses-f956c61a-5627-4d62-8d31-806040b61d75" data-toggle="tab">
+                                <a href="#request-retrieve-observations-responses-a2b5815e-313e-4cc4-b71f-5db663f4d76d" data-toggle="tab">
                                     
                                     Response
                                     
@@ -3995,7 +2411,7 @@ Authorization: JDIt0GpZyR3I</code></pre>
                         </ul>
                         <div class="tab-content">
                             
-                            <div class="tab-pane active" id="request-retrieve-observations-responses-f956c61a-5627-4d62-8d31-806040b61d75">
+                            <div class="tab-pane active" id="request-retrieve-observations-responses-a2b5815e-313e-4cc4-b71f-5db663f4d76d">
                                 <table class="table table-bordered">
                                     <tr><th style="width: 20%;">Status</th><td>200 OK</td></tr>
                                     
@@ -4225,7 +2641,7 @@ Authorization: LkBuS3be13tX
                         <ul class="nav nav-tabs" role="tablist">
                             
                             <li role="presentation" class="active">
-                                <a href="#request-create-program-responses-542642e0-8d2a-45bf-8d8c-fc49d59f1f06" data-toggle="tab">
+                                <a href="#request-create-program-responses-49bc75a1-fbf2-4bb0-83af-f940b25f3003" data-toggle="tab">
                                     
                                     Response
                                     
@@ -4235,7 +2651,7 @@ Authorization: LkBuS3be13tX
                         </ul>
                         <div class="tab-content">
                             
-                            <div class="tab-pane active" id="request-create-program-responses-542642e0-8d2a-45bf-8d8c-fc49d59f1f06">
+                            <div class="tab-pane active" id="request-create-program-responses-49bc75a1-fbf2-4bb0-83af-f940b25f3003">
                                 <table class="table table-bordered">
                                     <tr><th style="width: 20%;">Status</th><td>201 Created</td></tr>
                                     
@@ -4315,7 +2731,7 @@ Content-Type: application/json</code></pre>
                         <ul class="nav nav-tabs" role="tablist">
                             
                             <li role="presentation" class="active">
-                                <a href="#request-retrieve-programs-responses-4917ed69-a6e5-45ac-bf5d-6cdfa1bdbc0c" data-toggle="tab">
+                                <a href="#request-retrieve-programs-responses-ebec89f5-7ebd-4218-8f60-6a30bfd516d5" data-toggle="tab">
                                     
                                     Retrieve all programs
                                     
@@ -4323,7 +2739,7 @@ Content-Type: application/json</code></pre>
                             </li>
                             
                             <li role="presentation">
-                                <a href="#request-retrieve-programs-responses-85894153-80c0-4d2d-9037-4207409d1c53" data-toggle="tab">
+                                <a href="#request-retrieve-programs-responses-1814bb92-e3b6-4b9f-8071-fed8ee45728f" data-toggle="tab">
                                     
                                     Retrieve all programs
                                     
@@ -4333,7 +2749,7 @@ Content-Type: application/json</code></pre>
                         </ul>
                         <div class="tab-content">
                             
-                            <div class="tab-pane active" id="request-retrieve-programs-responses-4917ed69-a6e5-45ac-bf5d-6cdfa1bdbc0c">
+                            <div class="tab-pane active" id="request-retrieve-programs-responses-ebec89f5-7ebd-4218-8f60-6a30bfd516d5">
                                 <table class="table table-bordered">
                                     <tr><th style="width: 20%;">Status</th><td>200 OK</td></tr>
                                     
@@ -4410,7 +2826,7 @@ Content-Type: application/json</code></pre>
                                 </table>
                             </div>
                             
-                            <div class="tab-pane" id="request-retrieve-programs-responses-85894153-80c0-4d2d-9037-4207409d1c53">
+                            <div class="tab-pane" id="request-retrieve-programs-responses-1814bb92-e3b6-4b9f-8071-fed8ee45728f">
                                 <table class="table table-bordered">
                                     <tr><th style="width: 20%;">Status</th><td>200 OK</td></tr>
                                     
@@ -4528,7 +2944,7 @@ Accept: application/json</code></pre>
                         <ul class="nav nav-tabs" role="tablist">
                             
                             <li role="presentation" class="active">
-                                <a href="#request-retrieve-program-workflows-and-states-responses-e195f179-9a6c-4394-b1b2-76e306aa28df" data-toggle="tab">
+                                <a href="#request-retrieve-program-workflows-and-states-responses-a1d8798e-24b9-4e8b-8a42-90920644c834" data-toggle="tab">
                                     
                                     Response
                                     
@@ -4538,7 +2954,7 @@ Accept: application/json</code></pre>
                         </ul>
                         <div class="tab-content">
                             
-                            <div class="tab-pane active" id="request-retrieve-program-workflows-and-states-responses-e195f179-9a6c-4394-b1b2-76e306aa28df">
+                            <div class="tab-pane active" id="request-retrieve-program-workflows-and-states-responses-a1d8798e-24b9-4e8b-8a42-90920644c834">
                                 <table class="table table-bordered">
                                     <tr><th style="width: 20%;">Status</th><td>200 OK</td></tr>
                                     
@@ -5212,7 +3628,7 @@ Authorization: wUO8OFXAoZZT
                         <ul class="nav nav-tabs" role="tablist">
                             
                             <li role="presentation" class="active">
-                                <a href="#request-creating-drug-orders-responses-717cd30b-0433-454e-be71-23444c547b50" data-toggle="tab">
+                                <a href="#request-creating-drug-orders-responses-383f4590-6b75-4876-991c-2e703dfd2fd4" data-toggle="tab">
                                     
                                     Response
                                     
@@ -5222,7 +3638,7 @@ Authorization: wUO8OFXAoZZT
                         </ul>
                         <div class="tab-content">
                             
-                            <div class="tab-pane active" id="request-creating-drug-orders-responses-717cd30b-0433-454e-be71-23444c547b50">
+                            <div class="tab-pane active" id="request-creating-drug-orders-responses-383f4590-6b75-4876-991c-2e703dfd2fd4">
                                 <table class="table table-bordered">
                                     <tr><th style="width: 20%;">Status</th><td>201 Created</td></tr>
                                     
@@ -5452,7 +3868,7 @@ Content-Type: application/json
                         <ul class="nav nav-tabs" role="tablist">
                             
                             <li role="presentation" class="active">
-                                <a href="#request-create-dispensations-responses-989af37a-d022-482b-baf3-0def7472bdb4" data-toggle="tab">
+                                <a href="#request-create-dispensations-responses-93c86aee-e1d4-408a-94bf-489add3a1f4f" data-toggle="tab">
                                     
                                     Response
                                     
@@ -5462,7 +3878,7 @@ Content-Type: application/json
                         </ul>
                         <div class="tab-content">
                             
-                            <div class="tab-pane active" id="request-create-dispensations-responses-989af37a-d022-482b-baf3-0def7472bdb4">
+                            <div class="tab-pane active" id="request-create-dispensations-responses-93c86aee-e1d4-408a-94bf-489add3a1f4f">
                                 <table class="table table-bordered">
                                     <tr><th style="width: 20%;">Status</th><td>201 Created</td></tr>
                                     
@@ -5665,7 +4081,7 @@ Authorization: fbRRafA9Y2Gc</code></pre>
                         <ul class="nav nav-tabs" role="tablist">
                             
                             <li role="presentation" class="active">
-                                <a href="#request-retrieve-dispensations-responses-f77f78a1-73fa-41b5-a83b-4644d0471d90" data-toggle="tab">
+                                <a href="#request-retrieve-dispensations-responses-3919c47d-01c6-4f2a-baa0-d967a5fb20d6" data-toggle="tab">
                                     
                                     Response
                                     
@@ -5675,7 +4091,7 @@ Authorization: fbRRafA9Y2Gc</code></pre>
                         </ul>
                         <div class="tab-content">
                             
-                            <div class="tab-pane active" id="request-retrieve-dispensations-responses-f77f78a1-73fa-41b5-a83b-4644d0471d90">
+                            <div class="tab-pane active" id="request-retrieve-dispensations-responses-3919c47d-01c6-4f2a-baa0-d967a5fb20d6">
                                 <table class="table table-bordered">
                                     <tr><th style="width: 20%;">Status</th><td>200 OK</td></tr>
                                     
@@ -7093,7 +5509,7 @@ Authorization: c2t0QXtnOWEB</code></pre>
                         <ul class="nav nav-tabs" role="tablist">
                             
                             <li role="presentation" class="active">
-                                <a href="#request-retrieve-appointments-responses-59c85780-c51f-43ad-83fb-c456e660cb3b" data-toggle="tab">
+                                <a href="#request-retrieve-appointments-responses-874f3a37-3f2f-4ed4-a7cd-61d2a7590d24" data-toggle="tab">
                                     
                                     Response
                                     
@@ -7103,7 +5519,7 @@ Authorization: c2t0QXtnOWEB</code></pre>
                         </ul>
                         <div class="tab-content">
                             
-                            <div class="tab-pane active" id="request-retrieve-appointments-responses-59c85780-c51f-43ad-83fb-c456e660cb3b">
+                            <div class="tab-pane active" id="request-retrieve-appointments-responses-874f3a37-3f2f-4ed4-a7cd-61d2a7590d24">
                                 <table class="table table-bordered">
                                     <tr><th style="width: 20%;">Status</th><td>200 OK</td></tr>
                                     
@@ -7271,7 +5687,7 @@ Authorization: kqpBzH1K6rYN</code></pre>
                         <ul class="nav nav-tabs" role="tablist">
                             
                             <li role="presentation" class="active">
-                                <a href="#request-retrieve-relationship-types-responses-e43fb629-e99c-48bc-990d-8e97002d218e" data-toggle="tab">
+                                <a href="#request-retrieve-relationship-types-responses-130bd3ee-089a-4b94-a763-81adcdcb38fa" data-toggle="tab">
                                     
                                     Response
                                     
@@ -7281,7 +5697,7 @@ Authorization: kqpBzH1K6rYN</code></pre>
                         </ul>
                         <div class="tab-content">
                             
-                            <div class="tab-pane active" id="request-retrieve-relationship-types-responses-e43fb629-e99c-48bc-990d-8e97002d218e">
+                            <div class="tab-pane active" id="request-retrieve-relationship-types-responses-130bd3ee-089a-4b94-a763-81adcdcb38fa">
                                 <table class="table table-bordered">
                                     <tr><th style="width: 20%;">Status</th><td>200 OK</td></tr>
                                     
@@ -7379,7 +5795,7 @@ Referer: http://localhost:5984</code></pre>
                             <ul class="nav nav-tabs" role="tablist">
                                 
                                 <li role="presentation" class="active">
-                                    <a href="#request-stock-management-retrieve-all-batches-in-pharmacy-stock-responses-5414c863-1b56-4ff1-826e-5d380d26d7ba" data-toggle="tab">
+                                    <a href="#request-stock-management-retrieve-all-batches-in-pharmacy-stock-responses-faf57faa-109a-41dd-bb5d-987abebdbff1" data-toggle="tab">
                                         
                                             Response
                                         
@@ -7389,7 +5805,7 @@ Referer: http://localhost:5984</code></pre>
                             </ul>
                             <div class="tab-content">
                                 
-                                <div class="tab-pane active" id="request-stock-management-retrieve-all-batches-in-pharmacy-stock-responses-5414c863-1b56-4ff1-826e-5d380d26d7ba">
+                                <div class="tab-pane active" id="request-stock-management-retrieve-all-batches-in-pharmacy-stock-responses-faf57faa-109a-41dd-bb5d-987abebdbff1">
                                     <table class="table table-bordered">
                                         <tr><th style="width: 20%;">Status</th><td>200 OK</td></tr>
                                         
@@ -7591,7 +6007,7 @@ Content-Type: application/json
                             <ul class="nav nav-tabs" role="tablist">
                                 
                                 <li role="presentation" class="active">
-                                    <a href="#request-stock-management-create-or-add-items-to-batch-responses-2b9ef378-9af5-4b48-a990-862ceef6950a" data-toggle="tab">
+                                    <a href="#request-stock-management-create-or-add-items-to-batch-responses-6f97dcde-cba9-45d5-9cc1-c4412dd2527e" data-toggle="tab">
                                         
                                             Response
                                         
@@ -7601,7 +6017,7 @@ Content-Type: application/json
                             </ul>
                             <div class="tab-content">
                                 
-                                <div class="tab-pane active" id="request-stock-management-create-or-add-items-to-batch-responses-2b9ef378-9af5-4b48-a990-862ceef6950a">
+                                <div class="tab-pane active" id="request-stock-management-create-or-add-items-to-batch-responses-6f97dcde-cba9-45d5-9cc1-c4412dd2527e">
                                     <table class="table table-bordered">
                                         <tr><th style="width: 20%;">Status</th><td>201 Created</td></tr>
                                         
@@ -7696,7 +6112,7 @@ Authorization: M9mEO1jNftvs</code></pre>
                             <ul class="nav nav-tabs" role="tablist">
                                 
                                 <li role="presentation" class="active">
-                                    <a href="#request-stock-management-retrieve-specific-pharmacy-batch-item-responses-e434ef45-0f53-4114-bc3a-3d4d880aa958" data-toggle="tab">
+                                    <a href="#request-stock-management-retrieve-specific-pharmacy-batch-item-responses-995c0e2a-8cd3-4af3-9a5b-1b864aea6b92" data-toggle="tab">
                                         
                                             Response
                                         
@@ -7706,7 +6122,7 @@ Authorization: M9mEO1jNftvs</code></pre>
                             </ul>
                             <div class="tab-content">
                                 
-                                <div class="tab-pane active" id="request-stock-management-retrieve-specific-pharmacy-batch-item-responses-e434ef45-0f53-4114-bc3a-3d4d880aa958">
+                                <div class="tab-pane active" id="request-stock-management-retrieve-specific-pharmacy-batch-item-responses-995c0e2a-8cd3-4af3-9a5b-1b864aea6b92">
                                     <table class="table table-bordered">
                                         <tr><th style="width: 20%;">Status</th><td>200 OK</td></tr>
                                         
@@ -7788,7 +6204,7 @@ Authorization: M9mEO1jNftvs</code></pre>
                             <ul class="nav nav-tabs" role="tablist">
                                 
                                 <li role="presentation" class="active">
-                                    <a href="#request-stock-management-retrieve-all-pharmacy-batch-items-responses-dccf24b1-31a0-4b9a-bd98-e324ad08785a" data-toggle="tab">
+                                    <a href="#request-stock-management-retrieve-all-pharmacy-batch-items-responses-9ba32c87-8b04-4e57-abf7-f403759f0036" data-toggle="tab">
                                         
                                             Retrieve all pharmacy batch items
                                         
@@ -7796,7 +6212,7 @@ Authorization: M9mEO1jNftvs</code></pre>
                                 </li>
                                 
                                 <li role="presentation">
-                                    <a href="#request-stock-management-retrieve-all-pharmacy-batch-items-responses-a4748a10-f840-4bd8-9229-3d1c85289f1b" data-toggle="tab">
+                                    <a href="#request-stock-management-retrieve-all-pharmacy-batch-items-responses-e6872365-8892-43cb-b204-1fc42253781a" data-toggle="tab">
                                         
                                             Retrieve all pharmacy batch items
                                         
@@ -7804,7 +6220,7 @@ Authorization: M9mEO1jNftvs</code></pre>
                                 </li>
                                 
                                 <li role="presentation">
-                                    <a href="#request-stock-management-retrieve-all-pharmacy-batch-items-responses-adcc83f3-6564-476d-93f8-716b5638b03f" data-toggle="tab">
+                                    <a href="#request-stock-management-retrieve-all-pharmacy-batch-items-responses-436e387f-6528-43c6-93b3-5fec1061741b" data-toggle="tab">
                                         
                                             Retrieve all pharmacy batch items
                                         
@@ -7814,7 +6230,7 @@ Authorization: M9mEO1jNftvs</code></pre>
                             </ul>
                             <div class="tab-content">
                                 
-                                <div class="tab-pane active" id="request-stock-management-retrieve-all-pharmacy-batch-items-responses-dccf24b1-31a0-4b9a-bd98-e324ad08785a">
+                                <div class="tab-pane active" id="request-stock-management-retrieve-all-pharmacy-batch-items-responses-9ba32c87-8b04-4e57-abf7-f403759f0036">
                                     <table class="table table-bordered">
                                         <tr><th style="width: 20%;">Status</th><td>200 OK</td></tr>
                                         
@@ -7875,7 +6291,7 @@ Authorization: M9mEO1jNftvs</code></pre>
                                     </table>
                                 </div>
                                 
-                                <div class="tab-pane" id="request-stock-management-retrieve-all-pharmacy-batch-items-responses-a4748a10-f840-4bd8-9229-3d1c85289f1b">
+                                <div class="tab-pane" id="request-stock-management-retrieve-all-pharmacy-batch-items-responses-e6872365-8892-43cb-b204-1fc42253781a">
                                     <table class="table table-bordered">
                                         <tr><th style="width: 20%;">Status</th><td>200 OK</td></tr>
                                         
@@ -7936,7 +6352,7 @@ Authorization: M9mEO1jNftvs</code></pre>
                                     </table>
                                 </div>
                                 
-                                <div class="tab-pane" id="request-stock-management-retrieve-all-pharmacy-batch-items-responses-adcc83f3-6564-476d-93f8-716b5638b03f">
+                                <div class="tab-pane" id="request-stock-management-retrieve-all-pharmacy-batch-items-responses-436e387f-6528-43c6-93b3-5fec1061741b">
                                     <table class="table table-bordered">
                                         <tr><th style="width: 20%;">Status</th><td>200 OK</td></tr>
                                         
@@ -8043,7 +6459,7 @@ Authorization: M9mEO1jNftvs
                             <ul class="nav nav-tabs" role="tablist">
                                 
                                 <li role="presentation" class="active">
-                                    <a href="#request-stock-management-update-batch-responses-026245a1-c087-4cc8-a414-4752f2fd052e" data-toggle="tab">
+                                    <a href="#request-stock-management-update-batch-responses-fdd77277-b5c8-4019-a0f1-8a17b96dd6d2" data-toggle="tab">
                                         
                                             Response
                                         
@@ -8053,7 +6469,7 @@ Authorization: M9mEO1jNftvs
                             </ul>
                             <div class="tab-content">
                                 
-                                <div class="tab-pane active" id="request-stock-management-update-batch-responses-026245a1-c087-4cc8-a414-4752f2fd052e">
+                                <div class="tab-pane active" id="request-stock-management-update-batch-responses-fdd77277-b5c8-4019-a0f1-8a17b96dd6d2">
                                     <table class="table table-bordered">
                                         <tr><th style="width: 20%;">Status</th><td>201 Created</td></tr>
                                         
@@ -8164,7 +6580,7 @@ Authorization: M9mEO1jNftvs</code></pre>
                             <ul class="nav nav-tabs" role="tablist">
                                 
                                 <li role="presentation" class="active">
-                                    <a href="#request-stock-management-retrieve-batch-by-batch-number-responses-5a7bff63-1a0c-4d42-96d1-8d74e2cffcda" data-toggle="tab">
+                                    <a href="#request-stock-management-retrieve-batch-by-batch-number-responses-35fd68d2-8b2d-4ac3-ba0c-94810a8be13b" data-toggle="tab">
                                         
                                             Response
                                         
@@ -8174,7 +6590,7 @@ Authorization: M9mEO1jNftvs</code></pre>
                             </ul>
                             <div class="tab-content">
                                 
-                                <div class="tab-pane active" id="request-stock-management-retrieve-batch-by-batch-number-responses-5a7bff63-1a0c-4d42-96d1-8d74e2cffcda">
+                                <div class="tab-pane active" id="request-stock-management-retrieve-batch-by-batch-number-responses-35fd68d2-8b2d-4ac3-ba0c-94810a8be13b">
                                     <table class="table table-bordered">
                                         <tr><th style="width: 20%;">Status</th><td>200 OK</td></tr>
                                         
@@ -8269,7 +6685,7 @@ Authorization: 58L9eHzOh7Mi</code></pre>
                             <ul class="nav nav-tabs" role="tablist">
                                 
                                 <li role="presentation" class="active">
-                                    <a href="#request-stock-management-retrieve-earliest-expiring-item-responses-ab373ef7-8a2b-40e2-9cce-205cb9bfc28a" data-toggle="tab">
+                                    <a href="#request-stock-management-retrieve-earliest-expiring-item-responses-5ba87ba0-dc95-4c7a-8644-62fa960019c9" data-toggle="tab">
                                         
                                             Response
                                         
@@ -8279,7 +6695,7 @@ Authorization: 58L9eHzOh7Mi</code></pre>
                             </ul>
                             <div class="tab-content">
                                 
-                                <div class="tab-pane active" id="request-stock-management-retrieve-earliest-expiring-item-responses-ab373ef7-8a2b-40e2-9cce-205cb9bfc28a">
+                                <div class="tab-pane active" id="request-stock-management-retrieve-earliest-expiring-item-responses-5ba87ba0-dc95-4c7a-8644-62fa960019c9">
                                     <table class="table table-bordered">
                                         <tr><th style="width: 20%;">Status</th><td>200 OK</td></tr>
                                         
@@ -8404,7 +6820,7 @@ Authorization: 58L9eHzOh7Mi
                             <ul class="nav nav-tabs" role="tablist">
                                 
                                 <li role="presentation" class="active">
-                                    <a href="#request-stock-management-reallocate-batch-item-to-another-site-responses-4df4620b-0c25-43ad-94e0-b573649f8522" data-toggle="tab">
+                                    <a href="#request-stock-management-reallocate-batch-item-to-another-site-responses-3f4027bf-bdd0-4902-9e60-5682c089501b" data-toggle="tab">
                                         
                                             Reallocate batch item to another site
                                         
@@ -8412,7 +6828,7 @@ Authorization: 58L9eHzOh7Mi
                                 </li>
                                 
                                 <li role="presentation">
-                                    <a href="#request-stock-management-reallocate-batch-item-to-another-site-responses-c4069189-0cf2-47c6-bf87-8bac14621d41" data-toggle="tab">
+                                    <a href="#request-stock-management-reallocate-batch-item-to-another-site-responses-9e741648-95d2-40e6-a85b-26dc7bcf54a2" data-toggle="tab">
                                         
                                             Reallocate batch item to another site
                                         
@@ -8422,7 +6838,7 @@ Authorization: 58L9eHzOh7Mi
                             </ul>
                             <div class="tab-content">
                                 
-                                <div class="tab-pane active" id="request-stock-management-reallocate-batch-item-to-another-site-responses-4df4620b-0c25-43ad-94e0-b573649f8522">
+                                <div class="tab-pane active" id="request-stock-management-reallocate-batch-item-to-another-site-responses-3f4027bf-bdd0-4902-9e60-5682c089501b">
                                     <table class="table table-bordered">
                                         <tr><th style="width: 20%;">Status</th><td>201 Created</td></tr>
                                         
@@ -8458,7 +6874,7 @@ Authorization: 58L9eHzOh7Mi
                                     </table>
                                 </div>
                                 
-                                <div class="tab-pane" id="request-stock-management-reallocate-batch-item-to-another-site-responses-c4069189-0cf2-47c6-bf87-8bac14621d41">
+                                <div class="tab-pane" id="request-stock-management-reallocate-batch-item-to-another-site-responses-9e741648-95d2-40e6-a85b-26dc7bcf54a2">
                                     <table class="table table-bordered">
                                         <tr><th style="width: 20%;">Status</th><td>201 Created</td></tr>
                                         
@@ -8549,7 +6965,7 @@ Authorization: 8Azu1BYHc2r0</code></pre>
                             <ul class="nav nav-tabs" role="tablist">
                                 
                                 <li role="presentation" class="active">
-                                    <a href="#request-search-find-duplicate-identifiers-of-a-given-type-responses-65e89b6b-d9f9-4a9a-b693-fbbc2e86c8bd" data-toggle="tab">
+                                    <a href="#request-search-find-duplicate-identifiers-of-a-given-type-responses-26100f97-3883-42ef-bef0-cfc5e6cff7c3" data-toggle="tab">
                                         
                                             Response
                                         
@@ -8559,7 +6975,7 @@ Authorization: 8Azu1BYHc2r0</code></pre>
                             </ul>
                             <div class="tab-content">
                                 
-                                <div class="tab-pane active" id="request-search-find-duplicate-identifiers-of-a-given-type-responses-65e89b6b-d9f9-4a9a-b693-fbbc2e86c8bd">
+                                <div class="tab-pane active" id="request-search-find-duplicate-identifiers-of-a-given-type-responses-26100f97-3883-42ef-bef0-cfc5e6cff7c3">
                                     <table class="table table-bordered">
                                         <tr><th style="width: 20%;">Status</th><td>200 OK</td></tr>
                                         
@@ -8700,12 +7116,12 @@ Authorization: 8Azu1BYHc2r0</code></pre>
                             </ul>
                             <div class="tab-content">
                                 <div class="tab-pane active" id="request-search-find-patients-by-identifier-example-curl">
-                                    <pre><code class="hljs curl">curl -X GET -H "Authorization: 8Azu1BYHc2r0" "http://localhost:3000/api/v1/search/patients/by_identifier?type_id=3&identifier=P170100202393"</code></pre>
+                                    <pre><code class="hljs curl">curl -X GET -H "Authorization: 3rGfPFwKcmd3" "http://localhost:3000/api/v1/search/patients/by_identifier?type_id=3&identifier=P112000000023"</code></pre>
                                 </div>
                                 <div class="tab-pane" id="request-search-find-patients-by-identifier-example-http">
-                                    <pre><code class="hljs http">GET /api/v1/search/patients/by_identifier?type_id=3&identifier=P170100202393 HTTP/1.1
+                                    <pre><code class="hljs http">GET /api/v1/search/patients/by_identifier?type_id=3&identifier=P112000000023 HTTP/1.1
 Host: localhost:3000
-Authorization: 8Azu1BYHc2r0</code></pre>
+Authorization: 3rGfPFwKcmd3</code></pre>
                                 </div>
                             </div>
                         </div>
@@ -8715,7 +7131,7 @@ Authorization: 8Azu1BYHc2r0</code></pre>
                             <ul class="nav nav-tabs" role="tablist">
                                 
                                 <li role="presentation" class="active">
-                                    <a href="#request-search-find-patients-by-identifier-responses-e711331c-754e-45fa-9f0e-3c676225973d" data-toggle="tab">
+                                    <a href="#request-search-find-patients-by-identifier-responses-e623a2be-af8f-45c3-860a-a92e5ba4bef8" data-toggle="tab">
                                         
                                             Response
                                         
@@ -8725,19 +7141,19 @@ Authorization: 8Azu1BYHc2r0</code></pre>
                             </ul>
                             <div class="tab-content">
                                 
-                                <div class="tab-pane active" id="request-search-find-patients-by-identifier-responses-e711331c-754e-45fa-9f0e-3c676225973d">
+                                <div class="tab-pane active" id="request-search-find-patients-by-identifier-responses-e623a2be-af8f-45c3-860a-a92e5ba4bef8">
                                     <table class="table table-bordered">
                                         <tr><th style="width: 20%;">Status</th><td>200 OK</td></tr>
                                         
                                         <tr><th style="width: 20%;">Content-Type</th><td>application/json; charset=utf-8</td></tr>
                                         
-                                        <tr><th style="width: 20%;">ETag</th><td>W/"70d037c8c5948c69d35db15c4b184124"</td></tr>
+                                        <tr><th style="width: 20%;">ETag</th><td>W/"c7e3263bf83c8d56f03371b0ea1cec22"</td></tr>
                                         
                                         <tr><th style="width: 20%;">Cache-Control</th><td>max-age=0, private, must-revalidate</td></tr>
                                         
-                                        <tr><th style="width: 20%;">X-Request-Id</th><td>351f62da-180a-4a02-b563-6081ef32c926</td></tr>
+                                        <tr><th style="width: 20%;">X-Request-Id</th><td>11faf7f3-f81f-4ab9-9733-899954f50245</td></tr>
                                         
-                                        <tr><th style="width: 20%;">X-Runtime</th><td>0.513067</td></tr>
+                                        <tr><th style="width: 20%;">X-Runtime</th><td>0.076544</td></tr>
                                         
                                         <tr><th style="width: 20%;">Vary</th><td>Origin</td></tr>
                                         
@@ -8748,133 +7164,99 @@ Authorization: 8Azu1BYHc2r0</code></pre>
                                             <tr><td class="response-text-sample" colspan="2">
                                                 <pre><code>[
     {
-        "patient_id": 20897,
+        "patient_id": 8304,
         "tribe": null,
-        "creator": 55,
-        "date_created": "2009-05-08T00:00:00.000+02:00",
-        "changed_by": null,
-        "date_changed": null,
+        "creator": 1,
+        "date_created": "2020-03-06T08:58:29.000+02:00",
+        "changed_by": 1,
+        "date_changed": "2020-03-06T08:58:29.000+02:00",
         "voided": 0,
         "voided_by": null,
         "date_voided": null,
         "void_reason": null,
         "person": {
-            "person_id": 20897,
-            "gender": "F",
-            "birthdate": "1972-10-29",
+            "person_id": 8304,
+            "gender": "M",
+            "birthdate": "1990-07-01",
             "birthdate_estimated": 1,
             "dead": 0,
             "death_date": null,
             "cause_of_death": null,
-            "creator": 55,
-            "date_created": "2009-05-08T00:00:00.000+02:00",
-            "changed_by": null,
-            "date_changed": null,
+            "creator": 1,
+            "date_created": "2020-03-06T08:58:29.000+02:00",
+            "changed_by": 1,
+            "date_changed": "2020-03-06T08:58:29.000+02:00",
             "voided": 0,
             "voided_by": null,
             "date_voided": null,
             "void_reason": null,
-            "uuid": "5f621ee8-03e6-11e5-8580-7877eb364ad2",
+            "uuid": "27dbeddc-3b83-41c1-b927-69e39849f70a",
             "names": [
                 {
-                    "person_name_id": 21428,
+                    "person_name_id": 8304,
                     "preferred": 0,
-                    "person_id": 20897,
+                    "person_id": 8304,
                     "prefix": null,
-                    "given_name": "Ida",
+                    "given_name": "AnotherTest",
                     "middle_name": null,
                     "family_name_prefix": null,
-                    "family_name": "Zgambo",
+                    "family_name": "Patient",
                     "family_name2": null,
                     "family_name_suffix": null,
                     "degree": null,
-                    "creator": 55,
-                    "date_created": "2009-05-08T00:00:00.000+02:00",
+                    "creator": 1,
+                    "date_created": "2020-03-06T08:58:29.000+02:00",
                     "voided": 0,
                     "voided_by": null,
                     "date_voided": null,
                     "void_reason": null,
-                    "changed_by": null,
-                    "date_changed": null,
-                    "uuid": "5f62623a-03e6-11e5-8580-7877eb364ad2"
+                    "changed_by": 1,
+                    "date_changed": "2020-03-06T08:58:29.000+02:00",
+                    "uuid": "0ed48de5-bfe9-473c-94c0-470d08dbf75c"
                 }
             ],
             "addresses": [
                 {
-                    "person_address_id": 20250,
-                    "person_id": 20897,
+                    "person_address_id": 25,
+                    "person_id": 8304,
                     "preferred": 0,
-                    "address1": "NEARHEALTH CENTRE",
-                    "address2": null,
-                    "city_village": "Area 18 A",
-                    "state_province": null,
+                    "address1": null,
+                    "address2": "Likoma",
+                    "city_village": "Bonongwe",
+                    "state_province": "Balaka",
                     "postal_code": null,
                     "country": null,
                     "latitude": null,
                     "longitude": null,
-                    "creator": 55,
-                    "date_created": "2009-05-08T00:00:00.000+02:00",
+                    "creator": 1,
+                    "date_created": "2020-03-06T08:58:29.000+02:00",
                     "voided": 0,
                     "voided_by": null,
                     "date_voided": null,
                     "void_reason": null,
-                    "county_district": null,
-                    "neighborhood_cell": null,
+                    "county_district": "Mkumpha",
+                    "neighborhood_cell": "Edward Nkhwemba",
                     "region": null,
                     "subregion": null,
-                    "township_division": null,
-                    "uuid": "5f62bba2-03e6-11e5-8580-7877eb364ad2"
+                    "township_division": "Kalembo",
+                    "uuid": "2c31d6fd-55f5-4886-94b0-54f1eff529e8"
                 }
             ],
             "person_attributes": [
                 {
-                    "person_attribute_id": 118837,
-                    "person_id": 20897,
-                    "value": "Area 18 A",
-                    "person_attribute_type_id": 18,
-                    "creator": 55,
-                    "date_created": "2009-05-08T00:00:00.000+02:00",
-                    "changed_by": null,
-                    "date_changed": null,
-                    "voided": 0,
-                    "voided_by": null,
-                    "date_voided": null,
-                    "void_reason": null,
-                    "uuid": "5f62bc55-03e6-11e5-8580-7877eb364ad2",
-                    "type": {
-                        "person_attribute_type_id": 18,
-                        "name": "Current Place Of Residence",
-                        "description": "Place of stay",
-                        "format": "java.lang.String",
-                        "foreign_key": null,
-                        "searchable": 0,
-                        "creator": 1,
-                        "date_created": "2010-11-02T11:19:13.000+02:00",
-                        "changed_by": null,
-                        "date_changed": null,
-                        "retired": 0,
-                        "retired_by": null,
-                        "date_retired": null,
-                        "retire_reason": null,
-                        "edit_privilege": null,
-                        "uuid": "ba35eba0-8d80-11d8-abbb-0024217bb78e",
-                        "sort_weight": 9
-                    }
-                },
-                {
-                    "person_attribute_id": 118838,
-                    "person_id": 20897,
-                    "value": "NEARHEALTH CENTRE",
+                    "person_attribute_id": 9406,
+                    "person_id": 8304,
+                    "value": "Borehole",
                     "person_attribute_type_id": 19,
-                    "creator": 55,
-                    "date_created": "2009-05-08T00:00:00.000+02:00",
-                    "changed_by": null,
-                    "date_changed": null,
+                    "creator": 1,
+                    "date_created": "2020-03-06T08:58:29.000+02:00",
+                    "changed_by": 1,
+                    "date_changed": "2020-03-06T08:58:29.000+02:00",
                     "voided": 0,
                     "voided_by": null,
                     "date_voided": null,
                     "void_reason": null,
-                    "uuid": "5f62bba2-03e6-11e5-8580-7877eb364ad2",
+                    "uuid": "dc7a1603-a267-4852-908b-5948b75c692d",
                     "type": {
                         "person_attribute_type_id": 19,
                         "name": "Landmark Or Plot Number",
@@ -8896,53 +7278,19 @@ Authorization: 8Azu1BYHc2r0</code></pre>
                     }
                 },
                 {
-                    "person_attribute_id": 118839,
-                    "person_id": 20897,
-                    "value": "Other",
-                    "person_attribute_type_id": 13,
-                    "creator": 55,
-                    "date_created": "2009-05-08T00:00:00.000+02:00",
-                    "changed_by": null,
-                    "date_changed": null,
-                    "voided": 0,
-                    "voided_by": null,
-                    "date_voided": null,
-                    "void_reason": null,
-                    "uuid": "5f632ae4-03e6-11e5-8580-7877eb364ad2",
-                    "type": {
-                        "person_attribute_type_id": 13,
-                        "name": "Occupation",
-                        "description": "This is the current patient occupation",
-                        "format": "java.lang.String",
-                        "foreign_key": null,
-                        "searchable": 0,
-                        "creator": 1,
-                        "date_created": "2009-10-09T15:45:21.000+02:00",
-                        "changed_by": null,
-                        "date_changed": null,
-                        "retired": 0,
-                        "retired_by": null,
-                        "date_retired": null,
-                        "retire_reason": null,
-                        "edit_privilege": null,
-                        "uuid": "ba35e506-8d80-11d8-abbb-0024217bb78e",
-                        "sort_weight": 24
-                    }
-                },
-                {
-                    "person_attribute_id": 118840,
-                    "person_id": 20897,
-                    "value": "08859320",
+                    "person_attribute_id": 9407,
+                    "person_id": 8304,
+                    "value": "Unknown",
                     "person_attribute_type_id": 12,
-                    "creator": 55,
-                    "date_created": "2009-05-08T00:00:00.000+02:00",
-                    "changed_by": null,
-                    "date_changed": null,
+                    "creator": 1,
+                    "date_created": "2020-03-06T08:58:29.000+02:00",
+                    "changed_by": 1,
+                    "date_changed": "2020-03-06T08:58:29.000+02:00",
                     "voided": 0,
                     "voided_by": null,
                     "date_voided": null,
                     "void_reason": null,
-                    "uuid": "5f63373f-03e6-11e5-8580-7877eb364ad2",
+                    "uuid": "50a43668-a82f-4d63-b0c6-f7ab8252b5c0",
                     "type": {
                         "person_attribute_type_id": 12,
                         "name": "Cell Phone Number",
@@ -8962,377 +7310,24 @@ Authorization: 8Azu1BYHc2r0</code></pre>
                         "uuid": "ba35e3da-8d80-11d8-abbb-0024217bb78e",
                         "sort_weight": 5
                     }
-                },
-                {
-                    "person_attribute_id": 118841,
-                    "person_id": 20897,
-                    "value": "Not Available",
-                    "person_attribute_type_id": 14,
-                    "creator": 55,
-                    "date_created": "2009-05-08T00:00:00.000+02:00",
-                    "changed_by": null,
-                    "date_changed": null,
-                    "voided": 0,
-                    "voided_by": null,
-                    "date_voided": null,
-                    "void_reason": null,
-                    "uuid": "5f6347dd-03e6-11e5-8580-7877eb364ad2",
-                    "type": {
-                        "person_attribute_type_id": 14,
-                        "name": "Home Phone Number",
-                        "description": "Person home phone number, usually fixed line phone number",
-                        "format": "",
-                        "foreign_key": null,
-                        "searchable": 0,
-                        "creator": 1,
-                        "date_created": "2009-11-11T11:43:28.000+02:00",
-                        "changed_by": null,
-                        "date_changed": null,
-                        "retired": 0,
-                        "retired_by": null,
-                        "date_retired": null,
-                        "retire_reason": null,
-                        "edit_privilege": null,
-                        "uuid": "ba35e63c-8d80-11d8-abbb-0024217bb78e",
-                        "sort_weight": 13
-                    }
                 }
             ]
         },
         "patient_identifiers": [
             {
-                "patient_identifier_id": 45749,
-                "patient_id": 20897,
-                "identifier": "FN10411808",
-                "identifier_type": 18,
-                "preferred": 0,
-                "location_id": 1,
-                "creator": 55,
-                "date_created": "2009-05-08T00:00:00.000+02:00",
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "uuid": "5f6371e4-03e6-11e5-8580-7877eb364ad2",
-                "type": {
-                    "patient_identifier_type_id": 18,
-                    "name": "Archived filing number",
-                    "description": "Number attached to a patient's file at a clinic",
-                    "format": "",
-                    "check_digit": 0,
-                    "creator": 1,
-                    "date_created": "2011-07-08T14:21:32.000+02:00",
-                    "required": 0,
-                    "format_description": "",
-                    "validator": "",
-                    "retired": 0,
-                    "retired_by": null,
-                    "date_retired": null,
-                    "retire_reason": null,
-                    "uuid": "ba2f8e40-8d80-11d8-abbb-0024217bb78e"
-                }
-            },
-            {
-                "patient_identifier_id": 45750,
-                "patient_id": 20897,
-                "identifier": "P170100202393",
+                "patient_identifier_id": 3671,
+                "patient_id": 8304,
+                "identifier": "P112000000023",
                 "identifier_type": 3,
                 "preferred": 0,
-                "location_id": 1,
-                "creator": 55,
-                "date_created": "2009-05-08T00:00:00.000+02:00",
+                "location_id": 120,
+                "creator": 1,
+                "date_created": "2020-03-06T08:58:29.000+02:00",
                 "voided": 0,
                 "voided_by": null,
                 "date_voided": null,
                 "void_reason": null,
-                "uuid": "5f63a9fc-03e6-11e5-8580-7877eb364ad2",
-                "type": {
-                    "patient_identifier_type_id": 3,
-                    "name": "National id",
-                    "description": "National ID number developed by Baobab",
-                    "format": "",
-                    "check_digit": 0,
-                    "creator": 1,
-                    "date_created": "2007-11-29T22:12:34.000+02:00",
-                    "required": 0,
-                    "format_description": "P-175-0000004-5",
-                    "validator": null,
-                    "retired": 0,
-                    "retired_by": null,
-                    "date_retired": null,
-                    "retire_reason": null,
-                    "uuid": "ba2f69d8-8d80-11d8-abbb-0024217bb78e"
-                }
-            }
-        ]
-    },
-    {
-        "patient_id": 20898,
-        "tribe": null,
-        "creator": 86,
-        "date_created": "2009-05-08T00:00:00.000+02:00",
-        "changed_by": null,
-        "date_changed": null,
-        "voided": 0,
-        "voided_by": null,
-        "date_voided": null,
-        "void_reason": null,
-        "person": {
-            "person_id": 20898,
-            "gender": "M",
-            "birthdate": null,
-            "birthdate_estimated": 0,
-            "dead": 0,
-            "death_date": null,
-            "cause_of_death": null,
-            "creator": 86,
-            "date_created": "2009-05-08T00:00:00.000+02:00",
-            "changed_by": null,
-            "date_changed": null,
-            "voided": 0,
-            "voided_by": null,
-            "date_voided": null,
-            "void_reason": null,
-            "uuid": "618421ea-03e6-11e5-8580-7877eb364ad2",
-            "names": [
-                {
-                    "person_name_id": 21429,
-                    "preferred": 0,
-                    "person_id": 20898,
-                    "prefix": null,
-                    "given_name": "Salimu",
-                    "middle_name": null,
-                    "family_name_prefix": null,
-                    "family_name": "James",
-                    "family_name2": null,
-                    "family_name_suffix": null,
-                    "degree": null,
-                    "creator": 86,
-                    "date_created": "2009-05-08T00:00:00.000+02:00",
-                    "voided": 0,
-                    "voided_by": null,
-                    "date_voided": null,
-                    "void_reason": null,
-                    "changed_by": null,
-                    "date_changed": null,
-                    "uuid": "61846401-03e6-11e5-8580-7877eb364ad2"
-                }
-            ],
-            "addresses": [
-                {
-                    "person_address_id": 20251,
-                    "person_id": 20898,
-                    "preferred": 0,
-                    "address1": "Next to the market",
-                    "address2": null,
-                    "city_village": "Mchesi (A8)",
-                    "state_province": null,
-                    "postal_code": null,
-                    "country": null,
-                    "latitude": null,
-                    "longitude": null,
-                    "creator": 86,
-                    "date_created": "2009-05-08T00:00:00.000+02:00",
-                    "voided": 0,
-                    "voided_by": null,
-                    "date_voided": null,
-                    "void_reason": null,
-                    "county_district": null,
-                    "neighborhood_cell": null,
-                    "region": null,
-                    "subregion": null,
-                    "township_division": null,
-                    "uuid": "6184bc11-03e6-11e5-8580-7877eb364ad2"
-                }
-            ],
-            "person_attributes": [
-                {
-                    "person_attribute_id": 118842,
-                    "person_id": 20898,
-                    "value": "Mchesi (A8)",
-                    "person_attribute_type_id": 18,
-                    "creator": 86,
-                    "date_created": "2009-05-08T00:00:00.000+02:00",
-                    "changed_by": null,
-                    "date_changed": null,
-                    "voided": 0,
-                    "voided_by": null,
-                    "date_voided": null,
-                    "void_reason": null,
-                    "uuid": "6184bcc5-03e6-11e5-8580-7877eb364ad2",
-                    "type": {
-                        "person_attribute_type_id": 18,
-                        "name": "Current Place Of Residence",
-                        "description": "Place of stay",
-                        "format": "java.lang.String",
-                        "foreign_key": null,
-                        "searchable": 0,
-                        "creator": 1,
-                        "date_created": "2010-11-02T11:19:13.000+02:00",
-                        "changed_by": null,
-                        "date_changed": null,
-                        "retired": 0,
-                        "retired_by": null,
-                        "date_retired": null,
-                        "retire_reason": null,
-                        "edit_privilege": null,
-                        "uuid": "ba35eba0-8d80-11d8-abbb-0024217bb78e",
-                        "sort_weight": 9
-                    }
-                },
-                {
-                    "person_attribute_id": 118843,
-                    "person_id": 20898,
-                    "value": "Next to the market",
-                    "person_attribute_type_id": 19,
-                    "creator": 86,
-                    "date_created": "2009-05-08T00:00:00.000+02:00",
-                    "changed_by": null,
-                    "date_changed": null,
-                    "voided": 0,
-                    "voided_by": null,
-                    "date_voided": null,
-                    "void_reason": null,
-                    "uuid": "6184bc11-03e6-11e5-8580-7877eb364ad2",
-                    "type": {
-                        "person_attribute_type_id": 19,
-                        "name": "Landmark Or Plot Number",
-                        "description": "Landmark or plot number",
-                        "format": "java.lang.String",
-                        "foreign_key": null,
-                        "searchable": 0,
-                        "creator": 1,
-                        "date_created": "2010-11-02T11:19:43.000+02:00",
-                        "changed_by": 1,
-                        "date_changed": "2010-11-02T11:19:55.000+02:00",
-                        "retired": 0,
-                        "retired_by": null,
-                        "date_retired": null,
-                        "retire_reason": null,
-                        "edit_privilege": null,
-                        "uuid": "ba35ece0-8d80-11d8-abbb-0024217bb78e",
-                        "sort_weight": 16
-                    }
-                },
-                {
-                    "person_attribute_id": 118844,
-                    "person_id": 20898,
-                    "value": "Other",
-                    "person_attribute_type_id": 13,
-                    "creator": 86,
-                    "date_created": "2009-05-08T00:00:00.000+02:00",
-                    "changed_by": null,
-                    "date_changed": null,
-                    "voided": 0,
-                    "voided_by": null,
-                    "date_voided": null,
-                    "void_reason": null,
-                    "uuid": "61851722-03e6-11e5-8580-7877eb364ad2",
-                    "type": {
-                        "person_attribute_type_id": 13,
-                        "name": "Occupation",
-                        "description": "This is the current patient occupation",
-                        "format": "java.lang.String",
-                        "foreign_key": null,
-                        "searchable": 0,
-                        "creator": 1,
-                        "date_created": "2009-10-09T15:45:21.000+02:00",
-                        "changed_by": null,
-                        "date_changed": null,
-                        "retired": 0,
-                        "retired_by": null,
-                        "date_retired": null,
-                        "retire_reason": null,
-                        "edit_privilege": null,
-                        "uuid": "ba35e506-8d80-11d8-abbb-0024217bb78e",
-                        "sort_weight": 24
-                    }
-                },
-                {
-                    "person_attribute_id": 118845,
-                    "person_id": 20898,
-                    "value": "Not Available",
-                    "person_attribute_type_id": 12,
-                    "creator": 86,
-                    "date_created": "2009-05-08T00:00:00.000+02:00",
-                    "changed_by": null,
-                    "date_changed": null,
-                    "voided": 0,
-                    "voided_by": null,
-                    "date_voided": null,
-                    "void_reason": null,
-                    "uuid": "61852377-03e6-11e5-8580-7877eb364ad2",
-                    "type": {
-                        "person_attribute_type_id": 12,
-                        "name": "Cell Phone Number",
-                        "description": "Person primary cell phone number",
-                        "format": "java.lang.String",
-                        "foreign_key": null,
-                        "searchable": 0,
-                        "creator": 1,
-                        "date_created": "2009-10-07T15:44:33.000+02:00",
-                        "changed_by": 1,
-                        "date_changed": "2011-02-09T11:04:35.000+02:00",
-                        "retired": 0,
-                        "retired_by": null,
-                        "date_retired": null,
-                        "retire_reason": null,
-                        "edit_privilege": null,
-                        "uuid": "ba35e3da-8d80-11d8-abbb-0024217bb78e",
-                        "sort_weight": 5
-                    }
-                },
-                {
-                    "person_attribute_id": 118846,
-                    "person_id": 20898,
-                    "value": "Not Available",
-                    "person_attribute_type_id": 14,
-                    "creator": 86,
-                    "date_created": "2009-05-08T00:00:00.000+02:00",
-                    "changed_by": null,
-                    "date_changed": null,
-                    "voided": 0,
-                    "voided_by": null,
-                    "date_voided": null,
-                    "void_reason": null,
-                    "uuid": "618533a8-03e6-11e5-8580-7877eb364ad2",
-                    "type": {
-                        "person_attribute_type_id": 14,
-                        "name": "Home Phone Number",
-                        "description": "Person home phone number, usually fixed line phone number",
-                        "format": "",
-                        "foreign_key": null,
-                        "searchable": 0,
-                        "creator": 1,
-                        "date_created": "2009-11-11T11:43:28.000+02:00",
-                        "changed_by": null,
-                        "date_changed": null,
-                        "retired": 0,
-                        "retired_by": null,
-                        "date_retired": null,
-                        "retire_reason": null,
-                        "edit_privilege": null,
-                        "uuid": "ba35e63c-8d80-11d8-abbb-0024217bb78e",
-                        "sort_weight": 13
-                    }
-                }
-            ]
-        },
-        "patient_identifiers": [
-            {
-                "patient_identifier_id": 45751,
-                "patient_id": 20898,
-                "identifier": "P170100202393",
-                "identifier_type": 3,
-                "preferred": 0,
-                "location_id": 1,
-                "creator": 86,
-                "date_created": "2009-05-08T00:00:00.000+02:00",
-                "voided": 0,
-                "voided_by": null,
-                "date_voided": null,
-                "void_reason": null,
-                "uuid": "61855d8b-03e6-11e5-8580-7877eb364ad2",
+                "uuid": "fafe235b-7224-48e9-a9e1-a9a1eefef3e7",
                 "type": {
                     "patient_identifier_type_id": 3,
                     "name": "National id",
@@ -9425,7 +7420,7 @@ Content-Type: application/json
                             <ul class="nav nav-tabs" role="tablist">
                                 
                                 <li role="presentation" class="active">
-                                    <a href="#request-registry-management-create-register-responses-570da18c-5423-4648-8d1d-2110c638f8a5" data-toggle="tab">
+                                    <a href="#request-registry-management-create-register-responses-91016608-7e5b-4470-b1a3-ad86916ab30f" data-toggle="tab">
                                         
                                             Response
                                         
@@ -9435,7 +7430,7 @@ Content-Type: application/json
                             </ul>
                             <div class="tab-content">
                                 
-                                <div class="tab-pane active" id="request-registry-management-create-register-responses-570da18c-5423-4648-8d1d-2110c638f8a5">
+                                <div class="tab-pane active" id="request-registry-management-create-register-responses-91016608-7e5b-4470-b1a3-ad86916ab30f">
                                     <table class="table table-bordered">
                                         <tr><th style="width: 20%;">Status</th><td>201 Created</td></tr>
                                         
@@ -9534,7 +7529,7 @@ Content-Type: application/json
                             <ul class="nav nav-tabs" role="tablist">
                                 
                                 <li role="presentation" class="active">
-                                    <a href="#request-registry-management-binding-an-encounter-to-a-register-responses-6b468172-8588-4ffc-8e9c-4f7ae4de7496" data-toggle="tab">
+                                    <a href="#request-registry-management-binding-an-encounter-to-a-register-responses-c341ca7f-dd68-44cf-9d15-2b0194ec828b" data-toggle="tab">
                                         
                                             Response
                                         
@@ -9544,7 +7539,7 @@ Content-Type: application/json
                             </ul>
                             <div class="tab-content">
                                 
-                                <div class="tab-pane active" id="request-registry-management-binding-an-encounter-to-a-register-responses-6b468172-8588-4ffc-8e9c-4f7ae4de7496">
+                                <div class="tab-pane active" id="request-registry-management-binding-an-encounter-to-a-register-responses-c341ca7f-dd68-44cf-9d15-2b0194ec828b">
                                     <table class="table table-bordered">
                                         <tr><th style="width: 20%;">Status</th><td>201 Created</td></tr>
                                         
@@ -9603,6 +7598,19 @@ Content-Type: application/json
                     <h3 id="folder-hts">
                         HTS
                         <a href="#folder-hts"><i class="glyphicon glyphicon-link"></i></a>
+                    </h3>
+
+                    <div></div>
+
+                    
+
+                </div>
+                
+                
+                <div class="endpoints-group">
+                    <h3 id="folder-programs">
+                        Programs
+                        <a href="#folder-programs"><i class="glyphicon glyphicon-link"></i></a>
                     </h3>
 
                     <div></div>
