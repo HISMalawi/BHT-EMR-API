@@ -7,9 +7,9 @@ class Api::V1::DrugsController < ApplicationController
   end
 
   def index
-    name = params.permit(:name)[:name]
-    query = name ? Drug.where('name like ?', "%#{name}%") : Drug.order("name ASC")
-    render json: paginate(query)
+    filters = params.permit(%i[name concept_set])
+
+    render json: paginate(service.find_drugs(filters))
   end
 
   def drug_sets
