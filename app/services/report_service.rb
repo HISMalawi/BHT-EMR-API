@@ -137,6 +137,9 @@ class ReportService
     engine(@program).arv_refill_periods(start_date, end_date, min_age, max_age, org)
   end
 
+  def tx_ml(start_date, end_date)
+    engine(@program).tx_ml(start_date, end_date)
+  end
   private
 
   def engine(program)

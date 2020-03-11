@@ -15,7 +15,8 @@ module ARTService
       'IPT' => ARTService::Reports::IPTReport,
       'REGIMEN_SWITCH' => ARTService::Reports::RegimenSwitch,
       'COHORT_DISAGGREGATED_ADDITIONS' => ARTService::Reports::CohortDisaggregatedAdditions,
-      'ARV_REFILL_PERIODS' => ARTService::Reports::ArvRefillPeriods
+      'ARV_REFILL_PERIODS' => ARTService::Reports::ArvRefillPeriods,
+      'TX_ML' => ARTService::Reports::Pepfar::TxMl
     }.freeze
 
     def generate_report(type:, **kwargs)
@@ -89,9 +90,8 @@ module ARTService
         end_date: end_date.to_date, min_age: min_age, max_age: max_age, org: org).arv_refill_periods
     end
 
-    def tx_ml(start_date, end_date, age_group)
-      REPORTS['TX_ML'].new(start_date: start_date.to_date,
-        end_date: end_date.to_date, age_group: age_group).data
+    def tx_ml(start_date, end_date)
+      REPORTS['TX_ML'].new(start_date: start_date.to_date, end_date: end_date.to_date).data
     end
 
     private
