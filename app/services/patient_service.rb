@@ -302,6 +302,81 @@ class PatientService
     end
   end
 
+  def fetch_full_visit(patient, program = nil, visit_date)
+    patient_id = ActiveRecord::Base.connection.quote(patient.id)
+    program_id = program ? ActiveRecord::Base.connection.quote(program.id) : nil
+
+    current_regimen = ActiveRecord::Base.connection.select_one <<-SQL
+      SELECT patient_current_regimen(#{patient_id}, DATE('#{visit_date}')) regimen;
+    SQL
+
+    current_outcome = ActiveRecord::Base.connection.select_one <<-SQL
+      SELECT patient_outcome(#{patient_id}, DATE('#{visit_date}')) outcome;
+    SQL
+
+    current_weight = ActiveRecord::Base.connection.select_one <<-SQL
+      SELECT  IF(value_numeric is null ,value_text, value_numeric) weight
+      FROM obs WHERE person_id = #{patient_id}
+      AND voided = 0 AND DATE(obs_datetime) = DATE('#{visit_date}')
+      AND concept_id = 5089 ORDER BY date_created DESC LIMIT 1;
+    SQL
+
+    current_weight = ActiveRecord::Base.connection.select_one <<-SQL
+      SELECT  IF(value_numeric is null ,value_text, value_numeric) height
+      FROM obs WHERE person_id = #{patient_id}
+      AND voided = 0 AND DATE(obs_datetime) = DATE('#{visit_date}')
+      AND concept_id = 5090 ORDER BY date_created DESC LIMIT 1;
+    SQL
+
+    patient_available = ActiveRecord::Base.connection.select_one <<-SQL
+      SELECT IF(value_coded = 1065 , "YES", "N/A") pa
+      FROM obs WHERE concept_id = 1805 AND person_id = #{patient_id}
+      AND voided  = 0 AND DATE(obs_datetime) = DATE('#{visit_date}')
+      ORDER BY date_created DESC LIMIT 1;
+    SQL
+
+    guardian_available = ActiveRecord::Base.connection.select_one <<-SQL
+      SELECT IF(value_coded = 1065 , "YES", "N/A") pa
+      FROM obs WHERE concept_id = 2122 AND person_id = #{patient_id}
+      AND voided  = 0 AND DATE(obs_datetime) = DATE('#{visit_date}')
+      ORDER BY date_created DESC LIMIT 1;
+    SQL
+
+    appointment = ActiveRecord::Base.connection.select_one <<-SQL
+      SELECT DATE(value_datetime) date
+      FROM obs INNER JOIN encounter e ON e.encounter_id = obs.encounter_id
+      WHERE concept_id = 5096 AND person_id = #{patient_id}
+      AND encounter_type = 7 AND program_id = 1
+      AND obs.voided  = 0 AND DATE(obs_datetime) = DATE('#{visit_date}')
+      ORDER BY obs.date_created DESC LIMIT 1;
+    SQL
+
+
+    patient_available = patient_available['pa'] rescue 'N/A'
+    guardian_available =  guardian_available['pa'] rescue 'N/A'
+
+    if patient_available == 'YES' && guardian_available == 'YES'
+      visit_type = 'PG'
+    elsif patient_available == 'YES'
+      visit_type = 'P'
+    elsif patient_available == 'YES'
+      visit_type = 'G'
+    else
+      visit_type = 'N/A'
+    end
+
+    visit = {
+      regimen:  current_regimen['regimen'],
+      outcome:  current_outcome['outcome'],
+      weight:   (current_weight['weight'] rescue ''),
+      height:   (current_weight['height'] rescue  ''),
+      appointment:   (appointment['date'] rescue  ''),
+      visit_type: visit_type
+    }
+
+    return  visit
+  end
+
   private
 
   def npid_identifier_types

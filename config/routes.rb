@@ -44,6 +44,7 @@ Rails.application.routes.draw do
         get 'labels/print_tb_number', to: 'patients#print_tb_number'
         get 'labels/print_tb_lab_order_summary', to: 'patients#print_tb_lab_order_summary'
         get '/visits' => 'patients#visits'
+        get '/visit' => 'patients#visit'
         get('/appointments', to: redirect do |params, request|
           paginate_url "/api/v1/appointments?patient_id=#{params[:patient_id]}",
                        request.params
@@ -300,4 +301,5 @@ Rails.application.routes.draw do
   get '/api/v1/user_system_usage', to: 'healthcheck#user_system_usage'
   get '/api/v1/arv_refill_periods', to: 'api/v1/reports#arv_refill_periods'
   get '/api/v1/tx_ml', to: 'api/v1/reports#tx_ml'
+  get '/api/v1/tx_rtt', to: 'api/v1/reports#tx_rtt'
 end
