@@ -9,7 +9,7 @@ class Api::V1::OrdersController < ApplicationController
   def create
     create_params = params.require(:order).permit(
       :order_type_id, :concept_id, :encounter_id, :instructions, :start_date,
-      :auto_expire_date, :creator, :accession_number
+      :auto_expire_date, :creator, :accession_number, :patient_id
     )
 
     create_params[:orderer] ||= User.current.id
