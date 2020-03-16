@@ -15,7 +15,7 @@ class Api::V1::OrdersController < ApplicationController
     create_params[:orderer] ||= User.current.id
 
     order = Order.create create_params
-    if order.error.empty?
+    if order.errors.empty?
       render json: order, status: :created
     else
       render json: order.errors, status: :bad_request
