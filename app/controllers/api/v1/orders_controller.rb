@@ -9,13 +9,13 @@ class Api::V1::OrdersController < ApplicationController
   def create
     create_params = params.require(:order).permit(
       :order_type_id, :concept_id, :encounter_id, :instructions, :start_date,
-      :auto_expire_date, :creator, :accession_number
+      :auto_expire_date, :creator, :accession_number, :patient_id
     )
 
     create_params[:orderer] ||= User.current.id
 
     order = Order.create create_params
-    if order.error.empty?
+    if order.errors.empty?
       render json: order, status: :created
     else
       render json: order.errors, status: :bad_request
