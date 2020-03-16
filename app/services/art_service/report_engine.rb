@@ -17,7 +17,8 @@ module ARTService
       'COHORT_DISAGGREGATED_ADDITIONS' => ARTService::Reports::CohortDisaggregatedAdditions,
       'ARV_REFILL_PERIODS' => ARTService::Reports::ArvRefillPeriods,
       'TX_ML' => ARTService::Reports::Pepfar::TxMl,
-      'TX_RTT' => ARTService::Reports::Pepfar::TxRTT
+      'TX_RTT' => ARTService::Reports::Pepfar::TxRTT,
+      'IPT_COVERAGE' => ARTService::Reports::IPTCoverage
     }.freeze
 
     def generate_report(type:, **kwargs)
@@ -97,6 +98,10 @@ module ARTService
 
     def tx_rtt(start_date, end_date)
       REPORTS['TX_RTT'].new(start_date: start_date.to_date, end_date: end_date.to_date).data
+    end
+
+    def ipt_coverage(start_date, end_date)
+      REPORTS['IPT_COVERAGE'].new(start_date: start_date.to_date, end_date: end_date.to_date).data
     end
 
     private

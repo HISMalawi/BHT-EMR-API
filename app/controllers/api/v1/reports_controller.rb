@@ -143,6 +143,10 @@ class Api::V1::ReportsController < ApplicationController
     render json: service.tx_rtt(params[:start_date], params[:end_date])
   end
 
+  def ipt_coverage
+    render json: service.ipt_coverage(params[:start_date], params[:end_date])
+  end
+
   private
 
   def service

@@ -306,9 +306,36 @@ class PatientService
     patient_id = ActiveRecord::Base.connection.quote(patient.id)
     program_id = program ? ActiveRecord::Base.connection.quote(program.id) : nil
 
-    current_regimen = ActiveRecord::Base.connection.select_one <<-SQL
-      SELECT patient_current_regimen(#{patient_id}, DATE('#{visit_date}')) regimen;
+    medication = ActiveRecord::Base.connection.select_all <<-SQL
+      SELECT
+          o.patient_id, o.start_date, o.auto_expire_date,
+          d.name, t.quantity quantity
+      FROM person p
+      INNER JOIN orders o ON o.patient_id = p.person_id
+      INNER JOIN drug_order t ON o.order_id = t.order_id
+      INNER JOIN drug d ON d.drug_id = t.drug_inventory_id
+      INNER JOIN concept_set s ON s.concept_id = d.concept_id AND s.concept_set=1085
+      INNER JOIN encounter e ON e.patient_id =  o.patient_id
+      WHERE o.voided = 0 AND DATE(o.start_date) = DATE('#{visit_date}')
+      AND o.patient_id = #{patient_id} AND e.encounter_type = 54
+      AND e.program_id = 1 GROUP BY t.drug_inventory_id;
     SQL
+
+    medication_given = []
+
+    unless medication.blank?
+      current_regimen = ActiveRecord::Base.connection.select_one <<-SQL
+        SELECT patient_current_regimen(#{patient_id}, DATE('#{visit_date}')) regimen;
+      SQL
+
+      medication.each do |m|
+        medication_given  <<{
+          medication: m['name'],
+          quantity: m['quantity']
+        }
+      end
+
+    end
 
     current_outcome = ActiveRecord::Base.connection.select_one <<-SQL
       SELECT patient_outcome(#{patient_id}, DATE('#{visit_date}')) outcome;
@@ -366,12 +393,13 @@ class PatientService
     end
 
     visit = {
-      regimen:  current_regimen['regimen'],
+      regimen:  (current_regimen['regimen'] rescue  nil),
       outcome:  current_outcome['outcome'],
       weight:   (current_weight['weight'] rescue ''),
       height:   (current_weight['height'] rescue  ''),
       appointment:   (appointment['date'] rescue  ''),
-      visit_type: visit_type
+      visit_type: visit_type,
+      medication: medication_given
     }
 
     return  visit
