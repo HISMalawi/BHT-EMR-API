@@ -210,6 +210,11 @@ class Api::V1::PatientsController < ApplicationController
                      disposition: 'inline'
   end
 
+  def visit
+    program = params[:program_id] ? Program.find(params[:program_id]) : nil
+    render json: service.fetch_full_visit(patient, program, params[:date])
+  end
+
   private
 
   def patient
