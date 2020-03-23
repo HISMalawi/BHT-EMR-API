@@ -154,18 +154,20 @@ module ARTService
         # together with the regimen ingredients
         next unless ingredient.regimen
 
-        LOGGER.debug([lpv_drug_type, ingredient.drug.name])
+        LOGGER.debug([lpv_drug_type, ingredient.drug.name, find_drug_type(ingredient.drug)])
 
         regimen_index = ingredient.regimen.regimen_index
         regimen = regimens[regimen_index] || []
 
         drug_name = ingredient.drug.name
+        LOGGER.debug([%r{^LPV/r}.match?(drug_name), %w[pellets granules].include?(lpv_drug_type), find_drug_type(ingredient.drug) != lpv_drug_type])
+
         if %r{^LPV/r}.match?(drug_name)\
-            && %w[pellets granules].include?(lpv_drug_type)\
-            && find_drug_type(ingredient.drug) != lpv_drug_type
-          LOGGER.debug(find_drug_type(ingredient.drug))
-          # For LPV/r there is the option of giving out pellets or granules
-          # instead of the usual tabs if clinician explicitly specifies it.
+            && ((lpv_drug_type == 'tabs' && find_drug_type(ingredient.drug) != 'tabs')\
+                || (%w[pellets granules].include?(lpv_drug_type)\
+                    && find_drug_type(ingredient.drug) != lpv_drug_type))
+          # LPV/r comes in three forms tabs, pills, or granules. Clinician specifies
+          # which form to prescribe thus we skip the unwanted drugs.
           LOGGER.debug("Skipping non #{lpv_drug_type}, #{drug_name}...")
           next
         end
@@ -434,14 +436,14 @@ module ARTService
       '6' => [Set.new([734, 22])],
       '7' => [Set.new([734, 932])],
       '8' => [Set.new([39, 932])],
-      '9' => [Set.new([1044, 979]), Set.new([1044, 74]), Set.new([1044, 73]), Set.new([969, 73]), Set.new([969, 74])],
+      '9' => [Set.new([1044, 74]), Set.new([1044, 73]), Set.new([969, 73]), Set.new([969, 74]), Set.new([1044, 979])],
       '10' => [Set.new([734, 73])],
       '11' => [Set.new([736, 74]), Set.new([736, 73]), Set.new([736, 1044]), Set.new([39, 73]), Set.new([39, 74])],
       '12' => [Set.new([976, 977, 982])],
       '13' => [Set.new([983])],
       '14' => [Set.new([984, 982])],
       '15' => [Set.new([969, 982])],
-      '16' => [Set.new([1043,1044]), Set.new([954,969])],
+      '16' => [Set.new([1043, 1044]), Set.new([954,969])],
       '17' => [Set.new([30,1044]), Set.new([11,969])]
     }.freeze
   end
