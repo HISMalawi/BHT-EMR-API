@@ -341,7 +341,7 @@ module RdsService
     model = record.class
     database = model.connection.current_database
 
-    ActiveRecord::Base.connection.execute(
+    model.connection.execute(
       <<~SQL
         UPDATE `#{database}`.`#{model.table_name}`
         SET uuid = '#{new_uuid}'
