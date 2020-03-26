@@ -136,6 +136,7 @@ module ARTService
       end
 
       def generate_start_date_and_end_date(quarter)
+        return [@start_date, @end_date] if quarter == 'Custom'
         quarter, quarter_year = quarter.humanize.split(" ")
 
         quarter_start_dates = [

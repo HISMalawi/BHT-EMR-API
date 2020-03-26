@@ -41,8 +41,12 @@ class Api::V1::ReportsController < ApplicationController
     rebuild, init = params.require %i[quarter age_group rebuild_outcome initialize]
 
     init = (init == 'true' ? true : false)
-    start_date = Date.today
-    end_date = Date.today
+
+    start_date =  params[:start_date].to_date if params.include?(:start_date)
+    end_date = params[:end_date].to_date if params.include?(:end_date)
+
+    start_date = Date.today if start_date.blank?
+    end_date = Date.today if end_date.blank?
     rebuild_outcome = (rebuild == 'true' ? true : false)
 
     if(quarter == 'pepfar')

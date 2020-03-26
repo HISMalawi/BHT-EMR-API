@@ -290,8 +290,14 @@ module ARTService
         cohort_struct.eleven_p        = get_regimen_category('11P')
         cohort_struct.twelve_a         = get_regimen_category('12A')
         cohort_struct.thirteen_a       = get_regimen_category('13A')
+        cohort_struct.fourteen_p       = get_regimen_category('14P')
         cohort_struct.fourteen_a       = get_regimen_category('14A')
+        cohort_struct.fifteen_p       = get_regimen_category('15P')
         cohort_struct.fifteen_a       = get_regimen_category('15A')
+        cohort_struct.sixteen_p       = get_regimen_category('16P')
+        cohort_struct.sixteen_a       = get_regimen_category('16A')
+        cohort_struct.seventeen_p       = get_regimen_category('17P')
+        cohort_struct.seventeen_a       = get_regimen_category('17A')
         cohort_struct.unknown_regimen  = get_regimen_category('unknown_regimen')
 
         # Total patients with side effects:
