@@ -68,6 +68,15 @@ module ARTService
 
         else
           start_date, end_date = generate_start_date_and_end_date(quarter)
+          
+          if @rebuild && quarter  == 'Custom'
+            initialize_disaggregated
+            art_service = ARTService::Reports::CohortBuilder.new()
+            art_service.create_tmp_patient_table
+            art_service.load_data_into_temp_earliest_start_date(end_date)
+            art_service.update_cum_outcome(end_date)
+            art_service.update_tb_status(end_date)
+          end
         end
 
         tmp = get_age_groups(age_group, start_date, end_date, temp_outcome_table)
