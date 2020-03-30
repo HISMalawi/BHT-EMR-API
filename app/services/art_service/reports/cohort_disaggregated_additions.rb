@@ -60,6 +60,54 @@ EOF
         return given_ipt(patient_ids)
       end
 
+      def disaggregated_regimen_distribution
+        additional_sql = ""
+        additional_for_women_sql = ""
+        gender = @gender.first
+
+        if @age_group != 'All'
+          additional_sql = "HAVING age_group = '#{@age_group}'"
+        else
+          if @gender  == 'FP'
+            additional_for_women_sql = "INNER JOIN temp_disaggregated t ON t.patient_id = e.patient_id"
+            additional_for_women_sql += " AND t.maternal_status = 'FP' "
+          elsif @gender  == 'Fbf'
+            additional_for_women_sql = "INNER JOIN temp_disaggregated t ON t.patient_id = e.patient_id"
+            additional_for_women_sql += " AND t.maternal_status = 'Fbf' "
+          elsif @gender  == 'FNP'
+            additional_for_women_sql = "INNER JOIN temp_disaggregated t ON t.patient_id = e.patient_id"
+            additional_for_women_sql += " AND t.maternal_status = 'FNP' "
+          end
+        end
+
+        patients =  ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT
+          e.patient_id,  cohort_disaggregated_age_group(e.birthdate, DATE("#{@end_date.to_date}")) age_group
+        FROM temp_earliest_start_date e
+        INNER JOIN #{@patient_outcome_table} o ON  o.patient_id = e.patient_id
+        #{additional_for_women_sql}
+        WHERE LEFT(gender,1) = '#{gender}' AND o.cum_outcome = 'On antiretrovirals'
+        AND DATE(date_enrolled) <= '#{@end_date.to_date}'
+        GROUP BY e.patient_id #{additional_sql};
+        SQL
+
+        return {} if patients.blank?
+        patient_ids = patients.map{|p| p['patient_id'].to_i}
+        data = {}
+
+        patient_ids.each do |patient_id|
+          regimen_data =  ActiveRecord::Base.connection.select_one <<~SQL
+          SELECT patient_current_regimen(#{patient_id}, DATE('#{@end_date.to_date}')) regimen;
+          SQL
+
+          regimen = regimen_data['regimen']
+          data[regimen] = [] if data[regimen].blank?
+          data[regimen] << patient_id
+        end
+
+        return  data
+      end
+
       private
 
       def given_ipt(patient_ids)

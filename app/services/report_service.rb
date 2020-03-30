@@ -149,6 +149,10 @@ class ReportService
     engine(@program).ipt_coverage(start_date, end_date)
   end
 
+  def disaggregated_regimen_distribution(start_date, end_date, gender, age_group, outcome_table)
+    engine(@program).disaggregated_regimen_distribution(start_date, end_date, gender, age_group, outcome_table)
+  end
+
 
   private
 

@@ -23,7 +23,7 @@ module ARTService
       def initialize_disaggregated
 
         ActiveRecord::Base.connection.execute('DROP TABLE IF EXISTS temp_disaggregated')
-        
+
         ActiveRecord::Base.connection.execute(
           'CREATE TABLE IF NOT EXISTS temp_disaggregated (
              patient_id INTEGER PRIMARY KEY,
@@ -51,24 +51,24 @@ module ARTService
             if records['rec_count'].to_i < 1
               @rebuild = true
             end
-          rescue 
+          rescue
             initialize_disaggregated
             create_mysql_pepfar_current_defaulter
             create_mysql_pepfar_current_outcome
-            rebuild_outcomes 
+            rebuild_outcomes
           end
 
           if @rebuild
             initialize_disaggregated
             create_mysql_pepfar_current_defaulter
             create_mysql_pepfar_current_outcome
-            rebuild_outcomes 
+            rebuild_outcomes
           end
 
 
         else
           start_date, end_date = generate_start_date_and_end_date(quarter)
-          
+
           if @rebuild && quarter  == 'Custom'
             initialize_disaggregated
             art_service = ARTService::Reports::CohortBuilder.new()
@@ -95,7 +95,7 @@ module ARTService
         end
 
         list = {}
-        
+
         if all_clients.blank? && (age_group == 'Breastfeeding' || age_group == 'Pregnant')
           list[age_group] = {}
           list[age_group]['F'] = {
@@ -108,7 +108,7 @@ module ARTService
            return {}
         end
 
-        if age_group.match(/year|month/i)  
+        if age_group.match(/year|month/i)
           big_insert tmp, age_group
         end
 
@@ -135,7 +135,7 @@ module ARTService
 
           if gender == 'F' && all_clients_outcomes[patient_id] == 'On antiretrovirals'
             insert_female_maternal_status(patient_id, age_group, end_date)
-          elsif gender == 'F' && (date_enrolled >= start_date && date_enrolled <= end_date) 
+          elsif gender == 'F' && (date_enrolled >= start_date && date_enrolled <= end_date)
             insert_female_maternal_status(patient_id, age_group, end_date)
           end
 
@@ -171,14 +171,14 @@ module ARTService
 
       def screened_for_tb(my_patient_id, age_group, start_date, end_date)
         data = ActiveRecord::Base.connection.select_one <<EOF
-        SELECT patient_screened_for_tb(#{my_patient_id}, 
+        SELECT patient_screened_for_tb(#{my_patient_id},
           '#{start_date.to_date}', '#{end_date.to_date}') AS screened;
 EOF
 
         screened = data['screened'].to_i
 
         ActiveRecord::Base.connection.execute <<EOF
-        UPDATE temp_disaggregated SET screened_for_tb =  #{screened}, 
+        UPDATE temp_disaggregated SET screened_for_tb =  #{screened},
         age_group = '#{age_group}'
         WHERE patient_id = #{my_patient_id};
 EOF
@@ -187,9 +187,9 @@ EOF
       end
 
       def given_ipt(my_patient_id, age_group, start_date, end_date)
-        
+
         data = ActiveRecord::Base.connection.select_one <<EOF
-        SELECT patient_given_ipt(#{my_patient_id}, 
+        SELECT patient_given_ipt(#{my_patient_id},
           '#{start_date.to_date}', '#{end_date.to_date}') AS given;
 EOF
 
@@ -200,7 +200,7 @@ EOF
         age_group = '#{age_group}'
         WHERE patient_id = #{my_patient_id};
 EOF
-      
+
         return given
       end
 
@@ -219,7 +219,7 @@ EOF
           if date_enrolled == earliest_start_date
             tx_new = 1
           end unless earliest_start_date.blank?
-          
+
           if outcome == 'On antiretrovirals'
             tx_curr = 1
           end
@@ -237,12 +237,12 @@ EOF
 
       def get_age_groups(age_group, start_date, end_date, temp_outcome_table)
         if age_group != 'Pregnant' && age_group != 'FNP' && age_group != 'Not pregnant' && age_group != 'Breastfeeding'
-         
+
           results = ActiveRecord::Base.connection.select_all <<EOF
-            SELECT 
+            SELECT
             e.*,  cohort_disaggregated_age_group(DATE(e.birthdate), DATE('#{end_date}')) AS age_group,
             t2.cum_outcome AS outcome
-            FROM temp_earliest_start_date e 
+            FROM temp_earliest_start_date e
             INNER JOIN #{temp_outcome_table} t2 ON t2.patient_id = e.patient_id
             GROUP BY e.patient_id HAVING age_group = '#{age_group}';
 EOF
@@ -250,10 +250,10 @@ EOF
         elsif age_group == 'Pregnant'
           create_mysql_female_maternal_status
           results = ActiveRecord::Base.connection.select_all <<EOF
-            SELECT 
+            SELECT
               e.*, maternal_status AS mstatus,
               t3.cum_outcome AS outcome
-            FROM temp_earliest_start_date e 
+            FROM temp_earliest_start_date e
             INNER JOIN temp_disaggregated t2 ON t2.patient_id = e.patient_id
             INNER JOIN #{temp_outcome_table} t3 ON t3.patient_id = e.patient_id
             WHERE maternal_status = 'FP'
@@ -263,10 +263,10 @@ EOF
         elsif age_group == 'Breastfeeding'
           create_mysql_female_maternal_status
           results = ActiveRecord::Base.connection.select_all <<EOF
-            SELECT 
+            SELECT
               e.*, maternal_status AS mstatus,
               t3.cum_outcome AS outcome
-            FROM temp_earliest_start_date e 
+            FROM temp_earliest_start_date e
             INNER JOIN temp_disaggregated t2 ON t2.patient_id = e.patient_id
             INNER JOIN #{temp_outcome_table} t3 ON t3.patient_id = e.patient_id
             WHERE maternal_status = 'FBf'
@@ -276,10 +276,10 @@ EOF
         elsif age_group == 'FNP'
           create_mysql_female_maternal_status
           results = ActiveRecord::Base.connection.select_all <<EOF
-            SELECT 
+            SELECT
               e.*, maternal_status AS mstatus,
               t3.cum_outcome AS outcome
-            FROM temp_earliest_start_date e 
+            FROM temp_earliest_start_date e
             INNER JOIN temp_disaggregated t2 ON t2.patient_id = e.patient_id
             INNER JOIN #{temp_outcome_table} t3 ON t3.patient_id = e.patient_id
             WHERE maternal_status = 'FNP'
@@ -289,7 +289,7 @@ EOF
         end
 
         return results
-        
+
       end
 
       def create_mysql_female_maternal_status
@@ -331,40 +331,40 @@ ELSEIF pregnant_date IS NOT NULL AND breastfeeding_date IS NULL THEN SET materna
 END IF;
 
 IF maternal_status = 'Unknown' THEN
-  
-  IF breastfeeding_date <= pregnant_date THEN  
+
+  IF breastfeeding_date <= pregnant_date THEN
     SET obs_value_coded = (SELECT value_coded FROM obs WHERE concept_id IN(@pregnant_concepts) AND voided = 0 AND person_id = my_patient_id AND obs_datetime = pregnant_date LIMIT 1);
-    IF obs_value_coded = 1065 THEN SET maternal_status = 'FP';  
+    IF obs_value_coded = 1065 THEN SET maternal_status = 'FP';
     ELSEIF obs_value_coded = 1066 THEN SET maternal_status = 'FNP';
-    END IF;  
+    END IF;
   END IF;
-  
-  IF breastfeeding_date > pregnant_date THEN  
-    SET obs_value_coded = (SELECT value_coded FROM obs WHERE concept_id IN(@breastfeeding_concept) AND voided = 0 AND person_id = my_patient_id AND obs_datetime = breastfeeding_date LIMIT 1);
-    IF obs_value_coded = 1065 THEN SET maternal_status = 'FBf';  
-    ELSEIF obs_value_coded = 1066 THEN SET maternal_status = 'FNP';
-    END IF;  
-  END IF;
-  
-  IF DATE(breastfeeding_date) = DATE(pregnant_date) AND maternal_status = 'FNP' THEN  
+
+  IF breastfeeding_date > pregnant_date THEN
     SET obs_value_coded = (SELECT value_coded FROM obs WHERE concept_id IN(@breastfeeding_concept) AND voided = 0 AND person_id = my_patient_id AND obs_datetime = breastfeeding_date LIMIT 1);
     IF obs_value_coded = 1065 THEN SET maternal_status = 'FBf';
     ELSEIF obs_value_coded = 1066 THEN SET maternal_status = 'FNP';
-    END IF;  
-  END IF;  
+    END IF;
+  END IF;
+
+  IF DATE(breastfeeding_date) = DATE(pregnant_date) AND maternal_status = 'FNP' THEN
+    SET obs_value_coded = (SELECT value_coded FROM obs WHERE concept_id IN(@breastfeeding_concept) AND voided = 0 AND person_id = my_patient_id AND obs_datetime = breastfeeding_date LIMIT 1);
+    IF obs_value_coded = 1065 THEN SET maternal_status = 'FBf';
+    ELSEIF obs_value_coded = 1066 THEN SET maternal_status = 'FNP';
+    END IF;
+  END IF;
 END IF;
 
 IF maternal_status = 'Check FP' THEN
 
   SET obs_value_coded = (SELECT value_coded FROM obs WHERE concept_id IN(@pregnant_concepts) AND voided = 0 AND person_id = my_patient_id AND obs_datetime = pregnant_date LIMIT 1);
-  IF obs_value_coded = 1065 THEN SET maternal_status = 'FP';  
+  IF obs_value_coded = 1065 THEN SET maternal_status = 'FP';
   ELSEIF obs_value_coded = 1066 THEN SET maternal_status = 'FNP';
-  END IF;  
+  END IF;
 
   IF obs_value_coded IS NULL THEN
     SET obs_value_coded = (SELECT GROUP_CONCAT(value_coded) FROM obs WHERE concept_id IN(7563) AND voided = 0 AND person_id = my_patient_id AND obs_datetime = pregnant_date);
-    IF obs_value_coded IN(1755) THEN SET maternal_status = 'FP';  
-    END IF;  
+    IF obs_value_coded IN(1755) THEN SET maternal_status = 'FP';
+    END IF;
   END IF;
 
   IF maternal_status = 'Check FP' THEN SET maternal_status = 'FNP';
@@ -374,14 +374,14 @@ END IF;
 IF maternal_status = 'Check BF' THEN
 
   SET obs_value_coded = (SELECT value_coded FROM obs WHERE concept_id IN(@breastfeeding_concept) AND voided = 0 AND person_id = my_patient_id AND obs_datetime = breastfeeding_date LIMIT 1);
-  IF obs_value_coded = 1065 THEN SET maternal_status = 'FBf';  
+  IF obs_value_coded = 1065 THEN SET maternal_status = 'FBf';
   ELSEIF obs_value_coded = 1066 THEN SET maternal_status = 'FNP';
-  END IF;  
+  END IF;
 
   IF obs_value_coded IS NULL THEN
     SET obs_value_coded = (SELECT GROUP_CONCAT(value_coded) FROM obs WHERE concept_id IN(7563) AND voided = 0 AND person_id = my_patient_id AND obs_datetime = breastfeeding_date);
-    IF obs_value_coded IN(834,5632) THEN SET maternal_status = 'FBf';  
-    END IF;  
+    IF obs_value_coded IN(834,5632) THEN SET maternal_status = 'FBf';
+    END IF;
   END IF;
 
   IF maternal_status = 'Check BF' THEN SET maternal_status = 'FNP';
@@ -395,7 +395,7 @@ END;
 EOF
 
       end
-  
+
       def rebuild_outcomes
         ActiveRecord::Base.connection.execute(
           'DROP TABLE IF EXISTS `temp_pepfar_patient_outcomes`'
@@ -499,7 +499,7 @@ BEGIN
   END;
 EOF
 
-      
+
       end
 
       def create_mysql_pepfar_current_outcome
@@ -629,10 +629,10 @@ EOF
         )
 
        female_maternal_status = results.blank? ? 'FNP' : 'FP'
-       
+
 
        if female_maternal_status == 'FNP'
-          
+
         breastfeeding_concepts = []
         breastfeeding_concepts <<  ConceptName.find_by_name('Breast feeding?').concept_id
         breastfeeding_concepts <<  ConceptName.find_by_name('Breast feeding').concept_id
@@ -650,13 +650,13 @@ EOF
                         AND o.person_id = obs.person_id AND o.obs_datetime <='#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
           GROUP BY obs.person_id;"
         )
-      
+
          female_maternal_status = results2.blank? ? 'FNP' : 'FBf'
        end
 
 
        ActiveRecord::Base.connection.execute <<EOF
-        UPDATE temp_disaggregated SET maternal_status =  '#{female_maternal_status}', 
+        UPDATE temp_disaggregated SET maternal_status =  '#{female_maternal_status}',
            age_group = '#{age_group}' WHERE patient_id = #{patient_id};
 EOF
 
@@ -664,7 +664,7 @@ EOF
       end
 
       def big_insert(data, age_group)
-        
+
         (data || []).each do |r|
           ActiveRecord::Base.connection.execute <<EOF
             INSERT INTO temp_disaggregated (patient_id, age_group)
@@ -674,7 +674,7 @@ EOF
         end
 
       end
-      
+
     end
   end
 
