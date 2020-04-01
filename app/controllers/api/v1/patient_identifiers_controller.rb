@@ -17,14 +17,14 @@ class Api::V1::PatientIdentifiersController < ApplicationController
 
   # POST /patient_identifiers
   def create
-    @patient_identifier = PatientIdentifier.new(patient_identifier_params).tap do |hash|
-      hash[:location_id] = Location.current.id
-    end
+    params[:location_id] = Location.current.location_id
 
-    if @patient_identifier.save
-      render json: @patient_identifier, status: :created
+    identifier = PatientIdentifierService.create(patient_identifier_params)
+
+    if identifier.errors.empty?
+      render json: identifier, status: :created
     else
-      render json: @patient_identifier.errors, status: :unprocessable_entity
+      render json: identifier.errors, status: :bad_request
     end
   end
 
