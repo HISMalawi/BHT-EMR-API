@@ -104,6 +104,12 @@ module ARTService
       REPORTS['IPT_COVERAGE'].new(start_date: start_date.to_date, end_date: end_date.to_date).data
     end
 
+    def disaggregated_regimen_distribution(start_date, end_date, gender, age_group, outcome_table)
+      REPORTS['COHORT_DISAGGREGATED_ADDITIONS'].new(start_date: start_date.to_date,
+        end_date: end_date.to_date, age_group: age_group, gender: gender,
+          outcome_table: outcome_table).disaggregated_regimen_distribution
+    end
+
     private
 
     def call_report_manager(method, type:, **kwargs)

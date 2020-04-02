@@ -151,6 +151,11 @@ class Api::V1::ReportsController < ApplicationController
     render json: service.ipt_coverage(params[:start_date], params[:end_date])
   end
 
+  def disaggregated_regimen_distribution
+    render json: service.disaggregated_regimen_distribution(params[:start_date], params[:end_date],
+      params[:gender], params[:age_group], params[:outcome_table])
+  end
+
   private
 
   def service

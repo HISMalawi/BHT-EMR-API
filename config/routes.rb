@@ -302,4 +302,5 @@ Rails.application.routes.draw do
   get '/api/v1/arv_refill_periods', to: 'api/v1/reports#arv_refill_periods'
   get '/api/v1/tx_ml', to: 'api/v1/reports#tx_ml'
   get '/api/v1/tx_rtt', to: 'api/v1/reports#tx_rtt'
+  get '/api/v1/disaggregated_regimen_distribution', to: 'api/v1/reports#disaggregated_regimen_distribution'
 end
