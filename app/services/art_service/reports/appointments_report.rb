@@ -12,9 +12,9 @@ module ARTService
       'DISPENSING','LAB ORDERS','ART ADHERENCE',
       'GIVE LAB RESULTS','CERVICAL CANCER SCREENING',
       'HYPERTENSION MANAGEMENT','FAST TRACK ASSESMENT'
-    ] 
-     
-    HIV_ENCOUNTERS = EncounterType.where('name IN(?)', encounter_names).map(&:id)  
+    ]
+
+    HIV_ENCOUNTERS = EncounterType.where('name IN(?)', encounter_names).map(&:id)
 
     class AppointmentsReport
       def initialize(start_date:, end_date:)
@@ -31,7 +31,7 @@ module ARTService
           AND obs.value_datetime BETWEEN ? AND ?
           AND program_id = ? AND obs.concept_id = ?", encounter_type.id,
           @start_date.strftime('%Y-%m-%d 00:00:00'),
-          @end_date.strftime('%Y-%m-%d 23:59:59'), 
+          @end_date.strftime('%Y-%m-%d 23:59:59'),
           program.id, appointment_concept.concept_id).\
           joins("INNER JOIN obs ON obs.encounter_id = encounter.encounter_id").map(&:encounter_id)
 
@@ -41,7 +41,7 @@ module ARTService
           AND concept_id = ? AND value_datetime BETWEEN ? AND ?",
           encounter_ids, appointment_concept.concept_id,
            @start_date.strftime('%Y-%m-%d 00:00:00'),
-          @end_date.strftime('%Y-%m-%d 23:59:59')) 
+          @end_date.strftime('%Y-%m-%d 23:59:59'))
 
         patients = []
 
@@ -54,7 +54,7 @@ module ARTService
       end
 
 
-      private 
+      private
 
       def missed_appointment?(obs)
         client_came?(obs.person_id, obs.value_datetime)
@@ -63,8 +63,8 @@ module ARTService
       def client_came?(person_id, value_datetime)
         encounters = Encounter.where("patient_id = ? AND encounter_type IN(?)
           AND encounter_datetime BETWEEN ? AND ?", person_id,
-          HIV_ENCOUNTERS, value_datetime.to_date.strftime('%Y-%m-%d 00:00:00'),
-          value_datetime.to_date.strftime('%Y-%m-%d 23:59:59'))        
+          HIV_ENCOUNTERS, (value_datetime.to_date - 14.day).strftime('%Y-%m-%d 00:00:00'),
+          Date.today.strftime('%Y-%m-%d 23:59:59'))
 
         if encounters.blank?
           return client_info person_id, value_datetime
@@ -75,19 +75,19 @@ module ARTService
 
       def client_info(patient_id, appointment_date)
         person = ActiveRecord::Base.connection.select_one <<EOF
-        SELECT  
+        SELECT
           n.given_name, n.family_name, p.birthdate, p.gender,
           i.identifier arv_number, a.value cell_number,
           s.state_province district, s.county_district ta,
           s.city_village village
-        FROM person p 
+        FROM person p
         LEFT JOIN person_name n ON n.person_id = p.person_id
         LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
-        AND i.voided = 0 AND i.identifier_type = 4 
+        AND i.voided = 0 AND i.identifier_type = 4
         LEFT JOIN person_attribute a ON a.person_id = p.person_id
         AND a.voided = 0 AND a.person_attribute_type_id = 12
-        LEFT JOIN person_address s ON s.person_id = p.person_id 
-        AND s.voided = 0 WHERE p.person_id = #{patient_id} 
+        LEFT JOIN person_address s ON s.person_id = p.person_id
+        AND s.voided = 0 WHERE p.person_id = #{patient_id}
         GROUP BY p.person_id, DATE(p.date_created)
         ORDER BY p.person_id, p.date_created;
 EOF
@@ -102,8 +102,9 @@ EOF
           ta: person['ta'],
           village: person['village'],
           arv_number: person['arv_number'],
-          eventually_came_on: (eventually_came_on(patient_id, appointment_date)),
+          #eventually_came_on: (eventually_came_on(patient_id, appointment_date)),
           appointment_date: appointment_date.to_date,
+          current_outcome: get_current_outcome(patient_id),
           person_id: patient_id
         }
       end
@@ -111,7 +112,7 @@ EOF
       def eventually_came_on(patient_id, date)
         data = ActiveRecord::Base.connection.select_one <<EOF
         SELECT MIN(encounter_datetime) visit_date FROM encounter
-        WHERE patient_id = #{patient_id} 
+        WHERE patient_id = #{patient_id}
         AND encounter_type IN(#{HIV_ENCOUNTERS.join(',')})
         AND encounter_datetime > '#{date.to_date.strftime('%Y-%m-%d 23:59:59')}';
 EOF
@@ -125,6 +126,14 @@ EOF
 
       def encounter_type(name)
         EncounterType.find_by_name name
+      end
+
+      def get_current_outcome(patient_id)
+        current_outcome_info = ActiveRecord::Base.connection.select_one <<~SQL
+          SELECT patient_outcome(#{patient_id}, DATE('#{@end_date}')) as outcome;
+        SQL
+
+        return current_outcome_info['outcome']
       end
 
     end
