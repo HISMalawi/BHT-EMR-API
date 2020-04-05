@@ -35,7 +35,7 @@ module ARTService
 
       def defaulter_list(pepfar)
         data = ActiveRecord::Base.connection.select_all <<EOF
-        SELECT o.patient_id, min(start_date) start_date FROM orders o                      
+        SELECT o.patient_id, min(start_date) start_date FROM orders o
         INNER JOIN drug_order od ON od.order_id = o.order_id AND o.voided = 0
         INNER JOIN drug d ON d.drug_id = od.drug_inventory_id
         INNER JOIN concept_set s ON s.concept_id = d.concept_id
@@ -81,11 +81,11 @@ EOF
               s.city_village village
             FROM person p
             LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
-            AND i.voided = 0 AND i.identifier_type = 4 
+            AND i.voided = 0 AND i.identifier_type = 4
             INNER JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
             LEFT JOIN person_attribute a ON a.person_id = p.person_id
             AND a.voided = 0 AND a.person_attribute_type_id = 12
-            LEFT JOIN person_address s ON s.person_id = p.person_id  
+            LEFT JOIN person_address s ON s.person_id = p.person_id
             WHERE p.person_id = #{patient_id} GROUP BY p.person_id
             ORDER BY p.person_id, p.date_created;
 EOF
@@ -106,7 +106,8 @@ EOF
               district: person['district'],
               ta: person['ta'],
               village: person['village'],
-              arv_number: person['arv_number']
+              arv_number: person['arv_number'],
+              current_age: calculate_age(person['birthdate'])
             }
           end
         end
@@ -123,14 +124,14 @@ EOF
         FROM person p
         INNER JOIN cohort_drill_down c ON c.patient_id = p.person_id
         LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
-        AND i.voided = 0 AND i.identifier_type = 4 
+        AND i.voided = 0 AND i.identifier_type = 4
         LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
-        WHERE c.reporting_report_design_resource_id = #{id} 
+        WHERE c.reporting_report_design_resource_id = #{id}
         GROUP BY p.person_id ORDER BY p.person_id, p.date_created;
 EOF
 
         return {} if patients.blank?
-        
+
         patients.select do |person|
           people << {
             person_id: person['patient_id'],
@@ -203,14 +204,14 @@ EOF
         patient_ids = []
 
         begin
-          
-          (values.rows || []).each do |v|  
+
+          (values.rows || []).each do |v|
             patient_ids << v[0]
-          end  
-        
+          end
+
         rescue
-          
-          begin 
+
+          begin
             if values.first.include?(:patient_id)
               values.select do |obj|
                 patient_ids << obj[:patient_id]
@@ -228,8 +229,8 @@ EOF
           end
 
         end
-   
-        sql_insert_statement = nil 
+
+        sql_insert_statement = nil
         patient_ids.select do |patient_id|
           if sql_insert_statement.blank?
             sql_insert_statement = "(#{r.id}, #{patient_id})"
@@ -237,7 +238,7 @@ EOF
             sql_insert_statement += ",(#{r.id}, #{patient_id})"
           end
         end
-        
+
         unless sql_insert_statement.blank?
           ActiveRecord::Base.connection.execute <<EOF
           INSERT INTO cohort_drill_down (reporting_report_design_resource_id, patient_id)
@@ -248,8 +249,19 @@ EOF
 
       end
 
+      def  calculate_age(birthdate)
+        birthdate = birthdate.to_date rescue nil
+        return 'N/A' if birthdate.blank?
+
+        birthdate = ActiveRecord::Base.connection.select_one <<~SQL
+          SELECT TIMESTAMPDIFF(year, DATE('#{birthdate}'), DATE('#{@end_date}')) age;
+        SQL
+
+        return birthdate['age']
+      end
+
     end
   end
 
-      
+
 end
