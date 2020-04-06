@@ -47,7 +47,8 @@ module ARTService
 
     def next_appointment
       Observation.where(person: patient.person, concept: concept('Appointment date'))\
-                 .order(obs_datetime: :desc)\
+                 .where('obs_datetime >= ?', date)
+                 .order(obs_datetime: :asc)\
                  .first\
                  &.value_datetime
     end
