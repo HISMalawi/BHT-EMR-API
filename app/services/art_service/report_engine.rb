@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'ostruct'
+
 module ARTService
   class ReportEngine
     attr_reader :program
@@ -10,6 +12,7 @@ module ARTService
       'COHORT' => ARTService::Reports::Cohort,
       'COHORT_DISAGGREGATED' => ARTService::Reports::CohortDisaggregated,
       'COHORT_SURVIVAL_ANALYSIS' => ARTService::Reports::CohortSurvivalAnalysis,
+      'PATIENTS_ON_DTG' => ARTService::Reports::PatientsOnDTG,
       'VISITS' => ARTService::Reports::VisitsReport,
       'APPOINTMENTS' => ARTService::Reports::AppointmentsReport,
       'IPT' => ARTService::Reports::IPTReport,
@@ -130,12 +133,12 @@ module ARTService
     end
 
     def report_type(name)
-      type  = ReportType.find_by_name(name)
-      raise NotFoundError, "Report, #{name}, not found" unless type
+      type = ReportType.find_by_name(name)
+      return type if type
 
-      type
+      return OpenStruct.new(name: name.upcase) if REPORTS[name.upcase]
+
+      raise NotFoundError, "Report, #{name}, not found"
     end
-
-
   end
 end
