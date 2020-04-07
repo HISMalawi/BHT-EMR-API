@@ -6,7 +6,6 @@ require_relative '../../../app/services/dispensation_service'
 
 describe TBService::PatientsEngine do
 	include DrugOrderService
-	include ModelUtils
 
   let(:epoch) { Time.now }
 	let(:tb_program) { program 'TB PROGRAM' }

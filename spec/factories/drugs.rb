@@ -8,7 +8,12 @@ FactoryBot.define do
     date_created { Time.now }
 
     factory :lacoca_drug do
-      concept { create(:concept, concept_name: create(:concept_name, name: 'Coca')) }
+      concept do
+        concept = create(:concept)
+        create(:concept_name, concept: concept)
+
+        concept
+      end
     end
   end
 end

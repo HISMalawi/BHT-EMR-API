@@ -6,7 +6,6 @@ require_relative '../../../app/services/drug_order_service'
 require_relative '../../../app/services/nlims'
 
 describe TBService::RegimenEngine do
-  include ModelUtils
   include DrugOrderService
 
   let(:date) { Time.now }

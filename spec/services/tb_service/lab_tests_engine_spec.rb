@@ -2,8 +2,6 @@
 require 'rails_helper'
 
 describe TBService::LabTestsEngine do
-  include ModelUtils
-
   let(:date) { Time.now }
   let(:program) { Program.find_by_name 'TB PROGRAM' }
   let(:engine) do
