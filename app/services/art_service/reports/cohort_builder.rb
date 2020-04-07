@@ -650,8 +650,10 @@ module ARTService
         data
       end
 
-      def load_data_into_temp_earliest_start_date(end_date)
+      STATE_DIED = 3
+      STATE_ON_TREATMENT = 7
 
+      def load_data_into_temp_earliest_start_date(end_date)
         ActiveRecord::Base.connection.execute <<EOF
         INSERT INTO temp_earliest_start_date
           select
@@ -660,7 +662,7 @@ module ARTService
             date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`,
             `pe`.`birthdate`,
             `pe`.`birthdate_estimated`,
-            `person`.`death_date` AS `death_date`,
+            COALESCE(`died_outcome`.`start_date`, `pe`.`death_date`) AS `death_date`,
             `pe`.`gender` AS `gender`,
             (select timestampdiff(year, `pe`.`birthdate`, min(`s`.`start_date`))) AS `age_at_initiation`,
             (select timestampdiff(day, `pe`.`birthdate`, min(`s`.`start_date`))) AS `age_in_days`
@@ -669,11 +671,13 @@ module ARTService
             left join `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
             left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
             left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
+            left join (SELECT patient_program_id, start_date FROM patient_state WHERE state = #{STATE_DIED} AND voided = 0)
+              AS died_outcome ON p.patient_program_id = died_outcome.patient_program_id
           where
             ((`p`.`voided` = 0)
                 and (`s`.`voided` = 0)
                 and (`p`.`program_id` = 1)
-                and (`s`.`state` = 7))
+                and (`s`.`state` = #{STATE_ON_TREATMENT}))
                 and (DATE(`s`.`start_date`) >= '1900-01-1 00:00:00')
           group by `p`.`patient_id`
           HAVING date_enrolled IS NOT NULL;
