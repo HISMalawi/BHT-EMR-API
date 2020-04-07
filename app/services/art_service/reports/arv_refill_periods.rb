@@ -80,16 +80,24 @@ EOF
           prescribed_days = info['prescribed_days'].to_i
           med = info['name']
           gender = info['gender']
+          gender = (gender.blank? ? "Unknown" : gender)
+
+          if gender != 'Unknown'
+            gender = (gender.match(/F/i) ? 'Female' : 'Male')
+          end
+
           birthdate = info['birthdate']
 
-          results[patient_id] = {
+          results[gender] = {} if results[gender].blank?
+
+          results[gender][patient_id] = {
             drug: med, prescribed_days: prescribed_days,
             birthdate: birthdate, gender: gender
-          } if results[patient_id].blank?
+          } if results[gender][patient_id].blank?
 
-          if prescribed_days > results[patient_id][:prescribed_days]
-            results[patient_id][:drug] = med
-            results[patient_id][:prescribed_days] = prescribed_days
+          if prescribed_days > results[gender][patient_id][:prescribed_days]
+            results[gender][patient_id][:drug] = med
+            results[gender][patient_id][:prescribed_days] = prescribed_days
           end
 
         end
