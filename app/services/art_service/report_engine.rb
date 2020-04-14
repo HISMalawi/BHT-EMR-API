@@ -19,6 +19,7 @@ module ARTService
       'REGIMEN_SWITCH' => ARTService::Reports::RegimenSwitch,
       'COHORT_DISAGGREGATED_ADDITIONS' => ARTService::Reports::CohortDisaggregatedAdditions,
       'ARV_REFILL_PERIODS' => ARTService::Reports::ArvRefillPeriods,
+      'TX_CURR' => ARTService::Reports::PatientsAliveAndOnTreatment,
       'TX_ML' => ARTService::Reports::Pepfar::TxMl,
       'TX_RTT' => ARTService::Reports::Pepfar::TxRTT,
       'IPT_COVERAGE' => ARTService::Reports::IPTCoverage
