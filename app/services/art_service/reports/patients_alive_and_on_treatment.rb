@@ -5,9 +5,10 @@ module ARTService
     # Returns all patients alive and on treatment within a given
     # time period (Tx Curr).
     class PatientsAliveAndOnTreatment
-      attr_accessor :end_date
+      attr_accessor :start_date, :end_date
 
-      def initialize(end_date:, **_kwargs)
+      def initialize(start_date:, end_date:, **_kwargs)
+        @start_date = start_date
         @end_date = end_date
       end
 
@@ -15,7 +16,7 @@ module ARTService
         PatientState.joins(:patient_program)
                     .where(patient_program: { program_id: HIV_PROGRAM_ID },
                            state: ON_ANTIRETROVIRALS)
-                    .where('start_date <= ?', end_date)
+                    .where('start_date <= ? AND end_date >= ?', start_date, end_date)
                     .where.not(patient_program: { patient_id: patients_with_terminal_states })
                     .select(:patient_id)
                     .map(&:patient_id)
@@ -36,7 +37,7 @@ module ARTService
         PatientState.joins(:patient_program)
                     .where(patient_program: { program_id: HIV_PROGRAM_ID },
                            state: TERMINAL_STATES)
-                    .where('start_date <= ?', end_date)
+                    .where('start_date <= ? AND end_date >= ?', start_date, end_date)
                     .group('patient_program.patient_id')
                     .select(:patient_id)
       end
