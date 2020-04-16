@@ -14,6 +14,7 @@ module ARTService
       'COHORT_SURVIVAL_ANALYSIS' => ARTService::Reports::CohortSurvivalAnalysis,
       'PATIENTS_ON_DTG' => ARTService::Reports::PatientsOnDTG,
       'VISITS' => ARTService::Reports::VisitsReport,
+      'VL_DUE' => ARTService::Reports::PatientsDueForViralLoad,
       'APPOINTMENTS' => ARTService::Reports::AppointmentsReport,
       'IPT' => ARTService::Reports::IPTReport,
       'REGIMEN_SWITCH' => ARTService::Reports::RegimenSwitch,
