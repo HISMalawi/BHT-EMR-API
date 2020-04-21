@@ -35,7 +35,8 @@ module ARTService
         patients = ActiveRecord::Base.connection.select_all <<EOF
         select
             `p`.`patient_id` AS `patient_id`,
-             cast(patient_date_enrolled(`p`.`patient_id`) as date) AS `date_enrolled`
+             cast(patient_date_enrolled(`p`.`patient_id`) as date) AS `date_enrolled`,
+             pe.birthdate, pe.gender
           from
             ((`patient_program` `p`
             left join `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
@@ -53,11 +54,15 @@ module ARTService
 EOF
 
         return {} if patients.blank?
-        patient_ids = patients.map{|p|p['patient_id'].to_i}
-
+        data = []
+        patients.each do |p|
+          data  << [p['patient_id'].to_i, p["gender"], p["birthdate"]]
+      end
+=begin
         data = ActiveRecord::Base.connection.select_all <<EOF
           SELECT
-            o.patient_id, p.gender, p.birthdate, o.start_date, o.auto_expire_date, d.name, od.quantity,
+            o.patient_id, p.gender, p.birthdate, o.start_date,
+            o.auto_expire_date, d.name, od.quantity, d.drug_id,
             TIMESTAMPDIFF(day, DATE(o.start_date), DATE(o.auto_expire_date)) prescribed_days
           FROM orders o
           INNER JOIN drug_order od ON od.order_id = o.order_id
@@ -68,37 +73,29 @@ EOF
           WHERE s.concept_set = #{arv_concept_set} AND o.voided = 0
           AND DATE(o.start_date) = (
             SELECT DATE(MAX(o.start_date)) FROM orders t WHERE t.patient_id = o.patient_id
-            AND t.voided = 0 AND t.start_date <= '#{@end_date}'
+            AND t.voided = 0 AND t.start_date <= '#{@end_date}' AND od.order_id = t.order_id
           ) AND e.program_id = #{program_id} AND o.patient_id IN(#{patient_ids.join(',')})
           AND od.quantity > 0 AND e.encounter_type = #{encounter_type}
           GROUP BY o.patient_id, d.drug_id;
 EOF
-
+=end
         results = {}
-        (data || []).each do |info|
-          patient_id = info['patient_id'].to_i
-          prescribed_days = info['prescribed_days'].to_i
-          med = info['name']
-          gender = info['gender']
-          gender = (gender.blank? ? "Unknown" : gender)
-
+        (data || []).each do |patient_id, sex, birthdate|
+          gender = (sex.blank? ? 'Unknown' : sex)
           if gender != 'Unknown'
             gender = (gender.match(/F/i) ? 'Female' : 'Male')
           end
 
-          birthdate = info['birthdate']
-
+          birthdate = birthdate
           results[gender] = {} if results[gender].blank?
 
-          results[gender][patient_id] = {
-            drug: med, prescribed_days: prescribed_days,
-            birthdate: birthdate, gender: gender
-          } if results[gender][patient_id].blank?
+          dispensing_info = get_dispensing_info(patient_id,
+            encounter_type, arv_concept_set, program_id)
 
-          if prescribed_days > results[gender][patient_id][:prescribed_days]
-            results[gender][patient_id][:drug] = med
-            results[gender][patient_id][:prescribed_days] = prescribed_days
-          end
+          results[gender][patient_id] = {
+            prescribed_days: dispensing_info,
+            birthdate: birthdate, gender: gender
+          }
 
         end
 
@@ -117,6 +114,107 @@ EOF
         end
 
         return sql_path
+      end
+
+      def get_dispensing_info(patient_id, encounter_type,
+          arv_concept_set,  program_id)
+
+        data = ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT
+            o.patient_id, p.gender, p.birthdate, o.start_date,
+            o.auto_expire_date, d.name, quantity, d.drug_id,
+            TIMESTAMPDIFF(day, DATE(o.start_date), DATE(o.auto_expire_date)) prescribed_days
+          FROM orders o
+          INNER JOIN drug_order od ON od.order_id = o.order_id
+          INNER JOIN drug d ON d.drug_id = od.drug_inventory_id
+          INNER JOIN concept_set s ON s.concept_id = d.concept_id
+          INNER JOIN person p ON p.person_id = o.patient_id
+          INNER JOIN encounter e ON e.patient_id = p.person_id
+          WHERE s.concept_set = #{arv_concept_set} AND o.voided = 0
+          AND DATE(o.start_date) = (
+            SELECT DATE(MAX(t.start_date)) FROM orders t
+            INNER JOIN drug_order t2 ON t2.order_id = t.order_id
+            INNER JOIN drug t3 ON t3.drug_id = t2.drug_inventory_id
+            INNER JOIN concept_set t4 ON t4.concept_id = t3.concept_id
+            WHERE t.patient_id = #{patient_id}
+            AND t.voided = 0 AND t.start_date <= '#{@end_date}'
+            AND t4.concept_set = #{arv_concept_set}
+          ) AND e.program_id = #{program_id} AND o.patient_id = #{patient_id}
+          AND od.quantity > 0 AND e.encounter_type = #{encounter_type}
+          GROUP BY o.order_id;
+        SQL
+
+        return if data.blank?
+
+        regimen_info = ActiveRecord::Base.connection.select_one <<~SQL
+          SELECT patient_current_regimen(#{patient_id}, DATE('#{@end_date}')) regimen;
+        SQL
+
+        regimen = regimen_info['regimen']
+        prescribed_days = nil
+
+        unless regimen.match(/N/i)
+          weight_sql = get_weight(patient_id)
+          regimen_index = regimen.to_i
+          moh_regimen_ingredients = ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT
+            regimen_index, min_weight, max_weight,
+            drug_inventory_id, am, pm
+          FROM moh_regimens r
+          INNER JOIN moh_regimen_ingredient i ON r.regimen_id = i.regimen_id
+          AND r.regimen_index = #{regimen_index}
+          INNER JOIN moh_regimen_doses d ON i.dose_id = d.dose_id #{weight_sql}
+          GROUP BY min_weight, max_weight, drug_inventory_id;
+          SQL
+
+          doses = {}
+          (moh_regimen_ingredients || []).each do |i|
+            drug_id = i["drug_inventory_id"].to_i
+            am = i["am"].to_f
+            pm = i["pm"].to_f
+            doses[drug_id] = (am.to_f + pm.to_f).to_f
+          end
+
+          data.each do |info|
+            drug_id = info["drug_id"].to_i
+            quantity = info["quantity"].to_f
+            dose_per_day = doses[drug_id]
+            next if dose_per_day.blank?
+            if prescribed_days.blank?
+              prescribed_days = (quantity / dose_per_day).to_i
+            else
+              days = (quantity / dose_per_day).to_i
+              prescribed_days = days if days > prescribed_days
+            end
+          end unless doses.blank?
+
+          return prescribed_days unless prescribed_days.blank?
+        end
+
+
+        data.each do |info|
+          days = (info["prescribed_days"].to_i + 1)
+          if prescribed_days.blank?
+            prescribed_days = days
+          else
+            prescribed_days = days if days > prescribed_days
+          end
+        end
+
+        return prescribed_days
+      end
+
+      def get_weight(patient_id)
+        concept_id = ConceptName.find_by_name("Weight (Kg)").concept_id
+        weight_details = Observation.where("person_id = ? AND concept_id = ?
+          AND obs_datetime <= ? AND ( CAST(value_numeric as DECIMAL(4,1)) > 0 OR
+          CAST(value_text as DECIMAL(4,1)) > 0)", patient_id,
+            concept_id, @end_date).order("obs_datetime DESC, date_created DESC")
+
+        return nil if weight_details.blank?
+        weight_details = weight_details.first
+        weight = (weight_details.value_numeric.to_f > 0 ? weight_details.value_numeric.to_f : weight_details.value_text.to_f)
+        return " WHERE #{weight} >= min_weight AND #{weight} <= max_weight "
       end
 
     end

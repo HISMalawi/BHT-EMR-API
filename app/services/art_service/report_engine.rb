@@ -77,9 +77,9 @@ module ARTService
         end_date: end_date.to_date).regimen_switch(pepfar)
     end
 
-    def regimen_report(start_date, end_date)
+    def regimen_report(start_date, end_date, type)
       REPORTS['REGIMEN_SWITCH'].new(start_date: start_date.to_date,
-        end_date: end_date.to_date).regimen_report
+        end_date: end_date.to_date).regimen_report(type)
     end
 
     def screened_for_tb(start_date, end_date, gender, age_group, outcome_table)

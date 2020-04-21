@@ -121,7 +121,7 @@ class Api::V1::ReportsController < ApplicationController
   end
 
   def regimen_report
-    render json: service.regimen_report(params[:start_date], params[:end_date])
+    render json: service.regimen_report(params[:start_date], params[:end_date], params[:type])
   end
 
   def screened_for_tb

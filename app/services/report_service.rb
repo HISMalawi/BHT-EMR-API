@@ -121,8 +121,8 @@ class ReportService
     engine(@program).regimen_switch(start_date, end_date, pepfar)
   end
 
-  def regimen_report(start_date, end_date)
-    engine(@program).regimen_report(start_date, end_date)
+  def regimen_report(start_date, end_date, type)
+    engine(@program).regimen_report(start_date, end_date, type)
   end
 
   def screened_for_tb(start_date, end_date, gender, age_group, outcome_table)
