@@ -303,4 +303,5 @@ Rails.application.routes.draw do
   get '/api/v1/tx_ml', to: 'api/v1/reports#tx_ml'
   get '/api/v1/tx_rtt', to: 'api/v1/reports#tx_rtt'
   get '/api/v1/disaggregated_regimen_distribution', to: 'api/v1/reports#disaggregated_regimen_distribution'
+  post '/api/v1/tx_mmd_client_level_data', to: 'api/v1/reports#tx_mmd_client_level_data'
 end

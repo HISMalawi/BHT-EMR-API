@@ -153,6 +153,10 @@ class ReportService
     engine(@program).disaggregated_regimen_distribution(start_date, end_date, gender, age_group, outcome_table)
   end
 
+  def tx_mmd_client_level_data(start_date, end_date, patient_ids)
+    engine(@program).tx_mmd_client_level_data(start_date, end_date, patient_ids)
+  end
+
 
   private
 
