@@ -253,9 +253,10 @@ module ARTService
         SQL
 
         regimen = regimen_info['regimen']
+        regimen = (regimen.match(/N/i) ? "Unknown" : regimen)
         prescribed_days = nil
 
-        unless regimen.match(/N/i)
+        unless regimen.match(/Unknown/i)
           weight_sql = get_weight(patient_id)
           regimen_index = regimen.to_i
           moh_regimen_ingredients = ActiveRecord::Base.connection.select_all <<~SQL
