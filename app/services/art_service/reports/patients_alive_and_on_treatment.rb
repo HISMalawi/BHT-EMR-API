@@ -2,6 +2,8 @@
 
 module ARTService
   module Reports
+    Constants = ARTService::Constants
+
     # Returns all patients alive and on treatment within a given
     # time period (Tx Curr).
     class PatientsAliveAndOnTreatment
@@ -14,8 +16,8 @@ module ARTService
 
       def find_report
         PatientState.joins(:patient_program)
-                    .where(patient_program: { program_id: HIV_PROGRAM_ID },
-                           state: ON_ANTIRETROVIRALS)
+                    .where(patient_program: { program_id: Constants::PROGRAM_ID },
+                           state: Constants::States::ON_ANTIRETROVIRALS)
                     .where('start_date <= ? AND end_date >= ?', start_date, end_date)
                     .where.not(patient_program: { patient_id: patients_with_terminal_states })
                     .select(:patient_id)
@@ -24,19 +26,10 @@ module ARTService
 
       private
 
-      HIV_PROGRAM_ID = 1
-      ON_ANTIRETROVIRALS = 7
-      DEFAULTED = 12
-      DIED = 3
-      TRANSFERRED_OUT = 2
-      TREATMENT_STOPPED = 6
-
-      TERMINAL_STATES = [DEFAULTED, DIED, TRANSFERRED_OUT, TREATMENT_STOPPED].freeze
-
       def patients_with_terminal_states
         PatientState.joins(:patient_program)
-                    .where(patient_program: { program_id: HIV_PROGRAM_ID },
-                           state: TERMINAL_STATES)
+                    .where(patient_program: { program_id: Constants::PROGRAM_ID },
+                           state: Constants::States::TERMINALS)
                     .where('start_date <= ? AND end_date >= ?', start_date, end_date)
                     .group('patient_program.patient_id')
                     .select(:patient_id)
