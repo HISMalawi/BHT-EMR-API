@@ -294,7 +294,7 @@ module ARTService
           info[patient_id][regimen][drug_id] =  {
             drug_name: drug_name,
             start_date: start_date.to_date.strftime("%d/%b/%Y"),
-            auto_expire_date: auto_expire_date.to_date.strftime("%d/%b/%Y"),
+            auto_expire_date: (auto_expire_date.to_date.strftime("%d/%b/%Y") rescue nil),
             dose_per_day: dose_per_day,
             quantity: quantity,
             arv_number: (arv_number.blank? ? "N/A" : arv_number),
