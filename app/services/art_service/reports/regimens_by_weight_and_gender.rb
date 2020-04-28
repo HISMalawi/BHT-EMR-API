@@ -4,7 +4,7 @@ module ARTService
   module Reports
     Constants = ARTService::Constants
 
-    class RegimensByWeight
+    class RegimensByWeightAndGender
       attr_reader :start_date, :end_date
 
       def initialize(start_date:, end_date:, **_kwargs)
@@ -35,7 +35,8 @@ module ARTService
         WEIGHT_BANDS.map do |start_weight, end_weight|
           {
             weight: weight_band_to_string(start_weight, end_weight),
-            regimens: regimen_counts_by_weight(start_weight, end_weight)
+            males: regimen_counts_by_weight_and_gender(start_weight, end_weight, 'M'),
+            females: regimen_counts_by_weight_and_gender(start_weight, end_weight, 'F')
           }
         end
       end
@@ -48,11 +49,12 @@ module ARTService
         end
       end
 
-      def regimen_counts_by_weight(start_weight, end_weight)
+      def regimen_counts_by_weight_and_gender(start_weight, end_weight, gender)
         date = ActiveRecord::Base.connection.quote(end_date)
 
         Person.select("patient_current_regimen(person_id, #{date}) as regimen, count(*) AS count")
               .where(person_id: patients_in_weight_band(start_weight, end_weight))
+              .where('gender LIKE ?', "#{gender}%")
               .group(:regimen)
               .collect { |obs| { obs.regimen => obs.count } }
       end

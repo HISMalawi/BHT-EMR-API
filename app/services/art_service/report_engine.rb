@@ -17,7 +17,7 @@ module ARTService
       'VL_DUE' => ARTService::Reports::PatientsDueForViralLoad,
       'APPOINTMENTS' => ARTService::Reports::AppointmentsReport,
       'IPT' => ARTService::Reports::IPTReport,
-      'REGIMENS_BY_WEIGHT' => ARTService::Reports::RegimensByWeight,
+      'REGIMENS_BY_WEIGHT_AND_GENDER' => ARTService::Reports::RegimensByWeightAndGender,
       'REGIMEN_SWITCH' => ARTService::Reports::RegimenSwitch,
       'COHORT_DISAGGREGATED_ADDITIONS' => ARTService::Reports::CohortDisaggregatedAdditions,
       'ARV_REFILL_PERIODS' => ARTService::Reports::ArvRefillPeriods,
