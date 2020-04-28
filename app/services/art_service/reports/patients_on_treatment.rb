@@ -17,12 +17,21 @@ module ARTService
 
       # Returns patients that were on treatment within the given time period.
       def self.within(start_date, end_date)
-        on_arvs = PatientState.where('start_date <= ? AND end_date >= ? AND state = ?',
-                                     start_date, end_date, Constants::States::ON_ANTIRETROVIRALS)
+        sql_conditions =
+          <<~SQL
+            ((start_date >= :start_date AND start_date <= :end_date)
+              OR (end_date >= :start_date AND end_date <= :end_date)
+              OR (start_date < :start_date AND end_date IS NULL))
+            AND state = :state
+          SQL
+
+        on_arvs = PatientState.where(sql_conditions, start_date: start_date,
+                                                     end_date: end_date,
+                                                     state: Constants::States::ON_ANTIRETROVIRALS)
                               .group(:patient_program_id)
 
         PatientProgram.select(:patient_id)
-                      .joins(:patient_states)
+                      .joins('LEFT JOIN patient_state USING (patient_program_id)')
                       .merge(on_arvs)
                       .where(program_id: Constants::PROGRAM_ID)
       end
