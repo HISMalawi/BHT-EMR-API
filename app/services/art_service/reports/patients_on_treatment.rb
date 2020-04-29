@@ -28,10 +28,9 @@ module ARTService
         on_arvs = PatientState.where(sql_conditions, start_date: start_date,
                                                      end_date: end_date,
                                                      state: Constants::States::ON_ANTIRETROVIRALS)
-                              .group(:patient_program_id)
 
-        PatientProgram.select(:patient_id)
-                      .joins('LEFT JOIN patient_state USING (patient_program_id)')
+        PatientProgram.select('DISTINCT patient_program.patient_id')
+                      .joins(:patient_states)
                       .merge(on_arvs)
                       .where(program_id: Constants::PROGRAM_ID)
       end

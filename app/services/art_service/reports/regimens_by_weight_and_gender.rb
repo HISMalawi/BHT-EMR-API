@@ -70,20 +70,18 @@ module ARTService
       def patients_in_weight_band(start_weight, end_weight)
         if start_weight.nil? && end_weight.nil?
           # If no weight is provided then this must be all patients without a weight observation
-          return Patient.select(:patient_id)
-                        .where
-                        .not(patient_id: patients_with_known_weight)
-                        .group(:patient_id)
+          return PatientProgram.select(:patient_id)
+                               .where(program_id: Constants::PROGRAM_ID)
+                               .where.not(patient_id: patients_with_known_weight)
         end
 
-        patients_with_known_weight.where(value_numeric: (start_weight...end_weight))
+        patients_with_known_weight.where(value_numeric: (start_weight..end_weight))
       end
 
       def patients_with_known_weight
-        Observation.select(:person_id)
+        Observation.select('DISTINCT obs.person_id')
                    .where(concept_id: ConceptName.where(name: 'Weight (kg)').select(:concept_id))
-                   .where('obs_datetime < ?', end_date)
-                   .group(:person_id)
+                   .where('obs.obs_datetime < ?', end_date)
       end
     end
   end
