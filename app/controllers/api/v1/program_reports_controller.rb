@@ -14,7 +14,8 @@ class Api::V1::ProgramReportsController < ApplicationController
       name: name,
       type: type,
       start_date: Date.strptime(start_date.to_s),
-      end_date: Date.strptime(end_date.to_s)
+      end_date: Date.strptime(end_date.to_s),
+      **extra_params
     )
 
     if report
@@ -28,7 +29,7 @@ class Api::V1::ProgramReportsController < ApplicationController
 
   def service
     ReportService.new(program_id: params[:program_id],
-                      overwrite_mode: params[:regenerate]&.upcase == 'TRUE')
+                      overwrite_mode: params[:regenerate]&.casecmp?('true'))
   end
 
   def parse_report_name(name)
@@ -51,5 +52,12 @@ class Api::V1::ProgramReportsController < ApplicationController
       "#{year + 1}-01-01"
     ][index]
     Date.strptime(sdate)
+  end
+
+  def extra_params
+    request.query_parameters
+           .to_hash
+           .reject { |param, _| %w[name start_date end_date].include?(param.downcase) }
+           .transform_keys(&:to_sym)
   end
 end

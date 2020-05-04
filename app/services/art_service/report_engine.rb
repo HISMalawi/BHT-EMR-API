@@ -15,6 +15,7 @@ module ARTService
       'PATIENTS_ON_DTG' => ARTService::Reports::PatientsOnDTG,
       'VISITS' => ARTService::Reports::VisitsReport,
       'VL_DUE' => ARTService::Reports::PatientsDueForViralLoad,
+      'VL_DISAGGREGATED' => ARTService::Reports::ViralLoadDisaggregated,
       'APPOINTMENTS' => ARTService::Reports::AppointmentsReport,
       'IPT' => ARTService::Reports::IPTReport,
       'REGIMENS_BY_WEIGHT_AND_GENDER' => ARTService::Reports::RegimensByWeightAndGender,
@@ -128,17 +129,13 @@ module ARTService
       start_date = kwargs.delete(:start_date)
       end_date = kwargs.delete(:end_date)
       name = kwargs.delete(:name)
-      type  = report_type(type)
+      type = report_type(type)
 
       report_manager = REPORTS[type.name.upcase].new(
-        type: type, name: name, start_date: start_date, end_date: end_date
+        type: type, name: name, start_date: start_date, end_date: end_date, **kwargs
       )
-      method = report_manager.method(method)
-      if kwargs.empty?
-        method.call
-      else
-        method.call(**kwargs)
-      end
+
+      report_manager.send(method)
     end
 
     def report_type(name)
