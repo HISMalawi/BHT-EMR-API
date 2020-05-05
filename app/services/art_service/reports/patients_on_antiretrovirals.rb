@@ -24,7 +24,8 @@ module ARTService
         DrugOrder.select('orders.patient_id AS patient_id')
                  .joins(:order)
                  .merge(art_orders)
-                 .where(drug_inventory_id: ARTService::RegimenEngine.arv_drugs)
+                 .where(drug_inventory_id: ARTService::RegimenEngine.arv_drugs,
+                        quantity: 1..Float::INFINITY)
                  .where('start_date BETWEEN :start_date AND :end_date
                          OR auto_expire_date BETWEEN :start_date AND :end_date
                          OR (start_date <= :start_date AND auto_expire_date >= :end_date)',
