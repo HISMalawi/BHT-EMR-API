@@ -14,6 +14,11 @@ module ARTService
       @program = program
     end
 
+    def self.arv_drugs
+      # TODO: Get rid of the arv_drugs method in Drug model
+      Drug.arv_drugs
+    end
+
     # Returns all drugs that can be combined to form custom ART regimens
     def custom_regimen_ingredients
       arv_extras_concepts = Concept.joins(:concept_names).where(

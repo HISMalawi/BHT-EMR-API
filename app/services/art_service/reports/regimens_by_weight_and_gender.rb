@@ -60,7 +60,7 @@ module ARTService
         date = ActiveRecord::Base.connection.quote(end_date)
 
         Person.select("patient_current_regimen(person_id, #{date}) as regimen, count(*) AS count")
-              .where(person_id: PatientsOnTreatment.within(start_date, end_date))
+              .where(person_id: PatientsOnAntiretrovirals.within(start_date, end_date))
               .where(person_id: patients_in_weight_band(start_weight, end_weight))
               .where('gender LIKE ?', "#{gender}%")
               .group(:regimen)
