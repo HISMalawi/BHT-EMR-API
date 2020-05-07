@@ -1512,8 +1512,10 @@ BEGIN
   SET @regimen_thirteen_a_three := ('982,983');
 
   SET @regimen_fourteen_a     := ('982,984');
+  SET @regimem_fourteen_p     := ('736,969');
 
   SET @regimen_fifteen_a      := ('969,982');
+  SET @regimen_fifteen_p      := ('1044,969');
 
 
 

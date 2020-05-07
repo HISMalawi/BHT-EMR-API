@@ -2124,18 +2124,18 @@
 							"name": "Reports",
 							"item": [
 								{
-									"name": "Disaggregated Regimen Counts (/programs/1/reports/regimens_disaggregated)",
+									"name": "Regimen Counts by Weight and Gender (/programs/1/reports/regimens_by_weight_and_gender)",
 									"request": {
 										"method": "GET",
 										"header": [
 											{
 												"key": "Authorization",
-												"value": "vjVOqqc5p576",
+												"value": "sc9xOwE7qsT0",
 												"type": "text"
 											}
 										],
 										"url": {
-											"raw": "http://localhost:3000/api/v1/programs/1/reports/regimens_disaggregated?start_date=2019-10-01&end_date=2019-12-31",
+											"raw": "http://localhost:3000/api/v1/programs/1/reports/regimens_by_weight_and_gender?start_date=2019-06-01&end_date=2019-12-31",
 											"protocol": "http",
 											"host": [
 												"localhost"
@@ -2147,12 +2147,12 @@
 												"programs",
 												"1",
 												"reports",
-												"regimens_disaggregated"
+												"regimens_by_weight_and_gender"
 											],
 											"query": [
 												{
 													"key": "start_date",
-													"value": "2019-10-01"
+													"value": "2019-06-01"
 												},
 												{
 													"key": "end_date",
@@ -2163,18 +2163,18 @@
 									},
 									"response": [
 										{
-											"name": "Disaggregated Regimen Counts (/programs/1/reports/regimens_disaggregated)",
+											"name": "Regimen Counts by Weight and Gender (/programs/1/reports/regimens_by_weight_and_gender)",
 											"originalRequest": {
 												"method": "GET",
 												"header": [
 													{
 														"key": "Authorization",
-														"value": "vjVOqqc5p576",
+														"value": "sc9xOwE7qsT0",
 														"type": "text"
 													}
 												],
 												"url": {
-													"raw": "http://localhost:3000/api/v1/programs/1/reports/regimens_disaggregated?start_date=2019-10-01&end_date=2019-12-31",
+													"raw": "http://localhost:3000/api/v1/programs/1/reports/regimens_by_weight_and_gender?start_date=2019-06-01&end_date=2019-12-31",
 													"protocol": "http",
 													"host": [
 														"localhost"
@@ -2186,12 +2186,12 @@
 														"programs",
 														"1",
 														"reports",
-														"regimens_disaggregated"
+														"regimens_by_weight_and_gender"
 													],
 													"query": [
 														{
 															"key": "start_date",
-															"value": "2019-10-01"
+															"value": "2019-06-01"
 														},
 														{
 															"key": "end_date",
@@ -2210,7 +2210,7 @@
 												},
 												{
 													"key": "ETag",
-													"value": "W/\"807b290ec9ca422737dc79e2ef9192c4\""
+													"value": "W/\"1a692fa778d559c270987398b646164f\""
 												},
 												{
 													"key": "Cache-Control",
@@ -2218,11 +2218,11 @@
 												},
 												{
 													"key": "X-Request-Id",
-													"value": "e6c31ef8-2c75-4827-a9a8-a5fd372df495"
+													"value": "6a95e4f6-72e7-468c-8c11-c2719d671c0b"
 												},
 												{
 													"key": "X-Runtime",
-													"value": "1.379335"
+													"value": "4.892032"
 												},
 												{
 													"key": "Vary",
@@ -2234,7 +2234,427 @@
 												}
 											],
 											"cookie": [],
-											"body": "[\n    {\n        \"age_group\": \"0 to 5 months\",\n        \"male\": [],\n        \"female\": []\n    },\n    {\n        \"age_group\": \"6 to 11 months\",\n        \"male\": [],\n        \"female\": [\n            {\n                \"regimen\": \"5A\",\n                \"count\": 2\n            }\n        ]\n    },\n    {\n        \"age_group\": \"12 to 23 months\",\n        \"male\": [\n            {\n                \"regimen\": \"13A\",\n                \"count\": 2\n            }\n        ],\n        \"female\": [\n            {\n                \"regimen\": \"13A\",\n                \"count\": 1\n            }\n        ]\n    },\n    {\n        \"age_group\": \"2 to 4 years\",\n        \"male\": [\n            {\n                \"regimen\": \"13A\",\n                \"count\": 3\n            }\n        ],\n        \"female\": [\n            {\n                \"regimen\": \"2P\",\n                \"count\": 2\n            }\n        ]\n    },\n    {\n        \"age_group\": \"5 to 9 years\",\n        \"male\": [\n            {\n                \"regimen\": \"2P\",\n                \"count\": 8\n            }\n        ],\n        \"female\": [\n            {\n                \"regimen\": \"9P\",\n                \"count\": 6\n            }\n        ]\n    },\n    {\n        \"age_group\": \"10 to 14 years\",\n        \"male\": [\n            {\n                \"regimen\": \"13A\",\n                \"count\": 4\n            }\n        ],\n        \"female\": [\n            {\n                \"regimen\": \"13A\",\n                \"count\": 4\n            }\n        ]\n    },\n    {\n        \"age_group\": \"15 to 17 years\",\n        \"male\": [\n            {\n                \"regimen\": \"13A\",\n                \"count\": 2\n            }\n        ],\n        \"female\": []\n    },\n    {\n        \"age_group\": \"18 to 19 years\",\n        \"male\": [],\n        \"female\": [\n            {\n                \"regimen\": \"2A\",\n                \"count\": 1\n            }\n        ]\n    },\n    {\n        \"age_group\": \"20 to 24 years\",\n        \"male\": [\n            {\n                \"regimen\": \"13A\",\n                \"count\": 2\n            }\n        ],\n        \"female\": [\n            {\n                \"regimen\": \"13A\",\n                \"count\": 8\n            }\n        ]\n    },\n    {\n        \"age_group\": \"25 to 29 years\",\n        \"male\": [\n            {\n                \"regimen\": \"13A\",\n                \"count\": 2\n            }\n        ],\n        \"female\": [\n            {\n                \"regimen\": \"13A\",\n                \"count\": 35\n            }\n        ]\n    },\n    {\n        \"age_group\": \"30 to 34 years\",\n        \"male\": [\n            {\n                \"regimen\": \"13A\",\n                \"count\": 8\n            }\n        ],\n        \"female\": [\n            {\n                \"regimen\": \"5A\",\n                \"count\": 51\n            }\n        ]\n    },\n    {\n        \"age_group\": \"35 to 39 years\",\n        \"male\": [\n            {\n                \"regimen\": \"13A\",\n                \"count\": 20\n            }\n        ],\n        \"female\": [\n            {\n                \"regimen\": \"5A\",\n                \"count\": 75\n            }\n        ]\n    },\n    {\n        \"age_group\": \"40 to 44 years\",\n        \"male\": [\n            {\n                \"regimen\": \"13A\",\n                \"count\": 31\n            }\n        ],\n        \"female\": [\n            {\n                \"regimen\": \"5A\",\n                \"count\": 48\n            }\n        ]\n    },\n    {\n        \"age_group\": \"45 to 49 years\",\n        \"male\": [\n            {\n                \"regimen\": \"13A\",\n                \"count\": 33\n            }\n        ],\n        \"female\": [\n            {\n                \"regimen\": \"13A\",\n                \"count\": 30\n            }\n        ]\n    },\n    {\n        \"age_group\": \"50 to 120 years\",\n        \"male\": [\n            {\n                \"regimen\": \"13A\",\n                \"count\": 47\n            }\n        ],\n        \"female\": [\n            {\n                \"regimen\": \"5A\",\n                \"count\": 49\n            }\n        ]\n    }\n]"
+											"body": "[\n    {\n        \"weight\": \"3 - 3.9 Kg\",\n        \"males\": [],\n        \"females\": []\n    },\n    {\n        \"weight\": \"4 - 4.9 Kg\",\n        \"males\": [],\n        \"females\": []\n    },\n    {\n        \"weight\": \"6 - 9.9 Kg\",\n        \"males\": [\n            {\n                \"11P\": 2\n            },\n            {\n                \"13A\": 1\n            },\n            {\n                \"2P\": 4\n            },\n            {\n                \"9P\": 3\n            }\n        ],\n        \"females\": [\n            {\n                \"2A\": 2\n            },\n            {\n                \"2P\": 3\n            },\n            {\n                \"9P\": 2\n            }\n        ]\n    },\n    {\n        \"weight\": \"10 - 13.9 Kg\",\n        \"males\": [\n            {\n                \"0P\": 1\n            },\n            {\n                \"11P\": 1\n            },\n            {\n                \"2P\": 2\n            },\n            {\n                \"9P\": 1\n            },\n            {\n                \"N/A\": 1\n            }\n        ],\n        \"females\": [\n            {\n                \"2P\": 1\n            },\n            {\n                \"9P\": 2\n            },\n            {\n                \"N/A\": 1\n            }\n        ]\n    },\n    {\n        \"weight\": \"14 - 19.9 Kg\",\n        \"males\": [\n            {\n                \"0P\": 1\n            },\n            {\n                \"11P\": 1\n            },\n            {\n                \"2P\": 1\n            },\n            {\n                \"9P\": 1\n            },\n            {\n                \"N/A\": 1\n            }\n        ],\n        \"females\": [\n            {\n                \"0P\": 1\n            },\n            {\n                \"2P\": 3\n            },\n            {\n                \"9P\": 1\n            },\n            {\n                \"N/A\": 1\n            }\n        ]\n    },\n    {\n        \"weight\": \"20 - 24.9 Kg\",\n        \"males\": [\n            {\n                \"11P\": 1\n            },\n            {\n                \"2P\": 2\n            },\n            {\n                \"9P\": 1\n            }\n        ],\n        \"females\": [\n            {\n                \"2A\": 1\n            },\n            {\n                \"2P\": 3\n            },\n            {\n                \"9P\": 2\n            }\n        ]\n    },\n    {\n        \"weight\": \"25 - 29.9 Kg\",\n        \"males\": [\n            {\n                \"9P\": 1\n            },\n            {\n                \"N/A\": 1\n            }\n        ],\n        \"females\": [\n            {\n                \"13A\": 1\n            },\n            {\n                \"2A\": 2\n            }\n        ]\n    },\n    {\n        \"weight\": \"30 - 34.9 Kg\",\n        \"males\": [\n            {\n                \"13A\": 1\n            },\n            {\n                \"9P\": 1\n            }\n        ],\n        \"females\": [\n            {\n                \"13A\": 3\n            },\n            {\n                \"2A\": 2\n            },\n            {\n                \"5A\": 6\n            },\n            {\n                \"8A\": 1\n            },\n            {\n                \"N/A\": 1\n            }\n        ]\n    },\n    {\n        \"weight\": \"35 - 39.9 Kg\",\n        \"males\": [\n            {\n                \"13A\": 1\n            }\n        ],\n        \"females\": [\n            {\n                \"0P\": 1\n            },\n            {\n                \"13A\": 2\n            },\n            {\n                \"5A\": 5\n            },\n            {\n                \"N/A\": 1\n            }\n        ]\n    },\n    {\n        \"weight\": \"40 Kg +\",\n        \"males\": [\n            {\n                \"13A\": 140\n            },\n            {\n                \"15A\": 1\n            },\n            {\n                \"5A\": 8\n            },\n            {\n                \"8A\": 2\n            },\n            {\n                \"N/A\": 4\n            }\n        ],\n        \"females\": [\n            {\n                \"13A\": 148\n            },\n            {\n                \"15A\": 2\n            },\n            {\n                \"2A\": 3\n            },\n            {\n                \"5A\": 180\n            },\n            {\n                \"7A\": 1\n            },\n            {\n                \"8A\": 8\n            },\n            {\n                \"N/A\": 3\n            }\n        ]\n    }\n]"
+										}
+									]
+								},
+								{
+									"name": "Viral load disaggregated (/programs/1/reports/vl_disaggregated)",
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "DDg9Ldnvjl0r",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "http://localhost:3000/api/v1/programs/1/reports/vl_disaggregated?start_date=2010-01-01&end_date=2019-12-31&from=0&to=1000",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "3000",
+											"path": [
+												"api",
+												"v1",
+												"programs",
+												"1",
+												"reports",
+												"vl_disaggregated"
+											],
+											"query": [
+												{
+													"key": "start_date",
+													"value": "2010-01-01"
+												},
+												{
+													"key": "end_date",
+													"value": "2019-12-31"
+												},
+												{
+													"key": "from",
+													"value": "0"
+												},
+												{
+													"key": "to",
+													"value": "1000"
+												}
+											]
+										},
+										"description": "Retrieve an age and regimen disaggregated viral load report.\n\n## Parameters\n\n- `start_date`* - A required field specifying when the report should start.\n- `end_date` - An optional field specifying when the reeport ends (defaults to today).\n- `from` - An optional field specifying the lowest viral load values to include in the report (defaults to 0).\n- `to` - An optional value specifying the maximum viral load values to include in the report (defaults to 0 if `from` is 0 or infinity if `from` is any other value)."
+									},
+									"response": [
+										{
+											"name": "Patients with 0 (suppressed) viral load",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Authorization",
+														"value": "DDg9Ldnvjl0r",
+														"type": "text"
+													}
+												],
+												"url": {
+													"raw": "http://localhost:3000/api/v1/programs/1/reports/vl_disaggregated?start_date=2010-01-01&end_date=2019-12-31",
+													"protocol": "http",
+													"host": [
+														"localhost"
+													],
+													"port": "3000",
+													"path": [
+														"api",
+														"v1",
+														"programs",
+														"1",
+														"reports",
+														"vl_disaggregated"
+													],
+													"query": [
+														{
+															"key": "start_date",
+															"value": "2010-01-01"
+														},
+														{
+															"key": "end_date",
+															"value": "2019-12-31"
+														}
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json; charset=utf-8"
+												},
+												{
+													"key": "ETag",
+													"value": "W/\"f35a89d0fa4172ecfc40a055214ee9d6\""
+												},
+												{
+													"key": "Cache-Control",
+													"value": "max-age=0, private, must-revalidate"
+												},
+												{
+													"key": "X-Request-Id",
+													"value": "7c4102e3-d1d3-4871-b94b-2091e380a2c7"
+												},
+												{
+													"key": "X-Runtime",
+													"value": "0.151530"
+												},
+												{
+													"key": "Vary",
+													"value": "Origin"
+												},
+												{
+													"key": "Transfer-Encoding",
+													"value": "chunked"
+												}
+											],
+											"cookie": [],
+											"body": "{\n    \"40 - 44 Years\": {\n        \"13A\": 1\n    },\n    \"0 - 1 Years\": {\n        \"2P\": 1\n    },\n    \"35 - 39 Years\": {\n        \"5A\": 2\n    },\n    \"5 - 9 Years\": {\n        \"4A\": 1\n    },\n    \"30 - 34 Years\": {\n        \"5A\": 3,\n        \"N/A\": 2\n    },\n    \"45 - 50 Years\": {\n        \"13A\": 1\n    },\n    \"50 Years +\": {\n        \"13A\": 1,\n        \"5A\": 1,\n        \"N/A\": 2\n    },\n    \"10 - 14 Years\": {\n        \"9P\": 1\n    },\n    \"25 - 29 Years\": {\n        \"5A\": 3\n    }\n}"
+										},
+										{
+											"name": "Patients with viral load less than 1000",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Authorization",
+														"value": "DDg9Ldnvjl0r",
+														"type": "text"
+													}
+												],
+												"url": {
+													"raw": "http://localhost:3000/api/v1/programs/1/reports/vl_disaggregated?start_date=2010-01-01&end_date=2019-12-31&from=0&to=1000",
+													"protocol": "http",
+													"host": [
+														"localhost"
+													],
+													"port": "3000",
+													"path": [
+														"api",
+														"v1",
+														"programs",
+														"1",
+														"reports",
+														"vl_disaggregated"
+													],
+													"query": [
+														{
+															"key": "start_date",
+															"value": "2010-01-01"
+														},
+														{
+															"key": "end_date",
+															"value": "2019-12-31"
+														},
+														{
+															"key": "from",
+															"value": "0"
+														},
+														{
+															"key": "to",
+															"value": "1000"
+														}
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json; charset=utf-8"
+												},
+												{
+													"key": "ETag",
+													"value": "W/\"e5ad962d1dccc6a4f41a2b5278440d50\""
+												},
+												{
+													"key": "Cache-Control",
+													"value": "max-age=0, private, must-revalidate"
+												},
+												{
+													"key": "X-Request-Id",
+													"value": "f6347afb-333b-4e8f-9143-fe73f0039f3b"
+												},
+												{
+													"key": "X-Runtime",
+													"value": "0.751580"
+												},
+												{
+													"key": "Vary",
+													"value": "Origin"
+												},
+												{
+													"key": "Transfer-Encoding",
+													"value": "chunked"
+												}
+											],
+											"cookie": [],
+											"body": "{\n    \"30 - 34 Years\": {\n        \"13A\": 2,\n        \"5A\": 15,\n        \"N/A\": 2\n    },\n    \"40 - 44 Years\": {\n        \"13A\": 5,\n        \"5A\": 11,\n        \"N/A\": 1\n    },\n    \"0 - 1 Years\": {\n        \"2P\": 2,\n        \"13A\": 1\n    },\n    \"35 - 39 Years\": {\n        \"5A\": 19,\n        \"13A\": 6,\n        \"8A\": 1\n    },\n    \"5 - 9 Years\": {\n        \"4A\": 1,\n        \"11P\": 1,\n        \"9P\": 1,\n        \"2P\": 1,\n        \"13A\": 1\n    },\n    \"50 Years +\": {\n        \"13A\": 13,\n        \"5A\": 5,\n        \"N/A\": 3,\n        \"8A\": 1\n    },\n    \"45 - 50 Years\": {\n        \"13A\": 11,\n        \"5A\": 2,\n        \"6A\": 1,\n        \"8A\": 1\n    },\n    \"25 - 29 Years\": {\n        \"5A\": 7,\n        \"6A\": 1\n    },\n    \"10 - 14 Years\": {\n        \"13A\": 3,\n        \"2A\": 5,\n        \"9P\": 1,\n        \"2P\": 1\n    },\n    \"20 - 24 Years\": {\n        \"13A\": 1\n    },\n    \"1 - 4 Years\": {\n        \"13A\": 1,\n        \"5A\": 2\n    }\n}"
+										}
+									]
+								},
+								{
+									"name": "Regimens and Formulations - Patient Level (/programs/1/reports/regimens_and_formulations)",
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "qeEQgRdXd4jt",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "http://localhost:3000/api/v1/programs/1/reports/regimens_and_formulations?start_date=2019-10-01&end_date=2019-12-31&regimen=9P&formulation=tablets",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "3000",
+											"path": [
+												"api",
+												"v1",
+												"programs",
+												"1",
+												"reports",
+												"regimens_and_formulations"
+											],
+											"query": [
+												{
+													"key": "start_date",
+													"value": "2019-10-01"
+												},
+												{
+													"key": "end_date",
+													"value": "2019-12-31"
+												},
+												{
+													"key": "regimen",
+													"value": "9P"
+												},
+												{
+													"key": "formulation",
+													"value": "tablets"
+												}
+											]
+										},
+										"description": "Retrieve all patients who were under a given regimen and formulation in a given time period. Regimens are the standard regimens as defined by the 2018 Malawi MoH HIV clinical guidelines (Clinical Management of HIV in Children and Adults, 2018). As for formulation, this refers to the form of drug that was given, these come as: `pellets`, `tablets`, and `granules`."
+									},
+									"response": [
+										{
+											"name": "Formulation `tablets`",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Authorization",
+														"value": "qeEQgRdXd4jt",
+														"type": "text"
+													}
+												],
+												"url": {
+													"raw": "http://localhost:3000/api/v1/programs/1/reports/regimens_and_formulations?start_date=2019-10-01&end_date=2019-12-31&regimen=9P&formulation=pellets",
+													"protocol": "http",
+													"host": [
+														"localhost"
+													],
+													"port": "3000",
+													"path": [
+														"api",
+														"v1",
+														"programs",
+														"1",
+														"reports",
+														"regimens_and_formulations"
+													],
+													"query": [
+														{
+															"key": "start_date",
+															"value": "2019-10-01"
+														},
+														{
+															"key": "end_date",
+															"value": "2019-12-31"
+														},
+														{
+															"key": "regimen",
+															"value": "9P"
+														},
+														{
+															"key": "formulation",
+															"value": "pellets"
+														}
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json; charset=utf-8"
+												},
+												{
+													"key": "ETag",
+													"value": "W/\"7af7c10d56b71f0eb1b99abcb79b969c\""
+												},
+												{
+													"key": "Cache-Control",
+													"value": "max-age=0, private, must-revalidate"
+												},
+												{
+													"key": "X-Request-Id",
+													"value": "c8b7a4de-2a6c-45f1-94e6-9a716d7b06f9"
+												},
+												{
+													"key": "X-Runtime",
+													"value": "0.149611"
+												},
+												{
+													"key": "Vary",
+													"value": "Origin"
+												},
+												{
+													"key": "Transfer-Encoding",
+													"value": "chunked"
+												}
+											],
+											"cookie": [],
+											"body": "[\n    {\n        \"patient_id\": 3927,\n        \"arv_number\": \"ARTCL-ARV-1030\",\n        \"birthdate\": \"2019-04-08\",\n        \"gender\": \"F\",\n        \"weight\": 22\n    },\n    {\n        \"patient_id\": 4207,\n        \"arv_number\": \"ARTCL-ARV-1854\",\n        \"birthdate\": \"1963-04-10\",\n        \"gender\": \"F\",\n        \"weight\": 18\n    },\n    {\n        \"patient_id\": 4213,\n        \"arv_number\": \"ARTCL-ARV-3954\",\n        \"birthdate\": \"1981-04-28\",\n        \"gender\": \"M\",\n        \"weight\": 54\n    },\n    {\n        \"patient_id\": 4699,\n        \"arv_number\": \"ARTCL-ARV-2218\",\n        \"birthdate\": \"1987-04-10\",\n        \"gender\": \"M\",\n        \"weight\": 16\n    }\n]"
+										},
+										{
+											"name": "Formulation `tablets`",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Authorization",
+														"value": "qeEQgRdXd4jt",
+														"type": "text"
+													}
+												],
+												"url": {
+													"raw": "http://localhost:3000/api/v1/programs/1/reports/regimens_and_formulations?start_date=2019-10-01&end_date=2019-12-31&regimen=9P&formulation=tablets",
+													"protocol": "http",
+													"host": [
+														"localhost"
+													],
+													"port": "3000",
+													"path": [
+														"api",
+														"v1",
+														"programs",
+														"1",
+														"reports",
+														"regimens_and_formulations"
+													],
+													"query": [
+														{
+															"key": "start_date",
+															"value": "2019-10-01"
+														},
+														{
+															"key": "end_date",
+															"value": "2019-12-31"
+														},
+														{
+															"key": "regimen",
+															"value": "9P"
+														},
+														{
+															"key": "formulation",
+															"value": "tablets"
+														}
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json; charset=utf-8"
+												},
+												{
+													"key": "ETag",
+													"value": "W/\"424cee959bec3a3e0da38b82e60a3a76\""
+												},
+												{
+													"key": "Cache-Control",
+													"value": "max-age=0, private, must-revalidate"
+												},
+												{
+													"key": "X-Request-Id",
+													"value": "719bc3b2-82b8-4c0e-a5ae-ce9c4c122572"
+												},
+												{
+													"key": "X-Runtime",
+													"value": "0.214304"
+												},
+												{
+													"key": "Vary",
+													"value": "Origin"
+												},
+												{
+													"key": "Transfer-Encoding",
+													"value": "chunked"
+												}
+											],
+											"cookie": [],
+											"body": "[\n    {\n        \"patient_id\": 100,\n        \"arv_number\": \"ARTCL-ARV-36\",\n        \"birthdate\": \"1978-04-23\",\n        \"gender\": \"M\",\n        \"weight\": 22\n    },\n    {\n        \"patient_id\": 4097,\n        \"arv_number\": \"ARTCL-ARV-3636\",\n        \"birthdate\": \"1916-04-23\",\n        \"gender\": \"F\",\n        \"weight\": 10.7\n    },\n    {\n        \"patient_id\": 4157,\n        \"arv_number\": \"ARTCL-ARV-2305\",\n        \"birthdate\": \"2018-04-19\",\n        \"gender\": \"F\",\n        \"weight\": 15.6\n    },\n    {\n        \"patient_id\": 4568,\n        \"arv_number\": \"ARTCL-ARV-107\",\n        \"birthdate\": \"2014-04-13\",\n        \"gender\": \"M\",\n        \"weight\": 20\n    },\n    {\n        \"patient_id\": 8857,\n        \"arv_number\": \"ARTCL-ARV-3149\",\n        \"birthdate\": \"1957-04-14\",\n        \"gender\": \"M\",\n        \"weight\": 12\n    },\n    {\n        \"patient_id\": 9123,\n        \"arv_number\": \"ARTCL-ARV-4183\",\n        \"birthdate\": \"1978-04-23\",\n        \"gender\": \"F\",\n        \"weight\": 14\n    }\n]"
 										}
 									]
 								}

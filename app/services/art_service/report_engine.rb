@@ -9,23 +9,24 @@ module ARTService
     LOGGER = Rails.logger
 
     REPORTS = {
+      'APPOINTMENTS' => ARTService::Reports::AppointmentsReport,
+      'ARV_REFILL_PERIODS' => ARTService::Reports::ArvRefillPeriods,
       'COHORT' => ARTService::Reports::Cohort,
       'COHORT_DISAGGREGATED' => ARTService::Reports::CohortDisaggregated,
+      'COHORT_DISAGGREGATED_ADDITIONS' => ARTService::Reports::CohortDisaggregatedAdditions,
       'COHORT_SURVIVAL_ANALYSIS' => ARTService::Reports::CohortSurvivalAnalysis,
-      'PATIENTS_ON_DTG' => ARTService::Reports::PatientsOnDTG,
-      'VISITS' => ARTService::Reports::VisitsReport,
-      'VL_DUE' => ARTService::Reports::PatientsDueForViralLoad,
-      'VL_DISAGGREGATED' => ARTService::Reports::ViralLoadDisaggregated,
-      'APPOINTMENTS' => ARTService::Reports::AppointmentsReport,
       'IPT' => ARTService::Reports::IPTReport,
+      'PATIENTS_ON_DTG' => ARTService::Reports::PatientsOnDTG,
+      'REGIMENS_AND_FORMULATIONS' => ARTService::Reports::RegimensAndFormulations,
       'REGIMENS_BY_WEIGHT_AND_GENDER' => ARTService::Reports::RegimensByWeightAndGender,
       'REGIMEN_SWITCH' => ARTService::Reports::RegimenSwitch,
-      'COHORT_DISAGGREGATED_ADDITIONS' => ARTService::Reports::CohortDisaggregatedAdditions,
-      'ARV_REFILL_PERIODS' => ARTService::Reports::ArvRefillPeriods,
       'TX_CURR' => ARTService::Reports::PatientsAliveAndOnTreatment,
       'TX_ML' => ARTService::Reports::Pepfar::TxMl,
       'TX_RTT' => ARTService::Reports::Pepfar::TxRTT,
-      'IPT_COVERAGE' => ARTService::Reports::IPTCoverage
+      'IPT_COVERAGE' => ARTService::Reports::IPTCoverage,
+      'VISITS' => ARTService::Reports::VisitsReport,
+      'VL_DUE' => ARTService::Reports::PatientsDueForViralLoad,
+      'VL_DISAGGREGATED' => ARTService::Reports::ViralLoadDisaggregated
     }.freeze
 
     def generate_report(type:, **kwargs)
