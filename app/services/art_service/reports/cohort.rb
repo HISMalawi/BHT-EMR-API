@@ -58,11 +58,11 @@ EOF
 
           else
             record = ActiveRecord::Base.connection.select_one <<EOF
-            SELECT current_pepfar_defaulter(#{patient_id}, TIMESTAMP('#{@end_date}')) AS outcome,
+            SELECT pepfar_patient_outcome(#{patient_id}, TIMESTAMP('#{@end_date}')) AS outcome,
             current_pepfar_defaulter_date(#{patient_id}, TIMESTAMP('#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')) AS defaulter_date;
 EOF
 
-            record['outcome'] = (record['outcome'].to_i == 1 ? 'Defaulted' : nil)
+            record['outcome'] = (record['outcome'].match(/defau/i).blank? ? nil : 'Defaulted')
           end
 
           if record['outcome'] == 'Defaulted'
