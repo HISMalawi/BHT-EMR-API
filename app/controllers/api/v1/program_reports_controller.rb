@@ -57,7 +57,7 @@ class Api::V1::ProgramReportsController < ApplicationController
   def extra_params
     request.query_parameters
            .to_hash
-           .reject { |param, _| %w[name start_date end_date].include?(param.downcase) }
+           .reject { |param, _| %w[name start_date end_date regenerate].include?(param.downcase) }
            .transform_keys(&:to_sym)
   end
 end
