@@ -10,4 +10,9 @@ HOST=`ruby -ryaml -e "puts YAML::load_file('$ROOT_PATH/config/database.yml')['de
 
 METADATA_FILE=${ROOT_PATH}/db/sql/openmrs_metadata_1_7.sql
 
-mysqldump -u $USERNAME --password=$PASSWORD --host=$HOST $DATABASE $(cat $METADATA_FILE | awk '/CREATE TABLE .*/ { gsub(/`/, "", $3); print $3 }')
+if [ -f $METADATA_FILE ]; then
+  mysqldump -u $USERNAME --password=$PASSWORD --host=$HOST $DATABASE $(cat $METADATA_FILE | awk '/CREATE TABLE .*/ { gsub(/`/, "", $3); print $3 }')
+else
+  echo "No metadata file present: $METADATA_FILE"
+  exit 255
+fi
