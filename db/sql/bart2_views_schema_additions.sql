@@ -1463,6 +1463,9 @@ BEGIN
 
   SET @regimen_zero_a_one     := ('22,969');
 
+  SET @regimen_one_a          := ('613');
+  SET @regimen_one_p          := ('72');
+
   SET @regimen_two_p_one      := ('732');
   SET @regimen_two_p_two      := ('732,736');
   SET @regimen_two_p_three    := ('39,732');
@@ -1470,6 +1473,8 @@ BEGIN
 
   SET @regimen_two_a_one      := ('731');
   SET @regimen_two_a_two      := ('39,731');
+
+  SET @regimen_three_p        := ('955');
 
   SET @regimen_four_p_one     := ('30,736');
   SET @regimen_four_p_two     := ('11,736');
@@ -1540,6 +1545,8 @@ BEGIN
 
   SET @regimen_seventeen_a     := ('11,969');
 
+  SET @regimen_other := ('1046');
+
   /* Regimen ZERO ............................................................................. */
   IF @drug_ids IN(@regimen_zero_a_one) AND (length(@drug_ids) = length(@regimen_zero_a_one)) THEN
     SET regimen_cat = ('0A');
@@ -1567,6 +1574,19 @@ BEGIN
 
   /* Regimen ZERO ENDS ............................................................................. */
 
+  /* Regimen One */
+  IF @drug_ids IN (@regimen_one_a) AND (length(@drug_ids) = length(@regimen_one_a)) THEN
+    SET regimen_cat = ('1A');
+  END IF;
+
+  IF @drug_ids IN (@regimen_one_p) AND (length(@drug_ids) = length(@regimen_one_p)) THEN
+    SET regimen_cat = ('1P');
+  END IF;
+
+  /* Regimen other */
+  IF @drug_ids IN (@regimen_other) AND (length(@drug_ids) = length(@regimen_other)) THEN
+    SET regimen_cat = ('Other');
+  END IF;
 
   /* Regimen TWO ............................................................................. */
   IF @drug_ids IN(@regimen_two_a_one) AND (length(@drug_ids) = length(@regimen_two_a_one)) THEN
@@ -1596,6 +1616,10 @@ BEGIN
   /* Regimen TWO ENDS............................................................................. */
 
 
+  /* Regimen THREE */
+  IF @drug_ids IN(@regimen_three_p) AND (length(@drug_ids) = length(@regimen_three_p)) THEN
+    SET regimen_cat = ('3P');
+  END IF;
 
   /* Regimen FOUR ............................................................................. */
   IF @drug_ids IN(@regimen_four_a_one) AND (length(@drug_ids) = length(@regimen_four_a_one)) THEN
