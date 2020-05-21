@@ -38,7 +38,8 @@ module ARTService
             INNER JOIN concept_set s ON s.concept_id = d.concept_id AND s.concept_set=1085
             WHERE o.voided = 0 AND (o.start_date BETWEEN '#{@start_date}' AND '#{@end_date}')
             AND o.patient_id IN(#{patient_ids.join(',')})
-            AND t.quantity > 0 GROUP BY o.patient_id, DATE(o.auto_expire_date);
+            AND t.quantity > 0 GROUP BY o.patient_id
+            ORDER BY o.start_date DESC, o.patient_id ASC;
           SQL
 
 
