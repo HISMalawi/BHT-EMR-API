@@ -18,6 +18,7 @@ module ARTService
       'IPT' => ARTService::Reports::IPTReport,
       'PATIENTS_WITH_OUTDATED_DEMOGRAPHICS' => ARTService::Reports::PatientsWithOutdatedDemographics,
       'PATIENTS_ON_DTG' => ARTService::Reports::PatientsOnDTG,
+      'PREGNANT_PATIENTS' => ARTService::Reports::PregnantPatients,
       'REGIMENS_AND_FORMULATIONS' => ARTService::Reports::RegimensAndFormulations,
       'REGIMENS_BY_WEIGHT_AND_GENDER' => ARTService::Reports::RegimensByWeightAndGender,
       'REGIMEN_SWITCH' => ARTService::Reports::RegimenSwitch,
