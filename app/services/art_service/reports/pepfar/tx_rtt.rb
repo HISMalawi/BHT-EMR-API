@@ -60,17 +60,17 @@ module ARTService
 
             if data[age_group].blank?
               data[age_group]= {}
-              data[age_group][gender] = [0, 0, 0]
+              data[age_group][gender] = [[], [], []]
             elsif data[age_group][gender].blank?
-              data[age_group][gender] = [0, 0, 0]
+              data[age_group][gender] = [[], [], []]
             end
 
             if days_gone < 28
-              data[age_group][gender][0] += 1
+              data[age_group][gender][0] << patient_id
             elsif days_gone >= 28 && days_gone < 60
-              data[age_group][gender][1] += 1
+              data[age_group][gender][1] << patient_id
             else
-              data[age_group][gender][2] += 1
+              data[age_group][gender][2] << patient_id
             end
 
 
@@ -88,7 +88,7 @@ module ARTService
           INNER JOIN drug_order t ON o.order_id = t.order_id
           INNER JOIN drug d ON d.drug_id = t.drug_inventory_id
           INNER JOIN concept_set s ON s.concept_id = d.concept_id AND s.concept_set=1085
-          WHERE o.voided = 0 AND. o.auto_expire_date <= DATE('#{start_date}')
+          WHERE o.voided = 0 AND o.start_date <= DATE('#{start_date}')
           AND o.patient_id = #{patient_id}
           AND t.quantity > 0 ORDER BY o.auto_expire_date DESC;
 EOF

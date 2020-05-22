@@ -64,6 +64,18 @@ class Api::V1::PeopleController < ApplicationController
     end
   end
 
+  def list
+    clients  = ActiveRecord::Base.connection.select_all <<~SQL
+    SELECT p.*, a.identifier FROM person p
+    LEFT JOIN patient_identifier a ON a.patient_id = p.person_id
+    AND a.identifier_type = 4 AND a.voided = 0
+    WHERE p.person_id IN(#{params[:person_ids]})
+    GROUP BY p.person_id ORDER BY a.date_created DESC;
+    SQL
+
+    render json: clients
+  end
+
   private
 
   PERSON_ATTRIBUTES = %i[
