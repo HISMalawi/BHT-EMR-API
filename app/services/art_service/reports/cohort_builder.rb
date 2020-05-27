@@ -1582,6 +1582,7 @@ EOF
         reason_concept_ids = []
         asymptomatic_concept_ids = []
         asymptomatic_concept_ids << concept('ASYMPTOMATIC').concept_id
+        asymptomatic_concept_ids << concept('Asymptomatic HIV infection').concept_id
         reason_concept_ids << concept('WHO stage I adult').concept_id
         reason_concept_ids << concept('WHO stage I peds').concept_id
         reason_concept_ids << concept('WHO stage 1').concept_id
