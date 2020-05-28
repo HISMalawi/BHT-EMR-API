@@ -3721,6 +3721,473 @@
 			"protocolProfileBehavior": {}
 		},
 		{
+			"name": "Concepts",
+			"item": [
+				{
+					"name": "/api/v1/concepts (Retrieve concepts)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "nNcp7X6p60El",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:3000/api/v1/concepts",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"v1",
+								"concepts"
+							]
+						},
+						"description": "This endpoint enables retrieval of all concepts or specific concepts by their name and/or their concept set."
+					},
+					"response": [
+						{
+							"name": "Retrieve concepts by name",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "nNcp7X6p60El",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:3000/api/v1/concepts?name=DTG",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"api",
+										"v1",
+										"concepts"
+									],
+									"query": [
+										{
+											"key": "name",
+											"value": "DTG"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"608098999470ed53472239b144f952ec\""
+								},
+								{
+									"key": "Cache-Control",
+									"value": "max-age=0, private, must-revalidate"
+								},
+								{
+									"key": "X-Request-Id",
+									"value": "bca9b73b-51ce-4d09-a3a2-772357fe147b"
+								},
+								{
+									"key": "X-Runtime",
+									"value": "0.031063"
+								},
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"concept_id\": 9662,\n        \"retired\": 0,\n        \"short_name\": null,\n        \"description\": null,\n        \"form_text\": null,\n        \"datatype_id\": 4,\n        \"class_id\": 3,\n        \"is_set\": 0,\n        \"creator\": 1,\n        \"date_created\": \"2018-04-26T13:03:06.000+02:00\",\n        \"default_charge\": null,\n        \"version\": \"\",\n        \"changed_by\": 1,\n        \"date_changed\": \"2019-01-26T13:05:01.000+02:00\",\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"445eca0d-bc16-4f69-8ed7-9dc998a540fb\",\n        \"concept_names\": [\n            {\n                \"concept_id\": 9662,\n                \"name\": \"Dolutegravir\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2018-04-26T13:03:06.000+02:00\",\n                \"concept_name_id\": 12907,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"6683c998-57c6-4f05-ba80-0d504884bfc1\",\n                \"concept_name_type\": \"FULLY_SPECIFIED\",\n                \"locale_preferred\": 1\n            },\n            {\n                \"concept_id\": 9662,\n                \"name\": \"DTG\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2019-01-26T13:05:01.000+02:00\",\n                \"concept_name_id\": 12937,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"173658b8-c6fb-4823-ad7e-54b9c0d3cd48\",\n                \"concept_name_type\": \"SHORT\",\n                \"locale_preferred\": 0\n            }\n        ]\n    }\n]"
+						},
+						{
+							"name": "Retrieve all concepts",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "nNcp7X6p60El",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:3000/api/v1/concepts",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"api",
+										"v1",
+										"concepts"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"dea0dc01ad787d12736ed444e38591d5\""
+								},
+								{
+									"key": "Cache-Control",
+									"value": "max-age=0, private, must-revalidate"
+								},
+								{
+									"key": "X-Request-Id",
+									"value": "7747299c-5683-47c3-aab8-7be78993371d"
+								},
+								{
+									"key": "X-Runtime",
+									"value": "0.290022"
+								},
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"concept_id\": 1,\n        \"retired\": 0,\n        \"short_name\": \"\",\n        \"description\": \"\",\n        \"form_text\": null,\n        \"datatype_id\": 4,\n        \"class_id\": 4,\n        \"is_set\": 0,\n        \"creator\": 1,\n        \"date_created\": \"2004-01-01T00:00:00.000+02:00\",\n        \"default_charge\": null,\n        \"version\": \"\",\n        \"changed_by\": 1,\n        \"date_changed\": \"2005-02-16T00:13:08.000+02:00\",\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b8b9e308-8d80-11d8-abbb-0024217bb78e\",\n        \"concept_names\": [\n            {\n                \"concept_id\": 1,\n                \"name\": \"Anemia, blood loss\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-01-01T00:00:00.000+02:00\",\n                \"concept_name_id\": 1,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b995e358-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": \"FULLY_SPECIFIED\",\n                \"locale_preferred\": 0\n            }\n        ]\n    },\n    {\n        \"concept_id\": 2,\n        \"retired\": 0,\n        \"short_name\": \"\",\n        \"description\": \"\",\n        \"form_text\": null,\n        \"datatype_id\": 4,\n        \"class_id\": 4,\n        \"is_set\": 0,\n        \"creator\": 1,\n        \"date_created\": \"2004-01-01T00:00:00.000+02:00\",\n        \"default_charge\": null,\n        \"version\": \"\",\n        \"changed_by\": 1,\n        \"date_changed\": \"2005-03-03T17:51:12.000+02:00\",\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b8b9ec7c-8d80-11d8-abbb-0024217bb78e\",\n        \"concept_names\": [\n            {\n                \"concept_id\": 2,\n                \"name\": \"Anemia, hemolysis\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-01-01T00:00:00.000+02:00\",\n                \"concept_name_id\": 2,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b995f12c-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": \"FULLY_SPECIFIED\",\n                \"locale_preferred\": 0\n            }\n        ]\n    },\n    {\n        \"concept_id\": 3,\n        \"retired\": 0,\n        \"short_name\": \"\",\n        \"description\": \"\",\n        \"form_text\": null,\n        \"datatype_id\": 4,\n        \"class_id\": 4,\n        \"is_set\": 1,\n        \"creator\": 1,\n        \"date_created\": \"2004-01-01T00:00:00.000+02:00\",\n        \"default_charge\": null,\n        \"version\": \"\",\n        \"changed_by\": 1,\n        \"date_changed\": \"2012-08-31T16:16:24.000+02:00\",\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b8b9ef9c-8d80-11d8-abbb-0024217bb78e\",\n        \"concept_names\": [\n            {\n                \"concept_id\": 3,\n                \"name\": \"Anemia\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-01-01T00:00:00.000+02:00\",\n                \"concept_name_id\": 3,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b995f348-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": \"FULLY_SPECIFIED\",\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 3,\n                \"name\": \"Anaemia\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2005-02-12T11:27:42.000+02:00\",\n                \"concept_name_id\": 6443,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9bf5ba2-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 3,\n                \"name\": \"Anemia nos\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2005-02-12T11:15:01.000+02:00\",\n                \"concept_name_id\": 6447,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9bf5ec2-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 3,\n                \"name\": \"Anaemic\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2011-06-01T09:30:48.000+02:00\",\n                \"concept_name_id\": 10702,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9d49936-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            }\n        ]\n    },\n    {\n        \"concept_id\": 4,\n        \"retired\": 0,\n        \"short_name\": \"\",\n        \"description\": \"\",\n        \"form_text\": null,\n        \"datatype_id\": 4,\n        \"class_id\": 4,\n        \"is_set\": 0,\n        \"creator\": 1,\n        \"date_created\": \"2004-01-01T00:00:00.000+02:00\",\n        \"default_charge\": null,\n        \"version\": \"\",\n        \"changed_by\": 1,\n        \"date_changed\": \"2005-02-16T00:16:48.000+02:00\",\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b8b9f28a-8d80-11d8-abbb-0024217bb78e\",\n        \"concept_names\": [\n            {\n                \"concept_id\": 4,\n                \"name\": \"Asthma exacerbation\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-01-01T00:00:00.000+02:00\",\n                \"concept_name_id\": 5,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b995f53c-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": \"FULLY_SPECIFIED\",\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 4,\n                \"name\": \"Asthma relapse\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2005-02-12T11:15:37.000+02:00\",\n                \"concept_name_id\": 6490,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9bf8050-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            }\n        ]\n    },\n    {\n        \"concept_id\": 5,\n        \"retired\": 0,\n        \"short_name\": \"\",\n        \"description\": \"\",\n        \"form_text\": null,\n        \"datatype_id\": 2,\n        \"class_id\": 4,\n        \"is_set\": 0,\n        \"creator\": 1,\n        \"date_created\": \"2004-01-01T00:00:00.000+02:00\",\n        \"default_charge\": null,\n        \"version\": \"\",\n        \"changed_by\": 1,\n        \"date_changed\": \"2011-01-11T09:17:00.000+02:00\",\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b8b9f578-8d80-11d8-abbb-0024217bb78e\",\n        \"concept_names\": [\n            {\n                \"concept_id\": 5,\n                \"name\": \"Asthma\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-01-01T00:00:00.000+02:00\",\n                \"concept_name_id\": 6,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b995f71c-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": \"FULLY_SPECIFIED\",\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 5,\n                \"name\": \"Asthma nos\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2005-02-12T11:17:44.000+02:00\",\n                \"concept_name_id\": 6489,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9bf7f9c-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            }\n        ]\n    },\n    {\n        \"concept_id\": 7,\n        \"retired\": 0,\n        \"short_name\": \"\",\n        \"description\": \"\",\n        \"form_text\": null,\n        \"datatype_id\": 4,\n        \"class_id\": 4,\n        \"is_set\": 0,\n        \"creator\": 1,\n        \"date_created\": \"2004-01-01T00:00:00.000+02:00\",\n        \"default_charge\": null,\n        \"version\": \"\",\n        \"changed_by\": 1,\n        \"date_changed\": \"2011-01-19T11:14:57.000+02:00\",\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b8b9fb40-8d80-11d8-abbb-0024217bb78e\",\n        \"concept_names\": [\n            {\n                \"concept_id\": 7,\n                \"name\": \"Gallstones\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-01-01T00:00:00.000+02:00\",\n                \"concept_name_id\": 8,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b995fac8-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": \"FULLY_SPECIFIED\",\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 7,\n                \"name\": \"Biliary tract disease, gallstones\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2005-02-12T11:25:12.000+02:00\",\n                \"concept_name_id\": 6539,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9bfd898-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            }\n        ]\n    },\n    {\n        \"concept_id\": 8,\n        \"retired\": 0,\n        \"short_name\": \"\",\n        \"description\": \"\",\n        \"form_text\": null,\n        \"datatype_id\": 4,\n        \"class_id\": 4,\n        \"is_set\": 0,\n        \"creator\": 1,\n        \"date_created\": \"2004-01-01T00:00:00.000+02:00\",\n        \"default_charge\": null,\n        \"version\": \"\",\n        \"changed_by\": 1,\n        \"date_changed\": \"2005-02-16T00:20:33.000+02:00\",\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b8b9fe2e-8d80-11d8-abbb-0024217bb78e\",\n        \"concept_names\": [\n            {\n                \"concept_id\": 8,\n                \"name\": \"Biliary tract disease not otherwise specified\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-01-01T00:00:00.000+02:00\",\n                \"concept_name_id\": 9,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b995fca8-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": \"FULLY_SPECIFIED\",\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 8,\n                \"name\": \"Biliary tract disease nos\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2005-02-12T11:31:38.000+02:00\",\n                \"concept_name_id\": 6538,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9bfd7d0-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            }\n        ]\n    },\n    {\n        \"concept_id\": 10,\n        \"retired\": 0,\n        \"short_name\": \"\",\n        \"description\": \"\",\n        \"form_text\": null,\n        \"datatype_id\": 4,\n        \"class_id\": 4,\n        \"is_set\": 0,\n        \"creator\": 1,\n        \"date_created\": \"2004-01-01T00:00:00.000+02:00\",\n        \"default_charge\": null,\n        \"version\": \"\",\n        \"changed_by\": 1,\n        \"date_changed\": \"2005-02-14T04:40:19.000+02:00\",\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b8ba03ec-8d80-11d8-abbb-0024217bb78e\",\n        \"concept_names\": [\n            {\n                \"concept_id\": 10,\n                \"name\": \"Bronchitis, acute\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-01-01T00:00:00.000+02:00\",\n                \"concept_name_id\": 11,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b996005e-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": \"FULLY_SPECIFIED\",\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 10,\n                \"name\": \"Acute bronchitis\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2005-02-12T11:33:11.000+02:00\",\n                \"concept_name_id\": 6395,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9bf31f4-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            }\n        ]\n    },\n    {\n        \"concept_id\": 11,\n        \"retired\": 0,\n        \"short_name\": \"\",\n        \"description\": \"\",\n        \"form_text\": null,\n        \"datatype_id\": 4,\n        \"class_id\": 4,\n        \"is_set\": 0,\n        \"creator\": 1,\n        \"date_created\": \"2004-01-01T00:00:00.000+02:00\",\n        \"default_charge\": null,\n        \"version\": \"\",\n        \"changed_by\": 1,\n        \"date_changed\": \"2010-02-18T11:02:17.000+02:00\",\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b8ba0d9c-8d80-11d8-abbb-0024217bb78e\",\n        \"concept_names\": [\n            {\n                \"concept_id\": 11,\n                \"name\": \"Bronchitis, recurrent\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-01-01T00:00:00.000+02:00\",\n                \"concept_name_id\": 12,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9960234-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": \"FULLY_SPECIFIED\",\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 11,\n                \"name\": \"Recurrent bronchitis\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2005-02-12T11:33:49.000+02:00\",\n                \"concept_name_id\": 7546,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9c51362-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 11,\n                \"name\": \"Chronic bronchitis\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2010-02-18T11:02:17.000+02:00\",\n                \"concept_name_id\": 9524,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9cdfb30-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            }\n        ]\n    },\n    {\n        \"concept_id\": 12,\n        \"retired\": 0,\n        \"short_name\": \"\",\n        \"description\": \"\",\n        \"form_text\": null,\n        \"datatype_id\": 2,\n        \"class_id\": 1,\n        \"is_set\": 0,\n        \"creator\": 1,\n        \"date_created\": \"2004-01-01T00:00:00.000+02:00\",\n        \"default_charge\": null,\n        \"version\": \"\",\n        \"changed_by\": 1,\n        \"date_changed\": \"2009-12-08T11:37:24.000+02:00\",\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b8ba1094-8d80-11d8-abbb-0024217bb78e\",\n        \"concept_names\": [\n            {\n                \"concept_id\": 12,\n                \"name\": \"X-ray, chest\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-01-01T00:00:00.000+02:00\",\n                \"concept_name_id\": 13,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9960a4a-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": \"FULLY_SPECIFIED\",\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 12,\n                \"name\": \"Chest xray\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2005-01-07T00:00:00.000+02:00\",\n                \"concept_name_id\": 6619,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9c08d92-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 12,\n                \"name\": \"CXR\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-10-20T00:00:00.000+02:00\",\n                \"concept_name_id\": 6717,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9c0e314-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 12,\n                \"name\": \"X-ray chest\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-10-20T00:00:00.000+02:00\",\n                \"concept_name_id\": 7909,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9c6821a-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            }\n        ]\n    }\n]"
+						},
+						{
+							"name": "Retrieve concepts by concept set",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "nNcp7X6p60El",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:3000/api/v1/concepts?set=Antiretroviral+drugs",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"api",
+										"v1",
+										"concepts"
+									],
+									"query": [
+										{
+											"key": "set",
+											"value": "Antiretroviral+drugs"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"6c74102384c1e8590eccf90259d1972c\""
+								},
+								{
+									"key": "Cache-Control",
+									"value": "max-age=0, private, must-revalidate"
+								},
+								{
+									"key": "X-Request-Id",
+									"value": "9a07be7a-e7b8-4f35-b223-383b752b3b20"
+								},
+								{
+									"key": "X-Runtime",
+									"value": "0.184245"
+								},
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"concept_id\": 625,\n        \"retired\": 0,\n        \"short_name\": \"\",\n        \"description\": \"\",\n        \"form_text\": null,\n        \"datatype_id\": 4,\n        \"class_id\": 3,\n        \"is_set\": 0,\n        \"creator\": 1,\n        \"date_created\": \"2004-01-01T00:00:00.000+02:00\",\n        \"default_charge\": null,\n        \"version\": \"\",\n        \"changed_by\": null,\n        \"date_changed\": \"2009-02-24T09:30:24.000+02:00\",\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b8c6f458-8d80-11d8-abbb-0024217bb78e\",\n        \"concept_names\": [\n            {\n                \"concept_id\": 625,\n                \"name\": \"Stavudine\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-01-01T00:00:00.000+02:00\",\n                \"concept_name_id\": 639,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b999cfc2-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": \"FULLY_SPECIFIED\",\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 625,\n                \"name\": \"d4T\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-01-01T00:00:00.000+02:00\",\n                \"concept_name_id\": 5439,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9b9d038-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": \"SHORT\",\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 625,\n                \"name\": \"Zerit\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-10-20T00:00:00.000+02:00\",\n                \"concept_name_id\": 7941,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9c69d0e-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            }\n        ]\n    },\n    {\n        \"concept_id\": 628,\n        \"retired\": 0,\n        \"short_name\": \"\",\n        \"description\": \"\",\n        \"form_text\": null,\n        \"datatype_id\": 4,\n        \"class_id\": 3,\n        \"is_set\": 0,\n        \"creator\": 1,\n        \"date_created\": \"2004-01-01T00:00:00.000+02:00\",\n        \"default_charge\": null,\n        \"version\": \"\",\n        \"changed_by\": null,\n        \"date_changed\": \"2009-02-24T09:30:24.000+02:00\",\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b8c6fa5c-8d80-11d8-abbb-0024217bb78e\",\n        \"concept_names\": [\n            {\n                \"concept_id\": 628,\n                \"name\": \"Lamivudine\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-01-01T00:00:00.000+02:00\",\n                \"concept_name_id\": 642,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b999d350-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": \"FULLY_SPECIFIED\",\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 628,\n                \"name\": \"3TC\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-01-01T00:00:00.000+02:00\",\n                \"concept_name_id\": 5440,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9b9d100-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 628,\n                \"name\": \"Epivir\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-10-20T00:00:00.000+02:00\",\n                \"concept_name_id\": 6869,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9c19174-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            }\n        ]\n    },\n    {\n        \"concept_id\": 630,\n        \"retired\": 0,\n        \"short_name\": \"\",\n        \"description\": \"\",\n        \"form_text\": null,\n        \"datatype_id\": 4,\n        \"class_id\": 3,\n        \"is_set\": 0,\n        \"creator\": 1,\n        \"date_created\": \"2004-01-01T00:00:00.000+02:00\",\n        \"default_charge\": null,\n        \"version\": \"\",\n        \"changed_by\": 1,\n        \"date_changed\": \"2012-10-01T15:41:00.000+02:00\",\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b8c6fdcc-8d80-11d8-abbb-0024217bb78e\",\n        \"concept_names\": [\n            {\n                \"concept_id\": 630,\n                \"name\": \"Zidovudine and Lamivudine\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-01-01T00:00:00.000+02:00\",\n                \"concept_name_id\": 644,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b999d59e-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": \"FULLY_SPECIFIED\",\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 630,\n                \"name\": \"AZT/3TC\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-01-01T00:00:00.000+02:00\",\n                \"concept_name_id\": 5441,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9b9d1c8-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": \"SHORT\",\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 630,\n                \"name\": \"Combivir\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2005-01-21T00:00:00.000+02:00\",\n                \"concept_name_id\": 6667,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9c0b81c-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 630,\n                \"name\": \"Duovir\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2007-09-24T09:58:23.000+02:00\",\n                \"concept_name_id\": 6828,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9c16e9c-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 630,\n                \"name\": \"Virocomb\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2007-09-24T09:58:23.000+02:00\",\n                \"concept_name_id\": 7882,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9c665c8-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 630,\n                \"name\": \"Zidolam\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2007-09-24T09:58:23.000+02:00\",\n                \"concept_name_id\": 7943,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9c69e94-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 630,\n                \"name\": \"AZT + 3TC\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2012-10-01T15:41:00.000+02:00\",\n                \"concept_name_id\": 11860,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9da7b94-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            }\n        ]\n    },\n    {\n        \"concept_id\": 631,\n        \"retired\": 0,\n        \"short_name\": \"\",\n        \"description\": \"\",\n        \"form_text\": null,\n        \"datatype_id\": 4,\n        \"class_id\": 3,\n        \"is_set\": 0,\n        \"creator\": 1,\n        \"date_created\": \"2004-01-01T00:00:00.000+02:00\",\n        \"default_charge\": null,\n        \"version\": \"\",\n        \"changed_by\": 1,\n        \"date_changed\": \"2012-10-01T15:42:22.000+02:00\",\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b8c6ff70-8d80-11d8-abbb-0024217bb78e\",\n        \"concept_names\": [\n            {\n                \"concept_id\": 631,\n                \"name\": \"Nevirapine\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-01-01T00:00:00.000+02:00\",\n                \"concept_name_id\": 645,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b999d6d4-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": \"FULLY_SPECIFIED\",\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 631,\n                \"name\": \"Viramune\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-10-20T00:00:00.000+02:00\",\n                \"concept_name_id\": 7880,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9c66442-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 631,\n                \"name\": \"NVP\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2012-10-01T15:42:22.000+02:00\",\n                \"concept_name_id\": 11862,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9da7d24-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": \"SHORT\",\n                \"locale_preferred\": 0\n            }\n        ]\n    },\n    {\n        \"concept_id\": 633,\n        \"retired\": 0,\n        \"short_name\": \"\",\n        \"description\": \"\",\n        \"form_text\": null,\n        \"datatype_id\": 4,\n        \"class_id\": 3,\n        \"is_set\": 0,\n        \"creator\": 1,\n        \"date_created\": \"2004-01-01T00:00:00.000+02:00\",\n        \"default_charge\": null,\n        \"version\": \"\",\n        \"changed_by\": 1,\n        \"date_changed\": \"2012-10-01T15:41:39.000+02:00\",\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b8c702c2-8d80-11d8-abbb-0024217bb78e\",\n        \"concept_names\": [\n            {\n                \"concept_id\": 633,\n                \"name\": \"Efavirenz\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-01-01T00:00:00.000+02:00\",\n                \"concept_name_id\": 647,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b999d922-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": \"FULLY_SPECIFIED\",\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 633,\n                \"name\": \"EFZ\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2006-08-10T15:12:02.000+02:00\",\n                \"concept_name_id\": 6852,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9c18454-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 633,\n                \"name\": \"Stocrin\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-04-08T00:00:00.000+02:00\",\n                \"concept_name_id\": 7698,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9c5997c-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 633,\n                \"name\": \"Sustiva\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-04-08T00:00:00.000+02:00\",\n                \"concept_name_id\": 7714,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9c5a642-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 633,\n                \"name\": \"Sustive\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-10-20T00:00:00.000+02:00\",\n                \"concept_name_id\": 7715,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9c5a70a-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 633,\n                \"name\": \"EFV\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2012-10-01T15:41:39.000+02:00\",\n                \"concept_name_id\": 11861,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9da7c5c-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": \"SHORT\",\n                \"locale_preferred\": 0\n            }\n        ]\n    },\n    {\n        \"concept_id\": 635,\n        \"retired\": 0,\n        \"short_name\": \"\",\n        \"description\": \"\",\n        \"form_text\": null,\n        \"datatype_id\": 4,\n        \"class_id\": 3,\n        \"is_set\": 0,\n        \"creator\": 1,\n        \"date_created\": \"2004-01-01T00:00:00.000+02:00\",\n        \"default_charge\": null,\n        \"version\": \"\",\n        \"changed_by\": 1,\n        \"date_changed\": \"2005-01-12T00:00:00.000+02:00\",\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b8c7060a-8d80-11d8-abbb-0024217bb78e\",\n        \"concept_names\": [\n            {\n                \"concept_id\": 635,\n                \"name\": \"Nelfinavir\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-01-01T00:00:00.000+02:00\",\n                \"concept_name_id\": 649,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b999db84-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": \"FULLY_SPECIFIED\",\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 635,\n                \"name\": \"NFV\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2005-01-12T00:00:00.000+02:00\",\n                \"concept_name_id\": 7288,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9c3ea00-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 635,\n                \"name\": \"Viracept\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-10-20T00:00:00.000+02:00\",\n                \"concept_name_id\": 7878,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9c662b2-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            }\n        ]\n    },\n    {\n        \"concept_id\": 792,\n        \"retired\": 0,\n        \"short_name\": \"\",\n        \"description\": \"\",\n        \"form_text\": null,\n        \"datatype_id\": 4,\n        \"class_id\": 3,\n        \"is_set\": 0,\n        \"creator\": 1,\n        \"date_created\": \"2004-04-07T23:00:00.000+02:00\",\n        \"default_charge\": null,\n        \"version\": \"\",\n        \"changed_by\": 1,\n        \"date_changed\": \"2011-11-18T14:51:58.000+02:00\",\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b8c9a568-8d80-11d8-abbb-0024217bb78e\",\n        \"concept_names\": [\n            {\n                \"concept_id\": 792,\n                \"name\": \"Stavudine Lamivudine and Nevirapine\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-04-08T00:00:00.000+02:00\",\n                \"concept_name_id\": 809,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b99f21f2-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": \"FULLY_SPECIFIED\",\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 792,\n                \"name\": \"EMTRI\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2005-02-18T13:52:27.000+02:00\",\n                \"concept_name_id\": 6858,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9c188f0-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 792,\n                \"name\": \"Triomune\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2005-01-21T00:00:00.000+02:00\",\n                \"concept_name_id\": 7823,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9c634f4-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 792,\n                \"name\": \"Triomune-30\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2005-02-22T12:47:28.000+02:00\",\n                \"concept_name_id\": 7824,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9c635bc-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 792,\n                \"name\": \"Triomune-40\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2005-02-22T12:47:28.000+02:00\",\n                \"concept_name_id\": 7825,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9c63684-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 792,\n                \"name\": \"d4T/3TC/NVP\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2010-03-11T22:58:54.000+02:00\",\n                \"concept_name_id\": 9707,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9cec498-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": \"SHORT\",\n                \"locale_preferred\": 0\n            }\n        ]\n    },\n    {\n        \"concept_id\": 794,\n        \"retired\": 0,\n        \"short_name\": \"\",\n        \"description\": \"\",\n        \"form_text\": null,\n        \"datatype_id\": 4,\n        \"class_id\": 3,\n        \"is_set\": 0,\n        \"creator\": 1,\n        \"date_created\": \"2004-04-07T23:00:00.000+02:00\",\n        \"default_charge\": null,\n        \"version\": \"\",\n        \"changed_by\": null,\n        \"date_changed\": \"2009-02-24T09:30:24.000+02:00\",\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b8c9a8f6-8d80-11d8-abbb-0024217bb78e\",\n        \"concept_names\": [\n            {\n                \"concept_id\": 794,\n                \"name\": \"Lopinavir and Ritonavir\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-04-08T00:00:00.000+02:00\",\n                \"concept_name_id\": 811,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b99f2526-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": \"FULLY_SPECIFIED\",\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 794,\n                \"name\": \"LPV/r\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-04-08T00:00:00.000+02:00\",\n                \"concept_name_id\": 5463,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9b9e1e0-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": \"SHORT\",\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 794,\n                \"name\": \"Kaletra\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-10-20T00:00:00.000+02:00\",\n                \"concept_name_id\": 7134,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9c2b25c-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 794,\n                \"name\": \"Lpv/rtv\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2006-08-11T23:10:30.000+02:00\",\n                \"concept_name_id\": 7194,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9c2e72c-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            }\n        ]\n    },\n    {\n        \"concept_id\": 796,\n        \"retired\": 0,\n        \"short_name\": \"\",\n        \"description\": \"\",\n        \"form_text\": null,\n        \"datatype_id\": 4,\n        \"class_id\": 3,\n        \"is_set\": 0,\n        \"creator\": 1,\n        \"date_created\": \"2004-04-07T23:00:00.000+02:00\",\n        \"default_charge\": null,\n        \"version\": \"\",\n        \"changed_by\": null,\n        \"date_changed\": \"2009-02-24T09:30:24.000+02:00\",\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b8c9ac7a-8d80-11d8-abbb-0024217bb78e\",\n        \"concept_names\": [\n            {\n                \"concept_id\": 796,\n                \"name\": \"Didanosine\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-04-08T00:00:00.000+02:00\",\n                \"concept_name_id\": 813,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b99f277e-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": \"FULLY_SPECIFIED\",\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 796,\n                \"name\": \"DDI\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-04-08T00:00:00.000+02:00\",\n                \"concept_name_id\": 6734,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9c0f05c-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 796,\n                \"name\": \"DDI-125\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2005-02-22T12:50:02.000+02:00\",\n                \"concept_name_id\": 6735,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9c0f124-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 796,\n                \"name\": \"DDI-200\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2005-02-22T12:50:02.000+02:00\",\n                \"concept_name_id\": 6736,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9c0f1ec-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 796,\n                \"name\": \"Videx\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-04-08T00:00:00.000+02:00\",\n                \"concept_name_id\": 7875,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9c66064-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            }\n        ]\n    },\n    {\n        \"concept_id\": 797,\n        \"retired\": 0,\n        \"short_name\": \"\",\n        \"description\": \"\",\n        \"form_text\": null,\n        \"datatype_id\": 4,\n        \"class_id\": 3,\n        \"is_set\": 0,\n        \"creator\": 1,\n        \"date_created\": \"2004-04-07T23:00:00.000+02:00\",\n        \"default_charge\": null,\n        \"version\": \"\",\n        \"changed_by\": null,\n        \"date_changed\": \"2009-02-24T09:30:24.000+02:00\",\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b8c9ae3c-8d80-11d8-abbb-0024217bb78e\",\n        \"concept_names\": [\n            {\n                \"concept_id\": 797,\n                \"name\": \"Zidovudine\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-04-08T00:00:00.000+02:00\",\n                \"concept_name_id\": 814,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b99f28a0-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": \"FULLY_SPECIFIED\",\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 797,\n                \"name\": \"AZT\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-04-08T00:00:00.000+02:00\",\n                \"concept_name_id\": 5465,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9b9e2a8-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 797,\n                \"name\": \"Retrovir\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-10-20T00:00:00.000+02:00\",\n                \"concept_name_id\": 7568,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9c52488-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            },\n            {\n                \"concept_id\": 797,\n                \"name\": \"ZDV\",\n                \"locale\": \"en\",\n                \"creator\": 1,\n                \"date_created\": \"2004-10-20T00:00:00.000+02:00\",\n                \"concept_name_id\": 7938,\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"b9c69ac0-8d80-11d8-abbb-0024217bb78e\",\n                \"concept_name_type\": null,\n                \"locale_preferred\": 0\n            }\n        ]\n    }\n]"
+						}
+					]
+				}
+			],
+			"description": "Concepts are simply names of things in OpenMRS. Anything that has a name probably must have that name as a concept. Concepts can further be grouped under a concept set (which also has a name that is a concept). An example of concept set could be under the name 'Antiretroviral drugs' and would comprise drugs like Tenofovir and Dolutegravir.\n\nThis section primarily focuses on how concepts can be retrieved. Creation concepts is something normally done through an OpenMRS concept server.",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "b66787e4-1c63-4a59-b689-0796cfa19101",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "b129a9a1-7e4f-44d4-a01b-842b9cc4fe58",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Drugs",
+			"item": [
+				{
+					"name": "/api/v1/drugs (Retrieve drugs)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": ""
+						},
+						"description": "Retrieve all drugs or retrieve them by name and/or concept_set."
+					},
+					"response": [
+						{
+							"name": "Retrieve all drugs",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "nNcp7X6p60El",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:3000/api/v1/drugs",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"api",
+										"v1",
+										"drugs"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"592c59b6bf1dcb49eb1eca0ec160d443\""
+								},
+								{
+									"key": "Cache-Control",
+									"value": "max-age=0, private, must-revalidate"
+								},
+								{
+									"key": "X-Request-Id",
+									"value": "c9e93392-99b9-4c5c-8fe6-429599099790"
+								},
+								{
+									"key": "X-Runtime",
+									"value": "0.652381"
+								},
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"drug_id\": 611,\n        \"concept_id\": 2692,\n        \"name\": \"2RHZE+4RH\",\n        \"combination\": 0,\n        \"dosage_form\": null,\n        \"dose_strength\": null,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": null,\n        \"units\": \"\",\n        \"creator\": 1,\n        \"date_created\": \"2010-07-14T15:37:29.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9fb317c-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 610,\n        \"concept_id\": 7127,\n        \"name\": \"2SRHZ+7RH\",\n        \"combination\": 0,\n        \"dosage_form\": null,\n        \"dose_strength\": null,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": null,\n        \"units\": \"\",\n        \"creator\": 1,\n        \"date_created\": \"2010-07-14T15:29:52.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9fb30a0-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 612,\n        \"concept_id\": 2126,\n        \"name\": \"2SRHZE+1RHZE/5RHE\",\n        \"combination\": 0,\n        \"dosage_form\": null,\n        \"dose_strength\": null,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": null,\n        \"units\": \"\",\n        \"creator\": 1,\n        \"date_created\": \"2010-07-14T15:38:31.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9fb3258-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 42,\n        \"concept_id\": 628,\n        \"name\": \"3TC (Lamivudine 150mg tablet)\",\n        \"combination\": 0,\n        \"dosage_form\": 4020,\n        \"dose_strength\": 1,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": 3327,\n        \"units\": \"tab(s)\",\n        \"creator\": 1,\n        \"date_created\": \"2006-08-10T16:05:32.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9f5c39a-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [\n            {\n                \"id\": 37,\n                \"name\": \"3TC (Lamivudine 150mg tablet)\",\n                \"short_name\": \"3TC (Lamivudine 150mg tablet)\",\n                \"drug_inventory_id\": 42,\n                \"created_at\": \"2019-01-23T13:14:06.000+02:00\",\n                \"updated_at\": \"2019-01-23T13:14:06.000+02:00\"\n            }\n        ],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 41,\n        \"concept_id\": 628,\n        \"name\": \"3TC (Lamivudine syrup 10mg/mL from 100mL bottle)\",\n        \"combination\": 0,\n        \"dosage_form\": 4021,\n        \"dose_strength\": 10,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": 3327,\n        \"units\": \"ml\",\n        \"creator\": 1,\n        \"date_created\": \"2006-08-10T16:04:40.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9f5c2d2-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [\n            {\n                \"id\": 36,\n                \"name\": \"3TC (Lamivudine syrup 10mg / mL from 100mL bottle)\",\n                \"short_name\": \"3TC (Lamivudine syrup 10mg / mL from 100mL bottle)\",\n                \"drug_inventory_id\": 41,\n                \"created_at\": \"2019-01-23T13:14:06.000+02:00\",\n                \"updated_at\": \"2019-01-23T13:14:06.000+02:00\"\n            }\n        ],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 40,\n        \"concept_id\": 814,\n        \"name\": \"ABC (Abacavir 300mg tablet)\",\n        \"combination\": 0,\n        \"dosage_form\": 4020,\n        \"dose_strength\": 1,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": 3327,\n        \"units\": \"tab(s)\",\n        \"creator\": 1,\n        \"date_created\": \"2006-08-10T15:44:45.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9f5c200-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [\n            {\n                \"id\": 61,\n                \"name\": \"ABC (Abacavir 300mg tablet)\",\n                \"short_name\": \"ABC (Abacavir 300mg tablet)\",\n                \"drug_inventory_id\": 40,\n                \"created_at\": \"2019-01-23T13:14:06.000+02:00\",\n                \"updated_at\": \"2019-01-23T13:14:06.000+02:00\"\n            }\n        ],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 1044,\n        \"concept_id\": 7927,\n        \"name\": \"ABC/3TC (Abacavir and Lamivudine 120/60mg tablet)\",\n        \"combination\": 0,\n        \"dosage_form\": null,\n        \"dose_strength\": 1,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": null,\n        \"units\": \"tab(s)\",\n        \"creator\": 1,\n        \"date_created\": \"2019-12-12T14:00:33.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"02d4001c-1cd7-11ea-9843-caeb395e2aba\",\n        \"alternative_names\": [\n            {\n                \"id\": 80,\n                \"name\": \"ABC/3TC (Abacavir and Lamivudine 120/60mg tablet)\",\n                \"short_name\": \"ABC 120 / 3TC 60\",\n                \"drug_inventory_id\": 1044,\n                \"created_at\": \"2019-12-12T13:14:06.000+02:00\",\n                \"updated_at\": \"2019-12-12T13:14:06.000+02:00\"\n            }\n        ],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 733,\n        \"concept_id\": 7927,\n        \"name\": \"ABC/3TC (Abacavir and Lamivudine 60/30mg tablet)\",\n        \"combination\": 1,\n        \"dosage_form\": null,\n        \"dose_strength\": 1,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": null,\n        \"units\": \"tab(s)\",\n        \"creator\": 1,\n        \"date_created\": \"2011-07-01T11:32:34.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9fc7316-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [\n            {\n                \"id\": 15,\n                \"name\": \"Abacavir / Lamivudine 60 / 30mg\",\n                \"short_name\": \"ABC 60 / 3TC 30\",\n                \"drug_inventory_id\": 733,\n                \"created_at\": \"2018-12-19T09:13:49.000+02:00\",\n                \"updated_at\": \"2018-12-19T09:13:49.000+02:00\"\n            }\n        ],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 969,\n        \"concept_id\": 7927,\n        \"name\": \"ABC/3TC (Abacavir and Lamivudine 600/300mg tablet)\",\n        \"combination\": 0,\n        \"dosage_form\": null,\n        \"dose_strength\": 1,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": null,\n        \"units\": \"tab(s)\",\n        \"creator\": 1,\n        \"date_created\": \"2003-07-09T22:59:19.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9ff6e86-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [\n            {\n                \"id\": 24,\n                \"name\": \"Abacavir sulfate 600mg / Lamivudine 300mg\",\n                \"short_name\": \"ABC 600 / 3TC 300\",\n                \"drug_inventory_id\": 969,\n                \"created_at\": \"2018-12-19T09:13:49.000+02:00\",\n                \"updated_at\": \"2018-12-19T09:13:49.000+02:00\"\n            }\n        ],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 972,\n        \"concept_id\": 9523,\n        \"name\": \"ABC600/3TC300 + LPV/R 200/50\",\n        \"combination\": 1,\n        \"dosage_form\": null,\n        \"dose_strength\": 1,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": null,\n        \"units\": \"tabs\",\n        \"creator\": 1,\n        \"date_created\": \"2016-08-09T15:57:42.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"d77e2709-791d-48cd-b8ef-2e8335483f06\",\n        \"alternative_names\": [],\n        \"barcodes\": []\n    }\n]"
+						},
+						{
+							"name": "Retrieve drugs by concept set",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "nNcp7X6p60El",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:3000/api/v1/drugs?concept_set=Antiretroviral+drugs",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"api",
+										"v1",
+										"drugs"
+									],
+									"query": [
+										{
+											"key": "concept_set",
+											"value": "Antiretroviral+drugs"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"8167e9448516d03d78021c1dedbd1ad3\""
+								},
+								{
+									"key": "Cache-Control",
+									"value": "max-age=0, private, must-revalidate"
+								},
+								{
+									"key": "X-Request-Id",
+									"value": "b1213732-2f72-45e9-973e-0d35ab807515"
+								},
+								{
+									"key": "X-Runtime",
+									"value": "0.097636"
+								},
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"drug_id\": 42,\n        \"concept_id\": 628,\n        \"name\": \"3TC (Lamivudine 150mg tablet)\",\n        \"combination\": 0,\n        \"dosage_form\": 4020,\n        \"dose_strength\": 1,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": 3327,\n        \"units\": \"tab(s)\",\n        \"creator\": 1,\n        \"date_created\": \"2006-08-10T16:05:32.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9f5c39a-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [\n            {\n                \"id\": 37,\n                \"name\": \"3TC (Lamivudine 150mg tablet)\",\n                \"short_name\": \"3TC (Lamivudine 150mg tablet)\",\n                \"drug_inventory_id\": 42,\n                \"created_at\": \"2019-01-23T13:14:06.000+02:00\",\n                \"updated_at\": \"2019-01-23T13:14:06.000+02:00\"\n            }\n        ],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 41,\n        \"concept_id\": 628,\n        \"name\": \"3TC (Lamivudine syrup 10mg/mL from 100mL bottle)\",\n        \"combination\": 0,\n        \"dosage_form\": 4021,\n        \"dose_strength\": 10,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": 3327,\n        \"units\": \"ml\",\n        \"creator\": 1,\n        \"date_created\": \"2006-08-10T16:04:40.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9f5c2d2-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [\n            {\n                \"id\": 36,\n                \"name\": \"3TC (Lamivudine syrup 10mg / mL from 100mL bottle)\",\n                \"short_name\": \"3TC (Lamivudine syrup 10mg / mL from 100mL bottle)\",\n                \"drug_inventory_id\": 41,\n                \"created_at\": \"2019-01-23T13:14:06.000+02:00\",\n                \"updated_at\": \"2019-01-23T13:14:06.000+02:00\"\n            }\n        ],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 40,\n        \"concept_id\": 814,\n        \"name\": \"ABC (Abacavir 300mg tablet)\",\n        \"combination\": 0,\n        \"dosage_form\": 4020,\n        \"dose_strength\": 1,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": 3327,\n        \"units\": \"tab(s)\",\n        \"creator\": 1,\n        \"date_created\": \"2006-08-10T15:44:45.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9f5c200-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [\n            {\n                \"id\": 61,\n                \"name\": \"ABC (Abacavir 300mg tablet)\",\n                \"short_name\": \"ABC (Abacavir 300mg tablet)\",\n                \"drug_inventory_id\": 40,\n                \"created_at\": \"2019-01-23T13:14:06.000+02:00\",\n                \"updated_at\": \"2019-01-23T13:14:06.000+02:00\"\n            }\n        ],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 1044,\n        \"concept_id\": 7927,\n        \"name\": \"ABC/3TC (Abacavir and Lamivudine 120/60mg tablet)\",\n        \"combination\": 0,\n        \"dosage_form\": null,\n        \"dose_strength\": 1,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": null,\n        \"units\": \"tab(s)\",\n        \"creator\": 1,\n        \"date_created\": \"2019-12-12T14:00:33.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"02d4001c-1cd7-11ea-9843-caeb395e2aba\",\n        \"alternative_names\": [\n            {\n                \"id\": 80,\n                \"name\": \"ABC/3TC (Abacavir and Lamivudine 120/60mg tablet)\",\n                \"short_name\": \"ABC 120 / 3TC 60\",\n                \"drug_inventory_id\": 1044,\n                \"created_at\": \"2019-12-12T13:14:06.000+02:00\",\n                \"updated_at\": \"2019-12-12T13:14:06.000+02:00\"\n            }\n        ],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 733,\n        \"concept_id\": 7927,\n        \"name\": \"ABC/3TC (Abacavir and Lamivudine 60/30mg tablet)\",\n        \"combination\": 1,\n        \"dosage_form\": null,\n        \"dose_strength\": 1,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": null,\n        \"units\": \"tab(s)\",\n        \"creator\": 1,\n        \"date_created\": \"2011-07-01T11:32:34.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9fc7316-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [\n            {\n                \"id\": 15,\n                \"name\": \"Abacavir / Lamivudine 60 / 30mg\",\n                \"short_name\": \"ABC 60 / 3TC 30\",\n                \"drug_inventory_id\": 733,\n                \"created_at\": \"2018-12-19T09:13:49.000+02:00\",\n                \"updated_at\": \"2018-12-19T09:13:49.000+02:00\"\n            }\n        ],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 969,\n        \"concept_id\": 7927,\n        \"name\": \"ABC/3TC (Abacavir and Lamivudine 600/300mg tablet)\",\n        \"combination\": 0,\n        \"dosage_form\": null,\n        \"dose_strength\": 1,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": null,\n        \"units\": \"tab(s)\",\n        \"creator\": 1,\n        \"date_created\": \"2003-07-09T22:59:19.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9ff6e86-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [\n            {\n                \"id\": 24,\n                \"name\": \"Abacavir sulfate 600mg / Lamivudine 300mg\",\n                \"short_name\": \"ABC 600 / 3TC 300\",\n                \"drug_inventory_id\": 969,\n                \"created_at\": \"2018-12-19T09:13:49.000+02:00\",\n                \"updated_at\": \"2018-12-19T09:13:49.000+02:00\"\n            }\n        ],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 952,\n        \"concept_id\": 9232,\n        \"name\": \"ATV/(Atazanavir)\",\n        \"combination\": 0,\n        \"dosage_form\": null,\n        \"dose_strength\": 1,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": null,\n        \"units\": \"tab(s)\",\n        \"creator\": 1,\n        \"date_created\": \"2002-10-03T00:29:36.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9ff5f72-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [\n            {\n                \"id\": 74,\n                \"name\": \"ATV / (Atazanavir)\",\n                \"short_name\": \"ATV / (Atazanavir)\",\n                \"drug_inventory_id\": 952,\n                \"created_at\": \"2019-01-23T13:14:06.000+02:00\",\n                \"updated_at\": \"2019-01-23T13:14:06.000+02:00\"\n            }\n        ],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 932,\n        \"concept_id\": 9175,\n        \"name\": \"ATV/r (Atazanavir 300mg/Ritonavir 100mg)\",\n        \"combination\": 1,\n        \"dosage_form\": null,\n        \"dose_strength\": 1,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": null,\n        \"units\": \"tab(s)\",\n        \"creator\": 1,\n        \"date_created\": \"2013-06-06T09:13:40.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9fecec2-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [\n            {\n                \"id\": 21,\n                \"name\": \"Atazanavir / Ritonavir 300 / 100mg\",\n                \"short_name\": \"ATV/r 300/100\",\n                \"drug_inventory_id\": 932,\n                \"created_at\": \"2018-12-19T09:13:49.000+02:00\",\n                \"updated_at\": \"2018-12-19T09:13:49.000+02:00\"\n            }\n        ],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 37,\n        \"concept_id\": 797,\n        \"name\": \"AZT (Zidovudine 100mg tablet)\",\n        \"combination\": 0,\n        \"dosage_form\": 4020,\n        \"dose_strength\": 1,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": 3327,\n        \"units\": \"tab(s)\",\n        \"creator\": 1,\n        \"date_created\": \"2006-08-10T15:41:51.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9f5bfa8-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [\n            {\n                \"id\": 58,\n                \"name\": \"AZT (Zidovudine 100mg tablet)\",\n                \"short_name\": \"AZT (Zidovudine 100mg tablet)\",\n                \"drug_inventory_id\": 37,\n                \"created_at\": \"2019-01-23T13:14:06.000+02:00\",\n                \"updated_at\": \"2019-01-23T13:14:06.000+02:00\"\n            }\n        ],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 38,\n        \"concept_id\": 797,\n        \"name\": \"AZT (Zidovudine 300mg tablet)\",\n        \"combination\": 0,\n        \"dosage_form\": 4020,\n        \"dose_strength\": 1,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": 3327,\n        \"units\": \"tab(s)\",\n        \"creator\": 1,\n        \"date_created\": \"2006-08-10T15:42:22.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9f5c070-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [\n            {\n                \"id\": 59,\n                \"name\": \"AZT (Zidovudine 300mg tablet)\",\n                \"short_name\": \"AZT (Zidovudine 300mg tablet)\",\n                \"drug_inventory_id\": 38,\n                \"created_at\": \"2019-01-23T13:14:06.000+02:00\",\n                \"updated_at\": \"2019-01-23T13:14:06.000+02:00\"\n            }\n        ],\n        \"barcodes\": []\n    }\n]"
+						},
+						{
+							"name": "Retrieve drugs by name",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "nNcp7X6p60El",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:3000/api/v1/drugs?name=3TC",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"api",
+										"v1",
+										"drugs"
+									],
+									"query": [
+										{
+											"key": "name",
+											"value": "3TC"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"fe4db6e289af3ab6877b7201be585561\""
+								},
+								{
+									"key": "Cache-Control",
+									"value": "max-age=0, private, must-revalidate"
+								},
+								{
+									"key": "X-Request-Id",
+									"value": "efe1c6f7-eaf6-454c-989d-3864aa3b479d"
+								},
+								{
+									"key": "X-Runtime",
+									"value": "0.032211"
+								},
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"drug_id\": 42,\n        \"concept_id\": 628,\n        \"name\": \"3TC (Lamivudine 150mg tablet)\",\n        \"combination\": 0,\n        \"dosage_form\": 4020,\n        \"dose_strength\": 1,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": 3327,\n        \"units\": \"tab(s)\",\n        \"creator\": 1,\n        \"date_created\": \"2006-08-10T16:05:32.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9f5c39a-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [\n            {\n                \"id\": 37,\n                \"name\": \"3TC (Lamivudine 150mg tablet)\",\n                \"short_name\": \"3TC (Lamivudine 150mg tablet)\",\n                \"drug_inventory_id\": 42,\n                \"created_at\": \"2019-01-23T13:14:06.000+02:00\",\n                \"updated_at\": \"2019-01-23T13:14:06.000+02:00\"\n            }\n        ],\n        \"barcodes\": []\n    },\n    {\n        \"drug_id\": 41,\n        \"concept_id\": 628,\n        \"name\": \"3TC (Lamivudine syrup 10mg/mL from 100mL bottle)\",\n        \"combination\": 0,\n        \"dosage_form\": 4021,\n        \"dose_strength\": 10,\n        \"maximum_daily_dose\": null,\n        \"minimum_daily_dose\": null,\n        \"route\": 3327,\n        \"units\": \"ml\",\n        \"creator\": 1,\n        \"date_created\": \"2006-08-10T16:04:40.000+02:00\",\n        \"retired\": 0,\n        \"retired_by\": null,\n        \"date_retired\": null,\n        \"retire_reason\": null,\n        \"uuid\": \"b9f5c2d2-8d80-11d8-abbb-0024217bb78e\",\n        \"alternative_names\": [\n            {\n                \"id\": 36,\n                \"name\": \"3TC (Lamivudine syrup 10mg / mL from 100mL bottle)\",\n                \"short_name\": \"3TC (Lamivudine syrup 10mg / mL from 100mL bottle)\",\n                \"drug_inventory_id\": 41,\n                \"created_at\": \"2019-01-23T13:14:06.000+02:00\",\n                \"updated_at\": \"2019-01-23T13:14:06.000+02:00\"\n            }\n        ],\n        \"barcodes\": []\n    }\n]"
+						}
+					]
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
 			"name": "Log in",
 			"request": {
 				"method": "POST",
