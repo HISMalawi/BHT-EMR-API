@@ -62,6 +62,10 @@ class Observation < VoidableRecord
 
     drug_order.quantity = nil
     drug_order.save
+
+    return unless concept_id == ConceptName.find_by_name('Amount Dispensed').concept_id
+
+    DispensationService.update_stock_ledgers(self, :credit)
   end
 
   def name

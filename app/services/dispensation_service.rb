@@ -8,15 +8,12 @@ module DispensationService
       concept_id = concept('AMOUNT DISPENSED').concept_id
 
       if date
-        Observation.where(
-          person_id: patient_id, concept_id: concept_id
-        ).where(
-          'DATE(obs_datetime) = DATE(?)', date
-        ).order(date_created: :desc)
+        Observation.where(person_id: patient_id, concept_id: concept_id)
+                   .where('DATE(obs_datetime) = DATE(?)', date)
+                   .order(date_created: :desc)
       else
-        Observation.where(
-          person_id: patient_id, concept_id: concept_id
-        ).order(date_created: :desc)
+        Observation.where(person_id: patient_id, concept_id: concept_id)
+                   .order(date_created: :desc)
       end
     end
 
@@ -66,7 +63,7 @@ module DispensationService
         obs_datetime: date
       )
 
-      update_stock_ledgers(observation)
+      update_stock_ledgers(observation, :debit)
 
       observation
     end
@@ -79,6 +76,7 @@ module DispensationService
 
         dispensations.each do |dispensation|
           dispensation.void("Dispensation reversed by #{User.current.username}", skip_after_void: true)
+          update_stock_ledgers(dispensation, :credit)
         end
 
         drug_order.quantity = 0
@@ -128,10 +126,17 @@ module DispensationService
     # Finds a dispensing encounter for the given patient on the given date
     def find_encounter(program, patient, date)
       encounter_type = EncounterType.find_by(name: 'DISPENSING').encounter_type_id
-      Encounter.where(
-        'program_id = ? AND encounter_type = ? AND patient_id = ? AND DATE(encounter_datetime) = DATE(?)',
-        program.id, encounter_type, patient.patient_id, date
-      ).order(date_created: :desc).first
+      Encounter.where(program_id: program.id,
+                      encounter_type: encounter_type,
+                      patient_id: patient.id)
+               .where('DATE(encounter_datetime) = DATE(?)', date)
+               .order(date_created: :desc)
+               .first
+    end
+
+    def update_stock_ledgers(observation, mode = :debit)
+      json_observation = observation.as_json(ignore_includes: true).to_json
+      StockUpdateJob.perform_later(mode.to_s, User.current.id, Location.current.id, json_observation)
     end
 
     private
@@ -188,12 +193,15 @@ module DispensationService
 
     def mark_patient_art_start_date(patient, date)
       art_start_date_concept = concept('ART start date')
-      return if Observation.where(person_id: patient.patient_id, concept: art_start_date_concept).exists?
+      has_art_start_date = Observation.where(person_id: patient.patient_id,
+                                             concept: art_start_date_concept)
+                                      .exists?
+      return if has_art_start_date
 
-      Observation.create person_id: patient.patient_id,
+      Observation.create(person_id: patient.patient_id,
                          concept: art_start_date_concept,
                          value_datetime: date,
-                         obs_datetime: TimeUtils.retro_timestamp(date)
+                         obs_datetime: TimeUtils.retro_timestamp(date))
     end
 
     def create_patient_state(patient_program, program_workflow_state, date, previous_state = nil)
@@ -209,11 +217,6 @@ module DispensationService
           start_date: date
         )
       end
-    end
-
-    def update_stock_ledgers(observation)
-      json_observation = observation.as_json(ignore_includes: true).to_json
-      StockUpdateJob.perform_later(json_observation)
     end
   end
 end
