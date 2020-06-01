@@ -28,7 +28,8 @@ module ARTService
       'IPT_COVERAGE' => ARTService::Reports::IPTCoverage,
       'VISITS' => ARTService::Reports::VisitsReport,
       'VL_DUE' => ARTService::Reports::PatientsDueForViralLoad,
-      'VL_DISAGGREGATED' => ARTService::Reports::ViralLoadDisaggregated
+      'VL_DISAGGREGATED' => ARTService::Reports::ViralLoadDisaggregated,
+      'TB_PREV' => ARTService::Reports::Pepfar::TbPrev
     }.freeze
 
     def generate_report(type:, **kwargs)
@@ -124,6 +125,10 @@ module ARTService
       REPORTS['ARV_REFILL_PERIODS'].new(start_date: start_date.to_date,
         end_date: end_date.to_date, min_age: 0, max_age: 0,
           org: "moh").tx_mmd_client_level_data(patient_ids)
+    end
+
+    def tb_prev(start_date, end_date)
+      REPORTS['TB_PREV'].new(start_date: start_date.to_date, end_date: end_date.to_date).report
     end
 
     private

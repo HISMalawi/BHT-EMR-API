@@ -157,6 +157,9 @@ class ReportService
     engine(@program).tx_mmd_client_level_data(start_date, end_date, patient_ids)
   end
 
+  def tb_prev(start_date, end_date)
+    engine(@program).tb_prev(start_date, end_date)
+  end
 
   private
 

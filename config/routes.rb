@@ -305,4 +305,5 @@ Rails.application.routes.draw do
   get '/api/v1/disaggregated_regimen_distribution', to: 'api/v1/reports#disaggregated_regimen_distribution'
   post '/api/v1/tx_mmd_client_level_data', to: 'api/v1/reports#tx_mmd_client_level_data'
   get '/api/v1/clients', to: 'api/v1/people#list'
+  get '/api/v1/tb_prev', to: 'api/v1/reports#tb_prev'
 end
