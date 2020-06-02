@@ -364,6 +364,7 @@ EOF
           incomplete_visits_comp[patient_id] = {
             given_name: person_details["given_name"],
             family_name: person_details["family_name"],
+            gender: person_details["gender"],
             birthdate: person_details["birthdate"],
             arv_number: person_details["arv_number"],
             national_id: person_details["national_id"],
