@@ -35,8 +35,9 @@ class Api::V1::CleaningController < ApplicationController
 
     unless params[:program_id].blank?
       program = Program.find(params[:program_id])
-      service = SERVICES[program.name.upcase].new(params[:start_date], params[:end_date])
-      render json: service.incomplete_visits
+      service = SERVICES[program.name.upcase].new(start_date: params[:start_date],
+        end_date: params[:end_date], tool_name: params[:tool_name])
+      render json: service.results
     else
 
     render json: ActiveRecord::Base.connection.select_all("    SELECT DISTINCT concat(pn.given_name,' ',pn.family_name) AS name,p.identifier, tsd.gender,
@@ -110,7 +111,7 @@ class Api::V1::CleaningController < ApplicationController
 
   def art_tools
     program = Program.find(params[:program_id])
-    service = SERVICES[program.name.upcase].new(start_date: params[:start_date], 
+    service = SERVICES[program.name.upcase].new(start_date: params[:start_date],
       end_date: params[:end_date], tool_name: params[:report_name])
     render json: service.results
   end

@@ -2,7 +2,7 @@
 
 module ARTService
   class DataCleaningTool
-    
+
     TOOLS = {
       'DATE ENROLLED LESS THAN EARLIEST START DATE' => 'date_enrolled_less_than_earliest_start_date',
       'PRE ART OR UNKNOWN OUTCOMES' => 'pre_art_or_unknown_outcomes',
@@ -11,7 +11,8 @@ module ARTService
       'PRESCRIPTION WITHOUT DISPENSATION' => 'prescription_without_dispensation',
       'CLIENTS WITH ENCOUNTERS AFTER DECLARED DEAD' => 'client_with_encounters_after_declared_dead',
       'MALE CLIENTS WITH FEMALE OBS' => 'male_clients_with_female_obs',
-      'DOB MORE THAN DATE ENROLLED' => 'dob_more_than_date_enrolled'
+      'DOB MORE THAN DATE ENROLLED' => 'dob_more_than_date_enrolled',
+      'INCOMPLETE VISITS' => 'incomplete_visit'
     }
 
 
@@ -132,14 +133,14 @@ EOF
             and (`s`.`start_date`
             between '#{@start_date.strftime('%Y-%m-%d 00:00:00')}'
             and '#{@end_date.strftime('%Y-%m-%d 23:59:59')}')
-      group by `p`.`patient_id` 
+      group by `p`.`patient_id`
       ORDER BY s.start_date DESC;
 EOF
 
       return {} if data.blank?
       patient_ids = []
       data_patient_ids = data.collect{|d| d['patient_id'].to_i}
-      
+
       data_patient_ids.each do |patient_id|
         outcome = ActiveRecord::Base.connection.select_one <<EOF
         SELECT patient_outcome(#{patient_id}, DATE('#{@end_date}')) outcome;
@@ -200,7 +201,7 @@ EOF
       where("s.concept_set = ?", concept_set_id).map(&:drug_id)
 
       data = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT o.patient_id FROM orders o 
+      SELECT o.patient_id FROM orders o
       INNER JOIN drug_order d ON d.order_id = o.order_id AND drug_inventory_id IN(#{arvs.join(',')})
       INNER JOIN encounter e ON e.patient_id = o.patient_id AND e.program_id = 1
       WHERE d.quantity > 0 AND o.voided = 0 GROUP BY o.patient_id;
@@ -210,11 +211,11 @@ EOF
       return {} if patient_ids.blank?
       concept_id = concept('Reason for ART eligibility').concept_id
 
-      person_ids = Observation.where(concept_id: concept_id, 
+      person_ids = Observation.where(concept_id: concept_id,
         person_id: patient_ids).group(:person_id).map(&:person_id)
       final_list = patient_ids - person_ids
       return {} if final_list.blank?
-      
+
       data = ActiveRecord::Base.connection.select_all <<EOF
       SELECT
         p.person_id, i.identifier arv_number, birthdate, gender, death_date,
@@ -237,8 +238,8 @@ EOF
         gender, start_date, quantity, given_name, family_name
       FROM drug_order t
       INNER JOIN orders o ON o.order_id = t.order_id
-      AND start_date BETWEEN '#{@start_date.strftime('%Y-%m-%d 00:00:00')}' 
-      AND '#{@end_date.strftime('%Y-%m-%d 23:59:59')}' 
+      AND start_date BETWEEN '#{@start_date.strftime('%Y-%m-%d 00:00:00')}'
+      AND '#{@end_date.strftime('%Y-%m-%d 23:59:59')}'
       INNER JOIN encounter e ON o.encounter_id = e.encounter_id AND e.program_id = 1
       INNER JOIN person p ON p.person_id = o.patient_id
       LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
@@ -249,7 +250,7 @@ EOF
 EOF
 
       client = []
-      
+
       (data || []).each do |person|
         client << {
           arv_number: person['arv_number'],
@@ -261,14 +262,14 @@ EOF
           start_date: person['start_date']
         }
       end
-    
+
       return client
     end
 
     def client_with_encounters_after_declared_dead
       data = ActiveRecord::Base.connection.select_all <<EOF
       SELECT
-        p.person_id, i.identifier arv_number, birthdate, 
+        p.person_id, i.identifier arv_number, birthdate,
         gender, death_date, encounter_datetime, given_name,family_name
       FROM person p
       INNER JOIN encounter e ON p.person_id = e.patient_id
@@ -291,17 +292,17 @@ EOF
       concept_ids << concept('Family planning method').concept_id
 
       data = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT 
+      SELECT
         p.person_id, given_name, family_name, gender, birthdate,
         i.identifier arv_number
-      FROM person p 
-      INNER JOIN obs ON obs.person_id = p.person_id AND (p.gender != 'F' AND p.gender != 'Female') 
+      FROM person p
+      INNER JOIN obs ON obs.person_id = p.person_id AND (p.gender != 'F' AND p.gender != 'Female')
       LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
       AND i.identifier_type = 4 AND i.voided = 0
       LEFT JOIN person_name n ON n.person_id = p.person_id
       AND n.voided = 0
-      WHERE obs.concept_id IN(#{concept_ids.join(',')}) 
-      OR value_coded IN(#{concept_ids.join(',')}) 
+      WHERE obs.concept_id IN(#{concept_ids.join(',')})
+      OR value_coded IN(#{concept_ids.join(',')})
       AND p.voided = 0 AND obs.voided = 0 GROUP BY p.person_id
       ORDER BY n.date_created DESC;
 EOF
@@ -311,7 +312,7 @@ EOF
 
     def organise_data(data)
       client = []
-      
+
       (data || []).each do |person|
         client << {
           arv_number: person['arv_number'],
@@ -326,8 +327,54 @@ EOF
       return client
     end
 
-    def incomplete_visits
-      return {}
+    def incomplete_visit
+      program = Program.find_by_name("HIV PROGRAM")
+
+      patient_visit_dates = Encounter.where("program_id = ? AND encounter_datetime
+        BETWEEN ? AND ?", program.id, @start_date.strftime("%Y-%m-%d 00:00:00"),
+          @end_date.strftime("%Y-%m-%d 23:59:59")).group("encounter.patient_id, DATE(encounter_datetime)").\
+            map{|e| [e.patient_id, e.encounter_datetime.to_date]}
+
+
+      return {} if patient_visit_dates.blank?
+      incomplete_visits_comp = {}
+
+      patient_visit_dates.each do |patient_id, visit_date|
+        patient = Patient.find(patient_id)
+        date =  visit_date.to_date
+        workflow_engine = ARTService::WorkflowEngine.new(patient: patient, date: date, program: program)
+        complete = workflow_engine.next_encounter.blank? ? true : false
+
+        unless complete
+          person_details = ActiveRecord::Base.connection.select_one <<~SQL
+          SELECT
+            n.given_name, n.family_name, p.gender, p.birthdate,
+            a.identifier arv_number, i.identifier national_id
+          FROM person p
+          LEFT JOIN patient_identifier a ON a.patient_id = p.person_id
+          AND a.identifier_type = 4 AND a.voided = 0
+          LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
+          AND i.identifier_type = 3 AND i.voided = 0
+          LEFT JOIN person_name n On n.person_id = p.person_id AND n.voided = 0
+          WHERE p.person_id = #{patient_id} AND p.voided = 0
+          GROUP BY p.person_id ORDER BY i.date_created DESC,
+          a.date_created DESC, n.date_created DESC;
+          SQL
+
+          incomplete_visits_comp[patient_id] = {
+            given_name: person_details["given_name"],
+            family_name: person_details["family_name"],
+            birthdate: person_details["birthdate"],
+            arv_number: person_details["arv_number"],
+            national_id: person_details["national_id"],
+            dates: []
+          } if incomplete_visits_comp[patient_id].blank?
+          incomplete_visits_comp[patient_id][:dates] << visit_date.to_date
+        end
+
+      end
+
+      return incomplete_visits_comp
     end
 
     def concept(name)
