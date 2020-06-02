@@ -92,6 +92,9 @@ module ARTService
         ORDER BY p.person_id, p.date_created;
 EOF
 
+        current_outcome = get_current_outcome(patient_id)
+        return if current_outcome.match(/died/i) || current_outcome.match(/transfer/i) || current_outcome.match(/stop/i)
+
         return {
           given_name: person['given_name'],
           family_name: person['family_name'],
@@ -102,11 +105,19 @@ EOF
           ta: person['ta'],
           village: person['village'],
           arv_number: person['arv_number'],
-          #eventually_came_on: (eventually_came_on(patient_id, appointment_date)),
           appointment_date: appointment_date.to_date,
-          current_outcome: get_current_outcome(patient_id),
+          days_missed: days_missed(appointment_date.to_date),
+          current_outcome: current_outcome,
           person_id: patient_id
         }
+      end
+
+      def days_missed(set_date)
+        missed_days  = ActiveRecord::Base.connection.select_one <<~SQL
+          SELECT TIMESTAMPDIFF(day, DATE('#{set_date}'), DATE('#{@end_date}')) days;
+        SQL
+
+        return missed_days["days"].to_i
       end
 
       def eventually_came_on(patient_id, date)

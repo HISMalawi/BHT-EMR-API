@@ -326,7 +326,9 @@ EOF
       return client
     end
 
-
+    def incomplete_visits
+      return {}
+    end
 
     def concept(name)
       ConceptName.find_by_name(name)
