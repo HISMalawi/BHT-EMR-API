@@ -143,7 +143,8 @@ class StockManagementService
       PharmacyBatchItemReallocation.create(reallocation_code: reallocation_code, item: item,
                                            quantity: quantity, location: destination,
                                            reallocation_type: STOCK_ITEM_REALLOCATION,
-                                           date: date, creator: User.current)
+                                           date: date, date_created: Time.now, date_changed: Time.now,
+                                           creator: User.current.id)
     end
   end
 
@@ -155,7 +156,8 @@ class StockManagementService
       PharmacyBatchItemReallocation.create(reallocation_code: reallocation_code, item: item,
                                            quantity: quantity, date: date,
                                            reallocation_type: STOCK_ITEM_DISPOSAL,
-                                           creator: User.current)
+                                           date_created: Time.now, date_changed: Time.now,
+                                           creator: User.current.id)
     end
   end
 
