@@ -103,7 +103,7 @@ module ARTService
         end
 
         def tb_med_dispensations
-          date_six_months_ago = (@start_date.to_date - 6.months).strftime('%Y-%m-%d 00:00:00')
+          date_six_months_ago = (@start_date.to_date - 180.days).strftime('%Y-%m-%d 00:00:00')
           date_six_months_ago_end = (@start_date.to_date - 1.day).to_date
           date_six_months_ago_end = date_six_months_ago_end.strftime('%Y-%m-%d 23:59:59')
 
