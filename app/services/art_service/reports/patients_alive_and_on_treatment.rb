@@ -15,23 +15,14 @@ module ARTService
       end
 
       def find_report
+        query.map(&:patient_id)
+      end
+
+      def query
         PatientState.joins(:patient_program)
                     .where(patient_program: { program_id: Constants::PROGRAM_ID },
                            state: Constants::States::ON_ANTIRETROVIRALS)
-                    .where('start_date <= ? AND end_date >= ?', start_date, end_date)
-                    .where.not(patient_program: { patient_id: patients_with_terminal_states })
-                    .select(:patient_id)
-                    .map(&:patient_id)
-      end
-
-      private
-
-      def patients_with_terminal_states
-        PatientState.joins(:patient_program)
-                    .where(patient_program: { program_id: Constants::PROGRAM_ID },
-                           state: Constants::States::TERMINALS)
-                    .where('start_date <= ? AND end_date >= ?', start_date, end_date)
-                    .group('patient_program.patient_id')
+                    .where('start_date <= ? AND (end_date >= ? OR end_date IS NULL)', start_date, end_date)
                     .select(:patient_id)
       end
     end
