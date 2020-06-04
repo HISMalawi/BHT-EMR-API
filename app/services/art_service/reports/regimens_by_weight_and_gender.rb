@@ -37,7 +37,8 @@ module ARTService
           {
             weight: weight_band_to_string(start_weight, end_weight),
             males: regimen_counts_by_weight_and_gender(start_weight, end_weight, 'M'),
-            females: regimen_counts_by_weight_and_gender(start_weight, end_weight, 'F')
+            females: regimen_counts_by_weight_and_gender(start_weight, end_weight, 'F'),
+            unknown_gender: regimen_counts_by_weight_and_gender(start_weight, end_weight, nil)
           }
         end
       end
@@ -59,12 +60,15 @@ module ARTService
       def regimen_counts_by_weight_and_gender(start_weight, end_weight, gender)
         date = ActiveRecord::Base.connection.quote(end_date)
 
-        Person.select("patient_current_regimen(person_id, #{date}) as regimen, count(*) AS count")
-              .where(person_id: PatientsOnAntiretrovirals.within(start_date, end_date))
-              .where(person_id: patients_in_weight_band(start_weight, end_weight))
-              .where('gender LIKE ?', "#{gender}%")
-              .group(:regimen)
-              .collect { |obs| { obs.regimen => obs.count } }
+        query = Person.select("patient_current_regimen(person_id, #{date}) as regimen, count(*) AS count")
+                      .where(person_id: patients_alive_and_on_art)
+                      .where(person_id: patients_in_weight_band(start_weight, end_weight))
+                      .where(person_id: patients_with_arv_dispensations)
+                      .group(:regimen)
+
+        query = gender ? query.where('gender LIKE ?', "#{gender}%") : query.where(gender: nil)
+
+        query.collect { |obs| { obs.regimen => obs.count } }
       end
 
       def patients_in_weight_band(start_weight, end_weight)
@@ -82,6 +86,19 @@ module ARTService
         Observation.select('DISTINCT obs.person_id')
                    .where(concept_id: ConceptName.where(name: 'Weight (kg)').select(:concept_id))
                    .where('obs.obs_datetime < ?', end_date)
+      end
+
+      def patients_with_arv_dispensations
+        Order.joins(:drug_order)
+             .merge(DrugOrder.where(drug_inventory_id: Drug.arv_drugs))
+             .where('start_date >= :start_date OR (start_date <= :end_date AND auto_expire_date >= :start_date)',
+                    start_date: start_date, end_date: end_date)
+             .select(:patient_id)
+      end
+
+      def patients_alive_and_on_art
+        PatientsAliveAndOnTreatment.new(start_date: end_date, end_date: end_date)
+                                   .query
       end
     end
   end
