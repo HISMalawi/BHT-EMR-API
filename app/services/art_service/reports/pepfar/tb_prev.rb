@@ -20,47 +20,69 @@ module ARTService
           return {} if meds.blank?
 
           patient_ids = meds.map{|m| m["patient_id"].to_i}.uniq
-          total_clients = on_art_in_reporting_period(patient_ids)
-          return if total_clients.blank?
+          hiv_program_clients = on_art_in_reporting_period(patient_ids)
+          return if hiv_program_clients.blank?
+          clients_in_hiv_program = {}
+
+          hiv_program_clients.each do |e|
+            clients_in_hiv_program[e["patient_id"].to_i] = e
+          end
+
           clients = {}
 
-          total_ipt_dispensed = Hash.new(0)
-          clients_in_report  = []
-          clients_med_dispensation_dates = {}
+          total_ipt_dispensed = {}
+          start_date_of_inh = (@start_date.to_date - 180.day).to_date
 
           meds.each do |m|
             patient_id = m["patient_id"].to_i
-            quantity = m["quantity"].to_f
-            total_ipt_dispensed[patient_id] += quantity
-            clients_med_dispensation_dates[patient_id] = [] if clients_med_dispensation_dates[patient_id].blank?
-            clients_med_dispensation_dates[patient_id]  << m["start_date"].to_date
+            inh_start_date = min_inh_start_date(patient_id)
+            next unless (inh_start_date >= start_date_of_inh && inh_start_date < @start_date.to_date)
+            p = clients_in_hiv_program[patient_id]
+            next if p.blank?
 
-            if total_ipt_dispensed[patient_id] >= 168
-              clients_in_report << patient_id
-            end
-
-          end
-
-          total_clients.map do |p|
-            patient_id = p["patient_id"].to_i
-            next unless clients_in_report.include?(patient_id)
             earliest_start_date  = (p["earliest_start_date"].to_date rescue p["date_enrolled"].to_date)
+
+            quantity = m["quantity"].to_f
             clients[patient_id] = {
               date_enrolled: p["date_enrolled"].to_date,
               earliest_start_date: earliest_start_date,
               gender: (p["gender"].upcase.first rescue 'Unknown'),
               birthdate: (p["birthdate"].to_date rescue "Unknow"),
               age_group: p["age_group"],
-              outcome: client_outcome(patient_id),
-              client: new_client(earliest_start_date, clients_med_dispensation_dates[patient_id])
-            }
+              course_completed: false,
+              client: new_client(earliest_start_date, inh_start_date),
+              quantity: 0
+            } if clients[patient_id].blank?
+
+            clients[patient_id][:quantity] += quantity
+
+            if clients[patient_id][:quantity] >= 168
+              clients[patient_id][:course_completed] = true
+            end
+
           end
 
           return clients
         end
 
-        def new_client(earliest_start_date, dates)
-          med_start_date = dates.sort.first.to_date
+        def min_inh_start_date(patient_id)
+          start_date =  ActiveRecord::Base.connection.select_one <<-SQL
+            SELECT
+                DATE(MIN(o.start_date)) date
+            FROM person p
+            INNER JOIN orders o ON o.patient_id = p.person_id
+            INNER JOIN drug_order t ON o.order_id = t.order_id
+            INNER JOIN drug d ON d.drug_id = t.drug_inventory_id
+            INNER JOIN encounter e ON e.patient_id = o.patient_id AND e.program_id = 1
+            WHERE o.voided = 0 AND o.patient_id = #{patient_id}
+            AND d.concept_id = 656 AND t.quantity > 0;
+          SQL
+
+          return start_date["date"].to_date
+        end
+
+        def new_client(earliest_start_date, min_date)
+          med_start_date = min_date.to_date
           med_end_date = (earliest_start_date.to_date  +  90.day).to_date
 
           if med_start_date >= earliest_start_date.to_date && med_start_date < med_end_date
