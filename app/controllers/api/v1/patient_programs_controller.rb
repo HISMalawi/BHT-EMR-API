@@ -6,7 +6,7 @@ class Api::V1::PatientProgramsController < ApplicationController
   end
 
   def show
-    render json: PatientProgram.find(params[:id])
+    render json: patient_program!
   end
 
   def create
@@ -15,35 +15,50 @@ class Api::V1::PatientProgramsController < ApplicationController
     create_params[:location_id] = Location.current.id
     create_params[:patient_id] = params[:patient_id]
 
-    p_program = PatientProgram.find_by(patient_id: create_params[:patient_id],
-                                       program_id: create_params[:program_id])
-    if p_program
-      return render json: { errors: ['Patient already enrolled in program'] },
-                    status: :conflict
+    if PatientProgram.where(program_id: params[:program_id], patient_id: params[:patient_id])
+                     .exists?
+      render json: { errors: ['Patient already enrolled in program'] },
+             status: :conflict
+      return
     end
 
-    p_program = PatientProgram.create create_params
+    new_patient_program = PatientProgram.create(create_params)
 
-    if p_program.errors.empty?
-      render json: p_program, status: :created
+    if new_patient_program.errors.empty?
+      render json: new_patient_program, status: :created
     else
-      render json: p_program.errors, status: :bad_request
+      render json: new_patient_program.errors, status: :bad_request
+    end
+  end
+
+  def update
+    p_program = patient_program!
+    date_enrolled = params.require(:date_enrolled)
+
+    if p_program.update(date_enrolled: date_enrolled, location_id: Location.current.id)
+      render json: p_program
+    else
+      render json: { errors: p_program.errors }, status: :bad_request
     end
   end
 
   def destroy
-    p_program = PatientProgram.find_by patient_id: params[:patient_id],
-                                       program_id: params[:program_id]
+    p_program = patient_program
 
-    unless p_program
-      render json: { errors: ['Not found'] }, status: :not_found
-      return
-    end
-
-    if p_program.destroy
+    if p_program.nil? || p_program.destroy
       render status: :no_content
     else
       render json: :p_program.errors, status: :internal_server_error
     end
+  end
+
+  private
+
+  def patient_program
+    PatientProgram.find_by(patient_id: params[:patient_id], program_id: params[:id])
+  end
+
+  def patient_program!
+    PatientProgram.find_by!(patient_id: params[:patient_id], program_id: params[:id])
   end
 end
