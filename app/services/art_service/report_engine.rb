@@ -22,6 +22,7 @@ module ARTService
       'REGIMENS_AND_FORMULATIONS' => ARTService::Reports::RegimensAndFormulations,
       'REGIMENS_BY_WEIGHT_AND_GENDER' => ARTService::Reports::RegimensByWeightAndGender,
       'REGIMEN_SWITCH' => ARTService::Reports::RegimenSwitch,
+      'RETENTION' => ARTService::Reports::Retention,
       'TX_CURR' => ARTService::Reports::PatientsAliveAndOnTreatment,
       'TX_ML' => ARTService::Reports::Pepfar::TxMl,
       'TX_RTT' => ARTService::Reports::Pepfar::TxRTT,
