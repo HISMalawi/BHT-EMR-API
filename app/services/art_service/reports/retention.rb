@@ -14,16 +14,12 @@ module ARTService
       end
 
       def find_report
-        matched_patients = MONTHS.each_with_object({}) { |month, hash| hash[month] = [] }
+        matched_patients = MONTHS.each_with_object({}) do |month, hash|
+          hash[month] = { retained: [], all: [] }
+        end
 
-        patients(as_of: start_date - MONTHS.max.months).each do |patient|
-          month = MONTHS.find do |month|
-            (start_date..end_date).include?((patient.start_date + month.months).to_date)
-          end
-
-          next unless month
-
-          matched_patients[month] << {
+        find_patients_start_month(retained_patients(as_of: start_date - MONTHS.max.months)) do |month, patient|
+          matched_patients[month][:retained] << {
             patient_id: patient.patient_id,
             arv_number: patient.arv_number,
             start_date: patient.start_date,
@@ -31,13 +27,33 @@ module ARTService
           }
         end
 
+        find_patients_start_month(all_patients(as_of: start_date - MONTHS.max.months)) do |month, patient|
+          matched_patients[month][:all] << {
+            patient_id: patient.patient_id,
+            arv_number: patient.arv_number,
+            start_date: patient.start_date
+          }
+        end
+
         matched_patients
+      end
+
+      def find_patients_start_month(patients)
+        patients.each do |patient|
+          month = MONTHS.find do |month|
+            (start_date..end_date).include?((patient.start_date + month.months).to_date)
+          end
+
+          next unless month
+
+          yield month, patient
+        end
       end
 
       # Pull all patients who started medication before the current reporting period but after
       # the given `as_of` date and have any dispensation that ends in the current reporting
       # period... That's a mouthful woah!!!
-      def patients(as_of:)
+      def retained_patients(as_of:)
         start_date = ActiveRecord::Base.connection.quote(self.start_date)
         end_date = ActiveRecord::Base.connection.quote(self.end_date)
         as_of = ActiveRecord::Base.connection.quote(as_of)
@@ -60,6 +76,40 @@ module ARTService
               AND last_order.auto_expire_date BETWEEN #{start_date} AND #{end_date}
               AND last_order.order_type_id = #{drug_order_type_id}
               AND last_order.voided = 0
+              AND initial_order.start_date = (
+                SELECT MIN(start_date) FROM orders
+                WHERE patient_id = initial_order.patient_id
+                  AND start_date BETWEEN #{as_of} AND #{start_date}
+                  AND order_type_id = #{drug_order_type_id}
+                  AND voided = 0
+              )
+              AND initial_order.patient_id NOT IN (
+                SELECT orders.patient_id
+                FROM orders
+                  INNER JOIN encounter ON encounter.encounter_id = orders.encounter_id AND encounter.program_id = 1
+                WHERE start_date < #{as_of} AND order_type_id = #{drug_order_type_id} AND orders.voided = 0
+              )
+            GROUP BY initial_order.patient_id
+          SQL
+        )
+      end
+
+      def all_patients(as_of:)
+        start_date = ActiveRecord::Base.connection.quote(self.start_date)
+        as_of = ActiveRecord::Base.connection.quote(as_of)
+
+        Order.find_by_sql(
+          <<~SQL
+            SELECT initial_order.patient_id AS patient_id,
+                   initial_order.start_date AS start_date,
+                   patient_identifier.identifier AS arv_number
+            FROM orders initial_order
+              INNER JOIN encounter initial_encounter ON initial_encounter.encounter_id = initial_order.encounter_id AND initial_encounter.program_id = 1
+              LEFT JOIN patient_identifier ON patient_identifier.patient_id = initial_order.patient_id
+            WHERE initial_order.start_date BETWEEN #{as_of} AND #{start_date}
+              AND initial_order.voided = 0
+              AND initial_order.auto_expire_date IS NOT NULL
+              AND initial_order.order_type_id = #{drug_order_type_id}
               AND initial_order.start_date = (
                 SELECT MIN(start_date) FROM orders
                 WHERE patient_id = initial_order.patient_id
