@@ -121,6 +121,7 @@ EOF
               birthdate: demo['birthdate'],
               gender: demo['gender'],
               current_regimen: curr_reg['current_regimen'],
+              current_weight: current_weight(patient_id),
               medication: []
             }
           end
@@ -226,6 +227,17 @@ EOF
         start_date: @start_date.to_date, end_date: @end_date.to_date, rebuild: true)
         cohort_builder.create_mysql_pepfar_current_defaulter
         cohort_builder.create_mysql_pepfar_current_outcome
+      end
+
+      def current_weight(patient_id)
+        weight_concept = ConceptName.find_by_name("Weight (kg)").concept_id
+        obs = Observation.where("person_id = ? AND concept_id = ?
+          AND obs_datetime <= ? AND (value_numeric IS NOT NULL OR value_text IS NOT NULL)",
+            patient_id, weight_concept, @end_date.to_date.strftime("%Y-%m-%d 23:59:59"))\
+              .order("obs_datetime DESC, date_created DESC")
+
+        return nil if obs.blank?
+        return (obs.first.value_numeric.blank? ? obs.first.value_text : obs.first.value_numeric)
       end
 
     end

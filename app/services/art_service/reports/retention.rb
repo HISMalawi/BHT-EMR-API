@@ -23,6 +23,8 @@ module ARTService
             patient_id: patient.patient_id,
             arv_number: patient.arv_number,
             start_date: patient.start_date,
+            gender: (patient.gender.upcase.first rescue nil),
+            age_group: patient.age_group,
             end_date: patient.start_date + month.months
           }
         end
@@ -31,6 +33,8 @@ module ARTService
           matched_patients[month][:all] << {
             patient_id: patient.patient_id,
             arv_number: patient.arv_number,
+            gender: (patient.gender.upcase.first rescue nil),
+            age_group: patient.age_group,
             start_date: patient.start_date
           }
         end
@@ -63,11 +67,14 @@ module ARTService
             SELECT initial_order.patient_id AS patient_id,
                    initial_order.start_date AS start_date,
                    last_order.auto_expire_date AS auto_expire_date,
-                   patient_identifier.identifier AS arv_number
+                   patient_identifier.identifier AS arv_number,
+                   cohort_disaggregated_age_group(p.birthdate, DATE('#{@end_date}')) age_group,
+                   p.gender gender
             FROM orders initial_order
               INNER JOIN encounter initial_encounter ON initial_encounter.encounter_id = initial_order.encounter_id AND initial_encounter.program_id = 1
               INNER JOIN orders last_order ON last_order.patient_id = initial_order.patient_id
               INNER JOIN encounter last_encounter ON last_encounter.encounter_id = last_order.encounter_id
+              INNER JOIN person p ON p.person_id = initial_encounter.patient_id
               LEFT JOIN patient_identifier ON patient_identifier.patient_id = initial_order.patient_id
             WHERE initial_order.start_date BETWEEN #{as_of} AND #{start_date}
               AND initial_order.voided = 0
@@ -76,6 +83,7 @@ module ARTService
               AND last_order.auto_expire_date BETWEEN #{start_date} AND #{end_date}
               AND last_order.order_type_id = #{drug_order_type_id}
               AND last_order.voided = 0
+              AND p.voided = 0
               AND initial_order.start_date = (
                 SELECT MIN(start_date) FROM orders
                 WHERE patient_id = initial_order.patient_id
@@ -102,14 +110,18 @@ module ARTService
           <<~SQL
             SELECT initial_order.patient_id AS patient_id,
                    initial_order.start_date AS start_date,
-                   patient_identifier.identifier AS arv_number
+                   patient_identifier.identifier AS arv_number,
+                   cohort_disaggregated_age_group(p.birthdate, DATE('#{@end_date}')) age_group,
+                   p.gender gender
             FROM orders initial_order
               INNER JOIN encounter initial_encounter ON initial_encounter.encounter_id = initial_order.encounter_id AND initial_encounter.program_id = 1
+              INNER JOIN person p ON p.person_id = initial_encounter.patient_id
               LEFT JOIN patient_identifier ON patient_identifier.patient_id = initial_order.patient_id
             WHERE initial_order.start_date BETWEEN #{as_of} AND #{start_date}
               AND initial_order.voided = 0
               AND initial_order.auto_expire_date IS NOT NULL
               AND initial_order.order_type_id = #{drug_order_type_id}
+              AND p.voided = 0
               AND initial_order.start_date = (
                 SELECT MIN(start_date) FROM orders
                 WHERE patient_id = initial_order.patient_id

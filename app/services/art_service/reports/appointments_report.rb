@@ -93,7 +93,7 @@ module ARTService
 EOF
 
         current_outcome = get_current_outcome(patient_id)
-        return if current_outcome.match(/died/i) || current_outcome.match(/transfer/i) || current_outcome.match(/stop/i)
+        return nil if current_outcome.match(/died/i) || current_outcome.match(/transfer/i) || current_outcome.match(/stop/i)
 
         return {
           given_name: person['given_name'],
