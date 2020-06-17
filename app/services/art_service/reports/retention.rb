@@ -2,6 +2,8 @@
 
 module ARTService
   module Reports
+    # Retrieve patients who are completing their first 1st, 3rd, and 6th month on ART
+    # in the reporting period.
     class Retention
       attr_reader :start_date, :end_date
 
@@ -18,19 +20,19 @@ module ARTService
           hash[month] = { retained: [], all: [] }
         end
 
-        find_patients_start_month(retained_patients(as_of: start_date - MONTHS.max.months)) do |month, patient|
-          matched_patients[month][:retained] << {
+        find_patients_retention_period(retained_patients(as_of: start_date - MONTHS.max.months)) do |period, patient|
+          matched_patients[period][:retained] << {
             patient_id: patient.patient_id,
             arv_number: patient.arv_number,
             start_date: patient.start_date,
             gender: (patient.gender.upcase.first rescue nil),
             age_group: patient.age_group,
-            end_date: patient.start_date + month.months
+            end_date: patient.start_date + period.months
           }
         end
 
-        find_patients_start_month(all_patients(as_of: start_date - MONTHS.max.months)) do |month, patient|
-          matched_patients[month][:all] << {
+        find_patients_retention_period(all_patients(as_of: start_date - MONTHS.max.months)) do |period, patient|
+          matched_patients[period][:all] << {
             patient_id: patient.patient_id,
             arv_number: patient.arv_number,
             gender: (patient.gender.upcase.first rescue nil),
@@ -42,15 +44,15 @@ module ARTService
         matched_patients
       end
 
-      def find_patients_start_month(patients)
+      def find_patients_retention_period(patients)
         patients.each do |patient|
-          month = MONTHS.find do |month|
-            (start_date..end_date).include?((patient.start_date + month.months).to_date)
+          retention_period = MONTHS.find do |period|
+            (start_date..end_date).include?((patient.start_date + period.months).to_date)
           end
 
-          next unless month
+          next unless retention_period
 
-          yield month, patient
+          yield retention_period, patient
         end
       end
 
