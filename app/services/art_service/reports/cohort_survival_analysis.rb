@@ -13,30 +13,39 @@ module ARTService
       end
 
       def survival_analysis(quarter, age_group)
-        art_service = ARTService::Reports::CohortDisaggregated.new(name: 'survival_analysis', 
-          type: 'survival_analysis', start_date: Date.today, 
+        art_service = ARTService::Reports::CohortDisaggregated.new(name: 'survival_analysis',
+          type: 'survival_analysis', start_date: Date.today,
             end_date: Date.today, rebuild: @regenerate)
-        
-        start_date, end_date = art_service.generate_start_date_and_end_date(quarter) 
+
+        start_date, end_date = art_service.generate_start_date_and_end_date(quarter)
         art_service = ARTService::Reports::CohortBuilder.new()
         if @regenerate
           art_service.create_tmp_patient_table
           art_service.load_data_into_temp_earliest_start_date(end_date)
-          art_service.update_cum_outcome(end_date) 
+          art_service.update_cum_outcome(end_date)
         end
-        
+
         quarters = []
         no_data = false
-        art_service = ARTService::Reports::CohortDisaggregated.new(name: 'survival_analysis', 
-          type: 'survival_analysis', start_date: @start_date.to_date, 
+        art_service = ARTService::Reports::CohortDisaggregated.new(name: 'survival_analysis',
+          type: 'survival_analysis', start_date: @start_date.to_date,
             end_date: @end_date.to_date, rebuild: @regenerate)
-        
-        
+
+
         qtr = quarter.split(' ')[0]
         results = {}
         years = 1
 
-        while(!no_data) do 
+        years_to_backto = ActiveRecord::Base.connection.select_one <<~SQL
+          SELECT
+	          TIMESTAMPDIFF(YEAR, DATE(MIN(encounter_datetime)), DATE('#{end_date}')) years
+          FROM encounter e WHERE program_id = 1 AND voided = 0;
+        SQL
+
+        clinic_start_years = years_to_backto["years"].to_i rescue nil
+        clinic_start_years = 10 if clinic_start_years.blank?
+
+        while(years < clinic_start_years) do
           yr = ((quarter.split(' ')[1]).to_i - years)
           set_qtr = "#{qtr} #{yr}"
           qstart_date, qend_date = art_service.generate_start_date_and_end_date(set_qtr)
@@ -59,12 +68,12 @@ module ARTService
 		        additional_sql += ' AND gender = "F"'
 		      end
 
-          begin 
+          begin
             data = ActiveRecord::Base.connection.select_all <<EOF
-            SELECT 
+            SELECT
               cum_outcome, timestampdiff(month, DATE('#{qend_date}'), DATE('#{end_date}')) qinterval,
               timestampdiff(year, DATE(e.birthdate), DATE('#{end_date}')) AS patient_age,
-              e.gender 
+              e.gender
             FROM temp_earliest_start_date e
             INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
             WHERE date_enrolled BETWEEN '#{qstart_date.strftime('%Y-%m-%d')}'
@@ -87,14 +96,13 @@ EOF
             results[set_qtr][outcome][r['qinterval']] += 1
           end
 
-          no_data = true if data.blank?
           years+= 1
         end
-        
+
         if age_group == 'Women'
           append_last_six_months(quarter, results, end_date)
         end
-         
+
         return results
       end
 
@@ -102,11 +110,11 @@ EOF
         patient_ids = []
 
         patients = ActiveRecord::Base.connection.select_all <<EOF
-        SELECT 
-          e.*, patient_reason_for_starting_art_text(e.patient_id) reason 
+        SELECT
+          e.*, patient_reason_for_starting_art_text(e.patient_id) reason
         FROM temp_earliest_start_date e
         WHERE date_enrolled BETWEEN '#{start_date.to_date}' AND '#{end_date.to_date}'
-        AND gender IN('F','Female') GROUP BY e.patient_id 
+        AND gender IN('F','Female') GROUP BY e.patient_id
         HAVING reason LIKE '%pregnant%' OR reason LIKE '%breast%';
 EOF
 
@@ -124,19 +132,19 @@ EOF
         yes_concept_id = ConceptName.find_by_name('Yes').concept_id
 
         patients = ActiveRecord::Base.connection.select_all <<EOF
-        SELECT 
-          e.*, patient_reason_for_starting_art_text(e.patient_id) reason 
+        SELECT
+          e.*, patient_reason_for_starting_art_text(e.patient_id) reason
         FROM temp_earliest_start_date e
         INNER JOIN obs ON obs.person_id = e.patient_id
         WHERE date_enrolled BETWEEN '#{start_date.to_date}' AND '#{end_date.to_date}'
         AND gender IN('F','Female') AND obs.voided = 0
-        AND DATE(obs_datetime) = DATE(earliest_start_date) 
-        AND obs.concept_id IN(#{concept_ids.join(',')}) 
-        AND value_coded = #{yes_concept_id} GROUP BY e.patient_id 
+        AND DATE(obs_datetime) = DATE(earliest_start_date)
+        AND obs.concept_id IN(#{concept_ids.join(',')})
+        AND value_coded = #{yes_concept_id} GROUP BY e.patient_id
         HAVING reason LIKE '%Lymphocyte count below threshold with who stage%'
         ORDER BY obs_datetime DESC;
 EOF
-        
+
         pregnant_and_breastfeeding_clients = []
 
 				(patients || []).each do |aRow|
@@ -147,10 +155,10 @@ EOF
       end
 
       def append_last_six_months(quarter, results, end_date)
-        art_service = ARTService::Reports::CohortDisaggregated.new(name: 'survival_analysis', 
-          type: 'survival_analysis', start_date: @start_date.to_date, 
+        art_service = ARTService::Reports::CohortDisaggregated.new(name: 'survival_analysis',
+          type: 'survival_analysis', start_date: @start_date.to_date,
             end_date: @end_date.to_date, rebuild: @regenerate)
-        
+
         qstart_date, qend_date = art_service.generate_start_date_and_end_date(quarter)
         qstart_date = qstart_date - 6.month
         qend_date = qend_date - 6.month
@@ -166,10 +174,10 @@ EOF
 				option_Bplus_women_ids = [0] if option_Bplus_women_ids.blank?
 
         data = ActiveRecord::Base.connection.select_all <<EOF
-        SELECT 
+        SELECT
           cum_outcome, timestampdiff(month, DATE('#{qend_date}'), DATE('#{end_date}')) qinterval,
           timestampdiff(year, DATE(e.birthdate), DATE('#{end_date}')) AS patient_age,
-          e.gender 
+          e.gender
         FROM temp_earliest_start_date e
         INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
         WHERE date_enrolled BETWEEN '#{qstart_date.strftime('%Y-%m-%d')}'
@@ -188,15 +196,15 @@ EOF
             results[set_qtr][outcome] = {}
             results[set_qtr][outcome][r['qinterval']] = 0
           end
-          
-          puts "######### #{r['qinterval']}"  
+
+          puts "######### #{r['qinterval']}"
           results[set_qtr][outcome][r['qinterval']] += 1
 
         end
-        
-        return results      
+
+        return results
       end
-    
+
     end
   end
 
