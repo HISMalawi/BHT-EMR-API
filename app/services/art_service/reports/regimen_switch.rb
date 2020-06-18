@@ -33,8 +33,7 @@ module ARTService
         and (`s`.`voided` = 0)
         and (`p`.`program_id` = 1)
         and (`s`.`state` = 7))
-        and (DATE(`s`.`start_date`) BETWEEN '#{@start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
-        AND '#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
+        and (`s`.`start_date` <= '#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
       group by `p`.`patient_id`;
 EOF
 
@@ -101,6 +100,8 @@ EOF
           SELECT patient_current_regimen(#{patient_id}, '#{(@end_date).to_date}') current_regimen
 EOF
 
+          next unless (visit_date >= @start_date.to_date && visit_date <= @end_date.to_date)
+
           if clients[patient_id].blank?
             demo = ActiveRecord::Base.connection.select_one <<EOF
             SELECT
@@ -165,6 +166,8 @@ EOF
           rescue
             next
           end
+
+          next unless (visit_date >= @start_date.to_date && visit_date <= @end_date.to_date)
 
           prev_reg = ActiveRecord::Base.connection.select_one <<EOF
           SELECT patient_current_regimen(#{patient_id}, '#{(visit_date - 1.day).to_date}') previous_regimen
