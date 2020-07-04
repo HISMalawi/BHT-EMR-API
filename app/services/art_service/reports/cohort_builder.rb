@@ -1845,7 +1845,7 @@ EOF
       def males_initiated_on_art_first_time(start_date, end_date, data)
         clients = []
         (data || []).each do |e|
-          gender = (e['gender'].length > 0 ? e['gender'].upcase.first : nil)
+          gender = e['gender']&.upcase&.first
           next if gender.blank?
           next unless gender == 'M'
           date_enrolled = e['date_enrolled'].to_date
