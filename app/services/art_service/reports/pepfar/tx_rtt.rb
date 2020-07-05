@@ -72,7 +72,7 @@ module ARTService
                 and (`s`.`voided` = 0)
                 and (`p`.`program_id` = 1)
                 and (`s`.`state` = 7))
-                and (pepfar_patient_outcome(p.patient_id, DATE('#{(@end_date.to_date - 31.day)}')) = 'Defaulted'
+                and (pepfar_patient_outcome(p.patient_id, DATE('#{@end_date.to_date}')) = 'Defaulted'
                 or pepfar_patient_outcome(p.patient_id, DATE('#{(@start_date.to_date - 1.day)}')) = 'Defaulted')
           group by `p`.`patient_id`
           HAVING date_enrolled IS NOT NULL AND DATE(date_enrolled) < DATE('#{@start_date}');
