@@ -1,0 +1,2 @@
+class MohRegimenCombinationDrug < ApplicationRecord
+end
