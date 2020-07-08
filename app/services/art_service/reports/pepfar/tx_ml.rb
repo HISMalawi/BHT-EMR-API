@@ -26,6 +26,7 @@ module ARTService
 
           return [] if patient_ids.blank?
 
+
           filtered_patients = ActiveRecord::Base.connection.select_all <<EOF
           SELECT
             p.person_id patient_id, birthdate, gender,
@@ -82,8 +83,8 @@ EOF
                 and (`s`.`voided` = 0)
                 and (`p`.`program_id` = 1)
                 and (`s`.`state` = 7))
-                and (DATE(`s`.`start_date`) <= '#{@start_date.to_date.strftime("%Y-%m-%d 23:59:59")}')
-                and pepfar_patient_outcome(p.patient_id, DATE('#{@start_date}')) = 'On antiretrovirals'
+                and (DATE(`s`.`start_date`) < '#{@start_date.to_date.strftime("%Y-%m-%d 23:59:59")}')
+                and pepfar_patient_outcome(p.patient_id, DATE('#{@start_date.to_date - 1.day}')) = 'On antiretrovirals'
           group by `p`.`patient_id`
           HAVING date_enrolled IS NOT NULL;
 EOF
