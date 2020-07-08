@@ -68,7 +68,7 @@ module ARTService
 
         def maximum_start_date(patient_id)
           order_date =  ActiveRecord::Base.connection.select_one <<-SQL
-          SELECT MAX(start_date) start_date FROM  orders o
+          SELECT MIN(start_date) start_date FROM  orders o
           INNER JOIN encounter e ON e.encounter_id = o.encounter_id AND e.program_id = 1
           INNER JOIN drug_order t On t.order_id = o.order_id
           INNER JOIN drug d ON d.drug_id  = t.drug_inventory_id
