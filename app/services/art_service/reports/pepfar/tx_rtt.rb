@@ -50,7 +50,7 @@ module ARTService
         end
 
         def get_potential_tx_rtt_clients
-          return ActiveRecord::Base.connection.select_all <<-SQL
+          return ActiveRecord::Base.connection.select_all <<~SQL
           SELECT o.patient_id, p.gender,
             cohort_disaggregated_age_group(p.birthdate, DATE('#{@end_date}')) age_group
           FROM  orders o
@@ -67,7 +67,7 @@ module ARTService
         end
 
         def maximum_start_date(patient_id)
-          order_date =  ActiveRecord::Base.connection.select_one <<-SQL
+          order_date =  ActiveRecord::Base.connection.select_one <<~SQL
           SELECT MIN(start_date) start_date FROM  orders o
           INNER JOIN encounter e ON e.encounter_id = o.encounter_id AND e.program_id = 1
           INNER JOIN drug_order t On t.order_id = o.order_id
@@ -82,7 +82,7 @@ module ARTService
         end
 
         def maximum_end_date(patient_id, start_date)
-          order_date =  ActiveRecord::Base.connection.select_one <<-SQL
+          order_date =  ActiveRecord::Base.connection.select_one <<~SQL
             SELECT MAX(start_date) start_date  FROM  orders o
             INNER JOIN encounter e ON e.encounter_id = o.encounter_id AND e.program_id = 1
             INNER JOIN drug_order t On t.order_id = o.order_id
@@ -96,7 +96,7 @@ module ARTService
           return if order_date.blank?
           max_date = order_date['start_date'].to_date rescue nil
 
-          auto_expire =  ActiveRecord::Base.connection.select_one <<-SQL
+          auto_expire =  ActiveRecord::Base.connection.select_one <<~SQL
             SELECT MAX(auto_expire_date) auto_expire_date  FROM  orders o
             INNER JOIN encounter e ON e.encounter_id = o.encounter_id AND e.program_id = 1
             INNER JOIN drug_order t On t.order_id = o.order_id
@@ -115,7 +115,7 @@ module ARTService
         end
 
         def next_appointment_date(patient_id, start_date)
-          order_date =  ActiveRecord::Base.connection.select_one <<-SQL
+          order_date =  ActiveRecord::Base.connection.select_one <<~SQL
           SELECT value_datetime  FROM obs
           WHERE person_id = #{patient_id} AND DATE(obs_datetime) = DATE('#{start_date}')
           AND voided = 0 AND concept_id  = 5096  GROUP BY person_id;
