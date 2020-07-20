@@ -58,10 +58,10 @@ module ARTService
           INNER JOIN drug_order t On t.order_id = o.order_id
           INNER JOIN drug d ON d.drug_id  = t.drug_inventory_id
           INNER JOIN concept_set s ON s.concept_id = d.concept_id AND s.concept_set  = 1085
-          INNER JOIN person p ON p.person_id = e.patient_id
+          INNER JOIN person p ON p.person_id = o.patient_id
           WHERE o.voided = 0 AND o.start_date BETWEEN '#{@start_date}' AND '#{@end_date}' AND t.quantity > 0
           AND pepfar_patient_outcome(p.person_id, DATE('#{@end_date}')) = 'On antiretrovirals'
-          GROUP BY e.patient_id;
+          GROUP BY o.patient_id;
           SQL
 
         end
@@ -73,9 +73,9 @@ module ARTService
           INNER JOIN drug_order t On t.order_id = o.order_id
           INNER JOIN drug d ON d.drug_id  = t.drug_inventory_id
           INNER JOIN concept_set s ON s.concept_id = d.concept_id AND s.concept_set  = 1085
-          INNER JOIN person p ON p.person_id = e.patient_id
+          INNER JOIN person p ON p.person_id = o.patient_id
           WHERE o.voided = 0 AND o.start_date BETWEEN '#{@start_date}' AND '#{@end_date}'
-          AND p.person_id = #{patient_id} GROUP BY e.patient_id;
+          AND p.person_id = #{patient_id} GROUP BY o.patient_id;
           SQL
 
           return  order_date['start_date'].to_date
