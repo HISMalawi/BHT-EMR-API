@@ -103,7 +103,9 @@ module ARTService
 
       return {} unless prescribe_drugs
 
-      arv_extras_concept_ids = [ConceptName.find_by_name('CPT').concept_id, ConceptName.find_by_name('INH').concept_id]
+      arv_extras_concept_ids = ConceptName.where(name: %w[CPT INH Rifapentine])
+                                          .select(:concept_id)
+                                          .collect(&:concept_id)
 
       orders = Observation.where(concept: ConceptName.find_by_name('Medication orders').concept_id,
                                  person: patient.person)
@@ -130,9 +132,8 @@ module ARTService
                                                  weight: patient.weight.to_f.round(1))
 
         ingredients.each do |ingredient|
-          drug_name = ConceptName.where(concept_id: ingredient.drug.concept_id,
-                                        concept_name_type: 'FULLY_SPECIFIED')\
-                                 .first
+          drug_name = ConceptName.find_by(concept_id: ingredient.drug.concept_id,
+                                          concept_name_type: 'FULLY_SPECIFIED')
           dosages[drug_name.name] = ingredient_to_drug(ingredient)
         end
       end
