@@ -323,8 +323,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
-<<<<<<< HEAD
 -- Dump completed on 2020-07-29 17:03:48
-=======
--- Dump completed on 2020-07-26 15:21:11
->>>>>>> 8c3cd354... ART: Added RFP-150  dosages.
