@@ -1442,9 +1442,8 @@ BEGIN
   RETURN reason_for_art_eligibility;
 END;
 
-/* Current regimen query */
 DROP FUNCTION IF EXISTS `patient_current_regimen`;
-DELIMITER ;;
+
 CREATE FUNCTION `patient_current_regimen`(`my_patient_id` INT, `my_date` DATE) RETURNS VARCHAR(10)
 BEGIN
   DECLARE max_obs_datetime DATETIME;
