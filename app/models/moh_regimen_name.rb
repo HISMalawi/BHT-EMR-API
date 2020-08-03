@@ -1,0 +1,2 @@
+class MohRegimenName < ApplicationRecord
+end

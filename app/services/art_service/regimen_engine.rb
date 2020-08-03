@@ -22,7 +22,7 @@ module ARTService
     # Returns all drugs that can be combined to form custom ART regimens
     def custom_regimen_ingredients
       arv_extras_concepts = Concept.joins(:concept_names).where(
-        concept_name: { name: %w[INH CPT Pyridoxine Rifapentine] }
+        concept_name: { name: %w[INH CPT Pyridoxine] }
       )
       Drug.where(concept: arv_extras_concepts) + Drug.arv_drugs.order(name: :desc)
     end
@@ -92,36 +92,35 @@ module ARTService
     def find_dosages(patient, date = Date.today)
       # TODO: Refactor this into smaller functions
 
-      # Make sure it has been stated explicitly that drug are getting prescribed
+      # Make sure it has been stated explicitly that drugs are getting prescribed
       # to this patient
       prescribe_drugs = Observation.where(person_id: patient.patient_id,
                                           concept_id: ConceptName.find_by_name('Prescribe drugs').concept_id,
                                           value_coded: ConceptName.find_by_name('Yes').concept_id)\
                                    .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
-                                   .order(obs_datetime: :desc)
-                                   .first
+                                   .exists?
 
       return {} unless prescribe_drugs
 
-      arv_extras_concept_ids = ConceptName.where(name: %w[CPT INH Rifapentine])
-                                          .select(:concept_id)
-                                          .collect(&:concept_id)
+      arv_extras_concepts = ConceptName.where(name: %w[CPT INH Rifapentine])
+                                       .select(%i[concept_id name])
 
       orders = Observation.where(concept: ConceptName.find_by_name('Medication orders').concept_id,
-                                 person: patient.person)
+                                 person: patient.person,
+                                 value_coded: arv_extras_concepts.collect(&:concept_id))
                           .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
 
       orders.each_with_object({}) do |order, dosages|
-        next unless order.value_coded # Raise a warning here
-
         drug_concept_id = order.value_coded.to_i
 
-        next unless arv_extras_concept_ids.include?(drug_concept_id)
+        drug_concept = arv_extras_concepts.find { |concept| concept.concept_id == drug_concept_id }
 
         # HACK: Retrieve Pyridoxine 25 mg in addition to Isoniazed when
         # we detect INH drug concept
-        drugs = if drug_concept_id == arv_extras_concept_ids[1]
-                  Drug.where(concept: [drug_concept_id, ConceptName.find_by_name('Pyridoxine').concept_id])
+        drugs = if drug_concept.name == 'INH'
+                  Drug.where(concept: [drug_concept.concept_id, ConceptName.find_by_name('Pyridoxine').concept_id])
+                elsif drug_concept.name == 'Rifapentine'
+                  Drug.where(concept: [drug_concept.concept_id, ConceptName.find_by_name('Isoniazid').concept_id])
                 else
                   Drug.where(concept: drug_concept_id)
                 end
@@ -132,9 +131,8 @@ module ARTService
                                                  weight: patient.weight.to_f.round(1))
 
         ingredients.each do |ingredient|
-          drug_name = ConceptName.find_by(concept_id: ingredient.drug.concept_id,
-                                          concept_name_type: 'FULLY_SPECIFIED')
-          dosages[drug_name.name] = ingredient_to_drug(ingredient)
+          drug_name = ConceptName.find_by(concept_id: ingredient.drug.concept_id).name
+          dosages[drug_name] = ingredient_to_drug(ingredient)
         end
       end
     end
