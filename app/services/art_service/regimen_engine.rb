@@ -88,52 +88,35 @@ module ARTService
       regimens_from_ingredients(ingredients, lpv_drug_type: lpv_drug_type, patient: patient)
     end
 
-    # Returns dosages for patients prescribed ARVs
+    # Returns dosages for a patients prescribed medication courses
     def find_dosages(patient, date = Date.today)
-      # TODO: Refactor this into smaller functions
-
-      # Make sure it has been stated explicitly that drug are getting prescribed
+      # Make sure it has been stated explicitly that drugs are getting prescribed
       # to this patient
-      prescribe_drugs = Observation.where(person_id: patient.patient_id,
-                                          concept_id: ConceptName.find_by_name('Prescribe drugs').concept_id,
-                                          value_coded: ConceptName.find_by_name('Yes').concept_id)\
-                                   .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
-                                   .order(obs_datetime: :desc)
-                                   .first
+      return {} unless patient_getting_prescription?(patient, date)
 
-      return {} unless prescribe_drugs
+      courses = parallel_drug_courses.select(%i[concept_id name])
 
-      arv_extras_concept_ids = [ConceptName.find_by_name('CPT').concept_id, ConceptName.find_by_name('INH').concept_id]
+      find_course = lambda do |concept_id|
+        courses.find { |course| course.concept_id == concept_id }
+      end
 
-      orders = Observation.where(concept: ConceptName.find_by_name('Medication orders').concept_id,
-                                 person: patient.person)
-                          .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
+      prescriptions = patient_course_prescriptions(patient, date, courses)
 
-      orders.each_with_object({}) do |order, dosages|
-        next unless order.value_coded # Raise a warning here
+      prescribed_courses = courses.select do |course|
+        prescriptions.find { |prescription| prescription.value_coded.to_i == course.concept_id }
+      end
 
-        drug_concept_id = order.value_coded.to_i
+      prescriptions.each_with_object({}) do |prescription, dosages|
+        course = find_course.call(prescription.value_coded.to_i)
+        drugs = find_drugs_by_course(course)
 
-        next unless arv_extras_concept_ids.include?(drug_concept_id)
+        dominant_course_name = select_dominant_course_name(course, prescribed_courses)
 
-        # HACK: Retrieve Pyridoxine 25 mg in addition to Isoniazed when
-        # we detect INH drug concept
-        drugs = if drug_concept_id == arv_extras_concept_ids[1]
-                  Drug.where(concept: [drug_concept_id, ConceptName.find_by_name('Pyridoxine').concept_id])
-                else
-                  Drug.where(concept: drug_concept_id)
-                end
-
-        ingredients = MohRegimenIngredient.where(drug: drugs)\
-                                          .where('CAST(min_weight AS DECIMAL(4, 1)) <= :weight
-                                                  AND CAST(max_weight AS DECIMAL(4, 1)) >= :weight',
-                                                 weight: patient.weight.to_f.round(1))
+        ingredients = find_regimen_ingredients(weight: patient.weight, drugs: drugs, course: dominant_course_name)
 
         ingredients.each do |ingredient|
-          drug_name = ConceptName.where(concept_id: ingredient.drug.concept_id,
-                                        concept_name_type: 'FULLY_SPECIFIED')\
-                                 .first
-          dosages[drug_name.name] = ingredient_to_drug(ingredient)
+          drug_name = ConceptName.find_by(concept_id: ingredient.drug.concept_id).name
+          dosages[drug_name] = ingredient_to_drug(ingredient)
         end
       end
     end
@@ -152,20 +135,16 @@ module ARTService
     #     category: xx
     #   }
     def regimens_from_ingredients(ingredients, lpv_drug_type: 'tabs', patient: nil)
-      LOGGER.debug(ingredients.collect{ |i| [i.drug.id, i.drug.name] }.as_json)
       ingredients.each_with_object({}) do |ingredient, regimens|
         # Have some CPT & INH that do not belong to any regimen
         # but have a weight - dosage mapping hence being lumped
         # together with the regimen ingredients
         next unless ingredient.regimen
 
-        LOGGER.debug([lpv_drug_type, ingredient.drug.name, find_drug_type(ingredient.drug)])
-
         regimen_index = ingredient.regimen.regimen_index
         regimen = regimens[regimen_index] || []
 
         drug_name = ingredient.drug.name
-        LOGGER.debug([%r{^LPV/r}.match?(drug_name), %w[pellets granules].include?(lpv_drug_type), find_drug_type(ingredient.drug) != lpv_drug_type])
 
         if %r{^LPV/r}.match?(drug_name)\
             && ((lpv_drug_type == 'tabs' && find_drug_type(ingredient.drug) != 'tabs')\
@@ -410,6 +389,80 @@ module ARTService
       else
         'tabs'
       end
+    end
+
+    # Checks if it has been explicitly specified that a patient is getting
+    # a prescription on the given date.
+    def patient_getting_prescription?(patient, date)
+      Observation.where(person_id: patient.patient_id,
+                        concept_id: ConceptName.find_by_name('Prescribe drugs').concept_id,
+                        value_coded: ConceptName.find_by_name('Yes').concept_id)\
+                 .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
+                 .exists?
+    end
+
+    # Returns prescriptions for medication courses a patient is to receive
+    # on a given date.
+    def patient_course_prescriptions(patient, date, courses = nil)
+      query = Observation.where(concept: ConceptName.find_by_name('Medication orders').concept_id,
+                                person_id: patient.id)
+                         .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
+
+      return query unless courses
+
+      query.where(value_coded: courses.collect(&:concept_id))
+    end
+
+    # Returns drug courses (as concepts) that are offered alongside the primary
+    # ART regimen course
+    def parallel_drug_courses
+      ConceptName.where(name: %w[CPT INH Rifapentine])
+    end
+
+    # Returns the name of the dominant course among the given courses.
+    #
+    # Method compares primary_course to the rest of courses for an
+    # overlapping dominant course.
+    #
+    # NOTE: Courses can contain same drugs but with different dosages.
+    # For example 3HP and IPT both have INH with different dosages however.
+    def select_dominant_course_name(primary_course, courses)
+      # Currently this dominant course resolution is needed for 3HP vs INH only
+      # thus we are simply returning 3HP (Rifapentine) or nothing.
+      case primary_course.name.downcase
+      when 'rifapentine' then '3HP'
+      when 'inh' then courses.find { |course| course.name.casecmp?('rifapentine') } && '3HP'
+      end
+    end
+
+    # Retrieves drugs that make up the given medication course.
+    #
+    # Examples:
+    #   Course(INH) => {INH, Pyridoxine}
+    #   Course(Rifapentine) => {Rifapentine, INH} //
+    #
+    #   NOTE: The courses above should rightly be called IPT and 3HP but historically
+    #         they were being wrongly named in the application by their primary
+    #         ingredient name.
+    def find_drugs_by_course(drug_concept)
+      if drug_concept.name == 'INH' # IPT Course
+        Drug.where(concept: [drug_concept.concept_id, ConceptName.find_by_name('Pyridoxine').concept_id])
+      elsif drug_concept.name == 'Rifapentine' # 3HP Course
+        Drug.where(concept: [drug_concept.concept_id, ConceptName.find_by_name('Isoniazid').concept_id])
+      else
+        Drug.where(concept: drug_concept.id)
+      end
+    end
+
+    def find_regimen_ingredients(weight: nil, drugs: nil, course: nil)
+      query = MohRegimenIngredient.where(course: course)
+      query = query.where(drug: drugs) if drugs
+
+      return query unless weight
+
+      query.where('CAST(min_weight AS DECIMAL(4, 1)) <= :weight
+                   AND CAST(max_weight AS DECIMAL(4, 1)) >= :weight',
+                  weight: weight.to_f.round(1))
     end
 
     REGIMEN_CODES = {
