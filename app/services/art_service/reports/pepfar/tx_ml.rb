@@ -17,11 +17,17 @@ module ARTService
 
         def tx_ml
           data  = {}
-          patients  = get_potential_tx_ml_clients
+          tx_curr = get_potential_tx_ml_clients
+          tx_new  = get_new_potential_tx_ml_clients
           patient_ids  = []
 
-          (patients || []).each do |pat|
+          (tx_curr || []).each do |pat|
             patient_ids << pat['patient_id']
+          end
+
+          (tx_new || []).each do |pat|
+            patient_ids << pat['patient_id']
+            patient_ids = patient_ids.uniq
           end
 
           return [] if patient_ids.blank?
@@ -83,14 +89,37 @@ EOF
                 and (`s`.`voided` = 0)
                 and (`p`.`program_id` = 1)
                 and (`s`.`state` = 7))
-                and (DATE(`s`.`start_date`) < '#{@start_date.to_date.strftime("%Y-%m-%d 23:59:59")}')
+                and (DATE(`s`.`start_date`) < '#{@start_date.to_date}')
                 and pepfar_patient_outcome(p.patient_id, DATE('#{@start_date.to_date - 1.day}')) = 'On antiretrovirals'
           group by `p`.`patient_id`
-          HAVING date_enrolled IS NOT NULL;
+          HAVING date_enrolled IS NOT NULL AND DATE(date_enrolled) < '#{@start_date.to_date}';
 EOF
 
         end
 
+        def get_new_potential_tx_ml_clients
+          return ActiveRecord::Base.connection.select_all <<EOF
+          SELECT
+            `p`.`patient_id` AS `patient_id`, pe.birthdate, pe.gender,
+             cast(patient_date_enrolled(`p`.`patient_id`) as date) AS `date_enrolled`
+          FROM
+            ((`patient_program` `p`
+            LEFT JOIN `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
+            LEFT JOIN `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
+            LEFT JOIN `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
+          WHERE
+            ((`p`.`voided` = 0)
+                AND (`s`.`voided` = 0)
+                AND (`p`.`program_id` = 1)
+                AND (`s`.`state` = 7))
+                AND (DATE(`s`.`start_date`)
+                BETWEEN '#{@start_date.to_date.strftime("%Y-%m-%d 00:00:00")}' AND '#{@end_date}')
+          GROUP BY `p`.`patient_id`
+          HAVING date_enrolled IS NOT NULL
+          AND date_enrolled BETWEEN '#{@start_date.to_date}' AND '#{@start_date.to_date}';
+EOF
+
+        end
 
       end
 
