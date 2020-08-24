@@ -680,7 +680,7 @@ module ARTService
                 and (`s`.`state` = #{STATE_ON_TREATMENT}))
                 and (DATE(`s`.`start_date`) >= '1900-01-1 00:00:00')
           group by `p`.`patient_id`
-          HAVING date_enrolled IS NOT NULL;
+          HAVING date_enrolled IS NOT NULL AND DATE(date_enrolled) <= '#{end_date}';
 EOF
 
         concept_id = ConceptName.find_by_name('Type of patient').concept_id
