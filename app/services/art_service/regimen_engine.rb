@@ -450,7 +450,7 @@ module ARTService
       elsif drug_concept.name == 'Rifapentine' # 3HP Course
         Drug.where(concept: [drug_concept.concept_id, ConceptName.find_by_name('Isoniazid').concept_id])
       else
-        Drug.where(concept: drug_concept.id)
+        Drug.where(concept: drug_concept.concept_id)
       end
     end
 
