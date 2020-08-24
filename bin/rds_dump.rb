@@ -29,13 +29,20 @@ end
 
 def main
   flags = load_flags
-  rds_dump_file_name = 'rds_' + dump_file_name + '_dump.sql'
+  if flags.blank?
+    rds_dump_file_name = 'rds_' + dump_file_name + '_dump_' + Date.today.strftime('%d_%m_%Y') + '.sql'
+  else
+    rds_dump_file_name = 'rds_' + dump_file_name + '_dump.sql'
+  end
+
 
   File.open(Rails.root.join('log', rds_dump_file_name), 'w') do |fout|
     config['databases'].each do |database, database_config|
       dump(database, database_config['program_name'], fout, **flags)
     end
   end
+  puts 'compressing dump file'
+  `gzip #{Rails.root.join('log',rds_dump_file_name)}`
 end
 
 # Dump database in an RDS compatible format into given file.
