@@ -157,7 +157,8 @@ class Api::V1::ReportsController < ApplicationController
   end
 
   def tx_mmd_client_level_data
-    render json: service.tx_mmd_client_level_data(params[:start_date], params[:end_date], params[:patient_ids])
+    render json: service.tx_mmd_client_level_data(params[:start_date],
+       params[:end_date], params[:patient_ids],  params[:org])
   end
 
   def tb_prev
