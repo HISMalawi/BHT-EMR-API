@@ -122,7 +122,7 @@ module ARTService
             INNER JOIN concept_set t4 ON t4.concept_id = t3.concept_id
             WHERE t.patient_id = #{patient_id}
             AND t.voided = 0 AND t.start_date <= '#{@end_date}'
-            AND t4.concept_set = #{arv_concept_set}
+            AND t4.concept_set = #{arv_concept_set} AND t2.quantity > 0
           ) AND e.program_id = #{program_id} AND o.patient_id = #{patient_id}
           AND od.quantity > 0 AND e.encounter_type = #{encounter_type}
           GROUP BY o.order_id;
@@ -241,7 +241,7 @@ module ARTService
             INNER JOIN concept_set t4 ON t4.concept_id = t3.concept_id
             WHERE t.patient_id = #{patient_id}
             AND t.voided = 0 AND t.start_date <= '#{@end_date}'
-            AND t4.concept_set = #{arv_concept_set}
+            AND t4.concept_set = #{arv_concept_set} AND t2.quantity > 0
           )AND e.program_id = #{program_id} AND o.patient_id = #{patient_id}
           AND od.quantity > 0 AND e.encounter_type = #{encounter_type}
           AND i.voided  = 0

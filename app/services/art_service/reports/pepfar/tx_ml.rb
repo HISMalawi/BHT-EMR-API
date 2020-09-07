@@ -20,14 +20,19 @@ module ARTService
           tx_curr = get_potential_tx_ml_clients
           tx_new  = get_new_potential_tx_ml_clients
           patient_ids  = []
+          earliest_start_dates = {}
 
           (tx_curr || []).each do |pat|
-            patient_ids << pat['patient_id']
+            patient_id = pat['patient_id'].to_i
+            patient_ids << patient_id
+            earliest_start_dates[patient_id] = pat['earliest_start_date'].to_date rescue pat['date_enrolled'].to_date
           end
 
           (tx_new || []).each do |pat|
-            patient_ids << pat['patient_id']
+            patient_id = pat['patient_id'].to_i
+            patient_ids << patient_id
             patient_ids = patient_ids.uniq
+            earliest_start_dates[patient_id] = pat['earliest_start_date'].to_date rescue pat['date_enrolled'].to_date
           end
 
           return [] if patient_ids.blank?
@@ -51,22 +56,23 @@ EOF
 
             if data[age_group].blank?
               data[age_group]= {}
-              data[age_group][gender] = [0, 0, 0, 0, 0]
+              data[age_group][gender] = [[], [], [], [], [], []]
             elsif data[age_group][gender].blank?
-              data[age_group][gender] = [0, 0, 0, 0, 0]
+              data[age_group][gender] = [[], [], [], [], [], []]
             end
 
             case outcome
               when 'Defaulted'
-                data[age_group][gender][0] +=  1
+                new_def = new_defaulter(patient_id, earliest_start_dates[patient_id])
+                (new_def == true  ? data[age_group][gender][0] << patient_id : data[age_group][gender][1] << patient_id)
               when 'Patient died'
-                data[age_group][gender][1] +=  1
+                data[age_group][gender][2] << patient_id
               when 'Stopped'
-                data[age_group][gender][2] +=  1
+                data[age_group][gender][3] << patient_id
               when 'Patient transferred out'
-                data[age_group][gender][3] +=  1
+                data[age_group][gender][4] << patient_id
               else
-                data[age_group][gender][4] +=  1
+                data[age_group][gender][5] << patient_id
 
             end
           end
@@ -78,7 +84,8 @@ EOF
           return ActiveRecord::Base.connection.select_all <<EOF
           select
             `p`.`patient_id` AS `patient_id`, pe.birthdate, pe.gender,
-             cast(patient_date_enrolled(`p`.`patient_id`) as date) AS `date_enrolled`
+             cast(patient_date_enrolled(`p`.`patient_id`) as date) AS `date_enrolled`,
+             date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`
           from
             ((`patient_program` `p`
             left join `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
@@ -101,7 +108,8 @@ EOF
           return ActiveRecord::Base.connection.select_all <<EOF
           SELECT
             `p`.`patient_id` AS `patient_id`, pe.birthdate, pe.gender,
-             cast(patient_date_enrolled(`p`.`patient_id`) as date) AS `date_enrolled`
+             cast(patient_date_enrolled(`p`.`patient_id`) as date) AS `date_enrolled`,
+             date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`
           FROM
             ((`patient_program` `p`
             LEFT JOIN `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
@@ -119,6 +127,21 @@ EOF
           AND date_enrolled BETWEEN '#{@start_date.to_date}' AND '#{@start_date.to_date}';
 EOF
 
+        end
+
+        def new_defaulter(patient_id, earliest_start_date)
+
+          defaulter_date = ActiveRecord::Base.connection.select_one <<~SQL
+          SELECT current_pepfar_defaulter_date(#{patient_id}, '#{@end_date}') def_date;
+          SQL
+
+          defaulter_date  = defaulter_date["def_date"].to_date rescue @end_date.to_date
+          days_gone = ActiveRecord::Base.connection.select_one <<~SQL
+          SELECT TIMESTAMPDIFF(day, DATE('#{earliest_start_date}'), DATE('#{defaulter_date}')) days;
+          SQL
+
+          new_def  = (days_gone["days"].to_i > 90 ? false : true)
+          return new_def
         end
 
       end
