@@ -35,6 +35,11 @@ module ARTService
             earliest_start_dates[patient_id] = pat['earliest_start_date'].to_date rescue pat['date_enrolled'].to_date
           end
 
+          (tx_new || []).each do |pat|
+            patient_ids << pat['patient_id']
+            patient_ids = patient_ids.uniq
+          end
+
           return [] if patient_ids.blank?
 
 
