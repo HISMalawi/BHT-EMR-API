@@ -516,52 +516,6 @@ module ARTService
         data
       end
 
-      def patient_on_pre_ART_but_have_arvs_dispensed(start_date, end_date)
-        begin
-          patients = ActiveRecord::Base.connection.select_all(
-            "SELECT e.* FROM temp_earliest_start_date e
-             INNER JOIN temp_patient_outcomes o ON e.patient_id = o.patient_id
-             WHERE date_enrolled BETWEEN '#{start_date.to_date}' AND '#{end_date.to_date}'
-             AND cum_outcome LIKE '%Pre-%'"
-          )
-        rescue StandardError
-          raise 'Try running the revised cohort before this report'
-        end
-
-        data = {}
-
-        (patients || []).each do |p|
-          patient = Patient.find(p['patient_id'].to_i)
-          reason_for_starting = PatientService.reason_for_art_eligibility(patient)
-          # next unless reason_for_starting.blank?
-
-          patient_outcome = ActiveRecord::Base.connection.select_one(
-            "SELECT patient_outcome(#{patient.patient_id}, DATE('#{end_date.to_date}')) AS outcome"
-          )
-
-          patient_obj = PatientService.get_patient(patient.person)
-          data[patient_obj.patient_id] = {
-            arv_number: patient_obj.arv_number,
-            earliest_start_date: (begin
-                                      p['earliest_start_date'].to_date
-                                  rescue StandardError
-                                    nil
-                                    end),
-            date_enrolled: (begin
-                                p['date_enrolled'].to_date
-                            rescue StandardError
-                              nil
-                              end),
-            name: patient_obj.name,
-            gender: patient_obj.sex,
-            birthdate: patient_obj.birth_date,
-            outcome: patient_outcome['outcome']
-          }
-        end
-
-        data
-      end
-
       def patients_with_pre_art_or_unknown_outcome(_start_date, _end_date)
         begin
           patients = ActiveRecord::Base.connection.select_all(
@@ -599,50 +553,6 @@ module ARTService
             gender: patient_obj.sex,
             birthdate: patient_obj.birth_date,
             reason_for_starting: p['reason_for_starting'],
-            outcome: patient_outcome['outcome']
-          }
-        end
-
-        data
-      end
-
-      def missing_arv_dispensions(_start_date, end_date)
-        begin
-          patients = ActiveRecord::Base.connection.select_all(
-            "SELECT e.*, patient_reason_for_starting_art_text(e.patient_id) reason_for_starting
-            FROM temp_earliest_start_date e
-            WHERE (date_enrolled IS NULL OR LENGTH(date_enrolled) < 1)"
-          )
-        rescue StandardError
-          raise 'Try running the revised cohort before this report'
-        end
-
-        data = {}
-
-        (patients || []).each do |p|
-          patient = Patient.find(p['patient_id'].to_i)
-
-          patient_outcome = ActiveRecord::Base.connection.select_one(
-            "SELECT patient_outcome(#{patient.patient_id}, DATE('#{end_date.to_date}')) AS outcome"
-          )
-
-          patient_obj = PatientService.get_patient(patient.person)
-          data[patient_obj.patient_id] = {
-            arv_number: patient_obj.arv_number,
-            earliest_start_date: (begin
-                                      p['earliest_start_date'].to_date
-                                  rescue StandardError
-                                    nil
-                                    end),
-            date_enrolled: (begin
-                                p['date_enrolled'].to_date
-                            rescue StandardError
-                              nil
-                              end),
-            name: patient_obj.name,
-            gender: patient_obj.sex,
-            reason_for_starting: p['reason_for_starting'],
-            birthdate: patient_obj.birth_date,
             outcome: patient_outcome['outcome']
           }
         end
@@ -1970,7 +1880,6 @@ EOF
 
         age_in_months_when_starting = (art_earliest_start_date - person.birthdate).to_i
         age_when_starting = (age_in_months_when_starting / 365).to_i
-        # latest_outcome = patient_latest_outcome(order.patient_id, @cut_off_date)
         deathdate = person.death_date ? "'#{person.death_date.to_date}'" : 'NULL'
 
         ActiveRecord::Base.connection.execute(
@@ -2006,14 +1915,6 @@ EOF
            ) AS date"
         )
         result['date'].to_date
-      end
-
-      # Returns latest outcome for given patient relative to report date.
-      def patient_latest_outcome(patient_id, report_date = Time.now)
-        result = ActiveRecord::Base.connection.select_one(
-          "SELECT patient_outcome(#{patient_id}, '#{report_date}') AS outcome"
-        )
-        result['outcome']
       end
 
       # Returns a list of reasons for starting ART for each patient.

@@ -105,8 +105,8 @@ class FilingNumberService
   # `patients_to_be_archived_based_on_waste_state`
   def build_archive_candidates(patients)
     patients.collect do |patient|
-      patient['appointment_date'] = patient_last_appointment(patient['patient_id'])
-      patient.update(patient_demographics(patient['patient_id']))
+      patient['appointment_date'] = patient_last_appointment(patient[:patient_id])
+      patient.update(patient_demographics(patient[:patient_id]))
       patient
     end
   end
@@ -185,9 +185,8 @@ class FilingNumberService
     sql_path = duplicate_identifiers.blank? ? '' : "AND i.identifier NOT IN (#{duplicate_identifiers.join(',')})"
 
     outcomes = ActiveRecord::Base.connection.select_all <<-SQL
-      SELECT 
-        p.patient_id, patient_outcome(p.patient_id, DATE('#{Date.today.to_date}')) state, 
-        start_date, end_date, identifier
+      SELECT
+        p.patient_id,  state, start_date, end_date, identifier
       FROM patient_state s
         INNER JOIN patient_program p ON p.patient_program_id = s.patient_program_id
         INNER JOIN patient_identifier i ON p.patient_id = i.patient_id
@@ -219,7 +218,7 @@ class FilingNumberService
       encounter_patient_ids = [0] if encounter_patient_ids.blank?
 
       outcomes = ActiveRecord::Base.connection.select_all <<-SQL
-        SELECT p.patient_id, patient_outcome(p.patient_id, DATE('#{Date.today.to_date}')) state, start_date, end_date, identifier
+        SELECT p.patient_id, state, start_date, end_date, identifier
         FROM patient_state s
         INNER JOIN patient_program p ON p.patient_program_id = s.patient_program_id
         INNER JOIN patient_identifier i ON p.patient_id = i.patient_id
@@ -234,6 +233,22 @@ class FilingNumberService
       SQL
     end
 
-    outcomes
+    processed_states = []
+    (outcomes || []).each do |outcome|
+
+      latest_state = ActiveRecord::Base.connection.select_one <<~SQL
+       SELECT patient_outcome(#{outcome['patient_id']}, DATE('#{Date.today.to_date}')) state;
+      SQL
+
+      processed_states << {
+        patient_id: outcome['patient_id'],
+        state: latest_state['state'],
+        start_date: outcome['start_date'],
+        end_date: outcome['end_date'],
+        identifier: outcome['identifier']
+      }
+    end
+
+    return processed_states
   end
 end
