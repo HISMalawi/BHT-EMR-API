@@ -34,7 +34,12 @@ class DrugOrder < ApplicationRecord
   end
 
   def amount_needed
-    value = (duration * (equivalent_daily_dose || 1)) - (quantity || 0)
+    drug_frequency = self.frequency.to_s rescue ''
+    if drug_frequency.match(/Weekly/i)
+      value = (((duration * (equivalent_daily_dose || 1)) - (quantity || 0)) / 7)
+    else
+      value = (duration * (equivalent_daily_dose || 1)) - (quantity || 0)
+    end
     value.negative? ? 0 : value
   end
 
