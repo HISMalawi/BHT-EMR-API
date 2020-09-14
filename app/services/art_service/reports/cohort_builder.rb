@@ -564,48 +564,70 @@ module ARTService
       STATE_ON_TREATMENT = 7
 
       def load_data_into_temp_earliest_start_date(end_date)
-        ActiveRecord::Base.connection.execute <<EOF
-        INSERT INTO temp_earliest_start_date
-          select
-            `p`.`patient_id` AS `patient_id`,
-            cast(patient_date_enrolled(`p`.`patient_id`) as date) AS `date_enrolled`,
-            date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`,
-            `pe`.`birthdate`,
-            `pe`.`birthdate_estimated`,
-            COALESCE(`died_outcome`.`start_date`, `pe`.`death_date`) AS `death_date`,
-            `pe`.`gender` AS `gender`,
-            (select timestampdiff(year, `pe`.`birthdate`, min(`s`.`start_date`))) AS `age_at_initiation`,
-            (select timestampdiff(day, `pe`.`birthdate`, min(`s`.`start_date`))) AS `age_in_days`
-          from
-            ((`patient_program` `p`
-            left join `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
-            left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
-            left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
-            left join (SELECT patient_program_id, start_date FROM patient_state WHERE state = #{STATE_DIED} AND voided = 0)
-              AS died_outcome ON p.patient_program_id = died_outcome.patient_program_id
-          where
-            ((`p`.`voided` = 0)
-                and (`s`.`voided` = 0)
-                and (`p`.`program_id` = 1)
-                and (`s`.`state` = #{STATE_ON_TREATMENT}))
-                and (DATE(`s`.`start_date`) >= '1900-01-1 00:00:00')
-          group by `p`.`patient_id`
-          HAVING date_enrolled IS NOT NULL AND DATE(date_enrolled) <= '#{end_date}';
-EOF
-
-        concept_id = ConceptName.find_by_name('Type of patient').concept_id
-        ext_concept_id = ConceptName.find_by_name('External consultation').concept_id
-
-        person_ids = Observation.where(concept_id: concept_id,
-          value_coded: ext_concept_id).group(:person_id).map(&:person_id)
-
-        unless person_ids.blank?
-          ActiveRecord::Base.connection.execute <<EOF
-          DELETE FROM temp_earliest_start_date WHERE patient_id IN(#{person_ids.join(',')});
-EOF
-
-        end
-
+        ActiveRecord::Base.connection.execute(
+          <<~SQL
+            INSERT INTO temp_earliest_start_date
+            SELECT patient_program.patient_id,
+                   MIN(art_order.start_date) AS date_enrolled,
+                   IF (
+                    art_start_date_obs.value_datetime IS NOT NULL,
+                    art_start_date_obs.value_datetime,
+                    IF (
+                      STRCMP('Over 2 years', art_start_date_obs.value_text) = 0,
+                      DATE_SUB(art_start_date_obs.obs_datetime, INTERVAL 60 MONTH),
+                      COALESCE(
+                        DATE_SUB(art_start_date_obs.obs_datetime,
+                                 INTERVAL CAST(LEFT(art_start_date_obs.value_text, 2) AS INTEGER) MONTH),
+                        (SELECT MIN(obs_datetime) FROM obs
+                          WHERE person_id = patient_program.patient_id
+                            AND concept_id = 2834
+                            AND value_numeric > 0
+                            AND value_drug IN (SELECT drug_id FROM arv_drug)
+                            AND voided = 0)
+                      )
+                    )
+                   ) AS earliest_start_date,
+                   person.birthdate,
+                   person.birthdate_estimated,
+                   person.death_date,
+                   person.gender,
+                   (SELECT TIMESTAMPDIFF(YEAR, person.birthdate, MIN(outcome.start_date))) AS age_at_initiation,
+                   (SELECT TIMESTAMPDIFF(DAY, person.birthdate, MIN(outcome.start_date))) AS age_in_days
+            FROM patient_program
+            INNER JOIN person ON person.person_id = patient_program.patient_id
+            LEFT JOIN patient_state AS outcome
+              ON outcome.patient_program_id = patient_program.patient_program_id
+            LEFT JOIN obs AS art_start_date_obs
+              ON art_start_date_obs.concept_id = 2516
+              AND art_start_date_obs.person_id = patient_program.patient_id
+              AND art_start_date_obs.voided = 0
+            LEFT JOIN orders AS   art_order
+              ON art_order.patient_id = patient_program.patient_id
+              AND art_order.voided = 0
+              AND art_order.order_type_id = 1
+              AND art_order.concept_id IN (SELECT concept_id FROM concept_set WHERE concept_set = 1085)
+            LEFT JOIN drug_order
+              ON drug_order.order_id = art_order.order_id
+              AND drug_order.quantity > 0
+            WHERE patient_program.voided = 0
+              AND outcome.voided = 0
+              AND patient_program.program_id = 1
+              AND outcome.state = 7
+              AND outcome.start_date IS NOT NULL
+              AND patient_program.patient_id NOT IN (
+                SELECT person_id FROM obs
+                WHERE concept_id IN (
+                  SELECT concept_id FROM concept_name WHERE name LIKE 'Type of patient'
+                ) AND value_coded IN (
+                  SELECT concept_id FROM concept_name WHERE name LIKE 'External Consultation'
+                ) AND voided = 0
+                GROUP BY person_id
+              )
+            GROUP by patient_program.patient_id
+            HAVING date_enrolled IS NOT NULL
+              AND date_enrolled <= '#{end_date}';
+          SQL
+        )
       end
 
       def create_tmp_patient_table
@@ -621,7 +643,7 @@ EOF
              gender VARCHAR(32),
              age_at_initiation INT DEFAULT NULL,
              age_in_days INT DEFAULT NULL
-          ) ENGINE=MEMORY;'
+          );'
         )
 
         ActiveRecord::Base.connection.execute(
@@ -639,7 +661,7 @@ EOF
           'CREATE INDEX earliest_start_date_index ON temp_earliest_start_date (earliest_start_date)'
         )
         ActiveRecord::Base.connection.execute(
-          'CREATE INDEX earliest_start_date__date_enrolled_index ON temp_earliest_start_date (earliest_start_date, date_enrolled)'
+          'CREATE INDEX earliest_start_date__date_enrolled_index ON temp_earliest_start_date (patient_id, earliest_start_date, date_enrolled, gender)'
         )
       end
 
