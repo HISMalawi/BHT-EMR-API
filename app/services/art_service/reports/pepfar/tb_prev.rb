@@ -5,8 +5,8 @@ module ARTService
 
       class TbPrev
         def initialize(start_date:, end_date:)
-          @start_date = start_date.to_date.strftime('%Y-%m-%d 00:00:00')
-          @end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
+          @completion_start_date = start_date.to_date.strftime('%Y-%m-%d 00:00:00')
+          @completion_end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
         end
 
         def report
@@ -31,12 +31,12 @@ module ARTService
           clients = {}
 
           total_ipt_dispensed = {}
-          start_date_of_inh = (@start_date.to_date - 180.day).to_date
+          initiation_start_date = (@completion_start_date.to_date - 180.day).to_date
 
           meds.each do |m|
             patient_id = m["patient_id"].to_i
             inh_start_date = min_inh_start_date(patient_id)
-            next unless (inh_start_date >= start_date_of_inh && inh_start_date < @start_date.to_date)
+            next if (inh_start_date < initiation_start_date) # && initiation_start_date < @start_date.to_date)
             p = clients_in_hiv_program[patient_id]
             next if p.blank?
 
@@ -106,7 +106,7 @@ module ARTService
               `p`.`patient_id` AS `patient_id`, pe.birthdate, pe.gender,
                cast(patient_date_enrolled(`p`.`patient_id`) as date) AS `date_enrolled`,
                date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`,
-               cohort_disaggregated_age_group(pe.birthdate, DATE('#{@end_date}')) age_group
+               cohort_disaggregated_age_group(pe.birthdate, DATE('#{@completion_end_date}')) age_group
             from
               ((`patient_program` `p`
               left join `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
@@ -125,9 +125,9 @@ module ARTService
         end
 
         def tb_med_dispensations
-          date_six_months_ago = (@start_date.to_date - 180.days).strftime('%Y-%m-%d 00:00:00')
-          date_six_months_ago_end = (@start_date.to_date - 1.day).to_date
-          date_six_months_ago_end = date_six_months_ago_end.strftime('%Y-%m-%d 23:59:59')
+          initiation_start_date = (@completion_start_date.to_date - 180.days).strftime('%Y-%m-%d 00:00:00')
+          initiation_end_date = (@completion_start_date.to_date - 1.day).to_date
+          initiation_end_date = initiation_end_date.strftime('%Y-%m-%d 23:59:59')
 
           return ActiveRecord::Base.connection.select_all <<-SQL
             SELECT
@@ -139,7 +139,7 @@ module ARTService
             INNER JOIN drug d ON d.drug_id = t.drug_inventory_id
             INNER JOIN encounter e ON e.patient_id = o.patient_id AND e.program_id = 1
             WHERE o.voided = 0 AND (o.start_date
-            BETWEEN '#{date_six_months_ago}' AND '#{date_six_months_ago_end}')
+            BETWEEN '#{initiation_start_date}' AND '#{initiation_end_date}')
             AND d.concept_id = 656 AND t.quantity > 0
             GROUP BY o.patient_id, t.drug_inventory_id, DATE(o.start_date)
             ORDER BY o.patient_id;
