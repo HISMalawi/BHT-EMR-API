@@ -1447,13 +1447,9 @@ EOF
             AND obs.obs_datetime < (patients.earliest_start_date + INTERVAL 1 DAY)
             AND obs.voided = 0
           WHERE patients.gender IN ('F', 'Female')
-            AND patients.date_enrolled BETWEEN '2001-07-16' AND '2019-12-31'
+            AND patients.date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
           GROUP BY patient_id
           HAVING value_coded = #{yes_concept_id} OR value_coded = #{patient_preg_concept_id}
-        SQL
-
-        <<~SQL
-          SELECT patients.patient_id, obs.value_coded
         SQL
 
         pregnant_at_initiation = ActiveRecord::Base.connection.select_all(
@@ -1523,8 +1519,10 @@ EOF
       end
 
       def transfer_in(start_date, end_date)
-        ActiveRecord::Base.connection.select_all(
-          <<~SQL
+        start_date = ActiveRecord::Base.connection.quote(start_date)
+        end_date = ActiveRecord::Base.connection.quote(end_date)
+
+        ActiveRecord::Base.connection.select_all <<~SQL
           SELECT temp_earliest_start_date.patient_id
           FROM temp_earliest_start_date
           INNER JOIN clinic_registration_encounter
@@ -1540,15 +1538,14 @@ EOF
             AND last_taken_art_obs.concept_id = (
               SELECT concept_id FROM concept_name WHERE name = 'DATE ART LAST TAKEN' LIMIT 1
             )
-          WHERE (date_enrolled BETWEEN '2001-07-06' AND '2019-12-31')
+          WHERE (date_enrolled BETWEEN #{start_date} AND #{end_date})
             AND date_enrolled != earliest_start_date
             AND COALESCE(TIMESTAMPDIFF(day,
                                       last_taken_art_obs.value_datetime,
                                       last_taken_art_obs.obs_datetime) <= 14,
                         TRUE)
           GROUP BY temp_earliest_start_date.patient_id;
-          SQL
-        )
+        SQL
       end
 
       def re_initiated_on_art(start_date, end_date)
