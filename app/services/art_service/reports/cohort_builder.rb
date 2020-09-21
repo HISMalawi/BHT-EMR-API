@@ -538,7 +538,7 @@ module ARTService
                       DATE_SUB(art_start_date_obs.obs_datetime, INTERVAL 60 MONTH),
                       COALESCE(
                         DATE_SUB(art_start_date_obs.obs_datetime,
-                                  INTERVAL CAST(LEFT(art_start_date_obs.value_text, 2) AS SIGNED INTEGER) MONTH),
+                                  INTERVAL CAST(TRIM(LEFT(art_start_date_obs.value_text, 2)) AS SIGNED INTEGER) MONTH),
                         (SELECT MIN(obs_datetime) FROM obs
                           WHERE person_id = patient_program.patient_id
                             AND concept_id = 2834
