@@ -1070,8 +1070,9 @@ EOF
 
       def cal_regimem_category(_patient_list, end_date)
         Cohort::Regimens.patient_regimens(end_date).map do |prescription|
-          if prescription['regimen_category'] == 'Unknown'\
-              || !COHORT_REGIMENS.include?(prescription['regimen_category'])
+          regimen = prescription['regimen_category']
+
+          if regimen == 'Unknown' || !COHORT_REGIMENS.include?(regimen)
             regimen = 'unknown_regimen'
           end
 
@@ -1363,8 +1364,8 @@ EOF
         ActiveRecord::Base.connection.select_all <<~SQL
           SELECT patient_id
           FROM temp_earliest_start_date
-          WHERE date_enrolled >= #{start_date}
-            AND date_enrolled <= #{end_date}
+          WHERE date_enrolled >= '#{start_date}'
+            AND date_enrolled <= '#{end_date}'
             AND reason_for_starting_art IN (#{reason_concept_ids.to_sql})
         SQL
       end
