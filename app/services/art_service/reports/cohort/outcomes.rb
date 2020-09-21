@@ -177,6 +177,7 @@ module ARTService::Reports::Cohort::Outcomes
           WHERE start_date < (DATE(#{date}) + INTERVAL 1 DAY)
             AND voided = 0
         )
+        AND patients.patient_id NOT IN (SELECT patient_id FROM temp_patient_outcomes)
       GROUP BY patients.patient_id
     SQL
   end

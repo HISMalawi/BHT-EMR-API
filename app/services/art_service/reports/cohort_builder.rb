@@ -529,34 +529,17 @@ module ARTService
         ActiveRecord::Base.connection.execute <<~SQL
           INSERT INTO temp_earliest_start_date
           SELECT patient_program.patient_id,
-                  MIN(art_order.start_date) AS date_enrolled,
-                  DATE(IF (
-                    art_start_date_obs.value_datetime IS NOT NULL,
-                    art_start_date_obs.value_datetime,
-                    IF (
-                      STRCMP('Over 2 years', art_start_date_obs.value_text) = 0,
-                      DATE_SUB(art_start_date_obs.obs_datetime, INTERVAL 60 MONTH),
-                      COALESCE(
-                        DATE_SUB(art_start_date_obs.obs_datetime,
-                                  INTERVAL CAST(TRIM(LEFT(art_start_date_obs.value_text, 2)) AS SIGNED INTEGER) MONTH),
-                        (SELECT MIN(obs_datetime) FROM obs
-                          WHERE person_id = patient_program.patient_id
-                            AND concept_id = 2834
-                            AND value_numeric > 0
-                            AND value_drug IN (SELECT drug_id FROM arv_drug)
-                            AND voided = 0)
-                      )
-                    )
-                  )) AS earliest_start_date,
-                  person.birthdate,
-                  person.birthdate_estimated,
-                  person.death_date,
-                  person.gender,
-                  (SELECT TIMESTAMPDIFF(YEAR, person.birthdate, MIN(outcome.start_date))) AS age_at_initiation,
-                  (SELECT TIMESTAMPDIFF(DAY, person.birthdate, MIN(outcome.start_date))) AS age_in_days,
-                  (SELECT value_coded FROM obs
-                   WHERE concept_id = 7563 AND person_id = patient_program.patient_id AND voided = 0
-                   ORDER BY obs_datetime DESC LIMIT 1) AS reason_for_starting_art
+                 DATE(MIN(art_order.start_date)) AS date_enrolled,
+                 DATE(COALESCE(art_start_date_obs.value_datetime, MIN(art_order.start_date))) AS earliest_start_date,
+                 person.birthdate,
+                 person.birthdate_estimated,
+                 person.death_date,
+                 person.gender,
+                 IF(person.birthdate IS NOT NULL, TIMESTAMPDIFF(YEAR, person.birthdate, MIN(outcome.start_date)), NULL) AS age_at_initiation,
+                 IF(person.birthdate IS NOT NULL, TIMESTAMPDIFF(DAY, person.birthdate, MIN(outcome.start_date)), NULL) AS age_in_days,
+                 (SELECT value_coded FROM obs
+                  WHERE concept_id = 7563 AND person_id = patient_program.patient_id AND voided = 0
+                  ORDER BY obs_datetime DESC LIMIT 1) AS reason_for_starting_art
           FROM patient_program
           INNER JOIN person ON person.person_id = patient_program.patient_id
           LEFT JOIN patient_state AS outcome
@@ -565,6 +548,7 @@ module ARTService
             ON art_start_date_obs.concept_id = 2516
             AND art_start_date_obs.person_id = patient_program.patient_id
             AND art_start_date_obs.voided = 0
+            AND art_start_date_obs.obs_datetime <= '#{end_date}'
           LEFT JOIN orders AS   art_order
             ON art_order.patient_id = patient_program.patient_id
             AND art_order.voided = 0
@@ -587,7 +571,7 @@ module ARTService
               GROUP BY person_id
             )
           GROUP by patient_program.patient_id
-          HAVING date_enrolled <= '#{end_date}';
+          HAVING date_enrolled <= '#{end_date}'
         SQL
       end
 
@@ -596,7 +580,7 @@ module ARTService
         ActiveRecord::Base.connection.execute(
           'CREATE TABLE IF NOT EXISTS temp_earliest_start_date (
              patient_id INT PRIMARY KEY,
-             date_enrolled DATE NOT NULL,
+             date_enrolled DATE,
              earliest_start_date DATE,
              birthdate DATE DEFAULT NULL,
              birthdate_estimated BOOLEAN,
