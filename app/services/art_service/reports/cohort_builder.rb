@@ -668,35 +668,37 @@ module ARTService
 
       private
 
-      def total_patients_with_screened_bp(patients_list, _start_date, end_date)
-        patient_ids = []
-        (patients_list || []).each do |row|
-          patient_ids << row['patient_id'].to_i
-        end
+      def total_patients_with_screened_bp(total_alive_and_on_art, _start_date, end_date)
+        bp_concepts = ConceptName.where(name: ['Systolic blood pressure', 'Diastolic blood pressure'])
+                                 .select(:concept_id)
 
-        return [] if patient_ids.blank?
-
-        result = []
-
-        systolic_blood_presssure_concept_id = concept('Systolic blood pressure').concept_id
-        diastolic_pressure_concept_id = concept('Diastolic blood pressure').concept_id
-
-        results = ActiveRecord::Base.connection.select_all(
-          "SELECT o.person_id
+        results = ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT o.person_id
           FROM obs o
-          WHERE o.voided = 0 AND (o.concept_id in (#{systolic_blood_presssure_concept_id}, #{diastolic_pressure_concept_id}) AND o.value_text IS NOT NULL)
-          AND o.person_id IN (#{patient_ids.join(',')})
-          AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-          AND DATE(o.obs_datetime) = (SELECT max(date(obs.obs_datetime)) FROM obs obs
-                                      WHERE obs.voided = 0
-                                      AND (obs.concept_id IN (#{systolic_blood_presssure_concept_id}, #{diastolic_pressure_concept_id}) AND obs.value_text IS NOT NULL)
-                                      AND obs.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-                                      AND obs.person_id = o.person_id)
-          GROUP BY o.person_id;"
-        )
+          INNER JOIN (
+            SELECT person_id, MAX(obs.obs_datetime) AS obs_datetime
+            FROM obs
+            INNER JOIN temp_patient_outcomes
+              ON temp_patient_outcomes.patient_id = obs.person_id
+              AND temp_patient_outcomes.cum_outcome = 'On antiretrovirals'
+            WHERE voided = 0
+              AND concept_id IN (#{bp_concepts.to_sql})
+              AND value_text IS NOT NULL
+              AND obs_datetime < DATE('#{end_date}') + INTERVAL 1 DAY
+            GROUP BY person_id
+          ) AS max_obs
+            ON max_obs.person_id = o.person_id
+            AND max_obs.obs_datetime = o.obs_datetime
+          INNER JOIN temp_patient_outcomes
+            ON temp_patient_outcomes.patient_id = o.person_id
+            AND temp_patient_outcomes.cum_outcome = 'On antiretrovirals'
+          WHERE o.voided = 0
+            AND o.concept_id in (#{bp_concepts.to_sql})
+            AND o.value_text IS NOT NULL
+          GROUP BY o.person_id;
+        SQL
 
-        total_percent = ((results.count.to_f / patient_ids.count.to_f) * 100).to_i
-        total_percent
+        ((results.count.to_f / total_alive_and_on_art.count) * 100).to_i
       end
 
       def total_patients_on_family_planning(patients_list, start_date, end_date)
@@ -1332,7 +1334,7 @@ EOF
         asymptomatic_concepts = ConceptName.where(name: ['ASYMPTOMATIC', 'Asymptomatic HIV infection'])
                                            .select(:concept_id)
         find_patients_by_reason_for_starting(start_date, end_date, asymptomatic_concepts)
-          .rows { |patient_id,| patients << patient_id }
+          .each { |patient_id,| patients << patient_id }
 
         reason_concepts = ConceptName.where(name: ['WHO stage I adult',
                                                    'WHO stage I peds',
@@ -1348,7 +1350,7 @@ EOF
         start_date = revised_art_guidelines_date if start_date.to_date < revised_art_guidelines_date
 
         find_patients_by_reason_for_starting(start_date, end_date, reason_concepts)
-          .rows { |patient_id,| patients << patient_id }
+          .each { |patient_id,| patients << patient_id }
 
         patients
       end
