@@ -31,7 +31,7 @@ module ARTService
              maternal_status VARCHAR(10),
              given_ipt INT(1),
              screened_for_tb INT(1)
-          ) ENGINE=MEMORY;'
+          );'
         )
 
         return {temp_disaggregated: 'created'}
@@ -402,7 +402,7 @@ EOF
         )
 
         ActiveRecord::Base.connection.execute(
-          "CREATE TABLE temp_pepfar_patient_outcomes ENGINE=MEMORY AS (
+          "CREATE TABLE temp_pepfar_patient_outcomes AS (
             SELECT e.patient_id, patient_pepfar_outcome(e.patient_id, '#{@end_date.to_date} 23:59:59') AS cum_outcome
             FROM temp_earliest_start_date e WHERE e.date_enrolled <= '#{@end_date.to_date}'
           )"

@@ -623,15 +623,12 @@ module ARTService
           'DROP TABLE IF EXISTS `temp_patient_tb_status`'
         )
 
-        ActiveRecord::Base.connection.execute(
-          "CREATE TABLE temp_patient_tb_status ENGINE=MEMORY AS (
-            SELECT e.patient_id, patient_tb_status(e.patient_id, '#{end_date} 23:59:59') AS tb_status
-            FROM temp_earliest_start_date e
-            INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
-            WHERE e.date_enrolled <= '#{end_date}'
-            AND cum_outcome = 'On antiretrovirals'
-          )"
+        ActiveRecord::Base.connection.execute <<~SQL
+        CREATE TABLE temp_patient_tb_status (
+          patient_id INT(11) PRIMARY KEY,
+          tb_status INT(11)
         )
+        SQL
 
         ActiveRecord::Base.connection.execute(
           'ALTER TABLE temp_patient_tb_status
@@ -647,6 +644,22 @@ module ARTService
           'ALTER TABLE temp_patient_tb_status
            ADD INDEX patient_id_tb_status_index (patient_id, tb_status)'
         )
+
+        ActiveRecord::Base.connection.execute <<~SQL
+          INSERT INTO temp_patient_tb_status
+            SELECT e.patient_id, obs.value_coded
+            FROM temp_earliest_start_date e
+            INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
+            RIGHT JOIN obs ON obs.person_id = o.patient_id
+            WHERE e.date_enrolled <= '#{end_date}' AND obs.obs_datetime <= '#{end_date} 23:59:59'
+            AND cum_outcome = 'On antiretrovirals' AND obs.voided = 0
+            AND obs.concept_id = 7459
+            AND obs.obs_datetime = (
+              SELECT MAX(t.obs_datetime) FROM obs t WHERE t.concept_id = 7459 AND t.voided = 0
+              AND t.person_id = e.patient_id AND t.obs_datetime <= '#{end_date} 23:59:59'
+            ) GROUP BY e.patient_id;
+        SQL
+
       end
 
       def update_patient_side_effects(end_date)

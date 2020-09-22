@@ -18,7 +18,7 @@ module ARTService::Reports::Cohort::SideEffects
       CREATE TABLE temp_patient_side_effects (
         patient_id INT(11) PRIMARY KEY,
         has_se VARCHAR(120) NOT NULL
-      ) ENGINE=MEMORY
+      )
     SQL
 
     ActiveRecord::Base.connection.execute <<~SQL

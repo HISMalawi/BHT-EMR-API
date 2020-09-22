@@ -46,7 +46,7 @@ module ARTService::Reports::Cohort::Outcomes
       CREATE TABLE temp_patient_outcomes (
         patient_id INT(11) PRIMARY KEY,
         cum_outcome VARCHAR(120) NOT NULL
-      ) ENGINE=MEMORY
+      )
     SQL
 
     ActiveRecord::Base.connection.execute <<~SQL
