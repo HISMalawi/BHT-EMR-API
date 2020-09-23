@@ -1030,8 +1030,6 @@ module ARTService
         adherent = adherent.map { |row| row['person_id'] }
         unknown_adherence = Set.new(patients_alive_and_on_art) - adherent - not_adherent
 
-        byebug
-
         [adherent, not_adherent, unknown_adherence]
       end
 
