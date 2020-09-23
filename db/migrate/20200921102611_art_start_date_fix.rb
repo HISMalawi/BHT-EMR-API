@@ -26,7 +26,7 @@ class ArtStartDateFix < ActiveRecord::Migration[5.2]
           next
         end
 
-        ob.update_columns(value_datetime: art_start_date, value_text: 'Estimated')
+        ob.update_columns(value_datetime: art_start_date, value_text: "Estimated: #{value_text}")
       end
     end
 
