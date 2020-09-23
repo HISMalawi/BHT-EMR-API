@@ -948,33 +948,89 @@ module ARTService
       #    ]
       def latest_art_adherence(patients_alive_and_on_art, start_date, end_date)
         patients_alive_and_on_art = Set.new(patients_alive_and_on_art.map { |patient| patient['patient_id'] })
+        end_date = ActiveRecord::Base.connection.quote(end_date)
 
-        not_adherent = Observation.select(:person_id)
-                                  .joins(:order)
-                                  .merge(Order.where(order_type_id: drug_order_type.order_type_id,
-                                                     concept_id: arv_drug_concepts))
-                                  .where(person_id: patients_alive_and_on_art,
-                                         concept_id: drug_order_adherence_concept.concept_id,
-                                         obs_datetime: start_date..end_date)
-                                  .where('value_numeric < ? OR value_numeric > ?',
-                                         MIN_ART_ADHERENCE_THRESHOLD, MAX_ART_ADHERENCE_THRESHOLD)
-                                  .group(:person_id)
-                                  .collect(&:person_id)
+        not_adherent = ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT adherence.person_id
+          FROM obs AS adherence
+          INNER JOIN (
+            SELECT obs.person_id, DATE(MAX(obs.obs_datetime)) AS visit_date
+            FROM obs
+            INNER JOIN orders
+              ON orders.order_id = obs.order_id
+              AND orders.concept_id IN (#{arv_drug_concepts.to_sql})
+              AND orders.order_type_id = #{drug_order_type.order_type_id}
+              AND orders.voided = 0
+            INNER JOIN temp_patient_outcomes
+              ON temp_patient_outcomes.patient_id = obs.person_id
+              AND temp_patient_outcomes.cum_outcome = 'On antiretrovirals'
+            WHERE obs.concept_id = #{drug_order_adherence_concept.concept_id}
+              AND obs.obs_datetime < (DATE(#{end_date}) + INTERVAL 1 DAY)
+              AND (obs.value_numeric IS NOT NULL OR obs.value_text IS NOT NULL)
+              AND obs.voided = 0
+            GROUP BY obs.person_id
+          ) AS max_adherence
+            ON max_adherence.person_id = adherence.person_id
+            AND adherence.obs_datetime >= max_adherence.visit_date
+            AND adherence.obs_datetime < (max_adherence.visit_date + INTERVAL 1 DAY)
+          INNER JOIN orders
+            ON orders.order_id = adherence.order_id
+            AND orders.order_type_id = #{drug_order_type.order_type_id}
+            AND orders.concept_id IN (#{arv_drug_concepts.to_sql})
+            AND orders.voided = 0
+          WHERE adherence.concept_id = #{drug_order_adherence_concept.concept_id}
+            AND ((adherence.value_numeric < #{MIN_ART_ADHERENCE_THRESHOLD}
+                  OR adherence.value_numeric > #{MAX_ART_ADHERENCE_THRESHOLD})
+                 OR (CAST(adherence.value_text AS SIGNED INTEGER) < #{MIN_ART_ADHERENCE_THRESHOLD}
+                     OR CAST(adherence.value_text AS SIGNED INTEGER) > #{MAX_ART_ADHERENCE_THRESHOLD}))
+            AND adherence.voided = 0
+          GROUP BY adherence.person_id
+        SQL
 
-        adherent_and_unknown_adherence = Set.new(patients_alive_and_on_art) - not_adherent
+        not_adherent = not_adherent.map { |row| row['person_id'] }
 
-        adherent = Observation.select(:person_id)
-                              .joins(:order)
-                              .merge(Order.where(order_type_id: drug_order_type.order_type_id,
-                                                 concept_id: arv_drug_concepts))
-                              .where(person_id: adherent_and_unknown_adherence,
-                                     concept_id: drug_order_adherence_concept.concept_id,
-                                     obs_datetime: start_date..end_date,
-                                     value_numeric: MIN_ART_ADHERENCE_THRESHOLD..MAX_ART_ADHERENCE_THRESHOLD)
-                              .group(:person_id)
-                              .collect(&:person_id)
+        adherent = ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT adherence.person_id
+          FROM obs AS adherence
+          INNER JOIN (
+            SELECT obs.person_id, DATE(MAX(obs.obs_datetime)) AS visit_date
+            FROM obs
+            INNER JOIN orders
+              ON orders.order_id = obs.order_id
+              AND orders.concept_id IN (#{arv_drug_concepts.to_sql})
+              AND orders.order_type_id = #{drug_order_type.order_type_id}
+              AND orders.voided = 0
+            INNER JOIN temp_patient_outcomes
+              ON temp_patient_outcomes.patient_id = obs.person_id
+              AND temp_patient_outcomes.patient_id NOT IN (#{not_adherent.join(',')})
+              AND temp_patient_outcomes.cum_outcome = 'On antiretrovirals'
+            WHERE obs.concept_id = #{drug_order_adherence_concept.concept_id}
+              AND obs.obs_datetime < (DATE(#{end_date}) + INTERVAL 1 DAY)
+              AND (obs.value_numeric IS NOT NULL OR obs.value_text IS NOT NULL)
+              AND obs.voided = 0
+            GROUP BY obs.person_id
+          ) AS max_adherence
+            ON max_adherence.person_id = adherence.person_id
+            AND adherence.obs_datetime >= max_adherence.visit_date
+            AND adherence.obs_datetime < (max_adherence.visit_date + INTERVAL 1 DAY)
+          INNER JOIN orders
+            ON orders.order_id = adherence.order_id
+            AND orders.order_type_id = #{drug_order_type.order_type_id}
+            AND orders.concept_id IN (#{arv_drug_concepts.to_sql})
+            AND orders.voided = 0
+          WHERE adherence.concept_id = #{drug_order_adherence_concept.concept_id}
+            AND ((adherence.value_numeric >= #{MIN_ART_ADHERENCE_THRESHOLD}
+                  OR adherence.value_numeric <= #{MAX_ART_ADHERENCE_THRESHOLD})
+                 OR (CAST(adherence.value_text AS SIGNED INTEGER) >= #{MIN_ART_ADHERENCE_THRESHOLD}
+                     OR CAST(adherence.value_text AS SIGNED INTEGER) <= #{MAX_ART_ADHERENCE_THRESHOLD}))
+            AND adherence.voided = 0
+          GROUP BY adherence.person_id
+        SQL
 
-        unknown_adherence = adherent_and_unknown_adherence - adherent
+        adherent = adherent.map { |row| row['person_id'] }
+        unknown_adherence = Set.new(patients_alive_and_on_art) - adherent - not_adherent
+
+        byebug
 
         [adherent, not_adherent, unknown_adherence]
       end
@@ -997,7 +1053,7 @@ module ARTService
 
       def arv_drug_concepts
         @arv_drug_concepts ||= ConceptSet.where(set: concept('Antiretroviral drugs'))
-                                         .collect(&:concept_id)
+                                         .select(:concept_id)
       end
 
       def write_tb_status_indicators(cohort_struct, patients_alive_and_on_art, start_date, end_date)
