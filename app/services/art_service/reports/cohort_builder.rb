@@ -1088,7 +1088,7 @@ module ARTService
       def all_tb_statuses(end_date)
         ActiveRecord::Base.connection.select_all("
           SELECT e.*, tb_status FROM temp_earliest_start_date e
-          INNER JOIN temp_patient_tb_status s ON s.patient_id = e.patient_id
+          LEFT JOIN temp_patient_tb_status s ON s.patient_id = e.patient_id
           INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
           WHERE o.cum_outcome = 'On antiretrovirals'
           AND DATE(e.date_enrolled) <= '#{end_date.to_date}';
