@@ -39,7 +39,7 @@ module ARTService::Reports::Cohort::Regimens
             AND (recent_prescription.prescription_date + INTERVAL 1 DAY)
         GROUP BY orders.patient_id
       ) AS prescriptions
-      INNER JOIN (
+      LEFT JOIN (
         SELECT GROUP_CONCAT(drug.drug_id ORDER BY drug.drug_id ASC) AS drugs,
               regimen_name.name AS name
         FROM moh_regimen_combination AS combo
