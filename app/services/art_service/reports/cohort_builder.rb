@@ -1627,6 +1627,8 @@ EOF
               ON temp_earliest_start_date.patient_id = clinic_registration_encounter.patient_id
             INNER JOIN ever_registered_obs
               ON clinic_registration_encounter.encounter_id = ever_registered_obs.encounter_id
+              AND ever_registered_obs.value_coded = (SELECT concept_id FROM concept_name
+                WHERE name = 'Yes' AND voided = 0 LIMIT 1)
             INNER JOIN obs AS last_taken_art_obs
               ON last_taken_art_obs.encounter_id = clinic_registration_encounter.encounter_id
               AND last_taken_art_obs.voided = 0
