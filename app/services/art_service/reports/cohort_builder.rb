@@ -1602,6 +1602,13 @@ EOF
             AND ever_registered_obs.value_coded = (
               SELECT concept_id FROM concept_name WHERE name = 'Yes' AND voided = 0 LIMIT 1
             )
+          LEFT JOIN (
+              SELECT person_id, MIN(obs_datetime) AS obs_datetime
+              FROM ever_registered_obs
+              GROUP BY person_id
+            ) AS max_ever_registered_obs
+              ON max_ever_registered_obs.person_id = ever_registered_obs.person_id
+              AND max_ever_registered_obs.obs_datetime = ever_registered_obs.obs_datetime
           LEFT JOIN obs AS last_taken_art_obs
             ON last_taken_art_obs.encounter_id = ever_registered_obs.encounter_id
             AND last_taken_art_obs.voided = 0
@@ -1629,6 +1636,13 @@ EOF
               ON clinic_registration_encounter.encounter_id = ever_registered_obs.encounter_id
               AND ever_registered_obs.value_coded = (SELECT concept_id FROM concept_name
                 WHERE name = 'Yes' AND voided = 0 LIMIT 1)
+            INNER JOIN (
+              SELECT person_id, MIN(obs_datetime) AS obs_datetime
+              FROM ever_registered_obs
+              GROUP BY person_id
+            ) AS max_ever_registered_obs
+              ON max_ever_registered_obs.person_id = ever_registered_obs.person_id
+              AND max_ever_registered_obs.obs_datetime = ever_registered_obs.obs_datetime
             INNER JOIN obs AS last_taken_art_obs
               ON last_taken_art_obs.encounter_id = clinic_registration_encounter.encounter_id
               AND last_taken_art_obs.voided = 0
