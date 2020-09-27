@@ -154,14 +154,18 @@ EOF
 
       # Writes the report to database
       def save_report
-        report = Report.create(name: @name, start_date: @start_date,
-                               end_date: @end_date, type: @type,
-                               creator: User.current.id,
-                               renderer_type: 'PDF')
+        Report.transaction do
+          report = Report.create(name: @name,
+                                 start_date: @start_date,
+                                 end_date: @end_date,
+                                 type: @type,
+                                 creator: User.current.id,
+                                 renderer_type: 'PDF')
 
-        values = save_report_values(report)
+          values = save_report_values(report)
 
-        { report: report, values: values }
+          { report: report, values: values }
+        end
       end
 
       # Writes the report values to database

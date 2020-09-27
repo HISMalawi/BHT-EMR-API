@@ -405,6 +405,16 @@ class PatientService
     return  visit
   end
 
+  def tpt_prescription_count(patient, program, date)
+    drug_concept_ids = ConceptName.where("name IN(?)", ["Isoniazid","Rifapentine"]).map(&:concept_id)
+    orders =  Order.joins("INNER JOIN drug_order o ON o.order_id = orders.order_id
+      INNER JOIN drug d ON d.drug_id = o.drug_inventory_id")\
+      .where("d.concept_id IN(?) AND orders.patient_id = ? AND DATE(start_date) < ?
+      AND quantity > 0", drug_concept_ids, patient.id, date).\
+      group("DATE(orders.start_date)").select("DATE(start_date)")
+      return {count: orders.length}
+  end
+
   private
 
   def npid_identifier_types
