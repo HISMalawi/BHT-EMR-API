@@ -118,34 +118,40 @@ EOF
       end
 
       def cohort_report_drill_down(id)
-        people = []
+        id = ActiveRecord::Base.connection.quote(id)
 
-        patients = ActiveRecord::Base.connection.select_all <<EOF
-        SELECT i.identifier arv_number, p.birthdate,
-          p.gender, n.given_name, n.family_name, p.person_id patient_id
-        FROM person p
-        INNER JOIN cohort_drill_down c ON c.patient_id = p.person_id
-        LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
-        AND i.voided = 0 AND i.identifier_type = 4
-        LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
-        WHERE c.reporting_report_design_resource_id = #{id}
-        GROUP BY p.person_id ORDER BY p.person_id, p.date_created;
-EOF
+        patients = ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT i.identifier arv_number, p.birthdate,
+                 p.gender, n.given_name, n.family_name, p.person_id patient_id,
+                 patient_outcome(
+                   p.person_id,
+                   (SELECT report.end_date
+                    FROM reporting_report_design AS report
+                    INNER JOIN reporting_report_design_resource AS report_value
+                      ON report_value.report_design_id = report.id
+                      AND report_value.id = #{id}
+                    LIMIT 1)
+                 ) AS outcome
+          FROM person p
+          INNER JOIN cohort_drill_down c ON c.patient_id = p.person_id
+          LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
+          AND i.voided = 0 AND i.identifier_type = 4
+          LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
+          WHERE c.reporting_report_design_resource_id = #{id}
+          GROUP BY p.person_id ORDER BY p.person_id, p.date_created;
+        SQL
 
-        return {} if patients.blank?
-
-        patients.select do |person|
-          people << {
+        patients.map do |person|
+          {
             person_id: person['patient_id'],
             given_name: person['given_name'],
             family_name: person['family_name'],
             birthdate: person['birthdate'],
             gender: person['gender'],
-            arv_number: person['arv_number']
+            arv_number: person['arv_number'],
+            outcome: person['outcome']
           }
         end
-
-        return people
       end
 
       private
