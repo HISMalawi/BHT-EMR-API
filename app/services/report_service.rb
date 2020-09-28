@@ -22,7 +22,7 @@ class ReportService
     report = find_report(type, name, start_date, end_date, **kwargs)
 
     if report && @overwrite_mode
-      report.void('Over-written by new report')
+      report.destroy
       report = nil
     end
 

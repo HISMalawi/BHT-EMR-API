@@ -180,12 +180,11 @@ EOF
                                             description: value.description,
                                             contents: value_contents_to_json(value.contents))
 
-          report_value_saved = report_value.errors.empty?
-          unless report_value_saved
+          unless report_value.errors.empty?
             raise "Failed to save report value: #{report_value.errors.as_json}"
-          else
-            save_patients(report_value, value_contents_to_json(value).contents)
           end
+
+          save_patients(report_value, value_contents_to_json(value).contents)
 
           report_value
         end
