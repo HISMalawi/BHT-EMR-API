@@ -22,6 +22,7 @@ module ARTService
       end
 
       def build_report
+        clear_drill_down
         @cohort_builder.build(@cohort_struct, @start_date, @end_date)
         save_report
       end
@@ -123,17 +124,11 @@ EOF
         patients = ActiveRecord::Base.connection.select_all <<~SQL
           SELECT i.identifier arv_number, p.birthdate,
                  p.gender, n.given_name, n.family_name, p.person_id patient_id,
-                 patient_outcome(
-                   p.person_id,
-                   (SELECT report.end_date
-                    FROM reporting_report_design AS report
-                    INNER JOIN reporting_report_design_resource AS report_value
-                      ON report_value.report_design_id = report.id
-                      AND report_value.id = #{id}
-                    LIMIT 1)
-                 ) AS outcome
+                 outcomes.cum_outcome AS outcome
           FROM person p
           INNER JOIN cohort_drill_down c ON c.patient_id = p.person_id
+          INNER JOIN temp_patient_outcomes AS outcomes
+            ON outcomes.patient_id = c.patient_id
           LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
           AND i.voided = 0 AND i.identifier_type = 4
           LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
@@ -194,6 +189,12 @@ EOF
 
           report_value
         end
+      end
+
+      def clear_drill_down
+        ActiveRecord::Base.connection.execute <<~SQL
+          TRUNCATE cohort_drill_down
+        SQL
       end
 
       def value_contents_to_json(value_contents)
