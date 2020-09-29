@@ -46,7 +46,7 @@ module ANCService
              maternal_status VARCHAR(10),
              given_ipt INT(1),
              screened_for_tb INT(1)
-          ) ENGINE=MEMORY;'
+          );'
         )
 
         return {temp_disaggregated: 'created'}

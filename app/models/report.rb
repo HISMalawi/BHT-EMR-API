@@ -4,7 +4,9 @@ class Report < RetirableRecord
   self.table_name = :reporting_report_design
 
   belongs_to :type, foreign_key: :report_definition_id, class_name: 'ReportType'
-  has_many :values, class_name: 'ReportValue', foreign_key: :report_design_id
+  has_many :values, class_name: 'ReportValue',
+                    foreign_key: :report_design_id,
+                    dependent: :delete_all
 
   after_void :void_values
 

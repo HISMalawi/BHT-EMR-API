@@ -22,6 +22,7 @@ module ARTService
       end
 
       def build_report
+        clear_drill_down
         @cohort_builder.build(@cohort_struct, @start_date, @end_date)
         save_report
       end
@@ -118,34 +119,34 @@ EOF
       end
 
       def cohort_report_drill_down(id)
-        people = []
+        id = ActiveRecord::Base.connection.quote(id)
 
-        patients = ActiveRecord::Base.connection.select_all <<EOF
-        SELECT i.identifier arv_number, p.birthdate,
-          p.gender, n.given_name, n.family_name, p.person_id patient_id
-        FROM person p
-        INNER JOIN cohort_drill_down c ON c.patient_id = p.person_id
-        LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
-        AND i.voided = 0 AND i.identifier_type = 4
-        LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
-        WHERE c.reporting_report_design_resource_id = #{id}
-        GROUP BY p.person_id ORDER BY p.person_id, p.date_created;
-EOF
+        patients = ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT i.identifier arv_number, p.birthdate,
+                 p.gender, n.given_name, n.family_name, p.person_id patient_id,
+                 outcomes.cum_outcome AS outcome
+          FROM person p
+          INNER JOIN cohort_drill_down c ON c.patient_id = p.person_id
+          INNER JOIN temp_patient_outcomes AS outcomes
+            ON outcomes.patient_id = c.patient_id
+          LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
+          AND i.voided = 0 AND i.identifier_type = 4
+          LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
+          WHERE c.reporting_report_design_resource_id = #{id}
+          GROUP BY p.person_id ORDER BY p.person_id, p.date_created;
+        SQL
 
-        return {} if patients.blank?
-
-        patients.select do |person|
-          people << {
+        patients.map do |person|
+          {
             person_id: person['patient_id'],
             given_name: person['given_name'],
             family_name: person['family_name'],
             birthdate: person['birthdate'],
             gender: person['gender'],
-            arv_number: person['arv_number']
+            arv_number: person['arv_number'],
+            outcome: person['outcome']
           }
         end
-
-        return people
       end
 
       private
@@ -154,14 +155,18 @@ EOF
 
       # Writes the report to database
       def save_report
-        report = Report.create(name: @name, start_date: @start_date,
-                               end_date: @end_date, type: @type,
-                               creator: User.current.id,
-                               renderer_type: 'PDF')
+        Report.transaction do
+          report = Report.create(name: @name,
+                                 start_date: @start_date,
+                                 end_date: @end_date,
+                                 type: @type,
+                                 creator: User.current.id,
+                                 renderer_type: 'PDF')
 
-        values = save_report_values(report)
+          values = save_report_values(report)
 
-        { report: report, values: values }
+          { report: report, values: values }
+        end
       end
 
       # Writes the report values to database
@@ -176,15 +181,20 @@ EOF
                                             description: value.description,
                                             contents: value_contents_to_json(value.contents))
 
-          report_value_saved = report_value.errors.empty?
-          unless report_value_saved
+          unless report_value.errors.empty?
             raise "Failed to save report value: #{report_value.errors.as_json}"
-          else
-            save_patients(report_value, value_contents_to_json(value).contents)
           end
+
+          save_patients(report_value, value_contents_to_json(value).contents)
 
           report_value
         end
+      end
+
+      def clear_drill_down
+        ActiveRecord::Base.connection.execute <<~SQL
+          TRUNCATE cohort_drill_down
+        SQL
       end
 
       def value_contents_to_json(value_contents)
