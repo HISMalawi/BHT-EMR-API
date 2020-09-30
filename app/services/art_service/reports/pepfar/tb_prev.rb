@@ -126,8 +126,6 @@ module ARTService
 
         def tb_med_dispensations
           initiation_start_date = (@completion_start_date.to_date - 180.days).strftime('%Y-%m-%d 00:00:00')
-          initiation_end_date = (@completion_start_date.to_date - 1.day).to_date
-          initiation_end_date = initiation_end_date.strftime('%Y-%m-%d 23:59:59')
 
           return ActiveRecord::Base.connection.select_all <<-SQL
             SELECT
@@ -139,7 +137,7 @@ module ARTService
             INNER JOIN drug d ON d.drug_id = t.drug_inventory_id
             INNER JOIN encounter e ON e.patient_id = o.patient_id AND e.program_id = 1
             WHERE o.voided = 0 AND (o.start_date
-            BETWEEN '#{initiation_start_date}' AND '#{initiation_end_date}')
+            BETWEEN '#{initiation_start_date}' AND '#{@completion_end_date}')
             AND d.concept_id = 656 AND t.quantity > 0
             GROUP BY o.patient_id, t.drug_inventory_id, DATE(o.start_date)
             ORDER BY o.patient_id;
