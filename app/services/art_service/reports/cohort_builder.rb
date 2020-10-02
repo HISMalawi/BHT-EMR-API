@@ -1394,7 +1394,7 @@ EOF
         asymptomatic_concepts = ConceptName.where(name: ['ASYMPTOMATIC', 'Asymptomatic HIV infection'])
                                            .select(:concept_id)
         find_patients_by_reason_for_starting(start_date, end_date, asymptomatic_concepts)
-          .each { |patient_id,| patients << patient_id }
+          .each { |patient| patients << patient['patient_id'] }
 
         reason_concepts = ConceptName.where(name: ['WHO stage I adult',
                                                    'WHO stage I peds',
@@ -1410,7 +1410,7 @@ EOF
         start_date = revised_art_guidelines_date if start_date.to_date < revised_art_guidelines_date
 
         find_patients_by_reason_for_starting(start_date, end_date, reason_concepts)
-          .each { |patient_id,| patients << patient_id }
+          .each { |patient| patients << patient['patient_id'] }
 
         patients
       end
