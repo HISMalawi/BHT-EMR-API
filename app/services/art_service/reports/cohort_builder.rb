@@ -544,11 +544,17 @@ module ARTService
           INNER JOIN person ON person.person_id = patient_program.patient_id
           LEFT JOIN patient_state AS outcome
             ON outcome.patient_program_id = patient_program.patient_program_id
+          LEFT JOIN encounter AS clinic_registration_encounter
+            ON clinic_registration_encounter.encounter_type = (
+              SELECT encounter_type_id FROM encounter_type WHERE name = 'HIV CLINIC REGISTRATION' LIMIT 1
+            )
+            AND clinic_registration_encounter.patient_id = patient_program.patient_id
           LEFT JOIN obs AS art_start_date_obs
             ON art_start_date_obs.concept_id = 2516
             AND art_start_date_obs.person_id = patient_program.patient_id
             AND art_start_date_obs.voided = 0
             AND art_start_date_obs.obs_datetime <= '#{end_date}'
+            AND art_start_date_obs.encounter_id = clinic_registration_encounter.encounter_id
           LEFT JOIN orders AS   art_order
             ON art_order.patient_id = patient_program.patient_id
             AND art_order.voided = 0
