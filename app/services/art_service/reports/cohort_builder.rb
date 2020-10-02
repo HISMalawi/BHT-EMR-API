@@ -1495,7 +1495,7 @@ EOF
         pregnant_women_ids = [0] if pregnant_women_ids.blank?
 
         ActiveRecord::Base.connection.select_all(
-          "SELECT * FROM temp_earliest_start_date t
+          "SELECT t.patient_id FROM temp_earliest_start_date t
           WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
           AND (gender = 'F' OR gender = 'Female')
           AND t.patient_id NOT IN(#{pregnant_women_ids.join(',')}) GROUP BY patient_id"

@@ -211,35 +211,25 @@ EOF
         end
       end
 
+      PATIENT_ID_KEYS = ['patient_id', :patient_id, 'person_id', :person_id].freeze
+
       def save_patients(r, values)
-        return if values.blank?
-        patient_ids = []
+        return if values.blank? || !values.respond_to?(:each)
 
-        begin
+        get_patient_id = lambda do |patient, keys = PATIENT_ID_KEYS|
+          break nil if keys.empty?
 
-          (values.rows || []).each do |v|
-            patient_ids << v[0]
+          patient[keys.first] || get_patient_id[patient, keys[1..keys.size]]
+        end
+
+        patient_ids = values.map do |patient|
+          if patient.respond_to?(:key?) && PATIENT_ID_KEYS.any? { |key| patient.key?(key) }
+            get_patient_id[patient]
+          elsif patient.respond_to?(:each) && patient.respond_to?(:first)
+            patient.first
+          else
+            patient
           end
-
-        rescue
-
-          begin
-            if values.first.include?(:patient_id)
-              values.select do |obj|
-                patient_ids << obj[:patient_id]
-              end
-            end
-          rescue
-            begin
-              values.select do |patient_id|
-                patient_ids << patient_id
-              end
-            rescue
-              puts "#{r.name} +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #{values.inspect}"
-              return
-            end
-          end
-
         end
 
         sql_insert_statement = nil
