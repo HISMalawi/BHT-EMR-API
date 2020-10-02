@@ -665,14 +665,14 @@ IF set_patient_state = 6 THEN
   SET set_outcome = 'Treatment stopped';
 END IF;
 
-IF set_patient_state = 7 THEN
+IF set_patient_state = 7 OR set_outcome = 'Pre-ART (Continue)' OR set_outcome IS NULL THEN
   SET set_patient_state = current_defaulter(patient_id, set_timestamp);
 
   IF set_patient_state = 1 THEN
     SET set_outcome = 'Defaulted';
   END IF;
 
-  IF set_patient_state = 0 THEN
+  IF set_patient_state = 0 OR set_outcome IS NULL THEN
 
     SET dispensed_quantity = (SELECT d.quantity
       FROM orders o
@@ -2367,14 +2367,15 @@ IF set_patient_state = 6 THEN
   SET set_outcome = 'Treatment stopped';
 END IF;
 
-IF set_patient_state = 7 THEN
+IF set_patient_state = 7 OR set_outcome = 'Pre-ART (Continue)' OR set_outcome IS NULL THEN
+
   SET set_patient_state = current_pepfar_defaulter(patient_id, set_timestamp);
 
   IF set_patient_state = 1 THEN
     SET set_outcome = 'Defaulted';
   END IF;
 
-  IF set_patient_state = 0 THEN
+  IF set_patient_state = 0 OR set_outcome IS NULL THEN
 
     SET dispensed_quantity = (SELECT d.quantity
       FROM orders o
