@@ -198,7 +198,7 @@ module ARTService::Reports::Cohort::Outcomes
           SELECT patient_id
           FROM orders
           LEFT JOIN drug_order USING (order_id)
-          WHERE start_date <= #{date}
+          WHERE start_date < (DATE(#{date}) + INTERVAL 1 DAY)
             AND quantity > 0
             AND order_type_id = #{drug_order_type.order_type_id}
             AND concept_id IN (#{arv_drugs_concept_set.to_sql})
@@ -248,7 +248,7 @@ module ARTService::Reports::Cohort::Outcomes
           FROM orders INNER JOIN drug_order USING (order_id)
           WHERE order_type_id = #{drug_order_type.order_type_id}
             AND concept_id IN (#{arv_drugs_concept_set.to_sql})
-            AND start_date <= #{date}
+            AND start_date < (DATE(#{date}) + INTERVAL 1 DAY)
             AND quantity > 0
             AND voided = 0
             AND patient_id IN (SELECT patient_id FROM temp_earliest_start_date)
@@ -259,7 +259,7 @@ module ARTService::Reports::Cohort::Outcomes
           AND max_drug_orders.start_date = orders.start_date
         WHERE order_type_id = #{drug_order_type.order_type_id}
           AND concept_id IN (#{arv_drugs_concept_set.to_sql})
-          AND orders.start_date <= #{date}
+          AND orders.start_date < (DATE(#{date}) + INTERVAL 1 DAY)
           AND quantity > 0
           AND voided = 0
           AND orders.patient_id IN (SELECT patient_id FROM temp_earliest_start_date)
