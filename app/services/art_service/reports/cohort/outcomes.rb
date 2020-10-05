@@ -45,12 +45,13 @@ module ARTService::Reports::Cohort::Outcomes
     ActiveRecord::Base.connection.execute <<~SQL
       CREATE TABLE temp_patient_outcomes (
         patient_id INT(11) PRIMARY KEY,
-        cum_outcome VARCHAR(120) NOT NULL
+        cum_outcome VARCHAR(120) NOT NULL,
+        outcome_date DATE DEFAULT NULL
       )
     SQL
 
     ActiveRecord::Base.connection.execute <<~SQL
-      CREATE INDEX idx_outcomes ON temp_patient_outcomes (patient_id, cum_outcome)
+      CREATE INDEX idx_outcomes ON temp_patient_outcomes (patient_id, cum_outcome, outcome_date)
     SQL
   end
 
@@ -61,7 +62,7 @@ module ARTService::Reports::Cohort::Outcomes
 
     ActiveRecord::Base.connection.execute <<~SQL
       INSERT INTO temp_patient_outcomes
-      SELECT patients.patient_id, 'Patient died'
+      SELECT patients.patient_id, 'Patient died', patient_state.start_date
       FROM temp_earliest_start_date AS patients
       INNER JOIN patient_program
         ON patient_program.patient_id = patients.patient_id
@@ -85,14 +86,15 @@ module ARTService::Reports::Cohort::Outcomes
     ActiveRecord::Base.connection.execute <<~SQL
       INSERT INTO temp_patient_outcomes
       SELECT patients.patient_id,
-              (
-                SELECT name FROM concept_name
-                WHERE concept_id = (
-                SELECT concept_id FROM program_workflow_state
-                WHERE program_workflow_state_id = patient_state.state
-                LIMIT 1
-                )
-              ) AS cum_outcome
+             (
+               SELECT name FROM concept_name
+               WHERE concept_id = (
+               SELECT concept_id FROM program_workflow_state
+               WHERE program_workflow_state_id = patient_state.state
+               LIMIT 1
+               )
+             ) AS cum_outcome,
+             patient_state.start_date
       FROM temp_earliest_start_date AS patients
       INNER JOIN patient_program
         ON patient_program.patient_id = patients.patient_id
@@ -128,7 +130,8 @@ module ARTService::Reports::Cohort::Outcomes
       SELECT patients.patient_id,
              IF(current_defaulter(patients.patient_id, #{date}) = 1,
                 'Defaulted',
-                'Pre-ART (Continue)')
+                'Pre-ART (Continue)'),
+             patient_state.start_date
       FROM temp_earliest_start_date AS patients
       INNER JOIN patient_program
         ON patient_program.patient_id = patients.patient_id
@@ -164,7 +167,8 @@ module ARTService::Reports::Cohort::Outcomes
       SELECT patients.patient_id,
              IF(current_defaulter(patients.patient_id, #{date}) = 1,
                 'Defaulted',
-                'Unknown')
+                'Unknown'),
+             NULL
       FROM temp_earliest_start_date AS patients
       INNER JOIN patient_program
         ON patient_program.patient_id = patients.patient_id
@@ -190,7 +194,8 @@ module ARTService::Reports::Cohort::Outcomes
     ActiveRecord::Base.connection.execute <<~SQL
       INSERT INTO temp_patient_outcomes
       SELECT patients.patient_id,
-             'Unknown'
+             'Unknown',
+             NULL
       FROM temp_earliest_start_date AS patients
       WHERE date_enrolled <= #{date}
         AND patient_id NOT IN (SELECT patient_id FROM temp_patient_outcomes)
@@ -212,7 +217,7 @@ module ARTService::Reports::Cohort::Outcomes
 
     ActiveRecord::Base.connection.execute <<~SQL
       INSERT INTO temp_patient_outcomes
-      SELECT patients.patient_id, 'On antiretrovirals'
+      SELECT patients.patient_id, 'On antiretrovirals', patient_state.start_date
       FROM temp_earliest_start_date AS patients
       INNER JOIN patient_program
         ON patient_program.patient_id = patients.patient_id
@@ -282,7 +287,8 @@ module ARTService::Reports::Cohort::Outcomes
     ActiveRecord::Base.connection.execute <<~SQL
       INSERT INTO temp_patient_outcomes
       SELECT patient_id,
-             patient_outcome(patient_id, #{date})
+             patient_outcome(patient_id, #{date}),
+             NULL
       FROM temp_earliest_start_date
       WHERE date_enrolled <= #{date}
         AND patient_id NOT IN (SELECT patient_id FROM temp_patient_outcomes)
