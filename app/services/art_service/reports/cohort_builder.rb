@@ -549,6 +549,7 @@ module ARTService
               SELECT encounter_type_id FROM encounter_type WHERE name = 'HIV CLINIC REGISTRATION' LIMIT 1
             )
             AND clinic_registration_encounter.patient_id = patient_program.patient_id
+            AND clinic_registration_encounter.voided = 0
           LEFT JOIN obs AS art_start_date_obs
             ON art_start_date_obs.concept_id = 2516
             AND art_start_date_obs.person_id = patient_program.patient_id
