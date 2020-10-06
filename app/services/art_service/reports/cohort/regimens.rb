@@ -27,7 +27,7 @@ module ARTService::Reports::Cohort::Regimens
             AND drug_order.quantity > 0
           WHERE orders.voided = 0
             AND orders.concept_id IN (#{arv_drugs_concept_set.to_sql})
-            AND orders.start_date <= #{date}
+            AND orders.start_date < (DATE(#{date}) + INTERVAL 1 DAY)
             AND orders.patient_id IN (
               SELECT patient_id FROM temp_patient_outcomes WHERE cum_outcome = 'On antiretrovirals'
             )
