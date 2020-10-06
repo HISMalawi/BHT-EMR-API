@@ -13,7 +13,14 @@
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
+/* NOTE: It was noted that some databases have all VIEWs replaced by TABLES. This
+ * script fails to load on those databases because of that. Can't replace tables
+ * with views. Therefore, we preceed all CREATE VIEW statements with drop table
+ * statements to force our way through the damn databases.
+ */
+
 -- view to capture avg ART/HIV care treatment time for ART patients at a given site
+DROP TABLE IF EXISTS `patient_service_waiting_time`;
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
 VIEW `patient_service_waiting_time` AS
     SELECT
@@ -37,6 +44,7 @@ VIEW `patient_service_waiting_time` AS
     ORDER BY `e`.`patient_id` , `e`.`encounter_datetime`;
 
 -- Non-voided HIV Clinic Consultation encounters
+DROP TABLE IF EXISTS `clinic_consultation_encounter`;
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   VIEW `clinic_consultation_encounter` AS
   SELECT `encounter`.`encounter_id` AS `encounter_id`,
@@ -59,12 +67,14 @@ CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   WHERE (`encounter`.`encounter_type` = 53 AND `encounter`.`voided` = 0);
 
 -- ARV drugs
+DROP TABLE IF EXISTS `arv_drug`;
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
 	VIEW `arv_drug` AS
 	SELECT `drug_id` FROM `drug`
 	WHERE `concept_id` IN (SELECT `concept_id` FROM `concept_set` WHERE `concept_set` = 1085);
 
 -- ARV drugs orders
+DROP TABLE IF EXISTS `arv_drugs_orders`;
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
    VIEW `arv_drugs_orders` AS
    SELECT `ord`.`patient_id`, `ord`.`encounter_id`, `ord`.`concept_id`, `ord`.`start_date`
@@ -73,6 +83,7 @@ CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
    AND `ord`.`concept_id` IN (SELECT `concept_id` FROM `concept_set` WHERE `concept_set` = 1085);
 
 -- Non-voided HIV Clinic Registration encounters
+DROP TABLE IF EXISTS `clinic_registration_encounter`;
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
 	VIEW `clinic_registration_encounter` AS
 	SELECT `encounter`.`encounter_id` AS `encounter_id`,
@@ -146,6 +157,7 @@ END$$
 DELIMITER ;
 
 -- The date of the first On ARVs state for each patient
+DROP TABLE IF EXISTS `earliest_start_date`;
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   VIEW `earliest_start_date` AS
   select
@@ -170,6 +182,7 @@ CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   group by `p`.`patient_id`;
 
 -- The date of the first On ARVs state for each patient
+DROP TABLE IF EXISTS `patients_on_arvs`;
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
 	VIEW `patients_on_arvs` AS
     select
@@ -192,6 +205,7 @@ CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
     group by `p`.`patient_id`;
 
 -- reason_ or art eligibility obs
+DROP TABLE IF EXISTS `reason_for_art_eligibility_obs`;
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   	VIEW `reason_for_art_eligibility_obs` AS
     select
@@ -210,6 +224,7 @@ CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
     order by `o`.`obs_datetime` desc;
 
 -- The date of the first On ARVs state for each patient
+DROP TABLE IF EXISTS `patient_first_arv_amount_dispensed`;
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
 VIEW `patient_first_arv_amount_dispensed` AS
     select
@@ -244,6 +259,7 @@ VIEW `patient_first_arv_amount_dispensed` AS
                     and (`e`.`voided` = 0)))));
 
 -- 7937 = Ever registered at ART clinic
+DROP TABLE IF EXISTS `ever_registered_obs`;
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   VIEW `ever_registered_obs` AS
   SELECT `obs`.`obs_id` AS `obs_id`,
@@ -279,6 +295,7 @@ CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   WHERE ((`obs`.`concept_id` = 7937) AND (`obs`.`voided` = 0))
   AND (`obs`.`value_coded` = 1065);
 
+DROP TABLE IF EXISTS `patient_pregnant_obs`;
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   VIEW `patient_pregnant_obs` AS
   SELECT `obs`.`obs_id` AS `obs_id`,
@@ -317,6 +334,7 @@ CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
          (`obs`.`voided` = 0) AND
          (`person`.`gender` = 'F'));
 
+DROP TABLE IF EXISTS `patient_state_on_arvs`;
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   VIEW `patient_state_on_arvs` AS
   SELECT `patient_state`.`patient_state_id` AS `patient_state_id`,
@@ -336,6 +354,7 @@ CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   FROM `patient_state`
   WHERE (`patient_state`.`state` = 7 AND `patient_state`.`voided` = 0);
 
+DROP TABLE IF EXISTS `regimen_observation`;
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   VIEW `regimen_observation` AS
   SELECT `obs`.`obs_id` AS `obs_id`,
@@ -370,6 +389,7 @@ CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   FROM `obs`
   WHERE ((`obs`.`concept_id` = 2559) AND (`obs`.`voided` = 0));
 
+DROP TABLE IF EXISTS `start_date_observation`;
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   VIEW `start_date_observation` AS
   SELECT `obs`.`person_id` AS `person_id`,
@@ -379,6 +399,7 @@ CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   WHERE ((`obs`.`concept_id` = 2516) AND (`obs`.`voided` = 0))
   GROUP BY `obs`.`person_id`,`obs`.`value_datetime`;
 
+DROP TABLE IF EXISTS `tb_status_observations`;
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   VIEW `tb_status_observations` AS
   SELECT `obs`.`obs_id` AS `obs_id`,
@@ -414,6 +435,7 @@ CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   WHERE ((`obs`.`concept_id` = 7459) and (`obs`.`voided` = 0));
 
 -- The following 2 views will be used in calculation of defaulted dates
+DROP TABLE IF EXISTS `amount_dispensed_obs`;
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   VIEW `amount_dispensed_obs` AS
   SELECT
@@ -436,6 +458,7 @@ FROM
 WHERE
     `o`.`concept_id` = 2834 AND `o`.`voided` = 0;
 
+DROP TABLE IF EXISTS `amount_brought_back_obs`;
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   VIEW `amount_brought_back_obs` AS
 SELECT
@@ -456,6 +479,7 @@ FROM
 WHERE
     `o`.`concept_id` = 2540 AND `o`.`voided` = 0;
 
+DROP TABLE IF EXISTS `reason_for_eligibility_obs`;
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   VIEW `reason_for_eligibility_obs` AS
 SELECT
@@ -472,6 +496,7 @@ FROM
         AND `n`.`voided` = 0
 ORDER BY `e`.`patient_id` , `o`.`obs_datetime` DESC;
 
+DROP TABLE IF EXISTS `patients_with_has_transfer_letter_yes`;
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   VIEW `patients_with_has_transfer_letter_yes` AS
 SELECT
@@ -489,6 +514,7 @@ WHERE
         AND `o`.`value_coded` = 1065
         AND `o`.`voided` = 0;
 
+DROP TABLE IF EXISTS `all_patients_attributes`;
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   VIEW `all_patients_attributes` AS
 SELECT
@@ -502,6 +528,7 @@ FROM
 WHERE `voided` = 0
 GROUP BY `person_id`;
 
+DROP TABLE IF EXISTS `all_patient_identifiers`;
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   VIEW `all_patient_identifiers` AS
 SELECT
@@ -520,6 +547,7 @@ FROM
 WHERE `voided` = 0
 GROUP BY `patient_id`;
 
+DROP TABLE IF EXISTS `all_person_addresses`;
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   VIEW `all_person_addresses` AS
 SELECT
@@ -536,6 +564,7 @@ WHERE
                 AND `pad`.`voided` = 0)
         AND `p`.`voided` = 0;
 
+DROP TABLE IF EXISTS `guardians`;
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   VIEW `guardians` AS
 SELECT
@@ -565,6 +594,7 @@ WHERE
 AND `r`.`person_a` IN (SELECT `e`.`patient_id` FROM `earliest_start_date` `e`)
 ORDER BY `patient_id`;
 
+DROP TABLE IF EXISTS `patients_demographics`;
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   VIEW `patients_demographics` AS
 SELECT
@@ -1809,7 +1839,11 @@ DECLARE num_of_days INT;
 
 IF set_status = 'Patient died' THEN
 
-  SET date_of_death = (SELECT death_date FROM temp_earliest_start_date WHERE patient_id = set_patient_id);
+  SET date_of_death = (
+    SELECT COALESCE(death_date, outcome_date)
+    FROM temp_patient_outcomes INNER JOIN temp_earliest_start_date USING (patient_id)
+    WHERE cum_outcome = 'Patient died' AND patient_id = set_patient_id
+  );
 
   IF date_of_death IS NULL THEN
     RETURN 'Unknown';
