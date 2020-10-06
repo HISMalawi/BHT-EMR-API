@@ -297,11 +297,13 @@ class StockManagementService
     # TODO: Implement some sort of caching for this method
     as_of_date ||= DRUG_CONSUMPTION_RATE_INTERVAL.days.ago.to_date
 
-    total_drugs_consumed = Pharmacy.joins(:item)
-                                   .where('(pharmacy_obs.drug_id = :drug_id OR pharmacy_batch_items.drug_id = :drug_id)
-                                           AND pharmacy_encounter_type = :event_type AND encounter_date >= :date',
-                                          drug_id: drug_id, event_type: STOCK_DEBIT, date: as_of_date)\
-                                   .sum(:value_numeric)
+    total_drugs_consumed = Pharmacy.joins(:item, :type)
+                                   .where(encounter_date: as_of_date..Float::INFINITY)
+                                   .merge(PharmacyBatchItem.where(drug_id: drug_id))
+                                   .merge(PharmacyEncounterType.where(name: STOCK_DEBIT))
+                                   .select('SUM(ABS(value_numeric)) AS count')
+                                   .first
+                                   &.count
 
     (total_drugs_consumed || 0) / (Date.today - as_of_date).to_i
   end
