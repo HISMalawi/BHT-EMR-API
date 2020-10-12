@@ -554,7 +554,7 @@ module ARTService
             ON art_start_date_obs.concept_id = 2516
             AND art_start_date_obs.person_id = patient_program.patient_id
             AND art_start_date_obs.voided = 0
-            AND art_start_date_obs.obs_datetime <= '#{end_date}'
+            AND art_start_date_obs.obs_datetime < (DATE('#{end_date}') + INTERVAL 1 DAY)
             AND art_start_date_obs.encounter_id = clinic_registration_encounter.encounter_id
           LEFT JOIN orders AS   art_order
             ON art_order.patient_id = patient_program.patient_id
@@ -1625,8 +1625,8 @@ EOF
           WHERE (date_enrolled BETWEEN #{start_date} AND #{end_date})
             AND date_enrolled != earliest_start_date
             AND COALESCE(TIMESTAMPDIFF(day,
-                                      last_taken_art_obs.value_datetime,
-                                      last_taken_art_obs.obs_datetime) <= 14,
+                                       last_taken_art_obs.value_datetime,
+                                       last_taken_art_obs.obs_datetime) <= 14,
                         TRUE)
           GROUP BY temp_earliest_start_date.patient_id;
         SQL
