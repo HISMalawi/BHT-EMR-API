@@ -994,7 +994,7 @@ module ARTService
           GROUP BY adherence.person_id
         SQL
 
-        not_adherent = not_adherent.map { |row| row['person_id'] }
+        not_adherent = not_adherent.empty? ? [0] : not_adherent.map { |row| row['person_id'] }
 
         adherent = ActiveRecord::Base.connection.select_all <<~SQL
           SELECT adherence.person_id
