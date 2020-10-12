@@ -33,7 +33,7 @@ class Api::V1::PatientProgramsController < ApplicationController
   end
 
   def destroy
-    patient_program = PatientProgram.find_by(params[:id])
+    patient_program = PatientProgram.find_by(patient_program_id: params[:id])
     patient_program&.void(params[:reason] || "Voided by #{User.current.username}")
 
     if patient_program.nil? || patient_program.errors.empty?
