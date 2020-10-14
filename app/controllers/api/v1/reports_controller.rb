@@ -165,6 +165,10 @@ class Api::V1::ReportsController < ApplicationController
     render json: service.tb_prev(params[:start_date], params[:end_date])
   end
 
+  def patient_visit_types
+    render json: service.patient_visit_types(params[:start_date], params[:end_date])
+  end
+
   private
 
   def service

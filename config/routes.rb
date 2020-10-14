@@ -306,4 +306,5 @@ Rails.application.routes.draw do
   get '/api/v1/clients', to: 'api/v1/people#list'
   get '/api/v1/tb_prev', to: 'api/v1/reports#tb_prev'
   get '/api/v1/tpt_prescription_count' => 'api/v1/patients#tpt_prescription_count'
+  get '/api/v1/patient_visit_types', to: 'api/v1/reports#patient_visit_types'
 end

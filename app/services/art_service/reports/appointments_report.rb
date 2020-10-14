@@ -53,6 +53,47 @@ module ARTService
         return patients
       end
 
+      def patient_visit_types
+        encounter_type = EncounterType.find_by_name("HIV RECEPTION")
+        yes_concept = ConceptName.find_by_name("YES").concept_id
+
+        visits = Observation.joins("INNER JOIN encounter e ON e.encounter_id = obs.encounter_id
+          INNER JOIN concept_name c ON c.concept_id = obs.concept_id").\
+          where("encounter_type = ? AND (encounter_datetime BETWEEN ? AND ?)", 
+            encounter_type.id, @start_date.strftime('%Y-%m-%d 00:00:00'), 
+              @end_date.strftime('%Y-%m-%d 23:59:59')).\
+                select("e.patient_id, obs.obs_datetime, c.name,
+                  c.concept_id, obs.value_coded").group("DATE(obs.obs_datetime),
+                     e.patient_id, c.concept_id").order("obs_datetime ASC")
+
+        hiv_reception_breakdown = {}
+        
+        (visits || []).each do |v|
+          visit_date = v['obs_datetime'].to_date
+          visit_type = v["name"]
+          ans_given = v['value_coded'].to_i == yes_concept
+          patient_id = v['patient_id'].to_i
+          patient_present = (visit_type.match(/patient/i) && ans_given ? true : false)
+          guardian_present = (visit_type.match(/person/i) && ans_given ? true : false)
+
+          if hiv_reception_breakdown[visit_date].blank?
+            hiv_reception_breakdown[visit_date] = {}
+            hiv_reception_breakdown[visit_date][patient_id] = {
+              patient_present: 0, guardian_present: 0
+            }            
+          elsif hiv_reception_breakdown[visit_date][patient_id].blank?
+            hiv_reception_breakdown[visit_date][patient_id] = {
+              patient_present: false, guardian_present: false
+            }            
+          end
+
+          hiv_reception_breakdown[visit_date][patient_id][:patient_present] = patient_present if visit_type.match(/patient/i)
+          hiv_reception_breakdown[visit_date][patient_id][:guardian_present] = guardian_present if visit_type.match(/person/i)
+        end
+
+
+        return hiv_reception_breakdown
+      end
 
       private
 

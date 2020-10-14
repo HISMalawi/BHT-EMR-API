@@ -132,6 +132,11 @@ module ARTService
       REPORTS['TB_PREV'].new(start_date: start_date.to_date, end_date: end_date.to_date).report
     end
 
+    def patient_visit_types(start_date, end_date)
+      REPORTS['APPOINTMENTS'].new(start_date: start_date.to_date, 
+        end_date: end_date.to_date).patient_visit_types
+    end
+
     private
 
     def call_report_manager(method, type:, **kwargs)
