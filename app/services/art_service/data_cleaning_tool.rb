@@ -196,25 +196,58 @@ EOF
     end
 
     def missing_start_reasons
-      concept_set_id = concept('Antiretroviral drugs').concept_id
-      arvs = Drug.joins('INNER JOIN concept_set s ON s.concept_id = drug.concept_id').\
-      where("s.concept_set = ?", concept_set_id).map(&:drug_id)
 
-      data = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT o.patient_id FROM orders o
-      INNER JOIN drug_order d ON d.order_id = o.order_id AND drug_inventory_id IN(#{arvs.join(',')})
-      INNER JOIN encounter e ON e.patient_id = o.patient_id AND e.program_id = 1
-      WHERE d.quantity > 0 AND o.voided = 0 GROUP BY o.patient_id;
-EOF
+      clients = ActiveRecord::Base.connection.select_all <<~SQL
+      SELECT patient_program.patient_id,
+                 DATE(MIN(art_order.start_date)) AS date_enrolled,
+                 (SELECT value_coded FROM obs
+                  WHERE concept_id = 7563 AND person_id = patient_program.patient_id AND voided = 0
+                  ORDER BY obs_datetime DESC LIMIT 1) AS reason_for_starting_art
+          FROM patient_program
+          INNER JOIN person ON person.person_id = patient_program.patient_id
+          LEFT JOIN patient_state AS outcome
+            ON outcome.patient_program_id = patient_program.patient_program_id
+          LEFT JOIN encounter AS clinic_registration_encounter
+            ON clinic_registration_encounter.encounter_type = (
+              SELECT encounter_type_id FROM encounter_type WHERE name = 'HIV CLINIC REGISTRATION' LIMIT 1
+            )
+            AND clinic_registration_encounter.patient_id = patient_program.patient_id
+            AND clinic_registration_encounter.voided = 0
+          LEFT JOIN obs AS art_start_date_obs
+            ON art_start_date_obs.concept_id = 2516
+            AND art_start_date_obs.person_id = patient_program.patient_id
+            AND art_start_date_obs.voided = 0
+            AND art_start_date_obs.obs_datetime >= DATE('#{@start_date}')
+            AND art_start_date_obs.obs_datetime < (DATE('#{@end_date}') + INTERVAL 1 DAY)
+            AND art_start_date_obs.encounter_id = clinic_registration_encounter.encounter_id
+          LEFT JOIN orders AS   art_order
+            ON art_order.patient_id = patient_program.patient_id
+            AND art_order.voided = 0
+            AND art_order.concept_id IN (SELECT concept_id FROM concept_set WHERE concept_set = 1085)
+          LEFT JOIN drug_order
+            ON drug_order.order_id = art_order.order_id
+            AND drug_order.quantity > 0
+          WHERE patient_program.voided = 0
+            AND outcome.voided = 0
+            AND patient_program.program_id = 1
+            AND outcome.state = 7
+            AND outcome.start_date IS NOT NULL
+            AND patient_program.patient_id NOT IN (
+              SELECT person_id FROM obs
+              WHERE concept_id IN (
+                SELECT concept_id FROM concept_name WHERE name LIKE 'Type of patient'
+              ) AND value_coded IN (
+                SELECT concept_id FROM concept_name WHERE name LIKE 'External Consultation'
+              ) AND voided = 0
+              GROUP BY person_id
+            )
+          GROUP by patient_program.patient_id
+          HAVING date_enrolled <= '#{@end_date}' AND reason_for_starting_art IS NULL;
+        SQL
 
-      patient_ids = data.map{ |p| p['patient_id'].to_i }
+
+      patient_ids = clients.map{ |p| p['patient_id'].to_i }
       return {} if patient_ids.blank?
-      concept_id = concept('Reason for ART eligibility').concept_id
-
-      person_ids = Observation.where(concept_id: concept_id,
-        person_id: patient_ids).group(:person_id).map(&:person_id)
-      final_list = patient_ids - person_ids
-      return {} if final_list.blank?
 
       data = ActiveRecord::Base.connection.select_all <<EOF
       SELECT
@@ -224,7 +257,7 @@ EOF
       LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
       AND i.identifier_type = 4 AND i.voided = 0
       LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
-      WHERE p.person_id IN(#{final_list.join(',')})
+      WHERE p.person_id IN(#{patient_ids.join(',')})
       GROUP BY p.person_id ORDER BY i.date_created DESC;
 EOF
 
