@@ -36,7 +36,8 @@ module ARTService
           meds.each do |m|
             patient_id = m["patient_id"].to_i
             inh_start_date = min_inh_start_date(patient_id)
-            next if (inh_start_date.to_date > initiation_start_date.to_date) # && initiation_start_date < @start_date.to_date)
+            next unless (inh_start_date.to_date >= initiation_start_date.to_date &&
+              inh_start_date.to_date < @completion_start_date.to_date)
             p = clients_in_hiv_program[patient_id]
             next if p.blank?
 
