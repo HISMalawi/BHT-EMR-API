@@ -43,9 +43,9 @@ module ARTService
         cohort_struct.quarterly_re_initiated_on_art = re_initiated_on_art(quarter_start_date, end_date)
 
         # Patients transferred in on ART
-        cohort_struct.transfer_in = transfer_in(start_date, end_date)
-        cohort_struct.cum_transfer_in = transfer_in(cum_start_date, end_date)
-        cohort_struct.quarterly_transfer_in = transfer_in(quarter_start_date, end_date)
+        cohort_struct.transfer_in = transfer_in(start_date, end_date, cohort_struct.re_initiated_on_art)
+        cohort_struct.cum_transfer_in = transfer_in(cum_start_date, end_date, cohort_struct.cum_re_initiated_on_art)
+        cohort_struct.quarterly_transfer_in = transfer_in(quarter_start_date, end_date, cohort_struct.quarterly_re_initiated_on_art)
 
         # All males
         cohort_struct.all_males = males(start_date, end_date)
@@ -1595,9 +1595,11 @@ EOF
         )
       end
 
-      def transfer_in(start_date, end_date)
+      def transfer_in(start_date, end_date, re_initiated_on_art)
         start_date = ActiveRecord::Base.connection.quote(start_date)
         end_date = ActiveRecord::Base.connection.quote(end_date)
+
+        re_initiated_on_art = re_initiated_on_art.empty? ? [0] : re_initiated_on_art.rows.collect(&:first)
 
         ActiveRecord::Base.connection.select_all <<~SQL
           SELECT temp_earliest_start_date.patient_id
@@ -1628,6 +1630,7 @@ EOF
                                        last_taken_art_obs.value_datetime,
                                        last_taken_art_obs.obs_datetime) <= 14,
                         TRUE)
+            AND temp_earliest_start_date.patient_id NOT IN (#{re_initiated_on_art.join(',')})
           GROUP BY temp_earliest_start_date.patient_id;
         SQL
       end
@@ -1654,7 +1657,7 @@ EOF
               ON last_taken_art_obs.encounter_id = clinic_registration_encounter.encounter_id
               AND last_taken_art_obs.voided = 0
               AND last_taken_art_obs.concept_id = (
-                SELECT concept_id FROM concept_name WHERE name ='DATE ART LAST TAKEN' LIMIT 1
+                SELECT concept_id FROM concept_name WHERE name = 'DATE ART LAST TAKEN' LIMIT 1
               )
             WHERE (date_enrolled BETWEEN '#{start_date}' AND '#{end_date}')
               AND TIMESTAMPDIFF(day,
