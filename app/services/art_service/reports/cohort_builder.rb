@@ -1522,6 +1522,7 @@ EOF
                                    #{reason_for_starting_concept_id})
             AND obs.obs_datetime >= patients.earliest_start_date
             AND obs.obs_datetime < (patients.earliest_start_date + INTERVAL 1 DAY)
+            AND obs.value_coded IS NOT NULL
             AND obs.voided = 0
           WHERE patients.gender IN ('F', 'Female')
             AND patients.date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
