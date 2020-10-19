@@ -686,6 +686,8 @@ module ARTService
       private
 
       def total_patients_with_screened_bp(total_alive_and_on_art, _start_date, end_date)
+        return 0 if total_alive_and_on_art.empty?
+
         bp_concepts = ConceptName.where(name: ['Systolic blood pressure', 'Diastolic blood pressure'])
                                  .select(:concept_id)
 
