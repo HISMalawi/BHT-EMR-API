@@ -54,21 +54,10 @@ module ARTService
       end
 
       def patient_visit_types
-        encounter_type = EncounterType.find_by_name("HIV RECEPTION")
         yes_concept = ConceptName.find_by_name("YES").concept_id
-
-        visits = Observation.joins("INNER JOIN encounter e ON e.encounter_id = obs.encounter_id
-          INNER JOIN concept_name c ON c.concept_id = obs.concept_id").\
-          where("encounter_type = ? AND (encounter_datetime BETWEEN ? AND ?)", 
-            encounter_type.id, @start_date.strftime('%Y-%m-%d 00:00:00'), 
-              @end_date.strftime('%Y-%m-%d 23:59:59')).\
-                select("e.patient_id, obs.obs_datetime, c.name,
-                  c.concept_id, obs.value_coded").group("DATE(obs.obs_datetime),
-                     e.patient_id, c.concept_id").order("obs_datetime ASC")
-
         hiv_reception_breakdown = {}
-        
-        (visits || []).each do |v|
+
+        (patient_visits || []).each do |v|
           visit_date = v['obs_datetime'].to_date
           visit_type = v["name"]
           ans_given = v['value_coded'].to_i == yes_concept
@@ -80,11 +69,11 @@ module ARTService
             hiv_reception_breakdown[visit_date] = {}
             hiv_reception_breakdown[visit_date][patient_id] = {
               patient_present: 0, guardian_present: 0
-            }            
+            }
           elsif hiv_reception_breakdown[visit_date][patient_id].blank?
             hiv_reception_breakdown[visit_date][patient_id] = {
               patient_present: false, guardian_present: false
-            }            
+            }
           end
 
           hiv_reception_breakdown[visit_date][patient_id][:patient_present] = patient_present if visit_type.match(/patient/i)
@@ -95,7 +84,74 @@ module ARTService
         return hiv_reception_breakdown
       end
 
+      def patient_visit_list
+        yes_concept = ConceptName.find_by_name("YES").concept_id
+        hiv_reception_breakdown = {}
+
+        (patient_visits || []).each do |v|
+          visit_date = v['obs_datetime'].to_date
+          visit_type = v["name"]
+          ans_given = v['value_coded'].to_i == yes_concept
+          patient_id = v['patient_id'].to_i
+          patient_present = (visit_type.match(/patient/i) && ans_given ? true : false)
+          guardian_present = (visit_type.match(/person/i) && ans_given ? true : false)
+
+          if hiv_reception_breakdown[patient_id].blank?
+            demographics = client_data(patient_id)
+            hiv_reception_breakdown[patient_id] = {
+              patient_present: false, guardian_present: false,
+              given_name: demographics["given_name"],
+              family_name: demographics["family_name"],
+              gender: demographics["gender"],
+              birthdate: demographics["birthdate"],
+              arv_number: demographics["arv_number"]
+            }
+          end
+
+          hiv_reception_breakdown[patient_id][:patient_present] = patient_present if visit_type.match(/patient/i)
+          hiv_reception_breakdown[patient_id][:guardian_present] = guardian_present if visit_type.match(/person/i)
+        end
+
+        return hiv_reception_breakdown
+      end
+
       private
+
+      def client_data(patient_id)
+        person = ActiveRecord::Base.connection.select_one <<~SQL
+        SELECT
+          n.given_name, n.family_name, p.birthdate, p.gender,
+          i.identifier arv_number, a.value cell_number,
+          s.state_province district, s.county_district ta,
+          s.city_village village
+        FROM person p
+        LEFT JOIN person_name n ON n.person_id = p.person_id
+        LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
+        AND i.voided = 0 AND i.identifier_type = 4
+        LEFT JOIN person_attribute a ON a.person_id = p.person_id
+        AND a.voided = 0 AND a.person_attribute_type_id = 12
+        LEFT JOIN person_address s ON s.person_id = p.person_id
+        AND s.voided = 0 WHERE p.person_id = #{patient_id}
+        GROUP BY p.person_id, DATE(p.date_created)
+        ORDER BY p.person_id, p.date_created;
+        SQL
+      end
+
+      def patient_visits
+        encounter_type = EncounterType.find_by_name("HIV RECEPTION")
+
+        observations = Observation.joins("INNER JOIN encounter e ON e.encounter_id = obs.encounter_id
+          INNER JOIN concept_name c ON c.concept_id = obs.concept_id").\
+          where("encounter_type = ? AND (encounter_datetime BETWEEN ? AND ?)",
+            encounter_type.id, @start_date.strftime('%Y-%m-%d 00:00:00'),
+              @end_date.strftime('%Y-%m-%d 23:59:59')).\
+                select("e.patient_id, obs.obs_datetime, c.name,
+                  c.concept_id, obs.value_coded").group("DATE(obs.obs_datetime),
+                     e.patient_id, c.concept_id").order("obs_datetime ASC")
+
+        return observations
+      end
+
 
       def missed_appointment?(obs)
         client_came?(obs.person_id, obs.value_datetime)

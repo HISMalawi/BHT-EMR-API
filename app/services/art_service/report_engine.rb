@@ -133,8 +133,13 @@ module ARTService
     end
 
     def patient_visit_types(start_date, end_date)
-      REPORTS['APPOINTMENTS'].new(start_date: start_date.to_date, 
+      REPORTS['APPOINTMENTS'].new(start_date: start_date.to_date,
         end_date: end_date.to_date).patient_visit_types
+    end
+
+    def patient_visit_list(start_date, end_date)
+      REPORTS['APPOINTMENTS'].new(start_date: start_date.to_date,
+        end_date: end_date.to_date).patient_visit_list
     end
 
     private

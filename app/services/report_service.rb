@@ -165,6 +165,10 @@ class ReportService
     engine(@program).patient_visit_types(start_date, end_date)
   end
 
+  def patient_visit_list(start_date, end_date)
+    engine(@program).patient_visit_list(start_date, end_date)
+  end
+
   private
 
   def engine(program)
