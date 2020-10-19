@@ -244,38 +244,48 @@ module ARTService
         # Alive and On ART and Value Coded of the latest 'Regimen Category' Observation
         # of each patient that is linked to the Dispensing encounter in the reporting period
 
-        @regimen_categories = cal_regimem_category(cohort_struct.total_alive_and_on_art, end_date)
+        prescriptions = cal_regimem_category(cohort_struct.total_alive_and_on_art, end_date)
 
-        cohort_struct.zero_a           = get_regimen_category('0A')
-        cohort_struct.one_a            = get_regimen_category('1A')
-        cohort_struct.zero_p           = get_regimen_category('0P')
-        cohort_struct.one_p            = get_regimen_category('1P')
-        cohort_struct.two_a            = get_regimen_category('2A')
-        cohort_struct.two_p            = get_regimen_category('2P')
-        cohort_struct.three_a          = get_regimen_category('3A')
-        cohort_struct.three_p          = get_regimen_category('3P')
-        cohort_struct.four_a           = get_regimen_category('4A')
-        cohort_struct.four_p           = get_regimen_category('4P')
-        cohort_struct.five_a           = get_regimen_category('5A')
-        cohort_struct.six_a            = get_regimen_category('6A')
-        cohort_struct.seven_a          = get_regimen_category('7A')
-        cohort_struct.eight_a          = get_regimen_category('8A')
-        cohort_struct.nine_a           = get_regimen_category('9A')
-        cohort_struct.nine_p           = get_regimen_category('9P')
-        cohort_struct.ten_a            = get_regimen_category('10A')
-        cohort_struct.eleven_a        = get_regimen_category('11A')
-        cohort_struct.eleven_p        = get_regimen_category('11P')
-        cohort_struct.twelve_a         = get_regimen_category('12A')
-        cohort_struct.thirteen_a       = get_regimen_category('13A')
-        cohort_struct.fourteen_p       = get_regimen_category('14P')
-        cohort_struct.fourteen_a       = get_regimen_category('14A')
-        cohort_struct.fifteen_p       = get_regimen_category('15P')
-        cohort_struct.fifteen_a       = get_regimen_category('15A')
-        cohort_struct.sixteen_p       = get_regimen_category('16P')
-        cohort_struct.sixteen_a       = get_regimen_category('16A')
-        cohort_struct.seventeen_p       = get_regimen_category('17P')
-        cohort_struct.seventeen_a       = get_regimen_category('17A')
-        cohort_struct.unknown_regimen  = get_regimen_category('unknown_regimen')
+        concepts = ->(names) { ConceptName.where(name: names).select(:concept_id) }
+        drugs = ->(concepts) { Drug.where(concept: concepts).select(:drug_id).collect(&:drug_id) }
+
+        lpv_granules = drugs[concepts[['LPV/r Pellets', 'LPV/r Granules']]]
+        lpv_tabs = drugs[concepts['LPV/r']]
+
+        cohort_struct.zero_a            = filter_prescriptions_by_regimen(prescriptions, '0A')
+        cohort_struct.one_a             = filter_prescriptions_by_regimen(prescriptions, '1A')
+        cohort_struct.zero_p            = filter_prescriptions_by_regimen(prescriptions, '0P')
+        cohort_struct.one_p             = filter_prescriptions_by_regimen(prescriptions, '1P')
+        cohort_struct.two_a             = filter_prescriptions_by_regimen(prescriptions, '2A')
+        cohort_struct.two_p             = filter_prescriptions_by_regimen(prescriptions, '2P')
+        cohort_struct.three_a           = filter_prescriptions_by_regimen(prescriptions, '3A')
+        cohort_struct.three_p           = filter_prescriptions_by_regimen(prescriptions, '3P')
+        cohort_struct.four_a            = filter_prescriptions_by_regimen(prescriptions, '4A')
+        cohort_struct.four_p            = filter_prescriptions_by_regimen(prescriptions, '4P')
+        cohort_struct.five_a            = filter_prescriptions_by_regimen(prescriptions, '5A')
+        cohort_struct.six_a             = filter_prescriptions_by_regimen(prescriptions, '6A')
+        cohort_struct.seven_a           = filter_prescriptions_by_regimen(prescriptions, '7A')
+        cohort_struct.eight_a           = filter_prescriptions_by_regimen(prescriptions, '8A')
+        cohort_struct.nine_a            = filter_prescriptions_by_regimen(prescriptions, '9A')
+        cohort_struct.nine_p            = filter_prescriptions_by_regimen(prescriptions, '9P')
+        cohort_struct.nine_p_granules   = filter_prescriptions_by_drugs(cohort_struct.nine_p, lpv_granules)
+        cohort_struct.nine_p_tabs       = filter_prescriptions_by_drugs(cohort_struct.nine_p, lpv_tabs)
+        cohort_struct.ten_a             = filter_prescriptions_by_regimen(prescriptions, '10A')
+        cohort_struct.eleven_a          = filter_prescriptions_by_regimen(prescriptions, '11A')
+        cohort_struct.eleven_p          = filter_prescriptions_by_regimen(prescriptions, '11P')
+        cohort_struct.eleven_p_granules = filter_prescriptions_by_drugs(cohort_struct.eleven_p, lpv_granules)
+        cohort_struct.eleven_p_tabs     = filter_prescriptions_by_drugs(cohort_struct.eleven_p, lpv_tabs)
+        cohort_struct.twelve_a          = filter_prescriptions_by_regimen(prescriptions, '12A')
+        cohort_struct.thirteen_a        = filter_prescriptions_by_regimen(prescriptions, '13A')
+        cohort_struct.fourteen_p        = filter_prescriptions_by_regimen(prescriptions, '14P')
+        cohort_struct.fourteen_a        = filter_prescriptions_by_regimen(prescriptions, '14A')
+        cohort_struct.fifteen_p         = filter_prescriptions_by_regimen(prescriptions, '15P')
+        cohort_struct.fifteen_a         = filter_prescriptions_by_regimen(prescriptions, '15A')
+        cohort_struct.sixteen_p         = filter_prescriptions_by_regimen(prescriptions, '16P')
+        cohort_struct.sixteen_a         = filter_prescriptions_by_regimen(prescriptions, '16A')
+        cohort_struct.seventeen_p       = filter_prescriptions_by_regimen(prescriptions, '17P')
+        cohort_struct.seventeen_a       = filter_prescriptions_by_regimen(prescriptions, '17A')
+        cohort_struct.unknown_regimen   = filter_prescriptions_by_regimen(prescriptions, 'unknown_regimen')
 
         # Total patients with side effects:
         # Alive and On ART patients with DRUG INDUCED observations during their last HIV CLINIC CONSULTATION encounter up to the reporting period
@@ -1153,19 +1163,25 @@ EOF
             regimen = 'unknown_regimen'
           end
 
-          { patient_id: prescription['patient_id'], regimen_category: regimen }
+          {
+            patient_id: prescription['patient_id'],
+            regimen_category: regimen,
+            drugs: prescription['drugs'].split(',').collect(&:to_i),
+            prescription_date: prescription['prescription_date']
+          }
         end
       end
 
-      def get_regimen_category(arv_regimen_category)
-        registered = []
-        (@regimen_categories || []).each do |regimen_attr|
-          if arv_regimen_category == regimen_attr[:regimen_category]
-            registered << { patient_id: regimen_attr[:patient_id], regimen: regimen_attr[:regimen_category] }
-          end
+      def filter_prescriptions_by_regimen(prescriptions, regimen)
+        prescriptions.select do |prescription|
+          prescription[:regimen_category].casecmp?(regimen)
         end
+      end
 
-        registered
+      def filter_prescriptions_by_drugs(prescriptions, drug_ids)
+        prescriptions.select do |prescription|
+          prescription[:drugs].find { |drug_id| drug_ids.include?(drug_id) }
+        end
       end
 
       def died_in(month_str)

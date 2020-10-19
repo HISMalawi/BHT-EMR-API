@@ -6,11 +6,14 @@ module ARTService::Reports::Cohort::Regimens
 
     ActiveRecord::Base.connection.select_all <<~SQL
       SELECT prescriptions.patient_id,
-             regimens.name AS regimen_category
+             regimens.name AS regimen_category,
+             prescriptions.drugs,
+             prescriptions.prescription_date
       FROM (
         SELECT orders.patient_id,
                GROUP_CONCAT(DISTINCT(drug_order.drug_inventory_id)
-                                     ORDER BY drug_order.drug_inventory_id ASC) AS drugs
+                                     ORDER BY drug_order.drug_inventory_id ASC) AS drugs,
+               recent_prescription.prescription_date
         FROM temp_patient_outcomes AS outcomes
         INNER JOIN orders
           ON orders.patient_id = outcomes.patient_id
