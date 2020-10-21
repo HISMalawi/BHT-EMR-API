@@ -18,6 +18,16 @@ compatibility (examples of this include major architectural changes).
 
 ### Added
 
+### Fixed
+
+### Deprecated
+
+### Removed
+
+## [4.10.15] - 2020-10-21
+
+### Added
+
 - ART: Granules and Tablets disaggregation for 9P and 11P on cohort report.
 - Visit report drilldown
 
@@ -25,10 +35,6 @@ compatibility (examples of this include major architectural changes).
 
 - ART: Cohort report crash when cohort is run in quarters without any patients
   that have an 'On Treatment' status/outcome.
-
-### Deprecated
-
-### Removed
 
 ## [4.10.14] - 2020-10-16
 
