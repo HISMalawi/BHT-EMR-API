@@ -12,6 +12,16 @@ class Drug < ActiveRecord::Base
   has_many :alternative_names, class_name: 'AlternativeDrugName', foreign_key: 'drug_inventory_id'
   has_many :ntp_regimens, class_name: 'NtpRegimen'
 
+  def self.find_all_by_concept_set(concept_name)
+    concept = ConceptName.where(name: concept_name).select(:concept_id)
+    concept_set = ConceptSet.where(set: concept).select(:concept_id)
+    Drug.where(concept: concept_set)
+  end
+
+  def self.arv_drugs
+    find_all_by_concept_set('Antiretroviral drugs')
+  end
+
   def as_json(options = {})
     super(options.merge(
       include: {
@@ -22,14 +32,7 @@ class Drug < ActiveRecord::Base
   end
 
   def arv?
-    Drug.arv_drugs.map(&:concept_id).include?(concept_id)
-  end
-
-  def self.arv_drugs
-    arv_concept = ConceptName.find_by(name: 'ANTIRETROVIRAL DRUGS').concept_id
-    concepts = ConceptSet.where('concept_set = ?', arv_concept).map(&:concept_id)
-    concepts_placeholders = '(' + (['?'] * concepts.size).join(', ') + ')'
-    Drug.where("concept_id in #{concepts_placeholders}", *concepts)
+    Drug.arv_drugs.where(drug_id: drug_id).exists?
   end
 
   def tb_drug?

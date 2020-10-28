@@ -43,29 +43,35 @@ module DispensationService
       patient = drug_order.order.patient
       encounter = current_encounter(program, patient, date: date, create: true, provider: provider)
 
-      update_quantity_dispensed(drug_order, quantity)
+      ActiveRecord::Base.transaction do
+        update_quantity_dispensed(drug_order, quantity)
 
-      # HACK: Change state of patient in HIV Program to 'On anteretrovirals'
-      # once ARV's are detected. This should be moved away from here.
-      # It is behaviour that could potentially be surprising to our clients...
-      # Let's avoid surprises, clients must explicitly trigger the state change.
-      # Besides this service is open to different clients, some (actually most)
-      # are not even interested in the HIV Program... So...
-      mark_patient_as_on_antiretrovirals(patient, date) if drug_order.drug.arv?
+        # HACK: Change state of patient in HIV Program to 'On anteretrovirals'
+        # once ARV's are detected. This should be moved away from here.
+        # It is behaviour that could potentially be surprising to our clients...
+        # Let's avoid surprises, clients must explicitly trigger the state change.
+        # Besides this service is open to different clients, some (actually most)
+        # are not even interested in the HIV Program... So...
+        if drug_order.drug.arv?
+          ProgramEngineLoader.load(program, 'PatientStateEngine')
+                             &.new(patient, date)
+                             &.on_drug_dispensation(drug_order)
+        end
 
-      observation = Observation.create(
-        concept_id: concept('AMOUNT DISPENSED').concept_id,
-        order_id: drug_order.order_id,
-        person_id: patient.patient_id,
-        encounter_id: encounter.encounter_id,
-        value_drug: drug_order.drug_inventory_id,
-        value_numeric: quantity,
-        obs_datetime: date
-      )
+        observation = Observation.create(
+          concept_id: concept('AMOUNT DISPENSED').concept_id,
+          order_id: drug_order.order_id,
+          person_id: patient.patient_id,
+          encounter_id: encounter.encounter_id,
+          value_drug: drug_order.drug_inventory_id,
+          value_numeric: quantity,
+          obs_datetime: date
+        )
 
-      update_stock_ledgers(observation, :debit)
+        update_stock_ledgers(observation, :debit)
 
-      observation
+        observation
+      end
     end
 
     def void_dispensations(drug_order)
@@ -137,86 +143,6 @@ module DispensationService
     def update_stock_ledgers(observation, mode = :debit)
       json_observation = observation.as_json(ignore_includes: true).to_json
       StockUpdateJob.perform_later(mode.to_s, User.current.id, Location.current.id, json_observation)
-    end
-
-    private
-
-    # HACK: See dispense_drug methods
-    def mark_patient_as_on_antiretrovirals(patient, date)
-      program, patient_program = patient_hiv_program(patient)
-      return unless program && patient_program
-
-      program_workflow = program.program_workflows.first
-      return unless program_workflow
-
-      on_arvs_state = program_state(program_workflow, 'On antiretrovirals')
-      transferred_out_state = program_state(program_workflow, 'Patient transferred out')
-
-      current_patient_state = patient_current_state(patient_program, date)
-      if patient_has_state?(patient_program, on_arvs_state)\
-         && current_patient_state&.state != transferred_out_state.id
-        return
-      end
-
-      mark_patient_art_start_date(patient, date)
-
-      create_patient_state(patient_program, on_arvs_state, date, current_patient_state)
-    end
-
-    def patient_hiv_program(patient)
-      program = patient.programs.where(name: 'HIV Program').first
-      return [nil, nil] unless program
-
-      patient_program = patient.patient_programs.where(program: program).first
-      [program, patient_program]
-    end
-
-    def program_state(program_workflow, name)
-      state_concept = concept(name)
-      state = program_workflow.states.where(concept: state_concept).first
-      raise "'#{name}' state for HIV Program not found" unless state
-
-      state
-    end
-
-    def patient_current_state(patient_program, ref_date)
-      PatientState.where(patient_program: patient_program)\
-                  .where('start_date <= DATE(?)', ref_date.to_date)\
-                  .last
-    end
-
-    def patient_has_state?(patient_program, workflow_state)
-      patient_program.patient_states.where(
-        program_workflow_state: workflow_state
-      ).exists?
-    end
-
-    def mark_patient_art_start_date(patient, date)
-      art_start_date_concept = concept('ART start date')
-      has_art_start_date = Observation.where(person_id: patient.patient_id,
-                                             concept: art_start_date_concept)
-                                      .exists?
-      return if has_art_start_date
-
-      Observation.create(person_id: patient.patient_id,
-                         concept: art_start_date_concept,
-                         value_datetime: date,
-                         obs_datetime: TimeUtils.retro_timestamp(date))
-    end
-
-    def create_patient_state(patient_program, program_workflow_state, date, previous_state = nil)
-      ActiveRecord::Base.transaction do
-        if previous_state
-          previous_state.end_date = date
-          previous_state.save
-        end
-
-        PatientState.create(
-          patient_program: patient_program,
-          program_workflow_state: program_workflow_state,
-          start_date: date
-        )
-      end
     end
   end
 end
