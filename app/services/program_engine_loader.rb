@@ -1,5 +1,13 @@
 # frozen_string_literal: true
 
+# Load various submodules in the program service modules.
+#
+# Example:
+#   - Load PatientSummary in HIV Program.
+#
+#     >> program = Program.find('HIV Program')
+#     >> clazz = ProgramEngineLoader.load(program, 'PatientSummary')
+#     >> clazz.new(patient: Patient.last, date: Date.today).full_summary
 module ProgramEngineLoader
   PROGRAM_SERVICE_MODULES = {
     'HIV PROGRAM' => 'ARTService'

@@ -55,7 +55,7 @@ module DispensationService
         if drug_order.drug.arv?
           ProgramEngineLoader.load(program, 'PatientStateEngine')
                              &.new(patient, date)
-                             &.on_drug_dispensation(drug_order)
+                             &.on_drug_dispensation(drug_order, quantity)
         end
 
         observation = Observation.create(

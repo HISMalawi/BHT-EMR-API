@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module ARTService
+  # Responsible for dealing with patient state changes in HIV program.
   class PatientStateEngine
     attr_accessor :patient, :date
 
@@ -9,7 +10,11 @@ module ARTService
       @date = date
     end
 
-    def on_drug_dispensation(drug_order)
+    # Listener for drug dispensations under HIV Program.
+    #
+    # This is automatically called by the DispensationService when
+    # drugs are dispensed under the HIV program.
+    def on_drug_dispensation(drug_order, _amount_dispensed)
       return nil unless patient_program && arv_drug_order?(drug_order)
 
       on_arvs_state = program.state('On antiretrovirals')
