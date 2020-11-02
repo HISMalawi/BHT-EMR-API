@@ -142,7 +142,7 @@ module ARTService
 
         observations = Observation.joins("INNER JOIN encounter e ON e.encounter_id = obs.encounter_id
           INNER JOIN concept_name c ON c.concept_id = obs.concept_id").\
-          where("encounter_type = ? AND (encounter_datetime BETWEEN ? AND ?)",
+          where("encounter_type = ? AND (obs_datetime BETWEEN ? AND ?)",
             encounter_type.id, @start_date.strftime('%Y-%m-%d 00:00:00'),
               @end_date.strftime('%Y-%m-%d 23:59:59')).\
                 select("e.patient_id, obs.obs_datetime, c.name,
