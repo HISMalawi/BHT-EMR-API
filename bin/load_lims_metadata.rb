@@ -5,6 +5,7 @@ require 'csv'
 if $ARGV.size != 1
   puts 'Error: No metadata file specified'
   puts 'Usage: rails r bin/load_lims_metadata.rb lims-metadata.csv'
+  exit
 end
 
 User.current = User.first
