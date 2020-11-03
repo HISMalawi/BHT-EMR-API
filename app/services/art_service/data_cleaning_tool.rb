@@ -12,7 +12,8 @@ module ARTService
       'CLIENTS WITH ENCOUNTERS AFTER DECLARED DEAD' => 'client_with_encounters_after_declared_dead',
       'MALE CLIENTS WITH FEMALE OBS' => 'male_clients_with_female_obs',
       'DOB MORE THAN DATE ENROLLED' => 'dob_more_than_date_enrolled',
-      'INCOMPLETE VISITS' => 'incomplete_visit'
+      'INCOMPLETE VISITS' => 'incomplete_visit',
+      'MISSING DEMOGRAPHICS' => 'incomplete_demographics',
     }
 
 
@@ -31,6 +32,37 @@ module ARTService
     end
 
     private
+
+    def incomplete_demographics
+      data = ActiveRecord::Base.connection.select_all <<EOF
+      select
+        `p`.`patient_id` AS `patient_id`, `pe`.`birthdate`,
+        n.given_name, n.family_name, pe.gender, i.identifier arv_number
+      from
+        ((`patient_program` `p`
+        left join `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
+        left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
+        left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
+        LEFT JOIN patient_identifier i ON i.patient_id = pe.person_id
+        AND i.identifier_type = 4 AND i.voided = 0
+        LEFT JOIN person_name n ON n.person_id = pe.person_id AND n.voided = 0
+      where
+        ((`p`.`voided` = 0)
+            and (`s`.`voided` = 0)
+            and (`p`.`program_id` = 1)
+            and (`s`.`state` = 7))
+            and (`s`.`start_date`
+            between '#{@start_date.strftime('%Y-%m-%d 00:00:00')}'
+            and '#{@end_date.strftime('%Y-%m-%d 23:59:59')}')
+      group by `p`.`patient_id`
+      HAVING (birthdate IS NULL) OR (gender IS NULL)
+      OR (given_name IS NULL) OR (family_name IS NULL)
+      ORDER BY n.date_created DESC;
+EOF
+
+      return {} if data.blank?
+      return data
+    end
 
     def dob_more_than_date_enrolled
       data = ActiveRecord::Base.connection.select_all <<EOF
