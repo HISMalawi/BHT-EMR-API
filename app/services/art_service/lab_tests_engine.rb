@@ -11,16 +11,32 @@ class ARTService::LabTestsEngine
     @program = program
   end
 
+  ##
+  # Retrieves a test type by its concept id
   def type(type_id)
-    LabTestType.find(type_id)
+    type = ConceptSet.find_members_by_name('Test type')
+                     .where(concept_id: type_id)
+                     .first
+
+    unless type
+      raise NotFoundError, "Test type with ID ##{type_id} does not exist"
+    end
+
+    ConceptName.find_by_concept_id!(type.concept_id)
   end
 
+  ##
+  # Search for test types by name
   def types(search_string:)
-    test_types = nlims.test_types
+    concepts = ConceptName.where('name LIKE ?', "#{search_string}%")
+                          .select(:concept_id)
 
-    return test_types unless search_string
+    concept_set = ConceptSet.find_members_by_name('Test type')
+                            .where(concept: concepts)
+                            .select(:concept_id)
 
-    test_types.select { |test_type| test_type.start_with?(search_string) }
+    ConceptName.where(concept: concept_set)
+               .order(:name)
   end
 
   def lab_locations
@@ -31,15 +47,25 @@ class ARTService::LabTestsEngine
     nlims.labs
   end
 
+  ##
+  # Retrieve sample types by name
   def panels(test_type)
-    nlims.specimen_types(test_type)
+    concepts = ConceptSet.find_members_by_name(test_type)
+                         .select(:concept_id)
+
+    # Filter out only concepts that are marked as Lab specimen types
+    concepts = ConceptSet.find_members_by_name('Specimen Type')
+                         .where(concept: concepts)
+
+    ConceptName.where(concept: concepts)
+               .order(:name)
   end
 
-  def results(accession_number)
-    LabParameter.joins(:lab_sample)\
-                .where('Lab_Sample.AccessionNum = ?', accession_number)\
-                .order(Arel.sql('DATE(Lab_Sample.TimeStamp) DESC'))
-  end
+  # def results(accession_number)
+  #   LabParameter.joins(:lab_sample)\
+  #               .where('Lab_Sample.AccessionNum = ?', accession_number)\
+  #               .order(Arel.sql('DATE(Lab_Sample.TimeStamp) DESC'))
+  # end
 
   def orders_without_results(patient)
     npid = patient.identifier('National id')&.identifier
