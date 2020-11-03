@@ -5,6 +5,7 @@ require 'csv'
 if $ARGV.size != 1
   puts 'Error: No metadata file specified'
   puts 'Usage: rails r bin/load_lims_metadata.rb lims-metadata.csv'
+  exit
 end
 
 User.current = User.first
@@ -47,8 +48,8 @@ CSV.open(Rails.root.join($ARGV[0]), headers: :first_row) do |csv|
   test_types = {}
 
   csv.each do |row|
-    test_type_name = row[0]
-    sample_type_name = row[1]
+    test_type_name = row[1]
+    sample_type_name = row[0]
 
     ActiveRecord::Base.transaction do
       test_type = test_types[test_type] || create_test_type(test_type_name)
