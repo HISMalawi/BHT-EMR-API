@@ -20,6 +20,7 @@ compatibility (examples of this include major architectural changes).
 
 ### Fixed
 
+- Fixed leak of User.current and Location.current across threads.
 - ART: Previously on treatment patients who are currently not on treatment were
        not being switched back to on treatment upon ARV dispensation.
 
