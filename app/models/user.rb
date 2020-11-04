@@ -4,8 +4,6 @@ class User < RetirableRecord
   self.table_name = :users
   self.primary_key = :user_id
 
-  cattr_accessor :current
-
   belongs_to :person, foreign_key: :person_id
 
   has_many :properties, class_name: 'UserProperty', foreign_key: :user_id
@@ -21,6 +19,14 @@ class User < RetirableRecord
 
   def active?
     deactivated_on.nil?
+  end
+
+  def self.current
+    Thread.current['current_user']
+  end
+
+  def self.current=(user)
+    Thread.current['current_user'] = user
   end
 
   def as_json(options = {})
