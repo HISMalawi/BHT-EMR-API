@@ -19,26 +19,56 @@ def sample_type_concept_id
   @sample_type_concept_id ||= ConceptName.find_by_name!('Specimen type').concept_id
 end
 
+CONCEPT_DATATYPE_CODED = 2
+CONCEPT_CLASS_TEST = 1
+
+def concept(name, is_set: false)
+  # Filter out concept_names with voided concepts
+  concept = ConceptName.joins(:concept).find_by_name(name)
+  return concept if concept
+
+  ConceptName.create!(
+    concept: Concept.create!(
+      short_name: name,
+      datatype_id: CONCEPT_DATATYPE_CODED,
+      class_id: CONCEPT_CLASS_TEST,
+      is_set: is_set,
+      uuid: SecureRandom.uuid,
+      creator: User.current.user_id,
+      date_created: Time.now
+    ),
+    name: name,
+    locale: 'en',
+    concept_name_type: 'FULLY_SPECIED',
+    uuid: SecureRandom.uuid,
+    creator: User.current.user_id,
+    date_created: Time.now
+  )
+end
+
 def create_test_type(name)
-  concept_id = ConceptName.find_by_name!(name).concept_id
+  concept_id = concept(name, is_set: true).concept_id
 
   ConceptSet.find_or_create_by!(concept_set: test_type_concept_id,
                                 concept_id: concept_id,
-                                creator: User.current.user_id)
+                                creator: User.current.user_id,
+                                date_created: Time.now)
 rescue StandardError => e
   raise "Failed to create test type `#{name}`: #{e}"
 end
 
 def create_sample_type(name, test_type)
-  concept_id = ConceptName.find_by_name!(name).concept_id
+  concept_id = concept(name).concept_id
 
   [
     ConceptSet.find_or_create_by!(concept_set: sample_type_concept_id,
                                   concept_id: concept_id,
-                                  creator: User.current.user_id),
+                                  creator: User.current.user_id,
+                                  date_created: Time.now),
     ConceptSet.find_or_create_by!(concept_set: test_type.concept_id,
                                   concept_id: concept_id,
-                                  creator: User.current.user_id)
+                                  creator: User.current.user_id,
+                                  date_created: Time.now)
   ]
 rescue StandardError => e
   raise "Failed to create sample type `#{name}`: #{e}"
@@ -57,6 +87,8 @@ CSV.open(Rails.root.join($ARGV[0]), headers: :first_row) do |csv|
 
       test_types[test_type] ||= test_type
     end
+
+    puts "Created test #{test_type_name} <--< #{sample_type_name}"
   rescue StandardError => e
     puts "Error: #{test_type_name}: #{e}"
   end
