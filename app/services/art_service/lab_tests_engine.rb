@@ -34,7 +34,8 @@ class ARTService::LabTestsEngine
     test_types = test_types.filter_members(name: name) if name
 
     unless specimen_type
-      return ConceptName.where(concept_id: test_types.select(:concept_id))
+      return test_types.joins('INNER JOIN concept_name ON concept_set.concept_id = concept_name.concept_id')
+                       .select('concept_set.concept_set_id, concept_name.name')
     end
 
     # Filter out only those test types that have the specified specimen
@@ -45,10 +46,11 @@ class ARTService::LabTestsEngine
 
     concept_set = ConceptSet.where(
       concept_id: specimen_types,
-      concept_set: test_types
+      concept_set: test_types.select(:concept_id)
     )
 
-    ConceptName.where(concept_id: concept_set.select(:concept_set))
+    concept_set.joins('INNER JOIN concept_name ON concept_set.concept_set = concept_name.concept_id')
+               .select('concept_set.concept_set_id, concept_name.name')
   end
 
   def lab_locations
