@@ -16,4 +16,6 @@ class ConceptSet < ApplicationRecord
                          .select(:concept_id)
     ConceptSet.where(set: concept)
   end
+
+  scope :filter_members, ->(name: nil) { where(concept: ConceptName.where('name LIKE ?', "#{name}%").select(:concept_id)) }
 end

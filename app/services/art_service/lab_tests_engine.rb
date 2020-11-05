@@ -7,6 +7,8 @@ require 'auto12epl'
 class ARTService::LabTestsEngine
   include ModelUtils
 
+  ORDERING_FACILITY = ''
+
   def initialize(program:)
     @program = program
   end
@@ -27,16 +29,26 @@ class ARTService::LabTestsEngine
 
   ##
   # Search for test types by name
-  def types(search_string:)
-    concepts = ConceptName.where('name LIKE ?', "#{search_string}%")
-                          .select(:concept_id)
+  def types(name: nil, specimen_type: nil)
+    test_types = ConceptSet.find_members_by_name('Test type')
+    test_types = test_types.filter_members(name: name) if name
 
-    concept_set = ConceptSet.find_members_by_name('Test type')
-                            .where(concept: concepts)
-                            .select(:concept_id)
+    unless specimen_type
+      return ConceptName.where(concept_id: test_types.select(:concept_id))
+    end
 
-    ConceptName.where(concept: concept_set)
-               .order(:name)
+    # Filter out only those test types that have the specified specimen
+    # type.
+    specimen_types = ConceptSet.find_members_by_name('Specimen type')
+                               .filter_members(name: specimen_type)
+                               .select(:concept_id)
+
+    concept_set = ConceptSet.where(
+      concept_id: specimen_types,
+      concept_set: test_types
+    )
+
+    ConceptName.where(concept_id: concept_set.select(:concept_set))
   end
 
   def lab_locations
@@ -49,16 +61,26 @@ class ARTService::LabTestsEngine
 
   ##
   # Retrieve sample types by name
-  def panels(test_type)
-    concepts = ConceptSet.find_members_by_name(test_type)
-                         .select(:concept_id)
+  def panels(name: nil, test_type: nil)
+    specimen_types = ConceptSet.find_members_by_name('Specimen type')
+    specimen_types = specimen_types.filter_members(name: name) if name
 
-    # Filter out only concepts that are marked as Lab specimen types
-    concepts = ConceptSet.find_members_by_name('Specimen Type')
-                         .where(concept: concepts)
+    unless test_type
+      return ConceptName.where(concept_id: specimen_types.select(:concept_id))
+    end
 
-    ConceptName.where(concept: concepts)
-               .order(:name)
+    # Retrieve only those specimen types that belong to concept
+    # set of the selected test_type
+    test_types = ConceptSet.find_members_by_name('Test type')
+                           .filter_members(name: test_type)
+                           .select(:concept_id)
+
+    concept_set = ConceptSet.where(
+      concept_id: specimen_types.select(:concept_id),
+      concept_set: test_types
+    )
+
+    ConceptName.where(concept_id: concept_set.select(:concept_id))
   end
 
   # def results(accession_number)
@@ -89,21 +111,16 @@ class ARTService::LabTestsEngine
     end
   end
 
-  def create_order(encounter:, date:, tests:, **kwargs)
-    patient ||= encounter.patient
-    date ||= encounter.encounter_datetime
+  def order_test(encounter:, date:, order_params:)
+    date ||= Date.today
+    encounter ||= find_encounter(order_params[:patient_id], date)
 
-    tests.collect do |test|
-      lims_order = nlims.order_test(patient: patient, user: User.current, date: date,
-                                    reason: test['reason'], test_type: [test['test_type']],
-                                    **kwargs)
-      accession_number = lims_order['tracking_number']
+    order = Order.create!(patient_id: encounter.patient_id,
+                          start_date: date,
+                          orderer: order_params[:orderer_id] || User.current.user_id,
+                          type: OrderType.find_by_name!('Lab order'))
 
-      local_order = create_local_order(patient, encounter, date, accession_number)
-      save_reason_for_test(encounter, local_order, test['reason'])
 
-      { order: local_order, lims_order: lims_order }
-    end
   end
 
   def create_legacy_order(patient, order)
@@ -221,6 +238,25 @@ class ARTService::LabTestsEngine
     Order.where patient: patient,
                 order_type: order_type('Lab'),
                 concept: concept('Laboratory tests ordered')
+  end
+
+  def specimen_types_concept_set(name: nil)
+    set = ConceptSet.find_members_by_name('Specimen type')
+
+    if name
+      search_filter = ConceptName.where('name LIKE ?', "#{search_string}%").select(:concept_id)
+      set = set.where(concept: search_filter)
+    end
+
+    set
+  end
+
+  def test_types_concept_set(name: nil)
+    set = ConceptSet.find_members_by_name('Test type')
+
+    if name
+      search_filter = ConceptName.where('name LIKE ?', "#{search_string}%")
+    end
   end
 
   def nlims
