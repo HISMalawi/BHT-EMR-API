@@ -82,10 +82,10 @@ CSV.open(Rails.root.join($ARGV[0]), headers: :first_row) do |csv|
     sample_type_name = row[0]
 
     ActiveRecord::Base.transaction do
-      test_type = test_types[test_type] || create_test_type(test_type_name)
+      test_type = test_types[test_type_name] || create_test_type(test_type_name)
       create_sample_type(sample_type_name, test_type)
 
-      test_types[test_type] ||= test_type
+      test_types[test_type_name] ||= test_type
     end
 
     puts "Created test #{test_type_name} <--< #{sample_type_name}"

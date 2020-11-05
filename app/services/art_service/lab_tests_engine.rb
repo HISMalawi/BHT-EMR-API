@@ -35,7 +35,7 @@ class ARTService::LabTestsEngine
 
     unless specimen_type
       return test_types.joins('INNER JOIN concept_name ON concept_set.concept_id = concept_name.concept_id')
-                       .select('concept_set.concept_set_id, concept_name.name')
+                       .select('concept_name.name, concept_name.concept_id')
     end
 
     # Filter out only those test types that have the specified specimen
@@ -50,7 +50,7 @@ class ARTService::LabTestsEngine
     )
 
     concept_set.joins('INNER JOIN concept_name ON concept_set.concept_set = concept_name.concept_id')
-               .select('concept_set.concept_set_id, concept_name.name')
+               .select('concept_name.concept_id, concept_name.name')
   end
 
   def lab_locations
@@ -68,7 +68,8 @@ class ARTService::LabTestsEngine
     specimen_types = specimen_types.filter_members(name: name) if name
 
     unless test_type
-      return ConceptName.where(concept_id: specimen_types.select(:concept_id))
+      return specimen_types.select('concept_name.concept_id, concept_name.name')
+                           .joins('INNER JOIN concept_name ON concept_name.concept_id = concept_set.concept_id')
     end
 
     # Retrieve only those specimen types that belong to concept
@@ -82,7 +83,8 @@ class ARTService::LabTestsEngine
       concept_set: test_types
     )
 
-    ConceptName.where(concept_id: concept_set.select(:concept_id))
+    concept_set.select('concept_name.concept_id, concept_name.name')
+               .joins('INNER JOIN concept_name ON concept_name.concept_id = concept_set.concept_id')
   end
 
   # def results(accession_number)
@@ -240,25 +242,6 @@ class ARTService::LabTestsEngine
     Order.where patient: patient,
                 order_type: order_type('Lab'),
                 concept: concept('Laboratory tests ordered')
-  end
-
-  def specimen_types_concept_set(name: nil)
-    set = ConceptSet.find_members_by_name('Specimen type')
-
-    if name
-      search_filter = ConceptName.where('name LIKE ?', "#{search_string}%").select(:concept_id)
-      set = set.where(concept: search_filter)
-    end
-
-    set
-  end
-
-  def test_types_concept_set(name: nil)
-    set = ConceptSet.find_members_by_name('Test type')
-
-    if name
-      search_filter = ConceptName.where('name LIKE ?', "#{search_string}%")
-    end
   end
 
   def nlims
