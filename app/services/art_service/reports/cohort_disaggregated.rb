@@ -99,13 +99,13 @@ module ARTService
         if all_clients.blank? && (age_group == 'Breastfeeding' || age_group == 'Pregnant')
           list[age_group] = {}
           list[age_group]['F'] = {
-            tx_new: 0, tx_curr: 0,
-            tx_screened_for_tb: 0,
-            tx_given_ipt: 0
+            tx_new: [], tx_curr: [],
+            tx_screened_for_tb: [],
+            tx_given_ipt: []
           }
           return list
         elsif all_clients.blank?
-           return {}
+          return {}
         end
 
         if age_group.match(/year|month/i)
@@ -113,25 +113,25 @@ module ARTService
         end
 
         (tmp || []).each do |r|
-          gender = r['gender'].first
+          gender = r['gender']&.first || 'Unknown'
           patient_id = r['patient_id'].to_i
           tx_new, tx_curr, tx_given_ipt, tx_screened_for_tb = get_numbers(r, age_group, start_date, end_date, all_clients_outcomes)
 
           list[age_group] = {} if list[age_group].blank?
 
           list[age_group][gender] = {
-            tx_new: 0, tx_curr: 0,
-            tx_screened_for_tb: 0,
-            tx_given_ipt: 0
+            tx_new: [], tx_curr: [],
+            tx_screened_for_tb: [],
+            tx_given_ipt: []
           } if list[age_group][gender].blank?
 
 
-          list[age_group][gender][:tx_new] += tx_new
-          list[age_group][gender][:tx_curr] += tx_curr
-          list[age_group][gender][:tx_given_ipt] += tx_given_ipt
-          list[age_group][gender][:tx_screened_for_tb] += tx_screened_for_tb
+          list[age_group][gender][:tx_new] << r['patient_id'] if tx_new
+          list[age_group][gender][:tx_curr] << r['patient_id'] if tx_curr
+          list[age_group][gender][:tx_given_ipt] << r['patient_id'] if tx_given_ipt
+          list[age_group][gender][:tx_screened_for_tb] << r['patient_id'] if tx_screened_for_tb
 
-          date_enrolled  = r['date_enrolled'].to_date
+          date_enrolled = r['date_enrolled'].to_date
 
           if gender == 'F' && all_clients_outcomes[patient_id] == 'On antiretrovirals'
             insert_female_maternal_status(patient_id, age_group, end_date)
