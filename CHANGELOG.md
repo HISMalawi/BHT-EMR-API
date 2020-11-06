@@ -21,7 +21,9 @@ compatibility (examples of this include major architectural changes).
 ### Fixed
 
 - ART: Previously on treatment patients who are currently not on treatment were
-       not being switched back to on treatment upon ARV dispensation.
+  not being switched back to on treatment upon ARV dispensation.
+- ART Stock: Fixed resetting of drug stock to delivered quantity on voiding
+  of dispensation.
 
 ### Deprecated
 

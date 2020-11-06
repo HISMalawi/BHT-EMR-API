@@ -41,13 +41,22 @@ class StockManagementService
     drugs = find_batch_items(drug_id: drug_id).where('expiry_date > ?', date)
                                               .order(:expiry_date)
 
+    # Spread the quantity being credited back among the existing drugs,
+    # making sure that no drug in stock ends up having more than was
+    # initially delivered. BTW: Crediting is done following First to Expire,
+    # First Out (FEFO) basis.
     drugs.each do |drug|
       break if credit_quantity.zero?
 
       drug_deficit = drug.delivered_quantity - drug.current_quantity
-      commit_transaction(drug, STOCK_ADD, drug_deficit, date, update_item: true)
 
-      credit_quantity -= drug_deficit
+      if credit_quantity > drug_deficit
+        commit_transaction(drug, STOCK_ADD, drug_deficit, date, update_item: true)
+        credit_quantity -= drug_deficit
+      else
+        commit_transaction(drug, STOCK_ADD, credit_quantity, date, update_item: true)
+        credit_quantity = 0
+      end
     end
 
     credit_quantity
