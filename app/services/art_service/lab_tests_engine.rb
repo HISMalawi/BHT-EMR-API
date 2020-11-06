@@ -119,16 +119,31 @@ class ARTService::LabTestsEngine
     end
   end
 
-  def order_test(encounter:, date:, order_params:)
-    date ||= Date.today
+  ##
+  # Order multiple +tests+
+  #
+  # Each test must provide the following structure:
+  #
+  #     {
+  #       test_type_id,
+  #       reason_for_test
+  #     }
+  def order_tests(encounter, date, orderer, tests)
+    date = date.to_date || Date.today
     encounter ||= find_encounter(order_params[:patient_id], date)
 
-    order = Order.create!(patient_id: encounter.patient_id,
-                          start_date: date,
-                          orderer: order_params[:orderer_id] || User.current.user_id,
-                          type: OrderType.find_by_name!('Lab order'))
+    ActiveRecord::Base.transaction do
+      tests.map do |test|
+        order = create_lab_order(encounter, test_type_id: test[:test_type_id], date: date)
 
+        create_obs = method[:create_obs_order].curry[order, date]
 
+        create_obs['Reason for test', value_text: test[:reason]]
+        create_obs['Person making request', value_text: orderer]
+
+        serialize_order(order)
+      end
+    end
   end
 
   def create_legacy_order(patient, order)
@@ -209,6 +224,31 @@ class ARTService::LabTestsEngine
 
   private
 
+  ##
+  # Create a lab order on given +encounter+ for test type.
+  def create_order(encounter, test_type_id:, date: nil)
+    Order.create!(
+      type: OrderType.find_by_name('Lab order'),
+      concept_id: test_type_id, # Should we verify whether test_type_id points to an actual test type?
+      encounter_id: encounter.encounter_id,
+      patient_id: encounter.patient_id,
+      start_date: date || Date.today,
+      orderer: User.current.user_id
+    )
+  end
+
+  ##
+  # Create an observation for an existing lab +order+.
+  def create_order_obs(order, date, concept_name, **values)
+    Observation.create!(
+      person_id: order.patient_id,
+      concept_id: ConceptName.find_by_name(concept_name).concept_id,
+      encounter_id: order.encounter_id,
+      obs_datetime: retro_timestamp(date),
+      **values
+    )
+  end
+
   # Creates an Order in the primary openmrs database
   def create_local_order(patient, encounter, date, accession_number)
     Order.create(patient: patient,
@@ -219,6 +259,18 @@ class ARTService::LabTestsEngine
                  start_date: date,
                  accession_number: accession_number,
                  provider: User.current)
+  end
+
+  def serialize_order(_order)
+    # STUB: Serialized order
+    {
+      order_id: -1,
+      patient_id: 1,
+      test_type: 'Test type',
+      requesting_clinician: 'Clinician Full Name',
+      specimens: [],
+      date: 2.weeks.ago
+    }
   end
 
   def save_reason_for_test(encounter, order, reason)
