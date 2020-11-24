@@ -18,17 +18,24 @@ compatibility (examples of this include major architectural changes).
 
 ### Added
 
+- ART: Patient drilldown to cohort disaggregated.
+
 ### Fixed
 
-- Fixed leak of User.current and Location.current across threads.
+- ART: Resetting of amount needed to dispensed value instead of interval
+  selected by clinician on dispensation voiding.
+- Leak of User.current and Location.current across threads.
+- ART: Failure to dispense drugs for patients without an ART start state.
+
+## [4.10.16] - 2020-11-10
+
+### Fixed
+
 - ART: Previously on treatment patients who are currently not on treatment were
   not being switched back to on treatment upon ARV dispensation.
-- ART Stock: Fixed resetting of drug stock to delivered quantity on voiding
-  of dispensation.
-
-### Deprecated
-
-### Removed
+- ART Stock: Resetting of available quantity to delivered quantity on voiding
+  of any dispensations instead of just adding the dispensations back to the
+  available quantity.
 
 ## [4.10.15] - 2020-10-21
 
