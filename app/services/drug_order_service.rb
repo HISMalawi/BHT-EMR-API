@@ -113,17 +113,32 @@ module DrugOrderService
     end
 
     def create_order(encounter:, create_params:, order_type:)
-      Order.create(
+      start_date = TimeUtils.retro_timestamp(create_params[:start_date].to_date)
+      drug_runout_date = TimeUtils.retro_timestamp(create_params[:auto_expire_date].to_date)
+
+      order = Order.create(
         order_type_id: order_type.order_type_id,
         concept_id: Drug.find(create_params[:drug_inventory_id]).concept_id,
         encounter_id: encounter.encounter_id,
         patient_id: encounter.patient_id,
         orderer: User.current.user_id,
-        start_date: TimeUtils.retro_timestamp(create_params[:start_date].to_date),
-        auto_expire_date: TimeUtils.retro_timestamp(create_params[:auto_expire_date].to_date),
+        start_date: start_date,
+        auto_expire_date: drug_runout_date,
         obs_id: create_params[:obs_id],
         instructions: create_params[:instructions]
       )
+
+      # Store user specified drug run out date separately as it is overriden
+      # based on the drugs that actually get dispensed.
+      Observation.create!(concept_id: ConceptName.find_by_name!('Drug end date').concept_id,
+                          encounter: encounter,
+                          person_id: encounter.patient_id,
+                          order: order,
+                          obs_datetime: start_date,
+                          value_datetime: drug_runout_date,
+                          comments: 'User specified drug run out date during drug prescription')
+
+      order
     end
 
     def create_drug_order(order:, create_params:)

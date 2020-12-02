@@ -57,7 +57,7 @@ module ARTService
                      .exists?
     end
 
-    def mark_patient_art_start_date
+    def mark_patient_art_start_date(patient)
       art_start_date_concept = concept('ART start date')
       has_art_start_date = Observation.where(person_id: patient.patient_id,
                                              concept: art_start_date_concept)

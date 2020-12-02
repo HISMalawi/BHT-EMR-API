@@ -4,11 +4,17 @@ class Location < RetirableRecord
   self.table_name = :location
   self.primary_key = :location_id
 
-  cattr_accessor :current
-
   belongs_to :parent
   has_one :parent, class_name: 'Location', foreign_key: :parent_location
   has_many :tag_maps, class_name: 'LocationTagMap', foreign_key: :location_id
+
+  def self.current
+    Thread.current['current_location']
+  end
+
+  def self.current=(location)
+    Thread.current['current_location'] = location
+  end
 
   def as_json(options = {})
     super(options.merge(include: { parent: {} }))
@@ -134,7 +140,7 @@ class Location < RetirableRecord
                           FROM location_tag_map
                           WHERE location_tag_id = (SELECT location_tag_id
 	                                   FROM location_tag
-                                     WHERE name = 'Workstation Location')) 
+                                     WHERE name = 'Workstation Location'))
                           AND name LIKE '%#{search_string}%'
              ORDER BY name ASC"
     end
