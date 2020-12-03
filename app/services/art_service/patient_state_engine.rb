@@ -5,6 +5,8 @@ module ARTService
   class PatientStateEngine
     attr_accessor :patient, :date
 
+    include ModelUtils
+
     def initialize(patient, date)
       @patient = patient
       @date = date
