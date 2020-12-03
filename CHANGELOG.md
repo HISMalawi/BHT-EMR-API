@@ -14,7 +14,9 @@ minor number changes with new backward compatible features. The major
 number changes with major changes that completely break backwards
 compatibility (examples of this include major architectural changes).
 
-## Unreleased
+## [Unreleased]
+
+## [4.10.17] - 2020-12-03
 
 ### Added
 
@@ -22,6 +24,8 @@ compatibility (examples of this include major architectural changes).
 
 ### Fixed
 
+- Failure to pull drug orders by both date and program_id for patients with
+  multiple treatment encounters.
 - ART: Resetting of amount needed to dispensed value instead of interval
   selected by clinician on dispensation voiding.
 - Leak of User.current and Location.current across threads.
