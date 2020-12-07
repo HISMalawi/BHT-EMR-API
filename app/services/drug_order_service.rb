@@ -13,12 +13,18 @@ module DrugOrderService
 
   class << self
     def find(filters)
+      date = filters.delete(:date)&.to_date
       program_id = filters.delete(:program_id)
+
       query = DrugOrder.joins(:order).where(*parse_search_filters(filters))
 
-      if program_id
-        query = query.merge(Order.joins(:encounter)\
-                                 .where(encounter: { program_id: program_id }))
+      if date || program_id
+        encounter_query = Encounter.all
+
+        encounter_query = encounter_query.where('encounter_datetime BETWEEN ? AND ?', date, date + 1.day) if date
+        encounter_query = encounter_query.where(program_id: program_id) if program_id
+
+        query = query.merge(Order.joins(:encounter).merge(encounter_query))
       end
 
       query
