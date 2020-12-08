@@ -173,6 +173,11 @@ class Api::V1::ReportsController < ApplicationController
     render json: service.patient_visit_list(params[:date], params[:date])
   end
 
+  def patient_outcome_list
+    render json: service.patient_outcome_list(params[:start_date],
+      params[:end_date], params[:outcome])
+  end
+
   private
 
   def service
