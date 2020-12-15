@@ -16,7 +16,7 @@ module RdsService
 
     def initialize
       LOGGERS.each do |logger|
-        logger.level = Logger::DEBUG
+        logger.level = Logger::INFO
       end
     end
 
