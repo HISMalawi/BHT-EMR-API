@@ -18,6 +18,7 @@ compatibility (examples of this include major architectural changes).
 
 ### Changed
 
+- Added new clinics to metadata: Mehboob, FPAM, PIH Dalitso
 - ART: TX-RTT Report to MER 2.5 ([#13](https://github.com/HISMalawi/BHT-EMR-API/issues/13))
 
 ## [4.10.17] - 2020-12-03
