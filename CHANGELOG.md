@@ -16,6 +16,15 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+### Added
+
+### Changed
+
+### Fixed
+
+
+## [4.10.18] - 2020-12-16
+
 ### Changed
 
 - Added new clinics to metadata: Mehboob, FPAM, PIH Dalitso
