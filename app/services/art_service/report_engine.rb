@@ -30,7 +30,8 @@ module ARTService
       'VISITS' => ARTService::Reports::VisitsReport,
       'VL_DUE' => ARTService::Reports::PatientsDueForViralLoad,
       'VL_DISAGGREGATED' => ARTService::Reports::ViralLoadDisaggregated,
-      'TB_PREV' => ARTService::Reports::Pepfar::TbPrev
+      'TB_PREV' => ARTService::Reports::Pepfar::TbPrev,
+      'OUTCOME_LIST' => ARTService::Reports::OutcomeList
     }.freeze
 
     def generate_report(type:, **kwargs)
@@ -140,6 +141,11 @@ module ARTService
     def patient_visit_list(start_date, end_date)
       REPORTS['APPOINTMENTS'].new(start_date: start_date.to_date,
         end_date: end_date.to_date).patient_visit_list
+    end
+
+    def patient_outcome_list(start_date, end_date, outcome)
+      REPORTS['OUTCOME_LIST'].new(start_date: start_date.to_date,
+        end_date: end_date.to_date, outcome: outcome).get_list
     end
 
     private

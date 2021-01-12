@@ -308,4 +308,5 @@ Rails.application.routes.draw do
   get '/api/v1/tpt_prescription_count' => 'api/v1/patients#tpt_prescription_count'
   get '/api/v1/patient_visit_types', to: 'api/v1/reports#patient_visit_types'
   get '/api/v1/patient_visit_list', to: 'api/v1/reports#patient_visit_list'
+  get '/api/v1/patient_outcome_list', to: 'api/v1/reports#patient_outcome_list'
 end

@@ -76,19 +76,21 @@ module DispensationService
 
     def void_dispensations(drug_order)
       ActiveRecord::Base.transaction do
-        dispensations = drug_order.order\
-                                  .observations\
-                                  .where(concept_id: ConceptName.find_by_name('Amount dispensed').concept_id)
+        observations = lambda do |concept_names|
+          concepts = ConceptName.where(name: concept_names).select(:concept_id)
+          Observation.where(order_id: drug_order.id, concept: concepts)
+        end
 
-        dispensations.each do |dispensation|
+        observations['Amount dispensed'].each do |dispensation|
           dispensation.void("Dispensation reversed by #{User.current.username}", skip_after_void: true)
           update_stock_ledgers(dispensation, :credit)
         end
 
+        # Get clinician specified drug run out date...
+        run_out_date = observations['Drug end date'].first
+        drug_order.order.update!(auto_expire_date: run_out_date.value_datetime) if run_out_date
         drug_order.quantity = 0
-        unless drug_order.save
-          raise "Failed to void dispensations due to #{drug_order.errors.to_json}"
-        end
+        drug_order.save!
       end
     end
 
