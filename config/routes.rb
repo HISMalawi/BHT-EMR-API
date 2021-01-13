@@ -1,4 +1,8 @@
 Rails.application.routes.draw do
+  mount Lab::Engine => '/'
+  mount Rswag::Ui::Engine => '/api-docs'
+  mount Rswag::Api::Engine => '/api-docs'
+
   namespace :api do
     namespace :v1 do
       # Helper for creating dynamic redirect urls with redirect blocks
