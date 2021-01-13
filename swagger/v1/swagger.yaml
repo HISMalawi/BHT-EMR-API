@@ -1,0 +1,21 @@
+---
+openapi: 3.0.1
+info:
+  title: API V1
+  version: v1
+paths:
+servers:
+- url: http://{defaultHost}
+  variables:
+    defaultHost:
+      default: localhost:3000
+components:
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: Authorization
+      in: header
+    bearer:
+      type: bearer
+      name: Authorization
+      in: header
