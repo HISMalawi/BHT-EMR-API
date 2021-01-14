@@ -42,34 +42,30 @@ module ARTService
     end
 
     def get_adherence(patient_id, visit_date)
-      adherence_concpet = ConceptName.find_by_name('What was the patients adherence for this drug order')
-      start_date  = visit_date.to_date.strftime('%Y-%m-%d 00:00:00')
-      end_date    = visit_date.to_date.strftime('%Y-%m-%d 23:59;59')
+      start_date = visit_date.to_date
+      end_date = start_date + 1.day
 
-      adherences = Observation.where(["person_id = ? AND concept_id = ? AND obs_datetime BETWEEN ? AND ?",
-        patient_id, adherence_concpet.concept_id, start_date, end_date])
+      adherence_observations = Observation.where(
+        person_id: patient_id,
+        concept_id: ConceptName.where(name: 'Drug Order Adherence')
+                               .select(:concept_id),
+        obs_datetime: start_date...end_date
+      )
 
-      art_adherences = []
-      unless adherences.blank?
-        (adherences || []).each do |adherence|
-          drug_order = Order.find(adherence.order_id).drug_order rescue []
-          next if drug_order.blank?
+      adherence_observations.map do |observation|
+        drug_id = observation.value_drug || DrugOrder.find_by_order_id(observation.order_id)&.drug_inventory_id
+        next nil unless drug_id
 
-          adherence_rate = adherence.value_text
-          if not adherence_rate.blank? and not adherence_rate.match(/\%/)
-            adherence_rate = "#{adherence.value_text}%"
-          end
+        drug = Drug.find_by_drug_id(drug_id)
+        adherence_value = observation.value_numeric
+        adherence_value ||= observation.value_text ? observation.value_text.gsub(/%$/, '').to_f : nil
 
-          name = drug_order.drug.name rescue ''
-          art_adherences << {
-            :name       =>  (drug_order.drug.name rescue nil),
-            :short_name =>  (drug_order.drug.concept.shortname rescue nil),
-            :adherence   =>  adherence_rate
-          }
-        end
+        {
+          name: drug&.name,
+          short_name: drug&.concept&.shortname,
+          adherence: "#{adherence_value}%"
+        }
       end
-
-      return art_adherences
     end
 
     def get_regimen(patient_id, visit_date)

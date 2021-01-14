@@ -22,6 +22,8 @@ compatibility (examples of this include major architectural changes).
 
 ### Fixed
 
+- ART: Fixed display of drug adherence on patient mastercard (was almost always returning nil)
+
 
 ## [4.10.18] - 2020-12-16
 
