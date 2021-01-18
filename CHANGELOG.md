@@ -22,25 +22,26 @@ compatibility (examples of this include major architectural changes).
 
 ### Fixed
 
-
-## [4.10.18] - 2020-12-16
-
-### Changed
-
-- Added new clinics to metadata: Mehboob, FPAM, PIH Dalitso
-- ART: TX-RTT Report to MER 2.5 ([#13](https://github.com/HISMalawi/BHT-EMR-API/issues/13))
-
-## [4.10.17] - 2020-12-03
-
-### Added
-
-- ART: Patient drilldown to cohort disaggregated.
-
-### Fixed
+- Fixed leak of User.current and Location.current across threads.
+- ART: Previously on treatment patients who are currently not on treatment were
+       not being switched back to on treatment upon ARV dispensation.
 
 - Failure to pull drug orders by both date and program_id for patients with
   multiple treatment encounters.
 - ART: Resetting of amount needed to dispensed value instead of interval
+  selected by clinician on dispensation voiding.
+- Leak of User.current and Location.current across threads.
+- ART: Failure to dispense drugs for patients without an ART start state.
+  multiple treatment encounters.
+## [4.10.16] - 2020-11-10
+
+### Fixed
+
+- ART: Previously on treatment patients who are currently not on treatment were
+  not being switched back to on treatment upon ARV dispensation.
+- ART Stock: Resetting of available quantity to delivered quantity on voiding
+  of any dispensations instead of just adding the dispensations back to the
+  available quantity.
   selected by clinician on dispensation voiding.
 - Leak of User.current and Location.current across threads.
 - ART: Failure to dispense drugs for patients without an ART start state.
