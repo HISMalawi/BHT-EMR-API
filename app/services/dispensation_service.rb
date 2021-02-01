@@ -34,6 +34,8 @@ module DispensationService
           obs.as_json.tap { |hash| hash[:amount_needed] = drug_order.amount_needed }
         end
 
+        obs_list.each { |obs| update_stock_ledgers(:process_dispensation, obs['obs_id']) }
+
         obs_list
       end
     end
@@ -68,22 +70,21 @@ module DispensationService
           obs_datetime: date
         )
 
-        update_stock_ledgers(observation, :debit)
-
         observation
       end
     end
 
     def void_dispensations(drug_order)
-      ActiveRecord::Base.transaction do
+      voided_dispensations = ActiveRecord::Base.transaction do
         observations = lambda do |concept_names|
           concepts = ConceptName.where(name: concept_names).select(:concept_id)
           Observation.where(order_id: drug_order.id, concept: concepts)
         end
 
-        observations['Amount dispensed'].each do |dispensation|
+        voided_observations = observations['Amount dispensed'].map do |dispensation|
           dispensation.void("Dispensation reversed by #{User.current.username}", skip_after_void: true)
-          update_stock_ledgers(dispensation, :credit)
+
+          dispensation
         end
 
         # Get clinician specified drug run out date...
@@ -91,7 +92,11 @@ module DispensationService
         drug_order.order.update!(auto_expire_date: run_out_date.value_datetime) if run_out_date
         drug_order.quantity = 0
         drug_order.save!
+
+        voided_observations
       end
+
+      voided_dispensations.each { |dispensation| update_stock_ledgers(:reverse_dispensation, dispensation.id) }
     end
 
     # Updates the quantity dispensed of the drug_order and adjusts
@@ -142,9 +147,10 @@ module DispensationService
                .first
     end
 
-    def update_stock_ledgers(observation, mode = :debit)
-      json_observation = observation.as_json(ignore_includes: true).to_json
-      StockUpdateJob.perform_later(mode.to_s, User.current.id, Location.current.id, json_observation)
+    def update_stock_ledgers(action, observation_id)
+      StockUpdateJob.perform_later(action.to_s, user_id: User.current.id,
+                                                location_id: Location.current.id,
+                                                dispensation_id: observation_id)
     end
   end
 end
