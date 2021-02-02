@@ -37,12 +37,12 @@ module ARTService
     end
 
     def identifier(identifier_type_name)
-      identifier_type = PatientIdentifierType.find_by_name(identifier_type_name)
+      identifier_type = PatientIdentifierType.where(name: identifier_type_name)
 
-      PatientIdentifier.where(
-        identifier_type: identifier_type.patient_identifier_type_id,
+      PatientIdentifier.find_by(
+        identifier_type: identifier_type.select(:patient_identifier_type_id),
         patient_id: patient.patient_id
-      ).first&.identifier
+      )&.identifier
     end
 
     def npid

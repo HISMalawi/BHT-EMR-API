@@ -18,14 +18,20 @@ class Api::V1::EncountersController < ApplicationController
     filters = params.permit(%i[patient_id location_id encounter_type_id date program_id])
 
     if filters.empty?
-      render json: paginate(Encounter)
+      queryset = Encounter.all
     else
       remap_encounter_type_id! filters if filters[:encounter_type_id]
       date = filters.delete(:date)
       queryset = Encounter.where(filters)
-      queryset = queryset.where('DATE(encounter_datetime) = DATE(?)', date) if date
-      render json: paginate(queryset)
+      if date
+        queryset = queryset.where('encounter_datetime BETWEEN DATE(?) AND (DATE(?) + INTERVAL 1 DAY)', date, date)
+      end
     end
+
+    queryset = queryset.includes(%i[type patient location provider program], observations: { concept: %i[concept_names] })
+                       .order(:date_created)
+
+    render json: paginate(queryset)
   end
 
   # Generate a report on counts of various encounters
