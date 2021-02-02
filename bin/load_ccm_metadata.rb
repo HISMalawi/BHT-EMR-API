@@ -8,10 +8,10 @@ ConceptNames = [
   'Leep', 'Thermo','Cancer confirmed','VIA program', 'Pre VIA treatment',
   'Preferred counseling','Reason for NOT offering VIA','VIA treatment',
   'Postponed reason','Referral location','Previous VIA location',
-  'Previous VIA results'
+  'Previous VIA results', 'Cancer treatment', 'Cancer treatment procedure'
 ]
 
-VIAencounters = ['VIA test','VIA treatment']
+VIAencounters = ['VIA test','VIA treatment','Cancer treatment']
 
 def cervical_cancer_metadata
 
