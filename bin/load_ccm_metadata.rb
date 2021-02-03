@@ -8,7 +8,8 @@ ConceptNames = [
   'Leep', 'Thermo','Cancer confirmed','VIA program', 'Pre VIA treatment',
   'Preferred counseling','Reason for NOT offering VIA','VIA treatment',
   'Postponed reason','Referral location','Previous VIA location',
-  'Previous VIA results', 'Cancer treatment', 'Cancer treatment procedure'
+  'Previous VIA results', 'Cancer treatment', 'Cancer treatment procedure',
+  'Post VIA assessment'
 ]
 
 VIAencounters = ['VIA test','VIA treatment','Cancer treatment']
@@ -40,7 +41,10 @@ def cervical_cancer_metadata
 
 
 
-  states = ['Pre VIA treatment','Chemotherapy', 'Leep', 'Thermo','Cancer confirmed', 'Other gynaecological condition', 'Patient died','Treatment complete']
+  states = ['Pre VIA treatment','Chemotherapy',
+    'Leep', 'Thermo',
+    'Cancer confirmed', 'Other gynaecological condition',
+    'Patient died','Treatment complete','Post VIA assessment']
 
   states.each do |st|
     puts "--------->> #{st}"

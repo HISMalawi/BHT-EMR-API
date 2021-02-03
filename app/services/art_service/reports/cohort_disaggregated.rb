@@ -240,11 +240,13 @@ EOF
 
           results = ActiveRecord::Base.connection.select_all <<EOF
             SELECT
-            e.*,  cohort_disaggregated_age_group(DATE(e.birthdate), DATE('#{end_date}')) AS age_group,
-            t2.cum_outcome AS outcome
-            FROM temp_earliest_start_date e
-            INNER JOIN #{temp_outcome_table} t2 ON t2.patient_id = e.patient_id
-            GROUP BY e.patient_id HAVING age_group = '#{age_group}';
+              `cohort_disaggregated_age_group`(date(birthdate), date('2020-12-31')) AS age_group,
+              o.cum_outcome AS outcome, e.*
+            FROM earliest_start_date e
+            LEFT JOIN `#{temp_outcome_table}` o ON o.patient_id = e.patient_id
+            WHERE  cum_outcome = 'On antiretrovirals'
+            GROUP BY e.patient_id
+            HAVING age_group = '#{age_group}';
 EOF
 
         elsif age_group == 'Pregnant'
@@ -255,7 +257,7 @@ EOF
               t3.cum_outcome AS outcome
             FROM temp_earliest_start_date e
             INNER JOIN temp_disaggregated t2 ON t2.patient_id = e.patient_id
-            INNER JOIN #{temp_outcome_table} t3 ON t3.patient_id = e.patient_id
+            INNER JOIN `#{temp_outcome_table}` t3 ON t3.patient_id = e.patient_id
             WHERE maternal_status = 'FP'
             GROUP BY e.patient_id;
 EOF
@@ -268,7 +270,7 @@ EOF
               t3.cum_outcome AS outcome
             FROM temp_earliest_start_date e
             INNER JOIN temp_disaggregated t2 ON t2.patient_id = e.patient_id
-            INNER JOIN #{temp_outcome_table} t3 ON t3.patient_id = e.patient_id
+            INNER JOIN `#{temp_outcome_table}` t3 ON t3.patient_id = e.patient_id
             WHERE maternal_status = 'FBf'
             GROUP BY e.patient_id;
 EOF
@@ -281,7 +283,7 @@ EOF
               t3.cum_outcome AS outcome
             FROM temp_earliest_start_date e
             INNER JOIN temp_disaggregated t2 ON t2.patient_id = e.patient_id
-            INNER JOIN #{temp_outcome_table} t3 ON t3.patient_id = e.patient_id
+            INNER JOIN `#{temp_outcome_table}` t3 ON t3.patient_id = e.patient_id
             WHERE maternal_status = 'FNP'
             GROUP BY e.patient_id;
 EOF
