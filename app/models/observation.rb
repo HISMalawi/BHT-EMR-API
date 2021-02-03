@@ -65,7 +65,7 @@ class Observation < VoidableRecord
 
     return unless concept_id == ConceptName.find_by_name('Amount Dispensed').concept_id
 
-    DispensationService.update_stock_ledgers(self, :credit)
+    DispensationService.update_stock_ledgers(:reverse_dispensation, self.id)
   end
 
   def name
