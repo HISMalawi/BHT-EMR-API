@@ -22,9 +22,10 @@ compatibility (examples of this include major architectural changes).
 
 ### Fixed
 
-- ART: Fixed display of drug adherence on patient mastercard (was almost always returning nil)
+- Various query optimisations (N + 1 query fixes)
+- ART: Optimised query for searching for filing numbers that qualify for archival
 - ART Stock: Stock Card Report Changes from zero when voiding an encounter even when the stock level was zero (EGPAF Helpdesk #1989)
-
+- ART: Fixed display of drug adherence on patient mastercard (was almost always returning nil)
 
 ## [4.10.18] - 2020-12-16
 
