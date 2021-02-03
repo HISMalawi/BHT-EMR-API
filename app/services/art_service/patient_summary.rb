@@ -164,8 +164,6 @@ EOF
                        .order(:date_created)\
                        .first
 
-      given_name = na
-
       "#{name.given_name} #{name.family_name}"
     end
   end

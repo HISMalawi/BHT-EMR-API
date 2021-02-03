@@ -22,6 +22,7 @@ compatibility (examples of this include major architectural changes).
 
 ### Fixed
 
+- ART: Appended drug strengths to visit summary (EGPAF Helpdesk #2112)
 - Various query optimisations (N + 1 query fixes)
 - ART: Optimised query for searching for filing numbers that qualify for archival (EGPAF EMR Helpdesk #1948)
 - ART Stock: Stock Card Report Changes from zero when voiding an encounter even when the stock level was zero (EGPAF EMR Helpdesk #1989)
