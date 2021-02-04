@@ -53,15 +53,11 @@ module ARTService
             end
           rescue
             initialize_disaggregated
-            create_mysql_pepfar_current_defaulter
-            create_mysql_pepfar_current_outcome
             rebuild_outcomes
           end
 
           if @rebuild
             initialize_disaggregated
-            create_mysql_pepfar_current_defaulter
-            create_mysql_pepfar_current_outcome
             rebuild_outcomes
           end
 
