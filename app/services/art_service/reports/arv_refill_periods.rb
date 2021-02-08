@@ -37,24 +37,23 @@ module ARTService
         person_ids = [0] if person_ids.blank?
 
         patients = ActiveRecord::Base.connection.select_all <<~SQL
-        select
+          SELECT
             `p`.`patient_id` AS `patient_id`,
-             cast(patient_date_enrolled(`p`.`patient_id`) as date) AS `date_enrolled`,
-             pe.birthdate, pe.gender
-          from
+            cast(patient_date_enrolled(`p`.`patient_id`) as date) AS `date_enrolled`,
+            pe.birthdate, pe.gender
+          FROM
             ((`patient_program` `p`
             left join `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
             left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
             left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
-          where
+          WHERE
             ((`p`.`voided` = 0)
                 and (`s`.`voided` = 0)
                 and (`p`.`program_id` = 1)
-                and (`s`.`state` = 7))
-                and (DATE(`s`.`start_date`) <= '#{@end_date}')
-                #{sql_path} AND p.patient_id NOT IN(#{person_ids.join(',')})
-          group by `p`.`patient_id`
-          HAVING date_enrolled IS NOT NULL;
+                and (`s`.`state` = 7)
+                #{sql_path} AND p.patient_id NOT IN(#{person_ids.join(',')}))
+          GROUP BY `p`.`patient_id` HAVING date_enrolled IS NOT NULL
+          AND DATE(date_enrolled) <= DATE('#{@end_date}');
         SQL
 
         return {} if patients.blank?
