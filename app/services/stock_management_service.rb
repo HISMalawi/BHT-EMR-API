@@ -224,9 +224,11 @@ class StockManagementService
     drugs.each do |drug|
       break if debit_quantity.zero?
 
-      quantity = [drug.current_quantity, debit_quantity].min
-      commit_transaction(drug, STOCK_DEBIT, -quantity, date, **commit_kwargs)
-      debit_quantity -= quantity
+      drug.with_lock do
+        quantity = [drug.current_quantity, debit_quantity].min
+        commit_transaction(drug, STOCK_DEBIT, -quantity, date, **commit_kwargs)
+        debit_quantity -= quantity
+      end
     end
 
     debit_quantity
