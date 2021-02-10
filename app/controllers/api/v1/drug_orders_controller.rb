@@ -8,7 +8,7 @@ class Api::V1::DrugOrdersController < ApplicationController
 
     drug_orders = DrugOrderService.find(filters).order(Arel.sql('`orders`.`date_created`'))
 
-    render json: paginate(drug_orders)
+    render json: paginate(drug_orders.includes(%i[order], drug: [:barcodes]))
   end
 
   # POST /drug_orders

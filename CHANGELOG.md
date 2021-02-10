@@ -16,14 +16,29 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
-### Added
+- No updates so far
 
-### Changed
+## [4.10.21] - 2021-02-10
 
 ### Fixed
 
-- ART: Fixed display of drug adherence on patient mastercard (was almost always returning nil)
+- ART Stock: Race condition on parallel dispensation of same drug (eg when multiple packs are dispensed using v4.11.1 ART)
 
+## [4.10.20] - 2021-02-08
+
+### Fixed
+
+- ART: Misalignment of cohort disaggregated indicators with other report indicators
+
+## [4.10.19] - 2021-02-03
+
+### Fixed
+
+- ART: Appended drug strengths to visit summary (EGPAF Helpdesk #2112)
+- Various query optimisations (N + 1 query fixes)
+- ART: Optimised query for searching for filing numbers that qualify for archival (EGPAF EMR Helpdesk #1948)
+- ART Stock: Stock Card Report Changes from zero when voiding an encounter even when the stock level was zero (EGPAF EMR Helpdesk #1989)
+- ART: Fixed display of drug adherence on patient mastercard (was almost always returning nil)
 
 ## [4.10.18] - 2020-12-16
 

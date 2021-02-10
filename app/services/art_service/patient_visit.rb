@@ -131,6 +131,8 @@ module ARTService
       observations = Observation.where(concept: concept('Amount dispensed'),
                                        person: patient.person)\
                                 .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
+                                .includes(order: { drug_order: { drug: %i[alternative_names] } })
+                                .select(%i[order_id value_numeric])
 
       @pills_dispensed = observations.each_with_object({}) do |observation, pills_dispensed|
         drug = observation&.order&.drug_order&.drug
@@ -198,6 +200,13 @@ module ARTService
     end
 
     def format_drug_name(drug)
+      moh_name = drug.alternative_names.first&.short_name
+
+      if moh_name && %r{^\d*[A-Z]+\s*\d+(\s*/\s*\d*[A-Z]+\s*\d+)*$}i.match(moh_name)
+        return moh_name.gsub(/\s+/, '')
+                       .gsub(/Isoniazid/i, 'INH')
+      end
+
       match = drug.name.match(/^(.+)\s*\(.*$/)
       name = match.nil? ? drug.name : match[1]
 

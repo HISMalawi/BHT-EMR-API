@@ -11,7 +11,7 @@ class DrugOrder < ApplicationRecord
 
   def as_json(options = {})
     super(options.merge(
-      include: { order: {}, drug: {} }, methods: %i[dosage_struct amount_needed barcodes]
+      include: { order: {}, drug: {} }, methods: %i[amount_needed barcodes]
     ))
   end
 
@@ -20,7 +20,7 @@ class DrugOrder < ApplicationRecord
   end
 
   def duration
-    order = Order.unscoped.find_by_order_id(order_id)
+    order = self.order || Order.unscoped.find_by_order_id(order_id)
     return 0 if order&.auto_expire_date.blank? || order&.start_date.blank?
 
     interval = order.auto_expire_date.to_date - order.start_date.to_date

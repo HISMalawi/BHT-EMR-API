@@ -17,6 +17,8 @@ class Api::V1::PeopleController < ApplicationController
                                                            filters[:middle_name],
                                                            filters[:family_name],
                                                            filters[:gender])
+    people = people.includes(%i[names addresses], person_attributes: %i[type])
+
     render json: paginate(people).sort_by(&:name)
   end
 

@@ -53,15 +53,11 @@ module ARTService
             end
           rescue
             initialize_disaggregated
-            create_mysql_pepfar_current_defaulter
-            create_mysql_pepfar_current_outcome
             rebuild_outcomes
           end
 
           if @rebuild
             initialize_disaggregated
-            create_mysql_pepfar_current_defaulter
-            create_mysql_pepfar_current_outcome
             rebuild_outcomes
           end
 
@@ -212,7 +208,11 @@ EOF
         tx_given_ipt  = false
         outcome = outcomes[patient_id]
 
-        date_enrolled  = data['date_enrolled'].to_date
+        begin
+          date_enrolled  = data['date_enrolled'].to_date
+        rescue
+          raise data.inspect
+        end
         earliest_start_date  = data['earliest_start_date'].to_date rescue nil
 
         if date_enrolled >= start_date && date_enrolled <= end_date
@@ -244,7 +244,7 @@ EOF
               o.cum_outcome AS outcome, e.*
             FROM earliest_start_date e
             LEFT JOIN `#{temp_outcome_table}` o ON o.patient_id = e.patient_id
-            WHERE  cum_outcome = 'On antiretrovirals'
+            WHERE  date_enrolled IS NOT NULL AND DATE(date_enrolled) <= DATE('#{@end_date}')
             GROUP BY e.patient_id
             HAVING age_group = '#{age_group}';
 EOF
