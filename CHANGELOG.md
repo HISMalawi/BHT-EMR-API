@@ -18,6 +18,18 @@ compatibility (examples of this include major architectural changes).
 
 - No updates so far
 
+## [4.10.21] - 2021-02-10
+
+### Fixed
+
+- ART Stock: Race condition on parallel dispensation of same drug (eg when multiple packs are dispensed using v4.11.1 ART)
+
+## [4.10.20] - 2021-02-08
+
+### Fixed
+
+- ART: Misalignment of cohort disaggregated indicators with other report indicators
+
 ## [4.10.19] - 2021-02-03
 
 ### Fixed
