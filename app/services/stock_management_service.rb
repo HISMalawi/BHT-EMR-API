@@ -16,50 +16,30 @@ class StockManagementService
   STOCK_ITEM_DISPOSAL = 'Disposal'
   STOCK_ITEM_REALLOCATION = 'Reallocation'
 
-  # Stock update strategies
-  FEFO = 'FEFO' # First expired, first out
-  FIFO = 'FIFO' # First in, first out
-  LIFO = 'LIFO' # Last in, first out
+  def process_dispensation(dispensation_id)
+    dispensation = Observation.find_by(obs_id: dispensation_id)
+    raise "Dispensation ##{dispensation_id} not found" unless dispensation
 
-  def debit_drug(drug_id, debit_quantity, date)
-    drugs = find_batch_items(drug_id: drug_id).where('expiry_date > ? AND current_quantity > 0', date)
-                                              .order(:expiry_date)
-
-    drugs.each do |drug|
-      break if debit_quantity.zero?
-
-      quantity = [drug.current_quantity, debit_quantity].min
-      commit_transaction(drug, STOCK_DEBIT, -quantity, date, update_item: true)
-
-      debit_quantity -= quantity
-    end
-
-    debit_quantity
+    debit_drug(dispensation_drug_id(dispensation),
+               dispensation.value_numeric,
+               dispensation.obs_datetime,
+               dispensation_id: dispensation.obs_id)
   end
 
-  def credit_drug(drug_id, credit_quantity, date)
-    drugs = find_batch_items(drug_id: drug_id).where('expiry_date > ?', date)
-                                              .order(:expiry_date)
+  def reverse_dispensation(dispensation_id)
+    dispensation = Observation.unscoped.find_by(obs_id: dispensation_id, voided: true)
+    raise "*Voided* dispensation ##{dispensation_id} not found" unless dispensation
 
-    # Spread the quantity being credited back among the existing drugs,
-    # making sure that no drug in stock ends up having more than was
-    # initially delivered. BTW: Crediting is done following First to Expire,
-    # First Out (FEFO) basis.
-    drugs.each do |drug|
-      break if credit_quantity.zero?
+    event_log = Pharmacy.unscoped.find_by(dispensation_obs_id: dispensation_id,
+                                          pharmacy_encounter_type: pharmacy_event_type(STOCK_DEBIT).id)
+    raise "Dispensation ##{dispensation_id} already reversed" if event_log&.voided
 
-      drug_deficit = drug.delivered_quantity - drug.current_quantity
+    amount_rejected = credit_drug(dispensation_drug_id(dispensation),
+                                  dispensation.value_numeric,
+                                  dispensation.obs_datetime)
+    event_log&.void('Dispensation reversed')
 
-      if credit_quantity > drug_deficit
-        commit_transaction(drug, STOCK_ADD, drug_deficit, date, update_item: true)
-        credit_quantity -= drug_deficit
-      else
-        commit_transaction(drug, STOCK_ADD, credit_quantity, date, update_item: true)
-        credit_quantity = 0
-      end
-    end
-
-    credit_quantity
+    amount_rejected
   end
 
   # Add list of drugs to stock
@@ -202,40 +182,18 @@ class StockManagementService
     end
   end
 
-  def commit_transaction(batch_item, event_name, quantity, date = nil, update_item: false)
-    ActiveRecord::Base.transaction do
-      date ||= Date.today
-
-      event = Pharmacy.create(item: batch_item, value_numeric: quantity,
-                              type: pharmacy_event_type(event_name),
-                              encounter_date: date)
-      validate_activerecord_object(event)
-
-      return { event: event, target_item: batch_item } unless update_item
-
-      if quantity.negative? && batch_item.current_quantity < quantity.abs
-        raise InvalidParameterError, <<~ERROR
-          Debit amount (#{quantity.abs}) exceeds current quantity (#{batch_item.current_quantity}) on item ##{batch_item.id}
-        ERROR
-      end
-
-      batch_item.current_quantity += quantity.to_f
-      batch_item.save
-      validate_activerecord_object(batch_item)
-
-      { event: event, target_item: batch_item }
+  def update_batch_item!(batch_item, quantity)
+    if quantity.negative? && batch_item.current_quantity < quantity.abs
+      raise InvalidParameterError, <<~ERROR
+        Debit amount (#{quantity.abs}) exceeds current quantity (#{batch_item.current_quantity}) on item ##{batch_item.id}
+      ERROR
     end
-  end
 
-  def update_batch_items(activity, drug_id, quantity, date)
-    case activity.to_s
-    when 'credit'
-      credit_drug(drug_id, quantity, date)
-    when 'debit'
-      debit_drug(drug_id, quantity, date)
-    else
-      raise "Invalid stock update operation #{activity}"
-    end
+    batch_item.current_quantity += quantity.to_f
+    batch_item.save
+    validate_activerecord_object(batch_item)
+
+    batch_item
   end
 
   DAYS_IN_MONTH = 30
@@ -256,6 +214,67 @@ class StockManagementService
   end
 
   private
+
+  def debit_drug(drug_id, debit_quantity, date, dispensation_id: nil)
+    drugs = find_batch_items(drug_id: drug_id).where('expiry_date > ? AND current_quantity > 0', date)
+                                              .order(:expiry_date)
+
+    commit_kwargs = { update_item: true, metadata: { dispensation_obs_id: dispensation_id } }
+
+    drugs.each do |drug|
+      break if debit_quantity.zero?
+
+      drug.with_lock do
+        quantity = [drug.current_quantity, debit_quantity].min
+        commit_transaction(drug, STOCK_DEBIT, -quantity, date, **commit_kwargs)
+        debit_quantity -= quantity
+      end
+    end
+
+    debit_quantity
+  end
+
+  def credit_drug(drug_id, credit_quantity, date)
+    return credit_quantity unless credit_quantity.positive?
+
+    drugs = find_batch_items(drug_id: drug_id)
+            .where('delivery_date < :date AND expiry_date > :date AND date_changed >= :date', date: date)
+            .order(:expiry_date)
+
+    # Spread the quantity being credited back among the existing drugs,
+    # making sure that no drug in stock ends up having more than was
+    # initially delivered. BTW: Crediting is done following First to Expire,
+    # First Out (FEFO) basis.
+    drugs.each do |drug|
+      break if credit_quantity.zero?
+
+      drug_deficit = drug.delivered_quantity - drug.current_quantity
+
+      if credit_quantity > drug_deficit
+        commit_transaction(drug, STOCK_ADD, drug_deficit, date, update_item: true)
+        credit_quantity -= drug_deficit
+      else
+        commit_transaction(drug, STOCK_ADD, credit_quantity, date, update_item: true)
+        credit_quantity = 0
+      end
+    end
+
+    credit_quantity
+  end
+
+  def commit_transaction(batch_item, event_name, quantity, date = nil, update_item: false, metadata: {})
+    ActiveRecord::Base.transaction do
+      event = Pharmacy.create(type: pharmacy_event_type(event_name),
+                              item: batch_item,
+                              value_numeric: quantity,
+                              encounter_date: date || Date.today,
+                              **metadata)
+      validate_activerecord_object(event)
+      update_batch_item!(batch_item, quantity) if update_item
+
+      { event: event, target_item: batch_item }
+    end
+  end
 
   def find_or_create_batch(batch_number)
     batch = PharmacyBatch.find_by_batch_number(batch_number)
@@ -282,6 +301,11 @@ class StockManagementService
     raise NotFoundError, "Pharmacy encounter type not found: #{event_name}" unless type
 
     type
+  end
+
+  # Pulls a drug id from a dispensation observation
+  def dispensation_drug_id(dispensation)
+    dispensation.value_drug || DrugOrder.find(dispensation.order_id).drug_inventory_id
   end
 
   def validate_activerecord_object(object)

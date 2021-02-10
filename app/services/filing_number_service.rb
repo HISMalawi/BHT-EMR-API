@@ -204,16 +204,7 @@ class FilingNumberService
     SQL
 
     if outcomes.blank? || (outcomes.length < 5)
-      encounter_patient_ids = begin
-                                Encounter.find_by_sql("
-                                      SELECT patient_id, MAX(encounter_datetime) max_encounter_datetime
-                                      FROM  encounter WHERE patient_id IN(#{patient_ids.join(',')})
-                                      AND voided = 0 GROUP BY patient_id
-                                      HAVING max_encounter_datetime <= '#{(Date.today - 150.day).to_date.strftime('%Y-%m-%d 23:59:59')}';
-                                        ").map(&:patient_id).uniq
-                              rescue StandardError
-                                nil
-                              end
+      encounter_patient_ids = patients_last_seen_on(150.days.ago)
 
       encounter_patient_ids = [0] if encounter_patient_ids.blank?
 
@@ -250,5 +241,29 @@ class FilingNumberService
     end
 
     return processed_states
+  end
+
+  def patients_last_seen_on(date)
+    patients = ActiveRecord::Base.connection.select_all <<~SQL
+      SELECT DISTINCT patient_program.patient_id
+      FROM patient_program
+      INNER JOIN patient_identifier
+        ON patient_identifier.patient_id = patient_program.patient_id
+        AND patient_identifier.voided = 0
+      INNER JOIN patient_identifier_type
+        ON patient_identifier_type.name = 'Filing number'
+        AND patient_identifier_type.retired = 0
+        AND patient_identifier_type.patient_identifier_type_id = patient_identifier.identifier_type
+      WHERE patient_identifier.voided = 0
+        AND patient_program.patient_id NOT IN (
+          SELECT DISTINCT patient_id
+          FROM encounter
+          WHERE encounter_datetime > #{ActiveRecord::Base.connection.quote(date)}
+        )
+        AND patient_program.program_id = 1
+        AND patient_program.voided = 0
+    SQL
+
+    patients.collect { |patient| patient['patient_id'] }
   end
 end

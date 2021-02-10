@@ -16,32 +16,48 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
-### Added
+- No updates so far
 
-### Changed
+## [4.10.21] - 2021-02-10
 
 ### Fixed
 
-- Fixed leak of User.current and Location.current across threads.
-- ART: Previously on treatment patients who are currently not on treatment were
-       not being switched back to on treatment upon ARV dispensation.
+- ART Stock: Race condition on parallel dispensation of same drug (eg when multiple packs are dispensed using v4.11.1 ART)
+
+## [4.10.20] - 2021-02-08
+
+### Fixed
+
+- ART: Misalignment of cohort disaggregated indicators with other report indicators
+
+## [4.10.19] - 2021-02-03
+
+### Fixed
+
+- ART: Appended drug strengths to visit summary (EGPAF Helpdesk #2112)
+- Various query optimisations (N + 1 query fixes)
+- ART: Optimised query for searching for filing numbers that qualify for archival (EGPAF EMR Helpdesk #1948)
+- ART Stock: Stock Card Report Changes from zero when voiding an encounter even when the stock level was zero (EGPAF EMR Helpdesk #1989)
+- ART: Fixed display of drug adherence on patient mastercard (was almost always returning nil)
+
+## [4.10.18] - 2020-12-16
+
+### Changed
+
+- Added new clinics to metadata: Mehboob, FPAM, PIH Dalitso
+- ART: TX-RTT Report to MER 2.5 ([#13](https://github.com/HISMalawi/BHT-EMR-API/issues/13))
+
+## [4.10.17] - 2020-12-03
+
+### Added
+
+- ART: Patient drilldown to cohort disaggregated.
+
+### Fixed
 
 - Failure to pull drug orders by both date and program_id for patients with
   multiple treatment encounters.
 - ART: Resetting of amount needed to dispensed value instead of interval
-  selected by clinician on dispensation voiding.
-- Leak of User.current and Location.current across threads.
-- ART: Failure to dispense drugs for patients without an ART start state.
-  multiple treatment encounters.
-## [4.10.16] - 2020-11-10
-
-### Fixed
-
-- ART: Previously on treatment patients who are currently not on treatment were
-  not being switched back to on treatment upon ARV dispensation.
-- ART Stock: Resetting of available quantity to delivered quantity on voiding
-  of any dispensations instead of just adding the dispensations back to the
-  available quantity.
   selected by clinician on dispensation voiding.
 - Leak of User.current and Location.current across threads.
 - ART: Failure to dispense drugs for patients without an ART start state.

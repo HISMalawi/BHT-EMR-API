@@ -4,7 +4,8 @@ class ProgramPatientsService
     'TB PROGRAM' => TBService::PatientsEngine,
     'ANC PROGRAM' => ANCService::PatientsEngine,
     'OPD PROGRAM' => OPDService::PatientsEngine,
-    'VMMC PROGRAM' => VMMCService::PatientsEngine
+    'VMMC PROGRAM' => VMMCService::PatientsEngine,
+    'VIA PROGRAM' => VIAService::PatientsEngine
   }.freeze
 
   def initialize(program:)

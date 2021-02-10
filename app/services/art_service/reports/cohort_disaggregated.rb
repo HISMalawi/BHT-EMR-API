@@ -53,15 +53,11 @@ module ARTService
             end
           rescue
             initialize_disaggregated
-            create_mysql_pepfar_current_defaulter
-            create_mysql_pepfar_current_outcome
             rebuild_outcomes
           end
 
           if @rebuild
             initialize_disaggregated
-            create_mysql_pepfar_current_defaulter
-            create_mysql_pepfar_current_outcome
             rebuild_outcomes
           end
 
@@ -212,7 +208,11 @@ EOF
         tx_given_ipt  = false
         outcome = outcomes[patient_id]
 
-        date_enrolled  = data['date_enrolled'].to_date
+        begin
+          date_enrolled  = data['date_enrolled'].to_date
+        rescue
+          raise data.inspect
+        end
         earliest_start_date  = data['earliest_start_date'].to_date rescue nil
 
         if date_enrolled >= start_date && date_enrolled <= end_date
@@ -240,11 +240,13 @@ EOF
 
           results = ActiveRecord::Base.connection.select_all <<EOF
             SELECT
-            e.*,  cohort_disaggregated_age_group(DATE(e.birthdate), DATE('#{end_date}')) AS age_group,
-            t2.cum_outcome AS outcome
-            FROM temp_earliest_start_date e
-            INNER JOIN #{temp_outcome_table} t2 ON t2.patient_id = e.patient_id
-            GROUP BY e.patient_id HAVING age_group = '#{age_group}';
+              `cohort_disaggregated_age_group`(date(birthdate), date('#{@end_date}')) AS age_group,
+              o.cum_outcome AS outcome, e.*
+            FROM earliest_start_date e
+            LEFT JOIN `#{temp_outcome_table}` o ON o.patient_id = e.patient_id
+            WHERE  date_enrolled IS NOT NULL AND DATE(date_enrolled) <= DATE('#{@end_date}')
+            GROUP BY e.patient_id
+            HAVING age_group = '#{age_group}';
 EOF
 
         elsif age_group == 'Pregnant'
@@ -255,7 +257,7 @@ EOF
               t3.cum_outcome AS outcome
             FROM temp_earliest_start_date e
             INNER JOIN temp_disaggregated t2 ON t2.patient_id = e.patient_id
-            INNER JOIN #{temp_outcome_table} t3 ON t3.patient_id = e.patient_id
+            INNER JOIN `#{temp_outcome_table}` t3 ON t3.patient_id = e.patient_id
             WHERE maternal_status = 'FP'
             GROUP BY e.patient_id;
 EOF
@@ -268,7 +270,7 @@ EOF
               t3.cum_outcome AS outcome
             FROM temp_earliest_start_date e
             INNER JOIN temp_disaggregated t2 ON t2.patient_id = e.patient_id
-            INNER JOIN #{temp_outcome_table} t3 ON t3.patient_id = e.patient_id
+            INNER JOIN `#{temp_outcome_table}` t3 ON t3.patient_id = e.patient_id
             WHERE maternal_status = 'FBf'
             GROUP BY e.patient_id;
 EOF
@@ -281,7 +283,7 @@ EOF
               t3.cum_outcome AS outcome
             FROM temp_earliest_start_date e
             INNER JOIN temp_disaggregated t2 ON t2.patient_id = e.patient_id
-            INNER JOIN #{temp_outcome_table} t3 ON t3.patient_id = e.patient_id
+            INNER JOIN `#{temp_outcome_table}` t3 ON t3.patient_id = e.patient_id
             WHERE maternal_status = 'FNP'
             GROUP BY e.patient_id;
 EOF
@@ -403,8 +405,9 @@ EOF
 
         ActiveRecord::Base.connection.execute(
           "CREATE TABLE temp_pepfar_patient_outcomes AS (
-            SELECT e.patient_id, patient_pepfar_outcome(e.patient_id, '#{@end_date.to_date} 23:59:59') AS cum_outcome
-            FROM temp_earliest_start_date e WHERE e.date_enrolled <= '#{@end_date.to_date}'
+            SELECT e.patient_id, pepfar_patient_outcome(e.patient_id, DATE('#{@end_date.to_date}')) AS cum_outcome
+            FROM temp_earliest_start_date e WHERE DATE(e.date_enrolled) <= DATE('#{@end_date.to_date}')
+            GROUP BY e.patient_id
           )"
         )
 
@@ -423,187 +426,6 @@ EOF
            ADD INDEX patient_id_cum_outcome_index (patient_id, cum_outcome)'
         )
 
-      end
-
-      def create_mysql_pepfar_current_defaulter
-        ActiveRecord::Base.connection.execute <<EOF
-        DROP FUNCTION IF EXISTS current_pepfar_defaulter;
-EOF
-
-        ActiveRecord::Base.connection.execute <<EOF
-CREATE FUNCTION current_pepfar_defaulter(my_patient_id INT, my_end_date DATETIME) RETURNS int(1)
-DETERMINISTIC
-BEGIN
-
-  DECLARE done INT DEFAULT FALSE;
-  DECLARE my_start_date, my_expiry_date, my_obs_datetime DATETIME;
-  DECLARE my_daily_dose, my_quantity, my_pill_count, my_total_text, my_total_numeric DECIMAL;
-  DECLARE my_drug_id, flag INT;
-
-  DECLARE cur1 CURSOR FOR SELECT d.drug_inventory_id, o.start_date, d.equivalent_daily_dose daily_dose, d.quantity, o.start_date FROM drug_order d
-    INNER JOIN arv_drug ad ON d.drug_inventory_id = ad.drug_id
-    INNER JOIN orders o ON d.order_id = o.order_id
-      AND d.quantity > 0
-      AND o.voided = 0
-      AND o.start_date <= my_end_date
-      AND o.patient_id = my_patient_id;
-
-  DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
-
-  SELECT MAX(o.start_date) INTO @obs_datetime FROM drug_order d
-    INNER JOIN arv_drug ad ON d.drug_inventory_id = ad.drug_id
-    INNER JOIN orders o ON d.order_id = o.order_id
-      AND d.quantity > 0
-      AND o.voided = 0
-      AND o.start_date <= my_end_date
-      AND o.patient_id = my_patient_id
-    GROUP BY o.patient_id;
-
-  OPEN cur1;
-
-  SET flag = 0;
-
-  read_loop: LOOP
-    FETCH cur1 INTO my_drug_id, my_start_date, my_daily_dose, my_quantity, my_obs_datetime;
-
-    IF done THEN
-      CLOSE cur1;
-      LEAVE read_loop;
-    END IF;
-
-    IF DATE(my_obs_datetime) = DATE(@obs_datetime) THEN
-
-      IF my_daily_dose = 0 OR LENGTH(my_daily_dose) < 1 OR my_daily_dose IS NULL THEN
-        SET my_daily_dose = 1;
-      END IF;
-
-            SET my_pill_count = drug_pill_count(my_patient_id, my_drug_id, my_obs_datetime);
-
-            SET @expiry_date = ADDDATE(DATE_SUB(my_start_date, INTERVAL 2 DAY), ((my_quantity + my_pill_count)/my_daily_dose));
-
-      IF my_expiry_date IS NULL THEN
-        SET my_expiry_date = @expiry_date;
-      END IF;
-
-      IF @expiry_date < my_expiry_date THEN
-        SET my_expiry_date = @expiry_date;
-            END IF;
-        END IF;
-    END LOOP;
-
-    IF TIMESTAMPDIFF(day, my_expiry_date, my_end_date) > 30 THEN
-        SET flag = 1;
-    END IF;
-
-  RETURN flag;
-  END;
-EOF
-
-
-      end
-
-      def create_mysql_pepfar_current_outcome
-        ActiveRecord::Base.connection.execute <<EOF
-        DROP FUNCTION IF EXISTS patient_pepfar_outcome;
-EOF
-
-        ActiveRecord::Base.connection.execute <<EOF
-CREATE FUNCTION patient_pepfar_outcome(patient_id INT, visit_date date) RETURNS varchar(25)
-DETERMINISTIC
-BEGIN
-
-DECLARE set_program_id INT;
-DECLARE set_patient_state INT;
-DECLARE set_outcome varchar(25);
-DECLARE set_date_started date;
-DECLARE set_patient_state_died INT;
-DECLARE set_died_concept_id INT;
-DECLARE set_timestamp DATETIME;
-DECLARE dispensed_quantity INT;
-
-SET set_timestamp = TIMESTAMP(CONCAT(DATE(visit_date), ' ', '23:59:59'));
-SET set_program_id = (SELECT program_id FROM program WHERE name ="HIV PROGRAM" LIMIT 1);
-
-SET set_patient_state = (SELECT state FROM `patient_state` INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id AND p.program_id = set_program_id WHERE (patient_state.voided = 0 AND p.voided = 0 AND p.program_id = program_id AND DATE(start_date) <= visit_date AND p.patient_id = patient_id) AND (patient_state.voided = 0) ORDER BY start_date DESC, patient_state.patient_state_id DESC, patient_state.date_created DESC LIMIT 1);
-
-IF set_patient_state = 1 THEN
-  SET set_patient_state = current_pepfar_defaulter(patient_id, set_timestamp);
-
-  IF set_patient_state = 1 THEN
-    SET set_outcome = 'Defaulted';
-  ELSE
-    SET set_outcome = 'Pre-ART (Continue)';
-  END IF;
-END IF;
-
-IF set_patient_state = 2   THEN
-  SET set_outcome = 'Patient transferred out';
-END IF;
-
-IF set_patient_state = 3 OR set_patient_state = 127 THEN
-  SET set_outcome = 'Patient died';
-END IF;
-
-
-IF set_patient_state != 3 AND set_patient_state != 127 THEN
-  SET set_patient_state_died = (SELECT state FROM `patient_state` INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id AND p.program_id = set_program_id WHERE (patient_state.voided = 0 AND p.voided = 0 AND p.program_id = program_id AND DATE(start_date) <= visit_date AND p.patient_id = patient_id) AND (patient_state.voided = 0) AND state = 3 ORDER BY patient_state.patient_state_id DESC, patient_state.date_created DESC, start_date DESC LIMIT 1);
-
-  SET set_died_concept_id = (SELECT concept_id FROM concept_name WHERE name = 'Patient died' LIMIT 1);
-
-  IF set_patient_state_died IN(SELECT program_workflow_state_id FROM program_workflow_state WHERE concept_id = set_died_concept_id AND retired = 0) THEN
-    SET set_outcome = 'Patient died';
-    SET set_patient_state = 3;
-  END IF;
-END IF;
-
-
-
-IF set_patient_state = 6 THEN
-  SET set_outcome = 'Treatment stopped';
-END IF;
-
-IF set_patient_state = 7 THEN
-  SET set_patient_state = current_pepfar_defaulter(patient_id, set_timestamp);
-
-  IF set_patient_state = 1 THEN
-    SET set_outcome = 'Defaulted';
-  END IF;
-
-  IF set_patient_state = 0 THEN
-
-    SET dispensed_quantity = (SELECT d.quantity
-      FROM orders o
-      INNER JOIN drug_order d ON d.order_id = o.order_id
-      INNER JOIN drug ON drug.drug_id = d.drug_inventory_id
-      WHERE o.patient_id = patient_id AND d.drug_inventory_id IN(
-        SELECT DISTINCT(drug_id) FROM drug WHERE
-        concept_id IN(SELECT concept_id FROM concept_set WHERE concept_set = 1085)
-    ) AND DATE(o.start_date) <= visit_date AND d.quantity > 0 ORDER BY start_date DESC LIMIT 1);
-
-    IF dispensed_quantity > 0 THEN
-      SET set_outcome = 'On antiretrovirals';
-    END IF;
-  END IF;
-END IF;
-
-IF set_outcome IS NULL THEN
-  SET set_patient_state = current_pepfar_defaulter(patient_id, set_timestamp);
-
-  IF set_patient_state = 1 THEN
-    SET set_outcome = 'Defaulted';
-  END IF;
-
-  IF set_outcome IS NULL THEN
-    SET set_outcome = 'Unknown';
-  END IF;
-
-END IF;
-
-
-
-RETURN set_outcome;
-END;
-EOF
       end
 
       def insert_female_maternal_status(patient_id, age_group, end_date)

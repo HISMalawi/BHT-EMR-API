@@ -35,7 +35,7 @@ class Person < VoidableRecord
   end
 
   def name
-    @name ||= names.order(:date_created).last&.to_s
+    @name ||= names.max_by(&:date_created)&.to_s
   end
 
   def as_json(options = {})

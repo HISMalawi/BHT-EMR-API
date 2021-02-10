@@ -149,7 +149,7 @@ module ARTService
 
       count = 1
       visit.pills_dispensed.each do |drug, pills|
-        string = "#{drug} (#{pills})"
+        string = "#{drug} (#{strip_insignificant_zeroes(pills)})"
         if string.length > 26
           line = string[0..25]
           line2 = string[26..-1]
@@ -165,6 +165,14 @@ module ARTService
       data["arv_given#{count}"] = '255', "CPT (#{visit_cpt})" unless visit_cpt.zero?
 
       data
+    end
+
+    # Strip insignificant zeroes from a floating point number.
+    #
+    # Can save at least two characters which on a 255 character-wide
+    # zebra printer can be a big plus!
+    def strip_insignificant_zeroes(float)
+      float.to_s.gsub(/\.0*$/, '')
     end
   end
 end
