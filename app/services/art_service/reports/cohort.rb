@@ -35,16 +35,31 @@ module ARTService
       end
 
       def defaulter_list(pepfar)
-        data = ActiveRecord::Base.connection.select_all <<EOF
-        SELECT o.patient_id, min(start_date) start_date FROM orders o
-        INNER JOIN drug_order od ON od.order_id = o.order_id AND o.voided = 0
-        INNER JOIN drug d ON d.drug_id = od.drug_inventory_id
-        INNER JOIN concept_set s ON s.concept_id = d.concept_id
-        INNER JOIN patient_program pp ON pp.patient_id = o.patient_id
-        WHERE s.concept_set = 1085 AND od.quantity > 0
-        AND pp.program_id = 1 AND pp.voided = 0
-        GROUP BY o.patient_id;
-EOF
+        data = ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT o.patient_id, min(start_date) start_date
+          FROM orders o
+          INNER JOIN drug_order od ON od.order_id = o.order_id AND o.voided = 0
+          INNER JOIN drug d ON d.drug_id = od.drug_inventory_id
+          INNER JOIN concept_set s ON s.concept_id = d.concept_id
+          INNER JOIN patient_program pp ON pp.patient_id = o.patient_id
+          INNER JOIN (
+            SELECT DISTINCT obs.person_id AS patient_id
+            FROM obs
+            INNER JOIN encounter
+              ON encounter.program_id = 1
+              AND encounter.encounter_id = obs.encounter_id
+              AND encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'REGISTRATION' AND retired = 0)
+              AND encounter.voided = 0
+            WHERE obs.concept_id IN (SELECT concept_id FROM concept_name WHERE name = 'Type of patient' AND voided = 0)
+              AND obs.value_coded IN (SELECT concept_id FROM concept_name WHERE name = 'New patient' AND voided = 0)
+              AND obs.obs_datetime < DATE(#{ActiveRecord::Base.connection.quote(@end_date)}) + INTERVAL 1 DAY
+              AND obs.voided = 0
+          ) AS new_patients
+            ON new_patients.patient_id = o.patient_id
+          WHERE s.concept_set = 1085 AND od.quantity > 0
+          AND pp.program_id = 1 AND pp.voided = 0
+          GROUP BY o.patient_id;
+        SQL
 
         patients = []
 
