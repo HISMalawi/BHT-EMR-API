@@ -16,6 +16,10 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+- No updates yet.
+
+## [4.10.22] - 2021-02-12
+
 ### Fixed
 
 - ART: External consultations appearing on defaulters list (EGPAF EMR Helpdesk #2178)
