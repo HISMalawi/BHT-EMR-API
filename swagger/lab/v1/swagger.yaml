@@ -28,7 +28,7 @@ paths:
                 items:
                   type: object
                   properties:
-                    order_id:
+                    id:
                       type: integer
                     patient_id:
                       type: integer
@@ -97,7 +97,7 @@ paths:
                         - concept_id
                         - name
                   required:
-                  - order_id
+                  - id
                   - specimen
                   - reason_for_test
                   - accession_number
@@ -140,7 +140,7 @@ paths:
                         description: One of routine, targeted, or confirmatory
                     required:
                     - encounter_id
-                    - test_type_id
+                    - tests
                     - target_lab
                     - reason_for_test_id
     get:
@@ -179,7 +179,7 @@ paths:
                 items:
                   type: object
                   properties:
-                    order_id:
+                    id:
                       type: integer
                     patient_id:
                       type: integer
@@ -248,12 +248,149 @@ paths:
                         - concept_id
                         - name
                   required:
-                  - order_id
+                  - id
                   - specimen
                   - reason_for_test
                   - accession_number
                   - patient_id
                   - order_date
+  "/api/v1/lab/orders/{order_id}":
+    put:
+      summary: Update order
+      tags:
+      - Orders
+      description: Update an existing order
+      security:
+      - api_key: []
+      parameters:
+      - name: order_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    patient_id:
+                      type: integer
+                    encounter_id:
+                      type: integer
+                    order_date:
+                      type: string
+                      format: datetime
+                    accession_number:
+                      type: string
+                    specimen:
+                      type: object
+                      properties:
+                        concept_id:
+                          type: integer
+                        name:
+                          type: string
+                      required:
+                      - concept_id
+                      - name
+                    requesting_clinician:
+                      type: string
+                      nullable: true
+                    target_lab:
+                      type: string
+                    reason_for_test:
+                      type: object
+                      properties:
+                        concept_id:
+                          type: integer
+                        name:
+                          type: string
+                      required:
+                      - concept_id
+                      - name
+                    tests:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          concept_id:
+                            type: integer
+                          name:
+                            type: string
+                          result:
+                            type: object
+                            nullable: true
+                            properties:
+                              id:
+                                type: integer
+                              value:
+                                type: string
+                                nullable: true
+                              date:
+                                type: string
+                                format: datetime
+                                nullable: true
+                            required:
+                            - id
+                            - value
+                            - date
+                        required:
+                        - id
+                        - concept_id
+                        - name
+                  required:
+                  - id
+                  - specimen
+                  - reason_for_test
+                  - accession_number
+                  - patient_id
+                  - order_date
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                specimen:
+                  type: object
+                  properties:
+                    concept_id:
+                      type: integer
+                  required:
+                  - concept_id
+    delete:
+      summary: Void lab order
+      tags:
+      - Orders
+      description: |
+        Void a lab order and all it's associated records
+
+        This action voids an order, all it's linked tests and results.
+      security:
+      - api_key: []
+      parameters:
+      - name: order_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: reason
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          description: No Content
+          content: {}
   "/api/v1/lab/tests/{test_id}/results":
     post:
       summary: Add results to order
@@ -266,6 +403,8 @@ paths:
         required: true
         schema:
           type: integer
+      security:
+      - api_key: []
       responses:
         '201':
           description: Created
@@ -417,6 +556,8 @@ paths:
         An order can be created without specifying tests.
         This endpoint allows one to add tests to that order.
       parameters: []
+      security:
+      - api_key: []
       responses:
         '201':
           description: Created
