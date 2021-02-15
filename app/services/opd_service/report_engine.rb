@@ -301,6 +301,7 @@ module OPDService
       type = EncounterType.find_by_name 'Patient registration'
       concept = ConceptName.find_by_name 'Type of visit'
       value_coded = ConceptName.find_by_name visit_type
+=begin
 
       count = Encounter.where('encounter_datetime BETWEEN ? AND ?
         AND encounter_type = ? AND concept_id = ?
@@ -310,6 +311,14 @@ module OPDService
         select('count(*) AS total')
 
       return count[0]['total'].to_i
+=end
+
+      encounter_ids = Encounter.where('encounter_datetime BETWEEN ? AND ?
+        AND encounter_type = ?', *TimeUtils.day_bounds(@date), type.id).map(&:encounter_id)
+
+      return Observation.where('encounter_id IN(?) AND concept_id = ? AND value_coded = ?',
+        encounter_ids, concept.concept_id, value_coded.concept_id).group(:encounter_id).length
+     
     end
 
     def monthly_registration(visit_type)
