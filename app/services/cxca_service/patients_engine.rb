@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-module VIAService
+module CXCAService
   # Patients sub service.
   #
   # Basically provides VMMC specific patient-centric functionality
   class PatientsEngine
     include ModelUtils
 
-    VIA_PROGRAM =  Program.find_by name: 'VIA PROGRAM'
+    CxCa_PROGRAM =  Program.find_by name: 'CxCa program'
 
     def initialize(program:)
       @program = program
@@ -25,7 +25,7 @@ module VIAService
 
       x = Encounter.where(["DATE(encounter_datetime) = ? AND patient_id = ? AND voided = 0
           AND program_id = ?", date.to_date.strftime("%Y-%m-%d"),
-          patient.patient_id, VIA_PROGRAM.id]).collect{|e| e.name}.uniq
+          patient.patient_id, CxCa_PROGRAM.id]).collect{|e| e.name}.uniq
     end
 
     private

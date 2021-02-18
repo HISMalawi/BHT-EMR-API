@@ -1308,7 +1308,7 @@ DECLARE arv_concept INT;
 set dispension_concept_id = (SELECT concept_id FROM concept_name WHERE name = 'AMOUNT DISPENSED');
 set arv_concept = (SELECT concept_id FROM concept_name WHERE name = "ANTIRETROVIRAL DRUGS");
 
-set start_date = (SELECT MIN(DATE(obs_datetime)) FROM obs WHERE person_id = patient_id AND concept_id = dispension_concept_id AND value_drug IN (SELECT drug_id FROM drug d WHERE d.concept_id IN (SELECT cs.concept_id FROM concept_set cs WHERE cs.concept_set = arv_concept)));
+set start_date = (SELECT MIN(DATE(obs_datetime)) FROM obs WHERE voided = 0 AND person_id = patient_id AND concept_id = dispension_concept_id AND value_drug IN (SELECT drug_id FROM drug d WHERE d.concept_id IN (SELECT cs.concept_id FROM concept_set cs WHERE cs.concept_set = arv_concept)));
 
 RETURN start_date;
 END */;;

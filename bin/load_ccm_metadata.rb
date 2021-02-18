@@ -2,17 +2,27 @@
 
 
 ConceptNames = [
-  'Ever had VIA', 'Offer VIA', 'VIA test results', 'VIA test date',
+  'Ever had CxCa', 'Offer CxCa', 'CxCa test results', 'CxCa test date',
   'Suspect', 'Thermocoagulation', 'Postponed treatment', 'Client NOT ready',
   'Treatment NOT available', 'Unable to treat client',  'Chemotherapy',
-  'Leep', 'Thermo','Cancer confirmed','VIA program', 'Pre VIA treatment',
-  'Preferred counseling','Reason for NOT offering VIA','VIA treatment',
-  'Postponed reason','Referral location','Previous VIA location',
-  'Previous VIA results', 'Cancer treatment', 'Cancer treatment procedure',
-  'Post VIA assessment'
+  'Leep', 'Thermo','Cancer confirmed','CxCa program', 'Pre CxCa treatment',
+  'Preferred counseling','Reason for NOT offering CxCa','CxCa treatment',
+  'Postponed reason','Referral location','Previous CxCa location',
+  'Previous CxCa results', 'Cancer treatment', 'Cancer treatment procedure',
+  'Post CxCa assessment','Positive on ART','Positive NOT on ART',
+  'Negative tested <1 year', 'VIA','HPV DNA','Speculum Exam',
+  'PAP Smear normal','PAP Smear abnormal','HPV negative','HPV positive',
+  'Visble Lesion','No visble Lesion','Same day treatment',
+  'Large Lesion (>75%)','Further Investigation & Management',
+  'Suspect cancer','Referral feedback','One year subsequent check-up after treatment',
+  'Initial Screening','Subsequent screening',
+  'Problem visit after treatment','CxCa screening method','Previous CxCa screening method'
 ]
 
-VIAencounters = ['VIA test','VIA treatment','Cancer treatment']
+CxCaEncounters = [
+  'CxCa test','CxCa treatment','CxCa treatment','CxCa reception',
+  'CxCa referral feedback', 'CxCa results'
+ ]
 
 def cervical_cancer_metadata
 
@@ -27,12 +37,12 @@ def cervical_cancer_metadata
   end
 
 
-  VIAencounters.each do |enc|
+  CxCaEncounters.each do |enc|
     EncounterType.create(name: enc, creator: 1, date_created: Time.now(),
       uuid: SecureRandom.uuid)
   end
 
-  program = Program.create(name: 'VIA program', concept_id: ConceptName.find_by(name: 'VIA program').concept_id,
+  program = Program.create(name: 'CxCa program', concept_id: ConceptName.find_by(name: 'CxCa program').concept_id,
     creator: 1, uuid: SecureRandom.uuid, date_changed: Time.now(), changed_by: 1)
 
   program_workflow = ProgramWorkflow.create(program_id: program.program_id, creator: 1,
@@ -41,15 +51,15 @@ def cervical_cancer_metadata
 
 
 
-  states = ['Pre VIA treatment','Chemotherapy',
+  states = ['Pre CxCa treatment','Chemotherapy',
     'Leep', 'Thermo',
     'Cancer confirmed', 'Other gynaecological condition',
-    'Patient died','Treatment complete','Post VIA assessment']
+    'Patient died','Treatment complete','Post CxCa assessment']
 
   states.each do |st|
     puts "--------->> #{st}"
     concept_state = ConceptName.find_by(name: st)
-    initial = (st == 'Pre VIA treatment' ? 1 :  0)
+    initial = (st == 'Pre CxCa treatment' ? 1 :  0)
 
     if(st == 'Died' || st == 'Treatment complete')
       terminal = 1

@@ -2,7 +2,7 @@
 
 require 'set'
 
-module VIAService
+module CXCAService
   class WorkflowEngine
     include ModelUtils
 
@@ -34,25 +34,28 @@ module VIAService
 
     # Encounter types
     INITIAL_STATE = 0 # Start terminal for encounters graph
-    END_STATE = 1 # End terminal for encounters graph
-    VIA_TEST = 'VIA TEST'
-    VIA_TREATMENT = 'VIA TREATMENT'
-    CANCER_TREATMENT = 'CANCER TREATMENT'
+    END_STATE = 1 # End terminal for encounters graphCxCa_TEST = 'CXCA TEST'
+    CXCA_RECEPTION = 'CXCA RECEPTION'
+    CXCA_TEST = 'CXCA TEST'
+    CXCA_TREATMENT = 'CXCA TREATMENT'
     APPOINTMENT = 'APPOINTMENT'
+    FEEDBACK = 'CxCa REFERRAL FEEDBACK'
+
 
     # Encounters graph
     ENCOUNTER_SM = {
-      INITIAL_STATE => VIA_TEST,
-      VIA_TEST =>  VIA_TREATMENT,
-      VIA_TREATMENT => CANCER_TREATMENT,
-      CANCER_TREATMENT => APPOINTMENT,
-      APPOINTMENT  => END_STATE
+      INITIAL_STATE => CXCA_RECEPTION,
+      CXCA_RECEPTION =>  CXCA_TEST,
+      CXCA_TEST => CXCA_TREATMENT,
+      CXCA_TREATMENT => APPOINTMENT,
+      APPOINTMENT => FEEDBACK,
+      FEEDBACK  => END_STATE
     }.freeze
 
     STATE_CONDITIONS = {
-      VIA_TEST => %i[show_via_test?],
-      VIA_TREATMENT => %i[show_treatment?],
-      CANCER_TREATMENT => %i[previous_via_results_positive?
+      CXCA_RECEPTION => %i[show_reception?],
+      CXCA_TEST => %i[show_cxca_test?],
+      CXCA_TREATMENT => %i[previous_via_results_positive?
         referred_treatment? show_cancer_treatment?],
       APPOINTMENT => %i[show_appointment?]
     }.freeze
@@ -81,10 +84,10 @@ module VIAService
 
     # Checks if patient has been asked any VIA related questions today
     #
-    def show_via_test?
-      return false if via_positive?
+    def show_cxca_test?
+      return false if cxca_positive?
 
-      encounter_type = EncounterType.find_by name: VIA_TEST
+      encounter_type = EncounterType.find_by name: CXCA_TEST
       encounter = Encounter.joins(:type).where(
         'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
         @patient.patient_id, encounter_type.encounter_type_id, @date
@@ -95,7 +98,7 @@ module VIAService
 
     # Check if patient has been offered VIA and results is positive
     def show_treatment?
-      return false if via_positive?
+      return false if cxca_positive?
 
       encounter = Encounter.joins(:type).where(
         'encounter_type.name = ? AND encounter.patient_id = ?
@@ -181,10 +184,20 @@ module VIAService
       encounter.blank?
     end
 
+    def show_reception?
+      encounter_type = EncounterType.find_by name: CXCA_RECEPTION
+      encounter = Encounter.joins(:type).where(
+        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
+        @patient.patient_id, encounter_type.encounter_type_id, @date
+      ).order(encounter_datetime: :desc).first
+
+      encounter.blank?
+    end
+
     private
 
     def via_negative_or_suspected?
-      encounter_type = EncounterType.find_by name: VIA_TEST
+      encounter_type = EncounterType.find_by name: CXCA_TEST
       encounter = Encounter.joins(:type).where(
         'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
         @patient.patient_id, encounter_type.encounter_type_id, @date
@@ -201,8 +214,8 @@ module VIAService
       return false
     end
 
-    def via_positive?
-      encounter_type = EncounterType.find_by name: VIA_TEST
+    def cxca_positive?
+      encounter_type = EncounterType.find_by name: CXCA_TEST
       encounter = Encounter.joins(:type).where(
         'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) < DATE(?)',
         @patient.patient_id, encounter_type.encounter_type_id, @date
