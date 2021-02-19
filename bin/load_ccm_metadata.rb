@@ -21,7 +21,7 @@ ConceptNames = [
 
 CxCaEncounters = [
   'CxCa test','CxCa treatment','CxCa treatment','CxCa reception',
-  'CxCa referral feedback', 'CxCa results'
+  'CxCa referral feedback', 'CxCa results', 'CxCa screening result'
  ]
 
 def cervical_cancer_metadata

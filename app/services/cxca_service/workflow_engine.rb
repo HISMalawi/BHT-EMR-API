@@ -37,7 +37,7 @@ module CXCAService
     END_STATE = 1 # End terminal for encounters graphCxCa_TEST = 'CXCA TEST'
     CXCA_RECEPTION = 'CXCA RECEPTION'
     CXCA_TEST = 'CXCA TEST'
-    CXCA_TREATMENT = 'CXCA TREATMENT'
+    CXCA_SCREENING_RESULTS = 'CXCA screening result'
     APPOINTMENT = 'APPOINTMENT'
     FEEDBACK = 'CxCa REFERRAL FEEDBACK'
 
@@ -46,8 +46,8 @@ module CXCAService
     ENCOUNTER_SM = {
       INITIAL_STATE => CXCA_RECEPTION,
       CXCA_RECEPTION =>  CXCA_TEST,
-      CXCA_TEST => CXCA_TREATMENT,
-      CXCA_TREATMENT => APPOINTMENT,
+      CXCA_TEST => CXCA_SCREENING_RESULTS,
+      CXCA_SCREENING_RESULTS => APPOINTMENT,
       APPOINTMENT => FEEDBACK,
       FEEDBACK  => END_STATE
     }.freeze
@@ -55,8 +55,7 @@ module CXCAService
     STATE_CONDITIONS = {
       CXCA_RECEPTION => %i[show_reception?],
       CXCA_TEST => %i[show_cxca_test?],
-      CXCA_TREATMENT => %i[previous_via_results_positive?
-        referred_treatment? show_cancer_treatment?],
+      CXCA_SCREENING_RESULTS => %i[show_cxca_screening_results?],
       APPOINTMENT => %i[show_appointment?]
     }.freeze
 
@@ -117,38 +116,23 @@ module CXCAService
     end
 
     def show_appointment?
-      return true if via_negative_or_suspected?
-
-      via_treatment = concept('VIA treatment').concept_id
-      cryo_treatment = concept('POSITIVE CRYO').concept_id
-      thermocoagulation = concept('Thermocoagulation').concept_id
-
-      observations = Observation.where("concept_id  = ?
-        AND DATE(obs_datetime) = ? AND person_id  = ?", via_treatment,
-        @date, @patient.patient_id)
-
-      unless observations.blank?
-        ther_cryo = observations.find_by(value_coded: [cryo_treatment, thermocoagulation])
-        return true unless ther_cryo.blank?
-
-      end
-
+      return true
       return nil
     end
 
-    def previous_via_results_positive?
-      encounter_type = EncounterType.find_by name: VIA_TEST
+    def show_cxca_screening_results?
+      encounter_type = EncounterType.find_by name: CXCA_TEST
       encounter = Encounter.joins(:type).where(
-        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) < DATE(?)',
+        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
         @patient.patient_id, encounter_type.encounter_type_id, @date
       ).order(encounter_datetime: :desc).first
 
       unless encounter.blank?
-        via_result_concept_id = concept('VIA Results').concept_id
-        via_positive_result_concept_id = concept('Positive').concept_id
+        cxca_treatment_concept_id = concept('CxCa treatment').concept_id
+        same_day_treatment_concept_id = concept('Same day treatment').concept_id
 
         return encounter.observations.find_by("concept_id = ? AND value_coded IN(?)",
-          via_result_concept_id, [via_positive_result_concept_id]).blank? == true ? false : true
+          cxca_treatment_concept_id, [same_day_treatment_concept_id]).blank? == false ? true : false
       end
 
       return false
@@ -195,24 +179,6 @@ module CXCAService
     end
 
     private
-
-    def via_negative_or_suspected?
-      encounter_type = EncounterType.find_by name: CXCA_TEST
-      encounter = Encounter.joins(:type).where(
-        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
-        @patient.patient_id, encounter_type.encounter_type_id, @date
-      ).order(encounter_datetime: :desc).first
-
-      unless encounter.blank?
-        via_result_concept_id = concept('VIA Results').concept_id
-        via_positive_result_concept_id = concept('Positive').concept_id
-
-        return encounter.observations.find_by("concept_id = ? AND value_coded NOT IN(?)",
-          via_result_concept_id, [via_positive_result_concept_id]).blank? == true ? false : true
-      end
-
-      return false
-    end
 
     def cxca_positive?
       encounter_type = EncounterType.find_by name: CXCA_TEST
