@@ -24,9 +24,14 @@ class PatientService
 
   ##
   # Voids all patient records across all programs patient exists
-  def void_patient(patient, reason)
+  def void_patient(patient, reason, daemonize: true)
     reason = reason&.strip
     raise InvalidParameterError, 'Please provide a void reason' if reason.blank?
+
+    if daemonize
+      VoidPatientJob.perform_later(patient.patient_id, reason, User.current.user_id)
+      return nil
+    end
 
     void_params = { voided: true, date_voided: Date.today, voided_by: User.current.user_id, void_reason: reason }
 
