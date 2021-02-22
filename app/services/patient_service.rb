@@ -22,6 +22,33 @@ class PatientService
     end
   end
 
+  ##
+  # Voids all patient records across all programs patient exists
+  def void_patient(patient, reason)
+    reason = reason&.strip
+    raise InvalidParameterError, 'Please provide a void reason' if reason.blank?
+
+    void_params = { voided: true, date_voided: Date.today, voided_by: User.current.user_id, void_reason: reason }
+
+    Patient.transaction do
+      Rails.logger.info("Voiding all records for patient ##{patient.patient_id}")
+
+      # Void main patient trunk
+      [Observation, Order, Encounter, PatientState, PatientProgram, PatientIdentifier, Patient].each do |model|
+        if model == Observation then model.where(person_id: patient.patient_id)
+        elsif model == PatientState then model.joins(:patient_program).merge(PatientProgram.where(patient: patient))
+        elsif model == Patient then model.where(patient_id: patient.patient_id)
+        else model.where(patient: patient)
+        end.update_all(void_params)
+      end
+
+      # Void person details
+      [PersonName, PersonAddress, PersonAttribute, Person].map do |model|
+        model.where(person_id: patient.patient_id).update_all(void_params)
+      end
+    end
+  end
+
   # Change patient's person id
   #
   # WARNING: THIS IS A DANGEROUS OPERATION...
