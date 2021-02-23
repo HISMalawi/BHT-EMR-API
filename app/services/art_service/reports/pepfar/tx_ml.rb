@@ -129,7 +129,7 @@ EOF
                 BETWEEN '#{@start_date.to_date.strftime("%Y-%m-%d 00:00:00")}' AND '#{@end_date}')
           GROUP BY `p`.`patient_id`
           HAVING date_enrolled IS NOT NULL
-          AND date_enrolled BETWEEN '#{@start_date.to_date}' AND '#{@start_date.to_date}';
+          AND date_enrolled BETWEEN '#{@start_date.to_date}' AND '#{@end_date.to_date}';
 EOF
 
         end
