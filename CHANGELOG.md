@@ -16,7 +16,9 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
-- No updates yet.
+### Added
+
+- Global patient voiding (voids all of a patient's records)
 
 ## [4.10.22] - 2021-02-12
 

@@ -49,6 +49,12 @@ class Api::V1::PatientsController < ApplicationController
     render json: service.update_patient(patient, params.require(:person_id))
   end
 
+  def destroy
+    service.void_patient(patient, params.require(:reason))
+
+    render status: :no_content
+  end
+
   def print_national_health_id_label
     patient = Patient.find(params[:patient_id])
 
