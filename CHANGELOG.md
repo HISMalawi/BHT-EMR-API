@@ -16,7 +16,9 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
-- No updates yet.
+### Added
+
+- ART Stock: Added endpoint for retrieving an audit trail
 
 ## [4.10.22] - 2021-02-12
 
