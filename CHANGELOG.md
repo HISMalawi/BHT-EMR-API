@@ -18,6 +18,8 @@ compatibility (examples of this include major architectural changes).
 
 ### Added
 
+- ART Stock: Renamed pharmacy transaction types:
+  Tins Removed => Drugs removed, New Deliveries => Drugs Added, Edited Stock => Drugs Edited
 - ART Stock: Added endpoint for retrieving an audit trail
 
 ## [4.10.22] - 2021-02-12
