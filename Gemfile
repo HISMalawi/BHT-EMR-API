@@ -34,6 +34,10 @@ gem 'rest-client'
 
 gem 'test-unit'
 
+gem 'lab', git: 'https://github.com/EGPAFMalawiHIS/HIS-EMR-API-Lab.git', branch: 'development'
+gem 'rswag-api'
+gem 'rswag-ui'
+
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platforms: [:mri, :mingw, :x64_mingw]

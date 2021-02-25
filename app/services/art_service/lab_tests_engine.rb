@@ -7,20 +7,52 @@ require 'auto12epl'
 class ARTService::LabTestsEngine
   include ModelUtils
 
+  ORDERING_FACILITY = ''
+
   def initialize(program:)
     @program = program
   end
 
+  ##
+  # Retrieves a test type by its concept id
   def type(type_id)
-    LabTestType.find(type_id)
+    type = ConceptSet.find_members_by_name('Test type')
+                     .where(concept_id: type_id)
+                     .first
+
+    unless type
+      raise NotFoundError, "Test type with ID ##{type_id} does not exist"
+    end
+
+    ConceptName.find_by_concept_id!(type.concept_id)
   end
 
-  def types(search_string:)
-    test_types = nlims.test_types
+  ##
+  # Search for test types by name
+  def types(name: nil, specimen_type: nil)
+    test_types = ConceptSet.find_members_by_name('Test type')
+    test_types = test_types.filter_members(name: name) if name
 
-    return test_types unless search_string
+    unless specimen_type
+      return test_types.joins('INNER JOIN concept_name ON concept_set.concept_id = concept_name.concept_id')
+                       .select('concept_name.name, concept_name.concept_id')
+                       .group('concept_name.concept_id')
+    end
 
-    test_types.select { |test_type| test_type.start_with?(search_string) }
+    # Filter out only those test types that have the specified specimen
+    # type.
+    specimen_types = ConceptSet.find_members_by_name('Specimen type')
+                               .filter_members(name: specimen_type)
+                               .select(:concept_id)
+
+    concept_set = ConceptSet.where(
+      concept_id: specimen_types,
+      concept_set: test_types.select(:concept_id)
+    )
+
+    concept_set.joins('INNER JOIN concept_name ON concept_set.concept_set = concept_name.concept_id')
+               .select('concept_name.concept_id, concept_name.name')
+               .group('concept_name.concept_id')
   end
 
   def lab_locations
@@ -31,15 +63,39 @@ class ARTService::LabTestsEngine
     nlims.labs
   end
 
-  def panels(test_type)
-    nlims.specimen_types(test_type)
+  ##
+  # Retrieve sample types by name
+  def panels(name: nil, test_type: nil)
+    specimen_types = ConceptSet.find_members_by_name('Specimen type')
+    specimen_types = specimen_types.filter_members(name: name) if name
+
+    unless test_type
+      return specimen_types.select('concept_name.concept_id, concept_name.name')
+                           .joins('INNER JOIN concept_name ON concept_name.concept_id = concept_set.concept_id')
+                           .group('concept_name.concept_id')
+    end
+
+    # Retrieve only those specimen types that belong to concept
+    # set of the selected test_type
+    test_types = ConceptSet.find_members_by_name('Test type')
+                           .filter_members(name: test_type)
+                           .select(:concept_id)
+
+    concept_set = ConceptSet.where(
+      concept_id: specimen_types.select(:concept_id),
+      concept_set: test_types
+    )
+
+    concept_set.select('concept_name.concept_id, concept_name.name')
+               .joins('INNER JOIN concept_name ON concept_name.concept_id = concept_set.concept_id')
+               .group('concept_name.concept_id')
   end
 
-  def results(accession_number)
-    LabParameter.joins(:lab_sample)\
-                .where('Lab_Sample.AccessionNum = ?', accession_number)\
-                .order(Arel.sql('DATE(Lab_Sample.TimeStamp) DESC'))
-  end
+  # def results(accession_number)
+  #   LabParameter.joins(:lab_sample)\
+  #               .where('Lab_Sample.AccessionNum = ?', accession_number)\
+  #               .order(Arel.sql('DATE(Lab_Sample.TimeStamp) DESC'))
+  # end
 
   def orders_without_results(patient)
     npid = patient.identifier('National id')&.identifier
@@ -63,20 +119,30 @@ class ARTService::LabTestsEngine
     end
   end
 
-  def create_order(encounter:, date:, tests:, **kwargs)
-    patient ||= encounter.patient
-    date ||= encounter.encounter_datetime
+  ##
+  # Order multiple +tests+
+  #
+  # Each test must provide the following structure:
+  #
+  #     {
+  #       test_type_id,
+  #       reason_for_test
+  #     }
+  def order_tests(encounter, date, orderer, tests)
+    date = date.to_date || Date.today
+    encounter ||= find_encounter(order_params[:patient_id], date)
 
-    tests.collect do |test|
-      lims_order = nlims.order_test(patient: patient, user: User.current, date: date,
-                                    reason: test['reason'], test_type: [test['test_type']],
-                                    **kwargs)
-      accession_number = lims_order['tracking_number']
+    ActiveRecord::Base.transaction do
+      tests.map do |test|
+        order = create_lab_order(encounter, test_type_id: test[:test_type_id], date: date)
 
-      local_order = create_local_order(patient, encounter, date, accession_number)
-      save_reason_for_test(encounter, local_order, test['reason'])
+        create_obs = method[:create_obs_order].curry[order, date]
 
-      { order: local_order, lims_order: lims_order }
+        create_obs['Reason for test', value_text: test[:reason]]
+        create_obs['Person making request', value_text: orderer]
+
+        serialize_order(order)
+      end
     end
   end
 
@@ -158,6 +224,31 @@ class ARTService::LabTestsEngine
 
   private
 
+  ##
+  # Create a lab order on given +encounter+ for test type.
+  def create_order(encounter, test_type_id:, date: nil)
+    Order.create!(
+      type: OrderType.find_by_name('Lab order'),
+      concept_id: test_type_id, # Should we verify whether test_type_id points to an actual test type?
+      encounter_id: encounter.encounter_id,
+      patient_id: encounter.patient_id,
+      start_date: date || Date.today,
+      orderer: User.current.user_id
+    )
+  end
+
+  ##
+  # Create an observation for an existing lab +order+.
+  def create_order_obs(order, date, concept_name, **values)
+    Observation.create!(
+      person_id: order.patient_id,
+      concept_id: ConceptName.find_by_name(concept_name).concept_id,
+      encounter_id: order.encounter_id,
+      obs_datetime: retro_timestamp(date),
+      **values
+    )
+  end
+
   # Creates an Order in the primary openmrs database
   def create_local_order(patient, encounter, date, accession_number)
     Order.create(patient: patient,
@@ -168,6 +259,18 @@ class ARTService::LabTestsEngine
                  start_date: date,
                  accession_number: accession_number,
                  provider: User.current)
+  end
+
+  def serialize_order(_order)
+    # STUB: Serialized order
+    {
+      order_id: -1,
+      patient_id: 1,
+      test_type: 'Test type',
+      requesting_clinician: 'Clinician Full Name',
+      specimens: [],
+      date: 2.weeks.ago
+    }
   end
 
   def save_reason_for_test(encounter, order, reason)
