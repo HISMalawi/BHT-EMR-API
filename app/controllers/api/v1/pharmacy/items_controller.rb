@@ -12,7 +12,9 @@ class Api::V1::Pharmacy::ItemsController < ApplicationController
   end
 
   def update
-    permitted_params = params.permit(%i[current_quantity delivered_quantity expiry_date delivery_date])
+    permitted_params = params.permit(%i[current_quantity delivered_quantity expiry_date delivery_date reason])
+    raise InvalidParameterError, 'reason is required' if permitted_params[:reason].blank?
+
     item = service.edit_batch_item(params[:id], permitted_params)
 
     if item.errors.empty?
@@ -36,19 +38,23 @@ class Api::V1::Pharmacy::ItemsController < ApplicationController
 
   # Reallocate item to some other facility
   def reallocate
-    code, quantity, location_id = params.require(%i[reallocation_code quantity location_id])
+    code, quantity, location_id, reason = params.require(%i[reallocation_code quantity location_id reason])
+    raise InvalidParameterError, 'reason is required' if reason.blank?
+
     date = params[:date]&.to_date || Date.today
 
-    reallocation = service.reallocate_items(code, params[:item_id], quantity, location_id, date)
+    reallocation = service.reallocate_items(code, params[:item_id], quantity, location_id, date, reason)
 
     render json: reallocation, status: :created
   end
 
   def dispose
-    code, quantity = params.require(%i[reallocation_code quantity])
+    code, quantity, reason = params.require(%i[reallocation_code quantity reason])
+    raise InvalidParameterError, 'reason is required' if reason.blank?
+
     date = params['date']&.to_date || Date.today
 
-    disposal = service.dispose_item(code, params[:item_id], quantity, date)
+    disposal = service.dispose_item(code, params[:item_id], quantity, date, reason)
 
     render json: disposal, status: :created
   end

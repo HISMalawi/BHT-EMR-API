@@ -12,5 +12,5 @@ class Pharmacy < VoidableRecord
   belongs_to :dispensation, class_name: 'Observation',
                             foreign_key: :dispensation_obs_id,
                             optional: true
-  belongs_to :user, foreign_key: :creator
+  belongs_to :user, foreign_key: :creator, optional: true
 end

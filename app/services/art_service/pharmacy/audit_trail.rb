@@ -43,13 +43,15 @@ module ARTService
             .merge(batch_items(drug_id: drug_id, batch_number: batch_number))
             .merge(transaction_types)
             .select <<~SQL
-              pharmacy_obs.date_created AS transaction_date,
+              pharmacy_obs.date_created AS creation_date,
+              pharmacy_obs.transaction_date AS transaction_date,
               pharmacy_encounter_type.name AS transaction_type,
               pharmacy_batches.batch_number AS batch_number,
               drug.name AS drug_name,
-              pharmacy_obs.value_numeric AS amount_committed_to_stock,
+              pharmacy_obs.quantity AS amount_committed_to_stock,
               obs.value_numeric AS amount_dispensed_from_art,
-              users.username
+              users.username,
+              pharmacy_obs.transaction_reason
             SQL
         end
 
@@ -79,13 +81,15 @@ module ARTService
 
         def serialize_transaction(transaction)
           {
+            creation_date: transaction[:creation_date],
             transaction_date: transaction[:transaction_date],
             transaction_type: transaction[:transaction_type],
             batch_number: transaction[:batch_number],
             drug_name: transaction[:drug_name],
             amount_committed_to_stock: transaction[:amount_committed_to_stock],
             amount_dispensed_from_art: transaction[:amount_dispensed_from_art],
-            username: transaction[:username]
+            username: transaction[:username],
+            transaction_reason: transaction[:transaction_reason]
           }
         end
       end
