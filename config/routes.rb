@@ -37,6 +37,7 @@ Rails.application.routes.draw do
 
       resources :roles
 
+
       # Patients
       resources :patients do
         get '/labels/national_health_id' => 'patients#print_national_health_id_label'
@@ -111,7 +112,9 @@ Rails.application.routes.draw do
         end)
       end
 
+      resources :radiology
       resources :observations
+
       resources :patient_programs, only: %i[create index show destroy]
 
       resources :programs do
@@ -197,6 +200,7 @@ Rails.application.routes.draw do
       delete '/drug_sets/:id', to: 'drugs#void_drug_sets'
 
       resource :global_properties
+      resource :radiology_properties
       resource :user_properties
 
       resource :session_stats, path: 'stats/session'
@@ -308,5 +312,4 @@ Rails.application.routes.draw do
   get '/api/v1/tpt_prescription_count' => 'api/v1/patients#tpt_prescription_count'
   get '/api/v1/patient_visit_types', to: 'api/v1/reports#patient_visit_types'
   get '/api/v1/patient_visit_list', to: 'api/v1/reports#patient_visit_list'
-  get '/api/v1/patient_outcome_list', to: 'api/v1/reports#patient_outcome_list'
 end
