@@ -17,7 +17,7 @@ module Voidable
     clazz._update_voidable_field self, :void_reason, reason
     clazz._update_voidable_field self, :voided_by, user ? user.user_id : nil
 
-    save!
+    save!(validate: false)
 
     clazz._exec_after_void_callbacks self, reason unless skip_after_void
 
