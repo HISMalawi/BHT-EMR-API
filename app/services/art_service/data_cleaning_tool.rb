@@ -332,21 +332,64 @@ EOF
     end
 
     def client_with_encounters_after_declared_dead
-      data = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT
-        p.person_id, i.identifier arv_number, birthdate,
-        gender, death_date, encounter_datetime, given_name,family_name
-      FROM person p
-      INNER JOIN encounter e ON p.person_id = e.patient_id
-      LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
-      AND i.identifier_type = 4 AND i.voided = 0
-      LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
-      WHERE dead = 1 AND p.voided = 0 AND e.voided = 0
-      AND death_date IS NOT NULL AND (DATE(encounter_datetime) > DATE(death_date))
-      GROUP BY p.person_id ORDER BY i.date_created DESC;
-EOF
+      data = ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT person.person_id,
+               patient_identifier.identifier AS arv_number,
+               person.birthdate,
+               person.gender,
+               deaths.death_date,
+               encounter.encounter_datetime,
+               person_name.given_name,
+               person_name.family_name
+        FROM (
+          /* Recorded deaths */
+          SELECT patient_program.patient_program_id,
+                 patient_program.patient_id,
+                 patient_state.start_date AS death_date
+          FROM patient_program
+          INNER JOIN patient_state
+            ON patient_state.patient_program_id = patient_program.patient_program_id
+            AND patient_state.voided = 0
+            AND patient_state.state IN (
+              /* State: Patient Died */
+              SELECT program_workflow_state.program_workflow_state_id
+              FROM program_workflow_state
+              INNER JOIN program_workflow
+                ON program_workflow.program_workflow_id = program_workflow_state.program_workflow_id
+                AND program_workflow.program_id = 1
+                AND program_workflow.retired = 0
+              INNER JOIN concept_name
+                ON concept_name.concept_id = program_workflow_state.concept_id
+                AND concept_name.name = 'Patient Died'
+                AND concept_name.voided = 0
+              WHERE program_workflow_state.retired = 0
+            )
+          WHERE patient_program.program_id = 1
+            AND patient_program.voided = 0
+        ) AS deaths
+        INNER JOIN encounter
+          /* Need ART encounters only that come after the recorded death above. */
+          ON encounter.patient_id = deaths.patient_id
+          AND encounter.encounter_datetime >= DATE(deaths.death_date) + INTERVAL 1 DAY
+          AND encounter.program_id = 1
+        INNER JOIN person
+          ON person.person_id = deaths.patient_id
+        LEFT JOIN patient_identifier
+          ON patient_identifier.patient_id = deaths.patient_id
+          AND patient_identifier.voided = 0
+          AND patient_identifier.identifier_type IN (
+            /* ARV Number */
+            SELECT patient_identifier_type_id FROM patient_identifier_type
+            WHERE name = 'ARV Number' AND retired = 0
+          )
+        LEFT JOIN person_name
+          ON person_name.person_id = deaths.patient_id
+          AND person_name.voided = 0
+        GROUP BY deaths.patient_id
+        ORDER BY patient_identifier.date_created DESC
+      SQL
 
-      return organise_data data
+      organise_data(data)
     end
 
     def male_clients_with_female_obs
