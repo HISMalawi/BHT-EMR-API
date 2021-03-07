@@ -20,6 +20,10 @@ compatibility (examples of this include major architectural changes).
 
 - Global patient voiding (voids all of a patient's records)
 
+### Fixed
+
+- 422 Error on patient merge (EGPAF Helpdesk #1947)
+
 ## [4.10.22] - 2021-02-12
 
 ### Fixed
