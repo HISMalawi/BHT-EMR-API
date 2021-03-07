@@ -30,6 +30,7 @@ compatibility (examples of this include major architectural changes).
 
 - ART: Data cleaning tool, encounters after death, pulling patients that aren't dead or
   don't have encounters after death (EGPAF EMR Helpdesk #1977).
+- 422 Error on patient merge (EGPAF Helpdesk #1947)
 
 ## [4.10.22] - 2021-02-12
 
