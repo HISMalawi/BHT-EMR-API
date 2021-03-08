@@ -22,6 +22,7 @@ compatibility (examples of this include major architectural changes).
 
 ### Fixed
 
+- ART: External consultations appearing on missed appointments report
 - 422 Error on patient merge (EGPAF Helpdesk #1947)
 
 ## [4.10.22] - 2021-02-12
