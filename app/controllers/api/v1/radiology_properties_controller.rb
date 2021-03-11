@@ -13,7 +13,7 @@ class Api::V1::RadiologyPropertiesController < ApplicationController
       else
         hash['encounters']['radiology orders']['available'] = false
         hash['encounters']['view radiology results']['available'] = false
-
+      end
       File.open path , "w" do |f|
         f.puts JSON.pretty_generate hash
       end
