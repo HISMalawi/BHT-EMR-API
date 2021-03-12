@@ -23,6 +23,7 @@ compatibility (examples of this include major architectural changes).
 ### Fixed
 
 - 422 Error on patient merge (EGPAF Helpdesk #1947)
+- Invalid (memoized) current health center value after updating current health center
 
 ## [4.10.22] - 2021-02-12
 
