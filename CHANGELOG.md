@@ -22,6 +22,7 @@ compatibility (examples of this include major architectural changes).
 
 ### Fixed
 
+- Invalid (memoized) current health center value after updating current health center
 - 422 Error on patient merge (EGPAF Helpdesk #1947)
 - ART: Data cleaning tool, encounters after death, pulling patients that aren't dead or
   don't have encounters after death (EGPAF EMR Helpdesk #1977).
