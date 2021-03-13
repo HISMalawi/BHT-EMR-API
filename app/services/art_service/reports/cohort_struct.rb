@@ -159,7 +159,9 @@ module ARTService
         initial_non_pregnant_females_all_ages: 'Newly initiated non-pregnant females',
         cum_initial_non_pregnant_females_all_ages: 'Newly initiated non-pregnant females (Cummulative)',
         unknown_gender: 'All clients registered but has not gender specified',
-        cum_unknown_gender: 'All clients registered but has not gender specified (Cummulative)'
+        cum_unknown_gender: 'All clients registered but has not gender specified (Cummulative)',
+        newly_initiated_on_3hp: 'All patients who started 3HP in current reporting period',
+        newly_initiated_on_ipt: 'All patients who started IPT in current reporting period'
       }.freeze
 
       def initialize
