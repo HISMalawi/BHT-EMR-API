@@ -19,6 +19,7 @@ compatibility (examples of this include major architectural changes).
 ### Added
 
 - Global patient voiding (voids all of a patient's records)
+- ART: Indicators for patients newly initiated on TB Preventive Therapy
 
 ### Fixed
 
