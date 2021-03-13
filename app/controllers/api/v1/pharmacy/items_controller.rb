@@ -12,7 +12,7 @@ class Api::V1::Pharmacy::ItemsController < ApplicationController
   end
 
   def update
-    permitted_params = params.permit(%i[current_quantity delivered_quantity expiry_date delivery_date reason])
+    permitted_params = params.permit(%i[current_quantity delivered_quantity pack_size expiry_date delivery_date reason])
     raise InvalidParameterError, 'reason is required' if permitted_params[:reason].blank?
 
     item = service.edit_batch_item(params[:id], permitted_params)

@@ -20,6 +20,7 @@ class StockManagementService
     raise "Dispensation ##{dispensation_id} not found" unless dispensation
 
     debit_drug(dispensation_drug_id(dispensation),
+               dispensation_pack_size(dispensation),
                dispensation.value_numeric,
                dispensation.obs_datetime,
                'Drug dispensed',
@@ -35,6 +36,7 @@ class StockManagementService
     raise "Dispensation ##{dispensation_id} already reversed" if event_log&.voided
 
     amount_rejected = credit_drug(dispensation_drug_id(dispensation),
+                                  dispensation_pack_size(dispensation),
                                   dispensation.value_numeric,
                                   dispensation.obs_datetime,
                                   "Voided drug dispensation ##{dispensation.id}")
@@ -63,12 +65,16 @@ class StockManagementService
       stock_items.each_with_index do |item, i|
         drug_id = fetch_parameter(item, :drug_id)
         quantity = fetch_parameter(item, :quantity)
+        pack_size = item[:pack_size]
 
         delivery_date = fetch_parameter_as_date(item, :delivery_date, Date.today)
         expiry_date = fetch_parameter_as_date(item, :expiry_date)
 
-        item = find_batch_items(pharmacy_batch_id: batch.id, drug_id: drug_id,
-                                delivery_date: delivery_date, expiry_date: expiry_date).first
+        item = find_batch_items(pharmacy_batch_id: batch.id,
+                                drug_id: drug_id,
+                                pack_size: pack_size,
+                                delivery_date: delivery_date,
+                                expiry_date: expiry_date).first
 
         if item
           # Update existing item if already in batch
@@ -76,7 +82,7 @@ class StockManagementService
           item.current_quantity += quantity
           item.save
         else
-          item = create_batch_item(batch, drug_id, quantity, delivery_date, expiry_date)
+          item = create_batch_item(batch, drug_id, pack_size, quantity, delivery_date, expiry_date)
           validate_activerecord_object(item)
         end
 
@@ -215,9 +221,10 @@ class StockManagementService
 
   private
 
-  def debit_drug(drug_id, debit_quantity, date, reason, dispensation_id: nil)
-    drugs = find_batch_items(drug_id: drug_id).where('expiry_date > ? AND current_quantity > 0', date)
-                                              .order(:expiry_date)
+  def debit_drug(drug_id, pack_size, debit_quantity, date, reason, dispensation_id: nil)
+    drugs = find_batch_items(drug_id: drug_id, pack_size: pack_size)
+            .where('expiry_date > ? AND current_quantity > 0', date)
+            .order('expiry_date')
 
     commit_kwargs = { update_item: true, dispensation_obs_id: dispensation_id, transaction_reason: reason }
 
@@ -234,10 +241,10 @@ class StockManagementService
     debit_quantity
   end
 
-  def credit_drug(drug_id, credit_quantity, date, reason)
+  def credit_drug(drug_id, pack_size, credit_quantity, date, reason)
     return credit_quantity unless credit_quantity.positive?
 
-    drugs = find_batch_items(drug_id: drug_id)
+    drugs = find_batch_items(drug_id: drug_id, pack_size: pack_size)
             .where('delivery_date < :date AND expiry_date > :date AND date_changed >= :date', date: date)
             .order(:expiry_date)
 
@@ -283,12 +290,13 @@ class StockManagementService
     PharmacyBatch.create(batch_number: batch_number)
   end
 
-  def create_batch_item(batch, drug_id, quantity, delivery_date, expiry_date)
+  def create_batch_item(batch, drug_id, pack_size, quantity, delivery_date, expiry_date)
     quantity = quantity.to_f
 
     PharmacyBatchItem.create(
       batch: batch,
       drug_id: drug_id.to_i,
+      pack_size: pack_size,
       delivered_quantity: quantity,
       current_quantity: quantity,
       delivery_date: delivery_date,
@@ -306,6 +314,19 @@ class StockManagementService
   # Pulls a drug id from a dispensation observation
   def dispensation_drug_id(dispensation)
     dispensation.value_drug || DrugOrder.find(dispensation.order_id).drug_inventory_id
+  end
+
+  # Pulls a pack size from a dispensation observation
+  def dispensation_pack_size(dispensation)
+    # Currently dispensations on the frontend are made in unit pack sizes (ie
+    # each dispensation only has an amount equal to one pack size).
+    if PharmacyBatchItem.where(drug_id: dispensation_drug_id(dispensation),
+                               pack_size: dispensation.value_numeric)
+                        .exists?
+      return dispensation.value_numeric
+    end
+
+    nil
   end
 
   def validate_activerecord_object(object)

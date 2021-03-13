@@ -70,7 +70,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "M9mEO1jNftvs",
+								"value": "5LAbSTYzY5JF",
 								"type": "text"
 							},
 							{
@@ -113,7 +113,7 @@
 								"header": [
 									{
 										"key": "Authorization",
-										"value": "M9mEO1jNftvs",
+										"value": "5LAbSTYzY5JF",
 										"type": "text"
 									},
 									{
@@ -158,7 +158,7 @@
 								},
 								{
 									"key": "ETag",
-									"value": "W/\"c459a64a2f28f6d2b6e1aaccde88d2ae\""
+									"value": "W/\"213cb6189e6453a0f6736e1322c27550\""
 								},
 								{
 									"key": "Cache-Control",
@@ -166,11 +166,11 @@
 								},
 								{
 									"key": "X-Request-Id",
-									"value": "3e42263f-d773-48b5-adc4-9c2669e83744"
+									"value": "4d68223c-9e4c-4451-8f63-0819ad4b1d27"
 								},
 								{
 									"key": "X-Runtime",
-									"value": "0.107010"
+									"value": "0.150635"
 								},
 								{
 									"key": "Vary",
@@ -182,7 +182,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "[\n    {\n        \"id\": 1,\n        \"batch_number\": \"1234567890\",\n        \"creator\": 1,\n        \"date_created\": \"2019-05-09T15:01:26.000+02:00\",\n        \"date_changed\": null,\n        \"voided\": false,\n        \"voided_by\": null,\n        \"void_reason\": null,\n        \"date_voided\": null,\n        \"items\": [\n            {\n                \"id\": 1,\n                \"pharmacy_batch_id\": 1,\n                \"drug_id\": 901,\n                \"delivered_quantity\": 1000,\n                \"current_quantity\": 0,\n                \"delivery_date\": \"2019-05-09\",\n                \"expiry_date\": null,\n                \"creator\": 1,\n                \"date_created\": \"2019-05-09T15:06:03.000+02:00\",\n                \"date_changed\": \"2019-05-09T15:06:03.000+02:00\",\n                \"voided\": false,\n                \"voided_by\": null,\n                \"void_reason\": null,\n                \"date_voided\": null\n            },\n            {\n                \"id\": 2,\n                \"pharmacy_batch_id\": 1,\n                \"drug_id\": 901,\n                \"delivered_quantity\": 1000,\n                \"current_quantity\": 0,\n                \"delivery_date\": \"2019-05-09\",\n                \"expiry_date\": null,\n                \"creator\": 1,\n                \"date_created\": \"2019-05-09T15:06:06.000+02:00\",\n                \"date_changed\": \"2019-05-09T15:06:06.000+02:00\",\n                \"voided\": false,\n                \"voided_by\": null,\n                \"void_reason\": null,\n                \"date_voided\": null\n            },\n            {\n                \"id\": 3,\n                \"pharmacy_batch_id\": 1,\n                \"drug_id\": 901,\n                \"delivered_quantity\": 1000,\n                \"current_quantity\": 0,\n                \"delivery_date\": \"2019-05-09\",\n                \"expiry_date\": null,\n                \"creator\": 1,\n                \"date_created\": \"2019-05-09T15:06:08.000+02:00\",\n                \"date_changed\": \"2019-05-09T15:06:08.000+02:00\",\n                \"voided\": false,\n                \"voided_by\": null,\n                \"void_reason\": null,\n                \"date_voided\": null\n            },\n            {\n                \"id\": 4,\n                \"pharmacy_batch_id\": 1,\n                \"drug_id\": 901,\n                \"delivered_quantity\": 1000,\n                \"current_quantity\": 0,\n                \"delivery_date\": \"2019-05-09\",\n                \"expiry_date\": \"2020-12-31\",\n                \"creator\": 1,\n                \"date_created\": \"2019-05-09T15:34:15.000+02:00\",\n                \"date_changed\": \"2019-05-09T15:34:15.000+02:00\",\n                \"voided\": false,\n                \"voided_by\": null,\n                \"void_reason\": null,\n                \"date_voided\": null\n            },\n            {\n                \"id\": 5,\n                \"pharmacy_batch_id\": 1,\n                \"drug_id\": 901,\n                \"delivered_quantity\": 500,\n                \"current_quantity\": 0,\n                \"delivery_date\": \"2019-05-09\",\n                \"expiry_date\": \"2020-12-31\",\n                \"creator\": 1,\n                \"date_created\": \"2019-05-10T01:57:07.000+02:00\",\n                \"date_changed\": \"2019-05-10T01:57:07.000+02:00\",\n                \"voided\": false,\n                \"voided_by\": null,\n                \"void_reason\": null,\n                \"date_voided\": null\n            },\n            {\n                \"id\": 6,\n                \"pharmacy_batch_id\": 1,\n                \"drug_id\": 901,\n                \"delivered_quantity\": 500,\n                \"current_quantity\": 0,\n                \"delivery_date\": \"2019-05-09\",\n                \"expiry_date\": \"2020-12-31\",\n                \"creator\": 1,\n                \"date_created\": \"2019-05-10T01:58:12.000+02:00\",\n                \"date_changed\": \"2019-05-10T01:58:12.000+02:00\",\n                \"voided\": false,\n                \"voided_by\": null,\n                \"void_reason\": null,\n                \"date_voided\": null\n            },\n            {\n                \"id\": 7,\n                \"pharmacy_batch_id\": 1,\n                \"drug_id\": 901,\n                \"delivered_quantity\": 1000,\n                \"current_quantity\": 0,\n                \"delivery_date\": \"2019-05-09\",\n                \"expiry_date\": \"2020-12-31\",\n                \"creator\": 1,\n                \"date_created\": \"2019-05-16T15:21:20.000+02:00\",\n                \"date_changed\": \"2019-05-16T15:21:20.000+02:00\",\n                \"voided\": false,\n                \"voided_by\": null,\n                \"void_reason\": null,\n                \"date_voided\": null\n            }\n        ]\n    }\n]"
+							"body": "[\n    {\n        \"id\": 2,\n        \"batch_number\": \"12345\",\n        \"creator\": 1,\n        \"date_created\": \"2021-02-25T13:23:31.000+02:00\",\n        \"date_changed\": \"2021-02-25T13:23:31.000+02:00\",\n        \"voided\": false,\n        \"voided_by\": null,\n        \"void_reason\": null,\n        \"date_voided\": null,\n        \"changed_by\": 1,\n        \"items\": [\n            {\n                \"id\": 2,\n                \"pharmacy_batch_id\": 2,\n                \"drug_id\": 576,\n                \"delivered_quantity\": 1000000,\n                \"current_quantity\": 999970,\n                \"delivery_date\": \"2021-02-25\",\n                \"expiry_date\": \"2022-02-01\",\n                \"creator\": 1,\n                \"date_created\": \"2021-02-25T13:23:31.000+02:00\",\n                \"date_changed\": \"2021-02-25T13:27:23.000+02:00\",\n                \"voided\": false,\n                \"voided_by\": null,\n                \"void_reason\": null,\n                \"date_voided\": null,\n                \"changed_by\": 1,\n                \"pack_size\": null,\n                \"drug_name\": \"Cotrimoxazole (960mg)\"\n            },\n            {\n                \"id\": 3,\n                \"pharmacy_batch_id\": 2,\n                \"drug_id\": 982,\n                \"delivered_quantity\": 30000,\n                \"current_quantity\": 30000,\n                \"delivery_date\": \"2021-02-25\",\n                \"expiry_date\": \"2022-02-01\",\n                \"creator\": 1,\n                \"date_created\": \"2021-02-25T13:23:31.000+02:00\",\n                \"date_changed\": \"2021-02-25T13:23:31.000+02:00\",\n                \"voided\": false,\n                \"voided_by\": null,\n                \"void_reason\": null,\n                \"date_voided\": null,\n                \"changed_by\": 1,\n                \"pack_size\": null,\n                \"drug_name\": \"Dolutegravir (50mg tablet)\"\n            },\n            {\n                \"id\": 4,\n                \"pharmacy_batch_id\": 2,\n                \"drug_id\": 30,\n                \"delivered_quantity\": 90000,\n                \"current_quantity\": 90000,\n                \"delivery_date\": \"2021-02-25\",\n                \"expiry_date\": \"2022-02-01\",\n                \"creator\": 1,\n                \"date_created\": \"2021-02-25T13:23:31.000+02:00\",\n                \"date_changed\": \"2021-02-25T13:23:31.000+02:00\",\n                \"voided\": false,\n                \"voided_by\": null,\n                \"void_reason\": null,\n                \"date_voided\": null,\n                \"changed_by\": 1,\n                \"pack_size\": null,\n                \"drug_name\": \"EFV (Efavirenz 200mg tablet)\"\n            },\n            {\n                \"id\": 5,\n                \"pharmacy_batch_id\": 2,\n                \"drug_id\": 11,\n                \"delivered_quantity\": 30000,\n                \"current_quantity\": 30000,\n                \"delivery_date\": \"2021-02-25\",\n                \"expiry_date\": \"2022-02-01\",\n                \"creator\": 1,\n                \"date_created\": \"2021-02-25T13:23:31.000+02:00\",\n                \"date_changed\": \"2021-02-25T13:23:31.000+02:00\",\n                \"voided\": false,\n                \"voided_by\": null,\n                \"void_reason\": null,\n                \"date_voided\": null,\n                \"changed_by\": 1,\n                \"pack_size\": null,\n                \"drug_name\": \"EFV (Efavirenz 600mg tablet)\"\n            },\n            {\n                \"id\": 6,\n                \"pharmacy_batch_id\": 2,\n                \"drug_id\": 24,\n                \"delivered_quantity\": 100000,\n                \"current_quantity\": 99970,\n                \"delivery_date\": \"2021-02-25\",\n                \"expiry_date\": \"2022-02-01\",\n                \"creator\": 1,\n                \"date_created\": \"2021-02-25T13:23:31.000+02:00\",\n                \"date_changed\": \"2021-02-25T13:27:13.000+02:00\",\n                \"voided\": false,\n                \"voided_by\": null,\n                \"void_reason\": null,\n                \"date_voided\": null,\n                \"changed_by\": 1,\n                \"pack_size\": null,\n                \"drug_name\": \"INH or H (Isoniazid 100mg tablet)\"\n            },\n            {\n                \"id\": 7,\n                \"pharmacy_batch_id\": 2,\n                \"drug_id\": 931,\n                \"delivered_quantity\": 1000000,\n                \"current_quantity\": 1000000,\n                \"delivery_date\": \"2021-02-25\",\n                \"expiry_date\": \"2022-02-01\",\n                \"creator\": 1,\n                \"date_created\": \"2021-02-25T13:23:31.000+02:00\",\n                \"date_changed\": \"2021-02-25T13:23:31.000+02:00\",\n                \"voided\": false,\n                \"voided_by\": null,\n                \"void_reason\": null,\n                \"date_voided\": null,\n                \"changed_by\": 1,\n                \"pack_size\": null,\n                \"drug_name\": \"INH or H (Isoniazid 300mg tablet)\"\n            },\n            {\n                \"id\": 8,\n                \"pharmacy_batch_id\": 2,\n                \"drug_id\": 22,\n                \"delivered_quantity\": 60000,\n                \"current_quantity\": 60000,\n                \"delivery_date\": \"2021-02-25\",\n                \"expiry_date\": \"2022-02-01\",\n                \"creator\": 1,\n                \"date_created\": \"2021-02-25T13:23:31.000+02:00\",\n                \"date_changed\": \"2021-02-25T13:23:31.000+02:00\",\n                \"voided\": false,\n                \"voided_by\": null,\n                \"void_reason\": null,\n                \"date_voided\": null,\n                \"changed_by\": 1,\n                \"pack_size\": null,\n                \"drug_name\": \"NVP (Nevirapine 200 mg tablet)\"\n            },\n            {\n                \"id\": 9,\n                \"pharmacy_batch_id\": 2,\n                \"drug_id\": 968,\n                \"delivered_quantity\": 60000,\n                \"current_quantity\": 60000,\n                \"delivery_date\": \"2021-02-25\",\n                \"expiry_date\": \"2022-02-01\",\n                \"creator\": 1,\n                \"date_created\": \"2021-02-25T13:23:31.000+02:00\",\n                \"date_changed\": \"2021-02-25T13:23:31.000+02:00\",\n                \"voided\": false,\n                \"voided_by\": null,\n                \"void_reason\": null,\n                \"date_voided\": null,\n                \"changed_by\": 1,\n                \"pack_size\": null,\n                \"drug_name\": \"NVP (Nevirapine 50 mg tablet)\"\n            },\n            {\n                \"id\": 10,\n                \"pharmacy_batch_id\": 2,\n                \"drug_id\": 76,\n                \"delivered_quantity\": 1000000,\n                \"current_quantity\": 1000000,\n                \"delivery_date\": \"2021-02-25\",\n                \"expiry_date\": \"2022-02-01\",\n                \"creator\": 1,\n                \"date_created\": \"2021-02-25T13:23:31.000+02:00\",\n                \"date_changed\": \"2021-02-25T13:23:31.000+02:00\",\n                \"voided\": false,\n                \"voided_by\": null,\n                \"void_reason\": null,\n                \"date_voided\": null,\n                \"changed_by\": 1,\n                \"pack_size\": null,\n                \"drug_name\": \"Pyridoxine (50mg)\"\n            },\n            {\n                \"id\": 11,\n                \"pharmacy_batch_id\": 2,\n                \"drug_id\": 1039,\n                \"delivered_quantity\": 1000000,\n                \"current_quantity\": 1000000,\n                \"delivery_date\": \"2021-02-25\",\n                \"expiry_date\": \"2022-02-01\",\n                \"creator\": 1,\n                \"date_created\": \"2021-02-25T13:23:31.000+02:00\",\n                \"date_changed\": \"2021-02-25T13:23:31.000+02:00\",\n                \"voided\": false,\n                \"voided_by\": null,\n                \"void_reason\": null,\n                \"date_voided\": null,\n                \"changed_by\": 1,\n                \"pack_size\": null,\n                \"drug_name\": \"Pyridoxine (25mg)\"\n            },\n            {\n                \"id\": 12,\n                \"pharmacy_batch_id\": 2,\n                \"drug_id\": 983,\n                \"delivered_quantity\": 30000,\n                \"current_quantity\": 30000,\n                \"delivery_date\": \"2021-02-25\",\n                \"expiry_date\": \"2022-02-01\",\n                \"creator\": 1,\n                \"date_created\": \"2021-02-25T13:23:31.000+02:00\",\n                \"date_changed\": \"2021-02-25T13:23:31.000+02:00\",\n                \"voided\": false,\n                \"voided_by\": null,\n                \"void_reason\": null,\n                \"date_voided\": null,\n                \"changed_by\": 1,\n                \"pack_size\": null,\n                \"drug_name\": \"TDF300/3TC300/DTG50\"\n            },\n            {\n                \"id\": 13,\n                \"pharmacy_batch_id\": 2,\n                \"drug_id\": 732,\n                \"delivered_quantity\": 60000,\n                \"current_quantity\": 60000,\n                \"delivery_date\": \"2021-02-25\",\n                \"expiry_date\": \"2022-02-01\",\n                \"creator\": 1,\n                \"date_created\": \"2021-02-25T13:23:31.000+02:00\",\n                \"date_changed\": \"2021-02-25T13:23:31.000+02:00\",\n                \"voided\": false,\n                \"voided_by\": null,\n                \"void_reason\": null,\n                \"date_voided\": null,\n                \"changed_by\": 1,\n                \"pack_size\": null,\n                \"drug_name\": \"AZT/3TC/NVP (60/30/50mg tablet)\"\n            },\n            {\n                \"id\": 14,\n                \"pharmacy_batch_id\": 2,\n                \"drug_id\": 731,\n                \"delivered_quantity\": 60000,\n                \"current_quantity\": 60000,\n                \"delivery_date\": \"2021-02-25\",\n                \"expiry_date\": \"2022-02-01\",\n                \"creator\": 1,\n                \"date_created\": \"2021-02-25T13:23:31.000+02:00\",\n                \"date_changed\": \"2021-02-25T13:23:31.000+02:00\",\n                \"voided\": false,\n                \"voided_by\": null,\n                \"void_reason\": null,\n                \"date_voided\": null,\n                \"changed_by\": 1,\n                \"pack_size\": null,\n                \"drug_name\": \"AZT/3TC/NVP (300/150/200mg tablet)\"\n            },\n            {\n                \"id\": 15,\n                \"pharmacy_batch_id\": 2,\n                \"drug_id\": 39,\n                \"delivered_quantity\": 60000,\n                \"current_quantity\": 60000,\n                \"delivery_date\": \"2021-02-25\",\n                \"expiry_date\": \"2022-02-01\",\n                \"creator\": 1,\n                \"date_created\": \"2021-02-25T13:23:31.000+02:00\",\n                \"date_changed\": \"2021-02-25T13:23:31.000+02:00\",\n                \"voided\": false,\n                \"voided_by\": null,\n                \"void_reason\": null,\n                \"date_voided\": null,\n                \"changed_by\": 1,\n                \"pack_size\": null,\n                \"drug_name\": \"AZT/3TC (Zidovudine and Lamivudine 300/150mg)\"\n            },\n            {\n                \"id\": 16,\n                \"pharmacy_batch_id\": 2,\n                \"drug_id\": 736,\n                \"delivered_quantity\": 100000,\n                \"current_quantity\": 60000,\n                \"delivery_date\": \"2021-02-25\",\n                \"expiry_date\": \"2022-02-01\",\n                \"creator\": 1,\n                \"date_created\": \"2021-02-25T13:23:31.000+02:00\",\n                \"date_changed\": \"2021-03-13T22:00:36.000+02:00\",\n                \"voided\": false,\n                \"voided_by\": null,\n                \"void_reason\": null,\n                \"date_voided\": null,\n                \"changed_by\": 1,\n                \"pack_size\": null,\n                \"drug_name\": \"AZT/3TC (Zidovudine and Lamivudine 60/30 tablet)\"\n            }\n        ]\n    },\n    {\n        \"id\": 1,\n        \"batch_number\": \"1234567890\",\n        \"creator\": 1,\n        \"date_created\": \"2021-02-25T11:51:32.000+02:00\",\n        \"date_changed\": \"2021-02-25T11:51:32.000+02:00\",\n        \"voided\": false,\n        \"voided_by\": null,\n        \"void_reason\": null,\n        \"date_voided\": null,\n        \"changed_by\": 1,\n        \"items\": [\n            {\n                \"id\": 1,\n                \"pharmacy_batch_id\": 1,\n                \"drug_id\": 901,\n                \"delivered_quantity\": 2000,\n                \"current_quantity\": 1990,\n                \"delivery_date\": \"2019-05-09\",\n                \"expiry_date\": \"2020-12-31\",\n                \"creator\": 1,\n                \"date_created\": \"2021-02-25T11:51:32.000+02:00\",\n                \"date_changed\": \"2021-02-25T11:55:14.000+02:00\",\n                \"voided\": false,\n                \"voided_by\": null,\n                \"void_reason\": null,\n                \"date_voided\": null,\n                \"changed_by\": 1,\n                \"pack_size\": null,\n                \"drug_name\": \"Neostigmine (1ml injection)\"\n            }\n        ]\n    }\n]"
 						}
 					]
 				},
@@ -193,7 +193,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "M9mEO1jNftvs",
+								"value": "5LAbSTYzY5JF",
 								"type": "text"
 							},
 							{
@@ -205,7 +205,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"batch_number\": \"1234567890\",\n\t\"items\": [{\"drug_id\": 901, \"quantity\": 1000, \"expiry_date\": \"2020-12-31\", \"delivery_date\": \"2019-05-09\"}]\n}"
+							"raw": "{\n\t\"batch_number\": \"9876543210\",\n\t\"items\": [\n        {\n            \"drug_id\": 982,\n            \"pack_size\": 30,\n            \"quantity\": 1000,\n            \"expiry_date\": \"2022-12-31\",\n            \"delivery_date\": \"2020-05-09\"\n        }\n    ]\n}"
 						},
 						"url": {
 							"raw": "http://localhost:3000/api/v1/pharmacy/batches",
@@ -230,7 +230,7 @@
 								"header": [
 									{
 										"key": "Authorization",
-										"value": "M9mEO1jNftvs",
+										"value": "5LAbSTYzY5JF",
 										"type": "text"
 									},
 									{
@@ -242,7 +242,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n\t\"batch_number\": \"1234567890\",\n\t\"items\": [{\"drug_id\": 901, \"quantity\": 1000, \"expiry_date\": \"2020-12-31\", \"delivery_date\": \"2019-05-09\"}]\n}"
+									"raw": "{\n\t\"batch_number\": \"9876543210\",\n\t\"items\": [\n        {\n            \"drug_id\": 982,\n            \"pack_size\": 30,\n            \"quantity\": 1000,\n            \"expiry_date\": \"2022-12-31\",\n            \"delivery_date\": \"2020-05-09\"\n        }\n    ]\n}"
 								},
 								"url": {
 									"raw": "http://localhost:3000/api/v1/pharmacy/batches",
@@ -269,7 +269,7 @@
 								},
 								{
 									"key": "ETag",
-									"value": "W/\"9247348e0b615145b43e58086788fa2c\""
+									"value": "W/\"303b7afb56a00bad14f3514086c3efda\""
 								},
 								{
 									"key": "Cache-Control",
@@ -277,11 +277,11 @@
 								},
 								{
 									"key": "X-Request-Id",
-									"value": "c20b8b6c-cac5-4db3-8a32-d881f429bff9"
+									"value": "18ad6538-af4c-4831-ba31-0a49fb15fcd5"
 								},
 								{
 									"key": "X-Runtime",
-									"value": "0.348698"
+									"value": "0.050706"
 								},
 								{
 									"key": "Vary",
@@ -293,7 +293,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n    \"id\": 2,\n    \"batch_number\": \"1234567890\",\n    \"creator\": 1,\n    \"date_created\": \"2019-05-17T09:11:03.000+02:00\",\n    \"date_changed\": null,\n    \"voided\": false,\n    \"voided_by\": null,\n    \"void_reason\": null,\n    \"date_voided\": null,\n    \"items\": [\n        {\n            \"id\": 9,\n            \"pharmacy_batch_id\": 2,\n            \"drug_id\": 901,\n            \"delivered_quantity\": 1000,\n            \"current_quantity\": 0,\n            \"delivery_date\": \"2019-05-09\",\n            \"expiry_date\": \"2020-12-31\",\n            \"creator\": 1,\n            \"date_created\": \"2019-05-17T09:11:03.000+02:00\",\n            \"date_changed\": \"2019-05-17T09:11:03.000+02:00\",\n            \"voided\": false,\n            \"voided_by\": null,\n            \"void_reason\": null,\n            \"date_voided\": null\n        }\n    ]\n}"
+							"body": "{\n    \"id\": 3,\n    \"batch_number\": \"9876543210\",\n    \"creator\": 1,\n    \"date_created\": \"2021-03-13T22:58:24.000+02:00\",\n    \"date_changed\": \"2021-03-13T22:58:24.000+02:00\",\n    \"voided\": false,\n    \"voided_by\": null,\n    \"void_reason\": null,\n    \"date_voided\": null,\n    \"changed_by\": 1,\n    \"items\": [\n        {\n            \"id\": 19,\n            \"pharmacy_batch_id\": 3,\n            \"drug_id\": 982,\n            \"delivered_quantity\": 1000,\n            \"current_quantity\": 1000,\n            \"delivery_date\": \"2020-05-09\",\n            \"expiry_date\": \"2022-12-31\",\n            \"creator\": 1,\n            \"date_created\": \"2021-03-13T22:58:24.000+02:00\",\n            \"date_changed\": \"2021-03-13T22:58:24.000+02:00\",\n            \"voided\": false,\n            \"voided_by\": null,\n            \"void_reason\": null,\n            \"date_voided\": null,\n            \"changed_by\": 1,\n            \"pack_size\": 30,\n            \"drug_name\": \"Dolutegravir (50mg tablet)\"\n        }\n    ]\n}"
 						}
 					]
 				},
@@ -304,7 +304,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "M9mEO1jNftvs",
+								"value": "5LAbSTYzY5JF",
 								"type": "text"
 							}
 						],
@@ -332,7 +332,7 @@
 								"header": [
 									{
 										"key": "Authorization",
-										"value": "M9mEO1jNftvs",
+										"value": "5LAbSTYzY5JF",
 										"type": "text"
 									}
 								],
@@ -362,7 +362,7 @@
 								},
 								{
 									"key": "ETag",
-									"value": "W/\"86daa0fe67078d5d4f84c41a1bbb1339\""
+									"value": "W/\"969aa85eee7c0543b3ca6602e453f15f\""
 								},
 								{
 									"key": "Cache-Control",
@@ -370,11 +370,11 @@
 								},
 								{
 									"key": "X-Request-Id",
-									"value": "0afb6b02-be72-47e4-b939-266e90e73db6"
+									"value": "b1f536c4-7183-4fe9-ad22-541d01bb6575"
 								},
 								{
 									"key": "X-Runtime",
-									"value": "0.007616"
+									"value": "0.035037"
 								},
 								{
 									"key": "Vary",
@@ -386,7 +386,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n    \"id\": 9,\n    \"pharmacy_batch_id\": 2,\n    \"drug_id\": 901,\n    \"delivered_quantity\": 1000,\n    \"current_quantity\": 0,\n    \"delivery_date\": \"2019-05-09\",\n    \"expiry_date\": \"2020-12-31\",\n    \"creator\": 1,\n    \"date_created\": \"2019-05-17T09:11:03.000+02:00\",\n    \"date_changed\": \"2019-05-17T09:11:03.000+02:00\",\n    \"voided\": false,\n    \"voided_by\": null,\n    \"void_reason\": null,\n    \"date_voided\": null\n}"
+							"body": "{\n    \"id\": 9,\n    \"pharmacy_batch_id\": 2,\n    \"drug_id\": 968,\n    \"delivered_quantity\": 60000,\n    \"current_quantity\": 60000,\n    \"delivery_date\": \"2021-02-25\",\n    \"expiry_date\": \"2022-02-01\",\n    \"creator\": 1,\n    \"date_created\": \"2021-02-25T13:23:31.000+02:00\",\n    \"date_changed\": \"2021-02-25T13:23:31.000+02:00\",\n    \"voided\": false,\n    \"voided_by\": null,\n    \"void_reason\": null,\n    \"date_voided\": null,\n    \"changed_by\": 1,\n    \"pack_size\": null,\n    \"drug_name\": \"NVP (Nevirapine 50 mg tablet)\"\n}"
 						}
 					]
 				},
@@ -397,7 +397,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "M9mEO1jNftvs",
+								"value": "5LAbSTYzY5JF",
 								"type": "text"
 							}
 						],
@@ -430,7 +430,7 @@
 								"header": [
 									{
 										"key": "Authorization",
-										"value": "M9mEO1jNftvs",
+										"value": "5LAbSTYzY5JF",
 										"type": "text"
 									}
 								],
@@ -465,7 +465,7 @@
 								},
 								{
 									"key": "ETag",
-									"value": "W/\"6fff4b375c99204f2bc224f2c26661a5\""
+									"value": "W/\"d6a65ef2cb991e54b6e5d9c45428c423\""
 								},
 								{
 									"key": "Cache-Control",
@@ -473,11 +473,11 @@
 								},
 								{
 									"key": "X-Request-Id",
-									"value": "db397909-6107-4f7b-89f0-69cfdb8ace9b"
+									"value": "311bc2a1-dd62-4e16-be96-c0a0b5c654a1"
 								},
 								{
 									"key": "X-Runtime",
-									"value": "0.042295"
+									"value": "0.026303"
 								},
 								{
 									"key": "Vary",
@@ -489,143 +489,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "[\n    {\n        \"id\": 10,\n        \"pharmacy_batch_id\": 2,\n        \"drug_id\": 901,\n        \"delivered_quantity\": 500,\n        \"current_quantity\": 0,\n        \"delivery_date\": \"2019-05-09\",\n        \"expiry_date\": \"2020-12-31\",\n        \"creator\": 1,\n        \"date_created\": \"2019-05-17T09:11:58.000+02:00\",\n        \"date_changed\": \"2019-05-17T09:11:58.000+02:00\",\n        \"voided\": false,\n        \"voided_by\": null,\n        \"void_reason\": null,\n        \"date_voided\": null\n    },\n    {\n        \"id\": 9,\n        \"pharmacy_batch_id\": 2,\n        \"drug_id\": 901,\n        \"delivered_quantity\": 1000,\n        \"current_quantity\": 0,\n        \"delivery_date\": \"2019-05-09\",\n        \"expiry_date\": \"2020-12-31\",\n        \"creator\": 1,\n        \"date_created\": \"2019-05-17T09:11:03.000+02:00\",\n        \"date_changed\": \"2019-05-17T09:11:03.000+02:00\",\n        \"voided\": false,\n        \"voided_by\": null,\n        \"void_reason\": null,\n        \"date_voided\": null\n    }\n]"
-						},
-						{
-							"name": "Retrieve all pharmacy batch items",
-							"originalRequest": {
-								"method": "GET",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "M9mEO1jNftvs",
-										"type": "text"
-									}
-								],
-								"url": {
-									"raw": "http://localhost:3000/api/v1/pharmacy/items?drug_id=901",
-									"protocol": "http",
-									"host": [
-										"localhost"
-									],
-									"port": "3000",
-									"path": [
-										"api",
-										"v1",
-										"pharmacy",
-										"items"
-									],
-									"query": [
-										{
-											"key": "drug_id",
-											"value": "901"
-										}
-									]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json; charset=utf-8"
-								},
-								{
-									"key": "ETag",
-									"value": "W/\"6fff4b375c99204f2bc224f2c26661a5\""
-								},
-								{
-									"key": "Cache-Control",
-									"value": "max-age=0, private, must-revalidate"
-								},
-								{
-									"key": "X-Request-Id",
-									"value": "db397909-6107-4f7b-89f0-69cfdb8ace9b"
-								},
-								{
-									"key": "X-Runtime",
-									"value": "0.042295"
-								},
-								{
-									"key": "Vary",
-									"value": "Origin"
-								},
-								{
-									"key": "Transfer-Encoding",
-									"value": "chunked"
-								}
-							],
-							"cookie": [],
-							"body": "[\n    {\n        \"id\": 10,\n        \"pharmacy_batch_id\": 2,\n        \"drug_id\": 901,\n        \"delivered_quantity\": 500,\n        \"current_quantity\": 0,\n        \"delivery_date\": \"2019-05-09\",\n        \"expiry_date\": \"2020-12-31\",\n        \"creator\": 1,\n        \"date_created\": \"2019-05-17T09:11:58.000+02:00\",\n        \"date_changed\": \"2019-05-17T09:11:58.000+02:00\",\n        \"voided\": false,\n        \"voided_by\": null,\n        \"void_reason\": null,\n        \"date_voided\": null\n    },\n    {\n        \"id\": 9,\n        \"pharmacy_batch_id\": 2,\n        \"drug_id\": 901,\n        \"delivered_quantity\": 1000,\n        \"current_quantity\": 0,\n        \"delivery_date\": \"2019-05-09\",\n        \"expiry_date\": \"2020-12-31\",\n        \"creator\": 1,\n        \"date_created\": \"2019-05-17T09:11:03.000+02:00\",\n        \"date_changed\": \"2019-05-17T09:11:03.000+02:00\",\n        \"voided\": false,\n        \"voided_by\": null,\n        \"void_reason\": null,\n        \"date_voided\": null\n    }\n]"
-						},
-						{
-							"name": "Retrieve all pharmacy batch items",
-							"originalRequest": {
-								"method": "GET",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "M9mEO1jNftvs",
-										"type": "text"
-									}
-								],
-								"url": {
-									"raw": "http://localhost:3000/api/v1/pharmacy/items?drug_id=901",
-									"protocol": "http",
-									"host": [
-										"localhost"
-									],
-									"port": "3000",
-									"path": [
-										"api",
-										"v1",
-										"pharmacy",
-										"items"
-									],
-									"query": [
-										{
-											"key": "drug_id",
-											"value": "901"
-										}
-									]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json; charset=utf-8"
-								},
-								{
-									"key": "ETag",
-									"value": "W/\"6fff4b375c99204f2bc224f2c26661a5\""
-								},
-								{
-									"key": "Cache-Control",
-									"value": "max-age=0, private, must-revalidate"
-								},
-								{
-									"key": "X-Request-Id",
-									"value": "db397909-6107-4f7b-89f0-69cfdb8ace9b"
-								},
-								{
-									"key": "X-Runtime",
-									"value": "0.042295"
-								},
-								{
-									"key": "Vary",
-									"value": "Origin"
-								},
-								{
-									"key": "Transfer-Encoding",
-									"value": "chunked"
-								}
-							],
-							"cookie": [],
-							"body": "[\n    {\n        \"id\": 10,\n        \"pharmacy_batch_id\": 2,\n        \"drug_id\": 901,\n        \"delivered_quantity\": 500,\n        \"current_quantity\": 0,\n        \"delivery_date\": \"2019-05-09\",\n        \"expiry_date\": \"2020-12-31\",\n        \"creator\": 1,\n        \"date_created\": \"2019-05-17T09:11:58.000+02:00\",\n        \"date_changed\": \"2019-05-17T09:11:58.000+02:00\",\n        \"voided\": false,\n        \"voided_by\": null,\n        \"void_reason\": null,\n        \"date_voided\": null\n    },\n    {\n        \"id\": 9,\n        \"pharmacy_batch_id\": 2,\n        \"drug_id\": 901,\n        \"delivered_quantity\": 1000,\n        \"current_quantity\": 0,\n        \"delivery_date\": \"2019-05-09\",\n        \"expiry_date\": \"2020-12-31\",\n        \"creator\": 1,\n        \"date_created\": \"2019-05-17T09:11:03.000+02:00\",\n        \"date_changed\": \"2019-05-17T09:11:03.000+02:00\",\n        \"voided\": false,\n        \"voided_by\": null,\n        \"void_reason\": null,\n        \"date_voided\": null\n    }\n]"
+							"body": "[\n    {\n        \"id\": 17,\n        \"pharmacy_batch_id\": 1,\n        \"drug_id\": 901,\n        \"delivered_quantity\": 1000,\n        \"current_quantity\": 1000,\n        \"delivery_date\": \"2020-05-09\",\n        \"expiry_date\": \"2022-12-31\",\n        \"creator\": 1,\n        \"date_created\": \"2021-03-13T22:55:19.000+02:00\",\n        \"date_changed\": \"2021-03-13T22:55:19.000+02:00\",\n        \"voided\": false,\n        \"voided_by\": null,\n        \"void_reason\": null,\n        \"date_voided\": null,\n        \"changed_by\": 1,\n        \"pack_size\": 30,\n        \"drug_name\": \"Neostigmine (1ml injection)\"\n    },\n    {\n        \"id\": 1,\n        \"pharmacy_batch_id\": 1,\n        \"drug_id\": 901,\n        \"delivered_quantity\": 2000,\n        \"current_quantity\": 1990,\n        \"delivery_date\": \"2019-05-09\",\n        \"expiry_date\": \"2020-12-31\",\n        \"creator\": 1,\n        \"date_created\": \"2021-02-25T11:51:32.000+02:00\",\n        \"date_changed\": \"2021-02-25T11:55:14.000+02:00\",\n        \"voided\": false,\n        \"voided_by\": null,\n        \"void_reason\": null,\n        \"date_voided\": null,\n        \"changed_by\": 1,\n        \"pack_size\": null,\n        \"drug_name\": \"Neostigmine (1ml injection)\"\n    }\n]"
 						}
 					]
 				},
@@ -642,13 +506,13 @@
 							},
 							{
 								"key": "Authorization",
-								"value": "byd1DBnuql7r",
+								"value": "5LAbSTYzY5JF",
 								"type": "text"
 							}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"items\": [{\"drug_id\": 901, \"quantity\": 500, \"expiry_date\": \"2020-12-31\", \"delivery_date\": \"2019-05-09\"}]\n}"
+							"raw": "{\n    \"drug_id\": 901,\n    \"pack_size\": 90,\n    \"quantity\": 500,\n    \"expiry_date\": \"2020-12-31\",\n    \"delivery_date\": \"2019-05-09\",\n    \"reason\": \"Ndinasokoneza\"\n}"
 						},
 						"url": {
 							"raw": "http://localhost:3000/api/v1/pharmacy/items/16",
@@ -680,16 +544,16 @@
 									},
 									{
 										"key": "Authorization",
-										"value": "M9mEO1jNftvs",
+										"value": "5LAbSTYzY5JF",
 										"type": "text"
 									}
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n\t\"items\": [{\"drug_id\": 901, \"quantity\": 500, \"expiry_date\": \"2020-12-31\", \"delivery_date\": \"2019-05-09\"}]\n}"
+									"raw": "{\n    \"drug_id\": 901,\n    \"pack_size\": 90,\n    \"quantity\": 500,\n    \"expiry_date\": \"2020-12-31\",\n    \"delivery_date\": \"2019-05-09\",\n    \"reason\": \"Ndinasokoneza\"\n}"
 								},
 								"url": {
-									"raw": "http://localhost:3000/api/v1/pharmacy/batches/1234567890",
+									"raw": "http://localhost:3000/api/v1/pharmacy/items/16",
 									"protocol": "http",
 									"host": [
 										"localhost"
@@ -699,13 +563,13 @@
 										"api",
 										"v1",
 										"pharmacy",
-										"batches",
-										"1234567890"
+										"items",
+										"16"
 									]
 								}
 							},
-							"status": "Created",
-							"code": 201,
+							"status": "OK",
+							"code": 200,
 							"_postman_previewlanguage": "json",
 							"header": [
 								{
@@ -714,7 +578,7 @@
 								},
 								{
 									"key": "ETag",
-									"value": "W/\"44875dbaf028a4f718ba3b86496ad641\""
+									"value": "W/\"5488e8c31ecfb8ae609be9afc7606fef\""
 								},
 								{
 									"key": "Cache-Control",
@@ -722,11 +586,11 @@
 								},
 								{
 									"key": "X-Request-Id",
-									"value": "e7ca64f5-c24b-4437-b5b8-db973b4870bf"
+									"value": "b8d44b8d-efea-4f52-83fb-b77fd4c76070"
 								},
 								{
 									"key": "X-Runtime",
-									"value": "0.036926"
+									"value": "0.041152"
 								},
 								{
 									"key": "Vary",
@@ -738,7 +602,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n    \"id\": 2,\n    \"batch_number\": \"1234567890\",\n    \"creator\": 1,\n    \"date_created\": \"2019-05-17T09:11:03.000+02:00\",\n    \"date_changed\": null,\n    \"voided\": false,\n    \"voided_by\": null,\n    \"void_reason\": null,\n    \"date_voided\": null,\n    \"items\": [\n        {\n            \"id\": 9,\n            \"pharmacy_batch_id\": 2,\n            \"drug_id\": 901,\n            \"delivered_quantity\": 1000,\n            \"current_quantity\": 0,\n            \"delivery_date\": \"2019-05-09\",\n            \"expiry_date\": \"2020-12-31\",\n            \"creator\": 1,\n            \"date_created\": \"2019-05-17T09:11:03.000+02:00\",\n            \"date_changed\": \"2019-05-17T09:11:03.000+02:00\",\n            \"voided\": false,\n            \"voided_by\": null,\n            \"void_reason\": null,\n            \"date_voided\": null\n        },\n        {\n            \"id\": 10,\n            \"pharmacy_batch_id\": 2,\n            \"drug_id\": 901,\n            \"delivered_quantity\": 500,\n            \"current_quantity\": 0,\n            \"delivery_date\": \"2019-05-09\",\n            \"expiry_date\": \"2020-12-31\",\n            \"creator\": 1,\n            \"date_created\": \"2019-05-17T09:11:58.000+02:00\",\n            \"date_changed\": \"2019-05-17T09:11:58.000+02:00\",\n            \"voided\": false,\n            \"voided_by\": null,\n            \"void_reason\": null,\n            \"date_voided\": null\n        }\n    ]\n}"
+							"body": "{\n    \"id\": 16,\n    \"pack_size\": 90,\n    \"expiry_date\": \"2020-12-31\",\n    \"delivery_date\": \"2019-05-09\",\n    \"pharmacy_batch_id\": 2,\n    \"drug_id\": 736,\n    \"delivered_quantity\": 100000,\n    \"current_quantity\": 60000,\n    \"changed_by\": 1,\n    \"date_changed\": \"2021-03-13T23:06:20.000+02:00\",\n    \"creator\": 1,\n    \"date_created\": \"2021-02-25T13:23:31.000+02:00\",\n    \"voided\": false,\n    \"voided_by\": null,\n    \"void_reason\": null,\n    \"date_voided\": null,\n    \"drug_name\": \"AZT/3TC (Zidovudine and Lamivudine 60/30 tablet)\"\n}"
 						}
 					]
 				},
@@ -749,7 +613,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "M9mEO1jNftvs",
+								"value": "5LAbSTYzY5JF",
 								"type": "text"
 							}
 						],
@@ -777,7 +641,7 @@
 								"header": [
 									{
 										"key": "Authorization",
-										"value": "M9mEO1jNftvs",
+										"value": "5LAbSTYzY5JF",
 										"type": "text"
 									}
 								],
@@ -807,7 +671,7 @@
 								},
 								{
 									"key": "ETag",
-									"value": "W/\"9247348e0b615145b43e58086788fa2c\""
+									"value": "W/\"5441b6352cda440a55885ebc977ade07\""
 								},
 								{
 									"key": "Cache-Control",
@@ -815,11 +679,11 @@
 								},
 								{
 									"key": "X-Request-Id",
-									"value": "c075f4a2-d481-44c1-a607-a3306ad571d8"
+									"value": "e675557c-c5c5-40b0-a9d3-ad218e5e04bc"
 								},
 								{
 									"key": "X-Runtime",
-									"value": "0.024095"
+									"value": "0.027252"
 								},
 								{
 									"key": "Vary",
@@ -831,7 +695,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n    \"id\": 2,\n    \"batch_number\": \"1234567890\",\n    \"creator\": 1,\n    \"date_created\": \"2019-05-17T09:11:03.000+02:00\",\n    \"date_changed\": null,\n    \"voided\": false,\n    \"voided_by\": null,\n    \"void_reason\": null,\n    \"date_voided\": null,\n    \"items\": [\n        {\n            \"id\": 9,\n            \"pharmacy_batch_id\": 2,\n            \"drug_id\": 901,\n            \"delivered_quantity\": 1000,\n            \"current_quantity\": 0,\n            \"delivery_date\": \"2019-05-09\",\n            \"expiry_date\": \"2020-12-31\",\n            \"creator\": 1,\n            \"date_created\": \"2019-05-17T09:11:03.000+02:00\",\n            \"date_changed\": \"2019-05-17T09:11:03.000+02:00\",\n            \"voided\": false,\n            \"voided_by\": null,\n            \"void_reason\": null,\n            \"date_voided\": null\n        }\n    ]\n}"
+							"body": "{\n    \"id\": 1,\n    \"batch_number\": \"1234567890\",\n    \"creator\": 1,\n    \"date_created\": \"2021-02-25T11:51:32.000+02:00\",\n    \"date_changed\": \"2021-02-25T11:51:32.000+02:00\",\n    \"voided\": false,\n    \"voided_by\": null,\n    \"void_reason\": null,\n    \"date_voided\": null,\n    \"changed_by\": 1,\n    \"items\": [\n        {\n            \"id\": 1,\n            \"pharmacy_batch_id\": 1,\n            \"drug_id\": 901,\n            \"delivered_quantity\": 2000,\n            \"current_quantity\": 1990,\n            \"delivery_date\": \"2019-05-09\",\n            \"expiry_date\": \"2020-12-31\",\n            \"creator\": 1,\n            \"date_created\": \"2021-02-25T11:51:32.000+02:00\",\n            \"date_changed\": \"2021-02-25T11:55:14.000+02:00\",\n            \"voided\": false,\n            \"voided_by\": null,\n            \"void_reason\": null,\n            \"date_voided\": null,\n            \"changed_by\": 1,\n            \"pack_size\": null,\n            \"drug_name\": \"Neostigmine (1ml injection)\"\n        },\n        {\n            \"id\": 17,\n            \"pharmacy_batch_id\": 1,\n            \"drug_id\": 901,\n            \"delivered_quantity\": 1000,\n            \"current_quantity\": 1000,\n            \"delivery_date\": \"2020-05-09\",\n            \"expiry_date\": \"2022-12-31\",\n            \"creator\": 1,\n            \"date_created\": \"2021-03-13T22:55:19.000+02:00\",\n            \"date_changed\": \"2021-03-13T22:55:19.000+02:00\",\n            \"voided\": false,\n            \"voided_by\": null,\n            \"void_reason\": null,\n            \"date_voided\": null,\n            \"changed_by\": 1,\n            \"pack_size\": 30,\n            \"drug_name\": \"Neostigmine (1ml injection)\"\n        },\n        {\n            \"id\": 18,\n            \"pharmacy_batch_id\": 1,\n            \"drug_id\": 982,\n            \"delivered_quantity\": 1000,\n            \"current_quantity\": 1000,\n            \"delivery_date\": \"2020-05-09\",\n            \"expiry_date\": \"2022-12-31\",\n            \"creator\": 1,\n            \"date_created\": \"2021-03-13T22:57:46.000+02:00\",\n            \"date_changed\": \"2021-03-13T22:57:46.000+02:00\",\n            \"voided\": false,\n            \"voided_by\": null,\n            \"void_reason\": null,\n            \"date_voided\": null,\n            \"changed_by\": 1,\n            \"pack_size\": 30,\n            \"drug_name\": \"Dolutegravir (50mg tablet)\"\n        }\n    ]\n}"
 						}
 					]
 				},
@@ -842,12 +706,12 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "58L9eHzOh7Mi",
+								"value": "5LAbSTYzY5JF",
 								"type": "text"
 							}
 						],
 						"url": {
-							"raw": "http://localhost:3000/api/v1/pharmacy/earliest_expiring_item ",
+							"raw": "http://localhost:3000/api/v1/pharmacy/earliest_expiring_item",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -857,7 +721,7 @@
 								"api",
 								"v1",
 								"pharmacy",
-								"earliest_expiring_item "
+								"earliest_expiring_item"
 							]
 						}
 					},
@@ -869,12 +733,12 @@
 								"header": [
 									{
 										"key": "Authorization",
-										"value": "58L9eHzOh7Mi",
+										"value": "5LAbSTYzY5JF",
 										"type": "text"
 									}
 								],
 								"url": {
-									"raw": "http://localhost:3000/api/v1/pharmacy/earliest_expiring_item ",
+									"raw": "http://localhost:3000/api/v1/pharmacy/earliest_expiring_item",
 									"protocol": "http",
 									"host": [
 										"localhost"
@@ -884,7 +748,7 @@
 										"api",
 										"v1",
 										"pharmacy",
-										"earliest_expiring_item "
+										"earliest_expiring_item"
 									]
 								}
 							},
@@ -898,7 +762,7 @@
 								},
 								{
 									"key": "ETag",
-									"value": "W/\"c72960b0169371af80f87b9f7f70972c\""
+									"value": "W/\"3f7637253c7be92ec617f0de78e8b742\""
 								},
 								{
 									"key": "Cache-Control",
@@ -906,11 +770,11 @@
 								},
 								{
 									"key": "X-Request-Id",
-									"value": "8effb353-b0d7-41e1-b4a3-3c76d2c525ce"
+									"value": "f524e96f-1005-4374-a756-edafc76a5d12"
 								},
 								{
 									"key": "X-Runtime",
-									"value": "0.048205"
+									"value": "0.028617"
 								},
 								{
 									"key": "Vary",
@@ -922,7 +786,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n    \"id\": 1,\n    \"pharmacy_batch_id\": 1,\n    \"drug_id\": 901,\n    \"delivered_quantity\": 1000,\n    \"current_quantity\": 0,\n    \"delivery_date\": \"2019-05-09\",\n    \"expiry_date\": null,\n    \"creator\": 1,\n    \"date_created\": \"2019-05-09T15:06:03.000+02:00\",\n    \"date_changed\": \"2019-05-09T15:06:03.000+02:00\",\n    \"voided\": false,\n    \"voided_by\": null,\n    \"void_reason\": null,\n    \"date_voided\": null\n}"
+							"body": "{\n    \"id\": 1,\n    \"pharmacy_batch_id\": 1,\n    \"drug_id\": 901,\n    \"delivered_quantity\": 2000,\n    \"current_quantity\": 1990,\n    \"delivery_date\": \"2019-05-09\",\n    \"expiry_date\": \"2020-12-31\",\n    \"creator\": 1,\n    \"date_created\": \"2021-02-25T11:51:32.000+02:00\",\n    \"date_changed\": \"2021-02-25T11:55:14.000+02:00\",\n    \"voided\": false,\n    \"voided_by\": null,\n    \"void_reason\": null,\n    \"date_voided\": null,\n    \"changed_by\": 1,\n    \"pack_size\": null,\n    \"drug_name\": \"Neostigmine (1ml injection)\"\n}"
 						}
 					]
 				},
@@ -1073,80 +937,6 @@
 							],
 							"cookie": [],
 							"body": "{\n    \"id\": 1,\n    \"reallocation_code\": \"1234567890\",\n    \"batch_item_id\": 5,\n    \"quantity\": 0,\n    \"location_id\": 701,\n    \"created_at\": \"2019-05-16T15:56:16.000+02:00\",\n    \"updated_at\": \"2019-05-16T15:56:16.000+02:00\"\n}"
-						},
-						{
-							"name": "Reallocate batch item to another site",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"name": "Content-Type",
-										"value": "application/json",
-										"type": "text"
-									},
-									{
-										"key": "Authorization",
-										"value": "58L9eHzOh7Mi",
-										"type": "text"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n\t\"reallocation_code\": \"1234567890\",\n\t\"quantity\": 0,\n\t\"location_id\": 701\n}"
-								},
-								"url": {
-									"raw": "http://localhost:3000/api/v1/pharmacy/items/5/reallocate",
-									"protocol": "http",
-									"host": [
-										"localhost"
-									],
-									"port": "3000",
-									"path": [
-										"api",
-										"v1",
-										"pharmacy",
-										"items",
-										"5",
-										"reallocate"
-									]
-								}
-							},
-							"status": "Created",
-							"code": 201,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json; charset=utf-8"
-								},
-								{
-									"key": "ETag",
-									"value": "W/\"5bbbc83f4a4e5bf94f264e571548ab1e\""
-								},
-								{
-									"key": "Cache-Control",
-									"value": "max-age=0, private, must-revalidate"
-								},
-								{
-									"key": "X-Request-Id",
-									"value": "f7441784-ef67-43e4-abad-acb865f3a1c2"
-								},
-								{
-									"key": "X-Runtime",
-									"value": "0.843913"
-								},
-								{
-									"key": "Vary",
-									"value": "Origin"
-								},
-								{
-									"key": "Transfer-Encoding",
-									"value": "chunked"
-								}
-							],
-							"cookie": [],
-							"body": "{\n    \"id\": 1,\n    \"reallocation_code\": \"1234567890\",\n    \"batch_item_id\": 5,\n    \"quantity\": 0,\n    \"location_id\": 701,\n    \"created_at\": \"2019-05-16T15:56:16.000+02:00\",\n    \"updated_at\": \"2019-05-16T15:56:16.000+02:00\"\n}"
 						}
 					]
 				},
@@ -1163,13 +953,13 @@
 							},
 							{
 								"key": "Authorization",
-								"value": "byd1DBnuql7r",
+								"value": "5LAbSTYzY5JF",
 								"type": "text"
 							}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"current_quantity\": 60000,\n    \"delivered_quantity\": 100000,\n    \"delivery_date\": \"2021-02-25\",\n    \"expiry_date\": \"2022-02-01\",\n    \"reason\": \"Ndinayiwala\"\n}"
+							"raw": "{\n\t\"current_quantity\": 60000,\n    \"delivered_quantity\": 100000,\n    \"pack_size\": 60,\n    \"delivery_date\": \"2021-02-25\",\n    \"expiry_date\": \"2022-02-01\",\n    \"reason\": \"Ndinayiwala\"\n}"
 						},
 						"url": {
 							"raw": "http://localhost:3000/api/v1/pharmacy/items/16",
@@ -1202,13 +992,13 @@
 									},
 									{
 										"key": "Authorization",
-										"value": "byd1DBnuql7r",
+										"value": "5LAbSTYzY5JF",
 										"type": "text"
 									}
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n\t\"current_quantity\": 60000,\n    \"delivered_quantity\": 100000,\n    \"delivery_date\": \"2021-02-25\",\n    \"expiry_date\": \"2022-02-01\",\n    \"reason\": \"Ndinayiwala\"\n}"
+									"raw": "{\n\t\"current_quantity\": 60000,\n    \"delivered_quantity\": 100000,\n    \"pack_size\": 60,\n    \"delivery_date\": \"2021-02-25\",\n    \"expiry_date\": \"2022-02-01\",\n    \"reason\": \"Ndinayiwala\"\n}"
 								},
 								"url": {
 									"raw": "http://localhost:3000/api/v1/pharmacy/items/16",
@@ -1236,7 +1026,7 @@
 								},
 								{
 									"key": "ETag",
-									"value": "W/\"bc6fc837ddae47f4fced8ed7ef6d3887\""
+									"value": "W/\"9f41c4a07d87ae7b26e71c390797c5d5\""
 								},
 								{
 									"key": "Cache-Control",
@@ -1244,11 +1034,11 @@
 								},
 								{
 									"key": "X-Request-Id",
-									"value": "e65f6548-8497-4dff-be59-25e7df3bdaaa"
+									"value": "4a931168-e9a0-4053-95c5-ec79a3697dc7"
 								},
 								{
 									"key": "X-Runtime",
-									"value": "24.300103"
+									"value": "0.060487"
 								},
 								{
 									"key": "Vary",
@@ -1260,7 +1050,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n    \"current_quantity\": 60000,\n    \"id\": 16,\n    \"delivered_quantity\": 100000,\n    \"pharmacy_batch_id\": 2,\n    \"drug_id\": 736,\n    \"changed_by\": 1,\n    \"date_changed\": \"2021-03-13T22:00:36.000+02:00\",\n    \"delivery_date\": \"2021-02-25\",\n    \"expiry_date\": \"2022-02-01\",\n    \"creator\": 1,\n    \"date_created\": \"2021-02-25T13:23:31.000+02:00\",\n    \"voided\": false,\n    \"voided_by\": null,\n    \"void_reason\": null,\n    \"date_voided\": null,\n    \"drug_name\": \"AZT/3TC (Zidovudine and Lamivudine 60/30 tablet)\"\n}"
+							"body": "{\n    \"current_quantity\": 60000,\n    \"id\": 16,\n    \"delivered_quantity\": 100000,\n    \"pharmacy_batch_id\": 2,\n    \"drug_id\": 736,\n    \"changed_by\": 1,\n    \"date_changed\": \"2021-03-13T23:13:45.000+02:00\",\n    \"delivery_date\": \"2021-02-25\",\n    \"expiry_date\": \"2022-02-01\",\n    \"creator\": 1,\n    \"date_created\": \"2021-02-25T13:23:31.000+02:00\",\n    \"voided\": false,\n    \"voided_by\": null,\n    \"void_reason\": null,\n    \"date_voided\": null,\n    \"pack_size\": 60,\n    \"drug_name\": \"AZT/3TC (Zidovudine and Lamivudine 60/30 tablet)\"\n}"
 						}
 					]
 				}
