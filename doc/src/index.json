@@ -642,7 +642,7 @@
 							},
 							{
 								"key": "Authorization",
-								"value": "M9mEO1jNftvs",
+								"value": "byd1DBnuql7r",
 								"type": "text"
 							}
 						],
@@ -651,7 +651,7 @@
 							"raw": "{\n\t\"items\": [{\"drug_id\": 901, \"quantity\": 500, \"expiry_date\": \"2020-12-31\", \"delivery_date\": \"2019-05-09\"}]\n}"
 						},
 						"url": {
-							"raw": "http://localhost:3000/api/v1/pharmacy/batches/1234567890",
+							"raw": "http://localhost:3000/api/v1/pharmacy/items/16",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -661,8 +661,8 @@
 								"api",
 								"v1",
 								"pharmacy",
-								"batches",
-								"1234567890"
+								"items",
+								"16"
 							]
 						}
 					},
@@ -1147,6 +1147,120 @@
 							],
 							"cookie": [],
 							"body": "{\n    \"id\": 1,\n    \"reallocation_code\": \"1234567890\",\n    \"batch_item_id\": 5,\n    \"quantity\": 0,\n    \"location_id\": 701,\n    \"created_at\": \"2019-05-16T15:56:16.000+02:00\",\n    \"updated_at\": \"2019-05-16T15:56:16.000+02:00\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Edit/Update batch item",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "byd1DBnuql7r",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"current_quantity\": 60000,\n    \"delivered_quantity\": 100000,\n    \"delivery_date\": \"2021-02-25\",\n    \"expiry_date\": \"2022-02-01\",\n    \"reason\": \"Ndinayiwala\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:3000/api/v1/pharmacy/items/16",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"v1",
+								"pharmacy",
+								"items",
+								"16"
+							]
+						},
+						"description": "Edit a batch item. Can be used for stock verification by editing current_quantity"
+					},
+					"response": [
+						{
+							"name": "Edit/Update batch item",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "byd1DBnuql7r",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"current_quantity\": 60000,\n    \"delivered_quantity\": 100000,\n    \"delivery_date\": \"2021-02-25\",\n    \"expiry_date\": \"2022-02-01\",\n    \"reason\": \"Ndinayiwala\"\n}"
+								},
+								"url": {
+									"raw": "http://localhost:3000/api/v1/pharmacy/items/16",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"api",
+										"v1",
+										"pharmacy",
+										"items",
+										"16"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"bc6fc837ddae47f4fced8ed7ef6d3887\""
+								},
+								{
+									"key": "Cache-Control",
+									"value": "max-age=0, private, must-revalidate"
+								},
+								{
+									"key": "X-Request-Id",
+									"value": "e65f6548-8497-4dff-be59-25e7df3bdaaa"
+								},
+								{
+									"key": "X-Runtime",
+									"value": "24.300103"
+								},
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"current_quantity\": 60000,\n    \"id\": 16,\n    \"delivered_quantity\": 100000,\n    \"pharmacy_batch_id\": 2,\n    \"drug_id\": 736,\n    \"changed_by\": 1,\n    \"date_changed\": \"2021-03-13T22:00:36.000+02:00\",\n    \"delivery_date\": \"2021-02-25\",\n    \"expiry_date\": \"2022-02-01\",\n    \"creator\": 1,\n    \"date_created\": \"2021-02-25T13:23:31.000+02:00\",\n    \"voided\": false,\n    \"voided_by\": null,\n    \"void_reason\": null,\n    \"date_voided\": null,\n    \"drug_name\": \"AZT/3TC (Zidovudine and Lamivudine 60/30 tablet)\"\n}"
 						}
 					]
 				}
