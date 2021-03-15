@@ -11,7 +11,19 @@ class PharmacyBatchItem < VoidableRecord
   end
 
   def as_json(options = {})
-    super(options.merge(methods: %i[drug_name]))
+    super(options.merge(methods: %i[drug_name creator_info]))
+  end
+
+  def creator_info
+    user = User.unscoped.find_by(user_id: creator)
+    person_name = PersonName.where(person_id: creator).first
+
+    {
+      creator_id: creator,
+      username: user&.username,
+      given_name: person_name&.given_name,
+      family_name: person_name&.family_name
+    }
   end
 
   def creator_id
