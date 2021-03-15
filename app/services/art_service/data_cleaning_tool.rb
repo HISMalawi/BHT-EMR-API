@@ -441,11 +441,14 @@ EOF
     def incomplete_visit
       program = Program.find_by_name("HIV PROGRAM")
 
-      patient_visit_dates = Encounter.where("program_id = ? AND encounter_datetime
-        BETWEEN ? AND ?", program.id, @start_date.strftime("%Y-%m-%d 00:00:00"),
-          @end_date.strftime("%Y-%m-%d 23:59:59")).group("encounter.patient_id, DATE(encounter_datetime)").\
-            map{|e| [e.patient_id, e.encounter_datetime.to_date]}
-
+      patient_visit_dates = Encounter.where('program_id = ? AND encounter_datetime BETWEEN ? AND ?',
+                                            program.id,
+                                            @start_date.strftime('%Y-%m-%d 00:00:00'),
+                                            @end_date.strftime('%Y-%m-%d 23:59:59'))
+                                     .where.not(type: EncounterType.where(name: 'EXIT FROM HIV CARE'))
+                                     .group('encounter.patient_id, DATE(encounter_datetime)')
+                                     .select(:patient_id, :encounter_datetime)
+                                     .map { |e| [e.patient_id, e.encounter_datetime.to_date] }
 
       return {} if patient_visit_dates.blank?
       incomplete_visits_comp = {}
