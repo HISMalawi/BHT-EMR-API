@@ -38,6 +38,7 @@ module CXCAService
     CXCA_RECEPTION = 'CXCA RECEPTION'
     CXCA_TEST = 'CXCA TEST'
     CXCA_SCREENING_RESULTS = 'CXCA screening result'
+    CANCER_TREATMENT = 'CxCa treatment'
     APPOINTMENT = 'APPOINTMENT'
     FEEDBACK = 'CxCa REFERRAL FEEDBACK'
 
@@ -47,7 +48,8 @@ module CXCAService
       INITIAL_STATE => CXCA_RECEPTION,
       CXCA_RECEPTION =>  CXCA_TEST,
       CXCA_TEST => CXCA_SCREENING_RESULTS,
-      CXCA_SCREENING_RESULTS => APPOINTMENT,
+      CXCA_SCREENING_RESULTS => CANCER_TREATMENT,
+      CANCER_TREATMENT => APPOINTMENT,
       APPOINTMENT => FEEDBACK,
       FEEDBACK  => END_STATE
     }.freeze
@@ -56,7 +58,9 @@ module CXCAService
       CXCA_RECEPTION => %i[show_reception?],
       CXCA_TEST => %i[show_cxca_test?],
       CXCA_SCREENING_RESULTS => %i[show_cxca_screening_results?],
-      APPOINTMENT => %i[show_appointment?]
+      CANCER_TREATMENT => %i[show_cancer_treatment?],
+      APPOINTMENT => %i[show_appointment?],
+      FEEDBACK => %i[show_feedback?]
     }.freeze
 
     def next_state(current_state)
@@ -116,8 +120,17 @@ module CXCAService
     end
 
     def show_appointment?
-      return true
-      return nil
+      encounter_type = EncounterType.find_by name: APPOINTMENT
+      encounter = Encounter.joins(:type).where(
+        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)
+        AND program_id = ?', @patient.patient_id, encounter_type.encounter_type_id, @date,
+      @program.program_id).order(encounter_datetime: :desc).first
+
+      return true if encounter.blank? && cxca_not_offered? && !waiting_for_lab_results?
+      #return true if cxca_not_offered?
+      #return true if waiting_for_lab_results?
+
+      return false
     end
 
     def show_cxca_screening_results?
@@ -128,11 +141,11 @@ module CXCAService
       ).order(encounter_datetime: :desc).first
 
       unless encounter.blank?
-        cxca_treatment_concept_id = concept('CxCa treatment').concept_id
-        same_day_treatment_concept_id = concept('Same day treatment').concept_id
+        waiting_for_test = concept('Waiting for test results').concept_id
+        no_concept = concept('No').concept_id
 
         return encounter.observations.find_by("concept_id = ? AND value_coded IN(?)",
-          cxca_treatment_concept_id, [same_day_treatment_concept_id]).blank? == false ? true : false
+          waiting_for_test, [no_concept]).blank? == false ? true : false
       end
 
       return false
@@ -159,13 +172,45 @@ module CXCAService
     end
 
     def show_cancer_treatment?
-      encounter_type = EncounterType.find_by name: CANCER_TREATMENT
+      encounter_type = EncounterType.find_by name: CXCA_SCREENING_RESULTS #CANCER_TREATMENT
       encounter = Encounter.joins(:type).where(
         'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
         @patient.patient_id, encounter_type.encounter_type_id, @date
       ).order(encounter_datetime: :desc).first
 
-      encounter.blank?
+      unless encounter.blank?
+=begin
+        positive_concept_ids = [concept('VIA positive').concept_id]
+        positive_concept_ids << concept('PAP Smear abnormal').concept_id
+        positive_concept_ids << concept('HPV positive').concept_id
+        positive_concept_ids << concept('Visible Lesion').concept_id
+
+        screening_result = concept('Screening results').concept_id
+
+        positive_obs = encounter.observations.find_by("concept_id = ?
+          AND value_coded IN(?)", screening_result, positive_concept_ids)
+=end
+        treatment_option_concept_id  = concept('Directly observed treatment option').concept_id
+        same_day_concept_id  = concept('Same day treatment').concept_id
+
+        same_day_treatment = encounter.observations.find_by("concept_id = ?
+          AND value_coded IN(?)", treatment_option_concept_id, [same_day_concept_id])
+
+        if same_day_treatment
+          encounter_type = EncounterType.find_by name: CANCER_TREATMENT
+          cxca_encounter = Encounter.joins(:type).where(
+            'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
+            @patient.patient_id, encounter_type.encounter_type_id, @date
+          ).order(encounter_datetime: :desc).first
+          return true if cxca_encounter.blank?
+        end
+
+
+        return false
+      end
+
+
+
     end
 
     def show_reception?
@@ -175,7 +220,35 @@ module CXCAService
         @patient.patient_id, encounter_type.encounter_type_id, @date
       ).order(encounter_datetime: :desc).first
 
-      encounter.blank?
+      return encounter.blank? ? false : true
+    end
+
+    def show_feedback?
+      encounter_type = EncounterType.find_by name: CXCA_TEST
+      encounter = Encounter.joins(:type).where(
+        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) < DATE(?)',
+        @patient.patient_id, encounter_type.encounter_type_id, @date
+      ).order(encounter_datetime: :desc).first
+
+      unless encounter.blank?
+        waiting_for_test = concept('Waiting for test results').concept_id
+        yes_concept = concept('Yes').concept_id
+
+        waiting_for_test_obs = encounter.observations.find_by("concept_id = ?
+          AND value_coded IN(?)", waiting_for_test, [yes_concept])
+
+
+        encounter_type = EncounterType.find_by name: CXCA_RECEPTION
+        encounter = Encounter.joins(:type).where(
+          'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
+          @patient.patient_id, encounter_type.encounter_type_id, @date
+        ).order(encounter_datetime: :desc).first
+
+        return true if encounter && waiting_for_test_obs
+      end
+
+
+      return false
     end
 
     private
@@ -193,6 +266,40 @@ module CXCAService
 
         return encounter.observations.find_by("concept_id = ? AND value_coded IN(?)",
           via_result_concept_id, [via_positive_result_concept_id]).blank? == true ? false : true
+      end
+
+      return false
+    end
+
+    def waiting_for_lab_results?
+      encounter_type = EncounterType.find_by name: CXCA_TEST
+      encounter = Encounter.joins(:type).where(
+        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) < DATE(?)',
+        @patient.patient_id, encounter_type.encounter_type_id, @date
+      ).order(encounter_datetime: :desc).first
+
+      unless encounter.blank?
+        waiting_for_test = concept('Waiting for test results').concept_id
+        yes_concept = concept('Yes').concept_id
+
+        return encounter.observations.find_by("concept_id = ? AND value_coded IN(?)",
+          waiting_for_test, [yes_concept]).blank? == false ? true : false
+      end
+
+      return false
+    end
+
+    def cxca_not_offered?
+      encounter_type = EncounterType.find_by name: CXCA_TEST
+      encounter = Encounter.joins(:type).where(
+        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) < DATE(?)',
+        @patient.patient_id, encounter_type.encounter_type_id, @date
+      ).order(encounter_datetime: :desc).first
+
+      unless encounter.blank?
+        reason_for_no_cxca = concept('Reason for NOT offering CxCa').concept_id
+        reason_for_no_cxca = encounter.observations.find_by("concept_id = ?",  reason_for_no_cxca)
+        return true if reason_for_no_cxca.blank?
       end
 
       return false

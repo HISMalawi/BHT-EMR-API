@@ -12,15 +12,16 @@ ConceptNames = [
   'Post CxCa assessment','Positive on ART','Positive NOT on ART',
   'Negative tested <1 year', 'VIA','HPV DNA','Speculum Exam',
   'PAP Smear normal','PAP Smear abnormal','HPV negative','HPV positive',
-  'Visble Lesion','No visble Lesion','Same day treatment',
+  'Visible Lesion','No visible Lesion','Same day treatment',
   'Large Lesion (>75%)','Further Investigation & Management',
   'Suspect cancer','Referral feedback','One year subsequent check-up after treatment',
   'Initial Screening','Subsequent screening',
-  'Problem visit after treatment','CxCa screening method','Previous CxCa screening method'
+  'Problem visit after treatment','CxCa screening method','Previous CxCa screening method',
+  'Screening results','VIA negative', 'VIA positive'
 ]
 
 CxCaEncounters = [
-  'CxCa test','CxCa treatment','CxCa treatment','CxCa reception',
+  'CxCa test','CxCa treatment','CxCa reception',
   'CxCa referral feedback', 'CxCa results', 'CxCa screening result'
  ]
 
