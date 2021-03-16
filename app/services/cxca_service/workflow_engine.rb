@@ -302,7 +302,7 @@ module CXCAService
         return true if reason_for_no_cxca.blank?
       end
 
-      return false
+      return true
     end
 
     def concept(name)
