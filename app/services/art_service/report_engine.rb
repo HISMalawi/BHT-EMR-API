@@ -15,6 +15,7 @@ module ARTService
       'COHORT_DISAGGREGATED' => ARTService::Reports::CohortDisaggregated,
       'COHORT_DISAGGREGATED_ADDITIONS' => ARTService::Reports::CohortDisaggregatedAdditions,
       'COHORT_SURVIVAL_ANALYSIS' => ARTService::Reports::CohortSurvivalAnalysis,
+      'DRUG_DISPENSATIONS' => ARTService::Reports::DrugDispensations,
       'IPT' => ARTService::Reports::IPTReport,
       'PATIENTS_WITH_OUTDATED_DEMOGRAPHICS' => ARTService::Reports::PatientsWithOutdatedDemographics,
       'PATIENTS_ON_DTG' => ARTService::Reports::PatientsOnDTG,
