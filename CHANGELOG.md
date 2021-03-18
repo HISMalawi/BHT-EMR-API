@@ -38,6 +38,14 @@ compatibility (examples of this include major architectural changes).
   don't have encounters after death (EGPAF EMR Helpdesk #1977).
 - 422 Error on patient merge (EGPAF Helpdesk #1947)
 
+### Fixed
+
+- ART: Data cleaning tool, encounters after death, pulling patients that aren't dead or
+  don't have encounters after death (EGPAF EMR Helpdesk #1977).
+- 422 Error on patient merge (EGPAF Helpdesk #1947)
+- ART: Data cleaning tool, encounters after death, pulling patients that aren't dead or
+  don't have encounters after death (EGPAF EMR Helpdesk #1977).
+
 ## [4.10.22] - 2021-02-12
 
 ### Fixed
