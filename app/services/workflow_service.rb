@@ -9,7 +9,8 @@ class WorkflowService
     'TB PROGRAM' => TBService::WorkflowEngine,
     'ANC PROGRAM' => ANCService::WorkflowEngine,
     'OPD PROGRAM' => OPDService::WorkflowEngine,
-    'VMMC PROGRAM' => VMMCService::WorkflowEngine
+    'VMMC PROGRAM' => VMMCService::WorkflowEngine,
+    'VIA PROGRAM' => VIAService::WorkflowEngine
   }.freeze
 
   def initialize(program_id:, patient_id:, date: nil)
