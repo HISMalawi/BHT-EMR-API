@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative './cohort/tpt'
+
 module ARTService
   module Reports
     class CohortBuilder
@@ -327,6 +329,10 @@ module ARTService
 
         # Patients whose BP was screened and are above 30 years least once before end of quarter and on ARVs
         cohort_struct.total_patients_with_screened_bp = total_patients_with_screened_bp(cohort_struct.total_alive_and_on_art, start_date, end_date)
+
+        # Patients who started TPT in current reporting period
+        cohort_struct.newly_initiated_on_3hp = Cohort::Tpt.newly_initiated_on_3hp(start_date, end_date)
+        cohort_struct.newly_initiated_on_ipt = Cohort::Tpt.newly_initiated_on_ipt(start_date, end_date)
 
         puts "Started at: #{time_started}. Finished at: #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}"
         cohort_struct
