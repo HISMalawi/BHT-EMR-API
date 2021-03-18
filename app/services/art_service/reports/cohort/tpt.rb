@@ -37,7 +37,7 @@ module ARTService::Reports::Cohort::Tpt
       INNER JOIN orders AS rfp_orders
         ON rfp_orders.patient_id = cohort_patients.patient_id
         AND rfp_orders.order_type_id = (SELECT order_type_id FROM order_type WHERE name = 'Drug order' LIMIT 1)
-        AND rfp_orders.start_date BETWEEN '2021-01-01' AND '2021-03-31'
+        AND rfp_orders.start_date BETWEEN #{start_date} AND #{end_date}
         AND rfp_orders.voided = 0
       INNER JOIN drug_order AS rfp_drug_orders
         ON rfp_drug_orders.order_id = rfp_orders.order_id
@@ -53,7 +53,7 @@ module ARTService::Reports::Cohort::Tpt
         AND inh_drug_orders.drug_inventory_id IN (SELECT DISTINCT drug_id FROM drug INNER JOIN concept_name USING (concept_id) WHERE concept_name.name = 'Isoniazid')
         AND inh_drug_orders.quantity > 0
       INNER JOIN encounter
-        /* Ensure both drugs are under the same dispensation encounter. */
+        /* Ensure both drugs are under the same treatment encounter. */
         ON encounter.encounter_id = rfp_orders.encounter_id
         AND encounter.encounter_id = inh_orders.encounter_id
         AND encounter.program_id = (SELECT program_id FROM program WHERE name = 'HIV Program' LIMIT 1)

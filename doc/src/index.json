@@ -2032,6 +2032,122 @@
 											"body": "[\n    {\n        \"drug_name\": \"TDF/3TC/EFV (300/300/600mg tablet)\",\n        \"pack_size\": 30,\n        \"packs_dispensed\": 11\n    }\n]"
 										}
 									]
+								},
+								{
+									"name": "TPT New initiates disaggregated by age",
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "y466hvLR3dB5",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "http://localhost:3000/api/v1/programs/1/reports/tpt_newly_initiated?start_date=2021-01-01&end_date=2021-03-31",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "3000",
+											"path": [
+												"api",
+												"v1",
+												"programs",
+												"1",
+												"reports",
+												"tpt_newly_initiated"
+											],
+											"query": [
+												{
+													"key": "start_date",
+													"value": "2021-01-01"
+												},
+												{
+													"key": "end_date",
+													"value": "2021-03-31"
+												}
+											]
+										},
+										"description": "Retrieves all ART patients who started TPT (ie 6H and 3HP) within the reporting period."
+									},
+									"response": [
+										{
+											"name": "TPT New initiates disaggregated by age",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Authorization",
+														"value": "y466hvLR3dB5",
+														"type": "text"
+													}
+												],
+												"url": {
+													"raw": "http://localhost:3000/api/v1/programs/1/reports/tpt_newly_initiated?start_date=2021-01-01&end_date=2021-03-31",
+													"protocol": "http",
+													"host": [
+														"localhost"
+													],
+													"port": "3000",
+													"path": [
+														"api",
+														"v1",
+														"programs",
+														"1",
+														"reports",
+														"tpt_newly_initiated"
+													],
+													"query": [
+														{
+															"key": "start_date",
+															"value": "2021-01-01"
+														},
+														{
+															"key": "end_date",
+															"value": "2021-03-31"
+														}
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json; charset=utf-8"
+												},
+												{
+													"key": "ETag",
+													"value": "W/\"302c424b480581e5525a5797eed9686d\""
+												},
+												{
+													"key": "Cache-Control",
+													"value": "max-age=0, private, must-revalidate"
+												},
+												{
+													"key": "X-Request-Id",
+													"value": "af6d8b0c-380a-4fdb-8f81-3e420d904d59"
+												},
+												{
+													"key": "X-Runtime",
+													"value": "0.368284"
+												},
+												{
+													"key": "Vary",
+													"value": "Origin"
+												},
+												{
+													"key": "Transfer-Encoding",
+													"value": "chunked"
+												}
+											],
+											"cookie": [],
+											"body": "{\n    \"Unknown\": {\n        \"3HP\": [],\n        \"6H\": []\n    },\n    \"0-5 months\": {\n        \"3HP\": [],\n        \"6H\": []\n    },\n    \"6-11 months\": {\n        \"3HP\": [],\n        \"6H\": []\n    },\n    \"12-23 months\": {\n        \"3HP\": [],\n        \"6H\": []\n    },\n    \"2-4 years\": {\n        \"3HP\": [],\n        \"6H\": []\n    },\n    \"5-9 years\": {\n        \"3HP\": [],\n        \"6H\": []\n    },\n    \"10-14 years\": {\n        \"3HP\": [],\n        \"6H\": []\n    },\n    \"15-17 years\": {\n        \"3HP\": [],\n        \"6H\": []\n    },\n    \"18-19 years\": {\n        \"3HP\": [\n            {\n                \"patient_id\": 24,\n                \"prescription_date\": \"2021-02-25\",\n                \"given_name\": \"Te\",\n                \"family_name\": \"Pat\",\n                \"birthdate\": \"2001-07-01\",\n                \"gender\": \"F\",\n                \"arv_number\": null\n            },\n            {\n                \"patient_id\": 26,\n                \"prescription_date\": \"2021-03-13\",\n                \"given_name\": \"Test\",\n                \"family_name\": \"Pat\",\n                \"birthdate\": \"2001-07-01\",\n                \"gender\": \"M\",\n                \"arv_number\": null\n            }\n        ],\n        \"6H\": [\n            {\n                \"patient_id\": 27,\n                \"prescription_date\": \"2021-03-13\",\n                \"given_name\": \"Test\",\n                \"family_name\": \"Pat\",\n                \"birthdate\": \"2001-07-01\",\n                \"gender\": \"F\",\n                \"arv_number\": null\n            }\n        ]\n    },\n    \"20-24 years\": {\n        \"3HP\": [],\n        \"6H\": []\n    },\n    \"25-29 years\": {\n        \"3HP\": [],\n        \"6H\": []\n    },\n    \"30-34 years\": {\n        \"3HP\": [],\n        \"6H\": []\n    },\n    \"35-39 years\": {\n        \"3HP\": [\n            {\n                \"patient_id\": 32,\n                \"prescription_date\": \"2021-01-01\",\n                \"given_name\": \"New\",\n                \"family_name\": \"Patient\",\n                \"birthdate\": \"1981-07-01\",\n                \"gender\": \"M\",\n                \"arv_number\": null\n            }\n        ],\n        \"6H\": []\n    },\n    \"40-44 years\": {\n        \"3HP\": [],\n        \"6H\": []\n    },\n    \"45-49 years\": {\n        \"3HP\": [],\n        \"6H\": []\n    },\n    \"50 plus years\": {\n        \"3HP\": [],\n        \"6H\": []\n    }\n}"
+										}
+									]
 								}
 							],
 							"description": "The following section documents ART reports. These reports are primarily found under `programs/1/reports`."

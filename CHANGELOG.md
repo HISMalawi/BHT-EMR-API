@@ -18,6 +18,7 @@ compatibility (examples of this include major architectural changes).
 
 ### Added
 
+- ART: Newly initiated on TB Preventive Therapy age disaggregated report
 - ART: Report on drug dispensations disaggregated by pack_sizes
 - ART Stock: Renamed pharmacy transaction types:
   Tins Removed => Drugs removed, New Deliveries => Drugs Added, Edited Stock => Drugs Edited
