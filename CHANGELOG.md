@@ -18,6 +18,11 @@ compatibility (examples of this include major architectural changes).
 
 ### Added
 
+- ART: Report on drug dispensations disaggregated by pack_sizes
+- ART Stock: Renamed pharmacy transaction types:
+  Tins Removed => Drugs removed, New Deliveries => Drugs Added, Edited Stock => Drugs Edited
+- ART Stock: Endpoint for retrieving an audit trail
+- ART Stock: Separation of stock items by pack size in addition to drug id
 - Global patient voiding (voids all of a patient's records)
 - ART: Indicators for patients newly initiated on TB Preventive Therapy
 
