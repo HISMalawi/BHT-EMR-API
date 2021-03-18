@@ -44,15 +44,19 @@ module ARTService
 
       def init_report
         AGE_GROUPS.each_with_object({}) do |age_group, report|
-          report[age_group] = { '3HP' => [], '6H' => [] }
+          report[age_group] = {
+            '3HP' => { 'M' => [], 'F' => [], 'Unknown' => [] },
+            '6H' => { 'M' => [], 'F' => [], 'Unknown' => [] }
+          }
         end
       end
 
       def load_patients_into_report(report, regimen, patients)
         patients.each do |patient|
-          age_group = patient.delete('age_group')
+          age_group = patient['age_group']
+          gender = patient['gender']&.strip&.first&.upcase || 'Unknown'
 
-          report[age_group][regimen] << patient
+          report[age_group][regimen][gender] << patient
         end
       end
 
