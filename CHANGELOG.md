@@ -32,22 +32,6 @@ compatibility (examples of this include major architectural changes).
 - ART: External consultations appearing on missed appointments report
 - 422 Error on patient merge (EGPAF Helpdesk #1947)
 - Invalid (memoized) current health center value after updating current health center
-- 422 Error on patient merge (EGPAF EMR Helpdesk #1947)
-- ART: External consultations appearing on missed appointments report
-- ART: Data cleaning tool, encounters after death, pulling patients that aren't dead or
-  don't have encounters after death (EGPAF EMR Helpdesk #1977).
-
-### Fixed
-
-- ART: Data cleaning tool, encounters after death, pulling patients that aren't dead or
-  don't have encounters after death (EGPAF EMR Helpdesk #1977).
-- 422 Error on patient merge (EGPAF Helpdesk #1947)
-
-### Fixed
-
-- ART: Data cleaning tool, encounters after death, pulling patients that aren't dead or
-  don't have encounters after death (EGPAF EMR Helpdesk #1977).
-- 422 Error on patient merge (EGPAF Helpdesk #1947)
 - ART: Data cleaning tool, encounters after death, pulling patients that aren't dead or
   don't have encounters after death (EGPAF EMR Helpdesk #1977).
 
