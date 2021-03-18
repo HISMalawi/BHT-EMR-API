@@ -2121,7 +2121,7 @@
 												},
 												{
 													"key": "ETag",
-													"value": "W/\"65666fa792868e152f830e7d55e0bb59\""
+													"value": "W/\"302c424b480581e5525a5797eed9686d\""
 												},
 												{
 													"key": "Cache-Control",
@@ -2129,11 +2129,11 @@
 												},
 												{
 													"key": "X-Request-Id",
-													"value": "6f367400-9efb-4e56-b851-e41b9e6c3e12"
+													"value": "af6d8b0c-380a-4fdb-8f81-3e420d904d59"
 												},
 												{
 													"key": "X-Runtime",
-													"value": "0.112031"
+													"value": "0.368284"
 												},
 												{
 													"key": "Vary",
@@ -2145,7 +2145,7 @@
 												}
 											],
 											"cookie": [],
-											"body": "{\n    \"Unknown\": [],\n    \"0-5 months\": [],\n    \"6-11 months\": [],\n    \"12-23 months\": [],\n    \"2-4 years\": [],\n    \"5-9 years\": [],\n    \"10-14 years\": [],\n    \"15-17 years\": [],\n    \"18-19 years\": [\n        {\n            \"patient_id\": 24,\n            \"prescription_date\": \"2021-02-25\",\n            \"given_name\": \"Te\",\n            \"family_name\": \"Pat\",\n            \"birthdate\": \"2001-07-01\",\n            \"gender\": \"F\",\n            \"arv_number\": null\n        },\n        {\n            \"patient_id\": 26,\n            \"prescription_date\": \"2021-03-13\",\n            \"given_name\": \"Test\",\n            \"family_name\": \"Pat\",\n            \"birthdate\": \"2001-07-01\",\n            \"gender\": \"M\",\n            \"arv_number\": null\n        },\n        {\n            \"patient_id\": 27,\n            \"prescription_date\": \"2021-03-13\",\n            \"given_name\": \"Test\",\n            \"family_name\": \"Pat\",\n            \"birthdate\": \"2001-07-01\",\n            \"gender\": \"F\",\n            \"arv_number\": null\n        }\n    ],\n    \"20-24 years\": [],\n    \"25-29 years\": [],\n    \"30-34 years\": [],\n    \"35-39 years\": [\n        {\n            \"patient_id\": 32,\n            \"prescription_date\": \"2021-01-01\",\n            \"given_name\": \"New\",\n            \"family_name\": \"Patient\",\n            \"birthdate\": \"1981-07-01\",\n            \"gender\": \"M\",\n            \"arv_number\": null\n        }\n    ],\n    \"40-44 years\": [],\n    \"45-49 years\": [],\n    \"50 plus years\": []\n}"
+											"body": "{\n    \"Unknown\": {\n        \"3HP\": [],\n        \"6H\": []\n    },\n    \"0-5 months\": {\n        \"3HP\": [],\n        \"6H\": []\n    },\n    \"6-11 months\": {\n        \"3HP\": [],\n        \"6H\": []\n    },\n    \"12-23 months\": {\n        \"3HP\": [],\n        \"6H\": []\n    },\n    \"2-4 years\": {\n        \"3HP\": [],\n        \"6H\": []\n    },\n    \"5-9 years\": {\n        \"3HP\": [],\n        \"6H\": []\n    },\n    \"10-14 years\": {\n        \"3HP\": [],\n        \"6H\": []\n    },\n    \"15-17 years\": {\n        \"3HP\": [],\n        \"6H\": []\n    },\n    \"18-19 years\": {\n        \"3HP\": [\n            {\n                \"patient_id\": 24,\n                \"prescription_date\": \"2021-02-25\",\n                \"given_name\": \"Te\",\n                \"family_name\": \"Pat\",\n                \"birthdate\": \"2001-07-01\",\n                \"gender\": \"F\",\n                \"arv_number\": null\n            },\n            {\n                \"patient_id\": 26,\n                \"prescription_date\": \"2021-03-13\",\n                \"given_name\": \"Test\",\n                \"family_name\": \"Pat\",\n                \"birthdate\": \"2001-07-01\",\n                \"gender\": \"M\",\n                \"arv_number\": null\n            }\n        ],\n        \"6H\": [\n            {\n                \"patient_id\": 27,\n                \"prescription_date\": \"2021-03-13\",\n                \"given_name\": \"Test\",\n                \"family_name\": \"Pat\",\n                \"birthdate\": \"2001-07-01\",\n                \"gender\": \"F\",\n                \"arv_number\": null\n            }\n        ]\n    },\n    \"20-24 years\": {\n        \"3HP\": [],\n        \"6H\": []\n    },\n    \"25-29 years\": {\n        \"3HP\": [],\n        \"6H\": []\n    },\n    \"30-34 years\": {\n        \"3HP\": [],\n        \"6H\": []\n    },\n    \"35-39 years\": {\n        \"3HP\": [\n            {\n                \"patient_id\": 32,\n                \"prescription_date\": \"2021-01-01\",\n                \"given_name\": \"New\",\n                \"family_name\": \"Patient\",\n                \"birthdate\": \"1981-07-01\",\n                \"gender\": \"M\",\n                \"arv_number\": null\n            }\n        ],\n        \"6H\": []\n    },\n    \"40-44 years\": {\n        \"3HP\": [],\n        \"6H\": []\n    },\n    \"45-49 years\": {\n        \"3HP\": [],\n        \"6H\": []\n    },\n    \"50 plus years\": {\n        \"3HP\": [],\n        \"6H\": []\n    }\n}"
 										}
 									]
 								}

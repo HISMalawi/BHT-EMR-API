@@ -15,8 +15,8 @@ module ARTService
       def find_report
         report = init_report
 
-        load_patients_into_report(report, newly_initiated_on_3hp)
-        load_patients_into_report(report, newly_initiated_on_6h)
+        load_patients_into_report(report, '3HP', newly_initiated_on_3hp)
+        load_patients_into_report(report, '6H', newly_initiated_on_6h)
 
         report
       end
@@ -43,14 +43,16 @@ module ARTService
       ].freeze
 
       def init_report
-        AGE_GROUPS.each_with_object({}) { |age_group, report| report[age_group] = [] }
+        AGE_GROUPS.each_with_object({}) do |age_group, report|
+          report[age_group] = { '3HP' => [], '6H' => [] }
+        end
       end
 
-      def load_patients_into_report(report, patients)
+      def load_patients_into_report(report, regimen, patients)
         patients.each do |patient|
           age_group = patient.delete('age_group')
 
-          report[age_group] << patient
+          report[age_group][regimen] << patient
         end
       end
 
