@@ -34,7 +34,7 @@ gem 'rest-client'
 
 gem 'test-unit'
 
-gem 'lab', git: 'https://github.com/EGPAFMalawiHIS/HIS-EMR-API-Lab.git', branch: 'development'
+gem 'lab', git: 'https://github.com/EGPAFMalawiHIS/HIS-EMR-API-Lab.git', branch: 'feature/lims-sync'
 gem 'rswag-api'
 gem 'rswag-ui'
 
