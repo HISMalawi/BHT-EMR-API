@@ -18,20 +18,21 @@ compatibility (examples of this include major architectural changes).
 
 ### Added
 
+- ART: Newly initiated on TB Preventive Therapy age disaggregated report
+- ART: Report on drug dispensations disaggregated by pack_sizes
+- ART Stock: Renamed pharmacy transaction types:
+  Tins Removed => Drugs removed, New Deliveries => Drugs Added, Edited Stock => Drugs Edited
+- ART Stock: Endpoint for retrieving an audit trail
+- ART Stock: Separation of stock items by pack size in addition to drug id
 - Global patient voiding (voids all of a patient's records)
 - ART: Indicators for patients newly initiated on TB Preventive Therapy
 
 ### Fixed
 
+- ART: Transfer out only visits from incomplete visits report (EGPAF EMR Helpdesk #2355)
 - ART: External consultations appearing on missed appointments report
 - 422 Error on patient merge (EGPAF Helpdesk #1947)
 - Invalid (memoized) current health center value after updating current health center
-
-### Fixed
-
-- ART: Data cleaning tool, encounters after death, pulling patients that aren't dead or
-  don't have encounters after death (EGPAF EMR Helpdesk #1977).
-- 422 Error on patient merge (EGPAF Helpdesk #1947)
 - ART: Data cleaning tool, encounters after death, pulling patients that aren't dead or
   don't have encounters after death (EGPAF EMR Helpdesk #1977).
 

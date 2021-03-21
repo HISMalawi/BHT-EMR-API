@@ -175,6 +175,7 @@ Rails.application.routes.draw do
       end
 
       namespace :pharmacy do
+        resource :audit_trail, only: %i[show]
         resources :batches
         resources :items do
           post '/reallocate', to: 'items#reallocate'
