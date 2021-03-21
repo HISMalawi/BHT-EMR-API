@@ -72,7 +72,7 @@ EOF
                 (new_def == true  ? data[age_group][gender][0] << patient_id : data[age_group][gender][1] << patient_id)
               when 'Patient died'
                 data[age_group][gender][2] << patient_id
-              when 'Stopped'
+              when /Stopped/i
                 data[age_group][gender][3] << patient_id
               when 'Patient transferred out'
                 data[age_group][gender][4] << patient_id
