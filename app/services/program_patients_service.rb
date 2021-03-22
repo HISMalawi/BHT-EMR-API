@@ -5,7 +5,7 @@ class ProgramPatientsService
     'ANC PROGRAM' => ANCService::PatientsEngine,
     'OPD PROGRAM' => OPDService::PatientsEngine,
     'VMMC PROGRAM' => VMMCService::PatientsEngine,
-    'VIA PROGRAM' => VIAService::PatientsEngine
+    'CXCA PROGRAM' => CXCAService::PatientsEngine
   }.freeze
 
   def initialize(program:)
@@ -26,7 +26,7 @@ class ProgramPatientsService
   end
 
   def void_arv_number(arv_number)
-    identifiers = PatientIdentifier.where(identifier: arv_number, 
+    identifiers = PatientIdentifier.where(identifier: arv_number,
       identifier_type: PatientIdentifierType.find_by_name('ARV number').id)
 
     (identifiers || []).each do |identifier|

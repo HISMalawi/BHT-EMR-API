@@ -2,7 +2,7 @@
 
 require 'logger'
 
-module VIAService
+module CXCAService
   class AppointmentEngine
     include ModelUtils
 

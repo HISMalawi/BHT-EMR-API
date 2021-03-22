@@ -20,22 +20,56 @@ module ARTService
       private
 
       def regimen_data
-        return ActiveRecord::Base.connection.select_all <<EOF
-       select
+        encounter_type_id = EncounterType.find_by_name('DISPENSING').id
+        arv_concept_id  = ConceptName.find_by_name('Antiretroviral drugs').concept_id
+
+        drug_ids = Drug.joins('INNER JOIN concept_set s ON s.concept_id = drug.concept_id').\
+          where("s.concept_set = ?", arv_concept_id).map(&:drug_id)
+
+        arv_dispensentions = ActiveRecord::Base.connection.select_all <<~SQL
+            SELECT
+              o.patient_id patient_id, o.start_date,  o.order_id,
+              d.quantity, drug.name
+            FROM orders o
+            INNER JOIN drug_order d ON d.order_id = o.order_id
+            INNER JOIN drug ON drug.drug_id = d.drug_inventory_id
+            WHERE d.drug_inventory_id IN(#{drug_ids.join(',')})
+            AND d.quantity > 0 AND o.voided = 0 AND DATE(o.start_date) = (
+              SELECT DATE(MAX(start_date)) FROM orders
+              INNER JOIN drug_order t USING(order_id)
+              WHERE patient_id = o.patient_id
+              AND (
+                start_date BETWEEN '#{@start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
+                AND '#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+                AND t.drug_inventory_id IN(#{drug_ids.join(',')}) AND quantity > 0
+              )
+            ) AND o.start_date BETWEEN '#{@start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
+            AND '#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}' GROUP BY o.order_id;
+        SQL
+
+        patient_ids = []
+        (arv_dispensentions||[]).each{|data|
+          patient_ids  << data['patient_id'].to_i
+        }
+        return [] if patient_ids.blank?
+
+        return ActiveRecord::Base.connection.select_all <<~SQL
+       SELECT
         `p`.`patient_id` AS `patient_id`
-       from
+       FROM
           ((`patient_program` `p`
-          left join `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
-          left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
-          left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
-       where
+          LEFT JOIN `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
+          LEFT JOIN `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
+          LEFT JOIN `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
+       WHERE
         ((`p`.`voided` = 0)
-        and (`s`.`voided` = 0)
-        and (`p`.`program_id` = 1)
-        and (`s`.`state` = 7))
-        and (`s`.`start_date` <= '#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
-      group by `p`.`patient_id`;
-EOF
+        AND (`s`.`voided` = 0)
+        AND (`p`.`program_id` = 1)
+        AND (`s`.`state` = 7))
+        AND (`s`.`start_date` <= '#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+        AND p.patient_id IN(#{patient_ids.join(',')}))
+      GROUP BY `p`.`patient_id`;
+SQL
 
       end
 
@@ -127,9 +161,10 @@ EOF
             }
           end
 
-         (medications || []).each do |m|
+         (medications || []).each do |med|
             clients[patient_id][:medication] << {
-              medication: m['name'], quantity: m['quantity'],
+              medication: med['name'],
+              quantity: med['quantity'],
               start_date: visit_date
             }
           end

@@ -169,6 +169,12 @@ paths:
         description: Select results falling on a specific date
         schema:
           type: date
+      - name: status
+        in: query
+        required: false
+        description: 'Filter by sample status: ordered, drawn'
+        schema:
+          type: string
       responses:
         '200':
           description: Success
@@ -390,7 +396,6 @@ paths:
       responses:
         '204':
           description: No Content
-          content: {}
   "/api/v1/lab/tests/{test_id}/results":
     post:
       summary: Add results to order
@@ -408,7 +413,6 @@ paths:
       responses:
         '201':
           description: Created
-          content: {}
       requestBody:
         content:
           application/json:
@@ -419,14 +423,43 @@ paths:
                   type: integer
                 provider_id:
                   type: integer
-                modifier:
-                  type: string
-                value:
-                  type: string
                 date:
                   type: string
+                measures:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      indicator:
+                        type: object
+                        properties:
+                          concept_id:
+                            type: integer
+                            description: Concept ID of a test result indicator for
+                              this test (see GET /test_result_indicators)
+                          required:
+                          - concept_id
+                      value:
+                        type: string
+                        example: LDL
+                      value_modifier:
+                        type: string
+                        example: "="
+                      value_type:
+                        type: string
+                        enum:
+                        - text
+                        - boolean
+                        - numeric
+                        - coded
+                        description: Determines under what column the value is to
+                          be saved under in the obs table (defaults to text)
+                        example: text
+                    required:
+                    - indicator
+                    - value
               required:
-              - value
+              - measures
   "/api/v1/lab/specimen_types":
     get:
       summary: Specimen types
@@ -459,6 +492,38 @@ paths:
                 required:
                 - concept_id
                 - name
+  "/api/v1/lab/test_result_indicators":
+    get:
+      summary: Test Result Indicators
+      tags:
+      - Concepts
+      description: Retrieve all result indicators for a given test
+      security:
+      - api_key: []
+      parameters:
+      - name: test_type_id
+        in: query
+        required: true
+        description: Concept ID for the desired test
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    concept_id:
+                      type: integer
+                    name:
+                      type: string
+                  required:
+                  - concept_id
+                  - name
   "/api/v1/lab/test_types":
     get:
       summary: Test types
