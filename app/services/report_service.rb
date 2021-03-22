@@ -173,6 +173,10 @@ class ReportService
     engine(@program).patient_outcome_list(start_date, end_date, outcome)
   end
 
+  def clients_due_vl(start_date, end_date)
+    engine(@program).clients_due_vl(start_date, end_date)
+  end
+
   private
 
   def engine(program)
