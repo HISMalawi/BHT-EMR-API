@@ -49,14 +49,13 @@ module ARTService
       where
         ((`p`.`voided` = 0)
             and (`s`.`voided` = 0)
-            and (`p`.`program_id` = 1)
-            and (`s`.`state` = 7))
+            and (`p`.`program_id` = 1))
             and (`s`.`start_date`
             between '#{@start_date.strftime('%Y-%m-%d 00:00:00')}'
             and '#{@end_date.strftime('%Y-%m-%d 23:59:59')}')
       group by `p`.`patient_id`
-      HAVING (birthdate IS NULL) OR (gender IS NULL)
-      OR (given_name IS NULL) OR (family_name IS NULL)
+      HAVING NULLIF(birthdate, '') = NULL OR NULLIF(gender,'') = NULL
+      OR NULLIF(given_name,'') = NULL OR NULLIF(family_name,'') = NULL
       ORDER BY n.date_created DESC;
 EOF
 

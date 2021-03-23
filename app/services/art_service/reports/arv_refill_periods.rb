@@ -231,7 +231,8 @@ module ARTService
           INNER JOIN person p ON p.person_id = o.patient_id
           INNER JOIN encounter e ON e.patient_id = p.person_id
           LEFT JOIN patient_identifier i ON  i.patient_id = o.patient_id
-          AND i.identifier_type = #{identifier_type} AND LENGTH(identifier) > 0
+          AND i.identifier_type = #{identifier_type}
+          AND LENGTH(identifier) > 0 AND i.voided = 0
           WHERE s.concept_set = #{arv_concept_set} AND o.voided = 0
           AND DATE(o.start_date) = (
             SELECT DATE(MAX(t.start_date)) FROM orders t
@@ -243,7 +244,6 @@ module ARTService
             AND t4.concept_set = #{arv_concept_set} AND t2.quantity > 0
           )AND e.program_id = #{program_id} AND o.patient_id = #{patient_id}
           AND od.quantity > 0 AND e.encounter_type = #{encounter_type}
-          AND i.voided  = 0
           GROUP BY o.order_id;
         SQL
 
