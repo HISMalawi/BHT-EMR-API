@@ -3,7 +3,12 @@
 module ARTService
   module Reports
     ##
-    # Patients newly initiated on TPT disaggregated by regimen type and age group
+    # Patients newly initiated on TPT disaggregated by regimen type and age group.
+    #
+    # Newly initiated is defined as patients who have received TPT for the first
+    # time in the reporting period or patients who have gone on a TPT course
+    # break for a period that is at least 9 months long before restarting TPT
+    # in the current reporting period.
     class TptNewlyInitiated
       attr_reader :start_date, :end_date
 
@@ -85,7 +90,7 @@ module ARTService
       def newly_initiated_on_tpt(primary_drug_query)
         ActiveRecord::Base.connection.select_all <<~SQL
           SELECT patient_program.patient_id,
-                 cohort_disaggregated_age_group(person.birthdate, CURRENT_DATE()) AS age_group,
+                 cohort_disaggregated_age_group(person.birthdate, DATE(#{end_date})) AS age_group,
                  DATE(prescription_encounter.encounter_datetime) AS prescription_date,
                  person_name.given_name,
                  person_name.family_name,
@@ -110,27 +115,16 @@ module ARTService
             AND prescription_encounter.encounter_datetime >= #{start_date}
             AND prescription_encounter.encounter_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
             AND prescription_encounter.voided = 0
-          INNER JOIN orders AS primary_drug_order
-            ON primary_drug_order.encounter_id = prescription_encounter.encounter_id
-            AND primary_drug_order.order_type_id = (SELECT order_type_id FROM order_type WHERE name = 'Drug order' LIMIT 1)
-            AND primary_drug_order.start_date >= #{start_date}
-            AND primary_drug_order.start_date < DATE(#{end_date}) + INTERVAL 1 DAY
-            AND primary_drug_order.voided = 0
-          INNER JOIN drug_order AS primary_drug_order_drug
-            ON primary_drug_order_drug.order_id = primary_drug_order.order_id
-            AND primary_drug_order_drug.drug_inventory_id IN (#{primary_drug_query})
-            AND primary_drug_order_drug.quantity > 0  /* This implies that a dispensation was made */
-          /* Ensure that the primary drug dispensed above was prescribed together with Isoniazid (INH) */
-          INNER JOIN orders AS inh_order
-            ON inh_order.encounter_id = prescription_encounter.encounter_id
-            AND inh_order.order_type_id = (SELECT order_type_id FROM order_type WHERE name = 'Drug order' LIMIT 1)
-            AND inh_order.start_date >= #{start_date}
-            AND inh_order.start_date < DATE(#{end_date}) + INTERVAL 1 DAY
-            AND inh_order.voided = 0
-          INNER JOIN drug_order AS inh_drug_order
-            ON inh_drug_order.order_id = inh_order.order_id
-            AND inh_drug_order.drug_inventory_id IN (SELECT DISTINCT drug_id FROM drug INNER JOIN concept_name USING (concept_id) WHERE concept_name.name = 'Isoniazid')
-            AND inh_drug_order.quantity > 0 /* A dispensation was made */
+          INNER JOIN orders AS orders
+            ON orders.encounter_id = prescription_encounter.encounter_id
+            AND orders.order_type_id = (SELECT order_type_id FROM order_type WHERE name = 'Drug order' LIMIT 1)
+            AND orders.start_date >= #{start_date}
+            AND orders.start_date < DATE(#{end_date}) + INTERVAL 1 DAY
+            AND orders.voided = 0
+          INNER JOIN drug_order
+            ON drug_order.order_id = orders.order_id
+            AND drug_order.drug_inventory_id IN (#{primary_drug_query})
+            AND drug_order.quantity > 0  /* This implies that a dispensation was made */
           WHERE patient_program.patient_id NOT IN (
             /* Filter out patients who received TPT before current reporting period */
             SELECT DISTINCT patient_program.patient_id
@@ -140,24 +134,18 @@ module ARTService
               AND prescription_encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'Treatment')
               AND prescription_encounter.program_id = (SELECT program_id FROM program WHERE name = 'HIV Program' LIMIT 1)
               AND prescription_encounter.voided = 0
-            INNER JOIN orders AS primary_drug_order
-              ON primary_drug_order.encounter_id = prescription_encounter.encounter_id
-              AND primary_drug_order.order_type_id = (SELECT order_type_id FROM order_type WHERE name = 'Drug order' LIMIT 1)
-              AND primary_drug_order.start_date < #{start_date}
-              AND primary_drug_order.voided = 0
-            INNER JOIN drug_order AS rfp_drug_order
-              ON rfp_drug_order.order_id = primary_drug_order.order_id
-              AND rfp_drug_order.drug_inventory_id IN (#{primary_drug_query})
-              AND rfp_drug_order.quantity > 0
-            INNER JOIN orders AS inh_order
-              ON inh_order.encounter_id = prescription_encounter.encounter_id
-              AND inh_order.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
-              AND inh_order.start_date < #{start_date}
-              AND inh_order.voided = 0
-            INNER JOIN drug_order AS inh_drug_order
-              ON inh_drug_order.order_id = inh_order.order_id
-              AND inh_drug_order.drug_inventory_id IN (SELECT DISTINCT drug_id FROM drug INNER JOIN concept_name USING (concept_id) WHERE concept_name.name = 'Isoniazid')
-              AND inh_drug_order.quantity > 0
+            INNER JOIN orders
+              ON orders.encounter_id = prescription_encounter.encounter_id
+              AND orders.order_type_id = (SELECT order_type_id FROM order_type WHERE name = 'Drug order' LIMIT 1)
+              AND orders.start_date < #{start_date}
+              /* Re-initiates defined as those who stopped TPT for a period of at least 9 months
+                 and have restarted TPT are also included in the report */
+              AND orders.auto_expire_date >= DATE(#{start_date}) - INTERVAL 9 MONTH
+              AND orders.voided = 0
+            INNER JOIN drug_order AS drug_order
+              ON drug_order.order_id = orders.order_id
+              AND drug_order.drug_inventory_id IN (#{primary_drug_query})
+              AND drug_order.quantity > 0
             WHERE patient_program.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
           )
           GROUP BY patient_program.patient_id

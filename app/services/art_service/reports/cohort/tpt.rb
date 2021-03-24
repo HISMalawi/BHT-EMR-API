@@ -46,7 +46,8 @@ module ARTService::Reports::Cohort::Tpt
       INNER JOIN orders AS orders
         ON orders.patient_id = cohort_patients.patient_id
         AND orders.order_type_id = (SELECT order_type_id FROM order_type WHERE name = 'Drug order' LIMIT 1)
-        AND orders.start_date BETWEEN #{start_date} AND #{end_date}
+        AND orders.start_date >= #{start_date}
+        AND orders.start_date < DATE(#{end_date}) + INTERVAL 1 DAY
         AND orders.voided = 0
       INNER JOIN drug_order AS drug_orders
         ON drug_orders.order_id = orders.order_id
