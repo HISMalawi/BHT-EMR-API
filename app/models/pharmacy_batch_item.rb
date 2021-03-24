@@ -11,7 +11,7 @@ class PharmacyBatchItem < VoidableRecord
   end
 
   def as_json(options = {})
-    super(options.merge(methods: %i[drug_name drug_moh_name creator_info]))
+    super(options.merge(methods: %i[drug_name drug_legacy_name creator_info]))
   end
 
   def creator_info
@@ -27,10 +27,10 @@ class PharmacyBatchItem < VoidableRecord
   end
 
   def drug_name
-    drug.name
+    AlternativeDrugName.find_by(drug_inventory_id: drug_id)&.name
   end
 
-  def drug_moh_name
-    AlternativeDrugName.find_by(drug_inventory_id: drug_id)&.name
+  def drug_legacy_name
+    drug.name
   end
 end
