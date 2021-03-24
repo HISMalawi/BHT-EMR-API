@@ -18,6 +18,8 @@ compatibility (examples of this include major architectural changes).
 
 ### Added
 
+- ART: Revised TB Prev report
+- ART Stock: Updated names of drugs to use MoH short form naming convention
 - ART: Newly initiated on TB Preventive Therapy age disaggregated report
 - ART: Report on drug dispensations disaggregated by pack_sizes
 - ART Stock: Renamed pharmacy transaction types:
