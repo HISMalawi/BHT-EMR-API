@@ -7,9 +7,9 @@ class StockManagementService
   include ParameterUtils
 
   # Pharmacy activities (these map to pharmacy_encounter_type.name in the db)
-  STOCK_ADD = 'Drugs added'
-  STOCK_EDIT = 'Drugs edited'
-  STOCK_DEBIT = 'Drugs removed'
+  STOCK_ADD = 'Added'
+  STOCK_EDIT = 'Edited'
+  STOCK_DEBIT = 'Removed'
 
   # Pharmacy reallocation types
   STOCK_ITEM_DISPOSAL = 'Disposal'
