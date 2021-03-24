@@ -40,6 +40,7 @@ module ARTService
           transactions(from&.to_date, to&.to_date)
             .joins(:type, :item, :user)
             .left_joins(:dispensation)
+            .joins('LEFT JOIN alternative_drug_names ON alternative_drug_names.drug_inventory_id = pharmacy_batch_items.drug_id')
             .merge(batch_items(drug_id: drug_id, batch_number: batch_number))
             .merge(transaction_types)
             .select <<~SQL
@@ -47,7 +48,7 @@ module ARTService
               pharmacy_obs.transaction_date AS transaction_date,
               pharmacy_encounter_type.name AS transaction_type,
               pharmacy_batches.batch_number AS batch_number,
-              drug.name AS drug_name,
+              COALESCE(alternative_drug_names.name, drug.name) AS drug_name,
               pharmacy_obs.quantity AS amount_committed_to_stock,
               obs.value_numeric AS amount_dispensed_from_art,
               users.username,
