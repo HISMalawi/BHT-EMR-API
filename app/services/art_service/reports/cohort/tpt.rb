@@ -4,7 +4,13 @@
 # TB Preventive Therapy indicators for ART cohort
 module ARTService::Reports::Cohort::Tpt
   ##
-  # Patients initiated on 3HP in current reporting period.
+  # Patients (re-)initiated on 3HP in current reporting period.
+  #
+  # Candidates for this indicator are patients who either have
+  # had their first dispensation in the current reporting period
+  # or patients who have restarted 3HP in the current reporting
+  # period after breaking from the course for a period of at least
+  # 9 months (3 quarters).
   def self.newly_initiated_on_3hp(start_date, end_date)
     newly_initiated_on_tpt start_date, end_date, <<~SQL
       SELECT DISTINCT drug_id
@@ -16,7 +22,10 @@ module ARTService::Reports::Cohort::Tpt
   end
 
   ##
-  # Patients initiated on IPT in current reporting period
+  # Patients (re-)initiated on IPT in current reporting period
+  #
+  # Has a similar definition to 3HP, please refer to 3HP docs
+  # above.
   def self.newly_initiated_on_ipt(start_date, end_date)
     newly_initiated_on_tpt start_date, end_date, <<~SQL
       SELECT DISTINCT drug_id
@@ -34,56 +43,40 @@ module ARTService::Reports::Cohort::Tpt
     ActiveRecord::Base.connection.select_all <<~SQL
       SELECT DISTINCT cohort_patients.patient_id
       FROM temp_earliest_start_date AS cohort_patients
-      INNER JOIN orders AS rfp_orders
-        ON rfp_orders.patient_id = cohort_patients.patient_id
-        AND rfp_orders.order_type_id = (SELECT order_type_id FROM order_type WHERE name = 'Drug order' LIMIT 1)
-        AND rfp_orders.start_date BETWEEN #{start_date} AND #{end_date}
-        AND rfp_orders.voided = 0
-      INNER JOIN drug_order AS rfp_drug_orders
-        ON rfp_drug_orders.order_id = rfp_orders.order_id
-        AND rfp_drug_orders.drug_inventory_id IN (#{primary_drug_query})
-        AND rfp_drug_orders.quantity > 0
-      INNER JOIN orders AS inh_orders
-        ON inh_orders.patient_id = cohort_patients.patient_id
-        AND inh_orders.order_type_id = (SELECT order_type_id FROM order_type WHERE name = 'Drug order' LIMIT 1)
-        AND inh_orders.start_date BETWEEN #{start_date} AND #{end_date}
-        AND inh_orders.voided = 0
-      INNER JOIN drug_order AS inh_drug_orders
-        ON inh_drug_orders.order_id = inh_orders.order_id
-        AND inh_drug_orders.drug_inventory_id IN (SELECT DISTINCT drug_id FROM drug INNER JOIN concept_name USING (concept_id) WHERE concept_name.name = 'Isoniazid')
-        AND inh_drug_orders.quantity > 0
+      INNER JOIN orders AS orders
+        ON orders.patient_id = cohort_patients.patient_id
+        AND orders.order_type_id = (SELECT order_type_id FROM order_type WHERE name = 'Drug order' LIMIT 1)
+        AND orders.start_date BETWEEN #{start_date} AND #{end_date}
+        AND orders.voided = 0
+      INNER JOIN drug_order AS drug_orders
+        ON drug_orders.order_id = orders.order_id
+        AND drug_orders.drug_inventory_id IN (#{primary_drug_query})
+        AND drug_orders.quantity > 0
       INNER JOIN encounter
-        /* Ensure both drugs are under the same treatment encounter. */
-        ON encounter.encounter_id = rfp_orders.encounter_id
-        AND encounter.encounter_id = inh_orders.encounter_id
+        /* Ensure we are dealing with ART prescriptions (Treatment encounter) */
+        ON encounter.encounter_id = orders.encounter_id
+        AND encounter.encounter_type = (SELECT encounter_type_id FROM encounter_type WHERE name = 'Treatment' LIMIT 1)
         AND encounter.program_id = (SELECT program_id FROM program WHERE name = 'HIV Program' LIMIT 1)
         AND encounter.voided = 0
       WHERE cohort_patients.patient_id NOT IN (
-        /* Filter out patients who received Rifapentine before current reporting period */
+        /* Filter out patients who received TPT before current reporting period */
         SELECT DISTINCT cohort_patients.patient_id
         FROM temp_earliest_start_date AS cohort_patients
-        INNER JOIN orders AS rfp_orders
-          ON rfp_orders.patient_id = cohort_patients.patient_id
-          AND rfp_orders.order_type_id = (SELECT order_type_id FROM order_type WHERE name = 'Drug order' LIMIT 1)
-          AND rfp_orders.start_date < #{start_date}
-          AND rfp_orders.voided = 0
-        INNER JOIN drug_order AS rfp_drug_orders
-          ON rfp_drug_orders.order_id = rfp_orders.order_id
-          AND rfp_drug_orders.drug_inventory_id IN (#{primary_drug_query})
-          AND rfp_drug_orders.quantity > 0
-        INNER JOIN orders AS inh_orders
-          ON inh_orders.patient_id = cohort_patients.patient_id
-          AND inh_orders.order_type_id = (SELECT order_type_id FROM order_type WHERE name = 'Drug order' LIMIT 1)
-          AND inh_orders.start_date < #{start_date}
-          AND inh_orders.voided = 0
-        INNER JOIN drug_order AS inh_drug_orders
-          ON inh_drug_orders.order_id = inh_orders.order_id
-          AND inh_drug_orders.drug_inventory_id IN (SELECT DISTINCT drug_id FROM drug INNER JOIN concept_name USING (concept_id) WHERE concept_name.name = 'Isoniazid')
-          AND inh_drug_orders.quantity > 0
+        INNER JOIN orders
+          ON orders.patient_id = cohort_patients.patient_id
+          AND orders.order_type_id = (SELECT order_type_id FROM order_type WHERE name = 'Drug order' LIMIT 1)
+          AND orders.start_date < #{start_date}
+          /* DHA Recommendation: A break of 3 quarters is considered a re-initiation. */
+          AND orders.auto_expire_date >= (DATE(#{start_date}) - INTERVAL 9 MONTH)
+          AND orders.voided = 0
+        INNER JOIN drug_order AS drug_orders
+          ON drug_orders.order_id = orders.order_id
+          AND drug_orders.drug_inventory_id IN (#{primary_drug_query})
+          AND drug_orders.quantity > 0
         INNER JOIN encounter
-          /* Ensure both drugs are under the same dispensation encounter. */
-          ON encounter.encounter_id = rfp_orders.encounter_id
-          AND encounter.encounter_id = inh_orders.encounter_id
+          /* Ensure we are dealing with ART Prescriptions (Treatment encounter) */
+          ON encounter.encounter_id = orders.encounter_id
+          AND encounter.encounter_type = (SELECT encounter_type_id FROM encounter_type WHERE name = 'Treatment' LIMIT 1)
           AND encounter.program_id = (SELECT program_id FROM program WHERE name = 'HIV Program' LIMIT 1)
           AND encounter.voided = 0
       )
