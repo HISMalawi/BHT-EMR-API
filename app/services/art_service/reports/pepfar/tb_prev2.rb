@@ -145,7 +145,7 @@ module ARTService
               AND drug_order.quantity > 0
             WHERE person.voided = 0
               AND person.person_id IN (
-                /* People who have a dispensation in the current reporting period */
+                /* People who have a dispensation in the 6 months prior to the current reporting period */
                 SELECT DISTINCT patient_program.patient_id
                 FROM patient_program
                 INNER JOIN encounter AS prescription_encounter
@@ -158,8 +158,36 @@ module ARTService
                 INNER JOIN orders
                   ON orders.encounter_id = prescription_encounter.encounter_id
                   AND orders.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
-                  AND orders.auto_expire_date >= DATE(#{start_date})
-                  AND orders.auto_expire_date < DATE(#{end_date}) + INTERVAL 1 DAY
+                  AND orders.start_date >= DATE(#{start_date}) - INTERVAL 6 MONTH
+                  AND orders.start_date < DATE(#{start_date})
+                  AND orders.voided = 0
+                INNER JOIN drug_order
+                  ON drug_order.order_id = orders.order_id
+                  AND drug_order.quantity > 0
+                  AND drug_order.drug_inventory_id IN (
+                    SELECT DISTINCT drug_id
+                    FROM drug
+                    INNER JOIN concept_name
+                      ON concept_name.concept_id = drug.concept_id
+                      AND concept_name.name = 'Pyridoxine'
+                  )
+                WHERE patient_program.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
+                  AND patient_program.voided = 0
+              )
+              AND person.person_id NOT IN (
+                /* People who had a dispensation prior to the 6 months before start of the current reporting period */
+                SELECT DISTINCT patient_program.patient_id
+                FROM patient_program
+                INNER JOIN encounter AS prescription_encounter
+                  ON prescription_encounter.patient_id = patient_program.patient_id
+                  AND prescription_encounter.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
+                  AND prescription_encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'Treatment')
+                  AND prescription_encounter.encounter_datetime < DATE(#{start_date}) - INTERVAL 6 MONTH
+                  AND prescription_encounter.voided = 0
+                INNER JOIN orders
+                  ON orders.encounter_id = prescription_encounter.encounter_id
+                  AND orders.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
+                  AND orders.start_date < DATE(#{start_date}) - INTERVAL 6 MONTH
                   AND orders.voided = 0
                 INNER JOIN drug_order
                   ON drug_order.order_id = orders.order_id
@@ -224,7 +252,7 @@ module ARTService
               AND drug_order.quantity > 0
             WHERE person.voided = 0
               AND person.person_id IN (
-                /* People who have a dispensation in the current reporting period */
+                /* People who had a dispensation in the 3 months prior to start of reporting period */
                 SELECT DISTINCT patient_program.patient_id
                 FROM patient_program
                 INNER JOIN encounter AS prescription_encounter
@@ -232,13 +260,40 @@ module ARTService
                   AND prescription_encounter.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
                   AND prescription_encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'Treatment')
                   AND prescription_encounter.encounter_datetime >= DATE(#{start_date}) - INTERVAL 3 MONTH
-                  AND prescription_encounter.encounter_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
+                  AND prescription_encounter.encounter_datetime < DATE(#{start_date})
                   AND prescription_encounter.voided = 0
                 INNER JOIN orders
                   ON orders.encounter_id = prescription_encounter.encounter_id
                   AND orders.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
-                  AND orders.auto_expire_date >= DATE(#{start_date})
-                  AND orders.auto_expire_date < DATE(#{end_date}) + INTERVAL 1 DAY
+                  AND orders.start_date >= DATE(#{start_date}) - INTERVAL 3 MONTH
+                  AND orders.start_date < DATE(#{end_date})
+                  AND orders.voided = 0
+                INNER JOIN drug_order
+                  ON drug_order.order_id = orders.order_id
+                  AND drug_order.quantity > 0
+                  AND drug_order.drug_inventory_id IN (
+                    SELECT DISTINCT drug_id
+                    FROM drug
+                    INNER JOIN concept_name
+                      ON concept_name.concept_id = drug.concept_id
+                      AND concept_name.name = 'Rifapentine'
+                  )
+                WHERE patient_program.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
+                  AND patient_program.voided = 0
+              ) AND person.person_id NOT IN (
+                /* People who had a dispensation prior to the 3 months before start of reporting period */
+                SELECT DISTINCT patient_program.patient_id
+                FROM patient_program
+                INNER JOIN encounter AS prescription_encounter
+                  ON prescription_encounter.patient_id = patient_program.patient_id
+                  AND prescription_encounter.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
+                  AND prescription_encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'Treatment')
+                  AND prescription_encounter.encounter_datetime < DATE(#{start_date}) - INTERVAL 3 MONTH
+                  AND prescription_encounter.voided = 0
+                INNER JOIN orders
+                  ON orders.encounter_id = prescription_encounter.encounter_id
+                  AND orders.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
+                  AND orders.start_date < DATE(#{start_date}) - INTERVAL 3 MONTH
                   AND orders.voided = 0
                 INNER JOIN drug_order
                   ON drug_order.order_id = orders.order_id
