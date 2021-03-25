@@ -103,7 +103,7 @@ module ARTService
           ActiveRecord::Base.connection.select_all <<~SQL
             SELECT person.person_id AS patient_id,
                    patient_identifier.identifier AS arv_number,
-                   MIN(orders.start_date) AS tpt_initiation_date,
+                   DATE(MIN(orders.start_date)) AS tpt_initiation_date,
                    date_antiretrovirals_started(person.person_id, MIN(patient_state.start_date)) AS art_start_date,
                    SUM(drug_order.quantity) AS total_pills_taken,
                    SUM(DATEDIFF(orders.auto_expire_date, orders.start_date)) AS total_days_on_medication,
@@ -210,7 +210,7 @@ module ARTService
           ActiveRecord::Base.connection.select_all <<~SQL
             SELECT person.person_id AS patient_id,
                    patient_identifier.identifier AS arv_number,
-                   MIN(orders.start_date) AS tpt_initiation_date,
+                   DATE(MIN(orders.start_date)) AS tpt_initiation_date,
                    date_antiretrovirals_started(person.person_id, MIN(patient_state.start_date)) AS art_start_date,
                    SUM(drug_order.quantity) AS total_pills_taken,
                    SUM(DATEDIFF(orders.auto_expire_date, orders.start_date)) AS total_days_on_medication,
