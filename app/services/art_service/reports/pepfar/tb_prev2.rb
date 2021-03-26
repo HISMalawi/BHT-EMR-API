@@ -175,7 +175,9 @@ module ARTService
                   AND patient_program.voided = 0
               )
               AND person.person_id NOT IN (
-                /* People who had a dispensation prior to the 6 months before start of the current reporting period */
+                /* People who had a dispensation within a period of 9 months prior to the 6 months
+                   before start of the current reporting period. Patients who break medication
+                   for 9 months then restart are considered new on TPT (ie re-initiates). */
                 SELECT DISTINCT patient_program.patient_id
                 FROM patient_program
                 INNER JOIN encounter AS prescription_encounter
@@ -188,6 +190,7 @@ module ARTService
                   ON orders.encounter_id = prescription_encounter.encounter_id
                   AND orders.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
                   AND orders.start_date < DATE(#{start_date}) - INTERVAL 6 MONTH
+                  AND orders.start_date >= DATE(#{start_date}) - INTERVAL 15 MONTH  /* 6 + 9 Months */
                   AND orders.voided = 0
                 INNER JOIN drug_order
                   ON drug_order.order_id = orders.order_id
@@ -281,7 +284,10 @@ module ARTService
                 WHERE patient_program.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
                   AND patient_program.voided = 0
               ) AND person.person_id NOT IN (
-                /* People who had a dispensation prior to the 3 months before start of reporting period */
+                /* People who had a dispensation prior to the 3 to 9 months before start of reporting period.
+                   Continuing medication after a 9 months break is considered a restart hence such patients
+                   are classified as new on TPT.
+                 */
                 SELECT DISTINCT patient_program.patient_id
                 FROM patient_program
                 INNER JOIN encounter AS prescription_encounter
@@ -294,6 +300,7 @@ module ARTService
                   ON orders.encounter_id = prescription_encounter.encounter_id
                   AND orders.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
                   AND orders.start_date < DATE(#{start_date}) - INTERVAL 3 MONTH
+                  AND orders.start_date >= DATE(#{start_date}) - INTERVAL 12 MONTH
                   AND orders.voided = 0
                 INNER JOIN drug_order
                   ON drug_order.order_id = orders.order_id
