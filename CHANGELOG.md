@@ -18,6 +18,7 @@ compatibility (examples of this include major architectural changes).
 
 ### Added
 
+- Added health centre: Kaongizi Health Centre - Nkhotakota
 - ART: Revised TB Prev report
 - ART Stock: Updated names of drugs to use MoH short form naming convention
 - ART: Newly initiated on TB Preventive Therapy age disaggregated report
