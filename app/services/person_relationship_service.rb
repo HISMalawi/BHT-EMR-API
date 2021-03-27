@@ -15,8 +15,7 @@ class PersonRelationshipService
   end
 
   def find_relationships(filters)
-    relationships = Relationship.where 'person_a = :person or person_b = :person',
-                                       person: @person.person_id
+    relationships = Relationship.where 'person_a = :person', person: @person.person_id
     relationships = relationships.where filters unless filters.empty?
     relationships
   end

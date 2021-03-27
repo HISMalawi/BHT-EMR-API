@@ -439,19 +439,22 @@ EOF
 
         results = ActiveRecord::Base.connection.select_all(
           "SELECT person_id FROM obs obs
-            INNER JOIN encounter enc ON enc.encounter_id = obs.encounter_id AND enc.voided = 0
+            INNER JOIN encounter enc ON enc.encounter_id = obs.encounter_id
+            AND enc.voided = 0 AND enc.program_id = 1
           WHERE obs.person_id = #{patient_id}
           AND obs.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-          AND obs.concept_id IN(#{pregnant_concepts.join(',')}) AND obs.value_coded = '1065'
+          AND obs.concept_id IN(#{pregnant_concepts.join(',')}) AND obs.value_coded = 1065
           AND obs.voided = 0 AND enc.encounter_type IN(#{encounter_types.join(',')})
           AND DATE(obs.obs_datetime) = (SELECT MAX(DATE(o.obs_datetime)) FROM obs o
-                        WHERE o.concept_id IN(#{pregnant_concepts.join(',')}) AND voided = 0
-                        AND o.person_id = obs.person_id AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
+                        INNER JOIN encounter e ON e.encounter_id = o.encounter_id
+                        AND e.program_id = 1 AND e.voided = 0
+                        WHERE o.concept_id IN(#{pregnant_concepts.join(',')})
+                        AND o.voided = 0 AND o.person_id = obs.person_id
+                        AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
           GROUP BY obs.person_id"
         )
 
        female_maternal_status = results.blank? ? 'FNP' : 'FP'
-
 
        if female_maternal_status == 'FNP'
 
@@ -462,14 +465,18 @@ EOF
 
         results2 = ActiveRecord::Base.connection.select_all(
           "SELECT person_id  FROM obs obs
-            INNER JOIN encounter enc ON enc.encounter_id = obs.encounter_id AND enc.voided = 0
+            INNER JOIN encounter enc ON enc.encounter_id = obs.encounter_id
+            AND enc.voided = 0 AND enc.program_id = 1
           WHERE obs.person_id =#{patient_id}
           AND obs.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
           AND obs.concept_id IN(#{breastfeeding_concepts.join(',')}) AND obs.value_coded = 1065
           AND obs.voided = 0 AND enc.encounter_type IN(#{encounter_types.join(',')})
           AND DATE(obs.obs_datetime) = (SELECT MAX(DATE(o.obs_datetime)) FROM obs o
-                        WHERE o.concept_id IN(#{breastfeeding_concepts.join(',')}) AND voided = 0
-                        AND o.person_id = obs.person_id AND o.obs_datetime <='#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
+                        INNER JOIN encounter e ON e.encounter_id = o.encounter_id
+                        AND e.program_id = 1 AND e.voided = 0
+                        WHERE o.concept_id IN(#{breastfeeding_concepts.join(',')}) AND o.voided = 0
+                        AND o.person_id = obs.person_id
+                        AND o.obs_datetime <='#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
           GROUP BY obs.person_id;"
         )
 
