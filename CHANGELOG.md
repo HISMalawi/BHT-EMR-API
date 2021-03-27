@@ -16,6 +16,9 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+
+## [4.10.25] - 2021-03-27
+
 ### Added
 
 - Added health centre: Kaongizi Health Centre - Nkhotakota
