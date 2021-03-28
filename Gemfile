@@ -37,7 +37,7 @@ gem 'test-unit'
 gem 'rswag-api'
 gem 'rswag-ui'
 
-gem 'his-emr-api-lab', '0.0.1'
+gem 'his-emr-api-lab', '0.0.1', require: 'lab'
 
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
