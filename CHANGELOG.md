@@ -16,6 +16,10 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+### Fixed
+
+- ART: Lab visits being flagged as incomplete visits (EGPAF EMR Helpdesk #2376)
+
 
 ## [4.10.25] - 2021-03-27
 
