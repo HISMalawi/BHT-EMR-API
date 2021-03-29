@@ -230,6 +230,7 @@ module ARTService
           INNER JOIN concept_set s ON s.concept_id = d.concept_id
           INNER JOIN person p ON p.person_id = o.patient_id
           INNER JOIN encounter e ON e.patient_id = p.person_id
+          AND e.program_id = #{program_id}
           LEFT JOIN patient_identifier i ON  i.patient_id = o.patient_id
           AND i.identifier_type = #{identifier_type}
           AND LENGTH(identifier) > 0 AND i.voided = 0
@@ -243,8 +244,7 @@ module ARTService
             AND t.voided = 0 AND t.start_date <= '#{@end_date}'
             AND t4.concept_set = #{arv_concept_set} AND t2.quantity > 0
           )AND e.program_id = #{program_id} AND o.patient_id = #{patient_id}
-          AND od.quantity > 0 AND e.encounter_type = #{encounter_type}
-          GROUP BY o.order_id;
+          AND od.quantity > 0 GROUP BY o.order_id;
         SQL
 
         regimen_info = ActiveRecord::Base.connection.select_one <<~SQL
