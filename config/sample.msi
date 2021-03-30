@@ -4,29 +4,29 @@ EVENT_TIME {#{Time.now.strftime('%H%M%S')}}
 SCHEDULED_STUDY_RESOURCE {CR}
 SCHEDULED_STUDY_START_DATE {#{Time.now.strftime('%Y%m%d')}}
 SCHEDULED_STUDY_START_TIME {#{Time.now.strftime('%H%M%S')}}
-STUDY_ID {#{study_id}}
+STUDY_ID {#{patient_details[:accession_number]}}
 INSTITUTION {#{Location.current_health_center.name}}
 OPERATOR {}
-OTHER_PATIENT_IDS {#{patient_info[:national_id]}}
-PATIENT_ID {#{patient_info[:person_id]}}
+OTHER_PATIENT_IDS {#{patient_details[:national_id]}}
+PATIENT_ID {#{patient_details[:person_id]}}
 PATIENT_NAME {#{patient_name.gsub('_', ' ')}}
 PATIENT_NAME_BIG5 {}
-PATIENT_BIRTH_DATE {#{birthdate}}
-PATIENT_SEX {#{patient_info[:patientGender]}}
-PATIENT_SEX_BIG5 {#{patient_info[:patientGender]}}
-PATIENT_AGE {0#{patient_info[:patientAge]}Y}
+PATIENT_BIRTH_DATE {#{patient_details[:patientDOB]}}
+PATIENT_SEX {#{patient_details[:patientGender]}}
+PATIENT_SEX_BIG5 {#{patient_details[:patientGender]}}
+PATIENT_AGE {0#{patient_details[:patientAge]}Y}
 PATIENT_LOCATION {ER}
 PERFORMING_PHYSICIAN {}
 PERFORMING_PHYSICIAN_BIG5 {}
 REASON_FOR_STUDY {}
 REFERRING_PHYSICIAN {}
 REFERRING_PHYSICIAN_BIG5 {}
-REQUESTING_PHYSICIAN {#{user_id}}
+REQUESTING_PHYSICIAN {#{physician_details[:userID]}}
 REQUESTING_PHYSICIAN_BIG5 {}
 REQUESTING_SERVICE {}
 REQUESTING_SERVICE_BIG5 {}
 STATUS {SCHEDULED}
-STUDY_DESCRIPTION {#{order.gsub('_', ' ')} x-ray examination}
+STUDY_DESCRIPTION {#{orders.gsub('_', ' ')} x-ray examination}
 MODALITY {CR}
 OPERATOR_BIG5 {}
 STUDY_CODE {CHEAP}

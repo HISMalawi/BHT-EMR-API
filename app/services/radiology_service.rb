@@ -1,11 +1,8 @@
 require "net/ftp"
 module RadiologyService
   class << self
-    def create_radiology_orders(patient_details,physician_details, radiology_orders)
-      accession_number = patient_details[:accession_number]
-      patientDOB = patient_details[:patientDOB]
-      patient_info = patient_details
-      current_user = physician_details[:userID]
+
+    def generate_msi(patient_details,physician_details, radiology_orders)
       orders =''
       radiology_orders.each do |order|
         if orders != ''
@@ -14,15 +11,11 @@ module RadiologyService
           orders = order[:sub_value_text].gsub(' ', '_')
         end
       end
-      [orders]
-      generate_msi(accession_number, patientDOB, patient_info, current_user, orders)
-    end
 
-    def generate_msi(accession_number, birthdate, patient_info, user_id, order)
-      patient_name = "#{patient_info[:given_name]} #{patient_info[:family_name]}"
-      study_id = accession_number
+      patient_name = "#{patient_details[:given_name]} #{patient_details[:family_name]}"
+
       sample_file_path = "/var/www/BHT-EMR-API/config/sample.msi"
-      save_file_path = "/tmp/#{study_id }_#{patient_name.gsub(' ', '_')}_scheduled_radiology.msi"
+      save_file_path = "/tmp/#{patient_details[:accession_number] }_#{patient_name.gsub(' ', '_')}_scheduled_radiology.msi"
 
       # using eval() might decrease performance, not sure if there's a better way to do this.
       msi_file_data = eval(File.read(sample_file_path))
