@@ -174,15 +174,18 @@ module ARTService
     end
 
     def viral_load_result
-      orders = lab_tests_engine.find_orders_by_patient(patient)
-      result = find_recent_viral_load_result(orders)
+      viral_load_concept = ConceptName.where(name: 'HIV Viral Load').select(:concept_id)
+      tests = Lab::LabTest.where(value_coded: viral_load_concept, person_id: patient.patient_id)
+
+      result = Lab::LabResult.where(obs_group_id: tests, person_id: patient.patient_id)
+                             .order(:obs_datetime)
+                             .last
       return 'N/A' unless result
 
-      "#{result.value}(#{result.date.strftime('%d/%b/%y')})"
-    rescue RestClient::Exception => e
-      # Handle failed lims connections
-      LOGGER.error("Failed to communicate with LIMS: #{e}")
-      'N/A'
+      value = result.children.where(concept_id: viral_load_concept).first
+      return 'N/A' unless value
+
+      "#{value.value_modifier}#{value.value_numeric}"
     end
 
     def cpt; end
@@ -213,37 +216,6 @@ module ARTService
       name = 'CPT' if name.match?('Cotrimoxazole')
       name = 'INH' if name.match?('INH')
       name
-    end
-
-    # Finds the most recent viral load among a bunch of LIMS orders
-    def find_recent_viral_load_result(orders)
-      recent_vl = OpenStruct.new(date: TIME_EPOCH, result: nil)
-
-      orders.each do |order|
-        order[:tests].each do |test|
-          result = parse_lims_viral_load_result(test[:test_values])
-          next if result.value.nil? || result.date < recent_vl.date
-
-          recent_vl.date = result.date
-          recent_vl.result = result
-        end
-      end
-
-      recent_vl.result
-    end
-
-    def parse_lims_viral_load_result(result_values)
-      LOGGER.debug("Parsing LIMS viral load result: #{result_values}")
-      result_values.each_with_object(OpenStruct.new) do |test_value, result|
-        case test_value[:indicator]
-        when /result_date/i
-          result.date = test_value[:value]&.to_date || Date.today
-        when /Viral Load/i
-          result.value = test_value[:value]
-        else
-          LOGGER.warn("Unknown indicator (#{test_value[:indicator]}) in viral load result")
-        end
-      end
     end
   end
 end
