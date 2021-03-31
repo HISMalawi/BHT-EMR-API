@@ -315,4 +315,6 @@ Rails.application.routes.draw do
   get '/api/v1/patient_visit_list', to: 'api/v1/reports#patient_visit_list'
   get '/api/v1/patient_outcome_list', to: 'api/v1/reports#patient_outcome_list'
   get '/api/v1/clients_due_vl', to: 'api/v1/reports#clients_due_vl'
+  get '/api/v1/last_cxca_screening_details' => 'api/v1/patients#last_cxca_screening_details'
+
 end

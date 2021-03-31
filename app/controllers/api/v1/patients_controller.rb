@@ -226,6 +226,11 @@ class Api::V1::PatientsController < ApplicationController
     render json: service.tpt_prescription_count(patient, program, params[:date])
   end
 
+  def last_cxca_screening_details
+    cxca = CXCAService::PatientSummary.new(patient, params[:date].to_date)
+    render json: cxca.last_screening_info
+  end
+
   private
 
   def patient

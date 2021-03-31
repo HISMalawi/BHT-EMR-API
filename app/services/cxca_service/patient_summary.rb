@@ -17,8 +17,6 @@ module CXCAService
     end
 
     def full_summary
-
-
       {
         patient_id: patient.patient_id,
         current_outcome: program_status,
@@ -37,6 +35,18 @@ module CXCAService
 
       return concept_name.blank? ? nil : concept_name.first.name
     end
+
+    def last_screening_info
+      screening_date_concept = ConceptName.find_by(name: 'CxCa test date')
+      obs = Observation.where("concept_id = ? AND person_id = ? AND DATE(obs_datetime) <= ?",
+        screening_date_concept.concept_id, @patient.id, @date.to_date).order('obs_datetime DESC')
+      return (obs.blank? ? {} : {
+        date_screened: obs.first.value_datetime.to_date
+      })
+    end
+
+    private
+
 
   end
 
