@@ -16,7 +16,9 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+### Fixed
 
+- ART: Filtered out patients with NULL drug order quantities from cohort report
 ## [4.10.26] - 2021-03-29
 
 ### Fixed

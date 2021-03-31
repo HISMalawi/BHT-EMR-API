@@ -572,11 +572,11 @@ module ARTService
             AND art_start_date_obs.voided = 0
             AND art_start_date_obs.obs_datetime < (DATE('#{end_date}') + INTERVAL 1 DAY)
             AND art_start_date_obs.encounter_id = clinic_registration_encounter.encounter_id
-          LEFT JOIN orders AS   art_order
+          INNER JOIN orders AS art_order
             ON art_order.patient_id = patient_program.patient_id
             AND art_order.voided = 0
             AND art_order.concept_id IN (SELECT concept_id FROM concept_set WHERE concept_set = 1085)
-          LEFT JOIN drug_order
+          INNER JOIN drug_order
             ON drug_order.order_id = art_order.order_id
             AND drug_order.quantity > 0
           WHERE patient_program.voided = 0
