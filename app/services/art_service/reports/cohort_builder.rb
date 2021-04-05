@@ -590,7 +590,7 @@ module ARTService
                 SELECT concept_id FROM concept_name WHERE name LIKE 'Type of patient'
               ) AND value_coded IN (
                 SELECT concept_id FROM concept_name WHERE name LIKE 'External Consultation'
-              ) AND voided = 0
+              ) AND voided = 0 AND (obs_datetime < DATE('#{end_date}') + INTERVAL 1 DAY)
               GROUP BY person_id
             )
           GROUP by patient_program.patient_id
