@@ -708,10 +708,8 @@ IF set_patient_state = 7 OR set_outcome = 'Pre-ART (Continue)' OR set_outcome IS
       FROM orders o
       INNER JOIN drug_order d ON d.order_id = o.order_id
       INNER JOIN drug ON drug.drug_id = d.drug_inventory_id
-      INNER JOIN patient_program p ON p.patient_id = o.patient_id
       WHERE o.patient_id = patient_id AND o.voided = 0 
-      AND p.voided = 0 AND p.program_id = 1 AND DATE(p.date_enrolled) <= visit_date
-      AND d.drug_inventory_id IN(
+      AND p.voided = 0 AND d.drug_inventory_id IN(
         SELECT DISTINCT(drug_id) FROM drug WHERE
         concept_id IN(SELECT concept_id FROM concept_set WHERE concept_set = 1085)
     ) AND DATE(o.start_date) <= visit_date AND d.quantity > 0 ORDER BY start_date DESC LIMIT 1);
