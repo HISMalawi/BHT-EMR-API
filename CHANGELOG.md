@@ -16,6 +16,14 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+### [4.10.28] - 2021-04-07
+
+### Fixed
+
+- Lab: Updated his-emr-api-lab.gem to v0.0.1
+
+
+## [4.10.27] - 2021-04-01
 ### Fixed
 
 - ART: Filtered out patients with NULL drug order quantities from cohort report
