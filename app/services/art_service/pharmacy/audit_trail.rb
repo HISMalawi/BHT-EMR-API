@@ -43,6 +43,7 @@ module ARTService
             .joins('LEFT JOIN alternative_drug_names ON alternative_drug_names.drug_inventory_id = pharmacy_batch_items.drug_id')
             .merge(batch_items(drug_id: drug_id, batch_number: batch_number))
             .merge(transaction_types)
+            .order("pharmacy_obs.transaction_date DESC")
             .select <<~SQL
               pharmacy_obs.date_created AS creation_date,
               pharmacy_obs.transaction_date AS transaction_date,
