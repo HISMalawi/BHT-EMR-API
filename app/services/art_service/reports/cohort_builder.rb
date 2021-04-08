@@ -896,7 +896,7 @@ module ARTService
             AND obs.concept_id IN (#{breastfeeding_concepts.to_sql})
             AND obs.value_coded = 1065
             AND obs.voided = 0
-          GROUP BY obs.person_id
+          GROUP BY obs.person_id ORDER BY obs.obs_datetime DESC;
         SQL
       end
 
@@ -908,7 +908,7 @@ module ARTService
                                        .select(:concept_id)
 
         ActiveRecord::Base.connection.select_all <<~SQL
-          SELECT obs.person_id FROM obs obs
+          SELECT obs.person_id, obs.value_coded FROM obs obs
             INNER JOIN encounter enc
               ON enc.encounter_id = obs.encounter_id
               AND enc.voided = 0
@@ -927,7 +927,6 @@ module ARTService
               AND encounter.encounter_type IN (#{encounter_types.to_sql})
               AND encounter.voided = 0
             WHERE concept_id IN (#{pregnant_concepts.to_sql})
-              AND value_coded = 1065
               AND obs_datetime < DATE('#{end_date}') + INTERVAL 1 DAY
               AND obs.voided = 0
             GROUP BY person_id
@@ -935,9 +934,10 @@ module ARTService
             ON max_obs.person_id = obs.person_id
             AND max_obs.obs_datetime = obs.obs_datetime
           WHERE obs.concept_id IN (#{pregnant_concepts.to_sql})
-            AND obs.value_coded = 1065
             AND obs.voided = 0
           GROUP BY obs.person_id
+          HAVING value_coded = 1065
+          ORDER BY obs.obs_datetime DESC;
         SQL
       end
 
