@@ -1012,7 +1012,7 @@ module ARTService
           GROUP BY adherence.person_id
         SQL
 
-        not_adherent = not_adherent.empty? ? [0] : not_adherent.map { |row| row['person_id'] }
+        not_adherent = not_adherent.empty? ? [] : not_adherent.map { |row| row['person_id'] }
 
         adherent = ActiveRecord::Base.connection.select_all <<~SQL
           SELECT adherence.person_id
@@ -1027,7 +1027,7 @@ module ARTService
               AND orders.voided = 0
             INNER JOIN temp_patient_outcomes
               ON temp_patient_outcomes.patient_id = obs.person_id
-              AND temp_patient_outcomes.patient_id NOT IN (#{not_adherent.join(',')})
+              AND temp_patient_outcomes.patient_id NOT IN (#{(not_adherent.blank? ? 0 : not_adherent.join(','))})
               AND temp_patient_outcomes.cum_outcome = 'On antiretrovirals'
             WHERE obs.concept_id = #{drug_order_adherence_concept.concept_id}
               AND obs.obs_datetime < (DATE(#{end_date}) + INTERVAL 1 DAY)
