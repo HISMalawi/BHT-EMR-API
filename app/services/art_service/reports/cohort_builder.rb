@@ -1534,7 +1534,6 @@ EOF
         preg_at_initiation_concept_id = concept('PREGNANT AT INITIATION?').concept_id
         reason_for_starting_concept_id = concept('Reason for ART eligibility').concept_id
 
-        # (patient_id_plus_date_enrolled || []).each do |patient_id, date_enrolled|
         registered = ActiveRecord::Base.connection.select_all <<~SQL
           SELECT patients.*, obs.value_coded
           FROM temp_earliest_start_date AS patients
@@ -1544,48 +1543,18 @@ EOF
                                    #{patient_preg_concept_id},
                                    #{preg_at_initiation_concept_id},
                                    #{reason_for_starting_concept_id})
-            AND obs.obs_datetime >= patients.earliest_start_date
-            AND obs.obs_datetime < (patients.earliest_start_date + INTERVAL 1 DAY)
+            AND obs.obs_datetime BETWEEN '#{start_date.to_date.strftime("%Y-%m-%d 00:00:00")}'
+            AND '#{end_date.to_date.strftime("%Y-%m-%d 23:59:59")}'
             AND obs.value_coded IS NOT NULL
             AND obs.voided = 0
           WHERE patients.gender IN ('F', 'Female')
             AND patients.date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
           GROUP BY patient_id
           HAVING value_coded = #{yes_concept_id} OR value_coded = #{patient_preg_concept_id}
+          ORDER BY obs_datetime DESC
         SQL
 
-        pregnant_at_initiation = ActiveRecord::Base.connection.select_all(
-          "SELECT patient_id, patient_reason_for_starting_art(patient_id) reason_concept_id
-          FROM temp_earliest_start_date
-          WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-            AND (gender = 'F' OR gender = 'Female')
-          GROUP BY patient_id
-          HAVING reason_concept_id IN (1755, 7972, 6131);"
-        )
-        pregnant_at_initiation_ids = []
-        (pregnant_at_initiation || []).each do |patient|
-          pregnant_at_initiation_ids << patient['patient_id'].to_i
-        end
-
-        pregnant_at_initiation_ids = [0] if pregnant_at_initiation_ids.blank?
-
-        transfer_ins_women = ActiveRecord::Base.connection.select_all(
-          "SELECT patient_id, re_initiated_check(patient_id, date_enrolled) re_initiated
-          FROM temp_earliest_start_date
-          WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-            AND DATE(date_enrolled) != DATE(earliest_start_date)
-            AND (gender = 'F' OR gender = 'Female')
-            AND patient_id IN (#{pregnant_at_initiation_ids.join(',')})
-          GROUP BY patient_id
-          HAVING re_initiated != 'Re-initiated'"
-        )
-
-        transfer_ins_preg_women = []; all_pregnant_females = []
-        (transfer_ins_women || []).each do |patient|
-          if patient['patient_id'].to_i != 0
-            transfer_ins_preg_women << patient['patient_id'].to_i
-          end
-        end
+        all_pregnant_females = []
 
         (registered || []).each do |patient|
           if patient['patient_id'].to_i != 0
@@ -1593,7 +1562,6 @@ EOF
           end
         end
 
-        all_pregnant_females = (all_pregnant_females + transfer_ins_preg_women).uniq
         all_pregnant_females
       end
 
