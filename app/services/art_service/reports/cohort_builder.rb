@@ -1549,9 +1549,16 @@ EOF
             AND obs.voided = 0
           WHERE patients.gender IN ('F', 'Female')
             AND patients.date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-          GROUP BY patient_id
-          HAVING value_coded = #{yes_concept_id} OR value_coded = #{patient_preg_concept_id}
-          ORDER BY obs_datetime DESC
+            AND obs.obs_datetime = (
+                SELECT MAX(t.obs_datetime) FROM obs t WHERE t.person_id = obs.person_id
+                AND t.concept_id IN(#{preg_concept_id},
+                  #{patient_preg_concept_id},
+                  #{preg_at_initiation_concept_id},
+                  #{reason_for_starting_concept_id}) AND t.voided = 0
+                AND t.obs_datetime BETWEEN '#{start_date.to_date.strftime("%Y-%m-%d 00:00:00")}'
+                AND '#{end_date.to_date.strftime("%Y-%m-%d 23:59:59")}'
+            ) GROUP BY patient_id HAVING (value_coded = #{yes_concept_id}
+            OR value_coded = #{patient_preg_concept_id});
         SQL
 
         all_pregnant_females = []
