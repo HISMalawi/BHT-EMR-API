@@ -238,16 +238,23 @@ EOF
       def get_age_groups(age_group, start_date, end_date, temp_outcome_table)
         if age_group != 'Pregnant' && age_group != 'FNP' && age_group != 'Not pregnant' && age_group != 'Breastfeeding'
 
-          results = ActiveRecord::Base.connection.select_all <<EOF
+          results = ActiveRecord::Base.connection.select_all <<~SQL
             SELECT
               `cohort_disaggregated_age_group`(date(birthdate), date('#{@end_date}')) AS age_group,
               o.cum_outcome AS outcome, e.*
             FROM earliest_start_date e
             LEFT JOIN `#{temp_outcome_table}` o ON o.patient_id = e.patient_id
             WHERE  date_enrolled IS NOT NULL AND DATE(date_enrolled) <= DATE('#{@end_date}')
-            GROUP BY e.patient_id
+            AND e.patient_id NOT IN(
+            SELECT person_id FROM obs
+            WHERE concept_id IN (
+              SELECT concept_id FROM concept_name WHERE name LIKE 'Type of patient'
+            ) AND value_coded IN (
+              SELECT concept_id FROM concept_name WHERE name LIKE 'External Consultation'
+            ) AND voided = 0 AND (obs_datetime < DATE('#{@end_date}') + INTERVAL 1 DAY)
+            GROUP BY person_id) GROUP BY e.patient_id
             HAVING age_group = '#{age_group}';
-EOF
+          SQL
 
         elsif age_group == 'Pregnant'
           create_mysql_female_maternal_status
