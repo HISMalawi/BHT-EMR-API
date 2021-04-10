@@ -1528,6 +1528,9 @@ EOF
       end
 
       def pregnant_females_all_ages(start_date, end_date)
+        start_date = ActiveRecord::Base.connection.quote(start_date)
+        end_date = ActiveRecord::Base.connection.quote(end_date)
+
         yes_concept_id = concept('Yes').concept_id
         preg_concept_id = concept('IS PATIENT PREGNANT?').concept_id
         patient_preg_concept_id = concept('PATIENT PREGNANT').concept_id
@@ -1543,22 +1546,30 @@ EOF
                                    #{patient_preg_concept_id},
                                    #{preg_at_initiation_concept_id},
                                    #{reason_for_starting_concept_id})
-            AND obs.obs_datetime BETWEEN '#{start_date.to_date.strftime("%Y-%m-%d 00:00:00")}'
-            AND '#{end_date.to_date.strftime("%Y-%m-%d 23:59:59")}'
+            AND obs.obs_datetime >= #{start_date}
+            AND obs.obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
             AND obs.value_coded IS NOT NULL
             AND obs.voided = 0
+            INNER JOIN (
+              SELECT person_id, MIN(obs_datetime) AS obs_datetime, value_coded
+              FROM obs
+              WHERE voided = 0
+                AND concept_id IN (#{preg_concept_id},
+                                   #{patient_preg_concept_id},
+                                   #{preg_at_initiation_concept_id},
+                                   #{reason_for_starting_concept_id})
+                AND value_coded IS NOT NULL
+                AND obs_datetime >= #{start_date}
+                AND obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
+              GROUP BY person_id
+              HAVING (value_coded = 1065 OR value_coded = 1755)
+            ) AS min_pregnant_obs
+              ON min_pregnant_obs.person_id = obs.person_id
+              AND min_pregnant_obs.obs_datetime = obs.obs_datetime
           WHERE patients.gender IN ('F', 'Female')
-            AND patients.date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-            AND obs.obs_datetime = (
-                SELECT MIN(t.obs_datetime) FROM obs t WHERE t.person_id = obs.person_id
-                AND t.concept_id IN(#{preg_concept_id},
-                  #{patient_preg_concept_id},
-                  #{preg_at_initiation_concept_id},
-                  #{reason_for_starting_concept_id}) AND t.voided = 0
-                AND t.obs_datetime BETWEEN '#{start_date.to_date.strftime("%Y-%m-%d 00:00:00")}'
-                AND '#{end_date.to_date.strftime("%Y-%m-%d 23:59:59")}'
-            ) GROUP BY patient_id HAVING (value_coded = #{yes_concept_id}
-            OR value_coded = #{patient_preg_concept_id});
+            AND patients.date_enrolled BETWEEN #{start_date} AND #{end_date}
+            GROUP BY patient_id
+            HAVING (value_coded = #{yes_concept_id} OR value_coded = #{patient_preg_concept_id});
         SQL
 
         all_pregnant_females = []
