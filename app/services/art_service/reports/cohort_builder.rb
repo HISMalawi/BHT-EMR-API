@@ -1550,7 +1550,7 @@ EOF
           WHERE patients.gender IN ('F', 'Female')
             AND patients.date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
             AND obs.obs_datetime = (
-                SELECT MAX(t.obs_datetime) FROM obs t WHERE t.person_id = obs.person_id
+                SELECT MIN(t.obs_datetime) FROM obs t WHERE t.person_id = obs.person_id
                 AND t.concept_id IN(#{preg_concept_id},
                   #{patient_preg_concept_id},
                   #{preg_at_initiation_concept_id},
