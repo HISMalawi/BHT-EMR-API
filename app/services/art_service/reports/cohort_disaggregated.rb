@@ -231,6 +231,12 @@ EOF
         if (age_group == 'Breastfeeding' || age_group == 'Pregnant')
           if data['initial_maternal_status'] == 'FNP'
             tx_new = false
+          else
+            date_enrolled = data['date_enrolled'].to_date
+            earliest_start_date = data['earliest_start_date'].to_date rescue date_enrolled
+            if earliest_start_date != date_enrolled
+              tx_new = false
+            end
           end
         end
 
