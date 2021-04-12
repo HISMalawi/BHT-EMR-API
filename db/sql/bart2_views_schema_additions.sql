@@ -1877,7 +1877,7 @@ CREATE  FUNCTION `current_pepfar_defaulter`(my_patient_id INT, my_end_date DATET
 BEGIN
 DECLARE done INT DEFAULT FALSE;
   DECLARE my_start_date, my_expiry_date, my_obs_datetime DATETIME;
-  DECLARE my_daily_dose, my_quantity, my_pill_count, my_total_text, my_total_numeric DECIMAL;
+  DECLARE my_daily_dose, my_quantity, my_pill_count, my_total_text, my_total_numeric DECIMAL(6, 2);
   DECLARE my_drug_id, flag INT;
 
   DECLARE cur1 CURSOR FOR SELECT d.drug_inventory_id, o.start_date, d.equivalent_daily_dose daily_dose, d.quantity, o.start_date FROM drug_order d
@@ -1944,7 +1944,7 @@ CREATE FUNCTION `current_pepfar_defaulter_date`(my_patient_id INT, my_end_date D
 BEGIN
 	DECLARE done INT DEFAULT FALSE;
 	DECLARE my_start_date, my_expiry_date, my_obs_datetime, my_defaulted_date DATETIME;
-	DECLARE my_daily_dose, my_quantity, my_pill_count, my_total_text, my_total_numeric DECIMAL;
+	DECLARE my_daily_dose, my_quantity, my_pill_count, my_total_text, my_total_numeric DECIMAL(6, 2);
 	DECLARE my_drug_id, flag INT;
 
 	DECLARE cur1 CURSOR FOR SELECT d.drug_inventory_id, o.start_date, d.equivalent_daily_dose daily_dose, d.quantity, o.start_date FROM drug_order d
