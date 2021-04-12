@@ -28,13 +28,14 @@ module ARTService
         encounter_type = EncounterType.find_by(name: 'DISPENSING').id
 
         sql_path = moh_pepfar_breakdown(@min_age, @max_age)
-
+=begin
         concept_id = ConceptName.find_by_name('Type of patient').concept_id
         ext_concept_id = ConceptName.find_by_name('External consultation').concept_id
 
         person_ids = Observation.where(concept_id: concept_id,
           value_coded: ext_concept_id).group(:person_id).map(&:person_id)
         person_ids = [0] if person_ids.blank?
+=end
 
         patients = ActiveRecord::Base.connection.select_all <<~SQL
           SELECT
@@ -51,7 +52,17 @@ module ARTService
                 and (`s`.`voided` = 0)
                 and (`p`.`program_id` = 1)
                 and (`s`.`state` = 7)
-                #{sql_path} AND p.patient_id NOT IN(#{person_ids.join(',')}))
+                #{sql_path} AND p.patient_id NOT IN(
+
+                  SELECT person_id FROM obs
+                  WHERE concept_id IN (
+                  SELECT concept_id FROM concept_name WHERE name LIKE 'Type of patient'
+                  ) AND value_coded IN (
+                    SELECT concept_id FROM concept_name WHERE name LIKE 'External Consultation'
+                  ) AND voided = 0 AND (obs_datetime < DATE('#{@end_date}') + INTERVAL 1 DAY)
+                  GROUP BY person_id
+
+                ))
           GROUP BY `p`.`patient_id` HAVING date_enrolled IS NOT NULL
           AND DATE(date_enrolled) <= DATE('#{@end_date}');
         SQL
