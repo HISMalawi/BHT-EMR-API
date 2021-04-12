@@ -237,6 +237,10 @@ EOF
             if earliest_start_date != date_enrolled
               tx_new = false
             end
+
+            if data['mstatus'] == 'FNP'
+              tx_curr = false
+            end
           end
         end
 
@@ -274,7 +278,7 @@ EOF
             FROM temp_earliest_start_date e
             INNER JOIN temp_disaggregated t2 ON t2.patient_id = e.patient_id
             INNER JOIN `#{temp_outcome_table}` t3 ON t3.patient_id = e.patient_id
-            WHERE maternal_status = 'FP'
+            WHERE maternal_status = 'FP' OR initial_maternal_status = 'FP'
             GROUP BY e.patient_id;
 EOF
 
@@ -287,7 +291,7 @@ EOF
             FROM temp_earliest_start_date e
             INNER JOIN temp_disaggregated t2 ON t2.patient_id = e.patient_id
             INNER JOIN `#{temp_outcome_table}` t3 ON t3.patient_id = e.patient_id
-            WHERE maternal_status = 'FBf'
+            WHERE maternal_status = 'FBf' OR initial_maternal_status = 'FBf'
             GROUP BY e.patient_id;
 EOF
 
