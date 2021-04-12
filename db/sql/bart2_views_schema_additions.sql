@@ -708,7 +708,7 @@ IF set_patient_state = 7 OR set_outcome = 'Pre-ART (Continue)' OR set_outcome IS
       FROM orders o
       INNER JOIN drug_order d ON d.order_id = o.order_id
       INNER JOIN drug ON drug.drug_id = d.drug_inventory_id
-      WHERE o.patient_id = patient_id AND o.voided = 0 
+      WHERE o.patient_id = patient_id AND o.voided = 0
       AND d.drug_inventory_id IN(
         SELECT DISTINCT(drug_id) FROM drug WHERE
         concept_id IN(SELECT concept_id FROM concept_set WHERE concept_set = 1085)
@@ -1654,7 +1654,7 @@ CREATE FUNCTION `current_defaulter`(my_patient_id INT, my_end_date DATETIME) RET
 BEGIN
   DECLARE done INT DEFAULT FALSE;
   DECLARE my_start_date, my_expiry_date, my_obs_datetime DATETIME;
-  DECLARE my_daily_dose, my_quantity, my_pill_count, my_total_text, my_total_numeric DECIMAL;
+  DECLARE my_daily_dose, my_quantity, my_pill_count, my_total_text, my_total_numeric DECIMAL(6, 2);
   DECLARE my_drug_id, flag INT;
 
   DECLARE cur1 CURSOR FOR SELECT d.drug_inventory_id, o.start_date, d.equivalent_daily_dose daily_dose, d.quantity, o.start_date FROM drug_order d
@@ -1721,7 +1721,7 @@ DETERMINISTIC
 BEGIN
 DECLARE done INT DEFAULT FALSE;
   DECLARE my_start_date, my_expiry_date, my_obs_datetime, my_defaulted_date DATETIME;
-  DECLARE my_daily_dose, my_quantity, my_pill_count, my_total_text, my_total_numeric DECIMAL;
+  DECLARE my_daily_dose, my_quantity, my_pill_count, my_total_text, my_total_numeric DECIMAL(6, 2);
   DECLARE my_drug_id, flag INT;
 
   DECLARE cur1 CURSOR FOR SELECT d.drug_inventory_id, o.start_date, d.equivalent_daily_dose daily_dose, d.quantity, o.start_date FROM drug_order d
