@@ -15,6 +15,7 @@ module ARTService
       'COHORT_DISAGGREGATED' => ARTService::Reports::CohortDisaggregated,
       'COHORT_DISAGGREGATED_ADDITIONS' => ARTService::Reports::CohortDisaggregatedAdditions,
       'COHORT_SURVIVAL_ANALYSIS' => ARTService::Reports::CohortSurvivalAnalysis,
+      'DRUG_DISPENSATIONS' => ARTService::Reports::DrugDispensations,
       'IPT' => ARTService::Reports::IPTReport,
       'PATIENTS_WITH_OUTDATED_DEMOGRAPHICS' => ARTService::Reports::PatientsWithOutdatedDemographics,
       'PATIENTS_ON_DTG' => ARTService::Reports::PatientsOnDTG,
@@ -23,6 +24,8 @@ module ARTService
       'REGIMENS_BY_WEIGHT_AND_GENDER' => ARTService::Reports::RegimensByWeightAndGender,
       'REGIMEN_SWITCH' => ARTService::Reports::RegimenSwitch,
       'RETENTION' => ARTService::Reports::Retention,
+      'TB_PREV2' => ARTService::Reports::Pepfar::TbPrev2,
+      'TPT_NEWLY_INITIATED' => ARTService::Reports::TptNewlyInitiated,
       'TX_CURR' => ARTService::Reports::PatientsAliveAndOnTreatment,
       'TX_ML' => ARTService::Reports::Pepfar::TxMl,
       'TX_RTT' => ARTService::Reports::Pepfar::TxRTT,
@@ -31,7 +34,8 @@ module ARTService
       'VL_DUE' => ARTService::Reports::PatientsDueForViralLoad,
       'VL_DISAGGREGATED' => ARTService::Reports::ViralLoadDisaggregated,
       'TB_PREV' => ARTService::Reports::Pepfar::TbPrev,
-      'OUTCOME_LIST' => ARTService::Reports::OutcomeList
+      'OUTCOME_LIST' => ARTService::Reports::OutcomeList,
+      'VIRAL_LOAD' => ARTService::Reports::ViralLoad
     }.freeze
 
     def generate_report(type:, **kwargs)
@@ -146,6 +150,11 @@ module ARTService
     def patient_outcome_list(start_date, end_date, outcome)
       REPORTS['OUTCOME_LIST'].new(start_date: start_date.to_date,
         end_date: end_date.to_date, outcome: outcome).get_list
+    end
+
+    def clients_due_vl(start_date, end_date)
+      REPORTS['VIRAL_LOAD'].new(start_date: start_date.to_date,
+        end_date: end_date.to_date).clients_due
     end
 
     private

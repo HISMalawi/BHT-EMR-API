@@ -30,16 +30,19 @@ class DrugOrder < ApplicationRecord
   # Calculates the duration which the current drugs may last
   # given the equivalent daily dose
   def quantity_duration
-    (quantity / equivalent_daily_dose).to_i
+    duration = quantity / equivalent_daily_dose
+    duration *= 7 if weekly_dose?
+
+    duration.to_i
   end
 
   def amount_needed
-    drug_frequency = self.frequency.to_s rescue ''
-    if drug_frequency.match(/Weekly/i)
+    if weekly_dose?
       value = (((duration * (equivalent_daily_dose || 1)) - (quantity || 0)) / 7)
     else
       value = (duration * (equivalent_daily_dose || 1)) - (quantity || 0)
     end
+
     value.negative? ? 0 : value
   end
 
@@ -70,6 +73,12 @@ class DrugOrder < ApplicationRecord
 
   def date_created
     @date_created ||= Order.unscoped.find(order_id).date_created
+  end
+
+  def weekly_dose?
+    return false unless frequency
+
+    frequency.match?(/Weekly/i)
   end
 
   # def order

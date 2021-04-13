@@ -1,4 +1,8 @@
 Rails.application.routes.draw do
+  mount Lab::Engine => '/'
+  mount Rswag::Ui::Engine => '/api-docs'
+  mount Rswag::Api::Engine => '/api-docs'
+
   namespace :api do
     namespace :v1 do
       # Helper for creating dynamic redirect urls with redirect blocks
@@ -176,6 +180,7 @@ Rails.application.routes.draw do
       end
 
       namespace :pharmacy do
+        resource :audit_trail, only: %i[show]
         resources :batches
         resources :items do
           post '/reallocate', to: 'items#reallocate'
@@ -314,4 +319,8 @@ Rails.application.routes.draw do
   get '/api/v1/tpt_prescription_count' => 'api/v1/patients#tpt_prescription_count'
   get '/api/v1/patient_visit_types', to: 'api/v1/reports#patient_visit_types'
   get '/api/v1/patient_visit_list', to: 'api/v1/reports#patient_visit_list'
+  get '/api/v1/patient_outcome_list', to: 'api/v1/reports#patient_outcome_list'
+  get '/api/v1/clients_due_vl', to: 'api/v1/reports#clients_due_vl'
+  get '/api/v1/last_cxca_screening_details' => 'api/v1/patients#last_cxca_screening_details'
+
 end

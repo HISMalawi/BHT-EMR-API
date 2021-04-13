@@ -24,3 +24,4 @@ class Api::V1::LabTestTypesController < ApplicationController
     render json: engine.test_measures(test_name)
   end
 end
+

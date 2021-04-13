@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative './cohort/tpt'
+
 module ARTService
   module Reports
     class CohortBuilder
@@ -328,6 +330,10 @@ module ARTService
         # Patients whose BP was screened and are above 30 years least once before end of quarter and on ARVs
         cohort_struct.total_patients_with_screened_bp = total_patients_with_screened_bp(cohort_struct.total_alive_and_on_art, start_date, end_date)
 
+        # Patients who started TPT in current reporting period
+        cohort_struct.newly_initiated_on_3hp = Cohort::Tpt.newly_initiated_on_3hp(start_date, end_date)
+        cohort_struct.newly_initiated_on_ipt = Cohort::Tpt.newly_initiated_on_ipt(start_date, end_date)
+
         puts "Started at: #{time_started}. Finished at: #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}"
         cohort_struct
       end
@@ -545,8 +551,8 @@ module ARTService
                  person.birthdate_estimated,
                  person.death_date,
                  person.gender,
-                 IF(person.birthdate IS NOT NULL, TIMESTAMPDIFF(YEAR, person.birthdate, MIN(outcome.start_date)), NULL) AS age_at_initiation,
-                 IF(person.birthdate IS NOT NULL, TIMESTAMPDIFF(DAY, person.birthdate, MIN(outcome.start_date)), NULL) AS age_in_days,
+                 IF(person.birthdate IS NOT NULL, TIMESTAMPDIFF(YEAR, person.birthdate,  DATE(COALESCE(art_start_date_obs.value_datetime, MIN(art_order.start_date)))), NULL) AS age_at_initiation,
+                 IF(person.birthdate IS NOT NULL, TIMESTAMPDIFF(DAY, person.birthdate,  DATE(COALESCE(art_start_date_obs.value_datetime, MIN(art_order.start_date)))), NULL) AS age_in_days,
                  (SELECT value_coded FROM obs
                   WHERE concept_id = 7563 AND person_id = patient_program.patient_id AND voided = 0
                   ORDER BY obs_datetime DESC LIMIT 1) AS reason_for_starting_art
@@ -566,11 +572,11 @@ module ARTService
             AND art_start_date_obs.voided = 0
             AND art_start_date_obs.obs_datetime < (DATE('#{end_date}') + INTERVAL 1 DAY)
             AND art_start_date_obs.encounter_id = clinic_registration_encounter.encounter_id
-          LEFT JOIN orders AS   art_order
+          INNER JOIN orders AS art_order
             ON art_order.patient_id = patient_program.patient_id
             AND art_order.voided = 0
             AND art_order.concept_id IN (SELECT concept_id FROM concept_set WHERE concept_set = 1085)
-          LEFT JOIN drug_order
+          INNER JOIN drug_order
             ON drug_order.order_id = art_order.order_id
             AND drug_order.quantity > 0
           WHERE patient_program.voided = 0
@@ -584,7 +590,7 @@ module ARTService
                 SELECT concept_id FROM concept_name WHERE name LIKE 'Type of patient'
               ) AND value_coded IN (
                 SELECT concept_id FROM concept_name WHERE name LIKE 'External Consultation'
-              ) AND voided = 0
+              ) AND voided = 0 AND (obs_datetime < DATE('#{end_date}') + INTERVAL 1 DAY)
               GROUP BY person_id
             )
           GROUP by patient_program.patient_id
@@ -856,7 +862,7 @@ module ARTService
                                             .select(:concept_id)
 
         ActiveRecord::Base.connection.select_all <<~SQL
-          SELECT obs.person_id
+          SELECT obs.person_id, obs.value_coded
           FROM obs
           INNER JOIN encounter enc
             ON enc.encounter_id = obs.encounter_id
@@ -879,7 +885,6 @@ module ARTService
               AND concept_id IN (#{breastfeeding_concepts.to_sql})
               AND obs.voided = 0
               AND obs_datetime < DATE('#{end_date}') + INTERVAL 1 DAY
-              AND value_coded = 1065
             GROUP BY person_id
           ) AS max_obs
             ON max_obs.person_id = obs.person_id
@@ -888,9 +893,10 @@ module ARTService
             AND obs.person_id NOT IN (#{total_pregnant_women.join(',')})
             AND obs.obs_datetime < DATE('#{end_date}') + INTERVAL 1 DAY
             AND obs.concept_id IN (#{breastfeeding_concepts.to_sql})
-            AND obs.value_coded = 1065
             AND obs.voided = 0
           GROUP BY obs.person_id
+          HAVING value_coded = 1065
+          ORDER BY obs.obs_datetime DESC;
         SQL
       end
 
@@ -902,7 +908,7 @@ module ARTService
                                        .select(:concept_id)
 
         ActiveRecord::Base.connection.select_all <<~SQL
-          SELECT obs.person_id FROM obs obs
+          SELECT obs.person_id, obs.value_coded FROM obs obs
             INNER JOIN encounter enc
               ON enc.encounter_id = obs.encounter_id
               AND enc.voided = 0
@@ -921,7 +927,6 @@ module ARTService
               AND encounter.encounter_type IN (#{encounter_types.to_sql})
               AND encounter.voided = 0
             WHERE concept_id IN (#{pregnant_concepts.to_sql})
-              AND value_coded = 1065
               AND obs_datetime < DATE('#{end_date}') + INTERVAL 1 DAY
               AND obs.voided = 0
             GROUP BY person_id
@@ -929,9 +934,10 @@ module ARTService
             ON max_obs.person_id = obs.person_id
             AND max_obs.obs_datetime = obs.obs_datetime
           WHERE obs.concept_id IN (#{pregnant_concepts.to_sql})
-            AND obs.value_coded = 1065
             AND obs.voided = 0
           GROUP BY obs.person_id
+          HAVING value_coded = 1065
+          ORDER BY obs.obs_datetime DESC;
         SQL
       end
 
@@ -1006,7 +1012,7 @@ module ARTService
           GROUP BY adherence.person_id
         SQL
 
-        not_adherent = not_adherent.empty? ? [0] : not_adherent.map { |row| row['person_id'] }
+        not_adherent = not_adherent.empty? ? [] : not_adherent.map { |row| row['person_id'] }
 
         adherent = ActiveRecord::Base.connection.select_all <<~SQL
           SELECT adherence.person_id
@@ -1021,7 +1027,7 @@ module ARTService
               AND orders.voided = 0
             INNER JOIN temp_patient_outcomes
               ON temp_patient_outcomes.patient_id = obs.person_id
-              AND temp_patient_outcomes.patient_id NOT IN (#{not_adherent.join(',')})
+              AND temp_patient_outcomes.patient_id NOT IN (#{(not_adherent.blank? ? 0 : not_adherent.join(','))})
               AND temp_patient_outcomes.cum_outcome = 'On antiretrovirals'
             WHERE obs.concept_id = #{drug_order_adherence_concept.concept_id}
               AND obs.obs_datetime < (DATE(#{end_date}) + INTERVAL 1 DAY)
@@ -1522,13 +1528,15 @@ EOF
       end
 
       def pregnant_females_all_ages(start_date, end_date)
+        start_date = ActiveRecord::Base.connection.quote(start_date)
+        end_date = ActiveRecord::Base.connection.quote(end_date)
+
         yes_concept_id = concept('Yes').concept_id
         preg_concept_id = concept('IS PATIENT PREGNANT?').concept_id
         patient_preg_concept_id = concept('PATIENT PREGNANT').concept_id
         preg_at_initiation_concept_id = concept('PREGNANT AT INITIATION?').concept_id
         reason_for_starting_concept_id = concept('Reason for ART eligibility').concept_id
 
-        # (patient_id_plus_date_enrolled || []).each do |patient_id, date_enrolled|
         registered = ActiveRecord::Base.connection.select_all <<~SQL
           SELECT patients.*, obs.value_coded
           FROM temp_earliest_start_date AS patients
@@ -1538,48 +1546,33 @@ EOF
                                    #{patient_preg_concept_id},
                                    #{preg_at_initiation_concept_id},
                                    #{reason_for_starting_concept_id})
-            AND obs.obs_datetime >= patients.earliest_start_date
-            AND obs.obs_datetime < (patients.earliest_start_date + INTERVAL 1 DAY)
+            AND obs.obs_datetime >= #{start_date}
+            AND obs.obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
             AND obs.value_coded IS NOT NULL
             AND obs.voided = 0
+            INNER JOIN (
+              SELECT person_id, MIN(obs_datetime) AS obs_datetime, value_coded
+              FROM obs
+              WHERE voided = 0
+                AND concept_id IN (#{preg_concept_id},
+                                   #{patient_preg_concept_id},
+                                   #{preg_at_initiation_concept_id},
+                                   #{reason_for_starting_concept_id})
+                AND value_coded IS NOT NULL
+                AND obs_datetime >= #{start_date}
+                AND obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
+              GROUP BY person_id
+              HAVING (value_coded = 1065 OR value_coded = 1755)
+            ) AS min_pregnant_obs
+              ON min_pregnant_obs.person_id = obs.person_id
+              AND min_pregnant_obs.obs_datetime = obs.obs_datetime
           WHERE patients.gender IN ('F', 'Female')
-            AND patients.date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-          GROUP BY patient_id
-          HAVING value_coded = #{yes_concept_id} OR value_coded = #{patient_preg_concept_id}
+            AND patients.date_enrolled BETWEEN #{start_date} AND #{end_date}
+            GROUP BY patient_id
+            HAVING (value_coded = #{yes_concept_id} OR value_coded = #{patient_preg_concept_id});
         SQL
 
-        pregnant_at_initiation = ActiveRecord::Base.connection.select_all(
-          "SELECT patient_id, patient_reason_for_starting_art(patient_id) reason_concept_id
-          FROM temp_earliest_start_date
-          WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-            AND (gender = 'F' OR gender = 'Female')
-          GROUP BY patient_id
-          HAVING reason_concept_id IN (1755, 7972, 6131);"
-        )
-        pregnant_at_initiation_ids = []
-        (pregnant_at_initiation || []).each do |patient|
-          pregnant_at_initiation_ids << patient['patient_id'].to_i
-        end
-
-        pregnant_at_initiation_ids = [0] if pregnant_at_initiation_ids.blank?
-
-        transfer_ins_women = ActiveRecord::Base.connection.select_all(
-          "SELECT patient_id, re_initiated_check(patient_id, date_enrolled) re_initiated
-          FROM temp_earliest_start_date
-          WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-            AND DATE(date_enrolled) != DATE(earliest_start_date)
-            AND (gender = 'F' OR gender = 'Female')
-            AND patient_id IN (#{pregnant_at_initiation_ids.join(',')})
-          GROUP BY patient_id
-          HAVING re_initiated != 'Re-initiated'"
-        )
-
-        transfer_ins_preg_women = []; all_pregnant_females = []
-        (transfer_ins_women || []).each do |patient|
-          if patient['patient_id'].to_i != 0
-            transfer_ins_preg_women << patient['patient_id'].to_i
-          end
-        end
+        all_pregnant_females = []
 
         (registered || []).each do |patient|
           if patient['patient_id'].to_i != 0
@@ -1587,7 +1580,6 @@ EOF
           end
         end
 
-        all_pregnant_females = (all_pregnant_females + transfer_ins_preg_women).uniq
         all_pregnant_females
       end
 

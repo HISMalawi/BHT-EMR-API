@@ -20,6 +20,7 @@ class Api::V1::Pharmacy::BatchesController < ApplicationController
   #     drugs: [
   #       {
   #          drug_id: *int,
+  #          pack_size: int,
   #          quantity: *double,
   #          expiry_date: *string, # Date in 'YYYY-MM-DD'
   #          delivery_date: string # Same as above (defaults to today)

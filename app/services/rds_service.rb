@@ -40,7 +40,7 @@ module RdsService
 
   MODELS = [Person, PersonAttribute, PersonAddress, PersonName, Relationship, User, Patient,
             PatientIdentifier, PatientState, PatientProgram, Encounter,
-            Observation, Order, DrugOrder, Pharmacy, PharmacyBatch,
+            Observation, Order, DrugOrder, PharmacyBatch,
             PharmacyBatchItem, PharmacyBatchItemReallocation].freeze
 
   TIME_EPOCH = '0000-00-00 00:00:00'
@@ -48,7 +48,7 @@ module RdsService
 
   # These models are missing a `date_changed` field...
   # They probably are not meant to be changed after creation.
-  IMMUTABLE_MODELS = [PersonAddress, PatientIdentifier, Observation, Order, Relationship].freeze
+  IMMUTABLE_MODELS = [PersonAddress, PatientIdentifier, Observation, Order, Relationship, Pharmacy].freeze
 
   # Maximum number of records to be fetched from database per request
   RECORDS_BATCH_SIZE = 50_000

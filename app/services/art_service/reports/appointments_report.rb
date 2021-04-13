@@ -23,34 +23,20 @@ module ARTService
       end
 
       def missed_appointments
-        encounter_type = encounter_type 'APPOINTMENT'
-        appointment_concept = concept 'Appointment date'
-        program = Program.find_by_name 'HIV PROGRAM'
+        appointments = Observation.joins(:encounter)
+                                  .merge(appointment_encounters)
+                                  .where.not(person_id: referral_patients.select(:person_id))
+                                  .where(concept: ConceptName.where(name: 'Appointment date').select(:concept_id))
+                                  .where('value_datetime BETWEEN ? AND ?',
+                                         @start_date.strftime('%Y-%m-%d 00:00:00'),
+                                         @end_date.strftime('%Y-%m-%d 23:59:59'))
+                                  .group(:person_id)
 
-        encounter_ids = Encounter.where("encounter_type = ?
-          AND obs.value_datetime BETWEEN ? AND ?
-          AND program_id = ? AND obs.concept_id = ?", encounter_type.id,
-          @start_date.strftime('%Y-%m-%d 00:00:00'),
-          @end_date.strftime('%Y-%m-%d 23:59:59'),
-          program.id, appointment_concept.concept_id).\
-          joins("INNER JOIN obs ON obs.encounter_id = encounter.encounter_id").map(&:encounter_id)
+        appointments.each_with_object([]) do |appointment, patients|
+          patient = missed_appointment?(appointment)
 
-        encounter_ids = [0] if encounter_ids.blank?
-
-        appointments = Observation.where("encounter_id IN(?)
-          AND concept_id = ? AND value_datetime BETWEEN ? AND ?",
-          encounter_ids, appointment_concept.concept_id,
-           @start_date.strftime('%Y-%m-%d 00:00:00'),
-          @end_date.strftime('%Y-%m-%d 23:59:59'))
-
-        patients = []
-
-        (appointments || []).each do |obs|
-          missed = missed_appointment? obs
-          patients << missed unless missed.blank?
+          patients << patient unless patient.blank?
         end
-
-        return patients
       end
 
       def patient_visit_types
@@ -244,7 +230,23 @@ EOF
         return current_outcome_info['outcome']
       end
 
+      def referral_patients
+        Observation.where(concept: ConceptName.where(name: 'Type of patient').select(:concept_id),
+                          value_coded: ConceptName.where(name: 'External consultation').select(:concept_id),
+                          person_id: registration_encounters.select(:patient_id))
+                   .where('obs_datetime < DATE(?) + INTERVAL 1 DAY', @end_date)
+                   .distinct(:person_id)
+      end
+
+      def appointment_encounters
+        Encounter.where(program: Program.where(name: 'HIV Program'),
+                        type: EncounterType.where(name: 'Appointment'))
+      end
+
+      def registration_encounters
+        Encounter.where(program: Program.where(name: 'HIV Program'),
+                        type: EncounterType.where(name: 'Registration'))
+      end
     end
   end
-
 end

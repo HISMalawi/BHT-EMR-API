@@ -28,13 +28,14 @@ module ARTService
         encounter_type = EncounterType.find_by(name: 'DISPENSING').id
 
         sql_path = moh_pepfar_breakdown(@min_age, @max_age)
-
+=begin
         concept_id = ConceptName.find_by_name('Type of patient').concept_id
         ext_concept_id = ConceptName.find_by_name('External consultation').concept_id
 
         person_ids = Observation.where(concept_id: concept_id,
           value_coded: ext_concept_id).group(:person_id).map(&:person_id)
         person_ids = [0] if person_ids.blank?
+=end
 
         patients = ActiveRecord::Base.connection.select_all <<~SQL
           SELECT
@@ -51,7 +52,17 @@ module ARTService
                 and (`s`.`voided` = 0)
                 and (`p`.`program_id` = 1)
                 and (`s`.`state` = 7)
-                #{sql_path} AND p.patient_id NOT IN(#{person_ids.join(',')}))
+                #{sql_path} AND p.patient_id NOT IN(
+
+                  SELECT person_id FROM obs
+                  WHERE concept_id IN (
+                  SELECT concept_id FROM concept_name WHERE name LIKE 'Type of patient'
+                  ) AND value_coded IN (
+                    SELECT concept_id FROM concept_name WHERE name LIKE 'External Consultation'
+                  ) AND voided = 0 AND (obs_datetime < DATE('#{@end_date}') + INTERVAL 1 DAY)
+                  GROUP BY person_id
+
+                ))
           GROUP BY `p`.`patient_id` HAVING date_enrolled IS NOT NULL
           AND DATE(date_enrolled) <= DATE('#{@end_date}');
         SQL
@@ -230,8 +241,10 @@ module ARTService
           INNER JOIN concept_set s ON s.concept_id = d.concept_id
           INNER JOIN person p ON p.person_id = o.patient_id
           INNER JOIN encounter e ON e.patient_id = p.person_id
+          AND e.program_id = #{program_id}
           LEFT JOIN patient_identifier i ON  i.patient_id = o.patient_id
-          AND i.identifier_type = #{identifier_type} AND LENGTH(identifier) > 0
+          AND i.identifier_type = #{identifier_type}
+          AND LENGTH(identifier) > 0 AND i.voided = 0
           WHERE s.concept_set = #{arv_concept_set} AND o.voided = 0
           AND DATE(o.start_date) = (
             SELECT DATE(MAX(t.start_date)) FROM orders t
@@ -242,9 +255,7 @@ module ARTService
             AND t.voided = 0 AND t.start_date <= '#{@end_date}'
             AND t4.concept_set = #{arv_concept_set} AND t2.quantity > 0
           )AND e.program_id = #{program_id} AND o.patient_id = #{patient_id}
-          AND od.quantity > 0 AND e.encounter_type = #{encounter_type}
-          AND i.voided  = 0
-          GROUP BY o.order_id;
+          AND od.quantity > 0 GROUP BY o.order_id;
         SQL
 
         regimen_info = ActiveRecord::Base.connection.select_one <<~SQL

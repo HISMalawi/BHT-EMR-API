@@ -72,7 +72,7 @@ EOF
                 (new_def == true  ? data[age_group][gender][0] << patient_id : data[age_group][gender][1] << patient_id)
               when 'Patient died'
                 data[age_group][gender][2] << patient_id
-              when 'Stopped'
+              when /Stopped/i
                 data[age_group][gender][3] << patient_id
               when 'Patient transferred out'
                 data[age_group][gender][4] << patient_id
@@ -129,7 +129,7 @@ EOF
                 BETWEEN '#{@start_date.to_date.strftime("%Y-%m-%d 00:00:00")}' AND '#{@end_date}')
           GROUP BY `p`.`patient_id`
           HAVING date_enrolled IS NOT NULL
-          AND date_enrolled BETWEEN '#{@start_date.to_date}' AND '#{@start_date.to_date}';
+          AND date_enrolled BETWEEN '#{@start_date.to_date}' AND '#{@end_date.to_date}';
 EOF
 
         end

@@ -28,6 +28,7 @@ module ARTService
           'CREATE TABLE IF NOT EXISTS temp_disaggregated (
              patient_id INTEGER PRIMARY KEY,
              age_group VARCHAR(20),
+             initial_maternal_status VARCHAR(10),
              maternal_status VARCHAR(10),
              given_ipt INT(1),
              screened_for_tb INT(1)
@@ -227,9 +228,20 @@ EOF
           tx_curr = true
         end
 
-        if outcome == 'On antiretrovirals'
-          #tx_screened_for_tb = screened_for_tb(patient_id, age_group, date_enrolled, end_date)
-          #tx_given_ipt = given_ipt(patient_id, age_group, date_enrolled, end_date)
+        if (age_group == 'Breastfeeding' || age_group == 'Pregnant')
+          if data['initial_maternal_status'] == 'FNP'
+            tx_new = false
+          else
+            date_enrolled = data['date_enrolled'].to_date
+            earliest_start_date = data['earliest_start_date'].to_date rescue date_enrolled
+            if earliest_start_date != date_enrolled
+              tx_new = false
+            end
+
+            if data['mstatus'] == 'FNP'
+              tx_curr = false
+            end
+          end
         end
 
         return [tx_new, tx_curr, tx_given_ipt, tx_screened_for_tb]
@@ -238,27 +250,35 @@ EOF
       def get_age_groups(age_group, start_date, end_date, temp_outcome_table)
         if age_group != 'Pregnant' && age_group != 'FNP' && age_group != 'Not pregnant' && age_group != 'Breastfeeding'
 
-          results = ActiveRecord::Base.connection.select_all <<EOF
+          results = ActiveRecord::Base.connection.select_all <<~SQL
             SELECT
               `cohort_disaggregated_age_group`(date(birthdate), date('#{@end_date}')) AS age_group,
               o.cum_outcome AS outcome, e.*
             FROM earliest_start_date e
             LEFT JOIN `#{temp_outcome_table}` o ON o.patient_id = e.patient_id
             WHERE  date_enrolled IS NOT NULL AND DATE(date_enrolled) <= DATE('#{@end_date}')
-            GROUP BY e.patient_id
+            AND e.patient_id NOT IN(
+            SELECT person_id FROM obs
+            WHERE concept_id IN (
+              SELECT concept_id FROM concept_name WHERE name LIKE 'Type of patient'
+            ) AND value_coded IN (
+              SELECT concept_id FROM concept_name WHERE name LIKE 'External Consultation'
+            ) AND voided = 0 AND (obs_datetime < DATE('#{@end_date}') + INTERVAL 1 DAY)
+            GROUP BY person_id) GROUP BY e.patient_id
             HAVING age_group = '#{age_group}';
-EOF
+          SQL
 
         elsif age_group == 'Pregnant'
           create_mysql_female_maternal_status
           results = ActiveRecord::Base.connection.select_all <<EOF
             SELECT
               e.*, maternal_status AS mstatus,
+              t2.initial_maternal_status,
               t3.cum_outcome AS outcome
             FROM temp_earliest_start_date e
             INNER JOIN temp_disaggregated t2 ON t2.patient_id = e.patient_id
             INNER JOIN `#{temp_outcome_table}` t3 ON t3.patient_id = e.patient_id
-            WHERE maternal_status = 'FP'
+            WHERE maternal_status = 'FP' OR initial_maternal_status = 'FP'
             GROUP BY e.patient_id;
 EOF
 
@@ -271,7 +291,7 @@ EOF
             FROM temp_earliest_start_date e
             INNER JOIN temp_disaggregated t2 ON t2.patient_id = e.patient_id
             INNER JOIN `#{temp_outcome_table}` t3 ON t3.patient_id = e.patient_id
-            WHERE maternal_status = 'FBf'
+            WHERE maternal_status = 'FBf' OR initial_maternal_status = 'FBf'
             GROUP BY e.patient_id;
 EOF
 
@@ -438,20 +458,24 @@ EOF
         pregnant_concepts << ConceptName.find_by_name('patient pregnant').concept_id
 
         results = ActiveRecord::Base.connection.select_all(
-          "SELECT person_id FROM obs obs
-            INNER JOIN encounter enc ON enc.encounter_id = obs.encounter_id AND enc.voided = 0
+          "SELECT person_id, obs.value_coded value_coded FROM obs obs
+            INNER JOIN encounter enc ON enc.encounter_id = obs.encounter_id
+            AND enc.voided = 0 AND enc.program_id = 1
           WHERE obs.person_id = #{patient_id}
           AND obs.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-          AND obs.concept_id IN(#{pregnant_concepts.join(',')}) AND obs.value_coded = '1065'
+          AND obs.concept_id IN(#{pregnant_concepts.join(',')})
           AND obs.voided = 0 AND enc.encounter_type IN(#{encounter_types.join(',')})
           AND DATE(obs.obs_datetime) = (SELECT MAX(DATE(o.obs_datetime)) FROM obs o
-                        WHERE o.concept_id IN(#{pregnant_concepts.join(',')}) AND voided = 0
-                        AND o.person_id = obs.person_id AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
-          GROUP BY obs.person_id"
+                        INNER JOIN encounter e ON e.encounter_id = o.encounter_id
+                        AND e.program_id = 1 AND e.voided = 0
+                        WHERE o.concept_id IN(#{pregnant_concepts.join(',')})
+                        AND o.voided = 0 AND o.person_id = obs.person_id
+                        AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
+          GROUP BY obs.person_id HAVING value_coded = 1065
+          ORDER BY obs.obs_datetime DESC;"
         )
 
        female_maternal_status = results.blank? ? 'FNP' : 'FP'
-
 
        if female_maternal_status == 'FNP'
 
@@ -461,24 +485,78 @@ EOF
         breastfeeding_concepts <<  ConceptName.find_by_name('Breastfeeding').concept_id
 
         results2 = ActiveRecord::Base.connection.select_all(
-          "SELECT person_id  FROM obs obs
-            INNER JOIN encounter enc ON enc.encounter_id = obs.encounter_id AND enc.voided = 0
+          "SELECT person_id, obs.value_coded value_coded  FROM obs obs
+            INNER JOIN encounter enc ON enc.encounter_id = obs.encounter_id
+            AND enc.voided = 0 AND enc.program_id = 1
           WHERE obs.person_id =#{patient_id}
           AND obs.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-          AND obs.concept_id IN(#{breastfeeding_concepts.join(',')}) AND obs.value_coded = 1065
+          AND obs.concept_id IN(#{breastfeeding_concepts.join(',')})
           AND obs.voided = 0 AND enc.encounter_type IN(#{encounter_types.join(',')})
           AND DATE(obs.obs_datetime) = (SELECT MAX(DATE(o.obs_datetime)) FROM obs o
-                        WHERE o.concept_id IN(#{breastfeeding_concepts.join(',')}) AND voided = 0
-                        AND o.person_id = obs.person_id AND o.obs_datetime <='#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
-          GROUP BY obs.person_id;"
+                        INNER JOIN encounter e ON e.encounter_id = o.encounter_id
+                        AND e.program_id = 1 AND e.voided = 0
+                        WHERE o.concept_id IN(#{breastfeeding_concepts.join(',')}) AND o.voided = 0
+                        AND o.person_id = obs.person_id
+                        AND o.obs_datetime <='#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
+          GROUP BY obs.person_id HAVING value_coded = 1065
+          ORDER BY obs.obs_datetime DESC;"
         )
 
          female_maternal_status = results2.blank? ? 'FNP' : 'FBf'
        end
 
+       results = ActiveRecord::Base.connection.select_all(
+          "SELECT person_id, obs.value_coded value_coded FROM obs obs
+            INNER JOIN encounter enc ON enc.encounter_id = obs.encounter_id
+            AND enc.voided = 0 AND enc.program_id = 1
+          WHERE obs.person_id = #{patient_id}
+          AND obs.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+          AND obs.concept_id IN(#{pregnant_concepts.join(',')})
+          AND obs.voided = 0 AND enc.encounter_type IN(#{encounter_types.join(',')})
+          AND DATE(obs.obs_datetime) = (SELECT MIN(DATE(o.obs_datetime)) FROM obs o
+                        INNER JOIN encounter e ON e.encounter_id = o.encounter_id
+                        AND e.program_id = 1 AND e.voided = 0
+                        WHERE o.concept_id IN(#{pregnant_concepts.join(',')})
+                        AND o.voided = 0 AND o.person_id = obs.person_id
+                        AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
+          GROUP BY obs.person_id HAVING value_coded = 1065
+          ORDER BY obs.obs_datetime DESC;"
+        )
+
+       initial_female_maternal_status = results.blank? ? 'FNP' : 'FP'
+
+       if initial_female_maternal_status == 'FNP'
+
+        breastfeeding_concepts = []
+        breastfeeding_concepts <<  ConceptName.find_by_name('Breast feeding?').concept_id
+        breastfeeding_concepts <<  ConceptName.find_by_name('Breast feeding').concept_id
+        breastfeeding_concepts <<  ConceptName.find_by_name('Breastfeeding').concept_id
+
+        results2 = ActiveRecord::Base.connection.select_all(
+          "SELECT person_id, obs.value_coded value_coded  FROM obs obs
+            INNER JOIN encounter enc ON enc.encounter_id = obs.encounter_id
+            AND enc.voided = 0 AND enc.program_id = 1
+          WHERE obs.person_id =#{patient_id}
+          AND obs.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+          AND obs.concept_id IN(#{breastfeeding_concepts.join(',')})
+          AND obs.voided = 0 AND enc.encounter_type IN(#{encounter_types.join(',')})
+          AND DATE(obs.obs_datetime) = (SELECT MIN(DATE(o.obs_datetime)) FROM obs o
+                        INNER JOIN encounter e ON e.encounter_id = o.encounter_id
+                        AND e.program_id = 1 AND e.voided = 0
+                        WHERE o.concept_id IN(#{breastfeeding_concepts.join(',')}) AND o.voided = 0
+                        AND o.person_id = obs.person_id
+                        AND o.obs_datetime <='#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
+          GROUP BY obs.person_id HAVING value_coded = 1065
+          ORDER BY obs.obs_datetime DESC;"
+        )
+
+        initial_female_maternal_status = results2.blank? ? 'FNP' : 'FBf'
+       end
+
 
        ActiveRecord::Base.connection.execute <<EOF
         UPDATE temp_disaggregated SET maternal_status =  '#{female_maternal_status}',
+          initial_maternal_status = '#{initial_female_maternal_status}',
            age_group = '#{age_group}' WHERE patient_id = #{patient_id};
 EOF
 

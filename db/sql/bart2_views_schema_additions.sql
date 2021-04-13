@@ -708,7 +708,8 @@ IF set_patient_state = 7 OR set_outcome = 'Pre-ART (Continue)' OR set_outcome IS
       FROM orders o
       INNER JOIN drug_order d ON d.order_id = o.order_id
       INNER JOIN drug ON drug.drug_id = d.drug_inventory_id
-      WHERE o.patient_id = patient_id AND d.drug_inventory_id IN(
+      WHERE o.patient_id = patient_id AND o.voided = 0
+      AND d.drug_inventory_id IN(
         SELECT DISTINCT(drug_id) FROM drug WHERE
         concept_id IN(SELECT concept_id FROM concept_set WHERE concept_set = 1085)
     ) AND DATE(o.start_date) <= visit_date AND d.quantity > 0 ORDER BY start_date DESC LIMIT 1);
@@ -1308,7 +1309,7 @@ DECLARE arv_concept INT;
 set dispension_concept_id = (SELECT concept_id FROM concept_name WHERE name = 'AMOUNT DISPENSED');
 set arv_concept = (SELECT concept_id FROM concept_name WHERE name = "ANTIRETROVIRAL DRUGS");
 
-set start_date = (SELECT MIN(DATE(obs_datetime)) FROM obs WHERE person_id = patient_id AND concept_id = dispension_concept_id AND value_drug IN (SELECT drug_id FROM drug d WHERE d.concept_id IN (SELECT cs.concept_id FROM concept_set cs WHERE cs.concept_set = arv_concept)));
+set start_date = (SELECT MIN(DATE(obs_datetime)) FROM obs WHERE voided = 0 AND person_id = patient_id AND concept_id = dispension_concept_id AND value_drug IN (SELECT drug_id FROM drug d WHERE d.concept_id IN (SELECT cs.concept_id FROM concept_set cs WHERE cs.concept_set = arv_concept)));
 
 RETURN start_date;
 END */;;
@@ -1653,7 +1654,7 @@ CREATE FUNCTION `current_defaulter`(my_patient_id INT, my_end_date DATETIME) RET
 BEGIN
   DECLARE done INT DEFAULT FALSE;
   DECLARE my_start_date, my_expiry_date, my_obs_datetime DATETIME;
-  DECLARE my_daily_dose, my_quantity, my_pill_count, my_total_text, my_total_numeric DECIMAL;
+  DECLARE my_daily_dose, my_quantity, my_pill_count, my_total_text, my_total_numeric DECIMAL(6, 2);
   DECLARE my_drug_id, flag INT;
 
   DECLARE cur1 CURSOR FOR SELECT d.drug_inventory_id, o.start_date, d.equivalent_daily_dose daily_dose, d.quantity, o.start_date FROM drug_order d
@@ -1720,7 +1721,7 @@ DETERMINISTIC
 BEGIN
 DECLARE done INT DEFAULT FALSE;
   DECLARE my_start_date, my_expiry_date, my_obs_datetime, my_defaulted_date DATETIME;
-  DECLARE my_daily_dose, my_quantity, my_pill_count, my_total_text, my_total_numeric DECIMAL;
+  DECLARE my_daily_dose, my_quantity, my_pill_count, my_total_text, my_total_numeric DECIMAL(6, 2);
   DECLARE my_drug_id, flag INT;
 
   DECLARE cur1 CURSOR FOR SELECT d.drug_inventory_id, o.start_date, d.equivalent_daily_dose daily_dose, d.quantity, o.start_date FROM drug_order d
@@ -1876,7 +1877,7 @@ CREATE  FUNCTION `current_pepfar_defaulter`(my_patient_id INT, my_end_date DATET
 BEGIN
 DECLARE done INT DEFAULT FALSE;
   DECLARE my_start_date, my_expiry_date, my_obs_datetime DATETIME;
-  DECLARE my_daily_dose, my_quantity, my_pill_count, my_total_text, my_total_numeric DECIMAL;
+  DECLARE my_daily_dose, my_quantity, my_pill_count, my_total_text, my_total_numeric DECIMAL(6, 2);
   DECLARE my_drug_id, flag INT;
 
   DECLARE cur1 CURSOR FOR SELECT d.drug_inventory_id, o.start_date, d.equivalent_daily_dose daily_dose, d.quantity, o.start_date FROM drug_order d
@@ -1943,7 +1944,7 @@ CREATE FUNCTION `current_pepfar_defaulter_date`(my_patient_id INT, my_end_date D
 BEGIN
 	DECLARE done INT DEFAULT FALSE;
 	DECLARE my_start_date, my_expiry_date, my_obs_datetime, my_defaulted_date DATETIME;
-	DECLARE my_daily_dose, my_quantity, my_pill_count, my_total_text, my_total_numeric DECIMAL;
+	DECLARE my_daily_dose, my_quantity, my_pill_count, my_total_text, my_total_numeric DECIMAL(6, 2);
 	DECLARE my_drug_id, flag INT;
 
 	DECLARE cur1 CURSOR FOR SELECT d.drug_inventory_id, o.start_date, d.equivalent_daily_dose daily_dose, d.quantity, o.start_date FROM drug_order d

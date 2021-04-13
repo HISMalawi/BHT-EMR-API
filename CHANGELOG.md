@@ -16,7 +16,66 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
-- No updates so far
+### [4.10.28] - 2021-04-07
+
+### Fixed
+
+- Lab: Updated his-emr-api-lab.gem to v0.0.1
+
+
+## [4.10.27] - 2021-04-01
+### Fixed
+
+- ART: Filtered out patients with NULL drug order quantities from cohort report
+## [4.10.26] - 2021-03-29
+
+### Fixed
+
+- ART: Lab visits being flagged as incomplete visits (EGPAF EMR Helpdesk #2376)
+
+
+## [4.10.25] - 2021-03-27
+
+### Added
+
+- Added health centre: Kaongizi Health Centre - Nkhotakota
+- ART: Revised TB Prev report
+- ART Stock: Updated names of drugs to use MoH short form naming convention
+- ART: Newly initiated on TB Preventive Therapy age disaggregated report
+- ART: Report on drug dispensations disaggregated by pack_sizes
+- ART Stock: Renamed pharmacy transaction types:
+  Tins Removed => Drugs removed, New Deliveries => Drugs Added, Edited Stock => Drugs Edited
+- ART Stock: Endpoint for retrieving an audit trail
+- ART Stock: Separation of stock items by pack size in addition to drug id
+- Global patient voiding (voids all of a patient's records)
+- ART: Indicators for patients newly initiated on TB Preventive Therapy
+
+### Fixed
+
+- ART: Transfer out only visits from incomplete visits report (EGPAF EMR Helpdesk #2355)
+- ART: External consultations appearing on missed appointments report
+- 422 Error on patient merge (EGPAF Helpdesk #1947)
+- Invalid (memoized) current health center value after updating current health center
+- ART: Data cleaning tool, encounters after death, pulling patients that aren't dead or
+  don't have encounters after death (EGPAF EMR Helpdesk #1977).
+
+## [4.10.22] - 2021-02-12
+
+### Fixed
+
+- ART: External consultations appearing on defaulters list (EGPAF EMR Helpdesk #2178)
+
+## [4.10.21] - 2021-02-10
+
+### Fixed
+
+- ART Stock: Race condition on parallel dispensation of same drug (eg when multiple packs are dispensed using v4.11.1 ART)
+
+## [4.10.20] - 2021-02-08
+
+### Fixed
+
+- ART: Misalignment of cohort disaggregated indicators with other report indicators
 
 ## [4.10.19] - 2021-02-03
 

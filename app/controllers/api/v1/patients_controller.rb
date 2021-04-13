@@ -49,6 +49,12 @@ class Api::V1::PatientsController < ApplicationController
     render json: service.update_patient(patient, params.require(:person_id))
   end
 
+  def destroy
+    service.void_patient(patient, params.require(:reason))
+
+    render status: :no_content
+  end
+
   def print_national_health_id_label
     patient = Patient.find(params[:patient_id])
 
@@ -218,6 +224,11 @@ class Api::V1::PatientsController < ApplicationController
   def tpt_prescription_count
     program = params[:program_id] ? Program.find(params[:program_id]) : nil
     render json: service.tpt_prescription_count(patient, program, params[:date])
+  end
+
+  def last_cxca_screening_details
+    cxca = CXCAService::PatientSummary.new(patient, params[:date].to_date)
+    render json: cxca.last_screening_info
   end
 
   private

@@ -31,7 +31,7 @@ module ARTService
           clients = {}
 
           total_ipt_dispensed = {}
-          initiation_start_date = (@completion_start_date.to_date - 180.day).to_date
+          initiation_start_date = (@completion_start_date.to_date - 6.month).to_date
 
           meds.each do |m|
             patient_id = m["patient_id"].to_i
@@ -126,7 +126,7 @@ module ARTService
         end
 
         def tb_med_dispensations
-          initiation_start_date = (@completion_start_date.to_date - 180.days).strftime('%Y-%m-%d 00:00:00')
+          initiation_start_date = (@completion_start_date.to_date - 6.month).strftime('%Y-%m-%d 00:00:00')
 
           return ActiveRecord::Base.connection.select_all <<-SQL
             SELECT
