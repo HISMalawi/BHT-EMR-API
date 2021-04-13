@@ -12,10 +12,9 @@ module RadiologyService
         end
       end
 
-      patient_name = "#{patient_details[:given_name]} #{patient_details[:family_name]}"
 
       sample_file_path = "/var/www/BHT-EMR-API/config/sample.msi"
-      save_file_path = "/tmp/#{patient_details[:accession_number] }_#{patient_name.gsub(' ', '_')}_scheduled_radiology.msi"
+      save_file_path = "/tmp/#{patient_details[:accession_number] }_#{patient_details[:patient_name].gsub(' ', '_')}_scheduled_radiology.msi"
 
       # using eval() might decrease performance, not sure if there's a better way to do this.
       msi_file_data = eval(File.read(sample_file_path))
@@ -36,6 +35,21 @@ module RadiologyService
         ftp.login(main_config['ftp_user_name'], main_config['ftp_pw'])
         ftp.putbinaryfile(file_path)
       end
+    end
+
+    def print_radiology_barcode(accession_number,patient_national_id_with_dashes, patient_name, radio_order,date_created)
+      label = 'label' + 0.to_s
+      label = ZebraPrinter::Label.new(500,165)
+      label.font_size = 2
+      label.font_horizontal_multiplier = 1
+      label.font_vertical_multiplier = 1
+      label.left_margin = 300
+      label.draw_barcode(50,105,0,1,4,8,50,false,"#{accession_number}")
+      label.draw_multi_text("#{patient_name} #{patient_national_id_with_dashes}")
+      label.draw_multi_text("x-ray, #{radio_order.name.downcase rescue nil} - #{accession_number rescue nil}")
+      label.draw_multi_text("#{date_created}")
+
+      label.print(1)
     end
   end
 end

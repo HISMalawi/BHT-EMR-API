@@ -9,7 +9,7 @@ INSTITUTION {#{Location.current_health_center.name}}
 OPERATOR {}
 OTHER_PATIENT_IDS {#{patient_details[:national_id]}}
 PATIENT_ID {#{patient_details[:person_id]}}
-PATIENT_NAME {#{patient_name.gsub('_', ' ')}}
+PATIENT_NAME {#{patient_details[:patient_name].gsub('_', ' ')}}
 PATIENT_NAME_BIG5 {}
 PATIENT_BIRTH_DATE {#{patient_details[:patientDOB]}}
 PATIENT_SEX {#{patient_details[:patientGender]}}

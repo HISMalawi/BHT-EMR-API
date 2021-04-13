@@ -112,7 +112,9 @@ Rails.application.routes.draw do
         end)
       end
 
-      resources :radiology
+      resources :radiology do
+      get 'barcode', to: 'radiology#print_barcode'
+    end
       resources :observations
 
       resources :patient_programs, only: %i[create index show destroy]
