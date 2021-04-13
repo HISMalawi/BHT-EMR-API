@@ -238,9 +238,6 @@ EOF
               tx_new = false
             end
 
-            if data['mstatus'] == 'FNP'
-              tx_curr = false
-            end
           end
         end
 
@@ -287,6 +284,7 @@ EOF
           results = ActiveRecord::Base.connection.select_all <<EOF
             SELECT
               e.*, maternal_status AS mstatus,
+              initial_maternal_status,
               t3.cum_outcome AS outcome
             FROM temp_earliest_start_date e
             INNER JOIN temp_disaggregated t2 ON t2.patient_id = e.patient_id
@@ -300,6 +298,7 @@ EOF
           results = ActiveRecord::Base.connection.select_all <<EOF
             SELECT
               e.*, maternal_status AS mstatus,
+              initial_maternal_status,
               t3.cum_outcome AS outcome
             FROM temp_earliest_start_date e
             INNER JOIN temp_disaggregated t2 ON t2.patient_id = e.patient_id

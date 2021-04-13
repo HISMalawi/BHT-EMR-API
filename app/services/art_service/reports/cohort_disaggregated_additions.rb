@@ -16,7 +16,7 @@ module ARTService
         return screened_for_tb_female_client('FP') if @gender == "pregnant"
         return screened_for_tb_female_client('FNP') if @gender == "fnp"
         return screened_for_tb_female_client('FBf') if @gender == "breastfeeding"
-        p @patient_outcome_table
+
         gender = @gender.first.upcase
         results = ActiveRecord::Base.connection.select_all <<~SQL
           SELECT
