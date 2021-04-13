@@ -10,10 +10,12 @@ class CreateLabLimsOrderMappings < ActiveRecord::Migration[5.2]
       t.datetime :pulled_at
 
       t.timestamps
-
-      t.index :lims_id
     end
 
-    add_foreign_key :lab_lims_order_mappings, :orders, primary_key: :order_id, column: :order_id
+    unless foreign_key_exists?(:lab_lims_order_mappings, :orders)
+      add_foreign_key :lab_lims_order_mappings, :orders, primary_key: :order_id, column: :order_id
+    end
+
+    add_index :lab_lims_order_mappings, :lims_id unless index_exists?(:lab_lims_order_mappings, :lims_id)
   end
 end
