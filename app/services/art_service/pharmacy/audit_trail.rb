@@ -89,6 +89,8 @@ module ARTService
             transaction_date: transaction[:transaction_date],
             transaction_type: transaction[:transaction_type],
             batch_number: transaction[:batch_number],
+            drug_id: transaction[:drug_id],
+            batch_item_id: transaction[:batch_item_id],
             drug_name: transaction[:drug_name],
             amount_committed_to_stock: transaction[:amount_committed_to_stock],
             amount_dispensed_from_art: transaction[:amount_dispensed_from_art],
