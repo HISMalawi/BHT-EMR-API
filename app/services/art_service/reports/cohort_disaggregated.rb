@@ -78,6 +78,58 @@ module ARTService
 
         tmp = get_age_groups(age_group, start_date, end_date, temp_outcome_table)
 
+
+        #A hack to get female that were pregnant / breastfeeding at the beginning of the reporting period + those are currently the same state
+        if(age_group == 'Pregnant')
+          tmp_arr = []
+          (tmp || []).each do |data|
+            begin
+              date_enrolled  = data['date_enrolled'].to_date
+            rescue
+              raise data.inspect
+            end
+            earliest_start_date = data['earliest_start_date'] rescue date_enrolled
+
+            imstaus = data['initial_maternal_status']
+            mstatus = data['mstatus']
+
+            if(date_enrolled >= start_date && date_enrolled <= end_date) && imstaus == 'FP' && (date_enrolled == earliest_start_date)
+              tmp_arr << data
+            elsif mstatus == 'FP'
+              tmp_arr << data
+            end
+          end
+
+          tmp = tmp_arr
+        end
+
+        if(age_group == 'Breastfeeding')
+          tmp_arr = []
+          (tmp || []).each do |data|
+            begin
+              date_enrolled  = data['date_enrolled'].to_date
+            rescue
+              raise data.inspect
+            end
+            earliest_start_date = data['earliest_start_date'] rescue date_enrolled
+
+            imstaus = data['initial_maternal_status']
+            mstatus = data['mstatus']
+
+            if(date_enrolled >= start_date && date_enrolled <= end_date) && imstaus == 'FBf' && (date_enrolled == earliest_start_date)
+              tmp_arr << data
+            elsif mstatus == 'FBf'
+              tmp_arr << data
+            end
+          end
+
+          tmp = tmp_arr
+        end
+        # ........................... Hack ends .......... Will clean up later
+
+
+
+
         on_art = []
         all_clients = []
         all_clients_outcomes = {}
@@ -228,16 +280,15 @@ EOF
           tx_curr = true
         end
 
-        if (age_group == 'Breastfeeding' || age_group == 'Pregnant')
-          if data['initial_maternal_status'] == 'FNP'
-            tx_new = false
-          else
-            date_enrolled = data['date_enrolled'].to_date
-            earliest_start_date = data['earliest_start_date'].to_date rescue date_enrolled
-            if earliest_start_date != date_enrolled
-              tx_new = false
-            end
+        if (age_group == 'Pregnant')
+          if data['mstatus'] != 'FP'
+            tx_curr = false
+          end
+        end
 
+        if (age_group == 'Breastfeeding')
+          if data['mstatus'] != 'FBf'
+            tx_curr = false
           end
         end
 
