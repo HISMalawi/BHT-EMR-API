@@ -53,6 +53,10 @@ class Api::V1::ReportsController < ApplicationController
       start_date, end_date = params.require %i[start_date end_date]
       start_date = start_date.to_date
       end_date = end_date.to_date
+    elsif quarter.match('Q')
+      year = quarter.split(' ')[1].to_i
+      index = quarter.split(' ')[0]
+      start_date, end_date = quarter_to_date(index, year)
     end
 
     stats = service.cohort_disaggregated(quarter, age_group, start_date,
@@ -192,4 +196,20 @@ class Api::V1::ReportsController < ApplicationController
     @service = ReportService.new program_id: program_id
     @service
   end
+
+  def quarter_to_date(index, year)
+    index = index.upcase
+    year = year.to_i
+
+    if index == 'Q1'
+      return ["#{year}-01-01".to_date, "#{year}-03-31".to_date]
+    elsif index == 'Q2'
+      return ["#{year}-04-01".to_date, "#{year}-06-30".to_date]
+    elsif index == 'Q3'
+      return ["#{year}-07-01".to_date, "#{year}-09-30".to_date]
+    elsif index == 'Q4'
+      return ["#{year}-10-01".to_date, "#{year}-12-31".to_date]
+    end
+  end
+
 end
