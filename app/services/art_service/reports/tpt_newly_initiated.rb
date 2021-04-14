@@ -147,6 +147,15 @@ module ARTService
               AND drug_order.drug_inventory_id IN (#{primary_drug_query})
               AND drug_order.quantity > 0
             WHERE patient_program.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
+              AND patient_program.patient_id NOT IN (
+                SELECT person_id FROM obs
+                WHERE concept_id IN (
+                  SELECT concept_id FROM concept_name WHERE name LIKE 'Type of patient'
+                ) AND value_coded IN (
+                  SELECT concept_id FROM concept_name WHERE name LIKE 'External Consultation'
+                ) AND voided = 0 AND (obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY)
+                GROUP BY person_id
+              )
           )
           GROUP BY patient_program.patient_id
         SQL
