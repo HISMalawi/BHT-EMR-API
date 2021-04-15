@@ -127,7 +127,7 @@ module ARTService
             AND drug_order.quantity > 0  /* This implies that a dispensation was made */
           INNER JOIN orders AS arv_orders
             ON arv_orders.patient_id = patient_program.patient_id
-            AND arv_orders.start_date <= #{end_date}
+            AND arv_orders.start_date < DATE(#{end_date}) + INTERVAL 1 DAY
           INNER JOIN drug_order AS arv_drug_orders
             ON arv_drug_orders.order_id = arv_orders.order_id
             AND arv_drug_orders.drug_inventory_id IN (SELECT drug_id FROM arv_drug)
