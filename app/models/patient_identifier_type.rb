@@ -21,6 +21,20 @@ class PatientIdentifierType < RetirableRecord
     patient_identifier
   end
 
+  def next_identifier_for_malawi_nid(options = {})
+  return nil unless name == 'Malawi National ID'
+
+  new_national_id = options[:MNID]
+
+  patient_identifier = PatientIdentifier.new
+  patient_identifier.type = self
+  patient_identifier.identifier = new_national_id
+  patient_identifier.patient = options[:patient]
+  patient_identifier.location_id = Location.current.location_id
+  patient_identifier.save if patient_identifier.patient
+  patient_identifier
+end
+
   private
 
   def use_moh_national_id
