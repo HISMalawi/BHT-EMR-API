@@ -4,7 +4,7 @@ class PatientService
   include ModelUtils
   include TimeUtils
 
-  def create_patient(program, person)
+  def create_patient(program, person,malawi_national_id = nil)
     ActiveRecord::Base.transaction do
       patient = Patient.create(patient_id: person.id)
       unless patient.errors.empty?
@@ -15,6 +15,10 @@ class PatientService
         assign_patient_dde_npid(patient, program)
       else
         assign_patient_v3_npid(patient)
+        if malawi_national_id.present?
+           assign_patient_v28_malawiNid(patient,malawi_national_id)
+        end
+
       end
 
       patient.reload
@@ -477,6 +481,12 @@ class PatientService
   def assign_patient_v3_npid(patient)
     identifier_type = PatientIdentifierType.find_by(name: 'National id')
     identifier_type.next_identifier(patient: patient)
+  end
+
+  # Blesses patient with a v28 malawiNid
+  def assign_patient_v28_malawiNid(patient,malawi_national_id)
+    identifier_type = PatientIdentifierType.find_by(name: 'Malawi National ID')
+    identifier_type.next_identifier_for_malawi_nid(patient: patient,MNID: malawi_national_id)
   end
 
   # Blesses patient with a DDE npid
