@@ -16,6 +16,9 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+
+## [v4.10.34] - 2021-04-20
+
 ### Added
 
 - Lab: Added LIMS migration and worker scripts
