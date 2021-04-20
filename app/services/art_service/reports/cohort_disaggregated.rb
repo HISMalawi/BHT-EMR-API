@@ -281,12 +281,20 @@ EOF
         end
 
         if (age_group == 'Pregnant')
+          if data['initial_maternal_status'] != 'FP' && tx_new
+            tx_new = false
+          end
+
           if data['mstatus'] != 'FP'
             tx_curr = false
           end
         end
 
         if (age_group == 'Breastfeeding')
+          if data['initial_maternal_status'] != 'FBf' && tx_new
+            tx_new = false
+          end
+
           if data['mstatus'] != 'FBf'
             tx_curr = false
           end
