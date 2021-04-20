@@ -9,6 +9,19 @@ lims_default_password: 'knock_knock'
 lims_partner: 'BHT'
 lims_app_name: 'bht_emr_api'
 
+# Configuration for Pacs
+ftp_host:
+  192.168.3.202
+pacs_user:
+  'xero'
+pacs_pw:
+  'xero'
+ftp_user_name:
+  pacs
+ftp_pw:
+  pacs
+pacs_viewer:
+  192.168.3.203
 
 # Configuration for DDE
 dde:
