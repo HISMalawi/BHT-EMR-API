@@ -1657,13 +1657,14 @@ BEGIN
   DECLARE my_daily_dose, my_quantity, my_pill_count, my_total_text, my_total_numeric DECIMAL(6, 2);
   DECLARE my_drug_id, flag INT;
 
-  DECLARE cur1 CURSOR FOR SELECT d.drug_inventory_id, o.start_date, d.equivalent_daily_dose daily_dose, d.quantity, o.start_date FROM drug_order d
+  DECLARE cur1 CURSOR FOR SELECT d.drug_inventory_id, o.start_date, d.equivalent_daily_dose daily_dose, SUM(d.quantity), o.start_date FROM drug_order d
     INNER JOIN arv_drug ad ON d.drug_inventory_id = ad.drug_id
     INNER JOIN orders o ON d.order_id = o.order_id
       AND d.quantity > 0
       AND o.voided = 0
       AND o.start_date <= my_end_date
-      AND o.patient_id = my_patient_id;
+      AND o.patient_id = my_patient_id
+      GROUP BY drug_inventory_id, DATE(start_date), daily_dose;
 
   DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
 
@@ -1724,13 +1725,14 @@ DECLARE done INT DEFAULT FALSE;
   DECLARE my_daily_dose, my_quantity, my_pill_count, my_total_text, my_total_numeric DECIMAL(6, 2);
   DECLARE my_drug_id, flag INT;
 
-  DECLARE cur1 CURSOR FOR SELECT d.drug_inventory_id, o.start_date, d.equivalent_daily_dose daily_dose, d.quantity, o.start_date FROM drug_order d
+  DECLARE cur1 CURSOR FOR SELECT d.drug_inventory_id, o.start_date, d.equivalent_daily_dose daily_dose, SUM(d.quantity), o.start_date FROM drug_order d
     INNER JOIN arv_drug ad ON d.drug_inventory_id = ad.drug_id
     INNER JOIN orders o ON d.order_id = o.order_id
       AND d.quantity > 0
       AND o.voided = 0
       AND o.start_date <= my_end_date
-      AND o.patient_id = my_patient_id;
+      AND o.patient_id = my_patient_id
+      GROUP BY drug_inventory_id, DATE(start_date), daily_dose;
 
   DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
 
@@ -1880,13 +1882,15 @@ DECLARE done INT DEFAULT FALSE;
   DECLARE my_daily_dose, my_quantity, my_pill_count, my_total_text, my_total_numeric DECIMAL(6, 2);
   DECLARE my_drug_id, flag INT;
 
-  DECLARE cur1 CURSOR FOR SELECT d.drug_inventory_id, o.start_date, d.equivalent_daily_dose daily_dose, d.quantity, o.start_date FROM drug_order d
+  DECLARE cur1 CURSOR FOR SELECT d.drug_inventory_id, o.start_date, d.equivalent_daily_dose daily_dose, SUM(d.quantity), o.start_date FROM drug_order d
     INNER JOIN arv_drug ad ON d.drug_inventory_id = ad.drug_id
     INNER JOIN orders o ON d.order_id = o.order_id
       AND d.quantity > 0
       AND o.voided = 0
       AND o.start_date <= my_end_date
-      AND o.patient_id = my_patient_id;
+      AND o.patient_id = my_patient_id
+      GROUP BY drug_inventory_id, DATE(start_date), daily_dose;
+
 
   DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
 
@@ -1947,13 +1951,14 @@ BEGIN
 	DECLARE my_daily_dose, my_quantity, my_pill_count, my_total_text, my_total_numeric DECIMAL(6, 2);
 	DECLARE my_drug_id, flag INT;
 
-	DECLARE cur1 CURSOR FOR SELECT d.drug_inventory_id, o.start_date, d.equivalent_daily_dose daily_dose, d.quantity, o.start_date FROM drug_order d
+	DECLARE cur1 CURSOR FOR SELECT d.drug_inventory_id, o.start_date, d.equivalent_daily_dose daily_dose, SUM(d.quantity), o.start_date FROM drug_order d
 		INNER JOIN arv_drug ad ON d.drug_inventory_id = ad.drug_id
 		INNER JOIN orders o ON d.order_id = o.order_id
 			AND d.quantity > 0
 			AND o.voided = 0
 			AND o.start_date <= my_end_date
-			AND o.patient_id = my_patient_id;
+			AND o.patient_id = my_patient_id
+			GROUP BY drug_inventory_id, DATE(start_date), daily_dose;
 
 	DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
 
