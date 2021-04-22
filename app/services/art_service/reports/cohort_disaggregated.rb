@@ -571,12 +571,8 @@ EOF
           AND obs.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
           AND obs.concept_id IN(#{pregnant_concepts.join(',')})
           AND obs.voided = 0 AND enc.encounter_type IN(#{encounter_types.join(',')})
-          AND DATE(obs.obs_datetime) = (SELECT MIN(DATE(o.obs_datetime)) FROM obs o
-                        INNER JOIN encounter e ON e.encounter_id = o.encounter_id
-                        AND e.program_id = 1 AND e.voided = 0
-                        WHERE o.concept_id IN(#{pregnant_concepts.join(',')})
-                        AND o.voided = 0 AND o.person_id = obs.person_id
-                        AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
+          AND DATE(obs.obs_datetime) = (SELECT DATE(es.earliest_start_date) FROM temp_earliest_start_date es
+                                        WHERE es.patient_id = obs.person_id)
           GROUP BY obs.person_id HAVING value_coded = 1065
           ORDER BY obs.obs_datetime DESC;"
         )
@@ -598,12 +594,8 @@ EOF
           AND obs.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
           AND obs.concept_id IN(#{breastfeeding_concepts.join(',')})
           AND obs.voided = 0 AND enc.encounter_type IN(#{encounter_types.join(',')})
-          AND DATE(obs.obs_datetime) = (SELECT MIN(DATE(o.obs_datetime)) FROM obs o
-                        INNER JOIN encounter e ON e.encounter_id = o.encounter_id
-                        AND e.program_id = 1 AND e.voided = 0
-                        WHERE o.concept_id IN(#{breastfeeding_concepts.join(',')}) AND o.voided = 0
-                        AND o.person_id = obs.person_id
-                        AND o.obs_datetime <='#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
+          AND DATE(obs.obs_datetime) = (SELECT DATE(es.earliest_start_date) FROM temp_earliest_start_date es
+                                        WHERE es.patient_id = obs.person_id)
           GROUP BY obs.person_id HAVING value_coded = 1065
           ORDER BY obs.obs_datetime DESC;"
         )
