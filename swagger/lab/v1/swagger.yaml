@@ -175,6 +175,12 @@ paths:
         description: 'Filter by sample status: ordered, drawn'
         schema:
           type: string
+      - name: end_date
+        in: query
+        required: false
+        description: Select all results before this date
+        schema:
+          type: date
       responses:
         '200':
           description: Success
@@ -396,6 +402,32 @@ paths:
       responses:
         '204':
           description: No Content
+  "/api/v1/lab/reasons_for_test":
+    get:
+      summary: Reasons for test
+      description: Retrieve default reasons for test concept set
+      tags:
+      - Concepts
+      security:
+      - api_key: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    concept_id:
+                      type: integer
+                    name:
+                      type: string
+                      example: Routine
+                  required:
+                  - concept_id
+                  - name
   "/api/v1/lab/tests/{test_id}/results":
     post:
       summary: Add results to order
