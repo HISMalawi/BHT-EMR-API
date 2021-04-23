@@ -15,7 +15,7 @@ class RenamePharmacyTransactionTypes < ActiveRecord::Migration[5.2]
         next
       end
 
-      event_type.update!(name: new_event_name)
+      event_type.update_columns(name: new_event_name)
     end
   end
 
@@ -29,7 +29,7 @@ class RenamePharmacyTransactionTypes < ActiveRecord::Migration[5.2]
         next
       end
 
-      event_type.update!(name: old_event_name)
+      event_type.update_columns(name: old_event_name)
     end
   end
 end

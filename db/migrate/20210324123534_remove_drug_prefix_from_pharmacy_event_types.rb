@@ -10,7 +10,7 @@ class RemoveDrugPrefixFromPharmacyEventTypes < ActiveRecord::Migration[5.2]
       event = PharmacyEncounterType.find_by(name: old_name)
       next unless event
 
-      event.update!(name: new_name)
+      event.update_columns(name: new_name)
     end
   end
 
@@ -19,7 +19,7 @@ class RemoveDrugPrefixFromPharmacyEventTypes < ActiveRecord::Migration[5.2]
       event = PharmacyEncounterType.find_by(name: new_name)
       next unless event
 
-      event.update!(name: old_name)
+      event.update_columns(name: old_name)
     end
   end
 end
