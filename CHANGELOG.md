@@ -17,6 +17,12 @@ compatibility (examples of this include major architectural changes).
 ## [Unreleased]
 
 
+## [v4.10.35] - 2021-04-30
+
+### Added
+
+- Bumped up lab gem to version 0.0.12: Enables limiting number of LIMS migration workers
+
 ## [v4.10.34] - 2021-04-20
 
 ### Added
