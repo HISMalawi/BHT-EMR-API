@@ -45,6 +45,14 @@ class StockManagementService
     amount_rejected
   end
 
+  def create_batches(batches)
+    ActiveRecord::Base.connection.transaction do
+      batches.map do |batch|
+        add_items_to_batch(batch[:batch_number], batch[:items])
+      end
+    end
+  end
+
   # Add list of drugs to stock
   #
   # @param{batch_number} A batch number that came with the drugs package
@@ -65,6 +73,7 @@ class StockManagementService
       stock_items.each_with_index do |item, i|
         drug_id = fetch_parameter(item, :drug_id)
         quantity = fetch_parameter(item, :quantity)
+        barcode = fetch_parameter(item, :barcode)
         pack_size = item[:pack_size]
 
         delivery_date = fetch_parameter_as_date(item, :delivery_date, Date.today)
@@ -72,9 +81,8 @@ class StockManagementService
 
         item = find_batch_items(pharmacy_batch_id: batch.id,
                                 drug_id: drug_id,
-                                pack_size: pack_size,
-                                delivery_date: delivery_date,
-                                expiry_date: expiry_date).first
+                                barcode: barcode,
+                                pack_size: pack_size).first
 
         if item
           # Update existing item if already in batch
