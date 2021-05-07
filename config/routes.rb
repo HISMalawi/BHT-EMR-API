@@ -1,5 +1,6 @@
 Rails.application.routes.draw do
   mount Lab::Engine => '/'
+  mount Radiology::Engine => '/'
   mount Rswag::Ui::Engine => '/api-docs'
   mount Rswag::Api::Engine => '/api-docs'
 
@@ -116,9 +117,6 @@ Rails.application.routes.draw do
         end)
       end
 
-      resources :radiology do
-      get 'barcode', to: 'radiology#print_barcode'
-    end
       resources :observations
 
       resources :patient_programs, only: %i[create index show destroy]
@@ -207,7 +205,6 @@ Rails.application.routes.draw do
       delete '/drug_sets/:id', to: 'drugs#void_drug_sets'
 
       resource :global_properties
-      resource :radiology_properties
       resource :user_properties
 
       resource :session_stats, path: 'stats/session'

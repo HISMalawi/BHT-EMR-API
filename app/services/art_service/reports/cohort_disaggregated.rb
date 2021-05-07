@@ -78,6 +78,58 @@ module ARTService
 
         tmp = get_age_groups(age_group, start_date, end_date, temp_outcome_table)
 
+
+        #A hack to get female that were pregnant / breastfeeding at the beginning of the reporting period + those are currently the same state
+        if(age_group == 'Pregnant')
+          tmp_arr = []
+          (tmp || []).each do |data|
+            begin
+              date_enrolled  = data['date_enrolled'].to_date
+            rescue
+              raise data.inspect
+            end
+            earliest_start_date = data['earliest_start_date'] rescue date_enrolled
+
+            imstaus = data['initial_maternal_status']
+            mstatus = data['mstatus']
+
+            if(date_enrolled >= start_date && date_enrolled <= end_date) && imstaus == 'FP' && (date_enrolled == earliest_start_date)
+              tmp_arr << data
+            elsif mstatus == 'FP'
+              tmp_arr << data
+            end
+          end
+
+          tmp = tmp_arr
+        end
+
+        if(age_group == 'Breastfeeding')
+          tmp_arr = []
+          (tmp || []).each do |data|
+            begin
+              date_enrolled  = data['date_enrolled'].to_date
+            rescue
+              raise data.inspect
+            end
+            earliest_start_date = data['earliest_start_date'] rescue date_enrolled
+
+            imstaus = data['initial_maternal_status']
+            mstatus = data['mstatus']
+
+            if(date_enrolled >= start_date && date_enrolled <= end_date) && imstaus == 'FBf' && (date_enrolled == earliest_start_date)
+              tmp_arr << data
+            elsif mstatus == 'FBf'
+              tmp_arr << data
+            end
+          end
+
+          tmp = tmp_arr
+        end
+        # ........................... Hack ends .......... Will clean up later
+
+
+
+
         on_art = []
         all_clients = []
         all_clients_outcomes = {}
@@ -228,19 +280,23 @@ EOF
           tx_curr = true
         end
 
-        if (age_group == 'Breastfeeding' || age_group == 'Pregnant')
-          if data['initial_maternal_status'] == 'FNP'
+        if (age_group == 'Pregnant')
+          if data['initial_maternal_status'] != 'FP' && tx_new
             tx_new = false
-          else
-            date_enrolled = data['date_enrolled'].to_date
-            earliest_start_date = data['earliest_start_date'].to_date rescue date_enrolled
-            if earliest_start_date != date_enrolled
-              tx_new = false
-            end
+          end
 
-            if data['mstatus'] == 'FNP'
-              tx_curr = false
-            end
+          if data['mstatus'] != 'FP'
+            tx_curr = false
+          end
+        end
+
+        if (age_group == 'Breastfeeding')
+          if data['initial_maternal_status'] != 'FBf' && tx_new
+            tx_new = false
+          end
+
+          if data['mstatus'] != 'FBf'
+            tx_curr = false
           end
         end
 
@@ -287,6 +343,7 @@ EOF
           results = ActiveRecord::Base.connection.select_all <<EOF
             SELECT
               e.*, maternal_status AS mstatus,
+              initial_maternal_status,
               t3.cum_outcome AS outcome
             FROM temp_earliest_start_date e
             INNER JOIN temp_disaggregated t2 ON t2.patient_id = e.patient_id
@@ -300,6 +357,7 @@ EOF
           results = ActiveRecord::Base.connection.select_all <<EOF
             SELECT
               e.*, maternal_status AS mstatus,
+              initial_maternal_status,
               t3.cum_outcome AS outcome
             FROM temp_earliest_start_date e
             INNER JOIN temp_disaggregated t2 ON t2.patient_id = e.patient_id
@@ -513,12 +571,8 @@ EOF
           AND obs.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
           AND obs.concept_id IN(#{pregnant_concepts.join(',')})
           AND obs.voided = 0 AND enc.encounter_type IN(#{encounter_types.join(',')})
-          AND DATE(obs.obs_datetime) = (SELECT MIN(DATE(o.obs_datetime)) FROM obs o
-                        INNER JOIN encounter e ON e.encounter_id = o.encounter_id
-                        AND e.program_id = 1 AND e.voided = 0
-                        WHERE o.concept_id IN(#{pregnant_concepts.join(',')})
-                        AND o.voided = 0 AND o.person_id = obs.person_id
-                        AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
+          AND DATE(obs.obs_datetime) = (SELECT DATE(es.earliest_start_date) FROM temp_earliest_start_date es
+                                        WHERE es.patient_id = obs.person_id)
           GROUP BY obs.person_id HAVING value_coded = 1065
           ORDER BY obs.obs_datetime DESC;"
         )
@@ -540,12 +594,8 @@ EOF
           AND obs.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
           AND obs.concept_id IN(#{breastfeeding_concepts.join(',')})
           AND obs.voided = 0 AND enc.encounter_type IN(#{encounter_types.join(',')})
-          AND DATE(obs.obs_datetime) = (SELECT MIN(DATE(o.obs_datetime)) FROM obs o
-                        INNER JOIN encounter e ON e.encounter_id = o.encounter_id
-                        AND e.program_id = 1 AND e.voided = 0
-                        WHERE o.concept_id IN(#{breastfeeding_concepts.join(',')}) AND o.voided = 0
-                        AND o.person_id = obs.person_id
-                        AND o.obs_datetime <='#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
+          AND DATE(obs.obs_datetime) = (SELECT DATE(es.earliest_start_date) FROM temp_earliest_start_date es
+                                        WHERE es.patient_id = obs.person_id)
           GROUP BY obs.person_id HAVING value_coded = 1065
           ORDER BY obs.obs_datetime DESC;"
         )

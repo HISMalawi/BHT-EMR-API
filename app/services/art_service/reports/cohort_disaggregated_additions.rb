@@ -16,7 +16,7 @@ module ARTService
         return screened_for_tb_female_client('FP') if @gender == "pregnant"
         return screened_for_tb_female_client('FNP') if @gender == "fnp"
         return screened_for_tb_female_client('FBf') if @gender == "breastfeeding"
-        p @patient_outcome_table
+
         gender = @gender.first.upcase
         results = ActiveRecord::Base.connection.select_all <<~SQL
           SELECT
@@ -163,10 +163,12 @@ EOF
       end
 
       def screened_for_tb_female_client(group)
-        results = ActiveRecord::Base.connection.select_all <<EOF
-        SELECT patient_id FROM temp_disaggregated
-        WHERE maternal_status = "#{group}" GROUP BY patient_id;
-EOF
+        results = ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT f.patient_id FROM temp_disaggregated f
+        INNER JOIN #{@patient_outcome_table} o ON o.patient_id = f.patient_id
+        WHERE maternal_status = "#{group}"
+        AND o.cum_outcome = 'On antiretrovirals' GROUP BY f.patient_id;
+        SQL
 
         patient_ids = []
         (results || []).each do |r|
@@ -177,10 +179,12 @@ EOF
       end
 
       def female_clients_given_ipt(group)
-        results = ActiveRecord::Base.connection.select_all <<EOF
-        SELECT patient_id FROM temp_disaggregated
-        WHERE maternal_status = "#{group}" GROUP BY patient_id;
-EOF
+        results = ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT f.patient_id FROM temp_disaggregated f
+        INNER JOIN #{@patient_outcome_table} o ON o.patient_id = f.patient_id
+        WHERE maternal_status = "#{group}"
+        AND o.cum_outcome = 'On antiretrovirals' GROUP BY f.patient_id;
+        SQL
 
         patient_ids = []
         (results || []).each do |r|

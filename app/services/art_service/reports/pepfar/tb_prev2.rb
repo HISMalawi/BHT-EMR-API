@@ -74,22 +74,24 @@ module ARTService
           patients.each do |patient|
             age_group = patient['age_group']
             gender = patient['gender']&.first&.upcase || 'Unknown'
-            tpt_state = find_patient_tpt_state(patient, &patient_has_completed_tpt)
+            tpt_states = find_patient_tpt_state(patient, &patient_has_completed_tpt)
 
-            report[age_group][gender][tpt][tpt_state] << patient
+            tpt_states.each do |tpt_state|
+              report[age_group][gender][tpt][tpt_state] << patient
+            end
           end
         end
 
         def find_patient_tpt_state(patient, &patient_has_completed_tpt)
           if patient_has_completed_tpt[patient]
-            return :completed_new_on_art if patient_new_on_art?(patient)
+            return %i[started_new_on_art completed_new_on_art] if patient_new_on_art?(patient)
 
-            return :completed_previously_on_art
+            return %i[started_previously_on_art completed_previously_on_art]
           end
 
-          return :started_new_on_art if patient_new_on_art?(patient)
+          return %i[started_new_on_art] if patient_new_on_art?(patient)
 
-          :started_previously_on_art
+          %i[started_previously_on_art]
         end
 
         def patient_new_on_art?(patient)
@@ -135,7 +137,7 @@ module ARTService
               ON orders.encounter_id = prescription_encounter.encounter_id
               AND orders.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
               AND orders.start_date >= DATE(#{start_date}) - INTERVAL 6 MONTH
-              AND orders.auto_expire_date < DATE(#{end_date}) + INTERVAL 1 DAY
+              AND orders.start_date < DATE(#{end_date}) + INTERVAL 1 DAY
               AND orders.voided = 0
             INNER JOIN concept_name
               ON concept_name.concept_id = orders.concept_id
@@ -205,6 +207,15 @@ module ARTService
                 WHERE patient_program.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
                   AND patient_program.voided = 0
               )
+              AND patient_program.patient_id NOT IN (
+                SELECT person_id FROM obs
+                WHERE concept_id IN (
+                  SELECT concept_id FROM concept_name WHERE name LIKE 'Type of patient'
+                ) AND value_coded IN (
+                  SELECT concept_id FROM concept_name WHERE name LIKE 'External Consultation'
+                ) AND voided = 0 AND (obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY)
+                GROUP BY person_id
+              )
             GROUP BY person.person_id
           SQL
         end
@@ -245,7 +256,7 @@ module ARTService
               ON orders.encounter_id = prescription_encounter.encounter_id
               AND orders.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
               AND orders.start_date >= DATE(#{start_date}) - INTERVAL 3 MONTH
-              AND orders.auto_expire_date < DATE(#{end_date}) + INTERVAL 1 DAY
+              AND orders.start_date < DATE(#{end_date}) + INTERVAL 1 DAY
               AND orders.voided = 0
             INNER JOIN concept_name
               ON concept_name.concept_id = orders.concept_id

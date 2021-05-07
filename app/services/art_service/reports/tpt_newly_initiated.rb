@@ -125,6 +125,13 @@ module ARTService
             ON drug_order.order_id = orders.order_id
             AND drug_order.drug_inventory_id IN (#{primary_drug_query})
             AND drug_order.quantity > 0  /* This implies that a dispensation was made */
+          INNER JOIN orders AS arv_orders
+            ON arv_orders.patient_id = patient_program.patient_id
+            AND arv_orders.start_date < DATE(#{end_date}) + INTERVAL 1 DAY
+          INNER JOIN drug_order AS arv_drug_orders
+            ON arv_drug_orders.order_id = arv_orders.order_id
+            AND arv_drug_orders.drug_inventory_id IN (SELECT drug_id FROM arv_drug)
+            AND arv_drug_orders.quantity > 0
           WHERE patient_program.patient_id NOT IN (
             /* Filter out patients who received TPT before current reporting period */
             SELECT DISTINCT patient_program.patient_id
@@ -147,6 +154,15 @@ module ARTService
               AND drug_order.drug_inventory_id IN (#{primary_drug_query})
               AND drug_order.quantity > 0
             WHERE patient_program.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
+              AND patient_program.patient_id NOT IN (
+                SELECT person_id FROM obs
+                WHERE concept_id IN (
+                  SELECT concept_id FROM concept_name WHERE name LIKE 'Type of patient'
+                ) AND value_coded IN (
+                  SELECT concept_id FROM concept_name WHERE name LIKE 'External Consultation'
+                ) AND voided = 0 AND (obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY)
+                GROUP BY person_id
+              )
           )
           GROUP BY patient_program.patient_id
         SQL

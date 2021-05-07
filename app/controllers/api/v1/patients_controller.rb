@@ -41,7 +41,7 @@ class Api::V1::PatientsController < ApplicationController
   def create
     person = Person.find(params.require(:person_id))
     program = Program.find(params.require(:program_id))
-    malawi_national_id = params.require(:malawi_national_ID) rescue nil
+    malawi_national_id = params[:malawi_national_ID]
 
     render json: service.create_patient(program, person, malawi_national_id), status: :created
   end
