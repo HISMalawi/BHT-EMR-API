@@ -16,6 +16,12 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+## [v4.10.36] - 2021-05-07
+
+### Fixed
+
+- Removed duplicate HIV Viral load concepts
+
 
 ## [v4.10.35] - 2021-04-30
 
