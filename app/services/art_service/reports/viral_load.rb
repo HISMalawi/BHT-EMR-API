@@ -6,6 +6,7 @@ class ARTService::Reports::ViralLoad
     @start_date = start_date.to_date.strftime('%Y-%m-%d 00:00:00')
     @end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
     @program = Program.find_by_name 'HIV Program'
+    @possible_milestones = possible_milestones
   end
 
   def clients_due
@@ -60,35 +61,41 @@ class ARTService::Reports::ViralLoad
     return if patient_start_date.blank?
     start_date = patient_start_date
     appointment_date = person[:appointment_date].to_date
+    months_on_art = date_diff(patient_start_date.to_date, @end_date.to_date)
 
-    while @end_date.to_date > start_date do
-      if patient_start_date == start_date
-        mile_stone = (start_date + 6.month)
-      else
-        mile_stone = (start_date + 12.month)
-      end
-
-      if mile_stone >= @start_date.to_date && mile_stone <= @end_date.to_date
-        return {
-          patient_id: person[:patient_id],
-          mile_stone: mile_stone,
-          start_date: patient_start_date,
-          months_on_art: date_diff(patient_start_date.to_date, appointment_date),
-          appointment_date: appointment_date,
-          given_name: person[:given_name],
-          family_name: person[:family_name],
-          gender: person[:gender],
-          birthdate: person[:birthdate],
-          arv_number: person[:arv_number]
-        }
-      end
-
-      start_date = mile_stone
+    if @possible_milestones.include?(months_on_art)
+      return {
+        patient_id: person[:patient_id],
+        mile_stone: (patient_start_date.to_date + months_on_art.month).to_date,
+        start_date: patient_start_date,
+        months_on_art: months_on_art,
+        appointment_date: appointment_date,
+        given_name: person[:given_name],
+        family_name: person[:family_name],
+        gender: person[:gender],
+        birthdate: person[:birthdate],
+        arv_number: person[:arv_number]
+      }
     end
   end
 
   def date_diff(date1, date2)
-    (date2.year * 12 + date2.month) - (date1.year * 12 + date1.month)
+    diff_cal = ActiveRecord::Base.connection.select_one <<~SQL
+    SELECT TIMESTAMPDIFF(MONTH, DATE('#{date1.to_date}'), DATE('#{date2.to_date}')) AS months;
+    SQL
+
+    return diff_cal['months'].to_i
+  end
+
+  def possible_milestones
+    milestones = [6]
+    start_month = 6
+
+    1.upto(100).each do |y|
+      milestones << (start_month += 12)
+    end
+
+    return milestones
   end
 
 end
