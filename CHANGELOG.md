@@ -16,6 +16,10 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+### Fixed
+
+- Bumped up lab to version 0.0.14 (fixes lab order label provider name)
+
 ## [v4.10.36] - 2021-05-07
 
 ### Fixed
