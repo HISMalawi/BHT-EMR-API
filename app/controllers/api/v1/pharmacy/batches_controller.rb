@@ -23,14 +23,15 @@ class Api::V1::Pharmacy::BatchesController < ApplicationController
   #          pack_size: int,
   #          quantity: *double,
   #          expiry_date: *string, # Date in 'YYYY-MM-DD'
-  #          delivery_date: string # Same as above (defaults to today)
+  #          delivery_date: string, # Same as above (defaults to today)
+  #          barcode: string
   #       }
   #     ]
   #   }
   #
   def create
-    batch_number, items = params.require(%i[batch_number items])
-    render json: service.add_items_to_batch(batch_number, items), status: :created
+    batch_params = params['_json']
+    render json: service.create_batches(batch_params), status: :created
   end
 
   def update
