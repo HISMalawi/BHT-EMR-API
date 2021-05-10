@@ -18,7 +18,11 @@ compatibility (examples of this include major architectural changes).
 
 ### Fixed
 
-- Bumped up lab to version 0.0.14 (fixes lab order label provider name)
+- Lab: Bumped up lab to version 0.0.14 (fixes lab order label provider name)
+
+### Added
+
+- ART Stock: Barcodes to inventory items 
 
 ## [v4.10.36] - 2021-05-07
 
