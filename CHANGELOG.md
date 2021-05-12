@@ -20,8 +20,8 @@ compatibility (examples of this include major architectural changes).
 
 ### Fixed
 
-- ART: Lab encounters being counted as incomplete visits in dashboard visits report
 - ART: Missing Viral Load on visit summary when result type is non-numeric (ie text) (Fixes #2762 on EGPAF EMR helpdesk)
+- ART: Lab encounters being counted as incomplete visits in dashboard visits report
 - Lab: Bumped up lab to version 0.0.14 (fixes lab order label provider name)
 
 ### Added
