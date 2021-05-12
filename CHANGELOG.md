@@ -19,10 +19,11 @@ compatibility (examples of this include major architectural changes).
 ### Fixed
 
 - Lab: Bumped up lab to version 0.0.14 (fixes lab order label provider name)
+- ART: Missing Viral Load on visit summary when result type is non-numeric (ie text) (Fixes #2762 on EGPAF EMR helpdesk)
 
 ### Added
 
-- ART Stock: Barcodes to inventory items 
+- ART Stock: Barcodes to inventory items
 
 ## [v4.10.36] - 2021-05-07
 

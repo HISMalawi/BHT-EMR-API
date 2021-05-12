@@ -185,7 +185,7 @@ module ARTService
       value = result.children.where(concept_id: viral_load_concept).first
       return 'N/A' unless value
 
-      "#{value.value_modifier}#{value.value_numeric}"
+      "#{value.value_modifier || '='}#{value.value_numeric || value.value_text}"
     end
 
     def cpt; end
