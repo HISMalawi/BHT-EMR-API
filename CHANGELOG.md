@@ -16,10 +16,13 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+### [v4.10.37] - 2021-05-12
+
 ### Fixed
 
-- Lab: Bumped up lab to version 0.0.14 (fixes lab order label provider name)
+- ART: Lab encounters being counted as incomplete visits in dashboard visits report
 - ART: Missing Viral Load on visit summary when result type is non-numeric (ie text) (Fixes #2762 on EGPAF EMR helpdesk)
+- Lab: Bumped up lab to version 0.0.14 (fixes lab order label provider name)
 
 ### Added
 
