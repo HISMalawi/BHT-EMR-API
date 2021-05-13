@@ -16,7 +16,11 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
-### [v4.10.37] - 2021-05-12
+### Fixed
+
+- ART: Missing result date on visit summary
+
+## [v4.10.37] - 2021-05-12
 
 ### Fixed
 
