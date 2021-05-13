@@ -23,6 +23,9 @@ class ARTService::Reports::ViralLoad
     return clients_due_list
   end
 
+  def vl_results
+    return results
+  end
 
   private
 
@@ -96,6 +99,25 @@ class ARTService::Reports::ViralLoad
     end
 
     return milestones
+  end
+
+  def results
+    reason_for_test = ConceptName.find_by_name('Reason for test')
+    hiv_vl_load_concept_ids = ConceptName.where("name LIKE (?)", "%viral load%").map(&:concept_id)
+
+    order_results = Order.joins("INNER JOIN obs t2 ON t2.order_id = orders.order_id
+    AND orders.order_type_id = 4 AND orders.voided = 0
+    INNER JOIN obs t3 ON t2.order_id = t3.order_id AND t3.concept_id = #{reason_for_test.concept_id}
+    LEFT JOIN concept_name n ON n.concept_id = t3.value_coded
+    LEFT JOIN patient_identifier t4 ON t4.patient_id = orders.patient_id
+    AND t4.voided = 0 AND t4.identifier_type = 4
+    LEFT JOIN person_name t5 ON t5.person_id = orders.patient_id AND t5.voided = 0
+    INNER JOIN person p ON p.person_id = orders.patient_id").where("t2.concept_id IN(?)
+    AND t2.obs_datetime BETWEEN ? AND ?", hiv_vl_load_concept_ids, @start_date, @end_date).\
+    group("orders.order_id").select("orders.patient_id, t4.identifier arv_number, t5.given_name,
+    t5.family_name,p.gender, p.birthdate, orders.order_id, t2.concept_id, t2.obs_datetime,
+    t2.value_modifier, IF(t2.value_text IS NULL,
+    t2.value_numeric, t2.value_text) test_result, n.name reason_for_test")
   end
 
 end

@@ -177,6 +177,10 @@ class ReportService
     engine(@program).clients_due_vl(start_date, end_date)
   end
 
+  def vl_results(start_date, end_date)
+    engine(@program).vl_results(start_date, end_date)
+  end
+
   private
 
   def engine(program)

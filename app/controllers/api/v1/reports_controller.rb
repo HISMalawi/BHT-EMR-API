@@ -186,6 +186,10 @@ class Api::V1::ReportsController < ApplicationController
     render json: service.clients_due_vl(params[:start_date], params[:end_date])
   end
 
+  def vl_results
+    render json: service.vl_results(params[:start_date], params[:end_date])
+  end
+
   private
 
   def service

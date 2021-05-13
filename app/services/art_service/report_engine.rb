@@ -157,6 +157,11 @@ module ARTService
         end_date: end_date.to_date).clients_due
     end
 
+    def vl_results(start_date, end_date)
+      REPORTS['VIRAL_LOAD'].new(start_date: start_date.to_date,
+        end_date: end_date.to_date).vl_results
+    end
+
     private
 
     def call_report_manager(method, type:, **kwargs)
