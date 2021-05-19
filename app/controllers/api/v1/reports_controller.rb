@@ -190,6 +190,14 @@ class Api::V1::ReportsController < ApplicationController
     render json: service.vl_results(params[:start_date], params[:end_date])
   end
 
+  def samples_drawn
+    render json: service.samples_drawn(params[:start_date], params[:end_date])
+  end
+
+  def lab_test_results
+    render json: service.lab_test_results(params[:start_date], params[:end_date])
+  end
+
   private
 
   def service
