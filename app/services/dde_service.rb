@@ -64,7 +64,7 @@ class DDEService
 
   # Similar to import_patients_by_npid but uses name and gender instead of npid
   def import_patients_by_name_and_gender(given_name, family_name, gender)
-    locals = patient_service.find_patients_by_name_and_gender(given_name, family_name, gender).limit(PATIENT_SEARCH_RESULTS_LIMIT)
+    locals = patient_service.find_patients_by_name_and_gender(given_name, nil, family_name, gender).limit(PATIENT_SEARCH_RESULTS_LIMIT)
     remotes = find_remote_patients_by_name_and_gender(given_name, family_name, gender)
 
     import_remote_patient(locals, remotes)
@@ -78,7 +78,7 @@ class DDEService
   end
 
   def find_patients_by_name_and_gender(given_name, family_name, gender)
-    locals = patient_service.find_patients_by_name_and_gender(given_name, family_name, gender).limit(PATIENT_SEARCH_RESULTS_LIMIT)
+    locals = patient_service.find_patients_by_name_and_gender(given_name, nil, family_name, gender).limit(PATIENT_SEARCH_RESULTS_LIMIT)
     remotes = find_remote_patients_by_name_and_gender(given_name, family_name, gender)
 
     package_patients(locals, remotes)
