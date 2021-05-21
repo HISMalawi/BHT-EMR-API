@@ -78,7 +78,7 @@ class PatientService
     find_patients_by_identifier(npid, *npid_identifier_types.to_a)
   end
 
-  def find_patients_by_name_and_gender(given_name, middle_name, family_name, gender)
+  def find_patients_by_name_and_gender(given_name, middle_name = nil, family_name, gender)
     person_service = PersonService.new
     people = person_service.find_people_by_name_and_gender(given_name, middle_name, family_name, gender)
     Patient.joins(:person).merge(people)
