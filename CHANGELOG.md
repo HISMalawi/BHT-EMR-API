@@ -16,7 +16,9 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
-### Fixed
+### Added
+
+- [Lab] Lims data import from MySQL.
 
 ## [v4.10.37] - 2021-05-12
 
