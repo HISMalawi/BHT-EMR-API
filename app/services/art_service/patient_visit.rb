@@ -190,6 +190,29 @@ module ARTService
 
     def cpt; end
 
+    def regimen
+      PatientSummary.new(patient, date).current_regimen
+    end
+
+    def as_json(_options = {})
+      dispensations = pills_dispensed
+
+      {
+        outcome: outcome,
+        outcome_date: outcome_date,
+        visit_by: visit_by,
+        side_effects: side_effects,
+        viral_load: viral_load_result,
+        pills_brought: pills_brought,
+        pills_dispensed: dispensations,
+        regimen: dispensations.empty? ? 'N/A' : regimen,
+        adherence: adherence,
+        tb_status: tb_status,
+        height: height,
+        weight: weight
+      }
+    end
+
     private
 
     def lab_tests_engine
