@@ -2,7 +2,7 @@ module LaboratoryService
   module Reports
     module Clinic
 
-      class SamplesDrawn
+      class Orders
         def initialize(start_date:, end_date:)
           @start_date = start_date.to_date.strftime('%Y-%m-%d 00:00:00')
           @end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
@@ -14,6 +14,10 @@ module LaboratoryService
 
         def test_results
           return processed_results
+        end
+
+        def orders_made(status)
+          return made_orders(status)
         end
 
         private
@@ -98,6 +102,28 @@ module LaboratoryService
               result: sample.test_result,
               value_modifier: sample.value_modifier,
               patient_id: sample.patient_id
+            }
+          end
+
+        end
+
+        def made_orders(status)
+          order_type_id = OrderType.find_by_name('Lab').id
+          unknown_concept = concept 'Unknown'
+          test_type = concept 'Test type'
+          sql_extention = (status == 'drawn' ? "AND orders.concept_id NOT IN(#{unknown_concept.concept_id})" : nil)
+
+          orders = Order.where("order_type_id = ? AND obs.concept_id = ? #{sql_extention}
+            AND orders.start_date BETWEEN ? AND ?", order_type_id, test_type.concept_id,
+            @start_date, @end_date).joins("INNER JOIN obs
+            ON obs.order_id = orders.order_id INNER JOIN concept_name cn
+            ON cn.concept_id = obs.value_coded").select("cn.name test_name, cn.concept_id").\
+            group("orders.order_id, orders.concept_id")
+
+          return orders.map do |o|
+            {
+              name: o.test_name,
+              concept_id: o.concept_id
             }
           end
 

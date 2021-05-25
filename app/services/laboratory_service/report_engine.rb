@@ -9,7 +9,7 @@ module LaboratoryService
     LOGGER = Rails.logger
 
     REPORTS = {
-      'SAMPLES_DRAWN' => LaboratoryService::Reports::Clinic::SamplesDrawn
+      'SAMPLES_DRAWN' => LaboratoryService::Reports::Clinic::Orders
     }.freeze
 
 
@@ -19,6 +19,11 @@ module LaboratoryService
 
     def test_results(start_date, end_date)
       REPORTS['SAMPLES_DRAWN'].new(start_date: start_date, end_date: end_date).test_results
+    end
+
+    def orders_made(start_date, end_date, status)
+      REPORTS['SAMPLES_DRAWN'].new(start_date: start_date,
+        end_date: end_date).orders_made(status)
     end
 
   end

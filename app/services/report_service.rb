@@ -190,6 +190,10 @@ class ReportService
     engine(@program).test_results(start_date, end_date)
   end
 
+  def orders_made(start_date, end_date, status)
+    engine(@program).orders_made(start_date, end_date, status)
+  end
+
   private
 
   def engine(program)

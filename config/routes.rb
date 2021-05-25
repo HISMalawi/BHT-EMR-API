@@ -325,4 +325,5 @@ Rails.application.routes.draw do
   get '/api/v1/vl_results', to: 'api/v1/reports#vl_results'
   get '/api/v1/samples_drawn', to: 'api/v1/reports#samples_drawn'
   get '/api/v1/lab_test_results', to: 'api/v1/reports#lab_test_results'
+  get '/api/v1/orders_made', to: 'api/v1/reports#orders_made'
 end

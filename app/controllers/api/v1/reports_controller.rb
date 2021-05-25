@@ -198,6 +198,11 @@ class Api::V1::ReportsController < ApplicationController
     render json: service.lab_test_results(params[:start_date], params[:end_date])
   end
 
+  def orders_made
+    render json: service.orders_made(params[:start_date],
+      params[:end_date], params[:status])
+  end
+
   private
 
   def service
