@@ -16,7 +16,15 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+## [v4.10.38] - 2021-05-21
+
+### Added
+
+- [Lab] Lims data import from MySQL.
+
 ### Fixed
+
+- [DDE] Crash on search of patient by name and gender when DDE is enabled
 
 ## [v4.10.37] - 2021-05-12
 
