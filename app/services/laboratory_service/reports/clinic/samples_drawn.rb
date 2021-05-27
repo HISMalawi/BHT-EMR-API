@@ -12,7 +12,7 @@ module LaboratoryService
         end
 
         def test_results
-          return processed_results
+          ProcessedResults.new(start_date: @start_date, end_date: @end_date).read
         end
 
         def read
