@@ -161,14 +161,14 @@ module ARTService
     def side_effects
       return @side_effects if @side_effects
 
-      parent_obs = Observation.where(concept: concept('Malawi ART side effects'), person: patient.person)\
-                              .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))\
+      parent_obs = Observation.where(concept: concept('Malawi ART side effects'), person: patient.person)
+                              .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
                               .order(obs_datetime: :desc)
                               .first
       return [] unless parent_obs
 
-      @side_effects = parent_obs.children\
-                                .where(value_coded: concept('Yes'))\
+      @side_effects = parent_obs.children
+                                .where(value_coded: ConceptName.find_by_name!('Yes').concept_id)
                                 .collect { |side_effect| side_effect.concept.fullname }
                                 .compact
     end
