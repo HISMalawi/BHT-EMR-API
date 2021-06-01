@@ -1,6 +1,7 @@
 require 'zebra_printer/init'
 
 class Api::V1::ProgramPatientsController < ApplicationController
+  # TODO: Move to Api::V1::Programs namespace and rename to PatientsController
   before_action :authenticate, except: %i[print_visit_label print_transfer_out_label
                                           print_patient_history_label print_history_label
                                           print_lab_results_label]

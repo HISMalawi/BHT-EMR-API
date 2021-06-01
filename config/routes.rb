@@ -139,7 +139,7 @@ Rails.application.routes.draw do
         get '/barcodes/:barcode_name', to: 'program_barcodes#print_barcode'
         post 'void_arv_number/:arv_number' => 'program_patients#void_arv_number'
 
-        resources :program_patients, path: :patients do
+        resources :program_patients, path: 'patients' do
           get '/next_appointment_date' => 'patient_appointments#next_appointment_date'
           get '/last_drugs_received' => 'program_patients#last_drugs_received'
           get '/dosages' => 'program_patients#find_dosages'
@@ -162,6 +162,7 @@ Rails.application.routes.draw do
           get '/subsequent_visit', to: 'program_patients#subsequent_visit'
           get '/saved_encounters', to: 'program_patients#saved_encounters'
           resources :patient_states, path: :states
+          resources :visit, only: %i[index], module: 'programs/patients'
         end
         resources :lab_test_types, path: 'lab_tests/types'
         get '/lab_tests/panels' => 'lab_test_types#panels' # TODO: Move this into own controller
