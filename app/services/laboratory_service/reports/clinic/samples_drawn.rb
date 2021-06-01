@@ -16,6 +16,17 @@ module LaboratoryService
         end
 
         def read
+          query.map do |row|
+            row = row.dup
+            row['tests'] = row['tests'].split(',')
+
+            row
+          end
+        end
+
+        private
+
+        def query
           start_date = ActiveRecord::Base.connection.quote(@start_date)
           end_date = ActiveRecord::Base.connection.quote(@end_date)
 
@@ -28,7 +39,8 @@ module LaboratoryService
                    person.birthdate,
                    patient_identifier.identifier AS arv_number,
                    cohort_disaggregated_age_group(person.birthdate, #{end_date}) AS age_group,
-                   reason_for_test.name AS reason_for_test
+                   reason_for_test.name AS reason_for_test,
+                   GROUP_CONCAT(DISTINCT test_concepts.name SEPARATOR ',') AS tests
             FROM orders
             INNER JOIN order_type
               ON order_type.order_type_id = orders.order_type_id
@@ -36,6 +48,16 @@ module LaboratoryService
               AND order_type.retired = 0
             INNER JOIN concept_name AS specimen
               ON specimen.concept_id = orders.concept_id
+            INNER JOIN obs AS test_obs
+              ON test_obs.order_id = orders.order_id
+              AND test_obs.concept_id IN (SELECT concept_id FROM concept_name WHERE name LIKE 'Test type' AND voided = 0)
+              AND test_obs.voided = 0
+            INNER JOIN (
+              SELECT concept_id, name FROM concept_name INNER JOIN concept USING (concept_id)
+              WHERE retired = 0 AND concept_name_type = 'FULLY_SPECIFIED'
+              GROUP BY concept_id
+            ) AS test_concepts
+              ON test_concepts.concept_id = test_obs.value_coded
             LEFT JOIN obs AS reason_for_test_obs
               ON reason_for_test_obs.order_id = orders.order_id
               AND reason_for_test_obs.concept_id IN (SELECT concept_id FROM concept_name WHERE name LIKE 'Reason for test' AND voided = 0)
