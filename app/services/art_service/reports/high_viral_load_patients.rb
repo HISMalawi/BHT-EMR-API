@@ -21,6 +21,9 @@ module ARTService
         ActiveRecord::Base.connection.select_all <<~SQL
           SELECT orders.patient_id,
                  patient_identifier.identifier AS arv_number,
+                 person.birthdate AS birthdate,
+                 cohort_disaggregated_age_group(person.birthdate, #{end_date}) AS age_group,
+                 person.gender AS gender,
                  orders.start_date AS order_date,
                  COALESCE(orders.discontinued_date, orders.start_date) AS specimen_drawn_date,
                  test_results_obs.obs_datetime AS result_date,
@@ -33,6 +36,9 @@ module ARTService
             AND patient_identifier.identifier_type IN (
               SELECT patient_identifier_type_id FROM patient_identifier_type WHERE name = 'ARV Number' AND retired = 0
             )
+          INNER JOIN person
+            ON person.person_id = orders.patient_id
+            AND person.voided = 0
           /* For each lab order find an HIV Viral Load test */
           INNER JOIN obs AS test_obs
             ON test_obs.order_id = orders.order_id

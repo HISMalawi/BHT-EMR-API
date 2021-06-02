@@ -93,8 +93,8 @@ module LaboratoryService
             ) AS measure_concept
               ON measure_concept.concept_id = measure.concept_id
             WHERE lab_result_obs.voided = 0
-              AND lab_result_obs.obs_datetime >= #{start_date}
-              AND lab_result_obs.obs_datetime < #{end_date}
+              AND lab_result_obs.obs_datetime >= DATE(#{start_date})
+              AND lab_result_obs.obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
             GROUP BY lab_result_obs.obs_id
           SQL
         end
