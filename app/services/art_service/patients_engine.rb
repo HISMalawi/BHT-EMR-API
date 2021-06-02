@@ -7,8 +7,8 @@ module ARTService
   class PatientsEngine
     include ModelUtils
 
-    def initialize(program:)
-      @program = program
+    def initialize(program: nil)
+      @program = program || Program.find_by_name('HIV Program')
     end
 
     # Retrieves given patient's status info.
@@ -17,6 +17,12 @@ module ARTService
     # confirmation page in an ART application.
     def patient(patient_id, date)
       patient_summary(Patient.find(patient_id), date).full_summary
+    end
+
+    ##
+    # Retrieves a patient's visit summary for a given date
+    def patient_visit_summary(patient_id, date)
+      PatientVisit.new(Patient.find(patient_id), date)
     end
 
     # Returns a patient's last received drugs.
