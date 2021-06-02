@@ -16,6 +16,12 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+### Added
+
+- [ART] Added high viral load patients report
+- [Lab] Added samples drawn report
+- [Lab] Added results added report
+
 ## [v4.10.38] - 2021-05-21
 
 ### Added
