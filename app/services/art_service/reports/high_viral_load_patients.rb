@@ -92,7 +92,7 @@ module ARTService
               SELECT concept_id FROM concept_name INNER JOIN concept USING (concept_id)
               WHERE concept_name.name = 'Viral load' AND concept.retired = 0 AND concept_name.voided = 0
             )
-            AND (test_result_measure_obs.value_numeric >= 800
+            AND ((test_result_measure_obs.value_modifier IN ('=', '>') AND test_result_measure_obs.value_numeric >= 1000)
                  OR (test_result_measure_obs.value_modifier = '>' AND test_result_measure_obs.value_text = 'LDL'))
             AND test_result_measure_obs.voided = 0
           WHERE orders.concept_id IN (
