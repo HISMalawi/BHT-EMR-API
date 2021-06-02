@@ -7,9 +7,15 @@ class ARTService::Reports::ViralLoad
     @end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
     @program = Program.find_by_name 'HIV Program'
     @possible_milestones = possible_milestones
+    #global_property = GlobalProperty.find_by(property: 'use.filing.number')
+    @use_filing_number = false
+    #(global_property.property_value == 'true' ? true : false) rescue false
   end
 
   def clients_due
+    global_property = GlobalProperty.find_by(property: 'use.filing.number')
+    @use_filing_number = (global_property.property_value == 'true' ? true : false) rescue false
+
     clients =  potential_get_clients
     return [] if clients.blank?
     clients_due_list = []
@@ -24,7 +30,7 @@ class ARTService::Reports::ViralLoad
   end
 
   def vl_results
-    return results
+    return read_results
   end
 
   private
@@ -67,6 +73,7 @@ class ARTService::Reports::ViralLoad
     months_on_art = date_diff(patient_start_date.to_date, @end_date.to_date)
 
     if @possible_milestones.include?(months_on_art)
+      last_result = last_vl_result(person[:patient_id])
       return {
         patient_id: person[:patient_id],
         mile_stone: (patient_start_date.to_date + months_on_art.month).to_date,
@@ -77,7 +84,9 @@ class ARTService::Reports::ViralLoad
         family_name: person[:family_name],
         gender: person[:gender],
         birthdate: person[:birthdate],
-        arv_number: person[:arv_number]
+        arv_number: use_filing_number(person[:patient_id], person[:arv_number]),
+        last_result: last_result[0],
+        last_result_date: last_result[1]
       }
     end
   end
@@ -94,30 +103,57 @@ class ARTService::Reports::ViralLoad
     milestones = [6]
     start_month = 6
 
-    1.upto(100).each do |y|
+    1.upto(1000).each do |y|
       milestones << (start_month += 12)
     end
 
     return milestones
   end
 
-  def results
-    reason_for_test = ConceptName.find_by_name('Reason for test')
-    hiv_vl_load_concept_ids = ConceptName.where("name LIKE (?)", "%viral load%").map(&:concept_id)
+  def read_results
+    all_results = LaboratoryService::Reports::Clinic::ProcessedResults.new(start_date: @start_date, end_date: @end_date).read
+    processed_vl_results = []
 
-    order_results = Order.joins("INNER JOIN obs t2 ON t2.order_id = orders.order_id
-    AND orders.order_type_id = 4 AND orders.voided = 0
-    INNER JOIN obs t3 ON t2.order_id = t3.order_id AND t3.concept_id = #{reason_for_test.concept_id}
-    LEFT JOIN concept_name n ON n.concept_id = t3.value_coded
-    LEFT JOIN patient_identifier t4 ON t4.patient_id = orders.patient_id
-    AND t4.voided = 0 AND t4.identifier_type = 4
-    LEFT JOIN person_name t5 ON t5.person_id = orders.patient_id AND t5.voided = 0
-    INNER JOIN person p ON p.person_id = orders.patient_id").where("t2.concept_id IN(?)
-    AND t2.obs_datetime BETWEEN ? AND ?", hiv_vl_load_concept_ids, @start_date, @end_date).\
-    group("orders.order_id").select("orders.patient_id, t4.identifier arv_number, t5.given_name,
-    t5.family_name,p.gender, p.birthdate, orders.order_id, t2.concept_id, t2.obs_datetime,
-    t2.value_modifier, IF(t2.value_text IS NULL,
-    t2.value_numeric, t2.value_text) test_result, n.name reason_for_test")
+    all_results.each do |result|
+    measures = result[:measures]
+    measures.each do |measure|
+      next unless measure[:name].match(/viral load/)
+      processed_vl_results << {
+        accession_number: result[:accession_number],
+        result_date: result[:result_date],
+        patient_id: result[:patient_id],
+        order_date: result[:order_date],
+        specimen: result[:test],
+        gender: result[:gender],
+        arv_number: result[:arv_number],
+        birthdate: result[:birthdate],
+        age_group: result[:age_group],
+        result: measure[:value],
+        result_modifier: measure[:modifier]
+      }
+    end
+   end
+
+   return processed_vl_results
+  end
+
+  def last_vl_result(patient_id)
+    result_plus_date = ARTService::PatientVisit.new(Patient.find(patient_id),
+       @end_date.to_date).viral_load_result
+
+    return ['N/A', 'N/A'] if result_plus_date == 'N/A'
+    value = result_plus_date.split("(")[0]
+    value_date = result_plus_date.split("(")[1].gsub(")",'')
+    return [value, Date.parse(value_date)]
+  end
+
+  def use_filing_number(patient_id, arv_number)
+    return arv_number unless @use_filing_number
+
+    identifier_types = PatientIdentifierType.where("name LIKE '%Filing number%'").map(&:patient_identifier_type_id)
+    filing_numbers = PatientIdentifier.where("patient_id = ? AND identifier_type IN(?)",
+      patient_id, identifier_types)
+    return filing_numbers.blank? ? '' : filing_numbers.last.identifier
   end
 
 end

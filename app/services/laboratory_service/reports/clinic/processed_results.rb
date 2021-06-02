@@ -22,6 +22,7 @@ module LaboratoryService
               patient_id: result['patient_id'],
               order_date: result['order_date'],
               test: result['test'],
+              gender: result['gender'],
               reason_for_test: result['reason_for_test'],
               reason_for_test_obs_id: result['reason_for_test_obs_id'],
               arv_number: result['arv_number'],
@@ -51,7 +52,7 @@ module LaboratoryService
                    COALESCE(reason_for_test.name, reason_for_test_obs.value_text) AS reason_for_test,
                    reason_for_test_obs.obs_id AS reason_for_test_obs_id,
                    patient_identifier.identifier AS arv_number,
-                   person.birthdate,
+                   person.birthdate, person.gender,
                    cohort_disaggregated_age_group(person.birthdate, #{end_date}) AS age_group,
                    GROUP_CONCAT(DISTINCT CONCAT(measure_concept.name, ':', COALESCE(measure.value_modifier, '='), ':', COALESCE(measure.value_numeric, measure.value_text, ''))
                                 SEPARATOR ',') AS measures,
