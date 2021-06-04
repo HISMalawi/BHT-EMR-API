@@ -16,6 +16,8 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+## [v4.10.40] - 2021-06-04
+
 ### Added
 
 - ART: Added high viral load patients report
