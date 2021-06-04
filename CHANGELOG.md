@@ -18,19 +18,23 @@ compatibility (examples of this include major architectural changes).
 
 ### Added
 
-- [ART] Added high viral load patients report
-- [Lab] Added samples drawn report
-- [Lab] Added results added report
+- ART: Added high viral load patients report
+- Lab: Added samples drawn report
+- Lab: Added results added report
+
+### Fixed
+
+- Lab: Bumped up lab gem to version 1.0.0
 
 ## [v4.10.38] - 2021-05-21
 
 ### Added
 
-- [Lab] Lims data import from MySQL.
+- Lab: Lims data import from MySQL.
 
 ### Fixed
 
-- [DDE] Crash on search of patient by name and gender when DDE is enabled
+- DDE: Crash on search of patient by name and gender when DDE is enabled
 
 ## [v4.10.37] - 2021-05-12
 
