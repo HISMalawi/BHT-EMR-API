@@ -16,6 +16,7 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+## [v4.10.41] - 2021-06-07
 
 ### Changed
 
