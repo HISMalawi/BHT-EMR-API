@@ -16,6 +16,11 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+
+### Changed
+
+- Lab: Bumped up his_emr_api_lab to version 1.0.1 - Fixes HIV Viral Load mapping between EMR and LIMS
+
 ## [v4.10.40] - 2021-06-04
 
 ### Added
