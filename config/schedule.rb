@@ -20,6 +20,6 @@
 # Learn more: http://github.com/javan/whenever
 
 # Runs script in bin/ using rails runner
-every 5.minutes do
+every 1.minute do
   runner 'bin/lab/sync_worker.rb', environment: 'development'
 end
