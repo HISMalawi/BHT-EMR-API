@@ -16,6 +16,10 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+### Fixed
+
+- ART: Regimen 17A containing 16P drug ABC 60 / 3TC 30 + RAL 400
+
 ## [v4.10.42] - 2021-06-08
 
 ### Changed

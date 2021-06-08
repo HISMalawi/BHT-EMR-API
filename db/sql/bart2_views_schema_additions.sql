@@ -1507,7 +1507,7 @@ BEGIN
   );
 
   SET regimen = (
-    SELECT name FROM (
+    SELECT DISTINCT name FROM (
       SELECT GROUP_CONCAT(drug.drug_id ORDER BY drug.drug_id ASC) AS drugs,
              regimen_name.name AS name
       FROM moh_regimen_combination AS combo
