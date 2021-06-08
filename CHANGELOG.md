@@ -16,6 +16,10 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+### Changed
+
+- Lab: Bumped up to v1.0.2 - Fixes crash on push of non-VL tests to LIMS
+
 ## [v4.10.41] - 2021-06-07
 
 ### Changed
