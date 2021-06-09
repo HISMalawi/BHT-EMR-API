@@ -16,6 +16,10 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+### Fixed
+
+- ART: Patients with closing states like Died and TO appearing in VL due report
+
 ## [v4.10.43] - 2021-06-08
 
 ### Fixed
