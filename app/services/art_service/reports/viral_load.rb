@@ -54,7 +54,7 @@ class ARTService::Reports::ViralLoad
     ActiveRecord::Base.connection.quote(@program.program_id)
   end
 
-  def terminal_states
+  def closing_states
     state_concepts = ConceptName.where(name: ['Patient died', 'Patient transferred out', 'Treatment stopped'])
                                 .select(:concept_id)
     states = ProgramWorkflowState.where(concept_id: state_concepts)
@@ -107,7 +107,7 @@ class ARTService::Reports::ViralLoad
       INNER JOIN patient_state
         ON patient_state.patient_program_id = patient_program.patient_program_id
         AND patient_state.voided = 0
-        AND patient_state.state NOT IN (#{terminal_states})
+        AND patient_state.state NOT IN (#{closing_states})
       /* Limit states above to most recent states for each patient */
       INNER JOIN (
         SELECT patient_state.patient_program_id,
