@@ -194,6 +194,10 @@ class ReportService
     engine(@program).orders_made(start_date, end_date, status)
   end
 
+  def external_consultation_clients(start_date, end_date)
+    engine(@program).external_consultation_clients(start_date, end_date)
+  end
+
   private
 
   def engine(program)
