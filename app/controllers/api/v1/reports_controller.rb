@@ -203,6 +203,10 @@ class Api::V1::ReportsController < ApplicationController
       params[:end_date], params[:status])
   end
 
+  def external_consultation_clients
+    render json: service.external_consultation_clients(params[:start_date], params[:end_date])
+  end
+
   private
 
   def service
