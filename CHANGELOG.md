@@ -19,6 +19,7 @@ compatibility (examples of this include major architectural changes).
 ### Fixed
 
 - ART: Patients with closing states like Died and TO appearing in VL due report
+- ART: Migrated results missing from High VL report
 
 ## [v4.10.43] - 2021-06-08
 
