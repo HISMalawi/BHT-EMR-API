@@ -92,6 +92,9 @@ class ReportService
   def drugs_given_with_prescription(start_date, end_date)
     engine(@program).drugs_given_with_prescription(start_date, end_date)
   end
+  def dispensation(start_date, end_date)
+    engine(@program).dispensation(start_date, end_date)
+  end
 
   def cohort_survival_analysis(quarter, age_group, regenerate)
     engine(@program).cohort_survival_analysis(quarter, age_group, regenerate)
