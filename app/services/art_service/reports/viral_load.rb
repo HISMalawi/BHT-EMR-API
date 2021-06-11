@@ -13,8 +13,8 @@ class ARTService::Reports::ViralLoad
   end
 
   def clients_due
-    global_property = GlobalProperty.find_by(property: 'use.filing.number')
-    @use_filing_number = global_property&.property_value&.downcase == 'true'
+    # global_property = GlobalProperty.find_by(property: 'use.filing.number')
+    @use_filing_number = false # global_property&.property_value&.downcase == 'true'
 
     clients =  potential_get_clients
     return [] if clients.blank?
@@ -72,7 +72,7 @@ class ARTService::Reports::ViralLoad
     observations = ActiveRecord::Base.connection.select_all <<~SQL
       SELECT obs.person_id,
              obs.value_datetime,
-             date_antiretrovirals_started(obs.person_id, patient_start_date(obs.person_id)) AS start_date,
+             date_antiretrovirals_started(obs.person_id, NULL) AS start_date,
              patient_identifier.identifier,
              person_name.given_name,
              person_name.family_name,
@@ -116,6 +116,7 @@ class ARTService::Reports::ViralLoad
         INNER JOIN patient_program
           ON patient_program.program_id = #{program_id}
           AND patient_program.voided = 0
+          AND patient_program.patient_program_id = patient_state.patient_program_id
         WHERE patient_state.start_date < DATE(#{end_date}) + INTERVAL 1 DAY
           AND patient_state.voided = 0
         GROUP BY patient_state.patient_program_id
