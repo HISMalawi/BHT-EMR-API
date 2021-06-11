@@ -36,7 +36,8 @@ module ARTService
       'VL_DISAGGREGATED' => ARTService::Reports::ViralLoadDisaggregated,
       'TB_PREV' => ARTService::Reports::Pepfar::TbPrev,
       'OUTCOME_LIST' => ARTService::Reports::OutcomeList,
-      'VIRAL_LOAD' => ARTService::Reports::ViralLoad
+      'VIRAL_LOAD' => ARTService::Reports::ViralLoad,
+      'EXTERNAL_CONSULTATION_CLIENTS' => ARTService::Reports::ExternalConsultationClients
     }.freeze
 
     def generate_report(type:, **kwargs)
@@ -161,6 +162,11 @@ module ARTService
     def vl_results(start_date, end_date)
       REPORTS['VIRAL_LOAD'].new(start_date: start_date.to_date,
         end_date: end_date.to_date).vl_results
+    end
+
+    def external_consultation_clients(start_date, end_date)
+      REPORTS['EXTERNAL_CONSULTATION_CLIENTS'].new(start_date: start_date.to_date,
+        end_date: end_date.to_date).list
     end
 
     private
