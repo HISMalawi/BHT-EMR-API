@@ -45,15 +45,19 @@ class ARTService::Reports::VisitsReport
   # Returns a list of patients who visited the ART clinic on given day.
   def find_visiting_patients(date)
     day_start, day_end = TimeUtils.day_bounds(date)
-    Patient.find_by_sql(
-      [
-        'SELECT patient.* FROM patient INNER JOIN encounter USING (patient_id)
-         WHERE encounter.encounter_datetime BETWEEN ? AND ?
-          AND encounter.voided = 0 AND patient.voided = 0
-         GROUP BY patient.patient_id',
-        day_start, day_end
-      ]
-    )
+    query = <<~SQL
+      SELECT patient.* FROM patient INNER JOIN encounter USING (patient_id)
+       WHERE encounter.encounter_datetime BETWEEN ? AND ?
+        AND encounter.encounter_type NOT IN (
+          SELECT encounter_type_id FROM encounter_type WHERE name IN ('LAB', 'LAB ORDER', 'LAB RESULTS')
+        )
+        AND encounter.program_id = #{hiv_program.program_id}
+        AND encounter.voided = 0
+        AND patient.voided = 0
+       GROUP BY patient.patient_id
+    SQL
+
+    Patient.find_by_sql([query, day_start, day_end])
   end
 
   def workflow_engine(patient, date)

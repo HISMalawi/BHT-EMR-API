@@ -6,7 +6,8 @@ class ReportService
     'ANC PROGRAM' => ANCService::ReportEngine,
     'OPD PROGRAM' => OPDService::ReportEngine,
     'VMMC PROGRAM' => VMMCService::ReportEngine,
-    'TB PROGRAM' => TBService::ReportEngine
+    'TB PROGRAM' => TBService::ReportEngine,
+    'LABORATORY ORDERS' => LaboratoryService::ReportEngine
   }.freeze
   LOGGER = Rails.logger
 
@@ -178,6 +179,26 @@ class ReportService
 
   def clients_due_vl(start_date, end_date)
     engine(@program).clients_due_vl(start_date, end_date)
+  end
+
+  def vl_results(start_date, end_date)
+    engine(@program).vl_results(start_date, end_date)
+  end
+
+  def samples_drawn(start_date, end_date)
+    engine(@program).samples_drawn(start_date, end_date)
+  end
+
+  def lab_test_results(start_date, end_date)
+    engine(@program).test_results(start_date, end_date)
+  end
+
+  def orders_made(start_date, end_date, status)
+    engine(@program).orders_made(start_date, end_date, status)
+  end
+
+  def external_consultation_clients(start_date, end_date)
+    engine(@program).external_consultation_clients(start_date, end_date)
   end
 
   private

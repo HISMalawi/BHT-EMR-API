@@ -139,7 +139,7 @@ Rails.application.routes.draw do
         get '/barcodes/:barcode_name', to: 'program_barcodes#print_barcode'
         post 'void_arv_number/:arv_number' => 'program_patients#void_arv_number'
 
-        resources :program_patients, path: :patients do
+        resources :program_patients, path: 'patients' do
           get '/next_appointment_date' => 'patient_appointments#next_appointment_date'
           get '/last_drugs_received' => 'program_patients#last_drugs_received'
           get '/dosages' => 'program_patients#find_dosages'
@@ -162,6 +162,7 @@ Rails.application.routes.draw do
           get '/subsequent_visit', to: 'program_patients#subsequent_visit'
           get '/saved_encounters', to: 'program_patients#saved_encounters'
           resources :patient_states, path: :states
+          resources :visit, only: %i[index], module: 'programs/patients'
         end
         resources :lab_test_types, path: 'lab_tests/types'
         get '/lab_tests/panels' => 'lab_test_types#panels' # TODO: Move this into own controller
@@ -322,5 +323,9 @@ Rails.application.routes.draw do
   get '/api/v1/patient_outcome_list', to: 'api/v1/reports#patient_outcome_list'
   get '/api/v1/clients_due_vl', to: 'api/v1/reports#clients_due_vl'
   get '/api/v1/last_cxca_screening_details' => 'api/v1/patients#last_cxca_screening_details'
-
+  get '/api/v1/vl_results', to: 'api/v1/reports#vl_results'
+  get '/api/v1/samples_drawn', to: 'api/v1/reports#samples_drawn'
+  get '/api/v1/lab_test_results', to: 'api/v1/reports#lab_test_results'
+  get '/api/v1/orders_made', to: 'api/v1/reports#orders_made'
+  get '/api/v1/:program_id/external_consultation_clients', to: 'api/v1/reports#external_consultation_clients'
 end

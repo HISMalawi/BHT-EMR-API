@@ -19,53 +19,53 @@ EOF
 
       months_gone = months_gone['months'].to_i
     rescue
-      return {} 
+      return {}
     end
 
     milestones = [6]
-    start_month = 0
+    start_month = 6
 
-    1.upto(100).each do |y|
+    1.upto(1000).each do |y|
       milestones << (start_month += 12)
     end
 
     vl_eligibility = {
-      eligibile: false, 
+      eligibile: false,
       milestone: nil, period_on_art: months_gone,
       earliest_start_date: @earliest_start_date.to_date,
       skip_milestone: false, message: nil
      }
 
-    milestones.each do |m|
-      if months_gone >= m && months_gone <= (m + 3)
-        value_coded  = ConceptName.find_by_name('Delayed milestones').concept_id
-        value_coded2 = ConceptName.find_by_name('Tests ordered').concept_id
+    if milestones.include?(months_gone) || milestones.include?(months_gone + 1) ||
+      milestones.include?(months_gone + 2) || milestones.include?(months_gone + 3)
+      value_coded  = ConceptName.find_by_name('Delayed milestones').concept_id
+      value_coded2 = ConceptName.find_by_name('Tests ordered').concept_id
 
-        obs = Observation.where(person_id: @patient.id, value_numeric: m, 
-          concept_id: ConceptName.find_by_name('HIV viral load').concept_id,
-          value_coded: [value_coded,value_coded2]).\
-          order('obs_datetime DESC').first
+      obs = Observation.where(person_id: @patient.id, value_numeric: months_gone,
+        concept_id: ConceptName.find_by_name('HIV viral load').concept_id,
+        value_coded: [value_coded,value_coded2]).\
+        order('obs_datetime DESC').first
 
-        unless obs.blank? 
-          provider = PersonName.where(person_id: Encounter.find(obs.encounter_id).provider_id).last
-          if obs.value_coded == value_coded
-            vl_eligibility[:message] = "VL reminder set for next milestone"
-            vl_eligibility[:message] += " by #{provider.given_name} #{provider.family_name}" unless provider.blank?
-          else
-            vl_eligibility[:message] = "VL test ordered on #{obs.obs_datetime.strftime('%d/%b/%Y')}"
-            vl_eligibility[:message] += " by #{provider.given_name} #{provider.family_name}" unless provider.blank?
-          end
+      unless obs.blank?
+        provider = PersonName.where(person_id: Encounter.find(obs.encounter_id).provider_id).last
+        if obs.value_coded == value_coded
+          vl_eligibility[:message] = "VL reminder set for next milestone"
+          vl_eligibility[:message] += " by #{provider.given_name} #{provider.family_name}" unless provider.blank?
+        else
+          vl_eligibility[:message] = "VL test ordered on #{obs.obs_datetime.strftime('%d/%b/%Y')}"
+          vl_eligibility[:message] += " by #{provider.given_name} #{provider.family_name}" unless provider.blank?
         end
+      end
 
-        vl_eligibility[:eligibile] = true
-        vl_eligibility[:milestone] = m
-        vl_eligibility[:skip_milestone] = obs.blank? ? false : true
-      end 
+      vl_eligibility[:eligibile] = true
+      vl_eligibility[:milestone] = months_gone
+      vl_eligibility[:skip_milestone] = obs.blank? ? false : true
     end
 
     if vl_eligibility[:eligibile] == false
       milestones.each do |m|
         if (months_gone == (m - 1))
+          vl_eligibility[:milestone] = m
           vl_eligibility[:message] = 'VL is due in a month time.'
           vl_eligibility[:message] += "<br /> Client's start date: #{@earliest_start_date.to_date.strftime('%d/%b/%Y')}"
         end
