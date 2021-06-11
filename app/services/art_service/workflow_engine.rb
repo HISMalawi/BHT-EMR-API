@@ -183,7 +183,7 @@ module ARTService
                            .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
                            .order(encounter_datetime: :desc)\
                            .first
-      
+
       return false if encounter.blank?
       #commented out the next line because emastercard was not working (will check 'why' later)
       #raise "Can't check if patient checked in due to missing HIV_RECEPTION" if encounter.nil?

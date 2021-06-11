@@ -287,6 +287,56 @@ module OPDService
 
       return stats
     end
+    def dispensation(start_date, end_date)
+      type = EncounterType.find_by_name 'TREATMENT'
+
+      data = Encounter.where('encounter_datetime BETWEEN ? AND ?
+        AND encounter_type = ? ',
+        start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
+        end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id).\
+        joins('INNER JOIN orders o ON o.encounter_id = encounter.encounter_id
+        INNER JOIN drug_order i ON i.order_id = o.order_id
+        INNER JOIN drug d ON d.drug_id = i.drug_inventory_id').\
+        select('encounter.patient_id person_id,i.equivalent_daily_dose,i.frequency,COALESCE(SUM(i.quantity), 0) as total_quantity,
+        d.drug_id, o.start_date,o.instructions, d.name drug_name').\
+        order('d.name DESC').group('d.name')
+
+      stats = []
+      (data || []).each do |record|
+
+        drug_name =record['drug_name'];
+        data2 = Encounter.where("encounter_datetime BETWEEN ? AND ?
+        AND encounter_type = ? AND d.name ='"+drug_name+"'",
+        start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
+        end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id).\
+        joins('INNER JOIN orders o ON o.encounter_id = encounter.encounter_id
+        INNER JOIN drug_order i ON i.order_id = o.order_id
+        INNER JOIN drug d ON d.drug_id = i.drug_inventory_id').\
+        select('encounter.patient_id person_id,i.equivalent_daily_dose,i.frequency,i.quantity,
+        d.drug_id, o.start_date,o.instructions, d.name drug_name').\
+        order('d.name DESC').group(' o.order_id')
+
+        value = 0;
+        (data2 || []).each do |record2|
+          if record2['instructions'].include? "days"
+          duration = record2['instructions'].split("for")[1].split("days")[0].to_i
+          else
+            duration = 0
+          end
+
+          value += duration * record2['equivalent_daily_dose']
+        end
+
+          stats << {
+
+            drug_name: record['drug_name'],
+            quantity: record['total_quantity'],
+            amount_needed: value
+          }
+        end
+
+      return stats
+    end
 
     private
 
