@@ -16,6 +16,8 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+## [v4.10.44] - 2021-06-15
+
 ### Fixed
 
 - ART: Incomplete visits data cleaning tool including initial staging and vitals for
