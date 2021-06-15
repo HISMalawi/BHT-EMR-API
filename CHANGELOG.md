@@ -18,6 +18,8 @@ compatibility (examples of this include major architectural changes).
 
 ### Fixed
 
+- ART: Incomplete visits data cleaning tool including initial staging and vitals for
+       Transfer Ins as incomplete visit
 - ART: Patients with closing states like Died and TO appearing in VL due report
 - ART: Migrated results missing from High VL report
 
