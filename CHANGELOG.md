@@ -16,6 +16,12 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+## [v4.10.45] - 2021-06-16
+
+### Changed
+
+- Bumped up lab to version 1.0.4
+
 ## [v4.10.44] - 2021-06-15
 
 ### Fixed
