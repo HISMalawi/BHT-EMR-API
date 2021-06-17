@@ -9,6 +9,7 @@ module ARTService
     LOGGER = Rails.logger
 
     REPORTS = {
+      'ARCHIVING_CANDIDATES' => ARTService::Reports::ArchivingCandidates,
       'APPOINTMENTS' => ARTService::Reports::AppointmentsReport,
       'ARV_REFILL_PERIODS' => ARTService::Reports::ArvRefillPeriods,
       'COHORT' => ARTService::Reports::Cohort,
