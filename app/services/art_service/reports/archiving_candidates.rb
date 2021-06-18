@@ -11,10 +11,10 @@ module ARTService
 
       def find_report
         patients = patients_with_adverse_outcomes.to_a
-        defaulters = long_term_defaulters(patients.map { |patient| patient['patient_id'] })
+        long_term_defaulters(patients.map { |patient| patient['patient_id'] })
+          .each { |defaulter| patients << defaulter }
 
-        defaulters.each { |defaulter| patients << defaulter }
-        not_on_treatment
+        patients
       end
 
       private
@@ -80,47 +80,50 @@ module ARTService
       # and are defaulters
       def long_term_defaulters(patients_to_exclude = [])
         ActiveRecord::Base.connection.select_all <<~SQL
-          SELECT encounter.patient_id,
+          SELECT orders.patient_id,
                  patient_identifier.identifier AS filing_number,
                  'Defaulted' AS outcome,
-                 current_defaulter_date(encounter.patient_id, #{start_date}) AS outcome_date
-          FROM encounter
-          INNER JOIN program
-            ON program.program_id = encounter.program_id
-            AND program.name = 'HIV Program'
-            AND program.retired = 0
+                 current_defaulter_date(orders.patient_id, #{start_date}) AS outcome_date
+          FROM orders
+          INNER JOIN order_type
+            ON order_type.order_type_id = orders.order_type_id
+            AND order_type.name = 'Drug order'
+            AND order_type.retired = 0
+          INNER JOIN drug_order
+            ON drug_order.order_id = orders.order_id
+            AND drug_order.quantity > 0
+          INNER JOIN arv_drug
+            ON arv_drug.drug_id = drug_order.drug_inventory_id
+          INNER JOIN (
+            SELECT orders.patient_id,
+                   MAX(auto_expire_date) AS drug_run_out_date
+            FROM orders
+            INNER JOIN order_type
+              ON order_type.order_type_id = orders.order_type_id
+              AND order_type.name = 'Drug order'
+              AND order_type.retired = 0
+            INNER JOIN drug_order
+              ON drug_order.order_id = orders.order_id
+              AND drug_order.quantity > 0
+            INNER JOIN arv_drug
+              ON arv_drug.drug_id = drug_order.drug_inventory_id
+            WHERE orders.voided = 0
+              AND orders.patient_id NOT IN (#{patients_to_exclude.join(',')})
+            GROUP BY orders.patient_id
+            LIMIT 100
+          ) AS last_patient_drug_order
+            ON last_patient_drug_order.patient_id = orders.patient_id
+            AND last_patient_drug_order.drug_run_out_date < DATE(#{start_date}) - INTERVAL 6 MONTH
           INNER JOIN patient_identifier
-            ON patient_identifier.patient_id = encounter.patient_id
+            ON patient_identifier.patient_id = orders.patient_id
             AND patient_identifier.voided = 0
           INNER JOIN patient_identifier_type
             ON patient_identifier_type.patient_identifier_type_id = patient_identifier.identifier_type
             AND patient_identifier_type.name = 'Filing number'
             AND patient_identifier_type.retired = 0
-          WHERE encounter.voided = 0
-            AND encounter.encounter_datetime <= DATE(#{start_date}) - INTERVAL 6 MONTH
-            AND (encounter.patient_id NOT IN (#{patients_to_exclude.join(',')})
-                 OR encounter.patient_id NOT IN (
-                    SELECT patient_program.patient_id
-                    FROM patient_program
-                    INNER JOIN program
-                      ON program.program_id = patient_program.program_id
-                      AND program.name = 'HIV Program'
-                      AND program.retired = 0
-                    INNER JOIN encounter
-                      ON encounter.program_id = patient_program.program_id
-                      AND encounter.patient_id = patient_program.patient_id
-                      AND encounter.encounter_datetime >= DATE(#{start_date}) - INTERVAL 6 MONTH
-                      AND encounter.voided = 0
-                    INNER JOIN encounter_type
-                      ON encounter_type.encounter_type_id = encounter.encounter_type
-                      AND encounter_type.name = 'HIV Reception'
-                      AND encounter_type.retired = 0
-                    WHERE patient_program.voided = 0
-                    GROUP BY patient_program.patient_id
-                ))
-          GROUP BY encounter.patient_id
+          WHERE orders.voided = 0
+          GROUP BY orders.patient_id
           HAVING outcome_date IS NOT NULL
-          LIMIT 10
         SQL
       end
     end
