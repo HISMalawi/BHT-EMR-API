@@ -2287,18 +2287,18 @@
 									]
 								},
 								{
-									"name": "High Viral Load patients",
+									"name": "High Viral Load",
 									"request": {
 										"method": "GET",
 										"header": [
 											{
 												"key": "Authorization",
-												"value": "bppjjuqMwVLB",
+												"value": "i9dMzib8nnEF",
 												"type": "text"
 											}
 										],
 										"url": {
-											"raw": "http://localhost:3000/api/v1/programs/1/reports/high_vl_patients?start_date=2018-01-01&end_date=2021-05-31",
+											"raw": "http://localhost:3000/api/v1/programs/1/reports/high_vl_patients?start_date=2018-01-01&end_date=2021-05-31&range=intermediate",
 											"protocol": "http",
 											"host": [
 												"localhost"
@@ -2320,25 +2320,29 @@
 												{
 													"key": "end_date",
 													"value": "2021-05-31"
+												},
+												{
+													"key": "range",
+													"value": "intermediate"
 												}
 											]
 										},
-										"description": "Retrieve all ART patients whose most recent viral load result in reporting period is high.\n\nHigh viral load is defined as a result with a numeric value which is at least 800 or is >LDL."
+										"description": "Retrieve all ART patients whose most recent viral load result in reporting period is within specified range.\n\nThree ranges are available namely:\n* Low (less than or equal to 50 copies/ml or simple LDL)\n* High (default: greater than or equal to 1000 copies/ml)\n* Intermediate (greater than 50 copies/ml and less than 1000 copies/ml)"
 									},
 									"response": [
 										{
-											"name": "High Viral Load patients",
+											"name": "High Viral Load",
 											"originalRequest": {
 												"method": "GET",
 												"header": [
 													{
 														"key": "Authorization",
-														"value": "bppjjuqMwVLB",
+														"value": "i9dMzib8nnEF",
 														"type": "text"
 													}
 												],
 												"url": {
-													"raw": "http://localhost:3000/api/v1/programs/1/reports/high_vl_patients?start_date=2018-01-01&end_date=2021-05-31",
+													"raw": "http://localhost:3000/api/v1/programs/1/reports/high_vl_patients?start_date=2018-01-01&end_date=2021-05-31&range=intermediate",
 													"protocol": "http",
 													"host": [
 														"localhost"
@@ -2360,6 +2364,10 @@
 														{
 															"key": "end_date",
 															"value": "2021-05-31"
+														},
+														{
+															"key": "range",
+															"value": "intermediate"
 														}
 													]
 												}
@@ -2374,7 +2382,7 @@
 												},
 												{
 													"key": "ETag",
-													"value": "W/\"2f0bb367ed02568d59a87258076310b8\""
+													"value": "W/\"d8929416aadf2b027eecd5c8465a952f\""
 												},
 												{
 													"key": "Cache-Control",
@@ -2382,11 +2390,11 @@
 												},
 												{
 													"key": "X-Request-Id",
-													"value": "1996d46f-f70f-4cdf-8ebb-d002ddc5b417"
+													"value": "484356e8-2c05-4614-82eb-a1e0128afb45"
 												},
 												{
 													"key": "X-Runtime",
-													"value": "1.966063"
+													"value": "0.044390"
 												},
 												{
 													"key": "Vary",
@@ -2398,7 +2406,7 @@
 												}
 											],
 											"cookie": [],
-											"body": "[\n    {\n        \"patient_id\": 14986,\n        \"arv_number\": \"XXX-ARV-123\",\n        \"order_date\": \"2021-02-22T00:00:00.000+02:00\",\n        \"specimen_drawn_date\": \"2021-02-22T00:00:00.000+02:00\",\n        \"result_date\": \"2021-04-19T02:00:00.000+02:00\",\n        \"result_modifier\": \">\",\n        \"result\": \"LDL\"\n    },\n    {\n        \"patient_id\": 45200,\n        \"arv_number\": \"XXX-ARV-234\",\n        \"order_date\": \"2021-03-24T00:00:00.000+02:00\",\n        \"specimen_drawn_date\": \"2021-03-24T00:00:00.000+02:00\",\n        \"result_date\": \"2021-04-16T02:00:00.000+02:00\",\n        \"result_modifier\": \">\",\n        \"result\": \"LDL\"\n    },\n    {\n        \"patient_id\": 46308,\n        \"arv_number\": \"XXX-ARV-567\",\n        \"order_date\": \"2021-01-27T00:00:00.000+02:00\",\n        \"specimen_drawn_date\": \"2021-01-27T00:00:00.000+02:00\",\n        \"result_date\": \"2021-04-14T02:00:00.000+02:00\",\n        \"result_modifier\": \">\",\n        \"result\": \"LDL\"\n    }\n]"
+											"body": "[\n    {\n        \"patient_id\": 29,\n        \"arv_number\": null,\n        \"birthdate\": \"1971-07-01\",\n        \"age_group\": \"45-49 years\",\n        \"gender\": \"M\",\n        \"order_date\": \"2021-05-10T00:00:00.000+02:00\",\n        \"specimen_drawn_date\": \"2021-05-10T00:00:00.000+02:00\",\n        \"result_date\": \"2021-05-10T00:00:00.000+02:00\",\n        \"result_modifier\": \"<\",\n        \"result\": \"200\"\n    }\n]"
 										}
 									]
 								}
@@ -5404,6 +5412,47 @@
 							"body": "[{\"relationship_type_id\":4,\"a_is_to_b\":\"Aunt/Uncle\",\"b_is_to_a\":\"Niece/Nephew\",\"preferred\":0,\"weight\":0,\"description\":\"\",\"creator\":1,\"date_created\":\"2007-11-28T08:11:37.000Z\",\"uuid\":\"8d91a3dc-c2cc-11de-8d13-0010c6dffd0f\",\"retired\":false,\"retired_by\":null,\"date_retired\":null,\"retire_reason\":null}]"
 						}
 					]
+				}
+			]
+		},
+		{
+			"name": "Patients",
+			"item": [
+				{
+					"name": "Register a patient",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "0ca0Smzo1zAp",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"person_id\": 30,\n    \"program_id\": 1\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3000/api/v1/patients",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"v1",
+								"patients"
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},

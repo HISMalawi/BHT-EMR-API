@@ -7,11 +7,12 @@ module ARTService
     # in a reporting period.
     #
     # High viral load is defined as a viral load with a numeric value
-    # equal to or exceeding 800, or a result value of >LDL.
+    # equal to or exceeding 1000.
     class HighViralLoadPatients
-      def initialize(start_date:, end_date:, **_kwargs)
+      def initialize(start_date:, end_date:, range: 'high', **_kwargs)
         @start_date = start_date
         @end_date = end_date
+        @range = range || 'high'
       end
 
       def find_report
@@ -92,8 +93,7 @@ module ARTService
               SELECT concept_id FROM concept_name INNER JOIN concept USING (concept_id)
               WHERE concept_name.name = 'Viral load' AND concept.retired = 0 AND concept_name.voided = 0
             )
-            AND ((test_result_measure_obs.value_modifier IN ('=', '>') AND test_result_measure_obs.value_numeric >= 1000)
-                 OR (test_result_measure_obs.value_modifier = '>' AND test_result_measure_obs.value_text = 'LDL'))
+            AND (#{query_range})
             AND test_result_measure_obs.voided = 0
           WHERE orders.concept_id IN (
               SELECT concept_id FROM concept_name INNER JOIN concept USING (concept_id)
@@ -103,6 +103,23 @@ module ARTService
             AND orders.voided = 0
           GROUP BY orders.patient_id
         SQL
+      end
+
+      def query_range
+        case @range.downcase
+        when 'high' then <<~SQL
+          (test_result_measure_obs.value_modifier IN ('=', '>') AND test_result_measure_obs.value_numeric >= 1000)
+        SQL
+        when 'low' then <<~SQL
+          ((test_result_measure_obs.value_modifier IN ('=', '<') AND test_result_measure_obs.value_numeric <= 50)
+           OR test_result_measure_obs.value_text = 'LDL')
+        SQL
+        when 'intermediate' then <<~SQL
+          (test_result_measure_obs.value_numeric >= 51 AND test_result_measure_obs.value_numeric < 1000)
+        SQL
+        else
+          raise InvalidParameterError, "Invalid viral load range specified: #{@range}"
+        end
       end
     end
   end
