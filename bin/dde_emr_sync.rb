@@ -70,6 +70,31 @@ def update_record(record)
         )
   end
 
+  #Check if identifier is the same as update
+  existing_id = PatientIdentifier.where(patient_id: person_id, voided: 0,identifier_type: 3,
+                                        identifier: person_obj[:identifiers][:npid])
+
+  if existing_id.blank?
+    ActiveRecord::Base.transaction do
+      identifier = PatientIdentifier.where(patient_id: person_id, voided: 0,identifier_type: 3)
+
+      (identifier || []).each do | id |
+        id.update(voided: 1,
+                  date_voided: Time.now,
+                  voided_by: 1,
+                  void_reason: 'dde update')
+      end
+
+      location = Location.find_by_name('HIV Reception')
+      PatientIdentifier.create!(patient_id: person_id,
+                                identifier: person_obj[:identifiers][:npid],
+                                identifier_type: 3,
+                                creator: 1,
+                                date_created: Time.now,
+                                location_id: location_id.location_id)
+    end
+  end
+
   #update person attributes
   #PersonService.new.update_person_attributes(person_id,person_obj[:attributes])
 end
