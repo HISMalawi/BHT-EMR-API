@@ -145,15 +145,18 @@ def main
   else
     FileUtils.touch "/tmp/dde_emr_sync.lock"
   end
-  changes = pull_dde_updates
-  changes.each do |record|
-    ActiveRecord::Base.transaction do
-      update_record(record)
-      GlobalProperty.find_by_property('dde_update_tracker_seq').update(property_value: record['id'])
+  begin
+    changes = pull_dde_updates
+    changes.each do |record|
+      ActiveRecord::Base.transaction do
+        update_record(record)
+        GlobalProperty.find_by_property('dde_update_tracker_seq').update(property_value: record['id'])
+      end
     end
-  end
-  if File.exists?("/tmp/dde_emr_sync.lock")
-    FileUtils.rm "/tmp/dde_emr_sync.lock"
+  ensure
+    if File.exists?("/tmp/dde_emr_sync.lock")
+      FileUtils.rm "/tmp/dde_emr_sync.lock"
+    end
   end
 end
 
