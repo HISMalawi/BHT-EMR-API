@@ -16,6 +16,14 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+## [v4.10.47] - 2021-06-21
+
+### Added
+
+- Script to void and reassign duplicate filing numbers
+- ART: Archiving candidatesw report
+
+
 ## [v4.10.45] - 2021-06-16
 
 ### Changed
