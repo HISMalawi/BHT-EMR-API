@@ -2,6 +2,14 @@
 
 module PatientIdentifierService
   class << self
+    ##
+    # Finds all duplicate identifiers of a given type.
+    #
+    # Returns an array of (identifier, count) pairs where the count is the
+    # number of duplicates found.
+    #
+    # @param {PatientIdentifierType} identifier_type
+    # @returns {Array<Array<string, integer>>}
     def find_duplicates(identifier_type)
       pid_type_id = ActiveRecord::Base.connection.quote(identifier_type.id)
 
