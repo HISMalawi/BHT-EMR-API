@@ -114,12 +114,21 @@ def self.get_person_obj(person, person_attributes = [])
   end
 
 def main
+  if File.exists?("/tmp/dde_emr_sync.lock")
+    puts 'Another process running!'
+    exit
+  else
+    FileUtils.touch "/tmp/dde_emr_sync.lock"
+  end
   changes = pull_dde_updates
   changes.each do |record|
     ActiveRecord::Base.transaction do
       update_record(record)
       GlobalProperty.find_by_property('dde_update_tracker_seq').update(property_value: record['id'])
     end
+  end
+  if File.exists?("/tmp/dde_emr_sync.lock")
+    FileUtils.rm "/tmp/dde_emr_sync.lock"
   end
 end
 
