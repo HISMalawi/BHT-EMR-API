@@ -108,14 +108,15 @@ module ARTService
       def query_range
         case @range.downcase
         when 'high' then <<~SQL
-          (test_result_measure_obs.value_modifier IN ('=', '>') AND test_result_measure_obs.value_numeric >= 1000)
+          ((test_result_measure_obs.value_modifier IN ('=', '>') AND test_result_measure_obs.value_numeric >= 1000)
+           OR (test_result_measure_obs.value_modifier = '>' AND test_result_measure_obs.value_text = 'LDL'))
         SQL
         when 'low' then <<~SQL
-          ((test_result_measure_obs.value_modifier IN ('=', '<') AND test_result_measure_obs.value_numeric <= 50)
-           OR test_result_measure_obs.value_text = 'LDL')
+          (test_result_measure_obs.value_modifier IN ('=', '<')
+           AND (test_result_measure_obs.value_numeric <= 50 OR test_result_measure_obs.value_text = 'LDL'))
         SQL
         when 'intermediate' then <<~SQL
-          (test_result_measure_obs.value_numeric >= 51 AND test_result_measure_obs.value_numeric < 1000)
+          (test_result_measure_obs.value_numeric > 50 AND test_result_measure_obs.value_numeric < 1000)
         SQL
         else
           raise InvalidParameterError, "Invalid viral load range specified: #{@range}"
