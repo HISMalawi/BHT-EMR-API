@@ -16,9 +16,16 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+
+## [v4.10.48] - 2021-06-23
+
 ### Added
 
 - ART: Added optional range parameter to high viral load report
+
+### Fixed
+
+- Crash on startup in production
 
 ## [v4.10.47] - 2021-06-21
 
