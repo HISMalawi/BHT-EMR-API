@@ -21,7 +21,8 @@ compatibility (examples of this include major architectural changes).
 
 ### Added
 
-- ART: Added optional range parameter to high viral load report
+- ART: Optional range parameter to high viral load report
+- ART: Regimen 15PP
 
 ### Fixed
 
