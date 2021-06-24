@@ -91,7 +91,7 @@ def update_record(record)
                                 identifier_type: 3,
                                 creator: 1,
                                 date_created: Time.now,
-                                location_id: location_id.location_id)
+                                location_id: location.location_id)
     end
   end
 
