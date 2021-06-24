@@ -171,7 +171,7 @@ class ARTService::Reports::ViralLoad
         gender: person[:gender],
         birthdate: person[:birthdate],
         arv_number: use_filing_number(person[:patient_id], person[:arv_number]),
-        last_result_order_date: last_result.order_date,
+        last_result_order_date: (last_result.order_date.to_date rescue 'N/A'),
         last_result: last_result.result_value,
         last_result_date: last_result.result_date
       }
