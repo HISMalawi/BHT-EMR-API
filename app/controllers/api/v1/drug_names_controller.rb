@@ -4,8 +4,7 @@ class Api::V1::DrugNamesController < ApplicationController
     render json: service.find_generic_drugs(concept_set_id.concept_id)
   end
   def OPD_drugslist
-    concept_set_id = ConceptName.find_by_name 'OPD Medication'
-    render json: service.find_drug_list(concept_set_id.concept_id)
+    render json: service.find_drug_list()
   end
 
   private
