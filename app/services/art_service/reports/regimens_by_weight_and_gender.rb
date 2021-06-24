@@ -2,8 +2,6 @@
 
 module ARTService
   module Reports
-    Constants = ARTService::Constants
-
     class RegimensByWeightAndGender
       attr_reader :start_date, :end_date
 
@@ -75,7 +73,7 @@ module ARTService
         if start_weight.nil? && end_weight.nil?
           # If no weight is provided then this must be all patients without a weight observation
           return PatientProgram.select(:patient_id)
-                               .where(program_id: Constants::PROGRAM_ID)
+                               .where(program_id: ARTService::Constants::PROGRAM_ID)
                                .where.not(patient_id: patients_with_known_weight)
         end
 

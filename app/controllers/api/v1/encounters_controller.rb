@@ -77,9 +77,7 @@ class Api::V1::EncountersController < ApplicationController
       patient: Patient.find(patient_id),
       program: Program.find(program_id),
       provider: params[:provider_id] ? Person.find(params[:provider_id]) : User.current.person,
-      encounter_datetime: TimeUtils.retro_timestamp(params[:encounter_datetime]&.to_time || Time.now),
-      program: Program.find(program_id)
-
+      encounter_datetime: TimeUtils.retro_timestamp(params[:encounter_datetime]&.to_time || Time.now)
     )
 
     if encounter.errors.empty?
