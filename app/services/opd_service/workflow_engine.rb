@@ -44,6 +44,7 @@ module OPDService
     LAB_ORDERS = 'LAB ORDERS'
     OUTPATIENT_DIAGNOSIS = 'OUTPATIENT DIAGNOSIS'
     PRESCRIPTION = 'PRESCRIPTION'
+    DISPENSING = 'DISPENSING'
     TREATMENT = 'TREATMENT'
 =begin
     # Encounters graph
@@ -67,7 +68,8 @@ module OPDService
       LAB_ORDERS => RADIOLOGY_EXAMINATION,
       RADIOLOGY_EXAMINATION => OUTPATIENT_DIAGNOSIS,
       OUTPATIENT_DIAGNOSIS => PRESCRIPTION,
-      PRESCRIPTION => END_STATE
+      PRESCRIPTION => DISPENSING,
+      DISPENSING => END_STATE
     }.freeze
 
     STATE_CONDITIONS = {
@@ -78,6 +80,7 @@ module OPDService
       PRESCRIPTION => %i[patient_does_not_have_prescription?],
       LAB_ORDERS => %i[patient_does_not_have_lab_order?],
       RADIOLOGY_EXAMINATION => %i[patient_does_not_have_radiology_examination?],
+      DISPENSING => %i[patient_does_not_have_dispensation?],
     }.freeze
 
     def load_user_activities
@@ -101,8 +104,10 @@ module OPDService
           RADIOLOGY_EXAMINATION
         when /Outpatient diagnosis/i
           OUTPATIENT_DIAGNOSIS
-        when /prescription/i
+        when /Prescription/i
           PRESCRIPTION
+        when /Dispensing/i
+          DISPENSING
         else
           Rails.logger.warn "Invalid OPD activity in user properties: #{activity}"
         end
@@ -173,7 +178,7 @@ module OPDService
     # Checks if patient has prescription today
     #
     def patient_does_not_have_prescription?
-      encounter_type = EncounterType.find_by name:PRESCRIPTION
+      encounter_type = EncounterType.find_by name:TREATMENT
       encounter = Encounter.joins(:type).where(
         'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
         @patient.patient_id, encounter_type.encounter_type_id, @date
@@ -198,6 +203,18 @@ module OPDService
     #
     def patient_does_not_have_radiology_examination?
       encounter_type = EncounterType.find_by name:RADIOLOGY_EXAMINATION
+      encounter = Encounter.joins(:type).where(
+        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
+        @patient.patient_id, encounter_type.encounter_type_id, @date
+      ).order(encounter_datetime: :desc).first
+
+      encounter.blank?
+    end
+
+    # Checks if patient has prescription today
+    #
+    def patient_does_not_have_dispensation?
+      encounter_type = EncounterType.find_by name:DISPENSING
       encounter = Encounter.joins(:type).where(
         'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
         @patient.patient_id, encounter_type.encounter_type_id, @date
