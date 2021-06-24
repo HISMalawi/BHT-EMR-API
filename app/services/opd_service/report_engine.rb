@@ -129,6 +129,107 @@ module OPDService
       return stats
     end
 
+
+    def malaria_report(start_date, end_date)
+      type = EncounterType.find_by_name 'Outpatient diagnosis'
+      data = Encounter.where('encounter_datetime BETWEEN ? AND ?
+        ',
+        start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
+        end_date.to_date.strftime('%Y-%m-%d 23:59:59')).\
+        joins('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
+        INNER JOIN person p ON p.person_id = encounter.patient_id
+        LEFT JOIN person_name n ON n.person_id = encounter.patient_id AND n.voided = 0
+        LEFT JOIN person_attribute z ON z.person_id = encounter.patient_id AND z.person_attribute_type_id = 12
+        RIGHT JOIN person_address a ON a.person_id = encounter.patient_id').\
+        select('encounter.encounter_type,n.given_name, n.family_name, n.person_id, obs.value_text, obs.value_coded, p.*,
+        a.state_province district, a.township_division ta, a.city_village village, z.value')
+
+        patientD_confirmed_malaria_cases = []
+        patientD_presumed_malaria_cases = []
+
+        patientD_confirmed_malaria_cases_less_than_five_years = []
+        patientD_confirmed_malaria_cases_greater_than_five_years = []
+        patientD_presumed_malaria_cases_less_than_five_years = []
+        patientD_presumed_malaria_cases_greater_than_five_years = []
+
+
+        all_data={}
+        confirmed_malaria_cases =0
+        presumed_malaria_cases =0
+
+        confirmed_malaria_cases_less_than_five_years =0
+        confirmed_malaria_cases_greater_than_five_years =0
+        presumed_malaria_cases_less_than_five_years =0
+        presumed_malaria_cases_greater_than_five_years =0
+
+        (data || []).each do |record|
+          age_group = get_age_group_for_malaria(record['birthdate'], end_date)
+          preg = record['concept_id']
+          phone_number = record['value']
+          gender = record['gender']
+          given_name = record['given_name']
+          family_name = record['family_name']
+          district  = record['district']
+          ta  = record['ta']
+          village = record['village']
+          address = "#{district}; #{ta}; #{village}"
+          patient_info = "|#{given_name},#{record['person_id']},#{family_name},#{gender},#{phone_number},#{address}";
+          # patient_info = given_name,record['person_id'],family_name,gender,address
+
+          concept = ConceptName.find_by_concept_id record['value_coded']
+          dt =  record['value_coded']
+
+
+          if record['value_text'] == "Thick Smear Positive" || record['value_text'] =="Malaria RDT Positive"
+            confirmed_malaria_cases += 1
+            patientD_confirmed_malaria_cases << [patient_info]
+          end
+            if record['value_coded'] == 123
+            presumed_malaria_cases += 1
+            patientD_presumed_malaria_cases << [patient_info]
+          end
+            if  record['value_text'] == "Thick Smear Positive" || record['value_text'] == "Malaria RDT Positive" && age_group == '< 5 yrs'
+            confirmed_malaria_cases_less_than_five_years += 1
+            patientD_confirmed_malaria_cases_less_than_five_years << [patient_info]
+          end
+            if  record['value_text'] == "Thick Smear Positive" || record['value_text'] =="Malaria RDT Positive" && age_group == '> 5 yrs'
+            confirmed_malaria_cases_greater_than_five_years += 1
+            patientD_confirmed_malaria_cases_greater_than_five_years << [patient_info]
+          end
+          if age_group == '< 5 yrs' && record['value_coded'] == 123
+            presumed_malaria_cases_less_than_five_years += 1
+            patientD_presumed_malaria_cases_less_than_five_years << [patient_info]
+          end
+          if age_group == '> 5 yrs' && record['value_coded'] == 123
+            presumed_malaria_cases_greater_than_five_years += 1
+            patientD_presumed_malaria_cases_greater_than_five_years << [patient_info]
+          end
+
+
+
+
+        end
+
+        all_data = {
+
+          confirmed_malaria_cases: confirmed_malaria_cases,
+          patientD_confirmed_malaria_cases:patientD_confirmed_malaria_cases,
+          presumed_malaria_cases: presumed_malaria_cases,
+          patientD_presumed_malaria_cases: patientD_presumed_malaria_cases,
+          confirmed_malaria_cases_less_than_five_years: confirmed_malaria_cases_less_than_five_years,
+          patientD_confirmed_malaria_cases_less_than_five_years: patientD_confirmed_malaria_cases_less_than_five_years,
+          confirmed_malaria_cases_greater_than_five_years: confirmed_malaria_cases_greater_than_five_years,
+          patientD_confirmed_malaria_cases_greater_than_five_years: patientD_confirmed_malaria_cases_greater_than_five_years,
+          presumed_malaria_cases_less_than_five_years: presumed_malaria_cases_less_than_five_years,
+          patientD_presumed_malaria_cases_less_than_five_years: patientD_presumed_malaria_cases_less_than_five_years,
+          presumed_malaria_cases_greater_than_five_years: presumed_malaria_cases_greater_than_five_years,
+          patientD_presumed_malaria_cases_greater_than_five_years: patientD_presumed_malaria_cases_greater_than_five_years,
+
+        }
+
+        return all_data
+      end
+
     def diagnosis(start_date, end_date)
       type = EncounterType.find_by_name 'Outpatient diagnosis'
       data = Encounter.where('encounter_datetime BETWEEN ? AND ?
@@ -315,6 +416,32 @@ module OPDService
         return '> 14 yrs'
       else
         return 'Unknown'
+      end
+    end
+
+    def get_age_group_for_malaria(birthdate, end_date)
+      begin
+        birthdate = birthdate.to_date
+        end_date  = end_date.to_date
+        months = age_in_months(birthdate, end_date)
+      rescue
+        months = 'Unknown'
+      end
+
+      if months < 60
+        return '< 5 yrs'
+      elsif months > 60
+        return '> 5 yrs'
+      end
+    end
+
+    def pregnant_woman(concept_id)
+      begin
+        if concept_id.to_s == '6542'
+           return concept_id
+        else
+            return "unkwon"
+        end
       end
     end
 
