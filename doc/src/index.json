@@ -2327,88 +2327,9 @@
 												}
 											]
 										},
-										"description": "Retrieve all ART patients whose most recent viral load result in reporting period is within specified range.\n\nThree ranges are available namely:\n* Low (less than or equal to 50 copies/ml or simple LDL)\n* High (default: greater than or equal to 1000 copies/ml)\n* Intermediate (greater than 50 copies/ml and less than 1000 copies/ml)"
+										"description": "Retrieve all ART patients whose most recent viral load result in reporting period is within specified range.\n\nThree ranges are available namely:\n* suppressed\n* viraemia-1000\n* low-level-viraemia\nFor the meanings of the terms above, please visit the 2018 MoH ART Guidelines addendum."
 									},
-									"response": [
-										{
-											"name": "High Viral Load",
-											"originalRequest": {
-												"method": "GET",
-												"header": [
-													{
-														"key": "Authorization",
-														"value": "i9dMzib8nnEF",
-														"type": "text"
-													}
-												],
-												"url": {
-													"raw": "http://localhost:3000/api/v1/programs/1/reports/high_vl_patients?start_date=2018-01-01&end_date=2021-05-31&range=intermediate",
-													"protocol": "http",
-													"host": [
-														"localhost"
-													],
-													"port": "3000",
-													"path": [
-														"api",
-														"v1",
-														"programs",
-														"1",
-														"reports",
-														"high_vl_patients"
-													],
-													"query": [
-														{
-															"key": "start_date",
-															"value": "2018-01-01"
-														},
-														{
-															"key": "end_date",
-															"value": "2021-05-31"
-														},
-														{
-															"key": "range",
-															"value": "intermediate"
-														}
-													]
-												}
-											},
-											"status": "OK",
-											"code": 200,
-											"_postman_previewlanguage": "json",
-											"header": [
-												{
-													"key": "Content-Type",
-													"value": "application/json; charset=utf-8"
-												},
-												{
-													"key": "ETag",
-													"value": "W/\"d8929416aadf2b027eecd5c8465a952f\""
-												},
-												{
-													"key": "Cache-Control",
-													"value": "max-age=0, private, must-revalidate"
-												},
-												{
-													"key": "X-Request-Id",
-													"value": "484356e8-2c05-4614-82eb-a1e0128afb45"
-												},
-												{
-													"key": "X-Runtime",
-													"value": "0.044390"
-												},
-												{
-													"key": "Vary",
-													"value": "Origin"
-												},
-												{
-													"key": "Transfer-Encoding",
-													"value": "chunked"
-												}
-											],
-											"cookie": [],
-											"body": "[\n    {\n        \"patient_id\": 29,\n        \"arv_number\": null,\n        \"birthdate\": \"1971-07-01\",\n        \"age_group\": \"45-49 years\",\n        \"gender\": \"M\",\n        \"order_date\": \"2021-05-10T00:00:00.000+02:00\",\n        \"specimen_drawn_date\": \"2021-05-10T00:00:00.000+02:00\",\n        \"result_date\": \"2021-05-10T00:00:00.000+02:00\",\n        \"result_modifier\": \"<\",\n        \"result\": \"200\"\n    }\n]"
-										}
-									]
+									"response": []
 								}
 							],
 							"description": "The following section documents ART reports. These reports are primarily found under `programs/1/reports`."
