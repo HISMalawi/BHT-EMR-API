@@ -306,9 +306,9 @@ module OPDService
 
         drug_name =record['drug_name'];
         data2 = Encounter.where("encounter_datetime BETWEEN ? AND ?
-        AND encounter_type = ? AND d.name ='"+drug_name+"'",
+        AND encounter_type = ? AND d.name = ?",
         start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
-        end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id).\
+        end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id,drug_name).\
         joins('INNER JOIN orders o ON o.encounter_id = encounter.encounter_id
         INNER JOIN drug_order i ON i.order_id = o.order_id
         INNER JOIN drug d ON d.drug_id = i.drug_inventory_id').\

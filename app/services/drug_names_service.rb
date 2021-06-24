@@ -11,18 +11,14 @@ class DrugNamesService
         stats << [record['name'],record['concept_id']];
         end
       end
-      return stats
+    return stats
   end
-  def find_drug_list(concept_set_id)
-    data = ConceptSet.where('concept_set = ? ',concept_set_id).\
-      joins('INNER JOIN drug dg on dg.concept_id = concept_set.concept_id').\
-      select('concept_set.concept_id, dg.name, dg.dose_strength,dg.units')
-
+  def find_drug_list()
+    data = Drug.find_all_by_concept_set('OPD Medication');
       stats = {}
       concept_id = ""
       (data || []).each do |record|
 
-        # stats[record['concept_id']] = {"#{record['name']}": [record['dose_strength'].to_f,record['units']]}
         if(record['concept_id'] != concept_id)
           stats[record['concept_id']] = {}
         end
