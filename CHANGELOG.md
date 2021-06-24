@@ -16,6 +16,70 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+### Fixed
+
+- ART: Patients with closing states like Died and TO appearing in VL due report
+- ART: Migrated results missing from High VL report
+
+## [v4.10.43] - 2021-06-08
+
+### Fixed
+
+- ART: Regimen 17A containing 16P drug ABC 60 / 3TC 30 + RAL 400
+
+## [v4.10.42] - 2021-06-08
+
+### Changed
+
+- Lab: Bumped up to v1.0.2 - Fixes crash on push of non-VL tests to LIMS
+
+## [v4.10.41] - 2021-06-07
+
+### Changed
+
+- Lab: Bumped up his_emr_api_lab to version 1.0.1 - Fixes HIV Viral Load mapping between EMR and LIMS
+
+## [v4.10.40] - 2021-06-04
+
+### Added
+
+- ART: Added high viral load patients report
+- Lab: Added samples drawn report
+- Lab: Added results added report
+
+### Fixed
+
+- Lab: Bumped up lab gem to version 1.0.0
+
+## [v4.10.38] - 2021-05-21
+
+### Added
+
+- Lab: Lims data import from MySQL.
+
+### Fixed
+
+- DDE: Crash on search of patient by name and gender when DDE is enabled
+
+## [v4.10.37] - 2021-05-12
+
+### Fixed
+
+- ART: Missing result date on visit summary
+- ART: Missing Viral Load on visit summary when result type is non-numeric (ie text) (Fixes #2762 on EGPAF EMR helpdesk)
+- ART: Lab encounters being counted as incomplete visits in dashboard visits report
+- Lab: Bumped up lab to version 0.0.14 (fixes lab order label provider name)
+
+### Added
+
+- ART Stock: Barcodes to inventory items
+
+## [v4.10.36] - 2021-05-07
+
+### Fixed
+
+- Removed duplicate HIV Viral load concepts
+
 
 ## [v4.10.35] - 2021-04-30
 

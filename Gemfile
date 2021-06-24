@@ -8,7 +8,7 @@ gem 'rails', '~> 5.2.1'
 # Use sqlite3 as the database for Active Record
 gem 'mysql2'
 # Use Puma as the app server
-gem 'puma', '~> 3.11'
+# gem 'puma', '~> 4.3.8'
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
 # gem 'jbuilder', '~> 2.5'
 # Use Redis adapter to run Action Cable in production
@@ -37,8 +37,8 @@ gem 'test-unit'
 gem 'rswag-api'
 gem 'rswag-ui'
 
-gem 'his_emr_api_lab', '0.0.12'
-gem 'his_emr_api_radiology', '0.0.4'
+gem 'his_emr_api_radiology', '~> 0.0.5'
+gem 'his_emr_api_lab', '~> 1.0', '>= 1.0.5'
 
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console

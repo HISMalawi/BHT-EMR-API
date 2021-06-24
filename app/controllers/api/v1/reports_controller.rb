@@ -84,6 +84,12 @@ class Api::V1::ReportsController < ApplicationController
 
     render json: stats
   end
+  def dispensation
+    start_date, end_date = params.require %i[start_date end_date]
+    stats = service.dispensation(start_date, end_date)
+
+    render json: stats
+  end
 
   def cohort_survival_analysis
     quarter, age_group, reg = params.require %i[quarter age_group regenerate]
@@ -191,6 +197,27 @@ class Api::V1::ReportsController < ApplicationController
 
   def clients_due_vl
     render json: service.clients_due_vl(params[:start_date], params[:end_date])
+  end
+
+  def vl_results
+    render json: service.vl_results(params[:start_date], params[:end_date])
+  end
+
+  def samples_drawn
+    render json: service.samples_drawn(params[:start_date], params[:end_date])
+  end
+
+  def lab_test_results
+    render json: service.lab_test_results(params[:start_date], params[:end_date])
+  end
+
+  def orders_made
+    render json: service.orders_made(params[:start_date],
+      params[:end_date], params[:status])
+  end
+
+  def external_consultation_clients
+    render json: service.external_consultation_clients(params[:start_date], params[:end_date])
   end
 
   private

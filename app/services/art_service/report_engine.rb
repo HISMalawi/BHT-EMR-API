@@ -16,6 +16,7 @@ module ARTService
       'COHORT_DISAGGREGATED_ADDITIONS' => ARTService::Reports::CohortDisaggregatedAdditions,
       'COHORT_SURVIVAL_ANALYSIS' => ARTService::Reports::CohortSurvivalAnalysis,
       'DRUG_DISPENSATIONS' => ARTService::Reports::DrugDispensations,
+      'HIGH_VL_PATIENTS' => ARTService::Reports::HighViralLoadPatients,
       'IPT' => ARTService::Reports::IPTReport,
       'PATIENTS_WITH_OUTDATED_DEMOGRAPHICS' => ARTService::Reports::PatientsWithOutdatedDemographics,
       'PATIENTS_ON_DTG' => ARTService::Reports::PatientsOnDTG,
@@ -35,7 +36,8 @@ module ARTService
       'VL_DISAGGREGATED' => ARTService::Reports::ViralLoadDisaggregated,
       'TB_PREV' => ARTService::Reports::Pepfar::TbPrev,
       'OUTCOME_LIST' => ARTService::Reports::OutcomeList,
-      'VIRAL_LOAD' => ARTService::Reports::ViralLoad
+      'VIRAL_LOAD' => ARTService::Reports::ViralLoad,
+      'EXTERNAL_CONSULTATION_CLIENTS' => ARTService::Reports::ExternalConsultationClients
     }.freeze
 
     def generate_report(type:, **kwargs)
@@ -155,6 +157,16 @@ module ARTService
     def clients_due_vl(start_date, end_date)
       REPORTS['VIRAL_LOAD'].new(start_date: start_date.to_date,
         end_date: end_date.to_date).clients_due
+    end
+
+    def vl_results(start_date, end_date)
+      REPORTS['VIRAL_LOAD'].new(start_date: start_date.to_date,
+        end_date: end_date.to_date).vl_results
+    end
+
+    def external_consultation_clients(start_date, end_date)
+      REPORTS['EXTERNAL_CONSULTATION_CLIENTS'].new(start_date: start_date.to_date,
+        end_date: end_date.to_date).list
     end
 
     private
