@@ -1,5 +1,6 @@
 Rails.application.routes.draw do
   mount Lab::Engine => '/'
+  mount Radiology::Engine => '/'
   mount Rswag::Ui::Engine => '/api-docs'
   mount Rswag::Api::Engine => '/api-docs'
 
@@ -78,6 +79,8 @@ Rails.application.routes.draw do
       resources :person_attributes
 
       resources :concepts, only: %i[index show]
+      get 'OPD_generic_drugs' => 'drug_names#OPD_generic_drugs'
+      get 'OPD_drugslist' => 'drug_names#OPD_drugslist'
 
       # Locations
       resources :locations do
@@ -116,9 +119,6 @@ Rails.application.routes.draw do
         end)
       end
 
-      resources :radiology do
-      get 'barcode', to: 'radiology#print_barcode'
-    end
       resources :observations
 
       resources :patient_programs, only: %i[create index show destroy]
@@ -208,7 +208,6 @@ Rails.application.routes.draw do
       delete '/drug_sets/:id', to: 'drugs#void_drug_sets'
 
       resource :global_properties
-      resource :radiology_properties
       resource :user_properties
 
       resource :session_stats, path: 'stats/session'
@@ -285,6 +284,7 @@ Rails.application.routes.draw do
   get '/api/v1/with_nids' => 'api/v1/reports#with_nids'
   get '/api/v1/drugs_given_without_prescription' => 'api/v1/reports#drugs_given_without_prescription'
   get '/api/v1/drugs_given_with_prescription' => 'api/v1/reports#drugs_given_with_prescription'
+  get '/api/v1/dispensation' => 'api/v1/reports#dispensation'
 
   get '/api/v1/cohort_report_raw_data' => 'api/v1/reports#cohort_report_raw_data'
   get '/api/v1/cohort_disaggregated' => 'api/v1/reports#cohort_disaggregated'

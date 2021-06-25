@@ -77,6 +77,12 @@ class Api::V1::ReportsController < ApplicationController
 
     render json: stats
   end
+  def dispensation
+    start_date, end_date = params.require %i[start_date end_date]
+    stats = service.dispensation(start_date, end_date)
+
+    render json: stats
+  end
 
   def cohort_survival_analysis
     quarter, age_group, reg = params.require %i[quarter age_group regenerate]
