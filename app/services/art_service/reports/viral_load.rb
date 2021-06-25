@@ -7,15 +7,12 @@ class ARTService::Reports::ViralLoad
     @end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
     @program = Program.find_by_name 'HIV Program'
     @possible_milestones = possible_milestones
-    #global_property = GlobalProperty.find_by(property: 'use.filing.number')
-    @use_filing_number = false
-    #(global_property.property_value == 'true' ? true : false) rescue false
+    @use_filing_number = GlobalProperty.find_by(property: 'use.filing.numbers')
+                                       &.property_value
+                                       &.casecmp?('true')
   end
 
   def clients_due
-    # global_property = GlobalProperty.find_by(property: 'use.filing.number')
-    @use_filing_number = false # global_property&.property_value&.downcase == 'true'
-
     clients =  potential_get_clients
     return [] if clients.blank?
     clients_due_list = []
@@ -236,7 +233,9 @@ class ARTService::Reports::ViralLoad
 
     measure = Observation.joins(result_sql)
                          .where(concept: viral_load_concept)
-                         .where('(obs.value_numeric IS NOT NULL OR obs.value_text IS NOT NULL)')
+                         .where('(obs.value_numeric IS NOT NULL OR obs.value_text IS NOT NULL)
+                                 AND obs.obs_datetime < DATE(?) + INTERVAL 1 DAY',
+                                @end_date)
                          .order(obs_datetime: :desc)
                          .first
 
