@@ -16,6 +16,11 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+### Added
+
+- Facility: St. Faith Health Centre (STFA) Kasungu
+- Facility: St. Augustine Health Centre (STAU) Kasungu
+
 
 ## [v4.10.48] - 2021-06-23
 
