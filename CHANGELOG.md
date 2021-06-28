@@ -16,6 +16,8 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+## [v4.11.0] - 2021-06-28
+
 ### Added
 
 - Facility: St. Faith Health Centre (STFA) Kasungu
