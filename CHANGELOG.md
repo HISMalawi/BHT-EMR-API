@@ -18,6 +18,7 @@ compatibility (examples of this include major architectural changes).
 
 ### Fixed
 
+- ART: Regimen 14PP
 - ART: AZT 300 / 3TC 300 + DTG 50 being classified as Other regimen instead of 14A
 
 ## [v4.11.0] - 2021-06-28
