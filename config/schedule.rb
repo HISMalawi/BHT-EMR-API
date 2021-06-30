@@ -23,3 +23,7 @@
 every 1.minute do
   runner 'bin/lab/sync_worker.rb', environment: 'development'
 end
+
+every 1.minute do
+  runner 'bin/dde_emr_sync.rb', environment: 'development'
+end

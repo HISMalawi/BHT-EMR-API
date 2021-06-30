@@ -69,9 +69,7 @@ module ARTService
       raw_regimens = regimens_from_ingredients(ingredients, lpv_drug_type: lpv_drug_type)
       regimens = categorise_regimens(raw_regimens)
 
-      if use_tb_dosage
-        repackage_regimens_for_tb_patients!(regimens, patient_weight)
-      end
+      repackage_regimens_for_tb_patients!(regimens, patient_weight) if use_tb_dosage
 
       regimens
     end
@@ -233,41 +231,38 @@ module ARTService
       return drug.concept_id == dtg_concept_id
     end
 
-    def regimen_interpreter(medication_ids = [])
-      Rails.logger.debug "Interpreting regimen: #{medication_ids}"
-      regimen_name = nil
-
-      REGIMEN_CODES.each do |regimen_code, data|
-        data.each do |row|
-          drugs = [row].flatten
-          drug_ids = Drug.where(['drug_id IN (?)', drugs]).map(&:drug_id)
-          if ((drug_ids - medication_ids) == []) && (drug_ids.count == medication_ids.count)
-            regimen_name = regimen_code
-            break
-          end
-        end
-      end
-
-      Rails.logger.warn "Failed to Interpret regimen: #{medication_ids}" unless regimen_name
-
-      regimen_name
-    end
-
-    # An alternative to the regimen_interpreter method above...
-    # This achieves the same as that method without hitting the database
     def classify_regimen_combo(drug_combo)
       Rails.logger.debug "Interpreting regimen: #{drug_combo}"
+      drug_combo = drug_combo.sort
 
-      drug_combo = Set.new drug_combo
-      REGIMEN_CODES.each do |regimen_index, combos|
-        combos.each do |combo|
-          return regimen_category(drug_combo, regimen_index) if combo == drug_combo
-        end
+      combinations = ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT moh_regimen_combination.regimen_combination_id,
+               GROUP_CONCAT(DISTINCT moh_regimen_combination_drug.drug_id
+                            ORDER BY moh_regimen_combination_drug.drug_id
+                            ASC SEPARATOR ',') AS drugs,
+               moh_regimen_name.name
+        FROM moh_regimen_combination_drug
+        INNER JOIN (
+          SELECT regimen_combination_id
+          FROM moh_regimen_combination_drug
+          WHERE drug_id IN (#{drug_combo.join(',')})
+        ) AS potential_combinations
+          ON potential_combinations.regimen_combination_id = moh_regimen_combination_drug.regimen_combination_id
+        INNER JOIN moh_regimen_combination
+          ON moh_regimen_combination.regimen_combination_id = moh_regimen_combination_drug.regimen_combination_id
+        INNER JOIN moh_regimen_name
+          ON moh_regimen_name.regimen_name_id = moh_regimen_combination.regimen_name_id
+        GROUP BY moh_regimen_combination.regimen_combination_id
+        HAVING drugs = "#{drug_combo.join(',')}"
+      SQL
+
+      combinations = combinations.map { |combination| combination['name'] }
+
+      if combinations.size > 1
+        raise "Drug combination in multiple regimens: #{drug_combo.join(', ')} - #{combinations.join(' ')}"
       end
 
-      Rails.logger.warn "Failed to Interpret regimen: #{drug_combo}"
-
-      nil
+      combinations.first
     end
 
     # Analyses the drugs in list, @{param drug_combo}, and returns a regimen category
@@ -500,7 +495,7 @@ module ARTService
       '12' => [Set.new([976, 977, 982])],
       '13' => [Set.new([983])],
       '14' => [Set.new([736, 982]), Set.new([984, 982])],
-      '15' => [Set.new([1044, 982]), Set.new([969, 982])],
+      '15' => [Set.new([1044, 982]), Set.new([969, 982]), Set.new([1044, 980])],
       '16' => [Set.new([1043, 1044]), Set.new([954,969])],
       '17' => [Set.new([30,1044]), Set.new([11,969])]
     }.freeze

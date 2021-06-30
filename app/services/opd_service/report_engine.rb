@@ -390,11 +390,12 @@ module OPDService
     end
     def dispensation(start_date, end_date)
       type = EncounterType.find_by_name 'TREATMENT'
+      programID = Program.find_by_name 'OPD Program'
 
       data = Encounter.where('encounter_datetime BETWEEN ? AND ?
-        AND encounter_type = ? ',
+        AND encounter_type = ? AND program_id = ?',
         start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
-        end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id).\
+        end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id, programID.program_id).\
         joins('INNER JOIN orders o ON o.encounter_id = encounter.encounter_id
         INNER JOIN drug_order i ON i.order_id = o.order_id
         INNER JOIN drug d ON d.drug_id = i.drug_inventory_id').\
@@ -407,9 +408,9 @@ module OPDService
 
         drug_name =record['drug_name'];
         data2 = Encounter.where("encounter_datetime BETWEEN ? AND ?
-        AND encounter_type = ? AND d.name ='"+drug_name+"'",
+        AND encounter_type = ? AND d.name = ? AND program_id = ?",
         start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
-        end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id).\
+        end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id,drug_name, programID.program_id).\
         joins('INNER JOIN orders o ON o.encounter_id = encounter.encounter_id
         INNER JOIN drug_order i ON i.order_id = o.order_id
         INNER JOIN drug d ON d.drug_id = i.drug_inventory_id').\

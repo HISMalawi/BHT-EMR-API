@@ -42,3 +42,7 @@ db/schema.rb
 *.swp
 
 HEAD
+
+master.key
+
+credentials.yml.enc

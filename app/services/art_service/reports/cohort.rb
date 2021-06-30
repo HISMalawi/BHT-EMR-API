@@ -120,13 +120,12 @@ EOF
               gender: person['gender'],
               arv_number: person['arv_number'],
               outcome: 'Defaulted',
-              defaulter_date: (record['defaulter_date'].to_date rescue 'N/A'),
+              defaulter_date: record['defaulter_date']&.to_date || 'N/A',
               art_reason: record['art_reason'],
               cell_number: person['cell_number'],
               district: person['district'],
               ta: person['ta'],
               village: person['village'],
-              arv_number: person['arv_number'],
               current_age: calculate_age(person['birthdate'])
             }
           end

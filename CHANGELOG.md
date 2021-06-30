@@ -16,8 +16,38 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+
+## [v4.10.48] - 2021-06-23
+
+### Added
+
+- ART: Optional range parameter to high viral load report
+- ART: Regimen 15PP
+
 ### Fixed
 
+- Crash on startup in production
+
+## [v4.10.47] - 2021-06-21
+
+### Added
+
+- Script to void and reassign duplicate filing numbers
+- ART: Archiving candidatesw report
+
+
+## [v4.10.45] - 2021-06-16
+
+### Changed
+
+- Bumped up lab to version 1.0.4
+
+## [v4.10.44] - 2021-06-15
+
+### Fixed
+
+- ART: Incomplete visits data cleaning tool including initial staging and vitals for
+       Transfer Ins as incomplete visit
 - ART: Patients with closing states like Died and TO appearing in VL due report
 - ART: Migrated results missing from High VL report
 

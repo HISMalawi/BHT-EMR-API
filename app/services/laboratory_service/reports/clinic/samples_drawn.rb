@@ -24,6 +24,10 @@ module LaboratoryService
           end
         end
 
+        def orders_made(status)
+          query2 status
+        end
+
         private
 
         def query
@@ -83,6 +87,43 @@ module LaboratoryService
             GROUP BY orders.order_id
           SQL
         end
+
+        def query2(status)
+          start_date = ActiveRecord::Base.connection.quote(@start_date)
+          end_date = ActiveRecord::Base.connection.quote(@end_date)
+
+          additional_sql = (status == 'drawn' ? " AND `orders`.`concept_id`
+          NOT IN (SELECT `concept_name`.`concept_id` FROM `concept_name`
+          WHERE `concept_name`.`voided` = 0 AND `concept_name`.`name` = 'Unknown')" : '')
+
+          orders = ActiveRecord::Base.connection.select_all <<~SQL
+            SELECT `orders`.`order_id` FROM `orders` INNER JOIN `order_type`
+            ON `order_type`.`retired` = 0 AND `order_type`.`order_type_id` = `orders`.`order_type_id`
+            WHERE `orders`.`voided` = 0 AND `order_type`.`retired` = 0
+            AND `order_type`.`name` = 'Lab'
+            AND (DATE(start_date) BETWEEN #{start_date} AND #{end_date})
+            #{additional_sql} ORDER BY `orders`.`start_date` DESC;
+          SQL
+
+          return [] if orders.blank?
+          order_ids = orders.map{|order| order['order_id'].to_i}
+
+          tests = ActiveRecord::Base.connection.select_all <<~SQL
+            SELECT `obs`.*, concept_name.name FROM `obs` INNER JOIN concept_name
+            ON concept_name.concept_id = obs.value_coded
+            WHERE `obs`.`voided` = 0 AND concept_name.voided = 0
+            AND (`obs`.`concept_id`) IN (SELECT `concept_name`.`concept_id` FROM `concept_name`
+            WHERE `concept_name`.`voided` = 0 AND `concept_name`.`name` = 'Test type')
+            AND (`obs`.`order_id`) IN (#{order_ids.join(',')}) GROUP BY obs.order_id;
+          SQL
+
+          return tests.map do |t|
+            { name: t['name'], concept_id: t['value_coded'].to_i }
+          end
+        end
+
+
+
       end
     end
   end

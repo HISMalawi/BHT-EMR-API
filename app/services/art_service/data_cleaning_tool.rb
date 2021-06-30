@@ -438,16 +438,7 @@ EOF
     end
 
     def incomplete_visit
-      program = Program.find_by_name("HIV PROGRAM")
-
-      patient_visit_dates = Encounter.where('program_id = ? AND encounter_datetime BETWEEN ? AND ?',
-                                            program.id,
-                                            @start_date.strftime('%Y-%m-%d 00:00:00'),
-                                            @end_date.strftime('%Y-%m-%d 23:59:59'))
-                                     .where.not(type: EncounterType.where(name: ['EXIT FROM HIV CARE', 'LAB', 'LAB ORDERS', 'LAB RESULTS']))
-                                     .group('encounter.patient_id, DATE(encounter_datetime)')
-                                     .select(:patient_id, :encounter_datetime)
-                                     .map { |e| [e.patient_id, e.encounter_datetime.to_date] }
+      patient_visit_dates = patient_visits.map { |visit| [visit['patient_id'], visit['visit_date']] }
 
       return {} if patient_visit_dates.blank?
       incomplete_visits_comp = {}
@@ -485,7 +476,6 @@ EOF
           } if incomplete_visits_comp[patient_id].blank?
           incomplete_visits_comp[patient_id][:dates] << visit_date.to_date
         end
-
       end
 
       return incomplete_visits_comp
@@ -495,5 +485,35 @@ EOF
       ConceptName.find_by_name(name)
     end
 
+    def program
+      @program ||= Program.find_by_name!('HIV Program')
+    end
+
+    ##
+    # Returns all non-refill (external consultation) visits patients have had in a given time period
+    def patient_visits
+      ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT encounter.patient_id, DATE(encounter.encounter_datetime) AS visit_date
+        FROM encounter
+        INNER JOIN (
+            SELECT patient_id, MAX(encounter_datetime) AS encounter_datetime
+            FROM encounter
+            WHERE encounter_type = #{EncounterType.find_by_name!('Registration').encounter_type_id}
+              AND encounter_datetime <= DATE(#{ActiveRecord::Base.connection.quote(@end_date)}) + INTERVAL 1 DAY
+              AND voided = 0
+            GROUP BY patient_id
+        ) AS max_registration_encounter
+          ON max_registration_encounter.encounter_datetime <= encounter.encounter_datetime
+          AND max_registration_encounter.patient_id = encounter.patient_id
+        WHERE encounter.encounter_datetime >= DATE(#{ActiveRecord::Base.connection.quote(@start_date)})
+          AND encounter.encounter_datetime < DATE(#{ActiveRecord::Base.connection.quote(@end_date)}) + INTERVAL 1 DAY
+          AND encounter.encounter_type NOT IN (
+            SELECT encounter_type_id FROM encounter_type WHERE name IN ('EXIT FROM HIV CARE', 'LAB', 'LAB ORDERS', 'LAB RESULTS')
+          )
+          AND program_id = #{Program.find_by_name!('HIV Program').program_id}
+          AND voided = 0
+        GROUP BY encounter.patient_id, DATE(encounter.encounter_datetime)
+      SQL
+    end
   end
- end
+end

@@ -7,15 +7,12 @@ class ARTService::Reports::ViralLoad
     @end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
     @program = Program.find_by_name 'HIV Program'
     @possible_milestones = possible_milestones
-    #global_property = GlobalProperty.find_by(property: 'use.filing.number')
-    @use_filing_number = false
-    #(global_property.property_value == 'true' ? true : false) rescue false
+    @use_filing_number = GlobalProperty.find_by(property: 'use.filing.numbers')
+                                       &.property_value
+                                       &.casecmp?('true')
   end
 
   def clients_due
-    # global_property = GlobalProperty.find_by(property: 'use.filing.number')
-    @use_filing_number = false # global_property&.property_value&.downcase == 'true'
-
     clients =  potential_get_clients
     return [] if clients.blank?
     clients_due_list = []
@@ -171,8 +168,9 @@ class ARTService::Reports::ViralLoad
         gender: person[:gender],
         birthdate: person[:birthdate],
         arv_number: use_filing_number(person[:patient_id], person[:arv_number]),
-        last_result: last_result[0],
-        last_result_date: last_result[1]
+        last_result_order_date: (last_result.order_date.to_date rescue 'N/A'),
+        last_result: last_result.result_value,
+        last_result_date: last_result.result_date
       }
     end
   end
@@ -224,13 +222,28 @@ class ARTService::Reports::ViralLoad
   end
 
   def last_vl_result(patient_id)
-    result_plus_date = ARTService::PatientVisit.new(Patient.find(patient_id),
-       @end_date.to_date).viral_load_result
+    viral_load_concept = ConceptName.where(name: 'HIV Viral Load').select(:concept_id)
+    result_sql = <<~SQL
+      INNER JOIN obs AS parent
+        ON parent.obs_id = obs.obs_group_id
+        AND parent.concept_id IN (SELECT concept_id FROM concept_name WHERE name = 'Lab test result' AND voided = 0)
+        AND parent.voided = 0
+        AND parent.person_id = #{patient_id}
+    SQL
 
-    return ['N/A', 'N/A'] if result_plus_date == 'N/A'
-    value = result_plus_date.split("(")[0]
-    value_date = result_plus_date.split("(")[1].gsub(")",'')
-    return [value, Date.parse(value_date)]
+    measure = Observation.joins(result_sql)
+                         .where(concept: viral_load_concept)
+                         .where('(obs.value_numeric IS NOT NULL OR obs.value_text IS NOT NULL)
+                                 AND obs.obs_datetime < DATE(?) + INTERVAL 1 DAY',
+                                @end_date)
+                         .order(obs_datetime: :desc)
+                         .first
+
+    return OpenStruct.new(order_date: 'N/A', result_date: 'N/A', result_value: 'N/A') unless measure
+
+    OpenStruct.new(order_date: measure.order.start_date.to_date,
+                   result_date: measure.obs_datetime.to_date,
+                   result_value: "#{measure.value_modifier || '='}#{measure.value_numeric || measure.value_text}")
   end
 
   def use_filing_number(patient_id, arv_number)
