@@ -42,7 +42,7 @@ def update_record(record)
   person_id = PatientIdentifier.find_by_identifier(person_obj[:identifiers][:doc_id])
   return if person_id.blank?
   person_id = person_id[:patient_id]
-
+  debugger
   #update person
   person = Person.find_by_person_id(person_id)
   person.update(person_obj[:person].to_hash)
@@ -103,7 +103,7 @@ def pull_dde_updates
   pull_seq = tracker
   location_id = GlobalProperty.find_by_property('current_health_center_id')['property_value'].to_i
 
-  url = "#{@url}/v1/person_changes?site_id=#{location_id}&pull_seq=#{pull_seq}"
+  url = "#{@url}/v1/person_changes_updates?site_id=#{location_id}&pull_seq=#{pull_seq}"
 
   updates = JSON.parse(RestClient.get(url,headers={Authorization: authenticate }))
 end
@@ -150,7 +150,7 @@ def main
     changes.each do |record|
       ActiveRecord::Base.transaction do
         update_record(record)
-        GlobalProperty.find_by_property('dde_update_tracker_seq').update(property_value: record['id'])
+        GlobalProperty.find_by_property('dde_update_tracker_seq').update(property_value: record['update_seq'])
       end
     end
   ensure
