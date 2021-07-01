@@ -30,7 +30,7 @@ module ExceptionHandler
       render json: { errors: [e.message], entity: e.entity }, status: :unprocessable_entity
     end
 
-    rescue_from RestClient::Exception, Errno::ECONNREFUSED do |e|
+    rescue_from GatewayError, RestClient::Exception, Errno::ECONNREFUSED do |e|
       log_exception(e)
 
       if e.respond_to?(:response)
