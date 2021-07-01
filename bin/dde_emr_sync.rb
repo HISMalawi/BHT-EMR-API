@@ -42,7 +42,6 @@ def update_record(record)
   person_id = PatientIdentifier.find_by_identifier(person_obj[:identifiers][:doc_id])
   return if person_id.blank?
   person_id = person_id[:patient_id]
-  debugger
   #update person
   person = Person.find_by_person_id(person_id)
   person.update(person_obj[:person].to_hash)
