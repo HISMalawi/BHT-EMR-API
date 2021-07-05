@@ -12,6 +12,10 @@ class Api::V1::DrugsController < ApplicationController
     render json: paginate(service.find_drugs(filters))
   end
 
+  def OPD_drugslist
+    render json: Drug.find_all_by_concept_set('OPD Medication');
+  end
+
   def drug_sets
     drug_sets = {}
     set_names = {}

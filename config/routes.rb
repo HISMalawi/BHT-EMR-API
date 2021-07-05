@@ -79,8 +79,7 @@ Rails.application.routes.draw do
       resources :person_attributes
 
       resources :concepts, only: %i[index show]
-      get 'OPD_generic_drugs' => 'drug_names#OPD_generic_drugs'
-      get 'OPD_drugslist' => 'drug_names#OPD_drugslist'
+      get 'OPD_drugslist' => 'drugs#OPD_drugslist'
 
       # Locations
       resources :locations do
