@@ -16,6 +16,11 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+### Added
+
+- ART: Endpoint for retrieving drug doses based on patient's current weight
+
+
 ## [v4.11.0] - 2021-06-28
 
 ### Fixed
