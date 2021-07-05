@@ -17,7 +17,7 @@ class Location < RetirableRecord
   end
 
   def as_json(options = {})
-    super(options.merge(include: { parent: {} }))
+    super(options.merge(include: { parent: {} }, methods: %i[district]))
   end
 
   def self.current_health_center
@@ -30,6 +30,10 @@ class Location < RetirableRecord
     end
 
     health_center
+  end
+
+  def district
+    city_village
   end
 
   def site_id

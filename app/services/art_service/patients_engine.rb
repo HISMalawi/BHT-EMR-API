@@ -8,7 +8,7 @@ module ARTService
     include ModelUtils
 
     def initialize(program: nil)
-      @program = program || Program.find_by_name('HIV Program')
+      @program = program || Program.find_by_name!('HIV Program')
     end
 
     # Retrieves given patient's status info.
@@ -78,6 +78,22 @@ module ARTService
       {
         status: patient_initiated(patient.patient_id, date)
       }
+    end
+
+    def find_patient_recent_weight(patient_id, as_of = nil)
+      as_of ||= Date.today
+
+      vitals_encounter = Encounter.joins(:type)
+                                  .merge(EncounterType.where(name: 'VITALS'))
+                                  .where(program: @program, patient_id: patient_id)
+                                  .where('encounter_datetime < DATE(?) + INTERVAL 1 DAY', as_of)
+
+      Observation.joins(:encounter)
+                 .merge(vitals_encounter)
+                 .where(concept: ConceptName.where(name: 'Weight (kg)').select(:concept_id))
+                 .where(person_id: patient_id)
+                 .where('obs_datetime < DATE(?) + INTERVAL 1 DAY', as_of)
+                 .first
     end
 
     def find_next_available_arv_number

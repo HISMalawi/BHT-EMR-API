@@ -162,6 +162,7 @@ Rails.application.routes.draw do
           get '/saved_encounters', to: 'program_patients#saved_encounters'
           resources :patient_states, path: :states
           resources :visit, only: %i[index], module: 'programs/patients'
+          resources :drug_doses, only: %i[index], module: 'programs/patients'
         end
         resources :lab_test_types, path: 'lab_tests/types'
         get '/lab_tests/panels' => 'lab_test_types#panels' # TODO: Move this into own controller

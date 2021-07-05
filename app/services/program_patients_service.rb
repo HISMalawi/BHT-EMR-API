@@ -10,6 +10,8 @@ class ProgramPatientsService
 
   def initialize(program:)
     clazz = ENGINES[program.name.upcase]
+    raise NotFoundError, "Program patients engine for #{program} not registered" unless clazz
+
     @engine = clazz.new(program: program)
   end
 
