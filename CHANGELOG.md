@@ -16,6 +16,9 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+
+## [v4.11.1] - 2021-07-07
+
 ### Fixed
 
 - Crash on attempt to merge local patients (ie not from DDE)
