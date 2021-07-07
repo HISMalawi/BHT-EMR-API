@@ -16,6 +16,10 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+### Fixed
+
+- Crash on attempt to merge local patients (ie not from DDE)
+
 ### Added
 
 - ART: Endpoint for retrieving drug doses based on patient's current weight

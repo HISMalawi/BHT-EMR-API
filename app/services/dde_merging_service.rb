@@ -95,17 +95,17 @@ class DDEMergingService
 
   # Is a merge of a remote patient into a local patient possible?
   def remote_local_merge?(primary_patient_ids, secondary_patient_ids)
-    primary_patient_ids['patient_id']&.strip && secondary_patient_ids['doc_id']&.strip
+    primary_patient_ids['patient_id'] && secondary_patient_ids['doc_id']&.strip
   end
 
   # Like `remote_local_merge` but primary is remote and secondary is local
   def inverted_remote_local_merge?(primary_patient_ids, secondary_patient_ids)
-    primary_patient_ids['doc_id']&.strip && secondary_patient_ids['patient_id']&.strip
+    primary_patient_ids['doc_id']&.strip && secondary_patient_ids['patient_id']
   end
 
   # Is a merge of local patients possible?
   def local_merge?(primary_patient_ids, secondary_patient_ids)
-    primary_patient_ids['patient_id']&.strip && secondary_patient_ids['patient_id']&.strip
+    primary_patient_ids['patient_id'] && secondary_patient_ids['patient_id']
   end
 
   # Merge remote secondary patient into local primary patient
