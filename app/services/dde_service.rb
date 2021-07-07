@@ -263,6 +263,7 @@ class DDEService
       end
 
       remote_patients.delete(remote_patient) if remote_patient
+      local_patient['has_dde_updates'] = !matching_demographics?(local_patient, remote_patient)
 
       resolved_patients << local_patient
     end
