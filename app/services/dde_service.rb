@@ -262,8 +262,10 @@ class DDEService
         same_patient?(local_patient: local_patient, remote_patient: patient)
       end
 
-      remote_patients.delete(remote_patient) if remote_patient
-      local_patient['has_dde_updates'] = !matching_demographics?(local_patient, remote_patient)
+      if remote_patient
+        remote_patients.delete(remote_patient)
+        local_patient.has_dde_updates = Matcher.matching_local_and_remote_person?(local_patient.person, remote_patient)
+      end
 
       resolved_patients << local_patient
     end
@@ -448,5 +450,55 @@ class DDEService
   # A cache for all connections to dde (indexed by program id)
   def dde_connections
     @@dde_connections ||= {}
+  end
+
+  ##
+  # Matches local and remote (DDE) people.
+  #
+  # TODO: Move module to own file
+  module Matcher
+    class << self
+      def matching_local_and_remote_person?(local_person, remote_person)
+        return true if matching_demographics?(local_person, remote_person)\
+
+        remote_person['location_updated_at'] != current_location_id
+      end
+
+      private
+
+      def matching_demographics?(local_person, remote_person)
+        %i[matching_name? matching_birthdate? matching_gender? matching_address?]
+          .all? { |method_name| send(method_name, local_person, remote_person) }
+      end
+
+      def matching_name?(local_person, remote_person)
+        local_name = PersonName.find_by_person_id(local_person.person_id)
+
+        local_name.given_name.casecmp?(remote_person['first_name'])\
+          && local_name.family_name.casecmp?(remote_person['last_name'])
+      end
+
+      def matching_birthdate?(local_person, remote_person)
+        local_person.birthdate_estimated == remote_person['birthdate_estimated']\
+          && local_person.birthdate&.to_date == remote_person['birthdate']&.to_date
+      end
+
+      def matching_gender?(local_person, remote_person)
+        local_person.gender == remote_person['gender']
+      end
+
+      def matching_address?(local_person, remote_person)
+        local_address = PersonAddress.find_by_person_id(local_person.person_id)
+
+        fields = %w[current_district current_traditional_authority current_village
+                    home_district home_traditional_authority home_village]
+
+        fields.all? { |field| local_address.send(field) == remote_person['attributes'][field] }
+      end
+
+      def current_location_id
+        Location.current_health_center.location_id
+      end
+    end
   end
 end
