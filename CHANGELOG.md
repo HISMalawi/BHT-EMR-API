@@ -16,6 +16,9 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+### Changed
+
+- Bumped up his-emr-api-lab to v1.1.0 - This adds LIMS API integrations
 
 ## [v4.11.1] - 2021-07-07
 
