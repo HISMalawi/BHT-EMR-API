@@ -16,18 +16,32 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+### Changed
+
+- Bumped up his-emr-api-lab to v1.1.0 - This adds LIMS API integrations
+
+## [v4.11.1] - 2021-07-07
+
 ### Fixed
 
-- ART: Regimen 14PP
-- ART: AZT 300 / 3TC 300 + DTG 50 being classified as Other regimen instead of 14A
-
-## [v4.11.0] - 2021-06-28
+- Crash on attempt to merge local patients (ie not from DDE)
 
 ### Added
 
+- ART: Endpoint for retrieving drug doses based on patient's current weight
+
+
+## [v4.11.0] - 2021-06-28
+
+### Fixed
+
+- ART: AZT 300 / 3TC 300 + DTG 50 being classified as Other regimen instead of 14A
+
+### Added
+
+- ART: Regimen 14PP
 - Facility: St. Faith Health Centre (STFA) Kasungu
 - Facility: St. Augustine Health Centre (STAU) Kasungu
-
 
 ## [v4.10.48] - 2021-06-23
 
