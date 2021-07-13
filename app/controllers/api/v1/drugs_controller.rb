@@ -12,24 +12,6 @@ class Api::V1::DrugsController < ApplicationController
     render json: paginate(service.find_drugs(filters))
   end
 
-  def customise_OPD_prescription_interface(success_response_status: :created)
-    path, value = params.require %i[path property_value]
-
-    file = File.read path
-    hash = JSON.parse file
-
-    if value == 'true'
-      hash['encounters']['prescription']['url'] = "/apps/OPD/views/encounters/prescription.html"
-    else
-      hash['encounters']['prescription']['url'] = "/apps/OPD/views/encounters/malaria/prescription.html"
-    end
-
-    File.open path , "w" do |f|
-      f.puts JSON.pretty_generate hash
-    end
-    render json: value, status: success_response_status
-  end
-
   def drug_sets
     drug_sets = {}
     set_names = {}
