@@ -84,8 +84,6 @@ Rails.application.routes.draw do
       get 'OPD_drugslist' => 'drug_names#OPD_drugslist'
       get 'OPD_non_customise_drug_list' => 'drug_names#OPD_non_customise_drug_list'
 
-      post '/customise_OPD_prescription_interface' => 'drugs#customise_OPD_prescription_interface'
-
       # Locations
       resources :locations do
         get('/label', to: redirect do |params, request|
