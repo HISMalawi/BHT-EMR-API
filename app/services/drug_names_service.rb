@@ -11,21 +11,26 @@ class DrugNamesService
         stats << [record['name'],record['concept_id']];
         end
       end
+      return stats
+  end
+
+  def OPD_non_customise_drug_list()
+    stats = {}
+    concept_id = ""
+    data = find_drug_list()
+    (data || []).each do |record|
+
+      if(record['concept_id'] != concept_id)
+        stats[record['concept_id']] = {}
+      end
+      concept_id = record['concept_id']
+      stats[record['concept_id']]["#{record['name']}"] =  [record['dose_strength'].to_f,record['units']]
+
+    end
     return stats
   end
+
   def find_drug_list()
-    data = Drug.find_all_by_concept_set('OPD Medication');
-      stats = {}
-      concept_id = ""
-      (data || []).each do |record|
-
-        if(record['concept_id'] != concept_id)
-          stats[record['concept_id']] = {}
-        end
-        concept_id = record['concept_id']
-        stats[record['concept_id']]["#{record['name']}"] =  [record['dose_strength'].to_f,record['units']]
-
-      end
-      return stats
+     Drug.find_all_by_concept_set('OPD Medication');
   end
 end

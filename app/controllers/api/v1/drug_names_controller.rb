@@ -7,6 +7,10 @@ class Api::V1::DrugNamesController < ApplicationController
     render json: service.find_drug_list()
   end
 
+  def OPD_non_customise_drug_list
+    render json: service.OPD_non_customise_drug_list()
+  end
+
   private
 
   def service
