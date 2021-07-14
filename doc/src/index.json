@@ -6671,6 +6671,225 @@
 					]
 				}
 			]
+		},
+		{
+			"name": "DDE",
+			"item": [
+				{
+					"name": "Differences in patient demographics",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "W7freiS20p4J",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"tracking_number\": \"XEGPAF21791\",\n    \"result_date\": \"2021-07-09\",\n    \"test_name\": \"Viral load\",\n    \"test_status\": \"Drawn\",\n    \"date_updated\": \"2021-07-09 11:00\",\n    \"who_updated\": {\n        \"first_name\": \"John\",\n        \"last_name\": \"Cena\",\n        \"id_number\": \"LiBeBCNoFNe\"\n    },\n    \"results\": { \"Viral load\": \"< LDL\" }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:3000/api/v1/dde/patients/diff?patient_id=60&program_id=1",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"v1",
+								"dde",
+								"patients",
+								"diff"
+							],
+							"query": [
+								{
+									"key": "patient_id",
+									"value": "60"
+								},
+								{
+									"key": "program_id",
+									"value": "1"
+								}
+							]
+						},
+						"description": "Compares local patient's demographics to associated remote patient's demographics and returns an object summarising those changes. If there are no differences the diff is null (not an empty object)."
+					},
+					"response": [
+						{
+							"name": "Patient with differences in demographics",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "W7freiS20p4J",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"tracking_number\": \"XEGPAF21791\",\n    \"result_date\": \"2021-07-09\",\n    \"test_name\": \"Viral load\",\n    \"test_status\": \"Drawn\",\n    \"date_updated\": \"2021-07-09 11:00\",\n    \"who_updated\": {\n        \"first_name\": \"John\",\n        \"last_name\": \"Cena\",\n        \"id_number\": \"LiBeBCNoFNe\"\n    },\n    \"results\": { \"Viral load\": \"< LDL\" }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:3000/api/v1/dde/patients/diff?patient_id=60&program_id=1",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"api",
+										"v1",
+										"dde",
+										"patients",
+										"diff"
+									],
+									"query": [
+										{
+											"key": "patient_id",
+											"value": "60"
+										},
+										{
+											"key": "program_id",
+											"value": "1"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"29abb869d6b46a32b08e1337f88c77b5\""
+								},
+								{
+									"key": "Cache-Control",
+									"value": "max-age=0, private, must-revalidate"
+								},
+								{
+									"key": "X-Request-Id",
+									"value": "06664c45-f724-4bcb-b894-1e2b96284ff6"
+								},
+								{
+									"key": "X-Runtime",
+									"value": "0.494857"
+								},
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"diff\": {\n        \"gender\": {\n            \"local\": \"M\",\n            \"remote\": \"F\"\n        },\n        \"current_village\": {\n            \"local\": \"Chabwera\",\n            \"remote\": \"Aramu Jere\"\n        },\n        \"current_traditional_authority\": {\n            \"local\": \"Mpama\",\n            \"remote\": \"Mpherembe\"\n        },\n        \"current_district\": {\n            \"local\": \"Chiradzulu\",\n            \"remote\": \"Mzimba\"\n        }\n    }\n}"
+						},
+						{
+							"name": "Patient without any differences in demographics",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "W7freiS20p4J",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"tracking_number\": \"XEGPAF21791\",\n    \"result_date\": \"2021-07-09\",\n    \"test_name\": \"Viral load\",\n    \"test_status\": \"Drawn\",\n    \"date_updated\": \"2021-07-09 11:00\",\n    \"who_updated\": {\n        \"first_name\": \"John\",\n        \"last_name\": \"Cena\",\n        \"id_number\": \"LiBeBCNoFNe\"\n    },\n    \"results\": { \"Viral load\": \"< LDL\" }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:3000/api/v1/dde/patients/diff?patient_id=34&program_id=1",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"api",
+										"v1",
+										"dde",
+										"patients",
+										"diff"
+									],
+									"query": [
+										{
+											"key": "patient_id",
+											"value": "34"
+										},
+										{
+											"key": "program_id",
+											"value": "1"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"058b912d42558f68ddcc129d8bedda85\""
+								},
+								{
+									"key": "Cache-Control",
+									"value": "max-age=0, private, must-revalidate"
+								},
+								{
+									"key": "X-Request-Id",
+									"value": "b836bbf9-936b-43b1-b5d7-77b3aef2d598"
+								},
+								{
+									"key": "X-Runtime",
+									"value": "0.380557"
+								},
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"diff\": null\n}"
+						}
+					]
+				}
+			]
 		}
 	]
 }

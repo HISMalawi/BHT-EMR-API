@@ -3,8 +3,6 @@
 class Patient < VoidableRecord
   include ModelUtils
 
-  attr_writer :has_dde_updates
-
   after_void :void_related_models
 
   NPID_NAME = 'National id'
@@ -29,7 +27,6 @@ class Patient < VoidableRecord
 
   def as_json(options = {})
     super(options.merge(
-      methods: %i[has_dde_updates],
       include: {
         person: {
           include: {
@@ -46,10 +43,6 @@ class Patient < VoidableRecord
         }
       }
     ))
-  end
-
-  def has_dde_updates
-    @has_dde_updates || false
   end
 
   def national_id
