@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-require 'logger'
+require_relative './dde_service/matcher'
 
 class DDEService
   class DDEError < StandardError; end
 
   DDE_CONFIG_PATH = 'config/application.yml'
-  LOGGER = Logger.new(STDOUT)
+  LOGGER = Rails.logger
 
   # Limit all find queries for local patients to this
   PATIENT_SEARCH_RESULTS_LIMIT = 10
@@ -82,6 +82,21 @@ class DDEService
     remotes = find_remote_patients_by_name_and_gender(given_name, family_name, gender)
 
     package_patients(locals, remotes)
+  end
+
+  def find_patient_updates(local_patient_id)
+    dde_doc_id_type = PatientIdentifierType.where(name: 'DDE Person Document ID')
+    doc_id = PatientIdentifier.find_by(patient_id: local_patient_id, type: dde_doc_id_type)
+                              &.identifier
+    return nil unless doc_id
+
+    remote_patient = find_remote_patients_by_doc_id(doc_id).first
+    return nil unless remote_patient
+
+    Matcher.find_differences(Person.find(local_patient_id), remote_patient)
+  rescue DDEError => e
+    Rails.logger.warn("Check for DDE patient updates failed: #{e.message}")
+    nil
   end
 
   # Matches patients using a bunch of demographics
@@ -186,10 +201,7 @@ class DDEService
 
   def find_remote_patients_by_npid(npid)
     response, _status = dde_client.post('search_by_npid', npid: npid)
-
-    unless response.class == Array
-      raise DDEError, "Patient search by npid failed: DDE Response => #{response}"
-    end
+    raise DDEError, "Patient search by npid failed: DDE Response => #{response}" unless response.instance_of?(Array)
 
     response
   end
@@ -198,7 +210,7 @@ class DDEService
     response, _status = dde_client.post('search_by_name_and_gender', given_name: given_name,
                                                                      family_name: family_name,
                                                                      gender: gender)
-    unless response.class == Array
+    unless response.instance_of?(Array)
       raise DDEError, "Patient search by name and gender failed: DDE Response => #{response}"
     end
 
@@ -207,10 +219,7 @@ class DDEService
 
   def find_remote_patients_by_doc_id(doc_id)
     response, _status = dde_client.post('search_by_doc_id', doc_id: doc_id)
-
-    unless response.class == Array
-      raise DDEError, "Patient search by doc_id failed: DDE Response => #{response}"
-    end
+    raise DDEError, "Patient search by doc_id failed: DDE Response => #{response}" unless response.instance_of?(Array)
 
     response
   end
@@ -262,22 +271,19 @@ class DDEService
         same_patient?(local_patient: local_patient, remote_patient: patient)
       end
 
-      if remote_patient
-        remote_patients.delete(remote_patient)
-        local_patient.has_dde_updates = Matcher.matching_local_and_remote_person?(local_patient.person, remote_patient)
-      end
+      remote_patients.delete(remote_patient) if remote_patient
 
       resolved_patients << local_patient
     end
 
-    if resolved_patients.size.zero? && remote_patients.size == 1
+    if resolved_patients.empty? && remote_patients.size == 1
       # HACK: Frontenders requested that if only a single patient exists
       # remotely and locally none exists, the remote patient should be
       # imported.
       resolved_patients = [save_remote_patient(remote_patients[0])]
       remote_patients = []
     elsif auto_push_singular_local && resolved_patients.size == 1\
-         && remote_patients.size.zero? && local_only_patient?(resolved_patients.first)
+         && remote_patients.empty? && local_only_patient?(resolved_patients.first)
       # ANOTHER HACK: Push local only patient to DDE
       resolved_patients = [push_local_patient_to_dde(resolved_patients[0])]
     end
@@ -450,55 +456,5 @@ class DDEService
   # A cache for all connections to dde (indexed by program id)
   def dde_connections
     @@dde_connections ||= {}
-  end
-
-  ##
-  # Matches local and remote (DDE) people.
-  #
-  # TODO: Move module to own file
-  module Matcher
-    class << self
-      def matching_local_and_remote_person?(local_person, remote_person)
-        return true if matching_demographics?(local_person, remote_person)\
-
-        remote_person['location_updated_at'] != current_location_id
-      end
-
-      private
-
-      def matching_demographics?(local_person, remote_person)
-        %i[matching_name? matching_birthdate? matching_gender? matching_address?]
-          .all? { |method_name| send(method_name, local_person, remote_person) }
-      end
-
-      def matching_name?(local_person, remote_person)
-        local_name = PersonName.find_by_person_id(local_person.person_id)
-
-        local_name.given_name.casecmp?(remote_person['first_name'])\
-          && local_name.family_name.casecmp?(remote_person['last_name'])
-      end
-
-      def matching_birthdate?(local_person, remote_person)
-        local_person.birthdate_estimated == remote_person['birthdate_estimated']\
-          && local_person.birthdate&.to_date == remote_person['birthdate']&.to_date
-      end
-
-      def matching_gender?(local_person, remote_person)
-        local_person.gender == remote_person['gender']
-      end
-
-      def matching_address?(local_person, remote_person)
-        local_address = PersonAddress.find_by_person_id(local_person.person_id)
-
-        fields = %w[current_district current_traditional_authority current_village
-                    home_district home_traditional_authority home_village]
-
-        fields.all? { |field| local_address.send(field) == remote_person['attributes'][field] }
-      end
-
-      def current_location_id
-        Location.current_health_center.location_id
-      end
-    end
   end
 end
