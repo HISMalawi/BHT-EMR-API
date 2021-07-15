@@ -16,6 +16,15 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+### Added
+
+- New sites:
+  * Army Secondary school - Blantyre
+  * Kavuzi Cumnoc - Nkhata-bay
+- New concept: Stat
+
+## [v4.11.2] - 2021-07-15
+
 ### Changed
 
 - Bumped up his-emr-api-lab to v1.1.1 - This adds LIMS API integrations
