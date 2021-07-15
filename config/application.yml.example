@@ -8,7 +8,8 @@ lims_default_user: 'admin'
 lims_default_password: 'knock_knock'
 lims_partner: 'BHT'
 lims_app_name: 'bht_emr_api'
-lims_realtime_updates_url: http://localhost:3011
+# Uncomment the following to enable realtime updates through the LIMS socket
+# lims_realtime_updates_url: http://localhost:3011
 
 # Configuration for Pacs
 ftp_host:

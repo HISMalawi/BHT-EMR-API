@@ -18,6 +18,7 @@ compatibility (examples of this include major architectural changes).
 
 ### Added
 
+- Bumped up lab to v1.1.2 (See its [CHANGELOG](https://github.com/EGPAFMalawiHIS/his_emr_api_lab/blob/main/CHANGELOG.md) for more details)
 - New sites:
   * Army Secondary school - Blantyre
   * Kavuzi Cumnoc - Nkhata-bay
