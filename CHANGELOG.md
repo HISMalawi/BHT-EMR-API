@@ -16,6 +16,13 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+### Added
+
+- ART: script that voids invalid vitals (with values equal to NULL or zero)
+### Fixed
+
+- ART: patient_current_regimen function returning multiple regimens
+
 ## [v4.11.3] - 2021-07-15
 
 ### Added
