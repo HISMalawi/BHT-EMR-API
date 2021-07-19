@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require_relative './dde_service/matcher'
-
 class DDEService
+  require_relative './dde_service/matcher'
+
   class DDEError < StandardError; end
 
   DDE_CONFIG_PATH = 'config/application.yml'
@@ -41,6 +41,17 @@ class DDEService
 
     raise DDEError, "Failed to update person in DDE: #{response}" unless status == 200
 
+    patient
+  end
+
+  def update_local_patient(patient)
+    doc_id = patient_doc_id(patient)
+    return patient unless doc_id
+
+    dde_patient = find_remote_patients_by_doc_id(doc_id).first
+    return unless dde_patient
+
+    person_service.update_person(patient.person, dde_patient_to_local_person(dde_patient))
     patient
   end
 
@@ -165,36 +176,41 @@ class DDEService
   # NOTE: This creates a person on the database.
   def save_remote_patient(remote_patient)
     LOGGER.debug "Converting DDE person to openmrs: #{remote_patient}"
+    params = dde_patient_to_local_person(remote_patient)
 
-    person = person_service.create_person(
-      birthdate: remote_patient['birthdate'],
-      birthdate_estimated: remote_patient['birthdate_estimated'],
-      gender: remote_patient['gender']
+    Person.transaction do
+      person = person_service.create_person(params)
+      person_service.create_person_name(person, params)
+      person_service.create_person_address(person, params)
+      person_service.create_person_attributes(person, params)
+
+      patient = Patient.create(patient_id: person.id)
+      merging_service.link_local_to_remote_patient(patient, remote_patient)
+    end
+  end
+
+  ##
+  # Converts a dde_patient object into an object that can be passed to the person_service
+  # to create or update a person.
+  def dde_patient_to_local_person(dde_patient)
+    attributes = dde_patient.fetch('attributes')
+
+    ActiveSupport::HashWithIndifferentAccess.new(
+      birthdate: dde_patient.fetch('birthdate'),
+      birthdate_estimated: dde_patient.fetch('birthdate_estimated'),
+      gender: dde_patient.fetch('gender'),
+      given_name: dde_patient.fetch('given_name'),
+      family_name: dde_patient.fetch('family_name'),
+      middle_name: dde_patient.fetch('middle_name'),
+      home_village: attributes.fetch('home_village'),
+      home_traditional_authority: attributes.fetch('home_traditional_authority'),
+      home_district: attributes.fetch('home_district'),
+      current_village: attributes.fetch('current_village'),
+      current_traditional_authority: attributes.fetch('current_traditional_authority'),
+      current_district: attributes.fetch('current_district')
+      # cell_phone_number: attributes.fetch('cellphone_number'),
+      # occupation: attributes.fetch('occupation')
     )
-
-    person_service.create_person_name(
-      person, given_name: remote_patient['given_name'],
-              family_name: remote_patient['family_name'],
-              middle_name: remote_patient['middle_name']
-    )
-
-    remote_patient_attributes = remote_patient['attributes']
-    person_service.create_person_address(
-      person, home_village: remote_patient_attributes['home_village'],
-              home_traditional_authority: remote_patient_attributes['home_traditional_authority'],
-              home_district: remote_patient_attributes['home_district'],
-              current_village: remote_patient_attributes['current_village'],
-              current_traditional_authority: remote_patient_attributes['current_traditional_authority'],
-              current_district: remote_patient_attributes['current_district']
-    )
-
-    person_service.create_person_attributes(
-      person, cell_phone_number: remote_patient_attributes['cellphone_number'],
-              occupation: remote_patient_attributes['occupation']
-    )
-
-    patient = Patient.create(patient_id: person.id)
-    merging_service.link_local_to_remote_patient(patient, remote_patient)
   end
 
   private
@@ -218,6 +234,7 @@ class DDEService
   end
 
   def find_remote_patients_by_doc_id(doc_id)
+    Rails.logger.info("Searching for DDE patient by doc_id ##{doc_id}")
     response, _status = dde_client.post('search_by_doc_id', doc_id: doc_id)
     raise DDEError, "Patient search by doc_id failed: DDE Response => #{response}" unless response.instance_of?(Array)
 
