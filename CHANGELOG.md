@@ -16,6 +16,8 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+## [v4.11.4]
+
 ### Added
 
 - ART: script that voids invalid vitals (with values equal to NULL or zero)
