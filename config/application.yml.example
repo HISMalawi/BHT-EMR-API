@@ -1,3 +1,5 @@
+# Comment out parameter below to enable syncing with lims through the REST API.
+# lims_api: rest
 lims_host: localhost
 lims_prefix: api/v1
 lims_protocol: http

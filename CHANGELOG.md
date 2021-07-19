@@ -21,6 +21,8 @@ compatibility (examples of this include major architectural changes).
 ### Added
 
 - ART: script that voids invalid vitals (with values equal to NULL or zero)
+- Lab: Bumped up to v1.1.3 - Adds config for selecting lims_api for sync
+
 ### Fixed
 
 - ART: patient_current_regimen function returning multiple regimens
