@@ -226,6 +226,7 @@ Rails.application.routes.draw do
       get '/dde/patients/import_by_npid', to: 'dde#import_patients_by_npid'
       get '/dde/patients/match_by_demographics', to: 'dde#match_patients_by_demographics'
       get '/dde/patients/diff', to: 'dde#patient_diff'
+      get '/dde/patients/refresh', to: 'dde#refresh_patient'
       post '/dde/patients/reassign_npid', to: 'dde#reassign_patient_npid'
       post '/dde/patients/merge', to: 'dde#merge_patients'
 

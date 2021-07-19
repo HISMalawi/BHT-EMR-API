@@ -6888,6 +6888,139 @@
 							"body": "{\n    \"diff\": null\n}"
 						}
 					]
+				},
+				{
+					"name": "Update local patient's demographics from DDE",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "POcq7JwlhB0Z",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"tracking_number\": \"XEGPAF21791\",\n    \"result_date\": \"2021-07-09\",\n    \"test_name\": \"Viral load\",\n    \"test_status\": \"Drawn\",\n    \"date_updated\": \"2021-07-09 11:00\",\n    \"who_updated\": {\n        \"first_name\": \"John\",\n        \"last_name\": \"Cena\",\n        \"id_number\": \"LiBeBCNoFNe\"\n    },\n    \"results\": { \"Viral load\": \"< LDL\" }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:3000/api/v1/dde/patients/refresh?patient_id=34&program_id=1",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"v1",
+								"dde",
+								"patients",
+								"refresh"
+							],
+							"query": [
+								{
+									"key": "patient_id",
+									"value": "34"
+								},
+								{
+									"key": "program_id",
+									"value": "1"
+								}
+							]
+						},
+						"description": "Pulls patient's demographics from DDE and updates the patient with those demographics."
+					},
+					"response": [
+						{
+							"name": "Update local patient's demographics from DDE",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "POcq7JwlhB0Z",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"tracking_number\": \"XEGPAF21791\",\n    \"result_date\": \"2021-07-09\",\n    \"test_name\": \"Viral load\",\n    \"test_status\": \"Drawn\",\n    \"date_updated\": \"2021-07-09 11:00\",\n    \"who_updated\": {\n        \"first_name\": \"John\",\n        \"last_name\": \"Cena\",\n        \"id_number\": \"LiBeBCNoFNe\"\n    },\n    \"results\": { \"Viral load\": \"< LDL\" }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:3000/api/v1/dde/patients/refresh?patient_id=34&program_id=1",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"api",
+										"v1",
+										"dde",
+										"patients",
+										"refresh"
+									],
+									"query": [
+										{
+											"key": "patient_id",
+											"value": "34"
+										},
+										{
+											"key": "program_id",
+											"value": "1"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"2956d3ef2c38e707ea906aea7201567f\""
+								},
+								{
+									"key": "Cache-Control",
+									"value": "max-age=0, private, must-revalidate"
+								},
+								{
+									"key": "X-Request-Id",
+									"value": "462b8151-1e39-49b9-9f6f-4eaa4d26c65e"
+								},
+								{
+									"key": "X-Runtime",
+									"value": "1.315513"
+								},
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"patient_id\": 34,\n    \"tribe\": null,\n    \"creator\": 1,\n    \"date_created\": \"2021-03-24T15:31:26.000+02:00\",\n    \"changed_by\": 1,\n    \"date_changed\": \"2021-03-24T15:31:26.000+02:00\",\n    \"voided\": 0,\n    \"voided_by\": null,\n    \"date_voided\": null,\n    \"void_reason\": null,\n    \"person\": {\n        \"person_id\": 34,\n        \"birthdate\": \"1991-07-01\",\n        \"birthdate_estimated\": 1,\n        \"gender\": \"M\",\n        \"changed_by\": 1,\n        \"date_changed\": \"2021-07-19T11:50:14.000+02:00\",\n        \"dead\": 0,\n        \"death_date\": null,\n        \"cause_of_death\": null,\n        \"creator\": 1,\n        \"date_created\": \"2021-03-24T15:31:26.000+02:00\",\n        \"voided\": 0,\n        \"voided_by\": null,\n        \"date_voided\": null,\n        \"void_reason\": null,\n        \"uuid\": \"4cba4d98-bf7d-40f6-8e96-d53f566c22ff\",\n        \"names\": [\n            {\n                \"person_name_id\": 34,\n                \"preferred\": 0,\n                \"person_id\": 34,\n                \"prefix\": null,\n                \"given_name\": \"Tpt\",\n                \"middle_name\": null,\n                \"family_name_prefix\": null,\n                \"family_name\": \"Reinitiate\",\n                \"family_name2\": null,\n                \"family_name_suffix\": null,\n                \"degree\": null,\n                \"creator\": 1,\n                \"date_created\": \"2021-03-24T15:31:26.000+02:00\",\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"changed_by\": 1,\n                \"date_changed\": \"2021-07-19T11:50:14.000+02:00\",\n                \"uuid\": \"b92fa3a0-4b71-4f5d-9d3d-3e37344502ba\"\n            }\n        ],\n        \"addresses\": [\n            {\n                \"person_id\": 34,\n                \"voided\": 1,\n                \"date_voided\": \"2021-07-19T11:50:14.000+02:00\",\n                \"void_reason\": \"Address updated\",\n                \"voided_by\": 1,\n                \"person_address_id\": 34,\n                \"state_province\": \"Chiradzulu\",\n                \"township_division\": \"Kadewere\",\n                \"city_village\": \"Chabwera\",\n                \"preferred\": 0,\n                \"address1\": null,\n                \"address2\": \"Blantyre\",\n                \"postal_code\": null,\n                \"country\": null,\n                \"latitude\": null,\n                \"longitude\": null,\n                \"creator\": 1,\n                \"date_created\": \"2021-03-24T15:31:26.000+02:00\",\n                \"county_district\": \"Kunthembwe\",\n                \"neighborhood_cell\": \"Buluzi\",\n                \"region\": null,\n                \"subregion\": null,\n                \"uuid\": \"b0213f0b-1ba1-43b9-b89b-d3f2695f5354\"\n            }\n        ],\n        \"person_attributes\": [\n            {\n                \"person_attribute_id\": 291,\n                \"person_id\": 34,\n                \"value\": \"Mosque\",\n                \"person_attribute_type_id\": 19,\n                \"creator\": 1,\n                \"date_created\": \"2021-03-24T15:31:26.000+02:00\",\n                \"changed_by\": 1,\n                \"date_changed\": \"2021-03-24T15:31:26.000+02:00\",\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"288f6621-f6ee-4bed-ad47-43abdc988723\",\n                \"type\": {\n                    \"person_attribute_type_id\": 19,\n                    \"name\": \"Landmark Or Plot Number\",\n                    \"description\": \"Landmark or plot number\",\n                    \"format\": \"java.lang.String\",\n                    \"foreign_key\": null,\n                    \"searchable\": 0,\n                    \"creator\": 1,\n                    \"date_created\": \"2010-11-02T11:19:43.000+02:00\",\n                    \"changed_by\": 1,\n                    \"date_changed\": \"2010-11-02T11:19:55.000+02:00\",\n                    \"retired\": 0,\n                    \"retired_by\": null,\n                    \"date_retired\": null,\n                    \"retire_reason\": null,\n                    \"edit_privilege\": null,\n                    \"uuid\": \"ba35ece0-8d80-11d8-abbb-0024217bb78e\",\n                    \"sort_weight\": 16\n                }\n            },\n            {\n                \"person_attribute_id\": 292,\n                \"person_id\": 34,\n                \"value\": \"Unknown\",\n                \"person_attribute_type_id\": 12,\n                \"creator\": 1,\n                \"date_created\": \"2021-03-24T15:31:26.000+02:00\",\n                \"changed_by\": 1,\n                \"date_changed\": \"2021-03-24T15:31:26.000+02:00\",\n                \"voided\": 0,\n                \"voided_by\": null,\n                \"date_voided\": null,\n                \"void_reason\": null,\n                \"uuid\": \"defd2082-a082-4148-9e10-c88f70456956\",\n                \"type\": {\n                    \"person_attribute_type_id\": 12,\n                    \"name\": \"Cell Phone Number\",\n                    \"description\": \"Person primary cell phone number\",\n                    \"format\": \"java.lang.String\",\n                    \"foreign_key\": null,\n                    \"searchable\": 0,\n                    \"creator\": 1,\n                    \"date_created\": \"2009-10-07T15:44:33.000+02:00\",\n                    \"changed_by\": 1,\n                    \"date_changed\": \"2011-02-09T11:04:35.000+02:00\",\n                    \"retired\": 0,\n                    \"retired_by\": null,\n                    \"date_retired\": null,\n                    \"retire_reason\": null,\n                    \"edit_privilege\": null,\n                    \"uuid\": \"ba35e3da-8d80-11d8-abbb-0024217bb78e\",\n                    \"sort_weight\": 5\n                }\n            }\n        ]\n    },\n    \"patient_identifiers\": [\n        {\n            \"patient_identifier_id\": 54,\n            \"patient_id\": 34,\n            \"identifier\": \"P112000000112\",\n            \"identifier_type\": 2,\n            \"preferred\": 0,\n            \"location_id\": 120,\n            \"creator\": 1,\n            \"date_created\": \"2021-07-19T11:39:12.000+02:00\",\n            \"voided\": 0,\n            \"voided_by\": null,\n            \"date_voided\": null,\n            \"void_reason\": null,\n            \"uuid\": \"93d44d08-bab9-40f4-9352-510923d0a787\",\n            \"type\": {\n                \"patient_identifier_type_id\": 2,\n                \"name\": \"Old Identification Number\",\n                \"description\": \"Number given out prior to the OpenMRS system (No check digit)\",\n                \"format\": \"\",\n                \"check_digit\": 0,\n                \"creator\": 1,\n                \"date_created\": \"2005-09-22T00:00:00.000+02:00\",\n                \"required\": 0,\n                \"format_description\": null,\n                \"validator\": null,\n                \"retired\": 0,\n                \"retired_by\": null,\n                \"date_retired\": null,\n                \"retire_reason\": null,\n                \"uuid\": \"8d79403a-c2cc-11de-8d13-0010c6dffd0f\"\n            }\n        },\n        {\n            \"patient_identifier_id\": 55,\n            \"patient_id\": 34,\n            \"identifier\": \"2c7405cb-e875-11eb-a662-0242ac110002\",\n            \"identifier_type\": 27,\n            \"preferred\": 0,\n            \"location_id\": 120,\n            \"creator\": 1,\n            \"date_created\": \"2021-07-19T11:39:12.000+02:00\",\n            \"voided\": 0,\n            \"voided_by\": null,\n            \"date_voided\": null,\n            \"void_reason\": null,\n            \"uuid\": \"d6c587bb-2198-470e-9a5e-9fe42057c802\",\n            \"type\": {\n                \"patient_identifier_type_id\": 27,\n                \"name\": \"DDE person document ID\",\n                \"description\": \"Unique person identifier in DDE couchdb\",\n                \"format\": \"\",\n                \"check_digit\": 0,\n                \"creator\": 1,\n                \"date_created\": \"2018-05-24T07:42:41.000+02:00\",\n                \"required\": 0,\n                \"format_description\": \"\",\n                \"validator\": \"\",\n                \"retired\": 0,\n                \"retired_by\": null,\n                \"date_retired\": null,\n                \"retire_reason\": null,\n                \"uuid\": \"5dd9dd21-3252-4b53-977e-38af83e7416c\"\n            }\n        },\n        {\n            \"patient_identifier_id\": 56,\n            \"patient_id\": 34,\n            \"identifier\": \"RE4H67\",\n            \"identifier_type\": 3,\n            \"preferred\": 0,\n            \"location_id\": 120,\n            \"creator\": 1,\n            \"date_created\": \"2021-07-19T11:39:12.000+02:00\",\n            \"voided\": 0,\n            \"voided_by\": null,\n            \"date_voided\": null,\n            \"void_reason\": null,\n            \"uuid\": \"d9f5e71e-d4b5-4e81-9481-dbb88c684aa9\",\n            \"type\": {\n                \"patient_identifier_type_id\": 3,\n                \"name\": \"National id\",\n                \"description\": \"National ID number developed by Baobab\",\n                \"format\": \"\",\n                \"check_digit\": 0,\n                \"creator\": 1,\n                \"date_created\": \"2007-11-29T22:12:34.000+02:00\",\n                \"required\": 0,\n                \"format_description\": \"P-175-0000004-5\",\n                \"validator\": null,\n                \"retired\": 0,\n                \"retired_by\": null,\n                \"date_retired\": null,\n                \"retire_reason\": null,\n                \"uuid\": \"ba2f69d8-8d80-11d8-abbb-0024217bb78e\"\n            }\n        }\n    ]\n}"
+						}
+					]
 				}
 			]
 		}

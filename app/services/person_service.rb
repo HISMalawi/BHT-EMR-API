@@ -35,8 +35,16 @@ class PersonService
   end
 
   def update_person(person, params)
-    params = params.select { |k, _| PERSON_TRUNK_FIELDS.include? k.to_sym }
-    person.update params unless params.empty?
+    Person.transaction do
+      person_params = params.select { |k, _| PERSON_TRUNK_FIELDS.include? k.to_sym }
+      person.update!(person_params) unless person_params.empty?
+
+      update_person_name(person, params)
+      update_person_address(person, params)
+      update_person_attributes(person, params)
+
+      person
+    end
   end
 
   def find_people_by_name_and_gender(given_name, middle_name, family_name, gender, use_soundex: true)
