@@ -21,6 +21,7 @@ compatibility (examples of this include major architectural changes).
 ### Fixed
 
 - ART: Missing transfer out to location on transfer out (outcome) report
+- ART: Added check for missing dispensation observations in patients without prescriptions cleaning tool
 
 ## [v4.11.4] - 2021-07-19
 

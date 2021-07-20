@@ -296,22 +296,30 @@ EOF
     end
 
     def prescription_without_dispensation
-      data = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT
-        p.person_id, i.identifier arv_number, birthdate,
-        gender, start_date, quantity, given_name, family_name
-      FROM drug_order t
-      INNER JOIN orders o ON o.order_id = t.order_id
-      AND start_date BETWEEN '#{@start_date.strftime('%Y-%m-%d 00:00:00')}'
-      AND '#{@end_date.strftime('%Y-%m-%d 23:59:59')}'
-      INNER JOIN encounter e ON o.encounter_id = e.encounter_id AND e.program_id = 1
-      INNER JOIN person p ON p.person_id = o.patient_id
-      LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
-      AND i.identifier_type = 4 AND i.voided = 0
-      LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
-      WHERE o.voided = 0 AND quantity IS NULL OR quantity <= 0
-      GROUP BY DATE(start_date), p.person_id ORDER BY i.date_created DESC;
-EOF
+      start_date = ActiveRecord::Base.connection.quote(@start_date.strftime('%Y-%m-%d 00:00:00'))
+      end_date = ActiveRecord::Base.connection.quote(@end_date.strftime('%Y-%m-%d 23:59:59'))
+
+      data = ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT
+          p.person_id, i.identifier arv_number, birthdate,
+          gender, start_date, quantity, given_name, family_name
+        FROM drug_order t
+        INNER JOIN orders o ON o.order_id = t.order_id
+        AND start_date BETWEEN #{start_date} AND #{end_date}
+        INNER JOIN encounter e ON o.encounter_id = e.encounter_id AND e.program_id = 1
+        INNER JOIN person p ON p.person_id = o.patient_id
+        LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
+        AND i.identifier_type = 4 AND i.voided = 0
+        LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
+        LEFT JOIN obs AS dispensation
+          ON dispensation.order_id = o.order_id
+          AND dispensation.concept_id IN (SELECT concept_id FROM concept_name WHERE name = 'Amount Dispensed' AND voided = 0)
+          AND dispensation.voided = 0
+        WHERE o.voided = 0 AND quantity IS NULL OR quantity <= 0
+        GROUP BY DATE(start_date), p.person_id
+        HAVING COALESCE(SUM(dispensation.value_numeric), 0) <= 0
+        ORDER BY i.date_created DESC;
+      SQL
 
       client = []
 
