@@ -1,6 +1,8 @@
 class VoidInvalidArtVitals < ActiveRecord::Migration[5.2]
   def up
     puts 'Voiding weight and height vitals with 0 and null values; please wait...'
+    ActiveRecord::Base.connection.execute("SET SESSION sql_mode = ''")
+
     ActiveRecord::Base.connection.execute <<~SQL
       UPDATE obs
       SET obs.voided = 1,
@@ -22,7 +24,7 @@ class VoidInvalidArtVitals < ActiveRecord::Migration[5.2]
         )
         AND (obs.value_numeric IS NULL OR obs.value_numeric = 0)
         AND (obs.value_text IS NULL OR CAST(obs.value_text AS DECIMAL(1)) = 0)
-        AND obs.voided = 0
+        AND obs.voided = 0;
     SQL
   end
 
