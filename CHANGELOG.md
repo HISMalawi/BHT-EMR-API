@@ -16,6 +16,10 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+### Fixed
+
+- ART: Missing transfer out to location on transfer out (outcome) report
+
 ## [v4.11.4]
 
 ### Added
