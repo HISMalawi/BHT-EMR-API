@@ -382,6 +382,7 @@ EOF
           AND encounter.encounter_type NOT IN (
             SELECT encounter_type_id FROM encounter_type WHERE name = 'HIV Reception'
           )
+          AND encounter.voided = 0
         INNER JOIN person
           ON person.person_id = deaths.patient_id
         LEFT JOIN patient_identifier
