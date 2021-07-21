@@ -16,6 +16,12 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+## [v4.11.6] - 2021-07-21
+
+### Added
+
+- Lab: Bumped up lab to v1.1.5 - fixes failure to push orders with patients missing phone numbers
+
 ## [v4.11.5] - 2021-07-20
 
 ### Fixed
