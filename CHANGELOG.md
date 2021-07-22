@@ -16,6 +16,8 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+## [v4.11.7] - 2021-07-22
+
 ### Fixed
 
 - ART: Data cleaning tool 'encounters after death' picking voided encounters
