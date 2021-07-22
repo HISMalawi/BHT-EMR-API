@@ -19,6 +19,7 @@ compatibility (examples of this include major architectural changes).
 ### Fixed
 
 - ART: Data cleaning tool 'encounters after death' picking voided encounters
+- ART: 500 Error when merging local patients that have DDE IDs when DDE is disabled
 
 ## [v4.11.6] - 2021-07-21
 
