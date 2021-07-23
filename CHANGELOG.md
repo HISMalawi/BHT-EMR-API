@@ -18,6 +18,7 @@ compatibility (examples of this include major architectural changes).
 
 ### Fixed
 
+- ART: Data cleaning tool 'prescriptions without dispensations' picking voided prescriptions
 - ART: DBS VL results not being pulled in VL results report
 
 ## [v4.11.7] - 2021-07-22
