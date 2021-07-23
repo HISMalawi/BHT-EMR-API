@@ -16,6 +16,8 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+## [v4.11.8] - 2021-07-23
+
 ### Fixed
 
 - Lab: Fixed processed results report duplicating results
