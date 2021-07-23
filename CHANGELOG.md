@@ -16,6 +16,10 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+### Fixed
+
+- ART: DBS VL results not being pulled in VL results report
+
 ## [v4.11.7] - 2021-07-22
 
 ### Fixed
