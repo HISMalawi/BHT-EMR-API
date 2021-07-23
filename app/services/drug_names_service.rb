@@ -30,7 +30,15 @@ class DrugNamesService
     return stats
   end
 
-  def find_drug_list()
-     Drug.find_all_by_concept_set('OPD Medication');
+  def find_drug_list(filters)
+    query = Drug.find_all_by_concept_set('OPD Medication');
+
+    if filters.include?(:name)
+      name = filters.delete(:name)
+      query = query.where('name LIKE ?', "#{name}%")
+    end
+
+    query = query.where(filters) unless filters.empty?
+    query.order(:name)
   end
 end

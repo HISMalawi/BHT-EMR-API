@@ -4,7 +4,8 @@ class Api::V1::DrugNamesController < ApplicationController
     render json: service.find_generic_drugs(concept_set_id.concept_id)
   end
   def OPD_drugslist
-    render json: service.find_drug_list()
+    filters = params.permit(%i[name])
+    render json: paginate(service.find_drug_list(filters))
   end
 
   def OPD_non_customise_drug_list
