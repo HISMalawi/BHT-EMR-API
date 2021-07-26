@@ -40,8 +40,6 @@ module OPDService
     PATIENT_REGISTRATION = 'PATIENT REGISTRATION'
     VITALS = 'VITALS'
     PRESENTING_COMPLAINTS = 'PRESENTING COMPLAINTS'
-    RADIOLOGY_EXAMINATION = 'RADIOLOGY EXAMINATION'
-    LAB_ORDERS = 'LAB ORDERS'
     OUTPATIENT_DIAGNOSIS = 'OUTPATIENT DIAGNOSIS'
     PRESCRIPTION = 'PRESCRIPTION'
     TREATMENT = 'TREATMENT'
@@ -63,9 +61,7 @@ module OPDService
       INITIAL_STATE => PATIENT_REGISTRATION,
       PATIENT_REGISTRATION => VITALS,
       VITALS => PRESENTING_COMPLAINTS,
-      PRESENTING_COMPLAINTS => LAB_ORDERS,
-      LAB_ORDERS => RADIOLOGY_EXAMINATION,
-      RADIOLOGY_EXAMINATION => OUTPATIENT_DIAGNOSIS,
+      PRESENTING_COMPLAINTS => OUTPATIENT_DIAGNOSIS,
       OUTPATIENT_DIAGNOSIS => PRESCRIPTION,
       PRESCRIPTION => END_STATE
     }.freeze
@@ -76,8 +72,6 @@ module OPDService
       PRESENTING_COMPLAINTS => %i[patient_does_not_have_complaints?],
       OUTPATIENT_DIAGNOSIS => %i[patient_does_not_have_diagnosis?],
       PRESCRIPTION => %i[patient_does_not_have_prescription?],
-      LAB_ORDERS => %i[patient_does_not_have_lab_order?],
-      RADIOLOGY_EXAMINATION => %i[patient_does_not_have_radiology_examination?],
     }.freeze
 
     def load_user_activities
@@ -95,10 +89,6 @@ module OPDService
           VITALS
         when /Presenting complaints/i
           PRESENTING_COMPLAINTS
-        when /Lab orders/i
-          LAB_ORDERS
-        when /Radiology examination/i
-          RADIOLOGY_EXAMINATION
         when /Outpatient diagnosis/i
           OUTPATIENT_DIAGNOSIS
         when /Prescription/i
@@ -174,30 +164,6 @@ module OPDService
     #
     def patient_does_not_have_prescription?
       encounter_type = EncounterType.find_by name:TREATMENT
-      encounter = Encounter.joins(:type).where(
-        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
-        @patient.patient_id, encounter_type.encounter_type_id, @date
-      ).order(encounter_datetime: :desc).first
-
-      encounter.blank?
-    end
-
-    # Checks if patient has prescription today
-    #
-    def patient_does_not_have_lab_order?
-      encounter_type = EncounterType.find_by name:LAB_ORDERS
-      encounter = Encounter.joins(:type).where(
-        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
-        @patient.patient_id, encounter_type.encounter_type_id, @date
-      ).order(encounter_datetime: :desc).first
-
-      encounter.blank?
-    end
-
-    # Checks if patient has prescription today
-    #
-    def patient_does_not_have_radiology_examination?
-      encounter_type = EncounterType.find_by name:RADIOLOGY_EXAMINATION
       encounter = Encounter.joins(:type).where(
         'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
         @patient.patient_id, encounter_type.encounter_type_id, @date
