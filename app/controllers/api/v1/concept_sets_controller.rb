@@ -7,12 +7,14 @@ class Api::V1::ConceptSetsController < ApplicationController
   end
   def show
 
-    stats = {}
+    stats = []
     concept_id = ""
     data = realShow()
+    i = 0
     (data || []).each do |record1|
 
-        stats[record1['name']] = {
+        stats << {
+          group: record1['name'],
           complaints: [],
         }
 
@@ -22,7 +24,7 @@ class Api::V1::ConceptSetsController < ApplicationController
       s.concept_id = concept_name.concept_id").group("concept_name.concept_id")
 
       (data2 || []).each do |record|
-        stats[record1['name']][:complaints] << {
+        stats[i][:complaints] << {
           concept_id: record['concept_id'],
           concept_name_id: record['concept_name_id'],
           concept_name_type: record['concept_name_type'],
@@ -37,8 +39,9 @@ class Api::V1::ConceptSetsController < ApplicationController
           voided: record['voided'],
           voided_by: record['voided_by'],
         }
-      end
 
+      end
+      i += 1
     end
     # return stats
     render json: stats
