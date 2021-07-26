@@ -16,6 +16,10 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+### Added
+
+- ART: Inclusion of = LDL in suppressed VL results report
+
 ## [v4.11.8] - 2021-07-23
 
 ### Fixed

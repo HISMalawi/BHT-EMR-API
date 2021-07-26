@@ -142,27 +142,21 @@ module ARTService
         when 'suppressed' then <<~SQL
           (/* Plasma/Blood */
            (specimen_type.name IN ('Blood', 'Plasma')
-            AND ((test_result_measure_obs.value_modifier = '<'
-                  AND (test_result_measure_obs.value_text LIKE 'LDL'
-                       OR test_result_measure_obs.value_numeric IN (20, 40, 150)))
-                 OR (test_result_measure_obs.value_numeric >= 20
-                     AND test_result_measure_obs.value_numeric < 200)))
+            AND ((test_result_measure_obs.value_modifier IN ('<', '=') AND test_result_measure_obs.value_text = 'LDL')
+                 OR (test_result_measure_obs.value_modifier = '<' AND test_result_measure_obs.value_numeric IN (20, 40, 150)))
+                 OR (test_result_measure_obs.value_numeric >= 20 AND test_result_measure_obs.value_numeric < 200))
           /* DBS */
           OR (specimen_type.name IN ('DBS (Free drop to DBS card)', 'DBS (Using capillary tube)')
-              AND (test_result_measure_obs.value_modifier = '<'
-                   AND test_result_measure_obs.value_text LIKE 'LDL')))
+              AND (test_result_measure_obs.value_modifier IN ('<', '=') AND test_result_measure_obs.value_text = 'LDL')))
         SQL
         when 'low-level-viraemia' then <<~SQL
           (/* Plasma/Blood */
            (specimen_type.name IN ('Blood', 'Plasma')
-            AND (test_result_measure_obs.value_numeric >= 200
-                 AND test_result_measure_obs.value_numeric < 1000))
+            AND (test_result_measure_obs.value_numeric >= 200 AND test_result_measure_obs.value_numeric < 1000))
            /* DBS */
            OR (specimen_type.name IN ('DBS (Free drop to DBS card)', 'DBS (Using capillary tube)')
-               AND (test_result_measure_obs.value_modifier = '<'
-                    AND test_result_measure_obs.value_numeric IN (400, 550, 839))
-               OR (test_result_measure_obs.value_numeric >= 400
-                   AND test_result_measure_obs.value_numeric < 1000)))
+               AND (test_result_measure_obs.value_modifier = '<' AND test_result_measure_obs.value_numeric IN (400, 550, 839))
+               OR (test_result_measure_obs.value_numeric >= 400 AND test_result_measure_obs.value_numeric < 1000)))
         SQL
         when 'viraemia-1000' then <<~SQL
           (test_result_measure_obs.value_numeric >= 1000)
