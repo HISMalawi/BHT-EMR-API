@@ -10,27 +10,34 @@ class Api::V1::ConceptSetsController < ApplicationController
     stats = {}
     concept_id = ""
     data = realShow()
-    (data || []).each do |record|
+    (data || []).each do |record1|
 
-        stats[record['name']] = {
+        stats[record1['name']] = {
           complaints: [],
         }
 
-      stats[record['name']][:complaints] << {
-        concept_id: record['concept_id'],
-        concept_name_id: record['concept_name_id'],
-        concept_name_type: record['concept_name_type'],
-        creator: record['creator'],
-        date_created: record['date_created'],
-        date_voided: record['date_voided'],
-        locale: record['locale'],
-        locale_preferred: record['locale_preferred'],
-        name: record['name'],
-        uuid: record['uuid'],
-        void_reason: record['void_reason'],
-        voided: record['voided'],
-        voided_by: record['voided_by'],
-      }
+       data2 = ConceptName.where("s.concept_set = ?
+      AND concept_name.name LIKE (?)", record1['concept_id'],
+      "%%").joins("INNER JOIN concept_set s ON
+      s.concept_id = concept_name.concept_id").group("concept_name.concept_id")
+
+      (data2 || []).each do |record|
+        stats[record1['name']][:complaints] << {
+          concept_id: record['concept_id'],
+          concept_name_id: record['concept_name_id'],
+          concept_name_type: record['concept_name_type'],
+          creator: record['creator'],
+          date_created: record['date_created'],
+          date_voided: record['date_voided'],
+          locale: record['locale'],
+          locale_preferred: record['locale_preferred'],
+          name: record['name'],
+          uuid: record['uuid'],
+          void_reason: record['void_reason'],
+          voided: record['voided'],
+          voided_by: record['voided_by'],
+        }
+      end
 
     end
     # return stats
