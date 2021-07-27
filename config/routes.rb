@@ -266,7 +266,7 @@ Rails.application.routes.draw do
   post '/api/v1/cancel_fast_track' => 'api/v1/fast_track#cancel'
   get '/api/v1/on_fast_track' => 'api/v1/fast_track#on_fast_track'
   get '/api/v1/patient_weight_for_height_values' => 'api/v1/weight_for_height#index'
-  get '/api/v1/concept_set' => 'api/v1/concept_sets#show'
+  get '/api/v1/presenting_complaints' => 'api/v1/presenting_complaints#show'
   get '/api/v1/cervical_cancer_screening' => 'api/v1/cervical_cancer_screening#show'
 
   get '/api/v1/dashboard_stats' => 'api/v1/reports#index'
