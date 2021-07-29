@@ -16,6 +16,9 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+### Fixed
+
+- ART: TO report having TO location blank for patients with a TO on the same day as a visit
 
 ## [v4.11.9] - 2021-07-26
 

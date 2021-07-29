@@ -84,12 +84,11 @@ module ARTService
             ON exit_from_care_encounter.patient_id = patient_program.patient_id
             AND exit_from_care_encounter.encounter_datetime >= DATE(patient_state.start_date)
             AND exit_from_care_encounter.encounter_datetime < DATE(patient_state.start_date) + INTERVAL 1 DAY
+            AND exit_from_care_encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'EXIT FROM HIV CARE')
             AND exit_from_care_encounter.voided = 0
-          LEFT JOIN encounter_type
-            ON encounter_type.encounter_type_id = exit_from_care_encounter.encounter_type
-            AND encounter_type.name = 'EXIT FROM HIV CARE'
           LEFT JOIN obs AS transfer_out_to_obs
             ON transfer_out_to_obs.encounter_id = exit_from_care_encounter.encounter_id
+            AND exit_from_care_encounter.encounter_id IS NOT NULL
             AND transfer_out_to_obs.voided = 0
           LEFT JOIN concept_name AS transfer_out_to_concept
             ON transfer_out_to_concept.concept_id = transfer_out_to_obs.concept_id
