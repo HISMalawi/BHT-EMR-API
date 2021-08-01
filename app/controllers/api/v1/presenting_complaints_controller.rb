@@ -1,7 +1,7 @@
 class Api::V1::PresentingComplaintsController < ApplicationController
 
   def show
-    render json: service.getComplaints(params[:id])
+    render json: service.get_complaints(params[:id])
   end
 
   private
