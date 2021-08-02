@@ -1,6 +1,7 @@
 class UpdatePatientIdsOnOrdersForMergedPatients < ActiveRecord::Migration[5.2]
   def up
     hanging_orders.each do |order|
+      puts "Merging unmerged order ##{order.order_id} into patient ##{order['encounter_patient_id']}..."
       ActiveRecord::Base.connection.execute <<~SQL
         UPDATE orders
         SET patient_id = #{order['encounter_patient_id']}
@@ -20,6 +21,7 @@ class UpdatePatientIdsOnOrdersForMergedPatients < ActiveRecord::Migration[5.2]
   # These orders exist due to a bug in the original NART application. When merging
   # patients, everything was merged except orders.
   def hanging_orders
+    puts 'Fetching unmerged orders... Please wait...'
     ActiveRecord::Base.connection.select_all <<~SQL
       SELECT orders.order_id,
              encounter.encounter_id,
