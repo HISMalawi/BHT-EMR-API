@@ -18,6 +18,7 @@ compatibility (examples of this include major architectural changes).
 
 ### Fixed
 
+- ART: TO report showing NPIDs instead of ARV numbers
 - ART: TO report having TO location blank for patients with a TO on the same day as a visit
 
 ## [v4.11.9] - 2021-07-26

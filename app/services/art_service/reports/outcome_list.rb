@@ -76,10 +76,11 @@ module ARTService
           LEFT JOIN patient_identifier AS arv_number
             ON arv_number.patient_id = patient_program.patient_id
             AND arv_number.voided = 0
-          LEFT JOIN patient_identifier_type
-            ON patient_identifier_type.patient_identifier_type_id = arv_number.identifier_type
-            AND patient_identifier_type.name = 'ARV Number'
-            AND patient_identifier_type.retired = 0
+            AND identifier_type = (
+              SELECT patient_identifier_type_id FROM patient_identifier_type
+              WHERE patient_identifier_type.name = 'ARV Number' AND patient_identifier_type.retired = 0
+              LIMIT 1
+            )
           LEFT JOIN encounter AS exit_from_care_encounter
             ON exit_from_care_encounter.patient_id = patient_program.patient_id
             AND exit_from_care_encounter.encounter_datetime >= DATE(patient_state.start_date)
