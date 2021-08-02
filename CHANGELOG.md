@@ -16,8 +16,11 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+## [v.4.11.10] - 2021-08-02
+
 ### Fixed
 
+- ART: Added migration script to complete incomplete patient merges by old ART (it didn't merge orders)
 - ART: TO report showing NPIDs instead of ARV numbers
 - ART: TO report having TO location blank for patients with a TO on the same day as a visit
 
