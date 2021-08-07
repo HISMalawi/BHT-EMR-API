@@ -16,6 +16,10 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+### Fixed
+
+- Lab: Crash on update of lab orders through the LIMS rest API configuration
+
 ## [v.4.11.10] - 2021-08-02
 
 ### Fixed
