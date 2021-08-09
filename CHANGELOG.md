@@ -16,6 +16,10 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+### Fixed
+
+- Lab: Bumped up to version 1.1.7 - Fixes crash in LIMS worker on pull of orders with null specimen
+
 ## [v4.11.11] - 2021-08-07
 
 ### Fixed
