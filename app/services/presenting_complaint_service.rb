@@ -9,6 +9,7 @@ class PresentingComplaintService
       stats << {
         group: groupRecord['name'],
         complaints: [],
+        concept_id: groupRecord['concept_id'],
       }
 
       data = get_concept_names(groupRecord['concept_id'])
