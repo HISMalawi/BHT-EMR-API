@@ -37,8 +37,13 @@ gem 'test-unit'
 gem 'rswag-api'
 gem 'rswag-ui'
 
+<<<<<<< HEAD
 gem 'his_emr_api_radiology', '0.0.5'
 gem 'his_emr_api_lab', '>= 1.1.0'
+=======
+gem 'his_emr_api_lab', '1.0.5'
+gem gem 'his_emr_api_radiology', '~> 0.0.7'
+>>>>>>> db2c2dc80fe2a744455acc933fb2bf84fbeb03a1
 
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
