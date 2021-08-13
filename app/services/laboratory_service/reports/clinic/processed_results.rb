@@ -95,7 +95,7 @@ module LaboratoryService
             WHERE lab_result_obs.voided = 0
               AND lab_result_obs.obs_datetime >= DATE(#{start_date})
               AND lab_result_obs.obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
-            GROUP BY lab_result_obs.obs_id
+            GROUP BY orders.order_id
           SQL
         end
       end

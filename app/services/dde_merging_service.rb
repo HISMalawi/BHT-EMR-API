@@ -5,7 +5,7 @@
 class DDEMergingService
   include ModelUtils
 
-  attr_accessor :parent, :dde_client
+  attr_accessor :parent
 
   # Initialise DDE's merging service.
   #
@@ -27,7 +27,9 @@ class DDEMergingService
   #                                above
   def merge_patients(primary_patient_ids, secondary_patient_ids_list)
     secondary_patient_ids_list.collect do |secondary_patient_ids|
-      if remote_merge?(primary_patient_ids, secondary_patient_ids)
+      if !dde_enabled?
+        merge_local_patients(primary_patient_ids, secondary_patient_ids)
+      elsif remote_merge?(primary_patient_ids, secondary_patient_ids)
         merge_remote_patients(primary_patient_ids, secondary_patient_ids)
       elsif remote_local_merge?(primary_patient_ids, secondary_patient_ids)
         merge_remote_and_local_patients(primary_patient_ids, secondary_patient_ids)
@@ -95,17 +97,17 @@ class DDEMergingService
 
   # Is a merge of a remote patient into a local patient possible?
   def remote_local_merge?(primary_patient_ids, secondary_patient_ids)
-    primary_patient_ids['patient_id']&.strip && secondary_patient_ids['doc_id']&.strip
+    primary_patient_ids['patient_id'] && secondary_patient_ids['doc_id']&.strip
   end
 
   # Like `remote_local_merge` but primary is remote and secondary is local
   def inverted_remote_local_merge?(primary_patient_ids, secondary_patient_ids)
-    primary_patient_ids['doc_id']&.strip && secondary_patient_ids['patient_id']&.strip
+    primary_patient_ids['doc_id']&.strip && secondary_patient_ids['patient_id']
   end
 
   # Is a merge of local patients possible?
   def local_merge?(primary_patient_ids, secondary_patient_ids)
-    primary_patient_ids['patient_id']&.strip && secondary_patient_ids['patient_id']&.strip
+    primary_patient_ids['patient_id'] && secondary_patient_ids['patient_id']
   end
 
   # Merge remote secondary patient into local primary patient
@@ -351,6 +353,19 @@ class DDEMergingService
 
   def patient_service
     PatientService.new
+  end
+
+  def dde_enabled?
+    return @dde_enabled unless @dde_enabled.nil?
+
+    property = GlobalProperty.find_by_property('dde_enabled')
+    return @dde_enabled = false unless property&.property_value
+
+    @dde_enabled = case property.property_value
+                   when /true/i then true
+                   when /false/i then false
+                   else raise "Invalid value for property dde_enabled: #{property.property_value}"
+                   end
   end
 
   def dde_client

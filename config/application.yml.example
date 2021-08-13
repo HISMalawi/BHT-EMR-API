@@ -1,13 +1,17 @@
+# Comment out parameter below to enable syncing with lims through the REST API.
+# lims_api: rest
 lims_host: localhost
 lims_prefix: api/v1
 lims_protocol: http
 lims_port: 3010
-lims_username: 'lab_user'
-lims_password: 'lab_user_password'
+lims_username: 'emr_api'
+lims_password: 'emr_api_password'
 lims_default_user: 'admin'
 lims_default_password: 'knock_knock'
 lims_partner: 'BHT'
 lims_app_name: 'bht_emr_api'
+# Uncomment the following to enable realtime updates through the LIMS socket
+# lims_realtime_updates_url: http://localhost:3011
 
 # Configuration for Pacs
 ftp_host:

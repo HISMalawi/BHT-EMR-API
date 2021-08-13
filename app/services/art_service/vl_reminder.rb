@@ -36,8 +36,7 @@ EOF
       skip_milestone: false, message: nil
      }
 
-    if milestones.include?(months_gone) || milestones.include?(months_gone + 1) ||
-      milestones.include?(months_gone + 2) || milestones.include?(months_gone + 3)
+    if milestones.include?(months_gone)
       value_coded  = ConceptName.find_by_name('Delayed milestones').concept_id
       value_coded2 = ConceptName.find_by_name('Tests ordered').concept_id
 

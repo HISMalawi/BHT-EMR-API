@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'logger_multiplexor'
+##
+# Rails runner script that runs/manages processes that push/pull data to/from LIMS.
 
-Rails.logger = LoggerMultiplexor.new(Rails.root.join('log/lims-sync.log'), $stdout)
 Lab::Lims::Worker.start

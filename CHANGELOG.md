@@ -16,6 +16,93 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+## [v4.11.12] - 2021-08-09
+
+### Fixed
+
+- Lab: Bumped up to version 1.1.7 - Fixes crash in LIMS worker on pull of orders with null specimen
+
+## [v4.11.11] - 2021-08-07
+
+### Fixed
+
+- Lab: Crash on update of lab orders through the LIMS rest API configuration
+
+## [v.4.11.10] - 2021-08-02
+
+### Fixed
+
+- ART: Added migration script to complete incomplete patient merges by old ART (it didn't merge orders)
+- ART: TO report showing NPIDs instead of ARV numbers
+- ART: TO report having TO location blank for patients with a TO on the same day as a visit
+
+## [v4.11.9] - 2021-07-26
+
+### Added
+
+- ART: Inclusion of = LDL in suppressed VL results report
+
+## [v4.11.8] - 2021-07-23
+
+### Fixed
+
+- Lab: Fixed processed results report duplicating results
+- ART: Data cleaning tool 'prescriptions without dispensations' picking voided prescriptions
+- ART: DBS VL results not being pulled in VL results report
+
+## [v4.11.7] - 2021-07-22
+
+### Fixed
+
+- ART: Data cleaning tool 'encounters after death' picking voided encounters
+- ART: 500 Error when merging local patients that have DDE IDs when DDE is disabled
+
+## [v4.11.6] - 2021-07-21
+
+### Added
+
+- Lab: Bumped up lab to v1.1.5 - fixes failure to push orders with patients missing phone numbers
+
+## [v4.11.5] - 2021-07-20
+
+### Fixed
+
+- ART: Missing transfer out to location on transfer out (outcome) report
+- ART: Added check for missing dispensation observations in patients without prescriptions cleaning tool
+
+## [v4.11.4] - 2021-07-19
+
+### Added
+
+- ART: script that voids invalid vitals (with values equal to NULL or zero)
+- Lab: Bumped up to v1.1.3 - Adds config for selecting lims_api for sync
+
+### Fixed
+
+- ART: patient_current_regimen function returning multiple regimens
+
+## [v4.11.3] - 2021-07-15
+
+### Added
+
+- Bumped up lab to v1.1.2 (See its [CHANGELOG](https://github.com/EGPAFMalawiHIS/his_emr_api_lab/blob/main/CHANGELOG.md) for more details)
+- New sites:
+  * Army Secondary school - Blantyre
+  * Kavuzi Cumnoc - Nkhata-bay
+- New concept: Stat
+
+## [v4.11.2] - 2021-07-15
+
+### Changed
+
+- Bumped up his-emr-api-lab to v1.1.1 - This adds LIMS API integrations
+
+## [v4.11.1] - 2021-07-07
+
+### Fixed
+
+- Crash on attempt to merge local patients (ie not from DDE)
+
 ### Added
 
 - ART: Endpoint for retrieving drug doses based on patient's current weight
