@@ -1516,6 +1516,7 @@ BEGIN
       GROUP BY combo.regimen_combination_id
     ) AS regimens
     WHERE drugs = @drug_ids
+    LIMIT 1
   );
 
   IF regimen IS NULL THEN

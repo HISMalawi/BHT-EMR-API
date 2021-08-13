@@ -18,6 +18,14 @@ module ARTService
 
       private
 
+      def start_date
+        ActiveRecord::Base.connection.quote(@start_date)
+      end
+
+      def end_date
+        ActiveRecord::Base.connection.quote(@end_date)
+      end
+
       def load_report(name)
         name = name.to_sym
 
@@ -29,7 +37,67 @@ module ARTService
       end
 
       def transfer_out
-        return outcome_query 2
+        ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT patient_program.patient_id,
+                 arv_number.identifier,
+                 patient_program.date_enrolled,
+                 patient_program.date_completed,
+                 patient_state.start_date,
+                 patient_state.end_date,
+                 patient_state.state,
+                 state_concept.name,
+                 person_name.given_name,
+                 person_name.family_name,
+                 person.gender,
+                 person.birthdate,
+                 transfer_out_to_obs.value_text AS transferred_out_to
+          FROM patient_program
+          INNER JOIN program
+            ON program.program_id = patient_program.program_id
+            AND program.name = 'HIV Program'
+            AND program.retired = 0
+          INNER JOIN patient_state
+            ON patient_state.patient_program_id = patient_program.patient_program_id
+            AND patient_state.start_date >= DATE(#{start_date})
+            AND patient_state.start_date < DATE(#{end_date}) + INTERVAL 1 DAY
+            AND patient_state.voided = 0
+          INNER JOIN program_workflow_state
+            ON program_workflow_state.program_workflow_state_id = patient_state.state
+          INNER JOIN concept_name AS state_concept
+            ON state_concept.concept_id = program_workflow_state.concept_id
+            AND state_concept.name = 'Patient transferred out'
+            AND state_concept.voided = 0
+          LEFT JOIN person_name
+            ON person_name.person_id = patient_program.patient_id
+            AND person_name.voided = 0
+          INNER JOIN person
+            ON person.person_id = patient_program.patient_id
+            AND person.voided = 0
+          LEFT JOIN patient_identifier AS arv_number
+            ON arv_number.patient_id = patient_program.patient_id
+            AND arv_number.voided = 0
+            AND identifier_type = (
+              SELECT patient_identifier_type_id FROM patient_identifier_type
+              WHERE patient_identifier_type.name = 'ARV Number' AND patient_identifier_type.retired = 0
+              LIMIT 1
+            )
+          LEFT JOIN encounter AS exit_from_care_encounter
+            ON exit_from_care_encounter.patient_id = patient_program.patient_id
+            AND exit_from_care_encounter.encounter_datetime >= DATE(patient_state.start_date)
+            AND exit_from_care_encounter.encounter_datetime < DATE(patient_state.start_date) + INTERVAL 1 DAY
+            AND exit_from_care_encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'EXIT FROM HIV CARE')
+            AND exit_from_care_encounter.voided = 0
+          LEFT JOIN obs AS transfer_out_to_obs
+            ON transfer_out_to_obs.encounter_id = exit_from_care_encounter.encounter_id
+            AND exit_from_care_encounter.encounter_id IS NOT NULL
+            AND transfer_out_to_obs.voided = 0
+          LEFT JOIN concept_name AS transfer_out_to_concept
+            ON transfer_out_to_concept.concept_id = transfer_out_to_obs.concept_id
+            AND transfer_out_to_concept.name = 'Transfer out site'
+            AND transfer_out_to_concept.voided = 0
+          GROUP BY patient_program.patient_id
+          ORDER BY patient_state.start_date DESC, person_name.date_created DESC;
+        SQL
       end
 
       def died

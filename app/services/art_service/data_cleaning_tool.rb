@@ -296,38 +296,43 @@ EOF
     end
 
     def prescription_without_dispensation
-      data = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT
-        p.person_id, i.identifier arv_number, birthdate,
-        gender, start_date, quantity, given_name, family_name
-      FROM drug_order t
-      INNER JOIN orders o ON o.order_id = t.order_id
-      AND start_date BETWEEN '#{@start_date.strftime('%Y-%m-%d 00:00:00')}'
-      AND '#{@end_date.strftime('%Y-%m-%d 23:59:59')}'
-      INNER JOIN encounter e ON o.encounter_id = e.encounter_id AND e.program_id = 1
-      INNER JOIN person p ON p.person_id = o.patient_id
-      LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
-      AND i.identifier_type = 4 AND i.voided = 0
-      LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
-      WHERE o.voided = 0 AND quantity IS NULL OR quantity <= 0
-      GROUP BY DATE(start_date), p.person_id ORDER BY i.date_created DESC;
-EOF
+      start_date = ActiveRecord::Base.connection.quote(@start_date.strftime('%Y-%m-%d 00:00:00'))
+      end_date = ActiveRecord::Base.connection.quote(@end_date.strftime('%Y-%m-%d 23:59:59'))
 
-      client = []
-
-      (data || []).each do |person|
-        client << {
-          arv_number: person['arv_number'],
-          given_name: person['given_name'],
-          family_name: person['family_name'],
-          gender: person['gender'],
-          birthdate: person['birthdate'],
-          patient_id: person['person_id'],
-          start_date: person['start_date']
-        }
-      end
-
-      return client
+      ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT orders.patient_id,
+               patient_identifier.identifier AS arv_number,
+               birthdate,
+               gender,
+               start_date AS visit_date,
+               quantity,
+               given_name,
+               family_name
+        FROM drug_order
+        INNER JOIN orders
+          ON orders.order_id = drug_order.order_id
+          AND orders.start_date BETWEEN #{start_date} AND #{end_date}
+          AND orders.voided = 0
+        INNER JOIN encounter
+          ON encounter.encounter_id = orders.encounter_id
+          AND encounter.program_id = 1
+        INNER JOIN person
+          ON person.person_id = orders.patient_id
+        LEFT JOIN patient_identifier
+          ON patient_identifier.patient_id = person.person_id
+          AND patient_identifier.identifier_type = 4
+          AND patient_identifier.voided = 0
+        LEFT JOIN person_name
+          ON person_name.person_id = person.person_id
+          AND person_name.voided = 0
+        LEFT JOIN obs AS dispensation
+          ON dispensation.order_id = orders.order_id
+          AND dispensation.concept_id IN (SELECT concept_id FROM concept_name WHERE name = 'Amount Dispensed' AND voided = 0)
+          AND dispensation.voided = 0
+        WHERE (drug_order.quantity IS NULL OR drug_order.quantity <= 0)
+        GROUP BY DATE(orders.start_date), orders.patient_id
+        HAVING COALESCE(SUM(dispensation.value_numeric), 0) <= 0
+      SQL
     end
 
     def client_with_encounters_after_declared_dead
@@ -374,6 +379,7 @@ EOF
           AND encounter.encounter_type NOT IN (
             SELECT encounter_type_id FROM encounter_type WHERE name = 'HIV Reception'
           )
+          AND encounter.voided = 0
         INNER JOIN person
           ON person.person_id = deaths.patient_id
         LEFT JOIN patient_identifier
