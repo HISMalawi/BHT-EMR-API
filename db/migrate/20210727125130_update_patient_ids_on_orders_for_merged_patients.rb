@@ -1,7 +1,7 @@
 class UpdatePatientIdsOnOrdersForMergedPatients < ActiveRecord::Migration[5.2]
   def up
     hanging_orders.each do |order|
-      puts "Merging unmerged order ##{order.order_id} into patient ##{order['encounter_patient_id']}..."
+      puts "Merging unmerged order ##{order['order_id']} into patient ##{order['encounter_patient_id']}..."
       ActiveRecord::Base.connection.execute <<~SQL
         UPDATE orders
         SET patient_id = #{order['encounter_patient_id']}

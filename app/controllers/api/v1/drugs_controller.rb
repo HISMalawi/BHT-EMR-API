@@ -12,6 +12,11 @@ class Api::V1::DrugsController < ApplicationController
     render json: paginate(service.find_drugs(filters))
   end
 
+  def OPD_drugslist
+    filters = params.permit(%i[name])
+    render json: paginate(service.find_drug_list(filters))
+  end
+
   def drug_sets
     drug_sets = {}
     set_names = {}

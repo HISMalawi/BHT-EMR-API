@@ -16,6 +16,18 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+## [v4.11.12] - 2021-08-09
+
+### Fixed
+
+- Lab: Bumped up to version 1.1.7 - Fixes crash in LIMS worker on pull of orders with null specimen
+
+## [v4.11.11] - 2021-08-07
+
+### Fixed
+
+- Lab: Crash on update of lab orders through the LIMS rest API configuration
+
 ## [v.4.11.10] - 2021-08-02
 
 ### Fixed
