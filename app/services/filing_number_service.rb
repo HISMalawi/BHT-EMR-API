@@ -36,13 +36,39 @@ class FilingNumberService
     next_id = last_identifier.blank? ? 1 : last_identifier[5..-1].to_i + 1
 
     # HACK: Ensure we are not exceeding filing number limits
-    if type.match?(/^Filing.*/i) && next_id > filing_number_limit
-      return nil
-    elsif next_id > PHYSICAL_FILING_NUMBER_LIMIT
+    return find_lost_active_filing_number if type.match?(/^Filing.*/i) && next_id > filing_number_limit
+
+    if next_id > PHYSICAL_FILING_NUMBER_LIMIT
       raise "At physical filing number limit: #{next_id} > #{PHYSICAL_FILING_NUMBER_LIMIT}"
     end
 
     prefix + next_id.to_s.rjust(5, '0')
+  end
+
+  ##
+  # Looks for previously assigned active filing number that was voided and wasn't assigned to
+  # anyone else.
+  def find_lost_active_filing_number
+    prefix = filing_number_prefixes[0]
+    filing_number_type = patient_identifier_type('Filing number').id
+
+    identifier = ActiveRecord::Base.connection.select_one <<~SQL
+      SELECT DISTINCT identifier
+      FROM patient_identifier
+      WHERE identifier_type = #{ActiveRecord::Base.connection.quote(filing_number_type)}
+        AND identifier LIKE #{ActiveRecord::Base.connection.quote("#{prefix}%")}
+        AND voided = 1
+        AND identifier < #{ActiveRecord::Base.connection.quote(prefix + filing_number_limit.to_s)}
+        AND identifier NOT IN (
+          SELECT identifier
+          FROM patient_identifier
+          WHERE voided = 0
+            AND identifier_type = #{ActiveRecord::Base.connection.quote(filing_number_type)}
+            AND identifier LIKE #{ActiveRecord::Base.connection.quote("#{prefix}%")}
+        )
+    SQL
+
+    identifier['identifier']
   end
 
   # Archives patient with given filing number
