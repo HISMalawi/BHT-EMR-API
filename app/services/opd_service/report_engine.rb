@@ -139,13 +139,15 @@ module OPDService
         joins('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
         INNER JOIN person p ON p.person_id = encounter.patient_id
         LEFT JOIN person_name n ON n.person_id = encounter.patient_id AND n.voided = 0
+        LEFT JOIN person_attribute z ON z.person_id = encounter.patient_id AND z.person_attribute_type_id = 12
         RIGHT JOIN person_address a ON a.person_id = encounter.patient_id').\
         select('encounter.encounter_type,n.given_name, n.family_name, n.person_id, obs.value_coded, p.*,
-        a.state_province district, a.township_division ta, a.city_village village')
+        a.state_province district, a.township_division ta, a.city_village village, z.value')
 
       stats = {}
       (data || []).each do |record|
         age_group = get_age_group(record['birthdate'], end_date)
+        phone_number = record['value']
         gender = record['gender']
         given_name = record['given_name']
         family_name = record['family_name']
@@ -153,7 +155,7 @@ module OPDService
         ta  = record['ta']
         village = record['village']
         address = "#{district}; #{ta}; #{village}"
-        patient_info = "|#{given_name},#{record['person_id']},#{family_name},#{gender},#{address}";
+        patient_info = "|#{given_name},#{record['person_id']},#{family_name},#{gender},#{phone_number},#{address}";
         concept = ConceptName.find_by_concept_id record['value_coded']
 
         next if gender.blank?
