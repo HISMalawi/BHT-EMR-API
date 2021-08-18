@@ -10,6 +10,17 @@ class Api::V1::ReportsController < ApplicationController
     end
   end
 
+  def syndromic_statistics
+    date = params.require %i[date]
+    stats = service.dashboard_stats_for_syndromic_statistics(date.first)
+
+    if stats
+      render json: stats
+    else
+      render status: :no_content
+    end
+  end
+
   def with_nids
     stats = service.with_nids
     render json: stats

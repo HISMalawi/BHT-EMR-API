@@ -35,6 +35,25 @@ module OPDService
       return stats
     end
 
+    def dashboard_stats_for_syndromic_statistics(date)
+      @date = date.to_date
+      stats = {}
+      stats[:top] = {
+        # registered_today: registered_today('New patient'),
+        # returning_today: registered_today('Revisiting'),
+        # referred_today: registered_today('Referral')
+        ILI: respiratory_enctounter_today('ILI'),
+        Respiratory: respiratory_enctounter_today('Respiratory')
+      }
+
+      stats[:down] = {
+        ILI: monthly_respiratory_enctounter('ILI'),
+         Respiratory: monthly_respiratory_enctounter('Respiratory')
+      }
+
+      return stats
+    end
+
     def with_nids
       type = PatientIdentifierType.find_by_name 'Malawi National ID'
 
@@ -505,8 +524,7 @@ module OPDService
         return 'Unknown'
       end
     end
-
-    def registered_today(visit_type)
+def registered_today(visit_type)
       type = EncounterType.find_by_name 'Patient registration'
       concept = ConceptName.find_by_name 'Type of visit'
       value_coded = ConceptName.find_by_name visit_type
@@ -546,6 +564,56 @@ module OPDService
           concept.concept_id, value_coded.concept_id).\
           joins('INNER JOIN obs USING(encounter_id)').\
           select('count(*) AS total')
+
+        months[(i+1)]= {
+          start_date: date1, end_date: date2,
+          count: count[0]['total'].to_i
+        }
+      end
+
+      months
+    end
+
+    def respiratory_enctounter_today(group_name)
+      type = EncounterType.find_by_name 'Presenting complaints'
+
+      encounter_ids = Encounter.where('encounter_datetime BETWEEN ? AND ?
+        AND encounter_type = ?', *TimeUtils.day_bounds(@date), type.id).map(&:encounter_id)
+
+      return Observation.where('encounter_id IN(?) AND value_text = ?',
+        encounter_ids, group_name).group(:person_id).length
+    end
+
+
+
+    def monthly_respiratory_enctounter(group_name)
+      start_date = (@date - 12.month)
+      dates = []
+
+      start_date = start_date.beginning_of_month
+      end_date  = start_date.end_of_month
+      dates << [start_date, end_date]
+
+      1.upto(11) do |m|
+        sdate = start_date + m.month
+        edate = sdate.end_of_month
+        dates << [sdate, edate]
+      end
+
+      type = EncounterType.find_by_name 'Presenting complaints'
+      value_coded = ConceptName.find_by_name group_name
+
+      months = {}
+
+      (dates || []).each_with_index do |(date1, date2), i|
+        d1 = date1.strftime('%Y-%m-%d 00:00:00')
+        d2 = date2.strftime('%Y-%m-%d 23:59:59')
+
+        encounter_ids = Encounter.where('encounter_datetime BETWEEN ? AND ?
+        AND encounter_type = ?', d1,d2 , type.id).map(&:encounter_id)
+
+      count = Observation.where('encounter_id IN(?) AND value_text = ?',
+        encounter_ids, group_name).select('count(*) AS total')
 
         months[(i+1)]= {
           start_date: date1, end_date: date2,

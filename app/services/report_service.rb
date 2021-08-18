@@ -65,6 +65,10 @@ class ReportService
     engine(@program).dashboard_stats(date)
   end
 
+  def dashboard_stats_for_syndromic_statistics(date)
+    engine(@program).dashboard_stats_for_syndromic_statistics(date)
+  end
+
   def diagnosis(start_date, end_date)
     engine(@program).diagnosis(start_date, end_date)
   end

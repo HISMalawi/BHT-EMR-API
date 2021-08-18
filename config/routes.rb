@@ -271,6 +271,7 @@ Rails.application.routes.draw do
   get '/api/v1/cervical_cancer_screening' => 'api/v1/cervical_cancer_screening#show'
 
   get '/api/v1/dashboard_stats' => 'api/v1/reports#index'
+  get '/api/v1/dashboard_stats_for_syndromic_statistics' => 'api/v1/reports#syndromic_statistics'
 
   # SQA controller
   get '/api/v1/dead_encounters' => 'api/v1/cleaning#index'
