@@ -612,12 +612,12 @@ def registered_today(visit_type)
         encounter_ids = Encounter.where('encounter_datetime BETWEEN ? AND ?
         AND encounter_type = ?', d1,d2 , type.id).map(&:encounter_id)
 
-      count = Observation.where('encounter_id IN(?) AND value_text = ?',
-        encounter_ids, group_name).select('count(*) AS total')
+        count = Observation.where('encounter_id IN(?) AND value_text = ?',
+        encounter_ids, group_name).group(:person_id).length
 
         months[(i+1)]= {
           start_date: date1, end_date: date2,
-          count: count[0]['total'].to_i
+          count: count.to_i
         }
       end
 
