@@ -21,6 +21,8 @@ class Order < VoidableRecord
     return unless drug_order
 
     drug_order.quantity = 0
-    drug_order.save
+    # Skip validations which check for existence of order, in this case we have just voided it
+    # so it doesn't exist.
+    drug_order.save(validate: false)
   end
 end
