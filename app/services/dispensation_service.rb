@@ -138,11 +138,13 @@ module DispensationService
 
     # Finds a dispensing encounter for the given patient on the given date
     def find_encounter(program, patient, date)
+      date = date.to_date
+
       encounter_type = EncounterType.find_by(name: 'DISPENSING').encounter_type_id
       Encounter.where(program_id: program.id,
                       encounter_type: encounter_type,
-                      patient_id: patient.id)
-               .where('DATE(encounter_datetime) = DATE(?)', date)
+                      patient_id: patient.id,
+                      encounter_datetime: date...(date + 1.day))
                .order(date_created: :desc)
                .first
     end
