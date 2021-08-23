@@ -19,6 +19,7 @@ compatibility (examples of this include major architectural changes).
 ### Added
 
 - DDE: Endpoint for updating local patient's demographics
+- Re-assigning previously voided active filing numbers
 
 ### Fixed
 
