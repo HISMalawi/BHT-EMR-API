@@ -87,9 +87,8 @@ module DispensationService
           dispensation
         end
 
-        # Get clinician specified drug run out date...
-        run_out_date = observations['Drug end date'].first
-        drug_order.order.update!(auto_expire_date: run_out_date.value_datetime) if run_out_date
+        user_specified_drug_run_out_date = drug_order.order.discontinued_date
+        drug_order.order.update!(auto_expire_date: user_specified_drug_run_out_date) if user_specified_drug_run_out_date
         drug_order.quantity = 0
         drug_order.save!
 
@@ -109,6 +108,7 @@ module DispensationService
       # We assume patient start taking drugs on same day he/she receives them
       # thus we subtract 1 from the duration.
       quantity_duration = drug_order.quantity_duration - 1
+      order.discontinued_date ||= order.auto_expire_date
       order.auto_expire_date = order.start_date + quantity_duration.days
       order.save
 
