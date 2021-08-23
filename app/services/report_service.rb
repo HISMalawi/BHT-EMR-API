@@ -7,7 +7,8 @@ class ReportService
     'OPD PROGRAM' => OPDService::ReportEngine,
     'VMMC PROGRAM' => VMMCService::ReportEngine,
     'TB PROGRAM' => TBService::ReportEngine,
-    'LABORATORY ORDERS' => LaboratoryService::ReportEngine
+    'LABORATORY ORDERS' => LaboratoryService::ReportEngine,
+    'CXCA PROGRAM' => CXCAService::ReportEngine
   }.freeze
   LOGGER = Rails.logger
 
