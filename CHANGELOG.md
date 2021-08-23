@@ -19,7 +19,8 @@ compatibility (examples of this include major architectural changes).
 ### Fixed
 
 - ART: Data cleaning tool, Missing start reason, picking all Transfer In patients (issue [#3463](https://egpafemr.sdpondemand.manageengine.com/app/itdesk/ui/requests/118246000005889001/details))
-- Lab: Bumped up to version 1.1.8 - Fixes duplication of lab orders in some facilities (issue [#3470](https://egpafemr.sdpondemand.manageengine.com/app/itdesk/ui/requests/118246000005896105/details))
+- Amount needed resetting to wrong value when dispensation is voided (github [#39](https://github.com/HISMalawi/BHT-EMR-API/issues/39))
+- Lab: Bumped up to version 1.1.8 - Fixes duplication of lab orders in some facilities (helpdesk [#3470](https://egpafemr.sdpondemand.manageengine.com/app/itdesk/ui/requests/118246000005896105/details))
 
 ## [v4.11.12] - 2021-08-09
 
