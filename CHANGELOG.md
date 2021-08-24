@@ -20,11 +20,74 @@ compatibility (examples of this include major architectural changes).
 
 - DDE: Endpoint for updating local patient's demographics
 
-## [v4.11.4]
+### Fixed
+
+- ART: Added script to import staging information for old Lighthouse/MPC patients
+- ART: Data cleaning tool, Missing start reason, picking all Transfer In patients (issue [#3463](https://egpafemr.sdpondemand.manageengine.com/app/itdesk/ui/requests/118246000005889001/details))
+- Amount needed resetting to wrong value when dispensation is voided (github [#39](https://github.com/HISMalawi/BHT-EMR-API/issues/39))
+- Lab: Bumped up to version 1.1.8 - Fixes duplication of lab orders in some facilities (helpdesk [#3470](https://egpafemr.sdpondemand.manageengine.com/app/itdesk/ui/requests/118246000005896105/details))
+
+## [v4.11.12] - 2021-08-09
+
+### Fixed
+
+- Lab: Bumped up to version 1.1.7 - Fixes crash in LIMS worker on pull of orders with null specimen
+
+## [v4.11.11] - 2021-08-07
+
+### Fixed
+
+- Lab: Crash on update of lab orders through the LIMS rest API configuration
+
+## [v.4.11.10] - 2021-08-02
+
+### Fixed
+
+- ART: Added migration script to complete incomplete patient merges by old ART (it didn't merge orders)
+- ART: TO report showing NPIDs instead of ARV numbers
+- ART: TO report having TO location blank for patients with a TO on the same day as a visit
+
+## [v4.11.9] - 2021-07-26
+
+### Added
+
+- ART: Inclusion of = LDL in suppressed VL results report
+
+## [v4.11.8] - 2021-07-23
+
+### Fixed
+
+- Lab: Fixed processed results report duplicating results
+- ART: Data cleaning tool 'prescriptions without dispensations' picking voided prescriptions
+- ART: DBS VL results not being pulled in VL results report
+
+## [v4.11.7] - 2021-07-22
+
+### Fixed
+
+- ART: Data cleaning tool 'encounters after death' picking voided encounters
+- ART: 500 Error when merging local patients that have DDE IDs when DDE is disabled
+
+## [v4.11.6] - 2021-07-21
+
+### Added
+
+- Lab: Bumped up lab to v1.1.5 - fixes failure to push orders with patients missing phone numbers
+
+## [v4.11.5] - 2021-07-20
+
+### Fixed
+
+- ART: Missing transfer out to location on transfer out (outcome) report
+- ART: Added check for missing dispensation observations in patients without prescriptions cleaning tool
+
+## [v4.11.4] - 2021-07-19
 
 ### Added
 
 - ART: script that voids invalid vitals (with values equal to NULL or zero)
+- Lab: Bumped up to v1.1.3 - Adds config for selecting lims_api for sync
+
 ### Fixed
 
 - ART: patient_current_regimen function returning multiple regimens

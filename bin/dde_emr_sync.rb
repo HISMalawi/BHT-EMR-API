@@ -42,32 +42,35 @@ def update_record(record)
   person_id = PatientIdentifier.find_by_identifier(person_obj[:identifiers][:doc_id])
   return if person_id.blank?
   person_id = person_id[:patient_id]
-
   #update person
   person = Person.find_by_person_id(person_id)
-  person.update(person_obj[:person].to_hash)
+  person.update(person_obj[:person].to_hash) if person
 
   #update person names
   person_names = PersonName.find_by_person_id(person_id)
-  person_names.update(person_obj[:person_names].to_hash)
+  person_names.update(person_obj[:person_names].to_hash) if person_names
+
 
   #Upate person addresses
   person_address = PersonAddress.find_by('person_id = ? AND voided = ?', person_id, 0)
-  ActiveRecord::Base.connection.transaction do
-    person_address.update(voided: 1,
-                          void_reason: 'dde update',
-                          date_voided: Time.now,
-                          voided_by: 1 )
-    PersonAddress.create!(
-            person_id: person_id,
-            state_province: person_obj[:current_district],
-            city_village: person_obj[:current_village],
-            township_division: person_obj[:current_traditional_authority],
-            address2: person_obj[:home_district],
-            neighborhood_cell: person_obj[:home_village],
-            county_district: person_obj[:home_traditional_authority],
-            creator: 1
-        )
+
+  if person_address
+    ActiveRecord::Base.connection.transaction do
+      person_address.update(voided: 1,
+                            void_reason: 'dde update',
+                            date_voided: Time.now,
+                            voided_by: 1 )
+      PersonAddress.create!(
+              person_id: person_id,
+              state_province: person_obj[:current_district],
+              city_village: person_obj[:current_village],
+              township_division: person_obj[:current_traditional_authority],
+              address2: person_obj[:home_district],
+              neighborhood_cell: person_obj[:home_village],
+              county_district: person_obj[:home_traditional_authority],
+              creator: 1
+          )
+    end
   end
 
   #Check if identifier is the same as update
@@ -85,7 +88,7 @@ def update_record(record)
                   void_reason: 'dde update')
       end
 
-      location = Location.find_by_name('HIV Reception')
+      location = Location.find_by_name('Registration')
       PatientIdentifier.create!(patient_id: person_id,
                                 identifier: person_obj[:identifiers][:npid],
                                 identifier_type: 3,
@@ -103,7 +106,7 @@ def pull_dde_updates
   pull_seq = tracker
   location_id = GlobalProperty.find_by_property('current_health_center_id')['property_value'].to_i
 
-  url = "#{@url}/v1/person_changes?site_id=#{location_id}&pull_seq=#{pull_seq}"
+  url = "#{@url}/v1/person_changes_updates?site_id=#{location_id}&pull_seq=#{pull_seq}"
 
   updates = JSON.parse(RestClient.get(url,headers={Authorization: authenticate }))
 end
@@ -119,7 +122,11 @@ def self.get_person_obj(person, person_attributes = [])
         person: {
               gender: person[:gender],
               birthdate:  person[:birthdate],
-              birthdate_estimated: person[:birthdate_estimated]
+              birthdate_estimated: person[:birthdate_estimated],
+              voided: person[:voided],
+              voided_by: 1,
+              date_voided: person[:date_voided],
+              void_reason: person[:void_reason]
             },
         attributes: {
           #occupation: self.get_attribute(person, "Occupation"),
@@ -149,8 +156,9 @@ def main
     changes = pull_dde_updates
     changes.each do |record|
       ActiveRecord::Base.transaction do
-        update_record(record)
-        GlobalProperty.find_by_property('dde_update_tracker_seq').update(property_value: record['id'])
+        if update_record(record)
+          GlobalProperty.find_by_property('dde_update_tracker_seq').update(property_value: record['update_seq'])
+        end
       end
     end
   ensure

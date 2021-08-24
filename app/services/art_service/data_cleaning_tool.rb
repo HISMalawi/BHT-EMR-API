@@ -227,54 +227,41 @@ EOF
     end
 
     def missing_start_reasons
+      start_date = ActiveRecord::Base.connection.quote(@start_date.to_date)
+      end_date = ActiveRecord::Base.connection.quote(@end_date.to_date)
 
       clients = ActiveRecord::Base.connection.select_all <<~SQL
-      SELECT patient_program.patient_id,
-                 DATE(MIN(art_order.start_date)) AS date_enrolled,
-                 (SELECT value_coded FROM obs
-                  WHERE concept_id = 7563 AND person_id = patient_program.patient_id AND voided = 0
-                  ORDER BY obs_datetime DESC LIMIT 1) AS reason_for_starting_art
-          FROM patient_program
-          INNER JOIN person ON person.person_id = patient_program.patient_id
-          LEFT JOIN patient_state AS outcome
-            ON outcome.patient_program_id = patient_program.patient_program_id
-          LEFT JOIN encounter AS clinic_registration_encounter
-            ON clinic_registration_encounter.encounter_type = (
-              SELECT encounter_type_id FROM encounter_type WHERE name = 'HIV CLINIC REGISTRATION' LIMIT 1
-            )
-            AND clinic_registration_encounter.patient_id = patient_program.patient_id
-            AND clinic_registration_encounter.voided = 0
-          LEFT JOIN obs AS art_start_date_obs
-            ON art_start_date_obs.concept_id = 2516
-            AND art_start_date_obs.person_id = patient_program.patient_id
-            AND art_start_date_obs.voided = 0
-            AND art_start_date_obs.obs_datetime >= DATE('#{@start_date}')
-            AND art_start_date_obs.obs_datetime < (DATE('#{@end_date}') + INTERVAL 1 DAY)
-            AND art_start_date_obs.encounter_id = clinic_registration_encounter.encounter_id
-          LEFT JOIN orders AS   art_order
-            ON art_order.patient_id = patient_program.patient_id
-            AND art_order.voided = 0
-            AND art_order.concept_id IN (SELECT concept_id FROM concept_set WHERE concept_set = 1085)
-          LEFT JOIN drug_order
-            ON drug_order.order_id = art_order.order_id
-            AND drug_order.quantity > 0
-          WHERE patient_program.voided = 0
-            AND outcome.voided = 0
-            AND patient_program.program_id = 1
-            AND outcome.state = 7
-            AND outcome.start_date IS NOT NULL
-            AND patient_program.patient_id NOT IN (
-              SELECT person_id FROM obs
-              WHERE concept_id IN (
-                SELECT concept_id FROM concept_name WHERE name LIKE 'Type of patient'
-              ) AND value_coded IN (
-                SELECT concept_id FROM concept_name WHERE name LIKE 'External Consultation'
-              ) AND voided = 0
-              GROUP BY person_id
-            )
-          GROUP by patient_program.patient_id
-          HAVING date_enrolled <= '#{@end_date}' AND reason_for_starting_art IS NULL;
-        SQL
+        SELECT patient_program.patient_id,
+               reason_for_art_eligibility.value_coded AS reason_for_art,
+               MIN(orders.start_date) AS art_start_date
+        FROM patient_program
+        INNER JOIN program
+          ON program.program_id = patient_program.program_id
+          AND program.name = 'HIV Program'
+        INNER JOIN orders
+          ON orders.patient_id = patient_program.patient_id
+          AND orders.start_date < #{end_date}
+          AND orders.voided = 0
+          AND orders.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
+          AND orders.concept_id IN (
+            SELECT concept_set.concept_id
+            FROM concept_set
+            INNER JOIN concept_name
+              ON concept_name.concept_id = concept_set.concept_set
+              AND concept_name.name = 'Antiretroviral drugs'
+          )
+        INNER JOIN obs AS amount_dispensed
+          ON amount_dispensed.order_id = orders.order_id
+          AND amount_dispensed.concept_id IN (SELECT concept_id FROM concept_name WHERE name = 'Amount dispensed' AND voided = 0)
+          AND amount_dispensed.value_numeric > 0
+          AND amount_dispensed.voided = 0
+        LEFT JOIN obs AS reason_for_art_eligibility
+          ON reason_for_art_eligibility.person_id = patient_program.patient_id
+          AND reason_for_art_eligibility.concept_id IN (SELECT concept_id FROM concept_name WHERE name = 'Reason for ART eligibility' AND voided = 0)
+          AND reason_for_art_eligibility.voided = 0
+        GROUP BY patient_program.patient_id
+        HAVING reason_for_art IS NULL AND art_start_date >= DATE(#{start_date})
+      SQL
 
 
       patient_ids = clients.map{ |p| p['patient_id'].to_i }
@@ -296,38 +283,43 @@ EOF
     end
 
     def prescription_without_dispensation
-      data = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT
-        p.person_id, i.identifier arv_number, birthdate,
-        gender, start_date, quantity, given_name, family_name
-      FROM drug_order t
-      INNER JOIN orders o ON o.order_id = t.order_id
-      AND start_date BETWEEN '#{@start_date.strftime('%Y-%m-%d 00:00:00')}'
-      AND '#{@end_date.strftime('%Y-%m-%d 23:59:59')}'
-      INNER JOIN encounter e ON o.encounter_id = e.encounter_id AND e.program_id = 1
-      INNER JOIN person p ON p.person_id = o.patient_id
-      LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
-      AND i.identifier_type = 4 AND i.voided = 0
-      LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
-      WHERE o.voided = 0 AND quantity IS NULL OR quantity <= 0
-      GROUP BY DATE(start_date), p.person_id ORDER BY i.date_created DESC;
-EOF
+      start_date = ActiveRecord::Base.connection.quote(@start_date.strftime('%Y-%m-%d 00:00:00'))
+      end_date = ActiveRecord::Base.connection.quote(@end_date.strftime('%Y-%m-%d 23:59:59'))
 
-      client = []
-
-      (data || []).each do |person|
-        client << {
-          arv_number: person['arv_number'],
-          given_name: person['given_name'],
-          family_name: person['family_name'],
-          gender: person['gender'],
-          birthdate: person['birthdate'],
-          patient_id: person['person_id'],
-          start_date: person['start_date']
-        }
-      end
-
-      return client
+      ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT orders.patient_id,
+               patient_identifier.identifier AS arv_number,
+               birthdate,
+               gender,
+               start_date AS visit_date,
+               quantity,
+               given_name,
+               family_name
+        FROM drug_order
+        INNER JOIN orders
+          ON orders.order_id = drug_order.order_id
+          AND orders.start_date BETWEEN #{start_date} AND #{end_date}
+          AND orders.voided = 0
+        INNER JOIN encounter
+          ON encounter.encounter_id = orders.encounter_id
+          AND encounter.program_id = 1
+        INNER JOIN person
+          ON person.person_id = orders.patient_id
+        LEFT JOIN patient_identifier
+          ON patient_identifier.patient_id = person.person_id
+          AND patient_identifier.identifier_type = 4
+          AND patient_identifier.voided = 0
+        LEFT JOIN person_name
+          ON person_name.person_id = person.person_id
+          AND person_name.voided = 0
+        LEFT JOIN obs AS dispensation
+          ON dispensation.order_id = orders.order_id
+          AND dispensation.concept_id IN (SELECT concept_id FROM concept_name WHERE name = 'Amount Dispensed' AND voided = 0)
+          AND dispensation.voided = 0
+        WHERE (drug_order.quantity IS NULL OR drug_order.quantity <= 0)
+        GROUP BY DATE(orders.start_date), orders.patient_id
+        HAVING COALESCE(SUM(dispensation.value_numeric), 0) <= 0
+      SQL
     end
 
     def client_with_encounters_after_declared_dead
@@ -374,6 +366,7 @@ EOF
           AND encounter.encounter_type NOT IN (
             SELECT encounter_type_id FROM encounter_type WHERE name = 'HIV Reception'
           )
+          AND encounter.voided = 0
         INNER JOIN person
           ON person.person_id = deaths.patient_id
         LEFT JOIN patient_identifier

@@ -61,14 +61,11 @@ module DrugOrderService
         drug_orders.each_with_index do |drug_order, i|
           order = create_order encounter: encounter, create_params: drug_order,
                                order_type: order_type
-          unless order.errors.empty?
-            raise_model_error(order, "Unable to create order #{i}")
-          end
+
+          raise_model_error(order, "Unable to create order #{i}") unless order.errors.empty?
 
           drug_order = create_drug_order order: order, create_params: drug_order
-          unless drug_order.errors.empty?
-            raise_model_error(drug_order, "Unable to create drug order #{i}")
-          end
+          raise_model_error(drug_order, "Unable to create drug order #{i}") unless drug_order.errors.empty?
 
           saved_drug_orders << drug_order
         end
