@@ -23,6 +23,7 @@ compatibility (examples of this include major architectural changes).
 
 ### Fixed
 
+- Lab: Bumped up to version 1.1.11 - Fixes duplicates created by v1.1.7
 - ART: Added script to import staging information for old Lighthouse/MPC patients
 - ART: Data cleaning tool, Missing start reason, picking all Transfer In patients (issue [#3463](https://egpafemr.sdpondemand.manageengine.com/app/itdesk/ui/requests/118246000005889001/details))
 - Amount needed resetting to wrong value when dispensation is voided (github [#39](https://github.com/HISMalawi/BHT-EMR-API/issues/39))
