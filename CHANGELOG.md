@@ -16,6 +16,8 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+## [v4.11.13] - 2021-08-24
+
 ### Added
 
 - DDE: Endpoint for updating local patient's demographics
