@@ -16,6 +16,10 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+### Added
+
+- DDE: Endpoint for updating local patient's demographics
+
 ### Fixed
 
 - ART: Added script to import staging information for old Lighthouse/MPC patients
