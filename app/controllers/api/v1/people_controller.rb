@@ -31,11 +31,13 @@ class Api::V1::PeopleController < ApplicationController
                                             optional: [:middle_name]
     return render json: create_params, status: :bad_request if errors
 
-    Person.transaction do
+    person = Person.transaction do
       person = person_service.create_person(create_params)
       person_service.create_person_name(person, create_params)
       person_service.create_person_address(person, create_params)
       person_service.create_person_attributes(person, params.permit!)
+
+      person
     end
 
     render json: person, status: :created
