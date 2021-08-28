@@ -92,22 +92,22 @@ class DDEMergingService
   # The precondition for a remote merge is the presence of a doc_id
   # in both primary and secondary patient ids.
   def remote_merge?(primary_patient_ids, secondary_patient_ids)
-    primary_patient_ids['doc_id']&.strip && secondary_patient_ids['doc_id']&.strip
+    !primary_patient_ids['doc_id'].blank? && !secondary_patient_ids['doc_id'].blank?
   end
 
   # Is a merge of a remote patient into a local patient possible?
   def remote_local_merge?(primary_patient_ids, secondary_patient_ids)
-    primary_patient_ids['patient_id'] && secondary_patient_ids['doc_id']&.strip
+    !primary_patient_ids['patient_id'].blank? && !secondary_patient_ids['doc_id'].blank?
   end
 
   # Like `remote_local_merge` but primary is remote and secondary is local
   def inverted_remote_local_merge?(primary_patient_ids, secondary_patient_ids)
-    primary_patient_ids['doc_id']&.strip && secondary_patient_ids['patient_id']
+    !primary_patient_ids['doc_id'].blank? && !secondary_patient_ids['patient_id'].blank?
   end
 
   # Is a merge of local patients possible?
   def local_merge?(primary_patient_ids, secondary_patient_ids)
-    primary_patient_ids['patient_id'] && secondary_patient_ids['patient_id']
+    !primary_patient_ids['patient_id'].blank? && !secondary_patient_ids['patient_id'].blank?
   end
 
   # Merge remote secondary patient into local primary patient
