@@ -45,14 +45,14 @@ class DDEClient
 
   def delete(resource)
     exec_request resource do |url, headers|
-      RestClient.delete url, headers: headers
+      RestClient.delete url, headers
     end
   end
 
   private
 
   JSON_CONTENT_TYPE = 'application/json'
-  LOGGER = Logger.new STDOUT
+  LOGGER = Logger.new(STDOUT)
   DDE_API_KEY_VALIDITY_PERIOD = 3600 * 12
   DDE_VERSION = 'v1'
 
