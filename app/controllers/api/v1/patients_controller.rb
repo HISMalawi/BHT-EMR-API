@@ -51,7 +51,7 @@ class Api::V1::PatientsController < ApplicationController
   end
 
   def destroy
-    service.void_patient(patient, params.require(:reason))
+    service.void_patient(patient, params.require(:reason), daemonize: false)
 
     render status: :no_content
   end

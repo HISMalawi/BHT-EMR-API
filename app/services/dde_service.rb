@@ -21,6 +21,17 @@ class DDEService
     @program = program
   end
 
+  def self.dde_enabled?
+    property = GlobalProperty.find_by_property('dde_enabled')&.property_value
+    return false unless property
+
+    case property
+    when /true/i then true
+    when /false/i then false
+    else raise "Invalid value for property dde_enabled: #{property.property_value}"
+    end
+  end
+
   # Registers local OpenMRS patient in DDE
   #
   # On success patient get two identifiers under the types
@@ -30,6 +41,23 @@ class DDEService
   # for the patient.
   def create_patient(patient)
     push_local_patient_to_dde(patient)
+  end
+
+  def void_patient(patient, reason)
+    raise ArgumentError, "Can't request a DDE void for a non-voided patient" unless patient.voided?
+    raise ArgumentError, 'void_reason is required' if reason.blank?
+
+    doc_id = PatientIdentifier.unscoped
+                              .where(type: dde_doc_id_type, patient: patient)
+                              .order(:date_voided)
+                              .last
+                              &.identifier
+    return patient unless doc_id
+
+    response, status = dde_client.delete("void_person/#{doc_id}?void_reason=#{reason}")
+    raise DDEError, "Failed to void person in DDE: #{status} - #{response}" unless status == 200
+
+    patient
   end
 
   # Updates patient demographics in DDE.
@@ -476,6 +504,10 @@ class DDEService
       .where(patient: patient)
       .first
       &.identifier
+  end
+
+  def dde_doc_id_type
+    PatientIdentifierType.find_by_name('DDE Person document ID')
   end
 
   def person_service
