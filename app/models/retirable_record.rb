@@ -15,6 +15,7 @@ class RetirableRecord < ApplicationRecord
   include Voidable
 
   default_scope { where(retired: 0) }
+  scope :retired, -> { unscoped.where.not(retired: 0) }
 
   belongs_to :creator_user, foreign_key: 'creator', class_name: 'User'
 

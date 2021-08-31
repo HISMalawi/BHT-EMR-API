@@ -28,21 +28,23 @@ class StockManagementService
   end
 
   def reverse_dispensation(dispensation_id)
-    dispensation = Observation.unscoped.find_by(obs_id: dispensation_id, voided: true)
+    dispensation = Observation.voided.find(dispensation_id)
     raise "*Voided* dispensation ##{dispensation_id} not found" unless dispensation
 
-    event_log = Pharmacy.unscoped.find_by(dispensation_obs_id: dispensation_id,
-                                          pharmacy_encounter_type: pharmacy_event_type(STOCK_DEBIT).id)
-    raise "Dispensation ##{dispensation_id} already reversed" if event_log&.voided
+    Pharmacy.transaction do
+      event_log = Pharmacy.where(dispensation_obs_id: dispensation_id, type: pharmacy_event_type(STOCK_DEBIT)).lock!
+      reversal_amount = event_log.sum(&:quantity).abs
+      return reversal_amount unless reversal_amount.positive?
 
-    amount_rejected = credit_drug(dispensation_drug_id(dispensation),
-                                  dispensation_pack_size(dispensation),
-                                  dispensation.value_numeric,
-                                  dispensation.obs_datetime,
-                                  "Voided drug dispensation ##{dispensation.id}")
-    event_log&.void('Dispensation reversed')
+      amount_rejected = credit_drug(dispensation_drug_id(dispensation),
+                                    dispensation_pack_size(dispensation),
+                                    reversal_amount,
+                                    dispensation.obs_datetime,
+                                    "Reversing voided drug dispensation ##{dispensation.id}")
 
-    amount_rejected
+      event_log.each { |event| event.void("Reversing voided drug dispensation ##{dispensation.id}") }
+      amount_rejected
+    end
   end
 
   def create_batches(batches)
@@ -268,17 +270,13 @@ class StockManagementService
     # initially delivered. BTW: Crediting is done following First to Expire,
     # First Out (FEFO) basis.
     drugs.each do |drug|
-      break if credit_quantity.zero?
+      break unless credit_quantity.positive?
 
       drug_deficit = drug.delivered_quantity - drug.current_quantity
+      transaction_amount = credit_quantity > drug_deficit ? drug_deficit : credit_quantity
 
-      if credit_quantity > drug_deficit
-        commit_transaction(drug, STOCK_ADD, drug_deficit, date, update_item: true, transaction_reason: reason)
-        credit_quantity -= drug_deficit
-      else
-        commit_transaction(drug, STOCK_ADD, credit_quantity, date, update_item: true, transaction_reason: reason)
-        credit_quantity = 0
-      end
+      commit_transaction(drug, STOCK_ADD, drug_deficit, date, update_item: true, transaction_reason: reason)
+      credit_quantity -= transaction_amount
     end
 
     credit_quantity

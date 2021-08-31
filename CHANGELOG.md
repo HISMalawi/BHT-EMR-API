@@ -17,6 +17,7 @@ compatibility (examples of this include major architectural changes).
 
 ### Fixed
 
+- ART Stock: Resetting of current quantity on dispensation reversal
 - ART Stock: Relocation of drugs at a date before their delivery date
 - ART Stock: Drug relocations not saving retrospective dates
 
