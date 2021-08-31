@@ -168,17 +168,24 @@ class StockManagementService
 
   def reallocate_items(reallocation_code, batch_item_id, quantity, destination_location_id, date, reason)
     ActiveRecord::Base.transaction do
+      date = date&.to_date || Date.today
+
       item = PharmacyBatchItem.find(batch_item_id)
+      if item.delivery_date > date
+        raise InvalidParameterError, "Item was delivered at a date (#{item.delivery_date}) later than relocation date (#{date})"
+      end
 
       # A negative sign would result in addition of quantity thus
       # get rid of it as early as possible
       quantity = quantity.to_f.abs
-      commit_transaction(item, STOCK_DEBIT, -quantity.to_f, update_item: true, transaction_reason: reason)
+      commit_transaction(item, STOCK_DEBIT, -quantity.to_f, date, update_item: true, transaction_reason: reason)
       destination = Location.find(destination_location_id)
       PharmacyBatchItemReallocation.create(reallocation_code: reallocation_code, item: item,
                                            quantity: quantity, location: destination,
                                            reallocation_type: STOCK_ITEM_REALLOCATION,
-                                           date: date, date_created: Time.now, date_changed: Time.now,
+                                           date: date,
+                                           date_created: Time.now,
+                                           date_changed: Time.now,
                                            creator: User.current.id)
     end
   end
