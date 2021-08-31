@@ -24,7 +24,8 @@ WHO_STAGE_4 = concept['WHO Stage 4']
 WHO_STAGES_CRITERIA_PRESENT = concept['WHO Stages Criteria Present']
 YES = concept['Yes']
 
-D4T_30_3TC_150 = drug['d4T/3TC (Stavudine Lamivudine 30/150 tablet)']
+LAMIVUDINE_150 = drug['3TC (Lamivudine 150mg tablet)']
+D4T_30 = drug['d4T (Stavudine 30mg tablet)']
 NVP_200 = drug['NVP (Nevirapine 200 mg tablet)']
 
 DISPENSING_ENCOUNTER = encounter['Dispensing']
@@ -79,7 +80,7 @@ end
 def translate_drugs(patient, lh_drug)
   logger.info("Processing drugs for patient ##{patient.patient_id}: #{lh_drug}")
   case lh_drug
-  when /Stavudine 30 Lamivudine 150 Nevirapine 200/i then [D4T_30_3TC_150, NVP_200]
+  when /Stavudine 30 Lamivudine 150 Nevirapine 200/i then [D4T_30, LAMIVUDINE_150, NVP_200]
   else raise "Unknown drug name: #{lh_drug}"
   end
 end
