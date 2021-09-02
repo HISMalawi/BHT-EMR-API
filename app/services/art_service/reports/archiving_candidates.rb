@@ -108,7 +108,7 @@ module ARTService
             INNER JOIN arv_drug
               ON arv_drug.drug_id = drug_order.drug_inventory_id
             WHERE orders.voided = 0
-              AND orders.patient_id NOT IN (#{patients_to_exclude.join(',')})
+              #{"AND orders.patient_id NOT IN (#{patients_to_exclude.join(',')})" unless patients_to_exclude.empty?}
             GROUP BY orders.patient_id
             LIMIT 100
           ) AS last_patient_drug_order
