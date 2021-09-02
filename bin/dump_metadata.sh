@@ -10,7 +10,15 @@ HOST=`ruby -ryaml -e "puts YAML::load_file('$ROOT_PATH/config/database.yml')['de
 
 METADATA_FILE=${ROOT_PATH}/db/sql/openmrs_metadata_1_7.sql
 
-mysqldump -u $USERNAME --password=$PASSWORD --host=$HOST $DATABASE \
+if [ -n `mysqldump --version | cut -d ' ' -f 4 | grep -P '8\.\d+\.\d+.*'` ]; then
+  ARGS='--disable-column-statistics'
+else
+  ARGS=''
+fi
+
+set -x
+
+mysqldump -u $USERNAME --password=$PASSWORD --host=$HOST $ARGS $DATABASE \
   concept concept_name concept_set concept_answer concept_class concept_datatype \
   concept_derived concept_description concept_map concept_name_tag concept_name_tag_map \
   concept_numeric concept_proposal concept_proposal_tag_map concept_set_derived concept_source \
