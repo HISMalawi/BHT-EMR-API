@@ -8,7 +8,12 @@ PASSWORD=`ruby -ryaml -e "puts YAML::load_file('$ROOT_PATH/config/database.yml')
 DATABASE=`ruby -ryaml -e "puts YAML::load_file('$ROOT_PATH/config/database.yml')['development']['database']"`
 HOST=`ruby -ryaml -e "puts YAML::load_file('$ROOT_PATH/config/database.yml')['development']['host']"`
 
+if [ -n `mysqldump --version | cut -d ' ' -f 4 | grep -P '8\.\d+\.\d+.*'` ]; then
+  ARGS='--disable-column-statistics'
+else
+  ARGS=''
+fi
 
-mysqldump -u $USERNAME --password=$PASSWORD --host=$HOST $DATABASE moh_regimens moh_regimen_doses moh_regimen_ingredient \
+mysqldump -u $USERNAME --password=$PASSWORD --host=$HOST $ARGS $DATABASE moh_regimens moh_regimen_doses moh_regimen_ingredient \
           moh_regimen_ingredient_starter_packs moh_regimen_lookup moh_regimen_ingredient_tb_treatment alternative_drug_names \
           moh_regimen_combination moh_regimen_combination_drug moh_regimen_name
