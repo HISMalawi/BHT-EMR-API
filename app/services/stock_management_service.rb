@@ -42,7 +42,6 @@ class StockManagementService
                                     dispensation.obs_datetime,
                                     "Reversing voided drug dispensation ##{dispensation.id}")
 
-      event_log.each { |event| event.void("Reversing voided drug dispensation ##{dispensation.id}") }
       amount_rejected
     end
   end
