@@ -274,7 +274,7 @@ class StockManagementService
       drug_deficit = drug.delivered_quantity - drug.current_quantity
       transaction_amount = credit_quantity > drug_deficit ? drug_deficit : credit_quantity
 
-      commit_transaction(drug, STOCK_ADD, drug_deficit, date, update_item: true, transaction_reason: reason)
+      commit_transaction(drug, STOCK_ADD, transaction_amount, date, update_item: true, transaction_reason: reason)
       credit_quantity -= transaction_amount
     end
 
