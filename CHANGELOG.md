@@ -16,6 +16,11 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+
+### Added
+
+- Bumped up lab to v1.1.13 - Fixes error on LIMS push of orders created through LOS
+
 ## [v4.11.13] - 2021-08-24
 
 ### Added
