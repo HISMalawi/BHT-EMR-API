@@ -84,7 +84,7 @@ class DDEService
 
     response, status = dde_client.post('push_footprint', person_uuid: doc_id,
                                                          location_id: Location.current_health_center.location_id,
-                                                         date: date || Date.tody,
+                                                         encounter_datetime: date || Date.tody,
                                                          user_id: creator_id || User.current.user_id)
 
     LOGGER.warn("Failed to push patient footprint to DDE: #{status} - #{response}") unless status == 200
