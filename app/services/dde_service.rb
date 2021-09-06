@@ -73,6 +73,24 @@ class DDEService
   end
 
   ##
+  # Pushes a footprint for patient in current program to DDE
+  def create_patient_footprint(patient, date = nil, creator_id = nil)
+    LOGGER.debug("Pushing footprint to DDE for patient ##{patient.patient_id}")
+    doc_id = find_patient_doc_id(patient)
+    unless doc_id
+      LOGGER.debug("Patient ##{patient.patient_id} is not a DDE patient")
+      return
+    end
+
+    response, status = dde_client.post('push_footprint', person_uuid: doc_id,
+                                                         location_id: Location.current_health_center.location_id,
+                                                         date: date || Date.tody,
+                                                         user_id: creator_id || User.current.user_id)
+
+    LOGGER.warn("Failed to push patient footprint to DDE: #{status} - #{response}") unless status == 200
+  end
+
+  ##
   # Updates local patient with demographics currently in DDE.
   def update_local_patient(patient)
     doc_id = patient_doc_id(patient)
@@ -277,6 +295,10 @@ class DDEService
     raise DDEError, "Patient search by doc_id failed: DDE Response => #{response}" unless response.instance_of?(Array)
 
     response
+  end
+
+  def find_patient_doc_id(patient)
+    patient.patient_identifiers.where(type: dde_doc_id_type).first
   end
 
   # Resolves local and remote patients and post processes the remote
