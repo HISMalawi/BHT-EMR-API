@@ -16,6 +16,10 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+### Added
+
+- DDE: Pushing of footprint to DDE
+
 ## [v4.11.13] - 2021-08-24
 
 ### Added
