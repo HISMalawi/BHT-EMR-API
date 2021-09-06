@@ -180,19 +180,34 @@ class DDEMergingService
     secondary_name.void("Merged into person ##{primary_patient.patient_id}")
   end
 
+  NATIONAL_ID_TYPE = PatientIdentifierType.find_by_name!('National ID')
+  OLD_NATIONAL_ID_TYPE = PatientIdentifierType.find_by_name!('Old Identification Number')
+
   # Bless primary_patient with identifiers available only to the secondary patient
   def merge_identifiers(primary_patient, secondary_patient)
     secondary_patient.patient_identifiers.each do |identifier|
-      next if primary_patient.patient_identifiers.where(identifier_type: identifier.identifier_type).exists?
+      next if patient_has_identifier(primary_patient, identifier.identifier_type, identifier.identifier)
 
-      new_identifier = PatientIdentifier.create(patient_id: primary_patient.patient_id,
-                                                identifier_type: identifier.identifier_type,
-                                                identifier: identifier.identifier,
-                                                location_id: identifier.location_id)
-      raise "Could not merge patient identifier: #{new_identifier.errors.as_json}" unless new_identifier.errors.empty?
+      PatientIdentifier.create!(
+        patient_id: primary_patient.patient_id,
+        location_id: identifier.location_id,
+        identifier: identifier.identifier,
+        identifier_type: if identifier.identifier_type == NATIONAL_ID_TYPE.id
+                           # Can't have two National Patient IDs, the secondary ones are treated as old identifiers
+                           OLD_NATIONAL_ID_TYPE.id
+                         else
+                           identifier.identifier_type
+                         end
+      )
 
       identifier.void("Merged into patient ##{primary_patient.patient_id}")
     end
+  end
+
+  def patient_has_identifier(patient, identifier_type_id, identifier_value)
+    patient.patient_identifiers
+           .where(identifier_type: identifier_type_id, identifier: identifier_value)
+           .exists?
   end
 
   # Patch primary_patient missing attributes using secondary patient data
