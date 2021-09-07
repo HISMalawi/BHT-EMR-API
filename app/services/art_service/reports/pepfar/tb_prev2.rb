@@ -17,15 +17,15 @@ module ARTService
         def find_report
           report = init_report
 
-          load_patients_into_report(report, patients_on_6h, '6H') do |patient|
+          load_patients_into_report(report, patients_on_tpt('Pyridoxine'), '6H') do |patient|
             # 6H has a constant dosage of 1 pill per day
             patient['total_pills_taken'].to_i >= FULL_6H_COURSE_PILLS
           end
 
-          load_patients_into_report(report, patients_on_3hp, '3HP') do |patient|
+          load_patients_into_report(report, patients_on_tpt('Rifapentine'), '3HP') do |patient|
             # 3HP daily dosages vary by patient weight can't use easily use pills
             # to determine course completion
-            patient['total_days_on_medication'].to_i >= FULL_3HP_COURSE_MONTHS
+            patient['total_days_on_medication'].days >= FULL_3HP_COURSE_DAYS
           end
 
           report
@@ -34,7 +34,10 @@ module ARTService
         private
 
         FULL_6H_COURSE_PILLS = 168
-        FULL_3HP_COURSE_MONTHS = 28 * 3 # Months in days
+        FULL_3HP_COURSE_DAYS = (28.days - 1.day) + (56.days - 1.day) # 82 Days
+        # NOTE: Arrived at 82 days above from how 3HP is prescribed. 1st time prescription
+        #       is 1 month (28 days) then 2 months (56 days). And we assume that patients
+        #       start taking medication the very same they are given thus we subtract 1.
 
         AGE_GROUPS = [
           'Unknown',
@@ -101,7 +104,9 @@ module ARTService
           (tpt_initiation_date >= art_start_date) && (tpt_initiation_date < art_start_date + 90.days)
         end
 
-        def patients_on_6h
+        def patients_on_tpt(tpt_concept_name)
+          tpt_concept_name = ActiveRecord::Base.connection.quote(tpt_concept_name)
+
           ActiveRecord::Base.connection.select_all <<~SQL
             SELECT person.person_id AS patient_id,
                    patient_identifier.identifier AS arv_number,
@@ -141,191 +146,58 @@ module ARTService
               AND orders.voided = 0
             INNER JOIN concept_name
               ON concept_name.concept_id = orders.concept_id
-              AND concept_name.name = 'Pyridoxine'
+              AND concept_name.name = #{tpt_concept_name}
             INNER JOIN drug_order
               ON drug_order.order_id = orders.order_id
               AND drug_order.quantity > 0
+            INNER JOIN (
+              /* People (re-)initiated in the 6 months period prior to reporting period. */
+              SELECT DISTINCT encounter.patient_id
+              FROM encounter
+              INNER JOIN orders
+                ON orders.encounter_id = encounter.encounter_id
+                AND orders.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
+                AND orders.concept_id IN (SELECT concept_id FROM concept_name WHERE name = #{tpt_concept_name} AND voided = 0)
+                AND orders.start_date >= DATE(#{start_date}) - INTERVAL 6 MONTH
+                AND orders.start_date < DATE(#{start_date})
+                AND orders.voided = 0
+              INNER JOIN drug_order
+                ON drug_order.order_id = orders.order_id
+                AND drug_order.quantity > 0
+              INNER JOIN concept_name
+                ON concept_name.concept_id = orders.concept_id
+                AND concept_name.name = 'Rifapentine'
+                AND concept_name.voided = 0
+              WHERE encounter.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
+                AND encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'Treatment')
+                AND encounter.encounter_datetime >= DATE(#{start_date}) - INTERVAL 6 MONTH
+                AND encounter.encounter_datetime < DATE(#{start_date})
+                AND encounter.voided = 0
+                AND encounter.patient_id NOT IN (
+                  /* People who had a dispensation prior to the 3 to 9 months before start of reporting period.
+                     Continuing medication after a 9 months break is considered a restart hence such patients
+                     are classified as new on TPT.
+                   */
+                  SELECT DISTINCT encounter.patient_id
+                  FROM encounter
+                  INNER JOIN orders
+                    ON orders.encounter_id = encounter.encounter_id
+                    AND orders.concept_id IN (SELECT concept_id FROM concept_name WHERE name = #{tpt_concept_name} AND voided = 0)
+                    AND orders.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
+                    AND orders.start_date < DATE(#{start_date}) - INTERVAL 6 MONTH
+                    AND orders.start_date >= DATE(#{start_date}) - INTERVAL 15 MONTH
+                    AND orders.voided = 0
+                  INNER JOIN drug_order
+                    ON drug_order.order_id = orders.order_id
+                    AND drug_order.quantity > 0
+                  WHERE encounter.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
+                    AND encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'Treatment')
+                    AND encounter.encounter_datetime < DATE(#{start_date}) - INTERVAL 6 MONTH
+                    AND encounter.voided = 0
+                )
+            ) AS tpt_initiates
+              ON tpt_initiates.patient_id = patient_program.patient_id
             WHERE person.voided = 0
-              AND person.person_id IN (
-                /* People who have a dispensation in the 6 months prior to the current reporting period */
-                SELECT DISTINCT patient_program.patient_id
-                FROM patient_program
-                INNER JOIN encounter AS prescription_encounter
-                  ON prescription_encounter.patient_id = patient_program.patient_id
-                  AND prescription_encounter.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
-                  AND prescription_encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'Treatment')
-                  AND prescription_encounter.encounter_datetime >= DATE(#{start_date}) - INTERVAL 6 MONTH
-                  AND prescription_encounter.encounter_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
-                  AND prescription_encounter.voided = 0
-                INNER JOIN orders
-                  ON orders.encounter_id = prescription_encounter.encounter_id
-                  AND orders.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
-                  AND orders.start_date >= DATE(#{start_date}) - INTERVAL 6 MONTH
-                  AND orders.start_date < DATE(#{start_date})
-                  AND orders.voided = 0
-                INNER JOIN drug_order
-                  ON drug_order.order_id = orders.order_id
-                  AND drug_order.quantity > 0
-                  AND drug_order.drug_inventory_id IN (
-                    SELECT DISTINCT drug_id
-                    FROM drug
-                    INNER JOIN concept_name
-                      ON concept_name.concept_id = drug.concept_id
-                      AND concept_name.name = 'Pyridoxine'
-                  )
-                WHERE patient_program.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
-                  AND patient_program.voided = 0
-              )
-              AND person.person_id NOT IN (
-                /* People who had a dispensation within a period of 9 months prior to the 6 months
-                   before start of the current reporting period. Patients who break medication
-                   for 9 months then restart are considered new on TPT (ie re-initiates). */
-                SELECT DISTINCT patient_program.patient_id
-                FROM patient_program
-                INNER JOIN encounter AS prescription_encounter
-                  ON prescription_encounter.patient_id = patient_program.patient_id
-                  AND prescription_encounter.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
-                  AND prescription_encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'Treatment')
-                  AND prescription_encounter.encounter_datetime < DATE(#{start_date}) - INTERVAL 6 MONTH
-                  AND prescription_encounter.voided = 0
-                INNER JOIN orders
-                  ON orders.encounter_id = prescription_encounter.encounter_id
-                  AND orders.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
-                  AND orders.start_date < DATE(#{start_date}) - INTERVAL 6 MONTH
-                  AND orders.start_date >= DATE(#{start_date}) - INTERVAL 15 MONTH  /* 6 + 9 Months */
-                  AND orders.voided = 0
-                INNER JOIN drug_order
-                  ON drug_order.order_id = orders.order_id
-                  AND drug_order.quantity > 0
-                  AND drug_order.drug_inventory_id IN (
-                    SELECT DISTINCT drug_id
-                    FROM drug
-                    INNER JOIN concept_name
-                      ON concept_name.concept_id = drug.concept_id
-                      AND concept_name.name = 'Pyridoxine'
-                  )
-                WHERE patient_program.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
-                  AND patient_program.voided = 0
-              )
-              AND patient_program.patient_id NOT IN (
-                SELECT person_id FROM obs
-                WHERE concept_id IN (
-                  SELECT concept_id FROM concept_name WHERE name LIKE 'Type of patient'
-                ) AND value_coded IN (
-                  SELECT concept_id FROM concept_name WHERE name LIKE 'External Consultation'
-                ) AND voided = 0 AND (obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY)
-                GROUP BY person_id
-              )
-            GROUP BY person.person_id
-          SQL
-        end
-
-        def patients_on_3hp
-          ActiveRecord::Base.connection.select_all <<~SQL
-            SELECT person.person_id AS patient_id,
-                   patient_identifier.identifier AS arv_number,
-                   DATE(MIN(orders.start_date)) AS tpt_initiation_date,
-                   date_antiretrovirals_started(person.person_id, MIN(patient_state.start_date)) AS art_start_date,
-                   SUM(drug_order.quantity) AS total_pills_taken,
-                   SUM(DATEDIFF(orders.auto_expire_date, orders.start_date)) AS total_days_on_medication,
-                   person.gender,
-                   person.birthdate,
-                   cohort_disaggregated_age_group(person.birthdate, DATE(#{end_date})) AS age_group
-            FROM person
-            LEFT JOIN patient_identifier
-              ON patient_identifier.patient_id = person.person_id
-              AND patient_identifier.voided = 0
-              AND patient_identifier.identifier_type IN (SELECT patient_identifier_type_id FROM patient_identifier_type WHERE name = 'ARV Number')
-            INNER JOIN patient_program
-              ON patient_program.patient_id = person.person_id
-              AND patient_program.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
-              AND patient_program.voided = 0
-            INNER JOIN patient_state
-              ON patient_state.patient_program_id = patient_program.patient_program_id
-              AND patient_state.state = 7 /* State: 7 == On antiretrovirals */
-              AND patient_state.start_date < DATE(#{end_date})
-              AND patient_state.voided = 0
-            INNER JOIN encounter AS prescription_encounter
-              ON prescription_encounter.patient_id = patient_program.patient_id
-              AND prescription_encounter.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
-              AND prescription_encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'Treatment')
-              AND prescription_encounter.encounter_datetime >= DATE(#{start_date}) - INTERVAL 3 MONTH
-              AND prescription_encounter.encounter_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
-              AND prescription_encounter.voided = 0
-            INNER JOIN orders
-              ON orders.encounter_id = prescription_encounter.encounter_id
-              AND orders.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
-              AND orders.start_date >= DATE(#{start_date}) - INTERVAL 3 MONTH
-              AND orders.start_date < DATE(#{end_date}) + INTERVAL 1 DAY
-              AND orders.voided = 0
-            INNER JOIN concept_name
-              ON concept_name.concept_id = orders.concept_id
-              AND concept_name.name = 'Rifapentine'
-            INNER JOIN drug_order
-              ON drug_order.order_id = orders.order_id
-              AND drug_order.quantity > 0
-            WHERE person.voided = 0
-              AND person.person_id IN (
-                /* People who had a dispensation in the 3 months prior to start of reporting period */
-                SELECT DISTINCT patient_program.patient_id
-                FROM patient_program
-                INNER JOIN encounter AS prescription_encounter
-                  ON prescription_encounter.patient_id = patient_program.patient_id
-                  AND prescription_encounter.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
-                  AND prescription_encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'Treatment')
-                  AND prescription_encounter.encounter_datetime >= DATE(#{start_date}) - INTERVAL 3 MONTH
-                  AND prescription_encounter.encounter_datetime < DATE(#{start_date})
-                  AND prescription_encounter.voided = 0
-                INNER JOIN orders
-                  ON orders.encounter_id = prescription_encounter.encounter_id
-                  AND orders.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
-                  AND orders.start_date >= DATE(#{start_date}) - INTERVAL 3 MONTH
-                  AND orders.start_date < DATE(#{end_date})
-                  AND orders.voided = 0
-                INNER JOIN drug_order
-                  ON drug_order.order_id = orders.order_id
-                  AND drug_order.quantity > 0
-                  AND drug_order.drug_inventory_id IN (
-                    SELECT DISTINCT drug_id
-                    FROM drug
-                    INNER JOIN concept_name
-                      ON concept_name.concept_id = drug.concept_id
-                      AND concept_name.name = 'Rifapentine'
-                  )
-                WHERE patient_program.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
-                  AND patient_program.voided = 0
-              ) AND person.person_id NOT IN (
-                /* People who had a dispensation prior to the 3 to 9 months before start of reporting period.
-                   Continuing medication after a 9 months break is considered a restart hence such patients
-                   are classified as new on TPT.
-                 */
-                SELECT DISTINCT patient_program.patient_id
-                FROM patient_program
-                INNER JOIN encounter AS prescription_encounter
-                  ON prescription_encounter.patient_id = patient_program.patient_id
-                  AND prescription_encounter.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
-                  AND prescription_encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'Treatment')
-                  AND prescription_encounter.encounter_datetime < DATE(#{start_date}) - INTERVAL 3 MONTH
-                  AND prescription_encounter.voided = 0
-                INNER JOIN orders
-                  ON orders.encounter_id = prescription_encounter.encounter_id
-                  AND orders.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
-                  AND orders.start_date < DATE(#{start_date}) - INTERVAL 3 MONTH
-                  AND orders.start_date >= DATE(#{start_date}) - INTERVAL 12 MONTH
-                  AND orders.voided = 0
-                INNER JOIN drug_order
-                  ON drug_order.order_id = orders.order_id
-                  AND drug_order.quantity > 0
-                  AND drug_order.drug_inventory_id IN (
-                    SELECT DISTINCT drug_id
-                    FROM drug
-                    INNER JOIN concept_name
-                      ON concept_name.concept_id = drug.concept_id
-                      AND concept_name.name = 'Rifapentine'
-                  )
-                WHERE patient_program.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
-                  AND patient_program.voided = 0
-              )
             GROUP BY person.person_id
           SQL
         end
