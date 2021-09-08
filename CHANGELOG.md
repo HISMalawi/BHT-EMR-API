@@ -16,6 +16,12 @@ compatibility (examples of this include major architectural changes).
 
 ## [Unreleased]
 
+### Added
+
+- Bumped up lab to v1.1.13 - Fixes error on LIMS push of orders created through LOS
+- New concept Cryotherapy
+- Patient merging not appending secondary patient identifiers to primary patient (helpdesk [#3541](https://egpafemr.sdpondemand.manageengine.com/app/itdesk/ui/requests/118246000006095075/details))
+
 ## [v4.11.13] - 2021-08-24
 
 ### Added
