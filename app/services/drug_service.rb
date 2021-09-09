@@ -46,6 +46,18 @@ class DrugService
     query.order(:name)
   end
 
+  def find_drug_list(filters)
+    query = Drug.find_all_by_concept_set('OPD Medication');
+
+    if filters.include?(:name)
+      name = filters.delete(:name)
+      query = query.where('name LIKE ?', "#{name}%")
+    end
+
+    query = query.where(filters) unless filters.empty?
+    query.order(:name)
+  end
+
   private
 
   def save_drug_barcode(drug, quantity)

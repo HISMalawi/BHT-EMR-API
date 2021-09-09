@@ -65,8 +65,16 @@ class ReportService
     engine(@program).dashboard_stats(date)
   end
 
+  def dashboard_stats_for_syndromic_statistics(date)
+    engine(@program).dashboard_stats_for_syndromic_statistics(date)
+  end
+
   def diagnosis(start_date, end_date)
     engine(@program).diagnosis(start_date, end_date)
+  end
+
+  def malaria_report(start_date, end_date)
+    engine(@program).malaria_report(start_date, end_date)
   end
 
   def registration(start_date, end_date)
@@ -92,6 +100,9 @@ class ReportService
 
   def drugs_given_with_prescription(start_date, end_date)
     engine(@program).drugs_given_with_prescription(start_date, end_date)
+  end
+  def dispensation(start_date, end_date)
+    engine(@program).dispensation(start_date, end_date)
   end
 
   def cohort_survival_analysis(quarter, age_group, regenerate)

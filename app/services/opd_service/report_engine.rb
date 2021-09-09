@@ -35,6 +35,25 @@ module OPDService
       return stats
     end
 
+    def dashboard_stats_for_syndromic_statistics(date)
+      @date = date.to_date
+      stats = {}
+      stats[:top] = {
+        # registered_today: registered_today('New patient'),
+        # returning_today: registered_today('Revisiting'),
+        # referred_today: registered_today('Referral')
+        ILI: respiratory_enctounter_today('ILI'),
+        Respiratory: respiratory_enctounter_today('Respiratory')
+      }
+
+      stats[:down] = {
+        ILI: monthly_respiratory_enctounter('ILI'),
+         Respiratory: monthly_respiratory_enctounter('Respiratory')
+      }
+
+      return stats
+    end
+
     def with_nids
       type = PatientIdentifierType.find_by_name 'Malawi National ID'
 
@@ -128,6 +147,107 @@ module OPDService
 
       return stats
     end
+
+
+    def malaria_report(start_date, end_date)
+      type = EncounterType.find_by_name 'Outpatient diagnosis'
+      data = Encounter.where('encounter_datetime BETWEEN ? AND ?
+        ',
+        start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
+        end_date.to_date.strftime('%Y-%m-%d 23:59:59')).\
+        joins('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
+        INNER JOIN person p ON p.person_id = encounter.patient_id
+        LEFT JOIN person_name n ON n.person_id = encounter.patient_id AND n.voided = 0
+        LEFT JOIN person_attribute z ON z.person_id = encounter.patient_id AND z.person_attribute_type_id = 12
+        RIGHT JOIN person_address a ON a.person_id = encounter.patient_id').\
+        select('encounter.encounter_type,n.given_name, n.family_name, n.person_id, obs.value_text, obs.value_coded, p.*,
+        a.state_province district, a.township_division ta, a.city_village village, z.value')
+
+        patientD_confirmed_malaria_cases = []
+        patientD_presumed_malaria_cases = []
+
+        patientD_confirmed_malaria_cases_less_than_five_years = []
+        patientD_confirmed_malaria_cases_greater_than_five_years = []
+        patientD_presumed_malaria_cases_less_than_five_years = []
+        patientD_presumed_malaria_cases_greater_than_five_years = []
+
+
+        all_data={}
+        confirmed_malaria_cases =0
+        presumed_malaria_cases =0
+
+        confirmed_malaria_cases_less_than_five_years =0
+        confirmed_malaria_cases_greater_than_five_years =0
+        presumed_malaria_cases_less_than_five_years =0
+        presumed_malaria_cases_greater_than_five_years =0
+
+        (data || []).each do |record|
+          age_group = get_age_group_for_malaria(record['birthdate'], end_date)
+          preg = record['concept_id']
+          phone_number = record['value']
+          gender = record['gender']
+          given_name = record['given_name']
+          family_name = record['family_name']
+          district  = record['district']
+          ta  = record['ta']
+          village = record['village']
+          address = "#{district}; #{ta}; #{village}"
+          patient_info = "|#{given_name},#{record['person_id']},#{family_name},#{gender},#{phone_number},#{address}";
+          # patient_info = given_name,record['person_id'],family_name,gender,address
+
+          concept = ConceptName.find_by_concept_id record['value_coded']
+          dt =  record['value_coded']
+
+
+          if record['value_text'] == "Thick Smear Positive" || record['value_text'] =="Malaria RDT Positive"
+            confirmed_malaria_cases += 1
+            patientD_confirmed_malaria_cases << [patient_info]
+          end
+            if record['value_coded'] == 123
+            presumed_malaria_cases += 1
+            patientD_presumed_malaria_cases << [patient_info]
+          end
+            if  record['value_text'] == "Thick Smear Positive" || record['value_text'] == "Malaria RDT Positive" && age_group == '< 5 yrs'
+            confirmed_malaria_cases_less_than_five_years += 1
+            patientD_confirmed_malaria_cases_less_than_five_years << [patient_info]
+          end
+            if  record['value_text'] == "Thick Smear Positive" || record['value_text'] =="Malaria RDT Positive" && age_group == '> 5 yrs'
+            confirmed_malaria_cases_greater_than_five_years += 1
+            patientD_confirmed_malaria_cases_greater_than_five_years << [patient_info]
+          end
+          if age_group == '< 5 yrs' && record['value_coded'] == 123
+            presumed_malaria_cases_less_than_five_years += 1
+            patientD_presumed_malaria_cases_less_than_five_years << [patient_info]
+          end
+          if age_group == '> 5 yrs' && record['value_coded'] == 123
+            presumed_malaria_cases_greater_than_five_years += 1
+            patientD_presumed_malaria_cases_greater_than_five_years << [patient_info]
+          end
+
+
+
+
+        end
+
+        all_data = {
+
+          confirmed_malaria_cases: confirmed_malaria_cases,
+          patientD_confirmed_malaria_cases:patientD_confirmed_malaria_cases,
+          presumed_malaria_cases: presumed_malaria_cases,
+          patientD_presumed_malaria_cases: patientD_presumed_malaria_cases,
+          confirmed_malaria_cases_less_than_five_years: confirmed_malaria_cases_less_than_five_years,
+          patientD_confirmed_malaria_cases_less_than_five_years: patientD_confirmed_malaria_cases_less_than_five_years,
+          confirmed_malaria_cases_greater_than_five_years: confirmed_malaria_cases_greater_than_five_years,
+          patientD_confirmed_malaria_cases_greater_than_five_years: patientD_confirmed_malaria_cases_greater_than_five_years,
+          presumed_malaria_cases_less_than_five_years: presumed_malaria_cases_less_than_five_years,
+          patientD_presumed_malaria_cases_less_than_five_years: patientD_presumed_malaria_cases_less_than_five_years,
+          presumed_malaria_cases_greater_than_five_years: presumed_malaria_cases_greater_than_five_years,
+          patientD_presumed_malaria_cases_greater_than_five_years: patientD_presumed_malaria_cases_greater_than_five_years,
+
+        }
+
+        return all_data
+      end
 
     def diagnosis(start_date, end_date)
       type = EncounterType.find_by_name 'Outpatient diagnosis'
@@ -287,6 +407,57 @@ module OPDService
 
       return stats
     end
+    def dispensation(start_date, end_date)
+      type = EncounterType.find_by_name 'TREATMENT'
+      programID = Program.find_by_name 'OPD Program'
+
+      data = Encounter.where('encounter_datetime BETWEEN ? AND ?
+        AND encounter_type = ? AND program_id = ?',
+        start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
+        end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id, programID.program_id).\
+        joins('INNER JOIN orders o ON o.encounter_id = encounter.encounter_id
+        INNER JOIN drug_order i ON i.order_id = o.order_id
+        INNER JOIN drug d ON d.drug_id = i.drug_inventory_id').\
+        select('encounter.patient_id person_id,i.equivalent_daily_dose,i.frequency,COALESCE(SUM(i.quantity), 0) as total_quantity,
+        d.drug_id, o.start_date,o.instructions, d.name drug_name').\
+        order('d.name DESC').group('d.name')
+
+      stats = []
+      (data || []).each do |record|
+
+        drug_name =record['drug_name'];
+        data2 = Encounter.where("encounter_datetime BETWEEN ? AND ?
+        AND encounter_type = ? AND d.name = ? AND program_id = ?",
+        start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
+        end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id,drug_name, programID.program_id).\
+        joins('INNER JOIN orders o ON o.encounter_id = encounter.encounter_id
+        INNER JOIN drug_order i ON i.order_id = o.order_id
+        INNER JOIN drug d ON d.drug_id = i.drug_inventory_id').\
+        select('encounter.patient_id person_id,i.equivalent_daily_dose,i.frequency,i.quantity,
+        d.drug_id, o.start_date,o.instructions, d.name drug_name').\
+        order('d.name DESC').group(' o.order_id')
+
+        value = 0;
+        (data2 || []).each do |record2|
+          if record2['instructions'].include? "days"
+          duration = record2['instructions'].split("for")[1].split("days")[0].to_i
+          else
+            duration = 0
+          end
+
+          value += duration * record2['equivalent_daily_dose']
+        end
+
+          stats << {
+
+            drug_name: record['drug_name'],
+            quantity: record['total_quantity'],
+            amount_needed: value
+          }
+        end
+
+      return stats
+    end
 
     private
 
@@ -318,6 +489,32 @@ module OPDService
       end
     end
 
+    def get_age_group_for_malaria(birthdate, end_date)
+      begin
+        birthdate = birthdate.to_date
+        end_date  = end_date.to_date
+        months = age_in_months(birthdate, end_date)
+      rescue
+        months = 'Unknown'
+      end
+
+      if months < 60
+        return '< 5 yrs'
+      elsif months > 60
+        return '> 5 yrs'
+      end
+    end
+
+    def pregnant_woman(concept_id)
+      begin
+        if concept_id.to_s == '6542'
+           return concept_id
+        else
+            return "unkwon"
+        end
+      end
+    end
+
     def age_in_months(birthdate, today)
       begin
         years = (today.year - birthdate.year)
@@ -327,8 +524,7 @@ module OPDService
         return 'Unknown'
       end
     end
-
-    def registered_today(visit_type)
+def registered_today(visit_type)
       type = EncounterType.find_by_name 'Patient registration'
       concept = ConceptName.find_by_name 'Type of visit'
       value_coded = ConceptName.find_by_name visit_type
@@ -372,6 +568,56 @@ module OPDService
         months[(i+1)]= {
           start_date: date1, end_date: date2,
           count: count[0]['total'].to_i
+        }
+      end
+
+      months
+    end
+
+    def respiratory_enctounter_today(group_name)
+      type = EncounterType.find_by_name 'Presenting complaints'
+
+      encounter_ids = Encounter.where('encounter_datetime BETWEEN ? AND ?
+        AND encounter_type = ?', *TimeUtils.day_bounds(@date), type.id).map(&:encounter_id)
+
+      return Observation.where('encounter_id IN(?) AND value_text = ?',
+        encounter_ids, group_name).group(:person_id).length
+    end
+
+
+
+    def monthly_respiratory_enctounter(group_name)
+      start_date = (@date - 12.month)
+      dates = []
+
+      start_date = start_date.beginning_of_month
+      end_date  = start_date.end_of_month
+      dates << [start_date, end_date]
+
+      1.upto(11) do |m|
+        sdate = start_date + m.month
+        edate = sdate.end_of_month
+        dates << [sdate, edate]
+      end
+
+      type = EncounterType.find_by_name 'Presenting complaints'
+      value_coded = ConceptName.find_by_name group_name
+
+      months = {}
+
+      (dates || []).each_with_index do |(date1, date2), i|
+        d1 = date1.strftime('%Y-%m-%d 00:00:00')
+        d2 = date2.strftime('%Y-%m-%d 23:59:59')
+
+        encounter_ids = Encounter.where('encounter_datetime BETWEEN ? AND ?
+        AND encounter_type = ?', d1,d2 , type.id).map(&:encounter_id)
+
+        count = Observation.where('encounter_id IN(?) AND value_text = ?',
+        encounter_ids, group_name).group(:person_id).length
+
+        months[(i+1)]= {
+          start_date: date1, end_date: date2,
+          count: count.to_i
         }
       end
 
