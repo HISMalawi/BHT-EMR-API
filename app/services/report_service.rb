@@ -7,7 +7,8 @@ class ReportService
     'OPD PROGRAM' => OPDService::ReportEngine,
     'VMMC PROGRAM' => VMMCService::ReportEngine,
     'TB PROGRAM' => TBService::ReportEngine,
-    'LABORATORY ORDERS' => LaboratoryService::ReportEngine
+    'LABORATORY ORDERS' => LaboratoryService::ReportEngine,
+    'CXCA PROGRAM' => CXCAService::ReportEngine
   }.freeze
   LOGGER = Rails.logger
 
@@ -196,6 +197,10 @@ class ReportService
 
   def external_consultation_clients(start_date, end_date)
     engine(@program).external_consultation_clients(start_date, end_date)
+  end
+
+  def cxca_reports(start_date, end_date, report_name)
+    engine(@program).reports(start_date.to_date,end_date.to_date, report_name)
   end
 
   private

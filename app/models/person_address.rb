@@ -2,7 +2,20 @@ class PersonAddress < VoidableRecord
   self.table_name = 'person_address'
   self.primary_key = 'person_address_id'
 
-  belongs_to :person, foreign_key: :person_id
+  belongs_to :person,->{where(voided: [true,false])}, foreign_key: :person_id
+
+  def as_json(options = {})
+    super(options.merge(
+      methods: %i[
+        current_district
+        current_village
+        current_traditional_authority
+        home_district
+        home_village
+        home_traditional_authority
+      ]
+    ))
+  end
 
   def current_district
     state_province

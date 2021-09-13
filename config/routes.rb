@@ -225,6 +225,8 @@ Rails.application.routes.draw do
       get '/dde/patients/import_by_name_and_gender', to: 'dde#import_patients_by_name_and_gender'
       get '/dde/patients/import_by_npid', to: 'dde#import_patients_by_npid'
       get '/dde/patients/match_by_demographics', to: 'dde#match_patients_by_demographics'
+      get '/dde/patients/diff', to: 'dde#patient_diff'
+      get '/dde/patients/refresh', to: 'dde#refresh_patient'
       post '/dde/patients/reassign_npid', to: 'dde#reassign_patient_npid'
       post '/dde/patients/merge', to: 'dde#merge_patients'
 
@@ -329,4 +331,8 @@ Rails.application.routes.draw do
   get '/api/v1/lab_test_results', to: 'api/v1/reports#lab_test_results'
   get '/api/v1/orders_made', to: 'api/v1/reports#orders_made'
   get '/api/v1/:program_id/external_consultation_clients', to: 'api/v1/reports#external_consultation_clients'
+
+
+
+  get '/api/v1/screened_for_cxca', to: 'api/v1/reports#cxca_reports'
 end

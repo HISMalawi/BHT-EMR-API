@@ -55,15 +55,13 @@ class Observation < VoidableRecord
 
   def after_void(_reason)
     # HACK: Nullify any attached dispensations
-    return unless order_id
+    return if order_id.nil? || concept_id != ConceptName.find_by_name!('Amount dispensed').concept_id
 
     drug_order = DrugOrder.find_by(order_id: order_id)
     return unless drug_order
 
-    drug_order.quantity = nil
-    drug_order.save
-
-    return unless concept_id == ConceptName.find_by_name('Amount Dispensed').concept_id
+    drug_order.quantity -= value_numeric
+    drug_order.save(validate: false)
 
     DispensationService.update_stock_ledgers(:reverse_dispensation, self.id)
   end
