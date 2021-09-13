@@ -37,11 +37,11 @@ module CXCAService
     end
 
     def last_screening_info
-      screening_date_concept = ConceptName.find_by(name: 'CxCa test date')
+      screening_date_concept = ConceptName.find_by(name: 'CxCa screening method')
       obs = Observation.where("concept_id = ? AND person_id = ? AND DATE(obs_datetime) <= ?",
         screening_date_concept.concept_id, @patient.id, @date.to_date).order('obs_datetime DESC')
       return (obs.blank? ? {} : {
-        date_screened: obs.first.value_datetime.to_date
+        date_screened: obs.first.obs_datetime.to_date
       })
     end
 

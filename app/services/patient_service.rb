@@ -55,6 +55,9 @@ class PatientService
       [PersonName, PersonAddress, PersonAttribute, Person].map do |model|
         model.where(person_id: patient.patient_id).update_all(void_params)
       end
+
+      program = PatientProgram.unscoped.find_by(patient: patient)&.program || Program.first
+      dde_service(program).void_patient(patient.reload, reason) if DDEService.dde_enabled?
     end
   end
 

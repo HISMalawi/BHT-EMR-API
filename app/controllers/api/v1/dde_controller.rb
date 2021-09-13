@@ -39,6 +39,22 @@ class Api::V1::DdeController < ApplicationController
     render json: service.merge_patients(primary_patient_ids, secondary_patient_ids_list)
   end
 
+  def patient_diff
+    patient_id = params.require(:patient_id)
+    diff = service.find_patient_updates(patient_id)
+
+    render json: { diff: diff }
+  end
+
+  ##
+  # Updates local patient with demographics in DDE.
+  def refresh_patient
+    patient_id = params.require(:patient_id)
+    patient = service.update_local_patient(Patient.find(patient_id))
+
+    render json: patient
+  end
+
   private
 
   MATCH_PARAMS = %i[given_name family_name gender birthdate home_village

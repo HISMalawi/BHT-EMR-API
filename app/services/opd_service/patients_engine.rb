@@ -8,7 +8,6 @@ class OPDService::PatientsEngine
   def visit_summary_label(patient, date)
     OPDService::VisitLabel.new(patient, date)
   end
-  
   # Retrieves given patient's status info.
   #
   # The info is just what you would get on a patient information
