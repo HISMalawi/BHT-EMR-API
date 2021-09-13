@@ -8,7 +8,8 @@ module CXCAService
       'CXCA SCREENING RESULTS' => CXCAService::Reports::Moh::CxcaScreeningResults,
       'CANCER SUSPECTS' => CXCAService::Reports::Moh::CancerSuspects,
       'CLIENTS TREATED' => CXCAService::Reports::Moh::ClientTreated,
-      'TREATMENT OPTIONS' => CXCAService::Reports::Moh::TreatmentOptions
+      'TREATMENT OPTIONS' => CXCAService::Reports::Moh::TreatmentOptions,
+      'REFERRAL REASONS' => CXCAService::Reports::Moh::ReferralReasons
     }.freeze
 
     def reports(start_date, end_date, name)
