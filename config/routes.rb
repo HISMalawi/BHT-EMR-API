@@ -331,4 +331,8 @@ Rails.application.routes.draw do
   get '/api/v1/lab_test_results', to: 'api/v1/reports#lab_test_results'
   get '/api/v1/orders_made', to: 'api/v1/reports#orders_made'
   get '/api/v1/:program_id/external_consultation_clients', to: 'api/v1/reports#external_consultation_clients'
+
+
+
+  get '/api/v1/screened_for_cxca', to: 'api/v1/reports#cxca_reports'
 end

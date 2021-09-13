@@ -207,6 +207,10 @@ class Api::V1::ReportsController < ApplicationController
     render json: service.external_consultation_clients(params[:start_date], params[:end_date])
   end
 
+  def cxca_reports
+    render json: service.cxca_reports(params[:start_date], params[:end_date], params[:report_name])
+  end
+
   private
 
   def service
