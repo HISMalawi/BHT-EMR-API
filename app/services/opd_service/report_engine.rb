@@ -284,7 +284,7 @@ module OPDService
         LEFT JOIN person_attribute z ON z.person_id = encounter.patient_id AND z.person_attribute_type_id = 12
         RIGHT JOIN person_address a ON a.person_id = encounter.patient_id').\
         select('encounter.encounter_type,n.given_name, n.family_name, n.person_id, obs.value_coded, p.*,
-        a.state_province district, a.township_division ta, a.city_village village, z.value')
+        a.state_province district, a.township_division ta, a.city_village village, z.value').group('n.person_id')
 
       stats = {}
       (data || []).each do |record|
