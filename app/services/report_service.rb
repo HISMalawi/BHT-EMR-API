@@ -69,8 +69,16 @@ class ReportService
     engine(@program).dashboard_stats_for_syndromic_statistics(date)
   end
 
-  def diagnosis(start_date, end_date)
-    engine(@program).diagnosis(start_date, end_date)
+  def diagnosis(start_date, end_date,diagnosis_name)
+    engine(@program).diagnosis(start_date, end_date,diagnosis_name)
+  end
+
+  def idsr(start_date, end_date, diagnosis)
+    engine(@program).idsr(start_date, end_date, diagnosis)
+  end
+
+  def diagnosis_ls(start_date, end_date)
+    engine(@program).diagnosis_ls(start_date, end_date)
   end
 
   def malaria_report(start_date, end_date)

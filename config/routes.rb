@@ -281,8 +281,12 @@ Rails.application.routes.draw do
   get '/api/v1/incomplete_visits' => 'api/v1/cleaning#incompleteVisits'
   get '/api/v1/art_data_cleaning_tools' => 'api/v1/cleaning#art_tools'
 
+  # MoH
+  get '/api/v1/idsr' => 'api/v1/reports#idsr'
+
   #OPD reports
   get '/api/v1/diagnosis' => 'api/v1/reports#diagnosis'
+  get '/api/v1/diagnosis_ls' => 'api/v1/reports#diagnosis_ls'
   get '/api/v1/malaria_report' => 'api/v1/reports#malaria_report'
   get '/api/v1/registration' => 'api/v1/reports#registration'
   get '/api/v1/diagnosis_by_address' => 'api/v1/reports#diagnosis_by_address'

@@ -33,9 +33,23 @@ class Api::V1::ReportsController < ApplicationController
     render json: stats
   end
 
-  def diagnosis
+  def idsr
+    start_date, end_date, diagnosis = params.require %i[start_date end_date diagnosis]
+    stats = service.idsr(start_date, end_date, diagnosis)
+
+    render json: stats
+  end
+
+  def diagnosis_ls
     start_date, end_date = params.require %i[start_date end_date]
-    stats = service.diagnosis(start_date, end_date)
+    stats = service.diagnosis_ls(start_date, end_date)
+
+    render json: stats
+  end
+
+  def diagnosis
+    start_date, end_date,diagnosis_name = params.require %i[start_date end_date diagnosis_name]
+    stats = service.diagnosis(start_date, end_date,diagnosis_name)
 
     render json: stats
   end

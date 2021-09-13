@@ -249,13 +249,35 @@ module OPDService
         return all_data
       end
 
-    def diagnosis(start_date, end_date)
-      type = EncounterType.find_by_name 'Outpatient diagnosis'
-      data = Encounter.where('encounter_datetime BETWEEN ? AND ?
+      def diagnosis_ls(start_date, end_date)
+        type = EncounterType.find_by_name 'Outpatient diagnosis'
+        data = Encounter.where('encounter_datetime BETWEEN ? AND ?
         AND encounter_type = ? AND value_coded IS NOT NULL
         AND concept_id IN(6543, 6542)',
         start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
         end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id).\
+        joins('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id').\
+        select('encounter.encounter_type, obs.value_coded').group('obs.value_coded')
+
+        ls = []
+        stats = {}
+        (data || []).each do |record|
+
+          concept = ConceptName.find_by_concept_id record['value_coded']
+          ls.push(concept.name)
+        end
+
+        return ls
+      end
+
+    def diagnosis(start_date, end_date, diagnosis_name)
+      conceptt = ConceptName.find_by_name(diagnosis_name).concept_id
+      type = EncounterType.find_by_name 'Outpatient diagnosis'
+      data = Encounter.where('encounter_datetime BETWEEN ? AND ?
+        AND encounter_type = ? AND value_coded = ?
+        AND concept_id IN(6543, 6542)',
+        start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
+        end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id,conceptt).\
         joins('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
         INNER JOIN person p ON p.person_id = encounter.patient_id
         LEFT JOIN person_name n ON n.person_id = encounter.patient_id AND n.voided = 0
@@ -335,6 +357,58 @@ module OPDService
         elsif age_group == 'Unknown' && gender == 'M'
           stats[concept.name][:male_unknowns] += 1
           stats[concept.name][:patientD_M_unknowns] = "#{stats[concept.name][:patientD_M_unknowns]} #{patient_info}"
+        end
+
+      end
+
+      return stats
+    end
+
+    def idsr(start_date, end_date, diagnosis)
+      conceptt = ConceptName.find_by_name(diagnosis).concept_id
+      type = EncounterType.find_by_name 'Outpatient diagnosis'
+      data = Encounter.where('encounter_datetime BETWEEN ? AND ?
+        AND encounter_type = ? AND value_coded = ?
+        AND concept_id IN(6543, 6542)',
+        start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
+        end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id, conceptt).\
+        joins('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
+        INNER JOIN person p ON p.person_id = encounter.patient_id
+        LEFT JOIN person_name n ON n.person_id = encounter.patient_id AND n.voided = 0
+        LEFT JOIN person_attribute z ON z.person_id = encounter.patient_id AND z.person_attribute_type_id = 12
+        RIGHT JOIN person_address a ON a.person_id = encounter.patient_id').\
+        select('encounter.encounter_type,n.given_name, n.family_name, n.person_id, obs.value_coded, p.*,
+        a.state_province district, a.township_division ta, a.city_village village, z.value')
+
+      stats = {}
+      (data || []).each do |record|
+        age_group = get_age_group(record['birthdate'], end_date)
+        phone_number = record['value']
+        gender = record['gender']
+        given_name = record['given_name']
+        family_name = record['family_name']
+        district  = record['district']
+        ta  = record['ta']
+        village = record['village']
+        address = "#{district}; #{ta}; #{village}"
+        patient_info = "|#{given_name},#{record['person_id']},#{family_name},#{gender},#{phone_number},#{address}";
+        concept = ConceptName.find_by_concept_id record['value_coded']
+
+        if stats[concept.name].blank?
+          stats[concept.name] = {
+            less_than_five_yrs: 0,
+            patientD_LessThanFiveYrs: '',
+            greater_than_five_years: 0,
+            patientD_GreaterThanFiveYrs: '',
+          }
+        end
+
+        if age_group == '6 months < 5 yrs'
+          stats[concept.name][:less_than_five_yrs] += 1
+          stats[concept.name][:patientD_LessThanFiveYrs] = "#{stats[concept.name][:patientD_LessThanFiveYrs]} #{patient_info}"
+        elsif age_group == '>= 5 yrs'
+          stats[concept.name][:greater_than_five_years] += 1
+          stats[concept.name][:patientD_GreaterThanFiveYrs] = "#{stats[concept.name][:patientD_GreaterThanFiveYrs]} #{patient_info}"
         end
 
       end
@@ -478,6 +552,8 @@ module OPDService
         return 'Unknown'
       elsif months < 6
         return '< 6 months'
+      elsif months >= 56
+        return '>= 5 yrs'
       elsif months >= 6 && months < 56
         return '6 months < 5 yrs'
       elsif months >= 56 && months <= 168
