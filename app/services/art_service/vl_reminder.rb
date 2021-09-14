@@ -1,88 +1,129 @@
 # frozen_string_literal: true
 
 module ARTService
-class VLReminder
-  include ModelUtils
+  class VLReminder
+    attr_reader :patient, :program, :date
 
-  def initialize(patient_id:, date: Date.today)
-    @program = Program.find_by_name 'HIV PROGRAM'
-    @patient = Patient.find(patient_id)
-    @date = date.to_date
-    @earliest_start_date = get_earliest_start_date
-  end
-
-  def vl_reminder_info
-    begin
-      months_gone = ActiveRecord::Base.connection.select_one <<EOF
-      SELECT TIMESTAMPDIFF(MONTH, DATE('#{@earliest_start_date.to_date}'), DATE('#{@date}')) AS months;
-EOF
-
-      months_gone = months_gone['months'].to_i
-    rescue
-      return {}
+    def initialize(patient_id:, date: nil)
+      @program = Program.find_by_name('HIV PROGRAM')
+      @patient = Patient.find(patient_id)
+      @date = date&.to_date || Date.today
     end
 
-    milestones = [6]
-    start_month = 6
+    def vl_reminder_info
+      return struct_vl_info(eligible: true) if due_for_viral_load?
 
-    1.upto(1000).each do |y|
-      milestones << (start_month += 12)
-    end
-
-    vl_eligibility = {
-      eligibile: false,
-      milestone: nil, period_on_art: months_gone,
-      earliest_start_date: @earliest_start_date.to_date,
-      skip_milestone: false, message: nil
-     }
-
-    if milestones.include?(months_gone)
-      value_coded  = ConceptName.find_by_name('Delayed milestones').concept_id
-      value_coded2 = ConceptName.find_by_name('Tests ordered').concept_id
-
-      obs = Observation.where(person_id: @patient.id, value_numeric: months_gone,
-        concept_id: ConceptName.find_by_name('HIV viral load').concept_id,
-        value_coded: [value_coded,value_coded2]).\
-        order('obs_datetime DESC').first
-
-      unless obs.blank?
-        provider = PersonName.where(person_id: Encounter.find(obs.encounter_id).provider_id).last
-        if obs.value_coded == value_coded
-          vl_eligibility[:message] = "VL reminder set for next milestone"
-          vl_eligibility[:message] += " by #{provider.given_name} #{provider.family_name}" unless provider.blank?
-        else
-          vl_eligibility[:message] = "VL test ordered on #{obs.obs_datetime.strftime('%d/%b/%Y')}"
-          vl_eligibility[:message] += " by #{provider.given_name} #{provider.family_name}" unless provider.blank?
-        end
+      days_to_go = next_viral_load_due_date - Date.today
+      if in_months(days_to_go) < 9.months
+        return struct_vl_info(eligible: false, message: "Viral load due in #{days_to_go.to_i} days")
       end
 
-      vl_eligibility[:eligibile] = true
-      vl_eligibility[:milestone] = months_gone
-      vl_eligibility[:skip_milestone] = obs.blank? ? false : true
-    end
+      provider_string = last_viral_load_provider ? " by #{last_viral_load_provider}" : ''
 
-    if vl_eligibility[:eligibile] == false
-      milestones.each do |m|
-        if (months_gone == (m - 1))
-          vl_eligibility[:milestone] = m
-          vl_eligibility[:message] = 'VL is due in a month time.'
-          vl_eligibility[:message] += "<br /> Client's start date: #{@earliest_start_date.to_date.strftime('%d/%b/%Y')}"
-        end
+      if last_viral_load.value_coded == tests_ordered_concept_id
+        return struct_vl_info(eligible: true, message: "Viral load set for next milestone#{provider_string}")
       end
+
+      struct_vl_info(eligible: true,
+                     message: "Viral load ordered on #{last_viral_load_date.strftime('%d/%b/%Y')}#{provider_string}")
+    rescue ApplicationError => e
+      Rails.logger.warn(`Checking for Viral Load milestone on patient ##{patient.id} failed: #{e.class} - #{e}`)
+      {}
     end
 
-    return vl_eligibility
+    private
+
+    def due_for_viral_load?
+      due_for_initial_viral_load? || due_for_follow_up_viral_load?
+    end
+
+    ##
+    # Checks if patient is due for the initial viral load after starting new medication.
+    #
+    # This applies to new patients or patients who have recently switched regimens.
+    # If the patients haven't had a viral within 6 months since starting the
+    # medication then they are due for viral load.
+    def due_for_initial_viral_load?
+      return months_elapsed_since(earliest_start_date) >= 6.months unless last_viral_load_date
+
+      last_viral_load_date < last_regimen_switch_date && months_elapsed_since(last_regimen_switch_date) >= 6.months
+    end
+
+    def due_for_follow_up_viral_load?
+      return false unless last_viral_load_date
+
+      months_elapsed_since(last_viral_load_date) >= 12.months
+    end
+
+    def months_elapsed_since(date)
+      in_months(Date.today - date)
+    end
+
+    def earliest_start_date
+      return @earliest_start_date if @earliest_start_date
+
+      date_enrolled = patients_service.find_patient_date_enrolled(patient)
+      @earliest_start_date = patients_service.find_patient_earliest_start_date(patient, date_enrolled)&.to_date
+      raise ApplicationError, 'Patient is not on ART' unless @earliest_start_date
+
+      @earliest_start_date
+    end
+
+    def months_on_art
+      @months_on_art ||= in_months(Date.today - earliest_start_date&.to_date)
+    end
+
+    def last_viral_load
+      @last_viral_load ||= Observation.where(concept_id: ConceptName.where(name: 'HIV Viral Load')
+                                                                    .select(:concept_id),
+                                             value_coded: ConceptName.where(name: ['Delayed milestones', 'Tests ordered']),
+                                             person_id: patient.patient_id)
+                                      .where('obs_datetime < ?', date)
+                                      .order(:obs_datetime)
+                                      .last
+    end
+
+    def last_viral_load_date
+      @last_viral_load_date ||= last_viral_load&.obs_datetime&.to_date
+    end
+
+    def next_viral_load_due_date
+      return earliest_start_date + 6.months if last_viral_load_date.nil?
+
+      base_date = [last_viral_load_date, last_regimen_switch_date].compact.max
+
+      return base_date + 6.months if base_date == last_regimen_switch_date
+
+      base_date + 12.months
+    end
+
+    def last_regimen_switch
+      @last_regimen_switch ||=
+        Observation.where(concept_id: ConceptName.where(name: 'Reason antiretrovirals substitute or switch (first line only)')
+                                                 .select(:concept_id),
+                          person_id: patient.patient_id)
+                   .where('obs_datetime < ?', date)
+                   .order(:obs_datetime)
+                   .last
+    end
+
+    def patients_service
+      @patients_service ||= ARTService::PatientsEngine.new(program: program)
+    end
+
+    def in_months(date_diff)
+      (date_diff.to_i.days / 31.days).months
+    end
+
+    def struct_vl_info(milestone: nil, eligible: false, skip_milestone: false, message: nil)
+      {
+        milestone: milestone || months_elapsed_since(last_viral_load_date || earliest_start_date),
+        eligibile: eligible,  # Not fixing eligibile[sic] to maintain original interface
+        period_on_art: months_on_art,
+        earliest_start_date: earliest_start_date,
+        skip_milestone: skip_milestone,
+        message: message
+      }
+    end
   end
-
-  private
-
-  def get_earliest_start_date
-    patient_eng = ARTService::PatientsEngine.new(program: @program)
-    date_enrolled = patient_eng.find_patient_date_enrolled(@patient)
-    earliest_start_date = patient_eng.find_patient_earliest_start_date(@patient, date_enrolled)
-    return earliest_start_date
-  end
-
-
- end
 end
