@@ -1,22 +1,22 @@
 module CXCAService
   module Reports
-		module Moh
+		module Clinic
 
 
-			class ReferralReasons
+			class VisitReasons
 				def initialize(start_date:, end_date:)
 					@start_date = start_date.strftime('%Y-%m-%d 00:00:00')
 					@end_date = end_date.strftime('%Y-%m-%d 23:59:59')
 				end
 
 				def data
-					return screened
+					return reasons
 				end
 
 				private
 
-				def screened
-					referral_reason = concept 'Referral reason'
+				def reasons
+					referral_reason = concept 'Reason for visit'
 
 					obs = Observation.where("obs.concept_id = ? AND p.gender IN(?)
 					AND obs_datetime BETWEEN ? AND ?", referral_reason.concept_id,
