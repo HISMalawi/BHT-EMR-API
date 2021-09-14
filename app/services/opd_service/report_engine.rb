@@ -284,7 +284,7 @@ module OPDService
         LEFT JOIN person_attribute z ON z.person_id = encounter.patient_id AND z.person_attribute_type_id = 12
         RIGHT JOIN person_address a ON a.person_id = encounter.patient_id').\
         select('encounter.encounter_type,n.given_name, n.family_name, n.person_id, obs.value_coded, p.*,
-        a.state_province district, a.township_division ta, a.city_village village, z.value').group('n.person_id')
+        a.state_province district, a.township_division ta, a.city_village village, z.value')
 
       stats = {}
       (data || []).each do |record|
@@ -382,7 +382,7 @@ module OPDService
 
       stats = {}
       (data || []).each do |record|
-        age_group = get_age_group(record['birthdate'], end_date)
+        age_group = age_group_for_idsr(record['birthdate'], end_date)
         phone_number = record['value']
         gender = record['gender']
         given_name = record['given_name']
@@ -403,7 +403,7 @@ module OPDService
           }
         end
 
-        if age_group == '6 months < 5 yrs'
+        if age_group == '< 5 yrs'
           stats[concept.name][:less_than_five_yrs] += 1
           stats[concept.name][:patientD_LessThanFiveYrs] = "#{stats[concept.name][:patientD_LessThanFiveYrs]} #{patient_info}"
         elsif age_group == '>= 5 yrs'
@@ -552,14 +552,30 @@ module OPDService
         return 'Unknown'
       elsif months < 6
         return '< 6 months'
-      elsif months >= 56
-        return '>= 5 yrs'
       elsif months >= 6 && months < 56
         return '6 months < 5 yrs'
       elsif months >= 56 && months <= 168
         return '5 yrs to 14 yrs'
       elsif months > 168
         return '> 14 yrs'
+      else
+        return 'Unknown'
+      end
+    end
+
+    def age_group_for_idsr(birthdate, end_date)
+      begin
+        birthdate = birthdate.to_date
+        end_date  = end_date.to_date
+        months = age_in_months(birthdate, end_date)
+      rescue
+        months = 'Unknown'
+      end
+
+      if months < 56
+        return '< 5 yrs'
+      elsif months >= 56
+        return '>= 5 yrs'
       else
         return 'Unknown'
       end
