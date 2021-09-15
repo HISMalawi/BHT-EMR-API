@@ -1,0 +1,30 @@
+
+      {
+      "headers":      {"url":"https://covmw.com/ohspdev","user":"eidsr","pass":"Eidsr2021!"},
+      "weekly_idsr_map":{
+		      "AEFI" : [],
+		      "Poliomyelitis (AFP)" : ["Poliomyelitis"],
+		      "Acute Hemorrhagic Fever Syndrome (AHFS)" : [],
+		      "Anthrax" : ["Anthrax"],
+		      "Cholera" : ["Cholera"],
+		      "Covid-19" : ["COVID-19"],
+		      "Dengue" : [],
+		      "Diarrhoea with blood (Shigella)":["Dysentery"],
+		      "Human influenza due to new sub-type" : ["Human influenza caused by new subtype"],
+		      "Listeriosis" : [],
+		      "Malaria" : ["Malaria"],
+		      "Maternal death": [],
+		      "Measles" : ["Measles"],
+		      "Meningococcal Meningitis" : ["Meningococcal Meningitis"],
+		      "Neonatal tetanus" : ["Neonatal tetanus"],
+		      "PHEIC" : ["Public Health Event of international or national concern"], 
+		      "Plague" : ["Plague"],
+		      "Rabies" : ["Rabies"],
+		      "Acute Respiratory Infection (SARI)":["Severe acute respiratory infection"],
+		      "SARS" :[], 
+		      "Smallpox" : ["Smallpox (Variola)"], 
+		      "Typhoid Fever":["Typhoid fever"],
+		      "Yellow Fever" : ["Yellow fever"]},
+
+    "monthly_idsr_map":{}		   
+ }
