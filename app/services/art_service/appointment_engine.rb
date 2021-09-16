@@ -57,9 +57,7 @@ class AppointmentEngine
   end
 
   def next_appointment_date
-    if optimise_appointment?(@patient, @ref_date)
-      exec_drug_order_adjustments(@patient, @ref_date)
-    end
+    exec_drug_order_adjustments(@patient, @ref_date) if optimise_appointment?(@patient, @ref_date)
 
     _drug_id, date = earliest_appointment_date(@patient, @ref_date)
     return nil unless date
@@ -104,27 +102,9 @@ class AppointmentEngine
   ########################################################################################
 
   def earliest_appointment_date(patient, date)
-    orders = patient_arv_prescriptions patient, date
-    return [] if orders.empty?
+    first_to_expiry = patient_arv_prescriptions(patient, date).select(&:drug_order).min_by(&:auto_expire_date)
 
-    amount_dispensed = {}
-
-    orders.each do |order|
-      next unless order.drug_order
-
-      original_auto_expire_date = order.void_reason&.to_date
-
-      if order.start_date.to_date == order.auto_expire_date.to_date\
-        && original_auto_expire_date
-        auto_expire_date = original_auto_expire_date
-      else
-        auto_expire_date = (order.discontinued_date || order.auto_expire_date).to_date
-      end
-
-      amount_dispensed[order.drug_order.drug_inventory_id] = auto_expire_date
-    end
-
-    amount_dispensed.min_by { |_drug_id, auto_expire_date| auto_expire_date }
+    [first_to_expiry&.drug_order&.drug_inventory_id, first_to_expiry&.auto_expire_date]
   end
 
   def optimise_appointment?(patient, date)
@@ -250,8 +230,7 @@ class AppointmentEngine
       # We assume the patient starts taking drugs today thus we subtract one day
       order.auto_expire_date = order.start_date + (additional_days + drug_order.quantity_duration - 1).days
 
-      order.save
-      drug_order.save
+      order.save!
     end
 
     # exact_discontinued_dates = []
