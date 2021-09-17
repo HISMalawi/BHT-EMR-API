@@ -264,6 +264,7 @@ module OPDService
         (data || []).each do |record|
 
           concept = ConceptName.find_by_concept_id record['value_coded']
+          if (concept != nil)
           ls.push(concept.name)
         end
 
