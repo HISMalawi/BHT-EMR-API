@@ -18,10 +18,14 @@ compatibility (examples of this include major architectural changes).
 
 ### Added
 
-- Bumped up lab to v1.1.13 - Fixes error on LIMS push of orders created through LOS
+- DDE: Pushing of footprint to DDE on encounter create
 - New concept Cryotherapy
-- Patient merging not appending secondary patient identifiers to primary patient (helpdesk [#3541](https://egpafemr.sdpondemand.manageengine.com/app/itdesk/ui/requests/118246000006095075/details))
 
+### Fixed
+
+- ART: Hanging pills not being added to appointment date
+- Bumped up lab to v1.1.13 - Fixes error on LIMS push of orders created through LOS
+- Patient merging not appending secondary patient identifiers to primary patient (helpdesk [#3541](https://egpafemr.sdpondemand.manageengine.com/app/itdesk/ui/requests/118246000006095075/details))
 ### Changed
 
 - ART: TB Prev definition changed to capture 3HP for up to 6 months prior to the start of reporting period

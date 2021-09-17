@@ -10,8 +10,26 @@ class Api::V1::ReportsController < ApplicationController
     end
   end
 
+  def syndromic_statistics
+    date = params.require %i[date]
+    stats = service.dashboard_stats_for_syndromic_statistics(date.first)
+
+    if stats
+      render json: stats
+    else
+      render status: :no_content
+    end
+  end
+
   def with_nids
     stats = service.with_nids
+    render json: stats
+  end
+
+  def malaria_report
+    start_date, end_date = params.require %i[start_date end_date]
+    stats = service.malaria_report(start_date, end_date)
+
     render json: stats
   end
 
@@ -74,6 +92,12 @@ class Api::V1::ReportsController < ApplicationController
   def drugs_given_with_prescription
     start_date, end_date = params.require %i[start_date end_date]
     stats = service.drugs_given_with_prescription(start_date, end_date)
+
+    render json: stats
+  end
+  def dispensation
+    start_date, end_date = params.require %i[start_date end_date]
+    stats = service.dispensation(start_date, end_date)
 
     render json: stats
   end
