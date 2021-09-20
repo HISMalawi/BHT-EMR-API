@@ -1,4 +1,3 @@
-
 module CXCAService
   class ReportEngine
 
