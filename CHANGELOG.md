@@ -13,8 +13,13 @@ In short, a version number is of the following format `major.minor.patch`
 minor number changes with new backward compatible features. The major
 number changes with major changes that completely break backwards
 compatibility (examples of this include major architectural changes).
+ ## [Unreleased]
 
-## [Unreleased]
+### Fixed
+
+- ART Stock: Resetting of current quantity on dispensation reversal
+- ART Stock: Relocation of drugs at a date before their delivery date
+- ART Stock: Drug relocations not saving retrospective dates
 
 ### Added
 
