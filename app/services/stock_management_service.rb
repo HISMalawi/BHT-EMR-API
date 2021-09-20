@@ -211,9 +211,11 @@ class StockManagementService
       ERROR
     end
 
-    batch_item.current_quantity += quantity.to_f
-    batch_item.save
-    validate_activerecord_object(batch_item)
+    batch_item.with_lock do
+      batch_item.current_quantity += quantity.to_f
+      batch_item.save
+      validate_activerecord_object(batch_item)
+    end
 
     batch_item
   end
