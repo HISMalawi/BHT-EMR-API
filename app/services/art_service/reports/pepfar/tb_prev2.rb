@@ -166,7 +166,7 @@ module ARTService
                 AND drug_order.quantity > 0
               INNER JOIN concept_name
                 ON concept_name.concept_id = orders.concept_id
-                AND concept_name.name = 'Rifapentine'
+                AND concept_name.name = #{tpt_concept_name}
                 AND concept_name.voided = 0
               WHERE encounter.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
                 AND encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'Treatment')
