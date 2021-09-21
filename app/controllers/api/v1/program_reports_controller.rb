@@ -10,13 +10,11 @@ class Api::V1::ProgramReportsController < ApplicationController
     start_date ||= params.require(%i[start_date])[0]
     end_date ||= (params[:end_date] || Date.today.strftime('%Y-%m-%d'))
 
-    report = service.generate_report(
-      name: name,
-      type: type,
-      start_date: Date.strptime(start_date.to_s),
-      end_date: Date.strptime(end_date.to_s),
-      **extra_params
-    )
+    report = service.generate_report(name: name,
+                                     type: type,
+                                     start_date: parse_date(start_date),
+                                     end_date: parse_date(end_date),
+                                     **extra_params)
 
     if report
       render json: report
@@ -52,6 +50,13 @@ class Api::V1::ProgramReportsController < ApplicationController
       "#{year + 1}-01-01"
     ][index]
     Date.strptime(sdate)
+  end
+
+  def parse_date(date)
+    Date.strptime(date)
+  rescue Date::Error => e
+    logger.warn("Failed to parse date `#{date}` due to #{e.class} - #{e}")
+    raise InvalidParameterError, "Invalid date `#{date}`: #{e.message}"
   end
 
   def extra_params
