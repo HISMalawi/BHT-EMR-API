@@ -43,6 +43,7 @@ Rails.application.routes.draw do
 
       resources :roles
 
+      get '/patient_details_by_id' => 'patients#patient_details_by_id'
 
       # Patients
       resources :patients do
@@ -52,6 +53,7 @@ Rails.application.routes.draw do
         get 'labels/print_tb_lab_order_summary', to: 'patients#print_tb_lab_order_summary'
         get '/visits' => 'patients#visits'
         get '/visit' => 'patients#visit'
+
         get('/appointments', to: redirect do |params, request|
           paginate_url "/api/v1/appointments?patient_id=#{params[:patient_id]}",
                        request.params
