@@ -11,7 +11,7 @@ module ARTService
         @start_date = start_date
         @end_date = end_date
 
-        initialize_temporary_tables if rebuild_outcomes
+        initialize_temporary_tables if rebuild_outcomes || !outcomes_table_exists?
       end
 
       def find_report
@@ -29,6 +29,10 @@ module ARTService
       def initialize_temporary_tables
         logger.debug('Initialising cohort temporary tables...')
         CohortBuilder.new.init_temporary_tables(start_date, end_date)
+      end
+
+      def outcomes_table_exists?
+        ActiveRecord::Base.connection.table_exists?(:temp_patient_outcomes)
       end
 
       def logger

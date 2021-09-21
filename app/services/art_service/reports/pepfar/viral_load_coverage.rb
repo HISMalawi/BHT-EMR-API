@@ -14,6 +14,8 @@ module ARTService
 
           @end_date = params[:end_date]&.to_date || @start_date + 12.months
           raise InvalidParameterError, "start_date can't be greater than end_date" if @start_date > @end_date
+
+          @rebuild_outcomes = params[:rebuild_outcomes]&.casecmp?('true') || false
         end
 
         def find_report
@@ -49,7 +51,7 @@ module ARTService
 
         def find_patients_alive_and_on_art
           patients = PatientsAliveAndOnTreatment
-                     .new(start_date: start_date, end_date: end_date, rebuild_outcomes: true)
+                     .new(start_date: start_date, end_date: end_date, rebuild_outcomes: @rebuild_outcomes)
                      .query
           pepfar_patient_drilldown_information(patients, end_date)
         end
