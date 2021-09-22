@@ -23,6 +23,7 @@ compatibility (examples of this include major architectural changes).
 
 ### Added
 
+- ART: Regimens 14PP and 15PP to cohort report
 - DDE: Pushing of footprint to DDE on encounter create
 - New concept Cryotherapy
 
