@@ -27,6 +27,10 @@ compatibility (examples of this include major architectural changes).
 
 - ART: TB Prev definition changed to capture 3HP for up to 6 months prior to the start of reporting period
 
+### Fixed
+
+- ART: Regimen distribution pulling defaulters
+
 ## [v4.11.13] - 2021-08-24
 
 ### Added

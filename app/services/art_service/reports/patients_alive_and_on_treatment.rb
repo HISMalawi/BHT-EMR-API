@@ -5,13 +5,22 @@ module ARTService
     # Returns all patients alive and on treatment within a given
     # time period (Tx Curr).
     class PatientsAliveAndOnTreatment
-      attr_accessor :start_date, :end_date
+      attr_reader :start_date, :end_date
 
       def initialize(start_date:, end_date:, rebuild_outcomes: true, **_kwargs)
         @start_date = start_date
         @end_date = end_date
+        @rebuild_outcomes = rebuild_outcomes
+      end
 
-        initialize_temporary_tables if rebuild_outcomes || !outcomes_table_exists?
+      ##
+      # Repopulates temp_patient_outcomes and temp_earliest_start_date tables.
+      #
+      # The data in temp_patient_outcomes can be used to quickly find patients
+      # with various outcomes.
+      def refresh_outcomes_table
+        logger.debug('Initialising cohort temporary tables...')
+        CohortBuilder.new.init_temporary_tables(@start_date, @end_date)
       end
 
       def find_report
@@ -19,17 +28,14 @@ module ARTService
       end
 
       def query
+        refresh_outcomes_table if @rebuild_outcomes || !outcomes_table_exists?
+
         Patient.find_by_sql <<~SQL
           SELECT patient_id FROM temp_patient_outcomes WHERE cum_outcome LIKE 'On antiretrovirals'
         SQL
       end
 
       private
-
-      def initialize_temporary_tables
-        logger.debug('Initialising cohort temporary tables...')
-        CohortBuilder.new.init_temporary_tables(start_date, end_date)
-      end
 
       def outcomes_table_exists?
         ActiveRecord::Base.connection.table_exists?(:temp_patient_outcomes)
