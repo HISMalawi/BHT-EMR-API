@@ -101,9 +101,23 @@ module ARTService
       label.draw_multi_text('Current ART drugs', font_reverse: true)
       label.draw_multi_text(reg, font_reverse: false)
       label.draw_multi_text('Transfer out date:', font_reverse: true)
-      label.draw_multi_text(date.strftime('%d-%b-%Y').to_s, font_reverse: false)
+      label.draw_multi_text(actual_transfer_out_date.strftime('%d-%b-%Y').to_s, font_reverse: false)
 
       label.print(1)
+    end
+
+    # method to get transfer out date
+    def actual_transfer_out_date
+      record = PatientState
+               .joins(
+                 'LEFT JOIN (patient_program) on (patient_state.patient_program_id = patient_program.patient_program_id)'
+               )
+               .where('patient_program.patient_id = ?', patient.patient_id)
+               .where('patient_state.state=2')
+               .select <<~SQL
+                 patient_state.start_date
+               SQL
+      record.empty? ? date : record[0].start_date.to_date
     end
   end
 end
