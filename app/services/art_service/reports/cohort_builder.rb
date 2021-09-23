@@ -286,8 +286,10 @@ module ARTService
         cohort_struct.twelve_a          = filter_prescriptions_by_regimen(prescriptions, '12A')
         cohort_struct.thirteen_a        = filter_prescriptions_by_regimen(prescriptions, '13A')
         cohort_struct.fourteen_p        = filter_prescriptions_by_regimen(prescriptions, '14P')
+        cohort_struct.fourteen_pp       = filter_prescriptions_by_regimen(prescriptions, '14PP')
         cohort_struct.fourteen_a        = filter_prescriptions_by_regimen(prescriptions, '14A')
         cohort_struct.fifteen_p         = filter_prescriptions_by_regimen(prescriptions, '15P')
+        cohort_struct.fifteen_pp        = filter_prescriptions_by_regimen(prescriptions, '15PP')
         cohort_struct.fifteen_a         = filter_prescriptions_by_regimen(prescriptions, '15A')
         cohort_struct.sixteen_p         = filter_prescriptions_by_regimen(prescriptions, '16P')
         cohort_struct.sixteen_a         = filter_prescriptions_by_regimen(prescriptions, '16A')
@@ -1164,7 +1166,7 @@ EOF
       end
 
       COHORT_REGIMENS = %w[
-        0P 2P 4P 9P 11P 14P 15P 16P 17P 0A 2A 4A
+        0P 2P 4P 9P 11P 14P 14PP 15P 15PP 16P 17P 0A 2A 4A
         5A 6A 7A 8A 9A 10A 11A 12A 13A 14A 15A
         16A 17A
       ].freeze
