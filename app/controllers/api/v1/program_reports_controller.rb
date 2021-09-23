@@ -54,7 +54,7 @@ class Api::V1::ProgramReportsController < ApplicationController
 
   def parse_date(date)
     Date.strptime(date)
-  rescue Date::Error => e
+  rescue StandardError => e
     logger.warn("Failed to parse date `#{date}` due to #{e.class} - #{e}")
     raise InvalidParameterError, "Invalid date `#{date}`: #{e.message}"
   end
