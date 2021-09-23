@@ -60,8 +60,7 @@ module ARTService
       return viral_load_due_date if viral_load_due_date < date
 
       viral_load_skip = find_patient_recent_viral_load_skip(duration: date - regimen_switch.obs_datetime.to_date)
-      viral_load_due_date = viral_load_skip + 6.months
-      return viral_load_due_date if viral_load_skip
+      return viral_load_skip.obs_datetime.to_date + 6.months if viral_load_skip
 
       regimen_switch.obs_datetime.to_date + 6.months
     end
