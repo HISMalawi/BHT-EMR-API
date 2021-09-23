@@ -207,7 +207,8 @@ module ARTService
         },
         previous_regimen: {
           name: previous_regimen&.regimen,
-          date_completed: previous_regimen&.date_completed
+          date_completed: previous_regimen&.date_completed,
+          reason_for_regimen_switch: previous_regimen ? find_reason_for_regimen_switch(visit_date: current_regimen.date_started) : nil
         }
       }
     end
@@ -235,6 +236,23 @@ module ARTService
                     GROUP_CONCAT(DISTINCT drug_order.drug_inventory_id ORDER BY concept_id SEPARATOR ',') AS drugs")
            .order(start_date: :desc)
            .limit(2)
+    end
+
+    ##
+    # Returns the reason for regimen switch as a string on a given visit.
+    #
+    # NOTE: This method only focuses on the specified visit, so when calling this
+    #       you need to be 100% sure that there was a regimen switch on the
+    #       specified date.
+    def find_reason_for_regimen_switch(visit_date:)
+      regimen_switch_concept = ConceptName.where(name: 'Reason antiretrovirals substitute or switch (first line only)')
+                                          .select(:concept_id)
+      Observation.where(concept: regimen_switch_concept, person_id: patient.patient_id)
+                 .where('obs_datetime BETWEEN DATE(:date) AND DATE(:date) + INTERVAL 1 DAY', date: visit_date)
+                 .order(:obs_datetime)
+                 .select(:value_text)
+                 .last
+                 &.value_text
     end
 
     def period_on_art_in_months
