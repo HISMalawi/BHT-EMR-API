@@ -23,6 +23,10 @@ compatibility (examples of this include major architectural changes).
 
 ### Added
 
+- Lab: Test measure for CrAg test
+- New locations:
+  - Banja Care Private Clinic (Mulanje)
+  - Chikuli Private Clinic (Mulanje)
 - DDE: Pushing of footprint to DDE on encounter create
 - New concept Cryotherapy
 
