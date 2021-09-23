@@ -44,7 +44,7 @@ module ARTService
         return viral_load_skip.obs_datetime.to_date + 6.months if viral_load_skip
 
         viral_load = find_patient_last_viral_load
-        return viral_load ? viral_load.start_date.to_date + 12.months : Date.today
+        return viral_load ? viral_load.start_date.to_date + 12.months : viral_load_due_date
       end
 
       # If patient has a viral load in the last 12 months then we need to make sure
@@ -84,7 +84,10 @@ module ARTService
     ##
     # Returns patient's last viral load before now
     def find_patient_last_viral_load
-      Lab::LabOrder.where(concept: ConceptName.where(name: 'Blood').select(:concept_id), patient: patient)
+      specimens = ConceptName.where(name: ['Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)'])
+                             .select(:concept_id)
+
+      Lab::LabOrder.where(concept: specimens, patient: patient)
                    .where('start_date <= DATE(?)', date)
                    .joins(:tests)
                    .merge(viral_load_tests)
@@ -152,7 +155,7 @@ module ARTService
       last_viral_load_skip = find_patient_recent_viral_load_skip
 
       message = if last_viral_load_skip && last_viral_load && last_viral_load_skip.obs_datetime >= last_viral_load.obs_datetime
-                  "Viral load set for next milestone by #{provider(last_viral_load_skip.creator)}"
+                  "Viral load set for next milestone by #{formatted_username(last_viral_load_skip.creator)}"
                 elsif last_viral_load.date < @date - 2.months
                   "Viral load ordered on #{last_viral_load.strftime('%d/%b/%Y')} by #{provider(last_viral_load.creator)}"
                 else
