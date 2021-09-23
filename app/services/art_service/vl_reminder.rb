@@ -141,33 +141,28 @@ module ARTService
 
     def vl_reminder_info
       due_date = find_patient_viral_load_due_date
-      return struct_vl_info(eligible: true) if due_date <= date
+      return struct_vl_info(eligible: true, due_date: due_date) if due_date <= date
 
       days_to_go = due_date - date
       if in_months(days_to_go) < 9.months
-        return struct_vl_info(eligible: false, message: "Viral load due in #{days_to_go.to_i} days")
+        return struct_vl_info(eligible: false, due_date: due_date, message: "Viral load due in #{days_to_go.to_i} days")
       end
 
       last_viral_load = find_patient_last_viral_load
       last_viral_load_skip = find_patient_recent_viral_load_skip
 
-      if last_viral_load_skip && last_viral_load && last_viral_load_skip.obs_datetime.to_date > last_viral_load_skip
-        return struct_vl_info(
-          eligible: true,
-          message: "Viral load set for next milestone by #{provider(last_viral_load_skip.creator)}"
-        )
-      end
-
-      if last_viral_load
-        return struct_vl_info(
-          eligible: false,
-          message: "Viral load ordered on #{last_viral_load.strftime('%d/%b/%Y')} by #{provider(last_viral_load.creator)}"
-        )
-      end
+      message = if last_viral_load_skip && last_viral_load && last_viral_load_skip.obs_datetime >= last_viral_load.obs_datetime
+                  "Viral load set for next milestone by #{provider(last_viral_load_skip.creator)}"
+                elsif last_viral_load.date < @date - 2.months
+                  "Viral load ordered on #{last_viral_load.strftime('%d/%b/%Y')} by #{provider(last_viral_load.creator)}"
+                else
+                  "Viral load not due until #{due_date.strftime('%d/%b/%Y')}"
+                end
 
       struct_vl_info(
         eligible: false,
-        message: "Viral load not due until #{due_date}"
+        due_date: due_date,
+        message: message
       )
     end
 
@@ -186,38 +181,72 @@ module ARTService
 
       date_enrolled = patients_service.find_patient_date_enrolled(patient)
       @patient_earliest_start_date = patients_service.find_patient_earliest_start_date(patient, date_enrolled)&.to_date
-      @patient_earliest_start_date ||= PatientProgram.find_by(patient: patient, program: @program).date_enrolled
-      raise ApplicationError, 'Patient is not on ART' unless @patient_earliest_start_date
+      @patient_earliest_start_date ||= PatientProgram.find_by(patient: patient, program: @program)&.date_enrolled
+      Rails.logger.warn("Patient ##{patient.patient_id} is not on ART") unless @patient_earliest_start_date
 
-      @patient_earliest_start_date
+      @patient_earliest_start_date || Date.today
     end
 
-    def struct_vl_info(eligible: false, skip_milestone: false, message: nil)
+    def struct_vl_info(eligible: false, skip_milestone: false, message: nil, due_date: nil)
+      current_regimen, previous_regimen = find_patient_regimen_trail
+
       {
-        milestone: nil,
-        eligibile: eligible,  # Not fixing eligibile[sic] to maintain original interface
-        period_on_art: period_on_art_in_months, # months_on_art,
-        earliest_start_date: @patient_earliest_start_date,
+        eligibile: eligible, # Not fixing eligibile[sic] to maintain original interface
+        milestone: nil, # TODO: Should this simply be a count of how many viral loads the patient has so far?
         skip_milestone: skip_milestone,
+        due_date: due_date,
+        last_order_date: find_patient_last_viral_load&.start_date&.to_date,
+        period_on_art: period_on_art_in_months, # months_on_art,
+        earliest_start_date: patient_earliest_start_date,
         message: message,
-        # current_regimen: {
-        #   regimen: patient_current_regimen,
-        #   date_started: :string
-        # },
-        # previous_regimen: {
-        #   regimen: patient_current_regimen(find_patient_recent_regimen_switch(duration: 12.months)),
-        #   date_completed: :date
-        # }
+        current_regimen: {
+          name: current_regimen&.regimen,
+          date_started: current_regimen&.date_started
+        },
+        previous_regimen: {
+          name: previous_regimen&.regimen,
+          date_completed: previous_regimen&.date_completed
+        }
       }
     end
 
-    def find_patient_current_regimen(date = nil)
-      ARTService::PatientSummary.new(patient, date || self.date).current_regimen
+    ##
+    # Returns the current and previous patient regimens as a pair.
+    def find_patient_regimen_trail
+      patient_last_two_regimen_prescriptions.map do |prescription|
+        regimen = PatientSummary.new(patient, prescription.start_date).current_regimen
+        OpenStruct.new(regimen: regimen, date_started: prescription.start_date, date_completed: prescription.auto_expire_date)
+      end
+    end
+
+    ##
+    # Returns the last two unique regimen prescriptions for the current patient.
+    def patient_last_two_regimen_prescriptions
+      arv_concepts = ConceptSet.find_members_by_name('Antiretroviral drugs').select(:concept_id)
+
+      Order.joins(:order_type, :drug_order)
+           .merge(OrderType.where(name: 'Drug order'))
+           .where(concept_id: arv_concepts, patient: patient)
+           .group('DATE(orders.start_date)')
+           .select("DATE(orders.start_date) AS start_date,
+                    DATE(MAX(auto_expire_date)) AS auto_expire_date,
+                    GROUP_CONCAT(DISTINCT drug_order.drug_inventory_id ORDER BY concept_id SEPARATOR ',') AS drugs")
+           .order(start_date: :desc)
+           .limit(2)
     end
 
     def period_on_art_in_months
       (@date.year * 12 + @date.month) - (patient_earliest_start_date.year * 12 + patient_earliest_start_date.month)
     end
 
+    def formatted_username(user_id)
+      user = User.unscoped.find(user_id)
+      username = user.username
+      name = PersonName.find_by_person_id(user.person_id) || PersonName.unscoped.find_by_person_id(user.person_id)
+
+      return "(#{username})" unless name
+
+      "#{name.given_name} #{name.family_name} (#{username})"
+    end
   end
 end
