@@ -142,7 +142,7 @@ module ARTService
     end
 
     def vl_reminder_info
-      due_date = find_patient_viral_load_due_date
+      due_date = find_patient_viral_load_due_date.to_date
       return struct_vl_info(eligible: true, due_date: due_date) if due_date <= date
 
       days_to_go = due_date - date
@@ -155,7 +155,7 @@ module ARTService
 
       message = if last_viral_load_skip && last_viral_load && last_viral_load_skip.obs_datetime >= last_viral_load.obs_datetime
                   "Viral load set for next milestone by #{formatted_username(last_viral_load_skip.creator)}"
-                elsif last_viral_load.date < @date - 2.months
+                elsif last_viral_load.start_date < @date - 2.months
                   "Viral load ordered on #{last_viral_load.strftime('%d/%b/%Y')} by #{provider(last_viral_load.creator)}"
                 else
                   "Viral load not due until #{due_date.strftime('%d/%b/%Y')}"
