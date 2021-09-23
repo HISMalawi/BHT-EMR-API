@@ -112,7 +112,8 @@ module ARTService
                .joins(
                  'LEFT JOIN (patient_program) on (patient_state.patient_program_id = patient_program.patient_program_id)'
                )
-               .where('patient_program.patient_id = ?', patient.patient_id)
+               .where(patient_program: { patient_id: patient.patient_id,
+                                         program_id: Program.find_by_name!('HIV Program').program_id })
                .where('patient_state.state=2')
                .select <<~SQL
                  patient_state.start_date
