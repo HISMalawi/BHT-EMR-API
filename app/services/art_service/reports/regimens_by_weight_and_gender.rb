@@ -8,6 +8,7 @@ module ARTService
       def initialize(start_date:, end_date:, **_kwargs)
         @start_date = start_date
         @end_date = end_date
+        @rebuild_outcomes = true
       end
 
       def find_report
@@ -31,6 +32,9 @@ module ARTService
       ].freeze
 
       def regimen_counts
+        PatientsAliveAndOnTreatment.new(start_date: start_date, end_date: end_date)
+                                   .refresh_outcomes_table
+
         WEIGHT_BANDS.map do |start_weight, end_weight|
           {
             weight: weight_band_to_string(start_weight, end_weight),
@@ -58,13 +62,14 @@ module ARTService
       def regimen_counts_by_weight_and_gender(start_weight, end_weight, gender)
         date = ActiveRecord::Base.connection.quote(end_date)
 
-        query = Person.select("patient_current_regimen(person_id, #{date}) as regimen, count(*) AS count")
-                      .where(person_id: patients_alive_and_on_art)
-                      .where(person_id: patients_in_weight_band(start_weight, end_weight))
-                      .where(person_id: patients_with_arv_dispensations)
-                      .group(:regimen)
+        query = TempPatientOutcome.joins('INNER JOIN temp_earliest_start_date USING (patient_id)')
+                                  .select("patient_current_regimen(patient_id, #{date}) as regimen, count(*) AS count")
+                                  .where(patient_id: patients_in_weight_band(start_weight, end_weight))
+                                  .where(patient_id: patients_with_arv_dispensations)
+                                  .where(cum_outcome: 'On Antiretrovirals')
+                                  .group(:regimen)
 
-        query = gender ? query.where('gender LIKE ?', "#{gender}%") : query.where(gender: nil)
+        query = gender ? query.where('gender LIKE ?', "#{gender}%") : query.where('gender IS NULL')
 
         query.collect { |obs| { obs.regimen => obs.count } }
       end
@@ -82,21 +87,18 @@ module ARTService
 
       def patients_with_known_weight
         Observation.select('DISTINCT obs.person_id')
-                   .where(concept_id: ConceptName.where(name: 'Weight (kg)').select(:concept_id))
+                   .joins('INNER JOIN temp_patient_outcomes AS outcomes ON outcomes.patient_id = obs.person_id')
+                   .where(concept_id: ConceptName.where(name: 'Weight (kg)').select(:concept_id),
+                          outcomes: { cum_outcome: 'On antiretrovirals' })
                    .where('obs.obs_datetime < ?', end_date)
       end
 
       def patients_with_arv_dispensations
-        Order.joins(:drug_order)
-             .merge(DrugOrder.where(drug_inventory_id: Drug.arv_drugs))
-             .where('start_date >= :start_date OR (start_date <= :end_date AND auto_expire_date >= :start_date)',
-                    start_date: start_date, end_date: end_date)
+        Order.joins('INNER JOIN temp_patient_outcomes AS outcomes ON outcomes.patient_id = orders.patient_id')
+             .where(concept: ConceptSet.find_members_by_name('Antiretroviral drugs').select(:concept_id))
+             .where('start_date >= DATE(?) AND start_date < DATE(?) + INTERVAL 1 DAY', start_date, end_date)
+             .where(outcomes: { cum_outcome: 'On antiretrovirals' })
              .select(:patient_id)
-      end
-
-      def patients_alive_and_on_art
-        PatientsAliveAndOnTreatment.new(start_date: end_date, end_date: end_date)
-                                   .query
       end
     end
   end
