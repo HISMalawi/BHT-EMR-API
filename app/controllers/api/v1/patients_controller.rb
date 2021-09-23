@@ -228,10 +228,15 @@ class Api::V1::PatientsController < ApplicationController
     data = Person.where('person.person_id = ?', patient_id).\
       joins('
       RIGHT JOIN person_address a ON a.person_id = person.person_id
-      RIGHT JOIN person_name n ON n.person_id = person.person_id').\
+      RIGHT JOIN person_name n ON n.person_id = person.person_id
+      LEFT JOIN person_attribute z ON z.person_id = n.person_id AND z.person_attribute_type_id = 12
+      '
+
+      ).\
+
       select('person.*, a.state_province district,
       a.township_division ta, a.city_village village, a.township_division ta,
-      n.given_name, n.family_name').order('n.date_created DESC')
+      n.given_name, n.family_name, z.value').order('n.date_created DESC')
 
     stats = []
     (data || []).each do |record|
