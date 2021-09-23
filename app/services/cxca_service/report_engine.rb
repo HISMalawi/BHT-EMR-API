@@ -1,6 +1,21 @@
-
 module CXCAService
   class ReportEngine
+
+    REPORT_NAMES = {
+      'SCREENED FOR CXCA' => CXCAService::Reports::Moh::ScreenedForCxca,
+      'SCREENED FOR CXCA DISAGGREGATED BY HIV STATUS' => CXCAService::Reports::Moh::ScreenedForCxcaDisaggregatedByHivStatus,
+      'CXCA SCREENING RESULTS' => CXCAService::Reports::Moh::CxcaScreeningResults,
+      'CANCER SUSPECTS' => CXCAService::Reports::Moh::CancerSuspects,
+      'CLIENTS TREATED' => CXCAService::Reports::Moh::ClientTreated,
+      'TREATMENT OPTIONS' => CXCAService::Reports::Moh::TreatmentOptions,
+      'REFERRAL REASONS' => CXCAService::Reports::Moh::ReferralReasons,
+      'VISIT REASONS' => CXCAService::Reports::Clinic::VisitReasons,
+      'TREATMENT OPTIONS' => CXCAService::Reports::Moh::TreatmentOptions
+    }.freeze
+
+    def reports(start_date, end_date, name)
+      REPORT_NAMES[name].new(start_date: start_date, end_date: end_date).data
+    end
 
     def dashboard_stats(date)
       return test_performed date
