@@ -141,7 +141,7 @@ module ARTService
 
     def vl_reminder_info
       due_date = find_patient_viral_load_due_date
-      return struct_vl_info(eligible: true) if due_date >= date
+      return struct_vl_info(eligible: true) if due_date <= date
 
       days_to_go = due_date - date
       if in_months(days_to_go) < 9.months
@@ -196,7 +196,7 @@ module ARTService
       {
         milestone: nil,
         eligibile: eligible,  # Not fixing eligibile[sic] to maintain original interface
-        period_on_art: 0, # months_on_art,
+        period_on_art: period_on_art_in_months, # months_on_art,
         earliest_start_date: patient_earliest_start_date,
         skip_milestone: skip_milestone,
         message: message,
@@ -214,5 +214,10 @@ module ARTService
     def find_patient_current_regimen(date = nil)
       ARTService::PatientSummary.new(patient, date || self.date).current_regimen
     end
+
+    def period_on_art_in_months
+      (@date.year * 12 + @date.month) - (patient_earliest_start_date.year * 12 + patient_earliest_start_date.month)
+    end
+
   end
 end
