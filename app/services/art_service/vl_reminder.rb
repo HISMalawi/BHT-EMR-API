@@ -197,7 +197,7 @@ module ARTService
         milestone: nil,
         eligibile: eligible,  # Not fixing eligibile[sic] to maintain original interface
         period_on_art: period_on_art_in_months, # months_on_art,
-        earliest_start_date: patient_earliest_start_date,
+        earliest_start_date: @patient_earliest_start_date,
         skip_milestone: skip_milestone,
         message: message,
         # current_regimen: {
