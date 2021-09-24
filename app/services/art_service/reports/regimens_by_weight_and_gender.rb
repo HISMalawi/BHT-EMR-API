@@ -65,7 +65,6 @@ module ARTService
         query = TempPatientOutcome.joins('INNER JOIN temp_earliest_start_date USING (patient_id)')
                                   .select("patient_current_regimen(patient_id, #{date}) as regimen, count(*) AS count")
                                   .where(patient_id: patients_in_weight_band(start_weight, end_weight))
-                                  .where(patient_id: patients_with_arv_dispensations)
                                   .where(cum_outcome: 'On Antiretrovirals')
                                   .group(:regimen)
 
@@ -88,6 +87,7 @@ module ARTService
           .joins("INNER JOIN (#{max_weights}) AS max_weights
                   ON max_weights.person_id = obs.person_id AND max_weights.obs_datetime = obs.obs_datetime")
           .where(value_numeric: (start_weight..end_weight))
+          .select(:person_id)
       end
 
       def patients_with_known_weight
@@ -96,14 +96,6 @@ module ARTService
                           outcomes: { cum_outcome: 'On antiretrovirals' })
                    .where('obs.obs_datetime < ?', end_date)
                    .group(:person_id)
-      end
-
-      def patients_with_arv_dispensations
-        Order.joins('INNER JOIN temp_patient_outcomes AS outcomes ON outcomes.patient_id = orders.patient_id')
-             .where(concept: ConceptSet.find_members_by_name('Antiretroviral drugs').select(:concept_id))
-             .where('start_date >= DATE(?) AND start_date < DATE(?) + INTERVAL 1 DAY', start_date, end_date)
-             .where(outcomes: { cum_outcome: 'On antiretrovirals' })
-             .select(:patient_id)
       end
     end
   end
