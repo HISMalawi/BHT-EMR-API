@@ -72,7 +72,8 @@ module ARTService
     #   duration: An ActiveSupport::Duration specifying the period to search for a viral load
     #             starting from set date going back (default: 12 months)
     def find_patient_recent_viral_load(duration: 12.months)
-      Lab::LabOrder.where(concept: ConceptName.where(name: 'Blood').select(:concept_id), patient: patient)
+      Lab::LabOrder.where(concept: ConceptName.where(name: ['Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)'])\
+                  .select(:concept_id), patient: patient)
                    .where('start_date BETWEEN DATE(?) AND DATE(?)', (date - duration), date)
                    .joins(:tests)
                    .merge(viral_load_tests)
