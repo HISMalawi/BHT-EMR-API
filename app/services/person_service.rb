@@ -102,7 +102,7 @@ class PersonService
     return nil if params.empty?
 
     handle_model_errors do
-      new_address = person.addresses.first.dup
+      new_address = person.addresses.first.dup || PersonAddress.new(person: person)
       person.addresses.each { |address| address.void('Address updated') }
 
       new_address.update(creator: User.current.id, uuid: SecureRandom.uuid, **params)
