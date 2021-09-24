@@ -79,18 +79,23 @@ module ARTService
           # If no weight is provided then this must be all patients without a weight observation
           return PatientProgram.select(:patient_id)
                                .where(program_id: ARTService::Constants::PROGRAM_ID)
-                               .where.not(patient_id: patients_with_known_weight)
+                               .where.not(patient_id: patients_with_known_weight.select(:person_id))
         end
 
-        patients_with_known_weight.where(value_numeric: (start_weight..end_weight))
+        max_weights = patients_with_known_weight.select('MAX(obs_datetime) AS obs_datetime, person_id').to_sql
+
+        patients_with_known_weight
+          .joins("INNER JOIN (#{max_weights}) AS max_weights
+                  ON max_weights.person_id = obs.person_id AND max_weights.obs_datetime = obs.obs_datetime")
+          .where(value_numeric: (start_weight..end_weight))
       end
 
       def patients_with_known_weight
-        Observation.select('DISTINCT obs.person_id')
-                   .joins('INNER JOIN temp_patient_outcomes AS outcomes ON outcomes.patient_id = obs.person_id')
+        Observation.joins('INNER JOIN temp_patient_outcomes AS outcomes ON outcomes.patient_id = obs.person_id')
                    .where(concept_id: ConceptName.where(name: 'Weight (kg)').select(:concept_id),
                           outcomes: { cum_outcome: 'On antiretrovirals' })
                    .where('obs.obs_datetime < ?', end_date)
+                   .group(:person_id)
       end
 
       def patients_with_arv_dispensations
