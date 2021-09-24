@@ -17,6 +17,7 @@ compatibility (examples of this include major architectural changes).
 
 ### Added
 
+- ART: Added Drug refill visit workflow
 - ART: PEPFAR viral load coverage report
 - ART: Regimens 14PP and 15PP to cohort report
 - Lab: Test measure for CrAg test
@@ -24,7 +25,9 @@ compatibility (examples of this include major architectural changes).
   - Banja Care Private Clinic (Mulanje)
   - Chikuli Private Clinic (Mulanje)
 - DDE: Pushing of footprint to DDE on encounter create
-- New concept Cryotherapy
+- New concepts:
+  - Cryotherapy (a CxCa procedure)
+  - Drug refill (an ART procedure)
 
 ### Fixed
 
@@ -35,6 +38,7 @@ compatibility (examples of this include major architectural changes).
 - Bumped up lab to v1.1.13 - Fixes error on LIMS push of orders created through LOS
 - Patient merging not appending secondary patient identifiers to primary patient (helpdesk [#3541](https://egpafemr.sdpondemand.manageengine.com/app/itdesk/ui/requests/118246000006095075/details))
 - ART: Regimen distribution pulling defaulters
+
 ### Changed
 
 - ART: VL Reminders to use 2020 MoH guidelines
