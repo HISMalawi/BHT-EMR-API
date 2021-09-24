@@ -17,6 +17,7 @@ compatibility (examples of this include major architectural changes).
 
 ### Added
 
+- ART: Added Drug refill visit workflow
 - ART: PEPFAR viral load coverage report
 - ART: Regimens 14PP and 15PP to cohort report
 - Lab: Test measure for CrAg test

@@ -73,25 +73,30 @@ module ARTService
 
     STATE_CONDITIONS = {
       HIV_CLINIC_REGISTRATION => %i[patient_not_registered?
-                                    patient_not_visiting?],
+                                    patient_not_visiting?
+                                    patient_not_coming_for_drug_refill?],
       VITALS => %i[patient_checked_in?
                    patient_not_on_fast_track?
                    patient_has_not_completed_fast_track_visit?
                    patient_does_not_have_height_and_weight?],
       HIV_STAGING => %i[patient_not_already_staged?
-                        patient_has_not_completed_fast_track_visit?],
+                        patient_has_not_completed_fast_track_visit?
+                        patient_not_coming_for_drug_refill?],
       HIV_CLINIC_CONSULTATION => %i[patient_not_on_fast_track?
                                     patient_has_not_completed_fast_track_visit?],
       ART_ADHERENCE => %i[patient_received_art?
-                          patient_has_not_completed_fast_track_visit?],
+                          patient_has_not_completed_fast_track_visit?
+                          patient_not_coming_for_drug_refill?],
       HIV_CLINIC_CONSULTATION_CLINICIAN => %i[patient_not_on_fast_track?
-                                    patient_has_not_completed_fast_track_visit?],
+                                              patient_has_not_completed_fast_track_visit?
+                                              patient_not_coming_for_drug_refill?],
       TREATMENT => %i[patient_should_get_treatment?
                       patient_has_not_completed_fast_track_visit?],
       FAST_TRACK => %i[fast_track_activated?
                        patient_got_treatment?
                        patient_not_on_fast_track?
-                       patient_has_not_completed_fast_track_visit?],
+                       patient_has_not_completed_fast_track_visit?
+                       patient_not_coming_for_drug_refill?],
       DISPENSING => %i[patient_got_treatment?
                        patient_has_not_completed_fast_track_visit?],
       APPOINTMENT => %i[patient_got_treatment?
@@ -100,7 +105,7 @@ module ARTService
 
     # Concepts
     PATIENT_PRESENT = 'Patient present'
-    MINOR_AGE_LIMIT = 18  # Above this age, patient is considered an adult.
+    MINOR_AGE_LIMIT = 18 # Above this age, patient is considered an adult.
 
     def load_user_activities
       activities = user_property('Activities')&.property_value
@@ -155,9 +160,7 @@ module ARTService
     def valid_state?(state)
       return false if encounter_exists?(encounter_type(state)) || !art_activity_enabled?(state)
 
-      (STATE_CONDITIONS[state] || []).reduce(true) do |status, condition|
-        status && method(condition).call
-      end
+      (STATE_CONDITIONS[state] || []).all? { |condition| send(condition) }
     end
 
     def art_activity_enabled?(state)
@@ -214,14 +217,13 @@ module ARTService
       visiting_patient_concept = concept('External consultation')
       raise '"External consultation" concept not found' unless visiting_patient_concept
 
-      is_visiting_patient = Observation.joins(:encounter).where(
-        concept: patient_type_concept,
-        person: @patient.person,
-        value_coded: visiting_patient_concept.concept_id,
-        encounter: { program_id: @program.program_id }
-      ).where(
-        'obs_datetime <= ?', TimeUtils.day_bounds(@date)[1]
-      ).exists?
+      is_visiting_patient = Observation.joins(:encounter)
+                                       .where(concept: patient_type_concept,
+                                              person: @patient.person,
+                                              value_coded: visiting_patient_concept.concept_id,
+                                              encounter: { program_id: @program.program_id })
+                                       .where('obs_datetime <= ?', TimeUtils.day_bounds(@date)[1])
+                                       .exists?
 
       !is_visiting_patient
     end
@@ -392,6 +394,19 @@ module ARTService
      return false if referred.blank?
      return true if referred.value_coded == concept('Yes').concept_id
      return false
+    end
+
+    def patient_not_coming_for_drug_refill?
+      find_visit_type_observation&.value_coded != ConceptName.find_by!(name: Concept::DRUG_REFILL).concept_id
+    end
+
+    def find_visit_type_observation
+      Observation.joins(:encounter)
+                 .where(concept: ConceptName.where(name: Concept::PATIENT_TYPE).select(:concept_id),
+                        person: @patient.person,
+                        encounter: { program_id: @program.program_id })
+                 .where('obs_datetime < DATE(?) - INTERVAL 1 DAY', @date)
+                 .first
     end
 
     def htn_workflow

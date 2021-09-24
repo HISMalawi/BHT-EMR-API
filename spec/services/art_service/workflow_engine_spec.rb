@@ -53,6 +53,12 @@ describe ARTService::WorkflowEngine do
       expect(encounter_type.name.upcase).to eq('HIV RECEPTION')
     end
 
+    it 'skips HIV CLINIC REGISTRATION for Drug refill patients' do
+      register_patient(patient, epoch - 100.days)
+      record_patient_type(patient, Concept::DRUG_REFILL)
+      expect(engine.next_encounter.name.upcase).to eq('HIV RECEPTION')
+    end
+
     it 'returns HIV_RECEPTION after HIV CLINIC REGISTRATION' do
       register_patient patient
       encounter_type = engine.next_encounter
@@ -102,6 +108,12 @@ describe ARTService::WorkflowEngine do
       expect(encounter_type.name.upcase).to eq('HIV CLINIC CONSULTATION')
     end
 
+    it 'skips HIV STAGING for Drug refill patients' do
+      record_patient_type(patient, Concept::DRUG_REFILL)
+      record_vitals patient
+      expect(engine.next_encounter.name.upcase).to eq(EncounterType::HIV_CLINIC_CONSULTATION)
+    end
+
     it 'returns HIV CLINIC CONSULTATION for patients with HIV STAGING' do
       record_staging patient
       encounter_type = engine.next_encounter
@@ -132,6 +144,14 @@ describe ARTService::WorkflowEngine do
       expect(encounter_type.name.upcase).to eq('ART ADHERENCE')
     end
 
+    it 'skips ART ADHERENCE for Drug refill patients' do
+      record_patient_type(patient, Concept::DRUG_REFILL)
+      record_hiv_clinic_consultation patient
+      prescribe_arv patient, epoch - 1000.days
+      encounter_type = engine.next_encounter
+      expect(encounter_type.name.upcase).to eq('TREATMENT')
+    end
+
     it 'returns TREATMENT after ART ADHERENCE' do
       record_art_adherence patient
       encounter_type = engine.next_encounter
@@ -157,6 +177,12 @@ describe ARTService::WorkflowEngine do
                          concept_id: ConceptName.find_by_name!('Fast').concept_id,
                          obs_datetime: Time.now,
                          value_coded: ConceptName.find_by_name!('Yes').concept_id
+      expect(engine.next_encounter.name.upcase).to eq('DISPENSING')
+    end
+
+    it 'skips FAST TRACK ASSESSMENT for Drug refill patients' do
+      record_patient_type(patient, Concept::DRUG_REFILL)
+      record_treatment patient, assess_fast_track: true
       expect(engine.next_encounter.name.upcase).to eq('DISPENSING')
     end
 
@@ -188,10 +214,10 @@ describe ARTService::WorkflowEngine do
   def register_patient(patient, date = nil)
     date ||= Time.now
     enroll_patient patient
-    create :encounter, type: EncounterType.find_by_name!('HIV CLINIC REGISTRATION'),
+    create(:encounter, type: EncounterType.find_by!(name: EncounterType::HIV_CLINIC_REGISTRATION),
                        patient: patient,
                        date_created: date,
-                       program_id: HIV_PROGRAM_ID
+                       program_id: HIV_PROGRAM_ID)
   end
 
   def receive_patient(patient, guardian_only: false, on_fast_track: false)
@@ -336,5 +362,21 @@ describe ARTService::WorkflowEngine do
                          encounter: create(:encounter_vitals, patient: patient, program_id: HIV_PROGRAM_ID),
                          concept_id: ConceptName.find_by_name!('Prescribe drugs').concept_id,
                          value_coded: ConceptName.find_by_name!('No').concept_id
+  end
+
+  def record_patient_type(patient, concept_name, date: nil)
+    registration = patient.encounters
+                          .joins(:type)
+                          .merge(EncounterType.where(name: EncounterType::REGISTRATION))
+                          .first
+    registration ||= create(:encounter, patient: patient,
+                                        program_id: HIV_PROGRAM_ID,
+                                        encounter_datetime: date || Date.today,
+                                        type: EncounterType.find_by!(name: EncounterType::REGISTRATION))
+
+    Observation.create(person_id: patient.patient_id,
+                       encounter: registration,
+                       concept_id: ConceptName.find_by!(name: Concept::PATIENT_TYPE).concept_id,
+                       value_coded: ConceptName.find_by!(name: concept_name).concept_id)
   end
 end
