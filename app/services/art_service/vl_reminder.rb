@@ -218,8 +218,7 @@ module ARTService
     # Returns the current and previous patient regimens as a pair.
     def find_patient_regimen_trail
       patient_last_two_regimen_prescriptions.map do |prescription|
-        regimen = PatientSummary.new(patient, prescription.start_date).current_regimen
-        OpenStruct.new(regimen: regimen, date_started: prescription.start_date, date_completed: prescription.auto_expire_date)
+        OpenStruct.new(regimen: prescription.regimen, date_started: prescription.start_date, date_completed: prescription.auto_expire_date)
       end
     end
 
@@ -231,10 +230,10 @@ module ARTService
       Order.joins(:order_type, :drug_order)
            .merge(OrderType.where(name: 'Drug order'))
            .where(concept_id: arv_concepts, patient: patient)
-           .group('DATE(orders.start_date)')
-           .select("DATE(orders.start_date) AS start_date,
+           .group('patient_current_regimen(orders.patient_id, DATE(orders.start_date))')
+           .select("DATE(MIN(orders.start_date)) AS start_date,
                     DATE(MAX(auto_expire_date)) AS auto_expire_date,
-                    GROUP_CONCAT(DISTINCT drug_order.drug_inventory_id ORDER BY concept_id SEPARATOR ',') AS drugs")
+                    patient_current_regimen(orders.patient_id, DATE(orders.start_date)) AS regimen")
            .order(start_date: :desc)
            .limit(2)
     end
