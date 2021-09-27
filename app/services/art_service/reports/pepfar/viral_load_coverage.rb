@@ -15,22 +15,37 @@ module ARTService
           @end_date = params[:end_date]&.to_date || @start_date + 12.months
           raise InvalidParameterError, "start_date can't be greater than end_date" if @start_date > @end_date
 
-          @rebuild_outcomes = params[:rebuild_outcomes]&.casecmp?('true') || false
+          @rebuild_outcomes = params.fetch(:rebuild_outcomes, 'true')&.casecmp?('true')
+          @type = params.fetch(:application, 'poc')
         end
 
         def find_report
           report = init_report
 
-          load_patients_into_report(report, :tx_curr, find_patients_alive_and_on_art)
-          load_patients_into_report(report, :due_for_vl, find_patients_due_for_viral_load)
-          load_patients_into_report(report, :tested, find_patients_tested_for_viral_load)
-          load_patients_into_report(report, :high_vl, find_patients_with_high_viral_load)
-          load_patients_into_report(report, :low_vl, find_patients_with_low_viral_load)
+          case @type
+          when /poc/i then build_poc_report(report)
+          when /emastercard/i then build_emastercard_report(report)
+          else raise InvalidParameterError, "Report type must be one of [poc, emastercard] not #{@type}"
+          end
 
           report
         end
 
         private
+
+        def build_poc_report(report)
+          load_patients_into_report(report, :tx_curr, find_patients_alive_and_on_art)
+          load_patients_into_report(report, :due_for_vl, find_patients_due_for_viral_load)
+          load_patients_into_report(report, :tested, find_patients_tested_for_viral_load)
+          load_patients_into_report(report, :high_vl, find_patients_with_high_viral_load)
+          load_patients_into_report(report, :low_vl, find_patients_with_low_viral_load)
+        end
+
+        def build_emastercard_report(report)
+          load_patients_into_report(report, :tx_curr, find_patients_alive_and_on_art)
+          load_patients_into_report(report, :high_vl, find_emastercard_patients_with_high_viral_load)
+          load_patients_into_report(report, :low_vl, find_emastercard_patients_with_low_viral_load)
+        end
 
         def init_report
           pepfar_age_groups.each_with_object({}) do |age_group, report|
@@ -181,6 +196,40 @@ module ARTService
                      person.birthdate,
                      person.gender,
                      cohort_disaggregated_age_group(person.birthdate, #{ActiveRecord::Base.connection.quote(end_date)}) AS age_group")
+        end
+
+        def find_emastercard_patients_with_low_viral_load
+          Observation.joins(order: [:order_type])
+                     .joins('INNER JOIN temp_patient_outcomes ON temp_patient_outcomes.patient_id = obs.person_id')
+                     .joins('INNER JOIN person ON person.person_id = obs.person_id AND person.voided = 0')
+                     .joins('LEFT JOIN patient_identifier ON patient_identifier.patient_id = obs.person_id AND patient_identifier.voided = 0')
+                     .where(concept: ConceptName.where(name: 'Viral load').select(:concept_id),
+                            orders: { order_type: { name: 'Lab' } },
+                            temp_patient_outcomes: { cum_outcome: 'On antiretrovirals' })
+                     .where("obs.value_numeric < 1000 AND obs.value_modifier IN ('=', '<')")
+                     .group(:person_id)
+                     .select("obs.person_id AS patient_id,
+                              patient_identifier.identifier AS arv_number,
+                              person.birthdate,
+                              person.gender,
+                              cohort_disaggregated_age_group(person.birthdate, #{ActiveRecord::Base.connection.quote(end_date)}) AS age_group")
+        end
+
+        def find_emastercard_patients_with_high_viral_load
+          Observation.joins(order: [:order_type])
+                     .joins('INNER JOIN temp_patient_outcomes ON temp_patient_outcomes.patient_id = obs.person_id')
+                     .joins('INNER JOIN person ON person.person_id = obs.person_id AND person.voided = 0')
+                     .joins('LEFT JOIN patient_identifier ON patient_identifier.patient_id = obs.person_id AND patient_identifier.voided = 0')
+                     .where(concept: ConceptName.where(name: 'Viral load').select(:concept_id),
+                            orders: { order_type: { name: 'Lab' } },
+                            temp_patient_outcomes: { cum_outcome: 'On antiretrovirals' })
+                     .where("(obs.value_modifier = '=' AND obs.value_numeric >= 1000) OR (obs.value_modifier = '>' AND value_numeric IS NOT NULL)")
+                     .group(:person_id)
+                     .select("obs.person_id AS patient_id,
+                              patient_identifier.identifier AS arv_number,
+                              person.birthdate,
+                              person.gender,
+                              cohort_disaggregated_age_group(person.birthdate, #{ActiveRecord::Base.connection.quote(end_date)}) AS age_group")
         end
       end
     end
