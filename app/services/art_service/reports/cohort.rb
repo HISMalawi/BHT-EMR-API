@@ -29,7 +29,7 @@ module ARTService
           save_report
         end
       rescue FailedToAcquireLock => e
-        Rails.logger.debug("ART#Cohort report is locked by another process: #{e}")
+        Rails.logger.warn("ART#Cohort report is locked by another process: #{e}")
       end
 
       def find_report
