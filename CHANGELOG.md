@@ -31,6 +31,7 @@ compatibility (examples of this include major architectural changes).
 
 ### Fixed
 
+- ART: Pyridoxine not being automatically prescribed on 3HP prescriptions
 - ART Stock: Resetting of current quantity on dispensation reversal
 - ART Stock: Relocation of drugs at a date before their delivery date
 - ART Stock: Drug relocations not saving retrospective dates
