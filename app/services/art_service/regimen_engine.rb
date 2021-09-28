@@ -430,11 +430,12 @@ module ARTService
       end
     end
 
+    ##
     # Retrieves drugs that make up the given medication course.
     #
     # Examples:
     #   Course(INH) => {INH, Pyridoxine}
-    #   Course(Rifapentine) => {Rifapentine, INH} //
+    #   Course(Rifapentine) => {Rifapentine, INH, Pyridoxine} //
     #
     #   NOTE: The courses above should rightly be called IPT and 3HP but historically
     #         they were being wrongly named in the application by their primary
@@ -443,7 +444,7 @@ module ARTService
       if drug_concept.name == 'INH' # IPT Course
         Drug.where(concept: [drug_concept.concept_id, ConceptName.find_by_name('Pyridoxine').concept_id])
       elsif drug_concept.name == 'Rifapentine' # 3HP Course
-        Drug.where(concept: [drug_concept.concept_id, ConceptName.find_by_name('Isoniazid').concept_id])
+        Drug.where(concept: [drug_concept.concept_id, ConceptName.find_by_name('Isoniazid').concept_id, ConceptName.find_by_name('Pyridoxine').concept_id])
       else
         Drug.where(concept: drug_concept.concept_id)
       end
