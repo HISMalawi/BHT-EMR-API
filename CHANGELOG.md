@@ -13,15 +13,29 @@ In short, a version number is of the following format `major.minor.patch`
 minor number changes with new backward compatible features. The major
 number changes with major changes that completely break backwards
 compatibility (examples of this include major architectural changes).
+ ## [Unreleased]
 
-## [Unreleased]
+### Fixed
+
+- ART Stock: Resetting of current quantity on dispensation reversal
+- ART Stock: Relocation of drugs at a date before their delivery date
+- ART Stock: Drug relocations not saving retrospective dates
 
 ### Added
 
-- Bumped up lab to v1.1.13 - Fixes error on LIMS push of orders created through LOS
+- ART: Regimens 14PP and 15PP to cohort report
+- Lab: Test measure for CrAg test
+- New locations:
+  - Banja Care Private Clinic (Mulanje)
+  - Chikuli Private Clinic (Mulanje)
+- DDE: Pushing of footprint to DDE on encounter create
 - New concept Cryotherapy
-- Patient merging not appending secondary patient identifiers to primary patient (helpdesk [#3541](https://egpafemr.sdpondemand.manageengine.com/app/itdesk/ui/requests/118246000006095075/details))
 
+### Fixed
+
+- ART: Hanging pills not being added to appointment date
+- Bumped up lab to v1.1.13 - Fixes error on LIMS push of orders created through LOS
+- Patient merging not appending secondary patient identifiers to primary patient (helpdesk [#3541](https://egpafemr.sdpondemand.manageengine.com/app/itdesk/ui/requests/118246000006095075/details))
 ### Changed
 
 - ART: TB Prev definition changed to capture 3HP for up to 6 months prior to the start of reporting period
