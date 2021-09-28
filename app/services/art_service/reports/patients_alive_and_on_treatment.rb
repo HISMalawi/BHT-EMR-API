@@ -7,6 +7,8 @@ module ARTService
     class PatientsAliveAndOnTreatment
       attr_reader :start_date, :end_date
 
+      include ConcurrencyUtils
+
       def initialize(start_date:, end_date:, rebuild_outcomes: true, **_kwargs)
         @start_date = start_date
         @end_date = end_date
@@ -28,11 +30,13 @@ module ARTService
       end
 
       def query
-        refresh_outcomes_table if @rebuild_outcomes || !outcomes_table_exists?
+        with_lock('art_service/reports/tx_curr.lock') do
+          refresh_outcomes_table if @rebuild_outcomes || !outcomes_table_exists?
 
-        Patient.find_by_sql <<~SQL
-          SELECT patient_id FROM temp_patient_outcomes WHERE cum_outcome LIKE 'On antiretrovirals'
-        SQL
+          Patient.find_by_sql <<~SQL
+            SELECT patient_id FROM temp_patient_outcomes WHERE cum_outcome LIKE 'On antiretrovirals'
+          SQL
+        end
       end
 
       private
