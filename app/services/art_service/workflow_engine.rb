@@ -405,7 +405,7 @@ module ARTService
                  .where(concept: ConceptName.where(name: Concept::PATIENT_TYPE).select(:concept_id),
                         person: @patient.person,
                         encounter: { program_id: @program.program_id })
-                 .where('obs_datetime < DATE(?) - INTERVAL 1 DAY', @date)
+                 .where('obs_datetime < DATE(?) + INTERVAL 1 DAY', @date)
                  .first
     end
 
