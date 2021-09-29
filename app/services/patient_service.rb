@@ -77,8 +77,8 @@ class PatientService
     patient
   end
 
-  def find_patients_by_npid(npid)
-    find_patients_by_identifier(npid, *npid_identifier_types.to_a)
+  def find_patients_by_npid(npid, voided: false)
+    find_patients_by_identifier(npid, *npid_identifier_types.to_a, voided: voided)
   end
 
   def find_patients_by_name_and_gender(given_name, middle_name = nil, family_name, gender)
@@ -91,11 +91,12 @@ class PatientService
     median_weight_height(patient.age_in_months, patient.person.gender)
   end
 
-  def find_patients_by_identifier(identifier, *identifier_types)
-    Patient.joins(:patient_identifiers).where(
-      '`patient_identifier`.identifier_type in (?) AND `patient_identifier`.identifier = ?',
-      identifier_types.collect(&:id), identifier
-    )
+  def find_patients_by_identifier(identifier, *identifier_types, voided: false)
+    query = Patient.joins('INNER JOIN patient_identifier USING (patient_id)')
+                   .where(patient_identifier: { identifier: identifier, identifier_type: identifier_types.collect(&:id) })
+    query = query.where.not(patient_identifier: { voided: 0 }) if voided
+
+    query
   end
 
   def find_patient_visit_dates(patient, program = nil)
