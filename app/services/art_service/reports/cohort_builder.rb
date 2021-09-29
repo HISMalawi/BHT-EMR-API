@@ -9,6 +9,14 @@ module ARTService
 
       include ModelUtils
 
+      def initialize(outcomes_definition: 'moh')
+        unless %w[moh pepfar].include?(outcomes_definition.downcase)
+          raise ArgumentError, "Invalid outcomes_definition `#{outcomes_definition}` expected moh or pepfar"
+        end
+
+        @outcomes_definition = outcomes_definition
+      end
+
       def init_temporary_tables(_start_date, end_date)
         create_tmp_patient_table
         load_data_into_temp_earliest_start_date(end_date.to_date)
@@ -646,7 +654,8 @@ module ARTService
       end
 
       def update_cum_outcome(end_date)
-        Cohort::Outcomes.update_cummulative_outcomes(end_date)
+        Cohort::Outcomes.new(end_date: end_date, definition: @outcomes_definition)
+                        .update_cummulative_outcomes
       end
 
       def update_tb_status(end_date)

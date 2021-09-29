@@ -66,7 +66,7 @@ module ARTService
 
         def find_patients_alive_and_on_art
           patients = PatientsAliveAndOnTreatment
-                     .new(start_date: start_date, end_date: end_date, rebuild_outcomes: @rebuild_outcomes)
+                     .new(start_date: start_date, end_date: end_date, outcomes_definition: 'pepfar', rebuild_outcomes: @rebuild_outcomes)
                      .query
           pepfar_patient_drilldown_information(patients, end_date)
         end

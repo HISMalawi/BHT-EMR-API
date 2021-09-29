@@ -9,10 +9,11 @@ module ARTService
 
       include ConcurrencyUtils
 
-      def initialize(start_date:, end_date:, rebuild_outcomes: true, **_kwargs)
+      def initialize(start_date:, end_date:, outcomes_definition: 'moh', rebuild_outcomes: true, **_kwargs)
         @start_date = start_date
         @end_date = end_date
         @rebuild_outcomes = rebuild_outcomes
+        @outcomes_definition = outcomes_definition
       end
 
       ##
@@ -22,7 +23,8 @@ module ARTService
       # with various outcomes.
       def refresh_outcomes_table
         logger.debug('Initialising cohort temporary tables...')
-        CohortBuilder.new.init_temporary_tables(@start_date, @end_date)
+        CohortBuilder.new(outcomes_definition: @outcomes_definition)
+                     .init_temporary_tables(@start_date, @end_date)
       end
 
       def find_report
