@@ -2,7 +2,7 @@
 
 class DrugCms < ApplicationRecord
   self.table_name = :drug_cms
-  self.primary_key = :drug_inventory_id
+  self.primary_key = :id
 
   belongs_to :drug, foreign_key: :drug_inventory_id
 end

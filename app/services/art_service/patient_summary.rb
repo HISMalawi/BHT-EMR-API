@@ -62,6 +62,8 @@ module ARTService
       "#{district}, #{village}"
     end
 
+    ##
+    # Returns the patient's current regimen
     def current_regimen
       patient_id = ActiveRecord::Base.connection.quote(patient.patient_id)
       quoted_date = ActiveRecord::Base.connection.quote(date.to_date)

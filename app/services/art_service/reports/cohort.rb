@@ -10,6 +10,7 @@ module ARTService
     # the constructor. This method must be called to build report and save
     # it to database.
     class Cohort
+      include ConcurrencyUtils
       include ModelUtils
 
       def initialize(name:, type:, start_date:, end_date:)
@@ -22,9 +23,13 @@ module ARTService
       end
 
       def build_report
-        clear_drill_down
-        @cohort_builder.build(@cohort_struct, @start_date, @end_date)
-        save_report
+        with_lock('art_service/reports/cohort.lock', blocking: false) do
+          clear_drill_down
+          @cohort_builder.build(@cohort_struct, @start_date, @end_date)
+          save_report
+        end
+      rescue FailedToAcquireLock => e
+        Rails.logger.warn("ART#Cohort report is locked by another process: #{e}")
       end
 
       def find_report

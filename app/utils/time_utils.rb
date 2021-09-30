@@ -17,6 +17,22 @@ module TimeUtils
        datetime.strftime('%Y-%m-%d 23:59:59').to_time]
     end
 
+    ##
+    # Parses and validates start_date and end_date provided by users
+    #
+    # Returns: A pair of Date objects containing the start_date and end_date
+    def parse_date_range(start_date, end_date)
+      raise InvalidParameterError, 'start_date is required' if start_date.blank?
+      raise InvalidParameterError, 'end_date is required' if end_date.blank?
+
+      start_date = start_date.to_date
+      end_date = end_date.to_date
+
+      raise InvalidParameterError, "start_date can't be greater than end_date" if start_date > end_date
+
+      [start_date, end_date]
+    end
+
     # Returns a time object comprising the given date plus the current time.
     def retro_timestamp(date)
       return nil unless date

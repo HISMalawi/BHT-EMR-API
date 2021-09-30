@@ -9,6 +9,8 @@ module ARTService
       class TbPrev2
         attr_reader :start_date, :end_date
 
+        include Utils
+
         def initialize(start_date:, end_date:, **_kwargs)
           @start_date = ActiveRecord::Base.connection.quote(start_date)
           @end_date = ActiveRecord::Base.connection.quote(end_date)
@@ -39,27 +41,8 @@ module ARTService
         #       is 1 month (28 days) then 2 months (56 days). And we assume that patients
         #       start taking medication the very same they are given thus we subtract 1.
 
-        AGE_GROUPS = [
-          'Unknown',
-          '0-5 months',
-          '6-11 months',
-          '12-23 months',
-          '2-4 years',
-          '5-9 years',
-          '10-14 years',
-          '15-17 years',
-          '18-19 years',
-          '20-24 years',
-          '25-29 years',
-          '30-34 years',
-          '35-39 years',
-          '40-44 years',
-          '45-49 years',
-          '50 plus years'
-        ].freeze
-
         def init_report
-          AGE_GROUPS.each_with_object({}) do |age_group, report|
+          pepfar_age_groups.each_with_object({}) do |age_group, report|
             report[age_group] = %w[M F Unknown].each_with_object({}) do |gender, gender_sub_report|
               gender_sub_report[gender] = %w[6H 3HP].each_with_object({}) do |tpt, tpt_sub_report|
                 tpt_sub_report[tpt] = {
@@ -166,7 +149,7 @@ module ARTService
                 AND drug_order.quantity > 0
               INNER JOIN concept_name
                 ON concept_name.concept_id = orders.concept_id
-                AND concept_name.name = 'Rifapentine'
+                AND concept_name.name = #{tpt_concept_name}
                 AND concept_name.voided = 0
               WHERE encounter.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
                 AND encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'Treatment')
