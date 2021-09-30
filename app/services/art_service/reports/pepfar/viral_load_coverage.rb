@@ -15,6 +15,11 @@ module ARTService
           @end_date = params[:end_date]&.to_date || @start_date + 12.months
           raise InvalidParameterError, "start_date can't be greater than end_date" if @start_date > @end_date
 
+          @tx_curr_definition = params.fetch(:tx_curr_definition, 'pepfar')&.downcase
+          unless %w[moh pepfar].include?(@tx_curr_definition)
+            raise InvalidParameterError, "tx_curr_definition can only moh or pepfar not #{@tx_curr_definition}"
+          end
+
           @rebuild_outcomes = params.fetch(:rebuild_outcomes, 'true')&.casecmp?('true')
           @type = params.fetch(:application, 'poc')
         end
@@ -34,28 +39,37 @@ module ARTService
         private
 
         def build_poc_report(report)
-          load_patients_into_report(report, :tx_curr, find_patients_alive_and_on_art)
-          load_patients_into_report(report, :due_for_vl, find_patients_due_for_viral_load)
-          load_patients_into_report(report, :tested, find_patients_tested_for_viral_load)
-          load_patients_into_report(report, :high_vl, find_patients_with_high_viral_load)
-          load_patients_into_report(report, :low_vl, find_patients_with_low_viral_load)
+          load_patients_into_report(report, [:tx_curr], find_patients_alive_and_on_art)
+          load_patients_into_report(report, [:due_for_vl], find_patients_due_for_viral_load)
+          load_patients_into_report(report, %i[drawn routine], find_patients_tested_for_viral_load(routine: true))
+          load_patients_into_report(report, %i[drawn targeted], find_patients_tested_for_viral_load(routine: false))
+          load_patients_into_report(report, %i[high_vl routine], find_patients_with_high_viral_load(routine: true))
+          load_patients_into_report(report, %i[high_vl targeted], find_patients_with_high_viral_load(routine: false))
+          load_patients_into_report(report, %i[low_vl routine], find_patients_with_low_viral_load(routine: true))
+          load_patients_into_report(report, %i[low_vl targeted], find_patients_with_low_viral_load(routine: false))
         end
 
         def build_emastercard_report(report)
-          load_patients_into_report(report, :tx_curr, find_patients_alive_and_on_art)
-          load_patients_into_report(report, :high_vl, find_emastercard_patients_with_high_viral_load)
-          load_patients_into_report(report, :low_vl, find_emastercard_patients_with_low_viral_load)
+          load_patients_into_report(report, [:tx_curr], find_patients_alive_and_on_art)
+          load_patients_into_report(report, %i[high_vl routine], find_emastercard_patients_with_high_viral_load)
+          load_patients_into_report(report, %i[low_vl routine], find_emastercard_patients_with_low_viral_load)
         end
 
         def init_report
           pepfar_age_groups.each_with_object({}) do |age_group, report|
-            report[age_group] = { tx_curr: [], due_for_vl: [], tested: [], high_vl: [], low_vl: [] }
+            report[age_group] = {
+              tx_curr: [],
+              due_for_vl: [],
+              drawn: { routine: [], targeted: [] },
+              high_vl: { routine: [], targeted: [] },
+              low_vl: { routine: [], targeted: [] }
+            }
           end
         end
 
         def load_patients_into_report(report, sub_report, patients)
           patients.each do |patient|
-            report[patient.age_group][sub_report] << {
+            report.dig(patient.age_group, *sub_report) << {
               patient_id: patient.patient_id,
               arv_number: patient.arv_number,
               gender: patient.gender,
@@ -66,7 +80,7 @@ module ARTService
 
         def find_patients_alive_and_on_art
           patients = PatientsAliveAndOnTreatment
-                     .new(start_date: start_date, end_date: end_date, outcomes_definition: 'pepfar', rebuild_outcomes: @rebuild_outcomes)
+                     .new(start_date: start_date, end_date: end_date, outcomes_definition: @tx_curr_definition, rebuild_outcomes: @rebuild_outcomes)
                      .query
           pepfar_patient_drilldown_information(patients, end_date)
         end
@@ -74,17 +88,7 @@ module ARTService
         ##
         # Selects patients who are due for viral load
         def find_patients_due_for_viral_load
-          overdue_patients = find_patients_with_overdue_viral_load
-          due_for_initial_viral_load = find_patients_due_for_initial_viral_load # .where.not(patient: overdue_patients)
-
-          Rails.logger.debug do
-            overdue_patients_count = overdue_patients.collect(&:patient_id).size
-            due_for_initial_viral_load_count = due_for_initial_viral_load.collect(&:patient_id).size
-
-            "VL Coverage: overdue: #{overdue_patients_count}, Due for initial 6 months viral load: #{due_for_initial_viral_load_count}"
-          end
-
-          overdue_patients + due_for_initial_viral_load
+          find_patients_with_overdue_viral_load # + find_patients_due_for_initial_viral_load
         end
 
         ##
@@ -98,8 +102,7 @@ module ARTService
                        .joins("INNER JOIN temp_patient_outcomes AS outcomes ON outcomes.patient_id = orders.patient_id AND outcomes.cum_outcome = 'On Antiretrovirals'")
                        .joins('INNER JOIN person ON person.person_id = orders.patient_id AND person.voided = 0')
                        .joins('LEFT JOIN patient_identifier ON patient_identifier.patient_id = orders.patient_id AND patient_identifier.voided = 0')
-                       .where(concept: ConceptName.where(name: 'Blood').select(:concept_id),
-                              patient_identifier: { identifier_type: pepfar_patient_identifier_type })
+                       .where(patient_identifier: { identifier_type: pepfar_patient_identifier_type })
                        .where('start_date < ?', end_date)
                        .merge(find_viral_load_tests)
                        .group(:patient_id)
@@ -124,7 +127,7 @@ module ARTService
                .where(concept: ConceptSet.find_members_by_name('Antiretroviral drugs').select(:concept_id),
                       patient_identifier: { identifier_type: pepfar_patient_identifier_type })
                .where('outcomes.cum_outcome LIKE ?', 'On antiretrovirals')
-               .where.not(patient_id: find_patients_with_viral_load.collect(&:patient_id))
+               .where.not(patient_id: find_patients_with_viral_load(routine: nil).collect(&:patient_id))
                .where('start_date < DATE(?)', end_date)
                .group(:patient_id)
                .select("orders.patient_id,
@@ -138,64 +141,86 @@ module ARTService
 
         ##
         # Find all patients that are on treatment with at least one VL before end of reporting period.
-        def find_patients_with_viral_load
-          Lab::LabOrder.joins('INNER JOIN temp_patient_outcomes AS outcomes USING (patient_id)')
-                       .where('start_date < DATE(?)', end_date)
-                       .where('outcomes.cum_outcome LIKE ?', 'On Antiretrovirals')
-                       .group(:patient_id)
-                       .select('orders.patient_id')
+        def find_patients_with_viral_load(routine:)
+          query = Lab::LabOrder.joins('INNER JOIN obs AS tests ON tests.order_id = orders.order_id')
+                               .joins('INNER JOIN obs AS reason_for_test ON reason_for_test.order_id = orders.order_id')
+                               .joins('INNER JOIN temp_patient_outcomes AS outcomes USING (patient_id)')
+                               .where('start_date < DATE(?)', end_date)
+                               .where('outcomes.cum_outcome LIKE ?', 'On Antiretrovirals')
+                               .where('tests.concept_id IN (?) AND tests.value_coded IN (?) AND tests.voided = 0', concept('Test type'), concept('Viral load'))
+                               .where('reason_for_test.voided = 0 AND reason_for_test.concept_id IN (?)', concept('Reason for test'))
+                               .group(:patient_id)
+                               .select('orders.patient_id')
+          return query if routine.nil?
+
+          return query.where("reason_for_test.value_text = 'Routine'") if routine
+
+          query.where("reason_for_test.value_text != 'Routine'")
         end
 
         ##
         # Returns all patients that have been tested for viral load during the reporting period.
-        def find_patients_tested_for_viral_load
-          patients = find_patients_with_viral_load.where('start_date >= DATE(?)', start_date)
+        def find_patients_tested_for_viral_load(routine:)
+          patients = find_patients_with_viral_load(routine: routine).where('start_date >= DATE(?)', start_date)
           pepfar_patient_drilldown_information(patients, end_date)
         end
 
         ##
         # Returns a Relation of all viral load tests.
         def find_viral_load_tests
-          Lab::LabTest.where(value_coded: ConceptName.where(name: 'Viral load').select(:concept_id))
+          Lab::LabTest.where(value_coded: concept('Viral load'))
         end
 
         ##
         # Returns all patients with a viral load of at least 1000 in reporting period.
-        def find_patients_with_high_viral_load
-          viral_load = ConceptName.select(:concept_id).find_by!(name: 'Viral load').concept_id
+        def find_patients_with_high_viral_load(routine:)
+          query = find_viral_load_tests
+                  .joins(result: [:children])
+                  .joins('INNER JOIN person ON person.person_id = obs.person_id AND person.voided = 0')
+                  .joins('INNER JOIN obs AS reason_for_test ON reason_for_test.order_id = obs.order_id')
+                  .joins('INNER JOIN temp_patient_outcomes ON temp_patient_outcomes.patient_id = person.person_id')
+                  .joins('LEFT JOIN patient_identifier ON patient_identifier.patient_id = person.person_id AND patient_identifier.voided = 0')
+                  .where('children_obs.concept_id IN (?) AND children_obs.value_numeric >= 1000', concept('Viral load'))
+                  .where(obs_datetime: start_date..end_date,
+                         patient_identifier: { identifier_type: pepfar_patient_identifier_type },
+                         reason_for_test: { voided: 0, concept_id: concept('Reason for test') },
+                         temp_patient_outcomes: { cum_outcome: 'On antiretrovirals' })
+                  .group(:person_id)
+                  .select("obs.person_id AS patient_id,
+                           patient_identifier.identifier AS arv_number,
+                           person.birthdate,
+                           person.gender,
+                           cohort_disaggregated_age_group(person.birthdate, #{ActiveRecord::Base.connection.quote(end_date)}) AS age_group")
 
-          find_viral_load_tests
-            .joins(result: [:children])
-            .joins('INNER JOIN person ON person.person_id = obs.person_id AND person.voided = 0')
-            .joins('LEFT JOIN patient_identifier ON patient_identifier.patient_id = person.person_id AND patient_identifier.voided = 0')
-            .where('children_obs.concept_id = ? AND children_obs.value_numeric >= 1000', viral_load)
-            .where(obs_datetime: start_date..end_date, patient_identifier: { identifier_type: pepfar_patient_identifier_type })
-            .group(:person_id)
-            .select("obs.person_id AS patient_id,
-                     patient_identifier.identifier AS arv_number,
-                     person.birthdate,
-                     person.gender,
-                     cohort_disaggregated_age_group(person.birthdate, #{ActiveRecord::Base.connection.quote(end_date)}) AS age_group")
+          return query.where("reason_for_test.value_coded IN (?) OR reason_for_test.value_text = 'Routine'", concept('Routine')) if routine
+
+          query.where("reason_for_test.value_coded NOT IN (?) AND reason_for_test.value_text != 'Routine'", concept('Routine'))
         end
 
         ##
         # Returns all patients with a viral load below 1000 or < LDL in reporting period.
-        def find_patients_with_low_viral_load
-          viral_load = ConceptName.select(:concept_id).find_by!(name: 'Viral load').concept_id
+        def find_patients_with_low_viral_load(routine:)
+          query = find_viral_load_tests
+                  .joins(result: [:children])
+                  .joins('INNER JOIN person ON person.person_id = obs.person_id AND person.voided = 0')
+                  .joins('INNER JOIN obs AS reason_for_test ON reason_for_test.order_id = obs.order_id')
+                  .joins('INNER JOIN temp_patient_outcomes ON temp_patient_outcomes.patient_id = person.person_id')
+                  .joins('LEFT JOIN patient_identifier ON patient_identifier.patient_id = person.person_id AND patient_identifier.voided = 0')
+                  .where('children_obs.concept_id IN (?) AND children_obs.value_numeric < 1000 OR children_obs.value_text = "LDL"', concept('Viral load'))
+                  .where(obs_datetime: start_date..end_date,
+                         patient_identifier: { identifier_type: pepfar_patient_identifier_type },
+                         reason_for_test: { voided: 0, concept_id: concept('Reason for test') },
+                         temp_patient_outcomes: { cum_outcome: 'On antiretrovirals' })
+                  .group(:person_id)
+                  .select("obs.person_id AS patient_id,
+                           patient_identifier.identifier AS arv_number,
+                           person.birthdate,
+                           person.gender,
+                           cohort_disaggregated_age_group(person.birthdate, #{ActiveRecord::Base.connection.quote(end_date)}) AS age_group")
 
-          find_viral_load_tests
-            .joins(result: [:children])
-            .joins('INNER JOIN person ON person.person_id = obs.person_id AND person.voided = 0')
-            .joins('LEFT JOIN patient_identifier ON patient_identifier.patient_id = obs.person_id AND patient_identifier.voided = 0')
-            .where('children_obs.concept_id = ?', viral_load)
-            .where("children_obs.value_numeric < 1000 OR (children_obs.value_modifier = '<' AND children_obs.value_text = 'LDL')")
-            .where(obs_datetime: start_date..end_date, patient_identifier: { identifier_type: pepfar_patient_identifier_type })
-            .group(:person_id)
-            .select("obs.person_id AS patient_id,
-                     patient_identifier.identifier AS arv_number,
-                     person.birthdate,
-                     person.gender,
-                     cohort_disaggregated_age_group(person.birthdate, #{ActiveRecord::Base.connection.quote(end_date)}) AS age_group")
+          return query.where("reason_for_test.value_coded IN (?) OR reason_for_test.value_text = 'Routine'", concept('Routine')) if routine
+
+          query.where("reason_for_test.value_coded NOT IN (?) AND reason_for_test.value_text != 'Routine'", concept('Routine'))
         end
 
         def find_emastercard_patients_with_low_viral_load
@@ -230,6 +255,10 @@ module ARTService
                               person.birthdate,
                               person.gender,
                               cohort_disaggregated_age_group(person.birthdate, #{ActiveRecord::Base.connection.quote(end_date)}) AS age_group")
+        end
+
+        def concept(name)
+          ConceptName.where(name: name).select(:concept_id)
         end
       end
     end
