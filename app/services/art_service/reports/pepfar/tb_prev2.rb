@@ -18,13 +18,14 @@ module ARTService
 
         def find_report
           report = init_report
+          patients = group_patients_by_tpt_course(patients_on_tpt)
 
-          load_patients_into_report(report, patients_on_tpt('Pyridoxine'), '6H') do |patient|
+          load_patients_into_report(report, patients.six_h, '6H') do |patient|
             # 6H has a constant dosage of 1 pill per day
             patient['total_pills_taken'].to_i >= FULL_6H_COURSE_PILLS
           end
 
-          load_patients_into_report(report, patients_on_tpt('Rifapentine'), '3HP') do |patient|
+          load_patients_into_report(report, patients.three_hp, '3HP') do |patient|
             # 3HP daily dosages vary by patient weight can't use easily use pills
             # to determine course completion
             patient['total_days_on_medication'].days >= FULL_3HP_COURSE_DAYS
@@ -87,9 +88,7 @@ module ARTService
           (tpt_initiation_date >= art_start_date) && (tpt_initiation_date < art_start_date + 90.days)
         end
 
-        def patients_on_tpt(tpt_concept_name)
-          tpt_concept_name = ActiveRecord::Base.connection.quote(tpt_concept_name)
-
+        def patients_on_tpt
           ActiveRecord::Base.connection.select_all <<~SQL
             SELECT person.person_id AS patient_id,
                    patient_identifier.identifier AS arv_number,
@@ -99,7 +98,8 @@ module ARTService
                    SUM(DATEDIFF(orders.auto_expire_date, orders.start_date)) AS total_days_on_medication,
                    person.gender,
                    person.birthdate,
-                   cohort_disaggregated_age_group(person.birthdate, DATE(#{end_date})) AS age_group
+                   cohort_disaggregated_age_group(person.birthdate, DATE(#{end_date})) AS age_group,
+                   GROUP_CONCAT(DISTINCT drug_order.drug_inventory_id SEPARATOR ',') AS drugs
             FROM person
             LEFT JOIN patient_identifier
               ON patient_identifier.patient_id = person.person_id
@@ -129,7 +129,7 @@ module ARTService
               AND orders.voided = 0
             INNER JOIN concept_name
               ON concept_name.concept_id = orders.concept_id
-              AND concept_name.name = #{tpt_concept_name}
+              AND concept_name.name IN ('Rifapentine', 'Isoniazid')
             INNER JOIN drug_order
               ON drug_order.order_id = orders.order_id
               AND drug_order.quantity > 0
@@ -140,7 +140,7 @@ module ARTService
               INNER JOIN orders
                 ON orders.encounter_id = encounter.encounter_id
                 AND orders.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
-                AND orders.concept_id IN (SELECT concept_id FROM concept_name WHERE name = #{tpt_concept_name} AND voided = 0)
+                AND orders.concept_id IN (SELECT concept_id FROM concept_name WHERE name IN ('Isoniazid', 'Rifapentine') AND voided = 0)
                 AND orders.start_date >= DATE(#{start_date}) - INTERVAL 6 MONTH
                 AND orders.start_date < DATE(#{start_date})
                 AND orders.voided = 0
@@ -149,7 +149,7 @@ module ARTService
                 AND drug_order.quantity > 0
               INNER JOIN concept_name
                 ON concept_name.concept_id = orders.concept_id
-                AND concept_name.name = #{tpt_concept_name}
+                AND concept_name.name IN ('Rifapentine', 'Isoniazid')
                 AND concept_name.voided = 0
               WHERE encounter.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
                 AND encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'Treatment')
@@ -165,7 +165,7 @@ module ARTService
                   FROM encounter
                   INNER JOIN orders
                     ON orders.encounter_id = encounter.encounter_id
-                    AND orders.concept_id IN (SELECT concept_id FROM concept_name WHERE name = #{tpt_concept_name} AND voided = 0)
+                    AND orders.concept_id IN (SELECT concept_id FROM concept_name WHERE name IN ('Rifapentine', 'Isoniazid') AND voided = 0)
                     AND orders.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
                     AND orders.start_date < DATE(#{start_date}) - INTERVAL 6 MONTH
                     AND orders.start_date >= DATE(#{start_date}) - INTERVAL 15 MONTH
@@ -183,6 +183,23 @@ module ARTService
             WHERE person.voided = 0
             GROUP BY person.person_id
           SQL
+        end
+
+        ##
+        # Groups patients into their TPT categories (ie 6H and 3HP) based on their drugs
+        #
+        # Returns an object with a three_hp and six_h methods, each of which
+        # is an array of patients for that category.
+        def group_patients_by_tpt_course(patients)
+          patients.each_with_object(OpenStruct.new(six_h: [], three_hp: [])) do |patient, categories|
+            on_3hp = patient['drugs'].split(',').size > 1 # 3HP has Rifapentine and INH, whilst 6H only has 6H
+
+            if on_3hp
+              categories.three_hp << patient
+            else
+              categories.six_h << patient
+            end
+          end
         end
       end
     end
