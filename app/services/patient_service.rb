@@ -92,11 +92,8 @@ class PatientService
   end
 
   def find_patients_by_identifier(identifier, *identifier_types, voided: false)
-    query = Patient.joins('INNER JOIN patient_identifier USING (patient_id)')
-                   .where(patient_identifier: { identifier: identifier, identifier_type: identifier_types.collect(&:id) })
-    query = query.where.not(patient_identifier: { voided: 0 }) if voided
-
-    query
+    Patient.joins('INNER JOIN patient_identifier USING (patient_id)')
+           .where(patient_identifier: { identifier: identifier, identifier_type: identifier_types.collect(&:id), voided: voided })
   end
 
   def find_patient_visit_dates(patient, program = nil)
