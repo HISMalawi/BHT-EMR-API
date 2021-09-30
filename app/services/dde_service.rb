@@ -169,8 +169,8 @@ class DDEService
 
   # Matches patients using a bunch of demographics
   def match_patients_by_demographics(family_name:, given_name:, birthdate:,
-                                     birthdate_estimated:, gender:, home_district:,
-                                     home_traditional_authority:, home_village:)
+                                     gender:, home_district:, home_traditional_authority:,
+                                     home_village:, birthdate_estimated: 0)
     response, status = dde_client.post(
       'search/people', family_name: family_name,
                        given_name: given_name,
