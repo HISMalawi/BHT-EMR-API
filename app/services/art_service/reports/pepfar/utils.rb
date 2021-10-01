@@ -41,8 +41,10 @@ module ARTService
         def pepfar_patient_drilldown_information(patients, current_date)
           raise ArgumentError, "current_date can't be nil" unless current_date
 
-          Person.joins('LEFT JOIN patient_identifier ON patient_identifier.patient_id = person.person_id AND patient_identifier.voided = 0')
-                .where(person_id: patients, patient_identifier: { identifier_type: pepfar_patient_identifier_type })
+          Person.joins("LEFT JOIN patient_identifier ON patient_identifier.patient_id = person.person_id
+                          AND patient_identifier.voided = 0
+                          AND patient_identifier.identifier_type IN (#{pepfar_patient_identifier_type.to_sql})")
+                .where(person_id: patients)
                 .select("person.person_id AS patient_id,
                          person.gender,
                          person.birthdate,
