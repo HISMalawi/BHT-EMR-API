@@ -20,11 +20,16 @@ compatibility (examples of this include major architectural changes).
 - ART Stock: Relocation of drugs at a date before their delivery date
 - ART Stock: Drug relocations not saving retrospective dates
 
+
+### v4.12.0 - 2021-09-01
+
 ### Added
 
 - ART: Added Drug refill visit workflow
 - ART: PEPFAR viral load coverage report
 - ART: Regimens 14PP and 15PP to cohort report
+- DDE: Endpoint for updating local patient's demographics
+- Re-assigning previously voided active filing numbers
 - Lab: Test measure for CrAg test
 - New locations:
   - Banja Care Private Clinic (Mulanje)
@@ -51,11 +56,6 @@ compatibility (examples of this include major architectural changes).
 - ART: TB Prev definition changed to capture 3HP for up to 6 months prior to the start of reporting period
 
 ## [v4.11.13] - 2021-08-24
-
-### Added
-
-- DDE: Endpoint for updating local patient's demographics
-- Re-assigning previously voided active filing numbers
 
 ### Fixed
 
