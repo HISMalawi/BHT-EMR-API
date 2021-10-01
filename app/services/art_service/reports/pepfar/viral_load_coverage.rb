@@ -211,14 +211,16 @@ module ARTService
         def find_patients_with_viral_load
           ActiveRecord::Base.connection.select_all <<~SQL
             SELECT orders.patient_id,
+                   cohort_disaggregated_age_group(patient.birthdate,
+                                                  DATE(#{ActiveRecord::Base.connection.quote(end_date)})) AS age_group,
+                   patient.birthdate,
+                   patient.gender,
+                   patient_identifier.identifier AS arv_number,
                    orders.start_date AS order_date,
                    COALESCE(orders.discontinued_date, orders.start_date) AS sample_draw_date,
                    COALESCE(reason_for_test_value.name, reason_for_test.value_text) AS reason_for_test,
                    result.value_modifier AS result_modifier,
-                   COALESCE(result.value_numeric, result.value_text) AS result_value,
-                   cohort_disaggregated_age_group(patient.birthdate,
-                                                  DATE(#{ActiveRecord::Base.connection.quote(end_date)})) AS age_group,
-                   patient_identifier.identifier AS arv_number
+                   COALESCE(result.value_numeric, result.value_text) AS result_value
             FROM orders
             INNER JOIN order_type
               ON order_type.order_type_id = orders.order_type_id
