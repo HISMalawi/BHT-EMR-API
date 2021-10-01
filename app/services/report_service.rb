@@ -7,7 +7,8 @@ class ReportService
     'OPD PROGRAM' => OPDService::ReportEngine,
     'VMMC PROGRAM' => VMMCService::ReportEngine,
     'TB PROGRAM' => TBService::ReportEngine,
-    'LABORATORY ORDERS' => LaboratoryService::ReportEngine
+    'LABORATORY ORDERS' => LaboratoryService::ReportEngine,
+    'CXCA PROGRAM' => CXCAService::ReportEngine
   }.freeze
   LOGGER = Rails.logger
 
@@ -69,8 +70,16 @@ class ReportService
     engine(@program).dashboard_stats_for_syndromic_statistics(date)
   end
 
-  def diagnosis(start_date, end_date)
-    engine(@program).diagnosis(start_date, end_date)
+  def diagnosis(start_date, end_date,diagnosis_name)
+    engine(@program).diagnosis(start_date, end_date,diagnosis_name)
+  end
+
+  def idsr(start_date, end_date, diagnosis)
+    engine(@program).idsr(start_date, end_date, diagnosis)
+  end
+
+  def diagnosis_ls(start_date, end_date)
+    engine(@program).diagnosis_ls(start_date, end_date)
   end
 
   def malaria_report(start_date, end_date)
@@ -207,6 +216,10 @@ class ReportService
 
   def external_consultation_clients(start_date, end_date)
     engine(@program).external_consultation_clients(start_date, end_date)
+  end
+
+  def cxca_reports(start_date, end_date, report_name)
+    engine(@program).reports(start_date.to_date,end_date.to_date, report_name)
   end
 
   private

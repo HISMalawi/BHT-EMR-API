@@ -82,6 +82,7 @@ module CXCAService
     # Checks if patient has been asked any VIA related questions today
     #
     def show_cxca_test?
+      return false if postponed_treatment?
       return false if cxca_positive?
 
       encounter_type = EncounterType.find_by name: CXCA_TEST
@@ -173,17 +174,6 @@ module CXCAService
       ).order(encounter_datetime: :desc).first
 
       unless encounter.blank?
-=begin
-        positive_concept_ids = [concept('VIA positive').concept_id]
-        positive_concept_ids << concept('PAP Smear abnormal').concept_id
-        positive_concept_ids << concept('HPV positive').concept_id
-        positive_concept_ids << concept('Visible Lesion').concept_id
-
-        screening_result = concept('Screening results').concept_id
-
-        positive_obs = encounter.observations.find_by("concept_id = ?
-          AND value_coded IN(?)", screening_result, positive_concept_ids)
-=end
         treatment_option_concept_id  = concept('Directly observed treatment option').concept_id
         same_day_concept_id  = concept('Same day treatment').concept_id
 
@@ -218,7 +208,8 @@ module CXCAService
           return true unless postponed.blank?
       end
 
-      return false
+      option = postponed_treatment? ? true : false
+      return option
     end
 
     def show_reception?
@@ -283,6 +274,24 @@ module CXCAService
       end
 
       return true
+    end
+
+    def postponed_treatment?
+      treatment_option_concept_id  = concept('Directly observed treatment option').concept_id
+      postponed_concept_id  = concept('Postponed treatment').concept_id
+      last_visit_date = Encounter.where("encounter_datetime < ? AND patient_id = ?
+        AND program_id = ?", @date.to_date.strftime('%Y-%m-%d 00:00:00'),
+        @patient.id, @program.id).maximum(:encounter_datetime)
+
+      return false if last_visit_date.blank?
+
+      treatment_option = Observation.where("concept_id = ?
+        AND DATE(obs_datetime) = ? AND person_id = ?", treatment_option_concept_id,
+        last_visit_date.to_date.strftime('%Y-%m-%d 00:00:00'), @patient.id).\
+        order("obs_datetime DESC, date_created DESC").first
+
+      return treatment_option.value_coded == postponed_concept_id unless treatment_option.blank?
+      return false
     end
 
     def concept(name)

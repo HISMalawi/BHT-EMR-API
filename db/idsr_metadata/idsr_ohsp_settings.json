@@ -12,6 +12,13 @@
 		      "Diarrhoea with blood (Shigella)":["Dysentery"],
 		      "Human influenza due to new sub-type" : ["Human influenza caused by new subtype"],
 		      "Listeriosis" : ["Listeriosis"],
+<<<<<<< HEAD
+=======
+		      "Dengue" : [],
+		      "Diarrhoea with blood (Shigella)":["Dysentery"],
+		      "Human influenza due to new sub-type" : ["Human influenza caused by new subtype"],
+		      "Listeriosis" : [],
+>>>>>>> fc2525516da62bc89f702fcaf5901d3245530f4b
 		      "Malaria" : ["Malaria"],
 		      "Maternal death": [],
 		      "Measles" : ["Measles"],
@@ -22,6 +29,10 @@
 		      "Rabies" : ["Rabies"],
 		      "Acute Respiratory Infection (SARI)":["Severe acute respiratory infection"],
 		      "SARS" :["Severe acute respiratory syndrome"], 
+<<<<<<< HEAD
+=======
+		      "SARS" :[], 
+>>>>>>> fc2525516da62bc89f702fcaf5901d3245530f4b
 		      "Smallpox" : ["Smallpox (Variola)"], 
 		      "Typhoid Fever":["Typhoid fever"],
 		      "Yellow Fever" : ["Yellow fever"]},
@@ -45,4 +56,8 @@
                         "Diarrhoea In Under 5": ["Diarrhea"]
 
                    }		   
+<<<<<<< HEAD
+=======
+
+>>>>>>> fc2525516da62bc89f702fcaf5901d3245530f4b
  }

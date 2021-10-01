@@ -1,6 +1,7 @@
 Rails.application.routes.draw do
   mount Lab::Engine => '/'
   mount Radiology::Engine => '/'
+  mount EmrOhspInterface::Engine => '/'
   mount Rswag::Ui::Engine => '/api-docs'
   mount Rswag::Api::Engine => '/api-docs'
 
@@ -42,6 +43,7 @@ Rails.application.routes.draw do
 
       resources :roles
 
+      get '/patient_details_by_id' => 'patients#patient_details_by_id'
 
       # Patients
       resources :patients do
@@ -51,6 +53,7 @@ Rails.application.routes.draw do
         get 'labels/print_tb_lab_order_summary', to: 'patients#print_tb_lab_order_summary'
         get '/visits' => 'patients#visits'
         get '/visit' => 'patients#visit'
+
         get('/appointments', to: redirect do |params, request|
           paginate_url "/api/v1/appointments?patient_id=#{params[:patient_id]}",
                        request.params
@@ -283,8 +286,12 @@ Rails.application.routes.draw do
   get '/api/v1/incomplete_visits' => 'api/v1/cleaning#incompleteVisits'
   get '/api/v1/art_data_cleaning_tools' => 'api/v1/cleaning#art_tools'
 
+  # MoH
+  get '/api/v1/idsr' => 'api/v1/reports#idsr'
+
   #OPD reports
   get '/api/v1/diagnosis' => 'api/v1/reports#diagnosis'
+  get '/api/v1/diagnosis_ls' => 'api/v1/reports#diagnosis_ls'
   get '/api/v1/malaria_report' => 'api/v1/reports#malaria_report'
   get '/api/v1/registration' => 'api/v1/reports#registration'
   get '/api/v1/diagnosis_by_address' => 'api/v1/reports#diagnosis_by_address'
@@ -335,4 +342,8 @@ Rails.application.routes.draw do
   get '/api/v1/lab_test_results', to: 'api/v1/reports#lab_test_results'
   get '/api/v1/orders_made', to: 'api/v1/reports#orders_made'
   get '/api/v1/:program_id/external_consultation_clients', to: 'api/v1/reports#external_consultation_clients'
+
+
+
+  get '/api/v1/screened_for_cxca', to: 'api/v1/reports#cxca_reports'
 end

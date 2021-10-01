@@ -222,6 +222,41 @@ class Api::V1::PatientsController < ApplicationController
     render json: service.fetch_full_visit(patient, program, params[:date])
   end
 
+  def patient_details_by_id
+    patient_id = params[:patient_id]
+
+    data = Person.where('person.person_id = ?', patient_id).\
+      joins('
+      RIGHT JOIN person_address a ON a.person_id = person.person_id
+      RIGHT JOIN person_name n ON n.person_id = person.person_id
+      LEFT JOIN person_attribute z ON z.person_id = n.person_id AND z.person_attribute_type_id = 12
+      '
+
+      ).\
+
+      select('person.*, a.state_province district,
+      a.township_division ta, a.city_village village, a.township_division ta,
+      n.given_name, n.family_name, z.value').order('n.date_created DESC')
+
+    stats = []
+    (data || []).each do |record|
+      #person = Person.find record['person_id']
+      _district = record['district']
+      _ta = record['ta']
+      _village = record['village']
+      stats << {
+          patient_id: patient_id,
+          phone_number: record['value'],
+          gender: record['gender'],
+          given_name: record['given_name'],
+          family_name: record['family_name'],
+          address: "#{_district}, #{_ta}, #{_village}"
+      }
+    end
+
+    render json: stats
+  end
+
   def tpt_prescription_count
     program = params[:program_id] ? Program.find(params[:program_id]) : nil
     render json: service.tpt_prescription_count(patient, program, params[:date])
