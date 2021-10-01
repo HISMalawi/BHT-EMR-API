@@ -83,9 +83,9 @@ module ARTService
         def load_emastercard_results_into_report(report)
           find_emastercard_patient_results.each do |patient|
             if patient['result_value'] < 1000
-              report[patient['age_group']]['low_vl']['routine'] << patient
+              report[patient['age_group']][:low_vl][:routine] << patient
             else
-              report[patient['age_group']]['high_vl']['routine'] << patient
+              report[patient['age_group']][:high_vl][:routine] << patient
             end
           end
         end
@@ -287,11 +287,9 @@ module ARTService
                    cohort_disaggregated_age_group(patient.birthdate, #{ActiveRecord::Base.connection.quote(end_date)}) AS age_group,
                    obs.value_numeric AS result_value
             FROM obs
-            INNER JOIN orders
-              ON orders.order_id = obs.order_id
-              AND orders.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Lab' AND retired = 0)
-            INNER JOIN temp_earliest_start_date AS patient
-              ON patient.patient_id = obs.person_id
+            INNER JOIN encounter ON encounter.encounter_id = obs.encounter_id AND encounter.voided = 0
+            INNER JOIN encounter_type ON encounter_type.encounter_type_id = encounter.encounter_type AND encounter_type.name = 'Lab'
+            INNER JOIN temp_earliest_start_date AS patient ON patient.patient_id = obs.person_id
             INNER JOIN temp_patient_outcomes
               ON temp_patient_outcomes.patient_id = obs.person_id
               AND temp_patient_outcomes.cum_outcome = 'On antiretrovirals'
@@ -300,16 +298,18 @@ module ARTService
               AND patient_identifier.voided = 0
               AND patient_identifier.identifier_type IN (#{pepfar_patient_identifier_type.to_sql})
             INNER JOIN (
-              SELECT person_id, MAX(obs_datetime) AS obs_datetime
+              SELECT obs.person_id, MAX(obs.obs_datetime) AS obs_datetime
               FROM obs
-              WHERE concept_id IN (#{concept('Viral load').to_sql})
-                AND obs_datetime < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
-                AND voided = 0
-              GROUP BY person_id
+              INNER JOIN encounter ON encounter.encounter_id = obs.encounter_id AND encounter.voided = 0
+              INNER JOIN encounter_type ON encounter_type.encounter_type_id = encounter.encounter_type AND encounter_type.name = 'Lab'
+              WHERE obs.concept_id IN (#{concept('Viral load').to_sql})
+                AND obs.obs_datetime < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
+                AND obs.voided = 0
+              GROUP BY obs.person_id
             ) AS latest_results
               ON latest_results.person_id = obs.person_id
               AND latest_results.obs_datetime = obs.obs_datetime
-            WHERE obs.concept_id IN (#{concept('Viral load')})
+            WHERE obs.concept_id IN (#{concept('Viral load').to_sql})
               AND obs.value_numeric IS NOT NULL
               AND obs.voided = 0
             GROUP BY obs.person_id
