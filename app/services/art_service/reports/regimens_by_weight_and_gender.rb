@@ -3,6 +3,8 @@
 module ARTService
   module Reports
     class RegimensByWeightAndGender
+      include ConcurrencyUtils
+
       attr_reader :start_date, :end_date
 
       def initialize(start_date:, end_date:, **_kwargs)
@@ -32,16 +34,18 @@ module ARTService
       ].freeze
 
       def regimen_counts
-        PatientsAliveAndOnTreatment.new(start_date: start_date, end_date: end_date)
-                                   .refresh_outcomes_table
+        with_lock(Cohort::LOCK_FILE) do
+          PatientsAliveAndOnTreatment.new(start_date: start_date, end_date: end_date)
+                                     .refresh_outcomes_table
 
-        WEIGHT_BANDS.map do |start_weight, end_weight|
-          {
-            weight: weight_band_to_string(start_weight, end_weight),
-            males: regimen_counts_by_weight_and_gender(start_weight, end_weight, 'M'),
-            females: regimen_counts_by_weight_and_gender(start_weight, end_weight, 'F'),
-            unknown_gender: regimen_counts_by_weight_and_gender(start_weight, end_weight, nil)
-          }
+          WEIGHT_BANDS.map do |start_weight, end_weight|
+            {
+              weight: weight_band_to_string(start_weight, end_weight),
+              males: regimen_counts_by_weight_and_gender(start_weight, end_weight, 'M'),
+              females: regimen_counts_by_weight_and_gender(start_weight, end_weight, 'F'),
+              unknown_gender: regimen_counts_by_weight_and_gender(start_weight, end_weight, nil)
+            }
+          end
         end
       end
 

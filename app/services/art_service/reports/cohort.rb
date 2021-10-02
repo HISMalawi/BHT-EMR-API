@@ -13,6 +13,8 @@ module ARTService
       include ConcurrencyUtils
       include ModelUtils
 
+      LOCK_FILE = 'art_service/reports/cohort.lock'
+
       def initialize(name:, type:, start_date:, end_date:)
         @name = name
         @start_date = start_date
@@ -23,7 +25,7 @@ module ARTService
       end
 
       def build_report
-        with_lock('art_service/reports/cohort.lock', blocking: false) do
+        with_lock(LOCK_FILE, blocking: false) do
           clear_drill_down
           @cohort_builder.build(@cohort_struct, @start_date, @end_date)
           save_report
