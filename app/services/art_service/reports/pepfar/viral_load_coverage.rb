@@ -116,11 +116,6 @@ module ARTService
           # or patients whose first order comes at 6 months or greater after starting ART.
           ActiveRecord::Base.connection.select_all <<~SQL
             SELECT orders.patient_id,
-                   orders.start_date AS order_date,
-                   COALESCE(orders.discontinued_date, orders.start_date) AS sample_draw_date,
-                   COALESCE(reason_for_test_value.name, reason_for_test.value_text) AS reason_for_test,
-                   result.value_modifier AS result_modifier,
-                   COALESCE(result.value_numeric, result.value_text) AS result_value,
                    cohort_disaggregated_age_group(patient.birthdate,
                                                   DATE(#{ActiveRecord::Base.connection.quote(end_date)})) AS age_group,
                    patient.birthdate,
@@ -135,18 +130,6 @@ module ARTService
               ON concept_name.concept_id = orders.concept_id
               AND concept_name.name IN ('Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)')
               AND concept_name.voided = 0
-            LEFT JOIN obs AS reason_for_test
-              ON reason_for_test.order_id = orders.order_id
-              AND reason_for_test.concept_id IN (SELECT concept_id FROM concept_name WHERE name LIKE 'Reason for test' AND voided = 0)
-              AND reason_for_test.voided = 0
-            LEFT JOIN concept_name AS reason_for_test_value
-              ON reason_for_test_value.concept_id = reason_for_test.value_coded
-              AND reason_for_test_value.voided = 0
-            LEFT JOIN obs AS result
-              ON result.order_id = orders.order_id
-              AND result.concept_id IN (SELECT concept_id FROM concept_name WHERE name LIKE 'HIV Viral load' AND voided = 0)
-              AND result.voided = 0
-              AND (result.value_text IS NOT NULL OR result.value_numeric IS NOT NULL)
             INNER JOIN (
               /* Get the latest order dates for each patient */
               SELECT orders.patient_id, MAX(orders.start_date) AS start_date
@@ -159,7 +142,7 @@ module ARTService
                 ON concept_name.concept_id = orders.concept_id
                 AND concept_name.name IN ('Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)')
                 AND concept_name.voided = 0
-              WHERE orders.start_date < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH
+              WHERE orders.start_date <= DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH
                 AND orders.voided = 0
               GROUP BY orders.patient_id
             ) AS latest_patient_order_date
@@ -197,10 +180,14 @@ module ARTService
               AND patient_identifier.identifier_type IN (#{pepfar_patient_identifier_type.to_sql})
               AND patient_identifier.voided = 0
             WHERE patient.patient_id NOT IN (
-              SELECT DISTINCT person_id FROM obs
+              SELECT DISTINCT orders.patient_id FROM orders
+              INNER JOIN order_type ON order_type.order_type_id = orders.order_type_id AND order_type.name = 'Lab'
+              INNER JOIN obs ON orders.order_id = obs.order_id AND obs.voided = 0
               INNER JOIN concept_name ON concept_name.concept_id = obs.concept_id AND concept_name.name = 'Test type' AND concept_name.voided = 0
               INNER JOIN concept_name AS test_name ON test_name.concept_id = obs.value_coded AND test_name.name = 'HIV Viral Load' AND test_name.voided = 0
-              WHERE obs.obs_datetime < DATE(#{ActiveRecord::Base.connection.quote(start_date)}) - INTERVAL 12 MONTH
+              WHERE orders.start_date <= DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH
+                AND orders.concept_id IN (SELECT concept_id FROM concept_name WHERE name IN ('Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)'))
+                AND orders.voided = 0
             ) AND patient.earliest_start_date <= DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 6 MONTH
             GROUP BY patient.patient_id
           SQL
