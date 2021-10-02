@@ -513,24 +513,6 @@ module OPDService
       end
     end
 
-    def age_group_for_idsr(birthdate, end_date)
-      begin
-        birthdate = birthdate.to_date
-        end_date  = end_date.to_date
-        months = age_in_months(birthdate, end_date)
-      rescue
-        months = 'Unknown'
-      end
-
-      if months < 56
-        return '< 5 yrs'
-      elsif months >= 56
-        return '>= 5 yrs'
-      else
-        return 'Unknown'
-      end
-    end
-
     def get_age_group_for_malaria(birthdate, end_date)
       begin
         birthdate = birthdate.to_date
