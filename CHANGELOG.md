@@ -17,35 +17,45 @@ compatibility (examples of this include major architectural changes).
 
 ### Fixed
 
-- ART Stock: Resetting of current quantity on dispensation reversal
 - ART Stock: Relocation of drugs at a date before their delivery date
 - ART Stock: Drug relocations not saving retrospective dates
 
+
+### v4.12.0 - 2021-09-01
+
 ### Added
 
+- ART: Added Drug refill visit workflow
+- ART: PEPFAR viral load coverage report
 - ART: Regimens 14PP and 15PP to cohort report
+- DDE: Endpoint for updating local patient's demographics
+- Re-assigning previously voided active filing numbers
 - Lab: Test measure for CrAg test
 - New locations:
   - Banja Care Private Clinic (Mulanje)
   - Chikuli Private Clinic (Mulanje)
 - DDE: Pushing of footprint to DDE on encounter create
-- New concept Cryotherapy
+- New concepts:
+  - Cryotherapy (a CxCa procedure)
+  - Drug refill (an ART procedure)
 
 ### Fixed
 
+- ART: Pyridoxine not being automatically prescribed on 3HP prescriptions
+- ART Stock: Resetting of current quantity on dispensation reversal
+- ART Stock: Relocation of drugs at a date before their delivery date
+- ART Stock: Drug relocations not saving retrospective dates
 - ART: Hanging pills not being added to appointment date
 - Bumped up lab to v1.1.13 - Fixes error on LIMS push of orders created through LOS
 - Patient merging not appending secondary patient identifiers to primary patient (helpdesk [#3541](https://egpafemr.sdpondemand.manageengine.com/app/itdesk/ui/requests/118246000006095075/details))
+- ART: Regimen distribution pulling defaulters
+
 ### Changed
 
+- ART: VL Reminders to use 2020 MoH guidelines
 - ART: TB Prev definition changed to capture 3HP for up to 6 months prior to the start of reporting period
 
 ## [v4.11.13] - 2021-08-24
-
-### Added
-
-- DDE: Endpoint for updating local patient's demographics
-- Re-assigning previously voided active filing numbers
 
 ### Fixed
 

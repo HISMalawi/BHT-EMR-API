@@ -1,30 +1,42 @@
 # frozen_string_literal: true
 
-module ARTService::Reports::Cohort::Outcomes
-  def self.update_cummulative_outcomes(end_date)
+class ARTService::Reports::Cohort::Outcomes
+  attr_reader :end_date
+
+  def initialize(end_date:, definition: 'moh')
+    definition = definition.downcase
+    raise ArgumentError, "Invalid outcomes definition: #{definition}" unless %w[moh pepfar].include?(definition)
+
+    @end_date = end_date.to_date
+    @definition = definition
+  end
+
+  def update_cummulative_outcomes
     initialize_table
 
     # HIC SUNT DRACONIS: The order of the operations below matters,
     # do not change it unless you know what you are doing!!!
-    load_patients_who_died(end_date)
-    load_patients_who_stopped_treatment(end_date)
-    load_patients_on_pre_art(end_date)
-    load_patients_without_state(end_date)
-    load_patients_without_drug_orders(end_date)
-    load_patients_on_treatment(end_date)
-    load_defaulters(end_date)
+    load_patients_who_died
+    load_patients_who_stopped_treatment
+    load_patients_on_pre_art
+    load_patients_without_state
+    load_patients_without_drug_orders
+    load_patients_on_treatment
+    load_defaulters
   end
 
-  def self.arv_drugs_concept_set
+  private
+
+  def arv_drugs_concept_set
     @arv_drugs_concept_set ||= ConceptSet.where(set: Concept.find_by_name('Antiretroviral drugs'))
                                          .select(:concept_id)
   end
 
-  def self.drug_order_type
+  def drug_order_type
     @drug_order_type ||= OrderType.find_by_name('Drug order')
   end
 
-  def self.program_states(*names)
+  def program_states(*names)
     ProgramWorkflowState.joins(:program_workflow)
                         .joins(:concept)
                         .merge(ProgramWorkflow.where(program: hiv_program))
@@ -33,11 +45,11 @@ module ARTService::Reports::Cohort::Outcomes
                         .select(:program_workflow_state_id)
   end
 
-  def self.hiv_program
+  def hiv_program
     @hiv_program ||= Program.find_by_name('HIV Program')
   end
 
-  def self.initialize_table
+  def initialize_table
     ActiveRecord::Base.connection.execute <<~SQL
       DROP TABLE IF EXISTS temp_patient_outcomes
     SQL
@@ -57,8 +69,8 @@ module ARTService::Reports::Cohort::Outcomes
 
   # Loads all patiens with an outcome of died as of given date
   # into the temp_patient_outcomes table.
-  def self.load_patients_who_died(date)
-    date = ActiveRecord::Base.connection.quote(date)
+  def load_patients_who_died
+    date = ActiveRecord::Base.connection.quote(end_date)
 
     ActiveRecord::Base.connection.execute <<~SQL
       INSERT INTO temp_patient_outcomes
@@ -80,8 +92,8 @@ module ARTService::Reports::Cohort::Outcomes
 
   # Loads all patients with an outcome of transferred out or
   # treatment stopped into temp_patient_outcomes table.
-  def self.load_patients_who_stopped_treatment(date)
-    date = ActiveRecord::Base.connection.quote(date)
+  def load_patients_who_stopped_treatment
+    date = ActiveRecord::Base.connection.quote(end_date)
 
     ActiveRecord::Base.connection.execute <<~SQL
       INSERT INTO temp_patient_outcomes
@@ -122,13 +134,13 @@ module ARTService::Reports::Cohort::Outcomes
   end
 
   # Load all patients on Pre-ART.
-  def self.load_patients_on_pre_art(date)
-    date = ActiveRecord::Base.connection.quote(date)
+  def load_patients_on_pre_art
+    date = ActiveRecord::Base.connection.quote(end_date)
 
     ActiveRecord::Base.connection.execute <<~SQL
       INSERT INTO temp_patient_outcomes
       SELECT patients.patient_id,
-             IF(current_defaulter(patients.patient_id, #{date}) = 1,
+             IF(#{current_defaulter_function('patients.patient_id')} = 1,
                 'Defaulted',
                 'Pre-ART (Continue)'),
              patient_state.start_date
@@ -159,15 +171,13 @@ module ARTService::Reports::Cohort::Outcomes
   end
 
   # Load all patients without a state
-  def self.load_patients_without_state(date)
-    date = ActiveRecord::Base.connection.quote(date)
+  def load_patients_without_state
+    date = ActiveRecord::Base.connection.quote(end_date)
 
     ActiveRecord::Base.connection.execute <<~SQL
       INSERT INTO temp_patient_outcomes
       SELECT patients.patient_id,
-             IF(current_defaulter(patients.patient_id, #{date}) = 1,
-                'Defaulted',
-                'Unknown'),
+             IF(#{current_defaulter_function('patients.patient_id')} = 1, 'Defaulted', 'Unknown'),
              NULL
       FROM temp_earliest_start_date AS patients
       INNER JOIN patient_program
@@ -188,8 +198,8 @@ module ARTService::Reports::Cohort::Outcomes
 
   # Load all patients without drug orders or have drug orders
   # without a quantity.
-  def self.load_patients_without_drug_orders(date)
-    date = ActiveRecord::Base.connection.quote(date)
+  def load_patients_without_drug_orders
+    date = ActiveRecord::Base.connection.quote(end_date)
 
     ActiveRecord::Base.connection.execute <<~SQL
       INSERT INTO temp_patient_outcomes
@@ -212,8 +222,8 @@ module ARTService::Reports::Cohort::Outcomes
   end
 
   # Loads all patients who are on treatment
-  def self.load_patients_on_treatment(date)
-    date = ActiveRecord::Base.connection.quote(date)
+  def load_patients_on_treatment
+    date = ActiveRecord::Base.connection.quote(end_date)
 
     ActiveRecord::Base.connection.execute <<~SQL
       INSERT INTO temp_patient_outcomes
@@ -272,7 +282,7 @@ module ARTService::Reports::Cohort::Outcomes
         GROUP BY patient_id
       ) AS first_order_to_expire
         ON (first_order_to_expire.auto_expire_date >= #{date}
-            OR DATEDIFF(#{date}, DATE(first_order_to_expire.auto_expire_date)) <= 56)
+            OR DATEDIFF(#{date}, DATE(first_order_to_expire.auto_expire_date)) <= #{@definition == 'pepfar' ? 28 : 56})
         AND first_order_to_expire.patient_id = patient_program.patient_id
       WHERE patients.date_enrolled <= #{date}
         AND patients.patient_id NOT IN (SELECT patient_id FROM temp_patient_outcomes)
@@ -281,17 +291,33 @@ module ARTService::Reports::Cohort::Outcomes
   end
 
   # Load defaulters
-  def self.load_defaulters(date)
-    date = ActiveRecord::Base.connection.quote(date)
+  def load_defaulters
+    date = ActiveRecord::Base.connection.quote(end_date)
 
     ActiveRecord::Base.connection.execute <<~SQL
       INSERT INTO temp_patient_outcomes
       SELECT patient_id,
-             patient_outcome(patient_id, #{date}),
+             #{patient_outcome_function('patient_id')},
              NULL
       FROM temp_earliest_start_date
       WHERE date_enrolled <= #{date}
         AND patient_id NOT IN (SELECT patient_id FROM temp_patient_outcomes)
     SQL
+  end
+
+  def current_defaulter_function(sql_column)
+    case @definition
+    when 'moh' then "current_defaulter(#{sql_column}, #{ActiveRecord::Base.connection.quote(end_date)})"
+    when 'pepfar' then "current_pepfar_defaulter(#{sql_column}, #{ActiveRecord::Base.connection.quote(end_date)})"
+    else raise "Invalid outcomes definition: #{@definition}" # Should never happen but you never know!
+    end
+  end
+
+  def patient_outcome_function(sql_column)
+    case @definition
+    when 'moh' then "patient_outcome(#{sql_column}, #{ActiveRecord::Base.connection.quote(end_date)})"
+    when 'pepfar' then "pepfar_patient_outcome(#{sql_column}, #{ActiveRecord::Base.connection.quote(end_date)})"
+    else raise "Invalid outcomes definition: #{@definition}"
+    end
   end
 end

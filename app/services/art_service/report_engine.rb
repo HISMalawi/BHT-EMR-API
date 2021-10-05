@@ -38,6 +38,7 @@ module ARTService
       'TB_PREV' => ARTService::Reports::Pepfar::TbPrev,
       'OUTCOME_LIST' => ARTService::Reports::OutcomeList,
       'VIRAL_LOAD' => ARTService::Reports::ViralLoad,
+      'VIRAL_LOAD_COVERAGE' => ARTService::Reports::Pepfar::ViralLoadCoverage,
       'EXTERNAL_CONSULTATION_CLIENTS' => ARTService::Reports::ExternalConsultationClients
     }.freeze
 

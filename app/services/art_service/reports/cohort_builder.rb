@@ -9,6 +9,20 @@ module ARTService
 
       include ModelUtils
 
+      def initialize(outcomes_definition: 'moh')
+        unless %w[moh pepfar].include?(outcomes_definition.downcase)
+          raise ArgumentError, "Invalid outcomes_definition `#{outcomes_definition}` expected moh or pepfar"
+        end
+
+        @outcomes_definition = outcomes_definition
+      end
+
+      def init_temporary_tables(_start_date, end_date)
+        create_tmp_patient_table
+        load_data_into_temp_earliest_start_date(end_date.to_date)
+        update_cum_outcome(end_date)
+      end
+
       def build(cohort_struct, start_date, end_date)
         #load_tmp_patient_table(cohort_struct)
         create_tmp_patient_table
@@ -544,6 +558,8 @@ module ARTService
       STATE_ON_TREATMENT = 7
 
       def load_data_into_temp_earliest_start_date(end_date)
+        end_date = ActiveRecord::Base.connection.quote(end_date)
+
         ActiveRecord::Base.connection.execute <<~SQL
           INSERT INTO temp_earliest_start_date
           SELECT patient_program.patient_id,
@@ -567,17 +583,28 @@ module ARTService
               SELECT encounter_type_id FROM encounter_type WHERE name = 'HIV CLINIC REGISTRATION' LIMIT 1
             )
             AND clinic_registration_encounter.patient_id = patient_program.patient_id
+            AND clinic_registration_encounter.program_id = patient_program.program_id
+            AND clinic_registration_encounter.encounter_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
             AND clinic_registration_encounter.voided = 0
           LEFT JOIN obs AS art_start_date_obs
             ON art_start_date_obs.concept_id = 2516
             AND art_start_date_obs.person_id = patient_program.patient_id
             AND art_start_date_obs.voided = 0
-            AND art_start_date_obs.obs_datetime < (DATE('#{end_date}') + INTERVAL 1 DAY)
+            AND art_start_date_obs.obs_datetime < (DATE(#{end_date}) + INTERVAL 1 DAY)
             AND art_start_date_obs.encounter_id = clinic_registration_encounter.encounter_id
+          INNER JOIN encounter AS prescription_encounter
+            ON prescription_encounter.patient_id = patient_program.patient_id
+            AND prescription_encounter.program_id = patient_program.program_id
+            AND prescription_encounter.encounter_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
+            AND prescription_encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name LIKE 'Treatment')
+            AND prescription_encounter.voided = 0
           INNER JOIN orders AS art_order
             ON art_order.patient_id = patient_program.patient_id
-            AND art_order.voided = 0
+            AND art_order.encounter_id = prescription_encounter.encounter_id
             AND art_order.concept_id IN (SELECT concept_id FROM concept_set WHERE concept_set = 1085)
+            AND art_order.start_date < DATE(#{end_date}) + INTERVAL 1 DAY
+            AND art_order.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
+            AND art_order.voided = 0
           INNER JOIN drug_order
             ON drug_order.order_id = art_order.order_id
             AND drug_order.quantity > 0
@@ -587,16 +614,32 @@ module ARTService
             AND outcome.state = 7
             AND outcome.start_date IS NOT NULL
             AND patient_program.patient_id NOT IN (
-              SELECT person_id FROM obs
-              WHERE concept_id IN (
-                SELECT concept_id FROM concept_name WHERE name LIKE 'Type of patient'
-              ) AND value_coded IN (
-                SELECT concept_id FROM concept_name WHERE name LIKE 'External Consultation'
-              ) AND voided = 0 AND (obs_datetime < DATE('#{end_date}') + INTERVAL 1 DAY)
-              GROUP BY person_id
+              SELECT patient_type_obs.person_id
+              FROM obs AS patient_type_obs
+              INNER JOIN (
+                SELECT MAX(obs_datetime) AS obs_datetime, person_id
+                FROM obs
+                INNER JOIN encounter USING (encounter_id)
+                WHERE obs.concept_id IN (SELECT concept_id FROM concept_name WHERE name LIKE 'Type of patient' AND voided = 0)
+                  AND obs.obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
+                  AND encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'REGISTRATION' AND retired = 0)
+                  AND encounter.program_id IN (SELECT program_id FROM program WHERE name LIKE 'HIV Program')
+                  AND encounter.encounter_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
+                  AND obs.voided = 0
+                  AND encounter.voided = 0
+                GROUP BY obs.person_id
+              ) AS max_patient_type_obs
+                ON max_patient_type_obs.person_id = patient_type_obs.person_id
+                AND max_patient_type_obs.obs_datetime = patient_type_obs.obs_datetime
+                /* Doing the above to avoid picking patients that changed patient types at some point (eg External consultation to New patient) */
+              WHERE patient_type_obs.concept_id IN (SELECT concept_id FROM concept_name WHERE name = 'Type of patient' AND voided = 0)
+                AND patient_type_obs.value_coded IN (SELECT concept_id FROM concept_name WHERE name IN ('Drug refill', 'External consultation') AND voided = 0)
+                AND patient_type_obs.voided = 0
+                AND patient_type_obs.obs_datetime < (DATE(#{end_date}) + INTERVAL 1 DAY)
+              GROUP BY patient_type_obs.person_id
             )
           GROUP by patient_program.patient_id
-          HAVING date_enrolled <= '#{end_date}'
+          HAVING date_enrolled <= #{end_date}
         SQL
       end
 
@@ -640,7 +683,8 @@ module ARTService
       end
 
       def update_cum_outcome(end_date)
-        Cohort::Outcomes.update_cummulative_outcomes(end_date)
+        Cohort::Outcomes.new(end_date: end_date, definition: @outcomes_definition)
+                        .update_cummulative_outcomes
       end
 
       def update_tb_status(end_date)
