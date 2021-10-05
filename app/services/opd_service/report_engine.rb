@@ -366,58 +366,6 @@ module OPDService
       return stats
     end
 
-    def idsr(start_date, end_date, diagnosis)
-      conceptt = ConceptName.find_by_name(diagnosis).concept_id
-      type = EncounterType.find_by_name 'Outpatient diagnosis'
-      data = Encounter.where('encounter_datetime BETWEEN ? AND ?
-        AND encounter_type = ? AND value_coded = ?
-        AND concept_id IN(6543, 6542)',
-        start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
-        end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id, conceptt).\
-        joins('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
-        INNER JOIN person p ON p.person_id = encounter.patient_id
-        LEFT JOIN person_name n ON n.person_id = encounter.patient_id AND n.voided = 0
-        LEFT JOIN person_attribute z ON z.person_id = encounter.patient_id AND z.person_attribute_type_id = 12
-        RIGHT JOIN person_address a ON a.person_id = encounter.patient_id').\
-        select('encounter.encounter_type,n.given_name, n.family_name, n.person_id, obs.value_coded, p.*,
-        a.state_province district, a.township_division ta, a.city_village village, z.value')
-
-      stats = {}
-      (data || []).each do |record|
-        age_group = age_group_for_idsr(record['birthdate'], end_date)
-        phone_number = record['value']
-        gender = record['gender']
-        given_name = record['given_name']
-        family_name = record['family_name']
-        district  = record['district']
-        ta  = record['ta']
-        village = record['village']
-        address = "#{district}; #{ta}; #{village}"
-        patient_info = "|#{given_name},#{record['person_id']},#{family_name},#{gender},#{phone_number},#{address}";
-        concept = ConceptName.find_by_concept_id record['value_coded']
-
-        if stats[concept.name].blank?
-          stats[concept.name] = {
-            less_than_five_yrs: 0,
-            patientD_LessThanFiveYrs: '',
-            greater_than_five_years: 0,
-            patientD_GreaterThanFiveYrs: '',
-          }
-        end
-
-        if age_group == '< 5 yrs'
-          stats[concept.name][:less_than_five_yrs] += 1
-          stats[concept.name][:patientD_LessThanFiveYrs] = "#{stats[concept.name][:patientD_LessThanFiveYrs]} #{patient_info}"
-        elsif age_group == '>= 5 yrs'
-          stats[concept.name][:greater_than_five_years] += 1
-          stats[concept.name][:patientD_GreaterThanFiveYrs] = "#{stats[concept.name][:patientD_GreaterThanFiveYrs]} #{patient_info}"
-        end
-
-      end
-
-      return stats
-    end
-
     def drugs_given_without_prescription(start_date, end_date)
       type = EncounterType.find_by_name 'DRUGS GIVEN'
        visit_type = ConceptName.find_by_name 'Given drugs'
@@ -560,24 +508,6 @@ module OPDService
         return '5 yrs to 14 yrs'
       elsif months > 168
         return '> 14 yrs'
-      else
-        return 'Unknown'
-      end
-    end
-
-    def age_group_for_idsr(birthdate, end_date)
-      begin
-        birthdate = birthdate.to_date
-        end_date  = end_date.to_date
-        months = age_in_months(birthdate, end_date)
-      rescue
-        months = 'Unknown'
-      end
-
-      if months < 56
-        return '< 5 yrs'
-      elsif months >= 56
-        return '>= 5 yrs'
       else
         return 'Unknown'
       end

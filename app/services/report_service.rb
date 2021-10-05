@@ -47,10 +47,6 @@ class ReportService
     engine(@program).diagnosis(start_date, end_date,diagnosis_name)
   end
 
-  def idsr(start_date, end_date, diagnosis)
-    engine(@program).idsr(start_date, end_date, diagnosis)
-  end
-
   def diagnosis_ls(start_date, end_date)
     engine(@program).diagnosis_ls(start_date, end_date)
   end

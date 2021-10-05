@@ -996,6 +996,8 @@ Mzuzu Central Hospital,499,EQg6N2v2TXj
 Queen Elizaberth Central Hospital,614,aimBmvkBWy3
 Zomba Central Hospital,689,uJG4WFdUJSv
 Zomba Mental Hospital,694,S1l6Df6SvLL
+<<<<<<< HEAD
+=======
 OrgUnit ID,OrgUnit Name,EMR_Facility_ID
 Phf46V2Gghq, Kanjedza Police  Clinic,948
 jpKor9OWp56, Makadam Pvt Clinic,
@@ -1995,3 +1997,4 @@ aimBmvkBWy3,Queen Elizaberth Central Hospital,
 uJG4WFdUJSv,Zomba Central Hospital,
 S1l6Df6SvLL,Zomba Mental Hospital,
 
+>>>>>>> fc2525516da62bc89f702fcaf5901d3245530f4b
