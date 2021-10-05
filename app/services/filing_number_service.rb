@@ -291,25 +291,4 @@ class FilingNumberService
 
     patients.collect { |patient| patient['patient_id'] }
   end
-
-  def patients_with_adverse_outcomes(as_of)
-    Patient.find_by_sql <<~SQL
-      SELECT patient_program.patient_id
-      FROM patient_program
-      INNER JOIN program ON program.program_id = patient_program.program_id AND program.name = 'HIV Program'
-      INNER JOIN patient_state
-        ON patient_state.patient_program_id = patient_program.program_id
-        AND patient_state.state IN (
-          SELECT program_workflow_state_id FROM program_workflow_state WHERE name IN ('Patient died', 'Patient transferred out', 'Treatment stopped')
-        )
-        AND patient_state.voided = 0
-      INNER JOIN (
-        SELECT MAX(start_date)
-        FROM patient_state
-        INNER JOIN patient_state ON patient_state
-        GROUP BY patient_state.patient_id
-      ) AS most_recent_patient_state
-
-    SQL
-  end
 end
