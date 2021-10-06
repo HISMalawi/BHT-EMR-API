@@ -99,7 +99,7 @@ module ARTService
                    person.gender,
                    person.birthdate,
                    cohort_disaggregated_age_group(person.birthdate, DATE(#{end_date})) AS age_group,
-                   GROUP_CONCAT(DISTINCT drug_order.drug_inventory_id SEPARATOR ',') AS drugs
+                   GROUP_CONCAT(DISTINCT orders.concept_id SEPARATOR ',') AS drug_concepts
             FROM person
             LEFT JOIN patient_identifier
               ON patient_identifier.patient_id = person.person_id
@@ -112,20 +112,20 @@ module ARTService
             INNER JOIN patient_state
               ON patient_state.patient_program_id = patient_program.patient_program_id
               AND patient_state.state = 7 /* State: 7 == On antiretrovirals */
-              AND patient_state.start_date < DATE(#{end_date})
+              AND patient_state.start_date < DATE(#{start_date})
               AND patient_state.voided = 0
             INNER JOIN encounter AS prescription_encounter
               ON prescription_encounter.patient_id = patient_program.patient_id
               AND prescription_encounter.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
               AND prescription_encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'Treatment')
               AND prescription_encounter.encounter_datetime >= DATE(#{start_date}) - INTERVAL 6 MONTH
-              AND prescription_encounter.encounter_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
+              AND prescription_encounter.encounter_datetime < DATE(#{start_date})
               AND prescription_encounter.voided = 0
             INNER JOIN orders
               ON orders.encounter_id = prescription_encounter.encounter_id
               AND orders.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
               AND orders.start_date >= DATE(#{start_date}) - INTERVAL 6 MONTH
-              AND orders.start_date < DATE(#{end_date}) + INTERVAL 1 DAY
+              AND orders.start_date < DATE(#{start_date})
               AND orders.voided = 0
             INNER JOIN concept_name
               ON concept_name.concept_id = orders.concept_id
@@ -133,54 +133,60 @@ module ARTService
             INNER JOIN drug_order
               ON drug_order.order_id = orders.order_id
               AND drug_order.quantity > 0
-            INNER JOIN (
-              /* People (re-)initiated in the 6 months period prior to reporting period. */
-              SELECT DISTINCT encounter.patient_id
-              FROM encounter
-              INNER JOIN orders
-                ON orders.encounter_id = encounter.encounter_id
-                AND orders.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
-                AND orders.concept_id IN (SELECT concept_id FROM concept_name WHERE name IN ('Isoniazid', 'Rifapentine') AND voided = 0)
-                AND orders.start_date >= DATE(#{start_date}) - INTERVAL 6 MONTH
-                AND orders.start_date < DATE(#{start_date})
-                AND orders.voided = 0
-              INNER JOIN drug_order
-                ON drug_order.order_id = orders.order_id
-                AND drug_order.quantity > 0
-              INNER JOIN concept_name
-                ON concept_name.concept_id = orders.concept_id
-                AND concept_name.name IN ('Rifapentine', 'Isoniazid')
-                AND concept_name.voided = 0
-              WHERE encounter.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
-                AND encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'Treatment')
-                AND encounter.encounter_datetime >= DATE(#{start_date}) - INTERVAL 6 MONTH
-                AND encounter.encounter_datetime < DATE(#{start_date})
-                AND encounter.voided = 0
-                AND encounter.patient_id NOT IN (
-                  /* People who had a dispensation prior to the 3 to 9 months before start of reporting period.
-                     Continuing medication after a 9 months break is considered a restart hence such patients
-                     are classified as new on TPT.
-                   */
-                  SELECT DISTINCT encounter.patient_id
-                  FROM encounter
-                  INNER JOIN orders
-                    ON orders.encounter_id = encounter.encounter_id
-                    AND orders.concept_id IN (SELECT concept_id FROM concept_name WHERE name IN ('Rifapentine', 'Isoniazid') AND voided = 0)
-                    AND orders.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
-                    AND orders.start_date < DATE(#{start_date}) - INTERVAL 6 MONTH
-                    AND orders.start_date >= DATE(#{start_date}) - INTERVAL 15 MONTH
-                    AND orders.voided = 0
-                  INNER JOIN drug_order
-                    ON drug_order.order_id = orders.order_id
-                    AND drug_order.quantity > 0
-                  WHERE encounter.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
-                    AND encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'Treatment')
-                    AND encounter.encounter_datetime < DATE(#{start_date}) - INTERVAL 6 MONTH
-                    AND encounter.voided = 0
-                )
-            ) AS tpt_initiates
-              ON tpt_initiates.patient_id = patient_program.patient_id
             WHERE person.voided = 0
+              AND person.person_id NOT IN (
+                 /* People who had a dispensation prior to the 3 to 9 months before start of reporting period.
+                   Continuing medication after a 9 months break is considered a restart hence such patients
+                   are classified as new on TPT.
+                 */
+                SELECT DISTINCT encounter.patient_id
+                FROM encounter
+                INNER JOIN orders
+                  ON orders.encounter_id = encounter.encounter_id
+                  AND orders.concept_id IN (SELECT concept_id FROM concept_name WHERE name IN ('Rifapentine', 'Isoniazid') AND voided = 0)
+                  AND orders.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
+                  AND orders.start_date < DATE(#{start_date}) - INTERVAL 6 MONTH
+                  AND orders.start_date >= DATE(#{start_date}) - INTERVAL 15 MONTH
+                  AND orders.voided = 0
+                INNER JOIN drug_order
+                  ON drug_order.order_id = orders.order_id
+                  AND drug_order.quantity > 0
+                WHERE encounter.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
+                  AND encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'Treatment')
+                  AND encounter.encounter_datetime < DATE(#{start_date}) - INTERVAL 6 MONTH
+                  AND encounter.encounter_datetime >= DATE(#{start_date}) - INTERVAL 15 MONTH
+                  AND encounter.voided = 0
+              ) AND person.person_id NOT IN (
+              /* External consultations */
+              SELECT DISTINCT registration_encounter.patient_id
+              FROM patient_program
+              INNER JOIN program ON program.name = 'HIV Program'
+              INNER JOIN encounter AS registration_encounter
+                ON registration_encounter.patient_id = patient_program.patient_id
+                AND registration_encounter.program_id = patient_program.program_id
+                AND registration_encounter.encounter_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
+                AND registration_encounter.voided = 0
+              INNER JOIN (
+                SELECT MAX(encounter.encounter_datetime) AS encounter_datetime, encounter.patient_id
+                FROM encounter
+                INNER JOIN encounter_type
+                  ON encounter_type.encounter_type_id = encounter.encounter_type
+                  AND encounter_type.name = 'Registration'
+                INNER JOIN program
+                  ON program.program_id = encounter.program_id
+                  AND program.name = 'HIV Program'
+                WHERE encounter.encounter_datetime < DATE(#{end_date}) AND encounter.voided = 0
+                GROUP BY encounter.patient_id
+              ) AS max_registration_encounter
+                ON max_registration_encounter.patient_id = registration_encounter.patient_id
+                AND max_registration_encounter.encounter_datetime = registration_encounter.encounter_datetime
+              INNER JOIN obs AS patient_type_obs
+                ON patient_type_obs.encounter_id = registration_encounter.encounter_id
+                AND patient_type_obs.concept_id IN (SELECT concept_id FROM concept_name WHERE name = 'Type of patient' AND voided = 0)
+                AND patient_type_obs.value_coded IN (SELECT concept_id FROM concept_name WHERE name IN ('Drug refill', 'External consultation') AND voided = 0)
+                AND patient_type_obs.voided = 0
+              WHERE patient_program.voided = 0
+            )
             GROUP BY person.person_id
           SQL
         end
@@ -192,14 +198,20 @@ module ARTService
         # is an array of patients for that category.
         def group_patients_by_tpt_course(patients)
           patients.each_with_object(OpenStruct.new(six_h: [], three_hp: [])) do |patient, categories|
-            on_3hp = patient['drugs'].split(',').size > 1 # 3HP has Rifapentine and INH, whilst 6H only has 6H
-
-            if on_3hp
+            if patient_on_3hp?(patient)
               categories.three_hp << patient
             else
               categories.six_h << patient
             end
           end
+        end
+
+        def patient_on_3hp?(patient)
+          patient['drug_concepts'].split(',').collect(&:to_i).include?(rifapentine_concept.concept_id)
+        end
+
+        def rifapentine_concept
+          @rifapentine_concept ||= ConceptName.find_by!(name: 'Rifapentine')
         end
       end
     end
