@@ -66,6 +66,8 @@ class DDEMergingService
   # Binds the remote patient to the local patient by blessing the local patient
   # with the remotes npid and doc_id
   def link_local_to_remote_patient(local_patient, remote_patient)
+    return local_patient if local_patient_linked_to_remote?(local_patient, remote_patient)
+
     national_id_type = patient_identifier_type('National id')
     doc_id_type = patient_identifier_type('DDE person document id')
 
@@ -83,6 +85,12 @@ class DDEMergingService
 
     local_patient.reload
     local_patient
+  end
+
+  def local_patient_linked_to_remote?(local_patient, remote_patient)
+    identifier_exists = ->(type, value) { PatientIdentifierType.where(name: type), patient: patient, identifier: value).exists? }
+
+    identifier_exists['National id'] && identifier_exists['DDE person document id']
   end
 
   private
