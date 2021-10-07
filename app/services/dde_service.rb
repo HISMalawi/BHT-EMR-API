@@ -141,13 +141,7 @@ class DDEService
   def find_patients_by_npid(npid)
     locals = patient_service.find_patients_by_npid(npid).limit(PATIENT_SEARCH_RESULTS_LIMIT)
     remotes = find_remote_patients_by_npid(npid)
-    debugger
-    #match locals to remotes by doc_id
-    remotes.each do |remote_person|
-      matched_by_doc_id = PatientIdentifier.find_patients_by_identifier(remote_person['doc_id'])
-      locals.merge!(match_by_doc_id) if match_by_doc_id
-    end
-    debugger
+
     package_patients(locals, remotes, auto_push_singular_local: true)
   end
 
