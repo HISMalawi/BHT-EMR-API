@@ -141,7 +141,13 @@ class DDEService
   def find_patients_by_npid(npid)
     locals = patient_service.find_patients_by_npid(npid).limit(PATIENT_SEARCH_RESULTS_LIMIT)
     remotes = find_remote_patients_by_npid(npid)
-
+    debugger
+    #match locals to remotes by doc_id
+    remotes.each do |remote_person|
+      matched_by_doc_id = PatientIdentifier.find_patients_by_identifier(remote_person['doc_id'])
+      locals.merge!(match_by_doc_id) if match_by_doc_id
+    end
+    debugger
     package_patients(locals, remotes, auto_push_singular_local: true)
   end
 
@@ -164,15 +170,25 @@ class DDEService
     diff = Matcher.find_differences(Person.find(local_patient_id), remote_patient)
     if diff.key?(:npid) || diff.key?('npid')
       PatientIdentifier.transaction do
-         PatientIdentifier.where(identifier: diff['npid'][:local]).update(voided: true,
-                                 voided_by: User.current.user_id ,void_reason: 'NPID changed remotely',date_voided: Time.now)
-         PatientIdentifier.create(identifier: diff['npid'][:remote],patient_id: local_patient_id,
-                                  identifier_type: PatientIdentifierType.find_by(name: 'National id').patient_identifier_type_id,
-                                  location_id: GlobalProperty.find_by_property('current_health_center_id').property_value)
-         diff.delete('npid')
+        PatientIdentifier.where(
+          identifier: diff['npid'][:local],
+          patient_id: local_patient_id
+        ).update(
+          voided: true,
+          voided_by: User.current.user_id,
+          void_reason: 'NPID changed remotely',
+          date_voided: Time.now
+        )
+        PatientIdentifier.create(
+          identifier: diff['npid'][:remote],
+          patient_id: local_patient_id,
+          identifier_type: PatientIdentifierType.find_by(name: 'National id').patient_identifier_type_id,
+          location_id: GlobalProperty.find_by_property('current_health_center_id').property_value
+        )
+        diff.delete('npid')
       end
     end
-    return diff
+    diff
   rescue DDEError => e
     Rails.logger.warn("Check for DDE patient updates failed: #{e.message}")
     nil
@@ -395,7 +411,7 @@ class DDEService
 
     return false unless local_npid && local_doc_id
 
-    local_npid == remote_patient['npid'] && local_doc_id == remote_patient['doc_id']
+    local_doc_id == remote_patient['doc_id']
   end
 
   # Saves local patient to DDE and links the two using the IDs
