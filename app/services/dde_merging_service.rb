@@ -88,9 +88,12 @@ class DDEMergingService
   end
 
   def local_patient_linked_to_remote?(local_patient, remote_patient)
-    identifier_exists = ->(type, value) { PatientIdentifierType.where(name: type), patient: patient, identifier: value).exists? }
+    identifier_exists = lambda do |type, value|
+      PatientIdentifier.where(patient: local_patient, type: PatientIdentifierType.where(name: type), identifier: value)
+                       .exists?
+    end
 
-    identifier_exists['National id'] && identifier_exists['DDE person document id']
+    identifier_exists['National id', remote_patient['npid']] && identifier_exists['DDE person document id', remote_patient['doc_id']]
   end
 
   private
