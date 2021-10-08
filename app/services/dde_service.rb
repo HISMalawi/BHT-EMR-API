@@ -93,7 +93,7 @@ class DDEService
 
   ##
   # Updates local patient with demographics currently in DDE.
-  def update_local_patient(patient)
+  def update_local_patient(patient, update_npid: false)
     doc_id = patient_doc_id(patient)
     unless doc_id
       Rails.logger.warn("No DDE doc_id found for patient ##{patient.patient_id}")
@@ -108,9 +108,12 @@ class DDEService
       return patient
     end
 
-    person_service.update_person(patient.person, dde_patient_to_local_person(dde_patient))
-    merging_service.link_local_to_remote_patient(patient, dde_patient)
+    if update_npid
+      merging_service.link_local_to_remote_patient(patient, dde_patient)
+      return patient
+    end
 
+    person_service.update_person(patient.person, dde_patient_to_local_person(dde_patient))
     patient
   end
 
