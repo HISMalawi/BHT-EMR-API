@@ -15,11 +15,13 @@ number changes with major changes that completely break backwards
 compatibility (examples of this include major architectural changes).
  ## [Unreleased]
 
+ ### v4.12.1 - 2021-10-09
+
  ### Fixed
 
  - ART: Cohort report not picking tx_curr on Q4 reports
 
-### v4.12.0 - 2021-09-01
+### v4.12.0 - 2021-10-01
 
 ### Added
 
