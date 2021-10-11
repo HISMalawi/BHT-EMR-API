@@ -1,7 +1,4 @@
-require 'set'
-
 class OPDService::Reports::Diagnosis
-  include ModelUtils
 
   def find_report(start_date:, end_date:,diagnosis_name:, **_extra_kwargs)
     diagnosis(start_date, end_date, diagnosis_name)
