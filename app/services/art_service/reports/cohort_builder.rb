@@ -347,8 +347,9 @@ module ARTService
         cohort_struct.total_patients_with_screened_bp = total_patients_with_screened_bp(cohort_struct.total_alive_and_on_art, start_date, end_date)
 
         # Patients who started TPT in current reporting period
-        cohort_struct.newly_initiated_on_3hp = Cohort::Tpt.newly_initiated_on_3hp(start_date, end_date)
-        cohort_struct.newly_initiated_on_ipt = Cohort::Tpt.newly_initiated_on_ipt(start_date, end_date)
+        tpt = Cohort::Tpt.new(start_date, end_date)
+        cohort_struct.newly_initiated_on_3hp = tpt.newly_initiated_on_3hp
+        cohort_struct.newly_initiated_on_ipt = tpt.newly_initiated_on_ipt
 
         puts "Started at: #{time_started}. Finished at: #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}"
         cohort_struct

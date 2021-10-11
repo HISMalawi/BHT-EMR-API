@@ -39,10 +39,8 @@ module ConcurrencyUtils
 
     File.open(path, 'w') do |lock_file|
       Rails.logger.debug("Attempting to acquire lock: #{lock_file_path}")
-      locking_mode = blocking ? File::LOCK_EX : File::LOCK_NB | File::LOCK_EX
-      unless blocking || lock_file.flock(locking_mode)
-        raise FailedToAcquireLock, "Lock #{lock_file_path} is locked by another process"
-      end
+      locked = lock_file.flock(blocking ? File::LOCK_EX : File::LOCK_NB | File::LOCK_EX)
+      raise FailedToAcquireLock, "Lock #{lock_file_path} is locked by another process" if !locked && !blocking
 
       lock_file.write("Locked by process ##{Process.pid} at #{Time.now}")
       yield

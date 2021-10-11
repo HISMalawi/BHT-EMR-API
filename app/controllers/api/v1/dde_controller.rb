@@ -50,7 +50,9 @@ class Api::V1::DdeController < ApplicationController
   # Updates local patient with demographics in DDE.
   def refresh_patient
     patient_id = params.require(:patient_id)
-    patient = service.update_local_patient(Patient.find(patient_id))
+    update_npid = params[:update_npid]&.casecmp?('true') || false
+
+    patient = service.update_local_patient(Patient.find(patient_id), update_npid: update_npid)
 
     render json: patient
   end

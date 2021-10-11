@@ -13,10 +13,15 @@ In short, a version number is of the following format `major.minor.patch`
 minor number changes with new backward compatible features. The major
 number changes with major changes that completely break backwards
 compatibility (examples of this include major architectural changes).
-## [Unreleased]
+ ## [Unreleased]
 
+ ### v4.12.1 - 2021-10-09
 
-### v4.12.0 - 2021-09-01
+ ### Fixed
+
+ - ART: Cohort report not picking tx_curr on Q4 reports
+
+### v4.12.0 - 2021-10-01
 
 ### Added
 
@@ -44,6 +49,9 @@ compatibility (examples of this include major architectural changes).
 - Bumped up lab to v1.1.13 - Fixes error on LIMS push of orders created through LOS
 - Patient merging not appending secondary patient identifiers to primary patient (helpdesk [#3541](https://egpafemr.sdpondemand.manageengine.com/app/itdesk/ui/requests/118246000006095075/details))
 - ART: Regimen distribution pulling defaulters
+- ART Stock: Relocation of drugs at a date before their delivery date
+- ART Stock: Drug relocations not saving retrospective dates
+
 
 ### Changed
 
