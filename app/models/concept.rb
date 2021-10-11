@@ -44,4 +44,7 @@ class Concept < RetirableRecord
     return name unless name.blank?
     return self.concept_names.first.name rescue nil
   end
+
+  DRUG_REFILL = 'Drug refill'
+  PATIENT_TYPE = 'Type of Patient'
 end

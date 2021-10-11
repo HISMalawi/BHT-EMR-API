@@ -40,7 +40,7 @@ module RdsService
 
   MODELS = [Person, PersonAttribute, PersonAddress, PersonName, Relationship, User, Patient,
             PatientIdentifier, PatientState, PatientProgram, Encounter,
-            Observation, Order, DrugOrder, PharmacyBatch,
+            Observation, Order, DrugOrder,Pharmacy, PharmacyBatch,
             PharmacyBatchItem, PharmacyBatchItemReallocation].freeze
 
   TIME_EPOCH = '0000-00-00 00:00:00'
