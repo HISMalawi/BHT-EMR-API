@@ -3,8 +3,7 @@
 class FilingNumberService
   include ModelUtils
 
-  # Find patients that have a (non-archived) filing number that are eligible
-  # for archiving.
+  # Find patients that have an active filing number that are eligible for archiving.
   #
   # Search order is as follows:
   #   1. Patients with outcome 'Patient died'
@@ -68,7 +67,7 @@ class FilingNumberService
         )
     SQL
 
-    identifier['identifier']
+    identifier&.fetch('identifier', nil)
   end
 
   # Archives patient with given filing number

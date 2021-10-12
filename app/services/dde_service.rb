@@ -93,7 +93,7 @@ class DDEService
 
   ##
   # Updates local patient with demographics currently in DDE.
-  def update_local_patient(patient)
+  def update_local_patient(patient, update_npid: false)
     doc_id = patient_doc_id(patient)
     unless doc_id
       Rails.logger.warn("No DDE doc_id found for patient ##{patient.patient_id}")
@@ -105,6 +105,11 @@ class DDEService
     unless dde_patient
       Rails.logger.warn("Couldn't find patient ##{patient.patient_id} in DDE by doc_id ##{doc_id}")
       push_local_patient_to_dde(patient)
+      return patient
+    end
+
+    if update_npid
+      merging_service.link_local_to_remote_patient(patient, dde_patient)
       return patient
     end
 
@@ -312,9 +317,15 @@ class DDEService
                                 remote_patients: remote_patients,
                                 auto_push_singular_local: auto_push_singular_local)
 
-    patients[:remotes] = patients[:remotes].collect { |patient| localise_remote_patient(patient) }
+    # In some cases we may have remote patients that were previously imported but
+    # whose NPID has changed, we need to find and resolve these local patients.
+    unresolved_patients = find_patients_by_doc_id(patients[:remotes].collect { |remote_patient| remote_patient['doc_id'] })
+    additional_patients = resolve_patients(local_patients: unresolved_patients, remote_patients: patients[:remotes])
 
-    patients
+    {
+      locals: patients[:locals] + additional_patients[:locals],
+      remotes: additional_patients[:remotes].collect { |patient| localise_remote_patient(patient) }
+    }
   end
 
   # Locally saves the first unresolved remote patient.
@@ -360,7 +371,8 @@ class DDEService
       # HACK: Frontenders requested that if only a single patient exists
       # remotely and locally none exists, the remote patient should be
       # imported.
-      resolved_patients = [save_remote_patient(remote_patients[0])]
+      local_patient = find_patients_by_doc_id(remote_patients[0]['doc_id']).first
+      resolved_patients = [local_patient || save_remote_patient(remote_patients[0])]
       remote_patients = []
     elsif auto_push_singular_local && resolved_patients.size == 1\
          && remote_patients.empty? && local_only_patient?(resolved_patients.first)
@@ -379,12 +391,9 @@ class DDEService
 
   # Matches local and remote patient
   def same_patient?(local_patient:, remote_patient:)
-    local_npid = local_patient.identifier('National id')&.identifier
-    local_doc_id = local_patient.identifier('DDE person document id')&.identifier
-
-    return false unless local_npid && local_doc_id
-
-    local_npid == remote_patient['npid'] && local_doc_id == remote_patient['doc_id']
+    PatientIdentifier.where(patient: local_patient, type: dde_doc_id_type).any? do |doc_id|
+      doc_id.identifier == remote_patient['doc_id']
+    end
   end
 
   # Saves local patient to DDE and links the two using the IDs
@@ -482,7 +491,7 @@ class DDEService
     dde_patient = HashWithIndifferentAccess.new(
       given_name: person_name.given_name,
       family_name: person_name.family_name,
-      gender: person.gender,
+      gender: person.gender&.first,
       birthdate: person.birthdate,
       birthdate_estimated: person.birthdate_estimated, # Convert to bool?
       attributes: {
@@ -533,6 +542,13 @@ class DDEService
 
   def dde_doc_id_type
     PatientIdentifierType.find_by_name('DDE Person document ID')
+  end
+
+  def find_patients_by_doc_id(doc_ids)
+    identifiers = PatientIdentifier.joins(:type)
+                                   .merge(PatientIdentifierType.where(name: 'DDE Person Document ID'))
+                                   .where(identifier: doc_ids)
+    Patient.joins(:patient_identifiers).merge(identifiers).distinct
   end
 
   def person_service
