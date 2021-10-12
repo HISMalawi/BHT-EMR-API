@@ -320,7 +320,11 @@ class DDEService
     # In some cases we may have remote patients that were previously imported but
     # whose NPID has changed, we need to find and resolve these local patients.
     unresolved_patients = find_patients_by_doc_id(patients[:remotes].collect { |remote_patient| remote_patient['doc_id'] })
-    additional_patients = resolve_patients(local_patients: unresolved_patients, remote_patients: patients[:remotes])
+    additional_patients = if unresolved_patients.size.zero?
+                            resolve_patients(local_patients: unresolved_patients, remote_patients: patients[:remotes])
+                          else
+                            { locals: [], remotes: [] }
+                          end
 
     {
       locals: patients[:locals] + additional_patients[:locals],
@@ -367,7 +371,7 @@ class DDEService
       resolved_patients << local_patient
     end
 
-    if resolved_patients.empty? && remote_patients.size == 1
+    if resolved_patients.empty? && (local_patients.size.zero? && remote_patients.size == 1)
       # HACK: Frontenders requested that if only a single patient exists
       # remotely and locally none exists, the remote patient should be
       # imported.
@@ -378,6 +382,8 @@ class DDEService
          && remote_patients.empty? && local_only_patient?(resolved_patients.first)
       # ANOTHER HACK: Push local only patient to DDE
       resolved_patients = [push_local_patient_to_dde(resolved_patients[0])]
+    else
+      resolved_patients = local_patients
     end
 
     { locals: resolved_patients, remotes: remote_patients }
