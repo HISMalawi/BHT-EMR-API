@@ -320,11 +320,11 @@ class DDEService
     # In some cases we may have remote patients that were previously imported but
     # whose NPID has changed, we need to find and resolve these local patients.
     unresolved_patients = find_patients_by_doc_id(patients[:remotes].collect { |remote_patient| remote_patient['doc_id'] })
-    additional_patients = if unresolved_patients.size.zero?
-                            resolve_patients(local_patients: unresolved_patients, remote_patients: patients[:remotes])
-                          else
-                            { locals: [], remotes: [] }
-                          end
+    if unresolved_patients.empty?
+      return { locals: patients[:locals], remotes: patients[:remotes].collect { |patient| localise_remote_patient(patient) } }
+    end
+
+    additional_patients = resolve_patients(local_patients: unresolved_patients, remote_patients: patients[:remotes])
 
     {
       locals: patients[:locals] + additional_patients[:locals],
