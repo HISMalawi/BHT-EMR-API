@@ -491,7 +491,7 @@ class DDEService
     dde_patient = HashWithIndifferentAccess.new(
       given_name: person_name.given_name,
       family_name: person_name.family_name,
-      gender: person.gender,
+      gender: person.gender&.first,
       birthdate: person.birthdate,
       birthdate_estimated: person.birthdate_estimated, # Convert to bool?
       attributes: {
