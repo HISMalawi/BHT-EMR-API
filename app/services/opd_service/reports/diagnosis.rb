@@ -98,8 +98,6 @@ class OPDService::Reports::Diagnosis
       months = 'Unknown'
     end
 
-    puts  "AGE: #{months}"
-
     if months == 'Unknown'
       return 'Unknown'
     elsif months < 6
