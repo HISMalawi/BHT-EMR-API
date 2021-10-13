@@ -17,6 +17,7 @@ class OPDService::Reports::Diagnosis
       LEFT JOIN person_name n ON n.person_id = encounter.patient_id AND n.voided = 0
       LEFT JOIN person_attribute z ON z.person_id = encounter.patient_id AND z.person_attribute_type_id = 12
       RIGHT JOIN person_address a ON a.person_id = encounter.patient_id').\
+      group('obs.person_id,obs.value_coded,DATE(obs.obs_datetime)').\
       select('encounter.encounter_type,n.given_name, n.family_name, n.person_id, obs.value_coded, p.*,
       a.state_province district, a.township_division ta, a.city_village village, z.value')
 
@@ -54,17 +55,13 @@ class OPDService::Reports::Diagnosis
           patientD_F_Over14Yrs: '',
           male_over_fourteen_years: 0,
           patientD_M_Over14Yrs: '',
-          female_unknowns: 0,
-          patientD_F_unknowns: '',
-          male_unknowns: 0,
-          patientD_M_unknowns: '',
         }
       end
 
-      if age_group == 'months < 6' && gender == 'F'
+      if age_group == '< 6 months' && gender == 'F'
         stats[concept.name][:female_less_than_six_months] += 1
         stats[concept.name][:patientD_F_LessSixMonths] = "#{stats[concept.name][:patientD_F_LessSixMonths]} #{patient_info}"
-      elsif age_group == 'months < 6' && gender == 'M'
+      elsif age_group == '< 6 months' && gender == 'M'
         stats[concept.name][:male_less_than_six_months] += 1
         stats[concept.name][:patientD_M_LessSixMonths] = "#{stats[concept.name][:patientD_M_LessSixMonths]} #{patient_info}"
       elsif age_group == '6 months < 5 yrs' && gender == 'F'
@@ -85,12 +82,6 @@ class OPDService::Reports::Diagnosis
       elsif age_group == '> 14 yrs' && gender == 'M'
         stats[concept.name][:male_over_fourteen_years] += 1
         stats[concept.name][:patientD_M_Over14Yrs] = "#{stats[concept.name][:patientD_M_Over14Yrs]} #{patient_info}"
-      elsif age_group == 'Unknown' && gender == 'F'
-        stats[concept.name][:female_unknowns] += 1
-        stats[concept.name][:patientD_F_unknowns] = "#{stats[concept.name][:patientD_F_unknowns]} #{patient_info}"
-      elsif age_group == 'Unknown' && gender == 'M'
-        stats[concept.name][:male_unknowns] += 1
-        stats[concept.name][:patientD_M_unknowns] = "#{stats[concept.name][:patientD_M_unknowns]} #{patient_info}"
       end
 
     end
@@ -106,6 +97,8 @@ class OPDService::Reports::Diagnosis
     rescue
       months = 'Unknown'
     end
+
+    puts  "AGE: #{months}"
 
     if months == 'Unknown'
       return 'Unknown'
