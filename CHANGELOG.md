@@ -15,7 +15,14 @@ number changes with major changes that completely break backwards
 compatibility (examples of this include major architectural changes).
  ## [Unreleased]
 
- ### v4.12.1 - 2021-10-09
+ ## v4.12.2 - 2021-10-13
+
+ ### Fixed
+
+ - ART: Crash on VL reminder for patients who got a VL order in the last 2 months
+ - DDE: Duplication of patients with v4 NPIDs but no corresponding DDE doc ID (these are old DDE patients)
+
+ ## v4.12.1 - 2021-10-09
 
  ### Fixed
 
