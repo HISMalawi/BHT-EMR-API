@@ -13,14 +13,15 @@ In short, a version number is of the following format `major.minor.patch`
 minor number changes with new backward compatible features. The major
 number changes with major changes that completely break backwards
 compatibility (examples of this include major architectural changes).
- ## [Unreleased]
+## [Unreleased]
 
- ## v4.12.2 - 2021-10-13
+## v4.12.2 - 2021-10-13
 
- ### Fixed
+### Fixed
 
- - ART: Crash on VL reminder for patients who got a VL order in the last 2 months
- - DDE: Duplication of patients with v4 NPIDs but no corresponding DDE doc ID (these are old DDE patients)
+- Lab: Error on push of orders to LIMS immediately after creation (see Lab's [CHANGELOG](https://github.com/EGPAFMalawiHIS/his_emr_api_lab/blob/main/CHANGELOG.md#v1115---2021-10-14))
+- ART: Crash on VL reminder for patients who got a VL order in the last 2 months
+- DDE: Duplication of patients with v4 NPIDs but no corresponding DDE doc ID (these are old DDE patients)
 
  ## v4.12.1 - 2021-10-09
 
