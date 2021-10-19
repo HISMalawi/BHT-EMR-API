@@ -15,6 +15,10 @@ number changes with major changes that completely break backwards
 compatibility (examples of this include major architectural changes).
 ## [Unreleased]
 
+### Added
+
+- ART: Active filing number archiving candidates preferring oldest filing numbers and patients who changed state earliest
+
 ### Fixed
 
 - Lab: Random hangs when pushing orders to LIMS (see Lab's [CHANGELOG](https://github.com/EGPAFMalawiHIS/his_emr_api_lab/blob/main/CHANGELOG.md#v1116---2021-10-18))
