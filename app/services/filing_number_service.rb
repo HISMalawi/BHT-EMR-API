@@ -137,10 +137,16 @@ class FilingNumberService
   # Build archive candidates from patient list returned by
   # `patients_to_be_archived_based_on_waste_state`
   def build_archive_candidates(patients)
-    demographics_list = find_patients_demographics_and_appointment(patients.collect { |patient| patient['patient_id'] }).to_a
+    return [] if patients.empty?
+
+    demographics_list = find_patients_demographics_and_appointment(patients.collect do |patient|
+                                                                     patient['patient_id']
+                                                                   end).to_a
 
     patients.each do |patient|
-      patient_demographics = demographics_list.bsearch { |demographics| demographics['patient_id'] >= patient['patient_id'] }
+      patient_demographics = demographics_list.bsearch do |demographics|
+        demographics['patient_id'] >= patient['patient_id']
+      end
 
       patient['appointment_date'] = patient_demographics&.fetch('appointment_date')
       patient['given_name'] = patient_demographics&.fetch('given_name')
