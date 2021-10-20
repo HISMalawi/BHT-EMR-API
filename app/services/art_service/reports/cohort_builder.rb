@@ -593,15 +593,18 @@ module ARTService
             AND art_start_date_obs.voided = 0
             AND art_start_date_obs.obs_datetime < (DATE(#{end_date}) + INTERVAL 1 DAY)
             AND art_start_date_obs.encounter_id = clinic_registration_encounter.encounter_id
-          INNER JOIN encounter AS prescription_encounter
+           /* TODO: Re-enable the following condition. Has been removed because LLH and PIH
+              were noted to be dropping patients because of it. Seems these sites may have orders
+              without corresponding encounters. Adding this condition bumps up performance a bit. */
+           /* INNER JOIN encounter AS prescription_encounter
             ON prescription_encounter.patient_id = patient_program.patient_id
             AND prescription_encounter.program_id = patient_program.program_id
             AND prescription_encounter.encounter_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
             AND prescription_encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name LIKE 'Treatment')
-            AND prescription_encounter.voided = 0
+            AND prescription_encounter.voided = 0 */
           INNER JOIN orders AS art_order
             ON art_order.patient_id = patient_program.patient_id
-            AND art_order.encounter_id = prescription_encounter.encounter_id
+            /* AND art_order.encounter_id = prescription_encounter.encounter_id */
             AND art_order.concept_id IN (SELECT concept_id FROM concept_set WHERE concept_set = 1085)
             AND art_order.start_date < DATE(#{end_date}) + INTERVAL 1 DAY
             AND art_order.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
