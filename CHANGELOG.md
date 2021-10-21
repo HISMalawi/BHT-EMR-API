@@ -15,6 +15,8 @@ number changes with major changes that completely break backwards
 compatibility (examples of this include major architectural changes).
 ## [Unreleased]
 
+## v4.12.3 - 2021-10-21
+
 ### Added
 
 - ART: Active filing number archiving candidates preferring oldest filing numbers and patients who changed state earliest
