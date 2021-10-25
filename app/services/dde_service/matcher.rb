@@ -79,9 +79,7 @@ class DDEService
         local_address = PersonAddress.find_by_person_id(local_person.person_id)
         remote_address = remote_person['attributes']
 
-        return { local: local_address.send(field), remote: remote_address[field] } if local_address.send(field).blank?
         return nil if local_address.send(field).casecmp?(remote_address[field])
-
         { local: local_address.send(field), remote: remote_address[field] }
       end
 
