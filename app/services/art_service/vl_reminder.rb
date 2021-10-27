@@ -160,9 +160,9 @@ module ARTService
       message = if last_viral_load_skip_date && last_viral_load_date && last_viral_load_skip_date >= last_viral_load_date
                   "Viral load set for next milestone by #{formatted_username(last_viral_load_skip.creator)}"
                 elsif last_viral_load_date && last_viral_load_date < @date - 2.months
-                  "Viral load ordered on #{last_viral_load_date.strftime('%d/%b/%Y')} by #{formatted_username(last_viral_load.creator)}"
+                  "Viral load ordered on #{last_viral_load_date&.strftime('%d/%b/%Y')} by #{formatted_username(last_viral_load.creator)}"
                 else
-                  "Viral load not due until #{due_date.strftime('%d/%b/%Y')}"
+                  "Viral load not due until #{due_date&.strftime('%d/%b/%Y')}"
                 end
 
       struct_vl_info(
@@ -221,7 +221,8 @@ module ARTService
     # Returns the current and previous patient regimens as a pair.
     def find_patient_regimen_trail
       patient_last_two_regimen_prescriptions.map do |prescription|
-        OpenStruct.new(regimen: prescription.regimen, date_started: prescription.start_date, date_completed: prescription.auto_expire_date)
+        OpenStruct.new(regimen: prescription.regimen, date_started: prescription.start_date,
+                       date_completed: prescription.auto_expire_date)
       end
     end
 
