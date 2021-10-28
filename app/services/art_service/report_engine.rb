@@ -108,9 +108,10 @@ module ARTService
         end_date: end_date.to_date, age_group: age_group, gender: gender).clients_given_ipt
     end
 
-    def arv_refill_periods(start_date, end_date, min_age, max_age, org)
+    def arv_refill_periods(start_date, end_date, min_age, max_age, org, initialize_tables)
       REPORTS['ARV_REFILL_PERIODS'].new(start_date: start_date.to_date,
-        end_date: end_date.to_date, min_age: min_age, max_age: max_age, org: org).arv_refill_periods
+        end_date: end_date.to_date, min_age: min_age,
+        max_age: max_age, org: org, initialize_tables: initialize_tables).arv_refill_periods
     end
 
     def tx_ml(start_date, end_date)

@@ -164,7 +164,7 @@ class Api::V1::ReportsController < ApplicationController
 
   def arv_refill_periods
     render json: service.arv_refill_periods(params[:start_date], params[:end_date],
-      params[:min_age], params[:max_age], params[:org])
+      params[:min_age], params[:max_age], params[:org], params[:initialize_tables])
   end
 
   def tx_ml
