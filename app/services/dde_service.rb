@@ -222,7 +222,13 @@ class DDEService
     patient = patient_id.blank? ? nil : Patient.find(patient_id)
 
     # We have a doc_id thus we can re-assign npid in DDE
-    response, status = dde_client.post('reassign_npid', doc_id: doc_id)
+    # Check if person if available in DDE if not add person using doc_id
+    response, status = dde_client.post('search_by_doc_id', doc_id: doc_id)
+    if !response.blank? && status.to_i == 200
+      response, status = dde_client.post('reassign_npid', doc_id: doc_id)
+    elsif response.blank? && status.to_i == 200
+      return push_local_patient_to_dde(Patient.find(patient_ids['patient_id']))
+    end
 
     unless status == 200 && !response.empty?
       # The DDE's reassign_npid end point responds with a 200 - OK but returns
