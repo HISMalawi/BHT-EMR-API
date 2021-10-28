@@ -154,12 +154,12 @@ class Api::V1::ReportsController < ApplicationController
 
   def screened_for_tb
     render json: service.screened_for_tb(params[:start_date], params[:end_date],
-      params[:gender], params[:age_group], params[:outcome_table])
+      params[:gender], params[:age_group])
   end
 
   def clients_given_ipt
     render json: service.clients_given_ipt(params[:start_date], params[:end_date],
-      params[:gender], params[:age_group], params[:outcome_table])
+      params[:gender], params[:age_group])
   end
 
   def arv_refill_periods
@@ -180,8 +180,8 @@ class Api::V1::ReportsController < ApplicationController
   end
 
   def disaggregated_regimen_distribution
-    render json: service.disaggregated_regimen_distribution(params[:start_date], params[:end_date],
-      params[:gender], params[:age_group], params[:outcome_table])
+    render json: service.disaggregated_regimen_distribution(params[:start_date],
+      params[:end_date],  params[:gender])
   end
 
   def tx_mmd_client_level_data
