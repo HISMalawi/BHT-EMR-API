@@ -40,26 +40,24 @@ module ARTService
 
       def disaggregated(quarter, age_group)
 
-        temp_outcome_table = 'temp_patient_outcomes'
 
         if quarter == 'pepfar'
           start_date = @start_date
           end_date = @end_date
-          temp_outcome_table = 'temp_pepfar_patient_outcomes'
 
           begin
-            records = ActiveRecord::Base.connection.select_one('SELECT count(*) rec_count FROM temp_pepfar_patient_outcomes;')
+            records = ActiveRecord::Base.connection.select_one('SELECT count(*) rec_count FROM temp_patient_outcomes;')
             if records['rec_count'].to_i < 1
               @rebuild = true
             end
           rescue
             initialize_disaggregated
-            rebuild_outcomes
+            rebuild_outcomes 'pepfar'
           end
 
           if @rebuild
             initialize_disaggregated
-            rebuild_outcomes
+            rebuild_outcomes 'pepfar'
           end
 
 
@@ -71,12 +69,13 @@ module ARTService
             art_service = ARTService::Reports::CohortBuilder.new()
             art_service.create_tmp_patient_table
             art_service.load_data_into_temp_earliest_start_date(end_date)
-            art_service.update_cum_outcome(end_date)
+            #art_service.update_cum_outcome(end_date)
+            rebuild_outcomes 'moh'
             art_service.update_tb_status(end_date)
           end
         end
 
-        tmp = get_age_groups(age_group, start_date, end_date, temp_outcome_table)
+        tmp = get_age_groups(age_group, start_date, end_date)
 
 
         #A hack to get female that were pregnant / breastfeeding at the beginning of the reporting period + those are currently the same state
@@ -303,26 +302,45 @@ EOF
         return [tx_new, tx_curr, tx_given_ipt, tx_screened_for_tb]
       end
 
-      def get_age_groups(age_group, start_date, end_date, temp_outcome_table)
+      def get_age_groups(age_group, start_date, end_date)
         if age_group != 'Pregnant' && age_group != 'FNP' && age_group != 'Not pregnant' && age_group != 'Breastfeeding'
 
+          start_dob, end_dob = get_age_bounds age_group
+
+          age_group_patients = ActiveRecord::Base.connection.select_all <<~SQL
+            SELECT
+              patient_id, `cohort_disaggregated_age_group`(date(birthdate), date('#{@end_date}')) AS age_group
+            FROM temp_earliest_start_date e
+            WHERE birthdate BETWEEN '#{start_dob}' AND '#{end_dob}'
+            GROUP BY e.patient_id HAVING age_group = '#{age_group}';
+          SQL
+
+          age_group_patient_ids = [0]
+          (age_group_patients || []).each do |patient|
+            age_group_patient_ids << patient['patient_id'].to_i
+          end
+
+          results = ActiveRecord::Base.connection.select_all <<~SQL
+            SELECT
+              o.cum_outcome AS outcome, e.*
+            FROM temp_earliest_start_date e
+            LEFT JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
+            WHERE date_enrolled <= '#{@end_date}'
+            AND e.patient_id IN(#{age_group_patient_ids.join(',')})
+            GROUP BY e.patient_id;
+          SQL
+=begin
           results = ActiveRecord::Base.connection.select_all <<~SQL
             SELECT
               `cohort_disaggregated_age_group`(date(birthdate), date('#{@end_date}')) AS age_group,
               o.cum_outcome AS outcome, e.*
             FROM earliest_start_date e
-            LEFT JOIN `#{temp_outcome_table}` o ON o.patient_id = e.patient_id
+            LEFT JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
             WHERE  date_enrolled IS NOT NULL AND DATE(date_enrolled) <= DATE('#{@end_date}')
-            AND e.patient_id NOT IN(
-            SELECT person_id FROM obs
-            WHERE concept_id IN (
-              SELECT concept_id FROM concept_name WHERE name LIKE 'Type of patient'
-            ) AND value_coded IN (
-              SELECT concept_id FROM concept_name WHERE name LIKE 'External Consultation'
-            ) AND voided = 0 AND (obs_datetime < DATE('#{@end_date}') + INTERVAL 1 DAY)
-            GROUP BY person_id) GROUP BY e.patient_id
-            HAVING age_group = '#{age_group}';
+            AND e.patient_id NOT IN(#{visiting_clients.blank? ? 0 : visiting_clients.join(',')})
+            GROUP BY e.patient_id HAVING age_group = '#{age_group}';
           SQL
+=end
 
         elsif age_group == 'Pregnant'
           create_mysql_female_maternal_status
@@ -333,7 +351,7 @@ EOF
               t3.cum_outcome AS outcome
             FROM temp_earliest_start_date e
             INNER JOIN temp_disaggregated t2 ON t2.patient_id = e.patient_id
-            INNER JOIN `#{temp_outcome_table}` t3 ON t3.patient_id = e.patient_id
+            INNER JOIN temp_patient_outcomes t3 ON t3.patient_id = e.patient_id
             WHERE maternal_status = 'FP' OR initial_maternal_status = 'FP'
             GROUP BY e.patient_id;
 EOF
@@ -347,7 +365,7 @@ EOF
               t3.cum_outcome AS outcome
             FROM temp_earliest_start_date e
             INNER JOIN temp_disaggregated t2 ON t2.patient_id = e.patient_id
-            INNER JOIN `#{temp_outcome_table}` t3 ON t3.patient_id = e.patient_id
+            INNER JOIN temp_patient_outcomes t3 ON t3.patient_id = e.patient_id
             WHERE maternal_status = 'FBf' OR initial_maternal_status = 'FBf'
             GROUP BY e.patient_id;
 EOF
@@ -361,7 +379,7 @@ EOF
               t3.cum_outcome AS outcome
             FROM temp_earliest_start_date e
             INNER JOIN temp_disaggregated t2 ON t2.patient_id = e.patient_id
-            INNER JOIN `#{temp_outcome_table}` t3 ON t3.patient_id = e.patient_id
+            INNER JOIN temp_patient_outcomes t3 ON t3.patient_id = e.patient_id
             WHERE maternal_status = 'FNP'
             GROUP BY e.patient_id;
 EOF
@@ -476,7 +494,8 @@ EOF
 
       end
 
-      def rebuild_outcomes
+      def rebuild_outcomes(report_type)
+=begin
         ActiveRecord::Base.connection.execute(
           'DROP TABLE IF EXISTS `temp_pepfar_patient_outcomes`'
         )
@@ -488,7 +507,15 @@ EOF
             GROUP BY e.patient_id
           )"
         )
+=end
 
+        cohort_list = ARTService::Reports::CohortBuilder.new(outcomes_definition: report_type)
+        cohort_list.create_tmp_patient_table
+        cohort_list.load_data_into_temp_earliest_start_date(@end_date.to_date)
+
+        outcomes = ARTService::Reports::Cohort::Outcomes.new(end_date: @end_date.to_date, definition: report_type)
+        outcomes.update_cummulative_outcomes
+=begin
         ActiveRecord::Base.connection.execute(
           'ALTER TABLE temp_pepfar_patient_outcomes
            ADD INDEX patient_id_index (patient_id)'
@@ -503,7 +530,7 @@ EOF
           'ALTER TABLE temp_pepfar_patient_outcomes
            ADD INDEX patient_id_cum_outcome_index (patient_id, cum_outcome)'
         )
-
+=end
       end
 
       def insert_female_maternal_status(patient_id, age_group, end_date)
@@ -614,15 +641,45 @@ EOF
       end
 
       def big_insert(data, age_group)
+        insert_array = [];
+        (data || []).each do |r|
+          insert_array << "(#{r['patient_id']}, '#{age_group}')";
+        end
 
+        unless insert_array.blank?
+          ActiveRecord::Base.connection.execute <<~SQL
+            INSERT INTO temp_disaggregated (patient_id, age_group)
+            VALUES #{insert_array.join(",")};
+          SQL
+        end
+=begin
         (data || []).each do |r|
           ActiveRecord::Base.connection.execute <<EOF
             INSERT INTO temp_disaggregated (patient_id, age_group)
             VALUES(#{r['patient_id']}, '#{age_group}');
 EOF
-
         end
+=end
 
+      end
+
+      def get_age_bounds(age_group)
+        if age_group.match(/years/)
+          min_bound, max_bound = age_group.gsub(/years|-/, " ").squish.split(" ")
+          if age_group.match(/plus/)
+            return [
+              '1900-01-01'.to_date ,
+              "#{@end_date.year - max_bound.to_i}-01-01".to_date + 6.months
+            ]
+          else
+            return [
+              "#{@end_date.year - max_bound.to_i}-01-01".to_date - 6.month,
+              "#{@end_date.year - min_bound.to_i}-12-31".to_date + 6.month
+            ]
+          end
+        elsif age_group.match(/month/)
+          return [@end_date - 2.year, @end_date]
+        end
       end
 
     end

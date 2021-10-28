@@ -684,6 +684,9 @@ module ARTService
         ActiveRecord::Base.connection.execute(
           'CREATE INDEX idx_reason_for_art ON temp_earliest_start_date (reason_for_starting_art)'
         )
+        ActiveRecord::Base.connection.execute(
+          'CREATE INDEX birthdate_idx ON temp_earliest_start_date (birthdate)'
+        )
       end
 
       def update_cum_outcome(end_date)

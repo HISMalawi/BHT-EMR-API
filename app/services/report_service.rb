@@ -111,12 +111,12 @@ class ReportService
     engine(@program).regimen_report(start_date, end_date, type)
   end
 
-  def screened_for_tb(start_date, end_date, gender, age_group, outcome_table)
-    engine(@program).screened_for_tb(start_date, end_date, gender, age_group, outcome_table)
+  def screened_for_tb(start_date, end_date, gender, age_group)
+    engine(@program).screened_for_tb(start_date, end_date, gender, age_group)
   end
 
-  def clients_given_ipt(start_date, end_date, gender, age_group, outcome_table)
-    engine(@program).clients_given_ipt(start_date, end_date, gender, age_group, outcome_table)
+  def clients_given_ipt(start_date, end_date, gender, age_group)
+    engine(@program).clients_given_ipt(start_date, end_date, gender, age_group)
   end
 
   def arv_refill_periods(start_date, end_date, min_age, max_age, org)
@@ -135,8 +135,8 @@ class ReportService
     engine(@program).ipt_coverage(start_date, end_date)
   end
 
-  def disaggregated_regimen_distribution(start_date, end_date, gender, age_group, outcome_table)
-    engine(@program).disaggregated_regimen_distribution(start_date, end_date, gender, age_group, outcome_table)
+  def disaggregated_regimen_distribution(start_date, end_date, gender, age_group)
+    engine(@program).disaggregated_regimen_distribution(start_date, end_date, gender, age_group)
   end
 
   def tx_mmd_client_level_data(start_date, end_date, patient_ids, org)
