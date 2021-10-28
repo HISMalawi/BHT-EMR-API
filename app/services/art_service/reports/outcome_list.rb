@@ -37,78 +37,19 @@ module ARTService
       end
 
       def transfer_out
-        ActiveRecord::Base.connection.select_all <<~SQL
-          SELECT patient_program.patient_id,
-                 arv_number.identifier,
-                 patient_program.date_enrolled,
-                 patient_program.date_completed,
-                 patient_state.start_date,
-                 patient_state.end_date,
-                 patient_state.state,
-                 state_concept.name,
-                 person_name.given_name,
-                 person_name.family_name,
-                 person.gender,
-                 person.birthdate,
-                 transfer_out_to_obs.value_text AS transferred_out_to
-          FROM patient_program
-          INNER JOIN program
-            ON program.program_id = patient_program.program_id
-            AND program.name = 'HIV Program'
-            AND program.retired = 0
-          INNER JOIN patient_state
-            ON patient_state.patient_program_id = patient_program.patient_program_id
-            AND patient_state.start_date >= DATE(#{start_date})
-            AND patient_state.start_date < DATE(#{end_date}) + INTERVAL 1 DAY
-            AND patient_state.voided = 0
-          INNER JOIN program_workflow_state
-            ON program_workflow_state.program_workflow_state_id = patient_state.state
-          INNER JOIN concept_name AS state_concept
-            ON state_concept.concept_id = program_workflow_state.concept_id
-            AND state_concept.name = 'Patient transferred out'
-            AND state_concept.voided = 0
-          LEFT JOIN person_name
-            ON person_name.person_id = patient_program.patient_id
-            AND person_name.voided = 0
-          INNER JOIN person
-            ON person.person_id = patient_program.patient_id
-            AND person.voided = 0
-          LEFT JOIN patient_identifier AS arv_number
-            ON arv_number.patient_id = patient_program.patient_id
-            AND arv_number.voided = 0
-            AND identifier_type = (
-              SELECT patient_identifier_type_id FROM patient_identifier_type
-              WHERE patient_identifier_type.name = 'ARV Number' AND patient_identifier_type.retired = 0
-              LIMIT 1
-            )
-          LEFT JOIN encounter AS exit_from_care_encounter
-            ON exit_from_care_encounter.patient_id = patient_program.patient_id
-            AND exit_from_care_encounter.encounter_datetime >= DATE(patient_state.start_date)
-            AND exit_from_care_encounter.encounter_datetime < DATE(patient_state.start_date) + INTERVAL 1 DAY
-            AND exit_from_care_encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'EXIT FROM HIV CARE')
-            AND exit_from_care_encounter.voided = 0
-          LEFT JOIN obs AS transfer_out_to_obs
-            ON transfer_out_to_obs.encounter_id = exit_from_care_encounter.encounter_id
-            AND exit_from_care_encounter.encounter_id IS NOT NULL
-            AND transfer_out_to_obs.voided = 0
-          LEFT JOIN concept_name AS transfer_out_to_concept
-            ON transfer_out_to_concept.concept_id = transfer_out_to_obs.concept_id
-            AND transfer_out_to_concept.name = 'Transfer out site'
-            AND transfer_out_to_concept.voided = 0
-          GROUP BY patient_program.patient_id
-          ORDER BY patient_state.start_date DESC, person_name.date_created DESC;
-        SQL
+        outcome_query 'Patient transferred out'
       end
 
       def died
-        return outcome_query 3
+        return outcome_query 'Patient died'
       end
 
       def stopped
-        return outcome_query 6
+        return outcome_query 'Treatment stopped'
       end
 
       def outcome_query(outcome_state)
+=begin
         data = ActiveRecord::Base.connection.select_all <<~SQL
         SELECT
           pp.patient_id, i.identifier, pp.date_enrolled, pp.date_completed,
@@ -127,8 +68,83 @@ module ARTService
         AND s.state NOT IN(7,1, 12) AND s.state = #{outcome_state}
         GROUP BY pp.patient_id ORDER BY s.start_date DESC, fn.date_created DESC;
         SQL
+=end
 
-        return data
+        report_type = 'moh'
+        cohort_list = ARTService::Reports::CohortBuilder.new(outcomes_definition: report_type)
+        cohort_list.create_tmp_patient_table
+        cohort_list.load_data_into_temp_earliest_start_date(@end_date.to_date)
+
+        outcomes = ARTService::Reports::Cohort::Outcomes.new(end_date: @end_date.to_date, definition: report_type)
+        outcomes.update_cummulative_outcomes
+
+        transfer_out_to_location_sql = ""
+        transfer_out_to_location_name_sql = ""
+        if outcome_state.match(/Transfer/i)
+          concept_id = ConceptName.find_by_name('Transfer out to location').concept_id
+          transfer_out_to_location_name_sql = " ,l.name transferred_out_to"
+          transfer_out_to_location_sql = " LEFT JOIN obs to_location ON to_location.person_id = e.patient_id"
+          transfer_out_to_location_sql += " AND to_location.concept_id = #{concept_id} AND to_location.voided = 0"
+          transfer_out_to_location_sql += " LEFT JOIN location l ON l.location_id = to_location.value_numeric"
+        end
+
+        data = ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT
+            e.patient_id, i.identifier, e.birthdate,
+            e.gender, n.given_name, n.family_name,
+            art_reason.name art_reason, a.value cell_number,
+            s3.state_province district, s3.county_district ta,
+            s3.city_village village, TIMESTAMPDIFF(year, DATE(e.birthdate), DATE('#{@end_date}')) age,
+            pp.date_enrolled, pp.date_completed,
+            s2.start_date outcome_date, s2.end_date, s2.state
+            #{transfer_out_to_location_name_sql}
+          FROM temp_earliest_start_date e
+          INNER JOIN temp_patient_outcomes o ON e.patient_id = o.patient_id
+          LEFT JOIN patient_identifier i ON i.patient_id = e.patient_id
+          AND i.voided = 0 AND i.identifier_type = 4
+          INNER JOIN person_name n ON n.person_id = e.patient_id AND n.voided = 0
+          LEFT JOIN person_attribute a ON a.person_id = e.patient_id
+          AND a.voided = 0 AND a.person_attribute_type_id = 12
+          LEFT JOIN person_address s3 ON s3.person_id = e.patient_id
+          LEFT JOIN concept_name art_reason ON art_reason.concept_id = e.reason_for_starting_art
+          #{transfer_out_to_location_sql}
+          INNER JOIN patient_program pp ON pp.patient_id = e.patient_id AND pp.program_id = 1
+          INNER JOIN patient_state s2 ON s2.patient_program_id = pp.patient_program_id
+          INNER JOIN program_workflow_state ws ON ws.program_workflow_state_id = s2.state
+          INNER JOIN program_workflow w ON w.program_workflow_id = ws.program_workflow_id
+          INNER JOIN concept_name n2 ON n2.concept_id = ws.concept_id
+          WHERE o.cum_outcome = '#{outcome_state}'
+          AND pp.voided = 0 AND s2.voided = 0 AND s2.start_date
+          BETWEEN '#{@start_date}' AND '#{@end_date}' AND s2.state NOT IN(7,1, 12)
+          GROUP BY e.patient_id ORDER BY e.patient_id, n.date_created DESC;
+        SQL
+
+        patients = []
+
+        (data || []).each do |person|
+
+
+          patients << {
+            patient_id: person["patient_id"],
+            given_name: person['given_name'],
+            family_name: person['family_name'],
+            birthdate: person['birthdate'],
+            gender: person['gender'],
+            arv_number: person['arv_number'],
+            outcome: 'Defaulted',
+            art_reason: person['art_reason'],
+            cell_number: person['cell_number'],
+            district: person['district'],
+            ta: person['ta'],
+            village: person['village'],
+            current_age: person['age'],
+            identifier: person['identifier'],
+            transferred_out_to: (person['transferred_out_to'] ? person['transferred_out_to'] : 'N/A'),
+            outcome_date: (person['outcome_date']&.to_date || 'N/A')
+          }
+        end
+
+        return patients
       end
 
     end
