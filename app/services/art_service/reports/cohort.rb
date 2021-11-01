@@ -42,6 +42,7 @@ module ARTService
       end
 
       def defaulter_list(pepfar)
+=begin
         data = ActiveRecord::Base.connection.select_all <<~SQL
           SELECT o.patient_id, min(start_date) start_date
           FROM orders o
@@ -69,73 +70,64 @@ module ARTService
             )
           GROUP BY o.patient_id;
         SQL
+=end
+
+        report_type = (pepfar ? 'pepfar' : 'moh')
+        defaulter_date_sql = pepfar ? " current_pepfar_defaulter_date" : "current_defaulter_date"
+        cohort_list = ARTService::Reports::CohortBuilder.new(outcomes_definition: report_type)
+        cohort_list.create_tmp_patient_table
+        cohort_list.load_data_into_temp_earliest_start_date(@end_date.to_date)
+
+        outcomes = ARTService::Reports::Cohort::Outcomes.new(end_date: @end_date.to_date, definition: report_type)
+        outcomes.update_cummulative_outcomes
+
+
+        data = ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT
+            e.patient_id, i.identifier arv_number, e.birthdate,
+            e.gender, n.given_name, n.family_name,
+            art_reason.name art_reason, a.value cell_number,
+            s.state_province district, s.county_district ta,
+            s.city_village village, TIMESTAMPDIFF(year, DATE(e.birthdate), DATE('#{@end_date}')) age,
+            #{defaulter_date_sql}(e.patient_id, TIMESTAMP('#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')) AS defaulter_date
+          FROM temp_earliest_start_date e
+          INNER JOIN temp_patient_outcomes o ON e.patient_id = o.patient_id
+          LEFT JOIN patient_identifier i ON i.patient_id = e.patient_id
+          AND i.voided = 0 AND i.identifier_type = 4
+          INNER JOIN person_name n ON n.person_id = e.patient_id AND n.voided = 0
+          LEFT JOIN person_attribute a ON a.person_id = e.patient_id
+          AND a.voided = 0 AND a.person_attribute_type_id = 12
+          LEFT JOIN person_address s ON s.person_id = e.patient_id
+          LEFT JOIN concept_name art_reason ON art_reason.concept_id = e.reason_for_starting_art
+          WHERE o.cum_outcome = 'Defaulted' GROUP BY e.patient_id
+          ORDER BY e.patient_id, n.date_created DESC;
+        SQL
 
         patients = []
 
-        (data || []).each do |r|
-          patient_id = r['patient_id'].to_i
+        (data || []).each do |person|
+          defaulter_date = person['defaulter_date']&.to_date || 'N/A'
 
-          if pepfar == false
-            record = ActiveRecord::Base.connection.select_one <<EOF
-            SELECT patient_outcome(#{patient_id}, DATE('#{@end_date}')) AS outcome,
-            current_defaulter_date(#{patient_id}, TIMESTAMP('#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')) AS defaulter_date;
-EOF
-
-          else
-            record = ActiveRecord::Base.connection.select_one <<EOF
-            SELECT pepfar_patient_outcome(#{patient_id}, TIMESTAMP('#{@end_date}')) AS outcome,
-            current_pepfar_defaulter_date(#{patient_id}, TIMESTAMP('#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')) AS defaulter_date;
-EOF
-
-            record['outcome'] = (record['outcome'].match(/defau/i).blank? ? nil : 'Defaulted')
+          unless defaulter_date == 'N/A'
+            next if defaulter_date < @start_date.to_date
           end
 
-          if record['outcome'] == 'Defaulted'
-            defaulter_date = record['defaulter_date'].to_date rescue nil
-            #next if defaulter_date.blank?
-
-            unless defaulter_date.blank?
-              date_within = (defaulter_date >= @start_date.to_date && defaulter_date <= @end_date.to_date)
-              next unless date_within
-            end
-
-            person = ActiveRecord::Base.connection.select_one <<EOF
-            SELECT i.identifier arv_number, p.birthdate,
-              p.gender, n.given_name, n.family_name, p.person_id patient_id,
-              patient_reason_for_starting_art_text(p.person_id) art_reason,
-              a.value cell_number,
-              s.state_province district, s.county_district ta,
-              s.city_village village
-            FROM person p
-            LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
-            AND i.voided = 0 AND i.identifier_type = 4
-            INNER JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
-            LEFT JOIN person_attribute a ON a.person_id = p.person_id
-            AND a.voided = 0 AND a.person_attribute_type_id = 12
-            LEFT JOIN person_address s ON s.person_id = p.person_id
-            WHERE p.person_id = #{patient_id} GROUP BY p.person_id
-            ORDER BY p.person_id, p.date_created;
-EOF
-
-            next if person.blank?
-
-            patients << {
-              person_id: patient_id,
-              given_name: person['given_name'],
-              family_name: person['family_name'],
-              birthdate: person['birthdate'],
-              gender: person['gender'],
-              arv_number: person['arv_number'],
-              outcome: 'Defaulted',
-              defaulter_date: record['defaulter_date']&.to_date || 'N/A',
-              art_reason: record['art_reason'],
-              cell_number: person['cell_number'],
-              district: person['district'],
-              ta: person['ta'],
-              village: person['village'],
-              current_age: calculate_age(person['birthdate'])
-            }
-          end
+          patients << {
+            person_id: person["patient_id"],
+            given_name: person['given_name'],
+            family_name: person['family_name'],
+            birthdate: person['birthdate'],
+            gender: person['gender'],
+            arv_number: person['arv_number'],
+            outcome: 'Defaulted',
+            defaulter_date: defaulter_date,
+            art_reason: person['art_reason'],
+            cell_number: person['cell_number'],
+            district: person['district'],
+            ta: person['ta'],
+            village: person['village'],
+            current_age: person['age']
+          }
         end
 
         return patients

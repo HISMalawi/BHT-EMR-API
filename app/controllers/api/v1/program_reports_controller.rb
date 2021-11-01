@@ -53,7 +53,7 @@ class Api::V1::ProgramReportsController < ApplicationController
     when 2 then "#{year}-04-01"
     when 3 then "#{year}-07-01"
     when 4 then "#{year}-10-01"
-    when 5 then "#{year + 5}-01-01" # Not sure what I might end up breaking by removing this
+    when 5 then "#{year + 1}-01-01" # Not sure what I might end up breaking by removing this
     else raise InvalidParameterError, "Invalid quarter: Q#{index}-#{year}"
     end
   end

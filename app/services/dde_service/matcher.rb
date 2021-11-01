@@ -80,7 +80,6 @@ class DDEService
         remote_address = remote_person['attributes']
 
         return nil if local_address.send(field).casecmp?(remote_address[field])
-
         { local: local_address.send(field), remote: remote_address[field] }
       end
 

@@ -13,15 +13,31 @@ In short, a version number is of the following format `major.minor.patch`
 minor number changes with new backward compatible features. The major
 number changes with major changes that completely break backwards
 compatibility (examples of this include major architectural changes).
- ## [Unreleased]
+## [Unreleased]
+
+### Added
+
+- ART: Active filing number archiving candidates preferring oldest filing numbers and patients who changed state earliest
 
 ### Fixed
 
-- ART Stock: Relocation of drugs at a date before their delivery date
-- ART Stock: Drug relocations not saving retrospective dates
+- Lab: Random hangs when pushing orders to LIMS (see Lab's [CHANGELOG](https://github.com/EGPAFMalawiHIS/his_emr_api_lab/blob/main/CHANGELOG.md#v1116---2021-10-18))
 
+## v4.12.2 - 2021-10-13
 
-### v4.12.0 - 2021-09-01
+### Fixed
+
+- Lab: Error on push of orders to LIMS immediately after creation (see Lab's [CHANGELOG](https://github.com/EGPAFMalawiHIS/his_emr_api_lab/blob/main/CHANGELOG.md#v1115---2021-10-14))
+- ART: Crash on VL reminder for patients who got a VL order in the last 2 months
+- DDE: Duplication of patients with v4 NPIDs but no corresponding DDE doc ID (these are old DDE patients)
+
+ ## v4.12.1 - 2021-10-09
+
+ ### Fixed
+
+ - ART: Cohort report not picking tx_curr on Q4 reports
+
+### v4.12.0 - 2021-10-01
 
 ### Added
 
@@ -49,6 +65,9 @@ compatibility (examples of this include major architectural changes).
 - Bumped up lab to v1.1.13 - Fixes error on LIMS push of orders created through LOS
 - Patient merging not appending secondary patient identifiers to primary patient (helpdesk [#3541](https://egpafemr.sdpondemand.manageengine.com/app/itdesk/ui/requests/118246000006095075/details))
 - ART: Regimen distribution pulling defaulters
+- ART Stock: Relocation of drugs at a date before their delivery date
+- ART Stock: Drug relocations not saving retrospective dates
+
 
 ### Changed
 

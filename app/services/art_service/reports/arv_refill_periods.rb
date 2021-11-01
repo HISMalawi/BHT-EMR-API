@@ -4,12 +4,13 @@ module ARTService
   module Reports
 
     class ArvRefillPeriods
-      def initialize(start_date:, end_date:, min_age:, max_age:, org:)
+      def initialize(start_date:, end_date:, min_age:, max_age:, org:, initialize_tables:)
         @start_date = start_date.to_date.strftime('%Y-%m-%d 00:00:00')
         @end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
         @min_age = min_age
         @max_age = max_age
         @org = org
+        @initialize_tables = (initialize_tables == 'true' ? true : false)
       end
 
       def arv_refill_periods
@@ -27,44 +28,25 @@ module ARTService
         arv_concept_set = ConceptName.find_by(name: 'ARVS').concept_id
         encounter_type = EncounterType.find_by(name: 'DISPENSING').id
 
-        sql_path = moh_pepfar_breakdown(@min_age, @max_age)
-=begin
-        concept_id = ConceptName.find_by_name('Type of patient').concept_id
-        ext_concept_id = ConceptName.find_by_name('External consultation').concept_id
+        if @initialize_tables
+          report_type = (@org.match(/pepfar/i) ? 'pepfar' : 'moh')
+          cohort_list = ARTService::Reports::CohortBuilder.new(outcomes_definition: report_type)
+          cohort_list.create_tmp_patient_table
+          cohort_list.load_data_into_temp_earliest_start_date(@end_date.to_date)
 
-        person_ids = Observation.where(concept_id: concept_id,
-          value_coded: ext_concept_id).group(:person_id).map(&:person_id)
-        person_ids = [0] if person_ids.blank?
-=end
+          outcomes = ARTService::Reports::Cohort::Outcomes.new(end_date: @end_date.to_date, definition: report_type)
+          outcomes.update_cummulative_outcomes
+        end
 
         patients = ActiveRecord::Base.connection.select_all <<~SQL
           SELECT
-            `p`.`patient_id` AS `patient_id`,
-            cast(patient_date_enrolled(`p`.`patient_id`) as date) AS `date_enrolled`,
-            pe.birthdate, pe.gender
-          FROM
-            ((`patient_program` `p`
-            left join `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
-            left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
-            left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
-          WHERE
-            ((`p`.`voided` = 0)
-                and (`s`.`voided` = 0)
-                and (`p`.`program_id` = 1)
-                and (`s`.`state` = 7)
-                #{sql_path} AND p.patient_id NOT IN(
-
-                  SELECT person_id FROM obs
-                  WHERE concept_id IN (
-                  SELECT concept_id FROM concept_name WHERE name LIKE 'Type of patient'
-                  ) AND value_coded IN (
-                    SELECT concept_id FROM concept_name WHERE name LIKE 'External Consultation'
-                  ) AND voided = 0 AND (obs_datetime < DATE('#{@end_date}') + INTERVAL 1 DAY)
-                  GROUP BY person_id
-
-                ))
-          GROUP BY `p`.`patient_id` HAVING date_enrolled IS NOT NULL
-          AND DATE(date_enrolled) <= DATE('#{@end_date}');
+            p.patient_id, p.date_enrolled, p.birthdate, p.gender,
+            outcome.cum_outcome AS outcome
+          FROM temp_earliest_start_date p
+          LEFT JOIN temp_patient_outcomes outcome USING(patient_id)
+          WHERE DATE(date_enrolled) <= DATE('#{@end_date}')
+          AND TIMESTAMPDIFF(year, p.birthdate, DATE('#{@end_date}')) BETWEEN #{@min_age} AND #{@max_age}
+          AND cum_outcome = 'On antiretrovirals';
         SQL
 
         return {} if patients.blank?
@@ -94,20 +76,6 @@ module ARTService
         end
 
         return results
-      end
-
-      def moh_pepfar_breakdown(min_age, max_age)
-        if @min_age == 'Unknown' && @max_age == 'Unknown'
-          sql_path = "AND pe.birthdate IS NULL"
-          sql_path += " AND patient_outcome(p.patient_id, DATE('#{@end_date}')) = 'On antiretrovirals'" if @org.downcase == 'moh'
-          sql_path += " AND pepfar_patient_outcome(p.patient_id, DATE('#{@end_date}')) = 'On antiretrovirals'" if @org.downcase == 'pepfar'
-        else
-          sql_path = "AND TIMESTAMPDIFF(year, pe.birthdate, DATE('#{@end_date}')) BETWEEN #{@min_age} AND #{@max_age}"
-          sql_path += " AND patient_outcome(p.patient_id, DATE('#{@end_date}')) = 'On antiretrovirals'" if @org.downcase == 'moh'
-          sql_path += " AND pepfar_patient_outcome(p.patient_id, DATE('#{@end_date}')) = 'On antiretrovirals'" if @org.downcase == 'pepfar'
-        end
-
-        return sql_path
       end
 
       def get_dispensing_info(patient_id, encounter_type,

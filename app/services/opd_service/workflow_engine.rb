@@ -77,6 +77,8 @@ module OPDService
     def load_user_activities
       #activities = ['Patient registration,Social history']
       activities = user_property('OPD_activities')&.property_value
+      activities = "Patient registration,Social history,Vitals" if activities.blank?
+
       encounters = (activities&.split(',') || []).collect do |activity|
         # Re-map activities to encounters
         puts activity

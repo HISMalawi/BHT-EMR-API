@@ -5,7 +5,7 @@ default: &default
   username: root
   password: P@ch321!
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-  timeout: 5000
+  checkout_timeout: 5000
 
 development:
   <<: *default
@@ -24,16 +24,16 @@ production:
 #hts:
 #  adapter: mysql2
 #  username: root
-#  database: 
-#  password: 
+#  database:
+#  password:
 #  host: localhost
 #  pool: 500
 
 #anc:
 #  adapter: mysql2
 #  username: root
-#  database: 
-#  password: 
+#  database:
+#  password:
 #  host: localhost
 #  pool: 500
 
@@ -41,6 +41,6 @@ healthdata:
   adapter: mysql2
   username: root
   database: healthdata
-  password: 
+  password:
   host: localhost
   pool: 500
