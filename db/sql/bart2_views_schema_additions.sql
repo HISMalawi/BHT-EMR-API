@@ -2112,7 +2112,43 @@ RETURN age_group;
 END;
 
 
+DROP FUNCTION IF EXISTS `disaggregated_age_group`;
 
+CREATE FUNCTION `disaggregated_age_group`(birthdate date, end_date date) RETURNS VARCHAR(15)
+BEGIN
+
+DECLARE age_in_months INT(11);
+DECLARE age_in_years INT(11);
+DECLARE age_group VARCHAR(15);
+
+SET age_in_months = (SELECT timestampdiff(month, birthdate, end_date));
+SET age_in_years  = (SELECT timestampdiff(year, birthdate, end_date));
+SET age_group = ('Unknown');
+
+IF age_in_months >= 0 AND age_in_months <= 11 THEN SET age_group = "<1 year";
+ELSEIF age_in_years >= 1 AND age_in_years <= 4 THEN SET age_group = "1-4 years";
+ELSEIF age_in_years >= 5 AND age_in_years <= 9 THEN SET age_group = "5-9 years";
+ELSEIF age_in_years >= 10 AND age_in_years <= 14 THEN SET age_group = "10-14 years";
+ELSEIF age_in_years >= 15 AND age_in_years <= 19 THEN SET age_group = "15-19 years";
+ELSEIF age_in_years >= 20 AND age_in_years <= 24 THEN SET age_group = "20-24 years";
+ELSEIF age_in_years >= 25 AND age_in_years <= 29 THEN SET age_group = "25-29 years";
+ELSEIF age_in_years >= 30 AND age_in_years <= 34 THEN SET age_group = "30-34 years";
+ELSEIF age_in_years >= 35 AND age_in_years <= 39 THEN SET age_group = "35-39 years";
+ELSEIF age_in_years >= 40 AND age_in_years <= 44 THEN SET age_group = "40-44 years";
+ELSEIF age_in_years >= 45 AND age_in_years <= 49 THEN SET age_group = "45-49 years";
+ELSEIF age_in_years >= 50 AND age_in_years <= 54 THEN SET age_group = "50-54 years";
+ELSEIF age_in_years >= 55 AND age_in_years <= 59 THEN SET age_group = "55-59 years";
+ELSEIF age_in_years >= 60 AND age_in_years <= 64 THEN SET age_group = "60-64 years";
+ELSEIF age_in_years >= 65 AND age_in_years <= 69 THEN SET age_group = "65-69 years";
+ELSEIF age_in_years >= 70 AND age_in_years <= 74 THEN SET age_group = "70-74 years";
+ELSEIF age_in_years >= 75 AND age_in_years <= 79 THEN SET age_group = "75-79 years";
+ELSEIF age_in_years >= 80 AND age_in_years <= 84 THEN SET age_group = "80-84 years";
+ELSEIF age_in_years >= 85 AND age_in_years <= 89 THEN SET age_group = "85-89 years";
+ELSEIF age_in_years >= 90 THEN SET age_group = "90 plus years";
+END IF;
+
+RETURN age_group;
+END;
 
 
 

@@ -68,7 +68,7 @@ module ARTService
       def newly_initiated_on_tpt
         ActiveRecord::Base.connection.select_all <<~SQL
           SELECT patient_program.patient_id,
-                 cohort_disaggregated_age_group(person.birthdate, DATE(#{end_date})) AS age_group,
+                 disaggregated_age_group(person.birthdate, DATE(#{end_date})) AS age_group,
                  DATE(prescription_encounter.encounter_datetime) AS prescription_date,
                  person_name.given_name,
                  person_name.family_name,

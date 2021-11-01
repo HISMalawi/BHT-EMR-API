@@ -19,7 +19,7 @@ module ARTService
         gender = @gender.first.upcase
         results = ActiveRecord::Base.connection.select_all <<~SQL
           SELECT
-            e.patient_id, cohort_disaggregated_age_group(e.birthdate, DATE('#{@end_date}')) age_group
+            e.patient_id, disaggregated_age_group(e.birthdate, DATE('#{@end_date}')) age_group
           FROM temp_earliest_start_date e
           INNER JOIN temp_patient_outcomes USING(patient_id)
           WHERE cum_outcome = 'On antiretrovirals' AND LEFT(gender,1) = '#{gender}'
@@ -44,7 +44,7 @@ module ARTService
         patient_ids = []
         results = ActiveRecord::Base.connection.select_all <<EOF
         SELECT
-          e.patient_id, cohort_disaggregated_age_group(e.birthdate, DATE('#{@end_date}')) age_group
+          e.patient_id, disaggregated_age_group(e.birthdate, DATE('#{@end_date}')) age_group
         FROM temp_earliest_start_date e
         INNER JOIN temp_patient_outcomes USING(patient_id)
         WHERE cum_outcome = 'On antiretrovirals' AND LEFT(gender,1) = '#{gender}'
@@ -81,7 +81,7 @@ EOF
 
         patients =  ActiveRecord::Base.connection.select_all <<~SQL
         SELECT
-          e.patient_id,  cohort_disaggregated_age_group(e.birthdate, DATE("#{@end_date.to_date}")) age_group
+          e.patient_id,  disaggregated_age_group(e.birthdate, DATE("#{@end_date.to_date}")) age_group
         FROM temp_earliest_start_date e
         INNER JOIN temp_patient_outcomes o ON  o.patient_id = e.patient_id
         #{additional_for_women_sql}

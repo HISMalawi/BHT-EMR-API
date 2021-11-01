@@ -47,7 +47,7 @@ module ARTService
           SELECT
             p.person_id patient_id, birthdate, gender,
             pepfar_patient_outcome(p.person_id, date('#{@end_date}')) outcome,
-            cohort_disaggregated_age_group(p.birthdate, DATE('#{@end_date}')) age_group
+            disaggregated_age_group(p.birthdate, DATE('#{@end_date}')) age_group
           FROM person p WHERE p.person_id IN(#{patient_ids.join(",")}) GROUP BY p.person_id;
 EOF
 

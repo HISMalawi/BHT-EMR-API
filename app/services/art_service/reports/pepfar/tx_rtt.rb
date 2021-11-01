@@ -12,7 +12,7 @@ module ARTService
         def data
           tx_rtt.each_with_object({}) do |patient, report|
             age_group = report[patient['age_group']] || { 'M' => [], 'F' => [], 'Unknown' => [] }
-            age_group[patient['gender']&.first&.upcase || 'Unknown'] << patient['patient_id']
+            age_group[patient['gender']&.first&.upcase || 'Unknown'] << {patient_id: patient['patient_id'], months: patient['stop_period'] }
 
             report[patient['age_group']] = age_group
           end
@@ -23,7 +23,7 @@ module ARTService
         def tx_rtt
           ActiveRecord::Base.connection.select_all <<~SQL
             SELECT patient_program.patient_id,
-                 cohort_disaggregated_age_group(person.birthdate, #{end_date}) AS age_group,
+                 disaggregated_age_group(person.birthdate, #{end_date}) AS age_group,
                  person.gender,
                  IF(
                    patient_state_at_start_of_quarter.state = 6,
@@ -42,7 +42,8 @@ module ARTService
                      'On antiretrovirals',
                      'Defaulted'
                    )
-                 ) AS final_outcome
+                 ) AS final_outcome /*,
+                 TIMESTAMPDIFF(MONTH, date_of_last_patient_state_before_quarter.start_date, patients_with_orders_at_end_of_quarter.start_date) as stop_period*/
             FROM patient_program
             INNER JOIN person ON person.person_id = patient_program.patient_id
             /* Select patients that were on treatment before start of reporting period */
@@ -86,7 +87,7 @@ module ARTService
               ON patients_who_received_art_in_quarter.patient_id = patient_program.patient_id
             /* Ensure that patients are on ART at the end of the quarter */
             INNER JOIN (
-              SELECT patient_program_id, MAX(patient_state.date_created) AS date_created
+              SELECT patient_program_id, MAX(patient_state.date_created) AS date_created /*, patient_state.start_date*/
               FROM patient_state
               INNER JOIN patient_program USING (patient_program_id)
               WHERE patient_state.voided = 0

@@ -21,7 +21,7 @@ class OPDService::Reports::Diagnosis
       group('obs.person_id,obs.value_coded,DATE(obs.obs_datetime)').\
       select("encounter.encounter_type,n.given_name, n.family_name, n.person_id, obs.value_coded, p.gender,
       a.state_province district, a.township_division ta, a.city_village village, z.value,
-      cohort_disaggregated_age_group(p.birthdate,'#{end_date.to_date}') as age_group,c.name")
+      disaggregated_age_group(p.birthdate,'#{end_date.to_date}') as age_group,c.name")
 
       create_diagnosis_hash(data)
   end

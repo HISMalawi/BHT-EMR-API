@@ -45,15 +45,33 @@ select "Preparing database for migration";
 START TRANSACTION;
 /* Creating patient mapping between the two database. */
 DROP TABLE IF EXISTS $ANCDATABASE.patient_migration_mapping;
-CREATE TABLE $ANCDATABASE.patient_migration_mapping
-SELECT DISTINCT(anc.patient_id) AS anc_patient_id, art.patient_id AS art_patient_id
-FROM $ANCDATABASE.patient_identifier anc
-JOIN $DATABASE.patient_identifier art ON anc.identifier = art.identifier
-JOIN $ANCDATABASE.user_bak bak ON anc.creator = bak.ANC_user_id
-WHERE art.creator = bak.ART_user_id
-AND art.date_created = anc.date_created;
+CREATE TABLE $ANCDATABASE.patient_migration_mapping(
+anc_patient_id BIGINT NOT NULL,
+art_patient_id BIGINT NOT NULL,
+primary key(anc_patient_id)
+);
 
-ALTER TABLE $ANCDATABASE.patient_migration_mapping add primary key (anc_patient_id);
+insert into $ANCDATABASE.patient_migration_mapping(anc_patient_id, art_patient_id)
+select ANC_patient_id, ART_patient_id from $ANCDATABASE.ANC_patient_details;
+
+insert into $ANCDATABASE.patient_migration_mapping(anc_patient_id, art_patient_id)
+select ANC_patient_id, ART_patient_id from $ANCDATABASE.ANC_only_patients_details;
+
+insert into $ANCDATABASE.patient_migration_mapping(anc_patient_id, art_patient_id)
+select ANC_patient_id, ART_patient_id from $ANCDATABASE.anc_remaining_diff_gender;
+
+insert into $ANCDATABASE.patient_migration_mapping(anc_patient_id, art_patient_id)
+select distinct(ANC_patient_id), ART_patient_id from $ANCDATABASE.anc_art_patients_with_voided_art_identifier e
+where e.ANC_patient_id not in (select o.anc_patient_id from $ANCDATABASE.patient_migration_mapping o)
+group by e.ANC_patient_id having count(*) = 1;
+
+insert into $ANCDATABASE.patient_migration_mapping(anc_patient_id, art_patient_id)
+select ANC_patient_id, ART_patient_id from $ANCDATABASE.ANC_last_patients_not_migrated;
+
+insert into $ANCDATABASE.patient_migration_mapping(anc_patient_id, art_patient_id)
+select ANC_patient_id, ART_patient_id from $ANCDATABASE.patients_remaining_to_be_migrated
+where ANC_patient_id not in (select o.anc_patient_id from $ANCDATABASE.patient_migration_mapping o)
+group by ANC_patient_id having count(*) = 1;
 
 /* Drop them tables */
 DROP TABLE IF EXISTS $ANCDATABASE.encounter_duplicate_id;
@@ -64,6 +82,12 @@ DROP TABLE IF EXISTS $ANCDATABASE.order_migration_mapping;
 DROP TABLE IF EXISTS $ANCDATABASE.order_duplicate_migration_mapping;
 # DROP TABLE IF EXISTS $ANCDATABASE.obs_migration_mapping;
 
+
+DROP TABLE IF EXISTS $ANCDATABASE.temp_patient_mapping;
+CREATE TABLE $ANCDATABASE.temp_patient_mapping
+SELECT map.anc_patient_id, map.art_patient_id
+FROM $ANCDATABASE.ANC_patients_merged_into_main_dbs dbs
+INNER JOIN $ANCDATABASE.patient_migration_mapping map ON dbs.ANC_patient_id = map.anc_patient_id;
 
 CREATE TABLE IF NOT EXISTS $ANCDATABASE.encounter_duplicate_id(
 anc_encounter_id BIGINT NOT NULL,
@@ -145,6 +169,7 @@ BEGIN
 		SELECT patient_id, encounter_type, provider_id, creator, date_created, encounter_datetime
         FROM $ANCDATABASE.encounter
 		WHERE voided = 0
+        AND patient_id in (select wow.anc_patient_id from $ANCDATABASE.temp_patient_mapping wow)
 		GROUP BY patient_id, encounter_type, provider_id, creator, date_created, encounter_datetime
 		HAVING count(*) > 1;
 	DECLARE CONTINUE HANDLER FOR NOT FOUND SET finished = 1;
@@ -170,8 +195,8 @@ BEGIN
 			e.encounter_datetime,
 			(@i:=@i+1)
 			FROM $ANCDATABASE.encounter e
-			JOIN $ANCDATABASE.user_bak bak ON bak.ANC_user_id = e.creator
-			JOIN $ANCDATABASE.patient_migration_mapping map ON map.anc_patient_id = e.patient_id
+			INNER JOIN $ANCDATABASE.user_bak bak ON bak.ANC_user_id = e.creator
+			INNER JOIN $ANCDATABASE.temp_patient_mapping map ON map.anc_patient_id = e.patient_id
 			WHERE e.patient_id = cursor_patient_id
 			AND e.encounter_type = cursor_encounter_type
 			AND e.provider_id = cursor_provider_id
@@ -252,6 +277,7 @@ BEGIN
 		SELECT patient_id, concept_id, date_created, start_date, order_type_id, instructions, creator
 		FROM $ANCDATABASE.orders
         WHERE voided = 0
+        AND patient_id in (select wow.anc_patient_id from $ANCDATABASE.temp_patient_mapping wow)
 		GROUP BY patient_id, concept_id, date_created, start_date, order_type_id, instructions, creator, auto_expire_date
 		HAVING count(*) > 1;
 	DECLARE CONTINUE HANDLER FOR NOT FOUND SET finished = 1;
@@ -276,8 +302,8 @@ BEGIN
             e.instructions,
 			(@i:=@i+1)
 			FROM $ANCDATABASE.orders e
-			JOIN $ANCDATABASE.user_bak bak ON bak.ANC_user_id = e.creator
-			JOIN $ANCDATABASE.patient_migration_mapping map ON map.anc_patient_id = e.patient_id
+			INNER JOIN $ANCDATABASE.user_bak bak ON bak.ANC_user_id = e.creator
+			INNER JOIN $ANCDATABASE.temp_patient_mapping map ON map.anc_patient_id = e.patient_id
 			WHERE e.patient_id = cursor_patient_id
 			AND e.order_type_id = cursor_order_type
 			AND e.concept_id = cursor_concept_id
@@ -365,10 +391,11 @@ AND art_e.encounter_datetime = e.encounter_datetime
 AND art_e.creator = bak.ART_user_id
 AND art_e.encounter_id NOT IN (SELECT art_encounter_id FROM $ANCDATABASE.encounter_duplicate_migration_mapping)) AS art_encounter_id
 FROM $ANCDATABASE.encounter e
-INNER JOIN $ANCDATABASE.patient_migration_mapping map ON map.anc_patient_id = e.patient_id
+INNER JOIN $ANCDATABASE.temp_patient_mapping map ON map.anc_patient_id = e.patient_id
 INNER JOIN $ANCDATABASE.user_bak bak ON e.creator = bak.ANC_user_id
 WHERE e.voided = 0
-and e.encounter_id NOT IN (SELECT anc_encounter_id FROM $ANCDATABASE.encounter_duplicate_migration_mapping);
+AND e.patient_id IN (SELECT wow.anc_patient_id FROM $ANCDATABASE.temp_patient_mapping wow)
+AND e.encounter_id NOT IN (SELECT anc_encounter_id FROM $ANCDATABASE.encounter_duplicate_migration_mapping);
 
 
 INSERT INTO $ANCDATABASE.encounter_migration_mapping(anc_encounter_id, art_encounter_id)
@@ -393,9 +420,10 @@ AND art_e.instructions = e.instructions
 AND art_e.concept_id = e.concept_id
 AND art_e.order_id NOT IN (SELECT art_order_id FROM $ANCDATABASE.order_duplicate_migration_mapping))
 FROM $ANCDATABASE.orders e
-INNER JOIN $ANCDATABASE.patient_migration_mapping map ON map.anc_patient_id = e.patient_id
+INNER JOIN $ANCDATABASE.temp_patient_mapping map ON map.anc_patient_id = e.patient_id
 INNER JOIN $ANCDATABASE.user_bak bak ON e.creator = bak.ANC_user_id
 WHERE e.voided = 0
+AND e.patient_id IN (SELECT wow.anc_patient_id FROM $ANCDATABASE.temp_patient_mapping wow)
 and e.order_id NOT IN (SELECT anc_order_id FROM $ANCDATABASE.order_duplicate_migration_mapping);
 
 
@@ -403,6 +431,15 @@ INSERT INTO $ANCDATABASE.order_migration_mapping(anc_order_id, art_order_id)
 select anc_order_id, art_order_id from $ANCDATABASE.order_duplicate_migration_mapping;
 
 select "Starting the migration";
+
+# select "Migrating remaining encounters";
+# INSERT INTO $DATABASE.encounter (encounter_id, encounter_type, patient_id, provider_id, location_id, form_id, encounter_datetime, creator, date_created, voided, voided_by, date_voided, void_reason, uuid, changed_by, date_changed, program_id)
+# select encounter_id, encounter_type, patient_id, provider_id, location_id, form_id, encounter_datetime, creator, date_created, voided, voided_by, date_voided, void_reason, (select uuid()), changed_by, date_changed, 12
+# FROM $ANCDATABASE.encounter e
+# INNER JOIN $ANCDATABASE.encounter_migration_mapping map ON e.encounter_id = map.anc_encounter_id
+
+# WHERE map.art_encounter_id = 0
+# order by patient_id;
 
 /* This query insert BDE obs into main obs */
 INSERT INTO $DATABASE.obs (obs_id, person_id,  concept_id,  encounter_id,  order_id,  obs_datetime,  location_id,  obs_group_id,  accession_number,  value_group_id,  value_boolean,  value_coded,  value_coded_name_id,  value_drug,  value_datetime,  value_numeric,  value_modifier,  value_text,  date_started,  date_stopped,  comments,  creator,  date_created,  voided,  voided_by,  date_voided,  void_reason,  value_complex,  uuid)
@@ -440,12 +477,15 @@ JOIN $ANCDATABASE.patient_migration_mapping pmap ON p.person_id = pmap.anc_patie
 JOIN $ANCDATABASE.encounter_migration_mapping emap ON p.encounter_id = emap.anc_encounter_id
 JOIN $ANCDATABASE.user_bak cr ON cr.ANC_user_id = p.creator
 WHERE p.voided = 0
+AND emap.art_encounter_id != 0
 AND p.obs_id NOT IN (SELECT anc_obs_id FROM $ANCDATABASE.obs_migration_mapping);
 
 
 INSERT INTO $ANCDATABASE.obs_migration_mapping(anc_obs_id, art_obs_id)
-select obs_id, (SELECT @max_obs_id + obs_id) as anc_obs_id FROM $ANCDATABASE.obs
-WHERE obs_id NOT IN (SELECT anc_obs_id FROM $ANCDATABASE.obs_migration_mapping);
+select obs_id, (SELECT @max_obs_id + obs_id) as anc_obs_id FROM $ANCDATABASE.obs p
+INNER JOIN $ANCDATABASE.encounter_migration_mapping emap ON p.encounter_id = emap.anc_encounter_id
+WHERE emap.art_encounter_id != 0 and
+p.obs_id NOT IN (SELECT anc_obs_id FROM $ANCDATABASE.obs_migration_mapping);
 
 
 /* insert ANC drug_orders into ART database */
@@ -500,6 +540,6 @@ echo "====================================================Finished migrating dat
 
 end_now=$(date +”%T”)
 
-echo "the script started running at: " start_now
-echo "and ended at: " end_now
+echo "the script started running at: " $start_now
+echo "and ended at: " $end_now
 

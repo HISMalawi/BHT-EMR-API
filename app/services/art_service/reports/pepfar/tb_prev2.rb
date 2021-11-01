@@ -98,7 +98,7 @@ module ARTService
                    SUM(DATEDIFF(orders.auto_expire_date, orders.start_date)) AS total_days_on_medication,
                    person.gender,
                    person.birthdate,
-                   cohort_disaggregated_age_group(person.birthdate, DATE(#{end_date})) AS age_group,
+                   disaggregated_age_group(person.birthdate, DATE(#{end_date})) AS age_group,
                    GROUP_CONCAT(DISTINCT orders.concept_id SEPARATOR ',') AS drug_concepts
             FROM person
             LEFT JOIN patient_identifier

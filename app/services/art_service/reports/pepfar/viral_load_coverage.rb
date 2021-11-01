@@ -116,7 +116,7 @@ module ARTService
           # or patients whose first order comes at 6 months or greater after starting ART.
           ActiveRecord::Base.connection.select_all <<~SQL
             SELECT orders.patient_id,
-                   cohort_disaggregated_age_group(patient.birthdate,
+                   disaggregated_age_group(patient.birthdate,
                                                   DATE(#{ActiveRecord::Base.connection.quote(end_date)})) AS age_group,
                    patient.birthdate,
                    patient.gender,
@@ -166,7 +166,7 @@ module ARTService
         def find_patients_due_for_initial_viral_load
           ActiveRecord::Base.connection.select_all <<~SQL
             SELECT patient.patient_id,
-                   cohort_disaggregated_age_group(patient.birthdate,
+                   disaggregated_age_group(patient.birthdate,
                                                   DATE(#{ActiveRecord::Base.connection.quote(end_date)})) AS age_group,
                    patient.birthdate,
                    patient.gender,
@@ -198,7 +198,7 @@ module ARTService
         def find_patients_with_viral_load
           ActiveRecord::Base.connection.select_all <<~SQL
             SELECT orders.patient_id,
-                   cohort_disaggregated_age_group(patient.birthdate,
+                   disaggregated_age_group(patient.birthdate,
                                                   DATE(#{ActiveRecord::Base.connection.quote(end_date)})) AS age_group,
                    patient.birthdate,
                    patient.gender,
@@ -273,7 +273,7 @@ module ARTService
                    patient_identifier.identifier AS arv_number,
                    patient.birthdate,
                    patient.gender,
-                   cohort_disaggregated_age_group(patient.birthdate, #{ActiveRecord::Base.connection.quote(end_date)}) AS age_group,
+                   disaggregated_age_group(patient.birthdate, #{ActiveRecord::Base.connection.quote(end_date)}) AS age_group,
                    obs.value_numeric AS result_value
             FROM obs
             INNER JOIN encounter ON encounter.encounter_id = obs.encounter_id AND encounter.voided = 0
