@@ -57,7 +57,7 @@ class Encounter < VoidableRecord
   # end
 
   def after_create
-    dde_enabled = global_property(dde_enabled)
+    dde_enabled = global_property('dde_enabled')
     return unless if dde_enabled.blank?
                     false
                   else
