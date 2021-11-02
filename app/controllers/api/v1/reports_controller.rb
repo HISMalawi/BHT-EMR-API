@@ -58,16 +58,16 @@ class Api::V1::ReportsController < ApplicationController
     quarter, age_group,
     rebuild, init = params.require %i[quarter age_group rebuild_outcome initialize]
 
-    init = (init == 'true' ? true : false)
+    init = (init == 'true')
 
-    start_date =  params[:start_date].to_date if params.include?(:start_date)
+    start_date = params[:start_date].to_date if params.include?(:start_date)
     end_date = params[:end_date].to_date if params.include?(:end_date)
 
     start_date = Date.today if start_date.blank?
     end_date = Date.today if end_date.blank?
-    rebuild_outcome = (rebuild == 'true' ? true : false)
+    rebuild_outcome = (rebuild == 'true')
 
-    if(quarter == 'pepfar')
+    if quarter == 'pepfar'
       start_date, end_date = params.require %i[start_date end_date]
       start_date = start_date.to_date
       end_date = end_date.to_date
@@ -78,7 +78,7 @@ class Api::V1::ReportsController < ApplicationController
     end
 
     stats = service.cohort_disaggregated(quarter, age_group, start_date,
-      end_date, rebuild_outcome, init)
+                                         end_date, rebuild_outcome, init)
     render json: stats
   end
 
@@ -95,6 +95,7 @@ class Api::V1::ReportsController < ApplicationController
 
     render json: stats
   end
+
   def dispensation
     start_date, end_date = params.require %i[start_date end_date]
     stats = service.dispensation(start_date, end_date)
@@ -104,7 +105,7 @@ class Api::V1::ReportsController < ApplicationController
 
   def cohort_survival_analysis
     quarter, age_group, reg = params.require %i[quarter age_group regenerate]
-    reg = (reg == 'true' ? true : false)
+    reg = (reg == 'true')
     stats = service.cohort_survival_analysis(quarter, age_group, reg)
 
     render json: stats
@@ -119,7 +120,7 @@ class Api::V1::ReportsController < ApplicationController
 
   def defaulter_list
     start_date, end_date, pepfar = params.require %i[start_date end_date pepfar]
-    pepfar = (pepfar == 'true' ? true : false)
+    pepfar = (pepfar == 'true')
     stats = service.defaulter_list(start_date, end_date, pepfar)
 
     render json: stats
@@ -144,7 +145,7 @@ class Api::V1::ReportsController < ApplicationController
   end
 
   def regimen_switch
-    pepfar = params[:pepfar] == 'true' ? true : false
+    pepfar = params[:pepfar] == 'true'
     render json: service.regimen_switch(params[:start_date], params[:end_date], pepfar)
   end
 
@@ -154,17 +155,17 @@ class Api::V1::ReportsController < ApplicationController
 
   def screened_for_tb
     render json: service.screened_for_tb(params[:start_date], params[:end_date],
-      params[:gender], params[:age_group])
+                                         params[:gender], params[:age_group])
   end
 
   def clients_given_ipt
     render json: service.clients_given_ipt(params[:start_date], params[:end_date],
-      params[:gender], params[:age_group])
+                                           params[:gender], params[:age_group])
   end
 
   def arv_refill_periods
     render json: service.arv_refill_periods(params[:start_date], params[:end_date],
-      params[:min_age], params[:max_age], params[:org], params[:initialize_tables])
+                                            params[:min_age], params[:max_age], params[:org], params[:initialize_tables])
   end
 
   def tx_ml
@@ -181,12 +182,12 @@ class Api::V1::ReportsController < ApplicationController
 
   def disaggregated_regimen_distribution
     render json: service.disaggregated_regimen_distribution(params[:start_date],
-      params[:end_date],  params[:gender])
+                                                            params[:end_date], params[:gender], params[:age_group])
   end
 
   def tx_mmd_client_level_data
     render json: service.tx_mmd_client_level_data(params[:start_date],
-       params[:end_date], params[:patient_ids],  params[:org])
+                                                  params[:end_date], params[:patient_ids], params[:org])
   end
 
   def tb_prev
@@ -203,7 +204,7 @@ class Api::V1::ReportsController < ApplicationController
 
   def patient_outcome_list
     render json: service.patient_outcome_list(params[:start_date],
-      params[:end_date], params[:outcome])
+                                              params[:end_date], params[:outcome])
   end
 
   def clients_due_vl
@@ -224,7 +225,7 @@ class Api::V1::ReportsController < ApplicationController
 
   def orders_made
     render json: service.orders_made(params[:start_date],
-      params[:end_date], params[:status])
+                                     params[:end_date], params[:status])
   end
 
   def external_consultation_clients
@@ -251,14 +252,13 @@ class Api::V1::ReportsController < ApplicationController
     year = year.to_i
 
     if index == 'Q1'
-      return ["#{year}-01-01".to_date, "#{year}-03-31".to_date]
+      ["#{year}-01-01".to_date, "#{year}-03-31".to_date]
     elsif index == 'Q2'
-      return ["#{year}-04-01".to_date, "#{year}-06-30".to_date]
+      ["#{year}-04-01".to_date, "#{year}-06-30".to_date]
     elsif index == 'Q3'
-      return ["#{year}-07-01".to_date, "#{year}-09-30".to_date]
+      ["#{year}-07-01".to_date, "#{year}-09-30".to_date]
     elsif index == 'Q4'
-      return ["#{year}-10-01".to_date, "#{year}-12-31".to_date]
+      ["#{year}-10-01".to_date, "#{year}-12-31".to_date]
     end
   end
-
 end
