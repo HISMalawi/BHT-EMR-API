@@ -7,7 +7,6 @@ module OPDService
 
     REPORTS = {
       'LA_PRESCRIPTIONS' => OPDService::Reports::LaPrescriptions,
-      'DIAGNOSIS_LS' => OPDService::Reports::Diagnosis_Ls,
       'DIAGNOSIS' => OPDService::Reports::Diagnosis
     }
 
