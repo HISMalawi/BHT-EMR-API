@@ -40,11 +40,11 @@ class PatientService
     (data || []).each do |record|
       stats << {
           patient_id: patient_id,
-          phone_number: record['value'],
-          gender: record['gender'],
           given_name: record['given_name'],
           family_name: record['family_name'],
-          address: "#{record['district']}, #{record['ta']}, #{record['village']}"
+          gender: record['gender'],
+          phone_number: record['value'],
+          address: "#{record['district']}; #{record['ta']}; #{record['village']}"
       }
     end
 
