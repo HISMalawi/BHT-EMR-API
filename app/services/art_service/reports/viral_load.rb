@@ -241,9 +241,9 @@ class ARTService::Reports::ViralLoad
 
     return OpenStruct.new(order_date: 'N/A', result_date: 'N/A', result_value: 'N/A') unless measure
 
-    OpenStruct.new(order_date: measure.order.start_date.to_date,
-                   result_date: measure.obs_datetime.to_date,
-                   result_value: "#{measure.value_modifier || '='}#{measure.value_numeric || measure.value_text}")
+    OpenStruct.new(order_date: measure&.order&.start_date&.to_date,
+                   result_date: measure&.obs_datetime&.to_date,
+                   result_value: "#{measure&.value_modifier || '='}#{measure&.value_numeric || measure&.value_text}")
   end
 
   def use_filing_number(patient_id, arv_number)
