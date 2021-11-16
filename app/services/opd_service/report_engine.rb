@@ -6,7 +6,8 @@ module OPDService
     include ModelUtils
 
     REPORTS = {
-      'LA_PRESCRIPTIONS' => OPDService::Reports::LaPrescriptions
+      'LA_PRESCRIPTIONS' => OPDService::Reports::LaPrescriptions,
+      'DIAGNOSIS' => OPDService::Reports::Diagnosis
     }
 
     def initialize

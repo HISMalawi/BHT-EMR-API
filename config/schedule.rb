@@ -23,3 +23,9 @@
 every 1.minute do
   runner 'bin/lab/sync_worker.rb', environment: 'development'
 end
+
+
+every 1.day, at: ['4:30 am', '12:30 pm'] do
+  runner 'bin/idsr/idsr_ohsp_monthly_report.rb', environment: 'development'
+  runner 'bin/idsr/idsr_ohsp_weekly_report.rb',  environment: 'development'
+end

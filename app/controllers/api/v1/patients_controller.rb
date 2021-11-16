@@ -235,6 +235,12 @@ class Api::V1::PatientsController < ApplicationController
     render json: cxca.last_screening_info
   end
 
+  def patient_details_by_id
+    patient_id = params[:patient_id]
+
+    render json: service.patient_details_by_id(patient_id)
+  end
+
   private
 
   def patient

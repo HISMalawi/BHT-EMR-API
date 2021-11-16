@@ -1,6 +1,7 @@
 Rails.application.routes.draw do
   mount Lab::Engine => '/'
   mount Radiology::Engine => '/'
+  mount EmrOhspInterface::Engine => '/'
   mount Rswag::Ui::Engine => '/api-docs'
   mount Rswag::Api::Engine => '/api-docs'
 
@@ -41,6 +42,8 @@ Rails.application.routes.draw do
       end
 
       resources :roles
+
+      get '/patient_details_by_id' => 'patients#patient_details_by_id'
 
       # Patients
       resources :patients do
@@ -284,7 +287,6 @@ Rails.application.routes.draw do
   get '/api/v1/art_data_cleaning_tools' => 'api/v1/cleaning#art_tools'
 
   # OPD reports
-  get '/api/v1/diagnosis' => 'api/v1/reports#diagnosis'
   get '/api/v1/malaria_report' => 'api/v1/reports#malaria_report'
   get '/api/v1/registration' => 'api/v1/reports#registration'
   get '/api/v1/diagnosis_by_address' => 'api/v1/reports#diagnosis_by_address'
