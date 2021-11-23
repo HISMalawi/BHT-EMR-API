@@ -27,22 +27,22 @@ HOST=`ruby -ryaml -e "puts YAML::load_file('config/database.yml')['${ENV}']['hos
 echo "=================merging patients in ANC only into ART database"
 
 start_now=$(date +”%T”)
-echo "the script is starting at: " start_now 
+echo "the script is starting at: " start_now
 
 mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE <<EOF
 
 SET foreign_key_checks = 0;
 
 /* the defaults */
-SET @max_encounter_id := (SELECT max(encounter_id) FROM $DATABASE.encounter);
-SET @max_patient_id := (SELECT max(person_id) FROM $DATABASE.person);
-SET @max_patient_program_id := (SELECT max(patient_program_id) from $DATABASE.patient_program);
-SET @max_order_id := (SELECT max(order_id) from $DATABASE.orders);
-SET @max_obs_id := (SELECT max(obs_id) FROM $DATABASE.obs);
+SET @max_encounter_id := COALESCE((SELECT max(encounter_id) FROM $DATABASE.encounter),0);
+SET @max_patient_id := COALESCE((SELECT max(person_id) FROM $DATABASE.person),0);
+SET @max_patient_program_id := COALESCE((SELECT max(patient_program_id) from $DATABASE.patient_program),0);
+SET @max_order_id := COALESCE((SELECT max(order_id) from $DATABASE.orders),0);
+SET @max_obs_id := COALESCE((SELECT max(obs_id) FROM $DATABASE.obs),0);
 
 DROP TABLE if exists $ANCDATABASE.ANC_patients_merged_into_main_dbs;
 
-CREATE TABLE $ANCDATABASE.ANC_patients_merged_into_main_dbs as 
+CREATE TABLE $ANCDATABASE.ANC_patients_merged_into_main_dbs as
 SELECT ANC_patient_id FROM $ANCDATABASE.ANC_patient_details
 UNION
 SELECT ANC_patient_id FROM $ANCDATABASE.ANC_only_patients_details;
@@ -61,7 +61,7 @@ drop table if exists $ANCDATABASE.anc_remaining_diff_gender;
 
 create table $ANCDATABASE.anc_remaining_diff_gender as
 select a.patient_id AS ANC_patient_id, a.given_name, a.family_name, a.identifier, pa.person_id as ART_patient_id, pa.birthdate, pa.gender
-FROM $ANCDATABASE.anc_remaining_patient a 
+FROM $ANCDATABASE.anc_remaining_patient a
  inner join $DATABASE.patient_identifier p on a.identifier = p.identifier and p.voided = 0
  inner join $DATABASE.person pa on pa.birthdate = a.birthdate and pa.voided = 0
  inner join $DATABASE.person_name pn on pn.person_id = pa.person_id
@@ -90,14 +90,14 @@ SELECT ART_order_id,  order_type_id,  concept_id,  orderer, encounter_id,  instr
 
 /* insert ANC drug_orders into ART database */
 INSERT INTO $DATABASE.drug_order (order_id,  drug_inventory_id, dose, equivalent_daily_dose, units, frequency, prn, complex, quantity)
-SELECT ART_order_id, drug_inventory_id, dose, equivalent_daily_dose, units, frequency, prn, complex, quantity FROM $ANCDATABASE.drug_order d inner join $ANCDATABASE.orders_bak o on o.ANC_order_id = d.order_id; 
+SELECT ART_order_id, drug_inventory_id, dose, equivalent_daily_dose, units, frequency, prn, complex, quantity FROM $ANCDATABASE.drug_order d inner join $ANCDATABASE.orders_bak o on o.ANC_order_id = d.order_id;
 
 /* creating obs back-up */
 drop table if exists $ANCDATABASE.obs_bak;
 
 create table $ANCDATABASE.obs_bak as
 SELECT (SELECT @max_obs_id + o.obs_id) as obs_id, e.ART_patient_id AS person_id,  concept_id,  (SELECT @max_encounter_id + o.encounter_id) AS encounter_id,  (SELECT @max_order_id + o.order_id) AS order_id,  obs_datetime,  location_id,  obs_group_id,  accession_number,  value_group_id,  value_boolean,  value_coded,  value_coded_name_id,  value_drug,  value_datetime,  value_numeric,  value_modifier,  value_text,  date_started,  date_stopped,  comments, creator,  date_created,  voided,  voided_by,  date_voided,  void_reason, value_complex,  uuid FROM $ANCDATABASE.obs o inner join $ANCDATABASE.anc_remaining_diff_gender e on e.ANC_patient_id = o.person_id and o.voided = 0;
-   
+
 /* insert ANC obs into ART database */
 INSERT INTO $DATABASE.obs (obs_id, person_id,  concept_id,  encounter_id,  order_id,  obs_datetime,  location_id,  obs_group_id,  accession_number,  value_group_id,  value_boolean,  value_coded,  value_coded_name_id,  value_drug,  value_datetime,  value_numeric,  value_modifier,  value_text,  date_started,  date_stopped,  comments,  creator,  date_created,  voided,  voided_by,  date_voided,  void_reason,  value_complex,  uuid)
 SELECT obs_id, person_id,  concept_id, encounter_id,  order_id,  obs_datetime,  location_id,  obs_group_id,  accession_number,  value_group_id,  value_boolean,  value_coded,  value_coded_name_id,  value_drug,  value_datetime,  value_numeric, value_modifier,  value_text,  date_started,  date_stopped,  comments,  creator,  date_created,  voided, voided_by,  date_voided,  void_reason,  value_complex,  (SELECT UUID()) FROM $ANCDATABASE.obs_bak ORDER BY obs_id;
