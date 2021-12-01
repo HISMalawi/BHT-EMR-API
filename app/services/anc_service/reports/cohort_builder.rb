@@ -59,7 +59,7 @@ module ANCService
                                             @c_start_date.to_date.end_of_month)
 
           # women registered in a reporting month
-          @monthly_patients = registrations(@m_start_date.beginning_of_month, @m_end_date.end_of_month)
+          @monthly_patients = registrations(@m_start_date.to_date.beginning_of_month, @m_end_date.end_of_month)
 
 
           c_max_date = ((@c_start_date.to_date + @c_pregnant_range) - 1.day).to_date
