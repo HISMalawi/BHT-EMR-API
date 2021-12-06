@@ -34,6 +34,16 @@ module ARTService
                      pepfar_patient_outcome(patient_program.patient_id, #{start_date})
                    )
                  ) AS initial_outcome,
+
+                 IF(
+                  patient_state_at_start_of_quarter.state = 6,
+                  patient_state_at_start_of_quarter.start_date,
+                  IF(
+                    patient_state_at_start_of_quarter.state = 12,
+                patient_state_at_start_of_quarter.start_date,
+                current_pepfar_defaulter_date(patient_program.patient_id, #{start_date}))) AS initial_outcome_date,
+
+
                  IF(
                    patients_with_orders_at_end_of_quarter.patient_id IS NOT NULL,
                    'On antiretrovirals',
@@ -43,8 +53,17 @@ module ARTService
                      'Defaulted'
                    )
                  ) AS final_outcome,
-                 TIMESTAMPDIFF(MONTH, DATE(patients_with_orders_at_before_quarter.auto_expire_date),
-                 DATE(date_of_last_patient_state_before_quarter.date_created) ) as months
+
+
+                 TIMESTAMPDIFF(MONTH, IF(
+                  patient_state_at_start_of_quarter.state = 6,
+                  patient_state_at_start_of_quarter.start_date,
+                  IF(
+                    patient_state_at_start_of_quarter.state = 12,
+                patient_state_at_start_of_quarter.start_date,
+                current_pepfar_defaulter_date(patient_program.patient_id, #{start_date}))), patients_who_received_art_in_quarter.start_date) AS months
+
+
             FROM patient_program
             INNER JOIN person ON person.person_id = patient_program.patient_id
             /* Select patients that were on treatment before start of reporting period */
@@ -123,25 +142,6 @@ module ARTService
                 AND encounter.voided = 0
             ) AS patients_with_orders_at_end_of_quarter
               ON patients_with_orders_at_end_of_quarter.patient_id = patient_program.patient_id
-
-             /* Select patients' last auto_expire date before defualting / stopping */
-            INNER JOIN (
-                SELECT DISTINCT encounter.patient_id, orders.auto_expire_date
-                FROM encounter
-                INNER JOIN orders
-                  ON orders.encounter_id = encounter.encounter_id
-                  AND orders.voided = 0
-                  AND orders.start_date < DATE(#{start_date})
-                INNER JOIN drug_order
-                  ON drug_order.order_id = orders.order_id
-                  AND drug_order.quantity > 0
-                  AND drug_order.drug_inventory_id IN (SELECT DISTINCT drug_id FROM arv_drug)
-                WHERE encounter.program_id = 1
-                  AND encounter.encounter_datetime < DATE(#{start_date})
-                  AND encounter.voided = 0
-            ORDER BY orders.auto_expire_date DESC) AS patients_with_orders_at_before_quarter
-            ON patients_with_orders_at_before_quarter.patient_id = patient_program.patient_id
-
 
             WHERE patient_program.program_id = 1
 
