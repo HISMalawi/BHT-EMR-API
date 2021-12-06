@@ -90,7 +90,7 @@ module ARTService
               AND patient_state_at_start_of_quarter.state IN (6, 12) /* 2: TO, 6: Tx Stopped, 12: Defaulted */
             /* Select patients who received ART within the reporting period. */
             INNER JOIN (
-              SELECT DISTINCT encounter.patient_id
+              SELECT DISTINCT encounter.patient_id, orders.start_date
               FROM encounter
               INNER JOIN orders
                 ON orders.encounter_id = encounter.encounter_id
