@@ -50,8 +50,6 @@ module RdsService
   # They probably are not meant to be changed after creation.
   IMMUTABLE_MODELS = [PersonAddress, PatientIdentifier, Observation, Order, Relationship, Pharmacy].freeze
 
-  RETIRABLE_MODELS = [ProgramWorkflowState].freeze
-
   # Maximum number of records to be fetched from database per request
   RECORDS_BATCH_SIZE = 50_000
 
