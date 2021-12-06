@@ -42,7 +42,9 @@ module ARTService
                      'On antiretrovirals',
                      'Defaulted'
                    )
-                 ) AS final_outcome
+                 ) AS final_outcome,
+                 TIMESTAMPDIFF(MONTH, DATE(patients_with_orders_at_before_quarter.auto_expire_date),
+                 DATE(date_of_last_patient_state_before_quarter.date_created) ) as months
             FROM patient_program
             INNER JOIN person ON person.person_id = patient_program.patient_id
             /* Select patients that were on treatment before start of reporting period */
@@ -121,21 +123,28 @@ module ARTService
                 AND encounter.voided = 0
             ) AS patients_with_orders_at_end_of_quarter
               ON patients_with_orders_at_end_of_quarter.patient_id = patient_program.patient_id
-            WHERE patient_program.program_id = 1
-              /* Ensure that the patients retrieved, did not receive ART within 28 days
-                 before the start of the reporting period */
-              AND patient_program.patient_id NOT IN (
-                SELECT DISTINCT orders.patient_id
-                FROM orders
-                INNER JOIN drug_order USING (order_id)
-                INNER JOIN arv_drug ON arv_drug.drug_id = drug_inventory_id
-                INNER JOIN patient_program
-                  ON patient_program.patient_id = orders.patient_id
-                  AND patient_program.program_id = 1
-                WHERE ((orders.start_date BETWEEN (DATE(#{start_date}) - INTERVAL 30 DAY) AND DATE(#{start_date}))
-                       OR (orders.auto_expire_date BETWEEN (DATE(#{start_date}) - INTERVAL 30 DAY) AND DATE(#{start_date})))
+
+             /* Select patients' last auto_expire date before defualting / stopping */
+            INNER JOIN (
+                SELECT DISTINCT encounter.patient_id, orders.auto_expire_date
+                FROM encounter
+                INNER JOIN orders
+                  ON orders.encounter_id = encounter.encounter_id
                   AND orders.voided = 0
-              )
+                  AND orders.start_date < DATE(#{start_date})
+                INNER JOIN drug_order
+                  ON drug_order.order_id = orders.order_id
+                  AND drug_order.quantity > 0
+                  AND drug_order.drug_inventory_id IN (SELECT DISTINCT drug_id FROM arv_drug)
+                WHERE encounter.program_id = 1
+                  AND encounter.encounter_datetime < DATE(#{start_date})
+                  AND encounter.voided = 0
+            ORDER BY orders.auto_expire_date DESC) AS patients_with_orders_at_before_quarter
+            ON patients_with_orders_at_before_quarter.patient_id = patient_program.patient_id
+
+
+            WHERE patient_program.program_id = 1
+
             GROUP BY patient_program.patient_id
             HAVING initial_outcome IN ('Defaulted', 'Treatment stopped')
                AND final_outcome = 'On antiretrovirals'
