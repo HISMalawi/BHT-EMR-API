@@ -246,8 +246,17 @@ module CXCAService
       encounter = Encounter.joins("INNER JOIN obs ON obs.encounter_id = encounter.encounter_id").where(
         'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)
         AND obs.concept_id = ? AND obs.value_coded = ?',@patient.patient_id,
-        encounter_type.encounter_type_id, encounter_date, dot.concept_id, referral.concept_id
-      ).order(encounter_datetime: :desc).first
+        encounter_type.encounter_type_id, encounter_date,
+        dot.concept_id, referral.concept_id).order(encounter_datetime: :desc).first
+      return true unless encounter.blank?
+      screening_result = concept 'Screening results'
+      suspected_cancer = concept 'Suspect cancer'
+
+      encounter = Encounter.joins("INNER JOIN obs ON obs.encounter_id = encounter.encounter_id").where(
+        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)
+        AND obs.concept_id = ? AND obs.value_coded = ?',@patient.patient_id,
+        encounter_type.encounter_type_id, encounter_date,
+        screening_result.concept_id, suspected_cancer.concept_id).order(encounter_datetime: :desc).first
       return encounter.blank? ? false : true
     end
 
