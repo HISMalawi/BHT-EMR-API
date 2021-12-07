@@ -134,7 +134,7 @@ module ARTService
     def tx_mmd_client_level_data(start_date, end_date, patient_ids, org)
       REPORTS['ARV_REFILL_PERIODS'].new(start_date: start_date.to_date,
         end_date: end_date.to_date, min_age: 0, max_age: 0,
-          org: org).tx_mmd_client_level_data(patient_ids)
+          org: org, initialize_tables: "").tx_mmd_client_level_data(patient_ids)
     end
 
     def tb_prev(start_date, end_date)

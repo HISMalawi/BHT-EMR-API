@@ -40,10 +40,12 @@ module CXCAService
     CXCA_SCREENING_RESULTS = 'CXCA screening result'
     CANCER_TREATMENT = 'CxCa treatment'
     APPOINTMENT = 'APPOINTMENT'
+    CXCA_REFERRAL_FEEDBACK = 'CxCa referral feedback'
 
     # Encounters graph
     ENCOUNTER_SM = {
-      INITIAL_STATE => CXCA_TEST,
+      INITIAL_STATE => CXCA_REFERRAL_FEEDBACK,
+      CXCA_REFERRAL_FEEDBACK => CXCA_TEST,
       CXCA_TEST => CXCA_SCREENING_RESULTS,
       CXCA_SCREENING_RESULTS => CANCER_TREATMENT,
       CANCER_TREATMENT => APPOINTMENT,
@@ -51,9 +53,10 @@ module CXCAService
     }.freeze
 
     STATE_CONDITIONS = {
-      CXCA_TEST => %i[show_cxca_test?],
-      CXCA_SCREENING_RESULTS => %i[show_cxca_screening_results?],
-      CANCER_TREATMENT => %i[show_cancer_treatment?],
+      CXCA_REFERRAL_FEEDBACK => %i[show_referral_outcome?],
+      CXCA_TEST => %i[referral_outcome_not_done_today? show_cxca_test?],
+      CXCA_SCREENING_RESULTS => %i[referral_outcome_not_done_today? show_cxca_screening_results?],
+      CANCER_TREATMENT => %i[referral_outcome_not_done_today? show_cancer_treatment?],
       APPOINTMENT => %i[show_appointment?]
     }.freeze
 
@@ -222,6 +225,41 @@ module CXCAService
       return encounter.blank? ? false : true
     end
 
+    def show_referral_outcome?
+=begin
+      encounter_type = EncounterType.find_by name: CXCA_REFERRAL_FEEDBACK
+      encounter = Encounter.joins(:type).where(
+        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
+        @patient.patient_id, encounter_type.encounter_type_id, @date
+      ).order(encounter_datetime: :desc).first
+      return false unless encounter.blank?
+=end
+      return if referral_outcome_today?
+
+      encounter_date = last_encounter_date
+      encounter_date = @date if last_encounter_date.blank?
+
+      encounter_type = EncounterType.find_by name: CXCA_SCREENING_RESULTS
+      dot = concept 'Directly observed treatment option'
+      referral = concept 'Referral'
+
+      encounter = Encounter.joins("INNER JOIN obs ON obs.encounter_id = encounter.encounter_id").where(
+        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)
+        AND obs.concept_id = ? AND obs.value_coded = ?',@patient.patient_id,
+        encounter_type.encounter_type_id, encounter_date,
+        dot.concept_id, referral.concept_id).order(encounter_datetime: :desc).first
+      return true unless encounter.blank?
+      screening_result = concept 'Screening results'
+      suspected_cancer = concept 'Suspect cancer'
+
+      encounter = Encounter.joins("INNER JOIN obs ON obs.encounter_id = encounter.encounter_id").where(
+        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)
+        AND obs.concept_id = ? AND obs.value_coded = ?',@patient.patient_id,
+        encounter_type.encounter_type_id, encounter_date,
+        screening_result.concept_id, suspected_cancer.concept_id).order(encounter_datetime: :desc).first
+      return encounter.blank? ? false : true
+    end
+
     private
 
     def cxca_positive?
@@ -296,6 +334,25 @@ module CXCAService
 
     def concept(name)
       ConceptName.find_by_name(name)
+    end
+
+    def last_encounter_date
+      encounter_datetime = Encounter.where("DATE(encounter_datetime) < ? AND program_id = ?
+        AND patient_id = ?", @date, @program.id, @patient.id).maximum(:encounter_datetime)
+      return encounter_datetime.blank? ? nil : encounter_datetime.to_date
+    end
+
+    def referral_outcome_today?
+      encounter_type = EncounterType.find_by name: CXCA_REFERRAL_FEEDBACK
+      encounter = Encounter.joins(:type).where(
+        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
+        @patient.patient_id, encounter_type.encounter_type_id, @date
+      ).order(encounter_datetime: :desc).first
+      return (encounter.blank? ? false : true)
+    end
+
+    def referral_outcome_not_done_today?
+      return !referral_outcome_today?
     end
 
   end
