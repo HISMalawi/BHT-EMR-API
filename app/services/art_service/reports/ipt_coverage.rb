@@ -99,7 +99,7 @@ module ARTService
         return ActiveRecord::Base.connection.select_all <<-SQL
           SELECT
               o.patient_id, birthdate, gender, o.start_date, o.auto_expire_date,
-              cohort_disaggregated_age_group(p.birthdate, DATE('#{@end_date}')) age_group
+              disaggregated_age_group(p.birthdate, DATE('#{@end_date}')) age_group
           FROM person p
           INNER JOIN orders o ON o.patient_id = p.person_id
           INNER JOIN drug_order t ON o.order_id = t.order_id

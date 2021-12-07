@@ -107,7 +107,7 @@ module ARTService
               `p`.`patient_id` AS `patient_id`, pe.birthdate, pe.gender,
                cast(patient_date_enrolled(`p`.`patient_id`) as date) AS `date_enrolled`,
                date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`,
-               cohort_disaggregated_age_group(pe.birthdate, DATE('#{@completion_end_date}')) age_group
+               disaggregated_age_group(pe.birthdate, DATE('#{@completion_end_date}')) age_group
             from
               ((`patient_program` `p`
               left join `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))

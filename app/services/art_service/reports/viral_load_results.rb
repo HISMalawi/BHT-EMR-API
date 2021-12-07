@@ -28,7 +28,7 @@ module ARTService
           SELECT orders.patient_id,
                  patient_identifier.identifier AS arv_number,
                  person.birthdate AS birthdate,
-                 cohort_disaggregated_age_group(person.birthdate, #{end_date}) AS age_group,
+                 disaggregated_age_group(person.birthdate, #{end_date}) AS age_group,
                  person.gender AS gender,
                  orders.start_date AS order_date,
                  specimen_type.name AS specimen,

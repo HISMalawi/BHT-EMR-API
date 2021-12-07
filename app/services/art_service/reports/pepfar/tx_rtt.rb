@@ -13,7 +13,6 @@ module ARTService
           tx_rtt.each_with_object({}) do |patient, report|
             age_group = report[patient['age_group']] || { 'M' => [], 'F' => [], 'Unknown' => [] }
             age_group[patient['gender']&.first&.upcase || 'Unknown'] << {patient_id: patient['patient_id'], months: patient['months']}
-
             report[patient['age_group']] = age_group
           end
         end

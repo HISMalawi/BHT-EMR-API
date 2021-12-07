@@ -42,7 +42,7 @@ module LaboratoryService
                    person.gender,
                    person.birthdate,
                    patient_identifier.identifier AS arv_number,
-                   cohort_disaggregated_age_group(person.birthdate, #{end_date}) AS age_group,
+                   disaggregated_age_group(person.birthdate, #{end_date}) AS age_group,
                    reason_for_test.name AS reason_for_test,
                    GROUP_CONCAT(DISTINCT test_concepts.name SEPARATOR ',') AS tests
             FROM orders
