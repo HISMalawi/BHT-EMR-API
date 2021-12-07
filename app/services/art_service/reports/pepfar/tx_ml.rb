@@ -68,17 +68,20 @@ EOF
 
             case outcome
               when 'Defaulted'
-                new_def = new_defaulter(patient_id, earliest_start_dates[patient_id])
-                (new_def == true  ? data[age_group][gender][0] << patient_id : data[age_group][gender][1] << patient_id)
+                def_months = defaulter_period(patient_id, earliest_start_dates[patient_id])
+                if def_months < 3
+                  data[age_group][gender][1] << patient_id
+                elsif def_months <= 5
+                  data[age_group][gender][2] << patient_id
+                elsif def_months > 5
+                  data[age_group][gender][3] << patient_id
+                end
               when 'Patient died'
-                data[age_group][gender][2] << patient_id
+                data[age_group][gender][0] << patient_id
               when /Stopped/i
-                data[age_group][gender][3] << patient_id
+                data[age_group][gender][5] << patient_id
               when 'Patient transferred out'
                 data[age_group][gender][4] << patient_id
-              else
-                data[age_group][gender][5] << patient_id
-
             end
           end
 
@@ -134,7 +137,7 @@ EOF
 
         end
 
-        def new_defaulter(patient_id, earliest_start_date)
+        def defaulter_period(patient_id, earliest_start_date)
 
           defaulter_date = ActiveRecord::Base.connection.select_one <<~SQL
           SELECT current_pepfar_defaulter_date(#{patient_id}, '#{@end_date}') def_date;
@@ -142,11 +145,10 @@ EOF
 
           defaulter_date  = defaulter_date["def_date"].to_date rescue @end_date.to_date
           days_gone = ActiveRecord::Base.connection.select_one <<~SQL
-          SELECT TIMESTAMPDIFF(day, DATE('#{earliest_start_date}'), DATE('#{defaulter_date}')) days;
+          SELECT TIMESTAMPDIFF(MONTH, DATE('#{earliest_start_date}'), DATE('#{defaulter_date}')) months;
           SQL
 
-          new_def  = (days_gone["days"].to_i > 90 ? false : true)
-          return new_def
+          return days_gone["months"].to_i
         end
 
       end
