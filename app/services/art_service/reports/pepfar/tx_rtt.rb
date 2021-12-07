@@ -23,7 +23,7 @@ module ARTService
         def tx_rtt
           ActiveRecord::Base.connection.select_all <<~SQL
             SELECT patient_program.patient_id,
-              cohort_disaggregated_age_group(person.birthdate, #{end_date}) AS age_group,
+              disaggregated_age_group(person.birthdate, #{end_date}) AS age_group,
               person.gender,
               IF(
                 patient_state_at_start_of_quarter.state = 6, 'Treatment stopped',
