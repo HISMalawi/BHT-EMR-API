@@ -236,6 +236,12 @@ class Api::V1::ReportsController < ApplicationController
     render json: service.cxca_reports(params[:start_date], params[:end_date], params[:report_name])
   end
 
+  def vl_more_groups
+    vlc = ARTService::Reports::Pepfar::ViralLoadCoverage.new start_date: params[:start_date], end_date: params[:end_date]
+    result = vlc.woman_status params[:person_id].split(",").map {|number| number.to_i}
+    render json: result
+  end
+
   private
 
   def service

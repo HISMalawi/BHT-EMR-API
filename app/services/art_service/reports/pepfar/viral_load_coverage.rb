@@ -36,7 +36,106 @@ module ARTService
           report
         end
 
+        def woman_status(patient_list)
+          pregnant = pregnant_women(patient_list).map { |woman| woman['person_id'].to_i }
+          feeding = breast_feeding(patient_list - pregnant).map { |woman| woman['person_id'].to_i }
+
+          {
+            FP: pregnant,
+            FBf: feeding
+          }
+        end
+
         private
+
+        def pregnant_women(patient_list)
+          encounter_types = EncounterType.where(name: ['HIV CLINIC CONSULTATION', 'HIV STAGING'])
+                                           .select(:encounter_type_id)
+
+          pregnant_concepts = ConceptName.where(name: ['Is patient pregnant?', 'patient pregnant'])
+                                           .select(:concept_id)
+
+          ActiveRecord::Base.connection.select_all <<~SQL
+            SELECT obs.person_id,obs.value_coded
+            FROM obs obs
+            INNER JOIN encounter enc
+              ON enc.encounter_id = obs.encounter_id
+              AND enc.voided = 0
+              AND enc.encounter_type IN (#{encounter_types.to_sql})
+            INNER JOIN temp_earliest_start_date e
+              ON e.patient_id = enc.patient_id
+              AND LEFT(e.gender, 1) = 'F'
+            INNER JOIN temp_patient_outcomes
+              ON temp_patient_outcomes.patient_id = e.patient_id
+              AND temp_patient_outcomes.cum_outcome = 'On antiretrovirals'
+            INNER JOIN (
+              SELECT person_id, MAX(obs_datetime) AS obs_datetime
+              FROM obs
+              INNER JOIN encounter
+                ON encounter.encounter_id = obs.encounter_id
+                AND encounter.encounter_type IN (#{encounter_types.to_sql})
+                AND encounter.voided = 0
+              WHERE concept_id IN (#{pregnant_concepts.to_sql})
+                AND obs_datetime BETWEEN DATE('#{@start_date}') AND DATE('#{@end_date}') + INTERVAL 1 DAY
+                AND obs.voided = 0
+              GROUP BY person_id
+            ) AS max_obs
+              ON max_obs.person_id = obs.person_id
+              AND max_obs.obs_datetime = obs.obs_datetime
+            WHERE obs.concept_id IN (#{pregnant_concepts.to_sql})
+              AND obs.voided = 0
+              AND obs.person_id IN (#{patient_list.join(',')})
+            GROUP BY obs.person_id
+            HAVING obs.value_coded = 1065
+            ORDER BY obs.obs_datetime DESC;
+          SQL
+        end
+
+        def breast_feeding(patient_list)
+          encounter_types = EncounterType.where(name: ['HIV CLINIC CONSULTATION', 'HIV STAGING'])
+                            .select(:encounter_type_id)
+
+          breastfeeding_concepts = ConceptName.where(name: ['Breast feeding?', 'Breast feeding', 'Breastfeeding'])
+                                .select(:concept_id)
+
+          ActiveRecord::Base.connection.select_all <<~SQL
+            SELECT obs.person_id,obs.value_coded
+            FROM obs
+            INNER JOIN encounter enc
+              ON enc.encounter_id = obs.encounter_id
+              AND enc.voided = 0
+              AND enc.encounter_type IN (#{encounter_types.to_sql})
+            INNER JOIN temp_earliest_start_date e
+              ON e.patient_id = enc.patient_id
+              AND LEFT(e.gender, 1) = 'F'
+            INNER JOIN temp_patient_outcomes
+              ON temp_patient_outcomes.patient_id = e.patient_id
+              AND temp_patient_outcomes.cum_outcome = 'On antiretrovirals'
+            INNER JOIN (
+              SELECT person_id, MAX(obs_datetime) AS obs_datetime
+              FROM obs
+              INNER JOIN encounter
+              ON encounter.encounter_id = obs.encounter_id
+              AND encounter.encounter_type IN (#{encounter_types.to_sql})
+              AND encounter.voided = 0
+              WHERE person_id IN (SELECT patient_id FROM temp_patient_outcomes WHERE cum_outcome = 'On antiretrovirals')
+              AND concept_id IN (#{breastfeeding_concepts.to_sql})
+              AND obs.voided = 0
+              AND obs_datetime < DATE('#{end_date}') + INTERVAL 1 DAY
+              GROUP BY person_id
+            ) AS max_obs
+              ON max_obs.person_id = obs.person_id
+              AND max_obs.obs_datetime = obs.obs_datetime
+            WHERE obs.person_id = e.patient_id
+            AND obs.person_id IN (#{patient_list.join(',')})
+            AND obs.obs_datetime BETWEEN DATE(#{@start_date}) AND DATE(#{@end_date})
+            AND obs.concept_id IN (#{breastfeeding_concepts.to_sql})
+            AND obs.voided = 0
+            GROUP BY obs.person_id
+            HAVING obs.value_coded = 1065
+            ORDER BY obs.obs_datetime DESC;
+          SQL
+        end
 
         def build_poc_report(report)
           find_patients_alive_and_on_art.each { |patient| report[patient['age_group']][:tx_curr] << patient }
