@@ -45,11 +45,11 @@ SELECT "saving patients identifiers that have visited after migrations";
 DROP TABLE IF EXISTS $ANCDATABASE.ART_patient_identifier_in_use;
 
 CREATE TABLE $ANCDATABASE.ART_patient_identifier_in_use AS
-SELECT p.patient_id as patient_id, identifier
-FROM $ANCDATABASE.ART_patient_in_use p
-INNER JOIN $DATABASE.patient_identifier e ON p.patient_id = e.patient_id;
+SELECT e.patient_id, e.identifier
+FROM $DATABASE.patient_identifier e
+WHERE e.patient_id IN (SELECT p.patient_id FROM $ANCDATABASE.ART_patient_in_use p);
 
-ALTER TABLE $ANCDATABASE.ART_patient_identifier_in_use ADD INDEX `identifier_in_use` (`anc_patient_id`);
+ALTER TABLE $ANCDATABASE.ART_patient_identifier_in_use ADD INDEX identifier_in_use (patient_id);
 
 SELECT "saving patient mapping";
 DROP TABLE IF EXISTS $ANCDATABASE.patient_migration_mapping;
@@ -65,15 +65,15 @@ AND art.date_created = anc.date_created;
 ALTER TABLE $ANCDATABASE.patient_migration_mapping add primary key (anc_patient_id);
 
 SELECT "saving patient identifiers for those not in use";
-DROP TABLE IF EXISTS $ANCDATABASE.ART_patient_identifier_in_use;
+DROP TABLE IF EXISTS $ANCDATABASE.ART_patient_identifier_not_in_use;
 
 CREATE TABLE $ANCDATABASE.ART_patient_identifier_not_in_use AS
-SELECT p.art_patient_id as anc_patient_id, identifier
-FROM $ANCDATABASE.patient_migration_mapping p
-INNER JOIN $DATABASE.patient_identifier e ON p.art_patient_id = e.patient_id
-WHERE p.art_patient_id NOT IN (SELECT patient_id FROM $ANCDATABASE.patient_in_us);
+SELECT e.patient_id, e.identifier
+FROM $DATABASE.patient_identifier e
+WHERE e.patient_id NOT IN (SELECT p.patient_id FROM $ANCDATABASE.ART_patient_in_use p)
+AND e.patient_id IN (SELECT art_patient_id FROM $ANCDATABASE.patient_migration_mapping);
 
-ALTER TABLE $ANCDATABASE.ART_patient_identifier_not_in_use ADD INDEX `identifier_not_in_use` (`anc_patient_id`);
+ALTER TABLE $ANCDATABASE.ART_patient_identifier_not_in_use ADD INDEX identifier_not_in_use (patient_id);
 
 SELECT "removing drug_orders";
 DELETE FROM $DATABASE.drug_order WHERE order_id IN (SELECT order_id FROM $DATABASE.orders WHERE creator IN (SELECT ART_user_id FROM $ANCDATABASE.user_bak) AND patient_id NOT IN (SELECT patient_id FROM $ANCDATABASE.ART_patient_in_use));
