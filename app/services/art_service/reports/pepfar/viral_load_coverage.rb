@@ -36,7 +36,7 @@ module ARTService
           report
         end
 
-        def woman_status(patient_list)
+        def vl_maternal_status(patient_list)
           pregnant = pregnant_women(patient_list).map { |woman| woman['person_id'].to_i }
           feeding = breast_feeding(patient_list - pregnant).map { |woman| woman['person_id'].to_i }
 
