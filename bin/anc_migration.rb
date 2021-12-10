@@ -7,6 +7,7 @@ require 'yaml'
 # main method to do the workflow
 def main
   puts "Started at #{Time.now}"
+  create_user_bak
   ActiveRecord::Base.transaction do
     ActiveRecord::Base.connection.disable_referential_integrity do
       migrate_users
@@ -24,6 +25,7 @@ def main
     migrate_orders
     migrate_drug_order
   end
+  create_migration_residuals
   puts "Ended at #{Time.now}"
 end
 # rubocop:enable Metrics/AbcSize
@@ -119,6 +121,10 @@ end
 # method to create user mapping
 def create_user_bak
   ActiveRecord::Base.connection.execute <<~SQL
+    DROP TABLE IF EXISTS #{@database}.user_bak
+  SQL
+
+  ActiveRecord::Base.connection.execute <<~SQL
     CREATE TABLE #{@database}.user_bak as
     SELECT user_id AS ANC_user_id, (SELECT #{@user_id} + user_id) AS ART_user_id, (SELECT #{@person_id} + person_id) AS person_id FROM #{@database}.users
   SQL
@@ -132,7 +138,8 @@ end
 def migrate_users
   puts "Migrating user records: #{Time.now.strftime('%H:%M:%S')}"
   ActiveRecord::Base.connection.execute <<~SQL
-    UPDATE #{@database}.users SET username = 'admini' WHERE user_id = 1
+    UPDATE #{@database}.users SET username = CONCAT(username, '_anc')
+    WHERE username NOT LIKE '%_anc%'
   SQL
 
   ActiveRecord::Base.connection.execute <<~SQL
@@ -225,6 +232,7 @@ def migrate_patient_state
     INSERT INTO patient_state (patient_program_id, state, start_date, end_date, creator, date_created, changed_by, date_changed, voided, voided_by, date_voided, void_reason, uuid)
     SELECT (SELECT #{@patient_program_id} + patient_program_id) AS patient_program_id, state, start_date, end_date, (SELECT #{@user_id} + creator) AS creator, date_created,  (SELECT #{@user_id} + changed_by) AS changed_by, date_changed, voided,  (SELECT #{@user_id} + voided_by) AS voided_by, date_voided, void_reason, uuid
     FROM #{@database}.patient_state
+    WHERE patient_program_id IN (SELECT patient_program_id FROM #{@database}.patient_program)
   SQL
   puts "Finished patient_state: #{Time.now.strftime('%H:%M:%S')}"
 end
@@ -247,6 +255,7 @@ def migrate_obs
     INSERT INTO obs (obs_id, person_id,  concept_id,  encounter_id,  order_id,  obs_datetime,  location_id,  obs_group_id,  accession_number,  value_group_id,  value_boolean,  value_coded,  value_coded_name_id,  value_drug,  value_datetime,  value_numeric,  value_modifier,  value_text,  date_started,  date_stopped,  comments,  creator,  date_created,  voided,  voided_by,  date_voided,  void_reason,  value_complex,  uuid)
     SELECT (SELECT #{@obs_id} + obs_id) AS obs_id, (SELECT #{@person_id} + person_id) AS person_id,  concept_id,  (SELECT #{@encounter_id} + encounter_id) AS encounter_id,  (SELECT #{@order_id} + order_id) AS order_id, obs_datetime, location_id, (SELECT #{@obs_id} + obs_group_id) AS obs_group_id, accession_number, value_group_id, value_boolean, value_coded, value_coded_name_id, value_drug, value_datetime, value_numeric, value_modifier, value_text, date_started, date_stopped,  comments, (SELECT #{@user_id} + creator) AS creator, date_created, voided, (SELECT #{@user_id} + voided_by) AS voided_by, date_voided, void_reason, value_complex,  uuid
     FROM #{@database}.obs
+    WHERE encounter_id IN (SELECT encounter_id FROM #{@database}.encounter)
   SQL
   puts "Finished obs: #{Time.now.strftime('%H:%M:%S')}"
 end
@@ -256,8 +265,9 @@ def migrate_orders
   puts "Migrating order records: #{Time.now.strftime('%H:%M:%S')}"
   ActiveRecord::Base.connection.execute <<~SQL
     INSERT INTO orders (order_id, order_type_id, concept_id, orderer,  encounter_id,  instructions,  start_date,  auto_expire_date,  discontinued,  discontinued_date, discontinued_by,  discontinued_reason, creator, date_created,  voided,  voided_by,  date_voided,  void_reason, patient_id,  accession_number, obs_id,  uuid, discontinued_reason_non_coded)
-    SELECT (SELECT #{@order_id} + order_id) AS order_id,  order_type_id, concept_id, orderer, (SELECT #{@encounter_id} + encounter_id) AS encounter_id,  instructions, start_date, auto_expire_date,  discontinued,  discontinued_date, (SELECT #{@user_id} + discontinued_by) AS discontinued_by,  discontinued_reason,  (SELECT #{@user_id} + creator) AS creator,  date_created,  voided, (SELECT #{@user_id} + voided_by) AS voided_by,  date_voided, void_reason, (SELECT #{@person_id} + patient_id) AS patient_id, accession_number, SELECT #{@obs_id} + obs_id) AS obs_id, uuid, discontinued_reason_non_coded
+    SELECT (SELECT #{@order_id} + order_id) AS order_id,  order_type_id, concept_id, orderer, (SELECT #{@encounter_id} + encounter_id) AS encounter_id,  instructions, start_date, auto_expire_date,  discontinued,  discontinued_date, (SELECT #{@user_id} + discontinued_by) AS discontinued_by,  discontinued_reason,  (SELECT #{@user_id} + creator) AS creator,  date_created,  voided, (SELECT #{@user_id} + voided_by) AS voided_by,  date_voided, void_reason, (SELECT #{@person_id} + patient_id) AS patient_id, accession_number, (SELECT #{@obs_id} + obs_id) AS obs_id, uuid, discontinued_reason_non_coded
     FROM #{@database}.orders
+    WHERE encounter_id IN (SELECT encounter_id FROM #{@database}.encounter)
   SQL
   puts "Finished orders: #{Time.now.strftime('%H:%M:%S')}"
 end
@@ -269,16 +279,46 @@ def migrate_drug_order
     INSERT INTO drug_order (order_id, drug_inventory_id, dose, equivalent_daily_dose, units, frequency, prn, complex, quantity)
     SELECT (SELECT #{@order_id} + order_id) AS order_id, drug_inventory_id, dose, equivalent_daily_dose, units, frequency, prn, complex, quantity
     FROM #{@database}.drug_order
+    WHERE order_id IN (SELECT order_id FROM #{@database}.orders)
   SQL
   puts "Finished drug_order: #{Time.now.strftime('%H:%M:%S')}"
 end
 
-@database = YAML.load(File.open("#{Rails.root}/config/database.yml", 'r'))['anc_database']['database']
-@person_id = max_person_id
-@user_id = max_user_id
-@patient_program_id = max_patient_program_id
-@encounter_id = max_encounter_id
-@obs_id = max_obs_id
-@order_id = max_order_id
+# rubocop:disable Metrics/MethodLength
+# method to create migration residuals so that there can be a trace of how data was migrated
+def create_migration_residuals
+  ActiveRecord::Base.connection.execute <<~SQL
+    DROP TABLE IF EXISTS #{@database}.migration_mapping
+  SQL
 
-main
+  ActiveRecord::Base.connection.execute <<~SQL
+    CREATE TABLE #{@database}.migration_mapping(
+      parameter_name varchar(50) NOT NULL,
+      parameter_value INT NOT NULL,
+      primary key (parameter_name)
+    )
+  SQL
+
+  ActiveRecord::Base.connection.execute <<~SQL
+    INSERT INTO #{@database}.migration_mapping(parameter_name, parameter_value)
+    VALUES ('max_person_id', '#{@person_id}'),('max_user_id', '#{@user_id}'),
+    ('max_patient_program_id', '#{@patient_program_id}'),('max_encounter_id', '#{@encounter_id}'),
+    ('max_obs_id', '#{@obs_id}'),('max_order_id', '#{@order_id}')
+  SQL
+end
+# rubocop:enable Metrics/MethodLength
+
+database = YAML.load(File.open("#{Rails.root}/config/database.yml", 'r'))['anc_database']['database']
+# @person_id = max_person_id
+# @user_id = max_user_id
+# @patient_program_id = max_patient_program_id
+# @encounter_id = max_encounter_id
+# @obs_id = max_obs_id
+# @order_id = max_order_id
+
+what_to_run = ARGV[0].to_i
+
+if what_to_run.zero?
+  ANCService::ANCMigration.new({ person_id: max_person_id, user_id: max_user_id,
+                                 patient_program_id: max_patient_program_id, encounter_id: max_encounter_id, obs_id: max_obs_id, order_id: max_order_id, database: database }).main
+end

@@ -37,8 +37,8 @@ DROP TABLE IF EXISTS $ANCDATABASE.ART_patient_in_use;
 
 CREATE TABLE $ANCDATABASE.ART_patient_in_use AS
 SELECT p.patient_id
-FROM patient p
-INNER JOIN encounter e ON p.patient_id = e.patient_id
+FROM $DATABASE.patient p
+INNER JOIN $DATABASE.encounter e ON p.patient_id = e.patient_id
 WHERE p.creator IN (SELECT ART_user_id FROM $ANCDATABASE.user_bak) GROUP BY p.patient_id HAVING COUNT(*) > 1;
 
 SELECT "saving patients identifiers that have visited after migrations";
