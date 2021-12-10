@@ -64,12 +64,11 @@ module ARTService
         else
           start_date, end_date = generate_start_date_and_end_date(quarter)
 
-          if @rebuild && quarter  == 'Custom'
+          if @rebuild
             initialize_disaggregated
             art_service = ARTService::Reports::CohortBuilder.new()
             art_service.create_tmp_patient_table
             art_service.load_data_into_temp_earliest_start_date(end_date)
-            #art_service.update_cum_outcome(end_date)
             rebuild_outcomes 'moh'
             art_service.update_tb_status(end_date)
           end
@@ -309,7 +308,7 @@ EOF
 
           age_group_patients = ActiveRecord::Base.connection.select_all <<~SQL
             SELECT
-              patient_id, `cohort_disaggregated_age_group`(date(birthdate), date('#{@end_date}')) AS age_group
+              patient_id, `disaggregated_age_group`(date(birthdate), date('#{@end_date}')) AS age_group
             FROM temp_earliest_start_date e
             WHERE birthdate BETWEEN '#{start_dob}' AND '#{end_dob}'
             GROUP BY e.patient_id HAVING age_group = '#{age_group}';
