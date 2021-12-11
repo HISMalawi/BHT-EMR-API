@@ -320,5 +320,10 @@ what_to_run = ARGV[0].to_i
 
 if what_to_run.zero?
   ANCService::ANCMigration.new({ person_id: max_person_id, user_id: max_user_id,
-                                 patient_program_id: max_patient_program_id, encounter_id: max_encounter_id, obs_id: max_obs_id, order_id: max_order_id, database: database }).main
+                                 patient_program_id: max_patient_program_id, encounter_id: max_encounter_id,
+                                 obs_id: max_obs_id, order_id: max_order_id, database: database }).main
+elsif what_to_run == 1
+  ANCService::ANCReverseMigration.new({ database: database, migration_date: ARGV[1] }).main
+else
+  puts 'Not yet configured'
 end
