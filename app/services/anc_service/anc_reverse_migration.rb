@@ -23,6 +23,7 @@ module ANCService
       @remove = remove_list
       patient_identifier_not_in_use
       patient_mapping
+      create_reverse_residuals
       begin
         ActiveRecord::Base.transaction do
           ActiveRecord::Base.connection.disable_referential_integrity do
@@ -41,9 +42,9 @@ module ANCService
             remove_person
           end
         end
-      rescue => exception
-        puts exception.message[0..1000]
-        #puts exception.backtrace
+      rescue StandardError => e
+        puts e.message[0..1000]
+        # puts exception.backtrace
       end
       print_time message: 'Finished migration reversal script', long_form: true
     end
@@ -52,106 +53,194 @@ module ANCService
 
     private
 
-    # rubocop:disable Metrics/MethodLength
     # method to map patients that are already being used
     def patient_in_use
-      print_time message: 'Saving patients in use'
-      ActiveRecord::Base.connection.execute <<~SQL
-        DROP TABLE IF EXISTS #{@database}.ART_patient_in_use;
-      SQL
-      ActiveRecord::Base.connection.execute <<~SQL
+      central_execute statement: "DROP TABLE IF EXISTS #{@database}.ART_patient_in_use"
+      statement = <<~SQL
         CREATE TABLE #{@database}.ART_patient_in_use AS
         SELECT p.patient_id
         FROM patient p
         INNER JOIN encounter e ON p.patient_id = e.patient_id
-        WHERE p.creator IN (#{@users})
-        AND e.date_created >= DATE('#{@date}')
+        WHERE p.creator IN (#{@users}) AND e.date_created >= DATE('#{@date}')
         GROUP BY p.patient_id HAVING COUNT(*) > 0;
       SQL
-      print_time
+      central_execute message: 'Saving patients in use', statement: statement
     end
-    # rubocop:enable Metrics/MethodLength
 
-    # rubocop:disable Metrics/MethodLength
     # method to map patient that not being used
     def patient_identifier_in_use
-      print_time message: 'Saving patients identifiers in use'
-      ActiveRecord::Base.connection.execute <<~SQL
-        DROP TABLE IF EXISTS #{@database}.ART_patient_identifier_in_use
-      SQL
-      ActiveRecord::Base.connection.execute <<~SQL
+      central_execute statement: "DROP TABLE IF EXISTS #{@database}.ART_patient_identifier_in_use"
+      statement = <<~SQL
         CREATE TABLE #{@database}.ART_patient_identifier_in_use AS
         SELECT e.patient_id, e.identifier
         FROM patient_identifier e
         WHERE e.patient_id IN (#{@patients})
       SQL
-      ActiveRecord::Base.connection.execute <<~SQL
-        ALTER TABLE #{@database}.ART_patient_identifier_in_use ADD INDEX identifier_in_use (patient_id);
-      SQL
-      print_time
+      central_execute message:'Saving identifiers in use', statement: statement
+      central_execute statement: "ALTER TABLE #{@database}.ART_patient_identifier_in_use ADD INDEX identifier_in_use (patient_id)"
     end
-    # rubocop:enable Metrics/MethodLength
 
-    # rubocop:disable Metrics/MethodLength
     # method to get identifiers for patients not in use
     def patient_identifier_not_in_use
-      print_time message: 'Saving patients identifiers not in use'
-      ActiveRecord::Base.connection.execute <<~SQL
-        DROP TABLE IF EXISTS #{@database}.ART_patient_identifier_not_in_use
-      SQL
-      ActiveRecord::Base.connection.execute <<~SQL
+      central_execute statement: "DROP TABLE IF EXISTS #{@database}.ART_patient_identifier_not_in_use"
+      statement <<~SQL
         CREATE TABLE #{@database}.ART_patient_identifier_not_in_use AS
         SELECT e.patient_id, e.identifier
         FROM patient_identifier e
         WHERE e.patient_id IN (SELECT p.patient_id FROM #{@database}.ART_patient_not_in_use p)
       SQL
-      ActiveRecord::Base.connection.execute <<~SQL
-        ALTER TABLE #{@database}.ART_patient_identifier_not_in_use ADD INDEX identifier_not_in_use (patient_id);
-      SQL
-      print_time
+      central_execute 'Save identifier not used', statement
+      central_execute statement:
+                      "ALTER TABLE #{@database}.ART_patient_identifier_not_in_use ADD INDEX identifier_not_in_use (patient_id)"
     end
-    # rubocop:enable Metrics/MethodLength
 
-    # rubocop:disable Metrics/MethodLength
     # method to map patient that not being used
     def patient_not_in_use
-      print_time message: 'Saving patients not in use'
-      ActiveRecord::Base.connection.execute <<~SQL
-        DROP TABLE IF EXISTS #{@database}.ART_patient_not_in_use;
-      SQL
-      ActiveRecord::Base.connection.execute <<~SQL
+      central_execute statement: "DROP TABLE IF EXISTS #{@database}.ART_patient_not_in_use"
+      statement = <<~SQL
         CREATE TABLE #{@database}.ART_patient_not_in_use AS
         SELECT p.patient_id
         FROM patient p
-        WHERE p.creator IN (#{@users})
-        AND p.patient_id NOT IN (#{@patients})
+        WHERE p.creator IN (#{@users}) AND p.patient_id NOT IN (#{@patients})
       SQL
-      print_time
+      central_execute 'Add patients to not in use', statement
     end
-    # rubocop:enable Metrics/MethodLength
 
     # rubocop:disable Metrics/MethodLength
     # method to map all patients
     def patient_mapping
-      print_time message: 'Saving patient mapping'
-      ActiveRecord::Base.connection.execute <<~SQL
-        DROP TABLE IF EXISTS #{@database}.patient_migration_mapping
-      SQL
-      ActiveRecord::Base.connection.execute <<~SQL
+      central_execute statement: "DROP TABLE IF EXISTS #{@database}.patient_migration_mapping"
+      stmt = <<~SQL
         CREATE TABLE #{@database}.patient_migration_mapping
         SELECT DISTINCT(anc.patient_id) AS anc_patient_id, art.patient_id AS art_patient_id
         FROM #{@database}.patient_identifier anc
         JOIN patient_identifier art ON anc.identifier = art.identifier
         JOIN #{@database}.user_bak bak ON anc.creator = bak.ANC_user_id
-        WHERE art.creator = bak.ART_user_id
-        AND art.date_created = anc.date_created
+        WHERE art.creator = bak.ART_user_id AND art.date_created = anc.date_created
       SQL
-      ActiveRecord::Base.connection.execute <<~SQL
-        ALTER TABLE #{@database}.patient_migration_mapping add primary key (anc_patient_id)
-      SQL
-      print_time
+      central_execute 'Create patient mapping', stmt
+      central_execute statement: "ALTER TABLE #{@database}.patient_migration_mapping add primary key (anc_patient_id)"
     end
     # rubocop:enable Metrics/MethodLength
+
+    # rubocop:disable Metrics/MethodLength
+    # method to create reverse residuals so that there can be a trace of how data was before reverse
+    # even though this doesn't make sense
+    def create_reverse_residuals
+      central_execute statement: "DROP TABLE IF EXISTS #{@database}.reverse_mapping"
+      statement = <<~SQL
+        CREATE TABLE #{@database}.reverse_mapping(
+          parameter_name varchar(50) NOT NULL,parameter_value INT NULL,
+          primary key (parameter_name)
+        )
+      SQL
+      central_execute statement: statement
+      if check_mapping?
+        statement = <<~SQL
+          INSERT INTO #{@database}.reverse_mapping(parameter_name, parameter_value)
+          SELECT parameter_name, paramter_value FROM #{@database}.migration_mapping
+        SQL
+      else
+        all_anc_in_openmrs
+        statement = <<~SQL
+          INSERT INTO #{@database}.reverse_mapping(parameter_name, parameter_value)
+          VALUES ('max_person_id', #{prev_max_person_id}), ('max_patient_program_id', #{prev_max_program_id}),
+          ('max_encounter_id', #{prev_max_encounter_id}),
+          ('max_obs_id', #{prev_max_obs_id}),('max_order_id', #{prev_max_order_id})
+        SQL
+      end
+      central_execute 'Inserting reverse values to reverse_mapping table', statement
+    end
+    # rubocop:enable Metrics/MethodLength
+
+    # method to check if mapping residual table exists
+    def check_mapping?
+      result = ActiveRecord::Base.connection.select_one <<~SQL
+        SELECT count(*) AS count
+        FROM information_schema.tables
+        WHERE table_schema = "#{@database}"
+        AND table_name = 'migration_mapping'
+      SQL
+      !result['count'].zero?
+    end
+
+    # def method to get all openmrs patient id from anc
+    def all_anc_in_openmrs
+      result = ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT art_patient_id FROM #{@database}.patient_migration_mapping
+      SQL
+      @openmrs = result.map { |variale| variale['art_patient_id'].to_i }.join(',')
+    end
+
+    # method to get max encounter_id when data was being migrated
+    def prev_max_encounter_id
+      min_id = ActiveRecord::Base.connection.select_one <<~SQL
+        SELECT MIN(encounter_id) AS encounter_id FROM encounter WHERE patient_id IN (#{@openmrs})
+      SQL
+      return nil if min_id['encounter_id'].nil?
+
+      # this means there was some data that was migrated
+      result = ActiveRecord::Base.connection.select_one <<~SQL
+        SELECT COALESCE(MAX(encounter_id),0) as encounter_id FROM encounter WHERE encounter_id < #{min_id['encounter_id']}
+      SQL
+      result['encounter_id'].to_i
+    end
+
+    # method to get max obs id when data was being migrated
+    def prev_max_obs_id
+      min_id = ActiveRecord::Base.connection.select_one <<~SQL
+        SELECT MIN(obs_id) as obs_id FROM obs WHERE person_id IN (#{@openmrs})
+      SQL
+      return nil if min_id['obs_id'].nil?
+
+      # this means there was some data that was migrated
+      result = ActiveRecord::Base.connection.select_one <<~SQL
+        SELECT COALESCE(MAX(obs_id),0) as obs_id FROM obs WHERE obs_id < #{min_id['obs_id'].to_i}
+      SQL
+      result['obs_id'].to_i
+    end
+
+    # method to get max patient id when data was being migrated
+    def prev_max_program_id
+      min_id = ActiveRecord::Base.connection.select_one <<~SQL
+        SELECT MIN(patient_program_id) as patient_program_id FROM patient_program WHERE patient_id IN (#{@openmrs})
+      SQL
+      return nil if min_id['patient_program_id'].nil?
+
+      # means some migration happen so we can get the previous value
+      result = ActiveRecord::Base.connection.select_on <<~SQL
+        SELECT COALESCE(MAX(patient_program_id),0) as patient_program_id FROM patient_program WHERE patient_program_id < #{min_id['patient_program_id'].to_i}
+      SQL
+      result['patient_program_id'].to_i
+    end
+
+    # method to get max order id when data was being migrated
+    def prev_max_order_id
+      min_id = ActiveRecord::Base.connection.select_one <<~SQL
+        SELECT MIN(order_id) as order_id FROM orders WHERE patient_id IN (#{@openmrs})
+      SQL
+      return nil if min_id['order_id'].nil?
+
+      # means some migration happen so we can get the previous value
+      result = ActiveRecord::Base.connection.select_one <<~SQL
+        SELECT COALESCE(MAX(order_id),0) as order_id FROM orders WHERE order_id < #{mid['order_id'].to_i}
+      SQL
+      result['order_id'].to_i
+    end
+
+    # method to get max order id when data was being migrated
+    def prev_max_person_id
+      min_id = ActiveRecord::Base.connection.select_one <<~SQL
+        SELECT MIN(person_id) as person_id FROM person WHERE creator IN (#{@users})
+      SQL
+      return nil if min_id['person_id'].nil?
+
+      # means some migration happen so we can get the previous value
+      result = ActiveRecord::Base.connection.select_one <<~SQL
+        SELECT COALESCE(MAX(person_id),0) as person_id FROM person WHERE person_id < #{mid['person_id'].to_i}
+      SQL
+      result['person_id'].to_i
+    end
 
     # method to remove drug orders
     def remove_drug_orders
@@ -252,6 +341,13 @@ module ANCService
     # method to print time when running some heavy things
     def print_time(message: 'Done', long_form: false)
       puts "#{message}: #{long_form ? Time.now : Time.now.strftime('%H:%M:%S')}"
+    end
+
+    # method to execute commands
+    def central_execute(message: nil, statement: '')
+      print_time message: message unless message.nil?
+      ActiveRecord::Base.connection.execute statement
+      print_time unless message.nil?
     end
 
     # rubocop:disable Metrics/MethodLength
