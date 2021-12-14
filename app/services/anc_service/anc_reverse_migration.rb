@@ -145,7 +145,7 @@ module ANCService
       if check_mapping?
         statement = <<~SQL
           INSERT INTO #{@database}.reverse_mapping(parameter_name, parameter_value)
-          SELECT parameter_name, paramter_value FROM #{@database}.migration_mapping
+          SELECT parameter_name, parameter_value FROM #{@database}.migration_mapping
         SQL
       else
         all_anc_in_openmrs

@@ -76,29 +76,33 @@ module ANCService
     # method to execute a migration after a reversal was done
     def abnormal
       print_time message: 'Starting an abnormal migration (KAWALE CASE)', long_form: true
-      ActiveRecord::Base.transaction do
-        update_openmrs_users
-        migrate_person
-        migrate_person_name
-        migrate_person_address
-        migrate_person_attribute
-        migrate_patient
-        migrate_patient_identifier
-        migrate_patient_program
-        migrate_patient_state
-        migrate_encounter
-        migrate_obs
-        migrate_orders
-        migrate_drug_order
-        ANCService::ANCMissedMigration.new({ max_person_id: @person_id,
-                                             max_user_id: @user_id, max_patient_program_id: @patient_program_id,
-                                             max_encounter_id: @encounter_id, max_obs_id: @obs_id,
-                                             max_order_id: @order_id, database: @database }).main
+      begin
+        ActiveRecord::Base.transaction do
+          update_openmrs_users
+          migrate_person
+          migrate_person_name
+          migrate_person_address
+          migrate_person_attribute
+          migrate_patient
+          migrate_patient_identifier
+          migrate_patient_program
+          migrate_patient_state
+          migrate_encounter
+          migrate_obs
+          migrate_orders
+          migrate_drug_order
+          ANCService::ANCMissedMigration.new({ max_person_id: @person_id,
+                                               max_user_id: @user_id, max_patient_program_id: @patient_program_id,
+                                               max_encounter_id: @encounter_id, max_obs_id: @obs_id,
+                                               max_order_id: @order_id, database: @database }).main
 
-        update_migrated_records
+          update_migrated_records
+        end
+        create_migration_residuals
+        remove_holding_tables
+      rescue => e
+        puts e.message[0..1000]
       end
-      create_migration_residuals
-      remove_holding_tables
       print_time message: 'Abnormal migratrion finished', long_form: true
     end
     # rubocop:enable Metrics/AbcSize
@@ -235,14 +239,54 @@ module ANCService
       central_hub message: 'Migrating patient_state records', query: statement
     end
 
+    # rubocop:disable Metrics/MethodLength
     # method to migrate encounter records
     def migrate_encounter
+      if @database_reversed
+        migrate_encounter_system_users
+        migrate_encounter_not_system_users
+        return
+      end
       statement = <<~SQL
         INSERT INTO encounter (encounter_id, encounter_type, patient_id, provider_id, location_id, form_id, encounter_datetime, creator, date_created, voided, voided_by, date_voided, void_reason, uuid, changed_by, date_changed, program_id)
         SELECT (SELECT #{@encounter_id} + encounter_id) AS id, encounter_type, (SELECT #{@person_id} + patient_id) AS patient_id, (SELECT #{@person_id} + provider_id) AS provider_id, location_id, form_id, encounter_datetime, (SELECT #{@user_id} + creator) AS creator, date_created, voided, (SELECT #{@user_id} + voided_by) AS voided_by, date_voided, void_reason, uuid, (SELECT #{@user_id} + changed_by) AS changed_by, date_changed, 12
-        FROM #{@database}.encounter #{@database_reversed ? "WHERE patient_id IN (#{@patient_not_in_use})" : ''}
+        FROM #{@database}.encounter
       SQL
       central_hub message: 'Migrating encounter records', query: statement
+    end
+    # rubocop:enable Metrics/MethodLength
+
+    # method to load previous person id
+    def prev_person_id
+      result = ActiveRecord::Base.connection.select_one <<~SQL
+        SELECT parameter_value FROM #{@database}.reverse_mapping WHERE parameter_name = 'max_person_id'
+      SQL
+      result['parameter_value'].to_i
+    end
+
+    # method to migrate encounter whose providers are system users
+    def migrate_encounter_system_users
+      statement = <<~SQL
+        INSERT INTO encounter (encounter_id, encounter_type, patient_id, provider_id, location_id, form_id, encounter_datetime, creator, date_created, voided, voided_by, date_voided, void_reason, uuid, changed_by, date_changed, program_id)
+        SELECT (SELECT #{@encounter_id} + encounter_id) AS id, encounter_type, (SELECT #{@person_id} + patient_id) AS patient_id, (SELECT #{prev_person_id} + provider_id) AS provider_id, location_id, form_id, encounter_datetime, (SELECT #{@user_id} + creator) AS creator, date_created, voided, (SELECT #{@user_id} + voided_by) AS voided_by, date_voided, void_reason, uuid, (SELECT #{@user_id} + changed_by) AS changed_by, date_changed, 12
+        FROM #{@database}.encounter
+        WHERE patient_id IN (#{@patient_not_in_use})
+        AND provider_id IN (SELECT person_id FROM #{@database}.users)
+      SQL
+      central_hub message: 'Migrating encounter records whose provider is the system users', query: statement
+    end
+
+    # method to migrate encounter whose providers are system users
+    def migrate_encounter_not_system_users
+      statement = <<~SQL
+        INSERT INTO encounter (encounter_id, encounter_type, patient_id, provider_id, location_id, form_id, encounter_datetime, creator, date_created, voided, voided_by, date_voided, void_reason, uuid, changed_by, date_changed, program_id)
+        SELECT (SELECT #{@encounter_id} + e.encounter_id) AS id, e.encounter_type, (SELECT #{@person_id} + e.patient_id) AS patient_id, bak.person_id AS provider_id, e.location_id, e.form_id, e.encounter_datetime, bak.ART_user_id AS creator, e.date_created, e.voided, (SELECT #{@user_id} + e.voided_by) AS voided_by, e.date_voided, e.void_reason, e.uuid, (SELECT #{@user_id} + e.changed_by) AS changed_by, e.date_changed, 12
+        FROM #{@database}.encounter e
+        INNER JOIN #{@database}.user_bak bak ON e.creator = bak.ANC_user_id
+        WHERE patient_id IN (#{@patient_not_in_use})
+        AND provider_id NOT IN (SELECT person_id FROM #{@database}.users)
+      SQL
+      central_hub message: 'Migrating encounter records whose provider is not the system users', query: statement
     end
 
     # method to migrate obs records
@@ -410,7 +454,7 @@ module ANCService
       x = ActiveRecord::Base.connection.select_all <<~SQL
         SELECT patient_id FROM #{@database}.ART_patient_in_use
       SQL
-      x.map { |patient| patient['patient_id'].to_i }.join(',')
+      x.map { |patient| patient['patient_id'].to_i }
     end
 
     # simple check on migrated patients
@@ -420,10 +464,16 @@ module ANCService
 
     # method to get patient that were not in use
     def patient_not_in_use
+      not_in_use = [0]
       x = ActiveRecord::Base.connection.select_all <<~SQL
-        SELECT patient_id FROM #{@database}.ART_patient_not_in_use
+        SELECT anc_patient_id AS patient_id FROM #{@database}.patient_migration_mapping WHERE art_patient_id IN (SELECT patient_id FROM #{@database}.ART_patient_not_in_use)
       SQL
-      x.map { |patient| patient['patient_id'].to_i }.push(0).join(',')
+      y = ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT patient_id FROM #{@database}.patient WHERE patient_id NOT IN (SELECT anc_patient_id FROM #{@database}.patient_migration_mapping)
+      SQL
+      x.map { |patient| not_in_use << patient['patient_id'].to_i }
+      y.map { |patient| not_in_use << patient['patient_id'].to_i }
+      not_in_use.join(',')
     end
 
     # section to set session variables
