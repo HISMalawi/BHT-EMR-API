@@ -20,7 +20,7 @@ module ARTService
           hash[month] = { retained: [], all: [] }
         end
 
-        find_patients_retention_period(retained_patients(as_of: start_date - MONTHS.max.months)) do |period, patient|
+        find_patients_retention_period(retained_patients(as_of: Date.parse(start_date) - MONTHS.max.months)) do |period, patient|
           matched_patients[period][:retained] << {
             patient_id: patient.patient_id,
             arv_number: patient.arv_number,
@@ -31,7 +31,7 @@ module ARTService
           }
         end
 
-        find_patients_retention_period(all_patients(as_of: start_date - MONTHS.max.months)) do |period, patient|
+        find_patients_retention_period(all_patients(as_of: Date.parse(start_date) - MONTHS.max.months)) do |period, patient|
           matched_patients[period][:all] << {
             patient_id: patient.patient_id,
             arv_number: patient.arv_number,
@@ -47,7 +47,7 @@ module ARTService
       def find_patients_retention_period(patients)
         patients.each do |patient|
           retention_period = MONTHS.find do |period|
-            (start_date..end_date).include?((patient.start_date + period.months).to_date)
+            (start_date..end_date.to_s).include?((patient.start_date + period.months).to_date)
           end
 
           next unless retention_period
