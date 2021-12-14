@@ -135,7 +135,7 @@ module ANCService
 
     # method to migrate users records
     def migrate_users
-      statement <<~SQL
+      statement = <<~SQL
         UPDATE #{@database}.users SET username = CONCAT(username, '_anc')
         WHERE username NOT LIKE '%_anc%'
       SQL
@@ -332,7 +332,7 @@ module ANCService
         DROP TABLE IF EXISTS #{@database}.ART_patient_not_in_use;
         DROP TABLE IF EXISTS #{@database}.ART_patient_identifier_not_in_use;
         DROP TABLE IF EXISTS #{@database}.ART_patient_identifier_in_use;
-        DROP TABLE IF EXISTS #{@database}.ART_patient_in_use;
+        DROP TABLE IF EXISTS #{@database}.ART_patient_in_use
       SQL
       print_time message: 'Removing holding tables'
       statements.split(';').each { |value| central_hub message: nil, query: value.strip }

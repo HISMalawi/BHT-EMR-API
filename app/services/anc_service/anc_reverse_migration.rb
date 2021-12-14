@@ -391,7 +391,6 @@ module ANCService
       result = ActiveRecord::Base.connection.select_one <<~SQL
         SELECT count(*) as count FROM #{table_name} #{condition}
       SQL
-      puts result['count']
       !result['count'].to_i.zero?
     end
   end

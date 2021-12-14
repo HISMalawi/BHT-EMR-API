@@ -22,12 +22,13 @@ module ANCService
 
       reverse_value
       patients.each do |patient|
+        @patient = patient
         print_time message: "Migrating missed records for patient #{patient}"
-        anc_id = anc_patient_id patient
-        migrate_program_missed patient, anc_id
-        migrate_encounter_missed patient, anc_id
-        migrate_obs_missed patient, anc_id
-        migrate_orders_missed patient, anc_id
+        @anc_id = anc_patient_id patient
+        migrate_program_missed patient
+        migrate_encounter_missed patient
+        migrate_obs_missed patient
+        migrate_orders_missed patient
         print_time
       end
     end
@@ -50,17 +51,17 @@ module ANCService
     end
 
     # migrate encounters for patients in use
-    def migrate_encounter_missed(patient_id, anc_id)
-      anc_encounters = central_select_all('encounter_id', "#{@database}.encounter", "WHERE patient_id = #{anc_id}")
+    def migrate_encounter_missed(patient_id)
+      anc_encounters = central_select_all('encounter_id', "#{@database}.encounter", "WHERE patient_id = #{@anc_id}")
       openmrs_encounters = central_select_all('encounter_id', 'encounter', "WHERE patient_id = '#{patient_id}'")
       not_migrated = anc_encounters.map { |value| value + @prev_encounter_id } - openmrs_encounters
       migrate_encounter(not_migrated.map { |value| value - @prev_encounter_id }) if not_migrated.length.positive?
     end
 
     # migrate patient program records
-    def migrate_program_missed(patient_id, anc_id)
+    def migrate_program_missed(patient_id)
       anc_program = central_select_all('patient_program_id', "#{@database}.patient_program",
-                                       "WHERE patient_id = #{anc_id}")
+                                       "WHERE patient_id = #{@anc_id}")
       openmrs_program = central_select_all('patient_program_id', 'patient_program',
                                            "WHERE patient_id = #{patient_id}")
       not_migrated = anc_program.map { |value| value + @prev_program_id } - openmrs_program
@@ -72,16 +73,16 @@ module ANCService
     end
 
     # migrate obs records that were missed
-    def migrate_obs_missed(patient_id, anc_id)
-      record = central_select_all('obs_id', "#{@database}.obs", "WHERE person_id = #{anc_id}")
+    def migrate_obs_missed(patient_id)
+      record = central_select_all('obs_id', "#{@database}.obs", "WHERE person_id = #{@anc_id}")
       open_record = central_select_all('obs_id', 'obs', "WHERE person_id = #{patient_id}")
       not_migrated = record.map { |value| value + @prev_obs_id } - open_record
       migrate_obs(not_migrated.map { |value| value - @prev_obs_id }) if not_migrated.length.positive?
     end
 
     # migrate order records that were missed
-    def migrate_orders_missed(patient_id, anc_id)
-      record = central_select_all('order_id', "#{@database}.orders", "WHERE patient_id = #{anc_id}")
+    def migrate_orders_missed(patient_id)
+      record = central_select_all('order_id', "#{@database}.orders", "WHERE patient_id = #{@anc_id}")
       open_record = central_select_all('order_id', 'orders', "WHERE patient_id = #{patient_id}")
       not_migrated = record.map { |value| value + @prev_order_id } - open_record
       return unless not_migrated.length.positive?
@@ -95,7 +96,7 @@ module ANCService
     def migrate_orders(list)
       statement = <<~SQL
         INSERT INTO orders (order_id, order_type_id, concept_id, orderer,  encounter_id,  instructions,  start_date,  auto_expire_date,  discontinued,  discontinued_date, discontinued_by,  discontinued_reason, creator, date_created,  voided,  voided_by,  date_voided,  void_reason, patient_id,  accession_number, obs_id,  uuid, discontinued_reason_non_coded)
-        SELECT (SELECT #{@order_id} + order_id) AS order_id,  order_type_id, concept_id, orderer, (SELECT #{@encounter_id} + encounter_id) AS encounter_id,  instructions, start_date, auto_expire_date,  discontinued,  discontinued_date, (SELECT #{@user_id} + discontinued_by) AS discontinued_by,  discontinued_reason,  (SELECT #{@user_id} + creator) AS creator,  date_created,  voided, (SELECT #{@user_id} + voided_by) AS voided_by,  date_voided, void_reason, (SELECT #{@prev_person_id} + patient_id) AS patient_id, accession_number, (SELECT #{@obs_id} + obs_id) AS obs_id, uuid, discontinued_reason_non_coded
+        SELECT (SELECT #{@order_id} + order_id) AS order_id,  order_type_id, concept_id, orderer, (SELECT #{@encounter_id} + encounter_id) AS encounter_id,  instructions, start_date, auto_expire_date,  discontinued,  discontinued_date, (SELECT #{@user_id} + discontinued_by) AS discontinued_by,  discontinued_reason,  (SELECT #{@user_id} + creator) AS creator,  date_created,  voided, (SELECT #{@user_id} + voided_by) AS voided_by,  date_voided, void_reason, #{@patient}, accession_number, (SELECT #{@obs_id} + obs_id) AS obs_id, uuid, discontinued_reason_non_coded
         FROM #{@database}.orders
         WHERE order_id IN (#{list.join(',')})
       SQL
@@ -117,7 +118,7 @@ module ANCService
     def migrate_obs(list)
       statement = <<~SQL
         INSERT INTO obs (obs_id, person_id,  concept_id,  encounter_id,  order_id,  obs_datetime,  location_id,  obs_group_id,  accession_number,  value_group_id,  value_boolean,  value_coded,  value_coded_name_id,  value_drug,  value_datetime,  value_numeric,  value_modifier,  value_text,  date_started,  date_stopped,  comments,  creator,  date_created,  voided,  voided_by,  date_voided,  void_reason,  value_complex,  uuid)
-        SELECT (SELECT #{@obs_id} + obs_id) AS obs_id, (SELECT #{@prev_person_id} + person_id) AS person_id,  concept_id,  (SELECT #{@encounter_id} + encounter_id) AS encounter_id,  (SELECT #{@order_id} + order_id) AS order_id, obs_datetime, location_id, (SELECT #{@obs_id} + obs_group_id) AS obs_group_id, accession_number, value_group_id, value_boolean, value_coded, value_coded_name_id, value_drug, value_datetime, value_numeric, value_modifier, value_text, date_started, date_stopped,  comments, (SELECT #{@user_id} + creator) AS creator, date_created, voided, (SELECT #{@user_id} + voided_by) AS voided_by, date_voided, void_reason, value_complex,  uuid
+        SELECT (SELECT #{@obs_id} + obs_id) AS obs_id, #{@patient},  concept_id,  (SELECT #{@encounter_id} + encounter_id) AS encounter_id,  (SELECT #{@order_id} + order_id) AS order_id, obs_datetime, location_id, (SELECT #{@obs_id} + obs_group_id) AS obs_group_id, accession_number, value_group_id, value_boolean, value_coded, value_coded_name_id, value_drug, value_datetime, value_numeric, value_modifier, value_text, date_started, date_stopped,  comments, (SELECT #{@user_id} + creator) AS creator, date_created, voided, (SELECT #{@user_id} + voided_by) AS voided_by, date_voided, void_reason, value_complex,  uuid
         FROM #{@database}.obs
         WHERE obs_id IN (#{list.join(',')})
       SQL
@@ -128,7 +129,7 @@ module ANCService
     def migrate_patient_program(list)
       statement = <<~SQL
         INSERT INTO patient_program (patient_program_id,  patient_id,  program_id,  date_enrolled,  date_completed,  creator,  date_created, changed_by,  date_changed,  voided, voided_by,  date_voided,  void_reason,  uuid,  location_id)
-        SELECT (SELECT #{@patient_program_id} + patient_program_id) AS patient_program_id,  (SELECT #{@prev_person_id} + patient_id) AS patient_id,  program_id,  date_enrolled,  date_completed,  (SELECT #{@user_id} + creator) AS creator,  date_created, (SELECT #{@user_id} + changed_by) AS changed_by, date_changed,  voided,  (SELECT #{@user_id} + voided_by) AS voided_by,  date_voided,  void_reason,  uuid, location_id
+        SELECT (SELECT #{@patient_program_id} + patient_program_id) AS patient_program_id,  #{@patient},  program_id,  date_enrolled,  date_completed,  (SELECT #{@user_id} + creator) AS creator,  date_created, (SELECT #{@user_id} + changed_by) AS changed_by, date_changed,  voided,  (SELECT #{@user_id} + voided_by) AS voided_by,  date_voided,  void_reason,  uuid, location_id
         FROM #{@database}.patient_program
         WHERE patient_program_id IN (#{list.join(',')})
       SQL
@@ -150,7 +151,7 @@ module ANCService
     def migrate_encounter(list)
       statement = <<~SQL
         INSERT INTO encounter (encounter_id, encounter_type, patient_id, provider_id, location_id, form_id, encounter_datetime, creator, date_created, voided, voided_by, date_voided, void_reason, uuid, changed_by, date_changed, program_id)
-        SELECT (SELECT #{@encounter_id} + encounter_id) AS id, encounter_type, (SELECT #{@prev_person_id} + patient_id) AS patient_id, (SELECT #{@prev_person_id} + provider_id) AS provider_id, location_id, form_id, encounter_datetime, (SELECT #{@user_id} + creator) AS creator, date_created, voided, (SELECT #{@user_id} + voided_by) AS voided_by, date_voided, void_reason, uuid, (SELECT #{@user_id} + changed_by) AS changed_by, date_changed, 12
+        SELECT (SELECT #{@encounter_id} + encounter_id) AS id, encounter_type, #{@patient}, (SELECT #{@prev_person_id} + provider_id) AS provider_id, location_id, form_id, encounter_datetime, (SELECT #{@user_id} + creator) AS creator, date_created, voided, (SELECT #{@user_id} + voided_by) AS voided_by, date_voided, void_reason, uuid, (SELECT #{@user_id} + changed_by) AS changed_by, date_changed, 12
         FROM #{@database}.encounter
         WHERE encounter_id in (#{list.join(',')})
       SQL
