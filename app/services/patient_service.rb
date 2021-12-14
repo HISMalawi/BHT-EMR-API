@@ -134,7 +134,28 @@ class PatientService
       ORDER BY visit_date DESC
     SQL
 
-    rows.collect { |row| row['visit_date'] }
+    visit_dates = rows.collect { |row| row['visit_date'].to_date }
+    unless visit_dates.blank?
+      #Starting from the initial visit date, we add 1+ month while checking if the patient defaulted.
+      #if we find that the patient has a defualter date we add it to the array of visit dates.
+      initial_visit_date = visit_dates.last.to_date
+
+      while initial_visit_date < Date.today
+      initial_visit_date = initial_visit_date + 1.month
+        defaulter_date = ActiveRecord::Base.connection.select_one <<~SQL
+          SELECT current_defaulter_date(#{patient_id}, DATE('#{initial_visit_date}')) as defaulter_date;
+        SQL
+        unless defaulter_date['defaulter_date'].blank?
+          visit_dates << defaulter_date['defaulter_date'].to_date
+          visit_dates.uniq!
+        end
+      end
+
+      #We sort the dates array to make sure we start with the most recent date
+      visit_dates = visit_dates.sort {|a,b| b.to_date <=> a.to_date}.reverse
+    end
+
+    visit_dates
   end
 
   def median_weight_height(age_in_months, gender)

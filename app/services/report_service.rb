@@ -188,6 +188,11 @@ class ReportService
     engine(@program).reports(start_date.to_date,end_date.to_date, report_name)
   end
 
+  def vl_maternal_status(start_date, end_date, tx_curr_definition, patient_ids)
+    engine(@program).vl_maternal_status(start_date.to_date,end_date.to_date,
+      tx_curr_definition, patient_ids)
+  end
+
   private
 
   def engine(program)
