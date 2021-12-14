@@ -63,6 +63,7 @@ module ANCService
         migrate_obs
         migrate_orders
         migrate_drug_order
+        update_migrated_records
       end
       create_migration_residuals
       print_time message: 'Normal migratrion finished', long_form: true
@@ -74,6 +75,8 @@ module ANCService
     # rubocop:disable Metrics/AbcSize
     # method to execute a migration after a reversal was done
     def abnormal
+      puts @patient_not_in_use
+      puts @database_reversed
       print_time message: 'Starting an abnormal migration (KAWALE CASE)', long_form: true
       ActiveRecord::Base.transaction do
         migrate_person
@@ -92,8 +95,11 @@ module ANCService
                                              max_user_id: @user_id, max_patient_program_id: @patient_program_id,
                                              max_encounter_id: @encounter_id, max_obs_id: @obs_id,
                                              max_order_id: @order_id, database: @database }).main
+
+        update_migrated_records
       end
       create_migration_residuals
+      remove_holding_tables
       print_time message: 'Abnormal migratrion finished', long_form: true
     end
     # rubocop:enable Metrics/AbcSize
@@ -264,6 +270,32 @@ module ANCService
     end
 
     # rubocop:disable Metrics/MethodLength
+    # method to update migated records
+    def update_migrated_records
+      statements = <<~SQL
+        UPDATE encounter set encounter_type = 98 where encounter_type = 61;
+        UPDATE obs SET value_text = null, value_coded = 1065, value_coded_name_id = 1102 WHERE concept_id = 2723 and value_text IN ('Given during previous ANC visit for current pregnancy', 'Given Today', 'Yes');
+        UPDATE obs SET value_text = null, value_coded = 1066, value_coded_name_id = 1103 WHERE concept_id = 2723 and value_text IN ('No', 'Not given today or during current pregnancy');
+        UPDATE #{@database}.obs SET value_text = null, value_coded = 1067, value_coded_name_id = 1104 WHERE concept_id = 2723 and value_text IN ('Unknown');
+        UPDATE obs SET value_text = null, value_coded = 1065, value_coded_name_id = 1102 WHERE value_text = 'Yes';
+        UPDATE obs SET value_text = null, value_coded = 1066, value_coded_name_id = 1103 WHERE value_text = 'No';
+        UPDATE obs SET value_text = null, value_coded = 1067, value_coded_name_id = 1104 WHERE value_text = 'Unknown';
+        UPDATE obs SET value_text = null, value_coded = 703, value_coded_name_id = 718 WHERE value_text = 'Positive';
+        UPDATE obs SET value_text = null, value_coded = 664, value_coded_name_id = 678 WHERE value_text = 'Negative';
+        UPDATE obs SET value_text = null, value_coded = 2475, value_coded_name_id = 5944 WHERE value_text = 'Not Done';
+        UPDATE obs SET value_text = null, value_coded = 9436, value_coded_name_id = 12655 WHERE value_text = 'Inconclusive';
+        UPDATE obs SET value_text = null, value_coded = 2895, value_coded_name_id = 3115 WHERE concept_id = 7998 and value_text IN ('Alive');
+        UPDATE obs SET value_text = null, value_coded = 7804, value_coded_name_id = 10669 WHERE concept_id = 7998 and value_text IN ('Fresh Still Birth (FSB)');
+        UPDATE obs SET value_text = null, value_coded = 7803, value_coded_name_id = 10668 WHERE concept_id = 7998 and value_text IN ('Macerated Still Birth (MSB)');
+        UPDATE obs SET value_text = null, value_coded = 7975, value_coded_name_id = 10922 WHERE concept_id = 7998 and value_text IN ('Still Birth')
+      SQL
+      print_time message: 'Updating observations'
+      statements.split(';').each { |value| central_hub message: nil, query: value.strip }
+      print_time
+    end
+    # rubocop:enable Metrics/MethodLength
+
+    # rubocop:disable Metrics/MethodLength
     # method to create migration residuals so that there can be a trace of how data was migrated
     def create_migration_residuals
       central_hub query: "DROP TABLE IF EXISTS #{@database}.migration_mapping"
@@ -282,9 +314,27 @@ module ANCService
     end
     # rubocop:enable Metrics/MethodLength
 
+    # rubocop:disable Metrics/MethodLength
+    # method to remove holding tables
+    def remove_holding_tables
+      statements = <<~SQL
+        DROP TABLE IF EXISTS #{@database}.reverse_mapping;
+        DROP TABLE IF EXISTS #{@database}.patient_migration_mapping;
+        DROP TABLE IF EXISTS #{@database}.ART_patient_not_in_use;
+        DROP TABLE IF EXISTS #{@database}.ART_patient_identifier_not_in_use;
+        DROP TABLE IF EXISTS #{@database}.ART_patient_identifier_in_use;
+        DROP TABLE IF EXISTS #{@database}.ART_patient_in_use;
+      SQL
+      print_time message: 'Removing holding tables'
+      statements.split(';').each { |value| central_hub message: nil, query: value.strip }
+      print_time
+    end
+    # rubocop:enable Metrics/MethodLength
+
+    # method to execute migration commands
     def central_hub(message: nil, query: nil)
       print_time message: message if message
-      ActiveRecod::Base.connection.execute query
+      ActiveRecord::Base.connection.execute query
       print_time if message
     end
 

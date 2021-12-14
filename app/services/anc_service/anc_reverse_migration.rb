@@ -5,6 +5,7 @@ module ANCService
   # class to handle reversing of anc migrated data
   # in true sense we are just deleting the records
   class ANCReverseMigration
+    include ActionView::Helpers::DateHelper
     def initialize(params)
       @database = params[:database]
       @date = params[:migration_date]
@@ -14,6 +15,7 @@ module ANCService
     # rubocop:disable Metrics/AbcSize
     # method to start removing anc migrated data
     def main
+      start_time = Time.now
       print_time message: 'Starting migration reversal script', long_form: true
       @users = user_list
       patient_in_use
@@ -47,6 +49,7 @@ module ANCService
         # puts exception.backtrace
       end
       print_time message: 'Finished migration reversal script', long_form: true
+      puts "Migration took #{time_ago_in_words(Time.now - (Time.now - start_time), include_seconds: true)}"
     end
     # rubocop:enable Metrics/MethodLength
     # rubocop:enable Metrics/AbcSize
@@ -70,28 +73,30 @@ module ANCService
     # method to map patient that not being used
     def patient_identifier_in_use
       central_execute statement: "DROP TABLE IF EXISTS #{@database}.ART_patient_identifier_in_use"
-      statement = <<~SQL
+      stmt = <<~SQL
         CREATE TABLE #{@database}.ART_patient_identifier_in_use AS
         SELECT e.patient_id, e.identifier
         FROM patient_identifier e
         WHERE e.patient_id IN (#{@patients})
       SQL
-      central_execute message:'Saving identifiers in use', statement: statement
-      central_execute statement: "ALTER TABLE #{@database}.ART_patient_identifier_in_use ADD INDEX identifier_in_use (patient_id)"
+      central_execute message: 'Saving identifiers in use', statement: stmt
+      stmt = "ALTER TABLE #{@database}.ART_patient_identifier_in_use ADD INDEX identifier_in_use (patient_id)"
+      central_execute statement: stmt
     end
 
     # method to get identifiers for patients not in use
     def patient_identifier_not_in_use
       central_execute statement: "DROP TABLE IF EXISTS #{@database}.ART_patient_identifier_not_in_use"
-      statement <<~SQL
+      stmt = <<~SQL
         CREATE TABLE #{@database}.ART_patient_identifier_not_in_use AS
         SELECT e.patient_id, e.identifier
         FROM patient_identifier e
         WHERE e.patient_id IN (SELECT p.patient_id FROM #{@database}.ART_patient_not_in_use p)
       SQL
-      central_execute 'Save identifier not used', statement
-      central_execute statement:
-                      "ALTER TABLE #{@database}.ART_patient_identifier_not_in_use ADD INDEX identifier_not_in_use (patient_id)"
+      central_execute message: 'Save identifier not used', statement: stmt
+
+      stmt = "ALTER TABLE #{@database}.ART_patient_identifier_not_in_use ADD INDEX identifier_not_in_use (patient_id)"
+      central_execute statement: stmt
     end
 
     # method to map patient that not being used
@@ -103,7 +108,7 @@ module ANCService
         FROM patient p
         WHERE p.creator IN (#{@users}) AND p.patient_id NOT IN (#{@patients})
       SQL
-      central_execute 'Add patients to not in use', statement
+      central_execute message: 'Add patients to not in use', statement: statement
     end
 
     # rubocop:disable Metrics/MethodLength
@@ -118,19 +123,21 @@ module ANCService
         JOIN #{@database}.user_bak bak ON anc.creator = bak.ANC_user_id
         WHERE art.creator = bak.ART_user_id AND art.date_created = anc.date_created
       SQL
-      central_execute 'Create patient mapping', stmt
+      central_execute message: 'Create patient mapping', statement: stmt
       central_execute statement: "ALTER TABLE #{@database}.patient_migration_mapping add primary key (anc_patient_id)"
     end
     # rubocop:enable Metrics/MethodLength
 
     # rubocop:disable Metrics/MethodLength
+    # rubocop:disable Metrics/AbcSize
     # method to create reverse residuals so that there can be a trace of how data was before reverse
     # even though this doesn't make sense
     def create_reverse_residuals
       central_execute statement: "DROP TABLE IF EXISTS #{@database}.reverse_mapping"
       statement = <<~SQL
         CREATE TABLE #{@database}.reverse_mapping(
-          parameter_name varchar(50) NOT NULL,parameter_value INT NULL,
+          parameter_name varchar(50) NOT NULL,
+          parameter_value INT NULL,
           primary key (parameter_name)
         )
       SQL
@@ -144,13 +151,16 @@ module ANCService
         all_anc_in_openmrs
         statement = <<~SQL
           INSERT INTO #{@database}.reverse_mapping(parameter_name, parameter_value)
-          VALUES ('max_person_id', #{prev_max_person_id}), ('max_patient_program_id', #{prev_max_program_id}),
-          ('max_encounter_id', #{prev_max_encounter_id}),
-          ('max_obs_id', #{prev_max_obs_id}),('max_order_id', #{prev_max_order_id})
+          VALUES ('max_person_id', #{prev_max_person_id.nil? ? 'null' : prev_max_person_id}),
+          ('max_patient_program_id', #{prev_max_program_id.nil? ? 'null' : prev_max_program_id}),
+          ('max_encounter_id', #{prev_max_encounter_id.nil? ? 'null' : prev_max_encounter_id}),
+          ('max_obs_id', #{prev_max_obs_id.nil? ? 'null' : prev_max_obs_id}),
+          ('max_order_id', #{prev_max_order_id.nil? ? 'null' : prev_max_order_id})
         SQL
       end
-      central_execute 'Inserting reverse values to reverse_mapping table', statement
+      central_execute message: 'Inserting reverse values to reverse_mapping table', statement: statement
     end
+    # rubocop:enable Metrics/AbcSize
     # rubocop:enable Metrics/MethodLength
 
     # method to check if mapping residual table exists
@@ -169,7 +179,7 @@ module ANCService
       result = ActiveRecord::Base.connection.select_all <<~SQL
         SELECT art_patient_id FROM #{@database}.patient_migration_mapping
       SQL
-      @openmrs = result.map { |variale| variale['art_patient_id'].to_i }.join(',')
+      @openmrs = result.map { |variale| variale['art_patient_id'].to_i }.push(0).join(',')
     end
 
     # method to get max encounter_id when data was being migrated
@@ -208,7 +218,7 @@ module ANCService
       return nil if min_id['patient_program_id'].nil?
 
       # means some migration happen so we can get the previous value
-      result = ActiveRecord::Base.connection.select_on <<~SQL
+      result = ActiveRecord::Base.connection.select_one <<~SQL
         SELECT COALESCE(MAX(patient_program_id),0) as patient_program_id FROM patient_program WHERE patient_program_id < #{min_id['patient_program_id'].to_i}
       SQL
       result['patient_program_id'].to_i
@@ -223,7 +233,7 @@ module ANCService
 
       # means some migration happen so we can get the previous value
       result = ActiveRecord::Base.connection.select_one <<~SQL
-        SELECT COALESCE(MAX(order_id),0) as order_id FROM orders WHERE order_id < #{mid['order_id'].to_i}
+        SELECT COALESCE(MAX(order_id),0) as order_id FROM orders WHERE order_id < #{min_id['order_id'].to_i}
       SQL
       result['order_id'].to_i
     end
@@ -237,7 +247,7 @@ module ANCService
 
       # means some migration happen so we can get the previous value
       result = ActiveRecord::Base.connection.select_one <<~SQL
-        SELECT COALESCE(MAX(person_id),0) as person_id FROM person WHERE person_id < #{mid['person_id'].to_i}
+        SELECT COALESCE(MAX(person_id),0) as person_id FROM person WHERE person_id < #{min_id['person_id'].to_i}
       SQL
       result['person_id'].to_i
     end

@@ -5,13 +5,13 @@ module ANCService
   # class to manage missed migrations during the first migration
   class ANCMissedMigration
     def initialize(params)
-      @person_id = params['max_person_id']
-      @user_id = params['max_user_id']
-      @patient_program_id = params['max_patient_program_id']
-      @encounter_id = params['max_encounter_id']
-      @obs_id = params['max_obs_id']
-      @order_id = params['max_order_id']
-      @database = params['database']
+      @person_id = params[:max_person_id]
+      @user_id = params[:max_user_id]
+      @patient_program_id = params[:max_patient_program_id]
+      @encounter_id = params[:max_encounter_id]
+      @obs_id = params[:max_obs_id]
+      @order_id = params[:max_order_id]
+      @database = params[:database]
     end
 
     # rubocop:disable Metrics/MethodLength
@@ -37,11 +37,16 @@ module ANCService
 
     # method to get reverse migration values
     def reverse_value
-      @prev_encounter_id = central_select_one('max_encounter_id', "#{@database}.reverse_mapping", 'LIMIT 1')
-      @prev_program_id = central_select_one('max_patient_program_id', "#{@database}.reverse_mapping", 'LIMIT 1')
-      @prev_obs_id = central_select_one('max_obs_id', "#{@database}.reverse_mapping", 'LIMIT 1')
-      @prev_order_id = central_select_one('max_order_id', "#{@database}.reverse_mapping", 'LIMIT 1')
-      @prev_person_id = central_select_one('max_person_id', "#{@database}.reverse_mapping", 'LIMIT 1')
+      @prev_encounter_id = central_select_one('parameter_value', "#{@database}.reverse_mapping",
+                                              "WHERE parameter_name = 'max_encounter_id'")
+      @prev_program_id = central_select_one('parameter_value', "#{@database}.reverse_mapping",
+                                            "WHERE parameter_name = 'max_patient_program_id'")
+      @prev_obs_id = central_select_one('parameter_value', "#{@database}.reverse_mapping",
+                                        "WHERE parameter_name = 'max_obs_id'")
+      @prev_order_id = central_select_one('parameter_value', "#{@database}.reverse_mapping",
+                                          "WHERE parameter_name = 'max_order_id'")
+      @prev_person_id = central_select_one('parameter_value', "#{@database}.reverse_mapping",
+                                           "WHERE parameter_name = 'max_person_id'")
     end
 
     # migrate encounters for patients in use
@@ -149,7 +154,7 @@ module ANCService
         FROM #{@database}.encounter
         WHERE encounter_id in (#{list.join(',')})
       SQL
-      central_hub message: "Migrating encounter records", query: statement
+      central_hub message: 'Migrating encounter records', query: statement
     end
 
     # method to get anc patient id
@@ -179,7 +184,7 @@ module ANCService
     # central place to execute mysql commands
     def central_hub(message: nil, query: nil)
       print_time message: message if message
-      ActiveRecod::Base.connection.execute query
+      ActiveRecord::Base.connection.execute query
       print_time if message
     end
 
