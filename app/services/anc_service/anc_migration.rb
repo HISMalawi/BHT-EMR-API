@@ -75,10 +75,9 @@ module ANCService
     # rubocop:disable Metrics/AbcSize
     # method to execute a migration after a reversal was done
     def abnormal
-      puts @patient_not_in_use
-      puts @database_reversed
       print_time message: 'Starting an abnormal migration (KAWALE CASE)', long_form: true
       ActiveRecord::Base.transaction do
+        update_openmrs_users
         migrate_person
         migrate_person_name
         migrate_person_address
@@ -123,6 +122,16 @@ module ANCService
       central_hub query: statement
     end
     # rubocop:enable Metrics/MethodLength
+
+    # method to update openmrs_users that match those in anc database
+    def update_openmrs_users
+      statement = <<~SQL
+        UPDATE users SET username = CONCAT(username, '_anc')
+        WHERE user_id IN (SELECT ART_user_id FROM #{@database}.user_bak)
+        AND username NOT LIKE '%_anc%'
+      SQL
+      central_hub message: 'Updating usernames', query: statement
+    end
 
     # method to migrate users records
     def migrate_users

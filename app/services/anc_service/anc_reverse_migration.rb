@@ -363,6 +363,8 @@ module ANCService
     # rubocop:disable Metrics/MethodLength
     # method to do the needful of removing stuff
     def central_hub(table_name, condition)
+      return unless proceed(table_name, condition)
+
       print_time message: "Removing #{table_name} records"
       ActiveRecord::Base.connection.execute <<~SQL
         DROP TABLE IF EXISTS #{table_name}_copy
@@ -382,6 +384,16 @@ module ANCService
       print_time
     end
     # rubocop:enable Metrics/MethodLength
+
+    # method to check whether to continue or not with the central hub
+    def proceed(table_name, condition)
+      condition = condition.gsub('NOT IN', 'IN')
+      result = ActiveRecord::Base.connection.select_one <<~SQL
+        SELECT count(*) as count FROM #{table_name} #{condition}
+      SQL
+      puts result['count']
+      !result['count'].to_i.zero?
+    end
   end
   # rubocop:enable Metrics/ClassLength
 end
