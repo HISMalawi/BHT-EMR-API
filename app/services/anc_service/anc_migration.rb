@@ -239,22 +239,17 @@ module ANCService
       central_hub message: 'Migrating patient_state records', query: statement
     end
 
-    # rubocop:disable Metrics/MethodLength
     # method to migrate encounter records
     def migrate_encounter
-      if @database_reversed
-        migrate_encounter_system_users
-        migrate_encounter_not_system_users
-        return
-      end
-      statement = <<~SQL
-        INSERT INTO encounter (encounter_id, encounter_type, patient_id, provider_id, location_id, form_id, encounter_datetime, creator, date_created, voided, voided_by, date_voided, void_reason, uuid, changed_by, date_changed, program_id)
-        SELECT (SELECT #{@encounter_id} + encounter_id) AS id, encounter_type, (SELECT #{@person_id} + patient_id) AS patient_id, (SELECT #{@person_id} + provider_id) AS provider_id, location_id, form_id, encounter_datetime, (SELECT #{@user_id} + creator) AS creator, date_created, voided, (SELECT #{@user_id} + voided_by) AS voided_by, date_voided, void_reason, uuid, (SELECT #{@user_id} + changed_by) AS changed_by, date_changed, 12
-        FROM #{@database}.encounter
-      SQL
-      central_hub message: 'Migrating encounter records', query: statement
+      # statement = <<~SQL
+      #   INSERT INTO encounter (encounter_id, encounter_type, patient_id, provider_id, location_id, form_id, encounter_datetime, creator, date_created, voided, voided_by, date_voided, void_reason, uuid, changed_by, date_changed, program_id)
+      #   SELECT (SELECT #{@encounter_id} + encounter_id) AS id, encounter_type, (SELECT #{@person_id} + patient_id) AS patient_id, (SELECT #{@person_id} + provider_id) AS provider_id, location_id, form_id, encounter_datetime, (SELECT #{@user_id} + creator) AS creator, date_created, voided, (SELECT #{@user_id} + voided_by) AS voided_by, date_voided, void_reason, uuid, (SELECT #{@user_id} + changed_by) AS changed_by, date_changed, 12
+      #   FROM #{@database}.encounter
+      # SQL
+      # central_hub message: 'Migrating encounter records', query: statement
+      migrate_encounter_system_users
+      migrate_encounter_not_system_users
     end
-    # rubocop:enable Metrics/MethodLength
 
     # method to load previous person id
     def prev_person_id
@@ -270,8 +265,7 @@ module ANCService
         INSERT INTO encounter (encounter_id, encounter_type, patient_id, provider_id, location_id, form_id, encounter_datetime, creator, date_created, voided, voided_by, date_voided, void_reason, uuid, changed_by, date_changed, program_id)
         SELECT (SELECT #{@encounter_id} + encounter_id) AS id, encounter_type, (SELECT #{@person_id} + patient_id) AS patient_id, (SELECT #{prev_person_id} + provider_id) AS provider_id, location_id, form_id, encounter_datetime, (SELECT #{@user_id} + creator) AS creator, date_created, voided, (SELECT #{@user_id} + voided_by) AS voided_by, date_voided, void_reason, uuid, (SELECT #{@user_id} + changed_by) AS changed_by, date_changed, 12
         FROM #{@database}.encounter
-        WHERE patient_id IN (#{@patient_not_in_use})
-        AND provider_id IN (SELECT person_id FROM #{@database}.users)
+        WHERE provider_id IN (SELECT person_id FROM #{@database}.users) #{@database_reversed ? "AND patient_id IN (#{@patient_not_in_use})" : ''}
       SQL
       central_hub message: 'Migrating encounter records whose provider is the system users', query: statement
     end
@@ -283,8 +277,7 @@ module ANCService
         SELECT (SELECT #{@encounter_id} + e.encounter_id) AS id, e.encounter_type, (SELECT #{@person_id} + e.patient_id) AS patient_id, bak.person_id AS provider_id, e.location_id, e.form_id, e.encounter_datetime, bak.ART_user_id AS creator, e.date_created, e.voided, (SELECT #{@user_id} + e.voided_by) AS voided_by, e.date_voided, e.void_reason, e.uuid, (SELECT #{@user_id} + e.changed_by) AS changed_by, e.date_changed, 12
         FROM #{@database}.encounter e
         INNER JOIN #{@database}.user_bak bak ON e.creator = bak.ANC_user_id
-        WHERE patient_id IN (#{@patient_not_in_use})
-        AND provider_id NOT IN (SELECT person_id FROM #{@database}.users)
+        WHERE provider_id NOT IN (SELECT person_id FROM #{@database}.users) #{@database_reversed ? "AND patient_id IN (#{@patient_not_in_use})" : ''}
       SQL
       central_hub message: 'Migrating encounter records whose provider is not the system users', query: statement
     end
