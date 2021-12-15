@@ -173,7 +173,6 @@ module ARTService
 
     def vl_maternal_status(start_date, end_date,
       tx_curr_definition, patient_ids)
-      patient_ids = patient_ids.split(',').map{ |patient_id| patient_id.to_i }
       REPORTS['VIRAL_LOAD_COVERAGE'].new(start_date: start_date.to_date,
         end_date: end_date.to_date,
         tx_curr_definition: tx_curr_definition).vl_maternal_status(patient_ids)
