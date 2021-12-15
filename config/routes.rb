@@ -277,7 +277,7 @@ Rails.application.routes.draw do
 
   get '/api/v1/dashboard_stats' => 'api/v1/reports#index'
   get '/api/v1/dashboard_stats_for_syndromic_statistics' => 'api/v1/reports#syndromic_statistics'
-  get '/api/v1/vl_maternal_status' => 'api/v1/reports#vl_maternal_status'
+  post '/api/v1/vl_maternal_status' => 'api/v1/reports#vl_maternal_status'
 
   # SQA controller
   get '/api/v1/dead_encounters' => 'api/v1/cleaning#index'
