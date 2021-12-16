@@ -152,7 +152,7 @@ class PatientService
       end
 
       #We sort the dates array to make sure we start with the most recent date
-      visit_dates = visit_dates.sort {|a,b| b.to_date <=> a.to_date}.reverse
+      visit_dates = visit_dates.sort {|a,b| b.to_date <=> a.to_date}
     end
 
     visit_dates
