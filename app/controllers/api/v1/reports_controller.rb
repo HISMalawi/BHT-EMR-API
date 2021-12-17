@@ -244,6 +244,11 @@ class Api::V1::ReportsController < ApplicationController
       params[:report_definition], params[:patient_ids])
   end
 
+  def latest_regimen_dispensed
+    render json: service.latest_regimen_dispensed(params[:start_date],
+      params[:end_date], (params[:rebuild_outcome] == 'true' ? true : false))
+  end
+
   private
 
   def service

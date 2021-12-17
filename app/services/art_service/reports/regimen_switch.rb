@@ -16,7 +16,74 @@ module ARTService
         current_regimen(type)
       end
 
+      def latest_regimen_dispensed(rebuild_outcome)
+        if rebuild_outcome
+          cohort_list = ARTService::Reports::CohortBuilder.new(outcomes_definition: 'moh')
+          cohort_list.create_tmp_patient_table
+          cohort_list.load_data_into_temp_earliest_start_date(@end_date.to_date)
+
+          outcomes = ARTService::Reports::Cohort::Outcomes.new(end_date: @end_date.to_date, definition: 'moh')
+          outcomes.update_cummulative_outcomes
+        end
+
+        latest_regimens
+      end
+
       private
+
+      def latest_regimens
+        pills_dispensed = ConceptName.find_by_name('Amount of drug dispensed').concept_id
+        patient_identifier_type = PatientIdentifierType.find_by_name('ARV Number').id
+
+        arv_dispensentions = ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT
+            o.patient_id, drug.drug_id, o.order_id, i.identifier,
+            drug.name, d.quantity, o.start_date, obs.value_numeric,
+            person.birthdate, person.gender
+          FROM orders o
+          INNER JOIN drug_order d ON d.order_id = o.order_id
+          INNER JOIN drug ON drug.drug_id = d.drug_inventory_id
+          INNER JOIN arv_drug On arv_drug.drug_id = drug.drug_id
+          INNER JOIN temp_patient_outcomes t ON o.patient_id = t.patient_id
+          INNER JOIN person ON person.person_id = o.patient_id
+          LEFT JOIN obs on obs.order_id = o.order_id AND obs.concept_id=#{pills_dispensed}
+          LEFT JOIN patient_identifier i ON i.patient_id = o.patient_id
+          AND i.identifier_type = #{patient_identifier_type}
+          WHERE d.quantity > 0 AND o.voided = 0 AND DATE(o.start_date) = (
+            SELECT DATE(MAX(start_date)) FROM orders
+            INNER JOIN drug_order t USING(order_id)
+            WHERE patient_id = o.patient_id
+            AND start_date <= '#{@end_date.to_date.strftime("%Y-%m-%d 23:59:59")}' AND quantity > 0
+          ) AND person.voided = 0 AND i.voided = 0 AND t.cum_outcome = 'On antiretrovirals';
+        SQL
+
+        formated_data = {}
+
+        (arv_dispensentions || []).each do |data|
+          patient_id = data['patient_id'].to_i
+          dispensation_date = data['start_date'].to_date
+          order_id = data['order_id'].to_i
+          drug_id = data['drug_id'].to_i
+          medication = data['name']
+          quantity = data['quantity'].to_f
+          value_numeric = data['value_numeric'].to_f
+
+          formated_data[patient_id] = {} if formated_data[patient_id].blank?
+          formated_data[patient_id][order_id] = {
+            name: medication,
+            quantity: quantity,
+            dispensation_date: dispensation_date,
+            identifier: data['identifier'],
+            gender: data['gender'],
+            birthdate: data['birthdate'],
+            pack_sizes: []
+          } if formated_data[patient_id][order_id].blank?
+
+          formated_data[patient_id][order_id][:pack_sizes] << value_numeric
+        end
+
+        return formated_data
+      end
 
       def regimen_data
         encounter_type_id = EncounterType.find_by_name('DISPENSING').id

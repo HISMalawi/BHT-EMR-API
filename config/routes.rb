@@ -342,4 +342,5 @@ Rails.application.routes.draw do
   get '/api/v1/screened_for_cxca', to: 'api/v1/reports#cxca_reports'
   get '/api/v1/dispatch_order/:order_id', to: 'api/v1/dispatch_orders#show'
   post '/api/v1/dispatch_order', to: 'api/v1/dispatch_orders#create'
+  get '/api/v1/latest_regimen_dispensed', to: 'api/v1/reports#latest_regimen_dispensed'
 end

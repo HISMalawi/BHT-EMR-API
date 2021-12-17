@@ -178,6 +178,11 @@ module ARTService
         tx_curr_definition: tx_curr_definition).vl_maternal_status(patient_ids)
     end
 
+    def latest_regimen_dispensed(start_date, end_date, rebuild_outcome)
+      REPORTS['REGIMEN_SWITCH'].new(start_date: start_date.to_date,
+        end_date: end_date.to_date).latest_regimen_dispensed(rebuild_outcome)
+    end
+
     private
 
     def call_report_manager(method, type:, **kwargs)
