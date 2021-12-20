@@ -147,13 +147,14 @@ def without_drug_orders
 end
 # rubocop:enable Metrics/MethodLength
 
+# method to give us any duplicate clients being reported in the cohort
+def duplicates
+  a = @items.map { |record| record['patient_id'].to_i }
+  a.find_all { |e| a.count(e) > 1 }.uniq.sort
+end
+
 fetch_poc_clients
 load_imported_items ARGV[0]
-
-# check_outcomes
-# status_changed
-# without_arv_start_date
-# without_drug_orders
 
 begin
   file = File.new('mpc_verification_results.txt', 'a+')
@@ -174,6 +175,9 @@ begin
   file.puts '=========================================================' unless @we_dont_know.empty?
   file.puts 'Clients not included in MPC Cohort Report List'
   file.puts(missed_by_mpc.map { |record| record['patient_id'].to_i })
+  file.puts '========================================================='
+  file.puts 'Duplicates found on MPC Report List'
+  file.puts duplicates
 rescue IOError => e
   puts e.message
 ensure
