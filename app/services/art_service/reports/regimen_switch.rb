@@ -67,6 +67,7 @@ module ARTService
           medication = data['name']
           quantity = data['quantity'].to_f
           value_numeric = data['value_numeric'].to_f
+          drug_id = data['drug_id'].to_i
 
           formated_data[patient_id] = {} if formated_data[patient_id].blank?
           formated_data[patient_id][order_id] = {
@@ -76,6 +77,7 @@ module ARTService
             identifier: data['identifier'],
             gender: data['gender'],
             birthdate: data['birthdate'],
+            drug_id: drug_id,
             pack_sizes: []
           } if formated_data[patient_id][order_id].blank?
 
