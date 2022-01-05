@@ -30,6 +30,7 @@ class Api::V1::PeopleController < ApplicationController
     create_params, errors = required_params required: PersonService::PERSON_FIELDS,
                                             optional: [:middle_name]
     return render json: create_params, status: :bad_request if errors
+    return unless validate_birthdate params['birthdate']
 
     person = Person.transaction do
       person = person_service.create_person(create_params)
@@ -84,6 +85,15 @@ class Api::V1::PeopleController < ApplicationController
     home_district home_village home_traditional_authority
     current_district current_village current_traditional_authority
   ].freeze
+
+  def validate_birthdate(birthdate)
+    if birthdate.nil?
+      render json: ['birthdate cannot be empty'], status: :bad_request
+      return false
+    end
+
+    true
+  end
 
   def person_attributes(_params)
     PERSON_ATTRIBUTES.each_with_object({}) do |field, attrs|
