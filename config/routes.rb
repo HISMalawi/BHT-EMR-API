@@ -43,8 +43,6 @@ Rails.application.routes.draw do
 
       resources :roles
 
-      get '/patient_details_by_id' => 'patients#patient_details_by_id'
-
       # Patients
       resources :patients do
         get '/labels/national_health_id' => 'patients#print_national_health_id_label'
