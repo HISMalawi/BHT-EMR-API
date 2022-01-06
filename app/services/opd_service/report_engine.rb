@@ -7,8 +7,7 @@ module OPDService
 
     REPORTS = {
       'LA_PRESCRIPTIONS' => OPDService::Reports::LaPrescriptions,
-      'DIAGNOSIS' => OPDService::Reports::Diagnosis,
-      'HMIS15' => OPDService::Reports::HMIS15
+      'DIAGNOSIS' => OPDService::Reports::Diagnosis
     }
 
     def initialize

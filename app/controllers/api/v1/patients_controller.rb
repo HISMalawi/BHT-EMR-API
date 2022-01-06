@@ -225,12 +225,6 @@ class Api::V1::PatientsController < ApplicationController
     render json: service.fetch_full_visit(patient, program, params[:date])
   end
 
-  def patient_details_by_id
-    patient_id = params[:patient_id]
-
-    render json: service.patient_details_by_id(patient_id)
-  end
-
   def tpt_prescription_count
     program = params[:program_id] ? Program.find(params[:program_id]) : nil
     render json: service.tpt_prescription_count(patient, program, params[:date])
