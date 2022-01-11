@@ -313,7 +313,6 @@ EOF
             WHERE birthdate BETWEEN '#{start_dob}' AND '#{end_dob}'
             GROUP BY e.patient_id HAVING age_group = '#{age_group}';
           SQL
-
           age_group_patient_ids = [0]
           (age_group_patients || []).each do |patient|
             age_group_patient_ids << patient['patient_id'].to_i
@@ -676,8 +675,8 @@ EOF
               "#{@end_date.year - min_bound.to_i}-12-31".to_date + 6.month
             ]
           end
-        elsif age_group.match(/month/)
-          return [@end_date - 2.year, @end_date]
+        elsif age_group.match(/year/)
+          return [@end_date - 1.year, @end_date]
         end
       end
 
