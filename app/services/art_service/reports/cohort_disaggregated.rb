@@ -304,13 +304,10 @@ EOF
       def get_age_groups(age_group, start_date, end_date)
         if age_group != 'Pregnant' && age_group != 'FNP' && age_group != 'Not pregnant' && age_group != 'Breastfeeding'
 
-          start_dob, end_dob = get_age_bounds age_group
-
           age_group_patients = ActiveRecord::Base.connection.select_all <<~SQL
             SELECT
               patient_id, `disaggregated_age_group`(date(birthdate), date('#{@end_date}')) AS age_group
             FROM temp_earliest_start_date e
-            WHERE birthdate BETWEEN '#{start_dob}' AND '#{end_dob}'
             GROUP BY e.patient_id HAVING age_group = '#{age_group}';
           SQL
           age_group_patient_ids = [0]
@@ -659,25 +656,6 @@ EOF
         end
 =end
 
-      end
-
-      def get_age_bounds(age_group)
-        if age_group.match(/years/)
-          min_bound, max_bound = age_group.gsub(/years|-/, " ").squish.split(" ")
-          if age_group.match(/plus/)
-            return [
-              '1900-01-01'.to_date ,
-              "#{@end_date.year - max_bound.to_i}-01-01".to_date + 6.months
-            ]
-          else
-            return [
-              "#{@end_date.year - max_bound.to_i}-01-01".to_date - 6.month,
-              "#{@end_date.year - min_bound.to_i}-12-31".to_date + 6.month
-            ]
-          end
-        elsif age_group.match(/year/)
-          return [@end_date - 1.year, @end_date]
-        end
       end
 
     end
