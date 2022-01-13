@@ -187,7 +187,7 @@ EOF
           district: person['district'],
           ta: person['ta'],
           village: person['village'],
-          arv_number: person['arv_number'],
+          arv_number: (person['arv_number'].blank? ? 'N/A' : person['arv_number']),
           appointment_date: appointment_date.to_date,
           days_missed: days_missed(appointment_date.to_date),
           current_outcome: current_outcome,
