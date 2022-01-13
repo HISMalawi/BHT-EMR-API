@@ -249,31 +249,25 @@ EOF
       def swicth_report(pepfar)
         clients = {}
         data = regimen_data
-        pepfar_outcome_builder if pepfar
+        pepfar_outcome_builder(pepfar.blank? ? 'moh' : 'pepfar')
 
         (data || []).each do |r|
           patient_id = r['patient_id'].to_i
           medications = arv_dispensention_data(patient_id)
 
-          outcome_status = if pepfar
-                             ActiveRecord::Base.connection.select_one <<EOF
-          SELECT patient_pepfar_outcome(#{patient_id}, '#{@end_date.to_date}') outcome;
-EOF
 
-                           else
-                             ActiveRecord::Base.connection.select_one <<EOF
-          SELECT patient_outcome(#{patient_id}, '#{@end_date.to_date}') outcome;
-EOF
+          outcome_status = ActiveRecord::Base.connection.select_one <<~SQL
+            SELECT cum_outcome FROM temp_patient_outcomes WHERE patient_id = #{patient_id};
+          SQL
 
-                           end
-
-          next unless outcome_status['outcome'] == 'On antiretrovirals'
+          next unless outcome_status['cum_outcome'] == 'On antiretrovirals'
 
           begin
             visit_date = medications.first['start_date'].to_date
           rescue StandardError
             next
           end
+          next if visit_date.blank?
 
           next unless visit_date >= @start_date.to_date && visit_date <= @end_date.to_date
 
@@ -334,11 +328,10 @@ EOF
         (obs.blank? ? 'Resident' : 'External')
       end
 
-      def pepfar_outcome_builder
-        cohort_builder = ARTService::Reports::CohortDisaggregated.new(name: 'Regimen switch', type: 'pepfar',
+      def pepfar_outcome_builder(repport_type = 'moh')
+        cohort_builder = ARTService::Reports::CohortDisaggregated.new(name: 'Regimen switch', type: repport_type,
                                                                       start_date: @start_date.to_date, end_date: @end_date.to_date, rebuild: true)
-        cohort_builder.create_mysql_pepfar_current_defaulter
-        cohort_builder.create_mysql_pepfar_current_outcome
+        cohort_builder.rebuild_outcomes(repport_type)
       end
 
       def current_weight(patient_id)

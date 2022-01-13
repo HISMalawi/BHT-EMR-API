@@ -27,9 +27,9 @@ module ARTService
                                   .merge(appointment_encounters)
                                   .where.not(person_id: referral_patients.select(:person_id))
                                   .where(concept: ConceptName.where(name: 'Appointment date').select(:concept_id))
-                                  .where('value_datetime BETWEEN ? AND ?',
+                                  .where('value_datetime BETWEEN ? AND ? AND encounter.program_id = ?',
                                          @start_date.strftime('%Y-%m-%d 00:00:00'),
-                                         @end_date.strftime('%Y-%m-%d 23:59:59'))
+                                         @end_date.strftime('%Y-%m-%d 23:59:59'), 1)
                                   .group(:person_id)
 
         appointments.each_with_object([]) do |appointment, patients|
