@@ -18,13 +18,33 @@ module ARTService
       end
 
       def find_report
-        newly_initiated_on_tpt.each_with_object(init_report) do |patient, report|
-          age_group = patient['age_group']
-          gender = patient['gender']&.strip&.first&.upcase || 'Unknown'
-          course = patient_on_3hp?(patient) ? '3HP' : '6H'
+        report = init_report
+        newly_initiated_on_tpt.each do |tpt, patients|
+          patients.each do |patient|
+            patient_id = patient['patient_id']
+            person = ActiveRecord::Base.connection.select_one <<~SQL
+              SELECT disaggregated_age_group(birthdate, DATE('#{end_date.to_date}')) AS age_group,
+              patient_identifier.identifier AS arv_number, person.*
+              FROM person
+              LEFT JOIN patient_identifier ON patient_identifier.patient_id = person.person_id
+              AND patient_identifier.identifier_type IN (SELECT patient_identifier_type_id FROM patient_identifier_type
+              WHERE name = 'ARV Number') AND patient_identifier.voided = 0
+              WHERE person_id = #{patient_id} LIMIT 1;
+            SQL
+            age_group = person['age_group']
+            gender = person['gender']&.strip&.first&.upcase || 'Unknown'
+            #course = patient_on_3hp?(patient) ? '3HP' : '6H'
 
-          report[age_group][course][gender] << patient
+            report[age_group][tpt][gender] << {
+              patient_id: person['person_id'],
+              birthdate: person['birthdate'],
+              arv_number: person['arv_number'],
+              gender: gender,
+              dispensation_date: dispensation_date(patient_id, patient['drug_concepts'])
+            }
+          end
         end
+        return report
       end
 
       private
@@ -45,6 +65,25 @@ module ARTService
         '90 plus years'
       ].freeze
 
+
+      def dispensation_date(patient_id, concept_ids)
+        order = ActiveRecord::Base.connection.select_one <<~SQL
+          SELECT MIN(orders.start_date) start_date FROM orders
+          INNER JOIN drug_order
+            ON drug_order.order_id = orders.order_id
+            AND drug_order.quantity > 0  /* This implies that a dispensation was made */
+          INNER JOIN drug
+            ON drug.drug_id = drug_order.drug_inventory_id
+            AND drug.concept_id IN(#{concept_ids})
+          INNER JOIN encounter ON encounter.encounter_id = orders.encounter_id
+          AND encounter.program_id = 1
+          WHERE DATE(orders.start_date) BETWEEN '#{start_date.to_date}' AND '#{end_date.to_date}'
+          AND orders.voided = 0 AND orders.patient_id = #{patient_id};
+        SQL
+
+        return order['start_date'].to_date
+      end
+
       def init_report
         AGE_GROUPS.each_with_object({}) do |age_group, report|
           report[age_group] = {
@@ -63,6 +102,14 @@ module ARTService
       end
 
       def newly_initiated_on_tpt
+        tpt = ARTService::Reports::Cohort::Tpt.new(start_date.to_date, end_date.to_date)
+        tpt_data = {}
+        tpt_data["3HP"] = tpt.newly_initiated_on_3hp
+        tpt_data["6H"] = tpt.newly_initiated_on_ipt
+        return tpt_data
+      end
+
+      def newly_initiated_on_tpt_old
         ActiveRecord::Base.connection.select_all <<~SQL
           SELECT patient_program.patient_id,
                  disaggregated_age_group(person.birthdate, DATE(#{end_date})) AS age_group,
