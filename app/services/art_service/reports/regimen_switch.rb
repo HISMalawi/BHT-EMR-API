@@ -260,14 +260,12 @@ EOF
             SELECT cum_outcome FROM temp_patient_outcomes WHERE patient_id = #{patient_id};
           SQL
 
+          next if outcome_status.blank?
+          next if outcome_status['cum_outcome'].blank?
           next unless outcome_status['cum_outcome'] == 'On antiretrovirals'
 
-          begin
-            visit_date = medications.first['start_date'].to_date
-          rescue StandardError
-            next
-          end
-          next if visit_date.blank?
+          visit_date = medications.first['start_date']
+          visit_date.blank? ? next : (visit_date = visit_date.to_date)
 
           next unless visit_date >= @start_date.to_date && visit_date <= @end_date.to_date
 
@@ -296,7 +294,7 @@ EOF
 EOF
 
             clients[patient_id] = {
-              arv_number: demo['arv_number'],
+              arv_number: (demo['arv_number'].blank? ? 'N/A' : demo['arv_number']),
               given_name: demo['given_name'],
               family_name: demo['family_name'],
               birthdate: demo['birthdate'],
