@@ -317,7 +317,7 @@ class FilingNumberService
         ON drug_order.order_id = orders.order_id
         AND drug_order.quantity > 0
       GROUP BY filing_numbers.patient_id
-      ORDER BY filing_numbers.date_created ASC, orders.auto_expire_date ASC, filing_numbers.identifier ASC
+      ORDER BY orders.auto_expire_date ASC, filing_numbers.date_created ASC, filing_numbers.identifier ASC
       LIMIT 144
     SQL
   end
