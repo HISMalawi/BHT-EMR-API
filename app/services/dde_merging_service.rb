@@ -356,19 +356,24 @@ class DDEMergingService
 
     # first get all encounter to be voided, create new instances from them, then void the encounter
     Encounter.where(patient_id: secondary_patient.id).each do |encounter|
-      primary_encounter_hash = encounter.attributes
-      primary_encounter_hash.delete('encounter_id')
-      primary_encounter_hash.delete('uuid')
-      primary_encounter_hash.delete('creator')
-      primary_encounter_hash.delete('encounter_id')
-      primary_encounter_hash['patient_id'] = primary_patient.id
-      primary_encounter = Encounter.create(primary_encounter_hash)
-      unless primary_encounter.errors.empty?
-        raise "Could not merge patient encounters: #{primary_encounter.errors.as_json}"
+      check = Encounter.find_by(patient_id: primary_patient.id, encounter_type: encounter.encounter_type, date_created: encounter.date_created, program_id: encounter.program_id)
+      if check.blank?
+        primary_encounter_hash = encounter.attributes
+        primary_encounter_hash.delete('encounter_id')
+        primary_encounter_hash.delete('uuid')
+        primary_encounter_hash.delete('creator')
+        primary_encounter_hash.delete('encounter_id')
+        primary_encounter_hash['patient_id'] = primary_patient.id
+        primary_encounter = Encounter.create(primary_encounter_hash)
+        unless primary_encounter.errors.empty?
+          raise "Could not merge patient encounters: #{primary_encounter.errors.as_json}"
+        end
+        encounter.update(void_reason: "Merged into patient ##{primary_patient.patient_id}:#{primary_encounter.id}", voided: 1, date_voided: Time.now, voided_by: User.current.id)
+        encounter_map[encounter.id] = primary_encounter.id
+      else
+        encounter.update(void_reason: "Merged into patient ##{primary_patient.patient_id}:0", voided: 1, date_voided: Time.now, voided_by: User.current.id)
+        encounter_map[encounter.id] = check.id
       end
-
-      encounter.update(void_reason: "Merged into patient ##{primary_patient.patient_id}:#{primary_encounter.id}", voided: 1, date_voided: Time.now, voided_by: User.current.id)
-      encounter_map[encounter.id] = primary_encounter.id
     end
 
     encounter_map
