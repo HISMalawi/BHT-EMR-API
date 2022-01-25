@@ -49,14 +49,14 @@ class DDEMergingService
     ActiveRecord::Base.transaction do
       primary_patient = Patient.find(primary_patient_ids['patient_id'])
       secondary_patient = Patient.find(secondary_patient_ids['patient_id'])
-
       merge_name(primary_patient, secondary_patient)
       merge_identifiers(primary_patient, secondary_patient)
       merge_attributes(primary_patient, secondary_patient)
       merge_address(primary_patient, secondary_patient)
-      merge_orders(primary_patient, secondary_patient)
-      merge_observations(primary_patient, secondary_patient)
-      merge_encounters(primary_patient, secondary_patient)
+      result = merge_encounters(primary_patient, secondary_patient)
+      obs_result = merge_observations(primary_patient, secondary_patient, result)
+      merge_orders(primary_patient, secondary_patient, result, obs_result)
+
       secondary_patient.void("Merged into patient ##{primary_patient.id}")
 
       primary_patient
@@ -177,7 +177,7 @@ class DDEMergingService
       primary_name = PersonName.create(secondary_name_hash)
       raise "Could not merge patient name: #{primary_name.errors.as_json}" unless primary_name.errors.empty?
 
-      secondary_name.void("Merged into patient ##{primary_patient.patient_id}")
+      secondary_name.void("Merged into patient ##{primary_patient.patient_id}:#{primary_name.id}")
       return
     end
 
@@ -190,7 +190,7 @@ class DDEMergingService
     end
 
     primary_name.update(params)
-    secondary_name.void("Merged into person ##{primary_patient.patient_id}")
+    secondary_name.void("Merged into person ##{primary_patient.patient_id}:#{primary_name.id}")
   end
 
   NATIONAL_ID_TYPE = PatientIdentifierType.find_by_name!('National ID')
@@ -201,7 +201,7 @@ class DDEMergingService
     secondary_patient.patient_identifiers.each do |identifier|
       next if patient_has_identifier(primary_patient, identifier.identifier_type, identifier.identifier)
 
-      PatientIdentifier.create!(
+      new_identifier = PatientIdentifier.create(
         patient_id: primary_patient.patient_id,
         location_id: identifier.location_id,
         identifier: identifier.identifier,
@@ -212,8 +212,9 @@ class DDEMergingService
                            identifier.identifier_type
                          end
       )
+      raise "Could not merge patient identifier: #{new_identifier.errors.as_json}" unless new_identifier.errors.empty?
 
-      identifier.void("Merged into patient ##{primary_patient.patient_id}")
+      identifier.void("Merged into patient ##{primary_patient.patient_id}: #{new_identifier.id}")
     end
   end
 
@@ -235,7 +236,7 @@ class DDEMergingService
                                              value: attribute.value)
       raise "Could not merge patient attribute: #{new_attribute.errors.as_json}" unless new_attribute.errors.empty?
 
-      attribute.void("Merged into patient ##{primary_patient.patient_id}")
+      attribute.void("Merged into patient ##{primary_patient.patient_id}:#{new_attribute.id}")
     end
   end
 
@@ -256,7 +257,7 @@ class DDEMergingService
       primary_address = PersonAddress.create(secondary_address_hash)
       raise "Could not merge patient address: #{primary_address.errors.as_json}" unless primary_address.errors.empty?
 
-      secondary_address.void("Merged into patient ##{primary_patient.patient_id}")
+      secondary_address.void("Merged into patient ##{primary_patient.patient_id}:#{primary_address.id}")
       return
     end
 
@@ -269,49 +270,108 @@ class DDEMergingService
     end
 
     primary_address.update(params)
-    secondary_address.void("Merged into person ##{primary_patient.patient_id}")
+    secondary_address.void("Merged into person ##{primary_patient.patient_id}:#{primary_address.id}")
   end
 
   # Strips off secondary_patient all orders and blesses primary patient
   # with them
-  def merge_orders(primary_patient, secondary_patient)
+  def merge_orders(primary_patient, secondary_patient, encounter_map, obs_map)
     Rails.logger.debug("Merging patient orders: #{primary_patient} <= #{secondary_patient}")
+    orders_map = {}
+    Order.where(patient_id: secondary_patient.id).each do |order|
+      primary_order_hash = order.attributes
+      primary_order_hash.delete('order_id')
+      primary_order_hash.delete('uuid')
+      primary_order_hash.delete('creator')
+      primary_order_hash.delete('order_id')
+      primary_order_hash['patient_id'] = primary_patient.id
+      primary_order_hash['encounter_id'] = encounter_map[order.encounter_id]
+      primary_order_hash['obs_id'] = obs_map[order.obs_id] unless order.obs_id.blank?
+      primary_order = Order.create(primary_order_hash)
+      raise "Could not merge patient orders: #{primary_order.errors.as_json}" unless primary_order.errors.empty?
 
-    primary_patient_id = ActiveRecord::Base.connection.quote(primary_patient.id)
-    secondary_patient_id = ActiveRecord::Base.connection.quote(secondary_patient.id)
+      order.void("Merged into patient ##{primary_patient.patient_id}:#{primary_order.id}")
+      orders_map[order.id] = primary_order.id
+    end
 
-    ActiveRecord::Base.connection.execute <<~SQL
-      UPDATE orders SET patient_id = #{primary_patient_id}
-      WHERE patient_id = #{secondary_patient_id} AND voided = 0
-    SQL
+    update_drug_order orders_map
+    update_obs_order_id(orders_map, obs_map)
+  end
+
+  # method to update drug orders with the new order id
+  def update_drug_order(order_map)
+    DrugOrder.where(order_id: order_map.keys).each do |drug|
+      drug.update(order_id: order_map[drug.order_id])
+    end
+  end
+
+  def update_obs_order_id(order_map, obs_map)
+    Observation.where(obs_id: obs_map.values).each do |obs|
+      unless obs.order_id.blank?
+        obs.update(order_id: order_map[obs.order_id])
+      end
+    end
   end
 
   # Strips off secondary_patient all observations and blesses primary patient
   # with them
-  def merge_observations(primary_patient, secondary_patient)
+  def merge_observations(primary_patient, secondary_patient, encounter_map)
     Rails.logger.debug("Merging patient observations: #{primary_patient} <= #{secondary_patient}")
+    obs_map = {}
+    Observation.where(person_id: secondary_patient.id).each do |obs|
+      primary_obs_hash = obs.attributes
+      primary_obs_hash.delete('obs_id')
+      primary_obs_hash.delete('uuid')
+      primary_obs_hash.delete('creator')
+      primary_obs_hash.delete('obs_id')
+      primary_obs_hash['encounter_id'] = encounter_map[obs.encounter_id]
+      primary_obs_hash['person_id'] = primary_patient.id
+      primary_obs = Observation.create(primary_obs_hash)
+      unless primary_obs.errors.empty?
+        raise "Could not merge patient observations: #{primary_obs.errors.as_json}"
+      end
 
-    primary_patient_id = ActiveRecord::Base.connection.quote(primary_patient.id)
-    secondary_patient_id = ActiveRecord::Base.connection.quote(secondary_patient.id)
+      obs.update(void_reason: "Merged into patient ##{primary_patient.patient_id}:#{primary_obs.id}", voided: 1, date_voided: Time.now, voided_by: User.current.id)
+      obs_map[obs.id] = primary_obs.id
+    end
 
-    ActiveRecord::Base.connection.execute <<~SQL
-      UPDATE obs SET person_id = #{primary_patient_id}
-      WHERE person_id = #{secondary_patient_id} AND voided = 0
-    SQL
+    update_observations_group_id obs_map
+    obs_map
+  end
+
+  # this method updates observation table group id on the newly created observation
+  def update_observations_group_id(obs_map)
+    Observation.where(obs_id: obs_map.values).limit(nil).each do |obs|
+      unless obs.obs_group_id
+        obs.update(obs_group_id: obs_map[obs.obs_group_id])
+      end
+    end
   end
 
   # Strips off secondary_patient all encounters and blesses primary patient
   # with them
   def merge_encounters(primary_patient, secondary_patient)
     Rails.logger.debug("Merging patient encounters: #{primary_patient} <= #{secondary_patient}")
+    encounter_map = {}
 
-    primary_patient_id = ActiveRecord::Base.connection.quote(primary_patient.id)
-    secondary_patient_id = ActiveRecord::Base.connection.quote(secondary_patient.id)
+    # first get all encounter to be voided, create new instances from them, then void the encounter
+    Encounter.where(patient_id: secondary_patient.id).each do |encounter|
+      primary_encounter_hash = encounter.attributes
+      primary_encounter_hash.delete('encounter_id')
+      primary_encounter_hash.delete('uuid')
+      primary_encounter_hash.delete('creator')
+      primary_encounter_hash.delete('encounter_id')
+      primary_encounter_hash['patient_id'] = primary_patient.id
+      primary_encounter = Encounter.create(primary_encounter_hash)
+      unless primary_encounter.errors.empty?
+        raise "Could not merge patient encounters: #{primary_encounter.errors.as_json}"
+      end
 
-    ActiveRecord::Base.connection.execute <<~SQL
-      UPDATE encounter SET patient_id = #{primary_patient_id}
-      WHERE patient_id = #{secondary_patient_id} AND voided = 0
-    SQL
+      encounter.update(void_reason: "Merged into patient ##{primary_patient.patient_id}:#{primary_encounter.id}", voided: 1, date_voided: Time.now, voided_by: User.current.id)
+      encounter_map[encounter.id] = primary_encounter.id
+    end
+
+    encounter_map
   end
 
   def reassign_remote_patient_npid(patient_doc_id)
