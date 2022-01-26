@@ -279,7 +279,7 @@ class DDEMergingService
     Rails.logger.debug("Merging patient orders: #{primary_patient} <= #{secondary_patient}")
     orders_map = {}
     Order.where(patient_id: secondary_patient.id).each do |order|
-      check = Order.find_by('order_type_id = ? AND concept_id = ? AND patient_id = ? AND DATE(start_date)', order.order_type_id, order.concept_id, primary_patient.id, order.start_date.strftime('%Y-%m-%d'))
+      check = Order.find_by('order_type_id = ? AND concept_id = ? AND patient_id = ? AND DATE(start_date) = ?', order.order_type_id, order.concept_id, primary_patient.id, order.start_date.strftime('%Y-%m-%d'))
       if check.blank?
         primary_order_hash = order.attributes
         primary_order_hash.delete('order_id')
@@ -307,7 +307,7 @@ class DDEMergingService
   # method to update drug orders with the new order id
   def update_drug_order(order_map)
     DrugOrder.where(order_id: order_map.keys).each do |drug|
-      drug.update(order_id: order_map[drug.order_id])
+      drug.update(order_id: order_map[drug.order_id]) if DrugOrder.find(order_map[drug.order_id]).blank?
     end
   end
 
@@ -325,7 +325,7 @@ class DDEMergingService
     Rails.logger.debug("Merging patient observations: #{primary_patient} <= #{secondary_patient}")
     obs_map = {}
     Observation.where(person_id: secondary_patient.id).each do |obs|
-      check = Encounter.find_by('person_id = ? AND concept_id = ? AND DATE(obs_datetime) = ? AND value_coded = ?', primary_patient.id, obs.concept_id, obs.obs_datetime.strtime('%Y-%m-%d'), obs.value_coded)
+      check = Observation.find_by("person_id = #{primary_patient.id} AND concept_id = #{obs.concept_id} AND DATE(obs_datetime) = DATE('#{obs.obs_datetime.strftime('%Y-%m-%d')}') #{obs.value_coded.blank? ? '' : 'AND value_coded = ' + obs.value_coded.to_s}")
       if check.blank?
         primary_obs_hash = obs.attributes
         primary_obs_hash.delete('obs_id')
