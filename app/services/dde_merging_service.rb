@@ -279,19 +279,25 @@ class DDEMergingService
     Rails.logger.debug("Merging patient orders: #{primary_patient} <= #{secondary_patient}")
     orders_map = {}
     Order.where(patient_id: secondary_patient.id).each do |order|
-      primary_order_hash = order.attributes
-      primary_order_hash.delete('order_id')
-      primary_order_hash.delete('uuid')
-      primary_order_hash.delete('creator')
-      primary_order_hash.delete('order_id')
-      primary_order_hash['patient_id'] = primary_patient.id
-      primary_order_hash['encounter_id'] = encounter_map[order.encounter_id]
-      primary_order_hash['obs_id'] = obs_map[order.obs_id] unless order.obs_id.blank?
-      primary_order = Order.create(primary_order_hash)
-      raise "Could not merge patient orders: #{primary_order.errors.as_json}" unless primary_order.errors.empty?
+      check = Order.find_by('order_type_id = ? AND concept_id = ? AND patient_id = ? AND DATE(start_date)', order.order_type_id, order.concept_id, primary_patient.id, order.start_date.strftime('%Y-%m-%d'))
+      if check.blank?
+        primary_order_hash = order.attributes
+        primary_order_hash.delete('order_id')
+        primary_order_hash.delete('uuid')
+        primary_order_hash.delete('creator')
+        primary_order_hash.delete('order_id')
+        primary_order_hash['patient_id'] = primary_patient.id
+        primary_order_hash['encounter_id'] = encounter_map[order.encounter_id]
+        primary_order_hash['obs_id'] = obs_map[order.obs_id] unless order.obs_id.blank?
+        primary_order = Order.create(primary_order_hash)
+        raise "Could not merge patient orders: #{primary_order.errors.as_json}" unless primary_order.errors.empty?
 
-      order.void("Merged into patient ##{primary_patient.patient_id}:#{primary_order.id}")
-      orders_map[order.id] = primary_order.id
+        order.void("Merged into patient ##{primary_patient.patient_id}:#{primary_order.id}")
+        orders_map[order.id] = primary_order.id
+      else
+        order.void("Merged into patient ##{primary_patient.patient_id}:0")
+        orders_map[order.id] = check.id
+      end
     end
 
     update_drug_order orders_map
@@ -319,20 +325,26 @@ class DDEMergingService
     Rails.logger.debug("Merging patient observations: #{primary_patient} <= #{secondary_patient}")
     obs_map = {}
     Observation.where(person_id: secondary_patient.id).each do |obs|
-      primary_obs_hash = obs.attributes
-      primary_obs_hash.delete('obs_id')
-      primary_obs_hash.delete('uuid')
-      primary_obs_hash.delete('creator')
-      primary_obs_hash.delete('obs_id')
-      primary_obs_hash['encounter_id'] = encounter_map[obs.encounter_id]
-      primary_obs_hash['person_id'] = primary_patient.id
-      primary_obs = Observation.create(primary_obs_hash)
-      unless primary_obs.errors.empty?
-        raise "Could not merge patient observations: #{primary_obs.errors.as_json}"
-      end
+      check = Encounter.find_by('person_id = ? AND concept_id = ? AND DATE(obs_datetime) = ? AND value_coded = ?', primary_patient.id, obs.concept_id, obs.obs_datetime.strtime('%Y-%m-%d'), obs.value_coded)
+      if check.blank?
+        primary_obs_hash = obs.attributes
+        primary_obs_hash.delete('obs_id')
+        primary_obs_hash.delete('uuid')
+        primary_obs_hash.delete('creator')
+        primary_obs_hash.delete('obs_id')
+        primary_obs_hash['encounter_id'] = encounter_map[obs.encounter_id]
+        primary_obs_hash['person_id'] = primary_patient.id
+        primary_obs = Observation.create(primary_obs_hash)
+        unless primary_obs.errors.empty?
+          raise "Could not merge patient observations: #{primary_obs.errors.as_json}"
+        end
 
-      obs.update(void_reason: "Merged into patient ##{primary_patient.patient_id}:#{primary_obs.id}", voided: 1, date_voided: Time.now, voided_by: User.current.id)
-      obs_map[obs.id] = primary_obs.id
+        obs.update(void_reason: "Merged into patient ##{primary_patient.patient_id}:#{primary_obs.id}", voided: 1, date_voided: Time.now, voided_by: User.current.id)
+        obs_map[obs.id] = primary_obs.id
+      else
+        obs.update(void_reason: "Merged into patient ##{primary_patient.patient_id}:0", voided: 1, date_voided: Time.now, voided_by: User.current.id)
+        obs_map[obs.id] = check.id
+      end
     end
 
     update_observations_group_id obs_map
@@ -356,7 +368,7 @@ class DDEMergingService
 
     # first get all encounter to be voided, create new instances from them, then void the encounter
     Encounter.where(patient_id: secondary_patient.id).each do |encounter|
-      check = Encounter.find_by(patient_id: primary_patient.id, encounter_type: encounter.encounter_type, date_created: encounter.date_created, program_id: encounter.program_id)
+      check = Encounter.find_by('patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = ? AND program_id = ?', primary_patient.id, encounter.encounter_type, encounter.encounter_datetime.strftime('%Y-%m-%d'), encounter.program_id)
       if check.blank?
         primary_encounter_hash = encounter.attributes
         primary_encounter_hash.delete('encounter_id')
