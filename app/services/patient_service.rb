@@ -97,7 +97,7 @@ class PatientService
            .distinct
   end
 
-  def find_patient_visit_dates(patient, program = nil, include_defaulter_dates = false)
+  def find_patient_visit_dates(patient, program = nil, include_defaulter_dates = nil)
     patient_id = ActiveRecord::Base.connection.quote(patient.id)
     program_id = program ? ActiveRecord::Base.connection.quote(program.id) : nil
 
@@ -110,7 +110,7 @@ class PatientService
     SQL
 
     visit_dates = rows.collect { |row| row['visit_date'].to_date }
-    if !visit_dates.blank? && program&.id = 1 && include_defaulter_dates
+    if !visit_dates.blank? && program&.id == 1 && include_defaulter_dates
       #Starting from the initial visit date, we add 1+ month while checking if the patient defaulted.
       #if we find that the patient has a defualter date we add it to the array of visit dates.
       initial_visit_date = visit_dates.last.to_date
