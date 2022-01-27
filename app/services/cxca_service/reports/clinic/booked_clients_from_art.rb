@@ -21,14 +21,14 @@ module CXCAService
 					screening_method = ConceptName.find_by_name 'CxCa screening method'
 					hiv_program_id = Program.find_by_name("HIV PROGRAM").id
 
-					people = Person.joins("INNER JOIN obs ON person.person_id = obs.person_id
+					people = Person.joins("LEFT JOIN obs ON person.person_id = obs.person_id
+						AND obs.concept_id = #{screening_method.concept_id}
+						AND obs.obs_datetime BETWEEN '#{@start_date}' AND '#{@end_date}' AND obs.voided = 0
 						INNER JOIN (SELECT o.* FROM obs o INNER JOIN encounter e ON e.encounter_id = o.encounter_id
 						WHERE o.concept_id = #{offer_cxca.concept_id} AND o.obs_datetime
 						BETWEEN '#{@start_date}' AND '#{@end_date}' AND o.voided = 0
 						AND e.program_id = #{hiv_program_id} AND o.value_coded = #{offer_cxca_yes.concept_id})
-						cxca ON cxca.person_id = person.person_id").where("obs.concept_id = ?
-						AND obs.obs_datetime BETWEEN ? AND ? AND obs.voided = 0", screening_method.concept_id,
-						@start_date, @end_date).group("obs.concept_id, person.person_id").\
+						cxca ON cxca.person_id = person.person_id").group("person.person_id").\
 						select("age(birthdate,DATE('#{@end_date}'), DATE(person.date_created),
 						birthdate_estimated) age, person.person_id, obs.value_coded")
 
