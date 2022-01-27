@@ -13,29 +13,68 @@ In short, a version number is of the following format `major.minor.patch`
 minor number changes with new backward compatible features. The major
 number changes with major changes that completely break backwards
 compatibility (examples of this include major architectural changes).
-
 ## [Unreleased]
 
 ### Added
 
-- DDE: Pushing of footprint to DDE on encounter create
-- New concept Cryotherapy
+- ART: Active filing number archiving candidates preferring oldest filing numbers and patients who changed state earliest
 
 ### Fixed
 
-- ART: Hanging pills not being added to appointment date
-- Bumped up lab to v1.1.13 - Fixes error on LIMS push of orders created through LOS
-- Patient merging not appending secondary patient identifiers to primary patient (helpdesk [#3541](https://egpafemr.sdpondemand.manageengine.com/app/itdesk/ui/requests/118246000006095075/details))
-### Changed
+- Lab: Random hangs when pushing orders to LIMS (see Lab's [CHANGELOG](https://github.com/EGPAFMalawiHIS/his_emr_api_lab/blob/main/CHANGELOG.md#v1116---2021-10-18))
 
-- ART: TB Prev definition changed to capture 3HP for up to 6 months prior to the start of reporting period
+## v4.12.2 - 2021-10-13
 
-## [v4.11.13] - 2021-08-24
+### Fixed
+
+- Lab: Error on push of orders to LIMS immediately after creation (see Lab's [CHANGELOG](https://github.com/EGPAFMalawiHIS/his_emr_api_lab/blob/main/CHANGELOG.md#v1115---2021-10-14))
+- ART: Crash on VL reminder for patients who got a VL order in the last 2 months
+- DDE: Duplication of patients with v4 NPIDs but no corresponding DDE doc ID (these are old DDE patients)
+
+ ## v4.12.1 - 2021-10-09
+
+ ### Fixed
+
+ - ART: Cohort report not picking tx_curr on Q4 reports
+
+### v4.12.0 - 2021-10-01
 
 ### Added
 
+- ART: Added Drug refill visit workflow
+- ART: PEPFAR viral load coverage report
+- ART: Regimens 14PP and 15PP to cohort report
 - DDE: Endpoint for updating local patient's demographics
 - Re-assigning previously voided active filing numbers
+- Lab: Test measure for CrAg test
+- New locations:
+  - Banja Care Private Clinic (Mulanje)
+  - Chikuli Private Clinic (Mulanje)
+- DDE: Pushing of footprint to DDE on encounter create
+- New concepts:
+  - Cryotherapy (a CxCa procedure)
+  - Drug refill (an ART procedure)
+
+### Fixed
+
+- ART: Pyridoxine not being automatically prescribed on 3HP prescriptions
+- ART Stock: Resetting of current quantity on dispensation reversal
+- ART Stock: Relocation of drugs at a date before their delivery date
+- ART Stock: Drug relocations not saving retrospective dates
+- ART: Hanging pills not being added to appointment date
+- Bumped up lab to v1.1.13 - Fixes error on LIMS push of orders created through LOS
+- Patient merging not appending secondary patient identifiers to primary patient (helpdesk [#3541](https://egpafemr.sdpondemand.manageengine.com/app/itdesk/ui/requests/118246000006095075/details))
+- ART: Regimen distribution pulling defaulters
+- ART Stock: Relocation of drugs at a date before their delivery date
+- ART Stock: Drug relocations not saving retrospective dates
+
+
+### Changed
+
+- ART: VL Reminders to use 2020 MoH guidelines
+- ART: TB Prev definition changed to capture 3HP for up to 6 months prior to the start of reporting period
+
+## [v4.11.13] - 2021-08-24
 
 ### Fixed
 

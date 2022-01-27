@@ -30,36 +30,9 @@ class ReportService
 
     return report if report
 
-    lock = self.class.acquire_report_lock(type, start_date, end_date)
-    return nil unless lock
-
     LOGGER.debug("#{name} report not found... Queueing one...")
-    queue_report(name: name, type: type, start_date: start_date,
-                 end_date: end_date, lock: lock, **kwargs)
+    queue_report(name: name, type: type, start_date: start_date, end_date: end_date, **kwargs)
     nil
-  end
-
-  def self.acquire_report_lock(report_type_name, start_date, end_date)
-    path = lock_file_path(report_type_name, start_date, end_date)
-
-    if path.exist? && (File.stat(path).mtime + 12.hours) > Time.now
-      LOGGER.debug("Report is locked: #{path}")
-      return nil
-    end
-
-    File.open(path, 'w') do |fout|
-      fout << "Locked by #{User.current.username} @ #{Time.now}"
-    end
-
-    LOGGER.debug("Report lock file created: #{path}")
-    path
-  end
-
-  def self.release_report_lock(path)
-    path = Pathname.new(path)
-    return unless path.exist?
-
-    File.unlink(path)
   end
 
   def dashboard_stats(date)
@@ -138,16 +111,17 @@ class ReportService
     engine(@program).regimen_report(start_date, end_date, type)
   end
 
-  def screened_for_tb(start_date, end_date, gender, age_group, outcome_table)
-    engine(@program).screened_for_tb(start_date, end_date, gender, age_group, outcome_table)
+  def screened_for_tb(start_date, end_date, gender, age_group)
+    engine(@program).screened_for_tb(start_date, end_date, gender, age_group)
   end
 
-  def clients_given_ipt(start_date, end_date, gender, age_group, outcome_table)
-    engine(@program).clients_given_ipt(start_date, end_date, gender, age_group, outcome_table)
+  def clients_given_ipt(start_date, end_date, gender, age_group)
+    engine(@program).clients_given_ipt(start_date, end_date, gender, age_group)
   end
 
-  def arv_refill_periods(start_date, end_date, min_age, max_age, org)
-    engine(@program).arv_refill_periods(start_date, end_date, min_age, max_age, org)
+  def arv_refill_periods(start_date, end_date, min_age, max_age, org, initialize_tables)
+    engine(@program).arv_refill_periods(start_date,
+      end_date, min_age, max_age, org, initialize_tables)
   end
 
   def tx_ml(start_date, end_date)
@@ -162,8 +136,8 @@ class ReportService
     engine(@program).ipt_coverage(start_date, end_date)
   end
 
-  def disaggregated_regimen_distribution(start_date, end_date, gender, age_group, outcome_table)
-    engine(@program).disaggregated_regimen_distribution(start_date, end_date, gender, age_group, outcome_table)
+  def disaggregated_regimen_distribution(start_date, end_date, gender, age_group)
+    engine(@program).disaggregated_regimen_distribution(start_date, end_date, gender, age_group)
   end
 
   def tx_mmd_client_level_data(start_date, end_date, patient_ids, org)
@@ -214,6 +188,15 @@ class ReportService
     engine(@program).reports(start_date.to_date,end_date.to_date, report_name)
   end
 
+  def vl_maternal_status(start_date, end_date, tx_curr_definition, patient_ids)
+    engine(@program).vl_maternal_status(start_date.to_date,end_date.to_date,
+      tx_curr_definition, patient_ids)
+  end
+
+  def latest_regimen_dispensed(start_date, end_date, rebuild_outcome)
+    engine(@program).latest_regimen_dispensed(start_date.to_date,end_date.to_date, rebuild_outcome)
+  end
+
   private
 
   def engine(program)
@@ -233,11 +216,10 @@ class ReportService
                                  **kwargs)
   end
 
-  def queue_report(start_date:, end_date:, lock:, **kwargs)
+  def queue_report(start_date:, end_date:, **kwargs)
     kwargs[:start_date] = start_date.to_s
     kwargs[:end_date] = end_date.to_s
     kwargs[:user] = User.current.user_id
-    kwargs[:lock] = lock.to_s
 
     LOGGER.debug("Queueing #{kwargs['type']} report: #{kwargs}")
     if @immediate_mode
@@ -245,9 +227,5 @@ class ReportService
     else
       ReportJob.perform_later(engine(@program).class.to_s, **kwargs)
     end
-  end
-
-  def self.lock_file_path(report_type_name, start_date, end_date)
-    Rails.root.join('tmp', "#{report_type_name}-report-#{start_date}-to-#{end_date}.lock")
   end
 end

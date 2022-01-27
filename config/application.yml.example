@@ -13,6 +13,13 @@ lims_app_name: 'bht_emr_api'
 # Uncomment the following to enable realtime updates through the LIMS socket
 # lims_realtime_updates_url: http://localhost:3011
 
+#lims facility_code
+development:
+ facility_code: KCH
+
+production:
+ facility_code: KCH
+
 # Configuration for Pacs
 ftp_host:
   192.168.3.202
@@ -29,18 +36,18 @@ pacs_viewer:
 
 # Configuration for DDE
 dde:
-  url: http://localhost:5000
+  url: http://localhost:8050
 
   # This section has DDE username and password for various applications.
   # The application's name must be the same as a program name in the
   # program's table <em>but in lowercase</em>.
   hiv program:
     username: admin
-    password: bht.dde3!
+    password: bht.dde
 
   tb program:
     username: admin
-    password: bht.dde3!
+    password: bht.dde
 
 rds:
   # CouchDB configuration

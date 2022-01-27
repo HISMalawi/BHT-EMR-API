@@ -153,13 +153,16 @@ class ARTService::Reports::ViralLoad
     return if patient_start_date.blank?
     start_date = patient_start_date
     appointment_date = person[:appointment_date].to_date
-    months_on_art = date_diff(patient_start_date.to_date, @end_date.to_date)
+    #months_on_art = date_diff(patient_start_date.to_date, @end_date.to_date)
+    vl_info = get_vl_due_info(person[:patient_id], appointment_date)
+    months_on_art = vl_info[:period_on_art]
 
-    if @possible_milestones.include?(months_on_art)
+    #if @possible_milestones.include?(months_on_art)
+    if vl_info[:eligibile]
       last_result = last_vl_result(person[:patient_id])
       return {
         patient_id: person[:patient_id],
-        mile_stone: (patient_start_date.to_date + months_on_art.month).to_date,
+        mile_stone: (patient_start_date.to_date + months_on_art).to_date,
         start_date: patient_start_date,
         months_on_art: months_on_art,
         appointment_date: appointment_date,
@@ -241,9 +244,9 @@ class ARTService::Reports::ViralLoad
 
     return OpenStruct.new(order_date: 'N/A', result_date: 'N/A', result_value: 'N/A') unless measure
 
-    OpenStruct.new(order_date: measure.order.start_date.to_date,
-                   result_date: measure.obs_datetime.to_date,
-                   result_value: "#{measure.value_modifier || '='}#{measure.value_numeric || measure.value_text}")
+    OpenStruct.new(order_date: measure&.order&.start_date&.to_date,
+                   result_date: measure&.obs_datetime&.to_date,
+                   result_value: "#{measure&.value_modifier || '='}#{measure&.value_numeric || measure&.value_text}")
   end
 
   def use_filing_number(patient_id, arv_number)
@@ -253,6 +256,11 @@ class ARTService::Reports::ViralLoad
     filing_numbers = PatientIdentifier.where("patient_id = ? AND identifier_type IN(?)",
       patient_id, identifier_types)
     return filing_numbers.blank? ? '' : filing_numbers.last.identifier
+  end
+
+  def get_vl_due_info(patient_id, appointment_date)
+    vl_info = ARTService::VLReminder.new(patient_id: patient_id, date: appointment_date)
+    return vl_info.vl_reminder_info
   end
 
 end

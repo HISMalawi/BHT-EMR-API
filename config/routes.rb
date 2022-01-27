@@ -1,6 +1,7 @@
 Rails.application.routes.draw do
   mount Lab::Engine => '/'
   mount Radiology::Engine => '/'
+  mount EmrOhspInterface::Engine => '/'
   mount Rswag::Ui::Engine => '/api-docs'
   mount Rswag::Api::Engine => '/api-docs'
 
@@ -41,7 +42,6 @@ Rails.application.routes.draw do
       end
 
       resources :roles
-
 
       # Patients
       resources :patients do
@@ -85,7 +85,7 @@ Rails.application.routes.draw do
 
       # Locations
       resources :locations do
-        get('/label', to: redirect do |params, request|
+        get('/label', to: redirect do |params, _request|
           "/api/v1/labels/location?location_id=#{params[:location_id]}"
         end)
       end
@@ -154,7 +154,7 @@ Rails.application.routes.draw do
           get '/mastercard_data', to: 'program_patients#mastercard_data'
           get '/medication_side_effects', to: 'program_patients#medication_side_effects'
           get '/is_due_lab_order', to: 'program_patients#is_due_lab_order'
-          #ANC
+          # ANC
           get '/vl_info', to: 'lab_remainders#index'
           # ANC
           get '/surgical_history', to: 'program_patients#surgical_history'
@@ -184,6 +184,7 @@ Rails.application.routes.draw do
 
       namespace :pharmacy do
         resource :audit_trail, only: %i[show]
+        resource :drug_movement, only: %i[show]
         resources :batches
         resources :items do
           post '/reallocate', to: 'items#reallocate'
@@ -206,7 +207,7 @@ Rails.application.routes.draw do
       resources :drug_orders
       resources :orders
       get '/drug_sets', to: 'drugs#drug_sets' # ANC get drug sets
-      post '/drug_sets', to: 'drugs#create_drug_sets' #ANC drug sets creation
+      post '/drug_sets', to: 'drugs#create_drug_sets' # ANC drug sets creation
       delete '/drug_sets/:id', to: 'drugs#void_drug_sets'
 
       resource :global_properties
@@ -274,6 +275,7 @@ Rails.application.routes.draw do
 
   get '/api/v1/dashboard_stats' => 'api/v1/reports#index'
   get '/api/v1/dashboard_stats_for_syndromic_statistics' => 'api/v1/reports#syndromic_statistics'
+  post '/api/v1/vl_maternal_status' => 'api/v1/reports#vl_maternal_status'
 
   # SQA controller
   get '/api/v1/dead_encounters' => 'api/v1/cleaning#index'
@@ -283,8 +285,7 @@ Rails.application.routes.draw do
   get '/api/v1/incomplete_visits' => 'api/v1/cleaning#incompleteVisits'
   get '/api/v1/art_data_cleaning_tools' => 'api/v1/cleaning#art_tools'
 
-  #OPD reports
-  get '/api/v1/diagnosis' => 'api/v1/reports#diagnosis'
+  # OPD reports
   get '/api/v1/malaria_report' => 'api/v1/reports#malaria_report'
   get '/api/v1/registration' => 'api/v1/reports#registration'
   get '/api/v1/diagnosis_by_address' => 'api/v1/reports#diagnosis_by_address'
@@ -336,7 +337,8 @@ Rails.application.routes.draw do
   get '/api/v1/orders_made', to: 'api/v1/reports#orders_made'
   get '/api/v1/:program_id/external_consultation_clients', to: 'api/v1/reports#external_consultation_clients'
 
-
-
   get '/api/v1/screened_for_cxca', to: 'api/v1/reports#cxca_reports'
+  get '/api/v1/dispatch_order/:order_id', to: 'api/v1/dispatch_orders#show'
+  post '/api/v1/dispatch_order', to: 'api/v1/dispatch_orders#create'
+  get '/api/v1/latest_regimen_dispensed', to: 'api/v1/reports#latest_regimen_dispensed'
 end

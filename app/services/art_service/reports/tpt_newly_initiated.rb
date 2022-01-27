@@ -19,33 +19,70 @@ module ARTService
 
       def find_report
         report = init_report
+        newly_initiated_on_tpt.each do |tpt, patients|
+          patients.each do |patient|
+            patient_id = patient['patient_id']
+            person = ActiveRecord::Base.connection.select_one <<~SQL
+              SELECT disaggregated_age_group(birthdate, DATE('#{end_date.to_date}')) AS age_group,
+              patient_identifier.identifier AS arv_number, person.*
+              FROM person
+              LEFT JOIN patient_identifier ON patient_identifier.patient_id = person.person_id
+              AND patient_identifier.identifier_type IN (SELECT patient_identifier_type_id FROM patient_identifier_type
+              WHERE name = 'ARV Number') AND patient_identifier.voided = 0
+              WHERE person_id = #{patient_id} LIMIT 1;
+            SQL
+            age_group = person['age_group']
+            gender = person['gender']&.strip&.first&.upcase || 'Unknown'
+            #course = patient_on_3hp?(patient) ? '3HP' : '6H'
 
-        load_patients_into_report(report, '3HP', newly_initiated_on_3hp)
-        load_patients_into_report(report, '6H', newly_initiated_on_6h)
-
-        report
+            report[age_group][tpt][gender] << {
+              patient_id: person['person_id'],
+              birthdate: person['birthdate'],
+              arv_number: person['arv_number'],
+              gender: gender,
+              dispensation_date: dispensation_date(patient_id, patient['drug_concepts'])
+            }
+          end
+        end
+        return report
       end
 
       private
 
       AGE_GROUPS = [
         'Unknown',
-        '0-5 months',
-        '6-11 months',
-        '12-23 months',
-        '2-4 years',
-        '5-9 years',
-        '10-14 years',
-        '15-17 years',
-        '18-19 years',
+        '<1 year',
+        '1-4 years', '5-9 years',
+        '10-14 years', '15-19 years',
         '20-24 years',
-        '25-29 years',
-        '30-34 years',
-        '35-39 years',
-        '40-44 years',
-        '45-49 years',
-        '50 plus years'
+        '25-29 years', '30-34 years',
+        '35-39 years', '40-44 years',
+        '45-49 years', '50-54 years',
+        '55-59 years', '60-64 years',
+        '65-69 years', '70-74 years',
+        '75-79 years', '80-84 years',
+        '85-89 years',
+        '90 plus years'
       ].freeze
+
+
+      def dispensation_date(patient_id, concept_ids)
+        order = ActiveRecord::Base.connection.select_one <<~SQL
+          SELECT MIN(orders.start_date) start_date FROM orders
+          INNER JOIN drug_order
+            ON drug_order.order_id = orders.order_id
+            AND drug_order.quantity > 0  /* This implies that a dispensation was made */
+          INNER JOIN drug
+            ON drug.drug_id = drug_order.drug_inventory_id
+            AND drug.concept_id IN(#{concept_ids})
+          INNER JOIN encounter ON encounter.encounter_id = orders.encounter_id
+          AND encounter.program_id = 1
+          WHERE DATE(orders.start_date) BETWEEN '#{start_date.to_date}' AND '#{end_date.to_date}'
+          AND orders.voided = 0 AND orders.patient_id = #{patient_id};
+        SQL
+
+        return order['start_date'].to_date
+      end
 
       def init_report
         AGE_GROUPS.each_with_object({}) do |age_group, report|
@@ -56,47 +93,33 @@ module ARTService
         end
       end
 
-      def load_patients_into_report(report, regimen, patients)
-        patients.each do |patient|
-          age_group = patient['age_group']
-          gender = patient['gender']&.strip&.first&.upcase || 'Unknown'
-
-          report[age_group][regimen][gender] << patient
-        end
+      def patient_on_3hp?(patient)
+        patient['drug_concepts'].split(',').collect(&:to_i).include?(rifapentine_concept.concept_id)
       end
 
-      # 3HP new initiates
-      def newly_initiated_on_3hp
-        newly_initiated_on_tpt <<~SQL
-          SELECT DISTINCT drug_id
-          FROM drug
-          INNER JOIN concept_name
-            USING (concept_id)
-          WHERE concept_name.name = 'Rifapentine'
-        SQL
+      def rifapentine_concept
+        @rifapentine_concept ||= ConceptName.find_by!(name: 'Rifapentine')
       end
 
-      # IPT new initiates
-      def newly_initiated_on_6h
-        newly_initiated_on_tpt <<~SQL
-          SELECT DISTINCT drug_id
-          FROM drug
-          INNER JOIN concept_name
-            USING (concept_id)
-          WHERE concept_name.name = 'Pyridoxine'
-        SQL
+      def newly_initiated_on_tpt
+        tpt = ARTService::Reports::Cohort::Tpt.new(start_date.to_date, end_date.to_date)
+        tpt_data = {}
+        tpt_data["3HP"] = tpt.newly_initiated_on_3hp
+        tpt_data["6H"] = tpt.newly_initiated_on_ipt
+        return tpt_data
       end
 
-      def newly_initiated_on_tpt(primary_drug_query)
+      def newly_initiated_on_tpt_old
         ActiveRecord::Base.connection.select_all <<~SQL
           SELECT patient_program.patient_id,
-                 cohort_disaggregated_age_group(person.birthdate, DATE(#{end_date})) AS age_group,
+                 disaggregated_age_group(person.birthdate, DATE(#{end_date})) AS age_group,
                  DATE(prescription_encounter.encounter_datetime) AS prescription_date,
                  person_name.given_name,
                  person_name.family_name,
                  person.birthdate,
                  person.gender,
-                 patient_identifier.identifier AS arv_number
+                 patient_identifier.identifier AS arv_number,
+                 GROUP_CONCAT(DISTINCT orders.concept_id SEPARATOR ',') AS drug_concepts
           FROM person
           LEFT JOIN person_name
             ON person_name.person_id = person.person_id
@@ -123,15 +146,13 @@ module ARTService
             AND orders.voided = 0
           INNER JOIN drug_order
             ON drug_order.order_id = orders.order_id
-            AND drug_order.drug_inventory_id IN (#{primary_drug_query})
             AND drug_order.quantity > 0  /* This implies that a dispensation was made */
-          INNER JOIN orders AS arv_orders
-            ON arv_orders.patient_id = patient_program.patient_id
-            AND arv_orders.start_date < DATE(#{end_date}) + INTERVAL 1 DAY
-          INNER JOIN drug_order AS arv_drug_orders
-            ON arv_drug_orders.order_id = arv_orders.order_id
-            AND arv_drug_orders.drug_inventory_id IN (SELECT drug_id FROM arv_drug)
-            AND arv_drug_orders.quantity > 0
+          INNER JOIN drug
+            ON drug.drug_id = drug_order.drug_inventory_id
+          INNER JOIN concept_name AS tpt_drug_concepts
+            ON tpt_drug_concepts.concept_id = drug.concept_id
+            AND tpt_drug_concepts.name IN ('Rifapentine', 'Isoniazid')
+            AND tpt_drug_concepts.voided = 0
           WHERE patient_program.patient_id NOT IN (
             /* Filter out patients who received TPT before current reporting period */
             SELECT DISTINCT patient_program.patient_id
@@ -147,22 +168,46 @@ module ARTService
               AND orders.start_date < #{start_date}
               /* Re-initiates defined as those who stopped TPT for a period of at least 9 months
                  and have restarted TPT are also included in the report */
-              AND orders.auto_expire_date >= DATE(#{start_date}) - INTERVAL 9 MONTH
+              AND orders.start_date >= DATE(#{start_date}) - INTERVAL 9 MONTH
               AND orders.voided = 0
+            INNER JOIN concept_name AS tpt_drug_concepts
+              ON tpt_drug_concepts.concept_id = orders.concept_id
+              AND tpt_drug_concepts.name IN ('Rifapentine', 'Isoniazid')
+              AND tpt_drug_concepts.voided = 0
             INNER JOIN drug_order AS drug_order
               ON drug_order.order_id = orders.order_id
-              AND drug_order.drug_inventory_id IN (#{primary_drug_query})
               AND drug_order.quantity > 0
             WHERE patient_program.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
-              AND patient_program.patient_id NOT IN (
-                SELECT person_id FROM obs
-                WHERE concept_id IN (
-                  SELECT concept_id FROM concept_name WHERE name LIKE 'Type of patient'
-                ) AND value_coded IN (
-                  SELECT concept_id FROM concept_name WHERE name LIKE 'External Consultation'
-                ) AND voided = 0 AND (obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY)
-                GROUP BY person_id
-              )
+          ) AND patient_program.patient_id NOT IN (
+            /* External consultations */
+            SELECT DISTINCT registration_encounter.patient_id
+            FROM patient_program
+            INNER JOIN program ON program.name = 'HIV Program'
+            INNER JOIN encounter AS registration_encounter
+              ON registration_encounter.patient_id = patient_program.patient_id
+              AND registration_encounter.program_id = patient_program.program_id
+              AND registration_encounter.encounter_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
+              AND registration_encounter.voided = 0
+            INNER JOIN (
+              SELECT MAX(encounter.encounter_datetime) AS encounter_datetime, encounter.patient_id
+              FROM encounter
+              INNER JOIN encounter_type
+                ON encounter_type.encounter_type_id = encounter.encounter_type
+                AND encounter_type.name = 'Registration'
+              INNER JOIN program
+                ON program.program_id = encounter.program_id
+                AND program.name = 'HIV Program'
+              WHERE encounter.encounter_datetime < DATE(#{end_date}) AND encounter.voided = 0
+              GROUP BY encounter.patient_id
+            ) AS max_registration_encounter
+              ON max_registration_encounter.patient_id = registration_encounter.patient_id
+              AND max_registration_encounter.encounter_datetime = registration_encounter.encounter_datetime
+            INNER JOIN obs AS patient_type_obs
+              ON patient_type_obs.encounter_id = registration_encounter.encounter_id
+              AND patient_type_obs.concept_id IN (SELECT concept_id FROM concept_name WHERE name = 'Type of patient' AND voided = 0)
+              AND patient_type_obs.value_coded IN (SELECT concept_id FROM concept_name WHERE name IN ('Drug refill', 'External consultation') AND voided = 0)
+              AND patient_type_obs.voided = 0
+            WHERE patient_program.voided = 0
           )
           GROUP BY patient_program.patient_id
         SQL

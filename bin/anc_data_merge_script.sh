@@ -31,12 +31,12 @@ mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE <<EOF
 SET foreign_key_checks = 0;
 
 /* the defaults */
-SET @max_encounter_id := (SELECT max(encounter_id) FROM $DATABASE.encounter);
-SET @max_patient_id := (SELECT max(person_id) FROM $DATABASE.person);
-SET @max_patient_program_id := (SELECT max(patient_program_id) from $DATABASE.patient_program);
-SET @max_order_id := (SELECT max(order_id) from $DATABASE.orders);
-SET @max_obs_id := (SELECT max(obs_id) FROM $DATABASE.obs);
-SET @max_user_id := (select max(user_id) from $DATABASE.users);
+SET @max_encounter_id := COALESCE((SELECT max(encounter_id) FROM $DATABASE.encounter),0);
+SET @max_patient_id := COALESCE((SELECT max(person_id) FROM $DATABASE.person),0);
+SET @max_patient_program_id := COALESCE((SELECT max(patient_program_id) from $DATABASE.patient_program),0);
+SET @max_order_id := COALESCE((SELECT max(order_id) from $DATABASE.orders),0);
+SET @max_obs_id := COALESCE((SELECT max(obs_id) FROM $DATABASE.obs),0);
+SET @max_user_id := COALESCE((select max(user_id) from $DATABASE.users),0);
 
 /* update ANC admin user to admini  */
 UPDATE $ANCDATABASE.users SET username = 'admini' WHERE user_id = 1;
@@ -45,7 +45,7 @@ UPDATE $ANCDATABASE.users SET username = 'admini' WHERE user_id = 1;
 drop table if exists $ANCDATABASE.user_bak;
 
 create table $ANCDATABASE.user_bak as
-SELECT user_id as ANC_user_id, (SELECT @max_user_id + user_id) AS ART_user_id,  system_id,  username,  password,  salt,  secret_question,  secret_answer,  (SELECT @max_user_id + creator) as creator,  date_created,  (SELECT @max_user_id + changed_by) as changed_by,  date_changed,  (SELECT @max_patient_id + person_id) as person_id,  retired, (SELECT @max_user_id + retired_by) as retired_by,  date_retired,  retire_reason,  (SELECT UUID()),  authentication_token FROM $ANCDATABASE.users; 
+SELECT user_id as ANC_user_id, (SELECT @max_user_id + user_id) AS ART_user_id,  system_id,  username,  password,  salt,  secret_question,  secret_answer,  (SELECT @max_user_id + creator) as creator,  date_created,  (SELECT @max_user_id + changed_by) as changed_by,  date_changed,  (SELECT @max_patient_id + person_id) as person_id,  retired, (SELECT @max_user_id + retired_by) as retired_by,  date_retired,  retire_reason,  (SELECT UUID()),  authentication_token FROM $ANCDATABASE.users;
 
 /* insert users person table into ART person table  */
 INSERT INTO $DATABASE.person (person_id, gender, birthdate, birthdate_estimated, dead, death_date, cause_of_death, creator, date_created, changed_by, date_changed, voided, voided_by, date_voided, void_reason, uuid)
@@ -57,7 +57,7 @@ select preferred, (select @max_patient_id + f.person_id) as person_id, prefix, g
 
 /* Insert ANC users  */
 INSERT INTO $DATABASE.users (user_id,  system_id,  username,  password,  salt,  secret_question,  secret_answer,  creator,  date_created,  changed_by,  date_changed,  person_id,  retired,  retired_by,  date_retired,  retire_reason,  uuid,  authentication_token)
-SELECT ART_user_id, system_id,  username,  password,  salt,  secret_question,  secret_answer, (SELECT @max_user_id + creator) AS creator,  date_created,  (SELECT @max_user_id + changed_by) AS changed_by,  date_changed, person_id,  retired, (SELECT @max_user_id + retired_by) AS retired_by,  date_retired,  retire_reason,  (SELECT UUID()),  authentication_token FROM $ANCDATABASE.user_bak; 
+SELECT ART_user_id, system_id,  username,  password,  salt,  secret_question,  secret_answer, (SELECT @max_user_id + creator) AS creator,  date_created,  (SELECT @max_user_id + changed_by) AS changed_by,  date_changed, person_id,  retired, (SELECT @max_user_id + retired_by) AS retired_by,  date_retired,  retire_reason,  (SELECT UUID()),  authentication_token FROM $ANCDATABASE.user_bak;
 
 /* dropping and creating patient_details  */
 drop table if exists $ANCDATABASE.ANC_patient_details;
@@ -94,14 +94,14 @@ SELECT ART_order_id,  order_type_id,  concept_id,  orderer, encounter_id,  instr
 
 /* insert ANC drug_orders into ART database */
 INSERT INTO $DATABASE.drug_order (order_id,  drug_inventory_id, dose, equivalent_daily_dose, units, frequency, prn, complex, quantity)
-SELECT ART_order_id, drug_inventory_id, dose, equivalent_daily_dose, units, frequency, prn, complex, quantity FROM $ANCDATABASE.drug_order d inner join $ANCDATABASE.orders_bak o on o.ANC_order_id = d.order_id; 
+SELECT ART_order_id, drug_inventory_id, dose, equivalent_daily_dose, units, frequency, prn, complex, quantity FROM $ANCDATABASE.drug_order d inner join $ANCDATABASE.orders_bak o on o.ANC_order_id = d.order_id;
 
 /* creating obs back-up */
 drop table if exists $ANCDATABASE.obs_bak;
 
 create table $ANCDATABASE.obs_bak as
 SELECT (SELECT @max_obs_id + o.obs_id) as obs_id, e.ART_patient_id AS person_id,  concept_id,  (SELECT @max_encounter_id + o.encounter_id) AS encounter_id,  (SELECT @max_order_id + o.order_id) AS order_id,  obs_datetime,  location_id,  obs_group_id,  accession_number,  value_group_id,  value_boolean,  value_coded,  value_coded_name_id,  value_drug,  value_datetime,  value_numeric,  value_modifier,  value_text,  date_started,  date_stopped,  comments, (SELECT @max_user_id + creator) AS creator,  date_created,  voided,  (SELECT @max_user_id + voided_by) AS voided_by,  date_voided,  void_reason,  value_complex,  uuid FROM $ANCDATABASE.obs o inner join $ANCDATABASE.ANC_patient_details e on e.ANC_patient_id = o.person_id and o.voided = 0;
-   
+
 /* insert ANC obs into ART database */
 INSERT INTO $DATABASE.obs (obs_id, person_id,  concept_id,  encounter_id,  order_id,  obs_datetime,  location_id,  obs_group_id,  accession_number,  value_group_id,  value_boolean,  value_coded,  value_coded_name_id,  value_drug,  value_datetime,  value_numeric,  value_modifier,  value_text,  date_started,  date_stopped,  comments,  creator,  date_created,  voided,  voided_by,  date_voided,  void_reason,  value_complex,  uuid)
 SELECT obs_id, person_id,  concept_id, encounter_id,  order_id,  obs_datetime,  location_id,  obs_group_id,  accession_number,  value_group_id,  value_boolean,  value_coded,  value_coded_name_id,  value_drug,  value_datetime,  value_numeric, value_modifier,  value_text,  date_started,  date_stopped,  comments,  creator,  date_created,  voided, voided_by,  date_voided,  void_reason,  value_complex,  (SELECT UUID()) FROM $ANCDATABASE.obs_bak ORDER BY obs_id;

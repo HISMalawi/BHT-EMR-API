@@ -17,13 +17,16 @@ class Api::V1::PatientsController < ApplicationController
   end
 
   def search_by_npid
-    render json: service.find_patients_by_npid(params.require(:npid))
+    voided = params[:voided]&.casecmp?('true') || false
+    render json: service.find_patients_by_npid(params.require(:npid), voided: voided)
   end
 
   def search_by_identifier
     identifier_type_id, identifier = params.require(%i[type_id identifier])
     identifier_type = PatientIdentifierType.find(identifier_type_id)
-    render json: service.find_patients_by_identifier(identifier, identifier_type)
+    voided = params[:voided]&.casecmp?('true') || false
+
+    render json: service.find_patients_by_identifier(identifier, identifier_type, voided: voided)
   end
 
   # GET /api/v1/search/patients
@@ -84,7 +87,8 @@ class Api::V1::PatientsController < ApplicationController
 
   def visits
     program = params[:program_id] ? Program.find(params[:program_id]) : nil
-    render json: service.find_patient_visit_dates(patient, program)
+    render json: service.find_patient_visit_dates(patient, program,
+      params[:include_defaulter_dates] == "true")
   end
 
   def find_median_weight_and_height

@@ -30,6 +30,7 @@ class Api::V1::PeopleController < ApplicationController
     create_params, errors = required_params required: PersonService::PERSON_FIELDS,
                                             optional: [:middle_name]
     return render json: create_params, status: :bad_request if errors
+    return unless validate_birthdate params['birthdate']
 
     person = Person.transaction do
       person = person_service.create_person(create_params)
@@ -44,15 +45,15 @@ class Api::V1::PeopleController < ApplicationController
   end
 
   def update
+    program_id = params.require(:program_id) if DDEService.dde_enabled?
     person = Person.find(params[:id])
-    program = Program.find_by_program_id(params[:program_id])
     update_params = params.permit!
 
     person_service.update_person(person, update_params)
     person.reload
 
     # Hack trigger a patient update to force a DDE push if DDE is active
-    patient_service.update_patient(program, person.patient) if person.patient
+    patient_service.update_patient(Program.find(program_id), person.patient) if program_id && person.patient
 
     render json: person, status: :ok
   end
@@ -84,6 +85,15 @@ class Api::V1::PeopleController < ApplicationController
     home_district home_village home_traditional_authority
     current_district current_village current_traditional_authority
   ].freeze
+
+  def validate_birthdate(birthdate)
+    if birthdate.nil?
+      render json: ['birthdate cannot be empty'], status: :bad_request
+      return false
+    end
+
+    true
+  end
 
   def person_attributes(_params)
     PERSON_ATTRIBUTES.each_with_object({}) do |field, attrs|

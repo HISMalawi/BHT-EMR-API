@@ -27,17 +27,17 @@ HOST=`ruby -ryaml -e "puts YAML::load_file('config/database.yml')['${ENV}']['hos
 echo "=================merging patients in ANC only into ART database"
 
 start_now=$(date +”%T”)
-echo "the script is starting at: " start_now 
+echo "the script is starting at: " start_now
 
 mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE <<EOF
 
 SET foreign_key_checks = 0;
 /* the defaults */
-SET @max_encounter_id := (SELECT max(encounter_id) FROM $DATABASE.encounter);
-SET @max_patient_id := (SELECT max(person_id) FROM $DATABASE.person);
-SET @max_patient_program_id := (SELECT max(patient_program_id) from $DATABASE.patient_program);
-SET @max_order_id := (SELECT max(order_id) from $DATABASE.orders);
-SET @max_obs_id := (SELECT max(obs_id) FROM $DATABASE.obs);
+SET @max_encounter_id := COALESCE((SELECT max(encounter_id) FROM $DATABASE.encounter),0);
+SET @max_patient_id := COALESCE((SELECT max(person_id) FROM $DATABASE.person),0);
+SET @max_patient_program_id := COALESCE((SELECT max(patient_program_id) from $DATABASE.patient_program),0);
+SET @max_order_id := COALESCE((SELECT max(order_id) from $DATABASE.orders),0);
+SET @max_obs_id := COALESCE((SELECT max(obs_id) FROM $DATABASE.obs),0);
 
 
 /* dropping and creating person_back_up  */
@@ -66,11 +66,11 @@ WHERE a.identifier  NOT IN (SELECT anc_d.identifier FROM $ANCDATABASE.anc_remain
 
 /* Insert patient_identifier  */
 INSERT INTO $DATABASE.patient_identifier (patient_id,  identifier,  identifier_type,  preferred,  location_id,  creator,  date_created,   void_reason,  uuid)
-SELECT p.ART_patient_id, p.ART_identifier, p.new_identifier_type,  p.preferred,  p.location_id,  p.ART_creator,  p.date_created,  p.void_reason, (SELECT uuid()) 
-FROM $ANCDATABASE.anc_art_patients_with_voided_art_identifier p 
+SELECT p.ART_patient_id, p.ART_identifier, p.new_identifier_type,  p.preferred,  p.location_id,  p.ART_creator,  p.date_created,  p.void_reason, (SELECT uuid())
+FROM $ANCDATABASE.anc_art_patients_with_voided_art_identifier p
 WHERE p.pi_voided = 1 and p.void_reason like  '% new ID:%';
 
-/* creating encounters table back-up  */  
+/* creating encounters table back-up  */
 DROP TABLE if exists $ANCDATABASE.encounter_back;
 
 CREATE TABLE $ANCDATABASE.encounter_back as
@@ -84,9 +84,9 @@ FROM $ANCDATABASE.anc_art_patients_with_voided_art_identifier a
 WHERE a.pi_voided = 1 AND a.void_reason LIKE '% new ID:%';
 
 
-/* insert ANC encounters into ART database  */  
+/* insert ANC encounters into ART database  */
 INSERT INTO $DATABASE.encounter (encounter_id, encounter_type, patient_id, provider_id, location_id, form_id, encounter_datetime, creator, date_created, voided, voided_by, date_voided, void_reason, uuid, changed_by, date_changed, program_id)
-SELECT encounter_id, encounter_type, patient_id, provider_id, location_id, form_id, encounter_datetime, creator, date_created, voided, voided_by, date_voided, void_reason, (SELECT uuid()), changed_by, date_changed, 12 
+SELECT encounter_id, encounter_type, patient_id, provider_id, location_id, form_id, encounter_datetime, creator, date_created, voided, voided_by, date_voided, void_reason, (SELECT uuid()), changed_by, date_changed, 12
 from $ANCDATABASE.encounter_back order by patient_id;
 
 /* creating orders back-up  */
@@ -107,13 +107,13 @@ WHERE a.pi_voided = 1 AND a.void_reason LIKE '% new ID:%';
 
 /* insert ANC orders into ART database  */
 INSERT INTO $DATABASE.orders (order_id,  order_type_id,  concept_id,  orderer,  encounter_id,  instructions,  start_date,  auto_expire_date,  discontinued,  discontinued_date,  discontinued_by,  discontinued_reason,  creator,  date_created,  voided,  voided_by,  date_voided,  void_reason, patient_id,  accession_number, obs_id,  uuid, discontinued_reason_non_coded)
-SELECT ART_order_id,  order_type_id,  concept_id,  orderer, encounter_id,  instructions, start_date,  auto_expire_date,  discontinued,  discontinued_date,  discontinued_by,  discontinued_reason,  creator,  date_created,  voided,  voided_by,  date_voided,  void_reason, patient_id, accession_number, obs_id, (SELECT UUID()),  discontinued_reason_non_coded 
+SELECT ART_order_id,  order_type_id,  concept_id,  orderer, encounter_id,  instructions, start_date,  auto_expire_date,  discontinued,  discontinued_date,  discontinued_by,  discontinued_reason,  creator,  date_created,  voided,  voided_by,  date_voided,  void_reason, patient_id, accession_number, obs_id, (SELECT UUID()),  discontinued_reason_non_coded
 FROM $ANCDATABASE.orders_bak;
 
 /* insert ANC drug_orders into ART database */
 INSERT INTO $DATABASE.drug_order (order_id,  drug_inventory_id, dose, equivalent_daily_dose, units, frequency, prn, complex, quantity)
-SELECT ART_order_id, drug_inventory_id, dose, equivalent_daily_dose, units, frequency, prn, complex, quantity FROM $ANCDATABASE.drug_order d 
-inner join $ANCDATABASE.orders_bak o on o.ANC_order_id = d.order_id; 
+SELECT ART_order_id, drug_inventory_id, dose, equivalent_daily_dose, units, frequency, prn, complex, quantity FROM $ANCDATABASE.drug_order d
+inner join $ANCDATABASE.orders_bak o on o.ANC_order_id = d.order_id;
 
 /* creating obs back-up */
 DROP TABLE if exists $ANCDATABASE.obs_bak;
@@ -133,7 +133,7 @@ WHERE a.pi_voided = 1 AND a.void_reason LIKE '% new ID:%';
 
 /* insert ANC obs into ART database */
 INSERT INTO $DATABASE.obs (obs_id, person_id,  concept_id,  encounter_id,  order_id,  obs_datetime,  location_id,  obs_group_id,  accession_number,  value_group_id,  value_boolean,  value_coded,  value_coded_name_id,  value_drug,  value_datetime,  value_numeric,  value_modifier,  value_text,  date_started,  date_stopped,  comments,  creator,  date_created,  voided,  voided_by,  date_voided,  void_reason,  value_complex,  uuid)
-SELECT obs_id, person_id,  concept_id, encounter_id,  order_id,  obs_datetime,  location_id,  obs_group_id,  accession_number,  value_group_id,  value_boolean,  value_coded,  value_coded_name_id,  value_drug,  value_datetime,  value_numeric, value_modifier,  value_text,  date_started,  date_stopped,  comments,  creator,  date_created,  voided, voided_by,  date_voided,  void_reason,  value_complex,  (SELECT UUID()) 
+SELECT obs_id, person_id,  concept_id, encounter_id,  order_id,  obs_datetime,  location_id,  obs_group_id,  accession_number,  value_group_id,  value_boolean,  value_coded,  value_coded_name_id,  value_drug,  value_datetime,  value_numeric, value_modifier,  value_text,  date_started,  date_stopped,  comments,  creator,  date_created,  voided, voided_by,  date_voided,  void_reason,  value_complex,  (SELECT UUID())
 FROM $ANCDATABASE.obs_bak ORDER BY obs_id;
 
 /* creating patient_program back-up */
@@ -141,7 +141,7 @@ DROP TABLE if exists $ANCDATABASE.patient_program_bak;
 
 CREATE TABLE $ANCDATABASE.patient_program_bak as
 
-SELECT (SELECT @max_patient_program_id + patient_program_id) AS ART_patient_program_id, 
+SELECT (SELECT @max_patient_program_id + patient_program_id) AS ART_patient_program_id,
     p.patient_program_id AS ANC_patient_program_id, a.ART_patient_id AS patient_id,
     p.program_id, p.date_enrolled, p.date_completed, c.ART_user_id AS creator, p.date_created, p.changed_by,
     p.date_changed, p.voided, p.voided_by, p.date_voided, p.void_reason, p.uuid, p.location_id
@@ -152,7 +152,7 @@ WHERE a.pi_voided = 1 AND a.void_reason LIKE '% new ID:%';
 
 /* insert ANC patient_program into ART database */
 INSERT INTO $DATABASE.patient_program (patient_program_id,  patient_id,  program_id,  date_enrolled,  date_completed,  creator,  date_created, changed_by,  date_changed,  voided, voided_by,  date_voided,  void_reason,  uuid,  location_id)
-SELECT ART_patient_program_id,  patient_id,  program_id,  date_enrolled,  date_completed,  creator,  date_created, changed_by,  changed_by,  voided, voided_by,  date_voided,  void_reason,  (SELECT UUID()),  location_id 
+SELECT ART_patient_program_id,  patient_id,  program_id,  date_enrolled,  date_completed,  creator,  date_created, changed_by,  changed_by,  voided, voided_by,  date_voided,  void_reason,  (SELECT UUID()),  location_id
 from $ANCDATABASE.patient_program_bak f order by patient_id;
 
 /* insert ANC patient_state into ART database */

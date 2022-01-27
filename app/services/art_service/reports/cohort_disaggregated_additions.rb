@@ -4,12 +4,11 @@ module ARTService
 
     class CohortDisaggregatedAdditions
 
-      def initialize(start_date:, end_date:, gender:, age_group:, outcome_table:)
+      def initialize(start_date:, end_date:, gender:, age_group:)
         @start_date = start_date
         @end_date = end_date
         @gender = gender
         @age_group = age_group
-        @patient_outcome_table = outcome_table
       end
 
       def screened_for_tb
@@ -20,9 +19,9 @@ module ARTService
         gender = @gender.first.upcase
         results = ActiveRecord::Base.connection.select_all <<~SQL
           SELECT
-            e.patient_id, cohort_disaggregated_age_group(e.birthdate, DATE('#{@end_date}')) age_group
+            e.patient_id, disaggregated_age_group(e.birthdate, DATE('#{@end_date}')) age_group
           FROM temp_earliest_start_date e
-          INNER JOIN #{@patient_outcome_table} USING(patient_id)
+          INNER JOIN temp_patient_outcomes USING(patient_id)
           WHERE cum_outcome = 'On antiretrovirals' AND LEFT(gender,1) = '#{gender}'
           GROUP BY e.patient_id HAVING  age_group = '#{@age_group}';
         SQL
@@ -45,9 +44,9 @@ module ARTService
         patient_ids = []
         results = ActiveRecord::Base.connection.select_all <<EOF
         SELECT
-          e.patient_id, cohort_disaggregated_age_group(e.birthdate, DATE('#{@end_date}')) age_group
+          e.patient_id, disaggregated_age_group(e.birthdate, DATE('#{@end_date}')) age_group
         FROM temp_earliest_start_date e
-        INNER JOIN #{@patient_outcome_table} USING(patient_id)
+        INNER JOIN temp_patient_outcomes USING(patient_id)
         WHERE cum_outcome = 'On antiretrovirals' AND LEFT(gender,1) = '#{gender}'
         GROUP BY e.patient_id HAVING  age_group = '#{@age_group}';
 EOF
@@ -82,9 +81,9 @@ EOF
 
         patients =  ActiveRecord::Base.connection.select_all <<~SQL
         SELECT
-          e.patient_id,  cohort_disaggregated_age_group(e.birthdate, DATE("#{@end_date.to_date}")) age_group
+          e.patient_id,  disaggregated_age_group(e.birthdate, DATE("#{@end_date.to_date}")) age_group
         FROM temp_earliest_start_date e
-        INNER JOIN #{@patient_outcome_table} o ON  o.patient_id = e.patient_id
+        INNER JOIN temp_patient_outcomes o ON  o.patient_id = e.patient_id
         #{additional_for_women_sql}
         WHERE LEFT(gender,1) = '#{gender}' AND o.cum_outcome = 'On antiretrovirals'
         AND DATE(date_enrolled) <= '#{@end_date.to_date}'
@@ -145,13 +144,13 @@ EOF
       def tb_screened(patient_ids)
         return [] if patient_ids.blank?
 
-        results = ActiveRecord::Base.connection.select_all <<EOF
+        results = ActiveRecord::Base.connection.select_all <<~SQL
         SELECT e.*, tb_status FROM temp_earliest_start_date e
           INNER JOIN temp_patient_tb_status s ON s.patient_id = e.patient_id
-          INNER JOIN #{@patient_outcome_table} o ON o.patient_id = e.patient_id
+          INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
           WHERE o.cum_outcome = 'On antiretrovirals' AND e.patient_id IN(#{patient_ids.join(',')})
           AND DATE(e.date_enrolled) <= '#{@end_date.to_date}';
-EOF
+        SQL
 
 
         patient_ids = []
@@ -165,7 +164,7 @@ EOF
       def screened_for_tb_female_client(group)
         results = ActiveRecord::Base.connection.select_all <<~SQL
         SELECT f.patient_id FROM temp_disaggregated f
-        INNER JOIN #{@patient_outcome_table} o ON o.patient_id = f.patient_id
+        INNER JOIN temp_patient_outcomes o ON o.patient_id = f.patient_id
         WHERE maternal_status = "#{group}"
         AND o.cum_outcome = 'On antiretrovirals' GROUP BY f.patient_id;
         SQL
@@ -181,7 +180,7 @@ EOF
       def female_clients_given_ipt(group)
         results = ActiveRecord::Base.connection.select_all <<~SQL
         SELECT f.patient_id FROM temp_disaggregated f
-        INNER JOIN #{@patient_outcome_table} o ON o.patient_id = f.patient_id
+        INNER JOIN temp_patient_outcomes o ON o.patient_id = f.patient_id
         WHERE maternal_status = "#{group}"
         AND o.cum_outcome = 'On antiretrovirals' GROUP BY f.patient_id;
         SQL

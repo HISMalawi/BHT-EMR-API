@@ -20,7 +20,7 @@ module ARTService
           hash[month] = { retained: [], all: [] }
         end
 
-        find_patients_retention_period(retained_patients(as_of: start_date - MONTHS.max.months)) do |period, patient|
+        find_patients_retention_period(retained_patients(as_of: Date.parse(start_date) - MONTHS.max.months)) do |period, patient|
           matched_patients[period][:retained] << {
             patient_id: patient.patient_id,
             arv_number: patient.arv_number,
@@ -31,7 +31,7 @@ module ARTService
           }
         end
 
-        find_patients_retention_period(all_patients(as_of: start_date - MONTHS.max.months)) do |period, patient|
+        find_patients_retention_period(all_patients(as_of: Date.parse(start_date) - MONTHS.max.months)) do |period, patient|
           matched_patients[period][:all] << {
             patient_id: patient.patient_id,
             arv_number: patient.arv_number,
@@ -47,7 +47,7 @@ module ARTService
       def find_patients_retention_period(patients)
         patients.each do |patient|
           retention_period = MONTHS.find do |period|
-            (start_date..end_date).include?((patient.start_date + period.months).to_date)
+            (start_date..end_date.to_s).include?((patient.start_date + period.months).to_date)
           end
 
           next unless retention_period
@@ -70,7 +70,7 @@ module ARTService
                    initial_order.start_date AS start_date,
                    last_order.auto_expire_date AS auto_expire_date,
                    patient_identifier.identifier AS arv_number,
-                   cohort_disaggregated_age_group(p.birthdate, DATE('#{@end_date}')) age_group,
+                   disaggregated_age_group(p.birthdate, DATE('#{@end_date}')) age_group,
                    p.gender gender
             FROM orders initial_order
               INNER JOIN encounter initial_encounter ON initial_encounter.encounter_id = initial_order.encounter_id AND initial_encounter.program_id = 1
@@ -113,7 +113,7 @@ module ARTService
             SELECT initial_order.patient_id AS patient_id,
                    initial_order.start_date AS start_date,
                    patient_identifier.identifier AS arv_number,
-                   cohort_disaggregated_age_group(p.birthdate, DATE('#{@end_date}')) age_group,
+                   disaggregated_age_group(p.birthdate, DATE('#{@end_date}')) age_group,
                    p.gender gender
             FROM orders initial_order
               INNER JOIN encounter initial_encounter ON initial_encounter.encounter_id = initial_order.encounter_id AND initial_encounter.program_id = 1

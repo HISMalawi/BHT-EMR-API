@@ -96,26 +96,17 @@ class PersonService
 
   def create_person_address(person, params)
     params = PERSON_ADDRESS_FIELDS.each_with_object({}) do |field, address_params|
-      address_params[field] = params[field] if params[field]
+      address_params[field.to_sym] = params[field] if params[field]
     end
 
     return nil if params.empty?
 
     handle_model_errors do
-      person.addresses.each do |address|
-        address.void('Address updated')
-      end
+      new_address = person.addresses.first.dup || PersonAddress.new(person: person)
+      person.addresses.each { |address| address.void('Address updated') }
 
-      PersonAddress.create(
-        person: person,
-        state_province: params[:current_district],
-        city_village: params[:current_village],
-        township_division: params[:current_traditional_authority],
-        address2: params[:home_district],
-        neighborhood_cell: params[:home_village],
-        county_district: params[:home_traditional_authority],
-        creator: User.current.id
-      )
+      new_address.update(creator: User.current.id, uuid: SecureRandom.uuid, **params)
+      new_address
     end
   end
 

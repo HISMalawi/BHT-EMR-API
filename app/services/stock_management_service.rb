@@ -28,21 +28,22 @@ class StockManagementService
   end
 
   def reverse_dispensation(dispensation_id)
-    dispensation = Observation.unscoped.find_by(obs_id: dispensation_id, voided: true)
+    dispensation = Observation.voided.find(dispensation_id)
     raise "*Voided* dispensation ##{dispensation_id} not found" unless dispensation
 
-    event_log = Pharmacy.unscoped.find_by(dispensation_obs_id: dispensation_id,
-                                          pharmacy_encounter_type: pharmacy_event_type(STOCK_DEBIT).id)
-    raise "Dispensation ##{dispensation_id} already reversed" if event_log&.voided
+    Pharmacy.transaction do
+      event_log = Pharmacy.where(dispensation_obs_id: dispensation_id, type: pharmacy_event_type(STOCK_DEBIT)).lock!
+      reversal_amount = event_log.sum(&:quantity).abs
+      return reversal_amount unless reversal_amount.positive?
 
-    amount_rejected = credit_drug(dispensation_drug_id(dispensation),
-                                  dispensation_pack_size(dispensation),
-                                  dispensation.value_numeric,
-                                  dispensation.obs_datetime,
-                                  "Voided drug dispensation ##{dispensation.id}")
-    event_log&.void('Dispensation reversed')
+      amount_rejected = credit_drug(dispensation_drug_id(dispensation),
+                                    dispensation_pack_size(dispensation),
+                                    reversal_amount,
+                                    dispensation.obs_datetime,
+                                    "Reversing voided drug dispensation ##{dispensation.id}")
 
-    amount_rejected
+      amount_rejected
+    end
   end
 
   def create_batches(batches)
@@ -168,17 +169,24 @@ class StockManagementService
 
   def reallocate_items(reallocation_code, batch_item_id, quantity, destination_location_id, date, reason)
     ActiveRecord::Base.transaction do
+      date = date&.to_date || Date.today
+
       item = PharmacyBatchItem.find(batch_item_id)
+      if item.delivery_date > date
+        raise InvalidParameterError, "Item was delivered at a date (#{item.delivery_date}) later than relocation date (#{date})"
+      end
 
       # A negative sign would result in addition of quantity thus
       # get rid of it as early as possible
       quantity = quantity.to_f.abs
-      commit_transaction(item, STOCK_DEBIT, -quantity.to_f, update_item: true, transaction_reason: reason)
+      commit_transaction(item, STOCK_DEBIT, -quantity.to_f, date, update_item: true, transaction_reason: reason)
       destination = Location.find(destination_location_id)
       PharmacyBatchItemReallocation.create(reallocation_code: reallocation_code, item: item,
                                            quantity: quantity, location: destination,
                                            reallocation_type: STOCK_ITEM_REALLOCATION,
-                                           date: date, date_created: Time.now, date_changed: Time.now,
+                                           date: date,
+                                           date_created: Time.now,
+                                           date_changed: Time.now,
                                            creator: User.current.id)
     end
   end
@@ -203,9 +211,11 @@ class StockManagementService
       ERROR
     end
 
-    batch_item.current_quantity += quantity.to_f
-    batch_item.save
-    validate_activerecord_object(batch_item)
+    batch_item.with_lock do
+      batch_item.current_quantity += quantity.to_f
+      batch_item.save
+      validate_activerecord_object(batch_item)
+    end
 
     batch_item
   end
@@ -261,17 +271,13 @@ class StockManagementService
     # initially delivered. BTW: Crediting is done following First to Expire,
     # First Out (FEFO) basis.
     drugs.each do |drug|
-      break if credit_quantity.zero?
+      break unless credit_quantity.positive?
 
       drug_deficit = drug.delivered_quantity - drug.current_quantity
+      transaction_amount = credit_quantity > drug_deficit ? drug_deficit : credit_quantity
 
-      if credit_quantity > drug_deficit
-        commit_transaction(drug, STOCK_ADD, drug_deficit, date, update_item: true, transaction_reason: reason)
-        credit_quantity -= drug_deficit
-      else
-        commit_transaction(drug, STOCK_ADD, credit_quantity, date, update_item: true, transaction_reason: reason)
-        credit_quantity = 0
-      end
+      commit_transaction(drug, STOCK_ADD, transaction_amount, date, update_item: true, transaction_reason: reason)
+      credit_quantity -= transaction_amount
     end
 
     credit_quantity

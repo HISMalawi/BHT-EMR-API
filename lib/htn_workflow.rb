@@ -163,9 +163,7 @@ class HtnWorkflow
   def htn_client?(patient, date)
     htn_min_age = global_property('htn.screening.age.threshold')&.property_value&.to_i
     htn_min_age ||= HTN_SCREENING_MIN_AGE
-
     age = patient.age(today: date)
-
-    htn_min_age <= age || patient.programs.collect(&:name).include?('HYPERTENSION PROGRAM')
+    htn_min_age <= (age.nil? ? 0 : age) || patient.programs.collect(&:name).include?('HYPERTENSION PROGRAM')
   end
 end

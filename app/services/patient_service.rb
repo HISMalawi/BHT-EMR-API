@@ -77,8 +77,8 @@ class PatientService
     patient
   end
 
-  def find_patients_by_npid(npid)
-    find_patients_by_identifier(npid, *npid_identifier_types.to_a)
+  def find_patients_by_npid(npid, voided: false)
+    find_patients_by_identifier(npid, *npid_identifier_types.to_a, voided: voided)
   end
 
   def find_patients_by_name_and_gender(given_name, middle_name = nil, family_name, gender)
@@ -91,14 +91,13 @@ class PatientService
     median_weight_height(patient.age_in_months, patient.person.gender)
   end
 
-  def find_patients_by_identifier(identifier, *identifier_types)
-    Patient.joins(:patient_identifiers).where(
-      '`patient_identifier`.identifier_type in (?) AND `patient_identifier`.identifier = ?',
-      identifier_types.collect(&:id), identifier
-    )
+  def find_patients_by_identifier(identifier, *identifier_types, voided: false)
+    Patient.joins('INNER JOIN patient_identifier USING (patient_id)')
+           .where(patient_identifier: { identifier: identifier, identifier_type: identifier_types.collect(&:id), voided: voided })
+           .distinct
   end
 
-  def find_patient_visit_dates(patient, program = nil)
+  def find_patient_visit_dates(patient, program = nil, include_defaulter_dates = nil)
     patient_id = ActiveRecord::Base.connection.quote(patient.id)
     program_id = program ? ActiveRecord::Base.connection.quote(program.id) : nil
 
@@ -110,7 +109,28 @@ class PatientService
       ORDER BY visit_date DESC
     SQL
 
-    rows.collect { |row| row['visit_date'] }
+    visit_dates = rows.collect { |row| row['visit_date'].to_date }
+    if !visit_dates.blank? && (program_id.blank? ? false : (program_id.to_i ==  1)) && include_defaulter_dates
+      #Starting from the initial visit date, we add 1+ month while checking if the patient defaulted.
+      #if we find that the patient has a defualter date we add it to the array of visit dates.
+      initial_visit_date = visit_dates.last.to_date
+
+      while initial_visit_date < Date.today
+      initial_visit_date = initial_visit_date + 1.month
+        defaulter_date = ActiveRecord::Base.connection.select_one <<~SQL
+          SELECT current_defaulter_date(#{patient_id}, DATE('#{initial_visit_date}')) as defaulter_date;
+        SQL
+        unless defaulter_date['defaulter_date'].blank?
+          visit_dates << defaulter_date['defaulter_date'].to_date
+          visit_dates.uniq!
+        end
+      end
+
+      #We sort the dates array to make sure we start with the most recent date
+      visit_dates = visit_dates.sort {|a,b| b.to_date <=> a.to_date}
+    end
+
+    visit_dates
   end
 
   def median_weight_height(age_in_months, gender)

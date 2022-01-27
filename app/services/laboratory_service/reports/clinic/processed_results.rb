@@ -53,7 +53,7 @@ module LaboratoryService
                    reason_for_test_obs.obs_id AS reason_for_test_obs_id,
                    patient_identifier.identifier AS arv_number,
                    person.birthdate, person.gender,
-                   cohort_disaggregated_age_group(person.birthdate, #{end_date}) AS age_group,
+                   disaggregated_age_group(person.birthdate, #{end_date}) AS age_group,
                    GROUP_CONCAT(DISTINCT CONCAT(measure_concept.name, ':', COALESCE(measure.value_modifier, '='), ':', COALESCE(measure.value_numeric, measure.value_text, ''))
                                 SEPARATOR ',') AS measures,
                    orders.accession_number

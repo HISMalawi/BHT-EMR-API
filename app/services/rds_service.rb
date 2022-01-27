@@ -39,8 +39,8 @@ module RdsService
   DELTA_STATE_PATH = Rails.root.join('log/rds-sync-state.yml')
 
   MODELS = [Person, PersonAttribute, PersonAddress, PersonName, Relationship, User, Patient,
-            PatientIdentifier, PatientState, PatientProgram, Encounter,
-            Observation, Order, DrugOrder, PharmacyBatch,
+            PatientIdentifier, PatientState, PatientProgram, ProgramWorkflowState, Encounter,
+            Observation, Order, DrugOrder,Pharmacy, PharmacyBatch,
             PharmacyBatchItem, PharmacyBatchItemReallocation].freeze
 
   TIME_EPOCH = '0000-00-00 00:00:00'
@@ -178,6 +178,12 @@ module RdsService
       model.unscoped\
           .joins('INNER JOIN orders ON orders.order_id = drug_order.order_id')\
           .where(where_conditions, time: database_offset.to_s)
+    elsif model == ProgramWorkflowState
+      where_conditions = <<~SQL
+        (date_created >= :time OR date_changed >= :time)
+          OR (date_created IS NULL AND date_changed IS NULL)
+      SQL
+      model.unscoped.where(where_conditions, time: database_offset.to_s)
     else
       where_conditions = <<~SQL
         (date_changed >= :time OR date_created >= :time OR date_voided >= :time)
@@ -208,6 +214,10 @@ module RdsService
     if record.class == DrugOrder
       order = Order.unscoped.find(record.order_id)
       return order.date_voided || order.date_created
+    end
+
+    if record.class == ProgramWorkflowState
+      return record.date_changed || record.date_created
     end
 
     record_date_voided(record) || record.date_changed || record.date_created

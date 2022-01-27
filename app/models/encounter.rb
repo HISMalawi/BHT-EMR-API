@@ -57,6 +57,13 @@ class Encounter < VoidableRecord
   # end
 
   def after_create
+    dde_enabled = GlobalProperty.find_by_property 'dde_enabled'
+    return unless if dde_enabled.blank?
+                    false
+                  else
+                    (dde_enabled.property_value == 'true')
+                  end
+
     PushDDEFootprintsJob.perform_later(patient_id: patient_id,
                                        program_id: program_id,
                                        date: encounter_datetime.strftime('%Y-%m-%d'),
@@ -95,7 +102,7 @@ class Encounter < VoidableRecord
   # end
 
   def name
-    self.type&.name || 'N/A'
+    type&.name || 'N/A'
   end
 
   # def to_s

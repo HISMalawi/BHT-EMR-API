@@ -38,6 +38,7 @@ module ARTService
       'TB_PREV' => ARTService::Reports::Pepfar::TbPrev,
       'OUTCOME_LIST' => ARTService::Reports::OutcomeList,
       'VIRAL_LOAD' => ARTService::Reports::ViralLoad,
+      'VIRAL_LOAD_COVERAGE' => ARTService::Reports::Pepfar::ViralLoadCoverage,
       'EXTERNAL_CONSULTATION_CLIENTS' => ARTService::Reports::ExternalConsultationClients
     }.freeze
 
@@ -97,19 +98,20 @@ module ARTService
         end_date: end_date.to_date).regimen_report(type)
     end
 
-    def screened_for_tb(start_date, end_date, gender, age_group, outcome_table)
+    def screened_for_tb(start_date, end_date, gender, age_group)
       REPORTS['COHORT_DISAGGREGATED_ADDITIONS'].new(start_date: start_date.to_date,
-        end_date: end_date.to_date, age_group: age_group, gender: gender, outcome_table: outcome_table).screened_for_tb
+        end_date: end_date.to_date, age_group: age_group, gender: gender).screened_for_tb
     end
 
-    def clients_given_ipt(start_date, end_date, gender, age_group, outcome_table)
+    def clients_given_ipt(start_date, end_date, gender, age_group)
       REPORTS['COHORT_DISAGGREGATED_ADDITIONS'].new(start_date: start_date.to_date,
-        end_date: end_date.to_date, age_group: age_group, gender: gender, outcome_table: outcome_table).clients_given_ipt
+        end_date: end_date.to_date, age_group: age_group, gender: gender).clients_given_ipt
     end
 
-    def arv_refill_periods(start_date, end_date, min_age, max_age, org)
+    def arv_refill_periods(start_date, end_date, min_age, max_age, org, initialize_tables)
       REPORTS['ARV_REFILL_PERIODS'].new(start_date: start_date.to_date,
-        end_date: end_date.to_date, min_age: min_age, max_age: max_age, org: org).arv_refill_periods
+        end_date: end_date.to_date, min_age: min_age,
+        max_age: max_age, org: org, initialize_tables: initialize_tables).arv_refill_periods
     end
 
     def tx_ml(start_date, end_date)
@@ -124,16 +126,15 @@ module ARTService
       REPORTS['IPT_COVERAGE'].new(start_date: start_date.to_date, end_date: end_date.to_date).data
     end
 
-    def disaggregated_regimen_distribution(start_date, end_date, gender, age_group, outcome_table)
+    def disaggregated_regimen_distribution(start_date, end_date, gender, age_group)
       REPORTS['COHORT_DISAGGREGATED_ADDITIONS'].new(start_date: start_date.to_date,
-        end_date: end_date.to_date, age_group: age_group, gender: gender,
-          outcome_table: outcome_table).disaggregated_regimen_distribution
+        end_date: end_date.to_date, age_group: age_group, gender: gender).disaggregated_regimen_distribution
     end
 
     def tx_mmd_client_level_data(start_date, end_date, patient_ids, org)
       REPORTS['ARV_REFILL_PERIODS'].new(start_date: start_date.to_date,
         end_date: end_date.to_date, min_age: 0, max_age: 0,
-          org: org).tx_mmd_client_level_data(patient_ids)
+          org: org, initialize_tables: "").tx_mmd_client_level_data(patient_ids)
     end
 
     def tb_prev(start_date, end_date)
@@ -168,6 +169,18 @@ module ARTService
     def external_consultation_clients(start_date, end_date)
       REPORTS['EXTERNAL_CONSULTATION_CLIENTS'].new(start_date: start_date.to_date,
         end_date: end_date.to_date).list
+    end
+
+    def vl_maternal_status(start_date, end_date,
+      tx_curr_definition, patient_ids)
+      REPORTS['VIRAL_LOAD_COVERAGE'].new(start_date: start_date.to_date,
+        end_date: end_date.to_date,
+        tx_curr_definition: tx_curr_definition).vl_maternal_status(patient_ids)
+    end
+
+    def latest_regimen_dispensed(start_date, end_date, rebuild_outcome)
+      REPORTS['REGIMEN_SWITCH'].new(start_date: start_date.to_date,
+        end_date: end_date.to_date).latest_regimen_dispensed(rebuild_outcome)
     end
 
     private

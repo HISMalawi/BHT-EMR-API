@@ -66,14 +66,18 @@ class DDEMergingService
   # Binds the remote patient to the local patient by blessing the local patient
   # with the remotes npid and doc_id
   def link_local_to_remote_patient(local_patient, remote_patient)
+    return local_patient if local_patient_linked_to_remote?(local_patient, remote_patient)
+
     national_id_type = patient_identifier_type('National id')
+    old_identifier = patient_identifier_type('Old Identification Number')
     doc_id_type = patient_identifier_type('DDE person document id')
 
-    local_patient.patient_identifiers.where(type: [national_id_type, doc_id_type]) .each do |identifier|
-      if identifier.identifier_type == national_id_type.id && identifier.identifier.match?(/^\s*P\d{12}\s*$/i)
-        # We have a v3 NPID that should get demoted to legacy national id
-        create_local_patient_identifier(local_patient, identifier.identifier, 'Old Identification Number')
-      end
+    local_patient.patient_identifiers.where(type: [national_id_type, doc_id_type,old_identifier]).each do |identifier|
+      # We are now voiding all ids
+      # if identifier.identifier_type == national_id_type.id && identifier.identifier.match?(/^\s*P\d{12}\s*$/i)
+      #   # We have a v3 NPID that should get demoted to legacy national id
+      #   create_local_patient_identifier(local_patient, identifier.identifier, 'Old Identification Number')
+      # end
 
       identifier.void("Assigned new id: #{remote_patient['doc_id']}")
     end
@@ -83,6 +87,15 @@ class DDEMergingService
 
     local_patient.reload
     local_patient
+  end
+
+  def local_patient_linked_to_remote?(local_patient, remote_patient)
+    identifier_exists = lambda do |type, value|
+      PatientIdentifier.where(patient: local_patient, type: PatientIdentifierType.where(name: type), identifier: value)
+                       .exists?
+    end
+
+    identifier_exists['National id', remote_patient['npid']] && identifier_exists['DDE person document id', remote_patient['doc_id']]
   end
 
   private

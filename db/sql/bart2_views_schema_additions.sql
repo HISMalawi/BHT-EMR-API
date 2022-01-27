@@ -1710,7 +1710,7 @@ BEGIN
         END IF;
     END LOOP;
 
-    IF TIMESTAMPDIFF(day, my_expiry_date, my_end_date) > 60 THEN
+    IF TIMESTAMPDIFF(day, my_expiry_date, my_end_date) >= 60 THEN
         SET flag = 1;
     END IF;
 
@@ -1722,9 +1722,10 @@ CREATE FUNCTION current_defaulter_date(my_patient_id INT, my_end_date date) RETU
 DETERMINISTIC
 BEGIN
 DECLARE done INT DEFAULT FALSE;
-  DECLARE my_start_date, my_expiry_date, my_obs_datetime, my_defaulted_date DATETIME;
+  DECLARE my_start_date, my_expiry_date, my_obs_datetime DATETIME;
   DECLARE my_daily_dose, my_quantity, my_pill_count, my_total_text, my_total_numeric DECIMAL(6, 2);
-  DECLARE my_drug_id, flag INT;
+  DECLARE my_drug_id INT;
+  DECLARE my_default_date DATE;
 
   DECLARE cur1 CURSOR FOR SELECT d.drug_inventory_id, o.start_date, d.equivalent_daily_dose daily_dose, SUM(d.quantity), o.start_date FROM drug_order d
     INNER JOIN arv_drug ad ON d.drug_inventory_id = ad.drug_id
@@ -1734,6 +1735,7 @@ DECLARE done INT DEFAULT FALSE;
       AND o.start_date <= my_end_date
       AND o.patient_id = my_patient_id
       GROUP BY drug_inventory_id, DATE(start_date), daily_dose;
+
 
   DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
 
@@ -1748,8 +1750,6 @@ DECLARE done INT DEFAULT FALSE;
 
   OPEN cur1;
 
-  SET flag = 0;
-
   read_loop: LOOP
     FETCH cur1 INTO my_drug_id, my_start_date, my_daily_dose, my_quantity, my_obs_datetime;
 
@@ -1760,13 +1760,13 @@ DECLARE done INT DEFAULT FALSE;
 
     IF DATE(my_obs_datetime) = DATE(@obs_datetime) THEN
 
-      IF my_daily_dose = 0 OR my_daily_dose IS NULL OR LENGTH(my_daily_dose) < 1 THEN
+      IF my_daily_dose = 0 OR LENGTH(my_daily_dose) < 1 OR my_daily_dose IS NULL THEN
         SET my_daily_dose = 1;
       END IF;
 
-      SET my_pill_count = drug_pill_count(my_patient_id, my_drug_id, my_obs_datetime);
+            SET my_pill_count = drug_pill_count(my_patient_id, my_drug_id, my_obs_datetime);
 
-      SET @expiry_date = ADDDATE(my_start_date, ((my_quantity + my_pill_count)/my_daily_dose));
+            SET @expiry_date = ADDDATE(DATE_SUB(my_start_date, INTERVAL 2 DAY), ((my_quantity + my_pill_count)/my_daily_dose));
 
       IF my_expiry_date IS NULL THEN
         SET my_expiry_date = @expiry_date;
@@ -1774,15 +1774,15 @@ DECLARE done INT DEFAULT FALSE;
 
       IF @expiry_date < my_expiry_date THEN
         SET my_expiry_date = @expiry_date;
+            END IF;
         END IF;
-      END IF;
     END LOOP;
 
     IF TIMESTAMPDIFF(day, DATE(my_expiry_date), DATE(my_end_date)) >= 60 THEN
-      SET my_defaulted_date = ADDDATE(my_expiry_date, 60);
+        SET my_default_date = ADDDATE(my_expiry_date, 60);
     END IF;
 
-  RETURN my_defaulted_date;
+  RETURN my_default_date;
 END;
 
 /* ................................................................... */
@@ -1936,7 +1936,7 @@ DECLARE done INT DEFAULT FALSE;
         END IF;
     END LOOP;
 
-    IF TIMESTAMPDIFF(day, my_expiry_date, my_end_date) > 30 THEN
+    IF TIMESTAMPDIFF(day, my_expiry_date, my_end_date) >= 30 THEN
         SET flag = 1;
     END IF;
 
@@ -1948,67 +1948,67 @@ DROP FUNCTION IF EXISTS `current_pepfar_defaulter_date`;
 CREATE FUNCTION `current_pepfar_defaulter_date`(my_patient_id INT, my_end_date DATETIME) RETURNS DATE
 BEGIN
 	DECLARE done INT DEFAULT FALSE;
-	DECLARE my_start_date, my_expiry_date, my_obs_datetime, my_defaulted_date DATETIME;
-	DECLARE my_daily_dose, my_quantity, my_pill_count, my_total_text, my_total_numeric DECIMAL(6, 2);
-	DECLARE my_drug_id, flag INT;
+	DECLARE my_start_date, my_expiry_date, my_obs_datetime DATETIME;
+  DECLARE my_daily_dose, my_quantity, my_pill_count, my_total_text, my_total_numeric DECIMAL(6, 2);
+  DECLARE my_drug_id INT;
+  DECLARE my_default_date DATE;
 
-	DECLARE cur1 CURSOR FOR SELECT d.drug_inventory_id, o.start_date, d.equivalent_daily_dose daily_dose, SUM(d.quantity), o.start_date FROM drug_order d
-		INNER JOIN arv_drug ad ON d.drug_inventory_id = ad.drug_id
-		INNER JOIN orders o ON d.order_id = o.order_id
-			AND d.quantity > 0
-			AND o.voided = 0
-			AND o.start_date <= my_end_date
-			AND o.patient_id = my_patient_id
-			GROUP BY drug_inventory_id, DATE(start_date), daily_dose;
+  DECLARE cur1 CURSOR FOR SELECT d.drug_inventory_id, o.start_date, d.equivalent_daily_dose daily_dose, SUM(d.quantity), o.start_date FROM drug_order d
+    INNER JOIN arv_drug ad ON d.drug_inventory_id = ad.drug_id
+    INNER JOIN orders o ON d.order_id = o.order_id
+      AND d.quantity > 0
+      AND o.voided = 0
+      AND o.start_date <= my_end_date
+      AND o.patient_id = my_patient_id
+      GROUP BY drug_inventory_id, DATE(start_date), daily_dose;
 
-	DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
 
-	SELECT MAX(o.start_date) INTO @obs_datetime FROM drug_order d
-		INNER JOIN arv_drug ad ON d.drug_inventory_id = ad.drug_id
-		INNER JOIN orders o ON d.order_id = o.order_id
-			AND d.quantity > 0
-			AND o.voided = 0
-			AND o.start_date <= my_end_date
-			AND o.patient_id = my_patient_id
-		GROUP BY o.patient_id;
+  DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
 
-	OPEN cur1;
+  SELECT MAX(o.start_date) INTO @obs_datetime FROM drug_order d
+    INNER JOIN arv_drug ad ON d.drug_inventory_id = ad.drug_id
+    INNER JOIN orders o ON d.order_id = o.order_id
+      AND d.quantity > 0
+      AND o.voided = 0
+      AND o.start_date <= my_end_date
+      AND o.patient_id = my_patient_id
+    GROUP BY o.patient_id;
 
-	SET flag = 0;
+  OPEN cur1;
 
-	read_loop: LOOP
-		FETCH cur1 INTO my_drug_id, my_start_date, my_daily_dose, my_quantity, my_obs_datetime;
+  read_loop: LOOP
+    FETCH cur1 INTO my_drug_id, my_start_date, my_daily_dose, my_quantity, my_obs_datetime;
 
-		IF done THEN
-			CLOSE cur1;
-			LEAVE read_loop;
-		END IF;
+    IF done THEN
+      CLOSE cur1;
+      LEAVE read_loop;
+    END IF;
 
-		IF DATE(my_obs_datetime) = DATE(@obs_datetime) THEN
+    IF DATE(my_obs_datetime) = DATE(@obs_datetime) THEN
 
-      IF my_daily_dose = 0 OR my_daily_dose IS NULL OR LENGTH(my_daily_dose) < 1 THEN
+      IF my_daily_dose = 0 OR LENGTH(my_daily_dose) < 1 OR my_daily_dose IS NULL THEN
         SET my_daily_dose = 1;
       END IF;
 
             SET my_pill_count = drug_pill_count(my_patient_id, my_drug_id, my_obs_datetime);
 
-            SET @expiry_date = ADDDATE(my_start_date, ((my_quantity + my_pill_count)/my_daily_dose));
+            SET @expiry_date = ADDDATE(DATE_SUB(my_start_date, INTERVAL 2 DAY), ((my_quantity + my_pill_count)/my_daily_dose));
 
-			IF my_expiry_date IS NULL THEN
-				SET my_expiry_date = @expiry_date;
-			END IF;
+      IF my_expiry_date IS NULL THEN
+        SET my_expiry_date = @expiry_date;
+      END IF;
 
-			IF @expiry_date < my_expiry_date THEN
-				SET my_expiry_date = @expiry_date;
+      IF @expiry_date < my_expiry_date THEN
+        SET my_expiry_date = @expiry_date;
             END IF;
         END IF;
     END LOOP;
 
     IF TIMESTAMPDIFF(day, DATE(my_expiry_date), DATE(my_end_date)) >= 30 THEN
-        SET my_defaulted_date = ADDDATE(my_expiry_date, 30);
+        SET my_default_date = ADDDATE(my_expiry_date, 30);
     END IF;
 
-	RETURN my_defaulted_date;
+  RETURN my_default_date;
 END;
 
 
@@ -2112,7 +2112,43 @@ RETURN age_group;
 END;
 
 
+DROP FUNCTION IF EXISTS `disaggregated_age_group`;
 
+CREATE FUNCTION `disaggregated_age_group`(birthdate date, end_date date) RETURNS VARCHAR(15)
+BEGIN
+
+DECLARE age_in_months INT(11);
+DECLARE age_in_years INT(11);
+DECLARE age_group VARCHAR(15);
+
+SET age_in_months = (SELECT timestampdiff(month, birthdate, end_date));
+SET age_in_years  = (SELECT timestampdiff(year, birthdate, end_date));
+SET age_group = ('Unknown');
+
+IF age_in_months >= 0 AND age_in_months <= 11 THEN SET age_group = "<1 year";
+ELSEIF age_in_years >= 1 AND age_in_years <= 4 THEN SET age_group = "1-4 years";
+ELSEIF age_in_years >= 5 AND age_in_years <= 9 THEN SET age_group = "5-9 years";
+ELSEIF age_in_years >= 10 AND age_in_years <= 14 THEN SET age_group = "10-14 years";
+ELSEIF age_in_years >= 15 AND age_in_years <= 19 THEN SET age_group = "15-19 years";
+ELSEIF age_in_years >= 20 AND age_in_years <= 24 THEN SET age_group = "20-24 years";
+ELSEIF age_in_years >= 25 AND age_in_years <= 29 THEN SET age_group = "25-29 years";
+ELSEIF age_in_years >= 30 AND age_in_years <= 34 THEN SET age_group = "30-34 years";
+ELSEIF age_in_years >= 35 AND age_in_years <= 39 THEN SET age_group = "35-39 years";
+ELSEIF age_in_years >= 40 AND age_in_years <= 44 THEN SET age_group = "40-44 years";
+ELSEIF age_in_years >= 45 AND age_in_years <= 49 THEN SET age_group = "45-49 years";
+ELSEIF age_in_years >= 50 AND age_in_years <= 54 THEN SET age_group = "50-54 years";
+ELSEIF age_in_years >= 55 AND age_in_years <= 59 THEN SET age_group = "55-59 years";
+ELSEIF age_in_years >= 60 AND age_in_years <= 64 THEN SET age_group = "60-64 years";
+ELSEIF age_in_years >= 65 AND age_in_years <= 69 THEN SET age_group = "65-69 years";
+ELSEIF age_in_years >= 70 AND age_in_years <= 74 THEN SET age_group = "70-74 years";
+ELSEIF age_in_years >= 75 AND age_in_years <= 79 THEN SET age_group = "75-79 years";
+ELSEIF age_in_years >= 80 AND age_in_years <= 84 THEN SET age_group = "80-84 years";
+ELSEIF age_in_years >= 85 AND age_in_years <= 89 THEN SET age_group = "85-89 years";
+ELSEIF age_in_years >= 90 THEN SET age_group = "90 plus years";
+END IF;
+
+RETURN age_group;
+END;
 
 
 

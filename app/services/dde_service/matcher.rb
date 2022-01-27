@@ -43,7 +43,7 @@ class DDEService
 
         return nil if local_name&.family_name&.casecmp?(remote_person['family_name'])
 
-        { local: local_name.given_name, remote: remote_person['family_name'] }
+        { local: local_name.family_name, remote: remote_person['family_name'] }
       end
 
       def diff_birthdate(local_person, remote_person)
@@ -80,7 +80,6 @@ class DDEService
         remote_address = remote_person['attributes']
 
         return nil if local_address.send(field).casecmp?(remote_address[field])
-
         { local: local_address.send(field), remote: remote_address[field] }
       end
 
