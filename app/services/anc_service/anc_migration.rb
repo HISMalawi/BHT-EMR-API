@@ -41,6 +41,38 @@ module ANCService
 
     private
 
+    # quick method to check whether all anc patients are in openmrs_kawale
+    def fetch_patients_not_in_openmrs
+      fetch_anc_patients.to_a - fetch_art_patients.to_a
+    end
+
+    # fetch patients in openmrs
+    def fetch_patients_in_openmrs
+      fetch_anc_patients.to_a - fetch_patients_not_in_openmrs
+    end
+
+    # method to fetch anc patients
+    def fetch_anc_patients
+      ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT person_name.given_name, person_name.family_name, patient_identifier.identifier FROM #{@database}.person_name
+        INNER JOIN #{@database}.patient_identifier ON patient_identifier.patient_id = person_name.person_id
+        WHERE person_name.voided = 0
+        AND patient_identifier.identifier_type = 3
+        AND patient_identifier.voided = 0
+      SQL
+    end
+
+    # method to fetch art/openmrs patients
+    def fetch_art_patients
+      ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT person_name.given_name, person_name.family_name, patient_identifier.identifier FROM person_name
+        INNER JOIN patient_identifier ON patient_identifier.patient_id = person_name.person_id
+        WHERE person_name.voided = 0
+        AND patient_identifier.identifier_type = 3
+        AND patient_identifier.voided = 0
+      SQL
+    end
+
     # rubocop:disable Metrics/MethodLength
     # rubocop:disable Metrics/AbcSize
     # method to execute normal migration
@@ -50,7 +82,7 @@ module ANCService
       ActiveRecord::Base.transaction do
         ActiveRecord::Base.connection.disable_referential_integrity do
           migrate_users
-          migrate_person
+          migrate_specific_person(fetch_user_person_id, 'Migratating user specific person records')
         end
         migrate_person_name
         migrate_person_address
@@ -70,6 +102,25 @@ module ANCService
     end
     # rubocop:enable Metrics/AbcSize
     # rubocop:enable Metrics/MethodLength
+
+    # method to get users person ids
+    def fetch_user_person_id
+      result = ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT person_id FROM #{@database}.users
+      SQL
+      result.map { |person| person['person'] }
+    end
+
+    # method to migrate specific person
+    def migrate_specific_person(person_list, message)
+      statement = <<~SQL
+        INSERT INTO person (person_id, gender, birthdate, birthdate_estimated, dead, death_date, cause_of_death, creator, date_created, changed_by, date_changed, voided, voided_by, date_voided, void_reason, uuid)
+        SELECT (SELECT #{@person_id} + person_id) AS person_id, gender, birthdate, birthdate_estimated, dead, death_date, cause_of_death, (SELECT #{@user_id} + creator) AS creator, date_created, (SELECT #{@user_id} + changed_by) AS changed_by, date_changed, voided, (SELECT #{@user_id} + voided_by) AS voided_by, date_voided, void_reason, uuid
+        FROM #{@database}.person
+        WHERE person_id IN (#{person_list.join(',')})
+      SQL
+      central_hub message: message, query: statement
+    end
 
     # rubocop:disable Metrics/MethodLength
     # rubocop:disable Metrics/AbcSize
@@ -140,13 +191,8 @@ module ANCService
     # method to migrate users records
     def migrate_users
       statement = <<~SQL
-        UPDATE #{@database}.users SET username = CONCAT(username, '_anc')
-        WHERE username NOT LIKE '%_anc%'
-      SQL
-      central_hub query: statement
-      statement = <<~SQL
         INSERT INTO users (user_id,  system_id,  username,  password,  salt,  secret_question,  secret_answer,  creator,  date_created,  changed_by,  date_changed,  person_id,  retired,  retired_by,  date_retired,  retire_reason,  uuid,  authentication_token)
-        SELECT (SELECT #{@user_id} + user_id) AS user_id, system_id,  username,  password,  salt,  secret_question,  secret_answer, (SELECT #{@user_id} + creator) AS creator,  date_created,  (SELECT #{@user_id} + changed_by) AS changed_by,  date_changed, (SELECT #{@person_id} + person_id),  retired, (SELECT #{@user_id} + retired_by) AS retired_by,  date_retired,  retire_reason,  uuid,  authentication_token FROM #{@database}.users
+        SELECT (SELECT #{@user_id} + user_id) AS user_id, system_id,  CONCAT(username, '_anc'),  password,  salt,  secret_question,  secret_answer, (SELECT #{@user_id} + creator) AS creator,  date_created,  (SELECT #{@user_id} + changed_by) AS changed_by,  date_changed, (SELECT #{@person_id} + person_id),  retired, (SELECT #{@user_id} + retired_by) AS retired_by,  date_retired,  retire_reason,  uuid,  authentication_token FROM #{@database}.users
       SQL
       central_hub message: 'Migrating users records', query: statement
     end
@@ -453,6 +499,8 @@ module ANCService
     # simple check on migrated patients
     def migrated_patients?
       !migrated_patients.length.zero?
+      file = File.new('anc-list.txt', 'a+')
+
     end
 
     # method to get patient that were not in use
