@@ -333,10 +333,10 @@ class DDEMergingService
       check = Observation.find_by("person_id = #{primary_patient.id} AND concept_id = #{obs.concept_id} AND
         DATE(obs_datetime) = DATE('#{obs.obs_datetime.strftime('%Y-%m-%d')}') #{obs.value_coded.blank? ? '' : 'AND value_coded = ' + obs.value_coded.to_s}")
       if check.blank?
-        primary_obs = process_obervation_merging(obs, primary_patient.id, encounter_map)
+        primary_obs = process_obervation_merging(obs, primary_patient, encounter_map)
         obs_map[obs.id] = primary_obs.id
-      elsif obs.user.roles.map { |role| role['role'] }.include? 'Clinician'
-        primary_obs = process_obervation_merging(obs, primary_patient.id, encounter_map)
+      elsif check_clinician?(obs.creator, check.creator)
+        primary_obs = process_obervation_merging(obs, primary_patient, encounter_map)
         obs_map[obs.id] = primary_obs.id
       else
         obs.update(void_reason: "Merged into patient ##{primary_patient.patient_id}:0", voided: 1, date_voided: Time.now, voided_by: User.current.id)
@@ -348,20 +348,27 @@ class DDEMergingService
     obs_map
   end
 
+  # method to check whether to add observations
+  def check_clinician?(new_provider, current_provider)
+    creator = User.find(new_provider).roles.map { |role| role['role'] }.include? 'Clinician'
+    current = User.find(current_provider).roles.map { |role| role['role'] }.include? 'Clinician'
+    creator && !current
+  end
+
   # central place to void and create new observation
-  def process_obervation_merging(obs, primary_patient_id, encounter_map)
+  def process_obervation_merging(obs, primary_patient, encounter_map)
     primary_obs_hash = obs.attributes
     primary_obs_hash.delete('obs_id')
     primary_obs_hash.delete('uuid')
     primary_obs_hash.delete('creator')
     primary_obs_hash.delete('obs_id')
     primary_obs_hash['encounter_id'] = encounter_map[obs.encounter_id]
-    primary_obs_hash['person_id'] = primary_patient_id
+    primary_obs_hash['person_id'] = primary_patient.id
     primary_obs = Observation.create(primary_obs_hash)
     unless primary_obs.errors.empty?
       raise "Could not merge patient observations: #{primary_obs.errors.as_json}"
     end
-    obs.update(void_reason: "Merged into patient ##{primary_patient.patient_id}:#{primary_obs.id}", voided: 1, date_voided: Time.now, voided_by: User.current.id)
+    obs.update(void_reason: "Merged into patient ##{primary_patient.id}:#{primary_obs.id}", voided: 1, date_voided: Time.now, voided_by: User.current.id)
     primary_obs
   end
 
