@@ -23,7 +23,7 @@ class DrugOrder < ApplicationRecord
     order = self.order || Order.unscoped.find_by_order_id(order_id)
     return 0 if order&.auto_expire_date.blank? || order&.start_date.blank?
 
-    interval = order.auto_expire_date.to_date - order.start_date.to_date
+    interval = (order.discontinued_date.blank? ? order.auto_expire_date.to_date : order.discontinued_date.to_date) - order.start_date.to_date
     interval.to_i
   end
 
