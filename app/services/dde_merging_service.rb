@@ -391,6 +391,10 @@ class DDEMergingService
     encounter_map
   end
 
+  def check_clinical_encounters(encounter_type, encounter_date, program_id, patient_id)
+
+  end
+
   def reassign_remote_patient_npid(patient_doc_id)
     response, status = dde_client.post('reassign_npid', { doc_id: patient_doc_id })
 
