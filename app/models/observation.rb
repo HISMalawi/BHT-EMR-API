@@ -31,6 +31,7 @@ class Observation < VoidableRecord
   belongs_to :answer_concept, class_name: 'Concept', foreign_key: 'value_coded', optional: true
   # belongs_to(:answer_concept_name, class_name: 'ConceptName',
   #  foreign_key: 'value_coded_name_id')
+  belongs_to :user, foreign_key: :creator
 
   has_many :concept_names, through: :concept
 
