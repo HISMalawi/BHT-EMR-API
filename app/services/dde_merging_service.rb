@@ -53,9 +53,10 @@ class DDEMergingService
       merge_identifiers(primary_patient, secondary_patient)
       merge_attributes(primary_patient, secondary_patient)
       merge_address(primary_patient, secondary_patient)
+      @obs_map = {}
       result = merge_encounters(primary_patient, secondary_patient)
-      obs_result = merge_observations(primary_patient, secondary_patient, result)
-      merge_orders(primary_patient, secondary_patient, result, obs_result)
+      merge_observations(primary_patient, secondary_patient, result)
+      merge_orders(primary_patient, secondary_patient, result)
 
       secondary_patient.void("Merged into patient ##{primary_patient.id}")
 
@@ -275,7 +276,7 @@ class DDEMergingService
 
   # Strips off secondary_patient all orders and blesses primary patient
   # with them
-  def merge_orders(primary_patient, secondary_patient, encounter_map, obs_map)
+  def merge_orders(primary_patient, secondary_patient, encounter_map)
     Rails.logger.debug("Merging patient orders: #{primary_patient} <= #{secondary_patient}")
     orders_map = {}
     Order.where(patient_id: secondary_patient.id).each do |order|
@@ -288,7 +289,7 @@ class DDEMergingService
         primary_order_hash.delete('order_id')
         primary_order_hash['patient_id'] = primary_patient.id
         primary_order_hash['encounter_id'] = encounter_map[order.encounter_id]
-        primary_order_hash['obs_id'] = obs_map[order.obs_id] unless order.obs_id.blank?
+        primary_order_hash['obs_id'] = @obs_map[order.obs_id] unless order.obs_id.blank?
         primary_order = Order.create(primary_order_hash)
         raise "Could not merge patient orders: #{primary_order.errors.as_json}" unless primary_order.errors.empty?
 
@@ -301,7 +302,7 @@ class DDEMergingService
     end
 
     update_drug_order orders_map
-    update_obs_order_id(orders_map, obs_map)
+    update_obs_order_id(orders_map, @obs_map)
   end
 
   # method to update drug orders with the new order id
@@ -328,31 +329,25 @@ class DDEMergingService
   # with them
   def merge_observations(primary_patient, secondary_patient, encounter_map)
     Rails.logger.debug("Merging patient observations: #{primary_patient} <= #{secondary_patient}")
-    obs_map = {}
+
     Observation.where(person_id: secondary_patient.id).each do |obs|
       check = Observation.find_by("person_id = #{primary_patient.id} AND concept_id = #{obs.concept_id} AND
-        DATE(obs_datetime) = DATE('#{obs.obs_datetime.strftime('%Y-%m-%d')}') #{obs.value_coded.blank? ? '' : 'AND value_coded = ' + obs.value_coded.to_s}")
+        DATE(obs_datetime) = DATE('#{obs.obs_datetime.strftime('%Y-%m-%d')}') #{"AND value_coded = #{obs.value_coded}" unless obs.value_coded.blank?}")
       if check.blank?
         primary_obs = process_obervation_merging(obs, primary_patient, encounter_map)
-        obs_map[obs.id] = primary_obs.id
-      elsif check_clinician?(obs.creator, check.creator)
-        primary_obs = process_obervation_merging(obs, primary_patient, encounter_map)
-        obs_map[obs.id] = primary_obs.id
+        @obs_map[obs.id] = primary_obs.id
       else
         obs.update(void_reason: "Merged into patient ##{primary_patient.patient_id}:0", voided: 1, date_voided: Time.now, voided_by: User.current.id)
-        obs_map[obs.id] = check.id
+        @obs_map[obs.id] = check.id
       end
     end
 
-    update_observations_group_id obs_map
-    obs_map
+    update_observations_group_id @obs_map
   end
 
   # method to check whether to add observations
-  def check_clinician?(new_provider, current_provider)
-    creator = User.find(new_provider).roles.map { |role| role['role'] }.include? 'Clinician'
-    current = User.find(current_provider).roles.map { |role| role['role'] }.include? 'Clinician'
-    creator && !current
+  def check_clinician?(provider)
+    User.find(provider).roles.map { |role| role['role'] }.include? 'Clinician'
   end
 
   # central place to void and create new observation
@@ -404,12 +399,37 @@ class DDEMergingService
         encounter.update(void_reason: "Merged into patient ##{primary_patient.patient_id}:#{primary_encounter.id}", voided: 1, date_voided: Time.now, voided_by: User.current.id)
         encounter_map[encounter.id] = primary_encounter.id
       else
-        encounter.update(void_reason: "Merged into patient ##{primary_patient.patient_id}:0", voided: 1, date_voided: Time.now, voided_by: User.current.id)
         encounter_map[encounter.id] = check.id
+        process_encounter_obs(encounter, primary_patient, secondary_patient, encounter_map) if [6, 56].include? encounter.encounter_type
+        encounter.update(void_reason: "Merged into patient ##{primary_patient.patient_id}:0", voided: 1, date_voided: Time.now, voided_by: User.current.id)
       end
     end
 
     encounter_map
+  end
+
+  # method to process encounter obs
+  def process_encounter_obs(encounter, primary_patient, secondary_patient, encounter_map)
+    obs = encounter.observations.where(concept_id: ConceptName.find_by(name: 'Refer to ART clinician').concept_id)
+    return if obs.blank?
+
+    primary_obs = Observation.find_by("person_id = #{primary_patient.id} AND concept_id = #{obs.concept_id} AND
+      DATE(obs_datetime) = DATE('#{obs.obs_datetime.strftime('%Y-%m-%d')}')")
+    return if primary_obs.blank?
+
+    if primary_obs.value_coded != obs.value_coded && primary_obs.value_coded == ConceptName.find_by(name: 'No')
+      result = process_obervation_merging(obs, primary_patient, encounter_map)
+      @obs_map[obs.id] = result.id
+      # one needs to voide the primary
+      primary_obs.update(void_reason: "Merged into patient ##{primary_patient.id}:#{result.id}", voided: 1, date_voided: Time.now, voided_by: User.current.id)
+      # now one needs to added all obs that occured after this choice of referral
+      Observation.where('encounter_id = ? AND obs_datetime >= ? AND obs_datetime <= ? person_id = ? ', encounter.id, obs.obs_datetime, obs.obs_datetime.end_of_day, secondary_patient.id).each do |observation|
+        if check_clinician?(observation.creator)
+          result = process_obervation_merging(observation, primary_patient, encounter_map)
+          @obs_map[obs.id] = result.id
+        end
+      end
+    end
   end
 
   def reassign_remote_patient_npid(patient_doc_id)
