@@ -74,6 +74,17 @@ module ARTService
       regimens
     end
 
+    def fetch_regimens(use_tb_dosage: false, lpv_drug_type: 'tabs')
+      ingredients = MohRegimenIngredient.all
+
+      raw_regimens = regimens_from_ingredients(ingredients, lpv_drug_type: lpv_drug_type)
+      regimens = categorise_regimens(raw_regimens)
+
+      repackage_regimens_for_tb_patients!(regimens, patient_weight) if use_tb_dosage
+
+      regimens
+    end
+
     def regimen(patient, regimen_index, lpv_drug_type: 'tabs')
       ingredients = MohRegimenIngredient.joins(:regimen)\
                                         .where(moh_regimens: { regimen_index: regimen_index })\

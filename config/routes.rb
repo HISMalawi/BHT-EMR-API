@@ -128,6 +128,7 @@ Rails.application.routes.draw do
         resources :program_workflows, path: :workflows
         resources :program_regimens, path: :regimens
         get 'regimen_extras' => 'program_regimens#regimen_extras'
+        get 'all_arv_regimens' => 'program_regimens#all_arv_regimens'
 
         get 'booked_appointments' => 'program_appointments#booked_appointments'
         get 'scheduled_appointments' => 'program_appointments#scheduled_appointments'
