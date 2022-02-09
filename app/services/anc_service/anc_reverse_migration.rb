@@ -19,7 +19,7 @@ module ANCService
       print_time message: 'Starting migration reversal script', long_form: true
       @users = user_list
       patient_in_use
-      @patients = patient_list
+      @patients = "#{patient_list}','#{user_person_list}"
       patient_identifier_in_use
       patient_not_in_use
       @remove = remove_list
@@ -467,6 +467,14 @@ module ANCService
         SELECT ART_user_id FROM #{@database}.user_bak
       SQL
       x.map { |id| id['ART_user_id'].to_i }.push(0).join(',')
+    end
+
+    # method to get person id of users that are in use in openmrs
+    def user_person_list
+      x = ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT person_id FROM users WHERE user_id IN (#{user_list})
+      SQL
+      x.map { |id| id['person_id'].to_i }.push(0).join(',')
     end
 
     # method to print time when running some heavy things
