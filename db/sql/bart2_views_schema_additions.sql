@@ -1779,7 +1779,7 @@ DECLARE done INT DEFAULT FALSE;
     END LOOP;
 
     IF TIMESTAMPDIFF(day, DATE(my_expiry_date), DATE(my_end_date)) >= 60 THEN
-        SET my_default_date = ADDDATE(my_expiry_date, 60);
+        SET my_default_date = ADDDATE(my_expiry_date, 61);
     END IF;
 
   RETURN my_default_date;
@@ -2005,7 +2005,7 @@ BEGIN
     END LOOP;
 
     IF TIMESTAMPDIFF(day, DATE(my_expiry_date), DATE(my_end_date)) >= 30 THEN
-        SET my_default_date = ADDDATE(my_expiry_date, 30);
+        SET my_default_date = ADDDATE(my_expiry_date, 31);
     END IF;
 
   RETURN my_default_date;
