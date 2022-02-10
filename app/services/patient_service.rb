@@ -180,10 +180,19 @@ class PatientService
     SQL
   end
 
+  ADVERSE_OUTCOME_NAMES = [
+    'z_deprecated Treatment stopped - provider initiated',
+    'z_deprecated Treatment stopped - patient refused',
+    'Patient died',
+    'Patient transferred out',
+    'Treatment never started',
+    'Treatment stopped'
+  ].freeze
+
   def fetch_transfer_out_states
     ProgramWorkflowState.joins(:program_workflow)
                         .joins('INNER JOIN concept_name ON concept_name.concept_id = program_workflow_state.concept_id')
-                        .where(concept_name: { name: 'Patient transferred out', voided: 0 },
+                        .where(concept_name: { name: ADVERSE_OUTCOME_NAMES, voided: 0 },
                                program_workflow: { program_id: Program.where(name: 'HIV Program').select(:program_id) })
                         .select(:program_workflow_state_id)
   end
