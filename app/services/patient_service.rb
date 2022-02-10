@@ -120,7 +120,7 @@ class PatientService
         defaulter_date = ActiveRecord::Base.connection.select_one <<~SQL
           SELECT current_defaulter_date(#{patient_id}, DATE('#{initial_visit_date}')) as defaulter_date;
         SQL
-        unless defaulter_date['defaulter_date'].blank?
+        if !defaulter_date['defaulter_date'].blank? && check_defaulter_period(defaulter_date['defaulter_date'], patient_id, program_id)
           visit_dates << defaulter_date['defaulter_date'].to_date
           visit_dates.uniq!
         end
@@ -131,6 +131,61 @@ class PatientService
     end
 
     visit_dates
+  end
+
+  # method to fetch patient state that is between the defaulter date
+  def check_defaulter_period(defaulter_date, patient_id, program_id)
+    states = fetch_transfer_out_states
+    previous_visit = fetch_previous_visit(defaulter_date, patient_id, program_id)['visit_date']
+    result = ActiveRecord::Base.connection.select_one <<~SQL
+      SELECT start_date, end_date FROM patient_state
+      INNER JOIN patient_program ON patient_state.patient_program_id = patient_program.patient_program_id AND patient_program.voided = 0
+      WHERE patient_program.patient_id = #{patient_id}
+      AND patient_state.state IN (#{states.map { |state| state['program_workflow_state_id'] }.join(',')})
+      AND patient_state.voided = 0
+      AND start_date > DATE('#{previous_visit}')
+      AND start_date <= DATE('#{defaulter_date}')
+    SQL
+    return true if result.blank?
+
+    start_date = result['start_date']
+    # check if this record has an end date for better result
+    end_date = result['end_date'].blank? ? fetch_next_state_start_date(start_date, patient_id) : result['end_date']
+
+    return true if end_date.blank?
+
+    !defaulter_date.between(start_date, end_date)
+  end
+
+  def fetch_next_state_start_date(state_date, patient_id)
+    result = ActiveRecord::Base.connection.select_one <<~SQL
+      SELECT start_date FROM patient_state
+      INNER JOIN patient_program ON patient_state.patient_program_id = patient_program.patient_program_id AND patient_program.voided = 0
+      WHERE patient_program.patient_id = #{patient_id}
+      AND patient_state.voided = 0
+      AND start_date > DATE('#{state_date}')
+      ORDER BY start_date ASC
+    SQL
+    result.blank? ? nil : result['start_date']
+  end
+
+  def fetch_previous_visit(defaulter_date, patient_id, program_id)
+    ActiveRecord::Base.connection.select_one <<-SQL
+      SELECT DISTINCT DATE(encounter_datetime) AS visit_date
+      FROM encounter
+      WHERE patient_id = #{patient_id} AND voided = 0
+      AND DATE(encounter_datetime) < DATE('#{defaulter_date}') #{"AND program_id = #{program_id}" if program_id}
+      GROUP BY visit_date
+      ORDER BY visit_date DESC
+    SQL
+  end
+
+  def fetch_transfer_out_states
+    ProgramWorkflowState.joins(:program_workflow)
+                        .joins('INNER JOIN concept_name ON concept_name.concept_id = program_workflow_state.concept_id')
+                        .where(concept_name: { name: 'Patient transferred out', voided: 0 },
+                               program_workflow: { program_id: Program.where(name: 'HIV Program').select(:program_id) })
+                        .select(:program_workflow_state_id)
   end
 
   def median_weight_height(age_in_months, gender)
