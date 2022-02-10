@@ -161,7 +161,7 @@ module ANCService
     # method to get anc patient id
     def anc_patient_id(patient_id)
       result = ActiveRecord::Base.connection.select_one <<~SQL
-        SELECT anc_patient_id FROM #{@database}.patient_migration_mapping where art_patient_id = #{patient_id} LIMIT 1
+        SELECT anc_patient_id FROM #{@database}.mapped_patients where art_patient_id = #{patient_id}
       SQL
       result['anc_patient_id']
     end
