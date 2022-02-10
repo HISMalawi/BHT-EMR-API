@@ -143,7 +143,7 @@ class PatientService
       WHERE patient_program.patient_id = #{patient_id}
       AND patient_state.state IN (#{states.map { |state| state['program_workflow_state_id'] }.join(',')})
       AND patient_state.voided = 0
-      AND start_date > DATE('#{previous_visit}')
+      AND start_date >= DATE('#{previous_visit}')
       AND start_date <= DATE('#{defaulter_date}')
     SQL
     return true if result.blank?
@@ -152,7 +152,7 @@ class PatientService
     # check if this record has an end date for better result
     end_date = result['end_date'].blank? ? fetch_next_state_start_date(start_date, patient_id) : result['end_date']
 
-    return true if end_date.blank?
+    return false if end_date.blank?
 
     !defaulter_date.between(start_date, end_date)
   end
