@@ -19,7 +19,7 @@ module ANCService
       print_time message: 'Starting migration reversal script', long_form: true
       @users = user_list
       patient_in_use
-      @patients = "#{patient_list}','#{user_person_list}"
+      @patients = "#{patient_list},#{user_person_list}"
       patient_identifier_in_use
       patient_not_in_use
       @remove = remove_list

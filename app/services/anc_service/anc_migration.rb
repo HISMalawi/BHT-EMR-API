@@ -64,23 +64,23 @@ module ANCService
         migrate_person_attribute(not_linked, 'Migrating Person Attributes Details for those without any linkage')
         migrate_patient(not_linked, 'Migrating Patient Details for those without any linkage')
         migrate_patient_identifier(not_linked, 'Migrating Patient Identifier Details for those without any linkage')
-        migrate_patient_program(mapped, 'Migrating Patient Program Details for those linked', true)
+        migrate_patient_program(mapped, 'Migrating Patient Program Details for those linked', linked: true)
         migrate_patient_program(not_linked, 'Migrating Patient Program Details for those without any linkage')
         migrate_patient_state(mapped, 'Migrating Patient State for those linked')
         migrate_patient_state(not_linked, 'Migrating Patient State for those without any linkage')
         migrate_encounter_not_system_users(mapped,
-                                           'Migrating Patient encounters for those linked whose provider is not a system user', true)
+                                           'Migrating Patient encounters for those linked whose provider is not a system user', linked: true)
         migrate_encounter_not_system_users(not_linked,
                                            'Migrating Patient encounter for those without any linkage whose provider is a not a system user')
         migrate_encounter_system_users(mapped,
-                                       'Migrating Patient ecounter details for those linked whose provider is a system user', true)
+                                       'Migrating Patient ecounter details for those linked whose provider is a system user', linked: true)
         migrate_encounter_system_users(not_linked,
                                        'Migrating Patient encounter details for those without any linkage whose provider is a system user')
-        migrate_obs(mapped, 'Migratig patient observations for those linked')
+        migrate_obs(mapped, 'Migratig patient observations for those linked', linked: true)
         migrate_obs(not_linked, 'Migrating patient observations for those without any linkage')
-        migrate_orders(mapped, 'Migrating patient orders for those linked', true)
+        migrate_orders(mapped, 'Migrating patient orders for those linked', linked: true)
         migrate_orders(not_linked, 'Migrating patient orders for those without any linkage')
-        migrate_drug_order(mapped, 'Migrating patient drug orders for those linked', true)
+        migrate_drug_order(mapped, 'Migrating patient drug orders for those linked')
         migrate_drug_order(not_linked, 'Migrating patient drug orders for those without any linkage')
         if @database_reversed
           ANCService::ANCMissedMigration.new({ max_person_id: @person_id,
@@ -110,7 +110,7 @@ module ANCService
     # method to fetch linked patients
     def fetch_mapped_patients
       condition = ''
-      condition = "WHERE art_patient_id NOT IN (SELECT anc) #{@database}.ART_patient_in_use" if database_reversed
+      condition = "WHERE art_patient_id NOT IN (SELECT patient_id FROM #{@database}.ART_patient_in_use)" if @database_reversed
       result = ActiveRecord::Base.connection.select_all <<~SQL
         SELECT anc_patient_id, art_patient_id FROM #{@database}.mapped_patients #{condition}
       SQL
@@ -199,7 +199,6 @@ module ANCService
 
     # method to loop and create linkage between anc and openmrs(art) database
     def map_linkage_between_anc_and_openmrs
-      print_time message: 'Mapping Patients'
       create_mapped
       create_unmapped
       anc = ActiveRecord::Base.connection.select_all <<~SQL
@@ -208,9 +207,9 @@ module ANCService
         where patient_identifier.identifier_type = 3
         and patient_identifier.voided = 0
       SQL
-
+      print_time message: 'Mapping Patients'
       anc.each do |identifier|
-        openmrs = PatientIdentifier.where(identifier: identifier['identifier'].to_s)
+        openmrs = ActiveRecord::Base.connection.select_all "SELECT patient_id, identifier, voided FROM patient_identifier WHERE identifier = '#{identifier['identifier']}'"
         result = check_match(identifier['patient_id'], openmrs)
         if result.blank?
           unmapped_patients(identifier['patient_id'],
@@ -224,18 +223,23 @@ module ANCService
 
     # method to check dob
     def check_match(anc, openmrs)
+      return nil if openmrs.blank?
+
       record = nil
       openmrs.each do |identifier|
         @score = 0
-        ANCDetails.fetch_dob(@database, anc) == identifier.patient.person.birthdate ? @score += 10 : nil
+        patient = Patient.find_by(patient_id: identifier['patient_id'])
+        next if patient.blank?
+
+        ANCDetails.fetch_dob(@database, anc) == patient.person.birthdate ? @score += 20 : nil
         anc_name = ANCDetails.fetch_name(@database, anc)
-        anc_name['given_name'] == identifier.patient.person.names[0].given_name ? @score += 10 : nil
-        anc_name['family_name'] == identifier.patient.person.names[0].family_name ? @score += 10 : nil
-        ANCDetails.fetch_gender(@database, anc) == identifier.patient.person.gender ? @score += 10 : nil
-        check_address(ANCDetails.fetch_address(@data, anc), identifier.patient.person.addresses[0])
-        check_attribute(anc, identifier)
-        record = { anc => identifier.patitent.id } if @score >= 50
-        break if @score >= 50
+        anc_name['given_name'] == patient.person.names[0].given_name ? @score += 20 : nil
+        anc_name['family_name'] == patient.person.names[0].family_name ? @score += 20 : nil
+        ANCDetails.fetch_gender(@database, anc) == patient.person.gender ? @score += 20 : nil
+        check_address(ANCDetails.fetch_address(@data, anc), patient.person.addresses[0])
+        check_attribute(anc, patient)
+        record = { anc => patient.id, 'identifier' => patient.patient_identifiers.find_by(identifier_type: 3).identifier } if @score >= 60
+        break if @score >= 60
       end
       record
     end
@@ -244,7 +248,7 @@ module ANCService
     def check_attribute(anc, openmrs)
       @score += 10 if attribute_checker(anc, openmrs, 13)
       @score += 10 if attribute_checker(anc, openmrs, 12)
-      @score += 6.25 if attribute_checker(anc, openmrs, 3)
+      @score += 1.25 if attribute_checker(anc, openmrs, 3)
     end
 
     # method to just check the different attribute types of a patient
@@ -252,24 +256,26 @@ module ANCService
       record = ANCDetails.fetch_attribute(@database, anc, type)
       return false if record.blank?
 
-      record == openmrs.patient.person.person_attributes.find_by(person_attribute_type_id: type)&.value
+      record == openmrs.person.person_attributes.find_by(person_attribute_type_id: type)&.value
     end
 
     # method to check addresses
     def check_address(anc, openmrs)
-      @score += 6.25 if anc['address2'] == openmrs['address2']
-      @score += 6.25 if anc['county_district'] == openmrs['county_district']
-      @score += 6.25 if anc['neighborhood_cell'] == openmrs['neighborhood_cell']
-      @score += 6.25 if anc['state_province'] == openmrs['state_province']
-      @score += 6.25 if anc['city_village'] == openmrs['city_village']
-      @score += 6.25 if anc['address1'] == openmrs['address1']
+      return if anc.blank? || openmrs.blank?
+
+      @score += 1.25 if anc['address2'] == openmrs['address2']
+      @score += 1.25 if anc['county_district'] == openmrs['county_district']
+      @score += 1.25 if anc['neighborhood_cell'] == openmrs['neighborhood_cell']
+      @score += 1.25 if anc['state_province'] == openmrs['state_province']
+      @score += 1.25 if anc['city_village'] == openmrs['city_village']
+      @score += 1.25 if anc['address1'] == openmrs['address1']
     end
 
     # method to create unmapped table
     def create_mapped
       statements = <<~SQL
         DROP TABLE IF EXISTS #{@database}.mapped_patients;
-        CREATE TABLE #{@database}.mapped_patients (anc_patient_id int NOT NULL, art_patient_id int NOT NULL,identifier varchar(255) NOT NULL,PRIMARY KEY (anc_patient_id))
+        CREATE TABLE #{@database}.mapped_patients (anc_patient_id int NOT NULL, art_patient_id int NOT NULL,anc_identifier varchar(60) NOT NULL, art_identifier varchar(60) NOT NULL,PRIMARY KEY (anc_patient_id))
       SQL
       print_time message: 'Creating a table of patients with linkage'
       statements.split(';').each { |value| central_hub message: nil, query: value.strip }
@@ -279,8 +285,8 @@ module ANCService
     # method saved mapped patients
     def mapped_patients(map, identifier)
       statement = <<~SQL
-        INSERT INTO #{@database}.mapped_patients(anc_patient_id, art_patient_id, identifier)
-        VALUES (#{map.keys[0]}, #{map.values[0]}, #{identifier})
+        INSERT INTO #{@database}.mapped_patients(anc_patient_id, art_patient_id, anc_identifier, art_identifier)
+        VALUES (#{map.keys[0]}, #{map.values[0]}, "#{identifier}", '#{map.values[1]}')
       SQL
       central_execute statement
     end
@@ -289,7 +295,7 @@ module ANCService
     def create_unmapped
       statements = <<~SQL
         DROP TABLE IF EXISTS #{@database}.unmapped_patients;
-        CREATE TABLE #{@database}.unmapped_patients (anc_patient_id int NOT NULL,identifier varchar(255) NOT NULL,PRIMARY KEY (anc_patient_id))
+        CREATE TABLE #{@database}.unmapped_patients (anc_patient_id int NOT NULL,identifier varchar(60) NOT NULL,PRIMARY KEY (anc_patient_id))
       SQL
       print_time message: 'Creating a table of patients without any linkage'
       statements.split(';').each { |value| central_hub message: nil, query: value.strip }
@@ -300,7 +306,7 @@ module ANCService
     def unmapped_patients(patient_id, identifier)
       statement = <<~SQL
         INSERT INTO #{@database}.unmapped_patients(anc_patient_id, identifier)
-        VALUES (#{patient_id}, #{identifier})
+        VALUES (#{patient_id}, '#{identifier}')
       SQL
       central_execute statement
     end
@@ -327,7 +333,7 @@ module ANCService
       end
       statement = <<~SQL
         INSERT INTO person_name (preferred, person_id, prefix, given_name, middle_name, family_name_prefix, family_name, family_name2, family_name_suffix, degree, creator, date_created, voided, voided_by, date_voided, void_reason, changed_by, date_changed, uuid)
-        SELECT #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + person_id) AS person_id"},
+        SELECT preferred, #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + person_id) AS person_id"},
         prefix, given_name, middle_name, family_name_prefix, family_name, family_name2, family_name_suffix, degree, (SELECT #{@user_id} + creator) AS creator, date_created, voided, (SELECT #{@user_id} + voided_by) AS voided_by, date_voided, void_reason, (SELECT #{@user_id} + changed_by) AS changed_by, date_changed, uuid
         FROM #{@database}.person_name #{cond}
         WHERE person_id IN (#{patients})
