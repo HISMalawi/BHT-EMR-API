@@ -16,7 +16,6 @@ module ANCService
     end
 
     # rubocop:disable Metrics/MethodLength
-    # rubocop:disable Metrics/AbcSize
     # main method to do the workflow
     def main
       start_time = Time.now
@@ -25,8 +24,7 @@ module ANCService
       if @backup
         if @database_reversed
           @user_id = check_migration_map? ? user_id_from_map : user_id_from_bak
-          @patient_not_in_use = patient_not_in_use
-          abnormal
+          normal
         else
           puts 'Migration already happened you might want to reverse first before running this.'
           return
@@ -36,71 +34,67 @@ module ANCService
       end
       puts "Migration took #{time_ago_in_words(Time.now - (Time.now - start_time), include_seconds: true)}"
     end
-    # rubocop:enable Metrics/AbcSize
     # rubocop:enable Metrics/MethodLength
 
     private
-
-    # quick method to check whether all anc patients are in openmrs_kawale
-    def fetch_patients_not_in_openmrs
-      fetch_anc_patients.to_a - fetch_art_patients.to_a
-    end
-
-    # fetch patients in openmrs
-    def fetch_patients_in_openmrs
-      fetch_anc_patients.to_a - fetch_patients_not_in_openmrs
-    end
-
-    # method to fetch anc patients
-    def fetch_anc_patients
-      ActiveRecord::Base.connection.select_all <<~SQL
-        SELECT person_name.given_name, person_name.family_name, patient_identifier.identifier FROM #{@database}.person_name
-        INNER JOIN #{@database}.patient_identifier ON patient_identifier.patient_id = person_name.person_id
-        WHERE person_name.voided = 0
-        AND patient_identifier.identifier_type = 3
-        AND patient_identifier.voided = 0
-      SQL
-    end
-
-    # method to fetch art/openmrs patients
-    def fetch_art_patients
-      ActiveRecord::Base.connection.select_all <<~SQL
-        SELECT person_name.given_name, person_name.family_name, patient_identifier.identifier FROM person_name
-        INNER JOIN patient_identifier ON patient_identifier.patient_id = person_name.person_id
-        WHERE person_name.voided = 0
-        AND patient_identifier.identifier_type = 3
-        AND patient_identifier.voided = 0
-      SQL
-    end
 
     # rubocop:disable Metrics/MethodLength
     # rubocop:disable Metrics/AbcSize
     # method to execute normal migration
     def normal
-      print_time message: 'Starting a normal migration', long_form: true
-      create_user_bak
+      msg = @database_reversed ? 'Starting an abnormal migration (KAWALE CASE)' : 'Starting a normal migration'
+      print_time message: msg, long_form: true
+      create_user_bak unless @database_reversed
+      map_linkage_between_anc_and_openmrs
+      not_linked = fetch_unmapped_patients
+      mapped = fetch_mapped_patients
+      # rubocop:disable Metrics/BlockLength
       ActiveRecord::Base.transaction do
-        ActiveRecord::Base.connection.disable_referential_integrity do
-          migrate_users
-          migrate_person(fetch_user_person_id, 'Migratating user specific person records')
-          migrate_person_name(fetch_user_person_id, 'Migrating system users name records')
+        unless @database_reversed
+          ActiveRecord::Base.connection.disable_referential_integrity do
+            migrate_users
+            migrate_person(fetch_user_person_id, 'Migratating user specific person records')
+            migrate_person_name(fetch_user_person_id, 'Migrating system users name records')
+          end
         end
-        migrate_person()
-        migrate_person_name
-        migrate_person_address
-        migrate_person_attribute
-        migrate_patient
-        migrate_patient_identifier
-        migrate_patient_program
-        migrate_patient_state
-        migrate_encounter
-        migrate_obs
-        migrate_orders
-        migrate_drug_order
+        update_openmrs_users if @database_reversed
+        migrate_person(not_linked, 'Migrating Person Details for those without any linkage')
+        migrate_person_name(not_linked, 'Migrating Person Name Details for those without any linkage')
+        migrate_person_address(not_linked, 'Migrating Person Address Details for those without any linkage')
+        migrate_person_attribute(not_linked, 'Migrating Person Attributes Details for those without any linkage')
+        migrate_patient(not_linked, 'Migrating Patient Details for those without any linkage')
+        migrate_patient_identifier(not_linked, 'Migrating Patient Identifier Details for those without any linkage')
+        migrate_patient_program(mapped, 'Migrating Patient Program Details for those linked', true)
+        migrate_patient_program(not_linked, 'Migrating Patient Program Details for those without any linkage')
+        migrate_patient_state(mapped, 'Migrating Patient State for those linked')
+        migrate_patient_state(not_linked, 'Migrating Patient State for those without any linkage')
+        migrate_encounter_not_system_users(mapped,
+                                           'Migrating Patient encounters for those linked whose provider is not a system user', true)
+        migrate_encounter_not_system_users(not_linked,
+                                           'Migrating Patient encounter for those without any linkage whose provider is a not a system user')
+        migrate_encounter_system_users(mapped,
+                                       'Migrating Patient ecounter details for those linked whose provider is a system user', true)
+        migrate_encounter_system_users(not_linked,
+                                       'Migrating Patient encounter details for those without any linkage whose provider is a system user')
+        migrate_obs(mapped, 'Migratig patient observations for those linked')
+        migrate_obs(not_linked, 'Migrating patient observations for those without any linkage')
+        migrate_orders(mapped, 'Migrating patient orders for those linked', true)
+        migrate_orders(not_linked, 'Migrating patient orders for those without any linkage')
+        migrate_drug_order(mapped, 'Migrating patient drug orders for those linked', true)
+        migrate_drug_order(not_linked, 'Migrating patient drug orders for those without any linkage')
+        if @database_reversed
+          ANCService::ANCMissedMigration.new({ max_person_id: @person_id,
+                                               max_user_id: @user_id, max_patient_program_id: @patient_program_id,
+                                               max_encounter_id: @encounter_id, max_obs_id: @obs_id,
+                                               max_order_id: @order_id, database: @database }).main
+        end
         update_migrated_records
       end
+      # rubocop:enable Metrics/BlockLength
       create_migration_residuals
-      print_time message: 'Normal migratrion finished', long_form: true
+      remove_holding_tables if @database_reversed
+      msg = @database_reversed ? 'Abnormal migratrion finished' : 'Normal migratrion finished'
+      print_time message: msg, long_form: true
     end
     # rubocop:enable Metrics/AbcSize
     # rubocop:enable Metrics/MethodLength
@@ -115,48 +109,55 @@ module ANCService
 
     # method to fetch linked patients
     def fetch_mapped_patients
-      statement = <<~SQL
-        SELECT anc_patient_id, art_patient_id FROM mapped_patients
-        #{'WHERE anc_patient_id NOT IN (SELECT anc)'}
+      condition = ''
+      condition = "WHERE art_patient_id NOT IN (SELECT anc) #{@database}.ART_patient_in_use" if database_reversed
+      result = ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT anc_patient_id, art_patient_id FROM #{@database}.mapped_patients #{condition}
       SQL
+      result.map { |person| person['anc_patient_id'] }.push(0).join(',')
     end
 
-    # rubocop:disable Metrics/MethodLength
-    # rubocop:disable Metrics/AbcSize
-    # method to execute a migration after a reversal was done
-    def abnormal
-      print_time message: 'Starting an abnormal migration (KAWALE CASE)', long_form: true
-      begin
-        ActiveRecord::Base.transaction do
-          update_openmrs_users
-          migrate_person
-          migrate_person_name
-          migrate_person_address
-          migrate_person_attribute
-          migrate_patient
-          migrate_patient_identifier
-          migrate_patient_program
-          migrate_patient_state
-          migrate_encounter
-          migrate_obs
-          migrate_orders
-          migrate_drug_order
-          ANCService::ANCMissedMigration.new({ max_person_id: @person_id,
-                                               max_user_id: @user_id, max_patient_program_id: @patient_program_id,
-                                               max_encounter_id: @encounter_id, max_obs_id: @obs_id,
-                                               max_order_id: @order_id, database: @database }).main
-
-          update_migrated_records
-        end
-        create_migration_residuals
-        remove_holding_tables
-      rescue StandardError => e
-        puts e.message[0..1000]
-      end
-      print_time message: 'Abnormal migratrion finished', long_form: true
+    # method to fetch patients without any link
+    def fetch_unmapped_patients
+      result = ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT anc_patient_id FROM #{@database}.unmapped_patients
+      SQL
+      result.map { |record| record['anc_patient_id'] }.push(0).join(',')
     end
-    # rubocop:enable Metrics/AbcSize
-    # rubocop:enable Metrics/MethodLength
+
+    # # method to execute a migration after a reversal was done
+    # def abnormal
+    #   print_time message: 'Starting an abnormal migration (KAWALE CASE)', long_form: true
+    #   begin
+    #     map_linkage_between_anc_and_openmrs
+    #     ActiveRecord::Base.transaction do
+    #       update_openmrs_users
+    #       migrate_person
+    #       migrate_person_name
+    #       migrate_person_address
+    #       migrate_person_attribute
+    #       migrate_patient
+    #       migrate_patient_identifier
+    #       migrate_patient_program
+    #       migrate_patient_state
+    #       migrate_encounter
+    #       migrate_obs
+    #       migrate_orders
+    #       migrate_drug_order
+    #       ANCService::ANCMissedMigration.new({ max_person_id: @person_id,
+    #                                            max_user_id: @user_id, max_patient_program_id: @patient_program_id,
+    #                                            max_encounter_id: @encounter_id, max_obs_id: @obs_id,
+    #                                            max_order_id: @order_id, database: @database }).main
+
+    #       update_migrated_records
+    #     end
+    #     create_migration_residuals
+
+    #   rescue StandardError => e
+    #     puts e.message[0..1000]
+    #   end
+    #   print_time message: , long_form: true
+    # end
 
     # rubocop:disable Metrics/MethodLength
     # method to create user mapping
@@ -211,7 +212,12 @@ module ANCService
       anc.each do |identifier|
         openmrs = PatientIdentifier.where(identifier: identifier['identifier'].to_s)
         result = check_match(identifier['patient_id'], openmrs)
-        result.blank? ? unmapped_patients(identifier['patient_id'], identifier['identifier']) : mapped_patients(result, identifier['identifier'])
+        if result.blank?
+          unmapped_patients(identifier['patient_id'],
+                            identifier['identifier'])
+        else
+          mapped_patients(result, identifier['identifier'])
+        end
       end
       print_time
     end
@@ -300,77 +306,98 @@ module ANCService
     end
 
     # method to migrate person records
-    def migrate_person(patients, msg)
+    def migrate_person(patients, msg, linked: false)
+      cond = ''
+      cond = "INNER JOIN #{@database}.mapped_patients on mapped_patients.anc_patient_id = person.person_id" if linked
       statement = <<~SQL
         INSERT INTO person (person_id, gender, birthdate, birthdate_estimated, dead, death_date, cause_of_death, creator, date_created, changed_by, date_changed, voided, voided_by, date_voided, void_reason, uuid)
-        SELECT (SELECT #{@person_id} + person_id) AS person_id, gender, birthdate, birthdate_estimated, dead, death_date, cause_of_death, (SELECT #{@user_id} + creator) AS creator, date_created, (SELECT #{@user_id} + changed_by) AS changed_by, date_changed, voided, (SELECT #{@user_id} + voided_by) AS voided_by, date_voided, void_reason, uuid
-        FROM #{@database}.person
+        SELECT #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + person_id) AS person_id"},
+        gender, birthdate, birthdate_estimated, dead, death_date, cause_of_death, (SELECT #{@user_id} + creator) AS creator, date_created, (SELECT #{@user_id} + changed_by) AS changed_by, date_changed, voided, (SELECT #{@user_id} + voided_by) AS voided_by, date_voided, void_reason, uuid
+        FROM #{@database}.person #{cond}
         WHERE person_id IN (#{patients})
       SQL
       central_hub message: msg, query: statement
     end
 
     # method to migrate person name records
-    def migrate_person_name(patients, msg)
+    def migrate_person_name(patients, msg, linked: false)
+      cond = ''
+      if linked
+        cond = "INNER JOIN #{@database}.mapped_patients on mapped_patients.anc_patient_id = person_name.person_id"
+      end
       statement = <<~SQL
         INSERT INTO person_name (preferred, person_id, prefix, given_name, middle_name, family_name_prefix, family_name, family_name2, family_name_suffix, degree, creator, date_created, voided, voided_by, date_voided, void_reason, changed_by, date_changed, uuid)
-        SELECT preferred, (SELECT #{@person_id} + person_id) AS person_id, prefix, given_name, middle_name, family_name_prefix, family_name, family_name2, family_name_suffix, degree, (SELECT #{@user_id} + creator) AS creator, date_created, voided, (SELECT #{@user_id} + voided_by) AS voided_by, date_voided, void_reason, (SELECT #{@user_id} + changed_by) AS changed_by, date_changed, uuid
-        FROM #{@database}.person_name
+        SELECT #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + person_id) AS person_id"},
+        prefix, given_name, middle_name, family_name_prefix, family_name, family_name2, family_name_suffix, degree, (SELECT #{@user_id} + creator) AS creator, date_created, voided, (SELECT #{@user_id} + voided_by) AS voided_by, date_voided, void_reason, (SELECT #{@user_id} + changed_by) AS changed_by, date_changed, uuid
+        FROM #{@database}.person_name #{cond}
         WHERE person_id IN (#{patients})
       SQL
       central_hub message: msg, query: statement
     end
 
     # method to migrate person address records
-    def migrate_person_address(patients, msg)
+    def migrate_person_address(patients, msg, linked: false)
+      cond = ''
+      cond = "INNER JOIN #{@database}.mapped_patients on mapped_patients.anc_patient_id = p.person_id" if linked
       statement = <<~SQL
         INSERT INTO person_address (person_id,  preferred,  address1,  address2,  city_village,  state_province,  postal_code,  country,  latitude,  longitude,  creator,  date_created,  voided,  voided_by,  date_voided, void_reason, county_district,  neighborhood_cell,  region,  subregion,  township_division,  uuid)
-        SELECT (SELECT #{@person_id} + p.person_id) AS person_id, p.preferred,  p.address1,  p.address2,  p.city_village,  p.state_province, p.postal_code,  p.country,  p.latitude,  p.longitude,  (SELECT #{@user_id} + p.creator) AS creator,  p.date_created,  p.voided,  (SELECT #{@user_id} + p.voided_by) AS voided_by, p.date_voided, p.void_reason, p.county_district,  p.neighborhood_cell,  p.region,  p.subregion,  p.township_division, uuid
-        FROM #{@database}.person_address p
+        SELECT #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + p.person_id) AS person_id"},
+        p.preferred,  p.address1,  p.address2,  p.city_village,  p.state_province, p.postal_code,  p.country,  p.latitude,  p.longitude,  (SELECT #{@user_id} + p.creator) AS creator,  p.date_created,  p.voided,  (SELECT #{@user_id} + p.voided_by) AS voided_by, p.date_voided, p.void_reason, p.county_district,  p.neighborhood_cell,  p.region,  p.subregion,  p.township_division, uuid
+        FROM #{@database}.person_address p #{cond}
         WHERE p.person_id IN (#{patients})
       SQL
       central_hub message: msg, query: statement
     end
 
     # method to migrate person attribute records
-    def migrate_person_attribute(patients, msg)
+    def migrate_person_attribute(patients, msg, linked: false)
+      cond = ''
+      cond = "INNER JOIN #{@database}.mapped_patients on mapped_patients.anc_patient_id = p.person_id" if linked
       statement = <<~SQL
         INSERT INTO person_attribute (person_id, value, person_attribute_type_id, creator, date_created, changed_by, date_changed, voided, voided_by, date_voided, void_reason, uuid)
-        SELECT (SELECT #{@person_id} + p.person_id) AS person_id, p.value, p.person_attribute_type_id, (SELECT #{@user_id} + p.creator) AS creator, p.date_created,  (SELECT #{@user_id} + p.changed_by) AS changed_by, p.date_changed, p.voided,  p.voided_by, p.date_voided, p.void_reason, uuid
-        FROM #{@database}.person_attribute p
+        SELECT #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + p.person_id) AS person_id"}, p.value, p.person_attribute_type_id, (SELECT #{@user_id} + p.creator) AS creator, p.date_created,  (SELECT #{@user_id} + p.changed_by) AS changed_by, p.date_changed, p.voided,  p.voided_by, p.date_voided, p.void_reason, uuid
+        FROM #{@database}.person_attribute p #{cond}
         WHERE p.person_id IN (#{patients})
       SQL
       central_hub message: msg, query: statement
     end
 
     # method to migrate patient records
-    def migrate_patient(patients, msg)
+    def migrate_patient(patients, msg, linked: false)\
+      cond = ''
+      cond = "INNER JOIN #{@database}.mapped_patients on mapped_patients.anc_patient_id = p.patient_id" if linked
       statement = <<~SQL
         INSERT INTO patient (patient_id, tribe, creator, date_created, changed_by, date_changed, voided, voided_by, date_voided, void_reason)
-        SELECT (SELECT #{@person_id} + p.patient_id) AS patient_id, p.tribe, (SELECT #{@user_id} + p.creator) AS creator, p.date_created,  (SELECT #{@user_id} + p.changed_by) AS changed_by, p.date_changed, p.voided, (SELECT #{@user_id} + p.voided_by) AS voided_by, p.date_voided, p.void_reason
-        FROM #{@database}.patient p
+        SELECT #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + p.patient_id) AS patient_id"}, p.tribe, (SELECT #{@user_id} + p.creator) AS creator, p.date_created,  (SELECT #{@user_id} + p.changed_by) AS changed_by, p.date_changed, p.voided, (SELECT #{@user_id} + p.voided_by) AS voided_by, p.date_voided, p.void_reason
+        FROM #{@database}.patient p #{cond}
         WHERE p.patient_id IN (#{patients})
       SQL
       central_hub message: msg, query: statement
     end
 
     # method to migrate patient identifier records
-    def migrate_patient_identifier(patients, msg)
+    def migrate_patient_identifier(patients, msg, linked: false)
+      cond = ''
+      cond = "INNER JOIN #{@database}.mapped_patients on mapped_patients.anc_patient_id = p.patient_id" if linked
       statement = <<~SQL
         INSERT INTO patient_identifier (patient_id,  identifier,  identifier_type,  preferred,  location_id,  creator,  date_created,  voided,  voided_by,  date_voided,  void_reason,  uuid)
-        SELECT (SELECT #{@person_id} + p.patient_id) AS patient_id, p.identifier, p.identifier_type,  p.preferred,  p.location_id,  (SELECT #{@user_id} + p.creator) AS creator,  p.date_created,  p.voided, (SELECT #{@user_id} + p.voided_by) AS voided_by, p.date_voided, p.void_reason, uuid
-        FROM #{@database}.patient_identifier p
+        SELECT #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + p.patient_id) AS patient_id,"} p.identifier, p.identifier_type,  p.preferred,  p.location_id,  (SELECT #{@user_id} + p.creator) AS creator,  p.date_created,  p.voided, (SELECT #{@user_id} + p.voided_by) AS voided_by, p.date_voided, p.void_reason, uuid
+        FROM #{@database}.patient_identifier p #{cond}
         WHERE p.patient_id IN (#{patients})
       SQL
       central_hub message: msg, query: statement
     end
 
     # method to migrate patient program records
-    def migrate_patient_program(patients, msg)
+    def migrate_patient_program(patients, msg, linked: false)
+      cond = ''
+      if linked
+        cond = "INNER JOIN #{@database}.mapped_patients on mapped_patients.anc_patient_id = patient_program.patient_id"
+      end
       statement = <<~SQL
         INSERT INTO patient_program (patient_program_id,  patient_id,  program_id,  date_enrolled,  date_completed,  creator,  date_created, changed_by,  date_changed,  voided, voided_by,  date_voided,  void_reason,  uuid,  location_id)
-        SELECT (SELECT #{@patient_program_id} + patient_program_id) AS patient_program_id,  (SELECT #{@person_id} + patient_id) AS patient_id,  program_id,  date_enrolled,  date_completed,  (SELECT #{@user_id} + creator) AS creator,  date_created, (SELECT #{@user_id} + changed_by) AS changed_by, date_changed,  voided,  (SELECT #{@user_id} + voided_by) AS voided_by,  date_voided,  void_reason,  uuid, location_id
-        FROM #{@database}.patient_program
+        SELECT (SELECT #{@patient_program_id} + patient_program_id) AS patient_program_id,  #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + patient_id) AS patient_id"},  program_id,  date_enrolled,  date_completed,  (SELECT #{@user_id} + creator) AS creator,  date_created, (SELECT #{@user_id} + changed_by) AS changed_by, date_changed,  voided,  (SELECT #{@user_id} + voided_by) AS voided_by,  date_voided,  void_reason,  uuid, location_id
+        FROM #{@database}.patient_program #{cond}
         WHERE patient_id IN (#{patients})
       SQL
       central_hub message: msg, query: statement
@@ -387,17 +414,17 @@ module ANCService
       central_hub message: msg, query: statement
     end
 
-    # method to migrate encounter records
-    def migrate_encounter
-      # statement = <<~SQL
-      #   INSERT INTO encounter (encounter_id, encounter_type, patient_id, provider_id, location_id, form_id, encounter_datetime, creator, date_created, voided, voided_by, date_voided, void_reason, uuid, changed_by, date_changed, program_id)
-      #   SELECT (SELECT #{@encounter_id} + encounter_id) AS id, encounter_type, (SELECT #{@person_id} + patient_id) AS patient_id, (SELECT #{@person_id} + provider_id) AS provider_id, location_id, form_id, encounter_datetime, (SELECT #{@user_id} + creator) AS creator, date_created, voided, (SELECT #{@user_id} + voided_by) AS voided_by, date_voided, void_reason, uuid, (SELECT #{@user_id} + changed_by) AS changed_by, date_changed, 12
-      #   FROM #{@database}.encounter
-      # SQL
-      # central_hub message: 'Migrating encounter records', query: statement
-      migrate_encounter_system_users
-      migrate_encounter_not_system_users
-    end
+    # # method to migrate encounter records
+    # def migrate_encounter
+    #   # statement = <<~SQL
+    #   #   INSERT INTO encounter (encounter_id, encounter_type, patient_id, provider_id, location_id, form_id, encounter_datetime, creator, date_created, voided, voided_by, date_voided, void_reason, uuid, changed_by, date_changed, program_id)
+    #   #   SELECT (SELECT #{@encounter_id} + encounter_id) AS id, encounter_type, (SELECT #{@person_id} + patient_id) AS patient_id, (SELECT #{@person_id} + provider_id) AS provider_id, location_id, form_id, encounter_datetime, (SELECT #{@user_id} + creator) AS creator, date_created, voided, (SELECT #{@user_id} + voided_by) AS voided_by, date_voided, void_reason, uuid, (SELECT #{@user_id} + changed_by) AS changed_by, date_changed, 12
+    #   #   FROM #{@database}.encounter
+    #   # SQL
+    #   # central_hub message: 'Migrating encounter records', query: statement
+    #   migrate_encounter_system_users
+    #   migrate_encounter_not_system_users
+    # end
 
     # method to load previous person id
     def prev_person_id
@@ -408,22 +435,28 @@ module ANCService
     end
 
     # method to migrate encounter whose providers are system users
-    def migrate_encounter_system_users(patients, msg)
+    def migrate_encounter_system_users(patients, msg, linked: false)
+      cond = ''
+      if linked
+        cond = "INNER JOIN #{@database}.mapped_patients on mapped_patients.anc_patient_id = encounter.patient_id"
+      end
       statement = <<~SQL
         INSERT INTO encounter (encounter_id, encounter_type, patient_id, provider_id, location_id, form_id, encounter_datetime, creator, date_created, voided, voided_by, date_voided, void_reason, uuid, changed_by, date_changed, program_id)
-        SELECT (SELECT #{@encounter_id} + encounter_id) AS id, encounter_type, (SELECT #{@person_id} + patient_id) AS patient_id, (SELECT #{prev_person_id} + provider_id) AS provider_id, location_id, form_id, encounter_datetime, (SELECT #{@user_id} + creator) AS creator, date_created, voided, (SELECT #{@user_id} + voided_by) AS voided_by, date_voided, void_reason, uuid, (SELECT #{@user_id} + changed_by) AS changed_by, date_changed, 12
-        FROM #{@database}.encounter
+        SELECT (SELECT #{@encounter_id} + encounter_id) AS id, encounter_type, #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + patient_id) AS patient_id"}, (SELECT #{prev_person_id} + provider_id) AS provider_id, location_id, form_id, encounter_datetime, (SELECT #{@user_id} + creator) AS creator, date_created, voided, (SELECT #{@user_id} + voided_by) AS voided_by, date_voided, void_reason, uuid, (SELECT #{@user_id} + changed_by) AS changed_by, date_changed, 12
+        FROM #{@database}.encounter #{cond}
         WHERE provider_id IN (SELECT person_id FROM #{@database}.users) AND patient_id IN (#{patients})
       SQL
       central_hub message: msg, query: statement
     end
 
     # method to migrate encounter whose providers are system users
-    def migrate_encounter_not_system_users(patients, msg)
+    def migrate_encounter_not_system_users(patients, msg, linked: false)
+      cond = ''
+      cond = "INNER JOIN #{@database}.mapped_patients on mapped_patients.anc_patient_id = e.patient_id" if linked
       statement = <<~SQL
         INSERT INTO encounter (encounter_id, encounter_type, patient_id, provider_id, location_id, form_id, encounter_datetime, creator, date_created, voided, voided_by, date_voided, void_reason, uuid, changed_by, date_changed, program_id)
-        SELECT (SELECT #{@encounter_id} + e.encounter_id) AS id, e.encounter_type, (SELECT #{@person_id} + e.patient_id) AS patient_id, bak.person_id AS provider_id, e.location_id, e.form_id, e.encounter_datetime, bak.ART_user_id AS creator, e.date_created, e.voided, (SELECT #{@user_id} + e.voided_by) AS voided_by, e.date_voided, e.void_reason, e.uuid, (SELECT #{@user_id} + e.changed_by) AS changed_by, e.date_changed, 12
-        FROM #{@database}.encounter e
+        SELECT (SELECT #{@encounter_id} + e.encounter_id) AS id, e.encounter_type, #{linked ? 'mapped_patients.art_patient_id' : "(SELECT #{@person_id} + e.patient_id) AS patient_id"}, bak.person_id AS provider_id, e.location_id, e.form_id, e.encounter_datetime, bak.ART_user_id AS creator, e.date_created, e.voided, (SELECT #{@user_id} + e.voided_by) AS voided_by, e.date_voided, e.void_reason, e.uuid, (SELECT #{@user_id} + e.changed_by) AS changed_by, e.date_changed, 12
+        FROM #{@database}.encounter e #{cond}
         INNER JOIN #{@database}.user_bak bak ON e.creator = bak.ANC_user_id
         WHERE provider_id NOT IN (SELECT person_id FROM #{@database}.users) AND patient_id IN (#{patients})
       SQL
@@ -431,22 +464,26 @@ module ANCService
     end
 
     # method to migrate obs records
-    def migrate_obs(patients, msg)
+    def migrate_obs(patients, msg, linked: false)
+      cond = ''
+      cond = "INNER JOIN #{@database}.mapped_patients on mapped_patients.anc_patient_id = obs.person_id" if linked
       statement = <<~SQL
         INSERT INTO obs (obs_id, person_id,  concept_id,  encounter_id,  order_id,  obs_datetime,  location_id,  obs_group_id,  accession_number,  value_group_id,  value_boolean,  value_coded,  value_coded_name_id,  value_drug,  value_datetime,  value_numeric,  value_modifier,  value_text,  date_started,  date_stopped,  comments,  creator,  date_created,  voided,  voided_by,  date_voided,  void_reason,  value_complex,  uuid)
-        SELECT (SELECT #{@obs_id} + obs_id) AS obs_id, (SELECT #{@person_id} + person_id) AS person_id,  concept_id,  (SELECT #{@encounter_id} + encounter_id) AS encounter_id,  (SELECT #{@order_id} + order_id) AS order_id, obs_datetime, location_id, (SELECT #{@obs_id} + obs_group_id) AS obs_group_id, accession_number, value_group_id, value_boolean, value_coded, value_coded_name_id, value_drug, value_datetime, value_numeric, value_modifier, value_text, date_started, date_stopped,  comments, (SELECT #{@user_id} + creator) AS creator, date_created, voided, (SELECT #{@user_id} + voided_by) AS voided_by, date_voided, void_reason, value_complex,  uuid
-        FROM #{@database}.obs
+        SELECT (SELECT #{@obs_id} + obs_id) AS obs_id, #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + person_id) AS person_id"},  concept_id,  (SELECT #{@encounter_id} + encounter_id) AS encounter_id,  (SELECT #{@order_id} + order_id) AS order_id, obs_datetime, location_id, (SELECT #{@obs_id} + obs_group_id) AS obs_group_id, accession_number, value_group_id, value_boolean, value_coded, value_coded_name_id, value_drug, value_datetime, value_numeric, value_modifier, value_text, date_started, date_stopped,  comments, (SELECT #{@user_id} + creator) AS creator, date_created, voided, (SELECT #{@user_id} + voided_by) AS voided_by, date_voided, void_reason, value_complex,  uuid
+        FROM #{@database}.obs #{cond}
         WHERE encounter_id IN (SELECT encounter_id FROM #{@database}.encounter WHERE patient_id IN (#{patients}))
       SQL
       central_hub message: msg, query: statement
     end
 
     # method to migrate orders records
-    def migrate_orders(patients, msg)
+    def migrate_orders(patients, msg, linked: false)
+      cond = ''
+      cond = "INNER JOIN #{@database}.mapped_patients on mapped_patients.anc_patient_id = orders.patient_id" if linked
       statement = <<~SQL
         INSERT INTO orders (order_id, order_type_id, concept_id, orderer,  encounter_id,  instructions,  start_date,  auto_expire_date,  discontinued,  discontinued_date, discontinued_by,  discontinued_reason, creator, date_created,  voided,  voided_by,  date_voided,  void_reason, patient_id,  accession_number, obs_id,  uuid, discontinued_reason_non_coded)
-        SELECT (SELECT #{@order_id} + order_id) AS order_id,  order_type_id, concept_id, orderer, (SELECT #{@encounter_id} + encounter_id) AS encounter_id,  instructions, start_date, auto_expire_date,  discontinued,  discontinued_date, (SELECT #{@user_id} + discontinued_by) AS discontinued_by,  discontinued_reason,  (SELECT #{@user_id} + creator) AS creator,  date_created,  voided, (SELECT #{@user_id} + voided_by) AS voided_by,  date_voided, void_reason, (SELECT #{@person_id} + patient_id) AS patient_id, accession_number, (SELECT #{@obs_id} + obs_id) AS obs_id, uuid, discontinued_reason_non_coded
-        FROM #{@database}.orders
+        SELECT (SELECT #{@order_id} + order_id) AS order_id,  order_type_id, concept_id, orderer, (SELECT #{@encounter_id} + encounter_id) AS encounter_id,  instructions, start_date, auto_expire_date,  discontinued,  discontinued_date, (SELECT #{@user_id} + discontinued_by) AS discontinued_by,  discontinued_reason,  (SELECT #{@user_id} + creator) AS creator,  date_created,  voided, (SELECT #{@user_id} + voided_by) AS voided_by,  date_voided, void_reason, #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + patient_id) AS patient_id"}, accession_number, (SELECT #{@obs_id} + obs_id) AS obs_id, uuid, discontinued_reason_non_coded
+        FROM #{@database}.orders #{cond}
         WHERE encounter_id IN (SELECT encounter_id FROM #{@database}.encounter WHERE patient_id IN (#{patients}) )
       SQL
       central_hub message: msg, query: statement
@@ -467,21 +504,21 @@ module ANCService
     # method to update migated records
     def update_migrated_records
       statements = <<~SQL
-        UPDATE encounter set encounter_type = 98 where encounter_type = 61;
-        UPDATE obs SET value_text = null, value_coded = 1065, value_coded_name_id = 1102 WHERE concept_id = 2723 and value_text IN ('Given during previous ANC visit for current pregnancy', 'Given Today', 'Yes');
-        UPDATE obs SET value_text = null, value_coded = 1066, value_coded_name_id = 1103 WHERE concept_id = 2723 and value_text IN ('No', 'Not given today or during current pregnancy');
-        UPDATE #{@database}.obs SET value_text = null, value_coded = 1067, value_coded_name_id = 1104 WHERE concept_id = 2723 and value_text IN ('Unknown');
-        UPDATE obs SET value_text = null, value_coded = 1065, value_coded_name_id = 1102 WHERE value_text = 'Yes';
-        UPDATE obs SET value_text = null, value_coded = 1066, value_coded_name_id = 1103 WHERE value_text = 'No';
-        UPDATE obs SET value_text = null, value_coded = 1067, value_coded_name_id = 1104 WHERE value_text = 'Unknown';
-        UPDATE obs SET value_text = null, value_coded = 703, value_coded_name_id = 718 WHERE value_text = 'Positive';
-        UPDATE obs SET value_text = null, value_coded = 664, value_coded_name_id = 678 WHERE value_text = 'Negative';
-        UPDATE obs SET value_text = null, value_coded = 2475, value_coded_name_id = 5944 WHERE value_text = 'Not Done';
-        UPDATE obs SET value_text = null, value_coded = 9436, value_coded_name_id = 12655 WHERE value_text = 'Inconclusive';
-        UPDATE obs SET value_text = null, value_coded = 2895, value_coded_name_id = 3115 WHERE concept_id = 7998 and value_text IN ('Alive');
-        UPDATE obs SET value_text = null, value_coded = 7804, value_coded_name_id = 10669 WHERE concept_id = 7998 and value_text IN ('Fresh Still Birth (FSB)');
-        UPDATE obs SET value_text = null, value_coded = 7803, value_coded_name_id = 10668 WHERE concept_id = 7998 and value_text IN ('Macerated Still Birth (MSB)');
-        UPDATE obs SET value_text = null, value_coded = 7975, value_coded_name_id = 10922 WHERE concept_id = 7998 and value_text IN ('Still Birth')
+        UPDATE encounter SET encounter_type = 98 WHERE encounter_type = 61 AND encounter_id > #{@encounter_id};
+        UPDATE obs SET value_text = null, value_coded = 1065, value_coded_name_id = 1102 WHERE concept_id = 2723 AND value_text IN ('Given during previous ANC visit for current pregnancy', 'Given Today', 'Yes') AND obs_id > #{@obs_id};
+        UPDATE obs SET value_text = null, value_coded = 1066, value_coded_name_id = 1103 WHERE concept_id = 2723 AND value_text IN ('No', 'Not given today or during current pregnancy') AND obs_id > #{@obs_id};
+        UPDATE #{@database}.obs SET value_text = null, value_coded = 1067, value_coded_name_id = 1104 WHERE concept_id = 2723 AND value_text IN ('Unknown');
+        UPDATE obs SET value_text = null, value_coded = 1065, value_coded_name_id = 1102 WHERE value_text = 'Yes' AND obs_id > #{@obs_id};
+        UPDATE obs SET value_text = null, value_coded = 1066, value_coded_name_id = 1103 WHERE value_text = 'No' AND obs_id > #{@obs_id};
+        UPDATE obs SET value_text = null, value_coded = 1067, value_coded_name_id = 1104 WHERE value_text = 'Unknown' AND obs_id > #{@obs_id};
+        UPDATE obs SET value_text = null, value_coded = 703, value_coded_name_id = 718 WHERE value_text = 'Positive' AND obs_id > #{@obs_id};
+        UPDATE obs SET value_text = null, value_coded = 664, value_coded_name_id = 678 WHERE value_text = 'Negative' AND obs_id > #{@obs_id};
+        UPDATE obs SET value_text = null, value_coded = 2475, value_coded_name_id = 5944 WHERE value_text = 'Not Done' AND obs_id > #{@obs_id};
+        UPDATE obs SET value_text = null, value_coded = 9436, value_coded_name_id = 12655 WHERE value_text = 'Inconclusive' AND obs_id > #{@obs_id};
+        UPDATE obs SET value_text = null, value_coded = 2895, value_coded_name_id = 3115 WHERE concept_id = 7998 AND value_text IN ('Alive') AND obs_id > #{@obs_id};
+        UPDATE obs SET value_text = null, value_coded = 7804, value_coded_name_id = 10669 WHERE concept_id = 7998 AND value_text IN ('Fresh Still Birth (FSB)') AND obs_id > #{@obs_id};
+        UPDATE obs SET value_text = null, value_coded = 7803, value_coded_name_id = 10668 WHERE concept_id = 7998 AND value_text IN ('Macerated Still Birth (MSB)') AND obs_id > #{@obs_id};
+        UPDATE obs SET value_text = null, value_coded = 7975, value_coded_name_id = 10922 WHERE concept_id = 7998 AND value_text IN ('Still Birth') AND obs_id > #{@obs_id}
       SQL
       print_time message: 'Updating observations'
       statements.split(';').each { |value| central_hub message: nil, query: value.strip }
