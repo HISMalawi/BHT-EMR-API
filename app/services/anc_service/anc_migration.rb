@@ -13,6 +13,8 @@ module ANCService
       @obs_id = max_obs_id
       @order_id = max_order_id
       @database = database
+      @log = File.new('migration.log', 'a+')
+      @file = File.new('migration.csv', 'a+')
     end
 
     # rubocop:disable Metrics/MethodLength
@@ -26,13 +28,17 @@ module ANCService
           @user_id = check_migration_map? ? user_id_from_map : user_id_from_bak
           normal
         else
+          @log.puts 'Migration already happened you might want to reverse first before running this.'
           puts 'Migration already happened you might want to reverse first before running this.'
           return
         end
       else
         normal
       end
-      puts "Migration took #{time_ago_in_words(Time.now - (Time.now - start_time), include_seconds: true)}"
+      log = "Migration took #{time_ago_in_words(Time.now - (Time.now - start_time), include_seconds: true)}"
+      puts log
+      @log.puts log
+      write_migration_to_file
     end
     # rubocop:enable Metrics/MethodLength
 
@@ -209,7 +215,7 @@ module ANCService
       SQL
       print_time message: 'Mapping Patients'
       anc.each do |identifier|
-        openmrs = ActiveRecord::Base.connection.select_all "SELECT patient_id, identifier, voided FROM patient_identifier WHERE identifier = '#{identifier['identifier']}'"
+        openmrs = ActiveRecord::Base.connection.select_all "SELECT patient_id, identifier, void_reason FROM patient_identifier WHERE identifier = '#{identifier['identifier']}'"
         result = check_match(identifier['patient_id'], openmrs)
         if result.blank?
           unmapped_patients(identifier['patient_id'],
@@ -238,7 +244,7 @@ module ANCService
         ANCDetails.fetch_gender(@database, anc) == patient.person.gender ? @score += 20 : nil
         check_address(ANCDetails.fetch_address(@data, anc), patient.person.addresses[0])
         check_attribute(anc, patient)
-        record = { anc => patient.id, 'identifier' => patient.patient_identifiers.find_by(identifier_type: 3).identifier } if @score >= 60
+        record = { anc => patient.id, 'identifier' => patient.patient_identifiers.find_by(identifier_type: 3).identifier, 'reason' => identifier['void_reason'] } if @score >= 60
         break if @score >= 60
       end
       record
@@ -275,7 +281,7 @@ module ANCService
     def create_mapped
       statements = <<~SQL
         DROP TABLE IF EXISTS #{@database}.mapped_patients;
-        CREATE TABLE #{@database}.mapped_patients (anc_patient_id int NOT NULL, art_patient_id int NOT NULL,anc_identifier varchar(60) NOT NULL, art_identifier varchar(60) NOT NULL,PRIMARY KEY (anc_patient_id))
+        CREATE TABLE #{@database}.mapped_patients (anc_patient_id int NOT NULL, art_patient_id int NOT NULL,anc_identifier varchar(60) NOT NULL, art_identifier varchar(60) NOT NULL, reason varchar(255) NULL,PRIMARY KEY (anc_patient_id))
       SQL
       print_time message: 'Creating a table of patients with linkage'
       statements.split(';').each { |value| central_hub message: nil, query: value.strip }
@@ -285,8 +291,8 @@ module ANCService
     # method saved mapped patients
     def mapped_patients(map, identifier)
       statement = <<~SQL
-        INSERT INTO #{@database}.mapped_patients(anc_patient_id, art_patient_id, anc_identifier, art_identifier)
-        VALUES (#{map.keys[0]}, #{map.values[0]}, "#{identifier}", '#{map.values[1]}')
+        INSERT INTO #{@database}.mapped_patients(anc_patient_id, art_patient_id, anc_identifier, art_identifier, reason)
+        VALUES (#{map.keys[0]}, #{map.values[0]}, "#{identifier}", '#{map.values[1]}', '#{map.values[2]}')
       SQL
       central_execute statement
     end
@@ -582,7 +588,9 @@ module ANCService
 
     # method to print time when running some heavy things
     def print_time(message: 'Done', long_form: false)
-      puts "#{message}: #{long_form ? Time.now : Time.now.strftime('%H:%M:%S')}"
+      log = "#{message}: #{long_form ? Time.now : Time.now.strftime('%H:%M:%S')}"
+      puts log
+      @log.puts log
     end
 
     # Section of checking existance of tables
@@ -713,6 +721,98 @@ module ANCService
         SELECT COALESCE((SELECT max(order_id) FROM orders),0) AS id
       SQL
       table_id['id']
+    end
+
+    def report_mapped_patients
+      result = ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT * FROM #{@database}.mapped_patients
+      SQL
+      csv = 'ANC PATIENT ID,ART PATIENT ID,ANC PATIENT IDENTIFIER,ART PATIENT IDENTIFIER,REASON FOR CHANGE'
+      result.each do |record|
+        csv += "\n#{record['anc_patient_id']},#{record['art_patient_id']},#{record['anc_identifier']},#{record['art_identifier']},#{record['reason']}"
+      end
+      csv
+    end
+
+    def report_unmapped_patients
+      result = ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT * FROM #{@database}.unmapped_patients
+      SQL
+      csv = 'ANC PATIENT ID,ART PATIENT ID,PATIENT IDENTIFIER'
+      result.each do |record|
+        csv += "\n#{record['anc_patient_id']},#{record['anc_patient_id'].to_i + @person_id},#{record['identifier']}"
+      end
+      csv
+    end
+
+    def report_patients_not_enrolled
+      result = ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT anc_patient_id, art_patient_id,anc_identifier,art_identifier
+        FROM #{@database}.mapped_patients
+        WHERE NOT EXISTS (SELECT 1 FROM #{@database}.patient_program WHERE patient_program.patient_id = mapped_patients.anc_patient_id)
+      SQL
+      csv = 'ANC PATIENT ID,ART PATIENT ID,PATIENT IDENTIFIER'
+      result.each do |record|
+        csv += "\n#{record['anc_patient_id']},#{record['art_patient_id']},#{record['anc_identifier']},#{record['art_identifier']}"
+      end
+      csv += report_patients_not_enrolled_not_mapped
+    end
+
+    def report_patients_not_enrolled_and_not_mapped
+      result = ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT anc_patient_id,identifier
+        FROM #{@database}.unmapped_patients
+        WHERE NOT EXISTS (SELECT 1 FROM #{@database}.patient_program WHERE patient_program.patient_id = unmapped_patients.anc_patient_id)
+      SQL
+      csv = ''
+      result.each do |record|
+        csv += "\n#{record['anc_patient_id']},#{record['anc_patient_id'].to_i + @person_id},#{record['identifier']},#{record['identifier']}"
+      end
+      csv
+    end
+
+    def report_patient_without_encounters
+      result = ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT anc_patient_id, art_patient_id,anc_identifier,art_identifier
+        FROM #{@database}.mapped_patients
+        WHERE NOT EXISTS (SELECT 1 FROM #{@database}.encounter WHERE encounter.patient_id = mapped_patients.anc_patient_id AND voided = 0)
+      SQL
+      csv = 'ANC PATIENT ID,ART PATIENT ID,PATIENT IDENTIFIER'
+      result.each do |record|
+        csv += "\n#{record['anc_patient_id']},#{record['art_patient_id']},#{record['anc_identifier']},#{record['art_identifier']}"
+      end
+      csv += report_patient_without_encounters_and_not_mapped
+    end
+
+    def report_patient_without_encounters_and_not_mapped
+      result = ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT anc_patient_id,identifier
+        FROM #{@database}.unmapped_patients
+        WHERE NOT EXISTS (SELECT 1 FROM #{@database}.encounter WHERE encounter.patient_id = unmapped_patients.anc_patient_id)
+      SQL
+      csv = ''
+      result.each do |record|
+        csv += "\n#{record['anc_patient_id']},#{record['anc_patient_id'].to_i + @person_id},#{record['identifier']},#{record['identifier']}"
+      end
+      csv
+    end
+
+    # method to write mapping data
+    def write_migration_to_file
+      @log.close
+      @file.puts "This is a report of ANC Migration that happened on #{Time.now.to_date}"
+      @file.puts 'This is a list of Mapped Patients'
+      @file.puts report_mapped_patients
+      @file.puts '\nThis is a list of Patient without any link'
+      @file.puts report_unmapped_patients
+      @file.puts '\nThis is a list of Patients without program enrollment records'
+      @file.puts report_patients_not_enrolled
+      @file.puts '\nThis is a list of Patients without encounters'
+      @file.puts report_patient_without_encounters
+      @file.puts '\nThis is the log'
+      @file.puts File.open('migration.log').read
+      File.delete('migration.log') if File.exist?('migration.log')
+      @file.close
     end
   end
   # rubocop:enable Metrics/ClassLength
