@@ -785,7 +785,7 @@ module ANCService
         FROM #{@database}.mapped_patients
         WHERE NOT EXISTS (SELECT 1 FROM #{@database}.encounter WHERE encounter.patient_id = mapped_patients.anc_patient_id AND voided = 0)
       SQL
-      csv = 'ANC PATIENT ID,ART PATIENT ID,PATIENT IDENTIFIER'
+      csv = 'ANC PATIENT ID,ART PATIENT ID,ANC IDENTIFIER,ART IDENTIFIER'
       result.each do |record|
         csv += "\n#{record['anc_patient_id']},#{record['art_patient_id']},#{record['anc_identifier']},#{record['art_identifier']}"
       end
