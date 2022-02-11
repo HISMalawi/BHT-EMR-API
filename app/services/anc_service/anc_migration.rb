@@ -5,7 +5,7 @@ module ANCService
   # Class managing the migration of anc data to
   class ANCMigration
     include ActionView::Helpers::DateHelper
-    def initialize(database)
+    def initialize(database, confidence)
       @person_id = max_person_id
       @user_id = max_user_id
       @patient_program_id = max_patient_program_id
@@ -13,6 +13,7 @@ module ANCService
       @obs_id = max_obs_id
       @order_id = max_order_id
       @database = database
+      @confidence = confidence
       @log = File.new('migration.log', 'a+')
       @file = File.new('migration.csv', 'a+')
     end
@@ -50,7 +51,6 @@ module ANCService
     def normal
       msg = @database_reversed ? 'Starting an abnormal migration (KAWALE CASE)' : 'Starting a normal migration'
       print_time message: msg, long_form: true
-      create_user_bak unless @database_reversed
       map_linkage_between_anc_and_openmrs
       not_linked = fetch_unmapped_patients
       mapped = fetch_mapped_patients
@@ -58,6 +58,7 @@ module ANCService
       ActiveRecord::Base.transaction do
         unless @database_reversed
           ActiveRecord::Base.connection.disable_referential_integrity do
+            create_user_bak
             migrate_users
             migrate_person(fetch_user_person_id, 'Migratating user specific person records')
             migrate_person_name(fetch_user_person_id, 'Migrating system users name records')
@@ -110,7 +111,7 @@ module ANCService
       result = ActiveRecord::Base.connection.select_all <<~SQL
         SELECT person_id FROM #{@database}.users
       SQL
-      result.map { |person| person['person'] }.push(0).join(',')
+      result.map { |person| person['person_id'] }.push(0).join(',')
     end
 
     # method to fetch linked patients
@@ -237,24 +238,25 @@ module ANCService
         patient = Patient.find_by(patient_id: identifier['patient_id'])
         next if patient.blank?
 
-        ANCDetails.fetch_dob(@database, anc) == patient.person.birthdate ? @score += 20 : nil
+        ANCDetails.fetch_dob(@database, anc) == patient.person.birthdate ? @score += 5 : nil
         anc_name = ANCDetails.fetch_name(@database, anc)
-        anc_name['given_name'] == patient.person.names[0].given_name ? @score += 20 : nil
-        anc_name['family_name'] == patient.person.names[0].family_name ? @score += 20 : nil
-        ANCDetails.fetch_gender(@database, anc) == patient.person.gender ? @score += 20 : nil
+        anc_name['given_name'] == patient.person.names[0].given_name ? @score += 5: nil
+        anc_name['family_name'] == patient.person.names[0].family_name ? @score += 5 : nil
+        ANCDetails.fetch_gender(@database, anc) == patient.person.gender ? @score += 5 : nil
         check_address(ANCDetails.fetch_address(@data, anc), patient.person.addresses[0])
         check_attribute(anc, patient)
-        record = { anc => patient.id, 'identifier' => patient.patient_identifiers.find_by(identifier_type: 3).identifier, 'reason' => identifier['void_reason'] } if @score >= 60
-        break if @score >= 60
+        percentage = (@score * 100) / 45.0 >= @confidence
+        record = { anc => patient.id, 'identifier' => patient.patient_identifiers.find_by(identifier_type: 3).identifier, 'reason' => identifier['void_reason'] } if percentage
+        break if percentage
       end
       record
     end
 
     # method to check person attributes
     def check_attribute(anc, openmrs)
-      @score += 10 if attribute_checker(anc, openmrs, 13)
-      @score += 10 if attribute_checker(anc, openmrs, 12)
-      @score += 1.25 if attribute_checker(anc, openmrs, 3)
+      @score += 2 if attribute_checker(anc, openmrs, 13)
+      @score += 3 if attribute_checker(anc, openmrs, 12)
+      @score += 5 if attribute_checker(anc, openmrs, 3)
     end
 
     # method to just check the different attribute types of a patient
@@ -269,12 +271,12 @@ module ANCService
     def check_address(anc, openmrs)
       return if anc.blank? || openmrs.blank?
 
-      @score += 1.25 if anc['address2'] == openmrs['address2']
-      @score += 1.25 if anc['county_district'] == openmrs['county_district']
-      @score += 1.25 if anc['neighborhood_cell'] == openmrs['neighborhood_cell']
-      @score += 1.25 if anc['state_province'] == openmrs['state_province']
-      @score += 1.25 if anc['city_village'] == openmrs['city_village']
-      @score += 1.25 if anc['address1'] == openmrs['address1']
+      @score += 4 if anc['address2'] == openmrs['address2']
+      @score += 4 if anc['county_district'] == openmrs['county_district']
+      @score += 4 if anc['neighborhood_cell'] == openmrs['neighborhood_cell']
+      @score += 1 if anc['state_province'] == openmrs['state_province']
+      @score += 1 if anc['city_village'] == openmrs['city_village']
+      @score += 1 if anc['address1'] == openmrs['address1']
     end
 
     # method to create unmapped table
@@ -440,10 +442,16 @@ module ANCService
 
     # method to load previous person id
     def prev_person_id
-      result = ActiveRecord::Base.connection.select_one <<~SQL
-        SELECT parameter_value FROM #{@database}.reverse_mapping WHERE parameter_name = 'max_person_id'
-      SQL
-      result['parameter_value'].to_i
+      wow = 0
+      if @database_reversed
+        result = ActiveRecord::Base.connection.select_one <<~SQL
+          SELECT parameter_value FROM #{@database}.reverse_mapping WHERE parameter_name = 'max_person_id'
+        SQL
+        wow = result['parameter_value'].to_i
+      else
+        wow = @person_id
+      end
+      wow
     end
 
     # method to migrate encounter whose providers are system users
@@ -755,7 +763,7 @@ module ANCService
       result.each do |record|
         csv += "\n#{record['anc_patient_id']},#{record['art_patient_id']},#{record['anc_identifier']},#{record['art_identifier']}"
       end
-      csv += report_patients_not_enrolled_not_mapped
+      csv += report_patients_not_enrolled_and_not_mapped
     end
 
     def report_patients_not_enrolled_and_not_mapped
@@ -803,13 +811,17 @@ module ANCService
       @file.puts "This is a report of ANC Migration that happened on #{Time.now.to_date}"
       @file.puts 'This is a list of Mapped Patients'
       @file.puts report_mapped_patients
-      @file.puts '\nThis is a list of Patient without any link'
+      @file.puts ' '
+      @file.puts 'This is a list of Patient without any link'
       @file.puts report_unmapped_patients
-      @file.puts '\nThis is a list of Patients without program enrollment records'
+      @file.puts ' '
+      @file.puts 'This is a list of Patients without program enrollment records'
       @file.puts report_patients_not_enrolled
-      @file.puts '\nThis is a list of Patients without encounters'
+      @file.puts ' '
+      @file.puts 'This is a list of Patients without encounters'
       @file.puts report_patient_without_encounters
-      @file.puts '\nThis is the log'
+      @file.puts ' '
+      @file.puts 'This is the log'
       @file.puts File.open('migration.log').read
       File.delete('migration.log') if File.exist?('migration.log')
       @file.close
