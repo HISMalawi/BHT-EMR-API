@@ -154,7 +154,7 @@ class PatientService
 
     return false if end_date.blank?
 
-    !defaulter_date.between(start_date, end_date)
+    !defaulter_date.to_date.between?(start_date.to_date, end_date.to_date)
   end
 
   def fetch_next_state_start_date(state_date, patient_id)
