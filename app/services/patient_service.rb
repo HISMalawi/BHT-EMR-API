@@ -135,7 +135,7 @@ class PatientService
 
   # method to fetch patient state that is between the defaulter date
   def check_defaulter_period(defaulter_date, patient_id, program_id)
-    states = fetch_transfer_out_states
+    states = adverse_outcomes
     previous_visit = fetch_previous_visit(defaulter_date, patient_id, program_id)['visit_date']
     result = ActiveRecord::Base.connection.select_one <<~SQL
       SELECT start_date, end_date FROM patient_state
@@ -180,20 +180,10 @@ class PatientService
     SQL
   end
 
-  ADVERSE_OUTCOME_NAMES = [
-    'z_deprecated Treatment stopped - provider initiated',
-    'z_deprecated Treatment stopped - patient refused',
-    'Patient died',
-    'Patient transferred out',
-    'Treatment never started',
-    'Treatment stopped'
-  ].freeze
-
-  def fetch_transfer_out_states
+  def adverse_outcomes
     ProgramWorkflowState.joins(:program_workflow)
-                        .joins('INNER JOIN concept_name ON concept_name.concept_id = program_workflow_state.concept_id')
-                        .where(concept_name: { name: ADVERSE_OUTCOME_NAMES, voided: 0 },
-                               program_workflow: { program_id: Program.where(name: 'HIV Program').select(:program_id) })
+                        .where(initial: 0, terminal: 1,
+                               program_workflow: { program_id: Program.where(name: 'HIV Program') })
                         .select(:program_workflow_state_id)
   end
 
