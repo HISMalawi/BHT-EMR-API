@@ -259,6 +259,7 @@ EOF
           ON reason_for_art_eligibility.person_id = patient_program.patient_id
           AND reason_for_art_eligibility.concept_id IN (SELECT concept_id FROM concept_name WHERE name = 'Reason for ART eligibility' AND voided = 0)
           AND reason_for_art_eligibility.voided = 0
+        WHERE patient_program.patient_id NOT IN (#{external_clients})
         GROUP BY patient_program.patient_id
         HAVING reason_for_art IS NULL AND art_start_date >= DATE(#{start_date})
       SQL
@@ -507,6 +508,25 @@ EOF
           AND voided = 0
         GROUP BY encounter.patient_id, DATE(encounter.encounter_datetime)
       SQL
+    end
+
+    # Method to fetch all external and drug refills from the system
+    def external_clients
+      end_date = ActiveRecord::Base.connection.quote(@end_date.to_date)
+      clients = ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT obs.person_id FROM obs,
+        (SELECT person_id, Max(obs_datetime) AS obs_datetime, concept_id FROM obs
+        WHERE concept_id IN (SELECT concept_id FROM concept_name WHERE name = 'Type of patient' AND voided = 0)
+        AND DATE(obs_datetime) <= #{end_date}
+        AND voided = 0
+        GROUP BY person_id) latest_record
+        WHERE obs.person_id = latest_record.person_id
+        AND obs.concept_id = latest_record.concept_id
+        AND obs.obs_datetime = latest_record.obs_datetime
+        AND obs.value_coded IN (SELECT concept_id FROM concept_name WHERE name = 'Drug refill' || name = 'External consultation')
+        AND obs.voided = 0
+      SQL
+      clients.map { |record| record['person_id'] }.push(0).join(',')
     end
   end
 end
