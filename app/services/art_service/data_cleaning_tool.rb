@@ -520,7 +520,7 @@ EOF
     # rubocop:disable Metrics/MethodLength
     # Method to fetch all external and drug refills from the system
     def external_clients
-      property = GlobalProperty.find_by(property: 'can_remove_external_and_drug_refills_from_data_cleaning')
+      property = GlobalProperty.find_by(property: 'can.remove.external.and.drug.refills.from.data.cleaning')
       return 0 if property.blank? || property&.property_value == 'false'
 
       end_date = ActiveRecord::Base.connection.quote(@end_date.to_date)
