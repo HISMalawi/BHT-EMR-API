@@ -28,7 +28,7 @@ class Api::V1::EncountersController < ApplicationController
       end
     end
 
-    queryset = queryset.includes(%i[type patient location provider program], observations: { concept: %i[concept_names] })
+    queryset = queryset.includes(%i[type patient location program], provider: [:names], observations: { concept: %i[concept_names] })
                        .order(:date_created)
 
     render json: paginate(queryset)
