@@ -128,6 +128,7 @@ module CXCAService
 
     def show_cancer_treatment?
       return false if postponed_treatment_today?
+      return false unless cxca_positive?
 
       encounter_type = EncounterType.find_by name: CXCA_SCREENING_RESULTS
       encounter = Encounter.joins(:type).where(
@@ -233,6 +234,44 @@ module CXCAService
       return false
     end
 
+    def cxca_positive?
+      encounter_type = EncounterType.find_by name: CXCA_SCREENING_RESULTS
+      encounter = Encounter.joins(:type).where(
+        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) <= DATE(?)',
+        @patient.patient_id, encounter_type.encounter_type_id, @date
+      ).order(encounter_datetime: :desc).first
+
+      unless encounter.blank?
+        cxca_result_concept_id = concept('Screening results').concept_id
+        positive_cxca_results = []
+        via_positive = concept('VIA positive').concept_id
+        positive_cxca_results << via_positive
+        positive_cxca_results << concept('Suspect cancer').concept_id
+        positive_cxca_results << concept('PAP Smear Abnormal').concept_id
+        hpv_positive = concept('HPV positive').concept_id
+        positive_cxca_results << hpv_positive
+        positive_cxca_results << concept('Visible Lesion').concept_id
+
+        observation = encounter.observations.where(concept_id: cxca_result_concept_id)\
+          .order("obs_datetime DESC, obs.date_created DESC").first
+
+        unless observation.blank?
+          if observation.value_coded == hpv_positive
+            via_observation = encounter.observations.where(concept_id: concept('VIA Results').concept_id,
+              value_coded:via_positive).order("obs_datetime DESC, obs.date_created DESC").first
+
+            return via_observation.blank? ? false : true
+          end
+          return positive_cxca_results.include?(observation.value_coded)
+        end
+      end
+
+      return false
+    end
+
+    def concept(name)
+      ConceptName.find_by_name(name)
+    end
 
   end
 end
