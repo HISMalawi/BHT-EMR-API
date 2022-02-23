@@ -80,7 +80,7 @@ module ANCService
         migrate_encounter_not_system_users(not_linked,
                                            'Migrating Patient encounter for those without any linkage whose provider is a not a system user')
         migrate_encounter_system_users(mapped,
-                                       'Migrating Patient ecounter details for those linked whose provider is a system user', linked: true)
+                                       'Migrating Patient encounter details for those linked whose provider is a system user', linked: true)
         migrate_encounter_system_users(not_linked,
                                        'Migrating Patient encounter details for those without any linkage whose provider is a system user')
         migrate_obs(mapped, 'Migratig patient observations for those linked', linked: true)
@@ -462,8 +462,9 @@ module ANCService
       end
       statement = <<~SQL
         INSERT INTO encounter (encounter_id, encounter_type, patient_id, provider_id, location_id, form_id, encounter_datetime, creator, date_created, voided, voided_by, date_voided, void_reason, uuid, changed_by, date_changed, program_id)
-        SELECT (SELECT #{@encounter_id} + encounter_id) AS id, encounter_type, #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + patient_id) AS patient_id"}, (SELECT #{prev_person_id} + provider_id) AS provider_id, location_id, form_id, encounter_datetime, (SELECT #{@user_id} + creator) AS creator, date_created, voided, (SELECT #{@user_id} + voided_by) AS voided_by, date_voided, void_reason, uuid, (SELECT #{@user_id} + changed_by) AS changed_by, date_changed, 12
+        SELECT (SELECT #{@encounter_id} + encounter_id) AS id, encounter_type, #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + patient_id) AS patient_id"}, bak.person_id AS provider_id, location_id, form_id, encounter_datetime, (SELECT #{@user_id} + encounter.creator) AS creator, encounter.date_created, encounter.voided, (SELECT #{@user_id} + encounter.voided_by) AS voided_by, encounter.date_voided, encounter.void_reason, encounter.uuid, (SELECT #{@user_id} + encounter.changed_by) AS changed_by, encounter.date_changed, 12
         FROM #{@database}.encounter #{cond}
+        INNER JOIN #{@database}.user_bak bak ON encounter.creator = bak.ANC_user_id
         WHERE provider_id IN (SELECT person_id FROM #{@database}.users) AND patient_id IN (#{patients})
       SQL
       central_hub message: msg, query: statement
@@ -475,7 +476,7 @@ module ANCService
       cond = "INNER JOIN #{@database}.mapped_patients on mapped_patients.anc_patient_id = e.patient_id" if linked
       statement = <<~SQL
         INSERT INTO encounter (encounter_id, encounter_type, patient_id, provider_id, location_id, form_id, encounter_datetime, creator, date_created, voided, voided_by, date_voided, void_reason, uuid, changed_by, date_changed, program_id)
-        SELECT (SELECT #{@encounter_id} + e.encounter_id) AS id, e.encounter_type, #{linked ? 'mapped_patients.art_patient_id' : "(SELECT #{@person_id} + e.patient_id) AS patient_id"}, bak.person_id AS provider_id, e.location_id, e.form_id, e.encounter_datetime, bak.ART_user_id AS creator, e.date_created, e.voided, (SELECT #{@user_id} + e.voided_by) AS voided_by, e.date_voided, e.void_reason, e.uuid, (SELECT #{@user_id} + e.changed_by) AS changed_by, e.date_changed, 12
+        SELECT (SELECT #{@encounter_id} + e.encounter_id) AS id, e.encounter_type, #{linked ? 'mapped_patients.art_patient_id' : "(SELECT #{@person_id} + e.patient_id) AS patient_id"}, (SELECT #{@person_id} + provider_id) AS provider_id, e.location_id, e.form_id, e.encounter_datetime, bak.ART_user_id AS creator, e.date_created, e.voided, (SELECT #{@user_id} + e.voided_by) AS voided_by, e.date_voided, e.void_reason, e.uuid, (SELECT #{@user_id} + e.changed_by) AS changed_by, e.date_changed, 12
         FROM #{@database}.encounter e #{cond}
         INNER JOIN #{@database}.user_bak bak ON e.creator = bak.ANC_user_id
         WHERE provider_id NOT IN (SELECT person_id FROM #{@database}.users) AND patient_id IN (#{patients})
@@ -808,7 +809,7 @@ module ANCService
     # method to write mapping data
     def write_migration_to_file
       @log.close
-      @file.puts "This is a report of ANC Migration that happened on #{Time.now.to_date}"
+      @file.puts "This is a report of ANC Migration that happened on #{Time.now.to_date}. Confidence percentage was set to #{@confidence}"
       @file.puts 'This is a list of Mapped Patients'
       @file.puts report_mapped_patients
       @file.puts ' '
