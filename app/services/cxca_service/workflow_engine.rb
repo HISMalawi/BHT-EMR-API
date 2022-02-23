@@ -52,9 +52,9 @@ module CXCAService
 
     STATE_CONDITIONS = {
       CXCA_TEST => %i[show_cxca_test?],
-      CXCA_SCREENING_RESULTS => %i[show_cxca_screening_results?],
-      CANCER_TREATMENT => %i[show_cancer_treatment?],
-      APPOINTMENT => %i[show_appointment?]
+      CXCA_SCREENING_RESULTS => %i[show_cxca_screening_results? offer_cxca_screening?],
+      CANCER_TREATMENT => %i[show_cancer_treatment? offer_cxca_screening?],
+      APPOINTMENT => %i[show_appointment? offer_cxca_screening?]
     }.freeze
 =begin
     STATE_CONDITIONS = {
@@ -102,7 +102,6 @@ module CXCAService
     end
 
     def show_cxca_screening_results?
-
       encounter_type = EncounterType.find_by name: CXCA_SCREENING_RESULTS
       encounter = Encounter.joins(:type).where(
         'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
@@ -267,6 +266,21 @@ module CXCAService
       end
 
       return false
+    end
+
+    def offer_cxca_screening?
+      encounter_type = EncounterType.find_by name: CXCA_TEST
+      encounter = Encounter.joins(:type).where(
+        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) <= DATE(?)',
+        @patient.patient_id, encounter_type.encounter_type_id, @date
+      ).order(encounter_datetime: :desc).first
+
+      return false if encounter.blank?
+      obs = encounter.observations.where(concept_id: concept("Offer CxCa").concept_id,
+        value_coded: concept("Yes").concept_id)\
+        .order("obs_datetime DESC, obs.date_created DESC").first
+
+      return obs.blank? ? false : true
     end
 
     def concept(name)

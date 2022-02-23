@@ -18,11 +18,11 @@ module CXCAService
 				def disaggregated_data
 					offer_cxca = ConceptName.find_by_name 'Offer CxCa'
 					offer_cxca_yes = ConceptName.find_by_name 'Yes'
-					screening_method = ConceptName.find_by_name 'CxCa screening method'
+					reason_for_visit = ConceptName.find_by_name 'Reason for visit'
 					hiv_program_id = Program.find_by_name("HIV PROGRAM").id
 
 					people = Person.joins("LEFT JOIN obs ON person.person_id = obs.person_id
-						AND obs.concept_id = #{screening_method.concept_id}
+						AND obs.concept_id = #{reason_for_visit.concept_id}
 						AND obs.obs_datetime BETWEEN '#{@start_date}' AND '#{@end_date}' AND obs.voided = 0
 						INNER JOIN (SELECT o.* FROM obs o INNER JOIN encounter e ON e.encounter_id = o.encounter_id
 						WHERE o.concept_id = #{offer_cxca.concept_id} AND o.obs_datetime
