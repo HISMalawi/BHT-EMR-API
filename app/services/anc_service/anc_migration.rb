@@ -14,8 +14,8 @@ module ANCService
       @order_id = max_order_id
       @database = database
       @confidence = confidence
-      @log = File.new('migration.log', 'a+')
-      @file = File.new('migration.csv', 'a+')
+      @log = File.new('migration.log', 'w+')
+      @file = File.new("migration_#{Time.now.strftime('%Y%m%d')}.csv", 'w+')
     end
 
     # rubocop:disable Metrics/MethodLength
@@ -240,7 +240,7 @@ module ANCService
 
         ANCDetails.fetch_dob(@database, anc) == patient.person.birthdate ? @score += 5 : nil
         anc_name = ANCDetails.fetch_name(@database, anc)
-        anc_name['given_name'] == patient.person.names[0].given_name ? @score += 5: nil
+        anc_name['given_name'] == patient.person.names[0].given_name ? @score += 5 : nil
         anc_name['family_name'] == patient.person.names[0].family_name ? @score += 5 : nil
         ANCDetails.fetch_gender(@database, anc) == patient.person.gender ? @score += 5 : nil
         check_address(ANCDetails.fetch_address(@data, anc), patient.person.addresses[0])
