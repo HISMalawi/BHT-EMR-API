@@ -51,7 +51,7 @@ module ANCService
     def normal
       msg = @database_reversed ? 'Starting an abnormal migration (KAWALE CASE)' : 'Starting a normal migration'
       print_time message: msg, long_form: true
-      map_linkage_between_anc_and_openmrs
+      ANCMappingMigration.new(@database, @confidence).map_linkage_between_anc_and_openmrs
       not_linked = fetch_unmapped_patients
       mapped = fetch_mapped_patients
       # rubocop:disable Metrics/BlockLength
@@ -202,121 +202,6 @@ module ANCService
         SELECT (SELECT #{@user_id} + user_id) AS user_id, system_id,  CONCAT(username, '_anc'),  password,  salt,  secret_question,  secret_answer, (SELECT #{@user_id} + creator) AS creator,  date_created,  (SELECT #{@user_id} + changed_by) AS changed_by,  date_changed, (SELECT #{@person_id} + person_id),  retired, (SELECT #{@user_id} + retired_by) AS retired_by,  date_retired,  retire_reason,  uuid,  authentication_token FROM #{@database}.users
       SQL
       central_hub message: 'Migrating users records', query: statement
-    end
-
-    # method to loop and create linkage between anc and openmrs(art) database
-    def map_linkage_between_anc_and_openmrs
-      create_mapped
-      create_unmapped
-      anc = ActiveRecord::Base.connection.select_all <<~SQL
-        select identifier, patient_id
-        from  #{@database}.patient_identifier
-        where patient_identifier.identifier_type = 3
-        and patient_identifier.voided = 0
-      SQL
-      print_time message: 'Mapping Patients'
-      anc.each do |identifier|
-        openmrs = ActiveRecord::Base.connection.select_all "SELECT patient_id, identifier, void_reason FROM patient_identifier WHERE identifier = '#{identifier['identifier']}'"
-        result = check_match(identifier['patient_id'], openmrs)
-        if result.blank?
-          unmapped_patients(identifier['patient_id'],
-                            identifier['identifier'])
-        else
-          mapped_patients(result, identifier['identifier'])
-        end
-      end
-      print_time
-    end
-
-    # method to check dob
-    def check_match(anc, openmrs)
-      return nil if openmrs.blank?
-
-      record = nil
-      openmrs.each do |identifier|
-        @score = 0
-        patient = Patient.find_by(patient_id: identifier['patient_id'])
-        next if patient.blank?
-
-        ANCDetails.fetch_dob(@database, anc) == patient.person.birthdate ? @score += 5 : nil
-        anc_name = ANCDetails.fetch_name(@database, anc)
-        anc_name['given_name'] == patient.person.names[0].given_name ? @score += 5 : nil
-        anc_name['family_name'] == patient.person.names[0].family_name ? @score += 5 : nil
-        ANCDetails.fetch_gender(@database, anc) == patient.person.gender ? @score += 5 : nil
-        check_address(ANCDetails.fetch_address(@data, anc), patient.person.addresses[0])
-        check_attribute(anc, patient)
-        percentage = (@score * 100) / 45.0 >= @confidence
-        record = { anc => patient.id, 'identifier' => patient.patient_identifiers.find_by(identifier_type: 3).identifier, 'reason' => identifier['void_reason'] } if percentage
-        break if percentage
-      end
-      record
-    end
-
-    # method to check person attributes
-    def check_attribute(anc, openmrs)
-      @score += 2 if attribute_checker(anc, openmrs, 13)
-      @score += 3 if attribute_checker(anc, openmrs, 12)
-      @score += 5 if attribute_checker(anc, openmrs, 3)
-    end
-
-    # method to just check the different attribute types of a patient
-    def attribute_checker(anc, openmrs, type)
-      record = ANCDetails.fetch_attribute(@database, anc, type)
-      return false if record.blank?
-
-      record == openmrs.person.person_attributes.find_by(person_attribute_type_id: type)&.value
-    end
-
-    # method to check addresses
-    def check_address(anc, openmrs)
-      return if anc.blank? || openmrs.blank?
-
-      @score += 4 if anc['address2'] == openmrs['address2']
-      @score += 4 if anc['county_district'] == openmrs['county_district']
-      @score += 4 if anc['neighborhood_cell'] == openmrs['neighborhood_cell']
-      @score += 1 if anc['state_province'] == openmrs['state_province']
-      @score += 1 if anc['city_village'] == openmrs['city_village']
-      @score += 1 if anc['address1'] == openmrs['address1']
-    end
-
-    # method to create unmapped table
-    def create_mapped
-      statements = <<~SQL
-        DROP TABLE IF EXISTS #{@database}.mapped_patients;
-        CREATE TABLE #{@database}.mapped_patients (anc_patient_id int NOT NULL, art_patient_id int NOT NULL,anc_identifier varchar(60) NOT NULL, art_identifier varchar(60) NOT NULL, reason varchar(255) NULL,PRIMARY KEY (anc_patient_id))
-      SQL
-      print_time message: 'Creating a table of patients with linkage'
-      statements.split(';').each { |value| central_hub message: nil, query: value.strip }
-      print_time
-    end
-
-    # method saved mapped patients
-    def mapped_patients(map, identifier)
-      statement = <<~SQL
-        INSERT INTO #{@database}.mapped_patients(anc_patient_id, art_patient_id, anc_identifier, art_identifier, reason)
-        VALUES (#{map.keys[0]}, #{map.values[0]}, "#{identifier}", '#{map.values[1]}', '#{map.values[2]}')
-      SQL
-      central_execute statement
-    end
-
-    # method to create unmapped table
-    def create_unmapped
-      statements = <<~SQL
-        DROP TABLE IF EXISTS #{@database}.unmapped_patients;
-        CREATE TABLE #{@database}.unmapped_patients (anc_patient_id int NOT NULL,identifier varchar(60) NOT NULL,PRIMARY KEY (anc_patient_id))
-      SQL
-      print_time message: 'Creating a table of patients without any linkage'
-      statements.split(';').each { |value| central_hub message: nil, query: value.strip }
-      print_time
-    end
-
-    # method to save patients without any linkage
-    def unmapped_patients(patient_id, identifier)
-      statement = <<~SQL
-        INSERT INTO #{@database}.unmapped_patients(anc_patient_id, identifier)
-        VALUES (#{patient_id}, '#{identifier}')
-      SQL
-      central_execute statement
     end
 
     # method to migrate person records
@@ -583,25 +468,6 @@ module ANCService
     end
     # rubocop:enable Metrics/MethodLength
 
-    # method to execute migration commands
-    def central_hub(message: nil, query: nil)
-      print_time message: message if message
-      central_execute query
-      print_time if message
-    end
-
-    # method for central execution
-    def central_execute(query)
-      ActiveRecord::Base.connection.execute query
-    end
-
-    # method to print time when running some heavy things
-    def print_time(message: 'Done', long_form: false)
-      log = "#{message}: #{long_form ? Time.now : Time.now.strftime('%H:%M:%S')}"
-      puts log
-      @log.puts log
-    end
-
     # Section of checking existance of tables
 
     # method that check whether the user bak was already created
@@ -680,6 +546,25 @@ module ANCService
       x.map { |patient| not_in_use << patient['patient_id'].to_i }
       y.map { |patient| not_in_use << patient['patient_id'].to_i }
       not_in_use.join(',')
+    end
+
+    # method to execute migration commands
+    def central_hub(message: nil, query: nil)
+      print_time message: message if message
+      central_execute query
+      print_time if message
+    end
+
+    # method for central execution
+    def central_execute(query)
+      ActiveRecord::Base.connection.execute query
+    end
+
+    # method to print time when running some heavy things
+    def print_time(message: 'Done', long_form: false)
+      log = "#{message}: #{long_form ? Time.now : Time.now.strftime('%H:%M:%S')}"
+      puts log
+      @log.puts log
     end
 
     # section to set session variables

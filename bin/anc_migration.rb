@@ -115,6 +115,8 @@ if what_to_run.zero?
   ANCService::ANCMigration.new(database, ARGV[1].to_f).main
 elsif what_to_run == 1
   ANCService::ANCReverseMigration.new({ database: database, migration_date: ARGV[1] }).main
+elsif what_to_run == 2
+  ANCService::ANCMappingMigration.new(database, ARGV[1].to_f).map_linkage_between_anc_and_openmrs
 else
   puts create_csv(database)
 end
