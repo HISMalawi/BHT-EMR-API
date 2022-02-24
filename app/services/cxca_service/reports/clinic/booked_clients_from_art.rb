@@ -62,7 +62,7 @@ module CXCAService
 								screening_method_present: screening_method_present
 							})
 						elsif person_age > 49
-							age_groups['<49 years'].push({
+							age_groups['>49 years'].push({
 								person_id: person.person_id,
 								screening_method_present: screening_method_present
 							})
