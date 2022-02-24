@@ -72,9 +72,7 @@ module ANCService
         next if patient.blank?
 
         ANCDetails.fetch_dob(@database, anc['patient_id']) == patient.person.birthdate ? update_score_variables('Birthdate', 5) : nil
-        anc_name = ANCDetails.fetch_name(@database, anc['patient_id'])
-        anc_name['given_name'] == patient.person.names[0].given_name ? update_score_variables('Given name', 5) : nil
-        anc_name['family_name'] == patient.person.names[0].family_name ? update_score_variables('Family name', 5) : nil
+        check_name(ANCDetails.fetch_name(@database, anc['patient_id']), patient)
         ANCDetails.fetch_gender(@database, anc['patient_id']) == patient.person.gender ? update_score_variables('Gender', 5)  : nil
         check_address(ANCDetails.fetch_address(@data, anc['patient_id']), patient.person.addresses[0])
         check_attribute(anc['patient_id'], patient)
@@ -101,6 +99,13 @@ module ANCService
     # method to write the scores to a csv file
     def write_to_file(anc_patient, anc_identifier, art_patient, art_identifier)
       @file.puts("#{anc_patient},#{anc_identifier},#{art_patient},#{art_identifier},#{@fields.join('-')},#{@local_score}")
+    end
+
+    def check_name(anc_name, patient)
+      return if anc_name.blank?
+
+      anc_name['given_name'] == patient.person.names[0].given_name ? update_score_variables('Given name', 5) : nil
+      anc_name['family_name'] == patient.person.names[0].family_name ? update_score_variables('Family name', 5) : nil
     end
 
     # method to check person attributes
