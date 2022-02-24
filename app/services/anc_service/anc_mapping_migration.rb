@@ -13,7 +13,7 @@ module ANCService
     def map_linkage_between_anc_and_openmrs
       create_mapped
       create_unmapped
-      @file.puts('ANC Patient,ANC Identifier,ART Patient,ART Identifier,Score')
+      @file.puts('ANC Patient ID,ANC National Identifier,ART Patient ID,ART National Identifier,Matched Fields,Score')
       anc = ActiveRecord::Base.connection.select_all <<~SQL
         select identifier, patient_id
         from  #{@database}.patient_identifier
@@ -58,28 +58,30 @@ module ANCService
     # method to check dob
     def check_match(anc, openmrs)
       if openmrs.blank?
-        write_to_file(anc['patient_id'], anc['identifier'], '', '', 0)
+        @local_score = 0
+        @fields = []
+        write_to_file(anc['patient_id'], anc['identifier'], '', '')
         return nil
       end
 
       record = nil
       openmrs.each do |identifier|
         @score = 0
+        @fields = []
         patient = Patient.find_by(patient_id: identifier['patient_id'])
         next if patient.blank?
 
-        ANCDetails.fetch_dob(@database, anc['patient_id']) == patient.person.birthdate ? @score += 5 : nil
+        ANCDetails.fetch_dob(@database, anc['patient_id']) == patient.person.birthdate ? update_score_variables('Birthdate', 5) : nil
         anc_name = ANCDetails.fetch_name(@database, anc['patient_id'])
-        anc_name['given_name'] == patient.person.names[0].given_name ? @score += 5 : nil
-        anc_name['family_name'] == patient.person.names[0].family_name ? @score += 5 : nil
-        ANCDetails.fetch_gender(@database, anc['patient_id']) == patient.person.gender ? @score += 5 : nil
+        anc_name['given_name'] == patient.person.names[0].given_name ? update_score_variables('Given name', 5) : nil
+        anc_name['family_name'] == patient.person.names[0].family_name ? update_score_variables('Family name', 5) : nil
+        ANCDetails.fetch_gender(@database, anc['patient_id']) == patient.person.gender ? update_score_variables('Gender', 5)  : nil
         check_address(ANCDetails.fetch_address(@data, anc['patient_id']), patient.person.addresses[0])
         check_attribute(anc['patient_id'], patient)
-        local_score = (@score * 100) / 45.0
-        percentage = local_score >= @confidence
+        @local_score = (@score * 100) / 45.0
+        percentage = @local_score >= @confidence
         write_to_file(anc['patient_id'], anc['identifier'], patient.id,
-                      patient.patient_identifiers.find_by(identifier_type: 3).identifier,
-                      local_score)
+                      patient.patient_identifiers.find_by(identifier_type: 3).identifier)
         if percentage
           record = { anc => patient.id,
                      'identifier' => patient.patient_identifiers.find_by(identifier_type: 3).identifier,
@@ -90,16 +92,22 @@ module ANCService
       record
     end
 
+    # method to compound score and field match
+    def update_score_variables(field_name, score)
+      @score += score
+      @fields.push(field_name)
+    end
+
     # method to write the scores to a csv file
-    def write_to_file(anc_patient, anc_identifier, art_patient, art_identifier, score)
-      @file.puts("#{anc_patient},#{anc_identifier},#{art_patient},#{art_identifier},#{score}")
+    def write_to_file(anc_patient, anc_identifier, art_patient, art_identifier)
+      @file.puts("#{anc_patient},#{anc_identifier},#{art_patient},#{art_identifier},#{@fields.join('-')},#{@local_score}")
     end
 
     # method to check person attributes
     def check_attribute(anc, openmrs)
-      @score += 2 if attribute_checker(anc, openmrs, 13)
-      @score += 3 if attribute_checker(anc, openmrs, 12)
-      @score += 5 if attribute_checker(anc, openmrs, 3)
+      update_score_variables('Occupation', 2) if attribute_checker(anc, openmrs, 13)
+      update_score_variables('Phone number', 3) if attribute_checker(anc, openmrs, 12)
+      update_score_variables('Citizenship', 5) if attribute_checker(anc, openmrs, 3)
     end
 
     # method to just check the different attribute types of a patient
@@ -114,12 +122,12 @@ module ANCService
     def check_address(anc, openmrs)
       return if anc.blank? || openmrs.blank?
 
-      @score += 4 if anc['address2'] == openmrs['address2']
-      @score += 4 if anc['county_district'] == openmrs['county_district']
-      @score += 4 if anc['neighborhood_cell'] == openmrs['neighborhood_cell']
-      @score += 1 if anc['state_province'] == openmrs['state_province']
-      @score += 1 if anc['city_village'] == openmrs['city_village']
-      @score += 1 if anc['address1'] == openmrs['address1']
+      update_score_variables('Home district', 4) if anc['address2'] == openmrs['address2']
+      update_score_variables('Home TA', 4) if anc['county_district'] == openmrs['county_district']
+      update_score_variables('Home village', 4)if anc['neighborhood_cell'] == openmrs['neighborhood_cell']
+      update_score_variables('Current district', 1) if anc['state_province'] == openmrs['state_province']
+      update_score_variables('Current TA', 1) if anc['city_village'] == openmrs['city_village']
+      update_score_variables('Closest landmark', 1) if anc['address1'] == openmrs['address1']
     end
 
     # method to create unmapped table
