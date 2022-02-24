@@ -16,18 +16,22 @@ module CXCAService
 
     def next_appointment_date
       concept = ConceptName.find_by_name 'HIV status'
-      negative_concept = ConceptName.find_by_name 'Negative'
+      negative_concept = []
+      negative_concept << ConceptName.find_by_name('Negative').concept_id
+      negative_concept << ConceptName.find_by_name('Undisclosed').concept_id
 
       ob = Observation.where("concept_id = ? AND person_id = ?
         AND DATE(obs_datetime) <= ?",
        concept.concept_id, @patient.patient_id, @ref_date.to_date).\
        order("obs_datetime DESC, date_created DESC").first
 
-      ref_period = 1.week
+       ref_period = 1.week
 
       unless ob.blank?
-        if ob.value_coded == negative_concept.concept_id
+        if negative_concept.include?(ob.value_coded)
           ref_period = 3.year
+        else
+          ref_period = 1.year
         end
       else
         ref_period = 1.year
