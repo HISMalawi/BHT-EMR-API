@@ -211,7 +211,8 @@ module ARTService
         adherence: adherence,
         tb_status: tb_status,
         height: height,
-        weight: weight
+        weight: weight,
+        bmi: bmi
       }
     end
 
