@@ -17,10 +17,17 @@ class FilingNumberService
   #   3. Patients with outcome 'Treatment stopped'
   #   4. Patients with outcome 'Defaulted'
   def find_archiving_candidates(_offset = nil, _limit = nil)
-    patients = find_active_patients_with_adverse_outcomes
-    return build_archive_candidates(patients) unless patients.empty?
+    remove_temp_tables
+    create_temp_index_on_orders_table
+    create_temp_potential_filing_number_candidates
+    create_temp_patient_drug_run_out
+    create_temp_patient_with_adverse_outcomes
+    # patients = find_active_patients_with_adverse_outcomes
+    # return build_archive_candidates(patients) unless patients.empty?
 
-    build_archive_candidates(find_potential_defaulters)
+    # build_archive_candidates(find_potential_defaulters)
+    result = (find_patient_with_adverse_outcomes.to_a + find_defaulters.to_a).sort_by { |k| k['start_date'] }
+    build_archive_candidates(result)
   end
 
   # Current filing number format does not allow numbers exceeding this value
@@ -137,6 +144,7 @@ class FilingNumberService
   # Build archive candidates from patient list returned by
   # `patients_to_be_archived_based_on_waste_state`
   def build_archive_candidates(patients)
+    remove_temp_tables
     return [] if patients.empty?
 
     demographics_list = find_patients_demographics_and_appointment(patients.collect do |patient|
@@ -192,152 +200,282 @@ class FilingNumberService
     SQL
   end
 
-  def find_active_patients_with_adverse_outcomes
+  # def find_active_patients_with_adverse_outcomes
+  #   ActiveRecord::Base.connection.select_all <<~SQL
+  #     SELECT filing_numbers.patient_id,
+  #            filing_numbers.identifier AS filing_number,
+  #            patient_state.start_date AS start_date,
+  #            patient_state.end_date AS end_date,
+  #            concept_name.name AS state,
+  #            filing_numbers.date_created AS date_activated
+  #     FROM (
+  #       /* Unique active filing numbers */
+  #       SELECT patient_id, identifier, date_created
+  #       FROM patient_identifier
+  #       WHERE voided = 0
+  #         AND identifier_type = #{ActiveRecord::Base.connection.quote(filing_number_type.id)}
+  #         AND date_created < DATE(#{ActiveRecord::Base.connection.quote(date)})
+  #       GROUP BY identifier
+  #       HAVING COUNT(*) = 1
+  #     ) AS filing_numbers
+  #     /* Ensure latest outcome for each patient is adverse */
+  #     INNER JOIN patient_program
+  #       ON patient_program.patient_id = filing_numbers.patient_id
+  #       AND patient_program.program_id = #{ActiveRecord::Base.connection.quote(hiv_program.program_id)}
+  #       AND patient_program.voided = 0
+  #     INNER JOIN patient_state
+  #       ON patient_state.patient_program_id = patient_program.patient_program_id
+  #       AND patient_state.state IN (#{adverse_outcomes.to_sql})
+  #       AND patient_state.voided = 0
+  #     INNER JOIN (
+  #       SELECT patient_program_id, MAX(start_date) AS start_date
+  #       FROM patient_state
+  #       INNER JOIN patient_program USING (patient_program_id)
+  #       WHERE patient_state.voided = 0
+  #         AND patient_state.start_date < DATE(#{ActiveRecord::Base.connection.quote(date)}) /* Avoid patients who started today */
+  #         AND patient_program.voided = 0
+  #         AND patient_program.program_id = #{ActiveRecord::Base.connection.quote(hiv_program.program_id)}
+  #       GROUP BY patient_program_id
+  #     ) AS latest_outcome
+  #       ON latest_outcome.patient_program_id = patient_state.patient_program_id
+  #       AND latest_outcome.start_date = patient_state.start_date
+  #     /* Need the following for the outcome's name */
+  #     INNER JOIN program_workflow_state
+  #       ON program_workflow_state.program_workflow_state_id = patient_state.state
+  #     INNER JOIN concept_name
+  #       ON concept_name.concept_id = program_workflow_state.concept_id
+  #     WHERE filing_numbers.patient_id NOT IN (
+  #       /* patients with pending future visits (appointments) */
+  #       SELECT obs.person_id
+  #       FROM obs
+  #       INNER JOIN encounter
+  #         ON encounter.encounter_id = obs.encounter_id
+  #         AND encounter.program_id = #{ActiveRecord::Base.connection.quote(hiv_program.program_id)}
+  #         AND encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name LIKE 'Appointment')
+  #         AND encounter.voided = 0
+  #       WHERE obs.concept_id IN (SELECT concept_id FROM concept_name WHERE name LIKE 'Appointment date' AND voided = 0)
+  #         AND obs.value_datetime >= DATE(#{ActiveRecord::Base.connection.quote(date)})
+  #         AND obs.voided = 0
+  #     )
+  #     GROUP BY filing_numbers.patient_id
+  #     ORDER BY filing_numbers.date_created ASC, patient_state.start_date ASC, filing_numbers.identifier ASC
+  #     LIMIT 144 /* Should be enough for a clinician to make a decision */
+  #   SQL
+  # end
+
+  # def find_potential_defaulters
+  #   ActiveRecord::Base.connection.select_all <<~SQL
+  #     SELECT filing_numbers.patient_identifier_id,
+  #            filing_numbers.patient_id,
+  #            filing_numbers.identifier AS filing_number,
+  #            MAX(orders.auto_expire_date) AS start_date,
+  #            NULL AS end_date,
+  #            /* patient_outcome(filing_numbers.patient_id, DATE(#{ActiveRecord::Base.connection.quote(date)})) AS state, */
+  #            'Potential defaulter' AS state, /* Operation above slows down things a lot */
+  #            filing_numbers.date_created AS date_activated
+  #     /* Grab unique active filing numbers */
+  #     FROM (
+  #       SELECT patient_identifier_id, patient_identifier.patient_id, identifier, date_created
+  #       FROM patient_identifier
+  #       LEFT JOIN (
+  #         /* Definitely not defaulters */
+  #         SELECT orders.patient_id
+  #         FROM orders
+  #         INNER JOIN order_type
+  #           ON order_type.order_type_id = orders.order_type_id
+  #           AND order_type.name = 'Drug order'
+  #         INNER JOIN drug_order ON drug_order.order_id = orders.order_id AND quantity > 0
+  #         WHERE orders.concept_id IN (#{antiretroviral_drug_concepts.join(',')})
+  #           AND orders.auto_expire_date > DATE(#{ActiveRecord::Base.connection.quote(date)}) - INTERVAL 28 DAY
+  #           AND orders.voided = 0
+  #         UNION
+  #         SELECT obs.person_id
+  #         FROM obs
+  #         INNER JOIN concept_name
+  #           ON concept_name.concept_id = obs.concept_id
+  #           AND concept_name.name = 'Appointment date'
+  #           AND concept_name.voided = 0
+  #         INNER JOIN encounter
+  #           ON encounter.encounter_id = obs.encounter_id
+  #           AND encounter.program_id = #{hiv_program.program_id}
+  #           AND encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'Appointment')
+  #           AND encounter.voided = 0
+  #         WHERE obs.voided = 0
+  #           AND obs.value_datetime >= DATE(#{ActiveRecord::Base.connection.quote(date)})
+  #       ) AS non_defaulters
+  #         ON non_defaulters.patient_id = patient_identifier.patient_id
+  #       WHERE non_defaulters.patient_id IS NULL /* Remove obvious defaulters */
+  #         AND patient_identifier.patient_id IS NOT NULL
+  #         AND voided = 0
+  #         AND identifier_type = #{ActiveRecord::Base.connection.quote(filing_number_type.id)}
+  #         AND date_created < DATE(#{ActiveRecord::Base.connection.quote(date)})
+  #       GROUP BY identifier
+  #       HAVING COUNT(*) = 1
+  #     ) AS filing_numbers
+  #     /* Find patients who have gone more than 28 days without visiting since their last order */
+  #     INNER JOIN orders
+  #       ON orders.patient_id = filing_numbers.patient_id
+  #       AND orders.concept_id IN (#{antiretroviral_drug_concepts.join(',')})
+  #       AND orders.auto_expire_date <= DATE(#{ActiveRecord::Base.connection.quote(date)}) - INTERVAL 28 DAY
+  #       AND orders.voided = 0
+  #     INNER JOIN order_type
+  #       ON order_type.order_type_id = orders.order_type_id
+  #       AND order_type.name = 'Drug order'
+  #     INNER JOIN drug_order
+  #       ON drug_order.order_id = orders.order_id
+  #       AND drug_order.quantity > 0
+  #     GROUP BY filing_numbers.patient_id
+  #     ORDER BY orders.auto_expire_date ASC, filing_numbers.date_created ASC, filing_numbers.identifier ASC
+  #     LIMIT 144
+  #   SQL
+  # end
+
+  def find_patient_with_adverse_outcomes
     ActiveRecord::Base.connection.select_all <<~SQL
-      SELECT filing_numbers.patient_id,
-             filing_numbers.identifier AS filing_number,
-             patient_state.start_date AS start_date,
-             patient_state.end_date AS end_date,
-             concept_name.name AS state,
-             filing_numbers.date_created AS date_activated
-      FROM (
-        /* Unique active filing numbers */
-        SELECT patient_id, identifier, date_created
-        FROM patient_identifier
-        WHERE voided = 0
-          AND identifier_type = #{ActiveRecord::Base.connection.quote(filing_number_type.id)}
-          AND date_created < DATE(#{ActiveRecord::Base.connection.quote(date)})
-        GROUP BY identifier
-        HAVING COUNT(*) = 1
-      ) AS filing_numbers
-      /* Ensure latest outcome for each patient is adverse */
-      INNER JOIN patient_program
-        ON patient_program.patient_id = filing_numbers.patient_id
-        AND patient_program.program_id = #{ActiveRecord::Base.connection.quote(hiv_program.program_id)}
-        AND patient_program.voided = 0
-      INNER JOIN patient_state
-        ON patient_state.patient_program_id = patient_program.patient_program_id
-        AND patient_state.state IN (#{adverse_outcomes.to_sql})
-        AND patient_state.voided = 0
+      SELECT
+        fn.patient_identifier_id,
+        fn.identifier,
+        fn.patient_id,
+        adverse.name AS state,
+        adverse.start_date AS start_date,
+        adverse.end_date AS end_date,
+        fn.date_created AS date_activated
+      FROM temp_potential_filing_number_candidates fn
+      INNER JOIN temp_patient_with_adverse_outcomes adverse
+        ON adverse.patient_id = fn.patient_id
+      ORDER BY adverse.start_date ASC
+      LIMIT 30
+    SQL
+  end
+
+  def find_defaulters
+    ActiveRecord::Base.connection.select_all <<~SQL
+      SELECT
+        pi.patient_identifier_id,
+        pi.identifier,
+        orders_view.patient_id,
+        'Defaulted' AS state,
+        orders_view.start_date,
+        NULL AS end_date,
+        pi.date_created date_activated
+      FROM temp_patient_drug_run_out orders_view
+      INNER JOIN temp_potential_filing_number_candidates pi
+        ON pi.patient_id = orders_view.patient_id
+      WHERE orders_view.start_date <= DATE(#{ActiveRecord::Base.connection.quote(date)}) - INTERVAL 30 DAY
+        AND orders_view.patient_id NOT IN (SELECT patient_id FROM temp_patient_with_adverse_outcomes)
+      ORDER BY orders_view.start_date ASC
+      LIMIT 30
+    SQL
+  end
+
+  def create_temp_patient_with_adverse_outcomes
+    ActiveRecord::Base.connection.execute <<~SQL
+      CREATE TABLE temp_patient_with_adverse_outcomes
+      SELECT p.patient_id, n.*
+      FROM patient_program p
       INNER JOIN (
-        SELECT patient_program_id, MAX(start_date) AS start_date
-        FROM patient_state
-        INNER JOIN patient_program USING (patient_program_id)
-        WHERE patient_state.voided = 0
-          AND patient_state.start_date < DATE(#{ActiveRecord::Base.connection.quote(date)}) /* Avoid patients who started today */
-          AND patient_program.voided = 0
-          AND patient_program.program_id = #{ActiveRecord::Base.connection.quote(hiv_program.program_id)}
-        GROUP BY patient_program_id
-      ) AS latest_outcome
-        ON latest_outcome.patient_program_id = patient_state.patient_program_id
-        AND latest_outcome.start_date = patient_state.start_date
-      /* Need the following for the outcome's name */
-      INNER JOIN program_workflow_state
-        ON program_workflow_state.program_workflow_state_id = patient_state.state
-      INNER JOIN concept_name
-        ON concept_name.concept_id = program_workflow_state.concept_id
-      WHERE filing_numbers.patient_id NOT IN (
-        /* patients with pending future visits (appointments) */
-        SELECT obs.person_id
-        FROM obs
-        INNER JOIN encounter
-          ON encounter.encounter_id = obs.encounter_id
-          AND encounter.program_id = #{ActiveRecord::Base.connection.quote(hiv_program.program_id)}
-          AND encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name LIKE 'Appointment')
-          AND encounter.voided = 0
-        WHERE obs.concept_id IN (SELECT concept_id FROM concept_name WHERE name LIKE 'Appointment date' AND voided = 0)
-          AND obs.value_datetime >= DATE(#{ActiveRecord::Base.connection.quote(date)})
-          AND obs.voided = 0
-      )
-      GROUP BY filing_numbers.patient_id
-      ORDER BY filing_numbers.date_created ASC, patient_state.start_date ASC, filing_numbers.identifier ASC
-      LIMIT 144 /* Should be enough for a clinician to make a decision */
+        SELECT ps.patient_program_id, ps.state, ps.start_date, ps.end_date, cn.name
+        FROM patient_state ps
+        INNER JOIN program_workflow_state ws
+          ON ps.state = ws.program_workflow_state_id
+          AND ws.retired = 0
+        INNER JOIN concept_name cn
+          ON cn.concept_id = ws.concept_id
+          AND cn.voided = 0
+        INNER JOIN(
+          SELECT pis.patient_program_id, MAX(pis.start_date) start_date
+          FROM patient_state pis
+          WHERE pis.voided = 0
+          GROUP BY pis.patient_program_id
+        ) pis
+          ON pis.patient_program_id = ps.patient_program_id
+          AND pis.start_date = ps.start_date
+          AND ps.end_date IS NULL
+        GROUP BY ps.patient_program_id
+        HAVING count(ps.state) = 1
+      ) n
+        ON n.patient_program_id = p.patient_program_id
+      WHERE p.program_id = #{hiv_program.program_id}
+        AND p.voided = 0
+        AND n.state IN (8,6,3,2,119,0)
     SQL
   end
 
-  def find_potential_defaulters
-    ActiveRecord::Base.connection.select_all <<~SQL
-      SELECT filing_numbers.patient_identifier_id,
-             filing_numbers.patient_id,
-             filing_numbers.identifier AS filing_number,
-             MAX(orders.auto_expire_date) AS start_date,
-             NULL AS end_date,
-             /* patient_outcome(filing_numbers.patient_id, DATE(#{ActiveRecord::Base.connection.quote(date)})) AS state, */
-             'Potential defaulter' AS state, /* Operation above slows down things a lot */
-             filing_numbers.date_created AS date_activated
-      /* Grab unique active filing numbers */
-      FROM (
-        SELECT patient_identifier_id, patient_identifier.patient_id, identifier, date_created
-        FROM patient_identifier
-        LEFT JOIN (
-          /* Definitely not defaulters */
-          SELECT orders.patient_id
-          FROM orders
-          INNER JOIN order_type
-            ON order_type.order_type_id = orders.order_type_id
-            AND order_type.name = 'Drug order'
-          INNER JOIN drug_order ON drug_order.order_id = orders.order_id AND quantity > 0
-          WHERE orders.concept_id IN (#{antiretroviral_drug_concepts.join(',')})
-            AND orders.auto_expire_date > DATE(#{ActiveRecord::Base.connection.quote(date)}) - INTERVAL 28 DAY
-            AND orders.voided = 0
-          UNION
-          SELECT obs.person_id
-          FROM obs
-          INNER JOIN concept_name
-            ON concept_name.concept_id = obs.concept_id
-            AND concept_name.name = 'Appointment date'
-            AND concept_name.voided = 0
-          INNER JOIN encounter
-            ON encounter.encounter_id = obs.encounter_id
-            AND encounter.program_id = #{hiv_program.program_id}
-            AND encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'Appointment')
-            AND encounter.voided = 0
-          WHERE obs.voided = 0
-            AND obs.value_datetime >= DATE(#{ActiveRecord::Base.connection.quote(date)})
-        ) AS non_defaulters
-          ON non_defaulters.patient_id = patient_identifier.patient_id
-        WHERE non_defaulters.patient_id IS NULL /* Remove obvious defaulters */
-          AND patient_identifier.patient_id IS NOT NULL
-          AND voided = 0
-          AND identifier_type = #{ActiveRecord::Base.connection.quote(filing_number_type.id)}
-          AND date_created < DATE(#{ActiveRecord::Base.connection.quote(date)})
-        GROUP BY identifier
-        HAVING COUNT(*) = 1
-      ) AS filing_numbers
-      /* Find patients who have gone more than 28 days without visiting since their last order */
-      INNER JOIN orders
-        ON orders.patient_id = filing_numbers.patient_id
-        AND orders.concept_id IN (#{antiretroviral_drug_concepts.join(',')})
-        AND orders.auto_expire_date <= DATE(#{ActiveRecord::Base.connection.quote(date)}) - INTERVAL 28 DAY
-        AND orders.voided = 0
-      INNER JOIN order_type
-        ON order_type.order_type_id = orders.order_type_id
-        AND order_type.name = 'Drug order'
-      INNER JOIN drug_order
-        ON drug_order.order_id = orders.order_id
-        AND drug_order.quantity > 0
-      GROUP BY filing_numbers.patient_id
-      ORDER BY orders.auto_expire_date ASC, filing_numbers.date_created ASC, filing_numbers.identifier ASC
-      LIMIT 144
+  def create_temp_patient_drug_run_out
+    ActiveRecord::Base.connection.execute <<~SQL
+      CREATE TABLE temp_patient_drug_run_out
+      SELECT o.patient_id, MAX(o.auto_expire_date) start_date
+      FROM orders o
+      WHERE o.voided = 0
+        AND o.concept_id IN (#{antiretroviral_drug_concepts.join(',')})
+      GROUP BY o.patient_id
     SQL
   end
 
-  ADVERSE_OUTCOME_NAMES = [
-    'z_deprecated Treatment stopped - provider initiated',
-    'z_deprecated Treatment stopped - patient refused',
-    'Patient died',
-    'Patient transferred out',
-    'Treatment never started',
-    'Treatment stopped'
-  ].freeze
+  def create_temp_index_on_orders_table
+    ActiveRecord::Base.connection.execute <<~SQL
+      ALTER TABLE orders add index idx_orders_concept_id (concept_id)
+    SQL
+  end
+
+  def create_temp_potential_filing_number_candidates
+    ActiveRecord::Base.connection.execute <<~SQL
+      CREATE TABLE temp_potential_filing_number_candidates
+      SELECT identifier,patient_id,patient_identifier_id,date_created
+      FROM patient_identifier
+      WHERE identifier_type = #{ActiveRecord::Base.connection.quote(filing_number_type.id)}
+      AND voided = 0
+      GROUP BY identifier
+      HAVING COUNT(*) = 1
+    SQL
+  end
 
   def adverse_outcomes
-    ProgramWorkflowState.joins(:program_workflow)
-                        .joins('INNER JOIN concept_name ON concept_name.concept_id = program_workflow_state.concept_id')
-                        .where(concept_name: { name: ADVERSE_OUTCOME_NAMES, voided: 0 },
-                               program_workflow: { program_id: Program.where(name: 'HIV Program').select(:program_id) })
-                        .select(:program_workflow_state_id)
+    result = ActiveRecord::Base.connection.select_all <<~SQL
+      SELECT s.program_workflow_state_id state
+      FROM program p
+      INNER JOIN program_workflow w ON w.program_id = p.program_id
+      INNER JOIN program_workflow_state s ON s.program_workflow_id = w.program_workflow_id
+      INNER JOIN concept_name n ON n.concept_id = s.concept_id
+      WHERE  s.initial = 0 AND terminal = 1  AND p.program_id = 1 AND s.retired = 0
+      GROUP BY n.concept_id
+    SQL
+    result.map { |record| record['state'] }.push(0)
   end
+
+  def remove_temp_tables
+    ActiveRecord::Base.connection.execute <<~SQL
+      DROP TABLE IF EXISTS temp_patient_with_adverse_outcomes
+    SQL
+    ActiveRecord::Base.connection.execute <<~SQL
+      DROP TABLE IF EXISTS temp_patient_drug_run_out
+    SQL
+    ActiveRecord::Base.connection.execute <<~SQL
+      DROP TABLE IF EXISTS temp_potential_filing_number_candidates
+    SQL
+    if ActiveRecord::Base.connection.index_exists?(:orders, %i[concept_id])
+      ActiveRecord::Base.connection.execute <<~SQL
+        DROP INDEX idx_orders_concept_id ON orders
+      SQL
+    end
+  end
+
+  # ADVERSE_OUTCOME_NAMES = [
+  #   'z_deprecated Treatment stopped - provider initiated',
+  #   'z_deprecated Treatment stopped - patient refused',
+  #   'Patient died',
+  #   'Patient transferred out',
+  #   'Treatment never started',
+  #   'Treatment stopped'
+  # ].freeze
+
+  # def adverse_outcomes
+  #   ProgramWorkflowState.joins(:program_workflow)
+  #                       .joins('INNER JOIN concept_name ON concept_name.concept_id = program_workflow_state.concept_id')
+  #                       .where(concept_name: { name: ADVERSE_OUTCOME_NAMES, voided: 0 },
+  #                              program_workflow: { program_id: Program.where(name: 'HIV Program').select(:program_id) })
+  #                       .select(:program_workflow_state_id)
+  # end
 
   def hiv_program
     @hiv_program ||= Program.find_by!(name: 'HIV Program')
