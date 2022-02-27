@@ -16,17 +16,18 @@ class FilingNumberService
   #   2. Patients with outcome 'Patient transferred out'
   #   3. Patients with outcome 'Treatment stopped'
   #   4. Patients with outcome 'Defaulted'
-  def find_archiving_candidates(_offset = nil, _limit = nil)
+  def find_archiving_candidates(offset = nil, limit = nil)
+    offset ||= 0
+    limit ||= 12
     remove_temp_tables
     create_temp_index_on_orders_table
     create_temp_potential_filing_number_candidates
-    create_temp_patient_drug_run_out
     create_temp_patient_with_adverse_outcomes
     # patients = find_active_patients_with_adverse_outcomes
     # return build_archive_candidates(patients) unless patients.empty?
 
     # build_archive_candidates(find_potential_defaulters)
-    result = (find_patient_with_adverse_outcomes.to_a + find_defaulters.to_a).sort_by { |k| k['start_date'] }
+    result = (find_patient_with_adverse_outcomes(offset, limit / 2).to_a + find_defaulters(offset, limit / 2).to_a).sort_by { |k| k['start_date'] }
     build_archive_candidates(result)
   end
 
@@ -144,7 +145,6 @@ class FilingNumberService
   # Build archive candidates from patient list returned by
   # `patients_to_be_archived_based_on_waste_state`
   def build_archive_candidates(patients)
-    remove_temp_tables
     return [] if patients.empty?
 
     demographics_list = find_patients_demographics_and_appointment(patients.collect do |patient|
@@ -330,7 +330,7 @@ class FilingNumberService
   #   SQL
   # end
 
-  def find_patient_with_adverse_outcomes
+  def find_patient_with_adverse_outcomes(offset, limit)
     ActiveRecord::Base.connection.select_all <<~SQL
       SELECT
         fn.patient_identifier_id,
@@ -344,11 +344,11 @@ class FilingNumberService
       INNER JOIN temp_patient_with_adverse_outcomes adverse
         ON adverse.patient_id = fn.patient_id
       ORDER BY adverse.start_date ASC
-      LIMIT 30
+      LIMIT #{offset},#{limit}
     SQL
   end
 
-  def find_defaulters
+  def find_defaulters(offset, limit)
     ActiveRecord::Base.connection.select_all <<~SQL
       SELECT
         pi.patient_identifier_id,
@@ -358,19 +358,37 @@ class FilingNumberService
         orders_view.start_date,
         NULL AS end_date,
         pi.date_created date_activated
-      FROM temp_patient_drug_run_out orders_view
+      FROM (
+        SELECT o.patient_id, MAX(o.auto_expire_date) start_date
+        FROM orders o
+        WHERE o.voided = 0
+          AND o.concept_id IN (#{antiretroviral_drug_concepts.join(',')})
+        GROUP BY o.patient_id
+      ) orders_view
       INNER JOIN temp_potential_filing_number_candidates pi
         ON pi.patient_id = orders_view.patient_id
       WHERE orders_view.start_date <= DATE(#{ActiveRecord::Base.connection.quote(date)}) - INTERVAL 30 DAY
         AND orders_view.patient_id NOT IN (SELECT patient_id FROM temp_patient_with_adverse_outcomes)
       ORDER BY orders_view.start_date ASC
-      LIMIT 30
+      LIMIT #{offset},#{limit}
     SQL
   end
 
   def create_temp_patient_with_adverse_outcomes
     ActiveRecord::Base.connection.execute <<~SQL
-      CREATE TABLE temp_patient_with_adverse_outcomes
+      CREATE TEMPORARY TABLE temp_patient_with_adverse_outcomes (
+        patient_id int NOT NULL,
+        patient_program_id int NOT NULL,
+        state int NOT NULL,
+        start_date varchar(50),
+        end_date varchar(50),
+        name varchar(50),
+        PRIMARY KEY (patient_program_id),
+        INDEX (patient_id)
+      )
+    SQL
+    ActiveRecord::Base.connection.execute <<~SQL
+      INSERT INTO temp_patient_with_adverse_outcomes
       SELECT p.patient_id, n.*
       FROM patient_program p
       INNER JOIN (
@@ -397,22 +415,13 @@ class FilingNumberService
         ON n.patient_program_id = p.patient_program_id
       WHERE p.program_id = #{hiv_program.program_id}
         AND p.voided = 0
-        AND n.state IN (8,6,3,2,119,0)
-    SQL
-  end
-
-  def create_temp_patient_drug_run_out
-    ActiveRecord::Base.connection.execute <<~SQL
-      CREATE TABLE temp_patient_drug_run_out
-      SELECT o.patient_id, MAX(o.auto_expire_date) start_date
-      FROM orders o
-      WHERE o.voided = 0
-        AND o.concept_id IN (#{antiretroviral_drug_concepts.join(',')})
-      GROUP BY o.patient_id
+        AND n.state IN (#{adverse_outcomes.to_sql})
     SQL
   end
 
   def create_temp_index_on_orders_table
+    return if ActiveRecord::Base.connection.index_exists?(:orders, %i[concept_id])
+
     ActiveRecord::Base.connection.execute <<~SQL
       ALTER TABLE orders add index idx_orders_concept_id (concept_id)
     SQL
@@ -420,7 +429,17 @@ class FilingNumberService
 
   def create_temp_potential_filing_number_candidates
     ActiveRecord::Base.connection.execute <<~SQL
-      CREATE TABLE temp_potential_filing_number_candidates
+      CREATE TEMPORARY TABLE temp_potential_filing_number_candidates(
+        identifier varchar(50) NOT NULL,
+        patient_id int NOT NULL,
+        patient_identifier_id INT NOT NULL,
+        date_created VARCHAR(50) NOT NULL,
+        PRIMARY KEY (identifier),
+        INDEX (patient_id)
+      )
+    SQL
+    ActiveRecord::Base.connection.execute <<~SQL
+      INSERT INTO temp_potential_filing_number_candidates
       SELECT identifier,patient_id,patient_identifier_id,date_created
       FROM patient_identifier
       WHERE identifier_type = #{ActiveRecord::Base.connection.quote(filing_number_type.id)}
@@ -431,33 +450,19 @@ class FilingNumberService
   end
 
   def adverse_outcomes
-    result = ActiveRecord::Base.connection.select_all <<~SQL
-      SELECT s.program_workflow_state_id state
-      FROM program p
-      INNER JOIN program_workflow w ON w.program_id = p.program_id
-      INNER JOIN program_workflow_state s ON s.program_workflow_id = w.program_workflow_id
-      INNER JOIN concept_name n ON n.concept_id = s.concept_id
-      WHERE  s.initial = 0 AND terminal = 1  AND p.program_id = 1 AND s.retired = 0
-      GROUP BY n.concept_id
-    SQL
-    result.map { |record| record['state'] }.push(0)
+    ProgramWorkflowState.joins(:program_workflow)
+                        .where(initial: 0, terminal: 1,
+                               program_workflow: { program_id: Program.where(name: 'HIV Program') })
+                        .select(:program_workflow_state_id)
   end
 
   def remove_temp_tables
     ActiveRecord::Base.connection.execute <<~SQL
-      DROP TABLE IF EXISTS temp_patient_with_adverse_outcomes
+      DROP TEMPORARY TABLE IF EXISTS temp_patient_with_adverse_outcomes
     SQL
     ActiveRecord::Base.connection.execute <<~SQL
-      DROP TABLE IF EXISTS temp_patient_drug_run_out
+      DROP TEMPORARY TABLE IF EXISTS temp_potential_filing_number_candidates
     SQL
-    ActiveRecord::Base.connection.execute <<~SQL
-      DROP TABLE IF EXISTS temp_potential_filing_number_candidates
-    SQL
-    if ActiveRecord::Base.connection.index_exists?(:orders, %i[concept_id])
-      ActiveRecord::Base.connection.execute <<~SQL
-        DROP INDEX idx_orders_concept_id ON orders
-      SQL
-    end
   end
 
   # ADVERSE_OUTCOME_NAMES = [
