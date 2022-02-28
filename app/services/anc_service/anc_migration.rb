@@ -64,7 +64,13 @@ module ANCService
             migrate_person_name(fetch_user_person_id, 'Migrating system users name records')
           end
         end
-        update_openmrs_users if @database_reversed
+        if @database_reversed
+          migrate_person(fetch_missed_users('person_id'), 'Migrating Missed Users Person Details')
+          migrate_person_name(fetch_missed_users('person_id'), 'Migrating Missed User Person Name Details')
+          migrate_missed_users
+          add_missed_users_in_user_bak
+          update_openmrs_users
+        end
         migrate_person(fetch_missed_persons, 'Migrating Person details who are neither patients nor system users')
         migrate_person(fetch_missed_patients, 'Migrating Person details for missed patients')
         migrate_person(not_linked, 'Migrating Person Details for those without any linkage')
@@ -202,6 +208,25 @@ module ANCService
     end
     # rubocop:enable Metrics/MethodLength
 
+    def add_missed_users_in_user_bak
+      statement = <<~SQL
+        INSERT INTO #{@database}.user_bak (ANC_user_id, ART_user_id, person_id)
+        SELECT user_id, (SELECT #{@user_id} + user_id), (SELECT #{@person_id} + person_id)
+        FROM #{@database}.users
+        WHERE user_id IN (#{fetch_missed_users('user_id')})
+      SQL
+      central_hub message: 'Updating user_bak with missed/new users', query: statement
+    end
+
+    def fetch_missed_users(field)
+      result = ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT #{field}
+        FROM #{@database}.users
+        WHERE user_id NOT IN (SELECT ANC_user_id FROM #{@database}.user_bak)
+      SQL
+      result.map { |record| record[field] }.push(0).join(',')
+    end
+
     # method to update openmrs_users that match those in anc database
     def update_openmrs_users
       statement = <<~SQL
@@ -219,6 +244,16 @@ module ANCService
         SELECT (SELECT #{@user_id} + user_id) AS user_id, system_id,  CONCAT(username, '_anc'),  password,  salt,  secret_question,  secret_answer, (SELECT #{@user_id} + creator) AS creator,  date_created,  (SELECT #{@user_id} + changed_by) AS changed_by,  date_changed, (SELECT #{@person_id} + person_id),  retired, (SELECT #{@user_id} + retired_by) AS retired_by,  date_retired,  retire_reason,  uuid,  authentication_token FROM #{@database}.users
       SQL
       central_hub message: 'Migrating users records', query: statement
+    end
+
+    def migrate_missed_users
+      statement = <<~SQL
+        INSERT INTO users (user_id,  system_id,  username,  password,  salt,  secret_question,  secret_answer,  creator,  date_created,  changed_by,  date_changed,  person_id,  retired,  retired_by,  date_retired,  retire_reason,  uuid,  authentication_token)
+        SELECT (SELECT #{@user_id} + user_id) AS user_id, system_id,  CONCAT(username, '_anc'),  password,  salt,  secret_question,  secret_answer, (SELECT #{@user_id} + creator) AS creator,  date_created,  (SELECT #{@user_id} + changed_by) AS changed_by,  date_changed, (SELECT #{@person_id} + person_id),  retired, (SELECT #{@user_id} + retired_by) AS retired_by,  date_retired,  retire_reason,  uuid,  authentication_token
+        FROM #{@database}.users
+        WHERE user_id IN (#{fetch_missed_users('user_id')})
+      SQL
+      central_hub message: 'Migrating missed users records', query: statement
     end
 
     # method to migrate person records
@@ -377,7 +412,6 @@ module ANCService
       SQL
       result.map { |person| person['patient_id'] }.push(0).join(',')
     end
-
 
     # method to migrate encounter whose providers are system users
     def migrate_encounter_system_users(patients, msg, linked: false)
