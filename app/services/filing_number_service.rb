@@ -367,7 +367,7 @@ class FilingNumberService
       ) orders_view
       INNER JOIN temp_potential_filing_number_candidates pi
         ON pi.patient_id = orders_view.patient_id
-      WHERE orders_view.start_date <= DATE(#{ActiveRecord::Base.connection.quote(date)}) - INTERVAL 30 DAY
+      WHERE orders_view.start_date <= DATE(#{ActiveRecord::Base.connection.quote(date)}) - INTERVAL 240 DAY
         AND orders_view.patient_id NOT IN (SELECT patient_id FROM temp_patient_with_adverse_outcomes)
       ORDER BY orders_view.start_date ASC
       LIMIT #{offset},#{limit}
