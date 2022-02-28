@@ -126,6 +126,7 @@ module CXCAService
     end
 
     def show_cancer_treatment?
+      return false if same_day_treatment?
       return false if postponed_treatment_today?
       return false unless cxca_positive?
 
@@ -337,6 +338,25 @@ module CXCAService
 
       return false
     end
+
+    def same_day_treatment?
+      encounter_type = EncounterType.find_by name: CXCA_SCREENING_RESULTS
+      encounter = Encounter.joins(:type).where(
+        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) <= DATE(?)',
+        @patient.patient_id, encounter_type.encounter_type_id, @date
+      ).order(encounter_datetime: :desc).first
+
+      unless encounter.blank?
+        sameday_tx = ConceptName.find_by_name('Directly observed treatment option').concept_id
+        value_coded_concept = ConceptName.find_by_name("Same day treatment").concept_id
+
+        return encounter.observations.find_by(concept_id: sameday_tx,
+          value_coded: value_coded_concept).blank? ? false : true
+      end
+
+      return false
+    end
+
 
     def concept(name)
       ConceptName.find_by_name(name)
