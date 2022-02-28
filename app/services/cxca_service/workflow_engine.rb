@@ -164,7 +164,6 @@ module CXCAService
 
       encounter_type = EncounterType.find_by name: APPOINTMENT
       appointment =   Encounter.joins(:type).where(
-<<<<<<< HEAD
         'patient_id = ? AND encounter_type = ?
         AND DATE(encounter_datetime) = DATE(?) AND program_id = ?',
         @patient.patient_id, encounter_type.encounter_type_id, @date, @program.id
@@ -172,23 +171,11 @@ module CXCAService
 
       encounter_type = EncounterType.find_by name: CANCER_TREATMENT
       cancer_tx =   Encounter.joins(:type).where(
-=======
->>>>>>> v4.14.7
         'patient_id = ? AND encounter_type = ?
         AND DATE(encounter_datetime) = DATE(?) AND program_id = ?',
         @patient.patient_id, encounter_type.encounter_type_id, @date, @program.id
       ).order(encounter_datetime: :desc).first
 
-<<<<<<< HEAD
-=======
-      encounter_type = EncounterType.find_by name: CANCER_TREATMENT
-      cancer_tx =   Encounter.joins(:type).where(
-        'patient_id = ? AND encounter_type = ?
-        AND DATE(encounter_datetime) = DATE(?) AND program_id = ?',
-        @patient.patient_id, encounter_type.encounter_type_id, @date, @program.id
-      ).order(encounter_datetime: :desc).first
-
->>>>>>> v4.14.7
       unless cancer_tx.blank?
         ob = cancer_tx.observations.where(concept_id: concept('Recommended Plan of care').concept_id,
           value_coded: concept('Continue follow-up').concept_id)
@@ -204,13 +191,6 @@ module CXCAService
 
       return appointment.blank?
     end
-
-
-
-
-
-
-
 
     def results_available?
       encounter_type = EncounterType.find_by name: CXCA_SCREENING_RESULTS
