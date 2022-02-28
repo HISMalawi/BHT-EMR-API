@@ -81,7 +81,7 @@ module ANCService
         write_to_file(anc['patient_id'], anc['identifier'], patient.id,
                       patient.patient_identifiers.find_by(identifier_type: 3).identifier)
         if percentage
-          record = { anc => patient.id,
+          record = { anc['patient_id'] => patient.id,
                      'identifier' => patient.patient_identifiers.find_by(identifier_type: 3).identifier,
                      'reason' => identifier['void_reason'] }
         end
