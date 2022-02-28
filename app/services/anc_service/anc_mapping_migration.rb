@@ -15,10 +15,10 @@ module ANCService
       create_unmapped
       @file.puts('ANC Patient ID,ANC National Identifier,ART Patient ID,ART National Identifier,Matched Fields,Score')
       anc = ActiveRecord::Base.connection.select_all <<~SQL
-        select identifier, patient_id
-        from  #{@database}.patient_identifier
-        where patient_identifier.identifier_type = 3
-        and patient_identifier.voided = 0
+        SELECT identifier, patient_id
+        FROM  #{@database}.patient_identifier
+        WHERE patient_identifier.identifier_type = 3
+        AND patient_identifier.voided = 0
       SQL
       print_time message: 'Mapping Patients'
       anc.each do |identifier|

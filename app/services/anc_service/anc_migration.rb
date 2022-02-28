@@ -65,28 +65,45 @@ module ANCService
           end
         end
         update_openmrs_users if @database_reversed
+        migrate_person(fetch_missed_persons, 'Migrating Person details who are neither patients nor system users')
+        migrate_person(fetch_missed_patients, 'Migrating Person details for missed patients')
         migrate_person(not_linked, 'Migrating Person Details for those without any linkage')
+        migrate_person_name(fetch_missed_persons, 'Migrating Person Name details who are neither patients nor system users')
+        migrate_person_name(fetch_missed_patients, 'Migrating Person Name details for missed patients')
         migrate_person_name(not_linked, 'Migrating Person Name Details for those without any linkage')
+        migrate_person_address(fetch_missed_persons, 'Migrating Person Address details who are neither patients nor system users')
+        migrate_person_address(fetch_missed_patients, 'Migrating Person Address details for missed patients')
         migrate_person_address(not_linked, 'Migrating Person Address Details for those without any linkage')
+        migrate_person_attribute(fetch_missed_persons, 'Migrating Person Attributes details who are neither patients nor system users')
+        migrate_person_attribute(fetch_missed_patients, 'Migrating Person Attributes details for missed patients')
         migrate_person_attribute(not_linked, 'Migrating Person Attributes Details for those without any linkage')
         migrate_patient(not_linked, 'Migrating Patient Details for those without any linkage')
+        migrate_patient(fetch_missed_patients, 'Migrating Patient Details for missed patients')
         migrate_patient_identifier(not_linked, 'Migrating Patient Identifier Details for those without any linkage')
+        migrate_patient_identifier(fetch_missed_patients, 'Migrating Patient Details for missed patients')
+        migrate_patient_program(fetch_missed_patients, 'Migrating Patient Program Details for missed patients')
         migrate_patient_program(mapped, 'Migrating Patient Program Details for those linked', linked: true)
         migrate_patient_program(not_linked, 'Migrating Patient Program Details for those without any linkage')
+        migrate_patient_state(fetch_missed_patients, 'Migrating Patient State Details for missed patients')
         migrate_patient_state(mapped, 'Migrating Patient State for those linked')
         migrate_patient_state(not_linked, 'Migrating Patient State for those without any linkage')
+        migrate_encounter_not_system_users(fetch_missed_patients, 'Migrating Patient encounters for missed patients')
         migrate_encounter_not_system_users(mapped,
                                            'Migrating Patient encounters for those linked whose provider is not a system user', linked: true)
         migrate_encounter_not_system_users(not_linked,
                                            'Migrating Patient encounter for those without any linkage whose provider is a not a system user')
+        migrate_encounter_system_users(fetch_missed_patients, 'Migrating Patient encounter for missed patients')
         migrate_encounter_system_users(mapped,
                                        'Migrating Patient encounter details for those linked whose provider is a system user', linked: true)
         migrate_encounter_system_users(not_linked,
                                        'Migrating Patient encounter details for those without any linkage whose provider is a system user')
+        migrate_obs(fetch_missed_patients, 'Migrating Patient Observations for missed patients')
         migrate_obs(mapped, 'Migratig patient observations for those linked', linked: true)
         migrate_obs(not_linked, 'Migrating patient observations for those without any linkage')
+        migrate_orders(fetch_missed_patients, 'Migrating Patient orders for missed patients')
         migrate_orders(mapped, 'Migrating patient orders for those linked', linked: true)
         migrate_orders(not_linked, 'Migrating patient orders for those without any linkage')
+        migrate_drug_order(fetch_missed_patients, 'Migrating Patient Drug orders for missed patients')
         migrate_drug_order(mapped, 'Migrating patient drug orders for those linked')
         migrate_drug_order(not_linked, 'Migrating patient drug orders for those without any linkage')
         if @database_reversed
@@ -338,6 +355,29 @@ module ANCService
       end
       wow
     end
+
+    def fetch_missed_persons
+      result = ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT person_id FROM #{@database}.person
+        WHERE person_id NOT IN (SELECT patient_id FROM #{@database}.patient)
+        AND person_id NOT IN (SELECT person_id FROM #{@database}.users)
+      SQL
+      result.map { |person| person['person_id'] }.push(0).join(',')
+    end
+
+    def fetch_missed_patients
+      result = ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT patient_id FROM #{@database}.patient
+        WHERE patient_id NOT IN (
+          SELECT patient_id
+          FROM #{@database}.patient_identifier
+          WHERE identifier_type = 3
+          AND voided = 0
+        )
+      SQL
+      result.map { |person| person['patient_id'] }.push(0).join(',')
+    end
+
 
     # method to migrate encounter whose providers are system users
     def migrate_encounter_system_users(patients, msg, linked: false)
