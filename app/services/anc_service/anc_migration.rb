@@ -413,6 +413,32 @@ module ANCService
       result.map { |person| person['patient_id'] }.push(0).join(',')
     end
 
+    def fetch_providers_who_are_not_system_users
+      result = ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT provider_id FROM #{@database}.encounter
+        WHERE provider_id NOT IN (#{fetch_user_person_id})
+        GROUP BY provider_id
+      SQL
+      result.map { |record| record['provider_id'] }.push(0).join(',')
+    end
+
+    def change_provider_to_the_default_system_user
+      statement = <<~SQL
+        UPDATE #{@database}.encounter SET provider_id = (SELECT person_id FROM #{@database}.users LIMIT 1) WHERE provider_id IN (#{fetch_providers_who_are_not_system_users})
+      SQL
+      central_hub message: 'Updating providers that are not system users to a default system users', query: statement
+    end
+
+    def provider_change_history
+      statement = <<~SQL
+        CREATE TABLE #{@database}.provider_change_history
+        SELECT provider_id AS ANC_person_id, encounter_id AS ANC_encounter_id, (SELECT person_id FROM #{@database}.users LIMIT 1) AS ANC_new_person_id, (SELECT #{@person_id} + provider_id) AS ART_provider_id, (SELECT #{@encounter_id} + encounter_id) AS ART_encounter_id
+        FROM #{@database}.encounter
+        WHERE provider_id IN (#{fetch_providers_who_are_not_system_users})
+      SQL
+      central_hub(message: 'Recording providers who are not systems users', query: statement)
+    end
+
     # method to migrate encounter whose providers are system users
     def migrate_encounter_system_users(patients, msg, linked: false)
       cond = ''
