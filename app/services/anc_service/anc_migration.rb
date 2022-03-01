@@ -93,11 +93,6 @@ module ANCService
         migrate_patient_state(fetch_missed_patients, 'Migrating Patient State Details for missed patients')
         migrate_patient_state(mapped, 'Migrating Patient State for those linked')
         migrate_patient_state(not_linked, 'Migrating Patient State for those without any linkage')
-        migrate_encounter_not_system_users(fetch_missed_patients, 'Migrating Patient encounters for missed patients')
-        migrate_encounter_not_system_users(mapped,
-                                           'Migrating Patient encounters for those linked whose provider is not a system user', linked: true)
-        migrate_encounter_not_system_users(not_linked,
-                                           'Migrating Patient encounter for those without any linkage whose provider is a not a system user')
         migrate_encounter_system_users(fetch_missed_patients, 'Migrating Patient encounter for missed patients')
         migrate_encounter_system_users(mapped,
                                        'Migrating Patient encounter details for those linked whose provider is a system user', linked: true)
@@ -440,6 +435,7 @@ module ANCService
     end
 
     # method to migrate encounter whose providers are system users
+    # rubocop:disable Metrics/MethodLength
     def migrate_encounter_system_users(patients, msg, linked: false)
       cond = ''
       cond = "INNER JOIN #{@database}.mapped_patients on mapped_patients.anc_patient_id = encounter.patient_id" if linked
@@ -459,6 +455,7 @@ module ANCService
       SQL
       central_hub message: msg, query: statement
     end
+    # rubocop:enable Metrics/MethodLength
 
     # method to migrate obs records
     def migrate_obs(patients, msg, linked: false)
