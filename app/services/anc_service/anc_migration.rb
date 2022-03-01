@@ -92,6 +92,8 @@ module ANCService
         migrate_patient_program(not_linked, 'Migrating Patient Program Details for those without any linkage')
         migrate_patient_state(fetch_missed_patients, 'Migrating Patient State Details for missed patients')
         migrate_patient_state(mapped, 'Migrating Patient State for those linked')
+        provider_change_history
+        change_provider_to_the_default_system_user
         migrate_patient_state(not_linked, 'Migrating Patient State for those without any linkage')
         migrate_encounter_system_users(fetch_missed_patients, 'Migrating Patient encounter for missed patients')
         migrate_encounter_system_users(mapped,
@@ -429,6 +431,8 @@ module ANCService
     end
 
     def change_provider_to_the_default_system_user
+      return if fetch_providers_who_are_not_system_users.length == 1
+
       statement = <<~SQL
         UPDATE #{@database}.encounter SET provider_id = (SELECT person_id FROM #{@database}.users LIMIT 1) WHERE provider_id IN (#{fetch_providers_who_are_not_system_users})
       SQL
@@ -436,9 +440,12 @@ module ANCService
     end
 
     def provider_change_history
+      return if fetch_providers_who_are_not_system_users.length == 1
+
+      central_hub(message: 'Dropping recorded providers table', query: "DROP IF EXISTS #{@database}.provider_change_history")
       statement = <<~SQL
         CREATE TABLE #{@database}.provider_change_history
-        SELECT provider_id AS ANC_person_id, encounter_id AS ANC_encounter_id, (SELECT person_id FROM #{@database}.users LIMIT 1) AS ANC_new_person_id, (SELECT #{@person_id} + provider_id) AS ART_provider_id, (SELECT #{@encounter_id} + encounter_id) AS ART_encounter_id
+        SELECT provider_id AS ANC_person_id, encounter_id AS ANC_encounter_id, (SELECT person_id FROM #{@database}.users LIMIT 1) AS ANC_new_person_id, (SELECT (SELECT person_id FROM #{@database} LIMIT 1) + #{@person_id}) AS ART_provider_id, (SELECT #{@encounter_id} + encounter_id) AS ART_encounter_id
         FROM #{@database}.encounter
         WHERE provider_id IN (#{fetch_providers_who_are_not_system_users})
       SQL
@@ -795,6 +802,18 @@ module ANCService
       csv
     end
 
+    def report_providers_changed
+      result = ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT anc_person_id, art_person_id,anc_encounter_id,art_encounter_id
+        FROM #{@database}.provider_change_history
+      SQL
+      csv = 'ANC PROVIDER ID ,ART PROVIDER ID,ANC ENCOUNTER ID,ART ENCOUNTER ID'
+      result.each do |record|
+        csv += "\n#{record['anc_person_id']},#{record['art_person_id']},#{record['anc_encounter_id']},#{record['art_encounter_id']}"
+      end
+      csv
+    end
+
     # method to write mapping data
     def write_migration_to_file
       @log.close
@@ -811,6 +830,8 @@ module ANCService
       @file.puts 'This is a list of Patients without encounters'
       @file.puts report_patient_without_encounters
       @file.puts ' '
+      @file.puts 'This is list of Providers that were changed because they are not system users'
+      @file.puts report_providers_changed
       @file.puts 'This is the log'
       @file.puts File.open('migration.log').read
       File.delete('migration.log') if File.exist?('migration.log')
