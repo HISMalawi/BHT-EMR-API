@@ -241,6 +241,7 @@ module ANCService
       central_hub message: 'Migrating users records', query: statement
     end
 
+    # method to migrate missed users
     def migrate_missed_users
       statement = <<~SQL
         INSERT INTO users (user_id,  system_id,  username,  password,  salt,  secret_question,  secret_answer,  creator,  date_created,  changed_by,  date_changed,  person_id,  retired,  retired_by,  date_retired,  retire_reason,  uuid,  authentication_token)
@@ -252,30 +253,36 @@ module ANCService
     end
 
     # method to migrate person records
+    # rubocop:disable Metrics/MethodLength
     def migrate_person(patients, msg, linked: false)
       cond = ''
       cond = "INNER JOIN #{@database}.mapped_patients on mapped_patients.anc_patient_id = person.person_id" if linked
       statement = <<~SQL
         INSERT INTO person (person_id, gender, birthdate, birthdate_estimated, dead, death_date, cause_of_death, creator, date_created, changed_by, date_changed, voided, voided_by, date_voided, void_reason, uuid)
         SELECT #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + person_id) AS person_id"},
-        gender, birthdate, birthdate_estimated, dead, death_date, cause_of_death, (SELECT #{@user_id} + creator) AS creator, date_created, (SELECT #{@user_id} + changed_by) AS changed_by, date_changed, voided, (SELECT #{@user_id} + voided_by) AS voided_by, date_voided, void_reason, uuid
+        gender, birthdate, birthdate_estimated, dead, death_date, cause_of_death, creators.ART_user_id, date_created, changers.ART_user_id, date_changed, voided, voiders.ART_user_id, date_voided, void_reason, uuid
         FROM #{@database}.person #{cond}
+        INNER JOIN user_bak creators ON creators.ANC_user_id = person.creator
+        LEFT JOIN user_bak changers ON changers.ANC_user_id = person.changed_by
+        LEFT JOIN user_bak voiders ON voiders.ANC_user_id = person.voided_by
         WHERE person_id IN (#{patients})
       SQL
       central_hub message: msg, query: statement
     end
+    # rubocop:enable Metrics/MethodLength
 
     # method to migrate person name records
     def migrate_person_name(patients, msg, linked: false)
       cond = ''
-      if linked
-        cond = "INNER JOIN #{@database}.mapped_patients on mapped_patients.anc_patient_id = person_name.person_id"
-      end
+      cond = "INNER JOIN #{@database}.mapped_patients on mapped_patients.anc_patient_id = person_name.person_id" if linked
       statement = <<~SQL
         INSERT INTO person_name (preferred, person_id, prefix, given_name, middle_name, family_name_prefix, family_name, family_name2, family_name_suffix, degree, creator, date_created, voided, voided_by, date_voided, void_reason, changed_by, date_changed, uuid)
         SELECT preferred, #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + person_id) AS person_id"},
-        prefix, given_name, middle_name, family_name_prefix, family_name, family_name2, family_name_suffix, degree, (SELECT #{@user_id} + creator) AS creator, date_created, voided, (SELECT #{@user_id} + voided_by) AS voided_by, date_voided, void_reason, (SELECT #{@user_id} + changed_by) AS changed_by, date_changed, uuid
+        prefix, given_name, middle_name, family_name_prefix, family_name, family_name2, family_name_suffix, degree,creators.ART_user_id, date_created, voided,voiders.ART_user_id, date_voided, void_reason, changers.ART_user_id, date_changed, uuid
         FROM #{@database}.person_name #{cond}
+        INNER JOIN user_bak creators ON creators.ANC_user_id = person_name.creator
+        LEFT JOIN user_bak changers ON changers.ANC_user_id = person_name.changed_by
+        LEFT JOIN user_bak voiders ON voiders.ANC_user_id = person_name.voided_by
         WHERE person_id IN (#{patients})
       SQL
       central_hub message: msg, query: statement
@@ -288,8 +295,10 @@ module ANCService
       statement = <<~SQL
         INSERT INTO person_address (person_id,  preferred,  address1,  address2,  city_village,  state_province,  postal_code,  country,  latitude,  longitude,  creator,  date_created,  voided,  voided_by,  date_voided, void_reason, county_district,  neighborhood_cell,  region,  subregion,  township_division,  uuid)
         SELECT #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + p.person_id) AS person_id"},
-        p.preferred,  p.address1,  p.address2,  p.city_village,  p.state_province, p.postal_code,  p.country,  p.latitude,  p.longitude,  (SELECT #{@user_id} + p.creator) AS creator,  p.date_created,  p.voided,  (SELECT #{@user_id} + p.voided_by) AS voided_by, p.date_voided, p.void_reason, p.county_district,  p.neighborhood_cell,  p.region,  p.subregion,  p.township_division, uuid
+        p.preferred,  p.address1,  p.address2,  p.city_village,  p.state_province, p.postal_code,  p.country,  p.latitude,  p.longitude, creators.ART_user_id,  p.date_created,  p.voided, voiders.ART_user_id, p.date_voided, p.void_reason, p.county_district,  p.neighborhood_cell,  p.region,  p.subregion,  p.township_division, uuid
         FROM #{@database}.person_address p #{cond}
+        INNER JOIN user_bak creators ON creators.ANC_user_id = p.creator
+        LEFT JOIN user_bak voiders ON voiders.ANC_user_id = p.voided_by
         WHERE p.person_id IN (#{patients})
       SQL
       central_hub message: msg, query: statement
@@ -301,8 +310,11 @@ module ANCService
       cond = "INNER JOIN #{@database}.mapped_patients on mapped_patients.anc_patient_id = p.person_id" if linked
       statement = <<~SQL
         INSERT INTO person_attribute (person_id, value, person_attribute_type_id, creator, date_created, changed_by, date_changed, voided, voided_by, date_voided, void_reason, uuid)
-        SELECT #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + p.person_id) AS person_id"}, p.value, p.person_attribute_type_id, (SELECT #{@user_id} + p.creator) AS creator, p.date_created,  (SELECT #{@user_id} + p.changed_by) AS changed_by, p.date_changed, p.voided,  p.voided_by, p.date_voided, p.void_reason, uuid
+        SELECT #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + p.person_id) AS person_id"}, p.value, p.person_attribute_type_id, creators.ART_user_id, p.date_created, changers.ART_user_id, p.date_changed, p.voided, voiders.ART_user_id, p.date_voided, p.void_reason, uuid
         FROM #{@database}.person_attribute p #{cond}
+        INNER JOIN user_bak creators ON creators.ANC_user_id = p.creator
+        LEFT JOIN user_bak changers ON changers.ANC_user_id = p.changed_by
+        LEFT JOIN user_bak voiders ON voiders.ANC_user_id = p.voided_by
         WHERE p.person_id IN (#{patients})
       SQL
       central_hub message: msg, query: statement
