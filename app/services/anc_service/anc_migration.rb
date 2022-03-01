@@ -262,7 +262,7 @@ module ANCService
       cond = "INNER JOIN #{@database}.mapped_patients on mapped_patients.anc_patient_id = person.person_id" if linked
       statement = <<~SQL
         INSERT INTO person (person_id, gender, birthdate, birthdate_estimated, dead, death_date, cause_of_death, creator, date_created, changed_by, date_changed, voided, voided_by, date_voided, void_reason, uuid)
-        SELECT #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + person_id) AS person_id"},
+        SELECT #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + person.person_id) AS person_id"},
         gender, birthdate, birthdate_estimated, dead, death_date, cause_of_death, creators.ART_user_id, date_created, changers.ART_user_id, date_changed, voided, voiders.ART_user_id, date_voided, void_reason, uuid
         FROM #{@database}.person #{cond}
         INNER JOIN #{@database}.user_bak creators ON creators.ANC_user_id = person.creator
@@ -280,7 +280,7 @@ module ANCService
       cond = "INNER JOIN #{@database}.mapped_patients on mapped_patients.anc_patient_id = person_name.person_id" if linked
       statement = <<~SQL
         INSERT INTO person_name (preferred, person_id, prefix, given_name, middle_name, family_name_prefix, family_name, family_name2, family_name_suffix, degree, creator, date_created, voided, voided_by, date_voided, void_reason, changed_by, date_changed, uuid)
-        SELECT preferred, #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + person_id) AS person_id"},
+        SELECT preferred, #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + person_name.person_id) AS person_id"},
         prefix, given_name, middle_name, family_name_prefix, family_name, family_name2, family_name_suffix, degree,creators.ART_user_id, date_created, voided,voiders.ART_user_id, date_voided, void_reason, changers.ART_user_id, date_changed, uuid
         FROM #{@database}.person_name #{cond}
         INNER JOIN #{@database}.user_bak creators ON creators.ANC_user_id = person_name.creator
@@ -482,7 +482,7 @@ module ANCService
       cond = "INNER JOIN #{@database}.mapped_patients on mapped_patients.anc_patient_id = obs.person_id" if linked
       statement = <<~SQL
         INSERT INTO obs (obs_id, person_id,  concept_id,  encounter_id,  order_id,  obs_datetime,  location_id,  obs_group_id,  accession_number,  value_group_id,  value_boolean,  value_coded,  value_coded_name_id,  value_drug,  value_datetime,  value_numeric,  value_modifier,  value_text,  date_started,  date_stopped,  comments,  creator,  date_created,  voided,  voided_by,  date_voided,  void_reason,  value_complex,  uuid)
-        SELECT (SELECT #{@obs_id} + obs_id) AS obs_id, #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + person_id) AS person_id"},  concept_id,  (SELECT #{@encounter_id} + encounter_id) AS encounter_id,  (SELECT #{@order_id} + order_id) AS order_id, obs_datetime, location_id, (SELECT #{@obs_id} + obs_group_id) AS obs_group_id, accession_number, value_group_id, value_boolean, value_coded, value_coded_name_id, value_drug, value_datetime, value_numeric, value_modifier, value_text, date_started, date_stopped,  comments, creators.ART_user_id, date_created, voided, voiders.ART_user_id, date_voided, void_reason, value_complex,  uuid
+        SELECT (SELECT #{@obs_id} + obs_id) AS obs_id, #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + obs.person_id) AS person_id"},  concept_id,  (SELECT #{@encounter_id} + encounter_id) AS encounter_id,  (SELECT #{@order_id} + order_id) AS order_id, obs_datetime, location_id, (SELECT #{@obs_id} + obs_group_id) AS obs_group_id, accession_number, value_group_id, value_boolean, value_coded, value_coded_name_id, value_drug, value_datetime, value_numeric, value_modifier, value_text, date_started, date_stopped,  comments, creators.ART_user_id, date_created, voided, voiders.ART_user_id, date_voided, void_reason, value_complex,  uuid
         FROM #{@database}.obs #{cond}
         INNER JOIN #{@database}.user_bak creators ON creators.ANC_user_id = obs.creator
         LEFT JOIN #{@database}.user_bak voiders ON voiders.ANC_user_id = obs.voided_by
