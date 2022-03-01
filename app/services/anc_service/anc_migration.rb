@@ -517,6 +517,17 @@ module ANCService
       central_hub query: statement, message: msg
     end
 
+    def migrate_user_role
+      statement = <<~SQL
+        INSERT INTO user_role (user_id, role)
+        SELECT b.ART_user_id, r.role
+        FROM #{@database}.user_role r
+        INNER JOIN #{@database}.user_bak b on r.user_id = b.ANC_user_id
+        WHERE NOT EXISTS (SELECT 1 FROM user_role WHERE user_role.user_id = b.ART_user_id)
+      SQL
+      central_hub(message: 'Migrating user roles', query: statement)
+    end
+
     # rubocop:disable Metrics/MethodLength
     # method to update migated records
     def update_migrated_records
