@@ -442,9 +442,7 @@ module ANCService
     # method to migrate encounter whose providers are system users
     def migrate_encounter_system_users(patients, msg, linked: false)
       cond = ''
-      if linked
-        cond = "INNER JOIN #{@database}.mapped_patients on mapped_patients.anc_patient_id = encounter.patient_id"
-      end
+      cond = "INNER JOIN #{@database}.mapped_patients on mapped_patients.anc_patient_id = encounter.patient_id" if linked
       statement = <<~SQL
         INSERT INTO encounter (encounter_id, encounter_type, patient_id, provider_id, location_id, form_id, encounter_datetime, creator, date_created, voided, voided_by, date_voided, void_reason, uuid, changed_by, date_changed, program_id)
         SELECT (SELECT #{@encounter_id} + encounter_id), encounter_type, #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + patient_id)"}, providers.ART_user_id, location_id, form_id, encounter_datetime, bak.ART_user_id, encounter.date_created, encounter.voided, voider.ART_user_id, encounter.date_voided, encounter.void_reason, encounter.uuid, changer.ART_user_id, encounter.date_changed, 12
@@ -458,20 +456,6 @@ module ANCService
         LEFT JOIN #{@database}.user_bak voider on voider.ANC_user_id = encounter.voided_by
         LEFT JOIN #{@database}.user_bak changer on changer.ANC_user_id = encounter.changed_by
         WHERE provider_id IN (SELECT person_id FROM #{@database}.users) AND patient_id IN (#{patients})
-      SQL
-      central_hub message: msg, query: statement
-    end
-
-    # method to migrate encounter whose providers are system users
-    def migrate_encounter_not_system_users(patients, msg, linked: false)
-      cond = ''
-      cond = "INNER JOIN #{@database}.mapped_patients on mapped_patients.anc_patient_id = e.patient_id" if linked
-      statement = <<~SQL
-        INSERT INTO encounter (encounter_id, encounter_type, patient_id, provider_id, location_id, form_id, encounter_datetime, creator, date_created, voided, voided_by, date_voided, void_reason, uuid, changed_by, date_changed, program_id)
-        SELECT (SELECT #{@encounter_id} + e.encounter_id) AS id, e.encounter_type, #{linked ? 'mapped_patients.art_patient_id' : "(SELECT #{@person_id} + e.patient_id) AS patient_id"}, (SELECT #{@person_id} + provider_id) AS provider_id, e.location_id, e.form_id, e.encounter_datetime, bak.ART_user_id AS creator, e.date_created, e.voided, (SELECT #{@user_id} + e.voided_by) AS voided_by, e.date_voided, e.void_reason, e.uuid, (SELECT #{@user_id} + e.changed_by) AS changed_by, e.date_changed, 12
-        FROM #{@database}.encounter e #{cond}
-        INNER JOIN #{@database}.user_bak bak ON e.creator = bak.ANC_user_id
-        WHERE provider_id NOT IN (SELECT person_id FROM #{@database}.users) AND patient_id IN (#{patients})
       SQL
       central_hub message: msg, query: statement
     end
