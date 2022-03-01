@@ -447,7 +447,7 @@ module ANCService
       end
       statement = <<~SQL
         INSERT INTO encounter (encounter_id, encounter_type, patient_id, provider_id, location_id, form_id, encounter_datetime, creator, date_created, voided, voided_by, date_voided, void_reason, uuid, changed_by, date_changed, program_id)
-        SELECT (SELECT #{@encounter_id} + encounter_id) AS id, encounter_type, #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + patient_id) AS patient_id"}, providers.ART_user_id AS provider_id, location_id, form_id, encounter_datetime, bak.ART_user_id AS creator, encounter.date_created, encounter.voided, (SELECT #{@user_id} + encounter.voided_by) AS voided_by, encounter.date_voided, encounter.void_reason, encounter.uuid, (SELECT #{@user_id} + encounter.changed_by) AS changed_by, encounter.date_changed, 12
+        SELECT (SELECT #{@encounter_id} + encounter_id), encounter_type, #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + patient_id)"}, providers.ART_user_id, location_id, form_id, encounter_datetime, bak.ART_user_id, encounter.date_created, encounter.voided, voider.ART_user_id, encounter.date_voided, encounter.void_reason, encounter.uuid, changer.ART_user_id, encounter.date_changed, 12
         FROM #{@database}.encounter #{cond}
         INNER JOIN #{@database}.user_bak bak ON encounter.creator = bak.ANC_user_id
         INNER JOIN (
@@ -455,6 +455,8 @@ module ANCService
           FROM #{@database}.users u
           INNER JOIN #{@database}.user_bak b ON b.ANC_user_id = u.user_id
         ) providers ON providers.ANC_person_id = encounter.provider_id
+        LEFT JOIN #{@database}.user_bak voider on voider.ANC_user_id = encounter.voided_by
+        LEFT JOIN #{@database}.user_bak changer on changer.ANC_user_id = encounter.changed_by
         WHERE provider_id IN (SELECT person_id FROM #{@database}.users) AND patient_id IN (#{patients})
       SQL
       central_hub message: msg, query: statement
