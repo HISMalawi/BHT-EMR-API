@@ -474,8 +474,10 @@ module ANCService
       cond = "INNER JOIN #{@database}.mapped_patients on mapped_patients.anc_patient_id = obs.person_id" if linked
       statement = <<~SQL
         INSERT INTO obs (obs_id, person_id,  concept_id,  encounter_id,  order_id,  obs_datetime,  location_id,  obs_group_id,  accession_number,  value_group_id,  value_boolean,  value_coded,  value_coded_name_id,  value_drug,  value_datetime,  value_numeric,  value_modifier,  value_text,  date_started,  date_stopped,  comments,  creator,  date_created,  voided,  voided_by,  date_voided,  void_reason,  value_complex,  uuid)
-        SELECT (SELECT #{@obs_id} + obs_id) AS obs_id, #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + person_id) AS person_id"},  concept_id,  (SELECT #{@encounter_id} + encounter_id) AS encounter_id,  (SELECT #{@order_id} + order_id) AS order_id, obs_datetime, location_id, (SELECT #{@obs_id} + obs_group_id) AS obs_group_id, accession_number, value_group_id, value_boolean, value_coded, value_coded_name_id, value_drug, value_datetime, value_numeric, value_modifier, value_text, date_started, date_stopped,  comments, (SELECT #{@user_id} + creator) AS creator, date_created, voided, (SELECT #{@user_id} + voided_by) AS voided_by, date_voided, void_reason, value_complex,  uuid
+        SELECT (SELECT #{@obs_id} + obs_id) AS obs_id, #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + person_id) AS person_id"},  concept_id,  (SELECT #{@encounter_id} + encounter_id) AS encounter_id,  (SELECT #{@order_id} + order_id) AS order_id, obs_datetime, location_id, (SELECT #{@obs_id} + obs_group_id) AS obs_group_id, accession_number, value_group_id, value_boolean, value_coded, value_coded_name_id, value_drug, value_datetime, value_numeric, value_modifier, value_text, date_started, date_stopped,  comments, creators.ART_user_id, date_created, voided, voiders.ART_user_id, date_voided, void_reason, value_complex,  uuid
         FROM #{@database}.obs #{cond}
+        INNER JOIN user_bak creators ON creators.ANC_user_id = obs.creator
+        LEFT JOIN user_bak voiders ON voiders.ANC_user_id = obs.voided_by
         WHERE encounter_id IN (SELECT encounter_id FROM #{@database}.encounter WHERE patient_id IN (#{patients}))
       SQL
       central_hub message: msg, query: statement
@@ -487,8 +489,11 @@ module ANCService
       cond = "INNER JOIN #{@database}.mapped_patients on mapped_patients.anc_patient_id = orders.patient_id" if linked
       statement = <<~SQL
         INSERT INTO orders (order_id, order_type_id, concept_id, orderer,  encounter_id,  instructions,  start_date,  auto_expire_date,  discontinued,  discontinued_date, discontinued_by,  discontinued_reason, creator, date_created,  voided,  voided_by,  date_voided,  void_reason, patient_id,  accession_number, obs_id,  uuid, discontinued_reason_non_coded)
-        SELECT (SELECT #{@order_id} + order_id) AS order_id,  order_type_id, concept_id, orderer, (SELECT #{@encounter_id} + encounter_id) AS encounter_id,  instructions, start_date, auto_expire_date,  discontinued,  discontinued_date, (SELECT #{@user_id} + discontinued_by) AS discontinued_by,  discontinued_reason,  (SELECT #{@user_id} + creator) AS creator,  date_created,  voided, (SELECT #{@user_id} + voided_by) AS voided_by,  date_voided, void_reason, #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + patient_id) AS patient_id"}, accession_number, (SELECT #{@obs_id} + obs_id) AS obs_id, uuid, discontinued_reason_non_coded
+        SELECT (SELECT #{@order_id} + order_id) AS order_id,  order_type_id, concept_id, orderer, (SELECT #{@encounter_id} + encounter_id) AS encounter_id,  instructions, start_date, auto_expire_date,  discontinued,  discontinued_date, changers.ART_user_id,  discontinued_reason,  creators.ART_user_id,  date_created,  voided, voiders.ART_user_id,  date_voided, void_reason, #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + patient_id) AS patient_id"}, accession_number, (SELECT #{@obs_id} + obs_id) AS obs_id, uuid, discontinued_reason_non_coded
         FROM #{@database}.orders #{cond}
+        INNER JOIN user_bak creators ON creators.ANC_user_id = orders.creator
+        LEFT JOIN user_bak changers ON changers.ANC_user_id = orders.discontinued_by
+        LEFT JOIN user_bak voiders ON voiders.ANC_user_id = orders.voided_by
         WHERE encounter_id IN (SELECT encounter_id FROM #{@database}.encounter WHERE patient_id IN (#{patients}) )
       SQL
       central_hub message: msg, query: statement
