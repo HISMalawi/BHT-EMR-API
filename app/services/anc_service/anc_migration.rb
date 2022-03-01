@@ -326,8 +326,11 @@ module ANCService
       cond = "INNER JOIN #{@database}.mapped_patients on mapped_patients.anc_patient_id = p.patient_id" if linked
       statement = <<~SQL
         INSERT INTO patient (patient_id, tribe, creator, date_created, changed_by, date_changed, voided, voided_by, date_voided, void_reason)
-        SELECT #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + p.patient_id) AS patient_id"}, p.tribe, (SELECT #{@user_id} + p.creator) AS creator, p.date_created,  (SELECT #{@user_id} + p.changed_by) AS changed_by, p.date_changed, p.voided, (SELECT #{@user_id} + p.voided_by) AS voided_by, p.date_voided, p.void_reason
+        SELECT #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + p.patient_id) AS patient_id"}, p.tribe, creators.ART_user_id, p.date_created, changers.ART_user_id, p.date_changed, p.voided, voiders.ART_user_id, p.date_voided, p.void_reason
         FROM #{@database}.patient p #{cond}
+        INNER JOIN user_bak creators ON creators.ANC_user_id = p.creator
+        LEFT JOIN user_bak changers ON changers.ANC_user_id = p.changed_by
+        LEFT JOIN user_bak voiders ON voiders.ANC_user_id = p.voided_by
         WHERE p.patient_id IN (#{patients})
       SQL
       central_hub message: msg, query: statement
@@ -339,8 +342,10 @@ module ANCService
       cond = "INNER JOIN #{@database}.mapped_patients on mapped_patients.anc_patient_id = p.patient_id" if linked
       statement = <<~SQL
         INSERT INTO patient_identifier (patient_id,  identifier,  identifier_type,  preferred,  location_id,  creator,  date_created,  voided,  voided_by,  date_voided,  void_reason,  uuid)
-        SELECT #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + p.patient_id) AS patient_id,"} p.identifier, p.identifier_type,  p.preferred,  p.location_id,  (SELECT #{@user_id} + p.creator) AS creator,  p.date_created,  p.voided, (SELECT #{@user_id} + p.voided_by) AS voided_by, p.date_voided, p.void_reason, uuid
+        SELECT #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + p.patient_id) AS patient_id,"} p.identifier, p.identifier_type,  p.preferred,  p.location_id, creators.ART_user_id,  p.date_created,  p.voided, voiders.ART_user_id, p.date_voided, p.void_reason, uuid
         FROM #{@database}.patient_identifier p #{cond}
+        INNER JOIN user_bak creators ON creators.ANC_user_id = p.creator
+        LEFT JOIN user_bak voiders ON voiders.ANC_user_id = p.voided_by
         WHERE p.patient_id IN (#{patients})
       SQL
       central_hub message: msg, query: statement
@@ -354,8 +359,11 @@ module ANCService
       end
       statement = <<~SQL
         INSERT INTO patient_program (patient_program_id,  patient_id,  program_id,  date_enrolled,  date_completed,  creator,  date_created, changed_by,  date_changed,  voided, voided_by,  date_voided,  void_reason,  uuid,  location_id)
-        SELECT (SELECT #{@patient_program_id} + patient_program_id) AS patient_program_id,  #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + patient_id) AS patient_id"},  program_id,  date_enrolled,  date_completed,  (SELECT #{@user_id} + creator) AS creator,  date_created, (SELECT #{@user_id} + changed_by) AS changed_by, date_changed,  voided,  (SELECT #{@user_id} + voided_by) AS voided_by,  date_voided,  void_reason,  uuid, location_id
+        SELECT (SELECT #{@patient_program_id} + patient_program_id) AS patient_program_id,  #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + patient_id) AS patient_id"},  program_id,  date_enrolled,  date_completed, creators.ART_user_id,  date_created, changers.ART_user_id, date_changed,  voided, voiders.ART_user_id,  date_voided,  void_reason,  uuid, location_id
         FROM #{@database}.patient_program #{cond}
+        INNER JOIN user_bak creators ON creators.ANC_user_id = patient_program.creator
+        LEFT JOIN user_bak changers ON changers.ANC_user_id = patient_program.changed_by
+        LEFT JOIN user_bak voiders ON voiders.ANC_user_id = patient_program.voided_by
         WHERE patient_id IN (#{patients})
       SQL
       central_hub message: msg, query: statement
@@ -365,24 +373,15 @@ module ANCService
     def migrate_patient_state(patients, msg)
       statement = <<~SQL
         INSERT INTO patient_state (patient_program_id, state, start_date, end_date, creator, date_created, changed_by, date_changed, voided, voided_by, date_voided, void_reason, uuid)
-        SELECT (SELECT #{@patient_program_id} + patient_program_id) AS patient_program_id, state, start_date, end_date, (SELECT #{@user_id} + creator) AS creator, date_created,  (SELECT #{@user_id} + changed_by) AS changed_by, date_changed, voided,  (SELECT #{@user_id} + voided_by) AS voided_by, date_voided, void_reason, uuid
+        SELECT (SELECT #{@patient_program_id} + patient_program_id) AS patient_program_id, state, start_date, end_date, creators.ART_user_id, date_created, changers.ART_user_id, date_changed, voided, voiders.ART_user_id, date_voided, void_reason, uuid
         FROM #{@database}.patient_state
+        INNER JOIN user_bak creators ON creators.ANC_user_id = patient_state.creator
+        LEFT JOIN user_bak changers ON changers.ANC_user_id = patient_state.changed_by
+        LEFT JOIN user_bak voiders ON voiders.ANC_user_id = patient_state.voided_by
         WHERE patient_program_id IN (SELECT patient_program_id FROM #{@database}.patient_program WHERE patient_id IN (#{patients}))
       SQL
       central_hub message: msg, query: statement
     end
-
-    # # method to migrate encounter records
-    # def migrate_encounter
-    #   # statement = <<~SQL
-    #   #   INSERT INTO encounter (encounter_id, encounter_type, patient_id, provider_id, location_id, form_id, encounter_datetime, creator, date_created, voided, voided_by, date_voided, void_reason, uuid, changed_by, date_changed, program_id)
-    #   #   SELECT (SELECT #{@encounter_id} + encounter_id) AS id, encounter_type, (SELECT #{@person_id} + patient_id) AS patient_id, (SELECT #{@person_id} + provider_id) AS provider_id, location_id, form_id, encounter_datetime, (SELECT #{@user_id} + creator) AS creator, date_created, voided, (SELECT #{@user_id} + voided_by) AS voided_by, date_voided, void_reason, uuid, (SELECT #{@user_id} + changed_by) AS changed_by, date_changed, 12
-    #   #   FROM #{@database}.encounter
-    #   # SQL
-    #   # central_hub message: 'Migrating encounter records', query: statement
-    #   migrate_encounter_system_users
-    #   migrate_encounter_not_system_users
-    # end
 
     # method to load previous person id
     def prev_person_id
