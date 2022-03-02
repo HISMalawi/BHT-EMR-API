@@ -829,12 +829,12 @@ module ANCService
 
     def report_providers_changed
       result = ActiveRecord::Base.connection.select_all <<~SQL
-        SELECT anc_person_id, art_person_id,anc_encounter_id,art_encounter_id
+        SELECT anc_person_id, art_provider_id,anc_encounter_id,art_encounter_id
         FROM #{@database}.provider_change_history
       SQL
       csv = 'ANC PROVIDER ID ,ART PROVIDER ID,ANC ENCOUNTER ID,ART ENCOUNTER ID'
       result.each do |record|
-        csv += "\n#{record['anc_person_id']},#{record['art_person_id']},#{record['anc_encounter_id']},#{record['art_encounter_id']}"
+        csv += "\n#{record['anc_person_id']},#{record['art_provider_id']},#{record['anc_encounter_id']},#{record['art_encounter_id']}"
       end
       csv
     end
@@ -857,6 +857,7 @@ module ANCService
       @file.puts ' '
       @file.puts 'This is list of Providers that were changed because they are not system users'
       @file.puts report_providers_changed
+      @file.puts ' '
       @file.puts 'This is the log'
       @file.puts File.open('migration.log').read
       File.delete('migration.log') if File.exist?('migration.log')
