@@ -1,5 +1,6 @@
 {
 	"headers":      {"url":"https://covmw.com/ohspdev","user":"eidsr","pass":"Eidsr2021!"},
+	"sms_server":      {"url":"localhost:8186/submit","user":"admin@email.test","pass":"admin"},
 	"weekly_idsr_map":{
 		"AEFI" : [],
 		"Poliomyelitis (AFP)" : ["Poliomyelitis"],
@@ -72,6 +73,27 @@
 		"Leprosy - new cases" : ["Leprosy"],
 		"Common injuries and woulds (except RTA)" : ["Common injuries and woulds (except RTA)"],
 		"Number of road traffic accidents" : ["Number of road traffic accidents"]
+	},
+	"notifiable_disease_conditions": {
+		"Acute Flaccid Paralysis (AFP)" : ["Acute Flaccid paralysis"],
+		"Acute hemorrhagic fever syndrome (Ebola, Marburg, Lassa Fever, Rift Valley Fever (RVF), Crimean-Congo) " : ["Ebola fever","Fever"],
+		"Adverse effects following immunization (AEFI)" : [""],
+		"Anthrax" : ["Anthrax"],
+		"Cholera" : ["Cholera"],
+		"Cluster of SARI" : ["Severe acute respiratory infection"],
+		"Diarrhoea with blood (Shigella dysentery)" : ["Dysentery"],
+		"Influenza due to new subtype" : ["Human influenza caused by new subtype"],
+		"Maternal death" : ["Maternal death"],
+		"Measles " : ["Measles"],
+		"Meningococcal meningitis " : ["Meningococcal Meningitis"],
+		"Neonatal tetanus" : ["Neonatal tetanus"],
+		"Plague" : ["Plague"],
+		"Rabies (confirmed cases)" : ["Rabies"],
+		"Severe Acute Respiratory Syndrome (SARS)" : ["Severe acute respiratory syndrome"],
+		"Smallpox" : ["Smallpox (Variola)"],
+		"Typhoid fever" : ["Typhoid fever"],
+		"Yellow fever" : ["Yellow fever"],
+		"Any public health event of international concern (infectious, zoonotic, food borne, chemical, radio nuclear or due to an unknown condition)" : ["Public Health Event of international or national concern"]
 	}
 
 }
