@@ -29,6 +29,9 @@ module ARTService
           @completion_start_date = start_date.to_date.strftime('%Y-%m-%d 00:00:00')
           @completion_end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
 					@rebuild_outcome = rebuild_outcome
+					@use_filing_number = GlobalProperty.find_by(property: 'use.filing.numbers')
+																							&.property_value
+																							&.casecmp?('true')
         end
 
         def report
@@ -52,97 +55,108 @@ module ARTService
 						{name: "NVP (adult) bottles",  units: 0, quantity: 'N/A', dispensations: []},
 						{name: "NVP (pediatric) bottles", units: 0, quantity: 'N/A', dispensations: []},
 						{name: "Other (adult) bottles", units: 0, quantity: 'N/A', dispensations: []},
-						{name: "Other (pediatric) bottles", units: 0, quantity: 'N/A', dispensations: []}
+						{name: "Other (pediatric) bottles", units: 0, quantity: 'N/A', dispensations: []},
+						{name: "Other bottles", units: 0, quantity: 'N/A', dispensations: []}
 					]
 
 					dispensations = get_dispensations
 					other_drugs = []
 
-					dispensations.map do |order|
-						order_quantity = order["quantity"].to_i
-						drug_id = order["drug_id"].to_i
-						drug_name = order["name"]
-						category = get_category(drug_id, order_quantity)
+					(dispensations || {}).map do |order_id, dispensation_info|
+						quantities = dispensation_info[:quantities]
 
-						unless category.blank?
-							drug_category.map do |a|
-								if a[:name] == category[:name]
-									if category[:details][:quantity] == "N/A"
-										a[:units] += 1
-										a[:dispensations] << [drug_name, order_quantity]
-									elsif category[:details][:quantity] == order_quantity
-										a[:units] += 1
-										a[:dispensations] << [drug_name, order_quantity]
-									elsif category[:details][:quantity].to_i > 0 && (order_quantity % category[:details][:quantity] == 0)
-										a[:units] += (order_quantity % category[:details][:quantity])
-										a[:dispensations] << [drug_name, order_quantity]
-									else
-										a[:units] += 1
-										a[:dispensations] << [drug_name, order_quantity]
-									end
+						(quantities || []).each do |quantity|
+							fetched_category, unit = get_category(dispensation_info[:drug_id], quantity)
+							drug_category.map do |category|
+								if category[:name] == fetched_category
+									category[:units] += unit
+									category[:dispensations] << [
+										dispensation_info[:name],
+										quantity,
+										dispensation_info[:start_date],
+										dispensation_info[:identifier],
+										dispensation_info[:patient_id]
+									]
+									break
 								end
 							end
-						else
-							other_drugs << order
 						end
+
 					end
 
-					drug_category << {
-						name: "Other bottles", units: other_drugs.count,
-						quantity: 'N/A', dispensations: other_drugs.map{|o| [o["name"], o["quantity"]]}
-					}
 					return drug_category
 				end
 
-				def get_category(drug_id, order_quantity)
-					DrugCategory.map do |name, details|
-						if details[:quantity] == order_quantity && details[:drugs].include?(drug_id)
-							return {name: name, details: DrugCategory[name]}
-						elsif details[:quantity] == 'N/A' && details[:drugs].include?(drug_id)
-							return {name: name, details: DrugCategory[name]}
+				def get_category(drug_id, quantity)
+					DrugCategory.map do |name, data|
+						if data[:drugs].include?(drug_id)
+							qty = data[:quantity]
+							return [name, 1] if qty == 'N/A'
+							return [name, 1] if qty.to_i == quantity.to_i
 						end
 					end
 
-					category = nil
-					drug_category = nil
-
-					DrugCategory.map do |name, details|
-						if details[:drugs].include?(drug_id)
-							if category.blank?
-								category = order_quantity % details[:quantity]
-								drug_category = {name: name, details: DrugCategory[name]}
-							else
-								ans = order_quantity % details[:quantity]
-								if ans < category
-									category = ans
-									drug_category = {name: name, details: DrugCategory[name]}
-								end
+					DrugCategory.map do |name, data|
+						if data[:drugs].include?(drug_id)
+							qty = data[:quantity]
+							if(quantity.to_i % qty == 0)
+								return [name, (quantity / qty).to_i]
 							end
 						end
 					end
-
-					return drug_category
+					return ["Other bottles", 1]
 				end
 
 				def get_dispensations
-					ActiveRecord::Base.connection.select_all <<~SQL
-						SELECT orders.patient_id, drug.drug_id, drug.name, orders.start_date, quantity FROM orders
-						INNER JOIN encounter ON encounter.encounter_id = orders.encounter_id AND encounter.program_id = 1
-						INNER JOIN drug_order ON drug_order.order_id = orders.order_id AND drug_order.quantity > 0
-						INNER JOIN arv_drug ON arv_drug.drug_id = drug_order.drug_inventory_id
-						INNER JOIN drug ON drug.drug_id = drug_order.drug_inventory_id
-						INNER JOIN(
-						SELECT MAX(start_date) start_date, patient_id, orders.order_id FROM orders
-						INNER JOIN drug_order ON drug_order.order_id = orders.order_id
-						INNER JOIN arv_drug ON arv_drug.drug_id = drug_order.drug_inventory_id
-						WHERE start_date BETWEEN '#{@completion_start_date}' AND '#{@completion_end_date}'
-						GROUP BY orders.order_id, orders.patient_id ORDER BY orders.start_date
-						) AS order_start_date ON orders.order_id = order_start_date.order_id
-						AND orders.patient_id = order_start_date.patient_id
+					amount_dispensed = ConceptName.find_by(name: 'Amount of drug dispensed').concept_id
+					identifier_type = PatientIdentifierType.find_by(name: 'ARV number').id
+					identifier_type_name = @use_filing_number ? 'Filing Number' : 'ARV Number'
+					identifier_type = PatientIdentifierType.find_by_name!(identifier_type_name).id
 
-						WHERE orders.order_type_id = 1 AND orders.voided = 0
-						GROUP BY orders.order_id ORDER BY orders.start_date ASC, orders.patient_id ASC;
+					dispensations = {}
+					orders = ActiveRecord::Base.connection.select_all <<~SQL
+					SELECT
+						orders.order_id, orders.start_date, drug_order.quantity,drug.name,
+						orders.patient_id, obs.value_numeric, orders.start_date,
+						patient_identifier.identifier,drug.drug_id
+					FROM orders
+					INNER JOIN drug_order ON drug_order.order_id = orders.order_id AND drug_order.quantity > 0
+					INNER JOIN arv_drug ON arv_drug.drug_id = drug_order.drug_inventory_id
+					INNER JOIN drug ON drug.drug_id = arv_drug.drug_id
+					INNER JOIN encounter ON encounter.encounter_id = orders.encounter_id
+					AND encounter.program_id = #{Program.find_by(name: 'HIV Program').id}
+					INNER JOIN(
+					SELECT MAX(start_date) start_date, patient_id, orders.order_id FROM orders
+					INNER JOIN drug_order ON drug_order.order_id = orders.order_id
+					INNER JOIN arv_drug ON arv_drug.drug_id = drug_order.drug_inventory_id
+					WHERE start_date BETWEEN '#{@completion_start_date}' AND '#{@completion_end_date}'
+					AND orders.order_type_id = 1 AND orders.voided = 0
+					GROUP BY orders.order_id, orders.patient_id ORDER BY orders.start_date)
+					AS order_start_date ON orders.order_id = order_start_date.order_id
+					INNER JOIN obs ON obs.order_id = orders.order_id AND obs.voided = 0
+					AND obs.concept_id = #{amount_dispensed} AND obs.value_numeric > 0
+					LEFT JOIN patient_identifier ON patient_identifier.patient_id = orders.patient_id
+					AND patient_identifier.identifier_type = #{identifier_type}
+					AND patient_identifier.voided = 0
+					ORDER BY orders.start_date ASC, orders.patient_id;
 					SQL
+
+					(orders || []).each do |order|
+						order_id = order["order_id"].to_i
+						dispensations[order_id] = {
+							quantity: order["quantity"].to_f,
+							name: order["name"],
+							drug_id: order["drug_id"].to_i,
+							identifier: (order["identifier"] ||= "N/A"),
+							start_date: order["start_date"].to_date,
+							patient_id: order["patient_id"].to_i,
+							quantities: []
+						} if dispensations[order_id].blank?
+
+					  dispensations[order_id][:quantities] << order["value_numeric"].to_f
+					end
+
+					return dispensations
 				end
 
 			end
