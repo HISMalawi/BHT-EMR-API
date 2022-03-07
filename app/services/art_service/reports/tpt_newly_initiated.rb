@@ -44,7 +44,8 @@ module ARTService
             }
           end
         end
-        return report
+        report['Location'] = Location.current.city_village
+        report
       end
 
       private
