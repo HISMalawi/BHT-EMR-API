@@ -27,9 +27,9 @@ module ARTService
                                   .merge(appointment_encounters)
                                   .where.not(person_id: referral_patients.select(:person_id))
                                   .where(concept: ConceptName.where(name: 'Appointment date').select(:concept_id))
-                                  .where('value_datetime BETWEEN ? AND ?',
+                                  .where('value_datetime BETWEEN ? AND ? AND encounter.program_id = ?',
                                          @start_date.strftime('%Y-%m-%d 00:00:00'),
-                                         @end_date.strftime('%Y-%m-%d 23:59:59'))
+                                         @end_date.strftime('%Y-%m-%d 23:59:59'), 1)
                                   .group(:person_id)
 
         appointments.each_with_object([]) do |appointment, patients|
@@ -187,7 +187,7 @@ EOF
           district: person['district'],
           ta: person['ta'],
           village: person['village'],
-          arv_number: person['arv_number'],
+          arv_number: (person['arv_number'].blank? ? 'N/A' : person['arv_number']),
           appointment_date: appointment_date.to_date,
           days_missed: days_missed(appointment_date.to_date),
           current_outcome: current_outcome,
@@ -232,7 +232,7 @@ EOF
 
       def referral_patients
         Observation.where(concept: ConceptName.where(name: 'Type of patient').select(:concept_id),
-                          value_coded: ConceptName.where(name: 'External consultation').select(:concept_id),
+                          value_coded: ConceptName.where("name = 'External consultation' OR name = 'Drug refill'").select(:concept_id),
                           person_id: registration_encounters.select(:patient_id))
                    .where('obs_datetime < DATE(?) + INTERVAL 1 DAY', @end_date)
                    .distinct(:person_id)

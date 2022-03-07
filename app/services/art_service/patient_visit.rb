@@ -46,8 +46,10 @@ module ARTService
     end
 
     def next_appointment
-      Observation.where(person: patient.person, concept: concept('Appointment date'))\
+      Observation.joins(:encounter)
+                 .where(person: patient.person, concept: concept('Appointment date'))\
                  .where('obs_datetime >= ?', date)
+                 .where(encounter: {program: Program.find_by(name: 'HIV Program')})
                  .order(obs_datetime: :asc)\
                  .first\
                  &.value_datetime
@@ -209,7 +211,8 @@ module ARTService
         adherence: adherence,
         tb_status: tb_status,
         height: height,
-        weight: weight
+        weight: weight,
+        bmi: bmi
       }
     end
 

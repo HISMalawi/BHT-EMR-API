@@ -30,6 +30,9 @@ class Encounter < VoidableRecord
         patient: {},
         location: {},
         provider: {
+          include: {
+            names: {}
+          },
           except: %i[
             password salt secret_question secret_answer
             authentication_token token_expiry_time

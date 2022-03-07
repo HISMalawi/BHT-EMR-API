@@ -11,7 +11,8 @@ module CXCAService
       'REFERRAL REASONS' => CXCAService::Reports::Moh::ReferralReasons,
       'VISIT REASONS' => CXCAService::Reports::Clinic::VisitReasons,
       'TREATMENT OPTIONS' => CXCAService::Reports::Moh::TreatmentOptions,
-      'BOOKED CLIENTS FROM ART' => CXCAService::Reports::Clinic::BookedClientsFromArt
+      'BOOKED CLIENTS FROM ART' => CXCAService::Reports::Clinic::BookedClientsFromArt,
+      'BOOKED CLIENTS FROM ART RAW DATA' => CXCAService::Reports::Clinic::BookedClientsFromArtRawData
     }.freeze
 
     def reports(start_date, end_date, name)

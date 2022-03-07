@@ -6,6 +6,6 @@ class ReindexOrdersIdxOrders < ActiveRecord::Migration[5.2]
 
     add_index(:orders, %i[order_type_id concept_id patient_id start_date], name: 'idx_order')
     add_index(:orders, %i[order_type_id auto_expire_date], name: 'idx_order_expiry')
-    add_index(:order_type, :name)
+    add_index(:order_type, :name) unless index_exists?(:order_type, :name)
   end
 end

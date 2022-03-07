@@ -13,8 +13,8 @@ module ARTService
           raise InvalidParameterError, "Invalid formalation: #{formulation}"
         end
 
-        @start_date = start_date
-        @end_date = end_date
+        @start_date = start_date.to_date
+        @end_date = end_date.to_date
         @formulation = formulation
         @regimen = regimen
       end
