@@ -130,7 +130,9 @@ module ARTService
 
         ActiveRecord::Base.connection.select_all <<~SQL
            SELECT
-            `p`.`patient_id` AS `patient_id`
+            `p`.`patient_id` AS `patient_id`,
+            cast(patient_date_enrolled(`p`.`patient_id`) as date) AS `date_enrolled`,
+            date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`
            FROM
               ((`patient_program` `p`
               LEFT JOIN `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
@@ -230,6 +232,7 @@ EOF
               gender: demo['gender'],
               current_regimen: curr_reg['current_regimen'],
               current_weight: current_weight(patient_id),
+              art_start_date: r['earliest_start_date'],
               medication: []
             }
           end
@@ -302,6 +305,8 @@ EOF
               previous_regimen: prev_reg['previous_regimen'],
               current_regimen: current_reg['current_regimen'],
               patient_type: get_patient_type(demo['person_id'], pepfar),
+              current_weight: current_weight(demo['person_id']),
+              art_start_date: r['earliest_start_date'],
               medication: []
             }
           end
