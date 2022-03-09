@@ -66,7 +66,6 @@ module ARTService
         '90 plus years'
       ].freeze
 
-
       def dispensation_date(patient_id, concept_ids)
         order = ActiveRecord::Base.connection.select_one <<~SQL
           SELECT MIN(orders.start_date) start_date FROM orders
@@ -107,7 +106,7 @@ module ARTService
         tpt_data = {}
         tpt_data["3HP"] = tpt.newly_initiated_on_3hp
         tpt_data["6H"] = tpt.newly_initiated_on_ipt
-        return tpt_data
+        tpt_data
       end
 
       def newly_initiated_on_tpt_old

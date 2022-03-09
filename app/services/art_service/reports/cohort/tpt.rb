@@ -50,7 +50,7 @@ class ARTService::Reports::Cohort::Tpt
     end_date = ActiveRecord::Base.connection.quote(@end_date)
 
     @newly_initiated_on_tpt ||= ActiveRecord::Base.connection.select_all <<~SQL
-      SELECT cohort_patients.patient_id,
+      SELECT cohort_patients.patient_id, cohort_patients.earliest_start_date
              GROUP_CONCAT(DISTINCT orders.concept_id SEPARATOR ',') AS drug_concepts
       FROM temp_earliest_start_date AS cohort_patients
       INNER JOIN orders
