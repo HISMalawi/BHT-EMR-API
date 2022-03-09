@@ -302,6 +302,7 @@ EOF
               previous_regimen: prev_reg['previous_regimen'],
               current_regimen: current_reg['current_regimen'],
               patient_type: get_patient_type(demo['person_id'], pepfar),
+              current_weight: current_weight(demo['person_id']),
               medication: []
             }
           end
