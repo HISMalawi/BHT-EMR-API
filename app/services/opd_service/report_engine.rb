@@ -68,13 +68,21 @@ module OPDService
 
       stats = []
       (data || []).each do |record|
+        district  = record['district']
+        ta  = record['ta']
+        village = record['village']
+
+        address = "#{district}, #{ta}, #{village}"
+
         person = Person.find record['person_id']
         stats << {
           given_name: record['given_name'],
           family_name: record['family_name'],
           visit_type: record['visit_type'],
           birthdate: record['birthdate'],
+          date: record['date_created'],
           gender: record['gender'],
+          address: address,
           nid:  record['nid']
         }
       end
@@ -129,20 +137,28 @@ module OPDService
         joins('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
         INNER JOIN person p ON p.person_id = encounter.patient_id
         INNER JOIN concept_name c ON c.concept_id = obs.value_coded
-        LEFT JOIN person_name n ON n.person_id = encounter.patient_id AND n.voided = 0').\
+        LEFT JOIN person_name n ON n.person_id = encounter.patient_id AND n.voided = 0
+        RIGHT JOIN person_address a ON a.person_id = encounter.patient_id').\
         select('encounter.encounter_type, n.family_name, n.given_name,
-        obs.value_coded, obs.obs_datetime, p.*, c.name visit_type').\
+        obs.value_coded, obs.obs_datetime, p.*, c.name visit_type,
+        a.state_province district, a.township_division ta, a.city_village village').\
         order('n.date_created DESC').group('n.person_id, encounter.encounter_id')
 
       stats = []
       (data || []).each do |record|
+        district  = record['district']
+        ta  = record['ta']
+        village = record['village']
+
+        address = "#{district}, #{ta}, #{village}"
         stats << {
           given_name: record['given_name'],
           family_name: record['family_name'],
           visit_type: record['visit_type'],
           birthdate: record['birthdate'],
           gender: record['gender'],
-          date: record['obs_datetime'].to_date
+          date: record['obs_datetime'].to_date,
+          address: address
         }
       end
 
@@ -368,6 +384,7 @@ module OPDService
           drug_id: record['drug_id'],
           gender: record['gender'],
           date: record['obs_datetime'].to_date,
+          birthdate: record['birthdate'].to_date,
           patient_id: record['patient_id'],
           quantity: record['value_numeric']
         }
@@ -401,6 +418,7 @@ module OPDService
           drug_id: record['drug_id'],
           gender: record['gender'],
           date: record['start_date'].to_date,
+          birthdate: record['birthdate'].to_date,
           patient_id: record['person_id'],
           quantity: record['quantity']
         }
