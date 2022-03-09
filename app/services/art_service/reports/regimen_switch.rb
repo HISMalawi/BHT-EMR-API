@@ -232,6 +232,7 @@ EOF
               gender: demo['gender'],
               current_regimen: curr_reg['current_regimen'],
               current_weight: current_weight(patient_id),
+              art_start_date: r['earliest_start_date'],
               medication: []
             }
           end
