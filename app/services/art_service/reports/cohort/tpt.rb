@@ -38,11 +38,16 @@ class ARTService::Reports::Cohort::Tpt
   private
 
   def patient_on_3hp?(patient)
-    patient['drug_concepts'].split(',').collect(&:to_i).include?(rifapentine_concept.concept_id)
+    drug_concepts = patient['drug_concepts'].split(',').collect(&:to_i)
+    (drug_concepts & [rifapentine_concept.concept_id, three_hp_concept&.concept_id]).any?
   end
 
   def rifapentine_concept
     @rifapentine_concept ||= ConceptName.find_by!(name: 'Rifapentine')
+  end
+
+  def three_hp_concept
+    @three_hp_concept ||= ConceptName.find_by!(name: 'INH 300 / RFP 300')
   end
 
   def newly_initiated_on_tpt
@@ -61,7 +66,7 @@ class ARTService::Reports::Cohort::Tpt
         AND orders.voided = 0
       INNER JOIN concept_name AS tpt_drug_concepts
         ON tpt_drug_concepts.concept_id = orders.concept_id
-        AND tpt_drug_concepts.name IN ('Rifapentine', 'Isoniazid')
+        AND tpt_drug_concepts.name IN ('Rifapentine', 'Isoniazid', 'INH 300 / RFP 300')
         AND tpt_drug_concepts.voided = 0
       INNER JOIN drug_order AS drug_orders
         ON drug_orders.order_id = orders.order_id
