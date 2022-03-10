@@ -87,8 +87,9 @@ class Api::V1::PatientsController < ApplicationController
 
   def visits
     program = params[:program_id] ? Program.find(params[:program_id]) : nil
+    date = params[:date] ? params[:date].to_date : nil
     render json: service.find_patient_visit_dates(patient, program,
-      params[:include_defaulter_dates] == "true")
+      params[:include_defaulter_dates] == "true", date)
   end
 
   def find_median_weight_and_height

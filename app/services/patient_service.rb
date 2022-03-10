@@ -97,14 +97,15 @@ class PatientService
            .distinct
   end
 
-  def find_patient_visit_dates(patient, program = nil, include_defaulter_dates = nil)
+  def find_patient_visit_dates(patient, program = nil, include_defaulter_dates = nil, date = nil)
     patient_id = ActiveRecord::Base.connection.quote(patient.id)
     program_id = program ? ActiveRecord::Base.connection.quote(program.id) : nil
+    date ||= Date.today
 
     rows = ActiveRecord::Base.connection.select_all <<-SQL
       SELECT DISTINCT DATE(encounter_datetime) AS visit_date
       FROM encounter
-      WHERE patient_id = #{patient_id} AND voided = 0 #{"AND program_id = #{program_id}" if program_id}
+      WHERE patient_id = #{patient_id} AND voided = 0 #{"AND program_id = #{program_id}" if program_id} AND encounter_datetime < DATE('#{date}') + INTERVAL 1 DAY
       GROUP BY visit_date
       ORDER BY visit_date DESC
     SQL
@@ -130,7 +131,7 @@ class PatientService
       visit_dates = visit_dates.sort {|a,b| b.to_date <=> a.to_date}
     end
 
-    visit_dates
+    visit_dates.select { |record| record.to_date <= date }
   end
 
   # method to fetch patient state that is between the defaulter date
