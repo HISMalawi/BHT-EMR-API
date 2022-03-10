@@ -363,6 +363,7 @@ class DDEMergingService
     unless primary_obs.errors.empty?
       raise "Could not merge patient observations: #{primary_obs.errors.as_json}"
     end
+
     obs.update(void_reason: "Merged into patient ##{primary_patient.id}:#{primary_obs.id}", voided: 1, date_voided: Time.now, voided_by: User.current.id)
     primary_obs
   end
@@ -374,6 +375,11 @@ class DDEMergingService
         obs.update(obs_group_id: obs_map[obs.obs_group_id])
       end
     end
+  end
+
+  # Get all encounter types that involve referring to a clinician
+  def refer_to_clinician_encounter_types
+    @refer_to_clinician_encounter_types ||= EncounterType.where('name = ? OR name = ?', 'HIV CLINIC CONSULTATION', 'HYPERTENSION MANAGEMENT').map(&:encounter_type_id)
   end
 
   # Strips off secondary_patient all encounters and blesses primary patient
@@ -396,11 +402,14 @@ class DDEMergingService
         unless primary_encounter.errors.empty?
           raise "Could not merge patient encounters: #{primary_encounter.errors.as_json}"
         end
+
         encounter.update(void_reason: "Merged into patient ##{primary_patient.patient_id}:#{primary_encounter.id}", voided: 1, date_voided: Time.now, voided_by: User.current.id)
         encounter_map[encounter.id] = primary_encounter.id
       else
         encounter_map[encounter.id] = check.id
-        process_encounter_obs(encounter, primary_patient, secondary_patient, encounter_map) if [6, 56].include? encounter.encounter_type
+        # we are trying to processes all clinician encounters observations if this visit resulted in being referred to the clinician
+        # the merging needs to be smart enough to include the observartions under clinician
+        process_encounter_obs(encounter, primary_patient, secondary_patient, encounter_map) if refer_to_clinician_encounter_types.include? encounter.encounter_type
         encounter.update(void_reason: "Merged into patient ##{primary_patient.patient_id}:0", voided: 1, date_voided: Time.now, voided_by: User.current.id)
       end
     end
@@ -417,12 +426,15 @@ class DDEMergingService
       DATE(obs_datetime) = DATE('#{obs.obs_datetime.strftime('%Y-%m-%d')}')")
     return if primary_obs.blank?
 
+    # we are trying to handle the scenario where the primary had also referred this patient to clinician
+    # then we shouldn't do anything. If secondary was referred to a clinician and primary was not then merge
     if primary_obs.value_coded != obs.value_coded && primary_obs.value_coded == ConceptName.find_by(name: 'No')
       result = process_obervation_merging(obs, primary_patient, encounter_map)
       @obs_map[obs.id] = result.id
       # one needs to voide the primary
       primary_obs.update(void_reason: "Merged into patient ##{primary_patient.id}:#{result.id}", voided: 1, date_voided: Time.now, voided_by: User.current.id)
       # now one needs to added all obs that occured after this choice of referral
+      # these will be by the clinician/specialist
       Observation.where('encounter_id = ? AND obs_datetime >= ? AND obs_datetime <= ? person_id = ? ', encounter.id, obs.obs_datetime, obs.obs_datetime.end_of_day, secondary_patient.id).each do |observation|
         if check_clinician?(observation.creator)
           result = process_obervation_merging(observation, primary_patient, encounter_map)
