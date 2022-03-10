@@ -62,8 +62,8 @@ module ARTService
     def find_regimens(patient_weight, use_tb_dosage: false, lpv_drug_type: 'tabs')
       ingredients = MohRegimenIngredient.where(
         '(CAST(min_weight AS DECIMAL(4, 1)) <= :weight
-         AND CAST(max_weight AS DECIMAL(4, 1)) >= :weight)',
-        weight: patient_weight.to_f.round(1)
+         AND CAST(max_weight AS DECIMAL(4, 1)) >= :weight AND ingredient_active = :active)',
+        weight: patient_weight.to_f.round(1), active: 1
       )
 
       raw_regimens = regimens_from_ingredients(ingredients, lpv_drug_type: lpv_drug_type)
