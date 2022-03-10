@@ -39,7 +39,8 @@ module ARTService
       'OUTCOME_LIST' => ARTService::Reports::OutcomeList,
       'VIRAL_LOAD' => ARTService::Reports::ViralLoad,
       'VIRAL_LOAD_COVERAGE' => ARTService::Reports::Pepfar::ViralLoadCoverage,
-      'EXTERNAL_CONSULTATION_CLIENTS' => ARTService::Reports::ExternalConsultationClients
+      'EXTERNAL_CONSULTATION_CLIENTS' => ARTService::Reports::ExternalConsultationClients,
+      'SC_ARVDISP' => ARTService::Reports::Pepfar::ScArvdisp
     }.freeze
 
     def generate_report(type:, **kwargs)
@@ -181,6 +182,11 @@ module ARTService
     def latest_regimen_dispensed(start_date, end_date, rebuild_outcome)
       REPORTS['REGIMEN_SWITCH'].new(start_date: start_date.to_date,
         end_date: end_date.to_date).latest_regimen_dispensed(rebuild_outcome)
+    end
+
+    def sc_arvdisp(start_date, end_date, rebuild_outcome)
+      REPORTS['SC_ARVDISP'].new(start_date: start_date.to_date,
+        end_date: end_date.to_date, rebuild_outcome: rebuild_outcome).report
     end
 
     private
