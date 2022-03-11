@@ -182,7 +182,7 @@ module ARTService
       drug = ingredient.drug
       regimen_category_lookup = MohRegimenLookup.find_by(drug_inventory_id: ingredient.drug_inventory_id)
       regimen_category = regimen_category_lookup ? regimen_category_lookup.regimen_name[-1] : nil
-
+      frequency = ingredient.course == '3HP' ? 'Weekly (QW)' : 'Daily (QOD)'
       {
         drug_id: drug.drug_id,
         concept_id: drug.concept_id,
@@ -195,7 +195,8 @@ module ARTService
         concept_name: drug.concept.concept_names[0].name,
         pack_size: drug.drug_cms ? drug.drug_cms.pack_size : nil,
         barcodes: drug.barcodes.collect { |barcode| { tabs: barcode.tabs } },
-        regimen_category: regimen_category
+        regimen_category: regimen_category,
+        frequency: frequency
       }
     end
 
