@@ -58,7 +58,7 @@ module OPDService
     def with_nids
       type = PatientIdentifierType.find_by_name 'Malawi National ID'
 
-      data = Person.where('identifier_type = ?', type.id).\
+      data = Person.where('identifier_type = ? AND identifier != ? AND identifier != ? AND identifier != ?', type.id,'unknown','N/A','').\
         joins('INNER JOIN patient_identifier i ON i.patient_id = person.person_id
         RIGHT JOIN person_address a ON a.person_id = person.person_id
         RIGHT JOIN person_name n ON n.person_id = person.person_id').\
@@ -74,7 +74,6 @@ module OPDService
 
         address = "#{district}, #{ta}, #{village}"
 
-        person = Person.find record['person_id']
         stats << {
           given_name: record['given_name'],
           family_name: record['family_name'],
