@@ -62,8 +62,8 @@ module ARTService
     def find_regimens(patient_weight, use_tb_dosage: false, lpv_drug_type: 'tabs')
       ingredients = MohRegimenIngredient.where(
         '(CAST(min_weight AS DECIMAL(4, 1)) <= :weight
-         AND CAST(max_weight AS DECIMAL(4, 1)) >= :weight)',
-        weight: patient_weight.to_f.round(1)
+         AND CAST(max_weight AS DECIMAL(4, 1)) >= :weight AND ingredient_active = :active)',
+        weight: patient_weight.to_f.round(1), active: 1
       )
 
       raw_regimens = regimens_from_ingredients(ingredients, lpv_drug_type: lpv_drug_type)
@@ -182,7 +182,7 @@ module ARTService
       drug = ingredient.drug
       regimen_category_lookup = MohRegimenLookup.find_by(drug_inventory_id: ingredient.drug_inventory_id)
       regimen_category = regimen_category_lookup ? regimen_category_lookup.regimen_name[-1] : nil
-
+      frequency = ingredient.course == '3HP' ? 'Weekly (QW)' : 'Daily (QOD)'
       {
         drug_id: drug.drug_id,
         concept_id: drug.concept_id,
@@ -195,7 +195,8 @@ module ARTService
         concept_name: drug.concept.concept_names[0].name,
         pack_size: drug.drug_cms ? drug.drug_cms.pack_size : nil,
         barcodes: drug.barcodes.collect { |barcode| { tabs: barcode.tabs } },
-        regimen_category: regimen_category
+        regimen_category: regimen_category,
+        frequency: frequency
       }
     end
 
@@ -208,9 +209,9 @@ module ARTService
       on_tb_treatment_concept_ids = ConceptName.where(name: 'RX').collect(&:concept_id)
 
       tb_status_max = Observation.joins(:encounter)\
-                                              .where(person_id: patient.id,
-                                                     concept_id: tb_status_concept_id)\
-                                              .select('MAX(obs_datetime) AS obs_datetime')
+                                 .where(person_id: patient.id,
+                                        concept_id: tb_status_concept_id)\
+                                 .select('MAX(obs_datetime) AS obs_datetime')
 
       tb_status_max_datetime = tb_status_max.first&.obs_datetime&.to_time
       return false unless tb_status_max_datetime
@@ -228,7 +229,7 @@ module ARTService
       return false if patient_is_on_tb_treatment.blank?
       return false unless on_tb_treatment_concept_ids.include?(patient_is_on_tb_treatment.first.value_coded)
 
-      return drug.concept_id == dtg_concept_id
+      drug.concept_id == dtg_concept_id
     end
 
     def classify_regimen_combo(drug_combo)
@@ -411,7 +412,7 @@ module ARTService
     # Returns drug courses (as concepts) that are offered alongside the primary
     # ART regimen course
     def parallel_drug_courses
-      ConceptName.where(name: %w[CPT INH Rifapentine])
+      ConceptName.where(name: ['CPT', 'INH', 'Rifapentine', 'Isoniazid/Rifapentine'])
     end
 
     # Returns the name of the dominant course among the given courses.
@@ -425,6 +426,7 @@ module ARTService
       # Currently this dominant course resolution is needed for 3HP vs INH only
       # thus we are simply returning 3HP (Rifapentine) or nothing.
       case primary_course.name.downcase
+      when 'isoniazid/rifapentine' then '3HP'
       when 'rifapentine' then '3HP'
       when 'inh' then courses.find { |course| course.name.casecmp?('rifapentine') } && '3HP'
       end
@@ -444,7 +446,8 @@ module ARTService
       if drug_concept.name == 'INH' # IPT Course
         Drug.where(concept: [drug_concept.concept_id, ConceptName.find_by_name('Pyridoxine').concept_id])
       elsif drug_concept.name == 'Rifapentine' # 3HP Course
-        Drug.where(concept: [drug_concept.concept_id, ConceptName.find_by_name('Isoniazid').concept_id, ConceptName.find_by_name('Pyridoxine').concept_id])
+        Drug.where(concept: [drug_concept.concept_id, ConceptName.find_by_name('Isoniazid').concept_id,
+                             ConceptName.find_by_name('Pyridoxine').concept_id])
       else
         Drug.where(concept: drug_concept.concept_id)
       end
@@ -484,7 +487,8 @@ module ARTService
       # NVP (Nevirapine 200 mg tablet) = 22
       # LPV/r pellets = 979
       '0' => [Set.new([1044, 968]), Set.new([1044, 22]), Set.new([969, 22]), Set.new([969, 968])],
-      '2' => [Set.new([732]), Set.new([732, 736]), Set.new([732, 39]), Set.new([731]), Set.new([731, 39]), Set.new([731, 736])],
+      '2' => [Set.new([732]), Set.new([732, 736]), Set.new([732, 39]), Set.new([731]), Set.new([731, 39]),
+              Set.new([731, 736])],
       '4' => [Set.new([736, 30]), Set.new([736, 11]), Set.new([39, 11]), Set.new([39, 30])],
       '5' => [Set.new([735])],
       '6' => [Set.new([734, 22])],
@@ -497,8 +501,8 @@ module ARTService
       '13' => [Set.new([983])],
       '14' => [Set.new([736, 982]), Set.new([984, 982])],
       '15' => [Set.new([1044, 982]), Set.new([969, 982]), Set.new([1044, 980])],
-      '16' => [Set.new([1043, 1044]), Set.new([954,969])],
-      '17' => [Set.new([30,1044]), Set.new([11,969])]
+      '16' => [Set.new([1043, 1044]), Set.new([954, 969])],
+      '17' => [Set.new([30, 1044]), Set.new([11, 969])]
     }.freeze
   end
 end
