@@ -23,6 +23,7 @@ class ARTService::Reports::Cohort::Outcomes
     load_patients_without_drug_orders
     load_patients_on_treatment
     load_defaulters
+    remove_external_consultations_and_drug_refills
   end
 
   private
@@ -302,6 +303,40 @@ class ARTService::Reports::Cohort::Outcomes
       FROM temp_earliest_start_date
       WHERE date_enrolled <= #{date}
         AND patient_id NOT IN (SELECT patient_id FROM temp_patient_outcomes)
+    SQL
+  end
+
+  # remove patient who at the end of this reporting period
+  # are either external or drug refill
+  def remove_external_consultations_and_drug_refills
+    end_date = ActiveRecord::Base.connection.quote(end_date)
+    ActiveRecord::Base.connection.execute <<~SQL
+      DELETE FROM temp_patient_outcomes
+      WHERE patient_id IN (
+        SELECT patient_type_obs.person_id
+        FROM obs AS patient_type_obs
+        INNER JOIN (
+          SELECT MAX(obs_datetime) AS obs_datetime, person_id
+          FROM obs
+          INNER JOIN encounter USING (encounter_id)
+          WHERE obs.concept_id IN (SELECT concept_id FROM concept_name WHERE name LIKE 'Type of patient' AND voided = 0)
+            AND obs.obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
+            AND encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'REGISTRATION' AND retired = 0)
+            AND encounter.program_id IN (SELECT program_id FROM program WHERE name LIKE 'HIV Program')
+            AND encounter.encounter_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
+            AND obs.voided = 0
+            AND encounter.voided = 0
+          GROUP BY obs.person_id
+        ) AS max_patient_type_obs
+          ON max_patient_type_obs.person_id = patient_type_obs.person_id
+          AND max_patient_type_obs.obs_datetime = patient_type_obs.obs_datetime
+          /* Doing the above to avoid picking patients that changed patient types at some point (eg External consultation to New patient) */
+        WHERE patient_type_obs.concept_id IN (SELECT concept_id FROM concept_name WHERE name = 'Type of patient' AND voided = 0)
+          AND patient_type_obs.value_coded IN (SELECT concept_id FROM concept_name WHERE name IN ('Drug refill', 'External consultation') AND voided = 0)
+          AND patient_type_obs.voided = 0
+          AND patient_type_obs.obs_datetime < (DATE(#{end_date}) + INTERVAL 1 DAY)
+        GROUP BY patient_type_obs.person_id
+      )
     SQL
   end
 
