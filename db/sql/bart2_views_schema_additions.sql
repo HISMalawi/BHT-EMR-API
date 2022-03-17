@@ -2151,7 +2151,27 @@ RETURN age_group;
 END;
 
 
+DROP FUNCTION IF EXISTS `opd_disaggregated_age_group`;
 
+CREATE FUNCTION `opd_disaggregated_age_group`(birthdate date, end_date date) RETURNS VARCHAR(15)
+BEGIN
+
+DECLARE age_in_months INT(11);
+DECLARE age_in_years INT(11);
+DECLARE age_group VARCHAR(15);
+
+SET age_in_months = (SELECT timestampdiff(month, birthdate, end_date));
+SET age_in_years  = (SELECT timestampdiff(year, birthdate, end_date));
+SET age_group = ('Unknown');
+
+IF age_in_months >= 0 AND age_in_months <= 5 THEN SET age_group = "0-5 months";
+ELSEIF age_in_months >= 6 AND age_in_years < 5 THEN SET age_group = "6 mth < 5 yrs";
+ELSEIF age_in_years >= 5 AND age_in_years < 14 THEN SET age_group = "5-14 yrs";
+ELSEIF age_in_years >= 14 THEN SET age_group = ">= 14 years";
+END IF;
+
+RETURN age_group;
+END;
 
 
 

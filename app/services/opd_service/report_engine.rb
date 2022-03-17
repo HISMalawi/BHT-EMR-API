@@ -58,7 +58,7 @@ module OPDService
     def with_nids
       type = PatientIdentifierType.find_by_name 'Malawi National ID'
 
-      data = Person.where('identifier_type = ?', type.id).\
+      data = Person.where('identifier_type = ?, AND identifier != ? AND identifier != ? AND identifier != ?', type.id,'unknown','N/A','').\
         joins('INNER JOIN patient_identifier i ON i.patient_id = person.person_id
         RIGHT JOIN person_address a ON a.person_id = person.person_id
         RIGHT JOIN person_name n ON n.person_id = person.person_id').\
@@ -68,18 +68,18 @@ module OPDService
 
       stats = []
       (data || []).each do |record|
-        person = Person.find record['person_id']
         stats << {
           given_name: record['given_name'],
           family_name: record['family_name'],
           visit_type: record['visit_type'],
           birthdate: record['birthdate'],
+          date: record['date_created'],
           gender: record['gender'],
-          nid:  record['nid']
+          address: "#{record['district']}, #{record['ta']}, #{record['village']}",
+          nid: record['nid']
         }
       end
-
-      return stats
+      stats
     end
 
     def diagnosis_by_address(start_date, end_date)
@@ -129,9 +129,11 @@ module OPDService
         joins('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
         INNER JOIN person p ON p.person_id = encounter.patient_id
         INNER JOIN concept_name c ON c.concept_id = obs.value_coded
-        LEFT JOIN person_name n ON n.person_id = encounter.patient_id AND n.voided = 0').\
+        LEFT JOIN person_name n ON n.person_id = encounter.patient_id AND n.voided = 0
+        RIGHT JOIN person_address a ON a.person_id = encounter.patient_id').\
         select('encounter.encounter_type, n.family_name, n.given_name,
-        obs.value_coded, obs.obs_datetime, p.*, c.name visit_type').\
+        obs.value_coded, obs.obs_datetime, p.*, c.name visit_type,
+        a.state_province district, a.township_division ta, a.city_village village').\
         order('n.date_created DESC').group('n.person_id, encounter.encounter_id')
 
       stats = []
@@ -142,7 +144,8 @@ module OPDService
           visit_type: record['visit_type'],
           birthdate: record['birthdate'],
           gender: record['gender'],
-          date: record['obs_datetime'].to_date
+          date: record['obs_datetime'].to_date,
+          address: "#{record['district']}, #{record['ta']}, #{record['village']}"
         }
       end
 
@@ -368,6 +371,7 @@ module OPDService
           drug_id: record['drug_id'],
           gender: record['gender'],
           date: record['obs_datetime'].to_date,
+          birthdate: record['birthdate'].to_date,
           patient_id: record['patient_id'],
           quantity: record['value_numeric']
         }
@@ -401,6 +405,7 @@ module OPDService
           drug_id: record['drug_id'],
           gender: record['gender'],
           date: record['start_date'].to_date,
+          birthdate: record['birthdate'].to_date,
           patient_id: record['person_id'],
           quantity: record['quantity']
         }

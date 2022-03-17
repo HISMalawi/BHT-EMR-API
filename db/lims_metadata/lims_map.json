@@ -1,5 +1,5 @@
 {
-	"headers": {"host":"localhost",
+	"headers": {"host":"127.0.0.1",
 							"username":"root",
 							"password":"root",
 							"port": "3306",
@@ -45,7 +45,7 @@
 			"Serum calcium" : 1,
 			"Istat chem8 plus construct" : 1,
 			"International normalized ratio and prothrombin time lab result" : 1,
-			"CD4 count" : 1,
+			"CD4 count" : 28,
 			"HbA1c" : 1,
 			"Urine dipstick" : 1,
 			"Sickling test" : 1,
