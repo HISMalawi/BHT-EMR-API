@@ -47,7 +47,7 @@ class ARTService::Reports::Cohort::Tpt
   end
 
   def three_hp_concept
-    @three_hp_concept ||= ConceptName.find_by!(name: 'INH 300 / RFP 300')
+    @three_hp_concept ||= ConceptName.find_by!(name: 'Isoniazid/Rifapentines')
   end
 
   def newly_initiated_on_tpt
