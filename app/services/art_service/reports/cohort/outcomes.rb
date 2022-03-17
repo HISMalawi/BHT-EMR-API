@@ -309,7 +309,7 @@ class ARTService::Reports::Cohort::Outcomes
   # remove patient who at the end of this reporting period
   # are either external or drug refill
   def remove_external_consultations_and_drug_refills
-    end_date = ActiveRecord::Base.connection.quote(end_date)
+    date = ActiveRecord::Base.connection.quote(end_date)
     ActiveRecord::Base.connection.execute <<~SQL
       DELETE FROM temp_patient_outcomes
       WHERE patient_id IN (
@@ -320,10 +320,10 @@ class ARTService::Reports::Cohort::Outcomes
           FROM obs
           INNER JOIN encounter USING (encounter_id)
           WHERE obs.concept_id IN (SELECT concept_id FROM concept_name WHERE name LIKE 'Type of patient' AND voided = 0)
-            AND obs.obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
+            AND obs.obs_datetime < DATE(#{date}) + INTERVAL 1 DAY
             AND encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'REGISTRATION' AND retired = 0)
             AND encounter.program_id IN (SELECT program_id FROM program WHERE name LIKE 'HIV Program')
-            AND encounter.encounter_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
+            AND encounter.encounter_datetime < DATE(#{date}) + INTERVAL 1 DAY
             AND obs.voided = 0
             AND encounter.voided = 0
           GROUP BY obs.person_id
@@ -334,7 +334,7 @@ class ARTService::Reports::Cohort::Outcomes
         WHERE patient_type_obs.concept_id IN (SELECT concept_id FROM concept_name WHERE name = 'Type of patient' AND voided = 0)
           AND patient_type_obs.value_coded IN (SELECT concept_id FROM concept_name WHERE name IN ('Drug refill', 'External consultation') AND voided = 0)
           AND patient_type_obs.voided = 0
-          AND patient_type_obs.obs_datetime < (DATE(#{end_date}) + INTERVAL 1 DAY)
+          AND patient_type_obs.obs_datetime < (DATE(#{date}) + INTERVAL 1 DAY)
         GROUP BY patient_type_obs.person_id
       )
     SQL
