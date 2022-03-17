@@ -47,7 +47,7 @@ class ARTService::Reports::Cohort::Tpt
   end
 
   def three_hp_concept
-    @three_hp_concept ||= ConceptName.find_by!(name: 'INH 300 / RFP 300')
+    @three_hp_concept ||= ConceptName.find_by!(name: 'Isoniazid/Rifapentine')
   end
 
   def newly_initiated_on_tpt
@@ -66,7 +66,7 @@ class ARTService::Reports::Cohort::Tpt
         AND orders.voided = 0
       INNER JOIN concept_name AS tpt_drug_concepts
         ON tpt_drug_concepts.concept_id = orders.concept_id
-        AND tpt_drug_concepts.name IN ('Rifapentine', 'Isoniazid', 'INH 300 / RFP 300')
+        AND tpt_drug_concepts.name IN ('Rifapentine', 'Isoniazid', 'Isoniazid/Rifapentine')
         AND tpt_drug_concepts.voided = 0
       INNER JOIN drug_order AS drug_orders
         ON drug_orders.order_id = orders.order_id
