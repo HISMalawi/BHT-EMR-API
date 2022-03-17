@@ -665,6 +665,46 @@ module ARTService
           GROUP by patient_program.patient_id
           HAVING date_enrolled <= #{end_date}
         SQL
+        remove_drug_refills_and_external_consultation(end_date)
+      end
+
+      def remove_drug_refills_and_external_consultation(end_date)
+        ActiveRecord::Base.connection.execute <<~SQL
+          DELETE FROM temp_earliest_start_date
+          WHERE patient_id IN (#{drug_refills_and_external_consultation_list(end_date)})
+        SQL
+      end
+
+      # this just gives all clients who are truly external or drug refill
+      # rubocop:disable Metrics/MethodLength
+      # rubocop:disable Metrics/AbcSize
+      def drug_refills_and_external_consultation_list(end_date)
+        to_remove = [0]
+        ActiveRecord::Base.connection.select_all('SELECT patient_id FROM temp_earliest_start_date').each do |record|
+          result = Observation.joins(:encounter)
+                              .where("patient_id = #{record['patient_id']}
+                                      AND encounter_type = #{registration}
+                                      AND program_id = #{hiv_program.id}
+                                      AND encounter_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
+                                      AND obs.concept_id IN (#{type_of_patient.to_sql})")
+                              .select(:value_coded)
+          to_remove << record['patient_id'] unless result.map { |coded| coded['value_coded'] }.include? new_patient
+        end
+        to_remove.join(',')
+      end
+      # rubocop:enable Metrics/AbcSize
+      # rubocop:enable Metrics/MethodLength
+
+      def new_patient
+        @new_patient ||= ConceptName.find_by(name: 'New patient').concept_id
+      end
+
+      def registration
+        @registration ||= EncounterType.find_by(name: 'REGISTRATION').id
+      end
+
+      def type_of_patient
+        @type_of_patient ||= ConceptName.where(name: 'Type of patient').select(:concept_id)
       end
 
       def create_tmp_patient_table
