@@ -643,7 +643,7 @@ module ARTService
             AND patient_program.program_id = 1
             AND outcome.state = 7
             AND outcome.start_date IS NOT NULL
-            AND patient_program.patient_id NOT IN (
+            /*AND patient_program.patient_id NOT IN (
               SELECT e.patient_id FROM encounter e
               LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND value_coded = #{new_patient_concept}) AS new_patient ON e.patient_id = new_patient.person_id
               LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND value_coded = #{drug_refill_concept}) AS refill ON e.patient_id = refill.person_id
@@ -653,14 +653,13 @@ module ARTService
               AND e.encounter_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
               AND e.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'REGISTRATION' AND retired = 0)
               GROUP BY e.patient_id
-            )
+            )*/
           GROUP by patient_program.patient_id
           HAVING date_enrolled <= #{end_date}
         SQL
-        #remove_drug_refills_and_external_consultation(end_date)
+        remove_drug_refills_and_external_consultation(end_date)
       end
 
-=begin
       def remove_drug_refills_and_external_consultation(end_date)
         ActiveRecord::Base.connection.execute <<~SQL
           DELETE FROM temp_earliest_start_date
@@ -673,7 +672,7 @@ module ARTService
       # rubocop:disable Metrics/AbcSize
       def drug_refills_and_external_consultation_list(end_date)
         to_remove = [0]
-
+=begin
         ActiveRecord::Base.connection.select_all('SELECT patient_id FROM temp_earliest_start_date').each do |record|
           result = Observation.joins(:encounter)
                               .where("patient_id = #{record['patient_id']}
@@ -685,41 +684,25 @@ module ARTService
           to_remove << record['patient_id'] unless result.map { |coded| coded['value_coded'] }.include? new_patient
         end
         to_remove.join(',')
-
+=end
 
         type_of_patient_concept = concept('Type of patient').concept_id
         new_patient_concept = concept('New patient').concept_id
         drug_refill_concept = concept('Drug refill').concept_id
         external_concept = concept('External Consultation').concept_id
 
-        ActiveRecord::Base.connection.select_all("SELECT
-          e.patient_id, new_patient.value_coded new_patient,
-          refill.value_coded refill,  external.value_coded external
-        FROM temp_earliest_start_date e
+        ActiveRecord::Base.connection.select_all("SELECT e.patient_id FROM temp_earliest_start_date e
         LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY AND value_coded = #{new_patient_concept}) AS new_patient ON e.patient_id = new_patient.person_id
         LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY AND value_coded = #{drug_refill_concept}) AS refill ON e.patient_id = refill.person_id
         LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY AND value_coded = #{external_concept}) AS external ON e.patient_id = external.person_id
-        GROUP BY e.patient_id HAVING (refill IS NOT NULL OR external IS NOT NULL) AND new_patient IS NULL;").each do |record|
+        WHERE (refill.value_coded IS NOT NULL OR external.value_coded IS NOT NULL)
+        AND new_patient.value_coded IS NULL GROUP BY e.patient_id;").each do |record|
           to_remove << record['patient_id'].to_i
         end
 
         to_remove.join(',')
       end
-      # rubocop:enable Metrics/AbcSize
-      # rubocop:enable Metrics/MethodLength
 
-      def new_patient
-        @new_patient ||= ConceptName.find_by(name: 'New patient').concept_id
-      end
-
-      def registration
-        @registration ||= EncounterType.find_by(name: 'REGISTRATION').id
-      end
-
-      def type_of_patient
-        @type_of_patient ||= ConceptName.where(name: 'Type of patient').select(:concept_id)
-      end
-=end
       def create_tmp_patient_table
         ActiveRecord::Base.connection.execute('DROP TABLE IF EXISTS temp_earliest_start_date')
         ActiveRecord::Base.connection.execute(
