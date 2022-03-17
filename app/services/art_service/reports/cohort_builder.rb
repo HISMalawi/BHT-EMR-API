@@ -637,7 +637,7 @@ module ARTService
             AND patient_program.program_id = 1
             AND outcome.state = 7
             AND outcome.start_date IS NOT NULL
-            AND patient_program.patient_id NOT IN (
+            /* AND patient_program.patient_id NOT IN (
               SELECT patient_type_obs.person_id
               FROM obs AS patient_type_obs
               INNER JOIN (
@@ -655,13 +655,13 @@ module ARTService
               ) AS max_patient_type_obs
                 ON max_patient_type_obs.person_id = patient_type_obs.person_id
                 AND max_patient_type_obs.obs_datetime = patient_type_obs.obs_datetime
-                /* Doing the above to avoid picking patients that changed patient types at some point (eg External consultation to New patient) */
+                /* Doing the above to avoid picking patients that changed patient types at some point (eg External consultation to New patient)
               WHERE patient_type_obs.concept_id IN (SELECT concept_id FROM concept_name WHERE name = 'Type of patient' AND voided = 0)
                 AND patient_type_obs.value_coded IN (SELECT concept_id FROM concept_name WHERE name IN ('Drug refill', 'External consultation') AND voided = 0)
                 AND patient_type_obs.voided = 0
                 AND patient_type_obs.obs_datetime < (DATE(#{end_date}) + INTERVAL 1 DAY)
               GROUP BY patient_type_obs.person_id
-            )
+            )*/
           GROUP by patient_program.patient_id
           HAVING date_enrolled <= #{end_date}
         SQL
