@@ -692,11 +692,17 @@ module ARTService
         external_concept = concept('External Consultation').concept_id
 
         ActiveRecord::Base.connection.select_all("SELECT e.patient_id FROM temp_earliest_start_date e
-        LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY AND value_coded = #{new_patient_concept}) AS new_patient ON e.patient_id = new_patient.person_id
-        LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY AND value_coded = #{drug_refill_concept}) AS refill ON e.patient_id = refill.person_id
-        LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY AND value_coded = #{external_concept}) AS external ON e.patient_id = external.person_id
+        INNER JOIN encounter ec ON e.patient_id = ec.patient_id
+        AND ec.voided = 0
+        AND ec.encounter_type = (SELECT encounter_type_id FROM encounter_type WHERE name = 'REGISTRATION' LIMIT 1)
+        AND ec.program_id = #{hiv_program.id}
+        LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND value_coded = #{new_patient_concept}) AS new_patient ON e.patient_id = new_patient.person_id
+        LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND value_coded = #{drug_refill_concept}) AS refill ON e.patient_id = refill.person_id
+        LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND value_coded = #{external_concept}) AS external ON e.patient_id = external.person_id
         WHERE (refill.value_coded IS NOT NULL OR external.value_coded IS NOT NULL)
-        AND new_patient.value_coded IS NULL GROUP BY e.patient_id;").each do |record|
+        AND new_patient.value_coded IS NULL
+        AND ec.encounter_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
+        GROUP BY e.patient_id;").each do |record|
           to_remove << record['patient_id'].to_i
         end
 
