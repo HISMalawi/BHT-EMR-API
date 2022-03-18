@@ -52,17 +52,21 @@ class ARTService::Reports::ViralLoad
   end
 
   def closing_states
-    state_concepts = ConceptName.where(name: ['Patient died', 'Patient transferred out', 'Treatment stopped'])
-                                .select(:concept_id)
-    states = ProgramWorkflowState.where(concept_id: state_concepts)
-                                 .joins(:program_workflow)
-                                 .merge(ProgramWorkflow.where(program: @program))
+    # state_concepts = ConceptName.where(name: ['Patient died', 'Patient transferred out', 'Treatment stopped'])
+    #                             .select(:concept_id)
+    # states = ProgramWorkflowState.where(concept_id: state_concepts)
+    #                              .joins(:program_workflow)
+    #                              .merge(ProgramWorkflow.where(program: @program))
 
-    PatientState.joins(:program_workflow_state)
-                .merge(states)
-                .select(:state)
-                .distinct(:state)
-                .to_sql
+    # PatientState.joins(:program_workflow_state)
+    #             .merge(states)
+    #             .select(:state)
+    #             .distinct(:state)
+    #             .to_sql
+    ProgramWorkflowState.joins(:program_workflow)
+                        .where(initial: 0, terminal: 1,
+                               program_workflow: { program_id: @program.id })
+                        .select(:program_workflow_state_id).to_sql
   end
 
   def potential_get_clients
@@ -157,8 +161,9 @@ class ARTService::Reports::ViralLoad
     vl_info = get_vl_due_info(person[:patient_id], appointment_date)
     months_on_art = vl_info[:period_on_art]
 
+
     #if @possible_milestones.include?(months_on_art)
-    if vl_info[:eligibile]
+    if vl_info[:eligibile] || (!vl_info[:eligibile] && vl_info[:due_date] <= end_date.to_date + 28.day)
       last_result = last_vl_result(person[:patient_id])
       return {
         patient_id: person[:patient_id],
