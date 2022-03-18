@@ -581,6 +581,12 @@ module ARTService
       def load_data_into_temp_earliest_start_date(end_date)
         end_date = ActiveRecord::Base.connection.quote(end_date)
 
+        type_of_patient_concept = concept('Type of patient').concept_id
+        new_patient_concept = concept('New patient').concept_id
+        drug_refill_concept = concept('Drug refill').concept_id
+        external_concept = concept('External Consultation').concept_id
+        program_id = Program.find_by(name: 'HIV program').id
+
         ActiveRecord::Base.connection.execute <<~SQL
           INSERT INTO temp_earliest_start_date
           SELECT patient_program.patient_id,
@@ -637,34 +643,70 @@ module ARTService
             AND patient_program.program_id = 1
             AND outcome.state = 7
             AND outcome.start_date IS NOT NULL
-            AND patient_program.patient_id NOT IN (
-              SELECT patient_type_obs.person_id
-              FROM obs AS patient_type_obs
-              INNER JOIN (
-                SELECT MAX(obs_datetime) AS obs_datetime, person_id
-                FROM obs
-                INNER JOIN encounter USING (encounter_id)
-                WHERE obs.concept_id IN (SELECT concept_id FROM concept_name WHERE name LIKE 'Type of patient' AND voided = 0)
-                  AND obs.obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
-                  AND encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'REGISTRATION' AND retired = 0)
-                  AND encounter.program_id IN (SELECT program_id FROM program WHERE name LIKE 'HIV Program')
-                  AND encounter.encounter_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
-                  AND obs.voided = 0
-                  AND encounter.voided = 0
-                GROUP BY obs.person_id
-              ) AS max_patient_type_obs
-                ON max_patient_type_obs.person_id = patient_type_obs.person_id
-                AND max_patient_type_obs.obs_datetime = patient_type_obs.obs_datetime
-                /* Doing the above to avoid picking patients that changed patient types at some point (eg External consultation to New patient) */
-              WHERE patient_type_obs.concept_id IN (SELECT concept_id FROM concept_name WHERE name = 'Type of patient' AND voided = 0)
-                AND patient_type_obs.value_coded IN (SELECT concept_id FROM concept_name WHERE name IN ('Drug refill', 'External consultation') AND voided = 0)
-                AND patient_type_obs.voided = 0
-                AND patient_type_obs.obs_datetime < (DATE(#{end_date}) + INTERVAL 1 DAY)
-              GROUP BY patient_type_obs.person_id
-            )
+            /*AND patient_program.patient_id NOT IN (
+              SELECT e.patient_id FROM encounter e
+              LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND value_coded = #{new_patient_concept}) AS new_patient ON e.patient_id = new_patient.person_id
+              LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND value_coded = #{drug_refill_concept}) AS refill ON e.patient_id = refill.person_id
+              LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND value_coded = #{external_concept}) AS external ON e.patient_id = external.person_id
+              WHERE e.program_id = #{program_id} AND (refill.value_coded IS NOT NULL OR external.value_coded IS NOT NULL)
+              AND new_patient.value_coded IS NULL
+              AND e.encounter_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
+              AND e.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'REGISTRATION' AND retired = 0)
+              GROUP BY e.patient_id
+            )*/
           GROUP by patient_program.patient_id
           HAVING date_enrolled <= #{end_date}
         SQL
+        remove_drug_refills_and_external_consultation(end_date)
+      end
+
+      def remove_drug_refills_and_external_consultation(end_date)
+        ActiveRecord::Base.connection.execute <<~SQL
+          DELETE FROM temp_earliest_start_date
+          WHERE patient_id IN (#{drug_refills_and_external_consultation_list(end_date)})
+        SQL
+      end
+
+      # this just gives all clients who are truly external or drug refill
+      # rubocop:disable Metrics/MethodLength
+      # rubocop:disable Metrics/AbcSize
+      def drug_refills_and_external_consultation_list(end_date)
+        to_remove = [0]
+=begin
+        ActiveRecord::Base.connection.select_all('SELECT patient_id FROM temp_earliest_start_date').each do |record|
+          result = Observation.joins(:encounter)
+                              .where("patient_id = #{record['patient_id']}
+                                      AND encounter_type = #{registration}
+                                      AND program_id = #{hiv_program.id}
+                                      AND encounter_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
+                                      AND obs.concept_id IN (#{type_of_patient.to_sql})")
+                              .select(:value_coded)
+          to_remove << record['patient_id'] unless result.map { |coded| coded['value_coded'] }.include? new_patient
+        end
+        to_remove.join(',')
+=end
+
+        type_of_patient_concept = concept('Type of patient').concept_id
+        new_patient_concept = concept('New patient').concept_id
+        drug_refill_concept = concept('Drug refill').concept_id
+        external_concept = concept('External Consultation').concept_id
+
+        ActiveRecord::Base.connection.select_all("SELECT e.patient_id FROM temp_earliest_start_date e
+        INNER JOIN encounter ec ON e.patient_id = ec.patient_id
+        AND ec.voided = 0
+        AND ec.encounter_type = (SELECT encounter_type_id FROM encounter_type WHERE name = 'REGISTRATION' LIMIT 1)
+        AND ec.program_id = #{hiv_program.id}
+        LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND value_coded = #{new_patient_concept}) AS new_patient ON e.patient_id = new_patient.person_id
+        LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND value_coded = #{drug_refill_concept}) AS refill ON e.patient_id = refill.person_id
+        LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND value_coded = #{external_concept}) AS external ON e.patient_id = external.person_id
+        WHERE (refill.value_coded IS NOT NULL OR external.value_coded IS NOT NULL)
+        AND new_patient.value_coded IS NULL
+        AND ec.encounter_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
+        GROUP BY e.patient_id;").each do |record|
+          to_remove << record['patient_id'].to_i
+        end
+
+        to_remove.join(',')
       end
 
       def create_tmp_patient_table
