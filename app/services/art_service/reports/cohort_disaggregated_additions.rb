@@ -4,6 +4,11 @@ module ARTService
 
     class CohortDisaggregatedAdditions
 
+      COHORT_REGIMENS = %w[
+        0P 2P 4PP 4PA 9PP 9PA 11PP 11PA 12PP 12PA 14PP 14PA 15PP 15PA 16P 17PP 17PA
+        4A 5A 6A 7A 8A 9A 10A 11A 12A 13A 14A 15A 16A 17A
+      ].freeze
+
       def initialize(start_date:, end_date:, gender:, age_group:)
         @start_date = start_date
         @end_date = end_date
@@ -99,7 +104,7 @@ EOF
           SELECT patient_current_regimen(#{patient_id}, DATE('#{@end_date.to_date}')) regimen;
           SQL
 
-          regimen = regimen_data['regimen']
+          regimen = (COHORT_REGIMENS.include? regimen_data['regimen']) ? regimen_data['regimen'] : 'N/A'
           data[regimen] = [] if data[regimen].blank?
           data[regimen] << patient_id
         end
