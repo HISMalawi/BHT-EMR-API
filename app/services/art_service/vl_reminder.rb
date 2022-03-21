@@ -47,6 +47,15 @@ module ARTService
         return viral_load ? viral_load.start_date.to_date + 12.months : viral_load_due_date
       end
 
+      # if the patient is using ped regimens
+      return viral_load.start_date + 6.months if patient_using_pead_regimen?
+
+      # if the patient is pregnant
+      return viral_load.start_date + 6.months if patient_pregnant?
+
+      # if the patient is breastfeeding
+      return viral_load.start_date + 6.months if patient_breast_feeding?
+
       # If patient has a viral load in the last 12 months then we need to make sure
       # that the patient didn't have a regimen switch after the viral load due to
       # a treatment failure.
@@ -271,6 +280,66 @@ module ARTService
       return "(#{username})" unless name
 
       "#{name.given_name} #{name.family_name} (#{username})"
+    end
+
+    def patient_using_pead_regimen?
+      regimen = ActiveRecord::Base.connection.select_one <<~SQL
+        SELECT patient_current_regimen(#{patient.id}, DATE('#{date}')) regimen
+      SQL
+      regimen['regimen'].include? 'P'
+    end
+
+    def patient_pregnant?
+      return false unless patient.gender.match(/f/i)
+
+      result = ActiveRecord::Base.connection.select_one <<~SQL
+        SELECT value_coded
+        FROM obs
+        INNER JOIN encounter
+          ON encounter.encounter_id = obs.encounter_id
+          AND encounter.encounter_type IN (#{encounter_types.to_sql})
+          AND encounter.voided = 0
+        WHERE concept_id IN (#{pregnant_concepts.to_sql})
+          AND obs_datetime < DATE('#{date}') + INTERVAL 1 DAY
+          AND obs.voided = 0
+          AND obs.person_id = #{patient.id}
+        ORDER BY obs_datetime desc
+      SQL
+      result['value_coded'].to_i == 1065 # concept id for yes
+    end
+
+    def patient_breast_feeding?
+      return false unless patient.gender.match(/f/i)
+
+      result = ActiveRecord::Base.connection.select_one <<~SQL
+        SELECT value_coded
+        FROM obs
+        INNER JOIN encounter
+          ON encounter.encounter_id = obs.encounter_id
+          AND encounter.encounter_type IN (#{encounter_types.to_sql})
+          AND encounter.voided = 0
+        WHERE concept_id IN (#{pregnant_concepts.to_sql})
+          AND obs_datetime < DATE('#{date}') + INTERVAL 1 DAY
+          AND obs.voided = 0
+          AND obs.person_id = #{patient.id}
+        ORDER BY obs_datetime desc
+      SQL
+      result['value_coded'].to_i == 1065 # concept id for yes
+    end
+
+    def pregnant_concepts
+      @pregnant_concepts ||= ConceptName.where(name: ['Is patient pregnant?', 'patient pregnant'])
+                                        .select(:concept_id)
+    end
+
+    def breast_feeding_concepts
+      @breast_feeding_concepts ||= ConceptName.where(name: ['Breast feeding?', 'Breast feeding', 'Breastfeeding'])
+                                              .select(:concept_id)
+    end
+
+    def encounter_types
+      @encounter_types ||= EncounterType.where(name: ['HIV CLINIC CONSULTATION', 'HIV STAGING'])
+                                        .select(:encounter_type_id)
     end
   end
 end
