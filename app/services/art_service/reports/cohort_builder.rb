@@ -268,58 +268,29 @@ module ARTService
         lpv_granules = drugs[concepts[['LPV/r Pellets', 'LPV/r Granules']]]
         lpv_tabs = drugs[concepts['LPV/r']]
 
-        cohort_struct.zero_a            = filter_prescriptions_by_regimen(prescriptions, '0A')
-        cohort_struct.one_a             = filter_prescriptions_by_regimen(prescriptions, '1A')
-        cohort_struct.zero_p            = filter_prescriptions_by_regimen(prescriptions, '0P')
-        cohort_struct.one_p             = filter_prescriptions_by_regimen(prescriptions, '1P')
-        cohort_struct.two_a             = filter_prescriptions_by_regimen(prescriptions, '2A')
-        cohort_struct.two_p             = filter_prescriptions_by_regimen(prescriptions, '2P')
-        cohort_struct.three_a           = filter_prescriptions_by_regimen(prescriptions, '3A')
-        cohort_struct.three_p           = filter_prescriptions_by_regimen(prescriptions, '3P')
         cohort_struct.four_a            = filter_prescriptions_by_regimen(prescriptions, '4A')
-        cohort_struct.four_p            = filter_prescriptions_by_regimen(prescriptions, '4P')
         cohort_struct.four_pp           = filter_prescriptions_by_regimen(prescriptions, '4PP')
         cohort_struct.four_pa           = filter_prescriptions_by_regimen(prescriptions, '4PA')
         cohort_struct.five_a            = filter_prescriptions_by_regimen(prescriptions, '5A')
-        cohort_struct.six_a             = filter_prescriptions_by_regimen(prescriptions, '6A')
         cohort_struct.seven_a           = filter_prescriptions_by_regimen(prescriptions, '7A')
         cohort_struct.eight_a           = filter_prescriptions_by_regimen(prescriptions, '8A')
         cohort_struct.nine_a            = filter_prescriptions_by_regimen(prescriptions, '9A')
-        cohort_struct.nine_p            = filter_prescriptions_by_regimen(prescriptions, '9P')
         cohort_struct.nine_pp           = filter_prescriptions_by_regimen(prescriptions, '9PP')
         cohort_struct.nine_pa           = filter_prescriptions_by_regimen(prescriptions, '9PA')
-        cohort_struct.nine_p_granules   = filter_prescriptions_by_drugs(cohort_struct.nine_p, lpv_granules)
-        cohort_struct.nine_p_tabs       = filter_prescriptions_by_drugs(cohort_struct.nine_p, lpv_tabs)
-        cohort_struct.nine_pp_granules   = filter_prescriptions_by_drugs(cohort_struct.nine_pp, lpv_granules)
-        cohort_struct.nine_pp_tabs       = filter_prescriptions_by_drugs(cohort_struct.nine_pp, lpv_tabs)
-        cohort_struct.nine_pa_granules   = filter_prescriptions_by_drugs(cohort_struct.nine_pa, lpv_granules)
-        cohort_struct.nine_pa_tabs       = filter_prescriptions_by_drugs(cohort_struct.nine_pa, lpv_tabs)
         cohort_struct.ten_a             = filter_prescriptions_by_regimen(prescriptions, '10A')
         cohort_struct.eleven_a          = filter_prescriptions_by_regimen(prescriptions, '11A')
-        cohort_struct.eleven_p          = filter_prescriptions_by_regimen(prescriptions, '11P')
         cohort_struct.eleven_pp         = filter_prescriptions_by_regimen(prescriptions, '11PP')
         cohort_struct.eleven_pa         = filter_prescriptions_by_regimen(prescriptions, '11PA')
-        cohort_struct.eleven_p_granules = filter_prescriptions_by_drugs(cohort_struct.eleven_p, lpv_granules)
-        cohort_struct.eleven_p_tabs     = filter_prescriptions_by_drugs(cohort_struct.eleven_p, lpv_tabs)
-        cohort_struct.eleven_pp_granules = filter_prescriptions_by_drugs(cohort_struct.eleven_pp, lpv_granules)
-        cohort_struct.eleven_pp_tabs     = filter_prescriptions_by_drugs(cohort_struct.eleven_pp, lpv_tabs)
-        cohort_struct.eleven_pa_granules = filter_prescriptions_by_drugs(cohort_struct.eleven_pa, lpv_granules)
-        cohort_struct.eleven_pa_tabs     = filter_prescriptions_by_drugs(cohort_struct.eleven_pa, lpv_tabs)
         cohort_struct.twelve_a          = filter_prescriptions_by_regimen(prescriptions, '12A')
         cohort_struct.twelve_pp         = filter_prescriptions_by_regimen(prescriptions, '12PP')
         cohort_struct.twelve_pa         = filter_prescriptions_by_regimen(prescriptions, '12PA')
         cohort_struct.thirteen_a        = filter_prescriptions_by_regimen(prescriptions, '13A')
-        cohort_struct.fourteen_p        = filter_prescriptions_by_regimen(prescriptions, '14P')
         cohort_struct.fourteen_pp       = filter_prescriptions_by_regimen(prescriptions, '14PP')
         cohort_struct.fourteen_pa       = filter_prescriptions_by_regimen(prescriptions, '14PA')
         cohort_struct.fourteen_a        = filter_prescriptions_by_regimen(prescriptions, '14A')
-        cohort_struct.fifteen_p         = filter_prescriptions_by_regimen(prescriptions, '15P')
         cohort_struct.fifteen_pp        = filter_prescriptions_by_regimen(prescriptions, '15PP')
         cohort_struct.fifteen_pa        = filter_prescriptions_by_regimen(prescriptions, '15PA')
         cohort_struct.fifteen_a         = filter_prescriptions_by_regimen(prescriptions, '15A')
-        cohort_struct.sixteen_p         = filter_prescriptions_by_regimen(prescriptions, '16P')
-        cohort_struct.sixteen_a         = filter_prescriptions_by_regimen(prescriptions, '16A')
-        cohort_struct.seventeen_p       = filter_prescriptions_by_regimen(prescriptions, '17P')
         cohort_struct.seventeen_pp      = filter_prescriptions_by_regimen(prescriptions, '17PP')
         cohort_struct.seventeen_pa      = filter_prescriptions_by_regimen(prescriptions, '17PA')
         cohort_struct.seventeen_a       = filter_prescriptions_by_regimen(prescriptions, '17A')
@@ -1273,8 +1244,8 @@ EOF
       end
 
       COHORT_REGIMENS = %w[
-        0P 2P 4P 4PP 4PA 9P 9PP 9PA 11P 11PP 11PA 12PP 12PA 14P 14PP 14PA 14PP 15P 15PP 15PA 16P 17P 17PP 17PA
-        0A 2A 4A 5A 6A 7A 8A 9A 10A 11A 12A 13A 14A 15A 16A 17A
+        4PP 4PA 9PP 9PA 11PP 11PA 12PP 12PA 14PP 14PA 15PP 15PA 17PP 17PA
+        4A 5A 7A 8A 9A 10A 11A 12A 13A 14A 15A 17A
       ].freeze
 
       def cal_regimem_category(_patient_list, end_date)
