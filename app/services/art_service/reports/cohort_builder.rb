@@ -262,16 +262,21 @@ module ARTService
 
         prescriptions = cal_regimem_category(cohort_struct.total_alive_and_on_art, end_date)
 
-        concepts = ->(names) { ConceptName.where(name: names).select(:concept_id) }
-        drugs = ->(concepts) { Drug.where(concept: concepts).select(:drug_id).collect(&:drug_id) }
+        # concepts = ->(names) { ConceptName.where(name: names).select(:concept_id) }
+        # drugs = ->(concepts) { Drug.where(concept: concepts).select(:drug_id).collect(&:drug_id) }
 
-        lpv_granules = drugs[concepts[['LPV/r Pellets', 'LPV/r Granules']]]
-        lpv_tabs = drugs[concepts['LPV/r']]
+        # lpv_granules = drugs[concepts[['LPV/r Pellets', 'LPV/r Granules']]]
+        # lpv_tabs = drugs[concepts['LPV/r']]
 
+        cohort_struct.zero_p            = filter_prescriptions_by_regimen(prescriptions, '0P')
+        cohort_struct.zero_a            = filter_prescriptions_by_regimen(prescriptions, '0A')
+        cohort_struct.two_p             = filter_prescriptions_by_regimen(prescriptions, '2P')
+        cohort_struct.two_a             = filter_prescriptions_by_regimen(prescriptions, '2A')
         cohort_struct.four_a            = filter_prescriptions_by_regimen(prescriptions, '4A')
         cohort_struct.four_pp           = filter_prescriptions_by_regimen(prescriptions, '4PP')
         cohort_struct.four_pa           = filter_prescriptions_by_regimen(prescriptions, '4PA')
         cohort_struct.five_a            = filter_prescriptions_by_regimen(prescriptions, '5A')
+        cohort_struct.six_a             = filter_prescriptions_by_regimen(prescriptions, '6A')
         cohort_struct.seven_a           = filter_prescriptions_by_regimen(prescriptions, '7A')
         cohort_struct.eight_a           = filter_prescriptions_by_regimen(prescriptions, '8A')
         cohort_struct.nine_a            = filter_prescriptions_by_regimen(prescriptions, '9A')
@@ -291,6 +296,8 @@ module ARTService
         cohort_struct.fifteen_pp        = filter_prescriptions_by_regimen(prescriptions, '15PP')
         cohort_struct.fifteen_pa        = filter_prescriptions_by_regimen(prescriptions, '15PA')
         cohort_struct.fifteen_a         = filter_prescriptions_by_regimen(prescriptions, '15A')
+        cohort_struct.sixteen_p         = filter_prescriptions_by_regimen(prescriptions, '16P')
+        cohort_struct.sixteen_a         = filter_prescriptions_by_regimen(prescriptions, '16A')
         cohort_struct.seventeen_pp      = filter_prescriptions_by_regimen(prescriptions, '17PP')
         cohort_struct.seventeen_pa      = filter_prescriptions_by_regimen(prescriptions, '17PA')
         cohort_struct.seventeen_a       = filter_prescriptions_by_regimen(prescriptions, '17A')
@@ -1244,8 +1251,8 @@ EOF
       end
 
       COHORT_REGIMENS = %w[
-        4PP 4PA 9PP 9PA 11PP 11PA 12PP 12PA 14PP 14PA 15PP 15PA 17PP 17PA
-        4A 5A 7A 8A 9A 10A 11A 12A 13A 14A 15A 17A
+        0P 2P 4PP 4PA 9PP 9PA 11PP 11PA 12PP 12PA 14PP 14PA 15PP 15PA 16P 17PP 17PA
+        4A 5A 6A 7A 8A 9A 10A 11A 12A 13A 14A 15A 16A 17A
       ].freeze
 
       def cal_regimem_category(_patient_list, end_date)
