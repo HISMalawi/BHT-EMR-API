@@ -116,7 +116,7 @@ module ARTService
                                          program_id: Program.find_by_name!('HIV Program').program_id })
                .where("patient_state.state=2 AND patient_state.start_date <= DATE('#{date.to_date}')")
                .order(start_date: :desc)
-      record.blank? ? date : record.last.start_date.to_date
+      record.blank? ? date : record.first.start_date.to_date
     end
   end
 end
