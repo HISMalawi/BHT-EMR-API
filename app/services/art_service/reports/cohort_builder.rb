@@ -1251,8 +1251,8 @@ EOF
       end
 
       COHORT_REGIMENS = %w[
-        4PP 4PA 9PP 9PA 11PP 11PA 12PP 12PA 14PP 14PA 15PP 15PA 17PP 17PA
-        4A 5A 7A 8A 9A 10A 11A 12A 13A 14A 15A 17A
+        0P 2P 4PP 4PA 9PP 9PA 11PP 11PA 12PP 12PA 14PP 14PA 15PP 15PA 16P 17PP 17PA
+        4A 5A 6A 7A 8A 9A 10A 11A 12A 13A 14A 15A 16A 17A
       ].freeze
 
       def cal_regimem_category(_patient_list, end_date)
