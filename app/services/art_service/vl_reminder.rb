@@ -48,13 +48,13 @@ module ARTService
       end
 
       # if the patient is using ped regimens
-      return viral_load.start_date + 6.months if patient_using_pead_regimen?
+      return viral_load.start_date.to_date + 6.months if patient_using_pead_regimen?
 
       # if the patient is pregnant
-      return viral_load.start_date + 6.months if patient_pregnant?
+      return viral_load.start_date.to_date + 6.months if patient_pregnant?
 
       # if the patient is breastfeeding
-      return viral_load.start_date + 6.months if patient_breast_feeding?
+      return viral_load.start_date.to_date + 6.months if patient_breast_feeding?
 
       # If patient has a viral load in the last 12 months then we need to make sure
       # that the patient didn't have a regimen switch after the viral load due to
@@ -305,7 +305,7 @@ module ARTService
           AND obs.person_id = #{patient.id}
         ORDER BY obs_datetime desc
       SQL
-      result['value_coded'].to_i == 1065 # concept id for yes
+      yes_concepts.include? result['value_coded'].to_i
     end
 
     def patient_breast_feeding?
@@ -318,13 +318,17 @@ module ARTService
           ON encounter.encounter_id = obs.encounter_id
           AND encounter.encounter_type IN (#{encounter_types.to_sql})
           AND encounter.voided = 0
-        WHERE concept_id IN (#{pregnant_concepts.to_sql})
+        WHERE concept_id IN (#{breast_feeding_concepts.to_sql})
           AND obs_datetime < DATE('#{date}') + INTERVAL 1 DAY
           AND obs.voided = 0
           AND obs.person_id = #{patient.id}
         ORDER BY obs_datetime desc
       SQL
-      result['value_coded'].to_i == 1065 # concept id for yes
+      yes_concepts.include? result['value_coded'].to_i
+    end
+
+    def yes_concepts
+      @yes_concepts ||= ConceptName.where(name: 'Yes').select(:concept_id).map { |record| record['concept_id'].to_i }
     end
 
     def pregnant_concepts
