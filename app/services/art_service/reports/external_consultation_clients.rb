@@ -24,7 +24,7 @@ module ARTService
 
         possible_clients = ActiveRecord::Base.connection.select_all <<~SQL
           SELECT
-          	p.person_id patient_id, a.identifier, npid.identifier npid, main.value_coded,
+          	p.person_id patient_id, npid.identifier npid, main.value_coded,
           	p.birthdate, p.gender, main.obs_datetime, n.family_name, n.given_name, main.value_coded
           FROM obs main
           INNER JOIN person p ON p.person_id = main.person_id
