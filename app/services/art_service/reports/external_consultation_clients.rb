@@ -10,17 +10,16 @@ module ARTService
       end
 
       def list
-        extenal_clients
+        other_clients
       end
 
       private
 
-      def extenal_clients
+      def other_clients
         ext_consultation_concept_id = ConceptName.find_by_name('External consultation').concept_id
         drug_refill_concept_id = ConceptName.find_by_name('Drug refill').concept_id
         # internal_client_concept_id = ConceptName.find_by_name('New patient').concept_id
         type_of_client_concept_id = ConceptName.find_by_name('Type of patient').concept_id
-        arv_number_identifier_type_id = PatientIdentifierType.find_by_name('ARV number').id
         npid_identifier_type_id = PatientIdentifierType.find_by_name('National ID').id
 
         possible_clients = ActiveRecord::Base.connection.select_all <<~SQL
@@ -29,8 +28,6 @@ module ARTService
           	p.birthdate, p.gender, main.obs_datetime, n.family_name, n.given_name, main.value_coded
           FROM obs main
           INNER JOIN person p ON p.person_id = main.person_id
-          LEFT JOIN patient_identifier a ON a.patient_id = p.person_id
-          AND a.identifier_type = #{arv_number_identifier_type_id} AND a.voided = 0
           LEFT JOIN patient_identifier npid ON npid.patient_id = p.person_id
           AND npid.identifier_type = #{npid_identifier_type_id} AND npid.voided = 0
           LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
@@ -53,7 +50,6 @@ module ARTService
             patient_id: client['patient_id'].to_i,
             patient_type: client['value_coded'] == ext_consultation_concept_id ? 'External consultation' : 'Drug refill',
             npid: client['npid'],
-            arv_number: client['identifier'],
             birthdate: client['birthdate'].to_date,
             gender: client['gender'],
             given_name: client['given_name'],
