@@ -71,14 +71,15 @@ module ARTService
                                    .last\
                                    &.value_coded
 
-      return 'Unk' unless tb_status_value
+      return 'Unknown' unless tb_status_value
 
       ConceptName.find_by(concept_id: tb_status_value, concept_name_type: 'FULLY_SPECIFIED')&.name || 'Unknown'
     end
 
     def height
       obs = Observation.where(concept: concept('Height (cm)'), person: patient.person)\
-                       .order(obs_datetime: :desc)\
+                       .where("DATE(obs_datetime) <= DATE('#{@date.to_date}')")
+                       .order(obs_datetime: :desc)
                        .first
 
       obs&.value_numeric || obs&.value_text || 0
