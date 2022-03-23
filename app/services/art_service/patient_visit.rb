@@ -73,7 +73,7 @@ module ARTService
 
       return 'Unk' unless tb_status_value
 
-      ConceptName.find_by(concept_id: tb_status_value, concept_name_type: 'SHORT')&.name || 'Unk'
+      ConceptName.find_by(concept_id: tb_status_value, concept_name_type: 'FULLY_SPECIFIED')&.name || 'Unknown'
     end
 
     def height
