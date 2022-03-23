@@ -177,7 +177,10 @@ module ARTService
 
     def viral_load_result
       viral_load_concept = ConceptName.where(name: 'HIV Viral Load').select(:concept_id)
-      tests = Lab::LabTest.where(value_coded: viral_load_concept, person_id: patient.patient_id)
+      # tests = Lab::LabTest.where(value_coded: viral_load_concept, person_id: patient.patient_id, obs_datetime: Dat)
+      tests = Lab::LabTest.where("value_coded IN (#{viral_load_concept.to_sql})
+                                  AND person_id = #{patient.patient_id}
+                                  AND DATE(obs_datetime) = DATE('#{date.to_date}')")
 
       result = Lab::LabResult.where(obs_group_id: tests, person_id: patient.patient_id)
                              .order(:obs_datetime)
