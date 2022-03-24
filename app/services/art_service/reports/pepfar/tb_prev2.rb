@@ -129,7 +129,7 @@ module ARTService
               AND orders.voided = 0
             INNER JOIN concept_name
               ON concept_name.concept_id = orders.concept_id
-              AND concept_name.name IN ('Rifapentine', 'Isoniazid')
+              AND concept_name.name IN ('Rifapentine', 'Isoniazid', 'Isoniazid/Rifapentine')
             INNER JOIN drug_order
               ON drug_order.order_id = orders.order_id
               AND drug_order.quantity > 0
