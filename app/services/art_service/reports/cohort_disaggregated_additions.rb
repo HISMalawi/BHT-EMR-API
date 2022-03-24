@@ -117,19 +117,20 @@ EOF
       def given_ipt(patient_ids)
         return [] if patient_ids.blank?
         isoniazid_concept_id = ConceptName.find_by(name: 'Isoniazid').concept_id
+        isoniazid_rifapentine_concept_id = ConceptName.find_by(name: 'Isoniazid/Rifapentine').concept_id
         pyridoxine_concept_id = ConceptName.find_by(name: 'Pyridoxine').concept_id
 
         results = ActiveRecord::Base.connection.select_all(
           "SELECT ods.patient_id FROM orders ods
           INNER JOIN drug_order dos ON ods.order_id = dos.order_id AND ods.voided = 0
-          WHERE ods.concept_id IN (#{isoniazid_concept_id}, #{pyridoxine_concept_id})
+          WHERE ods.concept_id IN (#{isoniazid_concept_id}, #{pyridoxine_concept_id}, #{isoniazid_rifapentine_concept_id})
           AND dos.quantity IS NOT NULL
           AND ods.patient_id in (#{patient_ids.join(',')})
           AND ods.start_date BETWEEN '#{@start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
           AND '#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
           AND DATE(ods.start_date) = (SELECT MAX(DATE(o.start_date)) FROM orders o
                                       INNER JOIN drug_order d ON o.order_id = d.order_id AND o.voided = 0
-                                      WHERE o.concept_id IN (#{isoniazid_concept_id}, #{pyridoxine_concept_id})
+                                      WHERE o.concept_id IN (#{isoniazid_concept_id}, #{pyridoxine_concept_id}, #{isoniazid_rifapentine_concept_id})
                                       AND o.patient_id = ods.patient_id
                                       AND d.quantity IS NOT NULL
                                       AND o.start_date BETWEEN '#{@start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
