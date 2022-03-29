@@ -1,0 +1,30 @@
+[ N 2022-03-29 13:24:04.5358 164330/T1 age/Wat/WatchdogMain.cpp:1373 ]: Starting Passenger watchdog...
+[ N 2022-03-29 13:24:04.5450 164333/T1 age/Cor/CoreMain.cpp:1340 ]: Starting Passenger core...
+[ N 2022-03-29 13:24:04.5450 164333/T1 age/Cor/CoreMain.cpp:256 ]: Passenger core running in multi-application mode.
+[ N 2022-03-29 13:24:04.5965 164333/T1 age/Cor/CoreMain.cpp:1015 ]: Passenger core online, PID 164333
+2022/03/29 13:24:06 [error] 164357#0: *4 "/home/petros/Documents/Work/Testing_Systems/BHT-EMR-API/db/sql/public/index.html" is not found (2: No such file or directory), client: 127.0.0.1, server: _, request: "HEAD / HTTP/1.1", host: "0.0.0.0"
+[ N 2022-03-29 13:24:08.0507 164333/T5 age/Cor/SecurityUpdateChecker.h:519 ]: Security update check: no update found (next check in 24 hours)
+2022/03/29 13:24:09 [error] 164357#0: *5 open() "/home/petros/Documents/Work/Testing_Systems/BHT-EMR-API/db/sql/public/api/v1/programs/14/reports/diagnosis" failed (2: No such file or directory), client: 127.0.0.1, server: _, request: "GET /api/v1/programs/14/reports/diagnosis?start_date=2021-01-01&end_date=2021-01-13&date=2022-03-29 HTTP/1.1", host: "0.0.0.0:3000", referrer: "http://localhost:5000/"
+2022/03/29 13:24:27 [error] 164357#0: *6 open() "/home/petros/Documents/Work/Testing_Systems/BHT-EMR-API/db/sql/public/get_months" failed (2: No such file or directory), client: 192.168.11.50, server: _, request: "GET /get_months HTTP/1.1", host: "192.168.11.29:3000", referrer: "http://localhost:5000/"
+
+[ N 2022-03-29 13:24:54.1730 164333/T8 age/Cor/CoreMain.cpp:671 ]: Signal received. Gracefully shutting down... (send signal 2 more time(s) to force shutdown)
+[ N 2022-03-29 13:24:54.1730 164333/T1 age/Cor/CoreMain.cpp:1246 ]: Received command to shutdown gracefully. Waiting until all clients have disconnected...
+[ N 2022-03-29 13:24:54.1730 164333/T8 Ser/Server.h:902 ]: [ServerThr.1] Freed 0 spare client objects
+[ N 2022-03-29 13:24:54.1730 164333/Te Ser/Server.h:902 ]: [ServerThr.4] Freed 0 spare client objects
+[ N 2022-03-29 13:24:54.1730 164333/Ta Ser/Server.h:902 ]: [ServerThr.2] Freed 0 spare client objects
+[ N 2022-03-29 13:24:54.1730 164333/Tc Ser/Server.h:902 ]: [ServerThr.3] Freed 0 spare client objects
+[ N 2022-03-29 13:24:54.1731 164333/T8 Ser/Server.h:558 ]: [ServerThr.1] Shutdown finished
+[ N 2022-03-29 13:24:54.1731 164333/Te Ser/Server.h:558 ]: [ServerThr.4] Shutdown finished
+[ N 2022-03-29 13:24:54.1731 164333/Ta Ser/Server.h:558 ]: [ServerThr.2] Shutdown finished
+[ N 2022-03-29 13:24:54.1731 164333/Tc Ser/Server.h:558 ]: [ServerThr.3] Shutdown finished
+[ N 2022-03-29 13:24:54.1731 164333/Tg Ser/Server.h:902 ]: [ServerThr.5] Freed 0 spare client objects
+[ N 2022-03-29 13:24:54.1731 164333/Ti Ser/Server.h:902 ]: [ServerThr.6] Freed 0 spare client objects
+[ N 2022-03-29 13:24:54.1731 164333/Tg Ser/Server.h:558 ]: [ServerThr.5] Shutdown finished
+[ N 2022-03-29 13:24:54.1731 164333/Ti Ser/Server.h:558 ]: [ServerThr.6] Shutdown finished
+[ N 2022-03-29 13:24:54.1731 164333/Tk Ser/Server.h:902 ]: [ServerThr.7] Freed 0 spare client objects
+[ N 2022-03-29 13:24:54.1731 164333/Tm Ser/Server.h:902 ]: [ServerThr.8] Freed 0 spare client objects
+[ N 2022-03-29 13:24:54.1731 164333/Tk Ser/Server.h:558 ]: [ServerThr.7] Shutdown finished
+[ N 2022-03-29 13:24:54.1731 164333/Tm Ser/Server.h:558 ]: [ServerThr.8] Shutdown finished
+[ N 2022-03-29 13:24:54.1732 164333/To Ser/Server.h:902 ]: [ApiServer] Freed 0 spare client objects
+[ N 2022-03-29 13:24:54.1732 164333/To Ser/Server.h:558 ]: [ApiServer] Shutdown finished
+[ N 2022-03-29 13:24:55.5554 164333/T1 age/Cor/CoreMain.cpp:1325 ]: Passenger core shutdown finished
