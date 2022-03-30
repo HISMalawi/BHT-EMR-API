@@ -58,7 +58,7 @@ module OPDService
     def with_nids
       type = PatientIdentifierType.find_by_name 'Malawi National ID'
 
-      data = Person.where('identifier_type = ?, AND identifier != ? AND identifier != ? AND identifier != ?', type.id,'unknown','N/A','').\
+      data = Person.where('identifier_type = ? AND identifier != ? AND identifier != ? AND identifier != ?', type.id,'unknown','N/A','').\
         joins('INNER JOIN patient_identifier i ON i.patient_id = person.person_id
         RIGHT JOIN person_address a ON a.person_id = person.person_id
         RIGHT JOIN person_name n ON n.person_id = person.person_id').\
@@ -68,6 +68,12 @@ module OPDService
 
       stats = []
       (data || []).each do |record|
+        district  = record['district']
+        ta  = record['ta']
+        village = record['village']
+
+        address = "#{district}, #{ta}, #{village}"
+
         stats << {
           given_name: record['given_name'],
           family_name: record['family_name'],
@@ -75,11 +81,12 @@ module OPDService
           birthdate: record['birthdate'],
           date: record['date_created'],
           gender: record['gender'],
-          address: "#{record['district']}, #{record['ta']}, #{record['village']}",
-          nid: record['nid']
+          address: address,
+          nid:  record['nid']
         }
       end
-      stats
+
+      return stats
     end
 
     def diagnosis_by_address(start_date, end_date)
@@ -138,6 +145,11 @@ module OPDService
 
       stats = []
       (data || []).each do |record|
+        district  = record['district']
+        ta  = record['ta']
+        village = record['village']
+
+        address = "#{district}, #{ta}, #{village}"
         stats << {
           given_name: record['given_name'],
           family_name: record['family_name'],
@@ -145,7 +157,7 @@ module OPDService
           birthdate: record['birthdate'],
           gender: record['gender'],
           date: record['obs_datetime'].to_date,
-          address: "#{record['district']}, #{record['ta']}, #{record['village']}"
+          address: address
         }
       end
 
