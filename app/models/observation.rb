@@ -34,6 +34,15 @@ class Observation < VoidableRecord
 
   has_many :concept_names, through: :concept
 
+  validate :obs_datetime_cannot_be_in_the_future
+
+  # basically we want to ensure the data being saved is sanitized
+  def obs_datetime_cannot_be_in_the_future
+    return unless obs_datetime > Time.now
+
+    errors.add(:obs_datetime, ' cannot be in the future')
+  end
+
   scope(:recent, lambda { |number|
     joins(:encounter).order('obs_datetime DESC,date_created DESC').limit(number)
   })

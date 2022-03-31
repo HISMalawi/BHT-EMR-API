@@ -29,7 +29,8 @@ module ARTService
         [25, 29.9],
         [30, 34.9],
         [35, 39.9],
-        [40, Float::INFINITY],
+        [40, 49.9],
+        [50, Float::INFINITY],
         [nil, nil] # To capture all those missing weight
       ].freeze
 
