@@ -48,3 +48,5 @@ master.key
 credentials.yml.enc
 
 config/server/
+
+extensions.json

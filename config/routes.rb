@@ -342,4 +342,7 @@ Rails.application.routes.draw do
   post '/api/v1/dispatch_order', to: 'api/v1/dispatch_orders#create'
   get '/api/v1/latest_regimen_dispensed', to: 'api/v1/reports#latest_regimen_dispensed'
   get '/api/v1/sc_arvdisp', to: 'api/v1/reports#sc_arvdisp'
+
+  get '/api/v1/data_cleaning_confirmation', to: 'api/v1/data_cleaning#view'
+  post '/api/v1/data_cleaning_confirmation', to: 'api/v1/data_cleaning#create'
 end
