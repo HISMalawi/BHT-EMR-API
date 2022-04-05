@@ -25,7 +25,22 @@ class PatientStateService
                         end_date: nil
   end
 
+  def void_state(patient_state, reason)
+    void_encounter(patient_state, reason) if patient_state.name == 'Patient transferred out'
+    patient_state.void(reason)
+  end
+
   private
+
+  def void_encounter(patient_state, reason)
+    encounters = Encounter.where("patient_id = #{patient_state.patient_program.patient.id}
+                                AND program_id = #{patient_state.patient_program.program.id}
+                                AND encounter_type = #{EncounterType.find_by_name('EXIT FROM HIV CARE').id}
+                                AND date_created = '#{patient_state.date_created}'")
+    encounters.each do |encounter|
+      encounter.void(reason)
+    end
+  end
 
   def find_patient_program(program, patient, ref_date)
     patient_program = PatientProgram.where(program: program, patient: patient)\
