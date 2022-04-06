@@ -230,6 +230,7 @@ Rails.application.routes.draw do
       get '/dde/patients/refresh', to: 'dde#refresh_patient'
       post '/dde/patients/reassign_npid', to: 'dde#reassign_patient_npid'
       post '/dde/patients/merge', to: 'dde#merge_patients'
+      get '/dde/patients/remaining_npids', to: 'dde#remaining_npids'
 
       get '/labels/location', to: 'locations#print_label'
 

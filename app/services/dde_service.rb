@@ -43,6 +43,13 @@ class DDEService
     push_local_patient_to_dde(patient)
   end
 
+  def remaining_npids
+    response, status = dde_client.get("/location_npid_status?location_id=#{Location.current.id}")
+    raise DDEError, "Failed to fetch remaining npids: #{status} - #{response}" unless status == 200
+
+    response
+  end
+
   def void_patient(patient, reason)
     raise ArgumentError, "Can't request a DDE void for a non-voided patient" unless patient.voided?
     raise ArgumentError, 'void_reason is required' if reason.blank?
