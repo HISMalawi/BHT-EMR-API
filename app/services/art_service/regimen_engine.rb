@@ -22,7 +22,7 @@ module ARTService
     # Returns all drugs that can be combined to form custom ART regimens
     def custom_regimen_ingredients
       arv_extras_concepts = Concept.joins(:concept_names).where(
-        concept_name: { name: %w[INH CPT Pyridoxine Rifapentine] }
+        concept_name: { name: ['INH', 'CPT', 'Pyridoxine', 'Rifapentine', 'INH / RFP'] }
       )
       Drug.where(concept: arv_extras_concepts) + Drug.arv_drugs.order(name: :desc)
     end
