@@ -12,18 +12,24 @@ class PatientService
       end
 
       if use_dde_service?
-        assign_patient_dde_npid(patient, program)
-      else
-        assign_patient_v3_npid(patient)
-        if malawi_national_id.present?
-           assign_patient_v28_malawiNid(patient,malawi_national_id)
+        begin
+          assign_patient_dde_npid(patient, program)
+        rescue RuntimeError => e
+          create_local_npid(patient, malawi_national_id)
         end
-
+      else
+        create_local_npid(patient, malawi_national_id)
       end
 
       patient.reload
       patient
     end
+  end
+
+  # method to create local npid
+  def create_local_npid(patient, malawi_national_id)
+    assign_patient_v3_npid(patient)
+    assign_patient_v28_malawiNid(patient, malawi_national_id) if malawi_national_id.present?
   end
 
   ##
