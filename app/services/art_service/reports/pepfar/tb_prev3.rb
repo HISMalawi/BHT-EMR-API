@@ -28,8 +28,9 @@ module ARTService
           load_patients_into_report(report, patients.three_hp, '3HP') do |patient|
             # 3HP daily dosages vary by patient weight can't use easily use pills
             # to determine course completion
-            divider = (patient['drug_concepts'].include? ',') ? 14 : 7
-            patient['total_days_on_medication'].days / divider >= FULL_3HP_COURSE_DAYS
+            divider = (patient['drug_concepts'].include? ',') ? 14.0 : 7.0
+            days_on_medication = (patient['total_days_on_medication'] / divider).round
+            days_on_medication.days >= FULL_3HP_COURSE_DAYS
           end
 
           report
