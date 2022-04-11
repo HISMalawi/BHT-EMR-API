@@ -12,10 +12,26 @@ module ANCService
     SUBSEQ_VISIT_ENC = ["VITALS", "APPOINTMENT", "ART_FOLLOWUP", "TREATMENT",
             "LAB RESULTS", "UPDATE OUTCOME", "DISPENSING", "ANC VISIT TYPE"]
 
-    def initialize(start_date, end_date)
+    TOOLS = {
+      'INCOMPLETE VISITS' => 'incomplete_visits',
+      'DUPLICATE ENCOUNTERS' => 'duplicate_encounter'
+    }
+
+    def initialize(start_date, end_date, tool_name)
       @start_date = start_date.to_date
       @end_date = end_date.to_date
+      @tool_name = tool_name.upcase
     end
+
+    def results
+      begin
+        return eval(TOOLS["#{@tool_name}"])
+      rescue Exception => e
+        return "#{e.class}: #{e.message}"
+      end
+    end
+
+    private
 
     def incomplete_visits
       @incomplete_visits = []
@@ -54,6 +70,28 @@ module ANCService
             end
     end
       return @incomplete_visits
+    end
+
+    def duplicate_encounter
+      ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT
+          e.patient_id,
+          e.encounter_type,
+          i.identifier,
+          et.name,
+          DATE(e.encounter_datetime) as visit_date,
+          p.given_name,
+          p.family_name,
+          COUNT(*) total
+        FROM encounter e
+        INNER JOIN encounter_type et ON et.encounter_type_id = e.encounter_type AND et.retired = 0
+        INNER JOIN patient_identifier i ON i.patient_id = e.patient_id AND i.identifier_type = #{PatientIdentifierType.find_by(name: 'National id').id}
+        INNER JOIN person_name p ON p.person_id = e.patient_id AND p.voided = 0
+        WHERE e.program_id = #{Program.find_by_name('ANC PROGRAM').id} AND e.voided = 0
+        AND DATE(e.encounter_datetime) >= DATE('#{@start_date}') AND DATE(e.encounter_datetime) <= DATE('#{@end_date}')
+        GROUP BY e.patient_id, e.encounter_type, DATE(e.encounter_datetime)
+        HAVING IF (e.encounter_type = #{EncounterType.find_by(name: 'VITALS').id}, total > 2, total > 1)
+      SQL
     end
 
   end
