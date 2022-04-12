@@ -2,15 +2,14 @@
 
 module ANCService
   class DataCleaning
+    FIRST_VISIT_ENC = ['VITALS', 'APPOINTMENT', 'ART_FOLLOWUP',
+                       'TREATMENT', 'MEDICAL HISTORY', 'LAB RESULTS', 'UPDATE OUTCOME',
+                       'DISPENSING', 'ANC EXAMINATION', 'CURRENT PREGNANCY',
+                       'OBSTETRIC HISTORY', 'SURGICAL HISTORY', 'SOCIAL HISTORY',
+                       'ANC VISIT TYPE']
 
-    FIRST_VISIT_ENC = ["VITALS", "APPOINTMENT", "ART_FOLLOWUP",
-            "TREATMENT", "MEDICAL HISTORY", "LAB RESULTS", "UPDATE OUTCOME",
-            "DISPENSING", "ANC EXAMINATION", "CURRENT PREGNANCY",
-            "OBSTETRIC HISTORY", "SURGICAL HISTORY", "SOCIAL HISTORY",
-            "ANC VISIT TYPE"]
-
-    SUBSEQ_VISIT_ENC = ["VITALS", "APPOINTMENT", "ART_FOLLOWUP", "TREATMENT",
-            "LAB RESULTS", "UPDATE OUTCOME", "DISPENSING", "ANC VISIT TYPE"]
+    SUBSEQ_VISIT_ENC = ['VITALS', 'APPOINTMENT', 'ART_FOLLOWUP', 'TREATMENT',
+                        'LAB RESULTS', 'UPDATE OUTCOME', 'DISPENSING', 'ANC VISIT TYPE']
 
     TOOLS = {
       'INCOMPLETE VISITS' => 'incomplete_visits',
@@ -24,11 +23,9 @@ module ANCService
     end
 
     def results
-      begin
-        return eval(TOOLS["#{@tool_name}"])
-      rescue Exception => e
-        return "#{e.class}: #{e.message}"
-      end
+      eval(TOOLS[@tool_name.to_s])
+    rescue Exception => e
+      "#{e.class}: #{e.message}"
     end
 
     private
@@ -48,28 +45,25 @@ module ANCService
         AND Date(e.encounter_datetime) <= '#{@end_date}'
         AND voided = 0 AND program_id = 12
         GROUP BY e.patient_id, visit_date"
-    visits = ActiveRecord::Base.connection.select_all(query)
-    visits.each do |v|
-            all_et = FIRST_VISIT_ENC
-            patient_et =  v['et'].split(',')
-            patient_et = patient_et.map{|n|eval n}
-            a = all_et.to_set.subset?(patient_et.to_set)
-            if !a == true
-              patient_name = Person.find(v['patient_id']).name
-              national_id = PatientIdentifier.find_by_patient_id(v['patient_id']).identifier
-              visit_hash = {"name"=> patient_name,
-                          "n_id"=>national_id,
-                          "visit_no"=> v['visit_no'],
-                          "visit_date"=>v['visit_date'].to_date.strftime("%d/%m/%Y"),
-                          "patient_id"=> v['patient_id']
-                        }
+      visits = ActiveRecord::Base.connection.select_all(query)
+      visits.each do |v|
+        all_et = FIRST_VISIT_ENC
+        patient_et = v['et'].split(',')
+        patient_et = patient_et.map { |n| eval n }
+        a = all_et.to_set.subset?(patient_et.to_set)
+        next unless !a == true
 
-              @incomplete_visits << visit_hash
-            else
+        patient_name = Person.find(v['patient_id']).name
+        national_id = PatientIdentifier.find_by_patient_id(v['patient_id']).identifier
+        visit_hash = { 'name' => patient_name,
+                       'n_id' => national_id,
+                       'visit_no' => v['visit_no'],
+                       'visit_date' => v['visit_date'].to_date.strftime('%d/%m/%Y'),
+                       'patient_id' => v['patient_id'] }
 
-            end
-    end
-      return @incomplete_visits
+        @incomplete_visits << visit_hash
+      end
+      @incomplete_visits
     end
 
     def duplicate_encounter
@@ -93,7 +87,5 @@ module ANCService
         HAVING IF (e.encounter_type = #{EncounterType.find_by(name: 'VITALS').id}, total > 2, total > 1)
       SQL
     end
-
   end
-
 end
