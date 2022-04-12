@@ -123,13 +123,13 @@ module ARTService
               AND prescription_encounter.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
               AND prescription_encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'Treatment')
               AND prescription_encounter.encounter_datetime >= DATE(#{start_date}) - INTERVAL 6 MONTH
-              AND prescription_encounter.encounter_datetime < DATE(#{start_date})
+              AND prescription_encounter.encounter_datetime <= DATE(#{end_date})
               AND prescription_encounter.voided = 0
             INNER JOIN orders
               ON orders.encounter_id = prescription_encounter.encounter_id
               AND orders.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
               AND orders.start_date >= DATE(#{start_date}) - INTERVAL 6 MONTH
-              AND orders.start_date < DATE(#{start_date})
+              AND orders.start_date <= DATE(#{end_date})
               AND orders.voided = 0
             INNER JOIN concept_name
               ON concept_name.concept_id = orders.concept_id
