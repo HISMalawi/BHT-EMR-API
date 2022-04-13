@@ -22,9 +22,10 @@ class HealthcheckController < ApplicationController
 
   def version
     begin
-      render json: {'System version': File.read("#{Rails.root}/HEAD").gsub("\n","")}
+      tag = `git describe`.chomp
+      render json: { 'System version': tag }
     rescue
-      render json: {status: 'Head not set. Please run: git describe --tags > HEAD in BHT-EMR-API root folder.', 
+      render json: {status: 'Head not set. Please run: git describe --tags > HEAD in BHT-EMR-API root folder.',
         error: "No Head containing tag description found"}
     end
   end
@@ -35,7 +36,7 @@ class HealthcheckController < ApplicationController
       files = %x|ls -lh #{global_property.property_value}/*sql*|
       render json: {'Backup file(s)':  files.split("\n")}
     rescue
-      render json: {status: 'Backup(s) not found.', 
+      render json: {status: 'Backup(s) not found.',
         error: "Backup folder not found.Maybe the path is not set"}
     end
   end
@@ -46,10 +47,10 @@ class HealthcheckController < ApplicationController
     program_id = params[:program_id]
 
     usage = ActiveRecord::Base.connection.select_all <<EOF
-    SELECT 
+    SELECT
       username, given_name, family_name, u.date_created,
       r.role, COUNT(encounter_id) encounters FROM encounter e
-    INNER JOIN users u On u.user_id = e.creator 
+    INNER JOIN users u On u.user_id = e.creator
     LEFT JOIN person_name n ON n.person_id = u.person_id AND n.voided = 0
     LEFT JOIN user_role r ON r.user_id = u.user_id
     WHERE e.voided = 0 AND e.encounter_datetime BETWEEN '#{start_date}' AND '#{end_date}'
