@@ -120,6 +120,8 @@ module ANCService
     # those without complete demographics
     def incomplete_demographics
       ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT
+          pid.identifier,
 
       SQL
     end
