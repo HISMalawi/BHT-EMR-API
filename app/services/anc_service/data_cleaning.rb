@@ -2,6 +2,8 @@
 
 module ANCService
   class DataCleaning
+    include ModelUtils
+
     FIRST_VISIT_ENC = ['VITALS', 'APPOINTMENT', 'ART_FOLLOWUP',
                        'TREATMENT', 'MEDICAL HISTORY', 'LAB RESULTS', 'UPDATE OUTCOME',
                        'DISPENSING', 'ANC EXAMINATION', 'CURRENT PREGNANCY',
@@ -79,12 +81,12 @@ module ANCService
           COUNT(*) total
         FROM encounter e
         INNER JOIN encounter_type et ON et.encounter_type_id = e.encounter_type AND et.retired = 0
-        INNER JOIN patient_identifier i ON i.patient_id = e.patient_id AND i.identifier_type = #{PatientIdentifierType.find_by(name: 'National id').id}
+        INNER JOIN patient_identifier i ON i.patient_id = e.patient_id AND i.identifier_type = #{patient_identifier_type('National id').id}
         INNER JOIN person_name p ON p.person_id = e.patient_id AND p.voided = 0
-        WHERE e.program_id = #{Program.find_by_name('ANC PROGRAM').id} AND e.voided = 0
+        WHERE e.program_id = #{program('ANC PROGRAM').id} AND e.voided = 0
         AND DATE(e.encounter_datetime) >= DATE('#{@start_date}') AND DATE(e.encounter_datetime) <= DATE('#{@end_date}')
         GROUP BY e.patient_id, e.encounter_type, DATE(e.encounter_datetime)
-        HAVING IF (e.encounter_type = #{EncounterType.find_by(name: 'VITALS').id}, total > 2, total > 1)
+        HAVING IF (e.encounter_type = #{encounter_type('VITALS').id}, total > 2, total > 1)
       SQL
     end
 
@@ -101,13 +103,13 @@ module ANCService
           COUNT(*) total_encounters
         FROM encounter e
         INNER JOIN encounter_type et ON et.encounter_type_id = e.encounter_type AND et.retired = 0
-        LEFT JOIN patient_identifier pid ON pid.patient_id = e.patient_id AND pid.identifier_type = #{PatientIdentifierType.find_by(name: 'National id').id} AND pid.voided = 0
+        LEFT JOIN patient_identifier pid ON pid.patient_id = e.patient_id AND pid.identifier_type = #{patient_identifier_type('National id').id} AND pid.voided = 0
         LEFT JOIN person_name pn ON pn.person_id = e.patient_id AND pn.voided = 0
         INNER JOIN (
           SELECT ps.start_date, pp.program_id, pp.patient_id
           FROM patient_state ps
           INNER JOIN patient_program pp ON ps.patient_program_id = pp.patient_program_id AND pp.voided = 0
-          WHERE ps.voided = 0 AND pp.program_id = #{Program.find_by_name('ANC PROGRAM').id} AND ps.state IN (#{adverse_outcome(outcome: 'Patient died').to_sql})
+          WHERE ps.voided = 0 AND pp.program_id = #{program('ANC PROGRAM').id} AND ps.state IN (#{adverse_outcome(outcome: 'Patient died').to_sql})
         ) as pd ON pd.program_id = e.program_id AND pd.patient_id = e.patient_id AND DATE(e.encounter_datetime) > pd.start_date
         WHERE e.voided = 0
         GROUP BY e.patient_id;
@@ -121,15 +123,13 @@ module ANCService
       SQL
     end
 
-    public
-
     # defining the adverse outcome method
     def adverse_outcome(outcome: nil)
       condition = outcome.blank? ? '' : "concept_name.name = '#{outcome}'"
       ProgramWorkflowState.joins(:program_workflow)
                           .joins(concept: :concept_names)
                           .where(initial: 0, terminal: 1,
-                                 program_workflow: { program_id: Program.where(name: 'ANC PROGRAM') })
+                                 program_workflow: { program_id: program('ANC PROGRAM') })
                           .where(condition)
                           .select(:program_workflow_state_id)
     end
