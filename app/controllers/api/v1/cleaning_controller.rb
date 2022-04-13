@@ -118,8 +118,8 @@ class Api::V1::CleaningController < ApplicationController
 
   def anc_tools
     program = Program.find(params[:program_id])
-    service = SERVICES[program.name.upcase].new(start_date: params[:start_date],
-      end_date: params[:end_date], tool_name: params[:report_name])
+    service = SERVICES[program.name.upcase].new(params[:start_date],
+      params[:end_date], params[:report_name])
     render json: service.results
   end
 end
