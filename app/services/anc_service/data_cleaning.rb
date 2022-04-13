@@ -107,19 +107,31 @@ module ANCService
           SELECT ps.start_date, pp.program_id, pp.patient_id
           FROM patient_state ps
           INNER JOIN patient_program pp ON ps.patient_program_id = pp.patient_program_id AND pp.voided = 0
-          WHERE ps.voided = 0 AND pp.program_id = #{Program.find_by_name('ANC PROGRAM').id} AND ps.state IN (
-            SELECT s.program_workflow_state_id
-            FROM program p
-            INNER JOIN program_workflow w ON w.program_id = p.program_id
-            INNER JOIN program_workflow_state s ON s.program_workflow_id = w.program_workflow_id
-            INNER JOIN concept_name n ON n.concept_id = s.concept_id
-            WHERE s.initial = 0 AND terminal = 1 AND p.program_id = #{Program.find_by_name('ANC PROGRAM').id} s.retired = 0 AND n.name = 'Patient died'
-            GROUP BY n.concept_id
-          )
+          WHERE ps.voided = 0 AND pp.program_id = #{Program.find_by_name('ANC PROGRAM').id} AND ps.state IN (#{adverse_outcome(outcome: 'Patient died').to_sql})
         ) as pd ON pd.program_id = e.program_id AND pd.patient_id = e.patient_id AND DATE(e.encounter_datetime) > pd.start_date
         WHERE e.voided = 0
         GROUP BY e.patient_id;
       SQL
+    end
+
+    # those without complete demographics
+    def incomplete_demographics
+      ActiveRecord::Base.connection.select_all <<~SQL
+
+      SQL
+    end
+
+    public
+
+    # defining the adverse outcome method
+    def adverse_outcome(outcome: nil)
+      condition = outcome.blank? ? '' : "concept_name.name = '#{outcome}'"
+      ProgramWorkflowState.joins(:program_workflow)
+                          .joins(concept: :concept_names)
+                          .where(initial: 0, terminal: 1,
+                                 program_workflow: { program_id: Program.where(name: 'ANC PROGRAM') })
+                          .where(condition)
+                          .select(:program_workflow_state_id)
     end
   end
 end
