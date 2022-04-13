@@ -15,7 +15,8 @@ module ANCService
 
     TOOLS = {
       'INCOMPLETE VISITS' => 'incomplete_visits',
-      'DUPLICATE ENCOUNTERS' => 'duplicate_encounter'
+      'DUPLICATE ENCOUNTERS' => 'duplicate_encounter',
+      'ENCOUNTERS AFTER DEATH' => 'encounters_after_death'
     }.freeze
 
     def initialize(start_date, end_date, tool_name)
