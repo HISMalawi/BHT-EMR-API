@@ -16,7 +16,8 @@ module ANCService
     TOOLS = {
       'INCOMPLETE VISITS' => 'incomplete_visits',
       'DUPLICATE ENCOUNTERS' => 'duplicate_encounter',
-      'ENCOUNTERS AFTER DEATH' => 'encounters_after_death'
+      'ENCOUNTERS AFTER DEATH' => 'encounters_after_death',
+      'MALES WITH ANC ENCOUNTERS' => 'males_with_anc_observations'
     }.freeze
 
     def initialize(start_date, end_date, tool_name)
@@ -114,6 +115,26 @@ module ANCService
         ) as pd ON pd.program_id = e.program_id AND pd.patient_id = e.patient_id AND DATE(e.encounter_datetime) > pd.start_date
         WHERE e.voided = 0
         GROUP BY e.patient_id;
+      SQL
+    end
+
+    # Males with ANC observations like ANC EXAMINATION, OBSTETRIC HISTORY, ANC VISIT TYPE, CURRENT PREGNANCY
+    def males_with_anc_observations
+      ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT
+          e.patient_id,
+          i.identifier,
+          d.given_name,
+          d.family_name,
+          COUNT(*) total_encounters
+        FROM encounter e
+          INNER JOIN person p ON p.person_id = e.patient_id  AND p.gender = "M" AND p.voided = 0
+          INNER JOIN person_name d ON p.person_id = d.person_id AND d.voided = 0
+          INNER JOIN patient_identifier i ON i.patient_id = e.patient_id AND i.identifier_type = 3
+        WHERE
+          e.program_id = #{program('ANC PROGRAM').id} AND e.voided = 0 AND e.encounter_type in (81, 82, 98, 107)
+          AND DATE(e.encounter_datetime) >= DATE('#{@start_date}') AND DATE(e.encounter_datetime) <= DATE('#{@end_date}')
+        GROUP BY e.patient_id
       SQL
     end
 
