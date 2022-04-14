@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 8.0.28, for Linux (x86_64)
 --
--- Host: 172.17.0.3    Database: openmrs_roy
+-- Host: 172.17.0.2    Database: openmrs
 -- ------------------------------------------------------
 -- Server version	5.6.51
 
