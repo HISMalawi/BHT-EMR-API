@@ -30,14 +30,19 @@ class DrugOrder < ApplicationRecord
   # Calculates the duration which the current drugs may last
   # given the equivalent daily dose
   def quantity_duration
-    duration = drug.concept.fullname == 'Pyridoxine' ? abnormal_quantity_duration : normal_quantity_duration
+    duration = quantity / equivalent_daily_dose
     duration *= 7 if weekly_dose?
 
     duration.to_i
   end
 
   def amount_needed
-    value = drug.concept.fullname == 'Pyridoxine' ? abnormal_amount_needed : normal_amount_need
+    value = if weekly_dose?
+              (((duration * (equivalent_daily_dose || 1)) - (quantity || 0)) / 7)
+            else
+              (duration * (equivalent_daily_dose || 1)) - (quantity || 0)
+            end
+
     value.negative? ? 0 : value.ceil
   end
 
@@ -74,29 +79,5 @@ class DrugOrder < ApplicationRecord
     return false unless frequency
 
     frequency.match?(/Weekly/i)
-  end
-
-  private
-
-  def normal_amount_need
-    if weekly_dose?
-      (((duration * (equivalent_daily_dose || 1)) - (quantity || 0)) / 7)
-    else
-      (duration * (equivalent_daily_dose || 1)) - (quantity || 0)
-    end
-  end
-
-  def abnormal_amount_needed
-    weight = order.patient.weight
-    weight >= 19 ? normal_amount_need : ((duration * (equivalent_daily_dose || 1)) - (quantity || 0) / 2)
-  end
-
-  def normal_quantity_duration
-    quantity / equivalent_daily_dose
-  end
-
-  def abnormal_quantity_duration
-    weight = order.patient.weight
-    weight >= 19 ? normal_quantity_duration : (quantity / equivalent_daily_dose) * 2
   end
 end
