@@ -391,6 +391,7 @@ module ARTService
               INNER JOIN encounter ON encounter.encounter_id = obs.encounter_id AND encounter.voided = 0
               INNER JOIN encounter_type ON encounter_type.encounter_type_id = encounter.encounter_type AND encounter_type.name = 'Lab'
               WHERE obs.concept_id IN (#{concept('Viral load').to_sql})
+                AND obs.obs_datetime > DATE(#{ActiveRecord::Base.connection.quote(start_date)}) - INTERVAL 1 DAY
                 AND obs.obs_datetime < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
                 AND obs.voided = 0
               GROUP BY obs.person_id

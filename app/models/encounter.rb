@@ -16,6 +16,8 @@ class Encounter < VoidableRecord
   belongs_to :location, optional: true
   belongs_to :program
 
+  validate :encounter_datetime_cannot_be_in_the_future
+
   validates_presence_of :encounter_datetime
 
   # # TODO: this needs to account for current visit, which needs to account for
@@ -30,6 +32,9 @@ class Encounter < VoidableRecord
         patient: {},
         location: {},
         provider: {
+          include: {
+            names: {}
+          },
           except: %i[
             password salt secret_question secret_answer
             authentication_token token_expiry_time
@@ -55,6 +60,12 @@ class Encounter < VoidableRecord
   #   # possible retrospective entry
   #   self.encounter_datetime = Time.now if encounter_datetime.blank?
   # end
+
+  def encounter_datetime_cannot_be_in_the_future
+    return unless encounter_datetime > Time.now
+
+    errors.add(:encounter_datetime, "can't be in the future")
+  end
 
   def after_create
     dde_enabled = GlobalProperty.find_by_property 'dde_enabled'

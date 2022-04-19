@@ -114,11 +114,9 @@ module ARTService
                )
                .where(patient_program: { patient_id: patient.patient_id,
                                          program_id: Program.find_by_name!('HIV Program').program_id })
-               .where('patient_state.state=2')
-               .select <<~SQL
-                 patient_state.start_date
-               SQL
-      record.empty? ? date : record[0].start_date.to_date
+               .where("patient_state.state=2 AND patient_state.start_date <= DATE('#{date.to_date}')")
+               .order(start_date: :desc)
+      record.blank? ? date : record.first.start_date.to_date
     end
   end
 end

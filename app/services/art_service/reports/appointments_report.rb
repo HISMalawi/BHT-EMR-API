@@ -232,7 +232,7 @@ EOF
 
       def referral_patients
         Observation.where(concept: ConceptName.where(name: 'Type of patient').select(:concept_id),
-                          value_coded: ConceptName.where(name: 'External consultation').select(:concept_id),
+                          value_coded: ConceptName.where("name = 'External consultation' OR name = 'Drug refill'").select(:concept_id),
                           person_id: registration_encounters.select(:patient_id))
                    .where('obs_datetime < DATE(?) + INTERVAL 1 DAY', @end_date)
                    .distinct(:person_id)

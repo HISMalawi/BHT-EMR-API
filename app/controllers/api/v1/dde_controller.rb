@@ -20,6 +20,10 @@ class Api::V1::DdeController < ApplicationController
     render json: service.import_patients_by_doc_id(doc_id)
   end
 
+  def remaining_npids
+    render json: service.remaining_npids
+  end
+
   # GET /api/v1/dde/match
   #
   # Returns DDE patients matching demographics passed

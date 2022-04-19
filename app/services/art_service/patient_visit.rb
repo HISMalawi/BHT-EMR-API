@@ -46,8 +46,10 @@ module ARTService
     end
 
     def next_appointment
-      Observation.where(person: patient.person, concept: concept('Appointment date'))\
+      Observation.joins(:encounter)
+                 .where(person: patient.person, concept: concept('Appointment date'))\
                  .where('obs_datetime >= ?', date)
+                 .where(encounter: {program: Program.find_by(name: 'HIV Program')})
                  .order(obs_datetime: :asc)\
                  .first\
                  &.value_datetime
@@ -69,14 +71,15 @@ module ARTService
                                    .last\
                                    &.value_coded
 
-      return 'Unk' unless tb_status_value
+      return 'Unknown' unless tb_status_value
 
-      ConceptName.find_by(concept_id: tb_status_value, concept_name_type: 'SHORT')&.name || 'Unk'
+      ConceptName.find_by(concept_id: tb_status_value, concept_name_type: 'FULLY_SPECIFIED')&.name || 'Unknown'
     end
 
     def height
       obs = Observation.where(concept: concept('Height (cm)'), person: patient.person)\
-                       .order(obs_datetime: :desc)\
+                       .where("DATE(obs_datetime) <= DATE('#{@date.to_date}')")
+                       .order(obs_datetime: :desc)
                        .first
 
       obs&.value_numeric || obs&.value_text || 0
@@ -175,7 +178,10 @@ module ARTService
 
     def viral_load_result
       viral_load_concept = ConceptName.where(name: 'HIV Viral Load').select(:concept_id)
-      tests = Lab::LabTest.where(value_coded: viral_load_concept, person_id: patient.patient_id)
+      # tests = Lab::LabTest.where(value_coded: viral_load_concept, person_id: patient.patient_id, obs_datetime: Dat)
+      tests = Lab::LabTest.where("value_coded IN (#{viral_load_concept.to_sql})
+                                  AND person_id = #{patient.patient_id}
+                                  AND DATE(obs_datetime) = DATE('#{date.to_date}')")
 
       result = Lab::LabResult.where(obs_group_id: tests, person_id: patient.patient_id)
                              .order(:obs_datetime)
@@ -209,7 +215,8 @@ module ARTService
         adherence: adherence,
         tb_status: tb_status,
         height: height,
-        weight: weight
+        weight: weight,
+        bmi: bmi
       }
     end
 

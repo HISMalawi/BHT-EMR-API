@@ -249,6 +249,11 @@ class Api::V1::ReportsController < ApplicationController
       params[:end_date], (params[:rebuild_outcome] == 'true' ? true : false))
   end
 
+  def sc_arvdisp
+    render json: service.sc_arvdisp(params[:start_date],
+      params[:end_date], (params[:rebuild_outcome] == 'true' ? true : false))
+  end
+
   private
 
   def service

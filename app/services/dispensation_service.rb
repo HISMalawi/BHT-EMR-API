@@ -44,6 +44,19 @@ module DispensationService
       date ||= Time.now
       patient = drug_order.order.patient
       encounter = current_encounter(program, patient, date: date, create: true, provider: provider)
+      patient_type = Observation.where("concept_id = ? AND DATE(obs_datetime) <= ?
+        AND person_id = ?", concept('Type of patient').concept_id,
+        date.to_date, patient.patient_id).order("obs_datetime DESC").first
+
+      if patient_type.blank?
+        patient_type = 'New patient'
+      else
+        if patient_type.value_coded == concept("New patient").concept_id
+          patient_type = 'New patient'
+        else
+          patient_type = 'External'
+        end
+      end
 
       ActiveRecord::Base.transaction do
         update_quantity_dispensed(drug_order, quantity)
@@ -54,7 +67,7 @@ module DispensationService
         # Let's avoid surprises, clients must explicitly trigger the state change.
         # Besides this service is open to different clients, some (actually most)
         # are not even interested in the HIV Program... So...
-        if drug_order.drug.arv?
+        if drug_order.drug.arv? && patient_type == "New patient"
           ProgramEngineLoader.load(program, 'PatientStateEngine')
                              &.new(patient, date)
                              &.on_drug_dispensation(drug_order, quantity)

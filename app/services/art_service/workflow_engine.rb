@@ -220,12 +220,11 @@ module ARTService
       is_visiting_patient = Observation.joins(:encounter)
                                        .where(concept: patient_type_concept,
                                               person: @patient.person,
-                                              value_coded: visiting_patient_concept.concept_id,
                                               encounter: { program_id: @program.program_id })
                                        .where('obs_datetime <= ?', TimeUtils.day_bounds(@date)[1])
-                                       .exists?
+                                       .last
 
-      !is_visiting_patient
+      is_visiting_patient.value_coded != visiting_patient_concept.concept_id
     end
 
     # Check if patient is receiving any drugs today

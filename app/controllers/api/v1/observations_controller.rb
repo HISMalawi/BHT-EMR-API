@@ -110,6 +110,8 @@ class Api::V1::ObservationsController < ApplicationController
       period = [start_date.to_time, end_date.to_time + (24.hours - 1.second)]
     elsif params[:obs_datetime]
       period = TimeUtils.day_bounds(params[:obs_datetime])
+    elsif params[:date]
+      period = [TimeUtils.time_epoch, params[:date].to_time + (24.hours - 1.second)]
     end
 
     period

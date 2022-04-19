@@ -40,11 +40,14 @@ module ARTService
               birthdate: person['birthdate'],
               arv_number: person['arv_number'],
               gender: gender,
-              dispensation_date: dispensation_date(patient_id, patient['drug_concepts'])
+              dispensation_date: dispensation_date(patient_id, patient['drug_concepts']),
+              art_start_date: patient['earliest_start_date'],
+              tpt_start_date: patient['tpt_start_date']
             }
           end
         end
-        return report
+        report['Location'] = Location.current.city_village
+        report
       end
 
       private
@@ -64,7 +67,6 @@ module ARTService
         '85-89 years',
         '90 plus years'
       ].freeze
-
 
       def dispensation_date(patient_id, concept_ids)
         order = ActiveRecord::Base.connection.select_one <<~SQL
@@ -87,8 +89,10 @@ module ARTService
       def init_report
         AGE_GROUPS.each_with_object({}) do |age_group, report|
           report[age_group] = {
-            '3HP' => { 'M' => [], 'F' => [], 'Unknown' => [] },
-            '6H' => { 'M' => [], 'F' => [], 'Unknown' => [] }
+            '3HP_new' => { 'M' => [], 'F' => [], 'Unknown' => [] },
+            '6H_new' => { 'M' => [], 'F' => [], 'Unknown' => [] },
+            '3HP_prev' => { 'M' => [], 'F' => [], 'Unknown' => [] },
+            '6H_prev' => { 'M' => [], 'F' => [], 'Unknown' => [] }
           }
         end
       end
@@ -103,10 +107,14 @@ module ARTService
 
       def newly_initiated_on_tpt
         tpt = ARTService::Reports::Cohort::Tpt.new(start_date.to_date, end_date.to_date)
-        tpt_data = {}
-        tpt_data["3HP"] = tpt.newly_initiated_on_3hp
-        tpt_data["6H"] = tpt.newly_initiated_on_ipt
-        return tpt_data
+        data = {}
+        three_hp = tpt.newly_initiated_on_3hp
+        ipt = tpt.newly_initiated_on_ipt
+        data['3HP_new'] = three_hp.select { |record| record['earliest_start_date'].to_date > end_date.to_date - 3.month }
+        data['6H_new'] = ipt.select { |record| record['earliest_start_date'].to_date > end_date.to_date - 3.month }
+        data['3HP_prev'] = three_hp.select { |record| record['earliest_start_date'].to_date <= end_date.to_date - 3.month }
+        data['6H_prev'] = ipt.select { |record| record['earliest_start_date'].to_date <= end_date.to_date - 3.month }
+        data
       end
 
       def newly_initiated_on_tpt_old

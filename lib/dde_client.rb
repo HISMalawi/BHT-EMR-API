@@ -146,8 +146,7 @@ class DDEClient
     # DDE is somewhat undecided on how it reports back its status code.
     # Sometimes we get a proper HTTP status code and sometimes it is within
     # the response body.
-    response_status = response.body['status'] || response.code
-
+    response_status = response.code || response.body['status']
     [JSON.parse(response.body), response_status&.to_i]
   end
 end
