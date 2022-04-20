@@ -19,11 +19,9 @@ class DDERollbackService
     SQL
     return if result.blank?
 
-    result.delete('uuid')
     @row_id = result.delete('person_name_id')
-    result.delete('creator')
     remove_common_field(result)
-    central_execute_hub('person_name', "WHERE person_name_id = #{@row_id}")
+    central_execute_hub('person_name', 'person_name_id')
     PersonName.create(result)
   end
 
@@ -39,20 +37,23 @@ class DDERollbackService
     return if voided_identifiers.blank?
 
     voided_identifiers.each do |identifier|
-      process_identifiers(identifier['void_reason'])
+      patient_id, row_id = process_identifiers(identifier['void_reason'])
+      record = PatientIdentifier.find_by(patient_identifier_id: row_id, patient_id: patient_id)
+      record&.void("Merge Rollback to patient:#{identifier['patient_id']}")
+      identifier
     end
   end
 
   def process_patient_id_and_row_id(reason)
-    patient_id, row_id = reason.split('#')[1].split(':')
-    { patient: patient_id.to_i, row: row_id.to_i }
+    reason.split('#')[1].split(':')
   end
 
   def central_execute_hub(table, condition)
-    ActiveRecord::Base.connection.execute "UPDATE #{table} SET void_reason = 'Reversed-#{@reason}' #{condition}"
+    ActiveRecord::Base.connection.execute "UPDATE #{table} SET void_reason = 'Reversed-#{@reason}' WHERE #{condition} = #{@row_id}"
   end
 
   def remove_common_field(record)
+    record.delete('uuid')
     record.delete('voided')
     record.delete('voided_by')
     record.delete('date_voided')
