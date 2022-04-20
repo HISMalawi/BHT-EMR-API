@@ -89,7 +89,7 @@ module ARTService
           tpt_initiation_date = patient['tpt_initiation_date'].to_date
           art_start_date = patient['art_start_date'].to_date
 
-          (tpt_initiation_date >= art_start_date) && (tpt_initiation_date < art_start_date + 90.days)
+          (tpt_initiation_date >= art_start_date) && (tpt_initiation_date < art_start_date + 180.days)
         end
 
         def patients_on_tpt

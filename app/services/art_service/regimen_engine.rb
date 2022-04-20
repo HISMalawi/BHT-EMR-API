@@ -182,7 +182,8 @@ module ARTService
       drug = ingredient.drug
       regimen_category_lookup = MohRegimenLookup.find_by(drug_inventory_id: ingredient.drug_inventory_id)
       regimen_category = regimen_category_lookup ? regimen_category_lookup.regimen_name[-1] : nil
-      frequency = ingredient.course == '3HP' ? 'Weekly (QW)' : 'Daily (QOD)'
+      frequency_check = ingredient.course == '3HP' && ingredient.drug.concept.fullname != 'Pyridoxine'
+      frequency = frequency_check ? 'Weekly (QW)' : 'Daily (QOD)'
       {
         drug_id: drug.drug_id,
         concept_id: drug.concept_id,
@@ -448,6 +449,8 @@ module ARTService
       elsif drug_concept.name == 'Rifapentine' # 3HP Course
         Drug.where(concept: [drug_concept.concept_id, ConceptName.find_by_name('Isoniazid').concept_id,
                              ConceptName.find_by_name('Pyridoxine').concept_id])
+      elsif drug_concept.name == 'Isoniazid/Rifapentine' # new 3HP
+        Drug.where(concept: [drug_concept.concept_id, ConceptName.find_by_name('Pyridoxine').concept_id])
       else
         Drug.where(concept: drug_concept.concept_id)
       end
