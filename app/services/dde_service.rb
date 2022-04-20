@@ -421,11 +421,11 @@ class DDEService
     Rails.logger.info("Pushing local patient ##{patient.patient_id} to DDE")
     response, status = dde_client.post('add_person', openmrs_to_dde_patient(patient))
 
-    # if status != 200
-    #   error = UnprocessableEntityError.new("Failed to create patient in DDE: #{response.to_json}")
-    #   error.add_entity(patient)
-    #   raise error
-    # end
+    if status == 422
+      error = UnprocessableEntityError.new("Failed to create patient in DDE: #{response.to_json}")
+      error.add_entity(patient)
+      raise error
+    end
 
     raise response.to_json if status != 200
 
