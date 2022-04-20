@@ -178,7 +178,7 @@ class DDEMergingService
       primary_name = PersonName.create(secondary_name_hash)
       raise "Could not merge patient name: #{primary_name.errors.as_json}" unless primary_name.errors.empty?
 
-      secondary_name.void("Merged into patient ##{primary_patient.patient_id}:#{primary_name.id}")
+      secondary_name.void("Merged into person ##{primary_patient.patient_id}:#{primary_name.id}")
       return
     end
 
