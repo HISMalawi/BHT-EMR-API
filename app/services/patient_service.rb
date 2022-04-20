@@ -314,7 +314,7 @@ class PatientService
 
     # Force immediate execution of query. We don't want it executing after saving
     # the new identifier below
-    new_identifier = next_available_npid(patient: patient, national_type: national_id_type, program_id: program_id)
+    new_identifier = next_available_npid(patient: patient, identifier_type: national_id_type, program_id: program_id)
 
     existing_identifiers.each do |identifier|
       identifier.void("Re-assigned to new national identifier: #{new_identifier.identifier}")
@@ -656,7 +656,7 @@ class PatientService
   end
 
   # Returns the next available patient identifier for assignment
-  def next_available_npid(patient: , national_type: , program_id: nil)
+  def next_available_npid(patient: , identifier_type: , program_id: nil)
     unless identifier_type.name.match?(/#{PatientIdentifierType::NPID_TYPE_NAME}/i)
       raise "Unknown identifier type: #{identifier_type.name}"
     end
