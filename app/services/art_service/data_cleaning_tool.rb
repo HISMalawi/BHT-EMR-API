@@ -34,7 +34,7 @@ module ARTService
     private
 
     def incomplete_demographics
-      data = ActiveRecord::Base.connection.select_all <<EOF
+      data = ActiveRecord::Base.connection.select_all <<~SQL
       select
         `p`.`patient_id` AS `patient_id`, `pe`.`birthdate`,
         n.given_name, n.family_name, pe.gender, i.identifier arv_number
@@ -52,19 +52,20 @@ module ARTService
             and (`p`.`program_id` = 1))
             and (`s`.`start_date`
             between '#{@start_date.strftime('%Y-%m-%d 00:00:00')}'
-            and '#{@end_date.strftime('%Y-%m-%d 23:59:59')}')
+            and '#{@end_date.strftime('%Y-%m-%d 23:59:59')}'
+            and `p`.`patient_id` NOT IN (#{external_clients}))
       group by `p`.`patient_id`
       HAVING NULLIF(birthdate, '') = NULL OR NULLIF(gender,'') = NULL
       OR NULLIF(given_name,'') = NULL OR NULLIF(family_name,'') = NULL
       ORDER BY n.date_created DESC;
-EOF
+      SQL
 
       return {} if data.blank?
       return data
     end
 
     def dob_more_than_date_enrolled
-      data = ActiveRecord::Base.connection.select_all <<EOF
+      data = ActiveRecord::Base.connection.select_all <<~SQL
       select
         `p`.`patient_id` AS `patient_id`, `pe`.`birthdate`,
         cast(patient_date_enrolled(`p`.`patient_id`) as date) AS `date_enrolled`,
@@ -85,19 +86,20 @@ EOF
             and (`s`.`state` = 7))
             and (`s`.`start_date`
             between '#{@start_date.strftime('%Y-%m-%d 00:00:00')}'
-            and '#{@end_date.strftime('%Y-%m-%d 23:59:59')}')
+            and '#{@end_date.strftime('%Y-%m-%d 23:59:59')}'
+            and `p`.`patient_id` NOT IN (#{external_clients}))
       group by `p`.`patient_id`
       HAVING (DATE(date_enrolled) < DATE(birthdate))
       OR (DATE(earliest_start_date) < DATE(birthdate))
       ORDER BY n.date_created DESC;
-EOF
+      SQL
 
       return {} if data.blank?
       return data
     end
 
     def date_enrolled_less_than_earliest_start_date
-      data = ActiveRecord::Base.connection.select_all <<EOF
+      data = ActiveRecord::Base.connection.select_all <<~SQL
       select
         `p`.`patient_id` AS `patient_id`,
         cast(patient_date_enrolled(`p`.`patient_id`) as date) AS `date_enrolled`,
@@ -114,16 +116,17 @@ EOF
             and (`s`.`state` = 7))
             and (`s`.`start_date`
             between '#{@start_date.strftime('%Y-%m-%d 00:00:00')}'
-            and '#{@end_date.strftime('%Y-%m-%d 23:59:59')}')
+            and '#{@end_date.strftime('%Y-%m-%d 23:59:59')}'
+            and `p`.`patient_id` NOT IN (#{external_clients}))
       group by `p`.`patient_id`
       HAVING (date_enrolled IS NOT NULL AND earliest_start_date)
       AND DATE(earliest_start_date) > DATE(date_enrolled);
-EOF
+      SQL
 
       return {} if data.blank?
       patient_ids = data.map{|d| d['patient_id'].to_i}
 
-      data = ActiveRecord::Base.connection.select_all <<EOF
+      data = ActiveRecord::Base.connection.select_all <<~SQL
       SELECT
         p.person_id, i.identifier arv_number, birthdate, gender, death_date,
         n.given_name, n.family_name
@@ -133,7 +136,7 @@ EOF
       LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
       WHERE p.person_id IN(#{patient_ids.join(',')})
       GROUP BY p.person_id ORDER BY i.date_created DESC;
-EOF
+      SQL
 
       return organise_data data
     end
@@ -143,7 +146,7 @@ EOF
       arvs = Drug.joins('INNER JOIN concept_set s ON s.concept_id = drug.concept_id').\
       where("s.concept_set = ?", concept_set_id).map(&:drug_id)
 
-      data = ActiveRecord::Base.connection.select_all <<EOF
+      data = ActiveRecord::Base.connection.select_all <<~SQL
       select
         p.patient_id
       from
@@ -163,19 +166,20 @@ EOF
             and (`s`.`state` = 7))
             and (`s`.`start_date`
             between '#{@start_date.strftime('%Y-%m-%d 00:00:00')}'
-            and '#{@end_date.strftime('%Y-%m-%d 23:59:59')}')
+            and '#{@end_date.strftime('%Y-%m-%d 23:59:59')}'
+            and `p`.`patient_id` NOT IN (#{external_clients}))
       group by `p`.`patient_id`
       ORDER BY s.start_date DESC;
-EOF
+      SQL
 
       return {} if data.blank?
       patient_ids = []
       data_patient_ids = data.collect{|d| d['patient_id'].to_i}
 
       data_patient_ids.each do |patient_id|
-        outcome = ActiveRecord::Base.connection.select_one <<EOF
+        outcome = ActiveRecord::Base.connection.select_one <<~SQL
         SELECT patient_outcome(#{patient_id}, DATE('#{@end_date}')) outcome;
-EOF
+      SQL
 
         if outcome['outcome'].match(/Unknown/i) || outcome['outcome'].match(/Pre/i)
           patient_ids << patient_id
@@ -184,7 +188,7 @@ EOF
 
       return {} if patient_ids.blank?
 
-      data = ActiveRecord::Base.connection.select_all <<EOF
+      data = ActiveRecord::Base.connection.select_all <<~SQL
       SELECT
         p.person_id, i.identifier arv_number, birthdate, gender, death_date,
         n.given_name, n.family_name
@@ -194,7 +198,7 @@ EOF
       LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
       WHERE p.person_id IN(#{patient_ids.join(',')})
       GROUP BY p.person_id ORDER BY i.date_created DESC;
-EOF
+      SQL
 
       return organise_data data
     end
@@ -202,16 +206,17 @@ EOF
     def multiple_start_reasons
       concept_id = concept('Reason for ART eligibility').concept_id
 
-      data = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT person_id, count(concept_id) reason
-      FROM obs WHERE concept_id=#{concept_id} AND voided = 0
-      GROUP BY person_id HAVING reason > 1;
-EOF
+      data = ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT person_id, count(concept_id) reason
+        FROM obs WHERE concept_id=#{concept_id} AND voided = 0
+        AND person_id NOT IN (#{external_clients})
+        GROUP BY person_id HAVING reason > 1;
+      SQL
 
       return {} if data.blank?
       patient_ids = data.map{|d| d['person_id'].to_i}
 
-      data = ActiveRecord::Base.connection.select_all <<EOF
+      data = ActiveRecord::Base.connection.select_all <<~SQL
       SELECT
         p.person_id, i.identifier arv_number, birthdate, gender, death_date,
         n.given_name, n.family_name
@@ -221,7 +226,7 @@ EOF
       LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
       WHERE p.person_id IN(#{patient_ids.join(',')})
       GROUP BY p.person_id ORDER BY i.date_created DESC;
-EOF
+      SQL
 
       return organise_data data
     end
@@ -259,6 +264,7 @@ EOF
           ON reason_for_art_eligibility.person_id = patient_program.patient_id
           AND reason_for_art_eligibility.concept_id IN (SELECT concept_id FROM concept_name WHERE name = 'Reason for ART eligibility' AND voided = 0)
           AND reason_for_art_eligibility.voided = 0
+        WHERE patient_program.patient_id NOT IN (#{external_clients})
         GROUP BY patient_program.patient_id
         HAVING reason_for_art IS NULL AND art_start_date >= DATE(#{start_date})
       SQL
@@ -267,7 +273,7 @@ EOF
       patient_ids = clients.map{ |p| p['patient_id'].to_i }
       return {} if patient_ids.blank?
 
-      data = ActiveRecord::Base.connection.select_all <<EOF
+      data = ActiveRecord::Base.connection.select_all <<~SQL
       SELECT
         p.person_id, i.identifier arv_number, birthdate, gender, death_date,
         n.given_name, n.family_name
@@ -277,7 +283,7 @@ EOF
       LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
       WHERE p.person_id IN(#{patient_ids.join(',')})
       GROUP BY p.person_id ORDER BY i.date_created DESC;
-EOF
+      SQL
 
       return organise_data data
     end
@@ -316,7 +322,7 @@ EOF
           ON dispensation.order_id = orders.order_id
           AND dispensation.concept_id IN (SELECT concept_id FROM concept_name WHERE name = 'Amount Dispensed' AND voided = 0)
           AND dispensation.voided = 0
-        WHERE (drug_order.quantity IS NULL OR drug_order.quantity <= 0)
+        WHERE (drug_order.quantity IS NULL OR drug_order.quantity <= 0 AND orders.patient_id NOT IN(#{external_clients}))
         GROUP BY DATE(orders.start_date), orders.patient_id
         HAVING COALESCE(SUM(dispensation.value_numeric), 0) <= 0
       SQL
@@ -380,6 +386,7 @@ EOF
         LEFT JOIN person_name
           ON person_name.person_id = deaths.patient_id
           AND person_name.voided = 0
+        WHERE person.person_id NOT IN(#{external_clients})
         GROUP BY deaths.patient_id
         ORDER BY patient_identifier.date_created DESC
       SQL
@@ -394,7 +401,7 @@ EOF
       concept_ids << concept('PATIENT PREGNANT').concept_id
       concept_ids << concept('Family planning method').concept_id
 
-      data = ActiveRecord::Base.connection.select_all <<EOF
+      data = ActiveRecord::Base.connection.select_all <<~SQL
       SELECT
         p.person_id, given_name, family_name, gender, birthdate,
         i.identifier arv_number
@@ -406,9 +413,10 @@ EOF
       AND n.voided = 0
       WHERE obs.concept_id IN(#{concept_ids.join(',')})
       OR value_coded IN(#{concept_ids.join(',')})
-      AND p.voided = 0 AND obs.voided = 0 GROUP BY p.person_id
+      AND p.voided = 0 AND obs.voided = 0 and p.person_id NOT IN(#{external_clients})
+      GROUP BY p.person_id
       ORDER BY n.date_created DESC;
-EOF
+      SQL
 
       return organise_data data
     end
@@ -508,5 +516,29 @@ EOF
         GROUP BY encounter.patient_id, DATE(encounter.encounter_datetime)
       SQL
     end
+
+    # rubocop:disable Metrics/MethodLength
+    # Method to fetch all external and drug refills from the system
+    def external_clients
+      property = GlobalProperty.find_by(property: 'can.remove.external.and.drug.refills.from.data.cleaning')
+      return 0 if property.blank? || property&.property_value == 'false'
+
+      end_date = ActiveRecord::Base.connection.quote(@end_date.to_date)
+      clients = ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT obs.person_id FROM obs,
+        (SELECT person_id, Max(obs_datetime) AS obs_datetime, concept_id FROM obs
+        WHERE concept_id IN (SELECT concept_id FROM concept_name WHERE name = 'Type of patient' AND voided = 0)
+        AND DATE(obs_datetime) <= #{end_date}
+        AND voided = 0
+        GROUP BY person_id) latest_record
+        WHERE obs.person_id = latest_record.person_id
+        AND obs.concept_id = latest_record.concept_id
+        AND obs.obs_datetime = latest_record.obs_datetime
+        AND obs.value_coded IN (SELECT concept_id FROM concept_name WHERE name = 'Drug refill' || name = 'External consultation')
+        AND obs.voided = 0
+      SQL
+      clients.map { |record| record['person_id'] }.push(0).join(',')
+    end
+    # rubocop:enable Metrics/MethodLength
   end
 end

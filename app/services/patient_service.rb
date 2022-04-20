@@ -12,13 +12,13 @@ class PatientService
       end
 
       if use_dde_service?
-        assign_patient_dde_npid(patient, program)
-      else
-        assign_patient_v3_npid(patient)
-        if malawi_national_id.present?
-           assign_patient_v28_malawiNid(patient,malawi_national_id)
+        begin
+          assign_patient_dde_npid(patient, program)
+        rescue RuntimeError => e
+          create_local_npid(patient, malawi_national_id)
         end
-
+      else
+        create_local_npid(patient, malawi_national_id)
       end
 
       patient.reload
@@ -26,29 +26,10 @@ class PatientService
     end
   end
 
-  def patient_details_by_id(patient_id)
-    data = Person.where('person.person_id = ?', patient_id).\
-    joins('
-    RIGHT JOIN person_address a ON a.person_id = person.person_id
-    RIGHT JOIN person_name n ON n.person_id = person.person_id
-    LEFT JOIN person_attribute z ON z.person_id = n.person_id AND z.person_attribute_type_id = 12').\
-    select('person.*, a.state_province district,
-    a.township_division ta, a.city_village village,
-    n.given_name, n.family_name, z.value').order('n.date_created DESC')
-
-    stats = []
-    (data || []).each do |record|
-      stats << {
-          patient_id: patient_id,
-          given_name: record['given_name'],
-          family_name: record['family_name'],
-          gender: record['gender'],
-          phone_number: record['value'],
-          address: "#{record['district']}; #{record['ta']}; #{record['village']}"
-      }
-    end
-
-    stats
+  # method to create local npid
+  def create_local_npid(patient, malawi_national_id)
+    assign_patient_v3_npid(patient)
+    assign_patient_v28_malawiNid(patient, malawi_national_id) if malawi_national_id.present?
   end
 
   ##
@@ -122,20 +103,21 @@ class PatientService
            .distinct
   end
 
-  def find_patient_visit_dates(patient, program = nil)
+  def find_patient_visit_dates(patient, program = nil, include_defaulter_dates = nil, date = nil)
     patient_id = ActiveRecord::Base.connection.quote(patient.id)
     program_id = program ? ActiveRecord::Base.connection.quote(program.id) : nil
+    date ||= Date.today
 
     rows = ActiveRecord::Base.connection.select_all <<-SQL
       SELECT DISTINCT DATE(encounter_datetime) AS visit_date
       FROM encounter
-      WHERE patient_id = #{patient_id} AND voided = 0 #{"AND program_id = #{program_id}" if program_id}
+      WHERE patient_id = #{patient_id} AND voided = 0 #{"AND program_id = #{program_id}" if program_id} AND encounter_datetime < DATE('#{date}') + INTERVAL 1 DAY
       GROUP BY visit_date
       ORDER BY visit_date DESC
     SQL
 
     visit_dates = rows.collect { |row| row['visit_date'].to_date }
-    unless visit_dates.blank?
+    if !visit_dates.blank? && (program_id.blank? ? false : (program_id.to_i ==  1)) && include_defaulter_dates
       #Starting from the initial visit date, we add 1+ month while checking if the patient defaulted.
       #if we find that the patient has a defualter date we add it to the array of visit dates.
       initial_visit_date = visit_dates.last.to_date
@@ -145,7 +127,7 @@ class PatientService
         defaulter_date = ActiveRecord::Base.connection.select_one <<~SQL
           SELECT current_defaulter_date(#{patient_id}, DATE('#{initial_visit_date}')) as defaulter_date;
         SQL
-        unless defaulter_date['defaulter_date'].blank?
+        if !defaulter_date['defaulter_date'].blank? && check_defaulter_period(defaulter_date['defaulter_date'], patient_id, program_id)
           visit_dates << defaulter_date['defaulter_date'].to_date
           visit_dates.uniq!
         end
@@ -155,7 +137,61 @@ class PatientService
       visit_dates = visit_dates.sort {|a,b| b.to_date <=> a.to_date}
     end
 
-    visit_dates
+    visit_dates.select { |record| record.to_date <= date }
+  end
+
+  # method to fetch patient state that is between the defaulter date
+  def check_defaulter_period(defaulter_date, patient_id, program_id)
+    states = adverse_outcomes
+    previous_visit = fetch_previous_visit(defaulter_date, patient_id, program_id)['visit_date']
+    result = ActiveRecord::Base.connection.select_one <<~SQL
+      SELECT start_date, end_date FROM patient_state
+      INNER JOIN patient_program ON patient_state.patient_program_id = patient_program.patient_program_id AND patient_program.voided = 0
+      WHERE patient_program.patient_id = #{patient_id}
+      AND patient_state.state IN (#{states.map { |state| state['program_workflow_state_id'] }.join(',')})
+      AND patient_state.voided = 0
+      AND start_date >= DATE('#{previous_visit}')
+      AND start_date <= DATE('#{defaulter_date}')
+    SQL
+    return true if result.blank?
+
+    start_date = result['start_date']
+    # check if this record has an end date for better result
+    end_date = result['end_date'].blank? ? fetch_next_state_start_date(start_date, patient_id) : result['end_date']
+
+    return false if end_date.blank?
+
+    !defaulter_date.to_date.between?(start_date.to_date, end_date.to_date)
+  end
+
+  def fetch_next_state_start_date(state_date, patient_id)
+    result = ActiveRecord::Base.connection.select_one <<~SQL
+      SELECT start_date FROM patient_state
+      INNER JOIN patient_program ON patient_state.patient_program_id = patient_program.patient_program_id AND patient_program.voided = 0
+      WHERE patient_program.patient_id = #{patient_id}
+      AND patient_state.voided = 0
+      AND start_date > DATE('#{state_date}')
+      ORDER BY start_date ASC
+    SQL
+    result.blank? ? nil : result['start_date']
+  end
+
+  def fetch_previous_visit(defaulter_date, patient_id, program_id)
+    ActiveRecord::Base.connection.select_one <<-SQL
+      SELECT DISTINCT DATE(encounter_datetime) AS visit_date
+      FROM encounter
+      WHERE patient_id = #{patient_id} AND voided = 0
+      AND DATE(encounter_datetime) < DATE('#{defaulter_date}') #{"AND program_id = #{program_id}" if program_id}
+      GROUP BY visit_date
+      ORDER BY visit_date DESC
+    SQL
+  end
+
+  def adverse_outcomes
+    ProgramWorkflowState.joins(:program_workflow)
+                        .where(initial: 0, terminal: 1,
+                               program_workflow: { program_id: Program.where(name: 'HIV Program') })
+                        .select(:program_workflow_state_id)
   end
 
   def median_weight_height(age_in_months, gender)

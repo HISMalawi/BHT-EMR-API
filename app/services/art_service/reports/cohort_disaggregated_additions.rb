@@ -4,6 +4,11 @@ module ARTService
 
     class CohortDisaggregatedAdditions
 
+      COHORT_REGIMENS = %w[
+        0P 2P 4PP 4PA 9PP 9PA 11PP 11PA 12PP 12PA 14PP 14PA 15PP 15PA 16P 17PP 17PA
+        4A 5A 6A 7A 8A 9A 10A 11A 12A 13A 14A 15A 16A 17A
+      ].freeze
+
       def initialize(start_date:, end_date:, gender:, age_group:)
         @start_date = start_date
         @end_date = end_date
@@ -99,7 +104,7 @@ EOF
           SELECT patient_current_regimen(#{patient_id}, DATE('#{@end_date.to_date}')) regimen;
           SQL
 
-          regimen = regimen_data['regimen']
+          regimen = (COHORT_REGIMENS.include? regimen_data['regimen']) ? regimen_data['regimen'] : 'N/A'
           data[regimen] = [] if data[regimen].blank?
           data[regimen] << patient_id
         end
@@ -112,19 +117,20 @@ EOF
       def given_ipt(patient_ids)
         return [] if patient_ids.blank?
         isoniazid_concept_id = ConceptName.find_by(name: 'Isoniazid').concept_id
+        isoniazid_rifapentine_concept_id = ConceptName.find_by(name: 'Isoniazid/Rifapentine').concept_id
         pyridoxine_concept_id = ConceptName.find_by(name: 'Pyridoxine').concept_id
 
         results = ActiveRecord::Base.connection.select_all(
           "SELECT ods.patient_id FROM orders ods
           INNER JOIN drug_order dos ON ods.order_id = dos.order_id AND ods.voided = 0
-          WHERE ods.concept_id IN (#{isoniazid_concept_id}, #{pyridoxine_concept_id})
+          WHERE ods.concept_id IN (#{isoniazid_concept_id}, #{pyridoxine_concept_id}, #{isoniazid_rifapentine_concept_id})
           AND dos.quantity IS NOT NULL
           AND ods.patient_id in (#{patient_ids.join(',')})
           AND ods.start_date BETWEEN '#{@start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
           AND '#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
           AND DATE(ods.start_date) = (SELECT MAX(DATE(o.start_date)) FROM orders o
                                       INNER JOIN drug_order d ON o.order_id = d.order_id AND o.voided = 0
-                                      WHERE o.concept_id IN (#{isoniazid_concept_id}, #{pyridoxine_concept_id})
+                                      WHERE o.concept_id IN (#{isoniazid_concept_id}, #{pyridoxine_concept_id}, #{isoniazid_rifapentine_concept_id})
                                       AND o.patient_id = ods.patient_id
                                       AND d.quantity IS NOT NULL
                                       AND o.start_date BETWEEN '#{@start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'

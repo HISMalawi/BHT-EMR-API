@@ -13,6 +13,13 @@ lims_app_name: 'bht_emr_api'
 # Uncomment the following to enable realtime updates through the LIMS socket
 # lims_realtime_updates_url: http://localhost:3011
 
+#lims facility_code
+development:
+ facility_code: KCH
+
+production:
+ facility_code: KCH
+
 # Configuration for Pacs
 ftp_host:
   192.168.3.202

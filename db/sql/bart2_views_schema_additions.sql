@@ -1698,7 +1698,7 @@ BEGIN
 
             SET my_pill_count = drug_pill_count(my_patient_id, my_drug_id, my_obs_datetime);
 
-            SET @expiry_date = ADDDATE(DATE_SUB(my_start_date, INTERVAL 2 DAY), ((my_quantity + my_pill_count)/my_daily_dose));
+            SET @expiry_date = ADDDATE(DATE_SUB(my_start_date, INTERVAL 1 DAY), ((my_quantity + my_pill_count)/my_daily_dose));
 
       IF my_expiry_date IS NULL THEN
         SET my_expiry_date = @expiry_date;
@@ -1766,7 +1766,7 @@ DECLARE done INT DEFAULT FALSE;
 
             SET my_pill_count = drug_pill_count(my_patient_id, my_drug_id, my_obs_datetime);
 
-            SET @expiry_date = ADDDATE(DATE_SUB(my_start_date, INTERVAL 2 DAY), ((my_quantity + my_pill_count)/my_daily_dose));
+            SET @expiry_date = ADDDATE(DATE_SUB(my_start_date, INTERVAL 1 DAY), ((my_quantity + my_pill_count)/my_daily_dose));
 
       IF my_expiry_date IS NULL THEN
         SET my_expiry_date = @expiry_date;
@@ -1779,7 +1779,7 @@ DECLARE done INT DEFAULT FALSE;
     END LOOP;
 
     IF TIMESTAMPDIFF(day, DATE(my_expiry_date), DATE(my_end_date)) >= 60 THEN
-        SET my_default_date = ADDDATE(my_expiry_date, 60);
+        SET my_default_date = ADDDATE(my_expiry_date, 61);
     END IF;
 
   RETURN my_default_date;
@@ -1924,7 +1924,7 @@ DECLARE done INT DEFAULT FALSE;
 
             SET my_pill_count = drug_pill_count(my_patient_id, my_drug_id, my_obs_datetime);
 
-            SET @expiry_date = ADDDATE(DATE_SUB(my_start_date, INTERVAL 2 DAY), ((my_quantity + my_pill_count)/my_daily_dose));
+            SET @expiry_date = ADDDATE(DATE_SUB(my_start_date, INTERVAL 1 DAY), ((my_quantity + my_pill_count)/my_daily_dose));
 
       IF my_expiry_date IS NULL THEN
         SET my_expiry_date = @expiry_date;
@@ -1992,7 +1992,7 @@ BEGIN
 
             SET my_pill_count = drug_pill_count(my_patient_id, my_drug_id, my_obs_datetime);
 
-            SET @expiry_date = ADDDATE(DATE_SUB(my_start_date, INTERVAL 2 DAY), ((my_quantity + my_pill_count)/my_daily_dose));
+            SET @expiry_date = ADDDATE(DATE_SUB(my_start_date, INTERVAL 1 DAY), ((my_quantity + my_pill_count)/my_daily_dose));
 
       IF my_expiry_date IS NULL THEN
         SET my_expiry_date = @expiry_date;
@@ -2005,7 +2005,7 @@ BEGIN
     END LOOP;
 
     IF TIMESTAMPDIFF(day, DATE(my_expiry_date), DATE(my_end_date)) >= 30 THEN
-        SET my_default_date = ADDDATE(my_expiry_date, 30);
+        SET my_default_date = ADDDATE(my_expiry_date, 31);
     END IF;
 
   RETURN my_default_date;
@@ -2151,7 +2151,27 @@ RETURN age_group;
 END;
 
 
+DROP FUNCTION IF EXISTS `opd_disaggregated_age_group`;
 
+CREATE FUNCTION `opd_disaggregated_age_group`(birthdate date, end_date date) RETURNS VARCHAR(15)
+BEGIN
+
+DECLARE age_in_months INT(11);
+DECLARE age_in_years INT(11);
+DECLARE age_group VARCHAR(15);
+
+SET age_in_months = (SELECT timestampdiff(month, birthdate, end_date));
+SET age_in_years  = (SELECT timestampdiff(year, birthdate, end_date));
+SET age_group = ('Unknown');
+
+IF age_in_months >= 0 AND age_in_months <= 5 THEN SET age_group = "0-5 months";
+ELSEIF age_in_months >= 6 AND age_in_years < 5 THEN SET age_group = "6 mth < 5 yrs";
+ELSEIF age_in_years >= 5 AND age_in_years < 14 THEN SET age_group = "5-14 yrs";
+ELSEIF age_in_years >= 14 THEN SET age_group = ">= 14 years";
+END IF;
+
+RETURN age_group;
+END;
 
 
 

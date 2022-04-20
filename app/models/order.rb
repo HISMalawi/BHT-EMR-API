@@ -17,6 +17,15 @@ class Order < VoidableRecord
   has_many :observations
   has_one :drug_order
 
+  validate :start_date
+
+  # basically we want to ensure the data being saved is sanitized
+  def start_date_cannot_be_in_the_future
+    return unless start_date > Time.now
+
+    errors.add(:start_date, ' cannot be in the future')
+  end
+
   def clear_dispensed_drugs(_void_reason)
     return unless drug_order
 
