@@ -665,9 +665,9 @@ class PatientService
 
     dde_patient_id_type = patient_identifier_type(PatientIdentifierType::DDE_ID_TYPE_NAME)
     dde_patient_id = patient_identifiers(patient, dde_patient_id_type).first&.identifier
-    return dde_service(program_id).re_assign_npid(dde_patient_id) if dde_patient_id
+    return dde_service(Program.find(program_id)).re_assign_npid(dde_patient_id) if dde_patient_id
 
-    dde_service(program_id).create_patient(patient)
+    dde_service(Program.find(program_id)).create_patient(patient)
   end
 
   # The two methods that follow were sourced somewhere from NART/lib/patient_service.
