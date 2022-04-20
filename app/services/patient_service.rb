@@ -307,14 +307,14 @@ class PatientService
     )
   end
 
-  def assign_npid(patient)
+  def assign_npid(patient, program_id)
     national_id_type = patient_identifier_type(PatientIdentifierType::NPID_TYPE_NAME)
     existing_identifiers = patient_identifiers(patient, national_id_type)
     existing_identifiers[0]
 
     # Force immediate execution of query. We don't want it executing after saving
     # the new identifier below
-    new_identifier = next_available_npid(patient, national_id_type)
+    new_identifier = next_available_npid(patient: patient, national_type: national_id_type, program_id: program_id)
 
     existing_identifiers.each do |identifier|
       identifier.void("Re-assigned to new national identifier: #{new_identifier.identifier}")
@@ -656,18 +656,18 @@ class PatientService
   end
 
   # Returns the next available patient identifier for assignment
-  def next_available_npid(patient, identifier_type)
+  def next_available_npid(patient: , national_type: , program_id: nil)
     unless identifier_type.name.match?(/#{PatientIdentifierType::NPID_TYPE_NAME}/i)
       raise "Unknown identifier type: #{identifier_type.name}"
     end
 
     return identifier_type.next_identifier(patient: patient) unless use_dde_service?
 
-    dde_patient_id_type = patient_identifier_type(PatientIdentifierType::DDE_ID_TYPE)
+    dde_patient_id_type = patient_identifier_type(PatientIdentifierType::DDE_ID_TYPE_NAME)
     dde_patient_id = patient_identifiers(patient, dde_patient_id_type).first&.identifier
-    return dde_service.re_assign_npid(dde_patient_id) if dde_patient_id
+    return dde_service(program_id).re_assign_npid(dde_patient_id) if dde_patient_id
 
-    dde_service.register_patient(patient)
+    dde_service(program_id).create_patient(patient)
   end
 
   # The two methods that follow were sourced somewhere from NART/lib/patient_service.
