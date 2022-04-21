@@ -40,7 +40,9 @@ class DDERollbackService
       patient_id, row_id = process_identifiers(identifier['void_reason'])
       record = PatientIdentifier.find_by(patient_identifier_id: row_id, patient_id: patient_id)
       record&.void("Merge Rollback to patient:#{identifier['patient_id']}")
-      identifier
+      @row_id = identifier.delete('patient_identifier_id')
+      remove_common_field(identifier)
+      PatientIdentifier.create(identifier)
     end
   end
 
