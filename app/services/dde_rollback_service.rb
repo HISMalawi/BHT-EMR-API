@@ -70,6 +70,15 @@ class DDERollbackService
     process_observations(voided_observations: result)
   end
 
+  def rollback_order
+    result = ActiveRecord::Base.connection.select_all <<~SQL
+      SELECT * FROM orders
+      WHERE patient_id = #{secondary_patient.id} AND voided = 1
+      AND void_reason LIKE 'Merged into patient ##{primary_patient.patient_id}:%'
+    SQL
+    process_orders(voided_orders: result)
+  end
+
   def process_identifiers(voided_identifiers: nil)
     return if voided_identifiers.blank?
 
@@ -140,6 +149,20 @@ class DDERollbackService
     end
   end
 
+  def process_orders(voided_orders: nil)
+    return if voided_orders.blank?
+
+    voided_orders.each do |order|
+      patient_id, row_id = process_patient_id_and_row_id(order['void_reason'])
+      record = Order.find_by(order_id: row_id, patient_id: patient_id)
+      record&.void("Merge Rollback to patient:#{order['patient_id']}")
+      @row_id = order.delete('order_id')
+      remove_common_field(order)
+      central_execute_hub('orders', 'order_id')
+      handle_model_errors('patient order', Order.create(order))
+    end
+  end
+
   def process_patient_id_and_row_id(reason)
     reason.split('#')[1].split(':')
   end
@@ -159,5 +182,7 @@ class DDERollbackService
 
   def handle_model_errors(activity, local_model)
     raise "Could not rollback #{activity} due to #{local_model.errors.as_json}" unless local_model.errors.blank?
+
+    local_model
   end
 end
