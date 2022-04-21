@@ -52,6 +52,15 @@ class DDERollbackService
     process_addresses(voided_addresses: result)
   end
 
+  def rollback_encounter
+    result = ActiveRecord::Base.connection.select_all <<~SQL
+      SELECT * FROM encounter
+      WHERE patient_id = #{secondary_patient.id} AND voided = 1
+      AND void_reason LIKE 'Merged into patient ##{primary_patient.patient_id}:%'
+    SQL
+    process_encounters(voided_encounters: result)
+  end
+
   def process_identifiers(voided_identifiers: nil)
     return if voided_identifiers.blank?
 
@@ -89,6 +98,19 @@ class DDERollbackService
       remove_common_field(address)
       central_execute_hub('person_address', 'person_address_id')
       handle_model_errors('person address', PersonAddress.create(address))
+    end
+  end
+
+  def process_encounters(voided_encounters: nil)
+    return if voided_encounters.blank?
+
+    voided_encounters.each do |encounter|
+      patient_id, row_id = process_patient_id_and_row_id(encounter['void_reason'])
+      record = Encounter.find_by(person_address_id: row_id, patient_id: patient_id)
+      record&.void("Merge Rollback to patient:#{encounter['patient_id']}")
+      remove_common_field(encounter)
+      central_execute_hub('encounter', 'encounter_id')
+      handle_model_errors('patient encounter', Encounter.create(encounter))
     end
   end
 
