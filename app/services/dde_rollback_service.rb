@@ -43,11 +43,20 @@ class DDERollbackService
     process_attributes(voided_attributes: result)
   end
 
+  def rollback_address
+    result = ActiveRecord::Base.connection.select_all <<~SQL
+      SELECT * FROM person_address
+      WHERE person_id = #{secondary_patient.id} AND voided = 1
+      AND void_reason LIKE 'Merged into patient ##{primary_patient.patient_id}:%'
+    SQL
+    process_addresses(voided_addresses: result)
+  end
+
   def process_identifiers(voided_identifiers: nil)
     return if voided_identifiers.blank?
 
     voided_identifiers.each do |identifier|
-      patient_id, row_id = process_identifiers(identifier['void_reason'])
+      patient_id, row_id = process_patient_id_and_row_id(identifier['void_reason'])
       record = PatientIdentifier.find_by(patient_identifier_id: row_id, patient_id: patient_id)
       record&.void("Merge Rollback to patient:#{identifier['patient_id']}")
       @row_id = identifier.delete('patient_identifier_id')
@@ -61,12 +70,25 @@ class DDERollbackService
     return if voided_attributes.blank?
 
     voided_attributes.each do |attribute|
-      patient_id, row_id = process_identifiers(attribute['void_reason'])
+      patient_id, row_id = process_patient_id_and_row_id(attribute['void_reason'])
       record = PersonAttribute.find_by(person_attribute_id: row_id, person_id: patient_id)
       record&.void("Merge Rollback to patient:#{attribute['person_id']}")
       remove_common_field(attribute)
       central_execute_hub('person_attribute', 'person_attribute_id')
-      handle_model_errors('person_attribute', PersonAttribute.create(attribute))
+      handle_model_errors('person attribute', PersonAttribute.create(attribute))
+    end
+  end
+
+  def process_addresses(voided_addresses: nil)
+    return if voided_addresses.blank?
+
+    voided_addresses.each do |address|
+      patient_id, row_id = process_patient_id_and_row_id(address['void_reason'])
+      record = PersonAddress.find_by(person_address_id: row_id, person_id: patient_id)
+      record&.void("Merge Rollback to patient:#{address['person_id']}")
+      remove_common_field(address)
+      central_execute_hub('person_address', 'person_address_id')
+      handle_model_errors('person address', PersonAddress.create(address))
     end
   end
 
