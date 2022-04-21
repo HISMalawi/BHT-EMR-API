@@ -271,7 +271,7 @@ class DDEMergingService
     end
 
     primary_address.update(params)
-    secondary_address.void("Merged into person ##{primary_patient.patient_id}:#{primary_address.id}")
+    secondary_address.void("Merged into patient ##{primary_patient.patient_id}:#{primary_address.id}")
   end
 
   # Strips off secondary_patient all orders and blesses primary patient
