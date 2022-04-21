@@ -11,7 +11,7 @@ class DDERollbackService
 
   # this is the method to rollback patient name
   def rollback_name
-    result = ActiveRecord::Base.connect.select_one <<~SQL
+    result = ActiveRecord::Base.connection.select_one <<~SQL
       SELECT * FROM person_name
       WHERE voided = 1
       AND person_id = #{secondary_patient.id}
@@ -31,6 +31,16 @@ class DDERollbackService
       WHERE patient_id = #{secondary_patient.id} AND voided = 1
       AND void_reason LIKE 'Merged into patient ##{primary_patient.patient_id}:%'
     SQL
+    process_identifiers(voided_identifiers: result)
+  end
+
+  def rollback_attributes
+    result = ActiveRecord::Base.connection.select_all <<~SQL
+      SELECT * FROM person_attribute
+      WHERE person_id = #{secondary_patient.id} AND voided = 1
+      AND void_reason LIKE 'Merged into patient ##{primary_patient.patient_id}:%'
+    SQL
+    process_attributes(voided_attributes: result)
   end
 
   def process_identifiers(voided_identifiers: nil)
@@ -44,6 +54,19 @@ class DDERollbackService
       remove_common_field(identifier)
       central_execute_hub('patient_identifier', 'patient_identifier_id')
       handle_model_errors('patient identifier', PatientIdentifier.create(identifier))
+    end
+  end
+
+  def process_attributes(voided_attributes: nil)
+    return if voided_attributes.blank?
+
+    voided_attributes.each do |attribute|
+      patient_id, row_id = process_identifiers(attribute['void_reason'])
+      record = PersonAttribute.find_by(person_attribute_id: row_id, person_id: patient_id)
+      record&.void("Merge Rollback to patient:#{attribute['person_id']}")
+      remove_common_field(attribute)
+      central_execute_hub('person_attribute', 'person_attribute_id')
+      handle_model_errors('person_attribute', PersonAttribute.create(attribute))
     end
   end
 
