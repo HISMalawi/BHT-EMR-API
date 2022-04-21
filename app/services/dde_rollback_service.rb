@@ -42,6 +42,7 @@ class DDERollbackService
       record&.void("Merge Rollback to patient:#{identifier['patient_id']}")
       @row_id = identifier.delete('patient_identifier_id')
       remove_common_field(identifier)
+      central_execute_hub('patient_identifier', 'patient_identifier_id')
       handle_model_errors('patient identifier', PatientIdentifier.create(identifier))
     end
   end
