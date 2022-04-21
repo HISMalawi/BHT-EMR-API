@@ -114,7 +114,8 @@ module ARTService
 
         ingredients.each do |ingredient|
           drug_name = ConceptName.find_by(concept_id: ingredient.drug.concept_id).name
-          dosages[drug_name] = ingredient_to_drug(ingredient)
+          dosages[drug_name] = [] if dosages[drug_name].blank?
+          dosages[drug_name] << ingredient_to_drug(ingredient)
         end
       end
     end
