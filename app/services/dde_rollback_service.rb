@@ -22,7 +22,7 @@ class DDERollbackService
     @row_id = result.delete('person_name_id')
     remove_common_field(result)
     central_execute_hub('person_name', 'person_name_id')
-    PersonName.create(result)
+    handle_model_errors('person name', PersonName.create(result))
   end
 
   def rollback_identifiers
@@ -42,7 +42,7 @@ class DDERollbackService
       record&.void("Merge Rollback to patient:#{identifier['patient_id']}")
       @row_id = identifier.delete('patient_identifier_id')
       remove_common_field(identifier)
-      PatientIdentifier.create(identifier)
+      handle_model_errors('patient identifier', PatientIdentifier.create(identifier))
     end
   end
 
@@ -61,5 +61,9 @@ class DDERollbackService
     record.delete('date_voided')
     @reason = record.delete('void_reason')
     record
+  end
+
+  def handle_model_errors(activity, local_model)
+    raise "Could not rollback #{activity} due to #{local_model.errors.as_json}" unless local_model.errors.blank?
   end
 end
