@@ -159,8 +159,17 @@ class DDERollbackService
       @row_id = order.delete('order_id')
       remove_common_field(order)
       central_execute_hub('orders', 'order_id')
-      handle_model_errors('patient order', Order.create(order))
+      add_drug_order(handle_model_errors('patient order', Order.create(order)))
     end
+  end
+
+  def add_drug_order(order)
+    drug_order = ActiveRecord::Base.connection.select_one "SELECT * FROM drug_order WHERE order_id = #{@row_id}"
+    return if drug_order.blank?
+
+    drug_order.delete('order_id')
+    drug_order['order_id'] = order.id
+    handle_model_errors('patient drug order', DrugOrder.create(drug_order))
   end
 
   def process_patient_id_and_row_id(reason)
