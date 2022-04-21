@@ -128,6 +128,9 @@ class DDEClient
   rescue RestClient::BadRequest => e
     LOGGER.error "DDEClient suppressed exception: #{e}"
     handle_response e.response
+  rescue RestClient::UnprocessableEntity => e
+    LOGGER.error "DDEClient suppressed exception: #{e}"
+    handle_response e.response
   end
 
   def handle_response(response)
