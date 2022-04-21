@@ -128,6 +128,9 @@ class DDEClient
   rescue RestClient::BadRequest => e
     LOGGER.error "DDEClient suppressed exception: #{e}"
     handle_response e.response
+  rescue RestClient::UnprocessableEntity => e
+    LOGGER.error "DDEClient suppressed exception: #{e}"
+    handle_response e.response
   end
 
   def handle_response(response)
@@ -146,7 +149,8 @@ class DDEClient
     # DDE is somewhat undecided on how it reports back its status code.
     # Sometimes we get a proper HTTP status code and sometimes it is within
     # the response body.
-    response_status = response.code || response.body['status']
+    # response_status = response.code || response.body['status']
+    response_status = response.code
     [JSON.parse(response.body), response_status&.to_i]
   end
 end
