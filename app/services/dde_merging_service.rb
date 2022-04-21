@@ -301,19 +301,20 @@ class DDEMergingService
       end
     end
 
-    update_drug_order orders_map
+    manage_drug_order orders_map
     update_obs_order_id(orders_map, @obs_map)
   end
 
   # method to update drug orders with the new order id
-  def update_drug_order(order_map)
-    DrugOrder.where(order_id: order_map.keys).each do |drug|
-      unless DrugOrder.find(drug.order_id).blank?
-        result = ActiveRecord::Base.connection.select_all <<~SQL
-          SELECT * FROM drug_order WHERE order_id = #{order_map[drug.order_id]}
-        SQL
-        drug.update(order_id: order_map[drug.order_id]) if result.length.zero?
-      end
+  def manage_drug_order(order_map)
+    result = ActiveRecord::Base.connection.select_all "SELECT * FROM drug_order WHERE order_id IN (#{order_map.keys.join(',')})"
+    return if result.blank?
+
+    result.each do |drug_order|
+      new_id = order_map[drug_order['order_id']]
+      drug_order['order_id'] = new_id
+      new_drug_order = DrugOrder.create(result)
+      raise "Could not merge patient druge orders: #{new_drug_order.errors.as_json}" unless new_drug_order.errors.empty?
     end
   end
 
