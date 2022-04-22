@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 # this class will basically handle rolling back patients that were merged
+# rubocop:disable Metrics/ClassLength
 class DDERollbackService
   attr_reader :primary_patient, :secondary_patient, :creator
 
@@ -9,7 +10,21 @@ class DDERollbackService
     @secondary_patient = secondary
   end
 
+  def process_rollback
+    ActiveRecord::Base.transaction do
+      rollback_name
+      rollback_identifiers
+      rollback_attributes
+      rollback_address
+      rollback_encounter
+      rollback_observation
+      rollback_order
+    end
+  end
+
   # this is the method to rollback patient name
+  # rubocop:disable Metrics/MethodLength
+  # rubocop:disable Metrics/AbcSize
   def rollback_name
     result = ActiveRecord::Base.connection.select_one <<~SQL
       SELECT * FROM person_name
@@ -24,6 +39,8 @@ class DDERollbackService
     central_execute_hub('person_name', 'person_name_id')
     handle_model_errors('person name', PersonName.create(result))
   end
+  # rubocop:enable Metrics/AbcSize
+  # rubocop:enable Metrics/MethodLength
 
   def rollback_identifiers
     result = ActiveRecord::Base.connection.select_all <<~SQL
@@ -151,7 +168,7 @@ class DDERollbackService
 
   def process_orders(voided_orders: nil)
     return if voided_orders.blank?
-
+    errors
     voided_orders.each do |order|
       patient_id, row_id = process_patient_id_and_row_id(order['void_reason'])
       record = Order.find_by(order_id: row_id, patient_id: patient_id)
@@ -195,3 +212,4 @@ class DDERollbackService
     local_model
   end
 end
+# rubocop:enable Metrics/ClassLength
