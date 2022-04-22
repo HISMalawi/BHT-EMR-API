@@ -28,13 +28,13 @@ class DDEMergingService
   def merge_patients(primary_patient_ids, secondary_patient_ids_list)
     secondary_patient_ids_list.collect do |secondary_patient_ids|
       if !dde_enabled?
-        merge_local_patients(primary_patient_ids, secondary_patient_ids)
+        merge_local_patients(primary_patient_ids, secondary_patient_ids, 'Local Patients')
       elsif remote_merge?(primary_patient_ids, secondary_patient_ids)
         merge_remote_patients(primary_patient_ids, secondary_patient_ids)
       elsif remote_local_merge?(primary_patient_ids, secondary_patient_ids)
-        merge_remote_and_local_patients(primary_patient_ids, secondary_patient_ids)
+        merge_remote_and_local_patients(primary_patient_ids, secondary_patient_ids, 'Remote and Local Patient')
       elsif inverted_remote_local_merge?(primary_patient_ids, secondary_patient_ids)
-        merge_remote_and_local_patients(secondary_patient_ids, primary_patient_ids)
+        merge_remote_and_local_patients(secondary_patient_ids, primary_patient_ids, 'Local and Remote Patients')
       elsif local_merge?(primary_patient_ids, secondary_patient_ids)
         merge_local_patients(primary_patient_ids, secondary_patient_ids)
       else
@@ -45,7 +45,9 @@ class DDEMergingService
   end
 
   # Merges @{param secondary_patient} into @{param primary_patient}.
-  def merge_local_patients(primary_patient_ids, secondary_patient_ids)
+  # rubocop:disable Metrics/MethodLength
+  # rubocop:disable Metrics/AbcSize
+  def merge_local_patients(primary_patient_ids, secondary_patient_ids, merge_type)
     ActiveRecord::Base.transaction do
       primary_patient = Patient.find(primary_patient_ids['patient_id'])
       secondary_patient = Patient.find(secondary_patient_ids['patient_id'])
@@ -57,12 +59,16 @@ class DDEMergingService
       result = merge_encounters(primary_patient, secondary_patient)
       merge_observations(primary_patient, secondary_patient, result)
       merge_orders(primary_patient, secondary_patient, result)
+      merge_audit = MergeAudit.create({primary_id: primary_patient.id, secondary_id: secondary_patient.id, creator: User.current.id, merge_type: merge_type})
+      raise "Could not create audit trail due to #{merge_audit.errors.as_json}" unless merge_audit.errors.empty?
 
       secondary_patient.void("Merged into patient ##{primary_patient.id}")
 
       primary_patient
     end
   end
+  # rubocop:enable Metrics/AbcSize
+  # rubocop:enable Metrics/MethodLength
 
   # Binds the remote patient to the local patient by blessing the local patient
   # with the remotes npid and doc_id
@@ -125,14 +131,14 @@ class DDEMergingService
   end
 
   # Merge remote secondary patient into local primary patient
-  def merge_remote_and_local_patients(primary_patient_ids, secondary_patient_ids)
+  def merge_remote_and_local_patients(primary_patient_ids, secondary_patient_ids, merge_type)
     local_patient = Patient.find(primary_patient_ids['patient_id'])
     remote_patient = reassign_remote_patient_npid(secondary_patient_ids['doc_id'])
 
     local_patient = link_local_to_remote_patient(local_patient, remote_patient)
     return local_patient if secondary_patient_ids['patient_id'].blank?
 
-    merge_local_patients(primary_patient_ids, secondary_patient_ids)
+    merge_local_patients(primary_patient_ids, secondary_patient_ids, merge_type)
   end
 
   # Merge patients in DDE and update local records if need be
@@ -147,7 +153,7 @@ class DDEMergingService
     local_patient = link_local_to_remote_patient(Patient.find(primary_patient_ids['patient_id']), response)
     return local_patient if secondary_patient_ids['patient_id'].blank?
 
-    merge_local_patients(local_patient, Patient.find(secondary_patient_ids['patient_id']))
+    merge_local_patients(local_patient, Patient.find(secondary_patient_ids['patient_id']), 'Remote Patients')
   end
 
   def create_local_patient_identifier(patient, value, type_name)
