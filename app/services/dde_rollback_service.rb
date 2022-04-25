@@ -12,13 +12,14 @@ class DDERollbackService
 
   def process_rollback
     ActiveRecord::Base.transaction do
-      rollback_name
-      rollback_identifiers
-      rollback_attributes
-      rollback_address
-      rollback_encounter
-      rollback_observation
+      rollback_patient
       rollback_order
+      rollback_observation
+      rollback_encounter
+      rollback_address
+      rollback_attributes
+      rollback_identifiers
+      rollback_name
     end
   end
 
@@ -94,6 +95,39 @@ class DDERollbackService
       AND void_reason LIKE 'Merged into patient ##{primary_patient.patient_id}:%'
     SQL
     process_orders(voided_orders: result)
+  end
+
+  def rollback_patient
+    ActiveRecord::Base.connection.execute <<~SQL
+      UPDATE patient SET #{common_void_columns}  WHERE patient_id = #{common_void_reason}
+    SQL
+    rollback_person
+  end
+
+  def rollback_person
+    ActiveRecord::Base.connection.execute <<~SQL
+      UPDATE person SET #{common_void_columns} WHERE person_id = #{common_void_reason}
+    SQL
+    rollback_patient_program_and_state
+    rollback_relationship
+  end
+
+  def rollback_patient_program_and_state
+    ActiveRecord::Base.connection.execute <<~SQL
+      UPDATE patient_state ps
+      INNER JOIN patient_program pp ON ps.patient_program_id = pp.patient_program_id
+      SET ps.date_voided = NULL, ps.void_reason = NULL, ps.voided_by = NULL, ps.voided = 0, ps.date_changed = #{Time.now}, ps.changed_by = #{User.current.id},
+      pp.date_voided = NULL, pp.void_reason = NULL, pp.voided_by = NULL, pp.voided = 0, pp.date_changed = #{Time.now}, pp.changed_by = #{User.current.id}
+      WHERE pp.patient_id = #{secondary_patient.id}
+      AND ps.void_reason = 'Merged into patient ##{primary_patient.id}:0'
+      AND pp.void_reason = 'Merged into patient ##{primary_patient.id}:0'
+    SQL
+  end
+
+  def rollback_relationship
+    ActiveRecord::Base.connection.execute <<~SQL
+      UPDATE relationship SET #{common_void_columns} WHERE person_a = #{common_void_reason}
+    SQL
   end
 
   def process_identifiers(voided_identifiers: nil)
@@ -210,6 +244,14 @@ class DDERollbackService
     raise "Could not rollback #{activity} due to #{local_model.errors.as_json}" unless local_model.errors.blank?
 
     local_model
+  end
+
+  def common_void_columns
+    @common_void_columns ||= "date_voided = NULL, void_reason = NULL, voided_by = NULL, voided = 0, date_changed = #{Time.now}, changed_by = #{User.current.id}"
+  end
+
+  def common_void_reason
+    @common_void_reason ||= " #{secondary_patient.id} AND void_reason = 'Merged into patient ##{primary_patient.id}:0'"
   end
 end
 # rubocop:enable Metrics/ClassLength
