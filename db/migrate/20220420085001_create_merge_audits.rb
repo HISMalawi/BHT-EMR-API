@@ -7,6 +7,7 @@ class CreateMergeAudits < ActiveRecord::Migration[5.2]
       t.integer :primary_id, null: false
       t.integer :secondary_id, null: false
       t.string :merge_type, null: false
+      t.integer :secondary_previous_merge_id, null: true
       t.integer :creator, null: false
       t.boolean :voided, null: false, default: false
       t.integer :voided_by, null: true
@@ -19,5 +20,6 @@ class CreateMergeAudits < ActiveRecord::Migration[5.2]
     add_foreign_key :merge_audits, :patient, column: :secondary_id, primary_key: :patient_id
     add_foreign_key :merge_audits, :users, column: :creator, primary_key: :user_id
     add_foreign_key :merge_audits, :users, column: :voided_by, primary_key: :user_id
+    add_foreign_key :merge_audits, :merge_audits, column: :secondary_previous_merge_id
   end
 end
