@@ -305,6 +305,8 @@ module ARTService
           AND obs.person_id = #{patient.id}
         ORDER BY obs_datetime desc
       SQL
+      return false if result.blank?
+
       yes_concepts.include? result['value_coded'].to_i
     end
 
@@ -324,6 +326,8 @@ module ARTService
           AND obs.person_id = #{patient.id}
         ORDER BY obs_datetime desc
       SQL
+      return false if result.blank?
+
       yes_concepts.include? result['value_coded'].to_i
     end
 
