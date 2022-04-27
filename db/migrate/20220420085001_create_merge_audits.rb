@@ -7,7 +7,7 @@ class CreateMergeAudits < ActiveRecord::Migration[5.2]
       t.integer :primary_id, null: false
       t.integer :secondary_id, null: false
       t.string :merge_type, null: false
-      t.integer :secondary_previous_merge_id, null: true
+      t.bigint :secondary_previous_merge_id, null: true
       t.integer :creator, null: false
       t.boolean :voided, null: false, default: false
       t.integer :voided_by, null: true
