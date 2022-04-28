@@ -11,6 +11,12 @@ class MergeAuditService
     raise "Could not create audit trail due to #{merge_audit.errors.as_json}" unless merge_audit.errors.empty?
   end
 
+  # this uses the patient identifier to get the audit tree
+  def get_patient_audit(identifier)
+    fetch_merge_audit(find_voided_identifier(identifier))
+  end
+
+  # this uses the patient id to get the audit tree and it is used by get patient_audit
   def fetch_merge_audit(secondary)
     first_merge = common_merge_fetch('ma.secondary_id', secondary)
     raise NotFoundError, "There is no merge for #{secondary}" if first_merge.blank?
