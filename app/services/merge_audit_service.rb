@@ -12,27 +12,29 @@ class MergeAuditService
   end
 
   def fetch_merge_audit(secondary)
-    result = ActiveRecord::Base.connection.select_one <<~SQL
-      SELECT *
-      FROM merge_audits ma
-      INNER JOIN person_name pn ON pn.person_id = ma.secondary_id
-      INNER JOIN person p ON p.person_id = ma.secondary_id
-      INNER JOIN person_name spn ON spn.person_id = ma.secondary_id AND spn.voided = 1
-      INNER JOIN person sp ON sp.person_id = ma.secondary_id AND sp.voided = 1
-      WHERE ma.voided = 0 AND ma.secondary_id = #{secondary}
-    SQL
-    return {} if result.blank?
+    first_merge = common_merge_fetch('ma.secondary_id', secondary)
+    raise NotFoundError, "There is no merge for #{secondary}" if first_merge.blank?
+
+    tree = [first_merge]
+    merge_id = first_merge['id']
+    until merge_id.blank?
+      parent = common_merge_fetch('ma.secondary_previous_merge_id', merge_id)
+      tree << parent unless parent.blank?
+      merge_id = parent.blank? ? nil : parent['id']
+    end
+    tree
   end
 
-  def fetch_parent(merge_id)
+  def common_merge_fetch(field, fetch_value)
     ActiveRecord::Base.connection.select_one <<~SQL
-      SELECT *
+      SELECT ma.id, ma.primary_id, ma.secondary_id, pn.given_name primary_first_name, pn.family_name primary_surname, p.gender primary_gender, p.birthdate primary_birthdate,
+      spn.given_name secondary_first_name, spn.family_name secondary_surname, sp.gender secondary_gender, sp.birthdate secondary_birthdate
       FROM merge_audits ma
       INNER JOIN person_name pn ON pn.person_id = ma.secondary_id
       INNER JOIN person p ON p.person_id = ma.secondary_id
       INNER JOIN person_name spn ON spn.person_id = ma.secondary_id AND spn.voided = 1
       INNER JOIN person sp ON sp.person_id = ma.secondary_id AND sp.voided = 1
-      WHERE ma.voided = 0 AND ma.secondary_previous_merge_id = #{merge_id}
+      WHERE #{field} = #{fetch_value} AND ma.voided = 0
     SQL
   end
 end
