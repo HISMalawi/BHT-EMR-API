@@ -3,7 +3,7 @@
 # This service will handle merge audits with their tree structure
 class MergeAuditService
   # This method a merge audit for us
-  def create_merge_audit(primary_patient, secondary_patient)
+  def create_merge_audit(primary_patient, secondary_patient, merge_type)
     recent_merge_id = MergeAudit.where(primary_id: secondary_patient).last&.id
     merge_audit = MergeAudit.create({ primary_id: primary_patient, secondary_id: secondary_patient,
                                       creator: User.current.id, merge_type: merge_type,
