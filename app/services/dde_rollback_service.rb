@@ -3,35 +3,41 @@
 # this class will basically handle rolling back patients that were merged
 # rubocop:disable Metrics/ClassLength
 class DDERollbackService
-  attr_reader :primary_patient, :secondary_patient, :creator
+  attr_reader :primary_patient, :secondary_patient
 
-  def initialize(primary:, secondary:)
-    @primary_patient = primary
-    @secondary_patient = secondary
+  def rollback_merged_patient(patient_id)
+    tree = MergeAuditService.new.fetch_merge_audit(patient_id)
+    ActiveRecord::Base.transaction do
+      tree.each do |record|
+        @primary_patient = record['primary_id']
+        @secondary_patient = record['secondary_id']
+        process_rollback
+      end
+    end
+    Patient.find(patient_id)
   end
 
+  private
+
   def process_rollback
-    ActiveRecord::Base.transaction do
-      rollback_patient
-      rollback_order
-      rollback_observation
-      rollback_encounter
-      rollback_address
-      rollback_attributes
-      rollback_identifiers
-      rollback_name
-    end
+    rollback_patient
+    rollback_order
+    rollback_observation
+    rollback_encounter
+    rollback_address
+    rollback_attributes
+    rollback_identifiers
+    rollback_name
   end
 
   # this is the method to rollback patient name
   # rubocop:disable Metrics/MethodLength
-  # rubocop:disable Metrics/AbcSize
   def rollback_name
     result = ActiveRecord::Base.connection.select_one <<~SQL
       SELECT * FROM person_name
       WHERE voided = 1
-      AND person_id = #{secondary_patient.id}
-      AND void_reason = 'Merged into patient ##{primary_patient.patient_id}:#{primary_patient.person.names.first.id}'
+      AND person_id = #{secondary_patient}
+      AND void_reason LIKE 'Merged into patient ##{primary_patient}:%'
     SQL
     return if result.blank?
 
@@ -40,14 +46,13 @@ class DDERollbackService
     central_execute_hub('person_name', 'person_name_id')
     handle_model_errors('person name', PersonName.create(result))
   end
-  # rubocop:enable Metrics/AbcSize
   # rubocop:enable Metrics/MethodLength
 
   def rollback_identifiers
     result = ActiveRecord::Base.connection.select_all <<~SQL
       SELECT * FROM patient_identifier
-      WHERE patient_id = #{secondary_patient.id} AND voided = 1
-      AND void_reason LIKE 'Merged into patient ##{primary_patient.patient_id}:%'
+      WHERE patient_id = #{secondary_patient} AND voided = 1
+      AND void_reason LIKE 'Merged into patient ##{primary_patient}:%'
     SQL
     process_identifiers(voided_identifiers: result)
   end
@@ -55,8 +60,8 @@ class DDERollbackService
   def rollback_attributes
     result = ActiveRecord::Base.connection.select_all <<~SQL
       SELECT * FROM person_attribute
-      WHERE person_id = #{secondary_patient.id} AND voided = 1
-      AND void_reason LIKE 'Merged into patient ##{primary_patient.patient_id}:%'
+      WHERE person_id = #{secondary_patient} AND voided = 1
+      AND void_reason LIKE 'Merged into patient ##{primary_patient}:%'
     SQL
     process_attributes(voided_attributes: result)
   end
@@ -64,8 +69,8 @@ class DDERollbackService
   def rollback_address
     result = ActiveRecord::Base.connection.select_all <<~SQL
       SELECT * FROM person_address
-      WHERE person_id = #{secondary_patient.id} AND voided = 1
-      AND void_reason LIKE 'Merged into patient ##{primary_patient.patient_id}:%'
+      WHERE person_id = #{secondary_patient} AND voided = 1
+      AND void_reason LIKE 'Merged into patient ##{primary_patient}:%'
     SQL
     process_addresses(voided_addresses: result)
   end
@@ -73,8 +78,8 @@ class DDERollbackService
   def rollback_encounter
     result = ActiveRecord::Base.connection.select_all <<~SQL
       SELECT * FROM encounter
-      WHERE patient_id = #{secondary_patient.id} AND voided = 1
-      AND void_reason LIKE 'Merged into patient ##{primary_patient.patient_id}:%'
+      WHERE patient_id = #{secondary_patient} AND voided = 1
+      AND void_reason LIKE 'Merged into patient ##{primary_patient}:%'
     SQL
     process_encounters(voided_encounters: result)
   end
@@ -82,8 +87,8 @@ class DDERollbackService
   def rollback_observation
     result = ActiveRecord::Base.connection.select_all <<~SQL
       SELECT * FROM obs
-      WHERE person_id = #{secondary_patient.id} AND voided = 1
-      AND void_reason LIKE 'Merged into patient ##{primary_patient.patient_id}:%'
+      WHERE person_id = #{secondary_patient} AND voided = 1
+      AND void_reason LIKE 'Merged into patient ##{primary_patient}:%'
     SQL
     process_observations(voided_observations: result)
   end
@@ -91,8 +96,8 @@ class DDERollbackService
   def rollback_order
     result = ActiveRecord::Base.connection.select_all <<~SQL
       SELECT * FROM orders
-      WHERE patient_id = #{secondary_patient.id} AND voided = 1
-      AND void_reason LIKE 'Merged into patient ##{primary_patient.patient_id}:%'
+      WHERE patient_id = #{secondary_patient} AND voided = 1
+      AND void_reason LIKE 'Merged into patient ##{primary_patient}:%'
     SQL
     process_orders(voided_orders: result)
   end
@@ -118,9 +123,9 @@ class DDERollbackService
       INNER JOIN patient_program pp ON ps.patient_program_id = pp.patient_program_id
       SET ps.date_voided = NULL, ps.void_reason = NULL, ps.voided_by = NULL, ps.voided = 0, ps.date_changed = #{Time.now}, ps.changed_by = #{User.current.id},
       pp.date_voided = NULL, pp.void_reason = NULL, pp.voided_by = NULL, pp.voided = 0, pp.date_changed = #{Time.now}, pp.changed_by = #{User.current.id}
-      WHERE pp.patient_id = #{secondary_patient.id}
-      AND ps.void_reason = 'Merged into patient ##{primary_patient.id}:0'
-      AND pp.void_reason = 'Merged into patient ##{primary_patient.id}:0'
+      WHERE pp.patient_id = #{secondary_patient}
+      AND ps.void_reason = 'Merged into patient ##{primary_patient}:0'
+      AND pp.void_reason = 'Merged into patient ##{primary_patient}:0'
     SQL
   end
 
@@ -202,7 +207,7 @@ class DDERollbackService
 
   def process_orders(voided_orders: nil)
     return if voided_orders.blank?
-    errors
+
     voided_orders.each do |order|
       patient_id, row_id = process_patient_id_and_row_id(order['void_reason'])
       record = Order.find_by(order_id: row_id, patient_id: patient_id)
@@ -251,7 +256,7 @@ class DDERollbackService
   end
 
   def common_void_reason
-    @common_void_reason ||= " #{secondary_patient.id} AND void_reason = 'Merged into patient ##{primary_patient.id}:0'"
+    @common_void_reason ||= " #{secondary_patient} AND void_reason = 'Merged into patient ##{primary_patient}:0'"
   end
 end
 # rubocop:enable Metrics/ClassLength
