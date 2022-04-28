@@ -53,7 +53,6 @@ module ANCService
       @visit = []
       last_lmp = date_of_lnmp(patient, date)
       date_diff = (date.to_date.year * 12 + date.to_date.month) - (last_lmp.to_date.year * 12 + last_lmp.to_date.month) rescue nil
-
       unless last_lmp.blank? && (!(date_diff.blank?) && date_diff.to_i > 9)
 
         @visit =  patient.encounters.where(["DATE(encounter_datetime) >= ?
@@ -324,26 +323,8 @@ module ANCService
       PatientSummary.new patient, date
     end
 
-    def date_of_pregnancy_end(patient, date = Date.today)
-      patient.encounters.joins([:observations])
-        .where(['encounter_type = ? AND obs.concept_id = ? AND obs.value_coded = ?
-          AND DATE(obs_datetime) <= DATE(?)',
-          EncounterType.find_by_name("PREGNANCY STATUS").encounter_type_id,
-          ConceptName.find_by_name("Pregnancy status").concept_id,
-          ConceptName.find_by(name: "New", concept_name_type: "FULLY_SPECIFIED").concept_id,
-          date
-        ]).order(encounter_datetime: :desc).first.encounter_datetime rescue '1905-01-01'
-    end
-
     def date_of_lnmp(patient, date = Date.today)
-      lmp = ConceptName.find_by name: "Last menstrual period"
-      current_pregnancy = EncounterType.find_by name: "CURRENT PREGNANCY"
-      last_lmp = patient.encounters.joins([:observations])
-        .where(['encounter_type = ? AND obs.concept_id = ? AND DATE(obs.obs_datetime) >= DATE(?)',
-          current_pregnancy.id,lmp.concept_id, date_of_pregnancy_end(patient, date)])
-        .last.observations.collect {
-          |o| o.value_datetime
-        }.compact.last.to_date rescue nil
+      ANCService::PregnancyService.date_of_lnmp(patient, date)
     end
 
     # Check if patient has been given drugs

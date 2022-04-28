@@ -35,28 +35,8 @@ module ANCService
       }
     end
 
-    def date_of_pregnancy_end
-      patient.encounters.joins([:observations])
-        .where(['encounter_type = ? AND obs.concept_id = ? AND obs.value_coded = ?
-          AND DATE(obs_datetime) <= DATE(?)',
-          EncounterType.find_by_name("PREGNANCY STATUS").encounter_type_id,
-          ConceptName.find_by_name("Pregnancy status").concept_id,
-          ConceptName.find_by(name: "New", concept_name_type: "FULLY_SPECIFIED").concept_id,
-          @date
-        ]).order(encounter_datetime: :desc).first.encounter_datetime rescue '1905-01-01'
-    end
-
     def date_of_lnmp
-      last_lmp = patient.encounters.joins([:observations])
-        .where(['encounter_type = ? AND obs.concept_id = ?  AND DATE(obs.obs_datetime) >= DATE(?)',
-          EncounterType.find_by_name('Current pregnancy').id,
-          ConceptName.find_by_name('Last menstrual period').concept_id,
-          date_of_pregnancy_end
-        ])
-        .last.observations.collect {
-          |o| o.value_datetime
-        }.compact.last.to_date rescue nil
-
+      ANCService::PregnancyService.date_of_lnmp(@patient, @date)
     end
 
     def number_of_visits
