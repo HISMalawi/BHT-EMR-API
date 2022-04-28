@@ -167,7 +167,7 @@ class ARTService::Reports::ViralLoad
       last_result = last_vl_result(person[:patient_id])
       return {
         patient_id: person[:patient_id],
-        mile_stone: (patient_start_date.to_date + months_on_art).to_date,
+        mile_stone: (patient_start_date.to_date + months_on_art.month).to_date,
         start_date: patient_start_date,
         months_on_art: months_on_art,
         appointment_date: appointment_date,
