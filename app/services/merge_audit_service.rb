@@ -15,9 +15,24 @@ class MergeAuditService
     result = ActiveRecord::Base.connection.select_one <<~SQL
       SELECT *
       FROM merge_audits ma
-      INNER JOIN person_name pn ON pn.person_id = ma.secondary_id AND pn.voided = 1
-      INNER JOIN person p ON p.person_id = ma.secondary_id AND p.voided = 1
+      INNER JOIN person_name pn ON pn.person_id = ma.secondary_id
+      INNER JOIN person p ON p.person_id = ma.secondary_id
+      INNER JOIN person_name spn ON spn.person_id = ma.secondary_id AND spn.voided = 1
+      INNER JOIN person sp ON sp.person_id = ma.secondary_id AND sp.voided = 1
       WHERE ma.voided = 0 AND ma.secondary_id = #{secondary}
+    SQL
+    return {} if result.blank?
+  end
+
+  def fetch_parent(merge_id)
+    ActiveRecord::Base.connection.select_one <<~SQL
+      SELECT *
+      FROM merge_audits ma
+      INNER JOIN person_name pn ON pn.person_id = ma.secondary_id
+      INNER JOIN person p ON p.person_id = ma.secondary_id
+      INNER JOIN person_name spn ON spn.person_id = ma.secondary_id AND spn.voided = 1
+      INNER JOIN person sp ON sp.person_id = ma.secondary_id AND sp.voided = 1
+      WHERE ma.voided = 0 AND ma.secondary_previous_merge_id = #{merge_id}
     SQL
   end
 end
