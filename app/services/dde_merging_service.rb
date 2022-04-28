@@ -316,8 +316,10 @@ class DDEMergingService
 
     result.each do |drug_order|
       new_id = order_map[drug_order['order_id']]
+      next if DrugOrder.where(order_id: new_id)
+
       drug_order['order_id'] = new_id
-      new_drug_order = DrugOrder.create(result)
+      new_drug_order = DrugOrder.create(drug_order)
       raise "Could not merge patient druge orders: #{new_drug_order.errors.as_json}" unless new_drug_order.errors.empty?
     end
   end
