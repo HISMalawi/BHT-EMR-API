@@ -59,6 +59,7 @@ class DDEMergingService
       result = merge_encounters(primary_patient, secondary_patient)
       merge_observations(primary_patient, secondary_patient, result)
       merge_orders(primary_patient, secondary_patient, result)
+      MergeAuditService.new.create_merge_audit(primary_patient.id, secondary_patient.id, merge_type)
       secondary_patient.void("Merged into patient ##{primary_patient.id}:0")
 
       primary_patient
