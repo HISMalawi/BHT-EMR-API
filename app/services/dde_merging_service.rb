@@ -59,9 +59,6 @@ class DDEMergingService
       result = merge_encounters(primary_patient, secondary_patient)
       merge_observations(primary_patient, secondary_patient, result)
       merge_orders(primary_patient, secondary_patient, result)
-      merge_audit = MergeAudit.create({primary_id: primary_patient.id, secondary_id: secondary_patient.id, creator: User.current.id, merge_type: merge_type})
-      raise "Could not create audit trail due to #{merge_audit.errors.as_json}" unless merge_audit.errors.empty?
-
       secondary_patient.void("Merged into patient ##{primary_patient.id}:0")
 
       primary_patient
