@@ -51,10 +51,8 @@ module ANCService
 
     def anc_visit(patient, date)
       @visit = []
-      last_lmp = date_of_lnmp(patient)
-
+      last_lmp = date_of_lnmp(patient, date)
       date_diff = (date.to_date.year * 12 + date.to_date.month) - (last_lmp.to_date.year * 12 + last_lmp.to_date.month) rescue nil
-
       unless last_lmp.blank? && (!(date_diff.blank?) && date_diff.to_i > 9)
 
         @visit =  patient.encounters.where(["DATE(encounter_datetime) >= ?
@@ -76,7 +74,7 @@ module ANCService
     end
 
     def saved_encounters(patient, date)
-      last_lmp = date_of_lnmp(patient)
+      last_lmp = date_of_lnmp(patient, date)
       date_diff = (date.to_date.year * 12 + date.to_date.month) - (last_lmp.to_date.year * 12 + last_lmp.to_date.month) rescue nil
       ontime_encounters = ["REGISTRATION", "SOCIAL HISTORY", "SURGICAL HISTORY",
         "OBSTETRIC HISTORY", "MEDICAL HISTORY", "CURRENT PREGNANCY"]
@@ -168,7 +166,7 @@ module ANCService
       anc_visit = false
       preg_test = false
 
-      lmp_date = date_of_lnmp(patient)
+      lmp_date = date_of_lnmp(patient, date)
       return {subsequent_visit: false, pregnancy_test: false, hiv_status: ""} if lmp_date.nil?
 
       unless lmp_date.nil?
@@ -273,7 +271,7 @@ module ANCService
 
       return "positive" if self.hiv_positive?
 
-      lmp = date_of_lnmp(patient)
+      lmp = date_of_lnmp(patient, today)
 
       checked_date = lmp.present?? lmp : (today.to_date - 9.months)
 
@@ -325,16 +323,8 @@ module ANCService
       PatientSummary.new patient, date
     end
 
-    def date_of_lnmp(patient)
-      lmp = ConceptName.find_by name: "Last menstrual period"
-      current_pregnancy = EncounterType.find_by name: "CURRENT PREGNANCY"
-
-      last_lmp = patient.encounters.joins([:observations])
-        .where(['encounter_type = ? AND obs.concept_id = ?',
-          current_pregnancy.id,lmp.concept_id])
-        .last.observations.collect {
-          |o| o.value_datetime
-        }.compact.last.to_date rescue nil
+    def date_of_lnmp(patient, date = Date.today)
+      ANCService::PregnancyService.date_of_lnmp(patient, date)
     end
 
     # Check if patient has been given drugs
