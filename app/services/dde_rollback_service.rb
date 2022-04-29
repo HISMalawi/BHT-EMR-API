@@ -12,7 +12,7 @@ class DDERollbackService
         @primary_patient = record['primary_id']
         @secondary_patient = record['secondary_id']
         process_rollback
-        MergeAudit.find(record['id']).void("Rolling Back #{patient_id}")
+        MergeAudit.find(record['id']).void("Rolling back to #{patient_id}")
       end
     end
     Patient.find(patient_id)
