@@ -31,6 +31,16 @@ class DDERollbackService
     rollback_name
   end
 
+  # fetch patient doc id
+  def fetch_patient_doc_id(patient_id)
+    ActiveRecord::Base.connection.select_one <<~SQL
+      SELECT identifier
+      FROM patient_identifier
+      WHERE patient_id = #{patient_id}
+      AND identifier_type = #{PatientIdentifierType.find_by_name!('DDE person document ID').id}
+    SQL
+  end
+
   # this is the method to rollback patient name
   def rollback_name
     result = ActiveRecord::Base.connection.select_all <<~SQL
