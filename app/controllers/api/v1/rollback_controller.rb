@@ -9,7 +9,8 @@ class Api::V1::RollbackController < ApplicationController
 
   def rollback_patient
     patient_id = params.require(:patient_id)
-    render json: rollback_service.rollback_merged_patient(patient_id), status: :ok
+    program_id = params.require(:program_id)
+    render json: rollback_service.rollback_merged_patient(patient_id, program_id), status: :ok
   end
 
   private
