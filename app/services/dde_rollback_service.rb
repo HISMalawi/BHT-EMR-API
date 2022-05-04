@@ -3,24 +3,28 @@
 # this class will basically handle rolling back patients that were merged
 # rubocop:disable Metrics/ClassLength
 class DDERollbackService
-  attr_reader :primary_patient, :secondary_patient
+  attr_reader :primary_patient, :secondary_patient, :merge_type
 
+  # rubocop:disable Metrics/MethodLength
   def rollback_merged_patient(patient_id)
     tree = MergeAuditService.new.fetch_merge_audit(patient_id)
     ActiveRecord::Base.transaction do
       tree.each do |record|
         @primary_patient = record['primary_id']
         @secondary_patient = record['secondary_id']
+        @merge_type = record['merge_type']
         process_rollback
         MergeAudit.find(record['id']).void("Rolling back to #{primary_patient}")
       end
     end
     Patient.find(patient_id)
   end
+  # rubocop:enable Metrics/MethodLength
 
   private
 
   def process_rollback
+    rollback_dde
     rollback_patient
     rollback_encounter
     rollback_order
@@ -39,6 +43,10 @@ class DDERollbackService
       WHERE patient_id = #{patient_id}
       AND identifier_type = #{PatientIdentifierType.find_by_name!('DDE person document ID').id}
     SQL
+  end
+
+  def rollback_dde
+
   end
 
   # this is the method to rollback patient name
