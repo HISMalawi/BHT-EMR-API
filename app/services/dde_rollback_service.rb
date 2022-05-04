@@ -46,7 +46,13 @@ class DDERollbackService
   end
 
   def rollback_dde
+    return unless merge_type.match(/remote/i)
 
+    response, status = dde_client.post('rollback_merge',
+                                       primary_person_doc_id: fetch_patient_doc_id(primary_patient),
+                                       secondary_person_doc_id: fetch_patient_doc_id(secondary_patient))
+
+    raise "Failed to rollback patients on DDE side: #{status} - #{response}" unless status == 200
   end
 
   # this is the method to rollback patient name
@@ -261,6 +267,39 @@ class DDERollbackService
 
   def common_void_reason
     @common_void_reason ||= " #{secondary_patient} AND void_reason LIKE 'Merged into patient ##{primary_patient}:%'"
+  end
+
+  def dde_client
+    client = DDEClient.new
+
+    connection = dde_connections[program.id]
+
+    dde_connections[program.id] = if connection
+                                    client.restore_connection(connection)
+                                  else
+                                    client.connect(dde_config)
+                                  end
+
+    client
+  end
+
+  def dde_connections
+    @dde_connections ||= {}
+  end
+
+  # Loads a dde client into the dde_clients_cache for the
+  def dde_config
+    main_config = YAML.load_file(DDE_CONFIG_PATH)['dde']
+    raise 'No configuration for DDE found' unless main_config
+
+    program_config = main_config[program.name.downcase]
+    raise "No DDE config for program #{program.name} found" unless program_config
+
+    {
+      url: main_config['url'],
+      username: program_config['username'],
+      password: program_config['password']
+    }
   end
 end
 # rubocop:enable Metrics/ClassLength
