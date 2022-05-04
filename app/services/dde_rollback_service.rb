@@ -3,18 +3,23 @@
 # this class will basically handle rolling back patients that were merged
 # rubocop:disable Metrics/ClassLength
 class DDERollbackService
-  attr_reader :primary_patient, :secondary_patient, :merge_type
+  attr_accessor :primary_patient, :secondary_patient, :merge_type, :program
+
+  DDE_CONFIG_PATH = 'config/application.yml'
 
   # rubocop:disable Metrics/MethodLength
-  def rollback_merged_patient(patient_id)
+  def rollback_merged_patient(patient_id, program_id)
+    @program = Program.find(program_id)
     tree = MergeAuditService.new.fetch_merge_audit(patient_id)
     ActiveRecord::Base.transaction do
       tree.each do |record|
         @primary_patient = record['primary_id']
         @secondary_patient = record['secondary_id']
         @merge_type = record['merge_type']
+        Rails.logger.debug("Processing rollback for patients: #{primary_patient} <=> #{secondary_patient}")
         process_rollback
-        MergeAudit.find(record['id']).void("Rolling back to #{primary_patient}")
+        MergeAudit.find(record['id']).void("Rolling back to #{secondary_patient}")
+        @common_void_reason = nil
       end
     end
     Patient.find(patient_id)
@@ -32,17 +37,19 @@ class DDERollbackService
     rollback_address
     rollback_attributes
     rollback_identifiers
+    rollback_remote_identifiers
     rollback_name
   end
 
   # fetch patient doc id
   def fetch_patient_doc_id(patient_id)
-    ActiveRecord::Base.connection.select_one <<~SQL
+    result = ActiveRecord::Base.connection.select_one <<~SQL
       SELECT identifier
       FROM patient_identifier
       WHERE patient_id = #{patient_id}
       AND identifier_type = #{PatientIdentifierType.find_by_name!('DDE person document ID').id}
     SQL
+    result.blank? ? nil : result['identifier']
   end
 
   def rollback_dde
@@ -78,6 +85,14 @@ class DDERollbackService
     process_identifiers(voided_identifiers: result)
     ActiveRecord::Base.connection.execute <<~SQL
       UPDATE patient_identifier SET #{common_void_columns} WHERE patient_id = #{common_void_reason}
+    SQL
+  end
+
+  def rollback_remote_identifiers
+    return unless merge_type.match(/remote/i)
+
+    ActiveRecord::Base.connection.execute <<~SQL
+      UPDATE patient_identifier SET #{common_void_columns} WHERE patient_id = #{secondary_patient} AND void_reason = 'Assigned new id: #{fetch_patient_doc_id(primary_patient)}'
     SQL
   end
 
