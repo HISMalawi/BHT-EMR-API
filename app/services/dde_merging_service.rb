@@ -182,7 +182,7 @@ class DDEMergingService
       primary_name = PersonName.create(secondary_name_hash)
       raise "Could not merge patient name: #{primary_name.errors.as_json}" unless primary_name.errors.empty?
 
-      secondary_name.void("Merged into person ##{primary_patient.patient_id}:#{primary_name.id}")
+      secondary_name.void("Merged into patient ##{primary_patient.patient_id}:#{primary_name.id}")
       return
     end
 
@@ -195,7 +195,7 @@ class DDEMergingService
     end
 
     primary_name.update(params)
-    secondary_name.void("Merged into person ##{primary_patient.patient_id}:#{primary_name.id}")
+    secondary_name.void("Merged into patient ##{primary_patient.patient_id}:0")
   end
 
   NATIONAL_ID_TYPE = PatientIdentifierType.find_by_name!('National ID')
@@ -275,7 +275,7 @@ class DDEMergingService
     end
 
     primary_address.update(params)
-    secondary_address.void("Merged into patient ##{primary_patient.patient_id}:#{primary_address.id}")
+    secondary_address.void("Merged into patient ##{primary_patient.patient_id}:0")
   end
 
   # Strips off secondary_patient all orders and blesses primary patient
