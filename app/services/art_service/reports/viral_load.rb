@@ -154,11 +154,7 @@ class ARTService::Reports::ViralLoad
   end
 
   def get_vl_due_details(person) # patient_id, appointment_date, patient_start_date)
-    patient_start_date = begin
-      person[:start_date].to_date
-    rescue StandardError
-      nil
-    end
+    patient_start_date = person[:start_date].to_date rescue nil
     return if patient_start_date.blank?
 
     # start_date = patient_start_date
