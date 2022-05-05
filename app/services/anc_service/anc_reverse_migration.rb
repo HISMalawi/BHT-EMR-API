@@ -29,7 +29,7 @@ module ANCService
       begin
         ActiveRecord::Base.transaction do
           ActiveRecord::Base.connection.disable_referential_integrity do
-            do_the_needful
+            process_migration_reversal
           end
         end
       rescue StandardError => e
@@ -46,8 +46,7 @@ module ANCService
 
     # rubocop:disable Metrics/MethodLength
     # rubocop:disable Metrics/AbcSize
-    # do the needful here
-    def do_the_needful
+    def process_migration_reversal
       remove_drug_orders
       remove_proper_drug_orders
       remove_orders
