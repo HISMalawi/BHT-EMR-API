@@ -3,8 +3,6 @@
 class DDEService
   require_relative './dde_service/matcher'
 
-  class DDEError < StandardError; end
-
   DDE_CONFIG_PATH = 'config/application.yml'
   LOGGER = Rails.logger
 

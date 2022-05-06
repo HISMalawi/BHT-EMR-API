@@ -11,6 +11,11 @@
 # end
 
 # These inflection rules are supported but not enabled by default:
-# ActiveSupport::Inflector.inflections(:en) do |inflect|
-#   inflect.acronym 'RESTful'
-# end
+ActiveSupport::Inflector.inflections(:en) do |inflect|
+  inflect.acronym 'DDE'
+  inflect.acronym 'ART'
+  inflect.acronym 'TB'
+  inflect.acronym 'ANC'
+  inflect.acronym 'OPD'
+  inflect.acronym 'VMMC'
+end
