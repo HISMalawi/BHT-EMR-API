@@ -18,4 +18,5 @@ ActiveSupport::Inflector.inflections(:en) do |inflect|
   inflect.acronym 'ANC'
   inflect.acronym 'OPD'
   inflect.acronym 'VMMC'
+  inflect.acronym 'CXCA'
 end
