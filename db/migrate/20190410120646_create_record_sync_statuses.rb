@@ -4,8 +4,8 @@ class CreateRecordSyncStatuses < ActiveRecord::Migration[5.2]
       t.integer :record_type_id, null: false
       t.integer :record_id, null: false
       t.string :record_doc_id, null: false, unique: true
-      t.time :created_at, null: false
-      t.time :updated_at, null: false
+      # t.time :created_at, null: false
+      # t.time :updated_at, null: false
 
       t.timestamps
     end
