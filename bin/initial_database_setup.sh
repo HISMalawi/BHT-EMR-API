@@ -24,10 +24,10 @@ rails db:environment:set RAILS_ENV=$ENV
 #Creat Database
 bundle exec rake db:drop db:create db:seed # db:schema:load
 
-USERNAME=`ruby -ryaml -e "puts YAML::load_file('config/database.yml')['${ENV}']['username']"`
-PASSWORD=`ruby -ryaml -e "puts YAML::load_file('config/database.yml')['${ENV}']['password']"`
-DATABASE=`ruby -ryaml -e "puts YAML::load_file('config/database.yml')['${ENV}']['database']"`
-HOST=`ruby -ryaml -e "puts YAML::load_file('config/database.yml')['${ENV}']['host']"`
+USERNAME=`ruby -ryaml -e "puts YAML::unsafe_load_file('config/database.yml')['${ENV}']['username']"`
+PASSWORD=`ruby -ryaml -e "puts YAML::unsafe_load_file('config/database.yml')['${ENV}']['password']"`
+DATABASE=`ruby -ryaml -e "puts YAML::unsafe_load_file('config/database.yml')['${ENV}']['database']"`
+HOST=`ruby -ryaml -e "puts YAML::unsafe_load_file('config/database.yml')['${ENV}']['host']"`
 
 mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/initial_setup/openmrs_1_7_2_concept_server_full_db.sql
 
