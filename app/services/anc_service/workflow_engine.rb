@@ -57,6 +57,7 @@ module ANCService
     HIV_RECEPTION = 'HIV RECEPTION'
     ART_FOLLOWUP = 'ART_FOLLOWUP'
     HIV_CLINIC_REGISTRATION = 'HIV CLINIC REGISTRATION'
+    PREGNANCY_STATUS = 'PREGNANCY STATUS'
 
     ONE_TIME_ENCOUNTERS = [
       OBSTETRIC_HISTORY,MEDICAL_HISTORY,
@@ -357,17 +358,7 @@ module ANCService
     end
 
     def date_of_lnmp
-      lmp = ConceptName.find_by name: "Last menstrual period"
-      current_pregnancy = EncounterType.find_by name: CURRENT_PREGNANCY
-
-      last_lmp = @patient.encounters.joins([:observations])
-        .where(['encounter_type = ? AND obs.concept_id = ? AND DATE(encounter_datetime) > ?
-          AND DATE(encounter_datetime) < ?',current_pregnancy.id,lmp.concept_id,
-          (@date - 45.week), @date])
-        .last.observations.collect {
-          |o| o.value_datetime
-        }.compact.last.to_date rescue nil
+      ANCService::PregnancyService.date_of_lnmp(@patient, @date)
     end
-
   end
 end

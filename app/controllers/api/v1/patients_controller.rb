@@ -132,7 +132,7 @@ class Api::V1::PatientsController < ApplicationController
   end
 
   def assign_npid
-    render json: service.assign_npid(patient), status: :created
+    render json: service.assign_npid(patient, params['program_id']), status: :created
   end
 
   def find_archiving_candidates
