@@ -612,7 +612,7 @@ def registered_today(visit_type)
       end_date  = start_date.end_of_month
       dates << [start_date, end_date]
 
-      1.upto(11) do |m|
+      1.upto(12) do |m|
         sdate = start_date + m.month
         edate = sdate.end_of_month
         dates << [sdate, edate]
