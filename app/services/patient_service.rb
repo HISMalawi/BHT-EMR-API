@@ -134,9 +134,12 @@ class PatientService
       end
 
       #add program state start date to the visit dates
-      patient.patient_programs.where(program_id: program_id).last.patient_states.map do |state|
-        visit_dates << state.start_date
-        visit_dates.uniq!
+      #if the patient has multiple HIV programs (should not happen but ...) we loop through them and get all state dates
+      patient.patient_programs.where(program_id: program_id).each do |pro|
+        pro.patient_states.map do |state|
+          visit_dates << state.start_date
+          visit_dates.uniq!
+        end
       end
 
       #We sort the dates array to make sure we start with the most recent date
