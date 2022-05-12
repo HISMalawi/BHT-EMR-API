@@ -348,4 +348,7 @@ Rails.application.routes.draw do
 
   get '/api/v1/data_cleaning_confirmation', to: 'api/v1/data_cleaning#view'
   post '/api/v1/data_cleaning_confirmation', to: 'api/v1/data_cleaning#create'
+
+  get 'api/v1/opd_encounters', to: 'api/v1/opd_encounters#fetch_encounter'
+  post 'api/v1/opd_encounter', to: 'api/v1/opd_encounters#update_encounter_program'
 end
