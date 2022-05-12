@@ -5,7 +5,9 @@ class Api::V1::OpdEncountersController < ApplicationController
     limit = params[:limit] ||= 10
     offset = params[:page] ||= 1
 
-    render json: { data: Encounter.where(program_id: nil).limit(limit.to_i).offset((offset.to_i - 1) * limit.to_i), total: Encounter.where(program_id: nil).count },
+    query = "program_id IS NULL #{params[:encounter_type].present? ? "AND encounter_type = #{params[:encounter_type]}" : ''}"
+    render json: { data: Encounter.where(query).limit(limit.to_i).offset((offset.to_i - 1) * limit.to_i),
+                   total: Encounter.where(query).count },
            status: :ok
   end
 
