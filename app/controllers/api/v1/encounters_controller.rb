@@ -44,8 +44,8 @@ class Api::V1::EncountersController < ApplicationController
     encounter_types, = params.require(%i[encounter_types])
 
     complete_report = encounter_types.each_with_object({}) do |type_id, report|
-      male_count = count_by_gender(type_id, 'M', params[:date])
-      fem_count = count_by_gender(type_id, 'F', params[:date])
+      male_count = count_by_gender(type_id, 'M', params[:program_id].to_i, params[:date])
+      fem_count = count_by_gender(type_id, 'F', params[:program_id].to_i, params[:date])
       report[type_id] = { 'M': male_count, 'F': fem_count }
     end
 
@@ -128,8 +128,8 @@ class Api::V1::EncountersController < ApplicationController
     hash.remap_field! :encounter_type_id, :encounter_type
   end
 
-  def count_by_gender(type_id, gender, date = nil)
-    filters = { encounter_type: type_id }
+  def count_by_gender(type_id, gender, program_id, date = nil)
+    filters = { encounter_type: type_id, program_id: program_id}
     filters[:creator] = User.current.user_id unless params[:all]
 
     queryset = Encounter.where(filters)
