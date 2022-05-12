@@ -109,6 +109,13 @@ class Api::V1::CleaningController < ApplicationController
     render json: { message: 'Successful' }, status: :ok
   end
 
+  def orphaned_encounters
+    limit = params[:limit] ||= 10
+    offset = params[:page] ||= 1
+    encounter_type = params[:encounter_type] ||= nil
+    render json: ARTService::DataCleaningTool.orphaned_encounters(limit, offset, encounter_type), status: :ok
+  end
+
   def duplicate_identifier
     identifier = params.require(:identifier)
     ARTService::DataCleaningTool.void_duplicate_npid(identifier)

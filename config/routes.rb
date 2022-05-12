@@ -282,6 +282,7 @@ Rails.application.routes.draw do
   post '/api/v1/duplicate_identifier' => 'api/v1/cleaning#duplicate_identifier'
   post '/api/v1/erroneous_identifier' => 'api/v1/cleaning#erroneous_identifier'
   get '/api/v1/dead_encounters' => 'api/v1/cleaning#index'
+  get '/api/v1/orphaned_encounters' => 'api/v1/cleaning#orphaned_encounters'
   get '/api/v1/date_enrolled' => 'api/v1/cleaning#dateEnrolled'
   get '/api/v1/start_date' => 'api/v1/cleaning#startDate'
   get '/api/v1/male' => 'api/v1/cleaning#male'
@@ -348,7 +349,4 @@ Rails.application.routes.draw do
 
   get '/api/v1/data_cleaning_confirmation', to: 'api/v1/data_cleaning#view'
   post '/api/v1/data_cleaning_confirmation', to: 'api/v1/data_cleaning#create'
-
-  get 'api/v1/opd_encounters', to: 'api/v1/opd_encounters#fetch_encounter'
-  post 'api/v1/opd_encounter', to: 'api/v1/opd_encounters#update_encounter_program'
 end

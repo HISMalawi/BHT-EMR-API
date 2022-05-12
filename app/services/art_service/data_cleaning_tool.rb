@@ -27,6 +27,12 @@ module ARTService
       "#{e.class}: #{e.message}"
     end
 
+    def self.orphaned_encounters(limit, offset, encounter_type)
+      query = "program_id IS NULL #{ encounter_type ? "AND encounter_type = #{encounter_type}" : ''}"
+      { data: Encounter.where(query).limit(limit.to_i).offset((offset.to_i - 1) * limit.to_i),
+        total: Encounter.where(query).count }
+    end
+
     def self.void_duplicate_npid(identifier)
       ActiveRecord::Base.connection.execute <<~SQL
         UPDATE patient_identifier
