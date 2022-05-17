@@ -172,10 +172,11 @@ module ARTService
 
       @side_effects = []
       parent_obs.each do |obs|
-        @side_effects << obs.children
-                            .where(value_coded: ConceptName.find_by_name!('Yes').concept_id)
-                            .collect { |side_effect| side_effect.concept.fullname }
-                            .join(',')
+        result = obs.children
+                    .where(value_coded: ConceptName.find_by_name!('Yes').concept_id)
+                    .collect { |side_effect| side_effect.concept.fullname }
+
+        @side_effects << result.join(',') unless result.blank?
       end
 
       @side_effects
