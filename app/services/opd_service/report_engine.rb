@@ -7,7 +7,9 @@ module OPDService
 
     REPORTS = {
       'LA_PRESCRIPTIONS' => OPDService::Reports::LaPrescriptions,
-      'DIAGNOSIS' => OPDService::Reports::Diagnosis
+      'DIAGNOSIS' => OPDService::Reports::Diagnosis,
+      'CASES_SEEN' => OPDService::Reports::CasesSeen,
+      'MENTAL_HEALTH' => OPDService::Reports::MentalHealth
     }
 
     def initialize
@@ -359,13 +361,14 @@ module OPDService
     end
 
     def drugs_given_without_prescription(start_date, end_date)
+      programID = Program.find_by_name 'OPD Program'
       type = EncounterType.find_by_name 'DRUGS GIVEN'
        visit_type = ConceptName.find_by_name 'Given drugs'
 
       data = Encounter.where('encounter_datetime BETWEEN ? AND ?
-        AND encounter_type = ? AND obs.concept_id = ?',
+        AND encounter_type = ? AND obs.concept_id = ? AND program_id = ?',
         start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
-        end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id, visit_type.concept_id).\
+        end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id, visit_type.concept_id, programID.program_id).\
         joins('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
         INNER JOIN person p ON p.person_id = encounter.patient_id
         INNER JOIN drug d ON d.drug_id = obs.value_drug
@@ -394,11 +397,12 @@ module OPDService
 
     def drugs_given_with_prescription(start_date, end_date)
       type = EncounterType.find_by_name 'TREATMENT'
+      programID = Program.find_by_name 'OPD Program'
 
       data = Encounter.where('encounter_datetime BETWEEN ? AND ?
-        AND encounter_type = ? AND i.quantity > 0',
+        AND encounter_type = ? AND program_id = ? AND i.quantity > 0',
         start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
-        end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id).\
+        end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id, programID.program_id).\
         joins('INNER JOIN orders o ON o.encounter_id = encounter.encounter_id
         INNER JOIN person p ON p.person_id = encounter.patient_id
         INNER JOIN drug_order i ON i.order_id = o.order_id
@@ -612,7 +616,7 @@ def registered_today(visit_type)
       end_date  = start_date.end_of_month
       dates << [start_date, end_date]
 
-      1.upto(12) do |m|
+      1.upto(11) do |m|
         sdate = start_date + m.month
         edate = sdate.end_of_month
         dates << [sdate, edate]
