@@ -14,6 +14,39 @@ minor number changes with new backward compatible features. The major
 number changes with major changes that completely break backwards
 compatibility (examples of this include major architectural changes).
 ## [Unreleased]
+## v4.15.0
+- TB PREV: Updated to calculate those completed medication properly for both 6H and 3HP
+- Voiding Patient State: When voiding Patient Transfer out state, exit from care encounter is automatically being voided
+- Archiving candidates: The system now combines instead of only returning one adverse outcome
+   1. Patients with outcome 'Patient died'
+   2. Patients with outcome 'Patient transferred out'
+   3. Patients with outcome 'Treatment stopped'
+   4. Patients with outcome 'Defaulted'
+- DDE: The system now esposes an endpoint for querying remaining NPIDS
+- DDE: When DDE is down the system now fallbacks to local NPIDS
+- Validations on model
+   1. Observations
+   2. Encounters
+   3. Orders
+- REPORTS: The following are reports have been ammended
+   1. PEPFAR SC_ARVDISP Report
+   2. MOH TPT New Initiation report
+   3. MoH Clinic Regimen Switch Report
+   4. MoH Clinic Reg Dispensation
+   5. MOH Clinic External consultation clients
+- REGIMENS: we have new regimens based on the 2021 guidelines
+   1. 4PP
+   2. 4PA
+   3. 9PP
+   4. 9PA
+   5. 11PP
+   6. 11PA
+   7. 12PP
+   8. 12PA
+   9. 14PA
+   10. 15PA
+   11. 17PP
+   12. 17PA
 
 ### Added
 

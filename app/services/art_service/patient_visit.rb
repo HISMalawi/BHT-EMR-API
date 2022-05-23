@@ -71,14 +71,15 @@ module ARTService
                                    .last\
                                    &.value_coded
 
-      return 'Unk' unless tb_status_value
+      return 'Unknown' unless tb_status_value
 
-      ConceptName.find_by(concept_id: tb_status_value, concept_name_type: 'SHORT')&.name || 'Unk'
+      ConceptName.find_by(concept_id: tb_status_value, concept_name_type: 'FULLY_SPECIFIED')&.name || 'Unknown'
     end
 
     def height
       obs = Observation.where(concept: concept('Height (cm)'), person: patient.person)\
-                       .order(obs_datetime: :desc)\
+                       .where("DATE(obs_datetime) <= DATE('#{@date.to_date}')")
+                       .order(obs_datetime: :desc)
                        .first
 
       obs&.value_numeric || obs&.value_text || 0
@@ -176,14 +177,15 @@ module ARTService
     end
 
     def viral_load_result
-      viral_load_concept = ConceptName.where(name: 'HIV Viral Load').select(:concept_id)
-      tests = Lab::LabTest.where(value_coded: viral_load_concept, person_id: patient.patient_id)
+      tests = viral_load_tests
+      tests = viral_load_tests("<=") if tests.empty?
 
       result = Lab::LabResult.where(obs_group_id: tests, person_id: patient.patient_id)
                              .order(:obs_datetime)
                              .last
       return 'N/A' unless result
 
+      viral_load_concept = ConceptName.where(name: 'HIV Viral Load').select(:concept_id)
       value = result.children.where(concept_id: viral_load_concept).first
       return 'N/A' unless value
 
@@ -217,6 +219,14 @@ module ARTService
     end
 
     private
+
+    def viral_load_tests(sql_params = "=")
+      viral_load_concept = ConceptName.where(name: 'HIV Viral Load').select(:concept_id)
+      # tests = Lab::LabTest.where(value_coded: viral_load_concept, person_id: patient.patient_id, obs_datetime: Dat)
+      tests = Lab::LabTest.where("value_coded IN (#{viral_load_concept.to_sql})
+                                  AND person_id = #{patient.patient_id}
+                                  AND DATE(obs_datetime) #{sql_params} '#{date.to_date}'")
+    end
 
     def lab_tests_engine
       @lab_tests_engine = ARTService::LabTestsEngine.new(program: program('HIV Program'))

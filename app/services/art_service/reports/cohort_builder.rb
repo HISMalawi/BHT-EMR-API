@@ -262,46 +262,44 @@ module ARTService
 
         prescriptions = cal_regimem_category(cohort_struct.total_alive_and_on_art, end_date)
 
-        concepts = ->(names) { ConceptName.where(name: names).select(:concept_id) }
-        drugs = ->(concepts) { Drug.where(concept: concepts).select(:drug_id).collect(&:drug_id) }
+        # concepts = ->(names) { ConceptName.where(name: names).select(:concept_id) }
+        # drugs = ->(concepts) { Drug.where(concept: concepts).select(:drug_id).collect(&:drug_id) }
 
-        lpv_granules = drugs[concepts[['LPV/r Pellets', 'LPV/r Granules']]]
-        lpv_tabs = drugs[concepts['LPV/r']]
+        # lpv_granules = drugs[concepts[['LPV/r Pellets', 'LPV/r Granules']]]
+        # lpv_tabs = drugs[concepts['LPV/r']]
 
-        cohort_struct.zero_a            = filter_prescriptions_by_regimen(prescriptions, '0A')
-        cohort_struct.one_a             = filter_prescriptions_by_regimen(prescriptions, '1A')
         cohort_struct.zero_p            = filter_prescriptions_by_regimen(prescriptions, '0P')
-        cohort_struct.one_p             = filter_prescriptions_by_regimen(prescriptions, '1P')
-        cohort_struct.two_a             = filter_prescriptions_by_regimen(prescriptions, '2A')
+        cohort_struct.zero_a            = filter_prescriptions_by_regimen(prescriptions, '0A')
         cohort_struct.two_p             = filter_prescriptions_by_regimen(prescriptions, '2P')
-        cohort_struct.three_a           = filter_prescriptions_by_regimen(prescriptions, '3A')
-        cohort_struct.three_p           = filter_prescriptions_by_regimen(prescriptions, '3P')
+        cohort_struct.two_a             = filter_prescriptions_by_regimen(prescriptions, '2A')
         cohort_struct.four_a            = filter_prescriptions_by_regimen(prescriptions, '4A')
-        cohort_struct.four_p            = filter_prescriptions_by_regimen(prescriptions, '4P')
+        cohort_struct.four_pp           = filter_prescriptions_by_regimen(prescriptions, '4PP')
+        cohort_struct.four_pa           = filter_prescriptions_by_regimen(prescriptions, '4PA')
         cohort_struct.five_a            = filter_prescriptions_by_regimen(prescriptions, '5A')
         cohort_struct.six_a             = filter_prescriptions_by_regimen(prescriptions, '6A')
         cohort_struct.seven_a           = filter_prescriptions_by_regimen(prescriptions, '7A')
         cohort_struct.eight_a           = filter_prescriptions_by_regimen(prescriptions, '8A')
         cohort_struct.nine_a            = filter_prescriptions_by_regimen(prescriptions, '9A')
-        cohort_struct.nine_p            = filter_prescriptions_by_regimen(prescriptions, '9P')
-        cohort_struct.nine_p_granules   = filter_prescriptions_by_drugs(cohort_struct.nine_p, lpv_granules)
-        cohort_struct.nine_p_tabs       = filter_prescriptions_by_drugs(cohort_struct.nine_p, lpv_tabs)
+        cohort_struct.nine_pp           = filter_prescriptions_by_regimen(prescriptions, '9PP')
+        cohort_struct.nine_pa           = filter_prescriptions_by_regimen(prescriptions, '9PA')
         cohort_struct.ten_a             = filter_prescriptions_by_regimen(prescriptions, '10A')
         cohort_struct.eleven_a          = filter_prescriptions_by_regimen(prescriptions, '11A')
-        cohort_struct.eleven_p          = filter_prescriptions_by_regimen(prescriptions, '11P')
-        cohort_struct.eleven_p_granules = filter_prescriptions_by_drugs(cohort_struct.eleven_p, lpv_granules)
-        cohort_struct.eleven_p_tabs     = filter_prescriptions_by_drugs(cohort_struct.eleven_p, lpv_tabs)
+        cohort_struct.eleven_pp         = filter_prescriptions_by_regimen(prescriptions, '11PP')
+        cohort_struct.eleven_pa         = filter_prescriptions_by_regimen(prescriptions, '11PA')
         cohort_struct.twelve_a          = filter_prescriptions_by_regimen(prescriptions, '12A')
+        cohort_struct.twelve_pp         = filter_prescriptions_by_regimen(prescriptions, '12PP')
+        cohort_struct.twelve_pa         = filter_prescriptions_by_regimen(prescriptions, '12PA')
         cohort_struct.thirteen_a        = filter_prescriptions_by_regimen(prescriptions, '13A')
-        cohort_struct.fourteen_p        = filter_prescriptions_by_regimen(prescriptions, '14P')
         cohort_struct.fourteen_pp       = filter_prescriptions_by_regimen(prescriptions, '14PP')
+        cohort_struct.fourteen_pa       = filter_prescriptions_by_regimen(prescriptions, '14PA')
         cohort_struct.fourteen_a        = filter_prescriptions_by_regimen(prescriptions, '14A')
-        cohort_struct.fifteen_p         = filter_prescriptions_by_regimen(prescriptions, '15P')
         cohort_struct.fifteen_pp        = filter_prescriptions_by_regimen(prescriptions, '15PP')
+        cohort_struct.fifteen_pa        = filter_prescriptions_by_regimen(prescriptions, '15PA')
         cohort_struct.fifteen_a         = filter_prescriptions_by_regimen(prescriptions, '15A')
         cohort_struct.sixteen_p         = filter_prescriptions_by_regimen(prescriptions, '16P')
         cohort_struct.sixteen_a         = filter_prescriptions_by_regimen(prescriptions, '16A')
-        cohort_struct.seventeen_p       = filter_prescriptions_by_regimen(prescriptions, '17P')
+        cohort_struct.seventeen_pp      = filter_prescriptions_by_regimen(prescriptions, '17PP')
+        cohort_struct.seventeen_pa      = filter_prescriptions_by_regimen(prescriptions, '17PA')
         cohort_struct.seventeen_a       = filter_prescriptions_by_regimen(prescriptions, '17A')
         cohort_struct.unknown_regimen   = filter_prescriptions_by_regimen(prescriptions, 'unknown_regimen')
 
@@ -561,6 +559,12 @@ module ARTService
       def load_data_into_temp_earliest_start_date(end_date)
         end_date = ActiveRecord::Base.connection.quote(end_date)
 
+        type_of_patient_concept = concept('Type of patient').concept_id
+        new_patient_concept = concept('New patient').concept_id
+        drug_refill_concept = concept('Drug refill').concept_id
+        external_concept = concept('External Consultation').concept_id
+        program_id = Program.find_by(name: 'HIV program').id
+
         ActiveRecord::Base.connection.execute <<~SQL
           INSERT INTO temp_earliest_start_date
           SELECT patient_program.patient_id,
@@ -617,35 +621,57 @@ module ARTService
             AND patient_program.program_id = 1
             AND outcome.state = 7
             AND outcome.start_date IS NOT NULL
-            AND patient_program.patient_id NOT IN (
-              SELECT patient_type_obs.person_id
-              FROM obs AS patient_type_obs
-              INNER JOIN (
-                SELECT MAX(obs_datetime) AS obs_datetime, person_id
-                FROM obs
-                INNER JOIN encounter USING (encounter_id)
-                WHERE obs.concept_id IN (SELECT concept_id FROM concept_name WHERE name LIKE 'Type of patient' AND voided = 0)
-                  AND obs.obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
-                  AND encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'REGISTRATION' AND retired = 0)
-                  AND encounter.program_id IN (SELECT program_id FROM program WHERE name LIKE 'HIV Program')
-                  AND encounter.encounter_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
-                  AND obs.voided = 0
-                  AND encounter.voided = 0
-                GROUP BY obs.person_id
-              ) AS max_patient_type_obs
-                ON max_patient_type_obs.person_id = patient_type_obs.person_id
-                AND max_patient_type_obs.obs_datetime = patient_type_obs.obs_datetime
-                /* Doing the above to avoid picking patients that changed patient types at some point (eg External consultation to New patient) */
-              WHERE patient_type_obs.concept_id IN (SELECT concept_id FROM concept_name WHERE name = 'Type of patient' AND voided = 0)
-                AND patient_type_obs.value_coded IN (SELECT concept_id FROM concept_name WHERE name IN ('Drug refill', 'External consultation') AND voided = 0)
-                AND patient_type_obs.voided = 0
-                AND patient_type_obs.obs_datetime < (DATE(#{end_date}) + INTERVAL 1 DAY)
-              GROUP BY patient_type_obs.person_id
-            )
+            /*AND patient_program.patient_id NOT IN (
+              SELECT e.patient_id FROM encounter e
+              LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND value_coded = #{new_patient_concept}) AS new_patient ON e.patient_id = new_patient.person_id
+              LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND value_coded = #{drug_refill_concept}) AS refill ON e.patient_id = refill.person_id
+              LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND value_coded = #{external_concept}) AS external ON e.patient_id = external.person_id
+              WHERE e.program_id = #{program_id} AND (refill.value_coded IS NOT NULL OR external.value_coded IS NOT NULL)
+              AND new_patient.value_coded IS NULL
+              AND e.encounter_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
+              AND e.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'REGISTRATION' AND retired = 0)
+              GROUP BY e.patient_id
+            )*/
           GROUP by patient_program.patient_id
           HAVING date_enrolled <= #{end_date}
         SQL
+        remove_drug_refills_and_external_consultation(end_date)
       end
+
+      def remove_drug_refills_and_external_consultation(end_date)
+        ActiveRecord::Base.connection.execute <<~SQL
+          DELETE FROM temp_earliest_start_date
+          WHERE patient_id IN (#{drug_refills_and_external_consultation_list(end_date)})
+        SQL
+      end
+
+      # this just gives all clients who are truly external or drug refill
+      # rubocop:disable Metrics/MethodLength
+      # rubocop:disable Metrics/AbcSize
+      def drug_refills_and_external_consultation_list(end_date)
+        to_remove = [0]
+
+        type_of_patient_concept = concept('Type of patient').concept_id
+        new_patient_concept = concept('New patient').concept_id
+        drug_refill_concept = concept('Drug refill').concept_id
+        external_concept = concept('External Consultation').concept_id
+        hiv_clinic_registration_id = EncounterType.find_by_name('HIV CLINIC REGISTRATION').encounter_type_id
+
+        ActiveRecord::Base.connection.select_all("SELECT e.patient_id FROM temp_earliest_start_date e
+        LEFT JOIN encounter as hiv_registration ON hiv_registration.patient_id = e.patient_id AND hiv_registration.encounter_datetime < DATE(#{end_date}) AND hiv_registration.encounter_type = #{hiv_clinic_registration_id} AND hiv_registration.voided = 0
+        LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND value_coded = #{new_patient_concept} AND obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY) AS new_patient ON e.patient_id = new_patient.person_id
+        LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND value_coded = #{drug_refill_concept} AND obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY) AS refill ON e.patient_id = refill.person_id
+        LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND value_coded = #{external_concept} AND obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY) AS external ON e.patient_id = external.person_id
+        WHERE (refill.value_coded IS NOT NULL OR external.value_coded IS NOT NULL)
+        AND NOT (hiv_registration.encounter_id IS NOT NULL OR new_patient.value_coded IS NOT NULL)
+        GROUP BY e.patient_id
+        ORDER BY hiv_registration.encounter_datetime DESC, refill.obs_datetime DESC, external.obs_datetime DESC;").each do |record|
+          to_remove << record['patient_id'].to_i
+        end
+        to_remove.join(',')
+      end
+      # rubocop:enable Metrics/MethodLength
+      # rubocop:enable Metrics/AbcSize
 
       def create_tmp_patient_table
         ActiveRecord::Base.connection.execute('DROP TABLE IF EXISTS temp_earliest_start_date')
@@ -1211,9 +1237,8 @@ EOF
       end
 
       COHORT_REGIMENS = %w[
-        0P 2P 4P 9P 11P 14P 14PP 15P 15PP 16P 17P 0A 2A 4A
-        5A 6A 7A 8A 9A 10A 11A 12A 13A 14A 15A
-        16A 17A
+        0P 2P 4PP 4PA 9PP 9PA 11PP 11PA 12PP 12PA 14PP 14PA 15PP 15PA 16P 17PP 17PA
+        4A 5A 6A 7A 8A 9A 10A 11A 12A 13A 14A 15A 16A 17A
       ].freeze
 
       def cal_regimem_category(_patient_list, end_date)

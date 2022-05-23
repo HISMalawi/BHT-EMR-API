@@ -230,6 +230,7 @@ Rails.application.routes.draw do
       get '/dde/patients/refresh', to: 'dde#refresh_patient'
       post '/dde/patients/reassign_npid', to: 'dde#reassign_patient_npid'
       post '/dde/patients/merge', to: 'dde#merge_patients'
+      get '/dde/patients/remaining_npids', to: 'dde#remaining_npids'
 
       get '/labels/location', to: 'locations#print_label'
 
@@ -278,6 +279,8 @@ Rails.application.routes.draw do
   post '/api/v1/vl_maternal_status' => 'api/v1/reports#vl_maternal_status'
 
   # SQA controller
+  post '/api/v1/duplicate_identifier' => 'api/v1/cleaning#duplicate_identifier'
+  post '/api/v1/erroneous_identifier' => 'api/v1/cleaning#erroneous_identifier'
   get '/api/v1/dead_encounters' => 'api/v1/cleaning#index'
   get '/api/v1/date_enrolled' => 'api/v1/cleaning#dateEnrolled'
   get '/api/v1/start_date' => 'api/v1/cleaning#startDate'
@@ -342,4 +345,7 @@ Rails.application.routes.draw do
   post '/api/v1/dispatch_order', to: 'api/v1/dispatch_orders#create'
   get '/api/v1/latest_regimen_dispensed', to: 'api/v1/reports#latest_regimen_dispensed'
   get '/api/v1/sc_arvdisp', to: 'api/v1/reports#sc_arvdisp'
+
+  get '/api/v1/data_cleaning_confirmation', to: 'api/v1/data_cleaning#view'
+  post '/api/v1/data_cleaning_confirmation', to: 'api/v1/data_cleaning#create'
 end

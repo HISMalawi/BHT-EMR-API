@@ -19,7 +19,7 @@ module ANCService
       print_time message: 'Starting migration reversal script', long_form: true
       @users = user_list
       patient_in_use
-      @patients = patient_list
+      @patients = "#{patient_list},#{user_person_list}"
       patient_identifier_in_use
       patient_not_in_use
       @remove = remove_list
@@ -29,19 +29,7 @@ module ANCService
       begin
         ActiveRecord::Base.transaction do
           ActiveRecord::Base.connection.disable_referential_integrity do
-            remove_drug_orders
-            remove_orders
-            remove_obs
-            remove_concept_proposal
-            remove_encounters
-            remove_patient_state
-            remove_patient_program
-            remove_patient_identifier
-            remove_patient
-            remove_person_attribute
-            remove_person_address
-            remove_person_name
-            remove_person
+            process_migration_reversal
           end
         end
       rescue StandardError => e
@@ -56,6 +44,38 @@ module ANCService
 
     private
 
+    # rubocop:disable Metrics/MethodLength
+    # rubocop:disable Metrics/AbcSize
+    def process_migration_reversal
+      remove_drug_orders
+      remove_proper_drug_orders
+      remove_orders
+      remove_proper_orders
+      remove_obs
+      remove_proper_obs
+      remove_concept_proposal
+      remove_encounters
+      remove_proper_encounters
+      remove_patient_state
+      remove_proper_patient_state
+      remove_patient_program
+      remove_proper_patient_program
+      remove_patient_identifier
+      remove_proper_patient_identifier
+      remove_patient
+      remove_proper_patient
+      remove_person_attribute
+      remove_proper_person_attribute
+      remove_person_address
+      remove_proper_person_address
+      remove_person_name
+      remove_proper_person_name
+      remove_person
+      remove_proper_person
+    end
+    # rubocop:enable Metrics/AbcSize
+    # rubocop:enable Metrics/MethodLength
+
     # method to map patients that are already being used
     def patient_in_use
       central_execute statement: "DROP TABLE IF EXISTS #{@database}.ART_patient_in_use"
@@ -64,7 +84,7 @@ module ANCService
         SELECT p.patient_id
         FROM patient p
         INNER JOIN encounter e ON p.patient_id = e.patient_id
-        WHERE p.creator IN (#{@users}) AND e.date_created >= DATE('#{@date}')
+        WHERE p.creator IN (#{@users}) AND DATE(e.date_created) >= DATE('#{@date}')
         GROUP BY p.patient_id HAVING COUNT(*) > 0;
       SQL
       central_execute message: 'Saving patients in use', statement: statement
@@ -260,14 +280,38 @@ module ANCService
       central_hub 'drug_order', condition
     end
 
+    # method to remove drug that were properly migrated
+    def remove_proper_drug_orders
+      statement = <<~SQL
+        DELETE FROM drug_order WHERE order_id IN (SELECT order_id FROM orders WHERE DATE(date_created) <= DATE('#{@date}') AND creator IN (#{@users}) AND patient_id NOT IN (#{@patients}))
+      SQL
+      central_execute message: 'Remove drug_orders that were migrated properly', statement: statement
+    end
+
     # method to remove orders
     def remove_orders
       central_hub 'orders', "WHERE patient_id NOT IN (#{@remove})"
     end
 
+    # method to remove orders that were properly migrated
+    def remove_proper_orders
+      stmt = <<~SQL
+        DELETE FROM orders WHERE DATE(date_created) <= DATE('#{@date}') AND creator IN (#{@users}) AND patient_id NOT IN (#{@patients})
+      SQL
+      central_execute message: 'Removing orders that were migrated properly', statement: stmt
+    end
+
     # method to remove observations
     def remove_obs
       central_hub 'obs', "WHERE person_id NOT IN (#{@remove})"
+    end
+
+    # method to remove observations that were properly migrated
+    def remove_proper_obs
+      stmt = <<~SQL
+        DELETE FROM obs WHERE DATE(date_created) <= DATE('#{@date}') AND creator IN (#{@users}) AND person_id NOT IN (#{@patients})
+      SQL
+      central_execute message: 'Removing obs that were properly migrated', statement: stmt
     end
 
     # method to remove concept proposal
@@ -281,6 +325,14 @@ module ANCService
       central_hub 'encounter', "WHERE patient_id NOT IN (#{@remove})"
     end
 
+    # method to remove properly migrated encounters
+    def remove_proper_encounters
+      stmt = <<~SQL
+        DELETE FROM encounter WHERE DATE(date_created) <= DATE('#{@date}') AND creator IN (#{@users}) AND patient_id NOT IN (#{@patients})
+      SQL
+      central_execute message: 'Removing encounters that were properly migrated', statement: stmt
+    end
+
     # method to remove patient state
     def remove_patient_state
       condition = <<~SQL
@@ -289,9 +341,29 @@ module ANCService
       central_hub 'patient_state', condition
     end
 
+    # method to remove properly migrated encounters
+    def remove_proper_patient_state
+      stmt = <<~SQL
+        DELETE FROM patient_state
+        WHERE DATE(date_created) <= DATE('#{@date}')
+        AND creator IN (#{@users})
+        AND patient_program_id IN
+        (SELECT patient_program_id FROM patient_program WHERE DATE(date_created) <= DATE('#{@date}') AND creator IN (#{@users}) AND patient_id NOT IN (#{@patients}))
+      SQL
+      central_execute message: 'Removing patient states that were properly migrated', statement: stmt
+    end
+
     # method to remove patient program records
     def remove_patient_program
       central_hub 'patient_program', "WHERE patient_id NOT IN (#{@remove})"
+    end
+
+    # method to remove properly migrated encounters
+    def remove_proper_patient_program
+      stmt = <<~SQL
+        DELETE FROM patient_program WHERE DATE(date_created) <= DATE('#{@date}') AND creator IN (#{@users}) AND patient_id NOT IN (#{@patients})
+      SQL
+      central_execute message: 'Removing patient program that were properly migrated', statement: stmt
     end
 
     # method to remove patient identifier records
@@ -299,9 +371,25 @@ module ANCService
       central_hub 'patient_identifier', "WHERE patient_id NOT IN (#{@remove})"
     end
 
+    # method to remove properly migrated encounters
+    def remove_proper_patient_identifier
+      stmt = <<~SQL
+        DELETE FROM patient_identifier WHERE DATE(date_created) <= DATE('#{@date}') AND creator IN (#{@users}) AND patient_id NOT IN (#{@patients})
+      SQL
+      central_execute message: 'Removing patient_identifier that were properly migrated', statement: stmt
+    end
+
     # method to remove patients
     def remove_patient
       central_hub 'patient', "WHERE patient_id NOT IN (#{@remove})"
+    end
+
+    # method to remove properly migrated encounters
+    def remove_proper_patient
+      stmt = <<~SQL
+        DELETE FROM patient WHERE DATE(date_created) <= DATE('#{@date}') AND creator IN (#{@users}) AND patient_id NOT IN (#{@patients})
+      SQL
+      central_execute message: 'Removing patients that were properly migrated', statement: stmt
     end
 
     # method to remove person attributes
@@ -309,9 +397,25 @@ module ANCService
       central_hub 'person_attribute', "WHERE person_id NOT IN (#{@remove})"
     end
 
+    # method to remove properly migrated encounters
+    def remove_proper_person_attribute
+      stmt = <<~SQL
+        DELETE FROM person_attribute WHERE DATE(date_created) <= DATE('#{@date}') AND creator IN (#{@users}) AND person_id NOT IN (#{@patients})
+      SQL
+      central_execute message: 'Removing person attributes that were properly migrated', statement: stmt
+    end
+
     # method to remove person address
     def remove_person_address
       central_hub 'person_address', "WHERE person_id NOT IN (#{@remove})"
+    end
+
+    # method to remove properly migrated encounters
+    def remove_proper_person_address
+      stmt = <<~SQL
+        DELETE FROM person_address WHERE DATE(date_created) <= DATE('#{@date}') AND creator IN (#{@users}) AND person_id NOT IN (#{@patients})
+      SQL
+      central_execute message: 'Removing person addresses that were properly migrated', statement: stmt
     end
 
     # method to remove person name
@@ -319,9 +423,25 @@ module ANCService
       central_hub 'person_name', "WHERE person_id NOT IN (#{@remove})"
     end
 
+    # method to remove properly migrated encounters
+    def remove_proper_person_name
+      stmt = <<~SQL
+        DELETE FROM person_name WHERE DATE(date_created) <= DATE('#{@date}') AND creator IN (#{@users}) AND person_id NOT IN (#{@patients})
+      SQL
+      central_execute message: 'Removing person names that were properly migrated', statement: stmt
+    end
+
     # method to remove person records
     def remove_person
       central_hub 'person', "WHERE person_id NOT IN (#{@remove})"
+    end
+
+    # method to remove properly migrated encounters
+    def remove_proper_person
+      stmt = <<~SQL
+        DELETE FROM person WHERE DATE(date_created) <= DATE('#{@date}') AND creator IN (#{@users}) AND person_id NOT IN (#{@patients})
+      SQL
+      central_execute message: 'Removing person that were properly migrated', statement: stmt
     end
 
     # method to get patients in use
@@ -346,6 +466,14 @@ module ANCService
         SELECT ART_user_id FROM #{@database}.user_bak
       SQL
       x.map { |id| id['ART_user_id'].to_i }.push(0).join(',')
+    end
+
+    # method to get person id of users that are in use in openmrs
+    def user_person_list
+      x = ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT person_id FROM users WHERE user_id IN (#{user_list})
+      SQL
+      x.map { |id| id['person_id'].to_i }.push(0).join(',')
     end
 
     # method to print time when running some heavy things

@@ -43,6 +43,13 @@ class DDEService
     push_local_patient_to_dde(patient)
   end
 
+  def remaining_npids
+    response, status = dde_client.get("/location_npid_status?location_id=#{Location.current.id}")
+    raise DDEError, "Failed to fetch remaining npids: #{status} - #{response}" unless status == 200
+
+    response
+  end
+
   def void_patient(patient, reason)
     raise ArgumentError, "Can't request a DDE void for a non-voided patient" unless patient.voided?
     raise ArgumentError, 'void_reason is required' if reason.blank?
@@ -414,11 +421,13 @@ class DDEService
     Rails.logger.info("Pushing local patient ##{patient.patient_id} to DDE")
     response, status = dde_client.post('add_person', openmrs_to_dde_patient(patient))
 
-    if status != 200
+    if status == 422
       error = UnprocessableEntityError.new("Failed to create patient in DDE: #{response.to_json}")
       error.add_entity(patient)
       raise error
     end
+
+    raise response.to_json if status != 200
 
     merging_service.link_local_to_remote_patient(patient, response)
   end

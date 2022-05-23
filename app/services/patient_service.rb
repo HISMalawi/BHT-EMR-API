@@ -12,18 +12,24 @@ class PatientService
       end
 
       if use_dde_service?
-        assign_patient_dde_npid(patient, program)
-      else
-        assign_patient_v3_npid(patient)
-        if malawi_national_id.present?
-           assign_patient_v28_malawiNid(patient,malawi_national_id)
+        begin
+          assign_patient_dde_npid(patient, program)
+        rescue RuntimeError => e
+          create_local_npid(patient, malawi_national_id)
         end
-
+      else
+        create_local_npid(patient, malawi_national_id)
       end
 
       patient.reload
       patient
     end
+  end
+
+  # method to create local npid
+  def create_local_npid(patient, malawi_national_id)
+    assign_patient_v3_npid(patient)
+    assign_patient_v28_malawiNid(patient, malawi_national_id) if malawi_national_id.present?
   end
 
   ##
@@ -97,14 +103,15 @@ class PatientService
            .distinct
   end
 
-  def find_patient_visit_dates(patient, program = nil, include_defaulter_dates = nil)
+  def find_patient_visit_dates(patient, program = nil, include_defaulter_dates = nil, date = nil)
     patient_id = ActiveRecord::Base.connection.quote(patient.id)
     program_id = program ? ActiveRecord::Base.connection.quote(program.id) : nil
+    date ||= Date.today
 
     rows = ActiveRecord::Base.connection.select_all <<-SQL
       SELECT DISTINCT DATE(encounter_datetime) AS visit_date
       FROM encounter
-      WHERE patient_id = #{patient_id} AND voided = 0 #{"AND program_id = #{program_id}" if program_id}
+      WHERE patient_id = #{patient_id} AND voided = 0 #{"AND program_id = #{program_id}" if program_id} AND encounter_datetime < DATE('#{date}') + INTERVAL 1 DAY
       GROUP BY visit_date
       ORDER BY visit_date DESC
     SQL
@@ -126,11 +133,20 @@ class PatientService
         end
       end
 
+      #add program state start date to the visit dates
+      #if the patient has multiple HIV programs (should not happen but ...) we loop through them and get all state dates
+      patient.patient_programs.where(program_id: program_id).each do |pro|
+        pro.patient_states.map do |state|
+          visit_dates << state.start_date
+          visit_dates.uniq!
+        end
+      end
+
       #We sort the dates array to make sure we start with the most recent date
       visit_dates = visit_dates.sort {|a,b| b.to_date <=> a.to_date}
     end
 
-    visit_dates
+    visit_dates.select { |record| record.to_date <= date }
   end
 
   # method to fetch patient state that is between the defaulter date
@@ -300,14 +316,14 @@ class PatientService
     )
   end
 
-  def assign_npid(patient)
+  def assign_npid(patient, program_id)
     national_id_type = patient_identifier_type(PatientIdentifierType::NPID_TYPE_NAME)
     existing_identifiers = patient_identifiers(patient, national_id_type)
     existing_identifiers[0]
 
     # Force immediate execution of query. We don't want it executing after saving
     # the new identifier below
-    new_identifier = next_available_npid(patient, national_id_type)
+    new_identifier = next_available_npid(patient: patient, identifier_type: national_id_type, program_id: program_id)
 
     existing_identifiers.each do |identifier|
       identifier.void("Re-assigned to new national identifier: #{new_identifier.identifier}")
@@ -649,18 +665,18 @@ class PatientService
   end
 
   # Returns the next available patient identifier for assignment
-  def next_available_npid(patient, identifier_type)
+  def next_available_npid(patient: , identifier_type: , program_id: nil)
     unless identifier_type.name.match?(/#{PatientIdentifierType::NPID_TYPE_NAME}/i)
       raise "Unknown identifier type: #{identifier_type.name}"
     end
 
     return identifier_type.next_identifier(patient: patient) unless use_dde_service?
 
-    dde_patient_id_type = patient_identifier_type(PatientIdentifierType::DDE_ID_TYPE)
+    dde_patient_id_type = patient_identifier_type(PatientIdentifierType::DDE_ID_TYPE_NAME)
     dde_patient_id = patient_identifiers(patient, dde_patient_id_type).first&.identifier
-    return dde_service.re_assign_npid(dde_patient_id) if dde_patient_id
+    return dde_service(Program.find(program_id)).re_assign_npid(dde_patient_id) if dde_patient_id
 
-    dde_service.register_patient(patient)
+    dde_service(Program.find(program_id)).create_patient(patient)
   end
 
   # The two methods that follow were sourced somewhere from NART/lib/patient_service.

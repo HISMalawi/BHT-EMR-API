@@ -1,4 +1,3 @@
-
 class ARTService::Reports::ViralLoad
   include ModelUtils
 
@@ -13,21 +12,23 @@ class ARTService::Reports::ViralLoad
   end
 
   def clients_due
-    clients =  potential_get_clients
+    clients = potential_get_clients
     return [] if clients.blank?
+
     clients_due_list = []
 
     clients.each do |person|
-      vl_details = get_vl_due_details(person) #person[:patient_id], person[:appointment_date], person[:start_date])
+      vl_details = get_vl_due_details(person) # person[:patient_id], person[:appointment_date], person[:start_date])
       next if vl_details.blank?
+
       clients_due_list << vl_details
     end
 
-    return clients_due_list
+    clients_due_list
   end
 
   def vl_results
-    return read_results
+    read_results
   end
 
   private
@@ -52,17 +53,21 @@ class ARTService::Reports::ViralLoad
   end
 
   def closing_states
-    state_concepts = ConceptName.where(name: ['Patient died', 'Patient transferred out', 'Treatment stopped'])
-                                .select(:concept_id)
-    states = ProgramWorkflowState.where(concept_id: state_concepts)
-                                 .joins(:program_workflow)
-                                 .merge(ProgramWorkflow.where(program: @program))
+    # state_concepts = ConceptName.where(name: ['Patient died', 'Patient transferred out', 'Treatment stopped'])
+    #                             .select(:concept_id)
+    # states = ProgramWorkflowState.where(concept_id: state_concepts)
+    #                              .joins(:program_workflow)
+    #                              .merge(ProgramWorkflow.where(program: @program))
 
-    PatientState.joins(:program_workflow_state)
-                .merge(states)
-                .select(:state)
-                .distinct(:state)
-                .to_sql
+    # PatientState.joins(:program_workflow_state)
+    #             .merge(states)
+    #             .select(:state)
+    #             .distinct(:state)
+    #             .to_sql
+    ProgramWorkflowState.joins(:program_workflow)
+                        .where(initial: 0, terminal: 1,
+                               program_workflow: { program_id: @program.id })
+                        .select(:program_workflow_state_id).to_sql
   end
 
   def potential_get_clients
@@ -148,21 +153,22 @@ class ARTService::Reports::ViralLoad
     end
   end
 
-  def get_vl_due_details(person) #patient_id, appointment_date, patient_start_date)
+  def get_vl_due_details(person) # patient_id, appointment_date, patient_start_date)
     patient_start_date = person[:start_date].to_date rescue nil
     return if patient_start_date.blank?
-    start_date = patient_start_date
+
+    # start_date = patient_start_date
     appointment_date = person[:appointment_date].to_date
-    #months_on_art = date_diff(patient_start_date.to_date, @end_date.to_date)
+    # months_on_art = date_diff(patient_start_date.to_date, @end_date.to_date)
     vl_info = get_vl_due_info(person[:patient_id], appointment_date)
     months_on_art = vl_info[:period_on_art]
 
-    #if @possible_milestones.include?(months_on_art)
-    if vl_info[:eligibile]
+    # if @possible_milestones.include?(months_on_art)
+    if vl_info[:eligibile] || (vl_info[:due_date] <= end_date.to_date + 28.day)
       last_result = last_vl_result(person[:patient_id])
-      return {
+      {
         patient_id: person[:patient_id],
-        mile_stone: (patient_start_date.to_date + months_on_art).to_date,
+        mile_stone: vl_info[:due_date], # (patient_start_date.to_date + months_on_art.month).to_date,
         start_date: patient_start_date,
         months_on_art: months_on_art,
         appointment_date: appointment_date,
@@ -171,7 +177,11 @@ class ARTService::Reports::ViralLoad
         gender: person[:gender],
         birthdate: person[:birthdate],
         arv_number: use_filing_number(person[:patient_id], person[:arv_number]),
-        last_result_order_date: (last_result.order_date.to_date rescue 'N/A'),
+        last_result_order_date: begin
+          last_result.order_date.to_date
+        rescue StandardError
+          'N/A'
+        end,
         last_result: last_result.result_value,
         last_result_date: last_result.result_date
       }
@@ -180,48 +190,50 @@ class ARTService::Reports::ViralLoad
 
   def date_diff(date1, date2)
     diff_cal = ActiveRecord::Base.connection.select_one <<~SQL
-    SELECT TIMESTAMPDIFF(MONTH, DATE('#{date1.to_date}'), DATE('#{date2.to_date}')) AS months;
+      SELECT TIMESTAMPDIFF(MONTH, DATE('#{date1.to_date}'), DATE('#{date2.to_date}')) AS months;
     SQL
 
-    return diff_cal['months'].to_i
+    diff_cal['months'].to_i
   end
 
   def possible_milestones
     milestones = [6]
     start_month = 6
 
-    1.upto(1000).each do |y|
+    1.upto(1000).each do |_y|
       milestones << (start_month += 12)
     end
 
-    return milestones
+    milestones
   end
 
   def read_results
-    all_results = LaboratoryService::Reports::Clinic::ProcessedResults.new(start_date: @start_date, end_date: @end_date).read
+    all_results = LaboratoryService::Reports::Clinic::ProcessedResults.new(start_date: @start_date,
+                                                                           end_date: @end_date).read
     processed_vl_results = []
 
     all_results.each do |result|
-    measures = result[:measures]
-    measures.each do |measure|
-      next unless measure[:name].match(/viral load/)
-      processed_vl_results << {
-        accession_number: result[:accession_number],
-        result_date: result[:result_date],
-        patient_id: result[:patient_id],
-        order_date: result[:order_date],
-        specimen: result[:test],
-        gender: result[:gender],
-        arv_number: result[:arv_number],
-        birthdate: result[:birthdate],
-        age_group: result[:age_group],
-        result: measure[:value],
-        result_modifier: measure[:modifier]
-      }
-    end
-   end
+      measures = result[:measures]
+      measures.each do |measure|
+        next unless measure[:name].match(/viral load/)
 
-   return processed_vl_results
+        processed_vl_results << {
+          accession_number: result[:accession_number],
+          result_date: result[:result_date],
+          patient_id: result[:patient_id],
+          order_date: result[:order_date],
+          specimen: result[:test],
+          gender: result[:gender],
+          arv_number: result[:arv_number],
+          birthdate: result[:birthdate],
+          age_group: result[:age_group],
+          result: measure[:value],
+          result_modifier: measure[:modifier]
+        }
+      end
+    end
+
+    processed_vl_results
   end
 
   def last_vl_result(patient_id)
@@ -253,14 +265,13 @@ class ARTService::Reports::ViralLoad
     return arv_number unless @use_filing_number
 
     identifier_types = PatientIdentifierType.where("name LIKE '%Filing number%'").map(&:patient_identifier_type_id)
-    filing_numbers = PatientIdentifier.where("patient_id = ? AND identifier_type IN(?)",
-      patient_id, identifier_types)
-    return filing_numbers.blank? ? '' : filing_numbers.last.identifier
+    filing_numbers = PatientIdentifier.where('patient_id = ? AND identifier_type IN(?)',
+                                             patient_id, identifier_types)
+    filing_numbers.blank? ? '' : filing_numbers.last.identifier
   end
 
   def get_vl_due_info(patient_id, appointment_date)
     vl_info = ARTService::VLReminder.new(patient_id: patient_id, date: appointment_date)
-    return vl_info.vl_reminder_info
+    vl_info.vl_reminder_info
   end
-
 end

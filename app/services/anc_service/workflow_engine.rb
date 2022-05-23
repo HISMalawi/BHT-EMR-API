@@ -57,6 +57,7 @@ module ANCService
     HIV_RECEPTION = 'HIV RECEPTION'
     ART_FOLLOWUP = 'ART_FOLLOWUP'
     HIV_CLINIC_REGISTRATION = 'HIV CLINIC REGISTRATION'
+    PREGNANCY_STATUS = 'PREGNANCY STATUS'
 
     ONE_TIME_ENCOUNTERS = [
       OBSTETRIC_HISTORY,MEDICAL_HISTORY,
@@ -159,7 +160,7 @@ module ANCService
     # what encounter the patient should go for in this present time.
     def encounter_exists?(type)
       if (type == encounter_type("TREATMENT"))
-        return patient_has_been_given_drugs?
+        return patient_not_receiving_treatment_today? || patient_has_been_given_drugs?
       end
       Encounter.where(type: type, patient: @patient)\
                .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
@@ -190,6 +191,18 @@ module ANCService
         .order(encounter_datetime: :desc).first.blank?
 
       ttv_order
+    end
+
+    def patient_not_receiving_treatment_today?
+      med_recv_concept = ConceptName.find_by_name("Medication received at vist").concept_id
+      no_concept = ConceptName.find_by_name("No").concept_id
+      treatment_enc = EncounterType.find_by name: TREATMENT
+      obs = Encounter.joins([:observations])
+        .where("encounter.patient_id = ? AND encounter.encounter_type = ?
+          AND obs.concept_id = ? AND obs.value_coded = ? AND DATE(encounter.encounter_datetime) = DATE(?)",
+          @patient.patient_id, treatment_enc.id, med_recv_concept, no_concept, @date
+        )
+      !obs.blank?
     end
 
     def patient_has_been_given_drugs?
@@ -357,17 +370,7 @@ module ANCService
     end
 
     def date_of_lnmp
-      lmp = ConceptName.find_by name: "Last menstrual period"
-      current_pregnancy = EncounterType.find_by name: CURRENT_PREGNANCY
-
-      last_lmp = @patient.encounters.joins([:observations])
-        .where(['encounter_type = ? AND obs.concept_id = ? AND DATE(encounter_datetime) > ?
-          AND DATE(encounter_datetime) < ?',current_pregnancy.id,lmp.concept_id,
-          (@date - 45.week), @date])
-        .last.observations.collect {
-          |o| o.value_datetime
-        }.compact.last.to_date rescue nil
+      ANCService::PregnancyService.date_of_lnmp(@patient, @date)
     end
-
   end
 end

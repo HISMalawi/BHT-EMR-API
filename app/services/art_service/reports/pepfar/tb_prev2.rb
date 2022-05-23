@@ -129,7 +129,7 @@ module ARTService
               AND orders.voided = 0
             INNER JOIN concept_name
               ON concept_name.concept_id = orders.concept_id
-              AND concept_name.name IN ('Rifapentine', 'Isoniazid')
+              AND concept_name.name IN ('Rifapentine', 'Isoniazid', 'Isoniazid/Rifapentine')
             INNER JOIN drug_order
               ON drug_order.order_id = orders.order_id
               AND drug_order.quantity > 0
@@ -207,11 +207,16 @@ module ARTService
         end
 
         def patient_on_3hp?(patient)
-          patient['drug_concepts'].split(',').collect(&:to_i).include?(rifapentine_concept.concept_id)
+          drug_concepts = patient['drug_concepts'].split(',').collect(&:to_i)
+          (drug_concepts & [rifapentine_concept.concept_id, isoniazid_rifapentine_concept&.concept_id]).any?
         end
 
         def rifapentine_concept
           @rifapentine_concept ||= ConceptName.find_by!(name: 'Rifapentine')
+        end
+
+        def isoniazid_rifapentine_concept
+          @isoniazid_rifapentine_concept ||= ConceptName.find_by!(name: 'Isoniazid/Rifapentine')
         end
       end
     end

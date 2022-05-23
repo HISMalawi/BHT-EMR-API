@@ -87,8 +87,9 @@ class Api::V1::PatientsController < ApplicationController
 
   def visits
     program = params[:program_id] ? Program.find(params[:program_id]) : nil
+    date = params[:date] ? params[:date].to_date : nil
     render json: service.find_patient_visit_dates(patient, program,
-      params[:include_defaulter_dates] == "true")
+      params[:include_defaulter_dates] == "true", date)
   end
 
   def find_median_weight_and_height
@@ -98,7 +99,8 @@ class Api::V1::PatientsController < ApplicationController
 
   def drugs_received
     cut_off_date = params[:date]&.to_date || Date.today
-    drugs_orders = paginate(service.drugs_orders(patient, cut_off_date))
+    program_id = params[:program_id] || Program.first.id
+    drugs_orders = paginate(service.drugs_orders_by_program(patient, cut_off_date, program_id: program_id))
 
     render json: drugs_orders
   end
@@ -131,7 +133,7 @@ class Api::V1::PatientsController < ApplicationController
   end
 
   def assign_npid
-    render json: service.assign_npid(patient), status: :created
+    render json: service.assign_npid(patient, params['program_id']), status: :created
   end
 
   def find_archiving_candidates
