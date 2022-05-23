@@ -167,13 +167,19 @@ module ARTService
       parent_obs = Observation.where(concept: concept('Malawi ART side effects'), person: patient.person)
                               .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
                               .order(obs_datetime: :desc)
-                              .first
+
       return [] unless parent_obs
 
-      @side_effects = parent_obs.children
-                                .where(value_coded: ConceptName.find_by_name!('Yes').concept_id)
-                                .collect { |side_effect| side_effect.concept.fullname }
-                                .compact
+      @side_effects = []
+      parent_obs.each do |obs|
+        result = obs.children
+                    .where(value_coded: ConceptName.find_by_name!('Yes').concept_id)
+                    .collect { |side_effect| side_effect.concept.fullname }
+
+        @side_effects << result.join(',') unless result.blank?
+      end
+
+      @side_effects
     end
 
     def viral_load_result
