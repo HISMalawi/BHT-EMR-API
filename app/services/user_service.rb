@@ -74,6 +74,13 @@ module UserService
       end
     end
 
+    # Update programs if any
+    if params.include?(:programs)
+      user.user_programs.destroy_all
+      params[:programs].each do |program|
+        UserProgram.create user_id: user.user_id, program_id: program
+      end
+    end
     user
   end
 
