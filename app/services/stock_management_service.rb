@@ -49,7 +49,7 @@ class StockManagementService
   def create_batches(batches)
     ActiveRecord::Base.connection.transaction do
       batches.map do |batch|
-        add_items_to_batch(batch[:batch_number], batch[:items])
+        add_items_to_batch(batch[:batch_number], batch[:items], location_id: batch[:location_id])
       end
     end
   end
@@ -67,9 +67,9 @@ class StockManagementService
   #         expiry_date: *string   # A date conforming to ISO 8601 (ie YYYY-MM-DD)
   #         delivery_date: string  # Similar to above but is not required (defaults to today if not specified)
   #       }
-  def add_items_to_batch(batch_number, stock_items)
+  def add_items_to_batch(batch_number,  stock_items, location_id: nil)
     ActiveRecord::Base.transaction do
-      batch = find_or_create_batch(batch_number)
+      batch = find_or_create_batch(batch_number, location_id: location_id)
 
       stock_items.each_with_index do |item, i|
         drug_id = fetch_parameter(item, :drug_id)
@@ -297,11 +297,11 @@ class StockManagementService
     end
   end
 
-  def find_or_create_batch(batch_number)
+  def find_or_create_batch(batch_number, location_id: nil)
     batch = PharmacyBatch.find_by_batch_number(batch_number)
     return batch if batch
 
-    PharmacyBatch.create(batch_number: batch_number)
+    PharmacyBatch.create(batch_number: batch_number, location_id: location_id)
   end
 
   def create_batch_item(batch, drug_id, pack_size, quantity, delivery_date, expiry_date)
