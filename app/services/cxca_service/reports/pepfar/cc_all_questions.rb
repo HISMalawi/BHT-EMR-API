@@ -92,36 +92,49 @@ module CXCAService
 
         def type_of_screening
           ActiveRecord::Base.connection.select_all <<~SQL
-            SELECT e.patient_id, o.value_coded, cxca_age_group(p.birthdate, '#{@end_date}') as age_group FROM encounter e
+            SELECT e.patient_id, o.value_coded, cxca_age_group(p.birthdate, '#{@end_date}') as age_group, e.encounter_datetime FROM encounter e
+            INNER JOIN(
+              #{patient_filter('CxCa test')}
+            ) e2 ON e2.patient_id = e.patient_id AND e2.encounter_datetime = e.encounter_datetime
             INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.voided = 0 AND o.concept_id = #{ConceptName.find_by_name('Reason for visit').concept_id}
             INNER JOIN person p ON p.person_id = e.patient_id AND p.voided = 0
             WHERE e.voided = 0 AND e.encounter_type = #{EncounterType.find_by_name('CxCa test').id}
-            AND e.encounter_datetime BETWEEN '#{@start_date}' AND '#{@end_date}'
-            AND e.patient_id IN (#{patients_in_art_program})
           SQL
         end
 
         def screening_result
           ActiveRecord::Base.connection.select_all <<~SQL
             SELECT e.patient_id, o.value_coded, cxca_age_group(p.birthdate, '#{@end_date}') age_group FROM encounter e
+            INNER JOIN(
+              #{patient_filter('CxCa screening result')}
+            ) e2 ON e2.patient_id = e.patient_id AND e2.encounter_datetime = e.encounter_datetime
             INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.voided = 0 AND o.concept_id = #{ConceptName.find_by_name('Screening results').concept_id} AND o.value_coded IS NOT NULL
             INNER JOIN person p ON p.person_id = e.patient_id AND p.voided = 0
             WHERE e.voided = 0 AND e.encounter_type = #{EncounterType.find_by_name('CxCa screening result').id}
-            AND e.encounter_datetime BETWEEN '#{@start_date}' AND '#{@end_date}'
-            AND e.patient_id IN (#{patients_in_art_program})
           SQL
         end
 
         def type_of_treatment
           ActiveRecord::Base.connection.select_all <<~SQL
             SELECT e.patient_id, o.value_coded, cxca_age_group(p.birthdate, '#{@end_date}') age_group FROM encounter e
+            INNER JOIN(
+              #{patient_filter('CxCa treatment')}
+            ) e2 ON e2.patient_id = e.patient_id AND e2.encounter_datetime = e.encounter_datetime
             INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.voided = 0 AND o.concept_id = #{ConceptName.find_by_name('Treatment').concept_id}
             AND o.value_coded IN (#{ConceptName.where(name: %w[Cryotherapy Thermocoagulation LEEP]).select(:concept_id).to_sql})
             INNER JOIN person p ON p.person_id = e.patient_id AND p.voided = 0
             WHERE e.voided = 0 AND e.encounter_type = #{EncounterType.find_by_name('CxCa treatment').id}
-            AND e.encounter_datetime BETWEEN '#{@start_date}' AND '#{@end_date}'
-            AND e.patient_id IN (#{patients_in_art_program})
           SQL
+        end
+
+        def patient_filter(encounter_type)
+          <<~TEXT
+            SELECT patient_id, max(encounter_datetime) encounter_datetime FROM encounter
+            WHERE voided = 0 AND encounter_type = #{EncounterType.find_by_name(encounter_type).id}
+            AND encounter_datetime BETWEEN '#{@start_date}' AND '#{@end_date}'
+            AND patient_id IN (#{patients_in_art_program})
+            GROUP BY patient_id
+          TEXT
         end
 
         def patients_in_art_program
