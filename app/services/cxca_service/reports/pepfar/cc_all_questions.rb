@@ -62,10 +62,10 @@ module CXCAService
         def assign_to_type_of_screening(group, record)
           visit_type = Concept.find(record['value_coded']).fullname
           return  group[:first_screen] << record['patient_id'] if visit_type == 'Initial Screening'
-          return  group[:rescreen] << record['patient_id'] if ['Postponed treatment',
-                                                               'Problem visit after treatment'].include?(visit_type)
-          return  group[:follow_up_screen] << record['patient_id'] if ['One year subsequent check-up after treatment',
-                                                                       'Subsequent screening'].include?(visit_type)
+          return  group[:follow_up_screen] << record['patient_id'] if ['Postponed treatment', 'Referral',
+                                                                       'Problem visit after treatment'].include?(visit_type)
+          return  group[:rescreen] << record['patient_id'] if ['One year subsequent check-up after treatment',
+                                                               'Subsequent screening'].include?(visit_type)
         end
 
         # rubocop:disable Metrics/AbcSize
