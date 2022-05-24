@@ -119,9 +119,9 @@ class StockManagementService
   end
 
   def find_batch_items(filters = {})
-    query = PharmacyBatchItem
+    query = PharmacyBatchItem.joins(:batch)
     query = query.where(filters) unless filters.empty?
-    query.order(Arel.sql('date_created DESC, expiry_date ASC'))
+    query.order(Arel.sql('pharmacy_batch_items.date_created DESC, pharmacy_batch_items.expiry_date ASC'))
   end
 
   def void_batch(batch_number, reason)
