@@ -2,9 +2,9 @@ module CXCAService
   class ReportEngine
 
     REPORT_NAMES = {
-      'SCREENED FOR CXCA' => CXCAService::Reports::Moh::ScreenedForCxca,
-      'SCREENED FOR CXCA DISAGGREGATED BY HIV STATUS' => CXCAService::Reports::Moh::ScreenedForCxcaDisaggregatedByHivStatus,
-      'CXCA SCREENING RESULTS' => CXCAService::Reports::Moh::CxcaScreeningResults,
+      'SCREENED FOR CXCA' => CXCAService::Reports::Moh::ScreenedForCXCA,
+      'SCREENED FOR CXCA DISAGGREGATED BY HIV STATUS' => CXCAService::Reports::Moh::ScreenedForCXCADisaggregatedByHivStatus,
+      'CXCA SCREENING RESULTS' => CXCAService::Reports::Moh::CXCAScreeningResults,
       'CANCER SUSPECTS' => CXCAService::Reports::Moh::CancerSuspects,
       'CLIENTS TREATED' => CXCAService::Reports::Moh::ClientTreated,
       'TREATMENT OPTIONS' => CXCAService::Reports::Moh::TreatmentOptions,
