@@ -1,4 +1,4 @@
-class Api::V1::DdeController < ApplicationController
+class Api::V1::DDEController < ApplicationController
   # GET /api/v1/dde/patients
   def find_patients_by_npid
     npid = params.require(:npid)
