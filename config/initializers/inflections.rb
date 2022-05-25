@@ -19,4 +19,7 @@ ActiveSupport::Inflector.inflections(:en) do |inflect|
   inflect.acronym 'OPD'
   inflect.acronym 'VMMC'
   inflect.acronym 'CXCA'
+  inflect.acronym 'IPT'
+  inflect.acronym 'DTG'
+  inflect.acronym 'RTT'
 end
