@@ -3,7 +3,7 @@ module CXCAService
 		module Clinic
 
 
-			class BookedClientsFromArtRawData
+			class BookedClientsFromARTRawData
 				def initialize(start_date:, end_date:)
 					@start_date = start_date.strftime('%Y-%m-%d 00:00:00')
 					@end_date = end_date.strftime('%Y-%m-%d 23:59:59')
