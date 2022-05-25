@@ -16,6 +16,7 @@ class ApplicationController < ActionController::API
   DEFAULT_PAGE_SIZE = 10
 
   def authenticate
+    params.permit!
     authentication_token = request.headers['Authorization']
     unless authentication_token
       errors = ['Authorization token required']
