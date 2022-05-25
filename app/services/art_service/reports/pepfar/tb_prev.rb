@@ -3,7 +3,7 @@ module ARTService
   module Reports
     module Pepfar
 
-      class TbPrev
+      class TBPrev
         def initialize(start_date:, end_date:)
           @completion_start_date = start_date.to_date.strftime('%Y-%m-%d 00:00:00')
           @completion_end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
