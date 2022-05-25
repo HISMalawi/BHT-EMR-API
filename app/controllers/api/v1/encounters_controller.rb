@@ -15,7 +15,7 @@ class Api::V1::EncountersController < ApplicationController
   def index
     # Ignoring error value as required_params never errors when
     # retrieving optional parameters only
-    filters = params.permit(%i[patient_id location_id encounter_type_id date program_id])
+    filters = params.slice(%i[patient_id location_id encounter_type_id date program_id])
 
     if filters.empty?
       queryset = Encounter.all

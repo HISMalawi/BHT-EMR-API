@@ -23,9 +23,9 @@ class Api::V1::ObservationsController < ApplicationController
   # NOTE: When multiple parameters are specified they are
   #       AND-d together.
   def index
-    filters = params.permit(%i[person_id concept_id encounter_id order_id
-                               value_coded value_datetime value_numeric
-                               accession_number value_text])
+    filters = params.slice(:person_id, :concept_id, :encounter_id, :order_id,
+                           :value_coded, :value_datetime, :value_numeric,
+                           :accession_number, :value_text)
 
     query = filters.empty? ? Observation : Observation.where(filters)
 
@@ -100,7 +100,6 @@ class Api::V1::ObservationsController < ApplicationController
   end
 
   private
-
 
   def index_filter_period
     period = nil

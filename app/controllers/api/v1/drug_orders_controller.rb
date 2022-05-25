@@ -4,7 +4,7 @@ require 'utils/remappable_hash'
 
 class Api::V1::DrugOrdersController < ApplicationController
   def index
-    filters = params.permit DrugOrderService::FIND_FILTERS + [:date]
+    filters = params.slice(DrugOrderService::FIND_FILTERS + [:date])
 
     drug_orders = DrugOrderService.find(filters).order(Arel.sql('`orders`.`date_created`'))
 
