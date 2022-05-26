@@ -28,7 +28,7 @@ class Api::V1::DDEController < ApplicationController
   #
   # Returns DDE patients matching demographics passed
   def match_patients_by_demographics
-    render json: service.match_patients_by_demographics(match_params)
+    render json: service.match_patients_by_demographics(**match_params)
   end
 
   def reassign_patient_npid
@@ -47,7 +47,7 @@ class Api::V1::DDEController < ApplicationController
     patient_id = params.require(:patient_id)
     diff = service.find_patient_updates(patient_id)
 
-    render json: { diff: diff }
+    render json: { diff: }
   end
 
   ##
@@ -56,7 +56,7 @@ class Api::V1::DDEController < ApplicationController
     patient_id = params.require(:patient_id)
     update_npid = params[:update_npid]&.casecmp?('true') || false
 
-    patient = service.update_local_patient(Patient.find(patient_id), update_npid: update_npid)
+    patient = service.update_local_patient(Patient.find(patient_id), update_npid:)
 
     render json: patient
   end
@@ -75,7 +75,7 @@ class Api::V1::DDEController < ApplicationController
   end
 
   def service
-    DDEService.new(program: program)
+    DDEService.new(program:)
   end
 
   def program
