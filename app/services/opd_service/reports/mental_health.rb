@@ -8,7 +8,11 @@ class OPDService::Reports::MentalHealth
     type = EncounterType.find_by_name 'Outpatient diagnosis'
     data = Encounter.where('encounter_datetime BETWEEN ? AND ?
       AND encounter_type = ?
-      AND c.concept_id IN(9796,9795,9797,9798,467,9799,9800,9801,9802,9803,2719,9804,9805,9806,9807,9808,9809,10569,9811,15)',
+      AND c.concept_id IN("Chronic Organic Mental Disorder","Acute Organic Mental Disorder","Alcohol Use Mental Disorder",
+        "Drug Use Mental Disorder","Schizophrenia","Acute & Transient Psychotic Disorder","Schizo-affective disorder","Mood Affective Disorder (Manic)",
+        "Mood Affective Disorder (Bipolar)","Mood Affective Disorder (Depresion)","Anxiety disorder","Stress Reaction Adjustment Disorder",
+        "Dissociative Conversion Disorder","Somatoform Disorder","Puerperal Mental Disorder","Personality/Behaviour Disorder","Mental Retardation",
+        "Psychological mental disorder","Hyperkinetic Conduct Disorder","Diarrhea, cholera")',
       start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
       end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id).\
       joins('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
@@ -23,33 +27,6 @@ class OPDService::Reports::MentalHealth
       a.state_province district, a.township_division ta, a.city_village village, z.value,
       opd_disaggregated_age_group(p.birthdate,'#{end_date.to_date}') as age_group,c.name")
 
-      create_diagnosis_hash(data)
   end
 
-  def create_diagnosis_hash(data)
-    records = {}
-    (data || []).each do |record|
-      age_group = record['age_group'].blank? ? "Unknown" : record['age_group']
-      gender = (record['gender'].match(/f/i) ? "F" : (record['gender'].match(/m/i) ? "M" : "Unknown")) rescue "Unknown"
-      patient_id = record['person_id']
-      diagnosis = record['name']
-
-      if records[diagnosis].blank?
-        records[diagnosis] = {}
-      end
-
-      if records[diagnosis][gender].blank?
-        records[diagnosis][gender] = {}
-      end
-
-      if records[diagnosis][gender][age_group].blank?
-        records[diagnosis][gender][age_group] = []
-      end
-
-      records[diagnosis][gender][age_group] << patient_id
-
-    end
-
-    records
-  end
 end
