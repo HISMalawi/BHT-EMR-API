@@ -101,7 +101,8 @@ class Api::V1::PatientsController < ApplicationController
 
   def drugs_received
     cut_off_date = params[:date]&.to_date || Date.today
-    drugs_orders = paginate(service.drugs_orders(patient, cut_off_date))
+    program_id = params[:program_id] || Program.first.id
+    drugs_orders = paginate(service.drugs_orders_by_program(patient, cut_off_date, program_id: program_id))
 
     render json: drugs_orders
   end

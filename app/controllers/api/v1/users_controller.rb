@@ -45,7 +45,7 @@ class Api::V1::UsersController < ApplicationController
 
   def update
     update_params = params.slice(:password, :given_name, :family_name, :must_append_roles,
-                                 roles: [])
+                                 roles: [], programs: [])
 
     # Makes sure roles are an array if provided
     return unless validate_roles(update_params[:roles])
