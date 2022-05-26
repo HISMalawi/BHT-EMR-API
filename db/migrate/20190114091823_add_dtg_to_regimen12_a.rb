@@ -1,4 +1,4 @@
-class AddDtgToRegimen12A < ActiveRecord::Migration[5.2]
+class AddDTGToRegimen12A < ActiveRecord::Migration[5.2]
   def up
     User.current = User.first
     Location.current = Location.first

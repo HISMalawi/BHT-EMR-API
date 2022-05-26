@@ -1,4 +1,4 @@
-class UpdateDtg50Dose < ActiveRecord::Migration[5.2]
+class UpdateDTG50Dose < ActiveRecord::Migration[5.2]
   def up
     drug_id = Drug.find_by_name('Dolutegravir (50mg tablet)').id
     dose_id = MohRegimenDose.find_by(am: 1, pm: 0).id
