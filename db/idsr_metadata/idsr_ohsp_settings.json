@@ -1,6 +1,6 @@
 {
-	"headers":      {"url":"https://covmw.com/ohspdev","user":"eidsr","pass":"Eidsr2021!"},
-	"sms_server":      {"url":"localhost:8186/submit","user":"admin@email.test","pass":"admin"},
+	"headers":      {"url":"10.40.30.2","user":"ohsp_vpn","pass":"lin@1088"},
+	"sms_server":   {"url":"10.40.30.2","user":"ohsp_vpn","pass":"lin@1088"},
 	"weekly_idsr_map":{
 		"AEFI" : [],
 		"Poliomyelitis (AFP)" : ["Poliomyelitis"],
