@@ -1,13 +1,12 @@
 class Api::V1::OrdersController < ApplicationController
-  def index
-  end
+  def index; end
 
   def show
     render json: Order.find(params[:id])
   end
 
   def create
-    create_params = params.require(:order).permit(
+    create_params = params.require(:order).slice(
       :order_type_id, :concept_id, :encounter_id, :instructions, :start_date,
       :auto_expire_date, :creator, :accession_number, :patient_id
     )
@@ -23,7 +22,7 @@ class Api::V1::OrdersController < ApplicationController
   end
 
   def update
-    update_params = params.require(:order).permit(
+    update_params = params.require(:order).slice(
       :order_type_id, :concept_id, :encounter_id, :instructions, :start_date,
       :auto_expire_date, :creator, :accession_number
     )
@@ -38,7 +37,7 @@ class Api::V1::OrdersController < ApplicationController
 
   def destroy
     drug = Drug.find(params[:id])
-    if drug.destroy()
+    if drug.destroy
       render status: :no_content
     else
       render json: { errors: drug.errors }, status: :internal_server_error

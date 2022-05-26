@@ -4,7 +4,7 @@ class Api::V1::PersonNamesController < ApplicationController
   end
 
   def index
-    filters = params.permit(%i[given_name middle_name family_name person_id])
+    filters = params.slice(:given_name, :middle_name, :family_name, :person_id)
 
     if filters.empty?
       render json: paginate(PersonName)
@@ -33,7 +33,7 @@ class Api::V1::PersonNamesController < ApplicationController
     paginator = ->(query) { paginate(query) }
 
     names = NameSearchService.search_partial_person_name(field, search_string, use_soundex: false,
-                                                                               paginator: paginator)
+                                                                               paginator:)
 
     render json: names
   end

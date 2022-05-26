@@ -1,16 +1,16 @@
 class Api::V1::ProgramsController < ApplicationController
   def show
-    render json: Program.find(params[:id])
+    render json: Program.find(params.require(:id))
   end
 
   def index
-    name = params.permit(:name)[:name]
+    name = params.slice(:name)[:name]
     query = name ? Program.where('name like ?', "%#{name}%") : Program
     render json: paginate(query)
   end
 
   def create
-    create_params = params.require(:program).permit(%i[concept_id name description])
+    create_params = params.require(:program).slice(:concept_id, :name, :description)
 
     program = Program.create create_params
     if program.errors.empty?
@@ -21,9 +21,9 @@ class Api::V1::ProgramsController < ApplicationController
   end
 
   def update
-    update_params = params.require(:program).permit(%i[concept_id name description])
+    update_params = params.require(:program).slice(:concept_id, :name, :description)
 
-    program = Program.find(params[:id])
+    program = Program.find(params.require(:id))
     if program.update update_params
       render json: program, status: :ok
     else
@@ -32,7 +32,7 @@ class Api::V1::ProgramsController < ApplicationController
   end
 
   def destroy
-    program = Program.find(params[:id])
+    program = Program.find(params.require(:id))
     if program.destroy
       render status: :no_content
     else

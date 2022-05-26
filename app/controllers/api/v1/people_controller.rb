@@ -11,7 +11,7 @@ class Api::V1::PeopleController < ApplicationController
   #
   # @{deprecated} - See GET /search/patients
   def search
-    filters = params.permit(%i[given_name middle_name family_name gender])
+    filters = params.slice(:given_name, :middle_name, :family_name, :gender)
 
     people = person_service.find_people_by_name_and_gender(filters[:given_name],
                                                            filters[:middle_name],
@@ -36,7 +36,7 @@ class Api::V1::PeopleController < ApplicationController
       person = person_service.create_person(create_params)
       person_service.create_person_name(person, create_params)
       person_service.create_person_address(person, create_params)
-      person_service.create_person_attributes(person, params.permit!)
+      person_service.create_person_attributes(person, params)
 
       person
     end
@@ -46,8 +46,8 @@ class Api::V1::PeopleController < ApplicationController
 
   def update
     program_id = params.require(:program_id) if DDEService.dde_enabled?
-    person = Person.find(params[:id])
-    update_params = params.permit!
+    person = Person.find(params.require(:id))
+    update_params = params
 
     person_service.update_person(person, update_params)
     person.reload
@@ -68,12 +68,12 @@ class Api::V1::PeopleController < ApplicationController
   end
 
   def list
-    clients  = ActiveRecord::Base.connection.select_all <<~SQL
-    SELECT p.*, a.identifier FROM person p
-    LEFT JOIN patient_identifier a ON a.patient_id = p.person_id
-    AND a.identifier_type = 4 AND a.voided = 0
-    WHERE p.person_id IN(#{params[:person_ids]})
-    GROUP BY p.person_id ORDER BY a.date_created DESC;
+    clients = ActiveRecord::Base.connection.select_all <<~SQL
+      SELECT p.*, a.identifier FROM person p
+      LEFT JOIN patient_identifier a ON a.patient_id = p.person_id
+      AND a.identifier_type = 4 AND a.voided = 0
+      WHERE p.person_id IN(#{params[:person_ids]})
+      GROUP BY p.person_id ORDER BY a.date_created DESC;
     SQL
 
     render json: clients

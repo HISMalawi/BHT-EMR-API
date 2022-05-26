@@ -6,7 +6,7 @@ class Api::V1::UsersController < ApplicationController
   skip_before_action :authenticate, only: [:login]
 
   def index
-    filters = params.permit(:role).to_hash.transform_keys(&:to_sym)
+    filters = params.slice(:role).to_hash.transform_keys(&:to_sym)
     render json: service.find_users(**filters)
   end
 
@@ -21,17 +21,21 @@ class Api::V1::UsersController < ApplicationController
 
     return unless validate_roles(roles) & validate_username(username)
 
-    return if programs && !validate_programs(programs) # added this as a seperate return to prevent multiple redirects in case more than one validation fails
+    if programs && !validate_programs(programs)
+      return
+    end # added this as a seperate return to prevent multiple redirects in case more than one validation fails
 
-    return if programs && !validate_programs_existance(programs) # added this as a seperate return to prevent multiple redirects in case more than one validation fails
+    if programs && !validate_programs_existance(programs)
+      return
+    end # added this as a seperate return to prevent multiple redirects in case more than one validation fails
 
     user = UserService.create_user(
-      username: username, password: password, given_name: given_name,
-      family_name: family_name, roles: roles, programs: programs
+      username:, password:, given_name:,
+      family_name:, roles:, programs:
     )
 
     if user.errors.empty?
-      render json: { user: user }, status: :created
+      render json: { user: }, status: :created
     else
       render json: { errors: user.errors }, status: :bad_request
     end
@@ -40,8 +44,8 @@ class Api::V1::UsersController < ApplicationController
   end
 
   def update
-    update_params = params.permit :password, :given_name, :family_name, :must_append_roles,
-                                  roles: []
+    update_params = params.slice(:password, :given_name, :family_name, :must_append_roles,
+                                 roles: [])
 
     # Makes sure roles are an array if provided
     return unless validate_roles(update_params[:roles])
@@ -78,7 +82,7 @@ class Api::V1::UsersController < ApplicationController
   # GET
   def activate
     if UserService.activate_user(user)
-      render json: { message: ['User activated'], user: user }
+      render json: { message: ['User activated'], user: }
     else
       render json: { errors: user.errors }
     end
@@ -87,7 +91,7 @@ class Api::V1::UsersController < ApplicationController
   # Deactivates user
   def deactivate
     if UserService.deactivate_user(user)
-      render json: { message: ['User de-activated'], user: user }
+      render json: { message: ['User de-activated'], user: }
     else
       render json: { errors: user.errors }
     end
@@ -107,7 +111,7 @@ class Api::V1::UsersController < ApplicationController
   def validate_username(username)
     if UserService.check_user(username)
       errors = ['User already exists']
-      render json: { errors: errors }, status: :conflict
+      render json: { errors: }, status: :conflict
       return false
     end
 
@@ -118,7 +122,7 @@ class Api::V1::UsersController < ApplicationController
     User.find(params[:user_id])
   end
 
-  #validate user programs here
+  # validate user programs here
   def validate_programs(programs)
     if programs && !programs.respond_to?(:each)
       render json: ['`programs` must be an array'], status: :bad_request
@@ -128,12 +132,12 @@ class Api::V1::UsersController < ApplicationController
     true
   end
 
-  #validate program
+  # validate program
   def validate_programs_existance(programs)
     programs.each do |program_id|
-      unless Program.find_by(program_id: program_id)
+      unless Program.find_by(program_id:)
         errors = ['All Programs must exists']
-        render json: { errors: errors }, status: :conflict
+        render json: { errors: }, status: :conflict
         return false
       end
 

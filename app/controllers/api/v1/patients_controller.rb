@@ -8,7 +8,9 @@ require 'zebra_printer/init'
 class Api::V1::PatientsController < ApplicationController
   # TODO: Refactor the business logic here into a service class
 
-  before_action :authenticate, except: %i[print_national_health_id_label print_filing_number print_tb_number print_tb_lab_order_summary]
+  before_action :authenticate,
+                except: %i[print_national_health_id_label print_filing_number print_tb_number
+                           print_tb_lab_order_summary]
 
   include ModelUtils
 
@@ -18,7 +20,7 @@ class Api::V1::PatientsController < ApplicationController
 
   def search_by_npid
     voided = params[:voided]&.casecmp?('true') || false
-    render json: service.find_patients_by_npid(params.require(:npid), voided: voided)
+    render json: service.find_patients_by_npid(params.require(:npid), voided:)
   end
 
   def search_by_identifier
@@ -26,12 +28,12 @@ class Api::V1::PatientsController < ApplicationController
     identifier_type = PatientIdentifierType.find(identifier_type_id)
     voided = params[:voided]&.casecmp?('true') || false
 
-    render json: service.find_patients_by_identifier(identifier, identifier_type, voided: voided)
+    render json: service.find_patients_by_identifier(identifier, identifier_type, voided:)
   end
 
   # GET /api/v1/search/patients
   def search_by_name_and_gender
-    filters = params.permit(%i[given_name middle_name family_name birthdate gender])
+    filters = params.slice(:given_name, :middle_name, :family_name, :birthdate, :gender)
 
     patients = service.find_patients_by_name_and_gender(filters[:given_name],
                                                         filters[:middle_name],
@@ -89,12 +91,12 @@ class Api::V1::PatientsController < ApplicationController
     program = params[:program_id] ? Program.find(params[:program_id]) : nil
     date = params[:date] ? params[:date].to_date : nil
     render json: service.find_patient_visit_dates(patient, program,
-      params[:include_defaulter_dates] == "true", date)
+                                                  params[:include_defaulter_dates] == 'true', date)
   end
 
   def find_median_weight_and_height
     weight, height = service.find_patient_median_weight_and_height(patient)
-    render json: { weight: weight, height: height }
+    render json: { weight:, height: }
   end
 
   def drugs_received
@@ -156,24 +158,24 @@ class Api::V1::PatientsController < ApplicationController
   def last_drugs_received
     date = params[:date]&.to_date || Date.today
     program_id = params[:program_id]
-    render json: service.patient_last_drugs_received(patient, date, program_id: program_id)
+    render json: service.patient_last_drugs_received(patient, date, program_id:)
   end
 
   def drugs_orders_by_program
     cut_off_date = params[:date]&.to_date || Date.today
     program_id = params[:program_id]
-    drugs_orders = paginate(service.drugs_orders_by_program(patient, cut_off_date, program_id: program_id))
+    drugs_orders = paginate(service.drugs_orders_by_program(patient, cut_off_date, program_id:))
 
     render json: drugs_orders
   end
 
   # Returns all lab orders made since a given date
   def recent_lab_orders
-    patient_id, program_id = params.require([:patient_id, :program_id])
+    patient_id, program_id = params.require(%i[patient_id program_id])
     reference_date = params[:reference_date]&.to_date || Date.today
-    render json: service.recent_lab_orders(patient_id: patient_id,
-                                           program_id: program_id,
-                                           reference_date: reference_date)
+    render json: service.recent_lab_orders(patient_id:,
+                                           program_id:,
+                                           reference_date:)
   end
 
   def remaining_bp_drugs
@@ -203,7 +205,7 @@ class Api::V1::PatientsController < ApplicationController
   def last_drugs_pill_count
     date = params[:date]&.to_date || Date.today
     program_id = params[:program_id]
-    render json: service.patient_last_drugs_pill_count(patient, date, program_id: program_id)
+    render json: service.patient_last_drugs_pill_count(patient, date, program_id:)
   end
 
   def print_tb_lab_order_summary
@@ -326,7 +328,6 @@ class Api::V1::PatientsController < ApplicationController
 
   def lab_tests_engine
     program = Program.find_by(name: 'TB PROGRAM')
-    TBService::LabTestsEngine.new program: program
+    TBService::LabTestsEngine.new program:
   end
-
 end

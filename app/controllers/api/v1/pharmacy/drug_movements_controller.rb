@@ -14,7 +14,7 @@ class Api::V1::Pharmacy::DrugMovementsController < ApplicationController
 
   # these are the allowed params
   def allowed_params
-    params.permit(%i[start_date end_date drug_id])
+    params.slice(:start_date, :end_date, :drug_id)
   end
 end
 # rubocop:enable Style/ClassAndModuleChildren

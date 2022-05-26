@@ -32,7 +32,7 @@ class Api::V1::DDEController < ApplicationController
   end
 
   def reassign_patient_npid
-    patient_ids = params.permit(:doc_id, :patient_id)
+    patient_ids = params.slice(:doc_id, :patient_id)
     render json: service.reassign_patient_npid(patient_ids)
   end
 

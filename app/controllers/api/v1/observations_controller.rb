@@ -55,7 +55,7 @@ class Api::V1::ObservationsController < ApplicationController
     encounter = Encounter.find(encounter_id)
 
     observations = obs_archetypes.collect do |archetype|
-      obs, _child_obs = service.create_observation(encounter, archetype.permit!)
+      obs, _child_obs = service.create_observation(encounter, archetype)
       obs
     end
 
@@ -76,9 +76,10 @@ class Api::V1::ObservationsController < ApplicationController
   #   value_coded_name_id* - Only required if value_type above is coded
   #   order_id, comments
   def update
-    update_params = params.permit! # FIX-ME: This is highly unsafe
+    update_params = params.slice(:person_id, :encounter_id, :concept_id, :value_coded, :value_boolean, :value_datetime,
+                                 :value_numeric, :value_modifier, :value_text, :value_complex, :value_drug, :order_id)
 
-    observation = Observation.find(params[:id])
+    observation = Observation.find(params.require(:id))
     if observation.update(update_params)
       render json: observation, status: :created
     else
@@ -90,7 +91,7 @@ class Api::V1::ObservationsController < ApplicationController
   #
   # DELETE /observation/:id
   def destroy
-    observation = Observation.find(params[:id])
+    observation = Observation.find(params.require(:id))
     if observation.void("Voided by #{User.current}")
       render status: :no_content
     else

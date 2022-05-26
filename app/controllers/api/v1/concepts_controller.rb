@@ -6,7 +6,7 @@ class Api::V1::ConceptsController < ApplicationController
   end
 
   def index
-    permitted_params = params.permit(:name, :set)
+    permitted_params = params.slice(:name, :set)
     name = permitted_params[:name]
     set = permitted_params[:set]
 

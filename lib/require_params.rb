@@ -27,7 +27,7 @@ module RequireParams
   def required_params(required: [], optional: [])
     required = Set.new required
     all_fields = required + optional
-    all_params = params.permit(*all_fields)
+    all_params = params.slice(*all_fields)
     missing_params = collect_missing_parameters all_params, required, all_fields
     Rails.logger.debug "missing params: #{missing_params}"
     if missing_params.empty?

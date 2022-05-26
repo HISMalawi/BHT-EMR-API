@@ -2,7 +2,7 @@
 
 class Api::V1::Pharmacy::AuditTrailsController < ApplicationController
   def show
-    filters = params.permit(%i[start_date end_date drug_id batch_number])
+    filters = params.slice(:start_date, :end_date, :drug_id, :batch_number)
 
     trail = audit_trail from: filters[:start_date],
                         to: filters[:end_date],

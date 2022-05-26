@@ -2,7 +2,7 @@ class Api::V1::PatientProgramsController < ApplicationController
   # TODO: Refactor much of the logic in this controller into a service
 
   def index
-    filters = params.permit(%i[patient_id program_id])
+    filters = params.slice(:patient_id, :program_id)
     programs = filters.empty? ? PatientProgram.all : PatientProgram.where(filters)
 
     render json: paginate(programs)
@@ -13,7 +13,7 @@ class Api::V1::PatientProgramsController < ApplicationController
   end
 
   def create
-    create_params = params.require(:patient_program).permit(:program_id, :patient_id, :date_enrolled)
+    create_params = params.require(:patient_program).slice(:program_id, :patient_id, :date_enrolled)
     create_params[:date_enrolled] ||= Time.now
     create_params[:location_id] = Location.current.id
 
@@ -33,7 +33,7 @@ class Api::V1::PatientProgramsController < ApplicationController
   end
 
   def destroy
-    patient_program = PatientProgram.find_by(patient_program_id: params[:id])
+    patient_program = PatientProgram.find_by(patient_program_id: params.require(:id))
     patient_program&.void(params[:reason] || "Voided by #{User.current.username}")
 
     if patient_program.nil? || patient_program.errors.empty?

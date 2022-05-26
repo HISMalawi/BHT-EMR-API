@@ -3,7 +3,7 @@
 class Api::V1::Pharmacy::ItemsController < ApplicationController
   # GET /pharmacy/items[?drug_id=]
   def index
-    items = service.find_batch_items(params.permit(:drug_id, :current_quantity))
+    items = service.find_batch_items(params.slice(:drug_id, :current_quantity))
     render json: paginate(items)
   end
 
@@ -12,7 +12,8 @@ class Api::V1::Pharmacy::ItemsController < ApplicationController
   end
 
   def update
-    permitted_params = params.permit(%i[current_quantity delivered_quantity pack_size expiry_date delivery_date reason])
+    permitted_params = params.slice(:current_quantity, :delivered_quantity, :pack_size, :expiry_date, :delivery_date,
+                                    :reason)
     raise InvalidParameterError, 'reason is required' if permitted_params[:reason].blank?
 
     item = service.edit_batch_item(params[:id], permitted_params)
@@ -31,7 +32,7 @@ class Api::V1::Pharmacy::ItemsController < ApplicationController
   end
 
   def earliest_expiring
-    permitted_params = params.permit(:drug_id)
+    permitted_params = params.slice(:drug_id)
     item = service.find_earliest_expiring_item(permitted_params)
     render json: item
   end

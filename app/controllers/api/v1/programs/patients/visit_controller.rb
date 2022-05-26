@@ -2,7 +2,7 @@
 
 class Api::V1::Programs::Patients::VisitController < ApplicationController
   def index
-    permitted = params.permit(:date)
+    permitted = params.slice(:date)
     date = permitted[:date]&.to_date || Date.today
 
     summary = service.patient_visit_summary(params[:program_patient_id], date)

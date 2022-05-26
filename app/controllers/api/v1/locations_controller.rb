@@ -32,10 +32,10 @@ class Api::V1::LocationsController < ApplicationController
   end
 
   def create
-    params.permit %i[name description address1 address2 district]
+    permitted_params = params.slice(:name, :description, :address1, :address2, :district)
 
     location = Location.create(
-      name: name,
+      name: permitted_params[:name],
       creator: User.current_user.id,
       date_created: Time.now
     )
@@ -50,9 +50,7 @@ class Api::V1::LocationsController < ApplicationController
   def print_label
     location = location_to_print
 
-    unless location
-      return render json: 'location_id or location_name required', status: :bad_request
-    end
+    return render json: 'location_id or location_name required', status: :bad_request unless location
 
     commands = service.print_location_label(location)
     send_data(commands, type: 'application/label; charset=utf-8',
@@ -66,8 +64,7 @@ class Api::V1::LocationsController < ApplicationController
   def filter_locations_by_tag(locations, tag)
     location_tag_id = LocationTag.where('name like ?', "%#{tag}%")[0].id
     location_tag_maps = LocationTagMap.where location_tag_id: location_tag_id
-    locations = locations.joins(:tag_maps).merge(location_tag_maps)
-    locations
+    locations.joins(:tag_maps).merge(location_tag_maps)
   end
 
   def location

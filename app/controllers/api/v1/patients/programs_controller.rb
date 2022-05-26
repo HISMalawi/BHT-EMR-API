@@ -10,7 +10,7 @@ class Api::V1::Patients::ProgramsController < ApplicationController
   end
 
   def create
-    create_params = params.permit(:program_id, :date_enrolled)
+    create_params = params.slice(:program_id, :date_enrolled)
     create_params[:date_enrolled] ||= Time.now
     create_params[:location_id] = Location.current.id
     create_params[:patient_id] = params[:patient_id]

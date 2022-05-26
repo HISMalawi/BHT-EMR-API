@@ -10,7 +10,7 @@ class Api::V1::AppointmentsController < ApplicationController
   end
 
   def index
-    filters = params.permit %i[person_id obs_datetime date program_id]
+    filters = params.slice(:person_id, :obs_datetime, :date, :program_id)
     appointments = appointment_service.appointments filters
     render json: paginate(appointments)
   end
@@ -36,7 +36,7 @@ class Api::V1::AppointmentsController < ApplicationController
   end
 
   def destroy
-    appointment = Encounter.find params[:id]
+    appointment = Encounter.find params.require(:id)
     if appointment.obs.destroy && appointment.destroy
       render status: :no_content
     else
