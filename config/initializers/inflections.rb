@@ -21,5 +21,6 @@ ActiveSupport::Inflector.inflections(:en) do |inflect|
   inflect.acronym 'CXCA'
   inflect.acronym 'IPT'
   inflect.acronym 'DTG'
+  inflect.acronym 'DTG50'
   inflect.acronym 'RTT'
 end
