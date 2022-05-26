@@ -5,11 +5,12 @@ class OPDService::Reports::CasesSeen
   end
 
   def cases_seen(start_date, end_date)
+    concept_names = ['"Diabetes","Hypertension","Acute cerebrovascular attack","Suspected cancer","Confirmed cancer",
+          "Palliative care clients","Asthma","Depression","Psychosis acute","Psychosis chronic","Epilepsy"']
     type = EncounterType.find_by_name 'Outpatient diagnosis'
-    data = Encounter.where('encounter_datetime BETWEEN ? AND ?
+    data = Encounter.where("encounter_datetime BETWEEN ? AND ?
       AND encounter_type = ?
-      AND c.name IN("Diabetes","Hypertension","Acute cerebrovascular attack","Suspected cancer","Confirmed cancer",
-        "Palliative care clients","Asthma","Depression","Psychosis acute","Psychosis chronic","Epilepsy")',
+      AND c.name IN(#{concept_names[0]})",
       start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
       end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id).\
       joins('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
