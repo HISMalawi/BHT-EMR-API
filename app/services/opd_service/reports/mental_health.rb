@@ -14,9 +14,9 @@ class OPDService::Reports::MentalHealth
     type = EncounterType.find_by_name 'Outpatient diagnosis'
     data = Encounter.where("encounter_datetime BETWEEN ? AND ?
       AND encounter_type = ?
-      AND name: #{concept_names[0]}",
+      AND c.name IN(?)",
       start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
-      end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id).\
+      end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id,concept_names).\
       joins('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
       INNER JOIN person p ON p.person_id = encounter.patient_id
       LEFT JOIN person_name n ON n.person_id = encounter.patient_id AND n.voided = 0
