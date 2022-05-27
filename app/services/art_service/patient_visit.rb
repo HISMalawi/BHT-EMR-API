@@ -256,7 +256,7 @@ module ARTService
       name = match.nil? ? drug.name : match[1]
 
       name = 'CPT' if name.match?('Cotrimoxazole')
-      name = 'INH' if name.match?('INH')
+      # name = 'INH' if name.match?('INH')
       name
     end
   end
