@@ -5,16 +5,16 @@ class OPDService::Reports::MentalHealth
   end
 
   def mental_health(start_date, end_date)
-    concept_names = ['"Chronic Organic Mental Disorder","Acute Organic Mental Disorder","Alcohol Use Mental Disorder",
+    concept_names = ["Chronic Organic Mental Disorder","Acute Organic Mental Disorder","Alcohol Use Mental Disorder",
     "Drug Use Mental Disorder","Schizophrenia","Acute & Transient Psychotic Disorder","Schizo-affective disorder","Mood Affective Disorder (Manic)",
     "Mood Affective Disorder (Bipolar)","Mood Affective Disorder (Depresion)","Anxiety disorder","Stress Reaction Adjustment Disorder",
     "Dissociative Conversion Disorder","Somatoform Disorder","Puerperal Mental Disorder","Personality/Behaviour Disorder","Mental Retardation",
-    "Psychological mental disorder","Hyperkinetic Conduct Disorder","Diarrhea, cholera"']
+    "Psychological mental disorder","Hyperkinetic Conduct Disorder","Diarrhea, cholera"]
 
     type = EncounterType.find_by_name 'Outpatient diagnosis'
     data = Encounter.where("encounter_datetime BETWEEN ? AND ?
       AND encounter_type = ?
-      AND c.name IN(#{concept_names[0]})",
+      AND name: #{concept_names[0]}",
       start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
       end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id).\
       joins('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
