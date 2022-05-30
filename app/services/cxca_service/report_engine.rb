@@ -19,6 +19,7 @@ module CXCAService
     }.freeze
 
     def reports(start_date, end_date, name)
+      name = name.upcase
       case name
       when 'CC ALL QUESTIONS'
         REPORT_NAMES[name].new(start_date: start_date,

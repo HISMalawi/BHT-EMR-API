@@ -7,12 +7,14 @@ module CXCAService
       class CcAllQuestions
         attr_reader :response
 
-        AGE_GROUPS = ['15-19', '20-24', '25-29', '30-34', '35-39', '40-44', '45-49', '50+', 'Unknown Age'].freeze
+        AGE_GROUPS = ['15-19', '20-24', '25-29', '30-34', '35-39', '40-44', '45-49', '50+', 'Unknown Age',
+                      'Totals'].freeze
 
         def initialize(start_date:, end_date:)
           @start_date = start_date.strftime('%Y-%m-%d 00:00:00')
           @end_date = end_date.strftime('%Y-%m-%d 23:59:59')
           @response = init_response_structure
+          @total = response.find { |patient| patient[:age_group] == 'Totals' }
         end
 
         def general_report
@@ -61,11 +63,18 @@ module CXCAService
 
         def assign_to_type_of_screening(group, record)
           visit_type = Concept.find(record['value_coded']).fullname
-          return  group[:first_screen] << record['patient_id'] if visit_type == 'Initial Screening'
-          return  group[:follow_up_screen] << record['patient_id'] if ['Postponed treatment', 'Referral',
-                                                                       'Problem visit after treatment'].include?(visit_type)
-          return  group[:rescreen] << record['patient_id'] if ['One year subsequent check-up after treatment',
-                                                               'Subsequent screening'].include?(visit_type)
+          if visit_type == 'Initial Screening'
+            group[:first_screen] << record['patient_id']
+            @total[:first_screen] << record['patient_id']
+          end
+          if ['Postponed treatment', 'Referral', 'Problem visit after treatment'].include?(visit_type)
+            group[:follow_up_screen] << record['patient_id']
+            @total[:follow_up_screen] << record['patient_id']
+          end
+          if ['One year subsequent check-up after treatment', 'Subsequent screening'].include?(visit_type)
+            group[:rescreen] << record['patient_id']
+            @total[:rescreen] << record['patient_id']
+          end
         end
 
         # rubocop:disable Metrics/AbcSize
@@ -73,21 +82,35 @@ module CXCAService
         def assign_to_screening_result(group, record)
           result_type = Concept.find(record['value_coded']).fullname
           if result_type.match(/negative/i) || result_type.match(/normal/i) || result_type == 'No visible Lesion'
-            return group[:result_negative] << record['patient_id']
+            group[:result_negative] << record['patient_id']
+            @total[:result_negative] << record['patient_id']
           end
           if result_type.match(/positive/i) || result_type.match(/abnormal/i) || result_type == 'Visible Lesion'
-            return group[:result_positive] << record['patient_id']
+            group[:result_positive] << record['patient_id']
+            @total[:result_positive] << record['patient_id']
           end
-          return group[:result_suspected_cancer] << record['patient_id'] if result_type.match(/suspect/i)
+          if result_type.match(/suspect/i)
+            group[:result_suspected_cancer] << record['patient_id']
+            @total[:result_suspected_cancer] << record['patient_id']
+          end
         end
         # rubocop:enable Metrics/AbcSize
         # rubocop:enable Metrics/CyclomaticComplexity
 
         def assign_to_type_of_treatment(group, record)
           treatment_type = Concept.find(record['value_coded']).fullname
-          return  group[:cryotherapy] << record['patient_id'] if treatment_type == 'Cryotherapy'
-          return  group[:thermocoagulation] << record['patient_id'] if treatment_type == 'Thermocoagulation'
-          return  group[:leep] << record['patient_id'] if treatment_type == 'LEEP'
+          if treatment_type == 'Cryotherapy'
+            group[:cryotherapy] << record['patient_id']
+            @total[:cryotherapy] << record['patient_id']
+          end
+          if treatment_type == 'Thermocoagulation'
+            group[:thermocoagulation] << record['patient_id']
+            @total[:thermocoagulation] << record['patient_id']
+          end
+          if treatment_type == 'LEEP'
+            group[:leep] << record['patient_id']
+            @total[:leep] << record['patient_id']
+          end
         end
 
         def type_of_screening
