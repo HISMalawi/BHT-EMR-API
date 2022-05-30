@@ -14,7 +14,8 @@ module CXCAService
       'CC ALL QUESTIONS' => CXCAService::Reports::Pepfar::CcAllQuestions,
       'CC TYPE OF SCREEN' => CXCAService::Reports::Pepfar::CcAllQuestions,
       'CC SCREEN RESULT' => CXCAService::Reports::Pepfar::CcAllQuestions,
-      'CC TYPE OF TREATMENT' => CXCAService::Reports::Pepfar::CcAllQuestions
+      'CC TYPE OF TREATMENT' => CXCAService::Reports::Pepfar::CcAllQuestions,
+      'CC BASIC RESULT' => CXCAService::Reports::Pepfar::CcBasicResult
     }.freeze
 
     def reports(start_date, end_date, name)
