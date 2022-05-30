@@ -39,7 +39,7 @@ gem 'rswag-ui'
 
 # gem 'emr_ohsp_interface', '~> 1.0.1'
 # gem 'his_emr_api_lab', '~> 1.1.20'
-gem 'his_emr_api_lab', path: '/home/roy/person_scripts/MPC/LAB_YOU_CAN_MESS'
+gem 'his_emr_api_lab', path: '/home/roy/person_scripts/MPC/LAB_UPGRADE'
 # gem 'his_emr_api_radiology', '~> 0.0.7'
 
 group :development, :test do
