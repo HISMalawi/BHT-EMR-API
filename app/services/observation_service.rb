@@ -7,23 +7,25 @@ module ObservationService
         Rails.logger.debug("Creating observation: #{obs_parameters}")
         child_obs_parameters = obs_parameters.delete(:child)
 
-        validate_presence_of_obs_value(obs_parameters)
+        validate_presence_of_obs_value(obs_parameters.to_h.symbolize_keys)
 
         obs_parameters[:obs_datetime] = (
           TimeUtils.retro_timestamp(obs_parameters[:obs_datetime]) || encounter.encounter_datetime
         )
         obs_parameters[:person_id] = encounter.patient_id
         obs_parameters[:encounter_id] = encounter.id
-        observation = Observation.create(obs_parameters)
+        observation = Observation.create!(**obs_parameters)
         validate_observation(observation)
 
-        return [observation, nil] unless child_obs_parameters
+        if child_obs_parameters
+          Rails.logger.debug("Creating child observation for obs ##{observation.obs_id}")
+          child_obs_parameters[:obs_group_id] = observation.obs_id
+          child_observation = create_observation(encounter, child_obs_parameters)
 
-        Rails.logger.debug("Creating child observation for obs ##{observation.obs_id}")
-        child_obs_parameters[:obs_group_id] = observation.obs_id
-        child_observation = create_observation(encounter, child_obs_parameters)
-
-        [observation, child_observation]
+          [observation, child_observation]
+        else
+          [observation, nil]
+        end
       end
     end
 

@@ -223,6 +223,7 @@ module ARTService
                                               encounter: { program_id: @program.program_id })
                                        .where('obs_datetime <= ?', TimeUtils.day_bounds(@date)[1])
                                        .last
+      # return true if is_visiting_patient.blank?
 
       is_visiting_patient.value_coded != visiting_patient_concept.concept_id
     end
