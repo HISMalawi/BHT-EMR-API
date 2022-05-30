@@ -7,7 +7,8 @@ module CXCAService
       class CcBasicResult
         attr_reader :response
 
-        AGE_GROUPS = ['15-19', '20-24', '25-29', '30-34', '35-39', '40-44', '45-49', '50+', 'Unknown Age'].freeze
+        AGE_GROUPS = ['15-19', '20-24', '25-29', '30-34', '35-39', '40-44', '45-49', '50+', 'Unknown Age',
+                      'Totals'].freeze
 
         def initialize(start_date:, end_date:)
           @start_date = start_date.strftime('%Y-%m-%d 00:00:00')
@@ -16,6 +17,7 @@ module CXCAService
         end
 
         def data
+          @total = response.find { |patient| patient[:age_group] == 'Totals' }
           process_result
           process_screened
           process_treatment
@@ -37,6 +39,7 @@ module CXCAService
           total_number_on_treatment.each do |record|
             group = response.find { |patient| patient[:age_group] == record['age_group'] }
             group[:CXCA_SCRN_TX] << record['patient_id']
+            @total[:CXCA_SCRN_TX] << record['patient_id']
           end
         end
 
@@ -44,6 +47,7 @@ module CXCAService
           total_number_of_clients_screened.each do |record|
             group = response.find { |patient| patient[:age_group] == record['age_group'] }
             group[:CXCA_SCRN_D] << record['patient_id']
+            @total[:CXCA_SCRN_D] << record['patient_id']
           end
         end
 
@@ -57,13 +61,14 @@ module CXCAService
         def assign_to_screening_result_group(group, record)
           result_type = Concept.find(record['value_coded']).fullname
           if result_type.match(/negative/i) || result_type.match(/normal/i) || result_type == 'No visible Lesion'
-            return group[:CCXCC_SCRN_N] << record['patient_id']
+            group[:CCXCC_SCRN_N] << record['patient_id']
+            @total[:CCXCC_SCRN_N] << record['patient_id']
           end
 
           if result_type.match(/positive/i) || result_type.match(/abnormal/i) || result_type == 'Visible Lesion'
             group[:CXCA_SCRN_POS] << record['patient_id']
+            @total[:CXCA_SCRN_POS] << record['patient_id']
           end
-
         end
 
         def total_number_on_treatment
