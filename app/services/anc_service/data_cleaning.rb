@@ -14,6 +14,7 @@ module ANCService
                         'LAB RESULTS', 'UPDATE OUTCOME', 'DISPENSING', 'ANC VISIT TYPE'].freeze
 
     TOOLS = {
+      'NO HIV STATUS' => 'no_hiv_status',
       'INCOMPLETE VISITS' => 'incomplete_visits',
       'DUPLICATE ENCOUNTERS' => 'duplicate_encounter',
       'ENCOUNTERS AFTER DEATH' => 'encounters_after_death',
@@ -70,6 +71,24 @@ module ANCService
       @incomplete_visits
     end
 
+    def no_hiv_status
+      hiv_status = ConceptName.find_by name: 'HIV Status'
+      ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT
+          e.patient_id,
+          n.given_name,
+          n.family_name,
+          i.identifier
+        FROM encounter e
+        INNER JOIN person_name n ON n.person_id = e.patient_id AND n.voided = 0
+        INNER JOIN patient_identifier i ON i.patient_id = e.patient_id AND i.identifier_type = #{patient_identifier_type('National id').id}
+        WHERE e.program_id = 12 AND e.voided = 0
+        AND (SELECT COUNT(concept_id) FROM obs WHERE obs.concept_id=#{hiv_status.concept_id} AND obs.person_id = e.patient_id AND obs.voided=0) < 1
+        AND DATE(e.encounter_datetime) >= DATE('#{@start_date}') AND DATE(e.encounter_datetime) <= DATE('#{@end_date}')
+        GROUP BY e.patient_id
+      SQL
+    end
+
     def duplicate_encounter
       ActiveRecord::Base.connection.select_all <<~SQL
         SELECT
@@ -110,7 +129,7 @@ module ANCService
         INNER JOIN (
           SELECT ps.start_date, pp.program_id, pp.patient_id
           FROM patient_state ps
-          INNER JOIN patient_program pp ON ps.patient_program_id = pp.patient_program_id AND pp.voided = 0
+          INNER JOIN patient_program pp ON ps.patient_program_id =A pp.patient_program_id AND pp.voided = 0
           WHERE ps.voided = 0 AND pp.program_id = #{program('ANC PROGRAM').id} AND ps.state IN (#{adverse_outcome(outcome: 'Patient died').to_sql})
         ) as pd ON pd.program_id = e.program_id AND pd.patient_id = e.patient_id AND DATE(e.encounter_datetime) > pd.start_date
         WHERE e.voided = 0
