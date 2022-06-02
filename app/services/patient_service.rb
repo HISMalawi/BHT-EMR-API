@@ -108,6 +108,8 @@ class PatientService
     program_id = program ? ActiveRecord::Base.connection.quote(program.id) : nil
     date ||= Date.today
 
+    return find_los_visit_dates(patient_id, date) if program_id == '23'
+
     rows = ActiveRecord::Base.connection.select_all <<-SQL
       SELECT DISTINCT DATE(encounter_datetime) AS visit_date
       FROM encounter
@@ -147,6 +149,16 @@ class PatientService
     end
 
     visit_dates.select { |record| record.to_date <= date }
+  end
+
+  def find_los_visit_dates(patient, date = nil)
+    rows = ActiveRecord::Base.connection.select_all <<-SQL
+      SELECT DISTINCT DATE(encounter_datetime) AS visit_date
+      FROM encounter
+      INNER JOIN encounter_type et ON et.encounter_type_id = encounter.encounter_type AND et.name = 'LAB ORDERS' AND et.retired = 0
+      WHERE patient_id = #{patient} AND voided = 0 AND encounter_datetime < DATE('#{date}') + INTERVAL 1 DAY
+    SQL
+    rows.collect { |row| row['visit_date'].to_date }
   end
 
   # method to fetch patient state that is between the defaulter date
