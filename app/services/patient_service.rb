@@ -155,7 +155,7 @@ class PatientService
     rows = ActiveRecord::Base.connection.select_all <<-SQL
       SELECT DISTINCT DATE(encounter_datetime) AS visit_date
       FROM encounter
-      INNER JOIN encounter_type et ON et.encounter_type_id = encounter.encounter_type AND et.name = 'LAB ORDERS' AND et.retired = 0
+      INNER JOIN encounter_type et ON et.encounter_type_id = encounter.encounter_type AND (et.name = 'LAB ORDERS' OR et.name = 'LAB') AND et.retired = 0
       WHERE patient_id = #{patient} AND voided = 0 AND encounter_datetime < DATE('#{date}') + INTERVAL 1 DAY
     SQL
     rows.collect { |row| row['visit_date'].to_date }
