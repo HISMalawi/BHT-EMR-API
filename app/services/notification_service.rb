@@ -30,10 +30,6 @@ class NotificationService
       notify_all_users(alert)
       ActionCable.server.broadcast('nlims_channel', alert)
     end
-  rescue StandardError
-    Rails.logger.error('Error creating notification')
-    Rails.logger.error($!.message)
-    Rails.logger.error($!.backtrace.join("\n"))
   end
 
   def self.notify(notification_alert, recipients)
@@ -47,7 +43,7 @@ class NotificationService
   def self.notify_all(notification_alert, users)
     users.each do |user|
       user.notification_alert_recipients.create(
-        lert_id: notification_alert.id
+        alert_id: notification_alert.id
       )
     end
   end
