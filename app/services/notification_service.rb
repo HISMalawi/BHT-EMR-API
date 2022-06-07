@@ -21,7 +21,9 @@ class NotificationService
     end
   end
 
-  def create_notification(_alert_type, alert_message)
+  def create_notification(alert_type, alert_message)
+    return if alert_type != 'LIMS'
+
     lab = User.find_by(username: 'lab_daemon')
 
     ActiveRecord::Base.transaction do
