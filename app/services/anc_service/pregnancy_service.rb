@@ -12,14 +12,16 @@ module ANCService
     end
 
     def self.date_of_lnmp(patient, date)
-      lmp = ConceptName.find_by name: "Last menstrual period"
+      lmp_concept = ConceptName.find_by name: "Last menstrual period"
       current_pregnancy = EncounterType.find_by name: 'CURRENT PREGNANCY'
-      patient.encounters.joins([:observations])
-        .where(['encounter_type = ? AND obs.concept_id = ? AND DATE(obs.obs_datetime) >= DATE(?)',
-          current_pregnancy.id, lmp.concept_id, date_of_pregnancy_end(patient, date)])
-        .last.observations.collect {
-          |o| o.value_datetime
-        }.compact.last.to_date rescue nil
+      lmp_obs = Observation.joins(:encounter).select('value_datetime')
+        .where(concept: lmp_concept,
+              person: patient.person,
+              encounter: { encounter_type: current_pregnancy.encounter_type_id })
+        .where('concept_id = ? AND DATE(obs_datetime) >= DATE(?)',
+          lmp_concept.concept_id, date_of_pregnancy_end(patient, date)
+        ).last
+      return lmp_obs.value_datetime.to_date if !lmp_obs.blank?
     end
   end
 end
