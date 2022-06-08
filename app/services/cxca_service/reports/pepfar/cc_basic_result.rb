@@ -29,7 +29,7 @@ module CXCAService
         def init_response_structure
           struct = []
           AGE_GROUPS.each do |group|
-            struct << { age_group: group, CXCA_SCRN_D: [], CCXCC_SCRN_N: [], CXCA_SCRN_POS: [],
+            struct << { age_group: group, CXCA_SCRN_D: [], CXCA_SCRN_N: [], CXCA_SCRN_POS: [],
                         CXCA_SCRN_TX: [] }
           end
           struct
@@ -61,8 +61,8 @@ module CXCAService
         def assign_to_screening_result_group(group, record)
           result_type = Concept.find(record['value_coded']).fullname
           if result_type.match(/negative/i) || result_type.match(/normal/i) || result_type == 'No visible Lesion'
-            group[:CCXCC_SCRN_N] << record['patient_id']
-            @total[:CCXCC_SCRN_N] << record['patient_id']
+            group[:CXCA_SCRN_N] << record['patient_id']
+            @total[:CXCA_SCRN_N] << record['patient_id']
           end
 
           if result_type.match(/positive/i) || result_type.match(/abnormal/i) || result_type == 'Visible Lesion'
