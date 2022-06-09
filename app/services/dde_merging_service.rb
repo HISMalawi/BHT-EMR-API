@@ -577,7 +577,7 @@ class DDEMergingService
                     end
   end
 
-  def female_conepts
+  def female_concepts
     concept_ids = []
     concept_ids << concept('BREASTFEEDING').concept_id
     concept_ids << concept('BREAST FEEDING').concept_id
@@ -591,7 +591,7 @@ class DDEMergingService
   end
 
   def female_obs?(obs)
-    concepts = female_conepts
+    concepts = female_concepts
     concepts.include?(obs.concept_id) || concepts.include?(obs.value_coded)
   end
 end
