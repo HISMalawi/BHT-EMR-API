@@ -287,6 +287,7 @@ Rails.application.routes.draw do
   get '/api/v1/male' => 'api/v1/cleaning#male'
   get '/api/v1/incomplete_visits' => 'api/v1/cleaning#incompleteVisits'
   get '/api/v1/art_data_cleaning_tools' => 'api/v1/cleaning#art_tools'
+  get '/api/v1/anc_data_cleaning_tools' => 'api/v1/cleaning#anc_tools'
 
   # OPD reports
   get '/api/v1/malaria_report' => 'api/v1/reports#malaria_report'
