@@ -583,15 +583,15 @@ class DDEMergingService
     concept_ids << concept('BREAST FEEDING').concept_id
     concept_ids << concept('PATIENT PREGNANT').concept_id
     concept_ids << concept('Family planning method').concept_id
+    concept_ids << concept('Is patient pregnant?').concept_id
+    concept_ids << concept('Is patient breast feeding?').concept_id
+    concept_ids << concept('Patient using family planning').concept_id
+    concept_ids << concept('Method of family planning').concept_id
     concept_ids
   end
 
   def female_obs?(obs)
     concepts = female_conepts
-    concepts.include?(obs.concept_id) || concept.include?(obs.value_coded)
-  end
-
-  def concept(name)
-    ConceptName.find_by_name(name)
+    concepts.include?(obs.concept_id) || concepts.include?(obs.value_coded)
   end
 end
