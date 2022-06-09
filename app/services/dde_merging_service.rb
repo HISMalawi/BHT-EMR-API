@@ -56,8 +56,10 @@ class DDEMergingService
       merge_attributes(primary_patient, secondary_patient)
       merge_address(primary_patient, secondary_patient)
       @obs_map = {}
-      void_anc_encounter(primary_patient, secondary_patient) if female_male_merge?(primary_patient,
-                                                                                   secondary_patient) && secondary_female?(secondary_patient)
+      if female_male_merge?(primary_patient, secondary_patient) && secondary_female?(secondary_patient)
+        void_program_encounter(primary_patient, secondary_patient, 'CxCa program')
+        void_program_encounter(primary_patient, secondary_patient, 'ANC PROGRAM')
+      end
       result = merge_encounters(primary_patient, secondary_patient)
       merge_observations(primary_patient, secondary_patient, result)
       merge_orders(primary_patient, secondary_patient, result)
@@ -364,7 +366,8 @@ class DDEMergingService
 
   # central place to void and create new observation
   def process_obervation_merging(obs, primary_patient, encounter_map, secondary_patient)
-    if female_male_merge?(primary_patient, secondary_patient) && secondary_female?(secondary_patient) && female_obs?(obs)
+    if female_male_merge?(primary_patient,
+                          secondary_patient) && secondary_female?(secondary_patient) && female_obs?(obs)
       obs.void("Merged into patient ##{primary_patient.patient_id}:0")
       return nil
     end
@@ -570,9 +573,9 @@ class DDEMergingService
     secondary.gender.match(/f/i)
   end
 
-  def void_anc_encounter(primary, secondary)
+  def void_program_encounter(primary, secondary, name)
     Encounter.where(patient_id: secondary.patient_id,
-                    program: Program.find_by_name('ANC PROGRAM')).each do |encounter|
+                    program: Program.find_by_name(name)).each do |encounter|
                       encounter.void("Merged into patient ##{primary.patient_id}:0")
                     end
   end

@@ -21,11 +21,12 @@ class MergeAuditService
     first_merge = common_merge_fetch('ma.secondary_id', secondary)
     raise NotFoundError, "There is no merge for #{secondary}" if first_merge.blank?
 
-    tree = [first_merge]
+    count = 0
+    tree = [first_merge.merge({ 'merge_number' => count += 1 })]
     merge_id = MergeAudit.where(primary_id: first_merge['primary_id']).last&.id
     until merge_id.blank?
       parent = common_merge_fetch('ma.secondary_previous_merge_id', merge_id)
-      tree << parent unless parent.blank?
+      tree << parent.merge({ 'merge_number' => count += 1 }) unless parent.blank?
       merge_id = parent.blank? ? nil : MergeAudit.where(primary_id: parent['primary_id']).last&.id
     end
     tree.reverse
