@@ -2,7 +2,6 @@
 
 module ARTService
   class DataCleaningTool
-
     TOOLS = {
       'DATE ENROLLED LESS THAN EARLIEST START DATE' => 'date_enrolled_less_than_earliest_start_date',
       'PRE ART OR UNKNOWN OUTCOMES' => 'pre_art_or_unknown_outcomes',
@@ -13,9 +12,8 @@ module ARTService
       'MALE CLIENTS WITH FEMALE OBS' => 'male_clients_with_female_obs',
       'DOB MORE THAN DATE ENROLLED' => 'dob_more_than_date_enrolled',
       'INCOMPLETE VISITS' => 'incomplete_visit',
-      'MISSING DEMOGRAPHICS' => 'incomplete_demographics',
-    }
-
+      'MISSING DEMOGRAPHICS' => 'incomplete_demographics'
+    }.freeze
 
     def initialize(start_date:, end_date:, tool_name:)
       @start_date = start_date.to_date
@@ -24,183 +22,210 @@ module ARTService
     end
 
     def results
-      begin
-        return eval(TOOLS["#{@tool_name}"])
-      rescue Exception => e
-        return "#{e.class}: #{e.message}"
-      end
+      eval(TOOLS[@tool_name.to_s])
+    rescue Exception => e
+      "#{e.class}: #{e.message}"
+    end
+
+    def self.void_duplicate_npid(identifier)
+      ActiveRecord::Base.connection.execute <<~SQL
+        UPDATE patient_identifier
+        SET voided = 1,
+        void_reason = 'Duplicate identifier: #{identifier}',
+        voided_by = #{User.current.id},
+        date_voided = current_timestamp()
+        WHERE identifier = '#{identifier}'
+        AND identifier_type = 3
+        AND voided = 0
+      SQL
+    end
+
+    def self.void_unknown_identifiers
+      ActiveRecord::Base.connection.execute <<~SQL
+        UPDATE patient_identifier
+        SET voided = 1,
+        void_reason = 'Erroneous identifiers',
+        voided_by = #{User.current.id},
+        date_voided = current_timestamp()
+        WHERE LENGTH(identifier) != 6
+        AND LENGTH(identifier) != 13
+        AND identifier_type = 3
+        AND voided = 0
+      SQL
     end
 
     private
 
     def incomplete_demographics
       data = ActiveRecord::Base.connection.select_all <<~SQL
-      select
-        `p`.`patient_id` AS `patient_id`, `pe`.`birthdate`,
-        n.given_name, n.family_name, pe.gender, i.identifier arv_number
-      from
-        ((`patient_program` `p`
-        left join `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
-        left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
-        left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
-        LEFT JOIN patient_identifier i ON i.patient_id = pe.person_id
-        AND i.identifier_type = 4 AND i.voided = 0
-        LEFT JOIN person_name n ON n.person_id = pe.person_id AND n.voided = 0
-      where
-        ((`p`.`voided` = 0)
-            and (`s`.`voided` = 0)
-            and (`p`.`program_id` = 1))
-            and (`s`.`start_date`
-            between '#{@start_date.strftime('%Y-%m-%d 00:00:00')}'
-            and '#{@end_date.strftime('%Y-%m-%d 23:59:59')}'
-            and `p`.`patient_id` NOT IN (#{external_clients}))
-      group by `p`.`patient_id`
-      HAVING NULLIF(birthdate, '') = NULL OR NULLIF(gender,'') = NULL
-      OR NULLIF(given_name,'') = NULL OR NULLIF(family_name,'') = NULL
-      ORDER BY n.date_created DESC;
+        select
+          `p`.`patient_id` AS `patient_id`, `pe`.`birthdate`,
+          n.given_name, n.family_name, pe.gender, i.identifier arv_number
+        from
+          ((`patient_program` `p`
+          left join `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
+          left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
+          left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
+          LEFT JOIN patient_identifier i ON i.patient_id = pe.person_id
+          AND i.identifier_type = 4 AND i.voided = 0
+          LEFT JOIN person_name n ON n.person_id = pe.person_id AND n.voided = 0
+        where
+          ((`p`.`voided` = 0)
+              and (`s`.`voided` = 0)
+              and (`p`.`program_id` = 1))
+              and (`s`.`start_date`
+              between '#{@start_date.strftime('%Y-%m-%d 00:00:00')}'
+              and '#{@end_date.strftime('%Y-%m-%d 23:59:59')}'
+              and `p`.`patient_id` NOT IN (#{external_clients}))
+        group by `p`.`patient_id`
+        HAVING NULLIF(birthdate, '') = NULL OR NULLIF(gender,'') = NULL
+        OR NULLIF(given_name,'') = NULL OR NULLIF(family_name,'') = NULL
+        ORDER BY n.date_created DESC;
       SQL
 
       return {} if data.blank?
-      return data
+
+      data
     end
 
     def dob_more_than_date_enrolled
       data = ActiveRecord::Base.connection.select_all <<~SQL
-      select
-        `p`.`patient_id` AS `patient_id`, `pe`.`birthdate`,
-        cast(patient_date_enrolled(`p`.`patient_id`) as date) AS `date_enrolled`,
-        date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`,
-        n.given_name, n.family_name, pe.gender, i.identifier arv_number
-      from
-        ((`patient_program` `p`
-        left join `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
-        left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
-        left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
-        LEFT JOIN patient_identifier i ON i.patient_id = pe.person_id
-        AND i.identifier_type = 4 AND i.voided = 0
-        LEFT JOIN person_name n ON n.person_id = pe.person_id AND n.voided = 0
-      where
-        ((`p`.`voided` = 0)
-            and (`s`.`voided` = 0)
-            and (`p`.`program_id` = 1)
-            and (`s`.`state` = 7))
-            and (`s`.`start_date`
-            between '#{@start_date.strftime('%Y-%m-%d 00:00:00')}'
-            and '#{@end_date.strftime('%Y-%m-%d 23:59:59')}'
-            and `p`.`patient_id` NOT IN (#{external_clients}))
-      group by `p`.`patient_id`
-      HAVING (DATE(date_enrolled) < DATE(birthdate))
-      OR (DATE(earliest_start_date) < DATE(birthdate))
-      ORDER BY n.date_created DESC;
+        select
+          `p`.`patient_id` AS `patient_id`, `pe`.`birthdate`,
+          cast(patient_date_enrolled(`p`.`patient_id`) as date) AS `date_enrolled`,
+          date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`,
+          n.given_name, n.family_name, pe.gender, i.identifier arv_number
+        from
+          ((`patient_program` `p`
+          left join `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
+          left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
+          left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
+          LEFT JOIN patient_identifier i ON i.patient_id = pe.person_id
+          AND i.identifier_type = 4 AND i.voided = 0
+          LEFT JOIN person_name n ON n.person_id = pe.person_id AND n.voided = 0
+        where
+          ((`p`.`voided` = 0)
+              and (`s`.`voided` = 0)
+              and (`p`.`program_id` = 1)
+              and (`s`.`state` = 7))
+              and (`s`.`start_date`
+              between '#{@start_date.strftime('%Y-%m-%d 00:00:00')}'
+              and '#{@end_date.strftime('%Y-%m-%d 23:59:59')}'
+              and `p`.`patient_id` NOT IN (#{external_clients}))
+        group by `p`.`patient_id`
+        HAVING (DATE(date_enrolled) < DATE(birthdate))
+        OR (DATE(earliest_start_date) < DATE(birthdate))
+        ORDER BY n.date_created DESC;
       SQL
 
       return {} if data.blank?
-      return data
+
+      data
     end
 
     def date_enrolled_less_than_earliest_start_date
       data = ActiveRecord::Base.connection.select_all <<~SQL
-      select
-        `p`.`patient_id` AS `patient_id`,
-        cast(patient_date_enrolled(`p`.`patient_id`) as date) AS `date_enrolled`,
-        date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`
-      from
-        ((`patient_program` `p`
-        left join `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
-        left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
-        left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
-      where
-        ((`p`.`voided` = 0)
-            and (`s`.`voided` = 0)
-            and (`p`.`program_id` = 1)
-            and (`s`.`state` = 7))
-            and (`s`.`start_date`
-            between '#{@start_date.strftime('%Y-%m-%d 00:00:00')}'
-            and '#{@end_date.strftime('%Y-%m-%d 23:59:59')}'
-            and `p`.`patient_id` NOT IN (#{external_clients}))
-      group by `p`.`patient_id`
-      HAVING (date_enrolled IS NOT NULL AND earliest_start_date)
-      AND DATE(earliest_start_date) > DATE(date_enrolled);
+        select
+          `p`.`patient_id` AS `patient_id`,
+          cast(patient_date_enrolled(`p`.`patient_id`) as date) AS `date_enrolled`,
+          date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`
+        from
+          ((`patient_program` `p`
+          left join `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
+          left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
+          left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
+        where
+          ((`p`.`voided` = 0)
+              and (`s`.`voided` = 0)
+              and (`p`.`program_id` = 1)
+              and (`s`.`state` = 7))
+              and (`s`.`start_date`
+              between '#{@start_date.strftime('%Y-%m-%d 00:00:00')}'
+              and '#{@end_date.strftime('%Y-%m-%d 23:59:59')}'
+              and `p`.`patient_id` NOT IN (#{external_clients}))
+        group by `p`.`patient_id`
+        HAVING (date_enrolled IS NOT NULL AND earliest_start_date)
+        AND DATE(earliest_start_date) > DATE(date_enrolled);
       SQL
 
       return {} if data.blank?
-      patient_ids = data.map{|d| d['patient_id'].to_i}
+
+      patient_ids = data.map { |d| d['patient_id'].to_i }
 
       data = ActiveRecord::Base.connection.select_all <<~SQL
-      SELECT
-        p.person_id, i.identifier arv_number, birthdate, gender, death_date,
-        n.given_name, n.family_name
-      FROM person p
-      LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
-      AND i.identifier_type = 4 AND i.voided = 0
-      LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
-      WHERE p.person_id IN(#{patient_ids.join(',')})
-      GROUP BY p.person_id ORDER BY i.date_created DESC;
+        SELECT
+          p.person_id, i.identifier arv_number, birthdate, gender, death_date,
+          n.given_name, n.family_name
+        FROM person p
+        LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
+        AND i.identifier_type = 4 AND i.voided = 0
+        LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
+        WHERE p.person_id IN(#{patient_ids.join(',')})
+        GROUP BY p.person_id ORDER BY i.date_created DESC;
       SQL
 
-      return organise_data data
+      organise_data data
     end
 
     def pre_art_or_unknown_outcomes
       concept_set_id = concept('Antiretroviral drugs').concept_id
-      arvs = Drug.joins('INNER JOIN concept_set s ON s.concept_id = drug.concept_id').\
-      where("s.concept_set = ?", concept_set_id).map(&:drug_id)
+      arvs = Drug.joins('INNER JOIN concept_set s ON s.concept_id = drug.concept_id')\
+                 .where('s.concept_set = ?', concept_set_id).map(&:drug_id)
 
       data = ActiveRecord::Base.connection.select_all <<~SQL
-      select
-        p.patient_id
-      from
-        ((`patient_program` `p`
-        inner join orders o ON o.patient_id = p.patient_id
-        inner join drug_order d ON d.order_id = o.order_id
-        and d.drug_inventory_id in(#{arvs.join(',')})
-        left join `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
-        left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
-        left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
-      where
-        ((`p`.`voided` = 0)
-            and (`s`.`voided` = 0)
-            and (`d`.`quantity` > 0)
-            and (`o`.`voided` = 0)
-            and (`p`.`program_id` = 1)
-            and (`s`.`state` = 7))
-            and (`s`.`start_date`
-            between '#{@start_date.strftime('%Y-%m-%d 00:00:00')}'
-            and '#{@end_date.strftime('%Y-%m-%d 23:59:59')}'
-            and `p`.`patient_id` NOT IN (#{external_clients}))
-      group by `p`.`patient_id`
-      ORDER BY s.start_date DESC;
+        select
+          p.patient_id
+        from
+          ((`patient_program` `p`
+          inner join orders o ON o.patient_id = p.patient_id
+          inner join drug_order d ON d.order_id = o.order_id
+          and d.drug_inventory_id in(#{arvs.join(',')})
+          left join `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
+          left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
+          left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
+        where
+          ((`p`.`voided` = 0)
+              and (`s`.`voided` = 0)
+              and (`d`.`quantity` > 0)
+              and (`o`.`voided` = 0)
+              and (`p`.`program_id` = 1)
+              and (`s`.`state` = 7))
+              and (`s`.`start_date`
+              between '#{@start_date.strftime('%Y-%m-%d 00:00:00')}'
+              and '#{@end_date.strftime('%Y-%m-%d 23:59:59')}'
+              and `p`.`patient_id` NOT IN (#{external_clients}))
+        group by `p`.`patient_id`
+        ORDER BY s.start_date DESC;
       SQL
 
       return {} if data.blank?
+
       patient_ids = []
-      data_patient_ids = data.collect{|d| d['patient_id'].to_i}
+      data_patient_ids = data.collect { |d| d['patient_id'].to_i }
 
       data_patient_ids.each do |patient_id|
         outcome = ActiveRecord::Base.connection.select_one <<~SQL
-        SELECT patient_outcome(#{patient_id}, DATE('#{@end_date}')) outcome;
-      SQL
+          SELECT patient_outcome(#{patient_id}, DATE('#{@end_date}')) outcome;
+        SQL
 
-        if outcome['outcome'].match(/Unknown/i) || outcome['outcome'].match(/Pre/i)
-          patient_ids << patient_id
-        end
+        patient_ids << patient_id if outcome['outcome'].match(/Unknown/i) || outcome['outcome'].match(/Pre/i)
       end
 
       return {} if patient_ids.blank?
 
       data = ActiveRecord::Base.connection.select_all <<~SQL
-      SELECT
-        p.person_id, i.identifier arv_number, birthdate, gender, death_date,
-        n.given_name, n.family_name
-      FROM person p
-      LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
-      AND i.identifier_type = 4 AND i.voided = 0
-      LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
-      WHERE p.person_id IN(#{patient_ids.join(',')})
-      GROUP BY p.person_id ORDER BY i.date_created DESC;
+        SELECT
+          p.person_id, i.identifier arv_number, birthdate, gender, death_date,
+          n.given_name, n.family_name
+        FROM person p
+        LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
+        AND i.identifier_type = 4 AND i.voided = 0
+        LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
+        WHERE p.person_id IN(#{patient_ids.join(',')})
+        GROUP BY p.person_id ORDER BY i.date_created DESC;
       SQL
 
-      return organise_data data
+      organise_data data
     end
 
     def multiple_start_reasons
@@ -214,21 +239,22 @@ module ARTService
       SQL
 
       return {} if data.blank?
-      patient_ids = data.map{|d| d['person_id'].to_i}
+
+      patient_ids = data.map { |d| d['person_id'].to_i }
 
       data = ActiveRecord::Base.connection.select_all <<~SQL
-      SELECT
-        p.person_id, i.identifier arv_number, birthdate, gender, death_date,
-        n.given_name, n.family_name
-      FROM person p
-      LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
-      AND i.identifier_type = 4 AND i.voided = 0
-      LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
-      WHERE p.person_id IN(#{patient_ids.join(',')})
-      GROUP BY p.person_id ORDER BY i.date_created DESC;
+        SELECT
+          p.person_id, i.identifier arv_number, birthdate, gender, death_date,
+          n.given_name, n.family_name
+        FROM person p
+        LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
+        AND i.identifier_type = 4 AND i.voided = 0
+        LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
+        WHERE p.person_id IN(#{patient_ids.join(',')})
+        GROUP BY p.person_id ORDER BY i.date_created DESC;
       SQL
 
-      return organise_data data
+      organise_data data
     end
 
     def missing_start_reasons
@@ -269,23 +295,22 @@ module ARTService
         HAVING reason_for_art IS NULL AND art_start_date >= DATE(#{start_date})
       SQL
 
-
-      patient_ids = clients.map{ |p| p['patient_id'].to_i }
+      patient_ids = clients.map { |p| p['patient_id'].to_i }
       return {} if patient_ids.blank?
 
       data = ActiveRecord::Base.connection.select_all <<~SQL
-      SELECT
-        p.person_id, i.identifier arv_number, birthdate, gender, death_date,
-        n.given_name, n.family_name
-      FROM person p
-      LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
-      AND i.identifier_type = 4 AND i.voided = 0
-      LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
-      WHERE p.person_id IN(#{patient_ids.join(',')})
-      GROUP BY p.person_id ORDER BY i.date_created DESC;
+        SELECT
+          p.person_id, i.identifier arv_number, birthdate, gender, death_date,
+          n.given_name, n.family_name
+        FROM person p
+        LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
+        AND i.identifier_type = 4 AND i.voided = 0
+        LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
+        WHERE p.person_id IN(#{patient_ids.join(',')})
+        GROUP BY p.person_id ORDER BY i.date_created DESC;
       SQL
 
-      return organise_data data
+      organise_data data
     end
 
     def prescription_without_dispensation
@@ -402,23 +427,23 @@ module ARTService
       concept_ids << concept('Family planning method').concept_id
 
       data = ActiveRecord::Base.connection.select_all <<~SQL
-      SELECT
-        p.person_id, given_name, family_name, gender, birthdate,
-        i.identifier arv_number
-      FROM person p
-      INNER JOIN obs ON obs.person_id = p.person_id AND (p.gender != 'F' AND p.gender != 'Female')
-      LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
-      AND i.identifier_type = 4 AND i.voided = 0
-      LEFT JOIN person_name n ON n.person_id = p.person_id
-      AND n.voided = 0
-      WHERE obs.concept_id IN(#{concept_ids.join(',')})
-      OR value_coded IN(#{concept_ids.join(',')})
-      AND p.voided = 0 AND obs.voided = 0 and p.person_id NOT IN(#{external_clients})
-      GROUP BY p.person_id
-      ORDER BY n.date_created DESC;
+        SELECT
+          p.person_id, given_name, family_name, gender, birthdate,
+          i.identifier arv_number
+        FROM person p
+        INNER JOIN obs ON obs.person_id = p.person_id AND (p.gender != 'F' AND p.gender != 'Female')
+        LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
+        AND i.identifier_type = 4 AND i.voided = 0
+        LEFT JOIN person_name n ON n.person_id = p.person_id
+        AND n.voided = 0
+        WHERE obs.concept_id IN(#{concept_ids.join(',')})
+        OR value_coded IN(#{concept_ids.join(',')})
+        AND p.voided = 0 AND obs.voided = 0 and p.person_id NOT IN(#{external_clients})
+        GROUP BY p.person_id
+        ORDER BY n.date_created DESC;
       SQL
 
-      return organise_data data
+      organise_data data
     end
 
     def organise_data(data)
@@ -435,13 +460,14 @@ module ARTService
         }
       end
 
-      return client
+      client
     end
 
     def incomplete_visit
       patient_visit_dates = patient_visits.map { |visit| [visit['patient_id'], visit['visit_date']] }
 
       return {} if patient_visit_dates.blank?
+
       incomplete_visits_comp = {}
 
       patient_visit_dates.each do |patient_id, visit_date|
@@ -450,8 +476,9 @@ module ARTService
         workflow_engine = ARTService::WorkflowEngine.new(patient: patient, date: date, program: program)
         complete = workflow_engine.next_encounter.blank? ? true : false
 
-        unless complete
-          person_details = ActiveRecord::Base.connection.select_one <<~SQL
+        next if complete
+
+        person_details = ActiveRecord::Base.connection.select_one <<~SQL
           SELECT
             n.given_name, n.family_name, p.gender, p.birthdate,
             a.identifier arv_number, i.identifier national_id
@@ -464,22 +491,23 @@ module ARTService
           WHERE p.person_id = #{patient_id} AND p.voided = 0
           GROUP BY p.person_id ORDER BY i.date_created DESC,
           a.date_created DESC, n.date_created DESC;
-          SQL
+        SQL
 
+        if incomplete_visits_comp[patient_id].blank?
           incomplete_visits_comp[patient_id] = {
-            given_name: person_details["given_name"],
-            family_name: person_details["family_name"],
-            gender: person_details["gender"],
-            birthdate: person_details["birthdate"],
-            arv_number: person_details["arv_number"],
-            national_id: person_details["national_id"],
+            given_name: person_details['given_name'],
+            family_name: person_details['family_name'],
+            gender: person_details['gender'],
+            birthdate: person_details['birthdate'],
+            arv_number: person_details['arv_number'],
+            national_id: person_details['national_id'],
             dates: []
-          } if incomplete_visits_comp[patient_id].blank?
-          incomplete_visits_comp[patient_id][:dates] << visit_date.to_date
+          }
         end
+        incomplete_visits_comp[patient_id][:dates] << visit_date.to_date
       end
 
-      return incomplete_visits_comp
+      incomplete_visits_comp
     end
 
     def concept(name)

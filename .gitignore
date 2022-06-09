@@ -49,4 +49,7 @@ credentials.yml.enc
 
 config/server/
 
+# Ignore all migration generated reports
+migration*.csv
+migration*.log
 extensions.json

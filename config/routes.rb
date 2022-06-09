@@ -279,6 +279,8 @@ Rails.application.routes.draw do
   post '/api/v1/vl_maternal_status' => 'api/v1/reports#vl_maternal_status'
 
   # SQA controller
+  post '/api/v1/duplicate_identifier' => 'api/v1/cleaning#duplicate_identifier'
+  post '/api/v1/erroneous_identifier' => 'api/v1/cleaning#erroneous_identifier'
   get '/api/v1/dead_encounters' => 'api/v1/cleaning#index'
   get '/api/v1/date_enrolled' => 'api/v1/cleaning#dateEnrolled'
   get '/api/v1/start_date' => 'api/v1/cleaning#startDate'
