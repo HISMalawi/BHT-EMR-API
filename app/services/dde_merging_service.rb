@@ -56,6 +56,8 @@ class DDEMergingService
       merge_attributes(primary_patient, secondary_patient)
       merge_address(primary_patient, secondary_patient)
       @obs_map = {}
+      void_anc_encounter(primary_patient, secondary_patient) if female_male_merge?(primary_patient,
+                                                                                   secondary_patient) && secondary_female?(secondary_patient)
       result = merge_encounters(primary_patient, secondary_patient)
       merge_observations(primary_patient, secondary_patient, result)
       merge_orders(primary_patient, secondary_patient, result)
@@ -77,7 +79,7 @@ class DDEMergingService
     old_identifier = patient_identifier_type('Old Identification Number')
     doc_id_type = patient_identifier_type('DDE person document id')
 
-    local_patient.patient_identifiers.where(type: [national_id_type, doc_id_type,old_identifier]).each do |identifier|
+    local_patient.patient_identifiers.where(type: [national_id_type, doc_id_type, old_identifier]).each do |identifier|
       # We are now voiding all ids
       # if identifier.identifier_type == national_id_type.id && identifier.identifier.match?(/^\s*P\d{12}\s*$/i)
       #   # We have a v3 NPID that should get demoted to legacy national id
@@ -100,7 +102,8 @@ class DDEMergingService
                        .exists?
     end
 
-    identifier_exists['National id', remote_patient['npid']] && identifier_exists['DDE person document id', remote_patient['doc_id']]
+    identifier_exists['National id',
+                      remote_patient['npid']] && identifier_exists['DDE person document id', remote_patient['doc_id']]
   end
 
   private
@@ -284,7 +287,8 @@ class DDEMergingService
     Rails.logger.debug("Merging patient orders: #{primary_patient} <= #{secondary_patient}")
     orders_map = {}
     Order.where(patient_id: secondary_patient.id).each do |order|
-      check = Order.find_by('order_type_id = ? AND concept_id = ? AND patient_id = ? AND DATE(start_date) = ?', order.order_type_id, order.concept_id, primary_patient.id, order.start_date.strftime('%Y-%m-%d'))
+      check = Order.find_by('order_type_id = ? AND concept_id = ? AND patient_id = ? AND DATE(start_date) = ?',
+                            order.order_type_id, order.concept_id, primary_patient.id, order.start_date.strftime('%Y-%m-%d'))
       if check.blank?
         primary_order_hash = order.attributes
         primary_order_hash.delete('order_id')
@@ -326,9 +330,7 @@ class DDEMergingService
 
   def update_obs_order_id(order_map, obs_map)
     Observation.where(obs_id: obs_map.values).each do |obs|
-      unless obs.order_id.blank?
-        obs.update(order_id: order_map[obs.order_id])
-      end
+      obs.update(order_id: order_map[obs.order_id]) unless obs.order_id.blank?
     end
   end
 
@@ -339,12 +341,15 @@ class DDEMergingService
 
     Observation.where(person_id: secondary_patient.id).each do |obs|
       check = Observation.find_by("person_id = #{primary_patient.id} AND concept_id = #{obs.concept_id} AND
-        DATE(obs_datetime) = DATE('#{obs.obs_datetime.strftime('%Y-%m-%d')}') #{"AND value_coded = #{obs.value_coded}" unless obs.value_coded.blank?}")
+        DATE(obs_datetime) = DATE('#{obs.obs_datetime.strftime('%Y-%m-%d')}') #{unless obs.value_coded.blank?
+                                                                                  "AND value_coded = #{obs.value_coded}"
+                                                                                end}")
       if check.blank?
-        primary_obs = process_obervation_merging(obs, primary_patient, encounter_map)
-        @obs_map[obs.id] = primary_obs.id
+        primary_obs = process_obervation_merging(obs, primary_patient, encounter_map, secondary_patient)
+        @obs_map[obs.id] = primary_obs.id if primary_obs
       else
-        obs.update(void_reason: "Merged into patient ##{primary_patient.patient_id}:0", voided: 1, date_voided: Time.now, voided_by: User.current.id)
+        obs.update(void_reason: "Merged into patient ##{primary_patient.patient_id}:0", voided: 1,
+                   date_voided: Time.now, voided_by: User.current.id)
         @obs_map[obs.id] = check.id
       end
     end
@@ -358,7 +363,11 @@ class DDEMergingService
   end
 
   # central place to void and create new observation
-  def process_obervation_merging(obs, primary_patient, encounter_map)
+  def process_obervation_merging(obs, primary_patient, encounter_map, secondary_patient)
+    if female_male_merge?(primary_patient, secondary_patient) && secondary_female?(secondary_patient) && female_obs?(obs)
+      obs.void("Merged into patient ##{primary_patient.patient_id}:0")
+      return nil
+    end
     primary_obs_hash = obs.attributes
     primary_obs_hash.delete('obs_id')
     primary_obs_hash.delete('uuid')
@@ -367,26 +376,24 @@ class DDEMergingService
     primary_obs_hash['encounter_id'] = encounter_map[obs.encounter_id]
     primary_obs_hash['person_id'] = primary_patient.id
     primary_obs = Observation.create(primary_obs_hash)
-    unless primary_obs.errors.empty?
-      raise "Could not merge patient observations: #{primary_obs.errors.as_json}"
-    end
+    raise "Could not merge patient observations: #{primary_obs.errors.as_json}" unless primary_obs.errors.empty?
 
-    obs.update(void_reason: "Merged into patient ##{primary_patient.id}:#{primary_obs.id}", voided: 1, date_voided: Time.now, voided_by: User.current.id)
+    obs.update(void_reason: "Merged into patient ##{primary_patient.id}:#{primary_obs.id}", voided: 1,
+               date_voided: Time.now, voided_by: User.current.id)
     primary_obs
   end
 
   # this method updates observation table group id on the newly created observation
   def update_observations_group_id(obs_map)
     Observation.where(obs_id: obs_map.values).limit(nil).each do |obs|
-      unless obs.obs_group_id
-        obs.update(obs_group_id: obs_map[obs.obs_group_id])
-      end
+      obs.update(obs_group_id: obs_map[obs.obs_group_id]) unless obs.obs_group_id
     end
   end
 
   # Get all encounter types that involve referring to a clinician
   def refer_to_clinician_encounter_types
-    @refer_to_clinician_encounter_types ||= EncounterType.where('name = ? OR name = ?', 'HIV CLINIC CONSULTATION', 'HYPERTENSION MANAGEMENT').map(&:encounter_type_id)
+    @refer_to_clinician_encounter_types ||= EncounterType.where('name = ? OR name = ?', 'HIV CLINIC CONSULTATION',
+                                                                'HYPERTENSION MANAGEMENT').map(&:encounter_type_id)
   end
 
   # Strips off secondary_patient all encounters and blesses primary patient
@@ -397,7 +404,9 @@ class DDEMergingService
 
     # first get all encounter to be voided, create new instances from them, then void the encounter
     Encounter.where(patient_id: secondary_patient.id).each do |encounter|
-      check = Encounter.find_by('patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = ? AND program_id = ?', primary_patient.id, encounter.encounter_type, encounter.encounter_datetime.strftime('%Y-%m-%d'), encounter.program_id)
+      check = Encounter.find_by(
+        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = ? AND program_id = ?', primary_patient.id, encounter.encounter_type, encounter.encounter_datetime.strftime('%Y-%m-%d'), encounter.program_id
+      )
       if check.blank?
         primary_encounter_hash = encounter.attributes
         primary_encounter_hash.delete('encounter_id')
@@ -410,14 +419,19 @@ class DDEMergingService
           raise "Could not merge patient encounters: #{primary_encounter.errors.as_json}"
         end
 
-        encounter.update(void_reason: "Merged into patient ##{primary_patient.patient_id}:#{primary_encounter.id}", voided: 1, date_voided: Time.now, voided_by: User.current.id)
+        encounter.update(void_reason: "Merged into patient ##{primary_patient.patient_id}:#{primary_encounter.id}",
+                         voided: 1, date_voided: Time.now, voided_by: User.current.id)
         encounter_map[encounter.id] = primary_encounter.id
       else
         encounter_map[encounter.id] = check.id
         # we are trying to processes all clinician encounters observations if this visit resulted in being referred to the clinician
         # the merging needs to be smart enough to include the observartions under clinician
-        process_encounter_obs(encounter, primary_patient, secondary_patient, encounter_map) if refer_to_clinician_encounter_types.include? encounter.encounter_type
-        encounter.update(void_reason: "Merged into patient ##{primary_patient.patient_id}:0", voided: 1, date_voided: Time.now, voided_by: User.current.id)
+        if refer_to_clinician_encounter_types.include? encounter.encounter_type
+          process_encounter_obs(encounter, primary_patient, secondary_patient,
+                                encounter_map)
+        end
+        encounter.update(void_reason: "Merged into patient ##{primary_patient.patient_id}:0", voided: 1,
+                         date_voided: Time.now, voided_by: User.current.id)
       end
     end
 
@@ -436,18 +450,22 @@ class DDEMergingService
 
       # we are trying to handle the scenario where the primary had also referred this patient to clinician
       # then we shouldn't do anything. If secondary was referred to a clinician and primary was not then merge
-      if primary_obs.value_coded != obs.value_coded && primary_obs.value_coded == ConceptName.find_by(name: 'No')
-        result = process_obervation_merging(obs, primary_patient, encounter_map)
-        @obs_map[obs.id] = result.id
-        # one needs to voide the primary
-        primary_obs.update(void_reason: "Merged into patient ##{primary_patient.id}:#{result.id}", voided: 1, date_voided: Time.now, voided_by: User.current.id)
-        # now one needs to added all obs that occured after this choice of referral
-        # these will be by the clinician/specialist
-        Observation.where('encounter_id = ? AND obs_datetime >= ? AND obs_datetime <= ? person_id = ? ', encounter.id, obs.obs_datetime, obs.obs_datetime.end_of_day, secondary_patient.id).each do |observation|
-          if check_clinician?(observation.creator)
-            result = process_obervation_merging(observation, primary_patient, encounter_map)
-            @obs_map[obs.id] = result.id
-          end
+      unless primary_obs.value_coded != obs.value_coded && primary_obs.value_coded == ConceptName.find_by(name: 'No')
+        next
+      end
+
+      result = process_obervation_merging(obs, primary_patient, encounter_map, secondary_patient)
+      @obs_map[obs.id] = result.id if result
+      # one needs to voide the primary
+      primary_obs.update(void_reason: "Merged into patient ##{primary_patient.id}:#{result.id}", voided: 1,
+                         date_voided: Time.now, voided_by: User.current.id)
+      # now one needs to added all obs that occured after this choice of referral
+      # these will be by the clinician/specialist
+      Observation.where('encounter_id = ? AND obs_datetime >= ? AND obs_datetime <= ? person_id = ? ', encounter.id,
+                        obs.obs_datetime, obs.obs_datetime.end_of_day, secondary_patient.id).each do |observation|
+        if check_clinician?(observation.creator)
+          result = process_obervation_merging(observation, primary_patient, encounter_map, secondary_patient)
+          @obs_map[obs.id] = result.id if result
         end
       end
     end
@@ -456,9 +474,7 @@ class DDEMergingService
   def reassign_remote_patient_npid(patient_doc_id)
     response, status = dde_client.post('reassign_npid', { doc_id: patient_doc_id })
 
-    unless status == 200
-      raise "Failed to reassign remote patient npid: DDE Response => #{status} - #{response}"
-    end
+    raise "Failed to reassign remote patient npid: DDE Response => #{status} - #{response}" unless status == 200
 
     response
   end
@@ -472,7 +488,7 @@ class DDEMergingService
       # identifier_type => identifier or simply a map of
       # identifier_type => identifier. In the latter case the NPID is
       # not included in the identifiers object hence returning nil.
-      return nil if identifier.class == Array
+      return nil if identifier.instance_of?(Array)
 
       npid = identifier['National patient identifier']
       return npid unless npid.blank?
@@ -544,5 +560,38 @@ class DDEMergingService
     else
       @dde_client
     end
+  end
+
+  def female_male_merge?(primary, secondary)
+    primary.gender != secondary.gender
+  end
+
+  def secondary_female?(secondary)
+    secondary.gender.match(/f/i)
+  end
+
+  def void_anc_encounter(primary, secondary)
+    Encounter.where(patient_id: secondary.patient_id,
+                    program: Program.find_by_name('ANC PROGRAM')).each do |encounter|
+                      encounter.void("Merged into patient ##{primary.patient_id}:0")
+                    end
+  end
+
+  def female_conepts
+    concept_ids = []
+    concept_ids << concept('BREASTFEEDING').concept_id
+    concept_ids << concept('BREAST FEEDING').concept_id
+    concept_ids << concept('PATIENT PREGNANT').concept_id
+    concept_ids << concept('Family planning method').concept_id
+    concept_ids
+  end
+
+  def female_obs?(obs)
+    concepts = female_conepts
+    concepts.include?(obs.concept_id) || concept.include?(obs.value_coded)
+  end
+
+  def concept(name)
+    ConceptName.find_by_name(name)
   end
 end
