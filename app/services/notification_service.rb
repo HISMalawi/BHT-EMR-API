@@ -29,12 +29,12 @@ class NotificationService
     ActiveRecord::Base.transaction do
       alert = NotificationAlert.create!(text: alert_message, date_to_expire: Time.now + 3.months,
                                         creator: lab, changed_by: lab, date_created: Time.now)
-      notify_all_users(alert)
+      notify(alert, User.joins(:roles).where(user_role: { role: %w[Clinician Nurse] }))
       ActionCable.server.broadcast('nlims_channel', alert)
     end
   end
 
-  def self.notify(notification_alert, recipients)
+  def notify(notification_alert, recipients)
     recipients.each do |recipient|
       recipient.notification_alert_recipients.create(
         alert_id: notification_alert.id
@@ -42,7 +42,7 @@ class NotificationService
     end
   end
 
-  def self.notify_all(notification_alert, users)
+  def notify_all(notification_alert, users)
     users.each do |user|
       user.notification_alert_recipients.create(
         alert_id: notification_alert.id
