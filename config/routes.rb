@@ -4,7 +4,6 @@ Rails.application.routes.draw do
   mount EmrOhspInterface::Engine => '/'
   mount Rswag::Ui::Engine => '/api-docs'
   mount Rswag::Api::Engine => '/api-docs'
-  mount ActionCable.server => '/cable'
 
   namespace :api do
     namespace :v1 do
