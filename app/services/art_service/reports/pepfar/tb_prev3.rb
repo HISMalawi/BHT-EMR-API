@@ -38,7 +38,7 @@ module ARTService
 
         private
 
-        FULL_6H_COURSE_PILLS = 168
+        FULL_6H_COURSE_PILLS = 146
         FULL_3HP_COURSE_DAYS = 12.days
         # NOTE: Arrived at 12 days above from how 3HP is prescribed. 1st time prescription
         #       A patient takes 3HP once every week. Therefore it is 4 times a months
