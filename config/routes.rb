@@ -27,6 +27,9 @@ Rails.application.routes.draw do
         post '/deactivate', to: 'users#deactivate'
       end
 
+      # notifications for nlims any features in the future
+      resources :notifications, only: %i[index update]
+
       # Not placed under users urls to allow crud on current user's roles
       resources :user_roles, only: %i[index create destroy]
 
