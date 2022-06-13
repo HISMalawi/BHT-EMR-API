@@ -4,7 +4,7 @@ class PatientService
   include ModelUtils
   include TimeUtils
 
-  def create_patient(program, person,malawi_national_id = nil)
+  def create_patient(program, person, malawi_national_id = nil)
     ActiveRecord::Base.transaction do
       patient = Patient.create(patient_id: person.id)
       unless patient.errors.empty?
@@ -53,7 +53,8 @@ class PatientService
         if model == Observation then model.where(person_id: patient.patient_id)
         elsif model == PatientState then model.joins(:patient_program).merge(PatientProgram.where(patient: patient))
         elsif model == Patient then model.where(patient_id: patient.patient_id)
-        else model.where(patient: patient)
+        else
+          model.where(patient: patient)
         end.update_all(void_params)
       end
 
@@ -73,9 +74,7 @@ class PatientService
   def update_patient(program, patient, person_id = nil)
     if person_id
       patient.person_id = person_id
-      unless patient.save
-        raise "Could not update patient patient_id ##{patient_id} due to #{patient.errors.as_json}"
-      end
+      raise "Could not update patient patient_id ##{patient_id} due to #{patient.errors.as_json}" unless patient.save
     end
 
     dde_service(program).update_patient(patient) if use_dde_service? && dde_patient?(patient)
@@ -99,7 +98,8 @@ class PatientService
 
   def find_patients_by_identifier(identifier, *identifier_types, voided: false)
     Patient.joins('INNER JOIN patient_identifier USING (patient_id)')
-           .where(patient_identifier: { identifier: identifier, identifier_type: identifier_types.collect(&:id), voided: voided })
+           .where(patient_identifier: { identifier: identifier, identifier_type: identifier_types.collect(&:id),
+                                        voided: voided })
            .distinct
   end
 
@@ -108,33 +108,38 @@ class PatientService
     program_id = program ? ActiveRecord::Base.connection.quote(program.id) : nil
     date ||= Date.today
 
+    return find_los_visit_dates(patient_id, date) if program_id == '23'
+
     rows = ActiveRecord::Base.connection.select_all <<-SQL
       SELECT DISTINCT DATE(encounter_datetime) AS visit_date
       FROM encounter
-      WHERE patient_id = #{patient_id} AND voided = 0 #{"AND program_id = #{program_id}" if program_id} AND encounter_datetime < DATE('#{date}') + INTERVAL 1 DAY
+      WHERE patient_id = #{patient_id} AND voided = 0 #{if program_id
+                                                          "AND program_id = #{program_id}"
+                                                        end} AND encounter_datetime < DATE('#{date}') + INTERVAL 1 DAY
       GROUP BY visit_date
       ORDER BY visit_date DESC
     SQL
 
     visit_dates = rows.collect { |row| row['visit_date'].to_date }
-    if !visit_dates.blank? && (program_id.blank? ? false : (program_id.to_i ==  1)) && include_defaulter_dates
-      #Starting from the initial visit date, we add 1+ month while checking if the patient defaulted.
-      #if we find that the patient has a defualter date we add it to the array of visit dates.
+    if !visit_dates.blank? && (program_id.blank? ? false : (program_id.to_i == 1)) && include_defaulter_dates
+      # Starting from the initial visit date, we add 1+ month while checking if the patient defaulted.
+      # if we find that the patient has a defualter date we add it to the array of visit dates.
       initial_visit_date = visit_dates.last.to_date
 
       while initial_visit_date < Date.today
-      initial_visit_date = initial_visit_date + 1.month
+        initial_visit_date += 1.month
         defaulter_date = ActiveRecord::Base.connection.select_one <<~SQL
           SELECT current_defaulter_date(#{patient_id}, DATE('#{initial_visit_date}')) as defaulter_date;
         SQL
-        if !defaulter_date['defaulter_date'].blank? && check_defaulter_period(defaulter_date['defaulter_date'], patient_id, program_id)
-          visit_dates << defaulter_date['defaulter_date'].to_date
-          visit_dates.uniq!
-        end
+        next unless !defaulter_date['defaulter_date'].blank? && check_defaulter_period(defaulter_date['defaulter_date'],
+                                                                                       patient_id, program_id)
+
+        visit_dates << defaulter_date['defaulter_date'].to_date
+        visit_dates.uniq!
       end
 
-      #add program state start date to the visit dates
-      #if the patient has multiple HIV programs (should not happen but ...) we loop through them and get all state dates
+      # add program state start date to the visit dates
+      # if the patient has multiple HIV programs (should not happen but ...) we loop through them and get all state dates
       patient.patient_programs.where(program_id: program_id).each do |pro|
         pro.patient_states.map do |state|
           visit_dates << state.start_date
@@ -142,11 +147,21 @@ class PatientService
         end
       end
 
-      #We sort the dates array to make sure we start with the most recent date
-      visit_dates = visit_dates.sort {|a,b| b.to_date <=> a.to_date}
+      # We sort the dates array to make sure we start with the most recent date
+      visit_dates = visit_dates.sort { |a, b| b.to_date <=> a.to_date }
     end
 
     visit_dates.select { |record| record.to_date <= date }
+  end
+
+  def find_los_visit_dates(patient, date = nil)
+    rows = ActiveRecord::Base.connection.select_all <<~SQL
+      SELECT DISTINCT DATE(o.start_date) AS visit_date FROM orders o
+      INNER JOIN order_type ot ON ot.order_type_id = o.order_type_id AND ot.name = 'Lab' AND ot.retired = 0
+      WHERE o.patient_id = #{patient} AND o.voided = 0 AND o.start_date < DATE('#{date}') + INTERVAL 1 DAY
+      ORDER BY visit_date DESC
+    SQL
+    rows.collect { |row| row['visit_date'].to_date }
   end
 
   # method to fetch patient state that is between the defaulter date
@@ -217,7 +232,7 @@ class PatientService
   end
 
   def drugs_orders_by_program(patient, date, program_id: nil)
-    DrugOrder.joins(:order => :encounter).where(
+    DrugOrder.joins(order: :encounter).where(
       'orders.start_date <= ? AND orders.patient_id = ? AND quantity IS NOT NULL AND encounter.program_id = ?',
       TimeUtils.day_bounds(date)[1], patient.patient_id, program_id
     ).order('orders.start_date DESC')
@@ -248,7 +263,7 @@ class PatientService
   end
 
   # lab orders made for a patient
-  def recent_lab_orders (patient_id:, program_id:, reference_date:)
+  def recent_lab_orders(patient_id:, program_id:, reference_date:)
     lab_order_encounter = encounter_type('Lab Orders')
     Encounter.where('encounter_type = ? AND patient_id = ? AND encounter_datetime >= ? AND program_id = ?',
                     lab_order_encounter.encounter_type_id,
@@ -271,15 +286,16 @@ class PatientService
     ).order('encounter.encounter_datetime DESC')
 
     return [] unless pill_counts
+
     values = {}
 
-    (pill_counts).each do |obs|
+    pill_counts.each do |obs|
       order = obs.order
       drug_order = obs.order.drug_order
       values[drug_order.drug_inventory_id] = obs.value_numeric
     end
 
-    return values
+    values
   end
 
   # Retrieves a patient's bp trail
@@ -349,83 +365,75 @@ class PatientService
 
   # Source: NART/models/patients#patient_eligible_for_htn_screening
   def patient_eligible_for_htn_screening(patient, date = Date.today)
-    threshold = global_property("htn.screening.age.threshold")&.property_value&.to_i || 0
-    sbp_threshold = global_property("htn.systolic.threshold")&.property_value&.to_i || 0
-    dbp_threshold = global_property("htn.diastolic.threshold")&.property_value&.to_i || 0
+    threshold = global_property('htn.screening.age.threshold')&.property_value&.to_i || 0
+    sbp_threshold = global_property('htn.systolic.threshold')&.property_value&.to_i || 0
+    dbp_threshold = global_property('htn.diastolic.threshold')&.property_value&.to_i || 0
 
-    if (patient.age(today: date) >= threshold || patient.programs.map{|x| x.name}.include?("HYPERTENSION PROGRAM"))
+    if patient.age(today: date) >= threshold || patient.programs.map { |x| x.name }.include?('HYPERTENSION PROGRAM')
 
-      htn_program = Program.find_by_name("HYPERTENSION PROGRAM")
+      htn_program = Program.find_by_name('HYPERTENSION PROGRAM')
 
       patient_program = enrolled_on_program(patient, htn_program.id, date, false)
 
       if patient_program.blank?
-        #When patient has no HTN program
+        # When patient has no HTN program
         last_check = last_bp_readings(patient, date)
 
         if last_check.blank?
-          return true #patient has never had their BP checked
-        elsif ((last_check[:sbp].to_i >= sbp_threshold || last_check[:dbp].to_i >= dbp_threshold))
-          return true #patient had high BP readings at last visit
-        elsif((date.to_date - last_check[:max_date].to_date).to_i >= 365 )
-          return true # 1 Year has passed since last check
+          true # patient has never had their BP checked
+        elsif last_check[:sbp].to_i >= sbp_threshold || last_check[:dbp].to_i >= dbp_threshold
+          true # patient had high BP readings at last visit
         else
-          return false
+          (date.to_date - last_check[:max_date].to_date).to_i >= 365
         end
       else
-        #Get plan
+        # Get plan
 
         plan_concept = Concept.find_by_name('Plan').id
-        plan = Observation.where(["person_id = ? AND concept_id = ? AND obs_datetime <= ?", patient.id, plan_concept,
-            date.strftime('%Y-%m-%d 23:59:59').to_time]).order("obs_datetime DESC").first
+        plan = Observation.where(['person_id = ? AND concept_id = ? AND obs_datetime <= ?', patient.id, plan_concept,
+                                  date.strftime('%Y-%m-%d 23:59:59').to_time]).order('obs_datetime DESC').first
         if plan.blank?
-          return true
+          true
+        elsif plan.value_text.match(/ANNUAL/i)
+          (date.to_date - plan.obs_datetime.to_date).to_i >= 365
         else
-          if plan.value_text.match(/ANNUAL/i)
-            if ((date.to_date - plan.obs_datetime.to_date).to_i >= 365 )
-              return true #patient on annual screening and time has elapsed
-            else
-              return false #patient was screen but a year has not passed
-            end
-          else
-            return true #patient requires active screening
-          end
+          true # patient requires active screening
         end
 
       end
     else
-      return false
+      false
     end
   end
 
   # Source: NART/controllers/htn_encounter_controller#create
   def update_or_create_htn_state(patient, state, date)
-    htn_program = Program.find_by_name("HYPERTENSION PROGRAM")
+    htn_program = Program.find_by_name('HYPERTENSION PROGRAM')
     # get state id
-    state = ProgramWorkflowState.where(["program_workflow_id = ? AND concept_id in (?)",
-        ProgramWorkflow.where(["program_id = ?", htn_program.id]).first.id,
-        ConceptName.where(name: state).collect(&:concept_id)]).first.id
+    state = ProgramWorkflowState.where(['program_workflow_id = ? AND concept_id in (?)',
+                                        ProgramWorkflow.where(['program_id = ?', htn_program.id]).first.id,
+                                        ConceptName.where(name: state).collect(&:concept_id)]).first.id
     unless state.blank?
-      patient_program = PatientProgram.where(["patient_id = ? AND program_id = ? AND date_enrolled <= ?",
-          patient.patient_id, htn_program.id, date]).first
+      patient_program = PatientProgram.where(['patient_id = ? AND program_id = ? AND date_enrolled <= ?',
+                                              patient.patient_id, htn_program.id, date]).first
 
-      state_within_range = PatientState.where(["patient_program_id = ? AND state = ? AND start_date <= ? AND end_date >= ?",
-          patient_program.id, state, date, date]).first
+      state_within_range = PatientState.where(['patient_program_id = ? AND state = ? AND start_date <= ? AND end_date >= ?',
+                                               patient_program.id, state, date, date]).first
 
       if state_within_range.blank?
-        last_state = PatientState.where(["patient_program_id = ? AND start_date <= ? ",
-            patient_program.id, date]).order("start_date ASC").last
-        if ! last_state.blank?
+        last_state = PatientState.where(['patient_program_id = ? AND start_date <= ? ',
+                                         patient_program.id, date]).order('start_date ASC').last
+        unless last_state.blank?
           last_state.end_date = date
           last_state.save
         end
 
-        state_after = PatientState.where(["patient_program_id = ? AND start_date >= ? ",
-            patient_program.id, date]).order("start_date ASC").last
+        state_after = PatientState.where(['patient_program_id = ? AND start_date >= ? ',
+                                          patient_program.id, date]).order('start_date ASC').last
 
         new_state = PatientState.new(patient_program_id: patient_program.id,
-                                     start_date: date, state: state )
-        new_state.end_date = state_after.start_date if !state_after.blank?
+                                     start_date: date, state: state)
+        new_state.end_date = state_after.start_date unless state_after.blank?
         new_state.save
       end
     end
@@ -458,7 +466,7 @@ class PatientService
       SQL
 
       medication.each do |m|
-        medication_given  <<{
+        medication_given << {
           medication: m['name'],
           quantity: m['quantity']
         }
@@ -507,41 +515,62 @@ class PatientService
       ORDER BY obs.date_created DESC LIMIT 1;
     SQL
 
-
-    patient_available = patient_available['pa'] rescue 'N/A'
-    guardian_available =  guardian_available['pa'] rescue 'N/A'
-
-    if patient_available == 'YES' && guardian_available == 'YES'
-      visit_type = 'PG'
-    elsif patient_available == 'YES'
-      visit_type = 'P'
-    elsif patient_available == 'YES'
-      visit_type = 'G'
-    else
-      visit_type = 'N/A'
+    patient_available = begin
+      patient_available['pa']
+    rescue StandardError
+      'N/A'
+    end
+    guardian_available = begin
+      guardian_available['pa']
+    rescue StandardError
+      'N/A'
     end
 
-    visit = {
-      regimen:  (current_regimen['regimen'] rescue  nil),
-      outcome:  current_outcome['outcome'],
-      weight:   (current_weight['weight'] rescue ''),
-      height:   (current_weight['height'] rescue  ''),
-      appointment:   (appointment['date'] rescue  ''),
+    visit_type = if patient_available == 'YES' && guardian_available == 'YES'
+                   'PG'
+                 elsif patient_available == 'YES'
+                   'P'
+                 elsif patient_available == 'YES'
+                   'G'
+                 else
+                   'N/A'
+                 end
+
+    {
+      regimen: begin
+        current_regimen['regimen']
+      rescue StandardError
+        nil
+      end,
+      outcome: current_outcome['outcome'],
+      weight: begin
+        current_weight['weight']
+      rescue StandardError
+        ''
+      end,
+      height: begin
+        current_weight['height']
+      rescue StandardError
+        ''
+      end,
+      appointment: begin
+        appointment['date']
+      rescue StandardError
+        ''
+      end,
       visit_type: visit_type,
       medication: medication_given
     }
-
-    return  visit
   end
 
-  def tpt_prescription_count(patient, program, date)
-    drug_concept_ids = ConceptName.where("name IN(?)", ["Isoniazid","Rifapentine"]).map(&:concept_id)
-    orders =  Order.joins("INNER JOIN drug_order o ON o.order_id = orders.order_id
+  def tpt_prescription_count(patient, _program, date)
+    drug_concept_ids = ConceptName.where('name IN(?)', %w[Isoniazid Rifapentine]).map(&:concept_id)
+    orders = Order.joins("INNER JOIN drug_order o ON o.order_id = orders.order_id
       INNER JOIN drug d ON d.drug_id = o.drug_inventory_id")\
-      .where("d.concept_id IN(?) AND orders.patient_id = ? AND DATE(start_date) < ?
-      AND quantity > 0", drug_concept_ids, patient.id, date).\
-      group("DATE(orders.start_date)").select("DATE(start_date)")
-      return {count: orders.length}
+                  .where("d.concept_id IN(?) AND orders.patient_id = ? AND DATE(start_date) < ?
+      AND quantity > 0", drug_concept_ids, patient.id, date)\
+                  .group('DATE(orders.start_date)').select('DATE(start_date)')
+    { count: orders.length }
   end
 
   private
@@ -552,11 +581,9 @@ class PatientService
   end
 
   def use_dde_service?
-    begin
-      global_property('dde_enabled').property_value&.strip == 'true'
-    rescue
-      false
-    end
+    global_property('dde_enabled').property_value&.strip == 'true'
+  rescue StandardError
+    false
   end
 
   def dde_patient?(patient)
@@ -577,9 +604,9 @@ class PatientService
   end
 
   # Blesses patient with a v28 malawiNid
-  def assign_patient_v28_malawiNid(patient,malawi_national_id)
+  def assign_patient_v28_malawiNid(patient, malawi_national_id)
     identifier_type = PatientIdentifierType.find_by(name: 'Malawi National ID')
-    identifier_type.next_identifier_for_malawi_nid(patient: patient,MNID: malawi_national_id)
+    identifier_type.next_identifier_for_malawi_nid(patient: patient, MNID: malawi_national_id)
   end
 
   # Blesses patient with a DDE npid
@@ -665,7 +692,7 @@ class PatientService
   end
 
   # Returns the next available patient identifier for assignment
-  def next_available_npid(patient: , identifier_type: , program_id: nil)
+  def next_available_npid(patient:, identifier_type:, program_id: nil)
     unless identifier_type.name.match?(/#{PatientIdentifierType::NPID_TYPE_NAME}/i)
       raise "Unknown identifier type: #{identifier_type.name}"
     end
@@ -937,17 +964,17 @@ class PatientService
   end
 
   def enrolled_on_program(patient, program_id, date = DateTime.now, create = false)
-    #patient_id
-    program = PatientProgram.where(["patient_id = ? AND program_id = ? AND date_enrolled <= ?",
-        patient.id, program_id, date.strftime("%Y-%m-%d 23:59:59")]).last
-    alive_concept_id = ConceptName.where(["name =?", "Alive"]).first.concept_id
+    # patient_id
+    program = PatientProgram.where(['patient_id = ? AND program_id = ? AND date_enrolled <= ?',
+                                    patient.id, program_id, date.strftime('%Y-%m-%d 23:59:59')]).last
+    alive_concept_id = ConceptName.where(['name =?', 'Alive']).first.concept_id
     if program.blank? and create
       ActiveRecord::Base.transaction do
-        program = PatientProgram.create({:program_id => program_id, :date_enrolled => date,
-            :patient_id => patient.id})
-        alive_state = ProgramWorkflowState.where(["program_workflow_id = ? AND concept_id = ?",
-            ProgramWorkflow.where(["program_id = ?", program_id]).first.id, alive_concept_id]).first.id
-        PatientState.create(:patient_program_id => program.id, :start_date => date,:state => alive_state )
+        program = PatientProgram.create({ program_id: program_id, date_enrolled: date,
+                                          patient_id: patient.id })
+        alive_state = ProgramWorkflowState.where(['program_workflow_id = ? AND concept_id = ?',
+                                                  ProgramWorkflow.where(['program_id = ?', program_id]).first.id, alive_concept_id]).first.id
+        PatientState.create(patient_program_id: program.id, start_date: date, state: alive_state)
       end
     end
 
@@ -959,32 +986,44 @@ class PatientService
     dbp_concept = Concept.find_by_name('Diastolic blood pressure').id
     patient_id = patient.id
 
-    latest_date = Observation.find_by_sql("
+    latest_date = begin
+      Observation.find_by_sql("
       SELECT MAX(obs_datetime) AS date FROM obs
       WHERE person_id = #{patient_id}
         AND voided = 0
         AND concept_id IN (#{sbp_concept}, #{dbp_concept})
         AND obs_datetime <= '#{date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-      ").last.date.to_date rescue nil
+      ").last.date.to_date
+    rescue StandardError
+      nil
+    end
 
     return nil if latest_date.blank?
 
-    sbp = Observation.find_by_sql("
+    sbp = begin
+      Observation.find_by_sql("
         SELECT * FROM obs
         WHERE person_id = #{patient_id}
           AND voided = 0
           AND concept_id = #{sbp_concept}
           AND obs_datetime BETWEEN '#{latest_date.to_date.strftime('%Y-%m-%d 00:00:00')}' AND '#{latest_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-      ").last.value_numeric rescue nil
+      ").last.value_numeric
+    rescue StandardError
+      nil
+    end
 
-    dbp = Observation.find_by_sql("
+    dbp = begin
+      Observation.find_by_sql("
         SELECT * FROM obs
         WHERE person_id = #{patient_id}
           AND voided = 0
           AND concept_id = #{dbp_concept}
           AND obs_datetime BETWEEN '#{latest_date.to_date.strftime('%Y-%m-%d 00:00:00')}' AND '#{latest_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-      ").last.value_numeric rescue nil
+      ").last.value_numeric
+    rescue StandardError
+      nil
+    end
 
-    return {:patient_id => patient_id, :max_date => latest_date, :sbp => sbp, :dbp => dbp}
+    { patient_id: patient_id, max_date: latest_date, sbp: sbp, dbp: dbp }
   end
 end
