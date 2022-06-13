@@ -50,6 +50,7 @@ group :test do
   gem 'factory_bot_rails'
   gem 'rspec'
   gem 'rspec-rails'
+  gem 'rswag-specs'
 end
 
 group :development do

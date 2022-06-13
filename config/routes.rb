@@ -231,6 +231,8 @@ Rails.application.routes.draw do
       post '/dde/patients/reassign_npid', to: 'dde#reassign_patient_npid'
       post '/dde/patients/merge', to: 'dde#merge_patients'
       get '/dde/patients/remaining_npids', to: 'dde#remaining_npids'
+      get '/rollback/merge_history', to: 'rollback#merge_history'
+      post '/rollback/rollback_patient', to: 'rollback#rollback_patient'
 
       get '/labels/location', to: 'locations#print_label'
 
