@@ -855,9 +855,6 @@ module ANCService
       @file.puts 'This is a list of Patients without encounters'
       @file.puts report_patient_without_encounters
       @file.puts ' '
-      @file.puts 'This is list of Providers that were changed because they are not system users'
-      @file.puts report_providers_changed
-      @file.puts ' '
       @file.puts 'This is the log'
       @file.puts File.open('migration.log').read
       File.delete('migration.log') if File.exist?('migration.log')
