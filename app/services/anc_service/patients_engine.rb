@@ -205,7 +205,7 @@ module ANCService
         ANC_PROGRAM.id])
         .order([:encounter_datetime])
         .select("value_coded")
-        .last.value_coded #rescue nil
+        .last.value_coded rescue ''
 
       if last_test_visit == yes_concept.concept_id
         return true
