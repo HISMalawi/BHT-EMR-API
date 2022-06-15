@@ -79,10 +79,10 @@ module ANCService
         @local_score = (@score * 100) / 45.0
         percentage = @local_score >= @confidence
         write_to_file(anc['patient_id'], anc['identifier'], patient.id,
-                      patient.patient_identifiers.find_by(identifier_type: 3).identifier)
+                      patient.patient_identifiers.find_by(identifier_type: 3)&.identifier)
         if percentage
           record = { anc['patient_id'] => patient.id,
-                     'identifier' => patient.patient_identifiers.find_by(identifier_type: 3).identifier,
+                     'identifier' => patient.patient_identifiers.find_by(identifier_type: 3)&.identifier,
                      'reason' => identifier['void_reason'] }
         end
         break if percentage
