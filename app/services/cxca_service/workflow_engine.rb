@@ -126,7 +126,6 @@ module CXCAService
     end
 
     def show_cancer_treatment?
-      return false if same_day_treatment?
       return false if postponed_treatment_today?
       return false unless cxca_positive?
 
@@ -152,7 +151,6 @@ module CXCAService
     end
 
     def show_appointment?
-      return false if postponed_treatment?
 
 =begin
       encounter_type = EncounterType.find_by name: CANCER_TREATMENT

@@ -6,6 +6,7 @@ class User < RetirableRecord
 
   belongs_to :person, foreign_key: :person_id
 
+  has_many :notification_alert_recipients, class_name: 'NotificationAlertRecipient', foreign_key: :user_id
   has_many :properties, class_name: 'UserProperty', foreign_key: :user_id
   has_many :user_roles, class_name: 'UserRole'
   has_many :roles, through: :user_roles

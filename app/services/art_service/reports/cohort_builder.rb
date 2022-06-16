@@ -650,42 +650,28 @@ module ARTService
       # rubocop:disable Metrics/AbcSize
       def drug_refills_and_external_consultation_list(end_date)
         to_remove = [0]
-=begin
-        ActiveRecord::Base.connection.select_all('SELECT patient_id FROM temp_earliest_start_date').each do |record|
-          result = Observation.joins(:encounter)
-                              .where("patient_id = #{record['patient_id']}
-                                      AND encounter_type = #{registration}
-                                      AND program_id = #{hiv_program.id}
-                                      AND encounter_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
-                                      AND obs.concept_id IN (#{type_of_patient.to_sql})")
-                              .select(:value_coded)
-          to_remove << record['patient_id'] unless result.map { |coded| coded['value_coded'] }.include? new_patient
-        end
-        to_remove.join(',')
-=end
 
         type_of_patient_concept = concept('Type of patient').concept_id
         new_patient_concept = concept('New patient').concept_id
         drug_refill_concept = concept('Drug refill').concept_id
         external_concept = concept('External Consultation').concept_id
+        hiv_clinic_registration_id = EncounterType.find_by_name('HIV CLINIC REGISTRATION').encounter_type_id
 
         ActiveRecord::Base.connection.select_all("SELECT e.patient_id FROM temp_earliest_start_date e
-        INNER JOIN encounter ec ON e.patient_id = ec.patient_id
-        AND ec.voided = 0
-        AND ec.encounter_type = (SELECT encounter_type_id FROM encounter_type WHERE name = 'REGISTRATION' LIMIT 1)
-        AND ec.program_id = #{hiv_program.id}
-        LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND value_coded = #{new_patient_concept}) AS new_patient ON e.patient_id = new_patient.person_id
-        LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND value_coded = #{drug_refill_concept}) AS refill ON e.patient_id = refill.person_id
-        LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND value_coded = #{external_concept}) AS external ON e.patient_id = external.person_id
+        LEFT JOIN encounter as hiv_registration ON hiv_registration.patient_id = e.patient_id AND hiv_registration.encounter_datetime < DATE(#{end_date}) AND hiv_registration.encounter_type = #{hiv_clinic_registration_id} AND hiv_registration.voided = 0
+        LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND value_coded = #{new_patient_concept} AND obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY) AS new_patient ON e.patient_id = new_patient.person_id
+        LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND value_coded = #{drug_refill_concept} AND obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY) AS refill ON e.patient_id = refill.person_id
+        LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND value_coded = #{external_concept} AND obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY) AS external ON e.patient_id = external.person_id
         WHERE (refill.value_coded IS NOT NULL OR external.value_coded IS NOT NULL)
-        AND new_patient.value_coded IS NULL
-        AND ec.encounter_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
-        GROUP BY e.patient_id;").each do |record|
+        AND NOT (hiv_registration.encounter_id IS NOT NULL OR new_patient.value_coded IS NOT NULL)
+        GROUP BY e.patient_id
+        ORDER BY hiv_registration.encounter_datetime DESC, refill.obs_datetime DESC, external.obs_datetime DESC;").each do |record|
           to_remove << record['patient_id'].to_i
         end
-
         to_remove.join(',')
       end
+      # rubocop:enable Metrics/MethodLength
+      # rubocop:enable Metrics/AbcSize
 
       def create_tmp_patient_table
         ActiveRecord::Base.connection.execute('DROP TABLE IF EXISTS temp_earliest_start_date')

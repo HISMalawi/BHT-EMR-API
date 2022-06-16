@@ -2076,6 +2076,30 @@ BEGIN
 	RETURN given;
 END;
 
+DROP FUNCTION IF EXISTS `cxca_age_group`;
+
+CREATE FUNCTION `cxca_age_group`(birthdate date, end_date date) RETURNS VARCHAR(15)
+BEGIN
+
+DECLARE age_in_months INT(11);
+DECLARE age_in_years INT(11);
+DECLARE age_group VARCHAR(15);
+
+SET age_in_years  = (SELECT timestampdiff(year, birthdate, end_date));
+SET age_group = ('Unknown Age');
+
+IF age_in_years >= 15 AND age_in_years <= 19 THEN SET age_group = "15-19";
+ELSEIF age_in_years >= 20 AND age_in_years <= 24 THEN SET age_group = "20-24";
+ELSEIF age_in_years >= 25 AND age_in_years <= 29 THEN SET age_group = "25-29";
+ELSEIF age_in_years >= 30 AND age_in_years <= 34 THEN SET age_group = "30-34";
+ELSEIF age_in_years >= 35 AND age_in_years <= 39 THEN SET age_group = "35-39";
+ELSEIF age_in_years >= 40 AND age_in_years <= 44 THEN SET age_group = "40-44";
+ELSEIF age_in_years >= 45 AND age_in_years <= 49 THEN SET age_group = "45-49";
+ELSEIF age_in_years >= 50 THEN SET age_group = "50+";
+END IF;
+
+RETURN age_group;
+END;
 
 
 DROP FUNCTION IF EXISTS `cohort_disaggregated_age_group`;

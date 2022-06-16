@@ -137,9 +137,9 @@ module ARTService
 
         if obs_group.blank?
             next if no_side_effects_concept_id == row['value_coded'].to_i
-            results << ConceptName.find_by_concept_id(row['value_coded']).name
+            results << ConceptName.find_by_concept_id(row['value_coded'])&.name
         elsif obs_group.value_coded == yes_side_effects_concept_id
-            results << ConceptName.find_by_concept_id(obs_group.concept_id).name
+            results << ConceptName.find_by_concept_id(obs_group.concept_id)&.name
         end
       end
 

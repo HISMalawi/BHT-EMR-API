@@ -73,7 +73,7 @@ module ARTService
 
       return 'Unknown' unless tb_status_value
 
-      ConceptName.find_by(concept_id: tb_status_value, concept_name_type: 'FULLY_SPECIFIED')&.name || 'Unknown'
+      ConceptName.find_by(concept_id: tb_status_value, concept_name_type: 'SHORT')&.name || 'Unk'
     end
 
     def height
@@ -167,27 +167,31 @@ module ARTService
       parent_obs = Observation.where(concept: concept('Malawi ART side effects'), person: patient.person)
                               .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
                               .order(obs_datetime: :desc)
-                              .first
+
       return [] unless parent_obs
 
-      @side_effects = parent_obs.children
-                                .where(value_coded: ConceptName.find_by_name!('Yes').concept_id)
-                                .collect { |side_effect| side_effect.concept.fullname }
-                                .compact
+      @side_effects = []
+      parent_obs.each do |obs|
+        result = obs.children
+                    .where(value_coded: ConceptName.find_by_name!('Yes').concept_id)
+                    .collect { |side_effect| side_effect.concept.fullname }
+
+        @side_effects << result.join(',') unless result.blank?
+      end
+
+      @side_effects
     end
 
     def viral_load_result
-      viral_load_concept = ConceptName.where(name: 'HIV Viral Load').select(:concept_id)
-      # tests = Lab::LabTest.where(value_coded: viral_load_concept, person_id: patient.patient_id, obs_datetime: Dat)
-      tests = Lab::LabTest.where("value_coded IN (#{viral_load_concept.to_sql})
-                                  AND person_id = #{patient.patient_id}
-                                  AND DATE(obs_datetime) = DATE('#{date.to_date}')")
+      tests = viral_load_tests
+      tests = viral_load_tests("<=") if tests.empty?
 
       result = Lab::LabResult.where(obs_group_id: tests, person_id: patient.patient_id)
                              .order(:obs_datetime)
                              .last
       return 'N/A' unless result
 
+      viral_load_concept = ConceptName.where(name: 'HIV Viral Load').select(:concept_id)
       value = result.children.where(concept_id: viral_load_concept).first
       return 'N/A' unless value
 
@@ -222,6 +226,14 @@ module ARTService
 
     private
 
+    def viral_load_tests(sql_params = "=")
+      viral_load_concept = ConceptName.where(name: 'HIV Viral Load').select(:concept_id)
+      # tests = Lab::LabTest.where(value_coded: viral_load_concept, person_id: patient.patient_id, obs_datetime: Dat)
+      tests = Lab::LabTest.where("value_coded IN (#{viral_load_concept.to_sql})
+                                  AND person_id = #{patient.patient_id}
+                                  AND DATE(obs_datetime) #{sql_params} '#{date.to_date}'")
+    end
+
     def lab_tests_engine
       @lab_tests_engine = ARTService::LabTestsEngine.new(program: program('HIV Program'))
     end
@@ -244,7 +256,7 @@ module ARTService
       name = match.nil? ? drug.name : match[1]
 
       name = 'CPT' if name.match?('Cotrimoxazole')
-      name = 'INH' if name.match?('INH')
+      # name = 'INH' if name.match?('INH')
       name
     end
   end

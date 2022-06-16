@@ -38,7 +38,7 @@ module ARTService
 
         private
 
-        FULL_6H_COURSE_PILLS = 168
+        FULL_6H_COURSE_PILLS = 146
         FULL_3HP_COURSE_DAYS = 12.days
         # NOTE: Arrived at 12 days above from how 3HP is prescribed. 1st time prescription
         #       A patient takes 3HP once every week. Therefore it is 4 times a months
@@ -123,13 +123,13 @@ module ARTService
               AND prescription_encounter.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
               AND prescription_encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'Treatment')
               AND prescription_encounter.encounter_datetime >= DATE(#{start_date}) - INTERVAL 6 MONTH
-              AND prescription_encounter.encounter_datetime <= DATE(#{end_date})
+              AND prescription_encounter.encounter_datetime <= DATE(#{start_date})
               AND prescription_encounter.voided = 0
             INNER JOIN orders
               ON orders.encounter_id = prescription_encounter.encounter_id
               AND orders.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
               AND orders.start_date >= DATE(#{start_date}) - INTERVAL 6 MONTH
-              AND orders.start_date <= DATE(#{end_date})
+              AND orders.start_date <= DATE(#{start_date})
               AND orders.voided = 0
             INNER JOIN concept_name
               ON concept_name.concept_id = orders.concept_id

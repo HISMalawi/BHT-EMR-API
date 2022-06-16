@@ -1,21 +1,115 @@
 ---
 openapi: 3.0.1
 info:
-  title: API V1
+  title: EMR API V1 DOCS
   version: v1
 paths:
-servers:
-- url: http://{defaultHost}
-  variables:
-    defaultHost:
-      default: localhost:3000
+  "/api/v1/rollback/merge_history":
+    get:
+      summary: Retrieve merge history
+      tags:
+      - Merge Rollback
+      description: This shows the timeline of client merges
+      security:
+      - api_key: []
+      parameters:
+      - name: identifier
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Merge History found
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    primary_id:
+                      type: integer
+                    secondary_id:
+                      type: integer
+                    merge_date:
+                      type: string
+                    merge_type:
+                      type: string
+                    primary_first_name:
+                      type: string
+                    primary_surname:
+                      type: string
+                    primary_gender:
+                      type: string
+                    primary_birthdate:
+                      type: string
+                    secondary_first_name:
+                      type: string
+                    secondary_surname:
+                      type: string
+                    secondary_gender:
+                      type: string
+                    secondary_birthdate:
+                      type: string
+        '404':
+          description: Merge History not found
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+  "/api/v1/rollback/rollback_patient":
+    post:
+      summary: Rollback patient merge
+      tags:
+      - Merge Rollback
+      security:
+      - api_key: []
+      parameters: []
+      responses:
+        '200':
+          description: Patient Rolled back
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  patient_id:
+                    type: integer
+        '404':
+          description: There is no merge history of the patient
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                patient_id:
+                  type: integer
+                program_id:
+                  type: integer
+              required:
+              - patient_id
+              - program_id
 components:
   securitySchemes:
     api_key:
       type: apiKey
       name: Authorization
       in: header
-    bearer:
-      type: bearer
-      name: Authorization
-      in: header
+servers:
+- url: http://{defaultHost}
+  variables:
+    defaultHost:
+      default: localhost:3000

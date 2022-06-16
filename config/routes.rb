@@ -26,6 +26,9 @@ Rails.application.routes.draw do
         post '/deactivate', to: 'users#deactivate'
       end
 
+      # notifications for nlims any features in the future
+      resources :notifications, only: %i[index update]
+
       # Not placed under users urls to allow crud on current user's roles
       resources :user_roles, only: %i[index create destroy]
 
@@ -231,6 +234,8 @@ Rails.application.routes.draw do
       post '/dde/patients/reassign_npid', to: 'dde#reassign_patient_npid'
       post '/dde/patients/merge', to: 'dde#merge_patients'
       get '/dde/patients/remaining_npids', to: 'dde#remaining_npids'
+      get '/rollback/merge_history', to: 'rollback#merge_history'
+      post '/rollback/rollback_patient', to: 'rollback#rollback_patient'
 
       get '/labels/location', to: 'locations#print_label'
 
@@ -279,12 +284,15 @@ Rails.application.routes.draw do
   post '/api/v1/vl_maternal_status' => 'api/v1/reports#vl_maternal_status'
 
   # SQA controller
+  post '/api/v1/duplicate_identifier' => 'api/v1/cleaning#duplicate_identifier'
+  post '/api/v1/erroneous_identifier' => 'api/v1/cleaning#erroneous_identifier'
   get '/api/v1/dead_encounters' => 'api/v1/cleaning#index'
   get '/api/v1/date_enrolled' => 'api/v1/cleaning#dateEnrolled'
   get '/api/v1/start_date' => 'api/v1/cleaning#startDate'
   get '/api/v1/male' => 'api/v1/cleaning#male'
   get '/api/v1/incomplete_visits' => 'api/v1/cleaning#incompleteVisits'
   get '/api/v1/art_data_cleaning_tools' => 'api/v1/cleaning#art_tools'
+  get '/api/v1/anc_data_cleaning_tools' => 'api/v1/cleaning#anc_tools'
 
   # OPD reports
   get '/api/v1/malaria_report' => 'api/v1/reports#malaria_report'
@@ -339,6 +347,7 @@ Rails.application.routes.draw do
   get '/api/v1/:program_id/external_consultation_clients', to: 'api/v1/reports#external_consultation_clients'
 
   get '/api/v1/screened_for_cxca', to: 'api/v1/reports#cxca_reports'
+  get '/api/v1/pepfar_cxca', to: 'api/v1/reports#cxca_reports'
   get '/api/v1/dispatch_order/:order_id', to: 'api/v1/dispatch_orders#show'
   post '/api/v1/dispatch_order', to: 'api/v1/dispatch_orders#create'
   get '/api/v1/latest_regimen_dispensed', to: 'api/v1/reports#latest_regimen_dispensed'

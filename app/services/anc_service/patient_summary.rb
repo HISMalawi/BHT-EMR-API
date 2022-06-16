@@ -36,14 +36,7 @@ module ANCService
     end
 
     def date_of_lnmp
-      last_lmp = patient.encounters.joins([:observations])
-        .where(['encounter_type = ? AND obs.concept_id = ?',
-          EncounterType.find_by_name('Current pregnancy').id,
-          ConceptName.find_by_name('Last menstrual period').concept_id])
-        .last.observations.collect {
-          |o| o.value_datetime
-        }.compact.last.to_date rescue nil
-
+      ANCService::PregnancyService.date_of_lnmp(@patient, @date)
     end
 
     def number_of_visits
