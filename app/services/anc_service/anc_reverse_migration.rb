@@ -303,7 +303,18 @@ module ANCService
 
     # method to remove observations
     def remove_obs
-      central_hub 'obs', "WHERE person_id NOT IN (#{@remove})"
+      print_time message: 'Removing observations'
+      row_count = 1
+      record_count = 0
+      while row_count.positive?
+        central_execute  statement: "DELETE FROM obs WHERE person_id IN (#{@remove}) LIMIT 1000"
+        result = central_select statement: 'SELECT ROW_COUNT() as row_count'
+        row_count = result[0]['row_count'].to_i
+        record_count += row_count
+        print '.' if row_count.positive?
+        puts "\n #{record_count} records removed" if row_count.zero?
+      end
+      print_time
     end
 
     # method to remove observations that were properly migrated
@@ -322,7 +333,18 @@ module ANCService
 
     # method to remove encounters
     def remove_encounters
-      central_hub 'encounter', "WHERE patient_id NOT IN (#{@remove})"
+      print_time message: 'Removing encounters'
+      row_count = 1
+      record_count = 0
+      while row_count.positive?
+        central_execute  statement: "DELETE FROM encounter WHERE patient_id IN (#{@remove}) LIMIT 1000"
+        result = central_select statement: 'SELECT ROW_COUNT() as row_count'
+        row_count = result[0]['row_count'].to_i
+        record_count += row_count
+        print '.' if row_count.positive?
+        puts "\n #{record_count} records removed" if row_count.zero?
+      end
+      print_time
     end
 
     # method to remove properly migrated encounters
@@ -479,6 +501,13 @@ module ANCService
     # method to print time when running some heavy things
     def print_time(message: 'Done', long_form: false)
       puts "#{message}: #{long_form ? Time.now : Time.now.strftime('%H:%M:%S')}"
+    end
+
+    def central_select(statement: '', message: nil)
+      puts "Running #{message}" unless message.blank?
+      result = ActiveRecord::Base.connection.select_all statement
+      puts "Done running #{message}" unless message.blank?
+      result
     end
 
     # method to execute commands

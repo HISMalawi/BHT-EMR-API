@@ -19,6 +19,7 @@ module ANCService
         FROM  #{@database}.patient_identifier
         WHERE patient_identifier.identifier_type = 3
         AND patient_identifier.voided = 0
+        GROUP BY patient_id
       SQL
       print_time message: 'Mapping Patients'
       anc.each do |identifier|
@@ -79,10 +80,10 @@ module ANCService
         @local_score = (@score * 100) / 45.0
         percentage = @local_score >= @confidence
         write_to_file(anc['patient_id'], anc['identifier'], patient.id,
-                      patient.patient_identifiers.find_by(identifier_type: 3).identifier)
+                      patient.patient_identifiers.find_by(identifier_type: 3)&.identifier)
         if percentage
           record = { anc['patient_id'] => patient.id,
-                     'identifier' => patient.patient_identifiers.find_by(identifier_type: 3).identifier,
+                     'identifier' => patient.patient_identifiers.find_by(identifier_type: 3)&.identifier,
                      'reason' => identifier['void_reason'] }
         end
         break if percentage
@@ -104,8 +105,8 @@ module ANCService
     def check_name(anc_name, patient)
       return if anc_name.blank?
 
-      anc_name['given_name'] == patient.person.names[0].given_name ? update_score_variables('Given name', 5) : nil
-      anc_name['family_name'] == patient.person.names[0].family_name ? update_score_variables('Family name', 5) : nil
+      anc_name['given_name'] == patient.person.names[0]&.given_name ? update_score_variables('Given name', 5) : nil
+      anc_name['family_name'] == patient.person.names[0]&.family_name ? update_score_variables('Family name', 5) : nil
     end
 
     # method to check person attributes

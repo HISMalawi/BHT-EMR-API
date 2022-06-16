@@ -79,13 +79,16 @@ module ANCService
         migrate_person(fetch_missed_persons, 'Migrating Person details who are neither patients nor system users')
         # migrate_person(fetch_missed_patients, 'Migrating Person details for missed patients')
         migrate_person(not_linked, 'Migrating Person Details for those without any linkage')
-        migrate_person_name(fetch_missed_persons, 'Migrating Person Name details who are neither patients nor system users')
+        migrate_person_name(fetch_missed_persons,
+                            'Migrating Person Name details who are neither patients nor system users')
         # migrate_person_name(fetch_missed_patients, 'Migrating Person Name details for missed patients')
         migrate_person_name(not_linked, 'Migrating Person Name Details for those without any linkage')
-        migrate_person_address(fetch_missed_persons, 'Migrating Person Address details who are neither patients nor system users')
+        migrate_person_address(fetch_missed_persons,
+                               'Migrating Person Address details who are neither patients nor system users')
         # migrate_person_address(fetch_missed_patients, 'Migrating Person Address details for missed patients')
         migrate_person_address(not_linked, 'Migrating Person Address Details for those without any linkage')
-        migrate_person_attribute(fetch_missed_persons, 'Migrating Person Attributes details who are neither patients nor system users')
+        migrate_person_attribute(fetch_missed_persons,
+                                 'Migrating Person Attributes details who are neither patients nor system users')
         # migrate_person_attribute(fetch_missed_patients, 'Migrating Person Attributes details for missed patients')
         migrate_person_attribute(not_linked, 'Migrating Person Attributes Details for those without any linkage')
         migrate_patient(not_linked, 'Migrating Patient Details for those without any linkage')
@@ -142,7 +145,9 @@ module ANCService
     # method to fetch linked patients
     def fetch_mapped_patients
       condition = ''
-      condition = "WHERE art_patient_id NOT IN (SELECT patient_id FROM #{@database}.ART_patient_in_use)" if @database_reversed
+      if @database_reversed
+        condition = "WHERE art_patient_id NOT IN (SELECT patient_id FROM #{@database}.ART_patient_in_use)"
+      end
       result = ActiveRecord::Base.connection.select_all <<~SQL
         SELECT anc_patient_id, art_patient_id FROM #{@database}.mapped_patients #{condition}
       SQL
@@ -290,7 +295,9 @@ module ANCService
     # method to migrate person name records
     def migrate_person_name(patients, msg, linked: false)
       cond = ''
-      cond = "INNER JOIN #{@database}.mapped_patients on mapped_patients.anc_patient_id = person_name.person_id" if linked
+      if linked
+        cond = "INNER JOIN #{@database}.mapped_patients on mapped_patients.anc_patient_id = person_name.person_id"
+      end
       statement = <<~SQL
         INSERT INTO person_name (preferred, person_id, prefix, given_name, middle_name, family_name_prefix, family_name, family_name2, family_name_suffix, degree, creator, date_created, voided, voided_by, date_voided, void_reason, changed_by, date_changed, uuid)
         SELECT preferred, #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + person_name.person_id) AS person_id"},
@@ -456,7 +463,8 @@ module ANCService
     def provider_change_history
       return if fetch_providers_who_are_not_system_users.length == 1
 
-      central_hub(message: 'Dropping recorded providers table', query: "DROP TABLE IF EXISTS #{@database}.provider_change_history")
+      central_hub(message: 'Dropping recorded providers table',
+                  query: "DROP TABLE IF EXISTS #{@database}.provider_change_history")
       statement = <<~SQL
         CREATE TABLE #{@database}.provider_change_history
         SELECT provider_id AS ANC_person_id, encounter_id AS ANC_encounter_id, (SELECT person_id FROM #{@database}.users LIMIT 1) AS ANC_new_person_id, (SELECT (SELECT person_id FROM #{@database}.users LIMIT 1) + #{@person_id}) AS ART_provider_id, (SELECT #{@encounter_id} + encounter_id) AS ART_encounter_id
@@ -470,7 +478,9 @@ module ANCService
     # rubocop:disable Metrics/MethodLength
     def migrate_encounter_system_users(patients, msg, linked: false)
       cond = ''
-      cond = "INNER JOIN #{@database}.mapped_patients on mapped_patients.anc_patient_id = encounter.patient_id" if linked
+      if linked
+        cond = "INNER JOIN #{@database}.mapped_patients on mapped_patients.anc_patient_id = encounter.patient_id"
+      end
       statement = <<~SQL
         INSERT INTO encounter (encounter_id, encounter_type, patient_id, provider_id, location_id, form_id, encounter_datetime, creator, date_created, voided, voided_by, date_voided, void_reason, uuid, changed_by, date_changed, program_id)
         SELECT (SELECT #{@encounter_id} + encounter_id), encounter_type, #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + patient_id)"}, providers.ART_person_id, location_id, form_id, encounter_datetime, bak.ART_user_id, encounter.date_created, encounter.voided, voider.ART_user_id, encounter.date_voided, encounter.void_reason, encounter.uuid, changer.ART_user_id, encounter.date_changed, 12
@@ -563,7 +573,11 @@ module ANCService
         UPDATE obs SET value_text = null, value_coded = 7975, value_coded_name_id = 10922 WHERE concept_id = 7998 AND value_text IN ('Still Birth') AND obs_id > #{@obs_id}
       SQL
       print_time message: 'Updating observations'
-      statements.split(';').each { |value| central_hub message: nil, query: value.strip }
+      statements.split(';').each do |value|
+        central_hub message: nil, query: value.strip
+        print '.'
+      end
+      puts ''
       print_time
     end
     # rubocop:enable Metrics/MethodLength
@@ -839,6 +853,21 @@ module ANCService
       csv
     end
 
+    def report_clients_with_multiple_identifiers
+      result = ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT patient_id, GROUP_CONCAT(identifier SEPARATOR ' ') AS `identifiers`, count(*) AS count
+        FROM  #{@database}.patient_identifier
+        WHERE patient_identifier.identifier_type = 3
+        AND patient_identifier.voided = 0
+        GROUP BY patient_id HAVING COUNT(*) > 1
+      SQL
+      csv = 'ANC PATIENT ID ,ANC IDENTIFIERS, ANC COUNT'
+      result.each do |record|
+        csv += "\n#{record['patient_id']},#{record['identifiers']},#{record['count']}"
+      end
+      csv
+    end
+
     # method to write mapping data
     def write_migration_to_file
       @log.close
@@ -855,6 +884,12 @@ module ANCService
       @file.puts 'This is a list of Patients without encounters'
       @file.puts report_patient_without_encounters
       @file.puts ' '
+      @file.puts 'This is a list of Patients with multiple identifiers'
+      @file.puts report_clients_with_multiple_identifiers
+      @file.puts ' '
+      # @file.puts 'This is list of Providers that were changed because they are not system users'
+      # @file.puts report_providers_changed
+      # @file.puts ' '
       @file.puts 'This is the log'
       @file.puts File.open('migration.log').read
       File.delete('migration.log') if File.exist?('migration.log')
