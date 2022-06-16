@@ -312,7 +312,7 @@ module ANCService
         row_count = result[0]['row_count'].to_i
         record_count += row_count
         print '.' if row_count.positive?
-        puts "\n #{record_count} records removed"
+        puts "\n #{record_count} records removed" if row_count.zero?
       end
       print_time
     end
@@ -342,7 +342,7 @@ module ANCService
         row_count = result[0]['row_count'].to_i
         record_count += row_count
         print '.' if row_count.positive?
-        puts "\n #{record_count} records removed"
+        puts "\n #{record_count} records removed" if row_count.zero?
       end
       print_time
     end
