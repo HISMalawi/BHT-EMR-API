@@ -66,6 +66,7 @@ module ANCService
         end
         if @database_reversed
           ActiveRecord::Base.connection.disable_referential_integrity do
+            removed_hanging_users_in_user_bak
             @missed_users_person_ids = fetch_missed_users('person_id')
             @missed_users_ids = fetch_missed_users('user_id')
             migrate_person(@missed_users_person_ids, 'Migrating Missed Users Person Details')
@@ -223,6 +224,13 @@ module ANCService
         WHERE user_id IN (#{@missed_users_ids})
       SQL
       central_hub message: 'Updating user_bak with missed/new users', query: statement
+    end
+
+    def removed_hanging_users_in_user_bak
+      statement = <<~SQL
+        DELETE FROM #{@database}.user_bak WHERE person_id NOT IN (SELECT person_id FROM person)
+      SQL
+      central_hub message: 'Removing hanging users from user_bak', query: statement
     end
 
     def fetch_missed_users(field)
