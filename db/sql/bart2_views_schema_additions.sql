@@ -2175,6 +2175,34 @@ RETURN age_group;
 END;
 
 
+DROP FUNCTION IF EXISTS `OPD_syndromic_statistics`;
+
+CREATE FUNCTION `OPD_syndromic_statistics`(start_date date, end_date date) RETURNS VARCHAR(15)
+BEGIN
+
+DECLARE obs_in_months INT(11);
+DECLARE obs_date_group VARCHAR(15);
+
+SET obs_in_months = (SELECT timestampdiff(month, start_date, end_date));
+SET obs_date_group = ('Unknown');
+
+IF obs_in_months < 1  THEN SET obs_date_group = "0 months";
+ELSEIF obs_in_months = 1 THEN SET obs_date_group = "1 months";
+ELSEIF obs_in_months = 2  THEN SET obs_date_group = "2 months";
+ELSEIF obs_in_months = 3 THEN SET obs_date_group = "3 months";
+ELSEIF obs_in_months = 4 THEN SET obs_date_group = "4 months";
+ELSEIF obs_in_months = 5 THEN SET obs_date_group = "5 months";
+ELSEIF obs_in_months = 6 THEN SET obs_date_group = "6 months";
+ELSEIF obs_in_months = 7 THEN SET obs_date_group = "7 months";
+ELSEIF obs_in_months = 8 THEN SET obs_date_group = "8 months";
+ELSEIF obs_in_months = 9 THEN SET obs_date_group = "9 months";
+ELSEIF obs_in_months = 10 THEN SET obs_date_group = "10 months";
+ELSEIF obs_in_months = 11 THEN SET obs_date_group = "11 months";
+END IF;
+
+RETURN obs_date_group;
+END;
+
 DROP FUNCTION IF EXISTS `opd_disaggregated_age_group`;
 
 CREATE FUNCTION `opd_disaggregated_age_group`(birthdate date, end_date date) RETURNS VARCHAR(15)
@@ -2196,8 +2224,6 @@ END IF;
 
 RETURN age_group;
 END;
-
-
 
 
 DROP FUNCTION IF EXISTS `female_maternal_status`;

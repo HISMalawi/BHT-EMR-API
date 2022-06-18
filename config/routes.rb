@@ -26,6 +26,9 @@ Rails.application.routes.draw do
         post '/deactivate', to: 'users#deactivate'
       end
 
+      # notifications for nlims any features in the future
+      resources :notifications, only: %i[index update]
+
       # Not placed under users urls to allow crud on current user's roles
       resources :user_roles, only: %i[index create destroy]
 
@@ -214,6 +217,8 @@ Rails.application.routes.draw do
       resource :user_properties
 
       resource :session_stats, path: 'stats/session'
+
+      resources :diagnosis
 
       # Workflow engine
       get '/workflows/:program_id/:patient_id' => 'workflows#next_encounter'
