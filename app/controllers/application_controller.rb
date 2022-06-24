@@ -49,7 +49,7 @@ class ApplicationController < ActionController::API
     return queryset.all if params[:paginate] == 'false'
 
     limit = (params[:page_size] || DEFAULT_PAGE_SIZE).to_i
-    offset = (((params[:page] || 0).to_i)-1) * DEFAULT_PAGE_SIZE
+    offset = (((params[:page] || 1).to_i)-1) * DEFAULT_PAGE_SIZE
 
     queryset.offset(offset).limit(limit)
   end
