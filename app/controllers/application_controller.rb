@@ -14,7 +14,6 @@ class ApplicationController < ActionController::API
 
   CURRENT_LOCATION_PROPERTY = 'current_health_center_id'
   DEFAULT_PAGE_SIZE = 10
-  DEFAULT_PAGE = 1
 
   def authenticate
     authentication_token = request.headers['Authorization']
@@ -50,7 +49,7 @@ class ApplicationController < ActionController::API
     return queryset.all if params[:paginate] == 'false'
 
     limit = (params[:page_size] || DEFAULT_PAGE_SIZE).to_i
-    offset = (params[:page] || 0).to_i * DEFAULT_PAGE
+    offset = (((params[:page] || 0).to_i)-1) * DEFAULT_PAGE_SIZE
 
     queryset.offset(offset).limit(limit)
   end
