@@ -53,3 +53,9 @@ config/server/
 migration*.csv
 migration*.log
 extensions.json
+
+# Ignore json files under idsr
+/db/idsr_metadata/*.json
+
+# Ignore json files under lims
+/db/lims_metadata/*.json

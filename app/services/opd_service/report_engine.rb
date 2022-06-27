@@ -9,7 +9,8 @@ module OPDService
       'LA_PRESCRIPTIONS' => OPDService::Reports::LaPrescriptions,
       'DIAGNOSIS' => OPDService::Reports::Diagnosis,
       'CASES_SEEN' => OPDService::Reports::CasesSeen,
-      'MENTAL_HEALTH' => OPDService::Reports::MentalHealth
+      'MENTAL_HEALTH' => OPDService::Reports::MentalHealth,
+      'MALARIA_REPORT' => OPDService::Reports::MalariaReport
     }
 
     def initialize
@@ -622,7 +623,7 @@ def registered_today(visit_type)
 
 
     def monthly_respiratory_enctounter()
-      start_date = (@date - 12.month)
+      start_date = (@date - 11.month)
       dates = []
 
       start_date = start_date.beginning_of_month
@@ -637,37 +638,36 @@ def registered_today(visit_type)
 
       months = {}
       monthsRes = {}
-      start_date = (@date - 12.month)
-      data =Observation.where('obs_datetime BETWEEN ? AND ? AND value_text IN(?,?)',(@date - 12.month).beginning_of_month,@date,
-      'Respiratory','ILI').group(:person_id).pluck(:value_text,:obs_datetime).group_by(&:shift);
+      data =Observation.where('obs_datetime BETWEEN ? AND ? AND value_text IN(?,?)',(@date - 11.month).beginning_of_month,@date,
+        'Respiratory','ILI').group('value_text','months').\
+        pluck("CASE value_text WHEN 'Respiratory' THEN 'respiratory' WHEN 'ILI' THEN 'ILI' END as value_text,
+        DATE_FORMAT(obs.obs_datetime ,'%Y-%m-01') as obs_date,
+        OPD_syndromic_statistics(DATE_FORMAT(obs.obs_datetime ,'%Y-%m-01'),'#{@date}') as months,
+        COUNT(OPD_syndromic_statistics(DATE_FORMAT(obs.obs_datetime ,'%Y-%m-01'),'#{@date}')) as obs_count").\
+        group_by(&:shift);
+
+      respiratory_data = {}
+      ili_data = {}
+
+      respiratory_data = data['respiratory'].group_by(&:shift) if(data['respiratory'])
+      ili_data         = data['ILI'].group_by(&:shift) if(data['ILI'])
+
       (dates || []).each_with_index do |(date1, date2), i|
-        d1 = date1.strftime('%Y-%m')
-        d2 = date2.strftime('%Y-%m')
-        r1 = 0
-        r2 = 0
-        ili = 0
-        if(data['Respiratory'])
-          r1 = data['Respiratory'].join(',').split(',').grep(/^#{d1}/).length
-        end
-        if(data['respiratory'])
-          r2 = data['respiratory'].join(',').split(',').grep(/^#{d1}/).length
-        end
-        if(data['ILI'])
-          ili = data['ILI'].join(',').split(',').grep(/^#{d1}/).length
-        end
 
         monthsRes[(i+1)]= {
-          start_date: date1, end_date: date2,
-          count: ili
+          start_date: date1,
+          end_date: date2,
+          count: respiratory_data["#{date1}"] ? respiratory_data["#{date1}"][0][1] : 0
         }
         months[(i+1)]= {
-          start_date: date1, end_date: date2,
-          count: r1+r2
+          start_date: date1,
+          end_date: date2,
+          count: ili_data["#{date1}"] ? ili_data["#{date1}"][0][1] : 0
         }
 
       end
 
-      [months,monthsRes]
+      [monthsRes,months]
     end
 
   end
