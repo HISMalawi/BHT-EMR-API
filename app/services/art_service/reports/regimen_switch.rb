@@ -354,7 +354,7 @@ EOF
       def vl_result(patient_id)
         ActiveRecord::Base.connection.select_one <<~SQL
           SELECT lab_result_obs.obs_datetime AS result_date,
-          CONCAT (COALESCE(measure.value_modifier, '='),COALESCE(measure.value_numeric, measure.value_text, '')) as result
+          CONCAT (COALESCE(measure.value_modifier, '='),' ',COALESCE(measure.value_numeric, measure.value_text, '')) as result
           FROM obs AS lab_result_obs
           INNER JOIN orders
             ON orders.order_id = lab_result_obs.order_id
@@ -371,7 +371,10 @@ EOF
             GROUP BY concept_id
           ) AS measure_concept
             ON measure_concept.concept_id = measure.concept_id
-          WHERE lab_result_obs.voided = 0 AND measure.person_id = #{patient_id} AND (measure.value_numeric IS NOT NULL || measure.value_text IS NOT NULL)
+          WHERE lab_result_obs.voided = 0
+          AND measure.person_id = #{patient_id}
+          AND (measure.value_numeric IS NOT NULL || measure.value_text IS NOT NULL)
+          AND lab_result_obs.obs_datetime <= '#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
           ORDER BY lab_result_obs.obs_datetime DESC
           LIMIT 1
         SQL
