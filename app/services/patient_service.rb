@@ -342,7 +342,7 @@ class PatientService
     new_identifier = next_available_npid(patient: patient, identifier_type: national_id_type, program_id: program_id)
 
     existing_identifiers.each do |identifier|
-      identifier.void("Re-assigned to new national identifier: #{new_identifier.identifier}")
+      identifier.void("Re-assigned to new national identifier: #{new_identifier.identifier(national_id_type.name)}")
     end
 
     { new_identifier: new_identifier, voided_identifiers: existing_identifiers }
