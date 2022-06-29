@@ -223,7 +223,7 @@ EOF
             WHERE p.person_id = #{patient_id} GROUP BY p.person_id
             ORDER BY n.date_created DESC, i.date_created DESC;
 EOF
-
+            viral_load = vl_result(patient_id)
             clients[patient_id] = {
               arv_number: demo['arv_number'],
               given_name: demo['given_name'],
@@ -233,7 +233,9 @@ EOF
               current_regimen: curr_reg['current_regimen'],
               current_weight: current_weight(patient_id),
               art_start_date: r['earliest_start_date'],
-              medication: []
+              medication: [],
+              vl_result: viral_load ? viral_load['result'] : nil,
+              vl_result_date: viral_load ? viral_load['result_date'] : nil
             }
           end
 
@@ -347,6 +349,32 @@ EOF
         return nil if obs.blank?
 
         (obs.first.value_numeric.blank? ? obs.first.value_text : obs.first.value_numeric)
+      end
+
+      def vl_result(patient_id)
+        ActiveRecord::Base.connection.select_one <<~SQL
+          SELECT lab_result_obs.obs_datetime AS result_date,
+          CONCAT (COALESCE(measure.value_modifier, '='),COALESCE(measure.value_numeric, measure.value_text, '')) as result
+          FROM obs AS lab_result_obs
+          INNER JOIN orders
+            ON orders.order_id = lab_result_obs.order_id
+            AND orders.voided = 0
+          INNER JOIN obs AS measure
+            ON measure.obs_group_id = lab_result_obs.obs_id
+            AND measure.voided = 0
+          INNER JOIN (
+            SELECT concept_id, name
+            FROM concept_name
+            INNER JOIN concept USING (concept_id)
+            WHERE concept.retired = 0
+            AND name NOT LIKE 'Lab test result'
+            GROUP BY concept_id
+          ) AS measure_concept
+            ON measure_concept.concept_id = measure.concept_id
+          WHERE lab_result_obs.voided = 0 AND measure.person_id = #{patient_id} AND (measure.value_numeric IS NOT NULL || measure.value_text IS NOT NULL)
+          ORDER BY lab_result_obs.obs_datetime DESC
+          LIMIT 1
+        SQL
       end
     end
   end
