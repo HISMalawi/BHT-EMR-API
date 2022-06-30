@@ -119,6 +119,12 @@ class Api::V1::PatientsController < ApplicationController
     end
   end
 
+  def tpt_status
+    patient_id = params.require(:patient_id)
+    date = params[:date]&.to_date || Date.today
+    render json: tb_prevention_service.new(start_date: date, end_date: date).patient_tpt_status(patient_id)
+  end
+
   def assign_tb_number
     patient_id = params[:patient_id]
     date = params[:date]&.to_date || Date.today
@@ -310,6 +316,10 @@ class Api::V1::PatientsController < ApplicationController
 
   def person_service
     PersonService.new
+  end
+
+  def tb_prevention_service
+    @tb_prevention_service ||= ARTService::Reports::Pepfar::TbPrev3
   end
 
   def tb_lab_order_params

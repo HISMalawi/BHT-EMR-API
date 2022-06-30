@@ -22,18 +22,29 @@ module ARTService
 
           load_patients_into_report(report, patients.six_h, '6H') do |patient|
             # 6H has a constant dosage of 1 pill per day
-            patient['total_pills_taken'].to_i >= FULL_6H_COURSE_PILLS
+            patient_completed_tpt?(patient, '6H')
           end
 
           load_patients_into_report(report, patients.three_hp, '3HP') do |patient|
             # 3HP daily dosages vary by patient weight can't use easily use pills
             # to determine course completion
-            divider = (patient['drug_concepts'].include? ',') ? 14.0 : 7.0
-            days_on_medication = (patient['total_days_on_medication'] / divider).round
-            days_on_medication.days >= FULL_3HP_COURSE_DAYS
+            patient_completed_tpt?(patient, '3HP')
           end
 
           report
+        end
+
+        def patient_tpt_status(patient_id)
+          patient = individual_tpt_report(patient_id)
+          return { tpt: nil, completed: false } if patient.blank?
+
+          tpt = patient_on_3hp?(patient) ? '3HP' : '6H'
+          completed = patient_completed_tpt?(patient, tpt)
+          { tpt: if tpt == '6H'
+                   'IPT'
+                 else
+                   (patient['drug_concepts'].split(',').length > 1 ? '3HP (RFP + INH)' : 'INH 300 / RFP 300 (3HP)')
+                 end, completed: completed }
         end
 
         private
@@ -195,6 +206,27 @@ module ARTService
           SQL
         end
 
+        def individual_tpt_report(patient_id)
+          ActiveRecord::Base.connection.select_one <<-SQL
+            SELECT DATE(MIN(o.start_date)) AS tpt_initiation_date,
+                  SUM(dor.quantity) AS total_pills_taken,
+                  SUM(DATEDIFF(o.auto_expire_date, o.start_date)) AS total_days_on_medication,
+                    GROUP_CONCAT(DISTINCT o.concept_id SEPARATOR ',') AS drug_concepts
+            FROM orders o
+            INNER JOIN concept_name cn
+              ON cn.concept_id = o.concept_id
+              AND cn.name IN ('Rifapentine', 'Isoniazid', 'Isoniazid/Rifapentine')
+            INNER JOIN drug_order dor
+              ON dor.order_id = o.order_id
+              AND dor.quantity > 0
+            WHERE DATE(o.start_date) <= DATE(#{end_date})
+            AND o.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
+            AND o.voided = 0
+            AND o.patient_id = #{patient_id}
+            GROUP BY o.patient_id
+          SQL
+        end
+
         ##
         # Groups patients into their TPT categories (ie 6H and 3HP) based on their drugs
         #
@@ -221,6 +253,16 @@ module ARTService
 
         def isoniazid_rifapentine_concept
           @isoniazid_rifapentine_concept ||= ConceptName.find_by!(name: 'Isoniazid/Rifapentine')
+        end
+
+        def patient_completed_tpt?(patient, tpt)
+          if tpt == '3HP'
+            divider = patient['drug_concepts'].split(',').length > 1 ? 14.0 : 7.0
+            days_on_medication = (patient['total_days_on_medication'] / divider).round
+            days_on_medication.days >= FULL_3HP_COURSE_DAYS
+          else
+            patient['total_pills_taken'].to_i >= FULL_6H_COURSE_PILLS
+          end
         end
       end
     end
