@@ -331,7 +331,7 @@ module ARTService
     # than what is prescribed normally. This function takes a regimens
     # structure and repackages the relevant regimens.
     def repackage_regimens_for_tb_patients!(regimens, patient_weight)
-      %w[12A 13A 14A 15A].each do |regimen_name|
+      %w[12PP 12PA 12A 13A 14PP 14PA 14A 15PP 15PA 15A].each do |regimen_name|
         regimen = regimens[regimen_name]
         next unless regimen
 
