@@ -128,7 +128,7 @@ module ARTService
               AND max_obs.obs_datetime = obs.obs_datetime
             WHERE obs.person_id = e.patient_id
             AND obs.person_id IN (#{patient_list.join(',')})
-            AND obs.obs_datetime BETWEEN DATE(#{@start_date}) AND DATE(#{@end_date})
+            AND obs.obs_datetime BETWEEN DATE("#{@start_date}") AND DATE("#{@end_date}") + INTERVAL 1 DAY
             AND obs.concept_id IN (#{breastfeeding_concepts.to_sql})
             AND obs.voided = 0
             GROUP BY obs.person_id
