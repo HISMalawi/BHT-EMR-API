@@ -2225,6 +2225,21 @@ END IF;
 RETURN age_group;
 END;
 
+DROP FUNCTION IF EXISTS `triage_covid_report`;
+
+CREATE FUNCTION `triage_covid_report`(obs_date VARCHAR(25), my_patient_id int) RETURNS VARCHAR(15)
+BEGIN
+
+DECLARE count_obs VARCHAR(25);
+
+SET count_obs = (SELECT DATE(`obs`.`obs_datetime`) FROM `obs`
+                  INNER JOIN concept_name c ON c.concept_id = obs.concept_id
+                  WHERE `obs`.`voided` = 0 AND DATE(`obs`.`obs_datetime`) =  DATE(obs_date) AND `obs`.`person_id` = my_patient_id
+                  AND c.name IN('History of COVID-19 contact') AND c.voided = 0 LIMIT 1);
+
+RETURN count_obs;
+END;
+
 
 DROP FUNCTION IF EXISTS `female_maternal_status`;
 
