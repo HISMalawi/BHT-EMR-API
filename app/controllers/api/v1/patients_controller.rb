@@ -18,7 +18,7 @@ class Api::V1::PatientsController < ApplicationController
 
   def search_by_npid
     voided = params[:voided]&.casecmp?('true') || false
-    render json: service.find_patients_by_npid(params.require(:npid), voided: voided)
+    render json: paginate(service.find_patients_by_npid(params.require(:npid), voided: voided))
   end
 
   def search_by_identifier
