@@ -275,22 +275,25 @@ module ANCService
     # method to remove drug orders
     def remove_drug_orders
       condition = <<~SQL
-        WHERE order_id IN (SELECT order_id FROM orders WHERE patient_id NOT IN (#{@remove}))
+        DELETE FROM drug_order WHERE order_id IN (SELECT order_id FROM orders WHERE patient_id IN (#{@remove}))
+        LIMIT 1000
       SQL
-      central_hub 'drug_order', condition
+      central_remove(stm: condition, msg: 'Removing Drug Orders')
     end
 
     # method to remove drug that were properly migrated
     def remove_proper_drug_orders
       statement = <<~SQL
         DELETE FROM drug_order WHERE order_id IN (SELECT order_id FROM orders WHERE DATE(date_created) <= DATE('#{@date}') AND creator IN (#{@users}) AND patient_id NOT IN (#{@patients}))
+        LIMIT 1000
       SQL
-      central_execute message: 'Remove drug_orders that were migrated properly', statement: statement
+      central_remove msg: 'Remove drug_orders that were migrated properly', stm: statement
     end
 
     # method to remove orders
     def remove_orders
-      central_hub 'orders', "WHERE patient_id NOT IN (#{@remove})"
+      statement = "DELETE FROM orders WHERE patient_id IN (#{@remove}) LIMIT 1000"
+      central_remove(stm: statement, msg: 'Removing orders')
     end
 
     # method to remove orders that were properly migrated
@@ -298,16 +301,30 @@ module ANCService
       stmt = <<~SQL
         DELETE FROM orders WHERE DATE(date_created) <= DATE('#{@date}') AND creator IN (#{@users}) AND patient_id NOT IN (#{@patients})
       SQL
-      central_execute message: 'Removing orders that were migrated properly', statement: stmt
+      central_remove(stm: stmt, msg: 'Removing orders that were migrated properly')
     end
 
     # method to remove observations
     def remove_obs
-      print_time message: 'Removing observations'
+      central_remove(stm: "DELETE FROM obs WHERE person_id IN (#{@remove}) LIMIT 1000", msg: 'Removing observations')
+    end
+
+    # method to remove observations that were properly migrated
+    def remove_proper_obs
+      stmt = <<~SQL
+        DELETE FROM obs WHERE DATE(date_created) <= DATE('#{@date}') AND creator IN (#{@users}) AND person_id NOT IN (#{@patients})
+        LIMIT 1000
+      SQL
+      central_remove msg: 'Removing obs that were properly migrated', stm: stmt
+    end
+
+    # rubocop:disable Metrics/MethodLength
+    def central_remove(stm:, msg:)
+      print_time message: msg
       row_count = 1
       record_count = 0
       while row_count.positive?
-        central_execute  statement: "DELETE FROM obs WHERE person_id IN (#{@remove}) LIMIT 1000"
+        central_execute statement: stm
         result = central_select statement: 'SELECT ROW_COUNT() as row_count'
         row_count = result[0]['row_count'].to_i
         record_count += row_count
@@ -316,14 +333,7 @@ module ANCService
       end
       print_time
     end
-
-    # method to remove observations that were properly migrated
-    def remove_proper_obs
-      stmt = <<~SQL
-        DELETE FROM obs WHERE DATE(date_created) <= DATE('#{@date}') AND creator IN (#{@users}) AND person_id NOT IN (#{@patients})
-      SQL
-      central_execute message: 'Removing obs that were properly migrated', statement: stmt
-    end
+    # rubocop:enable Metrics/MethodLength
 
     # method to remove concept proposal
     def remove_concept_proposal
@@ -333,18 +343,8 @@ module ANCService
 
     # method to remove encounters
     def remove_encounters
-      print_time message: 'Removing encounters'
-      row_count = 1
-      record_count = 0
-      while row_count.positive?
-        central_execute  statement: "DELETE FROM encounter WHERE patient_id IN (#{@remove}) LIMIT 1000"
-        result = central_select statement: 'SELECT ROW_COUNT() as row_count'
-        row_count = result[0]['row_count'].to_i
-        record_count += row_count
-        print '.' if row_count.positive?
-        puts "\n #{record_count} records removed" if row_count.zero?
-      end
-      print_time
+      statement = "DELETE FROM encounter WHERE patient_id IN (#{@remove}) LIMIT 1000"
+      central_remove msg: 'Removing encounters', stm: statement
     end
 
     # method to remove properly migrated encounters
@@ -352,7 +352,7 @@ module ANCService
       stmt = <<~SQL
         DELETE FROM encounter WHERE DATE(date_created) <= DATE('#{@date}') AND creator IN (#{@users}) AND patient_id NOT IN (#{@patients})
       SQL
-      central_execute message: 'Removing encounters that were properly migrated', statement: stmt
+      central_remove msg: 'Removing encounters that were properly migrated', stm: stmt
     end
 
     # method to remove patient state
