@@ -37,7 +37,7 @@ module ANCService
         # puts exception.backtrace
       end
       print_time message: 'Finished migration reversal script', long_form: true
-      puts "Migration took #{time_ago_in_words(Time.now - (Time.now - start_time), include_seconds: true)}"
+      puts "Reversal took #{time_ago_in_words(Time.now - (Time.now - start_time), include_seconds: true)}"
     end
     # rubocop:enable Metrics/MethodLength
     # rubocop:enable Metrics/AbcSize
