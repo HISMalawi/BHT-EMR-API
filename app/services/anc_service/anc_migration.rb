@@ -19,6 +19,7 @@ module ANCService
     end
 
     # rubocop:disable Metrics/MethodLength
+    # rubocop:disable Metrics/AbcSize
     # main method to do the workflow
     def main
       start_time = Time.now
@@ -42,6 +43,7 @@ module ANCService
       write_migration_to_file
     end
     # rubocop:enable Metrics/MethodLength
+    # rubocop:enable Metrics/AbcSize
 
     private
 
@@ -56,25 +58,7 @@ module ANCService
       mapped = fetch_mapped_patients
       # rubocop:disable Metrics/BlockLength
       ActiveRecord::Base.transaction do
-        unless @database_reversed
-          ActiveRecord::Base.connection.disable_referential_integrity do
-            create_user_bak
-            migrate_users
-            migrate_person(fetch_user_person_id, 'Migratating user specific person records')
-            migrate_person_name(fetch_user_person_id, 'Migrating system users name records')
-          end
-        end
-        if @database_reversed
-          ActiveRecord::Base.connection.disable_referential_integrity do
-            removed_hanging_users_in_user_bak
-            @missed_users_person_ids = fetch_missed_users('person_id')
-            @missed_users_ids = fetch_missed_users('user_id')
-            migrate_person(@missed_users_person_ids, 'Migrating Missed Users Person Details')
-            migrate_person_name(@missed_users_person_ids, 'Migrating Missed User Person Name Details')
-            add_missed_users_in_user_bak
-            migrate_missed_users
-          end
-        end
+        handle_provider_movement
         update_openmrs_users
         migrate_user_role
         migrate_person(fetch_missed_persons, 'Migrating Person details who are neither patients nor system users')
@@ -131,6 +115,33 @@ module ANCService
       remove_holding_tables if @database_reversed
       msg = @database_reversed ? 'Abnormal migratrion finished' : 'Normal migratrion finished'
       print_time message: msg, long_form: true
+    end
+    # rubocop:enable Metrics/AbcSize
+    # rubocop:enable Metrics/MethodLength
+
+    # rubocop:disable Metrics/MethodLength
+    # rubocop:disable Metrics/AbcSize
+    # method to handle movement of system providers
+    def handle_provider_movement
+      if @database_reversed
+        ActiveRecord::Base.connection.disable_referential_integrity do
+          remove_hanging_users_in_user_bak
+          remove_hanging_users
+          @missed_users_person_ids = fetch_missed_users('person_id')
+          @missed_users_ids = fetch_missed_users('user_id')
+          add_missed_users_in_user_bak
+          migrate_missed_users
+          migrate_person(@missed_users_person_ids, 'Migrating Missed Users Person Details')
+          migrate_person_name(@missed_users_person_ids, 'Migrating Missed User Person Name Details')
+        end
+      else
+        ActiveRecord::Base.connection.disable_referential_integrity do
+          create_user_bak
+          migrate_users
+          migrate_person(fetch_user_person_id, 'Migratating user specific person records')
+          migrate_person_name(fetch_user_person_id, 'Migrating system users name records')
+        end
+      end
     end
     # rubocop:enable Metrics/AbcSize
     # rubocop:enable Metrics/MethodLength
@@ -226,11 +237,18 @@ module ANCService
       central_hub message: 'Updating user_bak with missed/new users', query: statement
     end
 
-    def removed_hanging_users_in_user_bak
+    def remove_hanging_users_in_user_bak
       statement = <<~SQL
         DELETE FROM #{@database}.user_bak WHERE person_id NOT IN (SELECT person_id FROM person)
       SQL
       central_hub message: 'Removing hanging users from user_bak', query: statement
+    end
+
+    def remove_hanging_users
+      statement = <<~SQL
+        DELETE FROM users WHERE person_id NOT IN (SELECT person_id FROM person)
+      SQL
+      central_hub message: 'Removing users without person ids', query: statement
     end
 
     def fetch_missed_users(field)
