@@ -300,6 +300,7 @@ module ANCService
     def remove_proper_orders
       stmt = <<~SQL
         DELETE FROM orders WHERE DATE(date_created) <= DATE('#{@date}') AND creator IN (#{@users}) AND patient_id NOT IN (#{@patients})
+        LIMIT 1000
       SQL
       central_remove(stm: stmt, msg: 'Removing orders that were migrated properly')
     end
