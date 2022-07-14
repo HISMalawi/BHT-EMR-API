@@ -109,6 +109,7 @@ module ARTService
                    patient_identifier.identifier AS arv_number,
                    DATE(MIN(orders.start_date)) AS tpt_initiation_date,
                    date_antiretrovirals_started(person.person_id, MIN(denominator_patient.start_date)) AS art_start_date,
+                   patient_outcome(person.person_id, DATE(#{end_date})) AS outcome,
                    SUM(drug_order.quantity) AS total_pills_taken,
                    SUM(DATEDIFF(orders.auto_expire_date, orders.start_date)) AS total_days_on_medication,
                    person.gender,
