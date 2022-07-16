@@ -1522,6 +1522,8 @@ EOF
         concepts = ConceptName.where(name: ['CD4 COUNT LESS THAN OR EQUAL TO 750',
                                             'CD4 count less than or equal to 500',
                                             'CD4 COUNT LESS THAN OR EQUAL TO 350',
+                                            'CD4 count less than 350',
+                                            'CD4 count less than 250',
                                             'CD4 COUNT LESS THAN OR EQUAL TO 250'])
                               .select(:concept_id)
         find_patients_by_reason_for_starting(start_date, end_date, concepts)
