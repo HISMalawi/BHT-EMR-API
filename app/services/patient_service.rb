@@ -92,8 +92,8 @@ class PatientService
     Patient.joins(:person).merge(people)
   end
 
-  def find_patient_median_weight_and_height(patient)
-    median_weight_height(patient.age_in_months, patient.person.gender)
+  def find_patient_median_weight_and_height(patient, date = Date.today)
+    median_weight_height(patient.age_in_months(date), patient.person.gender)
   end
 
   def find_patients_by_identifier(identifier, *identifier_types, voided: false)

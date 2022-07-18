@@ -93,7 +93,8 @@ class Api::V1::PatientsController < ApplicationController
   end
 
   def find_median_weight_and_height
-    weight, height = service.find_patient_median_weight_and_height(patient)
+    date = params[:date] || Date.today
+    weight, height = service.find_patient_median_weight_and_height(patient, date.to_date)
     render json: { weight: weight, height: height }
   end
 
