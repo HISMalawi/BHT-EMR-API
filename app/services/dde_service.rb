@@ -32,6 +32,19 @@ class DDEService
     end
   end
 
+  def test_connection
+    response = { connection_available:  false, message: 'No connection to DDE', status: 500 }
+    begin
+      result, status = dde_client
+      response[:connection_available] = status == 200
+      response[:message] = result
+    rescue => exception
+      LOGGER.error "Failed to connect to DDE: #{exception.message}"
+      response[:message] = exception.message
+    end
+    response
+  end
+
   # Registers local OpenMRS patient in DDE
   #
   # On success patient get two identifiers under the types

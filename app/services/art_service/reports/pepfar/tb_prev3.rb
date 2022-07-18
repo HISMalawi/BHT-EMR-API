@@ -108,7 +108,8 @@ module ARTService
             SELECT person.person_id AS patient_id,
                    patient_identifier.identifier AS arv_number,
                    DATE(MIN(orders.start_date)) AS tpt_initiation_date,
-                   date_antiretrovirals_started(person.person_id, MIN(patient_state.start_date)) AS art_start_date,
+                   date_antiretrovirals_started(person.person_id, MIN(denominator_patient.start_date)) AS art_start_date,
+                   patient_outcome(person.person_id, DATE(#{end_date})) AS outcome,
                    SUM(drug_order.quantity) AS total_pills_taken,
                    SUM(DATEDIFF(orders.auto_expire_date, orders.start_date)) AS total_days_on_medication,
                    person.gender,
@@ -120,27 +121,39 @@ module ARTService
               ON patient_identifier.patient_id = person.person_id
               AND patient_identifier.voided = 0
               AND patient_identifier.identifier_type IN (SELECT patient_identifier_type_id FROM patient_identifier_type WHERE name = 'ARV Number')
-            INNER JOIN patient_program
-              ON patient_program.patient_id = person.person_id
-              AND patient_program.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
-              AND patient_program.voided = 0
-            INNER JOIN patient_state
-              ON patient_state.patient_program_id = patient_program.patient_program_id
-              AND patient_state.state = 7 /* State: 7 == On antiretrovirals */
-              AND patient_state.start_date < DATE(#{start_date})
-              AND patient_state.voided = 0
+              INNER JOIN(
+                SELECT denominator_encounter.patient_id AS patient_id, patient_state.start_date AS start_date
+                  FROM person
+                  INNER JOIN patient_program
+                  ON patient_program.patient_id = person.person_id
+                  AND patient_program.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
+                  AND patient_program.voided = 0
+                INNER JOIN patient_state
+                  ON patient_state.patient_program_id = patient_program.patient_program_id
+                  AND patient_state.state = 7 /* State: 7 == On antiretrovirals */
+                  AND patient_state.start_date < DATE(#{start_date})
+                  AND patient_state.voided = 0
+                INNER JOIN encounter AS denominator_encounter
+                  ON denominator_encounter.patient_id = patient_program.patient_id
+                  AND denominator_encounter.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
+                  AND denominator_encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'Treatment')
+                  AND denominator_encounter.encounter_datetime >= DATE(#{start_date}) - INTERVAL 6 MONTH
+                  AND denominator_encounter.encounter_datetime <= DATE(#{start_date})
+                  AND denominator_encounter.voided = 0
+                GROUP BY patient_id
+              ) AS denominator_patient ON denominator_patient.patient_id = person.person_id
             INNER JOIN encounter AS prescription_encounter
-              ON prescription_encounter.patient_id = patient_program.patient_id
+              ON prescription_encounter.patient_id = denominator_patient.patient_id
               AND prescription_encounter.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
               AND prescription_encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'Treatment')
               AND prescription_encounter.encounter_datetime >= DATE(#{start_date}) - INTERVAL 6 MONTH
-              AND prescription_encounter.encounter_datetime <= DATE(#{start_date})
+              AND prescription_encounter.encounter_datetime <= DATE(#{end_date})
               AND prescription_encounter.voided = 0
             INNER JOIN orders
               ON orders.encounter_id = prescription_encounter.encounter_id
               AND orders.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
               AND orders.start_date >= DATE(#{start_date}) - INTERVAL 6 MONTH
-              AND orders.start_date <= DATE(#{start_date})
+              AND orders.start_date <= DATE(#{end_date})
               AND orders.voided = 0
             INNER JOIN concept_name
               ON concept_name.concept_id = orders.concept_id
