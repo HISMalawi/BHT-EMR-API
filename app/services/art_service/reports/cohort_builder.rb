@@ -20,6 +20,8 @@ module ARTService
       def init_temporary_tables(_start_date, end_date)
         create_tmp_patient_table
         drop_temp_register_start_date_table
+        drop_temp_other_patient_types
+        create_temp_other_patient_types(end_date)
         create_temp_register_start_date_table(end_date)
         load_data_into_temp_earliest_start_date(end_date.to_date)
         update_cum_outcome(end_date)
