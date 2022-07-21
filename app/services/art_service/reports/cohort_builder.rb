@@ -646,6 +646,8 @@ module ARTService
       end
 
       def create_temp_register_start_date_table(end_date)
+        type_of_patient_concept = concept('Type of patient').concept_id
+        new_patient_concept = concept('New patient').concept_id
 
         ActiveRecord::Base.connection.execute <<-SQL
           CREATE TABLE temp_register_start_date (
@@ -656,14 +658,14 @@ module ARTService
         SQL
         ActiveRecord::Base.connection.execute <<-SQL
           INSERT INTO temp_register_start_date (patient_id, start_date)
-          SELECT pp.patient_id AS patient_id, MIN(e.encounter_datetime) AS start_date
+          SELECT pp.patient_id as patient_id, MIN(o.obs_datetime) AS start_date
           FROM patient_program pp
-          INNER JOIN encounter e
-          ON e.patient_id = pp.patient_id
-          AND e.voided = 0
-          AND e.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'HIV CLINIC REGISTRATION' AND retired = 0)
-          AND e.encounter_datetime < DATE('#{end_date}') + INTERVAL 1 DAY
-          WHERE pp.program_id = 1
+          INNER JOIN obs o ON pp.patient_id = o.person_id
+          WHERE o.concept_id = #{type_of_patient_concept}
+          AND o.value_coded = #{new_patient_concept}
+          AND o.voided = 0
+          AND o.obs_datetime < DATE('#{end_date}') + INTERVAL 1 DAY
+          AND pp.program_id = 1
           AND pp.voided = 0
           GROUP BY patient_id
         SQL
