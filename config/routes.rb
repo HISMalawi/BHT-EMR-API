@@ -18,7 +18,7 @@ Rails.application.routes.draw do
       end
 
       # Routes down here ... Best we move everything above into own modules
-
+      resources :internal_sections, only: %i[index show create update destroy]
       resources :appointments
       resources :dispensations, only: %i[index create destroy]
       resources :users do
