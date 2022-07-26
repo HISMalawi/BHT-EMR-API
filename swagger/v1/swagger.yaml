@@ -4,6 +4,211 @@ info:
   title: EMR API V1 DOCS
   version: v1
 paths:
+  "/api/v1/internal_sections":
+    get:
+      summary: Retrieve all internal sections
+      tags:
+      - Internal Sections
+      description: This shows all internal sections
+      security:
+      - api_key: []
+      responses:
+        '200':
+          description: Internal Sections found
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    name:
+                      type: string
+                    created_at:
+                      type: string
+                    updated_at:
+                      type: string
+        '404':
+          description: Internal Sections not found
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+  "/api/v1/internal_sections/{id}":
+    get:
+      summary: Retrieve internal section by id
+      tags:
+      - Internal Sections
+      description: This shows internal section by id
+      security:
+      - api_key: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Internal Section found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+                  created_at:
+                    type: string
+                  updated_at:
+                    type: string
+        '404':
+          description: Internal Section not found
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+    put:
+      summary: Update internal section
+      tags:
+      - Internal Sections
+      security:
+      - api_key: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Internal Section updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+                  created_at:
+                    type: string
+                  updated_at:
+                    type: string
+        '422':
+          description: Internal Section not updated
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+              required:
+              - name
+    delete:
+      summary: Remove internal section
+      tags:
+      - Internal Sections
+      security:
+      - api_key: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Internal Section removed
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+        '422':
+          description: Internal Section not removed
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                void_reason:
+                  type: string
+              required:
+              - void_reason
+  "/api/v1/internal_sections/":
+    post:
+      summary: Create internal section
+      tags:
+      - Internal Sections
+      security:
+      - api_key: []
+      parameters: []
+      responses:
+        '201':
+          description: Internal Section created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+                  created_at:
+                    type: string
+                  updated_at:
+                    type: string
+        '422':
+          description: Internal Section not created
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+              required:
+              - name
   "/api/v1/rollback/merge_history":
     get:
       summary: Retrieve merge history
