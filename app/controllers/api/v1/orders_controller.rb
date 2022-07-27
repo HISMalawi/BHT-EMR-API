@@ -44,4 +44,14 @@ class Api::V1::OrdersController < ApplicationController
       render json: { errors: drug.errors }, status: :internal_server_error
     end
   end
+
+  def radiology_order
+    render json: RadiologyService::Investigation.create_order(radiology_params), status: 201
+  end
+
+  private
+
+  def radiology_params
+    params.permit(:encounter_id, :concept_id, :instructions, :start_date, :orderer, :accession_number, :provider)
+  end
 end

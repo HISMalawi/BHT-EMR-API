@@ -209,7 +209,10 @@ Rails.application.routes.draw do
       end
 
       resources :drug_orders
-      resources :orders
+      resources :orders do
+        post '/radiology', to: 'orders#radiology_order'
+      end
+
       get '/drug_sets', to: 'drugs#drug_sets' # ANC get drug sets
       post '/drug_sets', to: 'drugs#create_drug_sets' # ANC drug sets creation
       delete '/drug_sets/:id', to: 'drugs#void_drug_sets'

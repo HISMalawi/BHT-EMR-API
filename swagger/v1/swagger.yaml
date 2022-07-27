@@ -275,6 +275,81 @@ paths:
                   type: string
               required:
               - name
+  api/v1/orders/radiology:
+    post:
+      summary: Adds a Radiology Order
+      tags:
+      - Orders
+      description: This adds a radiology order to the system
+      security:
+      - api_key: []
+      parameters: []
+      responses:
+        '201':
+          description: Radiology Order Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  order_id:
+                    type: integer
+                  accession_number:
+                    type: string
+                  created_at:
+                    type: string
+                  updated_at:
+                    type: string
+        '422':
+          description: Radiology Order not created
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Encounter not found
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                encounter_id:
+                  type: integer
+                concept_id:
+                  type: integer
+                instructions:
+                  type: string
+                start_date:
+                  type: string
+                orderer:
+                  type: integer
+                accession_number:
+                  type: string
+                provider:
+                  type: integer
+              required:
+              - encounter_id
+              - concept_id
   "/api/v1/rollback/merge_history":
     get:
       summary: Retrieve merge history

@@ -17,19 +17,18 @@ module RadiologyService
 
     # rubocop:disable Metrics/AbcSize
     # rubocop:disable Metrics/MethodLength
-    def create_order(params)
+    def self.create_order(params)
       order_type = OrderType.find_by_name('Radiology')
       encounter = Encounter.find(params[:encounter_id])
       Order.create!(order_type: order_type,
                     concept_id: params[:concept_id] || unknown_concept_id,
                     encounter_id: encounter.id,
                     instructions: params[:instructions],
-                    start_date: params[:start_date] || Time.now,
-                    auto_expire_date: params[:auto_expire_date],
+                    start_date: params[:start_date] || encounter.encounter_datetime,
                     orderer: params[:orderer] || User.current.id,
                     accession_number: params[:accession_number] || AccessionNumberService.next_accession_number,
                     provider: params[:provider] || User.current.id,
-                    patient_id: @patient.id)
+                    patient_id: encounter.patient_id)
     end
     # rubocop:enable Metrics/AbcSize
     # rubocop:enable Metrics/MethodLength
