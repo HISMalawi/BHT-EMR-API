@@ -20,6 +20,8 @@ module ARTService
       def init_temporary_tables(_start_date, end_date)
         create_tmp_patient_table
         drop_temp_register_start_date_table
+        drop_temp_other_patient_types
+        create_temp_other_patient_types(end_date)
         create_temp_register_start_date_table(end_date)
         load_data_into_temp_earliest_start_date(end_date.to_date)
         update_cum_outcome(end_date)
@@ -29,6 +31,8 @@ module ARTService
         #load_tmp_patient_table(cohort_struct)
         create_tmp_patient_table
         drop_temp_register_start_date_table
+        drop_temp_other_patient_types
+        create_temp_other_patient_types(end_date)
         create_temp_register_start_date_table(end_date)
         load_data_into_temp_earliest_start_date(end_date.to_date)
 
@@ -645,6 +649,37 @@ module ARTService
         remove_drug_refills_and_external_consultation(end_date)
       end
 
+      def create_temp_other_patient_types(end_date)
+        type_of_patient_concept = concept('Type of patient').concept_id
+        drug_refill_concept = concept('Drug refill').concept_id
+        external_concept = concept('External Consultation').concept_id
+        ActiveRecord::Base.connection.execute <<~SQL
+          CREATE TABLE temp_other_patient_types (
+            patient_id INT(11) NOT NULL,
+            PRIMARY KEY (patient_id)
+          )
+        SQL
+
+        ActiveRecord::Base.connection.execute <<~SQL
+          INSERT INTO temp_other_patient_types (patient_id)
+          SELECT pp.patient_id as patient_id
+          FROM patient_program pp
+          INNER JOIN obs o ON pp.patient_id = o.person_id AND o.concept_id = #{type_of_patient_concept}
+          AND o.value_coded IN (#{drug_refill_concept},#{external_concept})
+          AND o.voided = 0
+          AND o.obs_datetime < DATE('#{end_date}') + INTERVAL 1 DAY
+          WHERE pp.program_id = 1
+          AND pp.voided = 0
+          GROUP BY patient_id
+        SQL
+      end
+
+      def drop_temp_other_patient_types
+        ActiveRecord::Base.connection.execute <<~SQL
+          DROP TABLE IF EXISTS temp_other_patient_types
+        SQL
+      end
+
       def create_temp_register_start_date_table(end_date)
         type_of_patient_concept = concept('Type of patient').concept_id
         new_patient_concept = concept('New patient').concept_id
@@ -660,12 +695,12 @@ module ARTService
           INSERT INTO temp_register_start_date (patient_id, start_date)
           SELECT pp.patient_id as patient_id, MIN(o.obs_datetime) AS start_date
           FROM patient_program pp
-          INNER JOIN obs o ON pp.patient_id = o.person_id
-          WHERE o.concept_id = #{type_of_patient_concept}
+          INNER JOIN temp_other_patient_types tmp ON tmp.patient_id = pp.patient_id
+          INNER JOIN obs o ON pp.patient_id = o.person_id AND o.concept_id = #{type_of_patient_concept}
           AND o.value_coded = #{new_patient_concept}
           AND o.voided = 0
           AND o.obs_datetime < DATE('#{end_date}') + INTERVAL 1 DAY
-          AND pp.program_id = 1
+          WHERE pp.program_id = 1
           AND pp.voided = 0
           GROUP BY patient_id
         SQL
