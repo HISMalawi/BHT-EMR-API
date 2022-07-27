@@ -35,7 +35,7 @@ module RadiologyService
     # rubocop:enable Metrics/MethodLength
 
     def self.radiology_concept_set(key)
-      case key.class.to_s
+      case sanitaniaze_params(key).class.to_s
       when 'String'
         values = ConceptSet.find_members_by_name(key)
       when 'Integer'
@@ -43,8 +43,12 @@ module RadiologyService
       end
 
       values.map do |concept_set|
-        { id: concept_set.concept_id, name: concept_set.concept.fullname }
+        { concept_id: concept_set.concept_id, name: concept_set.concept.fullname || concept_set.concept.shortname }
       end
+    end
+
+    def self.sanitaniaze_params(params)
+      Integer(params) rescue params
     end
 
     def unknown_concept_id
