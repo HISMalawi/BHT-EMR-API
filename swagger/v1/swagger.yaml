@@ -4,6 +4,72 @@ info:
   title: EMR API V1 DOCS
   version: v1
 paths:
+  "/api/v1/radiology_set":
+    get:
+      summary: Retrieve all radiology sets
+      tags:
+      - Concept Sets
+      description: This shows all radiology examination sets
+      security:
+      - api_key: []
+      parameters:
+      - name: id
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Radiology Sets found
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    concept_id:
+                      type: integer
+                    name:
+                      type: string
+  "/api/v1/concept_sets/{id}":
+    get:
+      summary: Retrieve concept set by id
+      tags:
+      - Concept Sets
+      description: This shows concept set by id
+      security:
+      - api_key: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Concept Set found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+                  created_at:
+                    type: string
+                  updated_at:
+                    type: string
+        '404':
+          description: Concept Set not found
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
   "/api/v1/internal_sections":
     get:
       summary: Retrieve all internal sections
