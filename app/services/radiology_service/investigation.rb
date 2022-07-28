@@ -27,7 +27,7 @@ module RadiologyService
                     start_date: params[:start_date] || encounter.encounter_datetime,
                     orderer: params[:orderer] || User.current.id,
                     accession_number: params[:accession_number] || AccessionNumberService.next_accession_number,
-                    provider: params[:provider] || User.current.id,
+                    provider: params[:provider] || User.current,
                     patient_id: encounter.patient_id)
     end
     # rubocop:enable Metrics/AbcSize
