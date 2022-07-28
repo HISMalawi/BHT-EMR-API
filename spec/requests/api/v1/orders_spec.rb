@@ -11,14 +11,15 @@ describe 'Orders API', type: :request, swagger_doc: 'v1/swagger.yaml' do
       produces 'application/json'
       security [api_key: []]
       parameter name: :id, in: :body, schema: {
-        type: :object, properties: {
+        type: :object,
+        properties: {
           encounter_id: { type: :integer },
           concept_id: { type: :integer },
-          instructions: { type: :string },
-          start_date: { type: :string },
-          orderer: { type: :integer },
-          accession_number: { type: :string },
-          provider: { type: :integer }
+          instructions: { type: :string, nullable: true },
+          start_date: { type: :string, nullable: true },
+          orderer: { type: :integer, nullable: true },
+          accession_number: { type: :string, nullable: true },
+          provider: { type: :integer, nullable: true }
         },
         required: %w[encounter_id concept_id]
       }
@@ -48,6 +49,33 @@ describe 'Orders API', type: :request, swagger_doc: 'v1/swagger.yaml' do
       end
 
       response '500', 'Internal Server Error' do
+        schema type: :string, properties: {
+          message: { type: :string }
+        }
+        run_test!
+      end
+    end
+
+    get 'Print the examination number' do
+      tags TAGS_NAME
+      description 'This prints a radiology examination number'
+      consumes 'application/json'
+      produces 'application/label'
+      security [api_key: []]
+      parameter name: :params, in: :query, schema: {
+        type: :object,
+        properties: {
+          accession_number: { type: :string },
+          order_id: { type: :integer }
+        }
+      }
+      response '201', 'File printed successfully' do
+        schema type: :file, properties: {
+          filename: { type: :string }
+        }
+        run_test!
+      end
+      response '404', 'Examination not found' do
         schema type: :string, properties: {
           message: { type: :string }
         }

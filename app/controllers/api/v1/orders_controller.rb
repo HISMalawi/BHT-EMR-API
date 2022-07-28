@@ -1,6 +1,5 @@
 class Api::V1::OrdersController < ApplicationController
-  def index
-  end
+  def index; end
 
   def show
     render json: Order.find(params[:id])
@@ -38,7 +37,7 @@ class Api::V1::OrdersController < ApplicationController
 
   def destroy
     drug = Drug.find(params[:id])
-    if drug.destroy()
+    if drug.destroy
       render status: :no_content
     else
       render json: { errors: drug.errors }, status: :internal_server_error
@@ -47,6 +46,14 @@ class Api::V1::OrdersController < ApplicationController
 
   def radiology_order
     render json: RadiologyService::Investigation.create_order(radiology_params), status: 201
+  end
+
+  def print_radiology_order
+    printer_commands = RadiologyService::OrderLabel.new(params.permit(:accession_number, :order_id)).print
+    send_data(printer_commands, type: 'application/label; charset=utf-8',
+                                stream: false,
+                                filename: "#{SecureRandom.hex(24)}.lbl",
+                                disposition: 'inline')
   end
 
   private

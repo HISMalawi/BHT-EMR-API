@@ -210,6 +210,7 @@ Rails.application.routes.draw do
 
       resources :drug_orders
       resources :orders do
+        get '/radiology', to: 'orders#print_radiology_order', on: :collection
         post '/radiology', to: 'orders#radiology_order', on: :collection
       end
 

@@ -339,17 +339,58 @@ paths:
                   type: integer
                 instructions:
                   type: string
+                  nullable: true
                 start_date:
                   type: string
+                  nullable: true
                 orderer:
                   type: integer
+                  nullable: true
                 accession_number:
                   type: string
+                  nullable: true
                 provider:
                   type: integer
+                  nullable: true
               required:
               - encounter_id
               - concept_id
+    get:
+      summary: Print the examination number
+      tags:
+      - Orders
+      description: This prints a radiology examination number
+      security:
+      - api_key: []
+      parameters:
+      - name: params
+        in: query
+        schema:
+          type: object
+          properties:
+            accession_number:
+              type: string
+            order_id:
+              type: integer
+      responses:
+        '201':
+          description: File printed successfully
+          content:
+            application/label:
+              schema:
+                type: file
+                properties:
+                  filename:
+                    type: string
+        '404':
+          description: Examination not found
+          content:
+            application/label:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
   "/api/v1/rollback/merge_history":
     get:
       summary: Retrieve merge history

@@ -4,8 +4,8 @@
 module RadiologyService
   # module handling printing of an order
   class OrderLabel
-    def initialize(order_id)
-      @order = Order.find(order_id)
+    def initialize(params)
+      @order = Order.find_by(params)
     end
 
     def print
@@ -15,7 +15,7 @@ module RadiologyService
       label.font_horizontal_multiplier = 1
       label.font_vertical_multiplier = 1
       label.left_margin = 100
-      label.draw_barcode(100, 220, 0, 1, 5, 15, 90, false, order.accession_number.to_s)
+      label.draw_barcode(100, 220, 0, 1, 5, 15, 90, false, @order.accession_number.to_s)
       label.draw_multi_text(@order.patient.person.name)
       label.draw_multi_text("#{@order.patient.national_id_with_dashes} #{@order.patient.person.gender} #{@order.patient.person.birth_date}")
       if detailed_examination.blank?
