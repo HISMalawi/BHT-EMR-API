@@ -210,7 +210,7 @@ Rails.application.routes.draw do
 
       resources :drug_orders
       resources :orders do
-        post '/radiology', to: 'orders#radiology_order'
+        post '/radiology', to: 'orders#radiology_order', on: :collection
       end
 
       get '/drug_sets', to: 'drugs#drug_sets' # ANC get drug sets

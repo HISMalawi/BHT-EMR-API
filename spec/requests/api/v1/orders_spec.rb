@@ -3,7 +3,7 @@ require 'swagger_helper'
 TAGS_NAME = 'Orders'.freeze
 
 describe 'Orders API', type: :request, swagger_doc: 'v1/swagger.yaml' do
-  path 'api/v1/orders/radiology' do
+  path '/api/v1/orders/radiology' do
     post 'Adds a Radiology Order' do
       tags TAGS_NAME
       description 'This adds a radiology order to the system'
