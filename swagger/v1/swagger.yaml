@@ -373,7 +373,7 @@ paths:
             order_id:
               type: integer
       responses:
-        '201':
+        '200':
           description: File printed successfully
           content:
             application/label:

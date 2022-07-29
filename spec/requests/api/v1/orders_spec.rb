@@ -69,7 +69,7 @@ describe 'Orders API', type: :request, swagger_doc: 'v1/swagger.yaml' do
           order_id: { type: :integer }
         }
       }
-      response '201', 'File printed successfully' do
+      response '200', 'File printed successfully' do
         schema type: :file, properties: {
           filename: { type: :string }
         }
