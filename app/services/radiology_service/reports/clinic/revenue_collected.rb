@@ -22,7 +22,7 @@ module RadiologyService
             FROM obs o
             WHERE o.voided = 0
             AND o.concept_id IN (SELECT concept_id FROM concept_name WHERE name IN ('PAYMENT AMOUNT','INVOICE AMOUNT') AND voided = 0)
-            AND o.obs_datetime BETWEEN '#{start_date}' AND '#{end_date}'
+            AND o.obs_datetime BETWEEN '#{@start_date}' AND '#{@end_date}'
             GROUP BY o.concept_id
           SQL
         end
