@@ -33,7 +33,7 @@ module RadiologyService
             AND od.order_type_id = #{radiology_order_type_id}
             AND o.concept_id = #{examination_concept_id}
             AND en.encounter_type = #{radiology_encounter_id}
-            AND od.concept_id IN (SELECT concept_id FROM concept_name WHERE name IN ('ULTRASOUND','MAMMOGRAPHY','MRI SCAN','CT SCAN','XRAY', 'BONE DENSITOMETRY'))
+            AND od.concept_id IN (SELECT concept_id FROM concept_name WHERE name IN ('ULTRASOUND','MAMMOGRAPHY','MRI SCAN','CT SCAN','XRAY', 'BONE DENSITOMETRY') AND voided = 0)
             AND od.voided = 0
             AND o.voided = 0
             AND DATE(o.obs_datetime) BETWEEN '#{@start_date}' AND '#{@end_date}'
