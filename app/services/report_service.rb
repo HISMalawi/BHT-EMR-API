@@ -8,7 +8,8 @@ class ReportService
     'VMMC PROGRAM' => VMMCService::ReportEngine,
     'TB PROGRAM' => TBService::ReportEngine,
     'LABORATORY ORDERS' => LaboratoryService::ReportEngine,
-    'CXCA PROGRAM' => CXCAService::ReportEngine
+    'CXCA PROGRAM' => CXCAService::ReportEngine,
+    'RADIOLOGY PROGRAM' => RadiologyService::ReportEngine
   }.freeze
   LOGGER = Rails.logger
 
@@ -185,7 +186,11 @@ class ReportService
   end
 
   def cxca_reports(start_date, end_date, report_name)
-    engine(@program).reports(start_date.to_date,end_date.to_date, report_name)
+    engine(@program).reports(start_date.to_date, end_date.to_date, report_name)
+  end
+
+  def radiology_reports(start_date, end_date, report_name)
+    engine(@program).reports(start_date.to_date, end_date.to_date, report_name)
   end
 
   def vl_maternal_status(start_date, end_date, tx_curr_definition, patient_ids)
