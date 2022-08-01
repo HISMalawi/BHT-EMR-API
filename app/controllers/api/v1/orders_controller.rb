@@ -1,5 +1,8 @@
 require 'zebra_printer/init'
+
 class Api::V1::OrdersController < ApplicationController
+  before_action :authenticate, except: %i[print_radiology_order]
+
   def index; end
 
   def show
