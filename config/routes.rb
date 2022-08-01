@@ -285,6 +285,7 @@ Rails.application.routes.draw do
   get '/api/v1/dashboard_stats' => 'api/v1/reports#index'
   get '/api/v1/dashboard_stats_for_syndromic_statistics' => 'api/v1/reports#syndromic_statistics'
   post '/api/v1/vl_maternal_status' => 'api/v1/reports#vl_maternal_status'
+  post '/api/v1/patient_art_vl_dates' => 'api/v1/reports#patient_art_vl_dates'
 
   # SQA controller
   post '/api/v1/duplicate_identifier' => 'api/v1/cleaning#duplicate_identifier'

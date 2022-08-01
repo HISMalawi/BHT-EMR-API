@@ -6,16 +6,21 @@ module ARTService
       # this module returns all the patient records on when
       # when the patient started ART
       # plus the last viral load result
-      module PatientStartVL
-        def self.get_patients_last_vl_and_latest_result(patient_ids, end_date)
+      class PatientStartVL
+        def get_patients_last_vl_and_latest_result(patient_ids, end_date)
           ids = patient_ids.push(0).join(',')
-          ActiveRecord::Base.connection.select_one <<~SQL
+          ActiveRecord::Base.connection.select_all <<~SQL
             SELECT vl_test_obs.person_id AS patient_id,
             DATE(vl_test_obs.obs_datetime) AS mr_viral_sample,
             latest_result_obs.result AS mr_vl_result,
             DATE(latest_result_obs.result_date) AS mr_vl_result_date,
-            patient_start_date(vl_test_obs.person_id) AS art_start_date
+            patient_start_date(vl_test_obs.person_id) AS art_start_date,
+            p.birthdate AS birthdate,
+            p.gender,
+            pi.identifier
             FROM obs vl_test_obs
+            INNER JOIN person p ON p.person_id = vl_test_obs.person_id
+            LEFT JOIN patient_identifier pi ON pi.patient_id = vl_test_obs.person_id AND pi.voided = 0 AND pi.identifier_type = 4
             INNER JOIN (
               SELECT person_id, obs_datetime
               FROM obs
