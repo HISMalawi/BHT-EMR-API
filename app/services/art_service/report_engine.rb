@@ -40,7 +40,8 @@ module ARTService
       'VIRAL_LOAD' => ARTService::Reports::ViralLoad,
       'VIRAL_LOAD_COVERAGE' => ARTService::Reports::Pepfar::ViralLoadCoverage,
       'EXTERNAL_CONSULTATION_CLIENTS' => ARTService::Reports::ExternalConsultationClients,
-      'SC_ARVDISP' => ARTService::Reports::Pepfar::ScArvdisp
+      'SC_ARVDISP' => ARTService::Reports::Pepfar::ScArvdisp,
+      'PATIENT_ART_VL_DATES' => ARTService::Reports::Pepfar::PatientStartVL
     }.freeze
 
     def generate_report(type:, **kwargs)
@@ -177,6 +178,10 @@ module ARTService
       REPORTS['VIRAL_LOAD_COVERAGE'].new(start_date: start_date.to_date,
         end_date: end_date.to_date,
         tx_curr_definition: tx_curr_definition).vl_maternal_status(patient_ids)
+    end
+
+    def patient_art_vl_dates(end_date, patient_ids)
+      REPORTS['PATIENT_ART_VL_DATES'].new.get_patients_last_vl_and_latest_result(patient_ids, end_date)
     end
 
     def latest_regimen_dispensed(start_date, end_date, rebuild_outcome)

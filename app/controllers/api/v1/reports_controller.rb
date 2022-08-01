@@ -244,6 +244,10 @@ class Api::V1::ReportsController < ApplicationController
       params[:report_definition], params[:patient_ids])
   end
 
+  def patient_art_vl_dates
+    render json: service.patient_art_vl_dates(params[:end_date], params[:patient_ids])
+  end
+
   def latest_regimen_dispensed
     render json: service.latest_regimen_dispensed(params[:start_date],
       params[:end_date], (params[:rebuild_outcome] == 'true' ? true : false))
