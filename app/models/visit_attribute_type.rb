@@ -1,0 +1,2 @@
+class VisitAttributeType < RetirableRecord
+end
