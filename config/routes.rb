@@ -78,6 +78,8 @@ Rails.application.routes.draw do
         resources :patient_programs, path: :programs, controller: 'patients/programs'
       end
 
+      resources :visit_types
+
       resources :patient_identifiers
 
       resources :person_attributes
