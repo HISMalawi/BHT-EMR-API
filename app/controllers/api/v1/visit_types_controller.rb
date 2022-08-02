@@ -1,4 +1,4 @@
-class VisitTypesController < ApplicationController
+class Api::V1::VisitTypesController < ApplicationController
   before_action :set_visit_type, only: %i[show update destroy]
 
   # GET /visit_types

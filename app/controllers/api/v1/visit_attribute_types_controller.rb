@@ -1,4 +1,4 @@
-class VisitAttributeTypesController < ApplicationController
+class Api::V1::VisitAttributeTypesController < ApplicationController
   before_action :set_visit_attribute_type, only: %i[show update destroy]
 
   # GET /visit_attribute_types

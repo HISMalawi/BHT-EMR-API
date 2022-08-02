@@ -79,14 +79,11 @@ Rails.application.routes.draw do
       end
 
       resources :visit_types
-
       resources :visits
-
       resources :visit_attributes
-
       resources :visit_attribute_types
-
       resources :provider_attribute_types
+      resources :providermanagement_provider_roles
 
       resources :patient_identifiers
 

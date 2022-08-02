@@ -1,4 +1,4 @@
-class VisitsController < ApplicationController
+class Api::V1::VisitsController < ApplicationController
   before_action :set_visit, only: [:show, :update, :destroy]
 
   # GET /visits

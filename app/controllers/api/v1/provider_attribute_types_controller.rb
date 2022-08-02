@@ -1,4 +1,4 @@
-class ProviderAttributeTypesController < ApplicationController
+class Api::V1::ProviderAttributeTypesController < ApplicationController
   before_action :set_provider_attribute_type, only: [:show, :update, :destroy]
 
   # GET /provider_attribute_types

@@ -1,4 +1,4 @@
-class VisitAttributesController < ApplicationController
+class Api::V1::VisitAttributesController < ApplicationController
   before_action :set_visit_attribute, only: [:show, :update, :destroy]
 
   # GET /visit_attributes
