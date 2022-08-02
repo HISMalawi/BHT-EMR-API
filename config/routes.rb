@@ -80,6 +80,8 @@ Rails.application.routes.draw do
 
       resources :visit_types
 
+      resources :visits
+
       resources :visit_attribute_types
 
       resources :patient_identifiers
