@@ -84,6 +84,7 @@ Rails.application.routes.draw do
       resources :visit_attribute_types
       resources :provider_attribute_types
       resources :providermanagement_provider_roles
+      resources :providers
 
       resources :patient_identifiers
 
