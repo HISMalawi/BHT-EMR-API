@@ -1,0 +1,2 @@
+class LocationAttributeType < RetirableRecord
+end
