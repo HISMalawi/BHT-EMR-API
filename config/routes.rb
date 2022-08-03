@@ -91,6 +91,7 @@ Rails.application.routes.draw do
       resources :location_attribute_types
       resources :location_attributes
       resources :allergies
+      resources :allergy_reactions
 
       resources :patient_identifiers
 
