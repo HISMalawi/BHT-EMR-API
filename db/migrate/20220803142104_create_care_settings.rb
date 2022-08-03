@@ -13,9 +13,10 @@ class CreateCareSettings < ActiveRecord::Migration[5.2]
       t.string :retire_reason, null: true
       t.integer :changed_by, null: true
       t.datetime :date_changed, null: true
-      t.string :uuid, null: false, limit: 38
-
-      t.timestamps
+      t.string :uuid, null: false, limit: 38, unique: true
     end
+    add_foreign_key :care_setting, :users, column: :creator, primary_key: :user_id
+    add_foreign_key :care_setting, :users, column: :changed_by, primary_key: :user_id
+    add_foreign_key :care_setting, :users, column: :retired_by, primary_key: :user_id
   end
 end
