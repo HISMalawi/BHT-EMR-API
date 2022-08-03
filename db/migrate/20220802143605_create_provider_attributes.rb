@@ -4,7 +4,7 @@ class CreateProviderAttributes < ActiveRecord::Migration[5.2]
       t.bigint :provider_id, null: false
       t.bigint :attribute_type_id, null: false
       t.text :value_reference, null: true
-      t.string :uuid, limit: 36, null: false
+      t.string :uuid, limit: 38, null: false
       t.integer :creator, null: false
       t.datetime :date_created, null: false
       t.integer :changed_by, null: false

@@ -17,7 +17,7 @@ class CreateProviderAttributeTypes < ActiveRecord::Migration[5.2]
       t.integer :retired_by, null: true
       t.datetime :date_retired, default: nil
       t.string :retire_reason, null: true
-      t.string :uuid, limit: 36, null: false
+      t.string :uuid, limit: 38, null: false
     end
     add_foreign_key :provider_attribute_types, :users, column: :creator, primary_key: :user_id
     add_foreign_key :provider_attribute_types, :users, column: :changed_by, primary_key: :user_id

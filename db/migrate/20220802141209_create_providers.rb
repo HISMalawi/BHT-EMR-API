@@ -12,7 +12,7 @@ class CreateProviders < ActiveRecord::Migration[5.2]
       t.integer :retired_by, null: true
       t.datetime :date_retired, null: true
       t.string :retire_reason, null: true
-      t.string :uuid, limit: 36, null: false
+      t.string :uuid, limit: 38, null: false
       t.bigint :provider_role_id, null: false
     end
 

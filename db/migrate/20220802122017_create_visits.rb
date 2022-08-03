@@ -15,7 +15,7 @@ class CreateVisits < ActiveRecord::Migration[5.2]
       t.integer :voided_by, null: true
       t.datetime :date_voided, null: true
       t.string :void_reason, null: true
-      t.string :uuid, null: false, limit: 36
+      t.string :uuid, null: false, limit: 38
     end
 
     add_foreign_key :visits, :users, column: :creator, primary_key: :user_id

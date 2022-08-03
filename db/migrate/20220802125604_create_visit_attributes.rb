@@ -4,7 +4,7 @@ class CreateVisitAttributes < ActiveRecord::Migration[5.2]
       t.bigint :visit_id, null: false
       t.bigint :attribute_type_id, null: false
       t.text :value_reference, null: false
-      t.string :uuid, null: false, limit: 36
+      t.string :uuid, null: false, limit: 38
       t.integer :creator, null: false
       t.datetime :date_created, null: false
       t.integer :changed_by, null: false

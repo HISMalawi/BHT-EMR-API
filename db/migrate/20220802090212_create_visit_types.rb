@@ -11,7 +11,7 @@ class CreateVisitTypes < ActiveRecord::Migration[5.2]
       t.integer :retired_by, null: true
       t.datetime :date_retired, null: true
       t.string :retire_reason, null: true
-      t.string :uuid, null: false, limit: 36
+      t.string :uuid, null: false, limit: 38
     end
     add_foreign_key :visit_types, :users, column: :creator, primary_key: :user_id
     add_foreign_key :visit_types, :users, column: :changed_by, primary_key: :user_id
