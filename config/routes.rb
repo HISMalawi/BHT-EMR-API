@@ -93,6 +93,7 @@ Rails.application.routes.draw do
       resources :allergies
       resources :allergy_reactions
       resources :person_merge_logs
+      resources :care_settings
 
       resources :patient_identifiers
 
