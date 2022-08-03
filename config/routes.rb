@@ -87,6 +87,7 @@ Rails.application.routes.draw do
       resources :providers
       resources :provider_attributes
       resources :encounter_roles
+      resources :encounter_providers
 
       resources :patient_identifiers
 
