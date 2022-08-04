@@ -97,6 +97,7 @@ Rails.application.routes.draw do
       resources :order_frequencies
       resources :order_sets
       resources :order_set_members
+      resources :order_groups
 
       resources :patient_identifiers
 
