@@ -95,6 +95,7 @@ Rails.application.routes.draw do
       resources :person_merge_logs
       resources :care_settings
       resources :order_frequencies
+      resources :order_sets
 
       resources :patient_identifiers
 

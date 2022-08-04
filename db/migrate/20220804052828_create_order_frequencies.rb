@@ -12,7 +12,7 @@ class CreateOrderFrequencies < ActiveRecord::Migration[5.2]
       t.string :retire_reason, limit: 255, null: true
       t.integer :changed_by, null: true
       t.datetime :date_changed, null: true
-      t.string :uuid, null: false, limit: 38
+      t.string :uuid, null: false, limit: 38, unique: true
     end
     add_foreign_key :order_frequency, :concept, column: :concept_id, primary_key: :concept_id
     add_foreign_key :order_frequency, :users, column: :creator, primary_key: :user_id
