@@ -94,6 +94,7 @@ Rails.application.routes.draw do
       resources :allergy_reactions
       resources :person_merge_logs
       resources :care_settings
+      resources :order_frequencies
 
       resources :patient_identifiers
 
