@@ -32,8 +32,8 @@ module PatientRegistrationService
           total = total_recorded['total'].to_i
           me_total = total_recorded(User.current.id)['total'].to_i
           result['Returning Patients'] =
-            { total: total - result['Newly Registered Patients']['total'],
-              me: me_total - result['Newly Registered Patients']['me'] }
+            { total: total - result['Newly Registered Patients'][:total],
+              me: me_total - result['Newly Registered Patients'][:me] }
           result
         end
 
@@ -45,17 +45,19 @@ module PatientRegistrationService
             #{user_id.nil? ? '' : "AND o.creator = #{user_id}"}
             AND o.value_text = '#{service}'
             AND o.obs_datetime BETWEEN '#{@start_date}' AND '#{@end_date}'
+            AND o.voided = 0
           SQL
         end
 
         def newly_registered_patients(user_id = nil)
-          ActiveRecord::Base.connection.select_one <<-SQL
+          ActiveRecord::Base.connection.select_one <<~SQL
             SELECT count(DISTINCT(e.patient_id)) AS total
             FROM encounter e
-            INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.voided = 0 AND o.concept_id = #{ConceptName.find_by_name('Type of patient').concept_id} AND o.value_coded = #{ConceptName.find_by_name('Yes').concept_id}
+            INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.voided = 0 AND o.concept_id = #{ConceptName.find_by_name('Type of patient').concept_id} AND o.value_coded = #{ConceptName.find_by_name('New Patient').concept_id}
             WHERE e.encounter_type = #{EncounterType.find_by_name('Registration').id}
             #{user_id.nil? ? '' : "AND e.creator = #{user_id}"}
             AND e.encounter_datetime BETWEEN '#{@start_date}' AND '#{@end_date}'
+            AND e.program_id = #{Program.find_by_name('PATIENT REGISTRATION PROGRAM').id}
           SQL
         end
 
@@ -65,6 +67,7 @@ module PatientRegistrationService
             FROM encounter e
             WHERE e.encounter_datetime BETWEEN '#{@start_date}' AND '#{@end_date}'
             #{user_id.nil? ? '' : "AND e.creator = #{user_id}"}
+            AND e.program_id = #{Program.find_by_name('PATIENT REGISTRATION PROGRAM').id}
           SQL
         end
       end
