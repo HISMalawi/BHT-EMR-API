@@ -1,7 +1,7 @@
 class CreateAllergyReactions < ActiveRecord::Migration[5.2]
   def change
     create_table :allergy_reaction, id: false do |t|
-      t.bigint :allergy_reaction_id, null: false, primary_key: true, auto_increment: true
+      t.primary_key :allergy_reaction_id
       t.bigint :allergy_id, null: false
       t.integer :reaction_concept_id, null: false
       t.string :reaction_non_coded, null: true, limit: 255

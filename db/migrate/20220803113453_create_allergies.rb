@@ -1,7 +1,7 @@
 class CreateAllergies < ActiveRecord::Migration[5.2]
   def change
     create_table :allergy, id: false do |t|
-      t.bigint :allergy_id, primary_key: true, null: false, auto_increment: true
+      t.primary_key :allergy_id
       t.integer :patient_id, null: false
       t.integer :severity_concept_id, null: true
       t.integer :coded_allergen, null: false

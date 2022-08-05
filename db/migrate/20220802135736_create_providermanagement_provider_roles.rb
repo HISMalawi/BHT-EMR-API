@@ -1,8 +1,9 @@
 class CreateProvidermanagementProviderRoles < ActiveRecord::Migration[5.2]
   def change
-    create_table :providermanagement_provider_roles do |t|
-      t.string :name, null: false
-      t.string :description, null: true
+    create_table :providermanagement_provider_role,id: false do |t|
+      t.primary_key :provider_role_id
+      t.string :name, null: false, limit: 255
+      t.string :description, null: true, limit: 1024
       t.integer :creator
       t.datetime :date_created, null: false
       t.integer :changed_by, null: false
@@ -10,12 +11,11 @@ class CreateProvidermanagementProviderRoles < ActiveRecord::Migration[5.2]
       t.boolean :retired, null: false, default: false
       t.integer :retired_by, null: true
       t.datetime :date_retired, null: true
-      t.string :retire_reason, null: true
-      t.string :uuid, limit: 38, null: false
+      t.string :retire_reason, null: true, limit: 255
+      t.string :uuid, limit: 38, null: false, unique: true
     end
-    add_foreign_key :providermanagement_provider_roles, :users, column: :creator, primary_key: :user_id
-    add_foreign_key :providermanagement_provider_roles, :users, column: :changed_by, primary_key: :user_id
-    add_foreign_key :providermanagement_provider_roles, :users, column: :retired_by, primary_key: :user_id
-    add_index :providermanagement_provider_roles, :uuid, unique: true
+    add_foreign_key :providermanagement_provider_role, :users, column: :creator, primary_key: :user_id
+    add_foreign_key :providermanagement_provider_role, :users, column: :changed_by, primary_key: :user_id
+    add_foreign_key :providermanagement_provider_role, :users, column: :retired_by, primary_key: :user_id
   end
 end

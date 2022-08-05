@@ -1,9 +1,10 @@
 class CreateLocationAttributeTypes < ActiveRecord::Migration[5.2]
   def change
-    create_table :location_attribute_types do |t|
-      t.string :name, null: false
-      t.string :description, null: true
-      t.string :datatype, null: true
+    create_table :location_attribute_type, id: false do |t|
+      t.primary_key :location_attribute_type_id
+      t.string :name, null: false, limit: 255
+      t.string :description, null: true, limit: 1024
+      t.string :datatype, null: true, limit: 255
       t.text :datatype_config, null: true
       t.string :preferred_handler, null: true
       t.text :handler_config, null: true
@@ -16,12 +17,11 @@ class CreateLocationAttributeTypes < ActiveRecord::Migration[5.2]
       t.boolean :retired, null: false, default: false
       t.integer :retired_by, null: true
       t.datetime :date_retired, null: true
-      t.string :retire_reason, null: true
-      t.string :uuid, null: false, limit: 38
+      t.string :retire_reason, null: true, limit: 255
+      t.string :uuid, null: false, limit: 38, unique: true
     end
-    add_index :location_attribute_types, :uuid, unique: true
-    add_foreign_key :location_attribute_types, :users, column: :creator, primary_key: :user_id
-    add_foreign_key :location_attribute_types, :users, column: :changed_by, primary_key: :user_id
-    add_foreign_key :location_attribute_types, :users, column: :retired_by, primary_key: :user_id
+    add_foreign_key :location_attribute_type, :users, column: :creator, primary_key: :user_id
+    add_foreign_key :location_attribute_type, :users, column: :changed_by, primary_key: :user_id
+    add_foreign_key :location_attribute_type, :users, column: :retired_by, primary_key: :user_id
   end
 end
