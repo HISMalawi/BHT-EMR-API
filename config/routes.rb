@@ -18,7 +18,7 @@ Rails.application.routes.draw do
       end
 
       # Routes down here ... Best we move everything above into own modules
-
+      resources :internal_sections, only: %i[index show create update destroy]
       resources :appointments
       resources :dispensations, only: %i[index create destroy]
       resources :users do
@@ -209,7 +209,11 @@ Rails.application.routes.draw do
       end
 
       resources :drug_orders
-      resources :orders
+      resources :orders do
+        get '/radiology', to: 'orders#print_radiology_order', on: :collection
+        post '/radiology', to: 'orders#radiology_order', on: :collection
+      end
+
       get '/drug_sets', to: 'drugs#drug_sets' # ANC get drug sets
       post '/drug_sets', to: 'drugs#create_drug_sets' # ANC drug sets creation
       delete '/drug_sets/:id', to: 'drugs#void_drug_sets'
@@ -280,6 +284,7 @@ Rails.application.routes.draw do
   get '/api/v1/patient_weight_for_height_values' => 'api/v1/weight_for_height#index'
   get '/api/v1/presenting_complaints' => 'api/v1/presenting_complaints#show'
   get '/api/v1/concept_set' => 'api/v1/concept_sets#show'
+  get '/api/v1/radiology_set' => 'api/v1/concept_sets#radiology_set'
   get '/api/v1/cervical_cancer_screening' => 'api/v1/cervical_cancer_screening#show'
 
   get '/api/v1/dashboard_stats' => 'api/v1/reports#index'
@@ -356,6 +361,8 @@ Rails.application.routes.draw do
   post '/api/v1/dispatch_order', to: 'api/v1/dispatch_orders#create'
   get '/api/v1/latest_regimen_dispensed', to: 'api/v1/reports#latest_regimen_dispensed'
   get '/api/v1/sc_arvdisp', to: 'api/v1/reports#sc_arvdisp'
+
+  get 'api/v1/radiology_reports', to: 'api/v1/reports#radiology_reports'
 
   get '/api/v1/data_cleaning_confirmation', to: 'api/v1/data_cleaning#view'
   post '/api/v1/data_cleaning_confirmation', to: 'api/v1/data_cleaning#create'
