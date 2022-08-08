@@ -128,4 +128,8 @@ class Patient < VoidableRecord
   def name
     PersonName.where(person_id: patient_id).order(:date_created).last&.to_s
   end
+
+  def merge_history
+    MergeAudit.where(primary_id: patient_id)
+  end
 end
