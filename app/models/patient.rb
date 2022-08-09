@@ -41,7 +41,8 @@ class Patient < VoidableRecord
         patient_identifiers: {
           methods: %i[type]
         }
-      }
+      },
+      methods: %i[merge_history]
     ))
   end
 
@@ -130,6 +131,6 @@ class Patient < VoidableRecord
   end
 
   def merge_history
-    MergeAudit.where(primary_id: patient_id)
+    MergeAudit.where(primary_id: patient_id).order(:created_at)
   end
 end
