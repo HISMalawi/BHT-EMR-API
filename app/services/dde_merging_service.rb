@@ -36,7 +36,7 @@ class DDEMergingService
       elsif inverted_remote_local_merge?(primary_patient_ids, secondary_patient_ids)
         merge_remote_and_local_patients(secondary_patient_ids, primary_patient_ids, 'Local and Remote Patients')
       elsif local_merge?(primary_patient_ids, secondary_patient_ids)
-        merge_local_patients(primary_patient_ids, secondary_patient_ids)
+        merge_local_patients(primary_patient_ids, secondary_patient_ids, 'Local Patients')
       else
         raise InvalidParameterError,
               "Invalid merge parameters: primary => #{primary_patient_ids}, secondary => #{secondary_patient_ids}"
