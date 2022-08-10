@@ -45,7 +45,7 @@ class MergeAudit < VoidableRecord
     patient = Patient.unscoped.find(secondary_id).as_json
     patient['person'] = Person.unscoped.find(secondary_id).as_json
     patient['person']['names'] = PersonName.unscoped.where(person_id: secondary_id).as_json
-    patient['patient_identifiers'] = PatientIdentifier.unscoped.where(patient_id: secondary_id).as_json
+    patient['patient_identifiers'] = PatientIdentifier.unscoped.where(patient_id: secondary_id).as_json(includes: :type)
     patient
   end
 end
