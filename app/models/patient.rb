@@ -131,6 +131,6 @@ class Patient < VoidableRecord
   end
 
   def merge_history
-    MergeAudit.where(primary_id: patient_id).order(:created_at)
+    MergeAudit.where(primary_id: patient_id).order(:created_at).as_json
   end
 end
