@@ -9,6 +9,7 @@ class ReportService
     'TB PROGRAM' => TBService::ReportEngine,
     'LABORATORY ORDERS' => LaboratoryService::ReportEngine,
     'CXCA PROGRAM' => CXCAService::ReportEngine,
+    'RADIOLOGY PROGRAM' => RadiologyService::ReportEngine,
     'PATIENT REGISTRATION PROGRAM' => RegistrationService::ReportEngine
   }.freeze
   LOGGER = Rails.logger
@@ -186,7 +187,11 @@ class ReportService
   end
 
   def cxca_reports(start_date, end_date, report_name)
-    engine(@program).reports(start_date.to_date,end_date.to_date, report_name)
+    engine(@program).reports(start_date.to_date, end_date.to_date, report_name)
+  end
+
+  def radiology_reports(start_date, end_date, report_name)
+    engine(@program).reports(start_date.to_date, end_date.to_date, report_name)
   end
 
   def pr_reports(start_date, end_date, report_name)

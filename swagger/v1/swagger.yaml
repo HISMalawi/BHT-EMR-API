@@ -4,6 +4,393 @@ info:
   title: EMR API V1 DOCS
   version: v1
 paths:
+  "/api/v1/radiology_set":
+    get:
+      summary: Retrieve all radiology sets
+      tags:
+      - Concept Sets
+      description: This shows all radiology examination sets
+      security:
+      - api_key: []
+      parameters:
+      - name: id
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Radiology Sets found
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    concept_id:
+                      type: integer
+                    name:
+                      type: string
+  "/api/v1/concept_sets/{id}":
+    get:
+      summary: Retrieve concept set by id
+      tags:
+      - Concept Sets
+      description: This shows concept set by id
+      security:
+      - api_key: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Concept Set found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+                  created_at:
+                    type: string
+                  updated_at:
+                    type: string
+        '404':
+          description: Concept Set not found
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+  "/api/v1/internal_sections":
+    get:
+      summary: Retrieve all internal sections
+      tags:
+      - Internal Sections
+      description: This shows all internal sections
+      security:
+      - api_key: []
+      responses:
+        '200':
+          description: Internal Sections found
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    name:
+                      type: string
+                    created_at:
+                      type: string
+                    updated_at:
+                      type: string
+        '404':
+          description: Internal Sections not found
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+  "/api/v1/internal_sections/{id}":
+    get:
+      summary: Retrieve internal section by id
+      tags:
+      - Internal Sections
+      description: This shows internal section by id
+      security:
+      - api_key: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Internal Section found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+                  created_at:
+                    type: string
+                  updated_at:
+                    type: string
+        '404':
+          description: Internal Section not found
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+    put:
+      summary: Update internal section
+      tags:
+      - Internal Sections
+      security:
+      - api_key: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Internal Section updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+                  created_at:
+                    type: string
+                  updated_at:
+                    type: string
+        '422':
+          description: Internal Section not updated
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+              required:
+              - name
+    delete:
+      summary: Remove internal section
+      tags:
+      - Internal Sections
+      security:
+      - api_key: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Internal Section removed
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+        '422':
+          description: Internal Section not removed
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                void_reason:
+                  type: string
+              required:
+              - void_reason
+  "/api/v1/internal_sections/":
+    post:
+      summary: Create internal section
+      tags:
+      - Internal Sections
+      security:
+      - api_key: []
+      parameters: []
+      responses:
+        '201':
+          description: Internal Section created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+                  created_at:
+                    type: string
+                  updated_at:
+                    type: string
+        '422':
+          description: Internal Section not created
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+              required:
+              - name
+  "/api/v1/orders/radiology":
+    post:
+      summary: Adds a Radiology Order
+      tags:
+      - Orders
+      description: This adds a radiology order to the system
+      security:
+      - api_key: []
+      parameters: []
+      responses:
+        '201':
+          description: Radiology Order Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  order_id:
+                    type: integer
+                  accession_number:
+                    type: string
+                  created_at:
+                    type: string
+                  updated_at:
+                    type: string
+        '422':
+          description: Radiology Order not created
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Encounter not found
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                encounter_id:
+                  type: integer
+                concept_id:
+                  type: integer
+                instructions:
+                  type: string
+                  nullable: true
+                start_date:
+                  type: string
+                  nullable: true
+                orderer:
+                  type: integer
+                  nullable: true
+                accession_number:
+                  type: string
+                  nullable: true
+                provider:
+                  type: integer
+                  nullable: true
+              required:
+              - encounter_id
+              - concept_id
+    get:
+      summary: Print the examination number
+      tags:
+      - Orders
+      description: This prints a radiology examination number
+      security:
+      - api_key: []
+      parameters:
+      - name: params
+        in: query
+        schema:
+          type: object
+          properties:
+            accession_number:
+              type: string
+            order_id:
+              type: integer
+      responses:
+        '200':
+          description: File printed successfully
+          content:
+            application/label:
+              schema:
+                type: file
+                properties:
+                  filename:
+                    type: string
+        '404':
+          description: Examination not found
+          content:
+            application/label:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
   "/api/v1/rollback/merge_history":
     get:
       summary: Retrieve merge history

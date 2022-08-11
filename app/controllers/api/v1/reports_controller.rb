@@ -236,6 +236,10 @@ class Api::V1::ReportsController < ApplicationController
     render json: service.cxca_reports(params[:start_date], params[:end_date], params[:report_name])
   end
 
+  def radiology_reports
+    render json: service.radiology_reports(params[:start_date], params[:end_date], params[:report_name])
+  end
+
   def pr_reports
     render json: service.pr_reports(params[:start_date], params[:end_date], params[:report_name])
   end
