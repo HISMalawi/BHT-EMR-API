@@ -52,7 +52,7 @@ module ARTService
                    .where(concept_id: ConceptName.find_by_name('Viral load').concept_id,
                           obs_datetime: (start_date..end_date),
                           value_numeric: viral_load_range)
-                   .merge(Encounter.where(encounter_type: EncounterType.find_by_name('HIV Clinic Consultation').encounter_type_id))
+                   .merge(Encounter.where(encounter_type: EncounterType.find_by_name('LAB ORDERS').encounter_type_id))
                    .group(:person_id)
                    .order(obs_datetime: :desc)
       end
