@@ -2325,7 +2325,7 @@ END IF;
 
 
 RETURN report_data;
-END
+END;
 
 DROP FUNCTION IF EXISTS `female_maternal_status`;
 
