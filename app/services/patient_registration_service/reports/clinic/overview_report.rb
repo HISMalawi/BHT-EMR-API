@@ -14,7 +14,7 @@ module PatientRegistrationService
         end
 
         def data
-          report
+          report_two
         end
 
         private
@@ -37,15 +37,38 @@ module PatientRegistrationService
           result
         end
 
-        def total_patients_by_service(service, user_id = nil)
+        def report_two
+          result = {}
+          clinic = total_patients_by_service
+          me = total_patients_by_service(User.current.id)
+          SERVICES.each do |service|
+            total_object = clinic&.find { |k| k['value_text'] == service }
+            total = total_object ? total_object['total'].to_i : 0
+            me_object = me&.find { |k| k['value_text'] == service }
+            me_total = me_object ? me_object['total'].to_i : 0
+            result[service] = { total: total, me: me_total }
+          end
+          result['Newly Registered Patients'] =
+            { total: newly_registered_patients['total'].to_i,
+              me: newly_registered_patients(User.current.id)['total'].to_i }
+          total = total_recorded['total'].to_i
+          me_total = total_recorded(User.current.id)['total'].to_i
+          result['Returning Patients'] =
+            { total: total - result['Newly Registered Patients'][:total],
+              me: me_total - result['Newly Registered Patients'][:me] }
+          result
+        end
+
+        def total_patients_by_service(user_id = nil)
           concept_id = ConceptName.find_by_name('Services ordered').concept_id
-          ActiveRecord::Base.connection.select_one <<~SQL
-            SELECT count(*) AS total FROM obs o
+          ActiveRecord::Base.connection.select_all <<~SQL
+            SELECT o.value_text, count(*) AS total FROM obs o
             WHERE o.concept_id = #{concept_id}
             #{user_id.nil? ? '' : "AND o.creator = #{user_id}"}
-            AND o.value_text = '#{service}'
+            AND o.value_text IN ('Casualty', 'Dental', 'Eye', 'Family Planing', 'Medical', 'OB/Gyn', 'Orthopedics','Pediatrics', 'Skin', 'STI Clinic', 'Surgical', 'Other')
             AND o.obs_datetime BETWEEN '#{@start_date}' AND '#{@end_date}'
             AND o.voided = 0
+            GROUP BY o.value_text
           SQL
         end
 
