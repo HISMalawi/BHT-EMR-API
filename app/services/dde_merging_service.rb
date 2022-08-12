@@ -218,7 +218,7 @@ class DDEMergingService
     secondary_patient.patient_identifiers.each do |identifier|
       next if patient_has_identifier(primary_patient, identifier.identifier_type, identifier.identifier)
 
-      new_identifier = PatientIdentifier.create(
+      new_identifier = PatientIdentifier.create!(
         patient_id: primary_patient.patient_id,
         location_id: identifier.location_id,
         identifier: identifier.identifier,
@@ -231,7 +231,10 @@ class DDEMergingService
       )
       raise "Could not merge patient identifier: #{new_identifier.errors.as_json}" unless new_identifier.errors.empty?
 
-      identifier.void("Merged into patient ##{primary_patient.patient_id}: #{new_identifier.id}")
+      new_id = new_identifier.id
+      Rails.logger.info "Patient ##{primary_patient.patient_id} has new identifier  on ##{new_id}"
+      identifier.update(void_reason: "Merged into patient ##{primary_patient.patient_id}: #{new_id}", voided: 1,
+                        date_voided: Time.now, voided_by: User.current.id)
     end
   end
 
@@ -324,6 +327,8 @@ class DDEMergingService
 
   # method to update drug orders with the new order id
   def manage_drug_order(order_map)
+    return if order_map.blank?
+
     result = ActiveRecord::Base.connection.select_all "SELECT * FROM drug_order WHERE order_id IN (#{order_map.keys.join(',')})"
     return if result.blank?
 

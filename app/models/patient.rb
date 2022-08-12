@@ -107,10 +107,10 @@ class Patient < VoidableRecord
 
   def void_related_models(reason)
     person.void(reason)
-    patient_identifiers.each { |row| row.void(reason) }
-    patient_programs.each { |row| row.void(reason) }
-    orders.each { |row| row.void(reason) }
-    encounters.each { |row| row.void(reason) }
+    patient_identifiers.each { |row| row.void(reason) if row['voided'].zero? }
+    patient_programs.each { |row| row.void(reason) if row['voided'].zero? }
+    orders.each { |row| row.void(reason) if row['voided'].zero? }
+    encounters.each { |row| row.void(reason) if row['voided'].zero? }
   end
 
   def gender
