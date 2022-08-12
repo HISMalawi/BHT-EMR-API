@@ -29,7 +29,6 @@ module ARTService
       private
 
       AGE_GROUPS = [
-        [0, 1],
         [1, 4],
         [5, 9],
         [10, 14],
@@ -39,8 +38,16 @@ module ARTService
         [30, 34],
         [35, 39],
         [40, 44],
-        [45, 50],
-        [50, Float::INFINITY]
+        [45, 49],
+        [50, 54],
+        [55, 59],
+        [60, 64],
+        [65, 69],
+        [70, 74],
+        [75, 79],
+        [80, 84],
+        [85, 89],
+        [90, Float::INFINITY]
       ].freeze
 
       # Returns all patients with a viral load in the selected range
@@ -63,12 +70,14 @@ module ARTService
         return 'Unknown' unless birthdate
 
         age = (end_date.to_date - birthdate.to_date).to_i / DAYS_IN_YEAR
+        return '<1 year' if age < 1
+
         start_age, end_age = AGE_GROUPS.find { |start_age, end_age| (start_age..end_age).include?(age) }
 
         if end_age == Float::INFINITY
-          "#{start_age} Years +"
+          "#{start_age} years +"
         else
-          "#{start_age} - #{end_age} Years"
+          "#{start_age} - #{end_age} years"
         end
       end
 
