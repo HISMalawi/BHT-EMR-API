@@ -14,7 +14,7 @@ class PatientService
       if use_dde_service?
         begin
           assign_patient_dde_npid(patient, program)
-        rescue RuntimeError => e
+        rescue
           create_local_npid(patient, malawi_national_id)
         end
       else
