@@ -172,6 +172,18 @@ An example of the file output by this process would be
 emc_poc_migration_20220816.csv
 ```
 
+The migration will skip certain results if they are blank/without value. You can find this list in the following file structure:
+```bash
+emc_poc_migration_skipped_yearmonthday.csv
+```
+
+An example of the file output by this process would be
+```bash
+emc_poc_migration_skipped_20220816.csv
+```
+
+The file will indicate the result date and the client ARV number which can be used for BDE purposes
+
 ## Running the API
 
 You can do the following (don't run it like this in production):
