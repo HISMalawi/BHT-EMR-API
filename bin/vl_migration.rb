@@ -14,7 +14,8 @@ def process
 end
 
 def create_order(obs)
-  Lab::OrdersService.order_test(prepare_order_payload(obs))
+  payload = prepare_order_payload(obs)
+  Lab::OrdersService.order_test(payload)
 end
 
 def create_test(obs, order)
@@ -47,10 +48,12 @@ end
 
 def prepare_order_payload(obs)
   provider = obs.encounter.provider_id
-  { patient_id: obs.person_id, provider_id: provider, date: previous_visit(obs.person_id, obs.obs_datetime),
-    program_id: program, target_lab: Location.current.name,
+  prev_encounter = previous_visit(obs.person_id, obs.obs_datetime)
+  encounter_id = create_encounter(obs, prev_encounter)['encounter_id']
+  { patient_id: obs.person_id, provider_id: provider, date: prev_encounter, encounter_id: encounter_id,
+    program_id: program, 'target_lab' => target_lab, reason_for_test_id: concept_name('Unknown'),
     tests: [{ concept_id: concept_name('Viral Load') }], specimen: { concept_id: concept_name('Blood') },
-    requesting_clinician: User.where(person_id: provider)&.first&.username, reason_for_test_id: concept_name('Unknown')}
+    'requesting_clinician' => User.where(person_id: provider)&.first&.username }
 end
 
 def previous_visit(patient_id, encounter_date)
@@ -68,6 +71,20 @@ def prepare_test_payload(obs, order)
                  value_type: !text_value_present.blank? ? 'text' : 'numeric',
                  value_modifier: obs.value_modifier || (modifier_present.blank? ? '=' : modifier_present[0..1]),
                  indicator: { concept_id: obs.concept_id } }] }
+end
+
+def create_encounter(obs, prev_encounter)
+  Encounter.create!(
+    patient_id: obs.person_id,
+    program_id: obs.encounter.program_id,
+    type: EncounterType.find_by_name!('LAB ORDERS'),
+    encounter_datetime: prev_encounter || Date.today,
+    provider_id: obs.encounter.provider_id || User.current.person.person_id
+  )
+end
+
+def target_lab
+  @target_lab ||= GlobalProperty.where(property: 'target.lab')&.first&.property_value || Location.where(name: 'Unknown').first.name
 end
 
 def program
