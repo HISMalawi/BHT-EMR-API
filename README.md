@@ -152,6 +152,26 @@ curl -X POST -H "Authorization: AiJViSpF3spb" -H "Content-Type: application/json
 }' "http://127.0.0.1:3000/api/v1/properties"
 ```
 
+### EMC to POC
+These are the instructions of migrating data for sites that have changed from an e-Mastercard(EMC) to Point of Care(POC).
+Open a terminal and navigate to the API application folder. On the root of the application folder run this command in your terminal
+
+```bash
+rails r ./bin/vl_migration.rb
+```
+
+Once this process completes a csv file will be created on the root of the application folder. The file name will have the following
+structure:
+
+```bash
+emc_poc_migration_dateMigrationWasRun.csv
+```
+
+An example of the file output by this process would be
+```bash
+emc_poc_migration_20220816.csv
+```
+
 ## Running the API
 
 You can do the following (don't run it like this in production):
