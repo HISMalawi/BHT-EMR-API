@@ -25,7 +25,7 @@ end
 def void_obs(obs, order)
   result = Observation.where(encounter_id: order['encounter_id'], concept_id: concept_name('Viral load')).first.id
   puts "Voiding old result #{obs.id} and creating result #{result}"
-  write_to_text_file("#{obs.id},#{result}")
+  write_to_text_file("#{obs.id},#{result},#{obs.obs_datetime.to_date},#{order['order_date']},#{obs.person_id},#{arv_number(obs.person_id)}")
   if obs.encounter.type.name == 'LAB'
     obs.encounter.void("copied to #{order['encounter_id']}")
   else
@@ -37,12 +37,26 @@ def write_to_text_file(content)
   @file.puts content
 end
 
+def arv_number(person_id)
+  PatientIdentifier.where(patient_id: person_id, identifier_type: patient_identifier_type)&.first&.identifier
+end
+
+def patient_identifier_type
+  @patient_identifier_type ||= PatientIdentifierType.find_by_name('ARV Number').id
+end
+
 def prepare_order_payload(obs)
   provider = obs.encounter.provider_id
-  { patient_id: obs.person_id, provider_id: provider, date: obs.obs_datetime, program_id: program,
+  { patient_id: obs.person_id, provider_id: provider, date: previous_visit(obs.person_id, obs.obs_datetime),
+    program_id: program, target_lab: Location.current.name,
     tests: [{ concept_id: concept_name('Viral Load') }], specimen: { concept_id: concept_name('Blood') },
-    requesting_clinician: User.where(person_id: provider)&.first&.username, reason_for_test_id: concept_name('Unknown'),
-    target_lab: Location.current.name }
+    requesting_clinician: User.where(person_id: provider)&.first&.username, reason_for_test_id: concept_name('Unknown')}
+end
+
+def previous_visit(patient_id, encounter_date)
+  result = Encounter.where('patient_id = ? AND encounter_datetime < DATE(?)', patient_id,
+                           encounter_date).order('encounter_datetime DESC').first
+  result.blank? ? encounter_date : result.encounter_datetime
 end
 
 def prepare_test_payload(obs, order)
@@ -68,7 +82,7 @@ def main
   User.current = User.first
   Location.current = Location.find(GlobalProperty.find_by(property: 'current_health_center_id').property_value)
   @file = File.new("emc_poc_migration_#{Time.now.strftime('%Y%m%d')}.csv", 'w+')
-  @file.puts 'obs_old_id,obs_new_id'
+  @file.puts 'obs_old_id,obs_new_id,result_date, order_date, patient_id, identifier'
   process
   @file.close
 end
