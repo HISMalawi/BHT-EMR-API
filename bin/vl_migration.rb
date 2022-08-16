@@ -7,10 +7,21 @@ end
 def process
   orphaned_vl_results.each do |obs|
     puts "Processing obs #{obs.id}"
-    order = create_order obs
-    create_test obs, order
-    void_obs obs, order
+    value_available(obs).blank? ? skip_process(obs) : normal_process(obs)
   end
+end
+
+def normal_process(obs)
+  order = create_order obs
+  create_test obs, order
+  void_obs obs, order
+end
+
+def skip_process(obs)
+  puts "Skipping obs #{obs.id} as value is blank"
+  write_to_skip_file("#{obs.id},#{obs.obs_datetime.to_date},#{obs.person_id},#{arv_number(obs.person_id)}")
+  # we void the obs
+  obs.void('value is blank')
 end
 
 def create_order(obs)
@@ -36,6 +47,10 @@ end
 
 def write_to_text_file(content)
   @file.puts content
+end
+
+def write_to_skip_file(content)
+  @skipped.puts content
 end
 
 def arv_number(person_id)
@@ -73,6 +88,10 @@ def prepare_test_payload(obs, order)
                  indicator: { concept_id: obs.concept_id } }] }
 end
 
+def value_available(obs)
+  obs.value_numeric || obs.value_text&.gsub(/(=|>|<|>=|<|<=|<>)/, '')
+end
+
 def create_encounter(obs, prev_encounter)
   Encounter.create!(
     patient_id: obs.person_id,
@@ -99,9 +118,12 @@ def main
   User.current = User.first
   Location.current = Location.find(GlobalProperty.find_by(property: 'current_health_center_id').property_value)
   @file = File.new("emc_poc_migration_#{Time.now.strftime('%Y%m%d')}.csv", 'w+')
+  @skipped = File.new("emc_poc_migration_skipped_#{Time.now.strftime('%Y%m%d')}.csv", 'w+')
+  @skipped.puts 'obs_id,result_date,patient_id,arv_number'
   @file.puts 'obs_old_id,obs_new_id,result_date, order_date, patient_id, identifier'
   process
   @file.close
+  @skipped.close
 end
 
 main
