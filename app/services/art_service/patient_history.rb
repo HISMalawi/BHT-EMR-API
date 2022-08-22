@@ -333,12 +333,12 @@ module ARTService
     def hiv_staging_observation_present?(concept_name)
       concept_id = ConceptName.find_by_name(concept_name)&.concept_id
       return false unless hiv_staging
-
       hiv_staging.observations\
-                 .where(concept_id: concept_id)\
+                 .where(concept_id: ConceptName.find_by_name('Who stages criteria present')&.concept_id)\
+                 .where(value_coded: concept_id)
                  .order(:obs_datetime)\
                  .first
-                 &.value_coded == ConceptName.find_by_name('Yes').concept_id
+                 .present?
     end
 
     # Returns the oldest observation for current patient of the given concept_name
