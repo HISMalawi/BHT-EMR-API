@@ -31,9 +31,10 @@ module RadiologyService
       return @examination if @examination
 
       examination_concept = ConceptName.find_by_name("EXAMINATION").concept_id
-      examination_obs = Observation.find_by(concept_id: examination_concept, encounter_id: @order.encounter_id)
+      examination_obs = Observation.where(concept_id: examination_concept)
+                                  .where(encounter_id: @order.encounter_id)
+                                  .last
       examination = examination_obs.answer_concept.shortname rescue ''
-
       if examination.blank?
         examination = examination_obs.answer_concept.fullname rescue ''
       end
@@ -48,7 +49,9 @@ module RadiologyService
       return @detailed_examination if @detailed_examination
 
       detailed_examination_concept = ConceptName.find_by_name('DETAILED EXAMINATION').concept_id
-      detailed_examination_obs = Observation.find_by(concept_id: detailed_examination_concept, encounter_id: @order.encounter_id)
+      detailed_examination_obs = Observation.where(concept_id: detailed_examination_concept)
+                                            .where(encounter_id: @order.encounter_id)
+                                            .last
       @detailed_examination ||= detailed_examination_obs&.answer_concept&.shortname || detailed_examination_obs&.answer_concept&.fullname
     end
 
