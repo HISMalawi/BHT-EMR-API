@@ -34,7 +34,7 @@ class DDEMergingService
       elsif remote_local_merge?(primary_patient_ids, secondary_patient_ids)
         merge_remote_and_local_patients(primary_patient_ids, secondary_patient_ids, 'Remote and Local Patient')
       elsif inverted_remote_local_merge?(primary_patient_ids, secondary_patient_ids)
-        merge_remote_and_local_patients(secondary_patient_ids, primary_patient_ids, 'Local and Remote Patients')
+        merge_local_patients(primary_patient_ids, secondary_patient_ids, 'Local and Remote Patients')
       elsif local_merge?(primary_patient_ids, secondary_patient_ids)
         merge_local_patients(primary_patient_ids, secondary_patient_ids, 'Local Patients')
       else
@@ -115,22 +115,29 @@ class DDEMergingService
   # The precondition for a remote merge is the presence of a doc_id
   # in both primary and secondary patient ids.
   def remote_merge?(primary_patient_ids, secondary_patient_ids)
-    !primary_patient_ids['doc_id'].blank? && !secondary_patient_ids['doc_id'].blank?
+    !search_by_doc_id(primary_patient_ids['doc_id']).blank? && !search_by_doc_id(secondary_patient_ids['doc_id']).blank?
   end
 
   # Is a merge of a remote patient into a local patient possible?
   def remote_local_merge?(primary_patient_ids, secondary_patient_ids)
-    !primary_patient_ids['patient_id'].blank? && !secondary_patient_ids['doc_id'].blank?
+    !primary_patient_ids['patient_id'].blank? && !search_by_doc_id(secondary_patient_ids['doc_id']).blank?
   end
 
   # Like `remote_local_merge` but primary is remote and secondary is local
   def inverted_remote_local_merge?(primary_patient_ids, secondary_patient_ids)
-    !primary_patient_ids['doc_id'].blank? && !secondary_patient_ids['patient_id'].blank?
+    !search_by_doc_id(primary_patient_ids['doc_id']).blank? && !secondary_patient_ids['patient_id'].blank?
   end
 
   # Is a merge of local patients possible?
   def local_merge?(primary_patient_ids, secondary_patient_ids)
     !primary_patient_ids['patient_id'].blank? && !secondary_patient_ids['patient_id'].blank?
+  end
+
+  def search_by_doc_id(doc_id)
+    response, status = dde_client.post('search_by_doc_id', doc_id: doc_id)
+    return nil unless status == 200
+
+    response
   end
 
   # Merge remote secondary patient into local primary patient
@@ -141,6 +148,11 @@ class DDEMergingService
     local_patient = link_local_to_remote_patient(local_patient, remote_patient)
     return local_patient if secondary_patient_ids['patient_id'].blank?
 
+    merge_local_patients(primary_patient_ids, secondary_patient_ids, merge_type)
+  end
+
+  # Merge remote secondary patient into local primary patient
+  def merge_local_and_remote_patients(primary_patient_ids, secondary_patient_ids, merge_type)
     merge_local_patients(primary_patient_ids, secondary_patient_ids, merge_type)
   end
 
@@ -211,7 +223,7 @@ class DDEMergingService
     secondary_patient.patient_identifiers.each do |identifier|
       next if patient_has_identifier(primary_patient, identifier.identifier_type, identifier.identifier)
 
-      new_identifier = PatientIdentifier.create(
+      new_identifier = PatientIdentifier.create!(
         patient_id: primary_patient.patient_id,
         location_id: identifier.location_id,
         identifier: identifier.identifier,
@@ -224,7 +236,10 @@ class DDEMergingService
       )
       raise "Could not merge patient identifier: #{new_identifier.errors.as_json}" unless new_identifier.errors.empty?
 
-      identifier.void("Merged into patient ##{primary_patient.patient_id}: #{new_identifier.id}")
+      new_id = new_identifier.id
+      Rails.logger.info "Patient ##{primary_patient.patient_id} has new identifier  on ##{new_id}"
+      identifier.update(void_reason: "Merged into patient ##{primary_patient.patient_id}: #{new_id}", voided: 1,
+                        date_voided: Time.now, voided_by: User.current.id)
     end
   end
 
@@ -317,6 +332,8 @@ class DDEMergingService
 
   # method to update drug orders with the new order id
   def manage_drug_order(order_map)
+    return if order_map.blank?
+
     result = ActiveRecord::Base.connection.select_all "SELECT * FROM drug_order WHERE order_id IN (#{order_map.keys.join(',')})"
     return if result.blank?
 
