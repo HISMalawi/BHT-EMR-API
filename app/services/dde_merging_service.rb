@@ -134,6 +134,8 @@ class DDEMergingService
   end
 
   def search_by_doc_id(doc_id)
+    return nil if doc_id.blank?
+
     response, status = dde_client.post('search_by_doc_id', doc_id: doc_id)
     return nil unless status == 200
 
