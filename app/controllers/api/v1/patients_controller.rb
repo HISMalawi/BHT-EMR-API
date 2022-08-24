@@ -8,7 +8,9 @@ require 'zebra_printer/init'
 class Api::V1::PatientsController < ApplicationController
   # TODO: Refactor the business logic here into a service class
 
-  before_action :authenticate, except: %i[print_national_health_id_label print_filing_number print_tb_number print_tb_lab_order_summary]
+  before_action :authenticate,
+                except: %i[print_national_health_id_label print_filing_number print_tb_number
+                           print_tb_lab_order_summary]
 
   include ModelUtils
 
@@ -23,8 +25,13 @@ class Api::V1::PatientsController < ApplicationController
 
   def search_by_identifier
     identifier_type_id, identifier = params.require(%i[type_id identifier])
-    identifier_type = PatientIdentifierType.find(identifier_type_id)
     voided = params[:voided]&.casecmp?('true') || false
+    identifier_type = if voided
+                        PatientIdentifierType.where(name: ['National id',
+                                                           'Old identification number'])
+                      else
+                        PatientIdentifierType.find(identifier_type_id)
+                      end
 
     render json: service.find_patients_by_identifier(identifier, identifier_type, voided: voided)
   end
@@ -89,7 +96,7 @@ class Api::V1::PatientsController < ApplicationController
     program = params[:program_id] ? Program.find(params[:program_id]) : nil
     date = params[:date] ? params[:date].to_date : nil
     render json: service.find_patient_visit_dates(patient, program,
-      params[:include_defaulter_dates] == "true", date)
+                                                  params[:include_defaulter_dates] == 'true', date)
   end
 
   def find_median_weight_and_height
@@ -176,7 +183,7 @@ class Api::V1::PatientsController < ApplicationController
 
   # Returns all lab orders made since a given date
   def recent_lab_orders
-    patient_id, program_id = params.require([:patient_id, :program_id])
+    patient_id, program_id = params.require(%i[patient_id program_id])
     reference_date = params[:reference_date]&.to_date || Date.today
     render json: service.recent_lab_orders(patient_id: patient_id,
                                            program_id: program_id,
@@ -339,5 +346,4 @@ class Api::V1::PatientsController < ApplicationController
     program = Program.find_by(name: 'TB PROGRAM')
     TBService::LabTestsEngine.new program: program
   end
-
 end
