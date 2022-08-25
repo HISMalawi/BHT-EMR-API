@@ -278,6 +278,7 @@ class Api::V1::PatientsController < ApplicationController
       label.draw_text("#{person.birthdate} #{sex}", 35, 75, 0, 1, 2, 2, false)
       label.draw_text(address, 35, 105, 0, 1, 2, 2, false)
     else
+      label.draw_barcode(50, 180, 0, 1, 5, 15, 120, false, national_id)
       label.draw_multi_text(person.name.titleize)
       label.draw_multi_text("#{patient.national_id_with_dashes} #{person.birthdate}#{sex}")
       label.draw_multi_text(address)
