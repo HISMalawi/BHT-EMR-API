@@ -41,13 +41,17 @@ module RadiologyService
         values = ConceptSet.where(concept_set: key)
       end
 
-      values.map do |concept_set|
+      result = values.map do |concept_set|
         { concept_id: concept_set.concept_id, name: concept_set.concept.fullname || concept_set.concept.shortname }
       end
+
+      result.sort_by! { |concept_set| concept_set[:name] }
     end
 
     def self.sanitaniaze_params(params)
-      Integer(params) rescue params
+      Integer(params)
+    rescue StandardError
+      params
     end
 
     def unknown_concept_id
