@@ -17,7 +17,13 @@ module RadiologyService
 
     def all_examinations
       order_type = OrderType.find_by_name('Radiology')
-      @patient.orders.where('order_type_id = ?', order_type)
+      results = @patient.orders.where('order_type_id = ?', order_type).order('start_date DESC')
+
+      results.map do |order|
+        label = RadiologyService::OrderLabel.new(order_id: order.id)
+        { examination_name: "#{label.order_type}-#{label.examination}-#{label.detailed_examination}",
+          order_date: order.start_date, accession_number: order.accession_number, patient_id: order.patient_id }
+      end
     end
 
     # rubocop:disable Metrics/AbcSize

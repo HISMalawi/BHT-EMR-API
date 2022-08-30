@@ -7,7 +7,7 @@ class Api::V1::RadiologyController < ApplicationController
   end
 
   def examinations
-    render json: paginate(investigation_service.all_examinations)
+    render json: investigation_service.all_examinations
   end
 
   private
