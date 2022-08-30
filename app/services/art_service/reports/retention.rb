@@ -63,46 +63,76 @@ module ARTService
         start_date = ActiveRecord::Base.connection.quote(self.start_date)
         end_date = ActiveRecord::Base.connection.quote(self.end_date)
         as_of = ActiveRecord::Base.connection.quote(as_of)
-
-        Order.find_by_sql(
-          <<~SQL
-            SELECT initial_order.patient_id AS patient_id,
-                   initial_order.start_date AS start_date,
-                   last_order.auto_expire_date AS auto_expire_date,
-                   patient_identifier.identifier AS arv_number,
-                   disaggregated_age_group(p.birthdate, DATE('#{@end_date}')) age_group,
-                   p.gender gender
-            FROM orders initial_order
-              INNER JOIN encounter initial_encounter ON initial_encounter.encounter_id = initial_order.encounter_id AND initial_encounter.program_id = 1
-              INNER JOIN orders last_order ON last_order.patient_id = initial_order.patient_id
-              INNER JOIN encounter last_encounter ON last_encounter.encounter_id = last_order.encounter_id
-              INNER JOIN person p ON p.person_id = initial_encounter.patient_id
-              LEFT JOIN patient_identifier ON patient_identifier.patient_id = initial_order.patient_id
-            WHERE initial_order.start_date BETWEEN #{as_of} AND #{start_date}
-              AND initial_order.voided = 0
-              AND initial_order.auto_expire_date IS NOT NULL
-              AND initial_order.order_type_id = #{drug_order_type_id}
-              AND last_order.auto_expire_date BETWEEN #{start_date} AND #{end_date}
+        ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT initial_orders.patient_id
+          FROM orders initial_orders
+          INNER JOIN encounter initial_encounter ON initial_encounter.encounter_id = initial_orders.encounter_id AND initial_encounter.voided = 0 AND initial_encounter.program_id = 1
+          INNER JOIN person p ON p.person_id = initial_orders.patient_id AND p.voided = 0
+          INNER JOIN (
+            SELECT last_order.patient_id, MAX(last_order.auto_expire_date)
+              FROM orders last_order
+              INNER JOIN encounter last_encounter ON last_encounter.encounter_id = last_order.encounter_id AND last_encounter.voided = 0 AND last_encounter.program_id = 1
+              WHERE last_order.auto_expire_date BETWEEN #{start_date} AND #{end_date}
               AND last_order.order_type_id = #{drug_order_type_id}
-              AND last_order.voided = 0
-              AND p.voided = 0
-              AND initial_order.start_date = (
-                SELECT MIN(start_date) FROM orders
-                WHERE patient_id = initial_order.patient_id
-                  AND start_date BETWEEN #{as_of} AND #{start_date}
-                  AND order_type_id = #{drug_order_type_id}
-                  AND voided = 0
-              )
-              AND initial_order.patient_id NOT IN (
-                SELECT orders.patient_id
-                FROM orders
-                  INNER JOIN encounter ON encounter.encounter_id = orders.encounter_id AND encounter.program_id = 1
-                WHERE start_date < #{as_of} AND order_type_id = #{drug_order_type_id} AND orders.voided = 0
-              )
-            GROUP BY initial_order.patient_id
-          SQL
-        )
+            AND last_order.voided = 0
+              GROUP BY last_order.patient_id
+          ) last_order ON initial_orders.patient_id = last_order.patient_id
+          WHERE initial_orders.start_date BETWEEN #{as_of} AND #{start_date}
+          AND initial_orders.order_type_id = #{drug_order_type_id}
+          AND initial_orders.auto_expire_date IS NOT NULL
+          AND initial_orders.patient_id NOT IN (
+            SELECT o.patient_id
+            FROM orders o
+            INNER JOIN encounter e ON e.encounter_id = o.encounter_id AND e.voided = 0 AND e.program_id = 1
+            WHERE o.order_type_id =  #{drug_order_type_id} AND o.start_date < #{as_of} AND o.auto_expire_date IS NOT NULL
+          )
+          GROUP BY initial_orders.patient_id
+        SQL
       end
+      # def retained_patients(as_of:)
+      #   start_date = ActiveRecord::Base.connection.quote(self.start_date)
+      #   end_date = ActiveRecord::Base.connection.quote(self.end_date)
+      #   as_of = ActiveRecord::Base.connection.quote(as_of)
+
+      #   Order.find_by_sql(
+      #     <<~SQL
+      #       SELECT initial_order.patient_id AS patient_id,
+      #              initial_order.start_date AS start_date,
+      #              last_order.auto_expire_date AS auto_expire_date,
+      #              patient_identifier.identifier AS arv_number,
+      #              disaggregated_age_group(p.birthdate, DATE('#{@end_date}')) age_group,
+      #              p.gender gender
+      #       FROM orders initial_order
+      #         INNER JOIN encounter initial_encounter ON initial_encounter.encounter_id = initial_order.encounter_id AND initial_encounter.program_id = 1
+      #         INNER JOIN orders last_order ON last_order.patient_id = initial_order.patient_id
+      #         INNER JOIN encounter last_encounter ON last_encounter.encounter_id = last_order.encounter_id
+      #         INNER JOIN person p ON p.person_id = initial_encounter.patient_id
+      #         LEFT JOIN patient_identifier ON patient_identifier.patient_id = initial_order.patient_id
+      #       WHERE initial_order.start_date BETWEEN #{as_of} AND #{start_date}
+      #         AND initial_order.voided = 0
+      #         AND initial_order.auto_expire_date IS NOT NULL
+      #         AND initial_order.order_type_id = #{drug_order_type_id}
+      #         AND last_order.auto_expire_date BETWEEN #{start_date} AND #{end_date}
+      #         AND last_order.order_type_id = #{drug_order_type_id}
+      #         AND last_order.voided = 0
+      #         AND p.voided = 0
+      #         AND initial_order.start_date = (
+      #           SELECT MIN(start_date) FROM orders
+      #           WHERE patient_id = initial_order.patient_id
+      #             AND start_date BETWEEN #{as_of} AND #{start_date}
+      #             AND order_type_id = #{drug_order_type_id}
+      #             AND voided = 0
+      #         )
+      #         AND initial_order.patient_id NOT IN (
+      #           SELECT orders.patient_id
+      #           FROM orders
+      #             INNER JOIN encounter ON encounter.encounter_id = orders.encounter_id AND encounter.program_id = 1
+      #           WHERE start_date < #{as_of} AND order_type_id = #{drug_order_type_id} AND orders.voided = 0
+      #         )
+      #       GROUP BY initial_order.patient_id
+      #     SQL
+      #   )
+      # end
 
       def all_patients(as_of:)
         start_date = ActiveRecord::Base.connection.quote(self.start_date)
