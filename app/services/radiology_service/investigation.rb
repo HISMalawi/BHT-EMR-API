@@ -4,15 +4,20 @@
 module RadiologyService
   # Investigation Class
   class Investigation
-    def initialize(patient_id, date)
-      @pateint = Patient.find(patient_id)
+    def initialize(patient_id:, date:)
+      @patient = Patient.find(patient_id)
       @date = date
     end
 
     def examinations
       order_type = OrderType.find_by_name('Radiology')
-      @patient.orders.where('order_type = ? AND start_date BETWEEN ? AND ?', order_type,
+      @patient.orders.where('order_type_id = ? AND start_date BETWEEN ? AND ?', order_type,
                             @date.to_date.strftime('%Y-%m-%d 00:00:00'), @date.to_date.strftime('%Y-%m-%d 23:59:59'))
+    end
+
+    def all_examinations
+      order_type = OrderType.find_by_name('Radiology')
+      @patient.orders.where('order_type_id = ?', order_type)
     end
 
     # rubocop:disable Metrics/AbcSize
