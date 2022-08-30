@@ -68,8 +68,13 @@ class Api::V1::PatientsController < ApplicationController
 
   def print_national_health_id_label
     patient = Patient.find(params[:patient_id])
+    qr_code = if params[:qr_code]
+                params[:qr_code].casecmp?('true') ? true : false
+              else
+                false
+              end
 
-    label = generate_national_id_label patient
+    label = generate_national_id_label(patient, qr_code)
     send_data label, type: 'application/label;charset=utf-8',
                      stream: false,
                      filename: "#{params[:patient_id]}-#{SecureRandom.hex(12)}.lbl",
@@ -257,7 +262,7 @@ class Api::V1::PatientsController < ApplicationController
     Patient.find(params[:id] || params[:patient_id])
   end
 
-  def generate_national_id_label(patient)
+  def generate_national_id_label(patient, qr_code)
     person = patient.person
 
     national_id = patient.national_id
@@ -270,10 +275,19 @@ class Api::V1::PatientsController < ApplicationController
     label.font_horizontal_multiplier = 2
     label.font_vertical_multiplier = 2
     label.left_margin = 50
-    label.draw_barcode(50, 180, 0, 1, 5, 15, 120, false, national_id)
-    label.draw_multi_text(person.name.titleize)
-    label.draw_multi_text("#{patient.national_id_with_dashes} #{person.birthdate}#{sex}")
-    label.draw_multi_text(address)
+    if qr_code
+      label.draw_qrcode(600, 60, "#{person.name}~#{national_id}~#{person.birthdate}~#{person.gender}~#{address}")
+      label.draw_barcode(50, 160, 0, 1, 4, 12, 120, false, national_id)
+      label.draw_text(person.name.titleize, 35, 5, 0, 1, 2, 2, false)
+      label.draw_text(patient.national_id_with_dashes, 35, 35, 0, 1, 2, 2, false)
+      label.draw_text("#{person.birthdate} #{sex}", 35, 75, 0, 1, 2, 2, false)
+      label.draw_text(address, 35, 105, 0, 1, 2, 2, false)
+    else
+      label.draw_barcode(50, 180, 0, 1, 5, 15, 120, false, national_id)
+      label.draw_multi_text(person.name.titleize)
+      label.draw_multi_text("#{patient.national_id_with_dashes} #{person.birthdate}#{sex}")
+      label.draw_multi_text(address)
+    end
     label.print(1)
   end
 

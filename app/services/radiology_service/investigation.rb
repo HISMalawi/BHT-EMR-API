@@ -4,15 +4,26 @@
 module RadiologyService
   # Investigation Class
   class Investigation
-    def initialize(patient_id, date)
-      @pateint = Patient.find(patient_id)
+    def initialize(patient_id:, date:)
+      @patient = Patient.find(patient_id)
       @date = date
     end
 
     def examinations
       order_type = OrderType.find_by_name('Radiology')
-      @patient.orders.where('order_type = ? AND start_date BETWEEN ? AND ?', order_type,
+      @patient.orders.where('order_type_id = ? AND start_date BETWEEN ? AND ?', order_type,
                             @date.to_date.strftime('%Y-%m-%d 00:00:00'), @date.to_date.strftime('%Y-%m-%d 23:59:59'))
+    end
+
+    def all_examinations
+      order_type = OrderType.find_by_name('Radiology')
+      results = @patient.orders.where('order_type_id = ?', order_type).order('start_date DESC')
+
+      results.map do |order|
+        label = RadiologyService::OrderLabel.new(order_id: order.id)
+        { examination_name: "#{label.order_type}-#{label.examination}-#{label.detailed_examination}",
+          order_date: order.start_date, accession_number: order.accession_number, patient_id: order.patient_id }
+      end
     end
 
     # rubocop:disable Metrics/AbcSize
@@ -41,13 +52,17 @@ module RadiologyService
         values = ConceptSet.where(concept_set: key)
       end
 
-      values.map do |concept_set|
+      result = values.map do |concept_set|
         { concept_id: concept_set.concept_id, name: concept_set.concept.fullname || concept_set.concept.shortname }
       end
+
+      result.sort_by! { |concept_set| concept_set[:name] }
     end
 
     def self.sanitaniaze_params(params)
-      Integer(params) rescue params
+      Integer(params)
+    rescue StandardError
+      params
     end
 
     def unknown_concept_id

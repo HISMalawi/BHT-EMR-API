@@ -14,8 +14,8 @@ module RadiologyService
       label.x = 200
       label.font_horizontal_multiplier = 1
       label.font_vertical_multiplier = 1
-      label.left_margin = 100
-      label.draw_barcode(100, 220, 0, 1, 5, 15, 90, false, @order.accession_number.to_s)
+      label.left_margin = 50
+      label.draw_barcode(100, 190, 0, 1, 5, 10, 80, false, @order.accession_number.to_s)
       label.draw_multi_text(@order.patient.person.name)
       label.draw_multi_text("#{@order.patient.national_id_with_dashes} #{@order.patient.person.gender} #{@order.patient.person.birthdate}")
       if detailed_examination.blank?
@@ -23,7 +23,7 @@ module RadiologyService
       else
         label.draw_multi_text("#{order_type}-#{examination}-#{detailed_examination}")
       end
-      label.draw_multi_text("#{session_date}, #{@order.accession_number} (#{referred_from})")
+      label.draw_multi_text("#{session_date}, #{@order.accession_number} (#{referred_from.upcase})")
       label.print(1)
     end
 
