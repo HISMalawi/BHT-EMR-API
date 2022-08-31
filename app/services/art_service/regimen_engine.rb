@@ -229,8 +229,18 @@ module ARTService
 
       return false if patient_is_on_tb_treatment.blank?
       return false unless on_tb_treatment_concept_ids.include?(patient_is_on_tb_treatment.first.value_coded)
+      return false if patient_stopped_tb_treatment?(patient, tb_status_max_datetime)
 
       drug.concept_id == dtg_concept_id
+    end
+
+    def patient_stopped_tb_treatment?(patient, tb_status_max_datetime)
+      tb_treatment = ConceptName.find_by_name('TB Treatment').concept_id
+      no_concept = ConceptName.where(name: 'No').collect(&:concept_id)
+
+      result = Observation.where('person_id = ? AND concept_id = ? AND value_coded IN (?) AND obs_datetime >= ?',
+                                 patient.id, tb_treatment, no_concept.join(','), tb_status_max_datetime)&.first
+      result.blank? ? false : true
     end
 
     def classify_regimen_combo(drug_combo)
