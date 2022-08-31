@@ -218,6 +218,8 @@ class DDEMergingService
   end
 
   NATIONAL_ID_TYPE = PatientIdentifierType.find_by_name!('National ID')
+  ARV_NUMBER_TYPE = PatientIdentifierType.find_by_name!('ARV Number')
+  LEGACY_ARV_NUMBER_TYPE = PatientIdentifierType.find_by_name!('Legacy ARV Number')
   OLD_NATIONAL_ID_TYPE = PatientIdentifierType.find_by_name!('Old Identification Number')
 
   # Bless primary_patient with identifiers available only to the secondary patient
@@ -232,6 +234,9 @@ class DDEMergingService
         identifier_type: if identifier.identifier_type == NATIONAL_ID_TYPE.id
                            # Can't have two National Patient IDs, the secondary ones are treated as old identifiers
                            OLD_NATIONAL_ID_TYPE.id
+                         elsif identifier.identifier_type == ARV_NUMBER_TYPE.id
+                           # Can't have two ARV numbers, the secondary ones are treated as legacy ARV numbers
+                           LEGACY_ARV_NUMBER_TYPE.id
                          else
                            identifier.identifier_type
                          end
@@ -609,6 +614,8 @@ class DDEMergingService
     concept_ids << concept('Is patient breast feeding?').concept_id
     concept_ids << concept('Patient using family planning').concept_id
     concept_ids << concept('Method of family planning').concept_id
+    concept_ids << concept('Offer CxCa').concept_id
+    concept_ids << concept('Family planning, action to take').concept_id
     concept_ids
   end
 
