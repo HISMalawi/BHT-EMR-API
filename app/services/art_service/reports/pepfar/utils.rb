@@ -58,6 +58,26 @@ module ARTService
           name = GlobalPropertyService.use_filing_numbers? ? 'Filing number' : 'ARV Number'
           PatientIdentifierType.where(name: name).select(:patient_identifier_type_id)
         end
+
+        FULL_6H_COURSE_PILLS = 146
+        FULL_3HP_COURSE_DAYS = 12.days
+        # NOTE: Arrived at 12 days above from how 3HP is prescribed. 1st time prescription
+        #       A patient takes 3HP once every week. Therefore it is 4 times a months
+        #       Multiply that with 3 months we arrive at 12
+        #       Hence the patient is taking this drug 12 times to be considered complete on
+        #       3HP
+
+        ##
+        # Returns whether a patient completed their course of TPT
+        def patient_completed_tpt?(patient, tpt)
+          if tpt == '3HP'
+            divider = patient['drug_concepts'].split(',').length > 1 ? 14.0 : 7.0
+            days_on_medication = (patient['total_days_on_medication'] / divider).round
+            days_on_medication.days >= FULL_3HP_COURSE_DAYS
+          else
+            patient['total_pills_taken'].to_i >= FULL_6H_COURSE_PILLS
+          end
+        end
       end
     end
   end

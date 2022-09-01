@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ArtService
+module ARTService
   module Reports
     ##
     # Family planning, action to take
@@ -9,6 +9,7 @@ module ArtService
     # it must be drillable
     class ClinicTptOutcome
       include ModelUtils
+      include ARTService::Reports::Pepfar::Utils
 
       def initialize(start_date:, end_date:)
         @start_date = start_date
@@ -16,29 +17,64 @@ module ArtService
       end
 
       def find_report
-        tpt_clients
+        report = init_report
+        load_patients_into_report report, tpt_clients
+        response = []
+        report.each do |key, value|
+          response << { age_group: key, tpt_type: '3HP', **value['3HP'] }
+          response << { age_group: key, tpt_type: '6H', **value['6H'] }
+        end
+        response
       end
 
       private
 
       TPT_TYPES = %w[3HP 6H].freeze
 
-      def prepare_tpt_clients_response_structure
-        structure = TPT_TYPES.each do |tpt_type|
-          ARTService::Reports::Pepfar::Utils.pepfar_age_groups.each do |age_group|
-            structure[tpt_type][age_group] = {
-              'Started TPT' => [],
-              'Completed TPT' => [],
-              'Not Completed TPT' => [],
-              'Died' => [],
-              'Stopped ART' => [],
-              'Defaulted' => [],
-              'TO' => [],
-              'Confirmed TB' => [],
-              'Pregnant' => []
+      def init_report
+        pepfar_age_groups.each_with_object({}) do |age_group, report|
+          next if age_group == 'Unknown'
+
+          report[age_group] = TPT_TYPES.each_with_object({}) do |tpt_type, tpt_report|
+            tpt_report[tpt_type] = {
+              started_tpt: [],
+              completed_tpt: [],
+              not_completed_tpt: [],
+              died: [],
+              stopped: [],
+              defaulted: [],
+              transfer_out: [],
+              confirmed_tb: [],
+              pregnant: []
             }
           end
         end
+      end
+
+      def patient_pregnant?(patient_id, last_tpt)
+        Observation.where(person_id: patient_id, concept_id: pregnant_concept_id,
+                          value_coded: yes_concept_id)
+                   .where('DATE(obs_datetime) > DATE(?) AND DATE(obs_datetime) < DATE(?) + INTERVAL 1 DAY', last_tpt.to_date, @end_date.to_date)
+                   .exists?
+      end
+
+      def patient_on_tb_treatment?(patient_id, last_tpt)
+        Observation.where(person_id: patient_id, concept_id: tb_treatment_concept_id,
+                          value_coded: yes_concept_id)
+                   .where('DATE(obs_datetime) > DATE(?) AND DATE(obs_datetime) < DATE(?) + INTERVAL 1 DAY', last_tpt.to_date, @end_date.to_date)
+                   .exists?
+      end
+
+      def pregnant_concept_id
+        @pregnant_concept_id ||= concept_name_to_id('Is patient pregnant?')
+      end
+
+      def tb_treatment_concept_id
+        @tb_treatment_concept_id ||= concept_name_to_id('TB treatment')
+      end
+
+      def yes_concept_id
+        @yes_concept_id ||= concept_name_to_id('Yes')
       end
 
       def tpt_clients
@@ -46,13 +82,19 @@ module ArtService
           SELECT
             p.person_id AS patient_id,
             DATE(min(o.start_date)) AS start_date,
+            DATE(max(o.start_date)) AS last_dispense_date,
             patient_outcome(p.person_id, DATE('#{@end_date}')) AS outcome,
             SUM(d.quantity) AS total_pills_taken,
             SUM(DATEDIFF(o.auto_expire_date, o.start_date)) AS total_days_on_medication,
             p.gender,
             p.birthdate,
             disaggregated_age_group(p.birthdate, DATE('#{@end_date}')) AS age_group,
-            GROUP_CONCAT(DISTINCT o.concept_id SEPARATOR ',') AS drug_concepts
+            GROUP_CONCAT(DISTINCT o.concept_id SEPARATOR ',') AS drug_concepts,
+            CASE
+              WHEN count(DISTINCT o.concept_id) >  1 THEN '3HP'
+              WHEN o.concept_id = 10565 THEN '3HP'
+              ELSE '6H'
+            END AS tpt_type
           FROM person p
           INNER JOIN encounter e
             ON e.patient_id = p.person_id
@@ -62,7 +104,7 @@ module ArtService
             AND e.encounter_datetime >= DATE('#{@start_date}') - INTERVAL 6 MONTH
             AND e.encounter_datetime <= DATE('#{@start_date}')
           INNER JOIN orders o
-            ON o.patient_id = e.patient_id
+            ON o.encounter_id = e.encounter_id
             AND o.concept_id IN (#{tpt_drugs.to_sql})
             AND o.start_date >= DATE('#{@start_date}') - INTERVAL 6 MONTH
             AND o.start_date <= DATE('#{@end_date}')
@@ -121,6 +163,41 @@ module ArtService
           )
           GROUP BY p.person_id
         SQL
+      end
+
+      def load_patients_into_report(report, patients)
+        patients.each do |patient|
+          report[patient['age_group']][patient['tpt_type']][:started_tpt] << patient['patient_id']
+          if patient_completed_tpt?(patient, patient['tpt_type'])
+            report[patient['age_group']][patient['tpt_type']][:completed_tpt] << patient['patient_id']
+          else
+            report[patient['age_group']][patient['tpt_type']][:not_completed_tpt] << patient['patient_id']
+            process_outcomes report, patient
+          end
+        end
+      end
+
+      def process_outcomes(report, patient)
+        case patient['outcome']
+        when 'Patient died'
+          report[patient['age_group']][patient['tpt_type']][:died] << patient['patient_id']
+        when 'Patient transferred out'
+          report[patient['age_group']][patient['tpt_type']][:transfer_out] << patient['patient_id']
+        when 'Treatment stopped'
+          report[patient['age_group']][patient['tpt_type']][:stopped] << patient['patient_id']
+        when 'Defaulted'
+          report[patient['age_group']][patient['tpt_type']][:defaulted] << patient['patient_id']
+        else
+          process_patient_conditions report, patient
+        end
+      end
+
+      def process_patient_conditions(report, patient)
+        if patient_on_tb_treatment?(patient['patient_id'], patient['last_dispense_date'])
+          report[patient['age_group']][patient['tpt_type']][:confirmed_tb] << patient['patient_id']
+        elsif patient['gender'] == 'F' && patient_pregnant?(patient['patient_id'], patient['last_dispense_date'])
+          report[patient['age_group']][patient['tpt_type']][:pregnant] << patient['patient_id']
+        end
       end
 
       def tpt_drugs
