@@ -11,9 +11,9 @@ module ARTService
       include ModelUtils
       include ARTService::Reports::Pepfar::Utils
 
-      def initialize(start_date:, end_date:)
-        @start_date = start_date
-        @end_date = end_date
+      def initialize(start_date:, end_date:, **_kwarg)
+        @start_date = start_date.to_date
+        @end_date = end_date.to_date
       end
 
       def find_report
