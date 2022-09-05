@@ -7,7 +7,7 @@ module ARTService
     # It should pull data for 6 month back e.g when the report is generated for the month of June,
     # the report must pick clients who started TPT in the month of December
     # it must be drillable
-    class ClinicTptOutcome
+    class TptOutcome
       include ModelUtils
       include ARTService::Reports::Pepfar::Utils
 
