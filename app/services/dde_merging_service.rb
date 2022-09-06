@@ -616,6 +616,9 @@ class DDEMergingService
     concept_ids << concept('Method of family planning').concept_id
     concept_ids << concept('Offer CxCa').concept_id
     concept_ids << concept('Family planning, action to take').concept_id
+    concept_ids << concept('Why does the woman not use birth control').concept_id
+    concept_ids << concept('CxCa test date').concept_id
+    concept_ids << concept('Reason for NOT offering CxCa').concept_id
     concept_ids
   end
 
