@@ -17,11 +17,11 @@ module ARTService
 					"NVP (pediatric) bottles" => {drugs: [21,817,968,971], quantity: 'N/A'},
 					"Other (adult) bottles" => {drugs: [
 						3,5,6,10,38,39,40,42,89,614,730,731,734,738,
-						814,815,932,933,934,952,954,955,957,969,976,978,982,984
+						814,815,932,933,934,952,954,955,957,969,976,978,982,984, 1217, 1213, 14
 					], quantity: 'N/A'},
 					"Other (pediatric) bottles" => {drugs: [
 						2, 9, 28, 29, 30, 31, 32, 36, 37, 41, 70, 71, 72, 90, 91,
-						95, 104, 177, 732, 733, 736, 737, 813, 816, 981, 1043, 1044
+						95, 104, 177, 732, 733, 736, 737, 813, 816, 981, 1043, 1044, 1214, 1215
 					], quantity: 'N/A'}
 				}
 
@@ -55,8 +55,8 @@ module ARTService
 						{name: "NVP (adult) bottles",  units: 0, quantity: 'N/A', dispensations: []},
 						{name: "NVP (pediatric) bottles", units: 0, quantity: 'N/A', dispensations: []},
 						{name: "Other (adult) bottles", units: 0, quantity: 'N/A', dispensations: []},
-						{name: "Other (pediatric) bottles", units: 0, quantity: 'N/A', dispensations: []},
-						{name: "Other bottles", units: 0, quantity: 'N/A', dispensations: []}
+						{name: "Other (pediatric) bottles", units: 0, quantity: 'N/A', dispensations: []}
+						# {name: "Other bottles", units: 0, quantity: 'N/A', dispensations: []}
 					]
 
 					dispensations = get_dispensations
@@ -104,7 +104,7 @@ module ARTService
 							end
 						end
 					end
-					return ["Other bottles", 1]
+					# return ["Other bottles", 1]
 				end
 
 				def get_dispensations
