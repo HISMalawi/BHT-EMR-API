@@ -367,9 +367,7 @@ class DDEMergingService
 
     Observation.where(person_id: secondary_patient.id).each do |obs|
       check = Observation.find_by("person_id = #{primary_patient.id} AND concept_id = #{obs.concept_id} AND
-        DATE(obs_datetime) = DATE('#{obs.obs_datetime.strftime('%Y-%m-%d')}') #{unless obs.value_coded.blank?
-                                                                                  "AND value_coded = #{obs.value_coded}"
-                                                                                end}")
+        DATE(obs_datetime) = DATE('#{obs.obs_datetime.strftime('%Y-%m-%d')}') #{"AND value_coded = #{obs.value_coded}" unless obs.value_coded.blank? } #{"AND obs_group_id IS NOT NULL" unless obs.obs_group_id.blank? } #{"AND order_id IS NOT NULL" unless obs.order_id.blank? }")
       if check.blank?
         primary_obs = process_obervation_merging(obs, primary_patient, encounter_map, secondary_patient)
         @obs_map[obs.id] = primary_obs.id if primary_obs
@@ -413,7 +411,7 @@ class DDEMergingService
   # this method updates observation table group id on the newly created observation
   def update_observations_group_id(obs_map)
     Observation.where(obs_id: obs_map.values).limit(nil).each do |obs|
-      obs.update(obs_group_id: obs_map[obs.obs_group_id]) unless obs.obs_group_id
+      obs.update(obs_group_id: obs_map[obs.obs_group_id]) unless obs.obs_group_id.blank?
     end
   end
 
@@ -423,7 +421,7 @@ class DDEMergingService
                                                                 'HYPERTENSION MANAGEMENT').map(&:encounter_type_id)
   end
 
-  # Strips off secondary_patient all encounters and blesses primary patient
+   # Strips off secondary_patient all encounters and blesses primary patient
   # with them
   def merge_encounters(primary_patient, secondary_patient)
     Rails.logger.debug("Merging patient encounters: #{primary_patient} <= #{secondary_patient}")
@@ -432,23 +430,10 @@ class DDEMergingService
     # first get all encounter to be voided, create new instances from them, then void the encounter
     Encounter.where(patient_id: secondary_patient.id).each do |encounter|
       check = Encounter.find_by(
-        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = ? AND program_id = ?', primary_patient.id, encounter.encounter_type, encounter.encounter_datetime.strftime('%Y-%m-%d'), encounter.program_id
+        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?) AND program_id = ?', primary_patient.id, encounter.encounter_type, encounter.encounter_datetime.to_date, encounter.program_id
       )
       if check.blank?
-        primary_encounter_hash = encounter.attributes
-        primary_encounter_hash.delete('encounter_id')
-        primary_encounter_hash.delete('uuid')
-        primary_encounter_hash.delete('creator')
-        primary_encounter_hash.delete('encounter_id')
-        primary_encounter_hash['patient_id'] = primary_patient.id
-        primary_encounter = Encounter.create(primary_encounter_hash)
-        unless primary_encounter.errors.empty?
-          raise "Could not merge patient encounters: #{primary_encounter.errors.as_json}"
-        end
-
-        encounter.update(void_reason: "Merged into patient ##{primary_patient.patient_id}:#{primary_encounter.id}",
-                         voided: 1, date_voided: Time.now, voided_by: User.current.id)
-        encounter_map[encounter.id] = primary_encounter.id
+        encounter_map[encounter.id] = create_new_encounter(encounter, primary_patient)
       else
         encounter_map[encounter.id] = check.id
         # we are trying to processes all clinician encounters observations if this visit resulted in being referred to the clinician
@@ -463,6 +448,41 @@ class DDEMergingService
     end
 
     encounter_map
+  end
+
+  def create_new_encounter(encounter, primary_patient)
+    return create_new_encounter_raw(encounter, primary_patient) if encounter.program_id.blank?
+
+    primary_encounter_hash = encounter.attributes
+    primary_encounter_hash.delete('encounter_id')
+    primary_encounter_hash.delete('uuid')
+    primary_encounter_hash.delete('creator')
+    primary_encounter_hash.delete('encounter_id')
+    primary_encounter_hash['patient_id'] = primary_patient.id
+    primary_encounter = Encounter.create(primary_encounter_hash)
+    unless primary_encounter.errors.empty?
+      raise "Could not merge patient encounters: #{primary_encounter.errors.as_json}"
+    end
+
+    common_encounter_void(encounter, primary_patient, primary_encounter.id)
+    primary_encounter.id
+  end
+
+  def create_new_encounter_raw(encounter, primary_patient)
+    ActiveRecord::Base.connection.disable_referential_integrity do
+      ActiveRecord::Base.connection.execute <<~SQL
+        INSERT INTO encounter (encounter_type, patient_id, encounter_datetime, provider_id,#{'location_id,' unless encounter.location.blank?} #{'form_id,' unless encounter.form_id.blank?} uuid, creator, date_created, voided, changed_by, date_changed)
+        VALUES (#{encounter.encounter_type}, #{primary_patient.id}, '#{encounter.encounter_datetime.strftime('%Y-%m-%d %H:%M:%S')}', #{encounter.provider_id}, #{"#{encounter.location_id}," unless encounter.location_id.blank?} #{"#{encounter.form_id}," unless encounter.form_id.blank?} uuid(), #{User.current.id}, '#{encounter.date_created.strftime('%Y-%m-%d %H:%M:%S')}', #{encounter.voided}, #{encounter.changed_by}, '#{encounter.date_changed.strftime('%Y-%m-%d %H:%M:%S')}')
+      SQL
+    end
+    row_id = ActiveRecord::Base.connection.select_one('SELECT LAST_INSERT_ID() AS id')['id']
+    common_encounter_void(encounter, primary_patient, row_id)
+    row_id
+  end
+
+  def common_encounter_void(encounter, primary_patient, new_encounter_id)
+    encounter.update(void_reason: "Merged into patient ##{primary_patient.patient_id}:#{new_encounter_id}",
+      voided: 1, date_voided: Time.now, voided_by: User.current.id)
   end
 
   # method to process encounter obs
