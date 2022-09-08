@@ -49,7 +49,7 @@ class ARTService::Reports::VisitsReport
       SELECT patient.* FROM patient INNER JOIN encounter USING (patient_id)
        WHERE encounter.encounter_datetime BETWEEN ? AND ?
         AND encounter.encounter_type NOT IN (
-          SELECT encounter_type_id FROM encounter_type WHERE name IN ('LAB', 'LAB ORDER', 'LAB RESULTS')
+          SELECT encounter_type_id FROM encounter_type WHERE name IN ('LAB', 'LAB ORDER', 'LAB ORDERS', 'LAB RESULTS')
         )
         AND encounter.program_id = #{hiv_program.program_id}
         AND encounter.voided = 0
