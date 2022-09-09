@@ -368,7 +368,7 @@ class DDEMergingService
     Observation.where(person_id: secondary_patient.id).each do |obs|
       check = Observation.find_by("person_id = #{primary_patient.id} AND concept_id = #{obs.concept_id} AND
         DATE(obs_datetime) = DATE('#{obs.obs_datetime.strftime('%Y-%m-%d')}') #{unless obs.value_coded.blank?
-                                                                                  "AND value_coded = #{obs.value_coded}"
+                                                                                  "AND value_coded IS NOT NULL"
                                                                                 end} #{unless obs.obs_group_id.blank?
                                                                                          'AND obs_group_id IS NOT NULL'
                                                                                        end} #{unless obs.order_id.blank?
