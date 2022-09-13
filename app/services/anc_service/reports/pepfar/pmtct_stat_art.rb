@@ -25,19 +25,19 @@ module ANCService
           '80-84 years',
           '85-89 years',
           '90 plus years',
-          'Uknown age'
+          'Unknown age'
         ].freeze
 
         def initialize(start_date:, end_date:, **_kwargs)
           @start_date = start_date
-          @end_date = end_date
+          @end_date = end_date + 1.day
         end
 
         def find_report
           report = init_report_structure
-          process_clients(pmtct_clients, report)
           response = []
-          report.each do |key, value|
+          process_clients(pmtct_clients, report).each do |key, value|
+            Rails.logger.info(value)
             response << { age_group: key, **value }
           end
           response
@@ -95,13 +95,13 @@ module ANCService
             if client['prev_test'] == yes_concept && client['prev_test_result'] == positive_concept
               report_structure[client['age_group']][:known_positive] << client['patient_id']
             end
-            if client['prev_test'] != yes_concept && client['hiv_status'] == positive_concept
+            if client['prev_test_result'] != positive_concept && client['hiv_status'] == positive_concept
               report_structure[client['age_group']][:newly_tested_positives] << client['patient_id']
             end
-            if client['prev_test'] != yes_concept && client['hiv_status'] != positive_concept
+            if client['prev_test'] != yes_concept && client['hiv_status'] == negative_concept
               report_structure[client['age_group']][:new_negatives] << client['patient_id']
             end
-            if client['prev_test'] == yes_concept && client['prev_test_result'] != positive_concept
+            if client['prev_test'] == yes_concept && client['prev_test_result'] == negative_concept
               report_structure[client['age_group']][:recent_negatives] << client['patient_id']
             end
             if (client['prev_test'] != yes_concept || client['prev_test'].blank?) && client['hiv_status'].blank?
@@ -115,6 +115,10 @@ module ANCService
             end
           end
           report_structure
+        end
+
+        def negative_concept
+          @negative_concept ||= concept_name_id('Negative')
         end
 
         def positive_concept
