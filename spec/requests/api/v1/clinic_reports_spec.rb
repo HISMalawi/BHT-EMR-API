@@ -3,7 +3,7 @@ require 'swagger_helper'
 TAGS_NAME = 'Clinic Reports'.freeze
 
 describe 'Clinic Reports API', type: :request, swagger_doc: 'v1/swagger.yaml' do
-  path 'api/v1/programs/1/reports/clinic_tx_rtt' do
+  path '/api/v1/programs/1/reports/clinic_tx_rtt' do
     get 'Retrieve CLINIC TX RTT report' do
       tags TAGS_NAME
       description 'This shows CLINIC TX RTT report'
@@ -35,7 +35,7 @@ describe 'Clinic Reports API', type: :request, swagger_doc: 'v1/swagger.yaml' do
     end
   end
 
-  path 'api/v1/programs/1/reports/tpt_outcome' do
+  path '/api/v1/programs/1/reports/tpt_outcome' do
     get 'Retrieve TPT OUTCOME report' do
       tags TAGS_NAME
       description 'This shows TPT OUTCOME report'

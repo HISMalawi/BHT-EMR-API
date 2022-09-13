@@ -4,7 +4,7 @@ info:
   title: EMR API V1 DOCS
   version: v1
 paths:
-  api/v1/programs/1/reports/clinic_tx_rtt:
+  "/api/v1/programs/1/reports/clinic_tx_rtt":
     get:
       summary: Retrieve CLINIC TX RTT report
       tags:
@@ -50,7 +50,7 @@ paths:
                 properties:
                   message:
                     type: string
-  api/v1/programs/1/reports/tpt_outcome:
+  "/api/v1/programs/1/reports/tpt_outcome":
     get:
       summary: Retrieve TPT OUTCOME report
       tags:
@@ -508,6 +508,72 @@ paths:
           description: Examination not found
           content:
             application/label:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+  "/api/v1/programs/12/reports/pmtct_stat_art":
+    get:
+      summary: Retrieve PMTCT STAT ART
+      tags:
+      - Pepfar Reports
+      description: This shows PMTCT STAT ART report
+      security:
+      - api_key: []
+      parameters:
+      - name: start_date
+        in: query
+        schema:
+          type: string
+      - name: end_date
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: PMTCT STAT ART Report found
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    age_group:
+                      type: string
+                    known_positive:
+                      type: array
+                      items:
+                        type: integer
+                    newly_tested_positives:
+                      type: array
+                      items:
+                        type: integer
+                    new_negatives:
+                      type: array
+                      items:
+                        type: integer
+                    recent_negatives:
+                      type: array
+                      items:
+                        type: integer
+                    not_done:
+                      type: array
+                      items:
+                        type: integer
+                    new_on_art:
+                      type: array
+                      items:
+                        type: integer
+                    already_on_art:
+                      type: array
+                      items:
+                        type: integer
+        '404':
+          description: PMTCT STAT ART Report not found
+          content:
+            application/json:
               schema:
                 type: string
                 properties:
