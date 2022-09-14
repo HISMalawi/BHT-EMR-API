@@ -116,6 +116,7 @@ class PatientService
       WHERE patient_id = #{patient_id} AND voided = 0 #{if program_id
                                                           "AND program_id = #{program_id}"
                                                         end} AND encounter_datetime < DATE('#{date}') + INTERVAL 1 DAY
+      AND encounter_type NOT IN (#{EncounterType.where(name: ['LAB', 'LAB ORDERS', 'LAB RESULTS']).select(:encounter_type_id).to_sql})
       GROUP BY visit_date
       ORDER BY visit_date DESC
     SQL

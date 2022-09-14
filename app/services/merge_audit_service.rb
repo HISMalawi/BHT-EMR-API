@@ -47,7 +47,7 @@ class MergeAuditService
 
   def find_voided_identifier(identifier)
     result = ActiveRecord::Base.connection.select_one <<~SQL
-      SELECT patient_id FROM patient_identifier WHERE identifier = '#{identifier}' AND voided = 1 ORDER BY date_voided ASC
+      SELECT patient_id FROM patient_identifier WHERE identifier = '#{identifier}' AND identifier_type = 3 AND voided = 1 ORDER BY date_voided ASC
     SQL
     raise NotFoundError, "Failed to find voided identifier: #{identifier}" if result.blank?
 
