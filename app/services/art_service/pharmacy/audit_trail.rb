@@ -51,6 +51,7 @@ module ARTService
               pharmacy_batches.batch_number,
               pharmacy_batch_items.id AS batch_item_id,
               pharmacy_batch_items.drug_id,
+              pharmacy_batch_items.product_code,
               COALESCE(alternative_drug_names.name, drug.name) AS drug_name,
               pharmacy_obs.quantity AS amount_committed_to_stock,
               obs.value_numeric AS amount_dispensed_from_art,
@@ -95,7 +96,8 @@ module ARTService
             amount_committed_to_stock: transaction[:amount_committed_to_stock],
             amount_dispensed_from_art: transaction[:amount_dispensed_from_art],
             username: transaction[:username],
-            transaction_reason: transaction[:transaction_reason]
+            transaction_reason: transaction[:transaction_reason],
+            product_code: transaction[:product_code]
           }
         end
       end
