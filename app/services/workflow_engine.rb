@@ -3,7 +3,7 @@
 require 'htn_workflow'
 require 'set'
 
-module HTCService
+module HTSService
   class WorkflowEngine
     include ModelUtils
 
