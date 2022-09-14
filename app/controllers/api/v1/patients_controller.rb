@@ -25,8 +25,13 @@ class Api::V1::PatientsController < ApplicationController
 
   def search_by_identifier
     identifier_type_id, identifier = params.require(%i[type_id identifier])
-    identifier_type = PatientIdentifierType.find(identifier_type_id)
     voided = params[:voided]&.casecmp?('true') || false
+    identifier_type = if voided
+                        PatientIdentifierType.where(name: ['National id',
+                                                           'Old identification number'])
+                      else
+                        PatientIdentifierType.find(identifier_type_id)
+                      end
 
     render json: service.find_patients_by_identifier(identifier, identifier_type, voided: voided)
   end
