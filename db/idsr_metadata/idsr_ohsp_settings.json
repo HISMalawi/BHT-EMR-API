@@ -50,7 +50,7 @@
 	},
 
 	"monthly_idsr_map":{
-		"STI" :["GONORRHEA", "GONORRHOEAE", "SYPHILIS", "SEXUALLY TRANSMITTED INFECTION"],
+		"STI" :["GONORRHEA", "GONORRHOEAE", "SYPHILIS", "SEXUALLY TRANSMITTED INFECTION", "STI"],
 		"Severe Pneumonia in under 5 cases" : ["Severe Pneumonia"],
 		"Viral Hepatitis" : ["Viral Hepatitis", "Acute Viral Hepatitis"],
 		"Malaria in Pregnancy":["Malaria in pregnancy"],
