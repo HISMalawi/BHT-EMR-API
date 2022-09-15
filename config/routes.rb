@@ -307,6 +307,7 @@ Rails.application.routes.draw do
   # OPD reports
   get '/api/v1/malaria_report' => 'api/v1/reports#malaria_report'
   get '/api/v1/registration' => 'api/v1/reports#registration'
+  get '/api/v1/attendance' => 'api/v1/reports#attendance'
   get '/api/v1/diagnosis_by_address' => 'api/v1/reports#diagnosis_by_address'
   get '/api/v1/with_nids' => 'api/v1/reports#with_nids'
   get '/api/v1/drugs_given_without_prescription' => 'api/v1/reports#drugs_given_without_prescription'

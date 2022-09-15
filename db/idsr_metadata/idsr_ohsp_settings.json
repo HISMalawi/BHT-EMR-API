@@ -1,6 +1,6 @@
 {
 	"headers":      {"url":"10.40.30.2:8001","user":"user_admin","pass":"pass_district"},
-	"sms_server":   {"url":"10.40.30.2:8004","user":"sms_user","pass":"sms_pass"},
+	"sms_server":   {"url":"10.40.30.11","user":"admin@email.test","pass":"administrator"},
 	"weekly_idsr_map":{
 		"AEFI" : [],
 		"Poliomyelitis (AFP)" : ["Poliomyelitis"],
@@ -384,7 +384,7 @@
     "Other skin conditions - new": ["Skin disorders", "Skin infection nos", "Infection skin", "Fungal infection skin", "Fungal skin infection", "Skin infection, fungal", "Skin rash"],
     "HIV/AIDS - new": ["HIV New Initiated on ART"],
     "Cases treated as STI - new": ["GONORRHEA", "GONORRHOEAE", "SYPHILIS", "SEXUALLY TRANSMITTED INFECTION"],
-    "Opportunistic infections - new": ["Candidiasis, vaginal","Vaginal candidiasis"],
+    "Opportunistic infections - new": ["Candidiasis, vaginal","Vaginal candidiasis", "Candidiasis oral"],
     "Malaria under 5 years - new": ["Malaria"],
     "Malaria 5 years and older - new": ["Malaria"],
     "Malaria - new": ["Malaria"],
