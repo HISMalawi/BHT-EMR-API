@@ -62,9 +62,9 @@ module HTSService
 
     STATE_CONDITIONS = {
 
-      PREGNANCY_STATUS => %i[pregnancy_status_track?],
+      PREGNANCY_STATUS => %i[gender_based_encounter_check?],
 
-      CIRCUMCISION => %i[circumcision_status_track?],
+      CIRCUMCISION => %i[gender_based_encounter_check?],
 
       SOCIAL_HISTORY => %i[marital_status_track?],
 
@@ -128,19 +128,17 @@ module HTSService
              (STATE_CONDITIONS[state] || []).all? { |condition| send(condition) }
     end
    
-   def pregnancy_status_track?
-
-           status = Encounter.where(type: @encounter, patient: @patient, program: @program).exists?
-          
-          return true if @patient.gender == "F" && status == false
-    end
-
-    def circumcision_status_track?
+    def gender_based_encounter_check?
 
             status = Encounter.where(type: @encounter, patient: @patient, program: @program).exists?
-          
-         return true if @patient.gender == "M" && status == false
+            case @encounter.name
 
+                when 'PREGNANCY STATUS'
+                     return true if @patient.gender == "F" && status == false
+
+                when "CIRCUMCISION"
+                     return true if @patient.gender == "M" && status == false      
+            end
     end
    
     def marital_status_track?            
@@ -163,17 +161,14 @@ module HTSService
 
      def check_hiv_results_status?      
 
-                     status = Observation.joins(:encounter)\
+       return true if true == Observation.joins(:encounter)\
                                          .where(concept: concept('HIV status'),
                                                 person: @patient.person,
                                                 value_coded: concept('Positive').concept_id,
                                                 encounter: { program_id: @program.program_id })\
                                          .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))
                                          .order(obs_datetime: :desc)\
-                                         .exists?        
-
-      return true if status == true
-      
+                                         .exists?      
     end 
 
     def htn_transform(encounter_type)
