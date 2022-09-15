@@ -49,11 +49,7 @@ class Api::V1::ReportsController < ApplicationController
 
   def attendance
     start_date, end_date = params.require %i[start_date end_date]
-    puts("#################################################################")
-    puts("#################################################################")
-    puts("#################################################################")
     puts( params.require %i[start_date end_date])
-    puts("#################################################################")
     stats = service.attendance(start_date, end_date)
 
     render json: stats
