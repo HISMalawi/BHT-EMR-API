@@ -4,21 +4,57 @@ module ARTService
   module Reports
     module Pepfar
       ## Viral Load Coverage Report
+      # 1. given the start and end dates, this report will go back 12 months using the end date
+      # 2. pick all clients that are due in the mentioned period
+      # 3. the picked clients should also include those that are new on ART 6 months before the end date
+      # 4. for the sample drawns available pick the latest sample drawn within the reporting period
+      # 5. for the results pick the latest result within the reporting period
       class ViralLoadCoverage2
         attr_reader :start_date, :end_date
 
         include Utils
 
         def initialize(start_date:, end_date:, **_kwargs)
-          @start_date = start_date
-          @end_date = end_date
+          @start_date = start_date&.to_date
+          raise InvalidParameterError, 'start_date is required' unless @start_date
+
+          @end_date = end_date&.to_date || @start_date + 12.months
+          raise InvalidParameterError, "start_date can't be greater than end_date" if @start_date > @end_date
         end
 
         def find_report
-          due_for_viral_load
+          report = init_report
+          build_report(report)
+          report
         end
 
         private
+
+        def build_report(report)
+          client = due_for_viral_load
+          return report if client.blank?
+
+          client.each { |patient| report[patient['age_group']][:due_for_vl] << patient }
+          load_patient_tests_into_report(report, client.map { |patient| patient['patient_id'] })
+        end
+
+        def load_patient_tests_into_report(report, clients)
+          find_patients_with_viral_load(clients).each do |patient|
+            age_group = patient['age_group']
+            reason_for_test = (patient['reason_for_test'] || 'Routine').match?(/Routine/i) ? :routine : :targeted
+
+            report[age_group][:drawn][reason_for_test] << patient
+            next unless patient['result_value']
+
+            if patient['result_value'].casecmp?('LDL')
+              report[age_group][:low_vl][reason_for_test] << patient
+            elsif patient['result_value'].to_i < 1000
+              report[age_group][:low_vl][reason_for_test] << patient
+            else
+              report[age_group][:high_vl][reason_for_test] << patient
+            end
+          end
+        end
 
         ## This method prepares the response structure for the report
         def init_report
@@ -99,11 +135,11 @@ module ARTService
               disaggregated_age_group(p.birthdate, DATE(#{ActiveRecord::Base.connection.quote(end_date)})) age_group,
               p.birthdate,
               p.gender,
-              pi.identifier AS arv_number
+              pid.identifier AS arv_number
             FROM person p
-            INNER JOIN patient_program pp ON pp.patient_id = p.person_id AND pp.program_id = 1 AND pp.voided = 0
+            INNER JOIN patient_program pp ON pp.patient_id = p.person_id AND pp.program_id = #{Program.find_by_name('HIV Program').id} AND pp.voided = 0
             INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id AND ps.state = 7
-            LEFT JOIN patient_identifier pi ON pi.patient_id = p.person_id AND pi.voided = 0 AND pi.identifier_type IN (#{pepfar_patient_identifier_type.to_sql})
+            LEFT JOIN patient_identifier pid ON pid.patient_id = p.person_id AND pid.voided = 0 AND pid.identifier_type IN (#{pepfar_patient_identifier_type.to_sql})
             WHERE p.person_id NOT IN (
               SELECT orders.patient_id
               FROM orders
@@ -116,11 +152,114 @@ module ARTService
                 AND orders.voided = 0
               GROUP BY orders.patient_id
             )
-            AND ps.start_date = DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 6 MONTH
+            AND ps.start_date <= DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 6 MONTH
             AND p.voided = 0
+            AND p.person_id NOT IN (#{drug_refills_and_external_consultation_list})
             GROUP BY p.person_id
           SQL
         end
+
+        ##
+        # Find all patients that are on treatment with at least one VL before end of reporting period.
+        def find_patients_with_viral_load(clients)
+          ActiveRecord::Base.connection.select_all <<~SQL
+            SELECT orders.patient_id,
+                   disaggregated_age_group(patient.birthdate,
+                                                  DATE(#{ActiveRecord::Base.connection.quote(end_date)})) AS age_group,
+                   patient.birthdate,
+                   patient.gender,
+                   patient_identifier.identifier AS arv_number,
+                   orders.start_date AS order_date,
+                   COALESCE(orders.discontinued_date, orders.start_date) AS sample_draw_date,
+                   COALESCE(reason_for_test_value.name, reason_for_test.value_text) AS reason_for_test,
+                   result.value_modifier AS result_modifier,
+                   COALESCE(result.value_numeric, result.value_text) AS result_value
+            FROM orders
+            INNER JOIN person patient ON patient.person_id = orders.patient_id AND patient.voided = 0
+            INNER JOIN order_type
+              ON order_type.order_type_id = orders.order_type_id
+              AND order_type.name = 'Lab'
+              AND order_type.retired = 0
+            INNER JOIN concept_name
+              ON concept_name.concept_id = orders.concept_id
+              AND concept_name.name IN ('Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)')
+              AND concept_name.voided = 0
+            LEFT JOIN obs AS reason_for_test
+              ON reason_for_test.order_id = orders.order_id
+              AND reason_for_test.concept_id IN (SELECT concept_id FROM concept_name WHERE name LIKE 'Reason for test' AND voided = 0)
+              AND reason_for_test.voided = 0
+            LEFT JOIN concept_name AS reason_for_test_value
+              ON reason_for_test_value.concept_id = reason_for_test.value_coded
+              AND reason_for_test_value.voided = 0
+            LEFT JOIN obs AS result
+              ON result.order_id = orders.order_id
+              AND result.concept_id IN (SELECT concept_id FROM concept_name WHERE name LIKE 'HIV Viral load' AND voided = 0)
+              AND result.voided = 0
+              AND (result.value_text IS NOT NULL OR result.value_numeric IS NOT NULL)
+            INNER JOIN (
+              /* Get the latest order dates for each patient */
+              SELECT orders.patient_id, MAX(orders.start_date) AS start_date
+              FROM orders
+              INNER JOIN order_type
+                ON order_type.order_type_id = orders.order_type_id
+                AND order_type.name = 'Lab'
+                AND order_type.retired = 0
+              INNER JOIN concept_name
+                ON concept_name.concept_id = orders.concept_id
+                AND concept_name.name IN ('Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)')
+                AND concept_name.voided = 0
+              WHERE orders.start_date < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
+                AND orders.start_date >= DATE(#{ActiveRecord::Base.connection.quote(start_date)}) - INTERVAL 12 MONTH
+                AND orders.voided = 0
+              GROUP BY orders.patient_id
+            ) AS latest_patient_order_date
+              ON latest_patient_order_date.patient_id = orders.patient_id
+              AND latest_patient_order_date.start_date = orders.start_date
+            LEFT JOIN patient_identifier
+              ON patient_identifier.patient_id = orders.patient_id
+              AND patient_identifier.identifier_type IN (#{pepfar_patient_identifier_type.to_sql})
+              AND patient_identifier.voided = 0
+            WHERE orders.start_date < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
+              AND orders.start_date >= DATE(#{ActiveRecord::Base.connection.quote(start_date)}) - INTERVAL 12 MONTH
+              AND orders.voided = 0
+              AND orders.patient_id IN (#{clients.join(',')})
+            GROUP BY orders.patient_id
+          SQL
+        end
+
+        public
+
+        # this just gives all clients who are truly external or drug refill
+        # rubocop:disable Metrics/MethodLength
+        # rubocop:disable Metrics/AbcSize
+        def drug_refills_and_external_consultation_list
+          to_remove = [0]
+
+          type_of_patient_concept = ConceptName.find_by_name('Type of patient').concept_id
+          new_patient_concept = ConceptName.find_by_name('New patient').concept_id
+          drug_refill_concept = ConceptName.find_by_name('Drug refill').concept_id
+          external_concept = ConceptName.find_by_name('External Consultation').concept_id
+          hiv_clinic_registration_id = EncounterType.find_by_name('HIV CLINIC REGISTRATION').encounter_type_id
+
+          ActiveRecord::Base.connection.select_all("
+            SELECT p.person_id patient_id
+            FROM person p
+            INNER JOIN patient_program pp ON pp.patient_id = p.person_id AND pp.program_id = #{Program.find_by_name('HIV Program').id} AND pp.voided = 0
+            INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id AND ps.state = 7 AND ps.start_date IS NOT NULL
+            LEFT JOIN encounter as hiv_registration ON hiv_registration.patient_id = p.person_id AND hiv_registration.encounter_datetime < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) AND hiv_registration.encounter_type = #{hiv_clinic_registration_id} AND hiv_registration.voided = 0
+            LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND value_coded = #{new_patient_concept} AND obs_datetime < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY) AS new_patient ON p.person_id = new_patient.person_id
+            LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND value_coded = #{drug_refill_concept} AND obs_datetime < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY) AS refill ON p.person_id = refill.person_id
+            LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND value_coded = #{external_concept} AND obs_datetime < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY) AS external ON p.person_id = external.person_id
+            WHERE (refill.value_coded IS NOT NULL OR external.value_coded IS NOT NULL)
+            AND NOT (hiv_registration.encounter_id IS NOT NULL OR new_patient.value_coded IS NOT NULL)
+            GROUP BY p.person_id
+            ORDER BY hiv_registration.encounter_datetime DESC, refill.obs_datetime DESC, external.obs_datetime DESC;").each do |record|
+            to_remove << record['patient_id'].to_i
+          end
+          to_remove.join(',')
+        end
+        # rubocop:enable Metrics/MethodLength
+        # rubocop:enable Metrics/AbcSize
       end
     end
   end

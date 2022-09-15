@@ -41,6 +41,7 @@ module ARTService
       'OUTCOME_LIST' => ARTService::Reports::OutcomeList,
       'VIRAL_LOAD' => ARTService::Reports::ViralLoad,
       'VIRAL_LOAD_COVERAGE' => ARTService::Reports::Pepfar::ViralLoadCoverage,
+      'VIRAL_LOAD_COVERAGE2' => ARTService::Reports::Pepfar::ViralLoadCoverage2,
       'EXTERNAL_CONSULTATION_CLIENTS' => ARTService::Reports::ExternalConsultationClients,
       'SC_ARVDISP' => ARTService::Reports::Pepfar::ScArvdisp,
       'PATIENT_ART_VL_DATES' => ARTService::Reports::Pepfar::PatientStartVL
