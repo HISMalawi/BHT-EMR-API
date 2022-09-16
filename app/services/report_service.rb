@@ -57,10 +57,6 @@ class ReportService
     engine(@program).registration(start_date, end_date)
   end
 
-  def attendance(start_date, end_date)
-    engine(@program).attendance(start_date, end_date)
-  end
-
   def diagnosis_by_address(start_date, end_date)
     engine(@program).diagnosis_by_address(start_date, end_date)
   end
