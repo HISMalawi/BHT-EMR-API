@@ -13,7 +13,7 @@ module OPDService
       'MALARIA_REPORT' => OPDService::Reports::MalariaReport,
       'TRIAGE_COVID' => OPDService::Reports::TriageCovid,
       'TRIAGE_REGISTRATION' => OPDService::Reports::TriageRegistration,
-      'ATTENDANCE' => OPDService::Reports::ATTENDANCE
+      'ATTENDANCE' => OPDService::Reports::Attendance
     }
 
     def initialize
