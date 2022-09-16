@@ -12,7 +12,7 @@ module OPDService
       'MENTAL_HEALTH' => OPDService::Reports::MentalHealth,
       'MALARIA_REPORT' => OPDService::Reports::MalariaReport,
       'TRIAGE_COVID' => OPDService::Reports::TriageCovid,
-      'TRIAGE_REGISTRATION' => OPDService::Reports::TriageRegistration
+      'TRIAGE_REGISTRATION' => OPDService::Reports::TriageRegistration,
       'ATTENDANCE' => OPDService::Reports::ATTENDANCE
     }
 
