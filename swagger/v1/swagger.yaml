@@ -579,6 +579,211 @@ paths:
                 properties:
                   message:
                     type: string
+  "/api/v1/programs/1/reports/viral_load_coverage":
+    get:
+      summary: Retrieve VL Coverage
+      tags:
+      - Pepfar Reports
+      description: This shows VL Coverage report
+      security:
+      - api_key: []
+      parameters:
+      - name: start_date
+        in: query
+        schema:
+          type: string
+      - name: end_date
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: VL Coverage Report found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  age_group:
+                    type: object
+                    properties:
+                      due_for_vl:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            age_group:
+                              type: string
+                            patient_id:
+                              type: integer
+                            arv_number:
+                              type: string
+                            birthdate:
+                              type: string
+                            gender:
+                              type: string
+                            due_status:
+                              type: integer
+                      drawn:
+                        type: object
+                        properties:
+                          routine:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                age_group:
+                                  type: string
+                                patient_id:
+                                  type: integer
+                                arv_number:
+                                  type: string
+                                birthdate:
+                                  type: string
+                                order_date:
+                                  type: string
+                                sample_drawn_date:
+                                  type: string
+                                reason_for_test:
+                                  type: string
+                                result_modifier:
+                                  type: string
+                                result_value:
+                                  type: string
+                          targeted:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                age_group:
+                                  type: string
+                                patient_id:
+                                  type: integer
+                                arv_number:
+                                  type: string
+                                birthdate:
+                                  type: string
+                                order_date:
+                                  type: string
+                                sample_drawn_date:
+                                  type: string
+                                reason_for_test:
+                                  type: string
+                                result_modifier:
+                                  type: string
+                                result_value:
+                                  type: string
+                      high_vl:
+                        type: object
+                        properties:
+                          type: object
+                          properties:
+                            routine:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  age_group:
+                                    type: string
+                                  patient_id:
+                                    type: integer
+                                  arv_number:
+                                    type: string
+                                  birthdate:
+                                    type: string
+                                  order_date:
+                                    type: string
+                                  sample_drawn_date:
+                                    type: string
+                                  reason_for_test:
+                                    type: string
+                                  result_modifier:
+                                    type: string
+                                  result_value:
+                                    type: string
+                            targeted:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  age_group:
+                                    type: string
+                                  patient_id:
+                                    type: integer
+                                  arv_number:
+                                    type: string
+                                  birthdate:
+                                    type: string
+                                  order_date:
+                                    type: string
+                                  sample_drawn_date:
+                                    type: string
+                                  reason_for_test:
+                                    type: string
+                                  result_modifier:
+                                    type: string
+                                  result_value:
+                                    type: string
+                      low_vl:
+                        type: object
+                        properties:
+                          type: object
+                          properties:
+                            routine:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  age_group:
+                                    type: string
+                                  patient_id:
+                                    type: integer
+                                  arv_number:
+                                    type: string
+                                  birthdate:
+                                    type: string
+                                  order_date:
+                                    type: string
+                                  sample_drawn_date:
+                                    type: string
+                                  reason_for_test:
+                                    type: string
+                                  result_modifier:
+                                    type: string
+                                  result_value:
+                                    type: string
+                            targeted:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  age_group:
+                                    type: string
+                                  patient_id:
+                                    type: integer
+                                  arv_number:
+                                    type: string
+                                  birthdate:
+                                    type: string
+                                  order_date:
+                                    type: string
+                                  sample_drawn_date:
+                                    type: string
+                                  reason_for_test:
+                                    type: string
+                                  result_modifier:
+                                    type: string
+                                  result_value:
+                                    type: string
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
   "/api/v1/rollback/merge_history":
     get:
       summary: Retrieve merge history
