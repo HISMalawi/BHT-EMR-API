@@ -28,14 +28,74 @@ module ARTService
           report
         end
 
+        def vl_maternal_status(patient_list)
+          return { FP: [], FBf: [] } if patient_list.blank?
+
+          pregnant = pregnant_women(patient_list).map { |woman| woman['person_id'].to_i }
+          return { FP: pregnant, Fbf: [] } if (patient_list - pregnant).blank?
+
+          feeding = breast_feeding(patient_list - pregnant).map { |woman| woman['person_id'].to_i }
+
+          {
+            FP: pregnant,
+            FBf: feeding
+          }
+        end
+
         private
 
-        def build_report(report)
-          client = due_for_viral_load
-          return report if client.blank?
+        def pregnant_women(patient_list)
+          ActiveRecord::Base.connection.select_all <<~SQL
+            SELECT o.person_id, o.value_coded
+            FROM obs o
+            INNER JOIN encounter e ON e.encounter_id = o.encounter_id AND e.voided = 0 AND e.encounter_type IN (#{encounter_types.to_sql})
+            INNER JOIN person p ON e.person_id = e.patient_id AND LEFT(e.gender, 1) = 'F'
+            INNER JOIN (
+              SELECT person_id, MAX(obs_datetime) AS obs_datetime
+              FROM obs
+              INNER JOIN encounter ON encounter.encounter_id = obs.encounter_id AND encounter.encounter_type IN (#{encounter_types.to_sql}) AND encounter.voided = 0
+              WHERE concept_id IN (#{pregnant_concepts.to_sql})
+                AND obs_datetime BETWEEN DATE(#{ActiveRecord::Base.connection.quote(start_date)}) AND DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
+                AND obs.voided = 0
+              GROUP BY person_id
+            ) AS max_obs ON max_obs.person_id = obs.person_id AND max_obs.obs_datetime = obs.obs_datetime
+            WHERE obs.concept_id IN (#{pregnant_concepts.to_sql})
+              AND obs.voided = 0
+              AND obs.value_coded IN (#{yes_concepts.join(',')})
+              AND obs.person_id IN (#{patient_list.join(',')})
+            GROUP BY obs.person_id
+          SQL
+        end
 
-          client.each { |patient| report[patient['age_group']][:due_for_vl] << patient }
-          load_patient_tests_into_report(report, client.map { |patient| patient['patient_id'] })
+        def breast_feeding(patient_list)
+          ActiveRecord::Base.connection.select_all <<~SQL
+            SELECT o.person_id, o.value_coded
+            FROM obs o
+            INNER JOIN encounter e ON e.encounter_id = o.encounter_id AND e.voided = 0 AND e.encounter_type IN (#{encounter_types.to_sql})
+            INNER JOIN person p ON e.person_id = e.patient_id AND LEFT(e.gender, 1) = 'F'
+            INNER JOIN (
+              SELECT person_id, MAX(obs_datetime) AS obs_datetime
+              FROM obs
+              INNER JOIN encounter ON encounter.encounter_id = obs.encounter_id AND encounter.encounter_type IN (#{encounter_types.to_sql}) AND encounter.voided = 0
+              WHERE concept_id IN (#{breast_feeding_concepts.to_sql})
+                AND obs_datetime BETWEEN DATE(#{ActiveRecord::Base.connection.quote(start_date)}) AND DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
+                AND obs.voided = 0
+              GROUP BY person_id
+            ) AS max_obs ON max_obs.person_id = obs.person_id AND max_obs.obs_datetime = obs.obs_datetime
+            WHERE obs.concept_id IN (#{breast_feeding_concepts.to_sql})
+              AND obs.voided = 0
+              AND obs.value_coded IN (#{yes_concepts.join(',')})
+              AND obs.person_id IN (#{patient_list.join(',')})
+            GROUP BY obs.person_id
+          SQL
+        end
+
+        def build_report(report)
+          clients = due_for_viral_load.map { |patient| patient unless patient['due_status'].zero? }.compact
+          return report if clients.blank?
+
+          clients.each { |patient| report[patient['age_group']][:due_for_vl] << patient }
+          load_patient_tests_into_report(report, clients.map { |patient| patient['patient_id'] })
         end
 
         def load_patient_tests_into_report(report, clients)
@@ -70,8 +130,21 @@ module ARTService
 
         def due_for_viral_load
           ActiveRecord::Base.connection.select_all <<~SQL
-            #{find_patients_with_overdue_viral_load} UNION #{find_patients_due_for_initial_viral_load}
+            (#{find_patients_with_overdue_viral_load}) UNION (#{find_patients_due_for_initial_viral_load})
           SQL
+        end
+
+        def adverse_outcomes
+          @adverse_outcomes ||= ActiveRecord::Base.connection.select_all(
+            <<~SQL
+              SELECT pws.program_workflow_state_id state
+              FROM program_workflow pw
+              INNER JOIN concept_name pcn ON pcn.concept_id = pw.concept_id AND pcn.concept_name_type = 'FULLY_SPECIFIED' AND pcn.voided = 0
+              INNER JOIN program_workflow_state pws ON pws.program_workflow_id = pw.program_workflow_id AND pws.retired = 0
+              INNER JOIN concept_name cn ON cn.concept_id = pws.concept_id AND cn.concept_name_type = 'FULLY_SPECIFIED' AND cn.voided = 0
+              WHERE pw.program_id = 1 AND pw.retired = 0 AND pws.terminal = 1
+            SQL
+          ).map { |state| state['state'] }
         end
 
         ##
@@ -88,7 +161,8 @@ module ARTService
                    disaggregated_age_group(p.birthdate, DATE(#{ActiveRecord::Base.connection.quote(end_date)})) AS age_group,
                    p.birthdate,
                    p.gender,
-                   patient_identifier.identifier AS arv_number
+                   patient_identifier.identifier AS arv_number,
+                   CASE WHEN state_within_order_period.start_date < DATE(orders.start_date) + INTERVAL 12 MONTH THEN FALSE ELSE TRUE END AS due_status
             FROM orders
             INNER JOIN person p ON p.person_id = orders.patient_id
             INNER JOIN order_type
@@ -117,11 +191,40 @@ module ARTService
             ) AS latest_patient_order_date
               ON latest_patient_order_date.patient_id = orders.patient_id
               AND latest_patient_order_date.start_date = orders.start_date
+            LEFT JOIN(
+              /* Get the current adverse outcome within the reporting period */
+              SELECT pp.patient_id, ps.state, ps.start_date
+              FROM patient_program pp
+              INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id
+              INNER JOIN (
+                SELECT ps.patient_program_id, MAX(ps.start_date) start_date
+                  FROM patient_program pap
+                  INNER JOIN patient_state ps ON ps.patient_program_id = pap.patient_program_id
+                  WHERE pap.program_id = 1
+                  AND ps.start_date BETWEEN DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH AND DATE(#{ActiveRecord::Base.connection.quote(end_date)})
+                  GROUP BY ps.patient_program_id
+              ) AS previous ON previous.patient_program_id = ps.patient_program_id AND previous.start_date = ps.start_date
+              WHERE pp.program_id = 1 AND pp.voided = 0 AND ps.state IN (#{adverse_outcomes.join(',')})
+            ) state_within_order_period ON state_within_order_period.patient_id = orders.patient_id
+            INNER JOIN (
+              SELECT pp.patient_id, ps.state, ps.start_date
+              FROM patient_program pp
+              INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id
+              INNER JOIN (
+                SELECT ps.patient_program_id, MAX(ps.start_date) start_date
+                  FROM patient_program pap
+                  INNER JOIN patient_state ps ON ps.patient_program_id = pap.patient_program_id
+                  WHERE pap.program_id = 1 AND ps.start_date <= DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH
+                  GROUP BY ps.patient_program_id
+              ) AS previous ON previous.patient_program_id = ps.patient_program_id AND previous.start_date = ps.start_date
+              WHERE pp.program_id = 1 AND pp.voided = 0
+            ) state_before_period ON state_before_period.patient_id = orders.patient_id AND state_before_period.state NOT IN (#{adverse_outcomes.join(',')})
             LEFT JOIN patient_identifier
               ON patient_identifier.patient_id = orders.patient_id
               AND patient_identifier.identifier_type IN (#{pepfar_patient_identifier_type.to_sql})
               AND patient_identifier.voided = 0
             WHERE orders.start_date < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH
+              AND orders.voided = 0
             GROUP BY orders.patient_id
           SQL
         end
@@ -135,10 +238,39 @@ module ARTService
               disaggregated_age_group(p.birthdate, DATE(#{ActiveRecord::Base.connection.quote(end_date)})) age_group,
               p.birthdate,
               p.gender,
-              pid.identifier AS arv_number
+              pid.identifier AS arv_number,
+              CASE WHEN state_within_order_period.start_date < DATE(MIN(ps.start_date)) + INTERVAL 6 MONTH THEN FALSE ELSE TRUE END AS due_status
             FROM person p
             INNER JOIN patient_program pp ON pp.patient_id = p.person_id AND pp.program_id = #{Program.find_by_name('HIV Program').id} AND pp.voided = 0
             INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id AND ps.state = 7
+            LEFT JOIN(
+              /* Get the current adverse outcome within the reporting period */
+              SELECT pp.patient_id, ps.state, ps.start_date
+              FROM patient_program pp
+              INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id
+              INNER JOIN (
+                SELECT ps.patient_program_id, MAX(ps.start_date) start_date
+                  FROM patient_program pap
+                  INNER JOIN patient_state ps ON ps.patient_program_id = pap.patient_program_id
+                  WHERE pap.program_id = 1
+                  AND ps.start_date BETWEEN DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH AND DATE(#{ActiveRecord::Base.connection.quote(end_date)})
+                  GROUP BY ps.patient_program_id
+              ) AS previous ON previous.patient_program_id = ps.patient_program_id AND previous.start_date = ps.start_date
+              WHERE pp.program_id = 1 AND pp.voided = 0 AND ps.state IN (#{adverse_outcomes.join(',')})
+            ) state_within_order_period ON state_within_order_period.patient_id = p.person_id
+            INNER JOIN (
+              SELECT pp.patient_id, ps.state, ps.start_date
+              FROM patient_program pp
+              INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id
+              INNER JOIN (
+                SELECT ps.patient_program_id, MAX(ps.start_date) start_date
+                  FROM patient_program pap
+                  INNER JOIN patient_state ps ON ps.patient_program_id = pap.patient_program_id
+                  WHERE pap.program_id = 1 AND ps.start_date <= DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH
+                  GROUP BY ps.patient_program_id
+              ) AS previous ON previous.patient_program_id = ps.patient_program_id AND previous.start_date = ps.start_date
+              WHERE pp.program_id = 1 AND pp.voided = 0
+            ) state_before_period ON state_before_period.patient_id = p.person_id AND state_before_period.state NOT IN (#{adverse_outcomes.join(',')})
             LEFT JOIN patient_identifier pid ON pid.patient_id = p.person_id AND pid.voided = 0 AND pid.identifier_type IN (#{pepfar_patient_identifier_type.to_sql})
             WHERE p.person_id NOT IN (
               SELECT orders.patient_id
@@ -227,8 +359,6 @@ module ARTService
           SQL
         end
 
-        public
-
         # this just gives all clients who are truly external or drug refill
         # rubocop:disable Metrics/MethodLength
         # rubocop:disable Metrics/AbcSize
@@ -260,6 +390,25 @@ module ARTService
         end
         # rubocop:enable Metrics/MethodLength
         # rubocop:enable Metrics/AbcSize
+
+        def yes_concepts
+          @yes_concepts ||= ConceptName.where(name: 'Yes').select(:concept_id).map { |record| record['concept_id'].to_i }
+        end
+
+        def pregnant_concepts
+          @pregnant_concepts ||= ConceptName.where(name: ['Is patient pregnant?', 'patient pregnant'])
+                                            .select(:concept_id)
+        end
+
+        def breast_feeding_concepts
+          @breast_feeding_concepts ||= ConceptName.where(name: ['Breast feeding?', 'Breast feeding', 'Breastfeeding'])
+                                                  .select(:concept_id)
+        end
+
+        def encounter_types
+          @encounter_types ||= EncounterType.where(name: ['HIV CLINIC CONSULTATION', 'HIV STAGING'])
+                                            .select(:encounter_type_id)
+        end
       end
     end
   end
