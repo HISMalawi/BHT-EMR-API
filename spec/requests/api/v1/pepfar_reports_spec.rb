@@ -36,4 +36,110 @@ describe 'Pepfar Reports API', type: :request, swagger_doc: 'v1/swagger.yaml' do
       end
     end
   end
+
+  path '/api/v1/programs/1/reports/viral_load_coverage' do
+    get 'Retrieve VL Coverage' do
+      tags TAGS_NAME
+      description 'This shows VL Coverage report'
+      produces 'application/json'
+      security [api_key: []]
+      parameter name: :start_date, in: :query, type: :string
+      parameter name: :end_date, in: :query, type: :string
+
+      response '200', 'VL Coverage Report found' do
+        schema type: :object, properties: {
+          age_group: { type: :object, properties: {
+            due_for_vl: { type: :array, items: { type: :object, properties: {
+              age_group: { type: :string },
+              patient_id: { type: :integer },
+              arv_number: { type: :string },
+              birthdate: { type: :string },
+              gender: { type: :string },
+              due_status: { type: :integer }
+            } } },
+            drawn: { type: :object, properties: {
+              routine: { type: :array, items: { type: :object, properties: {
+                age_group: { type: :string },
+                patient_id: { type: :integer },
+                arv_number: { type: :string },
+                birthdate: { type: :string },
+                order_date: { type: :string },
+                sample_drawn_date: { type: :string },
+                reason_for_test: { type: :string },
+                result_modifier: { type: :string },
+                result_value: { type: :string }
+              } } },
+              targeted: { type: :array, items: { type: :object, properties: {
+                age_group: { type: :string },
+                patient_id: { type: :integer },
+                arv_number: { type: :string },
+                birthdate: { type: :string },
+                order_date: { type: :string },
+                sample_drawn_date: { type: :string },
+                reason_for_test: { type: :string },
+                result_modifier: { type: :string },
+                result_value: { type: :string }
+              } } }
+            } },
+            high_vl: { type: :object, properties: { type: :object, properties: {
+              routine: { type: :array, items: { type: :object, properties: {
+                age_group: { type: :string },
+                patient_id: { type: :integer },
+                arv_number: { type: :string },
+                birthdate: { type: :string },
+                order_date: { type: :string },
+                sample_drawn_date: { type: :string },
+                reason_for_test: { type: :string },
+                result_modifier: { type: :string },
+                result_value: { type: :string }
+              } } },
+              targeted: { type: :array, items: { type: :object, properties: {
+                age_group: { type: :string },
+                patient_id: { type: :integer },
+                arv_number: { type: :string },
+                birthdate: { type: :string },
+                order_date: { type: :string },
+                sample_drawn_date: { type: :string },
+                reason_for_test: { type: :string },
+                result_modifier: { type: :string },
+                result_value: { type: :string }
+              } } }
+            } } },
+            low_vl: { type: :object, properties: { type: :object, properties: {
+              routine: { type: :array, items: { type: :object, properties: {
+                age_group: { type: :string },
+                patient_id: { type: :integer },
+                arv_number: { type: :string },
+                birthdate: { type: :string },
+                order_date: { type: :string },
+                sample_drawn_date: { type: :string },
+                reason_for_test: { type: :string },
+                result_modifier: { type: :string },
+                result_value: { type: :string }
+              } } },
+              targeted: { type: :array, items: { type: :object, properties: {
+                age_group: { type: :string },
+                patient_id: { type: :integer },
+                arv_number: { type: :string },
+                birthdate: { type: :string },
+                order_date: { type: :string },
+                sample_drawn_date: { type: :string },
+                reason_for_test: { type: :string },
+                result_modifier: { type: :string },
+                result_value: { type: :string }
+              } } }
+            } } }
+          } }
+        }
+        run_test!
+      end
+
+      response '500', 'Internal Server Error' do
+        schema type: :string, properties: {
+          message: { type: :string }
+        }
+        run_test!
+      end
+    end
+  end
 end
