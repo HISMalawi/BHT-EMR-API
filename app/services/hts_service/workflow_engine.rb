@@ -26,7 +26,8 @@ module HTSService
         encounter_type = EncounterType.find_by(name: state)
         encounter_type.name = encounter
 
-          return htn_transform(encounter_type) if valid_state?(state)
+          return hts_name(encounter_type) if valid_state?(state)
+
       end
 
       nil
@@ -161,21 +162,19 @@ module HTSService
 
      def check_hiv_results_status?      
 
-       return true if true == Observation.joins(:encounter)\
+       status = Observation.joins(:encounter)\
                                          .where(concept: concept('HIV status'),
                                                 person: @patient.person,
                                                 value_coded: concept('Positive').concept_id,
                                                 encounter: { program_id: @program.program_id })\
                                          .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))
                                          .order(obs_datetime: :desc)\
-                                         .exists?      
+                                         .exists?   
+        return true if status == true    
     end 
 
-    def htn_transform(encounter_type)
-      htn_activated = global_property('activate.htn.enhancement')&.property_value&.downcase == 'true'
-      return encounter_type unless htn_activated
-
-      htn_workflow.next_htn_encounter(@patient, encounter_type, @date)
+    def hts_name(encounter_type)
+      return encounter_type 
     end   
 
     def htn_workflow
