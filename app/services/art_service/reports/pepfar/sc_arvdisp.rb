@@ -17,11 +17,11 @@ module ARTService
 					"NVP (pediatric) bottles" => {drugs: [21,817,968,971], quantity: 'N/A'},
 					"Other (adult) bottles" => {drugs: [
 						3,5,6,10,38,39,40,42,89,614,730,731,734,738,
-						814,815,932,933,934,952,954,955,957,969,976,978,982,984
+						814,815,932,933,934,952,954,955,957,969,976,978,982,984, 1217, 1213, 14
 					], quantity: 'N/A'},
 					"Other (pediatric) bottles" => {drugs: [
 						2, 9, 28, 29, 30, 31, 32, 36, 37, 41, 70, 71, 72, 90, 91,
-						95, 104, 177, 732, 733, 736, 737, 813, 816, 981, 1043, 1044
+						95, 104, 177, 732, 733, 736, 737, 813, 816, 981, 1043, 1044, 1214, 1215
 					], quantity: 'N/A'}
 				}
 
@@ -55,8 +55,8 @@ module ARTService
 						{name: "NVP (adult) bottles",  units: 0, quantity: 'N/A', dispensations: []},
 						{name: "NVP (pediatric) bottles", units: 0, quantity: 'N/A', dispensations: []},
 						{name: "Other (adult) bottles", units: 0, quantity: 'N/A', dispensations: []},
-						{name: "Other (pediatric) bottles", units: 0, quantity: 'N/A', dispensations: []},
-						{name: "Other bottles", units: 0, quantity: 'N/A', dispensations: []}
+						{name: "Other (pediatric) bottles", units: 0, quantity: 'N/A', dispensations: []}
+						# {name: "Other bottles", units: 0, quantity: 'N/A', dispensations: []}
 					]
 
 					dispensations = get_dispensations
@@ -104,41 +104,35 @@ module ARTService
 							end
 						end
 					end
-					return ["Other bottles", 1]
+					# return ["Other bottles", 1]
 				end
 
 				def get_dispensations
 					amount_dispensed = ConceptName.find_by(name: 'Amount of drug dispensed').concept_id
-					identifier_type = PatientIdentifierType.find_by(name: 'ARV number').id
 					identifier_type_name = @use_filing_number ? 'Filing Number' : 'ARV Number'
 					identifier_type = PatientIdentifierType.find_by_name!(identifier_type_name).id
 
 					dispensations = {}
 					orders = ActiveRecord::Base.connection.select_all <<~SQL
-					SELECT
-						orders.order_id, orders.start_date, drug_order.quantity,drug.name,
-						orders.patient_id, obs.value_numeric, orders.start_date,
-						patient_identifier.identifier,drug.drug_id
-					FROM orders
-					INNER JOIN drug_order ON drug_order.order_id = orders.order_id AND drug_order.quantity > 0
-					INNER JOIN arv_drug ON arv_drug.drug_id = drug_order.drug_inventory_id
-					INNER JOIN drug ON drug.drug_id = arv_drug.drug_id
-					INNER JOIN encounter ON encounter.encounter_id = orders.encounter_id
-					AND encounter.program_id = #{Program.find_by(name: 'HIV Program').id}
-					INNER JOIN(
-					SELECT MAX(start_date) start_date, patient_id, orders.order_id FROM orders
-					INNER JOIN drug_order ON drug_order.order_id = orders.order_id
-					INNER JOIN arv_drug ON arv_drug.drug_id = drug_order.drug_inventory_id
-					WHERE start_date BETWEEN '#{@completion_start_date}' AND '#{@completion_end_date}'
-					AND orders.order_type_id = 1 AND orders.voided = 0
-					GROUP BY orders.order_id, orders.patient_id ORDER BY orders.start_date)
-					AS order_start_date ON orders.order_id = order_start_date.order_id
-					INNER JOIN obs ON obs.order_id = orders.order_id AND obs.voided = 0
-					AND obs.concept_id = #{amount_dispensed} AND obs.value_numeric > 0
-					LEFT JOIN patient_identifier ON patient_identifier.patient_id = orders.patient_id
-					AND patient_identifier.identifier_type = #{identifier_type}
-					AND patient_identifier.voided = 0
-					ORDER BY orders.start_date ASC, orders.patient_id;
+						SELECT
+							orders.order_id, orders.start_date, drug_order.quantity,drug.name,
+							orders.patient_id, obs.value_numeric, orders.start_date,
+							patient_identifier.identifier,drug.drug_id
+						FROM orders
+						INNER JOIN drug_order ON drug_order.order_id = orders.order_id AND drug_order.quantity > 0
+						INNER JOIN arv_drug ON arv_drug.drug_id = drug_order.drug_inventory_id
+						INNER JOIN drug ON drug.drug_id = arv_drug.drug_id
+						INNER JOIN encounter ON encounter.encounter_id = orders.encounter_id
+							AND encounter.program_id = #{Program.find_by(name: 'HIV Program').id}
+						INNER JOIN obs ON obs.order_id = orders.order_id AND obs.voided = 0
+						AND obs.concept_id = #{amount_dispensed} AND obs.value_numeric > 0
+						LEFT JOIN patient_identifier ON patient_identifier.patient_id = orders.patient_id
+						AND patient_identifier.identifier_type = #{identifier_type}
+						AND patient_identifier.voided = 0
+						WHERE orders.voided = 0
+						AND orders.start_date BETWEEN '#{@completion_start_date}' AND '#{@completion_end_date}'
+						AND orders.order_type_id = 1
+						ORDER BY orders.start_date ASC, orders.patient_id;
 					SQL
 
 					(orders || []).each do |order|

@@ -75,6 +75,7 @@ class StockManagementService
         drug_id = fetch_parameter(item, :drug_id)
         quantity = fetch_parameter(item, :quantity)
         barcode = fetch_parameter(item, :barcode)
+        product_code = fetch_parameter(item, :product_code)
         pack_size = item[:pack_size]
 
         delivery_date = fetch_parameter_as_date(item, :delivery_date, Date.today)
@@ -89,9 +90,10 @@ class StockManagementService
           # Update existing item if already in batch
           item.delivered_quantity += quantity
           item.current_quantity += quantity
+          item.product_code = product_code
           item.save
         else
-          item = create_batch_item(batch, drug_id, pack_size, quantity, delivery_date, expiry_date)
+          item = create_batch_item(batch, drug_id, pack_size, quantity, delivery_date, expiry_date, product_code)
           validate_activerecord_object(item)
         end
 
@@ -304,7 +306,7 @@ class StockManagementService
     PharmacyBatch.create(batch_number: batch_number, location_id: location_id)
   end
 
-  def create_batch_item(batch, drug_id, pack_size, quantity, delivery_date, expiry_date)
+  def create_batch_item(batch, drug_id, pack_size, quantity, delivery_date, expiry_date, product_code)
     quantity = quantity.to_f
 
     PharmacyBatchItem.create(
@@ -314,7 +316,8 @@ class StockManagementService
       delivered_quantity: quantity,
       current_quantity: quantity,
       delivery_date: delivery_date,
-      expiry_date: expiry_date
+      expiry_date: expiry_date,
+      product_code: product_code
     )
   end
 

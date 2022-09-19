@@ -9,12 +9,20 @@ class Api::V1::Pharmacy::AuditTrailsController < ApplicationController
                         drug_id: filters[:drug_id],
                         batch_number: filters[:batch_number]
 
-    render json: trail
+    render json: trail, status: :ok
+  end
+
+  def stock_report
+    render json: service.stock_report, status: :ok
   end
 
   private
 
   def audit_trail(**kwargs)
-    ARTService::Pharmacy::AuditTrail.retrieve(**kwargs)
+    service.retrieve(**kwargs)
+  end
+
+  def service
+    ARTService::Pharmacy::AuditTrail
   end
 end

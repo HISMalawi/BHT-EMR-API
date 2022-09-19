@@ -26,6 +26,8 @@ module ARTService
       'REGIMENS_BY_WEIGHT_AND_GENDER' => ARTService::Reports::RegimensByWeightAndGender,
       'REGIMEN_SWITCH' => ARTService::Reports::RegimenSwitch,
       'RETENTION' => ARTService::Reports::Retention,
+      'TPT_OUTCOME' => ARTService::Reports::TptOutcome,
+      'CLINIC_TX_RTT' => ARTService::Reports::ClinicTxRtt,
       'TB_PREV2' => ARTService::Reports::Pepfar::TbPrev3,
       'TPT_NEWLY_INITIATED' => ARTService::Reports::TptNewlyInitiated,
       'TX_CURR' => ARTService::Reports::PatientsAliveAndOnTreatment,
@@ -38,7 +40,7 @@ module ARTService
       'TB_PREV' => ARTService::Reports::Pepfar::TbPrev,
       'OUTCOME_LIST' => ARTService::Reports::OutcomeList,
       'VIRAL_LOAD' => ARTService::Reports::ViralLoad,
-      'VIRAL_LOAD_COVERAGE' => ARTService::Reports::Pepfar::ViralLoadCoverage,
+      'VIRAL_LOAD_COVERAGE' => ARTService::Reports::Pepfar::ViralLoadCoverage2,
       'EXTERNAL_CONSULTATION_CLIENTS' => ARTService::Reports::ExternalConsultationClients,
       'SC_ARVDISP' => ARTService::Reports::Pepfar::ScArvdisp,
       'PATIENT_ART_VL_DATES' => ARTService::Reports::Pepfar::PatientStartVL
