@@ -196,6 +196,7 @@ Rails.application.routes.draw do
         end
         get 'earliest_expiring_item', to: 'items#earliest_expiring'
         get 'drug_consumption', to: 'drugs#drug_consumption'
+        get 'stock_report', to: 'audit_trails#stock_report'
       end
 
       namespace :types do

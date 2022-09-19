@@ -784,6 +784,246 @@ paths:
                 properties:
                   message:
                     type: string
+  "/api/v1/pharmacy/stock_report":
+    get:
+      summary: Stock Report
+      tags:
+      - Pharmacy
+      description: This gets the stock report
+      security:
+      - api_key: []
+      responses:
+        '200':
+          description: Stock Report
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    product_code:
+                      type: string
+                    batch_numbers:
+                      type: string
+                    drug_name:
+                      type: string
+                    units:
+                      type: string
+                    closing_balance:
+                      type: float
+                    losses:
+                      type: float
+                    positive_adjustment:
+                      type: float
+                    negative_adjustment:
+                      type: float
+                    quantity_used:
+                      type: float
+                    quantity_received:
+                      type: float
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+  "/api/v1/pharmacy/audit_trail":
+    get:
+      summary: Audit Trail
+      tags:
+      - Pharmacy
+      description: This gets the audit trail
+      security:
+      - api_key: []
+      parameters:
+      - name: start_date
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: end_date
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: drug_id
+        in: query
+        required: false
+        schema:
+          type: integer
+      - name: batch_number
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Audit Trail
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    creation_date:
+                      type: string
+                    transaction_date:
+                      type: string
+                    transaction_type:
+                      type: string
+                    batch_number:
+                      type: string
+                    drug_id:
+                      type: integer
+                    batch_item_id:
+                      type: integer
+                    drug_name:
+                      type: string
+                    amount_committed_to_stock:
+                      type: float
+                    amount_dispensed_from_art:
+                      type: float
+                    username:
+                      type: string
+                    transaction_reason:
+                      type: string
+                    product_code:
+                      type: string
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+  "/api/v1/pharmacy/batches":
+    post:
+      summary: Add a batch
+      tags:
+      - Pharmacy
+      description: This adds a batch item and can create a batch if does not exist
+      security:
+      - api_key: []
+      parameters: []
+      responses:
+        '201':
+          description: Batch created
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    batch_number:
+                      type: string
+                    creator:
+                      type: integer
+                    date_created:
+                      type: string
+                    date_changed:
+                      type: string
+                    voided:
+                      type: boolean
+                    voided_by:
+                      type: integer
+                    date_voided:
+                      type: string
+                    void_reason:
+                      type: string
+                    changed_by:
+                      type: integer
+                    location_id:
+                      type: integer
+                    items:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          pharmacy_batch_id:
+                            type: integer
+                          drug_id:
+                            type: integer
+                          delivered_quantity:
+                            type: float
+                          current_quantity:
+                            type: float
+                          creator:
+                            type: integer
+                          date_created:
+                            type: string
+                          date_changed:
+                            type: string
+                          voided:
+                            type: boolean
+                          voided_by:
+                            type: integer
+                          date_voided:
+                            type: string
+                          void_reason:
+                            type: string
+                          changed_by:
+                            type: integer
+                          pack_size:
+                            type: integer
+                          barcode:
+                            type: string
+                          expiry_date:
+                            type: string
+                          product_code:
+                            type: string
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  batch_number:
+                    type: string
+                  location_id:
+                    type: integer
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        pack_size:
+                          type: integer
+                        barcode:
+                          type: string
+                        drug_id:
+                          type: integer
+                        expiry_date:
+                          type: string
+                        quantity:
+                          type: integer
+                        delivery_date:
+                          type: string
+                        product_code:
+                          type: string
+        required: true
   "/api/v1/rollback/merge_history":
     get:
       summary: Retrieve merge history
