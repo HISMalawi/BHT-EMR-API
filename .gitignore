@@ -53,7 +53,7 @@ config/server/
 *migration*.csv
 migration*.log
 extensions.json
-
+emc_ipt_duplicates*.csv
 # Ignore json files under idsr
 /db/idsr_metadata/*.json
 
