@@ -565,7 +565,8 @@ class PatientService
   end
 
   def tpt_prescription_count(patient, _program, date)
-    drug_concept_ids = ConceptName.where('name IN(?)', %w[Isoniazid Rifapentine]).map(&:concept_id)
+    drug_concept_ids = ConceptName.where('name IN(?)',
+                                         ['Isoniazid', 'Rifapentine', 'Isoniazid/Rifapentine']).map(&:concept_id)
     orders = Order.joins("INNER JOIN drug_order o ON o.order_id = orders.order_id
       INNER JOIN drug d ON d.drug_id = o.drug_inventory_id")\
                   .where("d.concept_id IN(?) AND orders.patient_id = ? AND DATE(start_date) < ?
