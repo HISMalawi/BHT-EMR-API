@@ -49,7 +49,7 @@ module ARTService
             SELECT o.person_id, o.value_coded
             FROM obs o
             INNER JOIN encounter e ON e.encounter_id = o.encounter_id AND e.voided = 0 AND e.encounter_type IN (#{encounter_types.to_sql})
-            INNER JOIN person p ON e.person_id = e.patient_id AND LEFT(e.gender, 1) = 'F'
+            INNER JOIN person p ON o.person_id = e.patient_id AND LEFT(p.gender, 1) = 'F'
             INNER JOIN (
               SELECT person_id, MAX(obs_datetime) AS obs_datetime
               FROM obs
@@ -58,7 +58,7 @@ module ARTService
                 AND obs.obs_datetime BETWEEN DATE(#{ActiveRecord::Base.connection.quote(start_date)}) AND DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
                 AND obs.voided = 0
               GROUP BY person_id
-            ) AS max_obs ON max_obs.person_id = obs.person_id AND max_obs.obs_datetime = obs.obs_datetime
+            ) AS max_obs ON max_obs.person_id = o.person_id AND max_obs.obs_datetime = o.obs_datetime
             WHERE o.concept_id IN (#{pregnant_concepts.to_sql})
               AND o.voided = 0
               AND o.value_coded IN (#{yes_concepts.join(',')})
@@ -72,7 +72,7 @@ module ARTService
             SELECT o.person_id, o.value_coded
             FROM obs o
             INNER JOIN encounter e ON e.encounter_id = o.encounter_id AND e.voided = 0 AND e.encounter_type IN (#{encounter_types.to_sql})
-            INNER JOIN person p ON e.person_id = e.patient_id AND LEFT(e.gender, 1) = 'F'
+            INNER JOIN person p ON o.person_id = e.patient_id AND LEFT(p.gender, 1) = 'F'
             INNER JOIN (
               SELECT person_id, MAX(obs_datetime) AS obs_datetime
               FROM obs
@@ -81,7 +81,7 @@ module ARTService
                 AND obs.obs_datetime BETWEEN DATE(#{ActiveRecord::Base.connection.quote(start_date)}) AND DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
                 AND obs.voided = 0
               GROUP BY person_id
-            ) AS max_obs ON max_obs.person_id = obs.person_id AND max_obs.obs_datetime = obs.obs_datetime
+            ) AS max_obs ON max_obs.person_id = o.person_id AND max_obs.obs_datetime = o.obs_datetime
             WHERE o.concept_id IN (#{breast_feeding_concepts.to_sql})
               AND o.voided = 0
               AND o.value_coded IN (#{yes_concepts.join(',')})
