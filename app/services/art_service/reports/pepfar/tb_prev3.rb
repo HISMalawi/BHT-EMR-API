@@ -102,8 +102,8 @@ module ARTService
                    DATE(MIN(orders.start_date)) AS tpt_initiation_date,
                    date_antiretrovirals_started(person.person_id, MIN(denominator_patient.start_date)) AS art_start_date,
                    patient_outcome(person.person_id, DATE(#{end_date})) AS outcome,
-                   SUM(drug_order.quantity) AS total_pills_taken,
-                   SUM(DATEDIFF(orders.auto_expire_date, orders.start_date)) AS total_days_on_medication,
+                   SUM(drug_order.quantity) + SUM(CASE WHEN tpt_transfer_in_obs.value_numeric IS NOT NULL THEN tpt_transfer_in_obs.value_numeric ELSE 0 END) AS total_pills_taken,
+                   SUM(DATEDIFF(orders.auto_expire_date, orders.start_date)) + SUM(CASE WHEN tpt_transfer_in_obs.value_datetime IS NOT NULL THEN DATEDIFF(tpt_transfer_in_obs.obs_datetime, tpt_transfer_in_obs.value_datetime) ElSE 0 END) AS total_days_on_medication,
                    person.gender,
                    person.birthdate,
                    disaggregated_age_group(person.birthdate, DATE(#{end_date})) AS age_group,
@@ -153,6 +153,12 @@ module ARTService
             INNER JOIN drug_order
               ON drug_order.order_id = orders.order_id
               AND drug_order.quantity > 0
+            LEFT JOIN obs tpt_transfer_in_obs
+              ON tpt_transfer_in_obs.person_id = person.person_id
+              AND tpt_transfer_in_obs.concept_id = #{ConceptName.find_by_name('TPT Drugs Received').id}
+              AND tpt_transfer_in_obs.voided = 0
+              AND tpt_transfer_in_obs.obs_datetime < DATE(#{start_date})
+              AND tpt_transfer_in_obs.value_coded IN (#{ConceptName.where(name: ['Rifapentine', 'Isoniazid', 'Isoniazid/Rifapentine']).select(:concept_id).to_sql})
             WHERE person.voided = 0
               AND person.person_id NOT IN (
                  /* People who had a dispensation prior to the 3 to 9 months before start of reporting period.
@@ -213,14 +219,20 @@ module ARTService
 
         def individual_tpt_report(patient_id)
           ActiveRecord::Base.connection.select_one <<-SQL
-            SELECT DATE(MIN(o.start_date)) AS tpt_initiation_date,
-                  SUM(dor.quantity) AS total_pills_taken,
-                  SUM(DATEDIFF(o.auto_expire_date, o.start_date)) AS total_days_on_medication,
-                    GROUP_CONCAT(DISTINCT o.concept_id SEPARATOR ',') AS drug_concepts
+            SELECT
+                DATE(MIN(o.start_date)) AS tpt_initiation_date,
+                SUM(dor.quantity) + SUM(CASE WHEN tpt_transfer_in_obs.value_numeric IS NOT NULL THEN tpt_transfer_in_obs.value_numeric ELSE 0 END) AS total_pills_taken,
+                SUM(DATEDIFF(o.auto_expire_date, o.start_date)) + SUM(CASE WHEN tpt_transfer_in_obs.value_datetime IS NOT NULL THEN DATEDIFF(tpt_transfer_in_obs.obs_datetime, tpt_transfer_in_obs.value_datetime) ElSE 0 END) AS total_days_on_medication,
+                GROUP_CONCAT(DISTINCT o.concept_id SEPARATOR ',') AS drug_concepts
             FROM orders o
             INNER JOIN concept_name cn
               ON cn.concept_id = o.concept_id
               AND cn.name IN ('Rifapentine', 'Isoniazid', 'Isoniazid/Rifapentine')
+            LEFT JOIN obs tpt_transfer_in_obs
+              ON tpt_transfer_in_obs.person_id = o.patient_id
+              AND tpt_transfer_in_obs.concept_id = #{ConceptName.find_by_name('TPT Drugs Received').id}
+              AND tpt_transfer_in_obs.voided = 0
+              AND tpt_transfer_in_obs.value_coded IN (#{ConceptName.where(name: ['Rifapentine', 'Isoniazid', 'Isoniazid/Rifapentine']).select(:concept_id).to_sql})
             INNER JOIN drug_order dor
               ON dor.order_id = o.order_id
               AND dor.quantity > 0

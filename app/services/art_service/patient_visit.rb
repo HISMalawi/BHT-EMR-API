@@ -183,8 +183,7 @@ module ARTService
     end
 
     def viral_load_result
-      tests = viral_load_tests
-      tests = viral_load_tests("<=") if tests.empty?
+      tests = viral_load_tests('<=')
 
       result = Lab::LabResult.where(obs_group_id: tests, person_id: patient.patient_id)
                              .order(:obs_datetime)
@@ -226,12 +225,12 @@ module ARTService
 
     private
 
-    def viral_load_tests(sql_params = "=")
+    def viral_load_tests(sql_params = '=')
       viral_load_concept = ConceptName.where(name: 'HIV Viral Load').select(:concept_id)
       # tests = Lab::LabTest.where(value_coded: viral_load_concept, person_id: patient.patient_id, obs_datetime: Dat)
-      tests = Lab::LabTest.where("value_coded IN (#{viral_load_concept.to_sql})
-                                  AND person_id = #{patient.patient_id}
-                                  AND DATE(obs_datetime) #{sql_params} '#{date.to_date}'")
+      Lab::LabTest.where("value_coded IN (#{viral_load_concept.to_sql})
+                          AND person_id = #{patient.patient_id}
+                          AND DATE(obs_datetime) #{sql_params} '#{date.to_date}'")
     end
 
     def lab_tests_engine
