@@ -54,16 +54,16 @@ module ARTService
               SELECT person_id, MAX(obs_datetime) AS obs_datetime
               FROM obs
               INNER JOIN encounter ON encounter.encounter_id = obs.encounter_id AND encounter.encounter_type IN (#{encounter_types.to_sql}) AND encounter.voided = 0
-              WHERE concept_id IN (#{pregnant_concepts.to_sql})
-                AND obs_datetime BETWEEN DATE(#{ActiveRecord::Base.connection.quote(start_date)}) AND DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
+              WHERE obs.concept_id IN (#{pregnant_concepts.to_sql})
+                AND obs.obs_datetime BETWEEN DATE(#{ActiveRecord::Base.connection.quote(start_date)}) AND DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
                 AND obs.voided = 0
               GROUP BY person_id
             ) AS max_obs ON max_obs.person_id = obs.person_id AND max_obs.obs_datetime = obs.obs_datetime
-            WHERE obs.concept_id IN (#{pregnant_concepts.to_sql})
-              AND obs.voided = 0
-              AND obs.value_coded IN (#{yes_concepts.join(',')})
-              AND obs.person_id IN (#{patient_list.join(',')})
-            GROUP BY obs.person_id
+            WHERE o.concept_id IN (#{pregnant_concepts.to_sql})
+              AND o.voided = 0
+              AND o.value_coded IN (#{yes_concepts.join(',')})
+              AND o.person_id IN (#{patient_list.join(',')})
+            GROUP BY o.person_id
           SQL
         end
 
@@ -77,16 +77,16 @@ module ARTService
               SELECT person_id, MAX(obs_datetime) AS obs_datetime
               FROM obs
               INNER JOIN encounter ON encounter.encounter_id = obs.encounter_id AND encounter.encounter_type IN (#{encounter_types.to_sql}) AND encounter.voided = 0
-              WHERE concept_id IN (#{breast_feeding_concepts.to_sql})
-                AND obs_datetime BETWEEN DATE(#{ActiveRecord::Base.connection.quote(start_date)}) AND DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
+              WHERE obs.concept_id IN (#{breast_feeding_concepts.to_sql})
+                AND obs.obs_datetime BETWEEN DATE(#{ActiveRecord::Base.connection.quote(start_date)}) AND DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
                 AND obs.voided = 0
               GROUP BY person_id
             ) AS max_obs ON max_obs.person_id = obs.person_id AND max_obs.obs_datetime = obs.obs_datetime
-            WHERE obs.concept_id IN (#{breast_feeding_concepts.to_sql})
-              AND obs.voided = 0
-              AND obs.value_coded IN (#{yes_concepts.join(',')})
-              AND obs.person_id IN (#{patient_list.join(',')})
-            GROUP BY obs.person_id
+            WHERE o.concept_id IN (#{breast_feeding_concepts.to_sql})
+              AND o.voided = 0
+              AND o.value_coded IN (#{yes_concepts.join(',')})
+              AND o.person_id IN (#{patient_list.join(',')})
+            GROUP BY o.person_id
           SQL
         end
 
