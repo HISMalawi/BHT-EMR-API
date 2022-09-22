@@ -2,7 +2,6 @@
 
 module ARTService
   module Reports
-
     class ArvRefillPeriods
       def initialize(start_date:, end_date:, min_age:, max_age:, org:, initialize_tables:)
         @start_date = start_date.to_date.strftime('%Y-%m-%d 00:00:00')
@@ -10,15 +9,15 @@ module ARTService
         @min_age = min_age
         @max_age = max_age
         @org = org
-        @initialize_tables = (initialize_tables == 'true' ? true : false)
+        @initialize_tables = (initialize_tables == 'true')
       end
 
       def arv_refill_periods
-        return break_down
+        break_down
       end
 
       def tx_mmd_client_level_data(patient_ids)
-        return client_level_data(patient_ids)
+        client_level_data(patient_ids)
       end
 
       private
@@ -50,9 +49,10 @@ module ARTService
         SQL
 
         return {} if patients.blank?
+
         data = []
         patients.each do |p|
-          data  << [p['patient_id'].to_i, p["gender"], p["birthdate"]]
+          data  << [p['patient_id'].to_i, p['gender'], p['birthdate']]
         end
 
         results = {}
@@ -62,24 +62,23 @@ module ARTService
             gender = (gender.match(/F/i) ? 'Female' : 'Male')
           end
 
-          birthdate = birthdate
+          # birthdate = birthdate
           results[gender] = {} if results[gender].blank?
 
           dispensing_info = get_dispensing_info(patient_id,
-            encounter_type, arv_concept_set, program_id)
+                                                encounter_type, arv_concept_set, program_id)
 
           results[gender][patient_id] = {
             prescribed_days: dispensing_info,
             birthdate: birthdate, gender: gender
           }
-
         end
 
-        return results
+        results
       end
 
       def get_dispensing_info(patient_id, encounter_type,
-        arv_concept_set,  program_id)
+                              arv_concept_set, program_id)
 
         data = ActiveRecord::Base.connection.select_all <<~SQL
           SELECT
@@ -131,70 +130,73 @@ module ARTService
 
           doses = {}
           (moh_regimen_ingredients || []).each do |i|
-            drug_id = i["drug_inventory_id"].to_i
-            am = i["am"].to_f
-            pm = i["pm"].to_f
+            drug_id = i['drug_inventory_id'].to_i
+            am = i['am'].to_f
+            pm = i['pm'].to_f
             doses[drug_id] = (am.to_f + pm.to_f).to_f
           end
 
-          data.each do |info|
-            drug_id = info["drug_id"].to_i
-            quantity = info["quantity"].to_f
-            dose_per_day = doses[drug_id]
-            next if dose_per_day.blank?
-            if prescribed_days.blank?
-              prescribed_days = (quantity / dose_per_day).to_i
-            else
-              days = (quantity / dose_per_day).to_i
-              prescribed_days = days if days > prescribed_days
+          unless doses.blank?
+            data.each do |info|
+              drug_id = info['drug_id'].to_i
+              quantity = info['quantity'].to_f
+              dose_per_day = doses[drug_id]
+              next if dose_per_day.blank?
+
+              if prescribed_days.blank?
+                prescribed_days = (quantity / dose_per_day).to_i
+              else
+                days = (quantity / dose_per_day).to_i
+                prescribed_days = days if days > prescribed_days
+              end
             end
-          end unless doses.blank?
+          end
 
           return prescribed_days unless prescribed_days.blank?
         end
 
-
         data.each do |info|
-          days = (info["prescribed_days"].to_i + 1)
+          days = (info['prescribed_days'].to_i + 1)
           if prescribed_days.blank?
             prescribed_days = days
-          else
-            prescribed_days = days if days > prescribed_days
+          elsif days > prescribed_days
+            prescribed_days = days
           end
         end
 
-        return prescribed_days
+        prescribed_days
       end
 
       def get_weight(patient_id)
-        concept_id = ConceptName.find_by_name("Weight (Kg)").concept_id
+        concept_id = ConceptName.find_by_name('Weight (Kg)').concept_id
         weight_details = Observation.where("person_id = ? AND concept_id = ?
           AND obs_datetime <= ? AND ( CAST(value_numeric as DECIMAL(4,1)) > 0 OR
           CAST(value_text as DECIMAL(4,1)) > 0)", patient_id,
-            concept_id, @end_date).order("obs_datetime DESC, date_created DESC")
+                                           concept_id, @end_date).order('obs_datetime DESC, date_created DESC')
 
         return nil if weight_details.blank?
+
         weight_details = weight_details.first
         weight = (weight_details.value_numeric.to_f > 0 ? weight_details.value_numeric.to_f : weight_details.value_text.to_f)
-        return " WHERE #{weight} >= min_weight AND #{weight} <= max_weight "
+        " WHERE #{weight} >= min_weight AND #{weight} <= max_weight "
       end
 
       def client_level_data(patient_ids)
         program_id = Program.find_by(name: 'HIV PROGRAM').id
         arv_concept_set = ConceptName.find_by(name: 'ARVS').concept_id
         encounter_type = EncounterType.find_by(name: 'DISPENSING').id
-        identifier_type = PatientIdentifierType.find_by_name("ARV number").id
+        identifier_type = PatientIdentifierType.find_by_name('ARV number').id
         info = []
 
         patient_ids.each do |patient_id|
           info << client_data(patient_id, encounter_type,
-            program_id,  arv_concept_set, identifier_type)
+                              program_id, arv_concept_set, identifier_type)
         end
 
-        return info
+        info
       end
 
-      def client_data(patient_id, encounter_type, program_id,  arv_concept_set,  identifier_type)
+      def client_data(patient_id, _encounter_type, program_id, arv_concept_set, identifier_type)
         info = {}
         info[patient_id] = {}
 
@@ -231,7 +233,7 @@ module ARTService
         SQL
 
         regimen = regimen_info['regimen']
-        regimen = (regimen.match(/N/i) ? "Unknown" : regimen)
+        regimen = (regimen.match(/N/i) ? 'Unknown' : regimen)
         prescribed_days = nil
 
         unless regimen.match(/Unknown/i)
@@ -250,41 +252,50 @@ module ARTService
 
           doses = {}
           (moh_regimen_ingredients || []).each do |i|
-            drug_id = i["drug_inventory_id"].to_i
-            am = i["am"].to_f
-            pm = i["pm"].to_f
+            drug_id = i['drug_inventory_id'].to_i
+            am = i['am'].to_f
+            pm = i['pm'].to_f
             doses[drug_id] = (am.to_f + pm.to_f).to_f
           end
         end
 
         info[patient_id][regimen] = {}
         data.each do |i|
-          drug_id = i["drug_id"].to_i
-          quantity = i["quantity"].to_f
-          drug_name  = i["name"]
-          start_date =  i["start_date"].to_date
-          auto_expire_date = i["auto_expire_date"]
-          dose_per_day = (doses[drug_id] rescue 'N/A')
-          quantity  = quantity.to_f
-          arv_number = i["arv_number"]
-          birthdate = i["birthdate"]
+          drug_id = i['drug_id'].to_i
+          quantity = i['quantity'].to_f
+          drug_name  = i['name']
+          start_date = i['start_date'].to_date
+          auto_expire_date = i['auto_expire_date']
+          dose_per_day = begin
+            doses[drug_id]
+          rescue StandardError
+            'N/A'
+          end
+          quantity = quantity.to_f
+          arv_number = i['arv_number']
+          birthdate = i['birthdate']
 
-          info[patient_id][regimen][drug_id] =  {
+          info[patient_id][regimen][drug_id] = {
             drug_name: drug_name,
-            start_date: start_date.to_date.strftime("%d/%b/%Y"),
-            auto_expire_date: (auto_expire_date.to_date.strftime("%d/%b/%Y") rescue nil),
+            start_date: start_date.to_date.strftime('%d/%b/%Y'),
+            auto_expire_date: begin
+              auto_expire_date.to_date.strftime('%d/%b/%Y')
+            rescue StandardError
+              nil
+            end,
             dose_per_day: dose_per_day,
             quantity: quantity,
-            arv_number: (arv_number.blank? ? "N/A" : arv_number),
-            birthdate: (birthdate.to_date.strftime("%d/%b/%Y") rescue 'N/A')
+            arv_number: (arv_number.blank? ? 'N/A' : arv_number),
+            birthdate: begin
+              birthdate.to_date.strftime('%d/%b/%Y')
+            rescue StandardError
+              'N/A'
+            end
           }
         end
 
-        return info
+        info
       end
     end
-
-
-
   end
 end

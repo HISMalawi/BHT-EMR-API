@@ -76,6 +76,10 @@ module ARTService
         defaulter_date_sql = pepfar ? " current_pepfar_defaulter_date" : "current_defaulter_date"
         cohort_list = ARTService::Reports::CohortBuilder.new(outcomes_definition: report_type)
         cohort_list.create_tmp_patient_table
+        cohort_list.drop_temp_register_start_date_table
+        cohort_list.drop_temp_other_patient_types
+        cohort_list.create_temp_other_patient_types(@end_date.to_date)
+        cohort_list.create_temp_register_start_date_table(@end_date.to_date)
         cohort_list.load_data_into_temp_earliest_start_date(@end_date.to_date)
 
         outcomes = ARTService::Reports::Cohort::Outcomes.new(end_date: @end_date.to_date, definition: report_type)
