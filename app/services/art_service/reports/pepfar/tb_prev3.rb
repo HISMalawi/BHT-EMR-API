@@ -7,12 +7,13 @@ module ARTService
       # Patients who started TPT just before the start of the current
       # and have finished within the current reporting period.
       class TbPrev3
-        attr_reader :start_date, :end_date
+        attr_reader :start_date, :end_date, :check_date
 
         include Utils
 
         def initialize(start_date:, end_date:, **_kwargs)
           @start_date = ActiveRecord::Base.connection.quote(start_date)
+          @check_date = start_date.to_date - 6.months
           @end_date = ActiveRecord::Base.connection.quote(end_date)
         end
 
@@ -100,15 +101,19 @@ module ARTService
 
         def patients_on_tpt
           clients = fetch_patients_on_tpt.to_a
+          results = []
           clients.each do |client|
             result = individual_tpt_report(client['patient_id'])
+            next if result['last_dispensed_date'].to_date < check_date
+
             client['tpt_initiation_date'] = result['tpt_initiation_date']
             client['total_pills_taken'] = result['total_pills_taken']
             client['total_days_on_medication'] = result['total_days_on_medication']
             client['drug_concepts'] = result['drug_concepts']
             client['transfer_in'] = result['transfer_in']
+            results << client
           end
-          clients
+          results
         end
 
         def fetch_patients_on_tpt
@@ -168,35 +173,13 @@ module ARTService
               AND drug_order.quantity > 0
             WHERE person.voided = 0
               AND person.person_id NOT IN (
-                 /* People who had a dispensation prior to the 3 to 9 months before start of reporting period.
-                   Continuing medication after a 9 months break is considered a restart hence such patients
-                   are classified as new on TPT.
-                 */
-                SELECT DISTINCT encounter.patient_id
-                FROM encounter
-                INNER JOIN orders
-                  ON orders.encounter_id = encounter.encounter_id
-                  AND orders.concept_id IN (SELECT concept_id FROM concept_name WHERE name IN ('Rifapentine', 'Isoniazid') AND voided = 0)
-                  AND orders.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
-                  AND orders.start_date < DATE(#{start_date}) - INTERVAL 6 MONTH
-                  AND orders.start_date >= DATE(#{start_date}) - INTERVAL 15 MONTH
-                  AND orders.voided = 0
-                INNER JOIN drug_order
-                  ON drug_order.order_id = orders.order_id
-                  AND drug_order.quantity > 0
-                WHERE encounter.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
-                  AND encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'Treatment')
-                  AND encounter.encounter_datetime < DATE(#{start_date}) - INTERVAL 6 MONTH
-                  AND encounter.encounter_datetime >= DATE(#{start_date}) - INTERVAL 15 MONTH
-                  AND encounter.voided = 0
-              ) AND person.person_id NOT IN (
               /* External consultations */
               SELECT DISTINCT registration_encounter.patient_id
-              FROM patient_program
-              INNER JOIN program ON program.name = 'HIV Program'
+              FROM patient_program pp
+              INNER JOIN program p ON p.program_id = pp.program_id AND p.name = 'HIV Program' AND p.retired = 0
               INNER JOIN encounter AS registration_encounter
-                ON registration_encounter.patient_id = patient_program.patient_id
-                AND registration_encounter.program_id = patient_program.program_id
+                ON registration_encounter.patient_id = pp.patient_id
+                AND registration_encounter.program_id = pp.program_id
                 AND registration_encounter.encounter_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
                 AND registration_encounter.voided = 0
               INNER JOIN (
@@ -218,7 +201,7 @@ module ARTService
                 AND patient_type_obs.concept_id IN (SELECT concept_id FROM concept_name WHERE name = 'Type of patient' AND voided = 0)
                 AND patient_type_obs.value_coded IN (SELECT concept_id FROM concept_name WHERE name IN ('Drug refill', 'External consultation') AND voided = 0)
                 AND patient_type_obs.voided = 0
-              WHERE patient_program.voided = 0
+              WHERE pp.voided = 0
             )
             GROUP BY person.person_id
           SQL
@@ -226,31 +209,35 @@ module ARTService
 
         def individual_tpt_report(patient_id)
           result = process_current_tpt_course_date(patient_id)
-          start_date = result[:start_date]
-          end_date = result[:end_date]
+          c_start_date = result[:start_date]
+          c_end_date = result[:end_date]
           ActiveRecord::Base.connection.select_one <<-SQL
             SELECT
-                DATE(MIN(o.start_date)) AS tpt_initiation_date,
+                CASE
+                  WHEN tpt_transfer_in_obs.value_datetime IS NULL THEN DATE(MIN(o.start_date))
+                  ELSE tpt_transfer_in_obs.value_datetime
+                END AS tpt_initiation_date,
                 SUM(dor.quantity) + SUM(CASE WHEN tpt_transfer_in_obs.value_numeric IS NOT NULL THEN tpt_transfer_in_obs.value_numeric ELSE 0 END) AS total_pills_taken,
                 SUM(DATEDIFF(o.auto_expire_date, o.start_date)) + SUM(CASE WHEN tpt_transfer_in_obs.value_datetime IS NOT NULL THEN DATEDIFF(tpt_transfer_in_obs.obs_datetime, tpt_transfer_in_obs.value_datetime) ElSE 0 END) AS total_days_on_medication,
                 GROUP_CONCAT(DISTINCT o.concept_id SEPARATOR ',') AS drug_concepts,
                 CASE
                   WHEN tpt_transfer_in_obs.value_numeric IS NOT NULL THEN TRUE
                   ELSE FALSE
-                END AS transfer_in
+                END AS transfer_in,
+                MAX(o.start_date) AS last_dispensed_date
             FROM orders o
             INNER JOIN concept_name cn
               ON cn.concept_id = o.concept_id
               AND cn.name IN ('Rifapentine', 'Isoniazid', 'Isoniazid/Rifapentine')
             LEFT JOIN obs tpt_transfer_in_obs
               ON tpt_transfer_in_obs.person_id = o.patient_id
-              AND tpt_transfer_in_obs.concept_id = #{ConceptName.find_by_name('TPT Drugs Received').id}
+              AND tpt_transfer_in_obs.concept_id = #{ConceptName.find_by_name('TPT Drugs Received').concept_id}
               AND tpt_transfer_in_obs.voided = 0
-              AND tpt_transfer_in_obs.value_coded IN (SELECT drug_id FROM drug WHERE concept_id IN (SELECT concept_id FROM concept_name WHERE name IN ('Rifapentine', 'Isoniazid', 'Isoniazid/Rifapentine')))
+              AND tpt_transfer_in_obs.value_drug IN (SELECT drug_id FROM drug WHERE concept_id IN (SELECT concept_id FROM concept_name WHERE name IN ('Rifapentine', 'Isoniazid', 'Isoniazid/Rifapentine')))
             INNER JOIN drug_order dor
               ON dor.order_id = o.order_id
               AND dor.quantity > 0
-            WHERE DATE(o.start_date) BETWEEN DATE(#{start_date}) AND DATE(#{end_date})
+            WHERE DATE(o.start_date) BETWEEN DATE('#{c_start_date}') AND DATE(#{c_end_date})
             AND o.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
             AND o.voided = 0
             AND o.patient_id = #{patient_id}
