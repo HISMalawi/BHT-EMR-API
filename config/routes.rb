@@ -208,6 +208,7 @@ Rails.application.routes.draw do
       resources :drugs do
         get '/barcode', to: 'drugs#print_barcode'
       end
+      get '/arv_drugs' => 'drugs#arv_drugs'
 
       resources :drug_orders
       resources :orders do
