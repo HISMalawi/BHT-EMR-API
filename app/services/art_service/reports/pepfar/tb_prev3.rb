@@ -95,28 +95,41 @@ module ARTService
           (tpt_initiation_date >= art_start_date) && (tpt_initiation_date < art_start_date + 180.days)
         end
 
+        def remove_transfer_in_patients(report)
+        end
+
         def patients_on_tpt
+          clients = fetch_patients_on_tpt.to_a
+          clients.each do |client|
+            result = individual_tpt_report(client['patient_id'])
+            client['tpt_initiation_date'] = result['tpt_initiation_date']
+            client['total_pills_taken'] = result['total_pills_taken']
+            client['total_days_on_medication'] = result['total_days_on_medication']
+            client['drug_concepts'] = result['drug_concepts']
+            client['transfer_in'] = result['transfer_in']
+          end
+          clients
+        end
+
+        def fetch_patients_on_tpt
           ActiveRecord::Base.connection.select_all <<~SQL
             SELECT person.person_id AS patient_id,
                    patient_identifier.identifier AS arv_number,
                    DATE(MIN(orders.start_date)) AS tpt_initiation_date,
                    date_antiretrovirals_started(person.person_id, MIN(denominator_patient.start_date)) AS art_start_date,
                    patient_outcome(person.person_id, DATE(#{end_date})) AS outcome,
-                   SUM(drug_order.quantity) + SUM(CASE WHEN tpt_transfer_in_obs.value_numeric IS NOT NULL THEN tpt_transfer_in_obs.value_numeric ELSE 0 END) AS total_pills_taken,
-                   SUM(DATEDIFF(orders.auto_expire_date, orders.start_date)) + SUM(CASE WHEN tpt_transfer_in_obs.value_datetime IS NOT NULL THEN DATEDIFF(tpt_transfer_in_obs.obs_datetime, tpt_transfer_in_obs.value_datetime) ElSE 0 END) AS total_days_on_medication,
                    person.gender,
                    person.birthdate,
-                   disaggregated_age_group(person.birthdate, DATE(#{end_date})) AS age_group,
-                   GROUP_CONCAT(DISTINCT orders.concept_id SEPARATOR ',') AS drug_concepts
+                   disaggregated_age_group(person.birthdate, DATE(#{end_date})) AS age_group
             FROM person
             LEFT JOIN patient_identifier
               ON patient_identifier.patient_id = person.person_id
               AND patient_identifier.voided = 0
               AND patient_identifier.identifier_type IN (SELECT patient_identifier_type_id FROM patient_identifier_type WHERE name = 'ARV Number')
-              INNER JOIN(
+            INNER JOIN(
                 SELECT denominator_encounter.patient_id AS patient_id, patient_state.start_date AS start_date
-                  FROM person
-                  INNER JOIN patient_program
+                FROM person
+                INNER JOIN patient_program
                   ON patient_program.patient_id = person.person_id
                   AND patient_program.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
                   AND patient_program.voided = 0
@@ -133,7 +146,7 @@ module ARTService
                   AND denominator_encounter.encounter_datetime <= DATE(#{start_date})
                   AND denominator_encounter.voided = 0
                 GROUP BY patient_id
-              ) AS denominator_patient ON denominator_patient.patient_id = person.person_id
+            ) AS denominator_patient ON denominator_patient.patient_id = person.person_id
             INNER JOIN encounter AS prescription_encounter
               ON prescription_encounter.patient_id = denominator_patient.patient_id
               AND prescription_encounter.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
@@ -153,12 +166,6 @@ module ARTService
             INNER JOIN drug_order
               ON drug_order.order_id = orders.order_id
               AND drug_order.quantity > 0
-            LEFT JOIN obs tpt_transfer_in_obs
-              ON tpt_transfer_in_obs.person_id = person.person_id
-              AND tpt_transfer_in_obs.concept_id = #{ConceptName.find_by_name('TPT Drugs Received').id}
-              AND tpt_transfer_in_obs.voided = 0
-              AND tpt_transfer_in_obs.obs_datetime < DATE(#{start_date})
-              AND tpt_transfer_in_obs.value_coded IN (#{ConceptName.where(name: ['Rifapentine', 'Isoniazid', 'Isoniazid/Rifapentine']).select(:concept_id).to_sql})
             WHERE person.voided = 0
               AND person.person_id NOT IN (
                  /* People who had a dispensation prior to the 3 to 9 months before start of reporting period.
@@ -226,7 +233,11 @@ module ARTService
                 DATE(MIN(o.start_date)) AS tpt_initiation_date,
                 SUM(dor.quantity) + SUM(CASE WHEN tpt_transfer_in_obs.value_numeric IS NOT NULL THEN tpt_transfer_in_obs.value_numeric ELSE 0 END) AS total_pills_taken,
                 SUM(DATEDIFF(o.auto_expire_date, o.start_date)) + SUM(CASE WHEN tpt_transfer_in_obs.value_datetime IS NOT NULL THEN DATEDIFF(tpt_transfer_in_obs.obs_datetime, tpt_transfer_in_obs.value_datetime) ElSE 0 END) AS total_days_on_medication,
-                GROUP_CONCAT(DISTINCT o.concept_id SEPARATOR ',') AS drug_concepts
+                GROUP_CONCAT(DISTINCT o.concept_id SEPARATOR ',') AS drug_concepts,
+                CASE
+                  WHEN tpt_transfer_in_obs.value_numeric IS NOT NULL THEN TRUE
+                  ELSE FALSE
+                END AS transfer_in
             FROM orders o
             INNER JOIN concept_name cn
               ON cn.concept_id = o.concept_id
@@ -246,8 +257,6 @@ module ARTService
             GROUP BY o.patient_id
           SQL
         end
-
-        public
 
         def process_current_tpt_course_date(patient_id)
           result = client_tpt_dates(patient_id)
