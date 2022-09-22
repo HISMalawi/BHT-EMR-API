@@ -218,6 +218,9 @@ module ARTService
         end
 
         def individual_tpt_report(patient_id)
+          result = process_current_tpt_course_date(patient_id)
+          start_date = result[:start_date]
+          end_date = result[:end_date]
           ActiveRecord::Base.connection.select_one <<-SQL
             SELECT
                 DATE(MIN(o.start_date)) AS tpt_initiation_date,
@@ -232,15 +235,83 @@ module ARTService
               ON tpt_transfer_in_obs.person_id = o.patient_id
               AND tpt_transfer_in_obs.concept_id = #{ConceptName.find_by_name('TPT Drugs Received').id}
               AND tpt_transfer_in_obs.voided = 0
-              AND tpt_transfer_in_obs.value_coded IN (#{ConceptName.where(name: ['Rifapentine', 'Isoniazid', 'Isoniazid/Rifapentine']).select(:concept_id).to_sql})
+              AND tpt_transfer_in_obs.value_coded IN (SELECT drug_id FROM drug WHERE concept_id IN (SELECT concept_id FROM concept_name WHERE name IN ('Rifapentine', 'Isoniazid', 'Isoniazid/Rifapentine')))
             INNER JOIN drug_order dor
               ON dor.order_id = o.order_id
               AND dor.quantity > 0
-            WHERE DATE(o.start_date) <= DATE(#{end_date})
+            WHERE DATE(o.start_date) BETWEEN DATE(#{start_date}) AND DATE(#{end_date})
             AND o.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
             AND o.voided = 0
             AND o.patient_id = #{patient_id}
             GROUP BY o.patient_id
+          SQL
+        end
+
+        public
+
+        def process_current_tpt_course_date(patient_id)
+          result = client_tpt_dates(patient_id)
+          return { start_date: '1900-01-01', end_date: end_date } if result.blank?
+
+          sorted_result = result.sort { |a, b| a['end_date'].to_date <=> b['start_date'].to_date }.reverse
+          return_date = { start_date: '1900-01-01', end_date: end_date }
+
+          course_interruption = result.first['course'] == '3HP' ? 1 : 2
+          # loop through the result array and find the first gap in the dates that equals the course interruption
+          sorted_result.each_with_index do |row, index|
+            next if index.zero?
+
+            diff = ActiveRecord::Base.connection.select_one("SELECT TIMESTAMPDIFF(MONTH,DATE('#{row['end_date']}'), DATE('#{sorted_result[index - 1]['start_date']}')) as months")['months']
+
+            if diff.to_i >= course_interruption
+              return_date = { start_date: ActiveRecord::Base.connection.quote(sorted_result[index - 1]['start_date']), end_date: end_date }
+              break
+            end
+          end
+          return_date
+        end
+
+        def client_tpt_dates(patient_id)
+          ActiveRecord::Base.connection.select_all <<~SQL
+            (
+              SELECT
+                DATE(o.value_datetime) AS start_date,
+                DATE(o.obs_datetime) AS end_date,
+                CASE
+                  WHEN count(distinct(o.value_drug)) > 1 THEN '3HP'
+                  WHEN o.value_drug = #{isoniazid_rifapentine_drug.drug_id} THEN '3HP'
+                  ELSE '6H'
+                END AS course
+              FROM obs o
+              WHERE o.concept_id = #{ConceptName.find_by_name('TPT Drugs Received').concept_id}
+              AND o.voided = 0
+              AND o.value_drug IN (SELECT drug_id FROM drug WHERE concept_id IN (SELECT concept_id FROM concept_name WHERE name IN ('Rifapentine', 'Isoniazid', 'Isoniazid/Rifapentine')))
+              AND o.person_id = #{patient_id}
+              AND o.value_numeric
+              AND DATE(o.obs_datetime) <= DATE(#{end_date})
+              GROUP BY o.obs_datetime
+              ORDER BY o.obs_datetime DESC
+            )
+            UNION
+            (
+              SELECT
+                DATE(o.start_date) AS start_date,
+                DATE(o.auto_expire_date) AS end_date,
+                CASE
+                  WHEN count(distinct(o.concept_id)) > 1 THEN '3HP'
+                  WHEN o.concept_id = #{isoniazid_rifapentine_concept.concept_id} THEN '3HP'
+                  ELSE '6H'
+                END AS course
+              FROM orders o
+              INNER JOIN encounter e ON e.encounter_id = o.encounter_id AND e.voided = 0 AND e.program_id = 1 /* HIV Program */
+              WHERE o.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
+              AND o.voided = 0
+              AND o.concept_id IN (#{ConceptName.where(name: ['Rifapentine', 'Isoniazid', 'Isoniazid/Rifapentine']).select(:concept_id).to_sql})
+              AND o.patient_id = #{patient_id}
+              AND DATE(o.start_date) <= DATE(#{end_date})
+              GROUP BY o.start_date
+              ORDER BY o.start_date DESC
+            )
           SQL
         end
 
@@ -270,6 +341,10 @@ module ARTService
 
         def isoniazid_rifapentine_concept
           @isoniazid_rifapentine_concept ||= ConceptName.find_by!(name: 'Isoniazid/Rifapentine')
+        end
+
+        def isoniazid_rifapentine_drug
+          @isoniazid_rifapentine_drug ||= Drug.find_by!(concept_id: isoniazid_rifapentine_concept.concept_id)
         end
       end
     end
