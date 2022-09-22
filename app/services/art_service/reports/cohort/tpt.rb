@@ -123,11 +123,10 @@ class ARTService::Reports::Cohort::Tpt
         AND encounter.program_id = (SELECT program_id FROM program WHERE name = 'HIV Program' LIMIT 1)
         AND encounter.voided = 0
       LEFT JOIN obs tpt_transfer_in_obs
-        ON tpt_transfer_in_obs.person_id = cohort_patients.patient_id
-        AND tpt_transfer_in_obs.concept_id = #{ConceptName.find_by_name('TPT Drugs Received').id}
+        ON tpt_transfer_in_obs.person_id = orders.patient_id
+        AND tpt_transfer_in_obs.concept_id = #{ConceptName.find_by_name('TPT Drugs Received').concept_id}
         AND tpt_transfer_in_obs.voided = 0
-        AND tpt_transfer_in_obs.obs_datetime < DATE(#{start_date})
-        AND tpt_transfer_in_obs.value_coded IN (#{ConceptName.where(name: ['Rifapentine', 'Isoniazid', 'Isoniazid/Rifapentine']).select(:concept_id).to_sql})
+        AND tpt_transfer_in_obs.value_drug IN (SELECT drug_id FROM drug WHERE concept_id IN (SELECT concept_id FROM concept_name WHERE name IN ('Rifapentine', 'Isoniazid', 'Isoniazid/Rifapentine')))
       LEFT JOIN (
         SELECT
           o.patient_id,
