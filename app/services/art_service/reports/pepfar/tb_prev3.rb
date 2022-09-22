@@ -67,6 +67,8 @@ module ARTService
 
         def load_patients_into_report(report, patients, tpt, &patient_has_completed_tpt)
           patients.each do |patient|
+            next if patient['transfer_in'] == 1 && !patient_has_completed_tpt[patient]
+
             age_group = patient['age_group']
             gender = patient['gender']&.first&.upcase || 'Unknown'
             tpt_states = find_patient_tpt_state(patient, &patient_has_completed_tpt)
@@ -79,7 +81,11 @@ module ARTService
 
         def find_patient_tpt_state(patient, &patient_has_completed_tpt)
           if patient_has_completed_tpt[patient]
+            return %i[completed_new_on_art] if patient_new_on_art?(patient) && patient['transfer_in'] == 1
+
             return %i[started_new_on_art completed_new_on_art] if patient_new_on_art?(patient)
+
+            return %i[completed_previously_on_art] if patient['transfer_in'] == 1
 
             return %i[started_previously_on_art completed_previously_on_art]
           end
@@ -94,9 +100,6 @@ module ARTService
           art_start_date = patient['art_start_date'].to_date
 
           (tpt_initiation_date >= art_start_date) && (tpt_initiation_date < art_start_date + 180.days)
-        end
-
-        def remove_transfer_in_patients(report)
         end
 
         def patients_on_tpt
@@ -221,8 +224,8 @@ module ARTService
                 SUM(DATEDIFF(o.auto_expire_date, o.start_date)) + SUM(CASE WHEN tpt_transfer_in_obs.value_datetime IS NOT NULL THEN DATEDIFF(tpt_transfer_in_obs.obs_datetime, tpt_transfer_in_obs.value_datetime) ElSE 0 END) AS total_days_on_medication,
                 GROUP_CONCAT(DISTINCT o.concept_id SEPARATOR ',') AS drug_concepts,
                 CASE
-                  WHEN tpt_transfer_in_obs.value_numeric IS NOT NULL THEN TRUE
-                  ELSE FALSE
+                  WHEN tpt_transfer_in_obs.value_numeric IS NOT NULL THEN 1
+                  ELSE 0
                 END AS transfer_in,
                 MAX(o.start_date) AS last_dispensed_date
             FROM orders o
