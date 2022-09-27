@@ -311,8 +311,10 @@ class OPDService::VisitLabel
           label.draw_multi_text("Outcomes : #{outcomes.uniq.join(',')}", concepts_font)
         end
     end
-    initial = User.current.person.names.last.given_name.first + "."
-    last_name = User.current.person.names.last.family_name
+    program_id = Program.find_by_name('OPD Program').program_id
+    user_id = Encounter.where(patient_id: patient['patient_id'], program_id: program_id).order(encounter_datetime: :desc).first.creator
+    initial = User.find(user_id).person.names.last.given_name.first + "."
+    last_name = User.find(user_id).person.names.last.family_name
     label.draw_multi_text("___________________________________________________", concepts_font)
     label.draw_multi_text("Seen by: #{initial + last_name} at " +
       " #{Location.current.name}", title_font_bottom)

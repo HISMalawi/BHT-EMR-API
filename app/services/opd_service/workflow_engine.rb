@@ -42,6 +42,7 @@ module OPDService
     PRESENTING_COMPLAINTS = 'PRESENTING COMPLAINTS'
     OUTPATIENT_DIAGNOSIS = 'OUTPATIENT DIAGNOSIS'
     PRESCRIPTION = 'PRESCRIPTION'
+    DISPENSING = 'DISPENSING'
     TREATMENT = 'TREATMENT'
 =begin
     # Encounters graph
@@ -63,7 +64,8 @@ module OPDService
       VITALS => PRESENTING_COMPLAINTS,
       PRESENTING_COMPLAINTS => OUTPATIENT_DIAGNOSIS,
       OUTPATIENT_DIAGNOSIS => PRESCRIPTION,
-      PRESCRIPTION => END_STATE
+      PRESCRIPTION => DISPENSING,
+      DISPENSING => END_STATE
     }.freeze
 
     STATE_CONDITIONS = {
@@ -72,6 +74,7 @@ module OPDService
       PRESENTING_COMPLAINTS => %i[patient_does_not_have_complaints?],
       OUTPATIENT_DIAGNOSIS => %i[patient_does_not_have_diagnosis?],
       PRESCRIPTION => %i[patient_does_not_have_prescription?],
+      DISPENSING => %i[patient_does_not_have_dispensation?],
     }.freeze
 
     def load_user_activities
@@ -95,6 +98,8 @@ module OPDService
           OUTPATIENT_DIAGNOSIS
         when /Prescription/i
           PRESCRIPTION
+        when /Dispensing/i
+          DISPENSING
         else
           Rails.logger.warn "Invalid OPD activity in user properties: #{activity}"
         end
@@ -166,6 +171,18 @@ module OPDService
     #
     def patient_does_not_have_prescription?
       encounter_type = EncounterType.find_by name:TREATMENT
+      encounter = Encounter.joins(:type).where(
+        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
+        @patient.patient_id, encounter_type.encounter_type_id, @date
+      ).order(encounter_datetime: :desc).first
+
+      encounter.blank?
+    end
+
+  # Checks if patient has prescription today
+    #
+    def patient_does_not_have_dispensation?
+      encounter_type = EncounterType.find_by name:DISPENSING
       encounter = Encounter.joins(:type).where(
         'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
         @patient.patient_id, encounter_type.encounter_type_id, @date
