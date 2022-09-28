@@ -212,7 +212,7 @@ module ARTService
 
         def individual_tpt_report(patient_id)
           result = process_current_tpt_course_date(patient_id)
-          c_start_date = result[:start_date]
+          c_start_date = ActiveRecord::Base.connection.quote(result[:start_date])
           c_end_date = result[:end_date]
           ActiveRecord::Base.connection.select_one <<-SQL
             SELECT
@@ -240,7 +240,7 @@ module ARTService
             INNER JOIN drug_order dor
               ON dor.order_id = o.order_id
               AND dor.quantity > 0
-            WHERE DATE(o.start_date) BETWEEN DATE('#{c_start_date}') AND DATE(#{c_end_date})
+            WHERE DATE(o.start_date) BETWEEN DATE(#{c_start_date}) AND DATE(#{c_end_date})
             AND o.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
             AND o.voided = 0
             AND o.patient_id = #{patient_id}
@@ -263,7 +263,7 @@ module ARTService
             diff = ActiveRecord::Base.connection.select_one("SELECT TIMESTAMPDIFF(MONTH,DATE('#{row['end_date']}'), DATE('#{sorted_result[index - 1]['start_date']}')) as months")['months']
 
             if diff.to_i >= course_interruption
-              return_date = { start_date: ActiveRecord::Base.connection.quote(sorted_result[index - 1]['start_date']), end_date: end_date }
+              return_date = { start_date: sorted_result[index - 1]['start_date'], end_date: end_date }
               break
             end
           end
@@ -286,7 +286,7 @@ module ARTService
               AND o.voided = 0
               AND o.value_drug IN (SELECT drug_id FROM drug WHERE concept_id IN (SELECT concept_id FROM concept_name WHERE name IN ('Rifapentine', 'Isoniazid', 'Isoniazid/Rifapentine')))
               AND o.person_id = #{patient_id}
-              AND o.value_numeric
+              AND o.value_numeric IS NOT NULL
               AND DATE(o.obs_datetime) <= DATE(#{end_date})
               GROUP BY o.obs_datetime
               ORDER BY o.obs_datetime DESC
@@ -303,10 +303,12 @@ module ARTService
                 END AS course
               FROM orders o
               INNER JOIN encounter e ON e.encounter_id = o.encounter_id AND e.voided = 0 AND e.program_id = 1 /* HIV Program */
+              INNER JOIN drug_order dor ON dor.order_id = o.order_id AND dor.quantity > 0
               WHERE o.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
               AND o.voided = 0
               AND o.concept_id IN (#{ConceptName.where(name: ['Rifapentine', 'Isoniazid', 'Isoniazid/Rifapentine']).select(:concept_id).to_sql})
               AND o.patient_id = #{patient_id}
+              AND o.auto_expire_date IS NOT NULL
               AND DATE(o.start_date) <= DATE(#{end_date})
               GROUP BY o.start_date
               ORDER BY o.start_date DESC
