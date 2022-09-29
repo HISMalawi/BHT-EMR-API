@@ -48,6 +48,10 @@ module ARTService
                  end, completed: completed }
         end
 
+        def fetch_individual_report(patient_id)
+          individual_tpt_report(patient_id)
+        end
+
         private
 
         def init_report
