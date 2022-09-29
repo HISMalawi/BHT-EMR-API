@@ -80,6 +80,29 @@ module ARTService
       def tpt_clients
         ActiveRecord::Base.connection.select_all <<~SQL
           SELECT
+            e.patient_id
+          FROM patient_program pp
+          INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id AND ps.voided = 0 AND ps.state = 7
+          INNER JOIN person p ON p.person_id = pp.patient_id AND p.voided = 0
+          INNER JOIN encounter e ON e.patient_id = pp.patient_id
+            AND e.encounter_type = 25 /* Treatment */
+            AND e.voided = 0
+            AND e.program_id = 1 /* HIV Program */
+          INNER JOIN orders o ON o.encounter_id = e.encounter_id
+            AND o.order_type_id = #{OrderType.find_by_name('Drug order').id}
+            AND o.voided = 0
+            AND o.concept_id IN (#{tpt_drugs.to_sql})
+            AND DATE(o.start_date) BETWEEN #{first_day_of_month} AND DATE(#{last_day_of_month})
+          INNER JOIN drug_order dor ON dor.order_id = o.order_id AND dor.voided = 0 AND dor.quantity > 0
+          WHERE pp.program_id = 1 /* HIV Program */
+          AND pp.voided = 0
+          AND ps.start_date >= DATE('#{@start_date}') AND ps.start_date <= DATE('#{@end_date}')
+        SQL
+      end
+
+      def tpt_clients
+        ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT
             p.person_id AS patient_id,
             DATE(min(o.start_date)) AS start_date,
             DATE(max(o.start_date)) AS last_dispense_date,
@@ -202,6 +225,14 @@ module ARTService
 
       def tpt_drugs
         ConceptName.where(name: ['INH', 'Isoniazid/Rifapentine', 'Rifapentine']).select(:concept_id)
+      end
+
+      def first_day_of_month
+        @first_day_of_month ||= ActiveRecord::Base.connection.quote((@start_date - 6.month).beginning_of_month)
+      end
+
+      def last_day_of_month
+        @last_day_of_month ||= ActiveRecord::Base.connection.quote((@start_date - 6.month).end_of_month)
       end
     end
   end

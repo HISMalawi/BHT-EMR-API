@@ -253,7 +253,7 @@ module ARTService
           return { start_date: '1900-01-01', end_date: end_date } if result.blank?
 
           sorted_result = result.sort { |a, b| a['end_date'].to_date <=> b['start_date'].to_date }.reverse
-          return_date = { start_date: '1900-01-01', end_date: end_date }
+          return_date = { start_date: sorted_result.last['start_date'], end_date: end_date }
 
           course_interruption = result.first['course'] == '3HP' ? 1 : 2
           # loop through the result array and find the first gap in the dates that equals the course interruption
