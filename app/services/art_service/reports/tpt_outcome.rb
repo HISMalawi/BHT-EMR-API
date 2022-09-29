@@ -92,29 +92,74 @@ module ARTService
             AND o.order_type_id = #{OrderType.find_by_name('Drug order').id}
             AND o.voided = 0
             AND o.concept_id IN (#{tpt_drugs.to_sql})
-            AND DATE(o.start_date) BETWEEN #{first_day_of_month} AND DATE(#{last_day_of_month})
           INNER JOIN drug_order dor ON dor.order_id = o.order_id AND dor.voided = 0 AND dor.quantity > 0
-          WHERE pp.program_id = 1 /* HIV Program */
-          AND pp.patient_id NOT IN (
-            /* Exclude patients who had TPT dispensation before */
-            SELECT
-              e.patient_id
-            FROM patient_program pp
-            INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id AND ps.voided = 0 AND ps.state = 7
-            INNER JOIN person p ON p.person_id = pp.patient_id AND p.voided = 0
-            INNER JOIN encounter e ON e.patient_id = pp.patient_id
-              AND e.encounter_type = 25 /* Treatment */
+          INNER JOIN (
+            SELECT e.patient_id
+            FROM encounter e
+            INNER JOIN orders o ON o.encounter_id = e.encounter_id
+              AND o.voided = 0
+              AND o.order_type_id = #{OrderType.find_by_name('Drug order').id}
+              AND o.concept_id IN (#{tpt_drugs.to_sql})
+              AND DATE(o.start_date) BETWEEN #{first_day_of_month} AND DATE(#{last_day_of_month})
+            INNER JOIN drug_order dor ON dor.order_id = o.order_id AND dor.voided = 0 AND dor.quantity > 0
+            WHERE e.encounter_type = 25 /* Treatment */
               AND e.voided = 0
               AND e.program_id = 1 /* HIV Program */
-            INNER JOIN orders o ON o.encounter_id = e.encounter_id
-              AND o.order_type_id = #{OrderType.find_by_name('Drug order').id}
-              AND o.voided = 0
-              AND o.concept_id IN (#{tpt_drugs.to_sql})
-              AND DATE(o.start_date) BETWEEN #{first_day_of_month} - INTERVAL 1 MONTH AND DATE(#{first_day_of_month}) - INTERVAL 1 DAY
-            INNER JOIN drug_order dor ON dor.order_id = o.order_id AND dor.voided = 0 AND dor.quantity > 0
-          )
-          AND pp.voided = 0
-          AND ps.start_date >= DATE('#{@start_date}') AND ps.start_date <= DATE('#{@end_date}')
+              AND DATE(e.encounter_datetime) BETWEEN #{first_day_of_month} AND DATE(#{last_day_of_month})
+            GROUP BY e.patient_id
+          ) clients_on_tpt ON clients_on_tpt.patient_id = e.patient_id
+          WHERE pp.program_id = 1 /* HIV Program */
+            AND pp.patient_id NOT IN (
+              /* Exclude patients who had TPT dispensation before */
+              SELECT
+                e.patient_id
+              FROM patient_program pp
+              INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id AND ps.voided = 0 AND ps.state = 7
+              INNER JOIN person p ON p.person_id = pp.patient_id AND p.voided = 0
+              INNER JOIN encounter e ON e.patient_id = pp.patient_id
+                AND e.encounter_type = 25 /* Treatment */
+                AND e.voided = 0
+                AND e.program_id = 1 /* HIV Program */
+              INNER JOIN orders o ON o.encounter_id = e.encounter_id
+                AND o.order_type_id = #{OrderType.find_by_name('Drug order').id}
+                AND o.voided = 0
+                AND o.concept_id IN (#{tpt_drugs.to_sql})
+                AND DATE(o.start_date) BETWEEN #{first_day_of_month} - INTERVAL 1 MONTH AND DATE(#{first_day_of_month}) - INTERVAL 1 DAY
+              INNER JOIN drug_order dor ON dor.order_id = o.order_id AND dor.voided = 0 AND dor.quantity > 0
+            )
+            AND pp.patient_id  NOT IN (
+              /* External consultations */
+              SELECT DISTINCT registration_encounter.patient_id
+              FROM patient_program
+              INNER JOIN program ON program.name = 'HIV Program'
+              INNER JOIN encounter AS registration_encounter
+                ON registration_encounter.patient_id = patient_program.patient_id
+                AND registration_encounter.program_id = patient_program.program_id
+                AND registration_encounter.encounter_datetime < DATE(#{@end_date}) + INTERVAL 1 DAY
+                AND registration_encounter.voided = 0
+              INNER JOIN (
+                SELECT MAX(encounter.encounter_datetime) AS encounter_datetime, encounter.patient_id
+                FROM encounter
+                INNER JOIN encounter_type
+                  ON encounter_type.encounter_type_id = encounter.encounter_type
+                  AND encounter_type.name = 'Registration'
+                INNER JOIN program
+                  ON program.program_id = encounter.program_id
+                  AND program.name = 'HIV Program'
+                WHERE encounter.encounter_datetime < DATE(#{@end_date}) AND encounter.voided = 0
+                GROUP BY encounter.patient_id
+              ) AS max_registration_encounter
+                ON max_registration_encounter.patient_id = registration_encounter.patient_id
+                AND max_registration_encounter.encounter_datetime = registration_encounter.encounter_datetime
+              INNER JOIN obs AS patient_type_obs
+                ON patient_type_obs.encounter_id = registration_encounter.encounter_id
+                AND patient_type_obs.concept_id IN (SELECT concept_id FROM concept_name WHERE name = 'Type of patient' AND voided = 0)
+                AND patient_type_obs.value_coded IN (SELECT concept_id FROM concept_name WHERE name IN ('Drug refill', 'External consultation') AND voided = 0)
+                AND patient_type_obs.voided = 0
+              WHERE patient_program.voided = 0
+            )
+            AND pp.voided = 0
+            AND ps.start_date >= DATE('#{@start_date}') AND ps.start_date <= DATE('#{@end_date}')
         SQL
       end
 
