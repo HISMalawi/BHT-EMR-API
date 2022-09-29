@@ -29,6 +29,8 @@ module ARTService
 
     def regimen_extras(patient_weight, name = nil)
       name = %w[INH Pyridoxine] if name&.casecmp?('INH') # INH is always paired with pyridoxine
+      name = %w[INH Rifapentine Pyridoxine] if name&.casecmp?('Rifapentine') # Rifapentine is always paired with pyridoxine
+      name = ['INH / RFP', 'Pyridoxine'] if name&.casecmp?('INH / RFP') # INH / RFP is always paired with pyridoxine
       name ||= %w[Pyridoxine INH CPT]
 
       drug_id ||= Drug.where(concept: Concept.joins(:concept_names)
