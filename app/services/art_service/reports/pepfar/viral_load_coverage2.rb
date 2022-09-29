@@ -258,19 +258,6 @@ module ARTService
               ) AS previous ON previous.patient_program_id = ps.patient_program_id AND previous.start_date = ps.start_date
               WHERE pp.program_id = 1 AND pp.voided = 0 AND ps.state IN (#{adverse_outcomes.join(',')})
             ) state_within_order_period ON state_within_order_period.patient_id = p.person_id
-            INNER JOIN (
-              SELECT pp.patient_id, ps.state, ps.start_date
-              FROM patient_program pp
-              INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id
-              INNER JOIN (
-                SELECT ps.patient_program_id, MAX(ps.start_date) start_date
-                  FROM patient_program pap
-                  INNER JOIN patient_state ps ON ps.patient_program_id = pap.patient_program_id
-                  WHERE pap.program_id = 1 AND ps.start_date <= DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH
-                  GROUP BY ps.patient_program_id
-              ) AS previous ON previous.patient_program_id = ps.patient_program_id AND previous.start_date = ps.start_date
-              WHERE pp.program_id = 1 AND pp.voided = 0
-            ) state_before_period ON state_before_period.patient_id = p.person_id AND state_before_period.state NOT IN (#{adverse_outcomes.join(',')})
             LEFT JOIN patient_identifier pid ON pid.patient_id = p.person_id AND pid.voided = 0 AND pid.identifier_type IN (#{pepfar_patient_identifier_type.to_sql})
             WHERE p.person_id NOT IN (
               SELECT orders.patient_id
