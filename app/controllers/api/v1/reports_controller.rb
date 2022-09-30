@@ -263,7 +263,8 @@ class Api::V1::ReportsController < ApplicationController
 
   def sc_arvdisp
     render json: service.sc_arvdisp(params[:start_date],
-      params[:end_date], (params[:rebuild_outcome] == 'true' ? true : false))
+      params[:end_date], (params[:rebuild_outcome] == 'true' ? true : false),
+      (params[:emastercard] == 'true' ? true : false))
   end
 
   private

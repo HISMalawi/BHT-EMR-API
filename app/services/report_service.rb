@@ -211,8 +211,8 @@ class ReportService
     engine(@program).latest_regimen_dispensed(start_date.to_date,end_date.to_date, rebuild_outcome)
   end
 
-  def sc_arvdisp(start_date, end_date, rebuild_outcome)
-    engine(@program).sc_arvdisp(start_date, end_date, rebuild_outcome)
+  def sc_arvdisp(start_date, end_date, rebuild_outcome, emastercard)
+    engine(@program).sc_arvdisp(start_date, end_date, rebuild_outcome, emastercard)
   end
 
   private

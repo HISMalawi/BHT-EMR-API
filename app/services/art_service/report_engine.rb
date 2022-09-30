@@ -191,9 +191,9 @@ module ARTService
         end_date: end_date.to_date).latest_regimen_dispensed(rebuild_outcome)
     end
 
-    def sc_arvdisp(start_date, end_date, rebuild_outcome)
+    def sc_arvdisp(start_date, end_date, rebuild_outcome, emastercard)
       REPORTS['SC_ARVDISP'].new(start_date: start_date.to_date,
-        end_date: end_date.to_date, rebuild_outcome: rebuild_outcome).report
+        end_date: end_date.to_date, rebuild_outcome: rebuild_outcome, emastercard: emastercard).report
     end
 
     private

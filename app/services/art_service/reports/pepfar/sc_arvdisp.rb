@@ -1,8 +1,9 @@
 module ARTService
   module Reports
     module Pepfar
+			# ARV Dispensation Report
       class ScArvdisp
-        DrugCategory = {
+        DRUG_CATEGORY = {
           'TLD 30-count bottles' => { drugs: [983], quantity: 30 },
           'TLD 90-count bottles' => { drugs: [983], quantity: 90 },
           'TLD 180-count bottles' => { drugs: [983], quantity: 180 },
@@ -22,12 +23,13 @@ module ARTService
             2, 9, 28, 29, 30, 31, 32, 36, 37, 41, 70, 71, 72, 90, 91,
             95, 104, 177, 732, 733, 736, 737, 813, 816, 981, 1043, 1044, 1214, 1215
           ], quantity: 'N/A' }
-        }
+					}.freeze
 
-        def initialize(start_date:, end_date:, rebuild_outcome: false)
+        def initialize(start_date:, end_date:, rebuild_outcome: false, emastercard: false)
           @completion_start_date = start_date.to_date.strftime('%Y-%m-%d 00:00:00')
           @completion_end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
           @rebuild_outcome = rebuild_outcome
+          @emastercard = emastercard
           @use_filing_number = GlobalProperty.find_by(property: 'use.filing.numbers')
                                               &.property_value
                                               &.casecmp?('true')
@@ -39,24 +41,24 @@ module ARTService
 
         private
 
-        def data
-          drug_category = [
-            { name: 'TLD 30-count bottles', units: 0, quantity: 30, dispensations: [] },
-            { name: 'TLD 90-count bottles', units: 0, quantity: 90, dispensations: [] },
-            { name: 'TLD 180-count bottles', units: 0, quantity: 180, dispensations: [] },
-            { name: 'TLE/400 30-count bottles', units: 0, quantity: 30, dispensations: [] },
-            { name: 'TLE/400 90-count bottles', units: 0, quantity: 90, dispensations: [] },
-            { name: 'TLE 600/TEE bottles', units: 0, quantity: 'N/A', dispensations: [] },
-            { name: 'DTG 10 90-count bottles', units: 0, quantity: 90, dispensations: [] },
-            { name: 'LPV/r 100/25 tabs 60 tabs/bottle', units: 0, quantity: 60, dispensations: [] },
-            { name: 'LPV/r 40/10 (pediatrics) bottles', units: 0, quantity: 'N/A', dispensations: [] },
-            { name: 'NVP (adult) bottles', units: 0, quantity: 'N/A', dispensations: [] },
-            { name: 'NVP (pediatric) bottles', units: 0, quantity: 'N/A', dispensations: [] },
-            { name: 'Other (adult) bottles', units: 0, quantity: 'N/A', dispensations: [] },
-            { name: 'Other (pediatric) bottles', units: 0, quantity: 'N/A', dispensations: [] }
-            # {name: "Other bottles", units: 0, quantity: 'N/A', dispensations: []}
-          ]
+        RESPONSE_STRUCT = [
+          { name: 'TLD 30-count bottles', units: 0, quantity: 30, dispensations: [] },
+          { name: 'TLD 90-count bottles', units: 0, quantity: 90, dispensations: [] },
+          { name: 'TLD 180-count bottles', units: 0, quantity: 180, dispensations: [] },
+          { name: 'TLE/400 30-count bottles', units: 0, quantity: 30, dispensations: [] },
+          { name: 'TLE/400 90-count bottles', units: 0, quantity: 90, dispensations: [] },
+          { name: 'TLE 600/TEE bottles', units: 0, quantity: 'N/A', dispensations: [] },
+          { name: 'DTG 10 90-count bottles', units: 0, quantity: 90, dispensations: [] },
+          { name: 'LPV/r 100/25 tabs 60 tabs/bottle', units: 0, quantity: 60, dispensations: [] },
+          { name: 'LPV/r 40/10 (pediatrics) bottles', units: 0, quantity: 'N/A', dispensations: [] },
+          { name: 'NVP (adult) bottles', units: 0, quantity: 'N/A', dispensations: [] },
+          { name: 'NVP (pediatric) bottles', units: 0, quantity: 'N/A', dispensations: [] },
+          { name: 'Other (adult) bottles', units: 0, quantity: 'N/A', dispensations: [] },
+          { name: 'Other (pediatric) bottles', units: 0, quantity: 'N/A', dispensations: [] }
+          # {name: "Other bottles", units: 0, quantity: 'N/A', dispensations: []}
+        ].freeze
 
+        def data
           dispensations = get_dispensations
 
           (dispensations || {}).map do |_order_id, dispensation_info|
@@ -64,7 +66,7 @@ module ARTService
 
             (quantities || []).each do |quantity|
               fetched_category, unit = get_category(dispensation_info[:drug_id], quantity)
-              drug_category.map do |category|
+              RESPONSE_STRUCT.map do |category|
                 next unless category[:name] == fetched_category
 
                 category[:units] += unit
@@ -80,11 +82,11 @@ module ARTService
             end
           end
 
-          drug_category
+          RESPONSE_STRUCT
         end
 
         def get_category(drug_id, quantity)
-          DrugCategory.map do |name, data|
+          DRUG_CATEGORY.map do |name, data|
             next unless data[:drugs].include?(drug_id)
 
             qty = data[:quantity]
@@ -92,7 +94,7 @@ module ARTService
             return [name, 1] if qty.to_i == quantity.to_i
           end
 
-          DrugCategory.map do |name, data|
+          DRUG_CATEGORY.map do |name, data|
             if data[:drugs].include?(drug_id)
               qty = data[:quantity]
               return [name, (quantity / qty).to_i] if quantity.to_i % qty == 0
@@ -102,35 +104,33 @@ module ARTService
         end
 
         ##
-        # these are the rules provided to us by M&E team given a drug_id and quantity
+        # these are the rules provided to us by Analyst and M&E team for EMC pack sizes
         # 1. Use the closest pack size to the quantity dispensed
-        # 2. The reminder should use the smallest pack size if the quantity dispensed is equal to the smallest pack size
-        # 3. The reminder will be ignored as this is not a valid pack size if the quantity dispensed is not equal to the smallest pack size
+        # 2. If the quantity dispensed is not a multiple of the pack size, use the next closest pack size
+        # 3. If the quantity dispensed is a multiple of the pack size, use the pack size
+        # 4. Disregard the quantity dispensed if doesnt match any of the pack sizes
         def emc_pack_size(drug_id, quantity)
-          available_pack_sizes = (DrugCategory.map do |name, data|
+          available_pack_sizes = (DRUG_CATEGORY.map do |name, data|
                                     { name: name, quantity: data[:quantity] } if data[:drugs].include?(drug_id)
                                   end).compact.uniq
           # sort the pack sizes in descending order
           available_pack_sizes = available_pack_sizes.sort_by { |pack_size| pack_size[:quantity] }.reverse
           return nil if available_pack_sizes.blank?
-          return [name, 1] if available_pack_sizes.include?('N/A')
-          return [name, 1] if available_pack_sizes.include?(quantity.to_i)
+          return [[pack_size[:name], 1]] if available_pack_sizes.include?('N/A')
+          return [[pack_size[:name], 1]] if available_pack_sizes.include?(quantity.to_i)
 
           results = []
           available_pack_sizes.each do |pack_size|
-            if quantity > pack_size[:quantity] && (quantity % pack_size[:quantity]).zero?
-              results << [name, (quantity / pack_size).to_i]
+            if quantity >= pack_size[:quantity] && (quantity % pack_size[:quantity]).zero?
+              results << [pack_size[:name], (quantity / pack_size[:quantity]).to_i]
               quantity = 0
-            elsif quantity > pack_size && quantity % pack_size != 0
-              # subtract the quantity from the pack size
-              # if the result is less than the pack size
-              # then return the pack size
-              # else return the pack size + 1
-              remainder = quantity - pack_size
-            else
-              remaining
+            elsif quantity >= pack_size[:quantity] && quantity % pack_size[:quantity] != 0
+              available_packs = (quantity / pack_size[:quantity]).floor
+              quantity -= pack_size[:quantity] * available_packs
+              results << [pack_size[:name], available_packs]
             end
           end
+          results
         end
 
         def get_dispensations
