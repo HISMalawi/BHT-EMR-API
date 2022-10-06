@@ -35,9 +35,19 @@ module ARTService
           report
         end
 
+        # rubocop:disable Metrics/MethodLength
+        # rubocop:disable Metrics/CyclomaticComplexity
+        # rubocop:disable Metrics/PerceivedComplexity
         def patient_tpt_status(patient_id)
+          return { tpt: nil, completed: false, tb_treatment: true } if patient_on_tb_treatment?(patient_id)
+
+          if patient_history_completed_tpt(patient_id)
+            return { tpt: patient_history_completed_tpt(patient_id).include?('IPT') ? '6H' : '3HP', completed: true,
+                     tb_treatment: false }
+          end
+
           patient = individual_tpt_report(patient_id)
-          return { tpt: nil, completed: false } if patient.blank?
+          return { tpt: nil, completed: false, tb_treatment: false } if patient.blank?
 
           tpt = patient_on_3hp?(patient) ? '3HP' : '6H'
           completed = patient_completed_tpt?(patient, tpt)
@@ -47,6 +57,9 @@ module ARTService
                    (patient['drug_concepts'].split(',').length > 1 ? '3HP (RFP + INH)' : 'INH 300 / RFP 300 (3HP)')
                  end, completed: completed }
         end
+        # rubocop:enable Metrics/MethodLength
+        # rubocop:enable Metrics/CyclomaticComplexity
+        # rubocop:enable Metrics/PerceivedComplexity
 
         def fetch_individual_report(patient_id)
           individual_tpt_report(patient_id)
@@ -111,7 +124,7 @@ module ARTService
           results = []
           clients.each do |client|
             result = individual_tpt_report(client['patient_id'])
-            next if result['last_dispensed_date'].to_date < check_date
+            next if result['tpt_initiation_date'].to_date < check_date
 
             client['tpt_initiation_date'] = result['tpt_initiation_date']
             client['total_pills_taken'] = result['total_pills_taken']
@@ -222,7 +235,8 @@ module ARTService
             SELECT
                 CASE
                   WHEN tpt_transfer_in_obs.value_datetime IS NULL THEN DATE(MIN(o.start_date))
-                  ELSE tpt_transfer_in_obs.value_datetime
+                  WHEN tpt_transfer_in_obs.value_datetime > MIN(o.start_date) THEN DATE(MIN(o.start_date))
+                  ELSE DATE(tpt_transfer_in_obs.value_datetime)
                 END AS tpt_initiation_date,
                 SUM(dor.quantity) + SUM(CASE WHEN tpt_transfer_in_obs.value_numeric IS NOT NULL THEN tpt_transfer_in_obs.value_numeric ELSE 0 END) AS total_pills_taken,
                 SUM(DATEDIFF(o.auto_expire_date, o.start_date)) + SUM(CASE WHEN tpt_transfer_in_obs.value_datetime IS NOT NULL THEN DATEDIFF(tpt_transfer_in_obs.obs_datetime, tpt_transfer_in_obs.value_datetime) ElSE 0 END) AS total_days_on_medication,
@@ -333,6 +347,18 @@ module ARTService
               categories.six_h << patient
             end
           end
+        end
+
+        def patient_history_completed_tpt(patient_id)
+          @patient_history_completed_tpt ||= Observation.where(person_id: patient_id,
+                                                               concept_id: ConceptName.find_by_name('Previous TB treatment history').concept_id)
+                                                        .where('value_text LIKE ? AND obs_datetime < DATE(?) + INTERVAL 1 DAY', '%Completed%', end_date)&.first&.value_text
+        end
+
+        def patient_on_tb_treatment?(patient_id)
+          Observation.where(person_id: patient_id, concept_id: ConceptName.find_by_name('TB status'),
+                            value_coded: ConceptName.find_by_name('Confirmed TB on treatment').concept_id)
+                     .where('obs_datetime < DATE(?) + INTERVAL 1 DAY', end_date).exists?
         end
 
         def patient_on_3hp?(patient)
