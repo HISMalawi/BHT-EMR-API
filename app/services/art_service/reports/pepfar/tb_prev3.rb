@@ -239,7 +239,7 @@ module ARTService
                   WHEN tpt_transfer_in_obs.value_datetime > MIN(o.start_date) THEN DATE(MIN(o.start_date))
                   ELSE DATE(tpt_transfer_in_obs.value_datetime)
                 END AS tpt_initiation_date,
-                SUM(TIMESTAMPDIFF(MONTH, o.start_date, o.auto_expire_date)) AS months_on_tpt,
+                COUNT(DISTINCT(DATE(o.start_date))) AS months_on_tpt,
                 SUM(dor.quantity) + SUM(CASE WHEN tpt_transfer_in_obs.value_numeric IS NOT NULL THEN tpt_transfer_in_obs.value_numeric ELSE 0 END) AS total_pills_taken,
                 SUM(DATEDIFF(o.auto_expire_date, o.start_date)) + SUM(CASE WHEN tpt_transfer_in_obs.value_datetime IS NOT NULL THEN DATEDIFF(tpt_transfer_in_obs.obs_datetime, tpt_transfer_in_obs.value_datetime) ElSE 0 END) AS total_days_on_medication,
                 GROUP_CONCAT(DISTINCT o.concept_id SEPARATOR ',') AS drug_concepts,
