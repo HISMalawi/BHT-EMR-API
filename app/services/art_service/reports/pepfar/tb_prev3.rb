@@ -55,7 +55,7 @@ module ARTService
                    'IPT'
                  else
                    (patient['drug_concepts'].split(',').length > 1 ? '3HP (RFP + INH)' : 'INH 300 / RFP 300 (3HP)')
-                 end, completed: completed }
+                 end, completed: completed, tb_treatment: false }
         end
         # rubocop:enable Metrics/MethodLength
         # rubocop:enable Metrics/CyclomaticComplexity
