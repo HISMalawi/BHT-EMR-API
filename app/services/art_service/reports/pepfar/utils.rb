@@ -71,9 +71,7 @@ module ARTService
         # Returns whether a patient completed their course of TPT
         def patient_completed_tpt?(patient, tpt)
           if tpt == '3HP'
-            divider = patient['drug_concepts'].split(',').length > 1 ? 14.0 : 7.0
-            days_on_medication = (patient['total_days_on_medication'] / divider).round
-            days_on_medication.days >= FULL_3HP_COURSE_DAYS
+            patient['months_on_tpt'].to_i >= 3
           else
             patient['total_pills_taken'].to_i >= FULL_6H_COURSE_PILLS
           end

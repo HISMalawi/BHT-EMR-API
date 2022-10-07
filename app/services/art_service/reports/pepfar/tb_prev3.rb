@@ -128,6 +128,7 @@ module ARTService
 
             client['tpt_initiation_date'] = result['tpt_initiation_date']
             client['total_pills_taken'] = result['total_pills_taken']
+            client['months_on_tpt'] = result['months_on_tpt']
             client['total_days_on_medication'] = result['total_days_on_medication']
             client['drug_concepts'] = result['drug_concepts']
             client['transfer_in'] = result['transfer_in']
@@ -238,6 +239,7 @@ module ARTService
                   WHEN tpt_transfer_in_obs.value_datetime > MIN(o.start_date) THEN DATE(MIN(o.start_date))
                   ELSE DATE(tpt_transfer_in_obs.value_datetime)
                 END AS tpt_initiation_date,
+                SUM(TIMESTAMPDIFF(MONTH, o.start_date, o.auto_expire_date)) AS months_on_tpt,
                 SUM(dor.quantity) + SUM(CASE WHEN tpt_transfer_in_obs.value_numeric IS NOT NULL THEN tpt_transfer_in_obs.value_numeric ELSE 0 END) AS total_pills_taken,
                 SUM(DATEDIFF(o.auto_expire_date, o.start_date)) + SUM(CASE WHEN tpt_transfer_in_obs.value_datetime IS NOT NULL THEN DATEDIFF(tpt_transfer_in_obs.obs_datetime, tpt_transfer_in_obs.value_datetime) ElSE 0 END) AS total_days_on_medication,
                 GROUP_CONCAT(DISTINCT o.concept_id SEPARATOR ',') AS drug_concepts,
@@ -270,7 +272,7 @@ module ARTService
           result = client_tpt_dates(patient_id)
           return { start_date: '1900-01-01', end_date: end_date } if result.blank?
 
-          sorted_result = result.sort { |a, b| a['end_date'].to_date <=> b['start_date'].to_date }.reverse
+          sorted_result = result.sort { |a, b| a['start_date'].to_date <=> b['start_date'].to_date }.reverse
           return_date = { start_date: sorted_result.last['start_date'], end_date: end_date }
 
           course_interruption = result.first['course'] == '3HP' ? 1 : 2
