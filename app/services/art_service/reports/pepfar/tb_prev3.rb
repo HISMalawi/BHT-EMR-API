@@ -41,8 +41,8 @@ module ARTService
         def patient_tpt_status(patient_id)
           return { tpt: nil, completed: false, tb_treatment: true } if patient_on_tb_treatment?(patient_id)
 
-          if patient_history_completed_tpt(patient_id)
-            return { tpt: patient_history_completed_tpt(patient_id).include?('IPT') ? '6H' : '3HP', completed: true,
+          if patient_history_on_completed_tpt(patient_id)
+            return { tpt: patient_history_on_completed_tpt(patient_id).include?('IPT') ? '6H' : '3HP', completed: true,
                      tb_treatment: false }
           end
 
@@ -351,16 +351,16 @@ module ARTService
           end
         end
 
-        def patient_history_completed_tpt(patient_id)
-          @patient_history_completed_tpt ||= Observation.where(person_id: patient_id,
-                                                               concept_id: ConceptName.find_by_name('Previous TB treatment history').concept_id)
-                                                        .where('value_text LIKE ? AND obs_datetime < DATE(?) + INTERVAL 1 DAY', '%Completed%', end_date)&.first&.value_text
+        def patient_history_on_completed_tpt(patient_id)
+          @patient_history_on_completed_tpt ||= Observation.where(person_id: patient_id,
+                                                                  concept_id: ConceptName.find_by_name('Previous TB treatment history').concept_id)
+                                                           .where("value_text LIKE '%Completed%' AND obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY")&.first&.value_text
         end
 
         def patient_on_tb_treatment?(patient_id)
-          Observation.where(person_id: patient_id, concept_id: ConceptName.find_by_name('TB status'),
+          Observation.where(person_id: patient_id, concept_id: ConceptName.find_by_name('TB status').concept_id,
                             value_coded: ConceptName.find_by_name('Confirmed TB on treatment').concept_id)
-                     .where('obs_datetime < DATE(?) + INTERVAL 1 DAY', end_date).exists?
+                     .where("obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY").exists?
         end
 
         def patient_on_3hp?(patient)
