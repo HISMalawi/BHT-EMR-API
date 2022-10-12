@@ -246,9 +246,7 @@ module ANCService
       hiv_status = hiv_test_res.blank? ? nil : ConceptName.find_by_concept_id(hiv_test_res).name
 
       hiv_status ||= prev_status
-      return true if hiv_status&.downcase == 'positive'
-
-      false
+      hiv_status&.downcase == 'positive'
     end
 
     def patient_is_not_enrolled_in_art?
