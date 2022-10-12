@@ -23,9 +23,10 @@ module ANCService
         encounter_type = EncounterType.find_by(name: state)
 
         if valid_state?(state)
-          if encounter_type.name == 'TREATMENT'
+          case encounter_type.name
+          when 'TREATMENT'
             return EncounterType.new(name: 'ANC TREATMENT')
-          elsif encounter_type.name == 'DISPENSING'
+          when encounter_type.name == 'DISPENSING'
             return EncounterType.new(name: 'ANC DISPENSING')
           else
             return encounter_type
@@ -186,7 +187,7 @@ module ANCService
       td_drug = Drug.find_by name: 'TD (0.5ml)'
       Encounter.joins(orders: [:drug_order])
                .where("encounter.patient_id = ? AND drug_order.drug_inventory_id = ?
-          AND DATE(encounter.encounter_datetime) = DATE(?) AND program_id = ?",
+                      AND DATE(encounter.encounter_datetime) = DATE(?) AND program_id = ?",
                       @patient.patient_id, td_drug.id, @date, @program.id)
                .order(encounter_datetime: :desc).first.blank?
     end
@@ -197,7 +198,8 @@ module ANCService
       treatment_enc = EncounterType.find_by name: TREATMENT
       obs = Encounter.joins([:observations])
                      .where("encounter.patient_id = ? AND encounter.encounter_type = ?
-          AND obs.concept_id = ? AND obs.value_coded = ? AND DATE(encounter.encounter_datetime) = DATE(?)",
+                            AND obs.concept_id = ? AND obs.value_coded = ?
+                            AND DATE(encounter.encounter_datetime) = DATE(?)",
                             @patient.patient_id, treatment_enc.id, med_recv_concept, no_concept, @date)
       !obs.blank?
     end
@@ -250,8 +252,7 @@ module ANCService
     end
 
     def patient_is_not_enrolled_in_art?
-      PatientProgram.where('program_id = ? AND patient_id = ?',
-                           HIV_PROGRAM.id, @patient.id).blank?
+      PatientProgram.where('program_id = ? AND patient_id = ?', HIV_PROGRAM.id, @patient.id).blank?
     end
 
     # Check if surgical history has been collected
@@ -261,9 +262,9 @@ module ANCService
       return true if lmp_date.nil?
 
       surgical_history_enc = EncounterType.find_by name: SURGICAL_HISTORY
-      Encounter.where("encounter_type = ?
-          AND patient_id = ? AND DATE(encounter_datetime) >= DATE(?)",
-                      surgical_history_enc.id, @patient.patient_id, lmp_date).blank?
+      Encounter.where('encounter_type = ? AND patient_id = ? AND DATE(encounter_datetime) >= DATE(?)',
+                      surgical_history_enc.id, @patient.patient_id, lmp_date)
+               .blank?
     end
 
     # Checks if this is the subsequent visit
@@ -275,11 +276,10 @@ module ANCService
       visit_type = EncounterType.find_by name: ANC_VISIT_TYPE
       reason_for_visit = ConceptName.find_by name: 'Reason for visit'
 
-      Encounter.joins(:observations).where("encounter.encounter_type = ?
-          AND concept_id = ? AND encounter.patient_id = ? AND
-          DATE(encounter.encounter_datetime) >= DATE(?)",
-                                           visit_type.id, reason_for_visit.concept_id,
-                                           @patient.patient_id, lmp_date)
+      Encounter.joins(:observations)
+               .where("encounter.encounter_type = ? AND concept_id = ? AND encounter.patient_id = ? AND
+                      DATE(encounter.encounter_datetime) >= DATE(?)", visit_type.id, reason_for_visit.concept_id,
+                      @patient.patient_id, lmp_date)
                .order(encounter_datetime: :desc).first.blank?
     end
 
@@ -289,8 +289,7 @@ module ANCService
 
       obstetric_encounter = EncounterType.find_by name: OBSTETRIC_HISTORY
 
-      Encounter.where("encounter_type = ?
-          AND patient_id = ? AND DATE(encounter_datetime) >= DATE(?)",
+      Encounter.where('encounter_type = ? AND patient_id = ? AND DATE(encounter_datetime) >= DATE(?)',
                       obstetric_encounter.id, @patient.patient_id, lmp_date)
                .order(encounter_datetime: :desc).first.blank?
     end
@@ -301,8 +300,7 @@ module ANCService
 
       medical_history_enc = EncounterType.find_by name: MEDICAL_HISTORY
 
-      Encounter.where("encounter_type = ?
-          AND patient_id = ? AND DATE(encounter_datetime) >= DATE(?)",
+      Encounter.where('encounter_type = ? AND patient_id = ? AND DATE(encounter_datetime) >= DATE(?)',
                       medical_history_enc.id, @patient.patient_id, lmp_date)
                .order(encounter_datetime: :desc).first.blank?
     end
@@ -313,8 +311,7 @@ module ANCService
 
       social_history_enc = EncounterType.find_by name: SOCIAL_HISTORY
 
-      Encounter.where("encounter_type = ?
-          AND patient_id = ? AND DATE(encounter_datetime) >= DATE(?)",
+      Encounter.where('encounter_type = ? AND patient_id = ? AND DATE(encounter_datetime) >= DATE(?)',
                       social_history_enc.id, @patient.patient_id, lmp_date)
                .order(encounter_datetime: :desc).first.blank?
     end
@@ -325,8 +322,7 @@ module ANCService
 
       curr_preg_enc = EncounterType.find_by name: CURRENT_PREGNANCY
 
-      Encounter.where("encounter_type = ?
-          AND patient_id = ? AND DATE(encounter_datetime) >= DATE(?)",
+      Encounter.where('encounter_type = ? AND patient_id = ? AND DATE(encounter_datetime) >= DATE(?)',
                       curr_preg_enc.id, @patient.patient_id, lmp_date)
                .order(encounter_datetime: :desc).first.blank?
     end
@@ -338,7 +334,7 @@ module ANCService
 
       proceed = Encounter.joins([:observations])
                          .where("encounter_type = ? AND obs.concept_id = ? AND patient_id = ?
-            AND (value_coded = ? OR value_text = 'Yes')", art_followup.id,
+                                AND (value_coded = ? OR value_text = 'Yes')", art_followup.id,
                                 pmtct.concept_id, @patient.patient_id, yes.concept_id)
                          .order(encounter_datetime: :desc).first.blank?
 
