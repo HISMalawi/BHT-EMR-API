@@ -15,7 +15,7 @@ module ANCService
         YES = ConceptName.find_by name: "Yes"
         NO  = ConceptName.find_by name: "No"
         LMP = ConceptName.find_by name: "Date of Last Menstrual Period"
-        TTV = ConceptName.find_by name: "TT STATUS"
+        TD = ConceptName.find_by name: "TT STATUS"
         HB  = ConceptName.find_by name: "HB TEST RESULT"
 
         WEEK_OF_FIRST_VISIT = ConceptName.find_by name: "Week of First Visit"
@@ -160,12 +160,12 @@ module ANCService
           cohort_struct.patients_with_pre_eclampsia = patients_with_pre_eclampsia
           cohort_struct.patients_without_pre_eclampsia = @cohort_patients - cohort_struct.patients_with_pre_eclampsia
 
-          # TTV given
-          ttv_at_least_3 = patients_given_ttv_at_least_two_doses
-          ttv_less_than_2 = patients_given_ttv_less_than_two_doses
-          ttv_not_given = @cohort_patients - (ttv_at_least_3 + ttv_less_than_2)
-          cohort_struct.patients_given_ttv_less_than_two_doses = ttv_less_than_2 + ttv_not_given
-          cohort_struct.patients_given_ttv_at_least_two_doses = ttv_at_least_3
+          # TD given
+          td_at_least_3 = patients_given_td_at_least_two_doses
+          td_less_than_2 = patients_given_td_less_than_two_doses
+          td_not_given = @cohort_patients - (td_at_least_3 + td_less_than_2)
+          cohort_struct.patients_given_td_less_than_two_doses = td_less_than_2 + td_not_given
+          cohort_struct.patients_given_td_at_least_two_doses = td_at_least_3
 
           # SP Doses given
           sp_less_than_3  = patients_given_zero_to_two_sp_doses
@@ -225,7 +225,6 @@ module ANCService
 
         # Get women registered within a specified period
         def registrations(start_dt, end_dt)
-
           Encounter.joins(['INNER JOIN obs ON obs.person_id = encounter.patient_id'])
             .where(['program_id = ? AND encounter_type = ? AND obs.concept_id = ? AND
               DATE(encounter_datetime) >= ? AND DATE(encounter_datetime) <= ? AND encounter.voided = 0',
@@ -578,13 +577,13 @@ EOF
             return []
         end
 
-        def patients_given_ttv_less_than_two_doses
+        def patients_given_td_less_than_two_doses
             patients = {}
 
             Order.joins([[:drug_order => :drug], :encounter])
-                .where(["encounter.program_id = ? AND drug.name LIKE ? AND (DATE(encounter_datetime) >= ? "\
+                .where(["encounter.program_id = ? AND (drug.name LIKE ? OR drug.name LIKE ?) AND (DATE(encounter_datetime) >= ? "\
                   "AND DATE(encounter_datetime) <= ?) AND encounter.patient_id IN (?) "\
-                  "AND orders.voided = 0", PROGRAM.id, "%TTV%",@c_lmp,
+                  "AND orders.voided = 0", PROGRAM.id, "%TD%", '%TTV%',@c_lmp,
                   ((@c_start_date.to_date + @c_pregnant_range) - 1.day),
                   @cohort_patients])
                 .group([:patient_id])
@@ -595,13 +594,13 @@ EOF
                     v.to_i + e.to_i < 2}.collect { |x, y| x }.uniq
         end
 
-        def patients_given_ttv_at_least_two_doses
+        def patients_given_td_at_least_two_doses
             patients = {}
 
             Order.joins([[:drug_order => :drug], :encounter])
-                .where(["encounter.program_id = ? AND drug.name LIKE ? AND (DATE(encounter_datetime) >= ? "\
+                .where(["encounter.program_id = ? AND (drug.name LIKE ? OR drug.name LIKE ? ) AND (DATE(encounter_datetime) >= ? "\
                   "AND DATE(encounter_datetime) <= ?) AND encounter.patient_id IN (?) "\
-                  "AND orders.voided = 0",PROGRAM.id, "%TTV%",@c_lmp,
+                  "AND orders.voided = 0",PROGRAM.id, "%TTV%", '%TD%', @c_lmp,
                   ((@c_start_date.to_date + @c_pregnant_range) - 1.day),
                   @cohort_patients])
                 .group([:patient_id])

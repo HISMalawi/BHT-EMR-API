@@ -14,7 +14,7 @@ module ANCService
         YES = ConceptName.find_by name: "Yes"
         NO  = ConceptName.find_by name: "No"
         LMP = ConceptName.find_by name: "Date of Last Menstrual Period"
-        TTV = ConceptName.find_by name: "TT STATUS"
+        TD = ConceptName.find_by name: "TT STATUS"
         HB  = ConceptName.find_by name: "HB TEST RESULT"
 
         WEEK_OF_FIRST_VISIT = ConceptName.find_by name: "Week of first visit"
@@ -56,7 +56,7 @@ module ANCService
           monthly_struct.women_received_sp_one = women_received_sp_one
           monthly_struct.women_received_sp_two = women_received_sp_two
           monthly_struct.women_received_sp_three = women_received_sp_three
-          monthly_struct.women_received_ttv = women_received_ttv
+          monthly_struct.women_received_td = women_received_ttv
           monthly_struct.women_received_one_twenty_iron_tabs = women_received_one_twenty_iron_tabs
           monthly_struct.women_received_albendazole = women_received_albendazole
           monthly_struct.women_received_itn = women_received_itn
@@ -240,8 +240,8 @@ module ANCService
             };
 
             rec_ttv = Order.joins([[:drug_order => :drug], :encounter])
-                .where(["drug.name LIKE ? AND encounter.patient_id IN (?)
-                    AND orders.voided = 0", "%TTV%", @new_monthly_visits])
+                .where(["(drug.name LIKE ? OR drug.name LIKE ? )AND encounter.patient_id IN (?)
+                    AND orders.voided = 0", "%TTV%", '%TD%', @new_monthly_visits])
                 .group([:patient_id]).select(["encounter.patient_id,
                   count(*) encounter_id"]).collect { |o|
                     o.patient_id

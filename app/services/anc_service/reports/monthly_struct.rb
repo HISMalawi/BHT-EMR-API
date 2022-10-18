@@ -3,7 +3,7 @@
 module ANCService
     module Reports
       require 'ostruct'
-  
+
       class MonthlyStruct
         FIELD_DESCRIPTIONS = {
           # Table contains various fields of the Cohort report and their descriptions.
@@ -24,7 +24,7 @@ module ANCService
           women_received_sp_one: "Women given one dose of SP",
           women_received_sp_two: "Women given two SP doses",
           women_received_sp_three: "Women given three SP doses",
-          women_received_ttv: "Women received TTV",
+          women_received_td: "Women received TD",
           women_received_one_twenty_iron_tabs: "Women received 120 iron tablets",
           women_received_albendazole: "Women receiced albendazole",
           women_received_itn: "Women given bed nets",
@@ -35,41 +35,41 @@ module ANCService
           total_number_of_outreach_clinic: "Total number of outreach clinics",
           total_number_of_outreach_clinic_attended: "Total number of outreach clinics attended"
         }.freeze
-  
+
         def initialize
           @values = ActiveSupport::HashWithIndifferentAccess.new
         end
-  
+
         def method_missing(name, *args, &block)
           name_prefix, name_suffix = split_missing_method_name(name)
-  
+
           return super(name, *args, &block) unless FIELD_DESCRIPTIONS.include?(name_prefix)
-  
+
           field = value(name_prefix)
           field.contents = args[0] if name_suffix == '='
           field.contents
-  
+
           field.contents
         end
-  
+
         #def respond_to_missing?(name)
         #  field_name, = split_missing_method_name(name)
         #  FIELD_DESCRIPTIONS.include?(field_name)
         #end
-  
+
         def values
           @values.values
         end
-  
+
         private
-  
+
         # Returns a ReportValue object for the given name
         def value(name)
           description = FIELD_DESCRIPTIONS[name]
           iname_parts = description.split(':', 2)
           iname_parts.insert(0, nil) unless iname_parts.size == 2
           short_iname, long_iname = iname_parts
-  
+
           @values[name] ||= OpenStruct.new(
             name: name,
             indicator_name: long_iname.strip,
@@ -78,7 +78,7 @@ module ANCService
             contents: nil
           )
         end
-  
+
         def split_missing_method_name(name)
           match = name.to_s.match(/^([_A-Z0-9]+)(=)?$/i)
           [match[1].to_sym, match[2]]
