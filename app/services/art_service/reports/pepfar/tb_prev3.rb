@@ -127,6 +127,7 @@ module ARTService
             next if client['tpt_initiation_date'].to_date > cut_off_point
 
             result = individual_tpt_report(client['patient_id'])
+            next if result.blank?
             next if result['tpt_initiation_date'].to_date < check_date
 
             client['tpt_initiation_date'] = result['tpt_initiation_date']
