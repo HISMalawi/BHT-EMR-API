@@ -11,7 +11,7 @@ class ReportService
     'CXCA PROGRAM' => CXCAService::ReportEngine,
     'RADIOLOGY PROGRAM' => RadiologyService::ReportEngine,
     'PATIENT REGISTRATION PROGRAM' => PatientRegistrationService::ReportEngine,
-    'HTC PROGRAM' => HTSService::ReportEngine
+    'HTC PROGRAM' => HtsService::ReportEngine
   }.freeze
   LOGGER = Rails.logger
 
@@ -23,7 +23,7 @@ class ReportService
 
   def generate_report(name:, type:, start_date: Date.strptime('1900-01-01'),
                       end_date: Date.today, **kwargs)
-    LOGGER.debug "Retrieving report, #{name}, for period #{start_date} to #{end_date}"
+    LOGGER.info "Retrieving report, #{name}, for period #{start_date} to #{end_date}"
     report = find_report(type, name, start_date, end_date, **kwargs)
 
     if report && @overwrite_mode
@@ -33,7 +33,7 @@ class ReportService
 
     return report if report
 
-    LOGGER.debug("#{name} report not found... Queueing one...")
+    LOGGER.info("#{name} report not found... Queueing one...")
     queue_report(name: name, type: type, start_date: start_date, end_date: end_date, **kwargs)
     nil
   end

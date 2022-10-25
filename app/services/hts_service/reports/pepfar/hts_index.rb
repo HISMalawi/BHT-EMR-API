@@ -14,7 +14,7 @@ module HtsService
           @end_date = end_date
         end
 
-        def find_report
+        def data
           report = init_report
           load_patients_into_report report, fetch_clients
           response = []
