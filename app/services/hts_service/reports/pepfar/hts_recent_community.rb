@@ -3,7 +3,7 @@
 module HtsService
   module Reports
     module Pepfar
-      # HTS Self report
+      # HTS Recent report
       class HtsRecentCommunity
         attr_accessor :start_date, :end_date
 
@@ -44,11 +44,11 @@ module HtsService
 
             report[age_group] = GENDER_TYPES.each_with_object({}) do |gender, gender_sub_report|
               gender_sub_report[gender] = {
-                index: { recent: 0, long_term: 0 },
-                mobile_comm: { recent: 0, long_term: 0 },
-                sns_comm: { recent: 0, long_term: 0 },
-                vct_comm: { recent: 0, long_term: 0 },
-                other_comm_tp: { recent: 0, long_term: 0 }
+                index: { recent: [], long_term: [] },
+                mobile_comm: { recent: [], long_term: [] },
+                sns_comm: { recent: [], long_term: [] },
+                vct_comm: { recent: [], long_term: [] },
+                other_comm_tp: { recent: [], long_term: [] }
               }
             end
           end
@@ -59,7 +59,7 @@ module HtsService
             age_group = patient['age_group']
             next if ['Unknown', '<1 year', '1-4 years', '5-9 years', '10-14 years'].include?(age_group)
 
-            report[age_group][patient['gender']][ENTRY_POINTS[patient['entry_point']]][patient['hiv_status'] == 10_576 ? :recent : :long_term] += 1
+            report[age_group][patient['gender']][ENTRY_POINTS[patient['entry_point']]][patient['hiv_status'] == 10_576 ? :recent : :long_term] << patient['patient_id']
           end
         end
 
