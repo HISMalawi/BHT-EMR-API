@@ -103,7 +103,19 @@ module HTSService
         when /REFERRAL/i
           REFERRAL
         when /Partner Reception/i
-          PARTNER_RECEPTIONc
+          PARTNER_RECEPTION
+        else
+          Rails.logger.warn "Invalid HTS activity in user properties: #{activity}"
+        end
+      end
+    end
+
+    def next_state(current_state)
+      ENCOUNTER_SM[current_state]
+    end
+
+    def encounter_exists?(type)
+      @encounter = type
       Encounter.where(type: type, patient: @patient, program: @program)\
               .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
               .exists?
