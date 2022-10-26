@@ -41,7 +41,7 @@ module HTSService
     PREGNANCY_STATUS = 'PREGNANCY STATUS'
     CIRCUMCISION = 'CIRCUMCISION'
     SOCIAL_HISTORY = 'SOCIAL HISTORY'
-    SCREENING = 'SCREENING'
+    TESTING = 'TESTING'
     APPOINTMENT = 'APPOINTMENT'
     HTS_CONTACT = 'HTS Contact'
     REFERRAL = 'REFERRAL'
@@ -52,8 +52,8 @@ module HTSService
       INITIAL_STATE => PREGNANCY_STATUS,
       PREGNANCY_STATUS => CIRCUMCISION,
       CIRCUMCISION => SOCIAL_HISTORY,
-      SOCIAL_HISTORY => SCREENING,
-      SCREENING => APPOINTMENT,
+      SOCIAL_HISTORY => TESTING,
+      TESTING => APPOINTMENT,
       APPOINTMENT => HTS_CONTACT,
       HTS_CONTACT => REFERRAL,
       REFERRAL => PARTNER_RECEPTION,
@@ -70,7 +70,7 @@ module HTSService
 
       SOCIAL_HISTORY => %i[no_social_history?],
 
-      SCREENING => %i[task_not_done_today?],
+      TESTING => %i[task_not_done_today?],
 
       APPOINTMENT => %i[task_not_done_today?
                        done_screening_today?],
@@ -94,8 +94,8 @@ module HTSService
           CIRCUMCISION
         when /SOCIAL HISTORY|MARITAL/i
           SOCIAL_HISTORY
-        when /SCREENING/i
-          SCREENING
+        when /TESTING/i
+          TESTING
         when /APPOINTMENT/i
           APPOINTMENT
         when /CONTACT/i
@@ -103,19 +103,7 @@ module HTSService
         when /REFERRAL/i
           REFERRAL
         when /Partner Reception/i
-          PARTNER_RECEPTION
-        else
-          Rails.logger.warn "Invalid HTS activity in user properties: #{activity}"
-        end
-      end
-    end
-
-    def next_state(current_state)
-      ENCOUNTER_SM[current_state]
-    end
-
-    def encounter_exists?(type)
-      @encounter = type
+          PARTNER_RECEPTIONc
       Encounter.where(type: type, patient: @patient, program: @program)\
               .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
               .exists?
@@ -142,7 +130,7 @@ module HTSService
 
     def done_screening_today?
 
-      encounter_type = EncounterType.find_by name: "SCREENING"
+      encounter_type = EncounterType.find_by name: "TESTING"
       Encounter.where(type:encounter_type, patient: @patient, program: @program)\
         .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
         .exists?
