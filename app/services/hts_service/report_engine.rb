@@ -24,8 +24,6 @@ module HtsService
       start_date = kwargs.delete(:start_date)
       end_date = kwargs.delete(:end_date)
       name = kwargs.delete(:name)
-      Rails.logger.debug "Report type: #{name}"
-      puts "Report type: #{name}"
       report_manager = REPORTS[name].new(start_date: start_date, end_date: end_date)
       method = report_manager.method(method)
       if kwargs.empty?
