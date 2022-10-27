@@ -277,7 +277,7 @@ paths:
       summary: Returns HTS Index Reports
       tags:
       - HTS Reports
-      description: This returns a list of HTS Index Reports
+      description: This returns a list of HTS Index aggregations
       security:
       - api_key: []
       parameters:
@@ -304,10 +304,10 @@ paths:
                   "$ref": "#/components/schemas/hts_index"
   "/api/v1/programs/18/reports/hts_tst_community":
     get:
-      summary: Returns HTS Index Reports
+      summary: Returns HTS TST Community Report
       tags:
       - HTS Reports
-      description: This returns a list of HTS Index Reports
+      description: This returns a list of HTS TST Community aggregations
       security:
       - api_key: []
       parameters:
@@ -325,7 +325,7 @@ paths:
           type: string
       responses:
         '200':
-          description: HTS Index Reports returned
+          description: HTS TST Community Report returned
           content:
             application/json:
               schema:
@@ -334,10 +334,10 @@ paths:
                   "$ref": "#/components/schemas/hts_tst_community"
   "/api/v1/programs/18/reports/hts_recent_community":
     get:
-      summary: Returns HTS Index Reports
+      summary: Returns HTS Recent Community Report
       tags:
       - HTS Reports
-      description: This returns a list of HTS Index Reports
+      description: This returns a list of HTS Recent Community Report aggregations
       security:
       - api_key: []
       parameters:
@@ -355,7 +355,7 @@ paths:
           type: string
       responses:
         '200':
-          description: HTS Index Reports returned
+          description: HTS Recent Community Report returned
           content:
             application/json:
               schema:
