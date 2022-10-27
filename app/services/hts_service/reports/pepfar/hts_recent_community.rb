@@ -71,7 +71,7 @@ module HtsService
             INNER JOIN obs location ON location.encounter_id = e.encounter_id AND location.voided = 0 AND location.concept_id = #{ConceptName.find_by_name('Location where test took place').concept_id}
             INNER JOIN obs recency ON recency.encounter_id = e.encounter_id AND recency.voided = 0 AND recency.concept_id = #{ConceptName.find_by_name('Recency Test').concept_id} AND recency.value_coded IN (#{ConceptName.find_by_name('Recent').concept_id}, #{ConceptName.find_by_name('Long-Term').concept_id})
             INNER JOIN person p ON p.person_id = e.patient_id AND p.voided = 0
-            WHERE e.encounter_type = #{EncounterType.find_by_name('SCREENING').encounter_type_id}
+            WHERE e.encounter_type = #{EncounterType.find_by_name('Testing').encounter_type_id}
             AND e.voided = 0
             AND e.encounter_datetime BETWEEN '#{start_date}' AND '#{end_date}' + INTERVAL 1 DAY
             AND e.program_id = #{Program.find_by_name('HTC PROGRAM').program_id}

@@ -93,7 +93,7 @@ module HtsService
               contacts.consent,
               contacts.contacts
             FROM person p
-            INNER JOIN encounter e ON e.patient_id = p.person_id AND e.encounter_type = #{EncounterType.find_by_name('SCREENING').encounter_type_id} AND e.voided = 0 AND e.program_id = #{Program.find_by_name('HTC Program').program_id}
+            INNER JOIN encounter e ON e.patient_id = p.person_id AND e.encounter_type = #{EncounterType.find_by_name('Testing').encounter_type_id} AND e.voided = 0 AND e.program_id = #{Program.find_by_name('HTC Program').program_id}
             INNER JOIN obs o ON o.person_id = e.patient_id AND o.voided = 0 AND o.concept_id = #{ConceptName.find_by_name('HIV test type').concept_id} AND e.encounter_id = o.encounter_id
             INNER JOIN obs o2 ON o2.person_id = e.patient_id AND o2.voided = 0 AND o2.concept_id = #{ConceptName.find_by_name('HIV status').concept_id} AND o2.encounter_id = o.encounter_id
             INNER JOIN obs o3 ON o3.person_id = e.patient_id AND o3.voided = 0 AND o3.concept_id = #{ConceptName.find_by_name('Previous HIV Test Results').concept_id} AND o3.encounter_id = o.encounter_id
@@ -103,7 +103,7 @@ module HtsService
                 e.patient_id,
                 MAX(e.encounter_datetime) AS last_visit
               FROM encounter e
-              WHERE e.encounter_type = #{EncounterType.find_by_name('SCREENING').encounter_type_id} AND e.voided = 0 AND e.program_id = #{Program.find_by_name('HTC Program').program_id} AND e.encounter_datetime BETWEEN '#{start_date}' AND '#{end_date}' + INTERVAL 1 DAY
+              WHERE e.encounter_type = #{EncounterType.find_by_name('Testing').encounter_type_id} AND e.voided = 0 AND e.program_id = #{Program.find_by_name('HTC Program').program_id} AND e.encounter_datetime BETWEEN '#{start_date}' AND '#{end_date}' + INTERVAL 1 DAY
               GROUP BY e.patient_id
             ) AS lastest_visit ON lastest_visit.patient_id = e.patient_id AND DATE(lastest_visit.last_visit) = DATE(e.encounter_datetime)
             LEFT JOIN (
