@@ -33,9 +33,9 @@ RSpec.configure do |config|
         schemas: {
           gender: { type: :string, enum: %w[M F Unknown] },
           age_group: { type: :string, enum: ['Unknown', '<1 year', '1-4 years', '5-9 years',
-                                              '10-14 years', '15-19 years', '20-24 years', '25-29 years', '30-34 years',
-                                              '35-39 years', '40-44 years', '45-49 years', '50-54 years', '55-59 years', '60-64 years',
-                                              '65-69 years', '70-74 years', '75-79 years', '80-84 years', '85-89 years', '90 plus years'] },
+                                             '10-14 years', '15-19 years', '20-24 years', '25-29 years', '30-34 years',
+                                             '35-39 years', '40-44 years', '45-49 years', '50-54 years', '55-59 years', '60-64 years',
+                                             '65-69 years', '70-74 years', '75-79 years', '80-84 years', '85-89 years', '90 plus years'] },
           hts_hiv_results: {
             type: :object,
             properties: {
@@ -78,7 +78,10 @@ RSpec.configure do |config|
               age_group: { '$ref' => '#/components/schemas/age_group' },
               index_clients: { type: :array, items: { type: :integer } },
               offered_clients: { type: :array, items: { type: :integer } },
-              contacted_elicited: { type: :array, items: { type: :integer } },
+              contacted_elicited: { type: :array, items: { type: :object, properties: {
+                patient: { type: :integer },
+                contacts: { type: :integer }
+              } } },
               facility: { '$ref' => '#/components/schemas/hts_index_common' },
               community: { '$ref' => '#/components/schemas/hts_index_common' }
             }

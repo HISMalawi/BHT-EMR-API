@@ -1405,7 +1405,12 @@ components:
         contacted_elicited:
           type: array
           items:
-            type: integer
+            type: object
+            properties:
+              patient:
+                type: integer
+              contacts:
+                type: integer
         facility:
           "$ref": "#/components/schemas/hts_index_common"
         community:
