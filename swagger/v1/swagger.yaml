@@ -272,12 +272,13 @@ paths:
                             type: string
                           updated_at:
                             type: string
-  "/api/v1/programs/18/reports/hts_index":
+  "/api/v1/hts_reports":
     get:
-      summary: Returns HTS Index Reports
+      summary: Returns HTS Reports
       tags:
       - HTS Reports
-      description: This returns a list of HTS Index aggregations
+      description: This returns a report based on the name of the report. For specific
+        response structure, do checkout the schema sections
       security:
       - api_key: []
       parameters:
@@ -295,73 +296,31 @@ paths:
           type: string
       responses:
         '200':
-          description: HTS Index Reports returned
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  "$ref": "#/components/schemas/hts_index"
-  "/api/v1/programs/18/reports/hts_tst_community":
-    get:
-      summary: Returns HTS TST Community Report
-      tags:
-      - HTS Reports
-      description: This returns a list of HTS TST Community aggregations
-      security:
-      - api_key: []
-      parameters:
-      - name: start_date
-        in: query
-        schema:
-          type: string
-      - name: end_date
-        in: query
-        schema:
-          type: string
-      - name: name
-        in: query
-        schema:
-          type: string
-      responses:
-        '200':
-          description: HTS TST Community Report returned
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  "$ref": "#/components/schemas/hts_tst_community"
-  "/api/v1/programs/18/reports/hts_recent_community":
-    get:
-      summary: Returns HTS Recent Community Report
-      tags:
-      - HTS Reports
-      description: This returns a list of HTS Recent Community Report aggregations
-      security:
-      - api_key: []
-      parameters:
-      - name: start_date
-        in: query
-        schema:
-          type: string
-      - name: end_date
-        in: query
-        schema:
-          type: string
-      - name: name
-        in: query
-        schema:
-          type: string
-      responses:
-        '200':
-          description: HTS Recent Community Report returned
+          description: Example for HTS RECENT COMMUNITY
           content:
             application/json:
               schema:
                 type: array
                 items:
                   "$ref": "#/components/schemas/hts_recent_community"
+        '404':
+          description: Example if the report doesn't exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: string
+        '400':
+          description: Example start date is greater than end date
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: string
   "/api/v1/internal_sections":
     get:
       summary: Retrieve all internal sections

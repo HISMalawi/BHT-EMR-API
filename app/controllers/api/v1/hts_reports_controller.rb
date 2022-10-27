@@ -19,9 +19,15 @@ class Api::V1::HtsReportsController < ApplicationController
 
   def validate_params
     @start_date, @end_date, @name = params.require(%i[start_date end_date name])
-    raise InvalidParameterError, 'start date cannot be greater than end date' if @start_date > @end_date
-    raise InvalidParameterError, 'end date cannot be greater than today' if @end_date.to_date > Date.today
-    raise InvalidParameterError, 'name cannot be blank' if @name.blank?
+    handle_errors 'start date cannot be greater than end date', 'start_date' if @start_date > @end_date
+    handle_errors 'end date cannot be greater than today', 'end_date' if @end_date.to_date > Date.today
+    handle_errors 'name cannot be blank', 'name' if @name.blank?
+  end
+
+  def handle_errors(message, entity)
+    error = UnprocessableEntityError.new(message)
+    error.add_entity(entity)
+    raise error
   end
 
   def service
