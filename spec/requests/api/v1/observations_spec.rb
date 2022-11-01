@@ -34,28 +34,30 @@ RSpec.describe 'Observation API', type: :request, swagger_doc: 'v1/swagger.yaml'
         type: :object,
         properties: {
           encounter_id: { type: :integer },
-          observations: { type: :object, properties: {
-            concept_id: { type: :integer },
-            obs_datetime: { type: :string },
-            value_coded: { type: :integer },
-            value_text: { type: :string },
-            value_numeric: { type: :number },
-            value_datetime: { type: :string },
-            value_drug: { type: :integer },
-            value_boolean: { type: :boolean },
-            child: {
-              type: :array,
-              items: {
-                type: :object,
-                properties: {
-                  concept_id: { type: :integer },
-                  obs_datetime: { type: :string },
-                  value_coded: { type: :integer },
-                  value_text: { type: :string },
-                  value_numeric: { type: :number },
-                  value_datetime: { type: :string },
-                  value_drug: { type: :integer },
-                  value_boolean: { type: :boolean }
+          observations: { type: :array, items: {
+            type: :object, properties: {
+              concept_id: { type: :integer },
+              obs_datetime: { type: :string },
+              value_coded: { type: :integer },
+              value_text: { type: :string },
+              value_numeric: { type: :number },
+              value_datetime: { type: :string },
+              value_drug: { type: :integer },
+              value_boolean: { type: :boolean },
+              child: {
+                type: :array,
+                items: {
+                  type: :object,
+                  properties: {
+                    concept_id: { type: :integer },
+                    obs_datetime: { type: :string },
+                    value_coded: { type: :integer },
+                    value_text: { type: :string },
+                    value_numeric: { type: :number },
+                    value_datetime: { type: :string },
+                    value_drug: { type: :integer },
+                    value_boolean: { type: :boolean }
+                  }
                 }
               }
             }
