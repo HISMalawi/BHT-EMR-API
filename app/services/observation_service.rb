@@ -1,61 +1,71 @@
 # frozen_string_literal: true
 
-module ObservationService
-  class << self
-    def create_observation(encounter, obs_parameters)
-      ActiveRecord::Base.transaction do
-        Rails.logger.debug("Creating observation: #{obs_parameters}")
-        child_obs_parameters = obs_parameters.delete(:child)
+class ObservationService
+  attr_accessor :records
 
-        validate_presence_of_obs_value(obs_parameters)
+  def initialize
+    @records = []
+  end
 
-        obs_parameters[:obs_datetime] = (
-          TimeUtils.retro_timestamp(obs_parameters[:obs_datetime]) || encounter.encounter_datetime
-        )
-        obs_parameters[:person_id] = encounter.patient_id
-        obs_parameters[:encounter_id] = encounter.id
-        observation = Observation.create(obs_parameters)
-        validate_observation(observation)
+  def create_observation(encounter, obs_parameters)
+    proccess_obs_creation(encounter, obs_parameters)
+    records
+  end
 
-        return [observation, nil] unless child_obs_parameters
+  private
 
-        Rails.logger.debug("Creating child observation for obs ##{observation.obs_id}")
-        child_obs_parameters[:obs_group_id] = observation.obs_id
-        child_observation = create_observation(encounter, child_obs_parameters)
+  OBS_VALUE_FIELDS = %i[
+    value_boolean value_numeric value_drug value_coded value_datetime
+    value_text
+  ].freeze
 
-        [observation, child_observation]
+  def proccess_obs_creation(encounter, obs_parameters)
+    ActiveRecord::Base.transaction do
+      Rails.logger.debug("Creating observation: #{obs_parameters}")
+      child_obs_parameters = obs_parameters.delete(:child)
+
+      validate_presence_of_obs_value(obs_parameters)
+
+      obs_parameters[:obs_datetime] = (
+        TimeUtils.retro_timestamp(obs_parameters[:obs_datetime]) || encounter.encounter_datetime
+      )
+      obs_parameters[:person_id] = encounter.patient_id
+      obs_parameters[:encounter_id] = encounter.id
+      observation = Observation.create(obs_parameters)
+      validate_observation(observation)
+      records << observation
+
+      return unless child_obs_parameters
+
+      Rails.logger.debug("Creating child observation for obs ##{observation.obs_id}")
+      child_obs_parameters.each do |child_obs|
+        child_obs[:obs_group_id] = observation.obs_id
+        proccess_obs_creation(encounter, child_obs)
       end
     end
+  end
 
-    private
+  def validate_presence_of_obs_value(obs_parameters)
+    obs_value_exists = lambda do |obs_value_fields|
+      return false if obs_value_fields.blank?
 
-    OBS_VALUE_FIELDS = %i[
-      value_boolean value_numeric value_drug value_coded value_datetime
-      value_text
-    ].freeze
+      return true unless obs_parameters[obs_value_fields[0]].blank?
 
-    def validate_presence_of_obs_value(obs_parameters)
-      obs_value_exists = lambda do |obs_value_fields|
-        return false if obs_value_fields.blank?
-
-        return true unless obs_parameters[obs_value_fields[0]].blank?
-
-        obs_value_exists.call(obs_value_fields[1..-1])
-      end
-
-      return true if obs_value_exists.call(OBS_VALUE_FIELDS)
-
-      raise InvalidParameterError, "Empty observation: #{obs_parameters}"
+      obs_value_exists.call(obs_value_fields[1..-1])
     end
 
-    # Raises an InvalidParameterError if the errors object of the observation
-    # contains errors
-    def validate_observation(observation)
-      return true if observation.errors.empty?
+    return true if obs_value_exists.call(OBS_VALUE_FIELDS)
 
-      error = InvalidParameterError.new('Could not create/update observation')
-      error.model_errors = observation.errors
-      raise error
-    end
+    raise InvalidParameterError, "Empty observation: #{obs_parameters}"
+  end
+
+  # Raises an InvalidParameterError if the errors object of the observation
+  # contains errors
+  def validate_observation(observation)
+    return true if observation.errors.empty?
+
+    error = InvalidParameterError.new('Could not create/update observation')
+    error.model_errors = observation.errors
+    raise error
   end
 end
