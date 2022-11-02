@@ -31,6 +31,7 @@ RSpec.configure do |config|
           }
         }
       },
+      security: [api_key: []],
       servers: [
         {
           url: 'http://{defaultHost}',
