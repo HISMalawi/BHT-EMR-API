@@ -12,7 +12,8 @@ module Helpers
     # In production the default user credentials should be changed
     # to something more secure
     def self.http_login
-      @http_login ||= UserService.login('admin', 'test')[:token]
+      main_config = YAML.load_file('config/application.yml')['test_credentials']
+      @http_login ||= UserService.login(main_config['username'], main_config['password'])[:token]
     end
   end
 end
