@@ -10,19 +10,35 @@ class Api::V1::UserPropertiesController < ApplicationController
   def show
     name, = params.require %i[property]
     property = UserProperty.find_by property: name,
-                                    user_id: User.current.user_id
+                                     user_id: User.current.user_id
     if property
       render json: property
     else
       render json: { errors: "Property, #{name} not found" }, status: :not_found
     end
+
+
   end
+
+  def unique_property
+
+    name,value = params.require %i[property property_value]
+    property = UserProperty.where(property: name,property_value: value).exists?
+    render json: property
+
+  end
+
 
   def create(success_response_status: :created)
     name, value = params.require %i[property property_value]
 
-    property = user_property name
-    property ||= UserProperty.new property: name, user_id: User.current.user_id
+    provider = User.current.user_id
+    provider = params[:user_id] if params.include?(:user_id)
+
+    property = UserProperty.find_by property: name,
+                                     user_id: provider
+
+    property ||= UserProperty.new property: name, user_id: provider
     property.property_value = value
 
     if property.save
