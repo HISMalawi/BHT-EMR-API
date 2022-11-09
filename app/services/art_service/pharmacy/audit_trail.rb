@@ -115,8 +115,8 @@ module ARTService
 
         def transactions(from, to)
           query = ::Pharmacy.all
-          query = query.where('pharmacy_obs.date_created >= ?', from) if from
-          query = query.where('pharmacy_obs.date_created < ?', to) if to
+          query = query.where('DATE(pharmacy_obs.date_created) >= ?', from) if from
+          query = query.where('DATE(pharmacy_obs.date_created) <= ?', to) if to
           query
         end
 

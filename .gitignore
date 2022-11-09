@@ -55,7 +55,7 @@ migration*.log
 extensions.json
 emc_ipt_duplicates*.csv
 # Ignore json files under idsr
-/db/idsr_metadata/*.json
+db/idsr_metadata/*.json
 
 # Ignore json files under lims
-/db/lims_metadata/*.json
+db/lims_metadata/*.json
