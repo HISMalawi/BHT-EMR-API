@@ -9,8 +9,12 @@ class Api::V1::UserPropertiesController < ApplicationController
 
   def show
     name, = params.require %i[property]
+
+    user = User.current.user_id
+    user = params[:user_id] if params.include?(:user_id)
+
     property = UserProperty.find_by property: name,
-                                     user_id: User.current.user_id
+                                     user_id: user
     if property
       render json: property
     else
