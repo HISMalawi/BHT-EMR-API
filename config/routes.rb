@@ -27,6 +27,9 @@ Rails.application.routes.draw do
       end
 
       resources :hts_reports, only: %i[index]
+      get '/hts_stats' => 'hts_reports#daily_stats'
+
+
 
       # notifications for nlims any features in the future
       resources :notifications, only: %i[index update]
@@ -224,7 +227,7 @@ Rails.application.routes.draw do
 
       resource :global_properties
       resource :user_properties
-      get '/api/v1/validate_properties' => 'user_properties#unique_property'
+      get '/validate_properties' => 'user_properties#unique_property'
 
       resource :session_stats, path: 'stats/session'
 
