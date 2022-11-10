@@ -10,7 +10,8 @@ class ReportService
     'LABORATORY ORDERS' => LaboratoryService::ReportEngine,
     'CXCA PROGRAM' => CXCAService::ReportEngine,
     'RADIOLOGY PROGRAM' => RadiologyService::ReportEngine,
-    'PATIENT REGISTRATION PROGRAM' => PatientRegistrationService::ReportEngine
+    'PATIENT REGISTRATION PROGRAM' => PatientRegistrationService::ReportEngine,
+    'HTC PROGRAM' => HtsService::ReportEngine
   }.freeze
   LOGGER = Rails.logger
 
