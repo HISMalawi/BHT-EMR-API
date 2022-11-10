@@ -26,6 +26,8 @@ Rails.application.routes.draw do
         post '/deactivate', to: 'users#deactivate'
       end
 
+      resources :hts_reports, only: %i[index]
+
       # notifications for nlims any features in the future
       resources :notifications, only: %i[index update]
 
