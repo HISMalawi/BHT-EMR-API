@@ -5,7 +5,7 @@ class CreateLimsAcknowledgementStatuses < ActiveRecord::Migration[5.2]
       t.integer :test, null: false
       t.datetime :date_received, null: false
       t.datetime :date_pushed, null: true
-      t.string :acknowledgment_type, null: false
+      t.string :acknowledgement_type, null: false
       t.boolean :pushed, null: false, default: false
     end
 
