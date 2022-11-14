@@ -15,6 +15,10 @@ class Api::V1::HtsReportsController < ApplicationController
     end
   end
 
+  def daily_stats
+    render json: HTSService::Dashboard.daily_statistics(params[:start_date],params[:end_date])
+  end
+
   private
 
   def validate_params
