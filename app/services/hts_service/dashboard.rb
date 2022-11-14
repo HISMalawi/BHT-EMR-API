@@ -6,8 +6,6 @@ module HTSService
 
   def self.daily_statistics(start_date,end_date)
 
-       total = PatientProgram.where(program_id:18).count
-
 art = Observation.joins("INNER JOIN concept_name ON concept_name.concept_id = obs.concept_id")
                  .joins("INNER JOIN encounter ON encounter.encounter_id = obs.encounter_id")
                  .where(obs: {value_text:"ART"},encounter:{program_id: 18},concept_name:{name:"Referrals ordered"})
@@ -27,7 +25,7 @@ tested = Observation.joins("INNER JOIN concept_name ON concept_name.concept_id =
                     .count
 
             stats = [{
-                      hts_registered: total,
+                      hts_registered: PatientProgram.where(program_id:18).count,
                       enrolled_on_art: art,
                       booked_appointments: booked,
                       tested_appointments: tested,
