@@ -15,19 +15,20 @@ module ARTService
 
       LOCK_FILE = 'art_service/reports/cohort.lock'
 
-      def initialize(name:, type:, start_date:, end_date:)
+      def initialize(name:, type:, start_date:, end_date:, **kwargs)
         @name = name
         @start_date = start_date
         @end_date = end_date
         @type = type
         @cohort_builder = CohortBuilder.new
         @cohort_struct = CohortStruct.new
+        @occupation = kwargs[:occupation]
       end
 
       def build_report
         with_lock(LOCK_FILE, blocking: false) do
           clear_drill_down
-          @cohort_builder.build(@cohort_struct, @start_date, @end_date)
+          @cohort_builder.build(@cohort_struct, @start_date, @end_date, @occupation)
           save_report
         end
       rescue FailedToAcquireLock => e

@@ -27,7 +27,7 @@ module ARTService
         update_cum_outcome(end_date)
       end
 
-      def build(cohort_struct, start_date, end_date)
+      def build(cohort_struct, start_date, end_date, occupation)
         #load_tmp_patient_table(cohort_struct)
         create_tmp_patient_table
         drop_temp_register_start_date_table
@@ -586,9 +586,19 @@ module ARTService
                  IF(person.birthdate IS NOT NULL, TIMESTAMPDIFF(DAY, person.birthdate,  DATE(COALESCE(art_start_date_obs.value_datetime, MIN(art_order.start_date)))), NULL) AS age_in_days,
                  (SELECT value_coded FROM obs
                   WHERE concept_id = 7563 AND person_id = patient_program.patient_id AND voided = 0
-                  ORDER BY obs_datetime DESC LIMIT 1) AS reason_for_starting_art
+                  ORDER BY obs_datetime DESC LIMIT 1) AS reason_for_starting_art,
+                pa.value as occupation
           FROM patient_program
           INNER JOIN person ON person.person_id = patient_program.patient_id
+          LEFT JOIN (
+            SELECT a.person_id, a.value
+            FROM person_attribute a
+            LEFT OUTER JOIN person_attribute b
+            ON a.person_attribute_id = b.person_attribute_id
+            AND a.date_created < b.date_created
+            AND b.voided = 0
+            WHERE b.person_attribute_id IS NULL AND a.person_attribute_type_id = 13 AND a.voided = 0
+          ) pa ON pa.person_id = patient_program.patient_id
           LEFT JOIN patient_state AS outcome
             ON outcome.patient_program_id = patient_program.patient_program_id
           LEFT JOIN encounter AS clinic_registration_encounter
@@ -760,7 +770,8 @@ module ARTService
              gender VARCHAR(32),
              age_at_initiation INT DEFAULT NULL,
              age_in_days INT DEFAULT NULL,
-             reason_for_starting_art INT DEFAULT NULL
+             reason_for_starting_art INT DEFAULT NULL,
+             occupation varchar(255) DEFAULT NULL
           );'
         )
 
