@@ -1,6 +1,6 @@
 {
 	"headers":      {"url":"10.40.30.2:8001","user":"user_admin","pass":"pass_district"},
-	"sms_server":   {"url":"10.40.30.11:8186/submit","user":"admin@email.test","pass":"administrator"},
+	"sms_server":   {"url":"0.0.0.0:8186/submit","user":"admin@email.test","pass":"administrator"},
 	"weekly_idsr_map":{
 		"AEFI" : [],
 		"Poliomyelitis (AFP)" : ["Poliomyelitis"],
@@ -304,10 +304,10 @@
 
 	"notifiable_disease_conditions": {
 		"Acute Flaccid Paralysis (AFP)" : ["Acute Flaccid paralysis"],
-		"Acute hemorrhagic fever syndrome (Ebola, Marburg, Lassa Fever, Rift Valley Fever (RVF), Crimean-Congo) " : ["Ebola fever","Fever"],
+		"Acute hemorrhagic fever syndrome (Ebola, Marburg, Lassa Fever, Rift Valley Fever (RVF), Crimean-Congo) " : ["Ebola fever"],
 		"Adverse effects following immunization (AEFI)" : [""],
 		"Anthrax" : ["Anthrax"],
-		"Cholera" : ["Cholera","Diarrhea, cholera", "Vibrio cholerae"],
+		"Cholera" : ["Cholera","Diarrhea, cholera", "Vibrio cholerae", "Diarrhea"],
 		"Cluster of SARI" : ["Severe acute respiratory infection", "Sari", "Other Severe Acute Respiratory Infections (SARIs)"],
 		"Diarrhoea with blood (Shigella dysentery)" : ["Dysentery", "Other Dysentery", "Bacillary dysentery", "Dysentery bacilliary"],
 		"Influenza due to new subtype" : ["Human influenza caused by new subtype", "Influenza", "Influenza like illness", "Influenza A", "Influenza B"],
