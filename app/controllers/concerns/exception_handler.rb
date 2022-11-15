@@ -11,7 +11,15 @@ module ExceptionHandler
   included do
     # rescues are performed in a LIFO manner thus base classes must be
     # declared early.
+    rescue_from ActionController::ParameterMissing do |e|
+      render json: { errors: [e.message] }, status: :bad_request
+    end
+
     rescue_from ApplicationError do |e|
+      render json: { errors: [e.message] }, status: :internal_server_error
+    end
+
+    rescue_from NoMethodError do |e|
       render json: { errors: [e.message] }, status: :internal_server_error
     end
 
