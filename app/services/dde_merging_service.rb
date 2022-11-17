@@ -368,7 +368,7 @@ class DDEMergingService
     Observation.where(person_id: secondary_patient.id).each do |obs|
       check = Observation.find_by("person_id = #{primary_patient.id} AND concept_id = #{obs.concept_id} AND
         DATE(obs_datetime) = DATE('#{obs.obs_datetime.strftime('%Y-%m-%d')}') #{unless obs.value_coded.blank?
-                                                                                  "AND value_coded IS NOT NULL"
+                                                                                  'AND value_coded IS NOT NULL'
                                                                                 end} #{unless obs.obs_group_id.blank?
                                                                                          'AND obs_group_id IS NOT NULL'
                                                                                        end} #{unless obs.order_id.blank?
@@ -486,7 +486,7 @@ class DDEMergingService
                                                                                                                                                                    "#{encounter.location_id},"
                                                                                                                                                                  end} #{unless encounter.form_id.blank?
                                                                                                                                                                           "#{encounter.form_id},"
-                                                                                                                                                                        end} uuid(), #{User.current.id}, '#{encounter.date_created.strftime('%Y-%m-%d %H:%M:%S')}', #{encounter.voided}, #{encounter.changed_by}, '#{encounter.date_changed.strftime('%Y-%m-%d %H:%M:%S')}')
+                                                                                                                                                                        end} uuid(), #{User.current.id}, '#{encounter&.date_created&.strftime('%Y-%m-%d %H:%M:%S')}', #{encounter.voided}, #{encounter.changed_by.blank? ? 'NULL' : encounter.changed_by},  #{encounter.date_changed.blank? ? 'NULL' : "'#{encounter.date_changed.strftime('%Y-%m-%d %H:%M:%S')}'"})
       SQL
     end
     row_id = ActiveRecord::Base.connection.select_one('SELECT LAST_INSERT_ID() AS id')['id']
