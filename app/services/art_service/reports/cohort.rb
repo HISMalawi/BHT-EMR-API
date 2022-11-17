@@ -36,7 +36,7 @@ module ARTService
       end
 
       def find_report
-        Report.where(type: @type, name: @name,
+        Report.where(type: @type, name: "#{@name} #{@occupation}",
                      start_date: @start_date, end_date: @end_date)\
               .order(date_created: :desc)\
               .first
@@ -176,7 +176,7 @@ module ARTService
       # Writes the report to database
       def save_report
         Report.transaction do
-          report = Report.create(name: @name,
+          report = Report.create(name: "#{@name} #{@occupation}",
                                  start_date: @start_date,
                                  end_date: @end_date,
                                  type: @type,

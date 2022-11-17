@@ -34,7 +34,7 @@ module ARTService
         drop_temp_other_patient_types
         create_temp_other_patient_types(end_date)
         create_temp_register_start_date_table(end_date)
-        load_data_into_temp_earliest_start_date(end_date.to_date)
+        load_data_into_temp_earliest_start_date(end_date.to_date, occupation)
 
         # create_tmp_patient_table_2(end_date)
 
@@ -564,7 +564,7 @@ module ARTService
       STATE_DIED = 3
       STATE_ON_TREATMENT = 7
 
-      def load_data_into_temp_earliest_start_date(end_date)
+      def load_data_into_temp_earliest_start_date(end_date, occupation = nil)
         end_date = ActiveRecord::Base.connection.quote(end_date)
 
         type_of_patient_concept = concept('Type of patient').concept_id
@@ -572,6 +572,7 @@ module ARTService
         drug_refill_concept = concept('Drug refill').concept_id
         external_concept = concept('External Consultation').concept_id
         program_id = Program.find_by(name: 'HIV program').id
+        cond = " AND pa.value = '#{occupation}'" unless occupation.blank?
 
         ActiveRecord::Base.connection.execute <<~SQL
           INSERT INTO temp_earliest_start_date
@@ -587,7 +588,7 @@ module ARTService
                  (SELECT value_coded FROM obs
                   WHERE concept_id = 7563 AND person_id = patient_program.patient_id AND voided = 0
                   ORDER BY obs_datetime DESC LIMIT 1) AS reason_for_starting_art,
-                pa.value as occupation
+                 pa.value as occupation
           FROM patient_program
           INNER JOIN person ON person.person_id = patient_program.patient_id
           LEFT JOIN (
@@ -641,7 +642,7 @@ module ARTService
             AND outcome.voided = 0
             AND patient_program.program_id = 1
             AND outcome.state = 7
-            AND outcome.start_date IS NOT NULL
+            AND outcome.start_date IS NOT NULL #{cond}
             /*AND patient_program.patient_id NOT IN (
               SELECT e.patient_id FROM encounter e
               LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND value_coded = #{new_patient_concept}) AS new_patient ON e.patient_id = new_patient.person_id
