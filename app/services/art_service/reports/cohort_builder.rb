@@ -586,8 +586,7 @@ module ARTService
                  IF(person.birthdate IS NOT NULL, TIMESTAMPDIFF(DAY, person.birthdate,  DATE(COALESCE(art_start_date_obs.value_datetime, MIN(art_order.start_date)))), NULL) AS age_in_days,
                  (SELECT value_coded FROM obs
                   WHERE concept_id = 7563 AND person_id = patient_program.patient_id AND voided = 0
-                  ORDER BY obs_datetime DESC LIMIT 1) AS reason_for_starting_art,
-                 pa.value as occupation
+                  ORDER BY obs_datetime DESC LIMIT 1) AS reason_for_starting_art
           FROM patient_program
           INNER JOIN person ON person.person_id = patient_program.patient_id
           LEFT JOIN (
@@ -777,8 +776,7 @@ module ARTService
              gender VARCHAR(32),
              age_at_initiation INT DEFAULT NULL,
              age_in_days INT DEFAULT NULL,
-             reason_for_starting_art INT DEFAULT NULL,
-             occupation varchar(255) DEFAULT NULL
+             reason_for_starting_art INT DEFAULT NULL
           );'
         )
 
