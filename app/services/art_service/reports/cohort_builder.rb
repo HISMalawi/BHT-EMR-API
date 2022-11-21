@@ -572,7 +572,6 @@ module ARTService
         drug_refill_concept = concept('Drug refill').concept_id
         external_concept = concept('External Consultation').concept_id
         program_id = Program.find_by(name: 'HIV program').id
-        cond = " AND pa.value = '#{occupation}'" unless occupation.blank?
 
         ActiveRecord::Base.connection.execute <<~SQL
           INSERT INTO temp_earliest_start_date
@@ -642,7 +641,7 @@ module ARTService
             AND outcome.voided = 0
             AND patient_program.program_id = 1
             AND outcome.state = 7
-            AND outcome.start_date IS NOT NULL #{cond}
+            AND outcome.start_date IS NOT NULL #{occupation_filter(occupation)}
             /*AND patient_program.patient_id NOT IN (
               SELECT e.patient_id FROM encounter e
               LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND value_coded = #{new_patient_concept}) AS new_patient ON e.patient_id = new_patient.person_id
@@ -658,6 +657,13 @@ module ARTService
           HAVING date_enrolled <= #{end_date}
         SQL
         remove_drug_refills_and_external_consultation(end_date)
+      end
+
+      def occupation_filter(occupation)
+        return '' if occupation.blank?
+        return '' if occupation == 'All'
+        return "AND pa.value = '#{occupation}'" if occupation == 'Military'
+        return "AND (pa.value != 'Military' OR pa.value IS NULL)" if occupation == 'Civilian'
       end
 
       def create_temp_other_patient_types(end_date)
