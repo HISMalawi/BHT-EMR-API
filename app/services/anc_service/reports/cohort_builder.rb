@@ -332,8 +332,7 @@ module ANCService
         end
 
         def new_hiv_positive_first_visit(date)
-
-          Encounter.find_by_sql(["SELECT e.patient_id FROM encounter e
+          new_pos = Encounter.find_by_sql(["SELECT e.patient_id FROM encounter e
             INNER JOIN obs o ON o.encounter_id = e.encounter_id AND e.voided = 0
             WHERE e.program_id = ? AND o.concept_id = ? AND ((o.value_coded = ?)
               OR (o.value_text = 'Positive')) AND e.patient_id IN (?)
@@ -347,11 +346,11 @@ module ANCService
             date.to_date.end_of_month,date.to_date.end_of_month
           ]).map(&:patient_id).uniq
 
+          (new_pos + new_positive_same_facility_art(date)).uniq
         end
 
         def prev_hiv_positive_first_visit(date)
-
-          Encounter.find_by_sql(["SELECT e.patient_id FROM encounter e INNER JOIN obs o ON
+          prev_pos = Encounter.find_by_sql(["SELECT e.patient_id FROM encounter e INNER JOIN obs o ON
                 o.encounter_id = e.encounter_id AND e.voided = 0
                 WHERE e.program_id = ? AND o.concept_id = ?
                 AND ((o.value_coded = ?) OR (o.value_text = 'Negative'))
@@ -360,6 +359,8 @@ module ANCService
                 POSITIVE.concept_id, @monthly_patients,
                 date.to_date.beginning_of_month.strftime('%Y-%m-%d 00:00:00'),
                 date.to_date.end_of_month.strftime('%Y-%m-%d 23:59:59')]).map(&:patient_id)
+
+          (prev_pos + prev_positive_same_facility_art(date)).uniq
         end
 
         def pre_hiv_negative_first_visit(date)
@@ -373,6 +374,27 @@ module ANCService
                         date.to_date.end_of_month.strftime('%Y-%m-%d 23:59:59')]).map(&:patient_id)
           (prev_neg - @first_new_hiv_negative)
 
+        end
+
+        def prev_positive_same_facility_art(date)
+          Encounter.find_by_sql(["
+                    SELECT e.patient_id
+                    FROM encounter e
+                    INNER JOIN obs o ON e.encounter_id = o.encounter_id AND o.concept_id = 7882
+                    WHERE o.value_datetime < '#{date.to_date.beginning_of_month.strftime('%Y-%m-%d 00:00:00')}'
+                    AND e.program_id = 1 AND e.encounter_type = 9
+                    AND e.patient_id IN (?)", @monthly_patients]).map(&:patient_id)
+        end
+
+        def new_positive_same_facility_art(date)
+          Encounter.find_by_sql(["
+                    SELECT e.patient_id
+                    FROM encounter e
+                    INNER JOIN obs o ON e.encounter_id = o.encounter_id AND o.concept_id = 7882
+                    WHERE o.value_datetime >= '#{date.to_date.beginning_of_month.strftime('%Y-%m-%d 00:00:00')}'
+                    AND o.value_datetime <= '#{date.to_date.end_of_month.strftime('%Y-%m-%d 23:59:59')}'
+                    AND e.program_id = 1 AND e.encounter_type = 9
+                    AND e.patient_id IN (?)", @monthly_patients]).map(&:patient_id)
         end
 
         def extra_art_checks(type,date)
