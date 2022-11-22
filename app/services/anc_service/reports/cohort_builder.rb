@@ -344,7 +344,7 @@ module ANCService
             GROUP BY e.patient_id", PROGRAM.id, HIV_STATUS.concept_id,
             POSITIVE.concept_id,@monthly_patients, HIV_STATUS.concept_id,
             date.to_date.end_of_month,date.to_date.end_of_month
-          ]).map(&:patient_id).uniq
+          ]).map(&:patient_id)
 
           (new_pos + new_positive_same_facility_art(date)).uniq
         end
@@ -380,9 +380,10 @@ module ANCService
           Encounter.find_by_sql(["
                     SELECT e.patient_id
                     FROM encounter e
-                    INNER JOIN obs o ON e.encounter_id = o.encounter_id AND o.concept_id = 7882
+                    INNER JOIN obs o ON e.encounter_id = o.encounter_id AND o.concept_id = 7882 /*Confirmatory Test date*/
                     WHERE o.value_datetime < '#{date.to_date.beginning_of_month.strftime('%Y-%m-%d 00:00:00')}'
-                    AND e.program_id = 1 AND e.encounter_type = 9
+                    AND o.voided = 0 AND e.voided = 0
+                    AND e.program_id = 1 AND e.encounter_type = 9 /*Clinic registration*/
                     AND e.patient_id IN (?)", @monthly_patients]).map(&:patient_id)
         end
 
@@ -390,10 +391,11 @@ module ANCService
           Encounter.find_by_sql(["
                     SELECT e.patient_id
                     FROM encounter e
-                    INNER JOIN obs o ON e.encounter_id = o.encounter_id AND o.concept_id = 7882
+                    INNER JOIN obs o ON e.encounter_id = o.encounter_id AND o.concept_id = 7882 /*Confirmatory Test date*/
                     WHERE o.value_datetime >= '#{date.to_date.beginning_of_month.strftime('%Y-%m-%d 00:00:00')}'
+                    AND o.voided = 0 AND e.voided = 0
                     AND o.value_datetime <= '#{date.to_date.end_of_month.strftime('%Y-%m-%d 23:59:59')}'
-                    AND e.program_id = 1 AND e.encounter_type = 9
+                    AND e.program_id = 1 AND e.encounter_type = 9 /*Clinic registration*/
                     AND e.patient_id IN (?)", @monthly_patients]).map(&:patient_id)
         end
 
