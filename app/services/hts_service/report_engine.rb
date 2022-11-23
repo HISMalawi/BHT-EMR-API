@@ -4,6 +4,8 @@ module HtsService
   # This is the engine managing all hts reports.
   class ReportEngine
     REPORTS = {
+      'HTS SUMMARY' => HtsService::Reports::Moh::HtsSummary,
+      'HTS INITIAL TESTED FOR HIV' => HtsService::Reports::Moh::HtsInitialTestedForHiv,
       'HTS INDEX' => HtsService::Reports::Pepfar::HtsIndex,
       'HTS SELF' => HtsService::Reports::Pepfar::HtsSelf,
       'HTS TST COMMUNITY' => HtsService::Reports::Pepfar::HtsTstCommunity,
