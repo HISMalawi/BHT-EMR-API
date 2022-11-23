@@ -42,6 +42,22 @@ module ARTService
           }
         end
 
+        def process_due_people
+          # time this process
+          start_time = Time.now
+          clients = []
+          Parallel.each(clients_on_art, in_threads: 20) do |patient|
+            result = outcome_date(patient['patient_id']) unless [2, 3, 6, 8, 119].include?(patient['state'].to_i)
+
+            patient['outcome'] = result['outcome'] if result.present?
+            patient['outcome_date'] = result['outcome_date'] if result.present?
+            clients << patient
+          end
+          end_time = Time.now
+          # log the time taken in minutes
+          "Time taken to process #{clients.count} clients: #{((end_time - start_time) / 60).round(2)} minutes"
+        end
+
         private
 
         def pregnant_women(patient_list)
@@ -275,6 +291,39 @@ module ARTService
             AND p.voided = 0
             AND p.person_id NOT IN (#{drug_refills_and_external_consultation_list})
             GROUP BY p.person_id
+          SQL
+        end
+
+        def clients_on_art
+          ActiveRecord::Base.connection.select_all <<~SQL
+            SELECT
+              p.person_id AS patient_id,
+              disaggregated_age_group(p.birthdate, DATE(#{ActiveRecord::Base.connection.quote(end_date)})) AS age_group,
+              p.birthdate,
+              p.gender,
+              pid.identifier AS arv_number,
+              current_state.state,
+              current_state.start_date
+            FROM person p
+            INNER JOIN patient_program pp ON pp.patient_id = p.person_id AND pp.voided = 0 AND pp.program_id = #{Program.find_by_name('HIV Program').id}
+            INNER JOIN (
+              SELECT a.patient_program_id, a.state, a.start_date, a.end_date
+                FROM patient_state a
+                LEFT OUTER JOIN patient_state b ON a.patient_program_id = b.patient_program_id
+                AND a.start_date < b.start_date
+                AND b.voided = 0
+                WHERE b.patient_program_id IS NULL AND a.end_date IS NULL AND a.voided = 0
+            ) current_state ON current_state.patient_program_id = pp.patient_program_id
+            LEFT JOIN patient_identifier pid ON pid.patient_id = pp.patient_id AND pid.identifier_type IN (#{pepfar_patient_identifier_type.to_sql}) AND pid.voided = 0
+            WHERE p.person_id NOT IN (#{drug_refills_and_external_consultation_list})
+            AND ((current_state.state IN (2, 3, 6, 8, 119) AND current_state.start_date >= (DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH)) OR current_state.state IN (7, 1, 87, 120, 136))
+          SQL
+        end
+
+        def outcome_date(patient_id)
+          ActiveRecord::Base.connection.select_one <<~SQL
+            SELECT pepfar_patient_outcome(#{patient_id}, DATE(#{ActiveRecord::Base.connection.quote(end_date)})) AS outcome,
+            current_pepfar_defaulter_date(#{patient_id}, DATE(#{ActiveRecord::Base.connection.quote(end_date)})) AS outcome_date
           SQL
         end
 
