@@ -46,11 +46,19 @@ module ARTService
           # time this process
           start_time = Time.now
           clients = []
-          Parallel.each(clients_on_art, in_threads: 20) do |patient|
-            result = outcome_date(patient['patient_id']) unless [2, 3, 6, 8, 119].include?(patient['state'].to_i)
+          results = clients_on_art
+          # get all clients that are females from results
+          maternal_status = vl_maternal_status(results.map { |patient| patient['patient_id'] if patient['gender'] == 'F' }.compact)
+          Parallel.each(results, in_threads: 20) do |patient|
+            # get client extra details
+            result = extra_information(patient['patient_id'])
+            patient['maternal_status'] = maternal_status[:FP].include?(patient['patient_id']) ? 'FP' : (maternal_status[:FBf].include?(patient['patient_id']) ? 'FBf' : nil)
+            patient['current_regimen'] = result['current_regimen']
+            patient['art_start_date'] = result['art_start_date']
+            next if result['art_start_date'].blank?
+            next if result['art_start_date'].to_date > end_date - 6.months
+            next if remove_adverse_outcome_patient?(patient)
 
-            patient['outcome'] = result['outcome'] if result.present?
-            patient['outcome_date'] = result['outcome_date'] if result.present?
             clients << patient
           end
           end_time = Time.now
@@ -59,6 +67,22 @@ module ARTService
         end
 
         private
+
+        def remove_adverse_outcome_patient?(patient)
+          return false unless adverse_outcomes.include?(patient['state'].to_i)
+
+          last_date = patient['vl_order_date'] || patient['art_start_date']
+          return false if patient['vl_order_date'].present? && last_date.to_date >= start_date && last_date.to_date <= end_date
+
+          length = 12
+          length = 6 if patient['maternal_status'] == 'FP'
+          length = 6 if patient['maternal_status'] == 'FBf'
+          length = 6 if patient['current_regimen'].to_s.match(/P/i)
+
+          return false if last_date.to_date + length.months < patient['outcome_date'].to_date
+
+          true
+        end
 
         def pregnant_women(patient_list)
           ActiveRecord::Base.connection.select_all <<~SQL
@@ -297,33 +321,61 @@ module ARTService
         def clients_on_art
           ActiveRecord::Base.connection.select_all <<~SQL
             SELECT
-              p.person_id AS patient_id,
+              ab.patient_id,
+              (MAX(ab.auto_expire_date) + INTERVAL 31 DAY) defaulter_date,
               disaggregated_age_group(p.birthdate, DATE(#{ActiveRecord::Base.connection.quote(end_date)})) AS age_group,
               p.birthdate,
               p.gender,
               pid.identifier AS arv_number,
               current_state.state,
-              current_state.start_date
-            FROM person p
-            INNER JOIN patient_program pp ON pp.patient_id = p.person_id AND pp.voided = 0 AND pp.program_id = #{Program.find_by_name('HIV Program').id}
+              current_state.start_date outcome_date,
+              current_order.start_date vl_order_date
+            FROM orders ab
+            INNER JOIN person p ON p.person_id = ab.patient_id AND p.voided = 0
+            INNER JOIN drug_order dor ON dor.order_id = ab.order_id AND dor.quantity > 0
+            INNER JOIN arv_drug ad ON dor.drug_inventory_id = ad.drug_id
+            INNER JOIN patient_program pp ON pp.patient_id = ab.patient_id AND pp.voided = 0 AND pp.program_id = 1
             INNER JOIN (
               SELECT a.patient_program_id, a.state, a.start_date, a.end_date
-                FROM patient_state a
-                LEFT OUTER JOIN patient_state b ON a.patient_program_id = b.patient_program_id
-                AND a.start_date < b.start_date
-                AND b.voided = 0
-                WHERE b.patient_program_id IS NULL AND a.end_date IS NULL AND a.voided = 0
+              FROM patient_state a
+              LEFT OUTER JOIN patient_state b ON a.patient_program_id = b.patient_program_id
+              AND a.start_date < b.start_date
+              AND b.voided = 0
+              WHERE b.patient_program_id IS NULL AND a.end_date IS NULL AND a.voided = 0
             ) current_state ON current_state.patient_program_id = pp.patient_program_id
-            LEFT JOIN patient_identifier pid ON pid.patient_id = pp.patient_id AND pid.identifier_type IN (#{pepfar_patient_identifier_type.to_sql}) AND pid.voided = 0
-            WHERE p.person_id NOT IN (#{drug_refills_and_external_consultation_list})
-            AND ((current_state.state IN (2, 3, 6, 8, 119) AND current_state.start_date >= (DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH)) OR current_state.state IN (7, 1, 87, 120, 136))
+            LEFT OUTER JOIN orders b ON ab.patient_id = b.patient_id
+            AND ab.order_id = b.order_id
+            AND ab.auto_expire_date < b.auto_expire_date
+            AND b.voided = 0 AND b.order_type_id = 1
+            LEFT JOIN patient_identifier pid ON pid.patient_id = pp.patient_id AND pid.identifier_type = 4 AND pid.voided = 0
+            LEFT JOIN (
+              SELECT ab.patient_id, MAX(ab.start_date) start_date
+              FROM orders ab
+              INNER JOIN concept_name
+                ON concept_name.concept_id = ab.concept_id
+                AND concept_name.name IN ('Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)', 'Plasma')
+                AND concept_name.voided = 0
+              LEFT OUTER JOIN orders b ON ab.patient_id = b.patient_id
+              AND ab.order_id = b.order_id
+              AND ab.start_date < b.start_date
+              AND b.voided = 0
+              WHERE b.patient_id IS NULL AND ab.voided = 0 AND ab.order_type_id = 4 AND ab.start_date < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
+              GROUP BY ab.patient_id
+            ) current_order ON current_order.patient_id = ab.patient_id
+            WHERE b.patient_id IS NULL
+              AND ab.voided = 0
+              AND (ab.auto_expire_date + INTERVAL 31 DAY) > (DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH)
+              AND ab.start_date < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
+              AND p.person_id NOT IN (#{drug_refills_and_external_consultation_list})
+              AND ((current_state.state IN (#{adverse_outcomes.join(',')}) AND current_state.start_date >= (DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH)) OR current_state.state IN (7, 1, 87, 120, 136))
+            GROUP BY ab.patient_id;
           SQL
         end
 
-        def outcome_date(patient_id)
+        def extra_information(patient_id)
           ActiveRecord::Base.connection.select_one <<~SQL
-            SELECT pepfar_patient_outcome(#{patient_id}, DATE(#{ActiveRecord::Base.connection.quote(end_date)})) AS outcome,
-            current_pepfar_defaulter_date(#{patient_id}, DATE(#{ActiveRecord::Base.connection.quote(end_date)})) AS outcome_date
+            SELECT patient_current_regimen(#{patient_id}, DATE(#{ActiveRecord::Base.connection.quote(end_date)})) AS current_regimen,
+            date_antiretrovirals_started(#{patient_id}, DATE(#{ActiveRecord::Base.connection.quote(end_date)})) AS art_start_date
           SQL
         end
 
