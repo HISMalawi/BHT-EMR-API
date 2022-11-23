@@ -3,7 +3,7 @@
 require 'rails_helper'
 
 RSpec.describe ObservationService do
-  subject { ObservationService }
+  subject { ObservationService.new }
   let(:encounter) { create(:encounter) }
   let(:obs_params) do
     {
@@ -37,12 +37,14 @@ RSpec.describe ObservationService do
     end
 
     it 'creates parent and child observations' do
-      obs_params[:child] = obs_params.dup
-      parent, children = subject.create_observation(encounter, obs_params)
+      welcome = obs_params.dup
+      obs_params[:child] = [welcome.dup, welcome.dup]
+      result = subject.create_observation(encounter, obs_params)
 
+      parent, children = result
       expect(parent.id).not_to be_nil
-      expect(children[0].id).not_to be_nil
-      expect(children[0].obs_group_id).to eq(parent.id)
+      expect(children.id).not_to be_nil
+      expect(children.obs_group_id).to eq(parent.id)
     end
 
     SECONDS_PER_MINUTE = 60

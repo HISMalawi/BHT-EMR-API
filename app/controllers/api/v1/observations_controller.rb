@@ -118,6 +118,6 @@ class Api::V1::ObservationsController < ApplicationController
   end
 
   def service
-    ObservationService
+    ObservationService.new
   end
 end
