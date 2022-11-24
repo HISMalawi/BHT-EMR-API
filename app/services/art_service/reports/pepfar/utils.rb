@@ -82,6 +82,31 @@ module ARTService
           end
         end
 
+        ##
+        # Returns the current occupation of a patient
+        def current_occupation(joiner)
+          <<~SQL
+            LEFT JOIN (
+              SELECT a.person_id, a.value
+              FROM person_attribute a
+              LEFT OUTER JOIN person_attribute b
+              ON a.person_attribute_id = b.person_attribute_id
+              AND a.date_created < b.date_created
+              AND b.voided = 0
+              WHERE b.person_attribute_id IS NULL AND a.person_attribute_type_id = 13 AND a.voided = 0
+            ) pa ON pa.person_id = #{joiner}
+          SQL
+        end
+
+        ##
+        # Returns an occupation filter based on the given occupation
+        def occupation_filter(occupation)
+          return '' if occupation.blank?
+          return '' if occupation == 'All'
+          return " AND pa.value = '#{occupation}'" if occupation == 'Military'
+          return " AND (pa.value != 'Military' OR pa.value IS NULL)" if occupation == 'Civilian'
+        end
+
         # this just gives all clients who are truly external or drug refill
         # rubocop:disable Metrics/MethodLength
         # rubocop:disable Metrics/AbcSize

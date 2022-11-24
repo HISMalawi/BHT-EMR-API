@@ -10,16 +10,18 @@ module ARTService
       # 4. for the sample drawns available pick the latest sample drawn within the reporting period
       # 5. for the results pick the latest result within the reporting period
       class ViralLoadCoverage2
-        attr_reader :start_date, :end_date
+        attr_reader :start_date, :end_date, :occupation
 
         include Utils
 
-        def initialize(start_date:, end_date:, **_kwargs)
+        def initialize(start_date:, end_date:, **kwargs)
           @start_date = start_date&.to_date
           raise InvalidParameterError, 'start_date is required' unless @start_date
 
           @end_date = end_date&.to_date || @start_date + 12.months
           raise InvalidParameterError, "start_date can't be greater than end_date" if @start_date > @end_date
+
+          @occupation = kwargs.delete(:occupation)
         end
 
         def find_report
@@ -32,7 +34,7 @@ module ARTService
           return { FP: [], FBf: [] } if patient_list.blank?
 
           pregnant = pregnant_women(patient_list).map { |woman| woman['person_id'].to_i }
-          return { FP: pregnant, Fbf: [] } if (patient_list - pregnant).blank?
+          return { FP: pregnant, FBf: [] } if (patient_list - pregnant).blank?
 
           feeding = breast_feeding(patient_list - pregnant).map { |woman| woman['person_id'].to_i }
 
@@ -43,8 +45,6 @@ module ARTService
         end
 
         def process_due_people
-          # time this process
-          start_time = Time.now
           clients = []
           results = clients_on_art
           # get all clients that are females from results
@@ -61,9 +61,7 @@ module ARTService
 
             clients << patient
           end
-          end_time = Time.now
-          # log the time taken in minutes
-          "Time taken to process #{clients.count} clients: #{((end_time - start_time) / 60).round(2)} minutes"
+          clients
         end
 
         private
@@ -131,9 +129,7 @@ module ARTService
         end
 
         def build_report(report)
-          clients = due_for_viral_load.map { |patient| patient unless patient['due_status'].zero? }.compact
-          return report if clients.blank?
-
+          clients = process_due_people
           clients.each { |patient| report[patient['age_group']][:due_for_vl] << patient }
           load_patient_tests_into_report(report, clients.map { |patient| patient['patient_id'] })
         end
@@ -187,137 +183,6 @@ module ARTService
           ).map { |state| state['state'] }
         end
 
-        ##
-        # Selects patients whose last viral load should have expired before the end of the reporting period.
-        #
-        # Patients returned by this aren't necessarily due for viral load, they may have
-        # their current milestone delayed. So extra processing on the patients is required
-        # to filter out the patients with delayed milestones.
-        def find_patients_with_overdue_viral_load
-          # Find all patients whose last order's expires in or before the reporting period (making them due)
-          # or patients whose first order comes at 6 months or greater after starting ART.
-          <<~SQL
-            SELECT orders.patient_id,
-                   disaggregated_age_group(p.birthdate, DATE(#{ActiveRecord::Base.connection.quote(end_date)})) AS age_group,
-                   p.birthdate,
-                   p.gender,
-                   patient_identifier.identifier AS arv_number,
-                   CASE WHEN state_within_order_period.start_date < DATE(orders.start_date) + INTERVAL 12 MONTH THEN FALSE ELSE TRUE END AS due_status
-            FROM orders
-            INNER JOIN person p ON p.person_id = orders.patient_id
-            INNER JOIN order_type
-              ON order_type.order_type_id = orders.order_type_id
-              AND order_type.name = 'Lab'
-              AND order_type.retired = 0
-            INNER JOIN concept_name
-              ON concept_name.concept_id = orders.concept_id
-              AND concept_name.name IN ('Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)')
-              AND concept_name.voided = 0
-            INNER JOIN (
-              /* Get the latest order dates for each patient */
-              SELECT orders.patient_id, MAX(orders.start_date) AS start_date
-              FROM orders
-              INNER JOIN order_type
-                ON order_type.order_type_id = orders.order_type_id
-                AND order_type.name = 'Lab'
-                AND order_type.retired = 0
-              INNER JOIN concept_name
-                ON concept_name.concept_id = orders.concept_id
-                AND concept_name.name IN ('Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)')
-                AND concept_name.voided = 0
-              WHERE orders.start_date < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH
-                AND orders.voided = 0
-              GROUP BY orders.patient_id
-            ) AS latest_patient_order_date
-              ON latest_patient_order_date.patient_id = orders.patient_id
-              AND latest_patient_order_date.start_date = orders.start_date
-            LEFT JOIN(
-              /* Get the current adverse outcome within the reporting period */
-              SELECT pp.patient_id, ps.state, ps.start_date
-              FROM patient_program pp
-              INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id
-              INNER JOIN (
-                SELECT ps.patient_program_id, MAX(ps.start_date) start_date
-                  FROM patient_program pap
-                  INNER JOIN patient_state ps ON ps.patient_program_id = pap.patient_program_id
-                  WHERE pap.program_id = 1
-                  AND ps.start_date BETWEEN DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH AND DATE(#{ActiveRecord::Base.connection.quote(end_date)})
-                  GROUP BY ps.patient_program_id
-              ) AS previous ON previous.patient_program_id = ps.patient_program_id AND previous.start_date = ps.start_date
-              WHERE pp.program_id = 1 AND pp.voided = 0 AND ps.state IN (#{adverse_outcomes.join(',')})
-            ) state_within_order_period ON state_within_order_period.patient_id = orders.patient_id
-            INNER JOIN (
-              SELECT pp.patient_id, ps.state, ps.start_date
-              FROM patient_program pp
-              INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id
-              INNER JOIN (
-                SELECT ps.patient_program_id, MAX(ps.start_date) start_date
-                  FROM patient_program pap
-                  INNER JOIN patient_state ps ON ps.patient_program_id = pap.patient_program_id
-                  WHERE pap.program_id = 1 AND ps.start_date <= DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH
-                  GROUP BY ps.patient_program_id
-              ) AS previous ON previous.patient_program_id = ps.patient_program_id AND previous.start_date = ps.start_date
-              WHERE pp.program_id = 1 AND pp.voided = 0
-            ) state_before_period ON state_before_period.patient_id = orders.patient_id AND state_before_period.state NOT IN (#{adverse_outcomes.join(',')})
-            LEFT JOIN patient_identifier
-              ON patient_identifier.patient_id = orders.patient_id
-              AND patient_identifier.identifier_type IN (#{pepfar_patient_identifier_type.to_sql})
-              AND patient_identifier.voided = 0
-            WHERE orders.start_date < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH
-              AND orders.voided = 0
-            GROUP BY orders.patient_id
-          SQL
-        end
-
-        ##
-        # Returns all patients that have been on ART for at least 6 months and have never had a Viral Load.
-        def find_patients_due_for_initial_viral_load
-          <<~SQL
-            SELECT
-              p.person_id AS patient_id,
-              disaggregated_age_group(p.birthdate, DATE(#{ActiveRecord::Base.connection.quote(end_date)})) age_group,
-              p.birthdate,
-              p.gender,
-              pid.identifier AS arv_number,
-              CASE WHEN state_within_order_period.start_date < DATE(MIN(ps.start_date)) + INTERVAL 6 MONTH THEN FALSE ELSE TRUE END AS due_status
-            FROM person p
-            INNER JOIN patient_program pp ON pp.patient_id = p.person_id AND pp.program_id = #{Program.find_by_name('HIV Program').id} AND pp.voided = 0
-            INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id AND ps.state = 7
-            LEFT JOIN(
-              /* Get the current adverse outcome within the reporting period */
-              SELECT pp.patient_id, ps.state, ps.start_date
-              FROM patient_program pp
-              INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id
-              INNER JOIN (
-                SELECT ps.patient_program_id, MAX(ps.start_date) start_date
-                  FROM patient_program pap
-                  INNER JOIN patient_state ps ON ps.patient_program_id = pap.patient_program_id
-                  WHERE pap.program_id = 1
-                  AND ps.start_date BETWEEN DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH AND DATE(#{ActiveRecord::Base.connection.quote(end_date)})
-                  GROUP BY ps.patient_program_id
-              ) AS previous ON previous.patient_program_id = ps.patient_program_id AND previous.start_date = ps.start_date
-              WHERE pp.program_id = 1 AND pp.voided = 0 AND ps.state IN (#{adverse_outcomes.join(',')})
-            ) state_within_order_period ON state_within_order_period.patient_id = p.person_id
-            LEFT JOIN patient_identifier pid ON pid.patient_id = p.person_id AND pid.voided = 0 AND pid.identifier_type IN (#{pepfar_patient_identifier_type.to_sql})
-            WHERE p.person_id NOT IN (
-              SELECT orders.patient_id
-              FROM orders
-              INNER JOIN order_type ON order_type.order_type_id = orders.order_type_id AND order_type.name = 'Lab' AND order_type.retired = 0
-              INNER JOIN concept_name ON concept_name.concept_id = orders.concept_id AND concept_name.name IN ('Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)') AND concept_name.voided = 0
-              INNER JOIN obs ON orders.order_id = obs.order_id AND obs.voided = 0
-              INNER JOIN concept_name AS cn ON cn.concept_id = obs.concept_id AND cn.name = 'Test type' AND cn.voided = 0
-              INNER JOIN concept_name AS test_name ON test_name.concept_id = obs.value_coded AND test_name.name = 'HIV Viral Load' AND test_name.voided = 0
-              WHERE orders.start_date <= DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH
-                AND orders.voided = 0
-              GROUP BY orders.patient_id
-            )
-            AND ps.start_date <= DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 6 MONTH
-            AND p.voided = 0
-            AND p.person_id NOT IN (#{drug_refills_and_external_consultation_list})
-            GROUP BY p.person_id
-          SQL
-        end
-
         def clients_on_art
           ActiveRecord::Base.connection.select_all <<~SQL
             SELECT
@@ -347,13 +212,14 @@ module ARTService
             AND ab.order_id = b.order_id
             AND ab.auto_expire_date < b.auto_expire_date
             AND b.voided = 0 AND b.order_type_id = 1
-            LEFT JOIN patient_identifier pid ON pid.patient_id = pp.patient_id AND pid.identifier_type = 4 AND pid.voided = 0
+            #{current_occupation('ab.patient_id')}
+            LEFT JOIN patient_identifier pid ON pid.patient_id = pp.patient_id AND pid.identifier_type IN (#{pepfar_patient_identifier_type.to_sql}) AND pid.voided = 0
             LEFT JOIN (
               SELECT ab.patient_id, MAX(ab.start_date) start_date
               FROM orders ab
               INNER JOIN concept_name
                 ON concept_name.concept_id = ab.concept_id
-                AND concept_name.name IN ('Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)', 'Plasma')
+                AND concept_name.name IN ('Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)')
                 AND concept_name.voided = 0
               LEFT OUTER JOIN orders b ON ab.patient_id = b.patient_id
               AND ab.order_id = b.order_id
@@ -363,7 +229,7 @@ module ARTService
               GROUP BY ab.patient_id
             ) current_order ON current_order.patient_id = ab.patient_id
             WHERE b.patient_id IS NULL
-              AND ab.voided = 0
+              AND ab.voided = 0 #{occupation_filter(occupation)}
               AND (ab.auto_expire_date + INTERVAL 31 DAY) > (DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH)
               AND ab.start_date < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
               AND p.person_id NOT IN (#{drug_refills_and_external_consultation_list})
@@ -442,7 +308,7 @@ module ARTService
             WHERE orders.start_date < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
               AND orders.start_date >= DATE(#{ActiveRecord::Base.connection.quote(start_date)}) - INTERVAL 12 MONTH
               AND orders.voided = 0
-              AND orders.patient_id IN (#{clients.join(',')})
+              AND orders.patient_id IN (#{clients.push(0).join(',')})
             GROUP BY orders.patient_id
           SQL
         end
