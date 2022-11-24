@@ -18,6 +18,7 @@ module ARTService
       end
 
       def init_temporary_tables(_start_date, end_date)
+        create_temp_cohort_members_table
         create_tmp_patient_table
         drop_temp_register_start_date_table
         drop_temp_other_patient_types
@@ -29,6 +30,7 @@ module ARTService
 
       def build(cohort_struct, start_date, end_date, occupation)
         #load_tmp_patient_table(cohort_struct)
+        create_temp_cohort_members_table
         create_tmp_patient_table
         drop_temp_register_start_date_table
         drop_temp_other_patient_types
@@ -565,6 +567,16 @@ module ARTService
       STATE_ON_TREATMENT = 7
 
       def load_data_into_temp_earliest_start_date(end_date, occupation = nil)
+        load_data_into_temp_cohort_members_table(end_date)
+        ActiveRecord::Base.connection.execute <<~SQL
+          INSERT INTO temp_earliest_start_date
+          SELECT patient_id, date_enrolled, earliest_start_date, birthdate, birthdate_estimated, death_date, gender, age_at_initiation, age_in_days, reason_for_starting_art
+          FROM temp_cohort_members #{occupation_filter(occupation)}
+        SQL
+      end
+
+      # rubocop:disable Metrics/MethodLength
+      def load_data_into_temp_cohort_members_table(end_date)
         end_date = ActiveRecord::Base.connection.quote(end_date)
 
         type_of_patient_concept = concept('Type of patient').concept_id
@@ -574,7 +586,7 @@ module ARTService
         program_id = Program.find_by(name: 'HIV program').id
 
         ActiveRecord::Base.connection.execute <<~SQL
-          INSERT INTO temp_earliest_start_date
+          INSERT INTO temp_cohort_members
           SELECT patient_program.patient_id,
                  DATE(MIN(art_order.start_date)) AS date_enrolled,
                  DATE(COALESCE(art_start_date_obs.value_datetime, MIN(art_order.start_date))) AS earliest_start_date,
@@ -586,7 +598,8 @@ module ARTService
                  IF(person.birthdate IS NOT NULL, TIMESTAMPDIFF(DAY, person.birthdate,  DATE(COALESCE(art_start_date_obs.value_datetime, MIN(art_order.start_date)))), NULL) AS age_in_days,
                  (SELECT value_coded FROM obs
                   WHERE concept_id = 7563 AND person_id = patient_program.patient_id AND voided = 0
-                  ORDER BY obs_datetime DESC LIMIT 1) AS reason_for_starting_art
+                  ORDER BY obs_datetime DESC LIMIT 1) AS reason_for_starting_art,
+                 pa.value AS occupation
           FROM patient_program
           INNER JOIN person ON person.person_id = patient_program.patient_id
           LEFT JOIN (
@@ -640,7 +653,7 @@ module ARTService
             AND outcome.voided = 0
             AND patient_program.program_id = 1
             AND outcome.state = 7
-            AND outcome.start_date IS NOT NULL #{occupation_filter(occupation)}
+            AND outcome.start_date IS NOT NULL
             /*AND patient_program.patient_id NOT IN (
               SELECT e.patient_id FROM encounter e
               LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND value_coded = #{new_patient_concept}) AS new_patient ON e.patient_id = new_patient.person_id
@@ -657,13 +670,65 @@ module ARTService
         SQL
         remove_drug_refills_and_external_consultation(end_date)
       end
+      # rubocop:enable Metrics/MethodLength
 
       def occupation_filter(occupation)
         return '' if occupation.blank?
         return '' if occupation == 'All'
-        return "AND pa.value = '#{occupation}'" if occupation == 'Military'
-        return "AND (pa.value != 'Military' OR pa.value IS NULL)" if occupation == 'Civilian'
+        return "WHERE occupation = '#{occupation}'" if occupation == 'Military'
+        return "WHERE (occupation != 'Military' OR occupation IS NULL)" if occupation == 'Civilian'
       end
+      ##
+      # This will hold crucial information for cohort members
+      # rubocop:disable Metrics/MethodLength
+      # rubocop:disable Metrics/AbcSize
+      def create_temp_cohort_members_table
+        ActiveRecord::Base.connection.execute('DROP TABLE IF EXISTS temp_cohort_members')
+        ActiveRecord::Base.connection.execute <<~SQL
+          CREATE TABLE temp_cohort_members (
+            patient_id INT PRIMARY KEY,
+            date_enrolled DATE,
+            earliest_start_date DATE,
+            birthdate DATE DEFAULT NULL,
+            birthdate_estimated BOOLEAN,
+            death_date DATE,
+            gender VARCHAR(32),
+            age_at_initiation INT DEFAULT NULL,
+            age_in_days INT DEFAULT NULL,
+            reason_for_starting_art INT DEFAULT NULL,
+            occupation VARCHAR(255) DEFAULT NULL
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+        SQL
+
+        ActiveRecord::Base.connection.execute(
+          'CREATE INDEX member_id_index ON temp_cohort_members (patient_id)'
+        )
+        ActiveRecord::Base.connection.execute(
+          'CREATE INDEX member_enrolled_index ON temp_cohort_members (date_enrolled)'
+        )
+
+        ActiveRecord::Base.connection.execute(
+          'CREATE INDEX member_date_enrolled_index ON temp_cohort_members (patient_id, date_enrolled)'
+        )
+
+        ActiveRecord::Base.connection.execute(
+          'CREATE INDEX member_start_date_index ON temp_cohort_members (earliest_start_date)'
+        )
+        ActiveRecord::Base.connection.execute(
+          'CREATE INDEX member_start_date__date_enrolled_index ON temp_cohort_members (patient_id, earliest_start_date, date_enrolled, gender)'
+        )
+        ActiveRecord::Base.connection.execute(
+          'CREATE INDEX member_reason ON temp_cohort_members (reason_for_starting_art)'
+        )
+        ActiveRecord::Base.connection.execute(
+          'CREATE INDEX member_birthdate_idx ON temp_cohort_members (birthdate)'
+        )
+        ActiveRecord::Base.connection.execute(
+          'CREATE INDEX member_occupation_idx ON temp_cohort_members (birthdate)'
+        )
+      end
+      # rubocop:enable Metrics/AbcSize
+      # rubocop:enable Metrics/MethodLength
 
       def create_temp_other_patient_types(end_date)
         type_of_patient_concept = concept('Type of patient').concept_id
@@ -730,7 +795,7 @@ module ARTService
 
       def remove_drug_refills_and_external_consultation(end_date)
         ActiveRecord::Base.connection.execute <<~SQL
-          DELETE FROM temp_earliest_start_date
+          DELETE FROM temp_cohort_members
           WHERE patient_id IN (#{drug_refills_and_external_consultation_list(end_date)})
         SQL
       end
