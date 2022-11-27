@@ -272,6 +272,10 @@ Rails.application.routes.draw do
       get '/sequences/next_accession_number', to: 'sequences#next_accession_number'
 
       post '/reports/encounters' => 'encounters#count'
+
+      #drugs_cms routes
+      get '/drug_cms/search', to: "drug_cms#search"
+      resources :drug_cms, only: %i[index create show update search]
     end
   end
 
@@ -369,4 +373,5 @@ Rails.application.routes.draw do
 
   get '/api/v1/data_cleaning_confirmation', to: 'api/v1/data_cleaning#view'
   post '/api/v1/data_cleaning_confirmation', to: 'api/v1/data_cleaning#create'
+
 end
