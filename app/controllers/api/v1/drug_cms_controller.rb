@@ -1,5 +1,4 @@
 class Api::V1::DrugCmsController < ApplicationController
-  before_action :authenticate, except: %i[index create update show search]
 
   def index
     render json: paginate(drug_cms_service.get_all_drug_cms)
