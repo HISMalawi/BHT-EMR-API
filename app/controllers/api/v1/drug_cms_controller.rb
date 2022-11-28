@@ -1,5 +1,5 @@
 class Api::V1::DrugCmsController < ApplicationController
-
+  #before_action :authenticate, except: %i[index create update show search]
 
   def index
     render json: paginate(drug_cms_service.get_all_drug_cms)
@@ -10,7 +10,11 @@ class Api::V1::DrugCmsController < ApplicationController
   end
 
   def update
-    render json: drug_cms_service.update_drug_cms(params)
+    if update_parameters[:id].present?
+      render json: drug_cms_service.update_drug_cms(update_parameters)
+    else
+      render json: nil
+    end
   end
 
   def show
@@ -30,5 +34,19 @@ class Api::V1::DrugCmsController < ApplicationController
   private
   def drug_cms_service
     DrugCmsService.new
+  end
+
+  def update_parameters
+    params.permit(
+      :id,
+      :code,
+      :drug_inventory_id,
+      :name,
+      :short_name,
+      :tabs,
+      :pack_size,
+      :weight,
+      :strength
+    )
   end
 end
