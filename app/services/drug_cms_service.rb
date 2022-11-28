@@ -33,23 +33,9 @@ class DrugCmsService
   end
 
   #update drug_cmd
-  def update_drug_cms(params)
+  def update_drug_cms(update_params)
     begin
       found_drug_cms = DrugCms.find(params[:id])
-      update_params = params.permit(
-        :code,
-        :drug_inventory_id,
-        :name,
-        :short_name,
-        :tabs,
-        :pack_size,
-        :weight,
-        :strength,
-        :voided,
-        :voided_by,
-        :date_voided,
-        :void_reason
-      )
       if found_drug_cms.update(update_params)
         found_drug_cms
       else
@@ -61,8 +47,7 @@ class DrugCmsService
   end
 
   #search drug_cms
-  def search_drug_cms(params)
-    kwd = params[:keyword]
-    DrugCms.where("code LIKE('%#{kwd}%') OR name LIKE('%#{kwd}%') OR short_name LIKE('%#{kwd}%')") rescue []
+  def search_drug_cms(kwd)
+    DrugCms.where("code LIKE('%#{kwd}%') OR name LIKE('%#{kwd}%') OR short_name LIKE('%#{kwd}%')")
   end
 end
