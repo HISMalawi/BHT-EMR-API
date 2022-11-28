@@ -39,6 +39,7 @@ module HTSService
     INITIAL_STATE = 0 # Start terminal for encounters graph
     END_STATE = 1 # End terminal for encounters graph
     PREGNANCY_STATUS = 'PREGNANCY STATUS'
+    ITEMS_GIVEN = 'ITEMS GIVEN'
     CIRCUMCISION = 'CIRCUMCISION'
     SOCIAL_HISTORY = 'SOCIAL HISTORY'
     TESTING = 'TESTING'
@@ -55,7 +56,8 @@ module HTSService
       SOCIAL_HISTORY => TESTING,
       TESTING => APPOINTMENT,
       APPOINTMENT => HTS_CONTACT,
-      HTS_CONTACT => REFERRAL,
+      HTS_CONTACT => ITEMS_GIVEN,
+      ITEMS_GIVEN => REFERRAL,
       REFERRAL => PARTNER_RECEPTION,
       PARTNER_RECEPTION => END_STATE
     }.freeze
@@ -76,6 +78,8 @@ module HTSService
                        done_screening_today?],
 
       HTS_CONTACT => %i[is_hiv_positive?],
+
+      ITEMS_GIVEN => %i[task_not_done_today?],
 
       REFERRAL => %i[task_not_done_today?],
 
@@ -100,6 +104,8 @@ module HTSService
           APPOINTMENT
         when /CONTACT/i
           HTS_CONTACT
+        when /ITEMS GIVEN/i
+          ITEMS_GIVEN
         when /REFERRAL/i
           REFERRAL
         when /Partner Reception/i
