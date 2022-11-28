@@ -35,7 +35,7 @@ class DrugCmsService
   #update drug_cmd
   def update_drug_cms(update_params)
     begin
-      found_drug_cms = DrugCms.find(params[:id])
+      found_drug_cms = DrugCms.find(update_params[:id])
       if found_drug_cms.update(update_params)
         found_drug_cms
       else
