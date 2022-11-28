@@ -1,5 +1,6 @@
 class Api::V1::DrugCmsController < ApplicationController
 
+
   def index
     render json: paginate(drug_cms_service.get_all_drug_cms)
   end
@@ -18,7 +19,12 @@ class Api::V1::DrugCmsController < ApplicationController
   end
 
   def search
-    render json: paginate(drug_cms_service.search_drug_cms(params))
+    kwd = params[:keyword]
+    if kwd.present?
+      render json: paginate(drug_cms_service.search_drug_cms(kwd))
+    else
+      render json: []
+    end
   end
 
   private
