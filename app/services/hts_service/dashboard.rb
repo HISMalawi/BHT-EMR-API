@@ -7,7 +7,8 @@ module HTSService
       # TODO: Check encounter_type_id for Testing
       Observation.joins("INNER JOIN concept_name ON concept_name.concept_id = obs.concept_id")
                  .joins("INNER JOIN encounter ON encounter.encounter_id = obs.encounter_id")
-                 .where(encounter: {program_id: 18 }, concept_name: { name: "HIV Status" })
+                 .joins("INNER JOIN encounter_type ON encounter.encounter_type = encounter_type.encounter_type_id")
+                 .where(encounter: {program_id: 18 }, encounter_type: { name: 'Testing'}, concept_name: { name: "HIV Status" })
                  .where('DATE(obs_datetime) = ?', date)
                  .count
     end
