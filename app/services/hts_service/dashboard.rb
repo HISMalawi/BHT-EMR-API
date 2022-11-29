@@ -4,7 +4,6 @@ module HTSService
   # Dashbiard Class
   class Dashboard
     def self.total_registered(date)
-      # TODO: Check encounter_type_id for Testing
       Observation.joins("INNER JOIN concept_name ON concept_name.concept_id = obs.concept_id")
                  .joins("INNER JOIN encounter ON encounter.encounter_id = obs.encounter_id")
                  .joins("INNER JOIN encounter_type ON encounter.encounter_type = encounter_type.encounter_type_id")
