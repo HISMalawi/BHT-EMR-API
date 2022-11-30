@@ -123,26 +123,24 @@ class StockManagementService
   def find_batch_items(filters = {})
     query = PharmacyBatchItem
     unless filters.empty?
-      query.where("DATE(pharmacy_batch_items.date_created) >= '#{filters[:from]}'") if !filters[:from].nil?
-      query.where("DATE(pharmacy_batch_items.date_created) <= '#{filters[:to]}'") if !filters[:to].nil?
-      query.where(drug_id: filters[:drug_id]) if !filters[:drug_id].nil?
-      query.where(current_quantity: filters[:current_quantity]) if !filters[:current_quantity].nil?
+      query = query.where("DATE(pharmacy_batch_items.date_created) >= '#{filters[:start_date]}'") if !filters[:start_date].nil?
+      query = query.where("DATE(pharmacy_batch_items.date_created) <= '#{filters[:end_date]}'") if !filters[:end_date].nil?
+      query = query.where(drug_id: filters[:drug_id]) if !filters[:drug_id].nil?
+      query = query.where(current_quantity: filters[:current_quantity]) if !filters[:current_quantity].nil?
     end
+    query = query.joins("LEFT JOIN pharmacy_obs ON pharmacy_batch_items.id = pharmacy_obs.batch_item_id AND pharmacy_obs.transaction_reason = 'Drug dispensed'")
+          .joins("INNER JOIN drug ON drug.drug_id = pharmacy_batch_items.drug_id")
+          .group("drug.drug_id")
+          .select <<~SQL
+              pharmacy_batch_items.*,
+              CASE
+                WHEN pharmacy_obs.quantity IS NULL
+                THEN 0
+              ELSE
+                ABS(SUM(pharmacy_obs.quantity))
+              END AS dispensed_quantity
+            SQL
     query.order(Arel.sql('pharmacy_batch_items.date_created DESC, pharmacy_batch_items.expiry_date ASC'))
-
-  end
-
-  def dispensed_quantity(from, to)
-    query = Pharmacy.all
-    query = query.joins("INNER JOIN pharmacy_batch_items ON pharmacy_batch_items.id = pharmacy_obs.batch_item_id")
-    query = query.where("DATE(pharmacy_obs.date_created) BETWEEN '#{from}' AND  '#{to}'") if from && to
-    query = query.where("pharmacy_obs.transaction_reason = 'Drug dispensed'")
-    query.joins("INNER JOIN drug ON drug.drug_id = pharmacy_batch_items.drug_id")
-      .group("drug.drug_id")
-      .select <<~SQL
-            drug.drug_id,
-            ABS(SUM(pharmacy_obs.quantity)) AS dispensed_quantity
-          SQL
   end
 
   def void_batch(batch_number, reason)

@@ -198,7 +198,6 @@ Rails.application.routes.draw do
         get 'drug_consumption', to: 'drugs#drug_consumption'
         get 'stock_report', to: 'audit_trails#stock_report'
         get '/audit_trail/grouped', to: 'audit_trails#show_grouped_audit_trail'
-        get '/dispensed_quantities', to: 'items#get_dispensed_quantities'
       end
 
       namespace :types do
