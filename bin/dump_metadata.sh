@@ -24,4 +24,4 @@ mysqldump -u $USERNAME --password=$PASSWORD --host=$HOST $ARGS $DATABASE \
   concept_numeric concept_proposal concept_proposal_tag_map concept_set_derived concept_source \
   concept_state_conversion concept_synonym concept_word encounter_type patient_identifier_type \
   order_type person_attribute_type program program_workflow program_workflow_state \
-  relationship_type drug privilege location role
+  relationship_type drug drug_cms privilege location role
