@@ -32,7 +32,7 @@ class Api::V1::DrugCmsController < ApplicationController
   def search
     kwd = params[:keyword]
     if kwd.present?
-      render json: paginate(service.search_drug_cms(kwd))
+      render json: service.search_drug_cms(kwd), status: :ok
     else
       render json: []
     end
