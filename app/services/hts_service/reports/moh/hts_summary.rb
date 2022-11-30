@@ -7,8 +7,6 @@ module HtsService
       class HtsSummary
         attr_accessor :start_date, :end_date
 
-        include ARTService::Reports::Pepfar::Utils
-
         def initialize(start_date:, end_date:)
           @start_date = start_date
           @end_date = end_date
@@ -43,6 +41,14 @@ module HtsService
           fetch_confirmatory_clients("Confirmatory Inconclusive")
           fetch_new_clients("New exposed infant")
           fetch_new_clients("New Inconclusive")
+          set_unique
+        end
+
+        def set_unique
+
+          @data.each do |key, array|    
+              @data[key]  =  array.uniq
+          end
 
         end
 
