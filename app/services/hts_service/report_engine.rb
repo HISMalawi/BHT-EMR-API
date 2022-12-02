@@ -7,7 +7,8 @@ module HtsService
       'HTS INDEX' => HtsService::Reports::Pepfar::HtsIndex,
       'HTS SELF' => HtsService::Reports::Pepfar::HtsSelf,
       'HTS TST COMMUNITY' => HtsService::Reports::Pepfar::HtsTstCommunity,
-      'HTS RECENT COMMUNITY' => HtsService::Reports::Pepfar::HtsRecentCommunity
+      'HTS RECENT COMMUNITY' => HtsService::Reports::Pepfar::HtsRecentCommunity,
+      'HTS DASHBOARD STATS' => HtsService::Reports::Stats::HtsDashboard
     }.freeze
 
     def generate_report(type:, **kwargs)
