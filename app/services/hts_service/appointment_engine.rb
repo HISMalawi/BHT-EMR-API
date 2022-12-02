@@ -13,7 +13,7 @@ module HTSService
     end
 
     def next_appointment_date
-      inconclusive_concept = 10609
+      inconclusive_concept = 10609 # Concept name: Inconclusive
       hiv_status = recent_hiv_status
       return @ref_date + 2.weeks if recent_access_point == concept_id('Community') && hiv_status == concept_id('Positive')
       return @ref_date + 2.weeks if hiv_status == inconclusive_concept
