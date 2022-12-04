@@ -46,21 +46,28 @@ module ARTService
 
         def process_due_people
           clients = []
+          start = Time.now
           results = clients_on_art
           # get all clients that are females from results
           maternal_status = vl_maternal_status(results.map { |patient| patient['patient_id'] if patient['gender'] == 'F' }.compact)
           Parallel.each(results, in_threads: 20) do |patient|
             # get client extra details
             result = extra_information(patient['patient_id'])
-            patient['maternal_status'] = maternal_status[:FP].include?(patient['patient_id']) ? 'FP' : (maternal_status[:FBf].include?(patient['patient_id']) ? 'FBf' : nil)
+            patient['defaulter_date'] = result['defaulter_date']
             patient['current_regimen'] = result['current_regimen']
             patient['art_start_date'] = result['art_start_date']
+            patient['maternal_status'] = maternal_status[:FP].include?(patient['patient_id']) ? 'FP' : (maternal_status[:FBf].include?(patient['patient_id']) ? 'FBf' : nil)
+            unless patient['defaulter_date'].blank?
+              next if patient['defaulter_date'] < end_date - 12.months
+            end
             next if result['art_start_date'].blank?
             next if result['art_start_date'].to_date > end_date - 6.months
             next if remove_adverse_outcome_patient?(patient)
 
             clients << patient
           end
+          end_time = Time.now
+          Rails.logger.info "Time taken to process #{results.length} clients: #{end_time - start} seconds. These are the clients returned: #{clients.length}"
           clients
         end
 
@@ -187,8 +194,10 @@ module ARTService
           ActiveRecord::Base.connection.select_all <<~SQL
             SELECT
               ab.patient_id,
-              (MAX(ab.auto_expire_date) + INTERVAL 31 DAY) defaulter_date,
               disaggregated_age_group(p.birthdate, DATE(#{ActiveRecord::Base.connection.quote(end_date)})) AS age_group,
+              -- patient_current_regimen(ab.patient_id, DATE(#{ActiveRecord::Base.connection.quote(end_date)})) AS current_regimen,
+              -- date_antiretrovirals_started(ab.patient_id, DATE(#{ActiveRecord::Base.connection.quote(end_date)})) AS art_start_date,
+              -- current_pepfar_defaulter_date(ab.patient_id, DATE(#{ActiveRecord::Base.connection.quote(end_date)})) AS defaulter_date,
               p.birthdate,
               p.gender,
               pid.identifier AS arv_number,
@@ -230,7 +239,6 @@ module ARTService
             ) current_order ON current_order.patient_id = ab.patient_id
             WHERE b.patient_id IS NULL
               AND ab.voided = 0 #{occupation_filter(occupation)}
-              AND (ab.auto_expire_date + INTERVAL 31 DAY) > (DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH)
               AND ab.start_date < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
               AND p.person_id NOT IN (#{drug_refills_and_external_consultation_list})
               AND ((current_state.state IN (#{adverse_outcomes.join(',')}) AND current_state.start_date >= (DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH)) OR current_state.state IN (7, 1, 87, 120, 136))
@@ -241,7 +249,8 @@ module ARTService
         def extra_information(patient_id)
           ActiveRecord::Base.connection.select_one <<~SQL
             SELECT patient_current_regimen(#{patient_id}, DATE(#{ActiveRecord::Base.connection.quote(end_date)})) AS current_regimen,
-            date_antiretrovirals_started(#{patient_id}, DATE(#{ActiveRecord::Base.connection.quote(end_date)})) AS art_start_date
+            date_antiretrovirals_started(#{patient_id}, DATE(#{ActiveRecord::Base.connection.quote(end_date)})) AS art_start_date,
+            current_pepfar_defaulter_date(#{patient_id}, DATE(#{ActiveRecord::Base.connection.quote(end_date)})) AS defaulter_date
           SQL
         end
 
