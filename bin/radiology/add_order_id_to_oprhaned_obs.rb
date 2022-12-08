@@ -1,5 +1,20 @@
+# frozen_string_literal: true
+
+require 'csv'
+
 RADIOLOGY_EXAMINATION = EncounterType.find_by_name!('RADIOLOGY EXAMINATION')
 RADIOLOGY_PROGRAM = Program.find_by_name!('RADIOLOGY PROGRAM')
+
+@obs_collections = []
+
+def save_changed_obs
+  CSV.open("log/orphaned_obs_reassigned_#{Time.now.strftime('%Y_%m_%d_%H_%M_%S')}.csv", 'w') do |csv|
+    csv << %w[obs_id order_id]
+    @obs_collections.each do |obs|
+      csv << obs
+    end
+  end
+end
 
 def all_encounters
   Encounter.where(type: RADIOLOGY_EXAMINATION, program: RADIOLOGY_PROGRAM)
@@ -16,6 +31,7 @@ def process_orphaned_obs(order)
   obs.each do |ob|
     ob.order_id = order.id
     ob.save!
+    @obs_collections << [ob.id, order.id]
   end
 end
 
@@ -32,7 +48,8 @@ ActiveRecord::Base.logger.level = :debug
 start_time = Time.now
 ActiveRecord::Base.transaction do
   process_all_orphaned_obs
-  Rails.logger.info("Successfully processed")
+  save_changed_obs
+  Rails.logger.info('Successfully processed')
 end
 end_time = Time.now
 
