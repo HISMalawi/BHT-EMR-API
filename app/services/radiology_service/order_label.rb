@@ -32,7 +32,7 @@ module RadiologyService
 
       examination_concept = ConceptName.find_by_name("EXAMINATION").concept_id
       examination_obs = Observation.where(concept_id: examination_concept)
-                                  .where(encounter_id: @order.encounter_id)
+                                  .where(encounter_id: @order.encounter_id, order_id: @order.id)
                                   .last
       examination = examination_obs.answer_concept.shortname rescue ''
       if examination.blank?
@@ -50,7 +50,7 @@ module RadiologyService
 
       detailed_examination_concept = ConceptName.find_by_name('DETAILED EXAMINATION').concept_id
       detailed_examination_obs = Observation.where(concept_id: detailed_examination_concept)
-                                            .where(encounter_id: @order.encounter_id)
+                                            .where(encounter_id: @order.encounter_id, order_id: @order.id)
                                             .last
       @detailed_examination ||= detailed_examination_obs&.answer_concept&.shortname || detailed_examination_obs&.answer_concept&.fullname
     end
@@ -61,7 +61,7 @@ module RadiologyService
 
     def referred_from
       referred_from_concept = ConceptName.find_by_name('REFERRED FROM').concept_id
-      referred_from = @order.encounter.observations.find_by(concept_id: referred_from_concept)&.value_text
+      referred_from = @order.encounter.observations.find_by(concept_id: referred_from_concept, order_id: @order.id)&.value_text
       referred_from.blank? ? 'Unknown' : referred_from
     end
   end
