@@ -84,6 +84,7 @@ module ARTService
           length = 6 if patient['maternal_status'] == 'FBf'
           length = 6 if patient['current_regimen'].to_s.match(/P/i)
 
+          return false if patient['vl_order_date'] && patient['vl_order_date'].to_date >= end_date - 12.months && patient['vl_order_date'].to_date <= end_date
           return false if last_date.to_date + length.months < patient['outcome_date'].to_date
 
           true
