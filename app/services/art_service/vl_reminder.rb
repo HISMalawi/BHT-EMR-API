@@ -153,7 +153,8 @@ module ARTService
 
     def vl_reminder_info
       due_date = find_patient_viral_load_due_date.to_date
-      return struct_vl_info(eligible: true, due_date: due_date) if due_date - 12.days <= date
+      # So this will accept a due date that is 30 days before the patient's next VL due date
+      return struct_vl_info(eligible: true, due_date: due_date) if due_date - 30.days <= date
 
       days_to_go = due_date - date
       if in_months(days_to_go) < 9.months
