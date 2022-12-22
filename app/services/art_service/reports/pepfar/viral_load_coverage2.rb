@@ -60,7 +60,7 @@ module ARTService
           end
           results.each { |patient| process_client_eligibility(patient) } if @type == 'emastercard'
           end_time = Time.now
-          Rails.logger.info "Time taken to process #{results.length} clients: #{end_time - start} seconds. These are the clients returned: #{clients.length}"
+          Rails.logger.info "Time taken to process #{results.length} clients: #{end_time - start} seconds. These are the clients returned: #{@clients.length}"
           @clients
         end
 
@@ -75,12 +75,12 @@ module ARTService
             if @maternal_status[:FP].include?(patient['patient_id'])
               'FP'
             else
-              (maternal_status[:FBf].include?(patient['patient_id']) ? 'FBf' : nil)
+              (@maternal_status[:FBf].include?(patient['patient_id']) ? 'FBf' : nil)
             end
-          next if !patient['defaulter_date'].blank? && (patient['defaulter_date'] < end_date - 12.months)
-          next if result['art_start_date'].blank?
-          next if result['art_start_date'].to_date > end_date - 6.months
-          next if remove_adverse_outcome_patient?(patient)
+          return if !patient['defaulter_date'].blank? && (patient['defaulter_date'] < end_date - 12.months)
+          return if result['art_start_date'].blank?
+          return if result['art_start_date'].to_date > end_date - 6.months
+          return if remove_adverse_outcome_patient?(patient)
 
           @clients << patient
         end
