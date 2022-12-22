@@ -22,6 +22,7 @@ module ARTService
           raise InvalidParameterError, "start_date can't be greater than end_date" if @start_date > @end_date
 
           @occupation = kwargs.delete(:occupation)
+          @type = kwargs.delete(:application)
         end
 
         def find_report
@@ -45,46 +46,61 @@ module ARTService
         end
 
         def process_due_people
-          clients = []
+          @clients = []
           start = Time.now
           results = clients_on_art
           # get all clients that are females from results
-          maternal_status = vl_maternal_status(results.map { |patient| patient['patient_id'] if patient['gender'] == 'F' }.compact)
-          Parallel.each(results, in_threads: 20) do |patient|
-            # get client extra details
-            result = extra_information(patient['patient_id'])
-            patient['defaulter_date'] = result['defaulter_date']
-            patient['current_regimen'] = result['current_regimen']
-            patient['art_start_date'] = result['art_start_date']
-            patient['maternal_status'] = maternal_status[:FP].include?(patient['patient_id']) ? 'FP' : (maternal_status[:FBf].include?(patient['patient_id']) ? 'FBf' : nil)
-            unless patient['defaulter_date'].blank?
-              next if patient['defaulter_date'] < end_date - 12.months
+          @maternal_status = vl_maternal_status(results.map do |patient|
+                                                  patient['patient_id'] if patient['gender'] == 'F'
+                                                end.compact)
+          if @type.blank? || @type == 'poc'
+            Parallel.each(results, in_threads: 20) do |patient|
+              process_client_eligibility(patient)
             end
-            next if result['art_start_date'].blank?
-            next if result['art_start_date'].to_date > end_date - 6.months
-            next if remove_adverse_outcome_patient?(patient)
-
-            clients << patient
           end
+          results.each { |patient| process_client_eligibility(patient) } if @type == 'emastercard'
           end_time = Time.now
           Rails.logger.info "Time taken to process #{results.length} clients: #{end_time - start} seconds. These are the clients returned: #{clients.length}"
-          clients
+          @clients
         end
 
         private
+
+        def process_client_eligibility(patient)
+          result = extra_information(patient['patient_id'])
+          patient['defaulter_date'] = result['defaulter_date']
+          patient['current_regimen'] = result['current_regimen']
+          patient['art_start_date'] = result['art_start_date']
+          patient['maternal_status'] =
+            if @maternal_status[:FP].include?(patient['patient_id'])
+              'FP'
+            else
+              (maternal_status[:FBf].include?(patient['patient_id']) ? 'FBf' : nil)
+            end
+          next if !patient['defaulter_date'].blank? && (patient['defaulter_date'] < end_date - 12.months)
+          next if result['art_start_date'].blank?
+          next if result['art_start_date'].to_date > end_date - 6.months
+          next if remove_adverse_outcome_patient?(patient)
+
+          @clients << patient
+        end
 
         def remove_adverse_outcome_patient?(patient)
           return false unless adverse_outcomes.include?(patient['state'].to_i)
 
           last_date = patient['vl_order_date'] || patient['art_start_date']
-          return false if patient['vl_order_date'].present? && last_date.to_date >= start_date && last_date.to_date <= end_date
+          if patient['vl_order_date'].present? && last_date.to_date >= start_date && last_date.to_date <= end_date
+            return false
+          end
 
           length = 12
           length = 6 if patient['maternal_status'] == 'FP'
           length = 6 if patient['maternal_status'] == 'FBf'
           length = 6 if patient['current_regimen'].to_s.match(/P/i)
 
-          return false if patient['vl_order_date'] && patient['vl_order_date'].to_date >= end_date - 12.months && patient['vl_order_date'].to_date <= end_date
+          if patient['vl_order_date'] && patient['vl_order_date'].to_date >= end_date - 12.months && patient['vl_order_date'].to_date <= end_date
+            return false
+          end
           return false if last_date.to_date + length.months < patient['outcome_date'].to_date
 
           true
@@ -324,7 +340,9 @@ module ARTService
         end
 
         def yes_concepts
-          @yes_concepts ||= ConceptName.where(name: 'Yes').select(:concept_id).map { |record| record['concept_id'].to_i }
+          @yes_concepts ||= ConceptName.where(name: 'Yes').select(:concept_id).map do |record|
+            record['concept_id'].to_i
+          end
         end
 
         def pregnant_concepts
