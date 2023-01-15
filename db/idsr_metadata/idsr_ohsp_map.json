@@ -1,6 +1,5 @@
 
       {
-			"headers":      {"url":"10.40.30.2:8001","user":"user_admin","pass":"pass_district"},
       "weekly_idsr_map":{
 		      "AEFI" : [],
 		      "AFP (Poliomyelitis***)" : ["Poliomyelitis"],
