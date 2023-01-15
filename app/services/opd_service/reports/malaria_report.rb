@@ -6,81 +6,104 @@ class OPDService::Reports::MalariaReport
     malaria_report()
   end
 
+  def registration()
+    type = EncounterType.find_by_name 'PATIENT REGISTRATION'
+    visit_type = ConceptName.find_by_name 'Type of visit'
+
+    data = Encounter.where('encounter_datetime BETWEEN ? AND ?
+      AND encounter_type = ? AND value_coded IS NOT NULL
+      AND obs.concept_id = ?', @start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
+      @end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id, visit_type.concept_id).\
+      joins('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
+      INNER JOIN concept_name c ON c.concept_id = obs.value_coded
+      INNER JOIN person p ON p.person_id = obs.person_id').\
+      group('obs.person_id').pluck("malaria_report('','','','','',c.name,p.birthdate,'#{@end_date.to_date}')
+      as malaria_data",'obs.person_id').group_by(&:shift);
+  end
+
   def malaria_report()
-    confirm_ids           = get_confirm_malaria_data()
-    combine_confirm_ids   = get_ids(confirm_ids)
-    confirm_pregnant_ids  = get_pregnant_malaria_data(combine_confirm_ids )
-    presume_ids           = get_presume_malaria_data(combine_confirm_ids)
-    combine_presume_ids   = get_ids(presume_ids)
-    presume_pregnant_ids  = get_pregnant_malaria_data(combine_presume_ids)
+    @malaria_data = Observation.where("obs_datetime BETWEEN ? AND ?  AND c.voided = ? AND c.name IN (?) AND
+      malaria_report(obs.order_id,obs.value_text,obs.value_coded,obs.person_id,DATE(obs_datetime),c.name,p.birthdate,'#{@end_date.to_date}') IS NOT NULL",
+      @start_date.to_date.strftime('%Y-%m-%d 00:00:00'),@end_date.to_date.strftime('%Y-%m-%d 23:59:59'),
+      0,['Amount dispensed','MRDT','Malaria film','Malaria Species','Primary diagnosis']).\
+      joins('INNER JOIN concept_name c ON c.concept_id = obs.concept_id
+      INNER JOIN person p ON p.person_id = obs.person_id').\
+      pluck("malaria_report(obs.order_id,obs.value_text,obs.value_coded,obs.person_id,DATE(obs_datetime),c.name,p.birthdate,'#{@end_date.to_date}')
+      as malaria_data",:person_id).group_by(&:shift);
 
-    confirm_LA_ids        = get_confirm_LA_data(combine_confirm_ids,'%Lumefantrine%')
-    presume_LA_ids        = get_confirm_LA_data(combine_presume_ids,'%Lumefantrine%')
-    confirm_ASAQ_ids      = get_confirm_LA_data(combine_confirm_ids,'%Artesunate%')
-    presume_ASAQ_ids      = get_confirm_LA_data(combine_presume_ids,'%Artesunate%')
+    build_malaria_hash
+  end
 
-    all_LA_drugs          = get_drugs('LA(Lumefantrine + arthemether)')
-    all_ASAQ_drugs        = get_drugs('Artesunate and amodiaquin')
+  def build_malaria_hash
+    confrim_non_pregnant_5more = get_ids('> 5yrs','confrim_non_pregnant','')
+    confrim_non_pregnant_5less = get_ids('< 5yrs','confrim_non_pregnant','')
+    presume_non_pregnant_5more = get_ids('> 5yrs','presume_non_pregnant','')
+    presume_non_pregnant_5less = get_ids('< 5yrs','presume_non_pregnant','')
+    confirm_pregnant_5more     = get_ids('> 5yrs','confirm_pregnant','')
+    confirm_pregnant_5less     = get_ids('< 5yrs','confirm_pregnant','')
+    presume_pregnant_5more     = get_ids('> 5yrs','presume_pregnant','')
+    presume_pregnant_5less     = get_ids('< 5yrs','presume_pregnant','')
+    total_OPD_malaria_cases_5more = confrim_non_pregnant_5more +presume_non_pregnant_5more +confirm_pregnant_5more +presume_pregnant_5more
+    total_OPD_malaria_cases_5less = confrim_non_pregnant_5less +presume_non_pregnant_5less +confirm_pregnant_5less +presume_pregnant_5less
+
+    suspected_malaria_mRDT_less_5yrs       = get_ids('< 5yrs','negative_MRDT','')
+    suspected_malaria_mRDT_more_5yrs       = get_ids('> 5yrs','negative_MRDT','')
+    suspected_malaria_microscopy_less_5yrs = get_ids('< 5yrs','negative_Malaria film','')
+    suspected_malaria_microscopy_more_5yrs = get_ids('> 5yrs','negative_Malaria film','')
+    total_suspected_malaria_5more = suspected_malaria_mRDT_more_5yrs +suspected_malaria_microscopy_more_5yrs +presume_non_pregnant_5more +presume_pregnant_5more
+    total_suspected_malaria_5less = suspected_malaria_mRDT_less_5yrs +suspected_malaria_microscopy_less_5yrs +presume_non_pregnant_5less +presume_pregnant_5less
 
     {
-      confirm_ids: confirm_ids,
-      presume_ids: presume_ids,
-      confirm_pregnant_ids: confirm_pregnant_ids,
-      presume_pregnant_ids: presume_pregnant_ids,
-      confirm_LA_ids: confirm_LA_ids,
-      presume_LA_ids: presume_LA_ids,
-      confirm_ASAQ_ids: confirm_ASAQ_ids,
-      presume_ASAQ_ids: presume_ASAQ_ids,
-      all_LA_drugs: all_LA_drugs,
-      all_ASAQ_drugs: all_ASAQ_drugs
+      confrim_non_pregnant_more_5yrs: confrim_non_pregnant_5more,
+      confrim_non_pregnant_less_5yrs: confrim_non_pregnant_5less,
+      presume_non_pregnant_more_5yrs: presume_non_pregnant_5more,
+      presume_non_pregnant_less_5yrs: presume_non_pregnant_5less,
+      confirm_pregnant_less_5yrs: confirm_pregnant_5less,
+      confirm_pregnant_more_5yrs: confirm_pregnant_5more,
+      presume_pregnant_less_5yrs: presume_pregnant_5less,
+      presume_pregnant_more_5yrs: presume_pregnant_5more,
+      total_OPD_malaria_cases_more_5yrs: total_OPD_malaria_cases_5more,
+      total_OPD_malaria_cases_less_5yrs: total_OPD_malaria_cases_5less,
+      total_OPD_attendance: registration(),
+      confirmed_malaria_treatment_failure_less_5yrs: get_ids('< 5yrs','confirmed_malaria_treatment_failure',''),
+      confirmed_malaria_treatment_failure_more_5yrs: get_ids('> 5yrs','confirmed_malaria_treatment_failure',''),
+      presumed_malaria_LA_less_5yrs: get_ids('< 5yrs','presume','Lumefantrine'),
+      presumed_malaria_LA_more_5yrs: get_ids('> 5yrs','presume','Lumefantrine'),
+      presumed_malaria_ASAQ_less_5yrs: get_ids('< 5yrs','presume','Artesunate'),
+      presumed_malaria_ASAQ_more_5yrs: get_ids('> 5yrs','presume','Artesunate'),
+      confirmed_malaria_LA_less_5yrs: get_ids('< 5yrs','confrim','Lumefantrine'),
+      confirmed_malaria_LA_more_5yrs: get_ids('> 5yrs','confrim','Lumefantrine'),
+      confirmed_malaria_ASAQ_less_5yrs: get_ids('< 5yrs','confrim','Artesunate'),
+      confirmed_malaria_ASAQ_more_5yrs: get_ids('> 5yrs','confrim','Artesunate'),
+      suspected_malaria_mRDT_less_5yrs: suspected_malaria_mRDT_less_5yrs,
+      suspected_malaria_mRDT_more_5yrs: suspected_malaria_mRDT_more_5yrs,
+      positive_malaria_mRDT_less_5yrs: get_ids('< 5yrs','positive_MRDT',''),
+      positive_malaria_mRDT_more_5yrs: get_ids('> 5yrs','positive_MRDT',''),
+      suspected_malaria_microscopy_less_5yrs: suspected_malaria_microscopy_less_5yrs,
+      suspected_malaria_microscopy_more_5yrs: suspected_malaria_microscopy_more_5yrs,
+      positive_malaria_microscopy_less_5yrs: get_ids('< 5yrs','positive_Malaria film',''),
+      positive_malaria_microscopy_more_5yrs: get_ids('> 5yrs','positive_Malaria film',''),
+      total_suspected_malaria_cases_less_5yrs: total_suspected_malaria_5less,
+      total_suspected_malaria_cases_more_5yrs: total_suspected_malaria_5more,
+      LA_1X6: get_ids('','','Lumefantrine + Arthemether 1 x 6'),
+      LA_2X6: get_ids('','','Lumefantrine + Arthemether 2 x 6'),
+      LA_3X6: get_ids('','','Lumefantrine + Arthemether 3 x 6'),
+      LA_4X6: get_ids('','','Lumefantrine + Arthemether 4 x 6'),
+      sp: get_ids('','','SP'),
+      ASAQ_25mg: get_ids('','','ASAQ 25mg/67.5mg (3 tablets)'),
+      ASAQ_50mg: get_ids('','','ASAQ 50mg/135mg (3 tablets)'),
+      ASAQ_100mg_3tabs: get_ids('','','ASAQ 100mg/270mg (3 tablets)'),
+      ASAQ_100mg_6tabs: get_ids('','','ASAQ 100mg/270mg (6 tablets)')
     }
   end
 
-  def get_pregnant_malaria_data(person_ids)
-    Observation.where('obs_datetime BETWEEN ? AND ? AND c.name = ? AND obs.person_id IN(?) AND c.voided = ?',
-    @start_date.to_date.strftime('%Y-%m-%d 00:00:00'),@end_date.to_date.strftime('%Y-%m-%d 23:59:59'),
-    'Patient pregnant',person_ids,0).\
-    joins('INNER JOIN concept_name c ON c.concept_id = obs.concept_id
-    INNER JOIN person p ON p.person_id = obs.person_id').\
-    pluck("malaria_age_group(p.birthdate,'#{@end_date.to_date}') as age_group",:person_id).group_by(&:shift);
-  end
-
-  def get_presume_malaria_data(combine_confirm_ids)
-    Observation.where('obs_datetime BETWEEN ? AND ? AND c.name = ? AND c.voided = ? AND p.person_id NOT IN(?)',
-    @start_date.to_date.strftime('%Y-%m-%d 00:00:00'),@end_date.to_date.strftime('%Y-%m-%d 23:59:59'),'Malaria',0,combine_confirm_ids).\
-    joins('INNER JOIN concept_name c ON c.concept_id = obs.value_coded
-    INNER JOIN person p ON p.person_id = obs.person_id').\
-    pluck("malaria_age_group(p.birthdate,'#{@end_date.to_date}') as age_group",:person_id).group_by(&:shift);
-  end
-
-  def get_confirm_malaria_data()
-    Observation.where('obs_datetime BETWEEN ? AND ? AND c.name IN(?) AND c.voided = ?',
-    @start_date.to_date.strftime('%Y-%m-%d 00:00:00'),@end_date.to_date.strftime('%Y-%m-%d 23:59:59'),
-    ['MRDT','Malaria Species','Malaria film'],0).\
-    joins('INNER JOIN concept_name c ON c.concept_id = obs.concept_id
-    INNER JOIN person p ON p.person_id = obs.person_id').\
-    pluck("malaria_age_group(p.birthdate,'#{@end_date.to_date}') as age_group",:person_id,:name).group_by(&:shift);
-  end
-
-  def get_confirm_LA_data(person_ids,drug_name)
-    Observation.where("obs_datetime BETWEEN ? AND ? AND obs.person_id IN(?) AND o.instructions like ?
-    ",@start_date.to_date.strftime('%Y-%m-%d 00:00:00'),@end_date.to_date.strftime('%Y-%m-%d 23:59:59'),person_ids,drug_name).\
-    joins('INNER JOIN orders o ON o.order_id = obs.order_id
-    INNER JOIN person p ON p.person_id = obs.person_id').\
-    pluck("malaria_age_group(p.birthdate,'#{@end_date.to_date}') as age_group",:person_id).group_by(&:shift);
-  end
-
-  def get_drugs(concept_name)
-    Order.where('orders.date_created BETWEEN ? AND ? AND c.name = ?',
-    @start_date.to_date.strftime('%Y-%m-%d 00:00:00'),@end_date.to_date.strftime('%Y-%m-%d 23:59:59'),concept_name).\
-    joins('INNER JOIN drug_order do ON do.order_id = orders.order_id
-    INNER JOIN concept_name c ON c.concept_id = orders.concept_id').\
-    pluck(:instructions,:patient_id,:quantity)
-  end
-
-  def get_ids(data)
-    ids = []
-    data.select { |element| ids = ids + data[element].flatten.group_by(&:class).values_at(String, Fixnum)[1]}
-    return ids
+  def get_ids(age_range,condition_name,drug_name)
+    array_id = []
+    @malaria_data.select { |element|
+      array_id << @malaria_data[element] if element.match?(age_range) && element.match?(condition_name) && drug_name == ""
+      array_id << @malaria_data[element] if element.match?(age_range) && element.match?(condition_name) && element.match?(drug_name) && drug_name != ""
+      array_id << @malaria_data[element] if age_range == ""  && element.match?(drug_name)
+    }
+    return array_id.flatten
   end
 end

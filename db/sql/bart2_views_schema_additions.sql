@@ -2274,6 +2274,92 @@ SET count_obs = (SELECT DATE(`obs`.`obs_datetime`) FROM `obs`
 RETURN count_obs;
 END;
 
+DROP FUNCTION IF EXISTS `malaria_report`;
+CREATE FUNCTION `malaria_report`(_order_id varchar(100),_value_text varchar(100),_value_coded varchar(100),_person_id varchar(100),_obs_datetime varchar(100),_concept_name varchar(100),birthdate varchar(100),today_date varchar(100)) RETURNS varchar(100)
+BEGIN
+
+DECLARE report_data VARCHAR(150);
+DECLARE age_in_years INT(11);
+
+SET age_in_years  = (SELECT timestampdiff(year, birthdate, today_date));
+SET report_data = NULL;
+SET @old_confirm_results = '';
+SET @confirm_results = NULL;
+SET @pregnant_patient = NULL;
+SET @drug_data = '';
+
+IF _concept_name = 'Revisiting' OR _concept_name = 'New patient' OR _concept_name = 'Referral' THEN
+    IF age_in_years <= 5 THEN SET report_data = "total_patient_less_5yrs";
+	ELSEIF age_in_years > 5 THEN SET report_data = "total_patient_more_5yrs";
+	END IF;
+ELSE
+	SELECT  CONCAT(',',c.name) as confirmed_malaria_treatment_failure INTO @old_confirm_results FROM `obs`
+	INNER JOIN concept_name c ON c.concept_id = obs.concept_id
+	WHERE `obs`.`voided` = 0 AND obs_datetime BETWEEN DATE_SUB(_obs_datetime, INTERVAL 7 DAY) AND DATE_SUB(_obs_datetime, INTERVAL 3 DAY)
+	AND obs.person_id = _person_id
+	AND c.name IN('MRDT','Malaria film') AND c.voided = 0 AND (value_text = 'Positive' OR value_text = 'Parasites seen') LIMIT 1;
+
+	SELECT  CONCAT(',',c.name) INTO @suspected_malaria FROM `obs`
+	INNER JOIN concept_name c ON c.concept_id = obs.concept_id
+	WHERE `obs`.`voided` = 0 AND DATE(obs_datetime) = _obs_datetime
+	AND obs.person_id = _person_id
+	AND c.name IN('MRDT','Malaria film') AND c.voided = 0 AND (value_text = 'Negative' OR value_text = 'No parasites seen') LIMIT 1;
+
+
+	SELECT c.name INTO @pregnant_patient FROM `obs`
+	INNER JOIN concept_name c ON c.concept_id = obs.concept_id
+	WHERE `obs`.`voided` = 0 AND DATE(obs_datetime) = _obs_datetime
+    AND c.name = 'Patient pregnant' AND value_coded = 1065
+	AND obs.person_id = _person_id AND c.voided = 0 LIMIT 1;
+
+	SELECT CONCAT(',',orders.instructions,'=',`quantity`) INTO @drug_data FROM `orders`
+	INNER JOIN drug_order do ON do.order_id = orders.order_id
+	INNER JOIN concept_name c ON c.concept_id = orders.concept_id
+	WHERE `orders`.`voided` = 0 AND DATE(orders.date_created) = _obs_datetime AND patient_id = _person_id AND quantity > 0
+	AND c.name IN ('LA(Lumefantrine + arthemether)','Artesunate and amodiaquin','Sulfadoxine and Pyrimethamine') LIMIT 1;
+
+	SELECT CONCAT(orders.instructions,'=',`quantity`) INTO report_data FROM `orders`
+	INNER JOIN drug_order do ON do.order_id = orders.order_id
+	INNER JOIN concept_name c ON c.concept_id = orders.concept_id
+	WHERE `orders`.`voided` = 0 AND DATE(orders.date_created) = _obs_datetime AND patient_id = _person_id AND quantity > 0
+	AND c.name IN ('LA(Lumefantrine + arthemether)','Artesunate and amodiaquin','Sulfadoxine and Pyrimethamine') AND orders.order_id = _order_id LIMIT 1;
+
+	IF (_concept_name = 'MRDT'AND _value_text = 'Positive') OR (_value_text = 'Parasites seen' AND _concept_name = 'Malaria film') THEN
+		SET _concept_name = CONCAT('positive_',_concept_name);
+        IF @pregnant_patient = 'Patient pregnant' THEN
+			IF age_in_years <= 5 THEN SET report_data = CONCAT("< 5yrs,","confirm_pregnant,",_concept_name,@drug_data,@old_confirm_results);
+			ELSEIF age_in_years > 5 THEN SET report_data = CONCAT("> 5yrs,","confirm_pregnant,",_concept_name,@drug_data,@old_confirm_results);
+			END IF;
+		END IF;
+
+		IF @pregnant_patient IS NULL THEN
+			IF age_in_years <= 5 THEN SET report_data = CONCAT("< 5yrs,","confrim_non_pregnant,",_concept_name,@drug_data,@old_confirm_results);
+			ELSEIF age_in_years > 5 THEN SET report_data = CONCAT("> 5yrs,","confrim_non_pregnant,", _concept_name,@drug_data,@old_confirm_results);
+			END IF;
+		END IF;
+	ELSEIF(_concept_name = 'MRDT'AND _value_text = 'Negative') OR (_value_text = 'No parasites seen' AND _concept_name = 'Malaria film') THEN
+		SET _concept_name = CONCAT('nagative_',_concept_name);
+        IF age_in_years <= 5 THEN SET report_data = CONCAT("< 5yrs,","suspected_malaria,",_concept_name,@drug_data,@old_confirm_results);
+		ELSEIF age_in_years > 5 THEN SET report_data = CONCAT("> 5yrs,","suspected_malaria,",_concept_name,@drug_data,@old_confirm_results);
+		END IF;
+	ELSEIF _value_coded = 123 THEN
+			IF @pregnant_patient = 'Patient pregnant' THEN
+				IF age_in_years <= 5 THEN SET report_data = CONCAT("< 5yrs,","presume_pregnant,",@drug_data,@old_confirm_results);
+				ELSEIF age_in_years > 5 THEN SET report_data = CONCAT("> 5yrs,","presume_pregnant,",@drug_data,@old_confirm_results);
+				END IF;
+			END IF;
+
+			IF @pregnant_patient IS NULL THEN
+				IF age_in_years <= 5 THEN SET report_data = CONCAT("< 5yrs,","presume_non_pregnant,",@drug_data,@old_confirm_results );
+				ELSEIF age_in_years > 5 THEN SET report_data = CONCAT(">5 yrs,","presume_non_pregnant,",@drug_data,@old_confirm_results);
+				END IF;
+			END IF;
+	END IF;
+END IF;
+
+
+RETURN report_data;
+END;
 
 DROP FUNCTION IF EXISTS `female_maternal_status`;
 
