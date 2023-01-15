@@ -197,6 +197,7 @@ Rails.application.routes.draw do
         get 'earliest_expiring_item', to: 'items#earliest_expiring'
         get 'drug_consumption', to: 'drugs#drug_consumption'
         get 'stock_report', to: 'audit_trails#stock_report'
+        get '/audit_trail/grouped', to: 'audit_trails#show_grouped_audit_trail'
       end
 
       namespace :types do
@@ -272,6 +273,10 @@ Rails.application.routes.draw do
       get '/sequences/next_accession_number', to: 'sequences#next_accession_number'
 
       post '/reports/encounters' => 'encounters#count'
+
+      #drugs_cms routes
+      get '/drug_cms/search', to: "drug_cms#search"
+      resources :drug_cms, only: %i[index]
     end
   end
 
@@ -307,6 +312,7 @@ Rails.application.routes.draw do
   get '/api/v1/anc_data_cleaning_tools' => 'api/v1/cleaning#anc_tools'
 
   # OPD reports
+  get '/api/v1/malaria_report' => 'api/v1/reports#malaria_report'
   get '/api/v1/registration' => 'api/v1/reports#registration'
   get '/api/v1/diagnosis_by_address' => 'api/v1/reports#diagnosis_by_address'
   get '/api/v1/with_nids' => 'api/v1/reports#with_nids'
@@ -368,4 +374,5 @@ Rails.application.routes.draw do
 
   get '/api/v1/data_cleaning_confirmation', to: 'api/v1/data_cleaning#view'
   post '/api/v1/data_cleaning_confirmation', to: 'api/v1/data_cleaning#create'
+
 end

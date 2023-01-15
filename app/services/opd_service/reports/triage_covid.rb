@@ -7,13 +7,13 @@ class OPDService::Reports::TriageCovid
   end
 
   def triage_covid()
-    @value_text =['No other symptom','Cough','Difficulty breathing','Loss of taste or smell','Fatigue',
+    value_text =['No other symptom','Cough','Difficulty breathing','Loss of taste or smell','Fatigue',
                   'Shortness of breath','Diarrhea','Vomiting','Generalised body Pains','Sore throat']
 
     data =Observation.where('obs_datetime BETWEEN ? AND ? AND obs.person_id IN (?) AND obs.value_text IN (?)
      AND triage_covid_report(DATE(obs_datetime),obs.person_id) is not null',
     @start_date.to_date.strftime('%Y-%m-%d 00:00:00'),@end_date.to_date.strftime('%Y-%m-%d 23:59:59'),
-    get_ids(triage_registration.group_by(&:shift)),@value_text).\
+    get_ids(triage_registration.group_by(&:shift)),value_text).\
     joins('INNER JOIN person p ON p.person_id = obs.person_id').\
     pluck('obs.value_text',:gender,:person_id)
 
@@ -40,8 +40,7 @@ class OPDService::Reports::TriageCovid
 
   def group_by_gender(data)
     obs = {}
-    @value_text = @value_text + ['Total']
-    @value_text.select { |element| obs[element] = data[element] ? data[element].group_by(&:shift) : [ ]}
+    data.select { |element| obs[element] = data[element].group_by(&:shift)}
     return obs
   end
 
