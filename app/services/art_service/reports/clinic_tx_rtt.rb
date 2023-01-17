@@ -3,7 +3,7 @@
 module ARTService
   module Reports
     # This is MOH client returned to care report
-    class ClinicTxRtt
+    class ClinicTxRTT
       def initialize(start_date:, end_date:, **_kwarg)
         @start_date = ActiveRecord::Base.connection.quote(start_date)
         @end_date = ActiveRecord::Base.connection.quote(end_date)

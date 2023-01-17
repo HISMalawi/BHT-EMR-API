@@ -14,7 +14,7 @@ module ARTService
       def initialize(start_date:, end_date:, **_kwarg)
         @start_date = start_date.to_date
         @end_date = end_date.to_date
-        @tb_prev = ARTService::Reports::Pepfar::TbPrev3.new(start_date: @start_date, end_date: @end_date)
+        @tb_prev = ARTService::Reports::Pepfar::TBPrev3.new(start_date: @start_date, end_date: @end_date)
       end
 
       def find_report

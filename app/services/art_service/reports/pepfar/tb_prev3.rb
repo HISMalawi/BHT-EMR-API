@@ -6,7 +6,7 @@ module ARTService
       ##
       # Patients who started TPT just before the start of the current
       # and have finished within the current reporting period.
-      class TbPrev3
+      class TBPrev3
         attr_reader :start_date, :end_date, :check_date, :cut_off_point
 
         include Utils
