@@ -4,6 +4,29 @@ info:
   title: EMR API V1 DOCS
   version: v1
 paths:
+  "/api/v1/art_data_cleaning_tools":
+    get:
+      summary: Retrieve patients with data problems
+      tags:
+      - Cleaning Tools
+      description: This shows the patients with data problems
+      security:
+      - api_key: []
+      parameters:
+      - name: params
+        in: query
+        schema:
+          "$ref": "#/components/schemas/data_cleaning_request"
+      responses:
+        '200':
+          description: You can cross check the different responses in the swagger
+            documentation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/multiple_filing_numbers"
   "/api/v1/programs/1/reports/clinic_tx_rtt":
     get:
       summary: Retrieve CLINIC TX RTT report
@@ -1208,6 +1231,53 @@ components:
       type: apiKey
       name: Authorization
       in: header
+  schemas:
+    data_cleaning_request:
+      type: object
+      properties:
+        program_id:
+          type: integer
+        start_date:
+          type: string
+        end_date:
+          type: string
+        report_name:
+          type: string
+      required:
+      - program_id
+      - start_date
+      - end_date
+      - report_name
+    multiple_filing_numbers:
+      type: object
+      properties:
+        person_id:
+          type: integer
+        given_name:
+          type: string
+        family_name:
+          type: string
+        gender:
+          type: string
+        birthdate:
+          type: string
+        arv_number:
+          type: string
+        identifiers:
+          type: integer
+        filing_numbers:
+          type: string
+    duplicate_filing_number:
+      type: object
+      properties:
+        identifier:
+          type: string
+        identifiers:
+          type: integer
+        patient_ids:
+          type: string
+security:
+- api_key: []
 servers:
 - url: http://{defaultHost}
   variables:

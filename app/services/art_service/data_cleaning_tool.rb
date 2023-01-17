@@ -12,7 +12,10 @@ module ARTService
       'MALE CLIENTS WITH FEMALE OBS' => 'male_clients_with_female_obs',
       'DOB MORE THAN DATE ENROLLED' => 'dob_more_than_date_enrolled',
       'INCOMPLETE VISITS' => 'incomplete_visit',
-      'MISSING DEMOGRAPHICS' => 'incomplete_demographics'
+      'MISSING DEMOGRAPHICS' => 'incomplete_demographics',
+      'MULTIPLE FILING NUMBERS' => 'multiple_filing_numbers',
+      'DUPLICATE FILING NUMBERS' => 'duplicate_filing_numbers',
+      'DUPLICATE ARCHIVED FILING NUMBERS' => 'duplicate_archived_filing_numbers'
     }.freeze
 
     def initialize(start_date:, end_date:, tool_name:)
@@ -478,7 +481,8 @@ module ARTService
 
         next if complete
 
-        person_details = ActiveRecord::Base.connection.select_one <<~SQL
+        person
+        _details = ActiveRecord::Base.connection.select_one <<~SQL
           SELECT
             n.given_name, n.family_name, p.gender, p.birthdate,
             a.identifier arv_number, i.identifier national_id
@@ -508,6 +512,39 @@ module ARTService
       end
 
       incomplete_visits_comp
+    end
+
+    def multiple_filing_numbers
+      ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT p.person_id, n.given_name, n.family_name, p.gender, p.birthdate, a.identifier arv_number, COUNT(i.identifier) identifiers, GROUP_CONCAT(i.identifier) filing_numbers
+        FROM person p
+        INNER JOIN patient_identifier i ON i.patient_id = p.person_id AND i.identifier_type = #{PatientIdentifierType.find_by_name('Filing number').id} AND i.voided = 0
+        LEFT JOIN patient_identifier a ON a.patient_id = p.person_id AND a.identifier_type = #{PatientIdentifierType.find_by_name('ARV Number').id} AND a.voided = 0
+        LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
+        WHERE p.voided = 0
+        GROUP BY p.person_id HAVING COUNT(i.identifier) > 1
+        ORDER BY n.date_created DESC;
+      SQL
+    end
+
+    def duplicate_filing_numbers
+      ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT i.identifier, COUNT(i.identifier) identifiers, GROUP_CONCAT(i.patient_id) patient_ids
+        FROM patient_identifier i
+        WHERE p.voided = 0 AND i.identifier_type = #{PatientIdentifierType.find_by_name('Filing number').id}
+        GROUP BY i.identifier HAVING COUNT(i.identifier) > 1
+        ORDER BY i.date_created DESC;
+      SQL
+    end
+
+    def duplicate_archived_filing_numbers
+      ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT i.identifier, COUNT(i.identifier) identifiers, GROUP_CONCAT(i.patient_id) patient_ids
+        FROM patient_identifier i
+        WHERE p.voided = 0 AND i.identifier_type = #{PatientIdentifierType.find_by_name('Archived filing number').id}
+        GROUP BY i.identifier HAVING COUNT(i.identifier) > 1
+        ORDER BY i.date_created DESC;
+      SQL
     end
 
     def concept(name)
