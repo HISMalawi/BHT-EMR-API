@@ -7,7 +7,13 @@ module OPDService
 
     REPORTS = {
       'LA_PRESCRIPTIONS' => OPDService::Reports::LaPrescriptions,
-      'DIAGNOSIS' => OPDService::Reports::Diagnosis
+      'DIAGNOSIS' => OPDService::Reports::Diagnosis,
+      'CASES_SEEN' => OPDService::Reports::CasesSeen,
+      'MENTAL_HEALTH' => OPDService::Reports::MentalHealth,
+      'MALARIA_REPORT' => OPDService::Reports::MalariaReport,
+      'TRIAGE_COVID' => OPDService::Reports::TriageCovid,
+      'TRIAGE_REGISTRATION' => OPDService::Reports::TriageRegistration,
+      'ATTENDANCE' => OPDService::Reports::Attendance
     }
 
     def initialize
@@ -39,17 +45,18 @@ module OPDService
     def dashboard_stats_for_syndromic_statistics(date)
       @date = date.to_date
       stats = {}
-      stats[:top] = {
-        # registered_today: registered_today('New patient'),
-        # returning_today: registered_today('Revisiting'),
-        # referred_today: registered_today('Referral')
-        ILI: respiratory_enctounter_today('ILI'),
-        Respiratory: respiratory_enctounter_today('Respiratory')
-      }
+      # stats[:top] = {
+      #   # registered_today: registered_today('New patient'),
+      #   # returning_today: registered_today('Revisiting'),
+      #   # referred_today: registered_today('Referral')
+      #   ILI: respiratory_enctounter_today('ILI'),
+      #   Respiratory: respiratory_enctounter_today('Respiratory')
+      # }
 
+      data =monthly_respiratory_enctounter()
       stats[:down] = {
-        ILI: monthly_respiratory_enctounter('ILI'),
-         Respiratory: monthly_respiratory_enctounter('Respiratory')
+        ILI: data[1],
+         Respiratory:data[0]
       }
 
       return stats
@@ -138,7 +145,7 @@ module OPDService
         INNER JOIN concept_name c ON c.concept_id = obs.value_coded
         LEFT JOIN person_name n ON n.person_id = encounter.patient_id AND n.voided = 0
         RIGHT JOIN person_address a ON a.person_id = encounter.patient_id').\
-        select('encounter.encounter_type, n.family_name, n.given_name,
+        select('encounter.encounter_type, n.family_name, n.given_name,n.person_id,
         obs.value_coded, obs.obs_datetime, p.*, c.name visit_type,
         a.state_province district, a.township_division ta, a.city_village village').\
         order('n.date_created DESC').group('n.person_id, encounter.encounter_id')
@@ -148,8 +155,19 @@ module OPDService
         district  = record['district']
         ta  = record['ta']
         village = record['village']
+        person_id = record['person_id']
 
         address = "#{district}, #{ta}, #{village}"
+        if(record['visit_type'] == "Referral")
+          referred_from_name = Observation.where("obs_datetime BETWEEN ? AND ?
+            AND concept_id = ? AND person_id = ?",start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
+            end_date.to_date.strftime('%Y-%m-%d 23:59:59'),'7414',person_id).\
+          joins('LEFT JOIN location l ON l.location_id = obs.value_text').\
+          select('l.name').order('obs_datetime DESC').first
+        end
+
+        referred_from_name = referred_from_name ? referred_from_name['name'] : "";
+
         stats << {
           given_name: record['given_name'],
           family_name: record['family_name'],
@@ -157,13 +175,13 @@ module OPDService
           birthdate: record['birthdate'],
           gender: record['gender'],
           date: record['obs_datetime'].to_date,
-          address: address
+          address: address,
+          name: referred_from_name
         }
       end
 
       return stats
     end
-
 
     def malaria_report(start_date, end_date)
       type = EncounterType.find_by_name 'Outpatient diagnosis'
@@ -359,13 +377,14 @@ module OPDService
     end
 
     def drugs_given_without_prescription(start_date, end_date)
+      programID = Program.find_by_name 'OPD Program'
       type = EncounterType.find_by_name 'DRUGS GIVEN'
        visit_type = ConceptName.find_by_name 'Given drugs'
 
       data = Encounter.where('encounter_datetime BETWEEN ? AND ?
-        AND encounter_type = ? AND obs.concept_id = ?',
+        AND encounter_type = ? AND obs.concept_id = ? AND program_id = ?',
         start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
-        end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id, visit_type.concept_id).\
+        end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id, visit_type.concept_id, programID.program_id).\
         joins('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
         INNER JOIN person p ON p.person_id = encounter.patient_id
         INNER JOIN drug d ON d.drug_id = obs.value_drug
@@ -394,11 +413,12 @@ module OPDService
 
     def drugs_given_with_prescription(start_date, end_date)
       type = EncounterType.find_by_name 'TREATMENT'
+      programID = Program.find_by_name 'OPD Program'
 
       data = Encounter.where('encounter_datetime BETWEEN ? AND ?
-        AND encounter_type = ? AND i.quantity > 0',
+        AND encounter_type = ? AND program_id = ? AND i.quantity > 0',
         start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
-        end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id).\
+        end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id, programID.program_id).\
         joins('INNER JOIN orders o ON o.encounter_id = encounter.encounter_id
         INNER JOIN person p ON p.person_id = encounter.patient_id
         INNER JOIN drug_order i ON i.order_id = o.order_id
@@ -604,42 +624,52 @@ def registered_today(visit_type)
 
 
 
-    def monthly_respiratory_enctounter(group_name)
-      start_date = (@date - 12.month)
+    def monthly_respiratory_enctounter()
+      start_date = (@date - 11.month)
       dates = []
 
       start_date = start_date.beginning_of_month
       end_date  = start_date.end_of_month
       dates << [start_date, end_date]
 
-      1.upto(12) do |m|
+      1.upto(11) do |m|
         sdate = start_date + m.month
         edate = sdate.end_of_month
         dates << [sdate, edate]
       end
 
-      type = EncounterType.find_by_name 'Presenting complaints'
-      value_coded = ConceptName.find_by_name group_name
-
       months = {}
+      monthsRes = {}
+      data =Observation.where('obs_datetime BETWEEN ? AND ? AND value_text IN(?,?)',(@date - 11.month).beginning_of_month,@date,
+        'Respiratory','ILI').group('value_text','months').\
+        pluck("CASE value_text WHEN 'Respiratory' THEN 'respiratory' WHEN 'ILI' THEN 'ILI' END as value_text,
+        DATE_FORMAT(obs.obs_datetime ,'%Y-%m-01') as obs_date,
+        OPD_syndromic_statistics(DATE_FORMAT(obs.obs_datetime ,'%Y-%m-01'),'#{@date}') as months,
+        COUNT(OPD_syndromic_statistics(DATE_FORMAT(obs.obs_datetime ,'%Y-%m-01'),'#{@date}')) as obs_count").\
+        group_by(&:shift);
+
+      respiratory_data = {}
+      ili_data = {}
+
+      respiratory_data = data['respiratory'].group_by(&:shift) if(data['respiratory'])
+      ili_data         = data['ILI'].group_by(&:shift) if(data['ILI'])
 
       (dates || []).each_with_index do |(date1, date2), i|
-        d1 = date1.strftime('%Y-%m-%d 00:00:00')
-        d2 = date2.strftime('%Y-%m-%d 23:59:59')
 
-        encounter_ids = Encounter.where('encounter_datetime BETWEEN ? AND ?
-        AND encounter_type = ?', d1,d2 , type.id).map(&:encounter_id)
-
-        count = Observation.where('encounter_id IN(?) AND value_text = ?',
-        encounter_ids, group_name).group(:person_id).length
-
-        months[(i+1)]= {
-          start_date: date1, end_date: date2,
-          count: count.to_i
+        monthsRes[(i+1)]= {
+          start_date: date1,
+          end_date: date2,
+          count: respiratory_data["#{date1}"] ? respiratory_data["#{date1}"][0][1] : 0
         }
+        months[(i+1)]= {
+          start_date: date1,
+          end_date: date2,
+          count: ili_data["#{date1}"] ? ili_data["#{date1}"][0][1] : 0
+        }
+
       end
 
-      months
+      [monthsRes,months]
     end
 
   end

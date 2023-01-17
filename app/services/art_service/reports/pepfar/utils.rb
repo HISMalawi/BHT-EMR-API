@@ -58,6 +58,86 @@ module ARTService
           name = GlobalPropertyService.use_filing_numbers? ? 'Filing number' : 'ARV Number'
           PatientIdentifierType.where(name: name).select(:patient_identifier_type_id)
         end
+
+        FULL_6H_COURSE_PILLS = 146
+        FULL_3HP_COURSE_DAYS = 12.days
+        # NOTE: Arrived at 12 days above from how 3HP is prescribed. 1st time prescription
+        #       A patient takes 3HP once every week. Therefore it is 4 times a months
+        #       Multiply that with 3 months we arrive at 12
+        #       Hence the patient is taking this drug 12 times to be considered complete on
+        #       3HP
+
+        ##
+        # Returns whether a patient completed their course of TPT
+        def patient_completed_tpt?(patient, tpt)
+          if tpt == '3HP'
+            # return true if patient['total_days_on_medication'].to_i >= 83 # 3 months
+            return true if patient['months_on_tpt'].to_i >= 3
+
+            divider = patient['drug_concepts'].split(',').length > 1 ? 14.0 : 7.0
+            days_on_medication = (patient['total_days_on_medication'] / divider).round
+            days_on_medication.days >= FULL_3HP_COURSE_DAYS
+          else
+            patient['total_pills_taken'].to_i >= FULL_6H_COURSE_PILLS
+          end
+        end
+
+        ##
+        # Returns the current occupation of a patient
+        def current_occupation(joiner)
+          <<~SQL
+            LEFT JOIN (
+              SELECT a.person_id, a.value
+              FROM person_attribute a
+              LEFT OUTER JOIN person_attribute b
+              ON a.person_attribute_id = b.person_attribute_id
+              AND a.date_created < b.date_created
+              AND b.voided = 0
+              WHERE b.person_attribute_id IS NULL AND a.person_attribute_type_id = 13 AND a.voided = 0
+            ) pa ON pa.person_id = #{joiner}
+          SQL
+        end
+
+        ##
+        # Returns an occupation filter based on the given occupation
+        def occupation_filter(occupation)
+          return '' if occupation.blank?
+          return '' if occupation == 'All'
+          return " AND pa.value = '#{occupation}'" if occupation == 'Military'
+          return " AND (pa.value != 'Military' OR pa.value IS NULL)" if occupation == 'Civilian'
+        end
+
+        # this just gives all clients who are truly external or drug refill
+        # rubocop:disable Metrics/MethodLength
+        # rubocop:disable Metrics/AbcSize
+        def drug_refills_and_external_consultation_list
+          to_remove = [0]
+
+          type_of_patient_concept = ConceptName.find_by_name('Type of patient').concept_id
+          new_patient_concept = ConceptName.find_by_name('New patient').concept_id
+          drug_refill_concept = ConceptName.find_by_name('Drug refill').concept_id
+          external_concept = ConceptName.find_by_name('External Consultation').concept_id
+          hiv_clinic_registration_id = EncounterType.find_by_name('HIV CLINIC REGISTRATION').encounter_type_id
+
+          ActiveRecord::Base.connection.select_all("
+            SELECT p.person_id patient_id
+            FROM person p
+            INNER JOIN patient_program pp ON pp.patient_id = p.person_id AND pp.program_id = #{Program.find_by_name('HIV Program').id} AND pp.voided = 0
+            INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id AND ps.state = 7 AND ps.start_date IS NOT NULL
+            LEFT JOIN encounter as hiv_registration ON hiv_registration.patient_id = p.person_id AND hiv_registration.encounter_datetime < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) AND hiv_registration.encounter_type = #{hiv_clinic_registration_id} AND hiv_registration.voided = 0
+            LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND value_coded = #{new_patient_concept} AND obs_datetime < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY) AS new_patient ON p.person_id = new_patient.person_id
+            LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND value_coded = #{drug_refill_concept} AND obs_datetime < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY) AS refill ON p.person_id = refill.person_id
+            LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND value_coded = #{external_concept} AND obs_datetime < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY) AS external ON p.person_id = external.person_id
+            WHERE (refill.value_coded IS NOT NULL OR external.value_coded IS NOT NULL)
+            AND NOT (hiv_registration.encounter_id IS NOT NULL OR new_patient.value_coded IS NOT NULL)
+            GROUP BY p.person_id
+            ORDER BY hiv_registration.encounter_datetime DESC, refill.obs_datetime DESC, external.obs_datetime DESC;").each do |record|
+            to_remove << record['patient_id'].to_i
+          end
+          to_remove.join(',')
+        end
+        # rubocop:enable Metrics/MethodLength
+        # rubocop:enable Metrics/AbcSize
       end
     end
   end

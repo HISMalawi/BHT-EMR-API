@@ -229,8 +229,18 @@ module ARTService
 
       return false if patient_is_on_tb_treatment.blank?
       return false unless on_tb_treatment_concept_ids.include?(patient_is_on_tb_treatment.first.value_coded)
+      return false if patient_stopped_tb_treatment?(patient, tb_status_max_datetime)
 
       drug.concept_id == dtg_concept_id
+    end
+
+    def patient_stopped_tb_treatment?(patient, tb_status_max_datetime)
+      tb_treatment = ConceptName.find_by_name('TB Treatment').concept_id
+      no_concept = ConceptName.where(name: 'No').collect(&:concept_id)
+
+      result = Observation.where('person_id = ? AND concept_id = ? AND value_coded IN (?) AND obs_datetime >= ?',
+                                 patient.id, tb_treatment, no_concept.join(','), tb_status_max_datetime)&.first
+      result.blank? ? false : true
     end
 
     def classify_regimen_combo(drug_combo)
@@ -331,7 +341,7 @@ module ARTService
     # than what is prescribed normally. This function takes a regimens
     # structure and repackages the relevant regimens.
     def repackage_regimens_for_tb_patients!(regimens, patient_weight)
-      %w[12A 13A 14A 15A].each do |regimen_name|
+      %w[12PP 12PA 12A 13A 14PP 14PA 14A 15PP 15PA 15A].each do |regimen_name|
         regimen = regimens[regimen_name]
         next unless regimen
 

@@ -86,3 +86,8 @@ rds:
     #   program_name: 'HTC PROGRAM'
     # anc:
     #   program_name: 'ANC PROGRAM'
+
+# You will need to uncomment this part if you are running rspec tests
+# test_credentials:
+#   username: admin
+#   password: test

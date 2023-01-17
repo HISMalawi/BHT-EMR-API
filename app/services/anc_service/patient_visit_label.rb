@@ -293,7 +293,7 @@ module ANCService
 
               main_drugs_passed = ((main_drugs.include?(o.drug_order.drug.name[0, o.drug_order.drug.name.index(" ")]))) rescue false
 
-              if main_drugs_passed  
+              if main_drugs_passed
                 @drugs[e.encounter_datetime.strftime("%d/%b/%Y")][o.drug_order.drug.name[0,
                     o.drug_order.drug.name.index(" ")]] = o.drug_order.quantity
               else
@@ -350,22 +350,19 @@ module ANCService
 
               label.draw_text(ttv.to_s,28,200,0,2,1,1,false)
 
-              #raise encounters[element]["ANC EXAMINATION"].inspect
-              sign = encounters[element]["ANC EXAMINATION"] #.humanize rescue ""
-
               sign = "";
               diagnosis = ["malaria", "anaemia", "pre-eclampsia", "vaginal bleeding", "early rupture of membranes",
                 "premature labour","pneumonia", "verruca planus, extensive"]
 
-              encounters[element]["ANC EXAMINATION"].each do |key, value|
-                if diagnosis.include?(key.downcase)
-                  sign += "#{key.downcase}, "
+              anc_exam = encounter["ANC EXAMINATION"]
+
+              unless anc_exam.blank?
+                  anc_exam.each do |key, value|
+                  if diagnosis.include?(key.downcase)
+                    sign += "#{key.downcase}, "
+                  end
                 end
               end
-
-              #raise sign.inspect
-
-
 
               sign = paragraphate(sign.to_s, 13, 5)
 

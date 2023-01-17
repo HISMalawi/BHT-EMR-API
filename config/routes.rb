@@ -18,13 +18,16 @@ Rails.application.routes.draw do
       end
 
       # Routes down here ... Best we move everything above into own modules
-
+      resources :internal_sections, only: %i[index show create update destroy]
       resources :appointments
       resources :dispensations, only: %i[index create destroy]
       resources :users do
         post '/activate', to: 'users#activate'
         post '/deactivate', to: 'users#deactivate'
       end
+
+      # notifications for nlims any features in the future
+      resources :notifications, only: %i[index update]
 
       # Not placed under users urls to allow crud on current user's roles
       resources :user_roles, only: %i[index create destroy]
@@ -55,6 +58,7 @@ Rails.application.routes.draw do
           paginate_url "/api/v1/appointments?patient_id=#{params[:patient_id]}",
                        request.params
         end)
+        get '/tpt_status' => 'patients#tpt_status'
         get '/drugs_received', to: 'patients#drugs_received'
         get '/last_drugs_received', to: 'patients#last_drugs_received'
         get '/drugs_orders_by_program', to: 'patients#drugs_orders_by_program'
@@ -192,6 +196,8 @@ Rails.application.routes.draw do
         end
         get 'earliest_expiring_item', to: 'items#earliest_expiring'
         get 'drug_consumption', to: 'drugs#drug_consumption'
+        get 'stock_report', to: 'audit_trails#stock_report'
+        get '/audit_trail/grouped', to: 'audit_trails#show_grouped_audit_trail'
       end
 
       namespace :types do
@@ -203,9 +209,14 @@ Rails.application.routes.draw do
       resources :drugs do
         get '/barcode', to: 'drugs#print_barcode'
       end
+      get '/arv_drugs' => 'drugs#arv_drugs'
 
       resources :drug_orders
-      resources :orders
+      resources :orders do
+        get '/radiology', to: 'orders#print_radiology_order', on: :collection
+        post '/radiology', to: 'orders#radiology_order', on: :collection
+      end
+
       get '/drug_sets', to: 'drugs#drug_sets' # ANC get drug sets
       post '/drug_sets', to: 'drugs#create_drug_sets' # ANC drug sets creation
       delete '/drug_sets/:id', to: 'drugs#void_drug_sets'
@@ -214,6 +225,8 @@ Rails.application.routes.draw do
       resource :user_properties
 
       resource :session_stats, path: 'stats/session'
+
+      resources :diagnosis
 
       # Workflow engine
       get '/workflows/:program_id/:patient_id' => 'workflows#next_encounter'
@@ -231,6 +244,8 @@ Rails.application.routes.draw do
       post '/dde/patients/reassign_npid', to: 'dde#reassign_patient_npid'
       post '/dde/patients/merge', to: 'dde#merge_patients'
       get '/dde/patients/remaining_npids', to: 'dde#remaining_npids'
+      get '/rollback/merge_history', to: 'rollback#merge_history'
+      post '/rollback/rollback_patient', to: 'rollback#rollback_patient'
 
       get '/labels/location', to: 'locations#print_label'
 
@@ -258,6 +273,10 @@ Rails.application.routes.draw do
       get '/sequences/next_accession_number', to: 'sequences#next_accession_number'
 
       post '/reports/encounters' => 'encounters#count'
+
+      #drugs_cms routes
+      get '/drug_cms/search', to: "drug_cms#search"
+      resources :drug_cms, only: %i[index]
     end
   end
 
@@ -272,11 +291,14 @@ Rails.application.routes.draw do
   get '/api/v1/patient_weight_for_height_values' => 'api/v1/weight_for_height#index'
   get '/api/v1/presenting_complaints' => 'api/v1/presenting_complaints#show'
   get '/api/v1/concept_set' => 'api/v1/concept_sets#show'
+  get '/api/v1/radiology_set' => 'api/v1/concept_sets#radiology_set'
+  get '/api/v1/radiology/examinations' => 'api/v1/radiology#examinations'
   get '/api/v1/cervical_cancer_screening' => 'api/v1/cervical_cancer_screening#show'
 
   get '/api/v1/dashboard_stats' => 'api/v1/reports#index'
   get '/api/v1/dashboard_stats_for_syndromic_statistics' => 'api/v1/reports#syndromic_statistics'
   post '/api/v1/vl_maternal_status' => 'api/v1/reports#vl_maternal_status'
+  post '/api/v1/patient_art_vl_dates' => 'api/v1/reports#patient_art_vl_dates'
 
   # SQA controller
   post '/api/v1/duplicate_identifier' => 'api/v1/cleaning#duplicate_identifier'
@@ -287,6 +309,7 @@ Rails.application.routes.draw do
   get '/api/v1/male' => 'api/v1/cleaning#male'
   get '/api/v1/incomplete_visits' => 'api/v1/cleaning#incompleteVisits'
   get '/api/v1/art_data_cleaning_tools' => 'api/v1/cleaning#art_tools'
+  get '/api/v1/anc_data_cleaning_tools' => 'api/v1/cleaning#anc_tools'
 
   # OPD reports
   get '/api/v1/malaria_report' => 'api/v1/reports#malaria_report'
@@ -341,11 +364,15 @@ Rails.application.routes.draw do
   get '/api/v1/:program_id/external_consultation_clients', to: 'api/v1/reports#external_consultation_clients'
 
   get '/api/v1/screened_for_cxca', to: 'api/v1/reports#cxca_reports'
+  get '/api/v1/pepfar_cxca', to: 'api/v1/reports#cxca_reports'
   get '/api/v1/dispatch_order/:order_id', to: 'api/v1/dispatch_orders#show'
   post '/api/v1/dispatch_order', to: 'api/v1/dispatch_orders#create'
   get '/api/v1/latest_regimen_dispensed', to: 'api/v1/reports#latest_regimen_dispensed'
   get '/api/v1/sc_arvdisp', to: 'api/v1/reports#sc_arvdisp'
 
+  get 'api/v1/radiology_reports', to: 'api/v1/reports#radiology_reports'
+
   get '/api/v1/data_cleaning_confirmation', to: 'api/v1/data_cleaning#view'
   post '/api/v1/data_cleaning_confirmation', to: 'api/v1/data_cleaning#create'
+
 end

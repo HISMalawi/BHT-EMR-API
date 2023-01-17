@@ -1,4 +1,8 @@
+require 'zebra_printer/init'
+
 class Api::V1::OrdersController < ApplicationController
+  before_action :authenticate, except: %i[print_radiology_order]
+
   def index; end
 
   def show
@@ -42,5 +46,23 @@ class Api::V1::OrdersController < ApplicationController
     else
       render json: { errors: drug.errors }, status: :internal_server_error
     end
+  end
+
+  def radiology_order
+    render json: RadiologyService::Investigation.create_order(radiology_params), status: 201
+  end
+
+  def print_radiology_order
+    printer_commands = RadiologyService::OrderLabel.new(params.permit(:accession_number, :order_id)).print
+    send_data(printer_commands, type: 'application/label; charset=utf-8',
+                                stream: false,
+                                filename: "#{SecureRandom.hex(24)}.lbl",
+                                disposition: 'inline')
+  end
+
+  private
+
+  def radiology_params
+    params.permit(:encounter_id, :concept_id, :instructions, :start_date, :orderer, :accession_number, :provider)
   end
 end

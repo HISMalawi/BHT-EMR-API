@@ -8,7 +8,9 @@ class ReportService
     'VMMC PROGRAM' => VMMCService::ReportEngine,
     'TB PROGRAM' => TBService::ReportEngine,
     'LABORATORY ORDERS' => LaboratoryService::ReportEngine,
-    'CXCA PROGRAM' => CXCAService::ReportEngine
+    'CXCA PROGRAM' => CXCAService::ReportEngine,
+    'RADIOLOGY PROGRAM' => RadiologyService::ReportEngine,
+    'PATIENT REGISTRATION PROGRAM' => PatientRegistrationService::ReportEngine
   }.freeze
   LOGGER = Rails.logger
 
@@ -185,12 +187,24 @@ class ReportService
   end
 
   def cxca_reports(start_date, end_date, report_name)
+    engine(@program).reports(start_date.to_date, end_date.to_date, report_name)
+  end
+
+  def radiology_reports(start_date, end_date, report_name)
+    engine(@program).reports(start_date.to_date, end_date.to_date, report_name)
+  end
+
+  def pr_reports(start_date, end_date, report_name)
     engine(@program).reports(start_date.to_date,end_date.to_date, report_name)
   end
 
   def vl_maternal_status(start_date, end_date, tx_curr_definition, patient_ids)
     engine(@program).vl_maternal_status(start_date.to_date,end_date.to_date,
       tx_curr_definition, patient_ids)
+  end
+
+  def patient_art_vl_dates(end_date, patient_ids)
+    engine(@program).patient_art_vl_dates(end_date.to_date, patient_ids)
   end
 
   def latest_regimen_dispensed(start_date, end_date, rebuild_outcome)

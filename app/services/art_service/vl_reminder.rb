@@ -81,7 +81,7 @@ module ARTService
     #   duration: An ActiveSupport::Duration specifying the period to search for a viral load
     #             starting from set date going back (default: 12 months)
     def find_patient_recent_viral_load(duration: 12.months)
-      Lab::LabOrder.where(concept: ConceptName.where(name: ['Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)'])\
+      Lab::LabOrder.where(concept: ConceptName.where(name: ['Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)', 'Plasma'])\
                   .select(:concept_id), patient: patient)
                    .where('start_date BETWEEN DATE(?) AND DATE(?)', (date - duration), date)
                    .joins(:tests)
@@ -153,7 +153,8 @@ module ARTService
 
     def vl_reminder_info
       due_date = find_patient_viral_load_due_date.to_date
-      return struct_vl_info(eligible: true, due_date: due_date) if due_date <= date
+      # So this will accept a due date that is 30 days before the patient's next VL due date
+      return struct_vl_info(eligible: true, due_date: due_date) if due_date - 30.days <= date
 
       days_to_go = due_date - date
       if in_months(days_to_go) < 9.months

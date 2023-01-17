@@ -17,6 +17,10 @@ class Api::V1::DrugsController < ApplicationController
     render json: paginate(service.find_drug_list(filters))
   end
 
+  def arv_drugs
+    render json: Drug.arv_drugs, status: :ok
+  end
+
   def drug_sets
     drug_sets = {}
     set_names = {}

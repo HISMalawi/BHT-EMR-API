@@ -1,21 +1,1215 @@
 ---
 openapi: 3.0.1
 info:
-  title: API V1
+  title: EMR API V1 DOCS
   version: v1
 paths:
-servers:
-- url: http://{defaultHost}
-  variables:
-    defaultHost:
-      default: localhost:3000
+  "/api/v1/programs/1/reports/clinic_tx_rtt":
+    get:
+      summary: Retrieve CLINIC TX RTT report
+      tags:
+      - Clinic Reports
+      description: This shows CLINIC TX RTT report
+      security:
+      - api_key: []
+      parameters:
+      - name: start_date
+        in: query
+        schema:
+          type: string
+      - name: end_date
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: CLINIC TX RTT Report found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  age_group:
+                    type: object
+                    properties:
+                      gender:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            patient_id:
+                              type: integer
+                            months:
+                              type: integer
+        '404':
+          description: CLINIC TX RTT Report not found
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+  "/api/v1/programs/1/reports/tpt_outcome":
+    get:
+      summary: Retrieve TPT OUTCOME report
+      tags:
+      - Clinic Reports
+      description: This shows TPT OUTCOME report
+      security:
+      - api_key: []
+      parameters:
+      - name: start_date
+        in: query
+        schema:
+          type: string
+      - name: end_date
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: TPT OUTCOME Report found
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    age_group:
+                      type: string
+                    tpt_type:
+                      type: string
+                    started_tpt:
+                      type: array
+                      items:
+                        type: integer
+                    completed_tpt:
+                      type: array
+                      items:
+                        type: integer
+                    not_completed_tpt:
+                      type: array
+                      items:
+                        type: integer
+                    died:
+                      type: array
+                      items:
+                        type: integer
+                    defaulted:
+                      type: array
+                      items:
+                        type: integer
+                    transferred_out:
+                      type: array
+                      items:
+                        type: integer
+                    confirmed_tb:
+                      type: array
+                      items:
+                        type: integer
+                    pregnant:
+                      type: array
+                      items:
+                        type: integer
+                    stopped:
+                      type: array
+                      items:
+                        type: integer
+        '404':
+          description: TPT OUTCOME Report not found
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+  "/api/v1/radiology_set":
+    get:
+      summary: Retrieve all radiology sets
+      tags:
+      - Concept Sets
+      description: This shows all radiology examination sets
+      security:
+      - api_key: []
+      parameters:
+      - name: id
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Radiology Sets found
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    concept_id:
+                      type: integer
+                    name:
+                      type: string
+  "/api/v1/concept_sets/{id}":
+    get:
+      summary: Retrieve concept set by id
+      tags:
+      - Concept Sets
+      description: This shows concept set by id
+      security:
+      - api_key: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Concept Set found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+                  created_at:
+                    type: string
+                  updated_at:
+                    type: string
+        '404':
+          description: Concept Set not found
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+  "/api/v1/arv_drugs":
+    get:
+      summary: Returns a list of ARV drugs
+      tags:
+      - Drugs
+      description: This returns a list of ARV drugs
+      security:
+      - api_key: []
+      responses:
+        '200':
+          description: ARV Drugs returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    drug_id:
+                      type: integer
+                    concept_id:
+                      type: integer
+                    name:
+                      type: string
+                    dosage_form:
+                      type: integer
+                    dosage_strength:
+                      type: float
+                    maximum_daily_dose:
+                      type: float
+                    minimum_daily_dose:
+                      type: float
+                    route:
+                      type: integer
+                    units:
+                      type: string
+                    creator:
+                      type: integer
+                    date_created:
+                      type: string
+                    retired:
+                      type: boolean
+                    retired_by:
+                      type: integer
+                    date_retired:
+                      type: string
+                    retire_reason:
+                      type: string
+                    uuid:
+                      type: string
+                    alternative_names:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          name:
+                            type: string
+                          short_name:
+                            type: string
+                          created_at:
+                            type: string
+                          updated_at:
+                            type: string
+                    barcodes:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          drug_order_barcode_id:
+                            type: integer
+                          drug_id:
+                            type: integer
+                          tabs:
+                            type: integer
+                          created_at:
+                            type: string
+                          updated_at:
+                            type: string
+  "/api/v1/internal_sections":
+    get:
+      summary: Retrieve all internal sections
+      tags:
+      - Internal Sections
+      description: This shows all internal sections
+      security:
+      - api_key: []
+      responses:
+        '200':
+          description: Internal Sections found
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    name:
+                      type: string
+                    created_at:
+                      type: string
+                    updated_at:
+                      type: string
+        '404':
+          description: Internal Sections not found
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+  "/api/v1/internal_sections/{id}":
+    get:
+      summary: Retrieve internal section by id
+      tags:
+      - Internal Sections
+      description: This shows internal section by id
+      security:
+      - api_key: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Internal Section found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+                  created_at:
+                    type: string
+                  updated_at:
+                    type: string
+        '404':
+          description: Internal Section not found
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+    put:
+      summary: Update internal section
+      tags:
+      - Internal Sections
+      security:
+      - api_key: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Internal Section updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+                  created_at:
+                    type: string
+                  updated_at:
+                    type: string
+        '422':
+          description: Internal Section not updated
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+              required:
+              - name
+    delete:
+      summary: Remove internal section
+      tags:
+      - Internal Sections
+      security:
+      - api_key: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Internal Section removed
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+        '422':
+          description: Internal Section not removed
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                void_reason:
+                  type: string
+              required:
+              - void_reason
+  "/api/v1/internal_sections/":
+    post:
+      summary: Create internal section
+      tags:
+      - Internal Sections
+      security:
+      - api_key: []
+      parameters: []
+      responses:
+        '201':
+          description: Internal Section created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+                  created_at:
+                    type: string
+                  updated_at:
+                    type: string
+        '422':
+          description: Internal Section not created
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+              required:
+              - name
+  "/api/v1/orders/radiology":
+    post:
+      summary: Adds a Radiology Order
+      tags:
+      - Orders
+      description: This adds a radiology order to the system
+      security:
+      - api_key: []
+      parameters: []
+      responses:
+        '201':
+          description: Radiology Order Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  order_id:
+                    type: integer
+                  accession_number:
+                    type: string
+                  created_at:
+                    type: string
+                  updated_at:
+                    type: string
+        '422':
+          description: Radiology Order not created
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Encounter not found
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                encounter_id:
+                  type: integer
+                concept_id:
+                  type: integer
+                instructions:
+                  type: string
+                  nullable: true
+                start_date:
+                  type: string
+                  nullable: true
+                orderer:
+                  type: integer
+                  nullable: true
+                accession_number:
+                  type: string
+                  nullable: true
+                provider:
+                  type: integer
+                  nullable: true
+              required:
+              - encounter_id
+              - concept_id
+    get:
+      summary: Print the examination number
+      tags:
+      - Orders
+      description: This prints a radiology examination number
+      security:
+      - api_key: []
+      parameters:
+      - name: params
+        in: query
+        schema:
+          type: object
+          properties:
+            accession_number:
+              type: string
+            order_id:
+              type: integer
+      responses:
+        '200':
+          description: File printed successfully
+          content:
+            application/label:
+              schema:
+                type: file
+                properties:
+                  filename:
+                    type: string
+        '404':
+          description: Examination not found
+          content:
+            application/label:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+  "/api/v1/programs/12/reports/pmtct_stat_art":
+    get:
+      summary: Retrieve PMTCT STAT ART
+      tags:
+      - Pepfar Reports
+      description: This shows PMTCT STAT ART report
+      security:
+      - api_key: []
+      parameters:
+      - name: start_date
+        in: query
+        schema:
+          type: string
+      - name: end_date
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: PMTCT STAT ART Report found
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    age_group:
+                      type: string
+                    known_positive:
+                      type: array
+                      items:
+                        type: integer
+                    newly_tested_positives:
+                      type: array
+                      items:
+                        type: integer
+                    new_negatives:
+                      type: array
+                      items:
+                        type: integer
+                    recent_negatives:
+                      type: array
+                      items:
+                        type: integer
+                    not_done:
+                      type: array
+                      items:
+                        type: integer
+                    new_on_art:
+                      type: array
+                      items:
+                        type: integer
+                    already_on_art:
+                      type: array
+                      items:
+                        type: integer
+        '404':
+          description: PMTCT STAT ART Report not found
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+  "/api/v1/programs/1/reports/viral_load_coverage":
+    get:
+      summary: Retrieve VL Coverage
+      tags:
+      - Pepfar Reports
+      description: This shows VL Coverage report
+      security:
+      - api_key: []
+      parameters:
+      - name: start_date
+        in: query
+        schema:
+          type: string
+      - name: end_date
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: VL Coverage Report found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  age_group:
+                    type: object
+                    properties:
+                      due_for_vl:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            age_group:
+                              type: string
+                            patient_id:
+                              type: integer
+                            arv_number:
+                              type: string
+                            birthdate:
+                              type: string
+                            gender:
+                              type: string
+                            due_status:
+                              type: integer
+                      drawn:
+                        type: object
+                        properties:
+                          routine:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                age_group:
+                                  type: string
+                                patient_id:
+                                  type: integer
+                                arv_number:
+                                  type: string
+                                birthdate:
+                                  type: string
+                                order_date:
+                                  type: string
+                                sample_drawn_date:
+                                  type: string
+                                reason_for_test:
+                                  type: string
+                                result_modifier:
+                                  type: string
+                                result_value:
+                                  type: string
+                          targeted:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                age_group:
+                                  type: string
+                                patient_id:
+                                  type: integer
+                                arv_number:
+                                  type: string
+                                birthdate:
+                                  type: string
+                                order_date:
+                                  type: string
+                                sample_drawn_date:
+                                  type: string
+                                reason_for_test:
+                                  type: string
+                                result_modifier:
+                                  type: string
+                                result_value:
+                                  type: string
+                      high_vl:
+                        type: object
+                        properties:
+                          type: object
+                          properties:
+                            routine:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  age_group:
+                                    type: string
+                                  patient_id:
+                                    type: integer
+                                  arv_number:
+                                    type: string
+                                  birthdate:
+                                    type: string
+                                  order_date:
+                                    type: string
+                                  sample_drawn_date:
+                                    type: string
+                                  reason_for_test:
+                                    type: string
+                                  result_modifier:
+                                    type: string
+                                  result_value:
+                                    type: string
+                            targeted:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  age_group:
+                                    type: string
+                                  patient_id:
+                                    type: integer
+                                  arv_number:
+                                    type: string
+                                  birthdate:
+                                    type: string
+                                  order_date:
+                                    type: string
+                                  sample_drawn_date:
+                                    type: string
+                                  reason_for_test:
+                                    type: string
+                                  result_modifier:
+                                    type: string
+                                  result_value:
+                                    type: string
+                      low_vl:
+                        type: object
+                        properties:
+                          type: object
+                          properties:
+                            routine:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  age_group:
+                                    type: string
+                                  patient_id:
+                                    type: integer
+                                  arv_number:
+                                    type: string
+                                  birthdate:
+                                    type: string
+                                  order_date:
+                                    type: string
+                                  sample_drawn_date:
+                                    type: string
+                                  reason_for_test:
+                                    type: string
+                                  result_modifier:
+                                    type: string
+                                  result_value:
+                                    type: string
+                            targeted:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  age_group:
+                                    type: string
+                                  patient_id:
+                                    type: integer
+                                  arv_number:
+                                    type: string
+                                  birthdate:
+                                    type: string
+                                  order_date:
+                                    type: string
+                                  sample_drawn_date:
+                                    type: string
+                                  reason_for_test:
+                                    type: string
+                                  result_modifier:
+                                    type: string
+                                  result_value:
+                                    type: string
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+  "/api/v1/pharmacy/stock_report":
+    get:
+      summary: Stock Report
+      tags:
+      - Pharmacy
+      description: This gets the stock report
+      security:
+      - api_key: []
+      responses:
+        '200':
+          description: Stock Report
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    product_code:
+                      type: string
+                    batch_numbers:
+                      type: string
+                    drug_name:
+                      type: string
+                    units:
+                      type: string
+                    closing_balance:
+                      type: float
+                    losses:
+                      type: float
+                    positive_adjustment:
+                      type: float
+                    negative_adjustment:
+                      type: float
+                    quantity_used:
+                      type: float
+                    quantity_received:
+                      type: float
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+  "/api/v1/pharmacy/audit_trail":
+    get:
+      summary: Audit Trail
+      tags:
+      - Pharmacy
+      description: This gets the audit trail
+      security:
+      - api_key: []
+      parameters:
+      - name: start_date
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: end_date
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: drug_id
+        in: query
+        required: false
+        schema:
+          type: integer
+      - name: batch_number
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Audit Trail
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    creation_date:
+                      type: string
+                    transaction_date:
+                      type: string
+                    transaction_type:
+                      type: string
+                    batch_number:
+                      type: string
+                    drug_id:
+                      type: integer
+                    batch_item_id:
+                      type: integer
+                    drug_name:
+                      type: string
+                    amount_committed_to_stock:
+                      type: float
+                    amount_dispensed_from_art:
+                      type: float
+                    username:
+                      type: string
+                    transaction_reason:
+                      type: string
+                    product_code:
+                      type: string
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+  "/api/v1/pharmacy/batches":
+    post:
+      summary: Add a batch
+      tags:
+      - Pharmacy
+      description: This adds a batch item and can create a batch if does not exist
+      security:
+      - api_key: []
+      parameters: []
+      responses:
+        '201':
+          description: Batch created
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    batch_number:
+                      type: string
+                    creator:
+                      type: integer
+                    date_created:
+                      type: string
+                    date_changed:
+                      type: string
+                    voided:
+                      type: boolean
+                    voided_by:
+                      type: integer
+                    date_voided:
+                      type: string
+                    void_reason:
+                      type: string
+                    changed_by:
+                      type: integer
+                    location_id:
+                      type: integer
+                    items:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          pharmacy_batch_id:
+                            type: integer
+                          drug_id:
+                            type: integer
+                          delivered_quantity:
+                            type: float
+                          current_quantity:
+                            type: float
+                          creator:
+                            type: integer
+                          date_created:
+                            type: string
+                          date_changed:
+                            type: string
+                          voided:
+                            type: boolean
+                          voided_by:
+                            type: integer
+                          date_voided:
+                            type: string
+                          void_reason:
+                            type: string
+                          changed_by:
+                            type: integer
+                          pack_size:
+                            type: integer
+                          barcode:
+                            type: string
+                          expiry_date:
+                            type: string
+                          product_code:
+                            type: string
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  batch_number:
+                    type: string
+                  location_id:
+                    type: integer
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        pack_size:
+                          type: integer
+                        barcode:
+                          type: string
+                        drug_id:
+                          type: integer
+                        expiry_date:
+                          type: string
+                        quantity:
+                          type: integer
+                        delivery_date:
+                          type: string
+                        product_code:
+                          type: string
+        required: true
+  "/api/v1/rollback/merge_history":
+    get:
+      summary: Retrieve merge history
+      tags:
+      - Merge Rollback
+      description: This shows the timeline of client merges
+      security:
+      - api_key: []
+      parameters:
+      - name: identifier
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Merge History found
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    primary_id:
+                      type: integer
+                    secondary_id:
+                      type: integer
+                    merge_date:
+                      type: string
+                    merge_type:
+                      type: string
+                    primary_first_name:
+                      type: string
+                    primary_surname:
+                      type: string
+                    primary_gender:
+                      type: string
+                    primary_birthdate:
+                      type: string
+                    secondary_first_name:
+                      type: string
+                    secondary_surname:
+                      type: string
+                    secondary_gender:
+                      type: string
+                    secondary_birthdate:
+                      type: string
+        '404':
+          description: Merge History not found
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+  "/api/v1/rollback/rollback_patient":
+    post:
+      summary: Rollback patient merge
+      tags:
+      - Merge Rollback
+      security:
+      - api_key: []
+      parameters: []
+      responses:
+        '200':
+          description: Patient Rolled back
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  patient_id:
+                    type: integer
+        '404':
+          description: There is no merge history of the patient
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                patient_id:
+                  type: integer
+                program_id:
+                  type: integer
+              required:
+              - patient_id
+              - program_id
 components:
   securitySchemes:
     api_key:
       type: apiKey
       name: Authorization
       in: header
-    bearer:
-      type: bearer
-      name: Authorization
-      in: header
+servers:
+- url: http://{defaultHost}
+  variables:
+    defaultHost:
+      default: localhost:3000

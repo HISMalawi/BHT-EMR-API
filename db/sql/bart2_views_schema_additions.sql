@@ -2076,6 +2076,30 @@ BEGIN
 	RETURN given;
 END;
 
+DROP FUNCTION IF EXISTS `cxca_age_group`;
+
+CREATE FUNCTION `cxca_age_group`(birthdate date, end_date date) RETURNS VARCHAR(15)
+BEGIN
+
+DECLARE age_in_months INT(11);
+DECLARE age_in_years INT(11);
+DECLARE age_group VARCHAR(15);
+
+SET age_in_years  = (SELECT timestampdiff(year, birthdate, end_date));
+SET age_group = ('Unknown Age');
+
+IF age_in_years >= 15 AND age_in_years <= 19 THEN SET age_group = "15-19";
+ELSEIF age_in_years >= 20 AND age_in_years <= 24 THEN SET age_group = "20-24";
+ELSEIF age_in_years >= 25 AND age_in_years <= 29 THEN SET age_group = "25-29";
+ELSEIF age_in_years >= 30 AND age_in_years <= 34 THEN SET age_group = "30-34";
+ELSEIF age_in_years >= 35 AND age_in_years <= 39 THEN SET age_group = "35-39";
+ELSEIF age_in_years >= 40 AND age_in_years <= 44 THEN SET age_group = "40-44";
+ELSEIF age_in_years >= 45 AND age_in_years <= 49 THEN SET age_group = "45-49";
+ELSEIF age_in_years >= 50 THEN SET age_group = "50+";
+END IF;
+
+RETURN age_group;
+END;
 
 
 DROP FUNCTION IF EXISTS `cohort_disaggregated_age_group`;
@@ -2150,6 +2174,68 @@ END IF;
 RETURN age_group;
 END;
 
+DROP FUNCTION IF EXISTS `anc_age_group`;
+
+CREATE FUNCTION `anc_age_group`(birthdate date, end_date date) RETURNS VARCHAR(15)
+BEGIN
+
+DECLARE age_in_years INT(11);
+DECLARE age_group VARCHAR(15);
+
+SET age_in_years  = (SELECT timestampdiff(year, birthdate, end_date));
+SET age_group = ('Unknown');
+
+IF age_in_years >= 0 AND age_in_years < 10 THEN SET age_group = "<10 years";
+ELSEIF age_in_years >= 10 AND age_in_years <= 14 THEN SET age_group = "10-14 years";
+ELSEIF age_in_years >= 15 AND age_in_years <= 19 THEN SET age_group = "15-19 years";
+ELSEIF age_in_years >= 20 AND age_in_years <= 24 THEN SET age_group = "20-24 years";
+ELSEIF age_in_years >= 25 AND age_in_years <= 29 THEN SET age_group = "25-29 years";
+ELSEIF age_in_years >= 30 AND age_in_years <= 34 THEN SET age_group = "30-34 years";
+ELSEIF age_in_years >= 35 AND age_in_years <= 39 THEN SET age_group = "35-39 years";
+ELSEIF age_in_years >= 40 AND age_in_years <= 44 THEN SET age_group = "40-44 years";
+ELSEIF age_in_years >= 45 AND age_in_years <= 49 THEN SET age_group = "45-49 years";
+ELSEIF age_in_years >= 50 AND age_in_years <= 54 THEN SET age_group = "50-54 years";
+ELSEIF age_in_years >= 55 AND age_in_years <= 59 THEN SET age_group = "55-59 years";
+ELSEIF age_in_years >= 60 AND age_in_years <= 64 THEN SET age_group = "60-64 years";
+ELSEIF age_in_years >= 65 AND age_in_years <= 69 THEN SET age_group = "65-69 years";
+ELSEIF age_in_years >= 70 AND age_in_years <= 74 THEN SET age_group = "70-74 years";
+ELSEIF age_in_years >= 75 AND age_in_years <= 79 THEN SET age_group = "75-79 years";
+ELSEIF age_in_years >= 80 AND age_in_years <= 84 THEN SET age_group = "80-84 years";
+ELSEIF age_in_years >= 85 AND age_in_years <= 89 THEN SET age_group = "85-89 years";
+ELSEIF age_in_years >= 90 THEN SET age_group = "90 plus years";
+END IF;
+
+RETURN age_group;
+END;
+
+
+DROP FUNCTION IF EXISTS `OPD_syndromic_statistics`;
+
+CREATE FUNCTION `OPD_syndromic_statistics`(start_date date, end_date date) RETURNS VARCHAR(15)
+BEGIN
+
+DECLARE obs_in_months INT(11);
+DECLARE obs_date_group VARCHAR(15);
+
+SET obs_in_months = (SELECT timestampdiff(month, start_date, end_date));
+SET obs_date_group = ('Unknown');
+
+IF obs_in_months < 1  THEN SET obs_date_group = "0 months";
+ELSEIF obs_in_months = 1 THEN SET obs_date_group = "1 months";
+ELSEIF obs_in_months = 2  THEN SET obs_date_group = "2 months";
+ELSEIF obs_in_months = 3 THEN SET obs_date_group = "3 months";
+ELSEIF obs_in_months = 4 THEN SET obs_date_group = "4 months";
+ELSEIF obs_in_months = 5 THEN SET obs_date_group = "5 months";
+ELSEIF obs_in_months = 6 THEN SET obs_date_group = "6 months";
+ELSEIF obs_in_months = 7 THEN SET obs_date_group = "7 months";
+ELSEIF obs_in_months = 8 THEN SET obs_date_group = "8 months";
+ELSEIF obs_in_months = 9 THEN SET obs_date_group = "9 months";
+ELSEIF obs_in_months = 10 THEN SET obs_date_group = "10 months";
+ELSEIF obs_in_months = 11 THEN SET obs_date_group = "11 months";
+END IF;
+
+RETURN obs_date_group;
+END;
 
 DROP FUNCTION IF EXISTS `opd_disaggregated_age_group`;
 
@@ -2173,7 +2259,20 @@ END IF;
 RETURN age_group;
 END;
 
+DROP FUNCTION IF EXISTS `triage_covid_report`;
 
+CREATE FUNCTION `triage_covid_report`(obs_date VARCHAR(25), my_patient_id int) RETURNS VARCHAR(15)
+BEGIN
+
+DECLARE count_obs VARCHAR(25);
+
+SET count_obs = (SELECT DATE(`obs`.`obs_datetime`) FROM `obs`
+                  INNER JOIN concept_name c ON c.concept_id = obs.concept_id
+                  WHERE `obs`.`voided` = 0 AND DATE(`obs`.`obs_datetime`) =  DATE(obs_date) AND `obs`.`person_id` = my_patient_id
+                  AND c.name IN('History of COVID-19 contact') AND c.voided = 0 LIMIT 1);
+
+RETURN count_obs;
+END;
 
 
 DROP FUNCTION IF EXISTS `female_maternal_status`;

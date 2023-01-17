@@ -41,7 +41,8 @@ class Patient < VoidableRecord
         patient_identifiers: {
           methods: %i[type]
         }
-      }
+      },
+      methods: %i[merge_history]
     ))
   end
 
@@ -106,10 +107,10 @@ class Patient < VoidableRecord
 
   def void_related_models(reason)
     person.void(reason)
-    patient_identifiers.each { |row| row.void(reason) }
-    patient_programs.each { |row| row.void(reason) }
-    orders.each { |row| row.void(reason) }
-    encounters.each { |row| row.void(reason) }
+    patient_identifiers.each { |row| row.void(reason) if row['voided'].zero? }
+    patient_programs.each { |row| row.void(reason) if row['voided'].zero? }
+    orders.each { |row| row.void(reason) if row['voided'].zero? }
+    encounters.each { |row| row.void(reason) if row['voided'].zero? }
   end
 
   def gender
@@ -127,5 +128,9 @@ class Patient < VoidableRecord
 
   def name
     PersonName.where(person_id: patient_id).order(:date_created).last&.to_s
+  end
+
+  def merge_history
+    MergeAudit.where(primary_id: patient_id).order(:created_at).as_json
   end
 end

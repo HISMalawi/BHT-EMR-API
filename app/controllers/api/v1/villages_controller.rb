@@ -11,7 +11,7 @@ class Api::V1::VillagesController < ApplicationController
   end
 
   def index
-    filters = params.slice(:traditional_authority_id, :name)
+    filters = params.permit(%i[traditional_authority_id village_id name])
 
     if filters.empty?
       render json: paginate(Village.order(:name))

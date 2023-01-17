@@ -50,10 +50,10 @@ class Person < VoidableRecord
   end
 
   def void_related_models(reason)
-    names.each { |name| name.void(reason) }
-    addresses.each { |address| address.void(reason) }
-    relationships.each { |relationship| relationship.void(reason) }
-    person_attributes.each { |attribute| attribute.void(reason) }
+    names.each { |name| name.void(reason) if name['voided'].zero? }
+    addresses.each { |address| address.void(reason) if address['voided'].zero? }
+    relationships.each { |relationship| relationship.void(reason) if relationship['voided'].zero? }
+    person_attributes.each { |attribute| attribute.void(reason) if attribute['voided'].zero? }
     # We are going to rely on patient => encounter => obs to void those
   end
 end

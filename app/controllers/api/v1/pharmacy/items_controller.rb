@@ -3,7 +3,7 @@
 class Api::V1::Pharmacy::ItemsController < ApplicationController
   # GET /pharmacy/items[?drug_id=]
   def index
-    items = service.find_batch_items(params.slice(:drug_id, :current_quantity))
+    items = service.find_batch_items(params.permit(:drug_id, :current_quantity, :start_date, :end_date))
     render json: paginate(items)
   end
 

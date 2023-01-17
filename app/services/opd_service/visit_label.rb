@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-
+require 'json'
 class OPDService::VisitLabel
   attr_reader :date, :patient
 
@@ -10,6 +10,51 @@ class OPDService::VisitLabel
     @date = date
   end
 
+  def filter_drug_instraction(o)
+    instruction_list = ""
+    o = o.split("\n")
+    o.each { |x|
+      drug_name = x.split(":")[0]
+      units = Drug.find_by_name(drug_name).units
+      if(drug_name.length() > 30)
+        drug_name = drug_name.truncate(27)
+      end
+      drug_instructions = x.split(":")[1].split("for")
+      drug_dos_fre = drug_instructions[0].split(" ")
+      drug_fre = covert_freq(x.split(":")[1])
+      drug_duration = drug_instructions[1].delete(" ")
+      if(drug_duration == "1days")
+        drug_duration = "1day"
+      end
+      instruction_list = instruction_list+drug_name + ":"+drug_dos_fre[0]+units+drug_fre+" - "+ drug_duration+"\n"
+    }
+    return instruction_list
+  end
+
+  def covert_freq(freq)
+    if(freq.include? "(OD)")
+      return "(1X/D)"
+    elsif(freq.include? "(BD)")
+      return "(2X/D)"
+    elsif(freq.include? "(TDS)")
+      return "(3X/D)"
+    elsif(freq.include? "(QID)")
+      return "(4X/D)"
+    elsif(freq.include? "(5X/D)")
+      return "(5X/D)"
+    elsif(freq.include? "(Q4HRS)")
+      return "(6X/D)"
+    elsif(freq.include? "(QAM)")
+      return "(Morning)"
+    elsif(freq.include? "(QWK)")
+      return "(1X/WK)"
+    elsif(freq.include? "Once a month")
+      return "(1X/MTH)"
+    elsif(freq.include? "Twice a month")
+      return "(2X/MTH)"
+    end
+    return ""
+  end
   def print
     label = ZebraPrinter::StandardLabel.new
     label.font_size = 3
@@ -266,8 +311,10 @@ class OPDService::VisitLabel
           label.draw_multi_text("Outcomes : #{outcomes.uniq.join(',')}", concepts_font)
         end
     end
-    initial = User.current.person.names.last.given_name.first + "."
-    last_name = User.current.person.names.last.family_name
+    program_id = Program.find_by_name('OPD Program').program_id
+    user_id = Encounter.where(patient_id: patient['patient_id'], program_id: program_id).order(encounter_datetime: :desc).first.creator
+    initial = User.find(user_id).person.names.last.given_name.first + "."
+    last_name = User.find(user_id).person.names.last.family_name
     label.draw_multi_text("___________________________________________________", concepts_font)
     label.draw_multi_text("Seen by: #{initial + last_name} at " +
       " #{Location.current.name}", title_font_bottom)

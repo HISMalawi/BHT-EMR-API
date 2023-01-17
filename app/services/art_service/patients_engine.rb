@@ -243,7 +243,7 @@ module ARTService
       end
 
       dispensed_arvs = Observation.where(
-        'person_id = ? AND concept_id = ? AND obs_datetime <= ?',
+        'person_id = ? AND concept_id = ? AND obs_datetime <= ? AND value_drug IS NOT NULL',
         patient_id, concept_id, end_date
       ).map(&:value_drug)
 
