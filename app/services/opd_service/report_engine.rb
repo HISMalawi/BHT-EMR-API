@@ -642,10 +642,10 @@ def registered_today(visit_type)
       monthsRes = {}
       data =Observation.where('obs_datetime BETWEEN ? AND ? AND value_text IN(?,?)',(@date - 11.month).beginning_of_month,@date,
         'Respiratory','ILI').group('value_text','months').\
-        pluck("CASE value_text WHEN 'Respiratory' THEN 'respiratory' WHEN 'ILI' THEN 'ILI' END as value_text,
+        pluck(Arel.sql("CASE value_text WHEN 'Respiratory' THEN 'respiratory' WHEN 'ILI' THEN 'ILI' END as value_text,
         DATE_FORMAT(obs.obs_datetime ,'%Y-%m-01') as obs_date,
         OPD_syndromic_statistics(DATE_FORMAT(obs.obs_datetime ,'%Y-%m-01'),'#{@date}') as months,
-        COUNT(OPD_syndromic_statistics(DATE_FORMAT(obs.obs_datetime ,'%Y-%m-01'),'#{@date}')) as obs_count").\
+        COUNT(OPD_syndromic_statistics(DATE_FORMAT(obs.obs_datetime ,'%Y-%m-01'),'#{@date}')) as obs_count")).\
         group_by(&:shift);
 
       respiratory_data = {}
