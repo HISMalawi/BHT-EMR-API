@@ -1,9 +1,10 @@
 CSV_FILE_NAME = "vl_to_ldl_migration_#{Time.now.strftime('%Y%m%d')}.csv"
 HIV_PROGRAM = Program.where(name: "HIV PROGRAM").first
+VIRAL_LOAD = ConceptName.where(name: "HIV viral load").first.concept
 
 # all test results with 1 as value numeric and = as value_modifier for HIV program
 def test_results
-  Observation.joins(:encounter).where(encounter: {program: HIV_PROGRAM }, obs: {value_modifier: '=', value_numeric: 1})
+  Observation.joins(:encounter).where(encounter: {program: HIV_PROGRAM }, obs: {value_modifier: '=', value_numeric: 1, concept: VIRAL_LOAD})
 end
 
 def superuser
@@ -42,10 +43,7 @@ def create_dup(obs)
 end
 
 def void_record(obs)
-  obs.voided = 1
-  obs.void_reason = 'Migrated to LDL'
-  obs.voided_by = superuser.id
-  obs.save!
+  obs.void("Migrated to LDL")
 end
 
 def log_record(new_record, obs)
