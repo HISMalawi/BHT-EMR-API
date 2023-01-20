@@ -253,41 +253,53 @@ EOF
       end
 
       def swicth_report(pepfar)
-        clients = {}
+        @clients = {}
         data = regimen_data
         pepfar_outcome_builder(pepfar.blank? ? 'moh' : 'pepfar')
 
-        (data || []).each do |r|
-          patient_id = r['patient_id'].to_i
-          medications = arv_dispensention_data(patient_id)
+        if data && data.length > 5000
+          parallel.each(data, in_threads: 20) do |r|
+            process_switch_report(r)
+          end
+        else
+          (data || []).each do |r|
+            process_switch_report(r)
+          end
+        end
 
+        @clients
+      end
 
-          outcome_status = ActiveRecord::Base.connection.select_one <<~SQL
-            SELECT cum_outcome FROM temp_patient_outcomes WHERE patient_id = #{patient_id};
-          SQL
+      def process_switch_report(r)
+        patient_id = r['patient_id'].to_i
+        medications = arv_dispensention_data(patient_id)
 
-          next if outcome_status.blank?
-          next if outcome_status['cum_outcome'].blank?
-          next unless outcome_status['cum_outcome'] == 'On antiretrovirals'
+        outcome_status = ActiveRecord::Base.connection.select_one <<~SQL
+          SELECT cum_outcome FROM temp_patient_outcomes WHERE patient_id = #{patient_id};
+        SQL
 
-          visit_date = medications.first['start_date']
-          visit_date.blank? ? next : (visit_date = visit_date.to_date)
+        return if outcome_status.blank?
+        return if outcome_status['cum_outcome'].blank?
+        return unless outcome_status['cum_outcome'] == 'On antiretrovirals'
 
-          next unless visit_date >= @start_date.to_date && visit_date <= @end_date.to_date
+        visit_date = medications.first['start_date']
+        visit_date.blank? ? return : (visit_date = visit_date.to_date)
 
-          prev_reg = ActiveRecord::Base.connection.select_one <<EOF
+        return unless visit_date >= @start_date.to_date && visit_date <= @end_date.to_date
+
+        prev_reg = ActiveRecord::Base.connection.select_one <<~SQL
           SELECT patient_current_regimen(#{patient_id}, '#{(visit_date - 1.day).to_date}') previous_regimen
-EOF
+        SQL
 
-          current_reg = ActiveRecord::Base.connection.select_one <<EOF
+        current_reg = ActiveRecord::Base.connection.select_one <<~SQL
           SELECT patient_current_regimen(#{patient_id}, '#{visit_date}') current_regimen
-EOF
+        SQL
 
-          next if prev_reg['previous_regimen'] == current_reg['current_regimen']
-          next if prev_reg['previous_regimen'] == 'N/A'
+        return if prev_reg['previous_regimen'] == current_reg['current_regimen']
+        return if prev_reg['previous_regimen'] == 'N/A'
 
-          if clients[patient_id].blank?
-            demo = ActiveRecord::Base.connection.select_one <<EOF
+        if @clients[patient_id].blank?
+          demo = ActiveRecord::Base.connection.select_one <<~SQL
             SELECT
               p.birthdate, p.gender, i.identifier arv_number,
               n.given_name, n.family_name, p.person_id
@@ -296,33 +308,30 @@ EOF
             LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
             AND i.identifier_type = 4 AND i.voided = 0
             WHERE p.person_id = #{patient_id} GROUP BY p.person_id
-            ORDER BY n.date_created DESC, i.date_created DESC;
-EOF
+            ORDER BY n.date_created DESC, i.date_created DESC
+          SQL
 
-            clients[patient_id] = {
-              arv_number: (demo['arv_number'].blank? ? 'N/A' : demo['arv_number']),
-              given_name: demo['given_name'],
-              family_name: demo['family_name'],
-              birthdate: demo['birthdate'],
-              gender: demo['gender'],
-              previous_regimen: prev_reg['previous_regimen'],
-              current_regimen: current_reg['current_regimen'],
-              patient_type: get_patient_type(demo['person_id'], pepfar),
-              current_weight: current_weight(demo['person_id']),
-              art_start_date: r['earliest_start_date'],
-              medication: []
-            }
-          end
-
-          (medications || []).each do |m|
-            clients[patient_id][:medication] << {
-              medication: m['name'], quantity: m['quantity'],
-              start_date: visit_date
-            }
-          end
+          @clients[patient_id] = {
+            arv_number: (demo['arv_number'].blank? ? 'N/A' : demo['arv_number']),
+            given_name: demo['given_name'],
+            family_name: demo['family_name'],
+            birthdate: demo['birthdate'],
+            gender: demo['gender'],
+            previous_regimen: prev_reg['previous_regimen'],
+            current_regimen: current_reg['current_regimen'],
+            patient_type: get_patient_type(demo['person_id'], pepfar),
+            current_weight: current_weight(demo['person_id']),
+            art_start_date: r['earliest_start_date'],
+            medication: []
+          }
         end
 
-        clients
+        (medications || []).each do |m|
+          @clients[patient_id][:medication] << {
+            medication: m['name'], quantity: m['quantity'],
+            start_date: visit_date
+          }
+        end
       end
 
       def get_patient_type(patient_id, pepfar)
