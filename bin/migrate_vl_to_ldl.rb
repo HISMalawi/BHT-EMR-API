@@ -1,4 +1,4 @@
-CSV_FILE_NAME = "vl_to_lpl_migration_#{Time.now.strftime('%Y%m%d')}.csv"
+CSV_FILE_NAME = "vl_to_ldl_migration_#{Time.now.strftime('%Y%m%d')}.csv"
 HIV_PROGRAM = Program.where(name: "HIV PROGRAM").first
 
 # all test results with 1 as value numeric and = as value_modifier for HIV program
@@ -43,13 +43,12 @@ end
 
 def void_record(obs)
   obs.voided = 1
-  obs.void_reason = 'Migrated to LPL'
+  obs.void_reason = 'Migrated to LDL'
   obs.voided_by = superuser.id
   obs.save!
 end
 
 def log_record(new_record, obs)
-  curr_time = Time.now
   #write to log file
   @file.puts "#{obs.id},#{new_record.id},#{obs.person_id},#{obs.encounter_id},#{obs.concept_id},#{obs.order_id},#{obs.value_numeric},#{obs.value_modifier}"
 end
