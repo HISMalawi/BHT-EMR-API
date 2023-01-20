@@ -230,7 +230,7 @@ EOF
               given_name: demo['given_name'],
               family_name: demo['family_name'],
               birthdate: demo['birthdate'],
-              gender: demo['gender'] == 'M' ? 'M' : maternal_status(patient_id, demo['gender']),
+              gender: demo['gender'],  #== 'M' ? 'M' : maternal_status(patient_id, demo['gender']),
               current_regimen: curr_reg['current_regimen'],
               current_weight: current_weight(patient_id),
               art_start_date: r['earliest_start_date'],
