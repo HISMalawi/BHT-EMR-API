@@ -8,7 +8,7 @@ def test_results
 end
 
 def superuser
-  User.find(1)
+  User.current
 end
 
 def start
@@ -57,6 +57,9 @@ end
 
 
 def setup
+  #set current user and location
+  User.current = User.first
+  Location.current = Location.first
   #progress counter
   @count = 0
   # initialize log file
