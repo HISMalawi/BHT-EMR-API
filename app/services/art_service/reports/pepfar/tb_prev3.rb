@@ -7,13 +7,14 @@ module ARTService
       # Patients who started TPT just before the start of the current
       # and have finished within the current reporting period.
       class TbPrev3
-        attr_reader :start_date, :end_date, :check_date
+        attr_reader :start_date, :end_date, :check_date, :cut_off_point
 
         include Utils
 
         def initialize(start_date:, end_date:, **_kwargs)
           @start_date = ActiveRecord::Base.connection.quote(start_date)
           @check_date = start_date.to_date - 6.months
+          @cut_off_point = start_date.to_date
           @end_date = ActiveRecord::Base.connection.quote(end_date)
         end
 
@@ -35,9 +36,19 @@ module ARTService
           report
         end
 
+        # rubocop:disable Metrics/MethodLength
+        # rubocop:disable Metrics/CyclomaticComplexity
+        # rubocop:disable Metrics/PerceivedComplexity
         def patient_tpt_status(patient_id)
+          return { tpt: nil, completed: false, tb_treatment: true } if patient_on_tb_treatment?(patient_id)
+
+          if patient_history_on_completed_tpt(patient_id)
+            return { tpt: patient_history_on_completed_tpt(patient_id).include?('IPT') ? '6H' : '3HP', completed: true,
+                     tb_treatment: false }
+          end
+
           patient = individual_tpt_report(patient_id)
-          return { tpt: nil, completed: false } if patient.blank?
+          return { tpt: nil, completed: false, tb_treatment: false } if patient.blank?
 
           tpt = patient_on_3hp?(patient) ? '3HP' : '6H'
           completed = patient_completed_tpt?(patient, tpt)
@@ -45,7 +56,14 @@ module ARTService
                    'IPT'
                  else
                    (patient['drug_concepts'].split(',').length > 1 ? '3HP (RFP + INH)' : 'INH 300 / RFP 300 (3HP)')
-                 end, completed: completed }
+                 end, completed: completed, tb_treatment: false }
+        end
+        # rubocop:enable Metrics/MethodLength
+        # rubocop:enable Metrics/CyclomaticComplexity
+        # rubocop:enable Metrics/PerceivedComplexity
+
+        def fetch_individual_report(patient_id)
+          individual_tpt_report(patient_id)
         end
 
         private
@@ -106,11 +124,15 @@ module ARTService
           clients = fetch_patients_on_tpt.to_a
           results = []
           clients.each do |client|
+            next if client['tpt_initiation_date'].to_date > cut_off_point
+
             result = individual_tpt_report(client['patient_id'])
-            next if result['last_dispensed_date'].to_date < check_date
+            next if result.blank?
+            next if result['tpt_initiation_date'].to_date < check_date
 
             client['tpt_initiation_date'] = result['tpt_initiation_date']
             client['total_pills_taken'] = result['total_pills_taken']
+            client['months_on_tpt'] = result['months_on_tpt']
             client['total_days_on_medication'] = result['total_days_on_medication']
             client['drug_concepts'] = result['drug_concepts']
             client['transfer_in'] = result['transfer_in']
@@ -213,13 +235,15 @@ module ARTService
         def individual_tpt_report(patient_id)
           result = process_current_tpt_course_date(patient_id)
           c_start_date = ActiveRecord::Base.connection.quote(result[:start_date])
-          c_end_date = result[:end_date]
+          c_end_date = ActiveRecord::Base.connection.quote(client_tpt_end_date(patient_id, c_start_date))
           ActiveRecord::Base.connection.select_one <<-SQL
             SELECT
                 CASE
                   WHEN tpt_transfer_in_obs.value_datetime IS NULL THEN DATE(MIN(o.start_date))
-                  ELSE tpt_transfer_in_obs.value_datetime
+                  WHEN tpt_transfer_in_obs.value_datetime > MIN(o.start_date) THEN DATE(MIN(o.start_date))
+                  ELSE DATE(tpt_transfer_in_obs.value_datetime)
                 END AS tpt_initiation_date,
+                COUNT(DISTINCT(DATE(o.start_date))) AS months_on_tpt,
                 SUM(dor.quantity) + SUM(CASE WHEN tpt_transfer_in_obs.value_numeric IS NOT NULL THEN tpt_transfer_in_obs.value_numeric ELSE 0 END) AS total_pills_taken,
                 SUM(DATEDIFF(o.auto_expire_date, o.start_date)) + SUM(CASE WHEN tpt_transfer_in_obs.value_datetime IS NOT NULL THEN DATEDIFF(tpt_transfer_in_obs.obs_datetime, tpt_transfer_in_obs.value_datetime) ElSE 0 END) AS total_days_on_medication,
                 GROUP_CONCAT(DISTINCT o.concept_id SEPARATOR ',') AS drug_concepts,
@@ -252,8 +276,8 @@ module ARTService
           result = client_tpt_dates(patient_id)
           return { start_date: '1900-01-01', end_date: end_date } if result.blank?
 
-          sorted_result = result.sort { |a, b| a['end_date'].to_date <=> b['start_date'].to_date }.reverse
-          return_date = { start_date: '1900-01-01', end_date: end_date }
+          sorted_result = result.sort { |a, b| a['start_date'].to_date <=> b['start_date'].to_date }.reverse
+          return_date = { start_date: sorted_result.last['start_date'], end_date: end_date }
 
           course_interruption = result.first['course'] == '3HP' ? 1 : 2
           # loop through the result array and find the first gap in the dates that equals the course interruption
@@ -287,9 +311,9 @@ module ARTService
               AND o.value_drug IN (SELECT drug_id FROM drug WHERE concept_id IN (SELECT concept_id FROM concept_name WHERE name IN ('Rifapentine', 'Isoniazid', 'Isoniazid/Rifapentine')))
               AND o.person_id = #{patient_id}
               AND o.value_numeric IS NOT NULL
-              AND DATE(o.obs_datetime) <= DATE(#{end_date})
-              GROUP BY o.obs_datetime
-              ORDER BY o.obs_datetime DESC
+              AND DATE(o.obs_datetime) <= DATE(#{start_date})
+              GROUP BY DATE(o.obs_datetime)
+              ORDER BY DATE(o.obs_datetime) DESC
             )
             UNION
             (
@@ -309,11 +333,79 @@ module ARTService
               AND o.concept_id IN (#{ConceptName.where(name: ['Rifapentine', 'Isoniazid', 'Isoniazid/Rifapentine']).select(:concept_id).to_sql})
               AND o.patient_id = #{patient_id}
               AND o.auto_expire_date IS NOT NULL
-              AND DATE(o.start_date) <= DATE(#{end_date})
-              GROUP BY o.start_date
-              ORDER BY o.start_date DESC
+              AND DATE(o.start_date) <= DATE(#{start_date})
+              GROUP BY DATE(o.start_date)
+              ORDER BY DATE(o.start_date) DESC
             )
           SQL
+        end
+
+        def client_tpt_end_date(patient_id, start_date)
+          # Get patient tpt dispensations dates after the start date and before the end date
+          result = ActiveRecord::Base.connection.select_all <<~SQL
+            (
+              SELECT
+                DATE(o.value_datetime) AS start_date,
+                DATE(MAX(o.obs_datetime)) AS end_date,
+                CASE
+                  WHEN count(distinct(o.value_drug)) > 1 THEN '3HP'
+                  WHEN o.value_drug = #{isoniazid_rifapentine_drug.drug_id} THEN '3HP'
+                  ELSE '6H'
+                END AS course
+              FROM obs o
+              WHERE o.concept_id = #{ConceptName.find_by_name('TPT Drugs Received').concept_id}
+              AND o.voided = 0
+              AND o.value_drug IN (SELECT drug_id FROM drug WHERE concept_id IN (SELECT concept_id FROM concept_name WHERE name IN ('Rifapentine', 'Isoniazid', 'Isoniazid/Rifapentine')))
+              AND o.person_id = #{patient_id}
+              AND o.value_numeric IS NOT NULL
+              AND DATE(o.obs_datetime) BETWEEN DATE(#{start_date}) AND DATE(#{end_date})
+              GROUP BY DATE(o.obs_datetime)
+              ORDER BY DATE(o.obs_datetime) DESC
+            )
+            UNION
+            (
+              SELECT
+                DATE(o.start_date) AS start_date,
+                DATE(MAX(o.auto_expire_date)) AS end_date,
+                CASE
+                  WHEN count(distinct(o.concept_id)) > 1 THEN '3HP'
+                  WHEN o.concept_id = #{isoniazid_rifapentine_concept.concept_id} THEN '3HP'
+                  ELSE '6H'
+                END AS course
+              FROM orders o
+              INNER JOIN encounter e ON e.encounter_id = o.encounter_id AND e.voided = 0 AND e.program_id = 1 /* HIV Program */
+              INNER JOIN drug_order dor ON dor.order_id = o.order_id AND dor.quantity > 0
+              WHERE o.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
+              AND o.voided = 0
+              AND o.concept_id IN (#{ConceptName.where(name: ['Rifapentine', 'Isoniazid', 'Isoniazid/Rifapentine']).select(:concept_id).to_sql})
+              AND o.patient_id = #{patient_id}
+              AND o.auto_expire_date IS NOT NULL
+              AND DATE(o.start_date) BETWEEN DATE(#{start_date}) AND DATE(#{end_date})
+              GROUP BY DATE(o.start_date)
+              ORDER BY DATE(o.start_date) DESC
+            )
+          SQL
+
+          return end_date if result.blank?
+
+          sorted_result = result.sort { |a, b| a['start_date'].to_date <=> b['start_date'].to_date }
+          return_date = sorted_result.last['end_date']
+          course_interruption = result.first['course'] == '3HP' ? 1 : 2
+          # use a for loop to check if there is a course interruption
+          sorted_result.each_with_index do |row, i|
+            next if i.zero?
+
+            if row['course'] != sorted_result[i - 1]['course']
+              return_date = sorted_result[i - 1]['end_date']
+              break
+            end
+            diff = ActiveRecord::Base.connection.select_one("SELECT TIMESTAMPDIFF(MONTH,DATE('#{sorted_result[i - 1]['end_date']}'),DATE('#{row['start_date']}')) as months")['months']
+            if diff.to_i >= course_interruption
+              return_date = sorted_result[i - 1]['end_date']
+              break
+            end
+          end
+          return_date
         end
 
         ##
@@ -329,6 +421,18 @@ module ARTService
               categories.six_h << patient
             end
           end
+        end
+
+        def patient_history_on_completed_tpt(patient_id)
+          @patient_history_on_completed_tpt ||= Observation.where(person_id: patient_id,
+                                                                  concept_id: ConceptName.find_by_name('Previous TB treatment history').concept_id)
+                                                           .where("value_text LIKE '%Completed%' AND obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY")&.first&.value_text
+        end
+
+        def patient_on_tb_treatment?(patient_id)
+          Observation.where(person_id: patient_id, concept_id: ConceptName.find_by_name('TB status').concept_id,
+                            value_coded: ConceptName.find_by_name('Confirmed TB on treatment').concept_id)
+                     .where("obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY").exists?
         end
 
         def patient_on_3hp?(patient)

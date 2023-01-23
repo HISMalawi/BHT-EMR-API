@@ -56,4 +56,4 @@ extensions.json
 emc_ipt_duplicates*.csv
 
 # Ignore json files under lims
-/db/lims_metadata/*.json
+db/lims_metadata/*.json

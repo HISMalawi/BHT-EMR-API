@@ -98,3 +98,7 @@ idsr_sms:
   url : ipaddress:8186/submit
   username : admin@email.test
   password : administrator
+# You will need to uncomment this part if you are running rspec tests
+# test_credentials:
+#   username: admin
+#   password: test

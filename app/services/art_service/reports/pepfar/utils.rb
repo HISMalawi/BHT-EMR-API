@@ -71,12 +71,40 @@ module ARTService
         # Returns whether a patient completed their course of TPT
         def patient_completed_tpt?(patient, tpt)
           if tpt == '3HP'
+            # return true if patient['total_days_on_medication'].to_i >= 83 # 3 months
+            return true if patient['months_on_tpt'].to_i >= 3
+
             divider = patient['drug_concepts'].split(',').length > 1 ? 14.0 : 7.0
             days_on_medication = (patient['total_days_on_medication'] / divider).round
             days_on_medication.days >= FULL_3HP_COURSE_DAYS
           else
             patient['total_pills_taken'].to_i >= FULL_6H_COURSE_PILLS
           end
+        end
+
+        ##
+        # Returns the current occupation of a patient
+        def current_occupation(joiner)
+          <<~SQL
+            LEFT JOIN (
+              SELECT a.person_id, a.value
+              FROM person_attribute a
+              LEFT OUTER JOIN person_attribute b
+              ON a.person_attribute_id = b.person_attribute_id
+              AND a.date_created < b.date_created
+              AND b.voided = 0
+              WHERE b.person_attribute_id IS NULL AND a.person_attribute_type_id = 13 AND a.voided = 0
+            ) pa ON pa.person_id = #{joiner}
+          SQL
+        end
+
+        ##
+        # Returns an occupation filter based on the given occupation
+        def occupation_filter(occupation)
+          return '' if occupation.blank?
+          return '' if occupation == 'All'
+          return " AND pa.value = '#{occupation}'" if occupation == 'Military'
+          return " AND (pa.value != 'Military' OR pa.value IS NULL)" if occupation == 'Civilian'
         end
 
         # this just gives all clients who are truly external or drug refill

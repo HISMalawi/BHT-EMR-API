@@ -122,7 +122,24 @@ class StockManagementService
 
   def find_batch_items(filters = {})
     query = PharmacyBatchItem
-    query = query.where(filters) unless filters.empty?
+    unless filters.empty?
+      query = query.where("DATE(pharmacy_batch_items.date_created) >= '#{filters[:start_date]}'") if !filters[:start_date].nil?
+      query = query.where("DATE(pharmacy_batch_items.date_created) <= '#{filters[:end_date]}'") if !filters[:end_date].nil?
+      query = query.where(drug_id: filters[:drug_id]) if !filters[:drug_id].nil?
+      query = query.where(current_quantity: filters[:current_quantity]) if !filters[:current_quantity].nil?
+    end
+    query = query.joins("LEFT JOIN pharmacy_obs ON pharmacy_batch_items.id = pharmacy_obs.batch_item_id AND pharmacy_obs.transaction_reason = 'Drug dispensed'")
+          .joins("INNER JOIN drug ON drug.drug_id = pharmacy_batch_items.drug_id")
+          .group("drug.drug_id")
+          .select <<~SQL
+              pharmacy_batch_items.*,
+              CASE
+                WHEN pharmacy_obs.quantity IS NULL
+                THEN 0
+              ELSE
+                ABS(SUM(pharmacy_obs.quantity))
+              END AS dispensed_quantity
+            SQL
     query.order(Arel.sql('pharmacy_batch_items.date_created DESC, pharmacy_batch_items.expiry_date ASC'))
   end
 
@@ -197,6 +214,7 @@ class StockManagementService
     ActiveRecord::Base.transaction do
       item = PharmacyBatchItem.find(batch_item_id)
       quantity = quantity.to_f.abs
+      validate_disposal(item, date, reason, quantity)
       commit_transaction(item, STOCK_DEBIT, -quantity.to_f, update_item: true, transaction_reason: reason)
       PharmacyBatchItemReallocation.create(reallocation_code: reallocation_code, item: item,
                                            quantity: quantity, date: date,
@@ -344,6 +362,16 @@ class StockManagementService
     end
 
     nil
+  end
+
+  # validate disposals
+  def validate_disposal(item, date, reason, quantity)
+    raise InvalidParameterError, 'Disposal date cannot be in the future' if date > Date.today
+    raise InvalidParameterError, 'Disposal date cannot be before the item was delivered' if date < item.delivery_date
+    raise InvalidParameterError, 'Disposal reason cannot be blank' if reason.blank?
+    raise InvalidParameterError, 'Disposal quantity cannot be blank' if quantity.blank?
+    raise InvalidParameterError, 'Disposal quantity cannot be greater than the current quantity' if quantity > item.current_quantity
+    raise InvalidParameterError, 'Disposal before expiry date is not allowed' if date < item.expiry_date && reason == 'Expired'
   end
 
   def validate_activerecord_object(object)
