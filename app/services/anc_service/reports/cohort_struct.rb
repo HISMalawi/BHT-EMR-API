@@ -3,14 +3,14 @@
 module ANCService
     module Reports
       require 'ostruct'
-  
+
       class CohortStruct
         FIELD_DESCRIPTIONS = {
           # Table contains various fields of the Cohort report and their descriptions.
           # A fields description is simply "Indicator: Human Readable Name",
           # or "Human Readable Name". The former is for fields with an indicator
           # label and the latter is for fields without.
-          
+
           monthly_patient: "Monthly: New women registered within the reporting month",
           pregnancy_test_done: "Monthly: Patients undergone pregnancy test",
           pregnancy_test_not_done: "Monthly: Patients who did not undergo pregnancy test",
@@ -39,8 +39,10 @@ module ANCService
           patients_without_pre_eclampsia: "Cohort: Patients with no Pre-eclampsia",
           patients_given_ttv_less_than_two_doses: "Cohort: Patients given less tha two ttv doses",
           patients_given_ttv_at_least_two_doses: "Cohort: Patients given at least two ttv doses",
-          patients_given_zero_to_two_sp_doses: "Cohort: Patients given less than three sp doses",
-          patients_given_at_least_three_sp_doses: "Cohort: Patients given at least three sp doses",
+          patients_given_zero_sp_doses: "Cohort: Patients given zero sp doses",
+          patients_given_one_sp_doses: "Cohort: Patients given one sp doses",
+          patients_given_two_sp_doses: "Cohort: Patients given two sp doses",
+          patients_given_three_or_more_sp_doses: "Cohort: Patients given three or more sp doses",
           patients_given_less_than_one_twenty_fefol_tablets: "Cohort: Patients_given less than 120 fefol tablets",
           patients_given_one_twenty_plus_fefol_tablets: "Cohort: Patients given 120+ fefol tablets",
           patients_not_given_albendazole_doses: "Cohort: Patients not given albendazole doses",
@@ -67,43 +69,43 @@ module ANCService
           on_cpt: "HIV positive patients not on CPT",
           nvp_not_given: "HIV positive patients not given NVP",
           nvp_given: "HIV positive patients given NVP",
-          
+
         }.freeze
-  
+
         def initialize
           @values = ActiveSupport::HashWithIndifferentAccess.new
         end
-  
+
         def method_missing(name, *args, &block)
           name_prefix, name_suffix = split_missing_method_name(name)
-  
+
           return super(name, *args, &block) unless FIELD_DESCRIPTIONS.include?(name_prefix)
-  
+
           field = value(name_prefix)
           field.contents = args[0] if name_suffix == '='
           field.contents
-  
+
           field.contents
         end
-  
+
         #def respond_to_missing?(name)
         #  field_name, = split_missing_method_name(name)
         #  FIELD_DESCRIPTIONS.include?(field_name)
         #end
-  
+
         def values
           @values.values
         end
-  
+
         private
-  
+
         # Returns a ReportValue object for the given name
         def value(name)
           description = FIELD_DESCRIPTIONS[name]
           iname_parts = description.split(':', 2)
           iname_parts.insert(0, nil) unless iname_parts.size == 2
           short_iname, long_iname = iname_parts
-  
+
           @values[name] ||= OpenStruct.new(
             name: name,
             indicator_name: long_iname.strip,
@@ -112,7 +114,7 @@ module ANCService
             contents: nil
           )
         end
-  
+
         def split_missing_method_name(name)
           match = name.to_s.match(/^([_A-Z0-9]+)(=)?$/i)
           [match[1].to_sym, match[2]]

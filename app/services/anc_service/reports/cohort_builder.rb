@@ -168,11 +168,14 @@ module ANCService
           cohort_struct.patients_given_ttv_at_least_two_doses = ttv_at_least_3
 
           # SP Doses given
-          sp_less_than_3  = patients_given_zero_to_two_sp_doses
-          sp_at_least_3   = patients_given_at_least_three_sp_doses
-          sp_not_given = (@cohort_patients - (sp_at_least_3 + sp_less_than_3)).uniq
-          cohort_struct.patients_given_zero_to_two_sp_doses = sp_less_than_3 + sp_not_given
-          cohort_struct.patients_given_at_least_three_sp_doses = sp_at_least_3
+          one_sp_given = patients_given_one_sp_doses
+          two_sp_given = patients_given_two_sp_doses
+          three_sp_given  = patients_given_three_or_more_sp_doses
+          sp_not_given = (@cohort_patients - (one_sp_given + two_sp_given + three_sp_given)).uniq
+          cohort_struct.patients_given_zero_sp_doses = sp_not_given
+          cohort_struct.patients_given_one_sp_doses = one_sp_given
+          cohort_struct.patients_given_two_sp_doses = two_sp_given
+          cohort_struct.patients_given_three_or_more_sp_doses = three_sp_given
 
           # Fefol tablets given
           fefol_less_than_120, fefol_120_plus = patients_given_fefol_tablets
@@ -636,12 +639,24 @@ EOF
                     v.to_i + e.to_i > 1}.collect { |x, y| x }.uniq
         end
 
-        def patients_given_zero_to_two_sp_doses
+        def patients_given_one_sp_doses
+          Order.where("encounter.program_id = ? AND (drug.name = ? OR drug.name = ?) AND DATE(encounter_datetime) <= ? "\
+                "AND encounter.patient_id IN (?)",
+                PROGRAM.id, "Sulphadoxine and Pyrimenthane (25mg tablet)","SP (3 tablets)",
+                ((@c_start_date.to_date + @c_pregnant_range) - 1.day), @cohort_patients)
+              .joins([[:drug_order => :drug], :encounter])
+              .select(["encounter.patient_id, count(encounter.encounter_id) as count, "\
+                "encounter_datetime, drug.name instructions"])
+              .group([:patient_id]).collect { |o|
+                [o.patient_id, o.count]
+              }.compact.delete_if { |x, y| y.to_i > 1 }.collect { |p, c| p }.uniq
+        end
 
-            Order.where("encounter.program_id = ? AND (drug.name = ? OR drug.name = ?) AND DATE(encounter_datetime) <= ? "\
+        def patients_given_two_sp_doses
+          Order.where("encounter.program_id = ? AND (drug.name = ? OR drug.name = ?) AND DATE(encounter_datetime) <= ? "\
                   "AND encounter.patient_id IN (?)",
-                  "Sulphadoxine and Pyrimenthane (25mg tablet)","SP (3 tablets)",
-                  PROGRAM.id,((@c_start_date.to_date + @c_pregnant_range) - 1.day), @cohort_patients)
+                  PROGRAM.id, "Sulphadoxine and Pyrimenthane (25mg tablet)","SP (3 tablets)",
+                  ((@c_start_date.to_date + @c_pregnant_range) - 1.day), @cohort_patients)
                 .joins([[:drug_order => :drug], :encounter])
                 .select(["encounter.patient_id, count(encounter.encounter_id) as count, "\
                   "encounter_datetime, drug.name instructions"])
@@ -650,18 +665,17 @@ EOF
                 }.compact.delete_if { |x, y| y.to_i > 2 }.collect { |p, c| p }.uniq
         end
 
-        def patients_given_at_least_three_sp_doses
-
-            Order.where("encounter.program_id = ? AND (drug.name = ? OR drug.name = ?) "\
-                  "AND DATE(encounter_datetime) <= ? AND encounter.patient_id IN (?)",
-                  PROGRAM.id,"Sulphadoxine and Pyrimenthane (25mg tablet)","SP (3 tablets)",
-                  ((@c_start_date.to_date + @c_pregnant_range) - 1.day), @cohort_patients)
-                .joins([[:drug_order => :drug], :encounter])
-                .select(["encounter.patient_id, count(encounter.encounter_id) as count, "\
-                  "encounter_datetime, drug.name instructions"])
-                .group([:patient_id]).collect { |o|
-                  [o.patient_id, o.count]
-                }.compact.delete_if { |x, y| y.to_i < 3 }.collect { |p, c| p }.uniq
+        def patients_given_three_or_more_sp_doses
+          Order.where("encounter.program_id = ? AND (drug.name = ? OR drug.name = ?) "\
+              "AND DATE(encounter_datetime) <= ? AND encounter.patient_id IN (?)",
+              PROGRAM.id,"Sulphadoxine and Pyrimenthane (25mg tablet)","SP (3 tablets)",
+              ((@c_start_date.to_date + @c_pregnant_range) - 1.day), @cohort_patients)
+              .joins([[:drug_order => :drug], :encounter])
+              .select(["encounter.patient_id, count(encounter.encounter_id) as count, "\
+                "encounter_datetime, drug.name instructions"])
+              .group([:patient_id]).collect { |o|
+                [o.patient_id, o.count]
+              }.compact.delete_if { |x, y| y.to_i < 3 }.collect { |p, c| p }.uniq
         end
 
         def patients_given_fefol_tablets
