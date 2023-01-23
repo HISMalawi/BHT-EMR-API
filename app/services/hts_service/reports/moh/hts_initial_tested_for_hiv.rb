@@ -145,8 +145,8 @@ module HtsService
 
         private
 
-        def init_report         
-          fetch_confirmatory_clients          
+        def init_report
+          fetch_confirmatory_clients
           fetch_hiv_tests
           fetch_medication
           fetch_partner_status
@@ -156,11 +156,11 @@ module HtsService
           fetch_referrals
           linked_clients
           set_unique
-          
+
         end
         def set_unique
 
-          @data.each do |key, array|    
+          @data.each do |key, array|
               @data[key]  =  array.uniq
           end
 
@@ -221,14 +221,14 @@ module HtsService
 
                                      @data["hepatitis_b_test_result_negative"].push(client.person_id) if ConceptName.find_by_name('Negative').concept_id == tests.value_coded
                                      @data["hepatitis_b_test_result_positive"].push(client.person_id) if ConceptName.find_by_name('Positive').concept_id == tests.value_coded
-                                     
+
                                    end
 
                                    if ConceptName.find_by_name('Syphilis Test Result').concept_id == tests.concept_id
 
                                     @data["syphilis_test_result_negative"].push(client.person_id) if ConceptName.find_by_name('Negative').concept_id == tests.value_coded
                                     @data["syphilis_test_result_positive"].push(client.person_id) if ConceptName.find_by_name('Positive').concept_id == tests.value_coded
-                                    
+
                                   end
                       end
 
@@ -236,7 +236,7 @@ module HtsService
         end
 
 
-        
+
         def fetch_pregnancy_test
 
 
@@ -294,7 +294,7 @@ module HtsService
 
               end
         end
-        
+
         def fetch_hiv_tests
 
           Person.joins("INNER JOIN encounter e ON e.patient_id = person.person_id AND e.encounter_type = #{EncounterType.find_by_name("TESTING").encounter_type_id} AND e.voided = 0 AND e.program_id = #{Program.find_by_name("HTC Program").program_id}")
@@ -332,7 +332,7 @@ module HtsService
 
                   end
 
-                   
+
                 end
         end
         def fetch_medication
@@ -357,7 +357,7 @@ module HtsService
                                        @data["ever_taken_arvs_prep"].push(client.person_id) if ConceptName.find_by_name('Prep or infant NVP').concept_id == drug.value_coded
                                        @data["ever_taken_arvs_pep"].push(client.person_id) if ConceptName.find_by_name('PEP').concept_id == drug.value_coded
                                        @data["ever_taken_arvs_art"].push(client.person_id) if ConceptName.find_by_name('ARV').concept_id == drug.value_coded
-                                      
+
                                   end
                                   if ConceptName.find_by_name("Time since last taken medication").concept_id == drug.concept_id
 
@@ -387,7 +387,7 @@ module HtsService
                                            @data["risk_category_ongoing"].push(client.person_id) if ConceptName.find_by_name('On-going risk').concept_id == drug.value_coded
                                            @data["risk_category_highrisk_event"].push(client.person_id) if ConceptName.find_by_name('High risk event in last 3 months').concept_id == drug.value_coded
                                            @data["risk_category_not_done"].push(client.person_id) if ConceptName.find_by_name('Risk assessment not done').concept_id == drug.value_coded
-                                          
+
                                   end
 
                             end
@@ -407,7 +407,7 @@ module HtsService
 
                      @data['partner_present_yes'].push(client.person_id) if client.value == "Yes"
                      @data["partner_present_no"].push(client.person_id) if client.value == "No"
-                  
+
                     Observation.where(encounter_id:client.encounter_id,
                                          person_id:client.person_id,
                                         concept_id:"#{ConceptName.find_by_name("Partner HIV Status").concept_id}").each do |status|
@@ -439,13 +439,13 @@ module HtsService
             .where("encounter_datetime BETWEEN '#{start_date}' AND '#{end_date}' + INTERVAL 1 DAY ")\
             .last
 
-               if obs.blank?                  
-                  @data['referral_for_prep_no'].push(client.person_id) 
+               if obs.blank?
+                  @data['referral_for_prep_no'].push(client.person_id)
                else
-                  @data['referral_for_prep_yes'].push(client.person_id) if obs.value_text == 'Prep'  
+                  @data['referral_for_prep_yes'].push(client.person_id) if obs.value_text == 'Prep'
                end
 
-           
+
              end
 
        end
@@ -454,7 +454,7 @@ module HtsService
 
         Person.joins("INNER JOIN encounter e ON e.patient_id = person.person_id AND e.encounter_type = #{EncounterType.find_by_name("TESTING").encounter_type_id} AND e.voided = 0 AND e.program_id = #{Program.find_by_name("HTC Program").program_id}")
               .joins("INNER JOIN obs ON obs.person_id = e.patient_id AND obs.voided = 0 AND obs.concept_id = #{ConceptName.find_by_name('HIV status').concept_id} AND obs.value_coded = #{ConceptName.find_by_name('Positive').concept_id}")
-              .joins("INNER JOIN obs1 ON obs1.person_id = e.patient_id AND obs1.voided = 0 AND obs1.concept_id = #{ConceptName.find_by_name('Referrals ordered').concept_id} AND obs1.value_coded = #{ConceptName.find_by_name('ART').concept_id}")
+              .joins("INNER JOIN obs obs1 ON obs1.person_id = e.patient_id AND obs1.voided = 0 AND obs1.concept_id = #{ConceptName.find_by_name('Referrals ordered').concept_id} AND obs1.value_coded = #{ConceptName.find_by_name('ART').concept_id}")
               .select("person.person_id person_id")
               .where("person.voided = 0 AND DATE(e.encounter_datetime) BETWEEN '#{start_date}' AND '#{end_date}' + INTERVAL 1 DAY")
               .each do |client|
@@ -464,7 +464,7 @@ module HtsService
               end
 
       end
-       
+
 
 
 

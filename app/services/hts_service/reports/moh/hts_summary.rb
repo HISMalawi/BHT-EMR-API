@@ -39,14 +39,13 @@ module HtsService
           fetch_clients_tested
           fetch_confirmatory_clients('Confirmatory Positive')
           fetch_confirmatory_clients("Confirmatory Inconclusive")
-          fetch_new_clients("New exposed infant")
-          fetch_new_clients("New Inconclusive")
+          fetch_new_clients
           set_unique
         end
 
         def set_unique
 
-          @data.each do |key, array|    
+          @data.each do |key, array|
               @data[key]  =  array.uniq
           end
 
@@ -72,38 +71,33 @@ module HtsService
 
           Person.joins("INNER JOIN encounter e ON e.patient_id = person.person_id AND e.encounter_type = #{EncounterType.find_by_name("TESTING").encounter_type_id} AND e.voided = 0 AND e.program_id = #{Program.find_by_name("HTC Program").program_id}")
                 .joins("INNER JOIN obs o1 ON o1.person_id = e.patient_id AND o1.voided = 0 AND o1.concept_id = #{ConceptName.find_by_name('HIV test type').concept_id} AND e.encounter_id = o1.encounter_id")
-                .joins("INNER JOIN obs o2 ON o2.person_id = e.patient_id AND o2.voided = 0 AND o2.concept_id = #{ConceptName.find_by_name('Previous HIV Test Results').concept_id} AND o1.encounter_id = o2.encounter_id")
-                .joins("INNER JOIN obs o3 ON o3.person_id = e.patient_id AND o3.voided = 0 AND o3.concept_id = #{ConceptName.find_by_name('Previous HIV Test done').concept_id} AND o2.encounter_id = o3.encounter_id")
-                .select("person.person_id person_id,person.gender gender")
+                .joins("INNER JOIN obs o2 ON o2.person_id = e.patient_id AND o2.voided = 0 AND o2.concept_id = #{ConceptName.find_by_name('Previous HIV Test done').concept_id} AND o1.encounter_id = o2.encounter_id")
+                .joins("INNER JOIN obs o3 ON o3.person_id = e.patient_id AND o3.voided = 0 AND o3.concept_id = #{ConceptName.find_by_name('Previous HIV Test Results').concept_id} AND o2.encounter_id = o3.encounter_id")
+                .select("person.person_id person_id,person.gender gender,o3.value_coded value")
                 .where(o1:{value_coded:ConceptName.find_by_name('Confirmatory HIV test').concept_id},
-                       o2:{value_coded:ConceptName.find_by_name("#{indicator}").concept_id},
-                       o3:{value_coded:ConceptName.find_by_name('Professional').concept_id})
+                       o2:{value_coded:ConceptName.find_by_name('Professional').concept_id})
                 .where("person.voided = 0 AND DATE(e.encounter_datetime) BETWEEN '#{start_date}' AND '#{end_date}' + INTERVAL 1 DAY")
                 .each do |client|
 
-                  @data['confirmatory_positive_total_prev_pos_professional_test'].push(client.person_id) if indicator == 'Confirmatory Positive'
-                  @data['confirmed_positive_male'].push(client.person_id) if client.gender == "M" && indicator == 'Confirmatory Positive'
-                  @data['confirmed_positive_female'].push(client.person_id) if client.gender == "F" && indicator == 'Confirmatory Positive'
-                  @data['confirmatory_inconclusive_total_prev_pos_professional_test'].push(client.person_id) if indicator == 'Confirmatory Inconclusive'
-                  @data['confirmed_inconclusive_male'].push(client.person_id) if client.gender == "M" && indicator == 'Confirmatory Inconclusive'
-                  @data['confirmed_inconclusive_female'].push(client.person_id) if client.gender == "F" && indicator == 'Confirmatory Inconclusive'
+                  @data['confirmatory_positive_total_prev_pos_professional_test'].push(client.person_id) if indicator == 'Confirmatory Positive' && ConceptName.find_by_name('POSITIVE').concept_id == client.value
+                  @data['confirmed_positive_male'].push(client.person_id) if client.gender == "M" && indicator == 'Confirmatory Positive' && ConceptName.find_by_name('POSITIVE').concept_id == client.value
+                  @data['confirmed_positive_female'].push(client.person_id) if client.gender == "F" && indicator == 'Confirmatory Positive' && ConceptName.find_by_name('POSITIVE').concept_id == client.value
+                  @data['confirmatory_inconclusive_total_prev_pos_professional_test'].push(client.person_id) if indicator == 'Confirmatory Inconclusive' && ConceptName.find_by_name('Inconclusive').concept_id == client.value
+                  @data['confirmed_inconclusive_male'].push(client.person_id) if client.gender == "M" && indicator == 'Confirmatory Inconclusive' && ConceptName.find_by_name('Inconclusive').concept_id == client.value
+                  @data['confirmed_inconclusive_female'].push(client.person_id) if client.gender == "F" && indicator == 'Confirmatory Inconclusive' && ConceptName.find_by_name('Inconclusive').concept_id == client.value
 
                 end
         end
 
-        def fetch_new_clients(indicator)
+        def fetch_new_clients
 
           Person.joins("INNER JOIN encounter e ON e.patient_id = person.person_id AND e.encounter_type = #{EncounterType.find_by_name("TESTING").encounter_type_id} AND e.voided = 0 AND e.program_id = #{Program.find_by_name("HTC Program").program_id}")
-                .joins("INNER JOIN obs o1 ON o1.person_id = e.patient_id AND o1.voided = 0 AND o1.concept_id = #{ConceptName.find_by_name('HIV test type').concept_id} AND e.encounter_id = o1.encounter_id")
-                .joins("INNER JOIN obs o2 ON o2.person_id = e.patient_id AND o2.voided = 0 AND o2.concept_id = #{ConceptName.find_by_name('Previous HIV Test Results').concept_id} AND o1.encounter_id = o2.encounter_id")
-                .select("person.person_id person_id,person.gender gender")
-                .where(o1:{value_coded:ConceptName.find_by_name('Confirmatory HIV test').concept_id},
-                       o2:{value_coded:ConceptName.find_by_name("#{indicator}").concept_id})
+                .joins("INNER JOIN obs o1 ON o1.person_id = e.patient_id AND o1.voided = 0 AND o1.concept_id = #{ConceptName.find_by_name('Previous HIV Test Results').concept_id} AND e.encounter_id = o1.encounter_id")
+                .select("person.person_id person_id,o1.value_coded value")
                 .where("person.voided = 0 AND DATE(e.encounter_datetime) BETWEEN '#{start_date}' AND '#{end_date}' + INTERVAL 1 DAY")
                 .each do |client|
 
-                  @data['new_exposed_infant'].push(client.person_id) if indicator == 'New exposed infant'
-                  @data['new_inconclusive'].push(client.person_id) if indicator == 'New Inconclusive'
+                  @data['new_inconclusive'].push(client.person_id) if ConceptName.find_by_concept_id(client.value).name == 'Inconclusive'
 
                 end
         end
