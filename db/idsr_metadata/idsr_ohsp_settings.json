@@ -1,6 +1,4 @@
 {
-	"headers":      {"url":"10.40.30.2:8001","user":"user_admin","pass":"pass_district"},
-	"sms_server":   {"url":"10.40.30.11:8186/submit","user":"admin@email.test","pass":"administrator"},
 	"weekly_idsr_map":{
 		"AEFI" : [],
 		"Poliomyelitis (AFP)" : ["Poliomyelitis"],
@@ -50,7 +48,20 @@
 	},
 
 	"monthly_idsr_map":{
-		"STI" :["GONORRHEA", "GONORRHOEAE", "SYPHILIS", "SEXUALLY TRANSMITTED INFECTION", "STI"],
+		"STI" :[
+            "Genital herpes",
+            "Syphilis RPR/VDRL",
+            "Genital warts",
+            "Neonatal Conjuct",
+            "Balanitis",
+            "Inguinal",
+            "Scrotum swelling",
+            "Lower abdominal pain",
+            "vaginal discharge",
+            "Urethral discharge",
+            "Genital ulcers",
+            "SYPHILIS",
+            "SEXUALLY TRANSMITTED INFECTION"],
 		"Severe Pneumonia in under 5 cases" : ["Severe Pneumonia"],
 		"Viral Hepatitis" : ["Viral Hepatitis", "Acute Viral Hepatitis"],
 		"Malaria in Pregnancy":["Malaria in pregnancy"],
@@ -93,12 +104,19 @@
 
 	"hmis_15_map": {
 		"Sexually transmitted infections-new cases": [
-            "Sexually transmitted infections",
-            "Sexually transmitted disease unspecified",
-            "Sexually transmitted disease other",
-            "Sexually transmitted infection",
-            "Sexually transmitted infections clinic"
-        ],
+            "Genital herpes",
+            "Syphilis RPR/VDRL",
+            "Genital warts",
+            "Neonatal Conjuct",
+            "Balanitis",
+            "Inguinal",
+            "Scrotum swelling",
+            "Lower abdominal pain",
+            "vaginal discharge",
+            "Urethral discharge",
+            "Genital ulcers",
+            "SYPHILIS",
+            "SEXUALLY TRANSMITTED INFECTION"],
 		"Syphilis in pregnancy" : ["Syphilis in pregnancy"],
 		"HIV confirmed positive (15-49 years) new cases" : [],
 		"Opportunistic infection - new cases" : [
@@ -383,7 +401,20 @@
     "Scabies - new": ["Scabies"],
     "Other skin conditions - new": ["Skin disorders", "Skin infection nos", "Infection skin", "Fungal infection skin", "Fungal skin infection", "Skin infection, fungal", "Skin rash"],
     "HIV/AIDS - new": ["HIV New Initiated on ART"],
-    "Cases treated as STI - new": ["GONORRHEA", "GONORRHOEAE", "SYPHILIS", "SEXUALLY TRANSMITTED INFECTION"],
+    "Cases treated as STI - new": [
+                                    "Genital herpes",
+                                    "Syphilis RPR/VDRL",
+                                    "Genital warts",
+                                    "Neonatal Conjuct",
+                                    "Balanitis",
+                                    "Inguinal",
+                                    "Scrotum swelling",
+                                    "Lower abdominal pain",
+                                    "vaginal discharge",
+                                    "Urethral discharge",
+                                    "Genital ulcers",
+                                    "SYPHILIS",
+                                    "SEXUALLY TRANSMITTED INFECTION"],
     "Opportunistic infections - new": ["Candidiasis, vaginal","Vaginal candidiasis", "Candidiasis oral"],
     "Malaria under 5 years - new": ["Malaria"],
     "Malaria 5 years and older - new": ["Malaria"],
