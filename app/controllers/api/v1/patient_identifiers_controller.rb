@@ -72,6 +72,18 @@ class Api::V1::PatientIdentifiersController < ApplicationController
     render json: archive_number, status: :created
   end
 
+  def void_multiple_filing_numbers
+    identifiers = params[:identifiers]
+    reason = params[:reason] || "Voided by #{User.current.username}"
+    itype = PatientIdentifierType.find_by(name: 'Filing number')
+    identifiers.each do |data|
+      PatientIdentifier.where(identifier_type: itype.id, identifier: data[:identifier], patient_id: data[:patient_id]).each do |i|
+        i.void(reason)
+      end
+    end
+    render status: :no_content
+  end
+
   def swap_active_number
     primary_patient_id    = params[:primary_patient_id]
     secondary_patient_id  = params[:secondary_patient_id]

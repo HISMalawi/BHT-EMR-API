@@ -19,6 +19,8 @@ class FilingNumberService
   def find_archiving_candidates(offset = nil, limit = nil)
     offset ||= 0
     limit ||= 12
+    three_quarters_of_limit = (limit * 0.75).to_i
+    one_quarter_of_limit = (limit * 0.25).to_i
     remove_temp_tables
     create_temp_index_on_orders_table
     create_temp_potential_filing_number_candidates
@@ -27,7 +29,7 @@ class FilingNumberService
     # return build_archive_candidates(patients) unless patients.empty?
 
     # build_archive_candidates(find_potential_defaulters)
-    result = (find_patient_with_adverse_outcomes(offset, limit / 2).to_a + find_defaulters(offset, limit / 2).to_a).sort_by { |k| k['start_date'] }
+    result = (find_patient_with_adverse_outcomes(offset, three_quarters_of_limit).to_a + find_defaulters(offset, one_quarter_of_limit).to_a).sort_by { |k| k['start_date'] }
     build_archive_candidates(result)
   end
 
