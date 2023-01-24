@@ -13,9 +13,7 @@ module ARTService
       'DOB MORE THAN DATE ENROLLED' => 'dob_more_than_date_enrolled',
       'INCOMPLETE VISITS' => 'incomplete_visit',
       'MISSING DEMOGRAPHICS' => 'incomplete_demographics',
-      'MULTIPLE FILING NUMBERS' => 'multiple_filing_numbers',
-      'DUPLICATE FILING NUMBERS' => 'duplicate_filing_numbers',
-      'DUPLICATE ARCHIVED FILING NUMBERS' => 'duplicate_archived_filing_numbers'
+      'MULTIPLE FILING NUMBERS' => 'multiple_filing_numbers'
     }.freeze
 
     def initialize(start_date:, end_date:, tool_name:)
