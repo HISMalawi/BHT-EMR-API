@@ -15,11 +15,36 @@ describe 'Cleaning Tools API', type: :request, swagger_doc: 'v1/swagger.yaml' do
       parameter name: :params, in: :query, schema: { '$ref': '#/components/schemas/data_cleaning_request' }
 
       response '200', 'You can cross check the different responses in the swagger documentation' do
-        # returns an array of objects from the component schema
+        # returns an array of objects from the component schema using oneOf
         schema type: :array, items: { '$ref': '#/components/schemas/multiple_filing_numbers' }
         run_test!
       end
     end
   end
-end
 
+  path '/api/v1/void_multiple_filing_numbers' do
+    delete 'Void multiple filing numbers' do
+      tags TAGS_NAME
+      description 'This voids multiple filing numbers'
+      consumes 'application/json'
+      security [api_key: []]
+      # request body
+      parameter name: :params, in: :body, schema: {
+        type: :object,
+        properties: {
+          identifiers: {
+            type: :array,
+            items: { '$ref': '#/components/schemas/void_mutliple_filing_numbers' }
+          },
+          reason: { type: :string }
+        },
+        required: %w[identifiers reason]
+      }
+
+      response '204', 'Returns no content' do
+        let(:params) { { identifiers: [{identifier: 'FN10100001', patient_id: 347 }], reason: 'Testing voiding' } }
+        run_test!
+      end
+    end
+  end
+end
