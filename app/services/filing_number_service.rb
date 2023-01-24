@@ -376,7 +376,7 @@ class FilingNumberService
 
   def create_temp_patient_with_adverse_outcomes
     ActiveRecord::Base.connection.execute <<~SQL
-      CREATE TEMPORARY TABLE temp_patient_with_adverse_outcomes (
+      CREATE TABLE temp_patient_with_adverse_outcomes (
         patient_id int NOT NULL,
         patient_program_id int NOT NULL,
         state int NOT NULL,
@@ -429,7 +429,7 @@ class FilingNumberService
 
   def create_temp_potential_filing_number_candidates
     ActiveRecord::Base.connection.execute <<~SQL
-      CREATE TEMPORARY TABLE temp_potential_filing_number_candidates(
+      CREATE TABLE temp_potential_filing_number_candidates(
         identifier varchar(50) NOT NULL,
         patient_id int NOT NULL,
         patient_identifier_id INT NOT NULL,
@@ -458,10 +458,10 @@ class FilingNumberService
 
   def remove_temp_tables
     ActiveRecord::Base.connection.execute <<~SQL
-      DROP TEMPORARY TABLE IF EXISTS temp_patient_with_adverse_outcomes
+      DROP TABLE IF EXISTS temp_patient_with_adverse_outcomes
     SQL
     ActiveRecord::Base.connection.execute <<~SQL
-      DROP TEMPORARY TABLE IF EXISTS temp_potential_filing_number_candidates
+      DROP TABLE IF EXISTS temp_potential_filing_number_candidates
     SQL
   end
 
