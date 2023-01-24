@@ -73,6 +73,7 @@ class Api::V1::PatientIdentifiersController < ApplicationController
   end
 
   def void_multiple_filing_numbers
+    puts params
     identifiers = params[:identifiers]
     reason = params[:reason] || "Voided by #{User.current.username}"
     itype = PatientIdentifierType.find_by(name: 'Filing number')
