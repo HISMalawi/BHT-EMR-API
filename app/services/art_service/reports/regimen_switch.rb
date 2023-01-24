@@ -178,10 +178,13 @@ module ARTService
       end
 
       def current_regimen(type)
+        start_time = Time.now
         data = regimen_data
+        puts "Time taken to fetch #{data.length} records: #{Time.now - start_time} seconds"
         @clients = {}
-        @maternal_status = ARTService::Reports::Pepfar::ViralLoadCoverage2.new(start_date: @start_date, end_date: @end_date).vl_maternal_status((data || []).map { |r| r['patient_id'] })
-
+        @maternal_status = ARTService::Reports::Pepfar::ViralLoadCoverage2.new(start_date: @start_date, end_date: @end_date).vl_maternal_status((data || []).map { |r| r['patient_id']})
+        @vl_results = latest_vl_result((data || []).map { |r| r['patient_id'] })
+        puts "Time taken to fetch vl and maternal status records: #{Time.now - start_time} seconds"
         if data && data.length > 5000
           Parallel.each(data, in_threads: 20) do |r|
             process_current_report(r, type)
@@ -191,6 +194,7 @@ module ARTService
             process_current_report(r, type)
           end
         end
+        puts "Time taken to process #{data.length} records: #{Time.now - start_time} seconds"
         @clients
       end
 
@@ -319,7 +323,7 @@ module ARTService
             ORDER BY n.date_created DESC, i.date_created DESC;
           SQL
 
-          viral_load = vl_result(patient_id)
+          viral_load = @vl_results.select { |v| v['patient_id'] == patient_id }.first
           @clients[patient_id] = {
             arv_number: demo['arv_number'],
             given_name: demo['given_name'],
@@ -362,7 +366,7 @@ module ARTService
       def current_weight(patient_id)
         weight_concept = ConceptName.find_by_name('Weight (kg)').concept_id
         obs = Observation.where("person_id = ? AND concept_id = ?
-          AND obs_datetime <= ? AND (value_numeric IS NOT NULL OR value_text IS NOT NULL)",
+                                AND obs_datetime <= ? AND (value_numeric IS NOT NULL OR value_text IS NOT NULL)",
                                 patient_id, weight_concept, @end_date.to_date.strftime('%Y-%m-%d 23:59:59'))\
                          .order('obs_datetime DESC, date_created DESC')
 
@@ -402,30 +406,15 @@ module ARTService
 
       def latest_vl_result(patient_list)
         ActiveRecord::Base.connection.select_all <<~SQL
-          SELECT lab_result_obs.person_id, lab_result_obs.obs_datetime AS result_date,
-          CONCAT (COALESCE(measure.value_modifier, '='),' ',COALESCE(measure.value_numeric, measure.value_text, '')) as result
-          FROM obs AS lab_result_obs
-          INNER JOIN orders
-            ON orders.order_id = lab_result_obs.order_id
-            AND orders.voided = 0
-          INNER JOIN obs AS measure
-            ON measure.obs_group_id = lab_result_obs.obs_id
-            AND measure.voided = 0
-          INNER JOIN (
-            SELECT concept_id, name
-            FROM concept_name
-            INNER JOIN concept USING (concept_id)
-            WHERE concept.retired = 0
-            AND name NOT LIKE 'Lab test result'
-            GROUP BY concept_id
-          ) AS measure_concept
-            ON measure_concept.concept_id = measure.concept_id
-          WHERE lab_result_obs.voided = 0
-          AND measure.person_id IN (#{patient_list})
-          AND (measure.value_numeric IS NOT NULL || measure.value_text IS NOT NULL)
-          AND lab_result_obs.obs_datetime <= '#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-          ORDER BY lab_result_obs.person_id, lab_result_obs.obs_datetime DESC
-          GROUP BY lab_result_obs.person_id
+          SELECT
+            o.person_id patient_id,
+            o.obs_datetime AS result_date,
+            CONCAT (COALESCE(o.value_modifier, '='),' ',COALESCE(o.value_numeric, o.value_text, '')) as result
+          FROM obs o
+          LEFT OUTER JOIN obs ob ON ob.person_id = o.person_id AND o.obs_datetime < ob.obs_datetime AND ob.voided = 0 AND ob.concept_id = 856
+          WHERE ob.person_id IS NULL AND o.concept_id = 856 AND o.voided = 0 AND o.obs_datetime < DATE('2022-03-31') + INTERVAL 1 DAY
+          AND (o.value_numeric IS NOT NULL || o.value_text IS NOT NULL)
+          AND o.person_id IN (#{patient_list.join(',')})
         SQL
       end
 
