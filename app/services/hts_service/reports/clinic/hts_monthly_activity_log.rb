@@ -12,13 +12,15 @@ module HtsService
         def data
           users = {}
           d = fetch_data
-          ls = ['hiv_status', 'syphilis_status', 'hepb_status', 'recency', 'self_kits']
+          ls = ['hiv_status', 'syphilis_status', 'hepb_status', 'recency']
           d.rows.each_with_index do | rows, rindex |
             user_id = rows[0]
+            person_id = rows[1]
+            if !users.has_key?(user_id)
+              users[user_id] = {}
+              users[user_id]['self_test_kits'] = self_test_kits(person_id)
+            end
             rows.each_with_index do | value, vindex |
-              if !users.has_key?(user_id)
-                users[user_id] = {}
-              end
               column = d.columns[vindex]
               if !users[user_id].has_key?(column)
                 if ls.include?(column)
@@ -37,7 +39,23 @@ module HtsService
               end
             end
           end
-          users.values
+            users.values
+        end
+
+        def self_test_kits(provider_id)
+          ActiveRecord::Base.connection.select_all <<~SQL
+            select
+              o.person_id,
+              o.value_numeric as self_kits
+            from encounter e
+            inner join obs o on o.encounter_id = e.encounter_id
+            where o.voided = 0 and o.concept_id = #{concept('Self-Test Kit').concept_id}
+            and e.program_id = 18 and e.encounter_type = #{encounter_type('ITEMS GIVEN').encounter_type_id}
+            and DATE(e.encounter_datetime) between "#{@start_date}" and "#{@end_date}"
+            and e.provider_id = #{provider_id}
+            and o.value_numeric > 0
+            group by o.person_id
+          SQL
         end
 
         def fetch_data
@@ -45,13 +63,13 @@ module HtsService
           ActiveRecord::Base.connection.select_all <<~SQL
             select
               u.user_id,
+              u.person_id AS user_person,
               u.username,
               up.property_value as provider_code,
               p1.person_id AS hiv_status,
               p2.person_id AS syphilis_status,
               p3.person_id AS hepb_status,
-              p4.person_id AS recency,
-              p5.person_id  AS self_kits
+              p4.person_id AS recency
             from users u
             inner join person p on p.person_id = u.person_id
             inner join encounter e on e.provider_id = p.person_id and e.voided = 0 and e.program_id = 18
@@ -60,7 +78,6 @@ module HtsService
             left join obs p2 on p2.encounter_id = e.encounter_id and p2.voided = 0 and p2.concept_id = #{concept('Syphilis Test Result').concept_id} and e.encounter_type = #{testing_encounter}
             left join obs p3 on p3.encounter_id = e.encounter_id and p3.voided = 0 and p3.concept_id = #{concept('Hepatitis B Test Result').concept_id} and e.encounter_type = #{testing_encounter}
             left join obs p4 on p4.encounter_id = e.encounter_id and p4.voided = 0 and p3.concept_id = #{concept('Recency Test').concept_id} and e.encounter_type = #{testing_encounter}
-            left join obs p5 on p5.encounter_id = e.encounter_id and p5.voided = 0 and p5.concept_id = #{concept('Self-Test Kit').concept_id} and e.encounter_type = #{encounter_type('ITEMS GIVEN').encounter_type_id}
             where DATE(e.encounter_datetime) between '#{@start_date}' and '#{@end_date}'
           SQL
         end
