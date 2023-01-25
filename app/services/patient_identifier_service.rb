@@ -24,6 +24,18 @@ module PatientIdentifierService
       rows.collect { |row| { count: row['count'], identifier: row['identifier'] } }
     end
 
+    def find_multiples(identifier_type)
+      ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT p.person_id patient_id, n.given_name, n.family_name, p.gender, p.birthdate, MAX(i.identifier) latest_identifier, COUNT(i.identifier) identifiers, GROUP_CONCAT(i.identifier) mutliple_identifiers
+        FROM person p
+        INNER JOIN patient_identifier i ON i.patient_id = p.person_id AND i.identifier_type = #{identifier_type.id} AND i.voided = 0
+        LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
+        WHERE p.voided = 0
+        GROUP BY p.person_id HAVING COUNT(i.identifier) > 1
+        ORDER BY n.date_created DESC
+      SQL
+    end
+
     def create(params)
       identifier = PatientIdentifier.find_by(identifier_type: params[:identifier_type],
                                              identifier: params[:identifier])

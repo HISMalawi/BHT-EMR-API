@@ -41,17 +41,17 @@ RSpec.configure do |config|
             },
             required: %w[program_id start_date end_date report_name]
           },
-          multiple_filing_numbers: {
+          multiple_identifiers: {
             type: :object,
             properties: {
-              person_id: { type: :integer },
+              patient_id: { type: :integer },
               given_name: { type: :string },
               family_name: { type: :string },
               gender: { type: :string },
               birthdate: { type: :string },
-              arv_number: { type: :string },
+              latest_identifier: { type: :string },
               identifiers: { type: :integer },
-              filing_numbers: { type: :string }
+              mutliple_identifiers: { type: :string }
             }
           },
           duplicate_filing_number: {
