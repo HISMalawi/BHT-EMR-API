@@ -16,7 +16,7 @@ describe 'Cleaning Tools API', type: :request, swagger_doc: 'v1/swagger.yaml' do
 
       response '200', 'You can cross check the different responses in the swagger documentation' do
         # returns an array of objects from the component schema using oneOf
-        schema type: :array, items: { '$ref': '#/components/schemas/multiple_filing_numbers' }
+        schema type: :array, items: { '$ref': '#/components/schemas/multiple_identifiers' }
         run_test!
       end
     end

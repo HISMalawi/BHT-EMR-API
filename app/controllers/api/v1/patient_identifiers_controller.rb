@@ -54,6 +54,11 @@ class Api::V1::PatientIdentifiersController < ApplicationController
     render json: service.find_duplicates(id_type)
   end
 
+  def multiples
+    id_type = PatientIdentifierType.find(params.require(:type_id))
+    render json: service.find_multiples(id_type)
+  end
+
   def archive_active_filing_number
     itypes = PatientIdentifierType.where(name: ['Filing number','Archived filing number'])
     identifier_types = itypes.map(&:id)
