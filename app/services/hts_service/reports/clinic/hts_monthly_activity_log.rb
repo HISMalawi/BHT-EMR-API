@@ -39,7 +39,7 @@ module HtsService
               end
             end
           end
-            users.values
+          users.values
         end
 
         def self_test_kits(provider_id)
@@ -77,7 +77,7 @@ module HtsService
             left join obs p1 on p1.encounter_id = e.encounter_id and p1.voided = 0 and p1.concept_id = #{concept('HIV Status').concept_id} and e.encounter_type = #{testing_encounter}
             left join obs p2 on p2.encounter_id = e.encounter_id and p2.voided = 0 and p2.concept_id = #{concept('Syphilis Test Result').concept_id} and e.encounter_type = #{testing_encounter}
             left join obs p3 on p3.encounter_id = e.encounter_id and p3.voided = 0 and p3.concept_id = #{concept('Hepatitis B Test Result').concept_id} and e.encounter_type = #{testing_encounter}
-            left join obs p4 on p4.encounter_id = e.encounter_id and p4.voided = 0 and p3.concept_id = #{concept('Recency Test').concept_id} and e.encounter_type = #{testing_encounter}
+            left join obs p4 on p4.encounter_id = e.encounter_id and p4.voided = 0 and p4.concept_id = #{concept('Recency Test').concept_id} and e.encounter_type = #{testing_encounter}
             where DATE(e.encounter_datetime) between '#{@start_date}' and '#{@end_date}'
           SQL
         end
