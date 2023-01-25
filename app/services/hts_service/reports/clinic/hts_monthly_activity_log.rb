@@ -37,7 +37,7 @@ module HtsService
               end
             end
           end
-          users
+          users.values
         end
 
         def fetch_data
