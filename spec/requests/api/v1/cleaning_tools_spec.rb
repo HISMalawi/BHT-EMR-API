@@ -22,7 +22,7 @@ describe 'Cleaning Tools API', type: :request, swagger_doc: 'v1/swagger.yaml' do
     end
   end
 
-  path '/api/v1/void_multiple_filing_numbers' do
+  path '/api/v1/void_multiple_identifiers' do
     delete 'Void multiple filing numbers' do
       tags TAGS_NAME
       description 'This voids multiple filing numbers'
@@ -34,15 +34,16 @@ describe 'Cleaning Tools API', type: :request, swagger_doc: 'v1/swagger.yaml' do
         properties: {
           identifiers: {
             type: :array,
-            items: { '$ref': '#/components/schemas/void_mutliple_filing_numbers' }
+            items: { '$ref': '#/components/schemas/void_multiple_identifiers' }
           },
-          reason: { type: :string }
+          reason: { type: :string },
+          identifier_type: { type: :integer }
         },
-        required: %w[identifiers reason]
+        required: %w[identifiers reason identifier_type]
       }
 
       response '204', 'Returns no content' do
-        let(:params) { { identifiers: [{identifier: 'FN10100001', patient_id: 347 }], reason: 'Testing voiding' } }
+        let(:params) { { identifiers: [{ identifier: 'FN10100001', patient_id: 347 }], reason: 'Testing voiding' } }
         run_test!
       end
     end

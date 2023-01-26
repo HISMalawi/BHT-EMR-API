@@ -62,7 +62,7 @@ RSpec.configure do |config|
               patient_ids: { type: :string }
             }
           },
-          void_mutliple_filing_numbers: {
+          void_multiple_identifiers: {
             type: :object,
             properties: {
               identifier: { type: :string },

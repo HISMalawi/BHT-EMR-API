@@ -77,11 +77,11 @@ class Api::V1::PatientIdentifiersController < ApplicationController
     render json: archive_number, status: :created
   end
 
-  def void_multiple_filing_numbers
-    puts params
+  def void_multiple_identifiers
     identifiers = params[:identifiers]
+    identifier_type = params[:identifier_type]
     reason = params[:reason] || "Voided by #{User.current.username}"
-    itype = PatientIdentifierType.find_by(name: 'Filing number')
+    itype = PatientIdentifierType.find(identifier_type)
     identifiers.each do |data|
       PatientIdentifier.where(identifier_type: itype.id, identifier: data[:identifier], patient_id: data[:patient_id]).each do |i|
         i.void(reason)
