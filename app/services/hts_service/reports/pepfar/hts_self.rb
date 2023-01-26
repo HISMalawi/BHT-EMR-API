@@ -75,11 +75,11 @@ module HtsService
             LEFT JOIN
               obs directly_assisted on directly_assisted.encounter_id = e.encounter_id and
               directly_assisted.concept_id = #{concept('Self-test approach').concept_id} and
-              directly_assisted.value_text = "Directly-assisted"
+              directly_assisted.value_coded = #{concept('Directly-assisted').concept_id}
             LEFT JOIN
               obs unassisted on unassisted.encounter_id = e.encounter_id and
               unassisted.concept_id = #{concept('Self-test approach').concept_id} and
-              unassisted.value_text = "Un-assisted"
+              unassisted.value_coded = #{concept('Un-assisted').concept_id}
             LEFT JOIN
               obs self_recipient on self_recipient.encounter_id = e.encounter_id and
               self_recipient.concept_id = #{concept('Self-test end user').concept_id} and
