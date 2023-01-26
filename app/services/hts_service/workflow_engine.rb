@@ -84,8 +84,8 @@ module HTSService
 
       REFERRAL => %i[task_not_done_today?],
 
-      PARTNER_RECEPTION => %i[task_not_done_today?]
-
+      PARTNER_RECEPTION => %i[task_not_done_today?
+                              not_from_community_accesspoint?]
     }.freeze
 
     def load_user_activities
@@ -166,6 +166,20 @@ module HTSService
               .blank?
     end
 
+    def from_community_accesspoint?
+      access = Observation.joins(:encounter)
+                          .where(concept: concept('HTS Access Type'),
+                              person: @patient.person,
+                              encounter: {
+                                program_id: @program.program_id,
+                                encounter_type: encounter_type('Testing')
+                              })
+                          .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))
+                          .last
+      return false if access.blank?
+      concept('Community').concept_id === access.value_coded
+    end
+
     def hiv_positive_at_health_facility_accesspoint?
       access = Observation.joins(:encounter)
                           .where(concept: concept('HTS Access Type'),
@@ -180,19 +194,24 @@ module HTSService
       concept('Health Facility').concept_id === access.value_coded && is_hiv_positive?
     end
 
+    def is_hiv_positive?
+      status = Observation.joins(:encounter)\
+      .where(concept: concept('HIV status'),
+      person: @patient.person,
+      encounter: { program_id: @program.program_id })\
+      .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))
+      .last
+      return false if status.blank?
+      concept('Positive').concept_id === status.value_coded
+    end
+
     def not_hiv_positive_at_health_facility_accesspoint?
       !hiv_positive_at_health_facility_accesspoint?
     end
 
-    def is_hiv_positive?
-      status = Observation.joins(:encounter)\
-                          .where(concept: concept('HIV status'),
-                                person: @patient.person,
-                                encounter: { program_id: @program.program_id })\
-                          .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))
-                          .last
-      return false if status.blank?
-      concept('Positive').concept_id === status.value_coded
+    def not_from_community_accesspoint?
+      !from_community_accesspoint?
     end
+
   end
 end
