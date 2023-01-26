@@ -75,9 +75,10 @@ module HTSService
       TESTING => %i[task_not_done_today?],
 
       APPOINTMENT => %i[task_not_done_today?
-                       done_screening_today?],
+                      done_screening_today?
+                      not_hiv_positive_at_health_facility_accesspoint?],
 
-      HTS_CONTACT => %i[is_hiv_positive?],
+      HTS_CONTACT => %i[hiv_positive_at_health_facility_accesspoint?],
 
       ITEMS_GIVEN => %i[task_not_done_today?],
 
@@ -163,6 +164,24 @@ module HTSService
       Encounter.where(patient: @patient, type: encounter_type, program: @program)\
               .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
               .blank?
+    end
+
+    def hiv_positive_at_health_facility_accesspoint?
+      access = Observation.joins(:encounter)
+                          .where(concept: concept('HTS Access Type'),
+                              person: @patient.person,
+                              encounter: {
+                                program_id: @program.program_id,
+                                encounter_type: encounter_type('Testing')
+                              })
+                          .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))
+                          .last
+      return false if access.blank?
+      concept('Health Facility').concept_id === access.value_coded && is_hiv_positive?
+    end
+
+    def not_hiv_positive_at_health_facility_accesspoint?
+      !hiv_positive_at_health_facility_accesspoint?
     end
 
     def is_hiv_positive?
