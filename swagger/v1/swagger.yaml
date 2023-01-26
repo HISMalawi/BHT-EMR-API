@@ -27,7 +27,7 @@ paths:
                 type: array
                 items:
                   "$ref": "#/components/schemas/multiple_identifiers"
-  "/api/v1/void_multiple_filing_numbers":
+  "/api/v1/void_multiple_identifiers":
     delete:
       summary: Void multiple filing numbers
       tags:
@@ -48,12 +48,15 @@ paths:
                 identifiers:
                   type: array
                   items:
-                    "$ref": "#/components/schemas/void_mutliple_filing_numbers"
+                    "$ref": "#/components/schemas/void_multiple_identifiers"
                 reason:
                   type: string
+                identifier_type:
+                  type: integer
               required:
               - identifiers
               - reason
+              - identifier_type
   "/api/v1/programs/1/reports/clinic_tx_rtt":
     get:
       summary: Retrieve CLINIC TX RTT report
@@ -1326,7 +1329,7 @@ components:
           type: integer
         patient_ids:
           type: string
-    void_mutliple_filing_numbers:
+    void_multiple_identifiers:
       type: object
       properties:
         identifier:
