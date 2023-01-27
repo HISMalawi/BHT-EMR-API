@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-require "rails_helper"
+require 'rails_helper'
 
 RSpec.configure do |config|
   # Specify a root folder where Swagger JSON files are generated
   # NOTE: If you're using the rswag-api to serve API descriptions, you'll need
   # to ensure that it's configured to serve Swagger from the same folder
-  config.swagger_root = Rails.root.join("swagger").to_s
+  config.swagger_root = Rails.root.join('swagger').to_s
 
   # Define one or more Swagger documents and provide global metadata for each one
   # When you run the 'rswag:specs:swaggerize' rake task, the complete Swagger will
@@ -67,12 +67,12 @@ RSpec.configure do |config|
                     voided_by: { type: :integer },
                     date_voided: { type: :string },
                     void_reason: { type: :string },
-                    uuid: { type: :string },
-                  },
-                },
-            },
+                    uuid: { type: :string }
+                  }
+                }
+              }
+            }
           },
-        },
           duplicate_filing_number: {
             type: :object,
             properties: {
@@ -82,11 +82,10 @@ RSpec.configure do |config|
             }
           },
           void_multiple_identifiers: {
-            type: :object,
-            properties: {
-              identifier: { type: :string },
-              patient_id: { type: :integer },
-            }
+            type: :array,
+            items: { type: :integer },
+            example: [1, 2, 3],
+            description: 'Array of patient identifiers record ids'
           }
         }
       },
@@ -103,7 +102,6 @@ RSpec.configure do |config|
       ]
     }
   }
-
 
   # Specify the format of the output Swagger file when running 'rswag:specs:swaggerize'.
   # The swagger_docs configuration option has the filename including format in

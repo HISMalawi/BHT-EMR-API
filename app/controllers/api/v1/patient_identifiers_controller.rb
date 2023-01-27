@@ -79,13 +79,9 @@ class Api::V1::PatientIdentifiersController < ApplicationController
 
   def void_multiple_identifiers
     identifiers = params[:identifiers]
-    identifier_type = params[:identifier_type]
     reason = params[:reason] || "Voided by #{User.current.username}"
-    itype = PatientIdentifierType.find(identifier_type)
     identifiers.each do |data|
-      PatientIdentifier.where(identifier_type: itype.id, identifier: data[:identifier], patient_id: data[:patient_id]).each do |i|
-        i.void(reason)
-      end
+      PatientIdentifier.find(data).void(reason)
     end
     render status: :no_content
   end

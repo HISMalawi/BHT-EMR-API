@@ -29,18 +29,7 @@ describe 'Cleaning Tools API', type: :request, swagger_doc: 'v1/swagger.yaml' do
       consumes 'application/json'
       security [api_key: []]
       # request body
-      parameter name: :params, in: :body, schema: {
-        type: :object,
-        properties: {
-          identifiers: {
-            type: :array,
-            items: { '$ref': '#/components/schemas/void_multiple_identifiers' }
-          },
-          reason: { type: :string },
-          identifier_type: { type: :integer }
-        },
-        required: %w[identifiers reason identifier_type]
-      }
+      parameter name: :params, in: :body, schema: { '$ref': '#/components/schemas/void_multiple_identifiers' }
 
       response '204', 'Returns no content' do
         let(:params) { { identifiers: [{ identifier: 'FN10100001', patient_id: 347 }], reason: 'Testing voiding' } }

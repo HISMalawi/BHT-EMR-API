@@ -43,20 +43,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                identifiers:
-                  type: array
-                  items:
-                    "$ref": "#/components/schemas/void_multiple_identifiers"
-                reason:
-                  type: string
-                identifier_type:
-                  type: integer
-              required:
-              - identifiers
-              - reason
-              - identifier_type
+              "$ref": "#/components/schemas/void_multiple_identifiers"
   "/api/v1/programs/1/reports/clinic_tx_rtt":
     get:
       summary: Retrieve CLINIC TX RTT report
@@ -1317,9 +1304,36 @@ components:
         latest_identifier:
           type: string
         identifiers:
-          type: integer
-        mutliple_identifiers:
-          type: string
+          type: array
+          items:
+            type: object
+            properties:
+              patient_identifier_id:
+                type: integer
+              patient_id:
+                type: integer
+              identifier:
+                type: string
+              identifier_type:
+                type: string
+              preferred:
+                type: boolean
+              location_id:
+                type: integer
+              creator:
+                type: integer
+              date_created:
+                type: string
+              voided:
+                type: boolean
+              voided_by:
+                type: integer
+              date_voided:
+                type: string
+              void_reason:
+                type: string
+              uuid:
+                type: string
     duplicate_filing_number:
       type: object
       properties:
@@ -1330,12 +1344,14 @@ components:
         patient_ids:
           type: string
     void_multiple_identifiers:
-      type: object
-      properties:
-        identifier:
-          type: string
-        patient_id:
-          type: integer
+      type: array
+      items:
+        type: integer
+      example:
+      - 1
+      - 2
+      - 3
+      description: Array of patient identifiers record ids
 security:
 - api_key: []
 servers:
