@@ -10,7 +10,6 @@ module HTSService
       @patient = patient
       @program = program || program('HTC Program')
       @date = date || Date.today
-      @activities = load_user_activities
     end
 
     # Retrieves the next encounter for bound patient
@@ -88,35 +87,6 @@ module HTSService
                               not_from_community_accesspoint?]
     }.freeze
 
-    def load_user_activities
-      activities = user_property('Activities')&.property_value
-      encounters = (activities&.split(',') || []).collect do |activity|
-        # Re-map activities to encounters
-        case activity
-        when /PREGNANCY STATUS/i
-          PREGNANCY_STATUS
-        when /CIRCUMCISION/i
-          CIRCUMCISION
-        when /SOCIAL HISTORY|MARITAL/i
-          SOCIAL_HISTORY
-        when /TESTING/i
-          TESTING
-        when /APPOINTMENT/i
-          APPOINTMENT
-        when /CONTACT/i
-          HTS_CONTACT
-        when /ITEMS GIVEN/i
-          ITEMS_GIVEN
-        when /REFERRAL/i
-          REFERRAL
-        when /Partner Reception/i
-          PARTNER_RECEPTION
-        else
-          Rails.logger.warn "Invalid HTS activity in user properties: #{activity}"
-        end
-      end
-    end
-
     def next_state(current_state)
       ENCOUNTER_SM[current_state]
     end
@@ -130,7 +100,7 @@ module HTSService
 
     def valid_state?(state)
 
-      return false if encounter_exists?(encounter_type(state)) || !@activities.include?(state)
+      return false if encounter_exists?(encounter_type(state))
 
       (STATE_CONDITIONS[state] || []).all? { |condition| send(condition) }
     end
