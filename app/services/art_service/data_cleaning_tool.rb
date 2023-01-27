@@ -12,7 +12,8 @@ module ARTService
       'MALE CLIENTS WITH FEMALE OBS' => 'male_clients_with_female_obs',
       'DOB MORE THAN DATE ENROLLED' => 'dob_more_than_date_enrolled',
       'INCOMPLETE VISITS' => 'incomplete_visit',
-      'MISSING DEMOGRAPHICS' => 'incomplete_demographics'
+      'MISSING DEMOGRAPHICS' => 'incomplete_demographics',
+      'MULTIPLE PATIENT TYPES' => 'multiple_patient_types'
     }.freeze
 
     def initialize(start_date:, end_date:, tool_name:)
@@ -478,7 +479,8 @@ module ARTService
 
         next if complete
 
-        person_details = ActiveRecord::Base.connection.select_one <<~SQL
+        person
+        _details = ActiveRecord::Base.connection.select_one <<~SQL
           SELECT
             n.given_name, n.family_name, p.gender, p.birthdate,
             a.identifier arv_number, i.identifier national_id
@@ -508,6 +510,21 @@ module ARTService
       end
 
       incomplete_visits_comp
+    end
+
+    def multiple_patient_types
+      ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT o.person_id patient_id, p.gender, p.birthdate, n.given_name, n.family_name, i.identifier arv_number, COUNT(DISTINCT o.concept_id) AS patient_type_count, DATE(o.obs_datetime) AS visit_date
+        FROM obs o
+        INNER JOIN person p ON p.person_id = o.person_id AND p.voided = 0
+        LEFT JOIN patient_identifier i ON i.patient_id = o.person_id AND i.identifier_type = 4 AND i.voided = 0
+        LEFT JOIN person_name n ON n.person_id = o.person_id AND n.voided = 0
+        WHERE o.concept_id = #{ConceptName.find_by_name('Type of patient').concept_id}
+        AND o.obs_datetime >= DATE(#{ActiveRecord::Base.connection.quote(@start_date)})
+        AND o.obs_datetime <= DATE(#{ActiveRecord::Base.connection.quote(@end_date)}) + INTERVAL 1 DAY
+        AND o.voided = 0
+        GROUP BY o.person_id, DATE(o.obs_datetime) HAVING patient_type_count > 1
+      SQL
     end
 
     def concept(name)
