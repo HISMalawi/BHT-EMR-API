@@ -50,10 +50,29 @@ RSpec.configure do |config|
               gender: { type: :string },
               birthdate: { type: :string },
               latest_identifier: { type: :string },
-              identifiers: { type: :integer },
-              mutliple_identifiers: { type: :string }
-            }
+              identifiers: {
+                type: :array,
+                items: {
+                  type: :object,
+                  properties: {
+                    patient_identifier_id: { type: :integer },
+                    patient_id: { type: :integer },
+                    identifier: { type: :string },
+                    identifier_type: { type: :string },
+                    preferred: { type: :boolean },
+                    location_id: { type: :integer },
+                    creator: { type: :integer },
+                    date_created: { type: :string },
+                    voided: { type: :boolean },
+                    voided_by: { type: :integer },
+                    date_voided: { type: :string },
+                    void_reason: { type: :string },
+                    uuid: { type: :string },
+                  },
+                },
+            },
           },
+        },
           duplicate_filing_number: {
             type: :object,
             properties: {
@@ -84,6 +103,7 @@ RSpec.configure do |config|
       ]
     }
   }
+
 
   # Specify the format of the output Swagger file when running 'rswag:specs:swaggerize'.
   # The swagger_docs configuration option has the filename including format in
