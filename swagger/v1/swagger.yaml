@@ -43,7 +43,15 @@ paths:
         content:
           application/json:
             schema:
-              "$ref": "#/components/schemas/void_multiple_identifiers"
+              type: object
+              properties:
+                identifiers:
+                  "$ref": "#/components/schemas/void_multiple_identifiers"
+                reason:
+                  type: string
+              required:
+              - identifiers
+              - reason
   "/api/v1/programs/1/reports/clinic_tx_rtt":
     get:
       summary: Retrieve CLINIC TX RTT report
