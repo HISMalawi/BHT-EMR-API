@@ -14,7 +14,8 @@ module HtsService
       'HTS TST COMMUNITY' => HtsService::Reports::Pepfar::HtsTstCommunity,
       'HTS RECENT COMMUNITY' => HtsService::Reports::Pepfar::HtsRecentCommunity,
       'HTS DASHBOARD STATS' => HtsService::Reports::Stats::HtsDashboard,
-      'HTS MONTHLY ACTIVITY LOG' => HtsService::Reports::Clinic::HtsMonthlyActivityLog
+      'HTS MONTHLY ACTIVITY LOG' => HtsService::Reports::Clinic::HtsMonthlyActivityLog,
+      'HTS HIV TESTING SUMMARY' => HtsService::Reports::Clinic::HtsHivTestingSummary
     }.freeze
 
     def generate_report(type:, **kwargs)
