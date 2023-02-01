@@ -12,7 +12,12 @@ module HtsService
       'HTS INDEX' => HtsService::Reports::Pepfar::HtsIndex,
       'HTS SELF' => HtsService::Reports::Pepfar::HtsSelf,
       'HTS TST COMMUNITY' => HtsService::Reports::Pepfar::HtsTstCommunity,
+      'HTS TST FACILITY' => HtsService::Reports::Pepfar::HtsTstFacility,
+      'HTS TST KP' => HtsService::Reports::Pepfar::HtsTstKp,
+      'HTS RECENT KP' => HtsService::Reports::Pepfar::HtsRecentKp,
+      'HTS SELF KP' => HtsService::Reports::Pepfar::HtsSelfKp,
       'HTS RECENT COMMUNITY' => HtsService::Reports::Pepfar::HtsRecentCommunity,
+      'HTS RECENT FACILITY' => HtsService::Reports::Pepfar::HtsRecentFacility,
       'HTS DASHBOARD STATS' => HtsService::Reports::Stats::HtsDashboard,
       'HTS MONTHLY ACTIVITY LOG' => HtsService::Reports::Clinic::HtsMonthlyActivityLog
     }.freeze
