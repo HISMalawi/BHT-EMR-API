@@ -64,7 +64,7 @@ module HTSService
     STATE_CONDITIONS = {
 
       PREGNANCY_STATUS => %i[is_female_client?
-                             task_not_done?],
+                             task_not_done_today?],
 
       CIRCUMCISION => %i[is_male_client?
                         client_not_circumcised?
