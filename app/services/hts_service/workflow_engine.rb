@@ -67,7 +67,8 @@ module HTSService
                              task_not_done?],
 
       CIRCUMCISION => %i[is_male_client?
-                        task_not_done?],
+                        client_not_circumcised?
+                        task_not_done_today?],
 
       SOCIAL_HISTORY => %i[no_social_history?],
 
@@ -111,6 +112,20 @@ module HTSService
 
     def is_female_client?
       @patient.gender == "F"
+    end
+
+    def client_not_circumcised?
+      status = Observation.joins(:encounter)
+                          .where(concept: concept('Circumcision status'),
+                            person: @patient.person,
+                            encounter: {
+                              program_id: @program.program_id,
+                              encounter_type: encounter_type('CIRCUMCISION')
+                            })
+                          .where('obs_datetime <= ?', @date)
+                          .last
+      return true if status.blank?
+      concept('No').concept_id === status.value_coded
     end
 
     def task_not_done?
