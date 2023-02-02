@@ -11,7 +11,7 @@ class DrugOrder < ApplicationRecord
 
   def as_json(options = {})
     super(options.merge(
-      include: { order: {}, drug: {} }, methods: %i[dosage_struct hanging_pills amount_needed barcodes]
+      include: { order: {}, drug: {} }, methods: %i[dosage_struct amount_needed barcodes]
     ))
   end
 
@@ -61,16 +61,6 @@ class DrugOrder < ApplicationRecord
       pm: ingredient&.dose&.pm || 0,
       units: drug.units
     }
-  end
-
-  def hanging_pills
-    return 0 unless order
-
-    obs = Observation.where(concept_id: ConceptName.find_by_name('Number of tablets brought to clinic').concept_id, order_id: order.id)
-    return 0 if obs.blank?
-    return 0 if obs.first.value_numeric.blank?
-
-    obs.first.value_numeric.to_i
   end
 
   def to_s
