@@ -46,6 +46,7 @@ module HTSService
     HTS_CONTACT = 'HTS Contact'
     REFERRAL = 'REFERRAL'
     PARTNER_RECEPTION = 'Partner Reception'
+    ART_INITIATION = 'ART Enrollment'
 
     # Encounters graph
     ENCOUNTER_SM = {
@@ -55,7 +56,8 @@ module HTSService
       SOCIAL_HISTORY => PARTNER_RECEPTION,
       PARTNER_RECEPTION => TESTING,
       TESTING => APPOINTMENT,
-      APPOINTMENT => HTS_CONTACT,
+      APPOINTMENT => ART_INITIATION,
+      ART_INITIATION => HTS_CONTACT,
       HTS_CONTACT => ITEMS_GIVEN,
       ITEMS_GIVEN => REFERRAL,
       REFERRAL => END_STATE
@@ -77,6 +79,9 @@ module HTSService
       APPOINTMENT => %i[task_not_done_today?
                       done_screening_today?
                       not_hiv_positive_at_health_facility_accesspoint?],
+
+      ART_INITIATION => %i[no_art_referral?
+                        hiv_positive_at_health_facility_accesspoint?],
 
       HTS_CONTACT => %i[hiv_positive_at_health_facility_accesspoint?],
 
@@ -177,6 +182,20 @@ module HTSService
                           .last
       return false if access.blank?
       concept('Health Facility').concept_id === access.value_coded && is_hiv_positive?
+    end
+
+    def no_art_referral?
+      referral = Observation.joins(:encounter)
+                          .where(concept: concept('ART referral'),
+                              person: @patient.person,
+                              encounter: {
+                                program_id: @program.program_id,
+                                encounter_type: encounter_type(ART_INITIATION)
+                              })
+                          .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))
+                          .last
+      return true if referral.blank?
+      concept('No').concept_id === referral.value_coded
     end
 
     def is_hiv_positive?
