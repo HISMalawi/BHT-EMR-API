@@ -476,17 +476,22 @@ class DDEMergingService
 
   def create_new_encounter_raw(encounter, primary_patient)
     ActiveRecord::Base.connection.disable_referential_integrity do
+      puts "This is the encounter_id: #{encounter.id}"
       ActiveRecord::Base.connection.execute <<~SQL
         INSERT INTO encounter (encounter_type, patient_id, encounter_datetime, provider_id,#{unless encounter.location.blank?
                                                                                                'location_id,'
                                                                                              end} #{unless encounter.form_id.blank?
                                                                                                       'form_id,'
-                                                                                                    end} uuid, creator, date_created, voided, changed_by, date_changed)
+                                                                                                    end} uuid, creator, date_created, voided #{unless encounter.changed_by.blank?
+                                                                                                      ', changed_by'
+                                                                                                    end} #{unless encounter.date_changed.blank?
+                                                                                                      ', date_changed'
+                                                                                                    end})
         VALUES (#{encounter.encounter_type}, #{primary_patient.id}, '#{encounter.encounter_datetime.strftime('%Y-%m-%d %H:%M:%S')}', #{encounter.provider_id}, #{unless encounter.location_id.blank?
                                                                                                                                                                    "#{encounter.location_id},"
                                                                                                                                                                  end} #{unless encounter.form_id.blank?
                                                                                                                                                                           "#{encounter.form_id},"
-                                                                                                                                                                        end} uuid(), #{User.current.id}, '#{encounter.date_created.strftime('%Y-%m-%d %H:%M:%S')}', #{encounter.voided}, #{encounter.changed_by}, '#{encounter.date_changed.strftime('%Y-%m-%d %H:%M:%S')}')
+                                                                                                                                                                        end} uuid(), #{User.current.id}, '#{encounter.date_created.strftime('%Y-%m-%d %H:%M:%S')}', #{encounter.voided} #{",{encounter.changed_by}" unless encounter.changed_by.blank?} #{",#{encounter.date_changed.strftime('%Y-%m-%d %H:%M:%S')}" unless encounter.date_changed.blank?})
       SQL
     end
     row_id = ActiveRecord::Base.connection.select_one('SELECT LAST_INSERT_ID() AS id')['id']
