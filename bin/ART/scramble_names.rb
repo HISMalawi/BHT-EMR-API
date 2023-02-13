@@ -15,7 +15,19 @@ def process_addresses(patient)
     address.address1 = Faker::Address.full_address.first(50)
     address.address2 = Faker::Address.full_address.first(50)
     address.city_village = Faker::Address.full_address.first(50)
+    address.country = Faker::Address.country.first(50)
+    address.county_district = Faker::Address.full_address.first(50)
+    address.neighborhood_cell = Faker::Address.full_address.first(50)
+    address.state_province = Faker::Address.full_address.first(50)
+    address.township_division = Faker::Address.full_address.first(50)
     address.save!
+  end
+end
+
+def process_occupation(patient)
+  patient.person.person_attributes.where(person_attribute_type_id: 13).each do |person_attribute|
+    person_attribute.value = Faker::Job.title
+    person_attribute.save!
   end
 end
 
@@ -31,18 +43,19 @@ def generate_phone_number
 end
 
 def process_phone_number(patient)
-  patient.person.person_attributes.where(person_attribute_type_id: 12).each do |person_attribute|
+  patient.person.person_attributes.where(person_attribute_type_id: [12, 14, 15]).each do |person_attribute|
     person_attribute.value = generate_phone_number
     person_attribute.save!
   end
 end
 
 def process_patient
-  Parallel.each(Patient.all, in_threads: 10) do |patient|
+  Patient.all.each do |patient|
     puts "Processing patient #{patient.id}"
     process_names patient
     process_addresses patient
     process_phone_number patient
+    process_occupation patient
   end
 end
 
