@@ -6,43 +6,13 @@ module HtsService
 
         include HtsService::Reports::HtsReportBuilder
 
+        ACCESS_POINTS = %i[htc vct opd].freeze
+        AGE_GROUPS = %i[zero_to_nine ten_to_nineteen twenty_plus].freeze
+        GENDER_GROUPS =  %i[male female].freeze
+
         INDICATORS = {
-          htc_0_to_9_tested_male: %i[htc tested_for_hiv male zero_to_nine],
-          htc_10_to_19_tested_male: %i[htc tested_for_hiv male ten_to_nineteen],
-          htc_20_plus_tested_male: %i[htc tested_for_hiv male twenty_plus],
-          htc_0_to_9_tested_female: %i[htc tested_for_hiv female zero_to_nine],
-          htc_10_to_19_tested_female: %i[htc tested_for_hiv female ten_to_nineteen],
-          htc_20_plus_tested_female: %i[htc tested_for_hiv female twenty_plus],
-          vct_0_to_9_tested_male: %i[vct tested_for_hiv male zero_to_nine],
-          vct_10_to_19_tested_male: %i[vct tested_for_hiv male ten_to_nineteen],
-          vct_20_plus_tested_male: %i[vct tested_for_hiv male twenty_plus],
-          vct_0_to_9_tested_female: %i[vct tested_for_hiv female zero_to_nine],
-          vct_10_to_19_tested_female: %i[vct tested_for_hiv female ten_to_nineteen],
-          vct_20_plus_tested_female: %i[vct tested_for_hiv female twenty_plus],
-          opd_0_to_9_tested_male: %i[opd tested_for_hiv male zero_to_nine],
-          opd_10_to_19_tested_male: %i[opd tested_for_hiv male ten_to_nineteen],
-          opd_20_plus_tested_male: %i[opd tested_for_hiv male twenty_plus],
-          opd_0_to_9_tested_female: %i[opd tested_for_hiv female zero_to_nine],
-          opd_10_to_19_tested_female: %i[opd tested_for_hiv female ten_to_nineteen],
-          opd_20_plus_tested_female: %i[opd tested_for_hiv female twenty_plus],
-          htc_0_to_9_tested_hiv_positive_male: %i[htc hiv_positive tested_for_hiv male zero_to_nine],
-          htc_10_to_19_tested_hiv_positive_male: %i[htc hiv_positive tested_for_hiv male ten_to_nineteen],
-          htc_20_plus_tested_hiv_positive_male: %i[htc hiv_positive tested_for_hiv male twenty_plus],
-          htc_0_to_9_tested_hiv_positive_female: %i[htc hiv_positive tested_for_hiv female zero_to_nine],
-          htc_10_to_19_tested_hiv_positive_female: %i[htc hiv_positive tested_for_hiv female ten_to_nineteen],
-          htc_20_plus_tested_hiv_positive_female: %i[htc hiv_positive tested_for_hiv female twenty_plus],
-          vct_0_to_9_tested_hiv_positive_male: %i[vct hiv_positive tested_for_hiv male zero_to_nine],
-          vct_10_to_19_tested_hiv_positive_male: %i[vct hiv_positive tested_for_hiv male ten_to_nineteen],
-          vct_20_plus_tested_hiv_positive_male: %i[vct hiv_positive tested_for_hiv male twenty_plus],
-          vct_0_to_9_tested_hiv_positive_female: %i[vct hiv_positive tested_for_hiv female zero_to_nine],
-          vct_10_to_19_tested_hiv_positive_female: %i[vct hiv_positive tested_for_hiv female ten_to_nineteen],
-          vct_20_plus_tested_hiv_positive_female: %i[vct hiv_positive tested_for_hiv female twenty_plus],
-          opd_0_to_9_tested_hiv_positive_male: %i[opd hiv_positive tested_for_hiv male zero_to_nine],
-          opd_10_to_19_tested_hiv_positive_male: %i[opd hiv_positive tested_for_hiv male ten_to_nineteen],
-          opd_20_plus_tested_hiv_positive_male: %i[opd hiv_positive tested_for_hiv male twenty_plus],
-          opd_0_to_9_tested_hiv_positive_female: %i[opd hiv_positive tested_for_hiv female zero_to_nine],
-          opd_10_to_19_tested_hiv_positive_female: %i[opd hiv_positive tested_for_hiv female ten_to_nineteen],
-          opd_20_plus_tested_hiv_positive_female: %i[opd hiv_positive tested_for_hiv female twenty_plus],
+          tested: %i[tested_for_hiv],
+          tested_hiv_positive: %i[hiv_positive tested_for_hiv]
         }.freeze
 
         def initialize(start_date:, end_date:)
@@ -59,7 +29,16 @@ module HtsService
             query = methods.inject(his_patients) do |patients, method|
               send(method, patients)
             end
-            report[indicator] = query.pluck(:patient_id)
+            ACCESS_POINTS.each do |access_point|
+              AGE_GROUPS.each do |age_group|
+                GENDER_GROUPS.each do |gender|
+                  q = [access_point, age_group, gender].inject(query) do |patients, method|
+                    send(method, patients)
+                  end
+                  report["#{access_point}_#{age_group}_#{indicator}_#{gender}"] = q.distinct.pluck(:patient_id)
+                end
+              end
+            end
           end
         end
       end
