@@ -50,7 +50,7 @@ module HTSService
           obs: {
             concept_id: ART_MEDICATION_HISTORY_CONCEPT
           }
-        )).select(:value_coded).first.value_coded == 1065 ? 'Yes' : 'No'
+        )).select(:value_coded).first.value_coded == 1065 ? 'Yes' : 'No' rescue 'No'
     end
 
     def last_date_taken_drugs
@@ -70,7 +70,7 @@ module HTSService
             concept_id: TEST_ONE_CONCEPT,
           }
         )).select(:obs_datetime).first
-        return status.blank? ? nil : status.obs_datetime.to_date
+        return status.obs_datetime.to_date rescue nil
     end
 
     def hiv_status
@@ -80,7 +80,7 @@ module HTSService
             concept_id: HIV_STATUS_CONCEPT,
           }
         )).select(%i[value_coded obs_datetime]).first
-      return status.blank? ? nil : {hiv_status: ConceptName.find_by_concept_id(status.value_coded).name, hiv_status_date: status.obs_datetime.to_date}
+      return {hiv_status: ConceptName.find_by_concept_id(status.value_coded).name, hiv_status_date: status.obs_datetime.to_date} rescue {}
     end
 
     def is_pregnant
@@ -90,7 +90,7 @@ module HTSService
             concept_id: PREGNANCY_STATUS_CONCEPT,
           }
         )).select(:value_coded).first
-      return status.blank? ? nil : ConceptName.find_by_concept_id(status.value_coded).name
+      return ConceptName.find_by_concept_id(status.value_coded).name rescue nil
     end
 
     def is_circumcised
@@ -100,7 +100,7 @@ module HTSService
             concept_id: CIRCUMCISION_STATUS_CONCEPT,
           }
         )).select(:value_coded).first
-        return status.blank? ? nil : ConceptName.find_by_concept_id(status.value_coded).name
+        return ConceptName.find_by_concept_id(status.value_coded).name rescue nil
     end
 
     def art_outcome
@@ -110,7 +110,7 @@ module HTSService
             concept_id: HIS_OUTCOME_CONCEPT,
           }
         )).select(:value_coded).first
-        return status.blank? ? nil : ConceptName.find_by_concept_id(status.value_coded).name
+        return ConceptName.find_by_concept_id(status.value_coded).name rescue nil
     end
 
     private
