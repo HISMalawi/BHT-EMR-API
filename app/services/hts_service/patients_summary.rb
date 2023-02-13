@@ -13,6 +13,7 @@ module HTSService
     TEST_ONE_CONCEPT = ConceptName.find_by_name('Test 1').concept_id
     ART_MEDICATION_HISTORY_CONCEPT = ConceptName.find_by_name('Antiretroviral medication history').concept_id
     LAST_DATE_TAKEN_DRUGS_CONCEPT = ConceptName.find_by_name('Time since last taken medication').concept_id
+    HTC_SERIAL_NUMBER_CONCEPT = ConceptName.find_by_name('HTC serial number').concept_id
 
     def initialize(patient, date)
       @patient = patient
@@ -29,8 +30,18 @@ module HTSService
         is_circumcised: is_circumcised,
         art_outcome: art_outcome,
         ever_received_art: ever_received_art,
-        last_date_taken_drugs: last_date_taken_drugs
+        last_date_taken_drugs: last_date_taken_drugs,
+        htc_serial_number: htc_serial_number
       }.merge(hiv_status)
+    end
+
+    def htc_serial_number
+      order_desc(
+        @service.where(
+          obs: {
+            concept_id: HTC_SERIAL_NUMBER_CONCEPT,
+          }
+        )).select(:value_text).first.value_text rescue nil
     end
 
     def ever_received_art
