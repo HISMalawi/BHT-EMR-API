@@ -41,7 +41,7 @@ module HTSService
           obs: {
             concept_id: HTC_SERIAL_NUMBER_CONCEPT,
           }
-        )).select(:value_text).first.value_text rescue nil
+        )).first.value_text rescue nil
     end
 
     def ever_received_art
@@ -50,7 +50,7 @@ module HTSService
           obs: {
             concept_id: ART_MEDICATION_HISTORY_CONCEPT
           }
-        )).select(:value_coded).first.value_coded == 1065 ? 'Yes' : 'No' rescue 'No'
+        )).first.value_coded == 1065 ? 'Yes' : 'No' rescue 'No'
     end
 
     def last_date_taken_drugs
@@ -60,17 +60,16 @@ module HTSService
             concept_id: LAST_DATE_TAKEN_DRUGS_CONCEPT
           }
         )
-      ).select(:value_datetime).first.value_datetime.to_date rescue nil
+      ).first.obs_datetime.to_date rescue nil
     end
 
     def hiv_test_result_date
-      status = order_desc(
+      order_desc(
         @service.where(
           obs: {
             concept_id: TEST_ONE_CONCEPT,
           }
-        )).select(:obs_datetime).first
-        return status.obs_datetime.to_date rescue nil
+        )).first.obs_datetime.to_date rescue nil
     end
 
     def hiv_status
@@ -79,28 +78,26 @@ module HTSService
           obs: {
             concept_id: HIV_STATUS_CONCEPT,
           }
-        )).select(%i[value_coded obs_datetime]).first
-      return {hiv_status: ConceptName.find_by_concept_id(status.value_coded).name, hiv_status_date: status.obs_datetime.to_date} rescue {}
+        )).pluck('concept_name.name, obs.obs_datetime').first
+      return {hiv_status: status[0], hiv_status_date: status[1].to_date} rescue {}
     end
 
     def is_pregnant
-      status = order_desc(
+      order_desc(
         @service.where(
           obs: {
             concept_id: PREGNANCY_STATUS_CONCEPT,
           }
-        )).select(:value_coded).first
-      return ConceptName.find_by_concept_id(status.value_coded).name rescue nil
+        )).pluck('concept_name.name').first rescue nil
     end
 
     def is_circumcised
-      status = order_desc(
+      order_desc(
         @service.where(
           obs: {
             concept_id: CIRCUMCISION_STATUS_CONCEPT,
           }
-        )).select(:value_coded).first
-        return ConceptName.find_by_concept_id(status.value_coded).name rescue nil
+        )).pluck('concept_name.name').first rescue nil
     end
 
     def art_outcome
@@ -109,18 +106,20 @@ module HTSService
           obs: {
             concept_id: HIS_OUTCOME_CONCEPT,
           }
-        )).select(:value_coded).first
-        return ConceptName.find_by_concept_id(status.value_coded).name rescue nil
+        )).pluck('concept_name.name').first rescue nil
     end
 
     private
 
     def order_desc query
-      query.order('obs_datetime DESC')
+      query.order(obs_datetime: :DESC)
     end
 
     def his_patient
        Observation.joins(encounter: :program)
+            .joins(<<-SQL)
+              LEFT JOIN concept_name ON concept_name.concept_id = obs.value_coded
+             SQL
             .where(
               obs: {person_id: patient.id},
               program: { program_id: HTC_PROGRAM }
