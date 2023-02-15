@@ -156,97 +156,138 @@ module ARTService
         drug_ids = Drug.joins('INNER JOIN concept_set s ON s.concept_id = drug.concept_id')\
                        .where('s.concept_set = ?', arv_concept_id).map(&:drug_id)
 
-        ActiveRecord::Base.connection.select_all <<~SQL
-          SELECT
-            o.patient_id,  drug.name, d.quantity, o.start_date
-          FROM orders o
-          INNER JOIN drug_order d ON d.order_id = o.order_id
-          INNER JOIN drug ON drug.drug_id = d.drug_inventory_id
-          WHERE d.drug_inventory_id IN(#{drug_ids.join(',')})
-          AND o.patient_id = #{patient_id} AND
-          d.quantity > 0 AND o.voided = 0 AND DATE(o.start_date) = (
-            SELECT DATE(MAX(start_date)) FROM orders
-            INNER JOIN drug_order t USING(order_id)
-            WHERE patient_id = o.patient_id
-            AND (
-              start_date BETWEEN '#{@start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
-              AND '#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-              AND t.drug_inventory_id IN(#{drug_ids.join(',')}) AND quantity > 0
-            )
-          ) GROUP BY (o.order_id);
-        SQL
+        ActiveRecord::Base.connection.select_all <<EOF
+        SELECT
+          o.patient_id,  drug.name, d.quantity, o.start_date
+        FROM orders o
+        INNER JOIN drug_order d ON d.order_id = o.order_id
+        INNER JOIN drug ON drug.drug_id = d.drug_inventory_id
+        WHERE d.drug_inventory_id IN(#{drug_ids.join(',')})
+        AND o.patient_id = #{patient_id} AND
+        d.quantity > 0 AND o.voided = 0 AND DATE(o.start_date) = (
+          SELECT DATE(MAX(start_date)) FROM orders
+          INNER JOIN drug_order t USING(order_id)
+          WHERE patient_id = o.patient_id
+          AND (
+            start_date BETWEEN '#{@start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
+            AND '#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+            AND t.drug_inventory_id IN(#{drug_ids.join(',')}) AND quantity > 0
+          )
+        ) GROUP BY (o.order_id);
+EOF
       end
 
       def current_regimen(type)
-        start_time = Time.now
         data = regimen_data
-        puts "Time taken to fetch #{data.length} records: #{Time.now - start_time} seconds"
-        @clients = {}
-        @maternal_status = ARTService::Reports::Pepfar::ViralLoadCoverage2.new(start_date: @start_date, end_date: @end_date).vl_maternal_status((data || []).map { |r| r['patient_id']})
-        @vl_results = latest_vl_result((data || []).map { |r| r['patient_id'] })
-        puts "Time taken to fetch vl and maternal status records: #{Time.now - start_time} seconds"
-        if data && data.length > 5000
-          Parallel.each(data, in_threads: 20) do |r|
-            process_current_report(r, type)
+
+        clients = {}
+        (data || []).each do |r|
+          patient_id = r['patient_id'].to_i
+
+          outcome_status = if type == 'pepfar'
+                             ActiveRecord::Base.connection.select_one <<~SQL
+                               SELECT pepfar_patient_outcome(#{patient_id}, '#{@end_date.to_date}') outcome;
+                             SQL
+
+                           else
+                             ActiveRecord::Base.connection.select_one <<~SQL
+                               SELECT patient_outcome(#{patient_id}, '#{@end_date.to_date}') outcome;
+                             SQL
+
+                           end
+          next unless outcome_status['outcome'] == 'On antiretrovirals'
+
+          medications = arv_dispensention_data(patient_id)
+
+          begin
+            visit_date = medications.first['start_date'].to_date
+          rescue StandardError
+            next
           end
-        else
-          (data || []).each do |r|
-            process_current_report(r, type)
+
+          curr_reg = ActiveRecord::Base.connection.select_one <<~SQL
+            SELECT patient_current_regimen(#{patient_id}, '#{@end_date.to_date}') current_regimen
+          SQL
+
+          next unless visit_date >= @start_date.to_date && visit_date <= @end_date.to_date
+
+          if clients[patient_id].blank?
+            demo = ActiveRecord::Base.connection.select_one <<~SQL
+              SELECT
+                p.birthdate, p.gender, i.identifier arv_number,
+                n.given_name, n.family_name
+              FROM person p
+              LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
+              LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
+              AND i.identifier_type = 4 AND i.voided = 0
+              WHERE p.person_id = #{patient_id} GROUP BY p.person_id
+              ORDER BY n.date_created DESC, i.date_created DESC;
+            SQL
+
+            viral_load = vl_result(patient_id)
+            clients[patient_id] = {
+              arv_number: demo['arv_number'],
+              given_name: demo['given_name'],
+              family_name: demo['family_name'],
+              birthdate: demo['birthdate'],
+              gender: demo['gender'] == 'M' ? 'M' : maternal_status(patient_id, demo['gender']),
+              current_regimen: curr_reg['current_regimen'],
+              current_weight: current_weight(patient_id),
+              art_start_date: r['earliest_start_date'],
+              medication: [],
+              vl_result: viral_load ? viral_load['result'] : nil,
+              vl_result_date: viral_load ? viral_load['result_date'] : nil
+            }
+          end
+
+          (medications || []).each do |med|
+            clients[patient_id][:medication] << {
+              medication: med['name'],
+              quantity: med['quantity'],
+              start_date: visit_date
+            }
           end
         end
-        puts "Time taken to process #{data.length} records: #{Time.now - start_time} seconds"
-        @clients
+
+        clients
       end
 
       def swicth_report(pepfar)
-        @clients = {}
+        clients = {}
         data = regimen_data
-        @maternal_status = ARTService::Reports::Pepfar::ViralLoadCoverage2.new(start_date: @start_date, end_date: @end_date).vl_maternal_status((data || []).map { |r| r['patient_id'] })
         pepfar_outcome_builder(pepfar.blank? ? 'moh' : 'pepfar')
 
-        if data && data.length > 5000
-          Parallel.each(data, in_threads: 20) do |r|
-            process_switch_report(r, pepfar)
-          end
-        else
-          (data || []).each do |r|
-            process_switch_report(r, pepfar)
-          end
-        end
+        (data || []).each do |r|
+          patient_id = r['patient_id'].to_i
+          medications = arv_dispensention_data(patient_id)
 
-        @clients
-      end
 
-      def process_switch_report(r, pepfar)
-        patient_id = r['patient_id'].to_i
-        medications = arv_dispensention_data(patient_id)
+          outcome_status = ActiveRecord::Base.connection.select_one <<~SQL
+            SELECT cum_outcome FROM temp_patient_outcomes WHERE patient_id = #{patient_id};
+          SQL
 
-        outcome_status = ActiveRecord::Base.connection.select_one <<~SQL
-          SELECT cum_outcome FROM temp_patient_outcomes WHERE patient_id = #{patient_id};
-        SQL
+          next if outcome_status.blank?
+          next if outcome_status['cum_outcome'].blank?
+          next unless outcome_status['cum_outcome'] == 'On antiretrovirals'
 
-        return if outcome_status.blank?
-        return if outcome_status['cum_outcome'].blank?
-        return unless outcome_status['cum_outcome'] == 'On antiretrovirals'
+          visit_date = medications.first['start_date']
+          visit_date.blank? ? next : (visit_date = visit_date.to_date)
 
-        visit_date = medications.first['start_date']
-        visit_date.blank? ? return : (visit_date = visit_date.to_date)
+          next unless visit_date >= @start_date.to_date && visit_date <= @end_date.to_date
 
-        return unless visit_date >= @start_date.to_date && visit_date <= @end_date.to_date
-
-        prev_reg = ActiveRecord::Base.connection.select_one <<~SQL
+          prev_reg = ActiveRecord::Base.connection.select_one <<EOF
           SELECT patient_current_regimen(#{patient_id}, '#{(visit_date - 1.day).to_date}') previous_regimen
-        SQL
+EOF
 
-        current_reg = ActiveRecord::Base.connection.select_one <<~SQL
+          current_reg = ActiveRecord::Base.connection.select_one <<EOF
           SELECT patient_current_regimen(#{patient_id}, '#{visit_date}') current_regimen
-        SQL
+EOF
 
-        return if prev_reg['previous_regimen'] == current_reg['current_regimen']
-        return if prev_reg['previous_regimen'] == 'N/A'
+          next if prev_reg['previous_regimen'] == current_reg['current_regimen']
+          next if prev_reg['previous_regimen'] == 'N/A'
 
-        if @clients[patient_id].blank?
-          demo = ActiveRecord::Base.connection.select_one <<~SQL
+          if clients[patient_id].blank?
+            demo = ActiveRecord::Base.connection.select_one <<EOF
             SELECT
               p.birthdate, p.gender, i.identifier arv_number,
               n.given_name, n.family_name, p.person_id
@@ -255,97 +296,33 @@ module ARTService
             LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
             AND i.identifier_type = 4 AND i.voided = 0
             WHERE p.person_id = #{patient_id} GROUP BY p.person_id
-            ORDER BY n.date_created DESC, i.date_created DESC
-          SQL
-
-          @clients[patient_id] = {
-            arv_number: (demo['arv_number'].blank? ? 'N/A' : demo['arv_number']),
-            given_name: demo['given_name'],
-            family_name: demo['family_name'],
-            birthdate: demo['birthdate'],
-            gender: demo['gender'],
-            previous_regimen: prev_reg['previous_regimen'],
-            current_regimen: current_reg['current_regimen'],
-            patient_type: get_patient_type(demo['person_id'], pepfar),
-            current_weight: current_weight(demo['person_id']),
-            art_start_date: r['earliest_start_date'],
-            medication: []
-          }
-        end
-
-        (medications || []).each do |m|
-          @clients[patient_id][:medication] << {
-            medication: m['name'], quantity: m['quantity'],
-            start_date: visit_date
-          }
-        end
-      end
-
-      def process_current_report(r, type)
-        patient_id = r['patient_id'].to_i
-
-        outcome_status = if type == 'pepfar'
-                            ActiveRecord::Base.connection.select_one <<~SQL
-                              SELECT pepfar_patient_outcome(#{patient_id}, '#{@end_date.to_date}') outcome;
-                            SQL
-                         else
-                          ActiveRecord::Base.connection.select_one <<~SQL
-                            SELECT patient_outcome(#{patient_id}, '#{@end_date.to_date}') outcome;
-                          SQL
-                         end
-
-        return unless outcome_status['outcome'] == 'On antiretrovirals'
-
-        medications = arv_dispensention_data(patient_id)
-
-        begin
-          visit_date = medications.first['start_date'].to_date
-        rescue StandardError
-          return
-        end
-
-        curr_reg = ActiveRecord::Base.connection.select_one <<~SQL
-          SELECT patient_current_regimen(#{patient_id}, '#{@end_date.to_date}') current_regimen
-        SQL
-
-        return unless visit_date >= @start_date.to_date && visit_date <= @end_date.to_date
-
-        if @clients[patient_id].blank?
-          demo = ActiveRecord::Base.connection.select_one <<~SQL
-            SELECT
-              p.birthdate, p.gender, i.identifier arv_number,
-              n.given_name, n.family_name
-            FROM person p
-            LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
-            LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
-            AND i.identifier_type = 4 AND i.voided = 0
-            WHERE p.person_id = #{patient_id} GROUP BY p.person_id
             ORDER BY n.date_created DESC, i.date_created DESC;
-          SQL
+EOF
 
-          viral_load = @vl_results.select { |v| v['patient_id'] == patient_id }.first
-          @clients[patient_id] = {
-            arv_number: demo['arv_number'],
-            given_name: demo['given_name'],
-            family_name: demo['family_name'],
-            birthdate: demo['birthdate'],
-            gender: demo['gender'] == 'M' ? 'M' : maternal_status(patient_id, demo['gender']),
-            current_regimen: curr_reg['current_regimen'],
-            current_weight: current_weight(patient_id),
-            art_start_date: r['earliest_start_date'],
-            medication: [],
-            vl_result: viral_load ? viral_load['result'] : nil,
-            vl_result_date: viral_load ? viral_load['result_date'] : nil
-          }
+            clients[patient_id] = {
+              arv_number: (demo['arv_number'].blank? ? 'N/A' : demo['arv_number']),
+              given_name: demo['given_name'],
+              family_name: demo['family_name'],
+              birthdate: demo['birthdate'],
+              gender: demo['gender'],
+              previous_regimen: prev_reg['previous_regimen'],
+              current_regimen: current_reg['current_regimen'],
+              patient_type: get_patient_type(demo['person_id'], pepfar),
+              current_weight: current_weight(demo['person_id']),
+              art_start_date: r['earliest_start_date'],
+              medication: []
+            }
+          end
+
+          (medications || []).each do |m|
+            clients[patient_id][:medication] << {
+              medication: m['name'], quantity: m['quantity'],
+              start_date: visit_date
+            }
+          end
         end
 
-        (medications || []).each do |med|
-          @clients[patient_id][:medication] << {
-            medication: med['name'],
-            quantity: med['quantity'],
-            start_date: visit_date
-          }
-        end
+        clients
       end
 
       def get_patient_type(patient_id, pepfar)
@@ -366,7 +343,7 @@ module ARTService
       def current_weight(patient_id)
         weight_concept = ConceptName.find_by_name('Weight (kg)').concept_id
         obs = Observation.where("person_id = ? AND concept_id = ?
-                                AND obs_datetime <= ? AND (value_numeric IS NOT NULL OR value_text IS NOT NULL)",
+          AND obs_datetime <= ? AND (value_numeric IS NOT NULL OR value_text IS NOT NULL)",
                                 patient_id, weight_concept, @end_date.to_date.strftime('%Y-%m-%d 23:59:59'))\
                          .order('obs_datetime DESC, date_created DESC')
 
@@ -404,26 +381,13 @@ module ARTService
         SQL
       end
 
-      def latest_vl_result(patient_list)
-        ActiveRecord::Base.connection.select_all <<~SQL
-          SELECT
-            o.person_id patient_id,
-            o.obs_datetime AS result_date,
-            CONCAT (COALESCE(o.value_modifier, '='),' ',COALESCE(o.value_numeric, o.value_text, '')) as result
-          FROM obs o
-          LEFT OUTER JOIN obs ob ON ob.person_id = o.person_id AND o.obs_datetime < ob.obs_datetime AND ob.voided = 0 AND ob.concept_id = 856
-          WHERE ob.person_id IS NULL AND o.concept_id = 856 AND o.voided = 0 AND o.obs_datetime < DATE('2022-03-31') + INTERVAL 1 DAY
-          AND (o.value_numeric IS NOT NULL || o.value_text IS NOT NULL)
-          AND o.person_id IN (#{patient_list.join(',')})
-        SQL
-      end
-
       def maternal_status(patient_id, current_gender)
         return nil if current_gender.blank?
 
+        result = ARTService::Reports::Pepfar::ViralLoadCoverage2.new(start_date: @start_date, end_date: @end_date).vl_maternal_status([patient_id])
         gender = 'FNP'
-        gender = 'FP' unless @maternal_status[:FP].include?(patient_id)
-        gender = 'FBf' unless @maternal_status[:FBf].include?(patient_id)
+        gender = 'FP' unless result[:FP].blank?
+        gender = 'FBf' unless result[:FBf].blank?
         gender
       end
     end
