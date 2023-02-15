@@ -91,6 +91,44 @@ module ARTService
         ActiveRecord::Base.connection.execute 'create index reg_outcome on temp_reg_outcome (patient_id)'
       end
 
+      def create_temp_vl_result
+        ActiveRecord::Base.connection.execute <<~SQL
+          CREATE table temp_vl_results
+          SELECT
+            lab_result_obs.obs_datetime AS result_date,
+            CONCAT (COALESCE(measure.value_modifier, '='),' ',COALESCE(measure.value_numeric, measure.value_text, '')) AS result,
+            lab_result_obs.person_id AS patient_id
+          FROM obs AS lab_result_obs
+          INNER JOIN orders ON orders.order_id = lab_result_obs.order_id AND orders.voided = 0
+          INNER JOIN obs AS measure ON measure.obs_group_id = lab_result_obs.obs_id AND measure.voided = 0
+          INNER JOIN (
+            SELECT concept_id, name
+            FROM concept_name
+            INNER JOIN concept USING (concept_id)
+            WHERE concept.retired = 0
+            AND name NOT LIKE 'Lab test result'
+            GROUP BY concept_id
+          ) AS measure_concept ON measure_concept.concept_id = measure.concept_id
+          WHERE lab_result_obs.voided = 0
+          AND measure.person_id IN (SELECT patient_id FROM temp_reg_outcome WHERE outcome = 'On antiretrovirals')
+          AND (measure.value_numeric IS NOT NULL || measure.value_text IS NOT NULL)
+          AND lab_result_obs.obs_datetime < #{end_date} + INTERVAL 1 DAY
+          ORDER BY lab_result_obs.obs_datetime DESC
+        SQL
+        ActiveRecord::Base.connection.execute 'create index vl_result on temp_vl_results (patient_id, result_date)'
+      end
+
+      def create_temp_current_vl_results
+        ActiveRecord::Base.connection.execute <<~SQL
+          CREATE TABLE temp_current_vl_results
+          SELECT t.*
+          FROM temp_vl_results t
+          LEFT JOIN temp_vl_results td ON td.patient_id = t.patient_id AND td.result_date > t.result_date
+          WHERE td.patient_id IS NULL
+        SQL
+        ActiveRecord::Base.connection.execute 'create index current_vl on temp_current_vl_results (patient_id)'
+      end
+
       def clients_alive_on_treatment
         ActiveRecord::Base.connection.execute <<~SQL
           CREATE table tmp_latest_arv_dispensation
