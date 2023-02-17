@@ -30,6 +30,7 @@ module ARTService
         ActiveRecord::Base.connection.execute 'DROP TABLE IF EXISTS temp_current_vl_results'
         ActiveRecord::Base.connection.execute 'DROP TABLE IF EXISTS temp_regimen_patient_weight'
         ActiveRecord::Base.connection.execute 'DROP TABLE IF EXISTS temp_regimen_data'
+        ActiveRecord::Base.connection.execute 'DROP TABLE IF EXISTS temp_patient_start_date'
       end
 
       def create_filtered_data
@@ -41,6 +42,7 @@ module ARTService
         create_temp_vl_result
         create_temp_current_vl_results
         create_temp_regimen_patient_weight
+        create_temp_patient_start_date
       end
 
       def create_temp_current_dispensation
@@ -161,6 +163,30 @@ module ARTService
         ActiveRecord::Base.connection.execute 'create index patient_weight on temp_regimen_patient_weight (patient_id)'
       end
 
+      def create_temp_patient_start_date
+        ActiveRecord::Base.connection.execute <<~SQL
+          CREATE TABLE temp_patient_start_date
+          SELECT
+            `p`.`patient_id` AS `patient_id`,
+            cast(patient_date_enrolled(`p`.`patient_id`) as date) AS `date_enrolled`,
+            date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`
+           FROM
+              ((`patient_program` `p`
+              LEFT JOIN `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
+              LEFT JOIN `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
+              LEFT JOIN `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
+           WHERE
+            ((`p`.`voided` = 0)
+            AND (`s`.`voided` = 0)
+            AND (`p`.`program_id` = 1)
+            AND (`s`.`state` = 7))
+            AND (`s`.`start_date` < #{end_date} + INTERVAL 1 DAY)
+            AND p.patient_id IN (SELECT patient_id FROM temp_reg_outcome WHERE outcome = 'On antiretrovirals')
+          GROUP BY `p`.`patient_id`;
+        SQL
+        ActiveRecord::Base.connection.execute 'create index start_date on temp_patient_start_date (patient_id)'
+      end
+
       def clients_alive_on_treatment
         ActiveRecord::Base.connection.select_all <<~SQL
           SELECT
@@ -173,15 +199,16 @@ module ARTService
             tpw.weight,
             tcvr.result_date,
             tcvr.result,
-            GROUP_CONCAT(CONCAT('{medication:"', tdd.name, '", start_date: "', DATE(tdd.start_date),'", quantity:"',tdd.quantity,'"}')) medication
+            tcp.name regimen,
+            tpsd.earliest_start_date
           FROM temp_reg_outcome trc
-          INNER JOIN temp_current_patient_regimen tcp ON tcp.patient_id = trc.patient_id
-          INNER JOIN temp_drug_dispensed tdd ON tdd.patient_id = trc.patient_id
           INNER JOIN person p ON p.person_id = trc.patient_id AND p.voided = 0
           INNER JOIN person_name pn ON pn.person_id = p.person_id AND pn.voided = 0
           LEFT JOIN patient_identifier i ON i.patient_id = p.person_id AND i.identifier_type = 4 AND i.voided = 0
           LEFT JOIN temp_regimen_patient_weight tpw ON tpw.patient_id = trc.patient_id
           LEFT JOIN temp_current_vl_results tcvr ON tcvr.patient_id = trc.patient_id
+          LEFT JOIN temp_current_patient_regimen tcp ON tcp.patient_id = trc.patient_id
+          LEFT JOIN temp_patient_start_date tpsd ON tpsd.patient_id = trc.patient_id
           WHERE trc.outcome = 'On antiretrovirals'
           GROUP BY trc.patient_id
         SQL
@@ -210,7 +237,7 @@ module ARTService
             current_regimen: client['regimen'],
             current_weight: client['weight'],
             art_start_date: client['earliest_start_date'],
-            medication: client['medication'].split(',').map(&:as_json) || [],
+            medication: fetch_medication(client['patient_id']),
             vl_result: client['result'],
             vl_result_date: client['result_date']
           }
@@ -230,6 +257,19 @@ module ARTService
         gender = 'FP' if @maternal_status[:FP].include?(patient_id)
         gender = 'FBf' if @maternal_status[:FBf].include?(patient_id)
         gender
+      end
+
+      def fetch_medication(patient_id)
+        result = []
+        data = ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT tdd.name, DATE(tdd.start_date) start_date, tdd.quantity
+          FROM temp_drug_dispensed tdd
+          WHERE tdd.patient_id = #{patient_id}
+        SQL
+        data.each do |row|
+          result << { medication: row['name'], start_date: row['start_date'], quantity: row['quantity'] }
+        end
+        result
       end
     end
   end
