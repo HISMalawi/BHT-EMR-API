@@ -3,8 +3,8 @@ module HtsService
     module Stats
       class HtsDashboard
         def initialize(start_date:, end_date:)
-          @start_date = start_date
-          @end_date = end_date
+          @start_date = Date.parse(start_date).beginning_of_day
+          @end_date = Date.parse(end_date).end_of_day
         end
 
         def data
@@ -14,32 +14,35 @@ module HtsService
             total_tested_returning: total_tested_returning
           }
         end
-1
+
         def base_query
-          Observation.joins("INNER JOIN concept_name cn ON cn.concept_id = obs.concept_id")
-                     .joins("INNER JOIN encounter e ON e.encounter_id = obs.encounter_id")
-                     .joins("INNER JOIN encounter_type et ON e.encounter_type = et.encounter_type_id")
-                     .where("e.program_id = 18 AND e.voided = 0 AND obs.voided = 0" )
+          Observation.joins(concept: :concept_names, encounter: [:program, :type])
+                    .where(program: { program_id: 18})
         end
 
         def total_registered
-          base_query.where("et.name = 'Testing' AND  cn.name = 'HIV Status'")
-                   .where('DATE(obs_datetime) BETWEEN ? AND ?', @start_date, @end_date)
-                   .count
+          base_query.where(
+                        encounter_type: {name: 'Testing'},
+                        concept_name: {name: 'HIV Status'},
+                        obs: {obs_datetime: @start_date..@end_date}
+                      ).select(:concept_id).count
         end
 
         def total_enrolled_into_art
-          on_art_concept = 7010
-          base_query.where("et.name = 'ART_FOLLOWUP' AND cn.name = 'Antiretroviral therapy referral'")
-                   .where("obs.value_coded = #{on_art_concept}")
-                   .where("DATE(obs_datetime) BETWEEN '#{@start_date}' AND '#{@end_date}'")
-                   .count
+          linked_concept = concept('Linked').concept_id
+          base_query.where(
+            encounter_type: {name: 'ART_FOLLOWUP'},
+            concept_name: {name: 'Antiretroviral status or outcome'},
+            obs: {obs_datetime: @start_date..@end_date, value_coded: linked_concept},
+          ).select(:concept_id).count
         end
 
         def total_tested_returning
-          base_query.where("et.name = 'APPOINTMENT' AND cn.name = 'Appointment date'")
-                   .where('DATE(obs.value_datetime) BETWEEN ? AND ? ', @start_date, @end_date)
-                   .count
+          base_query.where(
+            encounter_type: {name: 'APPOINTMENT'},
+            concept_name: {name: 'Appointment date'},
+            obs: {value_datetime: @start_date..@end_date}
+          ).select(:concept_id).count
         end
       end
     end
