@@ -3,11 +3,16 @@ module HtsService
     module HtsReportBuilder
 
       HTC_PROGRAM = Program.find_by_name('HTC PROGRAM').id
+      HIV_TESTING_ENCOUNTER = EncounterType.find_by_name('Testing')
       HIV_POSITIVE = concept('Positive').concept_id
       HIV_NEGATIVE = concept('Negative').concept_id
       HIV_STATUS_OBS = concept('HIV status').concept_id
       TEST_LOCATION = concept('Location where test took place').concept_id
-      HIV_TESTING_ENCOUNTER = EncounterType.find_by_name('Testing')
+      LINKED_CONCEPT = concept('Linked').concept_id
+      OUTCOME_FACILITY = 5937
+      ART_OUTCOME = concept('Antiretroviral status or outcome').concept_id
+      REFERRALS_ORDERED = concept('Referrals ordered').concept_id
+      CURRENT_FACILITY = Location.find(GlobalProperty.find_by_property('current_health_center_id').property_value.to_i).name
 
       def his_patients
           Patient.joins(:person, encounters: [:observations, :program])
@@ -18,6 +23,47 @@ module HtsService
               },
               program: { program_id: HTC_PROGRAM }
             )
+      end
+
+      def all query
+        query
+      end
+
+      def linked_within patients
+        linked(patients)
+          .merge(
+            Patient.joins(<<-SQL)
+              INNER JOIN obs within ON within.person_id = patient.patient_id
+            SQL
+            .where(
+              within: {concept_id: OUTCOME_FACILITY, value_text: CURRENT_FACILITY}
+          ))
+      end
+
+      def linked_outside patients
+        linked(patients)
+          .merge(
+            Patient.joins(<<-SQL)
+              INNER JOIN obs outside ON outside.person_id = patient.patient_id
+            SQL
+          .where(
+            outside: {concept_id: OUTCOME_FACILITY}
+          )).where.not(
+            outside: {value_text: [CURRENT_FACILITY, nil]}
+          )
+      end
+
+      def refered_outside patients
+        patients
+          .merge(
+            Patient.joins(<<-SQL)
+              INNER JOIN obs referred ON referred.person_id = patient.patient_id
+            SQL
+          .where(
+            referred: {concept_id: REFERRALS_ORDERED}
+          )).where.not(
+            referred: {value_text: ["None", nil]}
+          )
       end
 
       def male patients
@@ -60,6 +106,15 @@ module HtsService
         ))
       end
 
+      def linked patients
+        patients.merge(Patient.joins(<<-SQL)
+              INNER JOIN obs linked ON linked.person_id = patient.patient_id
+         SQL
+        .where(
+          linked: {concept_id: ART_OUTCOME, value_coded: LINKED_CONCEPT}
+        ))
+      end
+
       def htc patients
         test_location patients, 'HTC'
       end
@@ -72,17 +127,17 @@ module HtsService
         test_location patients, 'OPD'
       end
 
-      # def mch patients
-      #   test_location patients, 'MCH'
-      # end
+      def mch patients
+        test_location patients, 'Malnutrition'
+      end
 
-      # def outreach patients
-      #   test_location patients, 'Outreach'
-      # end
+      def outreach patients
+        test_location patients, 'Mobile'
+      end
 
-      # def anc patients
-      #   test_location patients, 'ANC First Visit'
-      # end
+      def anc patients
+        test_location patients, 'ANC First Visit'
+      end
 
     end
   end

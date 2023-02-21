@@ -6,6 +6,7 @@ module HtsService
 
         include HtsService::Reports::HtsReportBuilder
 
+        LINKAGE_TYPES = %i[all linked_within linked_outside refered_outside].freeze
         ACCESS_POINTS = %i[htc vct opd].freeze
         AGE_GROUPS = %i[zero_to_nine ten_to_nineteen twenty_plus].freeze
         GENDER_GROUPS =  %i[male female].freeze
@@ -32,10 +33,12 @@ module HtsService
             ACCESS_POINTS.each do |access_point|
               AGE_GROUPS.each do |age_group|
                 GENDER_GROUPS.each do |gender|
-                  q = [access_point, age_group, gender].inject(query) do |patients, method|
-                    send(method, patients)
+                  LINKAGE_TYPES.each do |linkage_type|
+                    linkage = [access_point, age_group, gender, linkage_type].inject(query) do |patients, method|
+                      send(method, patients)
+                    end
+                    report["#{linkage_type}_#{access_point}_#{age_group}_#{indicator}_#{gender}"] = linkage.distinct.pluck(:patient_id)
                   end
-                  report["#{access_point}_#{age_group}_#{indicator}_#{gender}"] = q.distinct.pluck(:patient_id)
                 end
               end
             end
