@@ -13,7 +13,7 @@ module ARTService
       end
 
       def regimen_report(type)
-        current_regimen(type)
+        ARTService::Reports::RegimenData.new(type: type, start_date: @start_date, end_date: @end_date).find_report
       end
 
       def latest_regimen_dispensed(rebuild_outcome)
@@ -103,7 +103,7 @@ module ARTService
           WHERE
           (
             start_date BETWEEN '#{@start_date.to_date.strftime('%Y-%m-%d 00:00:00')}' AND '#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-            AND t.drug_inventory_id IN (#{drug_ids.join(',')})
+            AND t.drug_inventory_id IN (#{drug_ids.join(',')}) AND t.quantity > 0
           )
           group by patient_id")
 

@@ -102,7 +102,7 @@ module ARTService
       def create_temp_patient_outcome
         ActiveRecord::Base.connection.execute <<~SQL
           CREATE TABLE temp_reg_outcome
-          SELECT patient_id, patient_outcome(patient_id, #{end_date}) outcome
+          SELECT patient_id, #{type == 'pepfar' ? "pepfar_patient_outcome(patient_id, #{end_date})" : "patient_outcome(patient_id, #{end_date})"} outcome
           FROM temp_current_dispensation
         SQL
         ActiveRecord::Base.connection.execute 'create index reg_outcome on temp_reg_outcome (patient_id)'
@@ -200,16 +200,14 @@ module ARTService
             tcvr.result_date,
             tcvr.result,
             tcp.name regimen,
-            tpsd.earliest_start_date
-          FROM temp_reg_outcome trc
+            trc.earliest_start_date
+          FROM temp_patient_start_date trc
           INNER JOIN person p ON p.person_id = trc.patient_id AND p.voided = 0
           INNER JOIN person_name pn ON pn.person_id = p.person_id AND pn.voided = 0
           LEFT JOIN patient_identifier i ON i.patient_id = p.person_id AND i.identifier_type = 4 AND i.voided = 0
           LEFT JOIN temp_regimen_patient_weight tpw ON tpw.patient_id = trc.patient_id
           LEFT JOIN temp_current_vl_results tcvr ON tcvr.patient_id = trc.patient_id
           LEFT JOIN temp_current_patient_regimen tcp ON tcp.patient_id = trc.patient_id
-          LEFT JOIN temp_patient_start_date tpsd ON tpsd.patient_id = trc.patient_id
-          WHERE trc.outcome = 'On antiretrovirals'
           GROUP BY trc.patient_id
         SQL
       end
