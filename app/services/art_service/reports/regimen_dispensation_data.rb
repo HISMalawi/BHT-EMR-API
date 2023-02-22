@@ -3,7 +3,7 @@
 module ARTService
   module Reports
     # this report is used to generate regimen data
-    class RegimenData
+    class RegimenDispensationData
       attr_reader :start_date, :end_date, :type
 
       def initialize(start_date:, end_date:, **kwargs)

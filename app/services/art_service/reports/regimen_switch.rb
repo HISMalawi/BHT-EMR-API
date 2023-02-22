@@ -13,7 +13,7 @@ module ARTService
       end
 
       def regimen_report(type)
-        ARTService::Reports::RegimenData.new(type: type, start_date: @start_date, end_date: @end_date).find_report
+        ARTService::Reports::RegimenDispensationData.new(type: type, start_date: @start_date, end_date: @end_date).find_report
       end
 
       def latest_regimen_dispensed(rebuild_outcome)
