@@ -60,7 +60,7 @@ module HTSService
                         concept: concept('Antiretroviral status or outcome'),
                         value_coded: concept('Linked').concept_id).exists?
       Logger.debug "Patient #{patient.id} already linked to HTS" unless !exists
-      exists
+      !exists
     end
 
     def patient_is_in_program?
