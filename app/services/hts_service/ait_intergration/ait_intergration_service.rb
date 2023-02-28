@@ -49,7 +49,7 @@ module HTSService::AITIntergration
       request_is_successful = lambda { |status_code| [200, 201].include? status_code}
       return "No Patients to sync" unless patients.present? && patients.count > 1
       index = index_patients.collect { |index| create_index_row index }
-      contacts = index_patients.collect { |index| create_contacts_rows index }
+      contacts = index_patients.collect { |index| create_contacts_rows index }.flatten
       index_csv = generate_csv_for index
       contact_csv = generate_csv_for contacts
       status_code = send_request 'index', index_csv
@@ -111,7 +111,7 @@ module HTSService::AITIntergration
           end
           contact
         end
-        index_contact_list.flatten
+        index_contact_list
     end
 
     def get_index_contacts index
