@@ -264,6 +264,23 @@ class Api::V1::PatientsController < ApplicationController
     render json: cxca.last_screening_info
   end
 
+  def sync_to_ait
+    property = GlobalProperty.find_by_property('hts.ait.last_synced_patient_id') rescue nil
+    property = GlobalProperty.create(
+                  property: 'hts.ait.last_synced_patient_id',
+                  property_value: oldest_hts_patient,
+                  description: 'Last synced patient id'
+                ) if property.blank?
+      render json: ait_intergration_service(property.property_value).sync
+  end
+
+  def oldest_hts_patient
+    Patient.joins(:person, encounters: :program)
+        .where(encounter: {encounter_type: EncounterType.find_by_name('testing')},
+              program: { name: Program.find_by_name('HTC program').name} )
+        .distinct.order(patient_id: :asc).first.id
+  end
+
   private
 
   def patient
@@ -345,6 +362,10 @@ class Api::V1::PatientsController < ApplicationController
 
   def person_service
     PersonService.new
+  end
+
+  def ait_intergration_service patient_id
+    HTSService::AITIntergration::AITIntergrationService.new(patient_id)
   end
 
   def tb_prevention_service
