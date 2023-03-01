@@ -1,15 +1,7 @@
 module HTSService::AITIntergration
     class CsvRowBuilder
 
-      #TODO add to db later, or not
-      locations = CSV.parse(File.read('db/csv/ait_locations.csv'), headers: true)
-      districts = CSV.parse(File.read('db/csv/ait_districts.csv'), headers: true)
-      regions = CSV.parse(File.read('db/csv/ait_regions.csv'), headers: true)
-
-      CURRENT_HEALTH_FACILITY = Location.current_health_center
-      FACILITY = locations.find { |location| location['name'] == CURRENT_HEALTH_FACILITY.name }.map { |k, v| [k.to_sym, v] }.to_h
-      DISTRICT = districts.find { |district| district['name'] == CURRENT_HEALTH_FACILITY.district }.map { |k, v| [k.to_sym, v] }.to_h
-      REGION = regions.find { |region| region['name'] == District.find_by_name(CURRENT_HEALTH_FACILITY.district).region.name }.map { |k, v| [k.to_sym, v] }.to_h
+      AIT_CONFIG = YAML.load_file("#{Rails.root}/config/ait.yml")
 
       def caseid patient
         nil
@@ -149,31 +141,31 @@ module HTSService::AITIntergration
       end
 
       def health_facility_id patient
-        FACILITY[:location_id]
+        AIT_CONFIG['health_facility_id']
       end
 
       def health_facility_name patient
-        FACILITY[:name]
+        AIT_CONFIG['health_facility_name']
       end
 
       def district_id patient
-        DISTRICT[:location_id]
+        AIT_CONFIG['district_id']
       end
 
       def district_name patient
-        DISTRICT[:name]
+        AIT_CONFIG['district_name']
       end
 
       def region_id patient
-        REGION[:location_id]
+        AIT_CONFIG['region_id']
       end
 
       def region_name patient
-        REGION[:name]
+        AIT_CONFIG['region_name']
       end
 
       def partner patient
-        FACILITY[:partner]
+        AIT_CONFIG['partner']
       end
 
       def owner_id patient
@@ -181,11 +173,11 @@ module HTSService::AITIntergration
       end
 
       def site_id patient
-        FACILITY[:site_id]
+        AIT_CONFIG['site_id']
       end
 
       def dhis2_code patient
-        FACILITY[:dhis2_code]
+        AIT_CONFIG['dhis2_code']
       end
 
       def continue_registration patient

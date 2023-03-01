@@ -4,9 +4,7 @@ module HTSService::AITIntergration
 
     LOGGER = Logger.new(STDOUT)
 
-    ENDPOINT = GlobalProperty.find_by_property('hts.ait.endpoint').property_value
-    USERNAME = GlobalProperty.find_by_property('hts.ait.username').property_value
-    PASSWORD = GlobalProperty.find_by_property('hts.ait.password').property_value
+    AIT_CONFIG = YAML.load_file("#{Rails.root}/config/ait.yml")
 
     HTC_PROGRAM = Program.find_by_name('HTC PROGRAM').id
     HIV_TESTING_ENCOUNTER = EncounterType.find_by_name('Testing')
@@ -40,8 +38,9 @@ module HTSService::AITIntergration
 
 
     def initialize(patient_id)
+      raise "AIT config not found or not properly set, please refer to the ait.yml.example" unless !AIT_CONFIG['endpoint'].empty?
       @patients = hts_patients_starting_from patient_id.to_i
-      @rest_client = RestClient::Resource.new ENDPOINT, user: USERNAME, password: PASSWORD, verify_ssl: false
+      @rest_client = RestClient::Resource.new AIT_CONFIG['endpoint'], user: AIT_CONFIG['username'], password: AIT_CONFIG['password'], verify_ssl: false
     end
 
 
@@ -103,7 +102,7 @@ module HTSService::AITIntergration
 
     def create_contacts_rows index
         LOGGER.info "Creating contacts rows for #{index.id}"
-        index_contact_list = get_index_contacts(index).collect do |contact|
+        get_index_contacts(index).collect do |contact|
           CONTACT_ADDITIONAL_HEADERS.each do |header|
             contact[header] = contact_csv_row_builder.send header, contact
             contact['parent_external_id'] = index.id
@@ -111,7 +110,6 @@ module HTSService::AITIntergration
           end
           contact
         end
-        index_contact_list
     end
 
     def get_index_contacts index
