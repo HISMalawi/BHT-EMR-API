@@ -4,18 +4,19 @@ module HtsService
   # This is the engine managing all hts reports.
   class ReportEngine
     REPORTS = {
-      'HTS SUMMARY' => HtsService::Reports::Moh::HtsSummary,
-      'HTS CONFIRMATORY' => HtsService::Reports::Moh::HtsConfirmatory,
-      'HTS INITIAL TESTED FOR HIV' => HtsService::Reports::Moh::HtsInitialTestedForHiv,
-      'HTS INITIAL TESTED FOR HEPATITIS B' => HtsService::Reports::Moh::HtsInitialTestedForHepb,
-      'HTS INITIAL TESTED FOR SYPHILIS' => HtsService::Reports::Moh::HtsInitialTestedForSyphilis,
-      'HTS INDEX' => HtsService::Reports::Pepfar::HtsIndex,
-      'HTS SELF' => HtsService::Reports::Pepfar::HtsSelf,
-      'HTS TST COMMUNITY' => HtsService::Reports::Pepfar::HtsTstCommunity,
-      'HTS RECENT COMMUNITY' => HtsService::Reports::Pepfar::HtsRecentCommunity,
-      'HTS DASHBOARD STATS' => HtsService::Reports::Stats::HtsDashboard,
-      'HTS MONTHLY ACTIVITY LOG' => HtsService::Reports::Clinic::HtsMonthlyActivityLog,
-      'HTS HIV TESTING SUMMARY' => HtsService::Reports::Clinic::HtsHivTestingSummary
+      "HTS SUMMARY" => HtsService::Reports::Moh::HtsSummary,
+      "HTS CONFIRMATORY" => HtsService::Reports::Moh::HtsConfirmatory,
+      "HTS INITIAL TESTED FOR HIV" => HtsService::Reports::Moh::HtsInitialTestedForHiv,
+      "HTS INITIAL TESTED FOR HEPATITIS B" => HtsService::Reports::Moh::HtsInitialTestedForHepb,
+      "HTS INITIAL TESTED FOR SYPHILIS" => HtsService::Reports::Moh::HtsInitialTestedForSyphilis,
+      "HTS INDEX" => HtsService::Reports::Pepfar::HtsIndex,
+      "HTS SELF" => HtsService::Reports::Pepfar::HtsSelf,
+      "HTS TST COMMUNITY" => HtsService::Reports::Pepfar::HtsTstCommunity,
+      "HTS RECENT COMMUNITY" => HtsService::Reports::Pepfar::HtsRecentCommunity,
+      "HTS DASHBOARD STATS" => HtsService::Reports::Stats::HtsDashboard,
+      "HTS MONTHLY ACTIVITY LOG" => HtsService::Reports::Clinic::HtsMonthlyActivityLog,
+      "HTS HIV TESTING SUMMARY" => HtsService::Reports::Clinic::HtsHivTestingSummary,
+      "HTS_LINK" => HtsService::Reports::Clinic::HtsLink,
     }.freeze
 
     def generate_report(type:, **kwargs)
