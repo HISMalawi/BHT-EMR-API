@@ -1,19 +1,17 @@
-
 module HtsService
   module Reports
     module Clinic
       class HtsHivTestingSummary
-
         include HtsService::Reports::HtsReportBuilder
 
-        LINKAGE_TYPES = %i[all linked_within linked_outside refered_outside].freeze
+        LINKAGE_TYPES = %i[all same_facility other_facilities refered_outside].freeze
         ACCESS_POINTS = %i[htc vct opd].freeze
         AGE_GROUPS = %i[zero_to_nine ten_to_nineteen twenty_plus].freeze
-        GENDER_GROUPS =  %i[male female].freeze
+        GENDER_GROUPS = %i[male female].freeze
 
         INDICATORS = {
           tested: %i[tested_for_hiv],
-          tested_hiv_positive: %i[hiv_positive tested_for_hiv]
+          tested_hiv_positive: %i[hiv_positive tested_for_hiv],
         }.freeze
 
         def initialize(start_date:, end_date:)

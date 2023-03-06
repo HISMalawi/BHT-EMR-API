@@ -3,7 +3,7 @@ module HtsService::Reports::Clinic
     include HtsService::Reports::HtsReportBuilder
     attr_reader :start_date, :end_date
 
-    INDICATORS = %i[linked_within linked_outside].freeze
+    INDICATORS = %i[same_facility other_facilities].freeze
     AGE_GROUPS = %i[zero_to_nine ten_to_nineteen twenty_plus].freeze
     LINKED_DAYS = %i[same_day two_to_seven_days eight_to_twenty_eight_days twenty_eight_days_plus].freeze
     GENDER = %i[male female].freeze

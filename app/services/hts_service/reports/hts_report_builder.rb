@@ -30,7 +30,7 @@ module HtsService
         query
       end
 
-      def linked_within(patients)
+      def same_facility(patients)
         linked(patients)
           .merge(
             Patient.joins(<<-SQL)
@@ -42,7 +42,7 @@ module HtsService
           )
       end
 
-      def linked_outside(patients)
+      def other_facilities(patients)
         linked(patients)
           .merge(
             Patient.joins(<<-SQL)
