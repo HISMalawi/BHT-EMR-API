@@ -4,7 +4,6 @@ module HtsService::Reports::Clinic
     attr_reader :start_date, :end_date
 
     INDICATORS = %i[same_facility other_facilities].freeze
-    AGE_GROUPS = %i[zero_to_nine ten_to_nineteen twenty_plus].freeze
     LINKED_DAYS = %i[same_day two_to_seven_days eight_to_twenty_eight_days twenty_eight_days_plus].freeze
     GENDER = %i[male female].freeze
 
@@ -21,9 +20,11 @@ module HtsService::Reports::Clinic
 
     def init_report
       report = []
+      num = 0
       GENDER.each do |gender|
         hts_age_groups.each_with_object([]) do |age_group, index|
           obj = {}
+          obj["num"] = num += 1
           INDICATORS.each do |indicator|
             obj[indicator.to_s] = {}
             obj["gender"] = gender[0].upcase
