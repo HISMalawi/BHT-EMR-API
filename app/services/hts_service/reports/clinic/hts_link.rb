@@ -5,7 +5,7 @@ module HtsService::Reports::Clinic
 
     INDICATORS = %i[same_facility other_facilities].freeze
     LINKED_DAYS = %i[same_day two_to_seven_days eight_to_twenty_eight_days twenty_eight_days_plus].freeze
-    GENDER = %i[male female].freeze
+    GENDER = %i[female male].freeze
 
     def initialize(start_date:, end_date:)
       @start_date = start_date.to_date.beginning_of_day
