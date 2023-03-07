@@ -5,10 +5,13 @@ module HtsService
 
       HTC_PROGRAM = Program.find_by_name("HTC PROGRAM").id
       HIV_TESTING_ENCOUNTER = EncounterType.find_by_name("Testing")
+      ITEMS_GIVEN_ENCOUNTER = EncounterType.find_by_name("ITEMS GIVEN")
       HIV_POSITIVE = concept("Positive").concept_id
       HIV_NEGATIVE = concept("Negative").concept_id
       HIV_STATUS_OBS = concept("HIV status").concept_id
       TEST_LOCATION = concept("Location where test took place").concept_id
+      VISIT_TYPE = concept("Visit type").concept_id
+      SELF_TEST_DISTRIBUTION = concept("Self test distribution").concept_id
       LINKED_CONCEPT = concept("Linked").concept_id
       OUTCOME_FACILITY = concept("ART clinic location").concept_id
       ART_OUTCOME = concept("Antiretroviral status or outcome").concept_id
@@ -21,6 +24,24 @@ module HtsService
             encounter: {
               encounter_datetime: @start_date..@end_date,
               encounter_type: HIV_TESTING_ENCOUNTER,
+            },
+            program: { program_id: HTC_PROGRAM },
+          )
+      end
+
+      def self_test_clients
+        Patient.joins(:person, encounters: [:observations, :program])
+          .merge(
+            Patient.joins(<<-SQL)
+          INNER JOIN encounter test ON test.voided = 0 AND test.patient_id = patient.patient_id
+          INNER JOIN obs visit ON visit.voided = 0 AND visit.person_id = person.person_id
+          SQL
+          )
+          .where(
+            visit: { concept_id: VISIT_TYPE, value_coded: SELF_TEST_DISTRIBUTION },
+            encounter: {
+              encounter_datetime: @start_date..@end_date,
+              encounter_type: ITEMS_GIVEN_ENCOUNTER,
             },
             program: { program_id: HTC_PROGRAM },
           )
