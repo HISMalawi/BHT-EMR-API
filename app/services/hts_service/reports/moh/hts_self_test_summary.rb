@@ -10,6 +10,7 @@ module HtsService::Reports::Moh
     AGE_GROUPS = %i[less_than_13 13_to_14 15_to_19 20_to_24 25_to_29 30_to_34 35_to_39 40_to_44 45_to_49 50_plus]
     LAST_HIV_TEST = %i[never_tested negative positive_on_art positive_not_on_art inconclusive].freeze
     LAST_SICE_HIV_TEST = %i[twelve_plus_months six_to_eleven_months thirty_five_months fourteen_days_to_two_months one_to_thirteen_days same_day].freeze
+    LAST_HIV_RESULT_DATE = %i[last_hiv_result_12_plus_months last_hiv_result_1_to_13_days last_hiv_result_6_to_11_months last_hiv_result_3_to_5_months last_hiv_result_14_days_to_2_months last_hiv_result_less_than_14_days]
     CONDOMS_GIVEN = %i[condoms_sum]
 
     def initialize(start_date:, end_date:)
@@ -30,6 +31,7 @@ module HtsService::Reports::Moh
       calc_gender_types self_test_clients
       calc_groups self_test_clients
       calc_last_hiv_test self_test_clients
+      calc_time_since_last_hiv_result self_test_clients
       calc_items_given self_test_clients
       calc_test_kit_end_users self_test_clients
       calc_end_user_sex_and_age self_test_clients
@@ -130,15 +132,18 @@ module HtsService::Reports::Moh
     end
 
     def calc_time_since_last_hiv_result(clients)
+      LAST_HIV_RESULT_DATE.each { |indicator| report[indicator] = [] }
       clients.where(obs: { concept_id: ConceptName.find_by_name("Time of HIV test").concept_id })
         .distinct
-        .select("obs.value_datetime, patient.patient_id")
+        .select("obs.value_datetime, obs.obs_datetime, patient.patient_id")
         .each do |client|
-        report[:last_hiv_result_12_plus_months].push(client.patient_id) if client.value_datetime >= 12.months.ago
-        report[:last_hiv_result_6_to_11_months].push(client.patient_id) if client.value_datetime >= 6.months.ago && client.value_datetime <= 11.months.ago
-        report[:last_hiv_result_3_to_5_months].push(client.patient_id) if client.value_datetime >= 3.months.ago && client.value_datetime <= 5.months.ago
-        report[:last_hiv_result_14_days_to_2_months].push(client.patient_id) if client.value_datetime >= 14.days.ago && client.value_datetime <= 2.months.ago
-        report[:last_hiv_result_1_to_13_days].push(client.patient_id) if client.value_datetime >= 1.day.ago && client.value_datetime <= 13.days.ago
+        next if client.value_datetime.blank?
+        report[:last_hiv_result_12_plus_months].push(client.patient_id) if client.value_datetime.to_date <= 12.months.ago
+        report[:last_hiv_result_6_to_11_months].push(client.patient_id) if client.value_datetime <= 6.months.ago && client.value_datetime >= 11.months.ago
+        report[:last_hiv_result_3_to_5_months].push(client.patient_id) if client.value_datetime <= 3.months.ago && client.value_datetime >= 5.months.ago
+        report[:last_hiv_result_14_days_to_2_months].push(client.patient_id) if client.value_datetime <= 14.days.ago && client.value_datetime >= 2.months.ago
+        report[:last_hiv_result_1_to_13_days].push(client.patient_id) if client.value_datetime <= 1.day.ago && client.value_datetime >= 13.days.ago
+        report[:last_hiv_result_same_day].push(client.patient_id) if client.value_datetime <= 0.days.ago && client.value_datetime >= 1.day.ago
       end
     end
 
