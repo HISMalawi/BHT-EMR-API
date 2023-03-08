@@ -167,15 +167,16 @@ module HtsService::Reports::Moh
       report[:self] = 0
       report[:sexpartner] = 0
       report[:other] = 0
+      report[:total_endusers] = 0
       clients.joins(<<-SQL)
         INNER JOIN concept_name on concept_name.concept_id = obs.concept_id
         SQL
         .where(
           concept_name: { name: "Self-Test end user" },
         )
-        .distinct
         .pluck("obs.value_coded")
         .each do |client|
+        report[:total_endusers] += 1
         report[:self] += 1 if client == concept("Self").id
         report[:sexpartner] += 1 if client == concept("Sexual Partner").id
         report[:other] += 1 if client == concept("Other").id
