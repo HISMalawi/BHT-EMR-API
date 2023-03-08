@@ -11,37 +11,46 @@ module HtsService
           {
             total_enrolled_into_art: total_enrolled_into_art,
             total_registered: total_registered,
-            total_tested_returning: total_tested_returning
+            total_tested_returning: total_tested_returning,
+            total_positive: total_positive,
           }
         end
 
         def base_query
           Observation.joins(concept: :concept_names, encounter: [:program, :type])
-                    .where(program: { program_id: 18})
+            .where(program: { program_id: 18 })
+        end
+
+        def total_positive
+          base_query.where(
+            encounter_type: { name: "Testing" },
+            concept_name: { name: "HIV Status" },
+            obs: { obs_datetime: @start_date..@end_date, value_coded: 703 },
+          ).distinct.select(:concept_id).count
         end
 
         def total_registered
           base_query.where(
-                        encounter_type: {name: 'Testing'},
-                        concept_name: {name: 'HIV Status'},
-                        obs: {obs_datetime: @start_date..@end_date}
-                      ).select(:concept_id).count
+            encounter_type: { name: "Testing" },
+            concept_name: { name: "HIV Status" },
+            obs: { obs_datetime: @start_date..@end_date },
+          ).select(:concept_id).count
         end
 
         def total_enrolled_into_art
-          linked_concept = concept('Linked').concept_id
+          linked_concept = concept("Linked").concept_id
           base_query.where(
-            encounter_type: {name: 'ART_FOLLOWUP'},
-            concept_name: {name: 'Antiretroviral status or outcome'},
-            obs: {obs_datetime: @start_date..@end_date, value_coded: linked_concept},
+            encounter_type: { name: "ART_FOLLOWUP" },
+            concept_name: { name: "Antiretroviral status or outcome" },
+            obs: { obs_datetime: @start_date..@end_date, value_coded: linked_concept },
           ).select(:concept_id).count
         end
 
         def total_tested_returning
           base_query.where(
-            encounter_type: {name: 'APPOINTMENT'},
-            concept_name: {name: 'Appointment date'},
-            obs: {value_datetime: @start_date..@end_date}
+            encounter_type: { name: "APPOINTMENT" },
+            concept_name: { name: "Appointment date" },
+            obs: { value_datetime: @start_date..@end_date },
           ).select(:concept_id).count
         end
       end
