@@ -33,6 +33,7 @@ module HtsService::Reports::Moh
       calc_items_given self_test_clients
       calc_test_kit_end_users self_test_clients
       calc_end_user_sex_and_age self_test_clients
+      @data[:total_recipients] = self_test_clients.distinct.pluck(:patient_id)
 
       @data
     end
@@ -41,12 +42,10 @@ module HtsService::Reports::Moh
 
     def calc_facility_data(clients)
       FACILITY.each { |indicator| @data[indicator] = [] }
-      @data[:total_recipients] = @data[:total_recipients] + 0 rescue 0
       access_type(clients, "Health Facility").where(obs: { concept_id: TEST_LOCATION })
         .distinct
         .select("obs.value_text, patient.patient_id")
         .each do |client|
-        @data[:total_recipients] += 1
         @data[:total_recipients_at_the_facility].push(client.patient_id)
         @data[:facility_vct].push(client.patient_id) if client.value_text == "VCT"
         @data[:facility_anc_first_visit].push(client.patient_id) if client.value_text == "ANC First Visit"
@@ -70,7 +69,6 @@ module HtsService::Reports::Moh
         .distinct
         .select("obs.value_text, patient.patient_id")
         .each do |client|
-        @data[:total_recipients] += 1
         @data[:total_recipients_in_the_community].push(client.patient_id)
         @data[:community_vmmc].push(client.patient_id) if client.value_text == "VMMC"
         @data[:community_index].push(client.patient_id) if client.value_text == "Index"
