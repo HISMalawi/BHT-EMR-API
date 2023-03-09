@@ -151,27 +151,31 @@ class StockManagementService
 
   def edit_batch_item(batch_item_id, params)
     ActiveRecord::Base.transaction do
-      item = PharmacyBatchItem.find(batch_item_id)
-      reason = params.delete(:reason)
-
-      if params[:current_quantity]
-        diff = params[:current_quantity].to_f - item.current_quantity
-        commit_transaction(item, STOCK_EDIT, diff, Date.today, update_item: false, transaction_reason: reason)
-      end
-
-      if params[:delivered_quantity]
-        diff = params[:delivered_quantity].to_f - item.delivered_quantity
-        commit_transaction(item, STOCK_EDIT, diff, Date.today, update_item: true, transaction_reason: reason)
-      end
-
-      unless item.update(params)
-        error = InvalidParameterError.new('Failed to update batch item')
-        error.model_errors = item.errors
-        raise error
-      end
-
-      item
+      process_edit_batch_item(batch_item_id, params)
     end
+  end
+
+  def process_edit_batch_item(batch_item_id, params)
+    item = PharmacyBatchItem.find(batch_item_id)
+    reason = params.delete(:reason)
+
+    if params[:current_quantity]
+      diff = params[:current_quantity].to_f - item.current_quantity
+      commit_transaction(item, STOCK_EDIT, diff, Date.today, update_item: false, transaction_reason: reason)
+    end
+
+    if params[:delivered_quantity]
+      diff = params[:delivered_quantity].to_f - item.delivered_quantity
+      commit_transaction(item, STOCK_EDIT, diff, Date.today, update_item: true, transaction_reason: reason)
+    end
+
+    unless item.update(params)
+      error = InvalidParameterError.new('Failed to update batch item')
+      error.model_errors = item.errors
+      raise error
+    end
+
+    item
   end
 
   def void_batch_item(batch_item_id, reason)
