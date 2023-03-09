@@ -25,7 +25,7 @@ module ANCService
 
         @patient.encounters.where(["encounter_datetime >= ? AND encounter_datetime <= ? AND program_id = ?",
           @current_range[0]["START"], @current_range[0]["END"], PROGRAM.id]).collect{|e|
-          encounters[e.encounter_datetime.strftime("%d/%b/%Y")] = {"USER" => PersonName.find_by(person_id: e.creator) }
+          encounters[e.encounter_datetime.strftime("%d/%b/%Y")] = {"USER" => PersonName.find_by(person_id: User.find(e.creator).person_id) }
         }
 
         @patient.encounters.where(["encounter_datetime >= ? AND encounter_datetime <= ? AND program_id = ?",
@@ -88,13 +88,13 @@ module ANCService
           label.draw_line(20,25,2,280,0)
           label.draw_line(20,305,800,2,0)
           label.draw_line(805,25,2,280,0)
-          label.draw_text("Visit Summary",28,33,0,1,1,2,false)
-          label.draw_text("Last Menstrual Period: #{@current_range[0]["START"].to_date.strftime("%d/%b/%Y") rescue ""}",28,76,0,2,1,1,false)
-          label.draw_text("Expected Date of Delivery: #{(@current_range[0]["END"].to_date - 5.week).strftime("%d/%b/%Y") rescue ""}",28,99,0,2,1,1,false)
+          label.draw_text("Visit Summary",40,33,0,1,1,2,false)
+          label.draw_text("Last Menstrual Period: #{@current_range[0]["START"].to_date.strftime("%d/%b/%Y") rescue ""}",40,76,0,2,1,1,false)
+          label.draw_text("Expected Date of Delivery: #{(@current_range[0]["END"].to_date - 5.week).strftime("%d/%b/%Y") rescue ""}",40,99,0,2,1,1,false)
           label.draw_line(28,60,132,1,0)
           label.draw_line(20,130,800,2,0)
           label.draw_line(20,190,800,2,0)
-          label.draw_text("Gest.",29,140,0,2,1,1,false)
+          label.draw_text("Gest.",41,140,0,2,1,1,false)
           label.draw_text("Fundal",99,140,0,2,1,1,false)
           label.draw_text("Pos./",178,140,0,2,1,1,false)
           label.draw_text("Fetal",259,140,0,2,1,1,false)
@@ -110,7 +110,7 @@ module ANCService
           label.draw_text("(tabs)",655,158,0,2,1,1,false)
           label.draw_text("Albe.",740,140,0,2,1,1,false)
           label.draw_text("(tabs)",740,156,0,2,1,1,false)
-          label.draw_text("Age",35,158,0,2,1,1,false)
+          label.draw_text("Age",41,158,0,2,1,1,false)
           label.draw_text("Height",99,158,0,2,1,1,false)
           label.draw_text("Pres.",178,158,0,2,1,1,false)
           label.draw_text("Heart",259,158,0,2,1,1,false)
@@ -153,9 +153,11 @@ module ANCService
 
               gestation_weeks = getEquivFundalWeeks(fundal_height) rescue "";
 
-              gest = gestation_weeks.to_s + "wks" rescue ""
+              gest = gestation_weeks.to_s
 
-              label.draw_text(gest,29,200,0,2,1,1,false)
+              label.draw_text(gest,41,200,0,2,1,1,false)
+
+              label.draw_text("wks",41,226,0,2,1,1,false)
 
               fund = (fundal_height <= 0 ? "?" : fundal_height.to_s + "(cm)") rescue ""
 
@@ -247,7 +249,7 @@ module ANCService
 
           @patient.encounters.where(["encounter_datetime >= ? AND encounter_datetime <= ? AND program_id = ?",
               @current_range[0]["START"], @current_range[0]["END"], PROGRAM.id]).collect{|e|
-            encounters[e.encounter_datetime.strftime("%d/%b/%Y")] = {"USER" => PersonName.find_by(person_id: e.creator) }
+            encounters[e.encounter_datetime.strftime("%d/%b/%Y")] = {"USER" => PersonName.find_by(person_id: User.find(e.creator).person_id) }
           }
 
           @patient.encounters.where(["encounter_datetime >= ? AND encounter_datetime <= ? AND program_id = ?",
@@ -317,8 +319,8 @@ module ANCService
           label.draw_line(364,130,2,175,0)
           label.draw_line(594,130,2,175,0)
           label.draw_line(706,130,2,175,0)
-          label.draw_text("Planned Delivery Place: #{@current_range[0]["PLANNED DELIVERY PLACE"] rescue ""}",28,66,0,2,1,1,false)
-          label.draw_text("Bed Net Given: #{@current_range[0]["MOSQUITO NET"] rescue ""}",28,99,0,2,1,1,false)
+          label.draw_text("Planned Delivery Place: #{@current_range[0]["PLANNED DELIVERY PLACE"] rescue ""}",40,66,0,2,1,1,false)
+          label.draw_text("Bed Net Given: #{@current_range[0]["MOSQUITO NET"] rescue ""}",40,99,0,2,1,1,false)
           label.draw_text("",28,138,0,2,1,1,false)
           label.draw_text("TTV",75,156,0,2,1,1,false)
 
@@ -380,7 +382,6 @@ module ANCService
               (0..(med.length)).each{|m|
                 label.draw_text(med[m].to_s,370,(200 + (18 * m)),0,2,1,1,false)
               }
-
               nex = encounters[element]["APPOINTMENT"]["APPOINTMENT DATE"] rescue []
 
               if nex != []
@@ -395,7 +396,7 @@ module ANCService
                 label.draw_text(nex[m].to_s,610,(200 + (18 * m)),0,2,1,1,false)
               }
 
-              user = "#{encounters[element]["USER"].given_name[0]} . #{encounters[element]["USER"].family_name[0]}" rescue ""
+              user = "#{encounters[element]["USER"].given_name[0].upcase}.#{encounters[element]["USER"].family_name[0].upcase}" rescue ""
 
               use = user #(encounters[element]["USER"].split(" ") rescue []).collect{|n| n[0,1].upcase + "."}.join("")  rescue ""
 
@@ -405,7 +406,7 @@ module ANCService
               #   label.draw_text(use[m],710,(200 + (18 * m)),0,2,1,1,false)
               # }
 
-              label.draw_text(use.to_s,710,200,0,2,1,1,false)
+              label.draw_text(use.to_s,730,200,0,2,1,1,false)
 
             end
           end
