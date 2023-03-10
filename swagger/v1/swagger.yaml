@@ -1175,6 +1175,68 @@ paths:
                         product_code:
                           type: string
         required: true
+  "/api/v1/pharmacy/items/batch_update":
+    post:
+      summary: stock verification batch update
+      tags:
+      - Pharmacy
+      description: This updates the stock verification batch items
+      security:
+      - api_key: []
+      parameters: []
+      responses:
+        '204':
+          description: successful
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                verification_date:
+                  type: string
+                  format: date
+                  example: '2020-01-01'
+                  required: true
+                reason:
+                  type: string
+                  example: test
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                        required: true
+                      current_quantity:
+                        type: integer
+                        example: 1
+                        required: false
+                      delivered_quantity:
+                        type: integer
+                        example: 1
+                        required: false
+                      pack_size:
+                        type: integer
+                        example: 1
+                        required: false
+                      expiry_date:
+                        type: string
+                        format: date
+                        example: '2020-01-01'
+                        required: false
+                      delivery_date:
+                        type: string
+                        format: date
+                        example: '2020-01-01'
+                        required: false
+                      reason:
+                        type: string
+                        example: test
+                        required: true
+        required: true
   "/api/v1/rollback/merge_history":
     get:
       summary: Retrieve merge history

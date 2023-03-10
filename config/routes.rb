@@ -190,6 +190,7 @@ Rails.application.routes.draw do
         resource :audit_trail, only: %i[show]
         resource :drug_movement, only: %i[show]
         resources :batches
+        resources :stock_verifications
         resources :items do
           post '/reallocate', to: 'items#reallocate'
           post '/dispose', to: 'items#dispose'
@@ -376,5 +377,7 @@ Rails.application.routes.draw do
 
   get '/api/v1/data_cleaning_confirmation', to: 'api/v1/data_cleaning#view'
   post '/api/v1/data_cleaning_confirmation', to: 'api/v1/data_cleaning#create'
+
+  post '/api/v1/pharmacy/items/batch_update', to: 'api/v1/pharmacy/items#batch_update'
 
 end

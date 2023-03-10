@@ -155,18 +155,28 @@ class StockManagementService
     end
   end
 
-  def process_edit_batch_item(batch_item_id, params)
+  def batch_update_items(data)
+    ActiveRecord::Base.transaction do
+      verification = PharmacyStockVerification.create!(verification_date: data.delete(:verification_date), reason: data.delete(:reason))
+      data['items'].map do |item|
+        id = item.delete(:id)
+        process_edit_batch_item(id, item, verif_id: verification.id)
+      end
+    end
+  end
+
+  def process_edit_batch_item(batch_item_id, params, verif_id: nil)
     item = PharmacyBatchItem.find(batch_item_id)
     reason = params.delete(:reason)
 
     if params[:current_quantity]
       diff = params[:current_quantity].to_f - item.current_quantity
-      commit_transaction(item, STOCK_EDIT, diff, Date.today, update_item: false, transaction_reason: reason)
+      commit_transaction(item, STOCK_EDIT, diff, Date.today, update_item: false, transaction_reason: reason, stock_verification_id:verif_id)
     end
 
     if params[:delivered_quantity]
       diff = params[:delivered_quantity].to_f - item.delivered_quantity
-      commit_transaction(item, STOCK_EDIT, diff, Date.today, update_item: true, transaction_reason: reason)
+      commit_transaction(item, STOCK_EDIT, diff, Date.today, update_item: true, transaction_reason: reason, stock_verification_id:verif_id)
     end
 
     unless item.update(params)
