@@ -28,7 +28,7 @@ module HtsService::Reports::Pepfar
     end
 
     def calc_age_groups(data, age_group)
-      x = send("array_#{age_group.keys.first}", data).deep_dup
+      x = data.select { |q| q["age_group"] == age_group.values.first }
       y = {
         pos: x.select { |q| q["value_coded"] == HIV_POSITIVE }.map { |q| q["person_id"] },
         neg: x.select { |q| q["value_coded"] == HIV_NEGATIVE }.map { |q| q["person_id"] },
@@ -89,11 +89,12 @@ module HtsService::Reports::Pepfar
                 SQL
         .where(hiv_status: { name: "Hiv status" })
         .distinct
-        .select("person.person_id, person.gender, person.birthdate, hiv_status.name, obs.value_coded")
+        .select("disaggregated_age_group(person.birthdate, '#{@end_date.to_date}') as age_group, person.person_id, person.gender, hiv_status.name, obs.value_coded")
         .to_sql
       Patient.connection.select_all(query).to_hash
     end
 
+    # TODO: combine the queries later
     def fetch_facility_data
       query = his_patients
         .joins(<<-SQL)
@@ -104,94 +105,6 @@ module HtsService::Reports::Pepfar
         .select("person.person_id, person.gender, person.birthdate, facility.name, obs.value_text")
         .to_sql
       Person.connection.select_all(query).to_hash
-    end
-
-    def array_less_than_one(patients)
-      patients.select { |q| age(q["birthdate"]) < 1 }
-    end
-
-    def array_one_to_four(patients)
-      select_range(1, 4, patients)
-    end
-
-    def array_five_to_nine(patients)
-      select_range(5, 9, patients)
-    end
-
-    def array_ten_to_fourteen(patients)
-      select_range(10, 14, patients)
-    end
-
-    def array_fifteen_to_nineteen(patients)
-      select_range(15, 19, patients)
-    end
-
-    def array_twenty_to_twenty_four(patients)
-      select_range(20, 24, patients)
-    end
-
-    def array_twenty_five_to_twenty_nine(patients)
-      select_range(25, 29, patients)
-    end
-
-    def array_thirty_to_thirty_four(patients)
-      select_range(30, 34, patients)
-    end
-
-    def array_thirty_five_to_thirty_nine(patients)
-      select_range(35, 39, patients)
-    end
-
-    def array_fourty_to_fourty_four(patients)
-      select_range(40, 49, patients)
-    end
-
-    def array_fourty_five_to_fourty_nine(patients)
-      select_range(45, 49, patients)
-    end
-
-    def array_fifty_to_fifty_four(patients)
-      select_range(50, 54, patients)
-    end
-
-    def array_fifty_five_to_fifty_nine(patients)
-      select_range(55, 59, patients)
-    end
-
-    def array_sixty_to_sixty_four(patients)
-      select_range(60, 64, patients)
-    end
-
-    def array_sixty_five_to_sixty_nine(patients)
-      select_range(1, 4, patients)
-    end
-
-    def array_seventy_to_seventy_four(patients)
-      select_range(70, 74, patients)
-    end
-
-    def array_seventy_five_to_seventy_nine(patients)
-      select_range(75, 79, patients)
-    end
-
-    def array_eighty_to_eighty_four(patients)
-      select_range(80, 84, patients)
-    end
-
-    def array_eighty_five_to_eighty_nine(patients)
-      select_range(85, 89, patients)
-    end
-
-    def array_ninety_plus(patients)
-      patients.select { |q| age(q["birthdate"]) > 90 }
-    end
-
-    def select_range(start, finish, patients)
-      patients.select { |q| (start..finish).include?(age(q["birthdate"])) }
-    end
-
-    def age(birthdate)
-      ((Date.today.to_date - birthdate.to_date) / 365.25).to_i + 1
     end
   end
 end
