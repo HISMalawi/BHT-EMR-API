@@ -68,7 +68,7 @@ module HtsService
           ActiveRecord::Base.connection.select_all <<~SQL
             SELECT e.patient_id, disaggregated_age_group(p.birthdate, '#{end_date}') AS age_group, p.gender, location.value_text AS entry_point, status.value_coded AS hiv_status
             FROM encounter e
-            INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.voided = 0 AND o.concept_id = #{ConceptName.find_by_name('HTS Access Type').concept_id} AND o.value_coded = #{ConceptName.find_by_name('Community-based organization').concept_id}
+            INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.voided = 0 AND o.concept_id = #{ConceptName.find_by_name('HTS Access Type').concept_id} AND o.value_coded = #{ConceptName.find_by_name('Community').concept_id}
             INNER JOIN obs location ON location.encounter_id = e.encounter_id AND location.voided = 0 AND location.concept_id = #{ConceptName.find_by_name('Location where test took place').concept_id}
             INNER JOIN obs status ON status.encounter_id = e.encounter_id AND status.voided = 0 AND status.concept_id = #{ConceptName.find_by_name('HIV Status').concept_id}
             INNER JOIN person p ON p.person_id = e.patient_id AND p.voided = 0
