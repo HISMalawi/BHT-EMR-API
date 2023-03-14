@@ -4,7 +4,8 @@ module HtsService::Reports::Pepfar
     include HtsService::Reports::HtsReportBuilder
     attr_reader :start_date, :end_date, :report, :numbering
 
-    ACCESS_POINTS = %i[index emergency inpatient malnutrition pediatric pmtct_anc1]
+    ACCESS_POINTS = { index: "Index", emergency: "Emergency", inpatient: "Inpatient",
+                      malnutrition: "Malnutrition", pediatric: "Pediatric", pmtct_anc1: "ANC first visit" }
 
     def initialize(start_date:, end_date:)
       @start_date = start_date
@@ -29,17 +30,16 @@ module HtsService::Reports::Pepfar
 
     def calc_age_groups(data, age_group)
       x = data.select { |q| q["age_group"] == age_group.values.first }
-      y = {
-        pos: x.select { |q| q["value_coded"] == HIV_POSITIVE }.map { |q| q["person_id"] },
-        neg: x.select { |q| q["value_coded"] == HIV_NEGATIVE }.map { |q| q["person_id"] },
+      {
+        pos: x.select { |q| q["status"] == HIV_POSITIVE }.map { |q| q["person_id"] },
+        neg: x.select { |q| q["status"] == HIV_NEGATIVE }.map { |q| q["person_id"] },
       }
-      y
     end
 
     def calc_access_points(data, row)
-      ACCESS_POINTS.each do |access_point|
-        x = send("filter_#{access_point}", data)
-        row["#{access_point}"] = calc_age_groups(x.select { |q| q["gender"] == row[:gender].to_s.strip }, row[:age_group])
+      ACCESS_POINTS.each_with_index do |(key, value)|
+        x = patients_in_access_point(data, value)
+        row["#{key}"] = calc_age_groups(x.select { |q| q["gender"] == row[:gender].to_s.strip }, row[:age_group])
         row["age_group"] = row[:age_group].values.first
       end
       row
@@ -55,32 +55,8 @@ module HtsService::Reports::Pepfar
       end
     end
 
-    def filter_index(patients)
-      has_facility(patients, "Index")
-    end
-
-    def filter_emergency(patients)
-      has_facility(patients, "Emergency")
-    end
-
-    def filter_inpatient(patients)
-      has_facility(patients, "Inpatient")
-    end
-
-    def filter_malnutrition(patients)
-      has_facility(patients, "Malnutrition")
-    end
-
-    def filter_pediatric(patients)
-      has_facility(patients, "Pediatric")
-    end
-
-    def filter_pmtct_anc1(patients)
-      has_facility(patients, "ANC first visit")
-    end
-
-    def has_facility(patients, facility)
-      patients.select { |q| q["value_text"] == facility }
+    def patients_in_access_point(patients, facility)
+      patients.select { |q| q["access_point"] == facility }
     end
 
     def fetch_status_data
@@ -89,7 +65,7 @@ module HtsService::Reports::Pepfar
                 SQL
         .where(hiv_status: { name: "Hiv status" })
         .distinct
-        .select("disaggregated_age_group(person.birthdate, '#{@end_date.to_date}') as age_group, person.person_id, person.gender, hiv_status.name, obs.value_coded")
+        .select("disaggregated_age_group(person.birthdate, '#{@end_date.to_date}') as age_group, person.person_id, person.gender, obs.value_coded as status")
         .to_sql
       Patient.connection.select_all(query).to_hash
     end
@@ -102,7 +78,7 @@ module HtsService::Reports::Pepfar
         SQL
         .where(facility: { name: "Location where test took place" })
         .distinct
-        .select("person.person_id, person.gender, person.birthdate, facility.name, obs.value_text")
+        .select("person.person_id, person.gender, person.birthdate, facility.name, obs.value_text as access_point")
         .to_sql
       Person.connection.select_all(query).to_hash
     end
