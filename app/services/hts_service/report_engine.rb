@@ -18,6 +18,7 @@ module HtsService
       "HTS HIV TESTING SUMMARY" => HtsService::Reports::Clinic::HtsHivTestingSummary,
       "HTS_LINK" => HtsService::Reports::Clinic::HtsLink,
       "SELF TEST SUMMARY" => HtsService::Reports::Moh::HtsSelfTestSummary,
+      "HTS TST FAC" => HtsService::Reports::Pepfar::HtsTstFac1,
     }.freeze
 
     def generate_report(type:, **kwargs)
