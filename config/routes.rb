@@ -380,4 +380,6 @@ Rails.application.routes.draw do
 
   post '/api/v1/pharmacy/items/batch_update', to: 'api/v1/pharmacy/items#batch_update'
 
+  get '/api/v1/next_appointment', to: 'api/v1/appointments#next_appointment'
+
 end
