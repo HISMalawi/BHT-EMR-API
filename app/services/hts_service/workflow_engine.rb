@@ -42,6 +42,7 @@ module HTSService
     CIRCUMCISION = 'CIRCUMCISION'
     SOCIAL_HISTORY = 'SOCIAL HISTORY'
     TESTING = 'TESTING'
+    RECENCY = 'RECENCY'
     APPOINTMENT = 'APPOINTMENT'
     HTS_CONTACT = 'HTS Contact'
     REFERRAL = 'REFERRAL'
@@ -54,7 +55,8 @@ module HTSService
       PREGNANCY_STATUS => CIRCUMCISION,
       CIRCUMCISION => SOCIAL_HISTORY,
       SOCIAL_HISTORY => TESTING,
-      TESTING => PARTNER_RECEPTION,
+      TESTING => RECENCY,
+      RECENCY => PARTNER_RECEPTION,
       PARTNER_RECEPTION => APPOINTMENT,
       APPOINTMENT => HTS_CONTACT,
       HTS_CONTACT => ITEMS_GIVEN,
@@ -75,6 +77,10 @@ module HTSService
       SOCIAL_HISTORY => %i[no_social_history?],
 
       TESTING => %i[task_not_done_today?],
+
+      RECENCY => %i[not_from_community_accesspoint?
+                    can_perform_recency?
+                    test2_done?],
 
       APPOINTMENT => %i[task_not_done_today?
                       done_screening_today?
@@ -118,6 +124,37 @@ module HTSService
     def is_female_client?
       @patient.gender == "F"
     end
+
+    def test2_done?
+      Observation.joins(:encounter).where(
+        person_id: @patient.person_id,
+        concept_id: concept('Test 2').concept_id,
+        encounter: {
+          program_id: @program.program_id,
+          encounter_type: encounter_type('TESTING')
+        }
+      ).first.exists?
+    end
+
+    def can_perform_recency?
+      %i[recency_activated? recency_in_user_properties?].all? { |condition| send(condition) }
+    end
+
+    def recency_in_user_properties?
+      properties = UserProperties.where(
+        user_id: User.current.id,
+        property: 'HTS_PROPERTIES'
+      ).first
+      properties = properties.property_value.split(',') rescue []
+      return false if properties.blank?
+      return false if !properties.include?('RECENCY')
+      true
+    end
+
+    def recency_activated?
+      GlobalProperty.where(property: 'hts.recency.test').last.property_value == 'true'
+    end
+
 
     def client_not_circumcised?
       status = Observation.joins(:encounter)
