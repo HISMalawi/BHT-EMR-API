@@ -4,6 +4,63 @@ info:
   title: EMR API V1 DOCS
   version: v1
 paths:
+  "/api/v1/next_appointment":
+    get:
+      summary: list appointments
+      tags:
+      - Appointments
+      description: Appointments Endpoints
+      security:
+      - api_key: []
+      parameters:
+      - name: patient_id
+        in: query
+        example: 1
+        description: Patient ID
+        required: true
+        default: 1
+        schema:
+          type: integer
+      - name: program_id
+        in: query
+        example: 1
+        description: Program ID
+        required: true
+        default: 1
+        schema:
+          type: integer
+      - name: date
+        in: query
+        format: date
+        example: '2020-01-01'
+        description: Date in YYYY-MM-DD format
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  appointment_date:
+                    type: string
+                    format: date
+                required:
+                - appointment_date
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: string
+                required:
+                - errors
   "/api/v1/art_data_cleaning_tools":
     get:
       summary: Retrieve patients with data problems
