@@ -21,10 +21,8 @@ module HtsService::Reports::Pepfar
     private
 
     def fetch_data
-      sdata, fdata = fetch_status_data, fetch_facility_data
-      data = fdata.map { |f| f.merge(sdata.find { |s| s["person_id"] == f["person_id"] }) }
       rows = hts_age_groups.collect { |age_group| construct_row age_group }.flatten
-      rows = rows.collect { |row| calc_access_points data, row }
+      rows = rows.collect { |row| calc_access_points query, row }
       rows.flatten.uniq
     end
 
@@ -59,26 +57,16 @@ module HtsService::Reports::Pepfar
       patients.select { |q| q["access_point"] == facility }
     end
 
-    def fetch_status_data
-      query = his_patients.joins(<<-SQL)
-                INNER JOIN concept_name hiv_status ON hiv_status.concept_id = obs.concept_id
-                SQL
-        .where(hiv_status: { name: "Hiv status" })
-        .distinct
-        .select("disaggregated_age_group(person.birthdate, '#{@end_date.to_date}') as age_group, person.person_id, person.gender, obs.value_coded as status")
-        .to_sql
-      Patient.connection.select_all(query).to_hash
-    end
-
-    # TODO: combine the queries later
-    def fetch_facility_data
-      query = his_patients
+    def query
+      query = his_patients_rev
         .joins(<<-SQL)
-        INNER JOIN concept_name facility ON facility.concept_id = obs.concept_id
+        LEFT JOIN obs facility ON facility.person_id = person.person_id
+        AND facility.concept_id = #{TEST_LOCATION}
+        LEFT JOIN obs hiv_status ON hiv_status.person_id = person.person_id
+        AND hiv_status.concept_id = #{HIV_STATUS_OBS}
         SQL
-        .where(facility: { name: "Location where test took place" })
-        .distinct
-        .select("person.person_id, person.gender, person.birthdate, facility.name, obs.value_text as access_point")
+        .select("disaggregated_age_group(person.birthdate, '#{@end_date.to_date}') as age_group, person.person_id, person.gender, facility.value_text as access_point, hiv_status.value_coded as status")
+        .group("person.person_id")
         .to_sql
       Person.connection.select_all(query).to_hash
     end
