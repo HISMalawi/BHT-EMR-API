@@ -4,7 +4,7 @@ module HtsService
       class HtsHivTestingSummary
         include HtsService::Reports::HtsReportBuilder
 
-        LINKAGE_TYPES = %i[all same_facility other_facilities refered_outside].freeze
+        LINKAGE_TYPES = %i[all linked_within_facility referred_outside_the_facility].freeze
         ACCESS_POINTS = %i[htc vct opd].freeze
         AGE_GROUPS = %i[zero_to_nine ten_to_nineteen twenty_plus].freeze
         GENDER_GROUPS = %i[male female].freeze
@@ -35,12 +35,21 @@ module HtsService
                     linkage = [access_point, age_group, gender, linkage_type].inject(query) do |patients, method|
                       send(method, patients)
                     end
-                    report["#{linkage_type}_#{access_point}_#{age_group}_#{indicator}_#{gender}"] = linkage.distinct.pluck(:patient_id)
+                    q = linkage_type != :all ? "" : "#{indicator}_"
+                    report["#{access_point}_#{age_group}_#{linkage_type == :all ? "" : "#{linkage_type}_"}#{q}#{gender}"] = linkage.distinct.pluck(:patient_id)
                   end
                 end
               end
             end
           end
+        end
+
+        def linked_within_facility(patients)
+          other_facilities patients
+        end
+
+        def referred_outside_the_facility(patients)
+          same_facility patients
         end
       end
     end
