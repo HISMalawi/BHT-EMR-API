@@ -29,6 +29,18 @@ module HtsService
           )
       end
 
+      #with the correct join
+      def his_patients_rev
+        Patient.joins(:person, encounters: :program)
+          .where(
+            encounter: {
+              encounter_datetime: @start_date..@end_date,
+              encounter_type: HIV_TESTING_ENCOUNTER,
+            },
+            program: { program_id: HTC_PROGRAM },
+          )
+      end
+
       def self_test_clients
         Patient.joins(:person, encounters: [:observations, :program])
           .merge(
