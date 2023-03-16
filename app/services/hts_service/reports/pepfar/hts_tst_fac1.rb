@@ -5,7 +5,8 @@ module HtsService::Reports::Pepfar
     attr_reader :start_date, :end_date, :report, :numbering
 
     ACCESS_POINTS = { index: "Index", emergency: "Emergency", inpatient: "Inpatient",
-                      malnutrition: "Malnutrition", pediatric: "Pediatric", pmtct_anc1: "ANC first visit" }
+                      malnutrition: "Malnutrition", pediatric: "Pediatric", pmtct_anc1: "ANC first visit",
+                      sns: "SNS", sti: "STI", tb: "TB", vct: "VCT", vmmc: "VMMC", other_pitc: "Other PITC" }
 
     def initialize(start_date:, end_date:)
       @start_date = start_date
