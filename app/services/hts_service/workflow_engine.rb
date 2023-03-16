@@ -78,8 +78,7 @@ module HTSService
 
       TESTING => %i[task_not_done_today?],
 
-      RECENCY => %i[not_from_community_accesspoint?
-                    can_perform_recency?],
+      RECENCY => %i[not_from_community_accesspoint? can_perform_recency?],
 
       APPOINTMENT => %i[task_not_done_today?
                         done_screening_today?
@@ -121,19 +120,20 @@ module HTSService
       @patient.gender == "F"
     end
 
-    def test2_done?
+    def test_two_done?
       Observation.joins(:encounter).where(
-        person_id: @patient.person_id,
+        person: @patient.person,
         concept_id: concept("Test 2").concept_id,
         encounter: {
           program_id: @program.program_id,
           encounter_type: encounter_type("TESTING"),
         },
-      ).first.exists?
+      ).exists?
     end
 
     def can_perform_recency?
-      %i[recency_activated? recency_in_user_properties?].all? { |condition| send(condition) }
+      puts "Can perform recency #{test_two_done?}"
+      %i[test_two_done? recency_activated? recency_in_user_properties?].all? { |condition| send(condition) }
     end
 
     def recency_in_user_properties?
