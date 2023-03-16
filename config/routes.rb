@@ -56,6 +56,7 @@ Rails.application.routes.draw do
         get '/labels/national_health_id' => 'patients#print_national_health_id_label'
         get '/labels/filing_number' => 'patients#print_filing_number'
         get 'labels/print_tb_number', to: 'patients#print_tb_number'
+        get 'labels/print_hts_linkage_code/:code', to: 'patients#print_hts_linkage_code'
         get 'labels/print_tb_lab_order_summary', to: 'patients#print_tb_lab_order_summary'
         get '/visits' => 'patients#visits'
         get '/visit' => 'patients#visit'

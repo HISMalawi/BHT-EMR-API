@@ -4,22 +4,22 @@ module HtsService
   # This is the engine managing all hts reports.
   class ReportEngine
     REPORTS = {
-      'HTS SUMMARY' => HtsService::Reports::Moh::HtsSummary,
-      'HTS CONFIRMATORY' => HtsService::Reports::Moh::HtsConfirmatory,
-      'HTS INITIAL TESTED FOR HIV' => HtsService::Reports::Moh::HtsInitialTestedForHiv,
-      'HTS INITIAL TESTED FOR HEPATITIS B' => HtsService::Reports::Moh::HtsInitialTestedForHepb,
-      'HTS INITIAL TESTED FOR SYPHILIS' => HtsService::Reports::Moh::HtsInitialTestedForSyphilis,
-      'HTS INDEX' => HtsService::Reports::Pepfar::HtsIndex,
-      'HTS SELF' => HtsService::Reports::Pepfar::HtsSelf,
-      'HTS TST COMMUNITY' => HtsService::Reports::Pepfar::HtsTstCommunity,
-      'HTS TST FACILITY' => HtsService::Reports::Pepfar::HtsTstFacility,
-      'HTS TST KP' => HtsService::Reports::Pepfar::HtsTstKp,
-      'HTS RECENT KP' => HtsService::Reports::Pepfar::HtsRecentKp,
-      'HTS SELF KP' => HtsService::Reports::Pepfar::HtsSelfKp,
-      'HTS RECENT COMMUNITY' => HtsService::Reports::Pepfar::HtsRecentCommunity,
-      'HTS RECENT FACILITY' => HtsService::Reports::Pepfar::HtsRecentFacility,
-      'HTS DASHBOARD STATS' => HtsService::Reports::Stats::HtsDashboard,
-      'HTS MONTHLY ACTIVITY LOG' => HtsService::Reports::Clinic::HtsMonthlyActivityLog
+      "HTS SUMMARY" => HtsService::Reports::Moh::HtsSummary,
+      "HTS CONFIRMATORY" => HtsService::Reports::Moh::HtsConfirmatory,
+      "HTS INITIAL TESTED FOR HIV" => HtsService::Reports::Moh::HtsInitialTestedForHiv,
+      "HTS INITIAL TESTED FOR HEPATITIS B" => HtsService::Reports::Moh::HtsInitialTestedForHepb,
+      "HTS INITIAL TESTED FOR SYPHILIS" => HtsService::Reports::Moh::HtsInitialTestedForSyphilis,
+      "HTS INDEX" => HtsService::Reports::Pepfar::HtsIndex,
+      "HTS SELF" => HtsService::Reports::Pepfar::HtsSelf,
+      "HTS TST COMMUNITY" => HtsService::Reports::Pepfar::HtsTstCommunity,
+      "HTS RECENT COMMUNITY" => HtsService::Reports::Pepfar::HtsRecentCommunity,
+      "HTS DASHBOARD STATS" => HtsService::Reports::Stats::HtsDashboard,
+      "HTS MONTHLY ACTIVITY LOG" => HtsService::Reports::Clinic::HtsMonthlyActivityLog,
+      "HTS HIV TESTING SUMMARY" => HtsService::Reports::Clinic::HtsHivTestingSummary,
+      "HTS_LINK" => HtsService::Reports::Clinic::HtsLink,
+      "SELF TEST SUMMARY" => HtsService::Reports::Moh::HtsSelfTestSummary,
+      "HTS TST FAC" => HtsService::Reports::Pepfar::HtsTstFac1,
+      "HTS RECENT FAC" => HtsService::Reports::Pepfar::HtsRecentFac,
     }.freeze
 
     def generate_report(type:, **kwargs)

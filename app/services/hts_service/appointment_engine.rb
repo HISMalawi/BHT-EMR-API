@@ -19,8 +19,8 @@ module HTSService
       return @ref_date + 2.weeks if hiv_status == inconclusive_concept
       if hiv_status == concept_id('Negative')
         risk_category = recent_risk_category
-        return @ref_date + 4.weeks if risk_category == concept_id('High risk event in last 3 months')
-        return @ref_date + 12.months if risk_category == concept_id('On-going risk')
+        return @ref_date + 4.weeks if risk_category == concept_id('High risk event in last 3 months') || risk_category == concept_id("Risk assessment not done")
+        return @ref_date + 12.months if risk_category == concept_id('On-going risk') || risk_category == concept_id('Low risk')
       end
     end
 

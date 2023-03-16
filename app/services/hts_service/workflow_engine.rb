@@ -42,10 +42,12 @@ module HTSService
     CIRCUMCISION = 'CIRCUMCISION'
     SOCIAL_HISTORY = 'SOCIAL HISTORY'
     TESTING = 'TESTING'
+    RECENCY = 'RECENCY'
     APPOINTMENT = 'APPOINTMENT'
     HTS_CONTACT = 'HTS Contact'
     REFERRAL = 'REFERRAL'
     PARTNER_RECEPTION = 'Partner Reception'
+    ART_INITIATION = 'ART Enrollment'
 
     # Encounters graph
     ENCOUNTER_SM = {
@@ -53,29 +55,39 @@ module HTSService
       PREGNANCY_STATUS => CIRCUMCISION,
       CIRCUMCISION => SOCIAL_HISTORY,
       SOCIAL_HISTORY => TESTING,
-      TESTING => APPOINTMENT,
+      TESTING => RECENCY,
+      RECENCY => PARTNER_RECEPTION,
+      PARTNER_RECEPTION => APPOINTMENT,
       APPOINTMENT => HTS_CONTACT,
       HTS_CONTACT => ITEMS_GIVEN,
-      ITEMS_GIVEN => REFERRAL,
-      REFERRAL => PARTNER_RECEPTION,
-      PARTNER_RECEPTION => END_STATE
+      ITEMS_GIVEN => ART_INITIATION,
+      ART_INITIATION => REFERRAL,
+      REFERRAL => END_STATE
     }.freeze
 
     STATE_CONDITIONS = {
 
       PREGNANCY_STATUS => %i[is_female_client?
-                             task_not_done?],
+                             task_not_done_today?],
 
       CIRCUMCISION => %i[is_male_client?
-                        task_not_done?],
+                        client_not_circumcised?
+                        task_not_done_today?],
 
       SOCIAL_HISTORY => %i[no_social_history?],
 
       TESTING => %i[task_not_done_today?],
 
+      RECENCY => %i[not_from_community_accesspoint?
+                    can_perform_recency?
+                    test2_done?],
+
       APPOINTMENT => %i[task_not_done_today?
                       done_screening_today?
                       not_hiv_positive_at_health_facility_accesspoint?],
+
+      ART_INITIATION => %i[no_art_referral?
+                        hiv_positive_at_health_facility_accesspoint?],
 
       HTS_CONTACT => %i[hiv_positive_at_health_facility_accesspoint?],
 
@@ -111,6 +123,51 @@ module HTSService
 
     def is_female_client?
       @patient.gender == "F"
+    end
+
+    def test2_done?
+      Observation.joins(:encounter).where(
+        person_id: @patient.person_id,
+        concept_id: concept('Test 2').concept_id,
+        encounter: {
+          program_id: @program.program_id,
+          encounter_type: encounter_type('TESTING')
+        }
+      ).first.exists?
+    end
+
+    def can_perform_recency?
+      %i[recency_activated? recency_in_user_properties?].all? { |condition| send(condition) }
+    end
+
+    def recency_in_user_properties?
+      properties = UserProperties.where(
+        user_id: User.current.id,
+        property: 'HTS_PROPERTIES'
+      ).first
+      properties = properties.property_value.split(',') rescue []
+      return false if properties.blank?
+      return false if !properties.include?('RECENCY')
+      true
+    end
+
+    def recency_activated?
+      GlobalProperty.where(property: 'hts.recency.test').last.property_value == 'true'
+    end
+
+
+    def client_not_circumcised?
+      status = Observation.joins(:encounter)
+                          .where(concept: concept('Circumcision status'),
+                            person: @patient.person,
+                            encounter: {
+                              program_id: @program.program_id,
+                              encounter_type: encounter_type('CIRCUMCISION')
+                            })
+                          .where('obs_datetime <= ?', @date)
+                          .last
+      return true if status.blank?
+      concept('No').concept_id === status.value_coded
     end
 
     def task_not_done?
@@ -162,6 +219,20 @@ module HTSService
                           .last
       return false if access.blank?
       concept('Health Facility').concept_id === access.value_coded && is_hiv_positive?
+    end
+
+    def no_art_referral?
+      referral = Observation.joins(:encounter)
+                          .where(concept: concept('ART referral'),
+                              person: @patient.person,
+                              encounter: {
+                                program_id: @program.program_id,
+                                encounter_type: encounter_type(ART_INITIATION)
+                              })
+                          .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))
+                          .last
+      return true if referral.blank?
+      concept('No').concept_id === referral.value_coded
     end
 
     def is_hiv_positive?

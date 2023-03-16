@@ -10,7 +10,7 @@ class Api::V1::PatientsController < ApplicationController
 
   before_action :authenticate,
                 except: %i[print_national_health_id_label print_filing_number print_tb_number
-                           print_tb_lab_order_summary]
+                           print_tb_lab_order_summary print_hts_linkage_code]
 
   include ModelUtils
 
@@ -227,6 +227,14 @@ class Api::V1::PatientsController < ApplicationController
 
   def print_tb_lab_order_summary
     label = lab_tests_engine.generate_lab_order_summary(tb_lab_order_params)
+    send_data label, type: 'application/label;charset=utf-8',
+                     stream: false,
+                     filename: "#{params[:patient_id]}-#{SecureRandom.hex(12)}.lbl",
+                     disposition: 'inline'
+  end
+
+  def print_hts_linkage_code
+    label = HTSService::HtsLinkageCode.new(params[:patient_id], params[:code]).print_linkage_code
     send_data label, type: 'application/label;charset=utf-8',
                      stream: false,
                      filename: "#{params[:patient_id]}-#{SecureRandom.hex(12)}.lbl",

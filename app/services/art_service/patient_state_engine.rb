@@ -30,6 +30,8 @@ module ARTService
         end
 
         create_patient_state(on_arvs_state, date, patient_state)
+        # if patient is on HTS update the state on HTS to linked to care
+        LinkPatientJob.perform_later(patient, date.to_s)
       end
     end
 
