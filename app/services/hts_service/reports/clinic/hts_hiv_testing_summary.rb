@@ -62,15 +62,16 @@ module HtsService
         end
 
         def build_test_report(person)
-          gender, age_group_name, access_point = build(person)
+          gender, age_group_name, access_point = build(person) rescue nil
           indicator = person["status"] == "Positive" ? "tested_hiv_positive" : "tested"
+          return nil if access_point.nil?
           "#{access_point}_#{age_group_name}_#{indicator}_#{gender}"
         end
 
         def build_linkage_report(person)
-          gender, age_group_name, access_point = build(person)
+          gender, age_group_name, access_point = build(person) rescue nil
           linkage_type = calc_linkage_type(person["outcome_facility"])
-          return nil if linkage_type.nil?
+          return nil if linkage_type.nil? || gender.nil?
           "#{access_point}_#{age_group_name}_#{linkage_type}_#{gender}"
         end
 
@@ -98,7 +99,7 @@ module HtsService
             LEFT JOIN obs location on location.voided = 0 AND location.person_id = person.person_id
             AND location.concept_id = #{TEST_LOCATION}
             SQL
-            ).select("person.person_id, person.gender, person.birthdate, max(linked.value_coded) as liked_status, max(outcome.value_text) as outcome_facility, hiv_status.value_coded as status, location.value_text as location")
+            ).select("person.person_id, person.gender, person.birthdate, max(outcome.value_text) as outcome_facility, hiv_status.value_coded as status, location.value_text as location")
             .distinct
             .group("person.person_id")
             .to_sql).to_hash
