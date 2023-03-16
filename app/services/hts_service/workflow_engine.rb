@@ -141,7 +141,7 @@ module HTSService
     end
 
     def recency_in_user_properties?
-      properties = UserProperties.where(
+      properties = UserProperty.where(
         user_id: User.current.id,
         property: 'HTS_PROPERTIES'
       ).first
