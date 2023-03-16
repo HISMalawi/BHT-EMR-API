@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'set'
+require "set"
 
 module HTSService
   class WorkflowEngine
@@ -8,7 +8,7 @@ module HTSService
 
     def initialize(patient:, date: nil, program: nil)
       @patient = patient
-      @program = program || program('HTC Program')
+      @program = program || program("HTC Program")
       @date = date || Date.today
     end
 
@@ -37,17 +37,17 @@ module HTSService
     # Encounter types
     INITIAL_STATE = 0 # Start terminal for encounters graph
     END_STATE = 1 # End terminal for encounters graph
-    PREGNANCY_STATUS = 'PREGNANCY STATUS'
-    ITEMS_GIVEN = 'ITEMS GIVEN'
-    CIRCUMCISION = 'CIRCUMCISION'
-    SOCIAL_HISTORY = 'SOCIAL HISTORY'
-    TESTING = 'TESTING'
-    RECENCY = 'RECENCY'
-    APPOINTMENT = 'APPOINTMENT'
-    HTS_CONTACT = 'HTS Contact'
-    REFERRAL = 'REFERRAL'
-    PARTNER_RECEPTION = 'Partner Reception'
-    ART_INITIATION = 'ART Enrollment'
+    PREGNANCY_STATUS = "PREGNANCY STATUS"
+    ITEMS_GIVEN = "ITEMS GIVEN"
+    CIRCUMCISION = "CIRCUMCISION"
+    SOCIAL_HISTORY = "SOCIAL HISTORY"
+    TESTING = "TESTING"
+    RECENCY = "RECENCY"
+    APPOINTMENT = "APPOINTMENT"
+    HTS_CONTACT = "HTS Contact"
+    REFERRAL = "REFERRAL"
+    PARTNER_RECEPTION = "Partner Reception"
+    ART_INITIATION = "ART Enrollment"
 
     # Encounters graph
     ENCOUNTER_SM = {
@@ -62,7 +62,7 @@ module HTSService
       HTS_CONTACT => ITEMS_GIVEN,
       ITEMS_GIVEN => ART_INITIATION,
       ART_INITIATION => REFERRAL,
-      REFERRAL => END_STATE
+      REFERRAL => END_STATE,
     }.freeze
 
     STATE_CONDITIONS = {
@@ -71,23 +71,22 @@ module HTSService
                              task_not_done_today?],
 
       CIRCUMCISION => %i[is_male_client?
-                        client_not_circumcised?
-                        task_not_done_today?],
+                         client_not_circumcised?
+                         task_not_done_today?],
 
       SOCIAL_HISTORY => %i[no_social_history?],
 
       TESTING => %i[task_not_done_today?],
 
       RECENCY => %i[not_from_community_accesspoint?
-                    can_perform_recency?
-                    test2_done?],
+                    can_perform_recency?],
 
       APPOINTMENT => %i[task_not_done_today?
-                      done_screening_today?
-                      not_hiv_positive_at_health_facility_accesspoint?],
+                        done_screening_today?
+                        not_hiv_positive_at_health_facility_accesspoint?],
 
       ART_INITIATION => %i[no_art_referral?
-                        hiv_positive_at_health_facility_accesspoint?],
+                           hiv_positive_at_health_facility_accesspoint?],
 
       HTS_CONTACT => %i[hiv_positive_at_health_facility_accesspoint?],
 
@@ -96,7 +95,7 @@ module HTSService
       REFERRAL => %i[task_not_done_today?],
 
       PARTNER_RECEPTION => %i[task_not_done_today?
-                              not_from_community_accesspoint?]
+                              not_from_community_accesspoint?],
     }.freeze
 
     def next_state(current_state)
@@ -105,13 +104,10 @@ module HTSService
 
     def encounter_exists?(type)
       @encounter = type
-      Encounter.where(type: type, patient: @patient, program: @program)\
-              .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
-              .exists?
+      Encounter.where(type: type, patient: @patient, program: @program).where("encounter_datetime BETWEEN ? AND ?", *TimeUtils.day_bounds(@date)).exists?
     end
 
     def valid_state?(state)
-
       return false if encounter_exists?(encounter_type(state))
 
       (STATE_CONDITIONS[state] || []).all? { |condition| send(condition) }
@@ -128,11 +124,11 @@ module HTSService
     def test2_done?
       Observation.joins(:encounter).where(
         person_id: @patient.person_id,
-        concept_id: concept('Test 2').concept_id,
+        concept_id: concept("Test 2").concept_id,
         encounter: {
           program_id: @program.program_id,
-          encounter_type: encounter_type('TESTING')
-        }
+          encounter_type: encounter_type("TESTING"),
+        },
       ).first.exists?
     end
 
@@ -143,31 +139,30 @@ module HTSService
     def recency_in_user_properties?
       properties = UserProperty.where(
         user_id: User.current.id,
-        property: 'HTS_PROPERTIES'
+        property: "HTS_PROGRAMS",
       ).first
-      properties = properties.property_value.split(',') rescue []
+      properties = properties.property_value.split(",") rescue []
       return false if properties.blank?
-      return false if !properties.include?('RECENCY')
+      return false if !properties.include?("Recency")
       true
     end
 
     def recency_activated?
-      GlobalProperty.where(property: 'hts.recency.test').last.property_value == 'true'
+      GlobalProperty.where(property: "hts.recency.test").last.property_value == "true"
     end
-
 
     def client_not_circumcised?
       status = Observation.joins(:encounter)
-                          .where(concept: concept('Circumcision status'),
-                            person: @patient.person,
-                            encounter: {
-                              program_id: @program.program_id,
-                              encounter_type: encounter_type('CIRCUMCISION')
-                            })
-                          .where('obs_datetime <= ?', @date)
+                          .where(concept: concept("Circumcision status"),
+                                 person: @patient.person,
+                                 encounter: {
+                                   program_id: @program.program_id,
+                                   encounter_type: encounter_type("CIRCUMCISION"),
+                                 })
+                          .where("obs_datetime <= ?", @date)
                           .last
       return true if status.blank?
-      concept('No').concept_id === status.value_coded
+      concept("No").concept_id === status.value_coded
     end
 
     def task_not_done?
@@ -175,11 +170,8 @@ module HTSService
     end
 
     def done_screening_today?
-
       encounter_type = EncounterType.find_by name: "TESTING"
-      Encounter.where(type:encounter_type, patient: @patient, program: @program)\
-        .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
-        .exists?
+      Encounter.where(type: encounter_type, patient: @patient, program: @program).where("encounter_datetime BETWEEN ? AND ?", *TimeUtils.day_bounds(@date)).exists?
     end
 
     def no_social_history?
@@ -188,62 +180,58 @@ module HTSService
 
     def task_not_done_today?
       encounter_type = EncounterType.find_by name: @encounter.name
-      Encounter.where(patient: @patient, type: encounter_type, program: @program)\
-              .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
-              .blank?
+      Encounter.where(patient: @patient, type: encounter_type, program: @program).where("encounter_datetime BETWEEN ? AND ?", *TimeUtils.day_bounds(@date)).blank?
     end
 
     def from_community_accesspoint?
       access = Observation.joins(:encounter)
-                          .where(concept: concept('HTS Access Type'),
-                              person: @patient.person,
-                              encounter: {
-                                program_id: @program.program_id,
-                                encounter_type: encounter_type('Testing')
-                              })
-                          .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))
+                          .where(concept: concept("HTS Access Type"),
+                                 person: @patient.person,
+                                 encounter: {
+                                   program_id: @program.program_id,
+                                   encounter_type: encounter_type("Testing"),
+                                 })
+                          .where("obs_datetime BETWEEN ? AND ?", *TimeUtils.day_bounds(@date))
                           .last
       return false if access.blank?
-      concept('Community').concept_id === access.value_coded
+      concept("Community").concept_id === access.value_coded
     end
 
     def hiv_positive_at_health_facility_accesspoint?
       access = Observation.joins(:encounter)
-                          .where(concept: concept('HTS Access Type'),
-                              person: @patient.person,
-                              encounter: {
-                                program_id: @program.program_id,
-                                encounter_type: encounter_type('Testing')
-                              })
-                          .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))
+                          .where(concept: concept("HTS Access Type"),
+                                 person: @patient.person,
+                                 encounter: {
+                                   program_id: @program.program_id,
+                                   encounter_type: encounter_type("Testing"),
+                                 })
+                          .where("obs_datetime BETWEEN ? AND ?", *TimeUtils.day_bounds(@date))
                           .last
       return false if access.blank?
-      concept('Health Facility').concept_id === access.value_coded && is_hiv_positive?
+      concept("Health Facility").concept_id === access.value_coded && is_hiv_positive?
     end
 
     def no_art_referral?
       referral = Observation.joins(:encounter)
-                          .where(concept: concept('ART referral'),
-                              person: @patient.person,
-                              encounter: {
-                                program_id: @program.program_id,
-                                encounter_type: encounter_type(ART_INITIATION)
-                              })
-                          .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))
-                          .last
+        .where(concept: concept("ART referral"),
+               person: @patient.person,
+               encounter: {
+                 program_id: @program.program_id,
+                 encounter_type: encounter_type(ART_INITIATION),
+               })
+        .where("obs_datetime BETWEEN ? AND ?", *TimeUtils.day_bounds(@date))
+        .last
       return true if referral.blank?
-      concept('No').concept_id === referral.value_coded
+      concept("No").concept_id === referral.value_coded
     end
 
     def is_hiv_positive?
-      status = Observation.joins(:encounter)\
-      .where(concept: concept('HIV status'),
-      person: @patient.person,
-      encounter: { program_id: @program.program_id })\
-      .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))
-      .last
+      status = Observation.joins(:encounter).where(concept: concept("HIV status"),
+                                                   person: @patient.person,
+                                                   encounter: { program_id: @program.program_id }).where("obs_datetime BETWEEN ? AND ?", *TimeUtils.day_bounds(@date))
+        .last
       return false if status.blank?
-      concept('Positive').concept_id === status.value_coded
+      concept("Positive").concept_id === status.value_coded
     end
 
     def not_hiv_positive_at_health_facility_accesspoint?
@@ -253,6 +241,5 @@ module HTSService
     def not_from_community_accesspoint?
       !from_community_accesspoint?
     end
-
   end
 end
