@@ -13,4 +13,5 @@ class Pharmacy < VoidableRecord
                             foreign_key: :dispensation_obs_id,
                             optional: true
   belongs_to :user, foreign_key: :creator, optional: true
+  belongs_to :stock_verification, class_name: 'PharmacyStockVerification', foreign_key: :stock_verification_id, optional: true
 end

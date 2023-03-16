@@ -278,6 +278,7 @@ class PatientService
   def patient_last_drugs_pill_count(patient, ref_date, program_id: nil)
     program = Program.find(program_id) if program_id
     concept_name = ConceptName.find_by_name('Number of tablets brought to clinic')
+    optimize_concept = ConceptName.find_by_name('Appointment type')
     return [] if program.blank?
 
     pill_counts = Observation.joins(:encounter).where(
@@ -286,12 +287,18 @@ class PatientService
       program.id, patient.patient_id, ref_date, concept_name.concept_id
     ).order('encounter.encounter_datetime DESC')
 
+    optimize = Observation.joins(:encounter).where(
+      'program_id = ? AND encounter.patient_id = ?
+        AND DATE(encounter_datetime) = DATE(?) AND concept_id = ? AND value_text = ?',
+      program.id, patient.patient_id, ref_date, optimize_concept.concept_id, 'Optimize - including hanging pills'
+    ).order('encounter.encounter_datetime DESC')
+
     return [] unless pill_counts
+    return [] if optimize.blank?
 
     values = {}
 
     pill_counts.each do |obs|
-      order = obs.order
       drug_order = obs.order.drug_order
       values[drug_order.drug_inventory_id] = obs.value_numeric
     end

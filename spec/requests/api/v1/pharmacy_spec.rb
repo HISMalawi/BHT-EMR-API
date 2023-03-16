@@ -154,4 +154,56 @@ describe 'Pharmacy API', type: :request, swagger_doc: 'v1/swagger.yaml' do
       end
     end
   end
+
+  path '/api/v1/pharmacy/items/batch_update' do
+    post('stock verification batch update') do
+      tags TAGS_NAME
+      description 'This updates the stock verification batch items'
+      consumes 'application/json'
+      produces 'application/json'
+      security [api_key: []]
+      parameter name: :body, in: :body, schema: {
+        type: :object,
+        properties: {
+          verification_date: { type: :string, format: :date, example: '2020-01-01', required: true },
+          reason: { type: :string, example: 'test' },
+          items: {
+            type: :array,
+            items: {
+              type: :object,
+              properties: {
+                id: { type: :integer, example: 1, required: true },
+                current_quantity: { type: :integer, example: 1, required: false },
+                delivered_quantity: { type: :integer, example: 1, required: false },
+                pack_size: { type: :integer, example: 1, required: false },
+                expiry_date: { type: :string, format: :date, example: '2020-01-01', required: false },
+                delivery_date: { type: :string, format: :date, example: '2020-01-01', required: false },
+                reason: { type: :string, example: 'test', required: true }
+              }
+            }
+          }
+        }
+      }, required: true
+      response(204, 'successful') do
+        let(:body) do
+          {
+            verification_date: '2020-01-01',
+            reason: 'test',
+            items: [
+              {
+                id: 1,
+                current_quantity: 1,
+                delivered_quantity: 1,
+                pack_size: 1,
+                expiry_date: '2020-01-01',
+                delivery_date: '2020-01-01',
+                reason: 'test'
+              }
+            ]
+          }
+        end
+        run_test!
+      end
+    end
+  end
 end

@@ -177,6 +177,10 @@ module ARTService
           PharmacyEncounterType.all
         end
 
+        def drug_cms(drug_id)
+          DrugCms.select(:id, :drug_inventory_id, :name, :short_name, :pack_size).find_by(:drug_inventory_id => drug_id)
+        end
+
         def serialize_drilled_transaction(transaction)
           {
             creation_date: transaction[:creation_date],
@@ -190,7 +194,8 @@ module ARTService
             amount_dispensed_from_art: transaction[:amount_dispensed_from_art],
             username: transaction[:username],
             transaction_reason: transaction[:transaction_reason],
-            product_code: transaction[:product_code]
+            product_code: transaction[:product_code],
+            drug_cms: drug_cms(transaction[:drug_id])
           }
         end
 
@@ -200,7 +205,8 @@ module ARTService
             transaction_type: transaction[:transaction_type],
             cum_per_day_stock_commited: transaction[:cum_per_day_stock_commited],
             drug_name: transaction[:drug_name],
-            drug_id: transaction[:drug_id]
+            drug_id: transaction[:drug_id],
+            drug_cms: drug_cms(transaction[:drug_id])
           }
         end
       end
