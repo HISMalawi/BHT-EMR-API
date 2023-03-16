@@ -62,9 +62,10 @@ class AppointmentEngine
     _drug_id, date = earliest_appointment_date(@patient, @ref_date)
     return nil unless date
 
+    appointment_date = global_property('auto.appointment.disabled') == 'true' ? suggested_date(@patient, date) : revised_suggested_date(@patient, date)
     {
       drugs_run_out_date: date,
-      appointment_date: revised_suggested_date(@patient, date)
+      appointment_date: appointment_date
     }
   end
 
@@ -197,6 +198,40 @@ class AppointmentEngine
       break
     end
 
+    recommended_date
+  end
+
+  def suggested_date(patient, expiry_date)
+    peads_clinic_days = global_property('peads.clinic.days')&.property_value
+    if patient.age(today: @ref_date) <= 14 && !peads_clinic_days.blank?
+      clinic_days = peads_clinic_days
+    else
+      clinic_days = global_property('clinic.days')&.property_value
+      clinic_days ||= 'Monday,Tuesday,Wednesday,Thursday,Friday'
+    end
+    clinic_days = clinic_days.split(',').collect(&:strip)
+
+    clinic_holidays = global_property('clinic.holidays')&.property_value
+    clinic_holidays = begin
+                        clinic_holidays.split(',').map { |day| day.to_date.strftime('%d %B') }.join(',').split(',')
+                      rescue StandardError
+                        []
+                      end
+
+    # the recommended date should be a day on or before the expiry date that is a clinic day and not a holiday
+    recommended_date = expiry_date.to_date - 2.days
+    expiry_date -= 2.days
+    # loop through the dates from the expiry date to 5 days before the expiry date
+    # and find the first date that is a clinic day and not a holiday
+    (expiry_date.to_date - 10.days).upto(expiry_date.to_date).reverse_each do |date|
+      next unless clinic_days.include?(date.to_date.strftime('%A'))
+      next unless clinic_holidays.include?(date.to_date.strftime('%d %B')).blank?
+
+      recommended_date = date
+      break
+    end
+
+    # do not consider the recommended date if it is full
     recommended_date
   end
 
