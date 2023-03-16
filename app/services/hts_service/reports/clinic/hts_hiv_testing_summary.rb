@@ -23,12 +23,18 @@ module HtsService
         end
 
         def init_report
+          sections = {
+            test: ->(person) { build_test_report(person) },
+            linkage: ->(person) { build_linkage_report(person) },
+            referral: ->(person) { build_referral_report(person) },
+          }
+          report_types = [:test, :linkage, :referral]
           constr_indicators.each { |k, _| @report[k] = [] }
           query.each do |person|
-            r = build_test_report person
-            @report[r.to_sym] << person["person_id"] rescue nil
-            l = build_linkage_report person
-            @report[l.to_sym] << person["person_id"] rescue nil
+            report_types.each do |type|
+              indicator = sections[type].call(person)
+              (@report[indicator] ||= []) << person["person_id"] if indicator
+            end
           end
           @report
         end
@@ -75,6 +81,15 @@ module HtsService
           "#{access_point}_#{age_group_name}_#{linkage_type}_#{gender}"
         end
 
+        def build_referral_report(person)
+          return nil if person["referred_to"].blank?
+          gender, age_group_name, access_point = build(person) rescue nil
+          return nil if access_point.nil?
+          referred = person["referred_to"]
+          return nil unless referred != CURRENT_FACILITY
+          "#{access_point}_#{age_group_name}_referred_outside_the_facility_#{gender}"
+        end
+
         def calc_linkage_type(outcome_facility)
           case outcome_facility
           when CURRENT_FACILITY
@@ -98,8 +113,10 @@ module HtsService
             AND hiv_status.concept_id = #{HIV_STATUS_OBS}
             LEFT JOIN obs location on location.voided = 0 AND location.person_id = person.person_id
             AND location.concept_id = #{TEST_LOCATION}
+            LEFT JOIN obs referred on referred.voided = 0 AND referred.person_id = person.person_id
+            AND referred.concept_id = #{concept("Referral location").concept_id}
             SQL
-            ).select("person.person_id, person.gender, person.birthdate, max(outcome.value_text) as outcome_facility, hiv_status.value_coded as status, location.value_text as location")
+            ).select("person.person_id, person.gender, person.birthdate, max(outcome.value_text) as outcome_facility, hiv_status.value_coded as status, location.value_text as location, referred.value_text as referred_to")
             .distinct
             .group("person.person_id")
             .to_sql).to_hash
