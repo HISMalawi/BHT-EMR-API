@@ -205,31 +205,32 @@ EOF
             next
           end
 
-          curr_reg = ActiveRecord::Base.connection.select_one <<EOF
-          SELECT patient_current_regimen(#{patient_id}, '#{@end_date.to_date}') current_regimen
-EOF
+          curr_reg = ActiveRecord::Base.connection.select_one <<~SQL
+            SELECT patient_current_regimen(#{patient_id}, '#{@end_date.to_date}') current_regimen
+          SQL
 
           next unless visit_date >= @start_date.to_date && visit_date <= @end_date.to_date
 
           if clients[patient_id].blank?
-            demo = ActiveRecord::Base.connection.select_one <<EOF
-            SELECT
-              p.birthdate, p.gender, i.identifier arv_number,
-              n.given_name, n.family_name
-            FROM person p
-            LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
-            LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
-            AND i.identifier_type = 4 AND i.voided = 0
-            WHERE p.person_id = #{patient_id} GROUP BY p.person_id
-            ORDER BY n.date_created DESC, i.date_created DESC;
-EOF
+            demo = ActiveRecord::Base.connection.select_one <<~SQL
+              SELECT
+                p.birthdate, p.gender, i.identifier arv_number,
+                n.given_name, n.family_name
+              FROM person p
+              LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
+              LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
+              AND i.identifier_type = 4 AND i.voided = 0
+              WHERE p.person_id = #{patient_id} GROUP BY p.person_id
+              ORDER BY n.date_created DESC, i.date_created DESC;
+            SQL
+
             viral_load = vl_result(patient_id)
             clients[patient_id] = {
               arv_number: demo['arv_number'],
               given_name: demo['given_name'],
               family_name: demo['family_name'],
               birthdate: demo['birthdate'],
-              gender: demo['gender'],
+              gender: demo['gender'] == 'M' ? 'M' : maternal_status(patient_id, demo['gender']),
               current_regimen: curr_reg['current_regimen'],
               current_weight: current_weight(patient_id),
               art_start_date: r['earliest_start_date'],
@@ -378,6 +379,16 @@ EOF
           ORDER BY lab_result_obs.obs_datetime DESC
           LIMIT 1
         SQL
+      end
+
+      def maternal_status(patient_id, current_gender)
+        return nil if current_gender.blank?
+
+        result = ARTService::Reports::Pepfar::ViralLoadCoverage2.new(start_date: @start_date, end_date: @end_date).vl_maternal_status([patient_id])
+        gender = 'FNP'
+        gender = 'FP' unless result[:FP].blank?
+        gender = 'FBf' unless result[:FBf].blank?
+        gender
       end
     end
   end

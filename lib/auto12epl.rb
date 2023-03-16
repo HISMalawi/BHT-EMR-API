@@ -50,7 +50,7 @@ class Auto12Epl
   STAT_WIDTH_BARCODE_HUMAN = 1.400
 
   # constants for generated EPL code
-  BARCODE_TYPE = '1A'
+  BARCODE_TYPE = '1'
   BARCODE_NARROW_WIDTH = '2'
   BARCODE_WIDE_WIDTH = '2'
   BARCODE_ROTATION = '0'
@@ -133,9 +133,9 @@ class Auto12Epl
 
     # combine EPL statements
     if stat == nil
-      "\nN\nR216,0\nZT\nS1\n#{name_element}\n#{pid_dob_age_gender_element}\n#{barcode_element}\n#{barcode_human_element}\n#{collector_element}\n#{tests_element}\nP3\n"
+      "\nN\nR216,19\nZT\nS1\n#{name_element}\n#{pid_dob_age_gender_element}\n#{barcode_element}\n#{barcode_human_element}\n#{collector_element}\n#{tests_element}\nP3\n"
     else
-      "\nN\nR216,0\nZT\nS1\n#{name_element}\n#{pid_dob_age_gender_element}\n#{barcode_element}\n#{barcode_human_element}\n#{collector_element}\n#{tests_element}\n#{stat_element}\nP3\n"
+      "\nN\nR216,19\nZT\nS1\n#{name_element}\n#{pid_dob_age_gender_element}\n#{barcode_element}\n#{barcode_human_element}\n#{collector_element}\n#{tests_element}\n#{stat_element}\nP3\n"
     end
 
   end

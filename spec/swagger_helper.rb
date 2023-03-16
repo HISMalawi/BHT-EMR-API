@@ -31,6 +31,7 @@ RSpec.configure do |config|
           }
         },
         schemas: {
+<<<<<<< HEAD
           gender: { type: :string, enum: %w[M F Unknown] },
           age_group: { type: :string, enum: ['Unknown', '<1 year', '1-4 years', '5-9 years',
                                              '10-14 years', '15-19 years', '20-24 years', '25-29 years', '30-34 years',
@@ -97,6 +98,63 @@ RSpec.configure do |config|
               vct_comm: { '$ref' => '#/components/schemas/hts_recency_results' },
               other_comm_tp: { '$ref' => '#/components/schemas/hts_recency_results' }
             }
+=======
+          data_cleaning_request: {
+            type: :object,
+            properties: {
+              program_id: { type: :integer },
+              start_date: { type: :string },
+              end_date: { type: :string },
+              report_name: { type: :string }
+            },
+            required: %w[program_id start_date end_date report_name]
+          },
+          multiple_identifiers: {
+            type: :object,
+            properties: {
+              patient_id: { type: :integer },
+              given_name: { type: :string },
+              family_name: { type: :string },
+              gender: { type: :string },
+              birthdate: { type: :string },
+              latest_identifier: { type: :string },
+              identifiers: {
+                type: :array,
+                items: {
+                  type: :object,
+                  properties: {
+                    patient_identifier_id: { type: :integer },
+                    patient_id: { type: :integer },
+                    identifier: { type: :string },
+                    identifier_type: { type: :string },
+                    preferred: { type: :boolean },
+                    location_id: { type: :integer },
+                    creator: { type: :integer },
+                    date_created: { type: :string },
+                    voided: { type: :boolean },
+                    voided_by: { type: :integer },
+                    date_voided: { type: :string },
+                    void_reason: { type: :string },
+                    uuid: { type: :string }
+                  }
+                }
+              }
+            }
+          },
+          duplicate_filing_number: {
+            type: :object,
+            properties: {
+              identifier: { type: :string },
+              identifiers: { type: :integer },
+              patient_ids: { type: :string }
+            }
+          },
+          void_multiple_identifiers: {
+            type: :array,
+            items: { type: :integer },
+            example: [1, 2, 3],
+            description: 'Array of patient identifiers record ids'
+>>>>>>> f85d51e9d0cf8c9cb97b30592d2176f006935c78
           }
         }
       },

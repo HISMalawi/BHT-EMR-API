@@ -99,7 +99,7 @@ module ARTService
         Observation.joins('INNER JOIN temp_patient_outcomes AS outcomes ON outcomes.patient_id = obs.person_id')
                    .where(concept_id: ConceptName.where(name: 'Weight (kg)').select(:concept_id),
                           outcomes: { cum_outcome: 'On antiretrovirals' })
-                   .where('obs.obs_datetime < ?', end_date)
+                   .where('DATE(obs.obs_datetime) <= ?', end_date)
                    .group(:person_id)
       end
     end

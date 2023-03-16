@@ -202,6 +202,7 @@ Rails.application.routes.draw do
         get 'earliest_expiring_item', to: 'items#earliest_expiring'
         get 'drug_consumption', to: 'drugs#drug_consumption'
         get 'stock_report', to: 'audit_trails#stock_report'
+        get '/audit_trail/grouped', to: 'audit_trails#show_grouped_audit_trail'
       end
 
       namespace :types do
@@ -265,6 +266,7 @@ Rails.application.routes.draw do
       get '/search/properties' => 'properties#search'
       get '/search/landmarks' => 'landmarks#search'
       get '/search/identifiers/duplicates' => 'patient_identifiers#duplicates'
+      get '/search/identifiers/multiples' => 'patient_identifiers#multiples'
 
       get '/dde/patients/find_by_npid', to: 'dde#find_patients_by_npid'
       get '/dde/patients/find_by_name_and_gender', to: 'dde#find_patients_by_name_and_gender'
@@ -278,6 +280,10 @@ Rails.application.routes.draw do
       get '/sequences/next_accession_number', to: 'sequences#next_accession_number'
 
       post '/reports/encounters' => 'encounters#count'
+
+      #drugs_cms routes
+      get '/drug_cms/search', to: "drug_cms#search"
+      resources :drug_cms, only: %i[index]
     end
   end
 
@@ -330,6 +336,7 @@ Rails.application.routes.draw do
   get '/api/v1/missed_appointments' => 'api/v1/reports#missed_appointments'
   post '/api/v1/addresses' => 'api/v1/person_addresses#create'
   get '/api/v1/archive_active_filing_number' => 'api/v1/patient_identifiers#archive_active_filing_number'
+  delete '/api/v1/void_multiple_identifiers' => 'api/v1/patient_identifiers#void_multiple_identifiers'
   get '/api/v1/ipt_coverage' => 'api/v1/reports#ipt_coverage'
   get '/api/v1/cohort_report_drill_down' => 'api/v1/reports#cohort_report_drill_down'
   post '/api/v1/swap_active_number' => 'api/v1/patient_identifiers#swap_active_number'
@@ -376,4 +383,5 @@ Rails.application.routes.draw do
 
   get '/api/v1/data_cleaning_confirmation', to: 'api/v1/data_cleaning#view'
   post '/api/v1/data_cleaning_confirmation', to: 'api/v1/data_cleaning#create'
+
 end

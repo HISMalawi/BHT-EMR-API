@@ -12,7 +12,7 @@ module ARTService
       'MALE CLIENTS WITH FEMALE OBS' => 'male_clients_with_female_obs',
       'DOB MORE THAN DATE ENROLLED' => 'dob_more_than_date_enrolled',
       'INCOMPLETE VISITS' => 'incomplete_visit',
-      'MISSING DEMOGRAPHICS' => 'incomplete_demographics'
+      'MISSING DEMOGRAPHICS' => 'incomplete_demographics',
     }.freeze
 
     def initialize(start_date:, end_date:, tool_name:)
@@ -478,7 +478,8 @@ module ARTService
 
         next if complete
 
-        person_details = ActiveRecord::Base.connection.select_one <<~SQL
+        person
+        _details = ActiveRecord::Base.connection.select_one <<~SQL
           SELECT
             n.given_name, n.family_name, p.gender, p.birthdate,
             a.identifier arv_number, i.identifier national_id
