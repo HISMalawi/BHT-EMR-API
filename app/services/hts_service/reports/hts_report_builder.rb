@@ -1,8 +1,6 @@
 module HtsService
   module Reports
     module HtsReportBuilder
-      include HtsService::Reports::HtsAgeGroups
-
       HTC_PROGRAM = Program.find_by_name("HTC PROGRAM").id
       HIV_TESTING_ENCOUNTER = EncounterType.find_by_name("Testing")
       ITEMS_GIVEN_ENCOUNTER = EncounterType.find_by_name("ITEMS GIVEN")
@@ -18,18 +16,31 @@ module HtsService
       REFERRALS_ORDERED = concept("Referrals ordered").concept_id
       CURRENT_FACILITY = Location.find(GlobalProperty.find_by_property("current_health_center_id").property_value.to_i).name
 
-      def his_patients
-        Patient.joins(:person, encounters: [:observations, :program])
-          .where(
-            encounter: {
-              encounter_datetime: @start_date..@end_date,
-              encounter_type: HIV_TESTING_ENCOUNTER,
-            },
-            program: { program_id: HTC_PROGRAM },
-          )
+      def hts_age_groups
+        [
+          { less_than_one: "<1 year" },
+          { one_to_four: "1-4 years" },
+          { five_to_nine: "5-9 years" },
+          { ten_to_fourteen: "10-14 years" },
+          { fifteen_to_nineteen: "15-19 years" },
+          { twenty_to_twenty_four: "20-24 years" },
+          { twenty_five_to_twenty_nine: "25-29 years" },
+          { thirty_to_thirty_four: "30-34 years" },
+          { thirty_five_to_thirty_nine: "35-39 years" },
+          { fourty_to_fourty_four: "40-44 years" },
+          { fourty_five_to_fourty_nine: "45-49 years" },
+          { fifty_to_fifty_four: "50-54 years" },
+          { fifty_five_to_fifty_nine: "55-59 years" },
+          { sixty_to_sixty_four: "60-64 years" },
+          { sixty_five_to_sixty_nine: "65-69 years" },
+          { seventy_to_seventy_four: "70-74 years" },
+          { seventy_five_to_seventy_nine: "75-79 years" },
+          { eighty_to_eighty_four: "80-84 years" },
+          { eighty_five_to_eighty_nine: "85-89 years" },
+          { ninety_plus: "90 plus years" },
+        ].freeze
       end
 
-      #with the correct join
       def his_patients_rev
         Patient.joins(:person, encounters: :program)
           .where(
@@ -57,111 +68,6 @@ module HtsService
             },
             program: { program_id: HTC_PROGRAM },
           )
-      end
-
-      def all(query)
-        query
-      end
-
-      def same_facility(patients)
-        linked(patients)
-          .merge(
-            Patient.joins(<<-SQL)
-              INNER JOIN obs within ON within.voided = 0 AND within.person_id = patient.patient_id
-            SQL
-              .where(
-                within: { concept_id: OUTCOME_FACILITY, value_text: CURRENT_FACILITY },
-              )
-          )
-      end
-
-      def other_facilities(patients)
-        linked(patients)
-          .merge(
-            Patient.joins(<<-SQL)
-              INNER JOIN obs outside ON outside.voided = 0 AND outside.person_id = patient.patient_id
-            SQL
-              .where(
-                outside: { concept_id: OUTCOME_FACILITY },
-              )
-          ).where.not(
-                outside: { value_text: [CURRENT_FACILITY, nil] },
-              )
-      end
-
-      def refered_outside(patients)
-        patients
-          .merge(
-            Patient.joins(<<-SQL)
-              INNER JOIN obs referred ON referred.voided = 0 AND referred.person_id = patient.patient_id
-            SQL
-              .where(
-                referred: { concept_id: REFERRALS_ORDERED },
-              )
-          ).where.not(
-                referred: { value_text: ["None", nil] },
-              )
-      end
-
-      def male(patients)
-        patients.where(person: { gender: "M" })
-      end
-
-      def female(patients)
-        patients.where(person: { gender: "F" })
-      end
-
-      def tested_for_hiv(patients)
-        patients.where(obs: { concept_id: HIV_STATUS_OBS })
-      end
-
-      def hiv_positive(patients)
-        patients.where(obs: { value_coded: HIV_POSITIVE })
-      end
-
-      def hiv_negative(patients)
-        patients.where(obs: { value_coded: HIV_NEGATIVE })
-      end
-
-      def test_location(patients, location)
-        patients.merge(Patient.joins(person: :observations).where(
-          observations_encounter: {
-            concept_id: TEST_LOCATION, value_text: location,
-          },
-        ))
-      end
-
-      def linked(patients)
-        patients.merge(Patient.joins(<<-SQL)
-              INNER JOIN obs linked ON linked.voided = 0 AND linked.person_id = patient.patient_id
-         SQL
-          .where(
-            linked: { concept_id: ART_OUTCOME, value_coded: LINKED_CONCEPT },
-          ))
-      end
-
-      def htc(patients)
-        test_location patients, "HTC"
-      end
-
-      def vct(patients)
-        test_location patients, "VCT"
-      end
-
-      def opd(patients)
-        test_location patients, "OPD"
-      end
-
-      def mch(patients)
-        test_location patients, "Malnutrition"
-      end
-
-      def outreach(patients)
-        test_location patients, "Mobile"
-      end
-
-      def anc(patients)
-        test_location patients, "ANC First Visit"
       end
     end
   end
