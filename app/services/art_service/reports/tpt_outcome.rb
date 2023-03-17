@@ -46,10 +46,37 @@ module ARTService
               defaulted: [],
               transfer_out: [],
               confirmed_tb: [],
-              pregnant: []
+              pregnant: [],
+              breast_feeding: [],
+              skin_rash: [],
+              peripheral_neuropathy: [],
+              yellow_eyes: [],
+              nausea: [],
+              dizziness: []
             }
           end
         end
+      end
+
+      def patient_breast_feeding?(patient_id, last_tpt)
+        Observation.where(person_id: patient_id, concept_id: breast_feeding_concept_id,
+                          value_coded: yes_concept_id)
+                   .where('DATE(obs_datetime) > DATE(?) AND DATE(obs_datetime) < DATE(?) + INTERVAL 1 DAY', last_tpt.to_date, @end_date.to_date)
+                   .exists?
+      end
+
+      def patient_skin_rash?(patient_id, last_tpt)
+        Observation.where(person_id: patient_id, concept_id: skin_rash_concept_id,
+                          value_coded: yes_concept_id)
+                   .where('DATE(obs_datetime) > DATE(?) AND DATE(obs_datetime) < DATE(?) + INTERVAL 1 DAY', last_tpt.to_date, @end_date.to_date)
+                   .exists?
+      end
+
+      def patient_peripheral_neuropathy?(patient_id, last_tpt)
+        Observation.where(person_id: patient_id, concept_id: peripheral_neuropathy_concept_id,
+                          value_coded: yes_concept_id)
+                   .where('DATE(obs_datetime) > DATE(?) AND DATE(obs_datetime) < DATE(?) + INTERVAL 1 DAY', last_tpt.to_date, @end_date.to_date)
+                   .exists?
       end
 
       def patient_pregnant?(patient_id, last_tpt)
@@ -66,6 +93,27 @@ module ARTService
                    .exists?
       end
 
+      def patient_yellow_eyes?(patient_id, last_tpt)
+        Observation.where(person_id: patient_id, concept_id: yellow_eyes_concept_id,
+                          value_coded: yes_concept_id)
+                   .where('DATE(obs_datetime) > DATE(?) AND DATE(obs_datetime) < DATE(?) + INTERVAL 1 DAY', last_tpt.to_date, @end_date.to_date)
+                   .exists?
+      end
+
+      def patient_nausea?(patient_id, last_tpt)
+        Observation.where(person_id: patient_id, concept_id: nausea_concept_id,
+                          value_coded: yes_concept_id)
+                   .where('DATE(obs_datetime) > DATE(?) AND DATE(obs_datetime) < DATE(?) + INTERVAL 1 DAY', last_tpt.to_date, @end_date.to_date)
+                   .exists?
+      end
+
+      def patient_dizziness?(patient_id, last_tpt)
+        Observation.where(person_id: patient_id, concept_id: dizziness_concept_id,
+                          value_coded: yes_concept_id)
+                   .where('DATE(obs_datetime) > DATE(?) AND DATE(obs_datetime) < DATE(?) + INTERVAL 1 DAY', last_tpt.to_date, @end_date.to_date)
+                   .exists?
+      end
+
       def pregnant_concept_id
         @pregnant_concept_id ||= concept_name_to_id('Is patient pregnant?')
       end
@@ -76,6 +124,30 @@ module ARTService
 
       def yes_concept_id
         @yes_concept_id ||= concept_name_to_id('Yes')
+      end
+
+      def breast_feeding_concept_id
+        @breast_feeding_concept_id ||= concept_name_to_id('Breast feeding?')
+      end
+
+      def skin_rash_concept_id
+        @skin_rash_concept_id ||= concept_name_to_id('Skin rash')
+      end
+
+      def peripheral_neuropathy_concept_id
+        @peripheral_neuropathy_concept_id ||= concept_name_to_id('Peripheral neuropathy')
+      end
+
+      def yellow_eyes_concept_id
+        @yellow_eyes_concept_id ||= concept_name_to_id('Yellow eyes')
+      end
+
+      def nausea_concept_id
+        @nausea_concept_id ||= concept_name_to_id('Nausea')
+      end
+
+      def dizziness_concept_id
+        @dizziness_concept_id ||= concept_name_to_id('Dizziness')
       end
 
       def tpt_clients
@@ -292,13 +364,34 @@ module ARTService
       def process_patient_conditions(report, patient)
         if patient_on_tb_treatment?(patient['patient_id'], patient['last_dispense_date'])
           report[patient['age_group']][patient['tpt_type']][:confirmed_tb] << patient['patient_id']
+          return
         elsif patient['gender'] == 'F' && patient_pregnant?(patient['patient_id'], patient['last_dispense_date'])
           report[patient['age_group']][patient['tpt_type']][:pregnant] << patient['patient_id']
+          return
+        elsif patient['gender'] == 'F' && patient_breast_feeding?(patient['patient_id'], patient['last_dispense_date'])
+          report[patient['age_group']][patient['tpt_type']][:breast_feeding] << patient['patient_id']
+          return
+        end
+
+        process_malawi_art_conditions report, patient
+      end
+
+      def process_malawi_art_conditions(report, patient)
+        %i[skin_rash nausea peripheral_neuropathy dizziness yellow_eyes].each do |condition|
+          method_name = "patient_#{condition}?".to_sym
+          if send(method_name, patient['patient_id'], patient['last_dispense_date'])
+            report[patient['age_group']][patient['tpt_type']][condition] << patient['patient_id']
+          end
+          break
         end
       end
 
       def tpt_drugs
         ConceptName.where(name: ['INH', 'Isoniazid/Rifapentine', 'Rifapentine']).select(:concept_id)
+      end
+
+      def tpt_actual_drugs
+        @tpt_actual_drugs ||= Drug.where(concept_id: tpt_drugs.map(&:concept_id)).select(:drug_id).to_sql
       end
 
       def first_day_of_month
