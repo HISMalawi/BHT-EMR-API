@@ -75,6 +75,24 @@ describe 'Clinic Reports API', type: :request, swagger_doc: 'v1/swagger.yaml' do
             } },
             stopped: { type: :array, items: {
               type: :integer
+            } },
+            breast_feeding: { type: :array, items: {
+              type: :integer
+            } },
+            skin_rash: { type: :array, items: {
+              type: :integer
+            } },
+            peripheral_neuropathy: { type: :array, items: {
+              type: :integer
+            } },
+            yellow_eyes: { type: :array, items: {
+              type: :integer
+            } },
+            nausea: { type: :array, items: {
+              type: :integer
+            } },
+            dizziness: { type: :array, items: {
+              type: :integer
             } }
           }
         }
