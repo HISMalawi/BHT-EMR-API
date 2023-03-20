@@ -397,7 +397,6 @@ module ARTService
 
           report[patient['age_group']][patient['tpt_type']][condition] << patient['patient_id']
           @condition = true
-          break
         end
       end
 
