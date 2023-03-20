@@ -231,7 +231,7 @@ module HtsService::Reports::Moh
     end
 
     def dob_within(birthdate, min, max)
-      age = ((Date.today.to_date - birthdate.to_date) / 365.25).to_i
+      age = ((Date.today.to_date - birthdate.to_date) / 365.25).to_i+1
       age_within(age, min, max)
     end
   end
