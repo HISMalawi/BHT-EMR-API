@@ -5,101 +5,100 @@ module HtsService
     module Pepfar
       # HTS Self report
       class HtsSelf
-        attr_accessor :start_date, :end_date
+        attr_accessor :start_date, :end_date, :report
 
         include ARTService::Reports::Pepfar::Utils
+        include HtsService::Reports::HtsReportBuilder
+
+        APPROACH = {
+          directly_assisted: concept("Directly-Assisted").concept_id,
+          unassisted: concept("Un-assisted").concept_id,
+        }
+
+        END_USER = {
+          self_recipient: concept("Self").concept_id,
+          sex_partner: concept("Sexual partner").concept_id,
+          other: concept("Other").concept_id,
+        }
 
         def initialize(start_date:, end_date:)
-          @start_date = start_date
-          @end_date = end_date
+          @start_date = start_date.to_date.beginning_of_day
+          @end_date = end_date.to_date.end_of_day
+          @report = []
         end
 
         def data
-          report = init_report
-          load_patients_into_report report, fetch_clients
-          response = []
-          report.each do |key, value|
-            response << { age_group: key, gender: 'F', **value['F'] }
-            response << { age_group: key, gender: 'M', **value['M'] }
-          end
-          response
+          init_report query
+          report
         end
 
         private
 
-        GENDER_TYPES = %w[F M].freeze
-
-        def load_patients_into_report(report, patients)
-          patients.each do | patient |
-            age_group = patient['age_group']
-            gender = patient['gender']
-            report[age_group][gender][:directly_assisted] << patient['directly_assisted'] if !patient['directly_assisted'].nil?
-            report[age_group][gender][:unassisted] << patient['unassisted'] if !patient['unassisted'].nil?
-            report[age_group][gender][:self_recipient] << patient['self_recipient'] if !patient['self_recipient'].nil?
-            report[age_group][gender][:sex_partner] << patient['sex_partner'] if !patient['sex_partner'].nil?
-            report[age_group][gender][:other] << patient['other'] if !patient['other'].nil?
-          end
-        end
-
-        def init_report
-          pepfar_age_groups.each_with_object({}) do |age_group, report|
-            next if age_group == 'Unknown'
-
-            report[age_group] = GENDER_TYPES.each_with_object({}) do |gender, gender_sub_report|
-              gender_sub_report[gender] = {
-                directly_assisted: [],
-                unassisted: [],
-                self_recipient: [],
-                sex_partner: [],
-                other: []
-              }
+      def init_report query
+        female_concept = concept("Female").concept_id
+        male_concept = concept("Male").concept_id
+        pepfar_age_groups.each do |age_group|
+          %i[M F].each do |gender|
+             row = {}
+             APPROACH.each do |(key, value)|
+              q = filter_approach(query, value, age_group, gender == :F ? female_concept : male_concept).map{|r| r["person_id"]}
+              row["#{key}"] = q
             end
+            END_USER.each do |(key, value)|
+              q = filter_end_user(query, value, age_group, gender == :F ? female_concept : male_concept).map{|r| r["person_id"]}
+              puts q.inspect
+              row["#{key}"] = q
+             end
+             row[:gender] = gender
+             row[:age_group] = age_group
+             report << row
           end
         end
+      end
 
-        def fetch_clients
-          ActiveRecord::Base.connection.select_all <<~SQL
-            SELECT
-              p.person_id,
-              p.gender,
-              disaggregated_age_group(p.birthdate, '#{@end_date}') as age_group,
-              directly_assisted.person_id as directly_assisted,
-              unassisted.person_id as unassisted,
-              self_recipient.person_id as self_recipient,
-              sex_partner.person_id as sex_partner,
-              other.person_id as other
-            FROM
-              person p
-            INNER JOIN
-              encounter e on e.patient_id = p.person_id
-            LEFT JOIN
-              obs directly_assisted on directly_assisted.encounter_id = e.encounter_id and
-              directly_assisted.concept_id = #{concept('Self-test approach').concept_id} and
-              directly_assisted.value_coded = #{concept('Directly-assisted').concept_id}
-            LEFT JOIN
-              obs unassisted on unassisted.encounter_id = e.encounter_id and
-              unassisted.concept_id = #{concept('Self-test approach').concept_id} and
-              unassisted.value_coded = #{concept('Un-assisted').concept_id}
-            LEFT JOIN
-              obs self_recipient on self_recipient.encounter_id = e.encounter_id and
-              self_recipient.concept_id = #{concept('Self-test end user').concept_id} and
-              self_recipient.value_coded = #{concept('Self').concept_id}
-            LEFT JOIN
-              obs sex_partner on sex_partner.encounter_id = e.encounter_id and
-              sex_partner.concept_id = #{concept('Self-test end user').concept_id} and
-              sex_partner.value_coded = #{concept('Sexual Partner').concept_id}
-            LEFT JOIN
-              obs other on other.encounter_id = e.encounter_id and
-              other.concept_id = #{concept('Self-test end user').concept_id} and
-              other.value_coded = #{concept('Other').concept_id}
-            WHERE
-              e.voided = 0 and
-              e.program_id = 18 and
-              e.encounter_type = #{encounter_type('ITEMS GIVEN').encounter_type_id} and
-              DATE(e.encounter_datetime) BETWEEN "#{@start_date}" AND "#{@end_date}"
-            GROUP BY p.person_id
-          SQL
+      def filter_approach(query, kit_approach, group, user_gender)
+        query.select do |row|
+          age_group, person_id, user, approach, gender = row.values
+          age_group == group && gender == user_gender && approach == kit_approach
         end
+      end
+
+      def filter_end_user(query, end_user, group, user_gender)
+        query.select do |row|
+          age_group, person_id, user, approach, gender = row.values
+          age_group == group && gender == user_gender && user == end_user
+        end
+      end
+
+      def query
+        Person.connection.select_all(
+          self_test_clients.joins(<<~SQL)
+            INNER JOIN obs user ON user.person_id = obs.person_id
+            AND user.voided = 0
+            AND user.concept_id = #{concept("Self-test end user").concept_id}
+            INNER JOIN obs approach ON approach.person_id = obs.person_id
+            AND approach.voided = 0
+            AND approach.concept_id = #{concept("Self-test approach").concept_id}
+            INNER JOIN obs gender ON gender.person_id = obs.person_id
+            AND gender.voided = 0
+            AND gender.concept_id = #{concept("Gender of contact").concept_id}
+            INNER JOIN obs age_group ON age_group.person_id = obs.person_id
+            AND age_group.voided = 0
+            AND age_group.concept_id = #{concept("Age of contact").concept_id}
+            AND age_group.value_datetime is not null
+            AND obs.obs_group_id is not null
+          SQL
+          .select(
+             "disaggregated_age_group(age_group.value_datetime, '#{@end_date.to_date}') as age_group,
+              person.person_id,
+              user.value_coded as user,
+              approach.value_coded as approach,
+              gender.value_coded as gender"
+          )
+          .group("age_group.obs_group_id")
+          .to_sql
+        ).to_hash
+      end
       end
     end
   end
