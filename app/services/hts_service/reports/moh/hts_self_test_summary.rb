@@ -87,7 +87,7 @@ module HtsService::Reports::Moh
         .distinct
         .select("obs.value_coded, patient.patient_id, person.gender")
         .each do |client|
-        report[:female_non_pregnant].push(client.id) if client.value_coded == 9538
+        report[:female_non_pregnant].push(client.id) if [5632, 9538].include?(client.value_coded)
         report[:female_pregnant].push(client.id) if client.value_coded == 1755
       end
     end
@@ -186,6 +186,7 @@ module HtsService::Reports::Moh
     def calc_end_user_sex_and_age(clients)
       SEX.each do |sex|
         AGE_GROUPS.each { |age_group| report["end_user_#{sex}s_#{age_group}"] = 0 }
+        report["total_#{sex}_end_users"] = 0
       end
       clients.joins(<<-SQL)
       INNER JOIN concept_name on concept_name.concept_id = obs.concept_id
@@ -197,6 +198,7 @@ module HtsService::Reports::Moh
         .select("obs.value_numeric, obs.obs_group_id, person.person_id")
         .each do |client|
         SEX.each do |sex|
+          report["total_#{sex}_end_users"] +=1 if gender_is_right(sex, client.obs_group_id)
           report["end_user_#{sex}s_less_than_13"] += 1 if age_within(client.value_numeric, 0, 12) && gender_is_right(sex, client.obs_group_id)
           report["end_user_#{sex}s_13_to_14"] += 1 if age_within(client.value_numeric, 13, 14) && gender_is_right(sex, client.obs_group_id)
           report["end_user_#{sex}s_15_to_19"] += 1 if age_within(client.value_numeric, 15, 19) && gender_is_right(sex, client.obs_group_id)
