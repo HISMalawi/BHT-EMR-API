@@ -36,7 +36,8 @@ module HtsService::Reports::Moh
       calc_test_kit_end_users self_test_clients
       calc_end_user_sex_and_age self_test_clients
       report[:total_recipients] = self_test_clients.distinct.pluck(:patient_id)
-
+      report["missing"] = []
+      report["invalid_entry"] = []
       report
     end
 
