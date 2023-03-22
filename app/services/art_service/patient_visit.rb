@@ -203,6 +203,33 @@ module ARTService
       PatientSummary.new(patient, date).current_regimen
     end
 
+    def pregnant?
+      pregnant_concept = ConceptName.where(name: 'pregnant?').select(:concept_id)
+
+      unless Observation.where(concept_id: pregnant_concept, obs_datetime: @date.to_date, value_coded: ConceptName.find_by_name!('Yes').concept_id )
+         return 'Preg'
+      end
+    end
+
+    def breastfeeding?
+      breastfeeding_concept = ConceptName.where(name: 'breatfeeding?').select(:concept_id)
+
+      unless Observation.where(concept_id: breastfeeding_concept, obs_datetime: @date.to_date, value_coded: ConceptName.find_by_name!('Yes').concept_id )
+         return 'Bf'
+      end
+    end
+
+    def doses_missed?
+      doses_missed_concept = ConceptName.where(name: 'Missed antiretroviral drug construct').select(:concept_id)
+      
+      doses_missed = Observation.where(concept_id: doses_missed_concept, obs_datetime: @date.to_date, value_coded: ConceptName.find_by_name!('Yes').concept_id )
+      
+      return if doses_missed.blank?
+
+      return doses_missed.first(:value_numeric)
+
+    end
+
     def as_json(_options = {})
       dispensations = pills_dispensed
 
@@ -219,7 +246,12 @@ module ARTService
         tb_status: tb_status,
         height: height,
         weight: weight,
-        bmi: bmi
+        bmi: bmi,
+        pregnant: pregnant?,
+        breastfeeding: breastfeeding?,
+        side_effects_batch: side_effects.empty? ? 'N' : 'Y',
+        next_appointment: next_appointment.strftime("%Y-%m-%d %H:%M:%S"),
+        doses_missed: doses_missed?
       }
     end
 
