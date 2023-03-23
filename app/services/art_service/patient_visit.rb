@@ -227,7 +227,10 @@ module ARTService
       return if doses_missed.blank?
 
       return doses_missed.first(:value_numeric)
+    end
 
+    def last_vl_test
+      
     end
 
     def as_json(_options = {})
@@ -250,7 +253,7 @@ module ARTService
         pregnant: pregnant?,
         breastfeeding: breastfeeding?,
         side_effects_batch: side_effects.empty? ? 'N' : 'Y',
-        next_appointment: next_appointment.strftime("%Y-%m-%d %H:%M:%S"),
+        next_appointment: next_appointment.strftime("%Y-%m-%d %H:%M:%S") ,
         doses_missed: doses_missed?
       }
     end
