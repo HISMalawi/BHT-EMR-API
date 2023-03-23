@@ -22,20 +22,22 @@ class Api::V1::Programs::Patients::VisitController < ApplicationController
   def patient_visits
     patient_ids = params[:patient_ids]
     all_patient_visits = []
-
+    
     patient_ids.each do | patient_id |
       patient_details = ARTService::Reports::MasterCard::PatientStruct.new(patient(patient_id)).fetch
-
+      
       person = patient(patient_id)
       visits = patient_service.find_patient_visit_dates(person, program,
-        params[:include_defaulter_dates] == 'true')
+      params[:include_defaulter_dates] == 'true')
       all_visits = []    
       visits.each do | visit |
         all_visits << {date: visit}.merge(visit_summary(person.id, visit).as_json)
       end
       patient_details[:visits] = all_visits
-
-      all_patient_visits << patient_details
+      @data = patient_details
+      template = File.read(Rails.root.join('app', 'views', 'layouts', 'patient_card.html.erb'))
+      html = ERB.new(template).result(binding)
+      all_patient_visits << {html: html}
     end
     
 
