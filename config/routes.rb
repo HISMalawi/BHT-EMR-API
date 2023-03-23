@@ -132,7 +132,6 @@ Rails.application.routes.draw do
         resources :program_workflows, path: :workflows
         resources :program_regimens, path: :regimens
         get 'regimen_extras' => 'program_regimens#regimen_extras'
-        
 
         get 'booked_appointments' => 'program_appointments#booked_appointments'
         get 'scheduled_appointments' => 'program_appointments#scheduled_appointments'
@@ -159,7 +158,6 @@ Rails.application.routes.draw do
           get '/mastercard_data', to: 'program_patients#mastercard_data'
           get '/medication_side_effects', to: 'program_patients#medication_side_effects'
           get '/is_due_lab_order', to: 'program_patients#is_due_lab_order'
-          get '/visits' => 'programs/patients/visit#patient_visits'
           # ANC
           get '/vl_info', to: 'lab_remainders#index'
           # ANC
