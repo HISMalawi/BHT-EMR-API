@@ -59,7 +59,7 @@ module ARTService::Reports::MasterCard
       {
         facility: patient_history.initial_observation("Confirmatory HIV test location")&.answer_string || "UNKNOWN",
         confimatory_test_type: patient_history.initial_observation("Confirmatory HIV test type")&.answer_string || "UNKNOWN",
-        confimatory_test_date: patient_history.initial_observation("Confirmatory HIV test date")&.value_datetime.to_date || "UNKNOWN",
+        confimatory_test_date: patient_history.initial_observation("Confirmatory HIV test date")&.value_datetime.to_s.to_date || "UNKNOWN",
         link_id: patient_history.initial_observation("HTC serial number")&.answer_string || "UNKNOWN",
       }
     end

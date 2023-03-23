@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 class Api::V1::Programs::Patients::VisitController < ApplicationController
-   
+
+  require './app/services/art_service/reports/master_card/mastercard_struct.rb'
+
   def index
     permitted = params.permit(:date)
     date = permitted[:date]&.to_date || Date.today
@@ -18,14 +20,26 @@ class Api::V1::Programs::Patients::VisitController < ApplicationController
   end
 
   def patient_visits
-    visits = patient_service.find_patient_visit_dates(patient, program,
-      params[:include_defaulter_dates] == 'true')
-     all_visits = {}    
-    visits.each do | visit |
-      all_visits[visit] = visit_summary(patient.id, visit)
-    end
+    patient_ids = params[:patient_ids]
+    all_patient_visits = []
 
-    render json: all_visits
+    patient_ids.each do | patient_id |
+      patient_details = ARTService::Reports::MasterCard::PatientStruct.new(patient(patient_id)).fetch
+
+      person = patient(patient_id)
+      visits = patient_service.find_patient_visit_dates(person, program,
+        params[:include_defaulter_dates] == 'true')
+      all_visits = []    
+      visits.each do | visit |
+        all_visits << {date: visit}.merge(visit_summary(person.id, visit).as_json)
+      end
+      patient_details[:visits] = all_visits
+
+      all_patient_visits << patient_details
+    end
+    
+
+    render json: all_patient_visits
   end
 
   private
@@ -40,8 +54,8 @@ class Api::V1::Programs::Patients::VisitController < ApplicationController
    PatientService.new
   end
 
-  def patient
-    Patient.find(params[:id] || params[:program_patient_id])
+  def patient(patient_id)
+    Patient.find(patient_id)
   end
 
   def program 
