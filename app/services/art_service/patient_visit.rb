@@ -250,7 +250,7 @@ module ARTService
         pregnant: pregnant?,
         breastfeeding: breastfeeding?,
         side_effects_batch: side_effects.empty? ? 'N' : 'Y',
-        next_appointment: next_appointment.strftime("%Y-%m-%d") rescue nil,
+        next_appointment: "",
         doses_missed: doses_missed?
       }
     end
