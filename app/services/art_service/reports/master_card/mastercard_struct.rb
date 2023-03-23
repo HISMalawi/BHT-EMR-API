@@ -17,12 +17,12 @@ module ARTService::Reports::MasterCard
 
     def fetch
       indicators.collect { |indicator| data.merge!(indicator) }
-      data
+      data.as_json
     end
 
     def transfer_in_date
       if patient_history.transfer_in == "Yes"
-        return { transfer_in_date: initial_observation("Transfer in date")&.answer_datetime }
+        return { transfer_in_date: initial_observation("Transfer in date")&.value_datetime.to_date }
       end
       { transfer_in_date: "" }
     end
@@ -33,7 +33,7 @@ module ARTService::Reports::MasterCard
 
     def load_patient_data
       Person.connection.select_all(
-        Person.joins(:names, :addresses, :patient, :relationships, :person_attributes)
+        Person.joins(:names, :addresses, :relationships, :person_attributes)
           .joins(<<-SQL)
           INNER JOIN person_name guardian ON guardian.person_id = relationship.person_b
           AND guardian.voided = 0
@@ -52,7 +52,7 @@ module ARTService::Reports::MasterCard
           relationship_type.b_is_to_a as guardian_relation,
           person_attribute.value as patient_phone,
           CONCAT(person_address.township_division, ', ', person_address.city_village, ', ', person_address.state_province) as physical_address,
-          min(guardian_phone.value) as guadian_phone")
+          min(guardian_phone.value) as guardian_phone")
           .to_sql
       ).to_hash.first
     end

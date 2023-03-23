@@ -283,6 +283,21 @@ module ARTService
 
       who_clinical_conditions
     end
+    
+    def who_clinical_conditions_list
+      use_extended_staging_questions = global_property('use.extended.staging.questions')&.property_value
+
+      encounter = hiv_staging
+      return [] unless encounter
+
+      encounter.observations.each_with_object([]) do |obs, conditions|
+        if use_extended_staging_questions&.casecmp?('true') && obs.answer_string&.casecmp?('yes')
+          conditions << obs.name
+        elsif obs.name.casecmp?('Who Stages Criteria Present')
+          conditions << obs.answer_string
+        end
+      end
+    end
 
     def name
       @name ||= patient.name
