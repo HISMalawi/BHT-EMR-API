@@ -33,18 +33,7 @@ module ARTService::Reports::MasterCard
 
     def load_patient_data
       Person.connection.select_all(
-        Person.joins(:names, :addresses, :relationships, :person_attributes)
-          .joins(<<-SQL)
-          INNER JOIN person_name guardian ON guardian.person_id = relationship.person_b
-          AND guardian.voided = 0
-          INNER JOIN relationship_type ON relationship_type.relationship_type_id = relationship.relationship
-          AND relationship_type.retired = 0
-          INNER JOIN person_attribute guardian_phone ON `guardian_phone`.`voided` = 0
-          AND guardian_phone.person_id = `guardian`.`person_id`
-        SQL
-          .where(person_id: patient.id)
-          .where(person_attribute: { person_attribute_type_id: 12 })
-          .select("person.person_id,
+        "SELECT person.person_id,
           person.gender as sex,
           person.birthdate as birth_date,
           CONCAT(person_name.given_name, ' ', person_name.family_name) as patient_name,
@@ -52,8 +41,12 @@ module ARTService::Reports::MasterCard
           relationship_type.b_is_to_a as guardian_relation,
           person_attribute.value as patient_phone,
           CONCAT(person_address.township_division, ', ', person_address.city_village, ', ', person_address.state_province) as physical_address,
-          min(guardian_phone.value) as guardian_phone")
-          .to_sql
+          min(guardian_phone.value) as guardian_phone FROM `person` INNER JOIN `person_name` ON `person_name`.`voided` = 0 AND `person_name`.`person_id` = `person`.`person_id` INNER JOIN `person_address` ON `person_address`.`voided` = 0 AND `person_address`.`person_id` = `person`.`person_id` INNER JOIN `relationship` ON `relationship`.`voided` = 0 AND `relationship`.`person_a` = `person`.`person_id` INNER JOIN `person_attribute` ON `person_attribute`.`voided` = 0 AND `person_attribute`.`person_id` = `person`.`person_id` INNER JOIN person_name guardian ON guardian.person_id = relationship.person_b
+          AND guardian.voided = 0
+          INNER JOIN relationship_type ON relationship_type.relationship_type_id = relationship.relationship
+          AND relationship_type.retired = 0
+          INNER JOIN person_attribute guardian_phone ON `guardian_phone`.`voided` = 0
+          AND guardian_phone.person_id = `guardian`.`person_id` WHERE `person`.`voided` = 0 AND `person`.`person_id` = #{patient.id} AND `person_attribute`.`person_attribute_type_id` = 12"
       ).to_hash.first
     end
 
