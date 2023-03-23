@@ -350,6 +350,7 @@ Rails.application.routes.draw do
   get '/api/v1/arv_refill_periods', to: 'api/v1/reports#arv_refill_periods'
   get '/api/v1/tx_ml', to: 'api/v1/reports#tx_ml'
   get '/api/v1/tx_rtt', to: 'api/v1/reports#tx_rtt'
+  get '/api/v1/register', to: 'api/v1/reports#art_register'
   get '/api/v1/disaggregated_regimen_distribution', to: 'api/v1/reports#disaggregated_regimen_distribution'
   post '/api/v1/tx_mmd_client_level_data', to: 'api/v1/reports#tx_mmd_client_level_data'
   get '/api/v1/clients', to: 'api/v1/people#list'

@@ -12,6 +12,7 @@ module ARTService
       'ARCHIVING_CANDIDATES' => ARTService::Reports::ArchivingCandidates,
       'APPOINTMENTS' => ARTService::Reports::AppointmentsReport,
       'ARV_REFILL_PERIODS' => ARTService::Reports::ArvRefillPeriods,
+      'ART_REGISTER' => ARTService::ARTRegister,
       'COHORT' => ARTService::Reports::Cohort,
       'COHORT_DISAGGREGATED' => ARTService::Reports::CohortDisaggregated,
       'COHORT_DISAGGREGATED_ADDITIONS' => ARTService::Reports::CohortDisaggregatedAdditions,
@@ -120,6 +121,10 @@ module ARTService
 
     def tx_ml(start_date, end_date)
       REPORTS['TX_ML'].new(start_date: start_date.to_date, end_date: end_date.to_date).data
+    end
+
+    def art_register(end_date, rebuild)
+      REPORTS['ART_REGISTER'].new(date: end_date.to_date, rebuild: rebuild).fetch_register
     end
 
     def tx_rtt(start_date, end_date)
