@@ -132,6 +132,7 @@ Rails.application.routes.draw do
         resources :program_workflows, path: :workflows
         resources :program_regimens, path: :regimens
         get 'regimen_extras' => 'program_regimens#regimen_extras'
+        
 
         get 'booked_appointments' => 'program_appointments#booked_appointments'
         get 'scheduled_appointments' => 'program_appointments#scheduled_appointments'
@@ -143,6 +144,7 @@ Rails.application.routes.draw do
         get 'defaulter_list' => 'program_patients#defaulter_list'
         get '/barcodes/:barcode_name', to: 'program_barcodes#print_barcode'
         post 'void_arv_number/:arv_number' => 'program_patients#void_arv_number'
+        get '/visits' => 'programs/patients/visit#patient_visits'
 
         resources :program_patients, path: 'patients' do
           get '/next_appointment_date' => 'patient_appointments#next_appointment_date'
@@ -158,6 +160,7 @@ Rails.application.routes.draw do
           get '/mastercard_data', to: 'program_patients#mastercard_data'
           get '/medication_side_effects', to: 'program_patients#medication_side_effects'
           get '/is_due_lab_order', to: 'program_patients#is_due_lab_order'
+          
           # ANC
           get '/vl_info', to: 'lab_remainders#index'
           # ANC
