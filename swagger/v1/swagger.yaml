@@ -1316,6 +1316,96 @@ paths:
                       type: string
                     current_age:
                       type: string
+  "/api/v1/register":
+    get:
+      summary: register report
+      tags:
+      - Reports
+      description: Reports Endpoints
+      parameters:
+      - name: date
+        in: query
+        format: date
+        example: '2022-10-1'
+        required: true
+        schema:
+          type: string
+      - name: rebuild
+        in: query
+        example: true or false
+        required: true
+        schema:
+          type: boolean
+      - name: program_id
+        in: query
+        example: 1
+        required: true
+        schema:
+          type: integer
+      security:
+      - api_key: []
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    patient_id:
+                      type: integer
+                    gender:
+                      type: string
+                    age_at_initiation:
+                      type: integer
+                    age_group:
+                      type: string
+                    year:
+                      type: integer
+                    quarter:
+                      type: integer
+                    given_name:
+                      type: string
+                    family_name:
+                      type: string
+                    city_village:
+                      type: string
+                    state_province:
+                      type: string
+                    township_division:
+                      type: string
+                    arv_number:
+                      type: string
+                    phone_number:
+                      type: string
+                    occupation:
+                      type: string
+                    registration_date:
+                      type: string
+                      format: date
+                      example: '2019-01-01'
+                    earliest_start_date:
+                      type: string
+                      format: date
+                      example: '2019-01-01'
+                    outcome:
+                      type: string
+                    outcome_date:
+                      type: string
+                      format: date
+                      example: '2019-01-01'
+                    initiation_condition:
+                      type: string
+                    who_stage:
+                      type: string
+                    transfer_in:
+                      type: string
+                    kaposis_sarcoma:
+                      type: string
+                    tb:
+                      type: string
   "/api/v1/rollback/merge_history":
     get:
       summary: Retrieve merge history
