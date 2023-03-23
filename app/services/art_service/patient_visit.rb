@@ -255,6 +255,32 @@ module ARTService
       }
     end
 
+     # load the lab results for the given test name
+    def lab_result(test_name)
+      concept_id = ConceptName.where(name: test_name).select(:concept_id)
+      return 'N/A' unless concept_id
+
+      tests = lab_test(concept_id)
+
+      result = Lab::LabResult.where(obs_group_id: tests, person_id: patient.patient_id)
+                             .order(:obs_datetime)
+
+      return 'N/A' unless result
+
+      result.collect do |r|
+        value = r.children.first
+
+        return 'N/A' unless value
+
+        {
+          name: test_name, 
+          result_date: "#{value.obs_datetime.strftime('%d/%b/%y')}", 
+          result: "#{value.value_modifier || '='}#{value.value_numeric || value.value_text}"
+        }
+      end
+
+    end
+
     private
 
     def viral_load_tests(sql_params = '=')
@@ -263,6 +289,11 @@ module ARTService
       Lab::LabTest.where("value_coded IN (#{viral_load_concept.to_sql})
                           AND person_id = #{patient.patient_id}
                           AND DATE(obs_datetime) #{sql_params} '#{date.to_date}'")
+    end
+
+    def lab_test(test_name_concept_id)
+      Lab::LabTest.where(value_coded: test_name_concept_id, person_id: patient.patient_id)
+      .where("DATE(obs_datetime) >= '#{date.to_date.beginning_of_day}'")
     end
 
     def lab_tests_engine
