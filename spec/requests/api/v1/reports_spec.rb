@@ -43,5 +43,50 @@ RSpec.describe 'api/v1/reports', type: :request do
       end
     end
   end
+
+  path '/api/v1/register' do
+    get 'register report' do
+      tags TAG
+      description TAG_DESCRIPTION
+      consumes 'application/json'
+      produces 'application/json'
+      parameter name: :date, in: :query, type: :string, format: :date, example: '2022-10-1', required: true
+      parameter name: :rebuild, in: :query, type: :boolean, example: 'true or false', required: true
+      parameter name: :program_id, in: :query, type: :integer, example: 1, required: true
+      security [api_key: []]
+
+      response(200, 'successful') do
+        schema type: :array, items: {
+          type: :object, properties: {
+            patient_id: { type: :integer },
+            gender: { type: :string },
+            age_at_initiation: { type: :integer },
+            age_group: { type: :string },
+            year: { type: :integer },
+            quarter: { type: :integer },
+            given_name: { type: :string },
+            family_name: { type: :string },
+            city_village: { type: :string },
+            state_province: { type: :string },
+            township_division: { type: :string },
+            arv_number: { type: :string },
+            phone_number: { type: :string },
+            occupation: { type: :string },
+            registration_date: { type: :string, format: :date, example: '2019-01-01' },
+            earliest_start_date: { type: :string, format: :date, example: '2019-01-01' },
+            outcome: { type: :string },
+            outcome_date: { type: :string, format: :date, example: '2019-01-01' },
+            initiation_condition: { type: :string },
+            who_stage: { type: :string },
+            transfer_in: { type: :string },
+            kaposis_sarcoma: { type: :string },
+            tb: { type: :string }
+          }
+        }
+
+        run_test!
+      end
+    end
+  end
 end
 # rubocop:enable Metrics/BlockLength

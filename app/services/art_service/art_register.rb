@@ -8,7 +8,7 @@ module ARTService
     def initialize(date: Date.today, rebuild: false)
       @current_day = date.to_date
       @year_ago = date - 1.year
-      @rebuild = rebuild
+      @rebuild = rebuild == 'true' ? true : false
     end
 
     def fetch_register
