@@ -32,7 +32,7 @@ module HtsService
         ENTRY_POINTS = {
           'VCT' => :vct_comm,
           'Index' => :index,
-          'VMMC' => :other_comm_tp,
+          'VMMC' => :vmmc_comm,
           'Other' => :other_comm_tp,
           'SNS' => :sns_comm,
           'Mobile' => :mobile_comm
@@ -48,6 +48,7 @@ module HtsService
                 mobile_comm: { recent: [], long_term: [] },
                 sns_comm: { recent: [], long_term: [] },
                 vct_comm: { recent: [], long_term: [] },
+                vmmc_comm: { recent: [], long_term: [] },
                 other_comm_tp: { recent: [], long_term: [] }
               }
             end

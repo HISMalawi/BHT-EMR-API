@@ -386,6 +386,5 @@ Rails.application.routes.draw do
   get '/api/v1/data_cleaning_confirmation', to: 'api/v1/data_cleaning#view'
   post '/api/v1/data_cleaning_confirmation', to: 'api/v1/data_cleaning#create'
 
-  post '/api/v1/pharmacy/items/batch_update', to: 'api/v1/pharmacy/items#batch_update'
-
+  post 'api/v1/sync_to_ait', to: 'api/v1/patients#sync_to_ait'
 end

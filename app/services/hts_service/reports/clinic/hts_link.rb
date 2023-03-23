@@ -69,11 +69,14 @@ module HtsService::Reports::Clinic
       Person.connection.select_all(
         his_patients_rev
           .joins(<<-SQL)
-        INNER JOIN obs linked ON linked.person_id = person.person_id
+        LEFT JOIN obs linked ON linked.person_id = person.person_id
+        AND linked.voided = 0
         AND linked.concept_id = #{ART_OUTCOME} AND linked.value_coded = #{LINKED_CONCEPT}
-        INNER JOIN obs facility ON facility.person_id = person.person_id
+        LEFT JOIN obs facility ON facility.person_id = person.person_id
+        AND facility.voided = 0
         AND facility.concept_id = #{OUTCOME_FACILITY}
         SQL
+        .where.not(facility: {value_text: nil})
           .select("disaggregated_age_group(person.birthdate, '#{@end_date.to_date}') as age_group, linked.obs_datetime AS linked_date, facility.value_text as facility, person.person_id, person.gender, encounter.encounter_datetime as date_tested")
           .group("person.person_id")
           .to_sql
