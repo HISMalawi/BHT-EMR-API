@@ -144,7 +144,7 @@ Rails.application.routes.draw do
         get 'defaulter_list' => 'program_patients#defaulter_list'
         get '/barcodes/:barcode_name', to: 'program_barcodes#print_barcode'
         post 'void_arv_number/:arv_number' => 'program_patients#void_arv_number'
-        get '/visits' => 'programs/patients/visit#patient_visits'
+        post '/visits' => 'programs/patients/visit#patient_visits'
 
         resources :program_patients, path: 'patients' do
           get '/next_appointment_date' => 'patient_appointments#next_appointment_date'
