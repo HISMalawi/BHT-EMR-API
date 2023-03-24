@@ -4973,7 +4973,7 @@
                                             height: 25.56px
                                     " class="c bold">
 
-                    <%=  visit[:pills_brought].map {|p| p[:quantity].to_i}.inject(&:+) %>
+                    <%=  visit[:pills_brought].map {|p| p[:quantity]}.inject(&:+) %>
                 </div>
 
                 <div style="
@@ -5074,7 +5074,7 @@
                                                             width: 70.104000px;
                                                             height: 25.56px
                                                     " class="c bold">
-                    <%= visit[:next_appointment].to_date %>
+                    <%= visit[:next_appointment] %>
 
                 </div>
                  
@@ -5084,7 +5084,7 @@
                                                             width: 70.104000px;
                                                             height: 25.56px
                                                     " class="c bold">
-  <%= visit[:outcome].to_date %>
+  <%= visit[:outcome] %>
 </div>
 
 <% 
