@@ -45,6 +45,7 @@ module ARTService::Reports::MasterCard
 
     def load_art_initiation
       {
+        arv_number: patient_history.arv_number,
         height: patient_history.initial_height,
         weight: patient_history.initial_weight,
         hiv_related_diseases: patient_history.who_clinical_conditions_list.join(", "),
