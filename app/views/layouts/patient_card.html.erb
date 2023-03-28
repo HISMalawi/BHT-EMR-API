@@ -494,7 +494,9 @@
                         rowspan='2 '
                         align='center'
                         valign='middle '>
-            <font face='Times New Roman' color='#000000'>Rapid</font>
+            <font face='Times New Roman' color='#000000'><%= @data["confimatory_test_type
+"] %>
+            </font>
           </td>
           <td
                         style='border-top: 1px solid #000000; border-right: 2px solid #000000'
@@ -503,7 +505,7 @@
                         center' '='center'
                         ' '
                         valign='middle '>
-            <font face='Times New Roman' color='#000000'>PCR</font>
+            <font face='Times New Roman' color='#000000'></font>
           </td>
         </tr>
         <tr>
@@ -513,6 +515,8 @@
           <td align='left' valign='top '>
             <font face='Times New Roman' color='#000000'><br>
             </font>
+            <%= @data["confimatory_test_date
+"] %>
           </td>
           <td
                         style='border-bottom: 1px solid #000000; border-left: 1px solid #000000'
@@ -745,7 +749,7 @@
                         style='border-top: 1px solid #000000; border-left: 2px solid #000000'
                         align='left'
                         valign='top '>
-            <font face='Times New Roman' color='#000000'>Reg.</font>
+            <font face='Times New Roman' color='#000000'></font>
           </td>
           <td
                         style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000'
@@ -910,7 +914,8 @@
                         style='border-bottom: 1px solid #000000; border-left: 2px solid #000000'
                         align='left'
                         valign='top '>
-            <font face='Times New Roman' color='#000000'>men</font>
+            <font face='Times New Roman' color='#000000'><%= @data[:visits][0][:regimen] %>
+            </font>
           </td>
           <td
                         style='border-bottom: 1px solid #000000; border-left: 1px solid #000000'
