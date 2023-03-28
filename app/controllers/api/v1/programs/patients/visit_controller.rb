@@ -45,7 +45,7 @@ class Api::V1::Programs::Patients::VisitController < ApplicationController
       
       html
     end
-    render json: htmls.join("")
+    render json: htmls
   end
 
   private

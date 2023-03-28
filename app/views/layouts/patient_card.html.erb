@@ -1795,17 +1795,17 @@
             <font face='Liberation Sans Narrow'></font>
             <%= visit[:side_effects].length > 0 ? "Y" : "N" %>
           </td>
-          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
-				align='left' valign=middle bgcolor='#F1F1F1'>
-            <font face='Times New Roman' color='#000000'><br>
-            </font>
-            <%= visit[:pills_brought].map {|p| p[:quantity]}.inject(&:+) rescue nil %>
-          </td>
-          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
-				align='left' valign=middle bgcolor='#F1F1F1'>
-            <font face='Times New Roman' color='#000000'><br>
-            </font>
-          </td>
+           
+<td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
+				align='center' valign=middle bgcolor='#F1F1F1'>
+  <font face='Liberation Sans Narrow'></font>
+  <%= visit[:pills_brought].map {|p| p[:quantity]}.inject(&:+) rescue nil %>
+</td>
+<td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
+				align='center' valign=middle bgcolor='#F1F1F1'>
+  <font face='Liberation Sans Narrow'></font>
+ <%= visit[:doses_missed].map {|p| p[:quantity]}.inject(&:+) rescue nil %>
+</td>
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				colspan=2 align='center' valign=middle bgcolor='#F1F1F1'>
             <font face='Times New Roman' color='#000000'><br>
@@ -1815,7 +1815,7 @@
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
 				align='right' valign=middle bgcolor='#F1F1F1'>
             <font face='Liberation Sans Narrow'></font>
-            <%= visit[:pills_dispensed].map {|q| q[1]}.inject(&:+) rescue "" %>
+            <%= visit[:arvs].map {|q| q[1]}.inject(&:+) rescue "" %>
           </td>
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
 				align='right' valign=middle bgcolor='#F1F1F1'>
@@ -1826,6 +1826,19 @@
 				align='left' valign=middle bgcolor='#F1F1F1'>
             <font face='Times New Roman' color='#000000'><br>
             </font>
+             <%= visit[:cpt].map {|q| q[1]}.inject(&:+) rescue "" %>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				align='left' valign=middle bgcolor='#F1F1F1'>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+             <%= visit[:ihn].map {|q| q[1]}.inject(&:+) rescue "" %>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				align='left' valign=middle bgcolor='#F1F1F1'>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+             <%= visit[:rfp].map {|q| q[1]}.inject(&:+) rescue "" %>
           </td>
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				align='left' valign=middle bgcolor='#F1F1F1'>
@@ -1836,16 +1849,7 @@
 				align='left' valign=middle bgcolor='#F1F1F1'>
             <font face='Times New Roman' color='#000000'><br>
             </font>
-          </td>
-          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
-				align='left' valign=middle bgcolor='#F1F1F1'>
-            <font face='Times New Roman' color='#000000'><br>
-            </font>
-          </td>
-          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
-				align='left' valign=middle bgcolor='#F1F1F1'>
-            <font face='Times New Roman' color='#000000'><br>
-            </font>
+             <%= visit[:pryidoxine].map {|q| q[1]}.inject(&:+) rescue "" %>
           </td>
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				colspan=2 align='left' valign=middle bgcolor='#F1F1F1'>
