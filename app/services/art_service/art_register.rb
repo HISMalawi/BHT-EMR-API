@@ -3,12 +3,13 @@
 module ARTService
   # Art TX Curr Register
   class ARTRegister
-    attr_accessor :current_day, :year_ago, :rebuild
+    attr_accessor :current_day, :year_ago, :rebuild, :adult
 
-    def initialize(date: Date.today, rebuild: false)
-      @current_day = date.to_date
-      @year_ago = date - 1.year
-      @rebuild = rebuild == 'true' ? true : false
+    def initialize(date:, rebuild:, adult:)
+      @current_day = date.to_date || Date.today
+      @year_ago = (date.to_date || Date.today) - 1.year
+      @rebuild = rebuild == 'true'
+      @adult = adult == 'true'
     end
 
     def fetch_register
@@ -22,7 +23,7 @@ module ARTService
       data = process_data
       File.delete(lock_file) if File.exist?(lock_file)
       data
-    rescue e
+    rescue StandardError => e
       File.delete(lock_file) if File.exist?(lock_file)
       raise e
     end
@@ -77,14 +78,15 @@ module ARTService
             (CASE WHEN art_initiation_status.value_text IS NOT NULL THEN 'TI' ELSE 'FT' END) AS art_initiation_status,
             COALESCE(kaposis_sacoma.value_coded, 'No')AS kaposis_sarcoma,
             COALESCE((SELECT name FROM concept_name WHERE concept_id = tb.value_coded LIMIT 1), 'Unknown') AS tb,
-            (CASE WHEN p.gender = 'M' THEN 'M' ELSE female_maternal_status(tpar.patient_id, p.earliest_start_date) END) AS maternal_status
+            (CASE WHEN p.gender = 'M' THEN 'M' ELSE female_maternal_status(tpar.patient_id, p.earliest_start_date) END) AS maternal_status,
+            patient_current_regimen(tpar.patient_id, '#{current_day}') AS current_regimen
         FROM temp_patient_outcomes tpar
         INNER JOIN temp_earliest_start_date p ON p.patient_id = tpar.patient_id
         LEFT JOIN obs art_eligibility ON art_eligibility.person_id = tpar.patient_id AND art_eligibility.concept_id = 2743 AND art_eligibility.voided = 0 AND art_eligibility.obs_datetime < DATE('#{current_day}') + INTERVAL 1 DAY
         LEFT JOIN obs who_stage ON who_stage.person_id = tpar.patient_id AND who_stage.concept_id = 7562 AND who_stage.voided = 0 AND who_stage.obs_datetime < DATE('#{current_day}') + INTERVAL 1 DAY
         LEFT JOIN obs art_initiation_status ON art_initiation_status.person_id = tpar.patient_id AND art_initiation_status.concept_id = 7750 AND art_initiation_status.voided = 0 AND art_initiation_status.obs_datetime < DATE('#{current_day}') + INTERVAL 1 DAY
         LEFT JOIN obs kaposis_sacoma ON kaposis_sacoma.person_id = tpar.patient_id AND kaposis_sacoma.concept_id = 2743 AND kaposis_sacoma.voided = 0 AND kaposis_sacoma.value_coded = 507 AND kaposis_sacoma.obs_datetime < DATE('#{current_day}') + INTERVAL 1 DAY
-        LEFT JOIN obs tb ON tb.person_id = tpar.patient_id AND tb.concept_id = 2690 AND tb.voided = 0 AND tb.value_coded = 1065 AND tb.obs_datetime < DATE('#{current_day}') + INTERVAL 1 DAY
+        LEFT JOIN obs tb ON tb.person_id = tpar.patient_id AND tb.concept_id = 7459 AND tb.voided = 0 AND tb.obs_datetime < DATE('#{current_day}') + INTERVAL 1 DAY
         WHERE tpar.cum_outcome IN ('On antiretrovirals')
         GROUP BY tpar.patient_id
       SQL
@@ -101,6 +103,8 @@ module ARTService
         INNER JOIN temp_earliest_start_date tpar_earliest_start_date ON tpar_earliest_start_date.patient_id = tpar.patient_id
         INNER JOIN temp_art_register_demographics tpar_demographics ON tpar_demographics.patient_id = tpar.patient_id
         LEFT JOIN temp_art_register_staging tpar_staging ON tpar_staging.patient_id = tpar.patient_id
+        -- use the adult property to get adult regimens that is all regimens that do not contain the letter 'P'
+        WHERE tpar_staging.current_regimen #{adult ? 'NOT' : ''} LIKE '%P%'
         GROUP BY tpar.patient_id
       SQL
     end
@@ -131,7 +135,8 @@ module ARTService
           who_stage: row['who_stage'],
           transfer_in: row['art_initiation_status'],
           kaposis_sarcoma: row['kaposis_sarcoma'],
-          tb: row['tb']
+          tb: row['tb'],
+          regimen: row['current_regimen']
         }
       end
     end
