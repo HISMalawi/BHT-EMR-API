@@ -379,7 +379,13 @@ module ARTService
         breastfeeding: breastfeeding?,
         side_effects_batch: side_effects.empty? ? 'N' : 'Y',
         next_appointment: next_appointment ? next_appointment.strftime('%Y-%m-%d') : nil,
-        doses_missed: doses_missed?
+        doses_missed: doses_missed?,
+        cpt: cpt_dispensed,
+        inh: inh_dispensed,
+        rfp: rfp_dispensed,
+        inh_rfp: new_3hp_dispensed,
+        pryidoxine: pryidoxine_dispensed,
+        arvs: arvs_dispensed
       }
     end
 
