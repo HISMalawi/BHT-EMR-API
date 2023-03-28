@@ -1342,6 +1342,12 @@ paths:
         required: true
         schema:
           type: integer
+      - name: adult
+        in: query
+        example: true or false
+        required: true
+        schema:
+          type: boolean
       security:
       - api_key: []
       responses:
@@ -1406,6 +1412,13 @@ paths:
                       type: string
                     tb:
                       type: string
+                    regimen:
+                      type: string
+                      example: 13A
+                    height:
+                      type: string
+                      format: float
+                      example: '1.5'
   "/api/v1/rollback/merge_history":
     get:
       summary: Retrieve merge history
