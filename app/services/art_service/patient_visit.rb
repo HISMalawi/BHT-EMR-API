@@ -171,7 +171,7 @@ module ARTService
       @cpt_dispensed = @cpt_dispensed.collect { |k, v| [k, v] }
     end
 
-    def arv_dispensed
+    def arvs_dispensed
       return @arv_dispensed if @arv_dispensed
 
       arv_drugs = Drug.arv_drugs.collect(&:drug_id)
@@ -386,7 +386,7 @@ module ARTService
         inh: inh_dispensed,
         rfp: rfp_dispensed,
         inh_rfp: new_3hp_dispensed,
-        pryidoxine: pryidoxine_dispensed,
+        pryidoxine: pyridoxine_dispensed,
         arvs: arvs_dispensed
       }
     end
