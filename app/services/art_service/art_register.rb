@@ -78,7 +78,8 @@ module ARTService
             COALESCE(kaposis_sacoma.value_coded, 'No')AS kaposis_sarcoma,
             COALESCE((SELECT name FROM concept_name WHERE concept_id = tb.value_coded LIMIT 1), 'Unknown') AS tb,
             (CASE WHEN p.gender = 'M' THEN 'M' ELSE female_maternal_status(tpar.patient_id, p.earliest_start_date) END) AS maternal_status,
-            patient_current_regimen(tpar.patient_id, '#{current_day}') AS current_regimen
+            patient_current_regimen(tpar.patient_id, '#{current_day}') AS current_regimen,
+            COALESCE(height.value_numeric, 0) AS height
         FROM temp_patient_outcomes tpar
         INNER JOIN temp_earliest_start_date p ON p.patient_id = tpar.patient_id
         LEFT JOIN obs art_eligibility ON art_eligibility.person_id = tpar.patient_id AND art_eligibility.concept_id = 2743 AND art_eligibility.voided = 0 AND art_eligibility.obs_datetime < DATE('#{current_day}') + INTERVAL 1 DAY
@@ -86,6 +87,7 @@ module ARTService
         LEFT JOIN obs art_initiation_status ON art_initiation_status.person_id = tpar.patient_id AND art_initiation_status.concept_id = 7750 AND art_initiation_status.voided = 0 AND art_initiation_status.obs_datetime < DATE('#{current_day}') + INTERVAL 1 DAY
         LEFT JOIN obs kaposis_sacoma ON kaposis_sacoma.person_id = tpar.patient_id AND kaposis_sacoma.concept_id = 2743 AND kaposis_sacoma.voided = 0 AND kaposis_sacoma.value_coded = 507 AND kaposis_sacoma.obs_datetime < DATE('#{current_day}') + INTERVAL 1 DAY
         LEFT JOIN obs tb ON tb.person_id = tpar.patient_id AND tb.concept_id = 7459 AND tb.voided = 0 AND tb.obs_datetime < DATE('#{current_day}') + INTERVAL 1 DAY
+        LEFT JOIN obs height ON height.person_id = tpar.patient_id AND height.concept_id = 5090 AND height.voided = 0 AND height.obs_datetime < DATE('#{current_day}') + INTERVAL 1 DAY
         WHERE tpar.cum_outcome IN ('On antiretrovirals')
         GROUP BY tpar.patient_id
       SQL
@@ -135,7 +137,8 @@ module ARTService
           transfer_in: row['art_initiation_status'],
           kaposis_sarcoma: row['kaposis_sarcoma'],
           tb: row['tb'],
-          regimen: row['current_regimen']
+          regimen: row['current_regimen'],
+          height: row['height']
         }
       end
     end
