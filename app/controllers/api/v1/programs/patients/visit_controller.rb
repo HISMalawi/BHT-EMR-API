@@ -21,27 +21,8 @@ class Api::V1::Programs::Patients::VisitController < ApplicationController
 
   def patient_visits
     patients = params[:patient_ids].collect { |id| patient(id) }    
-    htmls = patients.collect do | patient |
-
-      mastercard_service = patient_mastercard_service(patient)
-      mastercard_service = mastercard_service.patient_is_a_pediatric? ? ped_patient_mastercard_service(patient) : mastercard_service
-
-      patient_details = mastercard_service.fetch
-
-      visits_dates = patient_service.find_patient_visit_dates(patient, program, params[:include_defaulter_dates] == 'true')      
-
-      patient_details[:visits] = visits_dates.collect do | date |
-        {date: date}.merge(visit_summary(patient.id, date).as_json)
-      end
-
-      @data = patient_details
-      template = File.read(Rails.root.join('app', 'views', 'layouts', 'patient_card.html.erb'))
-
-      html = ERB.new(template).result(binding)
-
-      {html: html}
-    end
-    render json: htmls
+    BatchPrintingJob.perform_later(patients)
+    render json: { status: 'OK', message: "Your request is being processed" }
   end
 
   private
