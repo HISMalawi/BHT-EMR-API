@@ -149,6 +149,113 @@ module ARTService
       @pills_dispensed = @pills_dispensed.collect { |k, v| [k, v] }
     end
 
+    def cpt_dispensed
+      return @cpt_dispensed if @cpt_dispensed
+
+      cpt_drugs = Drug.where(concept_id: 916).collect(&:drug_id)
+
+      observations = Observation.where(concept: concept('Amount dispensed'), person: patient.person, value_drug: cpt_drugs)
+                                .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
+                                .includes(order: { drug_order: { drug: %i[alternative_names] } })
+                                .select(%i[order_id value_numeric])
+
+      @cpt_dispensed = observations.each_with_object({}) do |observation, cpt_dispensed|
+        drug = observation&.order&.drug_order&.drug
+        next unless drug
+
+        drug_name = format_drug_name(drug)
+        cpt_dispensed[drug_name] ||= 0
+        cpt_dispensed[drug_name] += observation.value_numeric
+      end
+
+      @cpt_dispensed = @cpt_dispensed.collect { |k, v| [k, v] }
+    end
+
+    def arv_dispensed
+      return @arv_dispensed if @arv_dispensed
+
+      arv_drugs = Drug.arv_drugs.collect(&:drug_id)
+
+      observations = Observation.where(concept: concept('Amount dispensed'), person: patient.person, value_drug: arv_drugs)
+                                .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
+                                .includes(order: { drug_order: { drug: %i[alternative_names] } })
+                                .select(%i[order_id value_numeric])
+
+      @arv_dispensed = observations.each_with_object({}) do |observation, arv_dispensed|
+        drug = observation&.order&.drug_order&.drug
+        next unless drug
+
+        drug_name = format_drug_name(drug)
+        arv_dispensed[drug_name] ||= 0
+        arv_dispensed[drug_name] += observation.value_numeric
+      end
+    end
+
+    def pyridoxine_dispensed
+      return @pyridoxine_dispensed if @pyridoxine_dispensed
+
+      pyridoxine_drugs = Drug.where(concept_id: 766).collect(&:drug_id)
+
+      observations = Observation.where(concept: concept('Amount dispensed'), person: patient.person, value_drug: pyridoxine_drugs)
+                                .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
+                                .includes(order: { drug_order: { drug: %i[alternative_names] } })
+                                .select(%i[order_id value_numeric])
+
+      @pyridoxine_dispensed = observations.each_with_object({}) do |observation, pyridoxine_dispensed|
+        drug = observation&.order&.drug_order&.drug
+        next unless drug
+
+        drug_name = format_drug_name(drug)
+        pyridoxine_dispensed[drug_name] ||= 0
+        pyridoxine_dispensed[drug_name] += observation.value_numeric
+      end
+
+      @pyridoxine_dispensed = @pyridoxine_dispensed.collect { |k, v| [k, v] }
+    end
+
+    def inh_dispensed 
+      return @inh_dispensed if @inh_dispensed
+
+      inh_drugs = Drug.where(concept_id: %w[656 750]).collect(&:drug_id)
+
+      observations = Observation.where(concept: concept('Amount dispensed'), person: patient.person, value_drug: inh_drugs)
+                                .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
+                                .includes(order: { drug_order: { drug: %i[alternative_names] } })
+                                .select(%i[order_id value_numeric])
+
+      @inh_dispensed = observations.each_with_object({}) do |observation, inh_dispensed|
+        drug = observation&.order&.drug_order&.drug
+        next unless drug
+
+        drug_name = format_drug_name(drug)
+        inh_dispensed[drug_name] ||= 0
+        inh_dispensed[drug_name] += observation.value_numeric
+      end
+
+      @inh_dispensed = @inh_dispensed.collect { |k, v| [k, v] }
+    end
+
+    def rfp_dispensed
+      return @rfp_dispensed if @rfp_dispensed
+
+      rfp_drugs = Drug.where(concept_id: 9974).collect(&:drug_id)
+      observations = Observation.where(concept: concept('Amount dispensed'), person: patient.person, value_drug: rfp_drugs)
+                                .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
+                                .includes(order: { drug_order: { drug: %i[alternative_names] } })
+                                .select(%i[order_id value_numeric])
+
+      @rfp_dispensed = observations.each_with_object({}) do |observation, rfp_dispensed|
+        drug = observation&.order&.drug_order&.drug
+        next unless drug
+
+        drug_name = format_drug_name(drug)
+        rfp_dispensed[drug_name] ||= 0
+        rfp_dispensed[drug_name] += observation.value_numeric
+      end
+
+      @rfp_dispensed = @rfp_dispensed.collect { |k, v| [k, v] }
+    end
+
     def visit_by
       if patient_present? && guardian_present?
         'BOTH'
@@ -250,8 +357,12 @@ module ARTService
         pregnant: pregnant?,
         breastfeeding: breastfeeding?,
         side_effects_batch: side_effects.empty? ? 'N' : 'Y',
-        next_appointment: "",
-        doses_missed: doses_missed?
+        next_appointment: next_appointment,
+        doses_missed: doses_missed?,
+        inh: inh_dispensed,
+        arvs: arv_dispensed,
+        rfp: rfp_dispensed,
+        pyridoxine: pyridoxine_dispensed
       }
     end
 
