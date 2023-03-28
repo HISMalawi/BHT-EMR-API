@@ -1,5112 +1,1428 @@
-<!DOCTYPE html>
-<style type="text/css">
-    @media print {
-        @page {
-            margin: 0
-        }
-
-        html {
-            margin: 0
-        }
-
-        body {
-            margin: 0;
-            -webkit-print-color-adjust: exact
-        }
-
-        #sidebar {
-            display: none
-        }
-
-        #page-container {
-            width: auto;
-            height: auto;
-            overflow: visible;
-            background-color: transparent
-        }
-
-        .d {
-            display: none
-        }
-    }
-
-    .no-overflow {
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-    }
-
-    .pf {
-        position: relative;
-        background-color: white;
-        overflow: hidden;
-        margin: 0;
-        border: 0
-    }
-
-    .pc {
-        position: absolute;
-        border: 0;
-        padding: 0;
-        margin: 0;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        /* overflow: hidden; */
-        display: block;
-        transform-origin: 0 0;
-        -ms-transform-origin: 0 0;
-        -webkit-transform-origin: 0 0
-    }
-
-    .pc.opened {
-        display: block
-    }
-
-    .bf {
-        position: absolute;
-        border: 0;
-        margin: 0;
-        top: 0;
-        bottom: 0;
-        width: 100%;
-        height: 100%;
-        -ms-user-select: none;
-        -moz-user-select: none;
-        -webkit-user-select: none;
-        user-select: none
-    }
-
-    .bi {
-        position: absolute;
-        border: 0;
-        margin: 0;
-        -ms-user-select: none;
-        -moz-user-select: none;
-        -webkit-user-select: none;
-        user-select: none
-    }
-
-
-    .bold {
-        font-weight: bold !important;
-    }
-
-    @media print {
-        .pf {
-            margin: 0;
-            box-shadow: none;
-            page-break-after: always;
-            page-break-inside: avoid
-        }
-
-        @-moz-document url-prefix() {
-            .pf {
-                overflow: visible;
-                border: 1px solid #fff
-            }
-
-            .pc {
-                overflow: visible
-            }
-        }
-    }
-
-    .c {
-        position: absolute;
-        border: 0;
-        padding: 0;
-        margin: 0;
-        /* overflow: hidden; */
-        display: block
-    }
-
-    .t {
-        position: absolute;
-        white-space: pre;
-        font-size: 1px;
-        transform-origin: 0 100%;
-        -ms-transform-origin: 0 100%;
-        -webkit-transform-origin: 0 100%;
-        unicode-bidi: bidi-override;
-        -moz-font-feature-settings: "liga" 0
-    }
-
-    .t:after {
-        content: ''
-    }
-
-    .t:before {
-        content: '';
-        display: inline-block
-    }
-
-    .t span {
-        position: relative;
-        unicode-bidi: bidi-override
-    }
-
-    ._ {
-        display: inline-block;
-        color: transparent;
-        z-index: -1
-    }
-
-    : :selection {
-        background: rgba(127,
-                255,
-                255,
-                0.4)
-    }
-
-    : :-moz-selection {
-        background: rgba(127,
-                255,
-                255,
-                0.4)
-    }
-
-    .pi {
-        display: none
-    }
-
-    .d {
-        position: absolute;
-        transform-origin: 0 100%;
-        -ms-transform-origin: 0 100%;
-        -webkit-transform-origin: 0 100%
-    }
-
-    .it {
-        border: 0;
-        background-color: rgba(255,
-                255,
-                255,
-                0.0)
-    }
-
-    .ir:hover {
-        cursor: pointer
-    }
-</style>
-<style type="text/css">
-    .m1 {
-        transform: matrix(0.000000,
-                0.250000,
-                -0.250000,
-                0.000000,
-                0,
-                0);
-        -ms-transform: matrix(0.000000,
-                0.250000,
-                -0.250000,
-                0.000000,
-                0,
-                0);
-        -webkit-transform: matrix(0.000000,
-                0.250000,
-                -0.250000,
-                0.000000,
-                0,
-                0);
-    }
-
-    .m0 {
-        transform: matrix(0.250000,
-                0.000000,
-                0.000000,
-                0.250000,
-                0,
-                0);
-        -ms-transform: matrix(0.250000,
-                0.000000,
-                0.000000,
-                0.250000,
-                0,
-                0);
-        -webkit-transform: matrix(0.250000,
-                0.000000,
-                0.000000,
-                0.250000,
-                0,
-                0);
-    }
-
-    .v1 {
-        vertical-align: -1.920000px;
-    }
-
-    .v0 {
-        vertical-align: 0.000000px;
-    }
-
-    .ls14 {
-        letter-spacing: -3.612000px;
-    }
-
-    .ls13 {
-        letter-spacing: -0.225600px;
-    }
-
-    .ls12 {
-        letter-spacing: -0.192000px;
-    }
-
-    .lsc {
-        letter-spacing: -0.120400px;
-    }
-
-    .lsb {
-        letter-spacing: -0.098000px;
-    }
-
-    .ls7 {
-        letter-spacing: -0.096000px;
-    }
-
-    .ls9 {
-        letter-spacing: -0.080800px;
-    }
-
-    .ls10 {
-        letter-spacing: -0.048400px;
-    }
-
-    .ls8 {
-        letter-spacing: -0.048000px;
-    }
-
-    .ls6 {
-        letter-spacing: 0.000000px;
-    }
-
-    .ls11 {
-        letter-spacing: 0.007680px;
-    }
-
-    .lsf {
-        letter-spacing: 0.013440px;
-    }
-
-    .lsa {
-        letter-spacing: 0.021600px;
-    }
-
-    .lse {
-        letter-spacing: 0.039840px;
-    }
-
-    .lsd {
-        letter-spacing: 0.096000px;
-    }
-
-    .ls2 {
-        letter-spacing: 0.156960px;
-    }
-
-    .ls1 {
-        letter-spacing: 0.159360px;
-    }
-
-    .ls5 {
-        letter-spacing: 0.228000px;
-    }
-
-    .ls4 {
-        letter-spacing: 0.240000px;
-    }
-
-    .ls3 {
-        letter-spacing: 0.332160px;
-    }
-
-    .ls0 {
-        letter-spacing: 0.348000px;
-    }
-
-    .sc_ {
-        text-shadow: none;
-    }
-
-    .sc2 {
-        text-shadow: -0.015em 0 rgb(0,
-                0,
-                0),
-            0 0.015em rgb(0,
-                0,
-                0), 0.015em 0 rgb(0,
-                0,
-                0),
-            0 -0.015em rgb(0,
-                0,
-                0);
-    }
-
-    .sc1 {
-        text-shadow: -0.015em 0 rgb(127,
-                127,
-                127),
-            0 0.015em rgb(127,
-                127,
-                127), 0.015em 0 rgb(127,
-                127,
-                127),
-            0 -0.015em rgb(127,
-                127,
-                127);
-    }
-
-    .sc0 {
-        text-shadow: -0.015em 0 transparent,
-            0 0.015em transparent, 0.015em 0 transparent,
-            0 -0.015em transparent;
-    }
-
-    @media screen and (-webkit-min-device-pixel-ratio: 0) {
-        .sc_ {
-            -webkit-text-stroke: 0px transparent;
-        }
-
-        .sc2 {
-            -webkit-text-stroke: 0.015em rgb(0,
-                    0,
-                    0);
-            text-shadow: none;
-        }
-
-        .sc1 {
-            -webkit-text-stroke: 0.015em rgb(127,
-                    127,
-                    127);
-            text-shadow: none;
-        }
-
-        .sc0 {
-            -webkit-text-stroke: 0.015em transparent;
-            text-shadow: none;
-        }
-    }
-
-    .ws16 {
-        word-spacing: -11.040000px;
-    }
-
-    .ws0 {
-        word-spacing: -10.944000px;
-    }
-
-    .ws2 {
-        word-spacing: -10.896000px;
-    }
-
-    .ws1 {
-        word-spacing: -10.848000px;
-    }
-
-    .ws5 {
-        word-spacing: -9.981600px;
-    }
-
-    .ws6 {
-        word-spacing: -9.960000px;
-    }
-
-    .wsf {
-        word-spacing: -9.911600px;
-    }
-
-    .ws4 {
-        word-spacing: -9.879200px;
-    }
-
-    .ws8 {
-        word-spacing: -9.862000px;
-    }
-
-    .ws9 {
-        word-spacing: -9.839600px;
-    }
-
-    .ws7 {
-        word-spacing: -9.348000px;
-    }
-
-    .wsa {
-        word-spacing: -9.096000px;
-    }
-
-    .ws12 {
-        word-spacing: -9.000000px;
-    }
-
-    .wse {
-        word-spacing: -8.280000px;
-    }
-
-    .wsc {
-        word-spacing: -8.079840px;
-    }
-
-    .wsd {
-        word-spacing: -8.053440px;
-    }
-
-    .ws10 {
-        word-spacing: -8.047680px;
-    }
-
-    .wsb {
-        word-spacing: -8.040000px;
-    }
-
-    .ws13 {
-        word-spacing: -7.848000px;
-    }
-
-    .ws14 {
-        word-spacing: -7.814400px;
-    }
-
-    .ws3 {
-        word-spacing: -6.960000px;
-    }
-
-    .ws11 {
-        word-spacing: -5.520000px;
-    }
-
-    .ws18 {
-        word-spacing: -5.388000px;
-    }
-
-    .ws17 {
-        word-spacing: -4.560000px;
-    }
-
-    .ws15 {
-        word-spacing: 0.000000px;
-    }
-
-    ._8 {
-        margin-left: -3.972000px;
-    }
-
-    ._5 {
-        margin-left: -1.078080px;
-    }
-
-    ._6 {
-        width: 1.430880px;
-    }
-
-    ._4 {
-        width: 2.914560px;
-    }
-
-    ._3 {
-        width: 3.930240px;
-    }
-
-    ._2 {
-        width: 5.736000px;
-    }
-
-    ._0 {
-        width: 29.312000px;
-    }
-
-    ._1 {
-        width: 43.584000px;
-    }
-
-    ._7 {
-        width: 71.304000px;
-    }
-
-    .fc3 {
-        color: transparent;
-    }
-
-    .fc2 {
-        color: rgb(127,
-                127,
-                127);
-    }
-
-    .fc1 {
-        color: rgb(255,
-                255,
-                255);
-    }
-
-    .fc0 {
-        color: rgb(0,
-                0,
-                0);
-    }
-
-    .fsa {
-        font-size: 3.840000px;
-    }
-
-    .fs3 {
-        font-size: 8.160000px;
-    }
-
-    .fs9 {
-        font-size: 18.240000px;
-    }
-
-    .fs8 {
-        font-size: 22.080000px;
-    }
-
-    .fs6 {
-        font-size: 27.840000px;
-    }
-
-    .fs7 {
-        font-size: 32.160000px;
-    }
-
-    .fs1 {
-        font-size: 36.000000px;
-    }
-
-    .fs4 {
-        font-size: 39.840000px;
-    }
-
-    .fs5 {
-        font-size: 44.160000px;
-    }
-
-    .fs0 {
-        font-size: 48.000000px;
-    }
-
-    .fs2 {
-        font-size: 56.160000px;
-    }
-
-    .y0 {
-        bottom: -0.500000px;
-    }
-
-    .y6 {
-        bottom: 0.000000px;
-    }
-
-    .y8 {
-        bottom: 0.359990px;
-    }
-
-    .y72 {
-        bottom: 0.960000px;
-    }
-
-    .y41 {
-        bottom: 1.800000px;
-    }
-
-    .y71 {
-        bottom: 1.920000px;
-    }
-
-    .y74 {
-        bottom: 2.040000px;
-    }
-
-    .y4 {
-        bottom: 2.280000px;
-    }
-
-    .y60 {
-        bottom: 2.400000px;
-    }
-
-    .y22 {
-        bottom: 2.520000px;
-    }
-
-    .y49 {
-        bottom: 2.640000px;
-    }
-
-    .y82 {
-        bottom: 2.760000px;
-    }
-
-    .yf {
-        bottom: 2.880000px;
-    }
-
-    .y13 {
-        bottom: 3.000000px;
-    }
-
-    .y3 {
-        bottom: 3.360000px;
-    }
-
-    .y1b {
-        bottom: 3.840000px;
-    }
-
-    .y16 {
-        bottom: 3.960000px;
-    }
-
-    .y34 {
-        bottom: 4.200000px;
-    }
-
-    .y2e {
-        bottom: 4.320000px;
-    }
-
-    .y5a {
-        bottom: 4.440000px;
-    }
-
-    .y43 {
-        bottom: 4.800000px;
-    }
-
-    .yb {
-        bottom: 5.780000px;
-    }
-
-    .ya {
-        bottom: 6.140000px;
-    }
-
-    .y2f {
-        bottom: 6.240000px;
-    }
-
-    .y5b {
-        bottom: 6.360000px;
-    }
-
-    .y24 {
-        bottom: 6.480000px;
-    }
-
-    .y46 {
-        bottom: 7.080000px;
-    }
-
-    .y75 {
-        bottom: 7.680000px;
-    }
-
-    .y5f {
-        bottom: 7.800000px;
-    }
-
-    .y3e {
-        bottom: 7.920000px;
-    }
-
-    .y76 {
-        bottom: 8.040000px;
-    }
-
-    .y4c {
-        bottom: 8.160000px;
-    }
-
-    .y79 {
-        bottom: 8.400000px;
-    }
-
-    .y64 {
-        bottom: 8.520000px;
-    }
-
-    .y4d {
-        bottom: 8.640000px;
-    }
-
-    .y51 {
-        bottom: 8.760000px;
-    }
-
-    .y1a {
-        bottom: 8.880000px;
-    }
-
-    .y1e {
-        bottom: 8.910000px;
-    }
-
-    .y10 {
-        bottom: 9.000000px;
-    }
-
-    .y52 {
-        bottom: 9.120000px;
-    }
-
-    .y63 {
-        bottom: 9.240000px;
-    }
-
-    .y14 {
-        bottom: 9.360000px;
-    }
-
-    .y20 {
-        bottom: 9.390000px;
-    }
-
-    .y4f {
-        bottom: 9.480000px;
-    }
-
-    .y7d {
-        bottom: 9.720000px;
-    }
-
-    .y50 {
-        bottom: 9.840000px;
-    }
-
-    .y68 {
-        bottom: 9.870000px;
-    }
-
-    .yc {
-        bottom: 10.100000px;
-    }
-
-    .y45 {
-        bottom: 11.520000px;
-    }
-
-    .y47 {
-        bottom: 11.640000px;
-    }
-
-    .y4a {
-        bottom: 12.600000px;
-    }
-
-    .y5 {
-        bottom: 12.960000px;
-    }
-
-    .y48 {
-        bottom: 13.560000px;
-    }
-
-    .y42 {
-        bottom: 14.520000px;
-    }
-
-    .y2 {
-        bottom: 14.640000px;
-    }
-
-    .y21 {
-        bottom: 14.670000px;
-    }
-
-    .y15 {
-        bottom: 14.760000px;
-    }
-
-    .y1f {
-        bottom: 14.790000px;
-    }
-
-    .ye {
-        bottom: 15.000000px;
-    }
-
-    .y29 {
-        bottom: 15.020000px;
-    }
-
-    .y18 {
-        bottom: 15.120000px;
-    }
-
-    .y1c {
-        bottom: 15.600000px;
-    }
-
-    .y11 {
-        bottom: 15.720000px;
-    }
-
-    .y2a {
-        bottom: 15.740000px;
-    }
-
-    .y36 {
-        bottom: 16.560000px;
-    }
-
-    .y7e {
-        bottom: 16.916000px;
-    }
-
-    .y2d {
-        bottom: 18.360000px;
-    }
-
-    .y59 {
-        bottom: 18.500000px;
-    }
-
-    .y3d {
-        bottom: 18.720000px;
-    }
-
-    .y40 {
-        bottom: 20.880000px;
-    }
-
-    .y39 {
-        bottom: 26.400000px;
-    }
-
-    .y32 {
-        bottom: 26.760000px;
-    }
-
-    .y3a {
-        bottom: 27.600000px;
-    }
-
-    .y38 {
-        bottom: 27.720000px;
-    }
-
-    .y37 {
-        bottom: 27.960000px;
-    }
-
-    .y35 {
-        bottom: 28.680000px;
-    }
-
-    .y3c {
-        bottom: 29.640000px;
-    }
-
-    .y57 {
-        bottom: 30.264000px;
-    }
-
-    .y3f {
-        bottom: 30.600000px;
-    }
-
-    .y85 {
-        bottom: 31.704000px;
-    }
-
-    .y84 {
-        bottom: 33.024000px;
-    }
-
-    .y3b {
-        bottom: 33.600000px;
-    }
-
-    .y83 {
-        bottom: 34.944000px;
-    }
-
-    .y31 {
-        bottom: 40.800000px;
-    }
-
-    .y5d {
-        bottom: 40.820000px;
-    }
-
-    .y81 {
-        bottom: 47.064000px;
-    }
-
-    .y56 {
-        bottom: 55.704000px;
-    }
-
-    .y80 {
-        bottom: 59.304000px;
-    }
-
-    .y7f {
-        bottom: 71.544000px;
-    }
-
-    .y55 {
-        bottom: 81.264000px;
-    }
-
-    .y7c {
-        bottom: 83.664000px;
-    }
-
-    .y7b {
-        bottom: 96.504000px;
-    }
-
-    .y54 {
-        bottom: 106.700000px;
-    }
-
-    .y7a {
-        bottom: 109.220000px;
-    }
-
-    .y53 {
-        bottom: 132.260000px;
-    }
-
-    .y78 {
-        bottom: 133.580000px;
-    }
-
-    .y4e {
-        bottom: 157.730000px;
-    }
-
-    .y77 {
-        bottom: 157.970000px;
-    }
-
-    .y73 {
-        bottom: 182.450000px;
-    }
-
-    .y4b {
-        bottom: 183.290000px;
-    }
-
-    .y70 {
-        bottom: 206.810000px;
-    }
-
-    .y30 {
-        bottom: 208.730000px;
-    }
-
-    .y6f {
-        bottom: 218.210000px;
-    }
-
-    .y44 {
-        bottom: 221.450000px;
-    }
-
-    .y2c {
-        bottom: 231.170000px;
-    }
-
-    .y6e {
-        bottom: 243.650000px;
-    }
-
-    .y33 {
-        bottom: 247.250000px;
-    }
-
-    .y2b {
-        bottom: 262.610000px;
-    }
-
-    .y28 {
-        bottom: 265.850000px;
-    }
-
-    .y6d {
-        bottom: 269.210000px;
-    }
-
-    .y27 {
-        bottom: 292.150000px;
-    }
-
-    .y6c {
-        bottom: 294.670000px;
-    }
-
-    .y26 {
-        bottom: 318.430000px;
-    }
-
-    .y6b {
-        bottom: 320.230000px;
-    }
-
-    .y25 {
-        bottom: 345.430000px;
-    }
-
-    .y6a {
-        bottom: 345.670000px;
-    }
-
-    .y69 {
-        bottom: 371.230000px;
-    }
-
-    .y23 {
-        bottom: 372.430000px;
-    }
-
-    .y67 {
-        bottom: 396.670000px;
-    }
-
-    .y1d {
-        bottom: 399.430000px;
-    }
-
-    .y66 {
-        bottom: 422.260000px;
-    }
-
-    .y19 {
-        bottom: 426.460000px;
-    }
-
-    .y65 {
-        bottom: 447.700000px;
-    }
-
-    .y17 {
-        bottom: 452.620000px;
-    }
-
-    .y62 {
-        bottom: 473.260000px;
-    }
-
-    .y12 {
-        bottom: 478.900000px;
-    }
-
-    .y5c {
-        bottom: 498.700000px;
-    }
-
-    .yd {
-        bottom: 505.180000px;
-    }
-
-    .y61 {
-        bottom: 511.420000px;
-    }
-
-    .y58 {
-        bottom: 521.020000px;
-    }
-
-    .y9 {
-        bottom: 532.180000px;
-    }
-
-    .y5e {
-        bottom: 537.240000px;
-    }
-
-    .y7 {
-        bottom: 552.480000px;
-    }
-
-    .y1 {
-        bottom: 555.360000px;
-    }
-
-    .h2f {
-        height: 2.795625px;
-    }
-
-    .h2e {
-        height: 5.940703px;
-    }
-
-    .h6 {
-        height: 8.482734px;
-    }
-
-    .h23 {
-        height: 9.600000px;
-    }
-
-    .h17 {
-        height: 9.720000px;
-    }
-
-    .h25 {
-        height: 9.840000px;
-    }
-
-    .h19 {
-        height: 12.000000px;
-    }
-
-    .h2c {
-        height: 12.120000px;
-    }
-
-    .h2d {
-        height: 12.240000px;
-    }
-
-    .h2b {
-        height: 12.840000px;
-    }
-
-    .h11 {
-        height: 14.040000px;
-    }
-
-    .h14 {
-        height: 16.080000px;
-    }
-
-    .h21 {
-        height: 16.224000px;
-    }
-
-    .h7 {
-        height: 19.824000px;
-    }
-
-    .h22 {
-        height: 22.320000px;
-    }
-
-    .h15 {
-        height: 22.440000px;
-    }
-
-    .h26 {
-        height: 22.920000px;
-    }
-
-    .h13 {
-        height: 23.413359px;
-    }
-
-    .h16 {
-        height: 23.460469px;
-    }
-
-    .h29 {
-        height: 23.640000px;
-    }
-
-    .h28 {
-        height: 23.664000px;
-    }
-
-    .h27 {
-        height: 23.760000px;
-    }
-
-    .h1a {
-        height: 24.000000px;
-    }
-
-    .h2 {
-        height: 24.720000px;
-    }
-
-    .h2a {
-        height: 24.840000px;
-    }
-
-    .h1d {
-        height: 24.960000px;
-    }
-
-    .h1c {
-        height: 24.984000px;
-    }
-
-    .h1b {
-        height: 25.080000px;
-    }
-
-    .h24 {
-        height: 25.104000px;
-    }
-
-    .ha {
-        height: 25.440000px;
-    }
-
-    .hc {
-        height: 25.464000px;
-    }
-
-    .hb {
-        height: 25.560000px;
-    }
-
-    .hd {
-        height: 25.584000px;
-    }
-
-    .h4 {
-        height: 26.208984px;
-    }
-
-    .h8 {
-        height: 29.004609px;
-    }
-
-    .h10 {
-        height: 29.062969px;
-    }
-
-    .he {
-        height: 30.120000px;
-    }
-
-    .h1e {
-        height: 30.264000px;
-    }
-
-    .h9 {
-        height: 32.149687px;
-    }
-
-    .h18 {
-        height: 32.214375px;
-    }
-
-    .h3 {
-        height: 34.945312px;
-    }
-
-    .h12 {
-        height: 38.520000px;
-    }
-
-    .h20 {
-        height: 38.544000px;
-    }
-
-    .h5 {
-        height: 40.886016px;
-    }
-
-    .hf {
-        height: 52.560000px;
-    }
-
-    .h1f {
-        height: 52.584000px;
-    }
-
-    .h0 {
-        height: 595.320000px;
-    }
-
-    .h1 {
-        height: 596.000000px;
-    }
-
-    .w3b {
-        width: 5.760000px;
-    }
-
-    .w17 {
-        width: 6.480000px;
-    }
-
-    .we {
-        width: 7.200000px;
-    }
-
-    .w7c {
-        width: 12.120000px;
-    }
-
-    .w66 {
-        width: 13.800000px;
-    }
-
-    .w65 {
-        width: 14.160000px;
-    }
-
-    .w76 {
-        width: 14.280000px;
-    }
-
-    .w81 {
-        width: 15.000000px;
-    }
-
-    .w86 {
-        width: 15.240000px;
-    }
-
-    .w6f {
-        width: 16.680000px;
-    }
-
-    .w6d {
-        width: 16.920000px;
-    }
-
-    .w58 {
-        width: 17.400000px;
-    }
-
-    .w57 {
-        width: 17.520000px;
-    }
-
-    .w6e {
-        width: 17.544000px;
-    }
-
-    .w60 {
-        width: 17.760000px;
-    }
-
-    .w5e {
-        width: 18.000000px;
-    }
-
-    .w5f {
-        width: 18.240000px;
-    }
-
-    .w61 {
-        width: 18.360000px;
-    }
-
-    .w84 {
-        width: 18.840000px;
-    }
-
-    .w7d {
-        width: 19.200000px;
-    }
-
-    .w7e {
-        width: 19.224000px;
-    }
-
-    .w82 {
-        width: 19.320000px;
-    }
-
-    .w83 {
-        width: 19.344000px;
-    }
-
-    .w25 {
-        width: 19.800000px;
-    }
-
-    .w27 {
-        width: 20.280000px;
-    }
-
-    .w26 {
-        width: 20.640000px;
-    }
-
-    .w70 {
-        width: 20.760000px;
-    }
-
-    .w67 {
-        width: 20.880000px;
-    }
-
-    .w5d {
-        width: 21.000000px;
-    }
-
-    .w68 {
-        width: 21.120000px;
-    }
-
-    .w78 {
-        width: 21.240000px;
-    }
-
-    .w69 {
-        width: 21.360000px;
-    }
-
-    .w4a {
-        width: 21.480000px;
-    }
-
-    .w4b {
-        width: 21.600000px;
-    }
-
-    .w4c {
-        width: 21.840000px;
-    }
-
-    .w1e {
-        width: 22.080000px;
-    }
-
-    .w1f {
-        width: 22.704000px;
-    }
-
-    .w59 {
-        width: 23.640000px;
-    }
-
-    .w5c {
-        width: 24.000000px;
-    }
-
-    .w5a {
-        width: 24.240000px;
-    }
-
-    .w5b {
-        width: 24.264000px;
-    }
-
-    .w50 {
-        width: 24.360000px;
-    }
-
-    .w53 {
-        width: 24.480000px;
-    }
-
-    .w51 {
-        width: 24.720000px;
-    }
-
-    .w52 {
-        width: 24.744000px;
-    }
-
-    .w30 {
-        width: 26.400000px;
-    }
-
-    .w2e {
-        width: 26.760000px;
-    }
-
-    .w2f {
-        width: 27.000000px;
-    }
-
-    .w39 {
-        width: 27.624000px;
-    }
-
-    .w4e {
-        width: 27.864000px;
-    }
-
-    .w43 {
-        width: 28.200000px;
-    }
-
-    .w6b {
-        width: 28.224000px;
-    }
-
-    .w62 {
-        width: 28.320000px;
-    }
-
-    .w80 {
-        width: 28.440000px;
-    }
-
-    .w73 {
-        width: 29.040000px;
-    }
-
-    .w85 {
-        width: 29.400000px;
-    }
-
-    .w89 {
-        width: 31.320000px;
-    }
-
-    .w28 {
-        width: 31.344000px;
-    }
-
-    .w6a {
-        width: 32.280000px;
-    }
-
-    .w4d {
-        width: 32.400000px;
-    }
-
-    .w79 {
-        width: 33.000000px;
-    }
-
-    .w2b {
-        width: 33.600000px;
-    }
-
-    .w2d {
-        width: 34.080000px;
-    }
-
-    .w2c {
-        width: 34.440000px;
-    }
-
-    .w40 {
-        width: 34.680000px;
-    }
-
-    .w54 {
-        width: 34.920000px;
-    }
-
-    .w64 {
-        width: 34.944000px;
-    }
-
-    .w56 {
-        width: 35.064000px;
-    }
-
-    .w7f {
-        width: 35.400000px;
-    }
-
-    .w75 {
-        width: 35.424000px;
-    }
-
-    .w55 {
-        width: 35.760000px;
-    }
-
-    .w42 {
-        width: 36.960000px;
-    }
-
-    .w8a {
-        width: 38.424000px;
-    }
-
-    .w2a {
-        width: 39.840000px;
-    }
-
-    .w29 {
-        width: 40.320000px;
-    }
-
-    .w3c {
-        width: 40.920000px;
-    }
-
-    .w18 {
-        width: 41.040000px;
-    }
-
-    .w19 {
-        width: 41.064000px;
-    }
-
-    .w11 {
-        width: 41.160000px;
-    }
-
-    .w1a {
-        width: 41.400000px;
-    }
-
-    .w3d {
-        width: 41.424000px;
-    }
-
-    .wf {
-        width: 41.760000px;
-    }
-
-    .w4f {
-        width: 41.880000px;
-    }
-
-    .wa {
-        width: 42.000000px;
-    }
-
-    .w3e {
-        width: 43.944000px;
-    }
-
-    .w1b {
-        width: 44.160000px;
-    }
-
-    .w1d {
-        width: 44.304000px;
-    }
-
-    .w1c {
-        width: 44.520000px;
-    }
-
-    .w77 {
-        width: 44.640000px;
-    }
-
-    .w37 {
-        width: 44.880000px;
-    }
-
-    .w38 {
-        width: 45.024000px;
-    }
-
-    .w22 {
-        width: 45.144000px;
-    }
-
-    .w7 {
-        width: 45.720000px;
-    }
-
-    .w34 {
-        width: 45.960000px;
-    }
-
-    .w23 {
-        width: 46.320000px;
-    }
-
-    .w90 {
-        width: 49.560000px;
-    }
-
-    .w63 {
-        width: 50.040000px;
-    }
-
-    .w44 {
-        width: 50.280000px;
-    }
-
-    .w74 {
-        width: 51.120000px;
-    }
-
-    .w15 {
-        width: 51.480000px;
-    }
-
-    .w35 {
-        width: 52.200000px;
-    }
-
-    .w3 {
-        width: 52.560000px;
-    }
-
-    .wc {
-        width: 52.920000px;
-    }
-
-    .w12 {
-        width: 55.584000px;
-    }
-
-    .w14 {
-        width: 56.184000px;
-    }
-
-    .w31 {
-        width: 56.400000px;
-    }
-
-    .w13 {
-        width: 56.760000px;
-    }
-
-    .w6c {
-        width: 62.760000px;
-    }
-
-    .w48 {
-        width: 63.120000px;
-    }
-
-    .w45 {
-        width: 63.264000px;
-    }
-
-    .w7b {
-        width: 63.840000px;
-    }
-
-    .w49 {
-        width: 69.024000px;
-    }
-
-    .w8d {
-        width: 70.800000px;
-    }
-
-    .w7a {
-        width: 70.944000px;
-    }
-
-    .w41 {
-        width: 72.360000px;
-    }
-
-    .w6 {
-        width: 81.144000px;
-    }
-
-    .w36 {
-        width: 83.544000px;
-    }
-
-    .w3a {
-        width: 83.880000px;
-    }
-
-    .w8 {
-        width: 86.904000px;
-    }
-
-    .w21 {
-        width: 89.784000px;
-    }
-
-    .w20 {
-        width: 90.000000px;
-    }
-
-    .w3f {
-        width: 98.184000px;
-    }
-
-    .w71 {
-        width: 98.784000px;
-    }
-
-    .w32 {
-        width: 102.120000px;
-    }
-
-    .w47 {
-        width: 103.340000px;
-    }
-
-    .w4 {
-        width: 105.360000px;
-    }
-
-    .w46 {
-        width: 108.120000px;
-    }
-
-    .w24 {
-        width: 133.820000px;
-    }
-
-    .w8b {
-        width: 134.180000px;
-    }
-
-    .w88 {
-        width: 134.780000px;
-    }
-
-    .w5 {
-        width: 157.680000px;
-    }
-
-    .w8f {
-        width: 163.100000px;
-    }
-
-    .w8c {
-        width: 177.260000px;
-    }
-
-    .w72 {
-        width: 188.660000px;
-    }
-
-    .w16 {
-        width: 215.060000px;
-    }
-
-    .wd {
-        width: 216.620000px;
-    }
-
-    .w10 {
-        width: 218.330000px;
-    }
-
-    .w8e {
-        width: 219.860000px;
-    }
-
-    .wb {
-        width: 226.850000px;
-    }
-
-    .w33 {
-        width: 260.090000px;
-    }
-
-    .w2 {
-        width: 269.330000px;
-    }
-
-    .w91 {
-        width: 395.950000px;
-    }
-
-    .w87 {
-        width: 602.110000px;
-    }
-
-    .w9 {
-        width: 841.919987px;
-    }
-
-    .w0 {
-        width: 841.920000px;
-    }
-
-    .w1 {
-        width: 842.500000px;
-    }
-
-    .x0 {
-        left: 0.000000px;
-    }
-
-    .x2 {
-        left: 1.320000px;
-    }
-
-    .x3 {
-        left: 2.760000px;
-    }
-
-    .xd {
-        left: 4.680000px;
-    }
-
-    .x27 {
-        left: 5.880000px;
-    }
-
-    .x1b {
-        left: 7.320000px;
-    }
-
-    .x37 {
-        left: 8.520000px;
-    }
-
-    .x19 {
-        left: 9.960000px;
-    }
-
-    .x5 {
-        left: 11.040000px;
-    }
-
-    .x6 {
-        left: 12.600000px;
-    }
-
-    .x3c {
-        left: 14.880000px;
-    }
-
-    .x1 {
-        left: 17.040000px;
-    }
-
-    .x31 {
-        left: 19.080000px;
-    }
-
-    .x24 {
-        left: 20.420000px;
-    }
-
-    .x32 {
-        left: 21.480000px;
-    }
-
-    .x40 {
-        left: 23.640000px;
-    }
-
-    .x2d {
-        left: 25.320000px;
-    }
-
-    .x51 {
-        left: 31.320000px;
-    }
-
-    .x33 {
-        left: 32.400000px;
-    }
-
-    .x3e {
-        left: 33.960000px;
-    }
-
-    .x2e {
-        left: 35.280000px;
-    }
-
-    .x48 {
-        left: 42.240000px;
-    }
-
-    .x55 {
-        left: 49.320000px;
-    }
-
-    .x10 {
-        left: 59.040000px;
-    }
-
-    .x49 {
-        left: 66.960000px;
-    }
-
-    .xb {
-        left: 76.230000px;
-    }
-
-    .xf {
-        left: 81.980000px;
-    }
-
-    .x2c {
-        left: 90.600000px;
-    }
-
-    .x4a {
-        left: 91.704000px;
-    }
-
-    .x9 {
-        left: 96.480000px;
-    }
-
-    .x1c {
-        left: 105.260000px;
-    }
-
-    .x14 {
-        left: 115.340000px;
-    }
-
-    .x34 {
-        left: 116.780000px;
-    }
-
-    .x1e {
-        left: 151.220000px;
-    }
-
-    .x4f {
-        left: 152.420000px;
-    }
-
-    .x5f {
-        left: 165.980000px;
-    }
-
-    .x15 {
-        left: 172.100000px;
-    }
-
-    .x5a {
-        left: 180.260000px;
-    }
-
-    .x1d {
-        left: 195.260000px;
-    }
-
-    .x5b {
-        left: 209.420000px;
-    }
-
-    .x4d {
-        left: 213.020000px;
-    }
-
-    .x16 {
-        left: 228.860000px;
-    }
-
-    .x4b {
-        left: 231.260000px;
-    }
-
-    .x5c {
-        left: 248.060000px;
-    }
-
-    .x4e {
-        left: 249.500000px;
-    }
-
-    .x35 {
-        left: 267.770000px;
-    }
-
-    .x4 {
-        left: 286.370000px;
-    }
-
-    .x36 {
-        left: 305.450000px;
-    }
-
-    .x5e {
-        left: 329.090000px;
-    }
-
-    .x38 {
-        left: 334.490000px;
-    }
-
-    .x11 {
-        left: 338.810000px;
-    }
-
-    .x7 {
-        left: 339.890000px;
-    }
-
-    .x60 {
-        left: 350.330000px;
-    }
-
-    .x1f {
-        left: 359.450000px;
-    }
-
-    .x39 {
-        left: 363.530000px;
-    }
-
-    .x28 {
-        left: 373.250000px;
-    }
-
-    .x20 {
-        left: 380.210000px;
-    }
-
-    .x21 {
-        left: 400.850000px;
-    }
-
-    .x29 {
-        left: 407.690000px;
-    }
-
-    .x3a {
-        left: 414.650000px;
-    }
-
-    .x22 {
-        left: 421.490000px;
-    }
-
-    .x61 {
-        left: 428.330000px;
-    }
-
-    .x23 {
-        left: 442.490000px;
-    }
-
-    .x8 {
-        left: 446.230000px;
-    }
-
-    .x4c {
-        left: 449.710000px;
-    }
-
-    .x50 {
-        left: 463.870000px;
-    }
-
-    .x30 {
-        left: 470.830000px;
-    }
-
-    .x25 {
-        left: 474.550000px;
-    }
-
-    .x3b {
-        left: 478.390000px;
-    }
-
-    .x42 {
-        left: 499.870000px;
-    }
-
-    .x2a {
-        left: 501.310000px;
-    }
-
-    .x5d {
-        left: 507.550000px;
-    }
-
-    .x26 {
-        left: 514.870000px;
-    }
-
-    .x43 {
-        left: 521.470000px;
-    }
-
-    .x56 {
-        left: 522.790000px;
-    }
-
-    .x2b {
-        left: 528.310000px;
-    }
-
-    .x44 {
-        left: 543.310000px;
-    }
-
-    .x12 {
-        left: 555.430000px;
-    }
-
-    .x13 {
-        left: 562.630000px;
-    }
-
-    .x45 {
-        left: 564.910000px;
-    }
-
-    .x3d {
-        left: 586.990000px;
-    }
-
-    .xa {
-        left: 604.990000px;
-    }
-
-    .x46 {
-        left: 620.110000px;
-    }
-
-    .x17 {
-        left: 646.180000px;
-    }
-
-    .x47 {
-        left: 648.460000px;
-    }
-
-    .xc {
-        left: 687.220000px;
-    }
-
-    .x18 {
-        left: 688.300000px;
-    }
-
-    .x3f {
-        left: 691.060000px;
-    }
-
-    .x2f {
-        left: 732.820000px;
-    }
-
-    .xe {
-        left: 733.900000px;
-    }
-
-    .x41 {
-        left: 754.900000px;
-    }
-
-    .x57 {
-        left: 766.660000px;
-    }
-
-    .x52 {
-        left: 771.940000px;
-    }
-
-    .x1a {
-        left: 777.700000px;
-    }
-
-    .x58 {
-        left: 785.860000px;
-    }
-
-    .x53 {
-        left: 789.340000px;
-    }
-
-    .x59 {
-        left: 805.080000px;
-    }
-
-    .x54 {
-        left: 806.880000px;
-    }
-
-    @media print {
-        .v1 {
-            vertical-align: -2.560000pt;
-        }
-
-        .v0 {
-            vertical-align: 0.000000pt;
-        }
-
-        .ls14 {
-            letter-spacing: -4.816000pt;
-        }
-
-        .ls13 {
-            letter-spacing: -0.300800pt;
-        }
-
-        .ls12 {
-            letter-spacing: -0.256000pt;
-        }
-
-        .lsc {
-            letter-spacing: -0.160533pt;
-        }
-
-        .lsb {
-            letter-spacing: -0.130667pt;
-        }
-
-        .ls7 {
-            letter-spacing: -0.128000pt;
-        }
-
-        .ls9 {
-            letter-spacing: -0.107733pt;
-        }
-
-        .ls10 {
-            letter-spacing: -0.064533pt;
-        }
-
-        .ls8 {
-            letter-spacing: -0.064000pt;
-        }
-
-        .ls6 {
-            letter-spacing: 0.000000pt;
-        }
-
-        .ls11 {
-            letter-spacing: 0.010240pt;
-        }
-
-        .lsf {
-            letter-spacing: 0.017920pt;
-        }
-
-        .lsa {
-            letter-spacing: 0.028800pt;
-        }
-
-        .lse {
-            letter-spacing: 0.053120pt;
-        }
-
-        .lsd {
-            letter-spacing: 0.128000pt;
-        }
-
-        .ls2 {
-            letter-spacing: 0.209280pt;
-        }
-
-        .ls1 {
-            letter-spacing: 0.212480pt;
-        }
-
-        .ls5 {
-            letter-spacing: 0.304000pt;
-        }
-
-        .ls4 {
-            letter-spacing: 0.320000pt;
-        }
-
-        .ls3 {
-            letter-spacing: 0.442880pt;
-        }
-
-        .ls0 {
-            letter-spacing: 0.464000pt;
-        }
-
-        .ws16 {
-            word-spacing: -14.720000pt;
-        }
-
-        .ws0 {
-            word-spacing: -14.592000pt;
-        }
-
-        .ws2 {
-            word-spacing: -14.528000pt;
-        }
-
-        .ws1 {
-            word-spacing: -14.464000pt;
-        }
-
-        .ws5 {
-            word-spacing: -13.308800pt;
-        }
-
-        .ws6 {
-            word-spacing: -13.280000pt;
-        }
-
-        .wsf {
-            word-spacing: -13.215467pt;
-        }
-
-        .ws4 {
-            word-spacing: -13.172267pt;
-        }
-
-        .ws8 {
-            word-spacing: -13.149333pt;
-        }
-
-        .ws9 {
-            word-spacing: -13.119467pt;
-        }
-
-        .ws7 {
-            word-spacing: -12.464000pt;
-        }
-
-        .wsa {
-            word-spacing: -12.128000pt;
-        }
-
-        .ws12 {
-            word-spacing: -12.000000pt;
-        }
-
-        .wse {
-            word-spacing: -11.040000pt;
-        }
-
-        .wsc {
-            word-spacing: -10.773120pt;
-        }
-
-        .wsd {
-            word-spacing: -10.737920pt;
-        }
-
-        .ws10 {
-            word-spacing: -10.730240pt;
-        }
-
-        .wsb {
-            word-spacing: -10.720000pt;
-        }
-
-        .ws13 {
-            word-spacing: -10.464000pt;
-        }
-
-        .ws14 {
-            word-spacing: -10.419200pt;
-        }
-
-        .ws3 {
-            word-spacing: -9.280000pt;
-        }
-
-        .ws11 {
-            word-spacing: -7.360000pt;
-        }
-
-        .ws18 {
-            word-spacing: -7.184000pt;
-        }
-
-        .ws17 {
-            word-spacing: -6.080000pt;
-        }
-
-        .ws15 {
-            word-spacing: 0.000000pt;
-        }
-
-        ._8 {
-            margin-left: -5.296000pt;
-        }
-
-        ._5 {
-            margin-left: -1.437440pt;
-        }
-
-        ._6 {
-            width: 1.907840pt;
-        }
-
-        ._4 {
-            width: 3.886080pt;
-        }
-
-        ._3 {
-            width: 5.240320pt;
-        }
-
-        ._2 {
-            width: 7.648000pt;
-        }
-
-        ._0 {
-            width: 39.082667pt;
-        }
-
-        ._1 {
-            width: 58.112000pt;
-        }
-
-        ._7 {
-            width: 95.072000pt;
-        }
-
-        .fsa {
-            font-size: 5.120000pt;
-        }
-
-        .fs3 {
-            font-size: 10.880000pt;
-        }
-
-        .fs9 {
-            font-size: 24.320000pt;
-        }
-
-        .fs8 {
-            font-size: 29.440000pt;
-        }
-
-        .fs6 {
-            font-size: 37.120000pt;
-        }
-
-        .fs7 {
-            font-size: 42.880000pt;
-        }
-
-        .fs1 {
-            font-size: 48.000000pt;
-        }
-
-        .fs4 {
-            font-size: 53.120000pt;
-        }
-
-        .fs5 {
-            font-size: 58.880000pt;
-        }
-
-        .fs0 {
-            font-size: 64.000000pt;
-        }
-
-        .fs2 {
-            font-size: 74.880000pt;
-        }
-
-        .y0 {
-            bottom: -0.666667pt;
-        }
-
-        .y6 {
-            bottom: 0.000000pt;
-        }
-
-        .y8 {
-            bottom: 0.479987pt;
-        }
-
-        .y72 {
-            bottom: 1.280000pt;
-        }
-
-        .y41 {
-            bottom: 2.400000pt;
-        }
-
-        .y71 {
-            bottom: 2.560000pt;
-        }
-
-        .y74 {
-            bottom: 2.720000pt;
-        }
-
-        .y4 {
-            bottom: 3.040000pt;
-        }
-
-        .y60 {
-            bottom: 3.200000pt;
-        }
-
-        .y22 {
-            bottom: 3.360000pt;
-        }
-
-        .y49 {
-            bottom: 3.520000pt;
-        }
-
-        .y82 {
-            bottom: 3.680000pt;
-        }
-
-        .yf {
-            bottom: 3.840000pt;
-        }
-
-        .y13 {
-            bottom: 4.000000pt;
-        }
-
-        .y3 {
-            bottom: 4.480000pt;
-        }
-
-        .y1b {
-            bottom: 5.120000pt;
-        }
-
-        .y16 {
-            bottom: 5.280000pt;
-        }
-
-        .y34 {
-            bottom: 5.600000pt;
-        }
-
-        .y2e {
-            bottom: 5.760000pt;
-        }
-
-        .y5a {
-            bottom: 5.920000pt;
-        }
-
-        .y43 {
-            bottom: 6.400000pt;
-        }
-
-        .yb {
-            bottom: 7.706667pt;
-        }
-
-        .ya {
-            bottom: 8.186667pt;
-        }
-
-        .y2f {
-            bottom: 8.320000pt;
-        }
-
-        .y5b {
-            bottom: 8.480000pt;
-        }
-
-        .y24 {
-            bottom: 8.640000pt;
-        }
-
-        .y46 {
-            bottom: 9.440000pt;
-        }
-
-        .y75 {
-            bottom: 10.240000pt;
-        }
-
-        .y5f {
-            bottom: 10.400000pt;
-        }
-
-        .y3e {
-            bottom: 10.560000pt;
-        }
-
-        .y76 {
-            bottom: 10.720000pt;
-        }
-
-        .y4c {
-            bottom: 10.880000pt;
-        }
-
-        .y79 {
-            bottom: 11.200000pt;
-        }
-
-        .y64 {
-            bottom: 11.360000pt;
-        }
-
-        .y4d {
-            bottom: 11.520000pt;
-        }
-
-        .y51 {
-            bottom: 11.680000pt;
-        }
-
-        .y1a {
-            bottom: 11.840000pt;
-        }
-
-        .y1e {
-            bottom: 11.880000pt;
-        }
-
-        .y10 {
-            bottom: 12.000000pt;
-        }
-
-        .y52 {
-            bottom: 12.160000pt;
-        }
-
-        .y63 {
-            bottom: 12.320000pt;
-        }
-
-        .y14 {
-            bottom: 12.480000pt;
-        }
-
-        .y20 {
-            bottom: 12.520000pt;
-        }
-
-        .y4f {
-            bottom: 12.640000pt;
-        }
-
-        .y7d {
-            bottom: 12.960000pt;
-        }
-
-        .y50 {
-            bottom: 13.120000pt;
-        }
-
-        .y68 {
-            bottom: 13.160000pt;
-        }
-
-        .yc {
-            bottom: 13.466667pt;
-        }
-
-        .y45 {
-            bottom: 15.360000pt;
-        }
-
-        .y47 {
-            bottom: 15.520000pt;
-        }
-
-        .y4a {
-            bottom: 16.800000pt;
-        }
-
-        .y5 {
-            bottom: 17.280000pt;
-        }
-
-        .y48 {
-            bottom: 18.080000pt;
-        }
-
-        .y42 {
-            bottom: 19.360000pt;
-        }
-
-        .y2 {
-            bottom: 19.520000pt;
-        }
-
-        .y21 {
-            bottom: 19.560000pt;
-        }
-
-        .y15 {
-            bottom: 19.680000pt;
-        }
-
-        .y1f {
-            bottom: 19.720000pt;
-        }
-
-        .ye {
-            bottom: 20.000000pt;
-        }
-
-        .y29 {
-            bottom: 20.026667pt;
-        }
-
-        .y18 {
-            bottom: 20.160000pt;
-        }
-
-        .y1c {
-            bottom: 20.800000pt;
-        }
-
-        .y11 {
-            bottom: 20.960000pt;
-        }
-
-        .y2a {
-            bottom: 20.986667pt;
-        }
-
-        .y36 {
-            bottom: 22.080000pt;
-        }
-
-        .y7e {
-            bottom: 22.554667pt;
-        }
-
-        .y2d {
-            bottom: 24.480000pt;
-        }
-
-        .y59 {
-            bottom: 24.666667pt;
-        }
-
-        .y3d {
-            bottom: 24.960000pt;
-        }
-
-        .y40 {
-            bottom: 27.840000pt;
-        }
-
-        .y39 {
-            bottom: 35.200000pt;
-        }
-
-        .y32 {
-            bottom: 35.680000pt;
-        }
-
-        .y3a {
-            bottom: 36.800000pt;
-        }
-
-        .y38 {
-            bottom: 36.960000pt;
-        }
-
-        .y37 {
-            bottom: 37.280000pt;
-        }
-
-        .y35 {
-            bottom: 38.240000pt;
-        }
-
-        .y3c {
-            bottom: 39.520000pt;
-        }
-
-        .y57 {
-            bottom: 40.352000pt;
-        }
-
-        .y3f {
-            bottom: 40.800000pt;
-        }
-
-        .y85 {
-            bottom: 42.272000pt;
-        }
-
-        .y84 {
-            bottom: 44.032000pt;
-        }
-
-        .y3b {
-            bottom: 44.800000pt;
-        }
-
-        .y83 {
-            bottom: 46.592000pt;
-        }
-
-        .y31 {
-            bottom: 54.400000pt;
-        }
-
-        .y5d {
-            bottom: 54.426667pt;
-        }
-
-        .y81 {
-            bottom: 62.752000pt;
-        }
-
-        .y56 {
-            bottom: 74.272000pt;
-        }
-
-        .y80 {
-            bottom: 79.072000pt;
-        }
-
-        .y7f {
-            bottom: 95.392000pt;
-        }
-
-        .y55 {
-            bottom: 108.352000pt;
-        }
-
-        .y7c {
-            bottom: 111.552000pt;
-        }
-
-        .y7b {
-            bottom: 128.672000pt;
-        }
-
-        .y54 {
-            bottom: 142.266667pt;
-        }
-
-        .y7a {
-            bottom: 145.626667pt;
-        }
-
-        .y53 {
-            bottom: 176.346667pt;
-        }
-
-        .y78 {
-            bottom: 178.106667pt;
-        }
-
-        .y4e {
-            bottom: 210.306667pt;
-        }
-
-        .y77 {
-            bottom: 210.626667pt;
-        }
-
-        .y73 {
-            bottom: 243.266667pt;
-        }
-
-        .y4b {
-            bottom: 244.386667pt;
-        }
-
-        .y70 {
-            bottom: 275.746667pt;
-        }
-
-        .y30 {
-            bottom: 278.306667pt;
-        }
-
-        .y6f {
-            bottom: 290.946667pt;
-        }
-
-        .y44 {
-            bottom: 295.266667pt;
-        }
-
-        .y2c {
-            bottom: 308.226667pt;
-        }
-
-        .y6e {
-            bottom: 324.866667pt;
-        }
-
-        .y33 {
-            bottom: 329.666667pt;
-        }
-
-        .y2b {
-            bottom: 350.146667pt;
-        }
-
-        .y28 {
-            bottom: 354.466667pt;
-        }
-
-        .y6d {
-            bottom: 358.946667pt;
-        }
-
-        .y27 {
-            bottom: 389.533333pt;
-        }
-
-        .y6c {
-            bottom: 392.893333pt;
-        }
-
-        .y26 {
-            bottom: 424.573333pt;
-        }
-
-        .y6b {
-            bottom: 426.973333pt;
-        }
-
-        .y25 {
-            bottom: 460.573333pt;
-        }
-
-        .y6a {
-            bottom: 460.893333pt;
-        }
-
-        .y69 {
-            bottom: 494.973333pt;
-        }
-
-        .y23 {
-            bottom: 496.573333pt;
-        }
-
-        .y67 {
-            bottom: 528.893333pt;
-        }
-
-        .y1d {
-            bottom: 532.573333pt;
-        }
-
-        .y66 {
-            bottom: 563.013333pt;
-        }
-
-        .y19 {
-            bottom: 568.613333pt;
-        }
-
-        .y65 {
-            bottom: 596.933333pt;
-        }
-
-        .y17 {
-            bottom: 603.493333pt;
-        }
-
-        .y62 {
-            bottom: 631.013333pt;
-        }
-
-        .y12 {
-            bottom: 638.533333pt;
-        }
-
-        .y5c {
-            bottom: 664.933333pt;
-        }
-
-        .yd {
-            bottom: 673.573333pt;
-        }
-
-        .y61 {
-            bottom: 681.893333pt;
-        }
-
-        .y58 {
-            bottom: 694.693333pt;
-        }
-
-        .y9 {
-            bottom: 709.573333pt;
-        }
-
-        .y5e {
-            bottom: 716.320000pt;
-        }
-
-        .y7 {
-            bottom: 736.640000pt;
-        }
-
-        .y1 {
-            bottom: 740.480000pt;
-        }
-
-        .h2f {
-            height: 3.727500pt;
-        }
-
-        .h2e {
-            height: 7.920937pt;
-        }
-
-        .h6 {
-            height: 11.310312pt;
-        }
-
-        .h23 {
-            height: 12.800000pt;
-        }
-
-        .h17 {
-            height: 12.960000pt;
-        }
-
-        .h25 {
-            height: 13.120000pt;
-        }
-
-        .h19 {
-            height: 16.000000pt;
-        }
-
-        .h2c {
-            height: 16.160000pt;
-        }
-
-        .h2d {
-            height: 16.320000pt;
-        }
-
-        .h2b {
-            height: 17.120000pt;
-        }
-
-        .h11 {
-            height: 18.720000pt;
-        }
-
-        .h14 {
-            height: 21.440000pt;
-        }
-
-        .h21 {
-            height: 21.632000pt;
-        }
-
-        .h7 {
-            height: 26.432000pt;
-        }
-
-        .h22 {
-            height: 29.760000pt;
-        }
-
-        .h15 {
-            height: 29.920000pt;
-        }
-
-        .h26 {
-            height: 30.560000pt;
-        }
-
-        .h13 {
-            height: 31.217812pt;
-        }
-
-        .h16 {
-            height: 31.280625pt;
-        }
-
-        .h29 {
-            height: 31.520000pt;
-        }
-
-        .h28 {
-            height: 31.552000pt;
-        }
-
-        .h27 {
-            height: 31.680000pt;
-        }
-
-        .h1a {
-            height: 32.000000pt;
-        }
-
-        .h2 {
-            height: 32.960000pt;
-        }
-
-        .h2a {
-            height: 33.120000pt;
-        }
-
-        .h1d {
-            height: 33.280000pt;
-        }
-
-        .h1c {
-            height: 33.312000pt;
-        }
-
-        .h1b {
-            height: 33.440000pt;
-        }
-
-        .h24 {
-            height: 33.472000pt;
-        }
-
-        .ha {
-            height: 33.920000pt;
-        }
-
-        .hc {
-            height: 33.952000pt;
-        }
-
-        .hb {
-            height: 34.080000pt;
-        }
-
-        .hd {
-            height: 34.112000pt;
-        }
-
-        .h4 {
-            height: 34.945312pt;
-        }
-
-        .h8 {
-            height: 38.672812pt;
-        }
-
-        .h10 {
-            height: 38.750625pt;
-        }
-
-        .he {
-            height: 40.160000pt;
-        }
-
-        .h1e {
-            height: 40.352000pt;
-        }
-
-        .h9 {
-            height: 42.866250pt;
-        }
-
-        .h18 {
-            height: 42.952500pt;
-        }
-
-        .h3 {
-            height: 46.593750pt;
-        }
-
-        .h12 {
-            height: 51.360000pt;
-        }
-
-        .h20 {
-            height: 51.392000pt;
-        }
-
-        .h5 {
-            height: 54.514687pt;
-        }
-
-        .hf {
-            height: 70.080000pt;
-        }
-
-        .h1f {
-            height: 70.112000pt;
-        }
-
-        .h0 {
-            height: 793.760000pt;
-        }
-
-        .h1 {
-            height: 794.666667pt;
-        }
-
-        .w3b {
-            width: 7.680000pt;
-        }
-
-        .w17 {
-            width: 8.640000pt;
-        }
-
-        .we {
-            width: 9.600000pt;
-        }
-
-        .w7c {
-            width: 16.160000pt;
-        }
-
-        .w66 {
-            width: 18.400000pt;
-        }
-
-        .w65 {
-            width: 18.880000pt;
-        }
-
-        .w76 {
-            width: 19.040000pt;
-        }
-
-        .w81 {
-            width: 20.000000pt;
-        }
-
-        .w86 {
-            width: 20.320000pt;
-        }
-
-        .w6f {
-            width: 22.240000pt;
-        }
-
-        .w6d {
-            width: 22.560000pt;
-        }
-
-        .w58 {
-            width: 23.200000pt;
-        }
-
-        .w57 {
-            width: 23.360000pt;
-        }
-
-        .w6e {
-            width: 23.392000pt;
-        }
-
-        .w60 {
-            width: 23.680000pt;
-        }
-
-        .w5e {
-            width: 24.000000pt;
-        }
-
-        .w5f {
-            width: 24.320000pt;
-        }
-
-        .w61 {
-            width: 24.480000pt;
-        }
-
-        .w84 {
-            width: 25.120000pt;
-        }
-
-        .w7d {
-            width: 25.600000pt;
-        }
-
-        .w7e {
-            width: 25.632000pt;
-        }
-
-        .w82 {
-            width: 25.760000pt;
-        }
-
-        .w83 {
-            width: 25.792000pt;
-        }
-
-        .w25 {
-            width: 26.400000pt;
-        }
-
-        .w27 {
-            width: 27.040000pt;
-        }
-
-        .w26 {
-            width: 27.520000pt;
-        }
-
-        .w70 {
-            width: 27.680000pt;
-        }
-
-        .w67 {
-            width: 27.840000pt;
-        }
-
-        .w5d {
-            width: 28.000000pt;
-        }
-
-        .w68 {
-            width: 28.160000pt;
-        }
-
-        .w78 {
-            width: 28.320000pt;
-        }
-
-        .w69 {
-            width: 28.480000pt;
-        }
-
-        .w4a {
-            width: 28.640000pt;
-        }
-
-        .w4b {
-            width: 28.800000pt;
-        }
-
-        .w4c {
-            width: 29.120000pt;
-        }
-
-        .w1e {
-            width: 29.440000pt;
-        }
-
-        .w1f {
-            width: 30.272000pt;
-        }
-
-        .w59 {
-            width: 31.520000pt;
-        }
-
-        .w5c {
-            width: 32.000000pt;
-        }
-
-        .w5a {
-            width: 32.320000pt;
-        }
-
-        .w5b {
-            width: 32.352000pt;
-        }
-
-        .w50 {
-            width: 32.480000pt;
-        }
-
-        .w53 {
-            width: 32.640000pt;
-        }
-
-        .w51 {
-            width: 32.960000pt;
-        }
-
-        .w52 {
-            width: 32.992000pt;
-        }
-
-        .w30 {
-            width: 35.200000pt;
-        }
-
-        .w2e {
-            width: 35.680000pt;
-        }
-
-        .w2f {
-            width: 36.000000pt;
-        }
-
-        .w39 {
-            width: 36.832000pt;
-        }
-
-        .w4e {
-            width: 37.152000pt;
-        }
-
-        .w43 {
-            width: 37.600000pt;
-        }
-
-        .w6b {
-            width: 37.632000pt;
-        }
-
-        .w62 {
-            width: 37.760000pt;
-        }
-
-        .w80 {
-            width: 37.920000pt;
-        }
-
-        .w73 {
-            width: 38.720000pt;
-        }
-
-        .w85 {
-            width: 39.200000pt;
-        }
-
-        .w89 {
-            width: 41.760000pt;
-        }
-
-        .w28 {
-            width: 41.792000pt;
-        }
-
-        .w6a {
-            width: 43.040000pt;
-        }
-
-        .w4d {
-            width: 43.200000pt;
-        }
-
-        .w79 {
-            width: 44.000000pt;
-        }
-
-        .w2b {
-            width: 44.800000pt;
-        }
-
-        .w2d {
-            width: 45.440000pt;
-        }
-
-        .w2c {
-            width: 45.920000pt;
-        }
-
-        .w40 {
-            width: 46.240000pt;
-        }
-
-        .w54 {
-            width: 46.560000pt;
-        }
-
-        .w64 {
-            width: 46.592000pt;
-        }
-
-        .w56 {
-            width: 46.752000pt;
-        }
-
-        .w7f {
-            width: 47.200000pt;
-        }
-
-        .w75 {
-            width: 47.232000pt;
-        }
-
-        .w55 {
-            width: 47.680000pt;
-        }
-
-        .w42 {
-            width: 49.280000pt;
-        }
-
-        .w8a {
-            width: 51.232000pt;
-        }
-
-        .w2a {
-            width: 53.120000pt;
-        }
-
-        .w29 {
-            width: 53.760000pt;
-        }
-
-        .w3c {
-            width: 54.560000pt;
-        }
-
-        .w18 {
-            width: 54.720000pt;
-        }
-
-        .w19 {
-            width: 54.752000pt;
-        }
-
-        .w11 {
-            width: 54.880000pt;
-        }
-
-        .w1a {
-            width: 55.200000pt;
-        }
-
-        .w3d {
-            width: 55.232000pt;
-        }
-
-        .wf {
-            width: 55.680000pt;
-        }
-
-        .w4f {
-            width: 55.840000pt;
-        }
-
-        .wa {
-            width: 56.000000pt;
-        }
-
-        .w3e {
-            width: 58.592000pt;
-        }
-
-        .w1b {
-            width: 58.880000pt;
-        }
-
-        .w1d {
-            width: 59.072000pt;
-        }
-
-        .w1c {
-            width: 59.360000pt;
-        }
-
-        .w77 {
-            width: 59.520000pt;
-        }
-
-        .w37 {
-            width: 59.840000pt;
-        }
-
-        .w38 {
-            width: 60.032000pt;
-        }
-
-        .w22 {
-            width: 60.192000pt;
-        }
-
-        .w7 {
-            width: 60.960000pt;
-        }
-
-        .w34 {
-            width: 61.280000pt;
-        }
-
-        .w23 {
-            width: 61.760000pt;
-        }
-
-        .w90 {
-            width: 66.080000pt;
-        }
-
-        .w63 {
-            width: 66.720000pt;
-        }
-
-        .w44 {
-            width: 67.040000pt;
-        }
-
-        .w74 {
-            width: 68.160000pt;
-        }
-
-        .w15 {
-            width: 68.640000pt;
-        }
-
-        .w35 {
-            width: 69.600000pt;
-        }
-
-        .w3 {
-            width: 70.080000pt;
-        }
-
-        .wc {
-            width: 70.560000pt;
-        }
-
-        .w12 {
-            width: 74.112000pt;
-        }
-
-        .w14 {
-            width: 74.912000pt;
-        }
-
-        .w31 {
-            width: 75.200000pt;
-        }
-
-        .w13 {
-            width: 75.680000pt;
-        }
-
-        .w6c {
-            width: 83.680000pt;
-        }
-
-        .w48 {
-            width: 84.160000pt;
-        }
-
-        .w45 {
-            width: 84.352000pt;
-        }
-
-        .w7b {
-            width: 85.120000pt;
-        }
-
-        .w49 {
-            width: 92.032000pt;
-        }
-
-        .w8d {
-            width: 94.400000pt;
-        }
-
-        .w7a {
-            width: 94.592000pt;
-        }
-
-        .w41 {
-            width: 96.480000pt;
-        }
-
-        .w6 {
-            width: 108.192000pt;
-        }
-
-        .w36 {
-            width: 111.392000pt;
-        }
-
-        .w3a {
-            width: 111.840000pt;
-        }
-
-        .w8 {
-            width: 115.872000pt;
-        }
-
-        .w21 {
-            width: 119.712000pt;
-        }
-
-        .w20 {
-            width: 120.000000pt;
-        }
-
-        .w3f {
-            width: 130.912000pt;
-        }
-
-        .w71 {
-            width: 131.712000pt;
-        }
-
-        .w32 {
-            width: 136.160000pt;
-        }
-
-        .w47 {
-            width: 137.786667pt;
-        }
-
-        .w4 {
-            width: 140.480000pt;
-        }
-
-        .w46 {
-            width: 144.160000pt;
-        }
-
-        .w24 {
-            width: 178.426667pt;
-        }
-
-        .w8b {
-            width: 178.906667pt;
-        }
-
-        .w88 {
-            width: 179.706667pt;
-        }
-
-        .w5 {
-            width: 210.240000pt;
-        }
-
-        .w8f {
-            width: 217.466667pt;
-        }
-
-        .w8c {
-            width: 236.346667pt;
-        }
-
-        .w72 {
-            width: 251.546667pt;
-        }
-
-        .w16 {
-            width: 286.746667pt;
-        }
-
-        .wd {
-            width: 288.826667pt;
-        }
-
-        .w10 {
-            width: 291.106667pt;
-        }
-
-        .w8e {
-            width: 293.146667pt;
-        }
-
-        .wb {
-            width: 302.466667pt;
-        }
-
-        .w33 {
-            width: 346.786667pt;
-        }
-
-        .w2 {
-            width: 359.106667pt;
-        }
-
-        .w91 {
-            width: 527.933333pt;
-        }
-
-        .w87 {
-            width: 802.813333pt;
-        }
-
-        .w9 {
-            width: 1122.559983pt;
-        }
-
-        .w0 {
-            width: 1122.560000pt;
-        }
-
-        .w1 {
-            width: 1123.333333pt;
-        }
-
-        .x0 {
-            left: 0.000000pt;
-        }
-
-        .x2 {
-            left: 1.760000pt;
-        }
-
-        .x3 {
-            left: 3.680000pt;
-        }
-
-        .xd {
-            left: 6.240000pt;
-        }
-
-        .x27 {
-            left: 7.840000pt;
-        }
-
-        .x1b {
-            left: 9.760000pt;
-        }
-
-        .x37 {
-            left: 11.360000pt;
-        }
-
-        .x19 {
-            left: 13.280000pt;
-        }
-
-        .x5 {
-            left: 14.720000pt;
-        }
-
-        .x6 {
-            left: 16.800000pt;
-        }
-
-        .x3c {
-            left: 19.840000pt;
-        }
-
-        .x1 {
-            left: 22.720000pt;
-        }
-
-        .x31 {
-            left: 25.440000pt;
-        }
-
-        .x24 {
-            left: 27.226667pt;
-        }
-
-        .x32 {
-            left: 28.640000pt;
-        }
-
-        .x40 {
-            left: 31.520000pt;
-        }
-
-        .x2d {
-            left: 33.760000pt;
-        }
-
-        .x51 {
-            left: 41.760000pt;
-        }
-
-        .x33 {
-            left: 43.200000pt;
-        }
-
-        .x3e {
-            left: 45.280000pt;
-        }
-
-        .x2e {
-            left: 47.040000pt;
-        }
-
-        .x48 {
-            left: 56.320000pt;
-        }
-
-        .x55 {
-            left: 65.760000pt;
-        }
-
-        .x10 {
-            left: 78.720000pt;
-        }
-
-        .x49 {
-            left: 89.280000pt;
-        }
-
-        .xb {
-            left: 101.640000pt;
-        }
-
-        .xf {
-            left: 109.306667pt;
-        }
-
-        .x2c {
-            left: 120.800000pt;
-        }
-
-        .x4a {
-            left: 122.272000pt;
-        }
-
-        .x9 {
-            left: 128.640000pt;
-        }
-
-        .x1c {
-            left: 140.346667pt;
-        }
-
-        .x14 {
-            left: 153.786667pt;
-        }
-
-        .x34 {
-            left: 155.706667pt;
-        }
-
-        .x1e {
-            left: 201.626667pt;
-        }
-
-        .x4f {
-            left: 203.226667pt;
-        }
-
-        .x5f {
-            left: 221.306667pt;
-        }
-
-        .x15 {
-            left: 229.466667pt;
-        }
-
-        .x5a {
-            left: 240.346667pt;
-        }
-
-        .x1d {
-            left: 260.346667pt;
-        }
-
-        .x5b {
-            left: 279.226667pt;
-        }
-
-        .x4d {
-            left: 284.026667pt;
-        }
-
-        .x16 {
-            left: 305.146667pt;
-        }
-
-        .x4b {
-            left: 308.346667pt;
-        }
-
-        .x5c {
-            left: 330.746667pt;
-        }
-
-        .x4e {
-            left: 332.666667pt;
-        }
-
-        .x35 {
-            left: 357.026667pt;
-        }
-
-        .x4 {
-            left: 381.826667pt;
-        }
-
-        .x36 {
-            left: 407.266667pt;
-        }
-
-        .x5e {
-            left: 438.786667pt;
-        }
-
-        .x38 {
-            left: 445.986667pt;
-        }
-
-        .x11 {
-            left: 451.746667pt;
-        }
-
-        .x7 {
-            left: 453.186667pt;
-        }
-
-        .x60 {
-            left: 467.106667pt;
-        }
-
-        .x1f {
-            left: 479.266667pt;
-        }
-
-        .x39 {
-            left: 484.706667pt;
-        }
-
-        .x28 {
-            left: 497.666667pt;
-        }
-
-        .x20 {
-            left: 506.946667pt;
-        }
-
-        .x21 {
-            left: 534.466667pt;
-        }
-
-        .x29 {
-            left: 543.586667pt;
-        }
-
-        .x3a {
-            left: 552.866667pt;
-        }
-
-        .x22 {
-            left: 561.986667pt;
-        }
-
-        .x61 {
-            left: 571.106667pt;
-        }
-
-        .x23 {
-            left: 589.986667pt;
-        }
-
-        .x8 {
-            left: 594.973333pt;
-        }
-
-        .x4c {
-            left: 599.613333pt;
-        }
-
-        .x50 {
-            left: 618.493333pt;
-        }
-
-        .x30 {
-            left: 627.773333pt;
-        }
-
-        .x25 {
-            left: 632.733333pt;
-        }
-
-        .x3b {
-            left: 637.853333pt;
-        }
-
-        .x42 {
-            left: 666.493333pt;
-        }
-
-        .x2a {
-            left: 668.413333pt;
-        }
-
-        .x5d {
-            left: 676.733333pt;
-        }
-
-        .x26 {
-            left: 686.493333pt;
-        }
-
-        .x43 {
-            left: 695.293333pt;
-        }
-
-        .x56 {
-            left: 697.053333pt;
-        }
-
-        .x2b {
-            left: 704.413333pt;
-        }
-
-        .x44 {
-            left: 724.413333pt;
-        }
-
-        .x12 {
-            left: 740.573333pt;
-        }
-
-        .x13 {
-            left: 750.173333pt;
-        }
-
-        .x45 {
-            left: 753.213333pt;
-        }
-
-        .x3d {
-            left: 782.653333pt;
-        }
-
-        .xa {
-            left: 806.653333pt;
-        }
-
-        .x46 {
-            left: 826.813333pt;
-        }
-
-        .x17 {
-            left: 861.573333pt;
-        }
-
-        .x47 {
-            left: 864.613333pt;
-        }
-
-        .xc {
-            left: 916.293333pt;
-        }
-
-        .x18 {
-            left: 917.733333pt;
-        }
-
-        .x3f {
-            left: 921.413333pt;
-        }
-
-        .x2f {
-            left: 977.093333pt;
-        }
-
-        .xe {
-            left: 978.533333pt;
-        }
-
-        .x41 {
-            left: 1006.533333pt;
-        }
-
-        .x57 {
-            left: 1022.213333pt;
-        }
-
-        .x52 {
-            left: 1029.253333pt;
-        }
-
-        .x1a {
-            left: 1036.933333pt;
-        }
-
-        .x58 {
-            left: 1047.813333pt;
-        }
-
-        .x53 {
-            left: 1052.453333pt;
-        }
-
-        .x59 {
-            left: 1073.440000pt;
-        }
-
-        .x54 {
-            left: 1075.840000pt;
-        }
-    }
-</style>
-</head>
-
-<body>
-    </div>
-    <div id="page-container">
-        <div id="pf2" class="pf w0 h0" data-page-no="2">
-            <div class="pc pc2 w0 h0"><img class="bi x0 y0 w1 h1" alt=""
-                    src="data:image/png;base64,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" />
-                <div class="c x1 y1 w2 h2">
-                    <div class="t m0 x2 h3 y2 ff1 fs0 fc0 sc0 ls6 ws15 no-overflow">ART Patient Card <span class="_ _0"> </span>Adult ARV
-                        Formulations <span class="_ _1"> </span><span class="ff2">Version 9</span> </div>
-                    <div class="t m0 x3 h4 y3 ff3 fs1 fc1 sc0 ls6 ws15">Yellow Card<span class="_ _2"> </span> </div>
-                </div>
-                <div class="c x4 y1 w3 h2">
-                    <div class="t m0 x5 h3 y2 ff4 fs0 fc0 sc0 ls6 ws0">Transfer</div>
-                    <div class="t m0 x6 h3 y4 ff4 fs0 fc0 sc0 ls6 ws15">-In Date </div>
-                </div>
-                <div class="c x7 y1 w4 h2">
-                    <div class="t m0 x0 h5 y5 ff4 fs2 fc0 sc0 ls6 ws15"> <%= @data["transfer_in_date"] %></div>
-                </div>
-                <div class="c x8 y1 w5 h2">
-                    <div class="t m0 x9 h3 y2 ff3 fs0 fc0 sc0 ls7 ws1">ART<span class="ls6 ws15"> Reg <span
-                                class="ls8 ws2">no</span> </span></div>
-                </div>
-                <div class="c xa y1 w6 h2">
-                    <div class="t m0 xb h3 y2 ff4 fs0 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c xc y1 w7 h2">
-                    <div class="t m0 x1 h3 y2 ff3 fs0 fc0 sc0 ls6 ws15">Child </div>
-                    <div class="t m0 xd h3 y4 ff3 fs0 fc0 sc0 ls6 ws15">HCC no </div>
-                </div>
-                <div class="c xe y1 w8 h2">
-                    <div class="t m0 xf h3 y2 ff3 fs0 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x0 y6 w9 h0">
-                    <div class="t m0 x1 h6 y7 ff5 fs3 fc0 sc0 ls6 ws15"> </div>
-                    <div class="t m0 x1 h6 y8 ff5 fs3 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x1 y58 w3f h1e">
-                    <div class="t m0 x33 h8 y59 ff6 fs4 fc0 sc0 ls6 ws15">Visit Date </div>
-                </div>
-                <div class="c x34 y58 w40 h1e">
-                    <div class="t m0 xd h8 y59 ff6 fs4 fc0 sc0 ls6 ws15">Weight </div>
-                </div>
-                <div class="c x1e y58 wf h1e">
-                    <div class="t m0 x3 h8 y59 ff6 fs4 fc0 sc0 ls6 ws15">Pregnant/ </div>
-                    <div class="t m0 x3 h8 y5a ff6 fs4 fc0 sc0 ls6 ws15">Breastfeed </div>
-                </div>
-                <div class="c x1d y58 w41 h1e">
-                    <div class="t m0 x0 h8 y59 ff6 fs4 fc0 sc0 ls6 ws15">TB Status (Current)*<span class="_ _6"></span><span
-                            class="fc3 sc0"> </span></div>
-                </div>
-                <div class="c x35 y58 w42 h1e">
-                    <div class="t m0 x19 h8 y59 ff6 fs4 fc0 sc0 ls6 ws15">Side </div>
-                    <div class="t m0 x1b h8 y5b ff6 fs4 fc0 sc0 ls6 ws15">Effects </div>
-                </div>
-                <div class="c x36 y58 w43 h1e">
-                    <div class="t m0 x37 h8 y59 ff6 fs4 fc0 sc0 ls1 ws15">Pill </div>
-                    <div class="t m0 x3 h8 y5b ff6 fs4 fc0 sc0 ls6 ws15">Count </div>
-                </div>
-                <div class="c x38 y58 w43 h1e">
-                    <div class="t m0 x3 h8 y59 ff6 fs4 fc0 sc0 ls6 ws15">Doses </div>
-                    <div class="t m0 x2 h8 y5b ff6 fs4 fc0 sc0 ls6 ws15">Missed </div>
-                </div>
-                <div class="c x39 y5c w44 h1f">
-                    <div class="t m0 x2 h8 y5d ff6 fs4 fc0 sc0 ls6 ws15">ART Regimen </div>
-                    <div class="t m0 x3 h10 y32 ff9 fs4 fc0 sc0 ls6 ws15">(<span class="_ _6"></span>wr<span
-                            class="_ _4"></span>it<span class="_ _6"></span>e<span class="_ _6"></span> <span
-                            class="_ _6"></span>c<span class="_ _6"></span>o<span class="_ _6"></span>de<span
-                            class="_ _6"></span>)<span class="_ _6"></span><span class="ff6"> </span></div>
-                </div>
-                <div class="c x3a y58 w45 h1e">
-                    <div class="t m0 x19 h8 y59 ff6 fs4 fc0 sc0 ls6 ws15">ARVs Given </div>
-                </div>
-                <div class="c x3b y5e w46 h11">
-                    <div class="t m0 x3c h8 y4 ff6 fs4 fc0 sc0 ls6 ws15">CPT / TPT Tabs Given<span class="_ _6"></span> </div>
-                </div>
-                <div class="c x3d y5e w47 h11">
-                    <div class="t m0 x3e h8 y34 ff6 fs4 fc0 sc0 ls6 ws15">Viral Load </div>
-                </div>
-                <div class="c x3f y5c w48 h1f">
-                    <div class="t m0 x40 h8 y5d ff6 fs4 fc0 sc0 ls6 ws15">Next </div>
-                    <div class="t m0 x1b h8 y35 ff6 fs4 fc0 sc0 ls6 ws15">Appointment/ </div>
-                    <div class="t m0 x27 h8 y36 ff6 fs4 fc0 sc0 ls6 ws15">Outcome Date </div>
-                </div>
-                <div class="c x41 y5e w49 h11">
-                    <div class="t m0 x3 h8 y4 ff6 fs4 fc0 sc0 ls6 ws15">Adverse Outcome<span class="_ _6"></span> </div>
-                </div>
-                <div class="c x3b y5c w4a h20">
-                    <div class="t m1 x1b h4 y37 ff6 fs1 fc0 sc0 ls6 ws15">CTX 960<span class="fc3 sc0"> </span></div>
-                </div>
-                <div class="c x42 y5c w4b h20">
-                    <div class="t m1 x1b h4 y38 ff6 fs1 fc0 sc0 ls6 ws15">RFP/INH<span class="fc3 sc0"> </span></div>
-                </div>
-                <div class="c x43 y5c w4c h20">
-                    <div class="t m1 x1b h4 y39 ff6 fs1 fc0 sc0 ls6 ws15">INH 300<span class="fc3 sc0"> </span></div>
-                </div>
-                <div class="c x44 y5c w4b h20">
-                    <div class="t m1 x1b h4 y3a ff6 fs1 fc0 sc0 ls6 ws15">RFP 150<span class="fc3 sc0"> </span></div>
-                </div>
-                <div class="c x45 y5c w4b h20">
-                    <div class="t m1 x1b h4 y3b ff6 fs1 fc0 sc0 ls6 ws15">Pyridoxine<span class="fc3 sc0"> </span></div>
-                </div>
-                <div class="c x3d y5c w4d h20">
-                    <div class="t m0 xd h4 y3c ff6 fs1 fc0 sc0 ls6 ws15">Months </div>
-                    <div class="t m0 x2 h4 y3d ff6 fs1 fc0 sc0 ls6 ws15">since last </div>
-                    <div class="t m0 xd h4 y5f ff6 fs1 fc0 sc0 ls6 ws15">VL Test </div>
-                </div>
-                <div class="c x46 y5c w4e h20">
-                    <div class="t m0 x3 h13 y3f ff6 fs7 fc0 sc0 ls6 ws15">Sample </div>
-                    <div class="t m0 x27 h8 y40 ff6 fs7 fc0 sc0 ls6 wsb">taken<span class="fs4 ws15"> </span></div>
-                </div>
-                <div class="c x47 y5c w4f h20">
-                    <div class="t m0 x6 h8 y3f ff6 fs7 fc0 sc0 ls6 wsb">Result<span class="fs4 ws15"> </span></div>
-                </div>
-                <div class="c x41 y58 w49 h21">
-                    <div class="t m0 x3e h8 y60 ff6 fs4 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x1 y5c w50 h22">
-                    <div class="t m0 x1b h16 y41 ff9 fs7 fc0 sc0 lse wsc">DD<span class="ls6 ws15"> </span></div>
-                </div>
-                <div class="c x48 y5c w51 h22">
-                    <div class="t m0 x27 h16 y41 ff9 fs7 fc0 sc0 lsf wsd">MM<span class="ls6 ws15"> </span></div>
-                </div>
-                <div class="c x49 y5c w52 h22">
-                    <div class="t m0 x1b h16 y41 ff9 fs7 fc0 sc0 ls4 wse">YY<span class="ls6 ws15"> </span></div>
-                </div>
-                <div class="c x4a y5c w53 h22">
-                    <div class="t m0 x1b h16 y41 ff9 fs7 fc0 sc0 ls6 ws15">Qtr. </div>
-                </div>
-                <div class="c x34 y5c w54 h22">
-                    <div class="t m0 x6 h10 y4 ff9 fs4 fc0 sc0 lsa ws5">kg<span class="ls6 ws15"> </span></div>
-                </div>
-                <div class="c x1e y5c wf h22">
-                    <div class="t m0 x0 h16 y42 ff9 fs7 fc0 sc0 ls6 ws15">Write child </div>
-                    <div class="t m0 x0 h16 y43 ff9 fs7 fc0 sc0 ls6 ws15">HCC no if Bf </div>
-                </div>
-                <div class="c x1d y61 w55 h23">
-                    <div class="t m0 x0 h13 y41 ff6 fs7 fc0 sc0 ls6 ws15">Presump. </div>
-                </div>
-                <div class="c x4b y61 w55 h23">
-                    <div class="t m0 x3 h13 y41 ff6 fs7 fc0 sc0 ls6 ws15">Confirmed </div>
-                </div>
-                <div class="c x35 y5c w42 h22">
-                    <div class="t m0 xd h16 y45 ff9 fs7 fc0 sc0 ls6 ws15">Specify in </div>
-                    <div class="t m0 x19 h18 y41 ff9 fs7 fc0 sc0 ls6 wsb">Notes<span class="fs5 ws15"> </span></div>
-                </div>
-                <div class="c x36 y5c w43 h22">
-                    <div class="t m0 x0 h9 y46 ff6 fs5 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x38 y5c w43 h22">
-                    <div class="t m0 x3c h9 y47 ff6 fs5 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x3a y5c w56 h22">
-                    <div class="t m0 x1b h8 y48 ff6 fs4 fc0 sc0 ls6 ws15">No. of </div>
-                    <div class="t m0 x27 h8 y49 ff6 fs4 fc0 sc0 ls6 ws15">tablets </div>
-                </div>
-                <div class="c x4c y5c w43 h22">
-                    <div class="t m0 x19 h8 y4 ff6 fs4 fc0 sc0 ls10 wsf">To<span class="ls6 ws15"> </span></div>
-                </div>
-                <div class="c x41 y5c w49 h22">
-                    <div class="t m0 x3e h8 y4a ff6 fs4 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x1d y5c w57 h19">
-                    <div class="t m0 xd h13 y13 ff6 fs7 fc0 sc0 ls11 ws10">No<span class="ls6 ws15"> </span></div>
-                </div>
-                <div class="c x4d y5c w58 h19">
-                    <div class="t m0 x3 h13 y13 ff6 fs7 fc0 sc0 ls6 ws15">Yes </div>
-                </div>
-                <div class="c x4b y5c w58 h19">
-                    <div class="t m0 x2 h13 y49 ff6 fs7 fc0 sc0 ls6 wsb">noR<span class="fs8 ws11 v1">x</span><span
-                            class="ws15"> </span></div>
-                </div>
-                <div class="c x4e y5c w57 h19">
-                    <div class="t m0 xd h13 y49 ff6 fs7 fc0 sc0 ls6 wsb">R<span class="fs8 ws11 v1">x</span><span class="ws15">
-                        </span></div>
-                </div>
-                <% @initial_left = 40
-                   @shift = @initial_left
-                   @left = [45, 45, 45, 50, 60, 80, 70, 70, 50, 50, 80, 100, 80, 38, 38, 28, 38, 110, 40, 80, 150]
-                   @initial_bottom = 840
-                   @bottom = @initial_bottom %>
-
-<% (1..7).each do |i| %>
-                <div style="
-                            left: <%= @shift %>px;
-            bottom: <%= @bottom %>px;
-                            width: 70.104000px;
-                            height: 25.56px
-                    " class="c bold">
-                   aaa 
-                </div>
-
-                <div style="
-                                             left: <%= @shift += @left[0] %>px;
-                bottom: <%= @bottom %>px;
-                                            width: 70.104000px;
-                                            height: 25.56px
-                                    " class="c bold">
-                    aaa
-                </div>
-
-                <div style="
-                                           left: <%= @shift += @left[1] %>px;
-                bottom: <%= @bottom %>px;
-                                            width: 70.104000px;
-                                            height: 25.56px
-                                    " class="c bold">
-                    aaa
-                </div>
-
-                <div style="
-                                            left: <%= @shift += @left[2] %>px;
-                bottom: <%= @bottom %>px;
-                                            width: 70.104000px;
-                                            height: 25.56px
-                                    " class="c bold">
-                    bbb
-                </div>
-
-                <div style="
-                                             left: <%= @shift += @left[3] %>px;
-                bottom: <%= @bottom %>px;
-                                            width: 70.104000px;
-                                            height: 25.56px
-                                    " class="c bold">
-                    aaa
-                </div>
-
-                <div style="
-                                            left: <%= @shift += @left[4] %>px;
-                bottom: <%= @bottom %>px;
-                                            width: 70.104000px;
-                                            height: 25.56px
-                                    " class="c bold">
-                    aaa
-                </div>
-
-                <div style="  left: <%= @shift += @left[5] %>px;
-                bottom: <%= @bottom %>px;
-                                            width: 70.104000px;
-                                            height: 25.56px
-                                    " class="c bold">
-                    aaa
-                </div>
-                <div style="
-                                            left: <%= @shift += @left[6] %>px;
-                bottom: <%= @bottom %>px;
-                                            width: 70.104000px;
-                                            height: 25.56px
-                                    " class="c bold">
-                    aaa
-                </div>
-
-                <div style="
-                                            left: <%= @shift += @left[7] %>px;
-                bottom: <%= @bottom %>px;
-                                            width: 70.104000px;
-                                            height: 25.56px
-                                    " class="c bold">
-                    aaa
-                </div>
-                <div style="
-                                             left: <%= @shift += @left[8] %>px;
-                bottom: <%= @bottom %>px;
-                                            width: 70.104000px;
-                                            height: 25.56px
-                                    " class="c bold">
-                    aaa
-                </div>
-
-                <div style="
-                                           left: <%= @shift += @left[9] %>px;
-                bottom: <%= @bottom %>px;
-                                            width: 70.104000px;
-                                            height: 25.56px
-                                    " class="c bold">
-                    aaa
-                </div>
-                <div style="
-                                           left: <%= @shift += @left[10] %>px;
-                bottom: <%= @bottom %>px;
-                                            width: 70.104000px;
-                                            height: 25.56px
-                                    " class="c bold">
-                    aaa
-                </div>
-                <div style="
-                                          left: <%= @shift += @left[11] %>px;
-                bottom: <%= @bottom %>px;
-                                            width: 70.104000px;
-                                            height: 25.56px
-                                    " class="c bold">
-                    aaa
-                </div>
-
-                <div style="
-                                            left: <%= @shift += @left[12] %>px;
-                bottom: <%= @bottom %>px;
-                                            width: 70.104000px;
-                                            height: 25.56px
-                                    " class="c bold">
-                    aaa
-                </div>
-
-                <div style="  left: <%= @shift += @left[13] %>px;
-                bottom: <%= @bottom %>px;
-                                            width: 70.104000px;
-                                            height: 25.56px
-                                    " class="c bold">
-                    aaa
-                </div>
-
-                <div style="  left: <%= @shift += @left[14] %>px;
-                bottom: <%= @bottom %>px;
-                                            width: 70.104000px;
-                                            height: 25.56px
-                                    " class="c bold">
-                    aaa
-                </div>
-
-                <div style="
-                                            left: <%= @shift += @left[15] %>px;
-                bottom: <%= @bottom %>px;
-                                            width: 70.104000px;
-                                            height: 25.56px
-                                    " class="c bold">
-                    aaa
-                </div>
-                <div style="
-                                            left: <%= @shift += @left[16] %>px;
-                bottom: <%= @bottom %>px;
-                                            width: 70.104000px;
-                                            height: 25.56px
-                                    " class="c bold">
-                    aaa
-                </div>
-
-                <div style="
-                                                           left: <%= @shift += @left[17] %>px;
-                bottom: <%= @bottom %>px;
-                                                            width: 70.104000px;
-                                                            height: 25.56px
-                                                    " class="c bold">
-                    bbb
-                </div>
-
-                <div style="
-                                                            left: <%= @shift += @left[18] %>px;
-                bottom: <%= @bottom %>px;
-                                                            width: 70.104000px;
-                                                            height: 25.56px
-                                                    " class="c bold">
-                    aaa
-                </div>
-
-                <div style="  left: <%= @shift += @left[19] %>px;
-                bottom: <%= @bottom %>px;
-                                                            width: 70.104000px;
-                                                            height: 25.56px
-                                                    " class="c bold">
-                    aaa
-                </div>
-                <div style="
-                                                            left: <%= @shift += @left[20] %>px;
-                bottom: <%= @bottom %>px;
-                                                            width: 70.104000px;
-                                                            height: 25.56px
-                                                    " class="c bold">
-                    zzz
-                </div>
-<% @shift = @initial_left
-     @bottom -= 45 end %>
-                <div class="c x1 y73 w71 h26">
-                    <div class="t m0 x2 h9 y74 ff6 fs5 fc0 sc2 ls6 ws16">Notes<span class="fs4 ws15"> </span></div>
-                </div>
-                <div class="c x34 y73 w7f h26">
-                    <div class="t m0 x1 h4 y51 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x1e y73 w80 h26">
-                    <div class="t m0 x3c h8 y75 ff6 fs4 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x5a y73 w65 h26">
-                    <div class="t m0 x1b h8 y75 ff6 fs4 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x1d y73 w81 h26">
-                    <div class="t m0 x1b h4 y51 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x5b y73 w82 h26">
-                    <div class="t m0 x19 h4 y51 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x16 y73 w82 h26">
-                    <div class="t m0 x19 h4 y51 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x5c y73 w83 h26">
-                    <div class="t m0 x19 h4 y51 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x35 y73 w84 h26">
-                    <div class="t m0 x37 h4 y51 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x4 y73 w84 h26">
-                    <div class="t m0 x37 h4 y51 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x36 y73 w73 h26">
-                    <div class="t m0 x3c h4 y51 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x38 y73 w73 h26">
-                    <div class="t m0 x3c h4 y51 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x39 y73 w74 h26">
-                    <div class="t m0 x2d h4 y76 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x3a y73 w75 h26">
-                    <div class="t m0 x1 h4 y51 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x4c y73 w65 h26">
-                    <div class="t m0 x1b h4 y51 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x50 y73 w76 h26">
-                    <div class="t m0 x1b h4 y51 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x3b y73 w85 h26">
-                    <div class="t m0 x3c h4 y51 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x5d y73 w86 h26">
-                    <div class="t m0 x1b h4 y51 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x56 y73 w69 h26">
-                    <div class="t m0 x19 h4 y76 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x44 y73 w78 h26">
-                    <div class="t m0 x19 h4 y76 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x45 y73 w69 h26">
-                    <div class="t m0 x19 h4 y76 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x3d y73 w79 h26">
-                    <div class="t m0 x1 h4 y51 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x46 y73 w7a h26">
-                    <div class="t m0 x2 h4 y51 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x3f y73 w7b h26">
-                    <div class="t m0 x51 h4 y51 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x41 y73 w7c h26">
-                    <div class="t m0 x27 h4 y51 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x57 y73 w7d h26">
-                    <div class="t m0 x19 h4 y51 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x58 y73 w7e h26">
-                    <div class="t m0 x19 h4 y51 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x59 y73 w7d h26">
-                    <div class="t m0 x19 h4 y51 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x1 y77 w71 h27">
-                    <div class="t m0 x55 h8 y1a ff6 fs4 fc0 sc2 ls6 ws15"> </div>
-                </div>
-                <div class="c x34 y77 w7f h27">
-                    <div class="t m0 x1 h4 y63 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x1e y77 w80 h27">
-                    <div class="t m0 x3c h8 y4c ff6 fs4 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x5a y77 w65 h27">
-                    <div class="t m0 x1b h8 y4c ff6 fs4 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x1d y77 w81 h27">
-                    <div class="t m0 x1b h4 y63 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x5b y77 w82 h27">
-                    <div class="t m0 x19 h4 y63 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x16 y77 w82 h27">
-                    <div class="t m0 x19 h4 y63 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x5c y77 w83 h27">
-                    <div class="t m0 x19 h4 y63 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x35 y77 w84 h27">
-                    <div class="t m0 x37 h4 y63 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x4 y77 w84 h27">
-                    <div class="t m0 x37 h4 y63 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x36 y77 w73 h27">
-                    <div class="t m0 x3c h4 y63 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x38 y77 w73 h27">
-                    <div class="t m0 x3c h4 y63 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x39 y77 w74 h27">
-                    <div class="t m0 x2d h4 y64 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x3a y77 w75 h27">
-                    <div class="t m0 x1 h4 y63 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x4c y77 w65 h27">
-                    <div class="t m0 x1b h4 y63 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x50 y77 w76 h27">
-                    <div class="t m0 x1b h4 y63 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x3b y77 w85 h27">
-                    <div class="t m0 x3c h4 y63 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x5d y77 w86 h27">
-                    <div class="t m0 x1b h4 y63 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x56 y77 w69 h27">
-                    <div class="t m0 x19 h4 y64 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x44 y77 w78 h27">
-                    <div class="t m0 x19 h4 y64 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x45 y77 w69 h27">
-                    <div class="t m0 x19 h4 y64 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x3d y77 w79 h27">
-                    <div class="t m0 x1 h4 y63 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x46 y77 w7a h27">
-                    <div class="t m0 x2 h4 y63 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x3f y77 w7b h27">
-                    <div class="t m0 x51 h4 y63 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x41 y77 w7c h27">
-                    <div class="t m0 x27 h4 y63 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x57 y77 w7d h27">
-                    <div class="t m0 x19 h4 y63 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x58 y77 w7e h27">
-                    <div class="t m0 x19 h4 y63 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x59 y77 w7d h27">
-                    <div class="t m0 x19 h4 y63 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x1 y78 w71 h28">
-                    <div class="t m0 x55 h8 y51 ff6 fs4 fc0 sc2 ls6 ws15"> </div>
-                </div>
-                <div class="c x34 y78 w7f h28">
-                    <div class="t m0 x1 h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x1e y78 w80 h28">
-                    <div class="t m0 x3c h8 y76 ff6 fs4 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x5a y78 w65 h28">
-                    <div class="t m0 x1b h8 y76 ff6 fs4 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x1d y78 w81 h28">
-                    <div class="t m0 x1b h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x5b y78 w82 h28">
-                    <div class="t m0 x19 h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x16 y78 w82 h28">
-                    <div class="t m0 x19 h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x5c y78 w83 h28">
-                    <div class="t m0 x19 h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x35 y78 w84 h28">
-                    <div class="t m0 x37 h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x4 y78 w84 h28">
-                    <div class="t m0 x37 h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x36 y78 w73 h28">
-                    <div class="t m0 x3c h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x38 y78 w73 h28">
-                    <div class="t m0 x3c h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x39 y78 w74 h28">
-                    <div class="t m0 x2d h4 y79 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x3a y78 w75 h28">
-                    <div class="t m0 x1 h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x4c y78 w65 h28">
-                    <div class="t m0 x1b h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x50 y78 w76 h28">
-                    <div class="t m0 x1b h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x3b y78 w85 h28">
-                    <div class="t m0 x3c h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x5d y78 w86 h28">
-                    <div class="t m0 x1b h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x56 y78 w69 h28">
-                    <div class="t m0 x19 h4 y79 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x44 y78 w78 h28">
-                    <div class="t m0 x19 h4 y79 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x45 y78 w69 h28">
-                    <div class="t m0 x19 h4 y79 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x3d y78 w79 h28">
-                    <div class="t m0 x1 h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x46 y78 w7a h28">
-                    <div class="t m0 x2 h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x3f y78 w7b h28">
-                    <div class="t m0 x51 h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x41 y78 w7c h28">
-                    <div class="t m0 x27 h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x57 y78 w7d h28">
-                    <div class="t m0 x19 h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x58 y78 w7e h28">
-                    <div class="t m0 x19 h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x59 y78 w7d h28">
-                    <div class="t m0 x19 h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x1 y7a w71 h29">
-                    <div class="t m0 x55 h8 y51 ff6 fs4 fc0 sc2 ls6 ws15"> </div>
-                </div>
-                <div class="c x34 y7a w7f h29">
-                    <div class="t m0 x1 h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x1e y7a w80 h29">
-                    <div class="t m0 x3c h8 y76 ff6 fs4 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x5a y7a w65 h29">
-                    <div class="t m0 x1b h8 y76 ff6 fs4 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x1d y7a w81 h29">
-                    <div class="t m0 x1b h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x5b y7a w82 h29">
-                    <div class="t m0 x19 h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x16 y7a w82 h29">
-                    <div class="t m0 x19 h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x5c y7a w83 h29">
-                    <div class="t m0 x19 h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x35 y7a w84 h29">
-                    <div class="t m0 x37 h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x4 y7a w84 h29">
-                    <div class="t m0 x37 h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x36 y7a w73 h29">
-                    <div class="t m0 x3c h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x38 y7a w73 h29">
-                    <div class="t m0 x3c h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x39 y7a w74 h29">
-                    <div class="t m0 x2d h4 y79 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x3a y7a w75 h29">
-                    <div class="t m0 x1 h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x4c y7a w65 h29">
-                    <div class="t m0 x1b h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x50 y7a w76 h29">
-                    <div class="t m0 x1b h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x3b y7a w85 h29">
-                    <div class="t m0 x3c h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x5d y7a w86 h29">
-                    <div class="t m0 x1b h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x56 y7a w69 h29">
-                    <div class="t m0 x19 h4 y79 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x44 y7a w78 h29">
-                    <div class="t m0 x19 h4 y79 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x45 y7a w69 h29">
-                    <div class="t m0 x19 h4 y79 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x3d y7a w79 h29">
-                    <div class="t m0 x1 h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x46 y7a w7a h29">
-                    <div class="t m0 x2 h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x3f y7a w7b h29">
-                    <div class="t m0 x51 h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x41 y7a w7c h29">
-                    <div class="t m0 x27 h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x57 y7a w7d h29">
-                    <div class="t m0 x19 h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x58 y7a w7e h29">
-                    <div class="t m0 x19 h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x59 y7a w7d h29">
-                    <div class="t m0 x19 h4 y52 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x1 y7b w87 h19">
-                    <div class="t m0 x2 h4 y22 ff6 fs1 fc0 sc2 ls6 ws15">Ever taken ARVs <span class="_ _7"> </span><span
-                            class="sc0">Has the patient ever taken any ARVs? (e.g. PrEP, PEP or triple therapy) If yes, specify
-                            drug and approximate date when last taken<span class="fs7"> </span></span></div>
-                </div>
-                <div class="c x46 y7c w88 h2a">
-                    <div class="t m0 x49 h4 y7d ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x41 y7c w89 h2a">
-                    <div class="t m0 x0 h13 y7e ff6 fs7 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x58 y7c w8a h2a">
-                    <div class="t m0 x0 h13 y7e ff6 fs7 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x1 y7c w8b h2b">
-                    <div class="t m0 x2 h8 y13 ff6 fs1 fc0 sc2 ls6 ws15">Routine TB Screening Checklist *<span class="fs4 sc0">
-                        </span></div>
-                </div>
-                <div class="c x1e y7c w8c h2b">
-                    <div class="t m0 x0 h4 y13 ff6 fs1 fc0 sc2 ls6 ws15">TB Status Current (any TB form, smear pos/ neg)<span
-                            class="_ _6"></span><span class="sc0"> </span></div>
-                </div>
-                <div class="c x5e y7c w8d h2b">
-                    <div class="t m0 x2 h4 y13 ff6 fs1 fc0 sc2 ls6 ws15">ARVs Given<span class="sc0"> </span></div>
-                </div>
-                <div class="c x21 y7c w8e h2b">
-                    <div class="t m0 x2 h4 y13 ff6 fs1 fc0 sc2 ls6 ws15">Adverse Outcomes<span class="fs7 sc0"> </span></div>
-                </div>
-                <div class="c x1 y7f w8b h2c">
-                    <div class="t m0 x2 h4 y49 ff6 fs1 fc0 sc0 ls6 ws15">1) Cough of any duration </div>
-                </div>
-                <div class="c x1e y7f w65 h2c">
-                    <div class="t m0 xd h4 y49 ff6 fs1 fc0 sc0 ls6 ws15">N </div>
-                </div>
-                <div class="c x5f y7f w8f h2c">
-                    <div class="t m0 x0 h4 y49 ff6 fs1 fc0 sc0 ls6 ws15">TB Not suspected<span class="sc2"> </span></div>
-                </div>
-                <div class="c x5e y7f w78 h2c">
-                    <div class="t m0 x37 h4 y49 ff6 fs1 fc0 sc0 ls6 ws15">P<span class="_ _8"></span> </div>
-                </div>
-                <div class="c x60 y7f w90 h2c">
-                    <div class="t m0 x2 h4 y49 ff6 fs1 fc0 sc0 ls6 ws15">to patient </div>
-                </div>
-                <div class="c x21 y7f w80 h2c">
-                    <div class="t m0 x1b h4 y49 ff6 fs1 fc0 sc0 ls6 ws15">D </div>
-                </div>
-                <div class="c x61 y7f w91 h2c">
-                    <div class="t m0 x2 h4 y49 ff6 fs1 fc0 sc0 ls6 ws15">Died </div>
-                </div>
-                <div class="c x1 y80 w8b h2d">
-                    <div class="t m0 x2 h4 y49 ff6 fs1 fc0 sc0 ls6 ws15">2) Fever </div>
-                </div>
-                <div class="c x1e y80 w65 h2d">
-                    <div class="t m0 xd h4 y49 ff6 fs1 fc0 sc0 ls6 ws15">Y </div>
-                </div>
-                <div class="c x5f y80 w8f h2d">
-                    <div class="t m0 x0 h4 y49 ff6 fs1 fc0 sc0 ls6 ws15">TB Suspected </div>
-                </div>
-                <div class="c x5e y80 w78 h2d">
-                    <div class="t m0 x37 h4 y49 ff6 fs1 fc0 sc0 ls6 ws15">G<span class="_ _8"></span> </div>
-                </div>
-                <div class="c x60 y80 w90 h2d">
-                    <div class="t m0 x2 h4 y49 ff6 fs1 fc0 sc0 ls6 ws15">to guardian </div>
-                </div>
-                <div class="c x21 y80 w80 h2d">
-                    <div class="t m0 x1b h4 y49 ff6 fs1 fc0 sc0 ls6 ws15">Def </div>
-                </div>
-                <div class="c x61 y80 w91 h2d">
-                    <div class="t m0 x2 h4 y49 ff6 fs1 fc0 sc0 ls6 ws15">Defaulted: More than 2 months overdu<span
-                            class="_ _5"></span>e after expected to have run out of tables, unkn<span class="_ _5"></span>own
-                        survival and ART status<span class="_ _4"></span> </div>
-                </div>
-                <div class="c x1 y81 w8b h2d">
-                    <div class="t m0 x2 h4 y82 ff6 fs1 fc0 sc0 ls6 ws15">3) Night sweats </div>
-                </div>
-                <div class="c x1e y81 w65 h2d">
-                    <div class="t m0 xd h4 y82 ff6 fs1 fc0 sc0 ls6 ws15">C </div>
-                </div>
-                <div class="c x5f y81 w8f h2d">
-                    <div class="t m0 x0 h4 y82 ff6 fs1 fc0 sc0 ls6 ws15">TB Confirmed not (yet) on TB treatment<span
-                            class="sc2"> </span></div>
-                </div>
-                <div class="c x5e y81 w78 h2d">
-                    <div class="t m0 x19 h4 y82 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x60 y81 w90 h2d">
-                    <div class="t m0 x2d h4 y82 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x21 y81 w80 h2d">
-                    <div class="t m0 x1b h4 y82 ff6 fs1 fc0 sc0 ls6 ws15">Stop </div>
-                </div>
-                <div class="c x61 y81 w91 h2d">
-                    <div class="t m0 x2 h4 y82 ff6 fs1 fc0 sc0 ls6 ws15">Patient stopped taking ARVs <span
-                            class="ffa">(clinician’s or patient’s own decision)</span><span class="sc2"> </span></div>
-                </div>
-                <div class="c x1 y83 w8b h2c">
-                    <div class="t m0 x2 h4 y49 ff6 fs1 fc0 sc0 ls6 ws15">4) Weight loss / failure to thrive </div>
-                </div>
-                <div class="c x1e y83 w65 h2c">
-                    <div class="t m0 xd h4 y49 ff6 fs1 fc0 sc0 ls6 ws12">R<span class="fs9 ws17 v1">X</span><span
-                            class="sc2 ws15"> </span></div>
-                </div>
-                <div class="c x5f y83 w8f h2c">
-                    <div class="t m0 x0 h4 y49 ff6 fs1 fc0 sc0 ls6 ws15">TB Confirmed &amp; currently taking TB treatment<span
-                            class="sc2"> </span></div>
-                </div>
-                <div class="c x5e y83 w78 h2c">
-                    <div class="t m0 x19 h4 y49 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x60 y83 w90 h2c">
-                    <div class="t m0 x2d h4 y49 ff6 fs1 fc0 sc0 ls6 ws15"> </div>
-                </div>
-                <div class="c x21 y83 w80 h2c">
-                    <div class="t m0 x1b h4 y49 ff6 fs1 fc0 sc0 ls14 ws18">TO<span class="ls6 ws15"> </span></div>
-                </div>
-                <div class="c x61 y83 w91 h2c">
-                    <div class="t m0 x2 h4 y49 ffa fs1 fc0 sc0 ls6 ws15">Transferred to other ART clinic (including ‘unoff<span
-                            class="_ _5"></span>icial’ transfers)<span class="_ _6"></span><span class="ff6 sc2"> </span></div>
-                </div>
-                <div class="c x0 y6 w9 h0">
-                    <div class="t m0 x1 h2e y84 ff4 fs3 fc0 sc0 ls6 ws15"> </div>
-                    <div class="t m0 x1 h2f y85 ff4 fsa fc0 sc0 ls6 ws15"> </div>
-                </div>
-            </div>
-        </div>
-
-    </div>
-</body>
-
-</html>
+<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.0 Transitional//EN'>
+<html>
+  <head>
+    <meta http-equiv='content-type' content='text/html; charset=utf-8' />
+    <title></title>
+    <style type='text/css'>
+      @media print {
+      .pagebreak {
+      page-break-before: always;
+      } 
+      }
+     
+      
+        table {
+        	width: 100%;
+        }
+      
+        table {
+        	border-collapse: collapse;
+        }
+      
+        td {
+        	padding-left: 0.3em;
+        	padding-right: 0.3em;
+        }
+      
+        .magic-div {
+        	height: 50px;
+        	width: 25px;
+        	position: relative;
+        }
+      
+        .magic-span {
+        	position: absolute;
+        	top: 50%;
+        	left: 50%;
+        	transform: translate(-50%, -50%) rotate(-90deg);
+        	transform-origin: center center;
+        	display: block;
+        	width: 0;
+        	text-anchor: end;
+        	text-align: center;
+        	margin-top: 27px;
+        	margin-bottom: 5px;
+        }
+      
+        .t_no_break {
+        	white-space: nowrap;
+        }
+      
+        @media print {
+        	.print-page {
+        		margin: 10px;
+        		page-break-inside: avoid;
+        		page-break-after: always;
+        	}
+        }
+    </style>
+  </head>
+  <body>
+    <div class="pagebreak"> </div>
+    <table>
+    </br>
+      <colgroup width='43'></colgroup>
+      <colgroup width='65'></colgroup>
+      <colgroup width='50'></colgroup>
+      <colgroup width='62'></colgroup>
+      <colgroup width='73'></colgroup>
+      <colgroup width='78'></colgroup>
+      <colgroup width='47'></colgroup>
+      <colgroup width='53'></colgroup>
+      <colgroup width='51'></colgroup>
+      <colgroup width='46'></colgroup>
+      <colgroup width='51'></colgroup>
+      <colgroup width='49'></colgroup>
+      <colgroup width='85'></colgroup>
+      <colgroup width='110'></colgroup>
+      <colgroup width='117'></colgroup>
+      <colgroup span='2' width='118'></colgroup>
+      <colgroup width='47'></colgroup>
+      <colgroup width='68'></colgroup>
+      <colgroup span='2' width='59'></colgroup>
+      <colgroup width='55'></colgroup>
+      <colgroup width='71'></colgroup>
+      <colgroup span='2' width='79'></colgroup>
+      <colgroup width='167'></colgroup>
+      <colgroup span='4' width='59'></colgroup>
+      <tr>
+        <td colspan='11' align='left' valign='top '>
+          <b>
+            <i>
+              <font face='Times New Roman' size='4 ' color='#000000'>ART Patient Card Paediatric ARV Formulations</font>
+            </i>
+          </b>
+        </td>
+        <td colspan='2' align='left' valign='top '>
+          <i>
+            <font face='Times New Roman' size='4 ' color='#000000'>Version 9</font>
+          </i>
+        </td>
+        <td align='left' valign='top '>
+          <font face='Times New Roman' size='4 ' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign='top '>
+          <font face='Times New Roman' size='4 ' color='#000000'>Transfer-In Date</font>
+        </td>
+        <td
+				style='border-left: 1px solid #000000'
+				colspan='2 '
+				rowspan='2 '
+				align='center'
+				valign='top '>
+          <font face='Times New Roman' size='4 ' color='#000000'><br>
+          </font>
+          <%= @data["transfer_in_date"] %>
+        </td>
+        <td align='left' valign='top '>
+          <font face='Times New Roman' size='4 ' color='#000000'><br>
+          </font>
+        </td>
+        <td
+				style='border-right: 1px solid #000000'
+				colspan='2 '
+				align='right'
+				valign='top '>
+          <b>
+            <font face='Times New Roman' size='4 ' color='#000000'>ART Reg No</font>
+          </b>
+        </td>
+        <td
+				style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				colspan='5 '
+				rowspan='2 '
+				align='center'
+				valign='top '>
+          <font face='Times New Roman' size='4 ' color='#000000'><br>
+          </font>
+          <%= @data["art_number"] %>
+        </td>
+        <td align='left' valign='top '>
+          <font face='Times New Roman' size='4 ' color='#000000'><br>
+          </font>
+        </td>
+        <td align='right' valign='top '>
+          <font face='Times New Roman' size='4 ' color='#000000'>Year</font>
+        </td>
+        <td
+				style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				colspan='4 '
+				rowspan='2 '
+				align='center'
+				valign='top '>
+          <font face='Times New Roman' size='4 ' color='#000000'><br>
+          </font>
+        </td>
+      </tr>
+      <tr>
+        <td colspan='3' align='left' valign='top ' bgcolor='#00B0F0'>
+          <font face='Times New Roman' size='4 ' color='#000000'>Blue Card</font>
+        </td>
+        <td colspan='8' align='left' valign='top '>
+          <font face='Times New Roman' size='4 ' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign='top '>
+          <font face='Times New Roman' size='4 ' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign='top '>
+          <font face='Times New Roman' size='4 ' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign='top '>
+          <font face='Times New Roman' size='4 ' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign='top '>
+          <font face='Times New Roman' size='4 ' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign='top '>
+          <font face='Times New Roman' size='4 ' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign='top '>
+          <font face='Times New Roman' size='4 ' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign='top '>
+          <font face='Times New Roman' size='4 ' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign='top '>
+          <font face='Times New Roman' size='4 ' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign='top '>
+          <font face='Times New Roman' size='4 ' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign='top '>
+          <font face='Times New Roman' size='4 ' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign='top '>
+          <font face='Times New Roman' size='4 ' color='#000000'><br>
+          </font>
+        </td>
+      </tr>
+      <tr>
+        <td align='left' valign=top>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign=top>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign=top>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign=top>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign=top>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign=top>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign=top>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign=top>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign=top>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign=top>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign=top>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign=top>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign=top>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign=top>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign=top>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign=top>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign=top>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign=top>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign=top>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign=top>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign=top>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign=top>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign=top>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign=top>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign=top>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign=top>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign=top>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign=top>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign=top>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign=top>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+      </tr>
+    </table>
+    <table cellspacing='0' border='0'>
+      <colgroup width='43'></colgroup>
+      <colgroup width='65'></colgroup>
+      <colgroup width='50'></colgroup>
+      <colgroup width='62'></colgroup>
+      <colgroup width='73'></colgroup>
+      <colgroup width='78'></colgroup>
+      <colgroup width='47'></colgroup>
+      <colgroup width='53'></colgroup>
+      <colgroup width='51'></colgroup>
+      <colgroup width='46'></colgroup>
+      <colgroup width='51'></colgroup>
+      <colgroup width='49'></colgroup>
+      <colgroup width='85'></colgroup>
+      <colgroup width='110'></colgroup>
+      <colgroup width='117'></colgroup>
+      <colgroup span='2' width='118'></colgroup>
+      <colgroup width='47'></colgroup>
+      <colgroup width='68'></colgroup>
+      <colgroup span='2' width='59'></colgroup>
+      <colgroup width='55'></colgroup>
+      <colgroup width='71'></colgroup>
+      <colgroup span='2' width='79'></colgroup>
+      <colgroup width='167'></colgroup>
+      <colgroup span='4' width='59'></colgroup>
+      <tr>
+        <td style='border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				colspan='3 ' align='center' valign='top '>
+          <font face='Liberation Sans Narrow' size='3 '>Visit Date</font>
+        </td>
+        <td style='border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				align='center' valign='top '>
+          <font face='Liberation Sans Narrow' size='3 '>Age</font>
+        </td>
+        <td style='border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				align='center' valign='top '>
+          <font face='Liberation Sans Narrow' size='3 '>Height</font>
+        </td>
+        <td style='border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				align='center' valign='top '>
+          <font face='Liberation Sans Narrow' size='3 '>Weight</font>
+        </td>
+        <td style='border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				colspan='4 ' rowspan='2 ' align='left' valign='top '>
+          <font face='Liberation Sans Narrow'>TB Status (Current)*</font>
+        </td>
+        <td style='border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				colspan='2 ' rowspan='2 ' align='left' valign='top '>
+          <font face='Liberation Sans Narrow'>Side Effects</font>
+        </td>
+        <td style='border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				rowspan='4 ' align='center' valign='top '>
+          <font face='Liberation Sans Narrow'>Pill Count</font>
+        </td>
+        <td style='border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				rowspan='4 ' align='center' valign='top '>
+          <font face='Liberation Sans Narrow' size='3 '>Doses Missed</font>
+        </td>
+        <td style='border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				colspan='2 ' rowspan='4 ' align='center' valign='top '>
+          <font face='Times New Roman' size='3 ' color='#000000'>ART Regimen</font>
+        </td>
+        <td style='border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				colspan='2 ' align='left' valign='top '>
+          <font face='Liberation Sans Narrow' size='3 '>ARVs Given</font>
+        </td>
+        <td style='border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				colspan='4 ' align='left' valign='top '>
+          <font face='Liberation Sans Narrow' size='3 '>CPT / TPT Tabs Given</font>
+        </td>
+        <td style='border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				rowspan='4 ' align='center' valign='top '>
+          <font face='Times New Roman' color='#000000'>Months since last VL<br>
+            Test</font>
+        </td>
+        <td style='border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				colspan='2 ' align='left' valign='top '>
+          <font face='Liberation Sans Narrow' size='3 '>Viral Load</font>
+        </td>
+        <td style='border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				rowspan='4 ' align='left' valign='top '>
+          <font face='Liberation Sans Narrow'>Next Appointment/ Outcome Date</font>
+        </td>
+        <td style='border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				colspan='4 ' rowspan='4 ' align='center' valign='top '>
+          <font face='Liberation Sans Narrow' size='3 '>Adverse Outcome</font>
+        </td>
+      </tr>
+      <tr>
+        <td style='border-left: 1px solid #000000' align='left' valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td style='border-right: 1px solid #000000' align='left' valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td style='border-left: 1px solid #000000; border-right: 1px solid #000000' align='left' valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td style='border-left: 1px solid #000000; border-right: 1px solid #000000' align='left' valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td style='border-left: 1px solid #000000; border-right: 1px solid #000000' align='left' valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td style='border-left: 1px solid #000000' align='left' valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td style='border-right: 1px solid #000000' align='left' valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td class='t_no_break ' align='center' valign='top '
+				style='border-left: 1px solid #000000; border-right: 1px solid #000000' rowspan='3 ' '>
+          <div class=' magic-div '>
+            <span class=' magic-span '>
+              <font face=' Liberation Sans Narrow'>CTX 120</font>
+            </span>
+          </div>
+        </td>
+        <td class='t_no_break ' rowspan='3 ' align='center' valign='top ' style='border-right: 1px solid #000000'>
+          <div class='magic-div '>
+            <span class='magic-span '>
+              <font face='Liberation Sans Narrow'>INH 100</font>
+            </span>
+          </div>
+        </td>
+        <td class='t_no_break ' rowspan='3 ' align='center' valign='top ' style='border-right: 1px solid #000000'>
+          <div class='magic-div '>
+            <span class='magic-span '>
+              <font face='Liberation Sans Narrow'>RFP 150</font>
+            </span>
+          </div>
+        </td>
+        <td style='border-right: 1px solid #000000' rowspan='3 ' align='center' valign='top '>
+          <div class='magic-div '>
+            <span class='magic-span '>
+              <font face='Liberation Sans Narrow'>Pyridoxine</font>
+            </span>
+          </div>
+        </td>
+        <td style='border-left: 1px solid #000000' align='left' valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td style='border-right: 1px solid #000000' align='left' valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+      </tr>
+      <tr>
+        <td style='border-left: 1px solid #000000' align='left' valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td style='border-right: 1px solid #000000' align='left' valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td style='border-left: 1px solid #000000; border-right: 1px solid #000000' align='left' valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td style='border-left: 1px solid #000000; border-right: 1px solid #000000' align='left' valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td style='border-left: 1px solid #000000; border-right: 1px solid #000000' align='left' valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td style='border-left: 1px solid #000000; border-right: 1px solid #000000' colspan='2 ' align='left'
+				valign='top '>
+          <font face='Liberation Sans Narrow'>Suspected</font>
+        </td>
+        <td style='border-left: 1px solid #000000; border-right: 1px solid #000000' colspan='2 ' align='left'
+				valign='top '>
+          <font face='Liberation Sans Narrow'>Confirmed</font>
+        </td>
+        <td style='border-left: 1px solid #000000; border-right: 1px solid #000000' colspan='2 ' rowspan='2align='
+				center' '=' center' ' ' valign='top '>
+          <font face='Times New Roman' color='#000000'>Specify in Notes</font>
+        </td>
+        <td style='border-left: 1px solid #000000' align='left' valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td style='border-right: 1px solid #000000' align='left' valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td style='border-left: 1px solid #000000; border-right: 1px solid #000000' rowspan='2 ' align='center'
+				valign='bottom '>
+          <font face='Liberation Sans Narrow'>Sample taken</font>
+        </td>
+        <td style='border-right: 1px solid #000000' align='left' valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+      </tr>
+      <tr>
+        <td style='border-left: 1px solid #000000' align='left' valign='top '>
+          <i>
+            <font face='Liberation Sans Narrow'>day</font>
+          </i>
+        </td>
+        <td align='left' valign='top '>
+          <i>
+            <font face='Liberation Sans Narrow'>month</font>
+          </i>
+        </td>
+        <td style='border-right: 1px solid #000000' align='left' valign='top '>
+          <i>
+            <font face='Liberation Sans Narrow'>year</font>
+          </i>
+        </td>
+        <td style='border-left: 1px solid #000000; border-right: 1px solid #000000' align='center' valign='top '>
+          <i>
+            <font face='Liberation Sans Narrow'>(Curr.)</font>
+          </i>
+        </td>
+        <td style='border-left: 1px solid #000000; border-right: 1px solid #000000' align='center' valign='top '>
+          <i>
+            <font face='Liberation Sans Narrow'>cm</font>
+          </i>
+        </td>
+        <td style='border-left: 1px solid #000000; border-right: 1px solid #000000' align='center' valign='top '>
+          <i>
+            <font face='Liberation Sans Narrow'>kg</font>
+          </i>
+        </td>
+        <td style='border-left: 1px solid #000000; border-right: 1px solid #000000' align='center' valign='top '>
+          <font face='Liberation Sans Narrow'>No</font>
+        </td>
+        <td style='border-left: 1px solid #000000; border-right: 1px solid #000000' align='center' valign='top '>
+          <font face='Liberation Sans Narrow'>Yes</font>
+        </td>
+        <td style='border-left: 1px solid #000000; border-right: 1px solid #000000' align='center' valign='bottom '>
+          <font face='Liberation Sans Narrow'>noRx</font>
+        </td>
+        <td style='border-left: 1px solid #000000; border-right: 1px solid #000000' align='center' valign='top '>
+          <font face='Times New Roman' color='#000000'>Rx</font>
+        </td>
+        <td style='border-left: 1px solid #000000' align='left' valign='top '>
+          <font face='Liberation Sans Narrow'>No. of tablets</font>
+        </td>
+        <td style='border-right: 1px solid #000000' align='left' valign='top '>
+          <font face='Liberation Sans Narrow'>To</font>
+        </td>
+        <td style='border-right: 1px solid #000000' align='center' valign='bottom '>
+          <font face='Liberation Sans Narrow'>Result</font>
+        </td>
+      </tr>
+      <% @data[:visits].each_with_index do |visit, i| %>
+        <tr>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
+					colspan=3 align='center' valign=middle bgcolor='#F1F1F1'>
+            <font face='Arial'>
+            </font>
+            <%= "#{visit[:date].strftime("%Y-%m-%d")}"%>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+					align='left' valign=middle bgcolor='#F1F1F1'>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+            <%= visit[:age] %>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+					align='left' valign=middle bgcolor='#F1F1F1'>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+            <%= "#{visit[:pregnant]
+						} #{visit[:breastfeeding]
+						}" %>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+					align='left' valign=middle bgcolor='#F1F1F1'>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+            <%= visit[:weight] %>
+          </td>
+          <td colspan="4" align="center"
+					style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
+					align='right' valign=middle bgcolor='#F1F1F1'>
+            <font face='Liberation Sans Narrow'>
+              <%= visit[:tb_status] %>
+            </font>
+          </td>
+          <td colspan="2"
+					style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
+					align='center' valign=middle bgcolor='#F1F1F1'>
+            <font face='Liberation Sans Narrow'></font>
+            <%= visit[:side_effects].length> 0 ? "Y" : "N" %>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+					align='left' valign=middle bgcolor='#F1F1F1'>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+            <%= visit[:pills_brought].map {|p| p[:quantity]}.inject(&:+) rescue "" %>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+					align='left' valign=middle bgcolor='#F1F1F1'>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+					colspan=2 align='center' valign=middle bgcolor='#F1F1F1'>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+            <%= visit[:regimen] %>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
+					align='right' valign=middle bgcolor='#F1F1F1'>
+            <font face='Liberation Sans Narrow'></font>
+            <%= visit[:pills_dispensed].map {|q| q[1]}.inject(&:+) rescue "" %>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
+						align='right' valign=middle bgcolor='#F1F1F1'>
+            <font face='Liberation Sans Narrow'></font>
+            P
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+						align='left' valign=middle bgcolor='#F1F1F1'>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+						align='left' valign=middle bgcolor='#F1F1F1'>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+						align='left' valign=middle bgcolor='#F1F1F1'>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+						align='left' valign=middle bgcolor='#F1F1F1'>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+						align='left' valign=middle bgcolor='#F1F1F1'>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+						colspan=2 align='left' valign=middle bgcolor='#F1F1F1'>
+            <font face='Times New Roman' color='#000000'></font>
+            <%= visit[:viral_load] %>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+						align='left' valign=middle bgcolor='#F1F1F1'>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+            <%= visit[:next_appointment] %>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
+						align='right' valign=middle bgcolor='#F1F1F1'>
+            <font face='Liberation Sans Narrow'></font>
+           <%= visit[:outcome] == 'On antiretrovirals' ? 'on ART' : visit[:outcome] %>
+
+          </td>
+        </tr>
+        <%
+		      end %>
+      </table>
+      <table>
+        <tr>
+          <td style='border-bottom: 1px solid #000000' height='33' align='left' valign=middle>
+            <font face='Times New Roman' size=3 color='#000000'>Notes</font>
+          </td>
+          <td style='border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+        </tr>
+        <tr>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+        </tr>
+        <tr>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+        </tr>
+        <tr>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+        </tr>
+        <tr>
+          <td align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign=top>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+        </tr>
+      </table>
+      <table cellspacing='0' border='0'>
+        <tr>
+          <td align='left' valign=top><b>
+              <font face='Times New Roman' color='#000000'>Ever taken ARVs</font>
+            </b></td>
+          <td colspan='8' align='left' valign=top>
+            <font face='Times New Roman' color='#000000'>Has the patient ever taken any ARVs? (e.g. single dose
+              nevirapine for PMTCT, PEP or triple therapy) If yes, specify drug and approximate date when last
+              taken</font>
+          </td>
+        </tr>
+        <tr>
+          <td align='left' valign=top><b>
+              <font face='Times New Roman' color='#000000'>Routine TB Screening Checklist *</font>
+            </b></td>
+          <td colspan='2' align='left' valign=top><b>
+              <font face='Times New Roman' color='#000000'>TB Status Current (any TB form, smear pos/ neg)</font>
+            </b></td>
+          <td colspan='2' align='left' valign=top><b>
+              <font face='Times New Roman' color='#000000'>ARVs Given</font>
+            </b></td>
+          <td colspan='2' align='left' valign=top><b>
+              <font face='Times New Roman' color='#000000'>Adverse Outcomes</font>
+            </b></td>
+          <tr>
+            <td align='left' valign=top>
+              <font face='Times New Roman' color='#000000'>1) Cough of any duration</font>
+            </td>
+            <td align='left' valign=top>
+              <font face='Times New Roman' color='#000000'>N</font>
+            </td>
+            <td align='left' valign=top>
+              <font face='Times New Roman' color='#000000'>TB Not suspected</font>
+            </td>
+            <td colspan='2' align='left' valign=top>
+              <font face='Times New Roman' color='#000000'>P to patient</font>
+            </td>
+            <td align='left' valign=top>
+              <font face='Times New Roman' color='#000000'>D</font>
+            </td>
+            <td align='left' valign=top>
+              <font face='Times New Roman' color='#000000'>Died</font>
+            </td>
+          </tr>
+          <tr>
+            <td align='left' valign=top>
+              <font face='Times New Roman' color='#000000'>2) Fever</font>
+            </td>
+            <td align='left' valign=top>
+              <font face='Times New Roman' color='#000000'>Y</font>
+            </td>
+            <td align='left' valign=top>
+              <font face='Times New Roman' color='#000000'>TB Suspected</font>
+            </td>
+            <td colspan='2' align='left' valign=top>
+              <font face='Times New Roman' color='#000000'>G to guardian</font>
+            </td>
+            <td align='left' valign=top>
+              <font face='Times New Roman' color='#000000'>Def</font>
+            </td>
+            <td align='left' valign=top>
+              <font face='Times New Roman' color='#000000'>Defaulted: More than 2 months overdue after expected to
+                have run out of tables, unknown survival and ART status</font>
+            </td>
+          </tr>
+          <tr>
+            <td align='left' valign=top>
+              <font face='Times New Roman' color='#000000'>3) Night sweats</font>
+            </td>
+            <td align='left' valign=top>
+              <font face='Times New Roman' color='#000000'>C</font>
+            </td>
+            <td align='left' valign=top>
+              <font face='Times New Roman' color='#000000'>TB Confirmed not (yet) on TB treatment</font>
+            </td>
+            <td colspan='2'></td>
+            <td align='left' valign=top><font face='Times New Roman' color='#000000'>Stop</font></td>
+            <td align='left' valign=top>
+              <font face='Times New Roman' color='#000000'>Patient stopped taking ARVs (clinician’s or patient’s own
+                decision)</font>
+            </td>
+          </tr>
+          <tr>
+            <td align='left' valign=top>
+              <font face='Times New Roman' color='#000000'>4) Weight loss / failure to thrive</font>
+            </td>
+            <td align='left' valign=top>
+              <font face='Times New Roman' color='#000000'>Rx</font>
+            </td>
+            <td align='left' valign=top>
+              <font face='Times New Roman' color='#000000'>TB Confirmed &amp; currently taking TB treatment</font>
+            </td>
+            <td  colspan='2'></td>
+            <td align='left' valign=top>
+              <font face='Times New Roman' color='#000000'>TO</font>
+            </td>
+            <td align='left' valign=top>
+              <font face='Times New Roman' color='#000000'>Transferred to other ART clinic (including ‘unofficial’
+                transfers)</font>
+            </td>
+          </tr>
+        </table>
+      </body>
+    </html>
