@@ -1342,12 +1342,12 @@ paths:
         required: true
         schema:
           type: integer
-      - name: adult
+      - name: formulation
         in: query
-        example: true or false
+        example: adult || child || all
         required: true
         schema:
-          type: boolean
+          type: string
       security:
       - api_key: []
       responses:

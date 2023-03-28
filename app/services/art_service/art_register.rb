@@ -232,7 +232,7 @@ module ARTService
       case formulation
       when 'adult'
         "WHERE tpar_staging.current_regimen NOT LIKE '%P%'"
-      when 'pediatric'
+      when 'child'
         "WHERE tpar_staging.current_regimen LIKE '%P%'"
       else
         ''

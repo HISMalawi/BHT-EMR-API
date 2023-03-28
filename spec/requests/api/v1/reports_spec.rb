@@ -53,7 +53,7 @@ RSpec.describe 'api/v1/reports', type: :request do
       parameter name: :date, in: :query, type: :string, format: :date, example: '2022-10-1', required: true
       parameter name: :rebuild, in: :query, type: :boolean, example: 'true or false', required: true
       parameter name: :program_id, in: :query, type: :integer, example: 1, required: true
-      parameter name: :adult, in: :query, type: :boolean, example: 'true or false', required: true
+      parameter name: :formulation, in: :query, type: :string, example: 'adult || child || all', required: true
       security [api_key: []]
 
       response(200, 'successful') do
