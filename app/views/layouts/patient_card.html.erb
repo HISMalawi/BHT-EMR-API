@@ -38,13 +38,12 @@
           .print-page {
               margin: 10px;
               page-break-inside: avoid;
-              page-break-after: always;
           }
       }
     </style>
   </head>
   <body>
-    <div class='print '>
+    <div class='print'>
       <table cellspacing='0' border='0'>
         <colgroup width='43'></colgroup>
         <colgroup width='65'></colgroup>
@@ -1756,9 +1755,10 @@
       <% @data[:visits].each_with_index do |visit, i| %>
         <tr>
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
-				colspan=3 align='center' valign=middle bgcolor='#F1F1F1'><b>
-              <font face='Arial'><%= "#{visit[:date].strftime('%d')} /#{visit[:date].strftime("%m")}/ #{visit[:date].strftime('%Y')}"%></font>
-            </b></td>
+				colspan=3 align='center' valign=middle bgcolor='#F1F1F1'>
+            <font face='Arial'></font>
+            <%= "#{visit[:date].strftime("%Y-%m-%d")}"%>
+          </td>
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				align='left' valign=middle bgcolor='#F1F1F1'>
             <font face='Times New Roman' color='#000000'><br>
@@ -1808,7 +1808,7 @@
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
 				align='right' valign=middle bgcolor='#F1F1F1'>
             <font face='Liberation Sans Narrow'></font>
-            <%= visit[:pills_dispensed].map {|q| q[1]}.join(", ") %>
+            <%= visit[:pills_dispensed].map {|q| q[1]}.inject(&:+) rescue "" %>
           </td>
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
 				align='right' valign=middle bgcolor='#F1F1F1'>
@@ -1854,7 +1854,7 @@
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
 				align='right' valign=middle bgcolor='#F1F1F1'>
             <font face='Liberation Sans Narrow'></font>
-            <%= visit[:outcome] %>
+            <%= visit[:outcome] == 'On antiretrovirals' ? 'on ART' : visit[:outcome] %>
           </td>
         </tr>
         <%

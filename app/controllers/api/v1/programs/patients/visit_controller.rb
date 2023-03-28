@@ -30,18 +30,31 @@ class Api::V1::Programs::Patients::VisitController < ApplicationController
 
       visits_dates = patient_service.find_patient_visit_dates(patient, program, params[:include_defaulter_dates] == 'true')      
 
-      patient_details[:visits] = visits_dates.collect do | date |
+      patient_details[:visits] = visits_dates.reverse.collect do | date |
         {date: date}.merge(visit_summary(patient.id, date).as_json)
       end
 
       @data = patient_details
       template = File.read(Rails.root.join('app', 'views', 'layouts', 'patient_card.html.erb'))
-
       html = ERB.new(template).result(binding)
 
-      {html: html}
+      page_two_data = load_page_data(@data)
+      
+      html+page_two_data
     end
     render json: htmls
+  end
+  
+  def load_page_data(patient_details)
+    html_string = ""
+    page_2_template = File.read(Rails.root.join('app', 'views', 'layouts', 'patient_card_page_two.html.erb'))
+    patient_details[:visits].each_slice(8).to_a.each_with_index do |slice, index|
+      patient = patient_details 
+      patient[:visits] = patient[:visits].drop(8)      
+      @data = patient
+      html_string += ERB.new(page_2_template).result(binding) if patient[:visits].present?
+    end
+    html_string
   end
 
   private
