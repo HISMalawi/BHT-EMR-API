@@ -40,7 +40,7 @@ class Api::V1::Programs::Patients::VisitController < ApplicationController
 
       page_two_data = load_page_data(@data)
       
-      html+page_two_data
+      {html: html+page_two_data}
     end
     render json: htmls
   end
