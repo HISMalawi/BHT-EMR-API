@@ -30,29 +30,22 @@ class Api::V1::Programs::Patients::VisitController < ApplicationController
 
       visits_dates = patient_service.find_patient_visit_dates(patient, program, params[:include_defaulter_dates] == 'true')      
 
-      # dates should only be from 2 years ago
-      visit_dates = visits_dates.select { |date| date.to_date >= 2.years.ago.to_date }
+      visits_dates = visits_dates.sort! { |a, b| b.to_date <=> a.to_date }.reverse
 
-      patient_details[:visits] = visits_dates.reverse.collect do | date |
+      filtred_dates = [visits_dates[0]]
+      filtred_dates += visits_dates.last(5)
+
+      patient_details[:visits] = filtred_dates.collect do | date |
         {date: date}.merge(visit_summary(patient.id, date).as_json)
       end
 
       @data = patient_details
       template = File.read(Rails.root.join('app', 'views', 'layouts', 'patient_card.html.erb'))
       html = ERB.new(template).result(binding)
-
-      page_two_data = load_page_data(@data)
       
-      {html: html+page_two_data}
+      html
     end
-    render json: htmls
-  end
-  
-  def load_page_data(patient_details)
-    page_2_template = File.read(Rails.root.join('app', 'views', 'layouts', 'patient_card_page_two.html.erb'))
-    patient_details[:visits] = patient_details[:visits].drop(8)      
-    @data = patient_details
-    ERB.new(page_2_template).result(binding) if patient_details[:visits].present?
+    render json: htmls.join("")
   end
 
   private

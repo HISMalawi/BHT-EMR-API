@@ -597,52 +597,42 @@
           <font face='Liberation Sans Narrow'>Result</font>
         </td>
       </tr>
-      <% @data[:visits].each_with_index do |visit, i| %>
         <tr>
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
 					colspan=3 align='center' valign=middle bgcolor='#F1F1F1'>
             <font face='Arial'>
             </font>
-            <%= "#{visit[:date].strftime("%Y-%m-%d")}"%>
           </td>
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 					align='left' valign=middle bgcolor='#F1F1F1'>
             <font face='Times New Roman' color='#000000'><br>
             </font>
-            <%= visit[:age] %>
           </td>
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 					align='left' valign=middle bgcolor='#F1F1F1'>
             <font face='Times New Roman' color='#000000'><br>
             </font>
-            <%= "#{visit[:pregnant]
-						} #{visit[:breastfeeding]
-						}" %>
           </td>
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 					align='left' valign=middle bgcolor='#F1F1F1'>
             <font face='Times New Roman' color='#000000'><br>
             </font>
-            <%= visit[:weight] %>
           </td>
           <td colspan="4" align="center"
 					style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
 					align='right' valign=middle bgcolor='#F1F1F1'>
             <font face='Liberation Sans Narrow'>
-              <%= visit[:tb_status] %>
             </font>
           </td>
           <td colspan="2"
 					style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
 					align='center' valign=middle bgcolor='#F1F1F1'>
             <font face='Liberation Sans Narrow'></font>
-            <%= visit[:side_effects].length> 0 ? "Y" : "N" %>
           </td>
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 					align='left' valign=middle bgcolor='#F1F1F1'>
             <font face='Times New Roman' color='#000000'><br>
             </font>
-            <%= visit[:pills_brought].map {|p| p[:quantity]}.inject(&:+) rescue "" %>
           </td>
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 					align='left' valign=middle bgcolor='#F1F1F1'>
@@ -653,12 +643,10 @@
 					colspan=2 align='center' valign=middle bgcolor='#F1F1F1'>
             <font face='Times New Roman' color='#000000'><br>
             </font>
-            <%= visit[:regimen] %>
           </td>
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
 					align='right' valign=middle bgcolor='#F1F1F1'>
             <font face='Liberation Sans Narrow'></font>
-            <%= visit[:pills_dispensed].map {|q| q[1]}.inject(&:+) rescue "" %>
           </td>
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
 						align='right' valign=middle bgcolor='#F1F1F1'>
@@ -693,23 +681,18 @@
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 						colspan=2 align='left' valign=middle bgcolor='#F1F1F1'>
             <font face='Times New Roman' color='#000000'></font>
-            <%= visit[:viral_load] %>
           </td>
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 						align='left' valign=middle bgcolor='#F1F1F1'>
             <font face='Times New Roman' color='#000000'><br>
             </font>
-            <%= visit[:next_appointment] %>
           </td>
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
 						align='right' valign=middle bgcolor='#F1F1F1'>
             <font face='Liberation Sans Narrow'></font>
-           <%= visit[:outcome] == 'On antiretrovirals' ? 'on ART' : visit[:outcome] %>
 
           </td>
         </tr>
-        <%
-		      end %>
       </table>
       <table>
         <tr>
