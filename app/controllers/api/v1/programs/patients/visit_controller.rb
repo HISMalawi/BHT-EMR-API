@@ -50,7 +50,7 @@ class Api::V1::Programs::Patients::VisitController < ApplicationController
   
   def load_page_data(patient_details)
     page_2_template = File.read(Rails.root.join('app', 'views', 'layouts', 'patient_card_page_two.html.erb'))
-    patient_details[:visits] = patient[:visits].drop(8)      
+    patient_details[:visits] = patient_details[:visits].drop(8)      
     @data = patient_details
     ERB.new(page_2_template).result(binding) if patient_details[:visits].present?
   end
