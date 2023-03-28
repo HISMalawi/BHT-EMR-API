@@ -2,28 +2,37 @@ class BatchPrintingJob < ActiveJob::Base
   queue_as :default
 
   def perform(patients)
+    batch = 0
     program = Program.find(1)
-    patient_history_service = service(program)
+    patient_visit_service = service(program)
     patients.each_slice(10) do |patients_data|
-      htmls = patients_data.collect do |patient|
-        mastercard_service = patient_mastercard_service(patient)
-        mastercard_service = mastercard_service.patient_is_a_pediatric? ? ped_patient_mastercard_service(patient) : mastercard_service
+    batch += 10
+    htmls = patients.collect do | patient |
 
-        patient_details = mastercard_service.fetch
+      mastercard_service = patient_mastercard_service(patient)
+      is_peds = mastercard_service.patient_is_a_pediatric?
+      mastercard_service = is_peds ? ped_patient_mastercard_service(patient) : mastercard_service
 
-        visits_dates = patient_service.find_patient_visit_dates(patient, program, true)
+      patient_details = mastercard_service.fetch
 
-        patient_details[:visits] = visits_dates.collect do |date|
-          { date: date }.merge(patient_history_service.patient_visit_summary(patient.id, date).as_json)
-        end
+      visits_dates = patient_service.find_patient_visit_dates(patient, program, true)      
 
-        @data = patient_details
-        template = File.read(Rails.root.join("app", "views", "layouts", "patient_card.html.erb"))
+      visits_dates = visits_dates.sort! { |a, b| b.to_date <=> a.to_date }.reverse
 
-        html = ERB.new(template).result(binding)
+      filtred_dates = [visits_dates[0]]
+      filtred_dates += visits_dates.last(5)
 
+      patient_details[:visits] = filtred_dates.collect do | date |
+        {date: date}.merge(patient_visit_service.patient_visit_summary(patient.id, date).as_json)
       end
-      BatchPrintingChannel.broadcast_to('batch_printing', htmls)
+
+      @data = patient_details
+      template = File.read(Rails.root.join('app', 'views', 'layouts', is_peds ? 'ped_patient_card.html.erb' : 'patient_card.html.erb'))
+      html = ERB.new(template).result(binding)
+      
+      html
+      end
+      ActionCable.server.broadcast "printing_channel", {batch: batch, total: patients.length, data: htmls}
     end
   end
 
@@ -39,9 +48,9 @@ class BatchPrintingJob < ActiveJob::Base
     PatientService.new
   end
 
-  def service program
+  def service(program)
     ProgramServiceLoader
-      .load(program, 'PatientsEngine')
+      .load(program, "PatientsEngine")
       .new
   end
 end
