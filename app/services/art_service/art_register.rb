@@ -3,12 +3,12 @@
 module ARTService
   # Art TX Curr Register
   class ARTRegister
-    attr_accessor :current_day, :rebuild, :adult
+    attr_accessor :current_day, :rebuild, :formulation
 
-    def initialize(date:, rebuild:, adult:)
+    def initialize(date:, rebuild:, formulation:)
       @current_day = date.to_date || Date.today
       @rebuild = rebuild == 'true'
-      @adult = adult == 'true'
+      @formulation = formulation || 'all'
     end
 
     def fetch_register
@@ -104,8 +104,7 @@ module ARTService
         INNER JOIN temp_earliest_start_date tpar_earliest_start_date ON tpar_earliest_start_date.patient_id = tpar.patient_id
         INNER JOIN temp_art_register_demographics tpar_demographics ON tpar_demographics.patient_id = tpar.patient_id
         LEFT JOIN temp_art_register_staging tpar_staging ON tpar_staging.patient_id = tpar.patient_id
-        -- use the adult property to get adult regimens that is all regimens that do not contain the letter 'P'
-        WHERE tpar_staging.current_regimen #{adult ? 'NOT' : ''} LIKE '%P%'
+        #{formulation_filter}
         GROUP BY tpar.patient_id
       SQL
     end
@@ -227,6 +226,17 @@ module ARTService
       ActiveRecord::Base.connection.execute <<~SQL
         DROP TABLE IF EXISTS #{name};
       SQL
+    end
+
+    def formulation_filter
+      case formulation
+      when 'adult'
+        "WHERE tpar_staging.current_regimen NOT LIKE '%P%'"
+      when 'pediatric'
+        "WHERE tpar_staging.current_regimen LIKE '%P%'"
+      else
+        ''
+      end
     end
   end
 end
