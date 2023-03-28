@@ -189,6 +189,8 @@ module ARTService
         arv_dispensed[drug_name] ||= 0
         arv_dispensed[drug_name] += observation.value_numeric
       end
+
+      @arv_dispensed = @arv_dispensed.collect { |k, v| [k, v] }
     end
 
     def pyridoxine_dispensed
