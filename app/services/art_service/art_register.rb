@@ -3,11 +3,10 @@
 module ARTService
   # Art TX Curr Register
   class ARTRegister
-    attr_accessor :current_day, :year_ago, :rebuild, :adult
+    attr_accessor :current_day, :rebuild, :adult
 
     def initialize(date:, rebuild:, adult:)
       @current_day = date.to_date || Date.today
-      @year_ago = (date.to_date || Date.today) - 1.year
       @rebuild = rebuild == 'true'
       @adult = adult == 'true'
     end
