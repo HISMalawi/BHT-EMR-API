@@ -338,8 +338,9 @@ module ARTService
       pregnant_concept = ConceptName.where(name: 'pregnant?').select(:concept_id)
 
       unless Observation.where(concept_id: pregnant_concept, obs_datetime: @date.to_date, value_coded: ConceptName.find_by_name!('Yes').concept_id)
-        'Preg'
+        'Y'
       end
+      'N'
     end
 
     def breastfeeding?

@@ -76,7 +76,7 @@
         <colgroup width='167'></colgroup>
         <colgroup span='4' width='59'></colgroup>
         <tr>
-          <td colspan='11' align='left' valign='top '>
+          <td colspan='8' align='left' valign='top '>
             <b>
               <i>
                 <font face='Times New Roman' size='4 ' color='#000000'>ART Patient Card Paediatric ARV Formulations</font>
@@ -374,7 +374,11 @@
             <font face='Times New Roman' color='#000000'>HIV-related</font>
           </td>
           <td
-                        style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 2px solid #000000'
+                        style=' max-width: 100px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 2px solid #000000'
                         colspan='8 '
                         rowspan='2 '
                         align='center'
@@ -926,7 +930,7 @@
                         style='border-bottom: 1px solid #000000; border-left: 1px solid #000000'
                         align='left'
                         valign='top '>
-            <font face='Times New Roman' color='#000000'> <%= @data[:visits][0][:date].strftime("%Y-%m-%d")
+            <font face='Times New Roman' color='#000000'> <%= @data[:visits][0][:date].strftime("%d-%m-%Y")
  %> </font>
           </td>
         </tr>
@@ -1766,7 +1770,7 @@
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
 				colspan=3 align='center' valign=middle bgcolor='#F1F1F1'>
             <font face='Arial'></font>
-            <%= "#{visit[:date].strftime("%Y-%m-%d")}"%>
+            <%= "#{visit[:date].strftime("%d-%m-%Y")}"%>
           </td>
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				align='left' valign=middle bgcolor='#F1F1F1'>
@@ -1798,12 +1802,12 @@
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
 				align='center' valign=middle bgcolor='#F1F1F1'>
             <font face='Liberation Sans Narrow'></font>
-            <%= visit[:pills_brought].map {|p| p[:quantity]}.inject(&:+) rescue nil %>
+            <%= visit[:pills_brought].map {|p| p[:quantity]}.inject(&:+).round rescue nil %>
           </td>
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
 				align='center' valign=middle bgcolor='#F1F1F1'>
             <font face='Liberation Sans Narrow'></font>
-            <%= visit[:doses_missed].map {|p| p[:quantity]}.inject(&:+) rescue nil %>
+            <%= visit[:doses_missed].map {|p| p[:quantity]}.inject(&:+).round rescue nil %>
           </td>
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				colspan=2 align='center' valign=middle bgcolor='#F1F1F1'>
@@ -1814,7 +1818,7 @@
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
 				align='right' valign=middle bgcolor='#F1F1F1'>
             <font face='Liberation Sans Narrow'></font>
-            <%= visit[:arvs].map {|q| q[1]}.inject(&:+) rescue "" %>
+            <%= visit[:arvs].map {|q| q[1]}.inject(&:+).round rescue "" %>
           </td>
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
 				align='right' valign=middle bgcolor='#F1F1F1'>
@@ -1825,19 +1829,19 @@
 				align='left' valign=middle bgcolor='#F1F1F1'>
             <font face='Times New Roman' color='#000000'><br>
             </font>
-            <%= visit[:cpt].map {|q| q[1]}.inject(&:+) rescue "" %>
+            <%= visit[:cpt].map {|q| q[1]}.inject(&:+).round rescue "" %>
           </td>
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				align='left' valign=middle bgcolor='#F1F1F1'>
             <font face='Times New Roman' color='#000000'><br>
             </font>
-            <%= visit[:ihn].map {|q| q[1]}.inject(&:+) rescue "" %>
+            <%= visit[:ihn].map {|q| q[1]}.inject(&:+).round rescue "" %>
           </td>
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				align='left' valign=middle bgcolor='#F1F1F1'>
             <font face='Times New Roman' color='#000000'><br>
             </font>
-            <%= visit[:rfp].map {|q| q[1]}.inject(&:+) rescue "" %>
+            <%= visit[:rfp].map {|q| q[1]}.inject(&:+).round rescue "" %>
           </td>
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				align='left' valign=middle bgcolor='#F1F1F1'>
@@ -1848,7 +1852,7 @@
 				align='left' valign=middle bgcolor='#F1F1F1'>
             <font face='Times New Roman' color='#000000'><br>
             </font>
-            <%= visit[:pryidoxine].map {|q| q[1]}.inject(&:+) rescue "" %>
+            <%= visit[:pryidoxine].map {|q| q[1]}.inject(&:+).round rescue "" %>
           </td>
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				colspan=2 align='left' valign=middle bgcolor='#F1F1F1'>
@@ -1950,7 +1954,7 @@
             <colgroup width='167'></colgroup>
             <colgroup span='4' width='59'></colgroup>
             <tr>
-              <td colspan='11' align='left' valign='top '>
+              <td colspan='8' align='left' valign='top '>
                 <b>
                   <i>
                     <font face='Times New Roman' size='4 ' color='#000000'>ART Patient Card Paediatric ARV Formulations</font>
@@ -2459,7 +2463,7 @@
                 <font face='Liberation Sans Narrow'>Result</font>
               </td>
             </tr>
-            <tr  style="height: 40px;">
+            <tr  style="height: 30px;">
               <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
 				colspan='3 ' align='center' valign='middle '>
                 <b>
@@ -2575,7 +2579,7 @@
                 <font face='Times New Roman' color='#000000'>TO</font>
               </td>
             </tr>
-            <tr  style="height: 40px;">
+            <tr  style="height: 30px;">
               <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
 				colspan='3 ' align='center' valign='middle '>
                 <b>
@@ -2691,7 +2695,7 @@
                 <font face='Times New Roman' color='#000000'>TO</font>
               </td>
             </tr>
-            <tr  style="height: 40px;">
+            <tr  style="height: 30px;">
               <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
 				colspan='3 ' align='center' valign='middle '>
                 <b>
@@ -2807,7 +2811,7 @@
                 <font face='Times New Roman' color='#000000'>TO</font>
               </td>
             </tr>
-            <tr  style="height: 40px;">
+            <tr  style="height: 30px;">
               <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
 				colspan='3 ' align='center' valign='middle ' bgcolor='#F1F1F1'>
                 <b>
@@ -2927,7 +2931,7 @@
                 <font face='Times New Roman' color='#000000'>TO</font>
               </td>
             </tr>
-            <tr  style="height: 40px;">
+            <tr  style="height: 30px;">
               <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
 				colspan='3 ' align='center' valign='middle ' bgcolor='#F1F1F1'>
                 <b>
@@ -3047,7 +3051,7 @@
                 <font face='Times New Roman' color='#000000'>TO</font>
               </td>
             </tr>
-            <tr  style="height: 40px;">
+            <tr  style="height: 30px;">
               <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
 				colspan='3 ' align='center' valign='middle ' bgcolor='#F1F1F1'>
                 <b>
@@ -3167,7 +3171,7 @@
                 <font face='Times New Roman' color='#000000'>TO</font>
               </td>
             </tr>
-            <tr  style="height: 40px;">
+            <tr  style="height: 30px;">
               <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
 				colspan='3 ' align='center' valign='middle '>
                 <b>
@@ -3283,7 +3287,7 @@
                 <font face='Times New Roman' color='#000000'>TO</font>
               </td>
             </tr>
-            <tr  style="height: 40px;">
+            <tr  style="height: 30px;">
               <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
 				colspan='3 ' align='center' valign='middle '>
                 <b>
@@ -3399,7 +3403,7 @@
                 <font face='Times New Roman' color='#000000'>TO</font>
               </td>
             </tr>
-            <tr  style="height: 40px;">
+            <tr  style="height: 30px;">
               <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
 				colspan='3 ' align='center' valign='middle '>
                 <b>
@@ -3515,7 +3519,7 @@
                 <font face='Times New Roman' color='#000000'>TO</font>
               </td>
             </tr>
-            <tr  style="height: 40px;">
+            <tr  style="height: 30px;">
               <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
 				colspan='3 ' align='center' valign='middle ' bgcolor='#F1F1F1'>
                 <b>
@@ -3635,7 +3639,7 @@
                 <font face='Times New Roman' color='#000000'>TO</font>
               </td>
             </tr>
-            <tr  style="height: 40px;">
+            <tr  style="height: 30px;">
               <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
 				colspan='3 ' align='center' valign='middle ' bgcolor='#F1F1F1'>
                 <b>
@@ -3755,7 +3759,7 @@
                 <font face='Times New Roman' color='#000000'>TO</font>
               </td>
             </tr>
-            <tr  style="height: 40px;">
+            <tr  style="height: 30px;">
               <td style='border-top: 1px solid #000000; border-bottom: 2px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
 				colspan='3 ' align='center' valign='middle ' bgcolor='#F1F1F1'>
                 <b>
