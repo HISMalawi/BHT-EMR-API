@@ -115,8 +115,11 @@ module HtsService
                  'referral_for_hiv_retesting_confirmatory_test' => [],
                  'referral_for_hiv_retesting_invalid_entry' => [],
                  'referral_for_hiv_retesting_missing' => [],
-                 'referral_for_prep_no' => [],
-                 'referral_for_prep_yes' => [],
+                 'referral_for_vmmc' => [],
+                 'referral_for_prep' => [],
+                 'referral_for_sti' => [],
+                 'referral_for_tb' => [],
+                 'referral_for_pep' => [],
                  'referral_for_prep_invalid_entry' => [],
                  'referral_for_prep_missing' => [],
                  'frs_given_family_referral_slips_sum' => [],
@@ -146,6 +149,7 @@ module HtsService
            fetch_hepatitis_b_clients
            linked_clients
            set_unique
+           fetch_referrals
         end
 
         def set_unique
@@ -409,6 +413,36 @@ module HtsService
                 end
 
         end
+
+
+        def fetch_referrals
+
+          Person.joins("INNER JOIN encounter e ON e.patient_id = person.person_id AND e.encounter_type = #{EncounterType.find_by_name("TESTING").encounter_type_id} AND e.voided = 0 AND e.program_id = #{Program.find_by_name("HTC Program").program_id}")
+                .joins("INNER JOIN obs o1 ON o1.person_id = e.patient_id AND o1.voided = 0 AND o1.concept_id = #{ConceptName.find_by_name('Syphilis Test Result').concept_id} AND o1.value_coded = #{ConceptName.find_by_name('Positive').concept_id} AND e.encounter_id = o1.encounter_id")
+                .select("person.person_id person_id")
+                .where("person.voided = 0 AND DATE(e.encounter_datetime) BETWEEN '#{start_date}' AND '#{end_date}' + INTERVAL 1 DAY")
+                .each do |client|
+
+            Observation.joins(:encounter)\
+                             .where(concept: concept('Referrals ordered'),
+                                     person: client.person_id,
+                 encounter: { encounter_type: EncounterType.find_by_name("REFERRAL").encounter_type_id,
+                                  program_id: Program.find_by_name("HTC Program").program_id })\
+            .select("obs.value_text value")\
+            .where("encounter_datetime BETWEEN '#{start_date}' AND '#{end_date}' + INTERVAL 1 DAY ")\
+            .each do |obs|
+
+                  @data['referral_for_vmmc'].push(client.person_id) if obs.value == "VMMC"
+                  @data['referral_for_prep'].push(client.person_id) if obs.value == 'PrEP'
+                  @data['referral_for_sti'].push(client.person_id) if obs.value == 'STI'
+                  @data['referral_for_tb'].push(client.person_id) if obs.value == 'TB'
+                  @data['referral_for_pep'].push(client.person_id) if obs.value == 'PEP'
+
+              end
+
+             end
+
+       end
 
 
 

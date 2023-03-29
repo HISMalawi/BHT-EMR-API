@@ -28,6 +28,8 @@ module HtsService
 'result_given_to_client_positive' => [],
 'result_given_to_client_inconclusive' => [],
 'result_given_to_client_exposed_infant' => [],
+'result_given_to_client_retest' => [],
+'result_given_to_client_inconclusive_retest' => [],
 'result_given_to_client_invalid_entry' => [],
 'result_given_to_client_missing' => [],
 'rtri_result_longterm' => [],
@@ -91,86 +93,85 @@ module HtsService
         end
         def set_unique
 
-          @data.each do |key, array|    
+          @data.each do |key, array|
               @data[key]  =  array.uniq
           end
 
-        end        
+        end
 
 
         def fetch_confirmatory_register
 
           Person.joins("INNER JOIN encounter e ON e.patient_id = person.person_id AND e.encounter_type = #{EncounterType.find_by_name("TESTING").encounter_type_id} AND e.voided = 0 AND e.program_id = #{Program.find_by_name("HTC Program").program_id}")
-                .joins("INNER JOIN obs ON obs.person_id = e.patient_id AND obs.voided = 0 AND obs.concept_id = #{ConceptName.find_by_name('HIV test type').concept_id} AND e.encounter_id = obs.encounter_id")
-                .select("person.person_id person_id,obs.encounter_id encounter_id")
-                .where(obs:{value_coded: ConceptName.find_by_name('Confirmatory HIV test').concept_id})
+                .joins("INNER JOIN obs ON obs.person_id = e.patient_id AND obs.voided = 0 AND e.encounter_id = obs.encounter_id")
+                .select("person.person_id person_id,obs.encounter_id encounter_id,
+                            obs.value_coded value_coded,obs.concept_id concept_id,
+                            person.birthdate dob")
                 .where("person.voided = 0 AND DATE(e.encounter_datetime) BETWEEN '#{start_date}' AND '#{end_date}' + INTERVAL 1 DAY")
-                .each do |client|                    
+                .each do |client|
 
-                    @data['total_clients_in_confirmatory_register'].push(client.person_id)                     
+                         if ConceptName.find_by_name('Test 2').concept_id == client.concept_id
 
-                     Observation.where(encounter_id:client.encounter_id,
-                                             person: client.person_id).each do |tests|
+                           @data['total_clients_in_confirmatory_register'].push(client.person_id)
+                           @data["hiv_test_2_result_negative"].push(client.person_id) if ConceptName.find_by_name('Negative').concept_id == client.value_coded
+                           @data["hiv_test_2_result_positive"].push(client.person_id) if ConceptName.find_by_name('Positive').concept_id == client.value_coded
+                           @data["hiv_test_2_result_invalid_entry"].push(client.person_id) if client.value_coded == nil
+                           @data["hiv_test_2_result_missing"].push(client.person_id) if client.value_coded == nil
 
-                         if ConceptName.find_by_name('Test 2').concept_id == tests.concept_id
+                          elsif ConceptName.find_by_name('Test 3').concept_id == client.concept_id
 
-                           @data["hiv_test_2_result_negative"].push(client.person_id) if ConceptName.find_by_name('Negative').concept_id == tests.value_coded
-                           @data["hiv_test_2_result_positive"].push(client.person_id) if ConceptName.find_by_name('Positive').concept_id == tests.value_coded
-                           @data["hiv_test_2_result_invalid_entry"].push(client.person_id) if tests.value_coded == nil
-                           @data["hiv_test_2_result_missing"].push(client.person_id) if tests.value_coded == nil
+                           @data["hiv_test_3_result_negative"].push(client.person_id) if ConceptName.find_by_name('Negative').concept_id == client.value_coded
+                           @data["hiv_test_3_result_positive"].push(client.person_id) if ConceptName.find_by_name('Positive').concept_id == client.value_coded
+                           @data["hiv_test_3_result_invalid_entry"].push(client.person_id) if client.value_coded == nil
+                           @data["hiv_test_3_result_not_applicable_or_missing"].push(client.person_id) if client.value_coded == nil
 
-                          elsif ConceptName.find_by_name('Test 3').concept_id == tests.concept_id
+                          elsif ConceptName.find_by_name('Immediate Repeat Test 1 Result').concept_id == client.concept_id
 
-                           @data["hiv_test_3_result_negative"].push(client.person_id) if ConceptName.find_by_name('Negative').concept_id == tests.value_coded
-                           @data["hiv_test_3_result_positive"].push(client.person_id) if ConceptName.find_by_name('Positive').concept_id == tests.value_coded
-                           @data["hiv_test_3_result_invalid_entry"].push(client.person_id) if tests.value_coded == nil
-                           @data["hiv_test_3_result_not_applicable_or_missing"].push(client.person_id) if tests.value_coded == nil
+                            @data["hiv_test_1_repeat_result_negative"].push(client.person_id) if ConceptName.find_by_name('Negative').concept_id == client.value_coded
+                            @data["hiv_test_1_repeat_result_positive"].push(client.person_id) if ConceptName.find_by_name('Positive').concept_id == client.value_coded
+                            @data["hiv_test_1_repeat_result_invalid_entry"].push(client.person_id) if client.value_coded == nil
+                            @data["hiv_test_1_repeat_result_not_applicable_or_missing"].push(client.person_id) if client.value_coded == nil
 
-                          elsif ConceptName.find_by_name('Immediate Repeat Test 1 Result').concept_id == tests.concept_id
+                          elsif ConceptName.find_by_name('HIV group').concept_id == client.concept_id
 
-                            @data["hiv_test_1_repeat_result_negative"].push(client.person_id) if ConceptName.find_by_name('Negative').concept_id == tests.value_coded
-                            @data["hiv_test_1_repeat_result_positive"].push(client.person_id) if ConceptName.find_by_name('Positive').concept_id == tests.value_coded
-                            @data["hiv_test_1_repeat_result_invalid_entry"].push(client.person_id) if tests.value_coded == nil
-                            @data["hiv_test_1_repeat_result_not_applicable_or_missing"].push(client.person_id) if tests.value_coded == nil
+                              today = Date.today
+                                dob = client.dob
+                             months = (today.year * 12 + today.month) - (dob.year * 12 + dob.month)
+                             @data["result_given_to_client_negative"].push(client.person_id) if ConceptName.find_by_name('New Negative').concept_id == client.value_coded
+                             @data["result_given_to_client_positive"].push(client.person_id) if ConceptName.find_by_name('New Positive').concept_id == client.value_coded
+                             @data["result_given_to_client_inconclusive"].push(client.person_id) if ConceptName.find_by_name('New Inconclusive').concept_id == client.value_coded
+                             @data["result_given_to_client_exposed_infant"].push(client.person_id) if ConceptName.find_by_name('New exposed infant').concept_id == client.value_coded && months < 7
+                            #@data['result_given_to_client_retest'].push(client.person_id) if ConceptName.find_by_name('Positive').concept_id == obs.value_coded
+                             @data['result_given_to_client_inconclusive_retest'].push(client.person_id) if ConceptName.find_by_name('Confirmatory Inconclusive').concept_id == client.value_coded
+                             @data["result_given_to_client_invalid_entry"].push(client.person_id) if client.value_coded == nil
+                             @data["result_given_to_client_missing"].push(client.person_id) if client.value_coded == nil
 
-                          elsif ConceptName.find_by_name('HIV status').concept_id == tests.concept_id
+                          elsif ConceptName.find_by_name('Recency Test').concept_id == client.concept_id
 
-                            @data["result_given_to_client_negative"].push(client.person_id) if ConceptName.find_by_name('Negative').concept_id == tests.value_coded
-                            @data["result_given_to_client_positive"].push(client.person_id) if ConceptName.find_by_name('Positive').concept_id == tests.value_coded
-                            #@data["result_given_to_client_inconclusive"].push(client.person_id) if ConceptName.find_by_name('Inconclusive').concept_id == tests.value_coded
-                            @data["result_given_to_client_exposed_infant"].push(client.person_id) if ConceptName.find_by_name('Exposed Infant').concept_id == tests.value_coded
-                            @data["result_given_to_client_invalid_entry"].push(client.person_id) if tests.value_coded == nil
-                            @data["result_given_to_client_missing"].push(client.person_id) if tests.value_coded == nil
-
-                          elsif ConceptName.find_by_name('Recency Test').concept_id == tests.concept_id
-
-                            @data["rtri_result_longterm"].push(client.person_id) if ConceptName.find_by_name('Long-Term').concept_id == tests.value_coded
-                            @data["rtri_result_recent"].push(client.person_id) if ConceptName.find_by_name('Recent').concept_id == tests.value_coded
-                            #@data["rtri_result_negative"].push(client.person_id) if ConceptName.find_by_name('Not Done').concept_id == tests.value_coded
-                            @data["rtri_result_not_done"].push(client.person_id) if ConceptName.find_by_name('Not Done').concept_id == tests.value_coded
-                            @data["rtri_result_invalid_entry"].push(client.person_id) if ConceptName.find_by_name('Invalid').concept_id == tests.value_coded
-                            @data["rtri_result_missing_among_hiv_positive_clients"].push(client.person_id) if tests.value_coded == nil
-                            @data["rtri_result_not_applicable"].push(client.person_id) if tests.value_coded == nil
+                            @data["rtri_result_longterm"].push(client.person_id) if ConceptName.find_by_name('Long-Term').concept_id == client.value_coded
+                            @data["rtri_result_recent"].push(client.person_id) if ConceptName.find_by_name('Recent').concept_id == client.value_coded
+                            #@data["rtri_result_negative"].push(client.person_id) if ConceptName.find_by_name('Not Done').concept_id == client.value_coded
+                            @data["rtri_result_not_done"].push(client.person_id) if ConceptName.find_by_name('Not Done').concept_id == client.value_coded
+                            @data["rtri_result_invalid_entry"].push(client.person_id) if ConceptName.find_by_name('Invalid').concept_id == client.value_coded
+                            @data["rtri_result_missing_among_hiv_positive_clients"].push(client.person_id) if client.value_coded == nil
+                            @data["rtri_result_not_applicable"].push(client.person_id) if client.value_coded == nil
 
 
-                          elsif ConceptName.find_by_name('Is DBS Sample Collected').concept_id == tests.concept_id
+                          elsif ConceptName.find_by_name('Is DBS Sample Collected').concept_id == client.concept_id
 
-                            @data["dbs_collected_no"].push(client.person_id) if ConceptName.find_by_name('No').concept_id == tests.value_coded
-                            @data["dbs_collected_yes"].push(client.person_id) if ConceptName.find_by_name('Yes').concept_id == tests.value_coded
+                            @data["dbs_collected_no"].push(client.person_id) if ConceptName.find_by_name('No').concept_id == client.value_coded
+                            @data["dbs_collected_yes"].push(client.person_id) if ConceptName.find_by_name('Yes').concept_id == client.value_coded
 
-                          elsif ConceptName.find_by_name('DBS Specimen ID').concept_id == tests.concept_id
+                          elsif ConceptName.find_by_name('DBS Specimen ID').concept_id == client.concept_id
 
-                              str = tests.value_text.size
-                              digits = tests.value_text.count('0123456789')
+                              str = client.value_text.size
+                              digits = client.value_text.count('0123456789')
                               letters = str.to_i - digits.to_i
 
                             @data["specimen_ids_valid_ids_entered"].push(client.person_id) if digits == 5 && letters == 2
                             @data["specimen_ids_invalid_entry"].push(client.person_id) if digits != 5 || letters != 2
 
                          end
-
-
-                    end
 
               end
         end
@@ -185,7 +186,7 @@ module HtsService
 
                      @data['referral_for_retesting_after_confirmatory_no'].push(client.person_id) if client.value == 'None'
                      @data['referral_for_retesting_after_confirmatory_yes'].push(client.person_id) if client.value == 'Re-Test'
-                  
+
               end
         end
 
@@ -205,12 +206,12 @@ module HtsService
             .where("encounter_datetime BETWEEN '#{start_date}' AND '#{end_date}' + INTERVAL 1 DAY ")\
             .last
 
-               if obs.blank?                  
-                   @data['referral_for_art_initiation_no'].push(client.person_id)                  
+               if obs.blank?
+                   @data['referral_for_art_initiation_no'].push(client.person_id)
                else
-                  @data['referral_for_art_initiation_yes'].push(client.person_id) if obs.value_text == 'ART'              
+                  @data['referral_for_art_initiation_yes'].push(client.person_id) if obs.value_text == 'ART'
                end
-           
+
              end
          end
 
@@ -225,8 +226,8 @@ module HtsService
                      @data['art_referral_outcome_linked'].push(client.person_id) if ConceptName.find_by_name('Link').concept_id == client.value_coded
                      @data['art_referral_outcome_refused'].push(client.person_id) if ConceptName.find_by_name('Refused').concept_id == client.value_coded
                      @data['art_referral_outcome_died'].push(client.person_id) if ConceptName.find_by_name('Died').concept_id == client.value_coded
-                     @data['art_referral_outcome_unknown'].push(client.person_id) if ConceptName.find_by_name('Unknown').concept_id == client.value_coded 
-                     
+                     @data['art_referral_outcome_unknown'].push(client.person_id) if ConceptName.find_by_name('Unknown').concept_id == client.value_coded
+
               end
         end
 
