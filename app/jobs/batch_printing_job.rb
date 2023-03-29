@@ -5,8 +5,8 @@ class BatchPrintingJob < ActiveJob::Base
     batch = 0
     program = Program.find(1)
     patient_visit_service = service(program)
-    patients.each_slice(10) do |patients_data|
-    batch += 10
+    patients.each_slice(2) do |patients_data|
+    batch += 2
     htmls = patients.collect do | patient |
 
       mastercard_service = patient_mastercard_service(patient)
