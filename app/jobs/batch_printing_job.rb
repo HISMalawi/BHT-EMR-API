@@ -30,7 +30,7 @@ class BatchPrintingJob < ActiveJob::Base
       template = File.read(Rails.root.join('app', 'views', 'layouts', is_peds ? 'ped_patient_card.html.erb' : 'patient_card.html.erb'))
       html = ERB.new(template).result(binding)
       
-      html
+      {html: html}
       end
       ActionCable.server.broadcast "printing_channel", {batch: batch, total: patients.length, data: htmls}
     end
