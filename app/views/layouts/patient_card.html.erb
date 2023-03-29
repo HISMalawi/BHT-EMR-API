@@ -495,7 +495,7 @@ text-overflow: ellipsis;
       </td>
       <td colspan=3 style='border-bottom: 1px solid #000000; border-left: 1px solid #000000' align='left' valign=top>
         <font face='Times New Roman' color='#000000'></font>
-        <span style="margin-left:5px;"><%= @data["birth_date"] %>
+        <span style="margin-left:5px;"><%= @data["birth_date"].strftime("%d-%m-%Y") rescue '' %>
         </td>
         <td style='border-bottom: 1px solid #000000' align='left' valign=top>
           <font face='Times New Roman' color='#000000'></font>
@@ -1645,11 +1645,11 @@ text-overflow: ellipsis;
             </font>
             <%= visit[:viral_load] %>
           </td>
-          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 2px solid #000000'
+          <td class='t_no_break' style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 2px solid #000000'
 				colspan=2 align='center' valign=  >
             <font face='Times New Roman' color='#000000'><br>
             </font>
-            <%= visit[:next_appointment] %>
+            <%= visit[:next_appointment].strftime("%d-%m-%Y") rescue '' %>
           </td>
           <td colspan="4" style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-right: 2px solid #000000'
 				align='center' valign=  >
