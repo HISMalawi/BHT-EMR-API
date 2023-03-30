@@ -388,7 +388,8 @@ module ARTService
         rfp: rfp_dispensed,
         inh_rfp: new_3hp_dispensed,
         pryidoxine: pyridoxine_dispensed,
-        arvs: arvs_dispensed
+        arvs: arvs_dispensed,
+        qtr: @date.month < 4 ? 1 : @date.month < 7 ? 2 : @date.month < 10 ? 3 : 4
       }
     end
 

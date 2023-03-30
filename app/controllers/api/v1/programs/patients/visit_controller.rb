@@ -38,8 +38,11 @@ class Api::V1::Programs::Patients::VisitController < ApplicationController
         { date: date }.merge(visit_summary(patient.id, date).as_json)
       end
 
-      arvs_given = patient_details[:visits].map { |visit| {date: visit[:date], arv: visit[:regimen]} }.uniq { |visit| visit[:arv]}
-      arvs_given.select { |visit| !!visit[:arv] }
+      arvs_given = patient_details[:visits]
+                  .map { |visit| {date: visit[:date], arv: visit[:regimen]}}
+                  .uniq { |visit| visit[:arv]}
+                  .select { |visit| visit[:arv].strip != "N/A" }
+
       patient_details[:arvs_given] = arvs_given
 
       @data = patient_details

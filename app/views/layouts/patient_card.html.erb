@@ -404,7 +404,7 @@ text-overflow: ellipsis;
 				colspan=4 rowspan=2 align='center' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
-          <%= @data[:arvs_given].second[:date] rescue '' %>
+          <%= @data[:arvs_given].third[:date] rescue '' %>
         </td>
       </tr>
       <tr>
@@ -1327,7 +1327,7 @@ text-overflow: ellipsis;
           </font>
         </td>
       </tr>
-      <tr style='height:10px' ></tr>
+      <tr style='height:4em'></tr>
       <tr>
         <td style='border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				colspan=4     '23' align='center' valign=top>
@@ -1552,17 +1552,18 @@ text-overflow: ellipsis;
       </tr>
       <% @data[:visits].each_with_index do |visit, i| %>
         <tr style='height:30px'>
-          <td colspan="3" style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
+          <td colspan="3" style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				    align='left' valign=  ><b>
               <font face='Arial'><br>
               </font>
             </b>
             <%= "#{visit[:date].strftime("%d-%m-%Y")}"%>
           </td>
-          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 2px solid #000000'
+          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000;'
 				align='left' valign=  >
             <font face='Times New Roman' color='#000000'><br>
             </font>
+            <%= "#{visit[:qtr]}"%>
           </td>
           <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000' colspan=1 align='left'
 				valign=top>
@@ -1661,19 +1662,19 @@ text-overflow: ellipsis;
           <td colspan="4" style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-right: 2px solid #000000'
 				align='center' valign=  >
             <font face='Times New Roman' color='#000000'></font>
-            <%= visit[:outcome] %>
+            <%= visit[:outcome] == 'On antiretrovirals' ? 'on ART' : visit[:outcome] %>
           </td>
         </tr>
       <% end %>
       <% (1..6).each do %>
-            <tr style='height:30px;'>
-          <td colspan="3" style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
+            <tr style='height:40px; !important'>
+          <td colspan="3" style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000;'
 				    align='left' valign=  ><b>
               <font face='Arial'><br>
               </font>
             </b>
           </td>
-          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 2px solid #000000'
+          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				align='left' valign=  >
             <font face='Times New Roman' color='#000000'><br>
             </font>
