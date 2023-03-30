@@ -474,6 +474,7 @@ text-overflow: ellipsis;
       <td style='border-left: 2px solid #000000; border-bottom: 1px solid #000000;' colspan=3 rowspan=2 align='center' valign=top>
         <font face='Times New Roman' color='#000000'><br>
         </font>
+        <%= @data[:arvs_given].first[:arv] rescue '' %>
       </td>
       <td class='t_no_break' style='border-left: 1px solid #000000; border-right: 1px solid #000000' rowspan=2 
 				valign=  >
@@ -483,6 +484,7 @@ text-overflow: ellipsis;
 				colspan=4 rowspan=2 align='center' valign=top>
         <font face='Times New Roman' color='#000000'><br>
         </font>
+        <%= @data[:arvs_given].first[:date] rescue '' %>
       </td>
     </tr>
     <tr>
@@ -552,6 +554,7 @@ text-overflow: ellipsis;
         <td style='border-left: 2px solid #000000; border-bottom: 1px solid #000000;' colspan=3 rowspan=2 align='center' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
+          <%= @data[:arvs_given].second[:arv] rescue '' %>
         </td>
         <td class='t_no_break' style='border-left: 1px solid #000000; border-right: 1px solid #000000' rowspan=2
 				valign=  >
@@ -561,6 +564,7 @@ text-overflow: ellipsis;
 				colspan=4 rowspan=2 align='center' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
+          <%= @data[:arvs_given].second[:date] rescue '' %>
         </td>
       </tr>
       <tr>
@@ -1184,7 +1188,7 @@ text-overflow: ellipsis;
 				colspan=3 rowspan=2 align='center' valign=  >
           <font face='Times New Roman' color='#000000'><br>
           </font>
-          <%= @data["lam"] %>
+          <%= @data["urine_lam"] %>
         </td>
         <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				rowspan=2 align='right' valign=  >
@@ -1194,7 +1198,7 @@ text-overflow: ellipsis;
 				colspan=6 rowspan=2 align='center' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
-          <%= @data["lam_date"] %>
+          <%= @data["urine_lam_date"] %>
         </td>
         <td align='left' valign=top>
           <font face='Times New Roman' color='#000000'><br>

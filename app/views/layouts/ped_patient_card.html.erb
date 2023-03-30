@@ -440,7 +440,7 @@ border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1p
                         align='center'
                         valign='middle '>
             <b>
-              <font face='Times New Roman' color='#000000'>   <%= @data["who_stage"] %>
+              <font face='Times New Roman' color='#000000'>    <%= @data["who_stage"].gsub('WHO stage', '') rescue '' %>
               </font>
             </b>
           </td>
@@ -1013,13 +1013,14 @@ border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1p
                         valign='middle '>
           <font face='Times New Roman' color='#000000'><br>
           </font>
+          <%= @data["age"] %>
         </td>
         <td
                         style='border-left: 1px solid #000000; border-right: 1px solid #000000'
                         colspan='2 '
                         align='left'
                         valign='top '>
-          <font face='Times New Roman' color='#000000'>Date last</font>
+          <font face='Times New Roman' color='#000000'></font>
         </td>
         <td
                         style='border-top: 1px solid #000000; border-bottom: 2px solid #000000; border-left: 1px solid #000000; border-right: 2px solid #000000'
@@ -1079,7 +1080,7 @@ border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1p
                         colspan='2 '
                         align='left'
                         valign='top '>
-          <font face='Times New Roman' color='#000000'>Taken</font>
+          <font face='Times New Roman' color='#000000'></font>
         </td>
         <td
                         style='border-bottom: 2px solid #000000; border-left: 2px solid #000000'

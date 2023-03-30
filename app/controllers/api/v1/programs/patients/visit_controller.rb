@@ -33,17 +33,21 @@ class Api::V1::Programs::Patients::VisitController < ApplicationController
       filtred_dates = [visits_dates[0]]
       filtred_dates += visits_dates.last(5)
 
+      
       patient_details[:visits] = filtred_dates.collect do |date|
         { date: date }.merge(visit_summary(patient.id, date).as_json)
       end
+
+      arvs_given = patient_details[:visits].map { |visit| {date: visit[:date], arv: visit[:arvs][0].to_a[0]} }.flatten.uniq { |visit| visit[:arv]}
+      patient_details[:arvs_given] = arvs_given
 
       @data = patient_details
       template = patient_card card_type
       html = ERB.new(template).result(binding)
 
-      {html: html}
+      html
     end
-    render json: htmls
+    render json: htmls.join("")
   end
 
   private
