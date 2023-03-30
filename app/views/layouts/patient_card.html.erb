@@ -394,6 +394,7 @@ text-overflow: ellipsis;
 				valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
+          <%= @data[:arvs_given].third[:arv] rescue '' %>
         </td>
         <td class='t_no_break' style='border-top: 2px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				rowspan=2 valign=  >
@@ -403,6 +404,7 @@ text-overflow: ellipsis;
 				colspan=4 rowspan=2 align='center' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
+          <%= @data[:arvs_given].second[:date] rescue '' %>
         </td>
       </tr>
       <tr>
