@@ -12,19 +12,10 @@ module ARTService::Reports::MasterCard
     end
 
     def load_followup_testing
-      lab_results = {}
-      { cd4: "CD4 count", bp: "Blood pressure", fbs: "FBS" }
-        .each do |key, value|
-        results = patient_visit.lab_result(value)
-        lab_results[key] = ""
-
-        next if results.blank?
-
-        # remove the result on the first visit
-        results.delete_at(0)
-        lab_results[key] = results
-      end
-      { followup_testing: lab_results }
+      {
+        cd4_counts: "",
+        bp_results: ""
+      }
     end
 
     def load_baseline_lab_results
@@ -52,7 +43,7 @@ module ARTService::Reports::MasterCard
         hiv_related_diseases: patient_history.who_clinical_conditions_list.join(", "),
         who_stage: patient_who_stage,
         tb_status_at_art_initiation: calc_tb_status_at_art_initiation,
-        ks: patient_history.ks,
+        ks: patient_history.ks == "Yes" ? "Y" : "N",
         preg_or_breastfeeding: pregnancy_status_on_first_visit,
       }
     end
@@ -78,6 +69,26 @@ module ARTService::Reports::MasterCard
       return "N" unless obs
       return "Y" if obs == "Confirmed TB Not on treatment"
       return "N"
+    end
+
+    def bp
+      bp_concepts = ConceptName.where(name: ['Systolic blood pressure', 'Diastolic blood pressure'])
+                                 .pluck(:concept_id)
+      Observation.where(concept_id: bp_concepts, person_id: patient.id)
+                  .order(obs_datetime: :desc)
+                  .pluck(:value_numeric, :obs_datetime)
+                .each_slice(2).map do |diastolic, systolic|
+                  {date: diastolic[1], bp:"#{systolic[0]}/#{diastolic[0]}"}
+                end
+    end
+
+    def cd4_count
+      Observation.where(concept_id: concept('CD4 count').concept_id, person_id: patient.id)
+                .order(obs_datetime: :desc)
+                .pluck(:value_numeric, :obs_datetime)
+                .each do |cd4, date|
+                  {date: date, cd4: cd4}
+                end
     end
 
     def pregnancy_status_on_first_visit
