@@ -78,7 +78,7 @@ module ARTService
             days_on_medication = (patient['total_days_on_medication'] / divider).round
             days_on_medication.days >= FULL_3HP_COURSE_DAYS
           else
-            patient['total_pills_taken'].to_i >= FULL_6H_COURSE_PILLS
+            patient['total_days_on_medication'].to_i >= FULL_6H_COURSE_PILLS
           end
         end
 
