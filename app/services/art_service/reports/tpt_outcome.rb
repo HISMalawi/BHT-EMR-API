@@ -28,6 +28,9 @@ module ARTService
         response
       end
 
+      def moh_report(report, clients)
+      end
+
       private
 
       TPT_TYPES = %w[3HP 6H].freeze
@@ -269,6 +272,18 @@ module ARTService
             report[patient['age_group']][patient['tpt_type']][:completed_tpt] << patient['patient_id']
           else
             report[patient['age_group']][patient['tpt_type']][:not_completed_tpt] << patient['patient_id']
+            process_outcomes report, patient
+          end
+        end
+      end
+
+      def load_patient_into_moh_report(report, patients)
+        patients.each do |patient|
+          report[patient['age_group']][patient['gender']][:started_tpt] << patient['patient_id']
+          if patient_completed_tpt?(patient, patient['gender'])
+            report[patient['age_group']][patient['gender']][:completed_tpt] << patient['patient_id']
+          else
+            report[patient['age_group']][patient['gender']][:not_completed_tpt] << patient['patient_id']
             process_outcomes report, patient
           end
         end
