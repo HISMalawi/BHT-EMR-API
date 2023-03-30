@@ -32,154 +32,29 @@ page-break-before: always !important;
   </head>
   <body>
     <div class='print'>
-      <table style='margin-bottom: 10px;' cellspacing='0' border='0'>
-        <colgroup width='43'></colgroup>
-        <colgroup width='65'></colgroup>
-        <colgroup width='50'></colgroup>
-        <colgroup width='62'></colgroup>
-        <colgroup width='73'></colgroup>
-        <colgroup width='78'></colgroup>
-        <colgroup width='47'></colgroup>
-        <colgroup width='53'></colgroup>
-        <colgroup width='51'></colgroup>
-        <colgroup width='46'></colgroup>
-        <colgroup width='51'></colgroup>
-        <colgroup width='49'></colgroup>
-        <colgroup width='85'></colgroup>
-        <colgroup width='110'></colgroup>
-        <colgroup width='117'></colgroup>
-        <colgroup span='2' width='118'></colgroup>
-        <colgroup width='47'></colgroup>
-        <colgroup width='68'></colgroup>
-        <colgroup span='2' width='59'></colgroup>
-        <colgroup width='55'></colgroup>
-        <colgroup width='71'></colgroup>
-        <colgroup span='2' width='79'></colgroup>
-        <colgroup width='167'></colgroup>
-        <colgroup span='4' width='59'></colgroup>
+      <table style="width:100%;margin-bottom: 15px;">
         <tr>
-          <td colspan='10' align='left' valign='top '>
+          <td>
             <b>
-              <i>
-                <font face='Times New Roman'    color='#000000'>ART Patient Card Paediatric ARV Formulations</font>
-              </i>
+            ART Patient Card Paediatric ARV Formulations
             </b>
+            <br/>
+            <div style="background-color:#00B0F0;padding:.5em;width:15vw;font-weight:bold;">
+            Blue Card
+            </div>
           </td>
-          <td colspan='2' align='left' valign='top '>
-            <i>
-              <font face='Times New Roman'    color='#000000'>Version 9</font>
-            </i>
+          <td>Version 9</td>
+          <td>Transfer-In Date</td>
+          <td style="border: 2px solid black;width:10vw;">
+            <%= @data["transfer_in_date"] %>
           </td>
-          <td align='left' valign='top '>
-            <font face='Times New Roman'    color='#000000'><br>
-            </font>
+          <td>ART Reg no</td>
+          <td style="border: 2px solid black;width:10vw;">
+            <%= @data["art_number"] %>
           </td>
-          <td colspan='2' align='left' valign='top '>
-            <font face='Times New Roman'    color='#000000'>Transfer-In Date</font>
-          </td>
-          <td
-                    
-                        style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
-                        colspan='2'
-                        rowspan='2 '
-                        align='center'
-                        align='top '>
-            <font face='Times New Roman'    color='#000000'><%= @data["transfer_in_date"] %><br>
-            </font>
-          </td>
-          <td align='left' valign='top '>
-            <font face='Times New Roman'    color='#000000'><br>
-            </font>
-          </td>
-          <td
-          colspan='3'
-                        style='border-right: 1px solid #000000'
-                        colspan='2 '
-                        align='right'
-                        valign='top '>
-            <b>
-              <font face='Times New Roman'    color='#000000'>ART Reg No</font>
-            </b>
-          </td>
-          <td
-                        style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
-                        colspan='5 '
-                        rowspan='2 '
-                        align='center'
-                        align='top '>
-            <font face='Times New Roman'    color='#000000'><%= @data["art_number"] %><br>
-            </font>
-          </td>
-          <td align='left' valign='top '>
-            <font face='Times New Roman'    color='#000000'><br>
-            </font>
-          </td>
-          <td align='right' valign='top '>
-            <font face='Times New Roman'    color='#000000'>Year</font>
-          </td>
-          <td
-                        style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
-                        colspan='4 '
-                        rowspan='2 '
-                        align='center'
-                        valign='top '>
-            <font face='Times New Roman'    color='#000000'><br>
-            </font>
-            <%= @data["created_at"] ? @data["created_at"]
-.strftime('%y') : '' %>
-          </td>
-        </tr>
-        <tr style='margin-top:3em !important'>
-          <td colspan='3' align='left' valign='top ' bgcolor='#00B0F0'>
-            <font face='Times New Roman'    color='#000000'>Blue Card</font>
-          </td>
-          <td colspan='8' align='left' valign='top '>
-            <font face='Times New Roman'    color='#000000'><br>
-            </font>
-          </td>
-          <td align='left' valign='top '>
-            <font face='Times New Roman'    color='#000000'><br>
-            </font>
-          </td>
-          <td align='left' valign='top '>
-            <font face='Times New Roman'    color='#000000'><br>
-            </font>
-          </td>
-          <td align='left' valign='top '>
-            <font face='Times New Roman'    color='#000000'><br>
-            </font>
-          </td>
-          <td align='left' valign='top '>
-            <font face='Times New Roman'    color='#000000'><br>
-            </font>
-          </td>
-          <td align='left' valign='top '>
-            <font face='Times New Roman'    color='#000000'><br>
-            </font>
-          </td>
-          <td align='left' valign='top '>
-            <font face='Times New Roman'    color='#000000'><br>
-            </font>
-          </td>
-          <td align='left' valign='top '>
-            <font face='Times New Roman'    color='#000000'><br>
-            </font>
-          </td>
-          <td align='left' valign='top '>
-            <font face='Times New Roman'    color='#000000'><br>
-            </font>
-          </td>
-          <td align='left' valign='top '>
-            <font face='Times New Roman'    color='#000000'><br>
-            </font>
-          </td>
-          <td align='left' valign='top '>
-            <font face='Times New Roman'    color='#000000'><br>
-            </font>
-          </td>
-          <td align='left' valign='top '>
-            <font face='Times New Roman'    color='#000000'><br>
-            </font>
+          <td>Year</td>
+          <td style="border: 2px solid black;width:10vw;">
+            <%= @data["created_at"] ? @data["created_at"].strftime('%y') : '' %> 
           </td>
         </tr>
       </table>
