@@ -45,6 +45,7 @@ module ARTService::Reports::MasterCard
 
     def load_art_initiation
       {
+        age: patient_history.age_at_initiation,
         art_number: patient_history.arv_number,
         height: patient_history.initial_height,
         weight: patient_history.initial_weight,
@@ -66,7 +67,10 @@ module ARTService::Reports::MasterCard
     end
 
     def patient_who_stage
-      Patient.find_by_sql("SELECT patient_who_stage(#{patient.id}) as who_stage").first.who_stage
+      stage = ActiveRecord::Base.connection.select_one <<~SQL
+        SELECT patient_who_stage(#{patient.id}) as who_stage
+      SQL
+      stage["who_stage"]
     end
 
     def calc_tb_status_at_art_initiation
@@ -77,16 +81,14 @@ module ARTService::Reports::MasterCard
     end
 
     def pregnancy_status_on_first_visit
-      pregnant_concept = concept("Is Patient Pregnant?")
-      obs = initial_observation(pregnant_concept)
-      return "N" unless obs
-      is_pregnant = obs.value_coded == concept("Yes").concept_id
+      obs = initial_observation(concept("Pregnant?"))
+      return "N" unless obs && obs.answer_string == "Yes"
+      is_pregnant = obs&.answer_string == "Yes"
       if is_pregnant
-        bf_obs = initial_observation(concept("Is Patient Breastfeeding?"))
-        return "Y" unless bf_obs
-        return bf_obs.value_coded == concept("Yes").concept_id
+        bf_obs = initial_observation(concept("Breastfeeding"))
+        return "Y" unless bf_obs && bf_obs.answer_string == "Yes"
+        return bf_obs.value_coded&.answer_string == "Yes" ? "Bf" : "N"
       end
-      return is_pregnant ? "Y" : "N"
     end
   end
 end

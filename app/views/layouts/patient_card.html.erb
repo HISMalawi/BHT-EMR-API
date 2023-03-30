@@ -466,7 +466,7 @@ text-overflow: ellipsis;
 				colspan=10 rowspan=2 align='center' valign=top>
         <font face='Times New Roman' color='#000000'><br>
         </font>
-        <%= @data["who_stage"].replace('WHO stage', '') rescue '' %>
+        <%= @data["who_stage"].gsub('WHO stage', '') rescue '' %>
       </td>
       <td rowspan=2 align='left' valign=  >
         <font face='Times New Roman' color='#000000'>ART reg 1</font>
@@ -495,10 +495,11 @@ text-overflow: ellipsis;
       </td>
       <td colspan=3 style='border-bottom: 1px solid #000000; border-left: 1px solid #000000' align='left' valign=top>
         <font face='Times New Roman' color='#000000'></font>
-        <span style="margin-left:5px;"><%= @data["birth_date"].strftime("%d-%m-%Y") rescue '' %>
+        <span style="margin-left:5px;"><%= @data["birth_date"].to_date.strftime("%d-%m-%Y") rescue '' %>
         </td>
         <td style='border-bottom: 1px solid #000000' align='left' valign=top>
           <font face='Times New Roman' color='#000000'></font>
+          <%= @data["age"] %>
         </td>
         <td style='border-bottom: 1px solid #000000' align='left' valign=top>
           <font face='Times New Roman' color='#000000'><br>
@@ -600,7 +601,7 @@ text-overflow: ellipsis;
 					border-right: 2px solid #000000; border-left: 1px solid #000000'
 				colspan=5 rowspan=2 align='center' valign=  >
           <font face='Times New Roman' color='#000000'></font>
-          <%= @data["pregnant"] %>
+          <%= @data["preg_or_breastfeeding"] %>
         </td>
         <td rowspan=2 align='left' valign=  >
           <font face='Times New Roman' color='#000000'>TB reg.</font>
