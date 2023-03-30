@@ -45,9 +45,9 @@ class Api::V1::Programs::Patients::VisitController < ApplicationController
       template = patient_card card_type
       html = ERB.new(template).result(binding)
 
-      html
+      {html: html, patient_id: patient.id}
     end
-    render json: htmls.join("")
+    render json: htmls
   end
 
   private
