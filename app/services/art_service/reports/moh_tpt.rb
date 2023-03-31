@@ -4,9 +4,11 @@ module ArtService
   module Reports
     # This class generates the MOH TPT report
     class MohTpt
-      attr_reader :start_date, :end_date, :start_of_month, :end_of_month
+      attr_reader :start_date, :end_date, :start_of_month, :end_of_month, :raw_end_date, :raw_start_date
 
-      def initialize(start_date:, **_kwarg)
+      def initialize(start_date:, end_date:, **_kwarg)
+        @raw_end_date = end_date.to_date
+        @raw_start_date = start_date.to_date
         @start_date = start_date - 9.months
         @end_date = @start_date + 3.months
         @start_of_month = @start_date.beginning_of_month
@@ -15,11 +17,23 @@ module ArtService
 
       def find_report
         report = init_report
+        drop_tables
+        initiated_on_art
+        initiated_on_tpt
+        create_indexes
+        process_initiated_on_art report, fetch_initiated_on_art
+        process_initiated_tpt report, fetch_initiated_on_tpt
+        response = []
+        report.each do |key, value|
+          response << { age_group: key, gender: 'F', **value['F'] }
+          response << { age_group: key, gender: 'M', **value['M'] }
+        end
+        response
       end
 
       private
 
-      GENDERS = %w[FEMALE MALE].freeze
+      GENDERS = %w[F M].freeze
       AGE_GROUPS = ['<1 year', '1-4 years', '5-9 years', '10-14 years', '15-19 years',
                     '20-24 years', '25-29 years', '30-34 years', '35-39 years', '40-44 years',
                     '45-49 years', '50-54 years', '55-59 years', '60-64 years', '65-69 years',
@@ -30,9 +44,9 @@ module ArtService
         AGE_GROUPS.each_with_object({}) do |age_group, report|
           report[age_group] = GENDERS.each_with_object({}) do |gender, tpt_report|
             tpt_report[gender] = {
-              initiated_art: [], initiated_tpt: [],
+              initiated_art: [], started_tpt: [], not_completed_tpt: [],
               completed_tpt: [], died: [], pregnant: [],
-              defaulted: [], stopped_art: [],
+              defaulted: [], stopped: [],
               transfer_out: [], confirmed_tb: []
             }
           end
@@ -41,13 +55,15 @@ module ArtService
 
       def process_initiated_on_art(report, patients)
         patients.each do |patient|
+          # print the whole hash
+          puts patient
           report[patient['age_group']][patient['gender']][:initiated_art] << patient['patient_id']
         end
       end
 
       def process_initiated_tpt(report, patients)
-        ARTService::Reports::TptOutcome.new(start_date: start_date, end_date: end_date)
-                                       .moh_report(report, patients)
+        ARTService::Reports::TptOutcome.new(start_date: start_date, end_date: raw_end_date)
+                                       .moh_report(report, patients, start_date, end_date)
       end
 
       def fetch_initiated_on_art
@@ -58,16 +74,18 @@ module ArtService
       end
 
       def fetch_initiated_on_tpt
-        ActiveRecord::Base.connection.select_all <<~SQL
+        result = ActiveRecord::Base.connection.select_all <<~SQL
           SELECT patient_id, age_group, gender FROM temp_initiated_on_tpt
           WHERE start_date >= DATE('#{start_of_month}')
         SQL
+        # convert to array of hashes
+        result.to_a
       end
 
       def initiated_on_art
         ActiveRecord::Base.connection.execute <<~SQL
           CREATE TABLE temp_initiated_on_art
-          SELECT pp.patient_id, coalesce(o.value_datetime, min(art_order.start_date)) art_start_date, p.gender, disaggregated_age_group(p.birthdate, DATE('#{end_of_month}')) age_group
+          SELECT pp.patient_id, coalesce(o.value_datetime, min(art_order.start_date)) art_start_date, p.gender, disaggregated_age_group(p.birthdate, DATE('#{raw_end_date}')) age_group
           FROM patient_program pp
           INNER JOIN person p ON p.person_id = pp.patient_id AND p.voided = 0
           INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id AND ps.voided = 0 AND ps.state = 7 -- ON ART
@@ -97,6 +115,7 @@ module ArtService
               AND o.start_date < DATE('#{start_of_month}')
             GROUP BY o.patient_id
           )
+          AND pp.program_id = 1 -- HIV program
           GROUP BY pp.patient_id
         SQL
       end
@@ -104,7 +123,17 @@ module ArtService
       def initiated_on_tpt
         ActiveRecord::Base.connection.execute <<~SQL
           CREATE TABLE temp_initiated_on_tpt
-          SELECT pp.patient_id, coalesce(tpt_transfer_in_obs.value_datetime, min(tpt_order.start_date)) start_date, p.gender, disaggregated_age_group(p.birthdate, DATE('#{end_of_month}')) age_group
+          SELECT
+            pp.patient_id,
+            coalesce(tpt_transfer_in_obs.value_datetime, min(tpt_order.start_date)) start_date,
+            p.gender, disaggregated_age_group(p.birthdate, DATE('#{raw_end_date}')) age_group,
+            patient_outcome(p.person_id, DATE('#{@raw_end_date}')) AS outcome,
+            GROUP_CONCAT(DISTINCT tpt_order.concept_id SEPARATOR ',') AS drug_concepts,
+            CASE
+              WHEN count(DISTINCT tpt_order.concept_id) >  1 THEN '3HP'
+              WHEN tpt_order.concept_id = 10565 THEN '3HP'
+              ELSE '6H'
+            END AS tpt_type
           FROM patient_program pp
           INNER JOIN person p ON p.person_id = pp.patient_id AND p.voided = 0
           INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id AND ps.voided = 0 AND ps.state = 7 -- ON ART
@@ -115,7 +144,7 @@ module ArtService
             AND tpt_order.order_type_id = 1 -- Drug order
             AND tpt_order.concept_id IN (#{tpt_concepts})
           INNER JOIN drug_order do ON do.order_id = tpt_order.order_id AND do.quantity > 0
-          LEFT JOIN obs tpt_transfer_in_obs ON tpt_transfer_in_obs.person_id = o.patient_id
+          LEFT JOIN obs tpt_transfer_in_obs ON tpt_transfer_in_obs.person_id = pp.patient_id
             AND tpt_transfer_in_obs.concept_id = #{ConceptName.find_by_name('TPT Drugs Received').concept_id}
             AND tpt_transfer_in_obs.voided = 0
             AND tpt_transfer_in_obs.value_drug IN (#{tpt_concepts})
@@ -130,6 +159,7 @@ module ArtService
               AND o.start_date < DATE('#{start_of_month}')
             GROUP BY o.patient_id
           )
+          AND pp.program_id = 1 -- HIV program
           GROUP BY pp.patient_id
         SQL
       end
