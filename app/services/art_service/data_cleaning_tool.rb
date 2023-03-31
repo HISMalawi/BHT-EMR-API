@@ -474,8 +474,7 @@ module ARTService
 
         next if complete
 
-        person
-        _details = ActiveRecord::Base.connection.select_one <<~SQL
+        person_details = ActiveRecord::Base.connection.select_one <<~SQL
           SELECT
             n.given_name, n.family_name, p.gender, p.birthdate,
             a.identifier arv_number, i.identifier national_id
