@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ArtService
+module ARTService
   module Reports
     # This class generates the MOH TPT report
     class MohTpt
@@ -15,7 +15,7 @@ module ArtService
         @end_of_month = @end_date.end_of_month
       end
 
-      def find_report
+      def data
         report = init_report
         drop_tables
         initiated_on_art
