@@ -44,16 +44,16 @@ page-break-before: always !important;
             </div>
           </td>
           <td>Version 9</td>
-          <td>Transfer-In Date</td>
-          <td style="border: 2px solid black;width:10vw;">
+          <td>Transfer-<br/>In Date</td>
+          <td style="border: 2px solid black;width:13%;">
             <%= @data["transfer_in_date"] %>
           </td>
           <td>ART Reg no</td>
-          <td style="border: 2px solid black;width:10vw;">
+          <td style="border: 2px solid black;width:13%;">
             <%= @data["art_number"] %>
           </td>
           <td>Year</td>
-          <td style="border: 2px solid black;width:10vw;">
+          <td style="border: 2px solid black;width:7%;">
             <%= @data["created_at"] ? @data["created_at"].strftime('%y') : '' %> 
           </td>
         </tr>
