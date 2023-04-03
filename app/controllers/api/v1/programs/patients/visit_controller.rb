@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
 class Api::V1::Programs::Patients::VisitController < ApplicationController
-
-  require './app/services/art_service/reports/master_card/mastercard_struct.rb'
+  require "./app/services/art_service/reports/master_card/mastercard_struct.rb"
 
   def index
     permitted = params.permit(:date)
@@ -20,47 +19,66 @@ class Api::V1::Programs::Patients::VisitController < ApplicationController
   end
 
   def patient_visits
-    patient_ids = params[:patient_ids]
-    all_patient_visits = []
-    
-    patient_ids.each do | patient_id |
-      patient_details = ARTService::Reports::MasterCard::PatientStruct.new(patient(patient_id)).fetch
-      
-      person = patient(patient_id)
-      visits = patient_service.find_patient_visit_dates(person, program,
-      params[:include_defaulter_dates] == 'true')
-      all_visits = []    
-      visits.each do | visit |
-        all_visits << {date: visit}.merge(visit_summary(person.id, visit).as_json)
-      end
-      patient_details[:visits] = all_visits
-      @data = patient_details
-      template = File.read(Rails.root.join('app', 'views', 'layouts', 'patient_card.html.erb'))
-      html = ERB.new(template).result(binding)
-      all_patient_visits << {html: html}
-    end
-    
+    patients = params[:patient_ids].collect { |id| patient(id) }
+    card_type = params[:card_type]
+    htmls = patients.collect do |patient|
+      mastercard_service = patient_mastercard_service(patient, card_type)
 
-    render json: all_patient_visits
+      patient_details = mastercard_service.fetch
+
+      visits_dates = patient_service.find_patient_visit_dates(patient, program, true)
+
+      visits_dates = visits_dates.sort! { |a, b| b.to_date <=> a.to_date }.reverse
+
+      filtred_dates = [visits_dates[0]]
+      filtred_dates += visits_dates.last(5)
+
+      
+      patient_details[:visits] = filtred_dates.collect do |date|
+        { date: date }.merge(visit_summary(patient.id, date).as_json)
+      end
+
+      arvs_given = patient_details[:visits]
+                  .map { |visit| {date: visit[:date], arv: visit[:regimen]}}
+                  .uniq { |visit| visit[:arv]}
+                  .select { |visit| visit[:arv].strip != "N/A" }
+
+      patient_details[:arvs_given] = arvs_given
+
+      @data = patient_details
+      template = patient_card card_type
+      html = ERB.new(template).result(binding)
+
+      {html: html, patient_id: patient.id}
+    end
+    render json: htmls
   end
 
   private
-  
+
+  def patient_card(card_type)
+    File.read(Rails.root.join("app", "views", "layouts", "#{card_type == "child" ? "ped_patient_card" : "patient_card"}.html.erb"))
+  end
+
+  def patient_mastercard_service(patient, card_type)
+    ARTService::Reports::MasterCard::PatientStruct.new(patient)
+  end
+
   def service
     ProgramServiceLoader
-      .load(Program.find(params[:program_id]), 'PatientsEngine')
+      .load(Program.find(params[:program_id]), "PatientsEngine")
       .new
   end
 
   def patient_service
-   PatientService.new
+    PatientService.new
   end
 
   def patient(patient_id)
     Patient.find(patient_id)
   end
 
-  def program 
+  def program
     Program.find(params[:program_id])
   end
 end
