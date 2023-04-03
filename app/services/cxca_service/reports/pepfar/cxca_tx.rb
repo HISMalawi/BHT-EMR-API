@@ -11,7 +11,7 @@ module CXCAService::Reports::Pepfar
       post_treatment_followup: ["One year subsequent check-up after treatment", "Problem visit after treatment"],
     }.freeze
 
-    TREATMENTS = %i[thermocoagulation cryotherapy].freeze
+    TREATMENTS = %i[thermocoagulation cryotherapy leep].freeze
 
     def initialize(start_date:, end_date:)
       @start_date = start_date.to_date.beginning_of_day
