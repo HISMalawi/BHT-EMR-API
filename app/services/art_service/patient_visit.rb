@@ -253,8 +253,9 @@ module ARTService
         pregnant: pregnant?,
         breastfeeding: breastfeeding?,
         side_effects_batch: side_effects.empty? ? 'N' : 'Y',
-        next_appointment: next_appointment ? next_appointment.strftime("%Y-%m-%d %H:%M:%S") : nil,
-        doses_missed: doses_missed?
+        next_appointment: next_appointment&.strftime("%Y-%m-%d %H:%M:%S"),
+        doses_missed: doses_missed?,
+        batch_master_card_visit_by: visit_by == 'BOTH' ? 'P G' : (visit_by[0] == 'Unk' ? nil : visit_by[0])
       }
     end
 

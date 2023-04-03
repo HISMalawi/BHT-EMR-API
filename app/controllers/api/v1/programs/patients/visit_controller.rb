@@ -23,24 +23,28 @@ class Api::V1::Programs::Patients::VisitController < ApplicationController
     patient_ids = params[:patient_ids]
     all_patient_visits = []
     
-    patient_ids.each do | patient_id |
-      patient_details = ARTService::Reports::MasterCard::PatientStruct.new(patient(patient_id)).fetch
+    patient_detail = ARTService::Reports::MasterCard::PatientStruct.new
+
+    all_patient_visits = Parallel.map(patient_ids) do |patient_id|
+      patient_details = patient_detail.fetch(patient(patient_id))
       
       person = patient(patient_id)
-      visits = patient_service.find_patient_visit_dates(person, program,
-      params[:include_defaulter_dates] == 'true')
+      visits = patient_service.find_patient_visit_dates(person, program, params[:include_defaulter_dates] == 'false')
+      
       all_visits = []    
-      visits.each do | visit |
+      visits.each do |visit|
         all_visits << {date: visit}.merge(visit_summary(person.id, visit).as_json)
       end
+      
       patient_details[:visits] = all_visits
       @data = patient_details
+      
       template = File.read(Rails.root.join('app', 'views', 'layouts', 'patient_card.html.erb'))
       html = ERB.new(template).result(binding)
-      all_patient_visits << {html: html}
+      
+      { html: html }
     end
     
-
     render json: all_patient_visits
   end
 
