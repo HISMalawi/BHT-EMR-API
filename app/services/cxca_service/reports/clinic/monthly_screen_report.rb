@@ -23,17 +23,20 @@ module CXCAService::Reports::Clinic
     def initialize(start_date:, end_date:)
       @start_date = start_date.to_date.beginning_of_day
       @end_date = end_date.to_date.end_of_day
-      @report = []
+      @report = {}
     end
 
     def data
-      init_report
+      patients = fetch_query
+      init_report patients
+      get_totals patients
+      report
     end
 
     private
 
-    def init_report
-      query = fetch_query
+    def init_report query
+      report_data = []
       TX_GROUPS.each do |(name, values)|
         row = {}
         row[name] ||= []
@@ -43,9 +46,19 @@ module CXCAService::Reports::Clinic
         end
         x2 = query.select { |q| q["reason_for_visit"].to_s.downcase.in?(values) && q["age_group"].in?(fifty_plus) }
         row[name].push(get_indicators(x2, "50 plus years"))
-        report << row
+        report_data << row
       end
-      report
+      report["data"] ||= []      
+      report["data"] = report_data
+    end
+
+    def get_totals query
+      report["totals"] ||= {}
+      report["totals"]["total_screened"] = query.map { |q| q["person_id"] }.uniq
+      report["totals"]["total_negative"] = query.select { |q| q["screening_results"].to_s.downcase.in?(CxCa_TX_OUTCOMES[:negative]) }.map { |q| q["person_id"] }.uniq
+      report["totals"]["total_via_plus_eligible_for_same_day_tx"] = query.select { |d| d["via_result"].to_s.downcase == "VIA positive" || d["screening_results"] == "VIA positive" && (d["tx_option"] == "Same day treatment") }.uniq
+      report["totals"]["total_positive"] = query.select { |q| q["screening_results"].to_s.downcase.in?(CxCa_TX_OUTCOMES[:positive]) }.map { |q| q["person_id"] }.uniq
+      report["totals"]["total_suspect_cancer"] = query.select { |q| q["screening_results"].to_s.downcase.in?(CxCa_TX_OUTCOMES[:suspected]) }.map { |q| q["person_id"] }.uniq
     end
 
     def get_indicators(x, age_group)

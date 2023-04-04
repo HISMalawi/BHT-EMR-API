@@ -17,17 +17,20 @@ module CXCAService::Reports::Clinic
     def initialize(start_date:, end_date:)
       @start_date = start_date.to_date.beginning_of_day
       @end_date = end_date.to_date.end_of_day
-      @report = []
+      @report = {}
     end
 
     def data
-      init_report
+      patients = fetch_query
+      init_report patients
+      include_report_totals patients
+      report
     end
 
     private
 
-    def init_report
-      query = fetch_query
+    def init_report query
+      data = []
       TX_GROUPS.each do |(name, values)|
         row = {}
         row[name] ||= []
@@ -37,9 +40,21 @@ module CXCAService::Reports::Clinic
         end
         x2 = query.select { |q| q["reason_for_visit"].to_s.downcase.in?(values) && q["age_group"].in?(fifty_plus) }
         row[name].push(get_indicators(x2, "50 plus years"))
-        report << row
+        data << row
       end
-      report
+      report["data"] = data
+    end
+
+    def include_report_totals query
+      report["totals"] ||= {}      
+      report["totals"]["total_cyrotherapy"] = query.select { |q| q["treatment"].to_s.downcase == "cryotherapy" }.map { |t| t["person_id"] }.uniq
+      report["totals"]["total_thermocoagulation"] = query.select { |q| q["treatment"].to_s.downcase == "thermocoagulation" }.map { |t| t["person_id"] }.uniq
+      report["totals"]["total_leep"] = query.select { |q| q["treatment"].to_s.downcase == "leep" }.map { |t| t["person_id"] }.uniq
+      report["totals"]["total_number_same_day_tx"] = query.select { |q| q["tx_option"] == "Same day treatment" }.map { |t| t["person_id"] }.uniq
+      report["totals"]["total_via_deffered"] = query.select { |d| d["tx_option"] == "Postponed treatment" && (d["via_result"].to_s.downcase == "VIA positive" || d["screening_results"] == "VIA positive") }.map { |t| t["person_id"] }.uniq
+      report["totals"]["total_via_reffered"] = query.select { |d| d["tx_option"] == "Referral" && (d["via_result"].to_s.downcase == "VIA positive" || d["screening_results"] == "VIA positive") }.map { |t| t["person_id"] }.uniq
+      report["totals"]["suspects_reffered"] = query.select { |d| d["tx_option"] == "Referral" && d["via_result"].to_s.downcase == "Suspect cancer" }.map { |t| t["person_id"] }.uniq
+      report["totals"]["total_reffered"] = query.select { |d| d["tx_option"] == "Referral" }.map { |t| t["person_id"] }.uniq
     end
 
     def get_indicators(x, age_group)

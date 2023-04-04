@@ -20,9 +20,7 @@ module CXCAService
       'CXCA TX' => CXCAService::Reports::Pepfar::CxcaTx,
       'CXCA SCRN' => CXCAService::Reports::Pepfar::CxcaScrn,
       'MONTHLY CECAP TX' => CXCAService::Reports::Clinic::MonthlyCecapTx,      
-      'MONTHLY CECAP TX TOTALS' => CXCAService::Reports::Clinic::MonthlyCecapTxTotals,      
-      'MONTHLY SCREEN REPORT' => CXCAService::Reports::Clinic::MonthlyScreenReport,      
-      'MONTHLY SCREEN REPORT TOTALS' => CXCAService::Reports::Clinic::MonthlyScreenReportTotals,      
+      'MONTHLY SCREEN REPORT' => CXCAService::Reports::Clinic::MonthlyScreenReport    
     }.freeze
 
     def reports(start_date, end_date, name)
