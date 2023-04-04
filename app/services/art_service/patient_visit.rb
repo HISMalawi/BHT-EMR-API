@@ -343,6 +343,14 @@ module ARTService
       'N'
     end
 
+    def months_since_last_vl_test
+       last_vl_load_test = ARTService::VLReminder.new(
+                           patient_id: patient.patient_id,
+                           date: date)
+                           .find_patient_last_viral_load
+       (date&.to_date.year * 12) - (last_vl_load_test.start_date.to_date.year * 12)
+    end
+
     def breastfeeding?
       breastfeeding_concept = ConceptName.where(name: 'breatfeeding?').select(:concept_id)
 
@@ -395,6 +403,7 @@ module ARTService
         inh_rfp: new_3hp_dispensed,
         pryidoxine: pyridoxine_dispensed,
         arvs: arvs_dispensed,
+        months_since_last_vl_test: months_since_last_vl_test,
         qtr: @date.month < 4 ? 1 : @date.month < 7 ? 2 : @date.month < 10 ? 3 : 4
       }
     end

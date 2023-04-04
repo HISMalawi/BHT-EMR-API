@@ -6,14 +6,16 @@ module ARTService::Reports::MasterCard
     HIV_PROGRAM = Program.find_by(name: "HIV PROGRAM").program_id
     LAB_TEST_RESULT = ConceptName.find_by_name("Lab test result").concept_id
 
+    def initialize(patient)
+      @patient = patient
+      @data = load_patient_data
+    end
+
     def patient_is_a_pediatric?
       patient.age_in_months < 24
     end
 
-    def fetch(patient)
-      @patient = patient
-      @data = load_patient_data
-
+    def fetch
       indicators.collect { |indicator| data.merge!(indicator) }
       data.as_json
     end
