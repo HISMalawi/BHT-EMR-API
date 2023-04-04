@@ -67,7 +67,7 @@ module ARTService
           left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
           left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
           LEFT JOIN patient_identifier i ON i.patient_id = pe.person_id
-          AND i.identifier_type = 4 AND i.voided = 0
+          AND i.identifier_type = #{indetifier_type} AND i.voided = 0
           LEFT JOIN person_name n ON n.person_id = pe.person_id AND n.voided = 0
         where
           ((`p`.`voided` = 0)
@@ -101,7 +101,7 @@ module ARTService
           left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
           left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
           LEFT JOIN patient_identifier i ON i.patient_id = pe.person_id
-          AND i.identifier_type = 4 AND i.voided = 0
+          AND i.identifier_type = #{indetifier_type} AND i.voided = 0
           LEFT JOIN person_name n ON n.person_id = pe.person_id AND n.voided = 0
         where
           ((`p`.`voided` = 0)
@@ -158,7 +158,7 @@ module ARTService
           n.given_name, n.family_name
         FROM person p
         LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
-        AND i.identifier_type = 4 AND i.voided = 0
+        AND i.identifier_type = #{indetifier_type} AND i.voided = 0
         LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
         WHERE p.person_id IN(#{patient_ids.join(',')})
         GROUP BY p.person_id ORDER BY i.date_created DESC;
@@ -219,7 +219,7 @@ module ARTService
           n.given_name, n.family_name
         FROM person p
         LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
-        AND i.identifier_type = 4 AND i.voided = 0
+        AND i.identifier_type = #{indetifier_type} AND i.voided = 0
         LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
         WHERE p.person_id IN(#{patient_ids.join(',')})
         GROUP BY p.person_id ORDER BY i.date_created DESC;
@@ -248,7 +248,7 @@ module ARTService
           n.given_name, n.family_name
         FROM person p
         LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
-        AND i.identifier_type = 4 AND i.voided = 0
+        AND i.identifier_type = #{indetifier_type} AND i.voided = 0
         LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
         WHERE p.person_id IN(#{patient_ids.join(',')})
         GROUP BY p.person_id ORDER BY i.date_created DESC;
@@ -304,7 +304,7 @@ module ARTService
           n.given_name, n.family_name
         FROM person p
         LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
-        AND i.identifier_type = 4 AND i.voided = 0
+        AND i.identifier_type = #{indetifier_type} AND i.voided = 0
         LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
         WHERE p.person_id IN(#{patient_ids.join(',')})
         GROUP BY p.person_id ORDER BY i.date_created DESC;
@@ -338,7 +338,7 @@ module ARTService
           ON person.person_id = orders.patient_id
         LEFT JOIN patient_identifier
           ON patient_identifier.patient_id = person.person_id
-          AND patient_identifier.identifier_type = 4
+          AND patient_identifier.identifier_type = #{indetifier_type}
           AND patient_identifier.voided = 0
         LEFT JOIN person_name
           ON person_name.person_id = person.person_id
@@ -403,11 +403,7 @@ module ARTService
         LEFT JOIN patient_identifier
           ON patient_identifier.patient_id = deaths.patient_id
           AND patient_identifier.voided = 0
-          AND patient_identifier.identifier_type IN (
-            /* ARV Number */
-            SELECT patient_identifier_type_id FROM patient_identifier_type
-            WHERE name = 'ARV Number' AND retired = 0
-          )
+          AND patient_identifier.identifier_type = #{indetifier_type}
         LEFT JOIN person_name
           ON person_name.person_id = deaths.patient_id
           AND person_name.voided = 0
@@ -433,7 +429,7 @@ module ARTService
         FROM person p
         INNER JOIN obs ON obs.person_id = p.person_id AND (p.gender != 'F' AND p.gender != 'Female')
         LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
-        AND i.identifier_type = 4 AND i.voided = 0
+        AND i.identifier_type = #{indetifier_type} AND i.voided = 0
         LEFT JOIN person_name n ON n.person_id = p.person_id
         AND n.voided = 0
         WHERE obs.concept_id IN(#{concept_ids.join(',')})
@@ -478,14 +474,13 @@ module ARTService
 
         next if complete
 
-        person
-        _details = ActiveRecord::Base.connection.select_one <<~SQL
+        person_details = ActiveRecord::Base.connection.select_one <<~SQL
           SELECT
             n.given_name, n.family_name, p.gender, p.birthdate,
             a.identifier arv_number, i.identifier national_id
           FROM person p
           LEFT JOIN patient_identifier a ON a.patient_id = p.person_id
-          AND a.identifier_type = 4 AND a.voided = 0
+          AND a.identifier_type = #{indetifier_type} AND a.voided = 0
           LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
           AND i.identifier_type = 3 AND i.voided = 0
           LEFT JOIN person_name n On n.person_id = p.person_id AND n.voided = 0
@@ -517,6 +512,10 @@ module ARTService
 
     def program
       @program ||= Program.find_by_name!('HIV Program')
+    end
+
+    def indetifier_type
+      @indetifier_type ||= PatientIdentifierType.find_by_name!(GlobalPropertyService.use_filing_numbers? ? 'Filing Number' : 'ARV Number').id
     end
 
     ##

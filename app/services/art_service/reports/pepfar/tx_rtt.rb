@@ -83,7 +83,7 @@ module ARTService
             FROM encounter
             INNER JOIN orders
               ON orders.encounter_id = encounter.encounter_id
-              AND orders.start_date BETWEEN DATE(#{start_date}) AND DATE(#{end_date})
+              AND DATE(orders.start_date) BETWEEN DATE(#{start_date}) AND DATE(#{end_date})
               AND orders.voided = 0
             INNER JOIN drug_order
               ON drug_order.order_id = orders.order_id
@@ -91,7 +91,7 @@ module ARTService
               AND drug_order.drug_inventory_id IN (SELECT DISTINCT drug_id FROM arv_drug)
             WHERE encounter.voided = 0
               AND encounter.program_id = 1
-              AND encounter.encounter_datetime BETWEEN DATE(#{start_date}) AND DATE(#{end_date})
+              AND DATE(encounter.encounter_datetime) BETWEEN DATE(#{start_date}) AND DATE(#{end_date})
           ) AS patients_who_received_art_in_quarter
             ON patients_who_received_art_in_quarter.patient_id = patient_program.patient_id
           /* Ensure that patients are on ART at the end of the quarter */
@@ -123,14 +123,14 @@ module ARTService
             INNER JOIN orders
               ON orders.encounter_id = encounter.encounter_id
               AND orders.voided = 0
-              AND orders.start_date BETWEEN DATE(#{start_date}) AND DATE(#{end_date})
-              AND orders.auto_expire_date >= (DATE(#{end_date}) - INTERVAL 30 DAY)
+              AND DATE(orders.start_date) BETWEEN DATE(#{start_date}) AND DATE(#{end_date})
+              AND DATE(orders.auto_expire_date) >= (DATE(#{end_date}) - INTERVAL 30 DAY)
             INNER JOIN drug_order
               ON drug_order.order_id = orders.order_id
               AND drug_order.quantity > 0
               AND drug_order.drug_inventory_id IN (SELECT DISTINCT drug_id FROM arv_drug)
             WHERE encounter.program_id = 1
-              AND encounter.encounter_datetime BETWEEN DATE(#{start_date}) AND DATE(#{end_date})
+              AND DATE(encounter.encounter_datetime) BETWEEN DATE(#{start_date}) AND DATE(#{end_date})
               AND encounter.voided = 0
           ) AS patients_with_orders_at_end_of_quarter
             ON patients_with_orders_at_end_of_quarter.patient_id = patient_program.patient_id
@@ -145,8 +145,8 @@ module ARTService
               INNER JOIN patient_program
                 ON patient_program.patient_id = orders.patient_id
                 AND patient_program.program_id = 1
-              WHERE ((orders.start_date BETWEEN (DATE(#{start_date}) - INTERVAL 30 DAY) AND DATE(#{start_date}))
-                     OR (orders.auto_expire_date BETWEEN (DATE(#{start_date}) - INTERVAL 30 DAY) AND DATE(#{start_date})))
+              WHERE ((DATE(orders.start_date )BETWEEN (DATE(#{start_date}) - INTERVAL 30 DAY) AND DATE(#{start_date}))
+                     OR (DATE(orders.auto_expire_date) BETWEEN (DATE(#{start_date}) - INTERVAL 30 DAY) AND DATE(#{start_date})))
                 AND orders.voided = 0
             )
           GROUP BY patient_program.patient_id

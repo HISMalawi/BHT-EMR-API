@@ -28,6 +28,13 @@ module ARTService
         response
       end
 
+      def moh_report(report, clients, start_date, end_date)
+        @first_day_of_month = start_date.to_date
+        @last_day_of_month = end_date.to_date
+        tpt_clients = process_tpt_clients(clients)
+        load_patients_into_report report, tpt_clients, 'gender'
+      end
+
       private
 
       TPT_TYPES = %w[3HP 6H].freeze
@@ -157,9 +164,9 @@ module ARTService
         SQL
       end
 
-      def process_tpt_clients
+      def process_tpt_clients(patients = nil)
         clients = []
-        tpt_clients.each do |client|
+        (patients || tpt_clients).each do |client|
           result = @tb_prev.fetch_individual_report(client['patient_id'])
           next if result.blank?
           next if result['tpt_initiation_date'].to_date < first_day_of_month.to_date
@@ -262,38 +269,38 @@ module ARTService
       #   SQL
       # end
 
-      def load_patients_into_report(report, patients)
+      def load_patients_into_report(report, patients, param = 'tpt_type')
         patients.each do |patient|
-          report[patient['age_group']][patient['tpt_type']][:started_tpt] << patient['patient_id']
+          report[patient['age_group']][patient[param]][:started_tpt] << patient['patient_id']
           if patient_completed_tpt?(patient, patient['tpt_type'])
-            report[patient['age_group']][patient['tpt_type']][:completed_tpt] << patient['patient_id']
+            report[patient['age_group']][patient[param]][:completed_tpt] << patient['patient_id']
           else
-            report[patient['age_group']][patient['tpt_type']][:not_completed_tpt] << patient['patient_id']
-            process_outcomes report, patient
+            report[patient['age_group']][patient[param]][:not_completed_tpt] << patient['patient_id']
+            process_outcomes report, patient, param
           end
         end
       end
 
-      def process_outcomes(report, patient)
+      def process_outcomes(report, patient, param = 'tpt_type')
         case patient['outcome']
         when 'Patient died'
-          report[patient['age_group']][patient['tpt_type']][:died] << patient['patient_id']
+          report[patient['age_group']][patient[param]][:died] << patient['patient_id']
         when 'Patient transferred out'
-          report[patient['age_group']][patient['tpt_type']][:transfer_out] << patient['patient_id']
+          report[patient['age_group']][patient[param]][:transfer_out] << patient['patient_id']
         when 'Treatment stopped'
-          report[patient['age_group']][patient['tpt_type']][:stopped] << patient['patient_id']
+          report[patient['age_group']][patient[param]][:stopped] << patient['patient_id']
         when 'Defaulted'
-          report[patient['age_group']][patient['tpt_type']][:defaulted] << patient['patient_id']
+          report[patient['age_group']][patient[param]][:defaulted] << patient['patient_id']
         else
-          process_patient_conditions report, patient
+          process_patient_conditions report, patient, param
         end
       end
 
-      def process_patient_conditions(report, patient)
+      def process_patient_conditions(report, patient, param = 'tpt_type')
         if patient_on_tb_treatment?(patient['patient_id'], patient['last_dispense_date'])
-          report[patient['age_group']][patient['tpt_type']][:confirmed_tb] << patient['patient_id']
+          report[patient['age_group']][patient[param]][:confirmed_tb] << patient['patient_id']
         elsif patient['gender'] == 'F' && patient_pregnant?(patient['patient_id'], patient['last_dispense_date'])
-          report[patient['age_group']][patient['tpt_type']][:pregnant] << patient['patient_id']
+          report[patient['age_group']][patient[param]][:pregnant] << patient['patient_id']
         end
       end
 
