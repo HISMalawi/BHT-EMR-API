@@ -58,10 +58,15 @@ module ARTService::Reports::MasterCard
     end
 
     def patient_who_stage
-      stage = ActiveRecord::Base.connection.select_one <<~SQL
-        SELECT patient_who_stage(#{patient.id}) as who_stage
+      data = ActiveRecord::Base.connection.select_one <<~SQL
+        SELECT
+           COALESCE((select name from concept_name where concept_id = o.value_coded and voided = 0 and name != '' LIMIT 1), o.value_text) as value
+        FROM obs o
+        WHERE o.person_id = #{patient.id} AND o.concept_id = 7562 -- WHO stage
+        AND o.voided = 0
       SQL
-      stage["who_stage"]
+      puts data
+      data["value"]
     end
 
     def calc_tb_status_at_art_initiation
