@@ -120,13 +120,13 @@ module HtsService
             'referral_for_hiv_retesting_confirmatory_test' => [],
             'referral_for_hiv_retesting_invalid_entry' => [],
             'referral_for_hiv_retesting_missing' => [],
-            'referral_for_vmmc' => [],
             'referral_for_prep' => [],
+            'referral_for_pep' => [],
+            'referral_for_vmmc' => [],
             'referral_for_sti' => [],
             'referral_for_tb' => [],
-            'referral_for_pep' => [],
-            'referral_for_prep_invalid_entry' => [],
-            'referral_for_prep_missing' => [],
+            'referral_invalid_entry' => [],
+            'referral_missing' => [],
             'frs_given_family_referral_slips_sum' => [],
             'frs_given_invalid_entry' => [],
             'male_condoms_given_male_condoms_sum' => [],
@@ -414,7 +414,7 @@ module HtsService
                 .where("person.voided = 0 AND DATE(e.encounter_datetime) BETWEEN '#{start_date}' AND '#{end_date}' + INTERVAL 1 DAY")
                 .each do |client|
 
-            Observation.joins(:encounter)\
+                  Observation.joins(:encounter)\
                              .where(concept: concept('Referrals ordered'),
                                      person: client.person_id,
                  encounter: { encounter_type: EncounterType.find_by_name("REFERRAL").encounter_type_id,
