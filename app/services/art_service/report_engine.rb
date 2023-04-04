@@ -123,8 +123,8 @@ module ARTService
       REPORTS['TX_ML'].new(start_date: start_date.to_date, end_date: end_date.to_date).data
     end
 
-    def art_register(end_date, rebuild)
-      REPORTS['ART_REGISTER'].new(date: end_date.to_date, rebuild: rebuild).fetch_register
+    def art_register(end_date, rebuild, formulation)
+      REPORTS['ART_REGISTER'].new(date: end_date.to_date, rebuild: rebuild, formulation: formulation).fetch_register
     end
 
     def tx_rtt(start_date, end_date)

@@ -1,4439 +1,1588 @@
-<!DOCTYPE html>
+<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.0 Transitional//EN'>
 <html>
+  <head><meta http-equiv='content-type' content='text/html; charset=utf-8'/>
+    <title></title>
+    <style type='text/css'>
+       @media print {
+.pagebreak {
+page-break-before: always !important;
+}
+}
 
-<head>
-    <style type="text/css">
-    @page{
-        size: a4 landscape;
-    }
-        .pf {
-            position: relative;
-            background-color: #fff;
-            overflow: hidden;
-            margin: 0;
-            border: 0
-        }
-
-        .pc {
-            position: absolute;
-            border: 0;
-            padding: 0;
-            margin: 0;
-            top: 0;
-            left: 0;
+        table {
             width: 100%;
-            height: 100%;
-            overflow: hidden;
-            display: block;
-            transform-origin: 0 0;
-            -ms-transform-origin: 0 0;
-            -webkit-transform-origin: 0 0
         }
-
-        .pc.opened {
-            display: block
+        table {
+            border-collapse: collapse;
         }
-
-        .bf {
-            position: absolute;
-            border: 0;
-            margin: 0;
-            top: 0;
-            bottom: 0;
-            width: 100%;
-            height: 100%;
-            -ms-user-select: none;
-            -moz-user-select: none;
-            -webkit-user-select: none;
-            user-select: none
+        td {
+            padding-left: 0.3em;
+            padding-right: 0.3em;
         }
-
-        .bi {
-            position: absolute;
-            border: 0;
-            margin: 0;
-            -ms-user-select: none;
-            -moz-user-select: none;
-            -webkit-user-select: none;
-            user-select: none
+        .t_no_break {
+            white-space: nowrap !important;
         }
-
-        .bold{
-            font-weight: bold !important;
-        }
-
-        .c {
-            position: absolute;
-            border: 0;
-            padding: 0;
-            margin: 0;
-            overflow: hidden;
-            display: block
-        }
-
-        .t {
-            position: absolute;
-            white-space: pre;
-            font-size: 1px;
-            transform-origin: 0 100%;
-            -ms-transform-origin: 0 100%;
-            -webkit-transform-origin: 0 100%;
-            unicode-bidi: bidi-override
-        }
-
-        .t:after {
-            content: ''
-        }
-
-        .t:before {
-            content: '';
-            display: inline-block
-        }
-
-        .t span {
-            position: relative;
-            unicode-bidi: bidi-override
-        }
-
-        ._ {
-            display: inline-block;
-            color: transparent;
-            z-index: -1
-        }
-
-        ::selection {
-            background: rgba(127, 255, 255, .4)
-        }
-
-        ::-moz-selection {
-            background: rgba(127, 255, 255, .4)
-        }
-
-        .pi {
-            display: none
-        }
-
-        .d {
-            position: absolute;
-            transform-origin: 0 100%;
-            -ms-transform-origin: 0 100%;
-            -webkit-transform-origin: 0 100%
-        }
-
-        .it {
-            border: 0;
-            background-color: rgba(255, 255, 255, 0)
-        }
-
-        .ir:hover {
-            cursor: pointer
-        }
-    </style>
-    <style type="text/css">
-        .ff0 {
-            font-family: sans-serif;
-            visibility: hidden
-        }
-
-        .ff1 {
-            font-family: ff1;
-            line-height: .925781;
-            font-style: normal;
-            font-weight: 400;
-            visibility: visible
-        }
-
-        .m2 {
-            transform: matrix(0, -.25, .25, 0, 0, 0);
-            -ms-transform: matrix(0, -.25, .25, 0, 0, 0);
-            -webkit-transform: matrix(0, -.25, .25, 0, 0, 0)
-        }
-
-        .m1 {
-            transform: matrix(.237173, 0, -.079050, .237173, 0, 0);
-            -ms-transform: matrix(.237173, 0, -.079050, .237173, 0, 0);
-            -webkit-transform: matrix(.237173, 0, -.079050, .237173, 0, 0)
-        }
-
-        .m0 {
-            transform: matrix(.25, 0, 0, .25, 0, 0);
-            -ms-transform: matrix(.25, 0, 0, .25, 0, 0);
-            -webkit-transform: matrix(.25, 0, 0, .25, 0, 0)
-        }
-
-        .v0 {
-            vertical-align: 0
-        }
-
-        .ls16 {
-            letter-spacing: -2.016000px
-        }
-
-        .lsf {
-            letter-spacing: -.3188px
-        }
-
-        .lsb {
-            letter-spacing: -.2228px
-        }
-
-        .ls1a {
-            letter-spacing: -.1688px
-        }
-
-        .lsc {
-            letter-spacing: -.144px
-        }
-
-        .ls12 {
-            letter-spacing: -.096000px
-        }
-
-        .ls14 {
-            letter-spacing: -.048000px
-        }
-
-        .ls18 {
-            letter-spacing: -.012000px
-        }
-
-        .lsa {
-            letter-spacing: 0
-        }
-
-        .ls15 {
-            letter-spacing: .036000px
-        }
-
-        .ls4 {
-            letter-spacing: .036480px
-        }
-
-        .ls0 {
-            letter-spacing: .038453px
-        }
-
-        .ls5 {
-            letter-spacing: .054240px
-        }
-
-        .ls2 {
-            letter-spacing: .072000px
-        }
-
-        .ls13 {
-            letter-spacing: .072800px
-        }
-
-        .ls6 {
-            letter-spacing: .072960px
-        }
-
-        .ls9 {
-            letter-spacing: .12px
-        }
-
-        .lsd {
-            letter-spacing: .128598px
-        }
-
-        .ls11 {
-            letter-spacing: .1316px
-        }
-
-        .lse {
-            letter-spacing: .1612px
-        }
-
-        .ls17 {
-            letter-spacing: .1684px
-        }
-
-        .ls19 {
-            letter-spacing: .192px
-        }
-
-        .ls8 {
-            letter-spacing: .204000px
-        }
-
-        .ls1 {
-            letter-spacing: .215040px
-        }
-
-        .ls10 {
-            letter-spacing: .2152px
-        }
-
-        .ls7 {
-            letter-spacing: .31872px
-        }
-
-        .ls3 {
-            letter-spacing: .45216px
-        }
-
-        .sc_ {
-            text-shadow: none
-        }
-
-        .sc1 {
-            text-shadow: -.015em 0 #000, 0 .015em #000, .015em 0 #000, 0 -.015em #000
-        }
-
-        .sc0 {
-            text-shadow: -.015em 0 transparent, 0 .015em transparent, .015em 0 transparent, 0 -.015em transparent
-        }
-
-        .wsf {
-            word-spacing: -36px
-        }
-
-        .ws19 {
-            word-spacing: -12.63568px
-        }
-
-        .ws17 {
-            word-spacing: -11.136px
-        }
-
-        .ws0 {
-            word-spacing: -10.944px
-        }
-
-        .ws1 {
-            word-spacing: -10.8px
-        }
-
-        .ws3 {
-            word-spacing: -9.574775px
-        }
-
-        .wsc {
-            word-spacing: -9.15632px
-        }
-
-        .wsb {
-            word-spacing: -9.12px
-        }
-
-        .wsd {
-            word-spacing: -9.083520px
-        }
-
-        .ws10 {
-            word-spacing: -8.328px
-        }
-
-        .ws12 {
-            word-spacing: -8.244px
-        }
-
-        .ws5 {
-            word-spacing: -8.208000px
-        }
-
-        .ws15 {
-            word-spacing: -8.196px
-        }
-
-        .wse {
-            word-spacing: -8.16px
-        }
-
-        .wsa {
-            word-spacing: -8.112px
-        }
-
-        .ws4 {
-            word-spacing: -7.857633px
-        }
-
-        .ws8 {
-            word-spacing: -7.54768px
-        }
-
-        .ws14 {
-            word-spacing: -7.500880px
-        }
-
-        .ws6 {
-            word-spacing: -7.49368px
-        }
-
-        .ws2 {
-            word-spacing: -7.33248px
-        }
-
-        .ws7 {
-            word-spacing: -7.013680px
-        }
-
-        .ws9 {
-            word-spacing: -6.47912px
-        }
-
-        .ws16 {
-            word-spacing: -6.34752px
-        }
-
-        .ws13 {
-            word-spacing: -6.192px
-        }
-
-        .ws11 {
-            word-spacing: -2.732181px
-        }
-
-        .ws18 {
-            word-spacing: 0
-        }
-
-        ._6 {
-            margin-left: -2.871733px
-        }
-
-        ._1 {
-            margin-left: -1.112267px
-        }
-
-        ._5 {
-            width: 1.006080px
-        }
-
-        ._0 {
-            width: 5.712px
-        }
-
-        ._3 {
-            width: 6.87168px
-        }
-
-        ._2 {
-            width: 7.904640px
-        }
-
-        ._4 {
-            width: 9.052800px
-        }
-
-        .fc3 {
-            color: transparent
-        }
-
-        .fc2 {
-            color: #333
-        }
-
-        .fc1 {
-            color: #fff
-        }
-
-        .fc0 {
-            color: #000
-        }
-
-        .fs6 {
-            font-size: 8.16px
-        }
-
-        .fs9 {
-            font-size: 20.16px
-        }
-
-        .fs8 {
-            font-size: 27.84px
-        }
-
-        .fs2 {
-            font-size: 32.16px
-        }
-
-        .fs5 {
-            font-size: 33.899278px
-        }
-
-        .fs3 {
-            font-size: 36px
-        }
-
-        .fsb {
-            font-size: 37.946952px
-        }
-
-        .fs7 {
-            font-size: 39.84px
-        }
-
-        .fs4 {
-            font-size: 41.994627px
-        }
-
-        .fs1 {
-            font-size: 44.16px
-        }
-
-        .fs0 {
-            font-size: 48px
-        }
-
-        .fsa {
-            font-size: 56.16px
-        }
-
-        .y2f {
-            bottom: -.84px
-        }
-
-        .y0 {
-            bottom: -.5px
-        }
-
-        .ye {
-            bottom: 0
-        }
-
-        .y10 {
-            bottom: .35999px
-        }
-
-        .y48 {
-            bottom: 1.44px
-        }
-
-        .y47 {
-            bottom: 1.92px
-        }
-
-        .y15 {
-            bottom: 2.16px
-        }
-
-        .y2 {
-            bottom: 2.52px
-        }
-
-        .y19 {
-            bottom: 2.64px
-        }
-
-        .y4b {
-            bottom: 2.88px
-        }
-
-        .y2b {
-            bottom: 3.12px
-        }
-
-        .y35 {
-            bottom: 3.24px
-        }
-
-        .y89 {
-            bottom: 4.8px
-        }
-
-        .y6e {
-            bottom: 5.040000px
-        }
-
-        .y38 {
-            bottom: 5.16px
-        }
-
-        .y1f {
-            bottom: 5.28px
-        }
-
-        .yb {
-            bottom: 5.52px
-        }
-
-        .y55 {
-            bottom: 5.64px
-        }
-
-        .y5b {
-            bottom: 5.88px
-        }
-
-        .y60 {
-            bottom: 5.91px
-        }
-
-        .y64 {
-            bottom: 6px
-        }
-
-        .y22 {
-            bottom: 6.12px
-        }
-
-        .y7 {
-            bottom: 6.36px
-        }
-
-        .y9 {
-            bottom: 6.48px
-        }
-
-        .y87 {
-            bottom: 7.8px
-        }
-
-        .y45 {
-            bottom: 7.92px
-        }
-
-        .y8b {
-            bottom: 8.064000px
-        }
-
-        .y25 {
-            bottom: 8.28px
-        }
-
-        .y1b {
-            bottom: 8.4px
-        }
-
-        .y20 {
-            bottom: 8.64px
-        }
-
-        .y1d {
-            bottom: 8.76px
-        }
-
-        .y26 {
-            bottom: 9px
-        }
-
-        .y1c {
-            bottom: 9.12px
-        }
-
-        .y88 {
-            bottom: 9.24px
-        }
-
-        .y28 {
-            bottom: 9.36px
-        }
-
-        .y68 {
-            bottom: 9.384px
-        }
-
-        .y5d {
-            bottom: 9.39px
-        }
-
-        .yd {
-            bottom: 9.48px
-        }
-
-        .y2d {
-            bottom: 9.6px
-        }
-
-        .y8c {
-            bottom: 9.624px
-        }
-
-        .y31 {
-            bottom: 9.72px
-        }
-
-        .y13 {
-            bottom: 9.84px
-        }
-
-        .y51 {
-            bottom: 9.96px
-        }
-
-        .y8e {
-            bottom: 9.984px
-        }
-
-        .y77 {
-            bottom: 9.99px
-        }
-
-        .y32 {
-            bottom: 10.080000px
-        }
-
-        .y58 {
-            bottom: 10.2px
-        }
-
-        .y69 {
-            bottom: 10.224px
-        }
-
-        .y5e {
-            bottom: 10.23px
-        }
-
-        .y56 {
-            bottom: 10.32px
-        }
-
-        .y79 {
-            bottom: 10.35px
-        }
-
-        .y2c {
-            bottom: 10.56px
-        }
-
-        .y6b {
-            bottom: 10.584px
-        }
-
-        .y61 {
-            bottom: 10.59px
-        }
-
-        .y5 {
-            bottom: 10.68px
-        }
-
-        .y21 {
-            bottom: 11.52px
-        }
-
-        .y8 {
-            bottom: 12.48px
-        }
-
-        .y4e {
-            bottom: 12.6px
-        }
-
-        .y1e {
-            bottom: 13.56px
-        }
-
-        .y16 {
-            bottom: 13.68px
-        }
-
-        .y14 {
-            bottom: 13.8px
-        }
-
-        .y8d {
-            bottom: 13.944px
-        }
-
-        .y24 {
-            bottom: 14.040000px
-        }
-
-        .y18 {
-            bottom: 14.16px
-        }
-
-        .y37 {
-            bottom: 14.28px
-        }
-
-        .y78 {
-            bottom: 14.31px
-        }
-
-        .y54 {
-            bottom: 14.4px
-        }
-
-        .y2a {
-            bottom: 14.64px
-        }
-
-        .y6a {
-            bottom: 14.664px
-        }
-
-        .y5f {
-            bottom: 14.67px
-        }
-
-        .y34 {
-            bottom: 14.76px
-        }
-
-        .y1a {
-            bottom: 16.56px
-        }
-
-        .y39 {
-            bottom: 16.68px
-        }
-
-        .y27 {
-            bottom: 17.28px
-        }
-
-        .y2e {
-            bottom: 17.52px
-        }
-
-        .y36 {
-            bottom: 17.64px
-        }
-
-        .y30 {
-            bottom: 18.6px
-        }
-
-        .y6 {
-            bottom: 19.080000px
-        }
-
-        .ya {
-            bottom: 19.32px
-        }
-
-        .y67 {
-            bottom: 19.44px
-        }
-
-        .y44 {
-            bottom: 20.040000px
-        }
-
-        .y71 {
-            bottom: 20.16px
-        }
-
-        .y8a {
-            bottom: 22.44px
-        }
-
-        .y4 {
-            bottom: 23.28px
-        }
-
-        .y4d {
-            bottom: 24px
-        }
-
-        .y4f {
-            bottom: 24.12px
-        }
-
-        .y49 {
-            bottom: 25.080000px
-        }
-
-        .y73 {
-            bottom: 25.2px
-        }
-
-        .yc {
-            bottom: 26.16px
-        }
-
-        .y6d {
-            bottom: 27.24px
-        }
-
-        .y3c {
-            bottom: 27.36px
-        }
-
-        .y43 {
-            bottom: 31.56px
-        }
-
-        .y4c {
-            bottom: 35.52px
-        }
-
-        .y42 {
-            bottom: 43.080000px
-        }
-
-        .y66 {
-            bottom: 46.344px
-        }
-
-        .y86 {
-            bottom: 47.904000px
-        }
-
-        .y41 {
-            bottom: 54.24px
-        }
-
-        .y40 {
-            bottom: 64.8px
-        }
-
-        .y65 {
-            bottom: 73.344px
-        }
-
-        .y85 {
-            bottom: 73.464px
-        }
-
-        .y3f {
-            bottom: 76.32px
-        }
-
-        .y53 {
-            bottom: 77.31px
-        }
-
-        .y63 {
-            bottom: 100.22px
-        }
-
-        .y84 {
-            bottom: 100.46px
-        }
-
-        .y62 {
-            bottom: 127.22px
-        }
-
-        .y83 {
-            bottom: 127.34px
-        }
-
-        .y52 {
-            bottom: 154.22px
-        }
-
-        .y82 {
-            bottom: 154.34px
-        }
-
-        .y5c {
-            bottom: 181.13px
-        }
-
-        .y81 {
-            bottom: 181.25px
-        }
-
-        .y5a {
-            bottom: 208.13px
-        }
-
-        .y80 {
-            bottom: 208.25px
-        }
-
-        .y59 {
-            bottom: 235.010000px
-        }
-
-        .y7f {
-            bottom: 235.13px
-        }
-
-        .y57 {
-            bottom: 262.010000px
-        }
-
-        .y7e {
-            bottom: 262.13px
-        }
-
-        .y50 {
-            bottom: 288.91px
-        }
-
-        .y7d {
-            bottom: 289.15px
-        }
-
-        .y3e {
-            bottom: 315.91px
-        }
-
-        .y7c {
-            bottom: 316.030000px
-        }
-
-        .y4a {
-            bottom: 327.31px
-        }
-
-        .y7b {
-            bottom: 343.030000px
-        }
-
-        .y3b {
-            bottom: 366.19px
-        }
-
-        .y7a {
-            bottom: 369.91px
-        }
-
-        .y46 {
-            bottom: 378.19px
-        }
-
-        .y3d {
-            bottom: 390.070000px
-        }
-
-        .y76 {
-            bottom: 396.91px
-        }
-
-        .y3a {
-            bottom: 407.62px
-        }
-
-        .y33 {
-            bottom: 413.74px
-        }
-
-        .y75 {
-            bottom: 423.94px
-        }
-
-        .y29 {
-            bottom: 439.3px
-        }
-
-        .y70 {
-            bottom: 451.54px
-        }
-
-        .y74 {
-            bottom: 462.94px
-        }
-
-        .y23 {
-            bottom: 464.74px
-        }
-
-        .y17 {
-            bottom: 490.3px
-        }
-
-        .y6c {
-            bottom: 501.94px
-        }
-
-        .y72 {
-            bottom: 513.94px
-        }
-
-        .y12 {
-            bottom: 515.74px
-        }
-
-        .y6f {
-            bottom: 525.7px
-        }
-
-        .y11 {
-            bottom: 540.36px
-        }
-
-        .yf {
-            bottom: 542.64px
-        }
-
-        .y3 {
-            bottom: 546px
-        }
-
-        .y1 {
-            bottom: 565.8px
-        }
-
-        .ha {
-            height: 5.944687px
-        }
-
-        .hb {
-            height: 8.482734px
-        }
-
-        .h23 {
-            height: 9.84px
-        }
-
-        .h1d {
-            height: 10.32px
-        }
-
-        .h2 {
-            height: 13.8px
-        }
-
-        .h17 {
-            height: 14.686875px
-        }
-
-        .h1a {
-            height: 15.48px
-        }
-
-        .h2e {
-            height: 15.504000px
-        }
-
-        .h7 {
-            height: 18.36px
-        }
-
-        .h1c {
-            height: 22.32px
-        }
-
-        .h12 {
-            height: 23.413359px
-        }
-
-        .h10 {
-            height: 23.429062px
-        }
-
-        .h14 {
-            height: 23.64px
-        }
-
-        .hf {
-            height: 24px
-        }
-
-        .hc {
-            height: 24.144px
-        }
-
-        .h31 {
-            height: 24.744px
-        }
-
-        .h15 {
-            height: 24.96px
-        }
-
-        .h16 {
-            height: 25.080000px
-        }
-
-        .h29 {
-            height: 25.44px
-        }
-
-        .h27 {
-            height: 25.464px
-        }
-
-        .h25 {
-            height: 25.56px
-        }
-
-        .h2a {
-            height: 26.16px
-        }
-
-        .h2c {
-            height: 26.184px
-        }
-
-        .h9 {
-            height: 26.208984px
-        }
-
-        .h13 {
-            height: 26.226562px
-        }
-
-        .h2b {
-            height: 26.28px
-        }
-
-        .h24 {
-            height: 27.626419px
-        }
-
-        .h11 {
-            height: 29.004609px
-        }
-
-        .hd {
-            height: 29.024063px
-        }
-
-        .h8 {
-            height: 30.573237px
-        }
-
-        .he {
-            height: 32.149687px
-        }
-
-        .h5 {
-            height: 32.17125px
-        }
-
-        .h4 {
-            height: 33.6px
-        }
-
-        .h6 {
-            height: 34.945312px
-        }
-
-        .h3 {
-            height: 34.96875px
-        }
-
-        .h22 {
-            height: 37.44px
-        }
-
-        .h2d {
-            height: 39.264px
-        }
-
-        .h18 {
-            height: 39.36px
-        }
-
-        .h28 {
-            height: 40.886016px
-        }
-
-        .h19 {
-            height: 41.598984px
-        }
-
-        .h21 {
-            height: 48.84px
-        }
-
-        .h1f {
-            height: 49.44px
-        }
-
-        .h20 {
-            height: 60.84px
-        }
-
-        .h1e {
-            height: 72.6px
-        }
-
-        .h30 {
-            height: 72.72px
-        }
-
-        .h1b {
-            height: 89.64px
-        }
-
-        .h2f {
-            height: 89.664px
-        }
-
-        .h26 {
-            height: 160.25px
-        }
-
-        .h0 {
-            height: 595.32px
-        }
-
-        .h1 {
-            height: 596px
-        }
-
-        .w2f {
-            width: 5.52px
-        }
-
-        .w21 {
-            width: 5.64px
-        }
-
-        .w11 {
-            width: 100%
-        }
-
-        .w23 {
-            width: 13.92px
-        }
-
-        .w24 {
-            width: 14.040000px
-        }
-
-        .w26 {
-            width: 14.28px
-        }
-
-        .w47 {
-            width: 15.36px
-        }
-
-        .w5a {
-            width: 15.6px
-        }
-
-        .w48 {
-            width: 15.72px
-        }
-
-        .w49 {
-            width: 15.84px
-        }
-
-        .w5b {
-            width: 15.864px
-        }
-
-        .w4a {
-            width: 15.96px
-        }
-
-        .w4f {
-            width: 17.64px
-        }
-
-        .w5f {
-            width: 17.88px
-        }
-
-        .w50 {
-            width: 18px
-        }
-
-        .w51 {
-            width: 18.12px
-        }
-
-        .w68 {
-            width: 18.6px
-        }
-
-        .w52 {
-            width: 18.84px
-        }
-
-        .w53 {
-            width: 18.864px
-        }
-
-        .w5c {
-            width: 18.96px
-        }
-
-        .w62 {
-            width: 19.080000px
-        }
-
-        .w64 {
-            width: 19.104000px
-        }
-
-        .w63 {
-            width: 19.32px
-        }
-
-        .w4c {
-            width: 19.68px
-        }
-
-        .w4e {
-            width: 19.8px
-        }
-
-        .w5d {
-            width: 19.92px
-        }
-
-        .w5e {
-            width: 20.040000px
-        }
-
-        .w4d {
-            width: 20.16px
-        }
-
-        .w1a {
-            width: 20.52px
-        }
-
-        .w44 {
-            width: 20.76px
-        }
-
-        .w19 {
-            width: 21px
-        }
-
-        .w43 {
-            width: 21.24px
-        }
-
-        .w2b {
-            width: 21.504000px
-        }
-
-        .w40 {
-            width: 22.104000px
-        }
-
-        .w60 {
-            width: 22.344px
-        }
-
-        .w41 {
-            width: 22.68px
-        }
-
-        .w67 {
-            width: 24.12px
-        }
-
-        .w42 {
-            width: 24.36px
-        }
-
-        .w61 {
-            width: 24.6px
-        }
-
-        .w13 {
-            width: 28.44px
-        }
-
-        .w20 {
-            width: 31.2px
-        }
-
-        .w1d {
-            width: 31.224px
-        }
-
-        .w1f {
-            width: 31.8px
-        }
-
-        .w1e {
-            width: 31.92px
-        }
-
-        .w1c {
-            width: 34.56px
-        }
-
-        .w1b {
-            width: 34.8px
-        }
-
-        .w30 {
-            width: 35.040000px
-        }
-
-        .w17 {
-            width: 35.16px
-        }
-
-        .w65 {
-            width: 35.64px
-        }
-
-        .wd {
-            width: 36px
-        }
-
-        .w3c {
-            width: 36.24px
-        }
-
-        .w3e {
-            width: 36.48px
-        }
-
-        .w32 {
-            width: 36.72px
-        }
-
-        .w58 {
-            width: 37.2px
-        }
-
-        .w45 {
-            width: 37.68px
-        }
-
-        .w46 {
-            width: 38.184px
-        }
-
-        .w33 {
-            width: 39.36px
-        }
-
-        .w3d {
-            width: 39.48px
-        }
-
-        .w55 {
-            width: 39.84px
-        }
-
-        .w3f {
-            width: 39.96px
-        }
-
-        .w59 {
-            width: 40.080000px
-        }
-
-        .w5 {
-            width: 42.24px
-        }
-
-        .w15 {
-            width: 42.6px
-        }
-
-        .w37 {
-            width: 44.304000px
-        }
-
-        .w7 {
-            width: 49.080000px
-        }
-
-        .w3 {
-            width: 49.68px
-        }
-
-        .w34 {
-            width: 49.824px
-        }
-
-        .w9 {
-            width: 55.68px
-        }
-
-        .w27 {
-            width: 55.704000px
-        }
-
-        .w16 {
-            width: 56.664px
-        }
-
-        .w56 {
-            width: 60px
-        }
-
-        .w2a {
-            width: 62.76px
-        }
-
-        .w2e {
-            width: 62.904000px
-        }
-
-        .w29 {
-            width: 63.144px
-        }
-
-        .w25 {
-            width: 63.24px
-        }
-
-        .w14 {
-            width: 63.72px
-        }
-
-        .wa {
-            width: 66.24px
-        }
-
-        .w38 {
-            width: 66.36px
-        }
-
-        .wb {
-            width: 66.384px
-        }
-
-        .w66 {
-            width: 67.104000px
-        }
-
-        .w4b {
-            width: 67.584px
-        }
-
-        .w31 {
-            width: 69.864px
-        }
-
-        .w3b {
-            width: 69.984px
-        }
-
-        .w57 {
-            width: 70.104000px
-        }
-
-        .w54 {
-            width: 70.344px
-        }
-
-        .wf {
-            width: 70.8px
-        }
-
-        .w36 {
-            width: 71.4px
-        }
-
-        .w39 {
-            width: 76.344px
-        }
-
-        .w22 {
-            width: 76.944px
-        }
-
-        .w8 {
-            width: 77.544px
-        }
-
-        .w12 {
-            width: 78.024000px
-        }
-
-        .w35 {
-            width: 79.8px
-        }
-
-        .w6 {
-            width: 84.504000px
-        }
-
-        .w2c {
-            width: 105px
-        }
-
-        .w10 {
-            width: 127.58px
-        }
-
-        .w4 {
-            width: 141.74px
-        }
-
-        .w2d {
-            width: 154.94px
-        }
-
-        .w3a {
-            width: 162.020000px
-        }
-
-        .w2 {
-            width: 177.26px
-        }
-
-        .w18 {
-            width: 260.69px
-        }
-
-        .w28 {
-            width: 302.69px
-        }
-
-        .we {
-            width: 304.25px
-        }
-
-        .wc {
-            width: 841.919987px
-        }
-
-        .w0 {
-            width: 841.92px
-        }
-
-        .w1 {
-            width: 842.5px
-        }
-
-        .x0 {
-            left: 0
-        }
-
-        .x29 {
-            left: 1.44px
-        }
-
-        .x1e {
-            left: 3px
-        }
-
-        .x1b {
-            left: 4.32px
-        }
-
-        .x4 {
-            left: 5.4px
-        }
-
-        .x2 {
-            left: 7.080000px
-        }
-
-        .x14 {
-            left: 8.52px
-        }
-
-        .xb {
-            left: 10.2px
-        }
-
-        .x40 {
-            left: 11.28px
-        }
-
-        .x33 {
-            left: 12.84px
-        }
-
-        .x1 {
-            left: 14.16px
-        }
-
-        .xc {
-            left: 15.36px
-        }
-
-        .x7 {
-            left: 17.64px
-        }
-
-        .x11 {
-            left: 18.72px
-        }
-
-        .x3b {
-            left: 20.040000px
-        }
-
-        .x32 {
-            left: 21.24px
-        }
-
-        .x31 {
-            left: 24.96px
-        }
-
-        .x50 {
-            left: 26.76px
-        }
-
-        .x10 {
-            left: 28.080000px
-        }
-
-        .x45 {
-            left: 30.36px
-        }
-
-        .x27 {
-            left: 31.68px
-        }
-
-        .x4f {
-            left: 33.72px
-        }
-
-        .x3a {
-            left: 35.28px
-        }
-
-        .xe {
-            left: 38.76px
-        }
-
-        .x9 {
-            left: 40.1px
-        }
-
-        .x39 {
-            left: 41.52px
-        }
-
-        .x17 {
-            left: 50.16px
-        }
-
-        .x2c {
-            left: 71.4px
-        }
-
-        .x15 {
-            left: 92.78px
-        }
-
-        .x2e {
-            left: 120.98px
-        }
-
-        .x2f {
-            left: 158.66px
-        }
-
-        .x16 {
-            left: 163.1px
-        }
-
-        .x3 {
-            left: 191.42px
-        }
-
-        .x2d {
-            left: 198.62px
-        }
-
-        .x30 {
-            left: 236.66px
-        }
-
-        .x5 {
-            left: 241.1px
-        }
-
-        .x4d {
-            left: 252.020000px
-        }
-
-        .x1f {
-            left: 260.69px
-        }
-
-        .x4e {
-            left: 268.010000px
-        }
-
-        .x34 {
-            left: 287.45px
-        }
-
-        .x2b {
-            left: 302.69px
-        }
-
-        .x46 {
-            left: 307.13px
-        }
-
-        .x20 {
-            left: 312.050000px
-        }
-
-        .x3c {
-            left: 327.77px
-        }
-
-        .x21 {
-            left: 333.050000px
-        }
-
-        .x47 {
-            left: 347.45px
-        }
-
-        .x18 {
-            left: 354.41px
-        }
-
-        .x35 {
-            left: 368.21px
-        }
-
-        .x6 {
-            left: 382.85px
-        }
-
-        .x48 {
-            left: 385.85px
-        }
-
-        .x22 {
-            left: 389.93px
-        }
-
-        .x49 {
-            left: 403.85px
-        }
-
-        .x4a {
-            left: 421.97px
-        }
-
-        .x8 {
-            left: 425.57px
-        }
-
-        .x36 {
-            left: 440.57px
-        }
-
-        .x23 {
-            left: 457.15px
-        }
-
-        .x3d {
-            left: 462.67px
-        }
-
-        .x37 {
-            left: 485.83px
-        }
-
-        .x24 {
-            left: 489.070000px
-        }
-
-        .xa {
-            left: 510.67px
-        }
-
-        .x25 {
-            left: 520.87px
-        }
-
-        .x3e {
-            left: 531.43px
-        }
-
-        .x19 {
-            left: 552.79px
-        }
-
-        .xd {
-            left: 560.23px
-        }
-
-        .x4b {
-            left: 572.11px
-        }
-
-        .x3f {
-            left: 591.91px
-        }
-
-        .x4c {
-            left: 610.75px
-        }
-
-        .x38 {
-            left: 630.7px
-        }
-
-        .xf {
-            left: 638.26px
-        }
-
-        .x26 {
-            left: 652.060000px
-        }
-
-        .x1a {
-            left: 666.34px
-        }
-
-        .x41 {
-            left: 682.18px
-        }
-
-        .x12 {
-            left: 695.5px
-        }
-
-        .x42 {
-            left: 697.9px
-        }
-
-        .x43 {
-            left: 713.74px
-        }
-
-        .x1c {
-            left: 730.060000px
-        }
-
-        .x28 {
-            left: 744.22px
-        }
-
-        .x44 {
-            left: 745.3px
-        }
-
-        .x2a {
-            left: 758.5px
-        }
-
-        .x13 {
-            left: 762.22px
-        }
-
-        .x1d {
-            left: 772.66px
-        }
-
         @media print {
-            .v0 {
-                vertical-align: 0
-            }
-
-            .ls16 {
-                letter-spacing: -2.688pt
-            }
-
-            .lsf {
-                letter-spacing: -.425067pt
-            }
-
-            .lsb {
-                letter-spacing: -.297067pt
-            }
-
-            .ls1a {
-                letter-spacing: -.225067pt
-            }
-
-            .lsc {
-                letter-spacing: -.192pt
-            }
-
-            .ls12 {
-                letter-spacing: -.128pt
-            }
-
-            .ls14 {
-                letter-spacing: -.064000pt
-            }
-
-            .ls18 {
-                letter-spacing: -.016000pt
-            }
-
-            .lsa {
-                letter-spacing: 0
-            }
-
-            .ls15 {
-                letter-spacing: .048000pt
-            }
-
-            .ls4 {
-                letter-spacing: .048640pt
-            }
-
-            .ls0 {
-                letter-spacing: .051271pt
-            }
-
-            .ls5 {
-                letter-spacing: .072320pt
-            }
-
-            .ls2 {
-                letter-spacing: .096000pt
-            }
-
-            .ls13 {
-                letter-spacing: .097067pt
-            }
-
-            .ls6 {
-                letter-spacing: .097280pt
-            }
-
-            .ls9 {
-                letter-spacing: .16pt
-            }
-
-            .lsd {
-                letter-spacing: .171464pt
-            }
-
-            .ls11 {
-                letter-spacing: .175467pt
-            }
-
-            .lse {
-                letter-spacing: .214933pt
-            }
-
-            .ls17 {
-                letter-spacing: .224533pt
-            }
-
-            .ls19 {
-                letter-spacing: .256pt
-            }
-
-            .ls8 {
-                letter-spacing: .272pt
-            }
-
-            .ls1 {
-                letter-spacing: .28672pt
-            }
-
-            .ls10 {
-                letter-spacing: .286933pt
-            }
-
-            .ls7 {
-                letter-spacing: .42496pt
-            }
-
-            .ls3 {
-                letter-spacing: .602880pt
-            }
-
-            .wsf {
-                word-spacing: -48pt
-            }
-
-            .ws19 {
-                word-spacing: -16.847573pt
-            }
-
-            .ws17 {
-                word-spacing: -14.848pt
-            }
-
-            .ws0 {
-                word-spacing: -14.592pt
-            }
-
-            .ws1 {
-                word-spacing: -14.4pt
-            }
-
-            .ws3 {
-                word-spacing: -12.766367pt
-            }
-
-            .wsc {
-                word-spacing: -12.208427pt
-            }
-
-            .wsb {
-                word-spacing: -12.16pt
-            }
-
-            .wsd {
-                word-spacing: -12.11136pt
-            }
-
-            .ws10 {
-                word-spacing: -11.104000pt
-            }
-
-            .ws12 {
-                word-spacing: -10.992pt
-            }
-
-            .ws5 {
-                word-spacing: -10.944pt
-            }
-
-            .ws15 {
-                word-spacing: -10.928pt
-            }
-
-            .wse {
-                word-spacing: -10.88pt
-            }
-
-            .wsa {
-                word-spacing: -10.816pt
-            }
-
-            .ws4 {
-                word-spacing: -10.476844pt
-            }
-
-            .ws8 {
-                word-spacing: -10.063573pt
-            }
-
-            .ws14 {
-                word-spacing: -10.001173pt
-            }
-
-            .ws6 {
-                word-spacing: -9.991573pt
-            }
-
-            .ws2 {
-                word-spacing: -9.77664pt
-            }
-
-            .ws7 {
-                word-spacing: -9.351573pt
-            }
-
-            .ws9 {
-                word-spacing: -8.638827pt
-            }
-
-            .ws16 {
-                word-spacing: -8.46336pt
-            }
-
-            .ws13 {
-                word-spacing: -8.256pt
-            }
-
-            .ws11 {
-                word-spacing: -3.642907pt
-            }
-
-            .ws18 {
-                word-spacing: 0
-            }
-
-            ._6 {
-                margin-left: -3.828977pt
-            }
-
-            ._1 {
-                margin-left: -1.483023pt
-            }
-
-            ._5 {
-                width: 1.34144pt
-            }
-
-            ._0 {
-                width: 7.616pt
-            }
-
-            ._3 {
-                width: 9.16224pt
-            }
-
-            ._2 {
-                width: 10.53952pt
-            }
-
-            ._4 {
-                width: 12.070400pt
-            }
-
-            .fs6 {
-                font-size: 10.88pt
-            }
-
-            .fs9 {
-                font-size: 26.88pt
-            }
-
-            .fs8 {
-                font-size: 37.12pt
-            }
-
-            .fs2 {
-                font-size: 42.88pt
-            }
-
-            .fs5 {
-                font-size: 45.199037pt
-            }
-
-            .fs3 {
-                font-size: 48pt
-            }
-
-            .fsb {
-                font-size: 50.595937pt
-            }
-
-            .fs7 {
-                font-size: 53.12pt
-            }
-
-            .fs4 {
-                font-size: 55.992837pt
-            }
-
-            .fs1 {
-                font-size: 58.88pt
-            }
-
-            .fs0 {
-                font-size: 64pt
-            }
-
-            .fsa {
-                font-size: 74.88pt
-            }
-
-            .y2f {
-                bottom: -1.12pt
-            }
-
-            .y0 {
-                bottom: -.666667pt
-            }
-
-            .ye {
-                bottom: 0
-            }
-
-            .y10 {
-                bottom: .479987pt
-            }
-
-            .y48 {
-                bottom: 1.92pt
-            }
-
-            .y47 {
-                bottom: 2.56pt
-            }
-
-            .y15 {
-                bottom: 2.88pt
-            }
-
-            .y2 {
-                bottom: 3.36pt
-            }
-
-            .y19 {
-                bottom: 3.52pt
-            }
-
-            .y4b {
-                bottom: 3.84pt
-            }
-
-            .y2b {
-                bottom: 4.16pt
-            }
-
-            .y35 {
-                bottom: 4.32pt
-            }
-
-            .y89 {
-                bottom: 6.4pt
-            }
-
-            .y6e {
-                bottom: 6.72pt
-            }
-
-            .y38 {
-                bottom: 6.88pt
-            }
-
-            .y1f {
-                bottom: 7.040000pt
-            }
-
-            .yb {
-                bottom: 7.36pt
-            }
-
-            .y55 {
-                bottom: 7.52pt
-            }
-
-            .y5b {
-                bottom: 7.84pt
-            }
-
-            .y60 {
-                bottom: 7.88pt
-            }
-
-            .y64 {
-                bottom: 8pt
-            }
-
-            .y22 {
-                bottom: 8.16pt
-            }
-
-            .y7 {
-                bottom: 8.48pt
-            }
-
-            .y9 {
-                bottom: 8.64pt
-            }
-
-            .y87 {
-                bottom: 10.4pt
-            }
-
-            .y45 {
-                bottom: 10.56pt
-            }
-
-            .y8b {
-                bottom: 10.752pt
-            }
-
-            .y25 {
-                bottom: 11.040000pt
-            }
-
-            .y1b {
-                bottom: 11.2pt
-            }
-
-            .y20 {
-                bottom: 11.52pt
-            }
-
-            .y1d {
-                bottom: 11.68pt
-            }
-
-            .y26 {
-                bottom: 12pt
-            }
-
-            .y1c {
-                bottom: 12.16pt
-            }
-
-            .y88 {
-                bottom: 12.32pt
-            }
-
-            .y28 {
-                bottom: 12.48pt
-            }
-
-            .y68 {
-                bottom: 12.512pt
-            }
-
-            .y5d {
-                bottom: 12.52pt
-            }
-
-            .yd {
-                bottom: 12.64pt
-            }
-
-            .y2d {
-                bottom: 12.8pt
-            }
-
-            .y8c {
-                bottom: 12.832pt
-            }
-
-            .y31 {
-                bottom: 12.96pt
-            }
-
-            .y13 {
-                bottom: 13.12pt
-            }
-
-            .y51 {
-                bottom: 13.28pt
-            }
-
-            .y8e {
-                bottom: 13.312pt
-            }
-
-            .y77 {
-                bottom: 13.32pt
-            }
-
-            .y32 {
-                bottom: 13.44pt
-            }
-
-            .y58 {
-                bottom: 13.6pt
-            }
-
-            .y69 {
-                bottom: 13.632pt
-            }
-
-            .y5e {
-                bottom: 13.64pt
-            }
-
-            .y56 {
-                bottom: 13.76pt
-            }
-
-            .y79 {
-                bottom: 13.8pt
-            }
-
-            .y2c {
-                bottom: 14.080000pt
-            }
-
-            .y6b {
-                bottom: 14.112pt
-            }
-
-            .y61 {
-                bottom: 14.12pt
-            }
-
-            .y5 {
-                bottom: 14.24pt
-            }
-
-            .y21 {
-                bottom: 15.36pt
-            }
-
-            .y8 {
-                bottom: 16.64pt
-            }
-
-            .y4e {
-                bottom: 16.8pt
-            }
-
-            .y1e {
-                bottom: 18.080000pt
-            }
-
-            .y16 {
-                bottom: 18.24pt
-            }
-
-            .y14 {
-                bottom: 18.4pt
-            }
-
-            .y8d {
-                bottom: 18.592pt
-            }
-
-            .y24 {
-                bottom: 18.72pt
-            }
-
-            .y18 {
-                bottom: 18.88pt
-            }
-
-            .y37 {
-                bottom: 19.040000pt
-            }
-
-            .y78 {
-                bottom: 19.080000pt
-            }
-
-            .y54 {
-                bottom: 19.2pt
-            }
-
-            .y2a {
-                bottom: 19.52pt
-            }
-
-            .y6a {
-                bottom: 19.552pt
-            }
-
-            .y5f {
-                bottom: 19.56pt
-            }
-
-            .y34 {
-                bottom: 19.68pt
-            }
-
-            .y1a {
-                bottom: 22.080000pt
-            }
-
-            .y39 {
-                bottom: 22.24pt
-            }
-
-            .y27 {
-                bottom: 23.040000pt
-            }
-
-            .y2e {
-                bottom: 23.36pt
-            }
-
-            .y36 {
-                bottom: 23.52pt
-            }
-
-            .y30 {
-                bottom: 24.8pt
-            }
-
-            .y6 {
-                bottom: 25.44pt
-            }
-
-            .ya {
-                bottom: 25.76pt
-            }
-
-            .y67 {
-                bottom: 25.92pt
-            }
-
-            .y44 {
-                bottom: 26.72pt
-            }
-
-            .y71 {
-                bottom: 26.88pt
-            }
-
-            .y8a {
-                bottom: 29.92pt
-            }
-
-            .y4 {
-                bottom: 31.040000pt
-            }
-
-            .y4d {
-                bottom: 32pt
-            }
-
-            .y4f {
-                bottom: 32.16pt
-            }
-
-            .y49 {
-                bottom: 33.44pt
-            }
-
-            .y73 {
-                bottom: 33.6pt
-            }
-
-            .yc {
-                bottom: 34.88pt
-            }
-
-            .y6d {
-                bottom: 36.32pt
-            }
-
-            .y3c {
-                bottom: 36.48pt
-            }
-
-            .y43 {
-                bottom: 42.080000pt
-            }
-
-            .y4c {
-                bottom: 47.36pt
-            }
-
-            .y42 {
-                bottom: 57.44pt
-            }
-
-            .y66 {
-                bottom: 61.792pt
-            }
-
-            .y86 {
-                bottom: 63.872pt
-            }
-
-            .y41 {
-                bottom: 72.32pt
-            }
-
-            .y40 {
-                bottom: 86.4pt
-            }
-
-            .y65 {
-                bottom: 97.792pt
-            }
-
-            .y85 {
-                bottom: 97.952pt
-            }
-
-            .y3f {
-                bottom: 101.76pt
-            }
-
-            .y53 {
-                bottom: 103.080000pt
-            }
-
-            .y63 {
-                bottom: 133.626667pt
-            }
-
-            .y84 {
-                bottom: 133.946667pt
-            }
-
-            .y62 {
-                bottom: 169.626667pt
-            }
-
-            .y83 {
-                bottom: 169.786667pt
-            }
-
-            .y52 {
-                bottom: 205.626667pt
-            }
-
-            .y82 {
-                bottom: 205.786667pt
-            }
-
-            .y5c {
-                bottom: 241.506667pt
-            }
-
-            .y81 {
-                bottom: 241.666667pt
-            }
-
-            .y5a {
-                bottom: 277.506667pt
-            }
-
-            .y80 {
-                bottom: 277.666667pt
-            }
-
-            .y59 {
-                bottom: 313.346667pt
-            }
-
-            .y7f {
-                bottom: 313.506667pt
-            }
-
-            .y57 {
-                bottom: 349.346667pt
-            }
-
-            .y7e {
-                bottom: 349.506667pt
-            }
-
-            .y50 {
-                bottom: 385.213333pt
-            }
-
-            .y7d {
-                bottom: 385.533333pt
-            }
-
-            .y3e {
-                bottom: 421.213333pt
-            }
-
-            .y7c {
-                bottom: 421.373333pt
-            }
-
-            .y4a {
-                bottom: 436.413333pt
-            }
-
-            .y7b {
-                bottom: 457.373333pt
-            }
-
-            .y3b {
-                bottom: 488.253333pt
-            }
-
-            .y7a {
-                bottom: 493.213333pt
-            }
-
-            .y46 {
-                bottom: 504.253333pt
-            }
-
-            .y3d {
-                bottom: 520.093333pt
-            }
-
-            .y76 {
-                bottom: 529.213333pt
-            }
-
-            .y3a {
-                bottom: 543.493333pt
-            }
-
-            .y33 {
-                bottom: 551.653333pt
-            }
-
-            .y75 {
-                bottom: 565.253333pt
-            }
-
-            .y29 {
-                bottom: 585.733333pt
-            }
-
-            .y70 {
-                bottom: 602.053333pt
-            }
-
-            .y74 {
-                bottom: 617.253333pt
-            }
-
-            .y23 {
-                bottom: 619.653333pt
-            }
-
-            .y17 {
-                bottom: 653.733333pt
-            }
-
-            .y6c {
-                bottom: 669.253333pt
-            }
-
-            .y72 {
-                bottom: 685.253333pt
-            }
-
-            .y12 {
-                bottom: 687.653333pt
-            }
-
-            .y6f {
-                bottom: 700.933333pt
-            }
-
-            .y11 {
-                bottom: 720.48pt
-            }
-
-            .yf {
-                bottom: 723.52pt
-            }
-
-            .y3 {
-                bottom: 728pt
-            }
-
-            .y1 {
-                bottom: 754.4pt
-            }
-
-            .ha {
-                height: 7.92625pt
-            }
-
-            .hb {
-                height: 11.310312pt
-            }
-
-            .h23 {
-                height: 13.12pt
-            }
-
-            .h1d {
-                height: 13.76pt
-            }
-
-            .h2 {
-                height: 18.4pt
-            }
-
-            .h17 {
-                height: 19.5825pt
-            }
-
-            .h1a {
-                height: 20.64pt
-            }
-
-            .h2e {
-                height: 20.672pt
-            }
-
-            .h7 {
-                height: 24.48pt
-            }
-
-            .h1c {
-                height: 29.76pt
-            }
-
-            .h12 {
-                height: 31.217812pt
-            }
-
-            .h10 {
-                height: 31.23875pt
-            }
-
-            .h14 {
-                height: 31.52pt
-            }
-
-            .hf {
-                height: 32pt
-            }
-
-            .hc {
-                height: 32.192pt
-            }
-
-            .h31 {
-                height: 32.992pt
-            }
-
-            .h15 {
-                height: 33.28pt
-            }
-
-            .h16 {
-                height: 33.44pt
-            }
-
-            .h29 {
-                height: 33.92pt
-            }
-
-            .h27 {
-                height: 33.952pt
-            }
-
-            .h25 {
-                height: 34.080000pt
-            }
-
-            .h2a {
-                height: 34.88pt
-            }
-
-            .h2c {
-                height: 34.912pt
-            }
-
-            .h9 {
-                height: 34.945312pt
-            }
-
-            .h13 {
-                height: 34.96875pt
-            }
-
-            .h2b {
-                height: 35.040000pt
-            }
-
-            .h24 {
-                height: 36.835225pt
-            }
-
-            .h11 {
-                height: 38.672812pt
-            }
-
-            .hd {
-                height: 38.69875pt
-            }
-
-            .h8 {
-                height: 40.764316pt
-            }
-
-            .he {
-                height: 42.86625pt
-            }
-
-            .h5 {
-                height: 42.895pt
-            }
-
-            .h4 {
-                height: 44.8pt
-            }
-
-            .h6 {
-                height: 46.59375pt
-            }
-
-            .h3 {
-                height: 46.625pt
-            }
-
-            .h22 {
-                height: 49.92pt
-            }
-
-            .h2d {
-                height: 52.352pt
-            }
-
-            .h18 {
-                height: 52.48pt
-            }
-
-            .h28 {
-                height: 54.514687pt
-            }
-
-            .h19 {
-                height: 55.465312pt
-            }
-
-            .h21 {
-                height: 65.12pt
-            }
-
-            .h1f {
-                height: 65.92pt
-            }
-
-            .h20 {
-                height: 81.12pt
-            }
-
-            .h1e {
-                height: 96.8pt
-            }
-
-            .h30 {
-                height: 96.96pt
-            }
-
-            .h1b {
-                height: 119.52pt
-            }
-
-            .h2f {
-                height: 119.552pt
-            }
-
-            .h26 {
-                height: 213.666667pt
-            }
-
-            .h0 {
-                height: 793.76pt
-            }
-
-            .h1 {
-                height: 794.666667pt
-            }
-
-            .w2f {
-                width: 7.36pt
-            }
-
-            .w21 {
-                width: 7.52pt
-            }
-
-            .w11 {
-                width: 9.44pt
-            }
-
-            .w23 {
-                width: 18.56pt
-            }
-
-            .w24 {
-                width: 18.72pt
-            }
-
-            .w26 {
-                width: 19.040000pt
-            }
-
-            .w47 {
-                width: 20.48pt
-            }
-
-            .w5a {
-                width: 20.8pt
-            }
-
-            .w48 {
-                width: 20.96pt
-            }
-
-            .w49 {
-                width: 21.12pt
-            }
-
-            .w5b {
-                width: 21.152pt
-            }
-
-            .w4a {
-                width: 21.28pt
-            }
-
-            .w4f {
-                width: 23.52pt
-            }
-
-            .w5f {
-                width: 23.84pt
-            }
-
-            .w50 {
-                width: 24pt
-            }
-
-            .w51 {
-                width: 24.16pt
-            }
-
-            .w68 {
-                width: 24.8pt
-            }
-
-            .w52 {
-                width: 25.12pt
-            }
-
-            .w53 {
-                width: 25.152pt
-            }
-
-            .w5c {
-                width: 25.28pt
-            }
-
-            .w62 {
-                width: 25.44pt
-            }
-
-            .w64 {
-                width: 25.472pt
-            }
-
-            .w63 {
-                width: 25.76pt
-            }
-
-            .w4c {
-                width: 26.24pt
-            }
-
-            .w4e {
-                width: 26.4pt
-            }
-
-            .w5d {
-                width: 26.56pt
-            }
-
-            .w5e {
-                width: 26.72pt
-            }
-
-            .w4d {
-                width: 26.88pt
-            }
-
-            .w1a {
-                width: 27.36pt
-            }
-
-            .w44 {
-                width: 27.68pt
-            }
-
-            .w19 {
-                width: 28pt
-            }
-
-            .w43 {
-                width: 28.32pt
-            }
-
-            .w2b {
-                width: 28.672pt
-            }
-
-            .w40 {
-                width: 29.472pt
-            }
-
-            .w60 {
-                width: 29.792pt
-            }
-
-            .w41 {
-                width: 30.24pt
-            }
-
-            .w67 {
-                width: 32.16pt
-            }
-
-            .w42 {
-                width: 32.48pt
-            }
-
-            .w61 {
-                width: 32.8pt
-            }
-
-            .w13 {
-                width: 37.92pt
-            }
-
-            .w20 {
-                width: 41.6pt
-            }
-
-            .w1d {
-                width: 41.632pt
-            }
-
-            .w1f {
-                width: 42.4pt
-            }
-
-            .w1e {
-                width: 42.56pt
-            }
-
-            .w1c {
-                width: 46.080000pt
-            }
-
-            .w1b {
-                width: 46.4pt
-            }
-
-            .w30 {
-                width: 46.72pt
-            }
-
-            .w17 {
-                width: 46.88pt
-            }
-
-            .w65 {
-                width: 47.52pt
-            }
-
-            .wd {
-                width: 48pt
-            }
-
-            .w3c {
-                width: 48.32pt
-            }
-
-            .w3e {
-                width: 48.64pt
-            }
-
-            .w32 {
-                width: 48.96pt
-            }
-
-            .w58 {
-                width: 49.6pt
-            }
-
-            .w45 {
-                width: 50.24pt
-            }
-
-            .w46 {
-                width: 50.912pt
-            }
-
-            .w33 {
-                width: 52.48pt
-            }
-
-            .w3d {
-                width: 52.64pt
-            }
-
-            .w55 {
-                width: 53.12pt
-            }
-
-            .w3f {
-                width: 53.28pt
-            }
-
-            .w59 {
-                width: 53.44pt
-            }
-
-            .w5 {
-                width: 56.32pt
-            }
-
-            .w15 {
-                width: 56.8pt
-            }
-
-            .w37 {
-                width: 59.072000pt
-            }
-
-            .w7 {
-                width: 65.44pt
-            }
-
-            .w3 {
-                width: 66.24pt
-            }
-
-            .w34 {
-                width: 66.432pt
-            }
-
-            .w9 {
-                width: 74.24pt
-            }
-
-            .w27 {
-                width: 74.272pt
-            }
-
-            .w16 {
-                width: 75.552pt
-            }
-
-            .w56 {
-                width: 80pt
-            }
-
-            .w2a {
-                width: 83.68pt
-            }
-
-            .w2e {
-                width: 83.872pt
-            }
-
-            .w29 {
-                width: 84.192pt
-            }
-
-            .w25 {
-                width: 84.32pt
-            }
-
-            .w14 {
-                width: 84.96pt
-            }
-
-            .wa {
-                width: 88.32pt
-            }
-
-            .w38 {
-                width: 88.48pt
-            }
-
-            .wb {
-                width: 88.512pt
-            }
-
-            .w66 {
-                width: 89.472pt
-            }
-
-            .w4b {
-                width: 90.112pt
-            }
-
-            .w31 {
-                width: 93.152pt
-            }
-
-            .w3b {
-                width: 93.312pt
-            }
-
-            .w57 {
-                width: 93.472pt
-            }
-
-            .w54 {
-                width: 93.792pt
-            }
-
-            .wf {
-                width: 94.4pt
-            }
-
-            .w36 {
-                width: 95.2pt
-            }
-
-            .w39 {
-                width: 101.792pt
-            }
-
-            .w22 {
-                width: 102.592pt
-            }
-
-            .w8 {
-                width: 103.392pt
-            }
-
-            .w12 {
-                width: 104.032000pt
-            }
-
-            .w35 {
-                width: 106.4pt
-            }
-
-            .w6 {
-                width: 112.672pt
-            }
-
-            .w2c {
-                width: 140pt
-            }
-
-            .w10 {
-                width: 170.106667pt
-            }
-
-            .w4 {
-                width: 188.986667pt
-            }
-
-            .w2d {
-                width: 206.586667pt
-            }
-
-            .w3a {
-                width: 216.026667pt
-            }
-
-            .w2 {
-                width: 236.346667pt
-            }
-
-            .w18 {
-                width: 347.586667pt
-            }
-
-            .w28 {
-                width: 403.586667pt
-            }
-
-            .we {
-                width: 405.666667pt
-            }
-
-            .wc {
-                width: 1122.559983pt
-            }
-
-            .w0 {
-                width: 1122.56pt
-            }
-
-            .w1 {
-                width: 1123.333333pt
-            }
-
-            .x0 {
-                left: 0
-            }
-
-            .x29 {
-                left: 1.92pt
-            }
-
-            .x1e {
-                left: 4pt
-            }
-
-            .x1b {
-                left: 5.76pt
-            }
-
-            .x4 {
-                left: 7.2pt
-            }
-
-            .x2 {
-                left: 9.44pt
-            }
-
-            .x14 {
-                left: 11.36pt
-            }
-
-            .xb {
-                left: 13.6pt
-            }
-
-            .x40 {
-                left: 15.040000pt
-            }
-
-            .x33 {
-                left: 17.12pt
-            }
-
-            .x1 {
-                left: 18.88pt
-            }
-
-            .xc {
-                left: 20.48pt
-            }
-
-            .x7 {
-                left: 23.52pt
-            }
-
-            .x11 {
-                left: 24.96pt
-            }
-
-            .x3b {
-                left: 26.72pt
-            }
-
-            .x32 {
-                left: 28.32pt
-            }
-
-            .x31 {
-                left: 33.28pt
-            }
-
-            .x50 {
-                left: 35.68pt
-            }
-
-            .x10 {
-                left: 37.44pt
-            }
-
-            .x45 {
-                left: 40.48pt
-            }
-
-            .x27 {
-                left: 42.24pt
-            }
-
-            .x4f {
-                left: 44.96pt
-            }
-
-            .x3a {
-                left: 47.040000pt
-            }
-
-            .xe {
-                left: 51.68pt
-            }
-
-            .x9 {
-                left: 53.466667pt
-            }
-
-            .x39 {
-                left: 55.36pt
-            }
-
-            .x17 {
-                left: 66.88pt
-            }
-
-            .x2c {
-                left: 95.2pt
-            }
-
-            .x15 {
-                left: 123.706667pt
-            }
-
-            .x2e {
-                left: 161.306667pt
-            }
-
-            .x2f {
-                left: 211.546667pt
-            }
-
-            .x16 {
-                left: 217.466667pt
-            }
-
-            .x3 {
-                left: 255.226667pt
-            }
-
-            .x2d {
-                left: 264.826667pt
-            }
-
-            .x30 {
-                left: 315.546667pt
-            }
-
-            .x5 {
-                left: 321.466667pt
-            }
-
-            .x4d {
-                left: 336.026667pt
-            }
-
-            .x1f {
-                left: 347.586667pt
-            }
-
-            .x4e {
-                left: 357.346667pt
-            }
-
-            .x34 {
-                left: 383.266667pt
-            }
-
-            .x2b {
-                left: 403.586667pt
-            }
-
-            .x46 {
-                left: 409.506667pt
-            }
-
-            .x20 {
-                left: 416.066667pt
-            }
-
-            .x3c {
-                left: 437.026667pt
-            }
-
-            .x21 {
-                left: 444.066667pt
-            }
-
-            .x47 {
-                left: 463.266667pt
-            }
-
-            .x18 {
-                left: 472.546667pt
-            }
-
-            .x35 {
-                left: 490.946667pt
-            }
-
-            .x6 {
-                left: 510.466667pt
-            }
-
-            .x48 {
-                left: 514.466667pt
-            }
-
-            .x22 {
-                left: 519.906667pt
-            }
-
-            .x49 {
-                left: 538.466667pt
-            }
-
-            .x4a {
-                left: 562.626667pt
-            }
-
-            .x8 {
-                left: 567.426667pt
-            }
-
-            .x36 {
-                left: 587.426667pt
-            }
-
-            .x23 {
-                left: 609.533333pt
-            }
-
-            .x3d {
-                left: 616.893333pt
-            }
-
-            .x37 {
-                left: 647.773333pt
-            }
-
-            .x24 {
-                left: 652.093333pt
-            }
-
-            .xa {
-                left: 680.893333pt
-            }
-
-            .x25 {
-                left: 694.493333pt
-            }
-
-            .x3e {
-                left: 708.573333pt
-            }
-
-            .x19 {
-                left: 737.053333pt
-            }
-
-            .xd {
-                left: 746.973333pt
-            }
-
-            .x4b {
-                left: 762.813333pt
-            }
-
-            .x3f {
-                left: 789.213333pt
-            }
-
-            .x4c {
-                left: 814.333333pt
-            }
-
-            .x38 {
-                left: 840.933333pt
-            }
-
-            .xf {
-                left: 851.013333pt
-            }
-
-            .x26 {
-                left: 869.413333pt
-            }
-
-            .x1a {
-                left: 888.453333pt
-            }
-
-            .x41 {
-                left: 909.573333pt
-            }
-
-            .x12 {
-                left: 927.333333pt
-            }
-
-            .x42 {
-                left: 930.533333pt
-            }
-
-            .x43 {
-                left: 951.653333pt
-            }
-
-            .x1c {
-                left: 973.413333pt
-            }
-
-            .x28 {
-                left: 992.293333pt
-            }
-
-            .x44 {
-                left: 993.733333pt
-            }
-
-            .x2a {
-                left: 1011.333333pt
-            }
-
-            .x13 {
-                left: 1016.293333pt
-            }
-
-            .x1d {
-                left: 1030.213333pt
+            .print-page {
+                margin: 10px;
+                page-break-inside: avoid;
             }
         }
     </style>
-</head>
-
-<body><img class="bi x0 y0 w1 h1" alt="wPfVHhOuY3UXQAAAABJRU5ErkJggg=="
-        src="data:image/png;base64,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">
-    <div class="c x1 y1 w2 h2">
-        <div class="t m0 x2 h3 y2 ff1 fs0 fc0 sc0 lsa ws18">Exposed Child Under 24 Months</div>
-    </div>
-    <div class="c x3 y3 w3 h4">
-        <div class="t m0 x4 h5 y4 ff2 fs1 fc0 sc0 lsa ws18">Unique</div>
-        <div class="t m0 x4 h5 y5 ff2 fs1 fc0 sc0 lsa ws18">Child ID</div>
-    </div>
-    <div class="c x5 y3 w4 h4">
-        <div class="t m0 x4 h5 y4 ff2 fs1 fc0 sc0 lsa ws18"></div>
-    </div>
-    <div class="c x6 y3 w5 h4">
-        <div class="t m0 x7 h5 y6 ff2 fs1 fc0 sc0 lsb ws18">HCC</div>
-        <div class="t m0 x2 h5 y7 ff2 fs1 fc0 sc0 lsa ws18">Reg No</div>
-    </div>
-    <div class="c x8 y3 w6 h4">
-        <div class="t m0 x9 h3 y8 ff2 fs0 fc0 sc0 lsa ws18"></div>
-    </div>
-    <div class="c xa y3 w7 h4">
-        <div class="t m0 xb h5 y6 ff2 fs1 fc0 sc0 lsa ws18">Transfer</div>
-        <div class="t m0 xc h6 y9 ff2 fs1 fc0 sc0 lsa ws18">in Date</div>
-    </div>
-    <div class="c xd y3 w8 h4">
-        <div class="t m0 xe h3 y8 ff2 fs0 fc0 sc0 lsa ws18"></div>
-    </div>
-    <div class="c xf y3 w9 h4">
-        <div class="t m0 x10 h6 ya ff3 fs0 fc0 sc0 lsa ws0">Bir<span class="lsc ws1">th</span></div>
-        <div class="t m0 x11 h3 yb ff3 fs0 fc0 sc0 lsa ws0">Cohort</div>
-    </div>
-    <div class="c x12 y3 wa h4">
-        <div class="t m0 x4 h6 yc ff2 fs2 fc0 sc0 lsa ws2">Month</div>
-    </div>
-    <div class="c x13 y3 wb h4">
-        <div class="t m0 x4 h6 yc ff2 fs2 fc0 sc0 lsa ws2">Year</div>
-    </div>
-    <div class="c x1 y3 w2 h7">
-        <div class="t m0 x14 h5 yd ff3 fs3 fc1 sc0 lsa ws18">Pink Card<span class="ff2 fs1 fc0">Version 3</span></div>
-        <div class="t m1 x15 h8 yd ff5 fs4 fc0 sc0 lsa ws3">D<span class="fs5 lsd ws4">ON</span><span
-                class="ff6 ls0">’</span><span class="fs5 ws18">T PHOTOCOPY<span class="fs4">!</span></span></div>
-        <div class="t m0 x16 h9 yd ff3 fs3 fc1 sc0 lsa ws18"></div>
-    </div>
-    <div class="c x0 ye wc h0">
-        <div class="t m0 x10 ha yf ff2 fs6 fc0 sc0 lsa ws18"></div>
-        <div class="t m0 x10 hb y10 ff7 fs6 fc0 sc0 lsa ws18"></div>
-        <div class="t m0 x10 hb y11 ff7 fs6 fc0 sc0 lsa ws18"></div>
-    </div>
-    <div class="c x1 y12 wd hc">
-        <div class="t m0 x2 hd y9 ff2 fs7 fc0 sc0 lsa ws18"></div>
-    </div>
-    <div class="c x17 y12 we hc">
-        <div class="t m0 x4 he y13 ff5 fs1 fc0 sc0 lsa ws18">C h i l d a n d G u a r d i a n D e t a i l s</div>
-    </div>
-    <div class="c x18 y12 wf hc">
-        <div class="t m0 x14 hd y9 ff2 fs7 fc0 sc0 lsa ws18"></div>
-    </div>
-    <div class="c x8 y12 w10 hc">
-        <div class="t m0 x2 he y13 ff5 fs1 fc0 sc0 lsa ws18">S t a t u s a t E n r o l m e n t</div>
-    </div>
-    <div class="c x19 y12 w11 hc">
-        <div class="t m0 x4 he y13 ff5 fs1 fc0 sc0 lsa ws18"></div>
-    </div>
-    <div class="c xd y12 w12 hc">
-        <div class="t m0 x0 he y14 ff5 fs1 fc0 sc0 lsa ws18">H I V T e s t i n g</div>
-        <div class="t m0 xc hd y15 ff2 fs7 fc0 sc0 lsa ws18">Sample Date</div>
-    </div>
-    <div class="c xf y12 w13 hc">
-        <div class="t m0 x4 hd y15 ff2 fs7 fc0 sc0 lsa ws18">Type</div>
-    </div>
-    <div class="c x1a y12 w14 hc">
-        <div class="t m0 xb hd y16 ff2 fs7 fc0 sc0 lsa ws18">Sample ID /</div>
-        <div class="t m0 x1b hd y15 ff2 fs7 fc0 sc0 lsa ws18">HTC Serial No.</div>
-    </div>
-    <div class="c x1c y12 w15 hc">
-        <div class="t m0 xb hd y15 ff2 fs7 fc0 sc0 lsa ws18">Result</div>
-    </div>
-    <div class="c x1d y12 w16 hc">
-        <div class="t m0 x1e hd y16 ff2 fs7 fc0 sc0 lsa ws18">Date received</div>
-        <div class="t m0 x1 hd y15 ff2 fs7 fc0 sc0 lsa ws18">from lab</div>
-    </div>
-    <div class="c x1 y17 w17 hf">
-        <div class="t m0 x0 hd y18 ff2 fs7 fc0 sc0 lsa ws18">Child</div>
-        <div class="t m0 x0 hd y19 ff2 fs7 fc0 sc0 lsa ws18">Name</div>
-    </div>
-    <div class="c x17 y17 w18 hf">John Snow<div class="t m0 x1f h10 y1a ff2 fs2 fc0 sc0 lsa ws18"></div>
-    </div>
-    <div class="c x20 y17 w19 hf">
-        <div class="t m0 x2 h11 y1b ff3 fs7 fc0 sc0 lsa ws18">M</div>
-    </div>
-    <div class="c x21 y17 w1a hf">
-        <div class="t m0 x2 h11 y1b ff3 fs7 fc0 sc0 lsa ws18">F</div>
-    </div>
-    <div class="c x18 y17 w1b hf">
-        <div class="t m0 xb h12 y1c ff3 fs2 fc0 sc0 lsa ws18">Mother</div>
-    </div>
-    <div class="c x22 y17 w1c hf">
-        <div class="t m0 x0 h13 y1d ff2 fs3 fc0 sc0 lsa ws18">Status</div>
-    </div>
-    <div class="c x8 y17 w1d hf">
-        <div class="t m0 x2 h13 y1e ff2 fs3 fc0 sc0 lsa ws18">Alive</div>
-        <div class="t m0 x1e h13 y1f ff2 fs3 fc0 sc0 lsa ws5">N<span class="fs2 ls1">o</span>A<span
-                class="fs2 lse ws6">RT</span></div>
-    </div>
-    <div class="c x23 y17 w1e hf">
-        <div class="t m0 x2 h13 y1e ff2 fs3 fc0 sc0 lsa ws18">Alive</div>
-        <div class="t m0 x1b h13 y1f ff2 fs3 fc0 sc0 ls2">O<span class="fs2 ls1">n</span><span
-                class="lsa ws5">A</span><span class="fs2 lsf ws7">RT</span></div>
-    </div>
-    <div class="c x24 y17 w1f hf">
-        <div class="t m0 x14 h13 y20 ff2 fs3 fc0 sc0 lsa ws5">D<span class="fs2 ws2">ied</span></div>
-    </div>
-    <div class="c x25 y17 w20 hf">
-        <div class="t m0 x14 hd y20 ff2 fs3 fc0 sc0 lsa ws5">U<span class="fs2 ls10 ws8">nk</span></div>
-    </div>
-    <div class="c x19 y17 w21 hf">
-        <div class="t m0 x1e h13 y21 ff2 fs3 fc0 sc0 lsa ws18"></div>
-    </div>
-    <div class="c xd y17 w22 hf">
-        <div class="t m0 xe hd y22 ff2 fs7 fc0 sc0 lsa ws18"></div>
-    </div>
-    <div class="c xf y17 w23 hf">
-        <div class="t m0 x0 h13 y1c ff2 fs3 fc0 sc0 lsa ws5">D<span class="fs8 ls11 ws9">BS</span></div>
-    </div>
-    <div class="c x26 y17 w24 hf">
-        <div class="t m0 x1e h13 y1c ff2 fs3 fc0 sc0 lsa ws5">R<span class="fs8 ls3">T</span></div>
-    </div>
-    <div class="c x1a y17 w25 hf">
-        <div class="t m0 x27 hd y22 ff2 fs7 fc0 sc0 lsa ws18"></div>
-    </div>
-    <div class="c x1c y17 w23 hf">
-        <div class="t m0 x0 h10 yd ff2 fs2 fc2 sc0 lsa ws18">Neg</div>
-    </div>
-    <div class="c x28 y17 w26 hf">
-        <div class="t m0 x29 h10 yd ff2 fs2 fc2 sc0 lsa ws18">Pos</div>
-    </div>
-    <div class="c x2a y17 w23 hf">
-        <div class="t m0 x1e h10 yd ff2 fs2 fc2 sc0 lsa ws18">Inc</div>
-    </div>
-    <div class="c x1d y17 w27 hf">
-        <div class="t m0 x10 hd y22 ff2 fs7 fc0 sc0 lsa ws18"></div>
-    </div>
-    <div class="c x1 y23 w17 h14">
-        <div class="t m0 x0 hd y24 ff2 fs7 fc0 sc0 lsa ws18">Guardian</div>
-        <div class="t m0 x0 hd y2 ff2 fs7 fc0 sc0 lsa ws18">Name</div>
-    </div>
-    <div class="c x17 y23 w28 h14">
-        <div class="t m0 x2b hd y25 ff2 fs7 fc0 sc0 lsa ws18"></div>
-    </div>
-    <div class="c x18 y23 w1b h14">
-        <div class="t m0 xb h10 y26 ff2 fs2 fc0 sc0 lsa ws18"></div>
-    </div>
-    <div class="c x22 y23 w1c h14">
-        <div class="t m0 xb h10 y26 ff2 fs2 fc0 sc0 lsa ws18">ART</div>
-    </div>
-    <div class="c x8 y23 w29 h14">
-        <div class="t m0 x0 h10 y27 ff2 fs2 fc2 sc0 lsa ws18">RegNo</div>
-    </div>
-    <div class="c x24 y23 w2a h14">
-        <div class="t m0 x0 h10 y27 ff2 fs2 fc2 sc0 lsa ws18">Start Date</div>
-    </div>
-    <div class="c x19 y23 w21 h14">
-        <div class="t m0 x0 h10 y27 ff2 fs2 fc2 sc0 lsa ws18"></div>
-    </div>
-    <div class="c xd y23 w22 h14">
-        <div class="t m0 x0 h10 y27 ff2 fs2 fc2 sc0 lsa ws18"></div>
-    </div>
-    <div class="c xf y23 w23 h14">
-        <div class="t m0 x0 h13 y26 ff2 fs3 fc0 sc0 lsa ws5">D<span class="fs8 ls11 ws9">BS</span></div>
-    </div>
-    <div class="c x26 y23 w24 h14">
-        <div class="t m0 x1e h13 y26 ff2 fs3 fc0 sc0 lsa ws5">R<span class="fs8 ls3">T</span></div>
-    </div>
-    <div class="c x1a y23 w25 h14">
-        <div class="t m0 x0 h10 y27 ff2 fs2 fc2 sc0 lsa ws18"></div>
-    </div>
-    <div class="c x1c y23 w23 h14">
-        <div class="t m0 x0 h10 y28 ff2 fs2 fc2 sc0 lsa ws18">Neg</div>
-    </div>
-    <div class="c x28 y23 w26 h14">
-        <div class="t m0 x29 h10 y28 ff2 fs2 fc2 sc0 lsa ws18">Pos</div>
-    </div>
-    <div class="c x2a y23 w23 h14">
-        <div class="t m0 x1e h10 y28 ff2 fs2 fc2 sc0 lsa ws18">Inc</div>
-    </div>
-    <div class="c x1d y23 w27 h14">
-        <div class="t m0 x0 h10 y27 ff2 fs2 fc2 sc0 lsa ws18"></div>
-    </div>
-    <div class="c x1 y29 w17 h15">
-        <div class="t m0 x0 hd y2a ff2 fs7 fc0 sc0 lsa ws18">Physical</div>
-        <div class="t m0 x0 hd y2b ff2 fs7 fc0 sc0 lsa ws18">Address</div>
-    </div>
-    <div class="c x17 y29 w28 h15">
-        <div class="t m0 x0 he y2c ff3 fs1 fc0 sc0 lsa ws18"></div>
-    </div>
-    <div class="c x18 y29 w1b h15">
-        <div class="t m0 xb h12 y2d ff3 fs2 fc0 sc0 lsa ws18">Child</div>
-    </div>
-    <div class="c x22 y29 w1c h15">
-        <div class="t m0 x29 h10 y2e ff2 fs2 fc0 sc0 lsa ws18">Enrolment</div>
-        <div class="t m0 x29 h10 y1b ff2 fs2 fc0 sc0 lsa ws18">Age (days)</div>
-        <div class="t m0 x0 h10 y2f ff2 fs2 fc0 sc0 lsa ws18"></div>
-    </div>
-    <div class="c x8 y29 w29 h15">
-        <div class="t m0 x0 h10 y30 ff2 fs2 fc2 sc0 ls10 ws8">2P</div>
-    </div>
-    <div class="c x24 y29 w2a h15">
-        <div class="t m0 x0 h10 y30 ff2 fs2 fc2 sc0 lsa ws18">NVP</div>
-    </div>
-    <div class="c x19 y29 w21 h15">
-        <div class="t m0 x0 h10 y30 ff2 fs2 fc2 sc0 lsa ws18"></div>
-    </div>
-    <div class="c xd y29 w22 h15">
-        <div class="t m0 x0 h10 y30 ff2 fs2 fc2 sc0 lsa ws18"></div>
-    </div>
-    <div class="c xf y29 w23 h15">
-        <div class="t m0 x0 h13 y31 ff2 fs3 fc0 sc0 lsa ws5">D<span class="fs8 ls11 ws9">BS</span></div>
-    </div>
-    <div class="c x26 y29 w24 h15">
-        <div class="t m0 x1e h13 y31 ff2 fs3 fc0 sc0 lsa ws5">R<span class="fs8 ls3">T</span></div>
-    </div>
-    <div class="c x1a y29 w25 h15">
-        <div class="t m0 x0 h10 y30 ff2 fs2 fc2 sc0 lsa ws18"></div>
-    </div>
-    <div class="c x1c y29 w23 h15">
-        <div class="t m0 x0 h10 y32 ff2 fs2 fc2 sc0 lsa ws18">Neg</div>
-    </div>
-    <div class="c x28 y29 w26 h15">
-        <div class="t m0 x29 h10 y32 ff2 fs2 fc2 sc0 lsa ws18">Pos</div>
-    </div>
-    <div class="c x2a y29 w23 h15">
-        <div class="t m0 x1e h10 y32 ff2 fs2 fc2 sc0 lsa ws18">Inc</div>
-    </div>
-    <div class="c x1d y29 w27 h15">
-        <div class="t m0 x0 h10 y30 ff2 fs2 fc2 sc0 lsa ws18"></div>
-    </div>
-    <div class="c x1 y33 w17 h16">
-        <div class="t m0 x0 hd y34 ff2 fs7 fc0 sc0 lsa ws18">Agrees</div>
-        <div class="t m0 x0 hd y35 ff2 fs7 fc0 sc0 lsa ws18">to FUP</div>
-    </div>
-    <div class="c x17 y33 w1a h16">
-        <div class="t m0 x2 h11 y26 ff3 fs7 fc0 sc0 lsa ws18">N</div>
-    </div>
-    <div class="c x2c y33 w2b h16">
-        <div class="t m0 x2 h11 y26 ff3 fs7 fc0 sc0 lsa ws18">Y</div>
-    </div>
-    <div class="c x15 y33 w2c h16">
-        <div class="t m0 x29 h10 y36 ff2 fs2 fc0 sc0 lsa ws18">Guardian</div>
-        <div class="t m0 x29 h10 y1b ff2 fs2 fc0 sc0 lsa ws18">Relation</div>
-    </div>
-    <div class="c x2d y33 w2d h16">
-        <div class="t m0 x0 h10 y36 ff2 fs2 fc0 sc0 lsa ws18">Guardian</div>
-        <div class="t m0 x0 h10 y1b ff2 fs2 fc0 sc0 lsa ws18">Phone</div>
-    </div>
-    <div class="c x18 y33 w1b h16">
-        <div class="t m0 xb h10 y31 ff2 fs2 fc0 sc0 lsa ws18"></div>
-    </div>
-    <div class="c x22 y33 w1c h16">
-        <div class="t m0 x1b h10 y37 ff2 fs2 fc0 sc0 lsa ws18">Duration</div>
-        <div class="t m0 x2 h10 y38 ff2 fs2 fc0 sc0 lsa ws18">(Days)</div>
-    </div>
-    <div class="c x8 y33 w2e h16">
-        <div class="t m0 x0 h13 y39 ff2 fs3 fc0 sc0 ls12 wsa">2P</div>
-    </div>
-    <div class="c x24 y33 w2a h16">
-        <div class="t m0 x0 h9 y39 ff4 fs3 fc0 sc0 lsa ws18">NVP</div>
-    </div>
-    <div class="c x19 y33 w2f h16">
-        <div class="t m0 x4 he y34 ff3 fs1 fc2 sc0 lsa ws18"></div>
-    </div>
-    <div class="c xd y33 w22 h16">
-        <div class="t m0 x4 he y34 ff3 fs1 fc2 sc0 lsa ws18"></div>
-    </div>
-    <div class="c xf y33 w23 h16">
-        <div class="t m0 x0 h13 y31 ff2 fs3 fc0 sc0 lsa ws5">D<span class="fs8 ls11 ws9">BS</span></div>
-    </div>
-    <div class="c x26 y33 w24 h16">
-        <div class="t m0 x1e h13 y31 ff2 fs3 fc0 sc0 lsa ws5">R<span class="fs8 ls3">T</span></div>
-    </div>
-    <div class="c x1a y33 w25 h16">
-        <div class="t m0 x4 he y34 ff3 fs1 fc2 sc0 lsa ws18"></div>
-    </div>
-    <div class="c x1c y33 w23 h16">
-        <div class="t m0 x0 h10 y32 ff2 fs2 fc2 sc0 lsa ws18">Neg</div>
-    </div>
-    <div class="c x28 y33 w26 h16">
-        <div class="t m0 x29 h10 y32 ff2 fs2 fc2 sc0 lsa ws18">Pos</div>
-    </div>
-    <div class="c x2a y33 w23 h16">
-        <div class="t m0 x1e h10 y32 ff2 fs2 fc2 sc0 lsa ws18">Inc</div>
-    </div>
-    <div class="c x1d y33 w27 h16">
-        <div class="t m0 x4 he y34 ff3 fs1 fc2 sc0 lsa ws18"></div>
-    </div>
-    <div class="c x0 ye wc h0">
-        <div class="t m0 x10 h17 y3a ff2 fs9 fc0 sc0 lsa ws18"></div>
-    </div>
-    <div class="c x1 y3b w30 h18">
-        <div class="t m0 x2 h11 y3c ff4 fs7 fc0 sc0 lsa ws18">Select</div>
-        <div class="t m0 x7 h11 y36 ff4 fs7 fc0 sc0 lsa ws18">row</div>
-        <div class="t m0 x14 h19 y38 ff4 fs7 fc0 sc0 ls4 wsb">for<span class="ff8 fsa sc1 ls5"></span></div>
-    </div>
-    <div class="c x17 y3d w31 h1a">
-        <div class="t m0 x7 hd y15 ff2 fs7 fc0 sc0 lsa ws18">Birth Date</div>
-    </div>
-    <div class="c x2e y3d w32 h1a">
-        <div class="t m0 x7 hd y15 ff2 fs7 fc0 sc0 lsa ws18"></div>
-    </div>
-    <div class="c x2f y3d w33 h1a">
-        <div class="t m0 x1e hd y15 ff2 fs7 fc0 sc0 lsa ws18">Birth Wgt</div>
-    </div>
-    <div class="c x2d y3d w32 h1a">
-        <div class="t m0 x7 hd y15 ff2 fs7 fc0 sc0 lsa ws18"></div>
-    </div>
-    <div class="c x30 y3e w34 h1b">
-        <div class="t m0 x2 hd y3f ff2 fs7 fc0 sc0 lsa ws18">Wasting /</div>
-        <div class="t m0 x1e hd y40 ff2 fs7 fc0 sc0 lsa ws18">Malnutrition</div>
-        <div class="t m0 x31 h13 y41 ff2 fs3 fc0 sc0 lsa ws18"></div>
-        <div class="t m0 x2 h11 y42 ff4 fs7 fc0 sc0 lsa ws18">Based on</div>
-        <div class="t m0 xb hd y43 ff2 fs7 fc0 sc0 lsa ws18">Wt / Hgt</div>
-        <div class="t m0 x32 hd y44 ff2 fs7 fc0 sc0 ls13 wsc">or</div>
-        <div class="t m0 x33 hd y2 ff2 fs7 fc0 sc0 lsa wsd">MUAC</div>
-    </div>
-    <div class="c x34 y3d w35 h1a">
-        <div class="t m0 x33 hd y15 ff2 fs7 fc0 sc0 lsa ws18">Breast feeding</div>
-    </div>
-    <div class="c x35 y3d w36 h1a">
-        <div class="t m0 xb hd y15 ff2 fs7 fc0 sc0 lsa ws18">Mother Status</div>
-    </div>
-    <div class="c x36 y3d w37 h1a">
-        <div class="t m0 x29 hd y15 ff2 fs7 fc0 sc0 lsa ws18">Clin. Monit<span class="fs3">.</span></div>
-    </div>
-    <div class="c x37 y3d w38 h1a">
-        <div class="t m0 x33 hd y15 ff2 fs7 fc0 sc0 lsa ws18">HIV testing</div>
-    </div>
-    <div class="c x19 y3d w39 h1a">
-        <div class="t m0 x1 hd y15 ff2 fs7 fc0 sc0 lsa ws18">HIV infection</div>
-    </div>
-    <div class="c x38 y3d w17 h1a">
-        <div class="t m0 x14 hd y15 ff2 fs7 fc0 sc0 lsa wsd">CPT</div>
-    </div>
-    <div class="c x1a y3d w3a h1a">
-        <div class="t m0 x39 hd y15 ff2 fs7 fc0 sc0 lsa ws18">Follow<span class="ff9 ls6">–</span>Up Outcome</div>
-    </div>
-    <div class="c x17 y3b w3b h1c">
-        <div class="t m0 x3a h13 y45 ff2 fs3 fc0 sc0 lsa ws18"></div>
-    </div>
-    <div class="c x2e y3b w3c h1c">
-        <div class="t m0 x7 h13 y45 ff2 fs3 fc0 sc0 lsa ws18"></div>
-    </div>
-    <div class="c x2f y3b w3d h1c">
-        <div class="t m0 x3b h13 y45 ff2 fs3 fc0 sc0 lsa ws18"></div>
-    </div>
-    <div class="c x2d y3b w3e h1c">
-        <div class="t m0 x7 h13 y45 ff2 fs3 fc0 sc0 lsa ws18"></div>
-    </div>
-    <div class="c x34 y46 w33 h1d">
-        <div class="t m0 x4 h13 y47 ff2 fs3 fc0 sc0 lsa ws18">Ongoing</div>
-    </div>
-    <div class="c x3c y46 w3f h1d">
-        <div class="t m0 x2 h13 y47 ff2 fs3 fc0 sc0 lsa ws18">Stopped</div>
-    </div>
-    <div class="c x35 y46 w36 h1d">
-        <div class="t m0 x1b h9 y47 ff4 fs3 fc0 sc0 lsa ws18">Check Adherence!</div>
-    </div>
-    <div class="c x36 y3e w40 h1e">
-        <div class="t m2 x1 h13 y48 ff2 fs3 fc0 sc0 lsa ws18">Noth. Abnorm. D<span class="ls12 wsa v0">et</span><span
-                class="v0">.</span></div>
-    </div>
-    <div class="c x3d y3e w41 h1e">
-        <div class="t m2 xc h13 y48 ff2 fs3 fc0 sc0 lsa ws18">Any sickness</div>
-    </div>
-    <div class="c x37 y3e w42 h1e">
-        <div class="t m2 xc h13 y48 ff2 fs3 fc0 sc0 lsa ws18">Not done</div>
-    </div>
-    <div class="c xa y3e w43 h1e">
-        <div class="t m2 x33 h13 y48 ff2 fs3 fc0 sc0 lsa ws18">DBS taken<span class="v0">(PCR)</span></div>
-    </div>
-    <div class="c x3e y3e w44 h1e">
-        <div class="t m2 x33 h13 y48 ff2 fs3 fc0 sc0 lsa ws18">Rapid test don<span class="v0">e</span></div>
-    </div>
-    <div class="c x19 y46 w45 h1d">
-        <div class="t m0 x29 h13 y47 ff2 fs3 fc0 sc0 lsa ws18">Confirmed</div>
-    </div>
-    <div class="c x3f y46 w46 h1d">
-        <div class="t m0 x1b h13 y47 ff2 fs3 fc0 sc0 lsa ws18">Not conf.</div>
-    </div>
-    <div class="c x38 y3b w17 h1c">
-        <div class="t m0 x14 h13 y45 ff2 fs3 fc0 sc0 lsa ws18">given</div>
-    </div>
-    <div class="c x1a y3e w47 h1e">
-        <div class="t m2 x40 hd y48 ff2 fs7 fc0 sc0 lsa ws18">Continue FUP</div>
-    </div>
-    <div class="c x41 y3e w48 h1e">
-        <div class="t m2 x40 hd y48 ff2 fs7 fc0 sc0 lsa ws18">Disch. uninfected</div>
-    </div>
-    <div class="c x42 y3e w49 h1e">
-        <div class="t m2 xb hd y48 ff2 fs7 fc0 sc0 lsa ws18">Started ART</div>
-    </div>
-    <div class="c x43 y3e w49 h1e">
-        <div class="t m2 x40 hd y48 ff2 fs7 fc0 sc0 lsa ws18">Transfer out</div>
-    </div>
-    <div class="c x1c y3e w48 h1e">
-        <div class="t m2 x40 hd y48 ff2 fs7 fc0 sc0 lsa wsd">Defaulted</div>
-    </div>
-    <div class="c x44 y3e w4a h1e">
-        <div class="t m2 x40 hd y48 ff2 fs7 fc0 sc0 lsa ws18">Died</div>
-    </div>
-    <div class="c x13 y3e w4b h1e">
-        <div class="t m0 x29 hd y49 ff2 fs7 fc0 sc0 lsa ws18">Next Appointment</div>
-        <div class="t m0 x45 hd y16 ff2 fs7 fc0 sc0 ls13 wsc">or</div>
-        <div class="t m0 x2 hd y15 ff2 fs7 fc0 sc0 lsa ws18">Outcome Date</div>
-    </div>
-    <div class="c x34 y4a w4c h1f">
-        <div class="t m2 x33 h13 ye ff2 fs3 fc0 sc0 lsa ws5">Exclusive</div>
-    </div>
-    <div class="c x46 y4a w4d h1f">
-        <div class="t m2 x14 h13 ye ff2 fs3 fc0 sc0 lsa ws18">Mixed /</div>
-        <div class="t m2 x7 h13 ye ff2 fs3 fc0 sc0 lsa ws5">Complement<span class="ws18 v0">.</span></div>
-    </div>
-    <div class="c x3c y4a w4c h1f">
-        <div class="t m2 x33 h13 ye ff2 fs3 fc0 sc0 lsa ws18">In last 6 weeks</div>
-    </div>
-    <div class="c x47 y4a w4e h1f">
-        <div class="t m2 x33 h13 ye ff2 fs3 fc0 sc0 lsa ws18">Over 6 w. ago</div>
-    </div>
-    <div class="c x35 y3e w4f h20">
-        <div class="t m2 x40 h13 y48 ff2 fs3 fc0 sc0 lsa ws18">Not on ART</div>
-    </div>
-    <div class="c x48 y3e w50 h20">
-        <div class="t m2 x40 h13 y48 ff2 fs3 fc0 sc0 lsa ws18">ART Adherent</div>
-    </div>
-    <div class="c x49 y3e w51 h20">
-        <div class="t m2 x33 h13 y48 ff2 fs3 fc0 sc0 lsa ws18">Died</div>
-    </div>
-    <div class="c x4a y3e w4f h20">
-        <div class="t m2 x40 h13 y48 ff2 fs3 fc0 sc0 lsa ws5">Unknown</div>
-    </div>
-    <div class="c x19 y3e w52 h20">
-        <div class="t m2 x33 h13 y4b ff2 fs3 fc0 sc0 lsa ws18">Not infected</div>
-    </div>
-    <div class="c x4b y3e w52 h20">
-        <div class="t m2 x33 h13 y4b ff2 fs3 fc0 sc0 ls14 wse">In<span class="lsa ws18">fected<span
-                    class="ffa wsf">→<span class="ff4 ws5">ART!</span></span></span></div>
-    </div>
-    <div class="c x3f y3e w52 h20">
-        <div class="t m2 x33 h13 y4b ff2 fs3 fc0 sc0 lsa ws18">Not ART eligible</div>
-    </div>
-    <div class="c x4c y3e w53 h20">
-        <div class="t m2 x33 h13 y4b ff2 fs3 fc0 sc0 lsa ws5">PSHD<span class="ffa wsf">→</span><span
-                class="ff4">ART!</span></div>
-    </div>
-    <div class="c x1 y3e w30 h21">
-        <div class="t m0 x29 h11 y4c ff3 fs7 fc0 sc0 lsa ws18">Current</div>
-        <div class="t m0 x29 hd y4d ff3 fs7 fc0 sc0 lsa ws18">Age in</div>
-        <div class="t m0 x29 h11 y4e ff3 fs7 fc0 sc0 lsa ws18">months</div>
-    </div>
-    <div class="c x17 y4a w54 h22">
-        <div class="t m0 x7 hd y4f ff2 fs7 fc0 sc0 lsa ws18">Visit Date</div>
-    </div>
-    <div class="c x2e y4a w32 h22">
-        <div class="t m0 x2 hd y4f ff2 fs7 fc0 sc0 lsa ws18">Height</div>
-    </div>
-    <div class="c x2f y4a w55 h22">
-        <div class="t m0 x2 hd y4f ff2 fs7 fc0 sc0 lsa ws18">Weight</div>
-    </div>
-    <div class="c x2d y4a w32 h22">
-        <div class="t m0 x4 hd y4f ff2 fs7 fc0 sc0 lsa ws18">MUAC</div>
-    </div>
-    <div class="c x38 y3e w17 h21">
-        <div class="t m0 x1e h13 y47 ff2 fs3 fc0 sc0 lsa ws18">ml / tabs</div>
-    </div>
-    <div class="c x17 y3e w31 h23">
-        <div class="t m0 x4 h13 y48 ff2 fs3 fc0 sc0 lsa ws18">day / month / year</div>
-    </div>
-    <div class="c x2e y3e w32 h23">
-        <div class="t m0 x33 h13 y48 ff2 fs3 fc0 sc0 ls9 ws10">cm</div>
-    </div>
-    <div class="c x2f y3e w33 h23">
-        <div class="t m0 xc h13 y48 ff2 fs3 fc0 sc0 ls9 ws10">kg</div>
-    </div>
-    <div class="c x2d y3e w32 h23">
-        <div class="t m0 x33 h13 y48 ff2 fs3 fc0 sc0 ls9 ws10">cm</div>
-    </div>
-    <div class="c x34 y3e w56 h23">
-        <div class="t m1 x14 h24 y48 ff5 fsb fc0 sc0 lsa ws11">E x p o s e d</div>
-        <div class="t m0 x17 h13 y48 ff2 fs3 fc0 sc0 lsa ws18"></div>
-    </div>
-    <div class="c x47 y3e w4e h23">
-        <div class="t m0 xb h13 y48 ff2 fs3 fc0 sc0 lsa ws18"></div>
-    </div>
-    <div class="c x1 y50 w1c h25">
-        <div class="t m0 x32 h3 y1c ff2 fs0 fc0 sc0 lsa ws18">0</div>
-    </div>
-
-<% @initial_left = 150.16
-   @shift = @initial_left
-   @left = [90, 70, 150, 60, 80, 100, 100, 100, 140, 100, 80, 150]
-   @initial_bottom = 520.91
-   @bottom = @initial_bottom %>
-
-<% (1..11).each do |i| %>
-
-    <div 
-    style="
-            left: <%= @shift %>px;
-            bottom: <%= @bottom %>px;
-            width: 70.104000px;
-            height: 25.56px
-    " class="c bold"
-    >
-        <div>aaa</div>
-    </div>
-    <div style="
-                left: <%= @shift += @left[0] %>px;
-                bottom: <%= @bottom %>px;
-                width: 70.104000px;
-                height: 25.56px
-        " class="c bold">
-        <div>bbb</div>
-    </div>
-    <div style="
-                    left: <%= @shift += @left[1] %>px;
-                     bottom: <%= @bottom %>px;
-                    width: 70.104000px;
-                    height: 25.56px
-            " class="c bold">
-        <div>ccc</div>
-    </div>
-
-    <div style="
-                        left: <%= @shift += @left[2] %>px;
-                         bottom: <%= @bottom %>px;
-                        width: 70.104000px;
-                        height: 25.56px
-                " class="c bold">
-        <div>ddd</div>
-    </div>
-
-    <div style="
-                           left: <%= @shift += @left[3] %>px;
-                             bottom: <%= @bottom %>px;
-                            width: 70.104000px;
-                            height: 25.56px
-                    " class="c bold">
-        <div>eee</div>
-    </div>
-
-    <div style="
-                                    left: <%= @shift += @left[4] %>px;
-                             bottom: <%= @bottom %>px;
-                            width: 70.104000px;
-                            height: 25.56px
-                    " class="c bold">
-        <div>fff</div>
-        
-    </div>
-
-    <div style="
-                                    left: <%= @shift += @left[5] %>px;
-                             bottom: <%= @bottom %>px;
-                            width: 70.104000px;
-                            height: 25.56px
-                    " class="c bold">
-        <div>ggg</div>
-    </div>
-
-    <div style="
-                                       left: <%= @shift += @left[6] %>px;
-                                 bottom: <%= @bottom %>px;
-                                width: 70.104000px;
-                                height: 25.56px
-                        " class="c bold">
-        <div>hhh</div>
-    </div>
-
-    <div style="
-                                           left: <%= @shift += @left[7] %>px;
-                                     bottom: <%= @bottom %>px;
-                                    width: 70.104000px;
-                                    height: 25.56px
-                            " class="c bold">
-        <div>iii</div>
-    </div>
-
-    <div style="
-                                                left: <%= @shift += @left[8] %>px;
-                                         bottom: <%= @bottom %>px;
-                                        width: 70.104000px;
-                                        height: 25.56px
-                                " class="c bold">
-        <div>hhh</div>
-    </div>
-
-    <div style="
-                                               left: <%= @shift += @left[9] %>px;
-                                         bottom: <%= @bottom %>px;
-                                        width: 70.104000px;
-                                        height: 25.56px
-                                " class="c bold">
-        <div>hhh</div>
-    </div>
-
-    <div style="
-                                                left: <%= @shift += @left[10] %>px;
-                                         bottom: <%= @bottom %>px;
-                                        width: 70.104000px;
-                                        height: 25.56px
-                                " class="c bold">
-        <div>hhh</div>
-    </div>
-
-    <div style="
-                                                left: <%= @shift += @left[11] %>px;
-                                         bottom: <%= @bottom %>px;
-                                        width: 70.104000px;
-                                        height: 25.56px
-                                " class="c bold">
-        <div>hhh</div>
-    </div>
-
-<% @shift = @initial_left
-     @bottom -= 45 if i >= 6
-     next if i >= 6
-     @bottom -= 50 end %>
-
+  </head>
+  <body>
+    <div class='print'>
+      <table style="width:100%;margin-bottom: 15px;">
+        <tr>
+          <td>
+            <b>
+            ART Patient Card Paediatric ARV Formulations
+            </b>
+            <br/>
+            <div style="background-color:#00B0F0;padding:.5em;width:15vw;font-weight:bold;">
+            Blue Card
+            </div>
+          </td>
+          <td>Version 9</td>
+          <td>Transfer-<br/>In Date</td>
+          <td style="border: 2px solid black;width:13%;">
+            <%= @data["transfer_in_date"] %>
+          </td>
+          <td>ART Reg no</td>
+          <td style="border: 2px solid black;width:13%;">
+            <%= @data["art_number"] %>
+          </td>
+          <td>Year</td>
+          <td style="border: 2px solid black;width:7%;">
+            <%= @data["created_at"] ? @data["created_at"].strftime('%y') : '' %> 
+          </td>
+        </tr>
+      </table>
+      <table style='margin-bottom: 10px;' cellspacing='0' border='0'>
+        <tr>
+          <td
+                        colspan='13'
+                        style='border-top: 2px solid #000000; border-left: 2px solid #000000'
+                        align='left'
+                        valign='top '>
+            <b>
+              <font face='Times New Roman'    color='#000000'>Patient / Guardian Details</font>
+            </b>
+          </td>
+          <td
+                        colspan='9'
+                        style='border-top: 2px solid #000000; border-left: 2px solid #000000'
+                        align='left'
+                        valign='top '>
+            <b>
+              <font face='Times New Roman'    color='#000000'>Status at ART Initiation</font>
+            </b>
+          </td>
+          <td
+                        colspan='8'
+                        style='border-top: 2px solid #000000; border-left: 2px solid #000000'
+                        align='left'
+                        valign='top '>
+            <b>
+              <font face='Times New Roman'    color='#000000'>Confirmatory HIV Test before ART Start</font>
+            </b>
+          </td>
+        </tr>
+        <tr>
+          <td style='border-left: 2px solid #000000' align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'>Patient
+            </font>
+          </td>
+          <td align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 2px solid #000000'
+                        colspan='11 '
+                        rowspan='2 '
+                        align='center'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+            <%= @data["patient_name"] %>
+          </td>
+          <td style='border-left: 2px solid #000000' align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'>HIV-related</font>
+          </td>
+          <td
+                        style=' max-width: 100px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 2px solid #000000'
+                        colspan='8 '
+                        rowspan='2 '
+                        align='center'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+            <%= @data["hiv_related_diseases"] %>
+          </td>
+          <td
+                        style='border-left: 2px solid #000000'
+                        colspan='2 '
+                        align='center'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'>Site, HTS</font>
+          </td>
+          <td
+                        style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 2px solid #000000'
+                        colspan='6 '
+                        rowspan='2 '
+                        align='center'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+        </tr>
+        <tr>
+          <td style='border-left: 2px solid #000000' align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'>Name</font>
+          </td>
+          <td align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-left: 2px solid #000000' align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'>diseases</font>
+          </td>
+          <td
+                        style='border-left: 2px solid #000000'
+                        colspan='2 '
+                        align='center'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'>Serial No.</font>
+          </td>
+        </tr>
+        <tr>
+          <td style='border-left: 2px solid #000000' align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'>Sex, Birth</font>
+          </td>
+          <td align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
+                        colspan='2 '
+                        rowspan='2 '
+                        align='center'
+                        valign='middle '>
+            <font face='Times New Roman' color='#000000'>          <font face='Times New Roman' color='#000000'><%= @data["sex"] %></font>
+            </font>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000'
+                        rowspan='2 '
+                        align='center'
+                        valign='middle '>
+            <font face='Times New Roman' color='#000000'></font>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-left: 1px solid #000000'
+                        align='left'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'>DOB</font>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 2px solid #000000'
+                        colspan='7 '
+                        rowspan='2 '
+                        align='center'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+            <%= @data["birth_date"].to_date.strftime("%d-%m-%Y") rescue '' %>
+          </td>
+          <td
+                        style='border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
+                        align='left'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'>Urine LAM/</font>
+          </td>
+          <td
+                        style='border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 2px solid #000000'
+                        colspan='8 '
+                        rowspan='2 '
+                        align='center'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+            <%= @data["lam"] %>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-left: 2px solid #000000'
+                        colspan='2 '
+                        rowspan='2 '
+                        align='center'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'>Test Date</font>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
+                        colspan='2 '
+                        rowspan='2 '
+                        align='center'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+            <%= @data["lam_date"] %>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-left: 1px solid #000000'
+                        colspan='2 '
+                        rowspan='2 '
+                        align='center'
+                        valign='middle '>
+            <font face='Times New Roman' color='#000000'><%= @data["confimatory_test_type
+"] %>
+            </font>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-right: 2px solid #000000'
+                        colspan='2 '
+                        rowspan='2align='
+                        center' '='center'
+                        ' '
+                        valign='middle '>
+            <font face='Times New Roman' color='#000000'></font>
+          </td>
+        </tr>
+        <tr>
+          <td style='border-left: 2px solid #000000' align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'>Date</font>
+          </td>
+          <td align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+            <%= @data["confimatory_test_date
+"] %>
+          </td>
+          <td
+                        style='border-bottom: 1px solid #000000; border-left: 1px solid #000000'
+                        align='left'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td
+                        style='border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
+                        align='left'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'>CrAg Result</font>
+          </td>
+        </tr>
+        <tr>
+          <td style='border-left: 2px solid #000000' align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'>Physical</font>
+          </td>
+          <td align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td
+                        style='
+                        max-width: 100px;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 2px solid #000000'
+                        colspan='11 '
+                        rowspan='2 '
+                        align='center'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+            <%= @data["physical_address"] %>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
+                        rowspan='2 '
+                        align='center'
+                        valign='middle '>
+            <font face='Times New Roman' color='#000000'>WHO Stage</font>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
+                        colspan='2 '
+                        rowspan='2 '
+                        align='center'
+                        valign='middle '>
+            <b>
+              <font face='Times New Roman' color='#000000'>    <%= @data["who_stage"].gsub('WHO stage', '') rescue '' %>
+              </font>
+            </b>
+          </td>
+          <td
+           class='t_no_break'
+                        style='border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        colspan='2 '
+                        align='left'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'>TB Status at Initiation
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000' align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'> <%= @data["tb_status"] %>
+            </font>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000'
+                        colspan='2 '
+                        align='center'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'></font>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 2px solid #000000'
+                        rowspan='2 '
+                        align='center'
+                        valign='middle '>
+            <font face='Times New Roman' color='#000000'></font>
+          </td>
+          <td
+            class='t_no_break'
+                        style='border-left: 2px solid #000000'
+                        colspan='2 '
+                        align='left'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'>ART educat. done</font>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-left: 2px solid #000000'
+                        align='left'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000'
+                        rowspan='2 '
+                        align='center'
+                        valign='middle '>
+            <font face='Times New Roman' color='#000000'></font>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 2px solid #000000'
+                        colspan='4 '
+                        rowspan='2 '
+                        align='left'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'>Date</font>
+          </td>
+        </tr>
+        <tr>
+          <td style='border-left: 2px solid #000000' align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'>Address</font>
+          </td>
+          <td align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td
+                        style='border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        colspan='2 '
+                        align='left'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'></font>
+          </td>
+          <td style='border-bottom: 1px solid #000000' align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'><%= @data["tb_status"] %></font>
+          </td>
+          <td
+                        style='border-bottom: 1px solid #000000'
+                        colspan='2 '
+                        align='center'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'></font>
+          </td>
+          <td
+                        style='border-left: 2px solid #000000'
+                        colspan='2 '
+                        align='left'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'></font>
+          </td>
+          <td
+                        style='border-bottom: 1px solid #000000; border-left: 2px solid #000000'
+                        align='left'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+        </tr>
+        <tr>
+          <td
+                        style='border-left: 2px solid #000000'
+                        colspan='2 '
+                        rowspan='2 '
+                        align='center'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 2px solid #000000'
+                        colspan='11 '
+                        rowspan='2 '
+                        align='center'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
+                        rowspan='2 '
+                        align='left'
+                        valign='middle '>
+            <font face='Times New Roman' color='#000000'>CD4</font>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        rowspan='2 '
+                        align='center'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+            <%= @data["cd4"] %>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
+                        rowspan='2 '
+                        align='right'
+                        valign='middle '>
+            <font face='Times New Roman' color='#000000'>%</font>
+          </td>
+          <td
+                        style='border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        colspan='2 '
+                        rowspan='2 '
+                        align='left'
+                        valign='middle '>
+            <font face='Times New Roman' color='#000000'>KS</font>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-bottom: 1px solid #000000'
+                        colspan='2 '
+                        rowspan='2align='
+                        center' '='center'
+                        ' '
+                        valign='middle '>
+            <font face='Times New Roman' color='#000000'><%= @data["ks"] %>
+            </font>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 2px solid #000000'
+                        colspan='2 '
+                        rowspan='2 '
+                        align='center'
+                        valign='middle '>
+            <font face='Times New Roman' color='#000000'></font>
+          </td>
+          <td
+                        style='border-left: 2px solid #000000'
+                        colspan='2 '
+                        rowspan='2 '
+                        align='left'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'>TB treatm.</font>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-left: 2px solid #000000'
+                        align='left'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'></font>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000'
+                        rowspan='2 '
+                        align='center'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-left: 1px solid #000000'
+                        align='left'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'>Start Date</font>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 2px solid #000000'
+                        colspan='3 '
+                        rowspan='2 '
+                        align='center'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+        </tr>
+        <tr>
+          <td
+                        style='border-bottom: 1px solid #000000; border-left: 2px solid #000000'
+                        align='left'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'></font>
+          </td>
+          <td
+                        style='border-bottom: 1px solid #000000; border-left: 1px solid #000000'
+                        align='left'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'></font>
+          </td>
+        </tr>
+        <tr>
+          <td style='border-left: 2px solid #000000' align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'>Guardian
+            </font>
+          </td>
+          <td align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 2px solid #000000'
+                        colspan='11 '
+                        rowspan='2 '
+                        align='center'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+            <%= @data["guardian_name"] %>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
+                        rowspan='2 '
+                        align='left'
+                        valign='middle '>
+            <font face='Times New Roman' color='#000000'>CD4 Date</font>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
+                        colspan='2 '
+                        rowspan='2 '
+                        align='center'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+            <%= @data["cd4_date"] %>
+          </td>
+          <td
+            class='t_no_break'
+                        style='border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        colspan='2 '
+                        align='left'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'>Ever taken ARVs</font>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-bottom: 1px solid #000000'
+                        colspan='2 '
+                        rowspan='2align='
+                        center' '='center'
+                        ' '
+                        valign='middle '>
+            <font face='Times New Roman' color='#000000'></font>
+            <%= @data["ever_taken_arvs"] %>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 2px solid #000000'
+                        colspan='2 '
+                        rowspan='2 '
+                        align='center'
+                        valign='middle '>
+            <font face='Times New Roman' color='#000000'></font>
+          </td>
+          <td
+                        style='border-left: 2px solid #000000'
+                        colspan='2 '
+                        align='left'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'>ART
+            </font>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-left: 2px solid #000000'
+                        align='left'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'></font>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000'
+                        rowspan='2 '
+                        align='center'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-left: 1px solid #000000'
+                        align='left'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'>Start date</font>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 2px solid #000000'
+                        colspan='3 '
+                        rowspan='2 '
+                        align='center'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+        </tr>
+        <tr>
+          <td style='border-left: 2px solid #000000' align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'>Name</font>
+          </td>
+          <td align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td
+                        style='border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        colspan='2 '
+                        align='left'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'></font>
+          </td>
+          <td
+                        style='border-left: 2px solid #000000'
+                        colspan='2 '
+                        align='left'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'>Regimens</font>
+          </td>
+          <td
+                        style='border-bottom: 1px solid #000000; border-left: 2px solid #000000'
+                        align='left'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'><%= @data[:visits][0][:regimen] %>
+            </font>
+          </td>
+          <td
+                        style='border-bottom: 1px solid #000000; border-left: 1px solid #000000'
+                        align='left'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'> <%= @data[:visits][0][:date].strftime("%d-%m-%Y")
+ %> </font>
+          </td>
+        </tr>
+        <tr>
+          <td
+                        style='border-left: 2px solid #000000'
+                        colspan='2 '
+                        rowspan='2 '
+                        align='left'
+                        valign='middle '>
+            <font face='Times New Roman' color='#000000'>Phone</font>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-left: 1px solid #000000'
+                        align='left'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'>Patient</font>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-right: 1px solid #000000'
+                        colspan='4 '
+                        align='center'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+            <%= @data["patient_phone"] %>
+          </td>
+          <td style='border-top: 1px solid #000000' align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'>Guardian</font>
+          </td>
+          <td style='border-top: 1px solid #000000' align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-right: 2px solid #000000'
+                        colspan='4 '
+                        align='center'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+            <%= @data["guardian_phone"] %>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
+                        rowspan='2 '
+                        align='left'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'>Height/Wgt</font>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        rowspan='2 '
+                        align='right'
+                        valign='middle '>
+            <%= @data["height"] %>
+            <font face='Times New Roman' color='#000000'>cm</font>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
+                        rowspan='2 '
+                        align='right'
+                        valign='middle '>
+            <%= @data["weight"] %>
+            <font face='Times New Roman' color='#000000'>kg</font>
+          </td>
+          <td
+                        style='border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        colspan='2 '
+                        rowspan='2 '
+                        align='left'
+                        valign='middle '>
+            <font face='Times New Roman' color='#000000'>Date last taken</font>
+          </td>
+          <td
+                        style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 2px solid #000000'
+                        colspan='4 '
+                        rowspan='2 '
+                        align='center'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-left: 2px solid #000000' align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-left: 2px solid #000000' align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-right: 2px solid #000000' align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+        </tr>
+        <tr>
+          <td
+                        style='border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        colspan='5 '
+                        align='center'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td
+                        style='border-bottom: 1px solid #000000; border-right: 2px solid #000000'
+                        colspan='6 '
+                        align='center'
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-left: 2px solid #000000' align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-left: 2px solid #000000' align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-right: 2px solid #000000' align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+        </tr>
+        <tr>
+          <td style='border-left: 2px solid #000000' align='left' valign='top '>
+            <font face='Times New Roman' color='#000000'>Agrees to</font>
+          </td>
+          <td align='center' valign='top '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td
+                        style='border-bottom: 2px solid #000000; border-left: 1px solid #000000'
+                        colspan='2 '
+                        rowspan='2align='
+                        center' '='center'
+                        ' '
+                        valign='middle '>
+            <%= @data["agrees_to_fup"] %>
+            <font face='Times New Roman' color='#000000'></font>
+          </td>
+          <td
+                        style='border-bottom: 2px solid #000000'
+                        rowspan='2 '
+                        align='left'
+                        valign='middle '>
+            <font face='Times New Roman' color='#000000'></font>
+          </td>
+          <td
+                        style='border-bottom: 2px solid #000000; border-right: 2px solid #000000'
+                        colspan='8 '
+                        rowspan='2align='
+                        left' '='left'
+                        ' '
+                        valign='top '>
+            <font face='Times New Roman' color='#000000'>Guardian Relation</font>
+          </br>
+          <%= @data["guardian_relation"] %>
+        </td>
+        <td
+                        style='border-top: 1px solid #000000; border-bottom: 2px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
+                        rowspan='2 '
+                        align='left'
+                        valign='middle '>
+          <font face='Times New Roman' color='#000000'>Age at Init.</font>
+        </td>
+        <td
+                        style='border-top: 1px solid #000000; border-bottom: 2px solid #000000; border-left: 1px solid #000000'
+                        colspan='2 '
+                        rowspan='2 '
+                        align='center'
+                        valign='middle '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+          <%= @data["age"] %>
+        </td>
+        <td
+                        style='border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        colspan='2 '
+                        align='left'
+                        valign='top '>
+          <font face='Times New Roman' color='#000000'></font>
+        </td>
+        <td
+                        style='border-top: 1px solid #000000; border-bottom: 2px solid #000000; border-left: 1px solid #000000; border-right: 2px solid #000000'
+                        colspan='4 '
+                        rowspan='2 '
+                        align='center'
+                        valign='top '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td style='border-left: 2px solid #000000' align='left' valign='top '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign='top '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td style='border-left: 2px solid #000000' align='left' valign='top '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign='top '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign='top '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign='top '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign='top '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td style='border-right: 2px solid #000000' align='left' valign='top '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+      </tr>
+      <tr>
+        <td
+                        style='border-bottom: 2px solid #000000; border-left: 2px solid #000000'
+                        align='left'
+                        valign='top '>
+          <font face='Times New Roman' color='#000000'>U=FUP</font>
+        </td>
+        <td style='border-bottom: 2px solid #000000' align='left' valign='top '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td
+                        style='border-bottom: 2px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        colspan='2 '
+                        align='left'
+                        valign='top '>
+          <font face='Times New Roman' color='#000000'></font>
+        </td>
+        <td
+                        style='border-bottom: 2px solid #000000; border-left: 2px solid #000000'
+                        align='left'
+                        valign='top '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td style='border-bottom: 2px solid #000000' align='left' valign='top '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td
+                        style='border-bottom: 2px solid #000000; border-left: 2px solid #000000'
+                        align='left'
+                        valign='top '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td style='border-bottom: 2px solid #000000' align='left' valign='top '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td style='border-bottom: 2px solid #000000' align='left' valign='top '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td style='border-bottom: 2px solid #000000' align='left' valign='top '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td style='border-bottom: 2px solid #000000' align='left' valign='top '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td
+                        style='border-bottom: 2px solid #000000; border-right: 2px solid #000000'
+                        align='left'
+                        valign='top '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+      </tr>
+    </table>
+    <table cellspacing='0' border='0'>
+      <colgroup width='43'></colgroup>
+      <colgroup width='65'></colgroup>
+      <colgroup width='50'></colgroup>
+      <colgroup width='62'></colgroup>
+      <colgroup width='73'></colgroup>
+      <colgroup width='78'></colgroup>
+      <colgroup width='47'></colgroup>
+      <colgroup width='53'></colgroup>
+      <colgroup width='51'></colgroup>
+      <colgroup width='46'></colgroup>
+      <colgroup width='51'></colgroup>
+      <colgroup width='49'></colgroup>
+      <colgroup width='85'></colgroup>
+      <colgroup width='110'></colgroup>
+      <colgroup width='117'></colgroup>
+      <colgroup span='2' width='118'></colgroup>
+      <colgroup width='47'></colgroup>
+      <colgroup width='68'></colgroup>
+      <colgroup span='2' width='59'></colgroup>
+      <colgroup width='55'></colgroup>
+      <colgroup width='71'></colgroup>
+      <colgroup span='2' width='79'></colgroup>
+      <colgroup width='167'></colgroup>
+      <colgroup span='4' width='59'></colgroup>
+      <tr>
+        <td
+                        style='border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        colspan='3 '
+                        align='center'
+                        valign='top '>
+          <font face='Liberation Sans Narrow'   >Visit Date</font>
+        </td>
+        <td
+                        style='border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        align='center'
+                        valign='top '>
+          <font face='Liberation Sans Narrow'   >Age</font>
+        </td>
+        <td
+                        style='border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        align='center'
+                        valign='top '>
+          <font face='Liberation Sans Narrow'   >Height</font>
+        </td>
+        <td
+                        style='border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        align='center'
+                        valign='top '>
+          <font face='Liberation Sans Narrow'   >Weight</font>
+        </td>
+        <td
+                        style='border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        colspan='4 '
+                        rowspan='2 '
+                        align='left'
+                        valign='top '>
+          <font face='Liberation Sans Narrow'>TB Status (Current)*</font>
+        </td>
+        <td
+                        style='border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        colspan='2 '
+                        rowspan='2 '
+                        align='left'
+                        valign='top '>
+          <font face='Liberation Sans Narrow'>Side Effects</font>
+        </td>
+        <td
+                        style='border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        rowspan='4 '
+                        align='center'
+                        valign='top '>
+          <font face='Liberation Sans Narrow'>Pill Count</font>
+        </td>
+        <td
+                        style='border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        rowspan='4 '
+                        align='center'
+                        valign='top '>
+          <font face='Liberation Sans Narrow'   >Doses Missed</font>
+        </td>
+        <td
+                        style='border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        colspan='2 '
+                        rowspan='4 '
+                        align='center'
+                        valign='top '>
+          <font face='Times New Roman'    color='#000000'>ART Regimen</font>
+        </td>
+        <td
+                        style='border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        colspan='2 '
+                        align='left'
+                        valign='top '>
+          <font face='Liberation Sans Narrow'   >ARVs Given</font>
+        </td>
+        <td
+                        style='border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        colspan='4 '
+                        align='left'
+                        valign='top '>
+          <font face='Liberation Sans Narrow'   >CPT / TPT Tabs Given</font>
+        </td>
+        <td
+                        style='border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        rowspan='4 '
+                        align='center'
+                        valign='top '>
+          <font face='Times New Roman' color='#000000'>Months since last VL<br>
+            Test</font>
+        </td>
+        <td
+                        style='border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        colspan='2 '
+                        align='left'
+                        valign='top '>
+          <font face='Liberation Sans Narrow'   >Viral Load</font>
+        </td>
+        <td
+                        style='border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        rowspan='4 '
+                        align='left'
+                        valign='top '>
+          <font face='Liberation Sans Narrow'>Next Appointment/ Outcome Date</font>
+        </td>
+        <td
+                        style='border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 2px solid #000000'
+                        colspan='4'
+                        rowspan='4'
+                        align='center'
+                        valign='top '>
+          <font face='Liberation Sans Narrow'   >Adverse Outcome</font>
+        </td>
+      </tr>
+      <tr>
+        <td style='border-left: 1px solid #000000' align='left' valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td style='border-right: 1px solid #000000' align='left' valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td
+                        style='border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        align='left'
+                        valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td
+                        style='border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        align='left'
+                        valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td
+                        style='border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        align='left'
+                        valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td style='border-left: 1px solid #000000' align='left' valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td style='border-right: 1px solid #000000' align='left' valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td
+                        class='t_no_break '
+                        align='center'
+                        valign='top '
+                        style='border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        rowspan='3 '
+                        '>
+          <div class='   '>
+            <span class='   '>
+              <font face='Liberation Sans Narrow'>CTX 120</font>
+            </span>
+          </div>
+        </td>
+        <td
+                        class='t_no_break '
+                        rowspan='3 '
+                        align='center'
+                        valign='top '
+                        style='border-right: 1px solid #000000'>
+          <div class='   '>
+            <span class='   '>
+              <font face='Liberation Sans Narrow'>INH 100</font>
+            </span>
+          </div>
+        </td>
+        <td
+                        class='t_no_break '
+                        rowspan='3 '
+                        align='center'
+                        valign='top '
+                        style='border-right: 1px solid #000000'>
+          <div class='   '>
+            <span class='   '>
+              <font face='Liberation Sans Narrow'>RFP 150</font>
+            </span>
+          </div>
+        </td>
+        <td
+                        style='border-right: 1px solid #000000'
+                        rowspan='3 '
+                        align='center'
+                        valign='top '>
+          <div class='   '>
+            <span class='   '>
+              <font face='Liberation Sans Narrow'>Pyridoxine</font>
+            </span>
+          </div>
+        </td>
+        <td style='border-left: 1px solid #000000' align='left' valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td style='border-right: 1px solid #000000' align='left' valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+      </tr>
+      <tr>
+        <td style='border-left: 1px solid #000000' align='left' valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td align='left' valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td style='border-right: 1px solid #000000' align='left' valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td
+                        style='border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        align='left'
+                        valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td
+                        style='border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        align='left'
+                        valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td
+                        style='border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        align='left'
+                        valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td
+                        style='border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        colspan='2 '
+                        align='left'
+                        valign='top '>
+          <font face='Liberation Sans Narrow'>Suspected</font>
+        </td>
+        <td
+                        style='border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        colspan='2 '
+                        align='left'
+                        valign='top '>
+          <font face='Liberation Sans Narrow'>Confirmed</font>
+        </td>
+        <td
+                        style='border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        colspan='2 '
+                        rowspan='2align='
+                        center' '='center'
+                        ' '
+                        valign='top '>
+          <font face='Times New Roman' color='#000000'>Specify in Notes</font>
+        </td>
+        <td style='border-left: 1px solid #000000' align='left' valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td style='border-right: 1px solid #000000' align='left' valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+        <td
+                        style='border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        rowspan='2 '
+                        align='center'
+                        valign='bottom '>
+          <font face='Liberation Sans Narrow'>Sample taken</font>
+        </td>
+        <td style='border-right: 1px solid #000000' align='left' valign='bottom '>
+          <font face='Times New Roman' color='#000000'><br>
+          </font>
+        </td>
+      </tr>
+      <tr>
+        <td style='border-left: 1px solid #000000' align='left' valign='top '>
+          <i>
+            <font face='Liberation Sans Narrow'>day</font>
+          </i>
+        </td>
+        <td align='left' valign='top '>
+          <i>
+            <font face='Liberation Sans Narrow'>month</font>
+          </i>
+        </td>
+        <td style='border-right: 1px solid #000000' align='left' valign='top '>
+          <i>
+            <font face='Liberation Sans Narrow'>year</font>
+          </i>
+        </td>
+        <td
+                        style='border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        align='center'
+                        valign='top '>
+          <i>
+            <font face='Liberation Sans Narrow'>(Curr.)</font>
+          </i>
+        </td>
+        <td
+                        style='border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        align='center'
+                        valign='top '>
+          <i>
+            <font face='Liberation Sans Narrow'>cm</font>
+          </i>
+        </td>
+        <td
+                        style='border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        align='center'
+                        valign='top '>
+          <i>
+            <font face='Liberation Sans Narrow'>kg</font>
+          </i>
+        </td>
+        <td
+                        style='border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        align='center'
+                        valign='top '>
+          <font face='Liberation Sans Narrow'>No</font>
+        </td>
+        <td
+                        style='border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        align='center'
+                        valign='top '>
+          <font face='Liberation Sans Narrow'>Yes</font>
+        </td>
+        <td
+                        style='border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        align='center'
+                        valign='bottom '>
+          <font face='Liberation Sans Narrow'>noRx</font>
+        </td>
+        <td
+                        style='border-left: 1px solid #000000; border-right: 1px solid #000000'
+                        align='center'
+                        valign='top '>
+          <font face='Times New Roman' color='#000000'>Rx</font>
+        </td>
+        <td style='border-left: 1px solid #000000' align='left' valign='top '>
+          <font face='Liberation Sans Narrow'>No. of tablets</font>
+        </td>
+        <td style='border-right: 1px solid #000000' align='left' valign='top '>
+          <font face='Liberation Sans Narrow'>To</font>
+        </td>
+        <td style='border-right: 1px solid #000000' align='center' valign='bottom '>
+          <font face='Liberation Sans Narrow'>Result</font>
+        </td>
+      </tr>
+      <% @data[:visits].each_with_index do |visit, i| %>
+        <tr>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
+				colspan=3 align='center' valign=middle bgcolor='#F1F1F1'>
+            <font face='Arial'></font>
+            <%= "#{visit[:date].strftime("%d-%m-%Y")}"%>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				align='left' valign=middle bgcolor='#F1F1F1'>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+            <%= visit[:age] %>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				align='left' valign=middle bgcolor='#F1F1F1'>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+            <%= visit[:height] %>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				align='left' valign=middle bgcolor='#F1F1F1'>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+            <%= visit[:weight] %>
+          </td>
+          <td colspan="4" align="center" style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
+				align='right' valign=middle bgcolor='#F1F1F1'>
+            <font face='Liberation Sans Narrow'><%= visit[:tb_status] %></font>
+          </td>
+          <td colspan="2" style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
+				align='center' valign=middle bgcolor='#F1F1F1'>
+            <font face='Liberation Sans Narrow'></font>
+            <%= visit[:side_effects].length > 0 ? "Y" : "N" %>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
+				align='center' valign=middle bgcolor='#F1F1F1'>
+            <font face='Liberation Sans Narrow'></font>
+            <%= visit[:pills_brought].map {|p| p[:quantity]}.inject(&:+).round rescue nil %>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
+				align='center' valign=middle bgcolor='#F1F1F1'>
+            <font face='Liberation Sans Narrow'></font>
+            <%= visit[:doses_missed].map {|p| p[:quantity]}.inject(&:+).round rescue nil %>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				colspan=2 align='center' valign=middle bgcolor='#F1F1F1'>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+            <%= visit[:regimen] %>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
+				align='right' valign=middle bgcolor='#F1F1F1'>
+            <font face='Liberation Sans Narrow'></font>
+            <%= visit[:arvs].map {|q| q[1]}.inject(&:+).round rescue "" %>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
+				align='right' valign=middle bgcolor='#F1F1F1'>
+            <font face='Liberation Sans Narrow'></font>
+            P
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				align='left' valign=middle bgcolor='#F1F1F1'>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+            <%= visit[:cpt].map {|q| q[1]}.inject(&:+).round rescue "" %>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				align='left' valign=middle bgcolor='#F1F1F1'>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+            <%= visit[:ihn].map {|q| q[1]}.inject(&:+).round rescue "" %>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				align='left' valign=middle bgcolor='#F1F1F1'>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+            <%= visit[:rfp].map {|q| q[1]}.inject(&:+).round rescue "" %>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				align='left' valign=middle bgcolor='#F1F1F1'>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				align='left' valign=middle bgcolor='#F1F1F1'>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+            <%= visit[:pryidoxine].map {|q| q[1]}.inject(&:+).round rescue "" %>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				colspan=2 align='left' valign=middle bgcolor='#F1F1F1'>
+            <font face='Times New Roman' color='#000000'></font>
+            <%= visit[:viral_load] %>
+          </td>
+          <td class='t_no_break' style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				align='left' valign=middle bgcolor='#F1F1F1'>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+            <%= visit[:next_appointment].to_date.strftime("%d-%m-%Y") rescue '' %>
+          </td>
+          <td class='t_no_break' colspan="5" style='border-top: 1px solid #000000; border-right: 2px solid #000000;
+ border-bottom: 1px solid #000000; border-left: 1px solid #000000'
+				align='right' valign=middle bgcolor='#F1F1F1'>
+            <font face='Liberation Sans Narrow'></font>
+            <%= visit[:outcome] == 'On antiretrovirals' ? 'on ART' : visit[:outcome] %>
+          </td>
+        </tr>
+        <% end %>
+        <% (1..6).each do %>
+           <tr>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
+				colspan=3 align='center' valign=middle bgcolor='#F1F1F1'>
+            <font face='Arial'></font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				align='left' valign=middle bgcolor='#F1F1F1'>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				align='left' valign=middle bgcolor='#F1F1F1'>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				align='left' valign=middle bgcolor='#F1F1F1'>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td colspan="4" align="center" style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
+				align='right' valign=middle bgcolor='#F1F1F1'>
+          </td>
+          <td colspan="2" style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
+				align='center' valign=middle bgcolor='#F1F1F1'>
+            <font face='Liberation Sans Narrow'></font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
+				align='center' valign=middle bgcolor='#F1F1F1'>
+            <font face='Liberation Sans Narrow'></font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
+				align='center' valign=middle bgcolor='#F1F1F1'>
+            <font face='Liberation Sans Narrow'></font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				colspan=2 align='center' valign=middle bgcolor='#F1F1F1'>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
+				align='right' valign=middle bgcolor='#F1F1F1'>
+            <font face='Liberation Sans Narrow'></font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
+				align='right' valign=middle bgcolor='#F1F1F1'>
+            <font face='Liberation Sans Narrow'></font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				align='left' valign=middle bgcolor='#F1F1F1'>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				align='left' valign=middle bgcolor='#F1F1F1'>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				align='left' valign=middle bgcolor='#F1F1F1'>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				align='left' valign=middle bgcolor='#F1F1F1'>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				align='left' valign=middle bgcolor='#F1F1F1'>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				colspan=2 align='left' valign=middle bgcolor='#F1F1F1'>
+            <font face='Times New Roman' color='#000000'></font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				align='left' valign=middle bgcolor='#F1F1F1'>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td colspan="5" style='border-top: 1px solid #000000; border-right: 2px solid #000000;
+ border-bottom: 1px solid #000000; border-left: 1px solid #000000'
+				align='right' valign=middle bgcolor='#F1F1F1'>
+            <font face='Liberation Sans Narrow'></font>
+          </td>
+        </tr>
+        <% end %>
+      </table>
+</div>
 </body>
-
 </html>

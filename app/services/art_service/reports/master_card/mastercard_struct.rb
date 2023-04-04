@@ -20,7 +20,7 @@ module ARTService::Reports::MasterCard
 
     def transfer_in_date
       if patient_history.transfer_in == "Yes"
-        return { transfer_in_date: initial_observation("Transfer in date")&.value_datetime.to_date }
+        return { transfer_in_date: initial_observation("Transfer in date")&.value_datetime&.to_date || "" }
       end
       { transfer_in_date: "" }
     end

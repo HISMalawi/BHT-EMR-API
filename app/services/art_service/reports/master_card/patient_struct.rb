@@ -12,19 +12,10 @@ module ARTService::Reports::MasterCard
     end
 
     def load_followup_testing
-      lab_results = {}
-      { cd4: "CD4 count", bp: "Blood pressure", fbs: "FBS" }
-        .each do |key, value|
-        results = patient_visit.lab_result(value)
-        lab_results[key] = ""
-
-        next if results.blank?
-
-        # remove the result on the first visit
-        results.delete_at(0)
-        lab_results[key] = results
-      end
-      { followup_testing: lab_results }
+      {
+        cd4_counts: "",
+        bp_results: ""
+      }
     end
 
     def load_baseline_lab_results
@@ -45,12 +36,14 @@ module ARTService::Reports::MasterCard
 
     def load_art_initiation
       {
+        age: patient_history.age_at_initiation,
+        art_number: patient_history.arv_number,
         height: patient_history.initial_height,
         weight: patient_history.initial_weight,
         hiv_related_diseases: patient_history.who_clinical_conditions_list.join(", "),
         who_stage: patient_who_stage,
         tb_status_at_art_initiation: calc_tb_status_at_art_initiation,
-        ks: patient_history.ks,
+        ks: patient_history.ks == "Yes" ? "Y" : "N",
         preg_or_breastfeeding: pregnancy_status_on_first_visit,
       }
     end
@@ -65,7 +58,10 @@ module ARTService::Reports::MasterCard
     end
 
     def patient_who_stage
-      Patient.find_by_sql("SELECT patient_who_stage(#{patient.id}) as who_stage").first.who_stage
+      stage = ActiveRecord::Base.connection.select_one <<~SQL
+        SELECT patient_who_stage(#{patient.id}) as who_stage
+      SQL
+      stage["who_stage"]
     end
 
     def calc_tb_status_at_art_initiation
@@ -75,17 +71,35 @@ module ARTService::Reports::MasterCard
       return "N"
     end
 
+    def bp
+      bp_concepts = ConceptName.where(name: ['Systolic blood pressure', 'Diastolic blood pressure'])
+                                 .pluck(:concept_id)
+      Observation.where(concept_id: bp_concepts, person_id: patient.id)
+                  .order(obs_datetime: :desc)
+                  .pluck(:value_numeric, :obs_datetime)
+                .each_slice(2).map do |diastolic, systolic|
+                  {date: diastolic[1], bp:"#{systolic[0]}/#{diastolic[0]}"}
+                end
+    end
+
+    def cd4_count
+      Observation.where(concept_id: concept('CD4 count').concept_id, person_id: patient.id)
+                .order(obs_datetime: :desc)
+                .pluck(:value_numeric, :obs_datetime)
+                .each do |cd4, date|
+                  {date: date, cd4: cd4}
+                end
+    end
+
     def pregnancy_status_on_first_visit
-      pregnant_concept = concept("Is Patient Pregnant?")
-      obs = initial_observation(pregnant_concept)
-      return "N" unless obs
-      is_pregnant = obs.value_coded == concept("Yes").concept_id
+      obs = initial_observation(concept("Pregnant?"))
+      return "N" unless obs && obs.answer_string == "Yes"
+      is_pregnant = obs&.answer_string == "Yes"
       if is_pregnant
-        bf_obs = initial_observation(concept("Is Patient Breastfeeding?"))
-        return "Y" unless bf_obs
-        return bf_obs.value_coded == concept("Yes").concept_id
+        bf_obs = initial_observation(concept("Breastfeeding"))
+        return "Y" unless bf_obs && bf_obs.answer_string == "Yes"
+        return bf_obs.value_coded&.answer_string == "Yes" ? "Bf" : "N"
       end
-      return is_pregnant ? "Y" : "N"
     end
   end
 end

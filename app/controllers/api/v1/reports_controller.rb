@@ -173,7 +173,7 @@ class Api::V1::ReportsController < ApplicationController
   end
 
   def art_register
-    render json: service.art_register(params[:date], params[:rebuild])
+    render json: service.art_register(params[:date], params[:rebuild], params[:formulation])
   end
 
   def tx_rtt

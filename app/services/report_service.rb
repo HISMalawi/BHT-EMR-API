@@ -134,8 +134,8 @@ class ReportService
     engine(@program).tx_rtt(start_date, end_date)
   end
 
-  def art_register(date, rebuild)
-    engine(@program).art_register(date, rebuild)
+  def art_register(date, rebuild, formulation)
+    engine(@program).art_register(date, rebuild, formulation)
   end
 
   def ipt_coverage(start_date, end_date)
