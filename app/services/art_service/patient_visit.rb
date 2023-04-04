@@ -348,6 +348,7 @@ module ARTService
                            patient_id: patient.patient_id,
                            date: date)
                            .find_patient_last_viral_load
+       return 'N/A' if last_vl_load_test.blank?
        (date&.to_date.year * 12) - (last_vl_load_test.start_date.to_date.year * 12)
     end
 
@@ -368,10 +369,6 @@ module ARTService
 
       doses_missed.first(:value_numeric)
       return doses_missed.first(:value_numeric)
-    end
-
-    def last_vl_test
-      
     end
 
     def as_json(_options = {})
