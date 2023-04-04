@@ -1442,7 +1442,7 @@ border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1p
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
 				align='right' valign=middle bgcolor='#F1F1F1'>
             <font face='Liberation Sans Narrow'></font>
-            P
+            <%= visit[:batch_master_card_visit_by] %>
           </td>
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				align='left' valign=middle bgcolor='#F1F1F1'>
@@ -1492,7 +1492,7 @@ border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1p
           </td>
         </tr>
         <% end %>
-        <% (1..6).each do %>
+        <% (1..(12 - @data[:visits].length)).each do %>
            <tr>
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
 				colspan=3 align='center' valign=middle bgcolor='#F1F1F1'>

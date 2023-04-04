@@ -1487,7 +1487,7 @@ text-overflow: ellipsis;
           <td style='border-right: 1px solid #000000;border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
 				align='right' valign=middle bgcolor='#F1F1F1'>
             <font face='Liberation Sans Narrow'></font>
-            P
+            <%= visit[:batch_master_card_visit_by] %>
           </td>
           <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000'
 				align='left' valign=  >
@@ -1523,6 +1523,7 @@ text-overflow: ellipsis;
 				align='left' valign=  >
             <font face='Times New Roman' color='#000000'><br>
             </font>
+            <%= visit[:months_since_last_vl_test] %>
           </td>
           <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 2px solid #000000'
 				colspan=2 align='center' valign=  >
@@ -1543,7 +1544,7 @@ text-overflow: ellipsis;
           </td>
         </tr>
       <% end %>
-      <% (1..6).each do %>
+      <% (1..(12 - @data[:visits].length)).each do %>
             <tr style='height:40px; !important'>
           <td colspan="3" style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000;'
 				    align='left' valign=  ><b>
