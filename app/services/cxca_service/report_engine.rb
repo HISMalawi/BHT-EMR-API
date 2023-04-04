@@ -19,6 +19,8 @@ module CXCAService
       'CXCA REASON FOR VISIT' => CXCAService::Reports::Moh::ReasonForVisit,
       'CXCA TX' => CXCAService::Reports::Pepfar::CxcaTx,
       'CXCA SCRN' => CXCAService::Reports::Pepfar::CxcaScrn,
+      'MONTHLY CECAP TX' => CXCAService::Reports::Clinic::MonthlyCecapTx,      
+      'MONTHLY CECAP TX TOTALS' => CXCAService::Reports::Clinic::MonthlyCecapTxTotals,      
     }.freeze
 
     def reports(start_date, end_date, name)
