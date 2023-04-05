@@ -2,6 +2,7 @@
 
 module ANCService
   module Reports
+    # ANC cohort report builder
     class CohortBuilder
       COHORT_LENGTH = 6.months
 
@@ -148,10 +149,10 @@ module ANCService
         @nvp_given = nvp_given
         @nvp_not_given = @c_total_hiv_positive - @nvp_given
 
-        cohort_struct.patients_with_total_of_one_visit = @anc_visits.reject { |_x, y| y != 1 }.collect { |x, _y| x }.uniq
-        cohort_struct.patients_with_total_of_two_visits = @anc_visits.reject { |_x, y| y != 2 }.collect { |x, _y| x }.uniq
-        cohort_struct.patients_with_total_of_three_visits = @anc_visits.reject { |_x, y| y != 3 }.collect { |x, _y| x }.uniq
-        cohort_struct.patients_with_total_of_four_visits = @anc_visits.reject { |_x, y| y != 4 }.collect { |x, _y| x }.uniq
+        cohort_struct.patients_with_total_of_one_visit = @anc_visits.select { |_x, y| y == 1 }.collect { |x, _y| x }.uniq
+        cohort_struct.patients_with_total_of_two_visits = @anc_visits.select { |_x, y| y == 2 }.collect { |x, _y| x }.uniq
+        cohort_struct.patients_with_total_of_three_visits = @anc_visits.select { |_x, y| y == 3 }.collect { |x, _y| x }.uniq
+        cohort_struct.patients_with_total_of_four_visits = @anc_visits.select { |_x, y| y == 4 }.collect { |x, _y| x }.uniq
         cohort_struct.patients_with_total_of_five_plus_visits = @anc_visits.reject { |_x, y| y < 5 }.collect { |x, _y| x }.uniq
         cohort_struct.patients_with_pre_eclampsia = patients_with_pre_eclampsia
         cohort_struct.patients_without_pre_eclampsia = @cohort_patients - cohort_struct.patients_with_pre_eclampsia
@@ -228,7 +229,7 @@ module ANCService
               DATE(encounter_datetime) >= ? AND DATE(encounter_datetime) <= ? AND encounter.voided = 0',
                          PROGRAM.id, CURRENT_PREGNANCY.id, LMP.concept_id, start_dt.to_date, end_dt.to_date])
                  .select(['MAX(value_datetime) lmp, patient_id'])
-                 .group([:patient_id]).collect { |e| e.patient_id }.uniq
+                 .group([:patient_id]).collect(&:patient_id).uniq
       end
 
       def anc_visits(_date)
@@ -260,7 +261,7 @@ module ANCService
             AND encounter.encounter_type = ? AND obs.concept_id = ?
             AND value_coded = ? AND encounter.patient_id in (?)",
                                              PROGRAM.id, LAB_RESULTS.id, preg_test.concept_id, YES.concept_id,
-                                             @monthly_patients).collect { |e| e.patient_id }.compact.uniq
+                                             @monthly_patients).collect(&:patient_id).compact.uniq
       end
 
       def pregnancy_test_done_in_first_trimester(date)
@@ -275,9 +276,7 @@ module ANCService
                                @patients_done_pregnancy_test,
                                date.to_date.beginning_of_month.strftime('%Y-%m-%d 00:00:00'),
                                date.to_date.end_of_month.strftime('%Y-%m-%d 23:59:59'),
-                               date.to_date, @patients_done_pregnancy_test]).collect do |e|
-          e.patient_id
-        end.uniq
+                               date.to_date, @patients_done_pregnancy_test]).collect(&:patient_id).uniq
       end
 
       def week_of_first_visit_zero_to_twelve(date)
@@ -287,9 +286,7 @@ module ANCService
               AND DATE(encounter_datetime) BETWEEN (?) AND (?) GROUP BY patient_id HAVING wk < 13",
                                WEEK_OF_FIRST_VISIT.concept_id, PROGRAM.id, @monthly_patients,
                                date.to_date.beginning_of_month.strftime('%Y-%m-%d 00:00:00'),
-                               date.to_date.end_of_month.strftime('%Y-%m-%d 23:59:59')]).collect do |e|
-          e.patient_id
-        end.uniq
+                               date.to_date.end_of_month.strftime('%Y-%m-%d 23:59:59')]).collect(&:patient_id).uniq
       end
 
       def week_of_first_visit_plus_thirteen(date)
@@ -299,9 +296,7 @@ module ANCService
               BETWEEN (?) AND (?) GROUP BY patient_id HAVING wk > 12",
                                WEEK_OF_FIRST_VISIT.concept_id, PROGRAM.id, @monthly_patients,
                                date.to_date.beginning_of_month.strftime('%Y-%m-%d 00:00:00'),
-                               date.to_date.end_of_month.strftime('%Y-%m-%d 23:59:59')]).collect do |e|
-          e.patient_id
-        end.uniq
+                               date.to_date.end_of_month.strftime('%Y-%m-%d 23:59:59')]).collect(&:patient_id).uniq
       end
 
       def new_hiv_negative_first_visit(date)
@@ -490,7 +485,7 @@ EOF
         dispensing_encounter_type = EncounterType.find_by_name('DISPENSING').id
         cpt_drug_id = Drug.where(['name LIKE ?', '%Cotrimoxazole%']).map(&:id)
 
-        if @patient_ids.length > 0
+        if @patient_ids.length.positive?
 
           cpt_ids = Encounter.find_by_sql(["SELECT * FROM encounter e
               INNER JOIN obs o ON e.encounter_id = o.encounter_id AND e.voided = 0
@@ -626,7 +621,7 @@ EOF
               "BETWEEN (#{@c_lmp}) AND (?) AND encounter.patient_id IN (?)",
                          PROGRAM.id, DIAGNOSIS.concept_id, PRE_ECLAMPSIA.concept_id,
                          (@c_start_date.to_date + @c_pregnant_range),
-                         @cohort_patients]).collect { |e| e.patient_id }.uniq
+                         @cohort_patients]).collect(&:patient_id).uniq
         []
       end
 
@@ -756,9 +751,7 @@ EOF
                     .select(["encounter.patient_id, encounter.encounter_id, drug.name instructions,
                     DATEDIFF(orders.auto_expire_date, orders.start_date) orderer"])
                     .group('encounter.patient_id')
-                    .collect do |o|
-          o.patient_id
-        end
+                    .collect(&:patient_id)
         results = @cohort_patients - data
       end
 
@@ -795,7 +788,7 @@ EOF
                   AND encounter.patient_id IN (?)", PROGRAM.id, CURRENT_PREGNANCY.id,
                          BED_NET.concept_id, YES.concept_id,
                          (@c_start_date.to_date + @c_pregnant_range), @cohort_patients])
-                 .collect { |e| e.patient_id }.uniq # rescue []
+                 .collect(&:patient_id).uniq # rescue []
       end
 
       def patients_have_hb_less_than_7_g_dl
@@ -806,9 +799,7 @@ EOF
                 AND DATE(encounter_datetime) <= ?) AND encounter.patient_id IN (?)",
                          PROGRAM.id, LAB_RESULTS.id, HB.concept_id,
                          ((@c_start_date.to_date + @c_pregnant_range) - 1.day),
-                         @cohort_patients]).select(['DISTINCT patient_id']).collect do |e|
-          e.patient_id
-        end.uniq
+                         @cohort_patients]).select(['DISTINCT patient_id']).collect(&:patient_id).uniq
       end
 
       def patients_have_hb_greater_than_6_g_dl
@@ -820,9 +811,7 @@ EOF
                          PROGRAM.id, LAB_RESULTS.id, HB.concept_id,
                          ((@c_start_date.to_date + @c_pregnant_range) - 1.day),
                          @cohort_patients])
-                 .select(['DISTINCT patient_id']).collect do |e|
-          e.patient_id
-        end.uniq
+                 .select(['DISTINCT patient_id']).collect(&:patient_id).uniq
       end
 
       def patients_with_negative_syphilis_status
@@ -834,7 +823,7 @@ EOF
                          PROGRAM.id, LAB_RESULTS.id, SYPHILIS.concept_id, NEGATIVE.concept_id,
                          'Negative', ((@c_start_date.to_date + @c_pregnant_range) - 1.day),
                          @cohort_patients])
-                 .select(['DISTINCT patient_id']).collect { |e| e.patient_id }
+                 .select(['DISTINCT patient_id']).collect(&:patient_id)
       end
 
       def patients_with_positive_syphilis_status
@@ -846,7 +835,7 @@ EOF
                          PROGRAM.id, LAB_RESULTS.id, SYPHILIS.concept_id, POSITIVE.concept_id,
                          'Positive', ((@c_start_date.to_date + @c_pregnant_range) - 1.day),
                          @cohort_patients])
-                 .select(['DISTINCT patient_id']).collect { |e| e.patient_id }
+                 .select(['DISTINCT patient_id']).collect(&:patient_id)
       end
 
       def new_hiv_negative_final_visit
@@ -1058,7 +1047,7 @@ EOF
                    .joins([[drug_order: :drug], :encounter])
                    .select(["encounter.patient_id, count(*) encounter_id, drug.name instructions,
                             SUM(DATEDIFF(auto_expire_date, start_date)) orderer"])
-                   .group([:patient_id]).collect { |o| o.patient_id }
+                   .group([:patient_id]).collect(&:patient_id)
 
         begin
           nvp.uniq
