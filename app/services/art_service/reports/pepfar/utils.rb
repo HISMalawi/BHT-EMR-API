@@ -84,9 +84,9 @@ module ARTService
 
         def patient_has_totally_completed_tpt?(patient, tpt)
           patient['total_days_on_medication'].to_i >= if tpt == '3HP'
-                                                        84 # 3 months
+                                                        80 # because we miss a single day with each DATEDIFF
                                                       else
-                                                        182 # 6 months
+                                                        176 # 6 months
                                                       end
         end
 
