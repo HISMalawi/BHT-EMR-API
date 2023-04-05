@@ -34,6 +34,7 @@ module CXCAService
 					formated_obs = []
 					(obs || []).each do |ob|
 						formated_obs << {
+							patient_id: ob.person_id,
 							screened_method: ob.name,
 							birthdate: ob.birthdate,
 							obs_datetime: ob.obs_datetime.to_date,
