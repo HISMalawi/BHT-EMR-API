@@ -24,7 +24,7 @@ module ANCService
           women_received_sp_one: "Women given one dose of SP",
           women_received_sp_two: "Women given two SP doses",
           women_received_sp_three: "Women given three SP doses",
-          women_received_ttv: "Women received TTV",
+          women_received_td: "Women received TD",
           women_received_one_twenty_iron_tabs: "Women received 120 iron tablets",
           women_received_albendazole: "Women receiced albendazole",
           women_received_itn: "Women given bed nets",
