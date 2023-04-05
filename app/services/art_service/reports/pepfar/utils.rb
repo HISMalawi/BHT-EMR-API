@@ -82,6 +82,14 @@ module ARTService
           end
         end
 
+        def patient_has_totally_completed_tpt?(patient, tpt)
+          patient['total_days_on_medication'].to_i >= if tpt == '3HP'
+                                                        84 # 3 months
+                                                      else
+                                                        182 # 6 months
+                                                      end
+        end
+
         ##
         # Returns the current occupation of a patient
         def current_occupation(joiner)
