@@ -344,12 +344,17 @@ module ARTService
     end
 
     def months_since_last_vl_test
-       last_vl_load_test = ARTService::VLReminder.new(
-                           patient_id: patient.patient_id,
-                           date: date)
-                           .find_patient_last_viral_load
-       return 'N/A' if last_vl_load_test.blank?
-       (date&.to_date.year * 12) - (last_vl_load_test.start_date.to_date.year * 12)
+       tests = viral_load_tests("<")
+       return "N/A" if tests.blank?
+       result = Lab::LabResult.where(obs_group_id: tests, person_id: patient.patient_id)
+                             .order(:obs_datetime)
+                             .last
+       return 'N/A' unless result
+
+       viral_load_concept = ConceptName.where(name: 'HIV Viral Load').select(:concept_id)
+       value = result.children.where(concept_id: viral_load_concept).first
+       return 'N/A' unless value
+       ((date.to_date - value.obs_datetime.to_date)/30).round
     end
 
     def breastfeeding?
