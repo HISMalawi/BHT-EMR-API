@@ -39,7 +39,7 @@ module RdsService
   DELTA_STATE_PATH = Rails.root.join('log/rds-sync-state.yml')
 
   MODELS = [Person, PersonAttribute, PersonAddress, PersonName, Relationship, User, Patient,
-            PatientIdentifier, PatientState, PatientProgram, ProgramWorkflowState, Encounter,
+            PatientIdentifier, PatientState, PatientProgram, ProgramWorkflow, ProgramWorkflowState, Encounter,
             Observation, Order, DrugOrder,Pharmacy, PharmacyBatch,
             PharmacyBatchItem, PharmacyBatchItemReallocation].freeze
 

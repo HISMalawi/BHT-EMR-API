@@ -343,6 +343,20 @@ module ARTService
       'N'
     end
 
+    def months_since_last_vl_test
+       tests = viral_load_tests("<")
+       return "N/A" if tests.blank?
+       result = Lab::LabResult.where(obs_group_id: tests, person_id: patient.patient_id)
+                             .order(:obs_datetime)
+                             .last
+       return 'N/A' unless result
+
+       viral_load_concept = ConceptName.where(name: 'HIV Viral Load').select(:concept_id)
+       value = result.children.where(concept_id: viral_load_concept).first
+       return 'N/A' unless value
+       (date.year * 12 + date.month) - (value.obs_datetime.year * 12 + value.obs_datetime.month)
+    end
+
     def breastfeeding?
       breastfeeding_concept = ConceptName.where(name: 'breatfeeding?').select(:concept_id)
 
@@ -353,9 +367,9 @@ module ARTService
 
     def doses_missed?
       doses_missed_concept = ConceptName.where(name: 'Missed antiretroviral drug construct').select(:concept_id)
-
-      doses_missed = Observation.where(concept_id: doses_missed_concept, obs_datetime: @date.to_date, value_coded: ConceptName.find_by_name!('Yes').concept_id)
-
+      
+      doses_missed = Observation.where(concept_id: doses_missed_concept, obs_datetime: @date.to_date, value_coded: ConceptName.find_by_name!('Yes').concept_id )
+      
       return if doses_missed.blank?
 
       doses_missed.first(:value_numeric)
@@ -380,8 +394,9 @@ module ARTService
         bmi: bmi,
         pregnant: pregnant?,
         breastfeeding: breastfeeding?,
+        batch_master_card_visit_by: visit_by == 'BOTH' ? 'P G' : (visit_by[0] == 'Unk' ? nil : visit_by[0]),
         side_effects_batch: side_effects.empty? ? 'N' : 'Y',
-        next_appointment: next_appointment ? next_appointment.strftime('%Y-%m-%d') : nil,
+        next_appointment: next_appointment ? next_appointment&.strftime("%Y-%m-%d %H:%M:%S") : nil,
         doses_missed: doses_missed?,
         cpt: cpt_dispensed,
         inh: inh_dispensed,
@@ -389,6 +404,7 @@ module ARTService
         inh_rfp: new_3hp_dispensed,
         pryidoxine: pyridoxine_dispensed,
         arvs: arvs_dispensed,
+        months_since_last_vl_test: months_since_last_vl_test,
         qtr: @date.month < 4 ? 1 : @date.month < 7 ? 2 : @date.month < 10 ? 3 : 4
       }
     end

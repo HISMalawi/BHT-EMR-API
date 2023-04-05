@@ -26,13 +26,14 @@ class Api::V1::Programs::Patients::VisitController < ApplicationController
 
       patient_details = mastercard_service.fetch
 
-      visits_dates = patient_service.find_patient_visit_dates(patient, program, true)
+      visits_dates = patient_service.find_patient_visit_dates(patient, program)
 
       visits_dates = visits_dates.sort! { |a, b| b.to_date <=> a.to_date }.reverse
 
       filtred_dates = [visits_dates[0]]
       filtred_dates += visits_dates.last(5)
 
+      filtred_dates.uniq!
       
       patient_details[:visits] = filtred_dates.collect do |date|
         { date: date }.merge(visit_summary(patient.id, date).as_json)
