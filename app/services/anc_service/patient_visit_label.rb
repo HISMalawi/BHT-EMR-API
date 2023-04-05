@@ -57,7 +57,7 @@ module ANCService
 
           @drugs = {};
           @other_drugs = {};
-          main_drugs = ["TTV", "SP", "Fefol", "Albendazole"]
+          main_drugs = ["TD", "SP", "Fefol", "Albendazole"]
 
           @patient.encounters.where(["(encounter_type = ? OR encounter_type = ?) AND encounter_datetime >= ? AND encounter_datetime <= ?",
               EncounterType.find_by_name("TREATMENT").id, EncounterType.find_by_name("DISPENSING").id,
@@ -279,7 +279,7 @@ module ANCService
 
           @drugs = {};
           @other_drugs = {};
-          main_drugs = ["TTV", "SP", "Fefol", "Albendazole"]
+          main_drugs = ["TD", "SP", "Fefol", "Albendazole"]
 
           @patient.encounters.where(["(encounter_type = ? OR encounter_type = ?) AND encounter_datetime >= ? AND encounter_datetime <= ?
             AND program_id = ?",EncounterType.find_by_name("TREATMENT").id, EncounterType.find_by_name("DISPENSING").id,
@@ -322,7 +322,7 @@ module ANCService
           label.draw_text("Planned Delivery Place: #{@current_range[0]["PLANNED DELIVERY PLACE"] rescue ""}",40,66,0,2,1,1,false)
           label.draw_text("Bed Net Given: #{@current_range[0]["MOSQUITO NET"] rescue ""}",40,99,0,2,1,1,false)
           label.draw_text("",28,138,0,2,1,1,false)
-          label.draw_text("TTV",75,156,0,2,1,1,false)
+          label.draw_text("TD",75,156,0,2,1,1,false)
 
           label.draw_text("Diagnosis",170,140,0,2,1,1,false)
           label.draw_text("Medication/Outcome",370,140,0,2,1,1,false)
@@ -348,9 +348,9 @@ module ANCService
 
             if element == @date.to_date.strftime("%d/%b/%Y")
 
-              ttv = (@drugs[element]["TTV"] > 0 ? 1 : "") rescue ""
+              td = (@drugs[element]["TD"] > 0 ? 1 : "") rescue ""
 
-              label.draw_text(ttv.to_s,28,200,0,2,1,1,false)
+              label.draw_text(td.to_s,28,200,0,2,1,1,false)
 
               sign = "";
               diagnosis = ["malaria", "anaemia", "pre-eclampsia", "vaginal bleeding", "early rupture of membranes",
