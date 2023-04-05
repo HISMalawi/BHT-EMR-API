@@ -354,7 +354,7 @@ module ARTService
        viral_load_concept = ConceptName.where(name: 'HIV Viral Load').select(:concept_id)
        value = result.children.where(concept_id: viral_load_concept).first
        return 'N/A' unless value
-       ((date.to_date - value.obs_datetime.to_date)/30).round
+       (date.year * 12 + date.month) - (value.obs_datetime.year * 12 + value.obs_datetime.month)
     end
 
     def breastfeeding?
