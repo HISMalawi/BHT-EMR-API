@@ -373,7 +373,6 @@ module ARTService
       return if doses_missed.blank?
 
       doses_missed.first(:value_numeric)
-      return doses_missed.first(:value_numeric)
     end
 
     def as_json(_options = {})

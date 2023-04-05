@@ -1465,13 +1465,13 @@ text-overflow: ellipsis;
 				valign=  >
             <font face='Times New Roman' color='#000000'><br>
             </font>
-            <%= visit[:pills_brought].map {|p| p[:quantity]}.inject(&:+).round rescue nil %>
+            <%= visit[:pills_brought].map {|p| p[1]}.inject(&:+).round rescue nil %>
           </td>
           <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000' colspan=1 align='center'
 				valign=  >
             <font face='Times New Roman' color='#000000'><br>
             </font>
-            <%= visit[:doses_missed].map {|p| p[:quantity]}.inject(&:+).round rescue nil %>
+            <%= visit[:doses_missed] rescue nil %>
           </td>
           <td colspan="3" style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				colspan=2 align='center' valign=middle bgcolor='#F1F1F1'>
