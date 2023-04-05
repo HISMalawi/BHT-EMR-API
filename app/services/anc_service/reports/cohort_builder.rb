@@ -166,12 +166,12 @@ module ANCService
         # SP Doses given
         sp_one_dose = patients_given_one_sp_dose
         sp_two_doses = patients_given_two_sp_doses
-        sp_three_doses = patients_given_three_sp_doses
+        sp_three_doses = patients_given_at_least_three_sp_doses
         sp_zero_doses = (@cohort_patients - (sp_one_dose + sp_two_doses + sp_three_doses)).uniq
         cohort_struct.patients_given_zero_sp_doses = sp_zero_doses
         cohort_struct.patients_given_one_sp_dose = sp_one_dose
         cohort_struct.patients_given_two_sp_doses = sp_two_doses
-        cohort_struct.patients_given_three_sp_doses = sp_three_doses
+        cohort_struct.patients_given_three_or_more_sp_doses = sp_three_doses
 
         # Fefol tablets given
         fefol_less_than_120, fefol_120_plus = patients_given_fefol_tablets
@@ -701,7 +701,7 @@ EOF
           AND encounter.voided = 0 AND encounter.program_id = #{PROGRAM.id}
           INNER JOIN concept_name ON o.concept_id = concept_name.concept_id AND concept_name.voided = 0 AND concept_name.name = 'Sulfadoxine and Pyrimethamine'
           INNER JOIN drug_order ON o.order_id = drug_order.order_id AND drug_order.quantity > 0
-          WHERE DATE(encounter_datetime) <= '#{@c_start_date.to_date + @c_pregnant_range - 1.day}' AND encounter.patient_id IN (#{@cohort_patients})
+          WHERE DATE(encounter_datetime) <= '#{@c_start_date.to_date + @c_pregnant_range - 1.day}' AND encounter.patient_id IN (#{(@cohort_patients + [0]).join(',')})
           AND encounter.program_id = #{PROGRAM.id}
           GROUP BY encounter.patient_id
         SQL
