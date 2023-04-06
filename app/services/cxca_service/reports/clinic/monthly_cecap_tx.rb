@@ -30,19 +30,16 @@ module CXCAService::Reports::Clinic
     private
 
     def init_report query
-      data = []
+      report["data"] ||= {}
       TX_GROUPS.each do |(name, values)|
-        row = {}
-        row[name] ||= []
         age_groups.each do |age_group|
+          report["data"][name] ||= []
           x = query.select { |q| q["reason_for_visit"].to_s.downcase.in?(values) && q["age_group"] == age_group }
-          row[name].push(get_indicators(x, age_group))
+          report["data"][name].push(get_indicators(x, age_group))
         end
         x2 = query.select { |q| q["reason_for_visit"].to_s.downcase.in?(values) && q["age_group"].in?(fifty_plus) }
-        row[name].push(get_indicators(x2, "50 plus years"))
-        data << row
+        report["data"][name].push(get_indicators(x2, "50 plus years"))
       end
-      report["data"] = data
     end
 
     def include_report_totals query

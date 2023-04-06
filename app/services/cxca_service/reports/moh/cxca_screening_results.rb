@@ -22,7 +22,7 @@ module CXCAService
 					['F','Female'], @start_date, @end_date).\
 					joins("INNER JOIN person p ON p.person_id = obs.person_id
 					INNER JOIN concept_name m ON m.concept_id = obs.value_coded").\
-					group("p.person_id, DATE(obs_datetime)").select("p.birthdate, m.concept_id, m.name, obs.obs_datetime,
+					group("p.person_id, DATE(obs_datetime)").select("p.person_id, p.birthdate, m.concept_id, m.name, obs.obs_datetime,
 					TIMESTAMPDIFF(year, p.birthdate, DATE(obs_datetime)) age").\
 					order("obs.obs_datetime DESC")
 

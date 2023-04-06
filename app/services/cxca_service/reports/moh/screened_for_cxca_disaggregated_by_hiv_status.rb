@@ -27,7 +27,7 @@ module CXCAService
 					INNER JOIN obs hiv_status ON hiv_status.person_id = obs.person_id
 					AND hiv_status.concept_id = #{hiv_status.concept_id}
 					INNER JOIN concept_name h ON hiv_status.value_coded = h.concept_id").\
-					group("p.person_id, DATE(obs.obs_datetime)").select("p.birthdate, m.concept_id, m.name, obs.obs_datetime,
+					group("p.person_id, DATE(obs.obs_datetime)").select("p.person_id, p.birthdate, m.concept_id, m.name, obs.obs_datetime,
 					TIMESTAMPDIFF(year, p.birthdate, DATE(obs.obs_datetime)) age, h.name hiv_status").\
 					order("hiv_status.obs_datetime DESC")
 
