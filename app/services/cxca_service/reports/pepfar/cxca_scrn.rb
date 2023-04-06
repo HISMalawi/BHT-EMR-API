@@ -35,10 +35,10 @@ module CXCAService::Reports::Pepfar
         row = {}
         row["age_group"] = age_group
         TX_GROUPS.each do |(name, values)|
-          screened = query.select { |q| q["reason_for_visit"].strip.downcase.in?(values) && q["age_group"] == age_group }
+          screened = query.select { |q| q["reason_for_visit"]&.strip&.downcase&.in?(values) && q["age_group"] == age_group }
           row[name] = {}
           CxCa_TX_OUTCOMES.each do |(outcome, values)|
-            row[name][outcome] = screened.select { |s| s["treatment"].strip.downcase.in?(values) }.map { |t| t["person_id"] }.uniq
+            row[name][outcome] = screened.select { |s| s["treatment"]&.strip&.downcase&.in?(values) }.map { |t| t["person_id"] }.uniq
           end
         end
         row
