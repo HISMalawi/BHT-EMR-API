@@ -36,7 +36,6 @@ module CXCAService::Reports::Pepfar
         row["age_group"] = age_group
         TX_GROUPS.each do |(name, values)|
           screened = query.select { |q| q["reason_for_visit"].strip.downcase.in?(values) && q["age_group"] == age_group }
-          puts screened if !screened.blank?
           row[name] = {}
           CxCa_TX_OUTCOMES.each do |(outcome, values)|
             row[name][outcome] = screened.select { |s| s["treatment"].strip.downcase.in?(values) }.map { |t| t["person_id"] }.uniq
@@ -61,6 +60,7 @@ module CXCAService::Reports::Pepfar
             AND reason_name.voided = 0
             LEFT JOIN concept_name screening_name ON screening_name.concept_id = treatment.value_coded
             AND screening_name.voided = 0
+            AND screening_name.name IS NOT NULL
           SQL
           .group("person.person_id")
           .select("disaggregated_age_group(person.birthdate, DATE('#{@end_date.to_date}')) AS age_group, person.person_id, reason_name.name AS reason_for_visit, screening_name.name AS treatment")
