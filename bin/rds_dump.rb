@@ -42,7 +42,7 @@ def main
     end
   end
   puts 'compressing dump file'
-  `gzip #{Rails.root.join('log',rds_dump_file_name)}`
+  `gzip -f #{Rails.root.join('log',rds_dump_file_name)}`
 end
 
 # Dump database in an RDS compatible format into given file.
