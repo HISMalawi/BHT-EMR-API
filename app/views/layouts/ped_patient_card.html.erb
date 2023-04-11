@@ -3,31 +3,31 @@
   <head><meta http-equiv='content-type' content='text/html; charset=utf-8'/>
     <title></title>
     <style type='text/css'>
+      @media print {
+      .pagebreak {
+      page-break-before: always !important;
+      }
+      }
+      
+       table {
+           width: 100%;
+       }
+       table {
+           border-collapse: collapse;
+       }
+       td {
+           padding-left: 0.3em;
+           padding-right: 0.3em;
+       }
+       .t_no_break {
+           white-space: nowrap !important;
+       }
        @media print {
-.pagebreak {
-page-break-before: always !important;
-}
-}
-
-        table {
-            width: 100%;
-        }
-        table {
-            border-collapse: collapse;
-        }
-        td {
-            padding-left: 0.3em;
-            padding-right: 0.3em;
-        }
-        .t_no_break {
-            white-space: nowrap !important;
-        }
-        @media print {
-            .print-page {
-                margin: 10px;
-                page-break-inside: avoid;
-            }
-        }
+           .print-page {
+               margin: 10px;
+               page-break-inside: avoid;
+           }
+       }
     </style>
   </head>
   <body>
@@ -36,11 +36,11 @@ page-break-before: always !important;
         <tr>
           <td>
             <b>
-            ART Patient Card Paediatric ARV Formulations
+              ART Patient Card Paediatric ARV Formulations
             </b>
             <br/>
             <div class='t_no_break' style="background-color:#00B0F0;padding:.5em;width:15vw;font-weight:bold;">
-            Blue Card
+              Blue Card
             </div>
           </td>
           <td>Version 9</td>
@@ -54,7 +54,7 @@ page-break-before: always !important;
           </td>
           <td>Year</td>
           <td style="border: 2px solid black;width:7%;">
-            <%= @data["created_at"] ? @data["created_at"].strftime('%y') : '' %> 
+            <%= @data["created_at"] ? @data["created_at"].strftime('%y') : '' %>
           </td>
         </tr>
       </table>
@@ -198,7 +198,7 @@ border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1p
                         valign='top '>
             <font face='Times New Roman' color='#000000'><br>
             </font>
-            <%= @data["birth_date"].to_date.strftime("%d-%m-%Y") rescue '' %>
+            <%= @data["birth_date"].to_date.strftime("%d-%b-%Y") rescue '' %>
           </td>
           <td
                         style='border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
@@ -670,7 +670,7 @@ border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1p
                         style='border-bottom: 1px solid #000000; border-left: 1px solid #000000'
                         align='left'
                         valign='top '>
-            <font face='Times New Roman' color='#000000'> <%= @data[:visits][0][:date].strftime("%d-%m-%Y")
+            <font face='Times New Roman' color='#000000'> <%= @data[:visits][0][:date].strftime("%d-%b-%Y")
  %> </font>
           </td>
         </tr>
@@ -1389,7 +1389,7 @@ border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1p
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
 				colspan=3 align='center' valign=middle bgcolor='#F1F1F1'>
             <font face='Arial'></font>
-            <%= "#{visit[:date].strftime("%d-%m-%Y")}"%>
+            <%= "#{visit[:date].strftime("%d-%b-%Y")}"%>
           </td>
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				align='left' valign=middle bgcolor='#F1F1F1'>
@@ -1482,7 +1482,7 @@ border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1p
 				align='left' valign=middle bgcolor='#F1F1F1'>
             <font face='Times New Roman' color='#000000'><br>
             </font>
-            <%= visit[:next_appointment].to_date.strftime("%d-%m-%Y") rescue '' %>
+            <%= visit[:next_appointment].to_date.strftime("%d-%b-%Y") rescue '' %>
           </td>
           <td class='t_no_break' colspan="5" style='border-top: 1px solid #000000; border-right: 2px solid #000000;
  border-bottom: 1px solid #000000; border-left: 1px solid #000000'
@@ -1491,98 +1491,126 @@ border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1p
             <%= visit[:outcome] == 'On antiretrovirals' ? 'on ART' : visit[:outcome] %>
           </td>
         </tr>
-        <% end %>
-        <% (1..(12 - @data[:visits].length)).each do %>
-           <tr>
-          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
-				colspan=3 align='center' valign=middle bgcolor='#F1F1F1'>
-            <font face='Arial'></font>
+      <% end %>
+      <% (1..(12 - @data[:visits].length)).each do %>
+        <tr style="height:2.3em !important">
+          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
+				colspan='3 ' align='center' valign='middle '>
+            <b>
+              <font face='Arial'></font>
+            </b>
           </td>
-          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
-				align='left' valign=middle bgcolor='#F1F1F1'>
+          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				align='left' valign='middle '>
             <font face='Times New Roman' color='#000000'><br>
             </font>
           </td>
-          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
-				align='left' valign=middle bgcolor='#F1F1F1'>
+          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				align='left' valign='middle '>
             <font face='Times New Roman' color='#000000'><br>
             </font>
           </td>
-          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
-				align='left' valign=middle bgcolor='#F1F1F1'>
+          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				align='left' valign='middle '>
             <font face='Times New Roman' color='#000000'><br>
             </font>
           </td>
-          <td colspan="4" align="center" style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
-				align='right' valign=middle bgcolor='#F1F1F1'>
+          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
+				align='right' valign='middle '>
+            <font face='Liberation Sans Narrow'>N</font>
           </td>
-          <td colspan="2" style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
-				align='center' valign=middle bgcolor='#F1F1F1'>
-            <font face='Liberation Sans Narrow'></font>
+          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000' align='center' valign='middle '>
+            <font face='Liberation Sans Narrow'>Y</font>
           </td>
-          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
-				align='center' valign=middle bgcolor='#F1F1F1'>
-            <font face='Liberation Sans Narrow'></font>
+          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000' align='center' valign='middle '>
+            <font face='Liberation Sans Narrow'>C</font>
           </td>
-          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
-				align='center' valign=middle bgcolor='#F1F1F1'>
-            <font face='Liberation Sans Narrow'></font>
+          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000'
+				align='center' valign='middle '>
+            <font face='Times New Roman' color='#000000'>Rx</font>
           </td>
-          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
-				colspan=2 align='center' valign=middle bgcolor='#F1F1F1'>
+          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
+				align='center' valign='middle '>
+            <font face='Liberation Sans Narrow'>N</font>
+          </td>
+          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000'
+				align='center' valign='middle '>
+            <font face='Liberation Sans Narrow'>Y</font>
+          </td>
+          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				align='left' valign='middle '>
             <font face='Times New Roman' color='#000000'><br>
             </font>
           </td>
-          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
-				align='right' valign=middle bgcolor='#F1F1F1'>
-            <font face='Liberation Sans Narrow'></font>
-          </td>
-          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
-				align='right' valign=middle bgcolor='#F1F1F1'>
-            <font face='Liberation Sans Narrow'></font>
-          </td>
-          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
-				align='left' valign=middle bgcolor='#F1F1F1'>
+          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				align='left' valign='middle '>
             <font face='Times New Roman' color='#000000'><br>
             </font>
           </td>
-          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
-				align='left' valign=middle bgcolor='#F1F1F1'>
+          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				colspan='2 ' align='center' valign='middle '>
             <font face='Times New Roman' color='#000000'><br>
             </font>
           </td>
-          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
-				align='left' valign=middle bgcolor='#F1F1F1'>
+          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
+				align='right' valign='middle '>
+            <font face='Liberation Sans Narrow'>P</font>
+          </td>
+          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000'
+				align='right' valign='middle '>
+            <font face='Liberation Sans Narrow'>G</font>
+          </td>
+          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				align='left' valign='middle '>
             <font face='Times New Roman' color='#000000'><br>
             </font>
           </td>
-          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
-				align='left' valign=middle bgcolor='#F1F1F1'>
+          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				align='left' valign='middle '>
             <font face='Times New Roman' color='#000000'><br>
             </font>
           </td>
-          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
-				align='left' valign=middle bgcolor='#F1F1F1'>
+          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				align='left' valign='middle '>
             <font face='Times New Roman' color='#000000'><br>
             </font>
           </td>
-          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
-				colspan=2 align='left' valign=middle bgcolor='#F1F1F1'>
-            <font face='Times New Roman' color='#000000'></font>
-          </td>
-          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
-				align='left' valign=middle bgcolor='#F1F1F1'>
+          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				align='left' valign='middle '>
             <font face='Times New Roman' color='#000000'><br>
             </font>
           </td>
-          <td colspan="5" style='border-top: 1px solid #000000; border-right: 2px solid #000000;
- border-bottom: 1px solid #000000; border-left: 1px solid #000000'
-				align='right' valign=middle bgcolor='#F1F1F1'>
-            <font face='Liberation Sans Narrow'></font>
+          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				align='left' valign='middle '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				colspan='2 ' align='left' valign='middle '>
+            <font face='Times New Roman' color='#000000'>Bled</font>
+          </td>
+          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				align='left' valign='middle '>
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
+				align='right' valign='middle '>
+            <font face='Liberation Sans Narrow'>D</font>
+          </td>
+          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000' align='right' valign='middle '>
+            <font face='Times New Roman' color='#000000'>Def</font>
+          </td>
+          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000' align='right' valign='middle '>
+            <font face='Times New Roman' color='#000000'>Stop</font>
+          </td>
+          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-right: 2px solid #000000'
+				align='center' valign='middle '>
+            <font face='Times New Roman' color='#000000'>TO</font>
           </td>
         </tr>
-        <% end %>
-      </table>
-</div>
+      <% end %>
+    </table>
+  </div>
 </body>
 </html>
