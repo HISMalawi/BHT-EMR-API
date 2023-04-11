@@ -5,11 +5,11 @@
     <title></title>
     <style type='text/css'>
       @media print {
-.pagebreak {
-page-break-before: always !important;
-}
-}
-
+      .pagebreak {
+      page-break-before: always !important;
+      }
+      }
+      
       
       table {
                       width: 100%;
@@ -49,24 +49,25 @@ page-break-before: always !important;
       <tr>
         <td style="width:35%">
           <b>
-          ART Patient Card Adult ARV Formulations
+            ART Patient Card Adult ARV Formulations
           </b>
           <br/>
           <div style="background-color:yellow;padding:.5em;width:15vw;font-weight:bold;">
-          Yellow Card
+            Yellow Card
           </div>
         </td>
         <td width="8%">Version 9</td>
-        <td width="8%">Transfer-<br/>In Date</td>
-        <td style="border: 2px solid black;width:15%;">
+        <td width="8%">Transfer-<br/>
+          In Date</td>
+        <td style="border: 1px solid black;width:15%;">
           <%= @data["transfer_in_date"] %>
         </td>
         <td width="6%">ART Reg no</td>
-        <td style="border: 2px solid black;width:15%;">
-           <%= @data["art_number"] %>
+        <td style="border: 1px solid black;width:15%;">
+          <%= @data["art_number"] %>
         </td>
         <td width="7%">Child HCC no</td>
-        <td style="border: 2px solid black;width:16%;"></td>
+        <td style="border: 1px solid black;width:16%;"></td>
       </tr>
     </table>
     <table cellspacing='0' border='0'>
@@ -217,21 +218,21 @@ page-break-before: always !important;
             <font face='Times New Roman'    color='#000000'><br>
             </font>
           </b></td>
-        <td colspan='12' style='border-bottom: 2px solid #000000; ' align='left' valign=top><b>
+        <td colspan='12' style='border-bottom: 1px solid #000000; ' align='left' valign=top><b>
             <font face='Times New Roman'    color='#000000'>Patient / Guardian Details</font>
           </b></td>
         <td align='left' valign=top><b>
             <font face='Times New Roman'    color='#000000'><br>
             </font>
           </b></td>
-        <td colspan='10' style='border-bottom: 2px solid #000000; '  align='left' valign=top><b>
+        <td colspan='10' style='border-bottom: 1px solid #000000; '  align='left' valign=top><b>
             <font face='Times New Roman'    color='#000000'>Status at ART Initiation</font>
           </b></td>
         <td   align='left' valign=top><b>
             <font face='Times New Roman'    color='#000000'><br>
             </font>
           </b></td>
-        <td colspan='8' style='border-bottom: 2px solid #000000' align='left' valign=top><b>
+        <td colspan='8' style='border-bottom: 1px solid #000000;' align='left' valign=top><b>
             <font face='Times New Roman'    color='#000000'>Treatment history</font>
           </b></td>
       </tr>
@@ -243,7 +244,7 @@ page-break-before: always !important;
           <font face='Times New Roman' color='#000000'><br>
           </font>
         </td>
-        <td style='border-top: 1px solid #000000; border-left: 2px solid #000000; border-right: 2px solid #000000'
+        <td style='border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000;'
 				colspan=12 rowspan=2 valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
@@ -258,7 +259,7 @@ white-space: nowrap;
 overflow: hidden;
 text-overflow: ellipsis;
 
-        border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 2px solid #000000'
+        border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000;'
 				colspan=10 rowspan=2 align='center' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
@@ -267,21 +268,21 @@ text-overflow: ellipsis;
         <td class='t_no_break' align='left' valign=top>
           <font face='Times New Roman' color='#000000'>Other ARVs</font>
         </td>
-        <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000' colspan=3 rowspan=2 align='center'
+        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000;' colspan=3 rowspan=2 align='center'
 				valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
           <%= @data[:arvs_given].third[:arv] rescue '' %>
         </td>
-        <td class='t_no_break' style='border-top: 2px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+        <td class='t_no_break' style='border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				rowspan=2 valign=  >
           <font face='Times New Roman' color='#000000'>Start date</font>
         </td>
-        <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 2px solid #000000'
+        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000;'
 				colspan=4 rowspan=2 align='center' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
-          <%= @data[:arvs_given].third[:date].to_date.strftime('%d-%m-%Y') rescue '' rescue '' %>
+          <%= @data[:arvs_given].third[:date].to_date.strftime('%d-%b-%Y') rescue '' rescue '' %>
         </td>
       </tr>
       <tr>
@@ -307,7 +308,7 @@ text-overflow: ellipsis;
           <font face='Times New Roman' color='#000000'><br>
           </font>
         </td>
-        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000'
+        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000;'
 			colspan=2 rowspan=2 align='center' valign=  >
           <font face='Times New Roman' color='#000000'></font>
           <%= @data["sex"] %>
@@ -331,7 +332,7 @@ text-overflow: ellipsis;
         <font face='Times New Roman' color='#000000'><br>
         </font>
       </td>
-      <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 2px solid #000000'
+      <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000;'
 				colspan=3 rowspan=2 align='center' valign=top>
         <font face='Times New Roman' color='#000000'><br>
         </font>
@@ -341,7 +342,7 @@ text-overflow: ellipsis;
         </font>
         WHO Stage
       </td>
-      <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 2px solid #000000'
+      <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000;'
 				colspan=10 rowspan=2 align='center' valign=top>
         <font face='Times New Roman' color='#000000'><br>
         </font>
@@ -350,7 +351,7 @@ text-overflow: ellipsis;
       <td rowspan=2 align='left' valign=  >
         <font face='Times New Roman' color='#000000'>ART reg 1</font>
       </td>
-      <td style='border-left: 2px solid #000000; border-bottom: 1px solid #000000;' colspan=3 rowspan=2 align='center' valign=top>
+      <td style='border-left: 1px solid #000000; border-bottom: 1px solid #000000;' colspan=3 rowspan=2 align='center' valign=top>
         <font face='Times New Roman' color='#000000'><br>
         </font>
         <%= @data[:arvs_given].first[:arv] rescue '' %>
@@ -359,11 +360,11 @@ text-overflow: ellipsis;
 				valign=  >
         <font face='Times New Roman' color='#000000'>Start date</font>
       </td>
-      <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 2px solid #000000'
+      <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000;'
 				colspan=4 rowspan=2 align='center' valign=top>
         <font face='Times New Roman' color='#000000'><br>
         </font>
-        <%= @data[:arvs_given].first[:date].to_date.strftime('%d-%m-%Y') rescue '' rescue '' %>
+        <%= @data[:arvs_given].first[:date].to_date.strftime('%d-%b-%Y') rescue '' rescue '' %>
       </td>
     </tr>
     <tr>
@@ -404,7 +405,7 @@ text-overflow: ellipsis;
                         white-space: nowrap;
                         overflow: hidden;
                         text-overflow: ellipsis;
-                        border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 2px solid #000000'
+                        border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000;'
                         colspan='12'
                         rowspan='2 '
                         valign='top '>
@@ -416,21 +417,21 @@ text-overflow: ellipsis;
 				valign=  >
           <font face='Times New Roman' color='#000000'></font>
         </td>
-        <td style='border-left: 2px solid #000000' colspan=3 rowspan=2 align='center' valign=  ><b>
+        <td style='border-left: 1px solid #000000;' colspan=3 rowspan=2 align='center' valign=  ><b>
             <font face='Times New Roman' color='#000000'></font>
           </b></td>
         <td style='border-top: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				colspan=2 rowspan=2 align='right' valign=  >
           <font face='Times New Roman' color='#000000'>KS</font>
         </td>
-        <td style='border-bottom: 1px solid #000000; border-right: 2px solid #000000; ' colspan=5 rowspan=2 align='center' valign=  >
+        <td style='border-bottom: 1px solid #000000; border-right: 1px solid #000000; ' colspan=5 rowspan=2 align='center' valign=  >
           <font face='Times New Roman' color='#000000'></font>
           <%= @data["ks"] %>
         </td>
         <td rowspan=2 align='left' valign=  >
           <font face='Times New Roman' color='#000000'>ART reg 2</font>
         </td>
-        <td style='border-left: 2px solid #000000; border-bottom: 1px solid #000000;' colspan=3 rowspan=2 align='center' valign=top>
+        <td style='border-left: 1px solid #000000; border-bottom: 1px solid #000000;' colspan=3 rowspan=2 align='center' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
           <%= @data[:arvs_given].second[:arv] rescue '' %>
@@ -439,11 +440,11 @@ text-overflow: ellipsis;
 				valign=  >
           <font face='Times New Roman' color='#000000'>Start date</font>
         </td>
-        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 2px solid #000000'
+        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000;'
 				colspan=4 rowspan=2 align='center' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
-          <%= @data[:arvs_given].second[:date].to_date.strftime('%d-%m-%Y') rescue '' rescue '' %>
+          <%= @data[:arvs_given].second[:date].to_date.strftime('%d-%b-%Y') rescue '' rescue '' %>
         </td>
       </tr>
       <tr>
@@ -463,7 +464,7 @@ text-overflow: ellipsis;
           <font face='Times New Roman' color='#000000'><br>
           </font>
         </td>
-        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 2px solid #000000'
+        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000;'
 				colspan=12 rowspan=2 =valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
@@ -472,7 +473,7 @@ text-overflow: ellipsis;
         <td  align='left' valign=  >
           <font face='Times New Roman' color='#000000'>TB status at</font>
         </td>
-        <td rowspan='2' colspan='3' style='border-top: 1px solid black; border-left: 2px solid #000000' align='center' valign=top>
+        <td rowspan='2' colspan='3' style='border-top: 1px solid black; border-left: 1px solid #000000;' align='center' valign=top>
           <font face='Times New Roman' color='#000000'></font>
           <%= @data["tb_status"] %>
         </td>
@@ -481,7 +482,7 @@ text-overflow: ellipsis;
           <font face='Times New Roman' color='#000000'>Preg/Breastf</font>
         </td>
         <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; 
-					border-right: 2px solid #000000; border-left: 1px solid #000000'
+					border-right: 1px solid #000000; border-left: 1px solid #000000'
 				colspan=5 rowspan=2 align='center' valign=  >
           <font face='Times New Roman' color='#000000'></font>
           <%= @data["preg_or_breastfeeding"] %>
@@ -489,16 +490,16 @@ text-overflow: ellipsis;
         <td rowspan=2 align='left' valign=  >
           <font face='Times New Roman' color='#000000'>TB reg.</font>
         </td>
-        <td style='border-bottom: 2px solid #000000; border-left: 2px solid #000000' colspan=3 rowspan=2
+        <td style='border-bottom: 1px solid #000000; border-left: 1px solid #000000;' colspan=3 rowspan=2
 				align='center' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
         </td>
-        <td class='t_no_break' style='border-bottom: 2px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+        <td class='t_no_break' style='border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				rowspan=2  >
           <font face='Times New Roman' color='#000000'>Start date</font>
         </td>
-        <td style='border-top: 1px solid #000000; border-bottom: 2px solid #000000; border-left: 1px solid #000000; border-right: 2px solid #000000'
+        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000;'
 				colspan=4 rowspan=2 align='center' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
@@ -523,24 +524,24 @@ text-overflow: ellipsis;
         <td   align='left' valign=  >
           <font face='Times New Roman' color='#000000'></font>
         </td>
-        <td colspan='6' style='border-top: 1px solid #000000; border-left: 2px solid #000000' align='left' valign=top>
+        <td colspan='6' style='border-top: 1px solid #000000; border-left: 1px solid #000000;' align='left' valign=top>
           <font face='Times New Roman' color='#000000'>Patient</font>
         </td>
-        <td  colspan='6' style='border-top: 1px solid #000000;  border-right: 2px solid;  border-left: 1px solid' align='left' valign=top>
+        <td  colspan='6' style='border-top: 1px solid #000000;  border-right: 1px solid;  border-left: 1px solid' align='left' valign=top>
           <font face='Times New Roman' color='#000000'>Guardian</font>
         </td>
         <td rowspan=2 align='left' valign=  >
           <font face='Times New Roman' color='#000000'>Height</font>
         </td>
-        <td style='border-top: 1px solid black;border-bottom: 2px solid #000000; border-left: 2px solid #000000' colspan=3 rowspan=2
+        <td style='border-top: 1px solid black;border-bottom: 1px solid #000000; border-left: 1px solid #000000;' colspan=3 rowspan=2
 				align='right' valign=  ><%= @data["height"] %>
           <font face='Times New Roman' color='#000000'>cm</font>
         </td>
-        <td style='border-bottom: 2px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+        <td style='border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 			colspan=2 rowspan=2 align='right' valign=  >
           <font face='Times New Roman' color='#000000'>Weight</font>
         </td>
-        <td style='border-top: 1px solid #000000; border-bottom: 2px solid #000000; border-left: 1px solid #000000; border-right: 2px solid #000000'
+        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000;'
 		colspan=5 rowspan=2 align='center' valign=  >
           <%= @data["weight"] %>
           <font face='Times New Roman' color='#000000'>Kg</font>
@@ -586,13 +587,13 @@ text-overflow: ellipsis;
         <td  align='left' valign=top>
           <font face='Times New Roman' color='#000000'></font>
         </td>
-        <td colspan='6'  style='border-bottom: 1px solid #000000; border-left: 2px solid #000000;  
+        <td colspan='6'  style='border-bottom: 1px solid #000000; border-left: 1px solid #000000;  
 			border-right: 1px solid'   align='left' valign=top>
           <font face='Times New Roman' color='#000000'></font>
           <%= @data["patient_phone"] %>
         </td>
         <td colspan='6'   style='border-bottom: 1px solid #000000;   
-			border-right: 2px solid' align='left' valign=top>
+			border-right: 1px solid' align='left' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
           <%= @data["guardian_phone"] %>
@@ -611,18 +612,18 @@ text-overflow: ellipsis;
           <font face='Times New Roman' color='#000000'><br>
           </font>
         </td>
-        <td style='border-bottom: 2px solid #000000; border-left: 2px solid #000000' colspan=2 
+        <td style='border-bottom: 1px solid #000000; border-left: 1px solid #000000;' colspan=2 
 				align='center' valign=  >
           <font face='Times New Roman' color='#000000'></font>
         </td>
-        <td style='border-bottom: 2px solid #000000'  align='left' valign=  >
+        <td style='border-bottom: 1px solid #000000;'  align='left' valign=  >
           <font face='Times New Roman' color='#000000'></font>
           <%= @data["agrees_to_fup"] %>
         </td>
-        <td style='border-left: 1px solid #000000; border-bottom: 2px solid #000000;' align='left' valign=top>
+        <td style='border-left: 1px solid #000000; border-bottom: 1px solid #000000;' align='left' valign=top>
           <font face='Times New Roman' color='#000000'>Guardian Relation</font>
         </td>
-        <td style=' border-bottom: 2px solid #000000; border-right: 2px solid #000000;' colspan='8' align='left' valign=top>
+        <td style=' border-bottom: 1px solid #000000; border-right: 1px solid #000000;' colspan='8' align='left' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
           <%= @data["guardian_relation"] %>
@@ -886,7 +887,7 @@ text-overflow: ellipsis;
           <font face='Times New Roman' color='#000000'><br>
           </font>
         </td>
-        <td style='border-bottom: 2px solid #000000' colspan=2 align='center' valign=bottom>
+        <td style='border-bottom: 1px solid #000000;' colspan=2 align='center' valign=bottom>
           <font face='Times New Roman' color='#000000'>Date</font>
         </td>
         <td align='center' valign=bottom>
@@ -918,47 +919,47 @@ text-overflow: ellipsis;
           <font face='Times New Roman' color='#000000'>CD4<br>
           </font>
         </td>
-        <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
+        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				colspan=3  align='center' valign=  >
           <font face='Times New Roman' color='#000000'><br>
           </font>
           <%= @data["cd4"] %>
         </td>
-        <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				align='right' valign=  >
           <font face='Times New Roman' color='#000000'>Date</font>
         </td>
-        <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 2px solid #000000'
+        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000;'
 				colspan=6  align='center' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
-          <%= @data["cd4_date"].to_date.strftime('%d-%m-%Y') rescue '' %>
+          <%= @data["cd4_date"].to_date.strftime('%d-%b-%Y') rescue '' %>
         </td>
         <td align='left' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
         </td>
-        <td colspan='2' style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
+        <td colspan='2' style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				  align='center' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
         </td>
-        <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				align='center' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
         </td>
-        <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				 align='center' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
         </td>
-        <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 2px solid #000000'
+        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000;'
 				colspan=2 align='center' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
         </td>
-        <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 2px solid #000000'
+        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000;'
 			colspan=2 align='center' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
@@ -968,16 +969,16 @@ text-overflow: ellipsis;
         <td colspan=2 rowspan=2     '48' align='left' valign=  >
           <font face='Times New Roman' color='#000000'>Facility</font>
         </td>
-        <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
+        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				colspan=5 rowspan=2 align='center' valign=  >
           <font face='Times New Roman' color='#000000'><br>
           </font>
           <%= @data["facility"] %>
         </td>
-        <td style='border-top: 2px solid #000000; border-left: 1px solid #000000' align='left' valign=top>
+        <td style='border-top: 1px solid #000000; border-left: 1px solid #000000' align='left' valign=top>
           <font face='Times New Roman' color='#000000'>Link</font>
         </td>
-        <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-right: 2px solid #000000'
+        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000;'
 				colspan=6 rowspan=2 align='center' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
@@ -986,7 +987,7 @@ text-overflow: ellipsis;
         <td align='left' valign=  >
           <font face='Times New Roman' color='#000000'>TB Xpert</font>
         </td>
-        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
+        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				colspan=3 rowspan=2 align='center' valign=  >
           <font face='Times New Roman' color='#000000'><br>
           </font>
@@ -996,17 +997,17 @@ text-overflow: ellipsis;
 				rowspan=2 align='right' valign=  >
           <font face='Times New Roman' color='#000000'>Date</font>
         </td>
-        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 2px solid #000000'
+        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000;'
 				colspan=6 rowspan=2 align='center' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
-          <%= @data["tb_xpert_date"].to_date.strftime('%d-%m-%Y') rescue '' %>
+          <%= @data["tb_xpert_date"].to_date.strftime('%d-%b-%Y') rescue '' %>
         </td>
         <td align='left' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
         </td>
-        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
+        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				colspan=2 rowspan=2 align='center' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
@@ -1026,7 +1027,7 @@ text-overflow: ellipsis;
           <font face='Times New Roman' color='#000000'><br>
           </font>
         </td>
-        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 2px solid #000000'
+        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000;'
 				colspan=2 rowspan=2 align='center' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
@@ -1049,13 +1050,13 @@ text-overflow: ellipsis;
         <td colspan=2 rowspan=2     '48' align='left' valign=  >
           <font face='Times New Roman' color='#000000'>Test date</font>
         </td>
-        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
+        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				colspan=5 rowspan=2 align='center' valign=  >
           <font face='Times New Roman' color='#000000'><br>
           </font>
-          <%= @data["confimatory_test_date"].to_date.strftime('%d-%m-%Y') rescue '' %>
+          <%= @data["confimatory_test_date"].to_date.strftime('%d-%b-%Y') rescue '' %>
         </td>
-        <td colspan="7" style='border-top: 1px solid #000000; border-right: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000' colspan=4 rowspan=2 align='center'
+        <td colspan="7" style='border-top: 1px solid #000000; border-right: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000' colspan=4 rowspan=2 align='center'
 				valign=  >
           <%= @data["confimatory_test_type"] %>
           <font face='Times New Roman' color='#000000'></font>
@@ -1063,7 +1064,7 @@ text-overflow: ellipsis;
         <td align='left' valign=  >
           <font face='Times New Roman' color='#000000'>Urine LAM</font>
         </td>
-        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
+        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				colspan=3 rowspan=2 align='center' valign=  >
           <font face='Times New Roman' color='#000000'><br>
           </font>
@@ -1073,17 +1074,17 @@ text-overflow: ellipsis;
 				rowspan=2 align='right' valign=  >
           <font face='Times New Roman' color='#000000'>Date</font>
         </td>
-        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 2px solid #000000'
+        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000;'
 				colspan=6 rowspan=2 align='center' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
-          <%= @data["urine_lam_date"].to_date.strftime('%d-%m-%Y') rescue '' %>
+          <%= @data["urine_lam_date"].to_date.strftime('%d-%b-%Y') rescue '' %>
         </td>
         <td align='left' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
         </td>
-        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
+        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				colspan=2 rowspan=2 align='center' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
@@ -1103,7 +1104,7 @@ text-overflow: ellipsis;
           <font face='Times New Roman' color='#000000'><br>
           </font>
         </td>
-        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 2px solid #000000'
+        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000;'
 				colspan=2 rowspan=2 align='center' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
@@ -1127,61 +1128,61 @@ text-overflow: ellipsis;
           <font face='Times New Roman' color='#000000'><br>
           </font>
         </td>
-        <td style='border-bottom: 2px solid #000000; border-left: 2px solid #000000' colspan=2 rowspan=2
+        <td style='border-bottom: 1px solid #000000; border-left: 1px solid #000000;' colspan=2 rowspan=2
 				align='center' valign=  >
           <font face='Times New Roman' color='#000000'></font>
         </td>
-        <td style='border-bottom: 2px solid #000000' rowspan=2 align='center' valign=  >
+        <td style='border-bottom: 1px solid #000000;' rowspan=2 align='center' valign=  >
           <font face='Times New Roman' color='#000000'></font>
         </td>
-        <td style='border-bottom: 2px solid #000000; border-left: 1px solid #000000; border-right: 2px solid #000000'
+        <td style='border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000;'
 				colspan=9 rowspan=2 align='left' valign=  >
           <font face='Times New Roman' color='#000000'>Date</font>
         </td>
         <td align='left' valign=  >
           <font face='Times New Roman' color='#000000'>CrAg</font>
         </td>
-        <td style='border-top: 1px solid #000000; border-bottom: 2px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
+        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				colspan=3 rowspan=2 align='center' valign=  >
           <font face='Times New Roman' color='#000000'><br>
           </font>
           <%= @data["crag"] %>
         </td>
-        <td style='border-top: 1px solid #000000; border-bottom: 2px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				rowspan=2 align='right' valign=  >
           <font face='Times New Roman' color='#000000'>Date</font>
         </td>
-        <td style='border-top: 1px solid #000000; border-bottom: 2px solid #000000; border-left: 1px solid #000000; border-right: 2px solid #000000'
+        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000;'
 				colspan=6 rowspan=2 align='center' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
-          <%= @data["crag_date"].to_date.strftime('%d-%m-%Y') rescue '' %>
+          <%= @data["crag_date"].to_date.strftime('%d-%b-%Y') rescue '' %>
         </td>
         <td align='left' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
         </td>
-        <td style='border-top: 1px solid #000000; border-bottom: 2px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
+        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				colspan=2 rowspan=2 align='center' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
         </td>
-        <td style='border-top: 1px solid #000000; border-bottom: 2px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				rowspan=2 align='center' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
         </td>
-        <td style='border-top: 1px solid #000000; border-bottom: 2px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				rowspan=2 align='center' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
         </td>
-        <td style='border-top: 1px solid #000000; border-bottom: 2px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				colspan=2 rowspan=2 align='center' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
         </td>
-        <td style='border-top: 1px solid #000000; border-bottom: 2px solid #000000; border-left: 1px solid #000000; border-right: 2px solid #000000'
+        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000;'
 				colspan=2 rowspan=2 align='center' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
@@ -1259,7 +1260,7 @@ text-overflow: ellipsis;
 				valign=top>
           <font face='Liberation Sans Narrow'>Result</font>
         </td>
-        <td style='border-top: 1px solid #000000; border-bottom: 2px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+        <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				colspan=2 rowspan=4 align='center' valign=top>
           <font face='Liberation Sans Narrow' size=3>Next Appointment/ Outcome Date</font>
         </td>
@@ -1429,45 +1430,45 @@ text-overflow: ellipsis;
       </tr>
       <% @data[:visits].each_with_index do |visit, i| %>
         <tr style='height:30px'>
-          <td colspan="3" style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
-				    align='left' valign=  ><b>
+          <td colspan="3" style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				    align='center' valign=  ><b>
               <font face='Arial'><br>
               </font>
             </b>
-            <%= "#{visit[:date].to_date.strftime('%d-%m-%Y') rescue ''}"%>
+            <%= "#{visit[:date].to_date.strftime('%d-%b-%Y') rescue ''}"%>
           </td>
-          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000;'
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000;'
 				align='left' valign=  >
             <font face='Times New Roman' color='#000000'><br>
             </font>
             <%= "#{visit[:qtr]}"%>
           </td>
-          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000' colspan=1 align='left'
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000' colspan=1 align='left'
 				valign=top>
             <font face='Times New Roman' color='#000000'></font>
             <%= "#{visit[:weight]}"%>
           </td>
-          <td colspan="2" style='border-top: 2px solid #000000; border-right: 1px solid #000000; border-bottom: 1px solid #000000' align='center' valign=  >
+          <td colspan="2" style='border-top: 1px solid #000000; border-right: 1px solid #000000; border-bottom: 1px solid #000000' align='center' valign=  >
             <font face='Liberation Sans Narrow'></font>
             <%= "#{visit[:pregnant]}"%>
           </td>
-          <td colspan="4" style=' border-right: 1px solid #000000; border-top: 2px solid #000000; border-bottom: 1px solid #000000' align='center' valign=  >
+          <td colspan="4" style=' border-right: 1px solid #000000; border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='center' valign=  >
             <font face='Liberation Sans Narrow'></font>
             <%= "#{visit[:tb_status]}"%>
           </td>
-          <td colspan="2" style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 2px solid #000000'
+          <td colspan="2" style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000;'
 			align='left' valign=  >
             <font face='Times New Roman' color='#000000'><br>
             </font>
             <%= visit[:side_effects].length> 0 ? "Y" : "N" %>
           </td>
-          <td style='border-right: 1px solid #000000;border-top: 2px solid #000000; border-bottom: 1px solid #000000' colspan=1 align='center'
+          <td style='border-right: 1px solid #000000;border-top: 1px solid #000000; border-bottom: 1px solid #000000' colspan=1 align='center'
 				valign=  >
             <font face='Times New Roman' color='#000000'><br>
             </font>
             <%= visit[:pills_brought].map {|p| p[1]}.inject(&:+).round rescue nil %>
           </td>
-          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000' colspan=1 align='center'
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' colspan=1 align='center'
 				valign=  >
             <font face='Times New Roman' color='#000000'><br>
             </font>
@@ -1489,55 +1490,55 @@ text-overflow: ellipsis;
             <font face='Liberation Sans Narrow'></font>
             <%= visit[:batch_master_card_visit_by] %>
           </td>
-          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000'
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000'
 				align='left' valign=  >
             <font face='Times New Roman' color='#000000'><br>
             </font>
             <%= visit[:cpt].map {|q| q[1]}.inject(&:+).round rescue "" %>
           </td>
-          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000'
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000'
 				align='left' valign=  >
             <font face='Times New Roman' color='#000000'><br>
             </font>
             <%= visit[:inh_rfp].map {|q| q[1]}.inject(&:+).round rescue "" %>
           </td>
-          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				align='left' valign=  >
             <font face='Times New Roman' color='#000000'><br>
             </font>
             <%= visit[:inh].map {|q| q[1]}.inject(&:+).round rescue "" %>
           </td>
-          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				align='left' valign=  >
             <font face='Times New Roman' color='#000000'><br>
             </font>
             <%= visit[:rfp].map {|q| q[1]}.inject(&:+).round rescue "" %>
           </td>
-          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
 				align='left' valign=  >
             <font face='Times New Roman' color='#000000'><br>
             </font>
             <%= visit[:pryidoxine].map {|q| q[1]}.inject(&:+).round rescue "" %>
           </td>
-          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				align='left' valign=  >
             <font face='Times New Roman' color='#000000'><br>
             </font>
             <%= visit[:months_since_last_vl_test] %>
           </td>
-          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 2px solid #000000'
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000;'
 				colspan=2 align='center' valign=  >
             <font face='Times New Roman' color='#000000'><br>
             </font>
             <%= visit[:viral_load] %>
           </td>
-          <td class='t_no_break' style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 2px solid #000000'
+          <td class='t_no_break' style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000;'
 				colspan=2 align='center' valign=  >
             <font face='Times New Roman' color='#000000'><br>
             </font>
             <%= visit[:next_appointment].strftime("%d-%m-%Y") rescue '' %>
           </td>
-          <td colspan="4" style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-right: 2px solid #000000'
+          <td colspan="4" style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000;'
 				align='center' valign=  >
             <font face='Times New Roman' color='#000000'></font>
             <%= visit[:outcome] == 'On antiretrovirals' ? 'on ART' : visit[:outcome] %>
@@ -1545,102 +1546,113 @@ text-overflow: ellipsis;
         </tr>
       <% end %>
       <% (1..(12 - @data[:visits].length)).each do %>
-            <tr style='height:40px; !important'>
-          <td colspan="3" style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000;'
-				    align='left' valign=  ><b>
+        <tr style="height: 2.2em !important;">
+          <td colspan=3 style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+				align='left' valign=  ><b>
               <font face='Arial'><br>
               </font>
-            </b>
-          </td>
-          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
-				align='left' valign=  >
+            </b></td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='left' valign=  >
             <font face='Times New Roman' color='#000000'><br>
             </font>
           </td>
-          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000' colspan=1 align='left'
-				valign=top>
-            <font face='Times New Roman' color='#000000'></font>
-          </td>
-          <td colspan="2" style='border-top: 2px solid #000000; border-right: 1px solid #000000; border-bottom: 1px solid #000000' align='center' valign=  >
-            <font face='Liberation Sans Narrow'></font>
-          </td>
-          <td colspan="4" style=' border-right: 1px solid #000000; border-top: 2px solid #000000; border-bottom: 1px solid #000000' align='center' valign=  >
-            <font face='Liberation Sans Narrow'></font>
-          </td>
-          <td colspan="2" style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 2px solid #000000'
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 			align='left' valign=  >
             <font face='Times New Roman' color='#000000'><br>
             </font>
           </td>
-          <td style='border-right: 1px solid #000000;border-top: 2px solid #000000; border-bottom: 1px solid #000000' colspan=1 align='center'
-				valign=  >
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' colspan=2 align='left'
+			valign=top>
+            <font face='Times New Roman' color='#000000'>Preg Bf</font>
+          </td>
+          <td colspan=4 style='border-top: 1px solid #000000; border-right: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
+			align='center' valign=  >
+            <font face='Liberation Sans Narrow'>N Y C Rx</font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='center' valign=  >
+            <font face='Liberation Sans Narrow'>N</font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='center' valign=  >
+            <font face='Liberation Sans Narrow'>Y</font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+			align='left' valign=  >
             <font face='Times New Roman' color='#000000'><br>
             </font>
           </td>
-          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000' colspan=1 align='center'
-				valign=  >
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000;'
+			align='left' valign=  >
             <font face='Times New Roman' color='#000000'><br>
             </font>
           </td>
-          <td colspan="3" style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
-				colspan=2 align='center' valign=middle bgcolor='#F1F1F1'>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' colspan=3 align='center'
+			valign=  >
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000;'
+			align='right' valign=  >
+            <font face='Liberation Sans Narrow'>P</font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000;'
+			align='right' valign=  >
+            <font face='Liberation Sans Narrow'>G</font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000'
+			align='left' valign=  >
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000'
+			align='left' valign=  >
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+			align='left' valign=  >
+            <font face='Times New Roman' color='#000000'><br>
+            </font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+			align='left' valign=  >
             <font face='Times New Roman' color='#000000'><br>
             </font>
           </td>
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
-				align='right' valign=middle bgcolor='#F1F1F1'>
-            <font face='Liberation Sans Narrow'></font>
-          </td>
-          <td style='border-right: 1px solid #000000;border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
-				align='right' valign=middle bgcolor='#F1F1F1'>
-            <font face='Liberation Sans Narrow'></font>
-          </td>
-          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000'
-				align='left' valign=  >
+			align='left' valign=  >
             <font face='Times New Roman' color='#000000'><br>
             </font>
           </td>
-          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000'
-				align='left' valign=  >
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
+			align='left' valign=  >
             <font face='Times New Roman' color='#000000'><br>
             </font>
           </td>
-          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
-				align='left' valign=  >
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000;'
+			colspan=2 align='left' valign=  >
+            <font face='Times New Roman' color='#000000'>Bled</font>
+          </td>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000;'
+			colspan=2 align='center' valign=  >
             <font face='Times New Roman' color='#000000'><br>
             </font>
           </td>
-          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
-				align='left' valign=  >
-            <font face='Times New Roman' color='#000000'><br>
-            </font>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000;'
+			align='right' valign=  >
+            <font face='Liberation Sans Narrow'>D</font>
           </td>
-          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000'
-				align='left' valign=  >
-            <font face='Times New Roman' color='#000000'><br>
-            </font>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='right' valign=  >
+            <font face='Times New Roman' color='#000000'>Def</font>
           </td>
-          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
-				align='left' valign=  >
-            <font face='Times New Roman' color='#000000'><br>
-            </font>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000' align='right' valign=  >
+            <font face='Times New Roman' color='#000000'>Stop</font>
           </td>
-          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 2px solid #000000'
-				colspan=2 align='center' valign=  >
-            <font face='Times New Roman' color='#000000'><br>
-            </font>
-          </td>
-          <td style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 2px solid #000000'
-				colspan=2 align='center' valign=  >
-            <font face='Times New Roman' color='#000000'><br>
-            </font>
-          </td>
-          <td colspan="4" style='border-top: 2px solid #000000; border-bottom: 1px solid #000000; border-right: 2px solid #000000'
-				align='center' valign=  >
-            <font face='Times New Roman' color='#000000'></font>
+          <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000;'
+			align='center' valign=  >
+            <font face='Times New Roman' color='#000000'>TO</font>
           </td>
         </tr>
-<% end %>
+      <% end %>
     </table>
   </body>
 </html>
