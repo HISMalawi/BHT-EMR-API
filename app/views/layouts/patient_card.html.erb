@@ -377,7 +377,7 @@ text-overflow: ellipsis;
       </td>
       <td colspan=3 style='border-bottom: 1px solid #000000; border-left: 1px solid #000000' align='left' valign=top>
         <font face='Times New Roman' color='#000000'></font>
-        <span style="margin-left:5px;"><%= @data["birth_date"].to_date.strftime("%d-%m-%Y") rescue '' %>
+        <span style="margin-left:5px;"><%= @data["birth_date"].to_date.strftime("%d-%b-%Y") rescue '' %>
         </td>
         <td style='border-bottom: 1px solid #000000' align='left' valign=top>
           <font face='Times New Roman' color='#000000'></font>
@@ -1536,7 +1536,7 @@ text-overflow: ellipsis;
 				colspan=2 align='center' valign=  >
             <font face='Times New Roman' color='#000000'><br>
             </font>
-            <%= visit[:next_appointment].strftime("%d-%m-%Y") rescue '' %>
+            <%= visit[:next_appointment].strftime("%d-%b-%Y") rescue '' %>
           </td>
           <td colspan="4" style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000;'
 				align='center' valign=  >
