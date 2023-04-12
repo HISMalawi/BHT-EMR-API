@@ -85,14 +85,15 @@ class StockManagementService
                                 drug_id: drug_id,
                                 pack_size: pack_size).first
 
+        barcode = barcode.blank? ? nil : barcode
         if item
           # Update existing item if already in batch
           item.delivered_quantity += quantity
           item.current_quantity += quantity
           item.product_code = product_code
+          item.barcode = barcode
           item.save
         else
-          barcode = barcode.blank? ? nil : barcode
           item = create_batch_item(batch, drug_id, pack_size, quantity, delivery_date, expiry_date, product_code, barcode)
           validate_activerecord_object(item)
         end
