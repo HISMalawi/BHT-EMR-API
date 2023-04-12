@@ -83,7 +83,6 @@ class StockManagementService
 
         item = find_batch_items(pharmacy_batch_id: batch.id,
                                 drug_id: drug_id,
-                                barcode: barcode,
                                 pack_size: pack_size).first
 
         if item
@@ -127,6 +126,8 @@ class StockManagementService
       query = query.where("DATE(pharmacy_batch_items.date_created) <= '#{filters[:end_date]}'") if !filters[:end_date].nil?
       query = query.where(drug_id: filters[:drug_id]) if !filters[:drug_id].nil?
       query = query.where(current_quantity: filters[:current_quantity]) if !filters[:current_quantity].nil?
+      query = query.where(pharmacy_batch_id: filters[:pharmacy_batch_id]) if !filters[:pharmacy_batch_id].nil?
+      query = query.where(pack_size: filters[:pack_size]) if !filters[:pack_size].nil?
     end
     query = query.joins("LEFT JOIN pharmacy_obs ON pharmacy_batch_items.id = pharmacy_obs.batch_item_id AND pharmacy_obs.transaction_reason = 'Drug dispensed'")
           .joins("INNER JOIN drug ON drug.drug_id = pharmacy_batch_items.drug_id")
