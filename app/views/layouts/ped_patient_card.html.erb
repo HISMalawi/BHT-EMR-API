@@ -46,7 +46,7 @@
           <td>Version 9</td>
           <td class='t_no_break'>Transfer In Date</td>
           <td style="border: 2px solid black;width:13%;">
-            <%= @data["transfer_in_date"] %>
+            <%= @data["transfer_in_date"].to_date.strftime('%d/%b/%Y') rescue '' %>
           </td>
           <td>ART Reg no</td>
           <td style="border: 2px solid black;width:13%;">
@@ -198,7 +198,7 @@ border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1p
                         valign='top '>
             <font face='Times New Roman' color='#000000'><br>
             </font>
-            <%= @data["birth_date"].to_date.strftime("%d-%b-%Y") rescue '' %>
+            <%= @data["birth_date"].to_date.strftime("%d/%b/%Y") rescue '' %>
           </td>
           <td
                         style='border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
@@ -670,7 +670,7 @@ border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1p
                         style='border-bottom: 1px solid #000000; border-left: 1px solid #000000'
                         align='left'
                         valign='top '>
-            <font face='Times New Roman' color='#000000'> <%= @data[:visits][0][:date].strftime("%d-%b-%Y")
+            <font face='Times New Roman' color='#000000'> <%= @data[:visits][0][:date].strftime("%d/%b/%Y")
  %> </font>
           </td>
         </tr>
@@ -1389,7 +1389,7 @@ border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1p
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 2px solid #000000; border-right: 1px solid #000000'
 				colspan=3 align='center' valign=middle bgcolor='#F1F1F1'>
             <font face='Arial'></font>
-            <%= "#{visit[:date].strftime("%d-%b-%Y")}"%>
+            <%= "#{visit[:date].strftime("%d/%b/%Y")}"%>
           </td>
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000'
 				align='left' valign=middle bgcolor='#F1F1F1'>
@@ -1482,7 +1482,7 @@ border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1p
 				align='left' valign=middle bgcolor='#F1F1F1'>
             <font face='Times New Roman' color='#000000'><br>
             </font>
-            <%= visit[:next_appointment].to_date.strftime("%d-%b-%Y") rescue '' %>
+            <%= visit[:next_appointment].to_date.strftime("%d/%b/%Y") rescue '' %>
           </td>
           <td class='t_no_break' colspan="5" style='border-top: 1px solid #000000; border-right: 2px solid #000000;
  border-bottom: 1px solid #000000; border-left: 1px solid #000000'

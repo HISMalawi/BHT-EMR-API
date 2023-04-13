@@ -60,7 +60,7 @@
         <td width="8%">Transfer-<br/>
           In Date</td>
         <td style="border: 1px solid black;width:15%;">
-          <%= @data["transfer_in_date"] %>
+          <%= @data["transfer_in_date"].to_date.strftime('%d/%b/%Y') rescue '' %>
         </td>
         <td width="6%">ART Reg no</td>
         <td style="border: 1px solid black;width:15%;">
@@ -282,7 +282,7 @@ text-overflow: ellipsis;
 				colspan=4 rowspan=2 align='center' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
-          <%= @data[:arvs_given].third[:date].to_date.strftime('%d-%b-%Y') rescue '' rescue '' %>
+          <%= @data[:arvs_given].third[:date].to_date.strftime('%d/%b/%Y') rescue '' %>
         </td>
       </tr>
       <tr>
@@ -364,7 +364,7 @@ text-overflow: ellipsis;
 				colspan=4 rowspan=2 align='center' valign=top>
         <font face='Times New Roman' color='#000000'><br>
         </font>
-        <%= @data[:arvs_given].first[:date].to_date.strftime('%d-%b-%Y') rescue '' rescue '' %>
+        <%= @data[:arvs_given].first[:date].to_date.strftime('%d/%b/%Y') rescue '' rescue '' %>
       </td>
     </tr>
     <tr>
@@ -377,7 +377,7 @@ text-overflow: ellipsis;
       </td>
       <td colspan=3 style='border-bottom: 1px solid #000000; border-left: 1px solid #000000' align='left' valign=top>
         <font face='Times New Roman' color='#000000'></font>
-        <span style="margin-left:5px;"><%= @data["birth_date"].to_date.strftime("%d-%b-%Y") rescue '' %>
+        <span style="margin-left:5px;"><%= @data["birth_date"].to_date.strftime("%d/%b/%Y") rescue '' %>
         </td>
         <td style='border-bottom: 1px solid #000000' align='left' valign=top>
           <font face='Times New Roman' color='#000000'></font>
@@ -444,7 +444,7 @@ text-overflow: ellipsis;
 				colspan=4 rowspan=2 align='center' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
-          <%= @data[:arvs_given].second[:date].to_date.strftime('%d-%b-%Y') rescue '' rescue '' %>
+          <%= @data[:arvs_given].second[:date].to_date.strftime('%d/%b/%Y') rescue '' rescue '' %>
         </td>
       </tr>
       <tr>
@@ -933,7 +933,7 @@ text-overflow: ellipsis;
 				colspan=6  align='center' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
-          <%= @data["cd4_date"].to_date.strftime('%d-%b-%Y') rescue '' %>
+          <%= @data["cd4_date"].to_date.strftime('%d/%b/%Y') rescue '' %>
         </td>
         <td align='left' valign=top>
           <font face='Times New Roman' color='#000000'><br>
@@ -1001,7 +1001,7 @@ text-overflow: ellipsis;
 				colspan=6 rowspan=2 align='center' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
-          <%= @data["tb_xpert_date"].to_date.strftime('%d-%b-%Y') rescue '' %>
+          <%= @data["tb_xpert_date"].to_date.strftime('%d/%b/%Y') rescue '' %>
         </td>
         <td align='left' valign=top>
           <font face='Times New Roman' color='#000000'><br>
@@ -1054,7 +1054,7 @@ text-overflow: ellipsis;
 				colspan=5 rowspan=2 align='center' valign=  >
           <font face='Times New Roman' color='#000000'><br>
           </font>
-          <%= @data["confimatory_test_date"].to_date.strftime('%d-%b-%Y') rescue '' %>
+          <%= @data["confimatory_test_date"].to_date.strftime('%d/%b/%Y') rescue '' %>
         </td>
         <td colspan="7" style='border-top: 1px solid #000000; border-right: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000' colspan=4 rowspan=2 align='center'
 				valign=  >
@@ -1078,7 +1078,7 @@ text-overflow: ellipsis;
 				colspan=6 rowspan=2 align='center' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
-          <%= @data["urine_lam_date"].to_date.strftime('%d-%b-%Y') rescue '' %>
+          <%= @data["urine_lam_date"].to_date.strftime('%d/%b/%Y') rescue '' %>
         </td>
         <td align='left' valign=top>
           <font face='Times New Roman' color='#000000'><br>
@@ -1156,7 +1156,7 @@ text-overflow: ellipsis;
 				colspan=6 rowspan=2 align='center' valign=top>
           <font face='Times New Roman' color='#000000'><br>
           </font>
-          <%= @data["crag_date"].to_date.strftime('%d-%b-%Y') rescue '' %>
+          <%= @data["crag_date"].to_date.strftime('%d/%b/%Y') rescue '' %>
         </td>
         <td align='left' valign=top>
           <font face='Times New Roman' color='#000000'><br>
@@ -1435,7 +1435,7 @@ text-overflow: ellipsis;
               <font face='Arial'><br>
               </font>
             </b>
-            <%= "#{visit[:date].to_date.strftime('%d-%b-%Y') rescue ''}"%>
+            <%= "#{visit[:date].to_date.strftime('%d/%b/%Y') rescue ''}"%>
           </td>
           <td style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000;'
 				align='left' valign=  >
@@ -1536,7 +1536,7 @@ text-overflow: ellipsis;
 				colspan=2 align='center' valign=  >
             <font face='Times New Roman' color='#000000'><br>
             </font>
-            <%= visit[:next_appointment].strftime("%d-%b-%Y") rescue '' %>
+            <%= visit[:next_appointment].strftime("%d/%b/%Y") rescue '' %>
           </td>
           <td colspan="4" style='border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000;'
 				align='center' valign=  >
