@@ -640,9 +640,10 @@ def registered_today(visit_type)
 
       months = {}
       monthsRes = {}
-      data =Observation.where('obs_datetime BETWEEN ? AND ? AND value_text IN(?,?)',(@date - 11.month).beginning_of_month,@date,
-        'Respiratory','ILI').group('value_text','months').\
-        pluck("CASE value_text WHEN 'Respiratory' THEN 'respiratory' WHEN 'ILI' THEN 'ILI' END as value_text,
+      data =Observation.where('obs_datetime BETWEEN ? AND ? AND name IN(?,?)',(@date - 11.month).beginning_of_month,@date,
+        'Respiratory','ILI').group('name','months').\
+        joins('INNER JOIN concept_name c ON c.concept_id = obs.value_coded').\
+        pluck("CASE name WHEN 'Respiratory' THEN 'respiratory' WHEN 'ILI' THEN 'ILI' END as name,
         DATE_FORMAT(obs.obs_datetime ,'%Y-%m-01') as obs_date,
         OPD_syndromic_statistics(DATE_FORMAT(obs.obs_datetime ,'%Y-%m-01'),'#{@date}') as months,
         COUNT(OPD_syndromic_statistics(DATE_FORMAT(obs.obs_datetime ,'%Y-%m-01'),'#{@date}')) as obs_count").\
