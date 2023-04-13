@@ -68,7 +68,15 @@ module HtsService
 'art_clinic_registration_indexber_not_applicable' => [],
 'linking_with_initial_register_valid_linkid' => [],
 'linking_with_initial_register_invalid_linkid' => [],
-'linking_with_initial_register_missing_linkid' => []
+'linking_with_initial_register_missing_linkid' => [],
+'hiv_group_new_positive' => [],
+'hiv_group_new_negative' => [],
+'hiv_group_negative' => [],
+'hiv_group_new_negative' => [],
+'hiv_group_new_inconclusive' => [],
+'hiv_group_exposed_infant' => [],
+'hiv_group_positive_retest' => [],
+'hiv_group_inconclusive_retest' => [],
 
 }
         end
@@ -86,6 +94,7 @@ module HtsService
           fetch_retest_referral
           fetch_art_referral
           fetch_art_referral_outcome
+          fetch_hiv_group
           set_unique
 
         end
@@ -133,15 +142,6 @@ module HtsService
                             @data["hiv_test_1_repeat_result_invalid_entry"].push(client.person_id) if tests.value_coded == nil
                             @data["hiv_test_1_repeat_result_not_applicable_or_missing"].push(client.person_id) if tests.value_coded == nil
 
-                          elsif ConceptName.find_by_name('HIV status').concept_id == tests.concept_id
-
-                            @data["result_given_to_client_negative"].push(client.person_id) if ConceptName.find_by_name('Negative').concept_id == tests.value_coded
-                            @data["result_given_to_client_positive"].push(client.person_id) if ConceptName.find_by_name('Positive').concept_id == tests.value_coded
-                            #@data["result_given_to_client_inconclusive"].push(client.person_id) if ConceptName.find_by_name('Inconclusive').concept_id == tests.value_coded
-                            @data["result_given_to_client_exposed_infant"].push(client.person_id) if ConceptName.find_by_name('Exposed Infant').concept_id == tests.value_coded
-                            @data["result_given_to_client_invalid_entry"].push(client.person_id) if tests.value_coded == nil
-                            @data["result_given_to_client_missing"].push(client.person_id) if tests.value_coded == nil
-
                           elsif ConceptName.find_by_name('Recency Test').concept_id == tests.concept_id
 
                             @data["rtri_result_longterm"].push(client.person_id) if ConceptName.find_by_name('Long-Term').concept_id == tests.value_coded
@@ -173,6 +173,21 @@ module HtsService
                     end
 
               end
+        end
+
+        def fetch_hiv_group
+          Person.joins(:observations, patient: :encounters)
+            .joins("INNER JOIN concept_name cn ON cn.concept_id = obs.value_coded AND cn.voided = 0")
+            .where(
+              encounter: { encounter_type: EncounterType.find_by_name("HIV Staging").encounter_type_id,
+                         encounter_datetime: start_date..end_date,
+                         program_id: Program.find_by_name("HTC Program").program_id
+                        },
+              obs: { concept_id: ConceptName.find_by_name("HIV group").concept_id }
+            ).select("person.person_id, name")
+            .each do |client|
+              @data["hiv_group_#{client.name.downcase}"].push(client.person_id) if client.name.downcase == client.name.downcase
+            end
         end
 
         def fetch_retest_referral

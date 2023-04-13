@@ -26,7 +26,7 @@ module HtsService
             encounter_type: { name: "Testing" },
             concept_name: { name: "HIV Status" },
             obs: { obs_datetime: @start_date..@end_date, value_coded: 703 },
-          ).distinct.select(:concept_id).count
+          ).select(:concept_id).count
         end
 
         def total_registered
