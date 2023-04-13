@@ -146,7 +146,8 @@ module ARTService
             COALESCE(alternative_drug_names.name, drug.name) AS drug_name,
             pharmacy_batch_items.drug_id,
             pharmacy_batch_items.pack_size,
-            SUM(pharmacy_obs.quantity) AS cum_per_day_stock_commited,
+            SUM(pharmacy_obs.quantity / COALESCE(NULLIF(pharmacy_batch_items.pack_size, 0),
+            1)) AS cum_per_day_stock_commited,
             CASE WHEN SUBSTR(pharmacy_obs.transaction_reason, 1, 34) = 'Reversing voided drug dispensation'
             THEN 'Reversing voided drug dispensation'
             ELSE pharmacy_obs.transaction_reason
