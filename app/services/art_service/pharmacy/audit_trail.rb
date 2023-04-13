@@ -115,6 +115,7 @@ module ARTService
               pharmacy_batches.batch_number,
               pharmacy_batch_items.id AS batch_item_id,
               pharmacy_batch_items.drug_id,
+              pharmacy_batch_items.pack_size,
               pharmacy_batch_items.product_code,
               COALESCE(alternative_drug_names.name, drug.name) AS drug_name,
               pharmacy_obs.quantity AS amount_committed_to_stock,
@@ -144,6 +145,7 @@ module ARTService
             pharmacy_obs.transaction_date AS transaction_date,
             COALESCE(alternative_drug_names.name, drug.name) AS drug_name,
             pharmacy_batch_items.drug_id,
+            pharmacy_batch_items.pack_size,
             SUM(pharmacy_obs.quantity) AS cum_per_day_stock_commited,
             CASE WHEN SUBSTR(pharmacy_obs.transaction_reason, 1, 34) = 'Reversing voided drug dispensation'
             THEN 'Reversing voided drug dispensation'
@@ -195,7 +197,7 @@ module ARTService
             username: transaction[:username],
             transaction_reason: transaction[:transaction_reason],
             product_code: transaction[:product_code],
-            drug_cms: drug_cms(transaction[:drug_id])
+            pack_size: transaction[:pack_size]
           }
         end
 
@@ -206,7 +208,7 @@ module ARTService
             cum_per_day_stock_commited: transaction[:cum_per_day_stock_commited],
             drug_name: transaction[:drug_name],
             drug_id: transaction[:drug_id],
-            drug_cms: drug_cms(transaction[:drug_id])
+            pack_size: transaction[:pack_size]
           }
         end
       end
