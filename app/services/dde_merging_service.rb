@@ -398,23 +398,23 @@ class DDEMergingService
 
 
   # method to update drug orders with the new order id
-  def manage_drug_order(order_map)
-    Rails.logger.debug("Merging patient drug orders: #{order_map}")
-    return if order_map.blank?
+  # def manage_drug_order(order_map)
+  #   Rails.logger.debug("Merging patient drug orders: #{order_map}")
+  #   return if order_map.blank?
 
-    result = ActiveRecord::Base.connection.select_all "SELECT * FROM drug_order WHERE order_id IN (#{order_map.keys.join(',')})"
-    return if result.blank?
+  #   result = ActiveRecord::Base.connection.select_all "SELECT * FROM drug_order WHERE order_id IN (#{order_map.keys.join(',')})"
+  #   return if result.blank?
 
-    result.to_a.each do |drug_order|
-      new_id = order_map[drug_order['order_id']]
-      next if DrugOrder.where(order_id: new_id).exists?
+  #   result.to_a.each do |drug_order|
+  #     new_id = order_map[drug_order['order_id']]
+  #     next if DrugOrder.where(order_id: new_id).exists?
 
-      drug_order['order_id'] = new_id
-      new_drug_order = DrugOrder.create!(drug_order)
-      debugger
-      raise "Could not merge patient druge orders: #{new_drug_order.errors.as_json}" unless new_drug_order.errors.empty?
-    end
-  end
+  #     drug_order['order_id'] = new_id
+  #     new_drug_order = DrugOrder.create!(drug_order)
+  #     debugger
+  #     raise "Could not merge patient druge orders: #{new_drug_order.errors.as_json}" unless new_drug_order.errors.empty?
+  #   end
+  # end
 
   def update_obs_order_id(order_map, obs_map)
     Observation.where(obs_id: obs_map.values).each do |obs|
