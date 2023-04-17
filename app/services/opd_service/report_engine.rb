@@ -640,19 +640,23 @@ def registered_today(visit_type)
 
       months = {}
       monthsRes = {}
-      data =Observation.where('obs_datetime BETWEEN ? AND ? AND name IN(?,?)',(@date - 11.month).beginning_of_month,@date,
-        'Respiratory','ILI').group('name','months').\
-        joins('INNER JOIN concept_name c ON c.concept_id = obs.value_coded').\
-        pluck("CASE name WHEN 'Respiratory' THEN 'respiratory' WHEN 'ILI' THEN 'ILI' END as name,
+      ili_id = ConceptName.find_by_name 'ILI'
+      respiratory_id = ConceptName.find_by_name 'Respiratory'
+      data =Observation.where("obs_datetime BETWEEN ? AND ? AND obs.value_text IN(?,?) OR 
+      obs.value_coded IN (#{ili_id.concept_id},#{respiratory_id.concept_id})",(@date - 11.month).beginning_of_month,@date,
+      'Respiratory','ILI').group('name','months').\
+      pluck("
+        coalesce(obs.value_text, (select name from concept_name where concept_id = obs.value_coded limit 1)) name,
         DATE_FORMAT(obs.obs_datetime ,'%Y-%m-01') as obs_date,
         OPD_syndromic_statistics(DATE_FORMAT(obs.obs_datetime ,'%Y-%m-01'),'#{@date}') as months,
-        COUNT(OPD_syndromic_statistics(DATE_FORMAT(obs.obs_datetime ,'%Y-%m-01'),'#{@date}')) as obs_count").\
-        group_by(&:shift);
+        COUNT(OPD_syndromic_statistics(DATE_FORMAT(obs.obs_datetime ,'%Y-%m-01'),'#{@date}')) as obs_count
+      ").\
+      group_by(&:shift);
 
       respiratory_data = {}
       ili_data = {}
 
-      respiratory_data = data['respiratory'].group_by(&:shift) if(data['respiratory'])
+      respiratory_data = data['Respiratory'].group_by(&:shift) if(data['Respiratory'])
       ili_data         = data['ILI'].group_by(&:shift) if(data['ILI'])
 
       (dates || []).each_with_index do |(date1, date2), i|
