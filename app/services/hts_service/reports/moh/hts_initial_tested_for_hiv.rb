@@ -299,7 +299,7 @@ module HtsService
                 .where("person.voided = 0 AND DATE(e.encounter_datetime) BETWEEN '#{start_date}' AND '#{end_date}' + INTERVAL 1 DAY")
                 .each do |client|
             next if client.value == nil || client.obs_date == nil
-            @data["last_hiv_test_never_tested"].push(client.person_id) if ConceptName.find_by_name("Never Tested").concept_id == client.concept_id
+            @data["last_hiv_test_never_tested"].push(client.person_id) if ConceptName.find_by_name("Never Tested").concept_id == client.o3concept_id
             @data["last_hiv_test_negative_self_test"].push(client.person_id) if ConceptName.find_by_name("Self").concept_id == client.o3concept_id && ConceptName.find_by_name("Negative").concept_id == client.concept_id
             @data["last_hiv_test_negative_prof_test"].push(client.person_id) if ConceptName.find_by_name("Professional").concept_id == client.o3concept_id && ConceptName.find_by_name("Negative").concept_id == client.concept_id
             @data["last_hiv_test_positive_self_test"].push(client.person_id) if ConceptName.find_by_name("Self").concept_id == client.o3concept_id && ConceptName.find_by_name("Positive").concept_id == client.concept_id

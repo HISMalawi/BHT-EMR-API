@@ -46,7 +46,6 @@ module HtsService
             end
             END_USER.each do |(key, value)|
               q = filter_end_user(query, value, age_group, gender == :F ? female_concept : male_concept).map{|r| r["person_id"]}
-              puts q.inspect
               row["#{key}"] = q
              end
              row[:gender] = gender

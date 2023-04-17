@@ -70,21 +70,21 @@ module HtsService
         def fetch_confirmatory_clients(indicator)
 
           Person.joins("INNER JOIN encounter e ON e.patient_id = person.person_id AND e.encounter_type = #{EncounterType.find_by_name("TESTING").encounter_type_id} AND e.voided = 0 AND e.program_id = #{Program.find_by_name("HTC Program").program_id}")
-                .joins("INNER JOIN obs o1 ON o1.person_id = e.patient_id AND o1.voided = 0 AND o1.concept_id = #{ConceptName.find_by_name('HIV test type').concept_id} AND e.encounter_id = o1.encounter_id")
-                .joins("INNER JOIN obs o2 ON o2.person_id = e.patient_id AND o2.voided = 0 AND o2.concept_id = #{ConceptName.find_by_name('Previous HIV Test done').concept_id} AND o1.encounter_id = o2.encounter_id")
-                .joins("INNER JOIN obs o3 ON o3.person_id = e.patient_id AND o3.voided = 0 AND o3.concept_id = #{ConceptName.find_by_name('Previous HIV Test Results').concept_id} AND o2.encounter_id = o3.encounter_id")
-                .select("person.person_id person_id,person.gender gender,o3.value_coded value")
-                .where(o1:{value_coded:ConceptName.find_by_name('Confirmatory HIV test').concept_id},
+                .joins("INNER JOIN obs o1 ON o1.person_id = e.patient_id AND o1.voided = 0 AND o1.concept_id = #{ConceptName.find_by_name('Previous HIV Test Results').concept_id} AND o1.encounter_id = e.encounter_id")
+                .joins("INNER JOIN obs o2 ON o2.person_id = e.patient_id AND o2.voided = 0 AND o2.concept_id = #{ConceptName.find_by_name('Previous HIV Test done').concept_id} AND o2.encounter_id = o1.encounter_id")
+                .joins("INNER JOIN obs o3 ON o3.person_id = e.patient_id AND o3.voided = 0 AND o3.concept_id = #{ConceptName.find_by_name('HIV group').concept_id} AND o3.encounter_id = o2.encounter_id")
+                .select("person.person_id person_id,person.gender gender, o3.value_coded value")
+                .where(o1:{value_coded:ConceptName.find_by_name('POSITIVE').concept_id},
                        o2:{value_coded:ConceptName.find_by_name('Professional').concept_id})
                 .where("person.voided = 0 AND DATE(e.encounter_datetime) BETWEEN '#{start_date}' AND '#{end_date}' + INTERVAL 1 DAY")
                 .each do |client|
 
-                  @data['confirmatory_positive_total_prev_pos_professional_test'].push(client.person_id) if indicator == 'Confirmatory Positive' && ConceptName.find_by_name('POSITIVE').concept_id == client.value
-                  @data['confirmed_positive_male'].push(client.person_id) if client.gender == "M" && indicator == 'Confirmatory Positive' && ConceptName.find_by_name('POSITIVE').concept_id == client.value
-                  @data['confirmed_positive_female'].push(client.person_id) if client.gender == "F" && indicator == 'Confirmatory Positive' && ConceptName.find_by_name('POSITIVE').concept_id == client.value
-                  @data['confirmatory_inconclusive_total_prev_pos_professional_test'].push(client.person_id) if indicator == 'Confirmatory Inconclusive' && ConceptName.find_by_name('Inconclusive').concept_id == client.value
-                  @data['confirmed_inconclusive_male'].push(client.person_id) if client.gender == "M" && indicator == 'Confirmatory Inconclusive' && ConceptName.find_by_name('Inconclusive').concept_id == client.value
-                  @data['confirmed_inconclusive_female'].push(client.person_id) if client.gender == "F" && indicator == 'Confirmatory Inconclusive' && ConceptName.find_by_name('Inconclusive').concept_id == client.value
+                  @data['confirmatory_positive_total_prev_pos_professional_test'].push(client.person_id) if indicator == 'Confirmatory Positive' && ConceptName.find_by_name('Confirmatory Positive').concept_id == client.value
+                  @data['confirmed_positive_male'].push(client.person_id) if client.gender == "M" if indicator == 'Confirmatory Positive' && ConceptName.find_by_name('Confirmatory Positive').concept_id == client.value
+                  @data['confirmed_positive_female'].push(client.person_id) if client.gender == "F" if indicator == 'Confirmatory Positive' && ConceptName.find_by_name('Confirmatory Positive').concept_id == client.value
+                  @data['confirmatory_inconclusive_total_prev_pos_professional_test'].push(client.person_id) if indicator == 'Confirmatory Inconclusive' && ConceptName.find_by_name('Confirmatory Inconclusive').concept_id == client.value
+                  @data['confirmed_inconclusive_male'].push(client.person_id) if client.gender == "M" && indicator == 'Confirmatory Inconclusive' && ConceptName.find_by_name('Confirmatory Inconclusive').concept_id == client.value
+                  @data['confirmed_inconclusive_female'].push(client.person_id) if client.gender == "F" && indicator == 'Confirmatory Inconclusive' && ConceptName.find_by_name('Confirmatory Inconclusive').concept_id == client.value
 
                 end
         end

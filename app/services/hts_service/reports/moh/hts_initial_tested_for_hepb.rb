@@ -63,12 +63,12 @@ module HtsService
             'last_hiv_test_exposed_infant'=> [],
             'last_hiv_test_invalid_entry'=> [],
             'last_hiv_test_missing'=> [],
-           'time_since_last_hiv_test_12plus_months'=> [],
-           'time_since_last_hiv_test_611_months'=> [],
-           'time_since_last_hiv_test_35_months'=> [],
-           'time_since_last_hiv_test_14_days_to_2_months' => [],
-           'time_since_last_hiv_test_1_to_13_days'=> [],
-           'time_since_last_hiv_test_same_day'=> [],
+            'time_since_last_hiv_test_12plus_months'=> [],
+            'time_since_last_hiv_test_611_months'=> [],
+            'time_since_last_hiv_test_35_months'=> [],
+            'time_since_last_hiv_test_14_days_to_2_months' => [],
+            'time_since_last_hiv_test_1_to_13_days'=> [],
+            'time_since_last_hiv_test_same_day'=> [],
            'time_since_last_hiv_test_invalid_entry'=> [],
            'time_since_last_hiv_test_not_applicable_or_missing'=> [],
            'ever_taken_arvs_no'=> [],
@@ -123,8 +123,11 @@ module HtsService
            'referral_for_hiv_retesting_confirmatory_test'=> [],
            'referral_for_hiv_retesting_invalid_entry'=> [],
            'referral_for_hiv_retesting_missing'=> [],
-           'referral_for_prep_no'=> [],
-           'referral_for_prep_yes'=> [],
+           'referral_for_vmmc' => [],
+            'referral_for_prep' => [],
+            'referral_for_sti' => [],
+            'referral_for_tb' => [],
+            'referral_for_pep' => [],
            'referral_for_prep_invalid_entry'=> [],
            'referral_for_prep_missing'=> [],
            'referral_for_prep' => [],
@@ -147,7 +150,7 @@ module HtsService
            'linking_with_hiv_confirmatory_register_not_applicable_not_linked' => [],
            'linking_with_hiv_confirmatory_register_invalid_linkid_in_conf_register' => [],
            'linking_with_hiv_confirmatory_register_total_clients_hiv_test_1_not_done' => [],
-         
+
 
         }
         end
@@ -170,11 +173,11 @@ module HtsService
           fetch_risk_category
           fetch_referrals        
           set_unique
-          
+
         end
         def set_unique
 
-          @data.each do |key, array|    
+          @data.each do |key, array|
               @data[key]  =  array.uniq
           end
 
@@ -247,7 +250,7 @@ module HtsService
                       @data['sex_or_pregnancy_female_nonpregnant'].push(values.person_id) if ConceptName.find_by_name('Not Pregnant / Breastfeeding').concept_id == values.concept_id
                       @data['sex_or_pregnancy_female_pregnant'].push(values.person_id) if ConceptName.find_by_name('Patient pregnant').concept_id == values.concept_id
                       @data['sex_or_pregnancy_female_breastfeeding'].push(values.person_id) if ConceptName.find_by_name('Breastfeeding').concept_id == values.concept_id
-                      
+
 
                     end
 
@@ -258,7 +261,7 @@ module HtsService
                               @data["hiv_test_1_result_positive"].push(client.person_id) if ConceptName.find_by_name('Positive').concept_id == tests.value_coded
                               @data["linking_with_hiv_confirmatory_register_total_clients_hiv_test_1_negative"].push(tests.person_id) if ConceptName.find_by_name('Negative').concept_id == tests.value_coded
                               @data["linking_with_hiv_confirmatory_register_total_clients_hiv_test_1_positive"].push(tests.person_id) if ConceptName.find_by_name('Positive').concept_id == tests.value_coded
-                          
+
                             end
 
                             if ConceptName.find_by_name('Hepatitis B Test Result').concept_id == tests.concept_id
@@ -293,8 +296,9 @@ module HtsService
                   @data["last_hiv_test_negative_prof_test"].push(client.person_id) if ConceptName.find_by_name('Professional').concept_id == client.o3concept_id && ConceptName.find_by_name('Negative').concept_id == client.concept_id
                   @data["last_hiv_test_positive_selftest"].push(client.person_id) if ConceptName.find_by_name('Self').concept_id == client.o3concept_id && ConceptName.find_by_name('Positive').concept_id == client.concept_id
                   @data["last_hiv_test_positive_prof_test"].push(client.person_id) if ConceptName.find_by_name('Professional').concept_id == client.o3concept_id && ConceptName.find_by_name('Positive').concept_id == client.concept_id
-                  #@data["last_hiv_test_inconclusive_prof_test"].push(client.person_id) if ConceptName.find_by_name('Professional').concept_id == client.o3concept_id && ConceptName.find_by_name('Inconclusive').concept_id == client.concept_id
+                  @data["last_hiv_test_inconclusive_prof_test"].push(client.person_id) if ConceptName.find_by_name('Professional').concept_id == client.o3concept_id && ConceptName.find_by_name('Inconclusive').concept_id == client.concept_id
                   @data["last_hiv_test_exposed_infant"].push(client.person_id) if ConceptName.find_by_name('Self').concept_id == client.o3concept_id && ConceptName.find_by_name('Exposed Infant').concept_id == client.concept_id
+                  @data["last_hiv_test_positive_prof_initial_test"].push(client.person_id) if ConceptName.find_by_name('Initial Professional').concept_id == client.o3concept_id && ConceptName.find_by_name('Positive').concept_id == client.concept_id
 
                   array = client.value.to_s.split(" ")
                   case array[1].to_s
@@ -307,7 +311,7 @@ module HtsService
                     @data["time_since_last_hiv_test_35_months"].push(client.person_id) if array[0].to_i > 60 && array[0].to_i < 150
                     @data["time_since_last_hiv_test_611_months"].push(client.person_id) if array[0].to_i > 149 && array[0].to_i < 330
                     @data["time_since_last_hiv_test_12plus_months"].push(client.person_id) if array[0].to_i > 329
-                
+
                     when "Months"
 
                     @data["time_since_last_hiv_test_14_days_to_2_months"].push(client.person_id) if array[0].to_i < 3
@@ -363,7 +367,7 @@ module HtsService
                                        @data["ever_taken_arvs_prep"].push(client.person_id) if ConceptName.find_by_name('Prep or infant NVP').concept_id == drug.value_coded
                                        @data["ever_taken_arvs_pep"].push(client.person_id) if ConceptName.find_by_name('PEP').concept_id == drug.value_coded
                                        @data["ever_taken_arvs_art"].push(client.person_id) if ConceptName.find_by_name('ARV').concept_id == drug.value_coded
-                                     
+
                                   end
                                   if ConceptName.find_by_name("Time since last taken medication").concept_id == drug.concept_id
 
@@ -386,7 +390,7 @@ module HtsService
                                                 @data["time_since_last_taken_arvs_611_months"].push(client.person_id) if array[0].to_i > 5 && array[0].to_i < 12
                                                 @data["time_since_last_taken_arvs_12plus_months"].push(client.person_id) if array[0].to_i > 11
                                         end
-                                         
+
                                   end
                             end
 
@@ -407,7 +411,7 @@ module HtsService
                 .each do |client|
 
                      @data['partner_present_yes'].push(client.person_id) if client.value == "Yes"
-                     @data["partner_present_no"].push(client.person_id) if client.value == "No"                  
+                     @data["partner_present_no"].push(client.person_id) if client.value == "No"
 
                     Observation.where(encounter_id:client.encounter_id,
                                          person_id:client.person_id,
@@ -469,12 +473,14 @@ module HtsService
 
              end
 
-       end
+          end
+       
 
        def linked_clients
 
         query = Patient.connection.select_all(
             his_patients_rev
+              .joins("INNER JOIN obs o3 ON o3.person_id = encounter.patient_id AND o3.voided = 0 AND o3.concept_id = #{ConceptName.find_by_name('Hepatitis B Test Result').concept_id} AND encounter.encounter_id = o3.encounter_id")
               .joins(<<-SQL)
               LEFT JOIN obs linked ON linked.person_id = person.person_id
               AND linked.voided = 0
@@ -486,13 +492,7 @@ module HtsService
           @data["linking_with_hiv_confirmatory_register_linked"] = query.select { |r| r["value_coded"] == LINKED_CONCEPT }.map { |r| r["person_id"] }
           @data["linking_with_hiv_confirmatory_register_not_applicable_not_linked"] = query.select { |r| r["value_coded"] != LINKED_CONCEPT }.map { |r| r["person_id"] }
        
-
-      end
-       
-
-
-
-
+end
       end
     end
   end
