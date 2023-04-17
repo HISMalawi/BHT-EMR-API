@@ -8,8 +8,8 @@ module HtsService
         attr_accessor :start_date, :end_date
 
         def initialize(start_date:, end_date:)
-          @start_date = start_date
-          @end_date = end_date
+          @start_date = start_date.to_date.beginning_of_day
+          @end_date = end_date.to_date.end_of_day
           @data = {
 'total_clients_in_confirmatory_register' => [],
 'hiv_test_2_result_negative' => [],
@@ -118,7 +118,6 @@ module HtsService
                             person.birthdate dob")
                 .where("person.voided = 0 AND DATE(e.encounter_datetime) BETWEEN '#{start_date}' AND '#{end_date}' + INTERVAL 1 DAY")
                 .each do |client|
-
                          if ConceptName.find_by_name('Test 2').concept_id == client.concept_id
 
                            @data['total_clients_in_confirmatory_register'].push(client.person_id)
@@ -140,20 +139,6 @@ module HtsService
                             @data["hiv_test_1_repeat_result_positive"].push(client.person_id) if ConceptName.find_by_name('Positive').concept_id == client.value_coded
                             @data["hiv_test_1_repeat_result_invalid_entry"].push(client.person_id) if client.value_coded == nil
                             @data["hiv_test_1_repeat_result_not_applicable_or_missing"].push(client.person_id) if client.value_coded == nil
-
-                          elsif ConceptName.find_by_name('HIV group').concept_id == client.concept_id
-
-                              today = Date.today
-                                dob = client.dob
-                             months = (today.year * 12 + today.month) - (dob.year * 12 + dob.month)
-                             @data["result_given_to_client_negative"].push(client.person_id) if ConceptName.find_by_name('New Negative').concept_id == client.value_coded
-                             @data["result_given_to_client_positive"].push(client.person_id) if ConceptName.find_by_name('New Positive').concept_id == client.value_coded
-                             @data["result_given_to_client_inconclusive"].push(client.person_id) if ConceptName.find_by_name('New Inconclusive').concept_id == client.value_coded
-                             @data["result_given_to_client_exposed_infant"].push(client.person_id) if ConceptName.find_by_name('New exposed infant').concept_id == client.value_coded && months < 7
-                            #@data['result_given_to_client_retest'].push(client.person_id) if ConceptName.find_by_name('Positive').concept_id == obs.value_coded
-                             @data['result_given_to_client_inconclusive_retest'].push(client.person_id) if ConceptName.find_by_name('Confirmatory Inconclusive').concept_id == client.value_coded
-                             @data["result_given_to_client_invalid_entry"].push(client.person_id) if client.value_coded == nil
-                             @data["result_given_to_client_missing"].push(client.person_id) if client.value_coded == nil
 
                           elsif ConceptName.find_by_name('Recency Test').concept_id == client.concept_id
 
@@ -189,14 +174,20 @@ module HtsService
           Person.joins(:observations, patient: :encounters)
             .joins("INNER JOIN concept_name cn ON cn.concept_id = obs.value_coded AND cn.voided = 0")
             .where(
-              encounter: { encounter_type: EncounterType.find_by_name("HIV Staging").encounter_type_id,
+              encounter: { encounter_type: EncounterType.find_by_name("TESTING").encounter_type_id,
                          encounter_datetime: start_date..end_date,
                          program_id: Program.find_by_name("HTC Program").program_id
                         },
               obs: { concept_id: ConceptName.find_by_name("HIV group").concept_id }
             ).select("person.person_id, name")
             .each do |client|
-              @data["hiv_group_#{client.name.downcase}"].push(client.person_id) if client.name.downcase == client.name.downcase
+              @data["hiv_group_new_positive"].push(client.person_id) if client.name == "New Positive"
+              @data["hiv_group_new_negative"].push(client.person_id) if client.name == "New Negative"
+              @data["hiv_group_exposed_infant"].push(client.person_id) if client.name == "Exposed Infant"
+              @data["hiv_group_negative"].push(client.person_id) if client.name == "Negative"
+              @data["hiv_group_positive_retest"].push(client.person_id) if client.name == "Positive Retest"
+              @data["hiv_group_new_incoclusive"].push(client.person_id) if client.name == "New Inconclusive"
+              @data["hiv_group_incoclusive_retest"].push(client.person_id) if client.name == "Inconclusive Restest"
             end
         end
 
