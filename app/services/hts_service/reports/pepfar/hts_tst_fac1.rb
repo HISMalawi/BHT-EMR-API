@@ -9,8 +9,8 @@ module HtsService::Reports::Pepfar
                       sns: "SNS", sti: "STI", tb: "TB", vct: "VCT", vmmc: "VMMC", other_pitc: "Other PITC" }
 
     def initialize(start_date:, end_date:)
-      @start_date = start_date
-      @end_date = end_date
+      @start_date = start_date.to_date.beginning_of_day
+      @end_date = end_date.to_date.end_of_day
       @report = []
       @numbering = 0
     end
@@ -37,7 +37,7 @@ module HtsService::Reports::Pepfar
 
     def calc_access_points(data, row)
       ACCESS_POINTS.each_with_index do |(key, value)|
-        x = patients_in_access_point(data, value)
+        x = patients_in_access_point(data, value) 
         row["#{key}"] = calc_age_groups(x.select { |q| q["gender"] == row[:gender].to_s.strip }, row[:age_group])
         row["age_group"] = row[:age_group].values.first
       end

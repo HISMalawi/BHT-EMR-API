@@ -10,8 +10,8 @@ module HtsService
         include ARTService::Reports::Pepfar::Utils
 
         def initialize(start_date:, end_date:)
-          @start_date = start_date
-          @end_date = end_date
+          @start_date = start_date.to_date.strftime('%Y-%m-%d 00:00:00')
+          @end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
         end
 
         def data
@@ -59,9 +59,8 @@ module HtsService
           patients.each do |patient|
             age_group = patient['age_group']
             next if ['Unknown', '<1 year', '1-4 years', '5-9 years', '10-14 years'].include?(age_group)
-            next unless [703, 664].include?(patient['hiv_status'])
-
-            report[age_group][patient['gender']][ENTRY_POINTS[patient['entry_point']]][patient['hiv_status'] == 703 ? :pos : :neg] << patient['patient_id']
+            next unless [10647, 664].include?(patient['hiv_status'])
+            report[age_group][patient['gender']][ENTRY_POINTS[patient['entry_point']]][patient['hiv_status'] == 10647 ? :pos : :neg] << patient['patient_id']
           end
         end
 
@@ -75,7 +74,7 @@ module HtsService
             INNER JOIN person p ON p.person_id = e.patient_id AND p.voided = 0
             WHERE e.encounter_type = #{EncounterType.find_by_name('Testing').encounter_type_id}
             AND e.voided = 0
-            AND e.encounter_datetime BETWEEN '#{start_date}' AND '#{end_date}' + INTERVAL 1 DAY
+            AND e.encounter_datetime BETWEEN '#{start_date}' AND '#{end_date}'
             AND e.program_id = #{Program.find_by_name('HTC PROGRAM').program_id}
           SQL
         end

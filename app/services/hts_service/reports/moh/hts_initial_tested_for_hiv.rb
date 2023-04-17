@@ -140,6 +140,7 @@ module HtsService
             "total_clients_hiv_test_1_negative" => [],
             "not_applicable_not_linked" => [],
             "invalid_link_id_in_conf_register" => [],
+            "last_hiv_test_positive_prof_initial_test"=>[],
           }
         end
 
@@ -168,6 +169,12 @@ module HtsService
         def set_unique
           @data.each do |key, array|
             next if array.class != Array
+            unless %i[
+              frs_given_family_referral_slips_sum male_condoms_given_male_condoms_sum female_condoms_given_female_condoms_sum
+            ].include?(key)
+              @data[key] = array
+              next
+            end
             @data[key] = array.uniq
           end
         end
@@ -255,24 +262,41 @@ module HtsService
         end
 
         def fetch_frm_referal
-          query =
-            Patient.connection.select_all(his_patients_rev
-              .joins(<<-SQL)
-              LEFT join obs frs on frs.voided = 0
-              AND frs.person_id = person.person_id
-              AND frs.concept_id = #{ConceptName.find_by_name("HTS Referal Slips Recipients").concept_id}
-              LEFT JOIN obs male_condoms on male_condoms.voided = 0
-              AND male_condoms.person_id = person.person_id
-              AND male_condoms.concept_id = #{ConceptName.find_by_name("Male condoms").concept_id}
-              LEFT JOIN obs female_condoms on female_condoms.voided = 0
-              AND female_condoms.person_id = person.person_id
-              AND female_condoms.concept_id = #{concept("Female condoms").concept_id}
-              SQL
-              .select("patient.patient_id, female_condoms.value_numeric as female_condoms, male_condoms.value_numeric as male_condoms, frs.value_numeric as frs").group("patient.patient_id").to_sql).to_hash
-
-          @data["frs_given_family_referral_slips_sum"] = query.map { |q| q["frs"].to_i }.sum
-          @data["male_condoms_given_male_condoms_sum"] = query.map { |q| q["male_condoms"].to_i }.sum
-          @data["female_condoms_given_female_condoms_sum"] = query.map { |q| q["female_condoms"].to_i }.sum
+            Person.joins(patient: :encounters)
+            .joins("INNER JOIN obs o4 ON o4.person_id = patient.patient_id AND o4.voided = 0 AND o4.concept_id = #{ConceptName.find_by_name('HIV status').concept_id} AND encounter.encounter_id = o4.encounter_id")
+            .joins(<<~SQL)
+              LEFT JOIN obs male_condoms on male_condoms.person_id = person.person_id
+              AND male_condoms.concept_id = #{concept('Male Condoms').concept_id}
+              AND male_condoms.voided = 0
+              LEFT JOIN obs female_condoms on female_condoms.person_id = person.person_id
+              AND female_condoms.concept_id = #{concept('Female Condoms').concept_id}
+              AND female_condoms.voided = 0  
+              LEFT JOIN obs frs on frs.person_id = person.person_id
+              AND frs.concept_id = #{concept('FRS').concept_id}
+              AND frs.voided = 0
+            SQL
+            .where(
+              encounter: { encounter_type: EncounterType.find_by_name("TESTING").encounter_type_id,
+                            encounter_datetime: start_date..end_date,
+                            program_id: Program.find_by_name("HTC Program").program_id },
+            ).select("person.person_id, male_condoms.value_numeric male_condoms, female_condoms.value_numeric female_condoms, frs.value_numeric frs")
+            .each do |client|
+              if client.male_condoms.present?
+                client.male_condoms.to_i.times do
+                  @data["male_condoms_given_male_condoms_sum"].push(client.patient.id)
+                end
+              end
+              if  client.female_condoms.present?
+                client.female_condoms.to_i.times do
+                  @data["female_condoms_given_female_condoms_sum"].push(client.patient.id)
+                end
+              end
+              if  client.frs.present?
+                client.frs.to_i.times do
+                  @data["frs_given_frs_sum"].push(client.patient.id)
+                end
+              end
+            end
         end
 
         def fetch_referral_retest

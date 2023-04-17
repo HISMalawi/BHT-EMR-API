@@ -8,6 +8,8 @@ module HtsService
         include HtsService::Reports::HtsReportBuilder
         attr_accessor :start_date, :end_date
 
+        YES_ANSWER = concept("Yes").concept_id
+
         def initialize(start_date:, end_date:)
           @start_date = start_date
           @end_date = end_date
@@ -150,7 +152,7 @@ module HtsService
            'linking_with_hiv_confirmatory_register_not_applicable_not_linked' => [],
            'linking_with_hiv_confirmatory_register_invalid_linkid_in_conf_register' => [],
            'linking_with_hiv_confirmatory_register_total_clients_hiv_test_1_not_done' => [],
-
+          "last_hiv_test_positive_prof_initial_test"=>[],
 
         }
         end
@@ -171,13 +173,21 @@ module HtsService
           fetch_referral_retests
           linked_clients
           fetch_risk_category
-          fetch_referrals        
+          fetch_referrals
+          fetch_ever_taken_drugs_before
+          fetch_items_given
           set_unique
 
         end
         def set_unique
 
           @data.each do |key, array|
+            unless %i[
+              frs_given_family_referral_slips_sum male_condoms_given_male_condoms_sum female_condoms_given_female_condoms_sum
+            ].include?(key)
+              @data[key] = array
+              next
+            end
               @data[key]  =  array.uniq
           end
 
@@ -228,15 +238,18 @@ module HtsService
                      @data['age_group_years_c_1524'].push(client.person_id) if date > 14 && date < 25
                      @data['age_group_years_d_25plus'].push(client.person_id) if date > 24
 
-                    Person.joins("INNER JOIN encounter e ON e.patient_id = person.person_id AND e.encounter_type = #{EncounterType.find_by_name("CIRCUMCISION").encounter_type_id} AND e.voided = 0 AND e.program_id = #{Program.find_by_name("HTC Program").program_id}")
-                    .joins("INNER JOIN obs ON obs.person_id = e.patient_id AND obs.voided = 0 AND obs.concept_id = #{ConceptName.find_by_name('Circumcision status').concept_id} AND e.encounter_id = obs.encounter_id")
-                    .joins("INNER JOIN obs o3 ON o3.person_id = e.patient_id AND o3.voided = 0 AND o3.concept_id = #{ConceptName.find_by_name('Hepatitis B Test Result').concept_id} AND e.encounter_id = o3.encounter_id")
-                    .select("person.person_id person_id,obs.encounter_id encounter_id,obs.value_coded concept_id")
-                    .where("person.voided = 0 AND person.person_id = '#{client.person_id}' AND DATE(e.encounter_datetime) BETWEEN '#{start_date}' AND '#{end_date}' + INTERVAL 1 DAY")
-                    .each do |values|
+                    status = Observation.joins(:encounter)\
+                          .where(concept: concept('Circumcision status'),
+                                  person: client.person_id,
+                               encounter: { encounter_type: EncounterType.find_by_name("CIRCUMCISION").encounter_type_id,
+                                                program_id: Program.find_by_name("HTC Program").program_id })\
+                          .where("encounter_datetime BETWEEN '#{start_date}' AND '#{end_date}' + INTERVAL 1 DAY ")\
+                          .last
 
-                      @data['sex_or_pregnancy_male_circumcised'].push(values.person_id) if ConceptName.find_by_name('Yes').concept_id == values.concept_id
-                      @data['sex_or_pregnancy_male_noncircumcised'].push(values.person_id) if ConceptName.find_by_name('No').concept_id == values.concept_id
+                    unless status.blank?
+
+                       @data['sex_or_pregnancy_male_circumcised'].push(client.person_id) if ConceptName.find_by_name('Yes').concept_id == status.value_coded
+                       @data['sex_or_pregnancy_male_noncircumcised'].push(client.person_id) if ConceptName.find_by_name('No').concept_id == status.value_coded
 
                     end
 
@@ -343,6 +356,73 @@ module HtsService
                   @data["risk_category_not_done"].push(client.person_id) if client.category == "Risk assessment not done"
             end
         end
+
+        def fetch_items_given
+            Person.joins(patient: :encounters)
+            .joins("INNER JOIN obs o4 ON o4.person_id = patient.patient_id AND o4.voided = 0 AND o4.concept_id = #{ConceptName.find_by_name('Hepatitis B Test Result').concept_id} AND encounter.encounter_id = o4.encounter_id")
+            .joins(<<~SQL)
+              LEFT JOIN obs male_condoms on male_condoms.person_id = person.person_id
+              AND male_condoms.concept_id = #{concept('Male Condoms').concept_id}
+              AND male_condoms.voided = 0
+              LEFT JOIN obs female_condoms on female_condoms.person_id = person.person_id
+              AND female_condoms.concept_id = #{concept('Female Condoms').concept_id}
+              AND female_condoms.voided = 0  
+              LEFT JOIN obs frs on frs.person_id = person.person_id
+              AND frs.concept_id = #{concept('FRS').concept_id}
+              AND frs.voided = 0
+            SQL
+            .where(
+              encounter: { encounter_type: EncounterType.find_by_name("TESTING").encounter_type_id,
+                            encounter_datetime: start_date..end_date,
+                            program_id: Program.find_by_name("HTC Program").program_id },
+            ).select("person.person_id, male_condoms.value_numeric male_condoms, female_condoms.value_numeric female_condoms, frs.value_numeric frs")
+            .each do |client|
+              if client.male_condoms.present?
+                client.male_condoms.to_i.times do
+                  @data["male_condoms_given_male_condoms_sum"].push(client.patient.id)
+                end
+              end
+              if  client.female_condoms.present?
+                client.female_condoms.to_i.times do
+                  @data["female_condoms_given_female_condoms_sum"].push(client.patient.id)
+                end
+              end
+              if  client.frs.present?
+                client.frs.to_i.times do
+                  @data["frs_given_frs_sum"].push(client.patient.id)
+                end
+              end
+            end
+        end
+
+        def fetch_ever_taken_drugs_before
+           Person.joins(:observations, patient: :encounters)
+            .joins("INNER JOIN obs o5 ON o5.person_id = encounter.patient_id AND o5.voided = 0 AND o5.concept_id = #{ConceptName.find_by_name('Hepatitis B Test Result').concept_id} AND encounter.encounter_id = o5.encounter_id")
+            .joins(<<~SQL)
+              LEFT JOIN obs taken_arv on taken_arv.person_id = person.person_id 
+              AND taken_arv.concept_id = #{concept('Taken ARV before').concept_id}
+              AND taken_arv.voided = 0
+              LEFT JOIN obs taken_prep on taken_prep.person_id = person.person_id 
+              AND taken_prep.concept_id = #{concept('Taken PrEP before').concept_id}
+              AND taken_prep.voided = 0
+              LEFT JOIN obs taken_pep on taken_pep.person_id = person.person_id 
+              AND taken_pep.concept_id = #{concept('Taken PEP before').concept_id}
+              AND taken_pep.voided = 0
+            SQL
+            .where(
+              encounter: { encounter_type: EncounterType.find_by_name("TESTING").encounter_type_id,
+                            encounter_datetime: start_date..end_date,
+                            program_id: Program.find_by_name("HTC Program").program_id }
+            )
+            .select("person.person_id person_id,person.gender gender,taken_arv.value_coded taken_arv,taken_prep.value_coded taken_prep,taken_pep.value_coded taken_pep")
+            .group("person.person_id")
+            .each do |client|
+              @data["ever_taken_arvs_art"].push(client.person_id) if client.taken_arv == YES_ANSWER
+              @data["ever_taken_arvs_prep"].push(client.person_id) if client.taken_prep == YES_ANSWER
+              @data["ever_taken_arvs_pep"].push(client.person_id) if client.taken_pep == YES_ANSWER
+              @data["ever_taken_arvs_no"].push(client.person_id) if client.taken_arv != YES_ANSWER && client.taken_prep != YES_ANSWER && client.taken_pep != YES_ANSWER
+            end
+        end
       
         def fetch_drugs_taken
 
@@ -389,6 +469,10 @@ module HtsService
                                                 @data["time_since_last_taken_arvs_35_months"].push(client.person_id) if array[0].to_i > 2 && array[0].to_i < 6
                                                 @data["time_since_last_taken_arvs_611_months"].push(client.person_id) if array[0].to_i > 5 && array[0].to_i < 12
                                                 @data["time_since_last_taken_arvs_12plus_months"].push(client.person_id) if array[0].to_i > 11
+
+                                            when "Years"
+
+                                              @data["time_since_last_taken_arvs_12plus_months"].push(client.person_id)
                                         end
 
                                   end
