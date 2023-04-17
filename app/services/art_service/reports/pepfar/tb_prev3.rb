@@ -51,7 +51,7 @@ module ARTService
           return { tpt: nil, completed: false, tb_treatment: false } if patient.blank?
 
           tpt = patient_on_3hp?(patient) ? '3HP' : '6H'
-          completed = patient_completed_tpt?(patient, tpt)
+          completed = patient_has_totally_completed_tpt?(patient, tpt)
           { tpt: if tpt == '6H'
                    'IPT'
                  else

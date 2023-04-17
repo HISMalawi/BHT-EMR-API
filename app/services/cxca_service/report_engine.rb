@@ -15,7 +15,12 @@ module CXCAService
       'CC TYPE OF SCREEN' => CXCAService::Reports::Pepfar::CcAllQuestions,
       'CC SCREEN RESULT' => CXCAService::Reports::Pepfar::CcAllQuestions,
       'CC TYPE OF TREATMENT' => CXCAService::Reports::Pepfar::CcAllQuestions,
-      'CC BASIC RESULT' => CXCAService::Reports::Pepfar::CcBasicResult
+      'CC BASIC RESULT' => CXCAService::Reports::Pepfar::CcBasicResult,
+      'CXCA REASON FOR VISIT' => CXCAService::Reports::Moh::ReasonForVisit,
+      'CXCA TX' => CXCAService::Reports::Pepfar::CxcaTx,
+      'CXCA SCRN' => CXCAService::Reports::Pepfar::CxcaScrn,
+      'MONTHLY CECAP TX' => CXCAService::Reports::Clinic::MonthlyCecapTx,      
+      'MONTHLY SCREEN' => CXCAService::Reports::Clinic::MonthlyScreenReport    
     }.freeze
 
     def reports(start_date, end_date, name)

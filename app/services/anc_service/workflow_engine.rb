@@ -86,7 +86,7 @@ module ANCService
     }.freeze
 
     STATE_CONDITIONS = {
-      DISPENSING => %i[patient_has_not_been_given_ttv?],
+      DISPENSING => %i[patient_has_not_been_given_td?],
       OBSTETRIC_HISTORY => %i[is_not_a_subsequent_visit?
                       obstetric_history_not_collected?],
       MEDICAL_HISTORY => %i[is_not_a_subsequent_visit?
@@ -114,7 +114,7 @@ module ANCService
         case activity
         when /vitals/i
           VITALS
-        when /TTV Vaccination/i
+        when /TD Vaccination/i
           DISPENSING
         when /anc visit type/i
           ANC_VISIT_TYPE
@@ -181,16 +181,16 @@ module ANCService
       end
     end
 
-    # Check if patient is not been given ttv
-    def patient_has_not_been_given_ttv?
-      ttv_drug = Drug.find_by name: "TTV (0.5ml)"
-      ttv_order = Encounter.joins(:orders => [:drug_order])
+    # Check if patient is not been given td
+    def patient_has_not_been_given_td?
+      td_drug = Drug.find_by name: "TD (0.5ml)"
+      td_order = Encounter.joins(:orders => [:drug_order])
         .where("encounter.patient_id = ? AND drug_order.drug_inventory_id = ?
           AND DATE(encounter.encounter_datetime) = DATE(?) AND program_id = ?",
-          @patient.patient_id, ttv_drug.id, @date, @program.id)
+          @patient.patient_id, td_drug.id, @date, @program.id)
         .order(encounter_datetime: :desc).first.blank?
 
-      ttv_order
+      td_order
     end
 
     def patient_not_receiving_treatment_today?
@@ -206,7 +206,7 @@ module ANCService
     end
 
     def patient_has_been_given_drugs?
-      ttv_drug = Drug.find_by name: "TTV (0.5ml)"
+      td_drug = Drug.find_by name: "TD (0.5ml)"
       drugs = []
 
       drug_order = ActiveRecord::Base.connection.select_all(
@@ -220,7 +220,7 @@ module ANCService
           ORDER BY encounter.encounter_datetime DESC"
       ).rows.collect{|d| drugs << d[0]}.compact
 
-      drugs.delete(ttv_drug.id)
+      drugs.delete(td_drug.id)
 
       if drugs.length > 0
         return true
