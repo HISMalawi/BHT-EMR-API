@@ -601,7 +601,7 @@ def registered_today(visit_type)
           date2.strftime('%Y-%m-%d 23:59:59'), type.id,
           concept.concept_id, value_coded.concept_id).\
           joins('INNER JOIN obs USING(encounter_id)').\
-          select('count(*) AS total')
+          select('COUNT(DISTINCT encounter_id) AS total')
 
         months[(i+1)]= {
           start_date: date1, end_date: date2,
