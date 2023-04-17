@@ -24,7 +24,7 @@ module HtsService::Reports::Clinic
       data = query
       rows = hts_age_groups.collect { |age_group| construct_row age_group }.flatten
       rows = rows.collect { |row| build_report data, row }
-      rows
+      rows.sort_by { |row| row[:gender] }
     end
 
     def build_report(data, row)
