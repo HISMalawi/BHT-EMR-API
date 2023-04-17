@@ -144,7 +144,7 @@ module ANCService
         @c_not_on_art = @c_total_hiv_positive - @c_total_on_art
 
         @on_cpt = @c_on_art_in_nart['on_cpt']
-        @not_on_cpt = (@c_total_hiv_positive - @on_cpt).uniq
+        @not_on_cpt = (@c_total_hiv_positive - @on_cpt.split(",")).uniq
 
         @nvp_given = nvp_given
         @nvp_not_given = @c_total_hiv_positive - @nvp_given
