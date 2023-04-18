@@ -125,6 +125,7 @@ module ARTService
 
           unless defaulter_date == 'N/A'
             next if defaulter_date < @start_date.to_date
+            next if defaulter_date > @end_date.to_date
           end
 
 
