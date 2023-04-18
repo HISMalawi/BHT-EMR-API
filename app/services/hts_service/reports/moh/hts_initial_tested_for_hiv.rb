@@ -8,6 +8,8 @@ module HtsService
         include HtsService::Reports::HtsReportBuilder
         attr_accessor :start_date, :end_date
 
+        YES_ANSWER = concept("Yes").concept_id
+
         def initialize(start_date:, end_date:)
           @start_date = start_date.to_date.beginning_of_day
           @end_date = end_date.to_date.end_of_day
@@ -159,6 +161,7 @@ module HtsService
           fetch_referral_retest
           fetch_male_circumcision
           fetch_pregnancy_test
+          fetch_ever_taken_drugs_before
           fetch_referrals
           fetch_frm_referal
           fetch_risk_category
@@ -239,6 +242,7 @@ module HtsService
         def fetch_pregnancy_test
           Person.joins("INNER JOIN encounter e ON e.patient_id = person.person_id AND e.encounter_type = #{EncounterType.find_by_name("PREGNANCY STATUS").encounter_type_id} AND e.voided = 0 AND e.program_id = #{Program.find_by_name("HTC Program").program_id}")
                 .joins("INNER JOIN obs ON obs.person_id = e.patient_id AND obs.voided = 0 AND obs.concept_id = #{ConceptName.find_by_name("Pregnancy status").concept_id} AND e.encounter_id = obs.encounter_id")
+                .joins("INNER JOIN obs o3 ON o3.person_id = e.patient_id AND o3.voided = 0 AND o3.concept_id = #{ConceptName.find_by_name("HIV status").concept_id}")
                 .select("person.person_id person_id,person.gender gender,obs.value_coded concept_id")
                 .where("person.voided = 0 AND DATE(e.encounter_datetime) BETWEEN '#{start_date}' AND '#{end_date}' + INTERVAL 1 DAY")
                 .each do |client|
@@ -252,6 +256,7 @@ module HtsService
         def fetch_male_circumcision
           Person.joins("INNER JOIN encounter e ON e.patient_id = person.person_id AND e.encounter_type = #{EncounterType.find_by_name("CIRCUMCISION").encounter_type_id} AND e.voided = 0 AND e.program_id = #{Program.find_by_name("HTC Program").program_id}")
                 .joins("INNER JOIN obs ON obs.person_id = e.patient_id AND obs.voided = 0 AND obs.concept_id = #{ConceptName.find_by_name("Circumcision status").concept_id} AND e.encounter_id = obs.encounter_id")
+                .joins("INNER JOIN obs o3 ON o3.person_id = e.patient_id AND o3.voided = 0 AND o3.concept_id = #{ConceptName.find_by_name("HIV status").concept_id}")
                 .select("person.person_id person_id,person.gender gender,obs.value_coded concept_id")
                 .where("person.voided = 0 AND DATE(e.encounter_datetime) BETWEEN '#{start_date}' AND '#{end_date}' + INTERVAL 1 DAY")
                 .each do |client|
@@ -302,6 +307,7 @@ module HtsService
         def fetch_referral_retest
           Person.joins("INNER JOIN encounter e ON e.patient_id = person.person_id AND e.encounter_type = #{EncounterType.find_by_name("APPOINTMENT").encounter_type_id} AND e.voided = 0 AND e.program_id = #{Program.find_by_name("HTC Program").program_id}")
                 .joins("INNER JOIN obs ON obs.person_id = e.patient_id AND obs.voided = 0 AND obs.concept_id = #{ConceptName.find_by_name("Referral for Re-Testing").concept_id} AND e.encounter_id = obs.encounter_id")
+                .joins("INNER JOIN obs o3 ON o3.person_id = e.patient_id AND o3.voided = 0 AND o3.concept_id = #{ConceptName.find_by_name("HIV status").concept_id}")
                 .select("person.person_id person_id,person.gender gender,obs.value_text value")
                 .where("person.voided = 0 AND DATE(e.encounter_datetime) BETWEEN '#{start_date}' AND '#{end_date}' + INTERVAL 1 DAY")
                 .each do |client|
@@ -316,18 +322,20 @@ module HtsService
 
         def fetch_hiv_tests
           Person.joins("INNER JOIN encounter e ON e.patient_id = person.person_id AND e.encounter_type = #{EncounterType.find_by_name("TESTING").encounter_type_id} AND e.voided = 0 AND e.program_id = #{Program.find_by_name("HTC Program").program_id}")
-                .joins("INNER JOIN obs o1 ON o1.person_id = e.patient_id AND o1.voided = 0 AND o1.concept_id = #{ConceptName.find_by_name("Time of HIV test").concept_id} AND e.encounter_id = o1.encounter_id")
-                .joins("INNER JOIN obs o2 ON o2.person_id = e.patient_id AND o2.voided = 0 AND o2.concept_id = #{ConceptName.find_by_name("Previous HIV Test Results").concept_id} AND e.encounter_id = o2.encounter_id")
-                .joins("INNER JOIN obs o3 ON o3.person_id = e.patient_id AND o3.voided = 0 AND o3.concept_id = #{ConceptName.find_by_name("Previous HIV Test done").concept_id} AND e.encounter_id = o3.encounter_id")
+                .joins("LEFT JOIN obs o1 ON o1.person_id = e.patient_id AND o1.voided = 0 AND o1.concept_id = #{ConceptName.find_by_name("Time of HIV test").concept_id} AND e.encounter_id = o1.encounter_id")
+                .joins("LEFT JOIN obs o2 ON o2.person_id = e.patient_id AND o2.voided = 0 AND o2.concept_id = #{ConceptName.find_by_name("Previous HIV Test Results").concept_id} AND e.encounter_id = o2.encounter_id")
+                .joins("LEFT JOIN obs o3 ON o3.person_id = e.patient_id AND o3.voided = 0 AND o3.concept_id = #{ConceptName.find_by_name("Previous HIV Test done").concept_id} AND e.encounter_id = o3.encounter_id")
+                .joins("INNER JOIN obs o4 ON o4.person_id = e.patient_id AND o4.voided = 0 AND o4.concept_id = #{ConceptName.find_by_name("HIV status").concept_id}")
                 .select("person.person_id person_id,person.gender gender,o1.obs_datetime obs_date,o1.value_datetime as value,o2.value_coded concept_id,o3.value_coded o3concept_id")
+                .group("person.person_id")
                 .where("person.voided = 0 AND DATE(e.encounter_datetime) BETWEEN '#{start_date}' AND '#{end_date}' + INTERVAL 1 DAY")
                 .each do |client|
+
+                
+            @data["last_hiv_test_never_tested"].push(client.person_id) if ConceptName.find_by_name("Never Tested").concept_id == client.concept_id
+
             next if client.value == nil || client.obs_date == nil
-            @data["last_hiv_test_never_tested"].push(client.person_id) if ConceptName.find_by_name("Never Tested").concept_id == client.o3concept_id
-            @data["last_hiv_test_negative_self_test"].push(client.person_id) if ConceptName.find_by_name("Self").concept_id == client.o3concept_id && ConceptName.find_by_name("Negative").concept_id == client.concept_id
-            @data["last_hiv_test_negative_prof_test"].push(client.person_id) if ConceptName.find_by_name("Professional").concept_id == client.o3concept_id && ConceptName.find_by_name("Negative").concept_id == client.concept_id
-            @data["last_hiv_test_positive_self_test"].push(client.person_id) if ConceptName.find_by_name("Self").concept_id == client.o3concept_id && ConceptName.find_by_name("Positive").concept_id == client.concept_id
-            @data["last_hiv_test_positive_prof_test"].push(client.person_id) if ConceptName.find_by_name("Professional").concept_id == client.o3concept_id && ConceptName.find_by_name("Positive").concept_id == client.concept_id
+            
             time_since_last_hiv_result = client.value
             obs_datetime = client.obs_date
             diff = (obs_datetime.to_date - time_since_last_hiv_result.to_date).to_i
@@ -337,12 +345,19 @@ module HtsService
             @data["time_since_last_hiv_test_3_to_5_months"].push(client.person_id) if diff >= 61 && diff <= 150
             @data["time_since_last_hiv_test_6_to_11_months"].push(client.person_id) if diff >= 151 && diff <= 330
             @data["time_since_last_hiv_test_12_plus_months"].push(client.person_id) if diff >= 331
+
+            @data["last_hiv_test_negative_self_test"].push(client.person_id) if ConceptName.find_by_name("Self").concept_id == client.o3concept_id && ConceptName.find_by_name("Negative").concept_id == client.concept_id
+            @data["last_hiv_test_negative_prof_test"].push(client.person_id) if ConceptName.find_by_name("Professional").concept_id == client.o3concept_id && ConceptName.find_by_name("Negative").concept_id == client.concept_id
+            @data["last_hiv_test_positive_self_test"].push(client.person_id) if ConceptName.find_by_name("Self").concept_id == client.o3concept_id && ConceptName.find_by_name("Positive").concept_id == client.concept_id
+            @data["last_hiv_test_positive_prof_test"].push(client.person_id) if ConceptName.find_by_name("Professional").concept_id == client.o3concept_id && ConceptName.find_by_name("Positive").concept_id == client.concept_id
+            @data["last_hiv_test_inconclusive_prof_test"].push(client.person_id) if /inconclusive/.match(ConceptName.find_by_concept_id(client.concept_id)&.name&.downcase) && ConceptName.find_by_name("Professional").concept_id == client.o3concept_id
           end
         end
 
         def fetch_risk_category
           Person.joins(:observations, patient: :encounters)
             .joins("INNER JOIN concept_name cn ON cn.concept_id = obs.value_coded and cn.voided = 0")
+            .joins("INNER JOIN obs o3 ON o3.person_id = encounter.patient_id AND o3.voided = 0 AND o3.concept_id = #{ConceptName.find_by_name("HIV status").concept_id}")
             .where(
               encounter: { encounter_type: EncounterType.find_by_name("TESTING").encounter_type_id,
                             encounter_datetime: start_date..end_date,
@@ -360,6 +375,7 @@ module HtsService
         def fetch_medication
           Person.joins("INNER JOIN encounter e ON e.patient_id = person.person_id AND e.encounter_type = #{EncounterType.find_by_name("TESTING").encounter_type_id} AND e.voided = 0 AND e.program_id = #{Program.find_by_name("HTC Program").program_id}")
                 .joins("INNER JOIN obs o1 ON o1.person_id = e.patient_id AND o1.voided = 0 AND o1.concept_id = #{ConceptName.find_by_name("Antiretroviral medication history").concept_id} AND e.encounter_id = o1.encounter_id")
+                .joins("INNER JOIN obs o3 ON o3.person_id = e.patient_id AND o3.voided = 0 AND o3.concept_id = #{ConceptName.find_by_name("HIV status").concept_id}")
                 .select("person.person_id person_id,person.gender gender,o1.value_coded concept_id,o1.encounter_id encounterid")
                 .where("person.voided = 0 AND DATE(e.encounter_datetime) BETWEEN '#{start_date}' AND '#{end_date}' + INTERVAL 1 DAY")
                 .group("person.person_id")
@@ -392,6 +408,7 @@ module HtsService
         def fetch_partner_status
           Person.joins("INNER JOIN encounter e ON e.patient_id = person.person_id AND e.encounter_type = #{EncounterType.find_by_name("Partner Reception").encounter_type_id} AND e.voided = 0 AND e.program_id = #{Program.find_by_name("HTC Program").program_id}")
                 .joins("INNER JOIN obs ON obs.person_id = e.patient_id AND obs.voided = 0 AND obs.concept_id = #{ConceptName.find_by_name("Partner Present").concept_id} AND e.encounter_id = obs.encounter_id")
+                .joins("INNER JOIN obs o3 ON o3.person_id = e.patient_id AND o3.voided = 0 AND o3.concept_id = #{ConceptName.find_by_name("HIV status").concept_id}")
                 .select("person.person_id person_id,person.gender gender,obs.value_text value,obs.encounter_id encounter_id")
                 .where("person.voided = 0 AND DATE(e.encounter_datetime) BETWEEN '#{start_date}' AND '#{end_date}' + INTERVAL 1 DAY")
                 .group("person.person_id")
@@ -410,6 +427,35 @@ module HtsService
             @data["partner_hiv_status_hiv_positive_not_on_art"].push(partner_status.person_id) if ConceptName.find_by_name("Positive NOT on ART").concept_id == partner_status.value_coded
             @data["partner_hiv_status_hiv_positive_on_art"].push(partner_status.person_id) if ConceptName.find_by_name("Positive on ART").concept_id == partner_status.value_coded
           end
+        end
+
+        def fetch_ever_taken_drugs_before
+           Person.joins(:observations, patient: :encounters)
+            .joins("INNER JOIN obs o5 ON o5.person_id = encounter.patient_id AND o5.voided = 0 AND o5.concept_id = #{ConceptName.find_by_name('Hiv status').concept_id} AND encounter.encounter_id = o5.encounter_id")
+            .joins(<<~SQL)
+              LEFT JOIN obs taken_arv on taken_arv.person_id = person.person_id 
+              AND taken_arv.concept_id = #{concept('Taken ARV before').concept_id}
+              AND taken_arv.voided = 0
+              LEFT JOIN obs taken_prep on taken_prep.person_id = person.person_id 
+              AND taken_prep.concept_id = #{concept('Taken PrEP before').concept_id}
+              AND taken_prep.voided = 0
+              LEFT JOIN obs taken_pep on taken_pep.person_id = person.person_id 
+              AND taken_pep.concept_id = #{concept('Taken PEP before').concept_id}
+              AND taken_pep.voided = 0
+            SQL
+            .where(
+              encounter: { encounter_type: EncounterType.find_by_name("TESTING").encounter_type_id,
+                            encounter_datetime: start_date..end_date,
+                            program_id: Program.find_by_name("HTC Program").program_id }
+            )
+            .select("person.person_id person_id,person.gender gender,taken_arv.value_coded taken_arv,taken_prep.value_coded taken_prep,taken_pep.value_coded taken_pep")
+            .group("person.person_id")
+            .each do |client|
+              @data["ever_taken_arvs_art"].push(client.person_id) if client.taken_arv == YES_ANSWER
+              @data["ever_taken_arvs_prep"].push(client.person_id) if client.taken_prep == YES_ANSWER
+              @data["ever_taken_arvs_pep"].push(client.person_id) if client.taken_pep == YES_ANSWER
+              @data["ever_taken_arvs_no"].push(client.person_id) if client.taken_arv != YES_ANSWER && client.taken_prep != YES_ANSWER && client.taken_pep != YES_ANSWER
+            end
         end
 
         def fetch_referrals
@@ -434,6 +480,7 @@ module HtsService
         def linked_clients
           query = Patient.connection.select_all(
             his_patients_rev
+              .joins("INNER JOIN obs o5 ON o5.person_id = encounter.patient_id AND o5.voided = 0 AND o5.concept_id = #{ConceptName.find_by_name('Hiv status').concept_id} AND encounter.encounter_id = o5.encounter_id")
               .joins(<<-SQL)
               LEFT JOIN obs linked ON linked.person_id = person.person_id
               AND linked.voided = 0

@@ -80,7 +80,8 @@ module HTSService
 
       RECENCY => %i[not_from_community_accesspoint? can_perform_recency?],
 
-      APPOINTMENT => %i[task_not_done_today?
+      APPOINTMENT => %i[does_not_have_two_incoclusive_results?
+                        task_not_done_today?
                         done_screening_today?
                         not_hiv_positive_at_health_facility_accesspoint?],
 
@@ -120,19 +121,53 @@ module HTSService
       @patient.gender == "F"
     end
 
+    def does_not_have_two_incoclusive_results?
+      !%i[previous_tested_incoclusive? current_test_is_inconclusive?].all? { |condition| send(condition) }
+    end
+
+    def previous_tested_incoclusive?
+      obs = Observation.joins(:encounter).where(
+        person: @patient.person,
+        concept_id: concept("Previous HIV Test Results").concept_id,
+        encounter: {
+          program_id: @program.program_id,
+          encounter_type: encounter_type("TESTING"),
+        },
+      ).where("encounter_datetime BETWEEN ? AND ?", *TimeUtils.day_bounds(@date))
+      .order("encounter_datetime DESC")
+      return false if obs.blank?
+      return true if /inconclusive/.match?(obs.last.answer_string&.downcase)
+      return false
+    end
+
+    def current_test_is_inconclusive?
+      obs = Observation.joins(:encounter).where(
+        person: @patient.person,
+        concept_id: concept("HIV status").concept_id,
+        encounter: {
+          program_id: @program.program_id,
+          encounter_type: encounter_type("TESTING"),
+        }
+      ).where("encounter_datetime BETWEEN ? AND ?", *TimeUtils.day_bounds(@date))
+      .order("encounter_datetime DESC")
+      return false if obs.blank?
+      return true if /inconclusive/.match?(obs.last.answer_string&.downcase)
+      return false
+    end
+
     def test_two_done?
       Observation.joins(:encounter).where(
         person: @patient.person,
         concept_id: concept("Test 2").concept_id,
         encounter: {
           program_id: @program.program_id,
-          encounter_type: encounter_type("TESTING"),
+          encounter_type: encounter_type("TESTING")
         },
-      ).exists?
+      ).where("encounter_datetime BETWEEN ? AND ?", *TimeUtils.day_bounds(@date))
+      .order("encounter_datetime DESC").exists?
     end
 
     def can_perform_recency?
-      puts "Can perform recency #{test_two_done?}"
       %i[test_two_done? recency_activated? recency_in_user_properties?].all? { |condition| send(condition) }
     end
 
@@ -148,7 +183,7 @@ module HTSService
     end
 
     def recency_activated?
-      GlobalProperty.where(property: "hts.recency.test").last.property_value == "true"
+      GlobalProperty.where(property: "hts.recency.test")&.last&.property_value == "true"
     end
 
     def client_not_circumcised?
