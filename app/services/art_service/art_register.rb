@@ -106,6 +106,7 @@ module ARTService
         LEFT JOIN temp_art_register_staging tpar_staging ON tpar_staging.patient_id = tpar.patient_id
         #{formulation_filter}
         GROUP BY tpar.patient_id
+        ORDER BY tpar_demographics.arv_number ASC
       SQL
     end
 
