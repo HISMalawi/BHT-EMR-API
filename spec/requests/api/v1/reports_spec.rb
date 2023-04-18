@@ -35,7 +35,8 @@ RSpec.describe 'api/v1/reports', type: :request do
             district: { type: :string },
             ta: { type: :string },
             village: { type: :string },
-            current_age: { type: :string }
+            current_age: { type: :string },
+            landmark: { type: :string }
           }
         }
 
