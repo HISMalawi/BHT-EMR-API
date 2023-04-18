@@ -90,7 +90,7 @@ module ARTService
           SELECT
             e.patient_id, i.identifier arv_number, e.birthdate,
             e.gender, n.given_name, n.family_name,
-            art_reason.name art_reason, a.value cell_number,
+            art_reason.name art_reason, a.value cell_number, landmark.value landmark,
             s.state_province district, s.county_district ta,
             s.city_village village, TIMESTAMPDIFF(year, DATE(e.birthdate), DATE('#{@end_date}')) age,
             #{defaulter_date_sql}(e.patient_id, TIMESTAMP('#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')) AS defaulter_date,
@@ -112,8 +112,9 @@ module ARTService
           INNER JOIN person_name n ON n.person_id = e.patient_id AND n.voided = 0
           LEFT JOIN person_attribute a ON a.person_id = e.patient_id
           AND a.voided = 0 AND a.person_attribute_type_id = 12
-          LEFT JOIN person_address s ON s.person_id = e.patient_id
-          LEFT JOIN concept_name art_reason ON art_reason.concept_id = e.reason_for_starting_art
+          LEFT JOIN person_attribute landmark ON landmark.person_id = e.patient_id AND landmark.voided = 0 AND landmark.person_attribute_type_id = 19
+          LEFT JOIN person_address s ON s.person_id = e.patient_id AND s.voided = 0
+          LEFT JOIN concept_name art_reason ON art_reason.concept_id = e.reason_for_starting_art AND art_reason.voided = 0
           WHERE o.cum_outcome = 'Defaulted' GROUP BY e.patient_id
           ORDER BY e.patient_id, n.date_created DESC;
         SQL
@@ -143,7 +144,8 @@ module ARTService
             district: person['district'],
             ta: person['ta'],
             village: person['village'],
-            current_age: person['age']
+            current_age: person['age'],
+            landmark: person['landmark']
           }
         end
 
