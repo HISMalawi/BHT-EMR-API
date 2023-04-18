@@ -1,11 +1,17 @@
 # frozen_string_literal: true
 
 # define a method that fetches a patient given their identifier
-def voided_patient(identifier:)
-  identifier = PatientIdentifier.unscoped.find_by(identifier: identifier, voided: true)
-  raise "Identifier #{identifier} that is voided was not found" if identifier.blank?
-
-  patient = Patient.unscoped.find(identifier.patient_id)
+def voided_patient(identifier:, given_name:, family_name:, gender:, birthdate:)
+  patient = ActiveRecord::Base.connection.select_one <<~SQL
+    SELECT p.*
+    FROM patient_identifier pi
+    INNER JOIN patient p ON p.patient_id = pi.patient_id AND p.voided = 1
+    INNER JOIN person pe ON pe.person_id = p.patient_id AND pe.voided = 1
+    INNER JOIN person_name pn ON pn.person_id = pe.person_id AND pn.voided = 1
+    WHERE pi.identifier = '#{identifier}' AND pn.given_name = '#{given_name}'
+    AND pn.family_name = '#{family_name}' AND pe.gender = '#{gender}'
+    AND pe.birthdate = '#{birthdate}' AND pi.voided = 1
+  SQL
   return patient if patient.present?
 
   raise "Patient with identifier #{identifier} not found"
@@ -111,9 +117,8 @@ def process_encounters(patient:)
   unvoid_obs(patient: patient)
 end
 
-def process_request(identifier:)
-  patient = voided_patient(identifier: identifier).attributes
-  Rails.logger.info "Processing patient with identifier #{identifier}"
+def process_request(identifier:, given_name:, family_name:, gender:, birthdate:)
+  patient = voided_patient(identifier: identifier, given_name: given_name, family_name: family_name, gender: gender, birthdate: birthdate)
   ActiveRecord::Base.transaction do
     unvoid_person(patient: patient)
     unvoid_patient(patient: patient)
@@ -130,5 +135,13 @@ User.current = User.first
 
 print 'Enter your patient identifier> '
 identifier = gets.strip
+print 'Enter patient first name> '
+given_name = gets.strip
+print 'Enter patient last name> '
+family_name = gets.strip
+print 'Enter patient gender (F or M)> '
+gender = gets.strip
+print 'Enter patient birthdate in the following format(yyyy-mm-dd) i.e 1987-07-15> '
+birthdate = gets.strip
 
-process_request(identifier: identifier)
+process_request(identifier: identifier, given_name: given_name, family_name: family_name, gender: gender, birthdate: birthdate)
