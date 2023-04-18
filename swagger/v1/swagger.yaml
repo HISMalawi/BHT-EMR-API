@@ -1373,6 +1373,8 @@ paths:
                       type: string
                     current_age:
                       type: string
+                    landmark:
+                      type: string
   "/api/v1/rollback/merge_history":
     get:
       summary: Retrieve merge history
