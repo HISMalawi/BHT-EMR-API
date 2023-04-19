@@ -43,6 +43,7 @@ module HTSService
     SOCIAL_HISTORY = "SOCIAL HISTORY"
     TESTING = "TESTING"
     RECENCY = "RECENCY"
+    DBS_ORDER = "DBS ORDER"
     APPOINTMENT = "APPOINTMENT"
     HTS_CONTACT = "HTS Contact"
     REFERRAL = "REFERRAL"
@@ -56,7 +57,8 @@ module HTSService
       CIRCUMCISION => SOCIAL_HISTORY,
       SOCIAL_HISTORY => TESTING,
       TESTING => RECENCY,
-      RECENCY => PARTNER_RECEPTION,
+      RECENCY => DBS_ORDER,
+      DBS_ORDER => PARTNER_RECEPTION,
       PARTNER_RECEPTION => APPOINTMENT,
       APPOINTMENT => HTS_CONTACT,
       HTS_CONTACT => ITEMS_GIVEN,
@@ -66,6 +68,8 @@ module HTSService
     }.freeze
 
     STATE_CONDITIONS = {
+
+      DBS_ORDER => %i[not_from_community_accesspoint? task_not_done_today? eligible_for_dbs?],
 
       PREGNANCY_STATUS => %i[is_female_client?
                              task_not_done_today?],
@@ -78,7 +82,7 @@ module HTSService
 
       TESTING => %i[task_not_done_today?],
 
-      RECENCY => %i[not_from_community_accesspoint? can_perform_recency?],
+      RECENCY => %i[not_from_community_accesspoint? can_perform_recency? not_eligible_for_dbs?],
 
       APPOINTMENT => %i[does_not_have_two_incoclusive_results?
                         task_not_done_today?
@@ -121,6 +125,25 @@ module HTSService
       @patient.gender == "F"
     end
 
+    def eligible_for_dbs?
+      # patient over 12 months then both current and previous test results are inconclusive
+      # patient less than 12 months with HIV positive result
+      if age_below_1? && hiv_positive_at_health_facility_accesspoint?
+        return true
+      elsif !age_below_1? && !does_not_have_two_incoclusive_results?
+        return true
+      end
+      return false
+    end
+
+    def not_eligible_for_dbs?
+      !eligible_for_dbs?
+    end
+
+    def age_below_1?
+      @patient.age_in_months < 12
+    end
+
     def does_not_have_two_incoclusive_results?
       !%i[previous_tested_incoclusive? current_test_is_inconclusive?].all? { |condition| send(condition) }
     end
@@ -134,7 +157,7 @@ module HTSService
           encounter_type: encounter_type("TESTING"),
         },
       ).where("encounter_datetime BETWEEN ? AND ?", *TimeUtils.day_bounds(@date))
-      .order("encounter_datetime DESC")
+        .order("encounter_datetime DESC")
       return false if obs.blank?
       return true if /inconclusive/.match?(obs.last.answer_string&.downcase)
       return false
@@ -147,9 +170,9 @@ module HTSService
         encounter: {
           program_id: @program.program_id,
           encounter_type: encounter_type("TESTING"),
-        }
+        },
       ).where("encounter_datetime BETWEEN ? AND ?", *TimeUtils.day_bounds(@date))
-      .order("encounter_datetime DESC")
+        .order("encounter_datetime DESC")
       return false if obs.blank?
       return true if /inconclusive/.match?(obs.last.answer_string&.downcase)
       return false
@@ -161,10 +184,10 @@ module HTSService
         concept_id: concept("Test 2").concept_id,
         encounter: {
           program_id: @program.program_id,
-          encounter_type: encounter_type("TESTING")
+          encounter_type: encounter_type("TESTING"),
         },
       ).where("encounter_datetime BETWEEN ? AND ?", *TimeUtils.day_bounds(@date))
-      .order("encounter_datetime DESC").exists?
+        .order("encounter_datetime DESC").exists?
     end
 
     def can_perform_recency?
