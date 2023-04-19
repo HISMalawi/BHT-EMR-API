@@ -82,7 +82,7 @@ module HTSService
 
       TESTING => %i[task_not_done_today?],
 
-      RECENCY => %i[not_from_community_accesspoint? can_perform_recency? not_eligible_for_dbs?],
+      RECENCY => %i[not_from_community_accesspoint? can_perform_recency?],
 
       APPOINTMENT => %i[does_not_have_two_incoclusive_results?
                         task_not_done_today?
@@ -128,11 +128,29 @@ module HTSService
     def eligible_for_dbs?
       # patient over 12 months then both current and previous test results are inconclusive
       # patient less than 12 months with HIV positive result
+      if recency_is_recent?
+        return true
+      end
       if age_below_1? && hiv_positive_at_health_facility_accesspoint?
         return true
       elsif !age_below_1? && !does_not_have_two_incoclusive_results?
         return true
       end
+      return false
+    end
+
+    def recency_is_recent?
+      recency_obs = Observation.joins(:encounter).where(
+        person: @patient.person,
+        concept_id: concept("Recency Test").concept_id,
+        encounter: {
+          program_id: @program.program_id,
+          encounter_type: encounter_type("RECENCY"),
+        },
+      ).where("encounter_datetime BETWEEN ? AND ?", *TimeUtils.day_bounds(@date))
+        .order("encounter_datetime DESC")
+      return false if recency_obs.blank?
+      return true if recency_obs.last.answer_string&.strip == "Recent"
       return false
     end
 
