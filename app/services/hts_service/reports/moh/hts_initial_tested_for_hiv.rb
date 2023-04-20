@@ -338,8 +338,8 @@ module HtsService
             
             time_since_last_hiv_result = client.value
             obs_datetime = client.obs_date
-            diff = (obs_datetime.to_date - time_since_last_hiv_result.to_date).to_i
-            @data["time_since_last_hiv_test_same_day"].push(client.person_id) if time_since_last_hiv_result.to_date == obs_datetime.to_date
+            diff = (obs_datetime&.to_date - time_since_last_hiv_result&.to_date).to_i
+            @data["time_since_last_hiv_test_same_day"].push(client.person_id) if time_since_last_hiv_result&.to_date == obs_datetime&.to_date
             @data["time_since_last_hiv_test_1_to_13_days"].push(client.person_id) if diff >= 1 && diff <= 13
             @data["time_since_last_hiv_test_14_days_to_2_months"].push(client.person_id) if diff >= 14 && diff <= 60
             @data["time_since_last_hiv_test_3_to_5_months"].push(client.person_id) if diff >= 61 && diff <= 150
@@ -392,8 +392,8 @@ module HtsService
                 if ConceptName.find_by_name("Time since last taken medication").concept_id == drug.concept_id
                   time_since_last_hiv_result = drug.value_datetime
                   obs_datetime = drug.obs_datetime
-                  diff = (obs_datetime.to_date - time_since_last_hiv_result.to_date).to_i
-                  @data["time_since_last_taken_arvs_same_day"].push(drug.person_id) if time_since_last_hiv_result.to_date == obs_datetime.to_date
+                  diff = (obs_datetime&.to_date - time_since_last_hiv_result&.to_date).to_i
+                  @data["time_since_last_taken_arvs_same_day"].push(drug.person_id) if time_since_last_hiv_result&.to_date == obs_datetime&.to_date
                   @data["time_since_last_taken_arvs_1_to_13_days"].push(drug.person_id) if diff >= 1 && diff <= 13
                   @data["time_since_last_taken_arvs_14_days_to_2_months"].push(drug.person_id) if diff >= 14 && diff <= 60
                   @data["time_since_last_taken_arvs_3_to_5_months"].push(drug.person_id) if diff >= 61 && diff <= 150
