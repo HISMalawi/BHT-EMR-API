@@ -90,7 +90,7 @@ module ANCService
           label.draw_line(805,25,2,280,0)
           label.draw_text("Visit Summary",40,33,0,1,1,2,false)
           label.draw_text("Last Menstrual Period: #{@current_range[0]["START"].to_date.strftime("%d/%b/%Y") rescue ""}",40,76,0,2,1,1,false)
-          label.draw_text("Expected Date of Delivery: #{(@current_range[0]["END"].to_date - 5.week).strftime("%d/%b/%Y") rescue ""}",40,99,0,2,1,1,false)
+          label.draw_text("Expected Date of Delivery: #{(@current_range[0]["END"].to_date).strftime("%d/%b/%Y") rescue ""}",40,99,0,2,1,1,false)
           label.draw_line(28,60,132,1,0)
           label.draw_line(20,130,800,2,0)
           label.draw_line(20,190,800,2,0)
