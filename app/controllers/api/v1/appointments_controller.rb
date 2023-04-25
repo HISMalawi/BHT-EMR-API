@@ -32,7 +32,7 @@ class Api::V1::AppointmentsController < ApplicationController
 
   def next_appointment
     accepted_params = params.permit(%i[patient_id date program_id])
-    encounter = Encounter.where('encounter_type = ? AND patient_id = ? AND DATE(encounter_datetime) <= ? AND program_id = ?', EncounterType.find_by_name('APPOINTMENT').id, accepted_params[:patient_id], accepted_params[:date], accepted_params[:program_id])&.last
+    encounter = Encounter.where('encounter_type = ? AND patient_id = ? AND DATE(encounter_datetime) <= ? AND program_id = ?', EncounterType.find_by_name('APPOINTMENT').id, accepted_params[:patient_id], accepted_params[:date], accepted_params[:program_id])&.order('encounter_datetime DESC')&.first
     obs = encounter ? encounter.observations&.where('concept_id = ?', ConceptName.find_by_name('APPOINTMENT DATE').concept_id)&.last : nil
     if obs
       render json: { appointment_date: obs.value_datetime.strftime('%Y-%m-%d')}
