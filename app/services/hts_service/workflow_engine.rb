@@ -40,7 +40,6 @@ module HTSService
     PREGNANCY_STATUS = "PREGNANCY STATUS"
     ITEMS_GIVEN = "ITEMS GIVEN"
     CIRCUMCISION = "CIRCUMCISION"
-    SOCIAL_HISTORY = "SOCIAL HISTORY"
     TESTING = "TESTING"
     RECENCY = "RECENCY"
     APPOINTMENT = "APPOINTMENT"
@@ -53,8 +52,7 @@ module HTSService
     ENCOUNTER_SM = {
       INITIAL_STATE => PREGNANCY_STATUS,
       PREGNANCY_STATUS => CIRCUMCISION,
-      CIRCUMCISION => SOCIAL_HISTORY,
-      SOCIAL_HISTORY => TESTING,
+      CIRCUMCISION => TESTING,
       TESTING => RECENCY,
       RECENCY => PARTNER_RECEPTION,
       PARTNER_RECEPTION => APPOINTMENT,
@@ -73,8 +71,6 @@ module HTSService
       CIRCUMCISION => %i[is_male_client?
                          client_not_circumcised?
                          task_not_done_today?],
-
-      SOCIAL_HISTORY => %i[no_social_history?],
 
       TESTING => %i[task_not_done_today?],
 
@@ -207,10 +203,6 @@ module HTSService
     def done_screening_today?
       encounter_type = EncounterType.find_by name: "TESTING"
       Encounter.where(type: encounter_type, patient: @patient, program: @program).where("encounter_datetime BETWEEN ? AND ?", *TimeUtils.day_bounds(@date)).exists?
-    end
-
-    def no_social_history?
-      Encounter.where(type: @encounter, patient: @patient, program: @program).blank?
     end
 
     def task_not_done_today?
