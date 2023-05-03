@@ -192,8 +192,8 @@ module HTSService
       return false
     end
 
-    def test_two_done?
-      Observation.joins(:encounter).where(
+    def test_two_reactive?
+      test2 = Observation.joins(:encounter).where(
         person: @patient.person,
         concept_id: concept("Test 2").concept_id,
         encounter: {
@@ -201,11 +201,14 @@ module HTSService
           encounter_type: encounter_type("TESTING"),
         },
       ).where("encounter_datetime BETWEEN ? AND ?", *TimeUtils.day_bounds(@date))
-        .order("encounter_datetime DESC").exists?
+        .order("encounter_datetime DESC").last
+      return false if test2.blank?
+      return true if /positive/.match?(test2.answer_string&.downcase)
+      return false
     end
 
     def can_perform_recency?
-      %i[test_two_done? recency_activated? recency_in_user_properties?].all? { |condition| send(condition) }
+      %i[test_two_reactive? recency_activated? recency_in_user_properties?].all? { |condition| send(condition) }
     end
 
     def recency_in_user_properties?
