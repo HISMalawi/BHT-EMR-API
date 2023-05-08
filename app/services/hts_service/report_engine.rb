@@ -20,6 +20,8 @@ module HtsService
       "SELF TEST SUMMARY" => HtsService::Reports::Moh::HtsSelfTestSummary,
       "HTS TST FAC" => HtsService::Reports::Pepfar::HtsTstFac1,
       "HTS RECENT FAC" => HtsService::Reports::Pepfar::HtsRecentFac,
+      "HTS LEGACY REGULAR" => HtsService::Reports::Clinic::HtsLegacyRegular,
+      "HTS LEGACY RETURNING" => HtsService::Reports::Clinic::HtsLegacyReturning,
     }.freeze
 
     def generate_report(type:, **kwargs)

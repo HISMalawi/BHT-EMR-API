@@ -6,7 +6,11 @@ module HtsService
       ITEMS_GIVEN_ENCOUNTER = EncounterType.find_by_name("ITEMS GIVEN")
       HIV_POSITIVE = concept("Positive").concept_id
       HIV_NEGATIVE = concept("Negative").concept_id
+      HIV_EXPOSED_INFANT = concept("Exposed infant").concept_id
+      HIV_INVALID_OR_INCONCLUSIVE = concept("Invalid or inconclusive").concept_id
+      HIV_NEVER_TESTED = concept("Never Tested").concept_id
       HIV_STATUS_OBS = concept("HIV status").concept_id
+      HTS_ACCESS_TYPE = concept("HTS Access Type").concept_id
       TEST_LOCATION = concept("Location where test took place").concept_id
       VISIT_TYPE = concept("Visit type").concept_id
       SELF_TEST_DISTRIBUTION = concept("Self test distribution").concept_id
@@ -59,7 +63,8 @@ module HtsService
           INNER JOIN encounter test ON test.voided = 0 AND test.patient_id = patient.patient_id
           INNER JOIN obs visit ON visit.voided = 0 AND visit.person_id = person.person_id
           SQL
-          )
+          
+)
           .where(
             visit: { concept_id: VISIT_TYPE, value_coded: SELF_TEST_DISTRIBUTION },
             encounter: {
