@@ -63,8 +63,7 @@ module HtsService
           INNER JOIN encounter test ON test.voided = 0 AND test.patient_id = patient.patient_id
           INNER JOIN obs visit ON visit.voided = 0 AND visit.person_id = person.person_id
           SQL
-          
-)
+          )
           .where(
             visit: { concept_id: VISIT_TYPE, value_coded: SELF_TEST_DISTRIBUTION },
             encounter: {
@@ -75,5 +74,29 @@ module HtsService
           )
       end
     end
+  end
+end
+
+class ObsValueScope
+  QUERY_STRING = "
+        %{join} JOIN obs %{name} ON %{name}.person_id = person.person_id
+        AND %{name}.concept_id = %{concept_id}
+        AND %{name}.voided = 0
+      "
+
+  def self.call(model:, name:, concept_id:, value: "value_coded", join: "INNER")
+    query = model
+    unless [name.class, concept_id.class].include?(Array)
+      return query.joins(QUERY_STRING % { join: join, name: name, concept_id: concept_id }).select("#{name}.#{value} AS #{name}")
+    end
+    construct_query(model, name, concept_id, value, join)
+  end
+
+  def self.construct_query(model, name, concept_id, value, join)
+    query = model
+    concept_id.each_with_index do |concept, index|
+      query = query.joins(QUERY_STRING % { join: join, name: name[index], concept_id: concept }).select("#{name[index]}.#{value} AS #{name[index]}")
+    end
+    query
   end
 end
