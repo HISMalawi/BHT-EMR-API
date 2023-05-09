@@ -79,16 +79,22 @@ module HtsService
         end
 
         def outcome_summary
-          data = connection.select_all(ObsValueScope.call(model: query, name: %w[test_one test_two test_three],
-                                                          concept_id: [TEST_ONE, TEST_TWO, TEST_THREE], join: 'LEFT')
-                                                          .group('person.person_id'))
-                           .to_hash
+          data = connection.select_all(
+            ObsValueScope.call(
+              model: query,
+              name: %w[test_one test_two test_three],
+              concept_id: [TEST_ONE, TEST_TWO, TEST_THREE],
+              join: 'LEFT'
+            ).group('person.person_id')
+          ).to_hash
           report.merge!({
                           single_negative: filter_hash(data, 'test_one', HIV_NEGATIVE),
                           single_positive: filter_hash(data, 'test_one', HIV_POSITIVE),
                           one_and_two_positive: filter_hash(data, %w[test_one test_two], HIV_POSITIVE),
                           one_and_two_negative: filter_hash(data, %w[test_one test_two], HIV_NEGATIVE),
-                          one_and_two_disc: filter_hash(data, 'test_one', HIV_POSITIVE)
+                          one_and_two_disc: data.select do |q|
+                            q['test_one'] == HIV_POSITIVE && q['test_two'] == HIV_NEGATIVE && q['test_three'] == HIV_POSITIVE || q['test_one'] == HIV_POSITIVE && q['test_two'] == HIV_POSITIVE && q['test_three'] == HIV_NEGATIVE
+                          end
                         })
         end
 
@@ -114,15 +120,16 @@ module HtsService
         end
 
         def access_type_and_age_group
-          query_one = ObsValueScope.call(model: query, name: 'test_location', concept_id: TEST_LOCATION,
-                                         value: 'value_text')
+          query_one = ObsValueScope.call(model: query, name: 'test_location', concept_id: TEST_LOCATION, value: 'value_text')
           query_two = ObsValueScope.call(model: query_one, name: 'p_status', concept_id: PREGNANCY_STATUS, join: 'LEFT')
           data = connection.select_all(query_two.group('person.person_id')).to_hash
 
           report.merge!({
-                          pitc: filter_hash(data, 'test_location', 'Other PITC'),
-                          frs: filter_hash(data, 'test_location', 'FRS'),
-                          other: data.reject { |q| %w[PITC FRS].include?(q['test_location']) },
+                          pitc: data.select { |q|
+                                  ['ANC first visit', 'Inpatient', 'STI', 'PMTCT FUP', 'Peadiatric',
+                                   'VMMC', 'Malnutrition', 'TB', 'OPD', 'Other PITC'].include?(q['test_location']) },
+                          frs: filter_hash(data, 'test_location', 'Index'),
+                          other: data.select { |q| %w[VCT Mobile Other].include?(q['test_location']) },
                           twenty_five_plus: data.select { |q| birthdate_to_age(q['birthdate']) > 25 },
                           zero_to_eleven_months: data.select { |q| birthdate_to_age(q['birthdate']) < 1 },
                           one_to_fourteen_years: data.select { |q| (1..14).include?(birthdate_to_age(q['birthdate'])) },

@@ -8,6 +8,7 @@ module HtsService
       HIV_NEGATIVE = concept("Negative").concept_id
       HIV_EXPOSED_INFANT = concept("Exposed infant").concept_id
       HIV_INVALID_OR_INCONCLUSIVE = concept("Invalid or inconclusive").concept_id
+      HIV_RESULT_INCONCLUSIVE = concept('Inconclusive').concept_id
       HIV_NEVER_TESTED = concept("Never Tested").concept_id
       HIV_STATUS_OBS = concept("HIV status").concept_id
       HTS_ACCESS_TYPE = concept("HTS Access Type").concept_id

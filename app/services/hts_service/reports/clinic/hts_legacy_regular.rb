@@ -79,7 +79,7 @@ module HtsService
           report.merge!({
                           new_exposed_infant: filter_hash(data, 'result_given', NEW_EXPOSED_INFANT),
                           new_inconclusive: filter_hash(data, 'result_given', NEW_INCONCLUSIVE),
-                          confirmatory_inconclusive: filter_hash(data, 'result_given', CONFIRMATORY_INCONCLUSIVE),
+                          confirmatory_inconclusive: filter_hash(data, 'result_given', CONFIRMATORY_INCONCLUSIVE)
                         })
         end
 
@@ -97,7 +97,9 @@ module HtsService
                           single_positive: filter_hash(data, 'test_one', HIV_POSITIVE),
                           one_and_two_positive: filter_hash(data, %w[test_one test_two], HIV_POSITIVE),
                           one_and_two_negative: filter_hash(data, %w[test_one test_two], HIV_NEGATIVE),
-                          one_and_two_disc: filter_hash(data, 'test_one', HIV_POSITIVE)
+                          one_and_two_disc: data.select do |q|
+                            q['test_one'] == HIV_POSITIVE && q['test_two'] == HIV_NEGATIVE && q['test_three'] == HIV_POSITIVE || q['test_one'] == HIV_POSITIVE && q['test_two'] == HIV_POSITIVE && q['test_three'] == HIV_NEGATIVE
+                          end
                         })
         end
 
@@ -107,8 +109,9 @@ module HtsService
               model: query,
               name: 'partner_present',
               concept_id: PARTENER_PRESENT,
-              value: 'value_text')
-            ).to_hash
+              value: 'value_text'
+            )
+          ).to_hash
           report.merge!({
                           partner_present: filter_hash(data, 'partner_present', 'Yes'),
                           partner_not_present: filter_hash(data, 'partner_present', 'No')
@@ -138,16 +141,18 @@ module HtsService
           data = connection.select_all(query_two.group('person.person_id')).to_hash
 
           report.merge!({
-                          pitc: filter_hash(data, 'test_location', 'Other PITC'),
-                          frs: filter_hash(data, 'test_location', 'FRS'),
-                          other: data.reject { |q| ['Other PITC', 'FRS'].include?(q['test_location']) },
+                          pitc: data.select { |q|
+                                  ['ANC first visit', 'Inpatient', 'STI', 'PMTCT FUP', 'Peadiatric',
+                                   'VMMC', 'Malnutrition', 'TB', 'OPD', 'Other PITC'].include?(q['test_location']) },
+                          frs: filter_hash(data, 'test_location', 'Index'),
+                          other: data.select { |q| %w[VCT Mobile Other].include?(q['test_location']) },
                           twenty_five_plus: data.select { |q| birthdate_to_age(q['birthdate']) > 25 },
                           zero_to_eleven_months: data.select { |q| birthdate_to_age(q['birthdate']) < 1 },
                           one_to_fourteen_years: data.select { |q| (1..14).include?(birthdate_to_age(q['birthdate'])) },
                           fiveteen_to_twenty_four_years: data.select { |q| (15..24).include?(birthdate_to_age(q['birthdate'])) },
                           male: filter_hash(data, 'gender', 'M'),
                           fnp: data.select { |q| [NOT_PREGNANT, BREASTFEEDING].include?(q['status']) },
-                          fp: filter_hash(data, 'status', PREGNANT_WOMAN),
+                          fp: filter_hash(data, 'status', PREGNANT_WOMAN)
                         })
         end
 
