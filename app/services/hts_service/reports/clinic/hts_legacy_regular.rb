@@ -25,9 +25,8 @@ module HtsService
         TEST_THREE = concept('Test 3').concept_id
         PREGNANCY_STATUS = concept('Pregnancy status').concept_id
 
-        def initialize(start_date:, end_date:) # rubocop:disable Metrics/MethodLength
-          @start_date = start_date.to_date.months_ago(2).beginning_of_day
-          @end_date = end_date.to_date.end_of_day
+        def initialize(quarter:, year:)
+          set_dates(quarter, year)
           @report = {}
           @regular_clients = ->(data) {
             data.where.not(
@@ -42,6 +41,11 @@ module HtsService
               )
             )
           }
+        end
+
+        def set_dates(quarter, year)
+          @start_date = Date.new(year.to_i, (quarter.gsub('Q', '').to_i * 3) - 2, 1)
+          @end_date = @start_date.end_of_quarter
         end
 
         def data

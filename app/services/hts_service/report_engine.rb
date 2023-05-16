@@ -38,10 +38,16 @@ module HtsService
       start_date = kwargs.delete(:start_date)
       end_date = kwargs.delete(:end_date)
       name = kwargs.delete(:name)
+
       report = REPORTS[name.upcase]
       raise NotFoundError, "#{name} report not found, current reports available #{REPORTS.keys}" if report.blank?
 
-      report_manager = report.new(start_date: start_date, end_date: end_date)
+      report_manager = report.new(start_date: start_date, end_date: end_date) if kwargs.empty?
+      report_manager = report.new(**kwargs) unless kwargs.empty?
+
+      kwargs.delete(:year)
+      kwargs.delete(:quarter)
+
       method = report_manager.method(method)
       if kwargs.empty?
         method.call
