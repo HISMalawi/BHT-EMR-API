@@ -26,7 +26,7 @@ module HtsService
         PREGNANCY_STATUS = concept('Pregnancy status').concept_id
 
         def initialize(start_date:, end_date:) # rubocop:disable Metrics/MethodLength
-          @start_date = start_date.to_date.beginning_of_day
+          @start_date = start_date.to_date.months_ago(2).beginning_of_day
           @end_date = end_date.to_date.end_of_day
           @report = {}
           @regular_clients = ->(data) {
@@ -57,14 +57,15 @@ module HtsService
           outcome_summary
           result_given_to_client
           r = report.deep_dup
-          (start_date.month..end_date.month).each_with_index do |month, index|
+          (0..2).each_with_index do |month, index|
+            month = end_date.months_ago(month).to_date.month
             r.each_key do |key|
               report[key] ||= {}
               r[key].each_key do |k|
                 data = r[key][k]
                 report[key]["month_#{index + 1}"] ||= {}
                 report[key]["month_#{index + 1}"]["community_#{k}"] = data.select { |q| q['access_type'] == 'Community' && q['encounter_datetime'].month == month }.map { |q| q['person_id'] }
-                report[key]["month_#{index + 1}"]["health_facility_#{k}"] = data.select { |q| q['access_type'] == 'Health facility' && q['encounter_datetime'].month == month}.map { |q| q['person_id'] }
+                report[key]["month_#{index + 1}"]["health_facility_#{k}"] = data.select { |q| q['access_type'] == 'Health facility' && q['encounter_datetime'].month == month }.map { |q| q['person_id'] }
                 report[key].delete(k)
               end
             end
@@ -72,25 +73,26 @@ module HtsService
           report
         end
 
-        def filter_gender(key, data)
-          report.merge!({ result_given_to_client: {
-                          "#{key}_male": data.select { |q| q['gender'] == 'M' },
-                          "#{key}_female": data.select { |q| q['gender'] == 'F' }
-                      }})
+        def filter_gender(data)
+          {
+            "male": data.select { |q| q['gender'] == 'M' },
+            "female": data.select { |q| q['gender'] == 'F' }
+          }
         end
 
         def result_given_to_client
           data = connection.select_all(ObsValueScope.call(model: query, name: 'result_given', concept_id: HIV_GROUP)).to_hash
-          filter_gender('new_negative', filter_hash(data, 'result_given', NEW_NEGATIVE))
-          filter_gender('new_positive', filter_hash(data, 'result_given', NEW_POSITIVE))
-          filter_gender('confirmatory_positive', filter_hash(data, 'result_given', CONFIRMATORY_POSITIVE))
-          report.merge!({
-                          result_given_to_client: {
-                            new_exposed_infant: filter_hash(data, 'result_given', NEW_EXPOSED_INFANT),
-                            new_inconclusive: filter_hash(data, 'result_given', NEW_INCONCLUSIVE),
-                            confirmatory_inconclusive: filter_hash(data, 'result_given', CONFIRMATORY_INCONCLUSIVE)
-                          }
-                        })
+          array = {
+                    new_exp_infant: filter_hash(data, 'result_given', NEW_EXPOSED_INFANT),
+                    new_inconclusive: filter_hash(data, 'result_given', NEW_INCONCLUSIVE),
+                    confirmat_inc: filter_hash(data, 'result_given', CONFIRMATORY_INCONCLUSIVE),
+                    total_confpos: filter_hash(data, 'result_given', CONFIRMATORY_POSITIVE),
+                    new_negative: filter_hash(data, 'result_given', NEW_NEGATIVE),
+                    non_disag: filter_hash(data, 'result_given', NEW_POSITIVE),
+                    tot_newpos: filter_hash(data, 'result_given', NEW_POSITIVE),
+                    total_check: data
+                  }.merge!(filter_gender(filter_hash(data, 'result_given', NEW_NEGATIVE)))
+          report.merge!({ result_given_to_client: array })
         end
 
         def outcome_summary
@@ -104,6 +106,7 @@ module HtsService
           ).to_hash
           report.merge!({
                           outcome_summary: {
+                            total_chec: data,
                             single_neg: filter_hash(data, 'test_one', HIV_NEGATIVE),
                             single_pos: filter_hash(data, 'test_one', HIV_POSITIVE),
                             one_and_two_neg: filter_hash(data, %w[test_one test_two], HIV_NEGATIVE),
@@ -127,7 +130,8 @@ module HtsService
           report.merge!({
                           partner_present: {
                             present: filter_hash(data, 'partner_present', 'Yes'),
-                            not_present: filter_hash(data, 'partner_present', 'No')
+                            not_present: filter_hash(data, 'partner_present', 'No'),
+                            total_chec: data
                          }
                         })
         end
@@ -146,7 +150,8 @@ module HtsService
                             negative: filter_hash(data, 'last_tested', HIV_NEGATIVE),
                             positive: filter_hash(data, 'last_tested', HIV_POSITIVE),
                             exposed_infant: filter_hash(data, 'last_tested', HIV_EXPOSED_INFANT),
-                            inconclusive: filter_hash(data, 'last_tested', HIV_INVALID_OR_INCONCLUSIVE)
+                            inconclusive: filter_hash(data, 'last_tested', HIV_INVALID_OR_INCONCLUSIVE),
+                            total_chec: data
                           }
                         })
         end
@@ -163,17 +168,20 @@ module HtsService
                                    'VMMC', 'Malnutrition', 'TB', 'OPD', 'Other PITC'].include?(q['test_location']) },
                             frs: filter_hash(data, 'test_location', 'Index'),
                             other: data.select { |q| %w[VCT Mobile Other].include?(q['test_location']) },
+                            total_chec: data
                           },
                           age_group: {
                             twenty_five_plus: data.select { |q| birthdate_to_age(q['birthdate']) > 25 },
                             zero_to_eleven_months: data.select { |q| birthdate_to_age(q['birthdate']) < 1 },
                             one_to_fourteen_years: data.select { |q| (1..14).include?(birthdate_to_age(q['birthdate'])) },
                             fiveteen_to_twenty_four_years: data.select { |q| (15..24).include?(birthdate_to_age(q['birthdate'])) },
+                            total_chec: data
                           },
                           sex: {
-                            male: filter_hash(data, 'gender', 'M'),
+                            m: filter_hash(data, 'gender', 'M'),
                             fnp: data.select { |q| [NOT_PREGNANT, BREASTFEEDING].include?(q['status']) },
-                            fp: filter_hash(data, 'status', PREGNANT_WOMAN)
+                            fp: filter_hash(data, 'status', PREGNANT_WOMAN),
+                            total_chec: data
                           }
                         })
         end
