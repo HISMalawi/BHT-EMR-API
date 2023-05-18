@@ -54,27 +54,50 @@ module HtsService
 
         private
 
-        def init_report
+        def fetch_report_indicators
           access_type_and_age_group
           last_tested
           partner_present
           outcome_summary
           result_given_to_client
-          r = report.deep_dup
+        end
+
+        def transform_data(report_dup, month, index)
+          report_dup.each_key do |key|
+            report[key] ||= {}
+            process_report_dup_key(report_dup[key], report[key], index, month)
+          end
+        end
+
+        def process_report_dup_key(report_dup_key, report_key, index, month)
+          report_dup_key.each_key do |k|
+            report_key["month_#{index + 1}"] ||= {}
+            process_access_types(report_dup_key[k], report_key["month_#{index + 1}"], k, month)
+            report_key.delete(k)
+          end
+        end
+
+        def process_access_types(data, report_month, k, month)
+          ['Community', 'Health facility'].each do |access_type|
+            filtered = filter_by_access_point(data, access_type, month).map { |q| q['person_id'] }
+            report_month["#{access_type.parameterize.underscore}_#{k}"] = filtered
+          end
+        end
+
+        def init_report
+          fetch_report_indicators
+          report_dup = report.deep_dup
           (0..2).each_with_index do |month, index|
             month = end_date.months_ago(month).to_date.month
-            r.each_key do |key|
-              report[key] ||= {}
-              r[key].each_key do |k|
-                data = r[key][k]
-                report[key]["month_#{index + 1}"] ||= {}
-                report[key]["month_#{index + 1}"]["community_#{k}"] = data.select { |q| q['access_type'] == 'Community' && q['encounter_datetime'].month == month }.map { |q| q['person_id'] }
-                report[key]["month_#{index + 1}"]["health_facility_#{k}"] = data.select { |q| q['access_type'] == 'Health facility' && q['encounter_datetime'].month == month }.map { |q| q['person_id'] }
-                report[key].delete(k)
-              end
-            end
+            transform_data(report_dup, month, index)
           end
           report
+        end
+
+        def filter_by_access_point(data, access_type, month)
+          data.select do |q|
+            q['access_type'] == access_type && q['encounter_datetime'].month == month
+          end
         end
 
         def filter_gender(data)
