@@ -79,7 +79,7 @@ module HtsService
 
         def process_access_types(data, report_month, k, month)
           ['Community', 'Health facility'].each do |access_type|
-            filtered = filter_by_access_point(data, access_type, month).map { |q| q['person_id'] }
+            filtered = filter_by_access_point(data, access_type, month).map { |q| q['person_id'] }.uniq
             report_month["#{access_type.parameterize.underscore}_#{k}"] = filtered
           end
         end
@@ -117,7 +117,7 @@ module HtsService
                     new_negative: filter_hash(data, 'result_given', NEW_NEGATIVE),
                     non_disag: filter_hash(data, 'result_given', NEW_POSITIVE),
                     tot_newpos: filter_hash(data, 'result_given', NEW_POSITIVE),
-                    total_check: data
+                    total_chec: data
                   }.merge!(filter_gender(filter_hash(data, 'result_given', NEW_NEGATIVE)))
           report.merge!({ result_given_to_client: array })
         end
