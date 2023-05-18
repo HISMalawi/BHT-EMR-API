@@ -16,7 +16,7 @@ module HtsService
         CONFIRMATORY_INCONCLUSIVE = concept('Confirmatory Inconclusive').concept_id
         HIV_GROUP = concept('HIV group').concept_id
         LAST_TESTED = concept('Previous HIV Test Results').concept_id
-        PARTENER_PRESENT = concept('Partner present').concept_id
+        PARTNER_PRESENT = concept('Partner present').concept_id
         PREGNANT_WOMAN = concept('Pregnant woman').concept_id
         NOT_PREGNANT = concept('Not Pregnant / Breastfeeding').concept_id
         BREASTFEEDING = concept('Breastfeeding').concept_id
@@ -24,6 +24,24 @@ module HtsService
         TEST_TWO = concept('Test 2').concept_id
         TEST_THREE = concept('Test 3').concept_id
         PREGNANCY_STATUS = concept('Pregnancy status').concept_id
+
+        INDICATORS = [
+          { name: 'test_location', concept_id: TEST_LOCATION, value: 'value_text', join: 'LEFT' },
+          { name: 'p_status', concept_id: PREGNANCY_STATUS, join: 'LEFT' },
+          { name: 'last_tested', concept_id: LAST_TESTED, join: 'LEFT' },
+          {
+            name: 'partner_present',
+            concept_id: PARTNER_PRESENT,
+            value: 'value_text',
+            join: 'LEFT'
+          },
+          {
+            name: %w[test_one test_two test_three],
+            concept_id: [TEST_ONE, TEST_TWO, TEST_THREE],
+            join: 'LEFT'
+          },
+          { name: 'result_given', concept_id: HIV_GROUP, join: 'LEFT' }
+        ].freeze
 
         def initialize(quarter:, year:)
           set_dates(quarter, year)
@@ -38,8 +56,8 @@ module HtsService
         end
 
         def set_dates(quarter, year)
-          @start_date = Date.new(year.to_i, (quarter.gsub('Q', '').to_i * 3) - 2, 1)
-          @end_date = @start_date.end_of_quarter
+          @start_date = Date.new(year.to_i, (quarter.gsub('Q', '').to_i * 3) - 2, 1).beginning_of_day
+          @end_date = @start_date.end_of_quarter.end_of_day
         end
 
         def data
@@ -49,6 +67,12 @@ module HtsService
         private
 
         def fetch_report_indicators
+          model = query
+
+          INDICATORS.each do |param|
+            model = ObsValueScope.call(model: model, **param)
+          end
+          @query_data = connection.select_all(model.group('person.person_id')).to_hash
           access_type_and_age_group
           last_tested
           partner_present
@@ -82,7 +106,7 @@ module HtsService
           fetch_report_indicators
           report_dup = report.deep_dup
           (0..2).each_with_index do |month, index|
-            month = end_date.months_ago(month).to_date.month
+            month = start_date.months_ago(month).to_date.month
             transform_data(report_dup, month, index)
           end
           report
@@ -102,7 +126,7 @@ module HtsService
         end
 
         def result_given_to_client
-          data = connection.select_all(ObsValueScope.call(model: query, name: 'result_given', concept_id: HIV_GROUP)).to_hash
+          data = @query_data
           array = {
                     new_exp_infant: filter_hash(data, 'result_given', NEW_EXPOSED_INFANT),
                     new_inconclusive: filter_hash(data, 'result_given', NEW_INCONCLUSIVE),
@@ -117,14 +141,7 @@ module HtsService
         end
 
         def outcome_summary
-          data = connection.select_all(
-            ObsValueScope.call(
-              model: query,
-              name: %w[test_one test_two test_three],
-              concept_id: [TEST_ONE, TEST_TWO, TEST_THREE],
-              join: 'LEFT'
-            ).group('person.person_id')
-          ).to_hash
+          data = @query_data
           report.merge!({
                           outcome_summary: {
                             total_chec: data,
@@ -140,14 +157,7 @@ module HtsService
         end
 
         def partner_present
-          data = connection.select_all(
-            ObsValueScope.call(
-              model: query,
-              name: 'partner_present',
-              concept_id: PARTENER_PRESENT,
-              value: 'value_text'
-            )
-          ).to_hash
+          data = @query_data
           report.merge!({
                           partner_present: {
                             present: filter_hash(data, 'partner_present', 'Yes'),
@@ -158,15 +168,9 @@ module HtsService
         end
 
         def last_tested
-          data = connection.select_all(
-            ObsValueScope.call(
-              model: query,
-              name: 'last_tested',
-              concept_id: LAST_TESTED
-            )
-          ).to_hash
+          data = @query_data
           report.merge!({
-                          last_test:{
+                          last_test: {
                             never_tested: filter_hash(data, 'last_tested', HIV_NEVER_TESTED),
                             negative: filter_hash(data, 'last_tested', HIV_NEGATIVE),
                             positive: filter_hash(data, 'last_tested', HIV_POSITIVE),
@@ -178,33 +182,34 @@ module HtsService
         end
 
         def access_type_and_age_group
-          query_one = ObsValueScope.call(model: query, name: 'test_location', concept_id: TEST_LOCATION, value: 'value_text')
-          query_two = ObsValueScope.call(model: query_one, name: 'p_status', concept_id: PREGNANCY_STATUS, join: 'LEFT')
-          data = connection.select_all(query_two.group('person.person_id')).to_hash
+          data = @query_data
+          access_type_hash = {
+            pitc: data.select { |q| ['ANC first visit', 'Inpatient', 'STI', 'PMTCT FUP', 'Peadiatric', 'VMMC', 'Malnutrition', 'TB', 'OPD', 'Other PITC'].include?(q['test_location']) },
+            frs: filter_hash(data, 'test_location', 'Index'),
+            other: data.select { |q| %w[VCT Mobile Other].include?(q['test_location']) }
+          }
+          access_type_hash[:total_chec] = access_type_hash.values.flatten
+
+          age_group_hash = {
+            twenty_five_plus: data.select { |q| birthdate_to_age(q['birthdate']) > 25 },
+            zero_to_eleven_months: data.select { |q| birthdate_to_age(q['birthdate']) < 1 },
+            one_to_fourteen_years: data.select { |q| (1..14).include?(birthdate_to_age(q['birthdate'])) },
+            fiveteen_to_twenty_four_years: data.select { |q| (15..24).include?(birthdate_to_age(q['birthdate'])) }
+          }
+          age_group_hash[:total_chec] = age_group_hash.values.flatten
+
+          sex_hash = {
+            m: filter_hash(data, 'gender', 'M'),
+            fnp: data.select { |q| [NOT_PREGNANT, BREASTFEEDING].include?(q['status']) },
+            fp: filter_hash(data, 'status', PREGNANT_WOMAN)
+          }
+          sex_hash[:total_chec] = sex_hash.values.flatten
 
           report.merge!({
-                          access_type: {
-                            pitc: data.select { |q|
-                                  ['ANC first visit', 'Inpatient', 'STI', 'PMTCT FUP', 'Peadiatric',
-                                   'VMMC', 'Malnutrition', 'TB', 'OPD', 'Other PITC'].include?(q['test_location']) },
-                            frs: filter_hash(data, 'test_location', 'Index'),
-                            other: data.select { |q| %w[VCT Mobile Other].include?(q['test_location']) },
-                            total_chec: data
-                          },
-                          age_group: {
-                            twenty_five_plus: data.select { |q| birthdate_to_age(q['birthdate']) > 25 },
-                            zero_to_eleven_months: data.select { |q| birthdate_to_age(q['birthdate']) < 1 },
-                            one_to_fourteen_years: data.select { |q| (1..14).include?(birthdate_to_age(q['birthdate'])) },
-                            fiveteen_to_twenty_four_years: data.select { |q| (15..24).include?(birthdate_to_age(q['birthdate'])) },
-                            total_chec: data
-                          },
-                          sex: {
-                            m: filter_hash(data, 'gender', 'M'),
-                            fnp: data.select { |q| [NOT_PREGNANT, BREASTFEEDING].include?(q['status']) },
-                            fp: filter_hash(data, 'status', PREGNANT_WOMAN),
-                            total_chec: data
-                          }
-                        })
+            access_type: access_type_hash,
+            age_group: age_group_hash,
+            sex: sex_hash
+          })
         end
 
         def filter_hash(data, key, value)
