@@ -135,8 +135,8 @@ module HtsService
                     new_negative: filter_hash(data, 'result_given', NEW_NEGATIVE),
                     non_disag: filter_hash(data, 'result_given', NEW_POSITIVE),
                     tot_newpos: filter_hash(data, 'result_given', NEW_POSITIVE),
-                    total_chec: data
                   }.merge!(filter_gender(filter_hash(data, 'result_given', NEW_NEGATIVE)))
+          array[:total_chec] = array.values.flatten
           report.merge!({ result_given_to_client: array })
         end
 
@@ -158,27 +158,25 @@ module HtsService
 
         def partner_present
           data = @query_data
-          report.merge!({
-                          partner_present: {
+          partner_present = {
                             present: filter_hash(data, 'partner_present', 'Yes'),
                             not_present: filter_hash(data, 'partner_present', 'No'),
-                            total_chec: data
                          }
-                        })
+          partner_present[:total_chec] = partner_present.values.flatten
+          report.merge!({partner_present: partner_present})
         end
 
         def last_tested
           data = @query_data
-          report.merge!({
-                          last_test: {
-                            never_tested: filter_hash(data, 'last_tested', HIV_NEVER_TESTED),
-                            negative: filter_hash(data, 'last_tested', HIV_NEGATIVE),
-                            positive: filter_hash(data, 'last_tested', HIV_POSITIVE),
-                            exposed_infant: filter_hash(data, 'last_tested', HIV_EXPOSED_INFANT),
-                            inconclusive: filter_hash(data, 'last_tested', HIV_INVALID_OR_INCONCLUSIVE),
-                            total_chec: data
-                          }
-                        })
+          last_test = {
+            never_tested: filter_hash(data, 'last_tested', HIV_NEVER_TESTED),
+            last_negative: filter_hash(data, 'last_tested', HIV_NEGATIVE),
+            last_positive: filter_hash(data, 'last_tested', HIV_POSITIVE),
+            last_exposed_infant: filter_hash(data, 'last_tested', HIV_EXPOSED_INFANT),
+            inconclusive: filter_hash(data, 'last_tested', HIV_INVALID_OR_INCONCLUSIVE),
+          }
+          last_test[:total_chec] = last_test.values.flatten
+          report.merge!({last_test: last_test})
         end
 
         def access_type_and_age_group
