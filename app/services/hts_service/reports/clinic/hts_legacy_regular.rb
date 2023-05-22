@@ -195,7 +195,7 @@ module HtsService
           access_type_hash[:total_chec] = access_type_hash.values.flatten
 
           age_group_hash = {
-            twenty_five_plus: data.select { |q| birthdate_to_age(q['birthdate']) > 25 },
+            twenty_five_plus: data.select { |q| birthdate_to_age(q['birthdate']) >= 25 },
             zero_to_eleven_months: data.select { |q| birthdate_to_age(q['birthdate']) < 1 },
             one_to_fourteen_years: data.select { |q| (1..14).include?(birthdate_to_age(q['birthdate'])) },
             fiveteen_to_twenty_four_years: data.select { |q| (15..24).include?(birthdate_to_age(q['birthdate'])) }
@@ -204,7 +204,7 @@ module HtsService
 
           sex_hash = {
             m: filter_hash(data, 'gender', 'M'),
-            fnp: data.select { |q| [NOT_PREGNANT, BREASTFEEDING].include?(q['status']) },
+            fnp: data.select { |q| [NOT_PREGNANT, BREASTFEEDING].include?(q['p_status']) },
             fp: filter_hash(data, 'status', PREGNANT_WOMAN)
           }
           sex_hash[:total_chec] = sex_hash.values.flatten
