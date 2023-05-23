@@ -9,478 +9,296 @@ module HtsService
         attr_accessor :start_date, :end_date
 
         YES_ANSWER = concept("Yes").concept_id
+        NO_ANSWER = concept("No").concept_id
+        TESTING_ENCOUNTER = encounter_type("HIV Testing").encounter_type_id
+        HEP_B_TEST_RESULT = concept("Hepatitis B Test Result").concept_id
+        SYPHILIS_TEST_RESULT = concept("Syphilis Test Result").concept_id
+        PREGNANCY_STATUS = concept("Pregnancy status").concept_id
+        CIRCUMCISION_STATUS = concept("Circumcision status").concept_id
+        MALE_CONDOMS = concept("Male Condoms").concept_id
+        FEMALE_CONDOMS = concept("Female Condoms").concept_id
+        FRS = concept("FRS").concept_id
+        REFERRAL_FOR_RETESTING = concept("Referral for Re-Testing").concept_id
+        TIME_OF_HIV_TEST = concept("Time of HIV test").concept_id
+        TIME_SINCE_LAST_MEDICATION = concept("Time since last taken medication").concept_id
+        PREVIOUS_HIV_TEST = concept("Previous HIV Test Results").concept_id
+        PREVIOUS_HIV_TEST_DONE = concept("Previous HIV Test done").concept_id
+        RISK_CATEGORY = concept("client risk category").concept_id
+        PARTNER_PRESENT = concept("Partner Present").concept_id
+        PARTNER_HIV_STATUS = concept("Partner HIV Status").concept_id
+        TAKEN_ARVS_BEFORE = concept("Taken ARV before").concept_id
+        TAKEN_PREP_BEFORE = concept("Taken PrEP before").concept_id
+        TAKEN_PEP_BEFORE = concept("Taken PEP before").concept_id
+        REFERALS_ORDERED = concept("Referrals ordered").concept_id
+        TEST_ONE = concept("Test 1").concept_id
+        TEST_TWO = concept("Test 2").concept_id
+        TEST_THREE = concept("Test 3").concept_id
+
+        PREGNANT_WOMAN = concept("Pregnant woman").concept_id
+        NOT_PREGNANT = concept("Not Pregnant / Breastfeeding").concept_id
+        BREASTFEEDING = concept("Breastfeeding").concept_id
+
+        INDICATORS = [
+          { name: "hiv_status", concept_id: HIV_STATUS_OBS, value: "value_coded", join: "INNER" },
+          { name: "access_type", concept_id: HTS_ACCESS_TYPE, value: "value_coded", join: "LEFT" },
+          { name: "test_location", concept_id: TEST_LOCATION, value: "value_text", join: "LEFT" },
+          { name: "hep_b_test_result", concept_id: HEP_B_TEST_RESULT, value: "value_coded", join: "LEFT" },
+          { name: "syphilis_test_result", concept_id: SYPHILIS_TEST_RESULT, value: "value_coded", join: "LEFT" },
+          {
+            name: %w[test_one test_two test_three],
+            concept_id: [TEST_ONE, TEST_TWO, TEST_THREE],
+            join: "LEFT",
+          },
+          { name: "pregnancy_status", concept_id: PREGNANCY_STATUS, value: "value_coded", join: "LEFT" },
+          { name: "circumcision_status", concept_id: CIRCUMCISION_STATUS, value: "value_coded", join: "LEFT" },
+          { name: "male_condoms", concept_id: MALE_CONDOMS, join: "LEFT" },
+          { name: "female_condoms", concept_id: FEMALE_CONDOMS, join: "LEFT" },
+          { name: "frs", concept_id: FRS, join: "LEFT" },
+          { name: "referal_for_retesting", concept_id: REFERRAL_FOR_RETESTING, join: "LEFT" },
+          { name: "time_of_hiv_test", concept_id: TIME_OF_HIV_TEST, value: "value_datetime", join: "LEFT" },
+          { name: "time_since_last_medication", concept_id: TIME_SINCE_LAST_MEDICATION, join: "LEFT" },
+          { name: "previous_hiv_test", concept_id: PREVIOUS_HIV_TEST, join: "LEFT" },
+          { name: "previous_hiv_test_done", concept_id: PREVIOUS_HIV_TEST_DONE, join: "LEFT" },
+          { name: "risk_category", concept_id: RISK_CATEGORY, join: "LEFT" },
+          { name: "partner_present", concept_id: PARTNER_PRESENT, value: "value_text", join: "LEFT" },
+          { name: "partner_hiv_status", concept_id: PARTNER_HIV_STATUS, join: "LEFT" },
+          { name: "taken_arvs_before", concept_id: TAKEN_ARVS_BEFORE, join: "LEFT" },
+          { name: "taken_prep_before", concept_id: TAKEN_PREP_BEFORE, join: "LEFT" },
+          { name: "taken_pep_before", concept_id: TAKEN_PEP_BEFORE, join: "LEFT" },
+          { name: "referrals_ordered", concept_id: REFERALS_ORDERED, value: "value_text", join: "LEFT" },
+        ]
 
         def initialize(start_date:, end_date:)
           @start_date = start_date.to_date.beginning_of_day
           @end_date = end_date.to_date.end_of_day
           @data = {
-            "total_clients_tested_for_hiv" => [],
-            "total_clients_tested_at_the_facility" => [],
-            "facility_vct" => [],
-            "facility_anc_first_visit" => [],
-            "facility_inpatient" => [],
-            "facility_sti" => [],
-            "facility_pmtct_fup" => [],
-            "facility_index" => [],
-            "facility_paediatric" => [],
-            "facility_vmmc" => [],
-            "facility_malnutrition" => [],
-            "facility_tb" => [],
-            "facility_opd" => [],
-            "facility_other_pitc" => [],
-            "facility_sns" => [],
-            "total_clients_tested_in_the_community" => [],
-            "community_vmmc" => [],
-            "community_index" => [],
-            "community_mobile" => [],
-            "community_vct" => [],
-            "community_other" => [],
-            "community_sns" => [],
+            "missing_link_id_not_in_conf_register" => [],
+            "hiv_test_1_result_missing" => [],
+            "hepatitis_b_test_result_not_done" => [],
+            "hepatitis_b_test_result_missing" => [],
+            "syphilis_test_result_not_done" => [],
+            "hiv_test_1_result_not_done" => [],
+            "risk_category_missing" => [],
+            "age_group_years_missing" => [],
             "access_point_type_invalid_entry" => [],
             "access_point_type_missing" => [],
-            "sex_or_pregnancy_total_males" => [],
-            "sex_or_pregnancy_male_circumcised" => [],
-            "sex_or_pregnancy_male_non_circumcised" => [],
-            "sex_or_pregnancy_total_females" => [],
-            "sex_or_pregnancy_female_non_pregnant" => [],
-            "sex_or_pregnancy_female_pregnant" => [],
-            "sex_or_pregnancy_female_breastfeeding" => [],
             "sex_or_pregnancy_invalid_entry" => [],
             "sex_or_pregnancy_missing" => [],
-            "age_group_years_a_under_1" => [],
-            "age_group_years_b_1_to_14" => [],
-            "age_group_years_c_15_to_24" => [],
-            "age_group_years_d_25_plus" => [],
-            "age_group_years_missing" => [],
-            "last_hiv_test_never_tested" => [],
-            "last_hiv_test_negative_self_test" => [],
-            "last_hiv_test_negative_prof_test" => [],
-            "last_hiv_test_positive_prof_initial_test" => [],
-            "last_hiv_test_positive_self_test" => [],
-            "last_hiv_test_positive_prof_test" => [],
             "last_hiv_test_invalid_self_test" => [],
-            "last_hiv_test_inconclusive_prof_test" => [],
-            "last_hiv_test_exposed_infant" => [],
             "last_hiv_test_invalid_entry" => [],
             "last_hiv_test_missing" => [],
-            "time_since_last_hiv_test_12_plus_months" => [],
-            "time_since_last_hiv_test_6_to_11_months" => [],
-            "time_since_last_hiv_test_3_to_5_months" => [],
-            "time_since_last_hiv_test_14_days_to_2_months" => [],
-            "time_since_last_hiv_test_1_to_13_days" => [],
-            "time_since_last_hiv_test_same_day" => [],
             "time_since_last_hiv_test_invalid_entry" => [],
             "time_since_last_hiv_test_not_applicable_or_missing" => [],
-            "ever_taken_arvs_no" => [],
-            "ever_taken_arvs_prep" => [],
-            "ever_taken_arvs_pep" => [],
-            "ever_taken_arvs_art" => [],
             "ever_taken_arvs_invalid_entry" => [],
             "ever_taken_arvs_missing" => [],
-            "time_since_last_taken_arvs_12_plus_months" => [],
-            "time_since_last_taken_arvs_6_to_11_months" => [],
-            "time_since_last_taken_arvs_3_to_5_months" => [],
-            "time_since_last_taken_arvs_14_days_to_2_months" => [],
-            "time_since_last_taken_arvs_1_to_13_days" => [],
-            "time_since_last_taken_arvs_same_day" => [],
             "time_since_last_taken_arvs_invalid_entry" => [],
             "time_since_last_taken_arvs_not_applicable_or_missing" => [],
-            "risk_category_low" => [],
-            "risk_category_ongoing" => [],
-            "risk_category_highrisk_event" => [],
-            "risk_category_not_done" => [],
             "risk_category_invalid_entry" => [],
-            "risk_category_missing" => [],
-            "hiv_test_1_result_negative" => [],
-            "hiv_test_1_result_positive" => [],
-            "hiv_test_1_result_not_done" => [],
             "hiv_test_1_result_invalid_entry" => [],
-            "hiv_test_1_result_missing" => [],
-            "hepatitis_b_test_result_negative" => [],
-            "hepatitis_b_test_result_positive" => [],
-            "hepatitis_b_test_result_not_done" => [],
             "hepatitis_b_test_result_invalid_entry" => [],
-            "hepatitis_b_test_result_missing" => [],
-            "syphilis_test_result_negative" => [],
-            "syphilis_test_result_positive" => [],
-            "syphilis_test_result_not_done" => [],
             "syphilis_test_result_invalid_entry" => [],
             "syphilis_test_result_missing" => [],
-            "partner_present_yes" => [],
-            "partner_present_no" => [],
             "partner_present_invalid_entry" => [],
             "partner_present_missing" => [],
-            "partner_hiv_status_no_partner" => [],
-            "partner_hiv_status_hiv_status_unknown" => [],
-            "partner_hiv_status_hiv_negative" => [],
-            "partner_hiv_status_hiv_positive_art_unknown" => [],
-            "partner_hiv_status_hiv_positive_not_on_art" => [],
-            "partner_hiv_status_hiv_positive_on_art" => [],
             "partner_hiv_status_invalid_entry" => [],
             "partner_hiv_status_missing" => [],
-            "referral_for_hiv_retesting_no_retest_needed" => [],
-            "referral_for_hiv_retesting_retest_needed" => [],
-            "referral_for_hiv_retesting_confirmatory_test" => [],
             "referral_for_hiv_retesting_invalid_entry" => [],
             "referral_for_hiv_retesting_missing" => [],
-            "referral_for_prep" => [],
-            "referral_for_pep" => [],
-            "referral_for_vmmc" => [],
-            "referral_for_sti" => [],
-            "referral_for_tb" => [],
             "referral_invalid_entry" => [],
             "referral_missing" => [],
             "frs_given_family_referral_slips_sum" => [],
             "frs_given_invalid_entry" => [],
             "male_condoms_given_male_condoms_sum" => [],
             "male_condoms_given_invalid_entry" => [],
-            "female_condoms_given_female_condoms_sum" => [],
             "female_condoms_given_invalid_entry" => [],
-            "linking_with_hiv_confirmatory_register_total_clients_hiv_test_1_positive" => [],
-            "linking_with_hiv_confirmatory_register_linked" => [],
-            "missing_link_id_not_in_conf_register" => [],
-            "total_clients_hiv_test_1_negative" => [],
             "not_applicable_not_linked" => [],
             "invalid_link_id_in_conf_register" => [],
-            "last_hiv_test_positive_prof_initial_test"=>[],
           }
         end
 
         def data
-          report = init_report
-          response = @data
-        end
-
-        private
-
-        def init_report
+          init_report
           fetch_confirmatory_clients
+          fetch_pregnancy_test
+          fetch_male_circumcision
+          fetch_referral_retest
           fetch_hiv_tests
+          fetch_risk_category
           fetch_medication
           fetch_partner_status
-          fetch_referral_retest
-          fetch_male_circumcision
-          fetch_pregnancy_test
-          fetch_ever_taken_drugs_before
           fetch_referrals
-          fetch_frm_referal
-          fetch_risk_category
           linked_clients
+          fetch_frm_referal
           set_unique
+          @data
+        end
+
+        def init_report
+          model = his_patients_rev
+          INDICATORS.each do |param|
+            model = ObsValueScope.call(model: model, **param)
+          end
+          @query = Person.connection.select_all(
+            model
+              .select("person.gender, person.person_id, person.birthdate, previous_hiv_test_done.obs_datetime")
+              .group("person.person_id")
+          ).to_hash
         end
 
         def set_unique
-          @data.each do |key, array|
-            next if array.class != Array
-            unless %i[
-              frs_given_family_referral_slips_sum male_condoms_given_male_condoms_sum female_condoms_given_female_condoms_sum
-            ].include?(key)
-              @data[key] = array
+          @data.each do |key, obj|
+            if %w[frs_given_family_referral_slips_sum male_condoms_given_male_condoms_sum female_condoms_given_female_condoms_sum].include?(key)
+              @data[key] = obj
               next
             end
-            @data[key] = array.uniq
+            @data[key] = obj&.map { |q| q["person_id"] }.uniq
           end
+        end
+
+        def filter_hash(key, value)
+          return @query.select { |q| q[key[0]] == value && q[key[1]] == value } if key.is_a?(Array)
+
+          @query.select { |q| q[key] == value }
+        end
+
+        def birthdate_to_age(birthdate)
+          today = Date.today
+          today.year - birthdate.year
         end
 
         def fetch_confirmatory_clients
-          Person.joins("INNER JOIN encounter e ON e.patient_id = person.person_id AND e.encounter_type = #{EncounterType.find_by_name("TESTING").encounter_type_id} AND e.voided = 0 AND e.program_id = #{Program.find_by_name("HTC Program").program_id}")
-                .joins("INNER JOIN obs o1 ON o1.person_id = e.patient_id AND o1.voided = 0 AND o1.concept_id = #{ConceptName.find_by_name("HTS Access Type").concept_id} AND e.encounter_id = o1.encounter_id")
-                .joins("INNER JOIN obs o2 ON o2.person_id = e.patient_id AND o2.voided = 0 AND o2.concept_id = #{ConceptName.find_by_name("Location where test took place").concept_id} AND e.encounter_id = o2.encounter_id")
-                .joins("INNER JOIN obs o3 ON o3.person_id = e.patient_id AND o3.voided = 0 AND o3.concept_id = #{ConceptName.find_by_name("HIV status").concept_id}")
-                .select("person.person_id person_id,person.gender gender,person.birthdate dob,o1.value_coded concept_id,o2.value_text value,o2.encounter_id encounter_id")
-                .where("person.voided = 0 AND DATE(e.encounter_datetime) BETWEEN '#{start_date}' AND '#{end_date}' + INTERVAL 1 DAY")
-                .each do |client|
-            @data["total_clients_tested_for_hiv"].push(client.person_id)
-            date = (Date.today.strftime("%Y%m%d").to_i - client.dob.strftime("%Y%m%d").to_i) / 10000
-            @data["age_group_years_a_under_1"].push(client.person_id) if date < 1
-            @data["age_group_years_b_1_to_14"].push(client.person_id) if date > 0 && date < 15
-            @data["age_group_years_c_15_to_24"].push(client.person_id) if date > 14 && date < 25
-            @data["age_group_years_d_25_plus"].push(client.person_id) if date > 24
-            @data["total_clients_tested_at_the_facility"].push(client.person_id) if ConceptName.find_by_name("Health facility").concept_id == client.concept_id
-            @data["total_clients_tested_in_the_community"].push(client.person_id) if ConceptName.find_by_name("Community").concept_id == client.concept_id
-            @data["facility_vct"].push(client.person_id) if client.value == "VCT" && ConceptName.find_by_name("Health facility").concept_id == client.concept_id
-            @data["facility_anc_first_visit"].push(client.person_id) if client.value == "ANC First Visit" && ConceptName.find_by_name("Health facility").concept_id == client.concept_id
-            @data["facility_inpatient"].push(client.person_id) if client.value == "Inpatient" && ConceptName.find_by_name("Health facility").concept_id == client.concept_id
-            @data["facility_sti"].push(client.person_id) if client.value == "STI" && ConceptName.find_by_name("Health facility").concept_id == client.concept_id
-            @data["facility_pmtct_fup"].push(client.person_id) if client.value == "PMTCT FUP" && ConceptName.find_by_name("Health facility").concept_id == client.concept_id
-            @data["facility_index"].push(client.person_id) if client.value == "Index" && ConceptName.find_by_name("Health facility").concept_id == client.concept_id
-            @data["facility_paediatric"].push(client.person_id) if client.value == "Paediatric" && ConceptName.find_by_name("Health facility").concept_id == client.concept_id
-            @data["facility_malnutrition"].push(client.person_id) if client.value == "Malnutrition" && ConceptName.find_by_name("Health facility").concept_id == client.concept_id
-            @data["facility_vmmc"].push(client.person_id) if client.value == "VMMC" && ConceptName.find_by_name("Health facility").concept_id == client.concept_id
-            @data["facility_tb"].push(client.person_id) if client.value == "TB" && ConceptName.find_by_name("Health facility").concept_id == client.concept_id
-            @data["facility_opd"].push(client.person_id) if client.value == "OPD" && ConceptName.find_by_name("Health facility").concept_id == client.concept_id
-            @data["facility_other_pitc"].push(client.person_id) if client.value == "Other PITC" && ConceptName.find_by_name("Health facility").concept_id == client.concept_id
-            @data["facility_sns"].push(client.person_id) if client.value == "SNS" && ConceptName.find_by_name("Health facility").concept_id == client.concept_id
-            @data["community_vmmc"].push(client.person_id) if client.value == "VMMC" && ConceptName.find_by_name("Community").concept_id == client.concept_id
-            @data["community_index"].push(client.person_id) if client.value == "Index" && ConceptName.find_by_name("Community").concept_id == client.concept_id
-            @data["community_mobile"].push(client.person_id) if client.value == "Mobile" && ConceptName.find_by_name("Community").concept_id == client.concept_id
-            @data["community_vct"].push(client.person_id) if client.value == "VCT" && ConceptName.find_by_name("Community").concept_id == client.concept_id
-            @data["community_other"].push(client.person_id) if client.value == "Other" && ConceptName.find_by_name("Community").concept_id == client.concept_id
-            @data["community_sns"].push(client.person_id) if client.value == "SNS" && ConceptName.find_by_name("Community").concept_id == client.concept_id
+          @data["total_clients_tested_for_hiv"] = @query
+          @data["age_group_years_a_under_1"] = @query.select { |q| birthdate_to_age(q["birthdate"]) < 1 }
+          @data["age_group_years_b_1_to_14"] = @query.select { |q| (1..14).include?(birthdate_to_age(q["birthdate"])) }
+          @data["age_group_years_c_15_to_24"] = @query.select { |q| (15..24).include?(birthdate_to_age(q["birthdate"])) }
+          @data["age_group_years_d_25_plus"] = (@query.select { |q| birthdate_to_age(q["birthdate"]) >= 25 })
+          @data["total_clients_tested_at_the_facility"] = filter_hash("access_type", concept("Health facility").concept_id)
+          @data["total_clients_tested_in_the_community"] = filter_hash("access_type", concept("Community").concept_id)
+          @data["facility_vct"] = filter_hash("access_type", concept("Health facility").concept_id).select { |q| q["test_location"] == "VCT" }
+          @data["facility_anc_first_visit"] = filter_hash("access_type", concept("Health facility").concept_id).select { |q| q["test_location"] == "ANC First visit" }
+          @data["facility_inpatient"] = filter_hash("access_type", concept("Health facility").concept_id).select { |q| q["test_location"] == "Inpatient" }
+          @data["facility_sti"] = filter_hash("access_type", concept("Health facility").concept_id).select { |q| q["test_location"] == "STI" }
+          @data["facility_pmtct_fup"] = filter_hash("access_type", concept("Health facility").concept_id).select { |q| q["test_location"] == "PMTCT FUP" }
+          @data["facility_index"] = filter_hash("access_type", concept("Health facility").concept_id).select { |q| q["test_location"] == "Index" }
+          @data["facility_paediatric"] = filter_hash("access_type", concept("Health facility").concept_id).select { |q| q["test_location"] == "Paediatric" }
+          @data["facility_malnutrition"] = filter_hash("access_type", concept("Health facility").concept_id).select { |q| q["test_location"] == "Malnutrition" }
+          @data["facility_vmmc"] = filter_hash("access_type", concept("Health facility").concept_id).select { |q| q["test_location"] == "VMMC" }
+          @data["facility_tb"] = filter_hash("access_type", concept("Health facility").concept_id).select { |q| q["test_location"] == "TB" }
+          @data["facility_opd"] = filter_hash("access_type", concept("Health facility").concept_id).select { |q| q["test_location"] == "OPD" }
+          @data["facility_other_pitc"] = filter_hash("access_type", concept("Health facility").concept_id).select { |q| q["test_location"] == "Other PITC" }
+          @data["facility_sns"] = filter_hash("access_type", concept("Health facility").concept_id).select { |q| q["test_location"] == "SNS" }
+          @data["community_vmmc"] = filter_hash("access_type", concept("Community").concept_id).select { |q| q["test_location"] == "VMMC" }
+          @data["community_index"] = filter_hash("access_type", concept("Community").concept_id).select { |q| q["test_location"] == "Index" }
+          @data["community_mobile"] = filter_hash("access_type", concept("Community").concept_id).select { |q| q["test_location"] == "Mobile" }
+          @data["community_vct"] = filter_hash("access_type", concept("Community").concept_id).select { |q| q["test_location"] == "VCT" }
+          @data["community_other"] = filter_hash("access_type", concept("Community").concept_id).select { |q| q["test_location"] == "Other" }
+          @data["community_sns"] = filter_hash("access_type", concept("Community").concept_id).select { |q| q["test_location"] == "SNS" }
 
-            Observation.where(encounter_id: client.encounter_id).each do |tests|
-              if ConceptName.find_by_name("Test 1").concept_id == tests.concept_id
-                @data["hiv_test_1_result_negative"].push(client.person_id) if ConceptName.find_by_name("Negative").concept_id == tests.value_coded
-                @data["total_clients_hiv_test_1_negative"].push(client.person_id) if ConceptName.find_by_name("Negative").concept_id == tests.value_coded
-                @data["hiv_test_1_result_positive"].push(client.person_id) if ConceptName.find_by_name("Positive").concept_id == tests.value_coded
-                @data["linking_with_hiv_confirmatory_register_total_clients_hiv_test_1_positive"].push(client.person_id) if ConceptName.find_by_name("Positive").concept_id == tests.value_coded
-              end
+          @data["hiv_test_1_result_negative"] = filter_hash("test_one", concept("Negative").concept_id)
+          @data["total_clients_hiv_test_1_negative"] = filter_hash("test_one", concept("Negative").concept_id)
+          @data["hiv_test_1_result_positive"] = filter_hash("test_one", concept("Positive").concept_id)
+          @data["linking_with_hiv_confirmatory_register_total_clients_hiv_test_1_positive"] = filter_hash("test_one", concept("Positive").concept_id)
 
-              if ConceptName.find_by_name("Hepatitis B Test Result").concept_id == tests.concept_id
-                @data["hepatitis_b_test_result_negative"].push(client.person_id) if ConceptName.find_by_name("Negative").concept_id == tests.value_coded
-                @data["hepatitis_b_test_result_positive"].push(client.person_id) if ConceptName.find_by_name("Positive").concept_id == tests.value_coded
-              end
+          @data["hepatitis_b_test_result_negative"] = filter_hash("hep_b_test_result", concept("Negative").concept_id)
+          @data["hepatitis_b_test_result_positive"] = filter_hash("hep_b_test_result", concept("Positive").concept_id)
 
-              if ConceptName.find_by_name("Syphilis Test Result").concept_id == tests.concept_id
-                @data["syphilis_test_result_negative"].push(client.person_id) if ConceptName.find_by_name("Negative").concept_id == tests.value_coded
-                @data["syphilis_test_result_positive"].push(client.person_id) if ConceptName.find_by_name("Positive").concept_id == tests.value_coded
-              end
-            end
-          end
+          @data["syphilis_test_result_negative"] = filter_hash("syphilis_test_result", concept("Negative").concept_id)
+          @data["syphilis_test_result_positive"] = filter_hash("syphilis_test_result", concept("Positive").concept_id)
         end
 
         def fetch_pregnancy_test
-          Person.joins("INNER JOIN encounter e ON e.patient_id = person.person_id AND e.encounter_type = #{EncounterType.find_by_name("PREGNANCY STATUS").encounter_type_id} AND e.voided = 0 AND e.program_id = #{Program.find_by_name("HTC Program").program_id}")
-                .joins("INNER JOIN obs ON obs.person_id = e.patient_id AND obs.voided = 0 AND obs.concept_id = #{ConceptName.find_by_name("Pregnancy status").concept_id} AND e.encounter_id = obs.encounter_id")
-                .joins("INNER JOIN obs o3 ON o3.person_id = e.patient_id AND o3.voided = 0 AND o3.concept_id = #{ConceptName.find_by_name("HIV status").concept_id}")
-                .select("person.person_id person_id,person.gender gender,obs.value_coded concept_id")
-                .where("person.voided = 0 AND DATE(e.encounter_datetime) BETWEEN '#{start_date}' AND '#{end_date}' + INTERVAL 1 DAY")
-                .each do |client|
-            @data["sex_or_pregnancy_total_females"].push(client.person_id)
-            @data["sex_or_pregnancy_female_pregnant"].push(client.person_id) if concept("Patient pregnant").concept_id == client.concept_id
-            @data["sex_or_pregnancy_female_non_pregnant"].push(client.person_id) if concept("Not Pregnant / Breastfeeding").concept_id == client.concept_id
-            @data["sex_or_pregnancy_female_breastfeeding"].push(client.person_id) if concept("Breastfeeding").concept_id == client.concept_id
-          end
+          @data["sex_or_pregnancy_total_females"] = filter_hash("gender", "F")
+          @data["sex_or_pregnancy_female_pregnant"] = filter_hash("pregnancy_status", PREGNANT_WOMAN)
+          @data["sex_or_pregnancy_female_non_pregnant"] = filter_hash("pregnancy_status", NOT_PREGNANT)
+          @data["sex_or_pregnancy_female_breastfeeding"] = filter_hash("pregnancy_status", BREASTFEEDING)
         end
 
         def fetch_male_circumcision
-          Person.joins("INNER JOIN encounter e ON e.patient_id = person.person_id AND e.encounter_type = #{EncounterType.find_by_name("CIRCUMCISION").encounter_type_id} AND e.voided = 0 AND e.program_id = #{Program.find_by_name("HTC Program").program_id}")
-                .joins("INNER JOIN obs ON obs.person_id = e.patient_id AND obs.voided = 0 AND obs.concept_id = #{ConceptName.find_by_name("Circumcision status").concept_id} AND e.encounter_id = obs.encounter_id")
-                .joins("INNER JOIN obs o3 ON o3.person_id = e.patient_id AND o3.voided = 0 AND o3.concept_id = #{ConceptName.find_by_name("HIV status").concept_id}")
-                .select("person.person_id person_id,person.gender gender,obs.value_coded concept_id")
-                .where("person.voided = 0 AND DATE(e.encounter_datetime) BETWEEN '#{start_date}' AND '#{end_date}' + INTERVAL 1 DAY")
-                .each do |client|
-            @data["sex_or_pregnancy_total_males"].push(client.person_id)
-            @data["sex_or_pregnancy_male_circumcised"].push(client.person_id) if ConceptName.find_by_name("Yes").concept_id == client.concept_id
-            @data["sex_or_pregnancy_male_non_circumcised"].push(client.person_id) if ConceptName.find_by_name("No").concept_id == client.concept_id
-          end
+          @data["sex_or_pregnancy_total_males"] = filter_hash("gender", "M")
+          @data["sex_or_pregnancy_male_circumcised"] = filter_hash("circumcision_status", YES_ANSWER)
+          @data["sex_or_pregnancy_male_non_circumcised"] = filter_hash("circumcision_status", NO_ANSWER)
         end
 
         def fetch_frm_referal
-            Person.joins(patient: :encounters)
-            .joins("INNER JOIN obs o4 ON o4.person_id = patient.patient_id AND o4.voided = 0 AND o4.concept_id = #{ConceptName.find_by_name('HIV status').concept_id} AND encounter.encounter_id = o4.encounter_id")
-            .joins(<<~SQL)
-              LEFT JOIN obs male_condoms on male_condoms.person_id = person.person_id
-              AND male_condoms.concept_id = #{concept('Male Condoms').concept_id}
-              AND male_condoms.voided = 0
-              LEFT JOIN obs female_condoms on female_condoms.person_id = person.person_id
-              AND female_condoms.concept_id = #{concept('Female Condoms').concept_id}
-              AND female_condoms.voided = 0  
-              LEFT JOIN obs frs on frs.person_id = person.person_id
-              AND frs.concept_id = #{concept('FRS').concept_id}
-              AND frs.voided = 0
-            SQL
-            .where(
-              encounter: { encounter_type: EncounterType.find_by_name("TESTING").encounter_type_id,
-                            encounter_datetime: start_date..end_date,
-                            program_id: Program.find_by_name("HTC Program").program_id },
-            ).select("person.person_id, male_condoms.value_numeric male_condoms, female_condoms.value_numeric female_condoms, frs.value_numeric frs")
-            .each do |client|
-              if client.male_condoms.present?
-                client.male_condoms.to_i.times do
-                  @data["male_condoms_given_male_condoms_sum"].push(client.patient.id)
-                end
-              end
-              if  client.female_condoms.present?
-                client.female_condoms.to_i.times do
-                  @data["female_condoms_given_female_condoms_sum"].push(client.patient.id)
-                end
-              end
-              if  client.frs.present?
-                client.frs.to_i.times do
-                  @data["frs_given_frs_sum"].push(client.patient.id)
-                end
-              end
-            end
+          @data["male_condoms_given_male_condoms_sum"] = @query.map { |q| q["male_condoms"] }.compact.sum
+          @data["female_condoms_given_female_condoms_sum"] = @query.map { |q| q["female_condoms"] }.compact.sum
+          @data["frs_given_family_referral_slips_sum"] = @query.map { |q| q["frs"] }.compact.sum
         end
 
         def fetch_referral_retest
-          Person.joins("INNER JOIN encounter e ON e.patient_id = person.person_id AND e.encounter_type = #{EncounterType.find_by_name("APPOINTMENT").encounter_type_id} AND e.voided = 0 AND e.program_id = #{Program.find_by_name("HTC Program").program_id}")
-                .joins("INNER JOIN obs ON obs.person_id = e.patient_id AND obs.voided = 0 AND obs.concept_id = #{ConceptName.find_by_name("Referral for Re-Testing").concept_id} AND e.encounter_id = obs.encounter_id")
-                .joins("INNER JOIN obs o3 ON o3.person_id = e.patient_id AND o3.voided = 0 AND o3.concept_id = #{ConceptName.find_by_name("HIV status").concept_id}")
-                .select("person.person_id person_id,person.gender gender,obs.value_text value")
-                .where("person.voided = 0 AND DATE(e.encounter_datetime) BETWEEN '#{start_date}' AND '#{end_date}' + INTERVAL 1 DAY")
-                .each do |client|
-            @data["referral_for_hiv_retesting_no_retest_needed"].push(client.person_id) if client.value == "None"
-            @data["referral_for_hiv_retesting_retest_needed"].push(client.person_id) if client.value == "Re-Test"
-            @data["referral_for_hiv_retesting_confirmatory_test"].push(client.person_id) if client.value == "Confirmatory Test"
-            #  @data['referral_for_hiv_retesting_invalid_entry'].push(client.person_id) if client.value == nil
-            #  @data['referral_for_hiv_retesting_missing'].push(client.person_id) if client.value == nil
+          @data["referral_for_hiv_retesting_no_retest_needed"] = filter_hash("referal_for_retesting", "None")
+          @data["referral_for_hiv_retesting_retest_needed"] = filter_hash("referal_for_retesting", "Retest Needed")
+          @data["referral_for_hiv_retesting_confirmatory_test"] = filter_hash("referal_for_retesting", "Confirmatory Test")
+        end
 
-          end
+        def get_diff(obs_time, time_since)
+          diff = (obs_time&.to_date - time_since&.to_date).to_i rescue 10001
+          diff
         end
 
         def fetch_hiv_tests
-          Person.joins("INNER JOIN encounter e ON e.patient_id = person.person_id AND e.encounter_type = #{EncounterType.find_by_name("TESTING").encounter_type_id} AND e.voided = 0 AND e.program_id = #{Program.find_by_name("HTC Program").program_id}")
-                .joins("LEFT JOIN obs o1 ON o1.person_id = e.patient_id AND o1.voided = 0 AND o1.concept_id = #{ConceptName.find_by_name("Time of HIV test").concept_id} AND e.encounter_id = o1.encounter_id")
-                .joins("LEFT JOIN obs o2 ON o2.person_id = e.patient_id AND o2.voided = 0 AND o2.concept_id = #{ConceptName.find_by_name("Previous HIV Test Results").concept_id} AND e.encounter_id = o2.encounter_id")
-                .joins("LEFT JOIN obs o3 ON o3.person_id = e.patient_id AND o3.voided = 0 AND o3.concept_id = #{ConceptName.find_by_name("Previous HIV Test done").concept_id} AND e.encounter_id = o3.encounter_id")
-                .joins("INNER JOIN obs o4 ON o4.person_id = e.patient_id AND o4.voided = 0 AND o4.concept_id = #{ConceptName.find_by_name("HIV status").concept_id}")
-                .select("person.person_id person_id,person.gender gender,o1.obs_datetime obs_date,o1.value_datetime as value,o2.value_coded concept_id,o3.value_coded o3concept_id")
-                .group("person.person_id")
-                .where("person.voided = 0 AND DATE(e.encounter_datetime) BETWEEN '#{start_date}' AND '#{end_date}' + INTERVAL 1 DAY")
-                .each do |client|
+          @data["last_hiv_test_never_tested"] = filter_hash("previous_hiv_test", concept("Never Tested").concept_id)
+          @data["last_hiv_test_negative_self_test"] = filter_hash("previous_hiv_test_done", concept("Self").concept_id).select { |q| q["previous_hiv_test"] == concept("Negative").concept_id }
+          @data["last_hiv_test_negative_prof_test"] = filter_hash("previous_hiv_test_done", concept("Professional").concept_id).select { |q| q["previous_hiv_test"] == concept("Negative").concept_id }
+          @data["last_hiv_test_positive_self_test"] = filter_hash("previous_hiv_test_done", concept("Self").concept_id).select { |q| [concept("Positive").concept_id, concept("Positive NOT on ART").concept_id, concept("Positive on ART").concept_id].include?(q["previous_hiv_test"]) }
+          @data["last_hiv_test_positive_prof_test"] = filter_hash("previous_hiv_test_done", concept("Professional").concept_id).select { |q| [concept("Positive").concept_id, concept("Positive NOT on ART").concept_id, concept("Positive on ART").concept_id].include?(q["previous_hiv_test"]) }
+          @data["last_hiv_test_positive_prof_initial_test"] = filter_hash("previous_hiv_test_done", concept("Initial professional").concept_id).select { |q| [concept("Positive").concept_id, concept("Positive NOT on ART").concept_id, concept("Positive on ART").concept_id].include?(q["previous_hiv_test"]) }
+          @data["last_hiv_test_inconclusive_prof_test"] = filter_hash("previous_hiv_test_done", concept("Professional").concept_id).select { |q| q["previous_hiv_test"] == concept("Invalid or inconclusive").concept_id }
+          @data["last_hiv_test_invalid_self_test"] = filter_hash("previous_hiv_test_done", concept("Self").concept_id).select { |q| q["previous_hiv_test"] == concept("Invalid or inconclusive").concept_id }
+          @data["last_hiv_test_exposed_infant"] = filter_hash("previous_hiv_test", concept("Exposed infant").concept_id)
 
-                
-            @data["last_hiv_test_never_tested"].push(client.person_id) if ConceptName.find_by_name("Never Tested").concept_id == client.concept_id
-
-            next if client.value == nil || client.obs_date == nil
-            
-            time_since_last_hiv_result = client.value
-            obs_datetime = client.obs_date
-            diff = (obs_datetime&.to_date - time_since_last_hiv_result&.to_date).to_i
-            @data["time_since_last_hiv_test_same_day"].push(client.person_id) if time_since_last_hiv_result&.to_date == obs_datetime&.to_date
-            @data["time_since_last_hiv_test_1_to_13_days"].push(client.person_id) if diff >= 1 && diff <= 13
-            @data["time_since_last_hiv_test_14_days_to_2_months"].push(client.person_id) if diff >= 14 && diff <= 60
-            @data["time_since_last_hiv_test_3_to_5_months"].push(client.person_id) if diff >= 61 && diff <= 150
-            @data["time_since_last_hiv_test_6_to_11_months"].push(client.person_id) if diff >= 151 && diff <= 330
-            @data["time_since_last_hiv_test_12_plus_months"].push(client.person_id) if diff >= 331
-
-            @data["last_hiv_test_negative_self_test"].push(client.person_id) if ConceptName.find_by_name("Self").concept_id == client.o3concept_id && ConceptName.find_by_name("Negative").concept_id == client.concept_id
-            @data["last_hiv_test_negative_prof_test"].push(client.person_id) if ConceptName.find_by_name("Professional").concept_id == client.o3concept_id && ConceptName.find_by_name("Negative").concept_id == client.concept_id
-            @data["last_hiv_test_positive_self_test"].push(client.person_id) if ConceptName.find_by_name("Self").concept_id == client.o3concept_id && ConceptName.find_by_name("Positive").concept_id == client.concept_id
-            @data["last_hiv_test_positive_prof_test"].push(client.person_id) if ConceptName.find_by_name("Professional").concept_id == client.o3concept_id && ConceptName.find_by_name("Positive").concept_id == client.concept_id
-            @data["last_hiv_test_inconclusive_prof_test"].push(client.person_id) if /inconclusive/.match(ConceptName.find_by_concept_id(client.concept_id)&.name&.downcase) && ConceptName.find_by_name("Professional").concept_id == client.o3concept_id
-          end
+          @data["time_since_last_hiv_test_same_day"] = @query.select { |q| get_diff(q["obs_datetime"], q["time_of_hiv_test"]) <= 0 }
+          @data["time_since_last_hiv_test_1_to_13_days"] = @query.select { |q| (1..13).include?(get_diff(q["obs_datetime"], q["time_of_hiv_test"])) }
+          @data["time_since_last_hiv_test_14_days_to_2_months"] = @query.select { |q| (14..60).include?(get_diff(q["obs_datetime"], q["time_of_hiv_test"])) }
+          @data["time_since_last_hiv_test_3_to_5_months"] = @query.select { |q| (61..150).include?(get_diff(q["obs_datetime"], q["time_of_hiv_test"])) }
+          @data["time_since_last_hiv_test_6_to_11_months"] = @query.select { |q| (151..330).include?(get_diff(q["obs_datetime"], q["time_of_hiv_test"])) }
+          @data["time_since_last_hiv_test_12_plus_months"] = @query.select { |q| (331..1000).include?(get_diff(q["obs_datetime"], q["time_of_hiv_test"])) }
         end
 
         def fetch_risk_category
-          Person.joins(:observations, patient: :encounters)
-            .joins("INNER JOIN concept_name cn ON cn.concept_id = obs.value_coded and cn.voided = 0")
-            .joins("INNER JOIN obs o3 ON o3.person_id = encounter.patient_id AND o3.voided = 0 AND o3.concept_id = #{ConceptName.find_by_name("HIV status").concept_id}")
-            .where(
-              encounter: { encounter_type: EncounterType.find_by_name("TESTING").encounter_type_id,
-                            encounter_datetime: start_date..end_date,
-                            program_id: Program.find_by_name("HTC Program").program_id },
-              obs: { concept_id: ConceptName.find_by_name("client risk category").concept_id },
-            ).select("person.person_id, cn.name as category")
-            .each do |client|
-                  @data["risk_category_low"].push(client.person_id) if client.category == "Low risk"
-                  @data["risk_category_ongoing"].push(client.person_id) if client.category == "On-going risk"
-                  @data["risk_category_highrisk_event"].push(client.person_id) if client.category == "High risk event in last 3 months"
-                  @data["risk_category_not_done"].push(client.person_id) if client.category == "Risk assessment not done"
-            end
+          @data["risk_category_low"] = filter_hash("risk_category", "Low risk")
+          @data["risk_category_ongoing"] = filter_hash("risk_category", "On-going risk")
+          @data["risk_category_highrisk_event"] = filter_hash("risk_category", "High risk event in last 3 months")
+          @data["risk_category_not_done"] = filter_hash("risk_category", "Risk assessment not done")
         end
 
         def fetch_medication
-          Person.joins("INNER JOIN encounter e ON e.patient_id = person.person_id AND e.encounter_type = #{EncounterType.find_by_name("TESTING").encounter_type_id} AND e.voided = 0 AND e.program_id = #{Program.find_by_name("HTC Program").program_id}")
-                .joins("INNER JOIN obs o1 ON o1.person_id = e.patient_id AND o1.voided = 0 AND o1.concept_id = #{ConceptName.find_by_name("Antiretroviral medication history").concept_id} AND e.encounter_id = o1.encounter_id")
-                .joins("INNER JOIN obs o3 ON o3.person_id = e.patient_id AND o3.voided = 0 AND o3.concept_id = #{ConceptName.find_by_name("HIV status").concept_id}")
-                .select("person.person_id person_id,person.gender gender,o1.value_coded concept_id,o1.encounter_id encounterid")
-                .where("person.voided = 0 AND DATE(e.encounter_datetime) BETWEEN '#{start_date}' AND '#{end_date}' + INTERVAL 1 DAY")
-                .group("person.person_id")
-                .each do |client|
-            @data["ever_taken_arvs_no"].push(client.person_id) if ConceptName.find_by_name("No").concept_id == client.concept_id
-            if ConceptName.find_by_name("Yes").concept_id == client.concept_id
-              Observation.where(encounter_id: client.encounterid,
-                                person_id: client.person_id).each do |drug|
-                if ConceptName.find_by_name("Given drugs").concept_id == drug.concept_id
-                  @data["ever_taken_arvs_prep"].push(client.person_id) if concept("Prep or infant NVP").concept_id == drug.value_coded
-                  @data["ever_taken_arvs_pep"].push(client.person_id) if concept("PEP").concept_id == drug.value_coded
-                  @data["ever_taken_arvs_art"].push(client.person_id) if concept("ART").concept_id == drug.value_coded
-                end
-                if ConceptName.find_by_name("Time since last taken medication").concept_id == drug.concept_id
-                  time_since_last_hiv_result = drug.value_datetime
-                  obs_datetime = drug.obs_datetime
-                  diff = (obs_datetime&.to_date - time_since_last_hiv_result&.to_date).to_i
-                  @data["time_since_last_taken_arvs_same_day"].push(drug.person_id) if time_since_last_hiv_result&.to_date == obs_datetime&.to_date
-                  @data["time_since_last_taken_arvs_1_to_13_days"].push(drug.person_id) if diff >= 1 && diff <= 13
-                  @data["time_since_last_taken_arvs_14_days_to_2_months"].push(drug.person_id) if diff >= 14 && diff <= 60
-                  @data["time_since_last_taken_arvs_3_to_5_months"].push(drug.person_id) if diff >= 61 && diff <= 150
-                  @data["time_since_last_taken_arvs_6_to_11_months"].push(drug.person_id) if diff >= 151 && diff <= 330
-                  @data["time_since_last_taken_arvs_12_plus_months"].push(drug.person_id) if diff >= 331
-                end
-              end
-            end
-          end
+          @data["ever_taken_arvs_no"] = filter_hash("taken_prep_before", NO_ANSWER)
+          @data["ever_taken_arvs_prep"] = filter_hash("taken_prep_before", YES_ANSWER)
+          @data["ever_taken_arvs_pep"] = filter_hash("taken_pep_before", YES_ANSWER)
+          @data["ever_taken_arvs_art"] = filter_hash("taken_arvs_before", YES_ANSWER)
+          @data["time_since_last_taken_arvs_same_day"] = @query.select { |q| get_diff(q["obs_datetime"], q["time_since_last_medication"]) <= 0 }
+          @data["time_since_last_taken_arvs_1_to_13_days"] = @query.select { |q| (1..13).include?(get_diff(q["obs_datetime"], q["time_since_last_medication"])) }
+          @data["time_since_last_taken_arvs_14_days_to_2_months"] = @query.select { |q| (14..60).include?(get_diff(q["obs_datetime"], q["time_since_last_medication"])) }
+          @data["time_since_last_taken_arvs_3_to_5_months"] = @query.select { |q| (61..150).include?(get_diff(q["obs_datetime"], q["time_since_last_medication"])) }
+          @data["time_since_last_taken_arvs_6_to_11_months"] = @query.select { |q| (151..330).include?(get_diff(q["obs_datetime"], q["time_since_last_medication"])) }
+          @data["time_since_last_taken_arvs_12_plus_months"] = @query.select { |q| (331..1000).include?(get_diff(q["obs_datetime"], q["time_since_last_medication"])) }
         end
 
         def fetch_partner_status
-          Person.joins("INNER JOIN encounter e ON e.patient_id = person.person_id AND e.encounter_type = #{EncounterType.find_by_name("Partner Reception").encounter_type_id} AND e.voided = 0 AND e.program_id = #{Program.find_by_name("HTC Program").program_id}")
-                .joins("INNER JOIN obs ON obs.person_id = e.patient_id AND obs.voided = 0 AND obs.concept_id = #{ConceptName.find_by_name("Partner Present").concept_id} AND e.encounter_id = obs.encounter_id")
-                .joins("INNER JOIN obs o3 ON o3.person_id = e.patient_id AND o3.voided = 0 AND o3.concept_id = #{ConceptName.find_by_name("HIV status").concept_id}")
-                .select("person.person_id person_id,person.gender gender,obs.value_text value,obs.encounter_id encounter_id")
-                .where("person.voided = 0 AND DATE(e.encounter_datetime) BETWEEN '#{start_date}' AND '#{end_date}' + INTERVAL 1 DAY")
-                .group("person.person_id")
-                .each do |client|
-            @data["partner_present_yes"].push(client.person_id) if client.value == "Yes"
-            @data["partner_present_no"].push(client.person_id) if client.value == "No"
+          @data["partner_present_yes"] = filter_hash("partner_present", "Yes")
+          @data["partner_present_no"] = filter_hash("partner_present", "No")
 
-            partner_status = Observation.where(encounter_id: client.encounter_id,
-                                               person_id: client.person_id,
-                                               concept_id: "#{ConceptName.find_by_name("Partner HIV Status").concept_id}").last
-
-            @data["partner_hiv_status_no_partner"].push(partner_status.person_id) if partner_status.value_coded == concept("No partner").concept_id
-            @data["partner_hiv_status_hiv_status_unknown"].push(partner_status.person_id) if ConceptName.find_by_name("HIV unknown").concept_id == partner_status.value_coded
-            @data["partner_hiv_status_hiv_negative"].push(partner_status.person_id) if ConceptName.find_by_name("Negative").concept_id == partner_status.value_coded
-            @data["partner_hiv_status_hiv_positive_art_unknown"].push(partner_status.person_id) if ConceptName.find_by_name("Positive Art unknown").concept_id == partner_status.value_coded
-            @data["partner_hiv_status_hiv_positive_not_on_art"].push(partner_status.person_id) if ConceptName.find_by_name("Positive NOT on ART").concept_id == partner_status.value_coded
-            @data["partner_hiv_status_hiv_positive_on_art"].push(partner_status.person_id) if ConceptName.find_by_name("Positive on ART").concept_id == partner_status.value_coded
-          end
-        end
-
-        def fetch_ever_taken_drugs_before
-           Person.joins(:observations, patient: :encounters)
-            .joins("INNER JOIN obs o5 ON o5.person_id = encounter.patient_id AND o5.voided = 0 AND o5.concept_id = #{ConceptName.find_by_name('Hiv status').concept_id} AND encounter.encounter_id = o5.encounter_id")
-            .joins(<<~SQL)
-              LEFT JOIN obs taken_arv on taken_arv.person_id = person.person_id 
-              AND taken_arv.concept_id = #{concept('Taken ARV before').concept_id}
-              AND taken_arv.voided = 0
-              LEFT JOIN obs taken_prep on taken_prep.person_id = person.person_id 
-              AND taken_prep.concept_id = #{concept('Taken PrEP before').concept_id}
-              AND taken_prep.voided = 0
-              LEFT JOIN obs taken_pep on taken_pep.person_id = person.person_id 
-              AND taken_pep.concept_id = #{concept('Taken PEP before').concept_id}
-              AND taken_pep.voided = 0
-            SQL
-            .where(
-              encounter: { encounter_type: EncounterType.find_by_name("TESTING").encounter_type_id,
-                            encounter_datetime: start_date..end_date,
-                            program_id: Program.find_by_name("HTC Program").program_id }
-            )
-            .select("person.person_id person_id,person.gender gender,taken_arv.value_coded taken_arv,taken_prep.value_coded taken_prep,taken_pep.value_coded taken_pep")
-            .group("person.person_id")
-            .each do |client|
-              @data["ever_taken_arvs_art"].push(client.person_id) if client.taken_arv == YES_ANSWER
-              @data["ever_taken_arvs_prep"].push(client.person_id) if client.taken_prep == YES_ANSWER
-              @data["ever_taken_arvs_pep"].push(client.person_id) if client.taken_pep == YES_ANSWER
-              @data["ever_taken_arvs_no"].push(client.person_id) if client.taken_arv != YES_ANSWER && client.taken_prep != YES_ANSWER && client.taken_pep != YES_ANSWER
-            end
+          @data["partner_hiv_status_no_partner"] = filter_hash("partner_hiv_status", concept("No partner").concept_id)
+          @data["partner_hiv_status_hiv_status_unknown"] = filter_hash("partner_hiv_status", concept("HIV unknown").concept_id)
+          @data["partner_hiv_status_hiv_negative"] = filter_hash("partner_hiv_status", concept("Negative").concept_id)
+          @data["partner_hiv_status_hiv_positive_art_unknown"] = filter_hash("partner_hiv_status", concept("Positive ART unknown").concept_id)
+          @data["partner_hiv_status_hiv_positive_not_on_art"] = filter_hash("partner_hiv_status", concept("Positive NOT on ART").concept_id)
+          @data["partner_hiv_status_hiv_positive_on_art"] = filter_hash("partner_hiv_status", concept("Positive on ART").concept_id)
         end
 
         def fetch_referrals
-          Person.joins("INNER JOIN encounter e ON e.patient_id = person.person_id AND e.encounter_type = #{EncounterType.find_by_name("TESTING").encounter_type_id} AND e.voided = 0 AND e.program_id = #{Program.find_by_name("HTC Program").program_id}")
-            .joins("INNER JOIN obs o1 ON o1.person_id = e.patient_id AND o1.voided = 0 AND o1.concept_id = #{ConceptName.find_by_name("HIV status").concept_id} AND o1.value_coded = #{ConceptName.find_by_name("Positive").concept_id} AND e.encounter_id = o1.encounter_id")
-            .select("person.person_id person_id")
-            .where("person.voided = 0 AND DATE(e.encounter_datetime) BETWEEN '#{start_date}' AND '#{end_date}' + INTERVAL 1 DAY")
-            .each do |client|
-            Observation.joins(:encounter).where(concept: concept("Referrals ordered"),
-                                                person: client.person_id,
-                                                encounter: { encounter_type: EncounterType.find_by_name("REFERRAL").encounter_type_id,
-                                                             program_id: Program.find_by_name("HTC Program").program_id }).select("obs.value_text value").where("encounter_datetime BETWEEN '#{start_date}' AND '#{end_date}' + INTERVAL 1 DAY ").each do |obs|
-              @data["referral_for_vmmc"].push(client.person_id) if obs.value&.strip == "VMMC"
-              @data["referral_for_prep"].push(client.person_id) if obs.value&.strip == "PrEP"
-              @data["referral_for_sti"].push(client.person_id) if obs.value&.strip == "STI"
-              @data["referral_for_tb"].push(client.person_id) if obs.value&.strip == "TB"
-              @data["referral_for_pep"].push(client.person_id) if obs.value&.strip == "PEP"
-            end
-          end
+          @data["referral_for_vmmc"] = filter_hash("referrals_ordered", "VMMC")
+          @data["referral_for_prep"] = filter_hash("referrals_ordered", "PrEP")
+          @data["referral_for_sti"] = filter_hash("referrals_ordered", "STI")
+          @data["referral_for_tb"] = filter_hash("referrals_ordered", "TB")
+          @data["referral_for_pep"] = filter_hash("referrals_ordered", "PEP")
         end
 
         def linked_clients
           query = Patient.connection.select_all(
             his_patients_rev
-              .joins("INNER JOIN obs o5 ON o5.person_id = encounter.patient_id AND o5.voided = 0 AND o5.concept_id = #{ConceptName.find_by_name('Hiv status').concept_id} AND encounter.encounter_id = o5.encounter_id")
+              .joins("INNER JOIN obs o5 ON o5.person_id = encounter.patient_id AND o5.voided = 0 AND o5.concept_id = #{ConceptName.find_by_name("Hiv status").concept_id} AND encounter.encounter_id = o5.encounter_id")
               .joins(<<-SQL)
               LEFT JOIN obs linked ON linked.person_id = person.person_id
               AND linked.voided = 0
@@ -489,8 +307,8 @@ module HtsService
               .select("person.person_id, max(linked.value_coded) as value_coded")
               .group("person.person_id").to_sql
           ).to_hash
-          @data["linking_with_hiv_confirmatory_register_linked"] = query.select { |r| r["value_coded"] == LINKED_CONCEPT }.map { |r| r["person_id"] }
-          @data["not_applicable_not_linked"] = query.select { |r| r["value_coded"] != LINKED_CONCEPT }.map { |r| r["person_id"] }
+          @data["linking_with_hiv_confirmatory_register_linked"] = query.select { |r| r["value_coded"] == LINKED_CONCEPT }
+          @data["not_applicable_not_linked"] = query.select { |r| r["value_coded"] != LINKED_CONCEPT }
         end
       end
     end
