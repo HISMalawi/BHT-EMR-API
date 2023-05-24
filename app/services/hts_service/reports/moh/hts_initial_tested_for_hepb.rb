@@ -50,9 +50,9 @@ module HtsService
           },
           { name: "pregnancy_status", concept_id: PREGNANCY_STATUS, value: "value_coded", join: "LEFT" },
           { name: "circumcision_status", concept_id: CIRCUMCISION_STATUS, value: "value_coded", join: "LEFT" },
-          { name: "male_condoms", concept_id: MALE_CONDOMS, join: "LEFT" },
-          { name: "female_condoms", concept_id: FEMALE_CONDOMS, join: "LEFT" },
-          { name: "frs", concept_id: FRS, join: "LEFT" },
+          { name: "male_condoms", concept_id: MALE_CONDOMS, join: "LEFT", value: 'value_numeric' },
+          { name: "female_condoms", concept_id: FEMALE_CONDOMS, join: "LEFT", value: 'value_numeric' },
+          { name: "frs", concept_id: FRS, join: "LEFT", value: 'value_numeric' },
           { name: "referal_for_retesting", concept_id: REFERRAL_FOR_RETESTING, join: "LEFT" },
           { name: "time_of_hiv_test", concept_id: TIME_OF_HIV_TEST, value: "value_datetime", join: "LEFT" },
           { name: "time_since_last_medication", concept_id: TIME_SINCE_LAST_MEDICATION, join: "LEFT" },
@@ -239,10 +239,10 @@ module HtsService
         end
 
         def fetch_risk_category
-          @data["risk_category_low"] = filter_hash("risk_category", "Low risk")
-          @data["risk_category_ongoing"] = filter_hash("risk_category", "On-going risk")
-          @data["risk_category_highrisk_event"] = filter_hash("risk_category", "High risk event in last 3 months")
-          @data["risk_category_not_done"] = filter_hash("risk_category", "Risk assessment not done")
+          @data["risk_category_low"] = filter_hash("risk_category", concept("Low risk").concept_id)
+          @data["risk_category_ongoing"] = filter_hash("risk_category", concept("On-going risk").concept_id)
+          @data["risk_category_highrisk_event"] = filter_hash("risk_category", concept("High risk event in last 3 months").concept_id)
+          @data["risk_category_not_done"] = filter_hash("risk_category", concept("Risk assessment not done").concept_id)
         end
 
         def fetch_items_given
