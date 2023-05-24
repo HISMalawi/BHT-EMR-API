@@ -80,7 +80,14 @@ end
 def unvoid_encounters(patient:)
   encounters = Encounter.unscoped.where(patient_id: patient['patient_id'], date_voided: patient['date_voided'])
   encounters.each do |encounter|
-    encounter.update!(voided: 0, voided_by: nil, date_voided: nil, void_reason: nil)
+    encounter.update!(voided: 0, voided_by: nil, date_voided: nil, void_reason: nil) if encounter.program_id.present?
+    next if encounter.program_id.present?
+    
+    # update using raw query to avoid validation errors
+    ActiveRecord::Base.connection.execute <<~SQL
+      UPDATE encounter SET voided = 0, voided_by = NULL, date_voided = NULL, void_reason = NULL
+      WHERE encounter_id = #{encounter['encounter_id']}
+    SQL
   end
 end
 
