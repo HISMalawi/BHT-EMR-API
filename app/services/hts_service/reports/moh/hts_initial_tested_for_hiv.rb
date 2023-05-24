@@ -141,7 +141,7 @@ module HtsService
           @query = Person.connection.select_all(
             model
               .select("person.gender, person.person_id, person.birthdate, previous_hiv_test_done.obs_datetime")
-              .group("person.person_id")
+              .group("person.person_id, referrals_ordered.value_text")
           ).to_hash
         end
 
@@ -158,7 +158,7 @@ module HtsService
         def filter_hash(key, value)
           return @query.select { |q| q[key[0]] == value && q[key[1]] == value } if key.is_a?(Array)
 
-          @query.select { |q| q[key] == value }
+          @query.select { |q| q[key]&.to_s&.strip == value&.to_s&.strip }
         end
 
         def birthdate_to_age(birthdate)
@@ -226,9 +226,9 @@ module HtsService
         end
 
         def fetch_referral_retest
-          @data["referral_for_hiv_retesting_no_retest_needed"] = filter_hash("referal_for_retesting", "None")
-          @data["referral_for_hiv_retesting_retest_needed"] = filter_hash("referal_for_retesting", "Retest Needed")
-          @data["referral_for_hiv_retesting_confirmatory_test"] = filter_hash("referal_for_retesting", "Confirmatory Test")
+          @data["referral_for_hiv_retesting_no_retest_needed"] = filter_hash("referal_for_retesting", concept("NOT done").concept_id)
+          @data["referral_for_hiv_retesting_retest_needed"] = filter_hash("referal_for_retesting", concept("Re-Test").concept_id)
+          @data["referral_for_hiv_retesting_confirmatory_test"] = filter_hash("referal_for_retesting", concept("Confirmatory HIV test").concept_id)
         end
 
         def get_diff(obs_time, time_since)
