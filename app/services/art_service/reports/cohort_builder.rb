@@ -354,8 +354,9 @@ module ARTService
 
         # Patients who started TPT in current reporting period
         tpt = Cohort::Tpt.new(start_date, end_date)
-        cohort_struct.newly_initiated_on_3hp = tpt.newly_initiated_on_3hp
-        cohort_struct.newly_initiated_on_ipt = tpt.newly_initiated_on_ipt
+        # tpt newly initiated has a property last_tpt_start_date we need to use that to get those clients
+        cohort_struct.newly_initiated_on_3hp = tpt.newly_initiated_on_3hp.select { |hash| hash['last_tpt_start_date'].nil? }
+        cohort_struct.newly_initiated_on_ipt = tpt.newly_initiated_on_ipt.select { |hash| hash['last_tpt_start_date'].nil? }
 
         puts "Started at: #{time_started}. Finished at: #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}"
         cohort_struct
