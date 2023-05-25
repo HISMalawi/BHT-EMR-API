@@ -11,7 +11,7 @@ module HtsService
         HIV_GROUP = concept("HIV group").concept_id
 
         INDICATORS = [
-          { name: "hiv_group", concept_id: HIV_GROUP}
+          { name: "hiv_group", concept_id: HIV_GROUP, join: 'LEFT'}
         ]
 
         def initialize(start_date:, end_date:)
@@ -70,8 +70,6 @@ module HtsService
           @data["confirmatory_inconclusive_total_prev_pos_professional_test"] = filter_hash("hiv_group", concept("Confirmatory Inconclusive").concept_id)
           @data["confirmed_inconclusive_male"] = @data["confirmatory_inconclusive_total_prev_pos_professional_test"].select { |q| q["gender"] == "M" }
           @data["confirmed_inconclusive_female"] = @data["confirmatory_inconclusive_total_prev_pos_professional_test"].select { |q| q["gender"] == "F" }
-
-          debugger
           @data["new_exposed_infant"] = filter_hash("hiv_group", concept("New exposed infant").concept_id)
           @data["new_inconclusive"] = filter_hash("hiv_group", concept("New inconclusive").concept_id)
         end
