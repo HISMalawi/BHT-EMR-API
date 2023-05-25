@@ -14,8 +14,8 @@ module HtsService::Reports::Moh
     CONDOMS_GIVEN = %i[condoms_sum]
 
     def initialize(start_date:, end_date:)
-      @start_date = start_date.to_date.beginning_of_day
-      @end_date = end_date.to_date.end_of_day
+      @start_date = start_date&.to_date&.beginning_of_day
+      @end_date = end_date&.to_date&.end_of_day
       @report = {}
     end
 

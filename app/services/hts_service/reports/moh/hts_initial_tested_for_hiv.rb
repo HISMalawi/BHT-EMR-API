@@ -69,8 +69,8 @@ module HtsService
         ]
 
         def initialize(start_date:, end_date:)
-          @start_date = start_date.to_date.beginning_of_day
-          @end_date = end_date.to_date.end_of_day
+          @start_date = start_date&.to_date&.beginning_of_day
+          @end_date = end_date&.to_date&.end_of_day
           @data = {
             "missing_link_id_not_in_conf_register" => [],
             "hiv_test_1_result_missing" => [],

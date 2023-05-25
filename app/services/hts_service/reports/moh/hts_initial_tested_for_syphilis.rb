@@ -68,8 +68,8 @@ module HtsService
         ]
 
         def initialize(start_date:, end_date:)
-          @start_date = start_date
-          @end_date = end_date
+          @start_date = start_date&.to_date&.beginning_of_day
+          @end_date = end_date&.to_date&.end_of_day
           @data = {
             "missing_link_id_not_in_conf_register" => [], "linking_with_hiv_confirmatory_register_missing_linkid_not_in_conf_register" => [],
             "hiv_test_1_result_missing" => [], "linking_with_hiv_confirmatory_register_total_clients_hiv_test_1_negative" => [],
@@ -280,7 +280,7 @@ module HtsService
           @data["referral_for_hiv_retesting_no_retest_needed"] = filter_hash("referal_for_retesting", concept("NOT done").concept_id)
           @data["referral_for_hiv_retesting_retest_needed"] = filter_hash("referal_for_retesting", concept("Re-Test").concept_id)
           @data["referral_for_hiv_retesting_confirmatory_test"] = filter_hash("referal_for_retesting", concept("Confirmatory HIV test").concept_id)
-          
+
         end
 
         def fetch_referrals

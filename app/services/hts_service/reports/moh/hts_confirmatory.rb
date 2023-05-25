@@ -24,7 +24,7 @@ module HtsService
         DBS_COLLECTED = concept("Is DBS Sample Collected").concept_id
         DBS_NUMBER = concept("DBS Specimen ID").concept_id
         HIV_GROUP = concept("HIV group").concept_id
-        ART_REFERAL = concept("ART referral").concept_id
+        ART_REFERAL = concept("Antiretroviral therapy referral").concept_id
 
         INDICATORS = [
           { name: "hiv_status", concept_id: HIV_STATUS_OBS, value: "value_coded", join: "INNER" },
@@ -40,13 +40,13 @@ module HtsService
           {name: "dbs_collected", concept_id: DBS_COLLECTED, join: "LEFT"},
           {name: "dbs_number", concept_id: DBS_NUMBER, join: "LEFT"},
           {name: "hiv_group", concept_id: HIV_GROUP, join: "LEFT"},
-          {name: "art_referal", concept_id: ART_REFERAL, join: "LEFT"},
-          
+          {name: "art_referal", concept_id: ART_REFERAL, value: "value_text", join: "LEFT"},
+
         ]
 
         def initialize(start_date:, end_date:)
-          @start_date = start_date.to_date.beginning_of_day
-          @end_date = end_date.to_date.end_of_day
+          @start_date = start_date&.to_date&.beginning_of_day
+          @end_date = end_date&.to_date&.end_of_day
           @data = {
             'art_referral_outcome_not_applicable' => [],
             'specimen_ids_not_applicable' => [],
@@ -111,10 +111,6 @@ module HtsService
 
         def set_unique
           @data.each do |key, obj|
-            if %w[specimen_ids_valid_ids_entered].include?(key)
-              @data[key] = obj
-              next
-            end
             @data[key] = obj&.map { |q| q["person_id"] }.uniq
           end
         end
@@ -129,7 +125,7 @@ module HtsService
             @data["hiv_test_1_repeat_result_negative"] = filter_hash('test_one_repeat', HIV_NEGATIVE)
             @data["hiv_test_1_repeat_result_positive"] = filter_hash('test_one_repeat', HIV_POSITIVE)
 
-            
+
             @data["rtri_result_longterm"] = filter_hash('recency', concept("Long-Term").concept_id)
             @data["rtri_result_recent"] = filter_hash('recency', concept("Recent").concept_id)
             @data["rtri_result_not_done"] = filter_hash('recency', concept("Not Done").concept_id)
@@ -138,8 +134,8 @@ module HtsService
 
             @data["dbs_collected_no"] = filter_hash('dbs_collected', NO_ANSWER)
             @data["dbs_collected_yes"] = filter_hash('dbs_collected', YES_ANSWER)
+            @data["specimen_ids_valid_ids_entered"] = filter_hash('dbs_collected', YES_ANSWER)
             @data["dbs_collected_not_applicable"] = []
-            @data["specimen_ids_valid_ids_entered"] = @query.select {|q| q['dbs_number'] != nil}.uniq.count
 
             @data["art_clinic_registration_indexber_valid_entry"] = []
             @data["art_clinic_registration_indexber_not_applicable"] = []
@@ -163,8 +159,8 @@ module HtsService
         end
 
         def fetch_art_referral
-          @data['referral_for_art_initiation_no'] = filter_hash("art_referal", YES_ANSWER)
-          @data['referral_for_art_initiation_yes'] = filter_hash("art_referal", NO_ANSWER)
+          @data['referral_for_art_initiation_no'] = filter_hash("art_referal", "Yes")
+          @data['referral_for_art_initiation_yes'] = filter_hash("art_referal", "No")
         end
 
         def fetch_art_referral_outcome
