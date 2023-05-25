@@ -18,12 +18,7 @@ module ARTService
 
       def latest_regimen_dispensed(rebuild_outcome)
         if rebuild_outcome
-          cohort_list = ARTService::Reports::CohortBuilder.new(outcomes_definition: 'moh')
-          cohort_list.create_tmp_patient_table
-          cohort_list.load_data_into_temp_earliest_start_date(@end_date.to_date)
-
-          outcomes = ARTService::Reports::Cohort::Outcomes.new(end_date: @end_date.to_date, definition: 'moh')
-          outcomes.update_cummulative_outcomes
+          ARTService::Reports::CohortBuilder.new(outcomes_definition: 'moh').init_temporary_tables(@start_date, @end_date)
         end
 
         latest_regimens
@@ -53,17 +48,19 @@ module ARTService
             SELECT DATE(MAX(start_date)) FROM orders
             INNER JOIN drug_order t USING(order_id)
             WHERE patient_id = o.patient_id
-            AND start_date <= '#{@end_date.to_date.strftime("%Y-%m-%d 23:59:59")}' AND quantity > 0
+            AND start_date <= '#{@end_date.to_date.strftime("%Y-%m-%d 23:59:59")}'
+            AND start_date >= '#{@start_date.to_date.strftime("%Y-%m-%d 00:00:00")}'
+            AND quantity > 0
           ) AND person.voided = 0 AND i.voided = 0 AND t.cum_outcome = 'On antiretrovirals';
         SQL
 
         formated_data = {}
 
         (arv_dispensentions || []).each do |data|
-          patient_id = data['patient_id'].to_i
           dispensation_date = data['start_date'].to_date
+          patient_id = data['patient_id'].to_i
           order_id = data['order_id'].to_i
-          drug_id = data['drug_id'].to_i
+          # drug_id = data['drug_id'].to_i
           medication = data['name']
           quantity = data['quantity'].to_f
           value_numeric = data['value_numeric'].to_f
@@ -84,7 +81,7 @@ module ARTService
           formated_data[patient_id][order_id][:pack_sizes] << value_numeric
         end
 
-        return formated_data
+        formated_data
       end
 
       def regimen_data
