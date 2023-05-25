@@ -2,18 +2,18 @@
 
 module ARTService
   module Reports
+    # Outcome List Report
     class OutcomeList
-
       REPORTS = Set.new(%i[transfer_out died stopped]).freeze
 
       def initialize(start_date:, end_date:, outcome:)
-        @start_date = start_date.to_date.strftime("%Y-%m-%d 00:00:00")
-        @end_date = end_date.to_date.strftime("%Y-%m-%d 23:59:59")
-        @report = load_report outcome.downcase.split(" ").join("_")
+        @start_date = start_date.to_date.strftime('%Y-%m-%d 00:00:00')
+        @end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
+        @report = load_report outcome.downcase.split(' ').join('_')
       end
 
       def get_list
-        return @report
+        @report
       end
 
       private
@@ -29,9 +29,7 @@ module ARTService
       def load_report(name)
         name = name.to_sym
 
-        unless REPORTS.include?(name)
-          raise "Invalid report: #{name}"
-        end
+        raise "Invalid report: #{name}" unless REPORTS.include?(name)
 
         method(name).call
       end
@@ -41,51 +39,43 @@ module ARTService
       end
 
       def died
-        return outcome_query 'Patient died'
+        outcome_query 'Patient died'
       end
 
       def stopped
-        return outcome_query 'Treatment stopped'
+        outcome_query 'Treatment stopped'
       end
 
       def outcome_query(outcome_state)
-=begin
-        data = ActiveRecord::Base.connection.select_all <<~SQL
-        SELECT
-          pp.patient_id, i.identifier, pp.date_enrolled, pp.date_completed,
-          s.start_date, s.end_date, s.state, n.name,
-          fn.given_name, fn.family_name, p.gender, p.birthdate
-        FROM  program
-        INNER JOIN patient_program pp ON program.program_id = pp.program_id AND program.program_id = 1
-        INNER JOIN patient_state s ON s.patient_program_id = pp.patient_program_id
-        INNER JOIN program_workflow_state ws ON ws.program_workflow_state_id = s.state
-        INNER JOIN program_workflow w ON w.program_workflow_id = ws.program_workflow_id
-        INNER JOIN concept_name n ON n.concept_id = ws.concept_id
-        LEFT JOIN person_name fn ON fn.person_id = pp.patient_id AND fn.voided = 0
-        INNER JOIN person p ON p.person_id = pp.patient_id AND p.voided = 0
-        LEFT JOIN patient_identifier i ON i.patient_id = pp.patient_id AND i.voided = 0 AND i.identifier_type = 4
-        WHERE pp.voided = 0 AND s.voided = 0 AND s.start_date BETWEEN '#{@start_date}' AND '#{@end_date}'
-        AND s.state NOT IN(7,1, 12) AND s.state = #{outcome_state}
-        GROUP BY pp.patient_id ORDER BY s.start_date DESC, fn.date_created DESC;
-        SQL
-=end
+        #         data = ActiveRecord::Base.connection.select_all <<~SQL
+        #         SELECT
+        #           pp.patient_id, i.identifier, pp.date_enrolled, pp.date_completed,
+        #           s.start_date, s.end_date, s.state, n.name,
+        #           fn.given_name, fn.family_name, p.gender, p.birthdate
+        #         FROM  program
+        #         INNER JOIN patient_program pp ON program.program_id = pp.program_id AND program.program_id = 1
+        #         INNER JOIN patient_state s ON s.patient_program_id = pp.patient_program_id
+        #         INNER JOIN program_workflow_state ws ON ws.program_workflow_state_id = s.state
+        #         INNER JOIN program_workflow w ON w.program_workflow_id = ws.program_workflow_id
+        #         INNER JOIN concept_name n ON n.concept_id = ws.concept_id
+        #         LEFT JOIN person_name fn ON fn.person_id = pp.patient_id AND fn.voided = 0
+        #         INNER JOIN person p ON p.person_id = pp.patient_id AND p.voided = 0
+        #         LEFT JOIN patient_identifier i ON i.patient_id = pp.patient_id AND i.voided = 0 AND i.identifier_type = 4
+        #         WHERE pp.voided = 0 AND s.voided = 0 AND s.start_date BETWEEN '#{@start_date}' AND '#{@end_date}'
+        #         AND s.state NOT IN(7,1, 12) AND s.state = #{outcome_state}
+        #         GROUP BY pp.patient_id ORDER BY s.start_date DESC, fn.date_created DESC;
+        #         SQL
 
         report_type = 'moh'
-        cohort_list = ARTService::Reports::CohortBuilder.new(outcomes_definition: report_type)
-        cohort_list.create_tmp_patient_table
-        cohort_list.load_data_into_temp_earliest_start_date(@end_date.to_date)
+        ARTService::Reports::CohortBuilder.new(outcomes_definition: report_type).init_temporary_tables(@start_date.to_date, @end_date.to_date)
 
-        outcomes = ARTService::Reports::Cohort::Outcomes.new(end_date: @end_date.to_date, definition: report_type)
-        outcomes.update_cummulative_outcomes
-
-        transfer_out_to_location_sql = ""
-        transfer_out_to_location_name_sql = ""
+        transfer_out_to_location_sql = ''
+        transfer_out_to_location_name_sql = ''
         if outcome_state.match(/Transfer/i)
           concept_id = ConceptName.find_by_name('Transfer out to location').concept_id
-          transfer_out_to_location_name_sql = " ,l.name transferred_out_to"
-          transfer_out_to_location_sql = " LEFT JOIN obs to_location ON to_location.person_id = e.patient_id"
+          transfer_out_to_location_name_sql = ' ,to_location.value_text transferred_out_to'
+          transfer_out_to_location_sql = ' LEFT JOIN obs to_location ON to_location.person_id = e.patient_id'
           transfer_out_to_location_sql += " AND to_location.concept_id = #{concept_id} AND to_location.voided = 0"
-          transfer_out_to_location_sql += " LEFT JOIN location l ON l.location_id = to_location.value_numeric"
         end
 
         data = ActiveRecord::Base.connection.select_all <<~SQL
@@ -122,10 +112,8 @@ module ARTService
         patients = []
 
         (data || []).each do |person|
-
-
           patients << {
-            patient_id: person["patient_id"],
+            patient_id: person['patient_id'],
             given_name: person['given_name'],
             family_name: person['family_name'],
             birthdate: person['birthdate'],
@@ -139,14 +127,13 @@ module ARTService
             village: person['village'],
             current_age: person['age'],
             identifier: person['identifier'],
-            transferred_out_to: (person['transferred_out_to'] ? person['transferred_out_to'] : 'N/A'),
+            transferred_out_to: (person['transferred_out_to'] || 'N/A'),
             outcome_date: (person['outcome_date']&.to_date || 'N/A')
           }
         end
 
-        return patients
+        patients
       end
-
     end
   end
 end
