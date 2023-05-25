@@ -68,7 +68,7 @@ module HtsService
           ActiveRecord::Base.connection.select_all <<~SQL
             SELECT e.patient_id, disaggregated_age_group(p.birthdate, '#{end_date}') AS age_group, p.gender, location.value_text AS entry_point, recency.value_coded AS recency_value
             FROM encounter e
-            INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.voided = 0 AND o.concept_id = #{ConceptName.find_by_name('HTS Access Type').concept_id} AND o.value_coded = #{ConceptName.find_by_name('Community-based organization').concept_id}
+            INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.voided = 0
             INNER JOIN obs location ON location.encounter_id = e.encounter_id AND location.voided = 0 AND location.concept_id = #{ConceptName.find_by_name('Location where test took place').concept_id}
             INNER JOIN obs recency ON recency.encounter_id = e.encounter_id AND recency.voided = 0 AND recency.concept_id = #{ConceptName.find_by_name('Recency Test').concept_id} AND recency.value_coded IN (#{ConceptName.find_by_name('Recent').concept_id}, #{ConceptName.find_by_name('Long-Term').concept_id})
             INNER JOIN person p ON p.person_id = e.patient_id AND p.voided = 0
