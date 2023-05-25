@@ -7,8 +7,8 @@ module ARTService
       attr_reader :start_date, :end_date, :type
 
       def initialize(start_date:, end_date:, **kwargs)
-        @start_date = ActiveRecord::Base.connection.quote(start_date)
-        @end_date = ActiveRecord::Base.connection.quote(end_date)
+        @start_date = ActiveRecord::Base.connection.quote(start_date.to_date.strftime('%Y-%m-%d 00:00:00'))
+        @end_date = ActiveRecord::Base.connection.quote(end_date.to_date.strftime('%Y-%m-%d 23:59:59'))
         @type = kwargs[:type]
       end
 
@@ -202,6 +202,7 @@ module ARTService
             tcp.name regimen,
             trc.earliest_start_date
           FROM temp_patient_start_date trc
+          INNER JOIN temp_current_dispensation tcd ON tcd.patient_id = trc.patient_id AND tcd.start_date BETWEEN #{@start_date} AND #{@end_date}
           INNER JOIN person p ON p.person_id = trc.patient_id AND p.voided = 0
           INNER JOIN person_name pn ON pn.person_id = p.person_id AND pn.voided = 0
           LEFT JOIN patient_identifier i ON i.patient_id = p.person_id AND i.identifier_type = 4 AND i.voided = 0
