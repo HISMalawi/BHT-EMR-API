@@ -251,7 +251,8 @@ module ARTService
                   WHEN tpt_transfer_in_obs.value_numeric IS NOT NULL THEN 1
                   ELSE 0
                 END AS transfer_in,
-                MAX(o.start_date) AS last_dispensed_date
+                MAX(o.start_date) AS last_dispensed_date,
+                MAX(o.auto_expire_date) AS auto_expire_date
             FROM orders o
             INNER JOIN concept_name cn
               ON cn.concept_id = o.concept_id
