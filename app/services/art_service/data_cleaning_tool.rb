@@ -510,7 +510,7 @@ module ARTService
     def missing_vl_results
       ActiveRecord::Base.connection.select_all <<~SQL
         SELECT o.order_id, n.given_name, n.family_name, p.gender, p.birthdate, a.identifier arv_number,
-        i.identifier national_id, ord.accession_number, DATE(ord.start_date) start_date
+        i.identifier national_id, ord.accession_number, DATE(ord.start_date) start_date, p.person_id patient_id
         FROM obs o
         INNER JOIN orders ord ON ord.order_id = o.order_id AND ord.voided = 0
         INNER JOIN person p ON p.person_id = o.person_id AND p.voided = 0
