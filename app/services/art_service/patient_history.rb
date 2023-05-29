@@ -77,7 +77,7 @@ module ARTService
       label2.draw_text("#{cd4_count} #{cd4_count_date}", 25, 110, 0, 2, 1, 1, false)
       label2.draw_text("1st + Test: #{hiv_test_date}", 25, 150, 0, 2, 1, 1, false)
 
-      label2.draw_text("TB: #{tb_within_last_two_yrs} #{eptb} #{pulmonary_tb}", 380, 70, 0, 2, 1, 1, false)
+      label2.draw_text("TB: #{tb_status}", 380, 70, 0, 2, 1, 1, false)
       label2.draw_text("KS: #{ks}", 380, 110, 0, 2, 1, 1, false)
       label2.draw_text("Preg:#{pregnant}", 380, 150, 0, 2, 1, 1, false)
       label2.draw_text(first_line_drugs.join(',')[0..32], 25, 190, 0, 2, 1, 1, false)
@@ -151,6 +151,11 @@ module ARTService
       @cd4_count
     end
 
+    def tb_status
+      result = "#{tb_within_last_two_yrs} #{eptb} #{pulmonary_tb}"
+      result.blank? ? 'N/A' : result
+    end
+
     def cd4_count_date
       load_hiv_staging_vars unless @cd4_count_date
 
@@ -164,9 +169,7 @@ module ARTService
     end
 
     def eptb
-      return if hiv_staging_observation_present?('Extrapulmonary tuberculosis (EPTB)')
-
-      'eptb'
+      return 'eptb' if hiv_staging_observation_present?('Extrapulmonary tuberculosis (EPTB)')
     end
 
     def first_line_drugs
@@ -215,10 +218,8 @@ module ARTService
     def pulmonary_tb
       if hiv_staging_observation_present?('Pulmonary tuberculosis')\
           || hiv_staging_observation_present?('Pulmonary tuberculosis (current)')
-        return
+        'Pulmonary tb'
       end
-
-      'Pulmonary tb'
     end
 
     def reason_for_art_eligibility
@@ -238,9 +239,8 @@ module ARTService
     end
 
     def tb_within_last_two_yrs
-      return if hiv_staging_observation_present?('Pulmonary tuberculosis within the last 2 years')
-
-      'tb within last 2 yrs'
+      concept_name = 'Pulmonary tuberculosis within the last 2 years'
+      return 'tb within last 2 yrs' if hiv_staging_observation_present?(concept_name)
     end
 
     def transfer_in
@@ -333,6 +333,7 @@ module ARTService
     def hiv_staging_observation_present?(concept_name)
       concept_id = ConceptName.find_by_name(concept_name)&.concept_id
       return false unless hiv_staging
+
       hiv_staging.observations\
                  .where(concept_id: ConceptName.find_by_name('Who stages criteria present')&.concept_id)\
                  .where(value_coded: concept_id)
