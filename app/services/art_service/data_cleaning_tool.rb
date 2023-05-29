@@ -13,6 +13,7 @@ module ARTService
       'DOB MORE THAN DATE ENROLLED' => 'dob_more_than_date_enrolled',
       'INCOMPLETE VISITS' => 'incomplete_visit',
       'MISSING DEMOGRAPHICS' => 'incomplete_demographics',
+      'MISSING VL RESULTS' => 'missing_vl_results'
     }.freeze
 
     def initialize(start_date:, end_date:, tool_name:)
@@ -504,6 +505,25 @@ module ARTService
       end
 
       incomplete_visits_comp
+    end
+
+    def missing_vl_results
+      ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT o.order_id, n.given_name, n.family_name, p.gender, p.birthdate, a.identifier arv_number,
+        i.identifier national_id, ord.accession_number, DATE(ord.start_date) start_date
+        FROM obs o
+        INNER JOIN orders ord ON ord.order_id = o.order_id AND ord.voided = 0
+        INNER JOIN person p ON p.person_id = o.person_id AND p.voided = 0
+        INNER JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
+        LEFT JOIN patient_identifier a ON a.patient_id = p.person_id AND a.voided = 0 AND a.identifier_type = #{indetifier_type}
+        LEFT JOIN patient_identifier i ON i.patient_id = p.person_id AND i.voided = 0 AND i.identifier_type = 3
+        LEFT JOIN obs tr ON tr.obs_group_id = o.obs_id AND tr.voided = 0 AND tr.concept_id = #{concept('Lab test result').concept_id}
+        LEFT JOIN obs r ON r.obs_group_id = tr.obs_id AND r.voided = 0 AND r.concept_id = #{concept('HIV viral load').concept_id}
+        AND r.value_modifier IS NOT NULL and (r.value_numeric IS NOT NULL OR r.value_text IS NOT NULL)
+        WHERE o.concept_id = #{concept('Test type').concept_id} AND o.value_coded = #{concept('HIV viral load').concept_id} AND o.voided = 0
+        AND o.obs_datetime BETWEEN '#{@start_date}' AND '#{@end_date}'
+        AND tr.obs_id IS NULL AND r.obs_id IS NULL
+      SQL
     end
 
     def concept(name)
