@@ -8,7 +8,7 @@ module HtsService
       HIV_NEGATIVE = concept("Negative").concept_id
       HIV_EXPOSED_INFANT = concept("Exposed infant").concept_id
       HIV_INVALID_OR_INCONCLUSIVE = concept("Invalid or inconclusive").concept_id
-      HIV_RESULT_INCONCLUSIVE = concept('Inconclusive').concept_id
+      HIV_RESULT_INCONCLUSIVE = concept("Inconclusive").concept_id
       HIV_NEVER_TESTED = concept("Never Tested").concept_id
       HIV_STATUS_OBS = concept("HIV status").concept_id
       HTS_ACCESS_TYPE = concept("HTS Access Type").concept_id
@@ -48,7 +48,7 @@ module HtsService
 
       def his_patients_rev
         Patient.joins(:person, encounters: :program)
-          .where(
+               .where(
             encounter: {
               encounter_datetime: @start_date..@end_date,
               encounter_type: HIV_TESTING_ENCOUNTER,
@@ -59,7 +59,7 @@ module HtsService
 
       def self_test_clients
         Patient.joins(:person, encounters: [:observations, :program])
-          .merge(
+               .merge(
             Patient.joins(<<-SQL)
           INNER JOIN encounter test ON test.voided = 0 AND test.patient_id = patient.patient_id
           INNER JOIN obs visit ON visit.voided = 0 AND visit.person_id = person.person_id
@@ -79,24 +79,37 @@ module HtsService
 end
 
 class ObsValueScope
-  QUERY_STRING = "
-        %{join} JOIN obs %{name} ON %{name}.person_id = person.person_id
-        AND %{name}.concept_id = %{concept_id}
-        AND %{name}.voided = 0
-      "
+  QUERY_STRING =
+    "%<join>s JOIN (
+          SELECT %<value>s, person_id
+          FROM obs
+          WHERE obs.voided = 0 AND obs.concept_id = %<concept_id>s
+        ) %<name>s ON %<name>s.person_id = person.person_id
+      ".freeze
 
-  def self.call(model:, name:, concept_id:, value: "value_coded", join: "INNER")
+  def self.call(model:, name:, concept_id:, value: 'value_coded', join: 'INNER')
     query = model
     unless [name.class, concept_id.class].include?(Array)
-      return query.joins(QUERY_STRING % { join: join, name: name, concept_id: concept_id }).select("#{name}.#{value} AS #{name}")
+      return query.joins(format(QUERY_STRING,
+                                join: join,
+                                name: name,
+                                concept_id: concept_id,
+                                value: value))
+                  .select("#{name}.#{value} AS #{name}")
     end
+
     construct_query(model, name, concept_id, value, join)
   end
 
   def self.construct_query(model, name, concept_id, value, join)
     query = model
     concept_id.each_with_index do |concept, index|
-      query = query.joins(QUERY_STRING % { join: join, name: name[index], concept_id: concept }).select("#{name[index]}.#{value} AS #{name[index]}")
+      query = query.joins(format(QUERY_STRING,
+                                 join: join,
+                                 name: name[index],
+                                 concept_id: concept,
+                                 value: value))
+                   .select("#{name[index]}.#{value} AS #{name[index]}")
     end
     query
   end
