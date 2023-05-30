@@ -1,5 +1,7 @@
 LOGGER = Logger.new($stdout)
 User.current = User.first
+new_concepts_file = File.new('merge_concepts.csv', 'w+')
+new_concepts_file.puts('concept_id, concept_name, status')
 
 default_db_config = Rails.configuration.database_configuration['development']
 concepts_db_config = Rails.configuration.database_configuration['concepts_merge_db']
@@ -16,23 +18,26 @@ LOGGER.info("Found #{records_to_insert.count} records that needs to be merged")
 
 # Insert the missing records into the development DB
 records_inserted = 0
-begin
+ActiveRecord::Base.transaction do
   records_to_insert.each do |record|
     LOGGER.info("creating new concept #{record['name']}")
     concept = Concept.create(
       short_name: record['name'],
       creator: record['creator'],
       class_id: record['class_id'],
-      datatype_id: record['datatype_id']
+      datatype_id: record['datatype_id'],
     )
     ConceptName.create(
       concept_id: concept.id,
-      name: concept.short_name
+      name: concept.short_name,
     )
     records_inserted += 1
+    new_concepts_file.puts("#{concept.id}, #{record['name']}, created")
+  rescue e
+    LOGGER.error("Failed to create concept #{record['name']}")
+    new_concepts_file.puts("#{concept.id}, #{record['name']}, failed, #{e.message}")
   end
-rescue StandardError => e
-  LOGGER.error("Error inserting record with name #{e.message}")
+  new_concepts_file.close
 end
 
 LOGGER.info("Inserted #{records_inserted} records")
