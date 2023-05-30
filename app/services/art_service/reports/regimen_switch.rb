@@ -54,6 +54,11 @@ module ARTService
           ) AND person.voided = 0 AND i.voided = 0 AND t.cum_outcome = 'On antiretrovirals';
         SQL
 
+        patient_list = arv_dispensentions.map { |d| d['patient_id'] }.uniq.push(0)
+
+        @latest_vl = latest_vl_orders(patient_list)
+        @latest_result = latest_vl_results(patient_list)
+
         formated_data = {}
 
         (arv_dispensentions || []).each do |data|
@@ -65,6 +70,9 @@ module ARTService
           quantity = data['quantity'].to_f
           value_numeric = data['value_numeric'].to_f
           drug_id = data['drug_id'].to_i
+          # find the latest vl result for the patient from the array of vl results {patient_id: number, order_date: date}
+          latest_vl = @latest_vl.select { |vl| vl[:patient_id] == patient_id }&.first
+          latest_result = @latest_result.select { |vl| vl[:patient_id] == patient_id }&.first
 
           formated_data[patient_id] = {} if formated_data[patient_id].blank?
           formated_data[patient_id][order_id] = {
@@ -75,7 +83,10 @@ module ARTService
             gender: data['gender'],
             birthdate: data['birthdate'],
             drug_id: drug_id,
-            pack_sizes: []
+            pack_sizes: [],
+            order_date: latest_vl.present? ? latest_vl[:order_date] : 'N/A',
+            result_date: latest_result.present? ? latest_result[:result_date] : 'N/A',
+            result: latest_result.present? ? latest_result[:result] : 'N/A'
           } if formated_data[patient_id][order_id].blank?
 
           formated_data[patient_id][order_id][:pack_sizes] << value_numeric
@@ -375,6 +386,43 @@ EOF
           AND lab_result_obs.obs_datetime <= '#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
           ORDER BY lab_result_obs.obs_datetime DESC
           LIMIT 1
+        SQL
+      end
+
+      def latest_vl_orders(patient_list)
+        ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT odr.patient_id, MAX(start_date) AS order_date
+          FROM obs o
+          INNER JOIN orders odr ON odr.order_id = o.order_id AND odr.voided = 0 AND odr.patient_id IN (#{patient_list.join(',')})
+          WHERE o.concept_id = #{ConceptName.find_by_name('Test Type').concept_id}
+          AND o.value_coded = #{ConceptName.find_by_name('HIV viral load').concept_id}
+          AND o.voided = 0
+          AND o.obs_datetime <= '#{@end_date}'
+          GROUP BY odr.patient_id
+        SQL
+      end
+
+      def latest_vl_results(patient_list)
+        ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT o.person_id AS patient_id,
+          o.obs_datetime AS result_date,
+          CONCAT (COALESCE(o.value_modifier, '='),' ',COALESCE(o.value_numeric, o.value_text, '')) AS result
+          FROM obs o
+          INNER JOIN (
+            SELECT MAX(obs_datetime) AS obs_datetime, person_id
+            FROM obs co
+            INNER JOIN orders odr ON odr.order_id = co.order_id AND odr.voided = 0
+            WHERE co.concept_id = #{ConceptName.find_by_name('HIV viral load').concept_id}
+            AND co.voided = 0
+            AND co.obs_datetime <= '#{@end_date}'
+            AND (co.value_numeric IS NOT NULL || co.value_text IS NOT NULL)
+            GROUP BY co.person_id
+          ) AS latest_vl ON latest_vl.obs_datetime = o.obs_datetime AND latest_vl.person_id = o.person_id
+          WHERE o.concept_id = #{ConceptName.find_by_name('HIV viral load').concept_id}
+          AND o.voided = 0 AND o.obs_datetime <= '#{@end_date}'
+          AND (o.value_numeric IS NOT NULL || o.value_text IS NOT NULL)
+          AND o.person_id IN (#{patient_list.join(',')})
+          ORDER BY o.obs_datetime DESC
         SQL
       end
 
