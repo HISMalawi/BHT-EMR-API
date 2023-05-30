@@ -6,8 +6,9 @@ concepts_db_config = Rails.configuration.database_configuration['concepts_merge_
 
 # Concepts in concepts database that are not present in database development
 records_to_insert = ConceptName.connection.select_all(format("
-  SELECT *
+  SELECT cn.name, c.creator, c.class_id, c.datatype_id
   FROM %<database_b>s.concept_name cn
+  INNER JOIN %<database_b>s.concept c ON c.concept_id = cn.concept_id
   WHERE name NOT IN (SELECT name FROM %<database_a>s.concept_name)
 ", database_a: default_db_config['database'], database_b: concepts_db_config['database'])).to_hash
 
@@ -21,8 +22,8 @@ begin
     concept = Concept.create(
       short_name: record['name'],
       creator: record['creator'],
-      class_id: 3,
-      datatype_id: 4
+      class_id: record['class_id'],
+      datatype_id: record['datatype_id']
     )
     ConceptName.create(
       concept_id: concept.id,
