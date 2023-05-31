@@ -37,7 +37,7 @@ module HtsService::Reports::Pepfar
 
     def calc_access_points(data, row)
       ACCESS_POINTS.each_with_index do |(key, value)|
-        x = patients_in_access_point(data, value) 
+        x = patients_in_access_point(data, value)
         row["#{key}"] = calc_age_groups(x.select { |q| q["gender"] == row[:gender].to_s.strip }, row[:age_group])
         row["age_group"] = row[:age_group].values.first
       end
@@ -61,8 +61,11 @@ module HtsService::Reports::Pepfar
     def query
       query = his_patients_rev
         .joins(<<-SQL)
-        LEFT JOIN obs facility ON facility.person_id = person.person_id
+        INNER JOIN obs facility ON facility.person_id = person.person_id
         AND facility.concept_id = #{TEST_LOCATION}
+        INNER JOIN obs access_type ON access_type.person_id = person.person_id
+        AND access_type.concept_id = #{HTS_ACCESS_TYPE}
+        AND access_type.value_coded = #{concept('Health facility').concept_id}
         INNER JOIN obs hiv_status ON hiv_status.person_id = person.person_id
         AND hiv_status.concept_id = #{HIV_STATUS_OBS}
         SQL

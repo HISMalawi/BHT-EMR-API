@@ -67,13 +67,13 @@ module HtsService::Reports::Pepfar
     def query
       query = his_patients_rev
         .joins(<<-SQL)
-        INNER JOIN obs access_type on access_type.voided = 0 
+        INNER JOIN obs access_type on access_type.voided = 0
         AND access_type.person_id = person.person_id
         AND access_type.concept_id = #{concept("HTS Access Type").concept_id}
-        AND access_type.value_coded = 8019
-        INNER JOIN obs recency ON recency.voided = 0 
+        AND access_type.value_coded = #{concept('Health Facility').concept_id}
+        INNER JOIN obs recency ON recency.voided = 0
         AND recency.person_id = person.person_id
-        AND recency.concept_id = #{concept("Recency test").concept_id}
+        AND recency.concept_id = #{concept("Recency Test").concept_id}
         INNER JOIN obs location ON location.voided = 0
         AND location.person_id = person.person_id
         AND location.concept_id = #{TEST_LOCATION}
