@@ -335,7 +335,7 @@
 		"Neonatal tetanus" : ["Neonatal tetanus", "Tetanus", "Other tetanus"],
 		"Plague" : ["Plague"],
 		"Rabies (confirmed cases)" : ["Rabies"],
-		"Severe Acute Respiratory Syndrome (SARS)" : ["Severe acute respiratory syndrome", "Acute respiratory infection", "Severe acute respiratory infection", "Upper respiratory tract infection", "Acute upper respiratory tract infection", "Acute lower respiratory tract infection", "Respiratory malignancy"],
+        "Severe Acute Respiratory Syndrome (SARS)" : ["Severe acute respiratory syndrome", "Acute respiratory infection", "Severe acute respiratory infection", "Acute upper respiratory tract infection", "Acute lower respiratory tract infection"],
 		"Smallpox" : ["Smallpox (Variola)", "Small pox"],
 		"Typhoid fever" : ["Typhoid fever"],
 		"Yellow fever" : ["Yellow fever"],

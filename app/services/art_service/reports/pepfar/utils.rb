@@ -78,7 +78,18 @@ module ARTService
             days_on_medication = (patient['total_days_on_medication'] / divider).round
             days_on_medication.days >= FULL_3HP_COURSE_DAYS
           else
-            patient['total_pills_taken'].to_i >= FULL_6H_COURSE_PILLS
+            patient['total_days_on_medication'].to_i >= FULL_6H_COURSE_PILLS
+          end
+        end
+
+        def patient_has_totally_completed_tpt?(patient, tpt)
+          if tpt == '3HP'
+            init_date = patient['tpt_initiation_date'].to_date
+            end_date = patient['auto_expire_date'].to_date
+            days_on_medication = (end_date - init_date).to_i
+            days_on_medication >= 80
+          else
+            patient['total_days_on_medication'].to_i >= 176
           end
         end
 

@@ -43,6 +43,12 @@ class Observation < VoidableRecord
     errors.add(:obs_datetime, ' cannot be in the future')
   end
 
+  scope(:for_program, lambda { |program_id|
+    return self if program_id.blank?
+
+    joins(:encounter).where(encounter: { program_id: program_id })
+  })
+
   scope(:recent, lambda { |number|
     joins(:encounter).order('obs_datetime DESC,date_created DESC').limit(number)
   })

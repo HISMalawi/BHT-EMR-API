@@ -314,7 +314,6 @@ Rails.application.routes.draw do
   get '/api/v1/anc_data_cleaning_tools' => 'api/v1/cleaning#anc_tools'
 
   # OPD reports
-  get '/api/v1/malaria_report' => 'api/v1/reports#malaria_report'
   get '/api/v1/registration' => 'api/v1/reports#registration'
   get '/api/v1/diagnosis_by_address' => 'api/v1/reports#diagnosis_by_address'
   get '/api/v1/with_nids' => 'api/v1/reports#with_nids'
@@ -354,6 +353,7 @@ Rails.application.routes.draw do
   post '/api/v1/tx_mmd_client_level_data', to: 'api/v1/reports#tx_mmd_client_level_data'
   get '/api/v1/clients', to: 'api/v1/people#list'
   get '/api/v1/tb_prev', to: 'api/v1/reports#tb_prev'
+  get '/api/v1/moh_tpt', to: 'api/v1/reports#moh_tpt'
   get '/api/v1/tpt_prescription_count' => 'api/v1/patients#tpt_prescription_count'
   get '/api/v1/patient_visit_types', to: 'api/v1/reports#patient_visit_types'
   get '/api/v1/patient_visit_list', to: 'api/v1/reports#patient_visit_list'
@@ -379,5 +379,7 @@ Rails.application.routes.draw do
   post '/api/v1/data_cleaning_confirmation', to: 'api/v1/data_cleaning#create'
 
   post '/api/v1/pharmacy/items/batch_update', to: 'api/v1/pharmacy/items#batch_update'
+
+  get '/api/v1/next_appointment', to: 'api/v1/appointments#next_appointment'
 
 end

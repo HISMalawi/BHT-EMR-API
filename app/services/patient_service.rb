@@ -299,6 +299,8 @@ class PatientService
     values = {}
 
     pill_counts.each do |obs|
+      next unless obs.order
+
       drug_order = obs.order.drug_order
       values[drug_order.drug_inventory_id] = obs.value_numeric
     end

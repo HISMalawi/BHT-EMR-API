@@ -51,7 +51,7 @@ module ARTService
           return { tpt: nil, completed: false, tb_treatment: false } if patient.blank?
 
           tpt = patient_on_3hp?(patient) ? '3HP' : '6H'
-          completed = patient_completed_tpt?(patient, tpt)
+          completed = patient_has_totally_completed_tpt?(patient, tpt)
           { tpt: if tpt == '6H'
                    'IPT'
                  else
@@ -251,7 +251,8 @@ module ARTService
                   WHEN tpt_transfer_in_obs.value_numeric IS NOT NULL THEN 1
                   ELSE 0
                 END AS transfer_in,
-                MAX(o.start_date) AS last_dispensed_date
+                MAX(o.start_date) AS last_dispensed_date,
+                MAX(o.auto_expire_date) AS auto_expire_date
             FROM orders o
             INNER JOIN concept_name cn
               ON cn.concept_id = o.concept_id

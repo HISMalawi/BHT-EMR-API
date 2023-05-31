@@ -4,6 +4,63 @@ info:
   title: EMR API V1 DOCS
   version: v1
 paths:
+  "/api/v1/next_appointment":
+    get:
+      summary: list appointments
+      tags:
+      - Appointments
+      description: Appointments Endpoints
+      security:
+      - api_key: []
+      parameters:
+      - name: patient_id
+        in: query
+        example: 1
+        description: Patient ID
+        required: true
+        default: 1
+        schema:
+          type: integer
+      - name: program_id
+        in: query
+        example: 1
+        description: Program ID
+        required: true
+        default: 1
+        schema:
+          type: integer
+      - name: date
+        in: query
+        format: date
+        example: '2020-01-01'
+        description: Date in YYYY-MM-DD format
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  appointment_date:
+                    type: string
+                    format: date
+                required:
+                - appointment_date
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: string
+                required:
+                - errors
   "/api/v1/art_data_cleaning_tools":
     get:
       summary: Retrieve patients with data problems
@@ -1261,6 +1318,87 @@ paths:
                         example: test
                         required: true
         required: true
+  "/api/v1/defaulter_list":
+    get:
+      summary: defaulter_list report
+      tags:
+      - Reports
+      description: Reports Endpoints
+      parameters:
+      - name: start_date
+        in: query
+        format: date
+        example: '2022-10-1'
+        required: true
+        schema:
+          type: string
+      - name: end_date
+        in: query
+        format: date
+        example: '2022-12-1'
+        required: true
+        schema:
+          type: string
+      - name: pepfar
+        in: query
+        example: moh or pepfar
+        required: true
+        schema:
+          type: string
+      - name: program_id
+        in: query
+        example: 1
+        required: true
+        schema:
+          type: integer
+      security:
+      - api_key: []
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    person_id:
+                      type: integer
+                    given_name:
+                      type: string
+                    family_name:
+                      type: string
+                    birthdate:
+                      type: string
+                    gender:
+                      type: string
+                    arv_number:
+                      type: string
+                    outcome:
+                      type: string
+                    defaulter_date:
+                      type: string
+                      format: date
+                      example: '2019-01-01'
+                    appointment_date:
+                      type: string
+                      format: date
+                      example: '2019-01-01'
+                    art_reason:
+                      type: string
+                    cell_number:
+                      type: string
+                    district:
+                      type: string
+                    ta:
+                      type: string
+                    village:
+                      type: string
+                    current_age:
+                      type: string
+                    landmark:
+                      type: string
   "/api/v1/rollback/merge_history":
     get:
       summary: Retrieve merge history
