@@ -4,8 +4,8 @@ module HtsService::Reports::Pepfar
     include HtsService::Reports::HtsReportBuilder
     attr_reader :start_date, :end_date, :report, :numbering
 
-    ACCESS_POINTS = { index: "Index", emergency: "Emergency", inpatient: "Inpatient",
-                      malnutrition: "Malnutrition", pediatric: "Pediatric", pmtct_anc1: "ANC first visit",
+    ACCESS_POINTS = { index: "Index", opd: 'OPD', emergency: "Emergency", inpatient: "Inpatient",
+                      malnutrition: "Malnutrition", pediatric: "Pediatric", pmtct_anc1: "ANC First Visit",
                       sns: "SNS", sti: "STI", tb: "TB", vct: "VCT", vmmc: "VMMC", other_pitc: "Other PITC" }
 
     def initialize(start_date:, end_date:)
@@ -41,6 +41,7 @@ module HtsService::Reports::Pepfar
         row["#{key}"] = calc_age_groups(x.select { |q| q["gender"] == row[:gender].to_s.strip }, row[:age_group])
         row["age_group"] = row[:age_group].values.first
       end
+      other_pitc = 
       row
     end
 
@@ -55,7 +56,7 @@ module HtsService::Reports::Pepfar
     end
 
     def patients_in_access_point(patients, facility)
-      patients.select { |q| q["access_point"] == facility }
+      patients.select { |q| /#{q['access_point']}/.match? facility }
     end
 
     def query
@@ -63,7 +64,7 @@ module HtsService::Reports::Pepfar
         .joins(<<-SQL)
         LEFT JOIN obs facility ON facility.person_id = person.person_id
         AND facility.concept_id = #{TEST_LOCATION}
-        LEFT JOIN obs hiv_status ON hiv_status.person_id = person.person_id
+        INNER JOIN obs hiv_status ON hiv_status.person_id = person.person_id
         AND hiv_status.concept_id = #{HIV_STATUS_OBS}
         SQL
         .select("disaggregated_age_group(person.birthdate, '#{@end_date.to_date}') as age_group, person.person_id, person.gender, facility.value_text as access_point, hiv_status.value_coded as status")
