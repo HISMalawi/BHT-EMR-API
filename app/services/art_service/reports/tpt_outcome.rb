@@ -388,20 +388,20 @@ module ARTService
           @condition = true
           return
         elsif patient['gender'] == 'F' && patient_breast_feeding?(patient['patient_id'], patient['last_dispense_date'])
-          report[patient['age_group']][patient['tpt_type']][:breast_feeding] << patient['patient_id']
+          report[patient['age_group']][patient[param]][:breast_feeding] << patient['patient_id']
           @condition = true
           return
         end
 
-        process_malawi_art_conditions report, patient
+        process_malawi_art_conditions report, patient, param
       end
 
-      def process_malawi_art_conditions(report, patient)
+      def process_malawi_art_conditions(report, patient, param = 'tpt_type')
         %i[skin_rash nausea peripheral_neuropathy dizziness yellow_eyes].each do |condition|
           method_name = "patient_#{condition}?".to_sym
           next unless send(method_name, patient['patient_id'], patient['last_dispense_date'])
 
-          report[patient['age_group']][patient['tpt_type']][condition] << patient['patient_id']
+          report[patient['age_group']][patient[param]][condition] << patient['patient_id']
           @condition = true
         end
       end
