@@ -90,9 +90,9 @@ module ARTService
             birthdate: data['birthdate'],
             drug_id: drug_id,
             pack_sizes: [],
-            order_date: latest_vl.present? ? latest_vl['order_date']&.to_date : 'N/A',
-            result_date: latest_result.present? ? latest_result['result_date']&.to_date : 'N/A',
-            result: latest_result.present? ? latest_result['result'] : 'N/A'
+            vl_latest_order_date: latest_vl.present? ? latest_vl['order_date']&.to_date : 'N/A',
+            vl_latest_result_date: latest_result.present? ? latest_result['result_date']&.to_date : 'N/A',
+            vl_latest_result: latest_result.present? ? latest_result['result'] : 'N/A'
           } if formated_data[patient_id][order_id].blank?
 
           formated_data[patient_id][order_id][:pack_sizes] << value_numeric

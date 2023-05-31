@@ -1845,6 +1845,107 @@ paths:
                       type: string
                     landmark:
                       type: string
+  "/api/v1/latest_regimen_dispensed":
+    get:
+      summary: latest_regimen_dispensed report
+      tags:
+      - Reports
+      description: Reports Endpoints
+      parameters:
+      - name: start_date
+        in: query
+        format: date
+        example: '2022-10-1'
+        required: true
+        schema:
+          type: string
+      - name: end_date
+        in: query
+        format: date
+        example: '2022-12-1'
+        required: true
+        schema:
+          type: string
+      - name: date
+        in: query
+        format: date
+        example: '2022-12-1'
+        required: true
+        schema:
+          type: string
+      - name: program_id
+        in: query
+        example: 1
+        required: true
+        schema:
+          type: integer
+      - name: rebuild_outcome
+        in: query
+        example: true
+        required: true
+        schema:
+          type: boolean
+      security:
+      - api_key: []
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    patient_id:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          order_id:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                              quantity:
+                                type: integer
+                              dispensation_date:
+                                type: string
+                                format: date
+                                example: '2019-01-01'
+                              identifier:
+                                type: string
+                              gender:
+                                type: string
+                              birthdate:
+                                type: string
+                                format: date
+                                example: '2019-01-01'
+                              drug_id:
+                                type: integer
+                              pack_sizes:
+                                type: array
+                                items:
+                                  type: integer
+                              order_date:
+                                type: string
+                                format: date
+                                example: '2019-01-01'
+                              result_date:
+                                type: string
+                                format: date
+                                example: '2019-01-01'
+                              result:
+                                type: string
+        '500':
+          description: failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
   "/api/v1/rollback/merge_history":
     get:
       summary: Retrieve merge history
