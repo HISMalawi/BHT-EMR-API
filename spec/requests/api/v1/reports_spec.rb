@@ -44,5 +44,53 @@ RSpec.describe 'api/v1/reports', type: :request do
       end
     end
   end
+
+  path '/api/v1/latest_regimen_dispensed' do
+    get 'latest_regimen_dispensed report' do
+      tags TAG
+      description TAG_DESCRIPTION
+      consumes 'application/json'
+      produces 'application/json'
+      parameter name: :start_date, in: :query, type: :string, format: :date, example: '2022-10-1', required: true
+      parameter name: :end_date, in: :query, type: :string, format: :date, example: '2022-12-1', required: true
+      parameter name: :date, in: :query, type: :string, format: :date, example: '2022-12-1', required: true
+      parameter name: :program_id, in: :query, type: :integer, example: 1, required: true
+      parameter name: :rebuild_outcome, in: :query, type: :boolean, example: true, required: true
+      security [api_key: []]
+
+      response(200, 'successful') do
+        schema type: :array, items: {
+          type: :object, properties: {
+            patient_id: { type: :object, properties: {
+              order_id: { type: :array, items: {
+                type: :object, properties: {
+                  name: { type: :string },
+                  quantity: { type: :integer },
+                  dispensation_date: { type: :string, format: :date, example: '2019-01-01' },
+                  identifier: { type: :string },
+                  gender: { type: :string },
+                  birthdate: { type: :string, format: :date, example: '2019-01-01' },
+                  drug_id: { type: :integer },
+                  pack_sizes: { type: :array, items: { type: :integer } },
+                  order_date: { type: :string, format: :date, example: '2019-01-01' },
+                  result_date: { type: :string, format: :date, example: '2019-01-01' },
+                  result: { type: :string }
+                }
+              } }
+            } }
+          }
+        }
+
+        run_test!
+      end
+
+      response(500, 'failed') do
+        schema type: :object, properties: {
+          error: { type: :string }
+        }
+        run_test!
+      end
+    end
+  end
 end
 # rubocop:enable Metrics/BlockLength
