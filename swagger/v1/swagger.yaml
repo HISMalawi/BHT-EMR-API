@@ -1927,15 +1927,15 @@ paths:
                                 type: array
                                 items:
                                   type: integer
-                              order_date:
+                              vl_latest_order_date:
                                 type: string
                                 format: date
                                 example: '2019-01-01'
-                              result_date:
+                              vl_latest_result_date:
                                 type: string
                                 format: date
                                 example: '2019-01-01'
-                              result:
+                              vl_latest_result:
                                 type: string
         '500':
           description: failed

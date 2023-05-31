@@ -72,9 +72,9 @@ RSpec.describe 'api/v1/reports', type: :request do
                   birthdate: { type: :string, format: :date, example: '2019-01-01' },
                   drug_id: { type: :integer },
                   pack_sizes: { type: :array, items: { type: :integer } },
-                  order_date: { type: :string, format: :date, example: '2019-01-01' },
-                  result_date: { type: :string, format: :date, example: '2019-01-01' },
-                  result: { type: :string }
+                  vl_latest_order_date: { type: :string, format: :date, example: '2019-01-01' },
+                  vl_latest_result_date: { type: :string, format: :date, example: '2019-01-01' },
+                  vl_latest_result: { type: :string }
                 }
                 },
               }
