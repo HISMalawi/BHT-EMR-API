@@ -86,7 +86,8 @@ module ARTService
             s3.state_province district, s3.county_district ta,
             s3.city_village village, TIMESTAMPDIFF(year, DATE(e.birthdate), DATE('#{@end_date}')) age,
             pp.date_enrolled, pp.date_completed,
-            s2.start_date outcome_date, s2.end_date, s2.state
+            s2.start_date outcome_date, s2.end_date, s2.state,
+            patient_current_regimen(e.patient_id, DATE('#{@end_date}')) current_regimen
             #{transfer_out_to_location_name_sql}
           FROM temp_earliest_start_date e
           INNER JOIN temp_patient_outcomes o ON e.patient_id = o.patient_id
@@ -128,7 +129,8 @@ module ARTService
             current_age: person['age'],
             identifier: person['identifier'],
             transferred_out_to: (person['transferred_out_to'] || 'N/A'),
-            outcome_date: (person['outcome_date']&.to_date || 'N/A')
+            outcome_date: (person['outcome_date']&.to_date || 'N/A'),
+            current_regimen: person['current_regimen']
           }
         end
 
