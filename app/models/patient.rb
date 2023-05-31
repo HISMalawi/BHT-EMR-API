@@ -42,7 +42,7 @@ class Patient < VoidableRecord
           methods: %i[type]
         }
       },
-      methods: %i[merge_history]
+      methods: %i[merge_history tpt_status art_start_date]
     ))
   end
 
@@ -132,5 +132,16 @@ class Patient < VoidableRecord
 
   def merge_history
     MergeAudit.where(primary_id: patient_id).order(:created_at).as_json
+  end
+
+  def art_start_date
+    result = ActiveRecord::Base.connection.select_one <<~SQL
+      SELECT patient_start_date(#{id}) AS art_start_date
+    SQL
+    result['art_start_date'] || nil
+  end
+
+  def tpt_status
+    ARTService::Reports::Pepfar::TbPrev3.new(start_date: Date.today - 6.months, end_date: Date.today).patient_tpt_status(id)
   end
 end

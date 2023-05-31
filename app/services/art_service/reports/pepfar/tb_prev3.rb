@@ -40,23 +40,26 @@ module ARTService
         # rubocop:disable Metrics/CyclomaticComplexity
         # rubocop:disable Metrics/PerceivedComplexity
         def patient_tpt_status(patient_id)
-          return { tpt: nil, completed: false, tb_treatment: true } if patient_on_tb_treatment?(patient_id)
+          return { tpt: nil, completed: false, tb_treatment: true, tpt_init_date: nil, tpt_complete_date: nil } if patient_on_tb_treatment?(patient_id)
 
           if patient_history_on_completed_tpt(patient_id)
             return { tpt: patient_history_on_completed_tpt(patient_id).include?('IPT') ? '6H' : '3HP', completed: true,
-                     tb_treatment: false }
+                     tb_treatment: false, tpt_init_date: nil, tpt_complete_date: nil}
           end
 
           patient = individual_tpt_report(patient_id)
-          return { tpt: nil, completed: false, tb_treatment: false } if patient.blank?
+          return { tpt: nil, completed: false, tb_treatment: false, tpt_init_date: nil, tpt_complete_date: nil } if patient.blank?
 
           tpt = patient_on_3hp?(patient) ? '3HP' : '6H'
           completed = patient_has_totally_completed_tpt?(patient, tpt)
+          tpt_init_date = patient['tpt_initiation_date']
+          tpt_complete_date = completed ? patient['auto_expire_date']&.to_date : nil
           { tpt: if tpt == '6H'
                    'IPT'
                  else
                    (patient['drug_concepts'].split(',').length > 1 ? '3HP (RFP + INH)' : 'INH 300 / RFP 300 (3HP)')
-                 end, completed: completed, tb_treatment: false }
+                 end, completed: completed, tb_treatment: false,
+            tpt_init_date: tpt_init_date, tpt_complete_date: tpt_complete_date }
         end
         # rubocop:enable Metrics/MethodLength
         # rubocop:enable Metrics/CyclomaticComplexity
