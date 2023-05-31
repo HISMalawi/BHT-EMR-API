@@ -41,7 +41,6 @@ module HtsService::Reports::Pepfar
         row["#{key}"] = calc_age_groups(x.select { |q| q["gender"] == row[:gender].to_s.strip }, row[:age_group])
         row["age_group"] = row[:age_group].values.first
       end
-      other_pitc = 
       row
     end
 
