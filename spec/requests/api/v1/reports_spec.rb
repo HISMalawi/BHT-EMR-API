@@ -61,9 +61,9 @@ RSpec.describe 'api/v1/reports', type: :request do
       response(200, 'successful') do
         schema type: :array, items: {
           type: :object, properties: {
-            patient_id: { type: :object, properties: {
-              order_id: { type: :array, items: {
-                type: :object, properties: {
+            patient_id: { type: :array, items: {
+              type: :object, properties: {
+                order_id: { type: :object, properties: {
                   name: { type: :string },
                   quantity: { type: :integer },
                   dispensation_date: { type: :string, format: :date, example: '2019-01-01' },
@@ -76,7 +76,8 @@ RSpec.describe 'api/v1/reports', type: :request do
                   result_date: { type: :string, format: :date, example: '2019-01-01' },
                   result: { type: :string }
                 }
-              } }
+                },
+              }
             } }
           }
         }
