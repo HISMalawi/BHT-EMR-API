@@ -167,7 +167,7 @@ module ARTService
       organise_data data
     end
 
-    def art_drugs
+    def arv_drugs
       Drug.joins('INNER JOIN concept_set s ON s.concept_id = drug.concept_id')\
           .where('s.concept_set = ?', concept('Antiretroviral drugs').concept_id)\
           .map(&:drug_id)
@@ -181,7 +181,7 @@ module ARTService
           ((`patient_program` `p`
           inner join orders o ON o.patient_id = p.patient_id
           inner join drug_order d ON d.order_id = o.order_id
-          and d.drug_inventory_id in(#{art_drugs.join(',')})
+          and d.drug_inventory_id in(#{arv_drugs.join(',')})
           left join `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
           left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
           left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
@@ -349,7 +349,7 @@ module ARTService
           ON dispensation.order_id = orders.order_id
           AND dispensation.concept_id IN (SELECT concept_id FROM concept_name WHERE name = 'Amount Dispensed' AND voided = 0)
           AND dispensation.voided = 0
-        WHERE drug_order.drug_inventory_id IN (#{art_drugs.join(',')})
+        WHERE drug_order.drug_inventory_id IN (#{arv_drugs.join(',')})
         AND (drug_order.quantity IS NULL OR drug_order.quantity <= 0 AND orders.patient_id NOT IN(#{external_clients}))
         GROUP BY DATE(orders.start_date), orders.patient_id
         HAVING COALESCE(SUM(dispensation.value_numeric), 0) <= 0
