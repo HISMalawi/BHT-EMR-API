@@ -79,13 +79,21 @@ module HtsService
 end
 
 class ObsValueScope
+  # QUERY_STRING =
+  #   "%<join>s JOIN (
+  #         SELECT %<value>s, person_id
+  #         FROM obs
+  #         WHERE obs.voided = 0 AND obs.concept_id = %<concept_id>s
+  #       ) AS %<name>s ON %<name>s.person_id = person.person_id
+  #     ".freeze
+
   QUERY_STRING =
-    "%<join>s JOIN (
-          SELECT %<value>s, person_id
-          FROM obs
-          WHERE obs.voided = 0 AND obs.concept_id = %<concept_id>s
-        ) %<name>s ON %<name>s.person_id = person.person_id
-      ".freeze
+    <<~SQL
+      %<join>s JOIN obs %<name>s ON %<name>s.person_id = person.person_id
+      AND %<name>s.voided = 0
+      AND %<name>s.concept_id = %<concept_id>s
+    SQL
+    .freeze
 
   def self.call(model:, name:, concept_id:, value: 'value_coded', join: 'INNER')
     query = model
