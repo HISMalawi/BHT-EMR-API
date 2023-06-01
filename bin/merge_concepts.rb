@@ -1,10 +1,29 @@
 LOGGER = Logger.new($stdout)
 User.current = User.first
-new_concepts_file = File.new('merge_concepts.csv', 'w+')
-new_concepts_file.puts('concept_id, concept_name, status')
+
+def usage
+  puts 'Usage: rails runner bin/merge_concepts.rb <from> <to>'
+  puts '  <from> - The branch to merge concepts from'
+  puts '  <to> - The branch to merge concepts to'
+  puts 'Example: bin/merge_concepts.rb hts development'
+  exit
+end
+
+from = ARGV[0]
+to = ARGV[1]
+
+usage unless from && to
 
 default_db_config = Rails.configuration.database_configuration['development']
 concepts_db_config = Rails.configuration.database_configuration['concepts_merge_db']
+
+unless default_db_config && concepts_db_config
+  LOGGER.error('Could not find database configurations')
+  exit
+end
+
+new_concepts_file = File.new("#{Rails.root}/log/merge_concepts-#{from}>#{to}-#{DateTime.now.strftime('%Y%m%d%H%M%S')}.csv", 'w+')
+new_concepts_file.puts('concept_id, concept_name, status')
 
 # Concepts in concepts database that are not present in database development
 records_to_insert = ConceptName.connection.select_all(format("
@@ -18,7 +37,7 @@ LOGGER.info("Found #{records_to_insert.count} records that needs to be merged")
 
 # Insert the missing records into the development DB
 records_inserted = 0
-ActiveRecord::Base.transaction do
+begin
   records_to_insert.each do |record|
     LOGGER.info("creating new concept #{record['name']}")
     concept = Concept.create(
@@ -33,11 +52,11 @@ ActiveRecord::Base.transaction do
     )
     records_inserted += 1
     new_concepts_file.puts("#{concept.id}, #{record['name']}, created")
-  rescue e
-    LOGGER.error("Failed to create concept #{record['name']}")
-    new_concepts_file.puts("#{concept.id}, #{record['name']}, failed, #{e.message}")
   end
-  new_concepts_file.close
+rescue e
+  LOGGER.error("Failed to create concept #{record['name']}")
+  new_concepts_file.puts("#{concept.id}, #{record['name']}, failed, #{e.message}")
 end
 
+new_concepts_file.close
 LOGGER.info("Inserted #{records_inserted} records")
