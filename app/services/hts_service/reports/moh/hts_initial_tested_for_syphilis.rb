@@ -170,28 +170,48 @@ module HtsService
         end
 
         def fetch_hepatitis_b_clients
+          access_types = {
+            'facility' => {
+              'VCT' => 'facility_vct',
+              'ANC First Visit' => 'facility_anc_first_visit',
+              'Inpatient' => 'facility_inpatient',
+              'STI' => 'facility_sti',
+              'PMTCT FUP' => 'facility_pmtctfup',
+              'Index' => 'facility_index',
+              'Paediatric' => 'facility_paediatric',
+              'Malnutrition' => 'facility_malnutrition',
+              'VMMC' => 'facility_vmmc',
+              'TB' => 'facility_tb',
+              'OPD' => 'facility_opd',
+              'Other PITC' => 'facility_other_pitc',
+              'SNS' => 'facility_sns'
+            },
+            'community' => {
+              'VMMC' => 'community_vmmc',
+              'Index' => 'community_index',
+              'Mobile' => 'community_mobile',
+              'VCT' => 'community_vct',
+              'Other' => 'community_other',
+              'SNS' => 'community_sns'
+            }
+          }
+
+          facility_hash = filter_hash('access_type', concept('Health facility').concept_id)
+          community_hash = filter_hash('access_type', concept('Community').concept_id)
+
+          access_types.each do |access_type, locations|
+            locations.each do |location, key|
+              if access_type == 'facility'
+                @data["access_point_type_#{key}"] = facility_hash.select { |q| q['test_location'] == location }
+              elsif access_type == 'community'
+                @data["access_point_type_#{key}"] = community_hash.select { |q| q['test_location'] == location }
+              end
+            end
+          end
+
           @data['total_clients_tested_for_syphilis'] = @query
-          @data['access_point_type_total_clients_tested_at_the_facility'] = filter_hash('access_type', concept('Health facility').concept_id)
-          @data['access_point_type_total_clients_tested_in_the_community'] = filter_hash('access_type', concept('Community').concept_id)
-          @data['access_point_type_facility_vct'] = filter_hash('access_type', concept('Health facility').concept_id).select { |q| q['test_location'] == 'VCT' }
-          @data['access_point_type_facility_anc_first_visit'] = filter_hash('access_type', concept('Health facility').concept_id).select { |q| q['test_location'] == 'ANC First visit' }
-          @data['access_point_type_facility_inpatient'] = filter_hash('access_type', concept('Health facility').concept_id).select { |q| q['test_location'] == 'Inpatient' }
-          @data['access_point_type_facility_sti'] = filter_hash('access_type', concept('Health facility').concept_id).select { |q| q['test_location'] == 'STI' }
-          @data['access_point_type_facility_pmtctfup'] = filter_hash('access_type', concept('Health facility').concept_id).select { |q| q['test_location'] == 'PMTCT FUP' }
-          @data['access_point_type_facility_index'] = filter_hash('access_type', concept('Health facility').concept_id).select { |q| q['test_location'] == 'Index' }
-          @data['access_point_type_facility_paediatric'] = filter_hash('access_type', concept('Health facility').concept_id).select { |q| q['test_location'] == 'Paediatric' }
-          @data['access_point_type_facility_malnutrition'] = filter_hash('access_type', concept('Health facility').concept_id).select { |q| q['test_location'] == 'Malnutrition' }
-          @data['access_point_type_facility_vmmc'] = filter_hash('access_type', concept('Health facility').concept_id).select { |q| q['test_location'] == 'VMMC' }
-          @data['access_point_type_facility_tb'] = filter_hash('access_type', concept('Health facility').concept_id).select { |q| q['test_location'] == 'TB' }
-          @data['access_point_type_facility_opd'] = filter_hash('access_type', concept('Health facility').concept_id).select { |q| q['test_location'] == 'OPD' }
-          @data['access_point_type_facility_other_pitc'] = filter_hash('access_type', concept('Health facility').concept_id).select { |q| q['test_location'] == 'Other PITC' }
-          @data['access_point_type_facility_sns'] = filter_hash('access_type', concept('Health facility').concept_id).select { |q| q['test_location'] == 'SNS' }
-          @data['access_point_type_community_vmmc'] = filter_hash('access_type', concept('Community').concept_id).select { |q| q['test_location'] == 'VMMC' }
-          @data['access_point_type_community_index'] = filter_hash('access_type', concept('Community').concept_id).select { |q| q['test_location'] == 'Index' }
-          @data['access_point_type_community_mobile'] = filter_hash('access_type', concept('Community').concept_id).select { |q| q['test_location'] == 'Mobile' }
-          @data['access_point_type_community_vct'] = filter_hash('access_type', concept('Community').concept_id).select { |q| q['test_location'] == 'VCT' }
-          @data['access_point_type_community_other'] = filter_hash('access_type', concept('Community').concept_id).select { |q| q['test_location'] == 'Other' }
-          @data['access_point_type_community_sns'] = filter_hash('access_type', concept('Community').concept_id).select { |q| q['test_location'] == 'SNS' }
+          @data['access_point_type_total_clients_tested_at_the_facility'] = facility_hash
+          @data['access_point_type_total_clients_tested_in_the_community'] = community_hash
 
           @data['sex_or_pregnancy_total_males'] = filter_hash('gender', 'M')
           @data['sex_or_pregnancy_male_circumcised'] = filter_hash('circumcision_status', YES_ANSWER)
@@ -234,7 +254,7 @@ module HtsService
           @data['time_since_last_hiv_test_1_to_13_days'] = @query.select { |q| (1..13).include?(get_diff(q['encounter_datetime'], q['time_of_hiv_test'])) }
           @data['time_since_last_hiv_test_35_months'] = @query.select { |q| (61..150).include?(get_diff(q['encounter_datetime'], q['time_of_hiv_test'])) }
           @data['time_since_last_hiv_test_611_months'] = @query.select { |q| (151..330).include?(get_diff(q['encounter_datetime'], q['time_of_hiv_test'])) }
-          @data['time_since_last_hiv_test_14_days_to_2_months'] = @query.select { |q| (14..61).include?(get_diff(q['encounter_datetime'], q['time_of_hiv_test'])) }
+          @data['time_since_last_hiv_test_14_days_to_2_months'] = @query.select { |q| (14..60).include?(get_diff(q['encounter_datetime'], q['time_of_hiv_test'])) }
           @data['time_since_last_hiv_test_12plus_months'] = @query.select { |q| get_diff(q['encounter_datetime'], q['time_of_hiv_test']) >= 365 }
         end
 
@@ -294,7 +314,7 @@ module HtsService
         def linked_clients
           query = Patient.connection.select_all(
             his_patients_rev
-              .joins("INNER JOIN obs o3 ON o3.person_id = encounter.patient_id AND o3.voided = 0 AND o3.concept_id = #{ConceptName.find_by_name("Hepatitis B Test Result").concept_id} AND encounter.encounter_id = o3.encounter_id")
+              .joins("INNER JOIN obs o3 ON o3.person_id = encounter.patient_id AND o3.voided = 0 AND o3.concept_id = #{SYPHILIS_TEST_RESULT} AND encounter.encounter_id = o3.encounter_id")
               .joins(<<-SQL)
               LEFT JOIN obs linked ON linked.person_id = person.person_id
               AND linked.voided = 0
