@@ -31,264 +31,71 @@ RSpec.configure do |config|
           }
         },
         schemas: {
-          data_cleaning_request: {
+          gender: { type: :string, enum: %w[M F Unknown] },
+          age_group: { type: :string, enum: ['Unknown', '<1 year', '1-4 years', '5-9 years',
+                                             '10-14 years', '15-19 years', '20-24 years', '25-29 years', '30-34 years',
+                                             '35-39 years', '40-44 years', '45-49 years', '50-54 years', '55-59 years', '60-64 years',
+                                             '65-69 years', '70-74 years', '75-79 years', '80-84 years', '85-89 years', '90 plus years'] },
+          hts_hiv_results: {
             type: :object,
             properties: {
-              program_id: { type: :integer },
-              start_date: { type: :string },
-              end_date: { type: :string },
-              report_name: { type: :string }
-            },
-            required: %w[program_id start_date end_date report_name]
-          },
-          multiple_identifiers: {
-            type: :object,
-            properties: {
-              patient_id: { type: :integer },
-              given_name: { type: :string },
-              family_name: { type: :string },
-              gender: { type: :string },
-              birthdate: { type: :string },
-              latest_identifier: { type: :string },
-              identifiers: {
-                type: :array,
-                items: {
-                  type: :object,
-                  properties: {
-                    patient_identifier_id: { type: :integer },
-                    patient_id: { type: :integer },
-                    identifier: { type: :string },
-                    identifier_type: { type: :string },
-                    preferred: { type: :boolean },
-                    location_id: { type: :integer },
-                    creator: { type: :integer },
-                    date_created: { type: :string },
-                    voided: { type: :boolean },
-                    voided_by: { type: :integer },
-                    date_voided: { type: :string },
-                    void_reason: { type: :string },
-                    uuid: { type: :string }
-                  }
-                }
-              }
+              neg: { type: :array, items: { type: :integer } },
+              pos: { type: :array, items: { type: :integer } }
             }
           },
-          duplicate_filing_number: {
+          hts_recency_results: {
             type: :object,
             properties: {
-              identifier: { type: :string },
-              identifiers: { type: :integer },
-              patient_ids: { type: :string }
+              recent: { type: :array, items: { type: :integer } },
+              long_term: { type: :array, items: { type: :integer } }
             }
           },
-          void_multiple_identifiers: {
-            type: :array,
-            items: { type: :integer },
-            example: [1, 2, 3],
-            description: 'Array of patient identifiers record ids'
-          },
-          patient_identifier_type: {
+          hts_index_common: {
             type: :object,
             properties: {
-              patient_identifier_type_id: { type: :integer },
-              name: { type: :string },
-              description: { type: :string },
-              format: { type: :string },
-              check_digit: { type: :integer },
-              creator: { type: :integer },
-              date_created: { type: :string },
-              required: { type: :integer },
-              format_description: { type: :string },
-              validator: { type: :string },
-              retired: { type: :integer },
-              retired_by: { type: :integer },
-              date_retired: { type: :string },
-              retire_reason: { type: :string },
-              uuid: { type: :string }
+              new_positives: { type: :array, items: { type: :integer } },
+              new_negatives: { type: :array, items: { type: :integer } },
+              known_positives: { type: :array, items: { type: :integer } },
+              documented_negatives: { type: :array, items: { type: :integer } }
             }
           },
-          patient_identifier: {
+          hts_tst_community: {
             type: :object,
             properties: {
-              patient_identifier_id: { type: :integer },
-              patient_id: { type: :integer },
-              identifier: { type: :string },
-              identifier_type: { type: :string },
-              preferred: { type: :boolean },
-              location_id: { type: :integer },
-              creator: { type: :integer },
-              date_created: { type: :string },
-              voided: { type: :boolean },
-              voided_by: { type: :integer },
-              date_voided: { type: :string },
-              void_reason: { type: :string },
-              uuid: { type: :string },
-              type: { "$ref": '#/components/schemas/patient_identifier_type' }
+              gender: { '$ref' => '#/components/schemas/gender' },
+              age_group: { '$ref' => '#/components/schemas/age_group' },
+              index_comm: { '$ref' => '#/components/schemas/hts_hiv_results' },
+              mobile_comm: { '$ref' => '#/components/schemas/hts_hiv_results' },
+              sns_comm: { '$ref' => '#/components/schemas/hts_hiv_results' },
+              vct_comm: { '$ref' => '#/components/schemas/hts_hiv_results' },
+              other_comm_tp: { '$ref' => '#/components/schemas/hts_hiv_results' }
             }
           },
-          person_attribute_type: {
+          hts_index: {
             type: :object,
             properties: {
-              person_attribute_type_id: { type: :integer },
-              name: { type: :string },
-              description: { type: :string },
-              format: { type: :string },
-              foreign_key: { type: :string },
-              searchable: { type: :integer },
-              creator: { type: :integer },
-              date_created: { type: :string },
-              changed_by: { type: :integer },
-              date_changed: { type: :string },
-              retired: { type: :integer },
-              retired_by: { type: :integer },
-              date_retired: { type: :string },
-              retire_reason: { type: :string },
-              edit_privilege: { type: :string },
-              uuid: { type: :string },
-              sort_weight: { type: :number }
+              gender: { '$ref' => '#/components/schemas/gender' },
+              age_group: { '$ref' => '#/components/schemas/age_group' },
+              index_clients: { type: :array, items: { type: :integer } },
+              offered_clients: { type: :array, items: { type: :integer } },
+              contacted_elicited: { type: :array, items: { type: :object, properties: {
+                patient: { type: :integer },
+                contacts: { type: :integer }
+              } } },
+              facility: { '$ref' => '#/components/schemas/hts_index_common' },
+              community: { '$ref' => '#/components/schemas/hts_index_common' }
             }
           },
-          person_attribute: {
+          hts_recent_community: {
             type: :object,
             properties: {
-              person_attribute_id: { type: :integer },
-              person_id: { type: :integer },
-              value: { type: :string },
-              person_attribute_type_id: { type: :integer },
-              creator: { type: :integer },
-              date_created: { type: :string },
-              changed_by: { type: :integer },
-              date_changed: { type: :string },
-              voided: { type: :integer },
-              voided_by: { type: :integer },
-              date_voided: { type: :string },
-              void_reason: { type: :string },
-              uuid: { type: :string },
-              type: { "$ref": '#/components/schemas/person_attribute_type' }
-            }
-          },
-          person_address: {
-            type: :object,
-            properties: {
-              person_address_id: { type: :integer },
-              person_id: { type: :integer },
-              preferred: { type: :integer },
-              address1: { type: :string },
-              address2: { type: :string },
-              city_village: { type: :string },
-              state_province: { type: :string },
-              postal_code: { type: :string },
-              country: { type: :string },
-              latitude: { type: :string },
-              longitude: { type: :string },
-              creator: { type: :integer },
-              date_created: { type: :string },
-              voided: { type: :integer },
-              voided_by: { type: :integer },
-              date_voided: { type: :string },
-              void_reason: { type: :string },
-              county_district: { type: :string },
-              neighborhood_cell: { type: :string },
-              region: { type: :string },
-              subregion: { type: :string },
-              township_division: { type: :string },
-              uuid: { type: :string }
-            }
-          },
-          person_name: {
-            type: :object,
-            properties: {
-              person_name_id: { type: :integer },
-              preferred: { type: :integer },
-              person_id: { type: :integer },
-              prefix: { type: :string },
-              given_name: { type: :string },
-              middle_name: { type: :string },
-              family_name_prefix: { type: :string },
-              family_name: { type: :string },
-              family_name2: { type: :string },
-              family_name_suffix: { type: :string },
-              degree: { type: :string },
-              creator: { type: :integer },
-              date_created: { type: :string },
-              voided: { type: :integer },
-              voided_by: { type: :integer },
-              date_voided: { type: :string },
-              void_reason: { type: :string },
-              changed_by: { type: :integer },
-              date_changed: { type: :string },
-              uuid: { type: :string }
-            }
-          },
-          person: {
-            type: :object,
-            properties: {
-              person_id: { type: :integer },
-              gender: { type: :string },
-              birthdate: { type: :string },
-              birthdate_estimated: { type: :integer },
-              dead: { type: :integer },
-              death_date: { type: :string },
-              cause_of_death: { type: :string },
-              creator: { type: :integer },
-              date_created: { type: :string },
-              changed_by: { type: :integer },
-              date_changed: { type: :string },
-              voided: { type: :integer },
-              voided_by: { type: :integer },
-              date_voided: { type: :string },
-              void_reason: { type: :string },
-              uuid: { type: :string },
-              names: { type: :array, items: { "$ref": '#/components/schemas/person_name' } },
-              addresses: { type: :array, items: { "$ref": '#/components/schemas/person_address' } },
-              patient_identifiers: { type: :array, items: { "$ref": '#/components/schemas/person_identifier' } },
-              person_attributes: { type: :array, items: { "$ref": '#/components/schemas/person_attribute' } }
-            }
-          },
-          tpt_status: {
-            type: :object,
-            properties: {
-              tpt: { type: :string },
-              completed: { type: :boolean },
-              tb_treatment: { type: :boolean },
-              tpt_init_date: { type: :string },
-              tpt_complete_date: { type: :string }
-            }
-          },
-          merge_audit: {
-            type: :object,
-            properties: {
-              id: { type: :integer },
-              primary_id: { type: :integer },
-              secondary_id: { type: :integer },
-              merge_type: { type: :string },
-              secondary_previous_merge_id: { type: :integer },
-              creator: { type: :integer },
-              voided: { type: :boolean },
-              voided_by: { type: :integer },
-              date_voided: { type: :string },
-              void_reason: { type: :string },
-              created_at: { type: :string },
-              updated_at: { type: :string }
-            }
-          },
-          patient: {
-            type: :object,
-            properties: {
-              patient_id: { type: :integer },
-              tribe: { type: :string },
-              creator: { type: :integer },
-              date_created: { type: :string },
-              changed_by: { type: :integer },
-              date_changed: { type: :string },
-              voided: { type: :integer },
-              voided_by: { type: :integer },
-              date_voided: { type: :string },
-              void_reason: { type: :string },
-              art_start_date: { type: :string },
-              tpt_status: { "$ref": '#/components/schemas/tpt_status' },
-              merge_history: { type: :array, items: { "$ref": '#/components/schemas/merge_audit' } },
-              person: { "$ref": '#/components/schemas/person' }
+              gender: { '$ref' => '#/components/schemas/gender' },
+              age_group: { '$ref' => '#/components/schemas/age_group' },
+              index: { '$ref' => '#/components/schemas/hts_recency_results' },
+              mobile_comm: { '$ref' => '#/components/schemas/hts_recency_results' },
+              sns_comm: { '$ref' => '#/components/schemas/hts_recency_results' },
+              vct_comm: { '$ref' => '#/components/schemas/hts_recency_results' },
+              other_comm_tp: { '$ref' => '#/components/schemas/hts_recency_results' }
             }
           }
         }

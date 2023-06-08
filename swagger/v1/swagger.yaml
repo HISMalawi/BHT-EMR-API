@@ -424,6 +424,55 @@ paths:
                             type: string
                           updated_at:
                             type: string
+  "/api/v1/hts_reports":
+    get:
+      summary: Returns HTS Reports
+      tags:
+      - HTS Reports
+      description: This returns a report based on the name of the report. For specific
+        response structure, do checkout the schema sections
+      security:
+      - api_key: []
+      parameters:
+      - name: start_date
+        in: query
+        schema:
+          type: string
+      - name: end_date
+        in: query
+        schema:
+          type: string
+      - name: name
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Example for HTS RECENT COMMUNITY
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/hts_recent_community"
+        '404':
+          description: Example if the report doesn't exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: string
+        '400':
+          description: Example start date is greater than end date
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: string
   "/api/v1/internal_sections":
     get:
       summary: Retrieve all internal sections
@@ -629,6 +678,69 @@ paths:
                   type: string
               required:
               - name
+  "/api/v1/observations":
+    post:
+      summary: Create new observation
+      tags:
+      - Observation Controller
+      security:
+      - api_key: []
+      parameters: []
+      responses:
+        '201':
+          description: Observation created
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                encounter_id:
+                  type: integer
+                observations:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      concept_id:
+                        type: integer
+                      obs_datetime:
+                        type: string
+                      value_coded:
+                        type: integer
+                      value_text:
+                        type: string
+                      value_numeric:
+                        type: number
+                      value_datetime:
+                        type: string
+                      value_drug:
+                        type: integer
+                      value_boolean:
+                        type: boolean
+                      child:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            concept_id:
+                              type: integer
+                            obs_datetime:
+                              type: string
+                            value_coded:
+                              type: integer
+                            value_text:
+                              type: string
+                            value_numeric:
+                              type: number
+                            value_datetime:
+                              type: string
+                            value_drug:
+                              type: integer
+                            value_boolean:
+                              type: boolean
+              required:
+              - concept_id
   "/api/v1/orders/radiology":
     post:
       summary: Adds a Radiology Order
@@ -2107,6 +2219,110 @@ components:
         latest_identifier:
           type: string
         identifiers:
+    gender:
+      type: string
+      enum:
+      - M
+      - F
+      - Unknown
+    age_group:
+      type: string
+      enum:
+      - Unknown
+      - "<1 year"
+      - 1-4 years
+      - 5-9 years
+      - 10-14 years
+      - 15-19 years
+      - 20-24 years
+      - 25-29 years
+      - 30-34 years
+      - 35-39 years
+      - 40-44 years
+      - 45-49 years
+      - 50-54 years
+      - 55-59 years
+      - 60-64 years
+      - 65-69 years
+      - 70-74 years
+      - 75-79 years
+      - 80-84 years
+      - 85-89 years
+      - 90 plus years
+    hts_hiv_results:
+      type: object
+      properties:
+        neg:
+          type: array
+          items:
+            type: integer
+        pos:
+          type: array
+          items:
+            type: integer
+    hts_recency_results:
+      type: object
+      properties:
+        recent:
+          type: array
+          items:
+            type: integer
+        long_term:
+          type: array
+          items:
+            type: integer
+    hts_index_common:
+      type: object
+      properties:
+        new_positives:
+          type: array
+          items:
+            type: integer
+        new_negatives:
+          type: array
+          items:
+            type: integer
+        known_positives:
+          type: array
+          items:
+            type: integer
+        documented_negatives:
+          type: array
+          items:
+            type: integer
+    hts_tst_community:
+      type: object
+      properties:
+        gender:
+          "$ref": "#/components/schemas/gender"
+        age_group:
+          "$ref": "#/components/schemas/age_group"
+        index_comm:
+          "$ref": "#/components/schemas/hts_hiv_results"
+        mobile_comm:
+          "$ref": "#/components/schemas/hts_hiv_results"
+        sns_comm:
+          "$ref": "#/components/schemas/hts_hiv_results"
+        vct_comm:
+          "$ref": "#/components/schemas/hts_hiv_results"
+        other_comm_tp:
+          "$ref": "#/components/schemas/hts_hiv_results"
+    hts_index:
+      type: object
+      properties:
+        gender:
+          "$ref": "#/components/schemas/gender"
+        age_group:
+          "$ref": "#/components/schemas/age_group"
+        index_clients:
+          type: array
+          items:
+            type: integer
+        offered_clients:
+          type: array
+          items:
+            type: integer
+        contacted_elicited:
           type: array
           items:
             type: object
@@ -2503,8 +2719,6 @@ components:
             "$ref": "#/components/schemas/merge_audit"
         person:
           "$ref": "#/components/schemas/person"
-security:
-- api_key: []
 servers:
 - url: http://{defaultHost}
   variables:
