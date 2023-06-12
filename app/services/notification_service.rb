@@ -31,7 +31,6 @@ class NotificationService
     return if alert_type != 'LIMS'
 
     lab = User.find_by(username: 'lab_daemon')
-    clear_notifications
     ActiveRecord::Base.transaction do
       alert = NotificationAlert.create!(text: alert_message.to_json, date_to_expire: Time.now + not_period.days,
                                         creator: lab, changed_by: lab, date_created: Time.now)
@@ -69,9 +68,5 @@ class NotificationService
         alert_id: notification_alert.id
       )
     end
-  end
-
-  def clear_notifications
-    NotificationClearJob.perform_later
   end
 end
