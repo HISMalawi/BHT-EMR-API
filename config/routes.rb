@@ -32,7 +32,11 @@ Rails.application.routes.draw do
 
 
       # notifications for nlims any features in the future
-      resources :notifications, only: %i[index update]
+      resources :notifications, only: %i[index update] do
+        collection do
+          put '/clear/:id', to: 'notifications#clear'
+        end
+      end
 
       # Not placed under users urls to allow crud on current user's roles
       resources :user_roles, only: %i[index create destroy]
