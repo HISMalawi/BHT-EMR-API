@@ -31,6 +31,21 @@ RSpec.configure do |config|
           }
         },
         schemas: {
+          notification_alert: {
+            type: :object,
+            properties: {
+              alert_id: { type: :integer },
+              text: { type: :string },
+              satisfied_by_any: { type: :boolean },
+              alert_read: { type: :boolean },
+              date_to_expire: { type: :string, format: 'date-time' },
+              creator: { type: :integer },
+              date_created: { type: :string, format: 'date-time' },
+              changed_by: { type: :integer },
+              date_changed: { type: :string, format: 'date-time' },
+              uuid: { type: :string }
+            }
+          },
           gender: { type: :string, enum: %w[M F Unknown] },
           age_group: { type: :string, enum: ['Unknown', '<1 year', '1-4 years', '5-9 years',
                                              '10-14 years', '15-19 years', '20-24 years', '25-29 years', '30-34 years',
