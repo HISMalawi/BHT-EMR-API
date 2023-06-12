@@ -26,6 +26,24 @@ class Api::V1::PeopleController < ApplicationController
     render json: Person.find(params[:id])
   end
 
+  def valid_provider_id
+    # get json of provider_ids
+    provider_id = params[:provider_id]
+    ids_json = JSON.parse(File.read("#{Rails.root}/db/hts_metadata/provider_ids.json"))
+    render json: ids_json.map { |q| q['htc_prov_id'] }.include?(provider_id)
+  end
+
+  def next_hts_linkage_ids_batch
+    ActiveRecord::Base.transaction do
+      max_id_property = GlobalProperty.find_or_create_by(property: 'hts.max_linkage_code_batch')
+      threshold_property = GlobalProperty.find_or_create_by(property: 'hts.linkage_code_batch_threshold')
+      max_id_value = max_id_property&.property_value&.to_i || 0
+      threshold = threshold_property&.property_value&.to_i || 1000
+      max_id_property.update(property_value: max_id_value + threshold)
+      render json: { min_id: max_id_value + 1, max_id: max_id_value + threshold }
+    end
+  end
+
   def create
     create_params, errors = required_params required: PersonService::PERSON_FIELDS,
                                             optional: [:middle_name]

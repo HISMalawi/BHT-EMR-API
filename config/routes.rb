@@ -25,9 +25,11 @@ Rails.application.routes.draw do
         post '/activate', to: 'users#activate'
         post '/deactivate', to: 'users#deactivate'
       end
-
+      
       resources :hts_reports, only: %i[index]
       get '/hts_stats' => 'hts_reports#daily_stats'
+      get '/valid_provider_id', to: 'people#valid_provider_id'
+      get '/next_hts_linkage_ids_batch', to: 'people#next_hts_linkage_ids_batch'
 
 
 
