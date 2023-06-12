@@ -17,6 +17,9 @@ module HTSService
       state = INITIAL_STATE
       loop do
         state = next_state state
+
+        HTSService::AITIntergration::AITIntergrationService.new(@patient.id-1).sync if state == END_STATE
+
         break if state == END_STATE
 
         LOGGER.debug "Loading encounter type: #{state}"
@@ -70,7 +73,8 @@ module HTSService
       DBS_ORDER => %i[not_from_community_accesspoint? task_not_done_today? eligible_for_dbs?],
 
       PREGNANCY_STATUS => %i[is_female_client?
-                             task_not_done_today?],
+                             task_not_done_today?
+                             age_greater_than_10_years?],
 
       CIRCUMCISION => %i[is_male_client?
                          client_not_circumcised?
@@ -78,7 +82,7 @@ module HTSService
 
       TESTING => %i[task_not_done_today?],
 
-      RECENCY => %i[not_from_community_accesspoint? can_perform_recency?],
+      RECENCY => %i[not_from_community_accesspoint? can_perform_recency? age_greater_than_10_years?],
 
       APPOINTMENT => %i[does_not_have_two_incoclusive_results?
                         task_not_done_today?
@@ -121,12 +125,14 @@ module HTSService
       @patient.gender == "F"
     end
 
+    def age_greater_than_10_years?
+      @patient.age > 10
+    end
+
     def eligible_for_dbs?
       # patient over 12 months then both current and previous test results are inconclusive
       # patient less than 12 months with HIV positive result
-      if recency_is_recent?
-        return true
-      end
+      return true if recency_is_recent?
       if age_below_1? && hiv_positive_at_health_facility_accesspoint?
         return true
       elsif !age_below_1? && !does_not_have_two_incoclusive_results?
