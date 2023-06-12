@@ -13,7 +13,11 @@ class NotificationAlert < ActiveRecord::Base
 
   has_many :notification_alert_recipients, class_name: 'NotificationAlertRecipient', foreign_key: :alert_id
 
+  # create a scope to get records
+  default_scope { where(alert_read: 0) }
+  scope :alert_read, -> { unscoped.where.not(alert_read: 0) }
+
   def check_uuid
-    self.uuid = SecureRandom.uuid if attributes.has_key?('uuid') && uuid.blank?
+    self.uuid = SecureRandom.uuid if attributes.key?('uuid') && uuid.blank?
   end
 end
