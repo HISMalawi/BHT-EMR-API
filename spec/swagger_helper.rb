@@ -46,6 +46,20 @@ RSpec.configure do |config|
               uuid: { type: :string }
             }
           },
+          lims_electronic_result: {
+            type: :object,
+            properties: {
+              date_ordered: { type: :string, format: 'date-time' },
+              given_name: { type: :string },
+              family_name: { type: :string },
+              arv_number: { type: :string },
+              patient_id: { type: :integer },
+              date_received: { type: :string, format: 'date-time' },
+              accession_number: { type: :string },
+              result: { type: :string },
+              test_name: { type: :string }
+            }
+          },
           gender: { type: :string, enum: %w[M F Unknown] },
           age_group: { type: :string, enum: ['Unknown', '<1 year', '1-4 years', '5-9 years',
                                              '10-14 years', '15-19 years', '20-24 years', '25-29 years', '30-34 years',
