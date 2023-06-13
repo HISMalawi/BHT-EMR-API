@@ -255,6 +255,32 @@ paths:
                 properties:
                   message:
                     type: string
+  api/v1/programs/1/reports/lims_electronic_results:
+    get:
+      summary: Retrieve LIMS ELECTRONIC RESULTS report
+      tags:
+      - Clinic Reports
+      description: This shows LIMS ELECTRONIC RESULTS report
+      security:
+      - api_key: []
+      parameters:
+      - name: start_date
+        in: query
+        schema:
+          type: string
+      - name: end_date
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: LIMS ELECTRONIC RESULTS Report found
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/lims_electronic_result"
   "/api/v1/radiology_set":
     get:
       summary: Retrieve all radiology sets
@@ -2277,6 +2303,29 @@ components:
           type: string
           format: date-time
         uuid:
+          type: string
+    lims_electronic_result:
+      type: object
+      properties:
+        date_ordered:
+          type: string
+          format: date-time
+        given_name:
+          type: string
+        family_name:
+          type: string
+        arv_number:
+          type: string
+        patient_id:
+          type: integer
+        date_received:
+          type: string
+          format: date-time
+        accession_number:
+          type: string
+        result:
+          type: string
+        test_name:
           type: string
     gender:
       type: string
