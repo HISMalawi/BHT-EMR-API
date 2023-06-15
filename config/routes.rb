@@ -25,6 +25,13 @@ Rails.application.routes.draw do
         post '/activate', to: 'users#activate'
         post '/deactivate', to: 'users#deactivate'
       end
+      
+      resources :hts_reports, only: %i[index]
+      get '/hts_stats' => 'hts_reports#daily_stats'
+      get '/valid_provider_id', to: 'people#valid_provider_id'
+      get '/next_hts_linkage_ids_batch', to: 'people#next_hts_linkage_ids_batch'
+
+
 
       # notifications for nlims any features in the future
       resources :notifications, only: %i[index update]
@@ -51,6 +58,7 @@ Rails.application.routes.draw do
         get '/labels/national_health_id' => 'patients#print_national_health_id_label'
         get '/labels/filing_number' => 'patients#print_filing_number'
         get 'labels/print_tb_number', to: 'patients#print_tb_number'
+        get 'labels/print_hts_linkage_code/:code', to: 'patients#print_hts_linkage_code'
         get 'labels/print_tb_lab_order_summary', to: 'patients#print_tb_lab_order_summary'
         get '/visits' => 'patients#visits'
         get '/visit' => 'patients#visit'
@@ -211,6 +219,7 @@ Rails.application.routes.draw do
         get '/barcode', to: 'drugs#print_barcode'
       end
       get '/arv_drugs' => 'drugs#arv_drugs'
+      get '/tb_drugs' => 'drugs#tb_drugs'
 
       resources :drug_orders
       resources :orders do
@@ -224,6 +233,7 @@ Rails.application.routes.draw do
 
       resource :global_properties
       resource :user_properties
+      get '/validate_properties' => 'user_properties#unique_property'
 
       resource :session_stats, path: 'stats/session'
 
@@ -301,6 +311,7 @@ Rails.application.routes.draw do
   get '/api/v1/dashboard_stats_for_syndromic_statistics' => 'api/v1/reports#syndromic_statistics'
   post '/api/v1/vl_maternal_status' => 'api/v1/reports#vl_maternal_status'
   post '/api/v1/patient_art_vl_dates' => 'api/v1/reports#patient_art_vl_dates'
+
 
   # SQA controller
   post '/api/v1/duplicate_identifier' => 'api/v1/cleaning#duplicate_identifier'
@@ -382,4 +393,5 @@ Rails.application.routes.draw do
 
   get '/api/v1/next_appointment', to: 'api/v1/appointments#next_appointment'
 
+  post 'api/v1/sync_to_ait', to: 'api/v1/patients#sync_to_ait'
 end

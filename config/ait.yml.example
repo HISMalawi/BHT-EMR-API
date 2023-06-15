@@ -1,0 +1,13 @@
+
+endpoint: https://commcaredev.hismalawi.org/a/egpafmw-development-space/importer/excel/bulk_upload_api/
+username: [username]
+password: [password]
+health_facility_id: 0258310b373544d1a49a7a782c4b4cef
+health_facility_name: African Bible College Health Centre
+district_id: 62eb26a4d6144e4d9cac3ea1bec00018
+district_name: Lilongwe
+region_id: 1e1a8ce104584615ab365f1824ca8246
+region_name: Central Region
+site_id: 6
+dhis2_code: 4040
+partner:

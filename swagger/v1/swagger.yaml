@@ -222,6 +222,30 @@ paths:
                       type: array
                       items:
                         type: integer
+                    breast_feeding:
+                      type: array
+                      items:
+                        type: integer
+                    skin_rash:
+                      type: array
+                      items:
+                        type: integer
+                    peripheral_neuropathy:
+                      type: array
+                      items:
+                        type: integer
+                    yellow_eyes:
+                      type: array
+                      items:
+                        type: integer
+                    nausea:
+                      type: array
+                      items:
+                        type: integer
+                    dizziness:
+                      type: array
+                      items:
+                        type: integer
         '404':
           description: TPT OUTCOME Report not found
           content:
@@ -400,6 +424,55 @@ paths:
                             type: string
                           updated_at:
                             type: string
+  "/api/v1/hts_reports":
+    get:
+      summary: Returns HTS Reports
+      tags:
+      - HTS Reports
+      description: This returns a report based on the name of the report. For specific
+        response structure, do checkout the schema sections
+      security:
+      - api_key: []
+      parameters:
+      - name: start_date
+        in: query
+        schema:
+          type: string
+      - name: end_date
+        in: query
+        schema:
+          type: string
+      - name: name
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Example for HTS RECENT COMMUNITY
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/hts_recent_community"
+        '404':
+          description: Example if the report doesn't exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: string
+        '400':
+          description: Example start date is greater than end date
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: string
   "/api/v1/internal_sections":
     get:
       summary: Retrieve all internal sections
@@ -605,6 +678,69 @@ paths:
                   type: string
               required:
               - name
+  "/api/v1/observations":
+    post:
+      summary: Create new observation
+      tags:
+      - Observation Controller
+      security:
+      - api_key: []
+      parameters: []
+      responses:
+        '201':
+          description: Observation created
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                encounter_id:
+                  type: integer
+                observations:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      concept_id:
+                        type: integer
+                      obs_datetime:
+                        type: string
+                      value_coded:
+                        type: integer
+                      value_text:
+                        type: string
+                      value_numeric:
+                        type: number
+                      value_datetime:
+                        type: string
+                      value_drug:
+                        type: integer
+                      value_boolean:
+                        type: boolean
+                      child:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            concept_id:
+                              type: integer
+                            obs_datetime:
+                              type: string
+                            value_coded:
+                              type: integer
+                            value_text:
+                              type: string
+                            value_numeric:
+                              type: number
+                            value_datetime:
+                              type: string
+                            value_drug:
+                              type: integer
+                            value_boolean:
+                              type: boolean
+              required:
+              - concept_id
   "/api/v1/orders/radiology":
     post:
       summary: Adds a Radiology Order
@@ -721,6 +857,476 @@ paths:
                 properties:
                   message:
                     type: string
+  "/api/v1/patients/{patient_id}/labels/national_health_id":
+    parameters:
+    - name: patient_id
+      in: path
+      description: patient_id
+      required: true
+      schema:
+        type: string
+    get:
+      summary: print_national_health_id_label patient
+      tags:
+      - Patients
+      description: Patient related endpoints
+      responses:
+        '200':
+          description: successful
+  "/api/v1/patients/{patient_id}/labels/filing_number":
+    parameters:
+    - name: patient_id
+      in: path
+      description: patient_id
+      required: true
+      schema:
+        type: string
+    get:
+      summary: print_filing_number patient
+      tags:
+      - Patients
+      description: Patient related endpoints
+      responses:
+        '200':
+          description: successful
+  "/api/v1/patients/{patient_id}/labels/print_tb_number":
+    parameters:
+    - name: patient_id
+      in: path
+      description: patient_id
+      required: true
+      schema:
+        type: string
+    get:
+      summary: print_tb_number patient
+      tags:
+      - Patients
+      description: Patient related endpoints
+      responses:
+        '200':
+          description: successful
+  "/api/v1/patients/{patient_id}/labels/print_tb_lab_order_summary":
+    parameters:
+    - name: patient_id
+      in: path
+      description: patient_id
+      required: true
+      schema:
+        type: string
+    get:
+      summary: print_tb_lab_order_summary patient
+      tags:
+      - Patients
+      description: Patient related endpoints
+      responses:
+        '200':
+          description: successful
+  "/api/v1/patients/{patient_id}/visits":
+    parameters:
+    - name: patient_id
+      in: path
+      description: patient_id
+      required: true
+      schema:
+        type: string
+    get:
+      summary: visits patient
+      tags:
+      - Patients
+      description: Patient related endpoints
+      responses:
+        '200':
+          description: successful
+  "/api/v1/patients/{patient_id}/visit":
+    parameters:
+    - name: patient_id
+      in: path
+      description: patient_id
+      required: true
+      schema:
+        type: string
+    get:
+      summary: visit patient
+      tags:
+      - Patients
+      description: Patient related endpoints
+      responses:
+        '200':
+          description: successful
+  "/api/v1/patients/{patient_id}/tpt_status":
+    parameters:
+    - name: patient_id
+      in: path
+      description: patient_id
+      required: true
+      schema:
+        type: string
+    get:
+      summary: tpt_status patient
+      tags:
+      - Patients
+      description: Patient related endpoints
+      responses:
+        '200':
+          description: successful
+  "/api/v1/patients/{patient_id}/drugs_received":
+    parameters:
+    - name: patient_id
+      in: path
+      description: patient_id
+      required: true
+      schema:
+        type: string
+    get:
+      summary: drugs_received patient
+      tags:
+      - Patients
+      description: Patient related endpoints
+      responses:
+        '200':
+          description: successful
+  "/api/v1/patients/{patient_id}/last_drugs_received":
+    parameters:
+    - name: patient_id
+      in: path
+      description: patient_id
+      required: true
+      schema:
+        type: string
+    get:
+      summary: last_drugs_received patient
+      tags:
+      - Patients
+      description: Patient related endpoints
+      responses:
+        '200':
+          description: successful
+  "/api/v1/patients/{patient_id}/drugs_orders_by_program":
+    parameters:
+    - name: patient_id
+      in: path
+      description: patient_id
+      required: true
+      schema:
+        type: string
+    get:
+      summary: drugs_orders_by_program patient
+      tags:
+      - Patients
+      description: Patient related endpoints
+      responses:
+        '200':
+          description: successful
+  "/api/v1/patients/{patient_id}/recent_lab_orders":
+    parameters:
+    - name: patient_id
+      in: path
+      description: patient_id
+      required: true
+      schema:
+        type: string
+    get:
+      summary: recent_lab_orders patient
+      tags:
+      - Patients
+      description: Patient related endpoints
+      responses:
+        '200':
+          description: successful
+  "/api/v1/patients/{patient_id}/current_bp_drugs":
+    parameters:
+    - name: patient_id
+      in: path
+      description: patient_id
+      required: true
+      schema:
+        type: string
+    get:
+      summary: current_bp_drugs patient
+      tags:
+      - Patients
+      description: Patient related endpoints
+      responses:
+        '200':
+          description: successful
+  "/api/v1/patients/{patient_id}/last_bp_drugs_dispensation":
+    parameters:
+    - name: patient_id
+      in: path
+      description: patient_id
+      required: true
+      schema:
+        type: string
+    get:
+      summary: last_bp_drugs patient
+      tags:
+      - Patients
+      description: Patient related endpoints
+      responses:
+        '200':
+          description: successful
+  "/api/v1/patients/{patient_id}/median_weight_height":
+    parameters:
+    - name: patient_id
+      in: path
+      description: patient_id
+      required: true
+      schema:
+        type: string
+    get:
+      summary: find_median_weight_and_height patient
+      tags:
+      - Patients
+      description: Patient related endpoints
+      responses:
+        '200':
+          description: successful
+  "/api/v1/patients/{patient_id}/bp_trail":
+    parameters:
+    - name: patient_id
+      in: path
+      description: patient_id
+      required: true
+      schema:
+        type: string
+    get:
+      summary: bp_readings_trail patient
+      tags:
+      - Patients
+      description: Patient related endpoints
+      responses:
+        '200':
+          description: successful
+  "/api/v1/patients/{patient_id}/eligible_for_htn_screening":
+    parameters:
+    - name: patient_id
+      in: path
+      description: patient_id
+      required: true
+      schema:
+        type: string
+    get:
+      summary: eligible_for_htn_screening patient
+      tags:
+      - Patients
+      description: Patient related endpoints
+      responses:
+        '200':
+          description: successful
+  "/api/v1/patients/{patient_id}/filing_number":
+    parameters:
+    - name: patient_id
+      in: path
+      description: patient_id
+      required: true
+      schema:
+        type: string
+    post:
+      summary: assign_filing_number patient
+      tags:
+      - Patients
+      description: Patient related endpoints
+      responses:
+        '200':
+          description: successful
+  "/api/v1/patients/{patient_id}/past_filing_numbers":
+    parameters:
+    - name: patient_id
+      in: path
+      description: patient_id
+      required: true
+      schema:
+        type: string
+    get:
+      summary: filing_number_history patient
+      tags:
+      - Patients
+      description: Patient related endpoints
+      responses:
+        '200':
+          description: successful
+  "/api/v1/patients/{patient_id}/assign_tb_number":
+    parameters:
+    - name: patient_id
+      in: path
+      description: patient_id
+      required: true
+      schema:
+        type: string
+    get:
+      summary: assign_tb_number patient
+      tags:
+      - Patients
+      description: Patient related endpoints
+      responses:
+        '200':
+          description: successful
+  "/api/v1/patients/{patient_id}/npid":
+    parameters:
+    - name: patient_id
+      in: path
+      description: patient_id
+      required: true
+      schema:
+        type: string
+    post:
+      summary: assign_npid patient
+      tags:
+      - Patients
+      description: Patient related endpoints
+      responses:
+        '200':
+          description: successful
+  "/api/v1/patients/{patient_id}/remaining_bp_drugs":
+    parameters:
+    - name: patient_id
+      in: path
+      description: patient_id
+      required: true
+      schema:
+        type: string
+    post:
+      summary: remaining_bp_drugs patient
+      tags:
+      - Patients
+      description: Patient related endpoints
+      responses:
+        '200':
+          description: successful
+  "/api/v1/patients/{patient_id}/update_or_create_htn_state":
+    parameters:
+    - name: patient_id
+      in: path
+      description: patient_id
+      required: true
+      schema:
+        type: string
+    post:
+      summary: update_or_create_htn_state patient
+      tags:
+      - Patients
+      description: Patient related endpoints
+      responses:
+        '200':
+          description: successful
+  "/api/v1/patients":
+    get:
+      summary: list patients
+      tags:
+      - Patients
+      description: Patient related endpoints
+      responses:
+        '200':
+          description: successful
+    post:
+      summary: create patient
+      tags:
+      - Patients
+      description: Patient related endpoints
+      responses:
+        '200':
+          description: successful
+  "/api/v1/patients/{id}":
+    parameters:
+    - name: id
+      in: path
+      description: id
+      required: true
+      schema:
+        type: string
+    get:
+      summary: show patient
+      tags:
+      - Patients
+      description: Patient related endpoints
+      security:
+      - api_key: []
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/patient"
+    put:
+      summary: update patient
+      tags:
+      - Patients
+      description: Patient related endpoints
+      responses:
+        '200':
+          description: successful
+    delete:
+      summary: delete patient
+      tags:
+      - Patients
+      description: Patient related endpoints
+      responses:
+        '200':
+          description: successful
+  "/api/v1/search/patients/by_npid":
+    get:
+      summary: search_by_npid patient
+      tags:
+      - Patients
+      description: Patient related endpoints
+      responses:
+        '200':
+          description: successful
+  "/api/v1/search/patients/by_identifier":
+    get:
+      summary: search_by_identifier patient
+      tags:
+      - Patients
+      description: Patient related endpoints
+      responses:
+        '200':
+          description: successful
+  "/api/v1/search/patients":
+    get:
+      summary: search_by_name_and_gender patient
+      tags:
+      - Patients
+      description: Patient related endpoints
+      responses:
+        '200':
+          description: successful
+  "/api/v1/archiving_candidates":
+    get:
+      summary: find_archiving_candidates patient
+      tags:
+      - Patients
+      description: Patient related endpoints
+      responses:
+        '200':
+          description: successful
+  "/api/v1/last_drugs_pill_count":
+    get:
+      summary: last_drugs_pill_count patient
+      tags:
+      - Patients
+      description: Patient related endpoints
+      responses:
+        '200':
+          description: successful
+  "/api/v1/tpt_prescription_count":
+    get:
+      summary: tpt_prescription_count patient
+      tags:
+      - Patients
+      description: Patient related endpoints
+      responses:
+        '200':
+          description: successful
+  "/api/v1/last_cxca_screening_details":
+    get:
+      summary: last_cxca_screening_details patient
+      tags:
+      - Patients
+      description: Patient related endpoints
+      responses:
+        '200':
+          description: successful
   "/api/v1/programs/12/reports/pmtct_stat_art":
     get:
       summary: Retrieve PMTCT STAT ART
@@ -1373,6 +1979,109 @@ paths:
                       type: string
                     current_age:
                       type: string
+                    landmark:
+                      type: string
+  "/api/v1/latest_regimen_dispensed":
+    get:
+      summary: latest_regimen_dispensed report
+      tags:
+      - Reports
+      description: Reports Endpoints
+      parameters:
+      - name: start_date
+        in: query
+        format: date
+        example: '2022-10-1'
+        required: true
+        schema:
+          type: string
+      - name: end_date
+        in: query
+        format: date
+        example: '2022-12-1'
+        required: true
+        schema:
+          type: string
+      - name: date
+        in: query
+        format: date
+        example: '2022-12-1'
+        required: true
+        schema:
+          type: string
+      - name: program_id
+        in: query
+        example: 1
+        required: true
+        schema:
+          type: integer
+      - name: rebuild_outcome
+        in: query
+        example: true
+        required: true
+        schema:
+          type: boolean
+      security:
+      - api_key: []
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    patient_id:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          order_id:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                              quantity:
+                                type: integer
+                              dispensation_date:
+                                type: string
+                                format: date
+                                example: '2019-01-01'
+                              identifier:
+                                type: string
+                              gender:
+                                type: string
+                              birthdate:
+                                type: string
+                                format: date
+                                example: '2019-01-01'
+                              drug_id:
+                                type: integer
+                              pack_sizes:
+                                type: array
+                                items:
+                                  type: integer
+                              vl_latest_order_date:
+                                type: string
+                                format: date
+                                example: '2019-01-01'
+                              vl_latest_result_date:
+                                type: string
+                                format: date
+                                example: '2019-01-01'
+                              vl_latest_result:
+                                type: string
+        '500':
+          description: failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
   "/api/v1/rollback/merge_history":
     get:
       summary: Retrieve merge history
@@ -1510,6 +2219,110 @@ components:
         latest_identifier:
           type: string
         identifiers:
+    gender:
+      type: string
+      enum:
+      - M
+      - F
+      - Unknown
+    age_group:
+      type: string
+      enum:
+      - Unknown
+      - "<1 year"
+      - 1-4 years
+      - 5-9 years
+      - 10-14 years
+      - 15-19 years
+      - 20-24 years
+      - 25-29 years
+      - 30-34 years
+      - 35-39 years
+      - 40-44 years
+      - 45-49 years
+      - 50-54 years
+      - 55-59 years
+      - 60-64 years
+      - 65-69 years
+      - 70-74 years
+      - 75-79 years
+      - 80-84 years
+      - 85-89 years
+      - 90 plus years
+    hts_hiv_results:
+      type: object
+      properties:
+        neg:
+          type: array
+          items:
+            type: integer
+        pos:
+          type: array
+          items:
+            type: integer
+    hts_recency_results:
+      type: object
+      properties:
+        recent:
+          type: array
+          items:
+            type: integer
+        long_term:
+          type: array
+          items:
+            type: integer
+    hts_index_common:
+      type: object
+      properties:
+        new_positives:
+          type: array
+          items:
+            type: integer
+        new_negatives:
+          type: array
+          items:
+            type: integer
+        known_positives:
+          type: array
+          items:
+            type: integer
+        documented_negatives:
+          type: array
+          items:
+            type: integer
+    hts_tst_community:
+      type: object
+      properties:
+        gender:
+          "$ref": "#/components/schemas/gender"
+        age_group:
+          "$ref": "#/components/schemas/age_group"
+        index_comm:
+          "$ref": "#/components/schemas/hts_hiv_results"
+        mobile_comm:
+          "$ref": "#/components/schemas/hts_hiv_results"
+        sns_comm:
+          "$ref": "#/components/schemas/hts_hiv_results"
+        vct_comm:
+          "$ref": "#/components/schemas/hts_hiv_results"
+        other_comm_tp:
+          "$ref": "#/components/schemas/hts_hiv_results"
+    hts_index:
+      type: object
+      properties:
+        gender:
+          "$ref": "#/components/schemas/gender"
+        age_group:
+          "$ref": "#/components/schemas/age_group"
+        index_clients:
+          type: array
+          items:
+            type: integer
+        offered_clients:
+          type: array
+          items:
+            type: integer
+        contacted_elicited:
           type: array
           items:
             type: object
@@ -1558,8 +2371,354 @@ components:
       - 2
       - 3
       description: Array of patient identifiers record ids
-security:
-- api_key: []
+    patient_identifier_type:
+      type: object
+      properties:
+        patient_identifier_type_id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        format:
+          type: string
+        check_digit:
+          type: integer
+        creator:
+          type: integer
+        date_created:
+          type: string
+        required:
+          type: integer
+        format_description:
+          type: string
+        validator:
+          type: string
+        retired:
+          type: integer
+        retired_by:
+          type: integer
+        date_retired:
+          type: string
+        retire_reason:
+          type: string
+        uuid:
+          type: string
+    patient_identifier:
+      type: object
+      properties:
+        patient_identifier_id:
+          type: integer
+        patient_id:
+          type: integer
+        identifier:
+          type: string
+        identifier_type:
+          type: string
+        preferred:
+          type: boolean
+        location_id:
+          type: integer
+        creator:
+          type: integer
+        date_created:
+          type: string
+        voided:
+          type: boolean
+        voided_by:
+          type: integer
+        date_voided:
+          type: string
+        void_reason:
+          type: string
+        uuid:
+          type: string
+        type:
+          "$ref": "#/components/schemas/patient_identifier_type"
+    person_attribute_type:
+      type: object
+      properties:
+        person_attribute_type_id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        format:
+          type: string
+        foreign_key:
+          type: string
+        searchable:
+          type: integer
+        creator:
+          type: integer
+        date_created:
+          type: string
+        changed_by:
+          type: integer
+        date_changed:
+          type: string
+        retired:
+          type: integer
+        retired_by:
+          type: integer
+        date_retired:
+          type: string
+        retire_reason:
+          type: string
+        edit_privilege:
+          type: string
+        uuid:
+          type: string
+        sort_weight:
+          type: number
+    person_attribute:
+      type: object
+      properties:
+        person_attribute_id:
+          type: integer
+        person_id:
+          type: integer
+        value:
+          type: string
+        person_attribute_type_id:
+          type: integer
+        creator:
+          type: integer
+        date_created:
+          type: string
+        changed_by:
+          type: integer
+        date_changed:
+          type: string
+        voided:
+          type: integer
+        voided_by:
+          type: integer
+        date_voided:
+          type: string
+        void_reason:
+          type: string
+        uuid:
+          type: string
+        type:
+          "$ref": "#/components/schemas/person_attribute_type"
+    person_address:
+      type: object
+      properties:
+        person_address_id:
+          type: integer
+        person_id:
+          type: integer
+        preferred:
+          type: integer
+        address1:
+          type: string
+        address2:
+          type: string
+        city_village:
+          type: string
+        state_province:
+          type: string
+        postal_code:
+          type: string
+        country:
+          type: string
+        latitude:
+          type: string
+        longitude:
+          type: string
+        creator:
+          type: integer
+        date_created:
+          type: string
+        voided:
+          type: integer
+        voided_by:
+          type: integer
+        date_voided:
+          type: string
+        void_reason:
+          type: string
+        county_district:
+          type: string
+        neighborhood_cell:
+          type: string
+        region:
+          type: string
+        subregion:
+          type: string
+        township_division:
+          type: string
+        uuid:
+          type: string
+    person_name:
+      type: object
+      properties:
+        person_name_id:
+          type: integer
+        preferred:
+          type: integer
+        person_id:
+          type: integer
+        prefix:
+          type: string
+        given_name:
+          type: string
+        middle_name:
+          type: string
+        family_name_prefix:
+          type: string
+        family_name:
+          type: string
+        family_name2:
+          type: string
+        family_name_suffix:
+          type: string
+        degree:
+          type: string
+        creator:
+          type: integer
+        date_created:
+          type: string
+        voided:
+          type: integer
+        voided_by:
+          type: integer
+        date_voided:
+          type: string
+        void_reason:
+          type: string
+        changed_by:
+          type: integer
+        date_changed:
+          type: string
+        uuid:
+          type: string
+    person:
+      type: object
+      properties:
+        person_id:
+          type: integer
+        gender:
+          type: string
+        birthdate:
+          type: string
+        birthdate_estimated:
+          type: integer
+        dead:
+          type: integer
+        death_date:
+          type: string
+        cause_of_death:
+          type: string
+        creator:
+          type: integer
+        date_created:
+          type: string
+        changed_by:
+          type: integer
+        date_changed:
+          type: string
+        voided:
+          type: integer
+        voided_by:
+          type: integer
+        date_voided:
+          type: string
+        void_reason:
+          type: string
+        uuid:
+          type: string
+        names:
+          type: array
+          items:
+            "$ref": "#/components/schemas/person_name"
+        addresses:
+          type: array
+          items:
+            "$ref": "#/components/schemas/person_address"
+        patient_identifiers:
+          type: array
+          items:
+            "$ref": "#/components/schemas/person_identifier"
+        person_attributes:
+          type: array
+          items:
+            "$ref": "#/components/schemas/person_attribute"
+    tpt_status:
+      type: object
+      properties:
+        tpt:
+          type: string
+        completed:
+          type: boolean
+        tb_treatment:
+          type: boolean
+        tpt_init_date:
+          type: string
+        tpt_complete_date:
+          type: string
+    merge_audit:
+      type: object
+      properties:
+        id:
+          type: integer
+        primary_id:
+          type: integer
+        secondary_id:
+          type: integer
+        merge_type:
+          type: string
+        secondary_previous_merge_id:
+          type: integer
+        creator:
+          type: integer
+        voided:
+          type: boolean
+        voided_by:
+          type: integer
+        date_voided:
+          type: string
+        void_reason:
+          type: string
+        created_at:
+          type: string
+        updated_at:
+          type: string
+    patient:
+      type: object
+      properties:
+        patient_id:
+          type: integer
+        tribe:
+          type: string
+        creator:
+          type: integer
+        date_created:
+          type: string
+        changed_by:
+          type: integer
+        date_changed:
+          type: string
+        voided:
+          type: integer
+        voided_by:
+          type: integer
+        date_voided:
+          type: string
+        void_reason:
+          type: string
+        art_start_date:
+          type: string
+        tpt_status:
+          "$ref": "#/components/schemas/tpt_status"
+        merge_history:
+          type: array
+          items:
+            "$ref": "#/components/schemas/merge_audit"
+        person:
+          "$ref": "#/components/schemas/person"
 servers:
 - url: http://{defaultHost}
   variables:
