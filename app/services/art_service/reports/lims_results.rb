@@ -21,7 +21,7 @@ module ARTService
         ActiveRecord::Base.connection.select_all <<~SQL
           SELECT o.start_date AS date_ordered, pn.given_name, pn.family_name, pi.identifier AS arv_number, e.patient_id,
           las.date_received, o.accession_number, CONCAT(COALESCE(res.value_modifier, '='), COALESCE(res.value_text, res.value_numeric)) AS result,
-          cn.name AS test_name, las.acknowledgement_type AS result_delivery_mode
+          cn.name AS test_name, las.acknowledgement_type AS result_delivery_mode, null AS order_status
           FROM orders o
           INNER JOIN lab_lims_order_mappings llom ON llom.order_id = o.order_id
           LEFT JOIN lims_acknowledgement_statuses las ON las.order_id = o.order_id
