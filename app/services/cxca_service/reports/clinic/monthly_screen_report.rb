@@ -50,28 +50,29 @@ module CXCAService::Reports::Clinic
 
     def get_totals query
       report["totals"] ||= {}
-      report["totals"]["total_screened"] = query.map { |q| q["person_id"] }.uniq
-      report["totals"]["total_negative"] = query.select { |q| q["screening_results"].to_s.downcase.in?(CxCa_TX_OUTCOMES[:negative]) }.map { |q| q["person_id"] }.uniq
+      report["totals"]["total_screened"] = query&.map { |q| q["person_id"] }&.uniq
+      report["totals"]["total_negative"] = query.select { |q| q["screening_results"]&.to_s.downcase&.in?(CxCa_TX_OUTCOMES[:negative]) }&.map { |q| q["person_id"] }.uniq
       report["totals"]["total_via_plus_eligible_for_same_day_tx"] = query.select { |d| d["via_result"].to_s.downcase == "VIA positive" || d["screening_results"] == "VIA positive" && (d["tx_option"] == "Same day treatment") }.uniq
-      report["totals"]["total_positive"] = query.select { |q| q["screening_results"].to_s.downcase.in?(CxCa_TX_OUTCOMES[:positive]) }.map { |q| q["person_id"] }.uniq
-      report["totals"]["total_suspect_cancer"] = query.select { |q| q["screening_results"].to_s.downcase.in?(CxCa_TX_OUTCOMES[:suspected]) }.map { |q| q["person_id"] }.uniq
+      report["totals"]["total_positive"] = query.select { |q| q["screening_results"]&.to_s&.downcase&.in?(CxCa_TX_OUTCOMES[:positive]) }&.map { |q| q["person_id"] }.uniq
+      report["totals"]["total_suspect_cancer"] = query.select { |q| q["screening_results"]&.to_s&.downcase&.in?(CxCa_TX_OUTCOMES[:suspected]) }&.map { |q| q["person_id"] }.uniq
     end
 
     def get_indicators(x, age_group)
       groups = {}
       groups["age_group"] = age_group
       CxCa_TX_OUTCOMES.each do |(name, values)|
-        groups[name] = x.select { |q| q["screening_results"].to_s.downcase.in?(values) }.map { |q| q["person_id"] }.uniq
+        groups[name] = x.select { |q| q["screening_results"].to_s.downcase.in?(values) }&.map { |q| q["person_id"] }.uniq
       end
+      groups["for_same_day_tx"] = x.select { |d| d["tx_option"] == "Same day treatment" }&.map { |q| q["person_id"] }.uniq
       groups
     end
 
     def fetch_query
       Person.connection.select_all(
         Person.joins(patient: :encounters)
-          .where(encounter: { program_id: CxCa_PROGRAM.id, encounter_datetime: @start_date..@end_date })
-          .joins(<<~SQL)
-            LEFT JOIN obs reason_for_visit ON reason_for_visit.person_id = person.person_id
+        .where(encounter: { program_id: CxCa_PROGRAM.id, encounter_datetime: @start_date..@end_date })
+        .joins(<<~SQL)
+        LEFT JOIN obs reason_for_visit ON reason_for_visit.person_id = person.person_id
             AND reason_for_visit.voided = 0
             AND reason_for_visit.concept_id = #{concept("Reason for visit").concept_id}
             LEFT JOIN concept_name reason_name ON reason_name.concept_id = reason_for_visit.value_coded
