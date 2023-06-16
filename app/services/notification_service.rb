@@ -40,7 +40,7 @@ class NotificationService
   end
 
   def not_period
-    result = GlobalProperty.where(property: 'notification_period')&.first
+    result = GlobalProperty.where(property: 'notification.period')&.first
     return result.property_value.to_i if result.present?
 
     7 # default to 7 days
