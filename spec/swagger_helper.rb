@@ -57,7 +57,9 @@ RSpec.configure do |config|
               date_received: { type: :string, format: 'date-time' },
               accession_number: { type: :string },
               result: { type: :string },
-              test_name: { type: :string }
+              test_name: { type: :string },
+              result_delivery_mode: { type: :string },
+              status: { type: :string }
             }
           },
           gender: { type: :string, enum: %w[M F Unknown] },
