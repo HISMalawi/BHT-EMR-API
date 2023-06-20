@@ -63,11 +63,11 @@ module HtsService
         end
 
         def fetch_confirmatory_clients
-          @data["confirmatory_positive_total_prev_pos_professional_test"] = filter_hash("hiv_group", concept("Confirmatory Positive").concept_id)
+          @data["confirmatory_positive_total_prev_pos_professional_test"] = filter_hash("hiv_group", concept("Positive Re-Test").concept_id)
           @data["confirmed_positive_male"] = @data["confirmatory_positive_total_prev_pos_professional_test"].select { |q| q["gender"] == "M" }
           @data["confirmed_positive_female"] = @data["confirmatory_positive_total_prev_pos_professional_test"].select { |q| q["gender"] == "F" }
 
-          @data["confirmatory_inconclusive_total_prev_pos_professional_test"] = filter_hash("hiv_group", concept("Confirmatory Inconclusive").concept_id)
+          @data["confirmatory_inconclusive_total_prev_pos_professional_test"] = filter_hash("hiv_group", concept("Inconclusive Re-Test").concept_id)
           @data["confirmed_inconclusive_male"] = @data["confirmatory_inconclusive_total_prev_pos_professional_test"].select { |q| q["gender"] == "M" }
           @data["confirmed_inconclusive_female"] = @data["confirmatory_inconclusive_total_prev_pos_professional_test"].select { |q| q["gender"] == "F" }
           @data["new_exposed_infant"] = filter_hash("hiv_group", concept("New exposed infant").concept_id)
