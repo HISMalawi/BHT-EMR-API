@@ -12,8 +12,8 @@ module HtsService
         NEW_POSITIVE = concept('New Positive').concept_id
         NEW_EXPOSED_INFANT = concept('New exposed infant').concept_id
         NEW_INCONCLUSIVE = concept('New Inconclusive').concept_id
-        CONFIRMATORY_POSITIVE = concept('Confirmatory Positive').concept_id
-        CONFIRMATORY_INCONCLUSIVE = concept('Confirmatory Inconclusive').concept_id
+        CONFIRMATORY_POSITIVE = concept('Positive Re-Test').concept_id
+        CONFIRMATORY_INCONCLUSIVE = concept('Inconclusive Re-Test').concept_id
         HIV_GROUP = concept('HIV group').concept_id
         LAST_TESTED = concept('Previous HIV Test Results').concept_id
         PARTNER_PRESENT = concept('Partner present').concept_id

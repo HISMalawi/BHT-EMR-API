@@ -148,9 +148,9 @@ module HtsService
           @data["hiv_group_new_negative"] = filter_hash('hiv_group', concept("New Negative").concept_id)
           @data["hiv_group_exposed_infant"] = filter_hash('hiv_group', concept("New exposed infant").concept_id)
           @data["hiv_group_negative"] = filter_hash('hiv_group', concept("Negative").concept_id)
-          @data["hiv_group_positive_retest"] = filter_hash('hiv_group', concept("Confirmatory Positive").concept_id)
+          @data["hiv_group_positive_retest"] = filter_hash('hiv_group', concept("Positive Re-Test").concept_id)
           @data["hiv_group_new_inconclusive"] = filter_hash('hiv_group', concept("New Inconclusive").concept_id)
-          @data["hiv_group_inconclusive_retest"] = filter_hash('hiv_group', concept("Confirmatory Inconclusive").concept_id)
+          @data["hiv_group_inconclusive_retest"] = filter_hash('hiv_group', concept("Inconclusive Re-Test").concept_id)
         end
 
         def fetch_retest_referral
