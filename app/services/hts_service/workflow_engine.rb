@@ -18,7 +18,7 @@ module HTSService
       loop do
         state = next_state state
 
-        HTSService::AITIntergration::AITIntergrationService.new(@patient.id-1).sync if state == END_STATE
+        AITIntergrationJob.perform_later(@patient.id) if state == END_STATE
 
         break if state == END_STATE
 
@@ -89,8 +89,8 @@ module HTSService
                         done_screening_today?
                         not_hiv_positive_at_health_facility_accesspoint?],
 
-      ART_INITIATION => %i[no_art_referral?
-                           hiv_positive_at_health_facility_accesspoint?],
+      ART_INITIATION => %i[no_art_referral? hiv_positive_at_health_facility_accesspoint?
+                           not_taken_arvs_in_last_7_days? previous_hiv_not_positive?],
 
       HTS_CONTACT => %i[hiv_positive_at_health_facility_accesspoint?],
 
@@ -158,6 +158,40 @@ module HTSService
 
     def not_eligible_for_dbs?
       !eligible_for_dbs?
+    end
+
+    def not_taken_arvs_in_last_7_days?
+      query = Observation.joins(:encounter).where(
+        person: @patient.person,
+        encounter: {
+          program_id: @program.program_id,
+          encounter_type: encounter_type("TESTING"),
+        }
+        ).where("encounter_datetime BETWEEN ? AND ?", *TimeUtils.day_bounds(@date))
+        .order("encounter_datetime DESC")
+
+      taken_arvs = query.where(concept_id: concept("Taken ARV before").concept_id)
+      time_since_last_arv = query.where(concept_id: concept("Time since last taken medication").concept_id)
+
+      if taken_arvs.last&.answer_string&.strip == "Yes" && parse_date(time_since_last_arv&.last&.value_datetime) >= 7.days.ago
+        return false
+      end
+      return true
+    end
+
+    def previous_hiv_not_positive?
+      query = Observation.joins(:encounter).where(
+        person: @patient.person,
+        concept_id: concept("Previous HIV Test Results").concept_id,
+        encounter: {
+          program_id: @program.program_id,
+          encounter_type: encounter_type("TESTING"),
+        }
+        ).where("encounter_datetime BETWEEN ? AND ?", *TimeUtils.day_bounds(@date))
+        .order("encounter_datetime DESC")
+      return true if query.blank?
+      return false if /positive/.match?(query.last&.answer_string&.downcase)
+      return true
     end
 
     def age_below_1?
