@@ -1349,14 +1349,14 @@ EOF
         registered = []
         if month_str == '4+ months'
           data = ActiveRecord::Base.connection.select_all(
-            "SELECT patient_id, died_in(t.patient_id, cum_outcome, date_enrolled) died_in FROM temp_patient_outcomes o
+            "SELECT patient_id, died_in(t.patient_id, cum_outcome, earliest_start_date) died_in FROM temp_patient_outcomes o
             INNER JOIN temp_earliest_start_date t USING(patient_id)
             WHERE cum_outcome = 'Patient died' GROUP BY patient_id
             HAVING died_in IN ('4+ months', 'Unknown')"
           )
         else
           data = ActiveRecord::Base.connection.select_all(
-            "SELECT patient_id, died_in(t.patient_id, cum_outcome, date_enrolled) died_in FROM temp_patient_outcomes o
+            "SELECT patient_id, died_in(t.patient_id, cum_outcome, earliest_start_date) died_in FROM temp_patient_outcomes o
             INNER JOIN temp_earliest_start_date t USING(patient_id)
             WHERE cum_outcome = 'Patient died' GROUP BY patient_id
             HAVING died_in = '#{month_str}'"
