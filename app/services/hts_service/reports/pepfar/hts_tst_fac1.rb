@@ -30,8 +30,8 @@ module HtsService::Reports::Pepfar
     def calc_age_groups(data, age_group)
       x = data.select { |q| q["age_group"] == age_group.values.first }
       {
-        pos: x.select { |q| q["status"] == HIV_POSITIVE }.map { |q| q["person_id"] },
-        neg: x.select { |q| q["status"] == HIV_NEGATIVE }.map { |q| q["person_id"] },
+        pos: x.select { |q| q["status"] == concept('Positive').concept_id }.map { |q| q["person_id"] },
+        neg: x.select { |q| q["status"] == concept('Negative').concept_id }.map { |q| q["person_id"] },
       }
     end
 
@@ -62,12 +62,12 @@ module HtsService::Reports::Pepfar
       query = his_patients_rev
         .joins(<<-SQL)
         INNER JOIN obs facility ON facility.person_id = person.person_id
-        AND facility.concept_id = #{TEST_LOCATION}
+        AND facility.concept_id = #{concept('Location where test took place').concept_id}
         INNER JOIN obs access_type ON access_type.person_id = person.person_id
-        AND access_type.concept_id = #{HTS_ACCESS_TYPE}
+        AND access_type.concept_id = #{concept('HTS Access Type').concept_id}
         AND access_type.value_coded = #{concept('Health facility').concept_id}
         INNER JOIN obs hiv_status ON hiv_status.person_id = person.person_id
-        AND hiv_status.concept_id = #{HIV_STATUS_OBS}
+        AND hiv_status.concept_id = #{concept('HIV status').concept_id}
         SQL
         .select("disaggregated_age_group(person.birthdate, '#{@end_date.to_date}') as age_group, person.person_id, person.gender, facility.value_text as access_point, hiv_status.value_coded as status")
         .group("person.person_id")
