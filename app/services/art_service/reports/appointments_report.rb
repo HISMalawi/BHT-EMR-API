@@ -7,7 +7,7 @@ module ARTService
     encounter_names = [
       'VITALS','HIV STAGING',
       'APPOINTMENT','HIV CLINIC REGISTRATION',
-      'ART_FOLLOWUP','LAB','TREATMENT','UPDATE OUTCOME',
+      'ART_FOLLOWUP','TREATMENT','UPDATE OUTCOME',
       'HIV RECEPTION','HIV CLINIC CONSULTATION',
       'DISPENSING','LAB ORDERS','ART ADHERENCE',
       'GIVE LAB RESULTS','CERVICAL CANCER SCREENING',
@@ -140,14 +140,14 @@ module ARTService
 
 
       def missed_appointment?(obs)
-        client_came?(obs.person_id, obs.value_datetime)
+        client_came?(obs.person_id, obs.value_datetime, obs.encounter.encounter_datetime.to_date + 1.day)
       end
 
-      def client_came?(person_id, value_datetime)
+      def client_came?(person_id, value_datetime, day_after_visit_date)
         encounters = Encounter.where("patient_id = ? AND encounter_type IN(?)
           AND encounter_datetime BETWEEN ? AND ?", person_id,
-          HIV_ENCOUNTERS, (value_datetime.to_date - 14.day).strftime('%Y-%m-%d 00:00:00'),
-          Date.today.strftime('%Y-%m-%d 23:59:59'))
+          HIV_ENCOUNTERS, (day_after_visit_date).strftime('%Y-%m-%d 00:00:00'),
+          @end_date.strftime('%Y-%m-%d 23:59:59'))
 
         if encounters.blank?
           return client_info person_id, value_datetime
