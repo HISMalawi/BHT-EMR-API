@@ -44,7 +44,8 @@ module ARTService
       'EXTERNAL_CONSULTATION_CLIENTS' => ARTService::Reports::ExternalConsultationClients,
       'SC_ARVDISP' => ARTService::Reports::Pepfar::ScArvdisp,
       'PATIENT_ART_VL_DATES' => ARTService::Reports::Pepfar::PatientStartVL,
-      'MOH_TPT' => ARTService::Reports::MohTpt
+      'MOH_TPT' => ARTService::Reports::MohTpt,
+      'VL_COLLECTION' => ARTService::Reports::VlCollection
     }.freeze
 
     def generate_report(type:, **kwargs)
