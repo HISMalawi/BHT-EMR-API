@@ -172,15 +172,32 @@ module ARTService
         # arv drugs are easily found by Drug.arv_drugs
         encounters = Encounter.joins(:orders)
                               .joins("INNER JOIN drug_order d ON d.order_id = orders.order_id AND d.quantity > 0
-                                      AND d.drug_inventory_id IN(#{Drug.arv_drugs.pluck(:drug_id).join(',')})")
-                              .where(patient_id: person_id, encounter_type: EncounterType.find_by_name('DISPENSING').id)
+                                      AND d.drug_inventory_id IN(#{arv_drugs})")
+                              .where(patient_id: person_id, encounter_type: treatment_encounter)
                               .where('encounter_datetime BETWEEN ? AND ?',
                                      day_after_visit_date.strftime('%Y-%m-%d 00:00:00'),
                                      @end_date.strftime('%Y-%m-%d 23:59:59'))
                               .where(orders: { voided: 0 })
                               .where(voided: 0)
 
-        client_info person_id, value_datetime if encounters.blank?
+        client_info(person_id, value_datetime) if encounters.blank? && client_alive?(person_id, value_datetime)
+      end
+
+      def client_alive?(person_id, value_datetime)
+        # check if the client is alive and doesn't have an adverse outcome
+        result = ActiveRecord::Base.connection.select_one <<~SQL
+          SELECT patient_outcome(#{person_id}, '#{value_datetime.to_date}') outcome;
+        SQL
+
+        result['outcome'].match(/Patient died|Patient transferred out|Treatment stopped/i).blank?
+      end
+
+      def arv_drugs
+        @arv_drugs ||= Drug.arv_drugs.pluck(:drug_id).join(',')
+      end
+
+      def treatment_encounter
+        @treatment_encounter ||= EncounterType.find_by_name('TREATMENT').id
       end
 
       # rubocop:disable Metrics/MethodLength
