@@ -31,8 +31,8 @@ module HtsService::Reports::Clinic
       # raise row[:gender].inspect
       gender_filter = data.select { |a| a["gender"] == row[:gender].to_s }
       age_group_filter = gender_filter.select { |q| q["age_group"] == row[:age_group].to_s }
-      same_facility = age_group_filter.select { |q| q["facility"] == CURRENT_FACILITY }
-      other_facilities = age_group_filter.select { |q| q["facility"] != CURRENT_FACILITY }
+      same_facility = age_group_filter.select { |q| q["facility"] == Location.find(GlobalProperty.find_by_property("current_health_center_id").property_value.to_i).name }
+      other_facilities = age_group_filter.select { |q| q["facility"] != Location.find(GlobalProperty.find_by_property("current_health_center_id").property_value.to_i).name }
       LINKED_DAYS.each do |linked_day|
         row["same_facility"]["#{linked_day}"] = same_facility.select { |q| calc_linked_days(q) == linked_day.to_sym }.map { |q| q["person_id"] }
         row["other_facilities"]["#{linked_day}"] = other_facilities.select { |q| calc_linked_days(q) == linked_day.to_sym }.map { |q| q["person_id"] }
@@ -71,10 +71,10 @@ module HtsService::Reports::Clinic
           .joins(<<-SQL)
         LEFT JOIN obs linked ON linked.person_id = person.person_id
         AND linked.voided = 0
-        AND linked.concept_id = #{ART_OUTCOME} AND linked.value_coded = #{LINKED_CONCEPT}
+        AND linked.concept_id = #{concept('Antiretroviral status or outcome').concept_id} AND linked.value_coded = #{concept('Linked').concept_id}
         LEFT JOIN obs facility ON facility.person_id = person.person_id
         AND facility.voided = 0
-        AND facility.concept_id = #{OUTCOME_FACILITY}
+        AND facility.concept_id = #{concept('ART clinic location').concept_id}
         SQL
         .where.not(facility: {value_text: nil})
           .select("disaggregated_age_group(person.birthdate, '#{@end_date.to_date}') as age_group, linked.obs_datetime AS linked_date, facility.value_text as facility, person.person_id, person.gender, encounter.encounter_datetime as date_tested")
