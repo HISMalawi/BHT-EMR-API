@@ -24,7 +24,7 @@ module ARTService
             p.gender,
             p.birthdate,
             i.identifier AS identifier,
-            DATE(ord.start_date) AS order_start_date
+            DATE(ord.start_date) AS order_date
           FROM obs o
           INNER JOIN orders ord ON ord.order_id = o.order_id AND ord.voided = 0
           INNER JOIN person p ON p.person_id = o.person_id AND p.voided = 0
