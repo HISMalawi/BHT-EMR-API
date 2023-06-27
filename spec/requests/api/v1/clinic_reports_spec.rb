@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 require 'swagger_helper'
 
-TAGS_NAME = 'Clinic Reports'.freeze
+TAGS_NAME = 'Clinic Reports'
 
 describe 'Clinic Reports API', type: :request, swagger_doc: 'v1/swagger.yaml' do
   path '/api/v1/programs/1/reports/clinic_tx_rtt' do
@@ -100,6 +102,29 @@ describe 'Clinic Reports API', type: :request, swagger_doc: 'v1/swagger.yaml' do
       end
 
       response '404', 'TPT OUTCOME Report not found' do
+        schema type: :string, properties: {
+          message: { type: :string }
+        }
+        run_test!
+      end
+    end
+  end
+
+  path '/api/v1/programs/1/reports/vl_collection' do
+    get 'Retrieve TPT OUTCOME report' do
+      tags TAGS_NAME
+      description 'This shows TPT OUTCOME report'
+      produces 'application/json'
+      security [api_key: []]
+      parameter name: :start_date, in: :query, type: :string
+      parameter name: :end_date, in: :query, type: :string
+
+      response '200', 'VL Collection Report found' do
+        schema type: :array, items: { '$ref' => '#/components/schemas/vl_collection' }
+        run_test!
+      end
+
+      response '404', 'VL Collection Report not found' do
         schema type: :string, properties: {
           message: { type: :string }
         }
