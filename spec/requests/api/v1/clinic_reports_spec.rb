@@ -111,9 +111,9 @@ describe 'Clinic Reports API', type: :request, swagger_doc: 'v1/swagger.yaml' do
   end
 
   path '/api/v1/programs/1/reports/vl_collection' do
-    get 'Retrieve TPT OUTCOME report' do
+    get 'Retrieve VL Collection report' do
       tags TAGS_NAME
-      description 'This shows TPT OUTCOME report'
+      description 'This shows Viral Load Collection report'
       produces 'application/json'
       security [api_key: []]
       parameter name: :start_date, in: :query, type: :string
