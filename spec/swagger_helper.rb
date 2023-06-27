@@ -31,6 +31,18 @@ RSpec.configure do |config|
           }
         },
         schemas: {
+          vl_collection: {
+            type: :object,
+            properties: {
+              patient_id: { type: :integer },
+              given_name: { type: :string },
+              family_name: { type: :string },
+              gender: { type: :string },
+              birthdate: { type: :string },
+              identifier: { type: :string },
+              order_date: { type: :string, format: :date }
+            }
+          },
           gender: { type: :string, enum: %w[M F Unknown] },
           age_group: { type: :string, enum: ['Unknown', '<1 year', '1-4 years', '5-9 years',
                                              '10-14 years', '15-19 years', '20-24 years', '25-29 years', '30-34 years',
