@@ -21,7 +21,7 @@ module ARTService
         ActiveRecord::Base.connection.select_all <<~SQL
           SELECT o.start_date AS date_ordered, pn.given_name, pn.family_name, pi.identifier AS arv_number, e.patient_id,
           las.date_received, o.accession_number, CONCAT(COALESCE(res.value_modifier, '='), COALESCE(res.value_text, res.value_numeric)) AS result,
-          cn.name AS test_name, las.acknowledgement_type AS result_delivery_mode, statuses.value_text AS order_status
+          cn.name AS test_name, las.acknowledgement_type AS result_delivery_mode, statuses.value_text AS order_status, reason_test.name AS test_reason
           FROM orders o
           INNER JOIN lab_lims_order_mappings llom ON llom.order_id = o.order_id
           LEFT JOIN lims_acknowledgement_statuses las ON las.order_id = o.order_id
@@ -35,6 +35,8 @@ module ARTService
           AND obs.concept_id = 7363 -- 'Lab test result'
           LEFT JOIN obs statuses ON statuses.order_id = o.order_id AND statuses.voided = 0 AND statuses.concept_id = 10682 -- 'lab order status'
           LEFT JOIN obs res ON res.obs_group_id = obs.obs_id AND res.voided = 0 AND res.order_id = o.order_id
+          LEFT JOIN obs reason ON reason.order_id = o.order_id AND reason.concept_id = 2429 -- 'Reason for test'
+          LEFT JOIN concept_name reason_test ON reason_test.concept_id = reason.value_coded
           WHERE DATE(o.start_date) BETWEEN '#{start_date}' AND '#{end_date}' AND o.voided = 0
           GROUP BY o.order_id
         SQL
