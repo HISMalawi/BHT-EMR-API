@@ -44,7 +44,8 @@ module ARTService
       'EXTERNAL_CONSULTATION_CLIENTS' => ARTService::Reports::ExternalConsultationClients,
       'SC_ARVDISP' => ARTService::Reports::Pepfar::ScArvdisp,
       'PATIENT_ART_VL_DATES' => ARTService::Reports::Pepfar::PatientStartVL,
-      'MOH_TPT' => ARTService::Reports::MohTpt
+      'MOH_TPT' => ARTService::Reports::MohTpt,
+      'TX_TB' => ARTService::Reports::Pepfar::TxTB
     }.freeze
 
     def generate_report(type:, **kwargs)
@@ -121,6 +122,10 @@ module ARTService
 
     def tx_ml(start_date, end_date)
       REPORTS['TX_ML'].new(start_date: start_date.to_date, end_date: end_date.to_date).data
+    end
+
+    def tx_tb(start_date, end_date)
+      REPORTS['TX_TB'].new(start_date: start_date.to_date, end_date: end_date.to_date).data
     end
 
     def tx_rtt(start_date, end_date)
