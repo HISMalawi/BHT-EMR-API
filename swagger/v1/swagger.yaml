@@ -281,6 +281,41 @@ paths:
                 type: array
                 items:
                   "$ref": "#/components/schemas/lims_electronic_result"
+  "/api/v1/programs/1/reports/vl_collection":
+    get:
+      summary: Retrieve VL Collection report
+      tags:
+      - Clinic Reports
+      description: This shows Viral Load Collection report
+      security:
+      - api_key: []
+      parameters:
+      - name: start_date
+        in: query
+        schema:
+          type: string
+      - name: end_date
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: VL Collection Report found
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/vl_collection"
+        '404':
+          description: VL Collection Report not found
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
   "/api/v1/radiology_set":
     get:
       summary: Retrieve all radiology sets
@@ -2331,6 +2366,24 @@ components:
           type: string
         status:
           type: string
+    vl_collection:
+      type: object
+      properties:
+        patient_id:
+          type: integer
+        given_name:
+          type: string
+        family_name:
+          type: string
+        gender:
+          type: string
+        birthdate:
+          type: string
+        identifier:
+          type: string
+        order_date:
+          type: string
+          format: date
     gender:
       type: string
       enum:
