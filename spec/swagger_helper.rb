@@ -31,6 +31,37 @@ RSpec.configure do |config|
           }
         },
         schemas: {
+          notification_alert: {
+            type: :object,
+            properties: {
+              alert_id: { type: :integer },
+              text: { type: :string },
+              satisfied_by_any: { type: :boolean },
+              alert_read: { type: :boolean },
+              date_to_expire: { type: :string, format: 'date-time' },
+              creator: { type: :integer },
+              date_created: { type: :string, format: 'date-time' },
+              changed_by: { type: :integer },
+              date_changed: { type: :string, format: 'date-time' },
+              uuid: { type: :string }
+            }
+          },
+          lims_electronic_result: {
+            type: :object,
+            properties: {
+              date_ordered: { type: :string, format: 'date-time' },
+              given_name: { type: :string },
+              family_name: { type: :string },
+              arv_number: { type: :string },
+              patient_id: { type: :integer },
+              date_received: { type: :string, format: 'date-time' },
+              accession_number: { type: :string },
+              result: { type: :string },
+              test_name: { type: :string },
+              result_delivery_mode: { type: :string },
+              status: { type: :string }
+            }
+          },
           vl_collection: {
             type: :object,
             properties: {

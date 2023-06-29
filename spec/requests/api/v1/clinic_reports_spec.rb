@@ -4,6 +4,7 @@ require 'swagger_helper'
 
 TAGS_NAME = 'Clinic Reports'
 
+# rubocop:disable Metrics/BlockLength
 describe 'Clinic Reports API', type: :request, swagger_doc: 'v1/swagger.yaml' do
   path '/api/v1/programs/1/reports/clinic_tx_rtt' do
     get 'Retrieve CLINIC TX RTT report' do
@@ -110,11 +111,29 @@ describe 'Clinic Reports API', type: :request, swagger_doc: 'v1/swagger.yaml' do
     end
   end
 
+  path 'api/v1/programs/1/reports/lims_electronic_results' do
+    get 'Retrieve LIMS ELECTRONIC RESULTS report' do
+      tags TAGS_NAME
+      description 'This shows LIMS ELECTRONIC RESULTS report'
+      consumes 'application/json'
+      produces 'application/json'
+      security [api_key: []]
+      parameter name: :start_date, in: :query, type: :string
+      parameter name: :end_date, in: :query, type: :string
+
+      response '200', 'LIMS ELECTRONIC RESULTS Report found' do
+        schema type: :array, items: { '$ref' => '#/components/schemas/lims_electronic_result' }
+        run_test!
+      end
+    end
+  end
+
   path '/api/v1/programs/1/reports/vl_collection' do
     get 'Retrieve VL Collection report' do
       tags TAGS_NAME
       description 'This shows Viral Load Collection report'
       produces 'application/json'
+      consumes 'application/json'
       security [api_key: []]
       parameter name: :start_date, in: :query, type: :string
       parameter name: :end_date, in: :query, type: :string
@@ -133,3 +152,4 @@ describe 'Clinic Reports API', type: :request, swagger_doc: 'v1/swagger.yaml' do
     end
   end
 end
+# rubocop:enable Metrics/BlockLength
