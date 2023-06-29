@@ -1371,6 +1371,26 @@ paths:
                         type: array
                         items:
                           type: integer
+                      specimens_sent:
+                        type: array
+                        items:
+                          type: integer
+                      smear_test_only:
+                        type: array
+                        items:
+                          type: integer
+                      gene_xpert_test_only:
+                        type: array
+                        items:
+                          type: integer
+                      lam:
+                        type: array
+                        items:
+                          type: integer
+                      other:
+                        type: array
+                        items:
+                          type: integer
                       sceen_pos_prev:
                         type: array
                         items:
