@@ -86,13 +86,13 @@ module HtsService
           gender, age_group_name, access_point = build(person) rescue nil
           return nil if access_point.nil?
           referred = person["referred_to"]
-          return nil unless referred != CURRENT_FACILITY
+          return nil unless referred != Location.find(GlobalProperty.find_by_property("current_health_center_id").property_value.to_i).name
           "#{access_point}_#{age_group_name}_referred_outside_the_facility_#{gender}"
         end
 
         def calc_linkage_type(outcome_facility)
           case outcome_facility
-          when CURRENT_FACILITY
+          when Location.find(GlobalProperty.find_by_property("current_health_center_id").property_value.to_i).name
             return "linked_within_facility"
           when nil
             return nil
@@ -106,13 +106,13 @@ module HtsService
             .merge(
               Patient.joins(<<-SQL)
             LEFT JOIN obs linked ON linked.voided = 0 AND linked.person_id = person.person_id
-            AND linked.concept_id = #{ART_OUTCOME}
+            AND linked.concept_id = #{concept('Antiretroviral status or outcome').concept_id}
             LEFT JOIN obs outcome on outcome.voided = 0 AND outcome.person_id = person.person_id
-            AND outcome.concept_id = #{OUTCOME_FACILITY}
+            AND outcome.concept_id = #{concept('ART clinic location').concept_id}
             LEFT JOIN obs hiv_status ON hiv_status.voided = 0 AND hiv_status.person_id = person.person_id
-            AND hiv_status.concept_id = #{HIV_STATUS_OBS}
+            AND hiv_status.concept_id = #{concept('HIV status').concept_id}
             LEFT JOIN obs location on location.voided = 0 AND location.person_id = person.person_id
-            AND location.concept_id = #{TEST_LOCATION}
+            AND location.concept_id = #{concept('Location where test took place').concept_id}
             LEFT JOIN obs referred on referred.voided = 0 AND referred.person_id = person.person_id
             AND referred.concept_id = #{concept("Referral location").concept_id}
             SQL

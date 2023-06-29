@@ -46,7 +46,7 @@ module HtsService::Reports::Moh
 
     def calc_facility_report(clients)
       FACILITY.each { |indicator| report[indicator] = [] }
-      access_type(clients, "Health Facility").where(obs: { concept_id: TEST_LOCATION })
+      access_type(clients, "Health Facility").where(obs: { concept_id: concept('Location where test took place').concept_id })
         .distinct
         .select("obs.value_text, patient.patient_id")
         .each do |client|
@@ -69,7 +69,7 @@ module HtsService::Reports::Moh
 
     def calc_community_report(clients)
       COMMUNITY.each { |indicator| report[indicator] = [] }
-      access_type(clients, "Community").where(obs: { concept_id: TEST_LOCATION })
+      access_type(clients, "Community").where(obs: { concept_id: concept('Location where test took place').concept_id })
         .distinct
         .select("obs.value_text, patient.patient_id")
         .each do |client|

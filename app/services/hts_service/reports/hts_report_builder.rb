@@ -1,25 +1,6 @@
 module HtsService
   module Reports
     module HtsReportBuilder
-      HTC_PROGRAM = Program.find_by_name("HTC PROGRAM").id
-      HIV_TESTING_ENCOUNTER = EncounterType.find_by_name("Testing")
-      ITEMS_GIVEN_ENCOUNTER = EncounterType.find_by_name("ITEMS GIVEN")
-      HIV_POSITIVE = concept("Positive").concept_id
-      HIV_NEGATIVE = concept("Negative").concept_id
-      HIV_EXPOSED_INFANT = concept("Exposed infant").concept_id
-      HIV_INVALID_OR_INCONCLUSIVE = concept("Invalid or inconclusive").concept_id
-      HIV_RESULT_INCONCLUSIVE = concept("Inconclusive").concept_id
-      HIV_NEVER_TESTED = concept("Never Tested").concept_id
-      HIV_STATUS_OBS = concept("HIV status").concept_id
-      HTS_ACCESS_TYPE = concept("HTS Access Type").concept_id
-      TEST_LOCATION = concept("Location where test took place").concept_id
-      VISIT_TYPE = concept("Visit type").concept_id
-      SELF_TEST_DISTRIBUTION = concept("Self test distribution").concept_id
-      LINKED_CONCEPT = concept("Linked").concept_id
-      OUTCOME_FACILITY = concept("ART clinic location").concept_id
-      ART_OUTCOME = concept("Antiretroviral status or outcome").concept_id
-      REFERRALS_ORDERED = concept("Referrals ordered").concept_id
-      CURRENT_FACILITY = Location.find(GlobalProperty.find_by_property("current_health_center_id").property_value.to_i).name
 
       def hts_age_groups
         [
@@ -51,9 +32,9 @@ module HtsService
                .where(
             encounter: {
               encounter_datetime: @start_date..@end_date,
-              encounter_type: HIV_TESTING_ENCOUNTER,
+              encounter_type: EncounterType.find_by_name("Testing"),
             },
-            program: { program_id: HTC_PROGRAM },
+            program: { program_id: Program.find_by_name("HTC PROGRAM").id },
           )
       end
 
@@ -66,12 +47,12 @@ module HtsService
           SQL
           )
           .where(
-            visit: { concept_id: VISIT_TYPE, value_coded: SELF_TEST_DISTRIBUTION },
+            visit: { concept_id: concept("Visit type").concept_id, value_coded: concept("Self test distribution").concept_id },
             encounter: {
               encounter_datetime: @start_date..@end_date,
-              encounter_type: ITEMS_GIVEN_ENCOUNTER,
+              encounter_type: EncounterType.find_by_name("ITEMS GIVEN"),
             },
-            program: { program_id: HTC_PROGRAM },
+            program: { program_id: Program.find_by_name("HTC PROGRAM").id },
           )
       end
     end

@@ -7,40 +7,45 @@ module HtsService
       class HtsLegacyReturning # rubocop:disable Style/Documentation
         include HtsService::Reports::HtsReportBuilder
         attr_reader :start_date, :end_date, :report
-
-        NEW_NEGATIVE = concept('New Negative').concept_id
-        NEW_POSITIVE = concept('New Positive').concept_id
-        NEW_EXPOSED_INFANT = concept('New exposed infant').concept_id
-        NEW_INCONCLUSIVE = concept('New Inconclusive').concept_id
-        CONFIRMATORY_POSITIVE = concept('Confirmatory Positive').concept_id
-        CONFIRMATORY_INCONCLUSIVE = concept('Confirmatory Inconclusive').concept_id
-        HIV_GROUP = concept('HIV group').concept_id
-        LAST_TESTED = concept('Previous HIV Test Results').concept_id
-        PARTNER_PRESENT = concept('Partner present').concept_id
-        PREGNANT_WOMAN = concept('Pregnant woman').concept_id
-        NOT_PREGNANT = concept('Not Pregnant / Breastfeeding').concept_id
-        BREASTFEEDING = concept('Breastfeeding').concept_id
-        TEST_ONE = concept('Test 1').concept_id
-        TEST_TWO = concept('Test 2').concept_id
-        TEST_THREE = concept('Test 3').concept_id
-        PREGNANCY_STATUS = concept('Pregnancy status').concept_id
+        
+        NEW_NEGATIVE = 'New Negative'
+        NEW_POSITIVE = 'New Positive'
+        NEW_EXPOSED_INFANT = 'New exposed infant'
+        NEW_INCONCLUSIVE = 'New Inconclusive'
+        CONFIRMATORY_POSITIVE = 'Positive Re-Test'
+        CONFIRMATORY_INCONCLUSIVE = 'Inconclusive Re-Test'
+        HIV_GROUP = 'HIV group'
+        LAST_TESTED = 'Previous HIV Test Results'
+        PARTNER_PRESENT = 'Partner present'
+        PREGNANT_WOMAN = 'Pregnant woman'
+        NOT_PREGNANT = 'Not Pregnant / Breastfeeding'
+        BREASTFEEDING = 'Breastfeeding'
+        TEST_ONE = 'Test 1'
+        TEST_TWO = 'Test 2'
+        TEST_THREE = 'Test 3'
+        PREGNANCY_STATUS = 'Pregnancy status'
+        HTS_ACCESS_TYPE = 'HTS Access Type'
+        HIV_NEVER_TESTED = 'Never Tested'
+        HIV_NEGATIVE = 'Negative'
+        HIV_EXPOSED_INFANT = 'Exposed infant'
+        HIV_INVALID_OR_INCONCLUSIVE = 'Invalid or inconclusive'
 
         INDICATORS = [
-          { name: 'test_location', concept_id: TEST_LOCATION, value: 'value_text', join: 'LEFT' },
-          { name: 'p_status', concept_id: PREGNANCY_STATUS, join: 'LEFT' },
-          { name: 'last_tested', concept_id: LAST_TESTED, join: 'LEFT' },
+          { name: 'test_location', concept_id: concept("Location where test took place").concept_id, value: 'value_text', join: 'LEFT' },
+          { name: 'p_status', concept_id: concept(PREGNANCY_STATUS).concept_id, join: 'LEFT' },
+          { name: 'last_tested', concept_id: concept(LAST_TESTED).concept_id, join: 'LEFT' },
           {
             name: 'partner_present',
-            concept_id: PARTNER_PRESENT,
+            concept_id: concept(PARTNER_PRESENT).concept_id,
             value: 'value_text',
             join: 'LEFT'
           },
           {
             name: %w[test_one test_two test_three],
-            concept_id: [TEST_ONE, TEST_TWO, TEST_THREE],
+            concept_id: [concept(TEST_ONE).concept_id, concept(TEST_TWO).concept_id, concept(TEST_THREE).concept_id],
             join: 'LEFT'
           },
-          { name: 'result_given', concept_id: HIV_GROUP, join: 'LEFT' }
+          { name: 'result_given', concept_id: concept(HIV_GROUP).concept_id, join: 'LEFT' }
         ].freeze
 
         def initialize(quarter:, year:)
@@ -128,14 +133,14 @@ module HtsService
         def result_given_to_client
           data = @query_data
           array = {
-                    new_exp_infant: filter_hash(data, 'result_given', NEW_EXPOSED_INFANT),
-                    new_inconclusive: filter_hash(data, 'result_given', NEW_INCONCLUSIVE),
-                    confirmat_inc: filter_hash(data, 'result_given', CONFIRMATORY_INCONCLUSIVE),
-                    total_confpos: filter_hash(data, 'result_given', CONFIRMATORY_POSITIVE),
-                    new_negative: filter_hash(data, 'result_given', NEW_NEGATIVE),
-                    non_disag: filter_hash(data, 'result_given', NEW_POSITIVE),
-                    tot_newpos: filter_hash(data, 'result_given', NEW_POSITIVE),
-                  }.merge!(filter_gender(filter_hash(data, 'result_given', NEW_NEGATIVE)))
+                    new_exp_infant: filter_hash(data, 'result_given', concept(NEW_EXPOSED_INFANT).concept_id),
+                    new_inconclusive: filter_hash(data, 'result_given', concept(NEW_INCONCLUSIVE).concept_id),
+                    confirmat_inc: filter_hash(data, 'result_given', concept(CONFIRMATORY_INCONCLUSIVE).concept_id),
+                    total_confpos: filter_hash(data, 'result_given', concept(CONFIRMATORY_POSITIVE).concept_id),
+                    new_negative: filter_hash(data, 'result_given', concept(NEW_NEGATIVE).concept_id),
+                    non_disag: filter_hash(data, 'result_given', concept(NEW_POSITIVE).concept_id),
+                    tot_newpos: filter_hash(data, 'result_given', concept(NEW_POSITIVE).concept_id),
+                  }.merge!(filter_gender(filter_hash(data, 'result_given', concept(NEW_NEGATIVE).concept_id)))
           array[:total_chec] = array.values.flatten
           report.merge!({ result_given_to_client: array })
         end
@@ -145,12 +150,12 @@ module HtsService
           report.merge!({
                           outcome_summary: {
                             total_chec: data,
-                            single_neg: filter_hash(data, 'test_one', HIV_NEGATIVE),
-                            single_pos: filter_hash(data, 'test_one', HIV_POSITIVE),
-                            one_and_two_neg: filter_hash(data, %w[test_one test_two], HIV_NEGATIVE),
-                            one_and_two_pos: filter_hash(data, %w[test_one test_two], HIV_POSITIVE),
+                            single_neg: filter_hash(data, 'test_one', concept(HIV_NEGATIVE).concept_id),
+                            single_pos: filter_hash(data, 'test_one', concept('Positive').concept_id),
+                            one_and_two_neg: filter_hash(data, %w[test_one test_two], concept(HIV_NEGATIVE).concept_id),
+                            one_and_two_pos: filter_hash(data, %w[test_one test_two], concept('Positive').concept_id),
                             one_and_two_disc: data.select do |q|
-                              q['test_one'] == HIV_POSITIVE && q['test_two'] == HIV_NEGATIVE && q['test_three'] == HIV_POSITIVE || q['test_one'] == HIV_POSITIVE && q['test_two'] == HIV_POSITIVE && q['test_three'] == HIV_NEGATIVE
+                              q['test_one'] ='Positive' && q['test_two'] == concept(HIV_NEGATIVE).concept_id && q['test_three'] ='Positive' || q['test_one'] ='Positive' && q['test_two'] ='Positive' && q['test_three'] == concept(HIV_NEGATIVE).concept_id
                             end
                           }
                         })
@@ -169,11 +174,11 @@ module HtsService
         def last_tested
           data = @query_data
           last_test = {
-            never_tested: filter_hash(data, 'last_tested', HIV_NEVER_TESTED),
-            last_negative: filter_hash(data, 'last_tested', HIV_NEGATIVE),
-            last_positive: filter_hash(data, 'last_tested', HIV_POSITIVE),
-            last_exposed_infant: filter_hash(data, 'last_tested', HIV_EXPOSED_INFANT),
-            inconclusive: filter_hash(data, 'last_tested', HIV_INVALID_OR_INCONCLUSIVE),
+            never_tested: filter_hash(data, 'last_tested', concept(HIV_NEVER_TESTED).concept_id),
+            last_negative: filter_hash(data, 'last_tested', concept(HIV_NEGATIVE).concept_id),
+            last_positive: filter_hash(data, 'last_tested', concept('Positive').concept_id),
+            last_exposed_infant: filter_hash(data, 'last_tested', concept(HIV_EXPOSED_INFANT).concept_id),
+            inconclusive: filter_hash(data, 'last_tested', concept(HIV_INVALID_OR_INCONCLUSIVE).concept_id),
           }
           last_test[:total_chec] = last_test.values.flatten
           report.merge!({last_test: last_test})
@@ -198,8 +203,8 @@ module HtsService
 
           sex_hash = {
             m: filter_hash(data, 'gender', 'M'),
-            fnp: data.select { |q| [NOT_PREGNANT, BREASTFEEDING].include?(q['p_status']) },
-            fp: filter_hash(data, 'status', PREGNANT_WOMAN)
+            fnp: data.select { |q| [concept(NOT_PREGNANT).concept_id, concept(BREASTFEEDING).concept_id].include?(q['p_status']) },
+            fp: filter_hash(data, 'status', concept(PREGNANT_WOMAN).concept_id)
           }
           sex_hash[:total_chec] = sex_hash.values.flatten
 
@@ -224,10 +229,9 @@ module HtsService
           today = Date.today
           today.year - birthdate.year
         end
-
         def query
           data = his_patients_rev.joins(<<-SQL)
-            INNER JOIN obs location ON location.concept_id = #{HTS_ACCESS_TYPE}
+            INNER JOIN obs location ON location.concept_id = #{concept('HTS Access Type').concept_id}
             AND location.voided = 0
             AND location.person_id = person.person_id
             INNER JOIN concept_name access_type_name ON access_type_name.concept_id = location.value_coded

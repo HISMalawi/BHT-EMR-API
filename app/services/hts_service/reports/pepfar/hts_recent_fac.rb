@@ -3,9 +3,9 @@ module HtsService::Reports::Pepfar
     include HtsService::Reports::HtsReportBuilder
     attr_reader :start_date, :end_date, :report, :numbering
 
-    RECENT = concept('Recent').concept_id
-    NEGATIVE = concept('Negative').concept_id
-    LONG_TERM = concept('Long-Term').concept_id
+    RECENT = 'Recent'
+    NEGATIVE = 'Negative'
+    LONG_TERM = 'Long-Term'
 
     ACCESS_POINTS = { index: 'Index', emergency: 'Emergency', inpatient: 'Inpatient',
                       malnutrition: 'Malnutrition', pediatric: 'Pediatric', pmtct_anc1_only: 'ANC First Visit',
@@ -35,8 +35,8 @@ module HtsService::Reports::Pepfar
     def calc_age_groups(data, age_group)
       x = data.select { |q| q['age_group'] == age_group.values.first }
       {
-        long_term: x.select { |q| q['recency'] == LONG_TERM }.map { |q| q['person_id'] },
-        recent: x.select { |q| q['recency'] == RECENT }.map { |q| q['person_id'] }
+        long_term: x.select { |q| q['recency'] == concept(LONG_TERM).concept_id }.map { |q| q['person_id'] },
+        recent: x.select { |q| q['recency'] == concept(RECENT).concept_id }.map { |q| q['person_id'] }
       }
     end
 
@@ -76,7 +76,7 @@ module HtsService::Reports::Pepfar
         AND recency.concept_id = #{concept("Recency Test").concept_id}
         INNER JOIN obs location ON location.voided = 0
         AND location.person_id = person.person_id
-        AND location.concept_id = #{TEST_LOCATION}
+        AND location.concept_id = #{concept('Location where test took place').concept_id}
         SQL
         .select("disaggregated_age_group(person.birthdate, '#{@end_date.to_date}') as age_group, person.person_id, person.gender, person.birthdate, location.value_text as access_point, recency.value_coded as recency")
         .group('person.person_id')
