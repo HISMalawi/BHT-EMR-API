@@ -35,8 +35,8 @@ module ARTService
           AND obs.concept_id = 7363 -- 'Lab test result'
           LEFT JOIN obs statuses ON statuses.order_id = o.order_id AND statuses.voided = 0 AND statuses.concept_id = 10682 -- 'lab order status'
           LEFT JOIN obs res ON res.obs_group_id = obs.obs_id AND res.voided = 0 AND res.order_id = o.order_id
-          LEFT JOIN obs reason ON reason.order_id = o.order_id AND reason.concept_id = 2429 -- 'Reason for test'
-          LEFT JOIN concept_name reason_test ON reason_test.concept_id = reason.value_coded
+          LEFT JOIN obs reason ON reason.order_id = o.order_id AND reason.voided = 0  AND reason.concept_id = 2429 -- 'Reason for test'
+          LEFT JOIN concept_name reason_test ON reason_test.concept_id = reason.value_coded AND reason_test.voided = 0 
           WHERE DATE(o.start_date) BETWEEN '#{start_date}' AND '#{end_date}' AND o.voided = 0
           GROUP BY o.order_id
         SQL
