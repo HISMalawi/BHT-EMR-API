@@ -313,6 +313,22 @@ class AppointmentEngine
       @amounts_brought_to_clinic[amount['drug_inventory_id'].to_i] = amount['value_numeric'].to_f rescue 0
     end
 
+    # include amounts brought from previous facility
+    amounts_brought_from_previous_facility = ActiveRecord::Base.connection.select_all <<-SQL
+      SELECT obs.*
+      FROM obs
+      INNER JOIN encounter e ON e.encounter_id = obs.encounter_id AND e.voided = 0
+      WHERE
+        obs.concept_id = #{ConceptName.find_by_name('Amount of drug brought to clinic').concept_id}
+        AND e.encounter_type = #{EncounterType.find_by_name('HIV CLINIC CONSULTATION').encounter_type_id}
+        AND person_id = #{patient.patient_id}
+        AND obs.voided = 0
+        AND value_numeric IS NOT NULL
+    SQL
+    (amounts_brought_from_previous_facility || []).each do |amount|
+      @amounts_brought_to_clinic[amount['value_drug'].to_i] += amount['value_numeric'].to_f rescue 0
+    end
+
     # amounts_brought_to_clinic = ActiveRecord::Base.connection.select_all <<-SQL
     #   SELECT obs.*, d.* FROM obs INNER JOIN drug d ON d.concept_id = obs.concept_id AND obs.voided = 0
     #   WHERE obs.obs_datetime BETWEEN '#{session_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
@@ -323,7 +339,6 @@ class AppointmentEngine
     # (amounts_brought_to_clinic || []).each do |amount|
     #   @amounts_brought_to_clinic[amount['drug_id'].to_i] += (amount['value_numeric'].to_f rescue 0)
     # end
-
     @amounts_brought_to_clinic
   end
 end
