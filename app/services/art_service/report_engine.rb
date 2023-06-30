@@ -124,10 +124,6 @@ module ARTService
       REPORTS['TX_ML'].new(start_date: start_date.to_date, end_date: end_date.to_date).data
     end
 
-    def tx_tb(start_date, end_date)
-      REPORTS['TX_TB'].new(start_date: start_date.to_date, end_date: end_date.to_date).data
-    end
-
     def tx_rtt(start_date, end_date)
       REPORTS['TX_RTT'].new(start_date: start_date.to_date, end_date: end_date.to_date).data
     end
