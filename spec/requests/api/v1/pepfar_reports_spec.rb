@@ -15,20 +15,17 @@ describe 'Pepfar Reports API', type: :request, swagger_doc: 'v1/swagger.yaml' do
 
       response '200', 'TX_TB Report found' do
         schema type: :object, properties: {
-          age_group: { type: :object, properties: {
+          age_group: { 
+          gender: { type: :object, properties: {
             tx_curr: { type: :array, items: { type: :integer } },
             sceen_pos_new: { type: :array, items: { type: :integer } },
             sceen_neg_new: { type: :array, items: { type: :integer } },
             started_tb_new: { type: :array, items: { type: :integer } },
-            specimens_sent: { type: :array, items: { type: :integer } },
-            smear_test_only: { type: :array, items: { type: :integer } },
-            gene_xpert_test_only: { type: :array, items: { type: :integer } },
-            lam: { type: :array, items: { type: :integer } },
-            other: { type: :array, items: { type: :integer } },
             sceen_pos_prev: { type: :array, items: { type: :integer } },
             sceen_neg_prev: { type: :array, items: { type: :integer } },
             started_tb_prev: { type: :array, items: { type: :integer } }
           } }
+        }
         }
         run_test!
       end
