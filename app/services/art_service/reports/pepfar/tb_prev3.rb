@@ -40,15 +40,21 @@ module ARTService
         # rubocop:disable Metrics/CyclomaticComplexity
         # rubocop:disable Metrics/PerceivedComplexity
         def patient_tpt_status(patient_id)
-          return { tpt: nil, completed: false, tb_treatment: true, tpt_init_date: nil, tpt_complete_date: nil } if patient_on_tb_treatment?(patient_id)
+          if patient_on_tb_treatment?(patient_id)
+            return { tpt: nil, completed: false, tb_treatment: true, tpt_init_date: nil,
+                     tpt_complete_date: nil }
+          end
 
           if patient_history_on_completed_tpt(patient_id)
             return { tpt: patient_history_on_completed_tpt(patient_id).include?('IPT') ? '6H' : '3HP', completed: true,
-                     tb_treatment: false, tpt_init_date: nil, tpt_complete_date: nil}
+                     tb_treatment: false, tpt_init_date: nil, tpt_complete_date: nil }
           end
 
           patient = individual_tpt_report(patient_id)
-          return { tpt: nil, completed: false, tb_treatment: false, tpt_init_date: nil, tpt_complete_date: nil } if patient.blank?
+          if patient.blank?
+            return { tpt: nil, completed: false, tb_treatment: false, tpt_init_date: nil,
+                     tpt_complete_date: nil }
+          end
 
           tpt = patient_on_3hp?(patient) ? '3HP' : '6H'
           completed = patient_has_totally_completed_tpt?(patient, tpt)
@@ -67,6 +73,11 @@ module ARTService
 
         def fetch_individual_report(patient_id)
           individual_tpt_report(patient_id)
+        end
+
+        def patient_on_3hp?(patient)
+          drug_concepts = patient['drug_concepts'].split(',').collect(&:to_i)
+          (drug_concepts & [rifapentine_concept.concept_id, isoniazid_rifapentine_concept&.concept_id]).any?
         end
 
         private
@@ -437,11 +448,6 @@ module ARTService
           Observation.where(person_id: patient_id, concept_id: ConceptName.find_by_name('TB status').concept_id,
                             value_coded: ConceptName.find_by_name('Confirmed TB on treatment').concept_id)
                      .where("obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY").exists?
-        end
-
-        def patient_on_3hp?(patient)
-          drug_concepts = patient['drug_concepts'].split(',').collect(&:to_i)
-          (drug_concepts & [rifapentine_concept.concept_id, isoniazid_rifapentine_concept&.concept_id]).any?
         end
 
         def rifapentine_concept
