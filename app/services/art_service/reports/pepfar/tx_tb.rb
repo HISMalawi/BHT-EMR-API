@@ -15,7 +15,7 @@ module ARTService
         def find_report
           init_report
           tx_curr = find_patients_alive_and_on_art
-          # tx_curr.each { |patient| report[patient['age_group']['gender']][:tx_curr] << patient['patient_id'] }
+          tx_curr.each { |patient| report[patient['age_group']][patient['gender'].to_sym][:tx_curr] << patient['patient_id'] }
           screened = tb_screened(tx_curr.map { |patient| patient['patient_id'] })
           pepfar_age_groups.each do |age_group|
             screened.each do |patient|
@@ -72,7 +72,7 @@ module ARTService
 
         def find_patients_alive_and_on_art
           ActiveRecord::Base.connection.select_all <<~SQL
-          SELECT pp.patient_id, coalesce(o.value_datetime, min(art_order.start_date)) art_start_date, disaggregated_age_group(p.birthdate, DATE('#{end_date.to_date}')) age_group
+          SELECT pp.patient_id, p.gender, coalesce(o.value_datetime, min(art_order.start_date)) art_start_date, disaggregated_age_group(p.birthdate, DATE('#{end_date.to_date}')) age_group
           FROM patient_program pp
           INNER JOIN person p ON p.person_id = pp.patient_id AND p.voided = 0
           INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id AND ps.voided = 0 AND ps.state = 7 -- ON ART
