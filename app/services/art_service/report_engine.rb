@@ -26,6 +26,7 @@ module ARTService
       'REGIMENS_BY_WEIGHT_AND_GENDER' => ARTService::Reports::RegimensByWeightAndGender,
       'REGIMEN_SWITCH' => ARTService::Reports::RegimenSwitch,
       'RETENTION' => ARTService::Reports::Retention,
+      'LIMS_ELECTRONIC_RESULTS' => ARTService::Reports::LimsResults,
       'TPT_OUTCOME' => ARTService::Reports::TptOutcome,
       'CLINIC_TX_RTT' => ARTService::Reports::ClinicTxRtt,
       'TB_PREV2' => ARTService::Reports::Pepfar::TbPrev3,
@@ -45,7 +46,8 @@ module ARTService
       'SC_ARVDISP' => ARTService::Reports::Pepfar::ScArvdisp,
       'PATIENT_ART_VL_DATES' => ARTService::Reports::Pepfar::PatientStartVL,
       'MOH_TPT' => ARTService::Reports::MohTpt,
-      'TX_TB' => ARTService::Reports::Pepfar::TxTB
+      'TX_TB' => ARTService::Reports::Pepfar::TxTB,
+      'VL_COLLECTION' => ARTService::Reports::VlCollection
     }.freeze
 
     def generate_report(type:, **kwargs)
