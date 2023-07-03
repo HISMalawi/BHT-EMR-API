@@ -47,7 +47,10 @@ module ARTService
               initiated_art: [], started_tpt: [], not_completed_tpt: [],
               completed_tpt: [], died: [], pregnant: [],
               defaulted: [], stopped: [],
-              transfer_out: [], confirmed_tb: []
+              transfer_out: [], confirmed_tb: [],
+              breast_feeding: [], skin_rash: [],
+              nausea: [], peripheral_neuropathy: [],
+              dizziness: [], yellow_eyes: []
             }
           end
         end
@@ -55,8 +58,6 @@ module ARTService
 
       def process_initiated_on_art(report, patients)
         patients.each do |patient|
-          # print the whole hash
-          puts patient
           report[patient['age_group']][patient['gender']][:initiated_art] << patient['patient_id']
         end
       end
@@ -75,7 +76,7 @@ module ARTService
 
       def fetch_initiated_on_tpt
         result = ActiveRecord::Base.connection.select_all <<~SQL
-          SELECT patient_id, age_group, gender FROM temp_initiated_on_tpt
+          SELECT * FROM temp_initiated_on_tpt
           WHERE start_date >= DATE('#{start_of_month}')
         SQL
         # convert to array of hashes
