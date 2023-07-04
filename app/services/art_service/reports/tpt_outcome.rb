@@ -19,7 +19,7 @@ module ARTService
 
       def find_report
         report = init_report
-        @param = tpt_type
+        @param = 'tpt_type'
         load_patients_into_report report, process_tpt_clients
         response = []
         report.each do |key, value|
