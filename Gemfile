@@ -1,14 +1,16 @@
+# frozen_string_literal: true
+
 source 'https://rubygems.org'
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
-ruby "3.1.2"
+ruby '~> 3.2.0'
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
-gem "rails", "~> 7.0.2", ">= 7.0.2.4"
+gem 'rails', '~> 7.0.6'
 # Use sqlite3 as the database for Active Record
 gem 'mysql2'
 # Use Puma as the app server
-gem "puma", "~> 5.0"
+gem 'puma', '~> 6.3'
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
 # gem 'jbuilder', '~> 2.5'
 # Use Redis adapter to run Action Cable in production
@@ -43,9 +45,9 @@ gem 'test-unit'
 gem 'rswag-api'
 gem 'rswag-ui'
 
-gem 'emr_ohsp_interface', '~> 1.2'
-gem 'his_emr_api_lab', '~> 1.1.30'
-gem 'his_emr_api_radiology', '~> 0.0.8'
+# gem 'emr_ohsp_interface', '~> 1.2'
+# gem 'his_emr_api_lab', '~> 1.1.30'
+# gem 'his_emr_api_radiology', '~> 0.0.8'
 
 gem 'parallel', '~> 1.20.1'
 
