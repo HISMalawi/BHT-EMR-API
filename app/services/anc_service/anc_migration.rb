@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-module ANCService
+module AncService
   # rubocop:disable Metrics/ClassLength
   # Class managing the migration of anc data to
-  class ANCMigration
+  class AncMigration
     include ActionView::Helpers::DateHelper
     def initialize(database, confidence)
       @person_id = max_person_id
@@ -53,7 +53,7 @@ module ANCService
     def normal
       msg = @database_reversed ? 'Starting an abnormal migration (KAWALE CASE)' : 'Starting a normal migration'
       print_time message: msg, long_form: true
-      ANCMappingMigration.new(@database, @confidence).map_linkage_between_anc_and_openmrs
+      AncMappingMigration.new(@database, @confidence).map_linkage_between_anc_and_openmrs
       not_linked = fetch_unmapped_patients
       mapped = fetch_mapped_patients
       # rubocop:disable Metrics/BlockLength
@@ -103,7 +103,7 @@ module ANCService
         migrate_drug_order(mapped, 'Migrating patient drug orders for those linked')
         migrate_drug_order(not_linked, 'Migrating patient drug orders for those without any linkage')
         if @database_reversed
-          ANCService::ANCMissedMigration.new({ max_person_id: @person_id,
+          AncService::AncMissedMigration.new({ max_person_id: @person_id,
                                                max_user_id: @user_id, max_patient_program_id: @patient_program_id,
                                                max_encounter_id: @encounter_id, max_obs_id: @obs_id,
                                                max_order_id: @order_id, database: @database }).main
@@ -193,7 +193,7 @@ module ANCService
     #       migrate_obs
     #       migrate_orders
     #       migrate_drug_order
-    #       ANCService::ANCMissedMigration.new({ max_person_id: @person_id,
+    #       AncService::AncMissedMigration.new({ max_person_id: @person_id,
     #                                            max_user_id: @user_id, max_patient_program_id: @patient_program_id,
     #                                            max_encounter_id: @encounter_id, max_obs_id: @obs_id,
     #                                            max_order_id: @order_id, database: @database }).main
@@ -217,11 +217,11 @@ module ANCService
       central_hub query: statement
       statement = <<~SQL
         CREATE TABLE #{@database}.user_bak as
-        SELECT user_id AS ANC_user_id, (SELECT #{@user_id} + user_id) AS ART_user_id, (SELECT #{@person_id} + person_id) AS person_id FROM #{@database}.users
+        SELECT user_id AS Anc_user_id, (SELECT #{@user_id} + user_id) AS ART_user_id, (SELECT #{@person_id} + person_id) AS person_id FROM #{@database}.users
       SQL
       central_hub message: 'Creating use backup', query: statement
       statement = <<~SQL
-        ALTER TABLE #{@database}.user_bak ADD PRIMARY KEY (ANC_user_id)
+        ALTER TABLE #{@database}.user_bak ADD PRIMARY KEY (Anc_user_id)
       SQL
       central_hub query: statement
     end
@@ -229,7 +229,7 @@ module ANCService
 
     def add_missed_users_in_user_bak
       statement = <<~SQL
-        INSERT INTO #{@database}.user_bak (ANC_user_id, ART_user_id, person_id)
+        INSERT INTO #{@database}.user_bak (Anc_user_id, ART_user_id, person_id)
         SELECT user_id, (SELECT (SELECT MAX(user_id) FROM users) + user_id), (SELECT #{@person_id} + person_id)
         FROM #{@database}.users
         WHERE user_id IN (#{@missed_users_ids})
@@ -255,7 +255,7 @@ module ANCService
       result = ActiveRecord::Base.connection.select_all <<~SQL
         SELECT #{field}
         FROM #{@database}.users
-        WHERE user_id NOT IN (SELECT ANC_user_id FROM #{@database}.user_bak)
+        WHERE user_id NOT IN (SELECT Anc_user_id FROM #{@database}.user_bak)
       SQL
       result.map { |record| record[field] }.push(0).join(',')
     end
@@ -276,10 +276,10 @@ module ANCService
         INSERT INTO users (user_id,  system_id,  username,  password,  salt,  secret_question,  secret_answer,  creator,  date_created,  changed_by,  date_changed,  person_id,  retired,  retired_by,  date_retired,  retire_reason,  uuid,  authentication_token)
         SELECT b.ART_user_id, users.system_id,  CONCAT(users.username, '_anc'),  users.password,  users.salt,  users.secret_question,  users.secret_answer, creators.ART_user_id,  users.date_created, changers.ART_user_id,  users.date_changed, b.person_id, users.retired, voiders.ART_user_id, users.date_retired,  users.retire_reason,  users.uuid,  users.authentication_token
         FROM #{@database}.users
-        INNER JOIN #{@database}.user_bak b on b.ANC_user_id = users.user_id
-        INNER JOIN #{@database}.user_bak creators on creators.ANC_user_id = users.creator
-        LEFT JOIN #{@database}.user_bak changers on changers.ANC_user_id = users.changed_by
-        LEFT JOIN #{@database}.user_bak voiders on voiders.ANC_user_id = users.retired_by
+        INNER JOIN #{@database}.user_bak b on b.Anc_user_id = users.user_id
+        INNER JOIN #{@database}.user_bak creators on creators.Anc_user_id = users.creator
+        LEFT JOIN #{@database}.user_bak changers on changers.Anc_user_id = users.changed_by
+        LEFT JOIN #{@database}.user_bak voiders on voiders.Anc_user_id = users.retired_by
       SQL
       central_hub message: 'Migrating users records', query: statement
     end
@@ -290,10 +290,10 @@ module ANCService
         INSERT INTO users (user_id,  system_id,  username,  password,  salt,  secret_question,  secret_answer,  creator,  date_created,  changed_by,  date_changed,  person_id,  retired,  retired_by,  date_retired,  retire_reason,  uuid,  authentication_token)
         SELECT b.ART_user_id, users.system_id,  CONCAT(users.username, '_anc'),  users.password,  users.salt,  users.secret_question,  users.secret_answer, creators.ART_user_id,  users.date_created, changers.ART_user_id,  users.date_changed, b.person_id, users.retired, voiders.ART_user_id, users.date_retired,  users.retire_reason,  users.uuid,  users.authentication_token
         FROM #{@database}.users
-        INNER JOIN #{@database}.user_bak b on b.ANC_user_id = users.user_id
-        INNER JOIN #{@database}.user_bak creators on creators.ANC_user_id = users.creator
-        LEFT JOIN #{@database}.user_bak changers on changers.ANC_user_id = users.changed_by
-        LEFT JOIN #{@database}.user_bak voiders on voiders.ANC_user_id = users.retired_by
+        INNER JOIN #{@database}.user_bak b on b.Anc_user_id = users.user_id
+        INNER JOIN #{@database}.user_bak creators on creators.Anc_user_id = users.creator
+        LEFT JOIN #{@database}.user_bak changers on changers.Anc_user_id = users.changed_by
+        LEFT JOIN #{@database}.user_bak voiders on voiders.Anc_user_id = users.retired_by
         WHERE user_id IN (#{@missed_users_ids})
       SQL
       central_hub message: 'Migrating missed users records', query: statement
@@ -309,9 +309,9 @@ module ANCService
         SELECT #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + person.person_id) AS person_id"},
         gender, birthdate, birthdate_estimated, dead, death_date, cause_of_death, creators.ART_user_id, person.date_created, changers.ART_user_id, person.date_changed, person.voided, voiders.ART_user_id, person.date_voided, person.void_reason, person.uuid
         FROM #{@database}.person #{cond}
-        INNER JOIN #{@database}.user_bak creators ON creators.ANC_user_id = person.creator
-        LEFT JOIN #{@database}.user_bak changers ON changers.ANC_user_id = person.changed_by
-        LEFT JOIN #{@database}.user_bak voiders ON voiders.ANC_user_id = person.voided_by
+        INNER JOIN #{@database}.user_bak creators ON creators.Anc_user_id = person.creator
+        LEFT JOIN #{@database}.user_bak changers ON changers.Anc_user_id = person.changed_by
+        LEFT JOIN #{@database}.user_bak voiders ON voiders.Anc_user_id = person.voided_by
         WHERE person.person_id IN (#{patients})
       SQL
       central_hub message: msg, query: statement
@@ -329,9 +329,9 @@ module ANCService
         SELECT preferred, #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + person_name.person_id) AS person_id"},
         prefix, given_name, middle_name, family_name_prefix, family_name, family_name2, family_name_suffix, degree,creators.ART_user_id, person_name.date_created, voided,voiders.ART_user_id, person_name.date_voided, person_name.void_reason, changers.ART_user_id, person_name.date_changed, person_name.uuid
         FROM #{@database}.person_name #{cond}
-        INNER JOIN #{@database}.user_bak creators ON creators.ANC_user_id = person_name.creator
-        LEFT JOIN #{@database}.user_bak changers ON changers.ANC_user_id = person_name.changed_by
-        LEFT JOIN #{@database}.user_bak voiders ON voiders.ANC_user_id = person_name.voided_by
+        INNER JOIN #{@database}.user_bak creators ON creators.Anc_user_id = person_name.creator
+        LEFT JOIN #{@database}.user_bak changers ON changers.Anc_user_id = person_name.changed_by
+        LEFT JOIN #{@database}.user_bak voiders ON voiders.Anc_user_id = person_name.voided_by
         WHERE person_name.person_id IN (#{patients})
       SQL
       central_hub message: msg, query: statement
@@ -346,8 +346,8 @@ module ANCService
         SELECT #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + p.person_id) AS person_id"},
         p.preferred,  p.address1,  p.address2,  p.city_village,  p.state_province, p.postal_code,  p.country,  p.latitude,  p.longitude, creators.ART_user_id,  p.date_created,  p.voided, voiders.ART_user_id, p.date_voided, p.void_reason, p.county_district,  p.neighborhood_cell,  p.region,  p.subregion,  p.township_division, p.uuid
         FROM #{@database}.person_address p #{cond}
-        INNER JOIN #{@database}.user_bak creators ON creators.ANC_user_id = p.creator
-        LEFT JOIN #{@database}.user_bak voiders ON voiders.ANC_user_id = p.voided_by
+        INNER JOIN #{@database}.user_bak creators ON creators.Anc_user_id = p.creator
+        LEFT JOIN #{@database}.user_bak voiders ON voiders.Anc_user_id = p.voided_by
         WHERE p.person_id IN (#{patients})
       SQL
       central_hub message: msg, query: statement
@@ -361,9 +361,9 @@ module ANCService
         INSERT INTO person_attribute (person_id, value, person_attribute_type_id, creator, date_created, changed_by, date_changed, voided, voided_by, date_voided, void_reason, uuid)
         SELECT #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + p.person_id) AS person_id"}, p.value, p.person_attribute_type_id, creators.ART_user_id, p.date_created, changers.ART_user_id, p.date_changed, p.voided, voiders.ART_user_id, p.date_voided, p.void_reason, p.uuid
         FROM #{@database}.person_attribute p #{cond}
-        INNER JOIN #{@database}.user_bak creators ON creators.ANC_user_id = p.creator
-        LEFT JOIN #{@database}.user_bak changers ON changers.ANC_user_id = p.changed_by
-        LEFT JOIN #{@database}.user_bak voiders ON voiders.ANC_user_id = p.voided_by
+        INNER JOIN #{@database}.user_bak creators ON creators.Anc_user_id = p.creator
+        LEFT JOIN #{@database}.user_bak changers ON changers.Anc_user_id = p.changed_by
+        LEFT JOIN #{@database}.user_bak voiders ON voiders.Anc_user_id = p.voided_by
         WHERE p.person_id IN (#{patients})
       SQL
       central_hub message: msg, query: statement
@@ -377,9 +377,9 @@ module ANCService
         INSERT INTO patient (patient_id, tribe, creator, date_created, changed_by, date_changed, voided, voided_by, date_voided, void_reason)
         SELECT #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + p.patient_id) AS patient_id"}, p.tribe, creators.ART_user_id, p.date_created, changers.ART_user_id, p.date_changed, p.voided, voiders.ART_user_id, p.date_voided, p.void_reason
         FROM #{@database}.patient p #{cond}
-        INNER JOIN #{@database}.user_bak creators ON creators.ANC_user_id = p.creator
-        LEFT JOIN #{@database}.user_bak changers ON changers.ANC_user_id = p.changed_by
-        LEFT JOIN #{@database}.user_bak voiders ON voiders.ANC_user_id = p.voided_by
+        INNER JOIN #{@database}.user_bak creators ON creators.Anc_user_id = p.creator
+        LEFT JOIN #{@database}.user_bak changers ON changers.Anc_user_id = p.changed_by
+        LEFT JOIN #{@database}.user_bak voiders ON voiders.Anc_user_id = p.voided_by
         WHERE p.patient_id IN (#{patients})
       SQL
       central_hub message: msg, query: statement
@@ -393,8 +393,8 @@ module ANCService
         INSERT INTO patient_identifier (patient_id,  identifier,  identifier_type,  preferred,  location_id,  creator,  date_created,  voided,  voided_by,  date_voided,  void_reason,  uuid)
         SELECT #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + p.patient_id) AS patient_id,"} p.identifier, p.identifier_type,  p.preferred,  p.location_id, creators.ART_user_id,  p.date_created,  p.voided, voiders.ART_user_id, p.date_voided, p.void_reason, p.uuid
         FROM #{@database}.patient_identifier p #{cond}
-        INNER JOIN #{@database}.user_bak creators ON creators.ANC_user_id = p.creator
-        LEFT JOIN #{@database}.user_bak voiders ON voiders.ANC_user_id = p.voided_by
+        INNER JOIN #{@database}.user_bak creators ON creators.Anc_user_id = p.creator
+        LEFT JOIN #{@database}.user_bak voiders ON voiders.Anc_user_id = p.voided_by
         WHERE p.patient_id IN (#{patients})
       SQL
       central_hub message: msg, query: statement
@@ -410,9 +410,9 @@ module ANCService
         INSERT INTO patient_program (patient_program_id,  patient_id,  program_id,  date_enrolled,  date_completed,  creator,  date_created, changed_by,  date_changed,  voided, voided_by,  date_voided,  void_reason,  uuid,  location_id)
         SELECT (SELECT #{@patient_program_id} + patient_program_id) AS patient_program_id,  #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + patient_id) AS patient_id"},  program_id,  date_enrolled,  date_completed, creators.ART_user_id, patient_program.date_created, changers.ART_user_id, patient_program.date_changed, patient_program.voided, voiders.ART_user_id, patient_program.date_voided,  patient_program.void_reason, patient_program.uuid, location_id
         FROM #{@database}.patient_program #{cond}
-        INNER JOIN #{@database}.user_bak creators ON creators.ANC_user_id = patient_program.creator
-        LEFT JOIN #{@database}.user_bak changers ON changers.ANC_user_id = patient_program.changed_by
-        LEFT JOIN #{@database}.user_bak voiders ON voiders.ANC_user_id = patient_program.voided_by
+        INNER JOIN #{@database}.user_bak creators ON creators.Anc_user_id = patient_program.creator
+        LEFT JOIN #{@database}.user_bak changers ON changers.Anc_user_id = patient_program.changed_by
+        LEFT JOIN #{@database}.user_bak voiders ON voiders.Anc_user_id = patient_program.voided_by
         WHERE patient_id IN (#{patients})
       SQL
       central_hub message: msg, query: statement
@@ -424,9 +424,9 @@ module ANCService
         INSERT INTO patient_state (patient_program_id, state, start_date, end_date, creator, date_created, changed_by, date_changed, voided, voided_by, date_voided, void_reason, uuid)
         SELECT (SELECT #{@patient_program_id} + patient_program_id) AS patient_program_id, state, start_date, end_date, creators.ART_user_id, patient_state.date_created, changers.ART_user_id, patient_state.date_changed, patient_state.voided, voiders.ART_user_id, patient_state.date_voided, patient_state.void_reason, patient_state.uuid
         FROM #{@database}.patient_state
-        INNER JOIN #{@database}.user_bak creators ON creators.ANC_user_id = patient_state.creator
-        LEFT JOIN #{@database}.user_bak changers ON changers.ANC_user_id = patient_state.changed_by
-        LEFT JOIN #{@database}.user_bak voiders ON voiders.ANC_user_id = patient_state.voided_by
+        INNER JOIN #{@database}.user_bak creators ON creators.Anc_user_id = patient_state.creator
+        LEFT JOIN #{@database}.user_bak changers ON changers.Anc_user_id = patient_state.changed_by
+        LEFT JOIN #{@database}.user_bak voiders ON voiders.Anc_user_id = patient_state.voided_by
         WHERE patient_program_id IN (SELECT patient_program_id FROM #{@database}.patient_program WHERE patient_id IN (#{patients}))
       SQL
       central_hub message: msg, query: statement
@@ -493,7 +493,7 @@ module ANCService
                   query: "DROP TABLE IF EXISTS #{@database}.provider_change_history")
       statement = <<~SQL
         CREATE TABLE #{@database}.provider_change_history
-        SELECT provider_id AS ANC_person_id, encounter_id AS ANC_encounter_id, (SELECT person_id FROM #{@database}.users LIMIT 1) AS ANC_new_person_id, (SELECT (SELECT person_id FROM #{@database}.users LIMIT 1) + #{@person_id}) AS ART_provider_id, (SELECT #{@encounter_id} + encounter_id) AS ART_encounter_id
+        SELECT provider_id AS Anc_person_id, encounter_id AS Anc_encounter_id, (SELECT person_id FROM #{@database}.users LIMIT 1) AS Anc_new_person_id, (SELECT (SELECT person_id FROM #{@database}.users LIMIT 1) + #{@person_id}) AS ART_provider_id, (SELECT #{@encounter_id} + encounter_id) AS ART_encounter_id
         FROM #{@database}.encounter
         WHERE provider_id IN (#{fetch_providers_who_are_not_system_users})
       SQL
@@ -511,14 +511,14 @@ module ANCService
         INSERT INTO encounter (encounter_id, encounter_type, patient_id, provider_id, location_id, form_id, encounter_datetime, creator, date_created, voided, voided_by, date_voided, void_reason, uuid, changed_by, date_changed, program_id)
         SELECT (SELECT #{@encounter_id} + encounter_id), encounter_type, #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + patient_id)"}, providers.ART_person_id, location_id, form_id, encounter_datetime, bak.ART_user_id, encounter.date_created, encounter.voided, voider.ART_user_id, encounter.date_voided, encounter.void_reason, encounter.uuid, changer.ART_user_id, encounter.date_changed, 12
         FROM #{@database}.encounter #{cond}
-        INNER JOIN #{@database}.user_bak bak ON encounter.creator = bak.ANC_user_id
+        INNER JOIN #{@database}.user_bak bak ON encounter.creator = bak.Anc_user_id
         INNER JOIN (
-          SELECT u.person_id ANC_person_id, b.person_id ART_person_id
+          SELECT u.person_id Anc_person_id, b.person_id ART_person_id
           FROM #{@database}.users u
-          INNER JOIN #{@database}.user_bak b ON b.ANC_user_id = u.user_id
-        ) providers ON providers.ANC_person_id = encounter.provider_id
-        LEFT JOIN #{@database}.user_bak voider on voider.ANC_user_id = encounter.voided_by
-        LEFT JOIN #{@database}.user_bak changer on changer.ANC_user_id = encounter.changed_by
+          INNER JOIN #{@database}.user_bak b ON b.Anc_user_id = u.user_id
+        ) providers ON providers.Anc_person_id = encounter.provider_id
+        LEFT JOIN #{@database}.user_bak voider on voider.Anc_user_id = encounter.voided_by
+        LEFT JOIN #{@database}.user_bak changer on changer.Anc_user_id = encounter.changed_by
         WHERE provider_id IN (SELECT person_id FROM #{@database}.users) AND patient_id IN (#{patients})
       SQL
       central_hub message: msg, query: statement
@@ -533,8 +533,8 @@ module ANCService
         INSERT INTO obs (obs_id, person_id,  concept_id,  encounter_id,  order_id,  obs_datetime,  location_id,  obs_group_id,  accession_number,  value_group_id,  value_boolean,  value_coded,  value_coded_name_id,  value_drug,  value_datetime,  value_numeric,  value_modifier,  value_text,  date_started,  date_stopped,  comments,  creator,  date_created,  voided,  voided_by,  date_voided,  void_reason,  value_complex,  uuid)
         SELECT (SELECT #{@obs_id} + obs_id) AS obs_id, #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + obs.person_id) AS person_id"},  concept_id,  (SELECT #{@encounter_id} + encounter_id) AS encounter_id,  (SELECT #{@order_id} + order_id) AS order_id, obs_datetime, location_id, (SELECT #{@obs_id} + obs_group_id) AS obs_group_id, accession_number, value_group_id, value_boolean, value_coded, value_coded_name_id, value_drug, value_datetime, value_numeric, value_modifier, value_text, date_started, date_stopped,  comments, creators.ART_user_id, obs.date_created, obs.voided, voiders.ART_user_id, obs.date_voided, obs.void_reason, value_complex,  obs.uuid
         FROM #{@database}.obs #{cond}
-        INNER JOIN #{@database}.user_bak creators ON creators.ANC_user_id = obs.creator
-        LEFT JOIN #{@database}.user_bak voiders ON voiders.ANC_user_id = obs.voided_by
+        INNER JOIN #{@database}.user_bak creators ON creators.Anc_user_id = obs.creator
+        LEFT JOIN #{@database}.user_bak voiders ON voiders.Anc_user_id = obs.voided_by
         WHERE encounter_id IN (SELECT encounter_id FROM #{@database}.encounter WHERE patient_id IN (#{patients}))
       SQL
       central_hub message: msg, query: statement
@@ -548,9 +548,9 @@ module ANCService
         INSERT INTO orders (order_id, order_type_id, concept_id, orderer,  encounter_id,  instructions,  start_date,  auto_expire_date,  discontinued,  discontinued_date, discontinued_by,  discontinued_reason, creator, date_created,  voided,  voided_by,  date_voided,  void_reason, patient_id,  accession_number, obs_id,  uuid, discontinued_reason_non_coded)
         SELECT (SELECT #{@order_id} + order_id) AS order_id,  order_type_id, concept_id, orderer, (SELECT #{@encounter_id} + encounter_id) AS encounter_id,  instructions, start_date, auto_expire_date,  discontinued,  discontinued_date, changers.ART_user_id,  discontinued_reason,  creators.ART_user_id,  orders.date_created,  orders.voided, voiders.ART_user_id,  orders.date_voided, orders.void_reason, #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + patient_id) AS patient_id"}, accession_number, (SELECT #{@obs_id} + obs_id) AS obs_id, orders.uuid, discontinued_reason_non_coded
         FROM #{@database}.orders #{cond}
-        INNER JOIN #{@database}.user_bak creators ON creators.ANC_user_id = orders.creator
-        LEFT JOIN #{@database}.user_bak changers ON changers.ANC_user_id = orders.discontinued_by
-        LEFT JOIN #{@database}.user_bak voiders ON voiders.ANC_user_id = orders.voided_by
+        INNER JOIN #{@database}.user_bak creators ON creators.Anc_user_id = orders.creator
+        LEFT JOIN #{@database}.user_bak changers ON changers.Anc_user_id = orders.discontinued_by
+        LEFT JOIN #{@database}.user_bak voiders ON voiders.Anc_user_id = orders.voided_by
         WHERE encounter_id IN (SELECT encounter_id FROM #{@database}.encounter WHERE patient_id IN (#{patients}) )
       SQL
       central_hub message: msg, query: statement
@@ -572,7 +572,7 @@ module ANCService
         INSERT INTO user_role (user_id, role)
         SELECT b.ART_user_id, r.role
         FROM #{@database}.user_role r
-        INNER JOIN #{@database}.user_bak b on r.user_id = b.ANC_user_id
+        INNER JOIN #{@database}.user_bak b on r.user_id = b.Anc_user_id
         WHERE NOT EXISTS (SELECT 1 FROM user_role WHERE user_role.user_id = b.ART_user_id)
       SQL
       central_hub(message: 'Migrating user roles', query: statement)
@@ -583,7 +583,7 @@ module ANCService
     def update_migrated_records
       statements = <<~SQL
         UPDATE encounter SET encounter_type = 98 WHERE encounter_type = 61 AND encounter_id > #{@encounter_id};
-        UPDATE obs SET value_text = null, value_coded = 1065, value_coded_name_id = 1102 WHERE concept_id = 2723 AND value_text IN ('Given during previous ANC visit for current pregnancy', 'Given Today', 'Yes') AND obs_id > #{@obs_id};
+        UPDATE obs SET value_text = null, value_coded = 1065, value_coded_name_id = 1102 WHERE concept_id = 2723 AND value_text IN ('Given during previous Anc visit for current pregnancy', 'Given Today', 'Yes') AND obs_id > #{@obs_id};
         UPDATE obs SET value_text = null, value_coded = 1066, value_coded_name_id = 1103 WHERE concept_id = 2723 AND value_text IN ('No', 'Not given today or during current pregnancy') AND obs_id > #{@obs_id};
         UPDATE #{@database}.obs SET value_text = null, value_coded = 1067, value_coded_name_id = 1104 WHERE concept_id = 2723 AND value_text IN ('Unknown');
         UPDATE obs SET value_text = null, value_coded = 1065, value_coded_name_id = 1102 WHERE value_text = 'Yes' AND obs_id > #{@obs_id};
@@ -692,7 +692,7 @@ module ANCService
     # method to get use id from user bak if this migration happened using old script
     def user_id_from_bak
       id = ActiveRecord::Base.connection.select_one <<~SQL
-        SELECT (ART_user_id - ANC_user_id) as id FROM #{@database}.user_bak limit 1
+        SELECT (ART_user_id - Anc_user_id) as id FROM #{@database}.user_bak limit 1
       SQL
       id['id']
     end
@@ -797,7 +797,7 @@ module ANCService
       result = ActiveRecord::Base.connection.select_all <<~SQL
         SELECT * FROM #{@database}.mapped_patients
       SQL
-      csv = 'ANC PATIENT ID,ART PATIENT ID,ANC PATIENT IDENTIFIER,ART PATIENT IDENTIFIER,REASON FOR CHANGE'
+      csv = 'Anc PATIENT ID,ART PATIENT ID,Anc PATIENT IDENTIFIER,ART PATIENT IDENTIFIER,REASON FOR CHANGE'
       result.each do |record|
         csv += "\n#{record['anc_patient_id']},#{record['art_patient_id']},#{record['anc_identifier']},#{record['art_identifier']},#{record['reason']}"
       end
@@ -808,7 +808,7 @@ module ANCService
       result = ActiveRecord::Base.connection.select_all <<~SQL
         SELECT * FROM #{@database}.unmapped_patients
       SQL
-      csv = 'ANC PATIENT ID,ART PATIENT ID,PATIENT IDENTIFIER'
+      csv = 'Anc PATIENT ID,ART PATIENT ID,PATIENT IDENTIFIER'
       result.each do |record|
         csv += "\n#{record['anc_patient_id']},#{record['anc_patient_id'].to_i + @person_id},#{record['identifier']}"
       end
@@ -821,7 +821,7 @@ module ANCService
         FROM #{@database}.mapped_patients
         WHERE NOT EXISTS (SELECT 1 FROM #{@database}.patient_program WHERE patient_program.patient_id = mapped_patients.anc_patient_id)
       SQL
-      csv = 'ANC PATIENT ID,ART PATIENT ID,PATIENT IDENTIFIER'
+      csv = 'Anc PATIENT ID,ART PATIENT ID,PATIENT IDENTIFIER'
       result.each do |record|
         csv += "\n#{record['anc_patient_id']},#{record['art_patient_id']},#{record['anc_identifier']},#{record['art_identifier']}"
       end
@@ -847,7 +847,7 @@ module ANCService
         FROM #{@database}.mapped_patients
         WHERE NOT EXISTS (SELECT 1 FROM #{@database}.encounter WHERE encounter.patient_id = mapped_patients.anc_patient_id AND voided = 0)
       SQL
-      csv = 'ANC PATIENT ID,ART PATIENT ID,ANC IDENTIFIER,ART IDENTIFIER'
+      csv = 'Anc PATIENT ID,ART PATIENT ID,Anc IDENTIFIER,ART IDENTIFIER'
       result.each do |record|
         csv += "\n#{record['anc_patient_id']},#{record['art_patient_id']},#{record['anc_identifier']},#{record['art_identifier']}"
       end
@@ -872,7 +872,7 @@ module ANCService
         SELECT anc_person_id, art_provider_id,anc_encounter_id,art_encounter_id
         FROM #{@database}.provider_change_history
       SQL
-      csv = 'ANC PROVIDER ID ,ART PROVIDER ID,ANC ENCOUNTER ID,ART ENCOUNTER ID'
+      csv = 'Anc PROVIDER ID ,ART PROVIDER ID,Anc ENCOUNTER ID,ART ENCOUNTER ID'
       result.each do |record|
         csv += "\n#{record['anc_person_id']},#{record['art_provider_id']},#{record['anc_encounter_id']},#{record['art_encounter_id']}"
       end
@@ -887,7 +887,7 @@ module ANCService
         AND patient_identifier.voided = 0
         GROUP BY patient_id HAVING COUNT(*) > 1
       SQL
-      csv = 'ANC PATIENT ID ,ANC IDENTIFIERS, ANC COUNT'
+      csv = 'Anc PATIENT ID ,Anc IDENTIFIERS, Anc COUNT'
       result.each do |record|
         csv += "\n#{record['patient_id']},#{record['identifiers']},#{record['count']}"
       end
@@ -897,7 +897,7 @@ module ANCService
     # method to write mapping data
     def write_migration_to_file
       @log.close
-      @file.puts "This is a report of ANC Migration that happened on #{Time.now.to_date}. Confidence percentage was set to #{@confidence}"
+      @file.puts "This is a report of Anc Migration that happened on #{Time.now.to_date}. Confidence percentage was set to #{@confidence}"
       @file.puts 'This is a list of Mapped Patients'
       @file.puts report_mapped_patients
       @file.puts ' '

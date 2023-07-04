@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ANCService
+module AncService
     class PatientLabLabel
       attr_accessor :patient, :date
 

@@ -2,7 +2,7 @@
 
 require 'logger'
 
-module ANCService
+module AncService
 class AppointmentEngine
   include ModelUtils
 

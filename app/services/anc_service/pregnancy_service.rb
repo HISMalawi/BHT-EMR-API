@@ -1,4 +1,4 @@
-module ANCService
+module AncService
   module PregnancyService
     def self.date_of_pregnancy_end(patient, date)
       patient.encounters.joins([:observations])

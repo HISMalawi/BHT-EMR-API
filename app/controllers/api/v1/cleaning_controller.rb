@@ -1,6 +1,6 @@
 class Api::V1::CleaningController < ApplicationController
   SERVICES = {
-    'ANC PROGRAM' => ANCService::DataCleaning,
+    'ANC PROGRAM' => AncService::DataCleaning,
     'HIV PROGRAM' => ARTService::DataCleaningTool
   }.freeze
 

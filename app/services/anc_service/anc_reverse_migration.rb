@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-module ANCService
+module AncService
   # rubocop:disable Metrics/ClassLength
   # class to handle reversing of anc migrated data
   # in true sense we are just deleting the records
-  class ANCReverseMigration
+  class AncReverseMigration
     include ActionView::Helpers::DateHelper
     def initialize(params)
       @database = params[:database]
@@ -140,7 +140,7 @@ module ANCService
         SELECT DISTINCT(anc.patient_id) AS anc_patient_id, art.patient_id AS art_patient_id
         FROM #{@database}.patient_identifier anc
         JOIN patient_identifier art ON anc.identifier = art.identifier
-        JOIN #{@database}.user_bak bak ON anc.creator = bak.ANC_user_id
+        JOIN #{@database}.user_bak bak ON anc.creator = bak.Anc_user_id
         WHERE art.creator = bak.ART_user_id AND art.date_created = anc.date_created
       SQL
       central_execute message: 'Create patient mapping', statement: stmt

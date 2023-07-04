@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ANCService
+module AncService
   # Provides various summary statistics for an ART patient
   class PatientSummary
     NPID_TYPE = 'National id'
@@ -36,7 +36,7 @@ module ANCService
     end
 
     def date_of_lnmp
-      ANCService::PregnancyService.date_of_lnmp(@patient, @date)
+      AncService::PregnancyService.date_of_lnmp(@patient, @date)
     end
 
     def number_of_visits

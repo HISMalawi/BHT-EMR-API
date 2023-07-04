@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ANCService
+module AncService
   # Patients sub service.
   #
   # Basically provides ANC specific patient-centric functionality
@@ -24,15 +24,15 @@ module ANCService
     end
 
     def visit_summary_label(patient, date)
-      ANCService::PatientVisitLabel.new patient, date
+      AncService::PatientVisitLabel.new patient, date
     end
 
     def history_label(patient, date)
-      ANCService::PatientHistoryLabel.new patient, date
+      AncService::PatientHistoryLabel.new patient, date
     end
 
     def lab_results_label(patient, date)
-      ANCService::PatientLabLabel.new patient, date
+      AncService::PatientLabLabel.new patient, date
     end
 
     def gravida(patient, date)
@@ -324,7 +324,7 @@ module ANCService
     end
 
     def date_of_lnmp(patient, date = Date.today)
-      ANCService::PregnancyService.date_of_lnmp(patient, date)
+      AncService::PregnancyService.date_of_lnmp(patient, date)
     end
 
     # Check if patient has been given drugs

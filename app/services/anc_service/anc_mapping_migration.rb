@@ -1,8 +1,8 @@
 # frozen_string_literal:true
 
-module ANCService
+module AncService
   # class that will map the users in the system
-  class ANCMappingMigration
+  class AncMappingMigration
     def initialize(anc_database, confidence)
       @database = anc_database
       @confidence = confidence
@@ -13,7 +13,7 @@ module ANCService
     def map_linkage_between_anc_and_openmrs
       create_mapped
       create_unmapped
-      @file.puts('ANC Patient ID,ANC National Identifier,ART Patient ID,ART National Identifier,Matched Fields,Score')
+      @file.puts('Anc Patient ID,Anc National Identifier,ART Patient ID,ART National Identifier,Matched Fields,Score')
       anc = ActiveRecord::Base.connection.select_all <<~SQL
         SELECT identifier, patient_id
         FROM  #{@database}.patient_identifier
@@ -72,10 +72,10 @@ module ANCService
         patient = Patient.find_by(patient_id: identifier['patient_id'])
         next if patient.blank?
 
-        ANCDetails.fetch_dob(@database, anc['patient_id']) == patient.person.birthdate ? update_score_variables('Birthdate', 5) : nil
-        check_name(ANCDetails.fetch_name(@database, anc['patient_id']), patient)
-        ANCDetails.fetch_gender(@database, anc['patient_id']) == patient.person.gender ? update_score_variables('Gender', 5)  : nil
-        check_address(ANCDetails.fetch_address(@data, anc['patient_id']), patient.person.addresses[0])
+        AncDetails.fetch_dob(@database, anc['patient_id']) == patient.person.birthdate ? update_score_variables('Birthdate', 5) : nil
+        check_name(AncDetails.fetch_name(@database, anc['patient_id']), patient)
+        AncDetails.fetch_gender(@database, anc['patient_id']) == patient.person.gender ? update_score_variables('Gender', 5)  : nil
+        check_address(AncDetails.fetch_address(@data, anc['patient_id']), patient.person.addresses[0])
         check_attribute(anc['patient_id'], patient)
         @local_score = (@score * 100) / 45.0
         percentage = @local_score >= @confidence
@@ -118,7 +118,7 @@ module ANCService
 
     # method to just check the different attribute types of a patient
     def attribute_checker(anc, openmrs, type)
-      record = ANCDetails.fetch_attribute(@database, anc, type)
+      record = AncDetails.fetch_attribute(@database, anc, type)
       return false if record.blank?
 
       record == openmrs.person.person_attributes.find_by(person_attribute_type_id: type)&.value
