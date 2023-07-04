@@ -15,6 +15,7 @@ class Order < VoidableRecord
   validates_presence_of :patient_id, :concept_id, :encounter_id,
                         :provider, :orderer
   has_many :observations
+  has_one :lims_acknowledgement_status, foreign_key: :order_id
   has_one :drug_order
 
   validate :start_date
@@ -26,7 +27,8 @@ class Order < VoidableRecord
     errors.add(:start_date, ' cannot be in the future')
   end
 
-  def clear_dispensed_drugs(_void_reason)
+  def clear_dispensed_drugs(void_reason)
+    lims_acknowledgement_status&.void(void_reason)
     return unless drug_order
 
     drug_order.quantity = 0

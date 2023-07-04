@@ -90,19 +90,31 @@ module ARTService
           SELECT
             e.patient_id, i.identifier arv_number, e.birthdate,
             e.gender, n.given_name, n.family_name,
-            art_reason.name art_reason, a.value cell_number,
+            art_reason.name art_reason, a.value cell_number, landmark.value landmark,
             s.state_province district, s.county_district ta,
             s.city_village village, TIMESTAMPDIFF(year, DATE(e.birthdate), DATE('#{@end_date}')) age,
-            #{defaulter_date_sql}(e.patient_id, TIMESTAMP('#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')) AS defaulter_date
+            #{defaulter_date_sql}(e.patient_id, TIMESTAMP('#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')) AS defaulter_date,
+            appointment.appointment_date AS appointment_date
           FROM temp_earliest_start_date e
           INNER JOIN temp_patient_outcomes o ON e.patient_id = o.patient_id
+          INNER JOIN (
+            SELECT e.patient_id, MAX(o.value_datetime) appointment_date
+            FROM encounter e
+            INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.voided = 0 AND o.concept_id = 5096 -- appointment date
+            WHERE e.encounter_type = 7 -- appointment encounter type
+            AND e.program_id = 1 -- hiv program
+            AND e.patient_id IN (SELECT patient_id FROM temp_patient_outcomes WHERE cum_outcome = 'Defaulted')
+            AND e.encounter_datetime < DATE('#{@end_date}') + INTERVAL 1 DAY
+            GROUP BY e.patient_id
+          ) appointment ON appointment.patient_id = e.patient_id
           LEFT JOIN patient_identifier i ON i.patient_id = e.patient_id
           AND i.voided = 0 AND i.identifier_type = 4
           INNER JOIN person_name n ON n.person_id = e.patient_id AND n.voided = 0
           LEFT JOIN person_attribute a ON a.person_id = e.patient_id
           AND a.voided = 0 AND a.person_attribute_type_id = 12
-          LEFT JOIN person_address s ON s.person_id = e.patient_id
-          LEFT JOIN concept_name art_reason ON art_reason.concept_id = e.reason_for_starting_art
+          LEFT JOIN person_attribute landmark ON landmark.person_id = e.patient_id AND landmark.voided = 0 AND landmark.person_attribute_type_id = 19
+          LEFT JOIN person_address s ON s.person_id = e.patient_id AND s.voided = 0
+          LEFT JOIN concept_name art_reason ON art_reason.concept_id = e.reason_for_starting_art AND art_reason.voided = 0
           WHERE o.cum_outcome = 'Defaulted' GROUP BY e.patient_id
           ORDER BY e.patient_id, n.date_created DESC;
         SQL
@@ -114,10 +126,12 @@ module ARTService
 
           unless defaulter_date == 'N/A'
             next if defaulter_date < @start_date.to_date
+            next if defaulter_date > @end_date.to_date
           end
 
+
           patients << {
-            person_id: person["patient_id"],
+            person_id: person['patient_id'],
             given_name: person['given_name'],
             family_name: person['family_name'],
             birthdate: person['birthdate'],
@@ -125,16 +139,18 @@ module ARTService
             arv_number: person['arv_number'],
             outcome: 'Defaulted',
             defaulter_date: defaulter_date,
+            appointment_date: person['appointment_date'].to_date.strftime('%Y-%m-%d'),
             art_reason: person['art_reason'],
             cell_number: person['cell_number'],
             district: person['district'],
             ta: person['ta'],
             village: person['village'],
-            current_age: person['age']
+            current_age: person['age'],
+            landmark: person['landmark']
           }
         end
 
-        return patients
+        patients
       end
 
       def cohort_report_drill_down(id)

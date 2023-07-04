@@ -12,7 +12,8 @@ module ARTService
       'MALE CLIENTS WITH FEMALE OBS' => 'male_clients_with_female_obs',
       'DOB MORE THAN DATE ENROLLED' => 'dob_more_than_date_enrolled',
       'INCOMPLETE VISITS' => 'incomplete_visit',
-      'MISSING DEMOGRAPHICS' => 'incomplete_demographics'
+      'MISSING DEMOGRAPHICS' => 'incomplete_demographics',
+      'MISSING VL RESULTS' => 'missing_vl_results'
     }.freeze
 
     def initialize(start_date:, end_date:, tool_name:)
@@ -67,7 +68,7 @@ module ARTService
           left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
           left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
           LEFT JOIN patient_identifier i ON i.patient_id = pe.person_id
-          AND i.identifier_type = 4 AND i.voided = 0
+          AND i.identifier_type = #{indetifier_type} AND i.voided = 0
           LEFT JOIN person_name n ON n.person_id = pe.person_id AND n.voided = 0
         where
           ((`p`.`voided` = 0)
@@ -101,7 +102,7 @@ module ARTService
           left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
           left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
           LEFT JOIN patient_identifier i ON i.patient_id = pe.person_id
-          AND i.identifier_type = 4 AND i.voided = 0
+          AND i.identifier_type = #{indetifier_type} AND i.voided = 0
           LEFT JOIN person_name n ON n.person_id = pe.person_id AND n.voided = 0
         where
           ((`p`.`voided` = 0)
@@ -158,7 +159,7 @@ module ARTService
           n.given_name, n.family_name
         FROM person p
         LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
-        AND i.identifier_type = 4 AND i.voided = 0
+        AND i.identifier_type = #{indetifier_type} AND i.voided = 0
         LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
         WHERE p.person_id IN(#{patient_ids.join(',')})
         GROUP BY p.person_id ORDER BY i.date_created DESC;
@@ -167,11 +168,13 @@ module ARTService
       organise_data data
     end
 
-    def pre_art_or_unknown_outcomes
-      concept_set_id = concept('Antiretroviral drugs').concept_id
-      arvs = Drug.joins('INNER JOIN concept_set s ON s.concept_id = drug.concept_id')\
-                 .where('s.concept_set = ?', concept_set_id).map(&:drug_id)
+    def arv_drugs
+      Drug.joins('INNER JOIN concept_set s ON s.concept_id = drug.concept_id')\
+          .where('s.concept_set = ?', concept('Antiretroviral drugs').concept_id)\
+          .map(&:drug_id)
+    end
 
+    def prse_art_or_unknown_outcomes
       data = ActiveRecord::Base.connection.select_all <<~SQL
         select
           p.patient_id
@@ -179,7 +182,7 @@ module ARTService
           ((`patient_program` `p`
           inner join orders o ON o.patient_id = p.patient_id
           inner join drug_order d ON d.order_id = o.order_id
-          and d.drug_inventory_id in(#{arvs.join(',')})
+          and d.drug_inventory_id in(#{arv_drugs.join(',')})
           left join `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
           left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
           left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
@@ -219,7 +222,7 @@ module ARTService
           n.given_name, n.family_name
         FROM person p
         LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
-        AND i.identifier_type = 4 AND i.voided = 0
+        AND i.identifier_type = #{indetifier_type} AND i.voided = 0
         LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
         WHERE p.person_id IN(#{patient_ids.join(',')})
         GROUP BY p.person_id ORDER BY i.date_created DESC;
@@ -248,7 +251,7 @@ module ARTService
           n.given_name, n.family_name
         FROM person p
         LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
-        AND i.identifier_type = 4 AND i.voided = 0
+        AND i.identifier_type = #{indetifier_type} AND i.voided = 0
         LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
         WHERE p.person_id IN(#{patient_ids.join(',')})
         GROUP BY p.person_id ORDER BY i.date_created DESC;
@@ -304,7 +307,7 @@ module ARTService
           n.given_name, n.family_name
         FROM person p
         LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
-        AND i.identifier_type = 4 AND i.voided = 0
+        AND i.identifier_type = #{indetifier_type} AND i.voided = 0
         LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
         WHERE p.person_id IN(#{patient_ids.join(',')})
         GROUP BY p.person_id ORDER BY i.date_created DESC;
@@ -338,7 +341,7 @@ module ARTService
           ON person.person_id = orders.patient_id
         LEFT JOIN patient_identifier
           ON patient_identifier.patient_id = person.person_id
-          AND patient_identifier.identifier_type = 4
+          AND patient_identifier.identifier_type = #{indetifier_type}
           AND patient_identifier.voided = 0
         LEFT JOIN person_name
           ON person_name.person_id = person.person_id
@@ -347,7 +350,8 @@ module ARTService
           ON dispensation.order_id = orders.order_id
           AND dispensation.concept_id IN (SELECT concept_id FROM concept_name WHERE name = 'Amount Dispensed' AND voided = 0)
           AND dispensation.voided = 0
-        WHERE (drug_order.quantity IS NULL OR drug_order.quantity <= 0 AND orders.patient_id NOT IN(#{external_clients}))
+        WHERE drug_order.drug_inventory_id IN (#{arv_drugs.join(',')})
+        AND (drug_order.quantity IS NULL OR drug_order.quantity <= 0 AND orders.patient_id NOT IN(#{external_clients}))
         GROUP BY DATE(orders.start_date), orders.patient_id
         HAVING COALESCE(SUM(dispensation.value_numeric), 0) <= 0
       SQL
@@ -403,11 +407,7 @@ module ARTService
         LEFT JOIN patient_identifier
           ON patient_identifier.patient_id = deaths.patient_id
           AND patient_identifier.voided = 0
-          AND patient_identifier.identifier_type IN (
-            /* ARV Number */
-            SELECT patient_identifier_type_id FROM patient_identifier_type
-            WHERE name = 'ARV Number' AND retired = 0
-          )
+          AND patient_identifier.identifier_type = #{indetifier_type}
         LEFT JOIN person_name
           ON person_name.person_id = deaths.patient_id
           AND person_name.voided = 0
@@ -433,7 +433,7 @@ module ARTService
         FROM person p
         INNER JOIN obs ON obs.person_id = p.person_id AND (p.gender != 'F' AND p.gender != 'Female')
         LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
-        AND i.identifier_type = 4 AND i.voided = 0
+        AND i.identifier_type = #{indetifier_type} AND i.voided = 0
         LEFT JOIN person_name n ON n.person_id = p.person_id
         AND n.voided = 0
         WHERE obs.concept_id IN(#{concept_ids.join(',')})
@@ -484,7 +484,7 @@ module ARTService
             a.identifier arv_number, i.identifier national_id
           FROM person p
           LEFT JOIN patient_identifier a ON a.patient_id = p.person_id
-          AND a.identifier_type = 4 AND a.voided = 0
+          AND a.identifier_type = #{indetifier_type} AND a.voided = 0
           LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
           AND i.identifier_type = 3 AND i.voided = 0
           LEFT JOIN person_name n On n.person_id = p.person_id AND n.voided = 0
@@ -510,12 +510,35 @@ module ARTService
       incomplete_visits_comp
     end
 
+    def missing_vl_results
+      ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT o.order_id, n.given_name, n.family_name, p.gender, p.birthdate, a.identifier arv_number,
+        i.identifier national_id, ord.accession_number, DATE(ord.start_date) order_date, p.person_id patient_id
+        FROM obs o
+        INNER JOIN orders ord ON ord.order_id = o.order_id AND ord.voided = 0
+        INNER JOIN person p ON p.person_id = o.person_id AND p.voided = 0
+        INNER JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
+        LEFT JOIN patient_identifier a ON a.patient_id = p.person_id AND a.voided = 0 AND a.identifier_type = #{indetifier_type}
+        LEFT JOIN patient_identifier i ON i.patient_id = p.person_id AND i.voided = 0 AND i.identifier_type = 3
+        LEFT JOIN obs tr ON tr.obs_group_id = o.obs_id AND tr.voided = 0 AND tr.concept_id = #{concept('Lab test result').concept_id}
+        LEFT JOIN obs r ON r.obs_group_id = tr.obs_id AND r.voided = 0 AND r.concept_id = #{concept('HIV viral load').concept_id}
+        AND r.value_modifier IS NOT NULL and (r.value_numeric IS NOT NULL OR r.value_text IS NOT NULL)
+        WHERE o.concept_id = #{concept('Test type').concept_id} AND o.value_coded = #{concept('HIV viral load').concept_id} AND o.voided = 0
+        AND o.obs_datetime BETWEEN '#{@start_date}' AND '#{@end_date}'
+        AND tr.obs_id IS NULL AND r.obs_id IS NULL
+      SQL
+    end
+
     def concept(name)
       ConceptName.find_by_name(name)
     end
 
     def program
       @program ||= Program.find_by_name!('HIV Program')
+    end
+
+    def indetifier_type
+      @indetifier_type ||= PatientIdentifierType.find_by_name!(GlobalPropertyService.use_filing_numbers? ? 'Filing Number' : 'ARV Number').id
     end
 
     ##

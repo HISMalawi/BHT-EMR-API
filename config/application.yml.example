@@ -87,6 +87,17 @@ rds:
     # anc:
     #   program_name: 'ANC PROGRAM'
 
+# Configuration for OHSP
+ohsp:
+  url : ipaddress:8001
+  username : user_admin
+  password : pass_district
+
+# Configuration for IDSR SMS service
+idsr_sms:
+  url : ipaddress:8186/submit
+  username : admin@email.test
+  password : administrator
 # You will need to uncomment this part if you are running rspec tests
 # test_credentials:
 #   username: admin

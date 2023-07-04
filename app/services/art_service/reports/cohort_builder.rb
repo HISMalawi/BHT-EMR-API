@@ -354,8 +354,9 @@ module ARTService
 
         # Patients who started TPT in current reporting period
         tpt = Cohort::Tpt.new(start_date, end_date)
-        cohort_struct.newly_initiated_on_3hp = tpt.newly_initiated_on_3hp
-        cohort_struct.newly_initiated_on_ipt = tpt.newly_initiated_on_ipt
+        # tpt newly initiated has a property last_tpt_start_date we need to use that to get those clients
+        cohort_struct.newly_initiated_on_3hp = tpt.newly_initiated_on_3hp.select { |hash| hash['last_tpt_start_date'].nil? }
+        cohort_struct.newly_initiated_on_ipt = tpt.newly_initiated_on_ipt.select { |hash| hash['last_tpt_start_date'].nil? }
 
         puts "Started at: #{time_started}. Finished at: #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}"
         cohort_struct
@@ -1348,14 +1349,14 @@ EOF
         registered = []
         if month_str == '4+ months'
           data = ActiveRecord::Base.connection.select_all(
-            "SELECT patient_id, died_in(t.patient_id, cum_outcome, date_enrolled) died_in FROM temp_patient_outcomes o
+            "SELECT patient_id, died_in(t.patient_id, cum_outcome, earliest_start_date) died_in FROM temp_patient_outcomes o
             INNER JOIN temp_earliest_start_date t USING(patient_id)
             WHERE cum_outcome = 'Patient died' GROUP BY patient_id
             HAVING died_in IN ('4+ months', 'Unknown')"
           )
         else
           data = ActiveRecord::Base.connection.select_all(
-            "SELECT patient_id, died_in(t.patient_id, cum_outcome, date_enrolled) died_in FROM temp_patient_outcomes o
+            "SELECT patient_id, died_in(t.patient_id, cum_outcome, earliest_start_date) died_in FROM temp_patient_outcomes o
             INNER JOIN temp_earliest_start_date t USING(patient_id)
             WHERE cum_outcome = 'Patient died' GROUP BY patient_id
             HAVING died_in = '#{month_str}'"

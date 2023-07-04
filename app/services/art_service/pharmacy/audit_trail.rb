@@ -115,6 +115,7 @@ module ARTService
               pharmacy_batches.batch_number,
               pharmacy_batch_items.id AS batch_item_id,
               pharmacy_batch_items.drug_id,
+              pharmacy_batch_items.pack_size,
               pharmacy_batch_items.product_code,
               COALESCE(alternative_drug_names.name, drug.name) AS drug_name,
               pharmacy_obs.quantity AS amount_committed_to_stock,
@@ -144,7 +145,9 @@ module ARTService
             pharmacy_obs.transaction_date AS transaction_date,
             COALESCE(alternative_drug_names.name, drug.name) AS drug_name,
             pharmacy_batch_items.drug_id,
-            SUM(pharmacy_obs.quantity) AS cum_per_day_stock_commited,
+            pharmacy_batch_items.pack_size,
+            SUM(pharmacy_obs.quantity / COALESCE(NULLIF(pharmacy_batch_items.pack_size, 0),
+            1)) AS cum_per_day_stock_commited,
             CASE WHEN SUBSTR(pharmacy_obs.transaction_reason, 1, 34) = 'Reversing voided drug dispensation'
             THEN 'Reversing voided drug dispensation'
             ELSE pharmacy_obs.transaction_reason
@@ -177,6 +180,10 @@ module ARTService
           PharmacyEncounterType.all
         end
 
+        def drug_cms(drug_id)
+          DrugCms.select(:id, :drug_inventory_id, :name, :short_name, :pack_size).find_by(:drug_inventory_id => drug_id)
+        end
+
         def serialize_drilled_transaction(transaction)
           {
             creation_date: transaction[:creation_date],
@@ -190,7 +197,8 @@ module ARTService
             amount_dispensed_from_art: transaction[:amount_dispensed_from_art],
             username: transaction[:username],
             transaction_reason: transaction[:transaction_reason],
-            product_code: transaction[:product_code]
+            product_code: transaction[:product_code],
+            pack_size: transaction[:pack_size]
           }
         end
 
@@ -200,7 +208,8 @@ module ARTService
             transaction_type: transaction[:transaction_type],
             cum_per_day_stock_commited: transaction[:cum_per_day_stock_commited],
             drug_name: transaction[:drug_name],
-            drug_id: transaction[:drug_id]
+            drug_id: transaction[:drug_id],
+            pack_size: transaction[:pack_size]
           }
         end
       end

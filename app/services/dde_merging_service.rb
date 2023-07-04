@@ -63,6 +63,7 @@ class DDEMergingService
       result = merge_encounters(primary_patient, secondary_patient)
       merge_observations(primary_patient, secondary_patient, result)
       merge_orders(primary_patient, secondary_patient, result)
+      merge_programs(primary_patient, secondary_patient)
       MergeAuditService.new.create_merge_audit(primary_patient.id, secondary_patient.id, merge_type)
       secondary_patient.void("Merged into patient ##{primary_patient.id}:0")
 
@@ -322,37 +323,98 @@ class DDEMergingService
         primary_order_hash['patient_id'] = primary_patient.id
         primary_order_hash['encounter_id'] = encounter_map[order.encounter_id]
         primary_order_hash['obs_id'] = @obs_map[order.obs_id] unless order.obs_id.blank?
-        primary_order = Order.create(primary_order_hash)
+        primary_order = Order.create!(primary_order_hash)
         raise "Could not merge patient orders: #{primary_order.errors.as_json}" unless primary_order.errors.empty?
 
+        create_new_drug_order(order, primary_order)
         order.void("Merged into patient ##{primary_patient.patient_id}:#{primary_order.id}")
         orders_map[order.id] = primary_order.id
       else
+        create_new_drug_order(order, check) if order.drug_order.present? && check.drug_order.blank?
         order.void("Merged into patient ##{primary_patient.patient_id}:0")
         orders_map[order.id] = check.id
       end
     end
-
-    manage_drug_order orders_map
     update_obs_order_id(orders_map, @obs_map)
   end
 
-  # method to update drug orders with the new order id
-  def manage_drug_order(order_map)
-    return if order_map.blank?
+  def create_new_drug_order(order, primary_order)
+    return unless order.drug_order
+    return if primary_order.drug_order
 
-    result = ActiveRecord::Base.connection.select_all "SELECT * FROM drug_order WHERE order_id IN (#{order_map.keys.join(',')})"
-    return if result.blank?
+    Rails.logger.debug("Merging patient drug orders: #{primary_order} <= #{order}")
+    drug_order_hash = order.drug_order.attributes
+    drug_order_hash.delete('order_id')
 
-    result.each do |drug_order|
-      new_id = order_map[drug_order['order_id']]
-      next if DrugOrder.where(order_id: new_id)
+    drug_order_hash['order_id'] = primary_order.id
+    drug_order = DrugOrder.create!(drug_order_hash)
+    raise "Could not merge patient drug orders: #{drug_order.errors.as_json}" unless drug_order.errors.empty?
+  end
 
-      drug_order['order_id'] = new_id
-      new_drug_order = DrugOrder.create(drug_order)
-      raise "Could not merge patient druge orders: #{new_drug_order.errors.as_json}" unless new_drug_order.errors.empty?
+  # strip off secondary_patient all program enrollments and blesses primary patient
+  # with them
+  def merge_programs(primary_patient, secondary_patient)
+    Rails.logger.debug("Merging patient programs: #{primary_patient} <= #{secondary_patient}")
+    PatientProgram.where(patient_id: secondary_patient.id).each do |program|
+      patient_states = program.patient_states
+      check = PatientProgram.find_by('program_id = ? AND patient_id = ?', program.program_id, primary_patient.id)
+      if check.blank?
+        primary_program_hash = program.attributes
+        primary_program_hash.delete('patient_program_id')
+        primary_program_hash.delete('uuid')
+
+        primary_program_hash['patient_id'] = primary_patient.id
+        primary_program = PatientProgram.create!(primary_program_hash)
+        raise "Could not merge patient programs: #{primary_program.errors.as_json}" unless primary_program.errors.empty?
+
+        merge_states(primary_program, patient_states)
+        program.void("Merged into patient ##{primary_patient.patient_id}:#{primary_program.id}")
+      else
+        merge_states(check, patient_states)
+        program.void("Merged into patient ##{primary_patient.patient_id}:0")
+      end
     end
   end
+
+  # strip off secondary_patient all pateint states and blesses primary patient
+  # with them
+  def merge_states(primary_patient_program, secondary_patient_states)
+    return if secondary_patient_states.blank?
+
+    Rails.logger.debug("Merging patient states: #{primary_patient_program.patient_id} <= #{secondary_patient_states[0].patient_program.patient_id}")
+    secondary_patient_states.each do |state|
+      check = PatientState.find_by('patient_program_id = ? AND state = ? AND DATE(start_date) = ?', primary_patient_program.id, state.state, state.start_date.strftime('%Y-%m-%d'))
+      next unless check.blank?
+
+      primary_state_hash = state.attributes
+      primary_state_hash.delete('patient_state_id')
+      primary_state_hash.delete('uuid')
+
+      primary_state_hash['patient_program_id'] = primary_patient_program.id
+      patient_state = PatientState.create!(primary_state_hash)
+      raise "Could not merge patient states: #{patient_state.errors.as_json}" unless patient_state.errors.empty?
+    end
+  end
+
+
+  # method to update drug orders with the new order id
+  # def manage_drug_order(order_map)
+  #   Rails.logger.debug("Merging patient drug orders: #{order_map}")
+  #   return if order_map.blank?
+
+  #   result = ActiveRecord::Base.connection.select_all "SELECT * FROM drug_order WHERE order_id IN (#{order_map.keys.join(',')})"
+  #   return if result.blank?
+
+  #   result.to_a.each do |drug_order|
+  #     new_id = order_map[drug_order['order_id']]
+  #     next if DrugOrder.where(order_id: new_id).exists?
+
+  #     drug_order['order_id'] = new_id
+  #     new_drug_order = DrugOrder.create!(drug_order)
+  #     debugger
+  #     raise "Could not merge patient druge orders: #{new_drug_order.errors.as_json}" unless new_drug_order.errors.empty?
+  #   end
+  # end
 
   def update_obs_order_id(order_map, obs_map)
     Observation.where(obs_id: obs_map.values).each do |obs|
@@ -476,17 +538,22 @@ class DDEMergingService
 
   def create_new_encounter_raw(encounter, primary_patient)
     ActiveRecord::Base.connection.disable_referential_integrity do
+      puts "This is the encounter_id: #{encounter.id}"
       ActiveRecord::Base.connection.execute <<~SQL
         INSERT INTO encounter (encounter_type, patient_id, encounter_datetime, provider_id,#{unless encounter.location.blank?
                                                                                                'location_id,'
                                                                                              end} #{unless encounter.form_id.blank?
                                                                                                       'form_id,'
-                                                                                                    end} uuid, creator, date_created, voided, changed_by, date_changed)
+                                                                                                    end} uuid, creator, date_created, voided #{unless encounter.changed_by.blank?
+                                                                                                      ', changed_by'
+                                                                                                    end} #{unless encounter.date_changed.blank?
+                                                                                                      ', date_changed'
+                                                                                                    end})
         VALUES (#{encounter.encounter_type}, #{primary_patient.id}, '#{encounter.encounter_datetime.strftime('%Y-%m-%d %H:%M:%S')}', #{encounter.provider_id}, #{unless encounter.location_id.blank?
                                                                                                                                                                    "#{encounter.location_id},"
                                                                                                                                                                  end} #{unless encounter.form_id.blank?
                                                                                                                                                                           "#{encounter.form_id},"
-                                                                                                                                                                        end} uuid(), #{User.current.id}, '#{encounter.date_created.strftime('%Y-%m-%d %H:%M:%S')}', #{encounter.voided}, #{encounter.changed_by}, '#{encounter.date_changed.strftime('%Y-%m-%d %H:%M:%S')}')
+                                                                                                                                                                        end} uuid(), #{User.current.id}, '#{encounter.date_created.strftime('%Y-%m-%d %H:%M:%S')}', #{encounter.voided} #{",{encounter.changed_by}" unless encounter.changed_by.blank?} #{",#{encounter.date_changed.strftime('%Y-%m-%d %H:%M:%S')}" unless encounter.date_changed.blank?})
       SQL
     end
     row_id = ActiveRecord::Base.connection.select_one('SELECT LAST_INSERT_ID() AS id')['id']

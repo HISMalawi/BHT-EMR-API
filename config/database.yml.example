@@ -44,3 +44,7 @@ healthdata:
   password:
   host: localhost
   pool: 500
+
+concepts_merge_db:
+  <<: *default
+  database: openmrs_test

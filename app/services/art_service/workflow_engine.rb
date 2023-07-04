@@ -24,6 +24,7 @@ module ARTService
         LOGGER.debug "Loading encounter type: #{state}"
         encounter_type = EncounterType.find_by(name: state)
         if encounter_type.blank? && state == HIV_CLINIC_CONSULTATION_CLINICIAN
+          next if seen_by_clinician?
           encounter_type = EncounterType.find_by(name: HIV_CLINIC_CONSULTATION)
           encounter_type.name = HIV_CLINIC_CONSULTATION_CLINICIAN
           return encounter_type if referred_to_clinician?
@@ -232,7 +233,7 @@ module ARTService
     #
     # Pre-condition for TREATMENT encounter and onwards
     def patient_should_get_treatment?
-      if referred_to_clinician?
+      if referred_to_clinician? && !seen_by_clinician?
         return false
       end
 
@@ -381,6 +382,18 @@ module ARTService
 
     def patient_is_a_minor?
       @patient.age(today: @date) < MINOR_AGE_LIMIT
+    end
+
+    def seen_by_clinician?
+      # check if patient consultation was done by clinician
+      Observation.joins(:encounter)\
+                  .where(person: @patient.person,
+                         encounter: { program_id: @program.program_id },
+                         obs: { concept: concept('Medication orders'),  #last observation for a consultation encounter
+                                creator: [User.joins(:roles).where(role: {role: 'Clinician'}).pluck(:user_id)].flatten
+                        },
+                  ).where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
+                  .exists?
     end
 
     def referred_to_clinician?

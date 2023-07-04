@@ -19,6 +19,7 @@ module ARTService
 
       def find_report
         report = init_report
+        @param = tpt_type
         load_patients_into_report report, process_tpt_clients
         response = []
         report.each do |key, value|
@@ -26,6 +27,14 @@ module ARTService
           response << { age_group: key, tpt_type: '6H', **value['6H'] }
         end
         response
+      end
+
+      def moh_report(report, clients, start_date, end_date)
+        @first_day_of_month = start_date.to_date
+        @last_day_of_month = end_date.to_date
+        tpt_clients = process_tpt_clients(clients)
+        @param = 'gender'
+        load_patients_into_report report, tpt_clients
       end
 
       private
@@ -46,23 +55,76 @@ module ARTService
               defaulted: [],
               transfer_out: [],
               confirmed_tb: [],
-              pregnant: []
+              pregnant: [],
+              breast_feeding: [],
+              skin_rash: [],
+              peripheral_neuropathy: [],
+              yellow_eyes: [],
+              nausea: [],
+              dizziness: []
             }
           end
         end
       end
 
+      def patient_breast_feeding?(patient_id, last_tpt)
+        Observation.where(person_id: patient_id, concept_id: breast_feeding_concept_id,
+                          value_coded: yes_concept_id)
+                   .where('DATE(obs_datetime) > DATE(?) AND DATE(obs_datetime) < DATE(?) + INTERVAL 1 DAY', last_tpt&.to_date, @end_date.to_date)
+                   .exists?
+      end
+
+      def patient_skin_rash?(patient_id, last_tpt)
+        Observation.where(person_id: patient_id, concept_id: drug_induced_concept_id,
+                          value_coded: skin_rash_concept_id)
+                   .where('DATE(obs_datetime) > DATE(?) AND DATE(obs_datetime) < DATE(?) + INTERVAL 1 DAY', last_tpt&.to_date, @end_date.to_date)
+                   .where("value_drug IN (#{tpt_actual_drugs})")
+                   .exists?
+      end
+
+      def patient_peripheral_neuropathy?(patient_id, last_tpt)
+        Observation.where(person_id: patient_id, concept_id: drug_induced_concept_id,
+                          value_coded: peripheral_neuropathy_concept_id)
+                   .where('DATE(obs_datetime) > DATE(?) AND DATE(obs_datetime) < DATE(?) + INTERVAL 1 DAY', last_tpt&.to_date, @end_date.to_date)
+                   .where("value_drug IN (#{tpt_actual_drugs})")
+                   .exists?
+      end
+
       def patient_pregnant?(patient_id, last_tpt)
         Observation.where(person_id: patient_id, concept_id: pregnant_concept_id,
                           value_coded: yes_concept_id)
-                   .where('DATE(obs_datetime) > DATE(?) AND DATE(obs_datetime) < DATE(?) + INTERVAL 1 DAY', last_tpt.to_date, @end_date.to_date)
+                   .where('DATE(obs_datetime) > DATE(?) AND DATE(obs_datetime) < DATE(?) + INTERVAL 1 DAY', last_tpt&.to_date, @end_date.to_date)
                    .exists?
       end
 
       def patient_on_tb_treatment?(patient_id, last_tpt)
         Observation.where(person_id: patient_id, concept_id: tb_treatment_concept_id,
                           value_coded: yes_concept_id)
-                   .where('DATE(obs_datetime) > DATE(?) AND DATE(obs_datetime) < DATE(?) + INTERVAL 1 DAY', last_tpt.to_date, @end_date.to_date)
+                   .where('DATE(obs_datetime) > DATE(?) AND DATE(obs_datetime) < DATE(?) + INTERVAL 1 DAY', last_tpt&.to_date, @end_date.to_date)
+                   .exists?
+      end
+
+      def patient_yellow_eyes?(patient_id, last_tpt)
+        Observation.where(person_id: patient_id, concept_id: drug_induced_concept_id,
+                          value_coded: yellow_eyes_concept_id)
+                   .where('DATE(obs_datetime) > DATE(?) AND DATE(obs_datetime) < DATE(?) + INTERVAL 1 DAY', last_tpt&.to_date, @end_date.to_date)
+                   .where("value_drug IN (#{tpt_actual_drugs})")
+                   .exists?
+      end
+
+      def patient_nausea?(patient_id, last_tpt)
+        Observation.where(person_id: patient_id, concept_id: drug_induced_concept_id,
+                          value_coded: nausea_concept_id)
+                   .where('DATE(obs_datetime) > DATE(?) AND DATE(obs_datetime) < DATE(?) + INTERVAL 1 DAY', last_tpt&.to_date, @end_date.to_date)
+                   .where("value_drug IN (#{tpt_actual_drugs})")
+                   .exists?
+      end
+
+      def patient_dizziness?(patient_id, last_tpt)
+        Observation.where(person_id: patient_id, concept_id: drug_induced_concept_id,
+                          value_coded: dizziness_concept_id)
+                   .where('DATE(obs_datetime) > DATE(?) AND DATE(obs_datetime) < DATE(?) + INTERVAL 1 DAY', last_tpt&.to_date, @end_date.to_date)
+                   .where("value_drug IN (#{tpt_actual_drugs})")
                    .exists?
       end
 
@@ -76,6 +138,34 @@ module ARTService
 
       def yes_concept_id
         @yes_concept_id ||= concept_name_to_id('Yes')
+      end
+
+      def breast_feeding_concept_id
+        @breast_feeding_concept_id ||= concept_name_to_id('Breast feeding?')
+      end
+
+      def skin_rash_concept_id
+        @skin_rash_concept_id ||= concept_name_to_id('Skin rash')
+      end
+
+      def peripheral_neuropathy_concept_id
+        @peripheral_neuropathy_concept_id ||= concept_name_to_id('Peripheral neuropathy')
+      end
+
+      def yellow_eyes_concept_id
+        @yellow_eyes_concept_id ||= concept_name_to_id('Yellow eyes')
+      end
+
+      def nausea_concept_id
+        @nausea_concept_id ||= concept_name_to_id('Nausea')
+      end
+
+      def dizziness_concept_id
+        @dizziness_concept_id ||= concept_name_to_id('Dizziness')
+      end
+
+      def drug_induced_concept_id
+        @drug_induced_concept_id ||= concept_name_to_id('Drug Induced')
       end
 
       def tpt_clients
@@ -157,9 +247,9 @@ module ARTService
         SQL
       end
 
-      def process_tpt_clients
+      def process_tpt_clients(patients = nil)
         clients = []
-        tpt_clients.each do |client|
+        (patients || tpt_clients).each do |client|
           result = @tb_prev.fetch_individual_report(client['patient_id'])
           next if result.blank?
           next if result['tpt_initiation_date'].to_date < first_day_of_month.to_date
@@ -168,6 +258,8 @@ module ARTService
           client['last_dispense_date'] = result['last_dispensed_date']
           client['total_pills_taken'] = result['total_pills_taken']
           client['total_days_on_medication'] = result['total_days_on_medication']
+          client['tpt_type'] = @tb_prev.patient_on_3hp?(result) ? '3HP' : '6H'
+          client['drug_concepts'] = result['drug_concepts']
 
           clients << client
         end
@@ -264,26 +356,29 @@ module ARTService
 
       def load_patients_into_report(report, patients)
         patients.each do |patient|
-          report[patient['age_group']][patient['tpt_type']][:started_tpt] << patient['patient_id']
+          report[patient['age_group']][patient[@param]][:started_tpt] << patient['patient_id']
           if patient_completed_tpt?(patient, patient['tpt_type'])
-            report[patient['age_group']][patient['tpt_type']][:completed_tpt] << patient['patient_id']
+            report[patient['age_group']][patient[@param]][:completed_tpt] << patient['patient_id']
           else
-            report[patient['age_group']][patient['tpt_type']][:not_completed_tpt] << patient['patient_id']
+            report[patient['age_group']][patient[@param]][:not_completed_tpt] << patient['patient_id']
             process_outcomes report, patient
           end
         end
       end
 
       def process_outcomes(report, patient)
+        process_patient_conditions report, patient
+        return if @condition
+
         case patient['outcome']
         when 'Patient died'
-          report[patient['age_group']][patient['tpt_type']][:died] << patient['patient_id']
+          report[patient['age_group']][patient[@param]][:died] << patient['patient_id']
         when 'Patient transferred out'
-          report[patient['age_group']][patient['tpt_type']][:transfer_out] << patient['patient_id']
+          report[patient['age_group']][patient[@param]][:transfer_out] << patient['patient_id']
         when 'Treatment stopped'
-          report[patient['age_group']][patient['tpt_type']][:stopped] << patient['patient_id']
+          report[patient['age_group']][patient[@param]][:stopped] << patient['patient_id']
         when 'Defaulted'
-          report[patient['age_group']][patient['tpt_type']][:defaulted] << patient['patient_id']
+          report[patient['age_group']][patient[@param]][:defaulted] << patient['patient_id']
         else
           process_patient_conditions report, patient
         end
@@ -291,14 +386,36 @@ module ARTService
 
       def process_patient_conditions(report, patient)
         if patient_on_tb_treatment?(patient['patient_id'], patient['last_dispense_date'])
-          report[patient['age_group']][patient['tpt_type']][:confirmed_tb] << patient['patient_id']
+          report[patient['age_group']][patient[@param]][:confirmed_tb] << patient['patient_id']
         elsif patient['gender'] == 'F' && patient_pregnant?(patient['patient_id'], patient['last_dispense_date'])
-          report[patient['age_group']][patient['tpt_type']][:pregnant] << patient['patient_id']
+          report[patient['age_group']][patient[@param]][:pregnant] << patient['patient_id']
+          @condition = true
+          return
+        elsif patient['gender'] == 'F' && patient_breast_feeding?(patient['patient_id'], patient['last_dispense_date'])
+          report[patient['age_group']][patient[@param]][:breast_feeding] << patient['patient_id']
+          @condition = true
+          return
+        end
+
+        process_malawi_art_conditions report, patient
+      end
+
+      def process_malawi_art_conditions(report, patient)
+        %i[skin_rash nausea peripheral_neuropathy dizziness yellow_eyes].each do |condition|
+          method_name = "patient_#{condition}?".to_sym
+          next unless send(method_name, patient['patient_id'], patient['last_dispense_date'])
+
+          report[patient['age_group']][patient[@param]][condition] << patient['patient_id']
+          @condition = true
         end
       end
 
       def tpt_drugs
         ConceptName.where(name: ['INH', 'Isoniazid/Rifapentine', 'Rifapentine']).select(:concept_id)
+      end
+
+      def tpt_actual_drugs
+        @tpt_actual_drugs ||= Drug.where(concept_id: tpt_drugs.map(&:concept_id)).select(:drug_id).to_sql
       end
 
       def first_day_of_month

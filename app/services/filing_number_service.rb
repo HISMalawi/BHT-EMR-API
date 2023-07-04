@@ -19,6 +19,8 @@ class FilingNumberService
   def find_archiving_candidates(offset = nil, limit = nil)
     offset ||= 0
     limit ||= 12
+    three_quarters_of_limit = (limit * 0.75).to_i
+    one_quarter_of_limit = (limit * 0.25).to_i
     remove_temp_tables
     create_temp_index_on_orders_table
     create_temp_potential_filing_number_candidates
@@ -27,7 +29,7 @@ class FilingNumberService
     # return build_archive_candidates(patients) unless patients.empty?
 
     # build_archive_candidates(find_potential_defaulters)
-    result = (find_patient_with_adverse_outcomes(offset, limit / 2).to_a + find_defaulters(offset, limit / 2).to_a).sort_by { |k| k['start_date'] }
+    result = (find_patient_with_adverse_outcomes(offset, three_quarters_of_limit).to_a + find_defaulters(offset, one_quarter_of_limit).to_a).sort_by { |k| k['start_date'] }
     build_archive_candidates(result)
   end
 
@@ -376,7 +378,7 @@ class FilingNumberService
 
   def create_temp_patient_with_adverse_outcomes
     ActiveRecord::Base.connection.execute <<~SQL
-      CREATE TEMPORARY TABLE temp_patient_with_adverse_outcomes (
+      CREATE TABLE temp_patient_with_adverse_outcomes (
         patient_id int NOT NULL,
         patient_program_id int NOT NULL,
         state int NOT NULL,
@@ -429,7 +431,7 @@ class FilingNumberService
 
   def create_temp_potential_filing_number_candidates
     ActiveRecord::Base.connection.execute <<~SQL
-      CREATE TEMPORARY TABLE temp_potential_filing_number_candidates(
+      CREATE TABLE temp_potential_filing_number_candidates(
         identifier varchar(50) NOT NULL,
         patient_id int NOT NULL,
         patient_identifier_id INT NOT NULL,
@@ -458,10 +460,10 @@ class FilingNumberService
 
   def remove_temp_tables
     ActiveRecord::Base.connection.execute <<~SQL
-      DROP TEMPORARY TABLE IF EXISTS temp_patient_with_adverse_outcomes
+      DROP TABLE IF EXISTS temp_patient_with_adverse_outcomes
     SQL
     ActiveRecord::Base.connection.execute <<~SQL
-      DROP TEMPORARY TABLE IF EXISTS temp_potential_filing_number_candidates
+      DROP TABLE IF EXISTS temp_potential_filing_number_candidates
     SQL
   end
 

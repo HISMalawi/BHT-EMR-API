@@ -21,6 +21,10 @@ class Api::V1::DrugsController < ApplicationController
     render json: Drug.arv_drugs, status: :ok
   end
 
+  def tb_drugs
+     render json: Drug.tb_drugs, status: :ok
+  end
+
   def drug_sets
     drug_sets = {}
     set_names = {}
