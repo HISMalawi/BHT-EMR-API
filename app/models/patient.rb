@@ -142,6 +142,6 @@ class Patient < VoidableRecord
   end
 
   def tpt_status
-    ARTService::Reports::Pepfar::TbPrev3.new(start_date: Date.today - 6.months, end_date: Date.today).patient_tpt_status(id)
+    ArtService::Reports::Pepfar::TbPrev3.new(start_date: Date.today - 6.months, end_date: Date.today).patient_tpt_status(id)
   end
 end

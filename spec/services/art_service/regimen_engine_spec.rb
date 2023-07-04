@@ -2,8 +2,8 @@
 
 require 'rails_helper'
 
-RSpec.describe ARTService::RegimenEngine do
-  let(:regimen_service) { ARTService::RegimenEngine.new program: program('HIV Program') }
+RSpec.describe ArtService::RegimenEngine do
+  let(:regimen_service) { ArtService::RegimenEngine.new program: program('HIV Program') }
   let(:patient) { create :patient }
   let(:vitals_encounter) { create :encounter_vitals, patient: patient }
   let(:dtg_ids) { Drug.where(concept_id: ConceptName.find_by_name('Dolutegravir').concept_id).collect(&:drug_id) }

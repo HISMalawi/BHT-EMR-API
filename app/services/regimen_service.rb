@@ -2,7 +2,7 @@
 
 class RegimenService
   ENGINES = {
-    'HIV PROGRAM' => ARTService::RegimenEngine,
+    'HIV PROGRAM' => ArtService::RegimenEngine,
     'TB PROGRAM' => TBService::RegimenEngine
   }.freeze
 

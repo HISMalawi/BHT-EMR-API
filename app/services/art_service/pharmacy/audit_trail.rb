@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   module Pharmacy
     ##
     # Conviniently access the audit trail (ie transactions)
@@ -27,7 +27,7 @@ module ARTService
         #   }
         #
         # Example:
-        #   => ARTService::Pharmacy::Trail.retrieve(from: 3.months.ago)
+        #   => ArtService::Pharmacy::Trail.retrieve(from: 3.months.ago)
         #   ... [Transactions starting from 3 months ago]
         def retrieve_drilled_transactions(**kwargs)
           drill_transactions(**kwargs)

@@ -21,7 +21,7 @@ module AncService
           "35-39","40-49","50+" ]
         @patients = monthly_registrations(@start_date, @end_date)
 
-        t = ARTService::Reports::CohortBuilder.new
+        t = ArtService::Reports::CohortBuilder.new
         t.create_tmp_patient_table
         t.load_data_into_temp_earliest_start_date(@end_date.to_date)
       end

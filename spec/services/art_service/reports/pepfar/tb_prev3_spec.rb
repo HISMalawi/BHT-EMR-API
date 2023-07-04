@@ -2,11 +2,11 @@
 
 require 'rails_helper'
 
-RSpec.describe ARTService::Reports::Pepfar::TBPrev3 do
+RSpec.describe ArtService::Reports::Pepfar::TbPrev3 do
   let(:drug_order) { create(:drug_order, drug: Drug.find(1216), order: order, quantity: 12) }
   let(:start_date) { Date.today - 3.months }
   let(:end_date) { Date.today }
-  let(:report) { ARTService::Reports::Pepfar::TBPrev3.new(start_date: start_date, end_date: end_date) }
+  let(:report) { ArtService::Reports::Pepfar::TbPrev3.new(start_date: start_date, end_date: end_date) }
 
   # persist data
   before(:all) do
@@ -49,7 +49,7 @@ RSpec.describe ARTService::Reports::Pepfar::TBPrev3 do
 
   describe :new do
     it 'initializes with start and end dates' do
-      expect(report).to be_a(ARTService::Reports::Pepfar::TBPrev3)
+      expect(report).to be_a(ArtService::Reports::Pepfar::TbPrev3)
     end
   end
 

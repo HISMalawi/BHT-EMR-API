@@ -37,7 +37,7 @@ def valid_prescription(duplicate_record)
 end
 
 def regimen_engine
-  @regimen_engine ||= ARTService::RegimenEngine.new(program: Program.find_by_name('HIV PROGRAM').id)
+  @regimen_engine ||= ArtService::RegimenEngine.new(program: Program.find_by_name('HIV PROGRAM').id)
 end
 
 def process

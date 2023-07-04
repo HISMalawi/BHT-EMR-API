@@ -2,10 +2,10 @@
 
 require 'rails_helper'
 
-RSpec.describe ARTService::AppointmentEngine do
+RSpec.describe ArtService::AppointmentEngine do
   MINUTE = 60
 
-  subject { ARTService::AppointmentEngine }
+  subject { ArtService::AppointmentEngine }
 
   let(:patient) { create :patient }
   let(:program) { Program.find_by_name('HIV Program') }

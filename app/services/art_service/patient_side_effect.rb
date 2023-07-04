@@ -1,4 +1,4 @@
-module ARTService
+module ArtService
   class PatientSideEffect
     include ModelUtils
 

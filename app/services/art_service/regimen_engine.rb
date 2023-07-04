@@ -2,7 +2,7 @@
 
 require 'set'
 
-module ARTService
+module ArtService
   # TODO: This module reads like noise, it needs a re-write or even better,
   #       a complete rewrite.
   class RegimenEngine

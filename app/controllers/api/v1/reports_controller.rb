@@ -249,7 +249,7 @@ class Api::V1::ReportsController < ApplicationController
   end
 
   def vl_maternal_status
-    #vlc = ARTService::Reports::Pepfar::ViralLoadCoverage.new start_date: params[:start_date], end_date: params[:end_date]
+    #vlc = ArtService::Reports::Pepfar::ViralLoadCoverage.new start_date: params[:start_date], end_date: params[:end_date]
     #result = vlc.woman_status params[:person_id].split(",").map {|number| number.to_i}
     #render json: result
     render json: service.vl_maternal_status(params[:start_date], params[:end_date],

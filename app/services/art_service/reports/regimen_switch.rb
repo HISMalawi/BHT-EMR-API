@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   module Reports
     class RegimenSwitch
       def initialize(start_date:, end_date:)
@@ -13,12 +13,12 @@ module ARTService
       end
 
       def regimen_report(type)
-        ARTService::Reports::RegimenDispensationData.new(type: type, start_date: @start_date, end_date: @end_date).find_report
+        ArtService::Reports::RegimenDispensationData.new(type: type, start_date: @start_date, end_date: @end_date).find_report
       end
 
       def latest_regimen_dispensed(rebuild_outcome)
         if rebuild_outcome
-          ARTService::Reports::CohortBuilder.new(outcomes_definition: 'moh').init_temporary_tables(@start_date, @end_date)
+          ArtService::Reports::CohortBuilder.new(outcomes_definition: 'moh').init_temporary_tables(@start_date, @end_date)
         end
 
         latest_regimens
@@ -349,7 +349,7 @@ module ARTService
       end
 
       def pepfar_outcome_builder(repport_type = 'moh')
-        cohort_builder = ARTService::Reports::CohortDisaggregated.new(name: 'Regimen switch', type: repport_type,
+        cohort_builder = ArtService::Reports::CohortDisaggregated.new(name: 'Regimen switch', type: repport_type,
                                                                       start_date: @start_date.to_date, end_date: @end_date.to_date, rebuild: true)
         cohort_builder.rebuild_outcomes(repport_type)
       end
@@ -437,7 +437,7 @@ module ARTService
       def maternal_status(patient_id, current_gender)
         return nil if current_gender.blank?
 
-        result = ARTService::Reports::Pepfar::ViralLoadCoverage2.new(start_date: @start_date, end_date: @end_date).vl_maternal_status([patient_id])
+        result = ArtService::Reports::Pepfar::ViralLoadCoverage2.new(start_date: @start_date, end_date: @end_date).vl_maternal_status([patient_id])
         gender = 'FNP'
         gender = 'FP' unless result[:FP].blank?
         gender = 'FBf' unless result[:FBf].blank?

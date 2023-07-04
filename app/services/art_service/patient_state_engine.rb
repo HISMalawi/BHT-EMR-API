@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   # Responsible for dealing with patient state changes in HIV program.
   class PatientStateEngine
     attr_accessor :patient, :date

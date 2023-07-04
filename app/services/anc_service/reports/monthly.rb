@@ -19,7 +19,7 @@ module AncService
         @type = type
         @cohort_builder = MonthlyBuilder.new
         @cohort_struct = MonthlyStruct.new
-        t = ARTService::Reports::CohortBuilder.new #.create_tmp_patient_table
+        t = ArtService::Reports::CohortBuilder.new #.create_tmp_patient_table
 
         t.create_tmp_patient_table
         t.load_data_into_temp_earliest_start_date(@end_date.to_date)

@@ -19,7 +19,7 @@ module AncService
         @type = type
         @cohort_builder = CohortBuilder.new
         @cohort_struct = CohortStruct.new
-        t = ARTService::Reports::CohortBuilder.new #.create_tmp_patient_table
+        t = ArtService::Reports::CohortBuilder.new #.create_tmp_patient_table
 
         t.create_tmp_patient_table
         t.drop_temp_register_start_date_table

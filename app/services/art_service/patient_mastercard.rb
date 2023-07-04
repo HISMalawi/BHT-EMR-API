@@ -1,4 +1,4 @@
-module ARTService
+module ArtService
   class PatientMastercard
     attr_accessor :patient, :date
 

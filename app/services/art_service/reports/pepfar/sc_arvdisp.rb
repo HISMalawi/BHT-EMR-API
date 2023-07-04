@@ -1,4 +1,4 @@
-module ARTService
+module ArtService
   module Reports
     module Pepfar
 

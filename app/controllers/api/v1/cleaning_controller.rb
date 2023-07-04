@@ -1,7 +1,7 @@
 class Api::V1::CleaningController < ApplicationController
   SERVICES = {
     'ANC PROGRAM' => AncService::DataCleaning,
-    'HIV PROGRAM' => ARTService::DataCleaningTool
+    'HIV PROGRAM' => ArtService::DataCleaningTool
   }.freeze
 
   def index
@@ -105,13 +105,13 @@ class Api::V1::CleaningController < ApplicationController
   end
 
   def erroneous_identifier
-    ARTService::DataCleaningTool.void_unknown_identifiers
+    ArtService::DataCleaningTool.void_unknown_identifiers
     render json: { message: 'Successful' }, status: :ok
   end
 
   def duplicate_identifier
     identifier = params.require(:identifier)
-    ARTService::DataCleaningTool.void_duplicate_npid(identifier)
+    ArtService::DataCleaningTool.void_duplicate_npid(identifier)
     render json: { message: 'Voided successfully' }, status: :ok
   end
 

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# TODO: Move this into ARTService::Pharmacy. Makes sense to have it there since
+# TODO: Move this into ArtService::Pharmacy. Makes sense to have it there since
 # this is only for ART.
 
 class StockManagementService

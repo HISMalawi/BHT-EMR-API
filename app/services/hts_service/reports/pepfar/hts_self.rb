@@ -7,7 +7,7 @@ module HtsService
       class HtsSelf
         attr_accessor :start_date, :end_date, :report
 
-        include ARTService::Reports::Pepfar::Utils
+        include ArtService::Reports::Pepfar::Utils
         include HtsService::Reports::HtsReportBuilder
 
         APPROACH = {

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   # Prints out patient transfer out labels
   #
   # Source: NART/app/controllers/generic_patients_controller#patient_transfer_out_label
@@ -10,7 +10,7 @@ module ARTService
     def initialize(patient, date)
       @patient = patient
       @date = date
-      @transfer_out_note = ARTService::PatientTransferOut.new patient, date
+      @transfer_out_note = ArtService::PatientTransferOut.new patient, date
     end
 
     def print

@@ -39,6 +39,6 @@ class Api::V1::Pharmacy::AuditTrailsController < ApplicationController
   end
 
   def service
-    ARTService::Pharmacy::AuditTrail
+    ArtService::Pharmacy::AuditTrail
   end
 end

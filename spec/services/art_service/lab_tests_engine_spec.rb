@@ -2,8 +2,8 @@
 
 require 'rails_helper'
 
-RSpec.describe ARTService::LabTestsEngine do
-  subject { ARTService::LabTestsEngine.new(program: program) }
+RSpec.describe ArtService::LabTestsEngine do
+  subject { ArtService::LabTestsEngine.new(program: program) }
   let(:program) { create :program }
 
   def make_test_type(concept)

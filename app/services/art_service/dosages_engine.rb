@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   module DosagesEngine
     class << self
       ##
@@ -29,7 +29,7 @@ module ARTService
       private
 
       def patients_engine
-        ARTService::PatientsEngine.new
+        ArtService::PatientsEngine.new
       end
     end
   end

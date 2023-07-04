@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   module Reports
     module Pepfar
       ##
       # Patients who started TPT just before the start of the current
       # and have finished within the current reporting period.
-      class TBPrev2
+      class TbPrev2
         attr_reader :start_date, :end_date
 
         include Utils

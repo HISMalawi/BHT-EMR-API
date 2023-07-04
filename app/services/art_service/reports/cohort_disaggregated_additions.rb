@@ -1,5 +1,5 @@
 
-module ARTService
+module ArtService
   module Reports
 
     class CohortDisaggregatedAdditions

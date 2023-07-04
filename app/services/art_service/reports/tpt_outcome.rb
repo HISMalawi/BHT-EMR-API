@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   module Reports
     ##
     # Family planning, action to take
@@ -9,12 +9,12 @@ module ARTService
     # it must be drillable
     class TptOutcome
       include ModelUtils
-      include ARTService::Reports::Pepfar::Utils
+      include ArtService::Reports::Pepfar::Utils
 
       def initialize(start_date:, end_date:, **_kwarg)
         @start_date = start_date.to_date
         @end_date = end_date.to_date
-        @tb_prev = ARTService::Reports::Pepfar::TBPrev3.new(start_date: @start_date, end_date: @end_date)
+        @tb_prev = ArtService::Reports::Pepfar::TbPrev3.new(start_date: @start_date, end_date: @end_date)
       end
 
       def find_report

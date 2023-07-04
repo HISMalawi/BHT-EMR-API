@@ -4,7 +4,7 @@ class Api::V1::LabController < ApplicationController
   # Dispatches any requests received to matching methods in the bound service
   #
   # Example:
-  #   `GET programs/1/lab/random?foo=bar` -> ARTService::Lab.new().dispatch(params)
+  #   `GET programs/1/lab/random?foo=bar` -> ArtService::Lab.new().dispatch(params)
   def dispatch_request
     logger.info(params)
 

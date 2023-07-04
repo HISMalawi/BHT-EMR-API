@@ -2,7 +2,7 @@
 
 ##
 # TB Preventive Therapy indicators for ART cohort
-class ARTService::Reports::Cohort::Tpt
+class ArtService::Reports::Cohort::Tpt
   def initialize(start_date, end_date)
     @start_date = start_date
     @end_date = end_date

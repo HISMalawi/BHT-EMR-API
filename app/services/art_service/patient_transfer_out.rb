@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   # Provides various data that is required for a transfer out note
   class PatientTransferOut
     include ModelUtils
@@ -70,7 +70,7 @@ module ARTService
     private
 
     def patient_summary
-      ARTService::PatientSummary.new patient, date
+      ArtService::PatientSummary.new patient, date
     end
 
     def hiv_staging_encounter

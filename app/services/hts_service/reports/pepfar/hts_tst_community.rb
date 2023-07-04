@@ -7,7 +7,7 @@ module HtsService
       class HtsTstCommunity
         attr_accessor :start_date, :end_date
 
-        include ARTService::Reports::Pepfar::Utils
+        include ArtService::Reports::Pepfar::Utils
 
         POSITIVE = concept('Refer client to HIV clinic').concept_id
         NEGATIVE = concept('Negative').concept_id

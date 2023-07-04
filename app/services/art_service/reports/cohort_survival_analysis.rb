@@ -1,7 +1,7 @@
 
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   module Reports
     class CohortSurvivalAnalysis
       def initialize(name:, type:, start_date:, end_date:, regenerate:)
@@ -13,12 +13,12 @@ module ARTService
       end
 
       def survival_analysis(quarter, age_group)
-        art_service = ARTService::Reports::CohortDisaggregated.new(name: 'survival_analysis',
+        art_service = ArtService::Reports::CohortDisaggregated.new(name: 'survival_analysis',
           type: 'survival_analysis', start_date: Date.today,
             end_date: Date.today, rebuild: @regenerate)
 
         start_date, end_date = art_service.generate_start_date_and_end_date(quarter)
-        art_service = ARTService::Reports::CohortBuilder.new()
+        art_service = ArtService::Reports::CohortBuilder.new()
         if @regenerate
           art_service.create_tmp_patient_table
           art_service.load_data_into_temp_earliest_start_date(end_date)
@@ -27,7 +27,7 @@ module ARTService
 
         quarters = []
         no_data = false
-        art_service = ARTService::Reports::CohortDisaggregated.new(name: 'survival_analysis',
+        art_service = ArtService::Reports::CohortDisaggregated.new(name: 'survival_analysis',
           type: 'survival_analysis', start_date: @start_date.to_date,
             end_date: @end_date.to_date, rebuild: @regenerate)
 
@@ -155,7 +155,7 @@ EOF
       end
 
       def append_last_six_months(quarter, results, end_date)
-        art_service = ARTService::Reports::CohortDisaggregated.new(name: 'survival_analysis',
+        art_service = ArtService::Reports::CohortDisaggregated.new(name: 'survival_analysis',
           type: 'survival_analysis', start_date: @start_date.to_date,
             end_date: @end_date.to_date, rebuild: @regenerate)
 

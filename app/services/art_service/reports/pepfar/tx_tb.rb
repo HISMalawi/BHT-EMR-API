@@ -1,8 +1,8 @@
 # rubocop:disable Metrics/BlockLength
-module ARTService
+module ArtService
   module Reports
     module Pepfar
-      class TxTB
+      class TxTb
         attr_accessor :start_date, :end_date, :report
 
         include Utils
