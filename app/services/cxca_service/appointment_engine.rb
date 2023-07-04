@@ -2,7 +2,7 @@
 
 require 'logger'
 
-module CXCAService
+module CxcaService
   class AppointmentEngine
     include ModelUtils
 

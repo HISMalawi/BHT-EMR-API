@@ -1,4 +1,4 @@
-module CXCAService
+module CxcaService
   module Reports
 		module Clinic
 

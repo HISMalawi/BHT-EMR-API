@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module CXCAService::Reports::Clinic
+module CxcaService::Reports::Clinic
   ##
   # Common utilities for clinic reports
   module Utils

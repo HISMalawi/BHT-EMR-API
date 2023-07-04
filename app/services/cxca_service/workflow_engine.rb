@@ -2,7 +2,7 @@
 
 require 'set'
 
-module CXCAService
+module CxcaService
   class WorkflowEngine
     include ModelUtils
 

@@ -1,4 +1,4 @@
-module CXCAService::Reports::Clinic
+module CxcaService::Reports::Clinic
   class MonthlyScreenReport
     include Utils
 

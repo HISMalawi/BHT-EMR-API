@@ -1,26 +1,26 @@
-module CXCAService
+module CxcaService
   class ReportEngine
     REPORT_NAMES = {
-      'SCREENED FOR CXCA' => CXCAService::Reports::Moh::ScreenedForCXCA,
-      'SCREENED FOR CXCA DISAGGREGATED BY HIV STATUS' => CXCAService::Reports::Moh::ScreenedForCXCADisaggregatedByHivStatus,
-      'CXCA SCREENING RESULTS' => CXCAService::Reports::Moh::CXCAScreeningResults,
-      'CANCER SUSPECTS' => CXCAService::Reports::Moh::CancerSuspects,
-      'CLIENTS TREATED' => CXCAService::Reports::Moh::ClientTreated,
-      'TREATMENT OPTIONS' => CXCAService::Reports::Moh::TreatmentOptions,
-      'REFERRAL REASONS' => CXCAService::Reports::Moh::ReferralReasons,
-      'VISIT REASONS' => CXCAService::Reports::Clinic::VisitReasons,
-      'BOOKED CLIENTS FROM ART' => CXCAService::Reports::Clinic::BookedClientsFromART,
-      'BOOKED CLIENTS FROM ART RAW DATA' => CXCAService::Reports::Clinic::BookedClientsFromARTRawData,
-      'CC ALL QUESTIONS' => CXCAService::Reports::Pepfar::CcAllQuestions,
-      'CC TYPE OF SCREEN' => CXCAService::Reports::Pepfar::CcAllQuestions,
-      'CC SCREEN RESULT' => CXCAService::Reports::Pepfar::CcAllQuestions,
-      'CC TYPE OF TREATMENT' => CXCAService::Reports::Pepfar::CcAllQuestions,
-      'CC BASIC RESULT' => CXCAService::Reports::Pepfar::CcBasicResult,
-      'CXCA REASON FOR VISIT' => CXCAService::Reports::Moh::ReasonForVisit,
-      'CXCA TX' => CXCAService::Reports::Pepfar::CxcaTx,
-      'CXCA SCRN' => CXCAService::Reports::Pepfar::CxcaScrn,
-      'MONTHLY CECAP TX' => CXCAService::Reports::Clinic::MonthlyCecapTx,      
-      'MONTHLY SCREEN' => CXCAService::Reports::Clinic::MonthlyScreenReport    
+      'SCREENED FOR CXCA' => CxcaService::Reports::Moh::ScreenedForCxca,
+      'SCREENED FOR CXCA DISAGGREGATED BY HIV STATUS' => CxcaService::Reports::Moh::ScreenedForCxcaDisaggregatedByHivStatus,
+      'CXCA SCREENING RESULTS' => CxcaService::Reports::Moh::CxcaScreeningResults,
+      'CANCER SUSPECTS' => CxcaService::Reports::Moh::CancerSuspects,
+      'CLIENTS TREATED' => CxcaService::Reports::Moh::ClientTreated,
+      'TREATMENT OPTIONS' => CxcaService::Reports::Moh::TreatmentOptions,
+      'REFERRAL REASONS' => CxcaService::Reports::Moh::ReferralReasons,
+      'VISIT REASONS' => CxcaService::Reports::Clinic::VisitReasons,
+      'BOOKED CLIENTS FROM ART' => CxcaService::Reports::Clinic::BookedClientsFromART,
+      'BOOKED CLIENTS FROM ART RAW DATA' => CxcaService::Reports::Clinic::BookedClientsFromARTRawData,
+      'CC ALL QUESTIONS' => CxcaService::Reports::Pepfar::CcAllQuestions,
+      'CC TYPE OF SCREEN' => CxcaService::Reports::Pepfar::CcAllQuestions,
+      'CC SCREEN RESULT' => CxcaService::Reports::Pepfar::CcAllQuestions,
+      'CC TYPE OF TREATMENT' => CxcaService::Reports::Pepfar::CcAllQuestions,
+      'CC BASIC RESULT' => CxcaService::Reports::Pepfar::CcBasicResult,
+      'CXCA REASON FOR VISIT' => CxcaService::Reports::Moh::ReasonForVisit,
+      'CXCA TX' => CxcaService::Reports::Pepfar::CxcaTx,
+      'CXCA SCRN' => CxcaService::Reports::Pepfar::CxcaScrn,
+      'MONTHLY CECAP TX' => CxcaService::Reports::Clinic::MonthlyCecapTx,      
+      'MONTHLY SCREEN' => CxcaService::Reports::Clinic::MonthlyScreenReport    
     }.freeze
 
     def reports(start_date, end_date, name)

@@ -5,7 +5,7 @@ class ProgramPatientsService
     'ANC PROGRAM' => AncService::PatientsEngine,
     'OPD PROGRAM' => OPDService::PatientsEngine,
     'VMMC PROGRAM' => VMMCService::PatientsEngine,
-    'CXCA PROGRAM' => CXCAService::PatientsEngine,
+    'CXCA PROGRAM' => CxcaService::PatientsEngine,
     'HTC PROGRAM' => HTSService::PatientsEngine
   }.freeze
 

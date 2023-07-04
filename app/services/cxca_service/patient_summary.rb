@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module CXCAService
+module CxcaService
   # Provides various summary statistics for an ART patient
   class PatientSummary
     NPID_TYPE = 'National id'
@@ -13,7 +13,7 @@ module CXCAService
     def initialize(patient, date)
       @patient = patient
       @date = date
-      @vmmc_service = CXCAService::PatientSummary
+      @vmmc_service = CxcaService::PatientSummary
     end
 
     def full_summary

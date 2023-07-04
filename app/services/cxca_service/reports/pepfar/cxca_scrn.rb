@@ -1,4 +1,4 @@
-module CXCAService::Reports::Pepfar
+module CxcaService::Reports::Pepfar
   class CxcaScrn
     attr_reader :start_date, :end_date, :report
     include Utils
