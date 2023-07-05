@@ -10,7 +10,7 @@ class WorkflowService
     'ANC PROGRAM' => AncService::WorkflowEngine,
     'VMMC PROGRAM' => VMMCService::WorkflowEngine,
     'CXCA PROGRAM' => CxcaService::WorkflowEngine,
-    'HTC PROGRAM' => HTSService::WorkflowEngine
+    'HTC PROGRAM' => HtsService::WorkflowEngine
   }.freeze
 
   def initialize(program_id:, patient_id:, date: nil)

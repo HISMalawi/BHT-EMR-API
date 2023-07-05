@@ -1,4 +1,4 @@
-module HTSService::AITIntergration
+module HtsService::AITIntergration
   class AITIntergrationService
     attr_accessor :patients, :rest_client
 
@@ -151,11 +151,11 @@ module HTSService::AITIntergration
     end
 
     def contact_csv_row_builder
-      HTSService::AITIntergration::ContactCsvRowBuilder.new
+      HtsService::AITIntergration::ContactCsvRowBuilder.new
     end
 
     def csv_row_builder
-      HTSService::AITIntergration::CsvRowBuilder.new
+      HtsService::AITIntergration::CsvRowBuilder.new
     end
   end
 end

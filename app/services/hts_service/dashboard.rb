@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 # HTS Service
-module HTSService
+module HtsService
   # Dashbiard Class
   class Dashboard
 
