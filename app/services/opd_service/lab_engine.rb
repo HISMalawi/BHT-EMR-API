@@ -36,7 +36,8 @@ module OpdService
         next unless test_result.blank? # Interested only in orders with no results
 
         # ["Accession #: 202011 Test: Microscopy Date: 2016-05-16", "Microscopy:202011"]
-        option = ["Accession #: #{accession_number} Test: #{test_name} Date: #{obs_datetime}", "#{test_name}:#{accession_number}"]
+        option = ["Accession #: #{accession_number} Test: #{test_name} Date: #{obs_datetime}",
+                  "#{test_name}:#{accession_number}"]
         available_options << option
       end
 

@@ -9,8 +9,7 @@ module OpdService
 
     include ModelUtils
 
-    attr_reader :patient
-    attr_reader :date
+    attr_reader :patient, :date
 
     def initialize(patient, date)
       @patient = patient
@@ -70,7 +69,7 @@ module OpdService
                        .order(:date_created)\
                        .first
 
-      given_name = na
+      na
 
       "#{name.given_name} #{name.family_name}"
     end
