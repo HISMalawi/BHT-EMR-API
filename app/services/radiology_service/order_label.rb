@@ -8,6 +8,8 @@ module RadiologyService
       @order = Order.find_by(params)
     end
 
+    # rubocop:disable Metrics/MethodLength
+    # rubocop:disable Metrics/AbcSize
     def print
       label = ZebraPrinter::StandardLabel.new
       label.font_size = 4
@@ -26,21 +28,33 @@ module RadiologyService
       label.draw_multi_text("#{session_date}, #{@order.accession_number} (#{referred_from.upcase})")
       label.print(1)
     end
+    # rubocop:enable Metrics/AbcSize
+    # rubocop:enable Metrics/MethodLength
 
+    # rubocop:disable Metrics/MethodLength
     def examination
       return @examination if @examination
 
-      examination_concept = ConceptName.find_by_name("EXAMINATION").concept_id
+      examination_concept = ConceptName.find_by_name('EXAMINATION').concept_id
       examination_obs = Observation.where(concept_id: examination_concept)
                                    .where(encounter_id: @order.encounter_id)
                                    .where(order_id: @order.id)
                                    .last
-      examination = examination_obs.answer_concept.shortname rescue ''
+      examination = begin
+        examination_obs.answer_concept.shortname
+      rescue StandardError
+        ''
+      end
       if examination.blank?
-        examination = examination_obs.answer_concept.fullname rescue ''
+        examination = begin
+          examination_obs.answer_concept.fullname
+        rescue StandardError
+          ''
+        end
       end
       @examination = examination
     end
+    # rubocop:enable Metrics/MethodLength
 
     def session_date
       @session_date ||= @order.start_date.strftime('%d-%b-%Y')
