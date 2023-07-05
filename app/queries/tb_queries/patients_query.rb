@@ -1,6 +1,8 @@
+# frozen_string_literal: true
 
-  class TBQueries::PatientsQuery
-    def initialize (relation = Patient.all)
+module TBQueries
+  class PatientsQuery
+    def initialize(relation = Patient.all)
       @relation = relation.extending(Scopes)
     end
 
@@ -9,21 +11,21 @@
     end
 
     module Scopes
-      def new_patients (start_date, end_date)
+      def new_patients(start_date, end_date)
         new_patient = concept('New TB Case')
 
-        joins(:encounters => :observations).where(:encounter => { program_id: tb_program,
-                                                                  encounter_datetime: start_date..end_date },
-                                                  :obs => { value_coded: new_patient })
+        joins(encounters: :observations).where(encounter: { program_id: tb_program,
+                                                            encounter_datetime: start_date..end_date },
+                                               obs: { value_coded: new_patient })
       end
 
-      def age_range (min, max, start_date, end_date)
+      def age_range(min, max, start_date, end_date)
         type = encounter_type('TB_Initial')
         joins(:person, :encounters).where('TIMESTAMPDIFF(YEAR, birthdate, NOW()) BETWEEN ? AND ?', min, max)\
                                    .where(encounter: { encounter_type: type, encounter_datetime: start_date..end_date })
       end
 
-      def with_encounters (encounters, start_date, end_date)
+      def with_encounters(encounters, start_date, end_date)
         program = program('TB Program')
         filter = encounters_filter(encounters)
 
@@ -32,42 +34,44 @@
                           .having('GROUP_CONCAT(encounter.encounter_type) LIKE ?', filter)
       end
 
-      def without_encounters (encounters, start_date = nil, end_date = nil)
+      def without_encounters(encounters, start_date = nil, end_date = nil)
         filter = encounters_filter(encounters)
-        where_filter = { :encounter => { program_id: tb_program.program_id } }
-        where_filter[:encounter][:encounter_datetime] = (start_date..end_date) if (start_date && end_date)
+        where_filter = { encounter: { program_id: tb_program.program_id } }
+        where_filter[:encounter][:encounter_datetime] = (start_date..end_date) if start_date && end_date
 
         joins(:encounters).where(where_filter)\
                           .group(:patient_id)\
                           .having('GROUP_CONCAT(encounter.encounter_type) NOT LIKE ?', filter)
       end
 
-      def with_obs (encounter, name, answer, start_date, end_date)
+      def with_obs(encounter, name, answer, start_date, end_date)
         type = encounter_type(encounter)
         concept = concept(name)
         value = concept(answer)
         program = program('TB Program')
 
-        joins(:encounters => :observations).where(encounter: { encounter_type: type.encounter_type_id,
-                                                               encounter_datetime: start_date..end_date,
-                                                               program_id: program.program_id },
-                                                  obs: { concept_id: concept.concept_id, value_coded: value.concept_id })
+        joins(encounters: :observations).where(encounter: { encounter_type: type.encounter_type_id,
+                                                            encounter_datetime: start_date..end_date,
+                                                            program_id: program.program_id },
+                                               obs: { concept_id: concept.concept_id,
+                                                      value_coded: value.concept_id })
       end
 
-      def some_with_obs (patients, encounter, name, answer)
+      def some_with_obs(patients, encounter, name, answer)
         type = encounter_type(encounter)
         concept = concept(name)
         value = concept(answer)
         program = program('TB Program')
 
-        joins(:encounters => :observations).where(patient_id: patients,
-                                                  encounter: { encounter_type: type.encounter_type_id,
-                                                               encounter_datetime: start_date..end_date,
-                                                               program_id: program.program_id },
-                                                  obs: { concept_id: concept.concept_id, value_coded: value.concept_id })
+        joins(encounters: :observations).where(patient_id: patients,
+                                               encounter: { encounter_type: type.encounter_type_id,
+                                                            encounter_datetime: start_date..end_date,
+                                                            program_id: program.program_id },
+                                               obs: { concept_id: concept.concept_id,
+                                                      value_coded: value.concept_id })
       end
 
-      def ntp_age_groups (patients_ids)
+      def ntp_age_groups(patients_ids)
         ids_as_string = patients_ids.join(',').to_s
         ActiveRecord::Base.connection.select_all(
           <<~SQL
@@ -89,11 +93,11 @@
         )
       end
 
-      def encounters_filter (encounters)
-        encounters.map { |encounter|
+      def encounters_filter(encounters)
+        encounters.map do |encounter|
           foo = encounter_type(encounter).encounter_type_id
           "%#{foo}%"
-        }.join('')
+        end.join('')
       end
 
       private
@@ -103,3 +107,4 @@
       end
     end
   end
+end

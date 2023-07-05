@@ -1,59 +1,64 @@
-class TBQueries::TbTreatmentQuery
-  STATES = {
-    :TB_RX => 92,
-    :ART_RX => 7
-  }.freeze
-  include ModelUtils
+# frozen_string_literal: true
 
-  def initialize (relation = PatientState.includes(:patient_program))
-    @relation = relation
-    @program = program('TB Program')
-  end
+module TBQueries
+  class TbTreatmentQuery
+    STATES = {
+      TB_RX: 92,
+      ART_RX: 7
+    }.freeze
+    include ModelUtils
 
-  def started_after_art (start_date, end_date)
-    in_tb_rx = in_tb_treatment(start_date, end_date)
-    return [] if in_tb_rx.empty?
-
-    ids = in_tb_rx.map { |state| state&.patient_program&.patient_id }
-
-    also_in_art_rx = tb_rx_in_art_rx(patient_ids: ids)
-    return [] if also_in_art_rx.empty?
-
-    started_after = also_in_art_rx.select do |in_art|
-      in_tb_rx.select do |in_tb|
-        (in_art.patient_program.patient_id == in_tb.patient_program.patient_id) && (in_art.date_created < in_tb.date_created)
-      end.size > 0
+    def initialize(relation = PatientState.includes(:patient_program))
+      @relation = relation
+      @program = program('TB Program')
     end
 
-    started_after.map { |state| state&.patient_program&.patient_id }
-  end
+    def started_after_art(start_date, end_date)
+      in_tb_rx = in_tb_treatment(start_date, end_date)
+      return [] if in_tb_rx.empty?
 
-  def started_before_art (start_date, end_date)
-    in_tb_rx = in_tb_treatment(start_date, end_date)
-    return [] if in_tb_rx.empty?
+      ids = in_tb_rx.map { |state| state&.patient_program&.patient_id }
 
-    ids = in_tb_rx.map { |state| state&.patient_program&.patient_id }
+      also_in_art_rx = tb_rx_in_art_rx(patient_ids: ids)
+      return [] if also_in_art_rx.empty?
 
-    also_in_art_rx = tb_rx_in_art_rx(patient_ids: ids)
-    return [] if also_in_art_rx.empty?
+      started_after = also_in_art_rx.select do |in_art|
+        in_tb_rx.select do |in_tb|
+          (in_art.patient_program.patient_id == in_tb.patient_program.patient_id) && (in_art.date_created < in_tb.date_created)
+        end.size.positive?
+      end
 
-    started_before = in_tb_rx.select do |in_tb|
-      answer = also_in_art_rx.select do |in_art|
-        (in_tb.patient_program.patient_id == in_art.patient_program.patient_id) && (in_tb.date_created < in_art.date_created)
-      end.size > 0
+      started_after.map { |state| state&.patient_program&.patient_id }
     end
 
-    started_before.map { |state| state&.patient_program&.patient_id }
-  end
+    def started_before_art(start_date, end_date)
+      in_tb_rx = in_tb_treatment(start_date, end_date)
+      return [] if in_tb_rx.empty?
 
-  private
-  def in_tb_treatment (start_date, end_date)
-    states = @relation.where(state: STATES[:TB_RX], end_date: nil, date_created: start_date..end_date)
-  end
+      ids = in_tb_rx.map { |state| state&.patient_program&.patient_id }
 
-  def tb_rx_in_art_rx (patient_ids:)
-    @relation.where(:patient_state => { state: STATES[:ART_RX],
-                                        end_date: nil },
-                    :patient_program => { patient_id: patient_ids })
+      also_in_art_rx = tb_rx_in_art_rx(patient_ids: ids)
+      return [] if also_in_art_rx.empty?
+
+      started_before = in_tb_rx.select do |in_tb|
+        also_in_art_rx.select do |in_art|
+          (in_tb.patient_program.patient_id == in_art.patient_program.patient_id) && (in_tb.date_created < in_art.date_created)
+        end.size.positive?
+      end
+
+      started_before.map { |state| state&.patient_program&.patient_id }
+    end
+
+    private
+
+    def in_tb_treatment(start_date, end_date)
+      @relation.where(state: STATES[:TB_RX], end_date: nil, date_created: start_date..end_date)
+    end
+
+    def tb_rx_in_art_rx(patient_ids:)
+      @relation.where(patient_state: { state: STATES[:ART_RX],
+                                       end_date: nil },
+                      patient_program: { patient_id: patient_ids })
+    end
   end
 end
