@@ -1,7 +1,9 @@
-class AitIntergrationJob < ApplicationJob
-    queue_as :default
+# frozen_string_literal: true
 
-    def perform(patient_id)
-        HtsService::AitIntergration::AitIntergrationService.new(patient_id).sync
-    end
+class AitIntergrationJob < ApplicationJob
+  queue_as :default
+
+  def perform(patient_id)
+    HtsService::AitIntergration::AitIntergrationService.new(patient_id).sync
+  end
 end
