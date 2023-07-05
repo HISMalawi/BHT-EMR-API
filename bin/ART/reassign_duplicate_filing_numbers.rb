@@ -12,7 +12,7 @@ def find_patients_by_filing_number(filing_number, filing_number_type)
   Patient.joins(:patient_identifiers).merge(identifiers)
 end
 
-def filing_number_service()
+def filing_number_service
   FilingNumberService.new
 end
 
