@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module TBService::Reports::CaseFinding
+module TbService::Reports::CaseFinding
   class << self
     def new_pulmonary_clinically_diagnosed (start_date, end_date)
       new_patients = patients_query.new_patients(start_date, end_date)

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module TBService
+module TbService
   # Provides various summary statistics for an TB patient
   class PatientSummary
     NPID_TYPE = 'National id'

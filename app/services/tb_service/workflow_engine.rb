@@ -2,7 +2,7 @@
 
 require 'set'
 
-module TBService
+module TbService
   class WorkflowEngine
     include ModelUtils
 

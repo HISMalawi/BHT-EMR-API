@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module TBService
+module TbService
   # Patients sub service.
   #
   # Basically provides ART specific patient-centric functionality
@@ -81,13 +81,13 @@ module TBService
     end
 
     def visit_summary_label(patient, date)
-      TBService::PatientVisitLabel.new patient, date
+      TbService::PatientVisitLabel.new patient, date
     end
 
     private
 
     def patient_summary(patient, date)
-      TBService::PatientSummary.new patient, date
+      TbService::PatientSummary.new patient, date
     end
   end
   end

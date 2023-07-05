@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module TBService::Reports::Tbhiv
+module TbService::Reports::Tbhiv
   class << self
     def new_and_relapse_tb_cases_notified (start_date, end_date)
       patients = patients_query.new_patients(start_date, end_date)

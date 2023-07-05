@@ -5,13 +5,13 @@ require 'rails_helper'
 require_relative '../../../app/services/drug_order_service'
 require_relative '../../../app/services/nlims'
 
-describe TBService::RegimenEngine do
+describe TbService::RegimenEngine do
   include DrugOrderService
 
   let(:date) { Time.now }
   let(:program) { Program.find_by_name 'TB PROGRAM' }
   let(:engine) do
-    TBService::RegimenEngine.new program: program
+    TbService::RegimenEngine.new program: program
   end
 	let(:person) do
 		Person.create( birthdate: date, gender: 'M' )

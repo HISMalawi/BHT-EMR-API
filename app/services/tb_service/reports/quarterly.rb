@@ -2,7 +2,7 @@
 
 include ModelUtils
 
-module TBService::Reports::Quarterly
+module TbService::Reports::Quarterly
   class << self
     STATES = {
       'TREATMENT_COMPLETE' => 93,

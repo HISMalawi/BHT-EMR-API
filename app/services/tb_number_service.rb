@@ -68,7 +68,7 @@ class TBNumberService
   end
 
   def self.regimen_engine
-    TBService::RegimenEngine.new(program: program('TB Program'))
+    TbService::RegimenEngine.new(program: program('TB Program'))
   end
 
   def self.facility_code

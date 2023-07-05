@@ -2,7 +2,7 @@
 
 require 'set'
 
-module TBService
+module TbService
   class RegimenEngine
     include ModelUtils
     include TimeUtils

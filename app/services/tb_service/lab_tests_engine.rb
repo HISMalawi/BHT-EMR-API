@@ -2,7 +2,7 @@
 
 require_relative '../nlims'
 
-class TBService::LabTestsEngine
+class TbService::LabTestsEngine
   include ModelUtils
 
   def initialize(program:)

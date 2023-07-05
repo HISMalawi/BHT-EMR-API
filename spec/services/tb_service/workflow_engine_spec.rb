@@ -4,7 +4,7 @@ require 'rails_helper'
 require_relative '../../../app/services/drug_order_service'
 
 
-describe TBService::WorkflowEngine do
+describe TbService::WorkflowEngine do
   include DrugOrderService
 
   let(:epoch) { Time.now }
@@ -21,7 +21,7 @@ describe TBService::WorkflowEngine do
   let(:minor_patient) {create_minor_patient()}
 
   let(:engine) do
-    TBService::WorkflowEngine.new program: tb_program,
+    TbService::WorkflowEngine.new program: tb_program,
                                    patient: patient,
                                    date: epoch
   end
@@ -235,7 +235,7 @@ describe TBService::WorkflowEngine do
   end
 
   def patient_engine(patient)
-    engine = TBService::WorkflowEngine.new program: tb_program,
+    engine = TbService::WorkflowEngine.new program: tb_program,
                                    patient: patient,
                                    date: epoch
     engine

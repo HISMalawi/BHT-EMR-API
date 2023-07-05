@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 require 'rails_helper'
 
-describe TBService::LabTestsEngine do
+describe TbService::LabTestsEngine do
   let(:date) { Time.now }
   let(:program) { Program.find_by_name 'TB PROGRAM' }
   let(:engine) do
-    TBService::LabTestsEngine.new program: program
+    TbService::LabTestsEngine.new program: program
   end
 	let(:person) do Person.create( birthdate: date, gender: 'M' )
   end

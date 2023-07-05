@@ -6,7 +6,7 @@ class ReportService
     'ANC PROGRAM' => AncService::ReportEngine,
     'OPD PROGRAM' => OpdService::ReportEngine,
     'VMMC PROGRAM' => VMMCService::ReportEngine,
-    'TB PROGRAM' => TBService::ReportEngine,
+    'TB PROGRAM' => TbService::ReportEngine,
     'LABORATORY ORDERS' => LaboratoryService::ReportEngine,
     'CXCA PROGRAM' => CxcaService::ReportEngine,
     'RADIOLOGY PROGRAM' => RadiologyService::ReportEngine,

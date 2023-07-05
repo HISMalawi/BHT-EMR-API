@@ -694,7 +694,7 @@ class PatientService
 
   def patient_engine
     program = Program.find_by(name: 'TB PROGRAM')
-    TBService::PatientsEngine.new program: program
+    TbService::PatientsEngine.new program: program
   end
 
   # Returns all of patient's identifiers of given identifier_type
