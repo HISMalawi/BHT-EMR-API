@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 require_relative 'lib/zebra_printer'
 require_relative 'lib/visit_label'
-#require 'debug'
+# require 'debug'
 
 module ZebraPrinter
   module Init

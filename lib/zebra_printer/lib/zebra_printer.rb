@@ -1,23 +1,14 @@
+# frozen_string_literal: true
 
 ## TODO: add text processing logic to escape characters outside of [A-Za-z0-9], consider :, \", (, ), \,
 ## TODO: add text processing logic to escape apostrophes
 ## TODO: maintain current x and current y throughout a label process
 
-module ZebraPrinter #:nodoc:
-
+module ZebraPrinter # :nodoc:
   class Label
-
     attr_reader :output
-    attr_accessor :template
-    attr_accessor :width, :height
-    attr_accessor :orientation
-    attr_accessor :left_margin, :right_margin, :top_margin, :bottom_margin
-    attr_accessor :line_spacing
-    attr_accessor :content_width, :content_height
-    attr_accessor :column, :column_count, :column_width, :column_height, :column_spacing
-    attr_accessor :x, :y
-    attr_accessor :font_size, :font_horizontal_multiplier, :font_vertical_multiplier, :font_reverse
-    attr_accessor :number_of_labels
+    attr_accessor :template, :width, :height, :orientation, :left_margin, :right_margin, :top_margin, :bottom_margin,
+                  :line_spacing, :content_width, :content_height, :column, :column_count, :column_width, :column_height, :column_spacing, :x, :y, :font_size, :font_horizontal_multiplier, :font_vertical_multiplier, :font_reverse, :number_of_labels
 
     # Initialize a new label with height weight and orientation. The orientation
     # can be 'T' for top, or 'B' for bottom
@@ -42,14 +33,14 @@ module ZebraPrinter #:nodoc:
       @font_horizontal_multiplier = 1
       @font_vertical_multiplier = 1
       @font_reverse = false
-      @output = ""
+      @output = ''
       header
     end
 
     # Create a new label from a template (hash)
-    def self.from_template(params, values = nil)
+    def self.from_template(params, _values = nil)
       label = Label.new(params[:width], params[:height], params[:orientation])
-      (params[:fields] || []).each {|field|
+      (params[:fields] || []).each do |field|
         label.draw_text(field[:text] || field[:sample],
                         field[:left],
                         field[:top],
@@ -58,22 +49,22 @@ module ZebraPrinter #:nodoc:
                         field[:font_horizontal_multiplier],
                         field[:font_vertical_multiplier],
                         field[:font_reverse])
-      }
-      (params[:lines] || []).each {|line|
+      end
+      (params[:lines] || []).each do |line|
         label.draw_line(line[:left],
                         line[:top],
                         line[:width],
                         line[:height],
                         line[:color])
-      }
-      (params[:frames] || []).each {|frame|
+      end
+      (params[:frames] || []).each do |frame|
         label.draw_frame(frame[:left],
                          frame[:top],
                          frame[:width],
                          frame[:height],
                          frame[:frame_width])
-      }
-      (params[:barcodes] || []).each {|barcode|
+      end
+      (params[:barcodes] || []).each do |barcode|
         label.draw_barcode(barcode[:left],
                            barcode[:top],
                            barcode[:rotation],
@@ -83,7 +74,7 @@ module ZebraPrinter #:nodoc:
                            barcode[:height],
                            barcode[:human_readable],
                            barcode[:data])
-      }
+      end
       label.template = params
       label
     end
@@ -105,7 +96,7 @@ module ZebraPrinter #:nodoc:
       @output << "P#{label_sets}"
       @output << ",#{label_copies}" if label_copies
       @output << "\n"
-      #@output << "N\\f\n\n"
+      # @output << "N\\f\n\n"
       @output
     end
 
@@ -125,7 +116,7 @@ module ZebraPrinter #:nodoc:
     #  +wide_bar_width+ use 15
     #  +h+ height of the barcode
     #  +print_code+ true/false, whether or not the human readable code should be printed
-    def draw_barcode(x,y,r,barcode_kind,narrow_bar_width,wide_bar_width,h,print_code,data)
+    def draw_barcode(x, y, r, barcode_kind, narrow_bar_width, wide_bar_width, h, print_code, data)
       @output << "B#{x},#{y},#{r},#{barcode_kind},#{narrow_bar_width},#{wide_bar_width},#{h},#{print_code ? 'B' : 'N'},\"#{data}\"\n"
     end
 
@@ -139,25 +130,25 @@ module ZebraPrinter #:nodoc:
 
     # Draw line
     # +color+ 0=black, 1=white, 2=xor
-    def draw_line(x,y,w,h,color = 0)
-      case color
-        when 1
-          @output << "LW"
-        when 2
-          @output << "LE"
-        else
-          @output << "LO"
-      end
+    def draw_line(x, y, w, h, color = 0)
+      @output << case color
+                 when 1
+                   'LW'
+                 when 2
+                   'LE'
+                 else
+                   'LO'
+                 end
       @output << "#{x},#{y},#{w},#{h}\n"
     end
 
     # Draw diagonal line
-    def draw_line_diagonal(x,y,w,h,y2)
+    def draw_line_diagonal(x, y, w, h, y2)
       @output << "LS#{x},#{y},#{w},#{h},#{y2}\n"
     end
 
     # Draw a frame
-    def draw_frame(x,y,x2,y2,frame_width)
+    def draw_frame(x, y, x2, y2, frame_width)
       @output << "X#{x},#{y},#{frame_width},#{x2},#{y2}\n"
     end
 
@@ -188,23 +179,31 @@ module ZebraPrinter #:nodoc:
     #  +horizontal_multiplier+ expand the text horizontally (valid values 1-9)
     #  +vertical_multiplier+ expand the text vertically (valid values 1-9)
     #  +reverse+ true/false, whether the text should be reversed
-    def draw_text(data,x,y,r = 0,font_selection = 1,horizontal_multiplier = 1,vertical_multiplier = 1,reverse = false)
-      data = data.gsub("'", "\\\\'") rescue data
+    def draw_text(data, x, y, r = 0, font_selection = 1, horizontal_multiplier = 1, vertical_multiplier = 1,
+                  reverse = false)
+      data = begin
+        data.gsub("'", "\\\\'")
+      rescue StandardError
+        data
+      end
       @output << "A#{x},#{y},#{r},#{font_selection},#{horizontal_multiplier},#{vertical_multiplier},#{reverse ? 'R' : 'N'},\"#{data}\"\n"
     end
 
     # Word wrapping, column wrapping, label wrapping text code, see draw_text for more information
-    def draw_multi_text(data , options = {})
+    def draw_multi_text(data, options = {})
       data = data.gsub("'", "\\\\'")
       @font_size = options[:font_size] unless options[:font_size].nil?
-      @font_horizontal_multiplier = options[:font_horizontal_multiplier] unless options[:font_horizontal_multiplier].nil?
+      unless options[:font_horizontal_multiplier].nil?
+        @font_horizontal_multiplier = options[:font_horizontal_multiplier]
+      end
       @font_vertical_multiplier = options[:font_vertical_multiplier] unless options[:font_vertical_multiplier].nil?
       @font_reverse = options[:font_reverse] unless options[:font_reverse].nil?
       @char_width, @char_height = get_char_sizes(@font_size, @font_horizontal_multiplier, @font_vertical_multiplier)
       @hanging_indent = options[:hanging_indent] || 0
       # Print each line separately
-      data.split("\n").each {|line|
+      data.split("\n").each do |line|
         next if line.blank?
+
         words = line.split("\s")
         size = 0
         word_start_index = 0
@@ -215,17 +214,18 @@ module ZebraPrinter #:nodoc:
           next_word = word_start_index + word_count
           next_word_size = get_word_size(@char_width, words[next_word], !new_line)
           # Check if we need to wrap
-          if (size + next_word_size >= @column_width)
+          if size + next_word_size >= @column_width
             # Break the line, write what we have and continue
-            text = (need_hanging_indent ? ' ' * @hanging_indent : '') + words[word_start_index..(word_start_index + (word_count-1))].join(" ")
+            text = (need_hanging_indent ? ' ' * @hanging_indent : '') + words[word_start_index..(word_start_index + (word_count - 1))].join(' ')
             check_bounds
-            draw_text(text, @x, @y, 0, @font_size, @font_horizontal_multiplier, @font_vertical_multiplier, @font_reverse)
+            draw_text(text, @x, @y, 0, @font_size, @font_horizontal_multiplier, @font_vertical_multiplier,
+                      @font_reverse)
             # Allow for indents
             need_hanging_indent = true
             # Start from this word, count it and its size
             word_start_index = next_word
             # Account for writing a single, really long word
-            word_start_index += 1 if word_count == 0
+            word_start_index += 1 if word_count.zero?
             word_count = 1
             size = next_word_size
             @y += @line_spacing + @char_height
@@ -238,50 +238,50 @@ module ZebraPrinter #:nodoc:
         end
         # Write out the end of the current set of words, should be DRYYYYYY
         unless word_start_index > words.size - 1
-          text = (need_hanging_indent ? ' ' * @hanging_indent : '') + words[word_start_index..(word_start_index + (word_count-1))].join(" ")
+          text = (need_hanging_indent ? ' ' * @hanging_indent : '') + words[word_start_index..(word_start_index + (word_count - 1))].join(' ')
           check_bounds
           draw_text(text, @x, @y, 0, @font_size, @font_horizontal_multiplier, @font_vertical_multiplier, @font_reverse)
         end
         @y += @line_spacing + @char_height
-      }
+      end
     end
 
-  private
+    private
 
     def check_bounds
       # If we have run out of room, move to the next column
-      if (@y + @char_height > @height - @bottom_margin)
-        @column += 1
-        @y = @top_margin
-        # If we have run out of columns, move to the next label
-        if @column > @column_count - 1
-          @column = 0
-          print(1)
-          header
-        end
-        @x = @left_margin + (@column * (@column_width + @column_spacing))
+      return unless @y + @char_height > @height - @bottom_margin
+
+      @column += 1
+      @y = @top_margin
+      # If we have run out of columns, move to the next label
+      if @column > @column_count - 1
+        @column = 0
+        print(1)
+        header
       end
+      @x = @left_margin + (@column * (@column_width + @column_spacing))
     end
 
     def get_char_sizes(font_selection, horizontal_multiplier, vertical_multiplier)
       case font_selection
-        when 2
-          char_width = 12
-          char_height = 20
-        when 3
-          char_width = 14
-          char_height = 24
-        when 4
-          char_width = 16
-          char_height = 32
-        when 5
-          char_width = 36.25
-          char_height = 48
-        else
-          char_width = 10
-          char_height = 14
+      when 2
+        char_width = 12
+        char_height = 20
+      when 3
+        char_width = 14
+        char_height = 24
+      when 4
+        char_width = 16
+        char_height = 32
+      when 5
+        char_width = 36.25
+        char_height = 48
+      else
+        char_width = 10
+        char_height = 14
       end
-      return [char_width * horizontal_multiplier, char_height * vertical_multiplier]
+      [char_width * horizontal_multiplier, char_height * vertical_multiplier]
     end
 
     def get_word_size(char_width, word, need_space)
@@ -290,11 +290,13 @@ module ZebraPrinter #:nodoc:
   end
 
   class StandardLabel < Label
-    def initialize()
-      dimensions = (GlobalProperty.find_by_property("label_width_height").property_value rescue nil || "801,329").split(",").collect{|d|d.to_i}
+    def initialize
+      dimensions = begin
+        GlobalProperty.find_by_property('label_width_height').property_value
+      rescue StandardError
+        nil || '801,329'
+      end.split(',').collect(&:to_i)
       super(dimensions.first, dimensions.last, 'T')
     end
   end
-
-
 end

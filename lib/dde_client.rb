@@ -52,7 +52,7 @@ class DDEClient
   private
 
   JSON_CONTENT_TYPE = 'application/json'
-  LOGGER = Logger.new(STDOUT)
+  LOGGER = Logger.new($stdout)
   DDE_API_KEY_VALIDITY_PERIOD = 3600 * 12
   DDE_VERSION = 'v1'
 
@@ -88,9 +88,7 @@ class DDEClient
 
     @auto_login = true
 
-    if status != 200
-      raise DDEClientError, "Unable to establish connection to DDE: #{response}"
-    end
+    raise DDEClientError, "Unable to establish connection to DDE: #{response}" if status != 200
 
     LOGGER.info('Connection to DDE established :)')
     @connection = {

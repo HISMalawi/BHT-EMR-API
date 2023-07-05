@@ -1,13 +1,12 @@
+# frozen_string_literal: true
 
 ## TODO: add text processing logic to escape characters outside of [A-Za-z0-9], consider :, \", (, ), \,
 ## TODO: add text processing logic to escape apostrophes
 ## TODO: maintain current x and current y throughout a label process
 
-module ZebraPrinter #:nodoc:
-
-  class VisitLabel < Label 
-
-    def initialize()
+module ZebraPrinter # :nodoc:
+  class VisitLabel < Label
+    def initialize
       @width = 776
       @height = 329
       @orientation = orientation || 'T'
@@ -26,21 +25,19 @@ module ZebraPrinter #:nodoc:
       @font_horizontal_multiplier = 1
       @font_vertical_multiplier = 1
       @font_reverse = false
-      @output = ""
+      @output = ''
       header
     end
-    
+
     def self.from_encounters(encounters)
       label = VisitLabel.new
-      encounters.each {|encounter| label.draw_encounter(encounter)}
+      encounters.each { |encounter| label.draw_encounter(encounter) }
       label
     end
-    
+
     def draw_encounter(encounter)
-      draw_multi_text(encounter.type.name, {:font_reverse => true})
-      draw_multi_text(encounter.observations.collect{|obs| obs.to_short_s}.join(", "), {:font_reverse => false})
+      draw_multi_text(encounter.type.name, { font_reverse: true })
+      draw_multi_text(encounter.observations.collect(&:to_short_s).join(', '), { font_reverse: false })
     end
-  
-  end  
-      
+  end
 end
