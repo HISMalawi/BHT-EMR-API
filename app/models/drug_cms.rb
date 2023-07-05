@@ -8,5 +8,5 @@ class DrugCms < VoidableRecord
   validates :name, presence: true, uniqueness: true
   validates :short_name, uniqueness: true
   validates :code, presence: true, uniqueness: true
-  validates :pack_size, presence: true, numericality: {only_integer: true, greater_than: 0}
+  validates :pack_size, presence: true, numericality: { only_integer: true, greater_than: 0 }
 end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Encounter < VoidableRecord
   self.table_name = :encounter
   self.primary_key = :encounter_id

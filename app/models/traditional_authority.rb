@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class TraditionalAuthority < RetirableRecord
   self.table_name  = 'traditional_authority'
   self.primary_key = 'traditional_authority_id'

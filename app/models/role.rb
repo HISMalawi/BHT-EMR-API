@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Role < ApplicationRecord
   self.table_name = 'role'
   self.primary_key = 'role' # Yes, role is the name of the primary key

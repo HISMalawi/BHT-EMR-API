@@ -64,9 +64,13 @@ class DrugOrder < ApplicationRecord
   end
 
   def to_s
-    return order.instructions unless order.instructions.blank? rescue nil
+    begin
+      return order.instructions unless order.instructions.blank?
+    rescue StandardError
+      nil
+    end
 
-    str = "#{drug.name}: #{self.dose} #{self.units} #{frequency} for #{duration||'some'} days"
+    str = "#{drug.name}: #{dose} #{units} #{frequency} for #{duration || 'some'} days"
     str << ' (prn)' if prn == 1
     str
   end

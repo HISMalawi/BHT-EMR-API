@@ -57,11 +57,23 @@ class Patient < VoidableRecord
     length = id.length
     case length
     when 13
-      id[0..4] + "-" + id[5..8] + "-" + id[9..-1] rescue id
+      begin
+        "#{id[0..4]}-#{id[5..8]}-#{id[9..-1]}"
+      rescue StandardError
+        id
+      end
     when 9
-      id[0..2] + "-" + id[3..6] + "-" + id[7..-1] rescue id
+      begin
+        "#{id[0..2]}-#{id[3..6]}-#{id[7..-1]}"
+      rescue StandardError
+        id
+      end
     when 6
-      id[0..2] + "-" + id[3..-1] rescue id
+      begin
+        "#{id[0..2]}-#{id[3..-1]}"
+      rescue StandardError
+        id
+      end
     else
       id
     end
@@ -71,8 +83,12 @@ class Patient < VoidableRecord
     return nil if person.birthdate.nil?
 
     # This code which better accounts for leap years
-    patient_age = (today.year - person.birthdate.year) + ((today.month -
-          person.birthdate.month) + ((today.day - person.birthdate.day) < 0 ? -1 : 0) < 0 ? -1 : 0)
+    patient_age = (today.year - person.birthdate.year) + (if ((today.month -
+          person.birthdate.month) + ((today.day - person.birthdate.day).negative? ? -1 : 0)).negative?
+                                                            -1
+                                                          else
+                                                            0
+                                                          end)
 
     # If the birthdate was estimated this year, we round up the age, that way if
     # it is March and the patient says they are 25, they stay 25 (not become 24)
@@ -142,6 +158,7 @@ class Patient < VoidableRecord
   end
 
   def tpt_status
-    ArtService::Reports::Pepfar::TbPrev3.new(start_date: Date.today - 6.months, end_date: Date.today).patient_tpt_status(id)
+    ArtService::Reports::Pepfar::TbPrev3.new(start_date: Date.today - 6.months,
+                                             end_date: Date.today).patient_tpt_status(id)
   end
 end

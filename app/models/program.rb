@@ -27,9 +27,7 @@ class Program < RetirableRecord
                                 .merge(program_workflows)
                                 .first
 
-    unless state
-      raise NotFoundError, "State '#{name}' missing in #{program.name}'s workflows"
-    end
+    raise NotFoundError, "State '#{name}' missing in #{program.name}'s workflows" unless state
 
     state
   end
