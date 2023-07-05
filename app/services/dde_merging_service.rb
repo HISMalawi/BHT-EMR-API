@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# An extension to the DDEService that provides merging functionality
+# An extension to the DdeService that provides merging functionality
 # for local patients and remote patients
 class DDEMergingService
   include ModelUtils

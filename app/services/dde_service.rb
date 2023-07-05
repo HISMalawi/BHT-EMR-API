@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class DDEService
+class DdeService
   require_relative './dde_service/matcher'
 
   DDE_CONFIG_PATH = 'config/application.yml'

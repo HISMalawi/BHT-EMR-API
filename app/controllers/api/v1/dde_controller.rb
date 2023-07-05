@@ -75,7 +75,7 @@ class Api::V1::DDEController < ApplicationController
   end
 
   def service
-    DDEService.new(program:)
+    DdeService.new(program:)
   end
 
   def program

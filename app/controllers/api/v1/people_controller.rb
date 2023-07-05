@@ -63,7 +63,7 @@ class Api::V1::PeopleController < ApplicationController
   end
 
   def update
-    program_id = params.require(:program_id) if DDEService.dde_enabled?
+    program_id = params.require(:program_id) if DdeService.dde_enabled?
     person = Person.find(params.require(:id))
     update_params = params
 

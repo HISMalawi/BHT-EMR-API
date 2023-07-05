@@ -64,7 +64,7 @@ class PatientService
       end
 
       program = PatientProgram.unscoped.find_by(patient: patient)&.program || Program.first
-      dde_service(program).void_patient(patient.reload, reason) if DDEService.dde_enabled?
+      dde_service(program).void_patient(patient.reload, reason) if DdeService.dde_enabled?
     end
   end
 
@@ -605,7 +605,7 @@ class PatientService
   end
 
   def dde_service(program)
-    DDEService.new(program: program)
+    DdeService.new(program: program)
   end
 
   # Blesses patient with a v3 npid
