@@ -71,10 +71,10 @@ module CxcaService
             group[:follow_up_screen] << record['patient_id']
             @total[:follow_up_screen] << record['patient_id']
           end
-          if ['One year subsequent check-up after treatment', 'Subsequent screening'].include?(visit_type)
-            group[:rescreen] << record['patient_id']
-            @total[:rescreen] << record['patient_id']
-          end
+          return unless ['One year subsequent check-up after treatment', 'Subsequent screening'].include?(visit_type)
+
+          group[:rescreen] << record['patient_id']
+          @total[:rescreen] << record['patient_id']
         end
 
         # rubocop:disable Metrics/AbcSize
@@ -89,10 +89,10 @@ module CxcaService
             group[:result_positive] << record['patient_id']
             @total[:result_positive] << record['patient_id']
           end
-          if result_type.match(/suspect/i)
-            group[:result_suspected_cancer] << record['patient_id']
-            @total[:result_suspected_cancer] << record['patient_id']
-          end
+          return unless result_type.match(/suspect/i)
+
+          group[:result_suspected_cancer] << record['patient_id']
+          @total[:result_suspected_cancer] << record['patient_id']
         end
         # rubocop:enable Metrics/AbcSize
         # rubocop:enable Metrics/CyclomaticComplexity
@@ -107,10 +107,10 @@ module CxcaService
             group[:thermocoagulation] << record['patient_id']
             @total[:thermocoagulation] << record['patient_id']
           end
-          if treatment_type == 'LEEP'
-            group[:leep] << record['patient_id']
-            @total[:leep] << record['patient_id']
-          end
+          return unless treatment_type == 'LEEP'
+
+          group[:leep] << record['patient_id']
+          @total[:leep] << record['patient_id']
         end
 
         def type_of_screening

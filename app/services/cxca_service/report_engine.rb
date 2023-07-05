@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module CxcaService
   class ReportEngine
     REPORT_NAMES = {
@@ -19,8 +21,8 @@ module CxcaService
       'CXCA REASON FOR VISIT' => CxcaService::Reports::Moh::ReasonForVisit,
       'CXCA TX' => CxcaService::Reports::Pepfar::CxcaTx,
       'CXCA SCRN' => CxcaService::Reports::Pepfar::CxcaScrn,
-      'MONTHLY CECAP TX' => CxcaService::Reports::Clinic::MonthlyCecapTx,      
-      'MONTHLY SCREEN' => CxcaService::Reports::Clinic::MonthlyScreenReport    
+      'MONTHLY CECAP TX' => CxcaService::Reports::Clinic::MonthlyCecapTx,
+      'MONTHLY SCREEN' => CxcaService::Reports::Clinic::MonthlyScreenReport
     }.freeze
 
     def reports(start_date, end_date, name)
