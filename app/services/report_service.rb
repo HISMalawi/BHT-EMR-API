@@ -64,7 +64,7 @@ class ReportService
 
   def cohort_disaggregated(quarter, age_group, start_date, end_date, rebuild, init)
     engine(@program).cohort_disaggregated(quarter, age_group,
-      start_date, end_date, rebuild, init)
+                                          start_date, end_date, rebuild, init)
   end
 
   def drugs_given_without_prescription(start_date, end_date)
@@ -74,6 +74,7 @@ class ReportService
   def drugs_given_with_prescription(start_date, end_date)
     engine(@program).drugs_given_with_prescription(start_date, end_date)
   end
+
   def dispensation(start_date, end_date)
     engine(@program).dispensation(start_date, end_date)
   end
@@ -120,7 +121,7 @@ class ReportService
 
   def arv_refill_periods(start_date, end_date, min_age, max_age, org, initialize_tables)
     engine(@program).arv_refill_periods(start_date,
-      end_date, min_age, max_age, org, initialize_tables)
+                                        end_date, min_age, max_age, org, initialize_tables)
   end
 
   def tx_ml(start_date, end_date)
@@ -196,12 +197,12 @@ class ReportService
   end
 
   def pr_reports(start_date, end_date, report_name)
-    engine(@program).reports(start_date.to_date,end_date.to_date, report_name)
+    engine(@program).reports(start_date.to_date, end_date.to_date, report_name)
   end
 
   def vl_maternal_status(start_date, end_date, tx_curr_definition, patient_ids)
-    engine(@program).vl_maternal_status(start_date.to_date,end_date.to_date,
-      tx_curr_definition, patient_ids)
+    engine(@program).vl_maternal_status(start_date.to_date, end_date.to_date,
+                                        tx_curr_definition, patient_ids)
   end
 
   def patient_art_vl_dates(end_date, patient_ids)
@@ -209,7 +210,7 @@ class ReportService
   end
 
   def latest_regimen_dispensed(start_date, end_date, rebuild_outcome)
-    engine(@program).latest_regimen_dispensed(start_date.to_date,end_date.to_date, rebuild_outcome)
+    engine(@program).latest_regimen_dispensed(start_date.to_date, end_date.to_date, rebuild_outcome)
   end
 
   def sc_arvdisp(start_date, end_date, rebuild_outcome)

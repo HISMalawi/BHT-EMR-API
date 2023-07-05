@@ -43,7 +43,8 @@ module PatientIdentifierService
           gender: row['gender'],
           birthdate: row['birthdate'],
           latest_identifier: row['latest_identifier'],
-          identifiers: PatientIdentifier.where(identifier: row['mutliple_identifiers'].split(','), patient_id: row['patient_id'])
+          identifiers: PatientIdentifier.where(identifier: row['mutliple_identifiers'].split(','),
+                                               patient_id: row['patient_id'])
         }
       end
     end

@@ -19,7 +19,7 @@ module AncService
         @type = type
         @cohort_builder = CohortBuilder.new
         @cohort_struct = CohortStruct.new
-        t = ArtService::Reports::CohortBuilder.new #.create_tmp_patient_table
+        t = ArtService::Reports::CohortBuilder.new # .create_tmp_patient_table
 
         t.create_tmp_patient_table
         t.drop_temp_register_start_date_table
@@ -35,7 +35,7 @@ module AncService
 
       def find_report
         build_report
-        #Report.where(type: @type, name: @name,
+        # Report.where(type: @type, name: @name,
         #             start_date: @start_date, end_date: @end_date)\
         #      .order(date_created: :desc)\
         #      .first
@@ -68,9 +68,7 @@ module AncService
                                             contents: value_contents_to_json(value.contents))
 
           report_value_saved = report_value.errors.empty?
-          unless report_value_saved
-            raise "Failed to save report value: #{report_value.errors.as_json}"
-          end
+          raise "Failed to save report value: #{report_value.errors.as_json}" unless report_value_saved
 
           report_value
         end

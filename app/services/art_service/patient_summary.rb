@@ -12,8 +12,7 @@ module ArtService
 
     include ModelUtils
 
-    attr_reader :patient
-    attr_reader :date
+    attr_reader :patient, :date
 
     def initialize(patient, date)
       @patient = patient
@@ -109,7 +108,11 @@ module ArtService
       SELECT date_antiretrovirals_started(#{patient.patient_id}, current_date()) AS earliest_date;
 EOF
 
-      start_date = sdate['earliest_date'].to_time rescue nil
+      start_date = begin
+        sdate['earliest_date'].to_time
+      rescue StandardError
+        nil
+      end
 
       return [nil, nil] unless start_date
 

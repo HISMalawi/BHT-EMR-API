@@ -14,7 +14,7 @@ class PatientService
       if use_dde_service?
         begin
           assign_patient_dde_npid(patient, program)
-        rescue
+        rescue StandardError
           create_local_npid(patient, malawi_national_id)
         end
       else
@@ -379,7 +379,7 @@ class PatientService
     sbp_threshold = global_property('htn.systolic.threshold')&.property_value&.to_i || 0
     dbp_threshold = global_property('htn.diastolic.threshold')&.property_value&.to_i || 0
 
-    if patient.age(today: date) >= threshold || patient.programs.map { |x| x.name }.include?('HYPERTENSION PROGRAM')
+    if patient.age(today: date) >= threshold || patient.programs.map(&:name).include?('HYPERTENSION PROGRAM')
 
       htn_program = Program.find_by_name('HYPERTENSION PROGRAM')
 
@@ -423,35 +423,35 @@ class PatientService
     state = ProgramWorkflowState.where(['program_workflow_id = ? AND concept_id in (?)',
                                         ProgramWorkflow.where(['program_id = ?', htn_program.id]).first.id,
                                         ConceptName.where(name: state).collect(&:concept_id)]).first.id
-    unless state.blank?
-      patient_program = PatientProgram.where(['patient_id = ? AND program_id = ? AND date_enrolled <= ?',
-                                              patient.patient_id, htn_program.id, date]).first
+    return if state.blank?
 
-      state_within_range = PatientState.where(['patient_program_id = ? AND state = ? AND start_date <= ? AND end_date >= ?',
-                                               patient_program.id, state, date, date]).first
+    patient_program = PatientProgram.where(['patient_id = ? AND program_id = ? AND date_enrolled <= ?',
+                                            patient.patient_id, htn_program.id, date]).first
 
-      if state_within_range.blank?
-        last_state = PatientState.where(['patient_program_id = ? AND start_date <= ? ',
-                                         patient_program.id, date]).order('start_date ASC').last
-        unless last_state.blank?
-          last_state.end_date = date
-          last_state.save
-        end
+    state_within_range = PatientState.where(['patient_program_id = ? AND state = ? AND start_date <= ? AND end_date >= ?',
+                                             patient_program.id, state, date, date]).first
 
-        state_after = PatientState.where(['patient_program_id = ? AND start_date >= ? ',
-                                          patient_program.id, date]).order('start_date ASC').last
+    return unless state_within_range.blank?
 
-        new_state = PatientState.new(patient_program_id: patient_program.id,
-                                     start_date: date, state: state)
-        new_state.end_date = state_after.start_date unless state_after.blank?
-        new_state.save
-      end
+    last_state = PatientState.where(['patient_program_id = ? AND start_date <= ? ',
+                                     patient_program.id, date]).order('start_date ASC').last
+    unless last_state.blank?
+      last_state.end_date = date
+      last_state.save
     end
+
+    state_after = PatientState.where(['patient_program_id = ? AND start_date >= ? ',
+                                      patient_program.id, date]).order('start_date ASC').last
+
+    new_state = PatientState.new(patient_program_id: patient_program.id,
+                                 start_date: date, state: state)
+    new_state.end_date = state_after.start_date unless state_after.blank?
+    new_state.save
   end
 
   def fetch_full_visit(patient, program = nil, visit_date)
     patient_id = ActiveRecord::Base.connection.quote(patient.id)
-    program_id = program ? ActiveRecord::Base.connection.quote(program.id) : nil
+    program ? ActiveRecord::Base.connection.quote(program.id) : nil
 
     medication = ActiveRecord::Base.connection.select_all <<-SQL
       SELECT
@@ -488,7 +488,7 @@ class PatientService
       SELECT patient_outcome(#{patient_id}, DATE('#{visit_date}')) outcome;
     SQL
 
-    current_weight = ActiveRecord::Base.connection.select_one <<-SQL
+    ActiveRecord::Base.connection.select_one <<-SQL
       SELECT  IF(value_numeric is null ,value_text, value_numeric) weight
       FROM obs WHERE person_id = #{patient_id}
       AND voided = 0 AND DATE(obs_datetime) = DATE('#{visit_date}')
@@ -979,7 +979,7 @@ class PatientService
     program = PatientProgram.where(['patient_id = ? AND program_id = ? AND date_enrolled <= ?',
                                     patient.id, program_id, date.strftime('%Y-%m-%d 23:59:59')]).last
     alive_concept_id = ConceptName.where(['name =?', 'Alive']).first.concept_id
-    if program.blank? and create
+    if program.blank? && create
       ActiveRecord::Base.transaction do
         program = PatientProgram.create({ program_id: program_id, date_enrolled: date,
                                           patient_id: patient.id })

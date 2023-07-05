@@ -72,9 +72,16 @@ module AncService
         patient = Patient.find_by(patient_id: identifier['patient_id'])
         next if patient.blank?
 
-        AncDetails.fetch_dob(@database, anc['patient_id']) == patient.person.birthdate ? update_score_variables('Birthdate', 5) : nil
+        if AncDetails.fetch_dob(@database,
+                                anc['patient_id']) == patient.person.birthdate
+          update_score_variables('Birthdate',
+                                 5)
+        end
         check_name(AncDetails.fetch_name(@database, anc['patient_id']), patient)
-        AncDetails.fetch_gender(@database, anc['patient_id']) == patient.person.gender ? update_score_variables('Gender', 5)  : nil
+        if AncDetails.fetch_gender(@database,
+                                   anc['patient_id']) == patient.person.gender
+          update_score_variables('Gender', 5)
+        end
         check_address(AncDetails.fetch_address(@data, anc['patient_id']), patient.person.addresses[0])
         check_attribute(anc['patient_id'], patient)
         @local_score = (@score * 100) / 45.0
@@ -130,7 +137,7 @@ module AncService
 
       update_score_variables('Home district', 4) if anc['address2'] == openmrs['address2']
       update_score_variables('Home TA', 4) if anc['county_district'] == openmrs['county_district']
-      update_score_variables('Home village', 4)if anc['neighborhood_cell'] == openmrs['neighborhood_cell']
+      update_score_variables('Home village', 4) if anc['neighborhood_cell'] == openmrs['neighborhood_cell']
       update_score_variables('Current district', 1) if anc['state_province'] == openmrs['state_province']
       update_score_variables('Current TA', 1) if anc['city_village'] == openmrs['city_village']
       update_score_variables('Closest landmark', 1) if anc['address1'] == openmrs['address1']

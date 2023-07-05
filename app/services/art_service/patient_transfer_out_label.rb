@@ -58,7 +58,7 @@ module ArtService
       initial_height = "Init HT: #{transfer_out_note.initial_height}"
       initial_weight = "Init WT: #{transfer_out_note.initial_weight}"
 
-      first_cd4_count = 'CD count ' + transfer_out_note.cd4_count if transfer_out_note.cd4_count
+      first_cd4_count = "CD count #{transfer_out_note.cd4_count}" if transfer_out_note.cd4_count
       unless transfer_out_note.cd4_count_date.blank?
         first_cd4_count_date = "CD count date #{transfer_out_note.cd4_count_date.strftime('%d-%b-%Y')}"
       end

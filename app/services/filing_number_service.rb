@@ -29,7 +29,11 @@ class FilingNumberService
     # return build_archive_candidates(patients) unless patients.empty?
 
     # build_archive_candidates(find_potential_defaulters)
-    result = (find_patient_with_adverse_outcomes(offset, three_quarters_of_limit).to_a + find_defaulters(offset, one_quarter_of_limit).to_a).sort_by { |k| k['start_date'] }
+    result = (find_patient_with_adverse_outcomes(offset,
+                                                 three_quarters_of_limit).to_a + find_defaulters(offset,
+                                                                                                 one_quarter_of_limit).to_a).sort_by do |k|
+      k['start_date']
+    end
     build_archive_candidates(result)
   end
 

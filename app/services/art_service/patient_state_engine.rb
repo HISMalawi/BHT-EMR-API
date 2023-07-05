@@ -25,9 +25,7 @@ module ArtService
       return if patient_state&.state == on_arvs_state.id
 
       ActiveRecord::Base.transaction do
-        unless patient_has_state?(patient_program, on_arvs_state)
-          mark_patient_art_start_date(patient)
-        end
+        mark_patient_art_start_date(patient) unless patient_has_state?(patient_program, on_arvs_state)
 
         create_patient_state(on_arvs_state, date, patient_state)
         # if patient is on HTS update the state on HTS to linked to care

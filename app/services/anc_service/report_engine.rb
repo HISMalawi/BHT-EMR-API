@@ -26,8 +26,8 @@ module AncService
       start_date = start_date.to_date.beginning_of_month
       end_date = start_date.to_date.end_of_month
       cohort = REPORTS['ANC_COHORT_DISAGGREGATED'].new(type: 'disaggregated',
-        name: 'disaggregated', start_date: start_date,
-        end_date: end_date, rebuild: false)
+                                                       name: 'disaggregated', start_date: start_date,
+                                                       end_date: end_date, rebuild: false)
 
       cohort.disaggregated(date, start_date, end_date)
     end

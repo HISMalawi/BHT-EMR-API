@@ -67,11 +67,11 @@ class StockManagementService
   #         expiry_date: *string   # A date conforming to ISO 8601 (ie YYYY-MM-DD)
   #         delivery_date: string  # Similar to above but is not required (defaults to today if not specified)
   #       }
-  def add_items_to_batch(batch_number,  stock_items, location_id: nil)
+  def add_items_to_batch(batch_number, stock_items, location_id: nil)
     ActiveRecord::Base.transaction do
       batch = find_or_create_batch(batch_number, location_id: location_id)
 
-      stock_items.each_with_index do |item, i|
+      stock_items.each_with_index do |item, _i|
         drug_id = fetch_parameter(item, :drug_id)
         quantity = fetch_parameter(item, :quantity)
         barcode = fetch_parameter(item, :barcode)
@@ -94,7 +94,8 @@ class StockManagementService
           item.barcode = barcode
           item.save
         else
-          item = create_batch_item(batch, drug_id, pack_size, quantity, delivery_date, expiry_date, product_code, barcode)
+          item = create_batch_item(batch, drug_id, pack_size, quantity, delivery_date, expiry_date, product_code,
+                                   barcode)
           validate_activerecord_object(item)
         end
 
@@ -124,25 +125,29 @@ class StockManagementService
   def find_batch_items(filters = {})
     query = PharmacyBatchItem
     unless filters.empty?
-      query = query.where("DATE(pharmacy_batch_items.date_created) >= '#{filters[:start_date]}'") if !filters[:start_date].nil?
-      query = query.where("DATE(pharmacy_batch_items.date_created) <= '#{filters[:end_date]}'") if !filters[:end_date].nil?
-      query = query.where(drug_id: filters[:drug_id]) if !filters[:drug_id].nil?
-      query = query.where(current_quantity: filters[:current_quantity]) if !filters[:current_quantity].nil?
-      query = query.where(pharmacy_batch_id: filters[:pharmacy_batch_id]) if !filters[:pharmacy_batch_id].nil?
-      query = query.where(pack_size: filters[:pack_size]) if !filters[:pack_size].nil?
+      unless filters[:start_date].nil?
+        query = query.where("DATE(pharmacy_batch_items.date_created) >= '#{filters[:start_date]}'")
+      end
+      unless filters[:end_date].nil?
+        query = query.where("DATE(pharmacy_batch_items.date_created) <= '#{filters[:end_date]}'")
+      end
+      query = query.where(drug_id: filters[:drug_id]) unless filters[:drug_id].nil?
+      query = query.where(current_quantity: filters[:current_quantity]) unless filters[:current_quantity].nil?
+      query = query.where(pharmacy_batch_id: filters[:pharmacy_batch_id]) unless filters[:pharmacy_batch_id].nil?
+      query = query.where(pack_size: filters[:pack_size]) unless filters[:pack_size].nil?
     end
     query = query.joins("LEFT JOIN pharmacy_obs ON pharmacy_batch_items.id = pharmacy_obs.batch_item_id AND pharmacy_obs.transaction_reason = 'Drug dispensed'")
-          .joins("INNER JOIN drug ON drug.drug_id = pharmacy_batch_items.drug_id")
-          .group("drug.drug_id")
-          .select <<~SQL
-              pharmacy_batch_items.*,
-              CASE
-                WHEN pharmacy_obs.quantity IS NULL
-                THEN 0
-              ELSE
-                ABS(SUM(pharmacy_obs.quantity))
-              END AS dispensed_quantity
-            SQL
+                 .joins('INNER JOIN drug ON drug.drug_id = pharmacy_batch_items.drug_id')
+                 .group('drug.drug_id')
+                 .select <<~SQL
+                   pharmacy_batch_items.*,
+                   CASE
+                     WHEN pharmacy_obs.quantity IS NULL
+                     THEN 0
+                   ELSE
+                     ABS(SUM(pharmacy_obs.quantity))
+                   END AS dispensed_quantity
+                 SQL
     query.order(Arel.sql('pharmacy_batch_items.date_created DESC, pharmacy_batch_items.expiry_date ASC'))
   end
 
@@ -160,7 +165,8 @@ class StockManagementService
 
   def batch_update_items(data)
     ActiveRecord::Base.transaction do
-      verification = PharmacyStockVerification.create!(verification_date: data.delete(:verification_date), reason: data.delete(:reason))
+      verification = PharmacyStockVerification.create!(verification_date: data.delete(:verification_date),
+                                                       reason: data.delete(:reason))
       data['items'].map do |item|
         id = item.delete(:id)
         process_edit_batch_item(id, item, verif_id: verification.id)
@@ -174,12 +180,14 @@ class StockManagementService
 
     if params[:current_quantity]
       diff = params[:current_quantity].to_f - item.current_quantity
-      commit_transaction(item, STOCK_EDIT, diff, Date.today, update_item: false, transaction_reason: reason, stock_verification_id:verif_id)
+      commit_transaction(item, STOCK_EDIT, diff, Date.today, update_item: false, transaction_reason: reason,
+                                                             stock_verification_id: verif_id)
     end
 
     if params[:delivered_quantity]
       diff = params[:delivered_quantity].to_f - item.delivered_quantity
-      commit_transaction(item, STOCK_EDIT, diff, Date.today, update_item: true, transaction_reason: reason, stock_verification_id:verif_id)
+      commit_transaction(item, STOCK_EDIT, diff, Date.today, update_item: true, transaction_reason: reason,
+                                                             stock_verification_id: verif_id)
     end
 
     unless item.update(params)
@@ -209,7 +217,8 @@ class StockManagementService
 
       item = PharmacyBatchItem.find(batch_item_id)
       if item.delivery_date > date
-        raise InvalidParameterError, "Item was delivered at a date (#{item.delivery_date}) later than relocation date (#{date})"
+        raise InvalidParameterError,
+              "Item was delivered at a date (#{item.delivery_date}) later than relocation date (#{date})"
       end
 
       # A negative sign would result in addition of quantity thus
@@ -388,8 +397,15 @@ class StockManagementService
     raise InvalidParameterError, 'Disposal date cannot be before the item was delivered' if date < item.delivery_date
     raise InvalidParameterError, 'Disposal reason cannot be blank' if reason.blank?
     raise InvalidParameterError, 'Disposal quantity cannot be blank' if quantity.blank?
-    raise InvalidParameterError, 'Disposal quantity cannot be greater than the current quantity' if quantity > item.current_quantity
-    raise InvalidParameterError, 'Disposal before expiry date is not allowed' if date < item.expiry_date && reason == 'Expired'
+
+    if quantity > item.current_quantity
+      raise InvalidParameterError,
+            'Disposal quantity cannot be greater than the current quantity'
+    end
+    return unless date < item.expiry_date && reason == 'Expired'
+
+    raise InvalidParameterError,
+          'Disposal before expiry date is not allowed'
   end
 
   def validate_activerecord_object(object)

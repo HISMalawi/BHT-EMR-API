@@ -49,7 +49,7 @@ module ArtService
       Observation.joins(:encounter)
                  .where(person: patient.person, concept: concept('Appointment date'))\
                  .where('obs_datetime >= ?', date)
-                 .where(encounter: {program: Program.find_by(name: 'HIV Program')})
+                 .where(encounter: { program: Program.find_by(name: 'HIV Program') })
                  .order(obs_datetime: :asc)\
                  .first\
                  &.value_datetime
