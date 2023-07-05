@@ -3,7 +3,7 @@ class ProgramPatientsService
     'HIV PROGRAM' => ArtService::PatientsEngine,
     'TB PROGRAM' => TBService::PatientsEngine,
     'ANC PROGRAM' => AncService::PatientsEngine,
-    'OPD PROGRAM' => OPDService::PatientsEngine,
+    'OPD PROGRAM' => OpdService::PatientsEngine,
     'VMMC PROGRAM' => VMMCService::PatientsEngine,
     'CXCA PROGRAM' => CxcaService::PatientsEngine,
     'HTC PROGRAM' => HtsService::PatientsEngine

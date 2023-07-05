@@ -1,4 +1,4 @@
-class OPDService::Reports::MalariaReport
+class OpdService::Reports::MalariaReport
 
   def find_report(start_date:, end_date:, **_extra_kwargs)
     @start_date = start_date

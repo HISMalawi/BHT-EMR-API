@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 require 'json'
-class OPDService::VisitLabel
+class OpdService::VisitLabel
   attr_reader :date, :patient
 
   include ModelUtils

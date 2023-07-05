@@ -1,4 +1,4 @@
-class OPDService::Reports::MentalHealth
+class OpdService::Reports::MentalHealth
 
   def find_report(start_date:, end_date:, **_extra_kwargs)
     mental_health(start_date, end_date)

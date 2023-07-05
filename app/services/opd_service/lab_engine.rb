@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module OPDService
+module OpdService
   class LabEngine
     attr_reader :program
 
