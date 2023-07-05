@@ -1,5 +1,5 @@
-module HtsService::AITIntergration
-  class AITIntergrationService
+module HtsService::AitIntergration
+  class AitIntergrationService
     attr_accessor :patients, :rest_client
 
     LOGGER = Logger.new(STDOUT)
@@ -151,11 +151,11 @@ module HtsService::AITIntergration
     end
 
     def contact_csv_row_builder
-      HtsService::AITIntergration::ContactCsvRowBuilder.new
+      HtsService::AitIntergration::ContactCsvRowBuilder.new
     end
 
     def csv_row_builder
-      HtsService::AITIntergration::CsvRowBuilder.new
+      HtsService::AitIntergration::CsvRowBuilder.new
     end
   end
 end

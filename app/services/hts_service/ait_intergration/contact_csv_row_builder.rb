@@ -1,4 +1,4 @@
-module HtsService::AITIntergration
+module HtsService::AitIntergration
   class ContactCsvRowBuilder
 
     def caseid contact
@@ -139,7 +139,7 @@ module HtsService::AITIntergration
     private
 
     def csv_row_builder
-      HtsService::AITIntergration::CsvRowBuilder.new
+      HtsService::AitIntergration::CsvRowBuilder.new
     end
 
   end

@@ -365,7 +365,7 @@ class Api::V1::PatientsController < ApplicationController
   end
 
   def ait_intergration_service patient_id
-    HtsService::AITIntergration::AITIntergrationService.new(patient_id)
+    HtsService::AitIntergration::AitIntergrationService.new(patient_id)
   end
 
   def tb_prevention_service

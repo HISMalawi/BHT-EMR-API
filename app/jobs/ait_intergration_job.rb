@@ -1,7 +1,7 @@
-class AITIntergrationJob < ApplicationJob
+class AitIntergrationJob < ApplicationJob
     queue_as :default
 
     def perform(patient_id)
-        HtsService::AITIntergration::AITIntergrationService.new(patient_id).sync
+        HtsService::AitIntergration::AitIntergrationService.new(patient_id).sync
     end
 end
