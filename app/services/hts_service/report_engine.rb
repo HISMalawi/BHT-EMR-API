@@ -21,7 +21,7 @@ module HtsService
       'HTS TST FAC' => HtsService::Reports::Pepfar::HtsTstFac1,
       'HTS RECENT FAC' => HtsService::Reports::Pepfar::HtsRecentFac,
       'HTS LEGACY REGULAR' => HtsService::Reports::Clinic::HtsLegacyRegular,
-      'HTS LEGACY RETURNING' => HtsService::Reports::Clinic::HtsLegacyReturning,
+      'HTS LEGACY RETURNING' => HtsService::Reports::Clinic::HtsLegacyReturning
     }.freeze
 
     def generate_report(type:, **kwargs)
@@ -49,7 +49,6 @@ module HtsService
         report_manager = report.new(start_date: start_date, end_date: end_date)
       end
       report_manager = report.new(quarter: quarter, year: year) if [quarter, year].all?
-
 
       method = report_manager.method(method)
       if kwargs.empty? || [year, quarter].all?

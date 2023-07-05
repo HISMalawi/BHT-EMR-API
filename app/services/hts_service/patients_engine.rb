@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 module HtsService
-
   class PatientsEngine
     include ModelUtils
 
@@ -11,11 +10,9 @@ module HtsService
       @program = program
     end
 
-
-    def patient patient_id, date
+    def patient(patient_id, date)
       patient_summary(Patient.find(patient_id), date).full_summary
     end
-
 
     private
 

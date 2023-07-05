@@ -37,36 +37,47 @@ module HtsService
         PREGNANT_WOMAN = 'Pregnant woman'
         NOT_PREGNANT = 'Not Pregnant / Breastfeeding'
         BREASTFEEDING = 'Breastfeeding'
-        
+
         INDICATORS = [
           { name: 'hiv_status', concept_id: concept('HIV status').concept_id, value: 'value_coded', join: 'LEFT' },
-          { name: 'access_type', concept_id: concept('HTS Access Type').concept_id, value: 'value_coded', join: 'LEFT' },
-          { name: 'test_location', concept_id: concept('Location where test took place').concept_id, value: 'value_text', join: 'LEFT' },
-          { name: 'hep_b_test_result', concept_id: concept(HEP_B_TEST_RESULT).concept_id, value: 'value_coded', join: 'LEFT' },
-          { name: 'syphilis_test_result', concept_id: concept(SYPHILIS_TEST_RESULT).concept_id, value: 'value_coded', join: 'INNER' },
+          { name: 'access_type', concept_id: concept('HTS Access Type').concept_id, value: 'value_coded',
+            join: 'LEFT' },
+          { name: 'test_location', concept_id: concept('Location where test took place').concept_id,
+            value: 'value_text', join: 'LEFT' },
+          { name: 'hep_b_test_result', concept_id: concept(HEP_B_TEST_RESULT).concept_id, value: 'value_coded',
+            join: 'LEFT' },
+          { name: 'syphilis_test_result', concept_id: concept(SYPHILIS_TEST_RESULT).concept_id, value: 'value_coded',
+            join: 'INNER' },
           {
             name: %w[test_one test_two test_three],
             concept_id: [concept(TEST_ONE).concept_id, concept(TEST_TWO).concept_id, concept(TEST_THREE).concept_id],
-            join: 'LEFT',
+            join: 'LEFT'
           },
-          { name: 'pregnancy_status', concept_id: concept(PREGNANCY_STATUS).concept_id, value: 'value_coded', join: 'LEFT' },
-          { name: 'circumcision_status', concept_id: concept(CIRCUMCISION_STATUS).concept_id, value: 'value_coded', join: 'LEFT' },
+          { name: 'pregnancy_status', concept_id: concept(PREGNANCY_STATUS).concept_id, value: 'value_coded',
+            join: 'LEFT' },
+          { name: 'circumcision_status', concept_id: concept(CIRCUMCISION_STATUS).concept_id, value: 'value_coded',
+            join: 'LEFT' },
           { name: 'male_condoms', concept_id: concept(MALE_CONDOMS).concept_id, join: 'LEFT', value: 'value_numeric' },
-          { name: 'female_condoms', concept_id: concept(FEMALE_CONDOMS).concept_id, join: 'LEFT', value: 'value_numeric' },
+          { name: 'female_condoms', concept_id: concept(FEMALE_CONDOMS).concept_id, join: 'LEFT',
+            value: 'value_numeric' },
           { name: 'frs', concept_id: concept(FRS).concept_id, join: 'LEFT', value: 'value_numeric' },
           { name: 'referal_for_retesting', concept_id: concept(REFERRAL_FOR_RETESTING).concept_id, join: 'LEFT' },
-          { name: 'time_of_hiv_test', concept_id: concept(TIME_OF_HIV_TEST).concept_id, value: 'value_datetime', join: 'LEFT' },
-          { name: 'time_since_last_medication', value: 'value_datetime', concept_id: concept(TIME_SINCE_LAST_MEDICATION).concept_id, join: 'LEFT' },
+          { name: 'time_of_hiv_test', concept_id: concept(TIME_OF_HIV_TEST).concept_id, value: 'value_datetime',
+            join: 'LEFT' },
+          { name: 'time_since_last_medication', value: 'value_datetime',
+            concept_id: concept(TIME_SINCE_LAST_MEDICATION).concept_id, join: 'LEFT' },
           { name: 'previous_hiv_test', concept_id: concept(PREVIOUS_HIV_TEST).concept_id, join: 'LEFT' },
           { name: 'previous_hiv_test_done', concept_id: concept(PREVIOUS_HIV_TEST_DONE).concept_id, join: 'LEFT' },
           { name: 'risk_category', concept_id: concept(RISK_CATEGORY).concept_id, join: 'LEFT' },
-          { name: 'partner_present', concept_id: concept(PARTNER_PRESENT).concept_id, value: 'value_text', join: 'LEFT' },
+          { name: 'partner_present', concept_id: concept(PARTNER_PRESENT).concept_id, value: 'value_text',
+            join: 'LEFT' },
           { name: 'partner_hiv_status', concept_id: concept(PARTNER_HIV_STATUS).concept_id, join: 'LEFT' },
           { name: 'taken_arvs_before', concept_id: concept(TAKEN_ARVS_BEFORE).concept_id, join: 'LEFT' },
           { name: 'taken_prep_before', concept_id: concept(TAKEN_PREP_BEFORE).concept_id, join: 'LEFT' },
           { name: 'taken_pep_before', concept_id: concept(TAKEN_PEP_BEFORE).concept_id, join: 'LEFT' },
-          { name: 'referrals_ordered', concept_id: concept(REFERALS_ORDERED).concept_id, value: 'value_text', join: 'LEFT' },
-        ]
+          { name: 'referrals_ordered', concept_id: concept(REFERALS_ORDERED).concept_id, value: 'value_text',
+            join: 'LEFT' }
+        ].freeze
 
         def initialize(start_date:, end_date:)
           @start_date = start_date&.to_date&.beginning_of_day
@@ -112,7 +123,7 @@ module HtsService
             'male_condoms_given_invalid_entry' => [],
             'female_condoms_given_invalid_entry' => [],
             'not_applicable_not_linked' => [],
-            'invalid_link_id_in_conf_register' => [],
+            'invalid_link_id_in_conf_register' => []
           }
         end
 
@@ -146,11 +157,12 @@ module HtsService
 
         def set_unique
           @data.each do |key, obj|
-            if %w[frs_given_family_referral_slips_sum male_condoms_given_male_condoms_sum female_condoms_given_female_condoms_sum].include?(key)
+            if %w[frs_given_family_referral_slips_sum male_condoms_given_male_condoms_sum
+                  female_condoms_given_female_condoms_sum].include?(key)
               @data[key] = obj
               next
             end
-            @data[key] = obj&.map { |q| q['person_id'] }.uniq
+            @data[key] = obj&.map { |q| q['person_id'] }&.uniq
           end
         end
 
@@ -161,8 +173,9 @@ module HtsService
         end
 
         def get_diff(obs_time, time_since)
-          diff = (obs_time&.to_date - time_since&.to_date).to_i rescue -1
-          diff
+          (obs_time&.to_date&.- time_since&.to_date).to_i
+        rescue StandardError
+          -1
         end
 
         def birthdate_to_age(birthdate)
@@ -215,8 +228,10 @@ module HtsService
           @data['access_point_type_total_clients_tested_in_the_community'] = community_hash
 
           @data['sex_or_pregnancy_total_males'] = filter_hash('gender', 'M')
-          @data['sex_or_pregnancy_male_circumcised'] = filter_hash('circumcision_status', concept(YES_ANSWER).concept_id)
-          @data['sex_or_pregnancy_male_noncircumcised'] = filter_hash('circumcision_status', concept(NO_ANSWER).concept_id)
+          @data['sex_or_pregnancy_male_circumcised'] =
+            filter_hash('circumcision_status', concept(YES_ANSWER).concept_id)
+          @data['sex_or_pregnancy_male_noncircumcised'] =
+            filter_hash('circumcision_status', concept(NO_ANSWER).concept_id)
 
           @data['age_group_years_a_under_1'] = @query.select { |q| birthdate_to_age(q['birthdate']) < 1 }
           @data['age_group_years_b_114'] = @query.select { |q| (1..14).include?(birthdate_to_age(q['birthdate'])) }
@@ -224,14 +239,18 @@ module HtsService
           @data['age_group_years_d_25plus'] = (@query.select { |q| birthdate_to_age(q['birthdate']) >= 25 })
 
           @data['sex_or_pregnancy_total_females'] = filter_hash('gender', 'F')
-          @data['sex_or_pregnancy_female_pregnant'] = filter_hash('pregnancy_status', concept(PREGNANT_WOMAN).concept_id)
-          @data['sex_or_pregnancy_female_nonpregnant'] = filter_hash('pregnancy_status', concept(NOT_PREGNANT).concept_id)
-          @data['sex_or_pregnancy_female_breastfeeding'] = filter_hash('pregnancy_status', concept(BREASTFEEDING).concept_id)
+          @data['sex_or_pregnancy_female_pregnant'] =
+            filter_hash('pregnancy_status', concept(PREGNANT_WOMAN).concept_id)
+          @data['sex_or_pregnancy_female_nonpregnant'] =
+            filter_hash('pregnancy_status', concept(NOT_PREGNANT).concept_id)
+          @data['sex_or_pregnancy_female_breastfeeding'] =
+            filter_hash('pregnancy_status', concept(BREASTFEEDING).concept_id)
 
           @data['hiv_test_1_result_negative'] = filter_hash('test_one', concept('Negative').concept_id)
           @data['total_clients_hiv_test_1_negative'] = filter_hash('test_one', concept('Negative').concept_id)
           @data['hiv_test_1_result_positive'] = filter_hash('test_one', concept('Positive').concept_id)
-          @data['linking_with_hiv_confirmatory_register_total_clients_hiv_test_1_positive'] = filter_hash('test_one', concept('Positive').concept_id)
+          @data['linking_with_hiv_confirmatory_register_total_clients_hiv_test_1_positive'] =
+            filter_hash('test_one', concept('Positive').concept_id)
 
           @data['hepatitis_b_test_result_negative'] = filter_hash('hep_b_test_result', concept('Negative').concept_id)
           @data['hepatitis_b_test_result_positive'] = filter_hash('hep_b_test_result', concept('Positive').concept_id)
@@ -242,27 +261,54 @@ module HtsService
 
         def fetch_hiv_tests
           @data['last_hiv_test_never_tested'] = filter_hash('previous_hiv_test', concept('Never Tested').concept_id)
-          @data['last_hiv_test_negative_selftest'] = filter_hash('previous_hiv_test_done', concept('Self').concept_id).select { |q| q['previous_hiv_test'] ='Negative' }
-          @data['last_hiv_test_negative_prof_test'] = filter_hash('previous_hiv_test_done', concept('Professional').concept_id).select { |q| q['previous_hiv_test'] ='Negative' }
-          @data['last_hiv_test_positive_selftest'] = filter_hash('previous_hiv_test_done', concept('Self').concept_id).select { |q| [concept('Positive').concept_id, concept('Positive NOT on ART').concept_id, concept('Positive on ART').concept_id].include?(q['previous_hiv_test']) }
-          @data['last_hiv_test_positive_prof_test'] = filter_hash('previous_hiv_test_done', concept('Professional').concept_id).select { |q| [concept('Positive').concept_id, concept('Positive NOT on ART').concept_id, concept('Positive on ART').concept_id].include?(q['previous_hiv_test']) }
-          @data['last_hiv_test_positive_prof_initial_test'] = filter_hash('previous_hiv_test_done', concept('Initial professional').concept_id).select { |q| [concept('Positive').concept_id, concept('Positive NOT on ART').concept_id, concept('Positive on ART').concept_id].include?(q['previous_hiv_test']) }
-          @data['last_hiv_test_inconclusive_prof_test'] = filter_hash('previous_hiv_test_done', concept('Professional').concept_id).select { |q| q['previous_hiv_test'] ='Invalid or inconclusive' }
-          @data['last_hiv_test_invalid_selftest'] = filter_hash('previous_hiv_test_done', concept('Self').concept_id).select { |q| q['previous_hiv_test'] ='Invalid or inconclusive' }
+          @data['last_hiv_test_negative_selftest'] = filter_hash('previous_hiv_test_done', concept('Self').concept_id).select do |q|
+            q['previous_hiv_test'] = 'Negative'
+          end
+          @data['last_hiv_test_negative_prof_test'] = filter_hash('previous_hiv_test_done', concept('Professional').concept_id).select do |q|
+            q['previous_hiv_test'] = 'Negative'
+          end
+          @data['last_hiv_test_positive_selftest'] = filter_hash('previous_hiv_test_done', concept('Self').concept_id).select do |q|
+            [concept('Positive').concept_id, concept('Positive NOT on ART').concept_id, concept('Positive on ART').concept_id].include?(q['previous_hiv_test'])
+          end
+          @data['last_hiv_test_positive_prof_test'] = filter_hash('previous_hiv_test_done', concept('Professional').concept_id).select do |q|
+            [concept('Positive').concept_id, concept('Positive NOT on ART').concept_id, concept('Positive on ART').concept_id].include?(q['previous_hiv_test'])
+          end
+          @data['last_hiv_test_positive_prof_initial_test'] = filter_hash('previous_hiv_test_done', concept('Initial professional').concept_id).select do |q|
+            [concept('Positive').concept_id, concept('Positive NOT on ART').concept_id, concept('Positive on ART').concept_id].include?(q['previous_hiv_test'])
+          end
+          @data['last_hiv_test_inconclusive_prof_test'] = filter_hash('previous_hiv_test_done', concept('Professional').concept_id).select do |q|
+            q['previous_hiv_test'] = 'Invalid or inconclusive'
+          end
+          @data['last_hiv_test_invalid_selftest'] = filter_hash('previous_hiv_test_done', concept('Self').concept_id).select do |q|
+            q['previous_hiv_test'] = 'Invalid or inconclusive'
+          end
           @data['last_hiv_test_exposed_infant'] = filter_hash('previous_hiv_test', concept('Exposed infant').concept_id)
 
-          @data['time_since_last_hiv_test_same_day'] = @query.select { |q| get_diff(q['encounter_datetime'], q['time_of_hiv_test']) == 0 }
-          @data['time_since_last_hiv_test_1_to_13_days'] = @query.select { |q| (1..13).include?(get_diff(q['encounter_datetime'], q['time_of_hiv_test'])) }
-          @data['time_since_last_hiv_test_35_months'] = @query.select { |q| (61..150).include?(get_diff(q['encounter_datetime'], q['time_of_hiv_test'])) }
-          @data['time_since_last_hiv_test_611_months'] = @query.select { |q| (151..330).include?(get_diff(q['encounter_datetime'], q['time_of_hiv_test'])) }
-          @data['time_since_last_hiv_test_14_days_to_2_months'] = @query.select { |q| (14..60).include?(get_diff(q['encounter_datetime'], q['time_of_hiv_test'])) }
-          @data['time_since_last_hiv_test_12plus_months'] = @query.select { |q| get_diff(q['encounter_datetime'], q['time_of_hiv_test']) >= 365 }
+          @data['time_since_last_hiv_test_same_day'] = @query.select do |q|
+            get_diff(q['encounter_datetime'], q['time_of_hiv_test']).zero?
+          end
+          @data['time_since_last_hiv_test_1_to_13_days'] = @query.select do |q|
+            (1..13).include?(get_diff(q['encounter_datetime'], q['time_of_hiv_test']))
+          end
+          @data['time_since_last_hiv_test_35_months'] = @query.select do |q|
+            (61..150).include?(get_diff(q['encounter_datetime'], q['time_of_hiv_test']))
+          end
+          @data['time_since_last_hiv_test_611_months'] = @query.select do |q|
+            (151..330).include?(get_diff(q['encounter_datetime'], q['time_of_hiv_test']))
+          end
+          @data['time_since_last_hiv_test_14_days_to_2_months'] = @query.select do |q|
+            (14..60).include?(get_diff(q['encounter_datetime'], q['time_of_hiv_test']))
+          end
+          @data['time_since_last_hiv_test_12plus_months'] = @query.select do |q|
+            get_diff(q['encounter_datetime'], q['time_of_hiv_test']) >= 365
+          end
         end
 
         def fetch_risk_category
           @data['risk_category_low'] = filter_hash('risk_category', concept('Low risk').concept_id)
           @data['risk_category_ongoing'] = filter_hash('risk_category', concept('On-going risk').concept_id)
-          @data['risk_category_highrisk_event'] = filter_hash('risk_category', concept('High risk event in last 3 months').concept_id)
+          @data['risk_category_highrisk_event'] =
+            filter_hash('risk_category', concept('High risk event in last 3 months').concept_id)
           @data['risk_category_not_done'] = filter_hash('risk_category', concept('Risk assessment not done').concept_id)
         end
 
@@ -277,12 +323,24 @@ module HtsService
           @data['ever_taken_arvs_prep'] = filter_hash('taken_prep_before', concept(YES_ANSWER).concept_id)
           @data['ever_taken_arvs_pep'] = filter_hash('taken_pep_before', concept(YES_ANSWER).concept_id)
           @data['ever_taken_arvs_art'] = filter_hash('taken_arvs_before', concept(YES_ANSWER).concept_id)
-          @data['time_since_last_taken_arvs_same_day'] = @query.select { |q| get_diff(q['encounter_datetime'], q['time_since_last_medication']) == 0 }
-          @data['time_since_last_taken_arvs_1_to_13_days'] = @query.select { |q| (1..13).include?(get_diff(q['encounter_datetime'], q['time_since_last_medication'])) }
-          @data['time_since_last_taken_arvs_14_days_to_2_months'] = @query.select { |q| (14..60).include?(get_diff(q['encounter_datetime'], q['time_since_last_medication'])) }
-          @data['time_since_last_taken_arvs_3_to_5_months'] = @query.select { |q| (61..150).include?(get_diff(q['encounter_datetime'], q['time_since_last_medication'])) }
-          @data['time_since_last_taken_arvs_6_to_11_months'] = @query.select { |q| (151..330).include?(get_diff(q['encounter_datetime'], q['time_since_last_medication'])) }
-          @data['time_since_last_taken_arvs_12_plus_months'] = @query.select { |q| (331..1000).include?(get_diff(q['encounter_datetime'], q['time_since_last_medication'])) }
+          @data['time_since_last_taken_arvs_same_day'] = @query.select do |q|
+            get_diff(q['encounter_datetime'], q['time_since_last_medication']).zero?
+          end
+          @data['time_since_last_taken_arvs_1_to_13_days'] = @query.select do |q|
+            (1..13).include?(get_diff(q['encounter_datetime'], q['time_since_last_medication']))
+          end
+          @data['time_since_last_taken_arvs_14_days_to_2_months'] = @query.select do |q|
+            (14..60).include?(get_diff(q['encounter_datetime'], q['time_since_last_medication']))
+          end
+          @data['time_since_last_taken_arvs_3_to_5_months'] = @query.select do |q|
+            (61..150).include?(get_diff(q['encounter_datetime'], q['time_since_last_medication']))
+          end
+          @data['time_since_last_taken_arvs_6_to_11_months'] = @query.select do |q|
+            (151..330).include?(get_diff(q['encounter_datetime'], q['time_since_last_medication']))
+          end
+          @data['time_since_last_taken_arvs_12_plus_months'] = @query.select do |q|
+            (331..1000).include?(get_diff(q['encounter_datetime'], q['time_since_last_medication']))
+          end
         end
 
         def fetch_partner_status
@@ -290,18 +348,24 @@ module HtsService
           @data['partner_present_no'] = filter_hash('partner_present', 'No')
 
           @data['partner_hiv_status_no_partner'] = filter_hash('partner_hiv_status', concept('No partner').concept_id)
-          @data['partner_hiv_status_hiv_status_unknown'] = filter_hash('partner_hiv_status', concept('HIV unknown').concept_id)
+          @data['partner_hiv_status_hiv_status_unknown'] =
+            filter_hash('partner_hiv_status', concept('HIV unknown').concept_id)
           @data['partner_hiv_status_hiv_negative'] = filter_hash('partner_hiv_status', concept('Negative').concept_id)
-          @data['partner_hiv_status_hiv_positive_art_unknown'] = filter_hash('partner_hiv_status', concept('Positive ART unknown').concept_id)
-          @data['partner_hiv_status_hiv_positive_not_on_art'] = filter_hash('partner_hiv_status', concept('Positive NOT on ART').concept_id)
-          @data['partner_hiv_status_hiv_positive_on_art'] = filter_hash('partner_hiv_status', concept('Positive on ART').concept_id)
+          @data['partner_hiv_status_hiv_positive_art_unknown'] =
+            filter_hash('partner_hiv_status', concept('Positive ART unknown').concept_id)
+          @data['partner_hiv_status_hiv_positive_not_on_art'] =
+            filter_hash('partner_hiv_status', concept('Positive NOT on ART').concept_id)
+          @data['partner_hiv_status_hiv_positive_on_art'] =
+            filter_hash('partner_hiv_status', concept('Positive on ART').concept_id)
         end
 
         def fetch_referral_retests
-          @data['referral_for_hiv_retesting_no_retest_needed'] = filter_hash('referal_for_retesting', concept('NOT done').concept_id)
-          @data['referral_for_hiv_retesting_retest_needed'] = filter_hash('referal_for_retesting', concept('Re-Test').concept_id)
-          @data['referral_for_hiv_retesting_confirmatory_test'] = filter_hash('referal_for_retesting', concept('Confirmatory HIV test').concept_id)
-
+          @data['referral_for_hiv_retesting_no_retest_needed'] =
+            filter_hash('referal_for_retesting', concept('NOT done').concept_id)
+          @data['referral_for_hiv_retesting_retest_needed'] =
+            filter_hash('referal_for_retesting', concept('Re-Test').concept_id)
+          @data['referral_for_hiv_retesting_confirmatory_test'] =
+            filter_hash('referal_for_retesting', concept('Confirmatory HIV test').concept_id)
         end
 
         def fetch_referrals
@@ -324,8 +388,10 @@ module HtsService
               .select('person.person_id, max(linked.value_coded) as value_coded')
               .group('person.person_id').to_sql
           ).to_hash
-          @data['linking_with_hiv_confirmatory_register_linked'] = query.select { |r| r['value_coded'] ='Linked' }
-          @data['linking_with_hiv_confirmatory_register_not_applicable_not_linked'] = query.select { |r| r['value_coded'] != concept('Linked').concept_id }
+          @data['linking_with_hiv_confirmatory_register_linked'] = query.select { |r| r['value_coded'] = 'Linked' }
+          @data['linking_with_hiv_confirmatory_register_not_applicable_not_linked'] = query.reject do |r|
+            r['value_coded'] == concept('Linked').concept_id
+          end
         end
       end
     end
