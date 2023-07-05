@@ -5,6 +5,7 @@ require 'set'
 module VmmcService
   class ReportEngine
     attr_reader :program
+
     include ModelUtils
 
     LOGGER = Rails.logger
