@@ -51,7 +51,7 @@ RSpec.describe ArtService::RegimenEngine do
       expected_regimens = %w[0A 2A 4A 5A 6A 7A 8A 9A 10A 11A 12A 13A 14A 15A]
 
       expect(regimens.size).to be expected_regimens.size
-      regimens.keys.each { |k| expect(expected_regimens).to include k }
+      regimens.each_key { |k| expect(expected_regimens).to include k }
     end
 
     it 'retrieves all regimens for women above 45 years' do
@@ -60,7 +60,7 @@ RSpec.describe ArtService::RegimenEngine do
       expected_regimens = %w[0A 2A 4A 5A 6A 7A 8A 9A 10A 11A 12A 13A 14A 15A]
 
       expect(regimens.size).to be expected_regimens.size
-      regimens.keys.each { |k| expect(expected_regimens).to include k }
+      regimens.each_key { |k| expect(expected_regimens).to include k }
     end
 
     it 'retrieves regimens [0A 2A 4P 9P 11P] for women under 30 kilos' do
@@ -78,7 +78,7 @@ RSpec.describe ArtService::RegimenEngine do
       expected_regimens = %w[0A 2A 4A 5A 6A 7A 8A 9A 10A 11A 12A 13A 14A 15A]
 
       expect(regimens.size).to be expected_regimens.size
-      regimens.keys.each { |k| expect(expected_regimens).to include k }
+      regimens.each_key { |k| expect(expected_regimens).to include k }
     end
 
     it 'retrieves regimens [0A 2A 4P 9P 11P] for men under 30 kilos' do
@@ -88,7 +88,7 @@ RSpec.describe ArtService::RegimenEngine do
       expected_regimens = Set.new(%w[0A 2A 4P 9P 11P])
 
       expect(Set.new(regimens.keys)).to eq(expected_regimens)
-      regimens.keys.each { |k| expect(expected_regimens).to include k }
+      regimens.each_key { |k| expect(expected_regimens).to include k }
     end
 
     it 'retrieves all regimens for men at least 35 kilos' do
@@ -98,7 +98,7 @@ RSpec.describe ArtService::RegimenEngine do
       expected_regimens = %w[0A 2A 4A 5A 6A 7A 8A 9A 10A 11A 12A 13A 14A 15A]
 
       expect(regimens.size).to be expected_regimens.size
-      regimens.keys.each { |k| expect(expected_regimens).to include k }
+      regimens.each_key { |k| expect(expected_regimens).to include k }
     end
 
     def put_patient_on_tb_treatment(patient)
