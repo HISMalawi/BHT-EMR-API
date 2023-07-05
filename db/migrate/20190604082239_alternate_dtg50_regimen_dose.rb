@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AlternateDTG50RegimenDose < ActiveRecord::Migration[5.2]
   def up
     # DTG drug inventory id is 982

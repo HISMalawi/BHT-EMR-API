@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class VoidInvalidARTVitals < ActiveRecord::Migration[5.2]
   def up
     puts 'Voiding weight and height vitals with 0 and null values; please wait...'

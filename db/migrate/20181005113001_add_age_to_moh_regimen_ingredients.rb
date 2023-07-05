@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddAgeToMohRegimenIngredients < ActiveRecord::Migration[5.2]
   def change
     add_column :moh_regimen_ingredient, :min_age, :integer

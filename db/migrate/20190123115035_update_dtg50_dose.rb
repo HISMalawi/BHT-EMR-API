@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class UpdateDTG50Dose < ActiveRecord::Migration[5.2]
   def up
     drug_id = Drug.find_by_name('Dolutegravir (50mg tablet)').id

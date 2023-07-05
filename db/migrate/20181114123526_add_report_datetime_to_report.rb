@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddReportDatetimeToReport < ActiveRecord::Migration[5.2]
   def change
     add_column :reporting_report_design, :start_date, :date

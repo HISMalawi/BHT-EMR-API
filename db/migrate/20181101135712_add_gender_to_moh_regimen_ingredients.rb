@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddGenderToMohRegimenIngredients < ActiveRecord::Migration[5.2]
   def up
     add_column :moh_regimen_ingredient, :gender, :string, default: 'MF'

@@ -7,7 +7,7 @@ class AddMissingAlternativeArvNames < ActiveRecord::Migration[5.2]
 
       name = drug.name.strip
       name.gsub!(/([a-z]+)(\d+)/i, '\1 \2') # Separate numbers from words
-      name.gsub!(/([a-z0-9]*)([&+-\/\\])([a-z0-9]*)/i, '\1 \2 \3') # Separate symbols (separators) from everything else
+      name.gsub!(%r{([a-z0-9]*)([&+-/\\])([a-z0-9]*)}i, '\1 \2 \3') # Separate symbols (separators) from everything else
 
       AlternativeDrugName.create(
         name: name,

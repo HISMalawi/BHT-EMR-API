@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddIdToDrugCms < ActiveRecord::Migration[5.2]
   def up
     return if column_exists?(:drug_cms, :id)
