@@ -8,7 +8,7 @@ class WorkflowService
     'OPD PROGRAM' => OpdService::WorkflowEngine,
     'TB PROGRAM' => TbService::WorkflowEngine,
     'ANC PROGRAM' => AncService::WorkflowEngine,
-    'VMMC PROGRAM' => VMMCService::WorkflowEngine,
+    'VMMC PROGRAM' => VmmcService::WorkflowEngine,
     'CXCA PROGRAM' => CxcaService::WorkflowEngine,
     'HTC PROGRAM' => HtsService::WorkflowEngine
   }.freeze

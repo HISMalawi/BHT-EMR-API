@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module VMMCService
+module VmmcService
   # Provides various summary statistics for an ART patient
   class PatientSummary
     NPID_TYPE = 'National id'
@@ -16,7 +16,7 @@ module VMMCService
     def initialize(patient, date)
       @patient = patient
       @date = date
-      @vmmc_service = VMMCService::PatientSummary
+      @vmmc_service = VmmcService::PatientSummary
     end
   
     def full_summary

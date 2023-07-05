@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class VMMCService::WorkflowEngine
+class VmmcService::WorkflowEngine
   include ModelUtils
 
   attr_reader :program, :patient, :date
