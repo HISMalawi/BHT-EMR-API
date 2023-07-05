@@ -41,7 +41,7 @@ module TimeUtils
       "#{date.strftime('%Y-%m-%d')} #{Time.now.strftime('%H:%M:%S')}".to_time
     end
 
-    def get_person_age (birthdate:)
+    def get_person_age(birthdate:)
       ((Time.zone.now - birthdate.to_time) / 1.year.seconds).floor
     end
   end
