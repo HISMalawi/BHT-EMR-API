@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 Rails.application.routes.draw do
-  # mount Lab::Engine => '/'
+  mount Lab::Engine => '/'
   # mount Radiology::Engine => '/'
   # mount EmrOhspInterface::Engine => '/'
   mount Rswag::Ui::Engine => '/api-docs'

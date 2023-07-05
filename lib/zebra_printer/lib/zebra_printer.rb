@@ -6,7 +6,7 @@
 
 module ZebraPrinter # :nodoc:
   class Label
-    attr_reader :output
+    attr_accessor :output
     attr_accessor :template, :width, :height, :orientation, :left_margin, :right_margin, :top_margin, :bottom_margin,
                   :line_spacing, :content_width, :content_height, :column, :column_count, :column_width, :column_height, :column_spacing, :x, :y, :font_size, :font_horizontal_multiplier, :font_vertical_multiplier, :font_reverse, :number_of_labels
 

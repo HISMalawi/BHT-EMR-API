@@ -47,6 +47,7 @@ class ApplicationController < ActionController::API
   end
 
   def paginate(queryset)
+    params.permit!
     return queryset.all if params[:paginate] == 'false'
 
     limit = (params[:page_size] || DEFAULT_PAGE_SIZE).to_i
