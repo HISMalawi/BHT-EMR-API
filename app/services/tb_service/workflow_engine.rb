@@ -91,7 +91,7 @@ module TbService
     STATE_CONDITIONS = {
 
       TB_INITIAL => %i[patient_not_transferred_in_today?
-                        tb_suspect_not_enrolled?],
+                       tb_suspect_not_enrolled?],
 
       EXAMINATION => %i[go_to_examination?],
 
@@ -105,7 +105,7 @@ module TbService
       LAB_RESULTS => %i[patient_should_go_for_lab_results?],
 
       TB_RECEPTION => %i[no_tb_reception?
-                                    patient_should_proceed_for_treatment?],
+                         patient_should_proceed_for_treatment?],
 
       TB_REGISTRATION => %i[patient_has_no_tb_registration?
                             patient_is_not_a_transfer_out?
@@ -113,7 +113,7 @@ module TbService
                             patient_is_no_a_referral?],
 
       VITALS => %i[no_vitals_today?
-                                    patient_should_proceed_for_treatment?],
+                   patient_should_proceed_for_treatment?],
 
       TREATMENT => %i[patient_has_no_treatment?
                       patient_should_proceed_for_treatment?],
@@ -166,7 +166,7 @@ module TbService
           TB_RECEPTION
         else
           Rails.logger.warn "Invalid TB activity in user properties: #{activity}"
-          end
+        end
       end
 
       Set.new(encounters)
@@ -262,7 +262,8 @@ module TbService
       ).order(encounter_datetime: :desc).first.nil?
     end
 
-    def dispensing_complete? # Check
+    # Check
+    def dispensing_complete?
       Encounter.joins(:type).where(
         'encounter_type.name = ? AND encounter.patient_id = ? AND DATE(encounter_datetime) = DATE(?) AND encounter.program_id = ?',
         DISPENSING,
@@ -318,11 +319,9 @@ module TbService
     end
 
     def patient_recent_lab_order_has_no_results?
-      begin
-        (last_time_lab_order_selected.obs_datetime > last_lab_result.obs_datetime)
-      rescue StandardError
-        return true unless last_lab_result
-      end
+      (last_time_lab_order_selected.obs_datetime > last_lab_result.obs_datetime)
+    rescue StandardError
+      return true unless last_lab_result
     end
 
     # patient worklow should proceed after 10 minutes
@@ -357,7 +356,7 @@ module TbService
       begin
         first_dispensation_date = first_dispensation.encounter_datetime
         number_of_days = (Time.current.to_date - first_dispensation_date.to_date).to_i
-        (number_of_days == 56 || number_of_days == 84 || number_of_days == 140 || number_of_days == 168)
+        [56, 84, 140, 168].include?(number_of_days)
       rescue StandardError
         false
       end
@@ -376,7 +375,7 @@ module TbService
 
     def patient_recent_lab_order_has_results?
       logger = Rails.logger
-      logger.info "PATIENT RECENT LAB ORDER HAS RESULTS:::::::::: #{(last_lab_result.obs_datetime > last_lab_order.obs_datetime)}"
+      logger.info "PATIENT RECENT LAB ORDER HAS RESULTS:::::::::: #{last_lab_result.obs_datetime > last_lab_order.obs_datetime}"
       (last_lab_result.obs_datetime > last_lab_order.obs_datetime)
     rescue StandardError
       false
@@ -392,7 +391,7 @@ module TbService
 
     def last_lab_order
       test_type = concept 'Test type'
-      tb = concept 'Tuberculous'
+      concept 'Tuberculous'
       Observation.joins(:encounter).where(
         'person_id = ? AND concept_id = ? AND encounter.encounter_type = ?',
         @patient.patient_id, test_type.concept_id, encounter_type(LAB_ORDERS).id
@@ -409,19 +408,15 @@ module TbService
     end
 
     def patient_recent_diagonis_has_results?
-      begin
-        (patient_recent_diagnosis_result.obs_datetime > patient_recent_diagnosis.obs_datetime)
-      rescue StandardError
-        false
-      end
+      (patient_recent_diagnosis_result.obs_datetime > patient_recent_diagnosis.obs_datetime)
+    rescue StandardError
+      false
     end
 
     def patient_recent_diagonis_has_no_results?
-      begin
-        (patient_recent_diagnosis.obs_datetime > patient_recent_diagnosis_result.obs_datetime)
-      rescue StandardError
-        false
-      end
+      (patient_recent_diagnosis.obs_datetime > patient_recent_diagnosis_result.obs_datetime)
+    rescue StandardError
+      false
     end
 
     def patient_recent_diagnosis
@@ -643,7 +638,7 @@ module TbService
       referral = concept 'Referral'
       Observation.joins(:encounter).where(
         'person_id = ? AND concept_id = ? AND value_coded = ? AND DATE(obs_datetime) = DATE(?) AND encounter.encounter_type = ?',
-        @patient.patient_id, patient_type.concept_id, referral.concept_id, @date,encounter_type(TB_INITIAL).id
+        @patient.patient_id, patient_type.concept_id, referral.concept_id, @date, encounter_type(TB_INITIAL).id
       ).order(obs_datetime: :desc).first.present?
     end
 
@@ -740,7 +735,7 @@ module TbService
       start_time, end_time = TimeUtils.day_bounds(@date)
       Observation.joins(:encounter).where(
         'person_id = ? AND concept_id = ? AND value_coded = ? AND encounter.encounter_type = ? AND obs_datetime BETWEEN ? AND ?',
-        @patient.patient_id, type_of_patient.concept_id, referral.concept_id,encounter_type(TB_INITIAL).id, start_time, end_time
+        @patient.patient_id, type_of_patient.concept_id, referral.concept_id, encounter_type(TB_INITIAL).id, start_time, end_time
       ).order(obs_datetime: :desc).first.present?
     end
 
@@ -767,11 +762,9 @@ module TbService
     end
 
     def rescreen_patient?
-      begin
-        patient_has_current_tb_results? && patient_current_tb_status_is_negative?
-      rescue StandardError
-        false
-      end
+      patient_has_current_tb_results? && patient_current_tb_status_is_negative?
+    rescue StandardError
+      false
     end
 
     def rediagnose_patient?
@@ -787,27 +780,21 @@ module TbService
     end
 
     def resend_patient_for_lab_order?
-      begin
-        last_time_procedure_selected.obs_datetime > last_time_test_type_selected.obs_datetime
-      rescue StandardError
-        false
-      end
+      last_time_procedure_selected.obs_datetime > last_time_test_type_selected.obs_datetime
+    rescue StandardError
+      false
     end
 
     def patient_has_current_tb_results?
-      begin
-        (last_tb_status.obs_datetime > last_examination.obs_datetime)
-      rescue StandardError
-        false
-      end
+      (last_tb_status.obs_datetime > last_examination.obs_datetime)
+    rescue StandardError
+      false
     end
 
     def patient_screened_with_no_results?
-      begin
-        (last_examination.obs_datetime > last_tb_status.obs_datetime)
-      rescue StandardError
-        false
-      end
+      (last_examination.obs_datetime > last_tb_status.obs_datetime)
+    rescue StandardError
+      false
     end
 
     def last_examination
@@ -835,11 +822,9 @@ module TbService
 
     # patient should get diagnised through lab order
     def alternate_test_procedure_type
-      begin
-        last_time_diagnosis_selected.obs_datetime > last_time_lab_order_selected.obs_datetime
-      rescue StandardError
-        return true if last_time_lab_order_selected.nil?
-      end
+      last_time_diagnosis_selected.obs_datetime > last_time_lab_order_selected.obs_datetime
+    rescue StandardError
+      return true if last_time_lab_order_selected.nil?
     end
 
     def last_time_diagnosis_selected
