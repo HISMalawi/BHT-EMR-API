@@ -14,16 +14,16 @@
 
 # These inflection rules are supported but not enabled by default:
 ActiveSupport::Inflector.inflections(:en) do |inflect|
-  inflect.acronym 'DDE'
-  inflect.acronym 'ART'
-  inflect.acronym 'TB'
-  inflect.acronym 'ANC'
-  inflect.acronym 'OPD'
-  inflect.acronym 'VMMC'
-  inflect.acronym 'CXCA'
+  # inflect.acronym 'DDE'
+  # inflect.acronym 'ART'
+  # inflect.acronym 'TB'
+  # inflect.acronym 'ANC'
+  # inflect.acronym 'OPD'
+  # inflect.acronym 'VMMC'
+  # inflect.acronym 'CXCA'
   inflect.acronym 'IPT'
   inflect.acronym 'DTG'
   inflect.acronym 'DTG50'
-  inflect.acronym 'RTT'
+  # inflect.acronym 'RTT'
   inflect.acronym 'VL'
 end

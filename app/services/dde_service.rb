@@ -56,7 +56,7 @@ class DdeService
 
   def remaining_npids
     response, status = dde_client.get("/location_npid_status?location_id=#{Location.current.id}")
-    raise DDEError, "Failed to fetch remaining npids: #{status} - #{response}" unless status == 200
+    raise DdeError, "Failed to fetch remaining npids: #{status} - #{response}" unless status == 200
 
     response
   end
@@ -73,7 +73,7 @@ class DdeService
     return patient unless doc_id
 
     response, status = dde_client.delete("void_person/#{doc_id}?void_reason=#{reason}")
-    raise DDEError, "Failed to void person in DDE: #{status} - #{response}" unless status == 200
+    raise DdeError, "Failed to void person in DDE: #{status} - #{response}" unless status == 200
 
     patient
   end
@@ -85,7 +85,7 @@ class DdeService
     dde_patient = openmrs_to_dde_patient(patient)
     response, status = dde_client.post('update_person', dde_patient)
 
-    raise DDEError, "Failed to update person in DDE: #{response}" unless status == 200
+    raise DdeError, "Failed to update person in DDE: #{response}" unless status == 200
 
     patient
   end
@@ -187,7 +187,7 @@ class DdeService
     return nil unless remote_patient
 
     Matcher.find_differences(Person.find(local_patient_id), remote_patient)
-  rescue DDEError => e
+  rescue DdeError => e
     Rails.logger.warn("Check for DDE patient updates failed: #{e.message}")
     nil
   end
@@ -209,7 +209,7 @@ class DdeService
                        }
     )
 
-    raise DDEError, "DDE patient search failed: #{status} - #{response}" unless status == 200
+    raise DdeError, "DDE patient search failed: #{status} - #{response}" unless status == 200
 
     response.collect do |match|
       doc_id = match['person']['id']
@@ -253,7 +253,7 @@ class DdeService
     unless status == 200 && !response.empty?
       # The DDE's reassign_npid end point responds with a 200 - OK but returns
       # an empty object when patient with given doc_id is not found.
-      raise DDEError, "Failed to reassign npid: DDE Response => #{status} - #{response}"
+      raise DdeError, "Failed to reassign npid: DDE Response => #{status} - #{response}"
     end
 
     return save_remote_patient(response) unless patient
@@ -307,7 +307,7 @@ class DdeService
 
   def find_remote_patients_by_npid(npid)
     response, _status = dde_client.post('search_by_npid', npid: npid)
-    raise DDEError, "Patient search by npid failed: DDE Response => #{response}" unless response.instance_of?(Array)
+    raise DdeError, "Patient search by npid failed: DDE Response => #{response}" unless response.instance_of?(Array)
 
     response
   end
@@ -317,7 +317,7 @@ class DdeService
                                                                      family_name: family_name,
                                                                      gender: gender)
     unless response.instance_of?(Array)
-      raise DDEError, "Patient search by name and gender failed: DDE Response => #{response}"
+      raise DdeError, "Patient search by name and gender failed: DDE Response => #{response}"
     end
 
     response
@@ -326,7 +326,7 @@ class DdeService
   def find_remote_patients_by_doc_id(doc_id)
     Rails.logger.info("Searching for DDE patient by doc_id ##{doc_id}")
     response, _status = dde_client.post('search_by_doc_id', doc_id: doc_id)
-    raise DDEError, "Patient search by doc_id failed: DDE Response => #{response}" unless response.instance_of?(Array)
+    raise DdeError, "Patient search by doc_id failed: DDE Response => #{response}" unless response.instance_of?(Array)
 
     response
   end
@@ -489,7 +489,7 @@ class DdeService
   end
 
   def dde_client
-    client = DDEClient.new
+    client = DdeClient.new
 
     connection = dde_connections[program.id]
 
