@@ -58,10 +58,7 @@ module ARTService
 
     def next_appointment_date
       exec_drug_order_adjustments(@patient, @ref_date) if optimise_appointment?(@patient,
-                                                                                @ref_date) || patient_has_tranfer_letter?(
-                                                                                  @patient, @ref_date
-                                                                                )
-
+                                                                                @ref_date)
       _drug_id, date = earliest_appointment_date(@patient, @ref_date)
       return nil unless date
 
