@@ -6,7 +6,7 @@ module Api
   module V1
     class DrugOrdersController < ApplicationController
       def index
-        filters = params.slice(DrugOrderService::FIND_FILTERS + [:date])
+        filters = params.permit(DrugOrderService::FIND_FILTERS + [:date])
 
         drug_orders = DrugOrderService.find(filters).order(Arel.sql('`orders`.`date_created`'))
 
