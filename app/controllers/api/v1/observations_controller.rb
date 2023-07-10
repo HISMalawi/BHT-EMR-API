@@ -55,6 +55,7 @@ module Api
       # Optional parameters
       #   order_id, comments
       def create
+        params.permit!
         encounter_id, obs_archetypes = params.require %i[encounter_id observations]
 
         encounter = Encounter.find(encounter_id)
