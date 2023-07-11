@@ -4,7 +4,7 @@ module Api
   module V1
     class PersonRelationshipsController < ApplicationController
       def index
-        filters = params.slice(:person_b, :relationship)
+        filters = params.permit(:person_b, :relationship)
         relationships = service.find_relationships filters
         render json: paginate(relationships)
       end

@@ -133,7 +133,7 @@ class Api::V1::PatientIdentifiersController < ApplicationController
 
   # Only allow a trusted parameter "white list" through.
   def patient_identifier_params
-    params.slice(:patient_id, :identifier, :identifier_type)
+    params.permit(:patient_id, :identifier, :identifier_type)
   end
 
   def service

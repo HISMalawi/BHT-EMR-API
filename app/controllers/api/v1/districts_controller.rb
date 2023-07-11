@@ -15,7 +15,7 @@ module Api
       end
 
       def index
-        filters = params.slice(:region_id, :name, :district_id)
+        filters = params.permit(:region_id, :name, :district_id)
 
         if filters.empty?
           render json: paginate(District.order(:name))

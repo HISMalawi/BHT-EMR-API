@@ -15,7 +15,7 @@ module Api
         end
 
         def update
-          permitted_params = params.slice(:current_quantity, :delivered_quantity, :pack_size, :expiry_date, :delivery_date,
+          permitted_params = params.permit(:current_quantity, :delivered_quantity, :pack_size, :expiry_date, :delivery_date,
                                           :reason)
           raise InvalidParameterError, 'reason is required' if permitted_params[:reason].blank?
 
@@ -45,7 +45,7 @@ module Api
         end
 
         def earliest_expiring
-          permitted_params = params.slice(:drug_id)
+          permitted_params = params.permit(:drug_id)
           item = service.find_earliest_expiring_item(permitted_params)
           render json: item
         end

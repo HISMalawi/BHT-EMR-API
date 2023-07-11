@@ -10,7 +10,7 @@ module Api
       end
 
       def index
-        permitted_params = params.slice(:name, :set)
+        permitted_params = params.permit(:name, :set)
         name = permitted_params[:name]
         set = permitted_params[:set]
 

@@ -7,13 +7,13 @@ class Api::V1::DrugsController < ApplicationController
   end
 
   def index
-    filters = params.slice(:name, :concept_set)
+    filters = params.permit(:name, :concept_set)
 
     render json: paginate(service.find_drugs(filters))
   end
 
   def OPD_drugslist
-    filters = params.slice(:name)
+    filters = params.permit(:name)
     render json: paginate(service.find_drug_list(filters))
   end
 

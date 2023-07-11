@@ -4,7 +4,7 @@ class Api::V1::PersonNamesController < ApplicationController
   end
 
   def index
-    filters = params.slice(:given_name, :middle_name, :family_name, :person_id)
+    filters = params.permit(:given_name, :middle_name, :family_name, :person_id)
 
     if filters.empty?
       render json: paginate(PersonName)

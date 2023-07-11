@@ -34,7 +34,7 @@ module Api
       end
 
       def create
-        permitted_params = params.slice(:name, :description, :address1, :address2, :district)
+        permitted_params = params.permit(:name, :description, :address1, :address2, :district)
 
         location = Location.create(
           name: permitted_params[:name],

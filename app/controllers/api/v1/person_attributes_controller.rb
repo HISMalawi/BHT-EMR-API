@@ -4,7 +4,7 @@ class Api::V1::PersonAttributesController < ApplicationController
   end
 
   def create
-    permitted_params = params.slice(:person_attribute_type_id, :person_id, :value)
+    permitted_params = params.permit(:person_attribute_type_id, :person_id, :value)
     attribute = PersonAttribute.create(permitted_params)
     if attribute.errors.empty?
       render json: attribute, status: :created
@@ -15,7 +15,7 @@ class Api::V1::PersonAttributesController < ApplicationController
 
   def update
     attribute = PersonAttribute.find(params.require(:id))
-    permitted_params = params.slice(:person_attribute_type_id, :value)
+    permitted_params = params.permit(:person_attribute_type_id, :value)
 
     if attribute.update(permitted_params)
       render json: attribute, status: :ok

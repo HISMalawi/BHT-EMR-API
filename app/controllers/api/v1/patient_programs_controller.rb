@@ -6,7 +6,7 @@ module Api
       # TODO: Refactor much of the logic in this controller into a service
 
       def index
-        filters = params.slice(:patient_id, :program_id)
+        filters = params.permit(:patient_id, :program_id)
         programs = filters.empty? ? PatientProgram.all : PatientProgram.where(filters)
 
         render json: paginate(programs)

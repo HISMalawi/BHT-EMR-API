@@ -49,6 +49,8 @@ gem 'rswag-ui'
 # gem 'his_emr_api_lab', '~> 1.1.30'
 # gem 'his_emr_api_radiology', '~> 0.0.8'
 
+gem 'his_emr_api_lab', path: '/home/skipper/his_emr_api_lab'
+
 gem 'parallel', '~> 1.20.1'
 
 group :development, :test do

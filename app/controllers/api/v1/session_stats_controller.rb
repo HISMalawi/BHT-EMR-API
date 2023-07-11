@@ -10,7 +10,7 @@ module Api
       private
 
       def service
-        permitted_params = params.slice(:date, :user_id)
+        permitted_params = params.permit(:date, :user_id)
         date = permitted_params[:date]&.to_date || Date.today
         user = permitted_params[:user_id] ? User.find(permitted_params[:user_id]) : User.current
 

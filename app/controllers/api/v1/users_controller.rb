@@ -6,7 +6,7 @@ class Api::V1::UsersController < ApplicationController
   skip_before_action :authenticate, only: [:login]
 
   def index
-    filters = params.slice(:role).to_hash.transform_keys(&:to_sym)
+    filters = params.permit(:role).to_hash.transform_keys(&:to_sym)
     render json: service.find_users(**filters)
   end
 
@@ -44,7 +44,7 @@ class Api::V1::UsersController < ApplicationController
   end
 
   def update
-    update_params = params.slice(:password, :given_name, :family_name, :must_append_roles,
+    update_params = params.permit(:password, :given_name, :family_name, :must_append_roles,
                                  roles: [], programs: [])
 
     # Makes sure roles are an array if provided

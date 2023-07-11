@@ -8,7 +8,7 @@ module Api
       end
 
       def index
-        name = params.slice(:name)[:name]
+        name = params.permit(:name)[:name]
         query = name ? Program.where('name like ?', "%#{name}%") : Program
         render json: paginate(query)
       end

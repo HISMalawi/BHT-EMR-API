@@ -14,7 +14,7 @@ module Api
       end
 
       def index
-        filters = params.slice(:person_id, :obs_datetime, :date, :program_id)
+        filters = params.permit(:person_id, :obs_datetime, :date, :program_id)
         appointments = appointment_service.appointments filters
         render json: paginate(appointments)
       end
