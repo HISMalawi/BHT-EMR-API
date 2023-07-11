@@ -1,14 +1,7 @@
-# frozen_string_literal: true
-
-## TODO: add text processing logic to escape characters outside of [A-Za-z0-9], consider :, \", (, ), \,
-## TODO: add text processing logic to escape apostrophes
-## TODO: maintain current x and current y throughout a label process
-
-module ZebraPrinter # :nodoc:
+module ZebraPrinter
   class Label
-    attr_accessor :output
-    attr_accessor :template, :width, :height, :orientation, :left_margin, :right_margin, :top_margin, :bottom_margin,
-                  :line_spacing, :content_width, :content_height, :column, :column_count, :column_width, :column_height, :column_spacing, :x, :y, :font_size, :font_horizontal_multiplier, :font_vertical_multiplier, :font_reverse, :number_of_labels
+    attr_accessor :output, :template, :width, :height, :orientation, :left_margin, :right_margin, :top_margin,
+                  :bottom_margin, :line_spacing, :content_width, :content_height, :column, :column_count, :column_width, :column_height, :column_spacing, :x, :y, :font_size, :font_horizontal_multiplier, :font_vertical_multiplier, :font_reverse, :number_of_labels
 
     # Initialize a new label with height weight and orientation. The orientation
     # can be 'T' for top, or 'B' for bottom
@@ -33,7 +26,7 @@ module ZebraPrinter # :nodoc:
       @font_horizontal_multiplier = 1
       @font_vertical_multiplier = 1
       @font_reverse = false
-      @output = ''.unfreeze
+      @output = ''
       header
     end
 
@@ -240,7 +233,8 @@ module ZebraPrinter # :nodoc:
         unless word_start_index > words.size - 1
           text = (need_hanging_indent ? ' ' * @hanging_indent : '') + words[word_start_index..(word_start_index + (word_count - 1))].join(' ')
           check_bounds
-          draw_text(text, @x, @y, 0, @font_size, @font_horizontal_multiplier, @font_vertical_multiplier, @font_reverse)
+          draw_text(text, @x, @y, 0, @font_size, @font_horizontal_multiplier, @font_vertical_multiplier,
+                    @font_reverse)
         end
         @y += @line_spacing + @char_height
       end
@@ -286,17 +280,6 @@ module ZebraPrinter # :nodoc:
 
     def get_word_size(char_width, word, need_space)
       (char_width * (word.size + (need_space ? 1 : 0))).to_i
-    end
-  end
-
-  class StandardLabel < Label
-    def initialize
-      dimensions = begin
-        GlobalProperty.find_by_property('label_width_height').property_value
-      rescue StandardError
-        nil || '801,329'
-      end.split(',').collect(&:to_i)
-      super(dimensions.first, dimensions.last, 'T')
     end
   end
 end
