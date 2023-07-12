@@ -3,9 +3,10 @@ default: &default
   host: localhost
   adapter: mysql2
   username: root
-  password: P@ch321!
+  password: password
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   checkout_timeout: 5000
+  port: 3306
 
 development:
   <<: *default
