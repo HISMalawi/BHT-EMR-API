@@ -37,6 +37,12 @@ module CXCAService
         end
 
         def map_report(data)
+          @age_groups.each do |key, value|   
+              @report[:suspects_disaggregated_by_age][key] ||= []
+              @report[:screened_disaggregated_by_age][key] ||= []
+              @report[:total_treated_disaggregated_by_age][key] ||= []
+          end
+
           data.each do |record|
             age_group = record['age_group']
 
@@ -53,7 +59,6 @@ module CXCAService
             outcome = get_concept_name(record['outcome'])
 
             @age_groups.each do |key, value|
-              @report[:screened_disaggregated_by_age][key] ||= []
               @report[:screened_disaggregated_by_age][key] << person_id if value.include?(age_group)
             end
 
@@ -76,9 +81,8 @@ module CXCAService
             @age_groups.each do |key, value|
               next unless screening_asesment.present?
 
-              @report[:suspects_disaggregated_by_age][key] ||= []
               @report[:suspects_disaggregated_by_age][key] << person_id if value.include?(age_group) &&
-                                                                           screening_asesment == concept('Suspect cancer').concept_id
+                                                    screening_asesment == concept('Suspect cancer').concept_id
             end
 
             @report[:total_treated][dot_option] ||= [] if dot_option.present?
@@ -93,7 +97,6 @@ module CXCAService
             @age_groups.each do |key, value|
               next unless dot_option.present?
 
-              @report[:total_treated_disaggregated_by_age][key] ||= []
               @report[:total_treated_disaggregated_by_age][key] << person_id if value.include?(age_group)
             end
 
