@@ -109,7 +109,7 @@ module HTSService::AITIntergration
       end
 
       def registered_by patient
-        User.current.username
+        User.current.username rescue 'Unknown'
       end
 
       def closed_contacts patient
