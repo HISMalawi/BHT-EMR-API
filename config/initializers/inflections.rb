@@ -25,5 +25,5 @@ ActiveSupport::Inflector.inflections(:en) do |inflect|
   inflect.acronym 'DTG'
   inflect.acronym 'DTG50'
   # inflect.acronym 'RTT'
-  inflect.acronym 'VL'
+  # inflect.acronym 'VL'
 end

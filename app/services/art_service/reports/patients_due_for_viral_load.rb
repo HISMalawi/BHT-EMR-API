@@ -30,7 +30,7 @@ module ArtService
       end
 
       def viral_load_reminder(patient_id)
-        ArtService::VLReminder
+        ArtService::VlReminder
           .new(patient_id: patient_id, date: end_date)
           .vl_reminder_info
       end

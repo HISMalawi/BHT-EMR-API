@@ -5,7 +5,7 @@ module AncService
     module Pepfar
       ##
       # HIV-positive pregnant women who received ART to reduce the risk of mother-to-child-transmission (MTCT) during pregnancy
-      class PmtctStatART
+      class PmtctStatArt
         ANC_AGE_GROUPS = [
           '<10 years',
           '10-14 years',

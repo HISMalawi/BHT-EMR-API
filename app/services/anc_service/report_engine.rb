@@ -11,7 +11,7 @@ module AncService
       'MONTHLY' => AncService::Reports::Monthly,
       'ANC_COHORT_DISAGGREGATED' => AncService::Reports::CohortDisaggregated,
       'VISITS' => AncService::Reports::VisitsReport,
-      'PMTCT_STAT_ART' => AncService::Reports::Pepfar::PmtctStatART
+      'PMTCT_STAT_ART' => AncService::Reports::Pepfar::PmtctStatArt
     }.freeze
 
     def generate_report(type:, **kwargs)
