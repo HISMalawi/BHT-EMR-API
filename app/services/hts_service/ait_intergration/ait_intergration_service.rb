@@ -86,7 +86,9 @@ module HTSService::AITIntergration
     end
 
     def update_last_synced_patient_id(patient_id)
-      GlobalProperty.find_by_property("hts.ait.last_synced_patient_id").update_attribute(:property_value, patient_id)
+      property = GlobalProperty.find_by_property('hts.ait.last_synced_patient_id')
+      GlobalProperty.create(property: 'hts.ait.last_synced_patient_id', property_value: patient_id) unless property.present?
+      property.update_attribute(:property_value, patient_id)
     end
 
     def create_index_row(index)
