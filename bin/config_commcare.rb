@@ -84,7 +84,7 @@ def setup_config
   puts 'Setting up config...'
   config = {
     endpoint: @env == '1' ? @dev_env : @prod_env,
-    health_facility_id: facility_id.to_i,
+    health_facility_id: facility_id,
     health_facility_name: facility_name,
     district_id: district_id.to_i,
     district_name: district_name,
