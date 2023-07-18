@@ -9,39 +9,39 @@ require 'roo'
 puts "Choose setup environment: \n1. Development \n2. Production"
 @env = gets.chomp
 
-workbooks = load_excel_file("#{Rails.root}/db/hts_metadata/#{@env == '1' ? @dev_file : @prod_file}.xlsx")
-@types, @countries, @regions, @districts, @health_facilities = workbooks
 
 
 # Function to load an Excel file and convert each sheet into a hash
 def load_excel_file(file_path)
   excel = Roo::Spreadsheet.open(file_path)
-
+  
   worksheets = excel.sheets.map do |sheet_name|
     sheet = excel.sheet(sheet_name)
     headers = sheet.row(1)
     data = []
-
+    
     (2..sheet.last_row).each do |row|
       row_data = {}
 
       sheet.row(row).each_with_index do |value, col|
         row_data[headers[col]] = value
       end
-
+      
       data << row_data
     end
 
     { sheet_name => data }
   end
-
+  
   worksheets
 end
 
+workbooks = load_excel_file("#{Rails.root}/db/hts_metadata/#{@env == '1' ? @dev_file : @prod_file}.xlsx")
+@types, @countries, @regions, @districts, @health_facilities = workbooks
 
 def setup_config
 
-
+  
   puts 'Enter your site code:'
   site_code = gets.chomp
   
