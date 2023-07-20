@@ -25,7 +25,7 @@ module HTSService::AITIntergration
       contact['Contact marital status']
     end
 
-    def hiv_status contact, index
+    def new_hiv_status contact, index
       "#{contact['Contact HIV tested']}#{contact['Contact has had HIV testing']}"
     end
 
