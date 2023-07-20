@@ -6,31 +6,21 @@ module HTSService::AITIntergration
 
     AIT_CONFIG = YAML.load_file("#{Rails.root}/config/ait.yml")
 
-    HTC_PROGRAM = Program.find_by_name("HTC PROGRAM").id
-    HIV_TESTING_ENCOUNTER = EncounterType.find_by_name("Testing")
+    HTC_PROGRAM = Program.find_by_name('HTC PROGRAM').id
+    HIV_TESTING_ENCOUNTER = EncounterType.find_by_name('Testing')
 
     PARAMS = {
-      :search_field => "external_id",
-      :search_column => "client_patient_id",
-      :create_new_cases => "on",
+      :search_field => 'external_id',
+      :search_column => 'client_patient_id',
+      :create_new_cases => 'on',
       :multipart => true,
     }
 
-    CONTACT_OBS_HEADERS = {
-      "First name of contact" => "Case Name",
-      "First name of contact" => "first_name",
-      "Last name of contact" => "last_name",
-      "Gender of contact" => "sex",
-      "Age of contact" => "age",
-      "Contact phone number" => "contact_phone_number",
-      "Contact marital status" => "marital_status",
-      "Contact HIV tested" => "hiv_status",
-    }.freeze
-
     CONTACT_ADDITIONAL_HEADERS = %i[
-      caseid parent_type contact_phone_number_verified name dob_known age_format sex_dissagregated entry_point age_in_years age_in_months age age_group dob sex
+      first_name last_name sex age contact_phone_number marital_status hiv_status case_id caseid parent_type contact_phone_number_verified name dob_known age_format sex_dissagregated entry_point age_in_years age_in_months age age_group dob sex
       generation close_case_date registered_by health_facility_id health_facility_name district_id district_name
-      region_id region_name partner dhis2_code continue_registration import_validation site_id owner_id
+      region_id region_name partner dhis2_code continue_registration physical_address import_validation site_id owner_id appointment_date referral_type appointment_location hiv_test_date
+      consent_to_contact select_recommended_mode_of_notification traditional_authority village ipv_status relationship_with_index_adult
     ].freeze
 
     HEADERS = %i[
@@ -38,37 +28,65 @@ module HTSService::AITIntergration
     ].freeze
 
     def initialize(patient_id)
-      raise "AIT config not found or not properly set, please refer to the ait.yml.example" unless !AIT_CONFIG["endpoint"].empty?
+      raise 'AIT config not found or not properly set, please refer to the ait.yml.example' unless !AIT_CONFIG['endpoint'].empty?
+
+      failed_ids = GlobalProperty.find_by_property('hts.ait.failed_queue')&.property_value&.split(',') || []
+
       @patients = hts_patients_starting_from patient_id.to_i
-      @rest_client = RestClient::Resource.new AIT_CONFIG["endpoint"], user: AIT_CONFIG["username"], password: AIT_CONFIG["password"], verify_ssl: false
+      @failed = Patient.where(patient_id: failed_ids).order(patient_id: :asc) if failed_ids.present?
+
+      @patients = @patients + @failed if @failed.present?
+
+      @rest_client = RestClient::Resource.new AIT_CONFIG['endpoint'], user: AIT_CONFIG['username'], password: AIT_CONFIG['password'], verify_ssl: false
     end
 
     def sync
-      request_is_successful = lambda { |status_code| [200, 201].include? status_code }
-      return "No Patients to sync" unless patients.present?
-      index = index_patients.collect { |index| create_index_row index }
-      contacts = index_patients.collect { |index| create_contacts_rows index }.flatten
-      index_csv = generate_csv_for index
-      contact_csv = generate_csv_for contacts
-      status_code = send_request "index", index_csv
-      send_request "contact", contact_csv if request_is_successful.call status_code
-      update_last_synced_patient_id patients.last.patient_id if request_is_successful.call status_code
-      index.map { |obj| obj[:contacts] = contacts.select { |contact| contact["parent_external_id"] == obj[:client_patient_id] }; obj }
+      begin      
+        request_is_successful = lambda { |status_code| [200, 201].include? status_code }
+        return 'No Patients to sync' unless patients.present?
+        
+        index = index_patients.collect { |i| create_index_row i }
+        contacts = index_patients.collect { |i| create_contacts_rows i }.flatten
+        index_csv = generate_csv_for index
+        contact_csv = generate_csv_for contacts
+        status_code = send_request 'index', index_csv
+        send_request 'contact', contact_csv if request_is_successful.call status_code
+        update_last_synced_patient_id patients.last.patient_id if request_is_successful.call status_code
+        remove_from_failed_queue
+        index.map { |obj| obj[:contacts] = contacts.select { |contact| contact['parent_external_id'] == obj[:client_patient_id] }; obj }
+      rescue StandardError => e
+        LOGGER.error e.message
+        LOGGER.info "Adding patients #{@patients.map(&:patient_id)} to the failed queue"
+        add_to_failed_queue
+        raise e
+      end
     end
 
     private
 
+    def add_to_failed_queue
+      failed_queue = GlobalProperty.find_by_property('hts.ait.failed_queue')
+      GlobalProperty.create(property: 'hts.ait.failed_queue', property_value: @patients.map(&:patient_id).join(',')) unless failed_queue.present?
+      failed_queue.update_attribute(:property_value, "#{failed_queue.property_value},#{@patients.map(&:patient_id).join(',')}")
+    end
+
+    def remove_from_failed_queue
+      failed_queue = GlobalProperty.find_by_property('hts.ait.failed_queue')
+      return unless failed_queue.present?
+      failed_queue.update_attribute(:property_value, failed_queue.property_value.split(',').reject { |id| @patients.map(&:patient_id).include? id.to_i }.join(','))
+    end
+
     def send_request(case_type, csv)
-      begin
+      #begin
         response = rest_client.post PARAMS.merge({ case_type: case_type, :file => File.new(csv, "rb") })
-      rescue RestClient::ExceptionWithResponse => e
-        case e.http_code
-        when 400, 401, 403
-          return e.response
-        else
-          raise e
-        end
-      end
+      # rescue RestClient::ExceptionWithResponse => e
+      #   case e.http_code
+      #   when 400, 401, 403
+      #     return e.response
+      #   else
+      #     raise e
+      #   end
+      # end
       response.code
     end
 
@@ -77,8 +95,8 @@ module HTSService::AITIntergration
     end
 
     def generate_csv_for(rows)
-      f = Tempfile.create(["ait_index_#{Date.today.to_date}", ".csv"])
-      CSV.open(f, "w") do |csv|
+      f = Tempfile.create(["ait_index_#{Date.today.to_date}", '.csv'])
+      CSV.open(f, 'w') do |csv|
         csv << rows.first.keys.collect { |header| header.to_s }
         rows.each { |row| csv << row.values }
       end
@@ -100,49 +118,48 @@ module HTSService::AITIntergration
       row
     end
 
-    def create_contacts_rows(index)
-      LOGGER.info "Creating contacts rows for #{index.id}"
-      get_index_contacts(index).collect do |contact|
+    def create_contacts_rows(patient)
+      LOGGER.info "Creating contacts rows for #{patient.id}"
+      rows = []
+      get_index_contacts(patient).each_with_index do |contact, index|
+        row = {}
         CONTACT_ADDITIONAL_HEADERS.each do |header|
-          contact[header] = contact_csv_row_builder.send header, contact
-          contact["parent_external_id"] = index.id
-          contact["client_patient_id"] = "#{index.id.to_s}_#{contact["first_name"]}_#{contact["last_name"]}"
+          row[header] = contact_csv_row_builder.send header, contact, index rescue nil
+
+          row['parent_external_id'] = patient.id
+          row['client_patient_id'] = "#{patient.id}_#{contact['Firstnames of contact']}#{contact['First name of contact']}_#{contact['Last name of contact']}#{contact['Lastname of contact']}"
         end
-        contact
+        rows << row
       end
+      rows
     end
 
     def get_index_contacts(index)
-      contactList = []
-      contacts_count_of(index).times do |i|
-        contact = {}
-        CONTACT_OBS_HEADERS.each do |header, value|
-          obs = Observation.joins(concept: :concept_names)
-            .where(concept_name: { name: header }, person_id: index.id)
-            .offset(i).first
-          contact[value] = get_value obs
+      contacts = []
+      Observation
+        .where(person_id: index.patient_id, concept_id: ConceptName.find_by_name('First name of contact').concept_id)
+        .select(:obs_group_id)
+        .distinct
+        .each do |obs|
+          obj = {}
+          obs = Observation.where(obs_group_id: obs.obs_group_id).order(obs_datetime: :desc)
+          obs.each do |o|
+            obj[ConceptName.find_by_concept_id(o.concept_id).name] = o&.answer_string&.strip
+          end
+          contacts << obj
         end
-        contactList << contact
-      end
-      contactList
+      contacts.uniq
     end
 
     def hts_patients_starting_from(patient_id)
       LOGGER.info "Initializing AIT intergration service from patient id #{patient_id}"
       Patient.joins(:person, encounters: :program)
-        .where("person.person_id >= ?", patient_id)
+        .where('person.person_id >= ?', patient_id)
         .where(
           encounter: { encounter_type: HIV_TESTING_ENCOUNTER },
           program: { program_id: HTC_PROGRAM },
         )
         .distinct.order(patient_id: :asc).limit(200)
-    end
-
-    def contacts_count_of(index)
-      Observation.joins(concept: :concept_names)
-        .where(concept_name: { name: "First name of contact" }, person_id: index.id)
-        .select(:concept_id)
-        .count
     end
 
     def get_value(obs)
