@@ -204,6 +204,10 @@ module HTSService::AITIntergration
       contact['Contact appointment date']&.to_date
     end
 
+    def index_entry_point contact, index
+      "HTS"
+    end
+
 
     private
 
