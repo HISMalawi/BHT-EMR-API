@@ -77,16 +77,11 @@ module HTSService::AITIntergration
     end
 
     def send_request(case_type, csv)
-      #begin
+      begin
         response = rest_client.post PARAMS.merge({ case_type: case_type, :file => File.new(csv, "rb") })
-      # rescue RestClient::ExceptionWithResponse => e
-      #   case e.http_code
-      #   when 400, 401, 403
-      #     return e.response
-      #   else
-      #     raise e
-      #   end
-      # end
+      rescue RestClient::ExceptionWithResponse => e
+        raise e.response
+      end
       response.code
     end
 
