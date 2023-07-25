@@ -142,6 +142,8 @@ class Patient < VoidableRecord
   end
 
   def tpt_status
+    return { tpt: nil, completed: false, tb_treatment: false, tpt_init_date: nil, tpt_complete_date: nil } if id.blank?
+    
     ARTService::Reports::Pepfar::TbPrev3.new(start_date: Date.today - 6.months, end_date: Date.today).patient_tpt_status(id)
   end
 end
