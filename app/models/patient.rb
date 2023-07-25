@@ -135,6 +135,8 @@ class Patient < VoidableRecord
   end
 
   def art_start_date
+    return nil if id.blank?
+
     result = ActiveRecord::Base.connection.select_one <<~SQL
       SELECT patient_start_date(#{id}) AS art_start_date
     SQL
