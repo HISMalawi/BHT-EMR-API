@@ -33,15 +33,19 @@ module CXCAService
         private
 
         def get_concept_name(concept_id)
-          ConceptName.find_by_concept_id(concept_id).name if concept_id.present? || nil
+          concept = ConceptName.find_by_concept_id(concept_id).name if concept_id.present?
+          return concept unless concept.blank?
+
+          nil
         end
 
         def map_report(data)
-          @age_groups.each do |key, value|   
-              @report[:suspects_disaggregated_by_age][key] ||= []
-              @report[:screened_disaggregated_by_age][key] ||= []
-              @report[:total_treated_disaggregated_by_age][key] ||= []
+          @age_groups.each do |key, _value|   
+            @report[:suspects_disaggregated_by_age][key] ||= []
+            @report[:screened_disaggregated_by_age][key] ||= []
+            @report[:total_treated_disaggregated_by_age][key] ||= []
           end
+          @report[:screened_disaggregated_by_hiv_status]['Negative'] ||= []
 
           data.each do |record|
             age_group = record['age_group']
@@ -61,38 +65,75 @@ module CXCAService
             @age_groups.each do |key, value|
               @report[:screened_disaggregated_by_age][key] << person_id if value.include?(age_group)
             end
-
-            @report[:screened_disaggregated_by_hiv_status][hiv_status] ||= []
-            @report[:screened_disaggregated_by_hiv_status][hiv_status] << person_id if hiv_status.present?
-            @report[:screened_disaggregated_by_reason_for_visit][visit_reason] ||= []
-            @report[:screened_disaggregated_by_reason_for_visit][visit_reason] << person_id if visit_reason.present?
-
-            @report[:screened_disaggregated_by_screening_method][screening_method] ||= []
-            @report[:screened_disaggregated_by_screening_method][screening_method] << person_id if screening_method.present?
-
-            @report[:screening_results_hiv_positive][screening_result] ||= []
-            @report[:screening_results_hiv_positive][screening_result] << person_id if screening_result.present? && [
-              'Positive Not on ART', 'Positive on ART'].include?(hiv_status)
-
-            @report[:screening_results_hiv_negative][screening_result] ||= []
-            @report[:screening_results_hiv_negative][screening_result] << person_id if screening_result.present? && [
-              'Negative', 'Never Tested'].include?(hiv_status)
+            
+            if hiv_status.present? && hiv_status == 'Never Tested'
+              @report[:screened_disaggregated_by_hiv_status]['Negative'] << person_id
+            end
+            
+            if hiv_status.present? && report[:screened_disaggregated_by_hiv_status].keys.include?(hiv_status&.to_sym)
+              @report[:screened_disaggregated_by_hiv_status][hiv_status] ||= []
+              @report[:screened_disaggregated_by_hiv_status][hiv_status] << person_id
+            end
+            
+            
+            if visit_reason.present? && report[:screened_disaggregated_by_reason_for_visit].keys.include?(visit_reason&.to_sym)
+              @report[:screened_disaggregated_by_reason_for_visit][visit_reason] ||= []
+              @report[:screened_disaggregated_by_reason_for_visit][visit_reason] << person_id
+            end
+            
+            
+            
+            if screening_method.present? && report[:screened_disaggregated_by_screening_method].keys.include?(screening_method&.to_sym)
+              @report[:screened_disaggregated_by_screening_method][screening_method] ||= []
+              @report[:screened_disaggregated_by_screening_method][screening_method] << person_id
+            end
+            
+            if screening_result.present? && ['Positive Not on ART', 'Positive on ART'].include?(hiv_status&.to_sym) && report[:screening_results_hiv_positive].keys.include?(screening_result&.to_sym)
+              @report[:screening_results_hiv_positive][screening_result] ||= []
+              @report[:screening_results_hiv_positive][screening_result] << person_id
+            end
+            if screening_result.present? && !report[:screening_results_hiv_positive].keys.include?(screening_result&.to_sym)
+              @report[:screening_results_hiv_positive]['Other gynae'&.to_sym] << person_id
+            end
+            
+            
+            if screening_result.present? && report[:screening_results_hiv_negative].keys.include?(screening_result&.to_sym)
+              @report[:screening_results_hiv_negative][screening_result] ||= []
+              @report[:screening_results_hiv_negative][screening_result] << person_id 
+            end
+            if screening_result.present? && !report[:screening_results_hiv_negative].keys.include?(screening_result&.to_sym)
+              @report[:screening_results_hiv_negative]['Other gynae'&.to_sym] << person_id
+            end
 
             @age_groups.each do |key, value|
               next unless screening_asesment.present?
-
-              @report[:suspects_disaggregated_by_age][key] << person_id if value.include?(age_group) &&
-                                                    screening_asesment == concept('Suspect cancer').concept_id
+              
+            @report[:suspects_disaggregated_by_age][key] << person_id if value.include?(age_group) &&
+              screening_asesment == concept('Suspect cancer').concept_id
+            end
+            
+            if dot_option.present? && report[:total_treated].keys.include?(dot_option&.to_sym)
+              @report[:total_treated][dot_option] ||= [] if dot_option.present?
+              @report[:total_treated][dot_option] << person_id
+            end
+            
+            
+            if tx_option.present? && report[:total_treated_disaggregated_by_tx_option].keys.include?(tx_option&.to_sym)
+              @report[:total_treated_disaggregated_by_tx_option][tx_option] ||= [] if tx_option.present?
+              @report[:total_treated_disaggregated_by_tx_option][tx_option] << person_id
             end
 
-            @report[:total_treated][dot_option] ||= [] if dot_option.present?
-            @report[:total_treated][dot_option] << person_id if dot_option.present?
+            if tx_option.present? && !report[:total_treated_disaggregated_by_tx_option].keys.include?(tx_option&.to_sym)
+              @report[:total_treated_disaggregated_by_tx_option]['Other'&.to_sym] << person_id
+            end
 
-            @report[:total_treated_disaggregated_by_tx_option][tx_option] ||= [] if tx_option.present?
-            @report[:total_treated_disaggregated_by_tx_option][tx_option] << person_id if tx_option.present?
-
-            @report[:referral_reasons][referral_reason] ||= [] if referral_reason.present?
-            @report[:referral_reasons][referral_reason] << person_id if referral_reason.present?
+            if referral_reason.present? && report[:referral_reasons].keys.include?(referral_reason&.to_sym)
+              @report[:referral_reasons][referral_reason] ||= [] if referral_reason.present?
+              @report[:referral_reasons][referral_reason] << person_id
+            end
+            if referral_reason.present? && !report[:referral_reasons].keys.include?(referral_reason&.to_sym)
+              @report[:referral_reasons]['Other gynae'&.to_sym] << person_id
+            end
 
             @age_groups.each do |key, value|
               next unless dot_option.present?
@@ -102,8 +143,13 @@ module CXCAService
 
             @report[:referral_feedback]['With referral feedback'] << person_id if outcome.present?
 
-            @report[:family_planning][family_planning] ||= [] if family_planning.present?
-            @report[:family_planning][family_planning] << person_id if family_planning.present?
+            if family_planning.present? && report[:family_planning].keys.include?(family_planning&.to_sym)
+              @report[:family_planning][family_planning] ||= [] if family_planning.present?
+              @report[:family_planning][family_planning] << person_id
+            end
+            unless report[:family_planning].keys.include?(family_planning&.to_sym)
+              @report[:family_planning]['N/A'&.to_sym] << person_id
+            end
           end
         end
 
@@ -111,13 +157,12 @@ module CXCAService
           @report = {
             screened_disaggregated_by_age: {},
             screened_disaggregated_by_hiv_status: {
-              "Never Tested": [],
               "Positive NOT on ART": [],
               "Positive on ART": [],
               "Negative": []
             },
             screened_disaggregated_by_reason_for_visit: {
-              "Initial screening": [],
+              "Initial Screening": [],
               "Postponed treatment": [],
               "One year subsequent check-up after treatment": [],
               "Subsequent screening": [],
@@ -132,13 +177,16 @@ module CXCAService
             },
             screening_results_hiv_positive: {
               "STI infection": [],
+              "HPV positive": [],
+              "HPV negative": [],
               "VIA negative": [],
               "VIA positive": [],
               "PAP Smear normal": [],
               "PAP Smear Abnormal": [],
               "No visible Lesion": [],
               "Visible Lesion": [],
-              "Suspected Cancer": []
+              "Suspected Cancer": [],
+              "Other gynae": []
             },
             screening_results_hiv_negative: {
               "STI infection": [],
@@ -148,19 +196,21 @@ module CXCAService
               "PAP Smear Abnormal": [],
               "No visible Lesion": [],
               "Visible Lesion": [],
-              "Suspected Cancer": []
+              "Suspected Cancer": [],
+              "Other gynae": []
             },
             suspects_disaggregated_by_age: {},
             total_treated: {
               "Same day treatment": [],
               "Postponed treatment": [],
-              "Referral": []
+              "Referral": [],
+              "Postponed treatment perfomed": []
             },
             total_treated_disaggregated_by_tx_option: {
-              'Hysterectomy': [],
-              'Chemotherapy': [],
-              'Palliative Care': [],
-              'LLETZ/LEEP': []
+              'Cryotherapy': [],
+              'Thermal Coagulation': [],
+              'LLETZ/LEEP': [],
+              'Other': []
             },
             referral_reasons: {
               "Further Investigation and Management": [],
@@ -168,13 +218,13 @@ module CXCAService
               "Unable to treat client": [],
               "Suspect Cancer": [],
               "Treatment not available": [],
-              "Other conditions": []
+              "Other gynae": []
             },
             total_treated_disaggregated_by_age: {},
             family_planning: {
               'Yes': [],
               'No': [],
-              'None': []
+              'N/A': []
             },
             referral_feedback: {
               "With referral feedback": []
