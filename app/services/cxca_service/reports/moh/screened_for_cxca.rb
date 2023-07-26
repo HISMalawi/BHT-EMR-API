@@ -148,7 +148,7 @@ module CXCAService
               @report[:family_planning][family_planning] << person_id
             end
             unless report[:family_planning].keys.include?(family_planning&.to_sym)
-              @report[:family_planning]['Not applicable'&.to_sym] << person_id
+              @report[:family_planning]['N/A'&.to_sym] << person_id
             end
           end
         end
@@ -225,7 +225,7 @@ module CXCAService
             family_planning: {
               'Yes': [],
               'No': [],
-              'Not applicable': []
+              'N/A': []
             },
             referral_feedback: {
               "With referral feedback": []
