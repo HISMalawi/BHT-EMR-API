@@ -148,7 +148,7 @@ module CXCAService
               @report[:family_planning][family_planning] << person_id
             end
             unless report[:family_planning].keys.include?(family_planning&.to_sym)
-              @report[:family_planning]['N/A'&.to_sym] << person_id
+              @report[:family_planning]['Not applicable'&.to_sym] << person_id
             end
           end
         end
@@ -189,7 +189,9 @@ module CXCAService
               "Other gynae": []
             },
             screening_results_hiv_negative: {
-              "STI infection": [],
+             "STI infection": [],
+              "HPV positive": [],
+              "HPV negative": [],
               "VIA negative": [],
               "VIA positive": [],
               "PAP Smear normal": [],
@@ -224,7 +226,7 @@ module CXCAService
             family_planning: {
               'Yes': [],
               'No': [],
-              'N/A': []
+              'Not applicable': []
             },
             referral_feedback: {
               "With referral feedback": []
