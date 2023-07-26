@@ -176,7 +176,6 @@ module CXCAService
               "Speculum Exam": []
             },
             screening_results_hiv_positive: {
-              "STI infection": [],
               "HPV positive": [],
               "HPV negative": [],
               "VIA negative": [],
@@ -189,7 +188,6 @@ module CXCAService
               "Other gynae": []
             },
             screening_results_hiv_negative: {
-             "STI infection": [],
               "HPV positive": [],
               "HPV negative": [],
               "VIA negative": [],
