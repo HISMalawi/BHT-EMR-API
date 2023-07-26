@@ -45,7 +45,7 @@ module CXCAService
             @report[:screened_disaggregated_by_age][key] ||= []
             @report[:total_treated_disaggregated_by_age][key] ||= []
           end
-          @report[:screened_disaggregated_by_hiv_status]['Negative'] ||= []
+          @report[:screened_disaggregated_by_hiv_status]['Unknown (HIV- > 1 year ago, Inconclusive, Prefers not to Disclose, or Never Tested)'] ||= []
 
           data.each do |record|
             age_group = record['age_group']
@@ -67,7 +67,7 @@ module CXCAService
             end
             
             if hiv_status.present? && hiv_status == 'Never Tested'
-              @report[:screened_disaggregated_by_hiv_status]['Negative'] << person_id
+              @report[:screened_disaggregated_by_hiv_status]['Unknown (HIV- > 1 year ago, Inconclusive, Prefers not to Disclose, or Never Tested)'] << person_id
             end
             
             if hiv_status.present? && report[:screened_disaggregated_by_hiv_status].keys.include?(hiv_status&.to_sym)
@@ -159,7 +159,8 @@ module CXCAService
             screened_disaggregated_by_hiv_status: {
               "Positive NOT on ART": [],
               "Positive on ART": [],
-              "Negative": []
+              "Negative": [],
+              "Unknown (HIV- > 1 year ago, Inconclusive, Prefers not to Disclose, or Never Tested)": []
             },
             screened_disaggregated_by_reason_for_visit: {
               "Initial Screening": [],
