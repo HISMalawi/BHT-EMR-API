@@ -113,7 +113,6 @@ class Api::V1::EncountersController < ApplicationController
     encounter = Encounter.find(params[:id])
     reason = params[:reason] || "Voided by #{User.current.username}"
     encounter_service.void encounter, reason
-    encounter_service.destroy_lab_order_lims(encounter.encounter_id)
   end
 
   private

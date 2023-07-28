@@ -51,14 +51,6 @@ class EncounterService
              .first
   end
 
-  def destroy_lab_order_lims(encounter_id)
-    order =Order.where(encounter_id:encounter_id )
-    worker = Lab::Lims::PushWorker.new(Lab::Lims::ApiFactory.create_api)
-    order.each do |item|
-      worker.void_order_in_lims(item.order_id)
-    end
-  end
-
   def void(encounter, reason)
     encounter.void(reason)
   end
