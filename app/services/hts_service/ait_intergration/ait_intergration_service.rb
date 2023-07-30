@@ -49,8 +49,8 @@ module HTSService::AITIntergration
         contacts = index_patients.collect { |i| create_contacts_rows i }.flatten
         index_csv = generate_csv_for index
         contact_csv = generate_csv_for contacts
-        status_code = send_request 'index', index_csv
-        send_request 'contact', contact_csv if request_is_successful.call status_code
+        status_code = send_request 'index', index_csv if index_csv.present?
+        send_request 'contact', contact_csv if request_is_successful.call status_code && contact_csv.present?
         update_last_synced_patient_id patients.last.patient_id if request_is_successful.call status_code
         remove_from_failed_queue
         index.map { |obj| obj[:contacts] = contacts.select { |contact| contact['parent_external_id'] == obj[:client_patient_id] }; obj }
@@ -65,9 +65,13 @@ module HTSService::AITIntergration
     private
 
     def add_to_failed_queue
-      failed_queue = GlobalProperty.find_by_property('hts.ait.failed_queue')
-      GlobalProperty.create(property: 'hts.ait.failed_queue', property_value: @patients.map(&:patient_id).join(',')) unless failed_queue.present?
-      failed_queue.update_attribute(:property_value, "#{failed_queue.property_value},#{@patients.map(&:patient_id).join(',')}")
+      patient_ids = @patients.map(&:patient_id)
+
+      failed_queue = GlobalProperty.where(property: 'hts.ait.failed_queue')
+
+      queue_ids = failed_queue.pluck(:property_value)
+      
+      failed_queue.update_all(property_value: (queue_ids + patient_ids)&.uniq&.join(','))
     end
 
     def remove_from_failed_queue
@@ -90,6 +94,8 @@ module HTSService::AITIntergration
     end
 
     def generate_csv_for(rows)
+      return unless rows.present?
+
       f = Tempfile.create(["ait_index_#{Date.today.to_date}", '.csv'])
       CSV.open(f, 'w') do |csv|
         csv << rows.first.keys.collect { |header| header.to_s }
