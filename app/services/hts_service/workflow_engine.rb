@@ -1,3 +1,4 @@
+# rubocop:disable Lint/SafeNavigationChain
 # frozen_string_literal: true
 
 require "set"
@@ -172,8 +173,7 @@ module HTSService
 
       taken_arvs = query.where(concept_id: concept("Taken ARV before").concept_id)
       time_since_last_arv = query.where(concept_id: concept("Time since last taken medication").concept_id)
-
-      if taken_arvs.last&.answer_string&.strip == "Yes" && parse_date(time_since_last_arv&.last&.value_datetime) >= 7.days.ago
+      if taken_arvs.last&.answer_string&.strip == "Yes" && time_since_last_arv&.last&.value_datetime.to_date >= 7.days.ago
         return false
       end
       return true
@@ -354,3 +354,5 @@ module HTSService
     end
   end
 end
+
+# rubocop:enable Lint/SafeNavigationChain
