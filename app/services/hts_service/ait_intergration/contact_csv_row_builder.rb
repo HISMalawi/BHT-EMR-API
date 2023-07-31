@@ -15,6 +15,8 @@ module HTSService::AITIntergration
         'm'
       when 'female'
         'fnp'
+      when 'f'
+        'fnp'
       else contact['Gender of contact']&.strip&.downcase
       end
     end
@@ -203,7 +205,7 @@ module HTSService::AITIntergration
     end
 
     def index_entry_point contact, index
-      "HTS"
+      "hts"
     end
 
 
