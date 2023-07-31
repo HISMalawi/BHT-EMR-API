@@ -11,7 +11,7 @@ module HTSService::AITIntergration
 
     def sex contact, index
       case contact['Gender of contact']&.strip&.downcase
-        when 'male'
+      when 'male'
         'm'
       when 'female'
         'fnp'
