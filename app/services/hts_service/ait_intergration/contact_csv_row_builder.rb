@@ -10,12 +10,12 @@ module HTSService::AITIntergration
     end
 
     def sex contact, index
-      case contact['Gender of contact']&.strip&.downcase
-      when 'male'
+      case contact['Gender of contact']&.strip
+      when 'Male'
         'm'
-      when 'female'
+      when 'Female'
         'fnp'
-      when 'f'
+      when 'F'
         'fnp'
       else contact['Gender of contact']&.strip&.downcase
       end
