@@ -90,10 +90,37 @@ module CXCAService
             
             if screening_result.present? && ['Positive Not on ART', 'Positive on ART'].include?(hiv_status&.to_sym) && report[:screening_results_hiv_positive].keys.include?(screening_result&.to_sym)
               @report[:screening_results_hiv_positive][screening_result] ||= []
+              if screening_result == 'HPV positive'
+                @report[:screening_results_hiv_positive]['Number of clients with HPV+'] << person_id
+              end
+              if screening_result == 'HPV negative'
+                @report[:screening_results_hiv_positive]['Number of clients with HPV-'] << person_id
+              end
+              if screening_result == 'VIA negative'
+                @report[:screening_results_hiv_positive]['Number of clients with VIA-'] << person_id
+              end
+              if screening_result == 'VIA positive'
+                @report[:screening_results_hiv_positive]['Number of clients with VIA+'] << person_id
+              end
+              if screening_result == 'PAP Smear normal'
+                @report[:screening_results_hiv_positive]['Number of clients with PAP Smear normal'] << person_id
+              end
+              if screening_result == 'PAP Smear abnormal'
+                @report[:screening_results_hiv_positive]['Number of clients with PAP Smear abnormal'] << person_id
+              end 
+              if screening_result == 'No visible Lesion'
+                @report[:screening_results_hiv_positive]['Number of clients with No visible Lesion'] << person_id
+              end
+              if screening_result == 'Visible Lesion'
+                @report[:screening_results_hiv_positive]['Number of clients with Visible Lesion'] << person_id
+              end
+              if screening_result == 'Suspected Cancer'
+                @report[:screening_results_hiv_positive]['Number of clients with Suspected Cancer'] << person_id
+              end
               @report[:screening_results_hiv_positive][screening_result] << person_id
             end
             if screening_result.present? && !report[:screening_results_hiv_positive].keys.include?(screening_result&.to_sym)
-              @report[:screening_results_hiv_positive]['Other gynae'&.to_sym] << person_id
+              @report[:screening_results_hiv_positive]['Number of clients with Other gynae'&.to_sym] << person_id
             end
             
             
@@ -177,16 +204,16 @@ module CXCAService
               "Speculum Exam": []
             },
             screening_results_hiv_positive: {
-              "HPV positive": [],
-              "HPV negative": [],
-              "VIA negative": [],
-              "VIA positive": [],
-              "PAP Smear normal": [],
-              "PAP Smear Abnormal": [],
-              "No visible Lesion": [],
-              "Visible Lesion": [],
-              "Suspected Cancer": [],
-              "Other gynae": []
+              "Number of clients with HPV+": [],
+              "Number of clients with HPV-": [],
+              "Number of clients with VIA-": [],
+              "Number of clients with VIA+": [],
+              "Number of clients with PAP Smear normal": [],
+              "Number of clients with PAP Smear Abnormal": [],
+              "Number of clients with No visible Lesion": [],
+              "Number of clients with Visible Lesion": [],
+              "Number of clients with Suspected Cancer": [],
+              "Number of clients with Other gynae": []
             },
             screening_results_hiv_negative: {
               "HPV positive": [],
