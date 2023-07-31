@@ -17,7 +17,7 @@ module HTSService::AITIntergration
     }
 
     CONTACT_ADDITIONAL_HEADERS = %i[
-      contact_id first_name last_name sex age contact_phone_number marital_status new_hiv_status case_id caseid parent_type contact_phone_number_verified name dob_known age_format sex_dissagregated entry_point age_in_years age_in_months age age_group dob sex
+      first_name last_name sex age contact_phone_number marital_status new_hiv_status case_id caseid parent_type contact_phone_number_verified name dob_known age_format sex_dissagregated entry_point age_in_years age_in_months age age_group dob sex
       generation close_case_date registered_by health_facility_id health_facility_name district_id district_name
       region_id region_name partner dhis2_code continue_registration physical_address import_validation site_id owner_id appointment_date referral_type appointment_location hiv_test_date index_entry_point
       consent_to_contact select_recommended_mode_of_notification traditional_authority village ipv_status relationship_with_index_adult
@@ -129,6 +129,8 @@ module HTSService::AITIntergration
 
           row['parent_external_id'] = patient.id
           row['client_patient_id'] = "#{patient.id}_#{contact['Firstnames of contact']}#{contact['First name of contact']}_#{contact['Last name of contact']}#{contact['Lastname of contact']}"
+          row['contact_id'] = row['client_patient_id']
+          row['index_interview_date'] = patient.encounters.last.encounter_datetime&.to_date
         end
         rows << row
       end
