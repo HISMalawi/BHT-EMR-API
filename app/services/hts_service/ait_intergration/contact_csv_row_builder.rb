@@ -1,6 +1,10 @@
 module HTSService::AITIntergration
   class ContactCsvRowBuilder
 
+    def contact_id contact, index
+      "#{first_name}_#{last_name}_hts"
+    end
+
     def first_name contact, index
       "#{contact['Firstnames of contact']}#{contact['First name of contact']}"
     end
@@ -26,7 +30,7 @@ module HTSService::AITIntergration
     end
 
     def new_hiv_status contact, index
-      "#{contact['Contact HIV tested']}#{contact['Contact has had HIV testing']}"
+      "#{contact['Contact HIV tested']}#{contact['Contact has had HIV testing']}"&.downcase
     end
 
     def caseid contact, index
@@ -54,19 +58,17 @@ module HTSService::AITIntergration
     end
 
     def sex_dissagregated contact, index
-      case contact['Gender of contact']&.strip
-        when 'M'
-        'Male'
-      when 'FNP'
-        'Female'
-      when 'FP'
-        'Female'
-      else contact['Gender of contact']
+      case contact['Gender of contact']&.strip&.downcase
+        when 'male'
+        'm'
+      when 'female'
+        'fnp'
+      else contact['Gender of contact']&.strip&.downcase
       end
     end
 
     def entry_point contact, index
-      'HTS'
+      'hts'
     end
 
     def age_in_years contact, index
