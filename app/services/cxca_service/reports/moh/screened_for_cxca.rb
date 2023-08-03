@@ -154,7 +154,8 @@ module CXCAService
               @report[:total_treated][dot_option] << person_id
             end
             
-            
+            # assiging accurate template value (LEEP) to screening_result instead of (LLETZ/LEEP)
+            screening_result = screening_result == 'LLETZ/LEEP' ? 'LEEP' : screening_result
             if tx_option.present? && report[:total_treated_disaggregated_by_tx_option].keys.include?(tx_option&.to_sym)
               @report[:total_treated_disaggregated_by_tx_option][tx_option] ||= [] if tx_option.present?
               @report[:total_treated_disaggregated_by_tx_option][tx_option] << person_id
@@ -247,7 +248,7 @@ module CXCAService
             total_treated_disaggregated_by_tx_option: {
               'Cryotherapy': [],
               'Thermal Coagulation': [],
-              'LLETZ/LEEP': [],
+              'LEEP': [],
               'Other': []
             },
             referral_reasons: {
