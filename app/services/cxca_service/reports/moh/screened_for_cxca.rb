@@ -156,6 +156,7 @@ module CXCAService
             
             # assiging accurate template value (LEEP) to screening_result instead of (LLETZ/LEEP)
             screening_result = screening_result == 'LLETZ/LEEP' ? 'LEEP' : screening_result
+
             if tx_option.present? && report[:total_treated_disaggregated_by_tx_option].keys.include?(tx_option&.to_sym)
               @report[:total_treated_disaggregated_by_tx_option][tx_option] ||= [] if tx_option.present?
               @report[:total_treated_disaggregated_by_tx_option][tx_option] << person_id
@@ -165,6 +166,9 @@ module CXCAService
               @report[:total_treated_disaggregated_by_tx_option]['Other'&.to_sym] << person_id
             end
 
+            # assiging accurate template value (Treatment not available) to screening_result instead of (No treatment)
+            screening_result = screening_result == 'Treatment not available' ? 'No treatment' : screening_result
+            
             if referral_reason.present? && report[:referral_reasons].keys.include?(referral_reason&.to_sym)
               @report[:referral_reasons][referral_reason] ||= [] if referral_reason.present?
               @report[:referral_reasons][referral_reason] << person_id
@@ -256,7 +260,7 @@ module CXCAService
               "Large Lesion (Greater than 75 percent)": [],
               "Unable to treat client": [],
               "Suspect Cancer": [],
-              "Treatment not available": [],
+              "No treatment": [],
               "Other gynae": []
             },
             total_treated_disaggregated_by_age: {},
