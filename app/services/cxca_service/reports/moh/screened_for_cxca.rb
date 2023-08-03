@@ -87,7 +87,6 @@ module CXCAService
               @report[:screened_disaggregated_by_screening_method][screening_method] ||= []
               @report[:screened_disaggregated_by_screening_method][screening_method] << person_id
             end
-            
             if screening_result.present? && ['Positive Not on ART', 'Positive on ART'].include?(hiv_status&.to_sym) && report[:screening_results_hiv_positive].keys.include?(screening_result&.to_sym)
               @report[:screening_results_hiv_positive][screening_result] ||= []
               if screening_result == 'HPV positive'
@@ -123,13 +122,24 @@ module CXCAService
               @report[:screening_results_hiv_positive]['Number of clients with Other gynae'&.to_sym] << person_id
             end
             
-            
+            # assiging accurate template values to screening_result
+            screening_result = screening_result == 'PAP Smear normal' ? 'Number of clients with PAP Smear normal' : screening_result
+            screening_result = screening_result == 'HPV positive' ? 'Number of clients with HPV+' : screening_result
+            screening_result = screening_result == 'HPV negative' ? 'Number of clients with HPV-' : screening_result
+            screening_result = screening_result == 'VIA negative' ? 'Number of clients with VIA-' : screening_result
+            screening_result = screening_result == 'VIA positive' ? 'Number of clients with VIA+' : screening_result
+            screening_result = screening_result == 'PAP Smear Abnormal' ? 'Number of clients with PAP Smear Abnormal' : screening_result
+            screening_result = screening_result == 'No visible Lesion' ? 'Number of clients with No visible Lesion' : screening_result
+            screening_result = screening_result == 'Visible Lesion' ? 'Number of clients with Visible Lesion' : screening_result
+            screening_result = screening_result == 'Suspected Cancer' ? 'Number of clients with Suspected Cancer' : screening_result
+
+            # Assigning personal IDs report 
             if screening_result.present? && report[:screening_results_hiv_negative].keys.include?(screening_result&.to_sym)
               @report[:screening_results_hiv_negative][screening_result] ||= []
               @report[:screening_results_hiv_negative][screening_result] << person_id 
             end
             if screening_result.present? && !report[:screening_results_hiv_negative].keys.include?(screening_result&.to_sym)
-              @report[:screening_results_hiv_negative]['Other gynae'&.to_sym] << person_id
+              @report[:screening_results_hiv_negative]['Number of clients with Other gynae'&.to_sym] << person_id
             end
 
             @age_groups.each do |key, value|
@@ -216,16 +226,16 @@ module CXCAService
               "Number of clients with Other gynae": []
             },
             screening_results_hiv_negative: {
-              "HPV positive": [],
-              "HPV negative": [],
-              "VIA negative": [],
-              "VIA positive": [],
-              "PAP Smear normal": [],
-              "PAP Smear Abnormal": [],
-              "No visible Lesion": [],
-              "Visible Lesion": [],
-              "Suspected Cancer": [],
-              "Other gynae": []
+              "Number of clients with HPV+": [],
+              "Number of clients with HPV-": [],
+              "Number of clients with VIA-": [],
+              "Number of clients with VIA+": [],
+              "Number of clients with PAP Smear normal": [],
+              "Number of clients with PAP Smear Abnormal": [],
+              "Number of clients with No visible Lesion": [],
+              "Number of clients with Visible Lesion": [],
+              "Number of clients with Suspected Cancer": [],
+              "Number of clients with Other gynae": []
             },
             suspects_disaggregated_by_age: {},
             total_treated: {
