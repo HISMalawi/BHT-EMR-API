@@ -12,40 +12,52 @@ module ARTService
           @end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
         end
 
+        # First of we need to get the patients who are alive and on treatment
+        # 1. We will rebuild the outcomes for the patients
+        # 2. We will get all clients who are 'On Antiretrovirals'
+        # 3. We will then get clients who have been screened for TB from the start_date to the end_date the become our denominator
+        # 4. Our numerator will be those clients who were TB confirmed and started on treatment (even though prior to this we where capturing the details)
         def find_report
           init_report
+          ARTService::Reports::CohortBuilder.new(outcomes_definition: 'pepfar').init_temporary_tables(start_date, end_date)
           tx_curr = find_patients_alive_and_on_art
           tx_curr.each { |patient| report[patient['age_group']][patient['gender'].to_sym][:tx_curr] << patient['patient_id'] }
-          screened = tb_screened(tx_curr.map { |patient| patient['patient_id'] })
-          pepfar_age_groups.each do |age_group|
-            screened.each do |patient|
-
-              next unless patient['age_group'] == age_group
-
-              start_date = patient['earliest_start_date']
-              enrollment_date = patient['date_enrolled']
-              tb_status_id = patient['tb_status']
-              gender = patient['gender'].to_sym
-
-              tb_status_name = ConceptName.find_by_concept_id(tb_status_id).name
-              next unless tb_status_name.present?
-
-              key_prefix = new_on_art(start_date, enrollment_date) ? :new : :prev
-
-              started_tb_key = :"started_tb_#{key_prefix}"
-              sceen_pos_key = :"sceen_pos_#{key_prefix}"
-              sceen_neg_key = :"sceen_neg_#{key_prefix}"
-              if ['RX', 'Confirmed TB on treatment'].include?(tb_status_name)
-                report[age_group][gender][started_tb_key] << patient['person_id']
-              elsif ['TB Suspected', 'Confirmed TB NOT on treatment', 'sup', 'Norx'].include?(tb_status_name)
-                report[age_group][gender][sceen_pos_key] << patient['person_id']
-              elsif tb_status_name == 'TB NOT suspected'
-                report[age_group][gender][sceen_neg_key] << patient['person_id']
-              end
-            end
-          end
-          report
         end
+
+        # def find_report
+        #   init_report
+        #   tx_curr = find_patients_alive_and_on_art
+        #   tx_curr.each { |patient| report[patient['age_group']][patient['gender'].to_sym][:tx_curr] << patient['patient_id'] }
+        #   screened = tb_screened(tx_curr.map { |patient| patient['patient_id'] })
+        #   pepfar_age_groups.each do |age_group|
+        #     screened.each do |patient|
+
+        #       next unless patient['age_group'] == age_group
+
+        #       start_date = patient['earliest_start_date']
+        #       enrollment_date = patient['date_enrolled']
+        #       tb_status_id = patient['tb_status']
+        #       gender = patient['gender'].to_sym
+
+        #       tb_status_name = ConceptName.find_by_concept_id(tb_status_id).name
+        #       next unless tb_status_name.present?
+
+        #       key_prefix = new_on_art(start_date, enrollment_date) ? :new : :prev
+
+        #       started_tb_key = :"started_tb_#{key_prefix}"
+        #       sceen_pos_key = :"sceen_pos_#{key_prefix}"
+        #       sceen_neg_key = :"sceen_neg_#{key_prefix}"
+        #       if ['RX', 'Confirmed TB on treatment'].include?(tb_status_name)
+        #         report[age_group][gender][started_tb_key] << patient['person_id']
+        #       elsif ['TB Suspected', 'Confirmed TB NOT on treatment', 'sup', 'Norx'].include?(tb_status_name)
+        #         report[age_group][gender][sceen_pos_key] << patient['person_id']
+        #       elsif tb_status_name == 'TB NOT suspected'
+        #         report[age_group][gender][sceen_neg_key] << patient['person_id']
+        #       end
+        #     end
+        #   end
+        #   report
+        # end
 
         def init_report
           @report = pepfar_age_groups.each_with_object({}) do |age_group, report|
@@ -72,38 +84,10 @@ module ARTService
 
         def find_patients_alive_and_on_art
           ActiveRecord::Base.connection.select_all <<~SQL
-          SELECT pp.patient_id, p.gender, coalesce(o.value_datetime, min(art_order.start_date)) art_start_date, disaggregated_age_group(p.birthdate, DATE('#{end_date.to_date}')) age_group
-          FROM patient_program pp
-          INNER JOIN person p ON p.person_id = pp.patient_id AND p.voided = 0
-          INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id AND ps.voided = 0 AND ps.state = 7 -- ON ART
-          INNER JOIN orders art_order ON art_order.patient_id = pp.patient_id
-            AND art_order.start_date >= DATE('#{start_date}')
-            AND art_order.start_date < DATE('#{end_date}') + INTERVAL 1 DAY
-            AND art_order.voided = 0
-            AND art_order.order_type_id = 1 -- Drug order
-            AND art_order.concept_id IN (#{arv_concepts})
-          INNER JOIN drug_order do ON do.order_id = art_order.order_id AND do.quantity > 0
-          LEFT JOIN encounter e ON e.patient_id = pp.patient_id
-            AND e.encounter_type = 9 -- HIV CLINIC REGISTRATION
-            AND e.voided = 0
-            AND e.encounter_datetime < DATE('#{end_date}') + INTERVAL 1 DAY
-            AND e.program_id = 1 -- HIV program
-          LEFT JOIN obs o ON o.person_id = pp.patient_id
-            AND o.concept_id = 2516 -- ART start date
-            AND o.encounter_id = e.encounter_id
-            AND o.voided = 0
-          WHERE pp.patient_id NOT IN (
-            SELECT o.patient_id
-            FROM orders o
-            INNER JOIN drug_order do ON do.order_id = o.order_id AND do.quantity > 0
-            WHERE o.order_type_id = 1 -- Drug order
-              AND o.voided  = 0
-              AND o.concept_id IN (#{arv_concepts})
-              AND o.start_date < DATE('#{start_date}')
-            GROUP BY o.patient_id
-          )
-          AND pp.program_id = 1 -- HIV program
-          GROUP BY pp.patient_id
+            SELECT tpo.patient_id, tesd.gender, disaggregated_age_group(tesd.birthdate, DATE('#{end_date.to_date}')) age_group
+            FROM temp_patient_outcomes tpo
+            INNER JOIN temp_earliest_start_date tesd ON tesd.patient_id = tpo.patient_id
+            WHERE tpo.cum_outcome = 'On antiretrovirals'
           SQL
         end
 
@@ -114,6 +98,31 @@ module ARTService
           return true if med_start_date >= earliest_start_date.to_date && med_start_date < med_end_date
 
           false
+        end
+
+        def clients_screened_for_tb
+          ActiveRecord::Base.connecton.select_all <<~SQL
+            SELECT DISTINCT(o.person_id) as patient_id, MAX(o.obs_datetime) AS screened_date, tesd.enrollment_date
+            FROM obs o
+            INNER JOIN temp_earliest_start_date tesd ON tesd.patient_id = o.person_id
+            WHERE o.concept = #{ConceptName.find_by_name('TB status').concept_id} 
+            AND o.voided = 0 AND o.value_coded IN (#{ConceptName.find_by_name('TB Suspected').concept_id}, #{ConceptName.find_by_name('TB NOT suspected').concept_id})
+            AND o.obs_datetime BETWEEN '#{start_date}' AND '#{end_date}'
+            GROUP BY o.person_id
+          SQL
+        end
+
+        def clients_confirmed_tb(clients)
+          ActiveRecord::Base.connection.select_all <<~SQL
+            SELECT o.person_id, MAX(o.obs_datetime) AS obs_datetime
+            FROM obs o
+            WHERE o.concept = #{ConceptName.find_by_name('TB status').concept_id}
+            AND o.value_coded = #{ConceptName.find_by_name('Confirmed TB on treatment').concept_id}
+            AND o.voided = 0
+            AND o.obs_datetime BETWEEN '#{start_date}' AND '#{end_date}'
+            AND o.person_id IN(#{clients.join(',')})
+            GROUP BY o.person_id
+          SQL
         end
 
         def tb_screened(patient_ids)
