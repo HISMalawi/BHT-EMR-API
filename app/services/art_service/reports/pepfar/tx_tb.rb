@@ -102,6 +102,7 @@ module ARTService
 
         def clients_screened_for_tb
           ActiveRecord::Base.connecton.select_all <<~SQL
+            CREATE TEMPORARY TABLE temp_tb_screened AS
             SELECT DISTINCT(o.person_id) as patient_id, MAX(o.obs_datetime) AS screened_date, tesd.enrollment_date
             FROM obs o
             INNER JOIN temp_earliest_start_date tesd ON tesd.patient_id = o.person_id
@@ -112,15 +113,16 @@ module ARTService
           SQL
         end
 
-        def clients_confirmed_tb(clients)
+        def clients_confirmed_tb_and_on_treatment
           ActiveRecord::Base.connection.select_all <<~SQL
+            CREATE TEMPORARY TABLE temp_tb_confirmed_and_on_treatment AS
             SELECT o.person_id, MAX(o.obs_datetime) AS obs_datetime
             FROM obs o
             WHERE o.concept = #{ConceptName.find_by_name('TB status').concept_id}
             AND o.value_coded = #{ConceptName.find_by_name('Confirmed TB on treatment').concept_id}
             AND o.voided = 0
             AND o.obs_datetime BETWEEN '#{start_date}' AND '#{end_date}'
-            AND o.person_id IN(#{clients.join(',')})
+            AND o.person_id IN(SELECT patient_id FROM temp_tb_screened)
             GROUP BY o.person_id
           SQL
         end
