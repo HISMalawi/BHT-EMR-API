@@ -98,11 +98,20 @@ module ARTService
             date_antiretrovirals_started(p.person_id, DATE(#{ActiveRecord::Base.connection.quote(end_date.to_date)})) AS date_enrolled,
             MIN(CASE WHEN o.value_coded = 1065 THEN true ELSE false END) AS screened_pos, tb_status.value_coded as tb_status
             FROM person p
-            INNER JOIN obs o ON o.person_id = p.person_id and o.voided = 0
-            LEFT JOIN obs tb_status ON tb_status.person_id = p.person_id
+            INNER JOIN obs tb_status ON tb_status.person_id = p.person_id
+              AND tb_status.voided = 0
               AND tb_status.concept_id = #{ConceptName.find_by_name('TB status').concept_id}
-            WHERE o.concept_id IN (#{SCREENING_QUESTIONS.map { |q| ConceptName.find_by_name(q).concept_id }.join(',')})
-              AND DATE(o.obs_datetime) BETWEEN DATE(#{ActiveRecord::Base.connection.quote(start_date)}) AND DATE(#{ActiveRecord::Base.connection.quote(end_date)})
+            LEFT JOIN (
+              SELECT
+                person_id,
+                value_coded
+              FROM
+                obs
+              WHERE
+                obs_datetime BETWEEN DATE(#{ActiveRecord::Base.connection.quote(start_date.to_date)}) AND DATE(#{ActiveRecord::Base.connection.quote(end_date.to_date)})
+                AND concept_id IN (#{ConceptName.where(name: SCREENING_QUESTIONS).select(:concept_id).map(&:concept_id).join(',')})
+                AND voided = 0
+            ) o ON o.person_id = p.person_id
             GROUP BY person_id
           SQL
         end
