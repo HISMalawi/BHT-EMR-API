@@ -156,9 +156,10 @@ module HTSService::AITIntergration
 
     def hts_patients_starting_from(patient_id)
       LOGGER.info "Initializing AIT intergration service from patient id #{patient_id}"
-      Patient.joins(:person, encounters: :program)
+      Patient.joins(:person, encounters: [:observations, :program])
         .where('person.person_id >= ?', patient_id)
         .where(
+          obs: { concept_id: ConceptName.find_by_name('HIV status').concept_id, value_coded: ConceptName.find_by_name('Positive').concept_id },
           encounter: { encounter_type: HIV_TESTING_ENCOUNTER },
           program: { program_id: HTC_PROGRAM },
         )
