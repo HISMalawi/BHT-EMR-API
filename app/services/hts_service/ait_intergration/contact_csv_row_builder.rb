@@ -14,9 +14,7 @@ module HTSService::AITIntergration
       when 'Male'
         'm'
       when 'Female'
-        'fnp'
-      when 'F'
-        'fnp'
+        contact['Contact pregnancy status']&.strip&.downcase
       else contact['Gender of contact']&.strip&.downcase
       end
     end
