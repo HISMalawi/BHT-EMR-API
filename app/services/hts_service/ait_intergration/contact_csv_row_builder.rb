@@ -99,10 +99,6 @@ module HTSService::AITIntergration
       (Date.today - contact['Age of contact'].to_i.years).change(day: 17)
     end
 
-    def sex contact, index
-      contact['Gender of contact'].strip
-    end
-
     def generation contact, index
       2
     end
