@@ -95,12 +95,12 @@ module HTSService
 
       HTS_CONTACT => %i[hiv_positive_at_health_facility_accesspoint?],
 
-      ITEMS_GIVEN => %i[task_not_done_today? not_from_community_accesspoint? age_greater_than_13_years],
+      ITEMS_GIVEN => %i[task_not_done_today? not_from_community_accesspoint? age_greater_than_13_years?],
 
       REFERRAL => %i[task_not_done_today?],
 
       PARTNER_RECEPTION => %i[task_not_done_today?
-                              not_from_community_accesspoint? age_greater_than_13_years],
+                              not_from_community_accesspoint? age_greater_than_13_years?],
     }.freeze
 
     def next_state(current_state)
