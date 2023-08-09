@@ -1,3 +1,4 @@
+# rubocop:disable Layout/LineLength
 module HTSService::AITIntergration
   class AITIntergrationService
     attr_accessor :patients, :rest_client
@@ -49,7 +50,7 @@ module HTSService::AITIntergration
         contacts = index_patients.collect { |i| create_contacts_rows i }.flatten
         index_csv = generate_csv_for index
         contact_csv = generate_csv_for contacts
-        status_code = send_request 'index', index_csv
+        status_code = send_request 'index', index_csv unless index_csv.nil?
         send_request 'contact', contact_csv if request_is_successful.call status_code
         update_last_synced_patient_id patients.last.patient_id if request_is_successful.call status_code
         remove_from_failed_queue
@@ -94,7 +95,7 @@ module HTSService::AITIntergration
     end
 
     def generate_csv_for(rows)
-      return unless rows.present?
+      return nil unless rows.any?
 
       f = Tempfile.create(["ait_index_#{Date.today.to_date}", '.csv'])
       CSV.open(f, 'w') do |csv|
@@ -122,10 +123,10 @@ module HTSService::AITIntergration
     def create_contacts_rows(patient)
       LOGGER.info "Creating contacts rows for #{patient.id}"
       rows = []
-      get_index_contacts(patient).each_with_index do |contact, index|
+      get_index_contacts(patient)&.each do |contact|
         row = {}
         CONTACT_ADDITIONAL_HEADERS.each do |header|
-          row[header] = contact_csv_row_builder.send header, contact, index rescue nil
+          row[header] = contact_csv_row_builder.send header, contact rescue nil
 
           row['parent_external_id'] = patient.id
           row['client_patient_id'] = "#{patient.id}_#{contact['Firstnames of contact']}#{contact['First name of contact']}_#{contact['Last name of contact']}#{contact['Lastname of contact']}"
@@ -139,18 +140,19 @@ module HTSService::AITIntergration
 
     def get_index_contacts(index)
       contacts = []
-      Observation
-        .where(person_id: index.patient_id, concept_id: ConceptName.find_by_name('First name of contact').concept_id)
-        .select(:obs_group_id)
-        .distinct
-        .each do |obs|
-          obj = {}
-          obs = Observation.where(obs_group_id: obs.obs_group_id).order(obs_datetime: :desc)
-          obs.each do |o|
-            obj[ConceptName.find_by_concept_id(o.concept_id).name] = o&.answer_string&.strip
-          end
-          contacts << obj
+      groups = Observation.where(person_id: index.patient_id, concept_id: ConceptName.find_by_name('First name of contact').concept_id)
+                          .select(:obs_group_id)
+                          .distinct
+      return nil unless groups.any?
+
+      groups.each do |obs|
+        obj = {}
+        obs = Observation.where(obs_group_id: obs.obs_group_id).order(obs_datetime: :desc)
+        obs.each do |o|
+          obj[ConceptName.find_by_concept_id(o.concept_id).name] = o&.answer_string&.strip
         end
+        contacts << obj
+      end
       contacts.uniq
     end
 
@@ -182,3 +184,5 @@ module HTSService::AITIntergration
     end
   end
 end
+
+# rubocop:enable Layout/LineLength
