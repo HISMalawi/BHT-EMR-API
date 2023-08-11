@@ -44,7 +44,7 @@ module HTSService::AITIntergration
       end
 
       def entry_point patient
-        observation_answer patient, "Location where test took place"
+        'hts'
       end
 
       def consent patient
