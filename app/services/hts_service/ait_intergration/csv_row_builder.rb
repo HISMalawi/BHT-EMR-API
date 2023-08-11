@@ -196,6 +196,10 @@ module HTSService::AITIntergration
         entry_point patients
       end
 
+      def linkage_code patients
+        observation_answer patients, "HTC serial number"
+      end
+
       def observation_answer patient, concept_name
         Observation
           .where(person_id: patient.patient_id, concept_id: ConceptName.find_by_name(concept_name).concept_id)
