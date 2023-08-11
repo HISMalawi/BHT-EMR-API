@@ -193,7 +193,7 @@ To intergrate to AIT and send HTS patient data, follow the steps below
 cp ./config/ait.yml.example ./config/ait.yml
 ```
 
-[SETUP AIT CONFIGURATION](db/hts_metadata/README)
+[SETUP AIT CONFIGURATION](db/hts_metadata/README.md)
 
 
 ## Running the API

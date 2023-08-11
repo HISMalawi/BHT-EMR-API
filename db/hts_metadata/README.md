@@ -8,7 +8,7 @@ This guide provides step-by-step instructions on how to set up and run the CommC
  - Run the script:
   
 ```shell
-rails  bin/config_commcare.rb
+rails r bin/config_commcare.rb
 ```
 
 ### Environment Selection

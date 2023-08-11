@@ -131,7 +131,7 @@ def setup_config
   end
 
   property = GlobalProperty.find_or_create_by(property: 'ait_config.is_set')
-  property.property_value = true
+  property.property_value = 'true'
   property.save
 
   property = GlobalProperty.find_or_create_by(property: 'ait_config.facility_name')
