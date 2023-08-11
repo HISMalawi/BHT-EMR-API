@@ -188,18 +188,12 @@ The file will indicate the result date and the client ARV number which can be us
 To intergrate to AIT and send HTS patient data, follow the steps below
 
 -   Copy and populate the AIT config file
+  
 ```bash
 cp ./config/ait.yml.example ./config/ait.yml
+```
 
-sudo vim ./config/ait/yml
-```
--   Enter the required configuration values accordingly and save
--   Run the application
-```bash
- bin/rails server
-```
--   The application will search for the oldest HTS patient and get all correspoding patients to sync with AIT
--   After syncing, The last patient will be logged in the GlobalProperties as ```hts.ait.last_synced_patient_id```
+[SETUP AIT CONFIGURATION](db/hts_metadata/README)
 
 
 ## Running the API
