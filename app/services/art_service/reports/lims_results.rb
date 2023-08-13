@@ -25,7 +25,7 @@ module ARTService
           FROM orders o
           INNER JOIN lab_lims_order_mappings llom ON llom.order_id = o.order_id
           LEFT JOIN lims_acknowledgement_statuses las ON las.order_id = o.order_id
-          INNER JOIN encounter e ON e.encounter_id = o.encounter_id AND e.voided = 0 AND e.program_id = 1 -- HIV PROGRAM
+          INNER JOIN encounter e ON e.encounter_id = o.encounter_id AND e.voided = 0 AND (e.program_id = 1 OR e.program_id = 23) -- HIV PROGRAM AND Laboratory program
           INNER JOIN users u ON u.user_id = o.orderer
           INNER JOIN person_name pn ON pn.person_id = u.person_id
           INNER JOIN obs test ON test.person_id = e.patient_id AND test.voided = 0 AND test.order_id = o.order_id AND test.concept_id = 9737 -- 'Test Type'
