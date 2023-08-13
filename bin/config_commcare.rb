@@ -7,8 +7,13 @@ require 'roo'
 @dev_file = 'commcare_project_data_development'
 
 puts "Choose setup environment: \n1. Development \n2. Production"
+
 @env = gets.chomp
 
+unless ['1', '2'].include? @env
+  puts 'Invalid option'
+  exit
+end
 
 
 # Function to load an Excel file and convert each sheet into a hash
@@ -38,6 +43,20 @@ end
 
 workbooks = load_excel_file("#{Rails.root}/db/hts_metadata/#{@env == '1' ? @dev_file : @prod_file}.xlsx")
 @types, @countries, @regions, @districts, @health_facilities = workbooks
+
+def is_valid_credentials?(username, password)
+  # try to login to commcare
+  # return true if successful
+  begin
+    rest_client = RestClient::Resource.new(@env == '1' ? @dev_env : @prod_env, user: username, password: password, verify_ssl: false)
+    rest_client.post({})
+  rescue RestClient::ExceptionWithResponse => e
+    return false if e.response.code == 401
+
+    return true
+  end
+  true
+end
 
 def setup_config
 
@@ -80,15 +99,25 @@ def setup_config
 
   puts 'Enter your commcare password:'
   password = gets.chomp
+
+  if username.blank? || password.blank?
+    puts 'Username or password cannot be blank'
+    exit
+  end
+
+  unless is_valid_credentials?(username, password)
+    puts 'Invalid username or password, cannot authenticate'
+    exit
+  end
   
   puts 'Setting up config...'
   config = {
     endpoint: @env == '1' ? @dev_env : @prod_env,
     health_facility_id: facility_id,
     health_facility_name: facility_name,
-    district_id: district_id.to_i,
+    district_id: district_id,
     district_name: district_name,
-    region_id: region_id.to_i,
+    region_id: region_id,
     region_name: region_name,
     site_id: site_code.to_i,
     dhis2_code: dhis2_code.to_i,
@@ -100,6 +129,14 @@ def setup_config
   file.each_key do |key|
     file[key] = config[key.to_sym] if config[key.to_sym]
   end
+
+  property = GlobalProperty.find_or_create_by(property: 'ait_config.is_set')
+  property.property_value = 'true'
+  property.save
+
+  property = GlobalProperty.find_or_create_by(property: 'ait_config.facility_name')
+  property.property_value = facility_name
+  property.save
 
   File.open("#{Rails.root}/config/ait.yml", 'w') { |f| f.write file.to_yaml }
   puts 'Config saved to config/ait.yml'

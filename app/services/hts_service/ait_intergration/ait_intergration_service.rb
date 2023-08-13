@@ -1,3 +1,4 @@
+# rubocop:disable Layout/LineLength
 module HTSService::AITIntergration
   class AITIntergrationService
     attr_accessor :patients, :rest_client
@@ -24,7 +25,7 @@ module HTSService::AITIntergration
     ].freeze
 
     HEADERS = %i[
-      caseid index_interview_date name first_name last_name client_patient_id dob_known age_format sex_dissagregated marital_status phone_number entry_point consent consent_refusal_reason index_comments age_in_years age_in_months age age_group dob index_client_category sex generation close_case_date registered_by closed_contacts enlisted_contacts eligible_t_contacts reached_contacts tested_contacts eligible_ait_contacts index_client_id health_facility_id health_facility_name district_id district_name region_id region_name partner dhis2_code continue_registration hiv_status import_validation index_entry_point site_id owner_id
+      caseid index_interview_date name first_name last_name client_patient_id dob_known age_format sex_dissagregated marital_status phone_number entry_point consent consent_refusal_reason index_comments age_in_years age_in_months age age_group dob index_client_category sex generation close_case_date registered_by closed_contacts enlisted_contacts eligible_t_contacts reached_contacts tested_contacts eligible_ait_contacts index_client_id health_facility_id health_facility_name district_id district_name region_id region_name partner dhis2_code continue_registration hiv_status import_validation index_entry_point site_id owner_id linkage_code
     ].freeze
 
     def initialize(patient_id)
@@ -49,7 +50,7 @@ module HTSService::AITIntergration
         contacts = index_patients.collect { |i| create_contacts_rows i }.flatten
         index_csv = generate_csv_for index
         contact_csv = generate_csv_for contacts
-        status_code = send_request 'index', index_csv
+        status_code = send_request 'index', index_csv unless index_csv.nil?
         send_request 'contact', contact_csv if request_is_successful.call status_code
         update_last_synced_patient_id patients.last.patient_id if request_is_successful.call status_code
         remove_from_failed_queue
@@ -65,9 +66,13 @@ module HTSService::AITIntergration
     private
 
     def add_to_failed_queue
-      failed_queue = GlobalProperty.find_by_property('hts.ait.failed_queue')
-      GlobalProperty.create(property: 'hts.ait.failed_queue', property_value: @patients.map(&:patient_id).join(',')) unless failed_queue.present?
-      failed_queue.update_attribute(:property_value, "#{failed_queue.property_value},#{@patients.map(&:patient_id).join(',')}")
+      patient_ids = @patients.map(&:patient_id)
+
+      failed_queue = GlobalProperty.where(property: 'hts.ait.failed_queue')
+
+      queue_ids = failed_queue.pluck(:property_value)
+      
+      failed_queue.update_all(property_value: (queue_ids + patient_ids)&.uniq&.join(','))
     end
 
     def remove_from_failed_queue
@@ -90,6 +95,8 @@ module HTSService::AITIntergration
     end
 
     def generate_csv_for(rows)
+      return nil unless rows.any?
+
       f = Tempfile.create(["ait_index_#{Date.today.to_date}", '.csv'])
       CSV.open(f, 'w') do |csv|
         csv << rows.first.keys.collect { |header| header.to_s }
@@ -116,13 +123,15 @@ module HTSService::AITIntergration
     def create_contacts_rows(patient)
       LOGGER.info "Creating contacts rows for #{patient.id}"
       rows = []
-      get_index_contacts(patient).each_with_index do |contact, index|
+      get_index_contacts(patient)&.each do |contact|
         row = {}
         CONTACT_ADDITIONAL_HEADERS.each do |header|
-          row[header] = contact_csv_row_builder.send header, contact, index rescue nil
+          row[header] = contact_csv_row_builder.send header, contact rescue nil
 
           row['parent_external_id'] = patient.id
           row['client_patient_id'] = "#{patient.id}_#{contact['Firstnames of contact']}#{contact['First name of contact']}_#{contact['Last name of contact']}#{contact['Lastname of contact']}"
+          row['contact_id'] = row['client_patient_id']
+          row['index_interview_date'] = patient.encounters.last.encounter_datetime&.to_date
         end
         rows << row
       end
@@ -131,26 +140,28 @@ module HTSService::AITIntergration
 
     def get_index_contacts(index)
       contacts = []
-      Observation
-        .where(person_id: index.patient_id, concept_id: ConceptName.find_by_name('First name of contact').concept_id)
-        .select(:obs_group_id)
-        .distinct
-        .each do |obs|
-          obj = {}
-          obs = Observation.where(obs_group_id: obs.obs_group_id).order(obs_datetime: :desc)
-          obs.each do |o|
-            obj[ConceptName.find_by_concept_id(o.concept_id).name] = o&.answer_string&.strip
-          end
-          contacts << obj
+      groups = Observation.where(person_id: index.patient_id, concept_id: ConceptName.find_by_name('First name of contact').concept_id)
+                          .select(:obs_group_id)
+                          .distinct
+      return nil unless groups.any?
+
+      groups.each do |obs|
+        obj = {}
+        obs = Observation.where(obs_group_id: obs.obs_group_id).order(obs_datetime: :desc)
+        obs.each do |o|
+          obj[ConceptName.find_by_concept_id(o.concept_id).name] = o&.answer_string&.strip
         end
+        contacts << obj
+      end
       contacts.uniq
     end
 
     def hts_patients_starting_from(patient_id)
       LOGGER.info "Initializing AIT intergration service from patient id #{patient_id}"
-      Patient.joins(:person, encounters: :program)
+      Patient.joins(:person, encounters: [:observations, :program])
         .where('person.person_id >= ?', patient_id)
         .where(
+          obs: { concept_id: ConceptName.find_by_name('HIV status').concept_id, value_coded: ConceptName.find_by_name('Positive').concept_id },
           encounter: { encounter_type: HIV_TESTING_ENCOUNTER },
           program: { program_id: HTC_PROGRAM },
         )
@@ -173,3 +184,5 @@ module HTSService::AITIntergration
     end
   end
 end
+
+# rubocop:enable Layout/LineLength

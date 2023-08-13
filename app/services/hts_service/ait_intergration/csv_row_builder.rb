@@ -44,7 +44,7 @@ module HTSService::AITIntergration
       end
 
       def entry_point patient
-        observation_answer patient, "Location where test took place"
+        'hts'
       end
 
       def consent patient
@@ -194,6 +194,10 @@ module HTSService::AITIntergration
 
       def index_entry_point patients
         entry_point patients
+      end
+
+      def linkage_code patients
+        observation_answer patients, "HTC serial number"
       end
 
       def observation_answer patient, concept_name
