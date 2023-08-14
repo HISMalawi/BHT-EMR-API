@@ -30,7 +30,7 @@ class Api::V1::PeopleController < ApplicationController
     # get json of provider_ids
     provider_id = params[:provider_id]
     ids_json = JSON.parse(File.read("#{Rails.root}/db/hts_metadata/provider_ids.json"))
-    render json: ids_json.map { |q| q['htc_prov_id'] }.include?(provider_id)
+    render json: ids_json.map { |q| q['htc_prov_id']&.downcase }.include?(provider_id&.downcase)
   end
 
   def next_hts_linkage_ids_batch
