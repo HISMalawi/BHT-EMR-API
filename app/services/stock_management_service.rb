@@ -127,15 +127,16 @@ class StockManagementService
     query = PharmacyBatchItem
     unless filters.empty?
       unless filters[:start_date].nil?
-        query = query.where("DATE(pharmacy_batch_items.date_created) >= '#{filters[:start_date]}'")
+        query = query.where("DATE(pharmacy_batch_items.delivery_date) >= '#{filters[:start_date]}'")
       end
       unless filters[:end_date].nil?
-        query = query.where("DATE(pharmacy_batch_items.date_created) <= '#{filters[:end_date]}'")
+        query = query.where("DATE(pharmacy_batch_items.delivery_date) <= '#{filters[:end_date]}'")
       end
       query = query.where(drug_id: filters[:drug_id]) unless filters[:drug_id].nil?
       query = query.where(current_quantity: filters[:current_quantity]) unless filters[:current_quantity].nil?
       query = query.where(pharmacy_batch_id: filters[:pharmacy_batch_id]) unless filters[:pharmacy_batch_id].nil?
       query = query.where(pack_size: filters[:pack_size]) unless filters[:pack_size].nil?
+      query = query.where("pharmacy_batches.batch_number = '#{filters[:batch_number]}'") unless filters[:batch_number].nil?
     end
     query = query.joins("LEFT JOIN pharmacy_obs ON pharmacy_batch_items.id = pharmacy_obs.batch_item_id AND pharmacy_obs.transaction_reason = 'Drug dispensed'")
                  .joins('INNER JOIN drug ON drug.drug_id = pharmacy_batch_items.drug_id')
