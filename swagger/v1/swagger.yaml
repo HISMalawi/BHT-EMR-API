@@ -316,6 +316,32 @@ paths:
                 properties:
                   message:
                     type: string
+  "/api/v1/programs/1/reports/discrepancy_report":
+    get:
+      summary: Retrieve Discrepancy report
+      tags:
+      - Clinic Reports
+      description: This shows Discrepancy report
+      security:
+      - api_key: []
+      parameters:
+      - name: start_date
+        in: query
+        schema:
+          type: string
+      - name: end_date
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Discrepancy Report found
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/discrepancy_report"
   "/api/v1/radiology_set":
     get:
       summary: Retrieve all radiology sets
@@ -2583,6 +2609,28 @@ components:
           "$ref": "#/components/schemas/hts_recency_results"
         other_comm_tp:
           "$ref": "#/components/schemas/hts_recency_results"
+    discrepancy_report:
+      type: array
+      items:
+        type: object
+        properties:
+          drug_id:
+            type: integer
+          name:
+            type: string
+          short_name:
+            type: string
+          verification_date:
+            type: string
+            format: date-time
+          verification_reason:
+            type: string
+          difference:
+            type: integer
+          current_quantity:
+            type: integer
+          variance_reason:
+            type: string
 security:
 - api_key: []
 servers:

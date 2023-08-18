@@ -47,7 +47,8 @@ module ARTService
       'PATIENT_ART_VL_DATES' => ARTService::Reports::Pepfar::PatientStartVL,
       'MOH_TPT' => ARTService::Reports::MohTpt,
       'TX_TB' => ARTService::Reports::Pepfar::TxTB,
-      'VL_COLLECTION' => ARTService::Reports::VlCollection
+      'VL_COLLECTION' => ARTService::Reports::VlCollection,
+      'DISCREPANCY_REPORT' => ARTService::Reports::Clinic::DiscrepancyReport
     }.freeze
 
     def generate_report(type:, **kwargs)

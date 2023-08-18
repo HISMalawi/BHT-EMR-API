@@ -17,6 +17,10 @@ class StockManagementService
   STOCK_ITEM_DISPOSAL = 'Disposal'
   STOCK_ITEM_REALLOCATION = 'Reallocation'
 
+  # Pharmacy counts types
+  STOCK_PREVIOUS_COUNT = 'Tins in previous stock'
+  STOCK_CURRENT_COUNT = 'Number of tins currently in  stock (physically counted)'
+
   def process_dispensation(dispensation_id)
     dispensation = Observation.find_by(obs_id: dispensation_id)
     raise "Dispensation ##{dispensation_id} not found" unless dispensation
@@ -183,12 +187,18 @@ class StockManagementService
 
     if params[:current_quantity]
       diff = params[:current_quantity].to_f - item.current_quantity
-      commit_transaction(item, STOCK_EDIT, diff, Date.today, update_item: false, transaction_reason: reason, stock_verification_id: verif_id)
+      current = item.current_quantity
+      if !diff.zero?
+        result = commit_transaction(item, STOCK_EDIT, diff, Date.today, update_item: true, transaction_reason: reason, stock_verification_id:verif_id)
+        commit_transaction(item, STOCK_PREVIOUS_COUNT, current, Date.today, update_item: false, transaction_reason: reason, stock_verification_id:verif_id, obs_group_id: result[:event].id)
+      end
     end
 
     if params[:delivered_quantity]
       diff = params[:delivered_quantity].to_f - item.delivered_quantity
-      commit_transaction(item, STOCK_EDIT, diff, Date.today, update_item: true, transaction_reason: reason, stock_verification_id: verif_id)
+      if !diff.zero?
+        commit_transaction(item, STOCK_EDIT, diff, Date.today, update_item: true, transaction_reason: reason, stock_verification_id:verif_id)
+      end
     end
 
     unless item.update(params)
