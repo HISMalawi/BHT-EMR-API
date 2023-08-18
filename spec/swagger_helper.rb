@@ -150,7 +150,7 @@ RSpec.configure do |config|
                 verification_date: { type: :string, format: 'date-time' },
                 verification_reason: { type: :string },
                 difference: { type: :integer },
-                variance: { type: :integer },
+                current_quantity: { type: :integer },
                 variance_reason: { type: :string }
               }
             }

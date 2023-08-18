@@ -27,7 +27,7 @@ module ARTService
                 psv.reason as verification_reason,
                 po_expected.quantity expected_quantity,
                 po.quantity difference,
-                po_expected.quantity - po.quantity as variance,
+                po_expected.quantity + po.quantity as current_quantity,
                 po.transaction_reason as variance_reason
             FROM pharmacy_stock_verifications psv
             INNER JOIN pharmacy_obs po ON po.stock_verification_id = psv.id AND po.voided = 0 AND po.obs_group_id IS NULL
