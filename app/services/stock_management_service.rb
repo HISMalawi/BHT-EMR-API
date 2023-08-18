@@ -189,8 +189,8 @@ class StockManagementService
       diff = params[:current_quantity].to_f - item.current_quantity
       current = item.current_quantity
       if !diff.zero?
-        commit_transaction(item, STOCK_EDIT, diff, Date.today, update_item: true, transaction_reason: reason, stock_verification_id:verif_id)
-        commit_transaction(item, STOCK_PREVIOUS_COUNT, current, Date.today, update_item: false, transaction_reason: reason, stock_verification_id:verif_id)
+        result = commit_transaction(item, STOCK_EDIT, diff, Date.today, update_item: true, transaction_reason: reason, stock_verification_id:verif_id)
+        commit_transaction(item, STOCK_PREVIOUS_COUNT, current, Date.today, update_item: false, transaction_reason: reason, stock_verification_id:verif_id, obs_group_id: result[:event].id)
       end
     end
 
