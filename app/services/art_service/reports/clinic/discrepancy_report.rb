@@ -11,18 +11,29 @@ module ARTService
         end
 
         def find_report
-            # TODO: Implement this
+          # TODO: Implement this
+          discrepancy_report
         end
 
         private
 
         def discrepancy_report
-            ActiveRecord::Base.connection.select_all <<~SQL
-                SELECT *
-                FROM pharmacy_stock_verifications psv
-                INNER JOIN pharmacy_obs po ON po.stock_verification_id = psv.stock_verification_id AND po.voided = 0
-                
-            SQL
+          ActiveRecord::Base.connection.select_all <<~SQL
+            SELECT
+                pbi.drug_id,
+                d.name,
+                d.short_name,
+                psv.verification_date,
+                po_expected.quantity expected_quantity,
+                po.quantity difference
+            FROM pharmacy_stock_verifications psv
+            INNER JOIN pharmacy_obs po ON po.stock_verification_id = psv.id AND po.voided = 0 AND po.obs_group_id IS NULL
+            INNER JOIN pharmacy_batch_items pbi ON pbi.id = po.batch_item_id AND pbi.voided = 0
+            INNER JOIN drug_cms d ON d.drug_inventory_id = pbi.drug_id AND d.voided = 0
+            LEFT JOIN pharmacy_obs po_expected ON po_expected.obs_group_id = po.pharmacy_module_id AND po_expected.voided = 0
+            WHERE psv.verification_date BETWEEN #{@start_date} AND #{@end_date}
+            GROUP BY psv.id
+          SQL
         end
       end
     end
