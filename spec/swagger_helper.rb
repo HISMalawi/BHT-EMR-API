@@ -140,6 +140,20 @@ RSpec.configure do |config|
               vct_comm: { '$ref' => '#/components/schemas/hts_recency_results' },
               other_comm_tp: { '$ref' => '#/components/schemas/hts_recency_results' }
             }
+          },
+          discrepancy_report: {
+            type: :array, items: {
+              type: :object, properties: {
+                drug_id: { type: :integer },
+                name: { type: :string },
+                short_name: { type: :string },
+                verification_date: { type: :string, format: 'date-time' },
+                verification_reason: { type: :string },
+                difference: { type: :integer },
+                variance: { type: :integer },
+                variance_reason: { type: :string }
+              }
+            }
           }
         }
       },

@@ -24,8 +24,11 @@ module ARTService
                 d.name,
                 d.short_name,
                 psv.verification_date,
+                psv.reason as verification_reason,
                 po_expected.quantity expected_quantity,
-                po.quantity difference
+                po.quantity difference,
+                po_expected.quantity - po.quantity as variance,
+                po.transaction_reason as variance_reason
             FROM pharmacy_stock_verifications psv
             INNER JOIN pharmacy_obs po ON po.stock_verification_id = psv.id AND po.voided = 0 AND po.obs_group_id IS NULL
             INNER JOIN pharmacy_batch_items pbi ON pbi.id = po.batch_item_id AND pbi.voided = 0
