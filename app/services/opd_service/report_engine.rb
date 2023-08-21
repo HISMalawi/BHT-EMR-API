@@ -133,54 +133,27 @@ module OPDService
     end
 
     def registration(start_date, end_date)
-      type = EncounterType.find_by_name 'PATIENT REGISTRATION'
-       visit_type = ConceptName.find_by_name 'Type of visit'
-
-      data = Encounter.where('encounter_datetime BETWEEN ? AND ?
-        AND encounter_type = ? AND value_coded IS NOT NULL
-        AND obs.concept_id = ?', start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
-        end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id, visit_type.concept_id).\
-        joins('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
-        INNER JOIN person p ON p.person_id = encounter.patient_id
-        INNER JOIN concept_name c ON c.concept_id = obs.value_coded
-        LEFT JOIN person_name n ON n.person_id = encounter.patient_id AND n.voided = 0
-        RIGHT JOIN person_address a ON a.person_id = encounter.patient_id').\
-        select('encounter.encounter_type, n.family_name, n.given_name,n.person_id,
-        obs.value_coded, obs.obs_datetime, p.*, c.name visit_type,
-        a.state_province district, a.township_division ta, a.city_village village').\
-        order('n.date_created DESC').group('n.person_id, encounter.encounter_id')
-
-      stats = []
-      (data || []).each do |record|
-        district  = record['district']
-        ta  = record['ta']
-        village = record['village']
-        person_id = record['person_id']
-
-        address = "#{district}, #{ta}, #{village}"
-        if(record['visit_type'] == "Referral")
-          referred_from_name = Observation.where("obs_datetime BETWEEN ? AND ?
-            AND concept_id = ? AND person_id = ?",start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
-            end_date.to_date.strftime('%Y-%m-%d 23:59:59'),'7414',person_id).\
-          joins('LEFT JOIN location l ON l.location_id = obs.value_text').\
-          select('l.name').order('obs_datetime DESC').first
-        end
-
-        referred_from_name = referred_from_name ? referred_from_name['name'] : "";
-
-        stats << {
-          given_name: record['given_name'],
-          family_name: record['family_name'],
-          visit_type: record['visit_type'],
-          birthdate: record['birthdate'],
-          gender: record['gender'],
-          date: record['obs_datetime'].to_date,
-          address: address,
-          name: referred_from_name
-        }
-      end
-
-      return stats
+      ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT
+          obs.person_id,encounter.encounter_id,
+          n.family_name,
+          n.given_name,
+          encounter_datetime as visit_date,
+          p.birthdate,
+          p.gender,
+          c.name AS visit_type
+        FROM `encounter`
+        INNER JOIN obs ON obs.encounter_id = encounter.encounter_id AND obs.voided = 0
+        INNER JOIN person p ON p.person_id = encounter.patient_id AND p.voided = 0
+        LEFT JOIN concept_name c ON c.concept_id = obs.value_coded AND c.name IN ('New patient','Revisiting','Referral') AND c.voided = 0
+        INNER JOIN person_name n ON n.person_id = encounter.patient_id AND n.voided = 0
+        WHERE
+            encounter.voided = 0
+            AND  DATE(encounter_datetime) BETWEEN '#{start_date}' AND '#{end_date}'
+            AND encounter.program_id = 14 -- OPD program
+        GROUP BY obs.person_id, DATE(encounter_datetime)
+        ORDER BY n.date_created DESC;
+      SQL
     end
 
     def malaria_report(start_date, end_date)
