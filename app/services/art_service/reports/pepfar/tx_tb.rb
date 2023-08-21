@@ -24,6 +24,7 @@ module ARTService
           process_tb_confirmed_and_on_treatment
           process_patients_alive_and_on_art
           process_tb_screened
+          process_tb_confirmed
           report
         end
 
@@ -74,13 +75,15 @@ module ARTService
         def create_temp_tb_screened_query
           <<~SQL
             CREATE TABLE temp_tb_screened AS
-            SELECT o.person_id as patient_id,
-            LEFT(tesd.gender, 1) AS gender, MAX(o.obs_datetime) AS screened_date,
-            tesd.earliest_start_date as enrollment_date,
-            disaggregated_age_group(tesd.birthdate, DATE('#{end_date.to_date}')) AS age_group,
-            (SELECT name FROM concept_name WHERE concept_id = o.value_coded AND o.voided = 0 LIMIT 1) AS tb_status
+            SELECT
+              o.person_id as patient_id,
+              LEFT(tesd.gender, 1) AS gender, MAX(o.obs_datetime) AS screened_date,
+              tesd.earliest_start_date as enrollment_date,
+              disaggregated_age_group(tesd.birthdate, DATE('#{end_date.to_date}')) AS age_group,
+              cn.name AS tb_status
             FROM obs o
             INNER JOIN temp_earliest_start_date tesd ON tesd.patient_id = o.person_id
+            INNER JOIN concept_name cn ON cn.concept_id = o.value_coded AND cn.voided = 0
             WHERE o.concept_id = #{ConceptName.find_by_name('TB status').concept_id}
             AND o.voided = 0 AND o.value_coded IN (#{ConceptName.find_by_name('TB Suspected').concept_id}, #{ConceptName.find_by_name('TB NOT suspected').concept_id})
             AND o.obs_datetime BETWEEN '#{start_date}' AND '#{end_date}'
@@ -95,13 +98,33 @@ module ARTService
         def create_temp_tb_confirmed_query
           <<~SQL
             CREATE TABLE temp_tb_confirmed_and_on_treatment AS
-            SELECT o.person_id as patient_id, MIN(o.obs_datetime) AS tb_confirmed_date
+            SELECT
+              o.person_id as patient_id,
+              LEFT(p.gender, 1) AS gender,
+              disaggregated_age_group(p.birthdate, DATE('#{end_date.to_date}')) AS age_group,
+              COALESCE(MIN(tcd.value_datetime),MIN(o.obs_datetime)) AS tb_confirmed_date,
+              tesd.earliest_start_date as enrollment_date,
+              prev.tb_confirmed_date prev_reading
             FROM obs o
+            INNER JOIN temp_earliest_start_date tesd ON tesd.patient_id = o.person_id
+            INNER JOIN person p ON p.person_id = o.person_id AND p.voided = 0
+            LEFT JOIN obs tcd ON tcd.concept_id = #{ConceptName.find_by_name('TB treatment start date').concept_id} AND tcd.voided = 0 AND tcd.person_id = o.person_id
+            LEFT JOIN (
+              SELECT
+                o.person_id,
+                COALESCE(MAX(tcd.value_datetime),MAX(o.obs_datetime)) AS tb_confirmed_date
+              FROM obs o
+              LEFT JOIN obs tcd ON tcd.concept_id = #{ConceptName.find_by_name('TB treatment start date').concept_id} AND tcd.voided = 0 AND tcd.person_id = o.person_id
+              WHERE o.concept_id = #{ConceptName.find_by_name('TB status').concept_id}
+              AND o.value_coded = #{ConceptName.find_by_name('Confirmed TB on treatment').concept_id}
+              AND o.voided = 0
+              AND o.obs_datetime <= '#{start_date}'
+              GROUP BY o.person_id
+            ) prev ON prev.person_id = o.person_id
             WHERE o.concept_id = #{ConceptName.find_by_name('TB status').concept_id}
             AND o.value_coded = #{ConceptName.find_by_name('Confirmed TB on treatment').concept_id}
             AND o.voided = 0
             AND o.obs_datetime BETWEEN '#{start_date}' AND '#{end_date}'
-            AND o.person_id IN (SELECT patient_id FROM temp_tb_screened)
             GROUP BY o.person_id
           SQL
         end
@@ -141,19 +164,34 @@ module ARTService
             metrics = @report[age_group][gender]
             enrollment_date = patient['enrollment_date']
             tb_status = patient['tb_status'].downcase
-            tb_confirmed_date = patient['tb_confirmed_date']
 
             if new_on_art(enrollment_date)
               metrics[:sceen_pos_new] << patient['patient_id'] if ['tb suspected', 'sup'].include?(tb_status)
               metrics[:sceen_neg_new] << patient['patient_id'] if ['tb not suspected', 'nosup'].include?(tb_status)
-              metrics[:started_tb_new] << patient['patient_id'] if tb_confirmed_date.present?
             else
               metrics[:sceen_pos_prev] << patient['patient_id'] if ['tb suspected', 'sup'].include?(tb_status)
               metrics[:sceen_neg_prev] << patient['patient_id'] if ['tb not suspected', 'nosup'].include?(tb_status)
-              metrics[:started_tb_prev] << patient['patient_id'] if tb_confirmed_date.present?
             end
           end
         end
+
+        def process_tb_confirmed
+          find_tb_confirmed_data.each do |patient|
+            age_group = patient['age_group']
+            next unless pepfar_age_groups.include?(age_group)
+
+            gender = patient['gender'].to_sym
+            metrics = @report[age_group][gender]
+            enrollment_date = patient['enrollment_date']
+
+            if new_on_art(enrollment_date)
+              metrics[:started_tb_new] << patient['patient_id']
+            else
+              metrics[:started_tb_prev] << patient['patient_id']
+            end
+          end
+        end
+
         # rubocop:enable Metrics/AbcSize
         # rubocop:enable Metrics/MethodLength
         # rubocop:enable Metrics/CyclomaticComplexity
@@ -171,11 +209,23 @@ module ARTService
           execute_query(find_tb_screened_data_query)
         end
 
+        def find_tb_confirmed_data
+          execute_query(find_tb_confirmed_data_query)
+        end
+
         def find_tb_screened_data_query
           <<~SQL
-            SELECT tbs.patient_id, tbs.enrollment_date, LEFT(tbs.gender, 1) AS gender, tbs.age_group, tbs.tb_status, tbs.screened_date, tbcot.tb_confirmed_date
+            SELECT tbs.patient_id, tbs.enrollment_date, LEFT(tbs.gender, 1) AS gender, tbs.age_group, tbs.tb_status, tbs.screened_date
             FROM temp_tb_screened tbs
-            LEFT JOIN temp_tb_confirmed_and_on_treatment tbcot ON tbcot.patient_id = tbs.patient_id
+          SQL
+        end
+
+        def find_tb_confirmed_data_query
+          <<~SQL
+            SELECT t.patient_id, t.gender, t.age_group, t.enrollment_date, t.tb_confirmed_date
+            FROM temp_tb_confirmed_and_on_treatment t
+            WHERE t.tb_confirmed_date > '#{start_date}'
+            AND (t.prev_reading IS NULL OR TIMESTAMPDIFF(MONTH,t.prev_reading, t.tb_confirmed_date) > 6)
           SQL
         end
 
