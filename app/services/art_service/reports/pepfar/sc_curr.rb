@@ -66,9 +66,10 @@ module ARTService
             drug_category ||= @report.find { |category| category[:drug_id].include?(item.drug_id) && category[:quantity] == 'N/A' }
             next unless drug_category
 
-            drug_category[:units] += (item.current_quantity / item.pack_size).to_i
+            bottles = (item.current_quantity / item.pack_size).to_i
+            drug_category[:units] += bottles
             drug_category[:granular_spec][item.drug.name] ||= 0
-            drug_category[:granular_spec][item.drug.name] += (item.current_quantity / item.pack_size).to_i
+            drug_category[:granular_spec][item.drug.name] += bottles
           end
         end
         # rubocop:enable Metrics/AbcSize
@@ -76,7 +77,7 @@ module ARTService
 
         def current_stock
           drugs = DRUG_CATEGORY.map { |_, drug| drug[:drugs] }.flatten.uniq
-          PharmacyBatchItem.where('expiry_date >= ? AND delivery_date <= ? AND drug_id IN (?)', @end_date, @end_date, drugs)
+          PharmacyBatchItem.where('expiry_date >= ? AND delivery_date <= ? AND drug_id IN (?) AND current_quantity > 0', @end_date, @end_date, drugs)
         end
       end
     end
