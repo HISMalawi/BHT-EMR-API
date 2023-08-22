@@ -157,6 +157,7 @@ module ARTService
 
         def transactions(from, to, transactions_date)
           query = ::Pharmacy.all
+          query = query.where("pharmacy_encounter_type_id != #{PharmacyEncounterType.find_by_name('Tins in previous stock').id}")
           query = query.where('DATE(pharmacy_obs.transaction_date) >= ?', from) if from
           query = query.where('DATE(pharmacy_obs.transaction_date) <= ?', to) if to
           query = query.where('DATE(pharmacy_obs.transaction_date) = ?', transactions_date) if transactions_date
