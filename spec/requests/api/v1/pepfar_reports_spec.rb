@@ -1,9 +1,10 @@
+# frozen_string_literal: true
+
 require 'swagger_helper'
 
-TAGS_NAME = 'Pepfar Reports'.freeze
+TAGS_NAME = 'Pepfar Reports'
 
 describe 'Pepfar Reports API', type: :request, swagger_doc: 'v1/swagger.yaml' do
-
   path 'api/v1/programs/1/reports/tx_tb' do
     get 'Retrieve TX_TB REPORT' do
       tags TAGS_NAME
@@ -15,17 +16,17 @@ describe 'Pepfar Reports API', type: :request, swagger_doc: 'v1/swagger.yaml' do
 
       response '200', 'TX_TB Report found' do
         schema type: :object, properties: {
-          age_group: { 
-          gender: { type: :object, properties: {
-            tx_curr: { type: :array, items: { type: :integer } },
-            sceen_pos_new: { type: :array, items: { type: :integer } },
-            sceen_neg_new: { type: :array, items: { type: :integer } },
-            started_tb_new: { type: :array, items: { type: :integer } },
-            sceen_pos_prev: { type: :array, items: { type: :integer } },
-            sceen_neg_prev: { type: :array, items: { type: :integer } },
-            started_tb_prev: { type: :array, items: { type: :integer } }
-          } }
-        }
+          age_group: {
+            gender: { type: :object, properties: {
+              tx_curr: { type: :array, items: { type: :integer } },
+              sceen_pos_new: { type: :array, items: { type: :integer } },
+              sceen_neg_new: { type: :array, items: { type: :integer } },
+              started_tb_new: { type: :array, items: { type: :integer } },
+              sceen_pos_prev: { type: :array, items: { type: :integer } },
+              sceen_neg_prev: { type: :array, items: { type: :integer } },
+              started_tb_prev: { type: :array, items: { type: :integer } }
+            } }
+          }
         }
         run_test!
       end
@@ -39,6 +40,28 @@ describe 'Pepfar Reports API', type: :request, swagger_doc: 'v1/swagger.yaml' do
     end
   end
 
+  path 'api/v1/programs/1/reports/sc_curr' do
+    get 'Retrieve SC CURR REPORT' do
+      tags TAGS_NAME
+      description 'This shows ARV Bottles available'
+      produces 'application/json'
+      security [api_key: []]
+      parameter name: :start_date, in: :query, type: :string
+      parameter name: :end_date, in: :query, type: :string
+
+      response '200', 'SC_CURR Report found' do
+        schema type: :array, items: { '$ref' => '#/components/schemas/sc_curr' }
+        run_test!
+      end
+
+      response '404', 'SC_CURR Report not found' do
+        schema type: :string, properties: {
+          message: { type: :string }
+        }
+        run_test!
+      end
+    end
+  end
 
   path '/api/v1/programs/12/reports/pmtct_stat_art' do
     get 'Retrieve PMTCT STAT ART' do
