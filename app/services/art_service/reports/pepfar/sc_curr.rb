@@ -52,7 +52,7 @@ module ARTService
               drug_id: drug[:drugs],
               units: 0,
               quantity: drug[:quantity],
-              granular_spec: {}
+              granular_spec: []
             }
           end
         end
@@ -68,8 +68,16 @@ module ARTService
 
             bottles = (item.current_quantity / item.pack_size).to_i
             drug_category[:units] += bottles
-            drug_category[:granular_spec][item.drug.name] ||= 0
-            drug_category[:granular_spec][item.drug.name] += bottles
+            # check if the drug is already in the granular_spec
+            granular_spec = drug_category[:granular_spec].find { |spec| spec[:drug_name] == item.drug.name }
+            if granular_spec
+              granular_spec[:units] += bottles
+            else
+              drug_category[:granular_spec] << {
+                drug_name: item.drug.name,
+                units: bottles
+              }
+            end
           end
         end
         # rubocop:enable Metrics/AbcSize
