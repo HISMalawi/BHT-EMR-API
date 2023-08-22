@@ -103,6 +103,10 @@ module ARTService
               LEFT(p.gender, 1) AS gender,
               disaggregated_age_group(p.birthdate, DATE('#{end_date.to_date}')) AS age_group,
               COALESCE(MIN(tcd.value_datetime),MIN(o.obs_datetime)) AS tb_confirmed_date,
+              CASE
+                WHEN COUNT(tcd.value_datetime) > 0 THEN TRUE
+                ELSE FALSE
+              END AS has_tb_confirmed_date,
               tesd.earliest_start_date as enrollment_date,
               prev.tb_confirmed_date prev_reading
             FROM obs o
@@ -225,7 +229,7 @@ module ARTService
             SELECT t.patient_id, t.gender, t.age_group, t.enrollment_date, t.tb_confirmed_date
             FROM temp_tb_confirmed_and_on_treatment t
             WHERE t.tb_confirmed_date > '#{start_date}'
-            AND (t.prev_reading IS NULL OR TIMESTAMPDIFF(MONTH,t.prev_reading, t.tb_confirmed_date) > 6)
+            AND (t.has_tb_confirmed_date = TRUE OR t.prev_reading IS NULL OR TIMESTAMPDIFF(MONTH,t.prev_reading, t.tb_confirmed_date) > 6)
           SQL
         end
 
