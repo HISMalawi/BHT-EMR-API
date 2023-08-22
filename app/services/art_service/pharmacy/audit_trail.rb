@@ -60,6 +60,7 @@ module ARTService
               WHEN pharmacy_obs.transaction_reason = 'Banned' THEN pharmacy_obs.quantity
               WHEN pharmacy_obs.transaction_reason = 'Missing' THEN pharmacy_obs.quantity
               WHEN pharmacy_obs.transaction_reason = 'For trainings' THEN pharmacy_obs.quantity
+              WHEN pharmacy_obs.transaction_reason = 'Theft' THEN pharmacy_obs.quantity
                 ELSE 0
                 END) AS losses,
             SUM(CASE
@@ -79,7 +80,9 @@ module ARTService
                 ELSE 0
                 END) AS quantity_received
             FROM `pharmacy_obs`
-            INNER JOIN `pharmacy_encounter_type` ON `pharmacy_encounter_type`.`retired` = FALSE AND `pharmacy_encounter_type`.`pharmacy_encounter_type_id` = `pharmacy_obs`.`pharmacy_encounter_type`
+            INNER JOIN `pharmacy_encounter_type` ON `pharmacy_encounter_type`.`retired` = FALSE 
+              AND `pharmacy_encounter_type`.`pharmacy_encounter_type_id` = `pharmacy_obs`.`pharmacy_encounter_type`
+              AND `pharmacy_encounter_type`.`name` != 'Tins in previous stock'
             INNER JOIN `pharmacy_batch_items` ON `pharmacy_batch_items`.`voided` = FALSE AND `pharmacy_batch_items`.`id` = `pharmacy_obs`.`batch_item_id`
             INNER JOIN `users` ON `users`.`retired` = 0 AND `users`.`user_id` = `pharmacy_obs`.`creator`
             INNER JOIN `drug` ON `drug`.`drug_id` = `pharmacy_batch_items`.`drug_id`
