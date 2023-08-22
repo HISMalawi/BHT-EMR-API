@@ -6,7 +6,7 @@ module ARTService
       # This class is used to generate the SC_CURR report
       # The current number of ARV drug units (bottles) at the end of the reporting period by ARV drug category
       class ScCurr
-        DrugCategory = {
+        DRUG_CATEGORY = {
           'TLD 30-count bottles' => { drugs: [983], quantity: 30 },
           'TLD 90-count bottles' => { drugs: [983], quantity: 90 },
           'TLD 180-count bottles' => { drugs: [983], quantity: 180 },
@@ -37,6 +37,8 @@ module ARTService
         def find_report
           initialize_report
           process_report
+          # remove the drug_id from the report
+          @report.each { |category| category.delete(:drug_id) }
           @report
         end
 
@@ -44,7 +46,7 @@ module ARTService
 
         def initialize_report
           @report = []
-          DrugCategory.each do |category, drug|
+          DRUG_CATEGORY.each do |category, drug|
             @report << {
               category: category,
               drug_id: drug[:drugs],
@@ -54,6 +56,8 @@ module ARTService
           end
         end
 
+        # rubocop:disable Metrics/AbcSize
+        # rubocop:disable Metrics/CyclomaticComplexity
         def process_report
           current_stock.each do |item|
             # Find the drug category
@@ -64,10 +68,12 @@ module ARTService
             drug_category[:units] += (item.current_quantity / item.pack_size).to_i
           end
         end
+        # rubocop:enable Metrics/AbcSize
+        # rubocop:enable Metrics/CyclomaticComplexity
 
         def current_stock
-          drugs = DrugCategory.map { |_, drug| drug[:drugs] }.flatten.uniq
-          PharmacyBatchItem.where('expiry_date >= ? AND expiry_date >= ? AND drug_id IN (?)', @start_date, @end_date, drugs)
+          drugs = DRUG_CATEGORY.map { |_, drug| drug[:drugs] }.flatten.uniq
+          PharmacyBatchItem.where('expiry_date >= ? AND delivery_date <= ? AND drug_id IN (?)', @end_date, @end_date, drugs)
         end
       end
     end
