@@ -51,7 +51,8 @@ module ARTService
               category: category,
               drug_id: drug[:drugs],
               units: 0,
-              quantity: drug[:quantity]
+              quantity: drug[:quantity],
+              granular_spec: {}
             }
           end
         end
@@ -66,6 +67,8 @@ module ARTService
             next unless drug_category
 
             drug_category[:units] += (item.current_quantity / item.pack_size).to_i
+            drug_category[:granular_spec][item.drug.name] ||= 0
+            drug_category[:granular_spec][item.drug.name] += (item.current_quantity / item.pack_size).to_i
           end
         end
         # rubocop:enable Metrics/AbcSize

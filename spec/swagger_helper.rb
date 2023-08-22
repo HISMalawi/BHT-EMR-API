@@ -36,7 +36,10 @@ RSpec.configure do |config|
             properties: {
               category: { type: :string, description: 'Drug category or the drug name' },
               units: { type: :integer, format: :int32, description: 'Number of bottles available' },
-              quantity: { type: :integer, format: :int32, description: 'Number of pills in a bottle' }
+              quantity: { type: :integer, format: :int32, description: 'Number of pills in a bottle' },
+              granular_spec: { type: :object, properties: {
+                drug: { type: :integer, format: :int32, description: 'Number of bottles available' }
+              } }
             }
           },
           notification_alert: {
