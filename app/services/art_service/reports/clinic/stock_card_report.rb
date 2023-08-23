@@ -61,39 +61,6 @@ module ARTService
             GROUP BY pbi.drug_id, pbi.pack_size
           SQL
         end
-
-        # def stock_card_report
-        #   ActiveRecord::Base.connection.select_all <<~SQL
-        #     SELECT
-        #         pbi.drug_id AS drug_id,
-        #         COALESCE(dc.short_name, dc.name, d.name, 'Unkown') AS drug_name,
-        #         first_stock.open_balance AS opening_balance,
-        #         current_stock.close_balance AS closing_balance,
-        #         SUM(ABS(po.quantity))/SUM(pbi.pack_size) AS dispensed_quantity,
-        #         pbi.pack_size
-        #     FROM pharmacy_stock_balances AS psb
-        #     INNER JOIN pharmacy_batch_items AS pbi ON pbi.drug_id = psb.drug_id AND pbi.pack_size = psb.pack_size
-        #     INNER JOIN drug AS d ON d.drug_id = pbi.drug_id
-        #     INNER JOIN (
-        #       SELECT drug_id, pack_size, MAX(transaction_date) AS transaction_date
-        #       FROM pharmacy_stock_balances
-        #       WHERE transaction_date BETWEEN #{@start_date} AND #{@end_date}
-        #       GROUP BY drug_id, pack_size
-        #     ) AS current_stock ON current_stock.drug_id = psb.drug_id AND current_stock.pack_size = psb.pack_size AND current_stock.transaction_date = psb.transaction_date
-        #     INNER JOIN (
-        #       SELECT drug_id, pack_size, MIN(transaction_date) AS transaction_date
-        #       FROM pharmacy_stock_balances
-        #       WHERE transaction_date BETWEEN #{@start_date} AND #{@end_date}
-        #     ) AS first_stock ON first_stock.drug_id = psb.drug_id AND first_stock.pack_size = psb.pack_size AND first_stock.transaction_date = psb.transaction_date
-        #     LEFT JOIN drug_cms AS dc ON dc.drug_inventory_id = d.drug_id
-        #     LEFT JOIN pharmacy_obs AS po ON po.batch_item_id = pbi.id
-        #         AND po.voided = 0
-        #         AND po.pharmacy_encounter_type = 3 -- Pharmacy dispensing
-        #         AND po.transaction_date BETWEEN #{@start_date} AND #{@end_date}
-        #     WHERE psb.transaction_date BETWEEN #{@start_date} AND #{@end_date}
-        #     GROUP BY pbi.drug_id
-        #   SQL
-        # end
       end
     end
   end
