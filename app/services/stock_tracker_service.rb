@@ -83,7 +83,7 @@ class StockTrackerService
     # The drug id and pack size are the same as the current transaction
 
     prev_stock = PharmacyStockBalance.where('transaction_date < ? AND drug_id = ? AND pack_size = ? ', @transaction_date, @drug_id, @pack_size).order(transaction_date: :desc)&.first
-    opening_balance = prev_stock&.close_balance || current_record_details || 0
+    opening_balance = prev_stock&.close_balance || 0 # || current_record_details
     closing_balance = opening_balance
 
     PharmacyStockBalance.create(drug_id: @drug_id, pack_size: @pack_size, open_balance: opening_balance, close_balance: closing_balance, transaction_date: @transaction_date)
@@ -91,6 +91,7 @@ class StockTrackerService
     puts "Error creating stock: #{e.message}"
   end
 
+  # this method is not used because it will give wrong results so it is highly discouraged and should be politically motivated for activation
   def current_record_details
     # get all current balances from PharmacyBatchItem for this particular drug and pack size
     result = PharmacyBatchItem.where(drug_id: @drug_id, pack_size: @pack_size).where('delivery_date < ?', @transaction_date)
