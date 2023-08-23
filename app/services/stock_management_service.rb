@@ -319,7 +319,7 @@ class StockManagementService
     return credit_quantity unless credit_quantity.positive?
 
     drugs = find_batch_items(drug_id: drug_id, pack_size: pack_size)
-            .where('delivery_date < :date AND expiry_date > :date AND date_changed >= :date', date: date)
+            .where('delivery_date < :date AND expiry_date > :date AND pharmacy_batch_items.date_changed >= :date', date: date)
             .order(:expiry_date)
 
     # Spread the quantity being credited back among the existing drugs,
@@ -348,6 +348,9 @@ class StockManagementService
                               **metadata)
       validate_activerecord_object(event)
       update_batch_item!(batch_item, quantity) if update_item
+      if ![STOCK_PREVIOUS_COUNT, STOCK_CURRENT_COUNT].include?(event_name)
+        StockTrackerService.new(drug_id: batch_item.drug_id, pack_size: batch_item.pack_size, transaction_date: date || Date.today).update_stock_balance(transaction_type: event_name, quantity: quantity)
+      end
 
       { event: event, target_item: batch_item }
     end
