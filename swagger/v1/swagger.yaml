@@ -1816,6 +1816,50 @@ paths:
                 properties:
                   message:
                     type: string
+  "/api/v1/programs/1/reports/stock_card":
+    get:
+      summary: Retrieve Stock Card
+      tags:
+      - Pepfar Reports
+      description: This shows Stock Card report
+      security:
+      - api_key: []
+      parameters:
+      - name: start_date
+        in: query
+        schema:
+          type: string
+      - name: end_date
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Stock Card Report found
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/stock_card"
+        '404':
+          description: Stock Card Report not found
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
   "/api/v1/pharmacy/stock_report":
     get:
       summary: Stock Report
@@ -2405,6 +2449,21 @@ components:
       name: Authorization
       in: header
   schemas:
+    stock_card:
+      type: object
+      properties:
+        drug_id:
+          type: integer
+        drug_name:
+          type: string
+        opening_balance:
+          type: number
+        closing_balance:
+          type: number
+        dispensed_quantity:
+          type: number
+        pack_size:
+          type: integer
     notification_alert:
       type: object
       properties:
