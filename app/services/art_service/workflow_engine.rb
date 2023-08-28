@@ -75,34 +75,37 @@ module ARTService
     }.freeze
 
     STATE_CONDITIONS = {
-      HIV_CLINIC_REGISTRATION => %i[patient_not_registered?
+      HIV_CLINIC_REGISTRATION => %i[patient_not_registered? patient_is_alive?
                                     patient_not_visiting?
                                     patient_not_coming_for_drug_refill?],
-      VITALS => %i[patient_checked_in?
+      HIV_RECEPTION => %i[patient_is_alive?],
+      VITALS => %i[patient_is_alive?
+                   patient_checked_in?
                    patient_not_on_fast_track?
                    patient_has_not_completed_fast_track_visit?
                    patient_does_not_have_height_and_weight?],
-      HIV_STAGING => %i[patient_not_already_staged?
+      HIV_STAGING => %i[patient_is_alive?
+                        patient_not_already_staged?
                         patient_has_not_completed_fast_track_visit?
                         patient_not_coming_for_drug_refill?],
-      HIV_CLINIC_CONSULTATION => %i[patient_not_on_fast_track?
+      HIV_CLINIC_CONSULTATION => %i[patient_not_on_fast_track? patient_is_alive?
                                     patient_has_not_completed_fast_track_visit?],
-      ART_ADHERENCE => %i[patient_received_art?
+      ART_ADHERENCE => %i[patient_received_art? patient_is_alive?
                           patient_has_not_completed_fast_track_visit?
                           patient_not_coming_for_drug_refill?],
-      HIV_CLINIC_CONSULTATION_CLINICIAN => %i[patient_not_on_fast_track?
+      HIV_CLINIC_CONSULTATION_CLINICIAN => %i[patient_not_on_fast_track? patient_is_alive?
                                               patient_has_not_completed_fast_track_visit?
                                               patient_not_coming_for_drug_refill?],
-      TREATMENT => %i[patient_should_get_treatment?
+      TREATMENT => %i[patient_should_get_treatment? patient_is_alive?
                       patient_has_not_completed_fast_track_visit?],
-      FAST_TRACK => %i[fast_track_activated?
+      FAST_TRACK => %i[fast_track_activated? patient_is_alive?
                        patient_got_treatment?
                        patient_not_on_fast_track?
                        patient_has_not_completed_fast_track_visit?
                        patient_not_coming_for_drug_refill?],
-      DISPENSING => %i[patient_got_treatment?
+      DISPENSING => %i[patient_got_treatment? patient_is_alive?
                        patient_has_not_completed_fast_track_visit?],
-      APPOINTMENT => %i[patient_got_treatment?
+      APPOINTMENT => %i[patient_got_treatment? patient_is_alive?
                         dispensing_complete?]
     }.freeze
 
@@ -421,6 +424,15 @@ module ARTService
                  .where('obs_datetime < DATE(?) + INTERVAL 1 DAY', @date)
                  .order(obs_datetime: :desc)
                  .first
+    end
+
+    # Checks whether the patient is alive and avoids trigger next encounter if they a state of died
+    def patient_is_alive?
+      program = PatientProgram.where(patient_id: @patient.id, program_id: @program.program_id)&.first
+      return true if program.blank?
+
+      current_state = PatientState.where(patient_program: program, state: 3).where('start_date <= ?', @date)
+      !current_state.present?
     end
 
     def htn_workflow
