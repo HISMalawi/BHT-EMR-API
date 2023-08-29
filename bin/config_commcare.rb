@@ -1,17 +1,23 @@
 require 'roo'
+require 'rest-client'
 
-@dev_env = 'https://commcaredev.hismalawi.org/a/egpafmw-development-space/importer/excel/bulk_upload_api/'
-@prod_env = 'https://comcarehq.hismalawi.org/a/egpaf-malawi-project/importer/excel/bulk_upload_api/'
+DEV_ENV = 'https://commcaredev.hismalawi.org/a/egpafmw-development-space/importer/excel/bulk_upload_api/'
+PROD_ENV = 'https://comcarehq.hismalawi.org/a/egpaf-malawi-project/importer/excel/bulk_upload_api/'
 
-@prod_file = 'commcare_project_data_production'
-@dev_file = 'commcare_project_data_development'
+PROD_FILE = 'commcare_project_data_production'
+DEV_FILE = 'commcare_project_data_development'
 
-puts "Choose setup environment: \n1. Development \n2. Production"
-@env = gets.chomp
+def choose_environment
+  puts "Choose setup environment: \n1. Development \n2. Production"
+  env = gets.chomp
 
+  unless ['1', '2'].include? env
+    puts 'Invalid option. Please choose 1 or 2'
+    return choose_environment
+  end
+  env
+end
 
-
-# Function to load an Excel file and convert each sheet into a hash
 def load_excel_file(file_path)
   excel = Roo::Spreadsheet.open(file_path)
   
@@ -36,18 +42,30 @@ def load_excel_file(file_path)
   worksheets
 end
 
-workbooks = load_excel_file("#{Rails.root}/db/hts_metadata/#{@env == '1' ? @dev_file : @prod_file}.xlsx")
+env = choose_environment
+workbooks = load_excel_file("#{Rails.root}/db/hts_metadata/#{env == '1' ? DEV_FILE : PROD_FILE}.xlsx")
 @types, @countries, @regions, @districts, @health_facilities = workbooks
 
-def setup_config
+def is_valid_credentials?(username, password, env)
+  begin
+    rest_client = RestClient::Resource.new(env == '1' ? DEV_ENV : PROD_ENV, user: username, password: password, verify_ssl: false)
+    rest_client.post({})
+  rescue RestClient::ExceptionWithResponse => e
+    return false if e.response.code == 401
+  end
+  true
+end
 
-  
+def setup_config(env)
   puts 'Enter your site code:'
   site_code = gets.chomp
   
   facility = @health_facilities['health-facility'].find { |f| f['data: site_id'] == site_code }
 
-  return puts 'Site code not found' unless facility
+  unless facility
+    puts 'Site code not found'
+    return setup_config(env)
+  end
 
   facility_name = facility['name']
   facility_id = facility['location_id']
@@ -60,30 +78,41 @@ def setup_config
   district_name = district['name']
   district_id = district['location_id']
 
-  
   parent_district = district['parent_site_code']
   region = @regions['region'].find { |r| r['site_code'] == parent_district }
   region_name = region['name']
   region_id = region['location_id']
-  
 
   puts "Facility name: #{facility_name} District: #{district_name} \nRegion: #{region_name} \nDHIS2 code: #{dhis2_code}"
   puts 'Is this correct? (Y/N)'
   prompt = gets.chomp
   
-  return setup_config if prompt.downcase == 'n'
+  return setup_config(env) if prompt.downcase == 'n'
 
-  return puts 'Invalid input' unless prompt.downcase == 'y'
+  unless prompt.downcase == 'y'
+    puts 'Invalid input'
+    return setup_config(env)
+  end
 
   puts 'Enter your commcare username:'
   username = gets.chomp
 
   puts 'Enter your commcare password:'
   password = gets.chomp
+
+  if username.empty? || password.empty?
+    puts 'Username or password cannot be blank'
+    return setup_config(env)
+  end
+
+  unless is_valid_credentials?(username, password, env)
+    puts 'Invalid username or password, cannot authenticate'
+    return setup_config(env)
+  end
   
   puts 'Setting up config...'
   config = {
-    endpoint: @env == '1' ? @dev_env : @prod_env,
+    endpoint: env == '1' ? DEV_ENV : PROD_ENV,
     health_facility_id: facility_id,
     health_facility_name: facility_name,
     district_id: district_id.to_i,
@@ -105,4 +134,4 @@ def setup_config
   puts 'Config saved to config/ait.yml'
 end
 
-setup_config
+setup_config(env)
