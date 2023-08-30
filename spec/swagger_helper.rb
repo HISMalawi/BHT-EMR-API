@@ -31,6 +31,34 @@ RSpec.configure do |config|
           }
         },
         schemas: {
+          hypertension_report: {
+            type: :object,
+            properties: {
+              age_group: {
+                type: :object,
+                properties: {
+                  gender: {
+                    type: :object,
+                    properties: {
+                      screened: { type: :array, items: { type: :integer } },
+                      normal_reading: { type: :array, items: { type: :integer } },
+                      mild_reading: { type: :array, items: { type: :integer } },
+                      moderate_reading: { type: :array, items: { type: :integer } },
+                      severe_reading: { type: :array, items: { type: :integer } },
+                      hydrochlorothiazide_25mg: { type: :array, items: { type: :integer } },
+                      amlodipine_5mg: { type: :array, items: { type: :integer } },
+                      amlodipine_10mg: { type: :array, items: { type: :integer } },
+                      enalapril_5mg: { type: :array, items: { type: :integer } },
+                      enalapril_10mg: { type: :array, items: { type: :integer } },
+                      atenolol_5mg: { type: :array, items: { type: :integer } },
+                      atenolol_10mg: { type: :array, items: { type: :integer } },
+                      total_regimen: { type: :array, items: { type: :integer } }
+                    }
+                  }
+                }
+              }
+            }
+          },
           stock_card: {
             type: :object,
             properties: {
