@@ -4,6 +4,7 @@ module ARTService
   module Reports
     module Clinic
       # Generates a hypertension report for a clinic
+      # rubocop:disable Metrics/ClassLength
       class HypertensionReport
         AGE_GROUPS = [
           '20-24 years',
@@ -157,6 +158,7 @@ module ARTService
           SQL
         end
       end
+      # rubocop:enable Metrics/ClassLength
     end
   end
 end
