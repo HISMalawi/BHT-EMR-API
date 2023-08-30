@@ -342,6 +342,32 @@ paths:
                 type: array
                 items:
                   "$ref": "#/components/schemas/discrepancy_report"
+  "/api/v1/programs/1/reports/hypertension_report":
+    get:
+      summary: Retrieve Hypertension report
+      tags:
+      - Clinic Reports
+      description: This shows Hypertension report
+      security:
+      - api_key: []
+      parameters:
+      - name: start_date
+        in: query
+        schema:
+          type: string
+      - name: end_date
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Hypertension Report found
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/hypertension_report"
   "/api/v1/radiology_set":
     get:
       summary: Retrieve all radiology sets
@@ -2449,6 +2475,67 @@ components:
       name: Authorization
       in: header
   schemas:
+    hypertension_report:
+      type: object
+      properties:
+        age_group:
+          type: object
+          properties:
+            gender:
+              type: object
+              properties:
+                screened:
+                  type: array
+                  items:
+                    type: integer
+                normal_reading:
+                  type: array
+                  items:
+                    type: integer
+                mild_reading:
+                  type: array
+                  items:
+                    type: integer
+                moderate_reading:
+                  type: array
+                  items:
+                    type: integer
+                severe_reading:
+                  type: array
+                  items:
+                    type: integer
+                hydrochlorothiazide_25mg:
+                  type: array
+                  items:
+                    type: integer
+                amlodipine_5mg:
+                  type: array
+                  items:
+                    type: integer
+                amlodipine_10mg:
+                  type: array
+                  items:
+                    type: integer
+                enalapril_5mg:
+                  type: array
+                  items:
+                    type: integer
+                enalapril_10mg:
+                  type: array
+                  items:
+                    type: integer
+                atenolol_5mg:
+                  type: array
+                  items:
+                    type: integer
+                atenolol_10mg:
+                  type: array
+                  items:
+                    type: integer
+                total_regimen:
+                  type: array
+                  items:
+                    type: integer
     stock_card:
       type: object
       properties:
