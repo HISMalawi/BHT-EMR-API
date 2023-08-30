@@ -45,6 +45,12 @@ module ARTService
         def find_report
           @report = init_report
           data
+          process_data
+          @report
+        rescue StandardError => e
+          puts e.message
+          puts e.backtrace.join("\n")
+          raise e
         end
 
         private
@@ -64,6 +70,7 @@ module ARTService
             normal_reading: [],
             mild_reading: [],
             moderate_reading: [],
+            severe_reading: [],
             hydrochlorothiazide_25mg: [],
             amlodipine_5mg: [],
             amlodipine_10mg: [],
@@ -78,13 +85,16 @@ module ARTService
 
         def process_data
           (data || []).each do |row|
-            age_group = row['age_group'].to_sym
-            gender = row['gender'].to_sym
+            age_group = row['age_group']
+            gender = row['gender']
+            next unless AGE_GROUPS.include?(age_group)
+            next unless GENDER.include?(gender)
+
             patient_id = row['patient_id']
             cluster = @report[age_group][gender]
             cluster[:screened] << patient_id
             process_bp_classification(cluster, patient_id, row['classification'])
-            process_drug_data(cluster, patient_id, row['drug_names'].split(','))
+            process_drug_data(cluster, patient_id, row['drug_names'].split(',')) if row['drug_names'].present?
             cluster[:total_regimen] << patient_id if row['drug_names'].present?
           end
         end
