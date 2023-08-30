@@ -44,7 +44,6 @@ module ARTService
 
         def find_report
           @report = init_report
-          data
           process_data
           @report
         rescue StandardError => e
@@ -83,6 +82,8 @@ module ARTService
         end
         # rubocop:enable Metrics/MethodLength
 
+        # rubocop:disable Metrics/AbcSize
+        # rubocop:disable Metrics/MethodLength
         def process_data
           (data || []).each do |row|
             age_group = row['age_group']
@@ -98,6 +99,8 @@ module ARTService
             cluster[:total_regimen] << patient_id if row['drug_names'].present?
           end
         end
+        # rubocop:enable Metrics/AbcSize
+        # rubocop:enable Metrics/MethodLength
 
         def process_bp_classification(cluster, patient_id, classification)
           case classification
