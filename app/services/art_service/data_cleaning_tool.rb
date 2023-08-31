@@ -399,7 +399,7 @@ module ARTService
           AND encounter.encounter_datetime >= DATE(deaths.death_date) + INTERVAL 1 DAY
           AND encounter.program_id = 1
           AND encounter.encounter_type NOT IN (
-            SELECT encounter_type_id FROM encounter_type WHERE name = 'HIV Reception'
+            SELECT encounter_type_id FROM encounter_type WHERE name = 'HIV Reception' OR name LIKE '%lab%'
           )
           AND encounter.voided = 0
         INNER JOIN person

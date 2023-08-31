@@ -42,6 +42,17 @@ RSpec.configure do |config|
               } }
             }
           },
+          stock_card: {
+            type: :object,
+            properties: {
+              drug_id: { type: :integer },
+              drug_name: { type: :string },
+              opening_balance: { type: :number },
+              closing_balance: { type: :number },
+              dispensed_quantity: { type: :number },
+              pack_size: { type: :integer }
+            }
+          },
           notification_alert: {
             type: :object,
             properties: {

@@ -189,63 +189,138 @@ paths:
                     started_tpt:
                       type: array
                       items:
-                        type: integer
+                        type: object
+                        properties:
+                          patient_id:
+                            type: integer
+                          gender:
+                            type: string
                     completed_tpt:
                       type: array
                       items:
-                        type: integer
+                        type: object
+                        properties:
+                          patient_id:
+                            type: integer
+                          gender:
+                            type: string
                     not_completed_tpt:
                       type: array
                       items:
-                        type: integer
+                        type: object
+                        properties:
+                          patient_id:
+                            type: integer
+                          gender:
+                            type: string
                     died:
                       type: array
                       items:
-                        type: integer
+                        type: object
+                        properties:
+                          patient_id:
+                            type: integer
+                          gender:
+                            type: string
                     defaulted:
                       type: array
                       items:
-                        type: integer
+                        type: object
+                        properties:
+                          patient_id:
+                            type: integer
+                          gender:
+                            type: string
                     transferred_out:
                       type: array
                       items:
-                        type: integer
+                        type: object
+                        properties:
+                          patient_id:
+                            type: integer
+                          gender:
+                            type: string
                     confirmed_tb:
                       type: array
                       items:
-                        type: integer
+                        type: object
+                        properties:
+                          patient_id:
+                            type: integer
+                          gender:
+                            type: string
                     pregnant:
                       type: array
                       items:
-                        type: integer
+                        type: object
+                        properties:
+                          patient_id:
+                            type: integer
+                          gender:
+                            type: string
                     stopped:
                       type: array
                       items:
-                        type: integer
+                        type: object
+                        properties:
+                          patient_id:
+                            type: integer
+                          gender:
+                            type: string
                     breast_feeding:
                       type: array
                       items:
-                        type: integer
+                        type: object
+                        properties:
+                          patient_id:
+                            type: integer
+                          gender:
+                            type: string
                     skin_rash:
                       type: array
                       items:
-                        type: integer
+                        type: object
+                        properties:
+                          patient_id:
+                            type: integer
+                          gender:
+                            type: string
                     peripheral_neuropathy:
                       type: array
                       items:
-                        type: integer
+                        type: object
+                        properties:
+                          patient_id:
+                            type: integer
+                          gender:
+                            type: string
                     yellow_eyes:
                       type: array
                       items:
-                        type: integer
+                        type: object
+                        properties:
+                          patient_id:
+                            type: integer
+                          gender:
+                            type: string
                     nausea:
                       type: array
                       items:
-                        type: integer
+                        type: object
+                        properties:
+                          patient_id:
+                            type: integer
+                          gender:
+                            type: string
                     dizziness:
                       type: array
                       items:
-                        type: integer
+                        type: object
+                        properties:
+                          patient_id:
+                            type: integer
+                          gender:
+                            type: string
         '404':
           description: TPT OUTCOME Report not found
           content:
@@ -1851,6 +1926,50 @@ paths:
                 properties:
                   message:
                     type: string
+  "/api/v1/programs/1/reports/stock_card":
+    get:
+      summary: Retrieve Stock Card
+      tags:
+      - Pepfar Reports
+      description: This shows Stock Card report
+      security:
+      - api_key: []
+      parameters:
+      - name: start_date
+        in: query
+        schema:
+          type: string
+      - name: end_date
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Stock Card Report found
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/stock_card"
+        '404':
+          description: Stock Card Report not found
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
   "/api/v1/pharmacy/stock_report":
     get:
       summary: Stock Report
@@ -2461,6 +2580,21 @@ components:
               type: integer
               format: int32
               description: Number of bottles available
+    stock_card:
+      type: object
+      properties:
+        drug_id:
+          type: integer
+        drug_name:
+          type: string
+        opening_balance:
+          type: number
+        closing_balance:
+          type: number
+        dispensed_quantity:
+          type: number
+        pack_size:
+          type: integer
     notification_alert:
       type: object
       properties:

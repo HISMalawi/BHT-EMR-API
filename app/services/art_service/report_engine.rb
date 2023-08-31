@@ -49,7 +49,8 @@ module ARTService
       'MOH_TPT' => ARTService::Reports::MohTpt,
       'TX_TB' => ARTService::Reports::Pepfar::TxTB,
       'VL_COLLECTION' => ARTService::Reports::VlCollection,
-      'DISCREPANCY_REPORT' => ARTService::Reports::Clinic::DiscrepancyReport
+      'DISCREPANCY_REPORT' => ARTService::Reports::Clinic::DiscrepancyReport,
+      'STOCK_CARD' => ARTService::Reports::Clinic::StockCardReport
     }.freeze
 
     def generate_report(type:, **kwargs)

@@ -62,7 +62,7 @@ describe 'Pepfar Reports API', type: :request, swagger_doc: 'v1/swagger.yaml' do
       end
     end
   end
-
+  
   path '/api/v1/programs/12/reports/pmtct_stat_art' do
     get 'Retrieve PMTCT STAT ART' do
       tags TAGS_NAME
@@ -190,6 +190,36 @@ describe 'Pepfar Reports API', type: :request, swagger_doc: 'v1/swagger.yaml' do
               } } }
             } } }
           } }
+        }
+        run_test!
+      end
+
+      response '500', 'Internal Server Error' do
+        schema type: :string, properties: {
+          message: { type: :string }
+        }
+        run_test!
+      end
+    end
+  end
+
+  path '/api/v1/programs/1/reports/stock_card' do
+    get 'Retrieve Stock Card' do
+      tags TAGS_NAME
+      description 'This shows Stock Card report'
+      produces 'application/json'
+      security [api_key: []]
+      parameter name: :start_date, in: :query, type: :string
+      parameter name: :end_date, in: :query, type: :string
+
+      response '200', 'Stock Card Report found' do
+        schema type: :array, items: { '$ref' => '#/components/schemas/stock_card' }
+        run_test!
+      end
+
+      response '404', 'Stock Card Report not found' do
+        schema type: :string, properties: {
+          message: { type: :string }
         }
         run_test!
       end
