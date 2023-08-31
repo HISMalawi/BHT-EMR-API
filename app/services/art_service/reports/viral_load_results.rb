@@ -40,7 +40,7 @@ module ARTService
           FROM orders
           INNER JOIN concept_name AS specimen_type
             ON specimen_type.concept_id = orders.concept_id
-            AND specimen_type.name IN ('Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)')
+            AND specimen_type.name IN ('Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)', 'Plasma')
             AND specimen_type.voided = 0
           LEFT JOIN patient_identifier
             ON patient_identifier.patient_id = orders.patient_id
@@ -83,7 +83,7 @@ module ARTService
               AND orders.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Lab' AND retired = 0)
               AND orders.concept_id IN (
                 SELECT concept_id FROM concept_name INNER JOIN concept USING (concept_id)
-                WHERE concept_name.name IN ('Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)')
+                WHERE concept_name.name IN ('Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)', 'Plasma')
                   AND concept.retired = 0 AND concept_name.voided = 0
               )
               AND orders.voided = 0
