@@ -44,6 +44,7 @@ module ARTService
       'VIRAL_LOAD_COVERAGE' => ARTService::Reports::Pepfar::ViralLoadCoverage2,
       'EXTERNAL_CONSULTATION_CLIENTS' => ARTService::Reports::ExternalConsultationClients,
       'SC_ARVDISP' => ARTService::Reports::Pepfar::ScArvdisp,
+      'SC_CURR' => ARTService::Reports::Pepfar::ScCurr,
       'PATIENT_ART_VL_DATES' => ARTService::Reports::Pepfar::PatientStartVL,
       'MOH_TPT' => ARTService::Reports::MohTpt,
       'TX_TB' => ARTService::Reports::Pepfar::TxTB,
