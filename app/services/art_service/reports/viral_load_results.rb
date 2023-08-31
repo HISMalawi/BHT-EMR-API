@@ -117,7 +117,7 @@ module ARTService
 
       def specimen_types
         Concept.joins(:concept_names)
-               .merge(ConceptName.where(name: ['Blood', ]))
+               .merge(ConceptName.where(name: ['Blood']))
                .select(:concept_id)
                .to_sql
       end
