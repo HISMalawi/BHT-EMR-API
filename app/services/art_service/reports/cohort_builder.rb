@@ -8,6 +8,7 @@ module ARTService
       QUARTER_LENGTH = 3.months
 
       include ModelUtils
+      include CommonSqlQueryUtils
 
       def initialize(outcomes_definition: 'moh')
         unless %w[moh pepfar].include?(outcomes_definition.downcase)
@@ -571,7 +572,7 @@ module ARTService
         ActiveRecord::Base.connection.execute <<~SQL
           INSERT INTO temp_earliest_start_date
           SELECT patient_id, date_enrolled, earliest_start_date, birthdate, birthdate_estimated, death_date, gender, age_at_initiation, age_in_days, reason_for_starting_art
-          FROM temp_cohort_members #{occupation_filter(occupation)}
+          FROM temp_cohort_members #{occupation_filter(occupation: occupation, field_name: 'occupation')}
         SQL
       end
 
@@ -672,12 +673,6 @@ module ARTService
       end
       # rubocop:enable Metrics/MethodLength
 
-      def occupation_filter(occupation)
-        return '' if occupation.blank?
-        return '' if occupation == 'All'
-        return "WHERE occupation = '#{occupation}'" if occupation == 'Military'
-        return "WHERE (occupation != 'Military' OR occupation IS NULL)" if occupation == 'Civilian'
-      end
       ##
       # This will hold crucial information for cohort members
       # rubocop:disable Metrics/MethodLength
