@@ -166,8 +166,25 @@ module ARTService
             LEFT JOIN orders ord ON ord.start_date = latest_drug_order.start_date AND ord.patient_id = latest_drug_order.patient_id AND ord.voided = 0 AND ord.concept_id IN (SELECT concept_id FROM concept_name WHERE name LIKE '%Hydrochlorothiazide%' OR name LIKE '%Amlodipine%' OR name LIKE '%Enalapril%' OR name LIKE '%Atenolol%')
             LEFT JOIN drug_order dor ON dor.order_id = ord.order_id AND dor.quantity > 0
             LEFT JOIN drug d ON d.drug_id = dor.drug_inventory_id AND d.retired = 0
+            WHERE tpo.patient_id NOT IN (#{external_clients})
             GROUP BY tpo.patient_id
             ORDER BY tpo.patient_id ASC
+          SQL
+        end
+
+        def external_clients
+          <<~SQL
+            SELECT obs.person_id FROM obs,
+            (SELECT person_id, Max(obs_datetime) AS obs_datetime, concept_id FROM obs
+            WHERE concept_id IN (SELECT concept_id FROM concept_name WHERE name = 'Type of patient' AND voided = 0)
+            AND DATE(obs_datetime) <= #{@end_date}
+            AND voided = 0
+            GROUP BY person_id) latest_record
+            WHERE obs.person_id = latest_record.person_id
+            AND obs.concept_id = latest_record.concept_id
+            AND obs.obs_datetime = latest_record.obs_datetime
+            AND obs.value_coded IN (SELECT concept_id FROM concept_name WHERE name = 'Drug refill' || name = 'External consultation')
+            AND obs.voided = 0
           SQL
         end
       end
