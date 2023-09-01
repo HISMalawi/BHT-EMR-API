@@ -105,8 +105,9 @@ class Api::V1::ReportsController < ApplicationController
 
   def cohort_survival_analysis
     quarter, age_group, reg = params.require %i[quarter age_group regenerate]
+    occupation = params[:occupation]
     reg = (reg == 'true')
-    stats = service.cohort_survival_analysis(quarter, age_group, reg)
+    stats = service.cohort_survival_analysis(quarter, age_group, reg, occupation)
 
     render json: stats
   end

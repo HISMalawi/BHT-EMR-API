@@ -70,10 +70,10 @@ module ARTService
       cohort.disaggregated(quarter, age_group)
     end
 
-    def cohort_survival_analysis(quarter, age_group, regenerate)
+    def cohort_survival_analysis(quarter, age_group, regenerate, occupation)
       cohort = REPORTS['COHORT_SURVIVAL_ANALYSIS'].new(type: 'survival_analysis',
         name: 'survival_analysis', start_date: Date.today,
-        end_date: Date.today, regenerate: regenerate)
+        end_date: Date.today, regenerate: regenerate, occupation: occupation)
       cohort.survival_analysis(quarter, age_group)
     end
 

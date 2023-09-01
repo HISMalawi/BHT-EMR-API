@@ -78,8 +78,8 @@ class ReportService
     engine(@program).dispensation(start_date, end_date)
   end
 
-  def cohort_survival_analysis(quarter, age_group, regenerate)
-    engine(@program).cohort_survival_analysis(quarter, age_group, regenerate)
+  def cohort_survival_analysis(quarter, age_group, regenerate, occupation)
+    engine(@program).cohort_survival_analysis(quarter, age_group, regenerate, occupation)
   end
 
   def defaulter_list(start_date, end_date, pepfar)
