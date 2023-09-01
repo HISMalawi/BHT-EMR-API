@@ -184,6 +184,18 @@ emc_poc_migration_skipped_20220816.csv
 
 The file will indicate the result date and the client ARV number which can be used for BDE purposes
 
+## AIT Intergration
+To intergrate to AIT and send HTS patient data, follow the steps below
+
+-   Copy and populate the AIT config file
+  
+```bash
+cp ./config/ait.yml.example ./config/ait.yml
+```
+
+[SETUP AIT CONFIGURATION](db/hts_metadata/README.md)
+
+
 ## Running the API
 
 You can do the following (don't run it like this in production):

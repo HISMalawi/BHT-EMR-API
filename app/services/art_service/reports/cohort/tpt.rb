@@ -58,6 +58,9 @@ class ARTService::Reports::Cohort::Tpt
     patients = []
     newly_initiated_on_tpt.each do |patient|
       course = patient['course'].match(/3HP/) ? '3HP' : 'IPT'
+      next if patient['last_course'].present?
+      next if patient['tpt_initial_start_date'].present? && patient['tpt_initial_start_date'].to_date < @start_date.to_date
+
       if patient['transfer_course'].blank? && patient['last_course'].blank?
         patients << patient
       elsif patient['transfer_course'].present? && patient['last_course'].blank?
@@ -127,6 +130,7 @@ class ARTService::Reports::Cohort::Tpt
         AND tpt_transfer_in_obs.concept_id = #{ConceptName.find_by_name('TPT Drugs Received').concept_id}
         AND tpt_transfer_in_obs.voided = 0
         AND tpt_transfer_in_obs.value_drug IN (SELECT drug_id FROM drug WHERE concept_id IN (SELECT concept_id FROM concept_name WHERE name IN ('Rifapentine', 'Isoniazid', 'Isoniazid/Rifapentine')))
+      -- Get the last TPT prescription
       LEFT JOIN (
         SELECT
           o.patient_id,

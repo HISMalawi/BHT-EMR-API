@@ -26,6 +26,7 @@ module ARTService
       'REGIMENS_BY_WEIGHT_AND_GENDER' => ARTService::Reports::RegimensByWeightAndGender,
       'REGIMEN_SWITCH' => ARTService::Reports::RegimenSwitch,
       'RETENTION' => ARTService::Reports::Retention,
+      'LIMS_ELECTRONIC_RESULTS' => ARTService::Reports::LimsResults,
       'TPT_OUTCOME' => ARTService::Reports::TptOutcome,
       'CLINIC_TX_RTT' => ARTService::Reports::ClinicTxRtt,
       'TB_PREV2' => ARTService::Reports::Pepfar::TbPrev3,
@@ -43,7 +44,13 @@ module ARTService
       'VIRAL_LOAD_COVERAGE' => ARTService::Reports::Pepfar::ViralLoadCoverage2,
       'EXTERNAL_CONSULTATION_CLIENTS' => ARTService::Reports::ExternalConsultationClients,
       'SC_ARVDISP' => ARTService::Reports::Pepfar::ScArvdisp,
-      'PATIENT_ART_VL_DATES' => ARTService::Reports::Pepfar::PatientStartVL
+      'SC_CURR' => ARTService::Reports::Pepfar::ScCurr,
+      'PATIENT_ART_VL_DATES' => ARTService::Reports::Pepfar::PatientStartVL,
+      'MOH_TPT' => ARTService::Reports::MohTpt,
+      'TX_TB' => ARTService::Reports::Pepfar::TxTB,
+      'VL_COLLECTION' => ARTService::Reports::VlCollection,
+      'DISCREPANCY_REPORT' => ARTService::Reports::Clinic::DiscrepancyReport,
+      'STOCK_CARD' => ARTService::Reports::Clinic::StockCardReport
     }.freeze
 
     def generate_report(type:, **kwargs)
@@ -124,6 +131,10 @@ module ARTService
 
     def tx_rtt(start_date, end_date)
       REPORTS['TX_RTT'].new(start_date: start_date.to_date, end_date: end_date.to_date).data
+    end
+
+    def moh_tpt(start_date, end_date)
+      REPORTS['MOH_TPT'].new(start_date: start_date.to_date, end_date: end_date.to_date).data
     end
 
     def ipt_coverage(start_date, end_date)

@@ -21,9 +21,17 @@ module RadiologyService
 
       results.map do |order|
         label = RadiologyService::OrderLabel.new(order_id: order.id)
-        { examination_name: "#{label.order_type}-#{label.examination}-#{label.detailed_examination}",
+        { examination_name: examination_output(label),
           order_date: order.start_date, accession_number: order.accession_number, patient_id: order.patient_id }
       end
+    end
+
+    def examination_output(label)
+      examination_name = ''
+      examination_name += label.order_type
+      examination_name += "-#{label.examination}" unless label.examination.blank?
+      examination_name += "-#{label.detailed_examination}" unless label.detailed_examination.blank?
+      examination_name
     end
 
     # rubocop:disable Metrics/AbcSize

@@ -328,11 +328,11 @@ module ANCService
     end
 
     # Check if patient has been given drugs
-    # apart from TTV drugs.
+    # apart from TD drugs.
 
     def patient_given_drugs_today(patient, date)
 
-      ttv_drug = Drug.find_by name: "TTV (0.5ml)"
+      td_drug = Drug.find_by name: "TD (0.5ml)"
       drugs = []
 
       drug_order = ActiveRecord::Base.connection.select_all(
@@ -346,7 +346,7 @@ module ANCService
           ORDER BY encounter.encounter_datetime DESC"
       ).rows.collect{|d| drugs << d[0]}.compact
 
-      drugs.delete(ttv_drug.id)
+      drugs.delete(td_drug.id)
 
       if drugs.length > 0
         return true

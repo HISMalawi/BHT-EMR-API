@@ -3,7 +3,7 @@
 class Api::V1::Pharmacy::ItemsController < ApplicationController
   # GET /pharmacy/items[?drug_id=]
   def index
-    items = service.find_batch_items(params.permit(:drug_id, :current_quantity))
+    items = service.find_batch_items(params.permit(:drug_id, :current_quantity, :start_date, :end_date, :batch_number))
     render json: paginate(items)
   end
 
@@ -22,6 +22,15 @@ class Api::V1::Pharmacy::ItemsController < ApplicationController
     else
       render json: { errors: item.errors }, status: :bad_request
     end
+  end
+
+  def batch_update
+    permitted_params = params.permit(:verification_date, :reason, items: %i[id current_quantity delivered_quantity pack_size expiry_date delivery_date reason])
+    raise InvalidParameterError, 'reason is required' if permitted_params[:reason].blank?
+
+    service.batch_update_items(permitted_params)
+
+    render status: :no_content
   end
 
   def destroy

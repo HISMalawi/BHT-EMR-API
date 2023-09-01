@@ -54,6 +54,11 @@ class Api::V1::PatientIdentifiersController < ApplicationController
     render json: service.find_duplicates(id_type)
   end
 
+  def multiples
+    id_type = PatientIdentifierType.find(params.require(:type_id))
+    render json: service.find_multiples(id_type)
+  end
+
   def archive_active_filing_number
     itypes = PatientIdentifierType.where(name: ['Filing number','Archived filing number'])
     identifier_types = itypes.map(&:id)
@@ -70,6 +75,15 @@ class Api::V1::PatientIdentifiersController < ApplicationController
       identifier: identifier, location_id: Location.current.id)
 
     render json: archive_number, status: :created
+  end
+
+  def void_multiple_identifiers
+    identifiers = params[:identifiers]
+    reason = params[:reason] || "Voided by #{User.current.username}"
+    identifiers.each do |data|
+      PatientIdentifier.find(data).void(reason)
+    end
+    render status: :no_content
   end
 
   def swap_active_number

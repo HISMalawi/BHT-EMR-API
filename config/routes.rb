@@ -25,9 +25,20 @@ Rails.application.routes.draw do
         post '/activate', to: 'users#activate'
         post '/deactivate', to: 'users#deactivate'
       end
+      
+      resources :hts_reports, only: %i[index]
+      get '/hts_stats' => 'hts_reports#daily_stats'
+      get '/valid_provider_id', to: 'people#valid_provider_id'
+      get '/next_hts_linkage_ids_batch', to: 'people#next_hts_linkage_ids_batch'
+
+
 
       # notifications for nlims any features in the future
-      resources :notifications, only: %i[index update]
+      resources :notifications, only: %i[index update] do
+        collection do
+          put '/clear/:id', to: 'notifications#clear'
+        end
+      end
 
       # Not placed under users urls to allow crud on current user's roles
       resources :user_roles, only: %i[index create destroy]
@@ -51,6 +62,7 @@ Rails.application.routes.draw do
         get '/labels/national_health_id' => 'patients#print_national_health_id_label'
         get '/labels/filing_number' => 'patients#print_filing_number'
         get 'labels/print_tb_number', to: 'patients#print_tb_number'
+        get 'labels/print_hts_linkage_code/:code', to: 'patients#print_hts_linkage_code'
         get 'labels/print_tb_lab_order_summary', to: 'patients#print_tb_lab_order_summary'
         get '/visits' => 'patients#visits'
         get '/visit' => 'patients#visit'
@@ -190,6 +202,7 @@ Rails.application.routes.draw do
         resource :audit_trail, only: %i[show]
         resource :drug_movement, only: %i[show]
         resources :batches
+        resources :stock_verifications
         resources :items do
           post '/reallocate', to: 'items#reallocate'
           post '/dispose', to: 'items#dispose'
@@ -197,6 +210,7 @@ Rails.application.routes.draw do
         get 'earliest_expiring_item', to: 'items#earliest_expiring'
         get 'drug_consumption', to: 'drugs#drug_consumption'
         get 'stock_report', to: 'audit_trails#stock_report'
+        get '/audit_trail/grouped', to: 'audit_trails#show_grouped_audit_trail'
       end
 
       namespace :types do
@@ -209,6 +223,7 @@ Rails.application.routes.draw do
         get '/barcode', to: 'drugs#print_barcode'
       end
       get '/arv_drugs' => 'drugs#arv_drugs'
+      get '/tb_drugs' => 'drugs#tb_drugs'
 
       resources :drug_orders
       resources :orders do
@@ -222,6 +237,7 @@ Rails.application.routes.draw do
 
       resource :global_properties
       resource :user_properties
+      get '/validate_properties' => 'user_properties#unique_property'
 
       resource :session_stats, path: 'stats/session'
 
@@ -259,6 +275,7 @@ Rails.application.routes.draw do
       get '/search/properties' => 'properties#search'
       get '/search/landmarks' => 'landmarks#search'
       get '/search/identifiers/duplicates' => 'patient_identifiers#duplicates'
+      get '/search/identifiers/multiples' => 'patient_identifiers#multiples'
 
       get '/dde/patients/find_by_npid', to: 'dde#find_patients_by_npid'
       get '/dde/patients/find_by_name_and_gender', to: 'dde#find_patients_by_name_and_gender'
@@ -272,6 +289,10 @@ Rails.application.routes.draw do
       get '/sequences/next_accession_number', to: 'sequences#next_accession_number'
 
       post '/reports/encounters' => 'encounters#count'
+
+      #drugs_cms routes
+      get '/drug_cms/search', to: "drug_cms#search"
+      resources :drug_cms, only: %i[index]
     end
   end
 
@@ -295,6 +316,7 @@ Rails.application.routes.draw do
   post '/api/v1/vl_maternal_status' => 'api/v1/reports#vl_maternal_status'
   post '/api/v1/patient_art_vl_dates' => 'api/v1/reports#patient_art_vl_dates'
 
+
   # SQA controller
   post '/api/v1/duplicate_identifier' => 'api/v1/cleaning#duplicate_identifier'
   post '/api/v1/erroneous_identifier' => 'api/v1/cleaning#erroneous_identifier'
@@ -307,7 +329,6 @@ Rails.application.routes.draw do
   get '/api/v1/anc_data_cleaning_tools' => 'api/v1/cleaning#anc_tools'
 
   # OPD reports
-  get '/api/v1/malaria_report' => 'api/v1/reports#malaria_report'
   get '/api/v1/registration' => 'api/v1/reports#registration'
   get '/api/v1/diagnosis_by_address' => 'api/v1/reports#diagnosis_by_address'
   get '/api/v1/with_nids' => 'api/v1/reports#with_nids'
@@ -323,6 +344,7 @@ Rails.application.routes.draw do
   get '/api/v1/missed_appointments' => 'api/v1/reports#missed_appointments'
   post '/api/v1/addresses' => 'api/v1/person_addresses#create'
   get '/api/v1/archive_active_filing_number' => 'api/v1/patient_identifiers#archive_active_filing_number'
+  delete '/api/v1/void_multiple_identifiers' => 'api/v1/patient_identifiers#void_multiple_identifiers'
   get '/api/v1/ipt_coverage' => 'api/v1/reports#ipt_coverage'
   get '/api/v1/cohort_report_drill_down' => 'api/v1/reports#cohort_report_drill_down'
   post '/api/v1/swap_active_number' => 'api/v1/patient_identifiers#swap_active_number'
@@ -346,6 +368,7 @@ Rails.application.routes.draw do
   post '/api/v1/tx_mmd_client_level_data', to: 'api/v1/reports#tx_mmd_client_level_data'
   get '/api/v1/clients', to: 'api/v1/people#list'
   get '/api/v1/tb_prev', to: 'api/v1/reports#tb_prev'
+  get '/api/v1/moh_tpt', to: 'api/v1/reports#moh_tpt'
   get '/api/v1/tpt_prescription_count' => 'api/v1/patients#tpt_prescription_count'
   get '/api/v1/patient_visit_types', to: 'api/v1/reports#patient_visit_types'
   get '/api/v1/patient_visit_list', to: 'api/v1/reports#patient_visit_list'
@@ -369,4 +392,10 @@ Rails.application.routes.draw do
 
   get '/api/v1/data_cleaning_confirmation', to: 'api/v1/data_cleaning#view'
   post '/api/v1/data_cleaning_confirmation', to: 'api/v1/data_cleaning#create'
+
+  post '/api/v1/pharmacy/items/batch_update', to: 'api/v1/pharmacy/items#batch_update'
+
+  get '/api/v1/next_appointment', to: 'api/v1/appointments#next_appointment'
+
+  post 'api/v1/sync_to_ait', to: 'api/v1/patients#sync_to_ait'
 end

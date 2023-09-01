@@ -13,17 +13,12 @@ module ARTService
       end
 
       def regimen_report(type)
-        current_regimen(type)
+        ARTService::Reports::RegimenDispensationData.new(type: type, start_date: @start_date, end_date: @end_date).find_report
       end
 
       def latest_regimen_dispensed(rebuild_outcome)
         if rebuild_outcome
-          cohort_list = ARTService::Reports::CohortBuilder.new(outcomes_definition: 'moh')
-          cohort_list.create_tmp_patient_table
-          cohort_list.load_data_into_temp_earliest_start_date(@end_date.to_date)
-
-          outcomes = ARTService::Reports::Cohort::Outcomes.new(end_date: @end_date.to_date, definition: 'moh')
-          outcomes.update_cummulative_outcomes
+          ARTService::Reports::CohortBuilder.new(outcomes_definition: 'moh').init_temporary_tables(@start_date, @end_date)
         end
 
         latest_regimens
@@ -41,33 +36,49 @@ module ARTService
             drug.name, d.quantity, o.start_date, obs.value_numeric,
             person.birthdate, person.gender
           FROM orders o
-          INNER JOIN drug_order d ON d.order_id = o.order_id
+          INNER JOIN drug_order d ON d.order_id = o.order_id AND d.quantity > 0
           INNER JOIN drug ON drug.drug_id = d.drug_inventory_id
           INNER JOIN arv_drug On arv_drug.drug_id = drug.drug_id
-          INNER JOIN temp_patient_outcomes t ON o.patient_id = t.patient_id
-          INNER JOIN person ON person.person_id = o.patient_id
-          LEFT JOIN obs on obs.order_id = o.order_id AND obs.concept_id=#{pills_dispensed}
+          INNER JOIN temp_patient_outcomes t ON o.patient_id = t.patient_id AND t.cum_outcome = 'On antiretrovirals'
+          INNER JOIN person ON person.person_id = o.patient_id AND person.voided = 0
+          INNER JOIN (
+            SELECT MAX(o.start_date) start_date, o.patient_id
+            FROM orders o
+            INNER JOIN drug_order dor ON dor.order_id = o.order_id AND dor.quantity > 0
+              AND dor.drug_inventory_id IN (SELECT drug_id FROM arv_drug)
+            WHERE o.voided = 0
+              AND o.start_date <= '#{@end_date.to_date.strftime("%Y-%m-%d 23:59:59")}'
+              AND o.start_date >= '#{@start_date.to_date.strftime("%Y-%m-%d 00:00:00")}'
+            GROUP BY o.patient_id
+          ) lor ON lor.start_date = o.start_date AND lor.patient_id = o.patient_id
+          LEFT JOIN obs on obs.order_id = o.order_id AND obs.concept_id=#{pills_dispensed} AND obs.voided = 0
           LEFT JOIN patient_identifier i ON i.patient_id = o.patient_id
-          AND i.identifier_type = #{patient_identifier_type}
-          WHERE d.quantity > 0 AND o.voided = 0 AND DATE(o.start_date) = (
-            SELECT DATE(MAX(start_date)) FROM orders
-            INNER JOIN drug_order t USING(order_id)
-            WHERE patient_id = o.patient_id
-            AND start_date <= '#{@end_date.to_date.strftime("%Y-%m-%d 23:59:59")}' AND quantity > 0
-          ) AND person.voided = 0 AND i.voided = 0 AND t.cum_outcome = 'On antiretrovirals';
+            AND i.identifier_type = #{patient_identifier_type} AND i.voided = 0
+          WHERE o.voided = 0
+            AND o.start_date <= '#{@end_date.to_date.strftime("%Y-%m-%d 23:59:59")}'
+            AND o.start_date >= '#{@start_date.to_date.strftime("%Y-%m-%d 00:00:00")}'
+          ORDER BY o.patient_id
         SQL
+
+        patient_list = arv_dispensentions.map { |d| d['patient_id'] }.uniq.push(0)
+
+        @latest_vl = latest_vl_orders(patient_list)
+        @latest_result = latest_vl_results(patient_list)
 
         formated_data = {}
 
         (arv_dispensentions || []).each do |data|
-          patient_id = data['patient_id'].to_i
           dispensation_date = data['start_date'].to_date
+          patient_id = data['patient_id'].to_i
           order_id = data['order_id'].to_i
-          drug_id = data['drug_id'].to_i
+          # drug_id = data['drug_id'].to_i
           medication = data['name']
           quantity = data['quantity'].to_f
           value_numeric = data['value_numeric'].to_f
           drug_id = data['drug_id'].to_i
+          # find the latest vl result for the patient from the array of vl results {patient_id: number, order_date: date}
+          latest_vl = @latest_vl.select { |vl| vl['patient_id'] == patient_id }&.first
+          latest_result = @latest_result.select { |vl| vl['patient_id'] == patient_id }&.first
 
           formated_data[patient_id] = {} if formated_data[patient_id].blank?
           formated_data[patient_id][order_id] = {
@@ -78,13 +89,16 @@ module ARTService
             gender: data['gender'],
             birthdate: data['birthdate'],
             drug_id: drug_id,
-            pack_sizes: []
+            pack_sizes: [],
+            vl_latest_order_date: latest_vl.present? ? latest_vl['order_date']&.to_date : 'N/A',
+            vl_latest_result_date: latest_result.present? ? latest_result['result_date']&.to_date : 'N/A',
+            vl_latest_result: latest_result.present? ? latest_result['result'] : 'N/A'
           } if formated_data[patient_id][order_id].blank?
 
           formated_data[patient_id][order_id][:pack_sizes] << value_numeric
         end
 
-        return formated_data
+        formated_data
       end
 
       def regimen_data
@@ -103,7 +117,7 @@ module ARTService
           WHERE
           (
             start_date BETWEEN '#{@start_date.to_date.strftime('%Y-%m-%d 00:00:00')}' AND '#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-            AND t.drug_inventory_id IN (#{drug_ids.join(',')})
+            AND t.drug_inventory_id IN (#{drug_ids.join(',')}) AND t.quantity > 0
           )
           group by patient_id")
 
@@ -156,25 +170,25 @@ module ARTService
         drug_ids = Drug.joins('INNER JOIN concept_set s ON s.concept_id = drug.concept_id')\
                        .where('s.concept_set = ?', arv_concept_id).map(&:drug_id)
 
-        ActiveRecord::Base.connection.select_all <<EOF
-        SELECT
-          o.patient_id,  drug.name, d.quantity, o.start_date
-        FROM orders o
-        INNER JOIN drug_order d ON d.order_id = o.order_id
-        INNER JOIN drug ON drug.drug_id = d.drug_inventory_id
-        WHERE d.drug_inventory_id IN(#{drug_ids.join(',')})
-        AND o.patient_id = #{patient_id} AND
-        d.quantity > 0 AND o.voided = 0 AND DATE(o.start_date) = (
-          SELECT DATE(MAX(start_date)) FROM orders
-          INNER JOIN drug_order t USING(order_id)
-          WHERE patient_id = o.patient_id
-          AND (
-            start_date BETWEEN '#{@start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
-            AND '#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-            AND t.drug_inventory_id IN(#{drug_ids.join(',')}) AND quantity > 0
-          )
-        ) GROUP BY (o.order_id);
-EOF
+        ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT
+            o.patient_id,  drug.name, d.quantity, o.start_date
+          FROM orders o
+          INNER JOIN drug_order d ON d.order_id = o.order_id
+          INNER JOIN drug ON drug.drug_id = d.drug_inventory_id
+          WHERE d.drug_inventory_id IN(#{drug_ids.join(',')})
+          AND o.patient_id = #{patient_id} AND
+          d.quantity > 0 AND o.voided = 0 AND DATE(o.start_date) = (
+            SELECT DATE(MAX(start_date)) FROM orders
+            INNER JOIN drug_order t USING(order_id)
+            WHERE patient_id = o.patient_id
+            AND (
+              start_date BETWEEN '#{@start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
+              AND '#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+              AND t.drug_inventory_id IN(#{drug_ids.join(',')}) AND quantity > 0
+            )
+          ) GROUP BY (o.order_id)
+        SQL
       end
 
       def current_regimen(type)
@@ -205,31 +219,32 @@ EOF
             next
           end
 
-          curr_reg = ActiveRecord::Base.connection.select_one <<EOF
-          SELECT patient_current_regimen(#{patient_id}, '#{@end_date.to_date}') current_regimen
-EOF
+          curr_reg = ActiveRecord::Base.connection.select_one <<~SQL
+            SELECT patient_current_regimen(#{patient_id}, '#{@end_date.to_date}') current_regimen
+          SQL
 
           next unless visit_date >= @start_date.to_date && visit_date <= @end_date.to_date
 
           if clients[patient_id].blank?
-            demo = ActiveRecord::Base.connection.select_one <<EOF
-            SELECT
-              p.birthdate, p.gender, i.identifier arv_number,
-              n.given_name, n.family_name
-            FROM person p
-            LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
-            LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
-            AND i.identifier_type = 4 AND i.voided = 0
-            WHERE p.person_id = #{patient_id} GROUP BY p.person_id
-            ORDER BY n.date_created DESC, i.date_created DESC;
-EOF
-            viral_load = vl_result(patient_id)
+            demo = ActiveRecord::Base.connection.select_one <<~SQL
+              SELECT
+                p.birthdate, p.gender, i.identifier arv_number,
+                n.given_name, n.family_name
+              FROM person p
+              LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
+              LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
+              AND i.identifier_type = 4 AND i.voided = 0
+              WHERE p.person_id = #{patient_id} GROUP BY p.person_id
+              ORDER BY n.date_created DESC, i.date_created DESC;
+            SQL
+
+            viral_load = latest_vl_results([patient_id])
             clients[patient_id] = {
               arv_number: demo['arv_number'],
               given_name: demo['given_name'],
               family_name: demo['family_name'],
               birthdate: demo['birthdate'],
-              gender: demo['gender'],
+              gender: demo['gender'] == 'M' ? 'M' : maternal_status(patient_id, demo['gender']),
               current_regimen: curr_reg['current_regimen'],
               current_weight: current_weight(patient_id),
               art_start_date: r['earliest_start_date'],
@@ -274,29 +289,29 @@ EOF
 
           next unless visit_date >= @start_date.to_date && visit_date <= @end_date.to_date
 
-          prev_reg = ActiveRecord::Base.connection.select_one <<EOF
-          SELECT patient_current_regimen(#{patient_id}, '#{(visit_date - 1.day).to_date}') previous_regimen
-EOF
+          prev_reg = ActiveRecord::Base.connection.select_one <<~SQL
+            SELECT patient_current_regimen(#{patient_id}, '#{(visit_date - 1.day).to_date}') previous_regimen
+          SQL
 
-          current_reg = ActiveRecord::Base.connection.select_one <<EOF
-          SELECT patient_current_regimen(#{patient_id}, '#{visit_date}') current_regimen
-EOF
+          current_reg = ActiveRecord::Base.connection.select_one <<~SQL
+            SELECT patient_current_regimen(#{patient_id}, '#{visit_date}') current_regimen
+          SQL
 
           next if prev_reg['previous_regimen'] == current_reg['current_regimen']
           next if prev_reg['previous_regimen'] == 'N/A'
 
           if clients[patient_id].blank?
-            demo = ActiveRecord::Base.connection.select_one <<EOF
-            SELECT
-              p.birthdate, p.gender, i.identifier arv_number,
-              n.given_name, n.family_name, p.person_id
-            FROM person p
-            LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
-            LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
-            AND i.identifier_type = 4 AND i.voided = 0
-            WHERE p.person_id = #{patient_id} GROUP BY p.person_id
-            ORDER BY n.date_created DESC, i.date_created DESC;
-EOF
+            demo = ActiveRecord::Base.connection.select_one <<~SQL
+              SELECT
+                p.birthdate, p.gender, i.identifier arv_number,
+                n.given_name, n.family_name, p.person_id
+              FROM person p
+              LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
+              LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
+              AND i.identifier_type = 4 AND i.voided = 0
+              WHERE p.person_id = #{patient_id} GROUP BY p.person_id
+              ORDER BY n.date_created DESC, i.date_created DESC
+            SQL
 
             clients[patient_id] = {
               arv_number: (demo['arv_number'].blank? ? 'N/A' : demo['arv_number']),
@@ -351,33 +366,82 @@ EOF
         (obs.first.value_numeric.blank? ? obs.first.value_text : obs.first.value_numeric)
       end
 
-      def vl_result(patient_id)
-        ActiveRecord::Base.connection.select_one <<~SQL
-          SELECT lab_result_obs.obs_datetime AS result_date,
-          CONCAT (COALESCE(measure.value_modifier, '='),' ',COALESCE(measure.value_numeric, measure.value_text, '')) as result
-          FROM obs AS lab_result_obs
-          INNER JOIN orders
-            ON orders.order_id = lab_result_obs.order_id
-            AND orders.voided = 0
-          INNER JOIN obs AS measure
-            ON measure.obs_group_id = lab_result_obs.obs_id
-            AND measure.voided = 0
-          INNER JOIN (
-            SELECT concept_id, name
-            FROM concept_name
-            INNER JOIN concept USING (concept_id)
-            WHERE concept.retired = 0
-            AND name NOT LIKE 'Lab test result'
-            GROUP BY concept_id
-          ) AS measure_concept
-            ON measure_concept.concept_id = measure.concept_id
-          WHERE lab_result_obs.voided = 0
-          AND measure.person_id = #{patient_id}
-          AND (measure.value_numeric IS NOT NULL || measure.value_text IS NOT NULL)
-          AND lab_result_obs.obs_datetime <= '#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-          ORDER BY lab_result_obs.obs_datetime DESC
-          LIMIT 1
+      # def vl_result(patient_id)
+      #   ActiveRecord::Base.connection.select_one <<~SQL
+      #     SELECT lab_result_obs.obs_datetime AS result_date,
+      #     CONCAT (COALESCE(measure.value_modifier, '='),' ',COALESCE(measure.value_numeric, measure.value_text, '')) as result
+      #     FROM obs AS lab_result_obs
+      #     INNER JOIN orders
+      #       ON orders.order_id = lab_result_obs.order_id
+      #       AND orders.voided = 0
+      #     INNER JOIN obs AS measure
+      #       ON measure.obs_group_id = lab_result_obs.obs_id
+      #       AND measure.voided = 0
+      #     INNER JOIN (
+      #       SELECT concept_id, name
+      #       FROM concept_name
+      #       INNER JOIN concept USING (concept_id)
+      #       WHERE concept.retired = 0
+      #       AND name NOT LIKE 'Lab test result'
+      #       GROUP BY concept_id
+      #     ) AS measure_concept
+      #       ON measure_concept.concept_id = measure.concept_id
+      #     WHERE lab_result_obs.voided = 0
+      #     AND measure.person_id = #{patient_id}
+      #     AND (measure.value_numeric IS NOT NULL || measure.value_text IS NOT NULL)
+      #     AND lab_result_obs.obs_datetime <= '#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+      #     ORDER BY lab_result_obs.obs_datetime DESC
+      #     LIMIT 1
+      #   SQL
+      # end
+
+      def latest_vl_orders(patient_list)
+        ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT odr.patient_id, MAX(start_date) AS order_date
+          FROM obs o
+          INNER JOIN orders odr ON odr.order_id = o.order_id AND odr.voided = 0 AND DATE(odr.start_date) <= '#{@end_date}'
+          WHERE o.concept_id = #{ConceptName.find_by_name('Test Type').concept_id}
+          AND o.value_coded = #{ConceptName.find_by_name('HIV viral load').concept_id}
+          AND o.voided = 0
+          AND o.person_id IN (#{patient_list.join(',')})
+          GROUP BY odr.patient_id
         SQL
+      end
+
+      def latest_vl_results(patient_list)
+        ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT o.person_id AS patient_id,
+          o.obs_datetime AS result_date,
+          CONCAT (COALESCE(o.value_modifier, '='),' ',COALESCE(o.value_numeric, o.value_text, '')) AS result
+          FROM obs o
+          INNER JOIN (
+            SELECT MAX(obs_datetime) AS obs_datetime, person_id
+            FROM obs co
+            INNER JOIN orders odr ON odr.order_id = co.order_id AND odr.voided = 0
+            WHERE co.concept_id = #{ConceptName.find_by_name('HIV viral load').concept_id}
+            AND co.voided = 0
+            AND co.obs_datetime <= '#{@end_date}'
+            AND (co.value_numeric IS NOT NULL || co.value_text IS NOT NULL)
+            AND co.person_id IN (#{patient_list.join(',')})
+            GROUP BY co.person_id
+          ) AS latest_vl ON latest_vl.obs_datetime = o.obs_datetime AND latest_vl.person_id = o.person_id
+          INNER JOIN orders odr ON odr.order_id = o.order_id AND odr.voided = 0
+          WHERE o.concept_id = #{ConceptName.find_by_name('HIV viral load').concept_id}
+          AND o.voided = 0 AND o.obs_datetime <= '#{@end_date}'
+          AND (o.value_numeric IS NOT NULL || o.value_text IS NOT NULL)
+          AND o.person_id IN (#{patient_list.join(',')})
+          ORDER BY o.obs_datetime DESC
+        SQL
+      end
+
+      def maternal_status(patient_id, current_gender)
+        return nil if current_gender.blank?
+
+        result = ARTService::Reports::Pepfar::ViralLoadCoverage2.new(start_date: @start_date, end_date: @end_date).vl_maternal_status([patient_id])
+        gender = 'FNP'
+        gender = 'FP' unless result[:FP].blank?
+        gender = 'FBf' unless result[:FBf].blank?
+        gender
       end
     end
   end

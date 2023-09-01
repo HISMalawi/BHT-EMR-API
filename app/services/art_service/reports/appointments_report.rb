@@ -1,27 +1,30 @@
-
 # frozen_string_literal: true
 
 module ARTService
   module Reports
+    # Produces an Appointment Report
 
-    encounter_names = [
-      'VITALS','HIV STAGING',
-      'APPOINTMENT','HIV CLINIC REGISTRATION',
-      'ART_FOLLOWUP','LAB','TREATMENT','UPDATE OUTCOME',
-      'HIV RECEPTION','HIV CLINIC CONSULTATION',
-      'DISPENSING','LAB ORDERS','ART ADHERENCE',
-      'GIVE LAB RESULTS','CERVICAL CANCER SCREENING',
-      'HYPERTENSION MANAGEMENT','FAST TRACK ASSESMENT'
-    ]
-
-    HIV_ENCOUNTERS = EncounterType.where('name IN(?)', encounter_names).map(&:id)
-
+    # rubocop:disable Metrics/ClassLength
     class AppointmentsReport
+      ENCOUNTER_NAMES = [
+        'VITALS', 'HIV STAGING',
+        'APPOINTMENT', 'HIV CLINIC REGISTRATION',
+        'ART_FOLLOWUP', 'TREATMENT', 'UPDATE OUTCOME',
+        'HIV RECEPTION', 'LAB', 'HIV CLINIC CONSULTATION',
+        'DISPENSING', 'LAB ORDERS', 'ART ADHERENCE',
+        'GIVE LAB RESULTS', 'CERVICAL CANCER SCREENING',
+        'HYPERTENSION MANAGEMENT', 'FAST TRACK ASSESMENT'
+      ].freeze
+
+      HIV_ENCOUNTERS = EncounterType.where('name IN(?)', ENCOUNTER_NAMES).map(&:id)
+
       def initialize(start_date:, end_date:)
         @start_date = start_date
         @end_date = end_date
       end
 
+      # rubocop:disable Metrics/MethodLength
+      # rubocop:disable Metrics/AbcSize
       def missed_appointments
         appointments = Observation.joins(:encounter)
                                   .merge(appointment_encounters)
@@ -38,14 +41,20 @@ module ARTService
           patients << patient unless patient.blank?
         end
       end
+      # rubocop:enable Metrics/AbcSize
+      # rubocop:enable Metrics/MethodLength
 
+      # rubocop:disable Metrics/MethodLength
+      # rubocop:disable Metrics/AbcSize
+      # rubocop:disable Metrics/PerceivedComplexity
+      # rubocop:disable Metrics/CyclomaticComplexity
       def patient_visit_types
-        yes_concept = ConceptName.find_by_name("YES").concept_id
+        yes_concept = ConceptName.find_by_name('YES').concept_id
         hiv_reception_breakdown = {}
 
         (patient_visits || []).each do |v|
           visit_date = v['obs_datetime'].to_date
-          visit_type = v["name"]
+          visit_type = v['name']
           ans_given = v['value_coded'].to_i == yes_concept
           patient_id = v['patient_id'].to_i
           patient_present = (visit_type.match(/patient/i) && ans_given ? true : false)
@@ -62,21 +71,32 @@ module ARTService
             }
           end
 
-          hiv_reception_breakdown[visit_date][patient_id][:patient_present] = patient_present if visit_type.match(/patient/i)
-          hiv_reception_breakdown[visit_date][patient_id][:guardian_present] = guardian_present if visit_type.match(/person/i)
+          if visit_type.match(/patient/i)
+            hiv_reception_breakdown[visit_date][patient_id][:patient_present] = patient_present
+          end
+          if visit_type.match(/person/i)
+            hiv_reception_breakdown[visit_date][patient_id][:guardian_present] = guardian_present
+          end
         end
 
-
-        return hiv_reception_breakdown
+        hiv_reception_breakdown
       end
+      # rubocop:enable Metrics/CyclomaticComplexity
+      # rubocop:enable Metrics/PerceivedComplexity
+      # rubocop:enable Metrics/AbcSize
+      # rubocop:enable Metrics/MethodLength
 
+      # rubocop:disable Metrics/MethodLength
+      # rubocop:disable Metrics/AbcSize
+      # rubocop:disable Metrics/PerceivedComplexity
+      # rubocop:disable Metrics/CyclomaticComplexity
       def patient_visit_list
-        yes_concept = ConceptName.find_by_name("YES").concept_id
+        yes_concept = ConceptName.find_by_name('YES').concept_id
         hiv_reception_breakdown = {}
 
         (patient_visits || []).each do |v|
-          visit_date = v['obs_datetime'].to_date
-          visit_type = v["name"]
+          # visit_date = v['obs_datetime'].to_date
+          visit_type = v['name']
           ans_given = v['value_coded'].to_i == yes_concept
           patient_id = v['patient_id'].to_i
           patient_present = (visit_type.match(/patient/i) && ans_given ? true : false)
@@ -86,11 +106,11 @@ module ARTService
             demographics = client_data(patient_id)
             hiv_reception_breakdown[patient_id] = {
               patient_present: false, guardian_present: false,
-              given_name: demographics["given_name"],
-              family_name: demographics["family_name"],
-              gender: demographics["gender"],
-              birthdate: demographics["birthdate"],
-              arv_number: demographics["arv_number"]
+              given_name: demographics['given_name'],
+              family_name: demographics['family_name'],
+              gender: demographics['gender'],
+              birthdate: demographics['birthdate'],
+              arv_number: demographics['arv_number']
             }
           end
 
@@ -98,87 +118,115 @@ module ARTService
           hiv_reception_breakdown[patient_id][:guardian_present] = guardian_present if visit_type.match(/person/i)
         end
 
-        return hiv_reception_breakdown
+        hiv_reception_breakdown
       end
+      # rubocop:enable Metrics/CyclomaticComplexity
+      # rubocop:enable Metrics/PerceivedComplexity
+      # rubocop:enable Metrics/AbcSize
+      # rubocop:enable Metrics/MethodLength
 
       private
 
       def client_data(patient_id)
-        person = ActiveRecord::Base.connection.select_one <<~SQL
-        SELECT
-          n.given_name, n.family_name, p.birthdate, p.gender,
-          i.identifier arv_number, a.value cell_number,
-          s.state_province district, s.county_district ta,
-          s.city_village village
-        FROM person p
-        LEFT JOIN person_name n ON n.person_id = p.person_id
-        LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
-        AND i.voided = 0 AND i.identifier_type = 4
-        LEFT JOIN person_attribute a ON a.person_id = p.person_id
-        AND a.voided = 0 AND a.person_attribute_type_id = 12
-        LEFT JOIN person_address s ON s.person_id = p.person_id
-        AND s.voided = 0 WHERE p.person_id = #{patient_id}
-        GROUP BY p.person_id, DATE(p.date_created)
-        ORDER BY p.person_id, p.date_created;
+        ActiveRecord::Base.connection.select_one <<~SQL
+          SELECT
+            n.given_name, n.family_name, p.birthdate, p.gender,
+            i.identifier arv_number, a.value cell_number,
+            s.state_province district, s.county_district ta,
+            s.city_village village
+          FROM person p
+          LEFT JOIN person_name n ON n.person_id = p.person_id
+          LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
+          AND i.voided = 0 AND i.identifier_type = 4
+          LEFT JOIN person_attribute a ON a.person_id = p.person_id
+          AND a.voided = 0 AND a.person_attribute_type_id = 12
+          LEFT JOIN person_address s ON s.person_id = p.person_id
+          AND s.voided = 0 WHERE p.person_id = #{patient_id}
+          GROUP BY p.person_id, DATE(p.date_created)
+          ORDER BY p.person_id, p.date_created;
         SQL
       end
 
       def patient_visits
-        encounter_type = EncounterType.find_by_name("HIV RECEPTION")
+        encounter_type = EncounterType.find_by_name('HIV RECEPTION')
 
-        observations = Observation.joins("INNER JOIN encounter e ON e.encounter_id = obs.encounter_id
-          INNER JOIN concept_name c ON c.concept_id = obs.concept_id").\
-          where("encounter_type = ? AND (obs_datetime BETWEEN ? AND ?)",
-            encounter_type.id, @start_date.strftime('%Y-%m-%d 00:00:00'),
-              @end_date.strftime('%Y-%m-%d 23:59:59')).\
-                select("e.patient_id, obs.obs_datetime, c.name,
+        Observation.joins("INNER JOIN encounter e ON e.encounter_id = obs.encounter_id
+          INNER JOIN concept_name c ON c.concept_id = obs.concept_id")\
+                   .where('encounter_type = ? AND (obs_datetime BETWEEN ? AND ?)',
+                          encounter_type.id, @start_date.strftime('%Y-%m-%d 00:00:00'),
+                          @end_date.strftime('%Y-%m-%d 23:59:59'))\
+                   .select("e.patient_id, obs.obs_datetime, c.name,
                   c.concept_id, obs.value_coded").group("DATE(obs.obs_datetime),
-                     e.patient_id, c.concept_id").order("obs_datetime ASC")
-
-        return observations
+                     e.patient_id, c.concept_id").order('obs_datetime ASC')
       end
-
 
       def missed_appointment?(obs)
-        client_came?(obs.person_id, obs.value_datetime)
+        client_came?(obs.person_id, obs.value_datetime, obs.encounter.encounter_datetime.to_date + 1.day)
       end
 
-      def client_came?(person_id, value_datetime)
-        encounters = Encounter.where("patient_id = ? AND encounter_type IN(?)
-          AND encounter_datetime BETWEEN ? AND ?", person_id,
-          HIV_ENCOUNTERS, (value_datetime.to_date - 14.day).strftime('%Y-%m-%d 00:00:00'),
-          Date.today.strftime('%Y-%m-%d 23:59:59'))
+      def client_came?(person_id, value_datetime, day_after_visit_date)
+        # we need to check if the client had a dispensing encounter
+        # check if the client was given arv drugs via the orders table and drug_order table
+        # on the drug_order table check if the quantity column is greater than 0
+        # if the quantity is greater than 0 then the client was given drugs
+        # arv drugs are easily found by Drug.arv_drugs
+        encounters = Encounter.joins(:orders)
+                              .joins("INNER JOIN drug_order d ON d.order_id = orders.order_id AND d.quantity > 0
+                                      AND d.drug_inventory_id IN(#{arv_drugs})")
+                              .where(patient_id: person_id, encounter_type: treatment_encounter)
+                              .where('encounter_datetime BETWEEN ? AND ?',
+                                     day_after_visit_date.strftime('%Y-%m-%d 00:00:00'),
+                                     @end_date.strftime('%Y-%m-%d 23:59:59'))
+                              .where(orders: { voided: 0 })
+                              .where(voided: 0)
 
-        if encounters.blank?
-          return client_info person_id, value_datetime
-        end
-
-
+        client_info(person_id, value_datetime) if encounters.blank? && client_alive?(person_id, value_datetime)
       end
 
+      def client_alive?(person_id, value_datetime)
+        # check if the client is alive and doesn't have an adverse outcome
+        result = ActiveRecord::Base.connection.select_one <<~SQL
+          SELECT patient_outcome(#{person_id}, '#{value_datetime.to_date}') outcome;
+        SQL
+
+        result['outcome'].match(/Patient died|Patient transferred out|Treatment stopped/i).blank?
+      end
+
+      def arv_drugs
+        @arv_drugs ||= Drug.arv_drugs.pluck(:drug_id).join(',')
+      end
+
+      def treatment_encounter
+        @treatment_encounter ||= EncounterType.find_by_name('TREATMENT').id
+      end
+
+      # rubocop:disable Metrics/MethodLength
+      # rubocop:disable Metrics/AbcSize
       def client_info(patient_id, appointment_date)
-        person = ActiveRecord::Base.connection.select_one <<EOF
-        SELECT
-          n.given_name, n.family_name, p.birthdate, p.gender,
-          i.identifier arv_number, a.value cell_number,
-          s.state_province district, s.county_district ta,
-          s.city_village village
-        FROM person p
-        LEFT JOIN person_name n ON n.person_id = p.person_id
-        LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
-        AND i.voided = 0 AND i.identifier_type = 4
-        LEFT JOIN person_attribute a ON a.person_id = p.person_id
-        AND a.voided = 0 AND a.person_attribute_type_id = 12
-        LEFT JOIN person_address s ON s.person_id = p.person_id
-        AND s.voided = 0 WHERE p.person_id = #{patient_id}
-        GROUP BY p.person_id, DATE(p.date_created)
-        ORDER BY p.person_id, p.date_created;
-EOF
+        person = ActiveRecord::Base.connection.select_one <<~SQL
+          SELECT
+            n.given_name, n.family_name, p.birthdate, p.gender,
+            i.identifier arv_number, a.value cell_number,
+            s.state_province district, s.county_district ta,
+            s.city_village village
+          FROM person p
+          LEFT JOIN person_name n ON n.person_id = p.person_id
+          LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
+          AND i.voided = 0 AND i.identifier_type = 4
+          LEFT JOIN person_attribute a ON a.person_id = p.person_id
+          AND a.voided = 0 AND a.person_attribute_type_id = 12
+          LEFT JOIN person_address s ON s.person_id = p.person_id
+          AND s.voided = 0 WHERE p.person_id = #{patient_id}
+          GROUP BY p.person_id, DATE(p.date_created)
+          ORDER BY p.person_id, p.date_created;
+        SQL
 
         current_outcome = get_current_outcome(patient_id)
-        return nil if current_outcome.match(/died/i) || current_outcome.match(/transfer/i) || current_outcome.match(/stop/i)
+        if current_outcome.match(/died/i) || current_outcome.match(/transfer/i) || current_outcome.match(/stop/i)
+          return nil
+        end
 
-        return {
+        {
           given_name: person['given_name'],
           family_name: person['family_name'],
           birthdate: person['birthdate'],
@@ -194,25 +242,33 @@ EOF
           person_id: patient_id
         }
       end
+      # rubocop:enable Metrics/MethodLength
+      # rubocop:enable Metrics/AbcSize
 
       def days_missed(set_date)
-        missed_days  = ActiveRecord::Base.connection.select_one <<~SQL
+        missed_days = ActiveRecord::Base.connection.select_one <<~SQL
           SELECT TIMESTAMPDIFF(day, DATE('#{set_date}'), DATE('#{@end_date}')) days;
         SQL
 
-        return missed_days["days"].to_i
+        missed_days['days'].to_i
       end
 
+      # rubocop:disable Metrics/MethodLength
       def eventually_came_on(patient_id, date)
-        data = ActiveRecord::Base.connection.select_one <<EOF
-        SELECT MIN(encounter_datetime) visit_date FROM encounter
-        WHERE patient_id = #{patient_id}
-        AND encounter_type IN(#{HIV_ENCOUNTERS.join(',')})
-        AND encounter_datetime > '#{date.to_date.strftime('%Y-%m-%d 23:59:59')}';
-EOF
+        data = ActiveRecord::Base.connection.select_one <<~SQL
+          SELECT MIN(encounter_datetime) visit_date FROM encounter
+          WHERE patient_id = #{patient_id}
+          AND encounter_type IN(#{HIV_ENCOUNTERS.join(',')})
+          AND encounter_datetime > '#{date.to_date.strftime('%Y-%m-%d 23:59:59')}';
+        SQL
 
-        return data['visit_date'].to_date rescue nil
+        begin
+          data['visit_date'].to_date
+        rescue StandardError
+          nil
+        end
       end
+      # rubocop:enable Metrics/MethodLength
 
       def concept(name)
         ConceptName.find_by_name name
@@ -227,12 +283,13 @@ EOF
           SELECT patient_outcome(#{patient_id}, DATE('#{@end_date}')) as outcome;
         SQL
 
-        return current_outcome_info['outcome']
+        current_outcome_info['outcome']
       end
 
       def referral_patients
         Observation.where(concept: ConceptName.where(name: 'Type of patient').select(:concept_id),
-                          value_coded: ConceptName.where("name = 'External consultation' OR name = 'Drug refill'").select(:concept_id),
+                          value_coded: ConceptName.where("name = 'External consultation' OR name = 'Drug refill'")
+                                                  .select(:concept_id),
                           person_id: registration_encounters.select(:patient_id))
                    .where('obs_datetime < DATE(?) + INTERVAL 1 DAY', @end_date)
                    .distinct(:person_id)
@@ -248,5 +305,6 @@ EOF
                         type: EncounterType.where(name: 'Registration'))
       end
     end
+    # rubocop:enable Metrics/ClassLength
   end
 end

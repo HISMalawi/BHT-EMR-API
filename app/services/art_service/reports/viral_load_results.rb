@@ -35,7 +35,8 @@ module ARTService
                  COALESCE(orders.discontinued_date, orders.start_date) AS specimen_drawn_date,
                  test_results_obs.obs_datetime AS result_date,
                  COALESCE(test_result_measure_obs.value_modifier, '=') AS result_modifier,
-                 COALESCE(test_result_measure_obs.value_numeric, test_result_measure_obs.value_text) AS result
+                 COALESCE(test_result_measure_obs.value_numeric, test_result_measure_obs.value_text) AS result,
+                 patient_current_regimen(orders.patient_id, orders.start_date) AS current_regimen
           FROM orders
           INNER JOIN concept_name AS specimen_type
             ON specimen_type.concept_id = orders.concept_id

@@ -10,7 +10,8 @@ class ReportService
     'LABORATORY ORDERS' => LaboratoryService::ReportEngine,
     'CXCA PROGRAM' => CXCAService::ReportEngine,
     'RADIOLOGY PROGRAM' => RadiologyService::ReportEngine,
-    'PATIENT REGISTRATION PROGRAM' => PatientRegistrationService::ReportEngine
+    'PATIENT REGISTRATION PROGRAM' => PatientRegistrationService::ReportEngine,
+    'HTC PROGRAM' => HtsService::ReportEngine
   }.freeze
   LOGGER = Rails.logger
 
@@ -47,10 +48,6 @@ class ReportService
 
   def diagnosis(start_date, end_date)
     engine(@program).diagnosis(start_date, end_date)
-  end
-
-  def malaria_report(start_date, end_date)
-    engine(@program).malaria_report(start_date, end_date)
   end
 
   def registration(start_date, end_date)
@@ -132,6 +129,10 @@ class ReportService
 
   def tx_rtt(start_date, end_date)
     engine(@program).tx_rtt(start_date, end_date)
+  end
+
+  def moh_tpt(start_date, end_date)
+    engine(@program).moh_tpt(start_date, end_date)
   end
 
   def ipt_coverage(start_date, end_date)

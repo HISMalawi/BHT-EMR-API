@@ -59,3 +59,9 @@ db/idsr_metadata/*.json
 
 # Ignore json files under lims
 db/lims_metadata/*.json
+
+.solargraph.yml
+.vscode
+
+# Ignore json files under hts_metadata
+db/hts_metadata/*.json

@@ -11,13 +11,14 @@ module ARTService
 					"TLE/400 90-count bottles" => {drugs: [735], quantity: 90},
 					"TLE 600/TEE bottles" => {drugs: [11], quantity: 'N/A'},
 				 	"DTG 10 90-count bottles" => {drugs: [980], quantity: 90},
+					"DTG 50 30-count bottles" => {drugs: [982], quantity: 30},
 					"LPV/r 100/25 tabs 60 tabs/bottle" => {drugs: [23,73,74,739,977,1045], quantity: 60},
 					"LPV/r 40/10 (pediatrics) bottles" => {drugs: [94,979], quantity: 'N/A'},
 					"NVP (adult) bottles" => {drugs: [22,613], quantity: 'N/A'},
 					"NVP (pediatric) bottles" => {drugs: [21,817,968,971], quantity: 'N/A'},
 					"Other (adult) bottles" => {drugs: [
 						3,5,6,10,38,39,40,42,89,614,730,731,734,738,
-						814,815,932,933,934,952,954,955,957,969,976,978,982,984, 1217, 1213, 14
+						814,815,932,933,934,952,954,955,957,969,976,978,984, 1217, 1213, 14
 					], quantity: 'N/A'},
 					"Other (pediatric) bottles" => {drugs: [
 						2, 9, 28, 29, 30, 31, 32, 36, 37, 41, 70, 71, 72, 90, 91,
@@ -50,6 +51,7 @@ module ARTService
 						{name: "TLE/400 90-count bottles", units: 0, quantity: 90, dispensations: []},
 						{name: "TLE 600/TEE bottles", units: 0, quantity: 'N/A', dispensations: []},
 						{name: "DTG 10 90-count bottles", units: 0, quantity: 90, dispensations: []},
+						{name: "DTG 50 30-count bottles", units: 0, quantity: 30, dispensations: []},
 						{name: "LPV/r 100/25 tabs 60 tabs/bottle", units: 0, quantity: 60, dispensations: []},
 						{name: "LPV/r 40/10 (pediatrics) bottles", units: 0, quantity: 'N/A', dispensations: []},
 						{name: "NVP (adult) bottles",  units: 0, quantity: 'N/A', dispensations: []},

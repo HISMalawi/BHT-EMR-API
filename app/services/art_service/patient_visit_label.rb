@@ -71,6 +71,7 @@ module ARTService
     end
 
     def seen_by(patient, date = Date.today)
+      date = date.to_date
       encounter_type = EncounterType.find_by_name('HIV CLINIC CONSULTATION').id
       a = Encounter.find_by_sql("SELECT * FROM encounter WHERE encounter_type = '#{encounter_type}'
                                   AND patient_id = #{patient.id}
