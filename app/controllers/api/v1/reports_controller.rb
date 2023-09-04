@@ -176,7 +176,7 @@ class Api::V1::ReportsController < ApplicationController
   end
 
   def tx_rtt
-    render json: service.tx_rtt(params[:start_date], params[:end_date])
+    render json: service.tx_rtt(params[:start_date], params[:end_date], occupation: params[:occupation])
   end
 
   def moh_tpt
