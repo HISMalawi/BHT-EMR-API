@@ -179,7 +179,7 @@ class Api::V1::ReportsController < ApplicationController
   end
 
   def moh_tpt
-    render json: service.moh_tpt(params[:start_date], params[:end_date])
+    render json: service.moh_tpt(params[:start_date], params[:end_date], occupation: params[:occupation])
   end
 
   def ipt_coverage

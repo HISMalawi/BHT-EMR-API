@@ -604,15 +604,7 @@ module ARTService
                  pa.value AS occupation
           FROM patient_program
           INNER JOIN person ON person.person_id = patient_program.patient_id
-          LEFT JOIN (
-            SELECT a.person_id, a.value
-            FROM person_attribute a
-            LEFT OUTER JOIN person_attribute b
-            ON a.person_attribute_id = b.person_attribute_id
-            AND a.date_created < b.date_created
-            AND b.voided = 0
-            WHERE b.person_attribute_id IS NULL AND a.person_attribute_type_id = 13 AND a.voided = 0
-          ) pa ON pa.person_id = patient_program.patient_id
+          LEFT JOIN (#{current_occupation_query}) pa ON pa.person_id = patient_program.patient_id
           LEFT JOIN patient_state AS outcome
             ON outcome.patient_program_id = patient_program.patient_program_id
           LEFT JOIN encounter AS clinic_registration_encounter

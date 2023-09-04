@@ -34,7 +34,7 @@ module ARTService
         @last_day_of_month = end_date.to_date
         tpt_clients = process_tpt_clients(clients)
         @param = 'gender'
-        load_patients_into_report report, tpt_clients
+        load_moh_patients_into_report report, tpt_clients
       end
 
       private
@@ -392,6 +392,19 @@ module ARTService
           if patient_completed_tpt?(patient, patient['tpt_type'])
             report[patient['age_group']][patient[@param]][:completed_tpt_new] << @common_response if new_on_art
             report[patient['age_group']][patient[@param]][:completed_tpt_prev] << @common_response unless new_on_art
+          else
+            report[patient['age_group']][patient[@param]][:not_completed_tpt] << @common_response
+            process_outcomes report, patient
+          end
+        end
+      end
+
+      def load_moh_patients_into_report(report, patients)
+        patients.each do |patient|
+          common_reponse(patient)
+          report[patient['age_group']][patient[@param]][:started_tpt] << @common_response
+          if patient_completed_tpt?(patient, patient['tpt_type'])
+            report[patient['age_group']][patient[@param]][:completed_tpt] << @common_response
           else
             report[patient['age_group']][patient[@param]][:not_completed_tpt] << @common_response
             process_outcomes report, patient

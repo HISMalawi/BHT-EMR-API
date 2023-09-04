@@ -11,11 +11,12 @@ module ARTService
 
         include Utils
 
-        def initialize(start_date:, end_date:, **_kwargs)
+        def initialize(start_date:, end_date:, **kwargs)
           @start_date = ActiveRecord::Base.connection.quote(start_date)
           @check_date = start_date.to_date - 6.months
           @cut_off_point = start_date.to_date
           @end_date = ActiveRecord::Base.connection.quote(end_date)
+          @occupation = kwargs[:occupation]
         end
 
         def find_report

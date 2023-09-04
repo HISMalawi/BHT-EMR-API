@@ -133,8 +133,8 @@ module ARTService
       REPORTS['TX_RTT'].new(start_date: start_date.to_date, end_date: end_date.to_date).data
     end
 
-    def moh_tpt(start_date, end_date)
-      REPORTS['MOH_TPT'].new(start_date: start_date.to_date, end_date: end_date.to_date).data
+    def moh_tpt(start_date, end_date, **kwargs)
+      REPORTS['MOH_TPT'].new(start_date: start_date.to_date, end_date: end_date.to_date, **kwargs).data
     end
 
     def ipt_coverage(start_date, end_date)

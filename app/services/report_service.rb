@@ -131,8 +131,8 @@ class ReportService
     engine(@program).tx_rtt(start_date, end_date)
   end
 
-  def moh_tpt(start_date, end_date)
-    engine(@program).moh_tpt(start_date, end_date)
+  def moh_tpt(start_date, end_date, **kwargs)
+    engine(@program).moh_tpt(start_date, end_date, **kwargs)
   end
 
   def ipt_coverage(start_date, end_date)

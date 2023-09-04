@@ -33,4 +33,16 @@ module CommonSqlQueryUtils
       AND obs.voided = 0
     SQL
   end
+
+  def current_occupation_query
+    <<~SQL
+      SELECT a.person_id, a.value
+      FROM person_attribute a
+      LEFT OUTER JOIN person_attribute b
+      ON a.person_attribute_id = b.person_attribute_id
+      AND a.date_created < b.date_created
+      AND b.voided = 0
+      WHERE b.person_attribute_id IS NULL AND a.person_attribute_type_id = 13 AND a.voided = 0
+    SQL
+  end
 end
