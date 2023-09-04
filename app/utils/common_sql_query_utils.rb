@@ -2,6 +2,12 @@
 
 # This is a module that can be included in any class that needs to use the methods defined here.
 module CommonSqlQueryUtils
+  def process_occupation(start_date:, end_date:, occupation:, definition: 'moh')
+    return if occupation.blank?
+
+    ARTService::Reports::CohortBuilder.new(outcomes_definition: definition).init_temporary_tables(start_date, end_date, occupation)
+  end
+
   def occupation_filter(occupation:, field_name:, table_name: '', include_clause: true)
     clause = 'WHERE' if include_clause
     table_name = "#{table_name}." unless table_name.blank?
