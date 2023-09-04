@@ -98,9 +98,10 @@ module ARTService
         end_date: Date.today).cohort_report_drill_down(id)
     end
 
-    def regimen_switch(start_date, end_date, pepfar)
+    def regimen_switch(start_date, end_date, pepfar, **kwargs)
       REPORTS['REGIMEN_SWITCH'].new(start_date: start_date.to_date,
-        end_date: end_date.to_date).regimen_switch(pepfar)
+                                    end_date: end_date.to_date, **kwargs)
+                               .regimen_switch(pepfar)
     end
 
     def regimen_report(start_date, end_date, type, **kwargs)

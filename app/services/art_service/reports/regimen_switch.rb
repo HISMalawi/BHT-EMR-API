@@ -354,7 +354,9 @@ module ARTService
 
       def pepfar_outcome_builder(repport_type = 'moh')
         cohort_builder = ARTService::Reports::CohortDisaggregated.new(name: 'Regimen switch', type: repport_type,
-                                                                      start_date: @start_date.to_date, end_date: @end_date.to_date, rebuild: true)
+                                                                      start_date: @start_date.to_date,
+                                                                      end_date: @end_date.to_date, rebuild: true,
+                                                                      occupation: @occupation)
         cohort_builder.rebuild_outcomes(repport_type)
       end
 

@@ -148,7 +148,7 @@ class Api::V1::ReportsController < ApplicationController
 
   def regimen_switch
     pepfar = params[:pepfar] == 'true'
-    render json: service.regimen_switch(params[:start_date], params[:end_date], pepfar)
+    render json: service.regimen_switch(params[:start_date], params[:end_date], pepfar, occupation: params[:occupation])
   end
 
   def regimen_report
