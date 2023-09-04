@@ -3,9 +3,10 @@
 module ARTService
   module Reports
     class RegimenSwitch
-      def initialize(start_date:, end_date:)
+      def initialize(start_date:, end_date:, **kwargs)
         @start_date = start_date
         @end_date = end_date
+        @occupation = kwargs[:occupation]
       end
 
       def regimen_switch(pepfar)
@@ -18,7 +19,7 @@ module ARTService
 
       def latest_regimen_dispensed(rebuild_outcome)
         if rebuild_outcome
-          ARTService::Reports::CohortBuilder.new(outcomes_definition: 'moh').init_temporary_tables(@start_date, @end_date)
+          ARTService::Reports::CohortBuilder.new(outcomes_definition: 'moh').init_temporary_tables(@start_date, @end_date, @occupation)
         end
 
         latest_regimens

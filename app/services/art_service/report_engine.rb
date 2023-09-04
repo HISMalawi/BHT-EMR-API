@@ -197,9 +197,9 @@ module ARTService
       REPORTS['PATIENT_ART_VL_DATES'].new.get_patients_last_vl_and_latest_result(patient_ids, end_date)
     end
 
-    def latest_regimen_dispensed(start_date, end_date, rebuild_outcome)
+    def latest_regimen_dispensed(start_date, end_date, rebuild_outcome, **kwargs)
       REPORTS['REGIMEN_SWITCH'].new(start_date: start_date.to_date,
-        end_date: end_date.to_date).latest_regimen_dispensed(rebuild_outcome)
+        end_date: end_date.to_date, **kwargs).latest_regimen_dispensed(rebuild_outcome)
     end
 
     def sc_arvdisp(start_date, end_date, rebuild_outcome)

@@ -208,8 +208,8 @@ class ReportService
     engine(@program).patient_art_vl_dates(end_date.to_date, patient_ids)
   end
 
-  def latest_regimen_dispensed(start_date, end_date, rebuild_outcome)
-    engine(@program).latest_regimen_dispensed(start_date.to_date,end_date.to_date, rebuild_outcome)
+  def latest_regimen_dispensed(start_date, end_date, rebuild_outcome, **kwargs)
+    engine(@program).latest_regimen_dispensed(start_date.to_date,end_date.to_date, rebuild_outcome, **kwargs)
   end
 
   def sc_arvdisp(start_date, end_date, rebuild_outcome)
