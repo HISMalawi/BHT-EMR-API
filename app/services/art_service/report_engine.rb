@@ -61,12 +61,11 @@ module ARTService
       call_report_manager(:find_report, type: type, **kwargs)
     end
 
-    def cohort_disaggregated(quarter, age_group, start_date, end_date, rebuild, init)
-      cohort = REPORTS['COHORT_DISAGGREGATED'].new(type: 'disaggregated',
-        name: 'disaggregated', start_date: start_date,
-        end_date: end_date, rebuild: rebuild)
-
+    def cohort_disaggregated(quarter, age_group, start_date, end_date, rebuild, init, **kwargs)
+      cohort = REPORTS['COHORT_DISAGGREGATED'].new(type: 'disaggregated', name: 'disaggregated', start_date: start_date,
+                                                   end_date: end_date, rebuild: rebuild, **kwargs)
       return cohort.initialize_disaggregated if init
+
       cohort.disaggregated(quarter, age_group)
     end
 

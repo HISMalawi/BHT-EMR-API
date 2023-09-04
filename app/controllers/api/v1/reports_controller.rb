@@ -78,7 +78,8 @@ class Api::V1::ReportsController < ApplicationController
     end
 
     stats = service.cohort_disaggregated(quarter, age_group, start_date,
-                                         end_date, rebuild_outcome, init)
+                                         end_date, rebuild_outcome, init,
+                                         occupation: params[:occupation])
     render json: stats
   end
 
