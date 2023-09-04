@@ -18,8 +18,9 @@ module ARTService
       end
 
       def latest_regimen_dispensed(rebuild_outcome)
-        if rebuild_outcome
-          ARTService::Reports::CohortBuilder.new(outcomes_definition: 'moh').init_temporary_tables(@start_date, @end_date, @occupation)
+        if rebuild_outcome || @occupation.present?
+          ARTService::Reports::CohortBuilder.new(outcomes_definition: 'moh')
+                                            .init_temporary_tables(@start_date, @end_date, @occupation)
         end
 
         latest_regimens
