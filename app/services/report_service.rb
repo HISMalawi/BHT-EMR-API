@@ -118,9 +118,9 @@ class ReportService
     engine(@program).clients_given_ipt(start_date, end_date, gender, age_group)
   end
 
-  def arv_refill_periods(start_date, end_date, min_age, max_age, org, initialize_tables)
+  def arv_refill_periods(start_date, end_date, min_age, max_age, org, initialize_tables, **kwargs)
     engine(@program).arv_refill_periods(start_date,
-      end_date, min_age, max_age, org, initialize_tables)
+      end_date, min_age, max_age, org, initialize_tables, **kwargs)
   end
 
   def tx_ml(start_date, end_date)
