@@ -126,8 +126,8 @@ module ARTService
         max_age: max_age, org: org, initialize_tables: initialize_tables, **kwargs).arv_refill_periods
     end
 
-    def tx_ml(start_date, end_date)
-      REPORTS['TX_ML'].new(start_date: start_date.to_date, end_date: end_date.to_date).data
+    def tx_ml(start_date, end_date, **kwargs)
+      REPORTS['TX_ML'].new(start_date: start_date.to_date, end_date: end_date.to_date, **kwargs).data
     end
 
     def tx_rtt(start_date, end_date)

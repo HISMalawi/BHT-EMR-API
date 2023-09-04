@@ -172,7 +172,7 @@ class Api::V1::ReportsController < ApplicationController
   end
 
   def tx_ml
-    render json: service.tx_ml(params[:start_date], params[:end_date])
+    render json: service.tx_ml(params[:start_date], params[:end_date], occupation: params[:occupation])
   end
 
   def tx_rtt

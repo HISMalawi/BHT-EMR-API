@@ -122,8 +122,8 @@ class ReportService
       end_date, min_age, max_age, org, initialize_tables, **kwargs)
   end
 
-  def tx_ml(start_date, end_date)
-    engine(@program).tx_ml(start_date, end_date)
+  def tx_ml(start_date, end_date, **kwargs)
+    engine(@program).tx_ml(start_date, end_date, **kwargs)
   end
 
   def tx_rtt(start_date, end_date)
