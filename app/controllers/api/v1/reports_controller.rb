@@ -227,7 +227,7 @@ class Api::V1::ReportsController < ApplicationController
   end
 
   def lab_test_results
-    render json: service.lab_test_results(params[:start_date], params[:end_date])
+    render json: service.lab_test_results(params[:start_date], params[:end_date], occupation: params[:occupation])
   end
 
   def orders_made

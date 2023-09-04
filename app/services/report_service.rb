@@ -174,8 +174,8 @@ class ReportService
     engine(@program).samples_drawn(start_date, end_date)
   end
 
-  def lab_test_results(start_date, end_date)
-    engine(@program).test_results(start_date, end_date)
+  def lab_test_results(start_date, end_date, **kwargs)
+    engine(@program).test_results(start_date, end_date, **kwargs)
   end
 
   def orders_made(start_date, end_date, status)
