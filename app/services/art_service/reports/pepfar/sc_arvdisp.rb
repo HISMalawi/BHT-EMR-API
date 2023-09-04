@@ -4,7 +4,9 @@ module ARTService
   module Reports
     module Pepfar
       class ScArvdisp
-        DrugCategory = {
+        include CommonSqlQueryUtils
+
+        DRUGCATEGORY = {
           'TLD 30-count bottles' => { drugs: [983], quantity: 30 },
           'TLD 90-count bottles' => { drugs: [983], quantity: 90 },
           'TLD 180-count bottles' => { drugs: [983], quantity: 180 },
@@ -27,13 +29,14 @@ module ARTService
           ], quantity: 'N/A' }
         }.freeze
 
-        def initialize(start_date:, end_date:, rebuild_outcome: false)
+        def initialize(start_date:, end_date:, rebuild_outcome: false, **kwargs)
           @completion_start_date = start_date.to_date.strftime('%Y-%m-%d 00:00:00')
           @completion_end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
           @rebuild_outcome = rebuild_outcome
           @use_filing_number = GlobalProperty.find_by(property: 'use.filing.numbers')
                                               &.property_value
                                               &.casecmp?('true')
+          @occupation = kwargs[:occupation]
         end
 
         def report
@@ -42,34 +45,31 @@ module ARTService
 
         private
 
+        DRUG_CATEGORY = [
+          { name: 'TLD 30-count bottles', units: 0, quantity: 30, dispensations: [] },
+          { name: 'TLD 90-count bottles', units: 0, quantity: 90, dispensations: [] },
+          { name: 'TLD 180-count bottles', units: 0, quantity: 180, dispensations: [] },
+          { name: 'TLE/400 30-count bottles', units: 0, quantity: 30, dispensations: [] },
+          { name: 'TLE/400 90-count bottles', units: 0, quantity: 90, dispensations: [] },
+          { name: 'TLE 600/TEE bottles', units: 0, quantity: 'N/A', dispensations: [] },
+          { name: 'DTG 10 90-count bottles', units: 0, quantity: 90, dispensations: [] },
+          { name: 'DTG 50 30-count bottles', units: 0, quantity: 30, dispensations: [] },
+          { name: 'LPV/r 100/25 tabs 60 tabs/bottle', units: 0, quantity: 60, dispensations: [] },
+          { name: 'LPV/r 40/10 (pediatrics) bottles', units: 0, quantity: 'N/A', dispensations: [] },
+          { name: 'NVP (adult) bottles', units: 0, quantity: 'N/A', dispensations: [] },
+          { name: 'NVP (pediatric) bottles', units: 0, quantity: 'N/A', dispensations: [] },
+          { name: 'Other (adult) bottles', units: 0, quantity: 'N/A', dispensations: [] },
+          { name: 'Other (pediatric) bottles', units: 0, quantity: 'N/A', dispensations: [] }
+          # {name: "Other bottles", units: 0, quantity: 'N/A', dispensations: []}
+        ].freeze
+
         def data
-          drug_category = [
-            { name: 'TLD 30-count bottles', units: 0, quantity: 30, dispensations: [] },
-            { name: 'TLD 90-count bottles', units: 0, quantity: 90, dispensations: [] },
-            { name: 'TLD 180-count bottles', units: 0, quantity: 180, dispensations: [] },
-            { name: 'TLE/400 30-count bottles', units: 0, quantity: 30, dispensations: [] },
-            { name: 'TLE/400 90-count bottles', units: 0, quantity: 90, dispensations: [] },
-            { name: 'TLE 600/TEE bottles', units: 0, quantity: 'N/A', dispensations: [] },
-            { name: 'DTG 10 90-count bottles', units: 0, quantity: 90, dispensations: [] },
-            { name: 'DTG 50 30-count bottles', units: 0, quantity: 30, dispensations: [] },
-            { name: 'LPV/r 100/25 tabs 60 tabs/bottle', units: 0, quantity: 60, dispensations: [] },
-            { name: 'LPV/r 40/10 (pediatrics) bottles', units: 0, quantity: 'N/A', dispensations: [] },
-            { name: 'NVP (adult) bottles', units: 0, quantity: 'N/A', dispensations: [] },
-            { name: 'NVP (pediatric) bottles', units: 0, quantity: 'N/A', dispensations: [] },
-            { name: 'Other (adult) bottles', units: 0, quantity: 'N/A', dispensations: [] },
-            { name: 'Other (pediatric) bottles', units: 0, quantity: 'N/A', dispensations: [] }
-            # {name: "Other bottles", units: 0, quantity: 'N/A', dispensations: []}
-          ]
-
-          dispensations = get_dispensations
-          other_drugs = []
-
-          (dispensations || {}).map do |_order_id, dispensation_info|
+          (fetch_dispensations || {}).map do |_order_id, dispensation_info|
             quantities = dispensation_info[:quantities]
 
             (quantities || []).each do |quantity|
-              fetched_category, unit = get_category(dispensation_info[:drug_id], quantity)
-              drug_category.map do |category|
+              fetched_category, unit = fetch_category(dispensation_info[:drug_id], quantity)
+              DRUG_CATEGORY.map do |category|
                 next unless category[:name] == fetched_category
 
                 category[:units] += unit
@@ -85,11 +85,11 @@ module ARTService
             end
           end
 
-          drug_category
+          DRUG_CATEGORY
         end
 
-        def get_category(drug_id, quantity)
-          DrugCategory.map do |name, data|
+        def fetch_category(drug_id, quantity)
+          DRUGCATEGORY.map do |name, data|
             next unless data[:drugs].include?(drug_id)
 
             qty = data[:quantity]
@@ -97,7 +97,7 @@ module ARTService
             return [name, 1] if qty.to_i == quantity.to_i
           end
 
-          DrugCategory.map do |name, data|
+          DRUGCATEGORY.map do |name, data|
             if data[:drugs].include?(drug_id)
               qty = data[:quantity]
               return [name, (quantity / qty).to_i] if (quantity.to_i % qty).zero?
@@ -106,13 +106,32 @@ module ARTService
           # return ["Other bottles", 1]
         end
 
-        def get_dispensations
-          amount_dispensed = ConceptName.find_by(name: 'Amount of drug dispensed').concept_id
-          identifier_type_name = @use_filing_number ? 'Filing Number' : 'ARV Number'
-          identifier_type = PatientIdentifierType.find_by_name!(identifier_type_name).id
-
+        def fetch_dispensations
           dispensations = {}
-          orders = ActiveRecord::Base.connection.select_all <<~SQL
+          (fetch_orders || []).each do |order|
+            order_id = order['order_id'].to_i
+            assign_order_details(dispensations, order) if dispensations[order_id].blank?
+            dispensations[order_id][:quantities] << order['value_numeric'].to_f
+          end
+
+          dispensations
+        end
+
+        def assign_order_details(report, order)
+          order_id = order['order_id'].to_i
+          report[order_id] = {
+            quantity: order['quantity'].to_f,
+            name: order['name'],
+            drug_id: order['drug_id'].to_i,
+            identifier: (order['identifier'] ||= 'N/A'),
+            start_date: order['start_date'].to_date,
+            patient_id: order['patient_id'].to_i,
+            quantities: []
+          }
+        end
+
+        def fetch_orders
+          ActiveRecord::Base.connection.select_all <<~SQL
             SELECT
             	orders.order_id, orders.start_date, drug_order.quantity,drug.name,
             	orders.patient_id, obs.value_numeric, orders.start_date,
@@ -124,34 +143,24 @@ module ARTService
             INNER JOIN encounter ON encounter.encounter_id = orders.encounter_id
             	AND encounter.program_id = #{Program.find_by(name: 'HIV Program').id}
             INNER JOIN obs ON obs.order_id = orders.order_id AND obs.voided = 0
-            AND obs.concept_id = #{amount_dispensed} AND obs.value_numeric > 0
+            	AND obs.concept_id = #{amount_dispensed} AND obs.value_numeric > 0
             LEFT JOIN patient_identifier ON patient_identifier.patient_id = orders.patient_id
-            AND patient_identifier.identifier_type = #{identifier_type}
-            AND patient_identifier.voided = 0
-            WHERE orders.voided = 0
+            	AND patient_identifier.identifier_type = #{identifier_type}
+            	AND patient_identifier.voided = 0
+            LEFT JOIN (#{current_occupation_query}) a ON a.person_id = orders.patient_id
+            WHERE orders.voided = 0 #{%w[Military Civilian].include?(@occupation) ? 'AND' : ''} #{occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'a', include_clause: false)}
             AND orders.start_date BETWEEN '#{@completion_start_date}' AND '#{@completion_end_date}'
             AND orders.order_type_id = 1
             ORDER BY orders.start_date ASC, orders.patient_id;
           SQL
+        end
 
-          (orders || []).each do |order|
-            order_id = order['order_id'].to_i
-            if dispensations[order_id].blank?
-              dispensations[order_id] = {
-                quantity: order['quantity'].to_f,
-                name: order['name'],
-                drug_id: order['drug_id'].to_i,
-                identifier: (order['identifier'] ||= 'N/A'),
-                start_date: order['start_date'].to_date,
-                patient_id: order['patient_id'].to_i,
-                quantities: []
-              }
-            end
+        def amount_dispensed
+          @amount_dispensed ||= ConceptName.find_by(name: 'Amount of drug dispensed').concept_id
+        end
 
-            dispensations[order_id][:quantities] << order['value_numeric'].to_f
-          end
-
-          dispensations
+        def identifier_type
+          @identifier_type ||= PatientIdentifierType.find_by_name!(@use_filing_number ? 'Filing Number' : 'ARV Number').id
         end
       end
     end
