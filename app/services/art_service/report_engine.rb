@@ -77,10 +77,10 @@ module ARTService
       cohort.survival_analysis(quarter, age_group)
     end
 
-    def defaulter_list(start_date, end_date, pepfar)
+    def defaulter_list(start_date, end_date, pepfar, **kwargs)
       REPORTS['COHORT'].new(type: 'defaulter_list',
         name: 'defaulter_list', start_date: start_date,
-        end_date: end_date).defaulter_list(pepfar)
+        end_date: end_date, **kwargs).defaulter_list(pepfar)
     end
 
     def missed_appointments(start_date, end_date)

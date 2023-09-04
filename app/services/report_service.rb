@@ -82,8 +82,8 @@ class ReportService
     engine(@program).cohort_survival_analysis(quarter, age_group, regenerate, occupation)
   end
 
-  def defaulter_list(start_date, end_date, pepfar)
-    engine(@program).defaulter_list(start_date, end_date, pepfar)
+  def defaulter_list(start_date, end_date, pepfar, **kwargs)
+    engine(@program).defaulter_list(start_date, end_date, pepfar, **kwargs)
   end
 
   def missed_appointments(start_date, end_date)

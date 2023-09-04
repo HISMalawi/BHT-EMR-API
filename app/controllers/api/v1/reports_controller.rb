@@ -122,7 +122,7 @@ class Api::V1::ReportsController < ApplicationController
   def defaulter_list
     start_date, end_date, pepfar = params.require %i[start_date end_date pepfar]
     pepfar = (pepfar == 'true')
-    stats = service.defaulter_list(start_date, end_date, pepfar)
+    stats = service.defaulter_list(start_date, end_date, pepfar, occupation: params[:occupation])
 
     render json: stats
   end
