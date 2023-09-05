@@ -183,9 +183,9 @@ module ARTService
                                 end_date: end_date.to_date).vl_results
     end
 
-    def external_consultation_clients(start_date, end_date)
+    def external_consultation_clients(start_date, end_date, **kwargs)
       REPORTS['EXTERNAL_CONSULTATION_CLIENTS'].new(start_date: start_date.to_date,
-                                                   end_date: end_date.to_date).list
+                                                   end_date: end_date.to_date, **kwargs).list
     end
 
     def vl_maternal_status(start_date, end_date,
