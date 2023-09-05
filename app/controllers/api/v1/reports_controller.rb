@@ -216,7 +216,7 @@ module Api
 
       def patient_outcome_list
         render json: service.patient_outcome_list(params[:start_date],
-                                                  params[:end_date], params[:outcome])
+                                                  params[:end_date], params[:outcome], occupation: params[:occupation])
       end
 
       def clients_due_vl

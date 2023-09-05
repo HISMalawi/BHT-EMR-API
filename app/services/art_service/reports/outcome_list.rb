@@ -4,11 +4,14 @@ module ARTService
   module Reports
     # Outcome List Report
     class OutcomeList
+      include CommonSqlQueryUtils
+
       REPORTS = Set.new(%i[transfer_out died stopped]).freeze
 
-      def initialize(start_date:, end_date:, outcome:)
+      def initialize(start_date:, end_date:, outcome:, **kwargs)
         @start_date = start_date.to_date.strftime('%Y-%m-%d 00:00:00')
         @end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
+        @occupation = kwargs[:occupation]
         @report = load_report outcome.downcase.split(' ').join('_')
       end
 
@@ -67,7 +70,7 @@ module ARTService
         #         SQL
 
         report_type = 'moh'
-        ARTService::Reports::CohortBuilder.new(outcomes_definition: report_type).init_temporary_tables(@start_date.to_date, @end_date.to_date)
+        ARTService::Reports::CohortBuilder.new(outcomes_definition: report_type).init_temporary_tables(@start_date.to_date, @end_date.to_date, @occupation)
 
         transfer_out_to_location_sql = ''
         transfer_out_to_location_name_sql = ''
@@ -91,10 +94,10 @@ module ARTService
           FROM temp_earliest_start_date e
           INNER JOIN temp_patient_outcomes o ON e.patient_id = o.patient_id
           LEFT JOIN patient_identifier i ON i.patient_id = e.patient_id
-          AND i.voided = 0 AND i.identifier_type = 4
+            AND i.voided = 0 AND i.identifier_type = 4
           INNER JOIN person_name n ON n.person_id = e.patient_id AND n.voided = 0
           LEFT JOIN person_attribute a ON a.person_id = e.patient_id
-          AND a.voided = 0 AND a.person_attribute_type_id = 12
+            AND a.voided = 0 AND a.person_attribute_type_id = 12
           LEFT JOIN person_address s3 ON s3.person_id = e.patient_id
           LEFT JOIN concept_name art_reason ON art_reason.concept_id = e.reason_for_starting_art
           #{transfer_out_to_location_sql}
@@ -104,7 +107,9 @@ module ARTService
           INNER JOIN program_workflow w ON w.program_workflow_id = ws.program_workflow_id
           INNER JOIN concept_name n2 ON n2.concept_id = ws.concept_id
           WHERE o.cum_outcome = '#{outcome_state}'
-          AND pp.voided = 0 AND s2.voided = 0 AND s2.start_date
+            AND pp.voided = 0
+            AND s2.voided = 0
+            AND s2.start_date
           BETWEEN '#{@start_date}' AND '#{@end_date}' AND s2.state NOT IN(7,1, 12)
           GROUP BY e.patient_id ORDER BY e.patient_id, n.date_created DESC;
         SQL

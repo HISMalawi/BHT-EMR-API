@@ -159,8 +159,8 @@ class ReportService
     engine(@program).patient_visit_list(start_date, end_date)
   end
 
-  def patient_outcome_list(start_date, end_date, outcome)
-    engine(@program).patient_outcome_list(start_date, end_date, outcome)
+  def patient_outcome_list(start_date, end_date, outcome, **kwargs)
+    engine(@program).patient_outcome_list(start_date, end_date, outcome, **kwargs)
   end
 
   def clients_due_vl(start_date, end_date, **kwargs)

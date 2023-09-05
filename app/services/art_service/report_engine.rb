@@ -167,9 +167,9 @@ module ARTService
                                   end_date: end_date.to_date).patient_visit_list
     end
 
-    def patient_outcome_list(start_date, end_date, outcome)
+    def patient_outcome_list(start_date, end_date, outcome, **kwargs)
       REPORTS['OUTCOME_LIST'].new(start_date: start_date.to_date,
-                                  end_date: end_date.to_date, outcome: outcome).get_list
+                                  end_date: end_date.to_date, outcome: outcome, **kwargs).get_list
     end
 
     def clients_due_vl(start_date, end_date, **kwargs)
