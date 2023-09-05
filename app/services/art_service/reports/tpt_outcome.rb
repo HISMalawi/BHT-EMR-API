@@ -8,13 +8,15 @@ module ARTService
     # the report must pick clients who started TPT in the month of December
     # it must be drillable
     class TptOutcome
+      include CommonSqlQueryUtils
       include ModelUtils
       include ARTService::Reports::Pepfar::Utils
 
-      def initialize(start_date:, end_date:, **_kwarg)
+      def initialize(start_date:, end_date:, **kwargs)
         @start_date = start_date.to_date
         @end_date = end_date.to_date
         @tb_prev = ARTService::Reports::Pepfar::TbPrev3.new(start_date: @start_date, end_date: @end_date)
+        @occupation = kwargs[:occupation]
       end
 
       def find_report
@@ -234,6 +236,7 @@ module ARTService
             AND art_start_date_obs.voided = 0
             AND art_start_date_obs.obs_datetime < (DATE('#{@end_date}') + INTERVAL 1 DAY)
             AND art_start_date_obs.encounter_id = clinic_registration_encounter.encounter_id
+          LEFT JOIN (#{current_occupation_query}) AS a ON a.person_id = pp.patient_id
           WHERE pp.program_id = 1 /* HIV Program */
             AND pp.patient_id  NOT IN (
               /* External consultations */
@@ -266,7 +269,7 @@ module ARTService
                 AND patient_type_obs.voided = 0
               WHERE patient_program.voided = 0
             )
-            AND pp.voided = 0
+            AND pp.voided = 0 #{%w[Military Civilian].include?(@occupation) ? 'AND' : ''} #{occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'a', include_clause: false)}
             AND DATE(o.start_date)<= DATE('#{@end_date}')
             GROUP BY pp.patient_id
         SQL
