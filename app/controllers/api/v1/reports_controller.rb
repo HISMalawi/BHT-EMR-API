@@ -215,7 +215,7 @@ class Api::V1::ReportsController < ApplicationController
   end
 
   def clients_due_vl
-    render json: service.clients_due_vl(params[:start_date], params[:end_date])
+    render json: service.clients_due_vl(params[:start_date], params[:end_date], occupation: params[:occupation])
   end
 
   def vl_results
