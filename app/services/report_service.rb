@@ -86,8 +86,8 @@ class ReportService
     engine(@program).defaulter_list(start_date, end_date, pepfar, **kwargs)
   end
 
-  def missed_appointments(start_date, end_date)
-    engine(@program).missed_appointments(start_date, end_date)
+  def missed_appointments(start_date, end_date, **kwargs)
+    engine(@program).missed_appointments(start_date, end_date, **kwargs)
   end
 
   def anc_cohort_disaggregated(date, start_date)

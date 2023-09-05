@@ -82,9 +82,9 @@ module ARTService
                             end_date: end_date, **kwargs).defaulter_list(pepfar)
     end
 
-    def missed_appointments(start_date, end_date)
+    def missed_appointments(start_date, end_date, **kwargs)
       REPORTS['APPOINTMENTS'].new(start_date: start_date.to_date,
-                                  end_date: end_date.to_date).missed_appointments
+                                  end_date: end_date.to_date, **kwargs).missed_appointments
     end
 
     def ipt_coverage(start_date, end_date)
