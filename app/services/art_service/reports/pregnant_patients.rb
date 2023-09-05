@@ -6,9 +6,12 @@ module ARTService
     class PregnantPatients
       attr_reader :start_date, :end_date
 
-      def initialize(start_date:, end_date:, **_kwargs)
+      include CommonSqlQueryUtils
+
+      def initialize(start_date:, end_date:, **kwargs)
         @start_date = start_date
         @end_date = end_date
+        @occupation = kwargs[:occupation]
       end
 
       def find_report
@@ -40,23 +43,25 @@ module ARTService
                    gender,
                    birthdate,
                    obs.obs_datetime AS last_reported_date
-            FROM obs INNER JOIN person ON person.person_id = obs.person_id
-              INNER JOIN person_name ON person_name.person_id = obs.person_id
-              LEFT JOIN patient_identifier ON patient_identifier.patient_id = obs.person_id
-                AND patient_identifier.identifier_type = #{arv_number_type_id}
-              INNER JOIN encounter ON encounter.encounter_id = obs.encounter_id
-                AND encounter.program_id = #{hiv_program_id}
+            FROM obs
+            INNER JOIN person ON person.person_id = obs.person_id
+            INNER JOIN person_name ON person_name.person_id = obs.person_id
+            LEFT JOIN patient_identifier ON patient_identifier.patient_id = obs.person_id
+              AND patient_identifier.identifier_type = #{arv_number_type_id}
+            INNER JOIN encounter ON encounter.encounter_id = obs.encounter_id
+              AND encounter.program_id = #{hiv_program_id}
+            LEFT JOIN (#{current_occupation_query}) a ON a.person_id = obs.person_id
             WHERE obs.concept_id IN (#{pregnant_concepts.select(:concept_id).to_sql})
-                  AND obs.value_coded = #{yes_concept_id}
-                  AND obs.person_id IN (#{patients_on_treatment.to_sql})
-                  AND obs.obs_datetime = (
-                    SELECT MAX(obs_date.obs_datetime) FROM obs obs_date
-                      INNER JOIN encounter USING (encounter_id)
-                    WHERE obs_date.concept_id IN (#{pregnant_concepts.select(:concept_id).to_sql})
-                      AND obs_date.obs_datetime BETWEEN #{str_start_date} AND #{str_end_date}
-                      AND obs_date.person_id = obs.person_id
-                      AND program_id = #{hiv_program_id}
-                  )
+              AND obs.value_coded = #{yes_concept_id}
+              AND obs.person_id IN (#{patients_on_treatment.to_sql})
+              AND obs.obs_datetime = (
+                SELECT MAX(obs_date.obs_datetime) FROM obs obs_date
+                  INNER JOIN encounter USING (encounter_id)
+                WHERE obs_date.concept_id IN (#{pregnant_concepts.select(:concept_id).to_sql})
+                  AND DATE(obs_date.obs_datetime) BETWEEN #{str_start_date} AND #{str_end_date}
+                  AND obs_date.person_id = obs.person_id
+                  AND program_id = #{hiv_program_id}
+              ) #{%w[Military Civilian].include?(@occupation) ? 'AND' : ''} #{occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'a', include_clause: false)}
             GROUP BY obs.person_id
           SQL
         )
