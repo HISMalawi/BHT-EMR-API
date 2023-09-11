@@ -14,6 +14,7 @@ module ARTService
           @start_date = start_date.to_date.strftime('%Y-%m-%d 00:00:00')
           @end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
           @rebuild_outcome = ActiveModel::Type::Boolean.new.cast(kwargs[:rebuild_outcome]) || false
+          @occupation = kwargs[:occupation]
         end
 
         def find_report
@@ -62,10 +63,10 @@ module ARTService
         end
 
         def build_cohort_tables
-          return unless rebuild_outcome
+          return unless rebuild_outcome || @occupation.present?
 
           cohort_builder = ARTService::Reports::CohortBuilder.new(outcomes_definition: 'pepfar')
-          cohort_builder.init_temporary_tables(start_date, end_date)
+          cohort_builder.init_temporary_tables(start_date, end_date, @occupation)
         end
 
         def process_tb_screening

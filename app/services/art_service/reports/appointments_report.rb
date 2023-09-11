@@ -6,6 +6,8 @@ module ARTService
 
     # rubocop:disable Metrics/ClassLength
     class AppointmentsReport
+      include CommonSqlQueryUtils
+
       ENCOUNTER_NAMES = [
         'VITALS', 'HIV STAGING',
         'APPOINTMENT', 'HIV CLINIC REGISTRATION',
@@ -18,21 +20,24 @@ module ARTService
 
       HIV_ENCOUNTERS = EncounterType.where('name IN(?)', ENCOUNTER_NAMES).map(&:id)
 
-      def initialize(start_date:, end_date:)
+      def initialize(start_date:, end_date:, **kwargs)
         @start_date = start_date
         @end_date = end_date
+        @occupation = kwargs[:occupation]
       end
 
       # rubocop:disable Metrics/MethodLength
       # rubocop:disable Metrics/AbcSize
       def missed_appointments
         appointments = Observation.joins(:encounter)
+                                  .joins("LEFT JOIN (#{current_occupation_query} )AS a ON a.person_id = obs.person_id")
                                   .merge(appointment_encounters)
                                   .where.not(person_id: referral_patients.select(:person_id))
                                   .where(concept: ConceptName.where(name: 'Appointment date').select(:concept_id))
                                   .where('value_datetime BETWEEN ? AND ? AND encounter.program_id = ?',
                                          @start_date.strftime('%Y-%m-%d 00:00:00'),
                                          @end_date.strftime('%Y-%m-%d 23:59:59'), 1)
+                                  .where(occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'a', include_clause: false).to_s)
                                   .group(:person_id)
 
         appointments.each_with_object([]) do |appointment, patients|
@@ -170,13 +175,14 @@ module ARTService
         # on the drug_order table check if the quantity column is greater than 0
         # if the quantity is greater than 0 then the client was given drugs
         # arv drugs are easily found by Drug.arv_drugs
+        value_datetime = value_datetime.to_date + 14.day
         encounters = Encounter.joins(:orders)
                               .joins("INNER JOIN drug_order d ON d.order_id = orders.order_id AND d.quantity > 0
                                       AND d.drug_inventory_id IN(#{arv_drugs})")
                               .where(patient_id: person_id, encounter_type: treatment_encounter)
                               .where('encounter_datetime BETWEEN ? AND ?',
                                      day_after_visit_date.strftime('%Y-%m-%d 00:00:00'),
-                                     @end_date.strftime('%Y-%m-%d 23:59:59'))
+                                     value_datetime.strftime('%Y-%m-%d 23:59:59'))
                               .where(orders: { voided: 0 })
                               .where(voided: 0)
 
