@@ -7,15 +7,18 @@ module ARTService
     class Retention
       attr_reader :start_date, :end_date
 
+      include CommonSqlQueryUtils
+
       DAYS_IN_MONTH = 28
       MONTHS = [1, 3, 6].freeze
 
-      def initialize(start_date:, end_date:, **_kwargs)
+      def initialize(start_date:, end_date:, **kwargs)
         @start_date = start_date.to_s
         @end_date = end_date.to_s
         @use_filing_number = GlobalProperty.find_by(property: 'use.filing.numbers')
                                        &.property_value
                                        &.casecmp?('true')
+        @occupation = kwargs[:occupation]
       end
 
       def find_report
@@ -96,8 +99,9 @@ module ARTService
               AND last_order.voided = 0
                 GROUP BY last_order.patient_id
             ) last_orders ON initial_orders.patient_id = last_orders.patient_id
+            LEFT JOIN (#{current_occupation_query}) a ON a.person_id = initial_orders.patient_id
             WHERE initial_orders.start_date BETWEEN #{as_of} AND #{start_date}
-            AND initial_orders.order_type_id = #{drug_order_type_id}
+            AND initial_orders.order_type_id = #{drug_order_type_id} #{%w[Military Civilian].include?(@occupation) ? 'AND' : ''} #{occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'a', include_clause: false)}
             AND initial_orders.auto_expire_date IS NOT NULL
             AND initial_orders.patient_id NOT IN (
               SELECT o.patient_id
@@ -122,14 +126,15 @@ module ARTService
                    disaggregated_age_group(p.birthdate, DATE('#{@end_date}')) age_group,
                    p.gender gender
             FROM orders initial_order
-              INNER JOIN encounter initial_encounter ON initial_encounter.encounter_id = initial_order.encounter_id AND initial_encounter.program_id = 1
-              INNER JOIN person p ON p.person_id = initial_encounter.patient_id
-              LEFT JOIN patient_identifier ON patient_identifier.patient_id = initial_order.patient_id AND patient_identifier.identifier_type = #{patient_identifier_type_id}
+            INNER JOIN encounter initial_encounter ON initial_encounter.encounter_id = initial_order.encounter_id AND initial_encounter.program_id = 1
+            INNER JOIN person p ON p.person_id = initial_encounter.patient_id
+            LEFT JOIN patient_identifier ON patient_identifier.patient_id = initial_order.patient_id AND patient_identifier.identifier_type = #{patient_identifier_type_id}
+            LEFT JOIN (#{current_occupation_query}) a ON a.person_id = initial_order.patient_id
             WHERE initial_order.start_date BETWEEN #{as_of} AND #{start_date}
               AND initial_order.voided = 0
               AND initial_order.auto_expire_date IS NOT NULL
               AND initial_order.order_type_id = #{drug_order_type_id}
-              AND p.voided = 0
+              AND p.voided = 0 #{%w[Military Civilian].include?(@occupation) ? 'AND' : ''} #{occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'a', include_clause: false)}
               AND initial_order.patient_id NOT IN (
                 SELECT orders.patient_id
                 FROM orders
