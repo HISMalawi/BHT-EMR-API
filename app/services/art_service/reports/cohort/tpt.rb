@@ -3,9 +3,13 @@
 ##
 # TB Preventive Therapy indicators for ART cohort
 class ARTService::Reports::Cohort::Tpt
-  def initialize(start_date, end_date)
+  include CommonSqlQueryUtils
+
+  def initialize(start_date, end_date, **kwargs)
     @start_date = start_date
     @end_date = end_date
+    @occupation = kwargs[:occupation]
+    process_occupation(start_date: @start_date, end_date: @end_date, occupation: @occupation) if @occupation.present?
   end
 
   ##

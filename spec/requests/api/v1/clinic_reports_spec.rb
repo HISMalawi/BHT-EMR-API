@@ -53,49 +53,109 @@ describe 'Clinic Reports API', type: :request, swagger_doc: 'v1/swagger.yaml' do
             age_group: { type: :string },
             tpt_type: { type: :string },
             started_tpt: { type: :array, items: {
-              type: :integer
+              type: :object,
+              properties: {
+                patient_id: { type: :integer },
+                gender: { type: :string }
+              }
             } },
             completed_tpt: { type: :array, items: {
-              type: :integer
+              type: :object,
+              properties: {
+                patient_id: { type: :integer },
+                gender: { type: :string }
+              }
             } },
             not_completed_tpt: { type: :array, items: {
-              type: :integer
+              type: :object,
+              properties: {
+                patient_id: { type: :integer },
+                gender: { type: :string }
+              }
             } },
             died: { type: :array, items: {
-              type: :integer
+              type: :object,
+              properties: {
+                patient_id: { type: :integer },
+                gender: { type: :string }
+              }
             } },
             defaulted: { type: :array, items: {
-              type: :integer
+              type: :object,
+              properties: {
+                patient_id: { type: :integer },
+                gender: { type: :string }
+              }
             } },
             transferred_out: { type: :array, items: {
-              type: :integer
+              type: :object,
+              properties: {
+                patient_id: { type: :integer },
+                gender: { type: :string }
+              }
             } },
             confirmed_tb: { type: :array, items: {
-              type: :integer
+              type: :object,
+              properties: {
+                patient_id: { type: :integer },
+                gender: { type: :string }
+              }
             } },
             pregnant: { type: :array, items: {
-              type: :integer
+              type: :object,
+              properties: {
+                patient_id: { type: :integer },
+                gender: { type: :string }
+              }
             } },
             stopped: { type: :array, items: {
-              type: :integer
+              type: :object,
+              properties: {
+                patient_id: { type: :integer },
+                gender: { type: :string }
+              }
             } },
             breast_feeding: { type: :array, items: {
-              type: :integer
+              type: :object,
+              properties: {
+                patient_id: { type: :integer },
+                gender: { type: :string }
+              }
             } },
             skin_rash: { type: :array, items: {
-              type: :integer
+              type: :object,
+              properties: {
+                patient_id: { type: :integer },
+                gender: { type: :string }
+              }
             } },
             peripheral_neuropathy: { type: :array, items: {
-              type: :integer
+              type: :object,
+              properties: {
+                patient_id: { type: :integer },
+                gender: { type: :string }
+              }
             } },
             yellow_eyes: { type: :array, items: {
-              type: :integer
+              type: :object,
+              properties: {
+                patient_id: { type: :integer },
+                gender: { type: :string }
+              }
             } },
             nausea: { type: :array, items: {
-              type: :integer
+              type: :object,
+              properties: {
+                patient_id: { type: :integer },
+                gender: { type: :string }
+              }
             } },
             dizziness: { type: :array, items: {
-              type: :integer
+              type: :object,
+              properties: {
+                patient_id: { type: :integer },
+                gender: { type: :string }
+              }
             } }
           }
         }

@@ -2,9 +2,10 @@ module LaboratoryService
   module Reports
     module Clinic
       class SamplesDrawn
-        def initialize(start_date:, end_date: nil, **_kwargs)
+        def initialize(start_date:, end_date: nil, **kwargs)
           @start_date = start_date.to_date
           @end_date = end_date&.to_date || Date.today
+          @kwargs = kwargs
         end
 
         def samples_drawn
@@ -12,7 +13,7 @@ module LaboratoryService
         end
 
         def test_results
-          ProcessedResults.new(start_date: @start_date, end_date: @end_date).read
+          ProcessedResults.new(start_date: @start_date, end_date: @end_date, **@kwargs).read
         end
 
         def read
