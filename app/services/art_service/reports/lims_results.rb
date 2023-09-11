@@ -4,13 +4,11 @@ module ARTService
   module Reports
     # This class generates the LIMS results report (results delivered electronically)
     class LimsResults
-      include CommonSqlQueryUtils
       attr_reader :start_date, :end_date
 
-      def initialize(start_date:, end_date:, **kwargs)
+      def initialize(start_date:, end_date:, **_kwargs)
         @start_date = start_date
         @end_date = end_date
-        @occupation = kwargs[:occupation]
       end
 
       def find_report
@@ -34,13 +32,12 @@ module ARTService
           INNER JOIN concept_name cn ON cn.concept_id = test.value_coded AND cn.voided = 0 AND cn.locale_preferred = 1
           LEFT JOIN patient_identifier pi ON pi.patient_id = e.patient_id AND pi.voided = 0 AND pi.identifier_type = #{identifier_type}
           LEFT JOIN obs ON obs.person_id = e.patient_id AND obs.voided = 0 AND obs.order_id = o.order_id
-            AND obs.concept_id = 7363 -- 'Lab test result'
+          AND obs.concept_id = 7363 -- 'Lab test result'
           LEFT JOIN obs statuses ON statuses.order_id = o.order_id AND statuses.voided = 0 AND statuses.concept_id = 10682 -- 'lab order status'
           LEFT JOIN obs res ON res.obs_group_id = obs.obs_id AND res.voided = 0 AND res.order_id = o.order_id
           LEFT JOIN obs reason ON reason.order_id = o.order_id AND reason.voided = 0  AND reason.concept_id = 2429 -- 'Reason for test'
-          LEFT JOIN concept_name reason_test ON reason_test.concept_id = reason.value_coded AND reason_test.voided = 0
-          LEFT JOIN (#{current_occupation_query}) AS a ON a.person_id = e.patient_id
-          WHERE DATE(o.start_date) BETWEEN '#{start_date}' AND '#{end_date}' AND o.voided = 0 #{%w[Military Civilian].include?(@occupation) ? 'AND' : ''} #{occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'a', include_clause: false)}
+          LEFT JOIN concept_name reason_test ON reason_test.concept_id = reason.value_coded AND reason_test.voided = 0 
+          WHERE DATE(o.start_date) BETWEEN '#{start_date}' AND '#{end_date}' AND o.voided = 0
           GROUP BY o.order_id
         SQL
       end

@@ -4,14 +4,12 @@ module ARTService
   module Reports
     # this report is used to generate regimen data
     class RegimenDispensationData
-      include CommonSqlQueryUtils
       attr_reader :start_date, :end_date, :type
 
       def initialize(start_date:, end_date:, **kwargs)
         @start_date = ActiveRecord::Base.connection.quote(start_date.to_date.strftime('%Y-%m-%d 00:00:00'))
         @end_date = ActiveRecord::Base.connection.quote(end_date.to_date.strftime('%Y-%m-%d 23:59:59'))
         @type = kwargs[:type]
-        @occupation = kwargs[:occupation]
       end
 
       def find_report
@@ -22,7 +20,6 @@ module ARTService
 
       private
 
-      # rubocop:disable Metrics/AbcSize
       def drop_regimen_data
         ActiveRecord::Base.connection.execute 'DROP TABLE IF EXISTS temp_current_dispensation'
         ActiveRecord::Base.connection.execute 'DROP TABLE IF EXISTS temp_drug_dispensed'
@@ -35,7 +32,6 @@ module ARTService
         ActiveRecord::Base.connection.execute 'DROP TABLE IF EXISTS temp_regimen_data'
         ActiveRecord::Base.connection.execute 'DROP TABLE IF EXISTS temp_patient_start_date'
       end
-      # rubocop:enable Metrics/AbcSize
 
       def create_filtered_data
         create_temp_current_dispensation
@@ -55,9 +51,8 @@ module ARTService
           SELECT o.patient_id, MAX(o.start_date) AS start_date
           FROM orders o
           INNER JOIN drug_order od ON od.order_id = o.order_id AND od.quantity > 0 AND od.drug_inventory_id IN (SELECT drug_id FROM arv_drug)
-          LEFT JOIN (#{current_occupation_query}) a ON a.person_id = o.patient_id
           WHERE o.start_date > #{end_date} - INTERVAL 18 MONTH AND o.start_date < #{end_date} + INTERVAL 1 DAY
-          AND o.voided = 0 #{%w[Military Civilian].include?(@occupation) ? 'AND' : ''} #{occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'a', include_clause: false)}
+          AND o.voided = 0
           AND o.order_type_id = 1 -- drug order
           GROUP BY o.patient_id
         SQL
@@ -97,8 +92,8 @@ module ARTService
           FROM temp_current_regimen_names tcrn
           INNER JOIN (
             SELECT patient_id, GROUP_CONCAT(drug_inventory_id ORDER BY drug_inventory_id ASC) AS drugs
-            FROM temp_drug_dispensed
-            GROUP BY patient_id
+              FROM temp_drug_dispensed
+              GROUP BY patient_id
           ) d ON d.drugs = tcrn.drugs
         SQL
         ActiveRecord::Base.connection.execute 'create index patient_regimen on temp_current_patient_regimen (patient_id)'

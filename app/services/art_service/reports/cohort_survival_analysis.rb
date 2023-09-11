@@ -4,13 +4,12 @@
 module ARTService
   module Reports
     class CohortSurvivalAnalysis
-      def initialize(name:, type:, start_date:, end_date:, regenerate:, occupation:)
+      def initialize(name:, type:, start_date:, end_date:, regenerate:)
         @name = name
         @type = type
         @start_date = start_date
         @end_date = end_date
         @regenerate = regenerate
-        @occupation = occupation
       end
 
       def survival_analysis(quarter, age_group)
@@ -19,8 +18,11 @@ module ARTService
             end_date: Date.today, rebuild: @regenerate)
 
         start_date, end_date = art_service.generate_start_date_and_end_date(quarter)
+        art_service = ARTService::Reports::CohortBuilder.new()
         if @regenerate
-          ARTService::Reports::CohortBuilder.new.init_temporary_tables(start_date, @end_date, @occupation)
+          art_service.create_tmp_patient_table
+          art_service.load_data_into_temp_earliest_start_date(end_date)
+          art_service.update_cum_outcome(end_date)
         end
 
         quarters = []

@@ -13,7 +13,6 @@ module ARTService
         attr_reader :start_date, :end_date, :occupation
 
         include Utils
-        include CommonSqlQueryUtils
 
         def initialize(start_date:, end_date:, **kwargs)
           @start_date = start_date&.to_date
@@ -236,10 +235,10 @@ module ARTService
               WHERE b.patient_program_id IS NULL AND a.end_date IS NULL AND a.voided = 0
             ) current_state ON current_state.patient_program_id = pp.patient_program_id
             LEFT OUTER JOIN orders b ON ab.patient_id = b.patient_id
-              AND ab.order_id = b.order_id
-              AND ab.auto_expire_date < b.auto_expire_date
-              AND b.voided = 0 AND b.order_type_id = 1
-            LEFT JOIN (#{current_occupation_query}) a ON a.person_id = ab.patient_id
+            AND ab.order_id = b.order_id
+            AND ab.auto_expire_date < b.auto_expire_date
+            AND b.voided = 0 AND b.order_type_id = 1
+            #{current_occupation('ab.patient_id')}
             LEFT JOIN patient_identifier pid ON pid.patient_id = pp.patient_id AND pid.identifier_type IN (#{pepfar_patient_identifier_type.to_sql}) AND pid.voided = 0
             LEFT JOIN (
               SELECT ab.patient_id, MAX(ab.start_date) start_date
@@ -256,7 +255,7 @@ module ARTService
               GROUP BY ab.patient_id
             ) current_order ON current_order.patient_id = ab.patient_id
             WHERE b.patient_id IS NULL
-              AND ab.voided = 0 #{%w[Military Civilian].include?(@occupation) ? 'AND' : ''} #{occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'a', include_clause: false)}
+              AND ab.voided = 0 #{occupation_filter(occupation)}
               AND ab.start_date < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
               AND p.person_id NOT IN (#{drug_refills_and_external_consultation_list})
               AND ((current_state.state IN (#{adverse_outcomes.join(',')}) AND current_state.start_date >= (DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH)) OR current_state.state IN (7, 1, 87, 120, 136))

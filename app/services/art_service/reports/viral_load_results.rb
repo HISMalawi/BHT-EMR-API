@@ -14,13 +14,10 @@ module ARTService
     #
     # The classifications above follow the ART guidelines 2018 Addendum.
     class ViralLoadResults
-      include CommonSqlQueryUtils
-
-      def initialize(start_date:, end_date: nil, range: nil, **kwargs)
+      def initialize(start_date:, end_date: nil, range: nil, **_kwargs)
         @start_date = start_date
         @end_date = end_date
         @range = range || 'viraemia-1000+'
-        @occupation = kwargs[:occupation]
       end
 
       def find_report
@@ -54,7 +51,6 @@ module ARTService
           INNER JOIN person
             ON person.person_id = orders.patient_id
             AND person.voided = 0
-          LEFT JOIN (#{current_occupation_query}) AS a ON a.person_id = orders.patient_id
           /* For each lab order find an HIV Viral Load test */
           INNER JOIN obs AS test_obs
             ON test_obs.order_id = orders.order_id
@@ -114,7 +110,7 @@ module ARTService
             AND test_result_measure_obs.voided = 0
             AND (#{query_range})
           WHERE orders.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Lab' AND retired = 0)
-            AND orders.voided = 0 #{%w[Military Civilian].include?(@occupation) ? 'AND' : ''} #{occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'a', include_clause: false)}
+            AND orders.voided = 0
           GROUP BY orders.patient_id
         SQL
       end

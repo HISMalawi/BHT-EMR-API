@@ -15,20 +15,19 @@ module ARTService
 
       LOCK_FILE = 'art_service/reports/cohort.lock'
 
-      def initialize(name:, type:, start_date:, end_date:, **kwargs)
+      def initialize(name:, type:, start_date:, end_date:)
         @name = name
         @start_date = start_date
         @end_date = end_date
         @type = type
         @cohort_builder = CohortBuilder.new
         @cohort_struct = CohortStruct.new
-        @occupation = kwargs[:occupation]
       end
 
       def build_report
         with_lock(LOCK_FILE, blocking: false) do
           clear_drill_down
-          @cohort_builder.build(@cohort_struct, @start_date, @end_date, @occupation)
+          @cohort_builder.build(@cohort_struct, @start_date, @end_date)
           save_report
         end
       rescue FailedToAcquireLock => e
@@ -36,7 +35,7 @@ module ARTService
       end
 
       def find_report
-        Report.where(type: @type, name: "#{@name} #{@occupation}",
+        Report.where(type: @type, name: @name,
                      start_date: @start_date, end_date: @end_date)\
               .order(date_created: :desc)\
               .first
@@ -74,8 +73,18 @@ module ARTService
 =end
 
         report_type = (pepfar ? 'pepfar' : 'moh')
-        defaulter_date_sql = pepfar ? 'current_pepfar_defaulter_date' : 'current_defaulter_date'
-        ARTService::Reports::CohortBuilder.new(outcomes_definition: report_type).init_temporary_tables(@start_date, @end_date, @occupation)
+        defaulter_date_sql = pepfar ? " current_pepfar_defaulter_date" : "current_defaulter_date"
+        cohort_list = ARTService::Reports::CohortBuilder.new(outcomes_definition: report_type)
+        cohort_list.create_tmp_patient_table
+        cohort_list.drop_temp_register_start_date_table
+        cohort_list.drop_temp_other_patient_types
+        cohort_list.create_temp_other_patient_types(@end_date.to_date)
+        cohort_list.create_temp_register_start_date_table(@end_date.to_date)
+        cohort_list.load_data_into_temp_earliest_start_date(@end_date.to_date)
+
+        outcomes = ARTService::Reports::Cohort::Outcomes.new(end_date: @end_date.to_date, definition: report_type)
+        outcomes.update_cummulative_outcomes
+
 
         data = ActiveRecord::Base.connection.select_all <<~SQL
           SELECT
@@ -182,7 +191,7 @@ module ARTService
       # Writes the report to database
       def save_report
         Report.transaction do
-          report = Report.create(name: "#{@name} #{@occupation}",
+          report = Report.create(name: @name,
                                  start_date: @start_date,
                                  end_date: @end_date,
                                  type: @type,
