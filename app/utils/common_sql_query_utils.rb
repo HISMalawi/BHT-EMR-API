@@ -13,8 +13,8 @@ module CommonSqlQueryUtils
     table_name = "#{table_name}." unless table_name.blank?
     return '' if occupation.blank?
     return '' if occupation == 'All'
-    return "#{clause} #{table_name}#{field_name} = '#{occupation}'" if occupation == 'Military'
-    return "#{clause} #{table_name}#{field_name} != 'Military'" if occupation == 'Civilian'
+    return "#{clause} #{table_name}#{field_name} IN ('#{occupation}', 'MDF Reserve', 'MDF Retired', 'Soldier', 'Soldier/Police')" if occupation == 'Military'
+    return "#{clause} #{table_name}#{field_name} NOT IN ('Military', 'MDF Reserve', 'MDF Retired', 'Soldier', 'Soldier/Police')" if occupation == 'Civilian'
   end
 
   def external_client_query(end_date:)
