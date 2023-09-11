@@ -228,5 +228,22 @@ describe 'Clinic Reports API', type: :request, swagger_doc: 'v1/swagger.yaml' do
       end
     end
   end
+
+  path '/api/v1/programs/1/reports/hypertension_report' do
+    get 'Retrieve Hypertension report' do
+      tags TAGS_NAME
+      description 'This shows Hypertension report'
+      produces 'application/json'
+      consumes 'application/json'
+      security [api_key: []]
+      parameter name: :start_date, in: :query, type: :string
+      parameter name: :end_date, in: :query, type: :string
+
+      response '200', 'Hypertension Report found' do
+        schema type: :array, items: { '$ref' => '#/components/schemas/hypertension_report' }
+        run_test!
+      end
+    end
+  end
 end
 # rubocop:enable Metrics/BlockLength
