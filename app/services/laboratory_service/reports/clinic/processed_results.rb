@@ -8,12 +8,9 @@ module LaboratoryService
       class ProcessedResults
         attr_reader :start_date, :end_date
 
-        include CommonSqlQueryUtils
-
-        def initialize(start_date:, end_date:, **kwargs)
+        def initialize(start_date:, end_date:, **_kwargs)
           @start_date = start_date.to_date
           @end_date = end_date.to_date
-          @occupation = kwargs[:occupation]
         end
 
         def read
@@ -79,7 +76,6 @@ module LaboratoryService
             INNER JOIN person
               ON person.person_id = lab_result_obs.person_id
               AND person.voided = 0
-            LEFT JOIN (#{current_occupation_query}) AS a ON a.person_id = lab_result_obs.person_id
             LEFT JOIN patient_identifier
               ON patient_identifier.patient_id = lab_result_obs.person_id
               AND patient_identifier.voided = 0
@@ -96,7 +92,7 @@ module LaboratoryService
               GROUP BY concept_id
             ) AS measure_concept
               ON measure_concept.concept_id = measure.concept_id
-            WHERE lab_result_obs.voided = 0 #{%w[Military Civilian].include?(@occupation) ? 'AND' : ''} #{occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'a', include_clause: false)}
+            WHERE lab_result_obs.voided = 0
               AND lab_result_obs.obs_datetime >= DATE(#{start_date})
               AND lab_result_obs.obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
             GROUP BY orders.order_id

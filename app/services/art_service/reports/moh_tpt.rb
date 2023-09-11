@@ -4,17 +4,15 @@ module ARTService
   module Reports
     # This class generates the MOH TPT report
     class MohTpt
-      include CommonSqlQueryUtils
       attr_reader :start_date, :end_date, :start_of_month, :end_of_month, :raw_end_date, :raw_start_date
 
-      def initialize(start_date:, end_date:, **kwargs)
+      def initialize(start_date:, end_date:, **_kwarg)
         @raw_end_date = end_date.to_date
         @raw_start_date = start_date.to_date
         @start_date = start_date - 9.months
         @end_date = @start_date + 3.months
         @start_of_month = @start_date.beginning_of_month
         @end_of_month = @end_date.end_of_month
-        @occupation = kwargs[:occupation]
       end
 
       def data
@@ -108,7 +106,6 @@ module ARTService
             AND o.concept_id = 2516 -- ART start date
             AND o.encounter_id = e.encounter_id
             AND o.voided = 0
-          LEFT JOIN (#{current_occupation_query}) a ON a.person_id = pp.patient_id
           WHERE pp.patient_id NOT IN (
             SELECT o.patient_id
             FROM orders o
@@ -119,7 +116,7 @@ module ARTService
               AND o.start_date < DATE('#{start_of_month}')
             GROUP BY o.patient_id
           )
-          AND pp.program_id = 1 #{%w[Military Civilian].include?(@occupation) ? 'AND' : ''} #{occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'a', include_clause: false)}
+          AND pp.program_id = 1 -- HIV program
           GROUP BY pp.patient_id
         SQL
       end
@@ -132,7 +129,6 @@ module ARTService
             coalesce(tpt_transfer_in_obs.value_datetime, min(tpt_order.start_date)) start_date,
             p.gender, disaggregated_age_group(p.birthdate, DATE('#{raw_end_date}')) age_group,
             patient_outcome(p.person_id, DATE('#{@raw_end_date}')) AS outcome,
-            DATE(COALESCE(art_start_date_obs.value_datetime, MIN(art_order.start_date))) AS earliest_start_date,
             GROUP_CONCAT(DISTINCT tpt_order.concept_id SEPARATOR ',') AS drug_concepts,
             CASE
               WHEN count(DISTINCT tpt_order.concept_id) >  1 THEN '3HP'
@@ -149,34 +145,11 @@ module ARTService
             AND tpt_order.order_type_id = 1 -- Drug order
             AND tpt_order.concept_id IN (#{tpt_concepts})
           INNER JOIN drug_order do ON do.order_id = tpt_order.order_id AND do.quantity > 0
-          LEFT JOIN encounter AS clinic_registration_encounter
-            ON clinic_registration_encounter.encounter_type = (
-              SELECT encounter_type_id FROM encounter_type WHERE name = 'HIV CLINIC REGISTRATION' LIMIT 1
-            )
-            AND clinic_registration_encounter.patient_id = pp.patient_id
-            AND clinic_registration_encounter.program_id = pp.program_id
-            AND clinic_registration_encounter.encounter_datetime < DATE('#{@end_date}') + INTERVAL 1 DAY
-            AND clinic_registration_encounter.voided = 0
-          INNER JOIN orders AS art_order
-            ON art_order.patient_id = pp.patient_id
-            /* AND art_order.encounter_id = prescription_encounter.encounter_id */
-            AND art_order.concept_id IN (SELECT concept_id FROM concept_set WHERE concept_set = 1085)
-            AND art_order.start_date < DATE('#{@end_of_month}') + INTERVAL 1 DAY
-            AND art_order.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
-            AND art_order.start_date >= DATE('1901-01-01')
-            AND art_order.voided = 0
-          LEFT JOIN obs AS art_start_date_obs
-            ON art_start_date_obs.concept_id = 2516
-            AND art_start_date_obs.person_id = pp.patient_id
-            AND art_start_date_obs.voided = 0
-            AND art_start_date_obs.obs_datetime < (DATE('#{@end_of_month}') + INTERVAL 1 DAY)
-            AND art_start_date_obs.encounter_id = clinic_registration_encounter.encounter_id
           LEFT JOIN obs tpt_transfer_in_obs ON tpt_transfer_in_obs.person_id = pp.patient_id
             AND tpt_transfer_in_obs.concept_id = #{ConceptName.find_by_name('TPT Drugs Received').concept_id}
             AND tpt_transfer_in_obs.voided = 0
             AND tpt_transfer_in_obs.value_drug IN (#{tpt_concepts})
             AND tpt_transfer_in_obs.obs_datetime < DATE('#{end_of_month}') + INTERVAL 1 DAY
-          LEFT JOIN (#{current_occupation_query}) a ON a.person_id = pp.patient_id
           WHERE pp.patient_id NOT IN (
             SELECT o.patient_id
             FROM orders o
@@ -187,7 +160,7 @@ module ARTService
               AND o.start_date < DATE('#{start_of_month}')
             GROUP BY o.patient_id
           )
-          AND pp.program_id = 1 #{%w[Military Civilian].include?(@occupation) ? 'AND' : ''} #{occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'a', include_clause: false)}
+          AND pp.program_id = 1 -- HIV program
           GROUP BY pp.patient_id
         SQL
       end

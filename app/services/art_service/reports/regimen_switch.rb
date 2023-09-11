@@ -3,10 +3,9 @@
 module ARTService
   module Reports
     class RegimenSwitch
-      def initialize(start_date:, end_date:, **kwargs)
+      def initialize(start_date:, end_date:)
         @start_date = start_date
         @end_date = end_date
-        @occupation = kwargs[:occupation]
       end
 
       def regimen_switch(pepfar)
@@ -14,15 +13,12 @@ module ARTService
       end
 
       def regimen_report(type)
-        ARTService::Reports::RegimenDispensationData.new(type: type, start_date: @start_date,
-                                                         end_date: @end_date, occupation: @occupation)
-                                                    .find_report
+        ARTService::Reports::RegimenDispensationData.new(type: type, start_date: @start_date, end_date: @end_date).find_report
       end
 
       def latest_regimen_dispensed(rebuild_outcome)
-        if rebuild_outcome || @occupation.present?
-          ARTService::Reports::CohortBuilder.new(outcomes_definition: 'moh')
-                                            .init_temporary_tables(@start_date, @end_date, @occupation)
+        if rebuild_outcome
+          ARTService::Reports::CohortBuilder.new(outcomes_definition: 'moh').init_temporary_tables(@start_date, @end_date)
         end
 
         latest_regimens
@@ -354,9 +350,7 @@ module ARTService
 
       def pepfar_outcome_builder(repport_type = 'moh')
         cohort_builder = ARTService::Reports::CohortDisaggregated.new(name: 'Regimen switch', type: repport_type,
-                                                                      start_date: @start_date.to_date,
-                                                                      end_date: @end_date.to_date, rebuild: true,
-                                                                      occupation: @occupation)
+                                                                      start_date: @start_date.to_date, end_date: @end_date.to_date, rebuild: true)
         cohort_builder.rebuild_outcomes(repport_type)
       end
 

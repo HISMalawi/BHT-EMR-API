@@ -2,8 +2,6 @@
 
 module ARTService
   class DataCleaningTool
-    include CommonSqlQueryUtils
-  
     TOOLS = {
       'DATE ENROLLED LESS THAN EARLIEST START DATE' => 'date_enrolled_less_than_earliest_start_date',
       'PRE ART OR UNKNOWN OUTCOMES' => 'pre_art_or_unknown_outcomes',
@@ -570,13 +568,28 @@ module ARTService
       SQL
     end
 
+    # rubocop:disable Metrics/MethodLength
     # Method to fetch all external and drug refills from the system
     def external_clients
       property = GlobalProperty.find_by(property: 'can.remove.external.and.drug.refills.from.data.cleaning')
       return 0 if property.blank? || property&.property_value == 'false'
 
-      clients = ActiveRecord::Base.connection.select_all external_client_query(end_date: @end_date.to_date)
+      end_date = ActiveRecord::Base.connection.quote(@end_date.to_date)
+      clients = ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT obs.person_id FROM obs,
+        (SELECT person_id, Max(obs_datetime) AS obs_datetime, concept_id FROM obs
+        WHERE concept_id IN (SELECT concept_id FROM concept_name WHERE name = 'Type of patient' AND voided = 0)
+        AND DATE(obs_datetime) <= #{end_date}
+        AND voided = 0
+        GROUP BY person_id) latest_record
+        WHERE obs.person_id = latest_record.person_id
+        AND obs.concept_id = latest_record.concept_id
+        AND obs.obs_datetime = latest_record.obs_datetime
+        AND obs.value_coded IN (SELECT concept_id FROM concept_name WHERE name = 'Drug refill' || name = 'External consultation')
+        AND obs.voided = 0
+      SQL
       clients.map { |record| record['person_id'] }.push(0).join(',')
     end
+    # rubocop:enable Metrics/MethodLength
   end
 end

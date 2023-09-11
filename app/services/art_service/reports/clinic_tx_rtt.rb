@@ -4,12 +4,9 @@ module ARTService
   module Reports
     # This is MOH client returned to care report
     class ClinicTxRtt
-      include CommonSqlQueryUtils
-
-      def initialize(start_date:, end_date:, **kwargs)
+      def initialize(start_date:, end_date:, **_kwarg)
         @start_date = ActiveRecord::Base.connection.quote(start_date)
         @end_date = ActiveRecord::Base.connection.quote(end_date)
-        @occupation = kwargs[:occupation]
       end
 
       def find_report
@@ -143,7 +140,6 @@ module ARTService
               AND encounter.voided = 0
           ) AS patients_with_orders_at_end_of_quarter
             ON patients_with_orders_at_end_of_quarter.patient_id = patient_program.patient_id
-          LEFT JOIN (#{current_occupation_query}) AS a ON a.person_id = patient_program.patient_id
           WHERE patient_program.program_id = 1
             /* Ensure that the patients retrieved, did not receive ART within 28 days
                before the start of the reporting period */
@@ -158,7 +154,7 @@ module ARTService
               WHERE ((DATE(orders.start_date) BETWEEN (DATE(#{@start_date}) - INTERVAL 60 DAY) AND DATE(#{@start_date}))
                      OR (DATE(orders.auto_expire_date )BETWEEN (DATE(#{@start_date}) - INTERVAL 60 DAY) AND DATE(#{@start_date})))
                 AND orders.voided = 0
-            ) #{%w[Military Civilian].include?(@occupation) ? 'AND' : ''} #{occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'a', include_clause: false)}
+            )
           GROUP BY patient_program.patient_id
           HAVING initial_outcome IN ('Defaulted', 'Treatment stopped')
              AND final_outcome = 'On antiretrovirals';

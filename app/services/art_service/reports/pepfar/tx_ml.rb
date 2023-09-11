@@ -5,12 +5,10 @@ module ARTService
         attr_reader :start_date, :end_date
 
         include Utils
-        include CommonSqlQueryUtils
 
-        def initialize(start_date:, end_date:, **kwargs)
+        def initialize(start_date:, end_date:)
           @start_date = start_date.to_date.strftime('%Y-%m-%d 00:00:00')
           @end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
-          @occupation = kwargs[:occupation]
         end
 
         def data
@@ -116,8 +114,8 @@ module ARTService
             FROM patient_program p
             INNER JOIN person pe ON pe.person_id = p.patient_id AND pe.voided = 0
             INNER JOIN patient_state s ON p.patient_program_id = s.patient_program_id AND s.voided = 0 AND s.state = 7
-            LEFT JOIN (#{current_occupation_query}) a ON a.person_id = p.patient_id
-            WHERE p.program_id = 1 #{%w[Military Civilian].include?(@occupation) ? 'AND' : ''} #{occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'a', include_clause: false)}
+            WHERE p.program_id = 1
+              AND s.state = 7
               AND DATE(s.start_date) < '#{start_date.to_date}'
               AND pepfar_patient_outcome(p.patient_id, DATE('#{start_date.to_date - 1.day}')) = 'On antiretrovirals'
               AND pe.person_id NOT IN (#{drug_refills_and_external_consultation_list})
@@ -137,8 +135,7 @@ module ARTService
             FROM patient_program p
             INNER JOIN person pe ON pe.person_id = p.patient_id AND pe.voided = 0
             INNER JOIN patient_state s ON p.patient_program_id = s.patient_program_id AND s.voided = 0 AND s.state = 7
-            LEFT JOIN (#{current_occupation_query}) a ON a.person_id = p.patient_id
-            WHERE p.program_id = 1 #{%w[Military Civilian].include?(@occupation) ? 'AND' : ''} #{occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'a', include_clause: false)}
+            WHERE p.program_id = 1
               AND DATE(s.start_date) BETWEEN DATE('#{start_date}') AND DATE('#{end_date}')
               AND pe.person_id NOT IN (#{drug_refills_and_external_consultation_list})
             GROUP BY p.patient_id
