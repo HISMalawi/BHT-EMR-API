@@ -67,9 +67,7 @@ module ARTService
 
           if @rebuild
             initialize_disaggregated
-            art_service = ARTService::Reports::CohortBuilder.new()
-            art_service.create_tmp_patient_table
-            art_service.load_data_into_temp_earliest_start_date(end_date)
+            ARTService::Reports::CohortBuilder.new.init_temporary_tables(@start_date, @end_date, @occupation)
             rebuild_outcomes 'moh'
             art_service.update_tb_status(end_date)
           end
