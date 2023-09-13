@@ -83,6 +83,13 @@ class Encounter < VoidableRecord
 
   def after_void(reason)
     orders.each { |order| order.void(reason) }
+    
+    if encounter_type == EncounterType.find_by_name('LAB ORDERS').id
+      orders.each { |order|       
+        worker = Lab::Lims::PushWorker.new(Lab::Lims::ApiFactory.create_api)
+        worker.void_order_in_lims(order.order_id)
+      }
+    end
 
     if encounter_type == EncounterType.find_by_name('ART ADHERENCE').id
       # Hack for ART ADHERENCE that blocks observation from voiding any attached
