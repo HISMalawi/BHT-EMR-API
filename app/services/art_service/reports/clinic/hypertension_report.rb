@@ -32,9 +32,9 @@ module ARTService
           'Enalapril (5mg)' => :enalapril_5mg,
           'Enalapril (10mg tablet)' => :enalapril_10mg,
           'Enalapril (10mg)' => :enalapril_10mg,
-          'Atenolol (50mg tablet)' => :atenolol_5mg,
-          'Atenolol (50mg)' => :atenolol_5mg,
-          'Atenolol (100mg tablet)' => :atenolol_10mg
+          'Atenolol (50mg tablet)' => :atenolol_50mg,
+          'Atenolol (50mg)' => :atenolol_50mg,
+          'Atenolol (100mg tablet)' => :atenolol_100mg
         }.freeze
 
         def initialize(start_date:, end_date:, **_kwargs)
@@ -75,8 +75,8 @@ module ARTService
             amlodipine_10mg: [],
             enalapril_5mg: [],
             enalapril_10mg: [],
-            atenolol_5mg: [],
-            atenolol_10mg: [],
+            atenolol_50mg: [],
+            atenolol_100mg: [],
             total_regimen: []
           }
         end
