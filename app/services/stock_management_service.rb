@@ -139,7 +139,7 @@ class StockManagementService
       query = query.where(drug_id: filters[:drug_id]) unless filters[:drug_id].nil?
       query = query.where(current_quantity: filters[:current_quantity]) unless filters[:current_quantity].nil?
       query = query.where(pharmacy_batch_id: filters[:pharmacy_batch_id]) unless filters[:pharmacy_batch_id].nil?
-      query = query.where(pack_size: filters[:pack_size]) unless filters[:pack_size].nil?
+      query = query.where(pack_size: filters[:pack_size]) if filters.key?(:pack_size)
       query = query.where("pharmacy_batches.batch_number = '#{filters[:batch_number]}'") unless filters[:batch_number].nil?
     end
     query = query.joins("LEFT JOIN pharmacy_obs ON pharmacy_batch_items.id = pharmacy_obs.batch_item_id AND pharmacy_obs.transaction_reason = 'Drug dispensed'")
