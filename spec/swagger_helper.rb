@@ -50,13 +50,15 @@ RSpec.configure do |config|
                       amlodipine_10mg: { type: :array, items: { type: :integer } },
                       enalapril_5mg: { type: :array, items: { type: :integer } },
                       enalapril_10mg: { type: :array, items: { type: :integer } },
-                      atenolol_5mg: { type: :array, items: { type: :integer } },
-                      atenolol_10mg: { type: :array, items: { type: :integer } },
+                      atenolol_50mg: { type: :array, items: { type: :integer } },
+                      atenolol_100mg: { type: :array, items: { type: :integer } },
                       total_regimen: { type: :array, items: { type: :integer } }
                     }
                   }
                 }
               }
+            }
+          },
           sc_curr: {
             type: :object,
             properties: {
