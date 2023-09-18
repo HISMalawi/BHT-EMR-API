@@ -251,7 +251,7 @@ class StockManagementService
       item = PharmacyBatchItem.find(batch_item_id)
       quantity = quantity.to_f.abs
       validate_disposal(item, date, reason, quantity)
-      commit_transaction(item, STOCK_DEBIT, -quantity.to_f, update_item: true, transaction_reason: reason)
+      commit_transaction(item, STOCK_DEBIT, -quantity.to_f, date, update_item: true, transaction_reason: reason)
       PharmacyBatchItemReallocation.create(reallocation_code: reallocation_code, item: item,
                                            quantity: quantity, date: date,
                                            reallocation_type: STOCK_ITEM_DISPOSAL,
