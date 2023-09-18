@@ -22,7 +22,7 @@ module ARTService
             SELECT
               pbi.drug_id AS drug_id,
               COALESCE(d.name, 'Unkown') AS drug_name,
-              COALESCE(psb_opening.open_balance, 0)/pbi.pack_size AS opening_balance,
+              COALESCE(psb_opening.close_balance, 0)/pbi.pack_size AS opening_balance,
               COALESCE(psb_closing.close_balance, 0)/pbi.pack_size  AS closing_balance,
               SUM(ABS(po.quantity))/pbi.pack_size AS dispensed_quantity,
               pbi.pack_size
@@ -48,7 +48,7 @@ module ARTService
                   MAX(transaction_date) AS transaction_date,
                   pack_size
               FROM pharmacy_stock_balances
-              WHERE transaction_date <= #{@start_date} -- Opening balance can be anything less than end_date
+              WHERE transaction_date < #{@start_date} -- Opening balance can be anything less than end_date
               GROUP BY drug_id, pack_size
             ) AS psb_min ON pbi.drug_id = psb_min.drug_id AND pbi.pack_size = psb_min.pack_size
             LEFT JOIN pharmacy_stock_balances AS psb_opening ON
