@@ -186,7 +186,7 @@ module ARTService
                               .where(orders: { voided: 0 })
                               .where(voided: 0)
 
-        client_info(person_id, value_datetime) if encounters.blank? && client_alive?(person_id, value_datetime)
+        client_info(person_id, value_datetime - 14.day) if encounters.blank? && client_alive?(person_id, value_datetime)
       end
 
       def client_alive?(person_id, value_datetime)
