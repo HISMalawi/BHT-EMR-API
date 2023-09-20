@@ -91,40 +91,9 @@ class Api::V1::PatientIdentifiersController < ApplicationController
     secondary_patient_id  = params[:secondary_patient_id]
     identifier            = params[:identifier]
 
-    itype = PatientIdentifierType.find_by(name: 'Filing number')
+    result = service.swap_active_number(primary_patient_id: primary_patient_id, secondary_patient_id: secondary_patient_id, identifier: identifier)
 
-    PatientIdentifier.where(identifier_type: itype.id, patient_id: primary_patient_id).each do |i|
-      i.void("Voided by #{User.current.username}")
-    end
-
-    active_number = PatientIdentifier.create(patient_id: primary_patient_id,
-      identifier_type: itype.id, identifier: identifier, location_id: Location.current.id)
-
-    PatientIdentifier.where(identifier_type: itype.id, patient_id: secondary_patient_id).each do |i|
-      i.void("Voided by #{User.current.username}")
-    end
-
-
-
-    # ........................
-
-    itype = PatientIdentifierType.find_by(name: 'Archived filing number')
-    [primary_patient_id, secondary_patient_id].each do |id|
-      PatientIdentifier.where(identifier_type: itype.id, patient_id: id).each do |i|
-        i.void("Voided by #{User.current.username}")
-      end
-    end
-
-
-    filing_service = FilingNumberService.new
-    archive_identifier = filing_service.find_available_filing_number('Archived filing number')
-    archive_number = PatientIdentifier.create(patient_id: secondary_patient_id,
-      identifier_type: itype.id, identifier: archive_identifier, location_id: Location.current.id)
-
-    render json: {
-      active_number: identifier, primary_patient_id: primary_patient_id,
-      secondary_patient_id: secondary_patient_id, dormant_number: archive_identifier
-    }
+    render json: result
   end
 
   private
