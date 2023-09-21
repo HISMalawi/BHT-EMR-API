@@ -126,10 +126,10 @@ module ARTService
         end
 
         SEVERITY_ORDER = {
-          severe_reading: 1,
-          moderate_reading: 2,
-          mild_reading: 3,
-          normal_reading: 4   
+          severe_reading: 4,
+          moderate_reading: 3,
+          mild_reading: 2,
+          normal_reading: 1   
         }.freeze
 
         SEVERITY_CLASSIFICATION = {
