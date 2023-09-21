@@ -91,19 +91,20 @@ module ARTService
             next unless AGE_GROUPS.include?(age_group)
             next unless GENDER.include?(gender)
 
-            patient_id = row['patient_id']
+            patient = client_info(row)
             cluster = @report[age_group][gender]
-            cluster[:screened] << patient_id
-            process_bp_classification(cluster, patient_id, row['classification'])
-            process_drug_data(cluster, patient_id, row['drug_names'].split(',')) if row['drug_names'].present?
-            cluster[:total_regimen] << patient_id if row['drug_names'].present?
+            cluster[:screened] << patient
+            process_bp_classification(cluster, patient, row['systolic_classification'], row['diastolic_classification'])
+            process_drug_data(cluster, patient, row['drug_names'].split(',')) if row['drug_names'].present?
+            cluster[:total_regimen] << patient if row['drug_names'].present?
           end
         end
         # rubocop:enable Metrics/AbcSize
         # rubocop:enable Metrics/MethodLength
 
-        def process_bp_classification(cluster, patient_id, classification)
-          case classification
+        def process_bp_classification(cluster, patient_id, sys_class, dia_class)
+          classification = SEVERITY_ORDER[sys_class.to_sym] > SEVERITY_ORDER[dia_class.to_sym] ? sys_class : dia_class
+          case SEVERITY_CLASSIFICATION[classification.to_sym]
           when 'NORMAL'
             cluster[:normal_reading] << patient_id
           when 'MILD'
@@ -124,6 +125,20 @@ module ARTService
           end
         end
 
+        SEVERITY_ORDER = {
+          severe_reading: 1,
+          moderate_reading: 2,
+          mild_reading: 3,
+          normal_reading: 4   
+        }.freeze
+
+        SEVERITY_CLASSIFICATION = {
+          severe_reading: 'SEVERE',
+          moderate_reading: 'MODERATE',
+          mild_reading: 'MILD',
+          normal_reading: 'NORMAL'
+        }.freeze
+
         def data
           ActiveRecord::Base.connection.select_all <<~SQL
             SELECT
@@ -131,11 +146,17 @@ module ARTService
                 sys.value_numeric systolic,
                 dia.value_numeric diastolic,
                 CASE
-                    WHEN sys.value_numeric <= 140 AND dia.value_numeric <= 90 THEN 'NORMAL'
-                    WHEN sys.value_numeric >= 159 AND sys.value_numeric <= 159 AND dia.value_numeric >= 91 AND dia.value_numeric <= 99 THEN 'MILD'
-                    WHEN sys.value_numeric >= 160 AND sys.value_numeric <= 179 AND dia.value_numeric >= 100 AND dia.value_numeric <= 109 THEN 'MODERATE'
-                    WHEN sys.value_numeric >= 180 AND dia.value_numeric >= 110 THEN 'SEVERE'
-                END AS classification,
+                    WHEN sys.value_numeric <= 139 THEN 'normal_reading'
+                    WHEN sys.value_numeric > 139 AND sys.value_numeric <= 159 THEN 'mild_reading'
+                    WHEN sys.value_numeric > 159 AND sys.value_numeric <= 179 THEN 'moderate_reading'
+                    WHEN sys.value_numeric > 179 THEN 'severe_reading'
+                END AS systolic_classification,
+                CASE
+                    WHEN dia.value_numeric < 89 THEN 'normal_reading'
+                    WHEN dia.value_numeric > 89 AND dia.value_numeric <= 99 THEN 'mild_reading'
+                    WHEN dia.value_numeric > 99 AND dia.value_numeric <= 109 THEN 'moderate_reading'
+                    WHEN dia.value_numeric > 109 THEN 'severe_reading'
+                END AS diastolic_classification,
                 UPPER(LEFT(p.gender, 1)) gender,
                 disaggregated_age_group(p.birthdate, #{@end_date}) age_group,
                 i.identifier arv_number,
@@ -186,6 +207,16 @@ module ARTService
             AND obs.value_coded IN (SELECT concept_id FROM concept_name WHERE name = 'Drug refill' || name = 'External consultation')
             AND obs.voided = 0
           SQL
+        end
+
+        def client_info(data)
+          {
+            patient_id: data['patient_id'],
+            arv_number: data['arv_number'],
+            gender: data['gender'],
+            diastolic: data['diastolic'],
+            systolic: data['systolic']
+          }
         end
       end
       # rubocop:enable Metrics/ClassLength
