@@ -27,7 +27,7 @@ class FilingNumberService
     result = (find_patient_with_adverse_outcomes(offset, limit).to_a + find_defaulters(offset, limit).to_a)
     result = result.sort_by { |k| k['start_date'] }
     # only take the first 12 patients
-    build_archive_candidates(result[0..11])
+    build_archive_candidates(result[0..limit - 1])
   end
 
   # Current filing number format does not allow numbers exceeding this value
