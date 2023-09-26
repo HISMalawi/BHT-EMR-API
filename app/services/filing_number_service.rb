@@ -349,21 +349,25 @@ class FilingNumberService
 
   def find_defaulters(offset, limit)
     ActiveRecord::Base.connection.select_all <<~SQL
-      SELECT tpfnc.patient_identifier_id,
-        tpfnc.identifier,
+      SELECT co.patient_identifier_id,
+        co.identifier,
         'Defaulted' AS state,
         NULL AS end_date,
-        tpfnc.date_created date_activated,
-        o.patient_id,
-        MAX(o.auto_expire_date) AS start_date
-      FROM orders o
-      INNER JOIN (#{temp_potential_filing_number_candidates}) tpfnc ON tpfnc.patient_id = o.patient_id
-      WHERE o.voided = 0
-        AND o.concept_id IN (#{antiretroviral_drug_concepts.join(',')})
-        AND start_date <= DATE(#{ActiveRecord::Base.connection.quote(date)}) - INTERVAL 80 DAY
-        AND NOT EXISTS (SELECT 1 FROM (#{temp_patient_with_adverse_outcomes}) tpa WHERE tpa.patient_id = o.patient_id)
-      GROUP BY o.patient_id
-      ORDER BY o.start_date ASC
+        co.date_created date_activated,
+        p.patient_id,
+        co.auto_expire_date AS start_date
+      FROM patient p
+      INNER JOIN (
+        SELECT o.patient_id, MAX(o.auto_expire_date) AS auto_expire_date, tpfnc.patient_identifier_id, tpfnc.identifier, tpfnc.date_created
+        FROM orders o
+        INNER JOIN (#{temp_potential_filing_number_candidates}) tpfnc ON tpfnc.patient_id = o.patient_id
+        WHERE voided = 0
+          AND concept_id IN (#{antiretroviral_drug_concepts.join(',')})
+        GROUP BY o.patient_id
+      ) co ON co.patient_id = p.patient_id AND co.auto_expire_date <= DATE(#{ActiveRecord::Base.connection.quote(date)}) - INTERVAL 80 DAY
+      WHERE p.voided = 0
+        AND NOT EXISTS (SELECT 1 FROM (#{temp_patient_with_adverse_outcomes}) tpa WHERE tpa.patient_id = p.patient_id)
+      ORDER BY co.auto_expire_date ASC
       LIMIT #{offset},#{limit}
     SQL
   end
