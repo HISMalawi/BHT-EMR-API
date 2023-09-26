@@ -10,3 +10,4 @@ duplicates = PatientIdentifierService.find_duplicates(identifier_type)
 
 ## List of Services
 - [Patient Identifier Service](docs/patient_identifier_service.md)
+- [Filing Number Service](docs/filing_number_service.md)
