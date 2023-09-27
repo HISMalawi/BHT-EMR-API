@@ -33,6 +33,16 @@ Install the required gems like so:
 bundle install
 ```
 
+### Setting up Production mode
+```sh
+bin/setup_production_mode.sh 
+```
+
+Incase this does not run you might want to make it executable and you can achieve that by doing this
+```sh
+chmod +x bin/setup_production_mode.sh 
+```
+
 #### Database
 
 The API uses an [Openmrs 1.7](https://openmrs.org/2010/11/openmrs-1-7-now-available/)
