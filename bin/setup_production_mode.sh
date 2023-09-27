@@ -44,3 +44,5 @@ if [ ! -f config/database.yml ]; then
 else
     echo "config/database.yml already exists."
 fi
+
+echo "Now you can run your api in production mode: RAILS_ENV=production rails s"
