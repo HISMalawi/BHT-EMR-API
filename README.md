@@ -101,8 +101,8 @@ $ vim config/database.yml   # Edit configuration
 
 1. Run the following commands to set up your development and test databases.
 
-    ```bash
-    bin/initial_database_setup.sh development mpc && bin/initial_database_setup.sh test mpc
+    ```sh
+    bin/initial_database_setup.sh production mpc && bin/initial_database_setup.sh development mpc && bin/initial_database_setup.sh test mpc
     ```
 
 2. Run test suite as follows:
