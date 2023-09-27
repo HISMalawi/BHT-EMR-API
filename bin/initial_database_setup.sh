@@ -30,6 +30,11 @@ DATABASE=`ruby -ryaml -e "puts YAML::load_file('config/database.yml')['${ENV}'][
 HOST=`ruby -ryaml -e "puts YAML::load_file('config/database.yml')['${ENV}']['host']"`
 PORT=`ruby -ryaml -e "puts YAML::load_file('config/database.yml')['${ENV}']['port']"`
 
+# if port is not set, use default port 3306
+if [ -z "$PORT" ]; then
+  PORT=3306
+fi
+
 mysql --host=$HOST --user=$USERNAME --port=$PORT --password=$PASSWORD $DATABASE < db/initial_setup/openmrs_1_7_2_concept_server_full_db.sql
 
 echo "Schema additions ----------------------------------------------------------------------------------"
