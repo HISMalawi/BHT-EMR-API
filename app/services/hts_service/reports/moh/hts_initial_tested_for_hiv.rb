@@ -135,7 +135,6 @@ module HtsService
         def init_report
           @query = his_patients_revs(INDICATORS) 
         end
-
         def set_unique
           @data.each do |key, obj|
             if %w[frs_given_family_referral_slips_sum male_condoms_given_male_condoms_sum female_condoms_given_female_condoms_sum].include?(key)

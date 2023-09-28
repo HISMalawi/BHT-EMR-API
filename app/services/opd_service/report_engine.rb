@@ -141,7 +141,7 @@ module OPDService
           encounter_datetime as visit_date,
           p.birthdate,
           p.gender,
-          c.name AS visit_type
+          MIN(IFNULL(c.name, 'Unidentified')) AS visit_type
         FROM `encounter`
         INNER JOIN obs ON obs.encounter_id = encounter.encounter_id AND obs.voided = 0
         INNER JOIN person p ON p.person_id = encounter.patient_id AND p.voided = 0
