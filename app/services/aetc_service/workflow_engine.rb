@@ -2,7 +2,9 @@
 
 require 'set'
 
+# rubocop:disable Metrics/ClassLength
 module AetcService
+  # A workflow engine for AETC program
   class WorkflowEngine
     include ModelUtils
 
@@ -44,7 +46,6 @@ module AetcService
     PRESCRIPTION = 'PRESCRIPTION'
     DISPENSING = 'DISPENSING'
     TREATMENT = 'TREATMENT'
-
 
     ENCOUNTER_SM = {
       INITIAL_STATE => PATIENT_REGISTRATION,
@@ -161,3 +162,4 @@ module AetcService
     end
   end
 end
+# rubocop:enable Metrics/ClassLength
