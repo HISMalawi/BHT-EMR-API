@@ -2,7 +2,7 @@
 
 require 'set'
 
-module OPDService
+module AetcService
   class WorkflowEngine
     include ModelUtils
 
@@ -44,43 +44,25 @@ module OPDService
     PRESCRIPTION = 'PRESCRIPTION'
     DISPENSING = 'DISPENSING'
     TREATMENT = 'TREATMENT'
-=begin
-    # Encounters graph
+
+
     ENCOUNTER_SM = {
       INITIAL_STATE => PATIENT_REGISTRATION,
       PATIENT_REGISTRATION => SOCIAL_HISTORY,
-      SOCIAL_HISTORY => END_STATE
+      SOCIAL_HISTORY => VITALS,
+      VITALS => END_STATE
     }.freeze
 
     STATE_CONDITIONS = {
       PATIENT_REGISTRATION => %i[patient_not_registered_today?],
-      SOCIAL_HISTORY => %i[social_history_not_collected?]
-    }.freeze
-=end
-    # Encounters graph
-    ENCOUNTER_SM = {
-      INITIAL_STATE => PATIENT_REGISTRATION,
-      PATIENT_REGISTRATION => VITALS,
-      VITALS => PRESENTING_COMPLAINTS,
-      PRESENTING_COMPLAINTS => OUTPATIENT_DIAGNOSIS,
-      OUTPATIENT_DIAGNOSIS => PRESCRIPTION,
-      PRESCRIPTION => DISPENSING,
-      DISPENSING => END_STATE
-    }.freeze
-
-    STATE_CONDITIONS = {
-      PATIENT_REGISTRATION => %i[patient_not_registered_today?],
-      VITALS => %i[patient_does_not_have_height_and_weight?],
-      PRESENTING_COMPLAINTS => %i[patient_does_not_have_complaints?],
-      OUTPATIENT_DIAGNOSIS => %i[patient_does_not_have_diagnosis?],
-      PRESCRIPTION => %i[patient_does_not_have_prescription?],
-      DISPENSING => %i[patient_does_not_have_dispensation?],
+      SOCIAL_HISTORY => %i[social_history_not_collected?],
+      VITALS => %i[patient_does_not_have_height_and_weight?]
     }.freeze
 
     def load_user_activities
-      #activities = ['Patient registration,Social history']
-      activities = user_property('OPD_activities')&.property_value
-      activities = "Patient registration,Social history,Vitals" if activities.blank?
+      # activities = ['Patient registration,Social history']
+      activities = user_property('AETC_activities')&.property_value
+      activities = 'Patient registration,Social history,Vitals' if activities.blank?
 
       encounters = (activities&.split(',') || []).collect do |activity|
         # Re-map activities to encounters
@@ -101,7 +83,7 @@ module OPDService
         when /Dispensing/i
           DISPENSING
         else
-          Rails.logger.warn "Invalid OPD activity in user properties: #{activity}"
+          Rails.logger.warn "Invalid AETC activity in user properties: #{activity}"
         end
       end
       Set.new(encounters)
@@ -122,14 +104,14 @@ module OPDService
     end
 
     def valid_state?(state)
-      return false if encounter_exists?(encounter_type(state)) || !opd_activity_enabled?(state)
+      return false if encounter_exists?(encounter_type(state)) || !aetc_activity_enabled?(state)
 
       (STATE_CONDITIONS[state] || []).reduce(true) do |status, condition|
         status && method(condition).call
       end
     end
-    def opd_activity_enabled?(state)
 
+    def aetc_activity_enabled?(state)
       @activities.include?(state)
     end
 
@@ -144,10 +126,11 @@ module OPDService
 
       encounter.blank?
     end
+
     # Checks if patient has complaints in today
     #
     def patient_does_not_have_complaints?
-      encounter_type = EncounterType.find_by name:PRESENTING_COMPLAINTS
+      encounter_type = EncounterType.find_by name: PRESENTING_COMPLAINTS
       encounter = Encounter.joins(:type).where(
         'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
         @patient.patient_id, encounter_type.encounter_type_id, @date
@@ -155,10 +138,11 @@ module OPDService
 
       encounter.blank?
     end
+
     # Checks if patient has diagnosis today
     #
     def patient_does_not_have_diagnosis?
-      encounter_type = EncounterType.find_by name:OUTPATIENT_DIAGNOSIS
+      encounter_type = EncounterType.find_by name: OUTPATIENT_DIAGNOSIS
       encounter = Encounter.joins(:type).where(
         'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
         @patient.patient_id, encounter_type.encounter_type_id, @date
@@ -170,7 +154,7 @@ module OPDService
     # Checks if patient has prescription today
     #
     def patient_does_not_have_prescription?
-      encounter_type = EncounterType.find_by name:TREATMENT
+      encounter_type = EncounterType.find_by name: TREATMENT
       encounter = Encounter.joins(:type).where(
         'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
         @patient.patient_id, encounter_type.encounter_type_id, @date
@@ -179,10 +163,10 @@ module OPDService
       encounter.blank?
     end
 
-  # Checks if patient has prescription today
+    # Checks if patient has prescription today
     #
     def patient_does_not_have_dispensation?
-      encounter_type = EncounterType.find_by name:DISPENSING
+      encounter_type = EncounterType.find_by name: DISPENSING
       encounter = Encounter.joins(:type).where(
         'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
         @patient.patient_id, encounter_type.encounter_type_id, @date
@@ -195,7 +179,8 @@ module OPDService
     def social_history_not_collected?
       encounter = Encounter.joins(:type).where(
         'encounter_type.name = ? AND encounter.patient_id = ?',
-        SOCIAL_HISTORY, @patient.patient_id)
+        SOCIAL_HISTORY, @patient.patient_id
+      )
 
       encounter.blank?
     end
