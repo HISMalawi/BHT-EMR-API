@@ -59,33 +59,29 @@ module AetcService
       VITALS => %i[patient_does_not_have_height_and_weight?]
     }.freeze
 
-    def load_user_activities
-      # activities = ['Patient registration,Social history']
-      activities = user_property('AETC_activities')&.property_value
-      activities = 'Patient registration,Social history,Vitals' if activities.blank?
+    ACTIVITY_MAP = {
+      'patient registration' => PATIENT_REGISTRATION,
+      'social history' => SOCIAL_HISTORY,
+      'vitals' => VITALS,
+      'presenting complaints' => PRESENTING_COMPLAINTS,
+      'outpatient diagnosis' => OUTPATIENT_DIAGNOSIS,
+      'prescription' => PRESCRIPTION,
+      'dispensing' => DISPENSING
+    }.freeze
 
-      encounters = (activities&.split(',') || []).collect do |activity|
-        # Re-map activities to encounters
-        puts activity
-        case activity
-        when /Patient registration/i
-          PATIENT_REGISTRATION
-        when /Social history/i
-          SOCIAL_HISTORY
-        when /Vitals/i
-          VITALS
-        when /Presenting complaints/i
-          PRESENTING_COMPLAINTS
-        when /Outpatient diagnosis/i
-          OUTPATIENT_DIAGNOSIS
-        when /Prescription/i
-          PRESCRIPTION
-        when /Dispensing/i
-          DISPENSING
+    def load_user_activities
+      activities = user_property('AETC_activities')&.property_value || 'Patient registration,Social history,Vitals'
+
+      encounters = activities.split(',').map do |activity|
+        activity_name = activity.strip.downcase
+        if ACTIVITY_MAP.key?(activity_name)
+          ACTIVITY_MAP[activity_name]
         else
           Rails.logger.warn "Invalid AETC activity in user properties: #{activity}"
+          nil
         end
-      end
+      end.compact
+
       Set.new(encounters)
     end
 
@@ -119,54 +115,6 @@ module AetcService
     #
     def patient_not_registered_today?
       encounter_type = EncounterType.find_by name: PATIENT_REGISTRATION
-      encounter = Encounter.joins(:type).where(
-        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
-        @patient.patient_id, encounter_type.encounter_type_id, @date
-      ).order(encounter_datetime: :desc).first
-
-      encounter.blank?
-    end
-
-    # Checks if patient has complaints in today
-    #
-    def patient_does_not_have_complaints?
-      encounter_type = EncounterType.find_by name: PRESENTING_COMPLAINTS
-      encounter = Encounter.joins(:type).where(
-        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
-        @patient.patient_id, encounter_type.encounter_type_id, @date
-      ).order(encounter_datetime: :desc).first
-
-      encounter.blank?
-    end
-
-    # Checks if patient has diagnosis today
-    #
-    def patient_does_not_have_diagnosis?
-      encounter_type = EncounterType.find_by name: OUTPATIENT_DIAGNOSIS
-      encounter = Encounter.joins(:type).where(
-        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
-        @patient.patient_id, encounter_type.encounter_type_id, @date
-      ).order(encounter_datetime: :desc).first
-
-      encounter.blank?
-    end
-
-    # Checks if patient has prescription today
-    #
-    def patient_does_not_have_prescription?
-      encounter_type = EncounterType.find_by name: TREATMENT
-      encounter = Encounter.joins(:type).where(
-        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
-        @patient.patient_id, encounter_type.encounter_type_id, @date
-      ).order(encounter_datetime: :desc).first
-
-      encounter.blank?
-    end
-
-    # Checks if patient has prescription today
-    #
-    def patient_does_not_have_dispensation?
-      encounter_type = EncounterType.find_by name: DISPENSING
       encounter = Encounter.joins(:type).where(
         'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
         @patient.patient_id, encounter_type.encounter_type_id, @date
