@@ -135,19 +135,6 @@ module HtsService
         def init_report
           @query = his_patients_revs(INDICATORS) 
         end
-=begin
-        def init_report
-          model = his_patients_rev
-          INDICATORS.each do |param|
-            model = ObsValueScope.call(model: model, **param)
-          end
-          @query = Person.connection.select_all(
-            model
-              .select('person.gender, person.person_id, person.birthdate, encounter.encounter_datetime')
-              .group('person.person_id, referrals_ordered.value_text')
-          ).to_hash          
-        end
-=end
 
         def set_unique
           @data.each do |key, obj|
