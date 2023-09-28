@@ -72,7 +72,7 @@ module AetcService
     def load_user_activities
       activities = user_property('AETC_activities')&.property_value || 'Patient registration,Social history,Vitals'
 
-      encounters = activities.split(',').map do |activity|
+      Set.new(activities.split(',').map do |activity|
         activity_name = activity.strip.downcase
         if ACTIVITY_MAP.key?(activity_name)
           ACTIVITY_MAP[activity_name]
@@ -80,9 +80,7 @@ module AetcService
           Rails.logger.warn "Invalid AETC activity in user properties: #{activity}"
           nil
         end
-      end.compact
-
-      Set.new(encounters)
+      end.compact)
     end
 
     def next_state(current_state)
@@ -126,8 +124,8 @@ module AetcService
     # Check if patient is not registered
     def social_history_not_collected?
       encounter = Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ?',
-        SOCIAL_HISTORY, @patient.patient_id
+        'encounter_type.name = ? AND encounter.patient_id = ? AND encounter.program_id = ?',
+        SOCIAL_HISTORY, @patient.patient_id, @program.id
       )
 
       encounter.blank?
