@@ -14,10 +14,13 @@ module ARTService
     #
     # The classifications above follow the ART guidelines 2018 Addendum.
     class ViralLoadResults
-      def initialize(start_date:, end_date: nil, range: nil, **_kwargs)
+      include CommonSqlQueryUtils
+
+      def initialize(start_date:, end_date: nil, range: nil, **kwargs)
         @start_date = start_date
         @end_date = end_date
         @range = range || 'viraemia-1000+'
+        @occupation = kwargs[:occupation]
       end
 
       def find_report
@@ -40,7 +43,7 @@ module ARTService
           FROM orders
           INNER JOIN concept_name AS specimen_type
             ON specimen_type.concept_id = orders.concept_id
-            AND specimen_type.name IN ('Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)')
+            AND specimen_type.name IN ('Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)', 'Plasma')
             AND specimen_type.voided = 0
           LEFT JOIN patient_identifier
             ON patient_identifier.patient_id = orders.patient_id
@@ -51,6 +54,7 @@ module ARTService
           INNER JOIN person
             ON person.person_id = orders.patient_id
             AND person.voided = 0
+          LEFT JOIN (#{current_occupation_query}) AS a ON a.person_id = orders.patient_id
           /* For each lab order find an HIV Viral Load test */
           INNER JOIN obs AS test_obs
             ON test_obs.order_id = orders.order_id
@@ -83,7 +87,7 @@ module ARTService
               AND orders.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Lab' AND retired = 0)
               AND orders.concept_id IN (
                 SELECT concept_id FROM concept_name INNER JOIN concept USING (concept_id)
-                WHERE concept_name.name IN ('Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)')
+                WHERE concept_name.name IN ('Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)', 'Plasma')
                   AND concept.retired = 0 AND concept_name.voided = 0
               )
               AND orders.voided = 0
@@ -110,14 +114,14 @@ module ARTService
             AND test_result_measure_obs.voided = 0
             AND (#{query_range})
           WHERE orders.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Lab' AND retired = 0)
-            AND orders.voided = 0
+            AND orders.voided = 0 #{%w[Military Civilian].include?(@occupation) ? 'AND' : ''} #{occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'a', include_clause: false)}
           GROUP BY orders.patient_id
         SQL
       end
 
       def specimen_types
         Concept.joins(:concept_names)
-               .merge(ConceptName.where(name: ['Blood', ]))
+               .merge(ConceptName.where(name: ['Blood']))
                .select(:concept_id)
                .to_sql
       end

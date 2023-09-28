@@ -31,6 +31,56 @@ RSpec.configure do |config|
           }
         },
         schemas: {
+          hypertension_report: {
+            type: :object,
+            properties: {
+              age_group: {
+                type: :object,
+                properties: {
+                  gender: {
+                    type: :object,
+                    properties: {
+                      screened: { type: :array, items: { type: :integer } },
+                      normal_reading: { type: :array, items: { type: :integer } },
+                      mild_reading: { type: :array, items: { type: :integer } },
+                      moderate_reading: { type: :array, items: { type: :integer } },
+                      severe_reading: { type: :array, items: { type: :integer } },
+                      hydrochlorothiazide_25mg: { type: :array, items: { type: :integer } },
+                      amlodipine_5mg: { type: :array, items: { type: :integer } },
+                      amlodipine_10mg: { type: :array, items: { type: :integer } },
+                      enalapril_5mg: { type: :array, items: { type: :integer } },
+                      enalapril_10mg: { type: :array, items: { type: :integer } },
+                      atenolol_50mg: { type: :array, items: { type: :integer } },
+                      atenolol_100mg: { type: :array, items: { type: :integer } },
+                      total_regimen: { type: :array, items: { type: :integer } }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          sc_curr: {
+            type: :object,
+            properties: {
+              category: { type: :string, description: 'Drug category or the drug name' },
+              units: { type: :integer, format: :int32, description: 'Number of bottles available' },
+              quantity: { type: :integer, format: :int32, description: 'Number of pills in a bottle' },
+              granular_spec: { type: :object, properties: {
+                drug: { type: :integer, format: :int32, description: 'Number of bottles available' }
+              } }
+            }
+          },
+          stock_card: {
+            type: :object,
+            properties: {
+              drug_id: { type: :integer },
+              drug_name: { type: :string },
+              opening_balance: { type: :number },
+              closing_balance: { type: :number },
+              dispensed_quantity: { type: :number },
+              pack_size: { type: :integer }
+            }
+          },
           notification_alert: {
             type: :object,
             properties: {
@@ -139,6 +189,20 @@ RSpec.configure do |config|
               sns_comm: { '$ref' => '#/components/schemas/hts_recency_results' },
               vct_comm: { '$ref' => '#/components/schemas/hts_recency_results' },
               other_comm_tp: { '$ref' => '#/components/schemas/hts_recency_results' }
+            }
+          },
+          discrepancy_report: {
+            type: :array, items: {
+              type: :object, properties: {
+                drug_id: { type: :integer },
+                name: { type: :string },
+                short_name: { type: :string },
+                verification_date: { type: :string, format: 'date-time' },
+                verification_reason: { type: :string },
+                difference: { type: :integer },
+                current_quantity: { type: :integer },
+                variance_reason: { type: :string }
+              }
             }
           }
         }

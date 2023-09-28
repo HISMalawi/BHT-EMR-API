@@ -53,49 +53,109 @@ describe 'Clinic Reports API', type: :request, swagger_doc: 'v1/swagger.yaml' do
             age_group: { type: :string },
             tpt_type: { type: :string },
             started_tpt: { type: :array, items: {
-              type: :integer
+              type: :object,
+              properties: {
+                patient_id: { type: :integer },
+                gender: { type: :string }
+              }
             } },
             completed_tpt: { type: :array, items: {
-              type: :integer
+              type: :object,
+              properties: {
+                patient_id: { type: :integer },
+                gender: { type: :string }
+              }
             } },
             not_completed_tpt: { type: :array, items: {
-              type: :integer
+              type: :object,
+              properties: {
+                patient_id: { type: :integer },
+                gender: { type: :string }
+              }
             } },
             died: { type: :array, items: {
-              type: :integer
+              type: :object,
+              properties: {
+                patient_id: { type: :integer },
+                gender: { type: :string }
+              }
             } },
             defaulted: { type: :array, items: {
-              type: :integer
+              type: :object,
+              properties: {
+                patient_id: { type: :integer },
+                gender: { type: :string }
+              }
             } },
             transferred_out: { type: :array, items: {
-              type: :integer
+              type: :object,
+              properties: {
+                patient_id: { type: :integer },
+                gender: { type: :string }
+              }
             } },
             confirmed_tb: { type: :array, items: {
-              type: :integer
+              type: :object,
+              properties: {
+                patient_id: { type: :integer },
+                gender: { type: :string }
+              }
             } },
             pregnant: { type: :array, items: {
-              type: :integer
+              type: :object,
+              properties: {
+                patient_id: { type: :integer },
+                gender: { type: :string }
+              }
             } },
             stopped: { type: :array, items: {
-              type: :integer
+              type: :object,
+              properties: {
+                patient_id: { type: :integer },
+                gender: { type: :string }
+              }
             } },
             breast_feeding: { type: :array, items: {
-              type: :integer
+              type: :object,
+              properties: {
+                patient_id: { type: :integer },
+                gender: { type: :string }
+              }
             } },
             skin_rash: { type: :array, items: {
-              type: :integer
+              type: :object,
+              properties: {
+                patient_id: { type: :integer },
+                gender: { type: :string }
+              }
             } },
             peripheral_neuropathy: { type: :array, items: {
-              type: :integer
+              type: :object,
+              properties: {
+                patient_id: { type: :integer },
+                gender: { type: :string }
+              }
             } },
             yellow_eyes: { type: :array, items: {
-              type: :integer
+              type: :object,
+              properties: {
+                patient_id: { type: :integer },
+                gender: { type: :string }
+              }
             } },
             nausea: { type: :array, items: {
-              type: :integer
+              type: :object,
+              properties: {
+                patient_id: { type: :integer },
+                gender: { type: :string }
+              }
             } },
             dizziness: { type: :array, items: {
-              type: :integer
+              type: :object,
+              properties: {
+                patient_id: { type: :integer },
+                gender: { type: :string }
+              }
             } }
           }
         }
@@ -147,6 +207,40 @@ describe 'Clinic Reports API', type: :request, swagger_doc: 'v1/swagger.yaml' do
         schema type: :string, properties: {
           message: { type: :string }
         }
+        run_test!
+      end
+    end
+  end
+
+  path '/api/v1/programs/1/reports/discrepancy_report' do
+    get 'Retrieve Discrepancy report' do
+      tags TAGS_NAME
+      description 'This shows Discrepancy report'
+      produces 'application/json'
+      consumes 'application/json'
+      security [api_key: []]
+      parameter name: :start_date, in: :query, type: :string
+      parameter name: :end_date, in: :query, type: :string
+
+      response '200', 'Discrepancy Report found' do
+        schema type: :array, items: { '$ref' => '#/components/schemas/discrepancy_report' }
+        run_test!
+      end
+    end
+  end
+
+  path '/api/v1/programs/1/reports/hypertension_report' do
+    get 'Retrieve Hypertension report' do
+      tags TAGS_NAME
+      description 'This shows Hypertension report'
+      produces 'application/json'
+      consumes 'application/json'
+      security [api_key: []]
+      parameter name: :start_date, in: :query, type: :string
+      parameter name: :end_date, in: :query, type: :string
+
+      response '200', 'Hypertension Report found' do
+        schema type: :array, items: { '$ref' => '#/components/schemas/hypertension_report' }
         run_test!
       end
     end

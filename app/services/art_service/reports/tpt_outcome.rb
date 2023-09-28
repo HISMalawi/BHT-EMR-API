@@ -8,13 +8,15 @@ module ARTService
     # the report must pick clients who started TPT in the month of December
     # it must be drillable
     class TptOutcome
+      include CommonSqlQueryUtils
       include ModelUtils
       include ARTService::Reports::Pepfar::Utils
 
-      def initialize(start_date:, end_date:, **_kwarg)
+      def initialize(start_date:, end_date:, **kwargs)
         @start_date = start_date.to_date
         @end_date = end_date.to_date
         @tb_prev = ARTService::Reports::Pepfar::TbPrev3.new(start_date: @start_date, end_date: @end_date)
+        @occupation = kwargs[:occupation]
       end
 
       def find_report
@@ -34,7 +36,7 @@ module ARTService
         @last_day_of_month = end_date.to_date
         tpt_clients = process_tpt_clients(clients)
         @param = 'gender'
-        load_patients_into_report report, tpt_clients
+        load_moh_patients_into_report report, tpt_clients
       end
 
       private
@@ -47,8 +49,10 @@ module ARTService
 
           report[age_group] = TPT_TYPES.each_with_object({}) do |tpt_type, tpt_report|
             tpt_report[tpt_type] = {
-              started_tpt: [],
-              completed_tpt: [],
+              started_tpt_new: [],
+              started_tpt_prev: [],
+              completed_tpt_new: [],
+              completed_tpt_prev: [],
               not_completed_tpt: [],
               died: [],
               stopped: [],
@@ -176,6 +180,7 @@ module ARTService
             p.gender,
             p.birthdate,
             disaggregated_age_group(p.birthdate, DATE('#{@end_date}')) AS age_group,
+            DATE(COALESCE(art_start_date_obs.value_datetime, MIN(art_order.start_date))) AS earliest_start_date,
             GROUP_CONCAT(DISTINCT o.concept_id SEPARATOR ',') AS drug_concepts,
             CASE
               WHEN count(DISTINCT o.concept_id) >  1 THEN '3HP'
@@ -209,6 +214,29 @@ module ARTService
               AND DATE(e.encounter_datetime) BETWEEN #{first_day_of_month} AND DATE(#{last_day_of_month})
             GROUP BY e.patient_id
           ) clients_on_tpt ON clients_on_tpt.patient_id = e.patient_id
+          LEFT JOIN encounter AS clinic_registration_encounter
+            ON clinic_registration_encounter.encounter_type = (
+              SELECT encounter_type_id FROM encounter_type WHERE name = 'HIV CLINIC REGISTRATION' LIMIT 1
+            )
+            AND clinic_registration_encounter.patient_id = pp.patient_id
+            AND clinic_registration_encounter.program_id = pp.program_id
+            AND clinic_registration_encounter.encounter_datetime < DATE('#{@end_date}') + INTERVAL 1 DAY
+            AND clinic_registration_encounter.voided = 0
+          INNER JOIN orders AS art_order
+            ON art_order.patient_id = pp.patient_id
+            /* AND art_order.encounter_id = prescription_encounter.encounter_id */
+            AND art_order.concept_id IN (SELECT concept_id FROM concept_set WHERE concept_set = 1085)
+            AND art_order.start_date < DATE('#{@end_date}') + INTERVAL 1 DAY
+            AND art_order.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
+            AND art_order.start_date >= DATE('1901-01-01')
+            AND art_order.voided = 0
+          LEFT JOIN obs AS art_start_date_obs
+            ON art_start_date_obs.concept_id = 2516
+            AND art_start_date_obs.person_id = pp.patient_id
+            AND art_start_date_obs.voided = 0
+            AND art_start_date_obs.obs_datetime < (DATE('#{@end_date}') + INTERVAL 1 DAY)
+            AND art_start_date_obs.encounter_id = clinic_registration_encounter.encounter_id
+          LEFT JOIN (#{current_occupation_query}) AS a ON a.person_id = pp.patient_id
           WHERE pp.program_id = 1 /* HIV Program */
             AND pp.patient_id  NOT IN (
               /* External consultations */
@@ -218,7 +246,7 @@ module ARTService
               INNER JOIN encounter AS registration_encounter
                 ON registration_encounter.patient_id = patient_program.patient_id
                 AND registration_encounter.program_id = patient_program.program_id
-                AND registration_encounter.encounter_datetime < DATE(#{@end_date}) + INTERVAL 1 DAY
+                AND registration_encounter.encounter_datetime < DATE('#{@end_date}') + INTERVAL 1 DAY
                 AND registration_encounter.voided = 0
               INNER JOIN (
                 SELECT MAX(encounter.encounter_datetime) AS encounter_datetime, encounter.patient_id
@@ -229,7 +257,7 @@ module ARTService
                 INNER JOIN program
                   ON program.program_id = encounter.program_id
                   AND program.name = 'HIV Program'
-                WHERE encounter.encounter_datetime < DATE(#{@end_date}) AND encounter.voided = 0
+                WHERE encounter.encounter_datetime < DATE('#{@end_date}') AND encounter.voided = 0
                 GROUP BY encounter.patient_id
               ) AS max_registration_encounter
                 ON max_registration_encounter.patient_id = registration_encounter.patient_id
@@ -241,7 +269,7 @@ module ARTService
                 AND patient_type_obs.voided = 0
               WHERE patient_program.voided = 0
             )
-            AND pp.voided = 0
+            AND pp.voided = 0 #{%w[Military Civilian].include?(@occupation) ? 'AND' : ''} #{occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'a', include_clause: false)}
             AND DATE(o.start_date)<= DATE('#{@end_date}')
             GROUP BY pp.patient_id
         SQL
@@ -249,7 +277,7 @@ module ARTService
 
       def process_tpt_clients(patients = nil)
         clients = []
-        (patients || tpt_clients).each do |client|
+        (patients || tpt_clients || []).each do |client|
           result = @tb_prev.fetch_individual_report(client['patient_id'])
           next if result.blank?
           next if result['tpt_initiation_date'].to_date < first_day_of_month.to_date
@@ -327,7 +355,7 @@ module ARTService
       #       INNER JOIN encounter AS registration_encounter
       #         ON registration_encounter.patient_id = patient_program.patient_id
       #         AND registration_encounter.program_id = patient_program.program_id
-      #         AND registration_encounter.encounter_datetime < DATE(#{@end_date}) + INTERVAL 1 DAY
+      #         AND registration_encounter.encounter_datetime < DATE('#{@end_date}') + INTERVAL 1 DAY
       #         AND registration_encounter.voided = 0
       #       INNER JOIN (
       #         SELECT MAX(encounter.encounter_datetime) AS encounter_datetime, encounter.patient_id
@@ -338,7 +366,7 @@ module ARTService
       #         INNER JOIN program
       #           ON program.program_id = encounter.program_id
       #           AND program.name = 'HIV Program'
-      #         WHERE encounter.encounter_datetime < DATE(#{@end_date}) AND encounter.voided = 0
+      #         WHERE encounter.encounter_datetime < DATE('#{@end_date}') AND encounter.voided = 0
       #         GROUP BY encounter.patient_id
       #       ) AS max_registration_encounter
       #         ON max_registration_encounter.patient_id = registration_encounter.patient_id
@@ -356,11 +384,32 @@ module ARTService
 
       def load_patients_into_report(report, patients)
         patients.each do |patient|
-          report[patient['age_group']][patient[@param]][:started_tpt] << patient['patient_id']
-          if patient_completed_tpt?(patient, patient['tpt_type'])
-            report[patient['age_group']][patient[@param]][:completed_tpt] << patient['patient_id']
+          new_on_art = patient_new_on_art?(patient)
+          common_reponse(patient)
+          if new_on_art
+            report[patient['age_group']][patient[@param]][:started_tpt_new] << @common_response
           else
-            report[patient['age_group']][patient[@param]][:not_completed_tpt] << patient['patient_id']
+            report[patient['age_group']][patient[@param]][:started_tpt_prev] << @common_response
+          end
+
+          if patient_completed_tpt?(patient, patient['tpt_type'])
+            report[patient['age_group']][patient[@param]][:completed_tpt_new] << @common_response if new_on_art
+            report[patient['age_group']][patient[@param]][:completed_tpt_prev] << @common_response unless new_on_art
+          else
+            report[patient['age_group']][patient[@param]][:not_completed_tpt] << @common_response
+            process_outcomes report, patient
+          end
+        end
+      end
+
+      def load_moh_patients_into_report(report, patients)
+        patients.each do |patient|
+          common_reponse(patient)
+          report[patient['age_group']][patient[@param]][:started_tpt] << @common_response
+          if patient_completed_tpt?(patient, patient['tpt_type'])
+            report[patient['age_group']][patient[@param]][:completed_tpt] << @common_response
+          else
+            report[patient['age_group']][patient[@param]][:not_completed_tpt] << @common_response
             process_outcomes report, patient
           end
         end
@@ -372,13 +421,13 @@ module ARTService
 
         case patient['outcome']
         when 'Patient died'
-          report[patient['age_group']][patient[@param]][:died] << patient['patient_id']
+          report[patient['age_group']][patient[@param]][:died] << @common_response
         when 'Patient transferred out'
-          report[patient['age_group']][patient[@param]][:transfer_out] << patient['patient_id']
+          report[patient['age_group']][patient[@param]][:transfer_out] << @common_response
         when 'Treatment stopped'
-          report[patient['age_group']][patient[@param]][:stopped] << patient['patient_id']
+          report[patient['age_group']][patient[@param]][:stopped] << @common_response
         when 'Defaulted'
-          report[patient['age_group']][patient[@param]][:defaulted] << patient['patient_id']
+          report[patient['age_group']][patient[@param]][:defaulted] << @common_response
         else
           process_patient_conditions report, patient
         end
@@ -386,13 +435,13 @@ module ARTService
 
       def process_patient_conditions(report, patient)
         if patient_on_tb_treatment?(patient['patient_id'], patient['last_dispense_date'])
-          report[patient['age_group']][patient[@param]][:confirmed_tb] << patient['patient_id']
+          report[patient['age_group']][patient[@param]][:confirmed_tb] << @common_response
         elsif patient['gender'] == 'F' && patient_pregnant?(patient['patient_id'], patient['last_dispense_date'])
-          report[patient['age_group']][patient[@param]][:pregnant] << patient['patient_id']
+          report[patient['age_group']][patient[@param]][:pregnant] << @common_response
           @condition = true
           return
         elsif patient['gender'] == 'F' && patient_breast_feeding?(patient['patient_id'], patient['last_dispense_date'])
-          report[patient['age_group']][patient[@param]][:breast_feeding] << patient['patient_id']
+          report[patient['age_group']][patient[@param]][:breast_feeding] << @common_response
           @condition = true
           return
         end
@@ -405,9 +454,24 @@ module ARTService
           method_name = "patient_#{condition}?".to_sym
           next unless send(method_name, patient['patient_id'], patient['last_dispense_date'])
 
-          report[patient['age_group']][patient[@param]][condition] << patient['patient_id']
+          report[patient['age_group']][patient[@param]][condition] << @common_response
           @condition = true
         end
+      end
+
+      def patient_new_on_art?(patient)
+        init_date = patient['earliest_start_date'].to_date
+        start_date = patient['start_date'].to_date
+
+        init_date + 6.months > start_date
+      end
+
+      def common_reponse(patient)
+        @common_response = if @param == 'tpt_type'
+                             { patient_id: patient['patient_id'], gender: patient['gender'] }
+                           else
+                             patient['patient_id']
+                           end
       end
 
       def tpt_drugs
