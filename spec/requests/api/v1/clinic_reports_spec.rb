@@ -256,7 +256,7 @@ describe 'Clinic Reports API', type: :request, swagger_doc: 'v1/swagger.yaml' do
       parameter name: :program_id, in: :query, type: :string
 
       response '200', 'CLINIC Dashboard Report found' do
-        schema type: :array, items: { '$ref' => '#/components/schemas/dashboard_stats' }
+        schema type: :array, items: { '$ref' => '#/components/schemas/aetc_dashboard' }
         run_test!
       end
 
