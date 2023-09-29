@@ -4,7 +4,7 @@ module AetcService
   # This is the engine managing all radiology reports.
   class ReportEngine
     REPORT_NAMES = {
-      'DASHBOARD STATISTICS' => AetcService::Clinic::DashboardStats
+      'DASHBOARD STATISTICS' => AetcService::Reports::Clinic::DashboardStats
     }.freeze
 
     def reports(start_date, end_date, name)
