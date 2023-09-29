@@ -468,7 +468,7 @@ paths:
               schema:
                 type: array
                 items:
-                  "$ref": "#/components/schemas/dashboard_stats"
+                  "$ref": "#/components/schemas/aetc_dashboard"
         '404':
           description: CLINIC Dashboard Report not found
           content:
