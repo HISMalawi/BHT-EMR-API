@@ -443,6 +443,41 @@ paths:
                 type: array
                 items:
                   "$ref": "#/components/schemas/hypertension_report"
+  "/api/v1/dashboard_stats":
+    get:
+      summary: Retrieve CLINIC Dashboard report
+      tags:
+      - Clinic Reports
+      description: This shows CLINIC TDashboard report
+      security:
+      - api_key: []
+      parameters:
+      - name: date
+        in: query
+        schema:
+          type: string
+      - name: program_id
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: CLINIC Dashboard Report found
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/dashboard_stats"
+        '404':
+          description: CLINIC Dashboard Report not found
+          content:
+            application/json:
+              schema:
+                type: string
+                properties:
+                  message:
+                    type: string
   "/api/v1/radiology_set":
     get:
       summary: Retrieve all radiology sets
@@ -2585,6 +2620,21 @@ components:
       name: Authorization
       in: header
   schemas:
+    aetc_dashboard:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Social History
+        me:
+          type: integer
+          example: 1
+        facility:
+          type: integer
+          example: 1
+        total:
+          type: integer
+          example: 2
     hypertension_report:
       type: object
       properties:
@@ -2634,11 +2684,11 @@ components:
                   type: array
                   items:
                     type: integer
-                atenolol_5mg:
+                atenolol_50mg:
                   type: array
                   items:
                     type: integer
-                atenolol_10mg:
+                atenolol_100mg:
                   type: array
                   items:
                     type: integer
