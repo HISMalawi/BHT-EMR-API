@@ -173,6 +173,6 @@ module HtsService
       end
       query
     end
-    query
+   
   end
 end
