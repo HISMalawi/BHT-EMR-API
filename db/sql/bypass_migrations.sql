@@ -1,3 +1,13 @@
+-- Delete the values that we are going to insert
+DELETE FROM schema_migrations WHERE version IN
+('20181114114615',
+'20181114123526',
+'20181119083341',
+'20181119175307',
+'20181120072351',
+'20181127093727',
+'20181210093633');
+
 -- Do some insertions
 INSERT INTO schema_migrations (version) VALUES
 ('20181114114615'),
@@ -10,6 +20,30 @@ INSERT INTO schema_migrations (version) VALUES
 ;
 
 -- because we have skipped these we need to create them manually here
+DROP TABLE IF EXISTS `report_def`;
+CREATE TABLE `report_def` (
+  `report_def_id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` mediumtext NOT NULL,
+  `date_created` datetime NOT NULL DEFAULT '1900-01-01 00:00:00',
+  `creator` int(11) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`report_def_id`),
+  KEY `User who created report_def` (`creator`),
+  CONSTRAINT `User who created report_def` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+DROP TABLE IF EXISTS `moh_regimen_doses`;
+CREATE TABLE `moh_regimen_doses` (
+  `dose_id` int(11) NOT NULL AUTO_INCREMENT,
+  `am` float DEFAULT NULL,
+  `pm` float DEFAULT NULL,
+  `date_created` datetime DEFAULT NULL,
+  `date_updated` datetime DEFAULT NULL,
+  `creator` int(11) DEFAULT NULL,
+  `voided` tinyint(1) NOT NULL DEFAULT '0',
+  `voided_by` int(11) DEFAULT NULL,
+  PRIMARY KEY (`dose_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+
 DROP TABLE IF EXISTS `moh_regimen_ingredient`;
 CREATE TABLE `moh_regimen_ingredient` (
   `ingredient_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -24,7 +58,7 @@ CREATE TABLE `moh_regimen_ingredient` (
   `voided` tinyint(1) NOT NULL DEFAULT '0',
   `voided_by` int(11) DEFAULT NULL,
   PRIMARY KEY (`ingredient_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=82 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 
 DROP TABLE IF EXISTS `reporting_report_design`;
 CREATE TABLE `reporting_report_design` (
@@ -54,7 +88,7 @@ CREATE TABLE `reporting_report_design` (
   CONSTRAINT `creator for reporting_report_design` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `report_definition_id for reporting_report_design` FOREIGN KEY (`report_definition_id`) REFERENCES `report_def` (`report_def_id`),
   CONSTRAINT `retired_by for reporting_report_design` FOREIGN KEY (`retired_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
 DROP TABLE IF EXISTS `reporting_report_design_resource`;
 CREATE TABLE `reporting_report_design_resource` (
@@ -85,4 +119,4 @@ CREATE TABLE `reporting_report_design_resource` (
   CONSTRAINT `creator for reporting_report_design_resource` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `report_design_id for reporting_report_design_resource` FOREIGN KEY (`report_design_id`) REFERENCES `reporting_report_design` (`id`),
   CONSTRAINT `retired_by for reporting_report_design_resource` FOREIGN KEY (`retired_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=41 DEFAULT CHARSET=utf8
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
