@@ -1,13 +1,10 @@
 # frozen_string_literal: true
 
-module RadiologyService
+module AetcService
   # This is the engine managing all radiology reports.
   class ReportEngine
     REPORT_NAMES = {
-      'DASHBOARD STATISTICS' => RadiologyService::Reports::Clinic::ClinicDay,
-      'DAILY REPORT' => RadiologyService::Reports::Clinic::DailyReport,
-      'REFERRAL REPORT' => RadiologyService::Reports::Clinic::ReferralReport,
-      'REVENUE COLLECTED' => RadiologyService::Reports::Clinic::RevenueCollected
+      'DASHBOARD STATISTICS' => AetcService::Clinic::DashboardStats
     }.freeze
 
     def reports(start_date, end_date, name)
@@ -16,7 +13,7 @@ module RadiologyService
     end
 
     def dashboard_stats(date)
-      REPORT_NAMES['DASHBOARD STATISTICS'].new(start_date: date, end_date: date).data
+      REPORT_NAMES['DASHBOARD STATISTICS'].new(start_date: date, end_date: date).fetch_report
     end
   end
 end
