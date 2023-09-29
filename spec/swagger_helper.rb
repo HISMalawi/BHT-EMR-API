@@ -31,6 +31,15 @@ RSpec.configure do |config|
           }
         },
         schemas: {
+          aetc_dashboard: {
+            type: :object,
+            properties: {
+              name: { type: :string, example: 'Social History' },
+              me: { type: :integer, example: 1 },
+              facility: { type: :integer, example: 1 },
+              total: { type: :integer, example: 2 }
+            }
+          },
           hypertension_report: {
             type: :object,
             properties: {
