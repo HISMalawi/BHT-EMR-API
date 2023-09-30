@@ -34,7 +34,7 @@ class DrugService
       concept_set = filters.delete(:concept_set)
       query = query.joins('INNER JOIN concept_set ON drug.concept_id = concept_set.concept_id')
                    .joins('INNER JOIN concept_name ON concept_set.concept_set = concept_name.concept_id')
-                   .where('concept_name.name LIKE ?', concept_set)
+                   .where('concept_name.name LIKE ?', concept_set).group_by('drug_id')
     end
 
     if filters.include?(:name)
