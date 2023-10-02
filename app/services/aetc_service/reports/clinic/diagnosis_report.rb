@@ -40,7 +40,7 @@ module AetcService
             INNER JOIN encounter_type et ON et.encounter_type_id = e.encounter_type AND et.name = 'OUTPATIENT DIAGNOSIS' AND et.retired = 0
             INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.voided = 0 AND o.concept_id IN ("#{concept('PRIMARY DIAGNOSIS').concept_id}", "#{concept('SECONDARY DIAGNOSIS').concept_id}")
             INNER JOIN concept_name cn ON cn.concept_id = o.value_coded AND cn.voided = 0
-            WHERE e.encounter_datetime >= '#{start_date}' AND e.encounter_datetime <= '#{end_date}' AND e.program_id = #{program('AETC').program_id} AND e.voided = 0
+            WHERE e.encounter_datetime >= '#{start_date}' AND e.encounter_datetime <= '#{end_date}' AND e.program_id = #{program('AETC PROGRAM').program_id} AND e.voided = 0
             GROUP BY o.value_coded, e.patient_id #{age_in_months_having_clause}
           SQL
         end

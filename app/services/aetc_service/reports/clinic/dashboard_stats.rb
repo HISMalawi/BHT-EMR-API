@@ -21,7 +21,7 @@ module AetcService
         # @param start_date [Date] The start date to generate the report for
         # @param end_date [Date] The end date to limit the result
         def initialize(start_date, end_date)
-          @program = Program.find_by_name 'AETC'
+          @program = Program.find_by_name 'AETC PROGRAM'
           @start_date = start_date.to_date.beginning_of_day.strftime('%Y-%m-%d %H:%M:%S')
           @end_date = end_date.to_date.end_of_day.strftime('%Y-%m-%d %H:%M:%S')
         end
