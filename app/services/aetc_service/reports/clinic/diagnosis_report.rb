@@ -14,7 +14,7 @@ module AetcService
           @age_group = kwargs[:age_group] || 'all'
         end
 
-        def find_report
+        def fetch_report
           flatten_report_data || []
         end
 
