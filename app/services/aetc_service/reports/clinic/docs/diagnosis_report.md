@@ -25,3 +25,5 @@ ___
 ### Outputs
 The output of the code snippet is an array of hashes, where each hash represents a diagnosis and its associated patient IDs. The format of each hash is `{ diagnosis: 'name', data: [patient_ids] }`. If no diagnosis data is found, an empty array is returned.
 ___
+
+[Go Back](../README.md)
