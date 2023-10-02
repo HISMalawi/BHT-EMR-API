@@ -31,6 +31,13 @@ RSpec.configure do |config|
           }
         },
         schemas: {
+          aetc_diagnosis: {
+            type: :object,
+            properties: {
+              diagnosis: { type: :string, example: 'Malaria' },
+              data: { type: :array, items: { type: :integer } }
+            }
+          },
           aetc_dashboard: {
             type: :object,
             properties: {
