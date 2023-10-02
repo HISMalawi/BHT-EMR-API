@@ -66,7 +66,7 @@ module AetcService
 
         # create a having clause for age in months
         def age_in_months_having_clause
-          return '' if age_group == 'all'
+          return '' if age_group == 'all' || age_group.blank?
 
           min_age, max_age = AGE_IN_MONTHS_MAP[age_group]
           "HAVING age_in_months >= #{min_age} AND age_in_months < #{max_age}"
