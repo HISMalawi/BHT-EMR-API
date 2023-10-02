@@ -4,3 +4,4 @@ This folder contains the AETC clinic reports. These reports are responsible for 
 ## Reports
 The AETC clinic reports provide the following reports:
 - [Dashboard Stats](./docs/dashboard_stats.md)
+- [Diagnosis Report](./docs/diagnosis_report.md)
