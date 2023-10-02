@@ -8,7 +8,7 @@ module AetcService
       'DIAGNOSIS REPORT' => AetcService::Reports::Clinic::DiagnosisReport,
     }.freeze
 
-    def reports(start_date, end_date, name, **kwargs)
+    def find_report(start_date, end_date, name, **kwargs)
       name = name.upcase
       REPORT_NAMES[name].new(start_date: start_date, end_date: end_date, **kwargs).fetch_report
     end
