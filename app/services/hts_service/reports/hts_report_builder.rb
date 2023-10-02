@@ -40,27 +40,28 @@ module HtsService
 
       def his_patients_revs(indicators) 
     
-                columns = ActiveRecord::Base.connection.columns('obs').map(&:name) 
-                sql_query = <<~SQL
-                SELECT
-                person.gender,
-                person.birthdate,
-                encounter.encounter_datetime,
-                obs.*
-              FROM patient
-              INNER JOIN person ON person.person_id = patient.patient_id
-              INNER JOIN encounter ON encounter.patient_id = patient.patient_id
-              INNER JOIN program ON program.program_id = encounter.program_id
-              INNER JOIN obs ON obs.person_id = patient.patient_id
-              WHERE
-                patient.voided = 0
-                AND encounter.encounter_datetime BETWEEN '#{@start_date}' AND '#{@end_date}'
-                AND encounter.encounter_type = (SELECT encounter_type_id FROM encounter_type WHERE name = 'Testing')
-                AND program.program_id = (SELECT program_id FROM program WHERE name = 'HTC PROGRAM')
-                AND obs.voided = 0;              
-             SQL
-    
-         results = ActiveRecord::Base.connection.select_all(sql_query)
+        columns = ActiveRecord::Base.connection.columns('obs').map(&:name) 
+        sql_query = <<~SQL
+          SELECT
+            person.gender,
+            person.birthdate,
+            encounter.encounter_datetime,
+            obs.*
+          FROM patient
+          INNER JOIN person ON person.person_id = patient.patient_id
+            AND patient.voided = 0
+          INNER JOIN encounter ON encounter.patient_id = patient.patient_id
+            AND encounter.encounter_datetime BETWEEN '#{@start_date}' AND '#{@end_date}'
+            AND encounter.encounter_type = (SELECT encounter_type_id FROM encounter_type WHERE name = 'Testing')
+            AND encounter.voided = 0
+          INNER JOIN program ON program.program_id = encounter.program_id
+            AND program.program_id = (SELECT program_id FROM program WHERE name = 'HTC PROGRAM')
+            AND program.retired = 0
+          INNER JOIN obs ON obs.person_id = patient.patient_id
+            AND obs.voided = 0;
+        SQL
+        
+        results = ActiveRecord::Base.connection.select_all(sql_query)        
          return process_patient_data(results, indicators)
             
       end
