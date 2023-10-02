@@ -46,24 +46,24 @@ module HtsService
           {
             name: %w[test_one test_two test_three],
             concept_id: [concept(TEST_ONE).concept_id, concept(TEST_TWO).concept_id, concept(TEST_THREE).concept_id],
-            join: 'LEFT'
+            join: 'LEFT', value: 'value_coded'
           },
           { name: 'pregnancy_status', concept_id: concept(PREGNANCY_STATUS).concept_id, value: 'value_coded', join: 'LEFT' },
           { name: 'circumcision_status', concept_id: concept(CIRCUMCISION_STATUS).concept_id, value: 'value_coded', join: 'LEFT' },
           { name: 'male_condoms', concept_id: concept(MALE_CONDOMS).concept_id, join: 'LEFT', value: 'value_numeric' },
           { name: 'female_condoms', concept_id: concept(FEMALE_CONDOMS).concept_id, join: 'LEFT', value: 'value_numeric' },
           { name: 'frs', concept_id: concept(FRS).concept_id, join: 'LEFT', value: 'value_numeric' },
-          { name: 'referal_for_retesting', concept_id: concept(REFERRAL_FOR_RETESTING).concept_id, join: 'LEFT' },
+          { name: 'referal_for_retesting', concept_id: concept(REFERRAL_FOR_RETESTING).concept_id, join: 'LEFT', value: 'value_coded' },
           { name: 'time_of_hiv_test', concept_id: concept(TIME_OF_HIV_TEST).concept_id, value: 'value_datetime', join: 'LEFT' },
           { name: 'time_since_last_medication', value: 'value_datetime', concept_id: concept(TIME_SINCE_LAST_MEDICATION).concept_id, join: 'LEFT' },
-          { name: 'previous_hiv_test', concept_id: concept(PREVIOUS_HIV_TEST).concept_id, join: 'LEFT' },
-          { name: 'previous_hiv_test_done', concept_id: concept(PREVIOUS_HIV_TEST_DONE).concept_id, join: 'LEFT' },
-          { name: 'risk_category', concept_id: concept(RISK_CATEGORY).concept_id, join: 'LEFT' },
+          { name: 'previous_hiv_test', concept_id: concept(PREVIOUS_HIV_TEST).concept_id, join: 'LEFT', value: 'value_coded' },
+          { name: 'previous_hiv_test_done', concept_id: concept(PREVIOUS_HIV_TEST_DONE).concept_id, join: 'LEFT', value: 'value_coded' },
+          { name: 'risk_category', concept_id: concept(RISK_CATEGORY).concept_id, join: 'LEFT', value: 'value_coded' },
           { name: 'partner_present', concept_id: concept(PARTNER_PRESENT).concept_id, value: 'value_text', join: 'LEFT' },
-          { name: 'partner_hiv_status', concept_id: concept(PARTNER_HIV_STATUS).concept_id, join: 'LEFT' },
-          { name: 'taken_arvs_before', concept_id: concept(TAKEN_ARVS_BEFORE).concept_id, join: 'LEFT' },
-          { name: 'taken_prep_before', concept_id: concept(TAKEN_PREP_BEFORE).concept_id, join: 'LEFT' },
-          { name: 'taken_pep_before', concept_id: concept(TAKEN_PEP_BEFORE).concept_id, join: 'LEFT' },
+          { name: 'partner_hiv_status', concept_id: concept(PARTNER_HIV_STATUS).concept_id, join: 'LEFT', value: 'value_coded' },
+          { name: 'taken_arvs_before', concept_id: concept(TAKEN_ARVS_BEFORE).concept_id, join: 'LEFT', value: 'value_coded' },
+          { name: 'taken_prep_before', concept_id: concept(TAKEN_PREP_BEFORE).concept_id, join: 'LEFT', value: 'value_coded' },
+          { name: 'taken_pep_before', concept_id: concept(TAKEN_PEP_BEFORE).concept_id, join: 'LEFT', value: 'value_coded' },
           { name: 'referrals_ordered', concept_id: concept(REFERALS_ORDERED).concept_id, value: 'value_text', join: 'LEFT' },
         ]
 
@@ -133,6 +133,10 @@ module HtsService
         end
 
         def init_report
+          @query = his_patients_revs(INDICATORS) 
+        end
+=begin
+        def init_report
           model = his_patients_rev
           INDICATORS.each do |param|
             model = ObsValueScope.call(model: model, **param)
@@ -141,8 +145,9 @@ module HtsService
             model
               .select('person.gender, person.person_id, person.birthdate, encounter.encounter_datetime')
               .group('person.person_id, referrals_ordered.value_text')
-          ).to_hash
+          ).to_hash          
         end
+=end
 
         def set_unique
           @data.each do |key, obj|
@@ -203,6 +208,7 @@ module HtsService
 
           @data['syphilis_test_result_negative'] = filter_hash('syphilis_test_result', concept('Negative').concept_id)
           @data['syphilis_test_result_positive'] = filter_hash('syphilis_test_result', concept('Positive').concept_id)
+         
         end
 
         def fetch_pregnancy_test
