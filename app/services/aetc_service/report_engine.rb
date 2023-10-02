@@ -5,11 +5,11 @@ module AetcService
   class ReportEngine
     REPORT_NAMES = {
       'DASHBOARD STATISTICS' => AetcService::Reports::Clinic::DashboardStats,
-      'DIAGNOSIS REPORT' => AetcService::Reports::Clinic::DiagnosisReport,
+      'DIAGNOSIS REPORT' => AetcService::Reports::Clinic::DiagnosisReport
     }.freeze
 
-    def find_report(start_date, end_date, name, **kwargs)
-      name = name.upcase
+    def find_report(start_date:, end_date:, name:, **kwargs)
+      name = name&.upcase&.gsub('_', ' ') || kwargs[:type]&.upcase&.gsub('_', ' ')
       REPORT_NAMES[name].new(start_date: start_date, end_date: end_date, **kwargs).fetch_report
     end
 

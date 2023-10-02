@@ -5,7 +5,7 @@ The code snippet is a class called `DiagnosisReport` that generates a diagnosis 
 ## Example Usage
 ```ruby
 report = DiagnosisReport.new(start_date: '2021-01-01', end_date: '2021-12-31', age_group: '5 to 14')
-report.find_report
+report.fetch_report
 ```
 
 ## Code Analysis
@@ -16,11 +16,11 @@ report.find_report
 ___
 ### Flow
 1. The `DiagnosisReport` class is initialized with the start date, end date, and age group.
-2. The `find_report` method is called, which triggers the generation of the diagnosis report.
+2. The `fetch_report` method is called, which triggers the generation of the diagnosis report.
 3. The `diagnosis` method queries the database for diagnosis data based on the provided dates, age group, and program ID.
 4. The `process_diagnosis` method processes the diagnosis data and organizes it into a hash where the diagnosis names are keys and the patient IDs are values.
 5. The `flatten_report_data` method converts the processed diagnosis data into an array of hashes, where each hash represents a diagnosis and its associated patient IDs.
-6. The `find_report` method returns the flattened report data.
+6. The `fetch_report` method returns the flattened report data.
 ___
 ### Outputs
 The output of the code snippet is an array of hashes, where each hash represents a diagnosis and its associated patient IDs. The format of each hash is `{ diagnosis: 'name', data: [patient_ids] }`. If no diagnosis data is found, an empty array is returned.
