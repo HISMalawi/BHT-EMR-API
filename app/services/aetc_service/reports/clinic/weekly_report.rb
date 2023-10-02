@@ -3,6 +3,7 @@
 module AetcService
     module Reports
         module Clinic
+            # A weekly report of the clinic
             class WeeklyReport
             end
         end
