@@ -31,6 +31,37 @@ RSpec.configure do |config|
           }
         },
         schemas: {
+          aetc_dissag_diagnosis: {
+            type: :object,
+            properties: {
+              diagnosis: { type: :string, example: 'Malaria' },
+              '< 6 months': { type: :object, properties: {
+                M: { type: :array, items: { type: :integer } },
+                F: { type: :array, items: { type: :integer } },
+                UNKNOWN: { type: :array, items: { type: :integer } }
+              } },
+              '6 months to < 5': { type: :object, properties: {
+                M: { type: :array, items: { type: :integer } },
+                F: { type: :array, items: { type: :integer } },
+                UNKNOWN: { type: :array, items: { type: :integer } }
+              } },
+              '5 to 14': { type: :object, properties: {
+                M: { type: :array, items: { type: :integer } },
+                F: { type: :array, items: { type: :integer } },
+                UNKNOWN: { type: :array, items: { type: :integer } }
+              } },
+              '> 14': { type: :object, properties: {
+                M: { type: :array, items: { type: :integer } },
+                F: { type: :array, items: { type: :integer } },
+                UNKNOWN: { type: :array, items: { type: :integer } }
+              } },
+              'total_by_gender': { type: :object, properties: {
+                M: { type: :array, items: { type: :integer } },
+                F: { type: :array, items: { type: :integer } },
+                UNKNOWN: { type: :array, items: { type: :integer } }
+              } }
+            }
+          },
           aetc_diagnosis: {
             type: :object,
             properties: {
