@@ -508,6 +508,36 @@ paths:
                 type: array
                 items:
                   "$ref": "#/components/schemas/aetc_diagnosis"
+  "/api/v1/programs/30/reports/diagnosis_specific_report":
+    get:
+      summary: Retrieve AETC Diagnosis Specific report
+      tags:
+      - Clinic Reports
+      description: This shows AETC Diagnosis Specific report
+      security:
+      - api_key: []
+      parameters:
+      - name: start_date
+        in: query
+        schema:
+          type: string
+      - name: end_date
+        in: query
+        schema:
+          type: string
+      - name: diagnosis
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: AETC Diagnosis Specific Report found
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/aetc_specific_diagnosis"
   "/api/v1/radiology_set":
     get:
       summary: Retrieve all radiology sets
@@ -2650,6 +2680,16 @@ components:
       name: Authorization
       in: header
   schemas:
+    aetc_specific_diagnosis:
+      type: object
+      properties:
+        address:
+          type: string
+          example: Limbe
+        patient_ids:
+          type: array
+          items:
+            type: integer
     aetc_diagnosis:
       type: object
       properties:
