@@ -14,7 +14,7 @@ module AetcService
         end
 
         def fetch_report
-          # TODO: Add disaggregated diagnosis report
+          flatten_report_data || []
         end
 
         private
@@ -22,6 +22,7 @@ module AetcService
         GENDER = %w[M F UNKNOWN].freeze
         AGE_GROUPS = ['< 6 months', '6 months to < 5', '5 to 14', '> 14', 'total_by_gender'].freeze
 
+        # rubocop:disable Metrics/AbcSize
         def diagnosis_report
           ActiveRecord::Base.connection.select_all <<~SQL
             SELECT
@@ -49,6 +50,7 @@ module AetcService
             GROUP BY o.value_coded, p.person_id
           SQL
         end
+        # rubocop:enable Metrics/AbcSize
 
         # rubocop:disable Metrics/AbcSize
         def process_diagnosis_report
@@ -64,6 +66,13 @@ module AetcService
           report_data
         end
         # rubocop:enable Metrics/AbcSize
+
+        def flatten_report_data
+          report_data = process_diagnosis_report
+          report_data.map do |diag, values|
+            { diagnosis: diag, **values }
+          end
+        end
 
         def init_age_group_gender_hash
           @init_age_group_gender_hash ||= AGE_GROUPS.each_with_object({}) do |age_group, report|
