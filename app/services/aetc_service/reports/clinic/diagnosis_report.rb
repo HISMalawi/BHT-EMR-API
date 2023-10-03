@@ -11,7 +11,7 @@ module AetcService
         def initialize(start_date:, end_date:, **kwargs)
           @start_date = start_date.to_date.beginning_of_day.strftime('%Y-%m-%d %H:%M:%S')
           @end_date = end_date.to_date.end_of_day.strftime('%Y-%m-%d %H:%M:%S')
-          @age_group = kwargs[:age_group] || 'all'
+          @age_group = JSON.parse(kwargs[:age_group]) || ['all']
         end
 
         def fetch_report
@@ -66,10 +66,15 @@ module AetcService
 
         # create a having clause for age in months
         def age_in_months_having_clause
-          return '' if age_group == 'all' || age_group.blank?
+          return '' if age_group.include?('all') || age_group.blank?
 
-          min_age, max_age = AGE_IN_MONTHS_MAP[age_group]
-          "HAVING age_in_months >= #{min_age} AND age_in_months < #{max_age}"
+          having_clause = ''
+          age_group.each_with_index do |age, index|
+            min_age, max_age = AGE_IN_MONTHS_MAP[age]
+            having_clause += "(age_in_months >= #{min_age} AND age_in_months < #{max_age})" if index.zero?
+            having_clause += " OR (age_in_months >= #{min_age} AND age_in_months < #{max_age})" if index.positive?
+          end
+          "HAVING #{having_clause}"
         end
       end
     end
