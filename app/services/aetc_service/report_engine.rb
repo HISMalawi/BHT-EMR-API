@@ -5,7 +5,8 @@ module AetcService
   class ReportEngine
     REPORT_NAMES = {
       'DASHBOARD STATISTICS' => AetcService::Reports::Clinic::DashboardStats,
-      'DIAGNOSIS REPORT' => AetcService::Reports::Clinic::DiagnosisReport
+      'DIAGNOSIS REPORT' => AetcService::Reports::Clinic::DiagnosisReport,
+      'DIAGNOSIS SPECIFIC REPORT' => AetcService::Reports::Clinic::DiagnosisSpecificReport
     }.freeze
 
     def find_report(start_date:, end_date:, name:, **kwargs)
