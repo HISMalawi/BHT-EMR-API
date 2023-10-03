@@ -20,7 +20,7 @@ module AetcService
         #
         # @param start_date [Date] The start date to generate the report for
         # @param end_date [Date] The end date to limit the result
-        def initialize(start_date, end_date)
+        def initialize(start_date:, end_date:, **kwargs)
           @program = Program.find_by_name 'AETC PROGRAM'
           @start_date = start_date.to_date.beginning_of_day.strftime('%Y-%m-%d %H:%M:%S')
           @end_date = end_date.to_date.end_of_day.strftime('%Y-%m-%d %H:%M:%S')
@@ -29,7 +29,7 @@ module AetcService
         # Generates a report of dashboard stats
         #
         # @return [Hash] A hash of dashboard stats
-        def find_report
+        def fetch_report
           patient_providers_encounters
         end
 
