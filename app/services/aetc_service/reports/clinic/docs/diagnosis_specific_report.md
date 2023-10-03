@@ -4,7 +4,7 @@ The 'Code-Under-Docs' is a class called 'DiagnosisSpecificReport' that generates
 
 ## Example Usage
 ```ruby
-report = DiagnosisSpecificReport.new(start_date: '2021-01-01', end_date: '2021-01-31', diagnosis: 'Malaria')
+report = DiagnosisSpecificReport.new(start_date: '2021-01-01', end_date: '2021-01-31', diagnosis: ['Malaria'])
 data = report.fetch_report
 puts data
 ```
@@ -20,7 +20,7 @@ Output:
 ### Inputs
 - start_date: a DateTime object representing the start date of the report
 - end_date: a DateTime object representing the end date of the report
-- diagnosis: a string representing the specific diagnosis for the report
+- diagnosis: an array of strings representing the specific diagnosis for the report
 ___
 ### Flow
 1. The class 'DiagnosisSpecificReport' is defined with attributes for start_date, end_date, and diagnosis.

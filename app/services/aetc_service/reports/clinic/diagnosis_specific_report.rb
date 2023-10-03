@@ -20,7 +20,7 @@ module AetcService
         #
         # @param start_date [DateTime] the start date of the report
         # @param end_date [DateTime] the end date of the report
-        # @param diagnosis [String] the diagnosis for the report
+        # @param diagnosis [Array<String>] the diagnosis for the report
         def initialize(start_date:, end_date:, **kwargs)
           @start_date = start_date.to_date.beginning_of_day
           @end_date = end_date.to_date.end_of_day
@@ -31,6 +31,8 @@ module AetcService
         #
         # @return [Array<Hash>] the report data
         def fetch_report
+          return [] if diagnosis.blank?
+
           process_data || []
         end
 
@@ -52,7 +54,7 @@ module AetcService
             INNER JOIN person_address pa ON pa.person_id = p.patient_id AND pa.voided = 0
             WHERE o.concept_id IN (#{concept('PRIMARY DIAGNOSIS').concept_id}, #{concept('SECONDARY DIAGNOSIS').concept_id})
                     AND o.voided = 0
-                    AND o.value_coded = #{concept(diagnosis).concept_id}
+                    AND o.value_coded IN (SELECT concept_id FROM concept_name WHERE name IN (#{diagnosis.join(',')}))
                     AND o.obs_datetime >= '#{start_date}' AND o.obs_datetime <= '#{end_date}'
             GROUP BY pa.county_district
           SQL
