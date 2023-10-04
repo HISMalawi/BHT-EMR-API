@@ -538,6 +538,32 @@ paths:
                 type: array
                 items:
                   "$ref": "#/components/schemas/aetc_specific_diagnosis"
+  "/api/v1/programs/30/reports/DISAGGREGATED_DIAGNOSIS":
+    get:
+      summary: Retrieve AETC DISAGGREGATED Diagnosis report
+      tags:
+      - Clinic Reports
+      description: This shows AETC DISAGGREGATED Diagnosis report
+      security:
+      - api_key: []
+      parameters:
+      - name: start_date
+        in: query
+        schema:
+          type: string
+      - name: end_date
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: AETC DISAGGREGATED Diagnosis Report found
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/aetc_dissag_diagnosis"
   "/api/v1/radiology_set":
     get:
       summary: Retrieve all radiology sets
@@ -2680,6 +2706,87 @@ components:
       name: Authorization
       in: header
   schemas:
+    aetc_dissag_diagnosis:
+      type: object
+      properties:
+        diagnosis:
+          type: string
+          example: Malaria
+        "< 6 months":
+          type: object
+          properties:
+            M:
+              type: array
+              items:
+                type: integer
+            F:
+              type: array
+              items:
+                type: integer
+            UNKNOWN:
+              type: array
+              items:
+                type: integer
+        6 months to < 5:
+          type: object
+          properties:
+            M:
+              type: array
+              items:
+                type: integer
+            F:
+              type: array
+              items:
+                type: integer
+            UNKNOWN:
+              type: array
+              items:
+                type: integer
+        5 to 14:
+          type: object
+          properties:
+            M:
+              type: array
+              items:
+                type: integer
+            F:
+              type: array
+              items:
+                type: integer
+            UNKNOWN:
+              type: array
+              items:
+                type: integer
+        "> 14":
+          type: object
+          properties:
+            M:
+              type: array
+              items:
+                type: integer
+            F:
+              type: array
+              items:
+                type: integer
+            UNKNOWN:
+              type: array
+              items:
+                type: integer
+        total_by_gender:
+          type: object
+          properties:
+            M:
+              type: array
+              items:
+                type: integer
+            F:
+              type: array
+              items:
+                type: integer
+            UNKNOWN:
+              type: array
+              items:
+                type: integer
     aetc_specific_diagnosis:
       type: object
       properties:
