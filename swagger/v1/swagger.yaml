@@ -508,12 +508,6 @@ paths:
                 type: array
                 items:
                   "$ref": "#/components/schemas/aetc_diagnosis"
-  "/api/v1/programs/30/reports/DISAGGREGATED_DIAGNOSIS":
-    get:
-      summary: Retrieve AETC DISAGGREGATED Diagnosis report
-      tags:
-      - Clinic Reports
-      description: This shows AETC DISAGGREGATED Diagnosis report
   "/api/v1/programs/30/reports/diagnosis_specific_report":
     get:
       summary: Retrieve AETC Diagnosis Specific report
@@ -531,9 +525,6 @@ paths:
         in: query
         schema:
           type: string
-      responses:
-        '200':
-          description: AETC DISAGGREGATED Diagnosis Report found
       - name: diagnosis
         in: query
         schema:
@@ -546,8 +537,33 @@ paths:
               schema:
                 type: array
                 items:
-                  "$ref": "#/components/schemas/aetc_dissag_diagnosis"
                   "$ref": "#/components/schemas/aetc_specific_diagnosis"
+  "/api/v1/programs/30/reports/DISAGGREGATED_DIAGNOSIS":
+    get:
+      summary: Retrieve AETC DISAGGREGATED Diagnosis report
+      tags:
+      - Clinic Reports
+      description: This shows AETC DISAGGREGATED Diagnosis report
+      security:
+      - api_key: []
+      parameters:
+      - name: start_date
+        in: query
+        schema:
+          type: string
+      - name: end_date
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: AETC DISAGGREGATED Diagnosis Report found
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/aetc_dissag_diagnosis"
   "/api/v1/radiology_set":
     get:
       summary: Retrieve all radiology sets
