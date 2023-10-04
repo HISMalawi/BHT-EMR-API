@@ -93,6 +93,13 @@ RSpec.configure do |config|
               } }
             }
           },
+          aetc_specific_diagnosis: {
+            type: :object,
+            properties: {
+              address: { type: :string, example: 'Limbe' },
+              patient_ids: { type: :array, items: { type: :integer } }
+            }
+          },
           aetc_diagnosis: {
             type: :object,
             properties: {

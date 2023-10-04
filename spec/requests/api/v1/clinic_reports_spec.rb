@@ -285,22 +285,25 @@ describe 'Clinic Reports API', type: :request, swagger_doc: 'v1/swagger.yaml' do
       end
     end
   end
-
-  path '/api/v1/programs/30/reports/DISAGGREGATED_DIAGNOSIS' do
-    get 'Retrieve AETC DISAGGREGATED Diagnosis report' do
+  
+  path '/api/v1/programs/30/reports/diagnosis_specific_report' do
+    get 'Retrieve AETC Diagnosis Specific report' do
       tags TAGS_NAME
-      description 'This shows AETC DISAGGREGATED Diagnosis report'
+      description 'This shows AETC Diagnosis Specific report'
       produces 'application/json'
       security [api_key: []]
       parameter name: :start_date, in: :query, type: :string
       parameter name: :end_date, in: :query, type: :string
+      parameter name: :diagnosis, in: :query, type: :string
 
-      response '200', 'AETC DISAGGREGATED Diagnosis Report found' do
-        schema type: :array, items: { '$ref' => '#/components/schemas/aetc_dissag_diagnosis' }
+
+      response '200', 'AETC Diagnosis Specific Report found' do
+        schema type: :array, items: { '$ref' => '#/components/schemas/aetc_specific_diagnosis' }
         run_test!
       end
     end
   end
+  
 
   path '/api/v1/programs/30/reports/DISAGGREGATED_DIAGNOSIS' do
     get 'Retrieve AETC DISAGGREGATED Diagnosis report' do
