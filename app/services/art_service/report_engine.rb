@@ -33,7 +33,7 @@ module ArtService
       'TPT_NEWLY_INITIATED' => ArtService::Reports::TptNewlyInitiated,
       'TX_CURR' => ArtService::Reports::PatientsAliveAndOnTreatment,
       'TX_ML' => ArtService::Reports::Pepfar::TxMl,
-      'TX_RTT' => ArtService::Reports::Pepfar::TxRTT,
+      'TX_RTT' => ArtService::Reports::Pepfar::TxRtt,
       'IPT_COVERAGE' => ArtService::Reports::IPTCoverage,
       'VISITS' => ArtService::Reports::VisitsReport,
       'VL_DUE' => ArtService::Reports::PatientsDueForViralLoad,

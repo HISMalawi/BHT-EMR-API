@@ -20,7 +20,7 @@ module ArtService
 
         start_date, end_date = art_service.generate_start_date_and_end_date(quarter)
         if @regenerate
-          ARTService::Reports::CohortBuilder.new.init_temporary_tables(start_date, @end_date, @occupation)
+          ArtService::Reports::CohortBuilder.new.init_temporary_tables(start_date, @end_date, @occupation)
         end
 
         quarters = []
