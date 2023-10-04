@@ -3,7 +3,7 @@
 module ArtService
   module Reports
     module Pepfar
-      # TxTB report
+      # TxTb report
       # rubocop:disable Metrics/ClassLength
       class TxTb
         attr_accessor :start_date, :end_date, :report, :rebuild_outcome
