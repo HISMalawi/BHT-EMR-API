@@ -7,10 +7,11 @@ module ArtService
 
       attr_reader :start_date, :end_date
 
-      def initialize(start_date:, end_date:, **_kwargs)
+      def initialize(start_date:, end_date:, **kwargs)
         @start_date = start_date
         @end_date = end_date
         @rebuild_outcomes = true
+        @occupation = kwargs[:occupation]
       end
 
       def find_report
@@ -36,7 +37,7 @@ module ArtService
 
       def regimen_counts
         with_lock(Cohort::LOCK_FILE) do
-          PatientsAliveAndOnTreatment.new(start_date: start_date, end_date: end_date)
+          PatientsAliveAndOnTreatment.new(start_date: start_date, end_date: end_date, occupation: @occupation)
                                      .refresh_outcomes_table
 
           WEIGHT_BANDS.map do |start_weight, end_weight|

@@ -10,12 +10,14 @@ module ArtService
         attr_reader :start_date, :end_date, :check_date, :cut_off_point
 
         include Utils
+        include CommonSqlQueryUtils
 
-        def initialize(start_date:, end_date:, **_kwargs)
+        def initialize(start_date:, end_date:, **kwargs)
           @start_date = ActiveRecord::Base.connection.quote(start_date)
           @check_date = start_date.to_date - 6.months
           @cut_off_point = start_date.to_date
           @end_date = ActiveRecord::Base.connection.quote(end_date)
+          @occupation = kwargs[:occupation]
         end
 
         def find_report
@@ -168,6 +170,7 @@ module ArtService
               ON patient_identifier.patient_id = person.person_id
               AND patient_identifier.voided = 0
               AND patient_identifier.identifier_type IN (SELECT patient_identifier_type_id FROM patient_identifier_type WHERE name = 'ARV Number')
+            LEFT JOIN (#{current_occupation_query}) AS current_occupation ON current_occupation.person_id = person.person_id
             INNER JOIN(
                 SELECT denominator_encounter.patient_id AS patient_id, patient_state.start_date AS start_date
                 FROM person
@@ -208,7 +211,7 @@ module ArtService
             INNER JOIN drug_order
               ON drug_order.order_id = orders.order_id
               AND drug_order.quantity > 0
-            WHERE person.voided = 0
+            WHERE person.voided = 0 #{%w[Military Civilian].include?(@occupation) ? 'AND' : ''} #{occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'current_occupation', include_clause: false)}
               AND person.person_id NOT IN (
               /* External consultations */
               SELECT DISTINCT registration_encounter.patient_id

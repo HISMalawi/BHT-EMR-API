@@ -1,3 +1,4 @@
+# rubocop:disable Lint/SafeNavigationChain
 # frozen_string_literal: true
 
 require 'set'
@@ -94,12 +95,12 @@ module HtsService
 
       HTS_CONTACT => %i[hiv_positive_at_health_facility_accesspoint?],
 
-      ITEMS_GIVEN => %i[task_not_done_today?],
+      ITEMS_GIVEN => %i[task_not_done_today? age_greater_than_13_years?],
 
       REFERRAL => %i[task_not_done_today?],
 
       PARTNER_RECEPTION => %i[task_not_done_today?
-                              not_from_community_accesspoint?]
+                              not_from_community_accesspoint? age_greater_than_13_years?],
     }.freeze
 
     def next_state(current_state)
@@ -128,6 +129,10 @@ module HtsService
 
     def age_greater_than_10_years?
       @patient.age > 10
+    end
+
+    def age_greater_than_13_years?
+      @patient.age > 13
     end
 
     def eligible_for_dbs?
@@ -173,10 +178,9 @@ module HtsService
       ).where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))
                          .order('encounter_datetime DESC')
 
-      taken_arvs = query.where(concept_id: concept('Taken ARV before').concept_id)
-      time_since_last_arv = query.where(concept_id: concept('Time since last taken medication').concept_id)
-
-      if taken_arvs.last&.answer_string&.strip == 'Yes' && parse_date(time_since_last_arv&.last&.value_datetime) >= 7.days.ago
+      taken_arvs = query.where(concept_id: concept("Taken ARV before").concept_id)
+      time_since_last_arv = query.where(concept_id: concept("Time since last taken medication").concept_id)
+      if taken_arvs.last&.answer_string&.strip == "Yes" && time_since_last_arv&.last&.value_datetime.to_date >= 7.days.ago
         return false
       end
 
@@ -378,3 +382,5 @@ module HtsService
     end
   end
 end
+
+# rubocop:enable Lint/SafeNavigationChain

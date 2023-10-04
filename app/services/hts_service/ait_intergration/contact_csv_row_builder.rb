@@ -3,6 +3,40 @@
 module HtsService
   module AitIntergration
     class ContactCsvRowBuilder
+      def first_name(contact)
+        "#{contact['Firstnames of contact']}#{contact['First name of contact']}"
+      end
+
+      def last_name(contact)
+        "#{contact['Last name of contact']}#{contact['Lastname of contact']}"
+      end
+
+      def sex(contact)
+        case contact['Gender of contact']&.strip
+        when 'Male'
+          'm'
+        when 'Female'
+          contact['Contact pregnancy status']&.strip&.downcase
+        else contact['Gender of contact']&.strip&.downcase
+        end
+      end
+
+      def contact_phone_number(contact)
+        "#{contact['Contact phone number']}#{contact['Telephone number of contact']}"
+      end
+
+      def physical_address(contact)
+        contact['Contact physical address']
+      end
+
+      def marital_status(contact)
+        contact['Contact marital status']
+      end
+
+      def new_hiv_status(contact)
+        "#{contact['Contact HIV tested']}#{contact['Contact has had HIV testing']}"&.downcase
+      end
+
       def caseid(_contact)
         nil
       end
@@ -12,7 +46,7 @@ module HtsService
       end
 
       def name(contact)
-        "#{contact['first_name']} #{contact['last_name']}"
+        "#{contact['Firstnames of contact']}#{contact['First name of contact']} #{contact['Last name of contact']}#{contact['Lastname of contact']}"
       end
 
       def contact_phone_number_verified(_contact)
@@ -24,39 +58,31 @@ module HtsService
       end
 
       def age_format(_contact)
-        'Years'
+        'years'
       end
 
       def sex_dissagregated(contact)
-        case contact['sex'].strip
-        when 'M'
-          'Male'
-        when 'FNP'
-          'Female'
-        when 'FP'
-          'Female'
-        else contact['sex']
-        end
+        sex contact
       end
 
       def entry_point(_contact)
-        'HTS'
+        'hts'
       end
 
       def age_in_years(contact)
-        contact['age'].to_i
+        contact['Age of contact'].to_i
       end
 
       def age_in_months(contact)
-        contact['age'].to_i * 12
+        contact['Age of contact'].to_i * 12
       end
 
       def age(contact)
-        contact['age'].to_i
+        contact['Age of contact'].to_i
       end
 
       def age_group(contact)
-        age = contact['age'].to_i
+        age = contact['Age of contact'].to_i
         case age
         when 0..14
           '0-14 Years'
@@ -70,15 +96,11 @@ module HtsService
       end
 
       def dob(contact)
-        (Date.today - contact['age'].to_i.years).change(day: 17)
+        (Date.today - contact['Age of contact'].to_i.years).change(day: 17)
       end
 
-      def sex(contact)
-        contact['sex'].strip
-      end
-
-      def generation(contact)
-        csv_row_builder.generation contact
+      def generation(_contact)
+        2
       end
 
       def close_case_date(_contact)
@@ -135,6 +157,50 @@ module HtsService
 
       def owner_id(contact)
         csv_row_builder.owner_id contact
+      end
+
+      def relationship_with_index_adult(contact)
+        contact['Relationships of contact']
+      end
+
+      def appointment_location(contact)
+        contact['Contact appointment location']
+      end
+
+      def hiv_test_date(contact)
+        contact['Contact HIV test date']
+      end
+
+      def ipv_status(contact)
+        contact['IPV Status']
+      end
+
+      def village(contact)
+        contact['Contact current village']
+      end
+
+      def traditional_authority(contact)
+        contact['Contact current TA']
+      end
+
+      def select_recommended_mode_of_notification(contact)
+        contact['Notification Means']&.downcase
+      end
+
+      def consent_to_contact(contact)
+        contact['Consent to contact the contact']
+      end
+
+      def referral_type(contact)
+        contact['Referral type']
+      end
+
+      def appointment_date(contact)
+        contact['Contact appointment date']&.to_date
+      end
+
+      def index_entry_point(_contact)
+        'hts'
       end
 
       private

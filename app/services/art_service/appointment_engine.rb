@@ -57,8 +57,8 @@ module ArtService
     end
 
     def next_appointment_date
-      exec_drug_order_adjustments(@patient, @ref_date) if optimise_appointment?(@patient, @ref_date)
-
+      exec_drug_order_adjustments(@patient, @ref_date) if optimise_appointment?(@patient,
+                                                                                @ref_date)
       _drug_id, date = earliest_appointment_date(@patient, @ref_date)
       return nil unless date
 
@@ -294,7 +294,41 @@ module ArtService
       complete_pack
     end
 
+    def patient_has_tranfer_letter?(patient, encounter_date)
+      result = Observation.joins(:encounter)
+                          .where('DATE(encounter.encounter_datetime) = ?', encounter_date)
+                          .where(
+                            person_id: patient.patient_id,
+                            concept_id: ConceptName.find_by_name('Has transfer letter').concept_id
+                          ).last
+      return false unless result.present? && result&.answer_string&.strip == 'Yes'
+
+      true
+    end
+
     # WARNING: More dragons follow
+
+    # include amounts brought from previous facility
+    def check_amounts_brought_from_previous_visits(patient, _session_date)
+      amounts_brought_from_previous_facility = ActiveRecord::Base.connection.select_all <<-SQL
+      SELECT obs.*
+      FROM obs
+      INNER JOIN encounter e ON e.encounter_id = obs.encounter_id AND e.voided = 0
+      WHERE
+        obs.concept_id = #{ConceptName.find_by_name('Amount of drug brought to clinic').concept_id}
+        AND e.encounter_type = #{EncounterType.find_by_name('HIV CLINIC CONSULTATION').encounter_type_id}
+        AND person_id = #{patient.patient_id}
+        AND obs.voided = 0
+        AND value_numeric IS NOT NULL
+      SQL
+      (amounts_brought_from_previous_facility || []).each do |amount|
+        @amounts_brought_to_clinic[amount['value_drug'].to_i] += begin
+          amount['value_numeric'].to_f
+        rescue StandardError
+          0
+        end
+      end
+    end
 
     # Source: NART/lib/medication_service.rb
     def amounts_brought_to_clinic(patient, session_date)
@@ -318,6 +352,9 @@ module ArtService
         end
       end
 
+      if patient_has_tranfer_letter?(patient, session_date)
+        check_amounts_brought_from_previous_visits(patient, session_date)
+      end
       # amounts_brought_to_clinic = ActiveRecord::Base.connection.select_all <<-SQL
       #   SELECT obs.*, d.* FROM obs INNER JOIN drug d ON d.concept_id = obs.concept_id AND obs.voided = 0
       #   WHERE obs.obs_datetime BETWEEN '#{session_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
@@ -328,7 +365,6 @@ module ArtService
       # (amounts_brought_to_clinic || []).each do |amount|
       #   @amounts_brought_to_clinic[amount['drug_id'].to_i] += (amount['value_numeric'].to_f rescue 0)
       # end
-
       @amounts_brought_to_clinic
     end
   end

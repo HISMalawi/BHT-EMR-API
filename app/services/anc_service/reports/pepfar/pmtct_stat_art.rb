@@ -25,7 +25,7 @@ module AncService
           '80-84 years',
           '85-89 years',
           '90 plus years',
-          'Unknown age'
+          'Unknown'
         ].freeze
 
         def initialize(start_date:, end_date:, **_kwargs)

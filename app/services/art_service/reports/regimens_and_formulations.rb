@@ -4,9 +4,11 @@ module ArtService
   module Reports
     # Retrieve patients in a particular regimen and formulation.
     class RegimensAndFormulations
+      include CommonSqlQueryUtils
+
       attr_reader :start_date, :end_date, :regimen, :formulation
 
-      def initialize(start_date:, end_date:, regimen: nil, formulation: 'tablets', **_kwargs)
+      def initialize(start_date:, end_date:, regimen: nil, formulation: 'tablets', **kwargs)
         raise InvalidParameterError, 'regimen is required' unless regimen
 
         unless %w[granules tablets pellets].include?(formulation)
@@ -17,6 +19,7 @@ module ArtService
         @end_date = end_date.to_date
         @formulation = formulation
         @regimen = regimen
+        @occupation = kwargs[:occupation]
       end
 
       def find_report
@@ -98,7 +101,9 @@ module ArtService
 
         DrugOrder.select('orders.patient_id AS patient_id, MAX(start_date) AS prescription_date')
                  .joins(:order)
+                 .joins("LEFT JOIN (#{current_occupation_query}) AS a ON a.person_id = orders.patient_id")
                  .where(quantity: 1..Float::INFINITY, drug_inventory_id: drugs)
+                 .where(occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'a', include_clause: false).to_s)
                  .merge(treatment_orders)
                  .group('orders.patient_id')
       end

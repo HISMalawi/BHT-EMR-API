@@ -4,9 +4,12 @@ module ArtService
       class TxRtt
         attr_reader :start_date, :end_date
 
-        def initialize(start_date:, end_date:)
+        include CommonSqlQueryUtils
+
+        def initialize(start_date:, end_date:, **kwargs)
           @start_date = ActiveRecord::Base.connection.quote(start_date)
           @end_date = ActiveRecord::Base.connection.quote(end_date)
+          @occupation = kwargs[:occupation]
         end
 
         def data
@@ -134,7 +137,8 @@ module ArtService
               AND encounter.voided = 0
           ) AS patients_with_orders_at_end_of_quarter
             ON patients_with_orders_at_end_of_quarter.patient_id = patient_program.patient_id
-          WHERE patient_program.program_id = 1
+          LEFT JOIN (#{current_occupation_query}) a ON a.person_id = patient_program.patient_id
+          WHERE patient_program.program_id = 1 #{%w[Military Civilian].include?(@occupation) ? 'AND' : ''} #{occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'a', include_clause: false)}
             /* Ensure that the patients retrieved, did not receive ART within 28 days
                before the start of the reporting period */
             AND patient_program.patient_id NOT IN (

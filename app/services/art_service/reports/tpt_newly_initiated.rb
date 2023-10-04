@@ -12,9 +12,10 @@ module ArtService
     class TptNewlyInitiated
       attr_reader :start_date, :end_date
 
-      def initialize(start_date:, end_date:, **_kwargs)
+      def initialize(start_date:, end_date:, **kwargs)
         @start_date = ActiveRecord::Base.connection.quote(start_date)
         @end_date = ActiveRecord::Base.connection.quote(end_date)
+        @occupation = kwargs[:occupation]
       end
 
       def find_report
@@ -106,7 +107,7 @@ module ArtService
       end
 
       def newly_initiated_on_tpt
-        tpt = ArtService::Reports::Cohort::Tpt.new(start_date.to_date, end_date.to_date)
+        tpt = ArtService::Reports::Cohort::Tpt.new(start_date.to_date, end_date.to_date, occupation: @occupation)
         data = {}
         three_hp = tpt.newly_initiated_on_3hp
         ipt = tpt.newly_initiated_on_ipt

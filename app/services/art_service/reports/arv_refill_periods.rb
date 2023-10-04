@@ -3,13 +3,14 @@
 module ArtService
   module Reports
     class ArvRefillPeriods
-      def initialize(start_date:, end_date:, min_age:, max_age:, org:, initialize_tables:)
+      def initialize(start_date:, end_date:, min_age:, max_age:, org:, initialize_tables:, **kwargs)
         @start_date = start_date.to_date.strftime('%Y-%m-%d 00:00:00')
         @end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
         @min_age = min_age
         @max_age = max_age
         @org = org
         @initialize_tables = (initialize_tables == 'true')
+        @occupation = kwargs[:occupation]
       end
 
       def arv_refill_periods
@@ -29,12 +30,7 @@ module ArtService
 
         if @initialize_tables
           report_type = (@org.match(/pepfar/i) ? 'pepfar' : 'moh')
-          cohort_list = ArtService::Reports::CohortBuilder.new(outcomes_definition: report_type)
-          cohort_list.create_tmp_patient_table
-          cohort_list.load_data_into_temp_earliest_start_date(@end_date.to_date)
-
-          outcomes = ArtService::Reports::Cohort::Outcomes.new(end_date: @end_date.to_date, definition: report_type)
-          outcomes.update_cummulative_outcomes
+          ArtService::Reports::CohortBuilder.new(outcomes_definition: report_type).init_temporary_tables(@start_date, @end_date, @occupation)
         end
 
         patients = ActiveRecord::Base.connection.select_all <<~SQL

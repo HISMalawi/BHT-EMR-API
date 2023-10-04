@@ -71,18 +71,20 @@ module Api
         end_date = Date.today if end_date.blank?
         rebuild_outcome = (rebuild == 'true')
 
-        if quarter == 'pepfar'
+        case quarter
+        when 'pepfar'
           start_date, end_date = params.require %i[start_date end_date]
           start_date = start_date.to_date
           end_date = end_date.to_date
-        elsif quarter.match('Q')
+        when 'Q'
           year = quarter.split(' ')[1].to_i
           index = quarter.split(' ')[0]
           start_date, end_date = quarter_to_date(index, year)
         end
 
         stats = service.cohort_disaggregated(quarter, age_group, start_date,
-                                             end_date, rebuild_outcome, init)
+                                             end_date, rebuild_outcome, init,
+                                             occupation: params[:occupation])
         render json: stats
       end
 
@@ -109,8 +111,9 @@ module Api
 
       def cohort_survival_analysis
         quarter, age_group, reg = params.require %i[quarter age_group regenerate]
+        occupation = params[:occupation]
         reg = (reg == 'true')
-        stats = service.cohort_survival_analysis(quarter, age_group, reg)
+        stats = service.cohort_survival_analysis(quarter, age_group, reg, occupation)
 
         render json: stats
       end
@@ -125,14 +128,14 @@ module Api
       def defaulter_list
         start_date, end_date, pepfar = params.require %i[start_date end_date pepfar]
         pepfar = (pepfar == 'true')
-        stats = service.defaulter_list(start_date, end_date, pepfar)
+        stats = service.defaulter_list(start_date, end_date, pepfar, occupation: params[:occupation])
 
         render json: stats
       end
 
       def missed_appointments
         start_date, end_date = params.require %i[start_date end_date]
-        stats = service.missed_appointments(start_date, end_date)
+        stats = service.missed_appointments(start_date, end_date, occupation: params[:occupation])
 
         render json: stats
       end
@@ -150,11 +153,11 @@ module Api
 
       def regimen_switch
         pepfar = params[:pepfar] == 'true'
-        render json: service.regimen_switch(params[:start_date], params[:end_date], pepfar)
+        render json: service.regimen_switch(params[:start_date], params[:end_date], pepfar, occupation: params[:occupation])
       end
 
       def regimen_report
-        render json: service.regimen_report(params[:start_date], params[:end_date], params[:type])
+        render json: service.regimen_report(params[:start_date], params[:end_date], params[:type], occupation: params[:occupation])
       end
 
       def screened_for_tb
@@ -169,19 +172,20 @@ module Api
 
       def arv_refill_periods
         render json: service.arv_refill_periods(params[:start_date], params[:end_date],
-                                                params[:min_age], params[:max_age], params[:org], params[:initialize_tables])
+                                                params[:min_age], params[:max_age], params[:org],
+                                                params[:initialize_tables], occupation: params[:occupation])
       end
 
       def tx_ml
-        render json: service.tx_ml(params[:start_date], params[:end_date])
+        render json: service.tx_ml(params[:start_date], params[:end_date], occupation: params[:occupation])
       end
 
       def tx_rtt
-        render json: service.tx_rtt(params[:start_date], params[:end_date])
+        render json: service.tx_rtt(params[:start_date], params[:end_date], occupation: params[:occupation])
       end
 
       def moh_tpt
-        render json: service.moh_tpt(params[:start_date], params[:end_date])
+        render json: service.moh_tpt(params[:start_date], params[:end_date], occupation: params[:occupation])
       end
 
       def ipt_coverage
@@ -212,11 +216,11 @@ module Api
 
       def patient_outcome_list
         render json: service.patient_outcome_list(params[:start_date],
-                                                  params[:end_date], params[:outcome])
+                                                  params[:end_date], params[:outcome], occupation: params[:occupation])
       end
 
       def clients_due_vl
-        render json: service.clients_due_vl(params[:start_date], params[:end_date])
+        render json: service.clients_due_vl(params[:start_date], params[:end_date], occupation: params[:occupation])
       end
 
       def vl_results
@@ -228,7 +232,7 @@ module Api
       end
 
       def lab_test_results
-        render json: service.lab_test_results(params[:start_date], params[:end_date])
+        render json: service.lab_test_results(params[:start_date], params[:end_date], occupation: params[:occupation])
       end
 
       def orders_made
@@ -237,7 +241,7 @@ module Api
       end
 
       def external_consultation_clients
-        render json: service.external_consultation_clients(params[:start_date], params[:end_date])
+        render json: service.external_consultation_clients(params[:start_date], params[:end_date], occupation: params[:occupation])
       end
 
       def cxca_reports
@@ -253,7 +257,7 @@ module Api
       end
 
       def vl_maternal_status
-        # vlc = ArtService::Reports::Pepfar::ViralLoadCoverage.new start_date: params[:start_date], end_date: params[:end_date]
+        # vlc = ARTService::Reports::Pepfar::ViralLoadCoverage.new start_date: params[:start_date], end_date: params[:end_date]
         # result = vlc.woman_status params[:person_id].split(",").map {|number| number.to_i}
         # render json: result
         render json: service.vl_maternal_status(params[:start_date], params[:end_date],
@@ -266,7 +270,9 @@ module Api
 
       def latest_regimen_dispensed
         render json: service.latest_regimen_dispensed(params[:start_date],
-                                                      params[:end_date], (params[:rebuild_outcome] == 'true'))
+                                                      params[:end_date],
+                                                      params[:rebuild_outcome] == 'true',
+                                                      occupation: params[:occupation])
       end
 
       def sc_arvdisp
@@ -279,7 +285,7 @@ module Api
       def service
         return @service if @service
 
-        program_id, = params.require %i[program_id date]
+        program_id, date = params.require %i[program_id date]
 
         @service = ReportService.new program_id: program_id
         @service

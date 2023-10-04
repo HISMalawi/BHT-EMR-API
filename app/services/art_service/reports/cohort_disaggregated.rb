@@ -3,12 +3,13 @@
 module ArtService
   module Reports
     class CohortDisaggregated
-      def initialize(name:, type:, start_date:, end_date:, rebuild:)
+      def initialize(name:, type:, start_date:, end_date:, rebuild:, **kwargs)
         @name = name
         @type = type
         @start_date = start_date
         @end_date = end_date
         @rebuild = rebuild
+        @occupation = kwargs[:occupation]
       end
 
       def find_report
@@ -66,9 +67,7 @@ module ArtService
 
           if @rebuild
             initialize_disaggregated
-            art_service = ArtService::Reports::CohortBuilder.new()
-            art_service.create_tmp_patient_table
-            art_service.load_data_into_temp_earliest_start_date(end_date)
+            ArtService::Reports::CohortBuilder.new.init_temporary_tables(@start_date, @end_date, @occupation)
             rebuild_outcomes 'moh'
             art_service.update_tb_status(end_date)
           end
@@ -490,46 +489,7 @@ EOF
       end
 
       def rebuild_outcomes(report_type)
-=begin
-        ActiveRecord::Base.connection.execute(
-          'DROP TABLE IF EXISTS `temp_pepfar_patient_outcomes`'
-        )
-
-        ActiveRecord::Base.connection.execute(
-          "CREATE TABLE temp_pepfar_patient_outcomes AS (
-            SELECT e.patient_id, pepfar_patient_outcome(e.patient_id, DATE('#{@end_date.to_date}')) AS cum_outcome
-            FROM temp_earliest_start_date e WHERE DATE(e.date_enrolled) <= DATE('#{@end_date.to_date}')
-            GROUP BY e.patient_id
-          )"
-        )
-=end
-
-        cohort_list = ArtService::Reports::CohortBuilder.new(outcomes_definition: report_type)
-        cohort_list.create_tmp_patient_table
-        cohort_list.drop_temp_register_start_date_table
-        cohort_list.drop_temp_other_patient_types
-        cohort_list.create_temp_other_patient_types(@end_date)
-        cohort_list.create_temp_register_start_date_table(@end_date)
-        cohort_list.load_data_into_temp_earliest_start_date(@end_date.to_date)
-
-        outcomes = ArtService::Reports::Cohort::Outcomes.new(end_date: @end_date.to_date, definition: report_type)
-        outcomes.update_cummulative_outcomes
-=begin
-        ActiveRecord::Base.connection.execute(
-          'ALTER TABLE temp_pepfar_patient_outcomes
-           ADD INDEX patient_id_index (patient_id)'
-        )
-
-        ActiveRecord::Base.connection.execute(
-          'ALTER TABLE temp_pepfar_patient_outcomes
-           ADD INDEX cum_outcome_index (cum_outcome)'
-        )
-
-        ActiveRecord::Base.connection.execute(
-          'ALTER TABLE temp_pepfar_patient_outcomes
-           ADD INDEX patient_id_cum_outcome_index (patient_id, cum_outcome)'
-        )
-=end
+        ArtService::Reports::CohortBuilder.new(outcomes_definition: report_type).init_temporary_tables(@start_date, @end_date, @occupation)
       end
 
       def insert_female_maternal_status(patient_id, age_group, end_date)

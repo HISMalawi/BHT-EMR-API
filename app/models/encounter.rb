@@ -85,6 +85,13 @@ class Encounter < VoidableRecord
 
   def after_void(reason)
     orders.each { |order| order.void(reason) }
+    
+    if encounter_type == EncounterType.find_by_name('LAB ORDERS').id && lims_config_exists?
+      orders.each do |order|  
+        worker = Lab::Lims::PushWorker.new(Lab::Lims::ApiFactory.create_api)
+        worker.void_order_in_lims(order.order_id)
+      end
+    end
 
     if encounter_type == EncounterType.find_by_name('ART ADHERENCE').id
       # Hack for ART ADHERENCE that blocks observation from voiding any attached
@@ -98,6 +105,18 @@ class Encounter < VoidableRecord
   def encounter_type_name=(encounter_type_name)
     self.type = EncounterType.find_by_name(encounter_type_name)
     raise "#{encounter_type_name} not a valid encounter_type" if type.nil?
+  end
+
+  # check if the application.yml has the following parameters
+  # 1. lims_api:
+  # 2. lims_realtime_updates_url:
+  def lims_config_exists?
+    lims_api = YAML.safe_load(File.read('config/application.yml'))['lims_api']
+    lims_realtime_updates_url = YAML.safe_load(File.read('config/application.yml'))['lims_realtime_updates_url']
+
+    return false if lims_api.blank? && lims_realtime_updates_url.blank?
+    
+    true
   end
 
   # def self.initial_encounter

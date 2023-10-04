@@ -151,6 +151,8 @@ class Patient < VoidableRecord
   end
 
   def art_start_date
+    return nil if id.blank?
+
     result = ActiveRecord::Base.connection.select_one <<~SQL
       SELECT patient_start_date(#{id}) AS art_start_date
     SQL
@@ -158,7 +160,8 @@ class Patient < VoidableRecord
   end
 
   def tpt_status
-    ArtService::Reports::Pepfar::TbPrev3.new(start_date: Date.today - 6.months,
-                                             end_date: Date.today).patient_tpt_status(id)
+    return { tpt: nil, completed: false, tb_treatment: false, tpt_init_date: nil, tpt_complete_date: nil } if id.blank?
+    
+    ARTService::Reports::Pepfar::TbPrev3.new(start_date: Date.today - 6.months, end_date: Date.today).patient_tpt_status(id)
   end
 end

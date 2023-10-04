@@ -47,6 +47,18 @@ module HtsService
         nil
       end
 
+      def entry_point(_patient)
+        'hts'
+      end
+
+      def consent(_patient)
+        1
+      end
+
+      def consent_refusal_reason(_patient)
+        nil
+      end
+
       def entry_point(patient)
         observation_answer patient, 'Location where test took place'
       end
@@ -114,6 +126,8 @@ module HtsService
 
       def registered_by(_patient)
         User.current.username
+      rescue StandardError
+        'Unknown'
       end
 
       def closed_contacts(_patient)
@@ -198,6 +212,10 @@ module HtsService
 
       def index_entry_point(patients)
         entry_point patients
+      end
+
+      def linkage_code(patients)
+        observation_answer patients, 'HTC serial number'
       end
 
       def observation_answer(patient, concept_name)
