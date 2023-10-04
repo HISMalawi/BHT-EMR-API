@@ -24,7 +24,7 @@ module AetcService
         def initialize(start_date:, end_date:, **kwargs)
           @start_date = start_date.to_date.beginning_of_day
           @end_date = end_date.to_date.end_of_day
-          @diagnosis = kwargs[:diagnosis]
+          @diagnosis = JSON.parse(kwargs[:diagnosis]).map { |d| "'#{d}'" }
         end
 
         # Fetches the report data
