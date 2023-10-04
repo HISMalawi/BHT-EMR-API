@@ -65,7 +65,7 @@ module Api
 
       def filter_locations_by_tag(locations, tag)
         location_tag_id = LocationTag.where('name like ?', "%#{tag}%")[0].id
-        location_tag_maps = LocationTagMap.where location_tag_id: location_tag_id
+        location_tag_maps = LocationTagMap.where(location_tag_id:)
         locations.joins(:tag_maps).merge(location_tag_maps)
       end
 

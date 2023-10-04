@@ -61,7 +61,7 @@ module TBQueries
 
     def any(state, patients, start_date, end_date)
       states = @relation.where('patient_program.patient_id': patients,
-                               state: state,
+                               state:,
                                'patient_state.date_created': start_date..end_date)
 
       return [] if states.empty?
@@ -96,7 +96,7 @@ module TBQueries
     end
 
     def still_open(state, patients)
-      states = @relation.where(state: state,
+      states = @relation.where(state:,
                                patient_program: { patient_id: patients },
                                end_date: nil)
 

@@ -12,10 +12,10 @@ module Api
         start_date ||= params.require(:start_date)
         end_date ||= (params[:end_date] || Date.today.strftime('%Y-%m-%d'))
 
-        pp({ start_date: start_date })
+        pp({ start_date: })
 
-        report = service.generate_report(name: name,
-                                         type: type,
+        report = service.generate_report(name:,
+                                         type:,
                                          start_date: parse_date(start_date).to_s,
                                          end_date: parse_date(end_date),
                                          **extra_params)

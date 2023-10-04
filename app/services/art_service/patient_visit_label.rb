@@ -30,12 +30,12 @@ module ArtService
         "#{unless visit.height.blank?
              "#{visit.height}cm"
            end}  #{unless visit.weight.blank?
-                                                                "#{visit.weight}kg"
-                                                              end}  #{unless visit.bmi.blank?
-                                                                                                                   "BMI:#{visit.bmi}"
-                                                                                                                 end} VL:#{visit.viral_load_result} #{unless pill_count.blank?
-                                                                  "(PC:#{pill_count[0..24]})"
-                                                                end}", 25, 95, 0, 2, 1, 1, false
+                     "#{visit.weight}kg"
+                   end}  #{unless visit.bmi.blank?
+                                                                        "BMI:#{visit.bmi}"
+                                                                      end} VL:#{visit.viral_load_result} #{unless pill_count.blank?
+                                                                                                                                                        "(PC:#{pill_count[0..24]})"
+                                                                                                                                                      end}", 25, 95, 0, 2, 1, 1, false
       )
 
       label.draw_text('SE', 25, 130, 0, 3, 1, 1, false)
@@ -163,7 +163,7 @@ module ArtService
         string = "#{drug} (#{strip_insignificant_zeroes(pills)})"
         if string.length > 26
           line = string[0..25]
-          line2 = string[26..-1]
+          line2 = string[26..]
           data["arv_given#{count}"] = '255', line
           data["arv_given#{count += 1}"] = '255', line2
         else

@@ -9,7 +9,7 @@ class ProgramWorkflowState < RetirableRecord
   has_many :patient_states, foreign_key: :state
 
   def name
-    ConceptName.find_by(concept_id: concept_id)&.name
+    ConceptName.find_by(concept_id:)&.name
   end
 
   def self.find_by_name_and_program(name:, program_id:)

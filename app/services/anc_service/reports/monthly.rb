@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'set'
-
 module AncService
   module Reports
     # Cohort report builder class.
@@ -46,14 +44,14 @@ module AncService
 
         values = save_report_values(report)
 
-        { report: report, values: values }
+        { report:, values: }
       end
 
       # Writes the report values to database
       def save_report_values(report)
         @cohort_struct.values.collect do |value|
           puts "Saving #{value.name} = #{value_contents_to_json(value.contents)}"
-          report_value = ReportValue.create(report: report,
+          report_value = ReportValue.create(report:,
                                             name: value.name,
                                             indicator_name: value.indicator_name,
                                             indicator_short_name: value.indicator_short_name,

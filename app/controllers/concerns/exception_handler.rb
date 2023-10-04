@@ -31,7 +31,7 @@ module ExceptionHandler
       log_exception(e)
       errors = [e.message]
       errors << e.model_errors if e.model_errors
-      render json: { errors: errors }, status: :bad_request
+      render json: { errors: }, status: :bad_request
     end
 
     rescue_from UnprocessableEntityError do |e|

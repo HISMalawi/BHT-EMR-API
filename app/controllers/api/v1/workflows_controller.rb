@@ -23,9 +23,9 @@ module Api
         program_id, patient_id = params.require %i[program_id patient_id]
         date = params[:date]
 
-        @service = WorkflowService.new program_id: program_id,
-                                       patient_id: patient_id,
-                                       date: date
+        @service = WorkflowService.new(program_id:,
+                                       patient_id:,
+                                       date:)
         @service
       end
     end

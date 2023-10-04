@@ -35,10 +35,10 @@ module Api
 
         encounter = Encounter.find encounter_id
 
-        order = engine.create_order tests: tests,
-                                    encounter: encounter,
-                                    date: date,
-                                    requesting_clinician: requesting_clinician
+        order = engine.create_order(tests:,
+                                    encounter:,
+                                    date:,
+                                    requesting_clinician:)
 
         render json: order, status: :created
       end

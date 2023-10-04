@@ -52,7 +52,7 @@ class DrugOrder < ApplicationRecord
 
   # Construct
   def dosage_struct
-    ingredient = MohRegimenIngredient.find_by(drug: drug)
+    ingredient = MohRegimenIngredient.find_by(drug:)
     {
       drug_id: drug.drug_id,
       drug_name: drug.name,

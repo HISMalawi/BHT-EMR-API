@@ -34,11 +34,11 @@ module AncService
       {
         patient_id: patient.patient_id,
         current_outcome: getCurrentPatientOutcome,
-        date_of_lnmp: date_of_lnmp,
+        date_of_lnmp:,
         anc_visits: number_of_visits,
-        fundus: fundus,
+        fundus:,
         gestation: gest_age,
-        edod: edod
+        edod:
       }
     end
 

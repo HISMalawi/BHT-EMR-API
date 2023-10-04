@@ -21,7 +21,7 @@ module Api
         result[:tracking_number] = order[:lims_order]['tracking_number']
         result = engine.save_result(result)
 
-        render json: { order: order, result: result }, status: :created
+        render json: { order:, result: }, status: :created
       end
 
       def patient

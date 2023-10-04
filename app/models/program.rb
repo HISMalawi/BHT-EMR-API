@@ -20,7 +20,7 @@ class Program < RetirableRecord
   end
 
   def state(name)
-    state_concept = ConceptName.where(name: name).select(:concept_id)
+    state_concept = ConceptName.where(name:).select(:concept_id)
 
     state = ProgramWorkflowState.where(concept: state_concept)
                                 .joins(:program_workflow)

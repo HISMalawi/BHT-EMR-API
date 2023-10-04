@@ -52,10 +52,10 @@ module Voidable
                                  void_reason: :void_reason,
                                  voided_by: :voided_by)
       @interface = {
-        voided: voided,
-        date_voided: date_voided,
-        void_reason: void_reason,
-        voided_by: voided_by
+        voided:,
+        date_voided:,
+        void_reason:,
+        voided_by:
       }
     end
 

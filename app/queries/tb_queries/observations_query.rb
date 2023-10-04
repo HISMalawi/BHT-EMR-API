@@ -20,7 +20,7 @@ module TBQueries
       concept = concept(name)
       answer = concept(value)
 
-      filter = { concept: concept, answer_concept: answer }
+      filter = { concept:, answer_concept: answer }
       filter[:obs_datetime] = (start_date..end_date) if start_date && end_date
 
       @relation.select(:person_id).distinct\

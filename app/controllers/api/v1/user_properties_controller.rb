@@ -57,7 +57,7 @@ module Api
 
       def destroy
         name = params.require %i[property]
-        property = UserProperty.find_by name: name, user_id: User.current.user_id
+        property = UserProperty.find_by name:, user_id: User.current.user_id
         if property.nil?
           render json: { errors: ["Property, #{name}, not found"] }
         elsif property.destroy

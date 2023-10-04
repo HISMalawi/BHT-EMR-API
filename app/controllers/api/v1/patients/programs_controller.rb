@@ -40,7 +40,7 @@ module Api
           p_program = patient_program!
           date_enrolled = params.require(:date_enrolled)
 
-          if p_program.update(date_enrolled: date_enrolled, location_id: Location.current.id)
+          if p_program.update(date_enrolled:, location_id: Location.current.id)
             render json: p_program
           else
             render json: { errors: p_program.errors }, status: :bad_request

@@ -116,9 +116,9 @@ module AncService
       end
 
       def workflow_engine(patient, date)
-        ArtService::WorkflowEngine.new patient: patient,
+        ArtService::WorkflowEngine.new patient:,
                                        program: hiv_program,
-                                       date: date
+                                       date:
       end
 
       def hiv_program
@@ -134,7 +134,7 @@ module AncService
                                indicator_name: indicator,
                                contents: value,
                                content_type: 'integer',
-                               report: report
+                               report:
           end
         end
       end

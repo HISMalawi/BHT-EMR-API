@@ -8,7 +8,7 @@ module ArtService
 
     def print(patient)
       demographics = mastercard_demographics(patient)
-      hiv_staging = Encounter.where(type: encounter_type('HIV Staging'), patient: patient).last
+      hiv_staging = Encounter.where(type: encounter_type('HIV Staging'), patient:).last
 
       tb_within_last_two_yrs = 'tb within last 2 yrs' unless demographics.tb_within_last_two_yrs.blank?
       eptb = 'eptb' unless demographics.eptb.blank?
@@ -74,7 +74,7 @@ module ArtService
       label.draw_text("Phone: #{phone_number}", 25, 120, 0, 3, 1, 1, false)
       if (demographics.address.blank? ? 0 : demographics.address.length) > 48
         label.draw_text("Addr:  #{demographics.address[0..47]}", 25, 150, 0, 3, 1, 1, false)
-        label.draw_text("    :  #{demographics.address[48..-1]}", 25, 180, 0, 3, 1, 1, false)
+        label.draw_text("    :  #{demographics.address[48..]}", 25, 180, 0, 3, 1, 1, false)
         last_line = 180
       else
         label.draw_text("Addr:  #{demographics.address}", 25, 150, 0, 3, 1, 1, false)
@@ -87,11 +87,11 @@ module ArtService
           last_line = 210
         elsif (last_line == 180) && (demographics.guardian.length > 48)
           label.draw_text("Guard: #{demographics.guardian[0..47]}", 25, 210, 0, 3, 1, 1, false)
-          label.draw_text("     : #{demographics.guardian[48..-1]}", 25, 240, 0, 3, 1, 1, false)
+          label.draw_text("     : #{demographics.guardian[48..]}", 25, 240, 0, 3, 1, 1, false)
           last_line = 240
         elsif (last_line == 150) && (demographics.guardian.length > 48)
           label.draw_text("Guard: #{demographics.guardian[0..47]}", 25, 180, 0, 3, 1, 1, false)
-          label.draw_text("     : #{demographics.guardian[48..-1]}", 25, 210, 0, 3, 1, 1, false)
+          label.draw_text("     : #{demographics.guardian[48..]}", 25, 210, 0, 3, 1, 1, false)
           last_line = 210
         elsif (last_line == 150) && (demographics.guardian.length < 48)
           label.draw_text("Guard: #{demographics.guardian}", 25, 180, 0, 3, 1, 1, false)

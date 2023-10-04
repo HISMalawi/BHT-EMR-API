@@ -69,7 +69,7 @@ module ArtService
       date ||= encounter.encounter_datetime
 
       tests.collect do |test|
-        lims_order = nlims.order_test(patient: patient, user: User.current, date: date,
+        lims_order = nlims.order_test(patient:, user: User.current, date:,
                                       reason: test['reason'], test_type: [test['test_type']],
                                       **kwargs)
         accession_number = lims_order['tracking_number']
@@ -77,7 +77,7 @@ module ArtService
         local_order = create_local_order(patient, encounter, date, accession_number)
         save_reason_for_test(encounter, local_order, test['reason'])
 
-        { order: local_order, lims_order: lims_order }
+        { order: local_order, lims_order: }
       end
     end
 
@@ -91,7 +91,7 @@ module ArtService
       local_order = create_local_order(patient, encounter, date_sample_drawn, lims_order['tracking_number'])
       save_reason_for_test(encounter, local_order, reason_for_test)
 
-      { order: local_order, lims_order: lims_order }
+      { order: local_order, lims_order: }
     end
 
     def print_order_label(accession_number)
@@ -142,13 +142,13 @@ module ArtService
         date_ordered: order['other']['date_created'],
         order_location: order['other']['order_location'],
         specimen_status: order['other']['specimen_status'],
-        accession_number: accession_number,
+        accession_number:,
         tests: order['tests'].collect do |k, v|
           test_values = result[k]&.collect do |indicator, value|
-            { indicator: indicator, value: value }
+            { indicator:, value: }
           end || []
 
-          { test_type: k, test_status: v, test_values: test_values }
+          { test_type: k, test_status: v, test_values: }
         end
       }]
     end
@@ -161,19 +161,19 @@ module ArtService
 
     # Creates an Order in the primary openmrs database
     def create_local_order(patient, encounter, date, accession_number)
-      Order.create(patient: patient,
-                   encounter: encounter,
+      Order.create(patient:,
+                   encounter:,
                    concept: concept('Laboratory tests ordered'),
                    order_type: order_type('Lab'),
                    orderer: User.current.user_id,
                    start_date: date,
-                   accession_number: accession_number,
+                   accession_number:,
                    provider: User.current)
     end
 
     def save_reason_for_test(encounter, order, reason)
-      Observation.create(order: order,
-                         encounter: encounter,
+      Observation.create(order:,
+                         encounter:,
                          concept: concept('Reason for test'),
                          obs_datetime: encounter.encounter_datetime,
                          person: encounter.patient.person,
@@ -182,18 +182,18 @@ module ArtService
 
     def find_lab_encounter(patient, date)
       start_time, end_time = TimeUtils.day_bounds(date)
-      encounter = Encounter.where(patient: patient, program: @program)\
+      encounter = Encounter.where(patient:, program: @program)\
                            .where('encounter_datetime BETWEEN ? AND ?', start_time, end_time)\
                            .last
       return encounter if encounter
 
-      Encounter.create(patient: patient, program: @program, type: encounter_type('Lab'),
+      Encounter.create(patient:, program: @program, type: encounter_type('Lab'),
                        provider: User.current.person,
                        encounter_datetime: TimeUtils.retro_timestamp(date))
     end
 
     def local_orders(patient)
-      Order.where patient: patient,
+      Order.where patient:,
                   order_type: order_type('Lab'),
                   concept: concept('Laboratory tests ordered')
     end

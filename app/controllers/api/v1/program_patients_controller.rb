@@ -36,8 +36,8 @@ module Api
         earliest_start_date = service.find_patient_earliest_start_date(patient, date_enrolled)
 
         render json: {
-          date_enrolled: date_enrolled,
-          earliest_start_date: earliest_start_date
+          date_enrolled:,
+          earliest_start_date:
         }
       end
 
@@ -141,7 +141,7 @@ module Api
       end
 
       def is_due_lab_order
-        if service.due_lab_order?(patient: patient)
+        if service.due_lab_order?(patient:)
           render json: { message: true }
         else
           render json: { message: false }
@@ -151,7 +151,7 @@ module Api
       protected
 
       def service
-        @service ||= ProgramPatientsService.new program: program
+        @service ||= ProgramPatientsService.new program:
       end
 
       def program

@@ -27,8 +27,8 @@ module Api
                         status: :bad_request
         end
 
-        orders = DrugOrderService.create_drug_orders encounter: encounter,
-                                                     drug_orders: drug_orders
+        orders = DrugOrderService.create_drug_orders(encounter:,
+                                                     drug_orders:)
         render json: orders, status: :created
       end
 

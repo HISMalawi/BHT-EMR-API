@@ -57,7 +57,7 @@ module ArtService
 
     def tb_status
       tb_status = PatientState.joins(:patient_program)\
-                              .merge(PatientProgram.where(patient: patient, program: program('tb_program')))\
+                              .merge(PatientProgram.where(patient:, program: program('tb_program')))\
                               .where('start_date <= ?', date.to_date)\
                               .order(:start_date)\
                               .last\
@@ -207,19 +207,19 @@ module ArtService
       dispensations = pills_dispensed
 
       {
-        outcome: outcome,
-        outcome_date: outcome_date,
-        visit_by: visit_by,
-        side_effects: side_effects,
+        outcome:,
+        outcome_date:,
+        visit_by:,
+        side_effects:,
         viral_load: viral_load_result,
-        pills_brought: pills_brought,
+        pills_brought:,
         pills_dispensed: dispensations,
         regimen: dispensations.empty? ? 'N/A' : regimen,
-        adherence: adherence,
-        tb_status: tb_status,
-        height: height,
-        weight: weight,
-        bmi: bmi
+        adherence:,
+        tb_status:,
+        height:,
+        weight:,
+        bmi:
       }
     end
 

@@ -93,9 +93,9 @@ module Api
       end
 
       def workflow_engine(patient, date)
-        AncService::WorkflowEngine.new patient: patient,
+        AncService::WorkflowEngine.new patient:,
                                        program: Program.find_by_name('ANC PROGRAM'),
-                                       date: date
+                                       date:
       end
 
       def essentials

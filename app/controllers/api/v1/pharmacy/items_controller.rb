@@ -16,7 +16,7 @@ module Api
 
         def update
           permitted_params = params.permit(:current_quantity, :delivered_quantity, :pack_size, :expiry_date, :delivery_date,
-                                          :reason)
+                                           :reason)
           raise InvalidParameterError, 'reason is required' if permitted_params[:reason].blank?
 
           item = service.edit_batch_item(params[:id], permitted_params)

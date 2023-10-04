@@ -50,7 +50,7 @@ module Api
       private
 
       def program_exists?(program_id, patient_id)
-        PatientProgram.where(program_id: program_id, patient_id: patient_id).exists?
+        PatientProgram.where(program_id:, patient_id:).exists?
       end
     end
   end

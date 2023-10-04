@@ -20,7 +20,7 @@ class NationalId < ApplicationRecord
     id = active.find(:first, order: 'id DESC')
     return '' if id.blank?
 
-    national_id = "#{id.national_id[0..2]}-#{id.national_id[3..-1]}"
+    national_id = "#{id.national_id[0..2]}-#{id.national_id[3..]}"
     label = ZebraPrinter::StandardLabel.new
     label.draw_barcode(40, 210, 0, 1, 5, 10, 70, false, id.national_id.to_s)
     label.draw_text('Name:', 40, 30, 0, 2, 2, 2, false)

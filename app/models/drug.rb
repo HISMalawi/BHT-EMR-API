@@ -32,7 +32,7 @@ class Drug < ActiveRecord::Base
   end
 
   def arv?
-    Drug.arv_drugs.where(drug_id: drug_id).exists?
+    Drug.arv_drugs.where(drug_id:).exists?
   end
 
   def tb_drug?

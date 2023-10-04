@@ -18,7 +18,7 @@ module Api
         return @service if @service
 
         program_id, program_patient_id, date = appointment_params
-        @service = AppointmentService.new program_id: program_id, patient_id: program_patient_id, retro_date: date
+        @service = AppointmentService.new program_id:, patient_id: program_patient_id, retro_date: date
 
         @service
       end

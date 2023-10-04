@@ -8,7 +8,7 @@ module Api
           render json: service.find_regimens_by_patient(patient)
         elsif params[:weight]
           use_tb_dosage = params[:tb_dosage]&.casecmp?('true')
-          render json: service.find_regimens(params[:weight], use_tb_dosage: use_tb_dosage)
+          render json: service.find_regimens(params[:weight], use_tb_dosage:)
         else
           render json: { error: 'patient_id or weight required' }, status: :bad_request
         end
@@ -23,7 +23,7 @@ module Api
         regimen = params[:id]
         lpv_drug_type = params.require(:lpv_drug_type)
 
-        render json: service.regimen(patient, regimen, lpv_drug_type: lpv_drug_type).values[0]
+        render json: service.regimen(patient, regimen, lpv_drug_type:).values[0]
       end
 
       def custom_regimen_ingredients
@@ -38,7 +38,7 @@ module Api
       end
 
       def custom_tb_ingredients
-        render json: service.custom_regimen_ingredients(patient: patient)
+        render json: service.custom_regimen_ingredients(patient:)
       end
 
       private
@@ -50,7 +50,7 @@ module Api
 
       def service
         program_id = params.require(:program_id)
-        RegimenService.new(program_id: program_id)
+        RegimenService.new(program_id:)
       end
     end
   end

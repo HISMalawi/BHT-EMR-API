@@ -41,7 +41,7 @@ module Api
 
       def destroy
         name = params.require %i[property]
-        property = GlobalProperty.find_by name: name
+        property = GlobalProperty.find_by(name:)
         if property.nil?
           render json: { errors: ["Property, #{name}, not found"] }
         elsif property.destroy

@@ -22,7 +22,7 @@ module ArtService
       label.draw_text("Phone: #{phone_number}", 25, 120, 0, 3, 1, 1, false)
       if (address.blank? ? 0 : address.length) > 48
         label.draw_text("Addr:  #{address[0..47]}", 25, 150, 0, 3, 1, 1, false)
-        label.draw_text("    :  #{address[48..-1]}", 25, 180, 0, 3, 1, 1, false)
+        label.draw_text("    :  #{address[48..]}", 25, 180, 0, 3, 1, 1, false)
         last_line = 180
       else
         label.draw_text("Addr:  #{address}", 25, 150, 0, 3, 1, 1, false)
@@ -35,11 +35,11 @@ module ArtService
           last_line = 210
         elsif last_line == 180 && guardian.length > 48
           label.draw_text("Guard: #{guardian[0..47]}", 25, 210, 0, 3, 1, 1, false)
-          label.draw_text("     : #{guardian[48..-1]}", 25, 240, 0, 3, 1, 1, false)
+          label.draw_text("     : #{guardian[48..]}", 25, 240, 0, 3, 1, 1, false)
           last_line = 240
         elsif last_line == 150 && guardian.length > 48
           label.draw_text("Guard: #{guardian[0..47]}", 25, 180, 0, 3, 1, 1, false)
-          label.draw_text("     : #{guardian[48..-1]}", 25, 210, 0, 3, 1, 1, false)
+          label.draw_text("     : #{guardian[48..]}", 25, 210, 0, 3, 1, 1, false)
           last_line = 210
         elsif last_line == 150 && guardian.length < 48
           label.draw_text("Guard: #{guardian}", 25, 180, 0, 3, 1, 1, false)
@@ -260,7 +260,7 @@ module ArtService
                               .first\
                               &.person_b
 
-      @guardian = PersonName.where(person_id: person_id).order(:date_created).last&.to_s
+      @guardian = PersonName.where(person_id:).order(:date_created).last&.to_s
     end
 
     def who_clinical_conditions
@@ -337,7 +337,7 @@ module ArtService
     # Patient's HIV staging encounter
     def hiv_staging
       @hiv_staging ||= Encounter.where(type: EncounterType.find_by_name('HIV Staging'),
-                                       patient: patient)\
+                                       patient:)\
                                 .order(:encounter_datetime)
                                 .last
     end
@@ -361,7 +361,7 @@ module ArtService
                               &.concept_id
       return nil unless concept_id
 
-      Observation.where(person_id: patient.id, concept_id: concept_id)\
+      Observation.where(person_id: patient.id, concept_id:)\
                  .order(:obs_datetime)\
                  .first
     end
@@ -372,8 +372,8 @@ module ArtService
       program_id = Program.find_by_name('HIV Program').id
 
       Observation.joins(:encounter)
-                 .merge(Encounter.where(program_id: program_id))
-                 .where(person_id: patient.id, concept_id: concept_id, **extra_filters)
+                 .merge(Encounter.where(program_id:))
+                 .where(person_id: patient.id, concept_id:, **extra_filters)
                  .order(:obs_datetime)
                  .last
     end

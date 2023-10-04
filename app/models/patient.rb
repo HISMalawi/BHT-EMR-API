@@ -58,19 +58,19 @@ class Patient < VoidableRecord
     case length
     when 13
       begin
-        "#{id[0..4]}-#{id[5..8]}-#{id[9..-1]}"
+        "#{id[0..4]}-#{id[5..8]}-#{id[9..]}"
       rescue StandardError
         id
       end
     when 9
       begin
-        "#{id[0..2]}-#{id[3..6]}-#{id[7..-1]}"
+        "#{id[0..2]}-#{id[3..6]}-#{id[7..]}"
       rescue StandardError
         id
       end
     when 6
       begin
-        "#{id[0..2]}-#{id[3..-1]}"
+        "#{id[0..2]}-#{id[3..]}"
       rescue StandardError
         id
       end
@@ -111,7 +111,7 @@ class Patient < VoidableRecord
   end
 
   def weight(today: Date.today)
-    obs = Observation.where(person: person, concept: concept('Weight'))\
+    obs = Observation.where(person:, concept: concept('Weight'))\
                      .where('DATE(obs_datetime) <= DATE(?)', today)\
                      .order(obs_datetime: :desc)\
                      .limit(1)\
@@ -137,7 +137,7 @@ class Patient < VoidableRecord
     type = PatientIdentifierType.find_by_name(type_name)
     return nil unless type
 
-    PatientIdentifier.where(patient: self, type: type)\
+    PatientIdentifier.where(patient: self, type:)\
                      .order(:date_created)\
                      .last
   end
@@ -161,7 +161,8 @@ class Patient < VoidableRecord
 
   def tpt_status
     return { tpt: nil, completed: false, tb_treatment: false, tpt_init_date: nil, tpt_complete_date: nil } if id.blank?
-    
-    ARTService::Reports::Pepfar::TbPrev3.new(start_date: Date.today - 6.months, end_date: Date.today).patient_tpt_status(id)
+
+    ARTService::Reports::Pepfar::TbPrev3.new(start_date: Date.today - 6.months,
+                                             end_date: Date.today).patient_tpt_status(id)
   end
 end

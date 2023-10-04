@@ -18,7 +18,7 @@ module Api
 
       def service
         program = Program.find(params[:program_id] || params[:id])
-        ProgramBarcodeService.new(program: program)
+        ProgramBarcodeService.new(program:)
       end
     end
   end

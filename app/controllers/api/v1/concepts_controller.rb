@@ -18,7 +18,7 @@ module Api
 
         if name
           query = query.joins(:concept_names)
-                       .merge(ConceptName.where(name: name))
+                       .merge(ConceptName.where(name:))
         end
 
         if set

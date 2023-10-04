@@ -83,7 +83,7 @@ module Api
       #   order_id, comments
       def update
         update_params = params.permit(:person_id, :encounter_id, :concept_id, :value_coded, :value_boolean, :value_datetime,
-                                     :value_numeric, :value_modifier, :value_text, :value_complex, :value_drug, :order_id)
+                                      :value_numeric, :value_modifier, :value_text, :value_complex, :value_drug, :order_id)
 
         observation = Observation.find(params.require(:id))
         if observation.update(update_params)

@@ -166,7 +166,7 @@ module AncService
         return patient_not_receiving_treatment_today? || patient_has_been_given_drugs?
       end
 
-      Encounter.where(type: type, patient: @patient)\
+      Encounter.where(type:, patient: @patient)\
                .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
                .exists?
     end

@@ -173,7 +173,7 @@ module AncService
 
       end
 
-      { hiv_status: hiv_status, art_status: on_art, arv_number: arv_number, arv_start_date: art_start_date }
+      { hiv_status:, art_status: on_art, arv_number:, arv_start_date: art_start_date }
     end
 
     def subsequent_visit(patient, date)

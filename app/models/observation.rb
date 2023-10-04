@@ -46,7 +46,7 @@ class Observation < VoidableRecord
   scope(:for_program, lambda { |program_id|
     return self if program_id.blank?
 
-    joins(:encounter).where(encounter: { program_id: program_id })
+    joins(:encounter).where(encounter: { program_id: })
   })
 
   scope(:recent, lambda { |number|
@@ -72,7 +72,7 @@ class Observation < VoidableRecord
     # HACK: Nullify any attached dispensations
     return if order_id.nil? || concept_id != ConceptName.find_by_name!('Amount dispensed').concept_id
 
-    drug_order = DrugOrder.find_by(order_id: order_id)
+    drug_order = DrugOrder.find_by(order_id:)
     return unless drug_order
 
     drug_order.quantity -= value_numeric

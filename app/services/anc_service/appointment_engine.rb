@@ -19,7 +19,7 @@ module AncService
 
       {
         drugs_run_out_date: '',
-        appointment_date: appointment_date
+        appointment_date:
       }
     end
 
@@ -30,7 +30,7 @@ module AncService
       return encounter if encounter
 
       Encounter.new type: encounter_type('APPOINTMENT'),
-                    patient: patient,
+                    patient:,
                     encounter_datetime: Time.now,
                     program: @program,
                     location_id: Location.current.location_id,

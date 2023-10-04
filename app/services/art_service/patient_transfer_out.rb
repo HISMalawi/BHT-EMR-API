@@ -33,7 +33,7 @@ module ArtService
 
     def transferred_out_to
       concept_id = ConceptName.find_by_name('Transfer out to').concept_id
-      Observation.where(concept_id: concept_id,
+      Observation.where(concept_id:,
                         person_id: patient.patient_id)\
                  .last\
                  &.value_text
@@ -77,13 +77,13 @@ module ArtService
       return @hiv_staging_encounter if @hiv_staging_encounter
 
       @hiv_staging_encounter = Encounter.where(type: encounter_type('HIV Staging'),
-                                               patient: patient)\
+                                               patient:)\
                                         .order(encounter_datetime: :desc)\
                                         &.first
     end
 
     def initial_observation(concept)
-      Observation.where(person_id: patient.patient_id, concept: concept)\
+      Observation.where(person_id: patient.patient_id, concept:)\
                  .order(obs_datetime: :desc)\
                  .first
     end

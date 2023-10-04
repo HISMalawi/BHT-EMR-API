@@ -416,7 +416,7 @@ module AncService
       # Returns patient's ART start date at current facility
       def find_patient_date_enrolled(patient)
         order = Order.joins(:encounter, :drug_order)\
-                     .where(encounter: { patient: patient },
+                     .where(encounter: { patient: },
                             drug_order: { drug: Drug.arv_drugs })\
                      .order(:start_date)\
                      .first

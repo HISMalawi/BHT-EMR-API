@@ -107,9 +107,9 @@ module Api
         provider = params[:provider_id] ? Person.find(params[:provider_id]) : User.current.person
         encounter_datetime = TimeUtils.retro_timestamp(params[:encounter_datetime]&.to_time || Time.now)
 
-        encounter_service.update(encounter, type: type, patient: patient,
-                                            provider: provider,
-                                            encounter_datetime: encounter_datetime)
+        encounter_service.update(encounter, type:, patient:,
+                                            provider:,
+                                            encounter_datetime:)
       end
 
       # Void an existing encounter
@@ -135,7 +135,7 @@ module Api
       end
 
       def count_by_gender(type_id, gender, program_id, date = nil)
-        filters = { encounter_type: type_id, program_id: program_id }
+        filters = { encounter_type: type_id, program_id: }
         filters[:creator] = User.current.user_id unless params[:all]
 
         queryset = Encounter.where(filters)

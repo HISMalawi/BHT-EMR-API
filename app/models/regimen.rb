@@ -8,7 +8,7 @@ class Regimen < RetirableRecord
   belongs_to :program
   has_many :regimen_drug_orders
 
-  scope :program, ->(program_id) { where(program_id: program_id) }
+  scope :program, ->(program_id) { where(program_id:) }
   scope :criteria, lambda { |weight|
     where('min_weight <= ? AND max_weight > ?', weight, weight)
   }

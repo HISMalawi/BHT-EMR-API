@@ -65,7 +65,7 @@ module Api
                                  location_id: Location.current.id,
                                  concept_id: ConceptName.find_by_name('FAST').concept_id,
                                  value_coded: ConceptName.find_by_name('No').concept_id,
-                                 encounter_id: encounter_id)
+                                 encounter_id:)
 
         render json: obs
       end

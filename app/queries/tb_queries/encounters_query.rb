@@ -13,7 +13,7 @@ module TBQueries
       start_time, end_time = TimeUtils.day_bounds(date)
 
       Encounter.where(program: @program,
-                      type: type,
+                      type:,
                       encounter_datetime: start_time..end_time)
     end
   end

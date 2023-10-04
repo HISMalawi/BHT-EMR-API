@@ -45,7 +45,7 @@ module ArtService
     end
 
     def patient_program
-      @patient_program ||= patient.patient_programs.where(program: program).first
+      @patient_program ||= patient.patient_programs.where(program:).first
     end
 
     def arv_drug_order?(drug_order)
@@ -81,8 +81,8 @@ module ArtService
       end
 
       PatientState.create(
-        patient_program: patient_program,
-        program_workflow_state: program_workflow_state,
+        patient_program:,
+        program_workflow_state:,
         start_date: date
       )
     end

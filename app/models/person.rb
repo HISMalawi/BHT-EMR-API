@@ -15,7 +15,7 @@ class Person < VoidableRecord
     def find_by_concept_name(name)
       concept_name = ConceptName.find_by_name(name)
       conditions = ['concept_id = ?', concept_name.concept_id]
-      all(conditions: conditions)
+      all(conditions:)
     rescue StandardError => e
       Logger.error "Suppressed exception: #{e}"
       []
