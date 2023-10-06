@@ -72,13 +72,13 @@ EOF
         if @age_group != 'All'
           additional_sql = "HAVING age_group = '#{@age_group}'"
         else
-          if @gender  == 'FP'
+          if @gender.upcase  == 'FP'
             additional_for_women_sql = "INNER JOIN temp_disaggregated t ON t.patient_id = e.patient_id"
             additional_for_women_sql += " AND t.maternal_status = 'FP' "
-          elsif @gender  == 'FBF'
+          elsif @gender.upcase == 'FBF'
             additional_for_women_sql = "INNER JOIN temp_disaggregated t ON t.patient_id = e.patient_id"
             additional_for_women_sql += " AND t.maternal_status = 'Fbf' "
-          elsif @gender  == 'FNP'
+          elsif @gender.upcase == 'FNP'
             additional_for_women_sql = "INNER JOIN temp_disaggregated t ON t.patient_id = e.patient_id"
             additional_for_women_sql += " AND t.maternal_status = 'FNP' "
           end
