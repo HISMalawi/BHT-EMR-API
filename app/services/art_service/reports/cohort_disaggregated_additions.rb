@@ -67,7 +67,7 @@ EOF
       def disaggregated_regimen_distribution
         additional_sql = ""
         additional_for_women_sql = ""
-        gender = @gender.first
+        gender = @gender.first.upcase
 
         if @age_group != 'All'
           additional_sql = "HAVING age_group = '#{@age_group}'"
@@ -75,7 +75,7 @@ EOF
           if @gender  == 'FP'
             additional_for_women_sql = "INNER JOIN temp_disaggregated t ON t.patient_id = e.patient_id"
             additional_for_women_sql += " AND t.maternal_status = 'FP' "
-          elsif @gender  == 'Fbf'
+          elsif @gender  == 'FBF'
             additional_for_women_sql = "INNER JOIN temp_disaggregated t ON t.patient_id = e.patient_id"
             additional_for_women_sql += " AND t.maternal_status = 'Fbf' "
           elsif @gender  == 'FNP'
