@@ -7,7 +7,8 @@ module AetcService
       'DASHBOARD STATISTICS' => AetcService::Reports::Clinic::DashboardStats,
       'DIAGNOSIS REPORT' => AetcService::Reports::Clinic::DiagnosisReport,
       'DIAGNOSIS SPECIFIC REPORT' => AetcService::Reports::Clinic::DiagnosisSpecificReport,
-      'DISAGGREGATED DIAGNOSIS' => AetcService::Reports::Clinic::DisaggregatedDiagnosis
+      'DISAGGREGATED DIAGNOSIS' => AetcService::Reports::Clinic::DisaggregatedDiagnosis,
+      'REFERRAL REPORT' => AetcService::Reports::Clinic::ReferralReport
     }.freeze
 
     def find_report(start_date:, end_date:, name:, **kwargs)
