@@ -564,6 +564,32 @@ paths:
                 type: array
                 items:
                   "$ref": "#/components/schemas/aetc_dissag_diagnosis"
+  "/api/v1/programs/30/reports/REFERRAL_REPORT":
+    get:
+      summary: Retrieve AETC Referral report
+      tags:
+      - Clinic Reports
+      description: This shows AETC Referral report
+      security:
+      - api_key: []
+      parameters:
+      - name: start_date
+        in: query
+        schema:
+          type: string
+      - name: end_date
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: AETC Referral Report found
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/aetc_referral_report"
   "/api/v1/radiology_set":
     get:
       summary: Retrieve all radiology sets
@@ -2706,6 +2732,16 @@ components:
       name: Authorization
       in: header
   schemas:
+    aetc_referral_report:
+      type: object
+      properties:
+        location:
+          type: string
+          example: Limbe
+        patients:
+          type: array
+          items:
+            type: integer
     aetc_dissag_diagnosis:
       type: object
       properties:
