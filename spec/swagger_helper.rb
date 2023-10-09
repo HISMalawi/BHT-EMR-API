@@ -31,6 +31,13 @@ RSpec.configure do |config|
           }
         },
         schemas: {
+          aetc_referral_report: {
+            type: :object,
+            properties: {
+              location: { type: :string, example: 'Limbe' },
+              patients: { type: :array, items: { type: :integer } }
+            }
+          },
           aetc_dissag_diagnosis: {
             type: :object,
             properties: {
