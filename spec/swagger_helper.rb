@@ -31,6 +31,20 @@ RSpec.configure do |config|
           }
         },
         schemas: {
+          aetc_total_registered_report: {
+            type: :object,
+            properties: {
+              patient_id: { type: :integer, example: 1 },
+              given_name: { type: :string, example: 'John' },
+              family_name: { type: :string, example: 'Doe' },
+              birthdate: { type: :string, format: 'date-time', example: '1990-01-01' },
+              gender: { type: :string, example: 'M' },
+              address: { type: :string, example: 'Limbe' },
+              ta: { type: :string, example: 'Limbe' },
+              registration_date: { type: :string, format: 'date-time', example: '2020-01-01' },
+              age_in_months: { type: :integer, example: 1 }
+            }
+          },
           aetc_referral_report: {
             type: :object,
             properties: {
