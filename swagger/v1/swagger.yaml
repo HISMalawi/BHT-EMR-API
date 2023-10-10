@@ -590,6 +590,36 @@ paths:
                 type: array
                 items:
                   "$ref": "#/components/schemas/aetc_referral_report"
+  "/api/v1/programs/30/reports/TOTAL_REGISTERED":
+    get:
+      summary: Retrieve AETC TOTAL REGISTERED report
+      tags:
+      - Clinic Reports
+      description: This shows AETC TOTAL REGISTERED report
+      security:
+      - api_key: []
+      parameters:
+      - name: start_date
+        in: query
+        schema:
+          type: string
+      - name: end_date
+        in: query
+        schema:
+          type: string
+      - name: age_group
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: AETC TOTAL REGISTERED Report found
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/aetc_total_registered_report"
   "/api/v1/radiology_set":
     get:
       summary: Retrieve all radiology sets
@@ -2732,6 +2762,38 @@ components:
       name: Authorization
       in: header
   schemas:
+    aetc_total_registered_report:
+      type: object
+      properties:
+        patient_id:
+          type: integer
+          example: 1
+        given_name:
+          type: string
+          example: John
+        family_name:
+          type: string
+          example: Doe
+        birthdate:
+          type: string
+          format: date-time
+          example: '1990-01-01'
+        gender:
+          type: string
+          example: M
+        address:
+          type: string
+          example: Limbe
+        ta:
+          type: string
+          example: Limbe
+        registration_date:
+          type: string
+          format: date-time
+          example: '2020-01-01'
+        age_in_months:
+          type: integer
+          example: 1
     aetc_referral_report:
       type: object
       properties:
