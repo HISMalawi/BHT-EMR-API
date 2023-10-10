@@ -9,7 +9,7 @@ module AetcService
       'DIAGNOSIS SPECIFIC REPORT' => AetcService::Reports::Clinic::DiagnosisSpecificReport,
       'DISAGGREGATED DIAGNOSIS' => AetcService::Reports::Clinic::DisaggregatedDiagnosis,
       'REFERRAL REPORT' => AetcService::Reports::Clinic::ReferralReport,
-      'TOTAL REGISTERED' => AetcService::Reports::Clinic::TotalRegisteredReport
+      'TOTAL REGISTERED' => AetcService::Reports::Clinic::TotalRegisteredReport,
       'OPD GENERAL' => AetcService::Reports::Clinic::OpdGeneral
     }.freeze
 
