@@ -930,7 +930,7 @@ module ARTService
               AND temp_patient_outcomes.cum_outcome = 'On antiretrovirals'
             WHERE voided = 0
               AND concept_id IN (#{bp_concepts.to_sql})
-              AND value_text IS NOT NULL
+              AND (value_text IS NOT NULL OR value_numeric IS NOT NULL)
               AND obs_datetime < DATE('#{end_date}') + INTERVAL 1 DAY
             GROUP BY person_id
           ) AS max_obs
