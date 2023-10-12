@@ -42,23 +42,25 @@ module HtsService
     
         columns = ActiveRecord::Base.connection.columns('obs').map(&:name) 
         sql_query = <<~SQL
-          SELECT
+        SELECT
             person.gender,
             person.birthdate,
             encounter.encounter_datetime,
             obs.*
-          FROM patient
-          INNER JOIN person ON person.person_id = patient.patient_id
-            AND patient.voided = 0
-          INNER JOIN encounter ON encounter.patient_id = patient.patient_id
-            AND encounter.encounter_datetime BETWEEN '#{@start_date}' AND '#{@end_date}'
-            AND encounter.encounter_type = (SELECT encounter_type_id FROM encounter_type WHERE name = 'Testing')
-            AND encounter.voided = 0
-          INNER JOIN program ON program.program_id = encounter.program_id
-            AND program.program_id = (SELECT program_id FROM program WHERE name = 'HTC PROGRAM')
-            AND program.retired = 0
-          INNER JOIN obs ON obs.person_id = patient.patient_id
-            AND obs.voided = 0;
+        FROM patient
+        INNER JOIN person ON person.person_id = patient.patient_id
+          AND patient.voided = 0
+        INNER JOIN encounter ON encounter.patient_id = patient.patient_id
+           AND encounter.voided = 0
+           AND encounter.encounter_datetime BETWEEN '#{@start_date}' AND '#{@end_date}'
+        INNER JOIN encounter_type ON encounter_type.encounter_type_id = encounter.encounter_type
+          AND encounter_type.name = 'Testing'
+          AND encounter_type.retired = 0
+        INNER JOIN program ON program.program_id = encounter.program_id
+          AND program.name = 'HTC PROGRAM'
+          AND program.retired = 0
+        INNER JOIN obs ON obs.person_id = patient.patient_id
+          AND obs.voided = 0;
         SQL
         
         results = ActiveRecord::Base.connection.select_all(sql_query)        
@@ -66,49 +68,36 @@ module HtsService
             
       end
             
-      def process_patient_data(results, indicators)  
+def process_patient_data(results, indicators)  
     
         data = []
     
         grouped_obs = results.group_by { |obs| obs['person_id'] }
         
         grouped_obs.each_with_index do |row, index|
+
           patient_id = row[0]
           observations = row[1]    
           data << { "person_id" => patient_id,"gender"=> observations[0]["gender"],"birthdate"=>observations[0]['birthdate'],"encounter_datetime"=>observations[0]["encounter_datetime"] }    
           index_new = data.index(data.last)     
         
           indicators.each do |indicator|
-            if indicator[:concept_id].is_a?(Integer)
-              desired_observation = observations.find { |obs| obs["concept_id"] == indicator[:concept_id] }
-              if desired_observation.present?              
-                val = indicator[:value]
-                name = indicator[:name]
-                data[index_new][name] = (val == "value_numeric" ? desired_observation[val].to_i : desired_observation[val])
-              else
-                name = indicator[:name]
-                data[index_new][name] = nil
-              end
-            elsif indicator[:concept_id].is_a?(Array)
-              indicator[:concept_id].each_with_index do |concept_id, index|
-                desired_observation = observations.find { |obs| obs["concept_id"] == concept_id }
-                if desired_observation.present?
-                  val = indicator[:value]
-                  name = indicator[:name][index]
-                  data[index_new][name] = (val == "value_numeric" ? desired_observation[val].to_i : desired_observation[val])
-                else
-                  name = indicator[:name][index]
-                  data[index_new][name] = nil
-                end
-              end
+            indicator_array = Array(indicator[:concept_id])
+            indicator_values = indicator[:value]
+            indicator_names = Array(indicator[:name])
+          
+            indicator_array.each_with_index do |concept_id, index|
+              desired_observation = observations.find { |obs| obs['concept_id'] == concept_id }
+              name = indicator_names[index] || indicator_names.first
+              data[index_new][name] = desired_observation&.[](indicator_values)
             end
-    
-          end
+
+          end          
+
         end
         
-        return data
-     
-  end
+        return data     
+end
   
 
  def self_test_clients
