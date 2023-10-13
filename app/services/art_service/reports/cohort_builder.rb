@@ -941,7 +941,7 @@ module ARTService
             AND temp_patient_outcomes.cum_outcome = 'On antiretrovirals'
           WHERE o.voided = 0
             AND o.concept_id in (#{bp_concepts.to_sql})
-            AND o.value_text IS NOT NULL
+            AND (o.value_text IS NOT NULL OR o.value_numeric IS NOT NULL)
           GROUP BY o.person_id;
         SQL
 
