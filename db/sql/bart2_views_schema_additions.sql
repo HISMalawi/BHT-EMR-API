@@ -2208,9 +2208,9 @@ END IF;
 RETURN age_group;
 END;
 
-DROP FUNCTION IF EXISTS `cxca_age_group`;
+DROP FUNCTION IF EXISTS `cxca_moh_age_group`;
 
-CREATE FUNCTION `cxca_age_group`(birthdate date, end_date date) RETURNS VARCHAR(15)
+CREATE FUNCTION `cxca_moh_age_group`(birthdate date, end_date date) RETURNS VARCHAR(15)
 BEGIN
 
 DECLARE age_in_years INT(11);
