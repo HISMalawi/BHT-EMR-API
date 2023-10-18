@@ -6,6 +6,7 @@ module CXCAService
   module Reports
     module Moh
       class ScreenedForCxca
+        include ModelUtils
         attr_accessor :start_date, :end_date, :report
 
         def initialize(start_date:, end_date:)
@@ -308,9 +309,10 @@ module CXCAService
             FROM person p
             INNER JOIN encounter e ON e.patient_id = p.person_id
               AND e.program_id = #{Program.find_by_name('CxCa Program').program_id} AND e.encounter_datetime >= '#{@start_date}'
-              AND  e.encounter_datetime <= '#{@end_date}'
+              AND e.encounter_datetime <= '#{@end_date}'
+              AND e.encounter_type = #{encounter_type('CxCa test').encounter_type_id}
               AND e.voided = 0
-            LEFT JOIN obs screened_method ON screened_method.person_id = person.person_id 
+            LEFT JOIN obs screened_method ON screened_method.person_id = person.person_id
               AND screened_method.concept_id = #{concept(SCREENING_METHOD).concept_id}
 							AND screened_method.voided = 0
               AND screened_method.obs_datetime >= '#{@start_date}'
@@ -360,7 +362,7 @@ module CXCAService
 							AND reason_for_visit.concept_id = #{concept('Reason for visit').concept_id}
               AND reason_for_visit.obs_datetime >= '#{@start_date}'
               AND reason_for_visit.obs_datetime <= '#{@end_date}'
-            WHERE p.voided = 0
+            WHERE p.voided = 0 AND LEFT(p.gender, 1) = 'F'
             GROUP BY p.person_id
           SQL
         end
