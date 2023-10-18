@@ -24,10 +24,15 @@ module CXCAService
         TX_OPTION = 'Treatment'
         FAMILY_PLANNING = 'Family planning'
         OUTCOME = 'Outcome'
+        CXCA_PROGRAM = 'CxCa Program'
+        CXCA_TEST = 'CxCa test'
+        REASON_FOR_VISIT = 'Reason for visit'
+
+        AGE_GROUPS = ['<25 years', '25-29 years', '30-44 years', '45-49 years', '>49 years'].freeze
 
         def data
           init_report
-          map_report query
+          map_report
           report
         end
 
@@ -40,15 +45,8 @@ module CXCAService
           nil
         end
 
-        def map_report(data)
-          @age_groups.each do |key, _value|   
-            @report[:suspects_disaggregated_by_age][key] ||= []
-            @report[:screened_disaggregated_by_age][key] ||= []
-            @report[:total_treated_disaggregated_by_age][key] ||= []
-          end
-          @report[:screened_disaggregated_by_hiv_status]['Unknown (HIV- > 1 year ago, Inconclusive, Prefers not to Disclose, or Never Tested)'] ||= []
-
-          data.each do |record|
+        def map_report
+          (query || []).each do |record|
             age_group = record['age_group']
 
             screening_method = get_concept_name(record['screening_method'])
@@ -66,24 +64,21 @@ module CXCAService
             @age_groups.each do |key, value|
               @report[:screened_disaggregated_by_age][key] << person_id if value.include?(age_group)
             end
-            
+
             if hiv_status.present? && hiv_status == 'Never Tested'
               @report[:screened_disaggregated_by_hiv_status]['Unknown (HIV- > 1 year ago, Inconclusive, Prefers not to Disclose, or Never Tested)'] << person_id
             end
-            
+
             if hiv_status.present? && report[:screened_disaggregated_by_hiv_status].keys.include?(hiv_status&.to_sym)
               @report[:screened_disaggregated_by_hiv_status][hiv_status] ||= []
               @report[:screened_disaggregated_by_hiv_status][hiv_status] << person_id
             end
-            
-            
+
             if visit_reason.present? && report[:screened_disaggregated_by_reason_for_visit].keys.include?(visit_reason&.to_sym)
               @report[:screened_disaggregated_by_reason_for_visit][visit_reason] ||= []
               @report[:screened_disaggregated_by_reason_for_visit][visit_reason] << person_id
             end
-            
-            
-            
+
             if screening_method.present? && report[:screened_disaggregated_by_screening_method].keys.include?(screening_method&.to_sym)
               @report[:screened_disaggregated_by_screening_method][screening_method] ||= []
               @report[:screened_disaggregated_by_screening_method][screening_method] << person_id
@@ -107,7 +102,7 @@ module CXCAService
               end
               if screening_result == 'PAP Smear abnormal'
                 @report[:screening_results_hiv_positive]['Number of clients with PAP Smear abnormal'] << person_id
-              end 
+              end
               if screening_result == 'No visible Lesion'
                 @report[:screening_results_hiv_positive]['Number of clients with No visible Lesion'] << person_id
               end
@@ -122,7 +117,7 @@ module CXCAService
             if screening_result.present? && !report[:screening_results_hiv_positive].keys.include?(screening_result&.to_sym)
               @report[:screening_results_hiv_positive]['Number of clients with Other gynae'&.to_sym] << person_id
             end
-            
+
             # assiging accurate template values to screening_result
             screening_result = screening_result == 'PAP Smear normal' ? 'Number of clients with PAP Smear normal' : screening_result
             screening_result = screening_result == 'HPV positive' ? 'Number of clients with HPV+' : screening_result
@@ -134,10 +129,10 @@ module CXCAService
             screening_result = screening_result == 'Visible Lesion' ? 'Number of clients with Visible Lesion' : screening_result
             screening_result = screening_result == 'Suspected Cancer' ? 'Number of clients with Suspected Cancer' : screening_result
 
-            # Assigning personal IDs report 
+            # Assigning personal IDs report
             if screening_result.present? && report[:screening_results_hiv_negative].keys.include?(screening_result&.to_sym)
               @report[:screening_results_hiv_negative][screening_result] ||= []
-              @report[:screening_results_hiv_negative][screening_result] << person_id 
+              @report[:screening_results_hiv_negative][screening_result] << person_id
             end
             if screening_result.present? && !report[:screening_results_hiv_negative].keys.include?(screening_result&.to_sym)
               @report[:screening_results_hiv_negative]['Number of clients with Other gynae'&.to_sym] << person_id
@@ -145,16 +140,16 @@ module CXCAService
 
             @age_groups.each do |key, value|
               next unless screening_asesment.present?
-              
-            @report[:suspects_disaggregated_by_age][key] << person_id if value.include?(age_group) &&
-              screening_asesment == concept('Suspect cancer').concept_id
+
+              @report[:suspects_disaggregated_by_age][key] << person_id if value.include?(age_group) &&
+                                                                           screening_asesment == concept('Suspect cancer').concept_id
             end
-            
+
             if dot_option.present? && report[:total_treated].keys.include?(dot_option&.to_sym)
               @report[:total_treated][dot_option] ||= [] if dot_option.present?
               @report[:total_treated][dot_option] << person_id
             end
-            
+
             # assiging accurate template value (LEEP) to screening_result instead of (LLETZ/LEEP)
             screening_result = screening_result == 'LLETZ/LEEP' ? 'LEEP' : screening_result
 
@@ -169,7 +164,7 @@ module CXCAService
 
             # assiging accurate template value (Treatment not available) to screening_result instead of (No treatment)
             screening_result = screening_result == 'Treatment not available' ? 'No treatment' : screening_result
-            
+
             if referral_reason.present? && report[:referral_reasons].keys.include?(referral_reason&.to_sym)
               @report[:referral_reasons][referral_reason] ||= [] if referral_reason.present?
               @report[:referral_reasons][referral_reason] << person_id
@@ -196,6 +191,7 @@ module CXCAService
           end
         end
 
+        # rubocop:disable Metrics/MethodLength
         def init_report
           @report = {
             screened_disaggregated_by_age: {},
@@ -274,22 +270,14 @@ module CXCAService
               "With referral feedback": []
             }
           }
-          @age_groups = {
-            '< 25 years' => ['<1 year',
-                             '1-4 years', '5-9 years',
-                             '10-14 years', '15-19 years',
-                             '20-24 years'],
-            '25-29 years' => ['25-29 years'],
-            '30-44 years' => ['30-34 years', '35-39 years',
-                              '40-44 years'],
-            '45-49 years' => ['45-49 years'],
-            '> 49 years' => ['50-54 years', '55-59 years',
-                             '60-64 years', '65-69 years',
-                             '70-74 years', '75-79 years',
-                             '80-84 years', '85-90 years',
-                             '90 plus years']
-          }
+          AGE_GROUPS.each do |key|
+            @report[:suspects_disaggregated_by_age][key] ||= []
+            @report[:screened_disaggregated_by_age][key] ||= []
+            @report[:total_treated_disaggregated_by_age][key] ||= []
+          end
+          @report[:screened_disaggregated_by_hiv_status]['Unknown (HIV- > 1 year ago, Inconclusive, Prefers not to Disclose, or Never Tested)'] ||= []
         end
+        # rubocop:enable Metrics/MethodLength
 
         def query
           ActiveRecord::Base.connection.select_all <<~SQL
@@ -308,106 +296,65 @@ module CXCAService
               cxca_moh_age_group(p.birthdate, DATE(encounter.encounter_datetime)) age_group
             FROM person p
             INNER JOIN encounter e ON e.patient_id = p.person_id
-              AND e.program_id = #{Program.find_by_name('CxCa Program').program_id} AND e.encounter_datetime >= '#{@start_date}'
+              AND e.program_id = #{program(CXCA_PROGRAM).id} AND e.encounter_datetime >= '#{@start_date}'
               AND e.encounter_datetime <= '#{@end_date}'
-              AND e.encounter_type = #{encounter_type('CxCa test').encounter_type_id}
+              AND e.encounter_type = #{encounter_type(CXCA_TEST).id}
               AND e.voided = 0
             LEFT JOIN obs screened_method ON screened_method.person_id = person.person_id
               AND screened_method.concept_id = #{concept(SCREENING_METHOD).concept_id}
-							AND screened_method.voided = 0
+              AND screened_method.voided = 0
               AND screened_method.obs_datetime >= '#{@start_date}'
               AND screened_method.obs_datetime <= '#{@end_date}'
-						LEFT JOIN obs screened_result ON screened_result.person_id = person.person_id
-							AND screened_result.concept_id = #{concept(SCREENING_RESULTS).concept_id}
-							AND screened_result.voided = 0
+            LEFT JOIN obs screened_result ON screened_result.person_id = person.person_id
+            	AND screened_result.concept_id = #{concept(SCREENING_RESULTS).concept_id}
+            	AND screened_result.voided = 0
               AND screened_result.obs_datetime >= '#{@start_date}'
               AND screened_result.obs_datetime <= '#{@end_date}'
-						LEFT JOIN obs referral_reason ON referral_reason.person_id = person.person_id
-							AND referral_reason.concept_id = #{concept(REFFERAL_REASONS).concept_id}
-							AND referral_reason.voided = 0
+            LEFT JOIN obs referral_reason ON referral_reason.person_id = person.person_id
+            	AND referral_reason.concept_id = #{concept(REFFERAL_REASONS).concept_id}
+            	AND referral_reason.voided = 0
               AND referral_reason.obs_datetime >= '#{@start_date}'
               AND referral_reason.obs_datetime <= '#{@end_date}'
-						LEFT JOIN obs hiv_status ON hiv_status.person_id = person.person_id
-							AND hiv_status.concept_id = #{concept(HIV_STATUS).concept_id}
-							AND hiv_status.voided = 0
+            LEFT JOIN obs hiv_status ON hiv_status.person_id = person.person_id
+            	AND hiv_status.concept_id = #{concept(HIV_STATUS).concept_id}
+            	AND hiv_status.voided = 0
               AND hiv_status.obs_datetime >= '#{@start_date}'
               AND hiv_status.obs_datetime <= '#{@end_date}'
-						LEFT JOIN obs dot_option ON dot_option.person_id = person.person_id
-							AND dot_option.concept_id = #{concept(DOT_OPTION).concept_id}
-							AND dot_option.voided = 0
+            LEFT JOIN obs dot_option ON dot_option.person_id = person.person_id
+            	AND dot_option.concept_id = #{concept(DOT_OPTION).concept_id}
+            	AND dot_option.voided = 0
               AND dot_option.obs_datetime >= '#{@start_date}'
               AND dot_option.obs_datetime <= '#{@end_date}'
-						LEFT JOIN obs screening_asesment ON screening_asesment.person_id = person.person_id
-							AND screening_asesment.concept_id = #{concept(SCREENING_ASSESMENT).concept_id}
-							AND screening_asesment.voided = 0
+            LEFT JOIN obs screening_asesment ON screening_asesment.person_id = person.person_id
+            	AND screening_asesment.concept_id = #{concept(SCREENING_ASSESMENT).concept_id}
+            	AND screening_asesment.voided = 0
               AND screening_asesment.obs_datetime >= '#{@start_date}'
               AND screening_asesment.obs_datetime <= '#{@end_date}'
-						LEFT JOIN obs tx_option ON tx_option.person_id = person.person_id
-							AND tx_option.concept_id = #{concept(TX_OPTION).concept_id}
-							AND tx_option.voided = 0
+            LEFT JOIN obs tx_option ON tx_option.person_id = person.person_id
+            	AND tx_option.concept_id = #{concept(TX_OPTION).concept_id}
+            	AND tx_option.voided = 0
               AND tx_option.obs_datetime >= '#{@start_date}'
               AND tx_option.obs_datetime <= '#{@end_date}'
-						LEFT JOIN obs family_planning ON family_planning.person_id = person.person_id
-							AND family_planning.concept_id = #{concept(FAMILY_PLANNING).concept_id}
-							AND family_planning.voided = 0
+            LEFT JOIN obs family_planning ON family_planning.person_id = person.person_id
+            	AND family_planning.concept_id = #{concept(FAMILY_PLANNING).concept_id}
+            	AND family_planning.voided = 0
               AND family_planning.obs_datetime >= '#{@start_date}'
               AND family_planning.obs_datetime <= '#{@end_date}'
-						LEFT JOIN obs outcome ON outcome.person_id = person.person_id
-							AND outcome.concept_id = #{concept(OUTCOME).concept_id}
-							AND outcome.voided = 0
+            LEFT JOIN obs outcome ON outcome.person_id = person.person_id
+            	AND outcome.concept_id = #{concept(OUTCOME).concept_id}
+            	AND outcome.voided = 0
               AND outcome.obs_datetime >= '#{@start_date}'
               AND outcome.obs_datetime <= '#{@end_date}'
-						INNER JOIN obs reason_for_visit ON reason_for_visit.person_id = person.person_id
-							AND reason_for_visit.voided = 0
-							AND reason_for_visit.concept_id = #{concept('Reason for visit').concept_id}
+            INNER JOIN obs reason_for_visit ON reason_for_visit.person_id = person.person_id
+              AND reason_for_visit.encounter_id = e.encounter_id
+            	AND reason_for_visit.voided = 0
+            	AND reason_for_visit.concept_id = #{concept(REASON_FOR_VISIT).concept_id}
               AND reason_for_visit.obs_datetime >= '#{@start_date}'
               AND reason_for_visit.obs_datetime <= '#{@end_date}'
             WHERE p.voided = 0 AND LEFT(p.gender, 1) = 'F'
             GROUP BY p.person_id
           SQL
         end
-
-        # def query
-        #   ActiveRecord::Base.connection.select_all <<-SQL
-				# 	SELECT
-				# 		outcome.value_coded, family_planning.value_coded family_planning, tx_option.value_coded tx_option, screening_asesment.value_coded screening_asessment, reason_for_visit.value_coded visit_reason, screened_method.value_coded screening_method, screened_result.value_coded screening_result, referral_reason.value_coded referral_reason, hiv_status.value_coded hiv_status, dot_option.value_coded dot_option, person.person_id, disaggregated_age_group(person.birthdate, DATE(encounter.encounter_datetime)) age_group
-				# 		FROM person
-				# 		INNER JOIN encounter ON encounter.patient_id = person.person_id
-				# 		LEFT JOIN obs screened_method ON screened_method.person_id = person.person_id
-				# 			AND screened_method.concept_id = #{concept(SCREENING_METHOD).concept_id}
-				# 			AND screened_method.voided = 0
-				# 		LEFT JOIN obs screened_result ON screened_result.person_id = person.person_id
-				# 			AND screened_result.concept_id = #{concept(SCREENING_RESULTS).concept_id}
-				# 			AND screened_result.voided = 0
-				# 		LEFT JOIN obs referral_reason ON referral_reason.person_id = person.person_id
-				# 			AND referral_reason.concept_id = #{concept(REFFERAL_REASONS).concept_id}
-				# 			AND referral_reason.voided = 0
-				# 		LEFT JOIN obs hiv_status ON hiv_status.person_id = person.person_id
-				# 			AND hiv_status.concept_id = #{concept(HIV_STATUS).concept_id}
-				# 			AND hiv_status.voided = 0
-				# 		LEFT JOIN obs dot_option ON dot_option.person_id = person.person_id
-				# 			AND dot_option.concept_id = #{concept(DOT_OPTION).concept_id}
-				# 			AND dot_option.voided = 0
-				# 		LEFT JOIN obs screening_asesment ON screening_asesment.person_id = person.person_id
-				# 			AND screening_asesment.concept_id = #{concept(SCREENING_ASSESMENT).concept_id}
-				# 			AND screening_asesment.voided = 0
-				# 		LEFT JOIN obs tx_option ON tx_option.person_id = person.person_id
-				# 			AND tx_option.concept_id = #{concept(TX_OPTION).concept_id}
-				# 			AND tx_option.voided = 0
-				# 		LEFT JOIN obs family_planning ON family_planning.person_id = person.person_id
-				# 			AND family_planning.concept_id = #{concept(FAMILY_PLANNING).concept_id}
-				# 			AND family_planning.voided = 0
-				# 		LEFT JOIN obs outcome ON outcome.person_id = person.person_id
-				# 			AND outcome.concept_id = #{concept(OUTCOME).concept_id}
-				# 			AND outcome.voided = 0
-				# 		INNER JOIN obs reason_for_visit ON reason_for_visit.person_id = person.person_id
-				# 			AND reason_for_visit.voided = 0
-				# 			AND reason_for_visit.concept_id = #{concept('Reason for visit').concept_id}
-				# 		WHERE encounter.encounter_datetime BETWEEN '#{@start_date}' AND '#{@end_date}'
-				# 		AND encounter.program_id = #{Program.find_by_name('CxCa Program').program_id}
-				# 		GROUP BY person.person_id
-        #   SQL
-        # end
       end
     end
   end
