@@ -291,46 +291,121 @@ module CXCAService
         end
 
         def query
-          ActiveRecord::Base.connection.select_all <<-SQL
-					SELECT
-						outcome.value_coded, family_planning.value_coded family_planning, tx_option.value_coded tx_option, screening_asesment.value_coded screening_asessment, reason_for_visit.value_coded visit_reason, screened_method.value_coded screening_method, screened_result.value_coded screening_result, referral_reason.value_coded referral_reason, hiv_status.value_coded hiv_status, dot_option.value_coded dot_option, person.person_id, disaggregated_age_group(person.birthdate, DATE(encounter.encounter_datetime)) age_group
-						FROM person
-						INNER JOIN encounter ON encounter.patient_id = person.person_id
-						LEFT JOIN obs screened_method ON screened_method.person_id = person.person_id
-							AND screened_method.concept_id = #{concept(SCREENING_METHOD).concept_id}
+          ActiveRecord::Base.connection.select_all <<~SQL
+            SELECT
+              outcome.value_coded,
+              family_planning.value_coded family_planning,
+              tx_option.value_coded tx_option,
+              screening_asesment.value_coded screening_asessment,
+              reason_for_visit.value_coded visit_reason,
+              screened_method.value_coded screening_method,
+              screened_result.value_coded screening_result,
+              referral_reason.value_coded referral_reason,
+              hiv_status.value_coded hiv_status,
+              dot_option.value_coded dot_option,
+              person.person_id,
+              cxca_moh_age_group(p.birthdate, DATE(encounter.encounter_datetime)) age_group
+            FROM person p
+            INNER JOIN encounter e ON e.patient_id = p.person_id
+              AND e.program_id = #{Program.find_by_name('CxCa Program').program_id} AND e.encounter_datetime >= '#{@start_date}'
+              AND  e.encounter_datetime <= '#{@end_date}'
+              AND e.voided = 0
+            LEFT JOIN obs screened_method ON screened_method.person_id = person.person_id 
+              AND screened_method.concept_id = #{concept(SCREENING_METHOD).concept_id}
 							AND screened_method.voided = 0
+              AND screened_method.obs_datetime >= '#{@start_date}'
+              AND screened_method.obs_datetime <= '#{@end_date}'
 						LEFT JOIN obs screened_result ON screened_result.person_id = person.person_id
 							AND screened_result.concept_id = #{concept(SCREENING_RESULTS).concept_id}
 							AND screened_result.voided = 0
+              AND screened_result.obs_datetime >= '#{@start_date}'
+              AND screened_result.obs_datetime <= '#{@end_date}'
 						LEFT JOIN obs referral_reason ON referral_reason.person_id = person.person_id
 							AND referral_reason.concept_id = #{concept(REFFERAL_REASONS).concept_id}
 							AND referral_reason.voided = 0
+              AND referral_reason.obs_datetime >= '#{@start_date}'
+              AND referral_reason.obs_datetime <= '#{@end_date}'
 						LEFT JOIN obs hiv_status ON hiv_status.person_id = person.person_id
 							AND hiv_status.concept_id = #{concept(HIV_STATUS).concept_id}
 							AND hiv_status.voided = 0
+              AND hiv_status.obs_datetime >= '#{@start_date}'
+              AND hiv_status.obs_datetime <= '#{@end_date}'
 						LEFT JOIN obs dot_option ON dot_option.person_id = person.person_id
 							AND dot_option.concept_id = #{concept(DOT_OPTION).concept_id}
 							AND dot_option.voided = 0
+              AND dot_option.obs_datetime >= '#{@start_date}'
+              AND dot_option.obs_datetime <= '#{@end_date}'
 						LEFT JOIN obs screening_asesment ON screening_asesment.person_id = person.person_id
 							AND screening_asesment.concept_id = #{concept(SCREENING_ASSESMENT).concept_id}
 							AND screening_asesment.voided = 0
+              AND screening_asesment.obs_datetime >= '#{@start_date}'
+              AND screening_asesment.obs_datetime <= '#{@end_date}'
 						LEFT JOIN obs tx_option ON tx_option.person_id = person.person_id
 							AND tx_option.concept_id = #{concept(TX_OPTION).concept_id}
 							AND tx_option.voided = 0
+              AND tx_option.obs_datetime >= '#{@start_date}'
+              AND tx_option.obs_datetime <= '#{@end_date}'
 						LEFT JOIN obs family_planning ON family_planning.person_id = person.person_id
 							AND family_planning.concept_id = #{concept(FAMILY_PLANNING).concept_id}
 							AND family_planning.voided = 0
+              AND family_planning.obs_datetime >= '#{@start_date}'
+              AND family_planning.obs_datetime <= '#{@end_date}'
 						LEFT JOIN obs outcome ON outcome.person_id = person.person_id
 							AND outcome.concept_id = #{concept(OUTCOME).concept_id}
 							AND outcome.voided = 0
+              AND outcome.obs_datetime >= '#{@start_date}'
+              AND outcome.obs_datetime <= '#{@end_date}'
 						INNER JOIN obs reason_for_visit ON reason_for_visit.person_id = person.person_id
 							AND reason_for_visit.voided = 0
 							AND reason_for_visit.concept_id = #{concept('Reason for visit').concept_id}
-						WHERE encounter.encounter_datetime BETWEEN '#{@start_date}' AND '#{@end_date}'
-						AND encounter.program_id = #{Program.find_by_name('CxCa Program').program_id}
-						GROUP BY person.person_id
+              AND reason_for_visit.obs_datetime >= '#{@start_date}'
+              AND reason_for_visit.obs_datetime <= '#{@end_date}'
+            WHERE p.voided = 0
+            GROUP BY p.person_id
           SQL
         end
+
+        # def query
+        #   ActiveRecord::Base.connection.select_all <<-SQL
+				# 	SELECT
+				# 		outcome.value_coded, family_planning.value_coded family_planning, tx_option.value_coded tx_option, screening_asesment.value_coded screening_asessment, reason_for_visit.value_coded visit_reason, screened_method.value_coded screening_method, screened_result.value_coded screening_result, referral_reason.value_coded referral_reason, hiv_status.value_coded hiv_status, dot_option.value_coded dot_option, person.person_id, disaggregated_age_group(person.birthdate, DATE(encounter.encounter_datetime)) age_group
+				# 		FROM person
+				# 		INNER JOIN encounter ON encounter.patient_id = person.person_id
+				# 		LEFT JOIN obs screened_method ON screened_method.person_id = person.person_id
+				# 			AND screened_method.concept_id = #{concept(SCREENING_METHOD).concept_id}
+				# 			AND screened_method.voided = 0
+				# 		LEFT JOIN obs screened_result ON screened_result.person_id = person.person_id
+				# 			AND screened_result.concept_id = #{concept(SCREENING_RESULTS).concept_id}
+				# 			AND screened_result.voided = 0
+				# 		LEFT JOIN obs referral_reason ON referral_reason.person_id = person.person_id
+				# 			AND referral_reason.concept_id = #{concept(REFFERAL_REASONS).concept_id}
+				# 			AND referral_reason.voided = 0
+				# 		LEFT JOIN obs hiv_status ON hiv_status.person_id = person.person_id
+				# 			AND hiv_status.concept_id = #{concept(HIV_STATUS).concept_id}
+				# 			AND hiv_status.voided = 0
+				# 		LEFT JOIN obs dot_option ON dot_option.person_id = person.person_id
+				# 			AND dot_option.concept_id = #{concept(DOT_OPTION).concept_id}
+				# 			AND dot_option.voided = 0
+				# 		LEFT JOIN obs screening_asesment ON screening_asesment.person_id = person.person_id
+				# 			AND screening_asesment.concept_id = #{concept(SCREENING_ASSESMENT).concept_id}
+				# 			AND screening_asesment.voided = 0
+				# 		LEFT JOIN obs tx_option ON tx_option.person_id = person.person_id
+				# 			AND tx_option.concept_id = #{concept(TX_OPTION).concept_id}
+				# 			AND tx_option.voided = 0
+				# 		LEFT JOIN obs family_planning ON family_planning.person_id = person.person_id
+				# 			AND family_planning.concept_id = #{concept(FAMILY_PLANNING).concept_id}
+				# 			AND family_planning.voided = 0
+				# 		LEFT JOIN obs outcome ON outcome.person_id = person.person_id
+				# 			AND outcome.concept_id = #{concept(OUTCOME).concept_id}
+				# 			AND outcome.voided = 0
+				# 		INNER JOIN obs reason_for_visit ON reason_for_visit.person_id = person.person_id
+				# 			AND reason_for_visit.voided = 0
+				# 			AND reason_for_visit.concept_id = #{concept('Reason for visit').concept_id}
+				# 		WHERE encounter.encounter_datetime BETWEEN '#{@start_date}' AND '#{@end_date}'
+				# 		AND encounter.program_id = #{Program.find_by_name('CxCa Program').program_id}
+				# 		GROUP BY person.person_id
+        #   SQL
+        # end
       end
     end
   end
