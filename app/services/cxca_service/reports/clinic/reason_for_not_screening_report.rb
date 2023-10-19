@@ -7,6 +7,19 @@ module CXCAService
       class ReasonForNotScreeningReport
         include Utils
         include ModelUtils
+
+        SCREENING_METHOD_MAP = {
+          'VIA' => 'VIA'.to_sym,
+          'Papanicolaou smear' => 'PAP Smear'.to_sym,
+          'HPV DNA' => 'HPV DNA'.to_sym,
+          'Speculum Exam' => 'Speculum Exam'.to_sym
+        }.freeze
+
+        # REASON_FOR_NOT_SCREENING_MAP = {
+        #     # Hysterectomy
+        #     # 
+        # }.freeze
+
         def initialize(start_date:, end_date:)
           @start_date = start_date.to_date.beginning_of_day.strftime('%Y-%m-%d %H:%M:%S')
           @end_date = end_date.to_date.end_of_day.strftime('%Y-%m-%d %H:%M:%S')
@@ -27,6 +40,7 @@ module CXCAService
             age_group = row['age_group']
             next unless moh_age_groups.include?(age_group)
 
+            @report[age_group]['total_seen_in_art'] << row['person_id']
             screened = row['screening_method'].present? ? 'screened' : 'not_screened'
             if screened == 'screened'
               @report[age_group][screened][row['screening_method']] ||= 0
@@ -42,6 +56,7 @@ module CXCAService
           @report = {}
           moh_age_groups.collect do |age_group|
             @report[age_group] = {}
+            @report[age_group]['total_seen_in_art'] = []
             @report[age_group]['screened'] = {}
             @report[age_group]['not_screened'] = {}
           end
