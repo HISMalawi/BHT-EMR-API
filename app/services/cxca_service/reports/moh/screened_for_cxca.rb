@@ -192,7 +192,7 @@ module CXCAService
           indicator = @report[:screened_disaggregated_by_hiv_status]
           negative = ['Negative'].include?(hiv_status)
           test_date = hiv_test_date.present? if negative
-          period = test_date.to_date < end_date.to_date - 1.year if negative && test_date.present?
+          period = hiv_test_date&.to_date < end_date.to_date - 1.year if negative && test_date.present?
           unknown_cat = negative && test_date && period
           uncat = negative && hiv_test_date.blank?
           if hiv_status.blank? || ['Never Tested', 'Undisclosed'].include?(hiv_status) || unknown_cat || uncat
@@ -258,11 +258,14 @@ module CXCAService
         end
 
         def handle_tx_option(tx_option, person_id)
-          if tx_option.present? && @report[:total_treated_disaggregated_by_tx_option].keys.include?(tx_option&.to_sym)
+          return unless tx_option.present?
+          
+          if @report[:total_treated_disaggregated_by_tx_option].keys.include?(tx_option&.to_sym)
             @report[:total_treated_disaggregated_by_tx_option][tx_option] ||= []
             @report[:total_treated_disaggregated_by_tx_option][tx_option] << person_id
-          elsif tx_option.present?
-            @report[:total_treated_disaggregated_by_tx_option]['Other'&.to_sym] << person_id
+          else
+            @report[:total_treated_disaggregated_by_tx_option]['Other'] ||= []
+            @report[:total_treated_disaggregated_by_tx_option]['Other'] << person_id
           end
         end
 
