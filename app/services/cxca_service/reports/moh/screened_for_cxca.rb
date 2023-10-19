@@ -259,7 +259,7 @@ module CXCAService
 
         def handle_tx_option(tx_option, person_id)
           return unless tx_option.present?
-          
+
           if @report[:total_treated_disaggregated_by_tx_option].keys.include?(tx_option&.to_sym)
             @report[:total_treated_disaggregated_by_tx_option][tx_option] ||= []
             @report[:total_treated_disaggregated_by_tx_option][tx_option] << person_id
