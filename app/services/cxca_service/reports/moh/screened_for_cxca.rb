@@ -319,7 +319,7 @@ module CXCAService
               hiv_test_date.value_datetime hiv_test_date,
               dot_option.value_coded dot_option,
               p.person_id,
-              cxca_moh_age_group(p.birthdate, DATE(e.encounter_datetime)) age_group
+              cxca_moh_age_group(p.birthdate, DATE('#{@end_date}')) age_group
             FROM person p
             INNER JOIN encounter e ON e.patient_id = p.person_id
               AND e.program_id = #{program(CXCA_PROGRAM).id} AND e.encounter_datetime >= '#{@start_date}'
