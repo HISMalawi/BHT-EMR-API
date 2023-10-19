@@ -33,6 +33,13 @@ module CXCAService
         CANCER_SUSPECTED = 'Suspected Cancer'
         AGE_GROUPS = ['<25 years', '25-29 years', '30-44 years', '45-49 years', '>49 years'].freeze
 
+        SCREENING_METHOD_MAP = {
+          'VIA': 'VIA'.to_sym,
+          'Papanicolaou smear': 'PAP Smear'.to_sym,
+          'HPV DNA': 'HPV DNA'.to_sym,
+          'Speculum Exam': 'Speculum Exam'.to_sym
+        }.freeze
+
         def data
           init_report
           map_report
@@ -46,14 +53,14 @@ module CXCAService
             age_group = record['age_group']
             next unless AGE_GROUPS.include?(age_group)
 
-            screening_method = concept_id_to_name(record['screening_method'])
+            screening_method = record['screening_method'] ? SCREENING_METHOD_MAP[concept_id_to_name(record['screening_method']).to_sym] : nil
             screening_result = concept_id_to_name(record['screening_result'])
             referral_reason = concept_id_to_name(record['referral_reason'])
             hiv_status = concept_id_to_name(record['hiv_status'])
             hiv_test_date = record['hiv_test_date']
             dot_option = concept_id_to_name(record['dot_option'])
             person_id = record['person_id']
-            screening_asesment = concept_id_to_name(record['screening_asesment'])
+            # screening_asesment = concept_id_to_name(record['screening_asesment'])
             cancer_suspect = record['cancer_suspect']
             visit_reason = concept_id_to_name(record['visit_reason'])
             tx_option = concept_id_to_name(record['tx_option'])
@@ -63,17 +70,17 @@ module CXCAService
             @report[:screened_disaggregated_by_age][age_group] << person_id if screening_method.present?
 
             if hiv_status.blank? || ['Never Tested', 'Undisclosed'].include?(hiv_status) || (['Negative'].include?(hiv_status) && hiv_test_date.present? && hiv_test_date.to_date < end_date.to_date - 1.year)
-              @report[:screened_disaggregated_by_hiv_status]['Unknown (HIV- > 1 year ago, Inconclusive, Prefers not to Disclose, or Never Tested)'] << person_id
+              @report[:screened_disaggregated_by_hiv_status]['Unknown (HIV- > 1 year ago, Inconclusive, Prefers not to Disclose, or Never Tested)'] << person_id if screening_method.present?
             end
 
             if ['Positive on ART', 'Positive NOT on ART'].include?(hiv_status) || ((['Negative'].include?(hiv_status) && hiv_test_date.present? && hiv_test_date.to_date > end_date.to_date - 1.year))
               @report[:screened_disaggregated_by_hiv_status][hiv_status] ||= []
-              @report[:screened_disaggregated_by_hiv_status][hiv_status] << person_id
+              @report[:screened_disaggregated_by_hiv_status][hiv_status] << person_id if screening_method.present?
             end
 
             if visit_reason.present? && @report[:screened_disaggregated_by_reason_for_visit].keys.include?(visit_reason&.to_sym)
               @report[:screened_disaggregated_by_reason_for_visit][visit_reason] ||= []
-              @report[:screened_disaggregated_by_reason_for_visit][visit_reason] << person_id
+              @report[:screened_disaggregated_by_reason_for_visit][visit_reason] << person_id if screening_method.present?
             end
 
             if screening_method.present? && @report[:screened_disaggregated_by_screening_method].keys.include?(screening_method&.to_sym)
@@ -81,7 +88,6 @@ module CXCAService
               @report[:screened_disaggregated_by_screening_method][screening_method] << person_id
             end
 
-            Rails.logger.debug "Processing Screening result: #{screening_result}"
             if screening_result.present?
               key_sym = ['Positive Not on ART', 'Positive on ART'].include?(hiv_status) ? :screening_results_hiv_positive : :screening_results_hiv_negative
               if screening_result.downcase == 'HPV positive'.downcase
@@ -107,12 +113,7 @@ module CXCAService
               end
               @report[key_sym][screening_result] << person_id if @report[key_sym].keys.include?(screening_result&.to_sym)
             end
-
-            Rails.logger.debug "Screening assessment: #{screening_asesment}"
-
-            if cancer_suspect.present?
-              @report[:suspects_disaggregated_by_age][age_group] << person_id
-            end
+            @report[:suspects_disaggregated_by_age][age_group] << person_id if cancer_suspect.present?
 
             if dot_option.present? && report[:total_treated].keys.include?(dot_option&.to_sym)
               @report[:total_treated][dot_option] ||= []
@@ -128,9 +129,10 @@ module CXCAService
               @report[:total_treated_disaggregated_by_tx_option]['Other'&.to_sym] << person_id
             end
 
+            referral_reason = referral_reason == 'Suspect cancer' ? 'Suspect Cancer' : referral_reason
             if referral_reason.present? && @report[:referral_reasons].keys.include?(referral_reason&.to_sym)
-              @report[:referral_reasons][referral_reason] ||= []
-              @report[:referral_reasons][referral_reason] << person_id
+              @report[:referral_reasons][referral_reason.to_sym] ||= []
+              @report[:referral_reasons][referral_reason.to_sym] << person_id
             end
 
             if referral_reason.present? && !@report[:referral_reasons].keys.include?(referral_reason&.to_sym)
@@ -141,8 +143,6 @@ module CXCAService
               @report[:total_treated_disaggregated_by_age][age_group] ||= []
               @report[:total_treated_disaggregated_by_age][age_group] << person_id
             end
-
-            Rails.logger.debug "Outcome: #{outcome}"
             @report[:referral_feedback]['With referral feedback'] << person_id if outcome.present?
 
             if family_planning.present? && @report[:family_planning].keys.include?(family_planning&.to_sym)
@@ -256,7 +256,7 @@ module CXCAService
               screened_method.value_coded screening_method,
               screened_result.value_coded screening_result,
               referral_reason.value_coded referral_reason,
-              COALESCE(client_on_art.client_on_art, hiv_status.value_coded) hiv_status,
+              COALESCE(client_on_art.client_on_art, hiv_status.value_coded, 9432) hiv_status, -- 9432 is the concept_id for Never Tested
               hiv_test_date.value_datetime hiv_test_date,
               dot_option.value_coded dot_option,
               p.person_id,
@@ -348,11 +348,20 @@ module CXCAService
             	AND tx_option.voided = 0
               AND tx_option.obs_datetime >= '#{@start_date}'
               AND tx_option.obs_datetime <= '#{@end_date}'
-            LEFT JOIN obs family_planning ON family_planning.person_id = p.person_id
-            	AND family_planning.concept_id = #{concept(FAMILY_PLANNING).concept_id}
-            	AND family_planning.voided = 0
-              AND family_planning.obs_datetime >= '#{@start_date}'
-              AND family_planning.obs_datetime <= '#{@end_date}'
+            LEFT JOIN (
+              SELECT e.patient_id, family_planning.value_coded
+              FROM encounter e
+              INNER JOIN obs family_planning ON family_planning.encounter_id = e.encounter_id
+                AND family_planning.concept_id = #{concept(FAMILY_PLANNING).concept_id}
+                AND family_planning.voided = 0
+                AND family_planning.obs_datetime >= '#{@start_date}'
+                AND family_planning.obs_datetime <= '#{@end_date}'
+              WHERE e.program_id = #{program(CXCA_PROGRAM).id}
+                AND e.encounter_datetime >= '#{@start_date}'
+                AND e.encounter_datetime <= '#{@end_date}'
+                AND e.voided = 0
+              GROUP BY e.patient_id
+            ) family_planning ON family_planning.patient_id = p.person_id
             LEFT JOIN obs outcome ON outcome.person_id = p.person_id
             	AND outcome.concept_id = #{concept(OUTCOME).concept_id}
             	AND outcome.voided = 0

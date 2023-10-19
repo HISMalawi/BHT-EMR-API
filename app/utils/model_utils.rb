@@ -24,7 +24,7 @@ module ModelUtils
     return nil if id.blank?
 
     concept = Concept.find_by_concept_id(id)
-    concept&.shortname || concept&.fullname || concept&.othername || nil
+    concept&.fullname
   end
 
   def program(name)
