@@ -16,6 +16,11 @@ module ModelUtils
     concept_name(name)&.concept_id
   end
 
+  def concept_id_to_name(id)
+    concept = Concept.find_by_concept_id(id)
+    concept&.shortname || concept&.fullname || nil
+  end
+
   def program(name)
     Program.find_by_name(name)
   end
