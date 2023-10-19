@@ -30,6 +30,10 @@ module CXCAService
 
         def data
           init_report
+        rescue StandardError => e
+          Rails.logger.error e.message
+          Rails.logger.error e.backtrace.join("\n")
+          raise e
         end
 
         private

@@ -30,12 +30,16 @@ module CXCAService
 
         def data
           init_report
+        rescue StandardError => e
+          Rails.logger.error e.message
+          Rails.logger.error e.backtrace.join("\n")
+          raise e
         end
 
         private
 
         def init_report
-          query = query.to_hash
+          query = fetch_query.to_a
           pepfar_age_groups.collect do |age_group|
             row = {}
             row['age_group'] = age_group
@@ -50,7 +54,7 @@ module CXCAService
           end
         end
 
-        def query
+        def fetch_query
           ActiveRecord::Base.connection.select_all <<~SQL
             SELECT
               p.person_id,
