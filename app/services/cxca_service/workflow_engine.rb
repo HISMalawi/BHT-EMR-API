@@ -56,14 +56,6 @@ module CXCAService
       CANCER_TREATMENT => %i[show_cancer_treatment? offer_cxca_screening?],
       APPOINTMENT => %i[show_appointment? offer_cxca_screening?]
     }.freeze
-=begin
-    STATE_CONDITIONS = {
-      CXCA_TEST => %i[show_cxca_test?],
-      CXCA_SCREENING_RESULTS => %i[show_cxca_screening_results?],
-      CANCER_TREATMENT => %i[show_cancer_treatment?],
-      APPOINTMENT => %i[show_appointment?]
-    }.freeze
-=end
 
     def next_state(current_state)
       ENCOUNTER_SM[current_state]
@@ -74,7 +66,7 @@ module CXCAService
     # NOTE: By `relevant` above we mean encounters that matter in deciding
     # what encounter the patient should go for in this present time.
     def encounter_exists?(type)
-      Encounter.where(type: type, patient: @patient)\
+      Encounter.where(type: type, patient: @patient, program: @program)\
                .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
                .exists?
     end
@@ -87,15 +79,12 @@ module CXCAService
       end
     end
 
-    private
-
     def show_cxca_test?
       return false unless results_available?
       return false if postponed_treatment?
-      #return false if cxca_positive?
 
       encounter_type = EncounterType.find_by name: CXCA_TEST
-      return encounter = Encounter.joins(:type).where(
+      Encounter.joins(:type).where(
         'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
         @patient.patient_id, encounter_type.encounter_type_id, @date
       ).order(encounter_datetime: :desc).blank?
@@ -110,19 +99,14 @@ module CXCAService
 
       return false unless encounter.blank?
 
-      encounter = Encounter.joins(:type).where(
-        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) < DATE(?)',
-        @patient.patient_id, encounter_type.encounter_type_id, @date
-      ).order(encounter_datetime: :desc).first
-
       unless encounter.blank?
         screening_results_available = ConceptName.find_by_name('Screening results available').concept_id
         concept_no = ConceptName.find_by_name('No').concept_id
-        return encounter.observations.find_by(concept_id: screening_results_available,
-          value_coded: concept_no).blank? ? false : true
+        return !encounter.observations.find_by(concept_id: screening_results_available,
+                                               value_coded: concept_no).blank?
       end
 
-      return true
+      true
     end
 
     def show_cancer_treatment?
@@ -146,20 +130,10 @@ module CXCAService
         @patient.patient_id, encounter_type.encounter_type_id, @date
       ).order(encounter_datetime: :desc).first
 
-      return encounter.blank?
-      #return true
+      encounter.blank?
     end
 
     def show_appointment?
-
-=begin
-      encounter_type = EncounterType.find_by name: CANCER_TREATMENT
-      encounter = Encounter.joins(:type).where(
-        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) <= DATE(?)',
-        @patient.patient_id, encounter_type.encounter_type_id, @date
-      ).order(encounter_datetime: :desc).first
-=end
-
       encounter_type = EncounterType.find_by name: APPOINTMENT
       appointment =   Encounter.joins(:type).where(
         'patient_id = ? AND encounter_type = ?
@@ -176,18 +150,48 @@ module CXCAService
 
       unless cancer_tx.blank?
         ob = cancer_tx.observations.where(concept_id: concept('Recommended Plan of care').concept_id,
-          value_coded: concept('Continue follow-up').concept_id)
+                                          value_coded: concept('Continue follow-up').concept_id)
 
-        if appointment.blank?
-          return true unless ob.blank?
-        end
+        # frozen_string_literal: true
+        # Retrieves the next encounter for bound patient
+        # Encounter types
+        # Start terminal for encounters graph
+        # End terminal for encounters graphCxCa_TEST = 'CXCA TEST'
+        # Encounters graph
+        #     STATE_CONDITIONS = {
+        #       CXCA_TEST => %i[show_cxca_test?],
+        #       CXCA_SCREENING_RESULTS => %i[show_cxca_screening_results?],
+        #       CANCER_TREATMENT => %i[show_cancer_treatment?],
+        #       APPOINTMENT => %i[show_appointment?]
+        #     }.freeze
+
+        # Check if a relevant encounter of given type exists for given patient.
+        #
+        # NOTE: By `relevant` above we mean encounters that matter in deciding
+        # what encounter the patient should go for in this present time.
+        return true if appointment.blank? && !ob.blank?
       end
 
-      unless appointment.blank?
-        return true if negative_screening?
-      end
+      # frozen_string_literal: true
+      # Retrieves the next encounter for bound patient
+      # Encounter types
+      # Start terminal for encounters graph
+      # End terminal for encounters graphCxCa_TEST = 'CXCA TEST'
+      # Encounters graph
+      #     STATE_CONDITIONS = {
+      #       CXCA_TEST => %i[show_cxca_test?],
+      #       CXCA_SCREENING_RESULTS => %i[show_cxca_screening_results?],
+      #       CANCER_TREATMENT => %i[show_cancer_treatment?],
+      #       APPOINTMENT => %i[show_appointment?]
+      #     }.freeze
 
-      return appointment.blank?
+      # Check if a relevant encounter of given type exists for given patient.
+      #
+      # NOTE: By `relevant` above we mean encounters that matter in deciding
+      # what encounter the patient should go for in this present time.
+      return true if !appointment.blank? && negative_screening?
+
+      appointment.blank?
     end
 
     def results_available?
@@ -199,10 +203,10 @@ module CXCAService
 
       unless encounter.blank?
         return encounter.observations.find_by(concept_id: ConceptName.find_by_name('Screening results available').concept_id,
-          value_coded: ConceptName.find_by_name("No").concept_id).blank? ? true : false
+                                              value_coded: ConceptName.find_by_name('No').concept_id).blank? ? true : false
       end
 
-      return true
+      true
     end
 
     def postponed_treatment?
@@ -215,15 +219,14 @@ module CXCAService
       unless encounter.blank?
         postponed_tx = ConceptName.find_by_name('Directly observed treatment option').concept_id
         value_coded_concepts = []
-        value_coded_concepts <<  ConceptName.find_by_name("Postponed treatment").concept_id
-        value_coded_concepts <<  ConceptName.find_by_name("Referral").concept_id
+        value_coded_concepts <<  ConceptName.find_by_name('Postponed treatment').concept_id
+        value_coded_concepts <<  ConceptName.find_by_name('Referral').concept_id
 
         return encounter.observations.find_by(concept_id: postponed_tx,
-          value_coded: value_coded_concepts).blank? ? false : true
+                                              value_coded: value_coded_concepts).blank? ? false : true
       end
 
-
-      return false
+      false
     end
 
     def postponed_treatment_today?
@@ -236,15 +239,14 @@ module CXCAService
       unless encounter.blank?
         postponed_tx = ConceptName.find_by_name('Directly observed treatment option').concept_id
         value_coded_concepts = []
-        value_coded_concepts <<  ConceptName.find_by_name("Postponed treatment").concept_id
-        value_coded_concepts <<  ConceptName.find_by_name("Referral").concept_id
+        value_coded_concepts <<  ConceptName.find_by_name('Postponed treatment').concept_id
+        value_coded_concepts <<  ConceptName.find_by_name('Referral').concept_id
 
         return encounter.observations.find_by(concept_id: postponed_tx,
-          value_coded: value_coded_concepts).blank? ? false : true
+                                              value_coded: value_coded_concepts).blank? ? false : true
       end
 
-
-      return false
+      false
     end
 
     def cxca_positive?
@@ -266,13 +268,13 @@ module CXCAService
         positive_cxca_results << concept('Visible Lesion').concept_id
 
         observation = encounter.observations.where(concept_id: cxca_result_concept_id)\
-          .order("obs_datetime DESC, obs.date_created DESC").first
+                               .order('obs_datetime DESC, obs.date_created DESC').first
 
         unless observation.blank?
           if observation.value_coded == hpv_positive
-            via_concept_ids = ConceptName.where(name: "VIA results").map(&:concept_id)
-            via_observation = encounter.observations.where("concept_id IN(?) AND value_coded = ?",
-                via_concept_ids, via_positive).order("obs_datetime DESC, obs.date_created DESC").first
+            via_concept_ids = ConceptName.where(name: 'VIA results').map(&:concept_id)
+            via_observation = encounter.observations.where('concept_id IN(?) AND value_coded = ?',
+                                                           via_concept_ids, via_positive).order('obs_datetime DESC, obs.date_created DESC').first
 
             return via_observation.blank? ? false : true
           end
@@ -280,7 +282,7 @@ module CXCAService
         end
       end
 
-      return false
+      false
     end
 
     def offer_cxca_screening?
@@ -291,11 +293,12 @@ module CXCAService
       ).order(encounter_datetime: :desc).first
 
       return false if encounter.blank?
-      obs = encounter.observations.where(concept_id: concept("Offer CxCa").concept_id,
-        value_coded: concept("Yes").concept_id)\
-        .order("obs_datetime DESC, obs.date_created DESC").first
 
-      return obs.blank? ? false : true
+      obs = encounter.observations.where(concept_id: concept('Offer CxCa').concept_id,
+                                         value_coded: concept('Yes').concept_id)\
+                     .order('obs_datetime DESC, obs.date_created DESC').first
+
+      obs.blank? ? false : true
     end
 
     def negative_screening?
@@ -305,29 +308,29 @@ module CXCAService
         @patient.patient_id, encounter_type.encounter_type_id, @date
       ).order(encounter_datetime: :desc).first
 
-      result = encounter.observations.where(concept_id: concept("Screening results").concept_id,
-        value_coded: [
-          concept("VIA negative").concept_id,
-          concept("PAP Smear normal").concept_id,
-          concept("HPV negative").concept_id,
-          concept("No visible Lesion").concept_id,
-          concept("Other gynaecological disease").concept_id
-        ])
+      result = encounter.observations.where(concept_id: concept('Screening results').concept_id,
+                                            value_coded: [
+                                              concept('VIA negative').concept_id,
+                                              concept('PAP Smear normal').concept_id,
+                                              concept('HPV negative').concept_id,
+                                              concept('No visible Lesion').concept_id,
+                                              concept('Other gynaecological disease').concept_id
+                                            ])
 
-        return true unless result.blank?
+      return true unless result.blank?
 
-      hp_result = encounter.observations.where(concept_id: concept("Screening results").concept_id,
-        value_coded: concept("HPV positive").concept_id)
+      hp_result = encounter.observations.where(concept_id: concept('Screening results').concept_id,
+                                               value_coded: concept('HPV positive').concept_id)
 
       if hp_result
-        via_concept_ids = ConceptName.where(name: "VIA results").map(&:concept_id)
-        via_negative = encounter.observations.where("concept_id IN(?) AND value_coded = ?",
-          via_concept_ids, concept("VIA negative").concept_id)
+        via_concept_ids = ConceptName.where(name: 'VIA results').map(&:concept_id)
+        via_negative = encounter.observations.where('concept_id IN(?) AND value_coded = ?',
+                                                    via_concept_ids, concept('VIA negative').concept_id)
 
         return true unless via_negative.blank?
       end
 
-      return false
+      false
     end
 
     def same_day_treatment?
@@ -339,18 +342,17 @@ module CXCAService
 
       unless encounter.blank?
         sameday_tx = ConceptName.find_by_name('Directly observed treatment option').concept_id
-        value_coded_concept = ConceptName.find_by_name("Same day treatment").concept_id
+        value_coded_concept = ConceptName.find_by_name('Same day treatment').concept_id
 
         return encounter.observations.find_by(concept_id: sameday_tx,
-          value_coded: value_coded_concept).blank? ? false : true
+                                              value_coded: value_coded_concept).blank? ? false : true
       end
 
-      return false
+      false
     end
 
     def concept(name)
       ConceptName.find_by_name(name)
     end
-
   end
 end
