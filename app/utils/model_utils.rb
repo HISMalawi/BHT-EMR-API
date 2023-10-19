@@ -1,4 +1,6 @@
 # frozen_string_literal: true
+
+# This module contains utility methods for retrieving models
 module ModelUtils
   # Retrieve concept by its name
   #
@@ -13,12 +15,16 @@ module ModelUtils
   end
 
   def concept_name_to_id(name)
+    return nil if name.blank?
+
     concept_name(name)&.concept_id
   end
 
   def concept_id_to_name(id)
+    return nil if id.blank?
+
     concept = Concept.find_by_concept_id(id)
-    concept&.shortname || concept&.fullname || nil
+    concept&.shortname || concept&.fullname || concept&.othername || nil
   end
 
   def program(name)

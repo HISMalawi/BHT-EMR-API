@@ -29,6 +29,8 @@ module CXCAService
         REASON_FOR_VISIT = 'Reason for visit'
         POSITIVE_ON_ART = 'Positive on ART'
         HIV_TEST_DATE = 'HIV test date'
+        CANCER_SUSPECT = 'Suspect Cancer'
+        CANCER_SUSPECTED = 'Suspected Cancer'
         AGE_GROUPS = ['<25 years', '25-29 years', '30-44 years', '45-49 years', '>49 years'].freeze
 
         def data
@@ -52,6 +54,7 @@ module CXCAService
             dot_option = concept_id_to_name(record['dot_option'])
             person_id = record['person_id']
             screening_asesment = concept_id_to_name(record['screening_asesment'])
+            cancer_suspect = record['cancer_suspect']
             visit_reason = concept_id_to_name(record['visit_reason'])
             tx_option = concept_id_to_name(record['tx_option'])
             family_planning = concept_id_to_name(record['family_planning'])
@@ -78,73 +81,43 @@ module CXCAService
               @report[:screened_disaggregated_by_screening_method][screening_method] << person_id
             end
 
-            if screening_result.present? && ['Positive Not on ART', 'Positive on ART'].include?(hiv_status&.to_sym) && @report[:screening_results_hiv_positive].keys.include?(screening_result&.to_sym)
-              @report[:screening_results_hiv_positive][screening_result] ||= []
-              if screening_result == 'HPV positive'
-                @report[:screening_results_hiv_positive]['Number of clients with HPV+'] << person_id
+            Rails.logger.debug "Processing Screening result: #{screening_result}"
+            if screening_result.present?
+              key_sym = ['Positive Not on ART', 'Positive on ART'].include?(hiv_status) ? :screening_results_hiv_positive : :screening_results_hiv_negative
+              if screening_result.downcase == 'HPV positive'.downcase
+                @report[key_sym]['Number of clients with HPV+'.to_sym] << person_id
+              elsif screening_result.downcase == 'HPV negative'.downcase
+                @report[key_sym]['Number of clients with HPV-'.to_sym] << person_id
+              elsif screening_result.downcase == 'VIA negative'.downcase
+                @report[key_sym]['Number of clients with VIA-'.to_sym] << person_id
+              elsif screening_result.downcase == 'VIA positive'.downcase
+                @report[key_sym]['Number of clients with VIA+'.to_sym] << person_id
+              elsif screening_result.downcase == 'PAP Smear normal'.downcase
+                @report[key_sym]['Number of clients with PAP Smear normal'.to_sym] << person_id
+              elsif screening_result.downcase == 'PAP Smear abnormal'.downcase
+                @report[key_sym]['Number of clients with PAP Smear abnormal'.to_sym] << person_id
+              elsif screening_result.downcase == 'No visible Lesion'.downcase
+                @report[key_sym]['Number of clients with No visible Lesion'.to_sym] << person_id
+              elsif screening_result.downcase == 'Visible Lesion'.downcase
+                @report[key_sym]['Number of clients with Visible Lesion'.to_sym] << person_id
+              elsif screening_result.downcase == 'Suspected Cancer'.downcase
+                @report[key_sym]['Number of clients with Suspected Cancer'.to_sym] << person_id
+              else
+                @report[key_sym]['Number of clients with Other gynae'&.to_sym] << person_id
               end
-              if screening_result == 'HPV negative'
-                @report[:screening_results_hiv_positive]['Number of clients with HPV-'] << person_id
-              end
-              if screening_result == 'VIA negative'
-                @report[:screening_results_hiv_positive]['Number of clients with VIA-'] << person_id
-              end
-              if screening_result == 'VIA positive'
-                @report[:screening_results_hiv_positive]['Number of clients with VIA+'] << person_id
-              end
-              if screening_result == 'PAP Smear normal'
-                @report[:screening_results_hiv_positive]['Number of clients with PAP Smear normal'] << person_id
-              end
-              if screening_result == 'PAP Smear abnormal'
-                @report[:screening_results_hiv_positive]['Number of clients with PAP Smear abnormal'] << person_id
-              end
-              if screening_result == 'No visible Lesion'
-                @report[:screening_results_hiv_positive]['Number of clients with No visible Lesion'] << person_id
-              end
-              if screening_result == 'Visible Lesion'
-                @report[:screening_results_hiv_positive]['Number of clients with Visible Lesion'] << person_id
-              end
-              if screening_result == 'Suspected Cancer'
-                @report[:screening_results_hiv_positive]['Number of clients with Suspected Cancer'] << person_id
-              end
-              @report[:screening_results_hiv_positive][screening_result] << person_id
-            end
-            if screening_result.present? && !@report[:screening_results_hiv_positive].keys.include?(screening_result&.to_sym)
-              @report[:screening_results_hiv_positive]['Number of clients with Other gynae'&.to_sym] << person_id
+              @report[key_sym][screening_result] << person_id if @report[key_sym].keys.include?(screening_result&.to_sym)
             end
 
-            # assiging accurate template values to screening_result
-            screening_result = screening_result == 'PAP Smear normal' ? 'Number of clients with PAP Smear normal' : screening_result
-            screening_result = screening_result == 'HPV positive' ? 'Number of clients with HPV+' : screening_result
-            screening_result = screening_result == 'HPV negative' ? 'Number of clients with HPV-' : screening_result
-            screening_result = screening_result == 'VIA negative' ? 'Number of clients with VIA-' : screening_result
-            screening_result = screening_result == 'VIA positive' ? 'Number of clients with VIA+' : screening_result
-            screening_result = screening_result == 'PAP Smear Abnormal' ? 'Number of clients with PAP Smear Abnormal' : screening_result
-            screening_result = screening_result == 'No visible Lesion' ? 'Number of clients with No visible Lesion' : screening_result
-            screening_result = screening_result == 'Visible Lesion' ? 'Number of clients with Visible Lesion' : screening_result
-            screening_result = screening_result == 'Suspected Cancer' ? 'Number of clients with Suspected Cancer' : screening_result
+            Rails.logger.debug "Screening assessment: #{screening_asesment}"
 
-            # Assigning personal IDs report
-            if screening_result.present? && @report[:screening_results_hiv_negative].keys.include?(screening_result&.to_sym)
-              @report[:screening_results_hiv_negative][screening_result] ||= []
-              @report[:screening_results_hiv_negative][screening_result] << person_id
-            end
-
-            if screening_result.present? && !@report[:screening_results_hiv_negative].keys.include?(screening_result&.to_sym)
-              @report[:screening_results_hiv_negative]['Number of clients with Other gynae'&.to_sym] << person_id
-            end
-
-            if screening_asesment.present? && screening_asesment == concept('Suspect cancer').concept_id
+            if cancer_suspect.present?
               @report[:suspects_disaggregated_by_age][age_group] << person_id
             end
 
             if dot_option.present? && report[:total_treated].keys.include?(dot_option&.to_sym)
-              @report[:total_treated][dot_option] ||= [] if dot_option.present?
+              @report[:total_treated][dot_option] ||= []
               @report[:total_treated][dot_option] << person_id
             end
-
-            # assiging accurate template value (LEEP) to screening_result instead of (LLETZ/LEEP)
-            screening_result = screening_result == 'LLETZ/LEEP' ? 'LEEP' : screening_result
 
             if tx_option.present? && @report[:total_treated_disaggregated_by_tx_option].keys.include?(tx_option&.to_sym)
               @report[:total_treated_disaggregated_by_tx_option][tx_option] ||= [] if tx_option.present?
@@ -154,9 +127,6 @@ module CXCAService
             if tx_option.present? && !@report[:total_treated_disaggregated_by_tx_option].keys.include?(tx_option&.to_sym)
               @report[:total_treated_disaggregated_by_tx_option]['Other'&.to_sym] << person_id
             end
-
-            # assiging accurate template value (Treatment not available) to screening_result instead of (No treatment)
-            screening_result = screening_result == 'Treatment not available' ? 'No treatment' : screening_result
 
             if referral_reason.present? && @report[:referral_reasons].keys.include?(referral_reason&.to_sym)
               @report[:referral_reasons][referral_reason] ||= []
@@ -172,6 +142,7 @@ module CXCAService
               @report[:total_treated_disaggregated_by_age][age_group] << person_id
             end
 
+            Rails.logger.debug "Outcome: #{outcome}"
             @report[:referral_feedback]['With referral feedback'] << person_id if outcome.present?
 
             if family_planning.present? && @report[:family_planning].keys.include?(family_planning&.to_sym)
@@ -280,6 +251,7 @@ module CXCAService
               family_planning.value_coded family_planning,
               tx_option.value_coded tx_option,
               screening_asesment.value_coded screening_asessment,
+              cancer_suspect.patient_id cancer_suspect,
               reason_for_visit.value_coded visit_reason,
               screened_method.value_coded screening_method,
               screened_result.value_coded screening_result,
@@ -357,6 +329,20 @@ module CXCAService
             	AND screening_asesment.voided = 0
               AND screening_asesment.obs_datetime >= '#{@start_date}'
               AND screening_asesment.obs_datetime <= '#{@end_date}'
+            LEFT JOIN (
+              SELECT e.patient_id
+              FROM encounter e
+              INNER JOIN obs o ON o.encounter_id = e.encounter_id
+                AND o.value_coded IN (#{concept(CANCER_SUSPECT).concept_id}, #{concept(CANCER_SUSPECTED).concept_id})
+                AND o.voided = 0
+                AND o.obs_datetime >= '#{@start_date}'
+                AND o.obs_datetime <= '#{@end_date}'
+              WHERE e.program_id = #{program(CXCA_PROGRAM).id}
+                AND e.encounter_datetime >= '#{@start_date}'
+                AND e.encounter_datetime <= '#{@end_date}'
+                AND e.voided = 0
+              GROUP BY e.patient_id
+            ) cancer_suspect ON cancer_suspect.patient_id = p.person_id
             LEFT JOIN obs tx_option ON tx_option.person_id = p.person_id
             	AND tx_option.concept_id = #{concept(TX_OPTION).concept_id}
             	AND tx_option.voided = 0
