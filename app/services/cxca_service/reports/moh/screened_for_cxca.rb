@@ -1,21 +1,16 @@
-# rubocop:disable Metrics/AbcSize
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/ClassLength, Style/Documentation
 module CXCAService
   module Reports
     module Moh
+      # This class is responsible for generating the MOH CXCA report
+      # rubocop:disable Metrics/ClassLength
       class ScreenedForCxca
         include ModelUtils
         attr_accessor :start_date, :end_date, :report
 
-        def initialize(start_date:, end_date:)
-          @start_date = start_date.strftime('%Y-%m-%d 00:00:00')
-          @end_date = end_date.strftime('%Y-%m-%d 23:59:59')
-        end
-
         SCREENING_METHOD = 'CxCa screening method'
-        SCREENING_RESULTS = 'Screening results'
+        SCREENING_RESULT = 'Screening results'
         REFFERAL_REASONS = 'Referral reason'
         SCREENING_METHOD = 'CxCa screening method'
         HIV_STATUS = 'HIV status'
@@ -31,36 +26,89 @@ module CXCAService
         HIV_TEST_DATE = 'HIV test date'
         CANCER_SUSPECT = 'Suspect Cancer'
         CANCER_SUSPECTED = 'Suspected Cancer'
-        AGE_GROUPS = ['<25 years', '25-29 years', '30-44 years', '45-49 years', '>49 years'].freeze
 
         SCREENING_METHOD_MAP = {
-          'VIA': 'VIA'.to_sym,
-          'Papanicolaou smear': 'PAP Smear'.to_sym,
-          'HPV DNA': 'HPV DNA'.to_sym,
-          'Speculum Exam': 'Speculum Exam'.to_sym
+          'VIA' => 'VIA'.to_sym,
+          'Papanicolaou smear' => 'PAP Smear'.to_sym,
+          'HPV DNA' => 'HPV DNA'.to_sym,
+          'Speculum Exam' => 'Speculum Exam'.to_sym
         }.freeze
+
+        AGE_GROUPS = ['<25 years', '25-29 years', '30-44 years', '45-49 years', '>49 years'].freeze
+
+        SCREENING_RESULTS = {
+          'HPV positive' => 'HPV+',
+          'HPV negative' => 'HPV-',
+          'VIA negative' => 'VIA-',
+          'VIA positive' => 'VIA+',
+          'PAP Smear normal' => 'PAP Smear normal',
+          'PAP Smear abnormal' => 'PAP Smear abnormal',
+          'No visible Lesion' => 'No visible Lesion',
+          'Visible Lesion' => 'Visible Lesion',
+          'Suspected Cancer' => 'Suspected Cancer'
+        }.freeze
+
+        HIV_STATUS_GROUP = {
+          'Positive NOT on ART' => [],
+          'Positive on ART' => [],
+          'Negative' => [],
+          'Unknown (HIV- > 1 year ago, Inconclusive, Prefers not to Disclose, or Never Tested)' => []
+        }.freeze
+
+        REFERRAL_REASON_GROUP = {
+          "Further Investigation and Management": [],
+          "Large Lesion (Greater than 75 percent)": [],
+          "Unable to treat client": [],
+          "Suspect Cancer": [],
+          "No treatment": [],
+          "Other gynae": []
+        }.freeze
+
+        REASON_FOR_VISIT_GROUP = [
+          'Initial Screening',
+          'Postponed treatment',
+          'One year subsequent check-up after treatment',
+          'Subsequent screening',
+          'Problem visit after treatment',
+          'Referral'
+        ].freeze
+
+        SCREENING_METHOD_GROUP = SCREENING_METHOD_MAP.values.uniq.map(&:to_s).map(&:downcase).freeze
+
+        SCREENING_RESULTS_GROUP = SCREENING_RESULTS.keys.uniq.map(&:downcase).freeze
+
+        def initialize(start_date:, end_date:)
+          @start_date = start_date.strftime('%Y-%m-%d 00:00:00')
+          @end_date = end_date.strftime('%Y-%m-%d 23:59:59')
+        end
 
         def data
           init_report
           map_report
           report
+        rescue StandardError => e
+          Rails.logger.error "Error generating CXCA report: #{e.message}"
+          e.backtrace.each { |line| Rails.logger.error line }
+          raise e
         end
 
         private
 
+        # rubocop:disable Metrics/AbcSize
+        # rubocop:disable Metrics/MethodLength
         def map_report
+          # rubocop:disable Metrics/BlockLength
           (query || []).each do |record|
             age_group = record['age_group']
             next unless AGE_GROUPS.include?(age_group)
 
-            screening_method = record['screening_method'] ? SCREENING_METHOD_MAP[concept_id_to_name(record['screening_method']).to_sym] : nil
+            screening_method = SCREENING_METHOD_MAP[concept_id_to_name(record['screening_method'])]
             screening_result = concept_id_to_name(record['screening_result'])
             referral_reason = concept_id_to_name(record['referral_reason'])
             hiv_status = concept_id_to_name(record['hiv_status'])
             hiv_test_date = record['hiv_test_date']
             dot_option = concept_id_to_name(record['dot_option'])
             person_id = record['person_id']
-            # screening_asesment = concept_id_to_name(record['screening_asesment'])
             cancer_suspect = record['cancer_suspect']
             visit_reason = concept_id_to_name(record['visit_reason'])
             tx_option = concept_id_to_name(record['tx_option'])
@@ -68,182 +116,190 @@ module CXCAService
             outcome = concept_id_to_name(record['outcome'])
 
             @report[:screened_disaggregated_by_age][age_group] << person_id if screening_method.present?
-
-            if hiv_status.blank? || ['Never Tested', 'Undisclosed'].include?(hiv_status) || (['Negative'].include?(hiv_status) && hiv_test_date.present? && hiv_test_date.to_date < end_date.to_date - 1.year)
-              @report[:screened_disaggregated_by_hiv_status]['Unknown (HIV- > 1 year ago, Inconclusive, Prefers not to Disclose, or Never Tested)'] << person_id if screening_method.present?
-            end
-
-            if ['Positive on ART', 'Positive NOT on ART'].include?(hiv_status) || ((['Negative'].include?(hiv_status) && hiv_test_date.present? && hiv_test_date.to_date > end_date.to_date - 1.year))
-              @report[:screened_disaggregated_by_hiv_status][hiv_status] ||= []
-              @report[:screened_disaggregated_by_hiv_status][hiv_status] << person_id if screening_method.present?
-            end
-
-            if visit_reason.present? && @report[:screened_disaggregated_by_reason_for_visit].keys.include?(visit_reason&.to_sym)
-              @report[:screened_disaggregated_by_reason_for_visit][visit_reason] ||= []
-              @report[:screened_disaggregated_by_reason_for_visit][visit_reason] << person_id if screening_method.present?
-            end
-
-            if screening_method.present? && @report[:screened_disaggregated_by_screening_method].keys.include?(screening_method&.to_sym)
-              @report[:screened_disaggregated_by_screening_method][screening_method] ||= []
-              @report[:screened_disaggregated_by_screening_method][screening_method] << person_id
-            end
-
-            if screening_result.present?
-              key_sym = ['Positive Not on ART', 'Positive on ART'].include?(hiv_status) ? :screening_results_hiv_positive : :screening_results_hiv_negative
-              if screening_result.downcase == 'HPV positive'.downcase
-                @report[key_sym]['Number of clients with HPV+'.to_sym] << person_id
-              elsif screening_result.downcase == 'HPV negative'.downcase
-                @report[key_sym]['Number of clients with HPV-'.to_sym] << person_id
-              elsif screening_result.downcase == 'VIA negative'.downcase
-                @report[key_sym]['Number of clients with VIA-'.to_sym] << person_id
-              elsif screening_result.downcase == 'VIA positive'.downcase
-                @report[key_sym]['Number of clients with VIA+'.to_sym] << person_id
-              elsif screening_result.downcase == 'PAP Smear normal'.downcase
-                @report[key_sym]['Number of clients with PAP Smear normal'.to_sym] << person_id
-              elsif screening_result.downcase == 'PAP Smear abnormal'.downcase
-                @report[key_sym]['Number of clients with PAP Smear abnormal'.to_sym] << person_id
-              elsif screening_result.downcase == 'No visible Lesion'.downcase
-                @report[key_sym]['Number of clients with No visible Lesion'.to_sym] << person_id
-              elsif screening_result.downcase == 'Visible Lesion'.downcase
-                @report[key_sym]['Number of clients with Visible Lesion'.to_sym] << person_id
-              elsif screening_result.downcase == 'Suspected Cancer'.downcase
-                @report[key_sym]['Number of clients with Suspected Cancer'.to_sym] << person_id
-              else
-                @report[key_sym]['Number of clients with Other gynae'&.to_sym] << person_id
-              end
-              @report[key_sym][screening_result] << person_id if @report[key_sym].keys.include?(screening_result&.to_sym)
-            end
+            handle_hiv_status(person_id, hiv_status, hiv_test_date, screening_method)
+            handle_visit_reason(person_id, visit_reason, screening_method)
+            handle_screening_method(screening_method, person_id)
+            handle_screening_result(hiv_status, screening_result, person_id)
             @report[:suspects_disaggregated_by_age][age_group] << person_id if cancer_suspect.present?
-
-            if dot_option.present? && report[:total_treated].keys.include?(dot_option&.to_sym)
-              @report[:total_treated][dot_option] ||= []
-              @report[:total_treated][dot_option] << person_id
-            end
-
-            if tx_option.present? && @report[:total_treated_disaggregated_by_tx_option].keys.include?(tx_option&.to_sym)
-              @report[:total_treated_disaggregated_by_tx_option][tx_option] ||= [] if tx_option.present?
-              @report[:total_treated_disaggregated_by_tx_option][tx_option] << person_id
-            end
-
-            if tx_option.present? && !@report[:total_treated_disaggregated_by_tx_option].keys.include?(tx_option&.to_sym)
-              @report[:total_treated_disaggregated_by_tx_option]['Other'&.to_sym] << person_id
-            end
-
-            referral_reason = referral_reason == 'Suspect cancer' ? 'Suspect Cancer' : referral_reason
-            if referral_reason.present? && @report[:referral_reasons].keys.include?(referral_reason&.to_sym)
-              @report[:referral_reasons][referral_reason.to_sym] ||= []
-              @report[:referral_reasons][referral_reason.to_sym] << person_id
-            end
-
-            if referral_reason.present? && !@report[:referral_reasons].keys.include?(referral_reason&.to_sym)
-              @report[:referral_reasons]['Other gynae'&.to_sym] << person_id
-            end
-
-            if tx_option.present?
-              @report[:total_treated_disaggregated_by_age][age_group] ||= []
-              @report[:total_treated_disaggregated_by_age][age_group] << person_id
-            end
+            handle_dot_option(dot_option, person_id)
+            handle_tx_option(tx_option, person_id)
+            handle_referral_reason(referral_reason, person_id)
+            handle_total_treated_by_age(tx_option, age_group, person_id)
             @report[:referral_feedback]['With referral feedback'] << person_id if outcome.present?
-
-            if family_planning.present? && @report[:family_planning].keys.include?(family_planning&.to_sym)
-              @report[:family_planning][family_planning] ||= [] if family_planning.present?
-              @report[:family_planning][family_planning] << person_id
-            end
-
-            unless @report[:family_planning].keys.include?(family_planning&.to_sym)
-              @report[:family_planning]['N/A'&.to_sym] << person_id
-            end
+            handle_family_planning(family_planning, person_id)
           end
+          # rubocop:enable Metrics/BlockLength
         end
+        # rubocop:enable Metrics/AbcSize
 
-        # rubocop:disable Metrics/MethodLength
         def init_report
           @report = {
             screened_disaggregated_by_age: {},
-            screened_disaggregated_by_hiv_status: {
-              "Positive NOT on ART": [],
-              "Positive on ART": [],
-              "Negative": [],
-              "Unknown (HIV- > 1 year ago, Inconclusive, Prefers not to Disclose, or Never Tested)": []
-            },
-            screened_disaggregated_by_reason_for_visit: {
-              "Initial Screening": [],
-              "Postponed treatment": [],
-              "One year subsequent check-up after treatment": [],
-              "Subsequent screening": [],
-              "Problem visit after treatment": [],
-              "Referral": []
-            },
-            screened_disaggregated_by_screening_method: {
-              "VIA": [],
-              "PAP Smear": [],
-              "HPV DNA": [],
-              "Speculum Exam": []
-            },
-            screening_results_hiv_positive: {
-              "Number of clients with HPV+": [],
-              "Number of clients with HPV-": [],
-              "Number of clients with VIA-": [],
-              "Number of clients with VIA+": [],
-              "Number of clients with PAP Smear normal": [],
-              "Number of clients with PAP Smear Abnormal": [],
-              "Number of clients with No visible Lesion": [],
-              "Number of clients with Visible Lesion": [],
-              "Number of clients with Suspected Cancer": [],
-              "Number of clients with Other gynae": []
-            },
-            screening_results_hiv_negative: {
-              "Number of clients with HPV+": [],
-              "Number of clients with HPV-": [],
-              "Number of clients with VIA-": [],
-              "Number of clients with VIA+": [],
-              "Number of clients with PAP Smear normal": [],
-              "Number of clients with PAP Smear Abnormal": [],
-              "Number of clients with No visible Lesion": [],
-              "Number of clients with Visible Lesion": [],
-              "Number of clients with Suspected Cancer": [],
-              "Number of clients with Other gynae": []
-            },
+            screened_disaggregated_by_hiv_status: HIV_STATUS_GROUP,
+            screened_disaggregated_by_reason_for_visit: {},
+            screened_disaggregated_by_screening_method: {},
+            screening_results_hiv_positive: initialize_screening_results_group,
+            screening_results_hiv_negative: initialize_screening_results_group,
             suspects_disaggregated_by_age: {},
-            total_treated: {
-              "Same day treatment": [],
-              "Postponed treatment": [],
-              "Referral": [],
-              "Postponed treatment perfomed": []
-            },
-            total_treated_disaggregated_by_tx_option: {
-              'Cryotherapy': [],
-              'Thermal Coagulation': [],
-              'LEEP': [],
-              'Other': []
-            },
-            referral_reasons: {
-              "Further Investigation and Management": [],
-              "Large Lesion (Greater than 75 percent)": [],
-              "Unable to treat client": [],
-              "Suspect Cancer": [],
-              "No treatment": [],
-              "Other gynae": []
-            },
+            total_treated: initialize_total_treated_group,
+            total_treated_disaggregated_by_tx_option: initialize_total_treated_disaggregated_group,
+            referral_reasons: REFERRAL_REASON_GROUP,
             total_treated_disaggregated_by_age: {},
-            family_planning: {
-              'Yes': [],
-              'No': [],
-              'N/A': []
-            },
-            referral_feedback: {
-              "With referral feedback": []
-            }
+            family_planning: { 'Yes' => [], 'No' => [], 'N/A' => [] },
+            referral_feedback: { 'With referral feedback' => [] }
           }
           AGE_GROUPS.each do |key|
             @report[:suspects_disaggregated_by_age][key] ||= []
             @report[:screened_disaggregated_by_age][key] ||= []
             @report[:total_treated_disaggregated_by_age][key] ||= []
           end
-          @report[:screened_disaggregated_by_hiv_status]['Unknown (HIV- > 1 year ago, Inconclusive, Prefers not to Disclose, or Never Tested)'] ||= []
         end
         # rubocop:enable Metrics/MethodLength
 
+        def initialize_screening_results_group
+          group = {}
+          SCREENING_RESULTS.each do |_key, result|
+            group["Number of clients with #{result}"] = []
+          end
+          group
+        end
+
+        def initialize_total_treated_group
+          {
+            'Same day treatment' => [],
+            'Postponed treatment' => [],
+            'Referral' => [],
+            'Postponed treatment perfomed' => []
+          }
+        end
+
+        def initialize_total_treated_disaggregated_group
+          {
+            'Cryotherapy' => [],
+            'Thermal Coagulation' => [],
+            'LEEP' => [],
+            'Other' => []
+          }
+        end
+
+        # rubocop:disable Metrics/AbcSize
+        # rubocop:disable Metrics/MethodLength
+        # rubocop:disable Metrics/CyclomaticComplexity
+        # rubocop:disable Metrics/PerceivedComplexity
+        def handle_hiv_status(person_id, hiv_status, hiv_test_date, screening_method)
+          return unless screening_method.present?
+
+          indicator = @report[:screened_disaggregated_by_hiv_status]
+          negative = ['Negative'].include?(hiv_status)
+          test_date = hiv_test_date.present? if negative
+          period = test_date.to_date < end_date.to_date - 1.year if negative && test_date.present?
+          unknown_cat = negative && test_date && period
+          uncat = negative && hiv_test_date.blank?
+          if hiv_status.blank? || ['Never Tested', 'Undisclosed'].include?(hiv_status) || unknown_cat || uncat
+            sub_indicator = 'Unknown (HIV- > 1 year ago, Inconclusive, Prefers not to Disclose, or Never Tested)'
+            indicator[sub_indicator.to_sym] << person_id
+          elsif ['Positive on ART', 'Positive NOT on ART', 'Negative'].include?(hiv_status)
+            indicator[hiv_status] ||= []
+            indicator[hiv_status] << person_id
+          end
+        end
+        # rubocop:enable Metrics/AbcSize
+        # rubocop:enable Metrics/MethodLength
+        # rubocop:enable Metrics/CyclomaticComplexity
+        # rubocop:enable Metrics/PerceivedComplexity
+
+        def handle_visit_reason(person_id, visit_reason, screening_method)
+          return unless visit_reason.present?
+          return unless REASON_FOR_VISIT_GROUP.include?(visit_reason&.to_sym)
+
+          @report[:screened_disaggregated_by_reason_for_visit][visit_reason] ||= []
+          @report[:screened_disaggregated_by_reason_for_visit][visit_reason] << person_id if screening_method.present?
+        end
+
+        def handle_screening_method(screening_method, person_id)
+          return if screening_method.blank?
+          return unless SCREENING_METHOD_GROUP.include?(screening_method&.to_sym)
+
+          @report[:screened_disaggregated_by_screening_method][screening_method] ||= []
+          @report[:screened_disaggregated_by_screening_method][screening_method] << person_id
+        end
+
+        # rubocop:disable Metrics/AbcSize
+        # rubocop:disable Metrics/MethodLength
+        # rubocop:disable Metrics/CyclomaticComplexity
+        # rubocop:disable Metrics/PerceivedComplexity
+        def handle_screening_result(hiv_status, screening_result, person_id)
+          return if screening_result.blank?
+
+          key_sym = :screening_results_hiv_negative
+          key_sym = :screening_results_hiv_positive if ['Positive on ART', 'Positive NOT on ART'].include?(hiv_status)
+          if SCREENING_RESULTS_GROUP.include?(screening_result.downcase)
+            @report[key_sym]["Number of clients with #{SCREENING_RESULTS[screening_result]}"] ||= []
+            @report[key_sym]["Number of clients with #{SCREENING_RESULTS[screening_result]}"] << person_id
+          elsif screening_result == 'Suspected cancer'
+            @report[key_sym]['Number of clients with Suspected Cancer'] ||= []
+            @report[key_sym]['Number of clients with Suspected Cancer'] << person_id
+          else
+            @report[key_sym]['Number of clients with Other gynae'] ||= []
+            @report[key_sym]['Number of clients with Other gynae'] << person_id
+          end
+        end
+        # rubocop:enable Metrics/AbcSize
+        # rubocop:enable Metrics/MethodLength
+        # rubocop:enable Metrics/CyclomaticComplexity
+        # rubocop:enable Metrics/PerceivedComplexity
+
+        def handle_dot_option(dot_option, person_id)
+          return if dot_option.blank?
+          return if @report[:total_treated].keys.include?(dot_option&.to_sym)
+
+          @report[:total_treated][dot_option] ||= []
+          @report[:total_treated][dot_option] << person_id
+        end
+
+        def handle_tx_option(tx_option, person_id)
+          if tx_option.present? && @report[:total_treated_disaggregated_by_tx_option].keys.include?(tx_option&.to_sym)
+            @report[:total_treated_disaggregated_by_tx_option][tx_option] ||= []
+            @report[:total_treated_disaggregated_by_tx_option][tx_option] << person_id
+          elsif tx_option.present?
+            @report[:total_treated_disaggregated_by_tx_option]['Other'&.to_sym] << person_id
+          end
+        end
+
+        # rubocop:disable Metrics/AbcSize
+        def handle_referral_reason(referral_reason, person_id)
+          return unless referral_reason.present?
+
+          if @report[:referral_reasons].keys.include?(referral_reason&.to_sym)
+            @report[:referral_reasons][referral_reason.to_sym] << person_id
+          elsif referral_reason == 'Suspect cancer'
+            @report[:referral_reasons]['Suspect Cancer'&.to_sym] << person_id
+          else
+            @report[:referral_reasons]['Other gynae'&.to_sym] << person_id
+          end
+        end
+        # rubocop:enable Metrics/AbcSize
+
+        def handle_total_treated_by_age(tx_option, age_group, person_id)
+          return if tx_option.blank?
+
+          @report[:total_treated_disaggregated_by_age][age_group] ||= []
+          @report[:total_treated_disaggregated_by_age][age_group] << person_id
+        end
+
+        def handle_family_planning(family_planning, person_id)
+          return unless family_planning.present?
+
+          if @report[:family_planning].keys.include?(family_planning)
+            @report[:family_planning][family_planning] ||= []
+            @report[:family_planning][family_planning] << person_id
+          else
+            @report[:family_planning]['N/A'] ||= []
+            @report[:family_planning]['N/A'] << person_id
+          end
+        end
+
+        # rubocop:disable Metrics/AbcSize
         def query
           ActiveRecord::Base.connection.select_all <<~SQL
             SELECT
@@ -296,7 +352,7 @@ module CXCAService
               AND screened_method.obs_datetime >= '#{@start_date}'
               AND screened_method.obs_datetime <= '#{@end_date}'
             LEFT JOIN obs screened_result ON screened_result.person_id = p.person_id
-            	AND screened_result.concept_id = #{concept(SCREENING_RESULTS).concept_id}
+            	AND screened_result.concept_id = #{concept(SCREENING_RESULT).concept_id}
             	AND screened_result.voided = 0
               AND screened_result.obs_datetime >= '#{@start_date}'
               AND screened_result.obs_datetime <= '#{@end_date}'
@@ -377,9 +433,9 @@ module CXCAService
             GROUP BY p.person_id
           SQL
         end
+        # rubocop:enable Metrics/AbcSize
       end
+      # rubocop:enable Metrics/ClassLength
     end
   end
 end
-
-# rubocop:enable Metrics/ClassLength, Style/Documentation, Metrics/AbcSize
