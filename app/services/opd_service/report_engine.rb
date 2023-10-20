@@ -402,6 +402,7 @@ module OPDService
         order('n.date_created DESC').group('n.person_id, o.order_id')
 
       stats = []
+      diagnosis = get_diagnosis(start_date, end_date, record['person_id'])
       (data || []).each do |record|
         stats << {
           given_name: record['given_name'],
@@ -412,11 +413,26 @@ module OPDService
           date: record['start_date'].to_date,
           birthdate: record['birthdate'].to_date,
           patient_id: record['person_id'],
-          quantity: record['quantity']
+          quantity: record['quantity'],
+          diagnosis: diagnosis,
         }
       end
 
       return stats
+    end
+
+    def get_diagnosis(start_date, end_date,person_id)
+      type = EncounterType.find_by_name 'Outpatient diagnosis'
+      data = Encounter.where('encounter_datetime BETWEEN ? AND ?
+        AND encounter_type = ? AND obs.person_id = ?
+        AND obs.concept_id IN(6543, 6542)',
+        start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
+        end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id,person_id).\
+        joins('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
+        INNER JOIN concept_name c ON c.concept_id = obs.value_coded
+        ').\
+        group('obs.person_id,obs.value_coded,DATE(obs.obs_datetime)').\
+        pluck("c.name").to_s
     end
     def dispensation(start_date, end_date)
       type = EncounterType.find_by_name 'TREATMENT'
