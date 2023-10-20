@@ -1,0 +1,189 @@
+# frozen_string_literal: true
+
+require 'set'
+
+module SpineService
+  class WorkflowEngine
+    include ModelUtils
+
+    def initialize(program:, patient:, date:)
+      @patient = patient
+      @program = program
+      @date = date
+    end
+
+    # Retrieves the next encounter for bound patient
+    def next_encounter
+      state = INITIAL_STATE
+      loop do
+        state = next_state state
+        break if state == END_STATE
+
+        LOGGER.debug "Loading encounter type: #{state}"
+        encounter_type = EncounterType.find_by(name: state)
+
+        return encounter_type if valid_state?(state)
+      end
+
+      nil
+    end
+
+    private
+
+    LOGGER = Rails.logger
+
+    # Encounter types
+    INITIAL_STATE = 0 # Start terminal for encounters graph
+    END_STATE = 1 # End terminal for encounters graph
+    ADMIT_PATIENT = 'ADMIT PATIENT'
+    UPDATE_OUTCOME = 'PATIENT OUTCOME'
+    PATIENT_DIAGNOSIS = 'DIAGNOSIS'
+    HIV_STATUS = 'UPDATE HIV STATUS'
+    TREATMENT = 'TREATMENT'
+
+    ENCOUNTER_SM = {
+      INITIAL_STATE => ADMIT_PATIENT,
+      ADMIT_PATIENT => HIV_STATUS,
+      HIV_STATUS => PATIENT_DIAGNOSIS,
+      PATIENT_DIAGNOSIS => TREATMENT,
+      TREATMENT => END_STATE
+    }.freeze
+
+    STATE_CONDITIONS = {
+      ADMIT_PATIENT => %i[patient_not_admitted?],
+      HIV_STATUS => %i[patient_does_not_have_hiv_status_today? patient_has_outcome_today?],
+      PATIENT_DIAGNOSIS => %i[patient_does_not_have_diagnosis_today? patient_has_outcome_today?],
+      TREATMENT => %i[patient_does_not_have_prescription? patient_has_outcome_today?]
+    }.freeze
+
+    def load_user_activities
+      # activities = ['Patient registration,Social history']
+      activities = user_property('SPINE_activities')&.property_value
+      activities = 'Patient registration,Social history,Vitals' if activities.blank?
+
+      encounters = (activities&.split(',') || []).collect do |activity|
+        # Re-map activities to encounters
+        puts activity
+        case activity
+        when /Patient registration/i
+          PATIENT_REGISTRATION
+        when /Social history/i
+          SOCIAL_HISTORY
+        when /Vitals/i
+          VITALS
+        when /Presenting complaints/i
+          PRESENTING_COMPLAINTS
+        when /Outpatient diagnosis/i
+          OUTPATIENT_DIAGNOSIS
+        when /Prescription/i
+          PRESCRIPTION
+        when /Dispensing/i
+          DISPENSING
+        else
+          Rails.logger.warn "Invalid Spine activity in user properties: #{activity}"
+        end
+      end
+      Set.new(encounters)
+    end
+
+    def next_state(current_state)
+      ENCOUNTER_SM[current_state]
+    end
+
+    # Check if a relevant encounter of given type exists for given patient.
+    #
+    # NOTE: By `relevant` above we mean encounters that matter in deciding
+    # what encounter the patient should go for in this present time.
+    def encounter_exists?(type)
+      Encounter.where(type: type, patient: @patient, program: @program)\
+               .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
+               .exists?
+    end
+
+    def valid_state?(state)
+      return false if encounter_exists?(encounter_type(state)) || !opd_activity_enabled?(state)
+
+      (STATE_CONDITIONS[state] || []).reduce(true) do |status, condition|
+        status && method(condition).call
+      end
+    end
+
+    def opd_activity_enabled?(state)
+      @activities.include?(state)
+    end
+
+    def patient_not_admitted?
+      admit_type = EncounterType.find_by name: ADMIT_PATIENT
+      outcome_type = EncounterType.find_by name: UPDATE_OUTCOME
+      admit_encounter = Encounter.joins(:type).where(
+        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) <= DATE(?) AND program_id = ?',
+        @patient.patient_id, admit_type.encounter_type_id, @date, @program.program_id
+      ).order(encounter_datetime: :desc).first
+      outcome_encounter = Encounter.joins(:type).where(
+        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) <= DATE(?) AND program_id = ?',
+        @patient.patient_id, outcome_type.encounter_type_id, @date, @program.program_id
+      ).order(encounter_datetime: :desc).first
+      
+      return true if encounter.blank? && outcome_encounter.blank?
+
+      return false if admit_encounter.present? && outcome_encounter.blank?
+
+      return false if admit_encounter.present? && outcome_encounter.present? && admit_encounter.encounter_datetime > outcome_encounter.encounter_datetime
+        
+      true
+    end
+
+    def patient_does_not_have_hiv_status_today?
+      # we need to check if the patient is on ART or reactive
+      # if the patient is negative then we do another check of whether this check was during this visit
+      status_concept = ConceptName.find_by_name('HIV status').concept_id
+      admit_type = EncounterType.find_by name: ADMIT_PATIENT
+      latest_status = Observation.where(person_id: @patient.id, concept_id: status_concept)\
+                                 .where('DATE(obs_datetime) <= DATE(?)', @date)\
+                                 .order(obs_datetime: :desc).first
+      latest_admission = Encounter.joins(:type)
+                                  .where(patient_id: @patient.id, program_id: @program.program_id)\
+                                  .where('DATE(encounter_datetime) <= DATE(?) AND encounter_type = ?', @date, admit_type.id)\
+                                  .order(encounter_datetime: :desc).first
+      
+      return true if latest_status.blank?
+      return false if latest_status.value_coded == ConceptName.find_by_name('Reactive').concept_id
+      return false if latest_status.value_coded == ConceptName.find_by_name('Positive').concept_id
+      return false if latest_status.value_text == 'Positive' || latest_status.value_text == 'Reactive'
+
+      return true if latest_admission.present? && latest_status.obs_datetime < latest_admission.encounter_datetime
+
+      true
+    end
+
+    def patient_has_outcome_today?
+      outcome_type = EncounterType.find_by name: UPDATE_OUTCOME
+      outcome_encounter = Encounter.joins(:type).where(
+        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?) AND program_id = ?',
+        @patient.patient_id, outcome_type.encounter_type_id, @date, @program.program_id
+      ).order(encounter_datetime: :desc).first
+
+      outcome_encounter.present?
+    end
+
+    def patient_does_not_have_diagnosis_today?
+      encounter_type = EncounterType.find_by name: PATIENT_DIAGNOSIS
+      encounter = Encounter.joins(:type).where(
+        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
+        @patient.patient_id, encounter_type.encounter_type_id, @date
+      ).order(encounter_datetime: :desc).first
+
+      encounter.blank?
+    end
+
+    def patient_does_not_have_prescription?
+      encounter_type = EncounterType.find_by name: TREATMENT
+      encounter = Encounter.joins(:type).where(
+        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
+        @patient.patient_id, encounter_type.encounter_type_id, @date
+      ).order(encounter_datetime: :desc).first
+
+      encounter.blank?
+    end
+  end
+end
