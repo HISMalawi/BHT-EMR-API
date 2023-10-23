@@ -3,6 +3,8 @@
 require 'set'
 
 module SpineService
+  # rubocop:disable Metrics/ClassLength
+  # This class implements a state machine that determines the next encounter
   class WorkflowEngine
     include ModelUtils
 
@@ -56,36 +58,6 @@ module SpineService
       TREATMENT => %i[patient_does_not_have_prescription? patient_has_outcome_today?]
     }.freeze
 
-    def load_user_activities
-      # activities = ['Patient registration,Social history']
-      activities = user_property('SPINE_activities')&.property_value
-      activities = 'Patient registration,Social history,Vitals' if activities.blank?
-
-      encounters = (activities&.split(',') || []).collect do |activity|
-        # Re-map activities to encounters
-        puts activity
-        case activity
-        when /Patient registration/i
-          PATIENT_REGISTRATION
-        when /Social history/i
-          SOCIAL_HISTORY
-        when /Vitals/i
-          VITALS
-        when /Presenting complaints/i
-          PRESENTING_COMPLAINTS
-        when /Outpatient diagnosis/i
-          OUTPATIENT_DIAGNOSIS
-        when /Prescription/i
-          PRESCRIPTION
-        when /Dispensing/i
-          DISPENSING
-        else
-          Rails.logger.warn "Invalid Spine activity in user properties: #{activity}"
-        end
-      end
-      Set.new(encounters)
-    end
-
     def next_state(current_state)
       ENCOUNTER_SM[current_state]
     end
@@ -119,13 +91,15 @@ module SpineService
         'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) <= DATE(?) AND program_id = ?',
         @patient.patient_id, outcome_type.encounter_type_id, @date, @program.program_id
       ).order(encounter_datetime: :desc).first
-      
+
       return true if encounter.blank? && outcome_encounter.blank?
 
       return false if admit_encounter.present? && outcome_encounter.blank?
 
-      return false if admit_encounter.present? && outcome_encounter.present? && admit_encounter.encounter_datetime > outcome_encounter.encounter_datetime
-        
+      if admit_encounter.present? && outcome_encounter.present? && admit_encounter.encounter_datetime > outcome_encounter.encounter_datetime
+        return false
+      end
+
       true
     end
 
@@ -141,12 +115,11 @@ module SpineService
                                   .where(patient_id: @patient.id, program_id: @program.program_id)\
                                   .where('DATE(encounter_datetime) <= DATE(?) AND encounter_type = ?', @date, admit_type.id)\
                                   .order(encounter_datetime: :desc).first
-      
+
       return true if latest_status.blank?
       return false if latest_status.value_coded == ConceptName.find_by_name('Reactive').concept_id
       return false if latest_status.value_coded == ConceptName.find_by_name('Positive').concept_id
       return false if latest_status.value_text == 'Positive' || latest_status.value_text == 'Reactive'
-
       return true if latest_admission.present? && latest_status.obs_datetime < latest_admission.encounter_datetime
 
       true
@@ -182,4 +155,5 @@ module SpineService
       encounter.blank?
     end
   end
+  # rubocop:enable Metrics/ClassLength
 end
