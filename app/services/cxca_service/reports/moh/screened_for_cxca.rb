@@ -53,7 +53,7 @@ module CXCAService
           'Positive on ART' => [],
           'Negative' => [],
           'Unknown (HIV- > 1 year ago, Inconclusive, Prefers not to Disclose, or Never Tested)' => []
-        }.freeze
+        }
 
         REFERRAL_REASON_GROUP = {
           "Further Investigation and Management": [],
@@ -62,7 +62,7 @@ module CXCAService
           "Suspect Cancer": [],
           "No treatment": [],
           "Other gynae": []
-        }.freeze
+        }
 
         REASON_FOR_VISIT_GROUP = [
           'Initial Screening',
@@ -103,6 +103,8 @@ module CXCAService
             next unless AGE_GROUPS.include?(age_group)
 
             screening_method = SCREENING_METHOD_MAP[concept_id_to_name(record['screening_method'])]
+            next unless screening_method.present?
+            
             screening_result = concept_id_to_name(record['screening_result'])
             referral_reason = concept_id_to_name(record['referral_reason'])
             hiv_status = concept_id_to_name(record['hiv_status'])
@@ -197,7 +199,8 @@ module CXCAService
           uncat = negative && hiv_test_date.blank?
           if hiv_status.blank? || ['Never Tested', 'Undisclosed'].include?(hiv_status) || unknown_cat || uncat
             sub_indicator = 'Unknown (HIV- > 1 year ago, Inconclusive, Prefers not to Disclose, or Never Tested)'
-            indicator[sub_indicator.to_sym] << person_id
+            indicator[sub_indicator] ||= []
+            indicator[sub_indicator] << person_id
           elsif ['Positive on ART', 'Positive NOT on ART', 'Negative'].include?(hiv_status)
             indicator[hiv_status] ||= []
             indicator[hiv_status] << person_id
