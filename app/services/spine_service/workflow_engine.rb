@@ -101,15 +101,11 @@ module SpineService
     end
 
     def valid_state?(state)
-      return false if encounter_exists?(encounter_type(state)) || !opd_activity_enabled?(state)
+      return false if encounter_exists?(encounter_type(state))
 
       (STATE_CONDITIONS[state] || []).reduce(true) do |status, condition|
         status && method(condition).call
       end
-    end
-
-    def opd_activity_enabled?(state)
-      @activities.include?(state)
     end
 
     def patient_not_admitted?
