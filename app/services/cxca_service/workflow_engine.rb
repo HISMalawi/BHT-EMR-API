@@ -110,10 +110,10 @@ module CXCAService
 
       return false unless encounter.blank?
 
-      # encounter = Encounter.joins(:type).where(
-      #   'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) < DATE(?)',
-      #   @patient.patient_id, encounter_type.encounter_type_id, @date
-      # ).order(encounter_datetime: :desc).first
+      encounter = Encounter.joins(:type).where(
+        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) < DATE(?)',
+        @patient.patient_id, encounter_type.encounter_type_id, @date
+      ).order(encounter_datetime: :desc).first
 
       unless encounter.blank?
         screening_results_available = ConceptName.find_by_name('Screening results available').concept_id

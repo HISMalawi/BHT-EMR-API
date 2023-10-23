@@ -87,7 +87,7 @@ module CXCAService
             INNER JOIN (
               SELECT o.patient_id
               FROM orders o
-              INNER JOIN drug_order d ON d.order_id = o.order_id AND d.drug_inventory_id = (SELECT drug_id FROM arv_drug) AND d.quantity > 0
+              INNER JOIN drug_order d ON d.order_id = o.order_id AND d.drug_inventory_id IN (SELECT drug_id FROM arv_drug) AND d.quantity > 0
               GROUP BY o.patient_id
             ) in_art ON in_art.patient_id = p.person_id
             WHERE p.voided = 0 AND LEFT(p.gender, 1) = 'F'
