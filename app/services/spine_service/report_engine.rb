@@ -1,7 +1,7 @@
 
 require 'set'
 
-module OPDService
+module SpineService
   class ReportEngine
     include ModelUtils
 
