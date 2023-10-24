@@ -123,7 +123,7 @@ class OPDService::Reports::Drug
         AND obs.concept_id IN(6543, 6542)) 
         GROUP BY obs.person_id,obs.value_coded,DATE(obs.obs_datetime)
       ) as diagnosis,
-      encounter.patient_id, i.quantity,given_name, family_name,
+      encounter.patient_id, i.quantity as dispense_quantity,given_name, family_name,
       d.drug_id, o.start_date,p.*, d.name drug_name 
       FROM `encounter` 
       INNER JOIN orders o ON o.encounter_id = encounter.encounter_id

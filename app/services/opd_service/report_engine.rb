@@ -14,7 +14,7 @@ module OPDService
       'TRIAGE_COVID' => OPDService::Reports::TriageCovid,
       'TRIAGE_REGISTRATION' => OPDService::Reports::TriageRegistration,
       'ATTENDANCE' => OPDService::Reports::Attendance,
-      'Drug' => OPDService::Reports::Drug
+      'DRUG' => OPDService::Reports::Drug
     }
 
     def initialize
@@ -351,137 +351,38 @@ module OPDService
     end
 
     def drugs_given_without_prescription(start_date, end_date)
-      ActiveRecord::Base.connection.select_all <<~SQL
-        SELECT 
-          CASE 
-            WHEN LOWER(i.frequency) LIKE '%od%' THEN i.dose * 1 * (
-              CASE 
-                WHEN LOWER(o.instructions) LIKE '% for %' 
-                  THEN SUBSTRING(o.instructions, LOCATE('for', o.instructions) + 4)
-                ELSE 1
-              END
-            )
-            WHEN LOWER(i.frequency) LIKE '%bd%' THEN i.dose * 2 * (
-              CASE 
-                WHEN LOWER(o.instructions) LIKE '% for %' 
-                  THEN SUBSTRING(o.instructions, LOCATE('for', o.instructions) + 4)
-                ELSE 1
-              END
-            )
-            WHEN LOWER(i.frequency) LIKE '%tds%' THEN i.dose * 3 * (
-              CASE 
-                WHEN LOWER(o.instructions) LIKE '% for %' 
-                  THEN SUBSTRING(o.instructions, LOCATE('for', o.instructions) + 4)
-                ELSE 1
-              END
-            )
-            WHEN LOWER(i.frequency) LIKE '%qid%' THEN i.dose * 4 * (
-              CASE 
-                WHEN LOWER(o.instructions) LIKE '% for %' 
-                  THEN SUBSTRING(o.instructions, LOCATE('for', o.instructions) + 4)
-                ELSE 1
-              END
-            )
-            WHEN LOWER(i.frequency) LIKE '%5x/d%' THEN i.dose * 5 * (
-              CASE 
-                WHEN LOWER(o.instructions) LIKE '% for %' 
-                  THEN SUBSTRING(o.instructions, LOCATE('for', o.instructions) + 4)
-                ELSE 1
-              END
-            )
-            WHEN LOWER(i.frequency) LIKE '%q4hrs%' THEN i.dose * 6 * (
-              CASE 
-                WHEN LOWER(o.instructions) LIKE '% for %' 
-                  THEN SUBSTRING(o.instructions, LOCATE('for', o.instructions) + 4)
-                ELSE 1
-              END
-            )
-            WHEN LOWER(i.frequency) LIKE '%qam%' THEN i.dose * 1 * (
-              CASE 
-                WHEN LOWER(o.instructions) LIKE '% for %' 
-                  THEN SUBSTRING(o.instructions, LOCATE('for', o.instructions) + 4)
-                ELSE 1
-              END
-            )
-            WHEN LOWER(i.frequency) LIKE '%qnoon%' THEN i.dose * 1 * (
-              CASE 
-                WHEN LOWER(o.instructions) LIKE '% for %' 
-                  THEN SUBSTRING(o.instructions, LOCATE('for', o.instructions) + 4)
-                ELSE 1
-              END
-            )
-            WHEN LOWER(i.frequency) LIKE '%qpm%' THEN i.dose * 1 * (
-              CASE 
-                WHEN LOWER(o.instructions) LIKE '% for %' 
-                  THEN SUBSTRING(o.instructions, LOCATE('for', o.instructions) + 4)
-                ELSE 1
-              END
-            )
-            WHEN LOWER(i.frequency) LIKE '%qhs%' THEN i.dose * 1 * (
-              CASE 
-                WHEN LOWER(o.instructions) LIKE '% for %' 
-                  THEN SUBSTRING(o.instructions, LOCATE('for', o.instructions) + 4)
-                ELSE 1
-              END
-            )
-            WHEN LOWER(i.frequency) LIKE '%qod%' THEN i.dose * 0.5 * (
-              CASE 
-                WHEN LOWER(o.instructions) LIKE '% for %' 
-                  THEN SUBSTRING(o.instructions, LOCATE('for', o.instructions) + 4)
-                ELSE 1
-              END
-            )
-            WHEN LOWER(i.frequency) LIKE '%qwk%' THEN i.dose * 0.14 * (
-              CASE 
-                WHEN LOWER(o.instructions) LIKE '% for %' 
-                  THEN SUBSTRING(o.instructions, LOCATE('for', o.instructions) + 4)
-                ELSE 1
-              END
-            )
-            WHEN LOWER(i.frequency) LIKE '%once a month%' THEN i.dose * 0.03 * (
-              CASE 
-                WHEN LOWER(o.instructions) LIKE '% for %' 
-                  THEN SUBSTRING(o.instructions, LOCATE('for', o.instructions) + 4)
-                ELSE 1
-              END
-            )
-            WHEN LOWER(i.frequency) LIKE '%twice a month%' THEN i.dose * 0.071 * (
-              CASE 
-                WHEN LOWER(o.instructions) LIKE '% for %' 
-                  THEN SUBSTRING(o.instructions, LOCATE('for', o.instructions) + 4)
-                ELSE 1
-              END
-            )
-            WHEN LOWER(i.frequency) LIKE '%unknown%' THEN i.dose * 0 * (
-              CASE 
-                WHEN LOWER(o.instructions) LIKE '% for %' 
-                  THEN SUBSTRING(o.instructions, LOCATE('for', o.instructions) + 4)
-                ELSE 1
-              END
-            )
-            ELSE i.dose 
-          END AS prescribe_quantity,(
-            SELECT c.name FROM encounter e 
-            INNER JOIN obs ON obs.encounter_id = e.encounter_id
-            INNER JOIN concept_name c ON c.concept_id = obs.value_coded 
-            WHERE e.`voided` = 0 AND (DATE(encounter_datetime) BETWEEN '#{start_date}' AND '#{end_date}'
-            AND encounter_type = 8 AND obs.person_id = encounter.patient_id
-            AND obs.concept_id IN(6543, 6542)) 
-            GROUP BY obs.person_id,obs.value_coded,DATE(obs.obs_datetime)
-          ) as diagnosis,
-          encounter.patient_id, i.quantity,given_name, family_name,
-          d.drug_id, o.start_date,p.*, d.name drug_name 
-          FROM `encounter` 
-          INNER JOIN orders o ON o.encounter_id = encounter.encounter_id
-          INNER JOIN person p ON p.person_id = encounter.patient_id
-          INNER JOIN drug_order i ON i.order_id = o.order_id
-          INNER JOIN drug d ON d.drug_id = i.drug_inventory_id
-          LEFT JOIN person_name n ON n.person_id = encounter.patient_id AND n.voided = 0 
-          WHERE `encounter`.`voided` = 0 
-          AND (DATE(encounter_datetime) BETWEEN '#{start_date}' AND '#{end_date}'
-          AND encounter_type = 25 AND program_id = 14) 
-          GROUP BY n.person_id, o.order_id ORDER BY n.date_created DESC LIMIT 0,100
-        SQL
+      programID = Program.find_by_name 'OPD Program'
+      type = EncounterType.find_by_name 'DRUGS GIVEN'
+       visit_type = ConceptName.find_by_name 'Given drugs'
+
+      data = Encounter.where('encounter_datetime BETWEEN ? AND ?
+        AND encounter_type = ? AND obs.concept_id = ? AND program_id = ?',
+        start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
+        end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id, visit_type.concept_id, programID.program_id).\
+        joins('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
+        INNER JOIN person p ON p.person_id = encounter.patient_id
+        INNER JOIN drug d ON d.drug_id = obs.value_drug
+        LEFT JOIN person_name n ON n.person_id = encounter.patient_id AND n.voided = 0').\
+        select('encounter.patient_id, obs.value_numeric,
+        d.drug_id, obs.obs_datetime,n.given_name, n.family_name, p.*, d.name drug_name').\
+        order('n.date_created DESC').group('n.person_id, encounter.encounter_id')
+
+      stats = []
+      (data || []).each do |record|
+        stats << {
+          given_name: record['given_name'],
+          family_name: record['family_name'],
+          drug_name: record['drug_name'],
+          drug_id: record['drug_id'],
+          gender: record['gender'],
+          date: record['obs_datetime'].to_date,
+          birthdate: record['birthdate'].to_date,
+          patient_id: record['patient_id'],
+          quantity: record['value_numeric']
+        }
+      end
+
+      return stats
     end
 
     def drugs_given_with_prescription(start_date, end_date)
@@ -512,14 +413,12 @@ module OPDService
           date: record['start_date'].to_date,
           birthdate: record['birthdate'].to_date,
           patient_id: record['person_id'],
-          quantity: record['quantity'],
-          diagnosis: get_diagnosis(start_date, end_date, record['person_id']),
+          quantity: record['quantity']
         }
       end
 
       return stats
     end
-
     def dispensation(start_date, end_date)
       type = EncounterType.find_by_name 'TREATMENT'
       programID = Program.find_by_name 'OPD Program'
