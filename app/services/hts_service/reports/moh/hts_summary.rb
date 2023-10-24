@@ -11,7 +11,7 @@ module HtsService
         HIV_GROUP = concept("HIV group").concept_id
 
         INDICATORS = [
-          { name: "hiv_group", concept_id: HIV_GROUP, join: 'LEFT'}
+          { name: "hiv_group", concept_id: HIV_GROUP, join: 'LEFT', value: 'value_coded'}
         ]
 
         def initialize(start_date:, end_date:)
@@ -31,15 +31,7 @@ module HtsService
         private
 
         def init_report
-          model = his_patients_rev
-          INDICATORS.each do |param|
-            model = ObsValueScope.call(model: model, **param)
-          end
-          @query = Person.connection.select_all(
-            model
-              .select("person.gender, person.person_id")
-              .group("person.person_id")
-          ).to_hash
+          @query = his_patients_revs(INDICATORS) 
         end
 
         def set_unique

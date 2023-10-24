@@ -31,15 +31,15 @@ module HtsService
           {
             name: %w[test_one test_two test_three test_one_repeat],
             concept_id: [concept(TEST_ONE).concept_id, concept(TEST_TWO).concept_id, concept(TEST_THREE).concept_id, concept(TEST_ONE_REPEAT).concept_id],
-            join: "LEFT",
+            join: "LEFT", value: 'value_coded'
           },
-          { name: "referal_for_retesting", concept_id: concept(REFERRAL_FOR_RETESTING).concept_id, join: "LEFT" },
-          { name: "risk_category", concept_id: concept(RISK_CATEGORY).concept_id, join: "LEFT" },
+          { name: "referal_for_retesting", concept_id: concept(REFERRAL_FOR_RETESTING).concept_id, join: "LEFT", value: 'value_coded' },
+          { name: "risk_category", concept_id: concept(RISK_CATEGORY).concept_id, join: "LEFT" , value: 'value_coded' },
           { name: "referrals_ordered", concept_id: concept(REFERALS_ORDERED).concept_id, value: "value_text", join: "LEFT" },
-          {name: 'recency', concept_id: concept(RECENCY).concept_id, join: 'LEFT'},
-          {name: "dbs_collected", concept_id: concept(DBS_COLLECTED).concept_id, join: "LEFT"},
-          {name: "dbs_number", concept_id: concept(DBS_NUMBER).concept_id, join: "LEFT"},
-          {name: "hiv_group", concept_id: concept(HIV_GROUP).concept_id, join: "LEFT"},
+          {name: 'recency', concept_id: concept(RECENCY).concept_id, join: 'LEFT', value: 'value_coded'},
+          {name: "dbs_collected", concept_id: concept(DBS_COLLECTED).concept_id, join: "LEFT", value: 'value_coded'},
+          {name: "dbs_number", concept_id: concept(DBS_NUMBER).concept_id, join: "LEFT", value: 'value_text'},
+          {name: "hiv_group", concept_id: concept(HIV_GROUP).concept_id, join: "LEFT", value: 'value_coded'},
           {name: "art_referal", concept_id: concept(ART_REFERAL).concept_id, value: "value_text", join: "LEFT"},
 
         ]
@@ -90,15 +90,7 @@ module HtsService
         private
 
         def init_report
-           model = his_patients_rev
-          INDICATORS.each do |param|
-            model = ObsValueScope.call(model: model, **param)
-          end
-          @query = Person.connection.select_all(
-            model
-              .select("person.gender, person.person_id, person.birthdate")
-              .group("person.person_id")
-          ).to_hash
+          @query = his_patients_revs(INDICATORS) 
         end
 
 
