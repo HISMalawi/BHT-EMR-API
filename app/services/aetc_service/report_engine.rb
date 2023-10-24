@@ -10,6 +10,7 @@ module AetcService
       'DISAGGREGATED DIAGNOSIS' => AetcService::Reports::Clinic::DisaggregatedDiagnosis,
       'REFERRAL REPORT' => AetcService::Reports::Clinic::ReferralReport,
       'TOTAL REGISTERED' => AetcService::Reports::Clinic::TotalRegisteredReport
+      'OPD GENERAL' => AetcService::Reports::Clinic::OpdGeneral
     }.freeze
 
     def find_report(start_date:, end_date:, name:, **kwargs)
