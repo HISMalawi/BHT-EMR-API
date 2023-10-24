@@ -44,15 +44,13 @@ module SpineService
     TREATMENT = 'TREATMENT'
 
     ENCOUNTER_SM = {
-      INITIAL_STATE => ADMIT_PATIENT,
-      ADMIT_PATIENT => HIV_STATUS,
+      INITIAL_STATE => HIV_STATUS,
       HIV_STATUS => PATIENT_DIAGNOSIS,
       PATIENT_DIAGNOSIS => TREATMENT,
       TREATMENT => END_STATE
     }.freeze
 
     STATE_CONDITIONS = {
-      ADMIT_PATIENT => %i[patient_not_admitted?],
       HIV_STATUS => %i[patient_does_not_have_hiv_status_today? patient_has_outcome_today?],
       PATIENT_DIAGNOSIS => %i[patient_does_not_have_diagnosis_today? patient_has_outcome_today?],
       TREATMENT => %i[patient_does_not_have_prescription? patient_has_outcome_today?]
@@ -78,29 +76,6 @@ module SpineService
       (STATE_CONDITIONS[state] || []).reduce(true) do |status, condition|
         status && method(condition).call
       end
-    end
-
-    def patient_not_admitted?
-      admit_type = EncounterType.find_by name: ADMIT_PATIENT
-      outcome_type = EncounterType.find_by name: UPDATE_OUTCOME
-      admit_encounter = Encounter.joins(:type).where(
-        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) <= DATE(?) AND program_id = ?',
-        @patient.patient_id, admit_type.encounter_type_id, @date, @program.program_id
-      ).order(encounter_datetime: :desc).first
-      outcome_encounter = Encounter.joins(:type).where(
-        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) <= DATE(?) AND program_id = ?',
-        @patient.patient_id, outcome_type.encounter_type_id, @date, @program.program_id
-      ).order(encounter_datetime: :desc).first
-
-      return true if admit_encounter.blank? && outcome_encounter.blank?
-
-      return false if admit_encounter.present? && outcome_encounter.blank?
-
-      if admit_encounter.present? && outcome_encounter.present? && admit_encounter.encounter_datetime > outcome_encounter.encounter_datetime
-        return false
-      end
-
-      true
     end
 
     def patient_does_not_have_hiv_status_today?
