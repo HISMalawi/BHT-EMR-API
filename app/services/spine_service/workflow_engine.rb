@@ -92,7 +92,7 @@ module SpineService
         @patient.patient_id, outcome_type.encounter_type_id, @date, @program.program_id
       ).order(encounter_datetime: :desc).first
 
-      return true if encounter.blank? && outcome_encounter.blank?
+      return true if admit_encounter.blank? && outcome_encounter.blank?
 
       return false if admit_encounter.present? && outcome_encounter.blank?
 
