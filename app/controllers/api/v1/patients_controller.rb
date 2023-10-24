@@ -38,13 +38,16 @@ class Api::V1::PatientsController < ApplicationController
 
   # GET /api/v1/search/patients
   def search_by_name_and_gender
-    filters = params.permit(%i[given_name middle_name family_name birthdate gender])
-
+    filters = params.permit(%i[given_name middle_name family_name birthdate gender per_page page])
+  
+    page = (filters[:page].presence).to_i || 1
+    per_page = (filters[:per_page].presence).to_i || 50
+  
     patients = service.find_patients_by_name_and_gender(filters[:given_name],
                                                         filters[:middle_name],
                                                         filters[:family_name],
-                                                        filters[:gender])
-
+                                                        filters[:gender]).limit(per_page).offset((page.to_i - 1) * per_page)
+  
     render json: patients
   end
 
