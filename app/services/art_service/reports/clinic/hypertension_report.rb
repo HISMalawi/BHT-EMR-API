@@ -152,7 +152,7 @@ module ARTService
                     WHEN sys.value_numeric > 179 THEN 'severe_reading'
                 END AS systolic_classification,
                 CASE
-                    WHEN dia.value_numeric < 89 THEN 'normal_reading'
+                    WHEN dia.value_numeric <= 89 THEN 'normal_reading'
                     WHEN dia.value_numeric > 89 AND dia.value_numeric <= 99 THEN 'mild_reading'
                     WHEN dia.value_numeric > 99 AND dia.value_numeric <= 109 THEN 'moderate_reading'
                     WHEN dia.value_numeric > 109 THEN 'severe_reading'

@@ -800,7 +800,7 @@ module ARTService
         external_concept = concept('External Consultation').concept_id
         hiv_clinic_registration_id = EncounterType.find_by_name('HIV CLINIC REGISTRATION').encounter_type_id
 
-        ActiveRecord::Base.connection.select_all("SELECT e.patient_id FROM temp_earliest_start_date e
+        ActiveRecord::Base.connection.select_all("SELECT e.patient_id FROM temp_cohort_members e
         LEFT JOIN encounter as hiv_registration ON hiv_registration.patient_id = e.patient_id AND hiv_registration.encounter_datetime < DATE(#{end_date}) AND hiv_registration.encounter_type = #{hiv_clinic_registration_id} AND hiv_registration.voided = 0
         LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND value_coded = #{new_patient_concept} AND obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY) AS new_patient ON e.patient_id = new_patient.person_id
         LEFT JOIN (SELECT * FROM obs WHERE concept_id = #{type_of_patient_concept} AND voided = 0 AND value_coded = #{drug_refill_concept} AND obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY) AS refill ON e.patient_id = refill.person_id
@@ -930,7 +930,7 @@ module ARTService
               AND temp_patient_outcomes.cum_outcome = 'On antiretrovirals'
             WHERE voided = 0
               AND concept_id IN (#{bp_concepts.to_sql})
-              AND value_text IS NOT NULL
+              AND (value_text IS NOT NULL OR value_numeric IS NOT NULL)
               AND obs_datetime < DATE('#{end_date}') + INTERVAL 1 DAY
             GROUP BY person_id
           ) AS max_obs
@@ -941,7 +941,7 @@ module ARTService
             AND temp_patient_outcomes.cum_outcome = 'On antiretrovirals'
           WHERE o.voided = 0
             AND o.concept_id in (#{bp_concepts.to_sql})
-            AND o.value_text IS NOT NULL
+            AND (o.value_text IS NOT NULL OR o.value_numeric IS NOT NULL)
           GROUP BY o.person_id;
         SQL
 
