@@ -12,7 +12,7 @@ module AETCService
                     @start_age = JSON.parse(kwargs[:start_age])
                     @end_age = JSON.parse(kwargs[:end_age])
                     @report_type = JSON.parse(kwargs[:report_type])
-                    @age_groups = ['> #{@start_age} to < #{@end_age}']
+                    @age_groups = ["> #{@start_age} to < #{@end_age}"]
                 end
 
                 def fetch_report
@@ -37,18 +37,19 @@ module AETCService
                 end
 
                 def fetch_general_diagnosis_report
+                    concept = ConceptName.find_by_name("DIAGNOSIS").concept_id
+
                     results = ActiveRecord::Base.connection.select_all <<~SQL
-                    SELECT name diagnosis , city_village village , 
+                    SELECT name diagnosis , 
                     age_group(p.birthdate,DATE(obs_datetime),DATE(p.date_created),p.birthdate_estimated) age_groups 
                     FROM `obs` 
                     INNER JOIN person p ON obs.person_id = obs.person_id
                     INNER JOIN concept_name c ON c.concept_name_id = obs.value_coded_name_id
-                    INNER JOIN person_address pd ON obs.person_id = pd.person_id
                     WHERE (obs.concept_id=#{concept} 
-                    AND obs_datetime >= '#{start_date.strftime('%Y-%m-%d 00:00:00')}'
-                    AND obs_datetime <= '#{end_date.strftime('%Y-%m-%d 23:59:59')}' AND obs.voided = 0) 
-                    GROUP BY diagnosis , village ,age_groups
-                    HAVING age_groups IN (#{age_groups.join(',')}) AND diagnosis = ?
+                    AND obs_datetime >= #{start_date.strftime('%Y-%m-%d 00:00:00')}
+                    AND obs_datetime <= #{end_date.strftime('%Y-%m-%d 23:59:59')} AND obs.voided = 0) 
+                    GROUP BY diagnosis,age_groups
+                    HAVING age_groups IN (#{age_groups})
                     ORDER BY c.name ASC
                     SQL
 
