@@ -27,6 +27,18 @@
 -- disable foreign key checks
 SET FOREIGN_KEY_CHECKS = 0;
 
+CREATE TABLE IF NOT EXISTS `moh_regimens` (
+  `regimen_id` int(11) NOT NULL AUTO_INCREMENT,
+  `regimen_index` int(11) NOT NULL,
+  `description` text,
+  `date_created` datetime DEFAULT NULL,
+  `date_updated` datetime DEFAULT NULL,
+  `creator` int(11) NOT NULL,
+  `voided` tinyint(1) NOT NULL DEFAULT '0',
+  `voided_by` int(11) DEFAULT NULL,
+  PRIMARY KEY (`regimen_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=latin1;
+
 -- because we have skipped these we need to create them manually here
 CREATE TABLE IF NOT EXISTS  `report_def` (
   `report_def_id` int(11) NOT NULL AUTO_INCREMENT,
