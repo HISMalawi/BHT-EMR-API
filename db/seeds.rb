@@ -6,12 +6,20 @@
 # Examples:
 #
 #   movies = Movie.create([{ name: 'Star Wars' }, { name: 'Lord of the Rings' }])
-Encounter.where(uuid: nil).each do |encounter|
-  encounter.uuid = SecureRandom.uuid
-  encounter.save
-end
+ActiveRecord::Base.connection.execute <<~SQL
+  UPDATE encounter SET uuid = UUID() WHERE uuid IS NULL
+SQL
+
+ActiveRecord::Base.connection.execute <<~SQL
+  UPDATE obs SET uuid = UUID() WHERE uuid IS NULL
+SQL
 
 # execute alter table and have uuid as not null and unique
 ActiveRecord::Base.connection.execute <<~SQL
   ALTER TABLE encounter MODIFY uuid VARCHAR(38) NOT NULL UNIQUE
+SQL
+
+# execute alter table and have uuid as not null and unique
+ActiveRecord::Base.connection.execute <<~SQL
+  ALTER TABLE obs MODIFY uuid VARCHAR(38) NOT NULL UNIQUE
 SQL
