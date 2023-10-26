@@ -6,6 +6,7 @@ module SpineService
     REPORTS = {
       # 'DASHBOARD STATISTICS' => AetcService::Reports::Clinic::DashboardStats,
       'DIAGNOSIS' => SpineService::Reports::Clinic::DiagnosisReport,
+      'ATTENDANCE' => SpineService::Reports::Clinic::AttendanceReport,
     }.freeze
 
     def find_report(start_date:, end_date:, name:, **kwargs)
