@@ -13,8 +13,12 @@ module SpineService
         end
 
         def fetch_report
-          program = Program.find_by_name 'Spine Program'
-          data = Encounter.where('encounter_datetime BETWEEN ? AND ? AND program_id = ? AND voided = 0', @start_date, @end_date, program.program_id.to_s)
+          data = Encounter.where(
+              'encounter_datetime BETWEEN ? AND ? AND program_id = ? AND voided = 0', 
+              @start_date, 
+              @end_date, 
+              program("Spine Program").program_id.to_s
+            )
             .group('patient_id, DATE(encounter_datetime)')
             .select("patient_id, DATE_FORMAT(encounter_datetime,'%Y-%m-%d') enc_date")
           
