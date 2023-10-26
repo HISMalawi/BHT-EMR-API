@@ -16,7 +16,7 @@ module SpineService
           type = EncounterType.find_by_name 'Outpatient diagnosis'
           data = Encounter.where('encounter_datetime BETWEEN ? AND ?
             AND encounter_type = ?
-            AND obs.concept_id IN(6543, 6542)', `#{start_date}`, `#{end_date}`,type.id).\
+            AND obs.concept_id IN(6543, 6542)', @start_date, @end_date, type.id).\
             joins('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
             INNER JOIN person p ON p.person_id = encounter.patient_id
             LEFT JOIN person_name n ON n.person_id = encounter.patient_id AND n.voided = 0
