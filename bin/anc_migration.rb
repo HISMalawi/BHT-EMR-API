@@ -3,7 +3,8 @@ require 'erb'
 require 'yaml'
 
 # Geth the anc database name
-database = YAML.load_file(ERB.new(File.read("#{Rails.root}/config/database.yml")).result)['anc_database']['database']
+# database = YAML.load_file(ERB.new(File.read("#{Rails.root}/config/database.yml")).result)['anc_database']['database']
+database = YAML.load(File.read("#{Rails.root}/config/database.yml"))['anc_database']['database']
 
 # method to create a beautiful csv file
 def fetch_diff(database)

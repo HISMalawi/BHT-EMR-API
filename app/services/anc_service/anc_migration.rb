@@ -509,7 +509,7 @@ module ANCService
       end
       statement = <<~SQL
         INSERT INTO encounter (encounter_id, encounter_type, patient_id, provider_id, location_id, form_id, encounter_datetime, creator, date_created, voided, voided_by, date_voided, void_reason, uuid, changed_by, date_changed, program_id)
-        SELECT (SELECT #{@encounter_id} + encounter_id), encounter_type, #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + patient_id)"}, providers.ART_person_id, location_id, form_id, encounter_datetime, bak.ART_user_id, encounter.date_created, encounter.voided, voider.ART_user_id, encounter.date_voided, encounter.void_reason, encounter.uuid, changer.ART_user_id, encounter.date_changed, 12
+        SELECT (SELECT #{@encounter_id} + encounter_id), encounter_type, #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + patient_id)"}, providers.ART_person_id, location_id, form_id, encounter_datetime, bak.ART_user_id, encounter.date_created, encounter.voided, voider.ART_user_id, encounter.date_voided, encounter.void_reason, encounter.uuid, changer.ART_user_id, encounter.date_changed, encounter.program_id
         FROM #{@database}.encounter #{cond}
         INNER JOIN #{@database}.user_bak bak ON encounter.creator = bak.ANC_user_id
         INNER JOIN (
