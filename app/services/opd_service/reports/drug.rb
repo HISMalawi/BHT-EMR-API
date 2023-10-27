@@ -115,16 +115,19 @@ class OPDService::Reports::Drug
         )
         ELSE i.dose 
       END AS prescribe_quantity,(
-        SELECT c.name FROM encounter e 
+        SELECT GROUP_CONCAT(c.name SEPARATOR ', ') AS names FROM encounter e 
         INNER JOIN obs ON obs.encounter_id = e.encounter_id
         INNER JOIN concept_name c ON c.concept_id = obs.value_coded 
         WHERE e.`voided` = 0 AND (DATE(encounter_datetime) BETWEEN '#{start_date}' AND '#{end_date}'
-        AND encounter_type = 8 AND obs.person_id = encounter.patient_id
-        AND obs.concept_id IN(6543, 6542)) 
-        GROUP BY obs.person_id,obs.value_coded,DATE(obs.obs_datetime)
+        AND encounter_type = 8 -- OUTPATIENT DIAGNOSIS
+        AND obs.person_id = encounter.patient_id
+        AND obs.concept_id IN(6543 -- Secondary diagnosis
+          ,6542 -- Primary diagnosis
+          )) 
+        AND Date(e.date_created) = DATE(o.date_created)
       ) as diagnosis,
       encounter.patient_id, i.quantity as dispense_quantity,given_name, family_name,
-      d.drug_id, o.start_date,p.*, d.name drug_name 
+      o.date_created as date, drug_id, o.start_date,p.*, d.name drug_name 
       FROM `encounter` 
       INNER JOIN orders o ON o.encounter_id = encounter.encounter_id
       INNER JOIN person p ON p.person_id = encounter.patient_id
@@ -133,8 +136,10 @@ class OPDService::Reports::Drug
       LEFT JOIN person_name n ON n.person_id = encounter.patient_id AND n.voided = 0 
       WHERE `encounter`.`voided` = 0 
       AND (DATE(encounter_datetime) BETWEEN '#{start_date}' AND '#{end_date}'
-      AND encounter_type = 25 AND program_id = 14) 
-      GROUP BY n.person_id, o.order_id ORDER BY n.date_created DESC LIMIT 0,100
+      AND encounter_type = 25 -- TREATMENT
+      AND program_id = 14 -- OPD Program
+    ) 
+      GROUP BY n.person_id, o.order_id ORDER BY n.date_created DESC
     SQL
   end
 end
