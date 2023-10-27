@@ -66,14 +66,6 @@ class ReportService
     engine(@program).cohort_disaggregated(quarter, age_group, start_date, end_date, rebuild, init, **kwargs)
   end
 
-  def drugs_given_without_prescription(start_date, end_date)
-    engine(@program).drugs_given_without_prescription(start_date, end_date)
-  end
-
-  def drugs_given_with_prescription(start_date, end_date)
-    engine(@program).drugs_given_with_prescription(start_date, end_date)
-  end
-
   def dispensation(start_date, end_date)
     engine(@program).dispensation(start_date, end_date)
   end
