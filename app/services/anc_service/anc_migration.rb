@@ -274,7 +274,7 @@ module ANCService
     def migrate_users
       statement = <<~SQL
         INSERT INTO users (user_id,  system_id,  username,  password,  salt,  secret_question,  secret_answer,  creator,  date_created,  changed_by,  date_changed,  person_id,  retired,  retired_by,  date_retired,  retire_reason,  uuid,  authentication_token)
-        SELECT b.ART_user_id, users.system_id,  CONCAT(users.username, '_anc'),  users.password,  users.salt,  users.secret_question,  users.secret_answer, creators.ART_user_id,  users.date_created, changers.ART_user_id,  users.date_changed, b.person_id, users.retired, voiders.ART_user_id, users.date_retired,  users.retire_reason,  users.uuid,  users.authentication_token
+        SELECT b.ART_user_id, users.system_id,  CONCAT(users.username, '_spine'),  users.password,  users.salt,  users.secret_question,  users.secret_answer, creators.ART_user_id,  users.date_created, changers.ART_user_id,  users.date_changed, b.person_id, users.retired, voiders.ART_user_id, users.date_retired,  users.retire_reason,  uuid(),  users.authentication_token
         FROM #{@database}.users
         INNER JOIN #{@database}.user_bak b on b.ANC_user_id = users.user_id
         INNER JOIN #{@database}.user_bak creators on creators.ANC_user_id = users.creator
