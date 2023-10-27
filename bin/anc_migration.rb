@@ -1,9 +1,9 @@
 # frozen_string_literal: true
-
+require 'erb'
 require 'yaml'
 
 # Geth the anc database name
-database = YAML.load(File.open("#{Rails.root}/config/database.yml", 'r'))['anc_database']['database']
+database = YAML.load_file(ERB.new(File.read("#{Rails.root}/config/database.yml")).result)['anc_database']['database']
 
 # method to create a beautiful csv file
 def fetch_diff(database)
@@ -97,12 +97,12 @@ def create_csv(database)
 
     open_person = fetch_person(nil, patient['identifier']) || { birthdate: nil, person_id: nil, gender: nil }
     open_name = fetch_person_names(nil, patient['identifier']) || { given_name: nil, family_name: nil }
-    open_address = fetch_person_address(nil, patient['identifier']) || {home_village: nil, home_region: nil, ta: nil, current_village: nil}
+    open_address = fetch_person_address(nil, patient['identifier']) || { home_village: nil, home_region: nil, ta: nil, current_village: nil }
     open_attribute = fetch_person_attribute(nil, patient['identifier']).map { |p| p['value'] }.join('/')
     open_identifier = fetch_other_identifiers(nil, patient['identifier']).map { |p| p['identifier'] }.join('/')
 
     file.puts <<~SQL
-#{patient['identifier']},#{patient['given_name']},#{patient['family_name']},#{anc_person['birthdate']},#{anc_person['gender']},#{anc_address['home_region']},#{anc_address['ta']},#{anc_address['home_village']},#{anc_address['current_village']},#{anc_identifier},#{anc_person['person_id']},#{anc_attribute},#{open_name['given_name']},#{open_name['family_name']},#{open_person['birthdate']},#{open_person['gender']},#{open_address['home_region']},#{open_address['ta']},#{open_address['home_village']},#{open_address['current_village']},#{open_identifier},#{open_person['person_id']},#{open_attribute}
+      #{patient['identifier']},#{patient['given_name']},#{patient['family_name']},#{anc_person['birthdate']},#{anc_person['gender']},#{anc_address['home_region']},#{anc_address['ta']},#{anc_address['home_village']},#{anc_address['current_village']},#{anc_identifier},#{anc_person['person_id']},#{anc_attribute},#{open_name['given_name']},#{open_name['family_name']},#{open_person['birthdate']},#{open_person['gender']},#{open_address['home_region']},#{open_address['ta']},#{open_address['home_village']},#{open_address['current_village']},#{open_identifier},#{open_person['person_id']},#{open_attribute}
     SQL
   end
   file.close
