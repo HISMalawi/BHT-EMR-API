@@ -111,67 +111,6 @@ module AetcService
                     max_age_in_months = age_range.max == Float::INFINITY ? 'NULL' : age_range.max
                     "timestampdiff(month, pe.birthdate, '2021-10-03 23:59:59 +0200') BETWEEN #{min_age_in_months} AND #{max_age_in_months} THEN #{age_group}"
                 end
-
-                # def age_group_to_sql(age_group)
-                #     age_range = age_group_to_range(age_group)
-                #     min_age_in_months = age_range.min
-                #     max_age_in_months = age_range.max == Float::INFINITY ? 'NULL' : age_range.max
-                #     "WHEN timestampdiff(month, pe.birthdate, '2021-10-03 23:59:59 +0200') age_in_months BETWEEN #{min_age_in_months} AND #{max_age_in_months} THEN #{age_group}"
-                # end
-
-                # Helper method to convert age group string to SQL condition
-                # def age_group_to_sql(age_group)
-                #     age_range = age_group_to_range(age_group)
-                #     max_value = age_range.max == Float::INFINITY ? 'NULL' : age_range.max
-                #     "BETWEEN timestampdiff(month, pe.birthdate, '2021-10-03 23:59:59 +0200') age_in_months AND #{max_value}"
-                # end
-
-
-                # def fetch_general_diagnosis_report
-                #     primary_diagnosis = ConceptName.find_by_name("PRIMARY DIAGNOSIS").concept_id
-                #     secondary_diagnosis = ConceptName.find_by_name("SECONDARY DIAGNOSIS").concept_id
-                  
-                #     results = ActiveRecord::Base.connection.select_all <<~SQL
-                #       SELECT name diagnosis, p.person_id,
-                #       age_group(p.birthdate, DATE(obs_datetime), DATE(p.date_created), p.birthdate_estimated) age_groups
-                #       FROM `obs`
-                #       INNER JOIN person p ON obs.person_id = p.person_id
-                #       INNER JOIN concept_name c ON c.concept_name_id = obs.value_coded_name_id
-                #       WHERE (obs.concept_id IN (#{primary_diagnosis}, #{secondary_diagnosis})
-                #       AND obs_datetime >= '#{start_date}'
-                #       AND obs_datetime <= '#{end_date}' AND obs.voided = 0)
-                #       ORDER BY c.name ASC
-                #     SQL
-                  
-                #     map_query(results)
-                #   end
-                  
-                #   AGE_IN_MONTHS_MAP = {
-                #     '< 6 months' => [0, 6],
-                #     '6 months to < 1 yr' => [6, 12],
-                #     '1 to < 5' => [12, 60],
-                #     '5 to 14' => [60, 168],
-                #     '> 14 to < 20' => [168, 240],
-                #     '20 to 30' => [240, 360],
-                #     '>30 to <40' => [360, 480],
-                #     '40 to <50' => [480, 600]
-                #   }.freeze
-                  
-                #   def map_query(data)
-                #     report = {}
-                  
-                #     data.each do |obj|
-                #       diagnosis = obj['diagnosis']
-                #       person_id = obj['person_id']
-                  
-                #       report[diagnosis] ||= []
-                #       unless report[diagnosis].include?(person_id)
-                #         report[diagnosis] << person_id
-                #       end
-                #     end
-                  
-                #     report
-                #   end
             end
         end
     end
