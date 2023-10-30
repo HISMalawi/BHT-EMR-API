@@ -15,6 +15,9 @@ module AetcService
                     @age_groups = ['> 14 to < 20', '20 to 30'].map{|g|"'#{g}'"}
                 end
 
+                # The old architecture used the same query to generate the reports
+                # Hence each case calling the same method  
+                # This will be changed after further details/requirements are gathered 
                 def fetch_report
                     case @report_type
                     when 'General outpatient'
@@ -40,7 +43,7 @@ module AetcService
                     fetch_general_diagnosis_report
                 end
 
-                # Define your global variable with age groups
+                # global variable with age groups
                 age_groups = [
                     '< 6 months',
                     '>14 to <20', 
@@ -92,7 +95,7 @@ module AetcService
                         SELECT cn.name AS diagnosis, e.patient_id AS person_id,  
                         CASE
                             #{age_group_conditions}
-                            ELSE 'Other'
+                            ELSE '> 50'
                         END AS age_group
                         FROM encounter e
                         INNER JOIN patient p ON p.patient_id = e.patient_id AND p.voided = 0
