@@ -274,7 +274,7 @@ module ANCService
     def migrate_users
       statement = <<~SQL
         INSERT INTO users (user_id,  system_id,  username,  password,  salt,  secret_question,  secret_answer,  creator,  date_created,  changed_by,  date_changed,  person_id,  retired,  retired_by,  date_retired,  retire_reason,  uuid,  authentication_token)
-        SELECT b.ART_user_id, users.system_id,  CONCAT(users.username, '_anc'),  users.password,  users.salt,  users.secret_question,  users.secret_answer, creators.ART_user_id,  users.date_created, changers.ART_user_id,  users.date_changed, b.person_id, users.retired, voiders.ART_user_id, users.date_retired,  users.retire_reason,  users.uuid,  users.authentication_token
+        SELECT b.ART_user_id, users.system_id,  CONCAT(users.username, '_spine'),  users.password,  users.salt,  users.secret_question,  users.secret_answer, creators.ART_user_id,  users.date_created, changers.ART_user_id,  users.date_changed, b.person_id, users.retired, voiders.ART_user_id, users.date_retired,  users.retire_reason,  uuid(),  users.authentication_token
         FROM #{@database}.users
         INNER JOIN #{@database}.user_bak b on b.ANC_user_id = users.user_id
         INNER JOIN #{@database}.user_bak creators on creators.ANC_user_id = users.creator
@@ -509,7 +509,7 @@ module ANCService
       end
       statement = <<~SQL
         INSERT INTO encounter (encounter_id, encounter_type, patient_id, provider_id, location_id, form_id, encounter_datetime, creator, date_created, voided, voided_by, date_voided, void_reason, uuid, changed_by, date_changed, program_id)
-        SELECT (SELECT #{@encounter_id} + encounter_id), encounter_type, #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + patient_id)"}, providers.ART_person_id, location_id, form_id, encounter_datetime, bak.ART_user_id, encounter.date_created, encounter.voided, voider.ART_user_id, encounter.date_voided, encounter.void_reason, encounter.uuid, changer.ART_user_id, encounter.date_changed, 12
+        SELECT (SELECT #{@encounter_id} + encounter_id), encounter_type, #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + patient_id)"}, providers.ART_person_id, location_id, form_id, encounter_datetime, bak.ART_user_id, encounter.date_created, encounter.voided, voider.ART_user_id, encounter.date_voided, encounter.void_reason, encounter.uuid, changer.ART_user_id, encounter.date_changed, encounter.program_id
         FROM #{@database}.encounter #{cond}
         INNER JOIN #{@database}.user_bak bak ON encounter.creator = bak.ANC_user_id
         INNER JOIN (

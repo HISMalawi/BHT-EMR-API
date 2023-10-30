@@ -14,6 +14,7 @@ class AlterUsersTableVoided < ActiveRecord::Migration[5.2]
     rename_column :users, :date_voided, :date_retired unless column_exists?(:users, :date_retired)
     add_column :users, :person_id, :integer unless column_exists?(:users, :person_id)
     add_column :users, :authentication_token, :string unless column_exists?(:users, :authentication_token)
+    add_column :users, :uuid, :string, length: 38 unless column_exists?(:users, :uuid)
     unless foreign_key_exists?(:users, :person_id)
         add_foreign_key :users, :person, column: :person_id, foreign_key: :person_id, primary_key: :person_id
     end

@@ -52,7 +52,8 @@ echo "Running bart2_views_schema_additions"
 mysql --host=$HOST --user=$USERNAME --port=$PORT --password=$PASSWORD $DATABASE < db/sql/bart2_views_schema_additions.sql
 echo "Running ntp_regimens"
 mysql --host=$HOST --user=$USERNAME --port=$PORT --password=$PASSWORD $DATABASE < db/sql/ntp_regimens.sql
-
+echo "Running malawi regions"
+mysql --host=$HOST --user=$USERNAME --port=$PORT --password=$PASSWORD $DATABASE < db/initial_setup/malawi_regions.sql
 
 # now call the update_art_metadata.sh script
 bin/update_art_metadata.sh $ENV
