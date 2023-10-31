@@ -117,10 +117,18 @@ module AetcService
                 end
 
                 def map_object data
-                    report = {}
+                    report = []
                     data.each do |p|
-                        report[p['diagnosis']] ||= []
-                        report[p['diagnosis']] << p['person_id']
+                        diagnosis = p['diagnosis']
+                        person_id = p['person_id']
+                        
+                        diagnosis_entry = report.find { |entry| entry['diagnosis'] == diagnosis }
+
+                        if diagnosis_entry.nil?
+                        report << { 'diagnosis' => diagnosis, 'patients' => [person_id] }
+                        else
+                        diagnosis_entry['patients'] << person_id
+                        end
                     end
                     report
                 end
