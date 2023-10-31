@@ -106,6 +106,7 @@ module AetcService
                         WHERE e.encounter_datetime >= '#{start_date}' AND e.encounter_datetime <= '#{end_date}' AND e.voided = 0
                         GROUP BY diagnosis, person_id, age_group
                     SQL
+                    map_object(results)
                 end
 
                 def age_group_to_sql(age_group)
@@ -114,6 +115,16 @@ module AetcService
                     max_age_in_months = age_range.max == Float::INFINITY ? 'NULL' : age_range.max
                     "timestampdiff(month, pe.birthdate, '2021-10-03 23:59:59 +0200') BETWEEN #{min_age_in_months} AND #{max_age_in_months} THEN #{age_group}"
                 end
+
+                def map_object data
+                    report = {}
+                    data.each do |p|
+                        report[p['diagnosis']] ||= []
+                        report[p['diagnosis']] << p['person_id']
+                    end
+                    report
+                end
+
             end
         end
     end
