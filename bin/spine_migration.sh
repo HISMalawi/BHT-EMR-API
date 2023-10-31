@@ -30,29 +30,19 @@ if [ -z "$PORT" ]; then
 fi
 
 mysql --host=$HOST --user=$USERNAME --port=$PORT --password=$PASSWORD $DATABASE < db/sql/openmrs_metadata_1_7.sql
-
 ## We need to bypass some migrations that are causing errors
 mysql --host=$HOST --user=$USERNAME --port=$PORT --password=$PASSWORD $DATABASE < db/sql/bypass_migrations.sql
 
 rails db:migrate
 
-echo "Running add regimens 13 and above"
 mysql --host=$HOST --user=$USERNAME --port=$PORT --password=$PASSWORD $DATABASE < db/sql/add_regimens_13_and_above.sql
-echo "Running add cpt and inh to regimen ingredients"
 mysql --host=$HOST --user=$USERNAME --port=$PORT --password=$PASSWORD $DATABASE < db/sql/add_cpt_and_inh_to_regimen_ingredients.sql
-echo "Running alternative_drug_names"
 mysql --host=$HOST --user=$USERNAME --port=$PORT --password=$PASSWORD $DATABASE < db/sql/alternative_drug_names.sql
-echo "Running fix_weight_and_height_obs"
 mysql --host=$HOST --user=$USERNAME --port=$PORT --password=$PASSWORD $DATABASE < db/sql/fix_weight_and_height_obs.sql
-echo "Running index_obs_value_datetime"
 mysql --host=$HOST --user=$USERNAME --port=$PORT --password=$PASSWORD $DATABASE < db/sql/index_obs_value_datetime.sql
-echo "Running moh_regimens_v2018"
 mysql --host=$HOST --user=$USERNAME --port=$PORT --password=$PASSWORD $DATABASE < db/sql/moh_regimens_v2018.sql
-echo "Running bart2_views_schema_additions"
 mysql --host=$HOST --user=$USERNAME --port=$PORT --password=$PASSWORD $DATABASE < db/sql/bart2_views_schema_additions.sql
-echo "Running ntp_regimens"
 mysql --host=$HOST --user=$USERNAME --port=$PORT --password=$PASSWORD $DATABASE < db/sql/ntp_regimens.sql
-echo "Running malawi regions"
 mysql --host=$HOST --user=$USERNAME --port=$PORT --password=$PASSWORD $DATABASE < db/initial_setup/malawi_regions.sql
 
 # now call the update_art_metadata.sh script
