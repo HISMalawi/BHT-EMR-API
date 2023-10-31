@@ -58,6 +58,7 @@ module ANCService
       mapped = fetch_mapped_patients
       # rubocop:disable Metrics/BlockLength
       ActiveRecord::Base.transaction do
+        migrate_roles
         handle_provider_movement
         update_openmrs_users
         migrate_user_role
@@ -307,7 +308,7 @@ module ANCService
       statement = <<~SQL
         INSERT INTO person (person_id, gender, birthdate, birthdate_estimated, dead, death_date, cause_of_death, creator, date_created, changed_by, date_changed, voided, voided_by, date_voided, void_reason, uuid)
         SELECT #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + person.person_id) AS person_id"},
-        gender, birthdate, birthdate_estimated, dead, death_date, cause_of_death, creators.ART_user_id, person.date_created, changers.ART_user_id, person.date_changed, person.voided, voiders.ART_user_id, person.date_voided, person.void_reason, person.uuid
+        gender, birthdate, COALESCE(birthdate_estimated, 0), dead, death_date, cause_of_death, creators.ART_user_id, person.date_created, changers.ART_user_id, person.date_changed, person.voided, voiders.ART_user_id, person.date_voided, person.void_reason, person.uuid
         FROM #{@database}.person #{cond}
         INNER JOIN #{@database}.user_bak creators ON creators.ANC_user_id = person.creator
         LEFT JOIN #{@database}.user_bak changers ON changers.ANC_user_id = person.changed_by
@@ -565,6 +566,16 @@ module ANCService
         WHERE order_id IN (SELECT order_id FROM #{@database}.orders WHERE patient_id IN (#{patients}))
       SQL
       central_hub query: statement, message: msg
+    end
+
+    def migrate_roles
+      statement = <<~SQL
+        INSERT INTO role (role, description, uuid)
+        SELECT role, description, uuid()
+        FROM #{@database}.role
+        WHERE role NOT IN (SELECT role FROM role)
+      SQL
+      central_hub message: 'Migrating roles', query: statement
     end
 
     def migrate_user_role
