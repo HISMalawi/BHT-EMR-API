@@ -1,0 +1,27 @@
+# frozen_string_literal: true
+
+def person_not_in_patient
+  ActiveRecord::Base.connection.select_all <<~SQL
+    SELECT person_id, date_created FROM person where person_id NOT IN (select patient_id from patient);
+  SQL
+end
+
+def create_person
+  Person.create!(creator: User.first.id)
+end
+
+def process_users
+  person_data = person_not_in_patient
+  User.all.each do |user|
+    next if user.person_id.present?
+
+    person = person_data.find { |p| p['date_created'] == user.date_created }
+    user.person_id = person ? person['person_id'] : create_person.id
+    user.save
+  end
+end
+
+# wrap in a transaction
+ActiveRecord::Base.transaction do
+  process_users
+end
