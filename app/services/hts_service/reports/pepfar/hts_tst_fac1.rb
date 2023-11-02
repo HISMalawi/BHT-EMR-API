@@ -6,7 +6,8 @@ module HtsService::Reports::Pepfar
 
     ACCESS_POINTS = { index: "Index", opd: 'OPD', emergency: "Emergency", inpatient: "Inpatient",
                       malnutrition: "Malnutrition", pediatric: "Pediatric", pmtct_anc1: "ANC First Visit",
-                      sns: "SNS", sti: "STI", tb: "TB", vct: "VCT", vmmc: "VMMC", other_pitc: "Other PITC" }
+                      sns: "SNS", sti: "STI", tb: "TB", vct: "VCT", vmmc: "VMMC", other_pitc: "Other PITC",
+                      pmtct_fup_preg: 'PMTCT FUP', pmtct_fup_bf: 'PMTCT FUP'}
 
     def initialize(start_date:, end_date:)
       @start_date = start_date.to_date.beginning_of_day
@@ -38,6 +39,14 @@ module HtsService::Reports::Pepfar
     def calc_access_points(data, row)
       ACCESS_POINTS.each_with_index do |(key, value)|
         x = patients_in_access_point(data, value)
+
+        # seperate pmtct fup preg and pmtct fup bfde
+        if key == :pmtct_fup_preg
+          x = x.select { |q| q["pregnancy_status"] == concept('Pregnant woman').concept_id }
+        elsif key == :pmtct_fup_bf
+          x = x.select { |q| q["pregnancy_status"] == concept('Breastfeeding').concept_id }
+        end
+         
         row["#{key}"] = calc_age_groups(x.select { |q| q["gender"] == row[:gender].to_s.strip }, row[:age_group])
         row["age_group"] = row[:age_group].values.first
       end
@@ -68,8 +77,10 @@ module HtsService::Reports::Pepfar
         AND access_type.value_coded = #{concept('Health facility').concept_id}
         INNER JOIN obs hiv_status ON hiv_status.person_id = person.person_id
         AND hiv_status.concept_id = #{concept('HIV status').concept_id}
+        LEFT JOIN obs pregnancy_status ON pregnancy_status.person_id = person.person_id
+        AND pregnancy_status.concept_id = #{concept('Pregnancy status').concept_id}
         SQL
-        .select("disaggregated_age_group(person.birthdate, '#{@end_date.to_date}') as age_group, person.person_id, person.gender, facility.value_text as access_point, hiv_status.value_coded as status")
+        .select("disaggregated_age_group(person.birthdate, '#{@end_date.to_date}') as age_group, person.person_id, person.gender, facility.value_text as access_point, hiv_status.value_coded as status, pregnancy_status.value_coded pregnancy_status")
         .group("person.person_id")
         .to_sql
       Person.connection.select_all(query).to_hash
