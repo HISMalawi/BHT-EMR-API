@@ -114,46 +114,46 @@ module SpineService
         def patient_providers_encounters
           ActiveRecord::Base.connection.select_all <<~SQL
             SELECT
-            et.name encounter,
-            COALESCE(female.total_encounters, 0) AS female,
-            COALESCE(male.total_encounters, 0) AS male,
-            COALESCE(individual_clinic.total_encounters, 0) AS me,
-            COALESCE(clinic.total_encounters, 0) AS facility
+              et.name encounter,
+              COALESCE(female.total_encounters, 0) AS female,
+              COALESCE(male.total_encounters, 0) AS male,
+              COALESCE(individual_clinic.total_encounters, 0) AS me,
+              COALESCE(clinic.total_encounters, 0) AS facility
             FROM encounter_type et
             LEFT JOIN (
-            SELECT e.encounter_type, count(*) as total_encounters
-            FROM encounter e
-            INNER JOIN person p ON p.person_id = e.patient_id AND LEFT(p.gender, 1) = 'F' AND p.voided = 0
-            WHERE e.encounter_datetime >= '#{@start_date}' AND e.encounter_datetime <= '#{@end_date}'
-            AND e.voided = 0
-            AND e.program_id = #{program.id}
-            GROUP BY e.encounter_type
+              SELECT e.encounter_type, count(*) as total_encounters
+              FROM encounter e
+              INNER JOIN person p ON p.person_id = e.patient_id AND LEFT(p.gender, 1) = 'F' AND p.voided = 0
+              WHERE e.encounter_datetime >= '#{@start_date}' AND e.encounter_datetime <= '#{@end_date}'
+              AND e.voided = 0
+              AND e.program_id = #{program.id}
+              GROUP BY e.encounter_type
             ) AS female ON female.encounter_type = et.encounter_type_id
             LEFT JOIN (
-            SELECT e.encounter_type, count(*) as total_encounters
-            FROM encounter e
-            INNER JOIN person p ON p.person_id = e.patient_id AND LEFT(p.gender, 1) = 'M' AND p.voided = 0
-            WHERE e.encounter_datetime >= '#{@start_date}' AND e.encounter_datetime <= '#{@end_date}'
-            AND e.voided = 0
-            AND e.program_id = #{program.id}
-            GROUP BY e.encounter_type
+              SELECT e.encounter_type, count(*) as total_encounters
+              FROM encounter e
+              INNER JOIN person p ON p.person_id = e.patient_id AND LEFT(p.gender, 1) = 'M' AND p.voided = 0
+              WHERE e.encounter_datetime >= '#{@start_date}' AND e.encounter_datetime <= '#{@end_date}'
+              AND e.voided = 0
+              AND e.program_id = #{program.id}
+              GROUP BY e.encounter_type
             ) AS male ON male.encounter_type = et.encounter_type_id
             LEFT JOIN (
-            SELECT e.encounter_type, count(*) as total_encounters
-            FROM encounter e
-            WHERE e.encounter_datetime >= '#{@start_date}' AND e.encounter_datetime <= '#{@end_date}'
-            AND e.voided = 0
-            AND e.program_id = #{program.id}
-            GROUP BY e.encounter_type
+              SELECT e.encounter_type, count(*) as total_encounters
+              FROM encounter e
+              WHERE e.encounter_datetime >= '#{@start_date}' AND e.encounter_datetime <= '#{@end_date}'
+              AND e.voided = 0
+              AND e.program_id = #{program.id}
+              GROUP BY e.encounter_type
             ) AS clinic ON clinic.encounter_type = et.encounter_type_id
             LEFT JOIN (
-            SELECT e.encounter_type, count(*) as total_encounters
-            FROM encounter e
-            WHERE e.encounter_datetime >= '#{@start_date}' AND e.encounter_datetime <= '#{@end_date}'
-            AND e.voided = 0
-            AND e.program_id = #{program.id}
-            AND e.provider_id = #{User.current.id}
-            GROUP BY e.encounter_type
+              SELECT e.encounter_type, count(*) as total_encounters
+              FROM encounter e
+              WHERE e.encounter_datetime >= '#{@start_date}' AND e.encounter_datetime <= '#{@end_date}'
+              AND e.voided = 0
+              AND e.program_id = #{program.id}
+              AND e.provider_id = #{User.current.id}
+              GROUP BY e.encounter_type
             ) AS individual_clinic ON individual_clinic.encounter_type = et.encounter_type_id
             WHERE et.retired = 0
             AND et.name IN ('#{ENCOUNTERS.join("','")}')
