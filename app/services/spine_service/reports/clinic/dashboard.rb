@@ -7,9 +7,9 @@ module SpineService
       class Dashboard
         attr_reader :start_date, :end_date, :program
 
-        def initialize(start_date:, end_date:, **_kwargs)
-          @start_date = start_date.to_date.beginning_of_day.strftime('%Y-%m-%d %H:%M:%S')
-          @end_date = end_date.to_date.end_of_day.strftime('%Y-%m-%d %H:%M:%S')
+        def initialize(date:, **_kwargs)
+          @start_date = date.to_date.beginning_of_day.strftime('%Y-%m-%d %H:%M:%S')
+          @end_date = date.to_date.end_of_day.strftime('%Y-%m-%d %H:%M:%S')
           @program = Program.find_by_name 'SPINE PROGRAM'
         end
 

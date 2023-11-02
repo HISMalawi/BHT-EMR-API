@@ -253,12 +253,11 @@ describe 'Clinic Reports API', type: :request, swagger_doc: 'v1/swagger.yaml' do
       produces 'application/json'
       consumes 'application/json'
       security [api_key: []]
-      parameter name: :start_date, in: :query, type: :string
-      parameter name: :end_date, in: :query, type: :string
+      parameter name: :date, in: :query, type: :string, required: true
 
       response '200', 'Dashboard Report found' do
         # return a components spine_dashboard
-        schema type: { '$ref' => '#/components/schemas/spine_dashboard' }
+        schema({ '$ref' => '#/components/schemas/spine_dashboard' })
         run_test!
       end
     end

@@ -34,13 +34,19 @@ RSpec.configure do |config|
           spine_dashboard: {
             type: :object,
             properties: {
-              rows: { type: :array, items: { type: :object, properties: {
-                encounter: { type: :string },
-                female: { type: :integer },
-                male: { type: :integer },
-                me: { type: :integer },
-                facility: { type: :integer }
-              } } },
+              rows: {
+                type: :array,
+                items: {
+                  type: :object,
+                  properties: {
+                    encounter: { type: :string },
+                    female: { type: :integer },
+                    male: { type: :integer },
+                    me: { type: :integer },
+                    facility: { type: :integer }
+                  }
+                }
+              },
               patient_summary_stats: {
                 type: :object,
                 properties: {
