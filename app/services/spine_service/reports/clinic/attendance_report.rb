@@ -14,7 +14,7 @@ module SpineService
 
         def fetch_report
           data = Encounter.where(
-              'encounter_datetime BETWEEN ? AND ? AND program_id = ? AND voided = 0', 
+              'encounter_datetime BETWEEN ? AND ? AND program_id = ?', 
               @start_date, 
               @end_date, 
               program("Spine Program").program_id.to_s
