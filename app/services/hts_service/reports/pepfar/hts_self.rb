@@ -95,7 +95,7 @@ module HtsService
               approach.value_coded as approach,
               gender.value_coded as gender"
           )
-          .group("age_group.obs_group_id")
+          .group("gender.value_coded, age_group.value_coded, user.value_coded, gender.value_coded")
           .to_sql
         ).to_hash
       end
