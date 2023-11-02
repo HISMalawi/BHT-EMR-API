@@ -245,5 +245,23 @@ describe 'Clinic Reports API', type: :request, swagger_doc: 'v1/swagger.yaml' do
       end
     end
   end
+
+  path '/api/v1/programs/31/reports/dashboard' do
+    get 'Retrieve Dashboard report' do
+      tags TAGS_NAME
+      description 'This shows Spine Module Dashboard report'
+      produces 'application/json'
+      consumes 'application/json'
+      security [api_key: []]
+      parameter name: :start_date, in: :query, type: :string
+      parameter name: :end_date, in: :query, type: :string
+
+      response '200', 'Dashboard Report found' do
+        # return a components spine_dashboard
+        schema type: { '$ref' => '#/components/schemas/spine_dashboard' }
+        run_test!
+      end
+    end
+  end
 end
 # rubocop:enable Metrics/BlockLength
