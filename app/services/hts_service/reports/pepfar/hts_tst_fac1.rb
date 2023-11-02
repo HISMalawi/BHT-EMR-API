@@ -71,15 +71,18 @@ module HtsService::Reports::Pepfar
       query = his_patients_rev
         .joins(<<-SQL)
         INNER JOIN obs facility ON facility.person_id = person.person_id
+        AND facility.voided = 0        
         AND facility.concept_id = #{concept('Location where test took place').concept_id}
         INNER JOIN obs access_type ON access_type.person_id = person.person_id
+        AND access_type.voided = 0        
         AND access_type.concept_id = #{concept('HTS Access Type').concept_id}
-        AND access_type.value_coded = #{concept('Health facility').concept_id}
+        AND access_type.value_coded = #{concept('Health facility').concept_id}\
         INNER JOIN obs hiv_status ON hiv_status.person_id = person.person_id
+        AND hiv_status.voided = 0        
         AND hiv_status.concept_id = #{concept('HIV status').concept_id}
         LEFT JOIN obs pregnancy_status ON pregnancy_status.person_id = person.person_id
-        AND pregnancy_status.concept_id = #{concept('Pregnancy status').concept_id}
         AND pregnancy_status.voided = 0
+        AND pregnancy_status.concept_id = #{concept('Pregnancy status').concept_id}
         SQL
         .select("disaggregated_age_group(person.birthdate, '#{@end_date.to_date}') as age_group, person.person_id, person.gender, facility.value_text as access_point, hiv_status.value_coded as status, pregnancy_status.value_coded pregnancy_status")
         .group("person.person_id")
