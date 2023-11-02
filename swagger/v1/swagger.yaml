@@ -443,6 +443,27 @@ paths:
                 type: array
                 items:
                   "$ref": "#/components/schemas/hypertension_report"
+  "/api/v1/programs/31/reports/dashboard":
+    get:
+      summary: Retrieve Dashboard report
+      tags:
+      - Clinic Reports
+      description: This shows Spine Module Dashboard report
+      security:
+      - api_key: []
+      parameters:
+      - name: date
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Dashboard Report found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/spine_dashboard"
   "/api/v1/radiology_set":
     get:
       summary: Retrieve all radiology sets
@@ -2585,6 +2606,194 @@ components:
       name: Authorization
       in: header
   schemas:
+    spine_dashboard:
+      type: object
+      properties:
+        rows:
+          type: array
+          items:
+            type: object
+            properties:
+              encounter:
+                type: string
+              female:
+                type: integer
+              male:
+                type: integer
+              me:
+                type: integer
+              facility:
+                type: integer
+        patient_summary_stats:
+          type: object
+          properties:
+            top:
+              type: object
+              properties:
+                registered_today:
+                  type: integer
+                returning_today:
+                  type: integer
+                referred_today:
+                  type: integer
+            down:
+              type: object
+              properties:
+                registered:
+                  type: object
+                  properties:
+                    registered:
+                      "$ref": "#/components/schemas/spine_stat_data"
+                    returning:
+                      "$ref": "#/components/schemas/spine_stat_data"
+                    referred:
+                      "$ref": "#/components/schemas/spine_stat_data"
+    spine_stat_data:
+      type: object
+      properties:
+        '1':
+          type: object
+          properties:
+            start_date:
+              type: string
+              format: date-time
+            end_date:
+              type: string
+              format: date-time
+            count:
+              type: integer
+        '2':
+          type: object
+          properties:
+            start_date:
+              type: string
+              format: date-time
+            end_date:
+              type: string
+              format: date-time
+            count:
+              type: integer
+        '3':
+          type: object
+          properties:
+            start_date:
+              type: string
+              format: date-time
+            end_date:
+              type: string
+              format: date-time
+            count:
+              type: integer
+        '4':
+          type: object
+          properties:
+            start_date:
+              type: string
+              format: date-time
+            end_date:
+              type: string
+              format: date-time
+            count:
+              type: integer
+        '5':
+          type: object
+          properties:
+            start_date:
+              type: string
+              format: date-time
+            end_date:
+              type: string
+              format: date-time
+            count:
+              type: integer
+        '6':
+          type: object
+          properties:
+            start_date:
+              type: string
+              format: date-time
+            end_date:
+              type: string
+              format: date-time
+            count:
+              type: integer
+        '7':
+          type: object
+          properties:
+            start_date:
+              type: string
+              format: date-time
+            end_date:
+              type: string
+              format: date-time
+            count:
+              type: integer
+        '8':
+          type: object
+          properties:
+            start_date:
+              type: string
+              format: date-time
+            end_date:
+              type: string
+              format: date-time
+            count:
+              type: integer
+        '9':
+          type: object
+          properties:
+            start_date:
+              type: string
+              format: date-time
+            end_date:
+              type: string
+              format: date-time
+            count:
+              type: integer
+        '10':
+          type: object
+          properties:
+            start_date:
+              type: string
+              format: date-time
+            end_date:
+              type: string
+              format: date-time
+            count:
+              type: integer
+        '11':
+          type: object
+          properties:
+            start_date:
+              type: string
+              format: date-time
+            end_date:
+              type: string
+              format: date-time
+            count:
+              type: integer
+        '12':
+          type: object
+          properties:
+            start_date:
+              type: string
+              format: date-time
+            end_date:
+              type: string
+              format: date-time
+            count:
+              type: integer
+        '13':
+          type: object
+          properties:
+            start_date:
+              type: string
+              format: date-time
+            end_date:
+              type: string
+              format: date-time
+            count:
+              type: integer
     hypertension_report:
       type: object
       properties:
@@ -2634,11 +2843,11 @@ components:
                   type: array
                   items:
                     type: integer
-                atenolol_5mg:
+                atenolol_50mg:
                   type: array
                   items:
                     type: integer
-                atenolol_10mg:
+                atenolol_100mg:
                   type: array
                   items:
                     type: integer
