@@ -18,6 +18,7 @@ module HtsService
         END_USER = {
           self_recipient: concept("Self").concept_id,
           sex_partner: concept("Sexual partner").concept_id,
+          caretaker_for_child: concept("Caretaker for child").concept_id,
           other: concept("Other").concept_id,
         }
 
