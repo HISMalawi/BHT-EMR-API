@@ -79,6 +79,7 @@ module HtsService::Reports::Pepfar
         AND hiv_status.concept_id = #{concept('HIV status').concept_id}
         LEFT JOIN obs pregnancy_status ON pregnancy_status.person_id = person.person_id
         AND pregnancy_status.concept_id = #{concept('Pregnancy status').concept_id}
+        AND pregnancy_status.voided = 0
         SQL
         .select("disaggregated_age_group(person.birthdate, '#{@end_date.to_date}') as age_group, person.person_id, person.gender, facility.value_text as access_point, hiv_status.value_coded as status, pregnancy_status.value_coded pregnancy_status")
         .group("person.person_id")
