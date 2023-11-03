@@ -20,7 +20,7 @@ module SpineService
                           .joins("INNER JOIN person p ON p.person_id = encounter.patient_id")
                           .joins("LEFT JOIN person_name n ON n.person_id = encounter.patient_id AND n.voided = 0")
                           .joins("LEFT JOIN person_attribute z ON z.person_id = encounter.patient_id AND z.person_attribute_type_id = #{cellphoneNumberId}")
-                          .joins("RIGHT JOIN person_address a ON a.person_id = encounter.patient_id")
+                          .joins("LEFT JOIN person_address a ON a.person_id = encounter.patient_id")
                           .joins("INNER JOIN concept_name c ON c.concept_id = obs.value_coded")
                           .where('encounter_datetime BETWEEN ? AND ? AND encounter_type = ?', @start_date, @end_date, encounter_type('Outpatient diagnosis').id)
                           .group('obs.person_id, obs.value_coded, DATE(obs.obs_datetime)')
