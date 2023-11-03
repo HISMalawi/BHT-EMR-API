@@ -6,9 +6,6 @@ module SpineService
       class DiagnosisReport
         include ModelUtils
         attr_reader :start_date, :end_date
-        primary_diagnosis = 6542
-        secondary_diagnosis = 6543
-        cellphoneNumberId = 12
 
         def initialize(start_date:, end_date:, **kwargs)
           @start_date = start_date.to_date.beginning_of_day.strftime('%Y-%m-%d %H:%M:%S')
@@ -16,6 +13,9 @@ module SpineService
         end
 
         def fetch_report
+          primary_diagnosis = 6542
+          secondary_diagnosis = 6543
+          cellphoneNumberId = 12
           data = Encounter.joins("INNER JOIN obs ON obs.encounter_id = encounter.encounter_id AND obs.concept_id IN(#{primary_diagnosis}, #{secondary_diagnosis}) AND obs.voided = 0")
                           .joins("INNER JOIN person p ON p.person_id = encounter.patient_id AND p.voided = 0")
                           .joins("LEFT JOIN person_name n ON n.person_id = encounter.patient_id AND n.voided = 0")
