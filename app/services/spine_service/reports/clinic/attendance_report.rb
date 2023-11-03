@@ -17,7 +17,7 @@ module SpineService
               'encounter_datetime BETWEEN ? AND ? AND program_id = ?', 
               @start_date, 
               @end_date, 
-              program("Spine Program").program_id.to_s
+              program("Spine Program").program_id
             )
             .group('patient_id, DATE(encounter_datetime)')
             .select("patient_id, DATE_FORMAT(encounter_datetime,'%Y-%m-%d') enc_date")
