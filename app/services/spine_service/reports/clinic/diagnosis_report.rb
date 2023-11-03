@@ -6,6 +6,9 @@ module SpineService
       class DiagnosisReport
         include ModelUtils
         attr_reader :start_date, :end_date
+        primary_diagnosis = 6542
+        secondary_diagnosis = 6543
+        cellphoneNumberId = 12
 
         def initialize(start_date:, end_date:, **kwargs)
           @start_date = start_date.to_date.beginning_of_day.strftime('%Y-%m-%d %H:%M:%S')
@@ -13,23 +16,19 @@ module SpineService
         end
 
         def fetch_report
-          type = EncounterType.find_by_name 'Outpatient diagnosis'
-          data = Encounter.where('encounter_datetime BETWEEN ? AND ?
-            AND encounter_type = ?
-            AND obs.concept_id IN(6543, 6542)', @start_date, @end_date, type.id).\
-            joins('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
-            INNER JOIN person p ON p.person_id = encounter.patient_id
-            LEFT JOIN person_name n ON n.person_id = encounter.patient_id AND n.voided = 0
-            LEFT JOIN person_attribute z ON z.person_id = encounter.patient_id AND z.person_attribute_type_id = 12
-            RIGHT JOIN person_address a ON a.person_id = encounter.patient_id
-            INNER JOIN concept_name c ON c.concept_id = obs.value_coded
-            ').\
-            group('obs.person_id,obs.value_coded,DATE(obs.obs_datetime)').\
-            select("encounter.encounter_type,n.given_name, n.family_name, n.person_id, obs.value_coded, p.gender,
-            a.state_province district, a.township_division ta, a.city_village village, z.value,
-            opd_disaggregated_age_group(p.birthdate,'#{end_date}') as age_group,c.name")
+          data = Encounter.joins("INNER JOIN obs ON obs.encounter_id = encounter.encounter_id AND obs.concept_id IN(#{primary_diagnosis}, #{secondary_diagnosis}) AND obs.voided = 0")
+                          .joins("INNER JOIN person p ON p.person_id = encounter.patient_id")
+                          .joins("LEFT JOIN person_name n ON n.person_id = encounter.patient_id AND n.voided = 0")
+                          .joins("LEFT JOIN person_attribute z ON z.person_id = encounter.patient_id AND z.person_attribute_type_id = #{cellphoneNumberId}")
+                          .joins("RIGHT JOIN person_address a ON a.person_id = encounter.patient_id")
+                          .joins("INNER JOIN concept_name c ON c.concept_id = obs.value_coded")
+                          .where('encounter_datetime BETWEEN ? AND ? AND encounter_type = ?', @start_date, @end_date, encounter_type('Outpatient diagnosis').id)
+                          .group('obs.person_id, obs.value_coded, DATE(obs.obs_datetime)')
+                          .select("encounter.encounter_type, n.given_name, n.family_name, n.person_id, obs.value_coded, p.gender,
+                                  a.state_province district, a.township_division ta, a.city_village village, z.value,
+                                  opd_disaggregated_age_group(p.birthdate,'#{end_date}') as age_group, c.name")
 
-            create_diagnosis_hash(data)
+          create_diagnosis_hash(data)
         end
 
         def create_diagnosis_hash(data)
