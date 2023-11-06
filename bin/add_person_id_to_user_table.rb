@@ -1,5 +1,11 @@
 # frozen_string_literal: true
 
+def add_global_property
+  GlobalProperty.create!(property: 'current_health_center_id', property_value: 614) if GlobalProperty.where(property: 'current_health_center_id').blank?
+  GlobalProperty.create!(property: 'current_health_center_name', property_value: 'Queen Elizabeth Central Hospital') if GlobalProperty.where(property: 'current_health_center_name').blank?
+  GlobalProperty.create!(property: 'site_prefix', property_value: 'QECH') if GlobalProperty.where(property: 'site_prefix').blank?
+end
+
 def person_not_in_patient
   ActiveRecord::Base.connection.select_all <<~SQL
     SELECT person_id, date_created FROM person where person_id NOT IN (select patient_id from patient);
@@ -23,5 +29,6 @@ end
 
 # wrap in a transaction
 ActiveRecord::Base.transaction do
+  add_global_property
   process_users
 end

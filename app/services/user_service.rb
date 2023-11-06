@@ -93,6 +93,10 @@ module UserService
     user.save
 
     { token: token, expiry_time: expires, user: user }
+  rescue e
+    Rails.logger.error "Error creating authentication token: #{e}"
+    Rails.logger.error e.backtrace.join("\n")
+    raise e
   end
 
   def self.create_token
@@ -133,6 +137,10 @@ module UserService
     end
 
     new_authentication_token user
+  rescue e
+    Rails.logger.error "Error logging in: #{e}"
+    Rails.logger.error e.backtrace.join("\n")
+    raise e
   end
 
   # Tries to authenticate user using the classical BART mode
