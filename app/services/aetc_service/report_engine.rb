@@ -11,7 +11,7 @@ module AetcService
       'REFERRAL REPORT' => AetcService::Reports::Clinic::ReferralReport,
       'TOTAL REGISTERED' => AetcService::Reports::Clinic::TotalRegisteredReport,
       'OPD GENERAL' => AetcService::Reports::Clinic::OpdGeneral,
-      'MALARIA_REPORT' => AetcService::Reports::Clinic::MalariaReport
+      'AETC MALARIA REPORT' => AetcService::Reports::Clinic::AetcMalariaReport
     }.freeze
 
     def find_report(start_date:, end_date:, name:, **kwargs)
