@@ -50,3 +50,6 @@ bin/update_art_metadata.sh $ENV
 
 echo "Update program IDS"
 mysql --host=$HOST --user=$USERNAME --port=$PORT --password=$PASSWORD $DATABASE -e 'UPDATE encounter SET program_id = 31 WHERE program_id = 1 OR program_id IS NULL;'
+
+rails db:seed
+rails r bin/add_person_id_to_user_table.rb 
