@@ -41,18 +41,21 @@ module SpineService
     UPDATE_OUTCOME = 'PATIENT OUTCOME'
     PATIENT_DIAGNOSIS = 'DIAGNOSIS'
     HIV_STATUS = 'UPDATE HIV STATUS'
+    PRESCRIPTION = 'PRESCRIPTION'
     TREATMENT = 'TREATMENT'
 
     ENCOUNTER_SM = {
       INITIAL_STATE => HIV_STATUS,
       HIV_STATUS => PATIENT_DIAGNOSIS,
-      PATIENT_DIAGNOSIS => TREATMENT,
+      PATIENT_DIAGNOSIS => PRESCRIPTION,
+      PRESCRIPTION => TREATMENT,
       TREATMENT => END_STATE
     }.freeze
 
     STATE_CONDITIONS = {
       HIV_STATUS => %i[patient_does_not_have_hiv_status_today? patient_has_outcome_today?],
       PATIENT_DIAGNOSIS => %i[patient_does_not_have_diagnosis_today? patient_has_outcome_today?],
+      PRESCRIPTION => %i[patient_does_not_have_prescription? patient_has_outcome_today?],
       TREATMENT => %i[patient_does_not_have_prescription? patient_has_outcome_today?]
     }.freeze
 
@@ -98,6 +101,16 @@ module SpineService
       return true if latest_admission.present? && latest_status.obs_datetime < latest_admission.encounter_datetime
 
       true
+    end
+
+    def patient_does_not_have_prescription?
+      encounter_type = EncounterType.find_by name: PRESCRIPTION
+      encounter = Encounter.joins(:type).where(
+        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?) AND program_id = ?',
+        @patient.patient_id, encounter_type.encounter_type_id, @date, @program.program_id
+      ).order(encounter_datetime: :desc).first
+
+      encounter.blank?
     end
 
     def patient_has_outcome_today?
