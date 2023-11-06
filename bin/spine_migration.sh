@@ -44,6 +44,7 @@ mysql --host=$HOST --user=$USERNAME --port=$PORT --password=$PASSWORD $DATABASE 
 mysql --host=$HOST --user=$USERNAME --port=$PORT --password=$PASSWORD $DATABASE < db/sql/bart2_views_schema_additions.sql
 mysql --host=$HOST --user=$USERNAME --port=$PORT --password=$PASSWORD $DATABASE < db/sql/ntp_regimens.sql
 mysql --host=$HOST --user=$USERNAME --port=$PORT --password=$PASSWORD $DATABASE < db/initial_setup/malawi_regions.sql
+mysql --host=$HOST --user=$USERNAME --port=$PORT --password=$PASSWORD $DATABASE < db/sql/missing_columns.sql
 
 # now call the update_art_metadata.sh script
 bin/update_art_metadata.sh $ENV
