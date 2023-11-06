@@ -1,0 +1,13 @@
+ALTER TABLE drug_ingredient ADD COLUMN concept_id int(11) NOT NULL DEFAULT 0;
+ALTER TABLE drug_ingredient ADD COLUMN ingredient_id int(11) NOT NULL DEFAULT 0;
+ALTER TABLE hl7_in_archive ADD COLUMN message_state int(1) NULL DEFAULT 2;
+ALTER TABLE hl7_in_queue ADD COLUMN message_state int(1) NOT NULL DEFAULT 0;
+ALTER TABLE location_tag ADD COLUMN name varchar(50) NULL ;
+ALTER TABLE orders ADD COLUMN discontinued_reason_non_coded varchar(255) NULL ;
+ALTER TABLE patient_program ADD COLUMN location_id int(11) NULL ;
+ALTER TABLE scheduler_task_config ADD COLUMN last_execution_time datetime NULL ;
+ALTER TABLE weight_for_heights ADD COLUMN id int(11) NOT NULL ;
+ALTER TABLE weight_for_heights ADD COLUMN supine_cm float NULL ;
+ALTER TABLE weight_for_heights ADD COLUMN standard_low_weight_height float NULL ;
+ALTER TABLE weight_for_heights ADD COLUMN standard_high_weight_height float NULL ;
+ALTER TABLE weight_for_heights ADD COLUMN sex int(6) NULL ;
