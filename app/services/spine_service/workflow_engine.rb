@@ -47,15 +47,14 @@ module SpineService
     ENCOUNTER_SM = {
       INITIAL_STATE => HIV_STATUS,
       HIV_STATUS => PATIENT_DIAGNOSIS,
-      PATIENT_DIAGNOSIS => PRESCRIPTION,
-      PRESCRIPTION => TREATMENT,
+      PATIENT_DIAGNOSIS => TREATMENT,
       TREATMENT => END_STATE
     }.freeze
 
     STATE_CONDITIONS = {
       HIV_STATUS => %i[patient_does_not_have_hiv_status_today? patient_has_outcome_today?],
       PATIENT_DIAGNOSIS => %i[patient_does_not_have_diagnosis_today? patient_has_outcome_today?],
-      PRESCRIPTION => %i[patient_does_not_have_prescription? patient_has_outcome_today?],
+      # PRESCRIPTION => %i[patient_does_not_have_prescription? patient_has_outcome_today?],
       TREATMENT => %i[patient_does_not_have_prescription? patient_has_outcome_today?]
     }.freeze
 
