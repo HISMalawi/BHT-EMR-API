@@ -501,3 +501,65 @@ ActiveRecord::Base.connection.execute <<~SQL
   ALTER TABLE users MODIFY uuid VARCHAR(38) NOT NULL UNIQUE
 SQL
 
+ActiveRecord::Base.connection.execute <<~SQL
+  ALTER TABLE patient_identifier ADD patient_identifier_id INT;
+SQL
+# SET @row_number = 0;
+# UPDATE patient_identifiers
+# SET patient_identifier_id = (@row_number := @row_number + 1);
+# implement the above in ruby
+ActiveRecord::Base.connection.execute <<~SQL
+  SET @row_number = 0;
+SQL
+
+ActiveRecord::Base.connection.execute <<~SQL
+  UPDATE patient_identifier SET patient_identifier_id = (@row_number := @row_number + 1);
+SQL
+
+ActiveRecord::Base.connection.execute <<~SQL
+  ALTER TABLE patient_identifier DROP FOREIGN KEY defines_identifier_type;
+SQL
+
+ActiveRecord::Base.connection.execute <<~SQL
+  ALTER TABLE patient_identifier DROP FOREIGN KEY identifies_patient;
+SQL
+
+ActiveRecord::Base.connection.execute <<~SQL
+  ALTER TABLE patient_identifier DROP FOREIGN KEY patient_identifier_ibfk_2;
+SQL
+
+ActiveRecord::Base.connection.execute <<~SQL
+  ALTER TABLE patient_identifier DROP KEY uuid;
+SQL
+
+ActiveRecord::Base.connection.execute <<~SQL
+  ALTER TABLE patient_identifier DROP PRIMARY KEY;
+SQL
+
+ActiveRecord::Base.connection.execute <<~SQL
+  ALTER TABLE patient_identifier ADD PRIMARY KEY (patient_identifier_id);
+SQL
+
+ActiveRecord::Base.connection.execute <<~SQL
+  ALTER TABLE patient_identifier MODIFY patient_identifier_id INT NOT NULL AUTO_INCREMENT;
+SQL
+
+ActiveRecord::Base.connection.execute <<~SQL
+  ALTER TABLE patient_identifier MODIFY uuid VARCHAR(38) NOT NULL UNIQUE;
+SQL
+
+ActiveRecord::Base.connection.execute <<~SQL
+  ALTER TABLE patient_identifier ADD CONSTRAINT defines_identifier_type FOREIGN KEY (identifier_type) REFERENCES patient_identifier_type (patient_identifier_type_id);
+SQL
+
+ActiveRecord::Base.connection.execute <<~SQL
+  ALTER TABLE patient_identifier ADD CONSTRAINT identifies_patient FOREIGN KEY (patient_id) REFERENCES patient (patient_id) ON UPDATE CASCADE;
+SQL
+
+ActiveRecord::Base.connection.execute <<~SQL
+  ALTER TABLE patient_identifier ADD CONSTRAINT patient_identifier_ibfk_2 FOREIGN KEY (location_id) REFERENCES location (location_id);
+SQL
+
+ActiveRecord::Base.connection.execute <<~SQL
+  ALTER TABLE patient_identifier AUTO_INCREMENT = #{PatientIdentifier.count + 1};
+SQL

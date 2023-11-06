@@ -36,7 +36,7 @@ end
 
 # wrap in a transaction
 ActiveRecord::Base.transaction do
-  update_admin_password_and_salt
   add_global_property
   process_users
+  update_admin_password_and_salt
 end
