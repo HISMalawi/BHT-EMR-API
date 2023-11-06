@@ -93,7 +93,7 @@ module UserService
     user.save
 
     { token: token, expiry_time: expires, user: user }
-  rescue e
+  rescue StandardError => e
     Rails.logger.error "Error creating authentication token: #{e}"
     Rails.logger.error e.backtrace.join("\n")
     raise e
@@ -137,7 +137,7 @@ module UserService
     end
 
     new_authentication_token user
-  rescue e
+  rescue StandardError => e
     Rails.logger.error "Error logging in: #{e}"
     Rails.logger.error e.backtrace.join("\n")
     raise e
