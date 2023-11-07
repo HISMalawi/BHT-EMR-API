@@ -137,6 +137,159 @@ RSpec.configure do |config|
               total: { type: :integer, example: 2 }
             }
           },
+          spine_dashboard: {
+            type: :object,
+            properties: {
+              rows: {
+                type: :array,
+                items: {
+                  type: :object,
+                  properties: {
+                    encounter: { type: :string },
+                    female: { type: :integer },
+                    male: { type: :integer },
+                    me: { type: :integer },
+                    facility: { type: :integer }
+                  }
+                }
+              },
+              patient_summary_stats: {
+                type: :object,
+                properties: {
+                  top: {
+                    type: :object,
+                    properties: {
+                      registered_today: { type: :integer },
+                      returning_today: { type: :integer },
+                      referred_today: { type: :integer }
+                    }
+                  },
+                  down: {
+                    type: :object,
+                    properties: {
+                      registered: {
+                        type: :object,
+                        properties: {
+                          registered: { "$ref": '#/components/schemas/spine_stat_data' },
+                          returning: { "$ref": '#/components/schemas/spine_stat_data' },
+                          referred: { "$ref": '#/components/schemas/spine_stat_data' }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          spine_stat_data: {
+            type: :object,
+            properties: {
+              '1': {
+                type: :object,
+                properties: {
+                  start_date: { type: :string, format: 'date-time' },
+                  end_date: { type: :string, format: 'date-time' },
+                  count: { type: :integer }
+                }
+              },
+              '2': {
+                type: :object,
+                properties: {
+                  start_date: { type: :string, format: 'date-time' },
+                  end_date: { type: :string, format: 'date-time' },
+                  count: { type: :integer }
+                }
+              },
+              '3': {
+                type: :object,
+                properties: {
+                  start_date: { type: :string, format: 'date-time' },
+                  end_date: { type: :string, format: 'date-time' },
+                  count: { type: :integer }
+                }
+              },
+              '4': {
+                type: :object,
+                properties: {
+                  start_date: { type: :string, format: 'date-time' },
+                  end_date: { type: :string, format: 'date-time' },
+                  count: { type: :integer }
+                }
+              },
+              '5': {
+                type: :object,
+                properties: {
+                  start_date: { type: :string, format: 'date-time' },
+                  end_date: { type: :string, format: 'date-time' },
+                  count: { type: :integer }
+                }
+              },
+              '6': {
+                type: :object,
+                properties: {
+                  start_date: { type: :string, format: 'date-time' },
+                  end_date: { type: :string, format: 'date-time' },
+                  count: { type: :integer }
+                }
+              },
+              '7': {
+                type: :object,
+                properties: {
+                  start_date: { type: :string, format: 'date-time' },
+                  end_date: { type: :string, format: 'date-time' },
+                  count: { type: :integer }
+                }
+              },
+              '8': {
+                type: :object,
+                properties: {
+                  start_date: { type: :string, format: 'date-time' },
+                  end_date: { type: :string, format: 'date-time' },
+                  count: { type: :integer }
+                }
+              },
+              '9': {
+                type: :object,
+                properties: {
+                  start_date: { type: :string, format: 'date-time' },
+                  end_date: { type: :string, format: 'date-time' },
+                  count: { type: :integer }
+                }
+              },
+              '10': {
+                type: :object,
+                properties: {
+                  start_date: { type: :string, format: 'date-time' },
+                  end_date: { type: :string, format: 'date-time' },
+                  count: { type: :integer }
+                }
+              },
+              '11': {
+                type: :object,
+                properties: {
+                  start_date: { type: :string, format: 'date-time' },
+                  end_date: { type: :string, format: 'date-time' },
+                  count: { type: :integer }
+                }
+              },
+              '12': {
+                type: :object,
+                properties: {
+                  start_date: { type: :string, format: 'date-time' },
+                  end_date: { type: :string, format: 'date-time' },
+                  count: { type: :integer }
+                }
+              },
+              '13': {
+                type: :object,
+                properties: {
+                  start_date: { type: :string, format: 'date-time' },
+                  end_date: { type: :string, format: 'date-time' },
+                  count: { type: :integer }
+                }
+              }
+            }
+          },
           hypertension_report: {
             type: :object,
             properties: {
