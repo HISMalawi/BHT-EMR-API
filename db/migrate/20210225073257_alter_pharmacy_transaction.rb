@@ -10,18 +10,20 @@ class AlterPharmacyTransaction < ActiveRecord::Migration[5.2]
     remove_column :pharmacy_obs, :expiring_units, :double if column_exists?(:pharmacy_obs, :expiring_units)
     remove_column :pharmacy_obs, :value_coded, :integer if column_exists?(:pharmacy_obs, :value_coded)
     remove_column :pharmacy_obs, :value_text, :string, limit: 255 if column_exists?(:pharmacy_obs, :value_text)
-    add_column :pharmacy_obs, :transaction_reason, :text, null: true
-    rename_column :pharmacy_obs, :value_numeric, :quantity
+    add_column :pharmacy_obs, :transaction_reason, :text, null: true unless column_exists?(:pharmacy_obs, :transaction_reason)
+    rename_column :pharmacy_obs, :value_numeric, :quantity unless column_exists?(:pharmacy_obs, :quantity)
 
     reversible do |direction|
       direction.up do
-        add_column :pharmacy_obs, :transaction_date, :date
+        add_column :pharmacy_obs, :transaction_date, :date unless column_exists?(:pharmacy_obs, :transaction_date)
 
-        ActiveRecord::Base.connection.execute <<~SQL
-          UPDATE pharmacy_obs SET transaction_date = DATE(encounter_date)
-        SQL
+        if column_exists?(:pharmacy_obs, :encounter_date)
+          ActiveRecord::Base.connection.execute <<~SQL
+            UPDATE pharmacy_obs SET transaction_date = DATE(encounter_date)
+          SQL
 
-        remove_column :pharmacy_obs, :encounter_date
+          remove_column :pharmacy_obs, :encounter_date
+        end
       end
 
       direction.down do

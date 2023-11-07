@@ -176,7 +176,7 @@ module ArtService
           .map(&:drug_id)
     end
 
-    def prse_art_or_unknown_outcomes
+    def pre_art_or_unknown_outcomes
       data = ActiveRecord::Base.connection.select_all <<~SQL
         select
           p.patient_id

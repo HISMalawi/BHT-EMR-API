@@ -18,10 +18,11 @@ module HtsService
         }.freeze
 
         END_USER = {
-          self_recipient: concept('Self').concept_id,
-          sex_partner: concept('Sexual partner').concept_id,
-          other: concept('Other').concept_id
-        }.freeze
+          self_recipient: concept("Self").concept_id,
+          sex_partner: concept("Sexual partner").concept_id,
+          caretaker_for_child: concept("Caretaker for child").concept_id,
+          other: concept("Other").concept_id,
+        }
 
         def initialize(start_date:, end_date:)
           @start_date = start_date.to_date.beginning_of_day
@@ -99,11 +100,19 @@ module HtsService
               user.value_coded as user,
               approach.value_coded as approach,
               gender.value_coded as gender"
+<<<<<<< HEAD
             )
             .group('age_group.obs_group_id')
             .to_sql
           ).to_hash
         end
+=======
+          )
+          .group("gender.value_coded, age_group.value_coded, user.value_coded, gender.value_coded")
+          .to_sql
+        ).to_hash
+      end
+>>>>>>> development
       end
     end
   end

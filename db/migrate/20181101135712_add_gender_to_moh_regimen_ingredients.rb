@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 
+# adding gender migration
 class AddGenderToMohRegimenIngredients < ActiveRecord::Migration[5.2]
   def up
-    add_column :moh_regimen_ingredient, :gender, :string, default: 'MF'
+    unless column_exists?(:moh_regimen_ingredient, :gender)
+      add_column :moh_regimen_ingredient, :gender, :string, default: 'MF'
+    end
     execute 'UPDATE moh_regimen_ingredient SET min_age = 0 WHERE min_age IS NULL'
     execute 'UPDATE moh_regimen_ingredient SET max_age = 120 WHERE max_age IS NULL'
 

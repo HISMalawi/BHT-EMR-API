@@ -1,9 +1,10 @@
 # frozen_string_literal: true
-
+require 'erb'
 require 'yaml'
 
 # Geth the anc database name
-database = YAML.safe_load(File.open("#{Rails.root}/config/database.yml", 'r'))['anc_database']['database']
+# database = YAML.load_file(ERB.new(File.read("#{Rails.root}/config/database.yml")).result)['anc_database']['database']
+database = YAML.load(File.read("#{Rails.root}/config/database.yml"))['anc_database']['database']
 
 # method to create a beautiful csv file
 def fetch_diff(database)
@@ -97,9 +98,7 @@ def create_csv(database)
 
     open_person = fetch_person(nil, patient['identifier']) || { birthdate: nil, person_id: nil, gender: nil }
     open_name = fetch_person_names(nil, patient['identifier']) || { given_name: nil, family_name: nil }
-    open_address = fetch_person_address(nil,
-                                        patient['identifier']) || { home_village: nil, home_region: nil, ta: nil,
-                                                                    current_village: nil }
+    open_address = fetch_person_address(nil, patient['identifier']) || { home_village: nil, home_region: nil, ta: nil, current_village: nil }
     open_attribute = fetch_person_attribute(nil, patient['identifier']).map { |p| p['value'] }.join('/')
     open_identifier = fetch_other_identifiers(nil, patient['identifier']).map { |p| p['identifier'] }.join('/')
 
