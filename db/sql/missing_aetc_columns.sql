@@ -1,4 +1,21 @@
 SET FOREIGN_KEY_CHECKS = 0;
+CREATE TABLE IF NOT EXISTS `order_extension` (
+  `order_extension_id` int(11) NOT NULL AUTO_INCREMENT,
+  `order_id` int(11) NOT NULL,
+  `value` varchar(50) NOT NULL DEFAULT '',
+  `creator` int(11) NOT NULL DEFAULT '0',
+  `date_created` datetime NOT NULL DEFAULT '1900-01-01 00:00:00',
+  `voided` tinyint(1) NOT NULL DEFAULT '0',
+  `voided_by` int(11) DEFAULT NULL,
+  `date_voided` datetime DEFAULT NULL,
+  `void_reason` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`order_extension_id`),
+  KEY `user_who_created_ext` (`creator`),
+  KEY `user_who_retired_ext` (`voided_by`),
+  KEY `retired_status` (`voided`),
+  CONSTRAINT `user_who_created_extension` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
+  CONSTRAINT `user_who_voided_extension` FOREIGN KEY (`voided_by`) REFERENCES `users` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 CREATE TABLE IF NOT EXISTS `drug_substance` (
   `drug_substance_id` int(11) NOT NULL AUTO_INCREMENT,
   `concept_id` int(11) NOT NULL DEFAULT '0',
@@ -177,12 +194,12 @@ CREATE TABLE IF NOT EXISTS `visit_encounters` (
   PRIMARY KEY (`id`),
   KEY `visit_id_enc_id_index` (`visit_id`,`encounter_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=373180 DEFAULT CHARSET=latin1;
-ALTER TABLE formentry_xsn ADD COLUMN uuid char(38) NOT NULL ;
-ALTER TABLE htmlformentry_html_form ADD COLUMN uuid char(38) NOT NULL ;
-ALTER TABLE htmlformentry_html_form ADD COLUMN description varchar(1000) NULL ;
-ALTER TABLE htmlformentry_html_form ADD COLUMN retired_by int(11) NULL ;
-ALTER TABLE htmlformentry_html_form ADD COLUMN date_retired datetime NULL ;
-ALTER TABLE htmlformentry_html_form ADD COLUMN retire_reason varchar(255) NULL ;
-ALTER TABLE obs ADD COLUMN value_location int(11) NULL ;
-ALTER TABLE weight_for_heights ADD COLUMN supinecm double NOT NULL ;
+-- ALTER TABLE formentry_xsn ADD COLUMN uuid char(38) NOT NULL ;
+-- ALTER TABLE htmlformentry_html_form ADD COLUMN uuid char(38) NOT NULL ;
+-- ALTER TABLE htmlformentry_html_form ADD COLUMN description varchar(1000) NULL ;
+-- ALTER TABLE htmlformentry_html_form ADD COLUMN retired_by int(11) NULL ;
+-- ALTER TABLE htmlformentry_html_form ADD COLUMN date_retired datetime NULL ;
+-- ALTER TABLE htmlformentry_html_form ADD COLUMN retire_reason varchar(255) NULL ;
+-- ALTER TABLE obs ADD COLUMN value_location int(11) NULL ;
+-- ALTER TABLE weight_for_heights ADD COLUMN supinecm double NOT NULL ;
 SET FOREIGN_KEY_CHECKS = 1;

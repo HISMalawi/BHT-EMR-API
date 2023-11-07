@@ -44,6 +44,7 @@ mysql --host=$HOST --user=$USERNAME --port=$PORT --password=$PASSWORD $DATABASE 
 mysql --host=$HOST --user=$USERNAME --port=$PORT --password=$PASSWORD $DATABASE < db/sql/moh_regimens_v2018.sql
 mysql --host=$HOST --user=$USERNAME --port=$PORT --password=$PASSWORD $DATABASE < db/sql/bart2_views_schema_additions.sql
 mysql --host=$HOST --user=$USERNAME --port=$PORT --password=$PASSWORD $DATABASE < db/sql/ntp_regimens.sql
+mysql --host=$HOST --user=$USERNAME --port=$PORT --password=$PASSWORD $DATABASE < db/sql/missing_aetc_columns.sql
 
 
 # now call the update_art_metadata.sh script
