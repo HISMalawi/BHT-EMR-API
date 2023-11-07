@@ -11,9 +11,8 @@ module AetcService
           'VITALS',
           'PRESENTING COMPLAINTS',
           'OUTPATIENT DIAGNOSIS',
-          'PRESCRIPTION',
-          'DISPENSING',
-          'TREATMENT'
+          'TREATMENT',
+          'DISPENSING'
         ].freeze
 
         # Initializes a new instance of the DashboardStats class
@@ -30,7 +29,14 @@ module AetcService
         #
         # @return [Hash] A hash of dashboard stats
         def fetch_report
-          patient_providers_encounters
+          {
+            top: {
+              registered_today: registered_today('New patient'),
+              returning_today: registered_today('Revisiting'),
+              referred_today: registered_today('Referral')
+            },
+            bottom: patient_providers_encounters
+          }
         end
 
         private
@@ -45,23 +51,36 @@ module AetcService
             LEFT JOIN (
               SELECT e.encounter_type, count(*) as total_encounters
               FROM encounter e
-              WHERE e.encounter_datetime >= DATE('#{@start_date}') AND e.encounter_datetime <= DATE('#{@end_date}')
+              WHERE e.encounter_datetime >= ('#{@start_date}') AND e.encounter_datetime <= ('#{@end_date}')
               AND e.voided = 0
               AND e.program_id = #{@program.id}
+              AND e.provider_id != #{User.current.person.id}
               GROUP BY e.encounter_type
             ) AS clinic ON clinic.encounter_type = et.encounter_type_id
             LEFT JOIN (
               SELECT e.encounter_type, count(*) as total_encounters
               FROM encounter e
-              WHERE e.encounter_datetime >= DATE('#{@start_date}') AND e.encounter_datetime <= DATE('#{@end_date}')
+              WHERE e.encounter_datetime >= ('#{@start_date}') AND e.encounter_datetime <= ('#{@end_date}')
               AND e.voided = 0
               AND e.program_id = #{@program.id}
-              AND e.provider_id = #{User.current.id}
+              AND e.provider_id = #{User.current.person.id}
               GROUP BY e.encounter_type
             ) AS individual_clinic ON individual_clinic.encounter_type = et.encounter_type_id
             WHERE et.retired = 0
             AND et.encounter_type_id IN ('#{encounter_type_ids.join("','")}')
           SQL
+        end
+
+        def registered_today(visit_type)
+          type = EncounterType.find_by_name 'Patient registration'
+          concept = ConceptName.find_by_name 'Type of visit'
+          value_coded = ConceptName.find_by_name visit_type
+
+          encounter_ids = Encounter.where('encounter_datetime BETWEEN ? AND ?
+            AND encounter_type = ?', *TimeUtils.day_bounds(@start_date), type.id).map(&:encounter_id)
+
+          Observation.where('encounter_id IN(?) AND concept_id = ? AND value_coded = ?',
+                            encounter_ids, concept.concept_id, value_coded.concept_id).group(:person_id).length
         end
 
         def encounter_type_ids
