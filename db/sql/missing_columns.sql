@@ -11,3 +11,5 @@ ALTER TABLE weight_for_heights ADD COLUMN supine_cm float NULL ;
 ALTER TABLE weight_for_heights ADD COLUMN standard_low_weight_height float NULL ;
 ALTER TABLE weight_for_heights ADD COLUMN standard_high_weight_height float NULL ;
 ALTER TABLE weight_for_heights ADD COLUMN sex int(6) NULL ;
+ALTER TABLE obs MODIFY COLUMN location_id INT NULL;
+ALTER TABLE `obs` DROP FOREIGN KEY `location_for_value`;
