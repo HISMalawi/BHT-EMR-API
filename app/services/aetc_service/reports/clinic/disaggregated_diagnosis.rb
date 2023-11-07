@@ -72,9 +72,9 @@ module AetcService
             next unless diag['diagnosis']
             next unless diag['age_group']
 
-            report_data[diag['diagnosis']] = init_age_group_gender_hash unless report_data.key?(diag['diagnosis'])
-            report_data[diag['diagnosis']][diag['age_group'].to_sym][diag['gender'].to_sym].push(diag['patient_id'])
-            report_data[diag['diagnosis']]['total_by_gender'.to_sym][diag['gender'].to_sym].push(diag['patient_id'])
+            report_data[diag['diagnosis'].to_sym] = init_age_group_gender_hash unless report_data.include?(diag['diagnosis'].to_sym)
+            report_data[diag['diagnosis'].to_sym][diag['age_group'].to_sym][diag['gender'].to_sym].push(diag['patient_id'])
+            report_data[diag['diagnosis'].to_sym]['total_by_gender'.to_sym][diag['gender'].to_sym].push(diag['patient_id'])
           end
           report_data
         end
@@ -94,7 +94,7 @@ module AetcService
         #
         # @return [Hash] The initialized hash
         def init_age_group_gender_hash
-          @init_age_group_gender_hash ||= AGE_GROUPS.each_with_object({}) do |age_group, report|
+          AGE_GROUPS.each_with_object({}) do |age_group, report|
             report[age_group.to_sym] = GENDER.each_with_object({}) do |gender, subreport|
               subreport[gender.to_sym] = []
             end
