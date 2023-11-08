@@ -2,6 +2,7 @@
 
 module OpdService
   module Reports
+    # OPD Malaria Report
     class MalariaReport
       def find_report(start_date:, end_date:, **_extra_kwargs)
         @start_date = start_date
@@ -10,29 +11,22 @@ module OpdService
       end
 
       def registration
-        type = EncounterType.find_by_name 'PATIENT REGISTRATION'
-        visit_type = ConceptName.find_by_name 'Type of visit'
-
-        Encounter.where('encounter_datetime BETWEEN ? AND ?
-      AND encounter_type = ? AND value_coded IS NOT NULL
-      AND obs.concept_id = ?', @start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
-                        @end_date.to_date.strftime('%Y-%m-%d 23:59:59'), type.id, visit_type.concept_id)\
-                 .joins('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
-      INNER JOIN concept_name c ON c.concept_id = obs.value_coded
-      INNER JOIN person p ON p.person_id = obs.person_id')\
-                 .group('obs.person_id').pluck("malaria_report('','','','','',c.name,p.birthdate,'#{@end_date.to_date}')
-      as malaria_data", 'obs.person_id').group_by(&:shift)
+        ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT
+            malaria_report('', '', '', '', '', c.name, p.birthdate, '#{@end_date.to_date}') as malaria_data,
+            o.person_id
+          FROM encounter e
+          INNER JOIN encounter_type et ON et.encounter_type_id = e.encounter_type AND et.retired = 0 AND et.name = 'PATIENT REGISTRATION'
+          INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.voided = 0 AND o.concept_id = (SELECT concept_id FROM concept_name WHERE name = 'Type of visit') AND o.value_coded IS NOT NULL
+          INNER JOIN concept_name c ON c.concept_id = o.value_coded AND c.voided = 0 -- AND c.name IN ('New patient', 'Referred')
+          INNER JOIN person p ON p.person_id = e.patient_id AND p.voided = 0
+          WHERE e.encounter_datetime BETWEEN '#{@start_date.to_date.strftime('%Y-%m-%d 00:00:00')}' AND '#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+          GROUP BY o.person_id
+        SQL
       end
 
       def malaria_report
-        @malaria_data = Observation.where("obs_datetime BETWEEN ? AND ?  AND c.voided = ? AND c.name IN (?) AND
-      malaria_report(obs.order_id,obs.value_text,obs.value_coded,obs.person_id,DATE(obs_datetime),c.name,p.birthdate,'#{@end_date.to_date}') IS NOT NULL",
-                                          @start_date.to_date.strftime('%Y-%m-%d 00:00:00'), @end_date.to_date.strftime('%Y-%m-%d 23:59:59'),
-                                          0, ['Amount dispensed', 'MRDT', 'Malaria film', 'Malaria Species', 'Primary diagnosis'])\
-                                   .joins('INNER JOIN concept_name c ON c.concept_id = obs.concept_id
-      INNER JOIN person p ON p.person_id = obs.person_id')\
-                                   .pluck("malaria_report(obs.order_id,obs.value_text,obs.value_coded,obs.person_id,DATE(obs_datetime),c.name,p.birthdate,'#{@end_date.to_date}')
-      as malaria_data", :person_id).group_by(&:shift)
+        @malaria_data = malaria_data
 
         build_malaria_hash
       end
@@ -80,12 +74,12 @@ module OpdService
           confirmed_malaria_LA_more_5yrs: get_ids('> 5yrs', 'confrim', 'Lumefantrine'),
           confirmed_malaria_ASAQ_less_5yrs: get_ids('< 5yrs', 'confrim', 'ASAQ'),
           confirmed_malaria_ASAQ_more_5yrs: get_ids('> 5yrs', 'confrim', 'ASAQ'),
-          suspected_malaria_mRDT_less_5yrs: suspected_malaria_mRDT_less_5yrs,
-          suspected_malaria_mRDT_more_5yrs: suspected_malaria_mRDT_more_5yrs,
+          suspected_malaria_mRDT_less_5yrs:,
+          suspected_malaria_mRDT_more_5yrs:,
           positive_malaria_mRDT_less_5yrs: get_ids('< 5yrs', 'positive_MRDT', ''),
           positive_malaria_mRDT_more_5yrs: get_ids('> 5yrs', 'positive_MRDT', ''),
-          suspected_malaria_microscopy_less_5yrs: suspected_malaria_microscopy_less_5yrs,
-          suspected_malaria_microscopy_more_5yrs: suspected_malaria_microscopy_more_5yrs,
+          suspected_malaria_microscopy_less_5yrs:,
+          suspected_malaria_microscopy_more_5yrs:,
           positive_malaria_microscopy_less_5yrs: get_ids('< 5yrs', 'positive_Malaria film', ''),
           positive_malaria_microscopy_more_5yrs: get_ids('> 5yrs', 'positive_Malaria film', ''),
           total_suspected_malaria_cases_less_5yrs: total_suspected_malaria_5less,
@@ -114,6 +108,24 @@ module OpdService
           array_id << @malaria_data[element]
         end
         array_id.flatten
+      end
+
+      private
+
+      def malaria_data
+        ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT
+              malaria_report(obs.order_id,obs.value_text,obs.value_coded,obs.person_id,DATE(obs_datetime),c.name,p.birthdate,'#{@end_date.to_date}') as malaria_data,
+              obs.person_id
+          FROM obs
+          INNER JOIN concept_name c ON c.concept_id = obs.concept_id AND c.voided = 0 AND c.name IN ('Amount dispensed', 'MRDT', 'Malaria film', 'Malaria Species', 'Primary diagnosis')
+          INNER JOIN person p ON p.person_id = obs.person_id AND p.voided = 0
+          INNER JOIN encounter e ON e.encounter_id = obs.encounter_id AND e.voided = 0
+          WHERE
+              obs.obs_datetime BETWEEN '#{@start_date.to_date.strftime('%Y-%m-%d 00:00:00')}' AND '#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+              AND obs.voided = 0
+          GROUP BY obs.person_id, malaria_data HAVING malaria_data IS NOT NULL
+        SQL
       end
     end
   end
