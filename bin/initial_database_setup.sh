@@ -24,11 +24,16 @@ rails db:environment:set RAILS_ENV=$ENV
 #Creat Database
 bundle exec rake db:drop db:create db:seed # db:schema:load
 
-USERNAME=`ruby -ryaml -e "puts YAML::unsafe_load_file('config/database.yml')['${ENV}']['username']"`
-PASSWORD=`ruby -ryaml -e "puts YAML::unsafe_load_file('config/database.yml')['${ENV}']['password']"`
-DATABASE=`ruby -ryaml -e "puts YAML::unsafe_load_file('config/database.yml')['${ENV}']['database']"`
-HOST=`ruby -ryaml -e "puts YAML::unsafe_load_file('config/database.yml')['${ENV}']['host']"`
-PORT=`ruby -ryaml -e "puts YAML::unsafe_load_file('config/database.yml')['${ENV}']['port']"`
+USERNAME=`ruby -ryaml -e "puts YAML.safe_load(File.read('config/database.yml'), aliases: true)['${ENV}']['username']"`
+PASSWORD=`ruby -ryaml -e "puts YAML.safe_load(File.read('config/database.yml'), aliases: true)['${ENV}']['password']"`
+DATABASE=`ruby -ryaml -e "puts YAML.safe_load(File.read('config/database.yml'), aliases: true)['${ENV}']['database']"`
+HOST=`ruby -ryaml -e "puts YAML.safe_load(File.read('config/database.yml'), aliases: true)['${ENV}']['host']"`
+PORT=`ruby -ryaml -e "puts YAML.safe_load(File.read('config/database.yml'), aliases: true)['${ENV}']['port']"`
+
+# if port is not set, use default port 3306
+if [ -z "$PORT" ]; then
+  PORT=3306
+fi
 
 mysql --host=$HOST --user=$USERNAME --password=$PASSWORD --port=$PORT -e "SET GLOBAL character_set_database = utf8mb4;"
 mysql --host=$HOST --user=$USERNAME --password=$PASSWORD --port=$PORT -e "SET GLOBAL innodb_large_prefix = 1;"
