@@ -20,7 +20,7 @@ module SpineService
               program("Spine Program").program_id
             )
             .group('patient_id, DATE(encounter_datetime)')
-            .select("patient_id, DATE_FORMAT(encounter_datetime,'%Y-%m-%d') enc_date")
+            .select("patient_id")
           
           results = (data || []).map{|e| e.patient_id}
           results
