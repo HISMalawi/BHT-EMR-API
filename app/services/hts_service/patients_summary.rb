@@ -27,12 +27,12 @@ module HtsService
       {
         patient_id: patient.patient_id,
         test_result_date: hiv_test_result_date,
-        is_pregnant: is_pregnant,
-        is_circumcised: is_circumcised,
-        art_outcome: art_outcome,
-        ever_received_art: ever_received_art,
-        last_date_taken_drugs: last_date_taken_drugs,
-        htc_serial_number: htc_serial_number
+        is_pregnant:,
+        is_circumcised:,
+        art_outcome:,
+        ever_received_art:,
+        last_date_taken_drugs:,
+        htc_serial_number:
       }.merge(hiv_status)
     end
 

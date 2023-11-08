@@ -58,14 +58,14 @@ module HtsService
           %i[M F].collect do |gender|
             {
               num_index: @numbering += 1,
-              gender: gender,
-              age_group: age_group
+              gender:,
+              age_group:
             }
           end
         end
 
         def patients_in_access_point(patients, facility)
-          patients.select { |q| /#{q["access_point"]}/.match? facility }
+          patients.select { |q| /#{q['access_point']}/.match? facility }
         end
 
         def query

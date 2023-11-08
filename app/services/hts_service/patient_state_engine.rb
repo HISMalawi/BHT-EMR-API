@@ -51,7 +51,7 @@ module HtsService
     def create_art_outcome_encounter
       EncounterService.new.create(
         type: EncounterType.find_by_name('ART_FOLLOWUP'),
-        patient: patient,
+        patient:,
         program: HTS_PROGRAM,
         encounter_datetime: date
       )

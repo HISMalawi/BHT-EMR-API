@@ -279,7 +279,7 @@ module HtsService
         end
 
         def gender_is_right(gender, obs_group_id)
-          Observation.where(obs_group_id: obs_group_id,
+          Observation.where(obs_group_id:,
                             concept_id: concept('Gender of contact')).first.value_coded == concept(gender).id
         end
 

@@ -1,8 +1,6 @@
 # rubocop:disable Lint/SafeNavigationChain
 # frozen_string_literal: true
 
-require 'set'
-
 module HtsService
   class WorkflowEngine
     include ModelUtils
@@ -100,7 +98,7 @@ module HtsService
       REFERRAL => %i[task_not_done_today?],
 
       PARTNER_RECEPTION => %i[task_not_done_today?
-                              not_from_community_accesspoint? age_greater_than_13_years?],
+                              not_from_community_accesspoint? age_greater_than_13_years?]
     }.freeze
 
     def next_state(current_state)
@@ -109,8 +107,8 @@ module HtsService
 
     def encounter_exists?(type)
       @encounter = type
-      Encounter.where(type: type, patient: @patient, program: @program).where('encounter_datetime BETWEEN ? AND ?',
-                                                                              *TimeUtils.day_bounds(@date)).exists?
+      Encounter.where(type:, patient: @patient, program: @program).where('encounter_datetime BETWEEN ? AND ?',
+                                                                         *TimeUtils.day_bounds(@date)).exists?
     end
 
     def valid_state?(state)
@@ -178,9 +176,9 @@ module HtsService
       ).where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))
                          .order('encounter_datetime DESC')
 
-      taken_arvs = query.where(concept_id: concept("Taken ARV before").concept_id)
-      time_since_last_arv = query.where(concept_id: concept("Time since last taken medication").concept_id)
-      if taken_arvs.last&.answer_string&.strip == "Yes" && time_since_last_arv&.last&.value_datetime.to_date >= 7.days.ago
+      taken_arvs = query.where(concept_id: concept('Taken ARV before').concept_id)
+      time_since_last_arv = query.where(concept_id: concept('Time since last taken medication').concept_id)
+      if taken_arvs.last&.answer_string&.strip == 'Yes' && time_since_last_arv&.last&.value_datetime.to_date >= 7.days.ago
         return false
       end
 

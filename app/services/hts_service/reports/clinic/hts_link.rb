@@ -57,14 +57,15 @@ module HtsService
           return :same_day if diff.zero?
           return :two_to_seven_days if diff >= 2 && diff <= 7
           return :eight_to_twenty_eight_days if diff >= 8 && diff <= 28
-          return :twenty_eight_days_plus if diff > 28
+
+          :twenty_eight_days_plus if diff > 28
         end
 
         def construct_row(age_group)
           %i[M F].collect do |gender|
             arr = {
               num: @numbering += 1,
-              gender: gender,
+              gender:,
               age_group: age_group.values.first
             }
             INDICATORS.each do |indicator|

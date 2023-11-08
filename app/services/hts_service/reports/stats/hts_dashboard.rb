@@ -11,10 +11,10 @@ module HtsService
 
         def data
           {
-            total_enrolled_into_art: total_enrolled_into_art,
-            total_registered: total_registered,
-            total_tested_returning: total_tested_returning,
-            total_positive: total_positive
+            total_enrolled_into_art:,
+            total_registered:,
+            total_tested_returning:,
+            total_positive:
           }
         end
 

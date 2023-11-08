@@ -39,7 +39,7 @@ module HtsService
         concept: concept('HIV status'),
         person: @patient.person
       ).where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@ref_date))
-      return obs.first.value_coded if obs.exists?
+      obs.first.value_coded if obs.exists?
     end
 
     def recent_access_point
@@ -48,7 +48,7 @@ module HtsService
         concept: concept('HTS Access Type'),
         person: @patient.person
       ).where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@ref_date))
-      return obs.first.value_coded if obs.exists?
+      obs.first.value_coded if obs.exists?
     end
 
     def recent_risk_category
@@ -57,7 +57,7 @@ module HtsService
         concept: concept('client risk category'),
         person: @patient.person
       ).where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@ref_date))
-      return obs.first.value_coded if obs.exists?
+      obs.first.value_coded if obs.exists?
     end
   end
 end

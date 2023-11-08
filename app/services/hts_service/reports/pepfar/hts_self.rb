@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-include ModelUtils
 # frozen_string_literal: true
+
 module HtsService
   module Reports
     module Pepfar
@@ -9,6 +9,7 @@ module HtsService
       class HtsSelf
         attr_accessor :start_date, :end_date, :report
 
+        include ModelUtils
         include ArtService::Reports::Pepfar::Utils
         include HtsService::Reports::HtsReportBuilder
 
@@ -18,11 +19,11 @@ module HtsService
         }.freeze
 
         END_USER = {
-          self_recipient: concept("Self").concept_id,
-          sex_partner: concept("Sexual partner").concept_id,
-          caretaker_for_child: concept("Caretaker for child").concept_id,
-          other: concept("Other").concept_id,
-        }
+          self_recipient: concept('Self').concept_id,
+          sex_partner: concept('Sexual partner').concept_id,
+          caretaker_for_child: concept('Caretaker for child').concept_id,
+          other: concept('Other').concept_id
+        }.freeze
 
         def initialize(start_date:, end_date:)
           @start_date = start_date.to_date.beginning_of_day
@@ -100,19 +101,11 @@ module HtsService
               user.value_coded as user,
               approach.value_coded as approach,
               gender.value_coded as gender"
-<<<<<<< HEAD
             )
-            .group('age_group.obs_group_id')
-            .to_sql
+          .group('gender.value_coded, age_group.value_coded, user.value_coded, gender.value_coded')
+          .to_sql
           ).to_hash
         end
-=======
-          )
-          .group("gender.value_coded, age_group.value_coded, user.value_coded, gender.value_coded")
-          .to_sql
-        ).to_hash
-      end
->>>>>>> development
       end
     end
   end
