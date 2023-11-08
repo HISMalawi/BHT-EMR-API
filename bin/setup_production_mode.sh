@@ -1,32 +1,36 @@
 #!/bin/bash
 
-# check if config folder has secret.yml
-if [ ! -f config/secrets.yml ]; then
-    echo "config/secrets.yml not found. Now creating one."
-    cp config/secrets.yml.example config/secrets.yml
-    # add secret key base to secrets.yml
+function create_secret(){
     echo "Adding secret key base to secrets.yml"
     # generate secret key base and store it in a variable
     secret_key_base=$(rake secret)
     # replace the secret key base in secrets.yml
     sed -i "s/secret_key_base:.*/secret_key_base: $secret_key_base/" config/secrets.yml
-    # check if the secret key base is added
-    if grep -q "secret_key_base" config/secrets.yml; then
-        echo "secret_key_base added to secrets.yml"
-    fi
+    echo "Done"
+}
+
+# check if config folder has secret.yml
+if [ ! -f config/secrets.yml ]; then
+    echo "config/secrets.yml not found. Now creating one."
+    cp config/secrets.yml.example config/secrets.yml
 else
     echo "config/secrets.yml already exists."
-    echo "now checking if secret_key_base is added to secrets.yml"
-    # check if the secret key base is added
-    if grep -q "secret_key_base" config/secrets.yml; then
-        echo "secret_key_base already added to secrets.yml"
+fi
+echo "now checking if secret_key_base is added to secrets.yml"
+if grep -q "secret_key_base:" config/secrets.yml; then
+    echo "secret_key_base is present in secrets.yml, now checking if it has a value"
+    # check if secret_key_base has a value
+    if grep -q "secret_key_base: ^[0-9a-fA-F]{128}$" config/secrets.yml; then
+        echo "secret_key_base is present and has a value in secrets.yml, skipping..."
     else
-        echo "Adding secret key base to secrets.yml"
-        # generate secret key base and store it in a variable
-        secret_key_base=$(rake secret)
-        # replace the secret key base in secrets.yml
-        sed -i "s/secret_key_base:.*/secret_key_base: $secret_key_base/" config/secrets.yml
+        echo "secret_key_base is present but has no value in secrets.yml"
+        create_secret
     fi
+else
+    echo "secret_key_base is not present in secrets.yml"
+    # add a secret key base to secrets.yml under production
+    sed -i "/^production:/a \ \ secret_key_base:" config/secrets.yml
+    create_secret
 fi
 
 # Now check if database.yml exists and the production database is set
