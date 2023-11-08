@@ -42,25 +42,26 @@ module HTSService::AITIntergration
     end
 
     def sync
-      begin      
-        request_is_successful = lambda { |status_code| [200, 201].include? status_code }
-        return 'No Patients to sync' unless patients.present?
-        
-        index = index_patients.collect { |i| create_index_row i }
-        contacts = index_patients.collect { |i| create_contacts_rows i }.flatten
+      request_is_successful = lambda { |status_code| [200, 201].include? status_code }
+      
+      patients.find_in_batches(batch_size: 100) do |p_list|
+        return 'No Patients to sync' unless p_list.present?
+
+        index = p_list.collect { |i| create_index_row i }
+        contacts = p_list.collect { |i| create_contacts_rows i }.flatten
         index_csv = generate_csv_for index
         contact_csv = generate_csv_for contacts
         status_code = send_request 'index', index_csv unless index_csv.nil?
-        send_request 'contact', contact_csv if request_is_successful.call status_code
-        update_last_synced_patient_id patients.last.patient_id if request_is_successful.call status_code
+        send_request 'contact', contact_csv if request_is_successful.call status_code && !contact_csv.nil?
+        update_last_synced_patient_id p_list.last.patient_id if request_is_successful.call status_code
         remove_from_failed_queue
         index.map { |obj| obj[:contacts] = contacts.select { |contact| contact['parent_external_id'] == obj[:client_patient_id] }; obj }
-      rescue StandardError => e
-        LOGGER.error e.message
-        LOGGER.info "Adding patients #{@patients.map(&:patient_id)} to the failed queue"
-        add_to_failed_queue
-        raise e
       end
+    rescue StandardError => e
+      LOGGER.error e.message
+      LOGGER.info "Adding patients #{@patients.map(&:patient_id)} to the failed queue"
+      add_to_failed_queue
+      raise e
     end
 
     private
@@ -88,10 +89,6 @@ module HTSService::AITIntergration
         raise e.response
       end
       response.code
-    end
-
-    def index_patients
-      patients
     end
 
     def generate_csv_for(rows)
@@ -165,7 +162,7 @@ module HTSService::AITIntergration
           encounter: { encounter_type: HIV_TESTING_ENCOUNTER },
           program: { program_id: HTC_PROGRAM },
         )
-        .distinct.order(patient_id: :asc).limit(200)
+        .distinct.order(patient_id: :asc)
     end
 
     def get_value(obs)
