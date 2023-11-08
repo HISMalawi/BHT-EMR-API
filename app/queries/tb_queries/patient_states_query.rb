@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module TBQueries
+module TbQueries
   class PatientStatesQuery
     STATES = {
       'TREATMENT_COMPLETE' => 93,

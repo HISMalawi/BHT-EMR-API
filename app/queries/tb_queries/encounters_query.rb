@@ -2,7 +2,7 @@
 
 include TimeUtils
 
-module TBQueries
+module TbQueries
   class EncountersQuery
     def initialize
       @program = program('TB Program')

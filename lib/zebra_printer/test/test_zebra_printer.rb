@@ -224,3 +224,6 @@ class ZebraPrinterTest < Test::Unit::TestCase
                  @label.output
   end
 end
+
+class ZebraPrinter::Test::TestZebraPrinter
+end

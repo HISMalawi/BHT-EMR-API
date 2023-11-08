@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module TBQueries
+module TbQueries
   class ObservationsQuery
     def initialize(relation = Observation.all)
       @relation = relation

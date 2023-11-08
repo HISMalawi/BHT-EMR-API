@@ -2,7 +2,7 @@
 
 module Api
   module V1
-    class DDEController < ApplicationController
+    class DdeController < ApplicationController
       # GET /api/v1/dde/patients
       def find_patients_by_npid
         npid = params.require(:npid)

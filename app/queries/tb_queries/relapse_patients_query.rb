@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module TBQueries
+module TbQueries
   class RelapsePatientsQuery
     STATES = {
       RX: 92, # in treatment

@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
-include ModelUtils
-
-class TBNumberService
+class TbNumberService
+  include ModelUtils
   class DuplicateIdentifierError < StandardError; end
 
   NORMAL_TYPE = 'District TB Number'

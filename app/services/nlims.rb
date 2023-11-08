@@ -3,7 +3,7 @@
 require 'ostruct'
 require 'rest-client'
 
-class NLims
+class Nlims
   LIMS_TEMP_FILE = Rails.root.join('tmp/lims_connection.yml')
   LOGGER = Rails.logger
 

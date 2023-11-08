@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module TBQueries
+module TbQueries
   class PatientsQuery
     def initialize(relation = Patient.all)
       @relation = relation.extending(Scopes)

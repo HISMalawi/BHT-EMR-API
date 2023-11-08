@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module TBQueries
+module TbQueries
   class ClinicallyDiagnosedPatientsQuery
     def initialize(relation = Patient.all)
       @relation = relation

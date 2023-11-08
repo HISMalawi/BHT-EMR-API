@@ -14,15 +14,15 @@ module HtsService
         include HtsService::Reports::HtsReportBuilder
 
         APPROACH = {
-          directly_assisted: concept('Directly-Assisted').concept_id,
-          unassisted: concept('Un-assisted').concept_id
+          directly_assisted: ConceptName.find_by_name('Directly-Assisted')&.concept_id,
+          unassisted: ConceptName.find_by_name('Un-assisted')&.concept_id
         }.freeze
 
         END_USER = {
-          self_recipient: concept('Self').concept_id,
-          sex_partner: concept('Sexual partner').concept_id,
-          caretaker_for_child: concept('Caretaker for child').concept_id,
-          other: concept('Other').concept_id
+          self_recipient: ConceptName.find_by_name('Self')&.concept_id,
+          sex_partner: ConceptName.find_by_name('Sexual partner')&.concept_id,
+          caretaker_for_child: ConceptName.find_by_name('Caretaker for child')&.concept_id,
+          other: ConceptName.find_by_name('Other')&.concept_id
         }.freeze
 
         def initialize(start_date:, end_date:)

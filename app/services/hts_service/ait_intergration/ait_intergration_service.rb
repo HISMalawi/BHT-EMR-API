@@ -7,7 +7,9 @@ module HtsService
     class AitIntergrationService
       attr_accessor :patients, :rest_client
 
-      LOGGER = Logger.new($stdout)
+      LOGGER = Logger.new(STDOUT)
+
+      AIT_CONFIG = YAML.load_file("#{Rails.root}/config/ait.yml")
 
       HTC_PROGRAM = Program.find_by_name('HTC PROGRAM').id
       HIV_TESTING_ENCOUNTER = EncounterType.find_by_name('Testing')
@@ -17,7 +19,7 @@ module HtsService
         search_column: 'client_patient_id',
         create_new_cases: 'on',
         multipart: true
-      }.freeze
+      }
 
       CONTACT_ADDITIONAL_HEADERS = %i[
         first_name last_name sex age contact_phone_number marital_status new_hiv_status case_id caseid parent_type contact_phone_number_verified name dob_known age_format sex_dissagregated entry_point age_in_years age_in_months age age_group dob sex
@@ -66,43 +68,44 @@ module HtsService
         raise e
       end
 
-      @patients = hts_patients_starting_from patient_id.to_i
-      @rest_client = RestClient::Resource.new AIT_CONFIG['endpoint'], user: AIT_CONFIG['username'],
-                                                                      password: AIT_CONFIG['password'], verify_ssl: false
-    end
+      private
 
-    def add_to_failed_queue
-      patient_ids = @patients.map(&:patient_id)
+      def add_to_failed_queue
+        patient_ids = @patients.map(&:patient_id)
 
-      failed_queue = GlobalProperty.where(property: 'hts.ait.failed_queue')
+        failed_queue = GlobalProperty.where(property: 'hts.ait.failed_queue')
 
-      queue_ids = failed_queue.pluck(:property_value)
+        queue_ids = failed_queue.pluck(:property_value)
 
-      failed_queue.update_all(property_value: (queue_ids + patient_ids)&.uniq&.join(','))
-    end
-
-    def remove_from_failed_queue
-      failed_queue = GlobalProperty.find_by_property('hts.ait.failed_queue')
-      return unless failed_queue.present?
-
-      failed_queue.update_attribute(:property_value, failed_queue.property_value.split(',').reject { |id| @patients.map(&:patient_id).include? id.to_i }.join(','))
-    end
-
-    def send_request(case_type, csv)
-      begin
-        rest_client.post PARAMS.merge({ case_type:, file: File.new(csv, 'rb') })
-      rescue RestClient::ExceptionWithResponse => e
-        raise e.response
+        failed_queue.update_all(property_value: (queue_ids + patient_ids)&.uniq&.join(','))
       end
 
-      private
+      def remove_from_failed_queue
+        failed_queue = GlobalProperty.find_by_property('hts.ait.failed_queue')
+        return unless failed_queue.present?
+
+        failed_queue.update_attribute(:property_value, failed_queue.property_value.split(',').reject { |id| @patients.map(&:patient_id).include? id.to_i }.join(','))
+      end
+
+      def send_request(case_type, csv)
+        begin
+          response = rest_client.post PARAMS.merge({ case_type:, file: File.new(csv, 'rb') })
+        rescue RestClient::ExceptionWithResponse => e
+          raise e.response
+        end
+        response.code
+      end
+
+      def index_patients
+        patients
+      end
 
       def generate_csv_for(rows)
         return nil unless rows.any?
 
         f = Tempfile.create(["ait_index_#{Date.today.to_date}", '.csv'])
         CSV.open(f, 'w') do |csv|
-          csv << rows.first.keys.collect(&:to_s)
+          csv << rows.first.keys.collect { |header| header.to_s }
           rows.each { |row| csv << row.values }
         end
         f.path
@@ -183,56 +186,14 @@ module HtsService
         obs.value_coded.strip unless obs.value_coded.empty?
       end
 
-      def get_index_contacts(index)
-        contactList = []
-        contacts_count_of(index).times do |i|
-          contact = {}
-          CONTACT_OBS_HEADERS.each do |header, value|
-            obs = Observation.joins(concept: :concept_names)
-                             .where(concept_name: { name: header }, person_id: index.id)
-                             .offset(i).first
-            contact[value] = get_value obs
-          end
-          contactList << contact
-        end
-        contactList
-      end
-
-      def hts_patients_starting_from(patient_id)
-        LOGGER.info "Initializing AIT intergration service from patient id #{patient_id}"
-        Patient.joins(:person, encounters: :program)
-               .where('person.person_id >=', patient_id)
-               .where(
-                 encounter: { encounter_type: HIV_TESTING_ENCOUNTER },
-                 program: { program_id: HTC_PROGRAM }
-               )
-               .distinct.order(patient_id: :asc).limit(200)
-      end
-
-      def contacts_count_of(index)
-        Observation.joins(concept: :concept_names)
-                   .where(concept_name: { name: 'First name of contact' }, person_id: index.id)
-                   .select(:concept_id)
-                   .count
-      end
-
-      def get_value(obs)
-        return nil if obs.nil?
-        return obs.answer_string.strip unless obs.answer_string.empty?
-        return obs.value_numeric.strip unless obs.value_numeric.empty?
-
-        obs.value_coded.strip unless obs.value_coded.empty?
-      end
-
       def contact_csv_row_builder
-        HtsService::AitIntergration::ContactCsvRowBuilder.new
+        HTSService::AITIntergration::ContactCsvRowBuilder.new
       end
 
       def csv_row_builder
-        HtsService::AitIntergration::CsvRowBuilder.new
+        HTSService::AITIntergration::CsvRowBuilder.new
       end
     end
   end
 end
-
 # rubocop:enable Layout/LineLength

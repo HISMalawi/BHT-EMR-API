@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module TBQueries
+module TbQueries
   class TbTreatmentQuery
     STATES = {
       TB_RX: 92,
