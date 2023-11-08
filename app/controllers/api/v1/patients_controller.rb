@@ -265,13 +265,15 @@ class Api::V1::PatientsController < ApplicationController
   end
 
   def sync_to_ait
+    min_patient = params.delete(:min_patient_id)
     property = GlobalProperty.find_by_property('hts.ait.last_synced_patient_id') rescue nil
     property = GlobalProperty.create(
                   property: 'hts.ait.last_synced_patient_id',
                   property_value: oldest_hts_patient,
                   description: 'Last synced patient id'
                 ) if property.blank?
-      render json: ait_intergration_service(property.property_value).sync
+    AITIntergrationJob::perform_later(min_patient || property.property_value)
+    render json: "Enqueued ait sync", status: :ok
   end
 
   def oldest_hts_patient
