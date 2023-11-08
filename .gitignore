@@ -51,6 +51,7 @@ config/server/
 
 # Ignore all migration generated reports
 *migration*.csv
+names_mismatch.csv
 migration*.log
 extensions.json
 emc_ipt_duplicates*.csv

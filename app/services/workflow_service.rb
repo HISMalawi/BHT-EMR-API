@@ -11,6 +11,7 @@ class WorkflowService
     'VMMC PROGRAM' => VMMCService::WorkflowEngine,
     'CXCA PROGRAM' => CXCAService::WorkflowEngine,
     'HTC PROGRAM' => HTSService::WorkflowEngine,
+    'AETC PROGRAM' => AetcService::WorkflowEngine,
     'SPINE PROGRAM' => SpineService::WorkflowEngine
   }.freeze
 

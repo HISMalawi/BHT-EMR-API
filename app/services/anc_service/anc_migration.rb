@@ -58,6 +58,7 @@ module ANCService
       mapped = fetch_mapped_patients
       # rubocop:disable Metrics/BlockLength
       ActiveRecord::Base.transaction do
+        migrate_roles
         handle_provider_movement
         update_openmrs_users
         migrate_user_role
@@ -274,7 +275,7 @@ module ANCService
     def migrate_users
       statement = <<~SQL
         INSERT INTO users (user_id,  system_id,  username,  password,  salt,  secret_question,  secret_answer,  creator,  date_created,  changed_by,  date_changed,  person_id,  retired,  retired_by,  date_retired,  retire_reason,  uuid,  authentication_token)
-        SELECT b.ART_user_id, users.system_id,  CONCAT(users.username, '_anc'),  users.password,  users.salt,  users.secret_question,  users.secret_answer, creators.ART_user_id,  users.date_created, changers.ART_user_id,  users.date_changed, b.person_id, users.retired, voiders.ART_user_id, users.date_retired,  users.retire_reason,  users.uuid,  users.authentication_token
+        SELECT b.ART_user_id, users.system_id,  CONCAT(users.username, '_spine'),  users.password,  users.salt,  users.secret_question,  users.secret_answer, creators.ART_user_id,  users.date_created, changers.ART_user_id,  users.date_changed, b.person_id, users.retired, voiders.ART_user_id, users.date_retired,  users.retire_reason,  uuid(),  users.authentication_token
         FROM #{@database}.users
         INNER JOIN #{@database}.user_bak b on b.ANC_user_id = users.user_id
         INNER JOIN #{@database}.user_bak creators on creators.ANC_user_id = users.creator
@@ -307,7 +308,7 @@ module ANCService
       statement = <<~SQL
         INSERT INTO person (person_id, gender, birthdate, birthdate_estimated, dead, death_date, cause_of_death, creator, date_created, changed_by, date_changed, voided, voided_by, date_voided, void_reason, uuid)
         SELECT #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + person.person_id) AS person_id"},
-        gender, birthdate, birthdate_estimated, dead, death_date, cause_of_death, creators.ART_user_id, person.date_created, changers.ART_user_id, person.date_changed, person.voided, voiders.ART_user_id, person.date_voided, person.void_reason, person.uuid
+        gender, birthdate, COALESCE(birthdate_estimated, 0), dead, death_date, cause_of_death, creators.ART_user_id, person.date_created, changers.ART_user_id, person.date_changed, person.voided, voiders.ART_user_id, person.date_voided, person.void_reason, person.uuid
         FROM #{@database}.person #{cond}
         INNER JOIN #{@database}.user_bak creators ON creators.ANC_user_id = person.creator
         LEFT JOIN #{@database}.user_bak changers ON changers.ANC_user_id = person.changed_by
@@ -509,7 +510,7 @@ module ANCService
       end
       statement = <<~SQL
         INSERT INTO encounter (encounter_id, encounter_type, patient_id, provider_id, location_id, form_id, encounter_datetime, creator, date_created, voided, voided_by, date_voided, void_reason, uuid, changed_by, date_changed, program_id)
-        SELECT (SELECT #{@encounter_id} + encounter_id), encounter_type, #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + patient_id)"}, providers.ART_person_id, location_id, form_id, encounter_datetime, bak.ART_user_id, encounter.date_created, encounter.voided, voider.ART_user_id, encounter.date_voided, encounter.void_reason, encounter.uuid, changer.ART_user_id, encounter.date_changed, 12
+        SELECT (SELECT #{@encounter_id} + encounter_id), encounter_type, #{linked ? 'art_patient_id' : "(SELECT #{@person_id} + patient_id)"}, providers.ART_person_id, location_id, form_id, encounter_datetime, bak.ART_user_id, encounter.date_created, encounter.voided, voider.ART_user_id, encounter.date_voided, encounter.void_reason, encounter.uuid, changer.ART_user_id, encounter.date_changed, encounter.program_id
         FROM #{@database}.encounter #{cond}
         INNER JOIN #{@database}.user_bak bak ON encounter.creator = bak.ANC_user_id
         INNER JOIN (
@@ -565,6 +566,16 @@ module ANCService
         WHERE order_id IN (SELECT order_id FROM #{@database}.orders WHERE patient_id IN (#{patients}))
       SQL
       central_hub query: statement, message: msg
+    end
+
+    def migrate_roles
+      statement = <<~SQL
+        INSERT INTO role (role, description, uuid)
+        SELECT role, description, uuid()
+        FROM #{@database}.role
+        WHERE role NOT IN (SELECT role FROM role)
+      SQL
+      central_hub message: 'Migrating roles', query: statement
     end
 
     def migrate_user_role
