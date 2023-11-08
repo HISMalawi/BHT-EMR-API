@@ -1,7 +1,7 @@
 # rubocop:disable Layout/LineLength
 module HTSService::AITIntergration
   class AITIntergrationService
-    attr_accessor :patients, :rest_client
+    attr_accessor :patients, :rest_client, :args
 
     LOGGER = Logger.new(STDOUT)
 
@@ -28,12 +28,17 @@ module HTSService::AITIntergration
       caseid index_interview_date name first_name last_name client_patient_id dob_known age_format sex_dissagregated marital_status phone_number entry_point consent consent_refusal_reason index_comments age_in_years age_in_months age age_group dob index_client_category sex generation close_case_date registered_by closed_contacts enlisted_contacts eligible_t_contacts reached_contacts tested_contacts eligible_ait_contacts index_client_id health_facility_id health_facility_name district_id district_name region_id region_name partner dhis2_code continue_registration hiv_status import_validation index_entry_point site_id owner_id linkage_code
     ].freeze
 
-    def initialize(patient_id)
+    def initialize(**args)
+      @args = args
+
       raise 'AIT config not found or not properly set, please refer to the ait.yml.example' unless !AIT_CONFIG['endpoint'].empty?
 
       failed_ids = GlobalProperty.find_by_property('hts.ait.failed_queue')&.property_value&.split(',') || []
+      patient_id = args[:patient_id]
+      from_date = args[:from_date]
+      to_date = args[:to_date]
 
-      @patients = hts_patients_starting_from patient_id.to_i
+      @patients = hts_patients_starting_from patient_id.to_i, from_date, to_date
       @failed = Patient.where(patient_id: failed_ids).order(patient_id: :asc) if failed_ids.present?
 
       @patients = @patients + @failed if @failed.present?
@@ -52,7 +57,7 @@ module HTSService::AITIntergration
         index_csv = generate_csv_for index
         contact_csv = generate_csv_for contacts
         status_code = send_request 'index', index_csv unless index_csv.nil?
-        send_request 'contact', contact_csv if request_is_successful.call status_code && !contact_csv.nil?
+        send_request 'contact', contact_csv if request_is_successful.call(status_code) && contacts.any?
         update_last_synced_patient_id p_list.last.patient_id if request_is_successful.call status_code
         remove_from_failed_queue
         index.map { |obj| obj[:contacts] = contacts.select { |contact| contact['parent_external_id'] == obj[:client_patient_id] }; obj }
@@ -153,16 +158,18 @@ module HTSService::AITIntergration
       contacts.uniq
     end
 
-    def hts_patients_starting_from(patient_id)
-      LOGGER.info "Initializing AIT intergration service from patient id #{patient_id}"
-      Patient.joins(:person, encounters: [:observations, :program])
-        .where('person.person_id >= ?', patient_id)
-        .where(
-          obs: { concept_id: ConceptName.find_by_name('HIV status').concept_id, value_coded: ConceptName.find_by_name('Positive').concept_id },
-          encounter: { encounter_type: HIV_TESTING_ENCOUNTER },
-          program: { program_id: HTC_PROGRAM },
+    def hts_patients_starting_from(patient_id, from_date, to_date)
+      LOGGER.info "Initializing AIT intergration service with args #{args}"
+      patients = Patient.joins(:person, encounters: [:observations, :program])
+      .where(
+        obs: { concept_id: ConceptName.find_by_name('HIV status').concept_id, value_coded: ConceptName.find_by_name('Positive').concept_id },
+        encounter: { encounter_type: HIV_TESTING_ENCOUNTER },
+        program: { program_id: HTC_PROGRAM },
         )
-        .distinct.order(patient_id: :asc)
+      patients = patients.where('person.person_id >= ?', patient_id) if patient_id.present?
+      patients = patients.where('encounter.encounter_datetime >= ?', from_date.to_date.beginning_of_day) if from_date.present?
+      patients = patients.where('encounter.encounter_datetime <= ?', to_date.to_date.end_of_day) if to_date.present?
+      patients
     end
 
     def get_value(obs)
