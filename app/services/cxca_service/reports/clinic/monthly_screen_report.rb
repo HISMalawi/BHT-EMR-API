@@ -7,8 +7,7 @@ module CxcaService
         include Utils
 
         attr_accessor :start_date, :end_date, :report
-
-        CxCa_PROGRAM = program 'CxCa program'
+        CxCa_PROGRAM = Program.find_by_name "CxCa program"
 
         TX_GROUPS = {
           first_time_screened: ['initial screening', 'referral'],

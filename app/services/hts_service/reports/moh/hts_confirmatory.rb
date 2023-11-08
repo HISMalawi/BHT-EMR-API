@@ -6,6 +6,7 @@ module HtsService
       # HTS Initial tested for hiv
       class HtsConfirmatory
         include HtsService::Reports::HtsReportBuilder
+        include ModelUtils
         attr_accessor :start_date, :end_date
 
         YES_ANSWER = 'Yes'
@@ -27,22 +28,30 @@ module HtsService
         ART_REFERAL = 'Antiretroviral therapy referral'
 
         INDICATORS = [
-          { name: 'hiv_status', concept_id: concept('HIV status').concept_id, value: 'value_coded', join: 'INNER' },
+          { name: 'hiv_status', concept_id: ConceptName.find_by_name('HIV status').concept_id, value: 'value_coded', join: 'INNER' },
           {
             name: %w[test_one test_two test_three test_one_repeat],
-            concept_id: [concept(TEST_ONE).concept_id, concept(TEST_TWO).concept_id, concept(TEST_THREE).concept_id,
-                         concept(TEST_ONE_REPEAT).concept_id],
+            concept_id: [ConceptName.find_by_name(TEST_ONE).concept_id,
+                         ConceptName.find_by_name(TEST_TWO).concept_id,
+                         ConceptName.find_by_name(TEST_THREE).concept_id,
+                         ConceptName.find_by_name(TEST_ONE_REPEAT).concept_id],
             join: 'LEFT'
           },
-          { name: 'referal_for_retesting', concept_id: concept(REFERRAL_FOR_RETESTING).concept_id, join: 'LEFT' },
-          { name: 'risk_category', concept_id: concept(RISK_CATEGORY).concept_id, join: 'LEFT' },
-          { name: 'referrals_ordered', concept_id: concept(REFERALS_ORDERED).concept_id, value: 'value_text',
+          { name: 'referal_for_retesting',
+            concept_id: ConceptName.find_by_name(REFERRAL_FOR_RETESTING).concept_id,
             join: 'LEFT' },
-          { name: 'recency', concept_id: concept(RECENCY).concept_id, join: 'LEFT' },
-          { name: 'dbs_collected', concept_id: concept(DBS_COLLECTED).concept_id, join: 'LEFT' },
-          { name: 'dbs_number', concept_id: concept(DBS_NUMBER).concept_id, join: 'LEFT' },
-          { name: 'hiv_group', concept_id: concept(HIV_GROUP).concept_id, join: 'LEFT' },
-          { name: 'art_referal', concept_id: concept(ART_REFERAL).concept_id, value: 'value_text', join: 'LEFT' }
+          { name: 'risk_category', concept_id: ConceptName.find_by_name(RISK_CATEGORY).concept_id, join: 'LEFT' },
+          { name: 'referrals_ordered',
+            concept_id: ConceptName.find_by_name(REFERALS_ORDERED).concept_id, value: 'value_text',
+            join: 'LEFT' },
+          { name: 'recency', concept_id: ConceptName.find_by_name(RECENCY).concept_id, join: 'LEFT' },
+          { name: 'dbs_collected', concept_id: ConceptName.find_by_name(DBS_COLLECTED).concept_id, join: 'LEFT' },
+          { name: 'dbs_number', concept_id: ConceptName.find_by_name(DBS_NUMBER).concept_id, join: 'LEFT' },
+          { name: 'hiv_group', concept_id: ConceptName.find_by_name(HIV_GROUP).concept_id, join: 'LEFT' },
+          { name: 'art_referal',
+            concept_id: ConceptName.find_by_name(ART_REFERAL).concept_id,
+            value: 'value_text',
+            join: 'LEFT' }
 
         ].freeze
 
@@ -89,6 +98,10 @@ module HtsService
           set_unique
         end
 
+        def self.concept(name)
+          name
+        end
+
         private
 
         def init_report
@@ -111,7 +124,7 @@ module HtsService
 
         def set_unique
           @data.each do |key, obj|
-            @data[key] = obj&.map { |q| q['person_id'] }&.uniq
+            @data[key] = obj&.map { |q| q['person_id'] }.uniq
           end
         end
 
@@ -152,10 +165,8 @@ module HtsService
         end
 
         def fetch_retest_referral
-          @data['referral_for_retesting_after_confirmatory_no'] =
-            filter_hash('referal_for_retesting', concept('NOT done').concept_id)
-          @data['referral_for_retesting_after_confirmatory_yes'] =
-            filter_hash('referal_for_retesting', concept('Re-Test').concept_id)
+          @data['referral_for_retesting_after_confirmatory_no'] = filter_hash('referal_for_retesting', concept('NOT done').concept_id)
+          @data['referral_for_retesting_after_confirmatory_yes'] = filter_hash('referal_for_retesting', concept('Re-Test').concept_id)
         end
 
         def fetch_art_referral
@@ -176,13 +187,9 @@ module HtsService
               .group('person.person_id').to_sql
           ).to_hash
           @data['art_referral_outcome_linked'] = query.select { |r| r['value_coded'] == concept('Linked').concept_id }
-          @data['art_referral_outcome_refused'] = query.select do |r|
-            r['value_coded'] == concept('Refused').concept_id
-          end
+          @data['art_referral_outcome_refused'] = query.select { |r| r['value_coded'] == concept('Refused').concept_id }
           @data['art_referral_outcome_died'] = query.select { |r| r['value_coded'] == concept('Died').concept_id }
-          @data['art_referral_outcome_unknown'] = query.select do |r|
-            r['value_coded'] == concept('Unknown').concept_id
-          end
+          @data['art_referral_outcome_unknown'] = query.select { |r| r['value_coded'] == concept('Unknown').concept_id }
         end
       end
     end

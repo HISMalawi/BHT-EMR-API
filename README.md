@@ -33,6 +33,16 @@ Install the required gems like so:
 bundle install
 ```
 
+### Setting up Production mode
+```sh
+bin/setup_production_mode.sh 
+```
+
+Incase this does not run you might want to make it executable and you can achieve that by doing this
+```sh
+chmod +x bin/setup_production_mode.sh 
+```
+
 #### Database
 
 The API uses an [Openmrs 1.7](https://openmrs.org/2010/11/openmrs-1-7-now-available/)
@@ -91,8 +101,8 @@ $ vim config/database.yml   # Edit configuration
 
 1. Run the following commands to set up your development and test databases.
 
-    ```bash
-    bin/initial_database_setup.sh development mpc && bin/initial_database_setup.sh test mpc
+    ```sh
+    bin/initial_database_setup.sh production mpc && bin/initial_database_setup.sh development mpc && bin/initial_database_setup.sh test mpc
     ```
 
 2. Run test suite as follows:

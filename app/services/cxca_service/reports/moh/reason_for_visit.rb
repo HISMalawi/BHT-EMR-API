@@ -5,8 +5,7 @@ module CxcaService
     module Moh
       class ReasonForVisit
         attr_accessor :start_date, :end_date
-
-        CxCa_PROGRAM = program 'CxCa program'
+        CxCa_PROGRAM = Program.find_by_name "CxCa program"
 
         def initialize(start_date:, end_date:)
           @start_date = start_date.to_date.beginning_of_day
