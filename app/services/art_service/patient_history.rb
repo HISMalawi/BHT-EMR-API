@@ -168,7 +168,7 @@ module ArtService
     end
 
     def eptb
-      return 'eptb' if hiv_staging_observation_present?('Extrapulmonary tuberculosis (EPTB)')
+      'eptb' if hiv_staging_observation_present?('Extrapulmonary tuberculosis (EPTB)')
     end
 
     def first_line_drugs
@@ -239,7 +239,7 @@ module ArtService
 
     def tb_within_last_two_yrs
       concept_name = 'Pulmonary tuberculosis within the last 2 years'
-      return 'tb within last 2 yrs' if hiv_staging_observation_present?(concept_name)
+      'tb within last 2 yrs' if hiv_staging_observation_present?(concept_name)
     end
 
     def transfer_in

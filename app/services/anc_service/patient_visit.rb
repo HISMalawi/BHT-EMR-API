@@ -45,13 +45,13 @@ module AncService
       prev_test_done = Observation.where(person: patient.person, concept: concept('Previous HIV Test Done'))\
                                   .order(obs_datetime: :desc)\
                                   .first\
-          &.value_coded || nil
+                                  &.value_coded || nil
       if prev_test_done == 1065 # if value is Yes, check prev hiv status
         prev_hiv_test_res = Observation.where(['person_id = ? and concept_id = ? and obs_datetime > ?',
                                                patient.person.id, ConceptName.find_by_name('Previous HIV Test Results').concept_id, date_of_lmp])\
                                        .order(obs_datetime: :desc)\
                                        .first\
-          &.value_coded
+                                       &.value_coded
         prev_status = ConceptName.find_by_concept_id(prev_hiv_test_res).name
         return prev_status if prev_status.to_s.downcase == 'positive'
       end
@@ -61,7 +61,7 @@ module AncService
                            patient.person.id, ConceptName.find_by_name('HIV Status').concept_id, date_of_lmp])\
                    .order(obs_datetime: :desc)\
                    .first\
-          &.value_coded
+                   &.value_coded
       rescue StandardError
         nil
       end
@@ -80,7 +80,7 @@ module AncService
                                      patient.person.id, ConceptName.find_by_name('Pregnancy test').concept_id, date_of_lmp])\
                              .order(obs_datetime: :desc)\
                              .first\
-          &.value_coded
+                             &.value_coded
 
       begin
         ConceptName.find_by_concept_id(preg_test).name
@@ -193,7 +193,7 @@ module AncService
       end
 
         current_range['START'] = date_aborted.to_date + 10.days
-        current_range['END'] = current_range['END'] #+ 45.week # + 7.day + 45.week #+ 9.months
+        current_range['END'] = current_range['END'] # + 45.week # + 7.day + 45.week #+ 9.months
       end
 
       current_range['END'] = current_range['END'] unless begin

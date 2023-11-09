@@ -47,7 +47,7 @@ module AncService
         0
       end
 
-      return gravida[0] unless gravida.zero?
+      gravida[0] unless gravida.zero?
     end
 
     def anc_visit(patient, date)
@@ -242,7 +242,7 @@ module AncService
       prev_test_done = Observation.where(person: patient.person, concept: concept('Previous HIV Test Done'))\
                                   .order(obs_datetime: :desc)\
                                   .first\
-          &.value_coded || nil
+                                  &.value_coded || nil
 
       if prev_test_done == 1065 # if value is Yes, check prev hiv status
 
@@ -250,7 +250,7 @@ module AncService
                                                patient.patient_id, prev_hiv_status.concept_id, checked_date])\
                                        .order(obs_datetime: :desc)\
                                        .first\
-          &.value_coded
+                                       &.value_coded
 
         prev_status = ConceptName.find_by_concept_id(prev_hiv_test_res).name
 
@@ -263,7 +263,7 @@ module AncService
                            patient.person.id, current_status.concept_id, checked_date])\
                    .order(obs_datetime: :desc)\
                    .first\
-        &.value_coded
+                   &.value_coded
       rescue StandardError
         nil
       end

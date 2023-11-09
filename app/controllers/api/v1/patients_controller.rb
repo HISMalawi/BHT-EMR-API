@@ -593,7 +593,7 @@ module Api
     version_number = file.strip[2..2]
     number = file
     len = number.length - 5
-    number = number[len..len] + '   ' + number[(len + 1)..(len + 2)] + ' ' + number[(len + 3)..(number.length)]
+    number = "#{number[len..len]}   #{number[(len + 1)..(len + 2)]} #{number[(len + 3)..(number.length)]}"
 
     label = ZebraPrinter::StandardLabel.new
     label.draw_text(number, 75, 30, 0, 4, 4, 4, false)
@@ -609,9 +609,9 @@ module Api
     file = identifier.identifier
     file_type = file.strip[3..4]
     version_number = file.strip[2..2]
-    number = file[5..-1]
+    number = file[5..]
 
-    number = number[0..1] + ' ' + number[2..3] + ' ' + number[4..-1]
+    number = "#{number[0..1]} #{number[2..3]} #{number[4..]}"
 
     label = ZebraPrinter::StandardLabel.new
     label.draw_text(number, 75, 30, 0, 4, 4, 4, false)

@@ -23,7 +23,7 @@ module AncService
                                   encounter: { encounter_type: current_pregnancy.encounter_type_id })
                            .where('concept_id = ? AND DATE(obs_datetime) >= DATE(?)',
                                   lmp_concept.concept_id, date_of_pregnancy_end(patient, date)).last
-      return lmp_obs.value_datetime.to_date unless lmp_obs.blank?
+      lmp_obs.value_datetime.to_date unless lmp_obs.blank?
     end
   end
 end

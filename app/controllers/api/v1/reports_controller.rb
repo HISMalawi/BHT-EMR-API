@@ -288,7 +288,7 @@ module Api
       def service
         return @service if @service
 
-        program_id, date = params.require %i[program_id date]
+        program_id, = params.require %i[program_id date]
 
         @service = ReportService.new(program_id:)
         @service

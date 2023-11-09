@@ -72,7 +72,10 @@ module AetcService
             next unless diag['diagnosis']
             next unless diag['age_group']
 
-            report_data[diag['diagnosis'].to_sym] = init_age_group_gender_hash unless report_data.include?(diag['diagnosis'].to_sym)
+            unless report_data.include?(diag['diagnosis'].to_sym)
+              report_data[diag['diagnosis'].to_sym] =
+                init_age_group_gender_hash
+            end
             report_data[diag['diagnosis'].to_sym][diag['age_group'].to_sym][diag['gender'].to_sym].push(diag['patient_id'])
             report_data[diag['diagnosis'].to_sym]['total_by_gender'.to_sym][diag['gender'].to_sym].push(diag['patient_id'])
           end

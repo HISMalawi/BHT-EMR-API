@@ -133,13 +133,11 @@ module Api
       # validate program
       def validate_programs_existance(programs)
         programs.each do |program_id|
-          unless Program.find_by(program_id:)
-            errors = ['All Programs must exists']
-            render json: { errors: }, status: :conflict
-            return false
-          end
+          next if Program.find_by(program_id:)
 
-          true
+          errors = ['All Programs must exists']
+          render json: { errors: }, status: :conflict
+          return false
         end
       end
 
