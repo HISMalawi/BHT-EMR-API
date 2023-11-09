@@ -2,7 +2,7 @@
 
 Rails.application.routes.draw do
   mount Lab::Engine => '/'
-  mount Radiology::Engine => '/'
+  # mount Radiology::Engine => '/'
   mount EmrOhspInterface::Engine => '/'
   mount Rswag::Ui::Engine => '/api-docs'
   mount Rswag::Api::Engine => '/api-docs'
