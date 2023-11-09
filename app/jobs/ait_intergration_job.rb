@@ -6,7 +6,7 @@ class AitIntergrationJob < ApplicationJob
     retry_job wait: 5.minutes, queue: :default
   end
 
-  def perform(patient_id)
-    HtsService::AitIntergration::AitIntergrationService.new(patient_id).sync
+  def perform(**args)
+    HTSService::AITIntergration::AITIntergrationService.new(**args).sync
   end
 end

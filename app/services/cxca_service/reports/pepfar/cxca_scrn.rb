@@ -8,7 +8,7 @@ module CxcaService
 
         include Utils
 
-        CxCa_PROGRAM = Program.find_by_name "CxCa program"
+        CxCa_PROGRAM = Program.find_by_name 'CxCa program'
 
         TX_GROUPS = {
           first_time_screened: ['initial screening', 'referral'],

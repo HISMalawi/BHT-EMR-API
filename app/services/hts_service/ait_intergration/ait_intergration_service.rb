@@ -54,8 +54,8 @@ module HtsService
         index_csv = generate_csv_for index
         contact_csv = generate_csv_for contacts
         status_code = send_request 'index', index_csv unless index_csv.nil?
-        send_request 'contact', contact_csv if request_is_successful.call status_code
-        update_last_synced_patient_id patients.last.patient_id if request_is_successful.call status_code
+        send_request 'contact', contact_csv if request_is_successful.call(status_code) && contacts.any?
+        update_last_synced_patient_id p_list.last.patient_id if request_is_successful.call status_code
         remove_from_failed_queue
         index.map do |obj|
           obj[:contacts] = contacts.select { |contact| contact['parent_external_id'] == obj[:client_patient_id] }

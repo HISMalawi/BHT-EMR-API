@@ -50,9 +50,9 @@ module HtsService
       def entry_point(_patient)
         'hts'
       end
-
-      def consent(_patient)
-        1
+      
+      def consent(patient)
+        observation_answer(patient, "Consent Confirmation")&.downcase
       end
 
       def consent_refusal_reason(_patient)
@@ -203,7 +203,7 @@ module HtsService
       end
 
       def hiv_status(patient)
-        observation_answer patient, 'HIV status'
+        observation_answer(patient, "HIV status")&.downcase
       end
 
       def import_validation(_patients)

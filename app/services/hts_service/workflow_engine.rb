@@ -17,7 +17,7 @@ module HtsService
       loop do
         state = next_state state
 
-        AitIntergrationJob.perform_later(@patient.id) if state == END_STATE
+        AITIntergrationJob.perform_later({patient_id:@patient.id}) if state == END_STATE
 
         break if state == END_STATE
 
