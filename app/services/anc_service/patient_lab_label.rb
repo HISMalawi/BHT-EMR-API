@@ -49,12 +49,11 @@ module ANCService
       @hiv_test_date = hiv_test_date.to_date.strftime("%Y-%m-%d") rescue ""
 
 
-      hep_b = Observation.select("COALESCE(CONCAT(obs.value_modifier, obs.value_numeric), 'N/A') hepatitis_b, obs.obs_datetime        hepatitis_b_result_date")
-            .joins("INNER JOIN encounter on encounter.encounter_id  = obs.encounter_id")
+      hep_b = Observation.select("CONCAT(obs.value_modifier, COALESCE(obs.value_numeric, ''),  COALESCE(obs.value_text, '')) hepatitis_b, obs.obs_datetime hepatitis_b_result_date")
+            .joins(:encounter)
             .joins("INNER JOIN obs tt on tt.order_id = obs.order_id")
             .where("encounter.program_id = #{ANC_PROGRAM.id}")
             .where("encounter_type  = #{EncounterType.find_by_name('LAB ORDERS').id}")
-            .where("obs.voided = 0")
             .where("obs.concept_id in (
                         SELECT concept_set.concept_id
                           FROM concept_set
@@ -69,12 +68,12 @@ module ANCService
                         SELECT concept_id  FROM concept_name WHERE name = 'Hepatitis B Test'
                       )")
             .where("obs.person_id = #{@patient.id}")
-
+      
       @hb = syphil['HB TEST RESULT'] + " g/dl" rescue nil
 
       #@hb1_date = hb["HB TEST RESULT DATE 1"] rescue nil
 
-      @hb2 = hep_b[0]['hepatitis_b'] + " g/dl" rescue 'N/A'
+      @hb2 = hep_b[0]['hepatitis_b'] + " g/dl" rescue nil
 
       @hb2_date = hep_b[0]['hepatitis_b_result_date'] rescue nil
 
