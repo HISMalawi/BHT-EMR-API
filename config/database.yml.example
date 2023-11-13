@@ -2,6 +2,7 @@
 default: &default
   host: localhost
   adapter: mysql2
+  encoding: latin1
   username: root
   password: password
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
