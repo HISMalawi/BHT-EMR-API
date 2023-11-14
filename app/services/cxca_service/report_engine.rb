@@ -24,7 +24,8 @@ module CXCAService
       'CXCA SCRN' => CXCAService::Reports::Pepfar::CxcaScrn,
       'CLINIC CXCA SCRN' => CXCAService::Reports::Clinic::CxcaScrn,
       'MONTHLY CECAP TX' => CXCAService::Reports::Clinic::MonthlyCecapTx,
-      'MONTHLY SCREEN' => CXCAService::Reports::Clinic::MonthlyScreenReport
+      'MONTHLY SCREEN' => CXCAService::Reports::Clinic::MonthlyScreenReport,
+      'REASON FOR NOT SCREENING REPORT' => CXCAService::Reports::Clinic::ReasonForNotScreeningReport
     }.freeze
 
     def reports(start_date, end_date, name)
