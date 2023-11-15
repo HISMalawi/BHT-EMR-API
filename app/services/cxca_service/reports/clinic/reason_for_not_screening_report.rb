@@ -44,7 +44,7 @@ module CXCAService
 
         def process_report
           (fetch_query || []).each do |row|
-            @report['reason_for_not_screening'] << row['patient_id'] if @report.keys.include?(row['reason_for_not_screening'])
+            @report[row['reason_for_not_screening']] << row['patient_id'] if @report.keys.include?(row['reason_for_not_screening'])
           end
         end
 
