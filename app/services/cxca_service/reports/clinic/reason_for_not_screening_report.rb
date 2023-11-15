@@ -6,20 +6,7 @@ module CXCAService
       # Reason for not screening report
       class ReasonForNotScreeningReport
         include Utils
-        include ModelUtils
-
-
-        REASONS_FOR_DENIAL = {
-          "Hysterectomy" => [],
-          "Not due for screening" => [],
-          "Client preferred counseling" => [],
-          "Not applicable" => [],
-          "Patient refused" => [],
-          "Chemotherapy" => [],
-          "Services not available" => [],
-          "Provider not available"  => []
-        }
-        
+        include ModelUtils        
 
         def initialize(start_date:, end_date:)
           @start_date = start_date.to_date.beginning_of_day.strftime('%Y-%m-%d %H:%M:%S')
@@ -39,7 +26,16 @@ module CXCAService
         private
 
         def init_report
-          @report = REASONS_FOR_DENIAL
+          @report = {
+            "Hysterectomy" => [],
+            "Not due for screening" => [],
+            "Preferred counseling" => [],
+            "Not applicable" => [],
+            "Patient refused" => [],
+            "Chemotherapy" => [],
+            "Services NOT available" => [],
+            "Provider NOT available"  => []
+          }
         end
 
         def process_report
