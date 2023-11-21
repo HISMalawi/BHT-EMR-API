@@ -48,7 +48,7 @@ module HTSService::AITIntergration
       end
 
       def consent patient
-       1
+        observation_answer(patient, "Consent Confirmation")&.downcase
       end
 
       def consent_refusal_reason patient
@@ -121,7 +121,7 @@ module HTSService::AITIntergration
       end
 
       def eligible_t_contacts patient
-        observation(patient, "Contact HIV tested").select{|o| o.value_coded == 703}.count
+        0
       end
 
       def reached_contacts patient
@@ -129,7 +129,7 @@ module HTSService::AITIntergration
       end
 
       def tested_contacts patient
-        observation(patient, "Contact has had HIV testing").select{|o| o.value_coded == 1065}.count
+        0
       end
 
       def eligible_ait_contacts patient
@@ -185,7 +185,7 @@ module HTSService::AITIntergration
       end
 
       def hiv_status patient
-        observation_answer patient, "HIV status"
+        observation_answer(patient, "HIV status")&.downcase
       end
 
       def import_validation patients

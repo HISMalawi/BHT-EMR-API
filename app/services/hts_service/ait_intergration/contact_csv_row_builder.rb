@@ -31,7 +31,7 @@ module HTSService::AITIntergration
       contact['Contact marital status']
     end
 
-    def new_hiv_status contact
+    def hiv_status contact
       "#{contact['Contact HIV tested']}#{contact['Contact has had HIV testing']}"&.downcase
     end
 
@@ -187,7 +187,7 @@ module HTSService::AITIntergration
     end
     
     def consent_to_contact contact
-      contact['Consent to contact the contact']
+      contact['Consent to contact the contact']&.downcase ||= 'yes'
     end
     
     def referral_type contact

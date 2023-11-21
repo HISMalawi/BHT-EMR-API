@@ -12,7 +12,6 @@ module CXCAService
         SCREENING_METHOD = 'CxCa screening method'
         SCREENING_RESULT = 'Screening results'
         REFFERAL_REASONS = 'Referral reason'
-        SCREENING_METHOD = 'CxCa screening method'
         HIV_STATUS = 'HIV status'
         DOT_OPTION = 'Directly observed treatment option'
         SCREENING_ASSESMENT = 'Cervix screening assessment'

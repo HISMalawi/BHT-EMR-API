@@ -8,7 +8,7 @@ module HtsService
         include HtsService::Reports::HtsReportBuilder
         attr_accessor :start_date, :end_date
 
-        HIV_GROUP = concept("HIV group").concept_id
+        HIV_GROUP = ConceptName.find_by_name("HIV group").concept_id
 
         INDICATORS = [
           { name: "hiv_group", concept_id: HIV_GROUP, join: 'LEFT'}
