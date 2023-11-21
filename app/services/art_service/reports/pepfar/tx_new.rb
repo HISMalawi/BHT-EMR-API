@@ -18,6 +18,11 @@ module ArtService
           report = init_report
           process_data report
           flatten_the_report report
+        rescue StandardError => e
+          Rails.logger.error e.message
+          Rails.logger.error e.backtrace.join("\n")
+
+          raise e
         end
 
         private
