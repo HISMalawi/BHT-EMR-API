@@ -33,6 +33,7 @@ module CXCAService
             "Not applicable" => [],
             "Patient refused" => [],
             "Chemotherapy" => [],
+            "Pregnancy" => [],
             "Services NOT available" => [],
             "Provider NOT available"  => []
           }
