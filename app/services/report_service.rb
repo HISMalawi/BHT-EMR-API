@@ -11,7 +11,9 @@ class ReportService
     'CXCA PROGRAM' => CXCAService::ReportEngine,
     'RADIOLOGY PROGRAM' => RadiologyService::ReportEngine,
     'PATIENT REGISTRATION PROGRAM' => PatientRegistrationService::ReportEngine,
-    'HTC PROGRAM' => HtsService::ReportEngine
+    'HTC PROGRAM' => HtsService::ReportEngine,
+    'AETC PROGRAM' => AetcService::ReportEngine,
+    'SPINE PROGRAM' => SpineService::ReportEngine,
   }.freeze
   LOGGER = Rails.logger
 
