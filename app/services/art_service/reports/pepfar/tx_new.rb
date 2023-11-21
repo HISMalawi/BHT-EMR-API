@@ -50,8 +50,6 @@ module ArtService
             new_patient = row['new_patient'].to_i
             patient_id = row['patient_id'].to_i
 
-            puts "Processing patient_id: #{patient_id}! #{row}"
-
             report[age_group.to_s][gender.to_s][cd4_count_group.to_sym] << patient_id
             report[age_group.to_s][gender.to_s]['transfer_in'.to_sym] << patient_id if new_patient.zero?
           end
@@ -71,7 +69,6 @@ module ArtService
         def flatten_the_report(report)
           result = []
           report.each do |age_group, age_group_report|
-            puts "Processing age_group: #{age_group}! #{age_group_report}"
             result << process_age_group_report(age_group, 'M', age_group_report['M'])
             result << process_age_group_report(age_group, 'F', age_group_report['F'])
           end
