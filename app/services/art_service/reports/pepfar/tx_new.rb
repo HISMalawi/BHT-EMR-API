@@ -53,31 +53,29 @@ module ArtService
             puts "Processing patient_id: #{patient_id}! #{row}"
 
             report[age_group.to_s][gender.to_s][cd4_count_group.to_sym] << patient_id
-            report[age_group.to_s][gender.to_s]["transfer_in".to_sym] << patient_id if new_patient.zero?
+            report[age_group.to_s][gender.to_s]['transfer_in'.to_sym] << patient_id if new_patient.zero?
           end
         end
 
+        def process_age_group_report(age_group, gender, age_group_report)
+          {
+            age_group:,
+            gender:,
+            cd4_less_than_200: age_group_report['cd4_less_than_200'.to_sym],
+            cd4_greater_than_equal_to_200: age_group_report['cd4_greater_than_equal_to_200'.to_sym],
+            cd4_unknown_or_not_done: age_group_report['cd4_unknown_or_not_done'.to_sym],
+            transfer_in: age_group_report['transfer_in'.to_sym]
+          }
+        end
+
         def flatten_the_report(report)
-            result = []
-            report.each do |age_group, age_group_report|
-                puts "Processing age_group: #{age_group}! #{age_group_report}"
-                result << {
-                    age_group: age_group,
-                    gender: age_group_report[0]['gender'],
-                    cd4_less_than_200: age_group_report[0]['gender'][0]['cd4_less_than_200'.to_sym],
-                    cd4_greater_than_equal_to_200: age_group_report[0]['gender'][0]['cd4_greater_than_equal_to_200'.to_sym],
-                    cd4_unknown_or_not_done: age_group_report['gender'][0]['cd4_unknown_or_not_done'.to_sym],
-                    transfer_in: age_group_report['gender'][0]['transfer_in'.to_sym]
-                }
-                result << {
-                    age_group: age_group,
-                    gender: age_group_report['gender'][1],
-                    cd4_less_than_200: age_group_report['gender'][1]['cd4_less_than_200'.to_sym],
-                    cd4_greater_than_equal_to_200: age_group_report['gender'][1]['cd4_greater_than_equal_to_200'.to_sym],
-                    cd4_unknown_or_not_done: age_group_report['gender'][1]['cd4_unknown_or_not_done'.to_sym],
-                    transfer_in: age_group_report['gender'][1]['transfer_in'.to_sym]
-                }
-            end
+          result = []
+          report.each do |age_group, age_group_report|
+            puts "Processing age_group: #{age_group}! #{age_group_report}"
+            result << process_age_group_report(age_group, 'M', age_group_report['M'])
+            result << process_age_group_report(age_group, 'F', age_group_report['F'])
+          end
+          result.sort_by { |h| [h[:gender] == 'F' ? 0 : 1, h[:age_group]] }
         end
 
         def data
