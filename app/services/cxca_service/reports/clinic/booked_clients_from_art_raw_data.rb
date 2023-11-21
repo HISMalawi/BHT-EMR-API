@@ -49,7 +49,7 @@ module CxcaService
                            gender: person.gender,
                            given_name: person.given_name,
                            family_name: person.family_name,
-                           seen: seen,
+                           seen:,
                            booked_date: person.obs_datetime.strftime('%d/%b/%Y'),
                            identifier: person.identifier
                          })

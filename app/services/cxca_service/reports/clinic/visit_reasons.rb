@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module CxcaService
+module CXCAService
   module Reports
     module Clinic
       class VisitReasons

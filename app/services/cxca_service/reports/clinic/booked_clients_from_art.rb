@@ -44,27 +44,27 @@ module CxcaService
             if person_age < 25
               age_groups['<25 years'].push({
                                              person_id: person.person_id,
-                                             screening_method_present: screening_method_present
+                                             screening_method_present:
                                            })
             elsif person_age >= 25 && person_age <= 29
               age_groups['25-29 years'].push({
                                                person_id: person.person_id,
-                                               screening_method_present: screening_method_present
+                                               screening_method_present:
                                              })
             elsif person_age >= 30 && person_age <= 44
               age_groups['30-44 years'].push({
                                                person_id: person.person_id,
-                                               screening_method_present: screening_method_present
+                                               screening_method_present:
                                              })
             elsif person_age >= 45 && person_age <= 49
               age_groups['45-49 years'].push({
                                                person_id: person.person_id,
-                                               screening_method_present: screening_method_present
+                                               screening_method_present:
                                              })
             elsif person_age > 49
               age_groups['>49 years'].push({
                                              person_id: person.person_id,
-                                             screening_method_present: screening_method_present
+                                             screening_method_present:
                                            })
             end
           end

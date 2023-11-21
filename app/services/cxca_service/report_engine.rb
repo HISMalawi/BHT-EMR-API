@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module CxcaService
+  # ReportEngine
   class ReportEngine
     REPORT_NAMES = {
       'SCREENED FOR CXCA' => CxcaService::Reports::Moh::ScreenedForCxca,
@@ -22,28 +23,29 @@ module CxcaService
       'CXCA TX' => CxcaService::Reports::Pepfar::CxcaTx,
       'CXCA SCRN' => CxcaService::Reports::Pepfar::CxcaScrn,
       'MONTHLY CECAP TX' => CxcaService::Reports::Clinic::MonthlyCecapTx,
-      'MONTHLY SCREEN' => CxcaService::Reports::Clinic::MonthlyScreenReport
+      'MONTHLY SCREEN' => CxcaService::Reports::Clinic::MonthlyScreenReport,
+      'REASON FOR NOT SCREENING REPORT' => CXCAService::Reports::Clinic::ReasonForNotScreeningReport
     }.freeze
 
     def reports(start_date, end_date, name)
       name = name.upcase
       case name
       when 'CC ALL QUESTIONS'
-        REPORT_NAMES[name].new(start_date: start_date,
-                               end_date: end_date).general_report
+        REPORT_NAMES[name].new(start_date:,
+                               end_date:).general_report
       when 'CC TYPE OF SCREEN'
-        REPORT_NAMES[name].new(start_date: start_date,
-                               end_date: end_date).visit_report
+        REPORT_NAMES[name].new(start_date:,
+                               end_date:).visit_report
 
       when 'CC SCREEN RESULT'
-        REPORT_NAMES[name].new(start_date: start_date,
-                               end_date: end_date).screening_result_report
+        REPORT_NAMES[name].new(start_date:,
+                               end_date:).screening_result_report
 
       when 'CC TYPE OF TREATMENT'
-        REPORT_NAMES[name].new(start_date: start_date,
-                               end_date: end_date).treatment_resport
+        REPORT_NAMES[name].new(start_date:,
+                               end_date:).treatment_resport
       else
-        REPORT_NAMES[name].new(start_date: start_date, end_date: end_date).data
+        REPORT_NAMES[name].new(start_date:, end_date:).data
       end
     end
 

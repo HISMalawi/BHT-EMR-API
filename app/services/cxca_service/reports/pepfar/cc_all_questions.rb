@@ -29,7 +29,7 @@ module CxcaService
             group = response.find { |patient| patient[:age_group] == record['age_group'] }
             assign_to_type_of_screening(group, record)
           end
-          return response if is_returning
+          response if is_returning
         end
 
         def screening_result_report(is_returning: true)
@@ -37,7 +37,7 @@ module CxcaService
             group = response.find { |patient| patient[:age_group] == record['age_group'] }
             assign_to_screening_result(group, record)
           end
-          return response if is_returning
+          response if is_returning
         end
 
         def treatment_resport(is_returning: true)
@@ -45,7 +45,7 @@ module CxcaService
             group = response.find { |patient| patient[:age_group] == record['age_group'] }
             assign_to_type_of_treatment(group, record)
           end
-          return response if is_returning
+          response if is_returning
         end
 
         private

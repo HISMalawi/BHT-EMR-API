@@ -49,7 +49,7 @@ module CxcaService
 
       {
         drugs_run_out_date: '',
-        appointment_date: appointment_date
+        appointment_date:
       }
     end
   end
