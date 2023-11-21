@@ -34,6 +34,7 @@ module ArtService
       'TX_CURR' => ArtService::Reports::PatientsAliveAndOnTreatment,
       'TX_ML' => ArtService::Reports::Pepfar::TxMl,
       'TX_RTT' => ArtService::Reports::Pepfar::TxRtt,
+      'TX_NEW' => ArtService::Reports::Pepfar::TxNew,
       'IPT_COVERAGE' => ArtService::Reports::IPTCoverage,
       'VISITS' => ArtService::Reports::VisitsReport,
       'VL_DUE' => ArtService::Reports::PatientsDueForViralLoad,
