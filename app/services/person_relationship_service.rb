@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class PersonRelationshipService
   def initialize(person)
     @person = person
@@ -7,6 +9,7 @@ class PersonRelationshipService
     relationship = Relationship.find_by relationship_id: relationship_id,
                                         person_a: @person.person_id
     raise NotFoundError, 'Relationship not found' unless relationship
+
     relationship
   end
 

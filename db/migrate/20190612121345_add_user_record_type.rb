@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddUserRecordType < ActiveRecord::Migration[5.2]
   def up
     RecordType.create(name: User.to_s)

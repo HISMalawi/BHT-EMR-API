@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module TBService
+module TbService
   # Patients sub service.
   #
   # Basically provides ART specific patient-centric functionality
@@ -41,33 +41,33 @@ module TBService
 
         drug_map[obs.value_drug] = order.drug_order if order.drug_order.drug.tb_drug?
       end).values
-  end
+    end
 
-        # assess whether a patient must go for a lab order
-        def due_lab_order? (patient:)
-          program_start_date = find_patient_date_enrolled(patient)
-          return false unless program_start_date
+    # assess whether a patient must go for a lab order
+    def due_lab_order?(patient:)
+      program_start_date = find_patient_date_enrolled(patient)
+      return false unless program_start_date
 
-          days = (Date.today - program_start_date).to_i
-          falls_within_ordering_period?(days: days, tolerance: 5) && no_orders_done?(patient: patient, time: 5.days.ago)
-        end
+      days = (Date.today - program_start_date).to_i
+      falls_within_ordering_period?(days: days, tolerance: 5) && no_orders_done?(patient: patient, time: 5.days.ago)
+    end
 
-        def no_orders_done? (patient:, time:)
-          lab_order = encounter_type('Lab Orders')
-          Encounter.where('patient_id = ? AND program_id = ? AND encounter_datetime >= ?',\
-                          patient.patient_id, @program.program_id, time).blank?
-        end
+    def no_orders_done?(patient:, time:)
+      encounter_type('Lab Orders')
+      Encounter.where('patient_id = ? AND program_id = ? AND encounter_datetime >= ?',\
+                      patient.patient_id, @program.program_id, time).blank?
+    end
 
-        def falls_within_ordering_period? (days:, tolerance:)
-          # a lab order is supposed to be done after 56, 84, 140 and 260 days
-          intervals = [56, 84, 140, 260]
+    def falls_within_ordering_period?(days:, tolerance:)
+      # a lab order is supposed to be done after 56, 84, 140 and 260 days
+      intervals = [56, 84, 140, 260]
 
-          # the patient may come earlier or later so a tolerance must be added
-          intervals.each do |interval|
-            return true if (days.between?(interval - tolerance, interval + tolerance))
-          end
-          false
-        end
+      # the patient may come earlier or later so a tolerance must be added
+      intervals.each do |interval|
+        return true if days.between?(interval - tolerance, interval + tolerance)
+      end
+      false
+    end
 
     # Returns patient's TB start date at current facility
     def find_patient_date_enrolled(patient)
@@ -81,13 +81,13 @@ module TBService
     end
 
     def visit_summary_label(patient, date)
-      TBService::PatientVisitLabel.new patient, date
+      TbService::PatientVisitLabel.new patient, date
     end
 
     private
 
     def patient_summary(patient, date)
-      TBService::PatientSummary.new patient, date
+      TbService::PatientSummary.new patient, date
     end
   end
-  end
+end

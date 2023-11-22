@@ -31,16 +31,16 @@ class ObservationService
       )
       obs_parameters[:person_id] = encounter.patient_id
       obs_parameters[:encounter_id] = encounter.id
-      observation = Observation.create(obs_parameters)
+      observation = Observation.create!(obs_parameters)
       validate_observation(observation)
       records << observation
 
-      return unless child_obs_parameters
-
-      Rails.logger.debug("Creating child observation for obs ##{observation.obs_id}")
-      child_obs_parameters.each do |child_obs|
-        child_obs[:obs_group_id] = observation.obs_id
-        proccess_obs_creation(encounter, child_obs)
+      if child_obs_parameters.present?
+        Rails.logger.debug("Creating child observation for obs ##{observation.obs_id}")
+        child_obs_parameters.each do |child_obs|
+          child_obs[:obs_group_id] = observation.obs_id
+          proccess_obs_creation(encounter, child_obs)
+        end
       end
     end
   end

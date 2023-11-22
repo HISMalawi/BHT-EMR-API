@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   class PatientVisitLabel
     attr_accessor :patient, :date
 
@@ -10,7 +10,7 @@ module ARTService
     end
 
     def print
-      visit = ARTService::PatientVisit.new patient, date
+      visit = ArtService::PatientVisit.new patient, date
       return unless visit
 
       owner = visit.guardian_present? && !visit.patient_present? ? ' :Guardian Visit' : ' :Patient visit'
@@ -20,13 +20,23 @@ module ARTService
       label = ZebraPrinter::StandardLabel.new
       # label.draw_text("Printed: #{Date.today.strftime('%b %d %Y')}",597,280,0,1,1,1,false)
       label.draw_text(seen_by(patient, date).to_s, 597, 250, 0, 1, 1, 1, false)
-      label.draw_text(date&.strftime('%B %d %Y').upcase, 25, 30, 0, 3, 1, 1, false)
+      label.draw_text(date&.strftime('%B %d %Y')&.upcase, 25, 30, 0, 3, 1, 1, false)
       label.draw_text(arv_number.to_s, 565, 30, 0, 3, 1, 1, true)
       label.draw_text("#{patient.person.name}(#{patient.gender}) #{owner}", 25, 60, 0, 3, 1, 1, false)
-      label.draw_text(('(' + visit.visit_by + ')' unless visit.visit_by.blank?).to_s, 255, 30, 0, 2, 1, 1, false)
+      label.draw_text(("(#{visit.visit_by})" unless visit.visit_by.blank?).to_s, 255, 30, 0, 2, 1, 1, false)
 
       pill_count = visit.pills_brought.collect { |c| c.join(',') }&.join(' ')
-      label.draw_text("#{visit.height.to_s + 'cm' unless visit.height.blank?}  #{visit.weight.to_s + 'kg' unless visit.weight.blank?}  #{'BMI:' + visit.bmi.to_s unless visit.bmi.blank?} VL:#{visit.viral_load_result} #{'(PC:' + pill_count[0..24] + ')' unless pill_count.blank?}", 25, 95, 0, 2, 1, 1, false)
+      label.draw_text(
+        "#{unless visit.height.blank?
+             "#{visit.height}cm"
+           end}  #{unless visit.weight.blank?
+                     "#{visit.weight}kg"
+                   end}  #{unless visit.bmi.blank?
+                                                                        "BMI:#{visit.bmi}"
+                                                                      end} VL:#{visit.viral_load_result} #{unless pill_count.blank?
+                                                                                                                                                        "(PC:#{pill_count[0..24]})"
+                                                                                                                                                      end}", 25, 95, 0, 2, 1, 1, false
+      )
 
       label.draw_text('SE', 25, 130, 0, 3, 1, 1, false)
       label.draw_text('TB', 110, 130, 0, 3, 1, 1, false)
@@ -39,7 +49,7 @@ module ARTService
       label.draw_text(visit.outcome.to_s, 577, 160, 0, 2, 1, 1, false)
       label.draw_text(visit.outcome_date&.strftime('%d/%b/%Y') || 'N/A', 655, 130, 0, 2, 1, 1, false)
       unless visit.next_appointment.blank?
-        label.draw_text('Next: ' + visit.next_appointment&.strftime('%d/%b/%Y'), 577, 190, 0, 2, 1, 1, false)
+        label.draw_text("Next: #{visit.next_appointment&.strftime('%d/%b/%Y')}", 577, 190, 0, 2, 1, 1, false)
       end
       starting_index = 25
       start_line = 160
@@ -79,21 +89,23 @@ module ARTService
                                   AND '#{date} 23:59:59'
                                   ORDER BY date_created DESC")
       provider = begin
-                  [a.first.name, a.first.creator]
-                 rescue StandardError
-                   nil
-                end
+        [a.first.name, a.first.creator]
+      rescue StandardError
+        nil
+      end
       # provider = patient.encounters.find_by_date(date).collect{|e| next unless e.name == 'HIV CLINIC CONSULTATION' ; [e.name,e.creator]}.compact
-      provider_username = ('Seen by: ' + User.find(provider[1]).username).to_s unless provider.blank?
+      provider_username = "Seen by: #{User.find(provider[1]).username}".to_s unless provider.blank?
       if provider_username.blank?
-        clinic_encounters = ['HIV CLINIC CONSULTATION', 'HIV STAGING', 'ART ADHERENCE', 'TREATMENT', 'DISPENSION', 'HIV RECEPTION']
+        clinic_encounters = ['HIV CLINIC CONSULTATION', 'HIV STAGING', 'ART ADHERENCE', 'TREATMENT', 'DISPENSION',
+                             'HIV RECEPTION']
         encounter_type_ids = EncounterType.where(['name IN (?)', clinic_encounters]).collect(&:id)
-        encounter = Encounter.where(['patient_id = ? AND encounter_type In (?)', patient.id, encounter_type_ids]).order('encounter_datetime DESC').first
+        encounter = Encounter.where(['patient_id = ? AND encounter_type In (?)', patient.id,
+                                     encounter_type_ids]).order('encounter_datetime DESC').first
         provider_username = begin
-                              ('Seen by: ' + User.find(encounter.creator).username).to_s
-                            rescue StandardError
-                              nil
-                            end
+          "Seen by: #{User.find(encounter.creator).username}".to_s
+        rescue StandardError
+          nil
+        end
       end
       provider_username
     end
@@ -103,8 +115,6 @@ module ARTService
       # i.e if a drug adherence is showing 86% and their is another drug with an adherence of 198%,then
       # we will show the one with 198%.
       # in future we are planning to show all available drug adherences
-
-      adherence_to_show = 0
       adherence_over_100 = 0
       adherence_below_100 = 0
       over_100_done = false
@@ -115,11 +125,11 @@ module ARTService
 
         drug_adherence = adh.to_i
         if drug_adherence <= 100
-          adherence_below_100 = adh.to_i if adherence_below_100 == 0
+          adherence_below_100 = adh.to_i if adherence_below_100.zero?
           adherence_below_100 = adh.to_i if drug_adherence <= adherence_below_100
           below_100_done = true
         else
-          adherence_over_100 = adh.to_i if adherence_over_100 == 0
+          adherence_over_100 = adh.to_i if adherence_over_100.zero?
           adherence_over_100 = adh.to_i if drug_adherence >= adherence_over_100
           over_100_done = true
         end
@@ -153,7 +163,7 @@ module ARTService
         string = "#{drug} (#{strip_insignificant_zeroes(pills)})"
         if string.length > 26
           line = string[0..25]
-          line2 = string[26..-1]
+          line2 = string[26..]
           data["arv_given#{count}"] = '255', line
           data["arv_given#{count += 1}"] = '255', line2
         else

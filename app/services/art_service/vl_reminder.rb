@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-module ARTService
-  class VLReminder
+module ArtService
+  class VlReminder
     attr_reader :patient, :program, :date
 
     def initialize(patient_id:, date: nil)
@@ -189,7 +189,7 @@ module ARTService
     end
 
     def patients_service
-      ARTService::PatientsEngine.new
+      ArtService::PatientsEngine.new
     end
 
     def patient_earliest_start_date

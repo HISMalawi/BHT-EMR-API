@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   module Reports
     # This is MOH client returned to care report
     class ClinicTxRtt

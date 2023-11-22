@@ -1,4 +1,4 @@
-# BHT EMR API
+# HIS EMR API
 
 ## Requirements
 
@@ -31,6 +31,16 @@ Install the required gems like so:
 
 ```sh
 bundle install
+```
+
+### Setting up Production mode
+```sh
+bin/setup_production_mode.sh 
+```
+
+Incase this does not run you might want to make it executable and you can achieve that by doing this
+```sh
+chmod +x bin/setup_production_mode.sh 
 ```
 
 #### Database
@@ -91,8 +101,8 @@ $ vim config/database.yml   # Edit configuration
 
 1. Run the following commands to set up your development and test databases.
 
-    ```bash
-    bin/initial_database_setup.sh development mpc && bin/initial_database_setup.sh test mpc
+    ```sh
+    bin/initial_database_setup.sh production mpc && bin/initial_database_setup.sh development mpc && bin/initial_database_setup.sh test mpc
     ```
 
 2. Run test suite as follows:
@@ -206,7 +216,7 @@ bin/rails server
 
 ## Raw Data Store
 
-The BHT-EMR-API is capable of pushing data to the Raw Data Store.
+The HIS-EMR-API is capable of pushing data to the Raw Data Store.
 More information on how to get it to do this can be found [here](./doc/rds/index.md)
 
 ## For developers

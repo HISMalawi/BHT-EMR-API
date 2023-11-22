@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   module Reports
     class ArvRefillPeriods
       def initialize(start_date:, end_date:, min_age:, max_age:, org:, initialize_tables:, **kwargs)
@@ -30,7 +30,7 @@ module ARTService
 
         if @initialize_tables
           report_type = (@org.match(/pepfar/i) ? 'pepfar' : 'moh')
-          ARTService::Reports::CohortBuilder.new(outcomes_definition: report_type).init_temporary_tables(@start_date, @end_date, @occupation)
+          ArtService::Reports::CohortBuilder.new(outcomes_definition: report_type).init_temporary_tables(@start_date, @end_date, @occupation)
         end
 
         patients = ActiveRecord::Base.connection.select_all <<~SQL

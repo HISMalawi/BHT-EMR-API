@@ -1,12 +1,14 @@
+# frozen_string_literal: true
+
 class ProgramPatientsService
   ENGINES = {
-    'HIV PROGRAM' => ARTService::PatientsEngine,
-    'TB PROGRAM' => TBService::PatientsEngine,
-    'ANC PROGRAM' => ANCService::PatientsEngine,
-    'OPD PROGRAM' => OPDService::PatientsEngine,
-    'VMMC PROGRAM' => VMMCService::PatientsEngine,
-    'CXCA PROGRAM' => CXCAService::PatientsEngine,
-    'HTC PROGRAM' => HTSService::PatientsEngine
+    'HIV PROGRAM' => ArtService::PatientsEngine,
+    'TB PROGRAM' => TbService::PatientsEngine,
+    'ANC PROGRAM' => AncService::PatientsEngine,
+    'OPD PROGRAM' => OpdService::PatientsEngine,
+    'VMMC PROGRAM' => VmmcService::PatientsEngine,
+    'CXCA PROGRAM' => CxcaService::PatientsEngine,
+    'HTC PROGRAM' => HtsService::PatientsEngine
   }.freeze
 
   def initialize(program:)
@@ -30,13 +32,12 @@ class ProgramPatientsService
 
   def void_arv_number(arv_number)
     identifiers = PatientIdentifier.where(identifier: arv_number,
-      identifier_type: PatientIdentifierType.find_by_name('ARV number').id)
+                                          identifier_type: PatientIdentifierType.find_by_name('ARV number').id)
 
     (identifiers || []).each do |identifier|
-      identifier.update_columns(voided: 1, void_reason: "Voided through the UI")
+      identifier.update_columns(voided: 1, void_reason: 'Voided through the UI')
     end
 
-    return "Voided #{identifiers.count} ARV number(s)"
+    "Voided #{identifiers.count} ARV number(s)"
   end
-
 end

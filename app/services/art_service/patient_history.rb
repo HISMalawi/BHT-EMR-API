@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   # Carries comprehensive historical information on a patient.
   #
   # Example:
@@ -8,13 +8,13 @@ module ARTService
   #   $ patient_history.first_line_drugs # Returns patient's first line drugs
   #   $ patient_history.current_regimen # Returns patient's current regimen
   #   $ patient_history.print # Generates label printer commands for printing the history.
-  class PatientHistory < ARTService::PatientSummary
+  class PatientHistory < ArtService::PatientSummary
     # Outputs a label with patient's history
     def print
       # demographics = mastercard_demographics(patient)
 
       label = ZebraPrinter::StandardLabel.new
-      label.draw_text("Printed on: #{Date.today.strftime('%A, %d-%b-%Y')}",450,300,0,1,1,1,false)
+      label.draw_text("Printed on: #{Date.today.strftime('%A, %d-%b-%Y')}", 450, 300, 0, 1, 1, 1, false)
       label.draw_text(arv_number || 'N/A', 575, 30, 0, 3, 1, 1, false)
       label.draw_text('PATIENT DETAILS', 25, 30, 0, 3, 1, 1, false)
       label.draw_text("Name:   #{name} (#{sex})", 25, 60, 0, 3, 1, 1, false)
@@ -22,7 +22,7 @@ module ARTService
       label.draw_text("Phone: #{phone_number}", 25, 120, 0, 3, 1, 1, false)
       if (address.blank? ? 0 : address.length) > 48
         label.draw_text("Addr:  #{address[0..47]}", 25, 150, 0, 3, 1, 1, false)
-        label.draw_text("    :  #{address[48..-1]}", 25, 180, 0, 3, 1, 1, false)
+        label.draw_text("    :  #{address[48..]}", 25, 180, 0, 3, 1, 1, false)
         last_line = 180
       else
         label.draw_text("Addr:  #{address}", 25, 150, 0, 3, 1, 1, false)
@@ -35,40 +35,41 @@ module ARTService
           last_line = 210
         elsif last_line == 180 && guardian.length > 48
           label.draw_text("Guard: #{guardian[0..47]}", 25, 210, 0, 3, 1, 1, false)
-          label.draw_text("     : #{guardian[48..-1]}", 25, 240, 0, 3, 1, 1, false)
+          label.draw_text("     : #{guardian[48..]}", 25, 240, 0, 3, 1, 1, false)
           last_line = 240
         elsif last_line == 150 && guardian.length > 48
           label.draw_text("Guard: #{guardian[0..47]}", 25, 180, 0, 3, 1, 1, false)
-          label.draw_text("     : #{guardian[48..-1]}", 25, 210, 0, 3, 1, 1, false)
+          label.draw_text("     : #{guardian[48..]}", 25, 210, 0, 3, 1, 1, false)
           last_line = 210
         elsif last_line == 150 && guardian.length < 48
           label.draw_text("Guard: #{guardian}", 25, 180, 0, 3, 1, 1, false)
           last_line = 180
         end
       else
-        if last_line == 180
+        case last_line
+        when 180
           label.draw_text('Guard: None', 25, 210, 0, 3, 1, 1, false)
           last_line = 210
-        elsif last_line == 180
+        when 180
           label.draw_text('Guard: None', 25, 210, 0, 3, 1, 1, false)
           last_line = 240
-        elsif last_line == 150
+        when 150
           label.draw_text('Guard: None', 25, 180, 0, 3, 1, 1, false)
           last_line = 210
-        elsif last_line == 150
+        when 150
           label.draw_text('Guard: None', 25, 180, 0, 3, 1, 1, false)
           last_line = 180
         end
       end
 
-      label.draw_text("TI:    #{transfer_in}",25,last_line+=30,0,3,1,1,false)
-      label.draw_text("FUP:   (#{agrees_to_followup})",25,last_line+=30,0,3,1,1,false)
+      label.draw_text("TI:    #{transfer_in}", 25, last_line += 30, 0, 3, 1, 1, false)
+      label.draw_text("FUP:   (#{agrees_to_followup})", 25, last_line + 30, 0, 3, 1, 1, false)
 
       label2 = ZebraPrinter::StandardLabel.new
-      #Vertical lines
+      # Vertical lines
       label2.draw_line(25, 170, 795, 3)
-      #label data
-      label2.draw_text("STATUS AT ART INITIATION",25,30,0,3,1,1,false)
+      # label data
+      label2.draw_text('STATUS AT ART INITIATION', 25, 30, 0, 3, 1, 1, false)
       label2.draw_text("(DSA: #{art_start_date&.strftime('%d-%b-%Y') || 'N/A'})", 370, 30, 0, 2, 1, 1, false)
       label2.draw_text(arv_number, 580, 20, 0, 3, 1, 1, false)
       label2.draw_text("Printed on: #{Date.today.strftime('%A, %d-%b-%Y')}", 25, 300, 0, 1, 1, 1, false)
@@ -94,9 +95,7 @@ module ARTService
 
       who_clinical_conditions.split(';').each do |condition|
         line += 25
-        if line <= 290
-          label2.draw_text(condition[0..35], 450, line, 0, 1, 1, 1, false)
-        end
+        label2.draw_text(condition[0..35], 450, line, 0, 1, 1, 1, false) if line <= 290
 
         extra_lines << condition[0..79] if line > 290
       end
@@ -106,7 +105,7 @@ module ARTService
         label3 = ZebraPrinter::StandardLabel.new
         label3.draw_text('STAGE DEFINING CONDITIONS', 25, line, 0, 3, 1, 1, false)
         label3.draw_text(identifier('ARV Number'), 370, line, 0, 2, 1, 1, false)
-        label3.draw_text("Printed on: #{Date.today.strftime('%A, %d-%b-%Y')}", 450, 300, 0, 1, 1, 1,false)
+        label3.draw_text("Printed on: #{Date.today.strftime('%A, %d-%b-%Y')}", 450, 300, 0, 1, 1, 1, false)
         extra_lines.each do |condition|
           label3.draw_text(condition, 25, line += 30, 0, 2, 1, 1, false)
         end
@@ -169,7 +168,7 @@ module ARTService
     end
 
     def eptb
-      return 'eptb' if hiv_staging_observation_present?('Extrapulmonary tuberculosis (EPTB)')
+      'eptb' if hiv_staging_observation_present?('Extrapulmonary tuberculosis (EPTB)')
     end
 
     def first_line_drugs
@@ -201,12 +200,12 @@ module ARTService
     def phone_number
       ['Cell phone number', 'Home phone number', 'Office phone number'].each do |name|
         phone_number_value = attribute(name)&.value
-        next if phone_number_value.blank? || phone_number_value.match?(/(Not\s*Available|N\/A|Unknown)/i)
+        next if phone_number_value.blank? || phone_number_value.match?(%r{(Not\s*Available|N/A|Unknown)}i)
 
         return phone_number_value
       end
 
-      "Unknown"
+      'Unknown'
     end
 
     def pregnant
@@ -240,7 +239,7 @@ module ARTService
 
     def tb_within_last_two_yrs
       concept_name = 'Pulmonary tuberculosis within the last 2 years'
-      return 'tb within last 2 yrs' if hiv_staging_observation_present?(concept_name)
+      'tb within last 2 yrs' if hiv_staging_observation_present?(concept_name)
     end
 
     def transfer_in
@@ -261,23 +260,36 @@ module ARTService
                               .first\
                               &.person_b
 
-      @guardian = PersonName.where(person_id: person_id).order(:date_created).last&.to_s
+      @guardian = PersonName.where(person_id:).order(:date_created).last&.to_s
     end
 
     def who_clinical_conditions
-      who_clinical_conditions = ""
+      who_clinical_conditions = ''
 
       (hiv_staging&.observations || []).collect do |obs|
+        name = begin
+          obs.to_s.split(':')[0].strip
+        rescue StandardError
+          nil
+        end
         if GlobalProperty.find_by_property('use.extended.staging.questions')&.property_value == 'true'
-          name = obs.to_s.split(':')[0].strip rescue nil
-          ans = obs.to_s.split(':')[1].strip rescue nil
+          ans = begin
+            obs.to_s.split(':')[1].strip
+          rescue StandardError
+            nil
+          end
           next unless ans.upcase == 'YES'
-          visits.who_clinical_conditions = visits.who_clinical_conditions + (name) + "; "
+
+          visits.who_clinical_conditions = "#{visits.who_clinical_conditions}#{name}; "
         else
-          name = obs.to_s.split(':')[0].strip rescue nil
           next unless name == 'WHO STAGES CRITERIA PRESENT'
-          condition = obs.to_s.split(':')[1].strip.humanize rescue nil
-          who_clinical_conditions = visits.who_clinical_conditions + (condition) + "; "
+
+          condition = begin
+            obs.to_s.split(':')[1].strip.humanize
+          rescue StandardError
+            nil
+          end
+          who_clinical_conditions = "#{visits.who_clinical_conditions}#{condition}; "
         end
       end
 
@@ -325,7 +337,7 @@ module ARTService
     # Patient's HIV staging encounter
     def hiv_staging
       @hiv_staging ||= Encounter.where(type: EncounterType.find_by_name('HIV Staging'),
-                                       patient: patient)\
+                                       patient:)\
                                 .order(:encounter_datetime)
                                 .last
     end
@@ -349,7 +361,7 @@ module ARTService
                               &.concept_id
       return nil unless concept_id
 
-      Observation.where(person_id: patient.id, concept_id: concept_id)\
+      Observation.where(person_id: patient.id, concept_id:)\
                  .order(:obs_datetime)\
                  .first
     end
@@ -360,8 +372,8 @@ module ARTService
       program_id = Program.find_by_name('HIV Program').id
 
       Observation.joins(:encounter)
-                 .merge(Encounter.where(program_id: program_id))
-                 .where(person_id: patient.id, concept_id: concept_id, **extra_filters)
+                 .merge(Encounter.where(program_id:))
+                 .where(person_id: patient.id, concept_id:, **extra_filters)
                  .order(:obs_datetime)
                  .last
     end
@@ -385,9 +397,10 @@ module ARTService
     def load_regimens
       regimens = {}
 
-      regimen_types = ['FIRST LINE ANTIRETROVIRAL REGIMEN','ALTERNATIVE FIRST LINE ANTIRETROVIRAL REGIMEN','SECOND LINE ANTIRETROVIRAL REGIMEN']
-      regimen_types.map do | regimen |
-        concept_member_ids = ConceptName.find_by_name(regimen).concept.concept_members.collect{|c|c.concept_id}
+      regimen_types = ['FIRST LINE ANTIRETROVIRAL REGIMEN', 'ALTERNATIVE FIRST LINE ANTIRETROVIRAL REGIMEN',
+                       'SECOND LINE ANTIRETROVIRAL REGIMEN']
+      regimen_types.map do |regimen|
+        concept_member_ids = ConceptName.find_by_name(regimen).concept.concept_members.collect(&:concept_id)
         case regimen
         when 'FIRST LINE ANTIRETROVIRAL REGIMEN'
           regimens[regimen] = concept_member_ids
@@ -402,10 +415,11 @@ module ARTService
 
       encounter_type = EncounterType.find_by_name('DISPENSING').id
       amount_dispensed_concept_id = ConceptName.find_by_name('Amount dispensed').concept_id
-      regimens.map do | regimen_type , ids |
-        encounter = Encounter.joins("INNER JOIN obs ON encounter.encounter_id = obs.encounter_id").where(
-          ["encounter_type=? AND encounter.patient_id = ? AND concept_id = ? AND encounter.voided = 0 AND value_drug != ?",
-            encounter_type , patient.id , amount_dispensed_concept_id, 297 ]).order("encounter_datetime").first
+      regimens.map do |_regimen_type, _ids|
+        encounter = Encounter.joins('INNER JOIN obs ON encounter.encounter_id = obs.encounter_id').where(
+          ['encounter_type=? AND encounter.patient_id = ? AND concept_id = ? AND encounter.voided = 0 AND value_drug != ?',
+           encounter_type, patient.id, amount_dispensed_concept_id, 297]
+        ).order('encounter_datetime').first
         first_treatment_encounters << encounter unless encounter.blank?
       end
 
@@ -415,23 +429,38 @@ module ARTService
 
       first_treatment_encounters.map do |treatment_encounter|
         treatment_encounter.observations.map do |obs|
-          next if not obs.concept_id == amount_dispensed_concept_id
-          drug = Drug.find(obs.value_drug) if obs.value_numeric > 0
+          next if obs.concept_id != amount_dispensed_concept_id
+
+          drug = Drug.find(obs.value_drug) if obs.value_numeric.positive?
           next if obs.value_numeric <= 0
-          drug_concept_id = drug.concept.concept_id
-          regimens.map do | regimen_type , concept_ids |
-            if regimen_type == 'FIRST LINE ANTIRETROVIRAL REGIMEN' #and concept_ids.include?(drug_concept_id)
-              @date_of_first_line_regimen = art_start_date #treatment_encounter.encounter_datetime.to_date
+
+          drug.concept.concept_id
+          regimens.map do |regimen_type, _concept_ids|
+            case regimen_type
+            when 'FIRST LINE ANTIRETROVIRAL REGIMEN' # and concept_ids.include?(drug_concept_id)
+              @date_of_first_line_regimen = art_start_date # treatment_encounter.encounter_datetime.to_date
               @first_line_drugs << drug.concept.shortname
-              @first_line_drugs = visits.first_line_drugs.uniq rescue []
-            elsif regimen_type == 'ALTERNATIVE FIRST LINE ANTIRETROVIRAL REGIMEN' #and concept_ids.include?(drug_concept_id)
-              @date_of_first_alt_line_regimen = art_start_date #treatment_encounter.encounter_datetime.to_date
+              @first_line_drugs = begin
+                visits.first_line_drugs.uniq
+              rescue StandardError
+                []
+              end
+            when 'ALTERNATIVE FIRST LINE ANTIRETROVIRAL REGIMEN' # and concept_ids.include?(drug_concept_id)
+              @date_of_first_alt_line_regimen = art_start_date # treatment_encounter.encounter_datetime.to_date
               @alt_first_line_drugs << drug.concept.shortname
-              @alt_first_line_drugs = visits.alt_first_line_drugs.uniq rescue []
-            elsif regimen_type == 'SECOND LINE ANTIRETROVIRAL REGIMEN' #and concept_ids.include?(drug_concept_id)
+              @alt_first_line_drugs = begin
+                visits.alt_first_line_drugs.uniq
+              rescue StandardError
+                []
+              end
+            when 'SECOND LINE ANTIRETROVIRAL REGIMEN' # and concept_ids.include?(drug_concept_id)
               @date_of_second_line_regimen = treatment_encounter.encounter_datetime.to_date
               @second_line_drugs << drug.concept.shortname
-              @second_line_drugs = second_line_drugs.uniq rescue []
+              @second_line_drugs = begin
+                second_line_drugs.uniq
+              rescue StandardError
+                []
+              end
             end
           end
         end.compact

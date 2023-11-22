@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   module Reports
     class ViralLoad
       include CommonSqlQueryUtils
@@ -283,7 +283,7 @@ module ARTService
       end
 
       def get_vl_due_info(patient_id, appointment_date)
-        vl_info = ARTService::VLReminder.new(patient_id: patient_id, date: appointment_date)
+        vl_info = ArtService::VlReminder.new(patient_id: patient_id, date: appointment_date)
         vl_info.vl_reminder_info
       end
     end

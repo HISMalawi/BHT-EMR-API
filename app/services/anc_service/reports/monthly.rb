@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
-require 'set'
-
-module ANCService
+module AncService
   module Reports
     # Cohort report builder class.
     #
@@ -19,7 +17,7 @@ module ANCService
         @type = type
         @cohort_builder = MonthlyBuilder.new
         @cohort_struct = MonthlyStruct.new
-        ARTService::Reports::CohortBuilder.new.init_temporary_tables(start_date, end_date, '')
+        ArtService::Reports::CohortBuilder.new.init_temporary_tables(start_date, end_date, '')
       end
 
       def build_report
@@ -28,7 +26,7 @@ module ANCService
 
       def find_report
         build_report
-        #Report.where(type: @type, name: @name,
+        # Report.where(type: @type, name: @name,
         #             start_date: @start_date, end_date: @end_date)\
         #      .order(date_created: :desc)\
         #      .first
@@ -46,14 +44,14 @@ module ANCService
 
         values = save_report_values(report)
 
-        { report: report, values: values }
+        { report:, values: }
       end
 
       # Writes the report values to database
       def save_report_values(report)
         @cohort_struct.values.collect do |value|
           puts "Saving #{value.name} = #{value_contents_to_json(value.contents)}"
-          report_value = ReportValue.create(report: report,
+          report_value = ReportValue.create(report:,
                                             name: value.name,
                                             indicator_name: value.indicator_name,
                                             indicator_short_name: value.indicator_short_name,
@@ -61,9 +59,7 @@ module ANCService
                                             contents: value_contents_to_json(value.contents))
 
           report_value_saved = report_value.errors.empty?
-          unless report_value_saved
-            raise "Failed to save report value: #{report_value.errors.as_json}"
-          end
+          raise "Failed to save report value: #{report_value.errors.as_json}" unless report_value_saved
 
           report_value
         end

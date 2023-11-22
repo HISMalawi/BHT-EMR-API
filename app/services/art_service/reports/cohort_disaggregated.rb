@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   module Reports
     class CohortDisaggregated
       def initialize(name:, type:, start_date:, end_date:, rebuild:, **kwargs)
@@ -67,7 +67,7 @@ module ARTService
 
           if @rebuild
             initialize_disaggregated
-            ARTService::Reports::CohortBuilder.new.init_temporary_tables(@start_date, @end_date, @occupation)
+            ArtService::Reports::CohortBuilder.new.init_temporary_tables(@start_date, @end_date, @occupation)
             rebuild_outcomes 'moh'
             art_service.update_tb_status(end_date)
           end
@@ -489,7 +489,7 @@ EOF
       end
 
       def rebuild_outcomes(report_type)
-        ARTService::Reports::CohortBuilder.new(outcomes_definition: report_type).init_temporary_tables(@start_date, @end_date, @occupation)
+        ArtService::Reports::CohortBuilder.new(outcomes_definition: report_type).init_temporary_tables(@start_date, @end_date, @occupation)
       end
 
       def insert_female_maternal_status(patient_id, age_group, end_date)

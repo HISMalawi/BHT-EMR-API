@@ -7,7 +7,7 @@ require_relative 'person_service'
 
 module UserService
   AUTHENTICATION_TOKEN_VALIDITY_PERIOD = 24.hours
-  LOGGER = Logger.new STDOUT
+  LOGGER = Logger.new $stdout
 
   class UserCreateError < StandardError; end
 
@@ -42,9 +42,9 @@ module UserService
       role = Role.find rolename
       UserRole.create role: role, user: user
     end
-    #user programs
+    # user programs
     programs&.each do |program_id|
-      user_programs = UserProgram.create user_id: user.user_id, program_id: program_id
+      UserProgram.create user_id: user.user_id, program_id: program_id
     end
 
     user
@@ -66,7 +66,7 @@ module UserService
     end
 
     # Update roles if any
-    if params[:roles]&.respond_to?(:each)
+    if params[:roles].respond_to?(:each)
       user.user_roles.destroy_all unless params[:must_append_roles]
       params[:roles].each do |rolename|
         role = Role.find rolename
@@ -93,6 +93,10 @@ module UserService
     user.save
 
     { token: token, expiry_time: expires, user: user }
+  rescue StandardError => e
+    Rails.logger.error "Error creating authentication token: #{e}"
+    Rails.logger.error e.backtrace.join("\n")
+    raise e
   end
 
   def self.create_token
@@ -133,6 +137,10 @@ module UserService
     end
 
     new_authentication_token user
+  rescue StandardError => e
+    Rails.logger.error "Error logging in: #{e}"
+    Rails.logger.error e.backtrace.join("\n")
+    raise e
   end
 
   # Tries to authenticate user using the classical BART mode
@@ -171,10 +179,8 @@ module UserService
     PersonService.new
   end
 
-  #check if user is already assigned to a project
+  # check if user is already assigned to a project
   def self.find_user_program(user_id, program_id)
-    user_program = UserProgram.where(user_id: user_id, program_id: program_id).first
-    user_program
+    UserProgram.where(user_id: user_id, program_id: program_id).first
   end
-
 end

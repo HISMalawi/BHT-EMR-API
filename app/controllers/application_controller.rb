@@ -16,17 +16,18 @@ class ApplicationController < ActionController::API
   DEFAULT_PAGE_SIZE = 10
 
   def authenticate
+    params.permit!
     authentication_token = request.headers['Authorization']
     unless authentication_token
       errors = ['Authorization token required']
-      render json: { errors: errors }, status: :unauthorized
+      render json: { errors: }, status: :unauthorized
       return false
     end
 
     user = UserService.authenticate authentication_token
     unless user
       errors = ['Invalid or expired authentication token']
-      render json: { errors: errors }, status: :unauthorized
+      render json: { errors: }, status: :unauthorized
       return false
     end
 
@@ -46,10 +47,11 @@ class ApplicationController < ActionController::API
   end
 
   def paginate(queryset)
+    params.permit!
     return queryset.all if params[:paginate] == 'false'
 
     limit = (params[:page_size] || DEFAULT_PAGE_SIZE).to_i
-    offset = (((params[:page] || 1).to_i)-1) * limit
+    offset = ((params[:page] || 1).to_i - 1) * limit
 
     queryset.offset(offset).limit(limit)
   end
@@ -64,7 +66,7 @@ class ApplicationController < ActionController::API
 
   # Takes search filters and converts them to an expression containing
   # inexact glob matchers that can be passed to `where` expressins.
-  def make_inexact_filters(filters, fields=nil)
+  def make_inexact_filters(filters, fields = nil)
     fields ||= filters.keys
 
     inexact_filters = filters.to_hash.each_with_object([[], []]) do |kv_pair, inexact_filters|

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddMultiColumnIndexToObs < ActiveRecord::Migration[5.2]
   def up
     puts('Creating index: idx_person_encounters')

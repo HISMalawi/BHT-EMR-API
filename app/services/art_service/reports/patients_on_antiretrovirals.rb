@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   module Reports
     # Retrieve all patients who are taking ARVs in a given time period.
     class PatientsOnAntiretrovirals
@@ -24,7 +24,7 @@ module ARTService
         DrugOrder.select('orders.patient_id AS patient_id')
                  .joins(:order)
                  .merge(art_orders)
-                 .where(drug_inventory_id: ARTService::RegimenEngine.arv_drugs,
+                 .where(drug_inventory_id: ArtService::RegimenEngine.arv_drugs,
                         quantity: 1..Float::INFINITY)
                  .where('start_date BETWEEN :start_date AND :end_date
                          OR auto_expire_date BETWEEN :start_date AND :end_date
@@ -37,7 +37,7 @@ module ARTService
 
       def art_orders
         Order.joins(:encounter)
-             .where('encounter.program_id = ?', ARTService::Constants::PROGRAM_ID)
+             .where('encounter.program_id = ?', ArtService::Constants::PROGRAM_ID)
       end
     end
   end
