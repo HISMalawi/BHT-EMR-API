@@ -350,4 +350,4 @@ See the following for more:
 
 - [Vscode](https://code.visualstudio.com/download) for editing
 - Rubocop - you can use this to format your code and find/fix various [defect attractors](http://esr.ibiblio.org/?p=8042)
-- If you use VSCode check out the following plugins [Ruby](https://marketplace.visualstudio.com/search?term=Ruby&target=VSCode), [Ruby-Rubocop](https://marketplace.visualstudio.com/search?term=Rubocop&target=VSCode&category=All%20categories&sortBy=Relevance), and [Rufo](https://marketplace.visualstudio.com/search?term=Rufo&target=VSCode&category=All%20categories&sortBy=Relevance)
+- If you use VSCode check out the following plugins [Ruby](https://marketplace.visualstudio.com/search?term=Ruby&target=VSCode), [Ruby-Rubocop](https://marketplace.visualstudio.com/search?term=Rubocop&target=VSCode&category=All%20categories&sortBy=Relevance), and [Rufo](https://marketplace.visualstudio.com/search?term=Rufo&target=VSCode&category=All%20categories&sortBy=Relevance), [Ruby Solargraph](https://marketplace.visualstudio.com/items?itemName=castwide.solargraph)
