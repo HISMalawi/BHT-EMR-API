@@ -1,12 +1,38 @@
 # HIS EMR API
 
+Table of Contents
+=================
+
+   * [HIS EMR API](#his-emr-api)
+      * [Requirements](#requirements)
+      * [Setting up](#setting-up)
+         * [Configuration](#configuration)
+         * [Setting up rails](#setting-up-rails)
+            * [Database](#database)
+               * [Using an existing database](#using-an-existing-database)
+               * [Using an empty database](#using-an-empty-database)
+         * [DDE](#dde)
+            * [Configuration](#configuration-1)
+            * [Enabling DDE](#enabling-dde)
+      * [Updating Metadata](#updating-metadata)
+      * [EMC to POC](#emc-to-poc)
+      * [AIT Intergration](#ait-intergration)
+      * [Running the API](#running-the-api)
+      * [Raw Data Store](#raw-data-store)
+      * [For developers](#for-developers)
+         * [Documentation](#documentation)
+         * [Building the Documentation](#building-the-documentation)
+         * [Testing](#testing)
+         * [Coding style/standards](#coding-stylestandards)
+         * [Useful (recommended) tools for development](#useful-recommended-tools-for-development)
+
 ## Requirements
 
 The following are required to run the API:
 
-- Ruby 2.5+
-- Rails 5.2
-- MySQL 5.5+
+- Ruby 3.2+
+- Rails 7.0+
+- MySQL 5.6+
 
 The following dependencies are also required for some operations,
 however the API can do without:
@@ -31,6 +57,12 @@ Install the required gems like so:
 
 ```sh
 bundle install
+```
+
+For sites that are operating offline, you can use the following command to install the required gems
+
+```sh
+bundle install --local
 ```
 
 ### Setting up Production mode
@@ -161,6 +193,22 @@ curl -X POST -H "Authorization: AiJViSpF3spb" -H "Content-Type: application/json
     "value": "true"
 }' "http://127.0.0.1:3000/api/v1/properties"
 ```
+
+### Updating Metadata
+- Facilities
+```bash
+./bin/update_art_metadata.sh [production|development|test]
+```
+You will have to choose the environment you want to update the metadata for.
+
+- Developers
+To add metadata into the system
+```bash
+bin/dump_metadata.sh [production|development|test]
+```
+
+Commit the changes to the repository. And as always make sure you create a PR to be reviewed.
+
 
 ### EMC to POC
 These are the instructions of migrating data for sites that have changed from an e-Mastercard(EMC) to Point of Care(POC).
