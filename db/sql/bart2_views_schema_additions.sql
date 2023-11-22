@@ -2238,7 +2238,7 @@ END;;
 DELIMITER ;
 
 DROP FUNCTION IF EXISTS `cxca_moh_age_group`;
-
+DELIMITER ;;
 CREATE FUNCTION `cxca_moh_age_group`(birthdate date, end_date date) RETURNS VARCHAR(15)
 BEGIN
 
@@ -2256,8 +2256,8 @@ ELSEIF age_in_years > 49 THEN SET age_group = ">49 years";
 END IF;
 
 RETURN age_group;
-END;
-
+END;;
+DELIMITER ;
 
 DROP FUNCTION IF EXISTS `OPD_syndromic_statistics`;
 DELIMITER ;;

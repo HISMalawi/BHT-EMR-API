@@ -48,6 +48,9 @@ module ArtService
         def initialize_gender_metrics
           {
             tx_curr: [],
+            symptom_screen_alone: [],
+            cxr_screen: [],
+            mwrd_screen: [],
             sceen_pos_new: [],
             sceen_neg_new: [],
             started_tb_new: [],
