@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module OPDService
+module OpdService
   # Provides various summary statistics for an ART patient
   class PatientSummary
     NPID_TYPE = 'National id'
@@ -9,8 +9,7 @@ module OPDService
 
     include ModelUtils
 
-    attr_reader :patient
-    attr_reader :date
+    attr_reader :patient, :date
 
     def initialize(patient, date)
       @patient = patient
@@ -70,7 +69,7 @@ module OPDService
                        .order(:date_created)\
                        .first
 
-      given_name = na
+      na
 
       "#{name.given_name} #{name.family_name}"
     end

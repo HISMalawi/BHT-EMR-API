@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ProgramAppointmentService
   extend ModelUtils
 
@@ -28,6 +30,7 @@ class ProgramAppointmentService
 
     (clients || []).each do |c|
       next if already_counted.include? c['person_id']
+
       already_counted << c['person_id']
 
       clients_formatted << {
@@ -38,7 +41,7 @@ class ProgramAppointmentService
       }
     end
 
-    return clients_formatted
+    clients_formatted
   end
 
   # Pretty much exactly like booked appointments above but limits itself to
@@ -84,8 +87,8 @@ class ProgramAppointmentService
         given_name: c['given_name'], family_name: c['family_name'],
         birthdate: c['birthdate'], gender: c['gender'], person_id: c['person_id'],
         arv_number: c['identifier'], birthdate_estimated: c['birthdate_estimated'],
-        cell_phone: c["cell_phone"], land_mark: c["land_mark"],
-        village: c["village"], district: c["district"]
+        cell_phone: c['cell_phone'], land_mark: c['land_mark'],
+        village: c['village'], district: c['district']
       }
     end
 

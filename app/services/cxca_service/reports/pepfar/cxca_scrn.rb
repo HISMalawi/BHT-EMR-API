@@ -1,16 +1,15 @@
 # frozen_string_literal: true
-module CXCAService
+
+module CxcaService
   module Reports
     module Pepfar
       class CxcaScrn
         attr_reader :start_date, :end_date, :report
-        CxCa_PROGRAM = Program.find_by_name "CxCa program"
-
 
         include Utils
         include ModelUtils
 
-        CxCa_PROGRAM = 'CxCa program'
+        CxCa_PROGRAM = Program.find_by_name 'CxCa program'
 
         TX_GROUPS = {
           first_time_screened: ['initial screening', 'referral'],
@@ -18,13 +17,13 @@ module CXCAService
           post_treatment_followup: ['one year subsequent check-up after treatment', 'problem visit after treatment']
         }.freeze
 
-        CxCa_TX_OUTCOMES = {
+        CXCA_TX_OUTCOMES = {
           positive: ['via positive', 'hpv positive', 'pap smear abnormal', 'visible lesion'],
           negative: ['via negative', 'hpv negative', 'pap smear normal', 'no visible lesion', 'other gynae'],
           suspected: ['suspect cancer']
         }.freeze
 
-        def initialize(start_date:, end_date:)
+        def initialize(start_date:, end_date:, **_kwargs)
           @start_date = start_date.to_date.beginning_of_day
           @end_date = end_date.to_date.end_of_day
           @report = {}
@@ -46,10 +45,14 @@ module CXCAService
             row = {}
             row['age_group'] = age_group
             TX_GROUPS.each do |(name, values)|
-              screened = query.select { |q| q['reason_for_visit']&.strip&.downcase&.in?(values) && q['age_group'] == age_group }
+              screened = query.select do |q|
+                q['reason_for_visit']&.strip&.downcase&.in?(values) && q['age_group'] == age_group
+              end
               row[name] = {}
-              CxCa_TX_OUTCOMES.each do |(outcome, values)|
-                row[name][outcome] = screened.select { |s| s['treatment']&.strip&.downcase&.in?(values) }.map { |t| t['person_id'] }.uniq
+              CXCA_TX_OUTCOMES.each do |(outcome, values)|
+                row[name][outcome] = screened.select do |s|
+                                       s['treatment']&.strip&.downcase&.in?(values)
+                                     end.map { |t| t['person_id'] }.uniq
               end
             end
             row

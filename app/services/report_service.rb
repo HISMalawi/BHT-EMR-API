@@ -2,18 +2,18 @@
 
 class ReportService
   ENGINES = {
-    'HIV PROGRAM' => ARTService::ReportEngine,
-    'ANC PROGRAM' => ANCService::ReportEngine,
-    'OPD PROGRAM' => OPDService::ReportEngine,
-    'VMMC PROGRAM' => VMMCService::ReportEngine,
-    'TB PROGRAM' => TBService::ReportEngine,
+    'HIV PROGRAM' => ArtService::ReportEngine,
+    'ANC PROGRAM' => AncService::ReportEngine,
+    'OPD PROGRAM' => OpdService::ReportEngine,
+    'VMMC PROGRAM' => VmmcService::ReportEngine,
+    'TB PROGRAM' => TbService::ReportEngine,
     'LABORATORY ORDERS' => LaboratoryService::ReportEngine,
-    'CXCA PROGRAM' => CXCAService::ReportEngine,
+    'CXCA PROGRAM' => CxcaService::ReportEngine,
     'RADIOLOGY PROGRAM' => RadiologyService::ReportEngine,
     'PATIENT REGISTRATION PROGRAM' => PatientRegistrationService::ReportEngine,
     'HTC PROGRAM' => HtsService::ReportEngine,
     'AETC PROGRAM' => AetcService::ReportEngine,
-    'SPINE PROGRAM' => SpineService::ReportEngine,
+    'SPINE PROGRAM' => SpineService::ReportEngine
   }.freeze
   LOGGER = Rails.logger
 

@@ -75,8 +75,7 @@ RSpec.describe 'api/v1/reports', type: :request do
                   vl_latest_order_date: { type: :string, format: :date, example: '2019-01-01' },
                   vl_latest_result_date: { type: :string, format: :date, example: '2019-01-01' },
                   vl_latest_result: { type: :string }
-                }
-                },
+                } }
               }
             } }
           }

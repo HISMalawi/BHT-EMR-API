@@ -7,7 +7,7 @@ module HtsService
       class HtsTstCommunity
         attr_accessor :start_date, :end_date
 
-        include ARTService::Reports::Pepfar::Utils
+        include ArtService::Reports::Pepfar::Utils
 
         POSITIVE = concept('Refer client to HIV clinic').concept_id
         NEGATIVE = concept('Negative').concept_id
@@ -63,6 +63,7 @@ module HtsService
             age_group = patient['age_group']
             next if ['Unknown', '<1 year', '1-4 years', '5-9 years', '10-14 years'].include?(age_group)
             next unless [POSITIVE, NEGATIVE].include?(patient['hiv_status'])
+
             report[age_group][patient['gender']][ENTRY_POINTS[patient['entry_point']]][patient['hiv_status'] == POSITIVE ? :pos : :neg] << patient['patient_id']
           end
         end

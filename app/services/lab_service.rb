@@ -2,7 +2,7 @@
 
 class LabService
   ENGINES = {
-    'OPD Program' => OPDService::LabEngine
+    'OPD Program' => OpdService::LabEngine
   }.freeze
 
   attr_accessor :program

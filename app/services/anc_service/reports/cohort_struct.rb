@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ANCService
+module AncService
   module Reports
     require 'ostruct'
 
@@ -107,10 +107,10 @@ module ANCService
         short_iname, long_iname = iname_parts
 
         @values[name] ||= OpenStruct.new(
-          name: name,
+          name:,
           indicator_name: long_iname.strip,
           indicator_short_name: short_iname ? short_iname.strip : short_iname,
-          description: description,
+          description:,
           contents: nil
         )
       end

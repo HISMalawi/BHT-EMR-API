@@ -2,7 +2,7 @@
 
 # this class will basically handle rolling back patients that were merged
 # rubocop:disable Metrics/ClassLength
-class DDERollbackService
+class DdeRollbackService
   attr_accessor :primary_patient, :secondary_patient, :merge_type, :program
 
   DDE_CONFIG_PATH = 'config/application.yml'
@@ -285,7 +285,7 @@ class DDERollbackService
   end
 
   def dde_client
-    client = DDEClient.new
+    client = DdeClient.new
 
     connection = dde_connections[program.id]
 

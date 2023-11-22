@@ -72,6 +72,7 @@ DROP FUNCTION IF EXISTS max_patient_lmp;
 
 DELIMITER $$
 CREATE FUNCTION max_patient_lmp(my_patient_id INT, my_e_date DATE, my_min_date DATE) RETURNS DATE
+NO SQL
 BEGIN
 
 DECLARE lmp_date DATE;
@@ -91,6 +92,7 @@ DROP FUNCTION IF EXISTS max_anc_visit_obs;
 
 DELIMITER $$
 CREATE FUNCTION max_anc_visit_obs(my_patient_id INT, my_e_date DATE, my_min_date DATE) RETURNS INT(11)
+NO SQL
 BEGIN
 
 DECLARE visits INT;

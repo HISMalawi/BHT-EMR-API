@@ -2,8 +2,8 @@
 
 require 'rails_helper'
 
-RSpec.describe TBService::AppointmentEngine do
-  subject { TBService::AppointmentEngine }
+RSpec.describe TbService::AppointmentEngine do
+  subject { TbService::AppointmentEngine }
   let(:patient) { create :patient }
   let(:program) { Program.find_by_name('TB Program') }
   let(:epoch) { Date.today }

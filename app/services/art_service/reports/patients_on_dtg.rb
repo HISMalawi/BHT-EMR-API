@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   module Reports
     class PatientsOnDTG
       attr_reader :start_date, :end_date

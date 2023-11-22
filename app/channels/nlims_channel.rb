@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class NlimsChannel < ApplicationCable::Channel
   def subscribed
     # ActionCable.server.broadcast("nlims_channel", {body: "This is a broadcast", status: "OK", time: Time.now})

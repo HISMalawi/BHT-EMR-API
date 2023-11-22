@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Helpers
   module Authentication
     def login_as(username, password)

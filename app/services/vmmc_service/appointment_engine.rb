@@ -2,11 +2,11 @@
 
 require 'logger'
 
-module VMMCService
+module VmmcService
   class AppointmentEngine
     include ModelUtils
 
-    LOGGER = Logger.new STDOUT
+    LOGGER = Logger.new $stdout
 
     def initialize(program:, patient:, retro_date: Date.today)
       @ref_date = retro_date.respond_to?(:to_date) ? retro_date.to_date : date
@@ -16,7 +16,7 @@ module VMMCService
 
     def next_appointment_date
       {
-        drugs_run_out_date: "",
+        drugs_run_out_date: '',
         appointment_date: @ref_date + 1.day
       }
     end

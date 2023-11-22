@@ -1,14 +1,16 @@
+# frozen_string_literal: true
+
 source 'https://rubygems.org'
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
-ruby '>= 2.5.3', '< 3.0.0'
+ruby '~> 3.2.0'
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
-gem 'rails', '~> 5.2.1'
+gem 'rails', '~> 7.0.6'
 # Use sqlite3 as the database for Active Record
 gem 'mysql2'
 # Use Puma as the app server
-gem 'puma', '~> 4.3.8'
+gem 'puma', '~> 6.3'
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
 # gem 'jbuilder', '~> 2.5'
 # Use Redis adapter to run Action Cable in production
@@ -43,9 +45,13 @@ gem 'test-unit'
 gem 'rswag-api'
 gem 'rswag-ui'
 
-gem 'emr_ohsp_interface', '~> 1.2.2'
-gem 'his_emr_api_lab', '~> 1.1.30'
-gem 'his_emr_api_radiology', '~> 0.0.8'
+# gem 'emr_ohsp_interface', '~> 1.2'
+# gem 'his_emr_api_lab', '~> 1.1.30'
+# gem 'his_emr_api_radiology', '~> 0.0.8'
+
+gem 'emr_ohsp_interface', '~> 2.2.0'
+gem 'his_emr_api_lab', git: 'https://github.com/EGPAFMalawiHIS/HIS-EMR-API-Lab', branch: 'upgrade/rails-7'
+# gem 'his_emr_api_radiology', '~> 1.0.9'
 
 gem 'parallel', '~> 1.20.1'
 
@@ -62,10 +68,10 @@ group :test do
 end
 
 group :development do
-  gem 'listen', '>= 3.0.5', '< 3.2'
+  gem 'listen'
   # Spring speeds up development by keeping your application running in the background. Read more: https://github.com/rails/spring
   gem 'spring'
-  gem 'spring-watcher-listen', '~> 2.0.0'
+  # gem 'spring-watcher-listen', '~> 2.0.0'
   gem 'web-console', '>= 3.3.0'
 end
 

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class ARTService::Reports::VisitsReport
+class ArtService::Reports::VisitsReport
   include ModelUtils
 
   def initialize(name:, type:, start_date:, end_date:)
@@ -61,7 +61,7 @@ class ARTService::Reports::VisitsReport
   end
 
   def workflow_engine(patient, date)
-    ARTService::WorkflowEngine.new patient: patient,
+    ArtService::WorkflowEngine.new patient: patient,
                                    program: hiv_program,
                                    date: date
   end

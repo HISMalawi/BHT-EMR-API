@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# TODO: Move this into ARTService::Pharmacy. Makes sense to have it there since
+# TODO: Move this into ArtService::Pharmacy. Makes sense to have it there since
 # this is only for ART.
 
 # Stock Management Service
@@ -100,7 +100,8 @@ class StockManagementService
           item.barcode = barcode
           item.save
         else
-          item = create_batch_item(batch, drug_id, pack_size, quantity, delivery_date, expiry_date, product_code, barcode)
+          item = create_batch_item(batch, drug_id, pack_size, quantity, delivery_date, expiry_date, product_code,
+                                   barcode)
           validate_activerecord_object(item)
         end
 
@@ -173,7 +174,8 @@ class StockManagementService
 
   def batch_update_items(data)
     ActiveRecord::Base.transaction do
-      verification = PharmacyStockVerification.create!(verification_date: data.delete(:verification_date), reason: data.delete(:reason))
+      verification = PharmacyStockVerification.create!(verification_date: data.delete(:verification_date),
+                                                       reason: data.delete(:reason))
       data['items'].map do |item|
         id = item.delete(:id)
         process_edit_batch_item(id, item, verif_id: verification.id)
@@ -228,7 +230,8 @@ class StockManagementService
 
       item = PharmacyBatchItem.find(batch_item_id)
       if item.delivery_date > date
-        raise InvalidParameterError, "Item was delivered at a date (#{item.delivery_date}) later than relocation date (#{date})"
+        raise InvalidParameterError,
+              "Item was delivered at a date (#{item.delivery_date}) later than relocation date (#{date})"
       end
 
       # A negative sign would result in addition of quantity thus

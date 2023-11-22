@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateInternalSections < ActiveRecord::Migration[5.2]
   def change
     create_table :internal_sections do |t|

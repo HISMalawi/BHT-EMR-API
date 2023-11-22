@@ -12,7 +12,7 @@ module RdsService
     # The 'logger' module does not provide a logger that can log
     # to multiple streams hence rolling our own quick and dirty one.
 
-    LOGGERS = [Logger.new(Rails.root.join('log/rds-sync.log')), Logger.new(STDOUT)].freeze
+    LOGGERS = [Logger.new(Rails.root.join('log/rds-sync.log')), Logger.new($stdout)].freeze
 
     def initialize
       LOGGERS.each do |logger|
@@ -40,7 +40,7 @@ module RdsService
 
   MODELS = [Person, PersonAttribute, PersonAddress, PersonName, Relationship, User, Patient,
             PatientIdentifier, PatientState, PatientProgram, ProgramWorkflow, ProgramWorkflowState, Encounter,
-            Observation, Order, DrugOrder,Pharmacy, PharmacyBatch,
+            Observation, Order, DrugOrder, Pharmacy, PharmacyBatch,
             PharmacyBatchItem, PharmacyBatchItemReallocation].freeze
 
   TIME_EPOCH = '0000-00-00 00:00:00'
@@ -134,9 +134,10 @@ module RdsService
   end
 
   # Only retrieves records with an update timestamp.
-  def retrieve_records_for_push(model, database_offset, database)
+  def retrieve_records_for_push(model, database_offset, _database)
     if model == User
-      model.unscoped.where('date_created >= :time OR date_changed >= :time OR date_retired >= :time', time: database_offset.to_s)
+      model.unscoped.where('date_created >= :time OR date_changed >= :time OR date_retired >= :time',
+                           time: database_offset.to_s)
     elsif immutable_model?(model)
       # HACK: person address seems to be missing `date_changed` field so we
       # fall back to the existing `date_created`
@@ -148,12 +149,13 @@ module RdsService
            .joins('INNER JOIN orders ON orders.order_id = drug_order.order_id')\
            .where('date_created >= :time OR date_voided >= :time', time: database_offset.to_s)
     else
-      model.unscoped.where('date_changed >= :time OR date_created >= :time OR date_voided >= :time', time: database_offset)
+      model.unscoped.where('date_changed >= :time OR date_created >= :time OR date_voided >= :time',
+                           time: database_offset)
     end
   end
 
   # Retrieves all records even those without update timestamps
-  def retrieve_records_for_dump(model, database_offset, database)
+  def retrieve_records_for_dump(model, database_offset, _database)
     if model == User
       where_conditions = <<~SQL
         (date_created >= :time OR date_changed >= :time OR date_retired >= :time)
@@ -176,9 +178,9 @@ module RdsService
         OR (date_created IS NULL AND date_voided IS NULL)
       SQL
       model.unscoped\
-          .joins('INNER JOIN orders ON orders.order_id = drug_order.order_id')\
-          .where(where_conditions, time: database_offset.to_s)
-    elsif model == ProgramWorkflowState || model == ProgramWorkflow
+           .joins('INNER JOIN orders ON orders.order_id = drug_order.order_id')\
+           .where(where_conditions, time: database_offset.to_s)
+    elsif [ProgramWorkflowState, ProgramWorkflow].include?(model)
       where_conditions = <<~SQL
         (date_created >= :time OR date_changed >= :time)
           OR (date_created IS NULL AND date_changed IS NULL)
@@ -207,16 +209,14 @@ module RdsService
   def record_update_time(record)
     # HACK: Models like PersonAddress are missing the preferred
     #   `date_changed` field thus we are falling back to date_created
-    if immutable_model?(record, true)
-      return record_date_voided(record) || record.date_created
-    end
+    return record_date_voided(record) || record.date_created if immutable_model?(record, true)
 
-    if record.class == DrugOrder
+    if record.instance_of?(DrugOrder)
       order = Order.unscoped.find(record.order_id)
       return order.date_voided || order.date_created
     end
 
-    if record.class == ProgramWorkflowState || record.class == ProgramWorkflow
+    if record.instance_of?(ProgramWorkflowState) || record.instance_of?(ProgramWorkflow)
       return record.date_changed || record.date_created
     end
 
@@ -284,7 +284,7 @@ module RdsService
 
     serialized_record['record_type'] = record.class.to_s
 
-    if record.class == Encounter && (!record.respond_to?(:program_id))
+    if record.instance_of?(Encounter) && !record.respond_to?(:program_id)
       # HACK: Apparently this script may be run on old applications
       # that use the old openmrs standard that has no program
       # specific encounters. Thus we manually have to set the program
@@ -360,10 +360,10 @@ module RdsService
     )
 
     UuidRemap.create(model: record.class.to_s,
-                    database: record.class.connection.current_database,
-                    old_uuid: old_uuid,
-                    new_uuid: new_uuid,
-                    record_id: record.id)
+                     database: record.class.connection.current_database,
+                     old_uuid: old_uuid,
+                     new_uuid: new_uuid,
+                     record_id: record.id)
   end
 
   def record_uuid_was_remapped?(record)
@@ -463,15 +463,14 @@ module RdsService
 
     url = "#{local_couch_url}/_replicate"
 
-      begin
-        RestClient.post(url, request.to_json, content_type: :json,
-                                              referer: local_couch_host_url)
-      rescue Exception => e
-          File.write('log/app_sync_erros.log',e.message,mode: 'a')
-          puts "Handled Exception"
-      end
+    begin
+      RestClient.post(url, request.to_json, content_type: :json,
+                                            referer: local_couch_host_url)
+    rescue Exception => e
+      File.write('log/app_sync_erros.log', e.message, mode: 'a')
+      puts 'Handled Exception'
+    end
   end
-
 
   def already_in_sync?(sync_params)
     response = RestClient.get("#{local_couch_url}/_active_tasks/replications")

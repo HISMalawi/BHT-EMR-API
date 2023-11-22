@@ -2,7 +2,7 @@
 
 ##
 # TB Preventive Therapy indicators for ART cohort
-class ARTService::Reports::Cohort::Tpt
+class ArtService::Reports::Cohort::Tpt
   include CommonSqlQueryUtils
 
   def initialize(start_date, end_date, **kwargs)

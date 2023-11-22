@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService::Reports
+module ArtService::Reports
   # Retrieves all current(neither dead nor transferred out) patients missing
   # any demographics or haven't had their demographics updated since the
   # given date

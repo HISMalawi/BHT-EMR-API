@@ -22,18 +22,18 @@ class PatientIdentifierType < RetirableRecord
   end
 
   def next_identifier_for_malawi_nid(options = {})
-  return nil unless name == 'Malawi National ID'
+    return nil unless name == 'Malawi National ID'
 
-  new_national_id = options[:MNID]
+    new_national_id = options[:MNID]
 
-  patient_identifier = PatientIdentifier.new
-  patient_identifier.type = self
-  patient_identifier.identifier = new_national_id.upcase()
-  patient_identifier.patient = options[:patient]
-  patient_identifier.location_id = Location.current.location_id
-  patient_identifier.save if patient_identifier.patient
-  patient_identifier
-end
+    patient_identifier = PatientIdentifier.new
+    patient_identifier.type = self
+    patient_identifier.identifier = new_national_id.upcase
+    patient_identifier.patient = options[:patient]
+    patient_identifier.location_id = Location.current.location_id
+    patient_identifier.save if patient_identifier.patient
+    patient_identifier
+  end
 
   private
 
@@ -55,7 +55,7 @@ end
     next_number = (last_id_number(id_prefix)[id_prefix.size..-2].to_i + 1).to_s.rjust(7, '0')
     new_national_id_no_check_digit = "#{id_prefix}#{next_number}"
     check_digit = PatientIdentifier.calculate_checkdigit(
-      new_national_id_no_check_digit[1..-1]
+      new_national_id_no_check_digit[1..]
     )
     "#{new_national_id_no_check_digit}#{check_digit}"
   end
