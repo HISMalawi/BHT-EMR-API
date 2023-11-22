@@ -98,9 +98,19 @@ module ArtService
             INNER JOIN concept_name cn ON cn.concept_id = o.value_coded AND cn.voided = 0
             WHERE o.concept_id = #{ConceptName.find_by_name('TB status').concept_id}
             AND o.voided = 0
-            AND o.value_coded IN (SELECT concept_id FROM concept_name WHERE name IN ('TB Suspected', 'TB NOT suspected', 'Confirmed TB NOT on treatment'))
+            AND o.value_coded IN (SELECT concept_id FROM concept_name WHERE name IN ('TB Suspected', 'TB NOT suspected', 'Confirmed TB NOT on treatment', 'Confirmed TB on treatment') AND voided = 0)
             AND o.obs_datetime BETWEEN '#{start_date}' AND '#{end_date}'
             GROUP BY o.person_id
+          SQL
+        end
+
+        def process_screening_method
+          execute_query(create_temp_screening_method_query)
+        end
+
+        def create_temp_screening_method_query
+          <<~SQL
+            -- to be implemented. We need to get the type of screening method used to screen for TB
           SQL
         end
 
