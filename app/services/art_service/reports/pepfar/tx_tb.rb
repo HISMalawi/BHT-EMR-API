@@ -19,6 +19,7 @@ module ArtService
 
         def find_report
           drop_temporary_tables
+          create_temp_earliest_start_date unless temp_eartliest_start_date_exists?
           init_report
           build_cohort_tables
           process_tb_screening
@@ -81,18 +82,35 @@ module ArtService
             CREATE TABLE temp_tb_screened AS
             SELECT
               o.person_id as patient_id,
-              LEFT(tesd.gender, 1) AS gender, MAX(o.obs_datetime) AS screened_date,
-              tesd.earliest_start_date as enrollment_date,
-              disaggregated_age_group(tesd.birthdate, DATE('#{end_date.to_date}')) AS age_group,
+              LEFT(current_obs.gender, 1) AS gender, MAX(o.obs_datetime) AS screened_date,
+              current_obs.earliest_start_date as enrollment_date,
+              disaggregated_age_group(current_obs.birthdate, DATE('#{end_date.to_date}')) AS age_group,
               cn.name AS tb_status
             FROM obs o
-            INNER JOIN temp_earliest_start_date tesd ON tesd.patient_id = o.person_id
+            INNER JOIN (
+              SELECT o.person_id, MAX(o.obs_datetime) AS obs_datetime, tesd.earliest_start_date, tesd.gender, tesd.birthdate
+              FROM obs o
+              INNER JOIN temp_earliest_start_date tesd ON tesd.patient_id = o.person_id
+              WHERE o.concept_id = #{ConceptName.find_by_name('TB status').concept_id}
+              AND o.voided = 0 AND o.obs_datetime BETWEEN '#{start_date}' AND '#{end_date}'
+              GROUP BY o.person_id
+            ) current_obs ON current_obs.person_id = o.person_id AND current_obs.obs_datetime = o.obs_datetime
             INNER JOIN concept_name cn ON cn.concept_id = o.value_coded AND cn.voided = 0
             WHERE o.concept_id = #{ConceptName.find_by_name('TB status').concept_id}
-            AND o.voided = 0 AND o.value_coded IN (#{ConceptName.find_by_name('TB Suspected').concept_id}, #{ConceptName.find_by_name('TB NOT suspected').concept_id})
+            AND o.voided = 0
+            AND o.value_coded IN (SELECT concept_id FROM concept_name WHERE name IN ('TB Suspected', 'TB NOT suspected', 'Confirmed TB NOT on treatment'))
             AND o.obs_datetime BETWEEN '#{start_date}' AND '#{end_date}'
             GROUP BY o.person_id
           SQL
+        end
+
+        def temp_eartliest_start_date_exists?
+          ActiveRecord::Base.connection.table_exists?('temp_earliest_start_date')
+        end
+
+        def create_temp_earliest_start_date
+          cohort_builder = ArtService::Reports::CohortBuilder.new(outcomes_definition: 'pepfar')
+          cohort_builder.init_temporary_tables(start_date, end_date, @occupation)
         end
 
         def process_tb_confirmed_and_on_treatment
@@ -174,10 +192,10 @@ module ArtService
             tb_status = patient['tb_status'].downcase
 
             if new_on_art(enrollment_date)
-              metrics[:sceen_pos_new] << patient['patient_id'] if ['tb suspected', 'sup'].include?(tb_status)
+              metrics[:sceen_pos_new] << patient['patient_id'] if ['tb suspected', 'sup', 'confirmed tb not on treatment', 'norx', 'confirmed tb on treatment', 'rx'].include?(tb_status)
               metrics[:sceen_neg_new] << patient['patient_id'] if ['tb not suspected', 'nosup'].include?(tb_status)
             else
-              metrics[:sceen_pos_prev] << patient['patient_id'] if ['tb suspected', 'sup'].include?(tb_status)
+              metrics[:sceen_pos_prev] << patient['patient_id'] if ['tb suspected', 'sup', 'confirmed tb not on treatment', 'norx'].include?(tb_status)
               metrics[:sceen_neg_prev] << patient['patient_id'] if ['tb not suspected', 'nosup'].include?(tb_status)
             end
           end
