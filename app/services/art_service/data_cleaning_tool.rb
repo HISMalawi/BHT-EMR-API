@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-module ArtService
+module ARTService
   class DataCleaningTool
     include CommonSqlQueryUtils
-
+  
     TOOLS = {
       'DATE ENROLLED LESS THAN EARLIEST START DATE' => 'date_enrolled_less_than_earliest_start_date',
       'PRE ART OR UNKNOWN OUTCOMES' => 'pre_art_or_unknown_outcomes',
@@ -475,7 +475,7 @@ module ArtService
       patient_visit_dates.each do |patient_id, visit_date|
         patient = Patient.find(patient_id)
         date =  visit_date.to_date
-        workflow_engine = ArtService::WorkflowEngine.new(patient:, date:, program:)
+        workflow_engine = ARTService::WorkflowEngine.new(patient: patient, date: date, program: program)
         complete = workflow_engine.next_encounter.blank? ? true : false
 
         next if complete

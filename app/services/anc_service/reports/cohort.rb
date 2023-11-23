@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
-module AncService
+require 'set'
+
+module ANCService
   module Reports
     # Cohort report builder class.
     #
@@ -17,7 +19,7 @@ module AncService
         @type = type
         @cohort_builder = CohortBuilder.new
         @cohort_struct = CohortStruct.new
-        ArtService::Reports::CohortBuilder.new.init_temporary_tables(start_date, end_date, '') # .create_tmp_patient_table
+        ARTService::Reports::CohortBuilder.new.init_temporary_tables(start_date, end_date, '') #.create_tmp_patient_table
       end
 
       def build_report
@@ -26,7 +28,7 @@ module AncService
 
       def find_report
         build_report
-        # Report.where(type: @type, name: @name,
+        #Report.where(type: @type, name: @name,
         #             start_date: @start_date, end_date: @end_date)\
         #      .order(date_created: :desc)\
         #      .first
@@ -44,14 +46,14 @@ module AncService
 
         values = save_report_values(report)
 
-        { report:, values: }
+        { report: report, values: values }
       end
 
       # Writes the report values to database
       def save_report_values(report)
         @cohort_struct.values.collect do |value|
           puts "Saving #{value.name} = #{value_contents_to_json(value.contents)}"
-          report_value = ReportValue.create(report:,
+          report_value = ReportValue.create(report: report,
                                             name: value.name,
                                             indicator_name: value.indicator_name,
                                             indicator_short_name: value.indicator_short_name,
@@ -59,7 +61,9 @@ module AncService
                                             contents: value_contents_to_json(value.contents))
 
           report_value_saved = report_value.errors.empty?
-          raise "Failed to save report value: #{report_value.errors.as_json}" unless report_value_saved
+          unless report_value_saved
+            raise "Failed to save report value: #{report_value.errors.as_json}"
+          end
 
           report_value
         end

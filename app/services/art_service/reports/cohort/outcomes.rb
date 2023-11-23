@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class ArtService::Reports::Cohort::Outcomes
+class ARTService::Reports::Cohort::Outcomes
   attr_reader :end_date
 
   def initialize(end_date:, definition: 'moh')

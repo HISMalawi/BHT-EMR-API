@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 class IndexCohortDrilldown < ActiveRecord::Migration[5.2]
   def up
     ActiveRecord::Base.connection.execute <<~SQL

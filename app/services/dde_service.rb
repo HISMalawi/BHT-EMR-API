@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
-class DdeService
+class DDEService
   require_relative './dde_service/matcher'
+
+  class DDEError < StandardError; end
 
   DDE_CONFIG_PATH = 'config/application.yml'
   LOGGER = Rails.logger
@@ -31,14 +33,14 @@ class DdeService
   end
 
   def test_connection
-    response = { connection_available: false, message: 'No connection to DDE', status: 500 }
+    response = { connection_available:  false, message: 'No connection to DDE', status: 500 }
     begin
       result, status = dde_client
       response[:connection_available] = status == 200
       response[:message] = result
-    rescue StandardError => e
-      LOGGER.error "Failed to connect to DDE: #{e.message}"
-      response[:message] = e.message
+    rescue => exception
+      LOGGER.error "Failed to connect to DDE: #{exception.message}"
+      response[:message] = exception.message
     end
     response
   end
@@ -56,7 +58,7 @@ class DdeService
 
   def remaining_npids
     response, status = dde_client.get("/location_npid_status?location_id=#{Location.current.id}")
-    raise DdeError, "Failed to fetch remaining npids: #{status} - #{response}" unless status == 200
+    raise DDEError, "Failed to fetch remaining npids: #{status} - #{response}" unless status == 200
 
     response
   end
@@ -73,7 +75,7 @@ class DdeService
     return patient unless doc_id
 
     response, status = dde_client.delete("void_person/#{doc_id}?void_reason=#{reason}")
-    raise DdeError, "Failed to void person in DDE: #{status} - #{response}" unless status == 200
+    raise DDEError, "Failed to void person in DDE: #{status} - #{response}" unless status == 200
 
     patient
   end
@@ -85,7 +87,7 @@ class DdeService
     dde_patient = openmrs_to_dde_patient(patient)
     response, status = dde_client.post('update_person', dde_patient)
 
-    raise DdeError, "Failed to update person in DDE: #{response}" unless status == 200
+    raise DDEError, "Failed to update person in DDE: #{response}" unless status == 200
 
     patient
   end
@@ -155,8 +157,7 @@ class DdeService
 
   # Similar to import_patients_by_npid but uses name and gender instead of npid
   def import_patients_by_name_and_gender(given_name, family_name, gender)
-    locals = patient_service.find_patients_by_name_and_gender(given_name, nil, family_name,
-                                                              gender).limit(PATIENT_SEARCH_RESULTS_LIMIT)
+    locals = patient_service.find_patients_by_name_and_gender(given_name, nil, family_name, gender).limit(PATIENT_SEARCH_RESULTS_LIMIT)
     remotes = find_remote_patients_by_name_and_gender(given_name, family_name, gender)
 
     import_remote_patient(locals, remotes)
@@ -170,8 +171,7 @@ class DdeService
   end
 
   def find_patients_by_name_and_gender(given_name, family_name, gender)
-    locals = patient_service.find_patients_by_name_and_gender(given_name, nil, family_name,
-                                                              gender).limit(PATIENT_SEARCH_RESULTS_LIMIT)
+    locals = patient_service.find_patients_by_name_and_gender(given_name, nil, family_name, gender).limit(PATIENT_SEARCH_RESULTS_LIMIT)
     remotes = find_remote_patients_by_name_and_gender(given_name, family_name, gender)
 
     package_patients(locals, remotes)
@@ -187,7 +187,7 @@ class DdeService
     return nil unless remote_patient
 
     Matcher.find_differences(Person.find(local_patient_id), remote_patient)
-  rescue DdeError => e
+  rescue DDEError => e
     Rails.logger.warn("Check for DDE patient updates failed: #{e.message}")
     nil
   end
@@ -209,7 +209,7 @@ class DdeService
                        }
     )
 
-    raise DdeError, "DDE patient search failed: #{status} - #{response}" unless status == 200
+    raise DDEError, "DDE patient search failed: #{status} - #{response}" unless status == 200
 
     response.collect do |match|
       doc_id = match['person']['id']
@@ -253,7 +253,7 @@ class DdeService
     unless status == 200 && !response.empty?
       # The DDE's reassign_npid end point responds with a 200 - OK but returns
       # an empty object when patient with given doc_id is not found.
-      raise DdeError, "Failed to reassign npid: DDE Response => #{status} - #{response}"
+      raise DDEError, "Failed to reassign npid: DDE Response => #{status} - #{response}"
     end
 
     return save_remote_patient(response) unless patient
@@ -307,7 +307,7 @@ class DdeService
 
   def find_remote_patients_by_npid(npid)
     response, _status = dde_client.post('search_by_npid', npid: npid)
-    raise DdeError, "Patient search by npid failed: DDE Response => #{response}" unless response.instance_of?(Array)
+    raise DDEError, "Patient search by npid failed: DDE Response => #{response}" unless response.instance_of?(Array)
 
     response
   end
@@ -317,7 +317,7 @@ class DdeService
                                                                      family_name: family_name,
                                                                      gender: gender)
     unless response.instance_of?(Array)
-      raise DdeError, "Patient search by name and gender failed: DDE Response => #{response}"
+      raise DDEError, "Patient search by name and gender failed: DDE Response => #{response}"
     end
 
     response
@@ -326,7 +326,7 @@ class DdeService
   def find_remote_patients_by_doc_id(doc_id)
     Rails.logger.info("Searching for DDE patient by doc_id ##{doc_id}")
     response, _status = dde_client.post('search_by_doc_id', doc_id: doc_id)
-    raise DdeError, "Patient search by doc_id failed: DDE Response => #{response}" unless response.instance_of?(Array)
+    raise DDEError, "Patient search by doc_id failed: DDE Response => #{response}" unless response.instance_of?(Array)
 
     response
   end
@@ -345,13 +345,9 @@ class DdeService
 
     # In some cases we may have remote patients that were previously imported but
     # whose NPID has changed, we need to find and resolve these local patients.
-    unresolved_patients = find_patients_by_doc_id(patients[:remotes].collect do |remote_patient|
-                                                    remote_patient['doc_id']
-                                                  end)
+    unresolved_patients = find_patients_by_doc_id(patients[:remotes].collect { |remote_patient| remote_patient['doc_id'] })
     if unresolved_patients.empty?
-      return { locals: patients[:locals], remotes: patients[:remotes].collect do |patient|
-                                                     localise_remote_patient(patient)
-                                                   end }
+      return { locals: patients[:locals], remotes: patients[:remotes].collect { |patient| localise_remote_patient(patient) } }
     end
 
     additional_patients = resolve_patients(local_patients: unresolved_patients, remote_patients: patients[:remotes])
@@ -401,7 +397,7 @@ class DdeService
       resolved_patients << local_patient
     end
 
-    if resolved_patients.empty? && (local_patients.empty? && remote_patients.size == 1)
+    if resolved_patients.empty? && (local_patients.size.zero? && remote_patients.size == 1)
       # HACK: Frontenders requested that if only a single patient exists
       # remotely and locally none exists, the remote patient should be
       # imported.
@@ -489,14 +485,14 @@ class DdeService
   end
 
   def dde_client
-    client = DdeClient.new
+    client = DDEClient.new
 
     connection = dde_connections[program.id]
 
     dde_connections[program.id] = if connection
                                     client.restore_connection(connection)
                                   else
-                                    client.connect(**dde_config)
+                                    client.connect(dde_config)
                                   end
 
     client
@@ -533,12 +529,12 @@ class DdeService
       birthdate: person.birthdate,
       birthdate_estimated: person.birthdate_estimated, # Convert to bool?
       attributes: {
-        current_district: person_address&.state_province,
-        current_traditional_authority: person_address&.township_division,
-        current_village: person_address&.city_village,
-        home_district: person_address&.address2,
-        home_village: person_address&.neighborhood_cell,
-        home_traditional_authority: person_address&.county_district,
+        current_district: person_address ? person_address.state_province : nil,
+        current_traditional_authority: person_address ? person_address.township_division : nil,
+        current_village: person_address ? person_address.city_village : nil,
+        home_district: person_address ? person_address.address2 : nil,
+        home_village: person_address ? person_address.neighborhood_cell : nil,
+        home_traditional_authority: person_address ? person_address.county_district : nil,
         occupation: person_attributes ? person_attributes[:occupation] : nil
       }
     )

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ArtService
+module ARTService
   # A summary of a patient's ART clinic visit
   class PatientVisit
     LOGGER = Rails.logger
@@ -49,7 +49,7 @@ module ArtService
       Observation.joins(:encounter)
                  .where(person: patient.person, concept: concept('Appointment date'))\
                  .where('obs_datetime >= ?', date)
-                 .where(encounter: { program: Program.find_by(name: 'HIV Program') })
+                 .where(encounter: {program: Program.find_by(name: 'HIV Program')})
                  .order(obs_datetime: :asc)\
                  .first\
                  &.value_datetime
@@ -57,7 +57,7 @@ module ArtService
 
     def tb_status
       tb_status = PatientState.joins(:patient_program)\
-                              .merge(PatientProgram.where(patient:, program: program('tb_program')))\
+                              .merge(PatientProgram.where(patient: patient, program: program('tb_program')))\
                               .where('start_date <= ?', date.to_date)\
                               .order(:start_date)\
                               .last\
@@ -207,19 +207,19 @@ module ArtService
       dispensations = pills_dispensed
 
       {
-        outcome:,
-        outcome_date:,
-        visit_by:,
-        side_effects:,
+        outcome: outcome,
+        outcome_date: outcome_date,
+        visit_by: visit_by,
+        side_effects: side_effects,
         viral_load: viral_load_result,
-        pills_brought:,
+        pills_brought: pills_brought,
         pills_dispensed: dispensations,
         regimen: dispensations.empty? ? 'N/A' : regimen,
-        adherence:,
-        tb_status:,
-        height:,
-        weight:,
-        bmi:
+        adherence: adherence,
+        tb_status: tb_status,
+        height: height,
+        weight: weight,
+        bmi: bmi
       }
     end
 
@@ -234,7 +234,7 @@ module ArtService
     end
 
     def lab_tests_engine
-      @lab_tests_engine = ArtService::LabTestsEngine.new(program: program('HIV Program'))
+      @lab_tests_engine = ARTService::LabTestsEngine.new(program: program('HIV Program'))
     end
 
     def calculate_bmi(weight, height)

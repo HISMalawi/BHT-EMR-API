@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 LOGGER = Logger.new($stdout)
 User.current = User.first
 
@@ -24,9 +22,7 @@ unless default_db_config && concepts_db_config
   exit
 end
 
-new_concepts_file = File.new(
-  "#{Rails.root}/log/merge_concepts-#{from}>#{to}-#{DateTime.now.strftime('%Y%m%d%H%M%S')}.csv", 'w+'
-)
+new_concepts_file = File.new("#{Rails.root}/log/merge_concepts-#{from}>#{to}-#{DateTime.now.strftime('%Y%m%d%H%M%S')}.csv", 'w+')
 new_concepts_file.puts('concept_id, concept_name, status')
 
 # Concepts in concepts database that are not present in database development
@@ -48,11 +44,11 @@ begin
       short_name: record['name'],
       creator: record['creator'],
       class_id: record['class_id'],
-      datatype_id: record['datatype_id']
+      datatype_id: record['datatype_id'],
     )
     ConceptName.create(
       concept_id: concept.id,
-      name: concept.short_name
+      name: concept.short_name,
     )
     records_inserted += 1
     new_concepts_file.puts("#{concept.id}, #{record['name']}, created")

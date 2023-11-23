@@ -6,7 +6,7 @@ require 'logger'
 DEFAULT_PROGRAM = 'HIV Program'
 DEFAULT_REPORT_TYPE = 'Cohort'
 
-LOGGER = Logger.new $stdout
+LOGGER = Logger.new STDOUT
 Rails.logger = LOGGER
 ActiveRecord::Base.logger = LOGGER
 

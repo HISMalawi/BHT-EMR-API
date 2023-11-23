@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ArtService
+module ARTService
   module Reports
     # Retrieve all pregnant females in a given time period
     class PregnantPatients
@@ -84,7 +84,7 @@ module ArtService
       end
 
       def hiv_program_id
-        ArtService::Constants::PROGRAM_ID
+        ARTService::Constants::PROGRAM_ID
       end
     end
   end

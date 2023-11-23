@@ -7,7 +7,7 @@ module HtsService
       class HtsRecentCommunity
         attr_accessor :start_date, :end_date
 
-        include ArtService::Reports::Pepfar::Utils
+        include ARTService::Reports::Pepfar::Utils
 
         def initialize(start_date:, end_date:)
           @start_date = start_date

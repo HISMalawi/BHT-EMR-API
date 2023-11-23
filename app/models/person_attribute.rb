@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 class PersonAttribute < VoidableRecord
   self.table_name = 'person_attribute'
   self.primary_key = 'person_attribute_id'

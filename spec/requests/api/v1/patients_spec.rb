@@ -534,12 +534,14 @@ RSpec.describe 'api/v1/patients', type: :request do
   end
 
   path '/api/v1/patients' do
+
     get('list patients') do
       tags TAG
       description TAG_DESCRIPTION
       consumes 'application/json'
       produces 'application/json'
       response(200, 'successful') do
+
         after do |example|
           example.metadata[:response][:content] = {
             'application/json' => {
@@ -557,6 +559,7 @@ RSpec.describe 'api/v1/patients', type: :request do
       consumes 'application/json'
       produces 'application/json'
       response(200, 'successful') do
+
         after do |example|
           example.metadata[:response][:content] = {
             'application/json' => {
@@ -626,12 +629,14 @@ RSpec.describe 'api/v1/patients', type: :request do
   end
 
   path '/api/v1/search/patients/by_npid' do
+
     get('search_by_npid patient') do
       tags TAG
       description TAG_DESCRIPTION
       consumes 'application/json'
       produces 'application/json'
       response(200, 'successful') do
+
         after do |example|
           example.metadata[:response][:content] = {
             'application/json' => {
@@ -645,12 +650,14 @@ RSpec.describe 'api/v1/patients', type: :request do
   end
 
   path '/api/v1/search/patients/by_identifier' do
+
     get('search_by_identifier patient') do
       tags TAG
       description TAG_DESCRIPTION
       consumes 'application/json'
       produces 'application/json'
       response(200, 'successful') do
+
         after do |example|
           example.metadata[:response][:content] = {
             'application/json' => {
@@ -664,12 +671,14 @@ RSpec.describe 'api/v1/patients', type: :request do
   end
 
   path '/api/v1/search/patients' do
+
     get('search_by_name_and_gender patient') do
       tags TAG
       description TAG_DESCRIPTION
       consumes 'application/json'
       produces 'application/json'
       response(200, 'successful') do
+
         after do |example|
           example.metadata[:response][:content] = {
             'application/json' => {
@@ -683,12 +692,14 @@ RSpec.describe 'api/v1/patients', type: :request do
   end
 
   path '/api/v1/archiving_candidates' do
+
     get('find_archiving_candidates patient') do
       tags TAG
       description TAG_DESCRIPTION
       consumes 'application/json'
       produces 'application/json'
       response(200, 'successful') do
+
         after do |example|
           example.metadata[:response][:content] = {
             'application/json' => {
@@ -702,12 +713,14 @@ RSpec.describe 'api/v1/patients', type: :request do
   end
 
   path '/api/v1/last_drugs_pill_count' do
+
     get('last_drugs_pill_count patient') do
       tags TAG
       description TAG_DESCRIPTION
       consumes 'application/json'
       produces 'application/json'
       response(200, 'successful') do
+
         after do |example|
           example.metadata[:response][:content] = {
             'application/json' => {
@@ -721,12 +734,14 @@ RSpec.describe 'api/v1/patients', type: :request do
   end
 
   path '/api/v1/tpt_prescription_count' do
+
     get('tpt_prescription_count patient') do
       tags TAG
       description TAG_DESCRIPTION
       consumes 'application/json'
       produces 'application/json'
       response(200, 'successful') do
+
         after do |example|
           example.metadata[:response][:content] = {
             'application/json' => {
@@ -740,12 +755,14 @@ RSpec.describe 'api/v1/patients', type: :request do
   end
 
   path '/api/v1/last_cxca_screening_details' do
+
     get('last_cxca_screening_details patient') do
       tags TAG
       description TAG_DESCRIPTION
       consumes 'application/json'
       produces 'application/json'
       response(200, 'successful') do
+
         after do |example|
           example.metadata[:response][:content] = {
             'application/json' => {

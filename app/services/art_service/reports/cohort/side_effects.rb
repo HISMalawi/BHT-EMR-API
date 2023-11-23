@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ArtService::Reports::Cohort::SideEffects
+module ARTService::Reports::Cohort::SideEffects
   def self.update_side_effects(date)
     initialize_table
 

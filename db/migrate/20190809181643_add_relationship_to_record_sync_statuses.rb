@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 class AddRelationshipToRecordSyncStatuses < ActiveRecord::Migration[5.2]
   MODELS = %w[Relationship].freeze
 

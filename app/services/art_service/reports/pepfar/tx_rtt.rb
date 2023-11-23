@@ -1,7 +1,7 @@
-module ArtService
+module ARTService
   module Reports
     module Pepfar
-      class TxRtt
+      class TxRTT
         attr_reader :start_date, :end_date
 
         include CommonSqlQueryUtils

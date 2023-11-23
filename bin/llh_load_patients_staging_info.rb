@@ -103,21 +103,18 @@ def patient_staging_encounter(patient, date)
                      .first
   return staging if staging
 
-  staging = encounter_service.create(program: HIV_PROGRAM, type: STAGING_ENCOUNTER, patient: patient,
-                                     encounter_datetime: date)
+  staging = encounter_service.create(program: HIV_PROGRAM, type: STAGING_ENCOUNTER, patient: patient, encounter_datetime: date)
   raise "Couldn't create staging encounter: #{staging.errors.as_json}" unless staging.errors.empty?
 
   staging
 end
 
 def drug_encounter(patient, date, encounter_type)
-  encounter = Encounter.where(type: encounter_type, patient: patient,
-                              encounter_datetime: (date..(date + 1.day).to_date))
+  encounter = Encounter.where(type: encounter_type, patient: patient, encounter_datetime: (date..(date + 1.day).to_date))
                        .first
   return encounter if encounter
 
-  encounter = encounter_service.create(program: HIV_PROGRAM, type: encounter_type, patient: patient,
-                                       encounter_datetime: date)
+  encounter = encounter_service.create(program: HIV_PROGRAM, type: encounter_type, patient: patient, encounter_datetime: date)
   raise "Couldn't create #{encounter_type.name} encounter: #{encounter.errors.as_json}" unless encounter.errors.empty?
 
   encounter
@@ -178,10 +175,7 @@ def dispense_drugs(patient, orders, date)
   logger.debug("Voiding existing dispensations for patient ##{patient.patient_id}")
   patient_dispensing_encounter(patient, date)
     .observations
-    .each do |observation|
-    observation.void('Overwritten by LLH Pre - 2010 patients import script',
-                     skip_after_void: true)
-  end
+    .each { |observation| observation.void('Overwritten by LLH Pre - 2010 patients import script', skip_after_void: true) }
 
   logger.debug("Creating new dispensations for patient ##{patient.patient_id}")
   dispensations = orders.map do |order|
@@ -192,7 +186,7 @@ def dispense_drugs(patient, orders, date)
     }
   end
 
-  DispensationService.create(HIV_PROGRAM, dispensations)
+  DispensationService.create(HIV_PROGRAM,  dispensations)
 end
 
 def process_csv(csv)

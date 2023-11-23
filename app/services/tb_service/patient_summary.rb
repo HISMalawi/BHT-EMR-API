@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module TbService
+module TBService
   # Provides various summary statistics for an TB patient
   class PatientSummary
     NPID_TYPE = 'National id'
@@ -9,7 +9,8 @@ module TbService
 
     include ModelUtils
 
-    attr_reader :patient, :date
+    attr_reader :patient
+    attr_reader :date
 
     def initialize(patient, date)
       @patient = patient
@@ -82,6 +83,7 @@ module TbService
                                 .where('CAST(min_weight AS DECIMAL(4, 1)) <= :weight
                                                   AND CAST(max_weight AS DECIMAL(4, 1)) >= :weight',
                                        weight: patient.weight.to_f.round(1))
+        ingredients
 
         ingredients.each do |ingredient|
           drug = Drug.find_by(drug_id: ingredient.drug_id)
@@ -135,11 +137,12 @@ module TbService
     end
 
     def patient_program_start_date
-      patient_program = PatientProgram.find_by(patient_id: patient.patient_id,
-                                               program_id: program('TB PROGRAM').program_id)
+      patient_program = PatientProgram.find_by(patient_id: patient.patient_id, program_id: program('TB PROGRAM').program_id)
       return 'N/A' unless patient_program
 
       patient_program.date_enrolled.to_date
     end
+
+    private
   end
-end
+  end

@@ -2,7 +2,7 @@
 
 require 'set'
 
-module ArtService
+module ARTService
   module Reports
     # Cohort report builder class.
     #
@@ -75,7 +75,7 @@ module ArtService
 
         report_type = (pepfar ? 'pepfar' : 'moh')
         defaulter_date_sql = pepfar ? 'current_pepfar_defaulter_date' : 'current_defaulter_date'
-        ArtService::Reports::CohortBuilder.new(outcomes_definition: report_type).init_temporary_tables(@start_date, @end_date, @occupation)
+        ARTService::Reports::CohortBuilder.new(outcomes_definition: report_type).init_temporary_tables(@start_date, @end_date, @occupation)
 
         data = ActiveRecord::Base.connection.select_all <<~SQL
           SELECT

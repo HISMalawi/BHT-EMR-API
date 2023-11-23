@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ArtService
+module ARTService
   # Responsible for dealing with patient state changes in HIV program.
   class PatientStateEngine
     attr_accessor :patient, :date
@@ -25,7 +25,9 @@ module ArtService
       return if patient_state&.state == on_arvs_state.id
 
       ActiveRecord::Base.transaction do
-        mark_patient_art_start_date(patient) unless patient_has_state?(patient_program, on_arvs_state)
+        unless patient_has_state?(patient_program, on_arvs_state)
+          mark_patient_art_start_date(patient)
+        end
 
         create_patient_state(on_arvs_state, date, patient_state)
         # if patient is on HTS update the state on HTS to linked to care
@@ -45,7 +47,7 @@ module ArtService
     end
 
     def patient_program
-      @patient_program ||= patient.patient_programs.where(program:).first
+      @patient_program ||= patient.patient_programs.where(program: program).first
     end
 
     def arv_drug_order?(drug_order)
@@ -81,8 +83,8 @@ module ArtService
       end
 
       PatientState.create(
-        patient_program:,
-        program_workflow_state:,
+        patient_program: patient_program,
+        program_workflow_state: program_workflow_state,
         start_date: date
       )
     end

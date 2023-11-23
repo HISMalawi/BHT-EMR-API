@@ -1,5 +1,6 @@
 # frozen_string_literal: true
-module ArtService
+
+module ARTService
   module Reports
     module Pepfar
       class ScArvdisp

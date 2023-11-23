@@ -3,7 +3,7 @@
 require 'logger'
 require 'restclient'
 
-class DdeClient
+class DDEClient
   def initialize
     @auto_login = true # If logged out, automatically login on next request
     @base_url = nil
@@ -20,7 +20,7 @@ class DdeClient
 
   # Reconnect to DDE using previous connection
   #
-  # @see: DdeClient#connect
+  # @see: DDEClient#connect
   def restore_connection(connection)
     @connection = reload_connection(connection)
   end
@@ -52,7 +52,7 @@ class DdeClient
   private
 
   JSON_CONTENT_TYPE = 'application/json'
-  LOGGER = Logger.new($stdout)
+  LOGGER = Logger.new(STDOUT)
   DDE_API_KEY_VALIDITY_PERIOD = 3600 * 12
   DDE_VERSION = 'v1'
 
@@ -88,7 +88,9 @@ class DdeClient
 
     @auto_login = true
 
-    raise DdeClientError, "Unable to establish connection to DDE: #{response}" if status != 200
+    if status != 200
+      raise DDEClientError, "Unable to establish connection to DDE: #{response}"
+    end
 
     LOGGER.info('Connection to DDE established :)')
     @connection = {
@@ -116,7 +118,7 @@ class DdeClient
     LOGGER.debug "Handling DDE response:\n\tStatus - #{response.code}\n\tBody - #{response.body}"
     handle_response response
   rescue RestClient::Unauthorized => e
-    LOGGER.error "DdeClient suppressed exception: #{e}"
+    LOGGER.error "DDEClient suppressed exception: #{e}"
     return handle_response e.response unless @auto_login
 
     LOGGER.debug 'Auto-logging into DDE...'
@@ -124,13 +126,13 @@ class DdeClient
     LOGGER.debug "Reset connection: #{@connection}"
     retry # Retry last request...
   rescue RestClient::BadRequest => e
-    LOGGER.error "DdeClient suppressed exception: #{e}"
+    LOGGER.error "DDEClient suppressed exception: #{e}"
     handle_response e.response
   rescue RestClient::UnprocessableEntity => e
-    LOGGER.error "DdeClient suppressed exception: #{e}"
+    LOGGER.error "DDEClient suppressed exception: #{e}"
     handle_response e.response
   rescue RestClient::NotFound => e
-    LOGGER.error "DdeClient suppressed exception: #{e}"
+    LOGGER.error "DDEClient suppressed exception: #{e}"
     handle_response e.response
   end
 

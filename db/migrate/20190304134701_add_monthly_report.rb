@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 class AddMonthlyReport < ActiveRecord::Migration[5.2]
   def up
     ReportType.create(name: 'monthly', creator: User.first&.user_id)

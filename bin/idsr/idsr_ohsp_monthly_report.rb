@@ -1,4 +1,2 @@
-# frozen_string_literal: true
-
 EmrOhspInterface::EmrOhspInterfaceService.generate_monthly_idsr_report
 EmrOhspInterface::EmrOhspInterfaceService.generate_weekly_idsr_report

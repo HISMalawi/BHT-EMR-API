@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 class AddIndexToOrder < ActiveRecord::Migration[5.2]
   def change
     return if ActiveRecord::Base.connection.index_exists?(:orders, %i[patient_id order_id])

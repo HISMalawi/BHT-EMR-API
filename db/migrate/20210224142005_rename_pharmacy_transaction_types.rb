@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 class RenamePharmacyTransactionTypes < ActiveRecord::Migration[5.2]
   EVENT_NAME_MAPPING = {
     'New deliveries' => 'Drugs added',

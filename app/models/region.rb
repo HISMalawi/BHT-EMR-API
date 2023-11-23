@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 class Region < ApplicationRecord
   self.table_name = 'region'
   self.primary_key = 'region_id'

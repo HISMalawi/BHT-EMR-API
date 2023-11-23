@@ -1,10 +1,8 @@
-# frozen_string_literal: true
-
 class PersonAddress < VoidableRecord
   self.table_name = 'person_address'
   self.primary_key = 'person_address_id'
 
-  belongs_to :person, -> { where(voided: [true, false]) }, foreign_key: :person_id
+  belongs_to :person,->{where(voided: [true,false])}, foreign_key: :person_id
 
   def as_json(options = {})
     super(options.merge(

@@ -150,12 +150,11 @@ module HtsService
 
         def set_unique
           @data.each do |key, obj|
-            if %w[frs_given_family_referral_slips_sum male_condoms_given_male_condoms_sum
-                  female_condoms_given_female_condoms_sum].include?(key)
+            if %w[frs_given_family_referral_slips_sum male_condoms_given_male_condoms_sum female_condoms_given_female_condoms_sum].include?(key)
               @data[key] = obj
               next
             end
-            @data[key] = obj&.map { |q| q['person_id'] }&.uniq
+            @data[key] = obj&.map { |q| q['person_id'] }.uniq
           end
         end
 
@@ -174,76 +173,34 @@ module HtsService
           @data['total_clients_tested_for_hiv'] = @query
           @data['age_group_years_a_under_1'] = @query.select { |q| birthdate_to_age(q['birthdate']) < 1 }
           @data['age_group_years_b_1_to_14'] = @query.select { |q| (1..14).include?(birthdate_to_age(q['birthdate'])) }
-          @data['age_group_years_c_15_to_24'] = @query.select do |q|
-            (15..24).include?(birthdate_to_age(q['birthdate']))
-          end
+          @data['age_group_years_c_15_to_24'] = @query.select { |q| (15..24).include?(birthdate_to_age(q['birthdate'])) }
           @data['age_group_years_d_25_plus'] = (@query.select { |q| birthdate_to_age(q['birthdate']) >= 25 })
-          @data['total_clients_tested_at_the_facility'] =
-            filter_hash('access_type', concept('Health facility').concept_id)
+          @data['total_clients_tested_at_the_facility'] = filter_hash('access_type', concept('Health facility').concept_id)
           @data['total_clients_tested_in_the_community'] = filter_hash('access_type', concept('Community').concept_id)
-          @data['facility_vct'] = filter_hash('access_type', concept('Health facility').concept_id).select do |q|
-            q['test_location'] == 'VCT'
-          end
-          @data['facility_anc_first_visit'] = filter_hash('access_type', concept('Health facility').concept_id).select do |q|
-            q['test_location'] == 'ANC First Visit'
-          end
-          @data['facility_inpatient'] = filter_hash('access_type', concept('Health facility').concept_id).select do |q|
-            q['test_location'] == 'Inpatient'
-          end
-          @data['facility_sti'] = filter_hash('access_type', concept('Health facility').concept_id).select do |q|
-            q['test_location'] == 'STI'
-          end
-          @data['facility_pmtct_fup'] = filter_hash('access_type', concept('Health facility').concept_id).select do |q|
-            q['test_location'] == 'PMTCT FUP'
-          end
-          @data['facility_index'] = filter_hash('access_type', concept('Health facility').concept_id).select do |q|
-            q['test_location'] == 'Index'
-          end
-          @data['facility_paediatric'] = filter_hash('access_type', concept('Health facility').concept_id).select do |q|
-            q['test_location'] == 'Paediatric'
-          end
-          @data['facility_malnutrition'] = filter_hash('access_type', concept('Health facility').concept_id).select do |q|
-            q['test_location'] == 'Malnutrition'
-          end
-          @data['facility_vmmc'] = filter_hash('access_type', concept('Health facility').concept_id).select do |q|
-            q['test_location'] == 'VMMC'
-          end
-          @data['facility_tb'] = filter_hash('access_type', concept('Health facility').concept_id).select do |q|
-            q['test_location'] == 'TB'
-          end
-          @data['facility_opd'] = filter_hash('access_type', concept('Health facility').concept_id).select do |q|
-            q['test_location'] == 'OPD'
-          end
-          @data['facility_other_pitc'] = filter_hash('access_type', concept('Health facility').concept_id).select do |q|
-            q['test_location'] == 'Other PITC'
-          end
-          @data['facility_sns'] = filter_hash('access_type', concept('Health facility').concept_id).select do |q|
-            q['test_location'] == 'SNS'
-          end
-          @data['community_vmmc'] = filter_hash('access_type', concept('Community').concept_id).select do |q|
-            q['test_location'] == 'VMMC'
-          end
-          @data['community_index'] = filter_hash('access_type', concept('Community').concept_id).select do |q|
-            q['test_location'] == 'Index'
-          end
-          @data['community_mobile'] = filter_hash('access_type', concept('Community').concept_id).select do |q|
-            q['test_location'] == 'Mobile'
-          end
-          @data['community_vct'] = filter_hash('access_type', concept('Community').concept_id).select do |q|
-            q['test_location'] == 'VCT'
-          end
-          @data['community_other'] = filter_hash('access_type', concept('Community').concept_id).select do |q|
-            q['test_location'] == 'Other'
-          end
-          @data['community_sns'] = filter_hash('access_type', concept('Community').concept_id).select do |q|
-            q['test_location'] == 'SNS'
-          end
+          @data['facility_vct'] = filter_hash('access_type', concept('Health facility').concept_id).select { |q| q['test_location'] == 'VCT' }
+          @data['facility_anc_first_visit'] = filter_hash('access_type', concept('Health facility').concept_id).select { |q| q['test_location'] == 'ANC First Visit' }
+          @data['facility_inpatient'] = filter_hash('access_type', concept('Health facility').concept_id).select { |q| q['test_location'] == 'Inpatient' }
+          @data['facility_sti'] = filter_hash('access_type', concept('Health facility').concept_id).select { |q| q['test_location'] == 'STI' }
+          @data['facility_pmtct_fup'] = filter_hash('access_type', concept('Health facility').concept_id).select { |q| q['test_location'] == 'PMTCT FUP' }
+          @data['facility_index'] = filter_hash('access_type', concept('Health facility').concept_id).select { |q| q['test_location'] == 'Index' }
+          @data['facility_paediatric'] = filter_hash('access_type', concept('Health facility').concept_id).select { |q| q['test_location'] == 'Paediatric' }
+          @data['facility_malnutrition'] = filter_hash('access_type', concept('Health facility').concept_id).select { |q| q['test_location'] == 'Malnutrition' }
+          @data['facility_vmmc'] = filter_hash('access_type', concept('Health facility').concept_id).select { |q| q['test_location'] == 'VMMC' }
+          @data['facility_tb'] = filter_hash('access_type', concept('Health facility').concept_id).select { |q| q['test_location'] == 'TB' }
+          @data['facility_opd'] = filter_hash('access_type', concept('Health facility').concept_id).select { |q| q['test_location'] == 'OPD' }
+          @data['facility_other_pitc'] = filter_hash('access_type', concept('Health facility').concept_id).select { |q| q['test_location'] == 'Other PITC' }
+          @data['facility_sns'] = filter_hash('access_type', concept('Health facility').concept_id).select { |q| q['test_location'] == 'SNS' }
+          @data['community_vmmc'] = filter_hash('access_type', concept('Community').concept_id).select { |q| q['test_location'] == 'VMMC' }
+          @data['community_index'] = filter_hash('access_type', concept('Community').concept_id).select { |q| q['test_location'] == 'Index' }
+          @data['community_mobile'] = filter_hash('access_type', concept('Community').concept_id).select { |q| q['test_location'] == 'Mobile' }
+          @data['community_vct'] = filter_hash('access_type', concept('Community').concept_id).select { |q| q['test_location'] == 'VCT' }
+          @data['community_other'] = filter_hash('access_type', concept('Community').concept_id).select { |q| q['test_location'] == 'Other' }
+          @data['community_sns'] = filter_hash('access_type', concept('Community').concept_id).select { |q| q['test_location'] == 'SNS' }
 
           @data['hiv_test_1_result_negative'] = filter_hash('test_one', concept('Negative').concept_id)
           @data['total_clients_hiv_test_1_negative'] = filter_hash('test_one', concept('Negative').concept_id)
           @data['hiv_test_1_result_positive'] = filter_hash('test_one', concept('Positive').concept_id)
-          @data['linking_with_hiv_confirmatory_register_total_clients_hiv_test_1_positive'] =
-            filter_hash('test_one', concept('Positive').concept_id)
+          @data['linking_with_hiv_confirmatory_register_total_clients_hiv_test_1_positive'] = filter_hash('test_one', concept('Positive').concept_id)
 
           @data['hepatitis_b_test_result_negative'] = filter_hash('hep_b_test_result', concept('Negative').concept_id)
           @data['hepatitis_b_test_result_positive'] = filter_hash('hep_b_test_result', concept('Positive').concept_id)
@@ -254,20 +211,15 @@ module HtsService
 
         def fetch_pregnancy_test
           @data['sex_or_pregnancy_total_females'] = filter_hash('gender', 'F')
-          @data['sex_or_pregnancy_female_pregnant'] =
-            filter_hash('pregnancy_status', concept(PREGNANT_WOMAN).concept_id)
-          @data['sex_or_pregnancy_female_non_pregnant'] =
-            filter_hash('pregnancy_status', concept(NOT_PREGNANT).concept_id)
-          @data['sex_or_pregnancy_female_breastfeeding'] =
-            filter_hash('pregnancy_status', concept(BREASTFEEDING).concept_id)
+          @data['sex_or_pregnancy_female_pregnant'] = filter_hash('pregnancy_status', concept(PREGNANT_WOMAN).concept_id)
+          @data['sex_or_pregnancy_female_non_pregnant'] = filter_hash('pregnancy_status', concept(NOT_PREGNANT).concept_id)
+          @data['sex_or_pregnancy_female_breastfeeding'] = filter_hash('pregnancy_status', concept(BREASTFEEDING).concept_id)
         end
 
         def fetch_male_circumcision
           @data['sex_or_pregnancy_total_males'] = filter_hash('gender', 'M')
-          @data['sex_or_pregnancy_male_circumcised'] =
-            filter_hash('circumcision_status', concept(YES_ANSWER).concept_id)
-          @data['sex_or_pregnancy_male_non_circumcised'] =
-            filter_hash('circumcision_status', concept(NO_ANSWER).concept_id)
+          @data['sex_or_pregnancy_male_circumcised'] = filter_hash('circumcision_status', concept(YES_ANSWER).concept_id)
+          @data['sex_or_pregnancy_male_non_circumcised'] = filter_hash('circumcision_status', concept(NO_ANSWER).concept_id)
         end
 
         def fetch_frm_referal
@@ -277,12 +229,9 @@ module HtsService
         end
 
         def fetch_referral_retest
-          @data['referral_for_hiv_retesting_no_retest_needed'] =
-            filter_hash('referal_for_retesting', concept('NOT done').concept_id)
-          @data['referral_for_hiv_retesting_retest_needed'] =
-            filter_hash('referal_for_retesting', concept('Re-Test').concept_id)
-          @data['referral_for_hiv_retesting_confirmatory_test'] =
-            filter_hash('referal_for_retesting', concept('Confirmatory HIV test').concept_id)
+          @data['referral_for_hiv_retesting_no_retest_needed'] = filter_hash('referal_for_retesting', concept('NOT done').concept_id)
+          @data['referral_for_hiv_retesting_retest_needed'] = filter_hash('referal_for_retesting', concept('Re-Test').concept_id)
+          @data['referral_for_hiv_retesting_confirmatory_test'] = filter_hash('referal_for_retesting', concept('Confirmatory HIV test').concept_id)
         end
 
         def get_diff(obs_time, time_since)
@@ -302,31 +251,18 @@ module HtsService
           @data['last_hiv_test_invalid_self_test'] = filter_hash('previous_hiv_test_done', concept('Self').concept_id).select { |q| q['previous_hiv_test'] = 'Invalid or inconclusive' }
           @data['last_hiv_test_exposed_infant'] = filter_hash('previous_hiv_test', concept('Exposed infant').concept_id)
 
-          @data['time_since_last_hiv_test_same_day'] = @query.select do |q|
-            get_diff(q['encounter_datetime'], q['time_of_hiv_test']).zero?
-          end
-          @data['time_since_last_hiv_test_1_to_13_days'] = @query.select do |q|
-            (1..13).include?(get_diff(q['encounter_datetime'], q['time_of_hiv_test']))
-          end
-          @data['time_since_last_hiv_test_14_days_to_2_months'] = @query.select do |q|
-            (14..60).include?(get_diff(q['encounter_datetime'], q['time_of_hiv_test']))
-          end
-          @data['time_since_last_hiv_test_3_to_5_months'] = @query.select do |q|
-            (61..150).include?(get_diff(q['encounter_datetime'], q['time_of_hiv_test']))
-          end
-          @data['time_since_last_hiv_test_6_to_11_months'] = @query.select do |q|
-            (151..330).include?(get_diff(q['encounter_datetime'], q['time_of_hiv_test']))
-          end
-          @data['time_since_last_hiv_test_12_plus_months'] = @query.select do |q|
-            get_diff(q['encounter_datetime'], q['time_of_hiv_test']) >= 365
-          end
+          @data['time_since_last_hiv_test_same_day'] = @query.select { |q| get_diff(q['encounter_datetime'], q['time_of_hiv_test']).zero? }
+          @data['time_since_last_hiv_test_1_to_13_days'] = @query.select { |q| (1..13).include?(get_diff(q['encounter_datetime'], q['time_of_hiv_test'])) }
+          @data['time_since_last_hiv_test_14_days_to_2_months'] = @query.select { |q| (14..60).include?(get_diff(q['encounter_datetime'], q['time_of_hiv_test'])) }
+          @data['time_since_last_hiv_test_3_to_5_months'] = @query.select { |q| (61..150).include?(get_diff(q['encounter_datetime'], q['time_of_hiv_test'])) }
+          @data['time_since_last_hiv_test_6_to_11_months'] = @query.select { |q| (151..330).include?(get_diff(q['encounter_datetime'], q['time_of_hiv_test'])) }
+          @data['time_since_last_hiv_test_12_plus_months'] = @query.select { |q| get_diff(q['encounter_datetime'], q['time_of_hiv_test']) >= 365 }
         end
 
         def fetch_risk_category
           @data['risk_category_low'] = filter_hash('risk_category', concept('Low risk').concept_id)
           @data['risk_category_ongoing'] = filter_hash('risk_category', concept('On-going risk').concept_id)
-          @data['risk_category_highrisk_event'] =
-            filter_hash('risk_category', concept('High risk event in last 3 months').concept_id)
+          @data['risk_category_highrisk_event'] = filter_hash('risk_category', concept('High risk event in last 3 months').concept_id)
           @data['risk_category_not_done'] = filter_hash('risk_category', concept('Risk assessment not done').concept_id)
         end
 
@@ -351,15 +287,11 @@ module HtsService
           @data['partner_present_no'] = filter_hash('partner_present', 'No')
 
           @data['partner_hiv_status_no_partner'] = filter_hash('partner_hiv_status', concept('No partner').concept_id)
-          @data['partner_hiv_status_hiv_status_unknown'] =
-            filter_hash('partner_hiv_status', concept('HIV unknown').concept_id)
+          @data['partner_hiv_status_hiv_status_unknown'] = filter_hash('partner_hiv_status', concept('HIV unknown').concept_id)
           @data['partner_hiv_status_hiv_negative'] = filter_hash('partner_hiv_status', concept('Negative').concept_id)
-          @data['partner_hiv_status_hiv_positive_art_unknown'] =
-            filter_hash('partner_hiv_status', concept('Positive ART unknown').concept_id)
-          @data['partner_hiv_status_hiv_positive_not_on_art'] =
-            filter_hash('partner_hiv_status', concept('Positive NOT on ART').concept_id)
-          @data['partner_hiv_status_hiv_positive_on_art'] =
-            filter_hash('partner_hiv_status', concept('Positive on ART').concept_id)
+          @data['partner_hiv_status_hiv_positive_art_unknown'] = filter_hash('partner_hiv_status', concept('Positive ART unknown').concept_id)
+          @data['partner_hiv_status_hiv_positive_not_on_art'] = filter_hash('partner_hiv_status', concept('Positive NOT on ART').concept_id)
+          @data['partner_hiv_status_hiv_positive_on_art'] = filter_hash('partner_hiv_status', concept('Positive on ART').concept_id)
         end
 
         def fetch_referrals

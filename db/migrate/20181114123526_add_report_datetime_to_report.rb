@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 class AddReportDatetimeToReport < ActiveRecord::Migration[5.2]
   def up
     add_column :reporting_report_design, :start_date, :date unless column_exists?(:reporting_report_design, :start_date)

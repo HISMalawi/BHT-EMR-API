@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ArtService
+module ARTService
   module Pharmacy
     # Aggregates stock movement
     module DrugMovement

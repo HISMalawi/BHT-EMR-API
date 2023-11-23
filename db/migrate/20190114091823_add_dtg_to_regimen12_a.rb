@@ -1,6 +1,4 @@
-# frozen_string_literal: true
-
-class AddDTGToRegimen12A < ActiveRecord::Migration[5.2]
+class AddDtgToRegimen12A < ActiveRecord::Migration[5.2]
   def up
     User.current = User.first
     Location.current = Location.first
