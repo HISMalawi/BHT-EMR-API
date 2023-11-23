@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 class UserRole < ApplicationRecord
   self.table_name = :user_role
   self.primary_keys = :role, :user_id

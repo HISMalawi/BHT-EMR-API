@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 class UpdatePatientIdsOnOrdersForMergedPatients < ActiveRecord::Migration[5.2]
   def up
     hanging_orders.each do |order|

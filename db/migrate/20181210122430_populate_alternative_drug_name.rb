@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 class PopulateAlternativeDrugName < ActiveRecord::Migration[5.2]
   def up
     DrugCms.all.each do |cms|

@@ -1,4 +1,4 @@
-module ArtService
+module ARTService
   module Reports
     module Pepfar
       class TxMl

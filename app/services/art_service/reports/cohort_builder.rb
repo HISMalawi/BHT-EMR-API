@@ -2,7 +2,7 @@
 
 require_relative './cohort/tpt'
 
-module ArtService
+module ARTService
   module Reports
     class CohortBuilder
       QUARTER_LENGTH = 3.months

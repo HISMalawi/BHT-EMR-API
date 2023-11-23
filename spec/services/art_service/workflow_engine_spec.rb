@@ -8,13 +8,13 @@ ACTIVITIES = 'ART adherence, Drug Dispensations, HIV clinic consultations,
 
 HIV_PROGRAM_ID = 1
 
-describe ArtService::WorkflowEngine do
+describe ARTService::WorkflowEngine do
   let(:epoch) { Time.now }
   let(:art_program) { Program.find_by_name!('HIV Program') }
   let(:patient) { create :patient }
   let(:engine) do
     UserProperty.create(user: User.current, property: 'Activities', property_value: ACTIVITIES)
-    ArtService::WorkflowEngine.new program: art_program,
+    ARTService::WorkflowEngine.new program: art_program,
                                    patient: patient,
                                    date: epoch
   end
@@ -23,7 +23,7 @@ describe ArtService::WorkflowEngine do
     # Initialise an engine without any user activities
     UserProperty.find_by(property: 'Activities')&.delete
 
-    ArtService::WorkflowEngine.new program: art_program,
+    ARTService::WorkflowEngine.new program: art_program,
                                    patient: patient,
                                    date: epoch
   end

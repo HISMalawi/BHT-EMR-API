@@ -12,7 +12,7 @@ RSpec.describe ObservationService do
       value_text: 'Foobar'
     }
   end
-  let(:create_observation) { ->(params) { subject.create_observation(encounter, params) } }
+  let(:create_observation) { ->(params) { subject.create_observation(encounter, params)} }
 
   describe :create_observation do
     it 'raises InvalidParameterError when not value field(s) is(are) present' do

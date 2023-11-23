@@ -16,6 +16,6 @@ class NotificationAlertRecipient < ActiveRecord::Base
   scope :cleared, -> { unscoped.where.not(cleared: 0) }
 
   def check_uuid
-    self.uuid = SecureRandom.uuid if attributes.key?('uuid') && uuid.blank?
+    self.uuid = SecureRandom.uuid if attributes.has_key?('uuid') && uuid.blank?
   end
 end

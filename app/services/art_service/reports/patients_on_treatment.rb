@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ArtService
+module ARTService
   module Reports
     # Reports on all patients that were on treatment in given time period
     # regardless of whether they have a terminal state or not within the
@@ -25,12 +25,12 @@ module ArtService
 
         on_arvs = PatientState.where(sql_conditions, start_date: start_date,
                                                      end_date: end_date,
-                                                     state: ArtService::Constants::States::ON_ANTIRETROVIRALS)
+                                                     state: ARTService::Constants::States::ON_ANTIRETROVIRALS)
 
         PatientProgram.select('DISTINCT patient_program.patient_id')
                       .joins(:patient_states)
                       .merge(on_arvs)
-                      .where(program_id: ArtService::Constants::PROGRAM_ID)
+                      .where(program_id: ARTService::Constants::PROGRAM_ID)
       end
 
       # We an interface to satisfy, let's be good citizens

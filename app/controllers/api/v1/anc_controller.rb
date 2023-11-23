@@ -1,23 +1,17 @@
-# frozen_string_literal: true
+class Api::V1::AncController < ApplicationController
+  extend ModelUtils
 
-module Api
-  module V1
-    class AncController < ApplicationController
-      extend ModelUtils
+  def deliveries
+    date = params[:date].to_date rescue nil
 
-      def deliveries
-        date = begin
-          params[:date].to_date
-        rescue StandardError
-          nil
-        end
+    if date.nil?
+      raise "Date is missing"
+    end
 
-        raise 'Date is missing' if date.nil?
+    encounter_type = EncounterType.find_by name: "CURRENT PREGNANCY"
+    concept = Concept.joins(:concept_names).where('concept_name.name = ?', "Estimated date of delivery").first
 
-        encounter_type = EncounterType.find_by name: 'CURRENT PREGNANCY'
-        concept = Concept.joins(:concept_names).where('concept_name.name = ?', 'Estimated date of delivery').first
-
-        clients = ActiveRecord::Base.connection.select_all("SELECT
+    clients = ActiveRecord::Base.connection.select_all("SELECT
       i.identifier, p.birthdate, p.gender, n.given_name,
       n.family_name, obs.person_id, p.birthdate_estimated
       FROM obs
@@ -36,74 +30,71 @@ module Api
       n.given_name, n.family_name,
       obs.person_id, p.birthdate_estimated;")
 
-        clients_formatted = []
-        already_counted = []
+    clients_formatted = []
+    already_counted = []
 
-        (clients || []).each do |c|
-          next if already_counted.include? c['person_id']
+    (clients || []).each do |c|
+      next if already_counted.include? c['person_id']
+      already_counted << c['person_id']
 
-          already_counted << c['person_id']
+      clients_formatted << {
+        given_name: c['given_name'], family_name: c['family_name'],
+        birthdate: c['birthdate'], gender: c['gender'], person_id: c['person_id'],
+        npid: c['identifier'], birthdate_estimated: c['birthdate_estimated']
+      }
+    end
 
-          clients_formatted << {
-            given_name: c['given_name'], family_name: c['family_name'],
-            birthdate: c['birthdate'], gender: c['gender'], person_id: c['person_id'],
-            npid: c['identifier'], birthdate_estimated: c['birthdate_estimated']
-          }
-        end
+    render json: clients_formatted
+  end
 
-        render json: clients_formatted
+  def visits
+
+    visits = {}
+    visits[:incomplete] = 0
+    visits[:complete] = 0
+
+    date = params[:date].to_date rescue nil
+
+    if date.nil?
+      raise "Date is missing"
+    end
+
+    find_visiting_patients(date).each do |patient|
+      if workflow_engine(patient, date).next_encounter
+        visits[:incomplete] += 1
+      else
+        visits[:complete] += 1
       end
+    end
 
-      def visits
-        visits = {}
-        visits[:incomplete] = 0
-        visits[:complete] = 0
+    render json: visits
+  end
 
-        date = begin
-          params[:date].to_date
-        rescue StandardError
-          nil
-        end
-
-        raise 'Date is missing' if date.nil?
-
-        find_visiting_patients(date).each do |patient|
-          if workflow_engine(patient, date).next_encounter
-            visits[:incomplete] += 1
-          else
-            visits[:complete] += 1
-          end
-        end
-
-        render json: visits
-      end
-
-      # Returns a list of patients who visited the ANC clinic on given day.
-      def find_visiting_patients(date)
-        day_start, day_end = TimeUtils.day_bounds(date)
-        Patient.find_by_sql(
-          [
-            'SELECT patient.* FROM patient INNER JOIN encounter USING (patient_id)
+  # Returns a list of patients who visited the ANC clinic on given day.
+  def find_visiting_patients(date)
+    day_start, day_end = TimeUtils.day_bounds(date)
+    Patient.find_by_sql(
+      [
+        'SELECT patient.* FROM patient INNER JOIN encounter USING (patient_id)
          WHERE encounter.encounter_datetime BETWEEN ? AND ?
           AND encounter.voided = 0 AND patient.voided = 0
          GROUP BY patient.patient_id',
-            day_start, day_end
-          ]
-        )
-      end
-
-      def workflow_engine(patient, date)
-        AncService::WorkflowEngine.new patient:,
-                                       program: Program.find_by_name('ANC PROGRAM'),
-                                       date:
-      end
-
-      def essentials
-        patient = params[:patientent_id]
-        date = params[:date]
-        anc_service = AncService::PatientsEngine.new program: Program.find_by_name('ANC PROGRAM')
-        render json: anc_service.essentials(patient, date)
-      end
-    end
+        day_start, day_end
+      ]
+    )
   end
+
+  def workflow_engine(patient, date)
+    ANCService::WorkflowEngine.new patient: patient,
+                                   program: Program.find_by_name("ANC PROGRAM"),
+                                   date: date
+  end
+
+  def essentials
+    patient = params[:patientent_id]
+    date = params[:date]
+    anc_service = ANCService::PatientsEngine.new program: Program.find_by_name("ANC PROGRAM")
+    render json: anc_service.essentials(patient, date)
+  end
+
 end

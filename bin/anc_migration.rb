@@ -113,11 +113,11 @@ end
 what_to_run = ARGV[0].to_i
 
 if what_to_run.zero?
-  AncService::AncMigration.new(database, ARGV[1].to_f).main
+  ANCService::ANCMigration.new(database, ARGV[1].to_f).main
 elsif what_to_run == 1
-  AncService::AncReverseMigration.new({ database: database, migration_date: ARGV[1] }).main
+  ANCService::ANCReverseMigration.new({ database: database, migration_date: ARGV[1] }).main
 elsif what_to_run == 2
-  AncService::AncMappingMigration.new(database, ARGV[1].to_f).map_linkage_between_anc_and_openmrs
+  ANCService::ANCMappingMigration.new(database, ARGV[1].to_f).map_linkage_between_anc_and_openmrs
 else
   puts create_csv(database)
 end

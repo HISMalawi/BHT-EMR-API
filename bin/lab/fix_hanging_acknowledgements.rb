@@ -6,8 +6,7 @@ def fix_hanging_acknowledgements
   voided_orders.each do |order|
     puts "Fixing hanging acknowledgement for order #{order['order_id']}"
     acknowledgement = LimsAcknowledgementStatus.find(order['order_id'])
-    acknowledgement.update!(voided: order['voided'], voided_by: order['voided_by'], date_voided: order['date_voided'],
-                            void_reason: order['void_reason'])
+    acknowledgement.update!(voided: order['voided'], voided_by: order['voided_by'], date_voided: order['date_voided'], void_reason: order['void_reason'])
   end
 end
 

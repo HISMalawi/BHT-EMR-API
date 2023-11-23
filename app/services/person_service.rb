@@ -5,7 +5,7 @@ require 'securerandom'
 require 'set'
 
 class PersonService
-  LOGGER = Logger.new $stdout
+  LOGGER = Logger.new STDOUT
 
   PERSON_TRUNK_FIELDS = %i[gender birthdate birthdate_estimated].freeze
   PERSON_NAME_FIELDS = %i[given_name family_name middle_name].freeze
@@ -91,8 +91,8 @@ class PersonService
     current_traditional_authority: :township_division,
     home_district: :address2,
     home_village: :neighborhood_cell,
-    home_traditional_authority: :county_district
-  }.freeze
+    home_traditional_authority: :county_district,
+  }
 
   def create_person_address(person, params)
     params = PERSON_ADDRESS_FIELDS.each_with_object({}) do |field, address_params|

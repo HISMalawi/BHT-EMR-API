@@ -10,7 +10,7 @@
 #     >> clazz.new(patient: Patient.last, date: Date.today).full_summary
 module ProgramEngineLoader
   PROGRAM_SERVICE_MODULES = {
-    'HIV PROGRAM' => 'ArtService'
+    'HIV PROGRAM' => 'ARTService'
   }.freeze
 
   def self.load(program, engine_name)

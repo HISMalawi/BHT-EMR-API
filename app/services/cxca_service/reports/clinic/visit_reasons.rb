@@ -1,9 +1,12 @@
 # frozen_string_literal: true
 
-module CxcaService
+module CXCAService
   module Reports
     module Clinic
+      # Visit reasons report
       class VisitReasons
+        include ModelUtils
+
         def initialize(start_date:, end_date:)
           @start_date = start_date.strftime('%Y-%m-%d 00:00:00')
           @end_date = end_date.strftime('%Y-%m-%d 23:59:59')
@@ -39,10 +42,6 @@ module CxcaService
           end
 
           formated_obs
-        end
-
-        def concept(name)
-          ConceptName.find_by_name(name)
         end
       end
     end

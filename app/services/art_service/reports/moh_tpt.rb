@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ArtService
+module ARTService
   module Reports
     # This class generates the MOH TPT report
     class MohTpt
@@ -65,7 +65,7 @@ module ArtService
       end
 
       def process_initiated_tpt(report, patients)
-        ArtService::Reports::TptOutcome.new(start_date: start_date, end_date: raw_end_date)
+        ARTService::Reports::TptOutcome.new(start_date: start_date, end_date: raw_end_date)
                                        .moh_report(report, patients, start_date, end_date)
       end
 

@@ -1,8 +1,6 @@
-# frozen_string_literal: true
-
 require 'swagger_helper'
 
-TAGS_NAME = 'Internal Sections'
+TAGS_NAME = 'Internal Sections'.freeze
 
 describe 'Internal Sections API', type: :request, swagger_doc: 'v1/swagger.yaml' do
   path '/api/v1/internal_sections' do
@@ -67,8 +65,8 @@ describe 'Internal Sections API', type: :request, swagger_doc: 'v1/swagger.yaml'
       security [api_key: []]
       parameter name: :params, in: :body, schema: {
         type: :object, properties: {
-                         name: { type: :string }
-                       },
+          name: { type: :string }
+        },
         required: %w[name]
       }
       produces 'application/json'
@@ -99,8 +97,8 @@ describe 'Internal Sections API', type: :request, swagger_doc: 'v1/swagger.yaml'
         parameter name: :id, in: :path, type: :integer
         parameter name: :params, in: :body, schema: {
           type: :object, properties: {
-                           name: { type: :string }
-                         },
+            name: { type: :string }
+          },
           required: %w[name]
         }
         produces 'application/json'
@@ -132,8 +130,8 @@ describe 'Internal Sections API', type: :request, swagger_doc: 'v1/swagger.yaml'
         parameter name: :id, in: :path, type: :integer
         parameter name: :void_reason, in: :body, schema: {
           type: :object, properties: {
-                           void_reason: { type: :string }
-                         },
+            void_reason: { type: :string }
+          },
           required: %w[void_reason]
         }
         produces 'application/json'

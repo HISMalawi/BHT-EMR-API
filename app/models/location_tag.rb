@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 class LocationTag < RetirableRecord
   self.table_name = :location_tag
   self.primary_key = :location_tag_id

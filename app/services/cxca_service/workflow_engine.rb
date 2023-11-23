@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-module CxcaService
-  # Cervical cancer screening workflow engine
-  # rubocop:disable Metrics/ClassLength
+require 'set'
+
+module CXCAService
   class WorkflowEngine
     include ModelUtils
 
@@ -56,12 +56,14 @@ module CxcaService
       CANCER_TREATMENT => %i[show_cancer_treatment? offer_cxca_screening?],
       APPOINTMENT => %i[show_appointment? offer_cxca_screening? patient_has_not_been_referred?]
     }.freeze
-    #     STATE_CONDITIONS = {
-    #       CXCA_TEST => %i[show_cxca_test?],
-    #       CXCA_SCREENING_RESULTS => %i[show_cxca_screening_results?],
-    #       CANCER_TREATMENT => %i[show_cancer_treatment?],
-    #       APPOINTMENT => %i[show_appointment?]
-    #     }.freeze
+=begin
+    STATE_CONDITIONS = {
+      CXCA_TEST => %i[show_cxca_test?],
+      CXCA_SCREENING_RESULTS => %i[show_cxca_screening_results?],
+      CANCER_TREATMENT => %i[show_cancer_treatment?],
+      APPOINTMENT => %i[show_appointment?]
+    }.freeze
+=end
 
     def next_state(current_state)
       ENCOUNTER_SM[current_state]
@@ -72,7 +74,7 @@ module CxcaService
     # NOTE: By `relevant` above we mean encounters that matter in deciding
     # what encounter the patient should go for in this present time.
     def encounter_exists?(type)
-      Encounter.where(type:, patient: @patient, program: @program)\
+      Encounter.where(type: type, patient: @patient, program: @program)\
                .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
                .exists?
     end
@@ -85,40 +87,39 @@ module CxcaService
       end
     end
 
+    private
+
     def patient_has_not_been_referred?
       encounter_type = EncounterType.find_by name: CXCA_SCREENING_RESULTS
       tx_option = ConceptName.find_by_name('Directly observed treatment option').concept_id
       tx_referral = ConceptName.find_by_name('Referral').concept_id
 
       ob = Observation.joins(:encounter)
-                      .where(
-                        encounter: {
-                          encounter_type:
-                        },
-                        obs: {
-                          concept_id: tx_option,
-                          value_coded: tx_referral,
-                          person_id: @patient.patient_id
-                        }
-                      ).where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))
-      ob.blank?
+        .where(
+          encounter: {
+            encounter_type: encounter_type,
+          },
+          obs: {
+            concept_id: tx_option,
+            value_coded: tx_referral,
+            person_id: @patient.patient_id
+          },
+        ).where("encounter_datetime BETWEEN ? AND ?", *TimeUtils.day_bounds(@date))
+        ob.blank?
     end
 
     def show_cxca_test?
       return false unless results_available?
       return false if postponed_treatment?
-
-      # return false if cxca_positive?
+      #return false if cxca_positive?
 
       encounter_type = EncounterType.find_by name: CXCA_TEST
-      Encounter.joins(:type).where(
+      return encounter = Encounter.joins(:type).where(
         'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
         @patient.patient_id, encounter_type.encounter_type_id, @date
       ).order(encounter_datetime: :desc).blank?
     end
 
-    # rubocop:disable Metrics/AbcSize
-    # rubocop:disable Metrics/MethodLength
     def show_cxca_screening_results?
       encounter_type = EncounterType.find_by name: CXCA_SCREENING_RESULTS
       encounter = Encounter.joins(:type).where(
@@ -137,16 +138,12 @@ module CxcaService
         screening_results_available = ConceptName.find_by_name('Screening results available').concept_id
         concept_no = ConceptName.find_by_name('No').concept_id
         return encounter.observations.find_by(concept_id: screening_results_available,
-                                              value_coded: concept_no).present?
+          value_coded: concept_no).blank? ? false : true
       end
 
-      true
+      return true
     end
-    # rubocop:enable Metrics/AbcSize
-    # rubocop:enable Metrics/MethodLength
 
-    # rubocop:disable Metrics/AbcSize
-    # rubocop:disable Metrics/MethodLength
     def show_cancer_treatment?
       return false if postponed_treatment_today?
       return false unless cxca_positive?
@@ -158,7 +155,7 @@ module CxcaService
       ).order(encounter_datetime: :desc).first
 
       unless encounter.blank?
-        observations = encounter.observations.find_by(concept_id: concept('Screening results available').concept_id)
+        observations = encounter.observations.find_by(concept_id: ConceptName.find_by_name('Screening results available').concept_id)
         return false if observations.value_coded == ConceptName.find_by_name('No').concept_id
       end
 
@@ -168,20 +165,19 @@ module CxcaService
         @patient.patient_id, encounter_type.encounter_type_id, @date
       ).order(encounter_datetime: :desc).first
 
-      encounter.blank?
-      # return true
+      return encounter.blank?
+      #return true
     end
-    # rubocop:enable Metrics/MethodLength
-    # rubocop:enable Metrics/AbcSize
 
-    # rubocop:disable Metrics/AbcSize
-    # rubocop:disable Metrics/MethodLength
     def show_appointment?
-      #       encounter_type = EncounterType.find_by name: CANCER_TREATMENT
-      #       encounter = Encounter.joins(:type).where(
-      #         'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) <= DATE(?)',
-      #         @patient.patient_id, encounter_type.encounter_type_id, @date
-      #       ).order(encounter_datetime: :desc).first
+
+=begin
+      encounter_type = EncounterType.find_by name: CANCER_TREATMENT
+      encounter = Encounter.joins(:type).where(
+        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) <= DATE(?)',
+        @patient.patient_id, encounter_type.encounter_type_id, @date
+      ).order(encounter_datetime: :desc).first
+=end
 
       encounter_type = EncounterType.find_by name: APPOINTMENT
       appointment =   Encounter.joins(:type).where(
@@ -199,17 +195,19 @@ module CxcaService
 
       unless cancer_tx.blank?
         ob = cancer_tx.observations.where(concept_id: concept('Recommended Plan of care').concept_id,
-                                          value_coded: concept('Continue follow-up').concept_id)
+          value_coded: concept('Continue follow-up').concept_id)
 
-        return true if appointment.blank? && !ob.blank?
+        if appointment.blank?
+          return true unless ob.blank?
+        end
       end
 
-      return true if !appointment.blank? && negative_screening?
+      unless appointment.blank?
+        return true if negative_screening?
+      end
 
-      appointment.blank?
+      return appointment.blank?
     end
-    # rubocop:enable Metrics/MethodLength
-    # rubocop:enable Metrics/AbcSize
 
     def results_available?
       encounter_type = EncounterType.find_by name: CXCA_SCREENING_RESULTS
@@ -219,15 +217,13 @@ module CxcaService
       ).order(encounter_datetime: :desc).first
 
       unless encounter.blank?
-        return encounter.observations.find_by(concept_id: concept('Screening results available').concept_id,
-                                              value_coded: concept('No').concept_id).blank?
+        return encounter.observations.find_by(concept_id: ConceptName.find_by_name('Screening results available').concept_id,
+          value_coded: ConceptName.find_by_name("No").concept_id).blank? ? true : false
       end
 
-      true
+      return true
     end
 
-    # rubocop:disable Metrics/AbcSize
-    # rubocop:disable Metrics/MethodLength
     def postponed_treatment?
       encounter_type = EncounterType.find_by name: CXCA_SCREENING_RESULTS
       encounter = Encounter.joins(:type).where(
@@ -238,20 +234,17 @@ module CxcaService
       unless encounter.blank?
         postponed_tx = ConceptName.find_by_name('Directly observed treatment option').concept_id
         value_coded_concepts = []
-        value_coded_concepts <<  ConceptName.find_by_name('Postponed treatment').concept_id
-        value_coded_concepts <<  ConceptName.find_by_name('Referral').concept_id
+        value_coded_concepts <<  ConceptName.find_by_name("Postponed treatment").concept_id
+        value_coded_concepts <<  ConceptName.find_by_name("Referral").concept_id
 
         return encounter.observations.find_by(concept_id: postponed_tx,
-                                              value_coded: value_coded_concepts).present?
+          value_coded: value_coded_concepts).blank? ? false : true
       end
 
-      false
-    end
-    # rubocop:enable Metrics/MethodLength
-    # rubocop:enable Metrics/AbcSize
 
-    # rubocop:disable Metrics/AbcSize
-    # rubocop:disable Metrics/MethodLength
+      return false
+    end
+
     def postponed_treatment_today?
       encounter_type = EncounterType.find_by name: CXCA_SCREENING_RESULTS
       encounter = Encounter.joins(:type).where(
@@ -262,21 +255,17 @@ module CxcaService
       unless encounter.blank?
         postponed_tx = ConceptName.find_by_name('Directly observed treatment option').concept_id
         value_coded_concepts = []
-        value_coded_concepts <<  ConceptName.find_by_name('Postponed treatment').concept_id
-        value_coded_concepts <<  ConceptName.find_by_name('Referral').concept_id
+        value_coded_concepts <<  ConceptName.find_by_name("Postponed treatment").concept_id
+        value_coded_concepts <<  ConceptName.find_by_name("Referral").concept_id
 
         return encounter.observations.find_by(concept_id: postponed_tx,
-                                              value_coded: value_coded_concepts).present?
+          value_coded: value_coded_concepts).blank? ? false : true
       end
 
-      false
-    end
-    # rubocop:enable Metrics/MethodLength
-    # rubocop:enable Metrics/AbcSize
 
-    # rubocop:disable Metrics/AbcSize
-    # rubocop:disable Metrics/MethodLength
-    # rubocop:disable Metrics/BlockNesting
+      return false
+    end
+
     def cxca_positive?
       encounter_type = EncounterType.find_by name: CXCA_SCREENING_RESULTS
       encounter = Encounter.joins(:type).where(
@@ -296,15 +285,13 @@ module CxcaService
         positive_cxca_results << concept('Visible Lesion').concept_id
 
         observation = encounter.observations.where(concept_id: cxca_result_concept_id)\
-                               .order('obs_datetime DESC, obs.date_created DESC').first
+          .order("obs_datetime DESC, obs.date_created DESC").first
 
         unless observation.blank?
           if observation.value_coded == hpv_positive
-            via_concept_ids = ConceptName.where(name: 'VIA results').map(&:concept_id)
-            via_observation = encounter.observations.where('concept_id IN(?) AND value_coded = ?',
-                                                           via_concept_ids, via_positive)
-                                       .order('obs_datetime DESC, obs.date_created DESC')
-                                       .first
+            via_concept_ids = ConceptName.where(name: "VIA results").map(&:concept_id)
+            via_observation = encounter.observations.where("concept_id IN(?) AND value_coded = ?",
+                via_concept_ids, via_positive).order("obs_datetime DESC, obs.date_created DESC").first
 
             return via_observation.blank? ? false : true
           end
@@ -312,13 +299,9 @@ module CxcaService
         end
       end
 
-      false
+      return false
     end
-    # rubocop:enable Metrics/BlockNesting
-    # rubocop:enable Metrics/MethodLength
-    # rubocop:enable Metrics/AbcSize
 
-    # rubocop:disable Metrics/AbcSize
     def offer_cxca_screening?
       encounter_type = EncounterType.find_by name: CXCA_TEST
       encounter = Encounter.joins(:type).where(
@@ -327,17 +310,13 @@ module CxcaService
       ).order(encounter_datetime: :desc).first
 
       return false if encounter.blank?
+      obs = encounter.observations.where(concept_id: concept("Offer CxCa").concept_id,
+        value_coded: concept("Yes").concept_id)\
+        .order("obs_datetime DESC, obs.date_created DESC").first
 
-      obs = encounter.observations.where(concept_id: concept('Offer CxCa').concept_id,
-                                         value_coded: concept('Yes').concept_id)\
-                     .order('obs_datetime DESC, obs.date_created DESC').first
-
-      obs.blank? ? false : true
+      return obs.blank? ? false : true
     end
-    # rubocop:enable Metrics/AbcSize
 
-    # rubocop:disable Metrics/AbcSize
-    # rubocop:disable Metrics/MethodLength
     def negative_screening?
       encounter_type = EncounterType.find_by name: CXCA_SCREENING_RESULTS
       encounter = Encounter.joins(:type).where(
@@ -345,34 +324,31 @@ module CxcaService
         @patient.patient_id, encounter_type.encounter_type_id, @date
       ).order(encounter_datetime: :desc).first
 
-      result = encounter.observations.where(concept_id: concept('Screening results').concept_id,
-                                            value_coded: [
-                                              concept('VIA negative').concept_id,
-                                              concept('PAP Smear normal').concept_id,
-                                              concept('HPV negative').concept_id,
-                                              concept('No visible Lesion').concept_id,
-                                              concept('Other gynaecological disease').concept_id
-                                            ])
+      result = encounter.observations.where(concept_id: concept("Screening results").concept_id,
+        value_coded: [
+          concept("VIA negative").concept_id,
+          concept("PAP Smear normal").concept_id,
+          concept("HPV negative").concept_id,
+          concept("No visible Lesion").concept_id,
+          concept("Other gynaecological disease").concept_id
+        ])
 
-      return true unless result.blank?
+        return true unless result.blank?
 
-      hp_result = encounter.observations.where(concept_id: concept('Screening results').concept_id,
-                                               value_coded: concept('HPV positive').concept_id)
+      hp_result = encounter.observations.where(concept_id: concept("Screening results").concept_id,
+        value_coded: concept("HPV positive").concept_id)
 
       if hp_result
-        via_concept_ids = ConceptName.where(name: 'VIA results').map(&:concept_id)
-        via_negative = encounter.observations.where('concept_id IN(?) AND value_coded = ?',
-                                                    via_concept_ids, concept('VIA negative').concept_id)
+        via_concept_ids = ConceptName.where(name: "VIA results").map(&:concept_id)
+        via_negative = encounter.observations.where("concept_id IN(?) AND value_coded = ?",
+          via_concept_ids, concept("VIA negative").concept_id)
 
         return true unless via_negative.blank?
       end
 
-      false
+      return false
     end
-    # rubocop:enable Metrics/MethodLength
-    # rubocop:enable Metrics/AbcSize
 
-    # rubocop:disable Metrics/MethodLength
     def same_day_treatment?
       encounter_type = EncounterType.find_by name: CXCA_SCREENING_RESULTS
       encounter = Encounter.joins(:type).where(
@@ -381,20 +357,19 @@ module CxcaService
       ).order(encounter_datetime: :desc).first
 
       unless encounter.blank?
-        sameday_tx = concept('Directly observed treatment option').concept_id
-        value_coded_concept = concept('Same day treatment').concept_id
+        sameday_tx = ConceptName.find_by_name('Directly observed treatment option').concept_id
+        value_coded_concept = ConceptName.find_by_name("Same day treatment").concept_id
 
         return encounter.observations.find_by(concept_id: sameday_tx,
-                                              value_coded: value_coded_concept).present?
+          value_coded: value_coded_concept).blank? ? false : true
       end
 
-      false
+      return false
     end
 
-    # rubocop:enable Metrics/MethodLength
     def concept(name)
       ConceptName.find_by_name(name)
     end
+
   end
-  # rubocop:enable Metrics/ClassLength
 end

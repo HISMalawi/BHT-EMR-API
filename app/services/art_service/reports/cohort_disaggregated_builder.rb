@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ArtService
+module ARTService
   module Reports
     class CohortDisaggregatedBuilder < CohortBuilder
       def build(_cohort_struct, start_date, end_date)

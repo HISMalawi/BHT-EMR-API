@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 include ModelUtils
 
 module HtsService
@@ -14,22 +12,22 @@ module HtsService
         def data
           users = {}
           d = fetch_data
-          ls = %w[hiv_status syphilis_status hepb_status recency]
-          d.rows.each_with_index do |rows, _rindex|
+          ls = ['hiv_status', 'syphilis_status', 'hepb_status', 'recency']
+          d.rows.each_with_index do | rows, rindex |
             user_id = rows[0]
             person_id = rows[1]
-            unless users.key?(user_id)
+            if !users.has_key?(user_id)
               users[user_id] = {}
               users[user_id]['self_test_kits'] = self_test_kits(person_id)
             end
-            rows.each_with_index do |value, vindex|
+            rows.each_with_index do | value, vindex |
               column = d.columns[vindex]
-              unless users[user_id].key?(column)
-                users[user_id][column] = if ls.include?(column)
-                                           []
-                                         else
-                                           value
-                                         end
+              if !users[user_id].has_key?(column)
+                if ls.include?(column)
+                  users[user_id][column] = []
+                else
+                  users[user_id][column] = value
+                end
               end
 
               next if value.nil?

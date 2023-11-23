@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ArtService
+module ARTService
   module Reports
     # Returns all patients alive and on treatment within a given
     # time period (Tx Curr).

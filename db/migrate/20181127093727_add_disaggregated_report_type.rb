@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 class AddDisaggregatedReportType < ActiveRecord::Migration[5.2]
   def up
     ReportType.create(name: 'cohort_disaggregated', creator: 1)
