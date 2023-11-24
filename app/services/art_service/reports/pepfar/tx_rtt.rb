@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module ARTService
   module Reports
     module Pepfar
@@ -5,6 +7,7 @@ module ARTService
         attr_reader :start_date, :end_date
 
         include CommonSqlQueryUtils
+        include Utils
 
         def initialize(start_date:, end_date:, **kwargs)
           @start_date = ActiveRecord::Base.connection.quote(start_date)
@@ -13,15 +16,64 @@ module ARTService
         end
 
         def data
-          tx_rtt.each_with_object({}) do |patient, report|
-            age_group = report[patient['age_group']] || { 'M' => [], 'F' => [], 'Unknown' => [] }
-            age_group[patient['gender']&.first&.upcase || 'Unknown'] << {patient_id: patient['patient_id'], months: patient['months']}
+          # tx_rtt.each_with_object({}) do |patient, report|
+          #   age_group = report[patient['age_group']] || { 'M' => [], 'F' => [], 'Unknown' => [] }
+          #   age_group[patient['gender']&.first&.upcase || 'Unknown'] << {patient_id: patient['patient_id'], months: patient['months']}
 
-            report[patient['age_group']] = age_group
-          end
+          #   report[patient['age_group']] = age_group
+          # end
+          report = init_report
+          flatten_the_report report
         end
 
         private
+
+        GENDER = ['M', 'F']
+
+        def init_report
+          pepfar_age_groups.each_with_object({}) do |age_group, age_group_report|
+            age_group_report[age_group] = GENDER.each_with_object({}) do |gender, gender_report|
+              gender_report[gender] = {
+                'cd4_less_than_200': [],
+                'cd4_greater_than_200': [],
+                'unknown_cd4_count': [],
+                'not_eligible_for_cd4': [],
+                'returned_less_than_3_months': [],
+                'returned_greater_than_3_months_and_less_than_6_months': [],
+                'returned_greater_than_6_months': [],
+              }
+            end
+          end
+        end
+
+        def process_age_group_report(age_group, gender, age_group_report)
+          {
+            age_group: age_group,
+            gender: gender,
+            cd4_less_than_200: age_group_report['cd4_less_than_200'.to_sym],
+            cd4_greater_than_200: age_group_report['cd4_greater_than_200'.to_sym],
+            unknown_cd4_count: age_group_report['unknown_cd4_count'.to_sym],
+            not_eligible_for_cd4: age_group_report['not_eligible_for_cd4'.to_sym],
+            returned_less_than_3_months: age_group_report['returned_less_than_3_months'.to_sym],
+            returned_greater_than_3_months_and_less_than_6_months: age_group_report['returned_greater_than_3_months_and_less_than_6_months'.to_sym],
+            returned_greater_than_6_months: age_group_report['returned_greater_than_6_months'.to_sym]
+          }
+        end
+
+        def flatten_the_report(report)
+          result = []
+          report.each do |age_group, age_group_report|
+            result << process_age_group_report(age_group, 'M', age_group_report['M'])
+            result << process_age_group_report(age_group, 'F', age_group_report['F'])
+          end
+          sorted_results = result.sort_by do |item|
+            gender_score = item[:gender] == 'Female' ? 0 : 1
+            age_group_score = pepfar_age_groups.index(item[:age_group])
+            [gender_score, age_group_score]
+          end
+          # sort by gender, start all females and push all males to the end
+          sorted_results.sort_by { |h| [h[:gender] == 'F' ? 0 : 1] }
+        end
 
         def tx_rtt
           ActiveRecord::Base.connection.select_all <<~SQL
