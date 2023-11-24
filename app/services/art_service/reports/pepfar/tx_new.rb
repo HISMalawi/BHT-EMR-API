@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ArtService
+module ARTService
   module Reports
     module Pepfar
       # This class is responsible for generating the tx_new report
