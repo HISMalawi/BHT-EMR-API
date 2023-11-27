@@ -6,7 +6,7 @@
 # the maximum value specified for Puma. Default is set to 5 threads for minimum
 # and maximum; this matches the default thread size of Active Record.
 #
-max_threads = ENV.fetch('RAILS_MAX_THREADS', 20)
+max_threads = ENV.fetch('RAILS_MAX_THREADS', 10)
 min_threads = ENV.fetch('RAILS_MIN_THREADS', 5)
 threads min_threads, max_threads
 
