@@ -15,7 +15,7 @@ module ARTService
         end
 
         def find_report
-          init_report
+          process_report
         end
 
         def data
