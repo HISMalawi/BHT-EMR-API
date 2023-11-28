@@ -463,6 +463,21 @@ RSpec.configure do |config|
                 variance_reason: { type: :string }
               }
             }
+          },
+          tpt_status: {
+            type: :object,
+            properties: {
+              tpt: { type: :string, example: 'INH 300 / RFP 300 (3HP)' },
+              completed: { type: :boolean, example: false },
+              tb_treatment: { type: :boolean, example: false },
+              tpt_init_date: { type: :string, format: 'date-time', example: '2023-01-01' },
+              tpt_complete_date: { type: :string, format: 'date-time', example: '2023-01-01' },
+              tpt_end_date: { type: :string, format: 'date-time', example: '2023-01-01' },
+              eligible: { type: :object, properties: {
+                '3HP': { type: :boolean, example: false },
+                '6H': { type: :boolean, example: false }
+              } }
+            }
           }
         }
       },
