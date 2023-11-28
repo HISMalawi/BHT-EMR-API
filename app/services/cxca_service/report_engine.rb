@@ -1,4 +1,7 @@
+# frozen_string_literal: true
+
 module CXCAService
+  # ReportEngine
   class ReportEngine
     REPORT_NAMES = {
       'SCREENED FOR CXCA' => CXCAService::Reports::Moh::ScreenedForCxca,
@@ -19,8 +22,10 @@ module CXCAService
       'CXCA REASON FOR VISIT' => CXCAService::Reports::Moh::ReasonForVisit,
       'CXCA TX' => CXCAService::Reports::Pepfar::CxcaTx,
       'CXCA SCRN' => CXCAService::Reports::Pepfar::CxcaScrn,
-      'MONTHLY CECAP TX' => CXCAService::Reports::Clinic::MonthlyCecapTx,      
-      'MONTHLY SCREEN' => CXCAService::Reports::Clinic::MonthlyScreenReport    
+      'CLINIC CXCA SCRN' => CXCAService::Reports::Clinic::CxcaScrn,
+      'MONTHLY CECAP TX' => CXCAService::Reports::Clinic::MonthlyCecapTx,
+      'MONTHLY SCREEN' => CXCAService::Reports::Clinic::MonthlyScreenReport,
+      'REASON FOR NOT SCREENING REPORT' => CXCAService::Reports::Clinic::ReasonForNotScreeningReport
     }.freeze
 
     def reports(start_date, end_date, name)

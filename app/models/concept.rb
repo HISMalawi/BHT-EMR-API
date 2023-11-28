@@ -45,6 +45,11 @@ class Concept < RetirableRecord
     return self.concept_names.first.name rescue nil
   end
 
+  def othername
+    # these are the names that are not short or fully specified they are just blank or null
+    self.concept_names.where('concept_name_type IS NULL').first.name rescue nil
+  end
+
   DRUG_REFILL = 'Drug refill'
   PATIENT_TYPE = 'Type of Patient'
 end

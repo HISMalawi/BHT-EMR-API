@@ -245,5 +245,127 @@ describe 'Clinic Reports API', type: :request, swagger_doc: 'v1/swagger.yaml' do
       end
     end
   end
+
+  path '/api/v1/dashboard_stats' do
+    get 'Retrieve CLINIC Dashboard report' do
+      tags TAGS_NAME
+      description 'This shows CLINIC TDashboard report'
+      produces 'application/json'
+      security [api_key: []]
+      parameter name: :date, in: :query, type: :string
+      parameter name: :program_id, in: :query, type: :string
+
+      response '200', 'CLINIC Dashboard Report found' do
+        schema type: :array, items: { '$ref' => '#/components/schemas/aetc_dashboard' }
+        run_test!
+      end
+
+      response '404', 'CLINIC Dashboard Report not found' do
+        schema type: :string, properties: {
+          message: { type: :string }
+        }
+        run_test!
+      end
+    end
+  end
+
+  path '/api/v1/programs/30/reports/diagnosis_report' do
+    get 'Retrieve AETC Diagnosis report' do
+      tags TAGS_NAME
+      description 'This shows AETC Diagnosis report'
+      produces 'application/json'
+      security [api_key: []]
+      parameter name: :start_date, in: :query, type: :string
+      parameter name: :end_date, in: :query, type: :string
+      parameter name: :age_group, in: :query, type: :string
+
+      response '200', 'AETC Diagnosis Report found' do
+        schema type: :array, items: { '$ref' => '#/components/schemas/aetc_diagnosis' }
+        run_test!
+      end
+    end
+  end
+
+  path '/api/v1/programs/30/reports/diagnosis_specific_report' do
+    get 'Retrieve AETC Diagnosis Specific report' do
+      tags TAGS_NAME
+      description 'This shows AETC Diagnosis Specific report'
+      produces 'application/json'
+      security [api_key: []]
+      parameter name: :start_date, in: :query, type: :string
+      parameter name: :end_date, in: :query, type: :string
+      parameter name: :diagnosis, in: :query, type: :string
+
+      response '200', 'AETC Diagnosis Specific Report found' do
+        schema type: :array, items: { '$ref' => '#/components/schemas/aetc_specific_diagnosis' }
+        run_test!
+      end
+    end
+  end
+
+  path '/api/v1/programs/30/reports/DISAGGREGATED_DIAGNOSIS' do
+    get 'Retrieve AETC DISAGGREGATED Diagnosis report' do
+      tags TAGS_NAME
+      description 'This shows AETC DISAGGREGATED Diagnosis report'
+      produces 'application/json'
+      security [api_key: []]
+      parameter name: :start_date, in: :query, type: :string
+      parameter name: :end_date, in: :query, type: :string
+
+      response '200', 'AETC DISAGGREGATED Diagnosis Report found' do
+        schema type: :array, items: { '$ref' => '#/components/schemas/aetc_dissag_diagnosis' }
+        run_test!
+      end
+    end
+  end
+
+  path '/api/v1/programs/30/reports/REFERRAL_REPORT' do
+    get 'Retrieve AETC Referral report' do
+      tags TAGS_NAME
+      description 'This shows AETC Referral report'
+      produces 'application/json'
+      security [api_key: []]
+      parameter name: :start_date, in: :query, type: :string
+      parameter name: :end_date, in: :query, type: :string
+
+      response '200', 'AETC Referral Report found' do
+        schema type: :array, items: { '$ref' => '#/components/schemas/aetc_referral_report' }
+        run_test!
+      end
+    end
+  end
+
+  path '/api/v1/programs/30/reports/TOTAL_REGISTERED' do
+    get 'Retrieve AETC TOTAL REGISTERED report' do
+      tags TAGS_NAME
+      description 'This shows AETC TOTAL REGISTERED report'
+      produces 'application/json'
+      security [api_key: []]
+      parameter name: :start_date, in: :query, type: :string
+      parameter name: :end_date, in: :query, type: :string
+      parameter name: :age_group, in: :query, type: :string
+
+      response '200', 'AETC TOTAL REGISTERED Report found' do
+        schema type: :array, items: { '$ref' => '#/components/schemas/aetc_total_registered_report' }
+        run_test!
+      end
+    end
+  end
+  path '/api/v1/programs/31/reports/dashboard' do
+    get 'Retrieve Dashboard report' do
+      tags TAGS_NAME
+      description 'This shows Spine Module Dashboard report'
+      produces 'application/json'
+      consumes 'application/json'
+      security [api_key: []]
+      parameter name: :date, in: :query, type: :string, required: true
+
+      response '200', 'Dashboard Report found' do
+        # return a components spine_dashboard
+        schema({ '$ref' => '#/components/schemas/spine_dashboard' })
+        run_test!
+      end
+    end
+  end
 end
 # rubocop:enable Metrics/BlockLength

@@ -2208,6 +2208,27 @@ END IF;
 RETURN age_group;
 END;
 
+DROP FUNCTION IF EXISTS `cxca_moh_age_group`;
+
+CREATE FUNCTION `cxca_moh_age_group`(birthdate date, end_date date) RETURNS VARCHAR(15)
+BEGIN
+
+DECLARE age_in_years INT(11);
+DECLARE age_group VARCHAR(15);
+
+SET age_in_years  = (SELECT timestampdiff(year, birthdate, end_date));
+SET age_group = ('Unknown');
+
+IF age_in_years >= 0 AND age_in_years < 25 THEN SET age_group = "<25 years";
+ELSEIF age_in_years >= 25 AND age_in_years <= 29 THEN SET age_group = "25-29 years";
+ELSEIF age_in_years >= 30 AND age_in_years <= 44 THEN SET age_group = "30-44 years";
+ELSEIF age_in_years >= 45 AND age_in_years <= 49 THEN SET age_group = "45-49 years";
+ELSEIF age_in_years > 49 THEN SET age_group = ">49 years";
+END IF;
+
+RETURN age_group;
+END;
+
 
 DROP FUNCTION IF EXISTS `OPD_syndromic_statistics`;
 

@@ -10,7 +10,7 @@ module HtsService
 
         YES_ANSWER = 'Yes'
         NO_ANSWER = 'No'
-        TESTING_ENCOUNTER = encounter_type('HIV Testing').encounter_type_id
+        TESTING_ENCOUNTER = EncounterType.find_by_name('HIV Testing').encounter_type_id
         HEP_B_TEST_RESULT = 'Hepatitis B Test Result'
         SYPHILIS_TEST_RESULT = 'Syphilis Test Result'
         PREGNANCY_STATUS = 'Pregnancy status'
@@ -39,33 +39,33 @@ module HtsService
         LINKED_CONCEPT = 'Linked'
 
         INDICATORS = [
-          { name: 'hiv_status', concept_id: concept('HIV status').concept_id, value: 'value_coded', join: 'LEFT' },
-          { name: 'access_type', concept_id: concept('HTS Access Type').concept_id, value: 'value_coded', join: 'LEFT' },
-          { name: 'test_location', concept_id: concept('Location where test took place').concept_id, value: 'value_text', join: 'LEFT' },
-          { name: 'hep_b_test_result', concept_id: concept(HEP_B_TEST_RESULT).concept_id, value: 'value_coded', join: 'INNER' },
-          { name: 'syphilis_test_result', concept_id: concept(SYPHILIS_TEST_RESULT).concept_id, value: 'value_coded', join: 'LEFT' },
+          { name: 'hiv_status', concept_id: ConceptName.find_by_name('HIV status').concept_id, value: 'value_coded', join: 'LEFT' },
+          { name: 'access_type', concept_id: ConceptName.find_by_name('HTS Access Type').concept_id, value: 'value_coded', join: 'LEFT' },
+          { name: 'test_location', concept_id: ConceptName.find_by_name('Location where test took place').concept_id, value: 'value_text', join: 'LEFT' },
+          { name: 'hep_b_test_result', concept_id: ConceptName.find_by_name(HEP_B_TEST_RESULT).concept_id, value: 'value_coded', join: 'INNER' },
+          { name: 'syphilis_test_result', concept_id: ConceptName.find_by_name(SYPHILIS_TEST_RESULT).concept_id, value: 'value_coded', join: 'LEFT' },
           {
             name: %w[test_one test_two test_three],
-            concept_id: [concept(TEST_ONE).concept_id, concept(TEST_TWO).concept_id, concept(TEST_THREE).concept_id],
+            concept_id: [ConceptName.find_by_name(TEST_ONE).concept_id, ConceptName.find_by_name(TEST_TWO).concept_id, ConceptName.find_by_name(TEST_THREE).concept_id],
             join: 'LEFT',
           },
-          { name: 'pregnancy_status', concept_id: concept(PREGNANCY_STATUS).concept_id, value: 'value_coded', join: 'LEFT' },
-          { name: 'circumcision_status', concept_id: concept(CIRCUMCISION_STATUS).concept_id, value: 'value_coded', join: 'LEFT' },
-          { name: 'male_condoms', concept_id: concept(MALE_CONDOMS).concept_id, join: 'LEFT', value: 'value_numeric' },
-          { name: 'female_condoms', concept_id: concept(FEMALE_CONDOMS).concept_id, join: 'LEFT', value: 'value_numeric' },
-          { name: 'frs', concept_id: concept(FRS).concept_id, join: 'LEFT', value: 'value_numeric' },
-          { name: 'referal_for_retesting', concept_id: concept(REFERRAL_FOR_RETESTING).concept_id, join: 'LEFT' },
-          { name: 'time_of_hiv_test', concept_id: concept(TIME_OF_HIV_TEST).concept_id, value: 'value_datetime', join: 'LEFT' },
-          { name: 'time_since_last_medication', value: 'value_datetime', concept_id: concept(TIME_SINCE_LAST_MEDICATION).concept_id, join: 'LEFT' },
-          { name: 'previous_hiv_test', concept_id: concept(PREVIOUS_HIV_TEST).concept_id, join: 'LEFT' },
-          { name: 'previous_hiv_test_done', concept_id: concept(PREVIOUS_HIV_TEST_DONE).concept_id, join: 'LEFT' },
-          { name: 'risk_category', concept_id: concept(RISK_CATEGORY).concept_id, join: 'LEFT' },
-          { name: 'partner_present', concept_id: concept(PARTNER_PRESENT).concept_id, value: 'value_text', join: 'LEFT' },
-          { name: 'partner_hiv_status', concept_id: concept(PARTNER_HIV_STATUS).concept_id, join: 'LEFT' },
-          { name: 'taken_arvs_before', concept_id: concept(TAKEN_ARVS_BEFORE).concept_id, join: 'LEFT' },
-          { name: 'taken_prep_before', concept_id: concept(TAKEN_PREP_BEFORE).concept_id, join: 'LEFT' },
-          { name: 'taken_pep_before', concept_id: concept(TAKEN_PEP_BEFORE).concept_id, join: 'LEFT' },
-          { name: 'referrals_ordered', concept_id: concept(REFERALS_ORDERED).concept_id, value: 'value_text', join: 'LEFT' },
+          { name: 'pregnancy_status', concept_id: ConceptName.find_by_name(PREGNANCY_STATUS).concept_id, value: 'value_coded', join: 'LEFT' },
+          { name: 'circumcision_status', concept_id: ConceptName.find_by_name(CIRCUMCISION_STATUS).concept_id, value: 'value_coded', join: 'LEFT' },
+          { name: 'male_condoms', concept_id: ConceptName.find_by_name(MALE_CONDOMS).concept_id, join: 'LEFT', value: 'value_numeric' },
+          { name: 'female_condoms', concept_id: ConceptName.find_by_name(FEMALE_CONDOMS).concept_id, join: 'LEFT', value: 'value_numeric' },
+          { name: 'frs', concept_id: ConceptName.find_by_name(FRS).concept_id, join: 'LEFT', value: 'value_numeric' },
+          { name: 'referal_for_retesting', concept_id: ConceptName.find_by_name(REFERRAL_FOR_RETESTING).concept_id, join: 'LEFT' },
+          { name: 'time_of_hiv_test', concept_id: ConceptName.find_by_name(TIME_OF_HIV_TEST).concept_id, value: 'value_datetime', join: 'LEFT' },
+          { name: 'time_since_last_medication', value: 'value_datetime', concept_id: ConceptName.find_by_name(TIME_SINCE_LAST_MEDICATION).concept_id, join: 'LEFT' },
+          { name: 'previous_hiv_test', concept_id: ConceptName.find_by_name(PREVIOUS_HIV_TEST).concept_id, join: 'LEFT' },
+          { name: 'previous_hiv_test_done', concept_id: ConceptName.find_by_name(PREVIOUS_HIV_TEST_DONE).concept_id, join: 'LEFT' },
+          { name: 'risk_category', concept_id: ConceptName.find_by_name(RISK_CATEGORY).concept_id, join: 'LEFT' },
+          { name: 'partner_present', concept_id: ConceptName.find_by_name(PARTNER_PRESENT).concept_id, value: 'value_text', join: 'LEFT' },
+          { name: 'partner_hiv_status', concept_id: ConceptName.find_by_name(PARTNER_HIV_STATUS).concept_id, join: 'LEFT' },
+          { name: 'taken_arvs_before', concept_id: ConceptName.find_by_name(TAKEN_ARVS_BEFORE).concept_id, join: 'LEFT' },
+          { name: 'taken_prep_before', concept_id: ConceptName.find_by_name(TAKEN_PREP_BEFORE).concept_id, join: 'LEFT' },
+          { name: 'taken_pep_before', concept_id: ConceptName.find_by_name(TAKEN_PEP_BEFORE).concept_id, join: 'LEFT' },
+          { name: 'referrals_ordered', concept_id: ConceptName.find_by_name(REFERALS_ORDERED).concept_id, value: 'value_text', join: 'LEFT' },
         ].freeze
 
         def initialize(start_date:, end_date:)

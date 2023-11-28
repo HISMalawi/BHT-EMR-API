@@ -19,7 +19,7 @@ module HTSService
       loop do
         state = next_state state
 
-        AITIntergrationJob.perform_later(@patient.id) if state == END_STATE
+        AITIntergrationJob.perform_later({patient_id:@patient.id}) if state == END_STATE
 
         break if state == END_STATE
 
@@ -50,6 +50,7 @@ module HTSService
     APPOINTMENT = "APPOINTMENT"
     HTS_CONTACT = "HTS Contact"
     REFERRAL = "REFERRAL"
+    REGISTRATION = "REGISTRATION"
     PARTNER_RECEPTION = "Partner Reception"
     ART_INITIATION = "ART Enrollment"
 
@@ -58,7 +59,8 @@ module HTSService
       INITIAL_STATE => PREGNANCY_STATUS,
       PREGNANCY_STATUS => CIRCUMCISION,
       CIRCUMCISION => TESTING,
-      TESTING => RECENCY,
+      TESTING => REGISTRATION,
+      REGISTRATION => RECENCY,
       RECENCY => DBS_ORDER,
       DBS_ORDER => PARTNER_RECEPTION,
       PARTNER_RECEPTION => APPOINTMENT,
@@ -83,6 +85,8 @@ module HTSService
 
       TESTING => %i[task_not_done_today?],
 
+      REGISTRATION => %i[client_is_unknown? hiv_positive_at_health_facility_accesspoint?],
+    
       RECENCY => %i[not_from_community_accesspoint? can_perform_recency? age_greater_than_10_years?],
 
       APPOINTMENT => %i[does_not_have_two_incoclusive_results?
@@ -118,6 +122,10 @@ module HTSService
       (STATE_CONDITIONS[state] || []).all? { |condition| send(condition) }
     end
 
+    def client_is_unknown?
+      @patient.name.downcase == 'unknown unknown'
+    end
+    
     def is_male_client?
       @patient.gender == "M"
     end
