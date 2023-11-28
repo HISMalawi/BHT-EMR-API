@@ -17,6 +17,10 @@ module ARTService
 
         def find_report
           patient_tpt_status
+        rescue StandardError => e
+          Rails.logger.error("Error generating TPT Status report for patient #{patient_id}: #{e.message}")
+          Rails.logger.error(e.backtrace.join("\n"))
+          raise e
         end
 
         private
@@ -59,30 +63,49 @@ module ARTService
           art_start_date = patient.art_start_date
           { tpt: nil, completed: false, tb_treatment: false, tpt_init_date: nil, tpt_complete_date: nil, tpt_end_date: nil,
             eligible: {
-              '3HP': end_date - art_start_date <= 3.months,
-              '6H': end_date - art_start_date <= 6.months
+              '3HP': art_start_date ? difference_in_months(end_date.to_date, art_start_date.to_date) <= 3.months : true,
+              '6H': art_start_date ? difference_in_months(end_date.to_date, art_start_date.to_date) <= 3.months : true
             } }
         end
 
         def tpt_status_based_on_patient(patient)
-          tpt = patient_on_3hp?(patient) ? '3HP' : '6H'
+          tpt = determine_tpt(patient)
           completed = patient_has_totally_completed_tpt?(patient, tpt)
           tpt_init_date = patient['tpt_initiation_date']
+          tpt_current_expiry_date = patient['auto_expire_date']&.to_date
+          diff_in_months = difference_in_months(end_date.to_date, tpt_current_expiry_date)
+          art_start_date = Patient.find(patient_id).art_start_date
           tpt_complete_date = completed ? patient['auto_expire_date']&.to_date : nil
-          tpt_end_date = tpt == '6H' ? tpt_init_date + 6.months : tpt_init_date + 3.months
-          tpt_name = if tpt == '6H'
-                       'IPT'
-                     else
-                       (patient['drug_concepts'].split(',').length > 1 ? '3HP (RFP + INH)' : 'INH 300 / RFP 300 (3HP)')
-                     end
+          tpt_end_date = calculate_tpt_end_date(tpt, tpt_init_date)
+          tpt_name = determine_tpt_name(tpt, patient)
 
           { tpt: tpt_name, completed: completed, tb_treatment: false,
             tpt_init_date: tpt_init_date, tpt_complete_date: tpt_complete_date,
             tpt_end_date: tpt_end_date,
-            eligible: {
-              '3HP': tpt == '3HP',
-              '6H': tpt == '6H'
-            } }
+            eligible: determine_eligibility(tpt, diff_in_months, art_start_date, end_date) }
+        end
+
+        def determine_tpt(patient)
+          patient_on_3hp?(patient) ? '3HP' : '6H'
+        end
+
+        def determine_tpt_name(tpt, patient)
+          if tpt == '6H'
+            'IPT'
+          else
+            (patient['drug_concepts'].split(',').length > 1 ? '3HP (RFP + INH)' : 'INH 300 / RFP 300 (3HP)')
+          end
+        end
+
+        def calculate_tpt_end_date(tpt, tpt_init_date)
+          tpt == '6H' ? tpt_init_date + 6.months : tpt_init_date + 3.months
+        end
+
+        def determine_eligibility(tpt, diff_in_months, art_start_date, end_date)
+          {
+            '3HP': tpt == '3HP' && diff_in_months <= 1 || art_start_date && difference_in_months(end_date.to_date, art_start_date.to_date) <= 3 && tpt == '3HP',
+            '6H': tpt == '6H' && diff_in_months <= 2 || art_start_date && difference_in_months(end_date.to_date, art_start_date.to_date) <= 3 && tpt == '6H'
+          }
         end
 
         def patient_has_totally_completed_tpt?(patient, tpt)
@@ -100,6 +123,10 @@ module ARTService
           @patient_history_on_completed_tpt ||= Observation.where(person_id: patient_id,
                                                                   concept_id: ConceptName.find_by_name('Previous TB treatment history').concept_id)
                                                            .where("value_text LIKE '%Completed%' AND obs_datetime < DATE('#{end_date}') + INTERVAL 1 DAY")&.first&.value_text
+        end
+
+        def difference_in_months(date1, date2)
+          (date1.year * 12 + date1.month) - (date2.year * 12 + date2.month)
         end
       end
     end
