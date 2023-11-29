@@ -51,7 +51,8 @@ module ARTService
       'VL_COLLECTION' => ARTService::Reports::VlCollection,
       'DISCREPANCY_REPORT' => ARTService::Reports::Clinic::DiscrepancyReport,
       'STOCK_CARD' => ARTService::Reports::Clinic::StockCardReport,
-      'HYPERTENSION_REPORT' => ARTService::Reports::Clinic::HypertensionReport
+      'HYPERTENSION_REPORT' => ARTService::Reports::Clinic::HypertensionReport,
+      'TX_NEW' => ARTService::Reports::Pepfar::TxNew
     }.freeze
 
     def generate_report(type:, **kwargs)
