@@ -104,6 +104,10 @@ Rails.application.routes.draw do
         get('/label', to: redirect do |params, _request|
           "/api/v1/labels/location?location_id=#{params[:location_id]}"
         end)
+
+        collection do
+          get :current_facility
+        end
       end
 
       resources :regions, only: %i[index] do
