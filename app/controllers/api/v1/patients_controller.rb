@@ -40,8 +40,8 @@ class Api::V1::PatientsController < ApplicationController
   def search_by_name_and_gender
     filters = params.permit(%i[given_name middle_name family_name birthdate gender per_page page])
   
-    page = (filters[:page].presence).to_i || 1
-    per_page = (filters[:per_page].presence).to_i || 50
+    page = (filters[:page].presence).to_i.nonzero? || 1
+    per_page = (filters[:per_page].presence).to_i.nonzero? || 50
   
     patients = service.find_patients_by_name_and_gender(filters[:given_name],
                                                         filters[:middle_name],
