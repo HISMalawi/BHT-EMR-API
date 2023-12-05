@@ -63,8 +63,8 @@ module ARTService
           art_start_date = patient.art_start_date
           { tpt: nil, completed: false, tb_treatment: false, tpt_init_date: nil, tpt_complete_date: nil, tpt_end_date: nil,
             eligible: {
-              '3HP': art_start_date ? difference_in_months(end_date.to_date, art_start_date.to_date) <= 3.months : true,
-              '6H': art_start_date ? difference_in_months(end_date.to_date, art_start_date.to_date) <= 3.months : true
+              '3HP': art_start_date ? difference_in_months(end_date.to_date, art_start_date.to_date) < 3 : true,
+              '6H': art_start_date ? difference_in_months(end_date.to_date, art_start_date.to_date) < 3 : true
             } }
         end
 
