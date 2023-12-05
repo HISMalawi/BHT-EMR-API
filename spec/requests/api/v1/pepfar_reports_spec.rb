@@ -232,4 +232,36 @@ describe 'Pepfar Reports API', type: :request, swagger_doc: 'v1/swagger.yaml' do
       end
     end
   end
+
+  path '/api/v1/tx_rtt' do
+    get 'PEPFAR TX RTT Report' do
+      tags TAGS_NAME
+      description 'This shows PEPFAR TX RTT report'
+      produces 'application/json'
+      security [api_key: []]
+      parameter name: :start_date, in: :query, type: :string
+      parameter name: :end_date, in: :query, type: :string
+      parameter name: :program_id, in: :query, type: :integer
+      parameter name: :date, in: :query, type: :string
+
+      response '200', 'PEPFAR TX RTT Report found' do
+        schema type: :array, items: { '$ref' => '#/components/schemas/tx_rtt' }
+        run_test!
+      end
+
+      response '404', 'PEPFAR TX RTT Report not found' do
+        schema type: :string, properties: {
+          message: { type: :string }
+        }
+        run_test!
+      end
+
+      response '500', 'Internal Server Error' do
+        schema type: :string, properties: {
+          message: { type: :string }
+        }
+        run_test!
+      end
+    end
+  end
 end

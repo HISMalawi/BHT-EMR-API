@@ -478,6 +478,20 @@ RSpec.configure do |config|
                 '6H': { type: :boolean, example: false }
               } }
             }
+          },
+          tx_rtt: {
+            type: :object,
+            properties: {
+              age_group: { type: :string },
+              gender: { type: :string },
+              cd4_less_than_200: { type: :array, items: { type: :integer } },
+              cd4_greater_than_or_equal_to_200: { type: :array, items: { type: :integer } },
+              unknown_cd4_count: { type: :array, items: { type: :integer } },
+              not_eligible_for_cd4: { type: :array, items: { type: :integer } },
+              returned_less_than_3_months: { type: :array, items: { type: :integer } },
+              returned_greater_than_3_months_and_less_than_6_months: { type: :array, items: { type: :integer } },
+              returned_greater_than_or_equal_to_6_months: { type: :array, items: { type: :integer } }
+            }
           }
         }
       },

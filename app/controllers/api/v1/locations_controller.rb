@@ -4,7 +4,7 @@ require 'utils/remappable_hash'
 require 'zebra_printer/init'
 
 class Api::V1::LocationsController < ApplicationController
-  skip_before_action :authenticate, only: %i[print_label]
+  skip_before_action :authenticate, only: %i[print_label current_facility]
 
   # Retrieve all locations
   #
@@ -29,6 +29,13 @@ class Api::V1::LocationsController < ApplicationController
   # GET /locations/:id
   def show
     render json: Location.find(params[:id])
+  end
+
+  # Retrieve the current configured facility
+  #
+  # GET /locations/current_facility
+  def current_facility
+    render json: Location.current_health_center
   end
 
   def create

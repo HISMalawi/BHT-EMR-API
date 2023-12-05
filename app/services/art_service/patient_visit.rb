@@ -151,7 +151,7 @@ module ARTService
 
     def visit_by
       if patient_present? && guardian_present?
-        'BOTH'
+        'Patient'
       elsif patient_present?
         'Patient'
       elsif guardian_present?
