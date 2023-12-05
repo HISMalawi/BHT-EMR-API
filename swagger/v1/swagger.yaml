@@ -2730,6 +2730,35 @@ paths:
                 properties:
                   error:
                     type: string
+  "/api/v1/patients/{id}/tpt_status":
+    get:
+      summary: tpt_status report
+      tags:
+      - Reports
+      description: Reports Endpoints
+      parameters:
+      - name: id
+        in: path
+        example: 1
+        required: true
+        schema:
+          type: integer
+      - name: date
+        in: query
+        format: date
+        example: '2022-10-1'
+        required: false
+        schema:
+          type: string
+      security:
+      - api_key: []
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/tpt_status"
   "/api/v1/rollback/merge_history":
     get:
       summary: Retrieve merge history
@@ -3504,6 +3533,39 @@ components:
             type: integer
           variance_reason:
             type: string
+    tpt_status:
+      type: object
+      properties:
+        tpt:
+          type: string
+          example: INH 300 / RFP 300 (3HP)
+        completed:
+          type: boolean
+          example: false
+        tb_treatment:
+          type: boolean
+          example: false
+        tpt_init_date:
+          type: string
+          format: date-time
+          example: '2023-01-01'
+        tpt_complete_date:
+          type: string
+          format: date-time
+          example: '2023-01-01'
+        tpt_end_date:
+          type: string
+          format: date-time
+          example: '2023-01-01'
+        eligible:
+          type: object
+          properties:
+            3HP:
+              type: boolean
+              example: false
+            6H:
+              type: boolean
+              example: false
     tx_rtt:
       type: object
       properties:
