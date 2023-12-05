@@ -103,8 +103,8 @@ module ARTService
 
         def determine_eligibility(tpt, diff_in_months, art_start_date, end_date)
           {
-            '3HP': tpt == '3HP' && diff_in_months <= 1 || art_start_date && difference_in_months(end_date.to_date, art_start_date.to_date) <= 3 && tpt == '3HP',
-            '6H': tpt == '6H' && diff_in_months <= 2 || art_start_date && difference_in_months(end_date.to_date, art_start_date.to_date) <= 3 && tpt == '6H'
+            '3HP': tpt == '3HP' && diff_in_months <= 1 || art_start_date && difference_in_months(end_date.to_date, art_start_date.to_date) < 3 && tpt == '3HP',
+            '6H': tpt == '6H' && diff_in_months <= 2 || art_start_date && difference_in_months(end_date.to_date, art_start_date.to_date) < 3 && tpt == '6H'
           }
         end
 
