@@ -122,7 +122,7 @@ module ARTService
         def patient_history_on_completed_tpt
           @patient_history_on_completed_tpt ||= Observation.where(person_id: patient_id,
                                                                   concept_id: ConceptName.find_by_name('Previous TB treatment history').concept_id)
-                                                           .where("value_text LIKE '%Completed%' AND obs_datetime < DATE('#{end_date}') + INTERVAL 1 DAY")&.first&.value_text
+                                                           .where("value_text LIKE '%complete%' AND obs_datetime < DATE('#{end_date}') + INTERVAL 1 DAY")&.first&.value_text
         end
 
         def difference_in_months(date1, date2)
