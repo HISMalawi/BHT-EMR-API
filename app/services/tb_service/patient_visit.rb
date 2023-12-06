@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module TbService
+module TBService
   # A summary of a patient's ART clinic visit
   class PatientVisit
     include ModelUtils
@@ -51,12 +51,12 @@ module TbService
 
     def tb_status
       state = begin
-        Concept.find(Observation.where(['person_id = ? AND concept_id = ? AND DATE(obs_datetime) <= ? AND value_coded IS NOT NULL',
-                                        patient.id, ConceptName.find_by_name('TB STATUS').concept_id,
-                                        visit_date.to_date]).order('obs_datetime DESC, date_created DESC').first.value_coded).fullname
-      rescue StandardError
-        'Unk'
-      end
+                Concept.find(Observation.where(['person_id = ? AND concept_id = ? AND DATE(obs_datetime) <= ? AND value_coded IS NOT NULL',
+                                                patient.id, ConceptName.find_by_name('TB STATUS').concept_id,
+                                                visit_date.to_date]).order('obs_datetime DESC, date_created DESC').first.value_coded).fullname
+              rescue StandardError
+                'Unk'
+              end
 
       program_id = Program.find_by_name('TB PROGRAM').id
       patient_state = PatientState.where(["patient_state.voided = 0 AND p.voided = 0

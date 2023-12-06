@@ -16,7 +16,7 @@ module AetcService
 
     def find_report(start_date:, end_date:, name:, **kwargs)
       name = name&.upcase&.gsub('_', ' ') || kwargs[:type]&.upcase&.gsub('_', ' ')
-      REPORT_NAMES[name].new(start_date:, end_date:, **kwargs).fetch_report
+      REPORT_NAMES[name].new(start_date: start_date, end_date: end_date, **kwargs).fetch_report
     end
 
     def dashboard_stats(date)

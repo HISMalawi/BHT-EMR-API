@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ArtService
+module ARTService
   module Reports
     ##
     # Patients newly initiated on TPT disaggregated by regimen type and age group.
@@ -107,7 +107,7 @@ module ArtService
       end
 
       def newly_initiated_on_tpt
-        tpt = ArtService::Reports::Cohort::Tpt.new(start_date.to_date, end_date.to_date, occupation: @occupation)
+        tpt = ARTService::Reports::Cohort::Tpt.new(start_date.to_date, end_date.to_date, occupation: @occupation)
         data = {}
         three_hp = tpt.newly_initiated_on_3hp
         ipt = tpt.newly_initiated_on_ipt

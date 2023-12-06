@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-module ArtService
+module ARTService
   module Reports
     module Pepfar
-      # TxTb report
+      # TxTB report
       # rubocop:disable Metrics/ClassLength
-      class TxTb
+      class TxTB
         attr_accessor :start_date, :end_date, :report, :rebuild_outcome
 
         include Utils
@@ -65,7 +65,7 @@ module ArtService
         def build_cohort_tables
           return unless rebuild_outcome || @occupation.present?
 
-          cohort_builder = ArtService::Reports::CohortBuilder.new(outcomes_definition: 'pepfar')
+          cohort_builder = ARTService::Reports::CohortBuilder.new(outcomes_definition: 'pepfar')
           cohort_builder.init_temporary_tables(start_date, end_date, @occupation)
         end
 

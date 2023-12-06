@@ -6,7 +6,7 @@ class << self
   include ModelUtils
 end
 
-LOGGER = Logger.new($stdout)
+LOGGER = Logger.new(STDOUT)
 ActiveRecord::Base.logger = LOGGER
 
 def main

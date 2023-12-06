@@ -135,7 +135,7 @@ module HtsService
         def init_report
           model = his_patients_rev
           INDICATORS.each do |param|
-            model = ObsValueScope.call(model:, **param)
+            model = ObsValueScope.call(model: model, **param)
           end
           @query = Person.connection.select_all(
             model
@@ -146,12 +146,11 @@ module HtsService
 
         def set_unique
           @data.each do |key, obj|
-            if %w[frs_given_family_referral_slips_sum male_condoms_given_male_condoms_sum
-                  female_condoms_given_female_condoms_sum].include?(key)
+            if %w[frs_given_family_referral_slips_sum male_condoms_given_male_condoms_sum female_condoms_given_female_condoms_sum].include?(key)
               @data[key] = obj
               next
             end
-            @data[key] = obj&.map { |q| q['person_id'] }&.uniq
+            @data[key] = obj&.map { |q| q['person_id'] }.uniq
           end
         end
 
@@ -218,10 +217,8 @@ module HtsService
           @data['access_point_type_total_clients_tested_in_the_community'] = community_hash
 
           @data['sex_or_pregnancy_total_males'] = filter_hash('gender', 'M')
-          @data['sex_or_pregnancy_male_circumcised'] =
-            filter_hash('circumcision_status', concept(YES_ANSWER).concept_id)
-          @data['sex_or_pregnancy_male_noncircumcised'] =
-            filter_hash('circumcision_status', concept(NO_ANSWER).concept_id)
+          @data['sex_or_pregnancy_male_circumcised'] = filter_hash('circumcision_status', concept(YES_ANSWER).concept_id)
+          @data['sex_or_pregnancy_male_noncircumcised'] = filter_hash('circumcision_status', concept(NO_ANSWER).concept_id)
 
           @data['age_group_years_a_under_1'] = @query.select { |q| birthdate_to_age(q['birthdate']) < 1 }
           @data['age_group_years_b_114'] = @query.select { |q| (1..14).include?(birthdate_to_age(q['birthdate'])) }
@@ -229,18 +226,14 @@ module HtsService
           @data['age_group_years_d_25plus'] = (@query.select { |q| birthdate_to_age(q['birthdate']) >= 25 })
 
           @data['sex_or_pregnancy_total_females'] = filter_hash('gender', 'F')
-          @data['sex_or_pregnancy_female_pregnant'] =
-            filter_hash('pregnancy_status', concept(PREGNANT_WOMAN).concept_id)
-          @data['sex_or_pregnancy_female_nonpregnant'] =
-            filter_hash('pregnancy_status', concept(NOT_PREGNANT).concept_id)
-          @data['sex_or_pregnancy_female_breastfeeding'] =
-            filter_hash('pregnancy_status', concept(BREASTFEEDING).concept_id)
+          @data['sex_or_pregnancy_female_pregnant'] = filter_hash('pregnancy_status', concept(PREGNANT_WOMAN).concept_id)
+          @data['sex_or_pregnancy_female_nonpregnant'] = filter_hash('pregnancy_status', concept(NOT_PREGNANT).concept_id)
+          @data['sex_or_pregnancy_female_breastfeeding'] = filter_hash('pregnancy_status', concept(BREASTFEEDING).concept_id)
 
           @data['hiv_test_1_result_negative'] = filter_hash('test_one', concept('Negative').concept_id)
           @data['total_clients_hiv_test_1_negative'] = filter_hash('test_one', concept('Negative').concept_id)
           @data['hiv_test_1_result_positive'] = filter_hash('test_one', concept('Positive').concept_id)
-          @data['linking_with_hiv_confirmatory_register_total_clients_hiv_test_1_positive'] =
-            filter_hash('test_one', concept('Positive').concept_id)
+          @data['linking_with_hiv_confirmatory_register_total_clients_hiv_test_1_positive'] = filter_hash('test_one', concept('Positive').concept_id)
 
           @data['hepatitis_b_test_result_negative'] = filter_hash('hep_b_test_result', concept('Negative').concept_id)
           @data['hepatitis_b_test_result_positive'] = filter_hash('hep_b_test_result', concept('Positive').concept_id)
@@ -271,8 +264,7 @@ module HtsService
         def fetch_risk_category
           @data['risk_category_low'] = filter_hash('risk_category', concept('Low risk').concept_id)
           @data['risk_category_ongoing'] = filter_hash('risk_category', concept('On-going risk').concept_id)
-          @data['risk_category_highrisk_event'] =
-            filter_hash('risk_category', concept('High risk event in last 3 months').concept_id)
+          @data['risk_category_highrisk_event'] = filter_hash('risk_category', concept('High risk event in last 3 months').concept_id)
           @data['risk_category_not_done'] = filter_hash('risk_category', concept('Risk assessment not done').concept_id)
         end
 
@@ -300,15 +292,11 @@ module HtsService
           @data['partner_present_no'] = filter_hash('partner_present', 'No')
 
           @data['partner_hiv_status_no_partner'] = filter_hash('partner_hiv_status', concept('No partner').concept_id)
-          @data['partner_hiv_status_hiv_status_unknown'] =
-            filter_hash('partner_hiv_status', concept('HIV unknown').concept_id)
+          @data['partner_hiv_status_hiv_status_unknown'] = filter_hash('partner_hiv_status', concept('HIV unknown').concept_id)
           @data['partner_hiv_status_hiv_negative'] = filter_hash('partner_hiv_status', concept('Negative').concept_id)
-          @data['partner_hiv_status_hiv_positive_art_unknown'] =
-            filter_hash('partner_hiv_status', concept('Positive ART unknown').concept_id)
-          @data['partner_hiv_status_hiv_positive_not_on_art'] =
-            filter_hash('partner_hiv_status', concept('Positive NOT on ART').concept_id)
-          @data['partner_hiv_status_hiv_positive_on_art'] =
-            filter_hash('partner_hiv_status', concept('Positive on ART').concept_id)
+          @data['partner_hiv_status_hiv_positive_art_unknown'] = filter_hash('partner_hiv_status', concept('Positive ART unknown').concept_id)
+          @data['partner_hiv_status_hiv_positive_not_on_art'] = filter_hash('partner_hiv_status', concept('Positive NOT on ART').concept_id)
+          @data['partner_hiv_status_hiv_positive_on_art'] = filter_hash('partner_hiv_status', concept('Positive on ART').concept_id)
         end
 
         def fetch_referral_retests

@@ -52,7 +52,7 @@ class DrugOrder < ApplicationRecord
 
   # Construct
   def dosage_struct
-    ingredient = MohRegimenIngredient.find_by(drug:)
+    ingredient = MohRegimenIngredient.find_by(drug: drug)
     {
       drug_id: drug.drug_id,
       drug_name: drug.name,
@@ -64,13 +64,9 @@ class DrugOrder < ApplicationRecord
   end
 
   def to_s
-    begin
-      return order.instructions unless order.instructions.blank?
-    rescue StandardError
-      nil
-    end
+    return order.instructions unless order.instructions.blank? rescue nil
 
-    str = "#{drug.name}: #{dose} #{units} #{frequency} for #{duration || 'some'} days"
+    str = "#{drug.name}: #{self.dose} #{self.units} #{frequency} for #{duration||'some'} days"
     str << ' (prn)' if prn == 1
     str
   end

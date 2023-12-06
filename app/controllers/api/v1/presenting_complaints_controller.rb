@@ -1,17 +1,12 @@
-# frozen_string_literal: true
+class Api::V1::PresentingComplaintsController < ApplicationController
 
-module Api
-  module V1
-    class PresentingComplaintsController < ApplicationController
-      def show
-        render json: service.get_complaints(params[:id])
-      end
+  def show
+    render json: service.get_complaints(params[:id])
+  end
 
-      private
+  private
 
-      def service
-        PresentingComplaintService.new
-      end
-    end
+  def service
+    PresentingComplaintService.new
   end
 end

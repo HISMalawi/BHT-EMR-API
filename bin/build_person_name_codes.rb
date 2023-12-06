@@ -2,7 +2,7 @@
 
 require 'logger'
 
-LOGGER = Logger.new($stdin)
+LOGGER = Logger.new(STDIN)
 ActiveRecord::Base.logger = LOGGER
 
 BATCH_SIZE = 1000

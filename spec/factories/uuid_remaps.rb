@@ -1,9 +1,7 @@
-# frozen_string_literal: true
-
 FactoryBot.define do
   factory :uuid_remap do
-    old_uuid { 'MyString' }
-    new_uuid { 'MyString' }
-    model { 'MyString' }
+    old_uuid { "MyString" }
+    new_uuid { "MyString" }
+    model { "MyString" }
   end
 end

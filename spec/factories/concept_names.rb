@@ -5,7 +5,7 @@ FactoryBot.define do
     # Ought to be using Faker or something for the following
     # but can't add a new gem without forcing `bundle install`
     # in none networked environments.
-    name { (0...20).map { rand(65..90).chr }.join }
+    name { (0...20).map { (65 + rand(26)).chr }.join }
     date_created { Time.now }
     creator { 1 }
   end

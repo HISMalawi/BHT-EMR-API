@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 class CreatePharmacyBatchItems < ActiveRecord::Migration[5.2]
   def change
     create_table :pharmacy_batch_items do |t|

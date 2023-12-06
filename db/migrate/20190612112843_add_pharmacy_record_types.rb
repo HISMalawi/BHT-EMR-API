@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 class AddPharmacyRecordTypes < ActiveRecord::Migration[5.2]
   MODELS = [Pharmacy, PharmacyBatch, PharmacyBatchItem,
             PharmacyBatchItemReallocation].freeze

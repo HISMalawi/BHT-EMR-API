@@ -15,7 +15,6 @@ class Concept < RetirableRecord
   has_many :concept_answers do
     def limit(search_string)
       return self if search_string.blank?
-
       map do |concept_answer|
         concept_answer if concept_answer.name.match(search_string)
       end.compact
@@ -25,7 +24,7 @@ class Concept < RetirableRecord
   has_many :concept_members, class_name: 'ConceptSet', foreign_key: :concept_set
 
   def self.find_by_name(concept_name)
-    Concept.joins(:concept_names).where(['concept_name.name =?', concept_name.to_s]).first
+    Concept.joins(:concept_names).where(["concept_name.name =?", "#{concept_name}"]).first
   end
 
   def as_json(options = {})
@@ -35,33 +34,15 @@ class Concept < RetirableRecord
   end
 
   def shortname
-    name = begin
-      concept_names.typed('SHORT').first.name
-    rescue StandardError
-      nil
-    end
+    name = self.concept_names.typed('SHORT').first.name rescue nil
     return name unless name.blank?
-
-    begin
-      concept_names.first.name
-    rescue StandardError
-      nil
-    end
+    return self.concept_names.first.name rescue nil
   end
 
   def fullname
-    name = begin
-      concept_names.typed('FULLY_SPECIFIED').first.name
-    rescue StandardError
-      nil
-    end
+    name = self.concept_names.typed('FULLY_SPECIFIED').first.name rescue nil
     return name unless name.blank?
-
-    begin
-      concept_names.first.name
-    rescue StandardError
-      nil
-    end
+    return self.concept_names.first.name rescue nil
   end
 
   def othername

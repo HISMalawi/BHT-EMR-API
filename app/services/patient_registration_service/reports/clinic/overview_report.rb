@@ -19,8 +19,6 @@ module PatientRegistrationService
 
         private
 
-        # rubocop:disable Metrics/MethodLength
-        # rubocop:disable Metrics/AbcSize
         def report
           result = {}
           SERVICES.each do |service|
@@ -38,8 +36,6 @@ module PatientRegistrationService
               me: me_total - result['Newly Registered Patients'][:me] }
           result
         end
-        # rubocop:enable Metrics/MethodLength
-        # rubocop:enable Metrics/AbcSize
 
         def total_patients_by_service(service, user_id = nil)
           concept_id = ConceptName.find_by_name('Services ordered').concept_id

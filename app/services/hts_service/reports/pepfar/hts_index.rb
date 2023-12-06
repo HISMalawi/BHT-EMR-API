@@ -7,7 +7,7 @@ module HtsService
       class HtsIndex
         attr_accessor :start_date, :end_date
 
-        include ArtService::Reports::Pepfar::Utils
+        include ARTService::Reports::Pepfar::Utils
 
         def initialize(start_date:, end_date:)
           @start_date = start_date
@@ -54,8 +54,7 @@ module HtsService
               report[patient['age_group']][patient['gender']][:accepted_ait] << patient['person_id']
             end
             unless patient['consent'].blank?
-              report[patient['age_group']][patient['gender']][:contacted_elicited] << { patient: patient['person_id'],
-                                                                                        contacts: patient['contacts'] }
+              report[patient['age_group']][patient['gender']][:contacted_elicited] << { patient: patient['person_id'], contacts: patient['contacts']}
             end
             case patient['hts_access_point']&.to_i
             when 8019 # Facility

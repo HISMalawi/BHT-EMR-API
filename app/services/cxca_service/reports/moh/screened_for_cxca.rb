@@ -1,9 +1,10 @@
 # frozen_string_literal: true
 
-module CxcaService
+module CXCAService
   module Reports
     module Moh
       # This class is responsible for generating the MOH CXCA report
+      # rubocop:disable Metrics/ClassLength
       class ScreenedForCxca
         include ModelUtils
         attr_accessor :start_date, :end_date, :report
@@ -51,7 +52,7 @@ module CxcaService
           'Positive on ART' => [],
           'Negative' => [],
           'Unknown (HIV- > 1 year ago, Inconclusive, Prefers not to Disclose, or Never Tested)' => []
-        }.freeze
+        }
 
         REFERRAL_REASON_GROUP = {
           "Further Investigation and Management": [],
@@ -60,7 +61,7 @@ module CxcaService
           "Suspect Cancer": [],
           "No treatment": [],
           "Other gynae": []
-        }.freeze
+        }
 
         REASON_FOR_VISIT_GROUP = [
           'Initial Screening',
@@ -102,7 +103,7 @@ module CxcaService
 
             screening_method = SCREENING_METHOD_MAP[concept_id_to_name(record['screening_method'])]
             next unless screening_method.present?
-
+            
             screening_result = concept_id_to_name(record['screening_result'])
             referral_reason = concept_id_to_name(record['referral_reason'])
             hiv_status = concept_id_to_name(record['hiv_status'])
@@ -192,7 +193,7 @@ module CxcaService
           indicator = @report[:screened_disaggregated_by_hiv_status]
           negative = ['Negative'].include?(hiv_status)
           test_date = hiv_test_date.present? if negative
-          period = hiv_test_date&.to_date&.< end_date.to_date - 1.year if negative && test_date.present?
+          period = hiv_test_date&.to_date < end_date.to_date - 1.year if negative && test_date.present?
           unknown_cat = negative && test_date && period
           uncat = negative && hiv_test_date.blank?
           if hiv_status.blank? || ['Never Tested', 'Undisclosed'].include?(hiv_status) || unknown_cat || uncat
@@ -439,6 +440,7 @@ module CxcaService
         end
         # rubocop:enable Metrics/AbcSize
       end
+      # rubocop:enable Metrics/ClassLength
     end
   end
 end

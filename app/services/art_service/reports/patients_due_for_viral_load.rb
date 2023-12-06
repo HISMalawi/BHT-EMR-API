@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ArtService
+module ARTService
   module Reports
     class PatientsDueForViralLoad
       attr_accessor :start_date, :end_date
@@ -24,13 +24,13 @@ module ArtService
       end
 
       def patients_alive_and_on_treatment
-        ArtService::Reports::PatientsAliveAndOnTreatment
+        ARTService::Reports::PatientsAliveAndOnTreatment
           .new(start_date: start_date, end_date: end_date)
           .find_report
       end
 
       def viral_load_reminder(patient_id)
-        ArtService::VlReminder
+        ARTService::VLReminder
           .new(patient_id: patient_id, date: end_date)
           .vl_reminder_info
       end

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'set'
+
 # rubocop:disable Metrics/ClassLength
 module AetcService
   # A workflow engine for AETC program
@@ -91,7 +93,7 @@ module AetcService
     # NOTE: By `relevant` above we mean encounters that matter in deciding
     # what encounter the patient should go for in this present time.
     def encounter_exists?(type)
-      Encounter.where(type:, patient: @patient)\
+      Encounter.where(type: type, patient: @patient)\
                .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
                .exists?
     end
@@ -140,21 +142,21 @@ module AetcService
 
     def patient_has_no_weight_today?
       concept_id = ConceptName.find_by_name('Weight').concept_id
-      !Observation.where(concept_id:, person_id: @patient.id)\
+      !Observation.where(concept_id: concept_id, person_id: @patient.id)\
                   .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
                   .exists?
     end
 
     def patient_has_no_height?
       concept_id = ConceptName.find_by_name('Height (cm)').concept_id
-      !Observation.where(concept_id:, person_id: @patient.id)\
+      !Observation.where(concept_id: concept_id, person_id: @patient.id)\
                   .where('obs_datetime < ?', TimeUtils.day_bounds(@date)[1])\
                   .exists?
     end
 
     def patient_has_no_height_today?
       concept_id = ConceptName.find_by_name('Height (cm)').concept_id
-      !Observation.where(concept_id:, person_id: @patient.id)\
+      !Observation.where(concept_id: concept_id, person_id: @patient.id)\
                   .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
                   .exists?
     end

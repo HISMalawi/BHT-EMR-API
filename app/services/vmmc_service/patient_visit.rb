@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module VmmcService
+module VMMCService
   # A summary of a patient's VMMC clinic visit
   class PatientVisit
     LOGGER = Rails.logger

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module CxcaService
+module CXCAService
   module Reports
     module Clinic
       class CxcaScrn
@@ -16,7 +16,7 @@ module CxcaService
           post_treatment_followup: ['one year subsequent check-up after treatment', 'problem visit after treatment']
         }.freeze
 
-        CXCA_TX_OUTCOMES = {
+        CxCa_TX_OUTCOMES = {
           positive: ['via positive', 'hpv positive', 'pap smear abnormal', 'visible lesion'],
           negative: ['via negative', 'hpv negative', 'pap smear normal', 'no visible lesion', 'other gynae'],
           suspected: ['suspect cancer']
@@ -44,14 +44,10 @@ module CxcaService
             row = {}
             row['age_group'] = age_group
             TX_GROUPS.each do |(name, values)|
-              screened = query.select do |q|
-                q['reason_for_visit']&.strip&.downcase&.in?(values) && q['age_group'] == age_group
-              end
+              screened = query.select { |q| q['reason_for_visit']&.strip&.downcase&.in?(values) && q['age_group'] == age_group }
               row[name] = {}
-              CXCA_TX_OUTCOMES.each do |(outcome, outcomes)|
-                row[name][outcome] = screened.select do |s|
-                                       s['treatment']&.strip&.downcase&.in?(outcomes)
-                                     end.map { |t| t['person_id'] }.uniq
+              CxCa_TX_OUTCOMES.each do |(outcome, outcomes)|
+                row[name][outcome] = screened.select { |s| s['treatment']&.strip&.downcase&.in?(outcomes) }.map { |t| t['person_id'] }.uniq
               end
             end
             row

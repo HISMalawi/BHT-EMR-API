@@ -1,8 +1,6 @@
-# frozen_string_literal: true
-
 # frozen_string_literals: true
 
-module CxcaService
+module CXCAService
   module Reports
     module Pepfar
       # class providing all major Cervical Cancer quetions
@@ -67,12 +65,10 @@ module CxcaService
             @total[:CXCA_SCRN_N] << record['patient_id']
           end
 
-          unless result_type.match(/positive/i) || result_type.match(/abnormal/i) || result_type == 'Visible Lesion'
-            return
+          if result_type.match(/positive/i) || result_type.match(/abnormal/i) || result_type == 'Visible Lesion'
+            group[:CXCA_SCRN_POS] << record['patient_id']
+            @total[:CXCA_SCRN_POS] << record['patient_id']
           end
-
-          group[:CXCA_SCRN_POS] << record['patient_id']
-          @total[:CXCA_SCRN_POS] << record['patient_id']
         end
 
         def total_number_on_treatment

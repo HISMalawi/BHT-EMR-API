@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-module CxcaService
+module CXCAService
   module Reports
     module Clinic
       # Reason for not screening report
       class ReasonForNotScreeningReport
         include Utils
-        include ModelUtils
+        include ModelUtils        
 
         def initialize(start_date:, end_date:)
           @start_date = start_date.to_date.beginning_of_day.strftime('%Y-%m-%d %H:%M:%S')
@@ -27,23 +27,21 @@ module CxcaService
 
         def init_report
           @report = {
-            'Hysterectomy' => [],
-            'Not due for screening' => [],
-            'Preferred counseling' => [],
-            'Not applicable' => [],
-            'Patient refused' => [],
-            'Chemotherapy' => [],
-            'Pregnancy' => [],
-            'Services NOT available' => [],
-            'Provider NOT available' => []
+            "Hysterectomy" => [],
+            "Not due for screening" => [],
+            "Preferred counseling" => [],
+            "Not applicable" => [],
+            "Patient refused" => [],
+            "Chemotherapy" => [],
+            "Pregnancy" => [],
+            "Services NOT available" => [],
+            "Provider NOT available"  => []
           }
         end
 
         def process_report
           (fetch_query || []).each do |row|
-            if @report.keys.include?(row['reason_for_not_screening'])
-              @report[row['reason_for_not_screening']] << row['patient_id']
-            end
+            @report[row['reason_for_not_screening']] << row['patient_id'] if @report.keys.include?(row['reason_for_not_screening'])
           end
         end
 

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ArtService
+module ARTService
   module Reports
     # Report for Showing all HIV Viral Load Tests Done Or Sample Collected per the specified period
     class VlCollection

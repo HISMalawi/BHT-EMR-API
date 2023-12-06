@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ArtService
+module ARTService
   module Reports
     # this report is used to generate regimen data
     class RegimenDispensationData
@@ -250,7 +250,7 @@ module ArtService
       end
 
       def maternal_status
-        ArtService::Reports::Pepfar::ViralLoadCoverage2.new(start_date: @start_date,
+        ARTService::Reports::Pepfar::ViralLoadCoverage2.new(start_date: @start_date,
                                                             end_date: @end_date).vl_maternal_status(alive_clients)
       end
 

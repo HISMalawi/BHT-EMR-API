@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 class CorrectRfpOrdersAutoExpireDate < ActiveRecord::Migration[5.2]
   def up
     rifapentine_orders.each do |order|

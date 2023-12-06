@@ -1,7 +1,7 @@
 # frozen_string_literal:true
 
 # Fetches all clients that are not new patients at between the specified period
-module ArtService
+module ARTService
   module Reports
     # Exteranal Consultation Clients
     class ExternalConsultationClients

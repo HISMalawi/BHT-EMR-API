@@ -4,7 +4,7 @@ require 'logger'
 
 # Utility methods for dealing with ActiveSupport::Parameters objects.
 module ParameterUtils
-  LOGGER = Logger.new($stdout)
+  LOGGER = Logger.new(STDOUT)
 
   # Fetches field from ActiveSupport::Parameters.
   #

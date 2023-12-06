@@ -2,16 +2,15 @@
 
 require 'set'
 
-module VmmcService
+module VMMCService
   class ReportEngine
     attr_reader :program
-
     include ModelUtils
 
     LOGGER = Rails.logger
 
     REPORTS = {
-      'COHORT' => VmmcService::Reports::Cohort
+      'COHORT' => VMMCService::Reports::Cohort
     }.freeze
 
     # def initialize(program:, date:)

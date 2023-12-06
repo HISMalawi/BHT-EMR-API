@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ArtService
+module ARTService
   module Reports
     # Retrieve patients who are completing their first 1st, 3rd, and 6th month on ART
     # in the reporting period.

@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 class ExtendPersonAttributeValueCharLimit < ActiveRecord::Migration[5.2]
   def up
     change_column :person_attribute, :value, :string, limit: 120, null: false
