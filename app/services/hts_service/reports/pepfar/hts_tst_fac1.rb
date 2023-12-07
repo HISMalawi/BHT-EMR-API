@@ -73,11 +73,14 @@ module HtsService::Reports::Pepfar
         INNER JOIN obs facility ON facility.person_id = person.person_id
         AND facility.voided = 0        
         AND facility.concept_id = #{concept('Location where test took place').concept_id}
-        INNER JOIN obs access_type ON access_type.person_id = person.person_id
+        INNER JOIN obs test_one ON test_one.person_id = person.person_id
+        AND test_one.voided = 0
+        AND test_one.concept_id = #{concept('Test 1').concept_id}
+        LEFT JOIN obs access_type ON access_type.person_id = person.person_id
         AND access_type.voided = 0        
         AND access_type.concept_id = #{concept('HTS Access Type').concept_id}
         AND access_type.value_coded = #{concept('Health facility').concept_id}\
-        INNER JOIN obs hiv_status ON hiv_status.person_id = person.person_id
+        LEFT JOIN obs hiv_status ON hiv_status.person_id = person.person_id
         AND hiv_status.voided = 0        
         AND hiv_status.concept_id = #{concept('HIV status').concept_id}
         LEFT JOIN obs pregnancy_status ON pregnancy_status.person_id = person.person_id
