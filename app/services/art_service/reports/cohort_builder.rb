@@ -1769,12 +1769,11 @@ EOF
                                    #{reason_for_starting_concept_id})
             AND obs.obs_datetime >= patients.earliest_start_date
             AND obs.obs_datetime < (patients.earliest_start_date + INTERVAL 1 DAY)
-            AND obs.value_coded IS NOT NULL
+            AND obs.value_coded IN (#{yes_concept_id},#{patient_preg_concept_id})
             AND obs.voided = 0
           WHERE patients.gender IN ('F', 'Female')
             AND patients.date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-          GROUP BY patient_id
-          HAVING value_coded = #{yes_concept_id} OR value_coded = #{patient_preg_concept_id}
+          GROUP BY patient_id 
         SQL
 
         pregnant_at_initiation = ActiveRecord::Base.connection.select_all(
