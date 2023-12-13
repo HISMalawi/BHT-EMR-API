@@ -39,7 +39,7 @@ module ARTService
                     MAX(transaction_date) AS transaction_date,
                     pack_size
                 FROM pharmacy_stock_balances
-                WHERE transaction_date <= #{@end_date} -- Opening balance can be anything less than end_date
+                WHERE transaction_date <= #{@end_date}
                 GROUP BY drug_id, pack_size
             ) AS psb_max ON pbi.drug_id = psb_max.drug_id AND pbi.pack_size = psb_max.pack_size
             LEFT JOIN (
