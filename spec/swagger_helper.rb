@@ -492,6 +492,19 @@ RSpec.configure do |config|
               returned_greater_than_3_months_and_less_than_6_months: { type: :array, items: { type: :integer } },
               returned_greater_than_or_equal_to_6_months: { type: :array, items: { type: :integer } }
             }
+          },
+          odd_dispensations: {
+            type: :object,
+            properties: {
+              patient_id: { type: :integer },
+              given_name: { type: :string },
+              family_name: { type: :string },
+              national_id: { type: :string },
+              arv_number: { type: :string },
+              gender: { type: :string },
+              birthdate: { type: :string, format: 'date-time' },
+              visit_dates: { type: :string, format: 'date-time' }
+            }
           }
         }
       },
