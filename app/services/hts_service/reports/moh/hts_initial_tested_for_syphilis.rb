@@ -67,13 +67,13 @@ module HtsService
           { name: 'taken_prep_before', concept: TAKEN_PREP_BEFORE, join: 'LEFT' },
           { name: 'taken_pep_before', concept: TAKEN_PEP_BEFORE, join: 'LEFT' },
           { name: 'referrals_ordered', concept: REFERALS_ORDERED, value: 'value_text', join: 'LEFT' },
-          {
-            name: 'outcome',
-            concept: 'Antiretroviral status or outcome',
-            value: 'value_coded',
-            join: 'LEFT',
-            max: true
-          }
+          # {
+          #   name: 'outcome',
+          #   concept: 'Antiretroviral status or outcome',
+          #   value: 'value_coded',
+          #   join: 'LEFT',
+          #   max: true
+          # }
         ].freeze
 
         def initialize(start_date:, end_date:)
@@ -120,7 +120,9 @@ module HtsService
             'male_condoms_given_invalid_entry' => [],
             'female_condoms_given_invalid_entry' => [],
             'not_applicable_not_linked' => [],
-            'invalid_link_id_in_conf_register' => []
+            'invalid_link_id_in_conf_register' => [],
+            'linking_with_hiv_confirmatory_register_linked' => [],
+            'linking_with_hiv_confirmatory_register_not_applicable_not_linked' => []
           }
         end
 
@@ -130,7 +132,7 @@ module HtsService
           fetch_hiv_tests
           fetch_partner_status
           fetch_referral_retests
-          linked_clients
+          # linked_clients
           fetch_risk_category
           fetch_referrals
           fetch_ever_taken_drugs_before
@@ -273,10 +275,10 @@ module HtsService
         def fetch_hiv_tests
           @data['last_hiv_test_never_tested'] = filter_hash('previous_hiv_test', concept('Never Tested').concept_id)
           @data['last_hiv_test_negative_selftest'] = filter_hash('previous_hiv_test_done', concept('Self').concept_id).select do |q|
-            q['previous_hiv_test'] = 'Negative'
+            q['previous_hiv_test'] == concept('Negative').concept_id
           end
           @data['last_hiv_test_negative_prof_test'] = filter_hash('previous_hiv_test_done', concept('Professional').concept_id).select do |q|
-            q['previous_hiv_test'] = 'Negative'
+            q['previous_hiv_test'] == concept('Negative').concept_id
           end
           @data['last_hiv_test_positive_selftest'] = filter_hash('previous_hiv_test_done', concept('Self').concept_id).select do |q|
             [concept('Positive').concept_id, concept('Positive NOT on ART').concept_id, concept('Positive on ART').concept_id].include?(q['previous_hiv_test'])
