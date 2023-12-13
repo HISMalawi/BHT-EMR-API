@@ -536,31 +536,23 @@ module ARTService
       ActiveRecord::Base.connection.select_all <<~SQL
         SELECT
           o.patient_id,
-          CONCAT(n.given_name, ' ', n.family_name) patient_name,
-          CONCAT(creator_name.given_name, ' ', creator_name.family_name) ordered_by,
-          CONCAT(dispenser_name.given_name, ' ', dispenser_name.family_name) dispensed_by,
+          n.given_name,
+          n.family_name,
           i.identifier national_id,
           a.identifier arv_number,
-          DATE(o.start_date) visit_date,
-          GROUP_CONCAT(DISTINCT(obs.obs_datetime)) dispenstaions_time
+          p.gender,
+          p.birthdate,
+          GROUP_CONCAT(DISTINCT(DATE(o.start_date))) visit_dates
         FROM orders o
         INNER JOIN patient_program pg ON pg.patient_id = o.patient_id AND pg.program_id = #{program.id} AND pg.voided = 0
         INNER JOIN patient_state ps ON ps.patient_program_id = pg.patient_program_id AND ps.state IN(#{adverse_outcomes}) AND o.start_date > ps.start_date AND ps.voided = 0
         INNER JOIN person p ON p.person_id = o.patient_id AND p.voided = 0
         INNER JOIN drug_order do ON do.order_id = o.order_id AND do.quantity > 0 AND do.drug_inventory_id IN (SELECT drug_id FROM arv_drug)
-        INNER JOIN obs ON obs.order_id = o.order_id AND obs.voided = 0 AND obs.concept_id = #{concept('Amount dispensed').concept_id}
         LEFT JOIN patient_identifier a ON a.patient_id = p.person_id AND a.voided = 0 AND a.identifier_type = #{indetifier_type}
         LEFT JOIN patient_identifier i ON i.patient_id = p.person_id AND i.voided = 0 AND i.identifier_type = 3
-        LEFT JOIN users u ON u.user_id = o.creator
-        LEFT JOIN users ud ON ud.user_id = obs.creator
-        LEFT JOIN person creator ON creator.person_id = u.person_id
         LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
-        LEFT JOIN person_name creator_name ON creator_name.person_id = creator.person_id
-        LEFT JOIN person dispenser ON dispenser.person_id = ud.person_id
-        LEFT JOIN person_name dispenser_name ON dispenser_name.person_id = dispenser.person_id
         WHERE o.order_type_id = #{OrderType.find_by_name('Drug order').id} AND o.voided = 0 AND o.start_date >= '#{@start_date}' AND o.start_date <= '#{@end_date}'
-        GROUP BY o.patient_id, DATE(o.start_date) HAVING ordered_by = dispensed_by
-        ORDER BY o.patient_id ASC
+        GROUP BY o.patient_id HAVING COUNT(DATE(o.start_date)) IN (1, 2)
       SQL
     end
 
