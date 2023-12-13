@@ -52,7 +52,7 @@ class ProgramAppointmentService
       i.identifier, p.birthdate, p.gender, n.given_name,
       n.family_name, obs.person_id, p.birthdate_estimated,att.value cell_phone,
       a.state_province district,
-      a.township_division village, a.city_village land_mark
+      a.township_division village, a.city_village land_mark, patient_outcome(obs.person_id, '#{date.strftime('%Y-%m-%d 23:59:59')}') outcome
     FROM obs
     INNER JOIN encounter e ON e.encounter_id = obs.encounter_id
     AND e.voided = 0 AND obs.voided = 0 AND e.program_id = #{program_id}
@@ -85,7 +85,8 @@ class ProgramAppointmentService
         birthdate: c['birthdate'], gender: c['gender'], person_id: c['person_id'],
         arv_number: c['identifier'], birthdate_estimated: c['birthdate_estimated'],
         cell_phone: c["cell_phone"], land_mark: c["land_mark"],
-        village: c["village"], district: c["district"]
+        village: c["village"], district: c["district"],
+        outcome: c["outcome"]
       }
     end
 
