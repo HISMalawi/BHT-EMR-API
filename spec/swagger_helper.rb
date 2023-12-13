@@ -494,7 +494,7 @@ RSpec.configure do |config|
             }
           },
           different_pregnancy_value_on_same_date: {
-            type: object,
+            type: :object,
             properties: {
               patient_id: { type: :integer },
               given_name: { type: :string },
