@@ -15,7 +15,8 @@ module ARTService
       'DOB MORE THAN DATE ENROLLED' => 'dob_more_than_date_enrolled',
       'INCOMPLETE VISITS' => 'incomplete_visit',
       'MISSING DEMOGRAPHICS' => 'incomplete_demographics',
-      'MISSING VL RESULTS' => 'missing_vl_results'
+      'MISSING VL RESULTS' => 'missing_vl_results',
+      'ODD DISPENSATIONS' => 'odd_dispensations'
     }.freeze
 
     def initialize(start_date:, end_date:, tool_name:)
@@ -528,6 +529,41 @@ module ARTService
         WHERE o.concept_id = #{concept('Test type').concept_id} AND o.value_coded = #{concept('HIV viral load').concept_id} AND o.voided = 0
         AND o.obs_datetime BETWEEN '#{@start_date}' AND '#{@end_date}'
         AND tr.obs_id IS NULL AND r.obs_id IS NULL
+      SQL
+    end
+
+    def odd_dispensations
+      ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT
+          o.patient_id,
+          n.given_name,
+          n.family_name,
+          i.identifier national_id,
+          a.identifier arv_number,
+          p.gender,
+          p.birthdate,
+          GROUP_CONCAT(DISTINCT(DATE(o.start_date))) visit_dates
+        FROM orders o
+        INNER JOIN patient_program pg ON pg.patient_id = o.patient_id AND pg.program_id = #{program.id} AND pg.voided = 0
+        INNER JOIN patient_state ps ON ps.patient_program_id = pg.patient_program_id AND ps.state IN(#{adverse_outcomes}) AND o.start_date > ps.start_date AND ps.voided = 0
+        INNER JOIN person p ON p.person_id = o.patient_id AND p.voided = 0
+        INNER JOIN drug_order do ON do.order_id = o.order_id AND do.quantity > 0 AND do.drug_inventory_id IN (SELECT drug_id FROM arv_drug)
+        LEFT JOIN patient_identifier a ON a.patient_id = p.person_id AND a.voided = 0 AND a.identifier_type = #{indetifier_type}
+        LEFT JOIN patient_identifier i ON i.patient_id = p.person_id AND i.voided = 0 AND i.identifier_type = 3
+        LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
+        WHERE o.order_type_id = #{OrderType.find_by_name('Drug order').id} AND o.voided = 0 AND o.start_date >= '#{@start_date}' AND o.start_date <= '#{@end_date}'
+        GROUP BY o.patient_id HAVING COUNT(DATE(o.start_date)) IN (1, 2)
+      SQL
+    end
+
+    def adverse_outcomes
+      <<~SQL
+        SELECT pws.program_workflow_state_id state
+        FROM program_workflow pw
+        INNER JOIN concept_name pcn ON pcn.concept_id = pw.concept_id AND pcn.concept_name_type = 'FULLY_SPECIFIED' AND pcn.voided = 0
+        INNER JOIN program_workflow_state pws ON pws.program_workflow_id = pw.program_workflow_id AND pws.retired = 0
+        INNER JOIN concept_name cn ON cn.concept_id = pws.concept_id AND cn.concept_name_type = 'FULLY_SPECIFIED' AND cn.voided = 0
+        WHERE pw.program_id = #{program.id} AND pw.retired = 0 AND pws.terminal = 1
       SQL
     end
 
