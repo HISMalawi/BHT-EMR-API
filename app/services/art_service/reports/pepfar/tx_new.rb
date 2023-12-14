@@ -55,7 +55,7 @@ module ARTService
             new_patient = row['new_patient'].to_i
             patient_id = row['patient_id'].to_i
 
-            report[age_group.to_s][gender.to_s][cd4_count_group.to_sym] << patient_id
+            report[age_group.to_s][gender.to_s][cd4_count_group.to_sym] << patient_id if new_patient.zero?
             report[age_group.to_s][gender.to_s]['transfer_in'.to_sym] << patient_id if new_patient.zero?
           end
         end
@@ -107,6 +107,7 @@ module ARTService
                 END new_patient
             FROM patient_program pp
             INNER JOIN person pe ON pe.person_id = pp.patient_id AND pe.voided = 0
+            INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id AND ps.voided = 0 AND ps.state = 7 -- ON ART
             LEFT JOIN (
                 SELECT max(o.obs_datetime) AS obs_datetime, o.person_id
                 FROM obs o
