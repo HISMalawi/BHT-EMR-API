@@ -85,7 +85,7 @@ module HTSService
 
       TESTING => %i[task_not_done_today?],
 
-      REGISTRATION => %i[client_is_unknown? hiv_positive_at_health_facility_accesspoint?],
+      REGISTRATION => %i[client_is_unknown? has_test_two_result?],
     
       RECENCY => %i[not_from_community_accesspoint? can_perform_recency? age_greater_than_10_years?],
 
@@ -242,6 +242,18 @@ module HTSService
       return false if obs.blank?
       return true if /inconclusive/.match?(obs.last.answer_string&.downcase)
       return false
+    end
+
+    def has_test_two_result?
+      test2 = Observation.joins(:encounter).where(
+        person: @patient.person,
+        concept_id: concept("Test 2").concept_id,
+        encounter: {
+          program_id: @program.program_id,
+          encounter_type: encounter_type("TESTING"),
+        },
+      ).where("encounter_datetime BETWEEN ? AND ?", *TimeUtils.day_bounds(@date))
+      !test2.blank?
     end
 
     def test_two_reactive?
