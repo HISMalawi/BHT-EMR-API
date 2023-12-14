@@ -104,10 +104,14 @@ module ARTService
                 CASE
                     WHEN transfer_in.value_coded IS NOT NULL THEN 0
                     ELSE 1
-                END new_patient
+                END new_patient,
+                pp.date_enrolled,
+                MIN(DATE(ord.start_date)) earliest_start_date
             FROM patient_program pp
             INNER JOIN person pe ON pe.person_id = pp.patient_id AND pe.voided = 0
             INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id AND ps.voided = 0 AND ps.state = 7 -- ON ART
+            INNER JOIN orders ord ON ord.patient_id = pp.patient_id AND ord.voided = 0 AND ord.concept_id = #{concept_name('ARV regimen').concept_id} AND ord.start_date <= '#{end_date}' AND ord.start_date >= '#{start_date}'
+            INNER JOIN drug_order do ON do.order_id = ord.order_id AND do.quantity > 0
             LEFT JOIN (
                 SELECT max(o.obs_datetime) AS obs_datetime, o.person_id
                 FROM obs o
