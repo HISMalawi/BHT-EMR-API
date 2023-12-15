@@ -117,7 +117,7 @@ module PatientIdentifierService
 
       archive_identifier = FilingNumberService.new.find_available_filing_number(dormant_identifier)
       create_patient_identifier(secondary_patient_id, archive_identifier, dormant_identifier)
-
+      create_patient_identifier(primary_patient_id, identifier, active_identifier)
       {
         active_number: identifier,
         primary_patient_id: primary_patient_id,
