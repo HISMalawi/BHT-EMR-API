@@ -50,18 +50,26 @@ def process_phone_number(patient)
 end
 
 def process_patient
+  pool = Concurrent::FixedThreadPool.new(40)
   Patient.all.each do |patient|
     puts "Processing patient #{patient.id}"
-    process_names patient
-    process_addresses patient
-    process_phone_number patient
-    process_occupation patient
+    pool.post do
+      process_names patient
+      process_addresses patient
+      process_phone_number patient
+      process_occupation patient
+    end
   end
+  pool.shutdown
+  pool.wait_for_termination
+  Rails.logger.info 'Done'
 end
+
+Rails.logger = Logger.new($stdout)
+ActiveRecord::Base.logger = Rails.logger
+ActiveRecord::Base.logger.level = :debug
 
 User.current = User.first
 Location.current = Location.first
 
-ActiveRecord::Base.transaction do
-  process_patient
-end
+process_patient
