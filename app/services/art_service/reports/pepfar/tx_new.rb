@@ -96,7 +96,7 @@ module ARTService
                 disaggregated_age_group(pe.birthdate, DATE('#{end_date}')) age_group,
                 CASE
                     WHEN o.value_numeric < 200 THEN 'cd4_less_than_200'
-                    WHEN o.value_numeric = 200 AND o.value_modifier = '=' THEN 'cd4_less_than_200'
+                    WHEN o.value_numeric = 200 AND o.value_modifier = '=' THEN 'cd4_greater_than_equal_to_200'
                     WHEN o.value_numeric = 200 AND o.value_modifier = '<' THEN 'cd4_less_than_200'
                     WHEN o.value_numeric = 200 AND o.value_modifier = '>' THEN 'cd4_greater_than_equal_to_200'
                     WHEN o.value_numeric > 200 THEN 'cd4_greater_than_equal_to_200'
@@ -110,7 +110,7 @@ module ARTService
                 MIN(DATE(ord.start_date)) earliest_start_date
             FROM patient_program pp
             INNER JOIN person pe ON pe.person_id = pp.patient_id AND pe.voided = 0
-            INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id AND ps.voided = 0 AND ps.state = 7 -- ON ART
+            INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id AND ps.voided = 0 AND ps.start_date >= '#{start_date}' AND ps.state = 7   -- ON ART
             INNER JOIN orders ord ON ord.patient_id = pp.patient_id AND ord.voided = 0 AND ord.start_date <= '#{end_date}' AND ord.order_type_id = #{order_type('Drug Order').id}
             INNER JOIN drug_order do ON do.order_id = ord.order_id AND do.quantity > 0 AND do.drug_inventory_id IN (SELECT drug_id FROM arv_drug)
             LEFT JOIN (
