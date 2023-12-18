@@ -54,8 +54,9 @@ module ARTService
             cd4_count_group = row['cd4_count_group']
             new_patient = row['new_patient'].to_i
             patient_id = row['patient_id'].to_i
+            earliest_start_date = row['earliest_start_date']
 
-            report[age_group.to_s][gender.to_s][cd4_count_group.to_sym] << patient_id if new_patient.zero?
+            report[age_group.to_s][gender.to_s][cd4_count_group.to_sym] << patient_id if new_patient.positive? && earliest_start_date.to_date >= start_date.to_date
             report[age_group.to_s][gender.to_s]['transfer_in'.to_sym] << patient_id if new_patient.zero?
           end
         end
@@ -110,8 +111,8 @@ module ARTService
             FROM patient_program pp
             INNER JOIN person pe ON pe.person_id = pp.patient_id AND pe.voided = 0
             INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id AND ps.voided = 0 AND ps.state = 7 -- ON ART
-            INNER JOIN orders ord ON ord.patient_id = pp.patient_id AND ord.voided = 0 AND ord.concept_id = #{concept_name('ARV regimen').concept_id} AND ord.start_date <= '#{end_date}' AND ord.start_date >= '#{start_date}'
-            INNER JOIN drug_order do ON do.order_id = ord.order_id AND do.quantity > 0
+            INNER JOIN orders ord ON ord.patient_id = pp.patient_id AND ord.voided = 0 AND ord.start_date <= '#{end_date}' AND ord.order_type_id = #{order_type('Drug Order').id}
+            INNER JOIN drug_order do ON do.order_id = ord.order_id AND do.quantity > 0 AND do.drug_inventory_id IN (SELECT drug_id FROM arv_drug)
             LEFT JOIN (
                 SELECT max(o.obs_datetime) AS obs_datetime, o.person_id
                 FROM obs o
@@ -122,7 +123,7 @@ module ARTService
                     AND pp.date_enrolled <= DATE('#{end_date}')
                     AND pp.date_enrolled >= DATE('#{start_date}')
                 WHERE o.concept_id = #{concept_name('CD4 count').concept_id} AND o.voided = 0
-                AND o.obs_datetime <= DATE('#{end_date}') AND o.obs_datetime >= DATE('#{start_date}')
+                AND o.obs_datetime <= '#{end_date}' AND o.obs_datetime >= '#{start_date}'
                 GROUP BY o.person_id
             ) current_cd4 ON current_cd4.person_id = pp.patient_id
             LEFT JOIN obs o ON o.person_id = pp.patient_id AND o.concept_id = #{concept_name('CD4 count').concept_id} AND o.voided = 0 AND o.obs_datetime = current_cd4.obs_datetime
