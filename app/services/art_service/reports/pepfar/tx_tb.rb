@@ -93,6 +93,7 @@ module ARTService
               FROM obs o
               INNER JOIN temp_earliest_start_date tesd ON tesd.patient_id = o.person_id
               WHERE o.concept_id = #{ConceptName.find_by_name('TB status').concept_id}
+              AND o.value_coded IN (SELECT concept_id FROM concept_name WHERE name IN ('TB Suspected', 'TB NOT suspected') AND voided = 0)
               AND o.voided = 0 AND o.obs_datetime BETWEEN '#{start_date}' AND '#{end_date}'
               GROUP BY o.person_id
             ) current_obs ON current_obs.person_id = o.person_id AND current_obs.obs_datetime = o.obs_datetime
@@ -101,7 +102,7 @@ module ARTService
             LEFT JOIN concept_name vcn ON vcn.concept_id = o.value_coded AND vcn.voided = 0 AND vcn.name IN ('CXR', 'MWRD')
             WHERE o.concept_id = #{ConceptName.find_by_name('TB status').concept_id}
             AND o.voided = 0
-            AND o.value_coded IN (SELECT concept_id FROM concept_name WHERE name IN ('TB Suspected', 'TB NOT suspected', 'Confirmed TB NOT on treatment', 'Confirmed TB on treatment') AND voided = 0)
+            AND o.value_coded IN (SELECT concept_id FROM concept_name WHERE name IN ('TB Suspected', 'TB NOT suspected') AND voided = 0)
             AND o.obs_datetime BETWEEN '#{start_date}' AND '#{end_date}'
             GROUP BY o.person_id
           SQL
