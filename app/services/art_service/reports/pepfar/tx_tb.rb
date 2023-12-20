@@ -192,8 +192,9 @@ module ARTService
             enrollment_date = patient['enrollment_date']
             tb_status = patient['tb_status'].downcase
             screening_methods = patient['screening_methods']&.split(',')&.map(&:downcase)
-            process_method(metrics, screening_methods)
-            process_screening_results(metrics, enrollment_date, tb_status)
+            patient_id = patient['patient_id']
+            process_method(metrics, screening_methods, patient_id)
+            process_screening_results(metrics, enrollment_date, tb_status, patient_id)
           end
         end
 
@@ -214,20 +215,20 @@ module ARTService
           end
         end
 
-        def process_screening_results(metrics, enrollment_date, tb_status)
+        def process_screening_results(metrics, enrollment_date, tb_status, patient_id)
           if new_on_art(enrollment_date)
-            metrics[:sceen_pos_new] << patient['patient_id'] if ['tb suspected', 'sup', 'confirmed tb not on treatment', 'norx', 'confirmed tb on treatment', 'rx'].include?(tb_status)
-            metrics[:sceen_neg_new] << patient['patient_id'] if ['tb not suspected', 'nosup'].include?(tb_status)
+            metrics[:sceen_pos_new] << patient_id if ['tb suspected', 'sup', 'confirmed tb not on treatment', 'norx', 'confirmed tb on treatment', 'rx'].include?(tb_status)
+            metrics[:sceen_neg_new] << patient_id if ['tb not suspected', 'nosup'].include?(tb_status)
           else
-            metrics[:sceen_pos_prev] << patient['patient_id'] if ['tb suspected', 'sup', 'confirmed tb not on treatment', 'norx'].include?(tb_status)
-            metrics[:sceen_neg_prev] << patient['patient_id'] if ['tb not suspected', 'nosup'].include?(tb_status)
+            metrics[:sceen_pos_prev] << patient_id if ['tb suspected', 'sup', 'confirmed tb not on treatment', 'norx'].include?(tb_status)
+            metrics[:sceen_neg_prev] << patient_id if ['tb not suspected', 'nosup'].include?(tb_status)
           end
         end
 
-        def process_method(metrics, methods)
-          metrics[:symptom_screen_alone] << methods if methods.blank?
-          metrics[:cxr_screen] << methods if methods.include?('cxr') && !methods.include?('mwrd')
-          metrics[:mwrd_screen] << methods if methods.include?('mwrd')
+        def process_method(metrics, methods, patient_id)
+          metrics[:symptom_screen_alone] << patient_id if methods.blank?
+          metrics[:cxr_screen] << patient_id if methods&.include?('cxr') && !methods&.include?('mwrd')
+          metrics[:mwrd_screen] << patient_id if methods&.include?('mwrd')
         end
 
         # rubocop:enable Metrics/AbcSize
