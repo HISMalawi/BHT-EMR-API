@@ -950,7 +950,7 @@ module ARTService
           SELECT tesd.patient_id, TIMESTAMPDIFF(YEAR, tesd.birthdate, DATE('#{end_date}')) AS age
           FROM temp_earliest_start_date tesd
           WHERE tesd.patient_id IN (#{total_alive_and_on_art.map { |r| r['patient_id'].to_i }.join(',')})
-          HAVING age >= 30
+          GROUP BY tesd.patient_id HAVING age >= 30
         SQL
 
         # map the results to patient ids
