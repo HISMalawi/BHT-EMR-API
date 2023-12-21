@@ -353,7 +353,7 @@ module ARTService
         cohort_struct.total_patients_on_family_planning = total_patients_on_family_planning(cohort_struct.total_alive_and_on_art, quarter_start_date, end_date)
 
         # Patients whose BP was screened and are above 30 years least once before end of quarter and on ARVs
-        cohort_struct.total_patients_with_screened_bp = total_patients_with_screened_bp(total_patients_alive_and_on_art_above_30_years(cohort_struct.total_alive_and_on_art), start_date, end_date)
+        cohort_struct.total_patients_with_screened_bp = total_patients_with_screened_bp(total_patients_alive_and_on_art_above_30_years(cohort_struct.total_alive_and_on_art, end_date), start_date, end_date)
 
         # Patients who started TPT in current reporting period
         tpt = Cohort::Tpt.new(start_date, end_date)
@@ -943,18 +943,18 @@ module ARTService
         ((results.count.to_f / total_alive_and_on_art.count) * 100).to_i
       end
 
-      def total_patients_alive_and_on_art_above_30_years(total_alive_and_on_art)
-        return 0 if total_alive_and_on_art.empty?
+      def total_patients_alive_and_on_art_above_30_years(total_alive_and_on_art, end_date)
+        return nil if total_alive_and_on_art.empty?
 
         results = ActiveRecord::Base.connection.select_all <<~SQL
-          SELECT tesd.patient, TIMESTAMPDIFF(YEAR, tesd.birthdate, DATE('#{end_date}')) AS age
+          SELECT tesd.patient_id, TIMESTAMPDIFF(YEAR, tesd.birthdate, DATE('#{end_date}')) AS age
           FROM temp_earliest_start_date tesd
-          WHERE tesd.patient_id IN (#{total_alive_and_on_art.join(',')})
+          WHERE tesd.patient_id IN (#{total_alive_and_on_art.map { |r| r['patient_id'].to_i }.join(',')})
           HAVING age >= 30
         SQL
 
         # map the results to patient ids
-        results&.map { |r| r['patient'].to_i }
+        results&.map { |r| r['patient_id'].to_i }
       end
 
 
