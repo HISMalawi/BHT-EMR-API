@@ -42,7 +42,7 @@ class Patient < VoidableRecord
           methods: %i[type]
         }
       },
-      methods: %i[merge_history tpt_status art_start_date]
+      methods: %i[merge_history art_start_date]
     ))
   end
 
@@ -141,6 +141,22 @@ class Patient < VoidableRecord
       SELECT patient_start_date(#{id}) AS art_start_date
     SQL
     result['art_start_date'] || nil
+  end
+
+  def last_arv_drug_expire_date
+    result = ActiveRecord::Base.connection.select_one <<~SQL
+          SELECT orders.auto_expire_date
+      from orders
+      inner join encounter on orders.encounter_id = encounter.encounter_id
+       and encounter.voided = 0
+      where orders.patient_id = #{id}
+      and encounter.program_id = #{Program.find_by_name('HIV PROGRAM').id}
+      and orders.voided = 0
+      and orders.concept_id in (#{Drug.arv_drugs.map(&:concept_id).join(',')})
+      order by orders.auto_expire_date desc
+      limit 1
+    SQL
+    result['auto_expire_date']&.to_date || nil
   end
 
   def tpt_status
