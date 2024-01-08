@@ -13,6 +13,7 @@ module ARTService
           @start_date = start_date
           @end_date = end_date
           @patient_id = kwargs[:patient_id]
+          @tpt_status = {}
         end
 
         def find_report
@@ -80,12 +81,12 @@ module ARTService
           tpt_name = determine_tpt_name(tpt, patient)
           arv_drug_runout_date = patient_arv_drug_runout_date
 
-          { tpt: tpt_name, completed: completed, tb_treatment: false,
-            tpt_init_date: tpt_init_date, tpt_complete_date: tpt_complete_date,
-            tpt_end_date: tpt_end_date,
-            art_start_date: art_start_date,
-            art_drug_auto_expire_date: arv_drug_runout_date,
-            eligible: determine_eligibility(tpt, diff_in_months, art_start_date, arv_drug_runout_date) }
+          @tpt_status.merge!({ tpt: tpt_name, completed: completed, tb_treatment: false,
+                               tpt_init_date: tpt_init_date, tpt_complete_date: tpt_complete_date,
+                               tpt_end_date: tpt_end_date, art_start_date: art_start_date,
+                               art_drug_auto_expire_date: arv_drug_runout_date
+                            })
+          determine_eligibility(tpt, diff_in_months, art_start_date, arv_drug_runout_date)
         end
 
         def determine_tpt(patient)
@@ -103,11 +104,13 @@ module ARTService
         def calculate_tpt_end_date(tpt, tpt_init_date)
           tpt == '6H' ? tpt_init_date + 6.months : tpt_init_date + 3.months
         end
-        
+
         def determine_eligibility(tpt, diff_in_months, art_start_date, arv_drug_runout_date)
-          
+
           three_hp_eligible = false
           six_h_eligible = false
+          tpt_init_date = @tpt_status[:tpt_init_date]
+          tpt_end_date = @tpt_status[:tpt_end_date]
           case tpt
           when '3HP'
             # 3HP is taken 1 dose per week
@@ -118,7 +121,12 @@ module ARTService
             three_hp_eligible = true if diff_in_months <= 1
             if diff_in_months > 1
               if arv_drug_runout_date && difference_in_months(arv_drug_runout_date.to_date, art_start_date.to_date) < 3
+                #  Patient defaulted for ART and TPT and was on ART for less than 3 months: patient TPT status is reset
                 three_hp_eligible = true
+                six_h_eligible = true
+                tpt_end_date = nil
+                tpt_init_date = nil
+                @tpt_status.merge!({ tpt: nil })
               end
             end
           when '6H'
@@ -130,14 +138,23 @@ module ARTService
             six_h_eligible = true if diff_in_months <= 2
             if diff_in_months > 2
               if arv_drug_runout_date && difference_in_months(arv_drug_runout_date.to_date, art_start_date.to_date) < 3
+                #  Patient defaulted for ART and TPT and was on ART for less than 3 months: patient TPT status is reset
+                three_hp_eligible = true
                 six_h_eligible = true
+                tpt_end_date = nil
+                tpt_init_date = nil
+                @tpt_status.merge!({ tpt: nil })
               end
             end
           end
-          {
-            '3HP': three_hp_eligible,
-            '6H': six_h_eligible
-          }
+          @tpt_status.merge!({
+                               tpt_init_date: tpt_init_date,
+                               tpt_end_date: tpt_end_date,
+                               eligible: {
+                                 '3HP': three_hp_eligible,
+                                 '6H': six_h_eligible
+                               }
+                             })
         end
 
         def patient_has_totally_completed_tpt?(patient, tpt)
