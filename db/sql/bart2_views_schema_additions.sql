@@ -1637,6 +1637,7 @@ BEGIN
     SET my_pill_count = my_total_numeric + my_total_text;
   END LOOP;
 
+  SET done = FALSE;
   OPEN cur2;
   read_loop2: LOOP
     FETCH cur2 INTO my_total_numeric;
@@ -1653,6 +1654,7 @@ BEGIN
     SET my_pill_count = my_total_numeric + my_pill_count;
   END LOOP;
 
+  SET done = FALSE;
   OPEN cur3;
   read_loop3: LOOP
     FETCH cur3 INTO my_total_transfer_in;
@@ -1746,7 +1748,7 @@ DROP FUNCTION IF EXISTS `current_defaulter_date`;
 CREATE FUNCTION current_defaulter_date(my_patient_id INT, my_end_date date) RETURNS varchar(25)
 DETERMINISTIC
 BEGIN
-DECLARE done INT DEFAULT FALSE;
+  DECLARE done INT DEFAULT FALSE;
   DECLARE my_start_date, my_expiry_date, my_obs_datetime DATETIME;
   DECLARE my_daily_dose, my_quantity, my_pill_count, my_total_text, my_total_numeric DECIMAL(6, 2);
   DECLARE my_drug_id INT;
