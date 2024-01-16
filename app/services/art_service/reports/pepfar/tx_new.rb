@@ -96,7 +96,11 @@ module ARTService
         def process_age_group_report(age_group, gender, age_group_report)
           {
             age_group: age_group,
-            gender: gender,
+            gender: if gender == 'F'
+                      'Female'
+                    else
+                      (gender == 'M' ? 'Male' : gender)
+                    end,
             cd4_less_than_200: age_group_report['cd4_less_than_200'.to_sym],
             cd4_greater_than_equal_to_200: age_group_report['cd4_greater_than_equal_to_200'.to_sym],
             cd4_unknown_or_not_done: age_group_report['cd4_unknown_or_not_done'.to_sym],
@@ -114,12 +118,14 @@ module ARTService
 
           new_group = pepfar_age_groups.map { |age_group| age_group }
           new_group << 'All'
-          gender_scores = { 'F' => 0, 'M' => 1, 'Male' => 2, 'FNP' => 4, 'FP' => 3, 'FBf' => 5 }
-          result.sort_by do |item|
+          gender_scores = { 'Female' => 0, 'Male' => 1, 'FNP' => 3, 'FP' => 2, 'FBf' => 4 }
+          result_scores = result.sort_by do |item|
             gender_score = gender_scores[item[:gender]]
             age_group_score = new_group.index(item[:age_group])
             [gender_score, age_group_score]
           end
+          # remove all unknown age groups
+          result_scores.reject { |item| item[:age_group].match?(/unknown/i) }
         end
 
         def data
