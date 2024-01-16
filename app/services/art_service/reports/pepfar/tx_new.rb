@@ -45,7 +45,7 @@ module ARTService
 
         def addittional_groups(report)
           report['All'] = {}
-          %w[M FP FNP FBf].each do |key|
+          %w[Male FP FNP FBf].each do |key|
             report['All'][key] = {
               cd4_less_than_200: [],
               cd4_greater_than_equal_to_200: [],
@@ -83,7 +83,7 @@ module ARTService
           maternal_status_date = kwargs[:maternal_status_date]
 
           if gender == 'M'
-            report['All']['M'][indicator.to_sym] << kwargs[:patient_id]
+            report['All']['Male'][indicator.to_sym] << kwargs[:patient_id]
           elsif maternal_status&.match?(/pregnant/i) && maternal_status_date&.to_date == start_date.to_date
             report['All']['FP'][indicator.to_sym] << kwargs[:patient_id]
           elsif maternal_status&.match?(/breast/i) && maternal_status_date&.to_date == start_date.to_date
@@ -113,9 +113,8 @@ module ARTService
           end
 
           new_group = pepfar_age_groups.map { |age_group| age_group }
-          new_group.delete('Unknown')
           new_group << 'All'
-          gender_scores = { 'F' => 0, 'M' => 1, 'FNP' => 3, 'FP' => 2, 'FBf' => 4 }
+          gender_scores = { 'F' => 0, 'M' => 1, 'Male' => 2, 'FNP' => 4, 'FP' => 3, 'FBf' => 5 }
           result.sort_by do |item|
             gender_score = gender_scores[item[:gender]]
             age_group_score = new_group.index(item[:age_group])
