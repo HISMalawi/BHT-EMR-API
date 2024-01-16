@@ -94,7 +94,7 @@ module HTSService
           AND hiv_status.voided = 0
           AND hiv_status.concept_id = #{concept('HIV STATUS').id}
           AND hiv_status.value_coded = #{concept('Positive').id}
-        INNER JOIN obs linkage ON linkage.encounter_id = e.encounter_id
+        LEFT JOIN obs linkage ON linkage.encounter_id = e.encounter_id
           AND linkage.voided = 0
           AND linkage.concept_id = #{concept('HTC Serial number').id}
           AND linkage.value_text IS NULL
@@ -127,7 +127,7 @@ module HTSService
         WHERE e.program_id = #{program('HTC PROGRAM').id} AND e.voided = 0
         AND DATE(e.encounter_datetime) >= DATE('#{@start_date}') AND DATE(e.encounter_datetime) <= DATE('#{@end_date}')
         GROUP BY e.patient_id, e.encounter_type, DATE(e.encounter_datetime)
-        HAVING IF total > 1
+        HAVING total > 1
       SQL
     end
 
@@ -152,7 +152,7 @@ module HTSService
           AND e.voided = 0
           AND e.encounter_type = #{encounter_type('TESTING').id}
         INNER JOIN patient_identifier i ON i.patient_id = p.patient_id AND i.identifier_type = #{patient_identifier_type('National id').id}
-        INNER JOIN obs partner_status ON partner_status.patient_id = p.patient_id
+        LEFT JOIN obs partner_status ON partner_status.person_id = p.patient_id
           AND partner_status.voided = 0
           AND partner_status.concept_id = #{concept('Partner HIV Status').id}
           AND partner_status.value_coded != #{concept('No Partner').id}
