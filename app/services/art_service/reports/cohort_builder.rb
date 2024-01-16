@@ -353,7 +353,7 @@ module ARTService
         cohort_struct.total_patients_on_family_planning = total_patients_on_family_planning(cohort_struct.total_alive_and_on_art, quarter_start_date, end_date)
 
         # Patients whose BP was screened and are above 30 years least once before end of quarter and on ARVs
-        cohort_struct.total_patients_with_screened_bp = total_patients_with_screened_bp(cohort_struct.total_alive_and_on_art, start_date, end_date)
+        cohort_struct.total_patients_with_screened_bp = total_patients_with_screened_bp(total_patients_alive_and_on_art_above_30_years(cohort_struct.total_alive_and_on_art, end_date), start_date, end_date)
 
         # Patients who started TPT in current reporting period
         tpt = Cohort::Tpt.new(start_date, end_date)
@@ -925,28 +925,38 @@ module ARTService
           INNER JOIN (
             SELECT person_id, MAX(obs.obs_datetime) AS obs_datetime
             FROM obs
-            INNER JOIN temp_patient_outcomes
-              ON temp_patient_outcomes.patient_id = obs.person_id
-              AND temp_patient_outcomes.cum_outcome = 'On antiretrovirals'
             WHERE voided = 0
               AND concept_id IN (#{bp_concepts.to_sql})
               AND (value_text IS NOT NULL OR value_numeric IS NOT NULL)
-              AND obs_datetime < DATE('#{end_date}') + INTERVAL 1 DAY
+              AND obs_datetime < DATE('#{end_date}') + INTERVAL 1 DAY AND obs_datetime >= DATE('#{end_date}') - INTERVAL 12 MONTH
+              AND person_id IN (#{total_alive_and_on_art.join(',')})
             GROUP BY person_id
           ) AS max_obs
             ON max_obs.person_id = o.person_id
             AND max_obs.obs_datetime = o.obs_datetime
-          INNER JOIN temp_patient_outcomes
-            ON temp_patient_outcomes.patient_id = o.person_id
-            AND temp_patient_outcomes.cum_outcome = 'On antiretrovirals'
           WHERE o.voided = 0
             AND o.concept_id in (#{bp_concepts.to_sql})
             AND (o.value_text IS NOT NULL OR o.value_numeric IS NOT NULL)
-          GROUP BY o.person_id;
+          GROUP BY o.person_id
         SQL
 
         ((results.count.to_f / total_alive_and_on_art.count) * 100).to_i
       end
+
+      def total_patients_alive_and_on_art_above_30_years(total_alive_and_on_art, end_date)
+        return nil if total_alive_and_on_art.empty?
+
+        results = ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT tesd.patient_id, TIMESTAMPDIFF(YEAR, tesd.birthdate, DATE('#{end_date}')) AS age
+          FROM temp_earliest_start_date tesd
+          WHERE tesd.patient_id IN (#{total_alive_and_on_art.map { |r| r['patient_id'].to_i }.join(',')})
+          GROUP BY tesd.patient_id HAVING age >= 30
+        SQL
+
+        # map the results to patient ids
+        results&.map { |r| r['patient_id'].to_i }
+      end
+
 
       def total_patients_on_family_planning(patients_list, start_date, end_date)
         patient_ids = []; patient_list = []
@@ -1769,12 +1779,11 @@ EOF
                                    #{reason_for_starting_concept_id})
             AND obs.obs_datetime >= patients.earliest_start_date
             AND obs.obs_datetime < (patients.earliest_start_date + INTERVAL 1 DAY)
-            AND obs.value_coded IS NOT NULL
+            AND obs.value_coded IN (#{yes_concept_id},#{patient_preg_concept_id})
             AND obs.voided = 0
           WHERE patients.gender IN ('F', 'Female')
             AND patients.date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-          GROUP BY patient_id
-          HAVING value_coded = #{yes_concept_id} OR value_coded = #{patient_preg_concept_id}
+          GROUP BY patient_id 
         SQL
 
         pregnant_at_initiation = ActiveRecord::Base.connection.select_all(

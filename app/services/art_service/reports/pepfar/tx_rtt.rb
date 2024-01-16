@@ -248,7 +248,9 @@ module ARTService
                 AND o.obs_datetime <= #{end_date} AND o.obs_datetime >= #{start_date}
                 GROUP BY o.person_id
             ) current_cd4 ON current_cd4.person_id = patient_program.patient_id
-            LEFT JOIN obs cd4_result ON cd4_result.person_id = patient_program.patient_id AND cd4_result.concept_id = #{concept_name('CD4 count').concept_id} AND cd4_result.voided = 0 AND cd4_result.obs_datetime = current_cd4.obs_datetime
+            LEFT JOIN obs cd4_result ON cd4_result.person_id = patient_program.patient_id AND cd4_result.concept_id = #{concept_name('CD4 count').concept_id} AND cd4_result.voided = 0
+            #  Not sure why we are matching the two dates but the result was excluding cd4 results for patients.
+            # AND cd4_result.obs_datetime = current_cd4.obs_datetime
             LEFT JOIN (#{current_occupation_query}) a ON a.person_id = patient_program.patient_id
             WHERE patient_program.program_id = 1 #{%w[Military Civilian].include?(@occupation) ? 'AND' : ''} #{occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'a', include_clause: false)}
               /* Ensure that the patients retrieved, did not receive ART within 28 days

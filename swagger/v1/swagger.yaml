@@ -3601,6 +3601,27 @@ components:
           type: array
           items:
             type: integer
+    different_pregnancy_value_on_same_date:
+      type: object
+      properties:
+        patient_id:
+          type: integer
+        given_name:
+          type: string
+        family_name:
+          type: string
+        visit_date:
+          type: string
+          format: date-time
+        gender:
+          type: string
+        birthdate:
+          type: string
+          format: date-time
+        arv_number:
+          type: string
+        national_id:
+          type: string
 security:
 - api_key: []
 servers:

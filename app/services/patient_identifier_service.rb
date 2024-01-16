@@ -25,7 +25,7 @@ module PatientIdentifierService
 
     def create(params)
       validate_identifier(params)
-      void_existing_identifier(params[:patient_id], params[:identifier_type])
+      void_existing_identifier(params)
       create_new_identifier(params)
     end
 
@@ -77,7 +77,9 @@ module PatientIdentifierService
       raise InvalidParameterError, 'Identifier already assigned to another patient'
     end
 
-    def void_existing_identifier(patient_id, identifier_type)
+    def void_existing_identifier(params)
+      patient_id = params[:patient_id]
+      identifier_type = params[:identifier_type]
       identifier = PatientIdentifier.find_by(patient_id: patient_id, identifier_type: identifier_type)
       identifier&.void("Updated to #{params[:identifier]} by #{User.current.username}")
     end
@@ -117,7 +119,7 @@ module PatientIdentifierService
 
       archive_identifier = FilingNumberService.new.find_available_filing_number(dormant_identifier)
       create_patient_identifier(secondary_patient_id, archive_identifier, dormant_identifier)
-
+      create_patient_identifier(primary_patient_id, identifier, active_identifier)
       {
         active_number: identifier,
         primary_patient_id: primary_patient_id,

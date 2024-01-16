@@ -88,20 +88,6 @@ module Api
         render json: stats
       end
 
-      def drugs_given_without_prescription
-        start_date, end_date = params.require %i[start_date end_date]
-        stats = service.drugs_given_without_prescription(start_date, end_date)
-
-        render json: stats
-      end
-
-      def drugs_given_with_prescription
-        start_date, end_date = params.require %i[start_date end_date]
-        stats = service.drugs_given_with_prescription(start_date, end_date)
-
-        render json: stats
-      end
-
       def dispensation
         start_date, end_date = params.require %i[start_date end_date]
         stats = service.dispensation(start_date, end_date)
