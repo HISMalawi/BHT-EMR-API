@@ -55,11 +55,11 @@ module HTSService
         LEFT JOIN obs vt ON vt.encounter_id = e.encounter_id
           AND vt.voided = 0
           AND vt.concept_id = #{concept('Visit type').id}
-        LEFT JOIN encounter et ON et.patient_id = e.patient_id 
+          LEFT JOIN encounter et ON et.patient_id = p.patient_id 
           AND et.voided = 0
           AND et.encounter_type = #{encounter_type('TESTING').id}
         WHERE e.program_id = #{program('HTC PROGRAM').id}
-          AND vt.value_coded NOT IN (#{concept('Self test distribution').concept_id})
+          AND vt.value_coded IS NULL
           AND DATE(e.encounter_datetime) >= DATE('#{@start_date}')
           AND DATE(e.encounter_datetime) <= DATE('#{@end_date}')
           AND et.encounter_id IS NULL
