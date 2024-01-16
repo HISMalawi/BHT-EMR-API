@@ -41,6 +41,7 @@ module HTSService
           i.identifier,
           DATE(e.encounter_datetime) as visit_date,
           pe.gender,
+          pe.birthdate,
           pn.given_name,
           pn.family_name
         FROM patient p
@@ -51,11 +52,14 @@ module HTSService
         INNER JOIN encounter e ON e.patient_id = p.patient_id 
           AND e.voided = 0
         INNER JOIN patient_identifier i ON i.patient_id = p.patient_id AND i.identifier_type = #{patient_identifier_type('National id').id}
+        LEFT JOIN obs vt ON vt.encounter_id = e.encounter_id
+          AND vt.voided = 0
+          AND vt.concept_id = #{concept('Visit type').id}
         LEFT JOIN encounter et ON et.patient_id = e.patient_id 
           AND et.voided = 0
           AND et.encounter_type = #{encounter_type('TESTING').id}
         WHERE e.program_id = #{program('HTC PROGRAM').id}
-          AND pn.given_name NOT LIKE '%Unknown%'
+          AND vt.value_coded NOT IN (#{concept('Self test distribution').concept_id})
           AND DATE(e.encounter_datetime) >= DATE('#{@start_date}')
           AND DATE(e.encounter_datetime) <= DATE('#{@end_date}')
           AND et.encounter_id IS NULL
@@ -72,6 +76,7 @@ module HTSService
           i.identifier,
           DATE(e.encounter_datetime) as visit_date,
           pe.gender,
+          pe.birthdate,
           pn.given_name,
           pn.family_name
         FROM patient p
@@ -89,15 +94,14 @@ module HTSService
           AND hiv_status.voided = 0
           AND hiv_status.concept_id = #{concept('HIV STATUS').id}
           AND hiv_status.value_coded = #{concept('Positive').id}
-        LEFT JOIN encounter art_init ON art_init.patient_id = p.patient_id
-          AND art_init.voided = 0
-          AND art_init.encounter_type = #{encounter_type('ART Enrollment').id}
+        INNER JOIN obs linkage ON linkage.encounter_id = e.encounter_id
+          AND linkage.voided = 0
+          AND linkage.concept_id = #{concept('HTC Serial number').id}
+          AND linkage.value_text IS NULL
         WHERE e.program_id = #{program('HTC PROGRAM').id}
           AND e.voided = 0
           AND DATE(e.encounter_datetime) >= DATE('#{@start_date}')
           AND DATE(e.encounter_datetime) <= DATE('#{@end_date}')
-          AND art_init.encounter_id IS NULL
-        GROUP BY p.patient_id
       SQL
     end
 
@@ -110,6 +114,7 @@ module HTSService
           et.name,
           DATE(e.encounter_datetime) as visit_date,
           pn.gender,
+          pn.birthdate,
           p.given_name,
           p.family_name,
           COUNT(*) total
@@ -122,7 +127,7 @@ module HTSService
         WHERE e.program_id = #{program('HTC PROGRAM').id} AND e.voided = 0
         AND DATE(e.encounter_datetime) >= DATE('#{@start_date}') AND DATE(e.encounter_datetime) <= DATE('#{@end_date}')
         GROUP BY e.patient_id, e.encounter_type, DATE(e.encounter_datetime)
-        HAVING IF (e.encounter_type = #{encounter_type('VITALS').id}, total > 2, total > 1)
+        HAVING IF total > 1
       SQL
     end
 
@@ -147,15 +152,15 @@ module HTSService
           AND e.voided = 0
           AND e.encounter_type = #{encounter_type('TESTING').id}
         INNER JOIN patient_identifier i ON i.patient_id = p.patient_id AND i.identifier_type = #{patient_identifier_type('National id').id}
-        INNER JOIN encounter pr ON p.patient_id = pr.patient_id
-          AND pr.voided = 0
-          AND pr.encounter_type = #{encounter_type('Partner Reception').id}
+        INNER JOIN obs partner_status ON partner_status.patient_id = p.patient_id
+          AND partner_status.voided = 0
+          AND partner_status.concept_id = #{concept('Partner HIV Status').id}
+          AND partner_status.value_coded != #{concept('No Partner').id}
         WHERE e.program_id = #{program('HTC PROGRAM').id}
           AND e.voided = 0
           AND DATE(e.encounter_datetime) >= DATE('#{@start_date}')
           AND DATE(e.encounter_datetime) <= DATE('#{@end_date}')
           AND DATE(pe.birthdate) >= DATE(date_sub(e.encounter_datetime, interval 14 year)) 
-        GROUP BY p.patient_id
       SQL
     end
 
@@ -186,7 +191,6 @@ module HTSService
           AND DATE(e.encounter_datetime) >= DATE('#{@start_date}')
           AND DATE(e.encounter_datetime) <= DATE('#{@end_date}')
           AND pe.birthdate > DATE(e.encounter_datetime)
-        GROUP BY e.patient_id
       SQL
     end
   end
