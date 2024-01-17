@@ -2,7 +2,7 @@
 
 ##
 # Returns all patients with active filing numbers that are suitable for archival
-module ArtService
+module ARTService
   module Reports
     class ArchivingCandidates
       def initialize(start_date: nil, **_kwargs)

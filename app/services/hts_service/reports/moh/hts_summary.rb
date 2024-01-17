@@ -8,10 +8,12 @@ module HtsService
         include HtsService::Reports::HtsReportBuilder
         attr_accessor :start_date, :end_date
 
-        HIV_GROUP = ConceptName.find_by_name("HIV group").concept_id
+        HIV_GROUP = 'HIV group'
+        TEST_ONE = 'Test 1'
 
         INDICATORS = [
-          { name: 'hiv_group', concept_id: HIV_GROUP, join: 'LEFT' }
+          { name: 'test_one', concept: TEST_ONE, join: 'INNER' },
+          { name: 'hiv_group', concept: HIV_GROUP, join: 'LEFT' }
         ].freeze
 
         def initialize(start_date:, end_date:)
@@ -33,13 +35,13 @@ module HtsService
         def init_report
           model = his_patients_rev
           INDICATORS.each do |param|
-            model = ObsValueScope.call(model:, **param)
+            model = ObsValueScope.call(**param.merge(model: model))
           end
           @query = Person.connection.select_all(
             model
               .select('person.gender, person.person_id')
               .group('person.person_id')
-          ).to_hash
+          )
         end
 
         def set_unique

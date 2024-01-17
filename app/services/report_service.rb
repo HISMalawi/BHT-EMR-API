@@ -2,18 +2,18 @@
 
 class ReportService
   ENGINES = {
-    'HIV PROGRAM' => ArtService::ReportEngine,
-    'ANC PROGRAM' => AncService::ReportEngine,
-    'OPD PROGRAM' => OpdService::ReportEngine,
-    'VMMC PROGRAM' => VmmcService::ReportEngine,
-    'TB PROGRAM' => TbService::ReportEngine,
+    'HIV PROGRAM' => ARTService::ReportEngine,
+    'ANC PROGRAM' => ANCService::ReportEngine,
+    'OPD PROGRAM' => OPDService::ReportEngine,
+    'VMMC PROGRAM' => VMMCService::ReportEngine,
+    'TB PROGRAM' => TBService::ReportEngine,
     'LABORATORY ORDERS' => LaboratoryService::ReportEngine,
-    'CXCA PROGRAM' => CxcaService::ReportEngine,
+    'CXCA PROGRAM' => CXCAService::ReportEngine,
     'RADIOLOGY PROGRAM' => RadiologyService::ReportEngine,
     'PATIENT REGISTRATION PROGRAM' => PatientRegistrationService::ReportEngine,
     'HTC PROGRAM' => HtsService::ReportEngine,
     'AETC PROGRAM' => AetcService::ReportEngine,
-    'SPINE PROGRAM' => SpineService::ReportEngine
+    'SPINE PROGRAM' => SpineService::ReportEngine,
   }.freeze
   LOGGER = Rails.logger
 
@@ -66,14 +66,6 @@ class ReportService
 
   def cohort_disaggregated(quarter, age_group, start_date, end_date, rebuild, init, **kwargs)
     engine(@program).cohort_disaggregated(quarter, age_group, start_date, end_date, rebuild, init, **kwargs)
-  end
-
-  def drugs_given_without_prescription(start_date, end_date)
-    engine(@program).drugs_given_without_prescription(start_date, end_date)
-  end
-
-  def drugs_given_with_prescription(start_date, end_date)
-    engine(@program).drugs_given_with_prescription(start_date, end_date)
   end
 
   def dispensation(start_date, end_date)

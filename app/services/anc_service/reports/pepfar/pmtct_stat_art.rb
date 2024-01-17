@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-module AncService
+module ANCService
   module Reports
-    module Pepfar
+    module PEPFAR
       ##
       # HIV-positive pregnant women who received ART to reduce the risk of mother-to-child-transmission (MTCT) during pregnancy
       class PmtctStatArt

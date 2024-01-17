@@ -88,20 +88,6 @@ module Api
         render json: stats
       end
 
-      def drugs_given_without_prescription
-        start_date, end_date = params.require %i[start_date end_date]
-        stats = service.drugs_given_without_prescription(start_date, end_date)
-
-        render json: stats
-      end
-
-      def drugs_given_with_prescription
-        start_date, end_date = params.require %i[start_date end_date]
-        stats = service.drugs_given_with_prescription(start_date, end_date)
-
-        render json: stats
-      end
-
       def dispensation
         start_date, end_date = params.require %i[start_date end_date]
         stats = service.dispensation(start_date, end_date)
@@ -153,13 +139,11 @@ module Api
 
       def regimen_switch
         pepfar = params[:pepfar] == 'true'
-        render json: service.regimen_switch(params[:start_date], params[:end_date], pepfar,
-                                            occupation: params[:occupation])
+        render json: service.regimen_switch(params[:start_date], params[:end_date], pepfar, occupation: params[:occupation])
       end
 
       def regimen_report
-        render json: service.regimen_report(params[:start_date], params[:end_date], params[:type],
-                                            occupation: params[:occupation])
+        render json: service.regimen_report(params[:start_date], params[:end_date], params[:type], occupation: params[:occupation])
       end
 
       def screened_for_tb
@@ -243,8 +227,7 @@ module Api
       end
 
       def external_consultation_clients
-        render json: service.external_consultation_clients(params[:start_date], params[:end_date],
-                                                           occupation: params[:occupation])
+        render json: service.external_consultation_clients(params[:start_date], params[:end_date], occupation: params[:occupation])
       end
 
       def cxca_reports
@@ -260,7 +243,7 @@ module Api
       end
 
       def vl_maternal_status
-        # vlc = ArtService::Reports::Pepfar::ViralLoadCoverage.new start_date: params[:start_date], end_date: params[:end_date]
+        # vlc = ARTService::Reports::Pepfar::ViralLoadCoverage.new start_date: params[:start_date], end_date: params[:end_date]
         # result = vlc.woman_status params[:person_id].split(",").map {|number| number.to_i}
         # render json: result
         render json: service.vl_maternal_status(params[:start_date], params[:end_date],
@@ -288,9 +271,9 @@ module Api
       def service
         return @service if @service
 
-        program_id, = params.require %i[program_id date]
+        program_id, date = params.require %i[program_id date]
 
-        @service = ReportService.new(program_id:)
+        @service = ReportService.new program_id: program_id
         @service
       end
 

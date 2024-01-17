@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 require 'rswag/ui'
 
 Rswag::Ui.configure do |c|

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ArtService
+module ARTService
   module Reports
     module Pepfar
       ##
@@ -38,46 +38,8 @@ module ArtService
           report
         end
 
-        # rubocop:disable Metrics/MethodLength
-        # rubocop:disable Metrics/CyclomaticComplexity
-        # rubocop:disable Metrics/PerceivedComplexity
-        def patient_tpt_status(patient_id)
-          if patient_on_tb_treatment?(patient_id)
-            return { tpt: nil, completed: false, tb_treatment: true, tpt_init_date: nil,
-                     tpt_complete_date: nil }
-          end
-
-          if patient_history_on_completed_tpt(patient_id)
-            return { tpt: patient_history_on_completed_tpt(patient_id).include?('IPT') ? '6H' : '3HP', completed: true,
-                     tb_treatment: false, tpt_init_date: nil, tpt_complete_date: nil, tpt_end_date: nil }
-          end
-
-          patient = individual_tpt_report(patient_id)
-          return { tpt: nil, completed: false, tb_treatment: false, tpt_init_date: nil, tpt_complete_date: nil, tpt_end_date: nil } if patient.blank?
-
-          tpt = patient_on_3hp?(patient) ? '3HP' : '6H'
-          completed = patient_has_totally_completed_tpt?(patient, tpt)
-          tpt_init_date = patient['tpt_initiation_date']
-          tpt_complete_date = completed ? patient['auto_expire_date']&.to_date : nil
-          tpt_end_date = tpt == '6H' ? tpt_init_date + 6.months : tpt_init_date + 3.months
-          { tpt: if tpt == '6H'
-                   'IPT'
-                 else
-                   (patient['drug_concepts'].split(',').length > 1 ? '3HP (RFP + INH)' : 'INH 300 / RFP 300 (3HP)')
-                 end, completed: completed, tb_treatment: false,
-            tpt_init_date: tpt_init_date, tpt_complete_date: tpt_complete_date, tpt_end_date: tpt_end_date }
-        end
-        # rubocop:enable Metrics/MethodLength
-        # rubocop:enable Metrics/CyclomaticComplexity
-        # rubocop:enable Metrics/PerceivedComplexity
-
         def fetch_individual_report(patient_id)
           individual_tpt_report(patient_id)
-        end
-
-        def patient_on_3hp?(patient)
-          drug_concepts = patient['drug_concepts'].split(',').collect(&:to_i)
-          (drug_concepts & [rifapentine_concept.concept_id, isoniazid_rifapentine_concept&.concept_id]).any?
         end
 
         private
@@ -437,26 +399,6 @@ module ArtService
               categories.six_h << patient
             end
           end
-        end
-
-        def patient_history_on_completed_tpt(patient_id)
-          @patient_history_on_completed_tpt ||= Observation.where(person_id: patient_id,
-                                                                  concept_id: ConceptName.find_by_name('Previous TB treatment history').concept_id)
-                                                           .where("value_text LIKE '%Completed%' AND obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY")&.first&.value_text
-        end
-
-        def patient_on_tb_treatment?(patient_id)
-          Observation.where(person_id: patient_id, concept_id: ConceptName.find_by_name('TB status').concept_id,
-                            value_coded: ConceptName.find_by_name('Confirmed TB on treatment').concept_id)
-                     .where("obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY").exists?
-        end
-
-        def rifapentine_concept
-          @rifapentine_concept ||= ConceptName.find_by!(name: 'Rifapentine')
-        end
-
-        def isoniazid_rifapentine_concept
-          @isoniazid_rifapentine_concept ||= ConceptName.find_by!(name: 'Isoniazid/Rifapentine')
         end
 
         def isoniazid_rifapentine_drug

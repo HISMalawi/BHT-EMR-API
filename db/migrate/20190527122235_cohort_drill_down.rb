@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 class CohortDrillDown < ActiveRecord::Migration[5.2]
   def change
     create_table :cohort_drill_down do |t|

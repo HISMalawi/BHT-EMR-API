@@ -1,6 +1,4 @@
-# frozen_string_literal: true
-
-class AlternateDTG50RegimenDose < ActiveRecord::Migration[5.2]
+class AlternateDtg50RegimenDose < ActiveRecord::Migration[5.2]
   def up
     # DTG drug inventory id is 982
     dose_id = MohRegimenDose.find_by(am: 1.0, pm: 0.0)&.dose_id

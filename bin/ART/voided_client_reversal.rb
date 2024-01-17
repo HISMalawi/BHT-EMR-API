@@ -82,7 +82,7 @@ def unvoid_encounters(patient:)
   encounters.each do |encounter|
     encounter.update!(voided: 0, voided_by: nil, date_voided: nil, void_reason: nil) if encounter.program_id.present?
     next if encounter.program_id.present?
-
+    
     # update using raw query to avoid validation errors
     ActiveRecord::Base.connection.execute <<~SQL
       UPDATE encounter SET voided = 0, voided_by = NULL, date_voided = NULL, void_reason = NULL
@@ -125,8 +125,7 @@ def process_encounters(patient:)
 end
 
 def process_request(identifier:, given_name:, family_name:, gender:, birthdate:)
-  patient = voided_patient(identifier: identifier, given_name: given_name, family_name: family_name, gender: gender,
-                           birthdate: birthdate)
+  patient = voided_patient(identifier: identifier, given_name: given_name, family_name: family_name, gender: gender, birthdate: birthdate)
   ActiveRecord::Base.transaction do
     unvoid_person(patient: patient)
     unvoid_patient(patient: patient)
@@ -152,5 +151,4 @@ gender = gets.strip
 print 'Enter patient birthdate in the following format(yyyy-mm-dd) i.e 1987-07-15> '
 birthdate = gets.strip
 
-process_request(identifier: identifier, given_name: given_name, family_name: family_name, gender: gender,
-                birthdate: birthdate)
+process_request(identifier: identifier, given_name: given_name, family_name: family_name, gender: gender, birthdate: birthdate)

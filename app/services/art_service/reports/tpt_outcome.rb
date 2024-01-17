@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ArtService
+module ARTService
   module Reports
     ##
     # Family planning, action to take
@@ -10,12 +10,12 @@ module ArtService
     class TptOutcome
       include CommonSqlQueryUtils
       include ModelUtils
-      include ArtService::Reports::Pepfar::Utils
+      include ARTService::Reports::Pepfar::Utils
 
       def initialize(start_date:, end_date:, **kwargs)
         @start_date = start_date.to_date
         @end_date = end_date.to_date
-        @tb_prev = ArtService::Reports::Pepfar::TbPrev3.new(start_date: @start_date, end_date: @end_date)
+        @tb_prev = ARTService::Reports::Pepfar::TbPrev3.new(start_date: @start_date, end_date: @end_date)
         @occupation = kwargs[:occupation]
       end
 

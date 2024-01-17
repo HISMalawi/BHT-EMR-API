@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-module AncService
+module ANCService
   # class managing retrievel of anc patient details
-  class AncDetails
+  class ANCDetails
     # method to get DOB of patient
     def self.fetch_dob(database, patient_id)
       puts("Running Fetch dob method: #{database}(#{patient_id})")

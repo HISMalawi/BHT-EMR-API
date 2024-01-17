@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 # This migration comes from lab (originally 20210310115457)
 class CreateLabLimsOrderMappings < ActiveRecord::Migration[5.2]
   def change

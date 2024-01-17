@@ -20,14 +20,16 @@ class Program < RetirableRecord
   end
 
   def state(name)
-    state_concept = ConceptName.where(name:).select(:concept_id)
+    state_concept = ConceptName.where(name: name).select(:concept_id)
 
     state = ProgramWorkflowState.where(concept: state_concept)
                                 .joins(:program_workflow)
                                 .merge(program_workflows)
                                 .first
 
-    raise NotFoundError, "State '#{name}' missing in #{program.name}'s workflows" unless state
+    unless state
+      raise NotFoundError, "State '#{name}' missing in #{program.name}'s workflows"
+    end
 
     state
   end

@@ -29,24 +29,25 @@ module HtsService
         HIV_NEGATIVE = 'Negative'
         HIV_EXPOSED_INFANT = 'Exposed infant'
         HIV_INVALID_OR_INCONCLUSIVE = 'Invalid or inconclusive'
+        LOCATION_WHERE_TEST_TOOK_PLACE = 'Location where test took place'
 
         INDICATORS = [
-          { name: 'test_location', concept_id: concept('Location where test took place').concept_id,
+          { name: 'test_location', concept: LOCATION_WHERE_TEST_TOOK_PLACE,
             value: 'value_text', join: 'LEFT' },
-          { name: 'p_status', concept_id: concept(PREGNANCY_STATUS).concept_id, join: 'LEFT' },
-          { name: 'last_tested', concept_id: concept(LAST_TESTED).concept_id, join: 'LEFT' },
+          { name: 'p_status', concept: PREGNANCY_STATUS, join: 'LEFT' },
+          { name: 'last_tested', concept: LAST_TESTED, join: 'LEFT' },
           {
             name: 'partner_present',
-            concept_id: concept(PARTNER_PRESENT).concept_id,
+            concept: PARTNER_PRESENT,
             value: 'value_text',
             join: 'LEFT'
           },
           {
             name: %w[test_one test_two test_three],
-            concept_id: [concept(TEST_ONE).concept_id, concept(TEST_TWO).concept_id, concept(TEST_THREE).concept_id],
+            concept: [TEST_ONE, TEST_TWO, TEST_THREE],
             join: 'LEFT'
           },
-          { name: 'result_given', concept_id: concept(HIV_GROUP).concept_id, join: 'LEFT' }
+          { name: 'result_given', concept: HIV_GROUP, join: 'LEFT' }
         ].freeze
 
         def initialize(quarter:, year:)
@@ -76,9 +77,9 @@ module HtsService
           model = query
 
           INDICATORS.each do |param|
-            model = ObsValueScope.call(model:, **param)
+            model = ObsValueScope.call(**param.merge(model: model))
           end
-          @query_data = connection.select_all(model.group('person.person_id')).to_hash
+          @query_data = connection.select_all(model.group('person.person_id'))
           access_type_and_age_group
           last_tested
           partner_present
@@ -173,7 +174,7 @@ module HtsService
             not_present: filter_hash(data, 'partner_present', 'No')
           }
           partner_present[:total_chec] = partner_present.values.flatten
-          report.merge!({ partner_present: })
+          report.merge!({ partner_present: partner_present})
         end
 
         def last_tested
@@ -186,7 +187,7 @@ module HtsService
             inconclusive: filter_hash(data, 'last_tested', concept(HIV_INVALID_OR_INCONCLUSIVE).concept_id)
           }
           last_test[:total_chec] = last_test.values.flatten
-          report.merge!({ last_test: })
+          report.merge!({ last_test: last_test})
         end
 
         def access_type_and_age_group

@@ -75,7 +75,8 @@ RSpec.describe 'api/v1/reports', type: :request do
                   vl_latest_order_date: { type: :string, format: :date, example: '2019-01-01' },
                   vl_latest_result_date: { type: :string, format: :date, example: '2019-01-01' },
                   vl_latest_result: { type: :string }
-                } }
+                }
+                },
               }
             } }
           }
@@ -88,6 +89,25 @@ RSpec.describe 'api/v1/reports', type: :request do
         schema type: :object, properties: {
           error: { type: :string }
         }
+        run_test!
+      end
+    end
+  end
+
+  # http://localhost:3000/api/v1//patients/26/tpt_status?
+  path '/api/v1/patients/{id}/tpt_status' do
+    get 'tpt_status report' do
+      tags TAG
+      description TAG_DESCRIPTION
+      consumes 'application/json'
+      produces 'application/json'
+      parameter name: :id, in: :path, type: :integer, example: 1, required: true
+      parameter name: :date, in: :query, type: :string, format: :date, example: '2022-10-1', required: false
+      security [api_key: []]
+
+      response(200, 'successful') do
+        # use the schema defined in the swagger_helper
+        schema '$ref' => '#/components/schemas/tpt_status'
         run_test!
       end
     end

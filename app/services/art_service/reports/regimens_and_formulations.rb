@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ArtService
+module ARTService
   module Reports
     # Retrieve patients in a particular regimen and formulation.
     class RegimensAndFormulations

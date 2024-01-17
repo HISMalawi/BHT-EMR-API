@@ -3,7 +3,7 @@
 require 'htn_workflow'
 require 'set'
 
-module ArtService
+module ARTService
   class WorkflowEngine
     include ModelUtils
 

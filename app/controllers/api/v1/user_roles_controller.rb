@@ -1,21 +1,15 @@
-# frozen_string_literal: true
+class Api::V1::UserRolesController < ApplicationController
+  def index
+    render json: service.user_roles(user)
+  end
 
-module Api
-  module V1
-    class UserRolesController < ApplicationController
-      def index
-        render json: service.user_roles(user)
-      end
+  private
 
-      private
+  def user
+    params[:user_id].nil? ? User.current : User.find(params[:user_id])
+  end
 
-      def user
-        params[:user_id].nil? ? User.current : User.find(params[:user_id])
-      end
-
-      def service
-        UserService
-      end
-    end
+  def service
+    UserService
   end
 end

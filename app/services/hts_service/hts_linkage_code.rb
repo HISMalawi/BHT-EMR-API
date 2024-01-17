@@ -1,12 +1,11 @@
-# frozen_string_literal: true
-
-module HtsService
+module HTSService
   class HtsLinkageCode
+
     HTS_LINK_CODE_CONCEPT = ConceptName.find_by_name('HTC serial number').concept_id
 
     attr_reader :patient_id, :code
 
-    def initialize(patient_id, code)
+    def initialize patient_id, code
       @patient_id = patient_id
       @code = code
     end

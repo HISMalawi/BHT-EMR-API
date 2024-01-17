@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 class Heartbeat < ActiveRecord::Migration[5.2]
   def self.up
     create_table :heart_beat, id: false do |t|
@@ -11,7 +9,7 @@ class Heartbeat < ActiveRecord::Migration[5.2]
       t.column  :username, :string, limit: 10
       t.column  :url, :string, limit: 100
     end
-    execute 'ALTER TABLE `heart_beat` CHANGE COLUMN `id` `id` INT(11) NOT NULL AUTO_INCREMENT , ADD PRIMARY KEY (`id`);'
+    execute "ALTER TABLE `heart_beat` CHANGE COLUMN `id` `id` INT(11) NOT NULL AUTO_INCREMENT , ADD PRIMARY KEY (`id`);"
   end
 
   def self.down

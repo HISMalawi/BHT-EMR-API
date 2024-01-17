@@ -1,3 +1,3 @@
 # frozen_string_literal: true
 
-class DdeClientError < StandardError; end
+class DDEClientError < StandardError; end

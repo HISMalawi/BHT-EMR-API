@@ -21,25 +21,29 @@ class HealthcheckController < ApplicationController
   end
 
   def version
-    tag = `git describe`.chomp
-    render json: { 'System version': tag }
-  rescue StandardError
-    render json: { status: 'Head not set. Please run: git describe --tags > HEAD in BHT-EMR-API root folder.',
-                   error: 'No Head containing tag description found' }
+    begin
+      tag = `git describe`.chomp
+      render json: { 'System version': tag }
+    rescue
+      render json: {status: 'Head not set. Please run: git describe --tags > HEAD in BHT-EMR-API root folder.',
+        error: "No Head containing tag description found"}
+    end
   end
 
   def database_backup_files
-    global_property = GlobalProperty.find_by(property: 'backup.path')
-    files = `ls -lh #{global_property.property_value}/*sql*`
-    render json: { 'Backup file(s)':  files.split("\n") }
-  rescue StandardError
-    render json: { status: 'Backup(s) not found.',
-                   error: 'Backup folder not found.Maybe the path is not set' }
+    begin
+      global_property =  GlobalProperty.find_by(property: 'backup.path')
+      files = %x|ls -lh #{global_property.property_value}/*sql*|
+      render json: {'Backup file(s)':  files.split("\n")}
+    rescue
+      render json: {status: 'Backup(s) not found.',
+        error: "Backup folder not found.Maybe the path is not set"}
+    end
   end
 
   def user_system_usage
-    start_date = params[:start_date].to_date.strftime('%Y-%m-%d 00:00:00')
-    end_date = params[:end_date].to_date.strftime('%Y-%m-%d 23:59:59')
+    start_date = params[:start_date].to_date.strftime("%Y-%m-%d 00:00:00")
+    end_date = params[:end_date].to_date.strftime("%Y-%m-%d 23:59:59")
     program_id = params[:program_id]
 
     usage = ActiveRecord::Base.connection.select_all <<EOF
@@ -67,4 +71,5 @@ EOF
 
     render json: counts
   end
+
 end

@@ -65,7 +65,7 @@ module HtsService
           %i[M F].collect do |gender|
             arr = {
               num: @numbering += 1,
-              gender:,
+              gender: gender,
               age_group: age_group.values.first
             }
             INDICATORS.each do |indicator|

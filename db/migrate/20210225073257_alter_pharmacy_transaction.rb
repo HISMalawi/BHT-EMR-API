@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 class AlterPharmacyTransaction < ActiveRecord::Migration[5.2]
   def change
     remove_column :pharmacy_obs, :expiry_date, :date if column_exists?(:pharmacy_obs, :expiry_date)

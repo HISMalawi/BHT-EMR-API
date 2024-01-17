@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ArtService
+module ARTService
   # Patients sub service.
   #
   # Basically provides ART specific patient-centric functionality
@@ -145,23 +145,23 @@ module ArtService
     end
 
     def visit_summary_label(patient, date)
-      ArtService::PatientVisitLabel.new patient, date
+      ARTService::PatientVisitLabel.new patient, date
     end
 
     def transfer_out_label(patient, date)
-      ArtService::PatientTransferOutLabel.new patient, date
+      ARTService::PatientTransferOutLabel.new patient, date
     end
 
     def mastercard_data(patient, date)
-      ArtService::PatientMastercard.new(patient, date).data
+      ARTService::PatientMastercard.new(patient, date).data
     end
 
     def patient_history_label(patient, date)
-      ArtService::PatientHistory.new(patient, date)
+      ARTService::PatientHistory.new(patient, date)
     end
 
     def medication_side_effects(patient, date)
-      service = ArtService::PatientSideEffect.new(patient, date)
+      service = ARTService::PatientSideEffect.new(patient, date)
       service.side_effects
     end
 

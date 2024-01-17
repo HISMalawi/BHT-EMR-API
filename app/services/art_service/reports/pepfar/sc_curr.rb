@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ArtService
+module ARTService
   module Reports
     module Pepfar
       # This class is used to generate the SC_CURR report

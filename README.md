@@ -1,4 +1,4 @@
-# HIS EMR API
+# BHT EMR API
 
 Table of Contents
 =================
@@ -264,7 +264,7 @@ bin/rails server
 
 ## Raw Data Store
 
-The HIS-EMR-API is capable of pushing data to the Raw Data Store.
+The BHT-EMR-API is capable of pushing data to the Raw Data Store.
 More information on how to get it to do this can be found [here](./doc/rds/index.md)
 
 ## For developers

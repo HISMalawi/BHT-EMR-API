@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ArtService
+module ARTService
   module Reports
     # This class generates the LIMS results report (results delivered electronically)
     class LimsResults

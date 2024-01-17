@@ -2,8 +2,8 @@
 
 class RegimenService
   ENGINES = {
-    'HIV PROGRAM' => ArtService::RegimenEngine,
-    'TB PROGRAM' => TbService::RegimenEngine
+    'HIV PROGRAM' => ARTService::RegimenEngine,
+    'TB PROGRAM' => TBService::RegimenEngine
   }.freeze
 
   def initialize(program_id:)

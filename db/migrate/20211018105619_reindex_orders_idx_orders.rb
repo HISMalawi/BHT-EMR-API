@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 class ReindexOrdersIdxOrders < ActiveRecord::Migration[5.2]
   def change
     if index_exists?(:orders, %i[start_date patient_id concept_id order_type_id], name: 'idx_order')

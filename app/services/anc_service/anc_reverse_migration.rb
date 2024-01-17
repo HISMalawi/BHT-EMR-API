@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-module AncService
+module ANCService
   # rubocop:disable Metrics/ClassLength
   # class to handle reversing of anc migrated data
   # in true sense we are just deleting the records
-  class AncReverseMigration
+  class ANCReverseMigration
     include ActionView::Helpers::DateHelper
     def initialize(params)
       @database = params[:database]
@@ -87,7 +87,7 @@ module AncService
         WHERE p.creator IN (#{@users}) AND DATE(e.date_created) >= DATE('#{@date}')
         GROUP BY p.patient_id HAVING COUNT(*) > 0;
       SQL
-      central_execute message: 'Saving patients in use', statement:
+      central_execute message: 'Saving patients in use', statement: statement
     end
 
     # method to map patient that not being used
@@ -128,7 +128,7 @@ module AncService
         FROM patient p
         WHERE p.creator IN (#{@users}) AND p.patient_id NOT IN (#{@patients})
       SQL
-      central_execute message: 'Add patients to not in use', statement:
+      central_execute message: 'Add patients to not in use', statement: statement
     end
 
     # rubocop:disable Metrics/MethodLength
@@ -140,7 +140,7 @@ module AncService
         SELECT DISTINCT(anc.patient_id) AS anc_patient_id, art.patient_id AS art_patient_id
         FROM #{@database}.patient_identifier anc
         JOIN patient_identifier art ON anc.identifier = art.identifier
-        JOIN #{@database}.user_bak bak ON anc.creator = bak.Anc_user_id
+        JOIN #{@database}.user_bak bak ON anc.creator = bak.ANC_user_id
         WHERE art.creator = bak.ART_user_id AND art.date_created = anc.date_created
       SQL
       central_execute message: 'Create patient mapping', statement: stmt
@@ -161,7 +161,7 @@ module AncService
           primary key (parameter_name)
         )
       SQL
-      central_execute(statement:)
+      central_execute statement: statement
       if check_mapping?
         statement = <<~SQL
           INSERT INTO #{@database}.reverse_mapping(parameter_name, parameter_value)
@@ -178,7 +178,7 @@ module AncService
           ('max_order_id', #{prev_max_order_id.nil? ? 'null' : prev_max_order_id})
         SQL
       end
-      central_execute message: 'Inserting reverse values to reverse_mapping table', statement:
+      central_execute message: 'Inserting reverse values to reverse_mapping table', statement: statement
     end
     # rubocop:enable Metrics/AbcSize
     # rubocop:enable Metrics/MethodLength

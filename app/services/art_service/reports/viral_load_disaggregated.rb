@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ArtService
+module ARTService
   module Reports
     class ViralLoadDisaggregated
       attr_reader :start_date, :end_date, :from, :to

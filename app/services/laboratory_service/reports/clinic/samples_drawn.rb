@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 module LaboratoryService
   module Reports
     module Clinic
@@ -95,13 +93,9 @@ module LaboratoryService
           start_date = ActiveRecord::Base.connection.quote(@start_date)
           end_date = ActiveRecord::Base.connection.quote(@end_date)
 
-          additional_sql = (if status == 'drawn'
-                              " AND `orders`.`concept_id`
+          additional_sql = (status == 'drawn' ? " AND `orders`.`concept_id`
           NOT IN (SELECT `concept_name`.`concept_id` FROM `concept_name`
-          WHERE `concept_name`.`voided` = 0 AND `concept_name`.`name` = 'Unknown')"
-                            else
-                              ''
-                            end)
+          WHERE `concept_name`.`voided` = 0 AND `concept_name`.`name` = 'Unknown')" : '')
 
           orders = ActiveRecord::Base.connection.select_all <<~SQL
             SELECT `orders`.`order_id` FROM `orders` INNER JOIN `order_type`
@@ -113,8 +107,7 @@ module LaboratoryService
           SQL
 
           return [] if orders.blank?
-
-          order_ids = orders.map { |order| order['order_id'].to_i }
+          order_ids = orders.map{|order| order['order_id'].to_i}
 
           tests = ActiveRecord::Base.connection.select_all <<~SQL
             SELECT `obs`.*, concept_name.name FROM `obs` INNER JOIN concept_name
@@ -125,10 +118,13 @@ module LaboratoryService
             AND (`obs`.`order_id`) IN (#{order_ids.join(',')}) GROUP BY obs.order_id;
           SQL
 
-          tests.map do |t|
+          return tests.map do |t|
             { name: t['name'], concept_id: t['value_coded'].to_i }
           end
         end
+
+
+
       end
     end
   end

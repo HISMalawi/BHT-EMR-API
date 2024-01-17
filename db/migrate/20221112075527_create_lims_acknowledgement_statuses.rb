@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 class CreateLimsAcknowledgementStatuses < ActiveRecord::Migration[5.2]
   def change
     create_table :lims_acknowledgement_statuses, id: false do |t|

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ArtService
+module ARTService
   module Reports
     module Pepfar
       ##
@@ -82,17 +82,6 @@ module ArtService
           end
         end
 
-        def patient_has_totally_completed_tpt?(patient, tpt)
-          if tpt == '3HP'
-            init_date = patient['tpt_initiation_date'].to_date
-            end_date = patient['auto_expire_date'].to_date
-            days_on_medication = (end_date - init_date).to_i
-            days_on_medication >= 80
-          else
-            patient['total_days_on_medication'].to_i >= 176
-          end
-        end
-
         # this just gives all clients who are truly external or drug refill
         # rubocop:disable Metrics/MethodLength
         # rubocop:disable Metrics/AbcSize
@@ -124,6 +113,25 @@ module ArtService
         end
         # rubocop:enable Metrics/MethodLength
         # rubocop:enable Metrics/AbcSize
+
+        def rifapentine_concept
+          @rifapentine_concept ||= ConceptName.find_by!(name: 'Rifapentine')
+        end
+
+        def isoniazid_rifapentine_concept
+          @isoniazid_rifapentine_concept ||= ConceptName.find_by!(name: 'Isoniazid/Rifapentine')
+        end
+
+        def patient_on_3hp?(patient)
+          drug_concepts = patient['drug_concepts'].split(',').collect(&:to_i)
+          (drug_concepts & [rifapentine_concept.concept_id, isoniazid_rifapentine_concept&.concept_id]).any?
+        end
+
+        def patient_on_tb_treatment?(patient_id)
+          Observation.where(person_id: patient_id, concept_id: ConceptName.find_by_name('TB status').concept_id,
+                            value_coded: ConceptName.find_by_name('Confirmed TB on treatment').concept_id)
+                     .where("obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY").exists?
+        end
       end
     end
   end

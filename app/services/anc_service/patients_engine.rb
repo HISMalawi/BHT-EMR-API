@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module AncService
+module ANCService
   # Patients sub service.
   #
   # Basically provides ANC specific patient-centric functionality
@@ -24,120 +24,113 @@ module AncService
     end
 
     def visit_summary_label(patient, date)
-      AncService::PatientVisitLabel.new patient, date
+      ANCService::PatientVisitLabel.new patient, date
     end
 
     def history_label(patient, date)
-      AncService::PatientHistoryLabel.new patient, date
+      ANCService::PatientHistoryLabel.new patient, date
     end
 
     def lab_results_label(patient, date)
-      AncService::PatientLabLabel.new patient, date
+      ANCService::PatientLabLabel.new patient, date
     end
 
     def gravida(patient, date)
-      gravida = begin
-        patient.encounters.joins(:observations)
-               .where(["DATE(encounter_datetime) >= ? AND DATE(encounter_datetime) <= ?
-            AND encounter_type = ? AND obs.concept_id = ?", (date.to_date - 4.months),
-                       date, EncounterType.find_by_name('OBSTETRIC HISTORY').id,
-                       ConceptName.find_by_name('Patient pregnant').concept_id]).order('encounter_datetime DESC')
-               .first.observations.collect(&:value_numeric).compact
-      rescue StandardError
-        0
-      end
 
-      gravida[0] unless gravida.zero?
+      gravida = patient.encounters.joins(:observations)
+          .where(["DATE(encounter_datetime) >= ? AND DATE(encounter_datetime) <= ?
+            AND encounter_type = ? AND obs.concept_id = ?", (date.to_date - 4.months),
+            date,EncounterType.find_by_name("OBSTETRIC HISTORY").id,
+            ConceptName.find_by_name("Patient pregnant").concept_id]).order("encounter_datetime DESC")
+          .first.observations.collect{|o|
+            o.value_numeric
+          }.compact rescue 0
+
+      return gravida[0] unless gravida == 0
     end
 
     def anc_visit(patient, date)
       @visit = []
       last_lmp = date_of_lnmp(patient, date)
-      date_diff = begin
-        (date.to_date.year * 12 + date.to_date.month) - (last_lmp.to_date.year * 12 + last_lmp.to_date.month)
-      rescue StandardError
-        nil
-      end
-      unless last_lmp.blank? && (!date_diff.blank? && date_diff.to_i > 9)
+      date_diff = (date.to_date.year * 12 + date.to_date.month) - (last_lmp.to_date.year * 12 + last_lmp.to_date.month) rescue nil
+      unless last_lmp.blank? && (!(date_diff.blank?) && date_diff.to_i > 9)
 
-        @visit = begin
-          patient.encounters.where(["DATE(encounter_datetime) >= ?
+        @visit =  patient.encounters.where(["DATE(encounter_datetime) >= ?
             AND DATE(encounter_datetime) <= ? AND encounter_type = ? AND program_id = ?",
-                                    last_lmp, date, EncounterType.find_by_name('ANC VISIT TYPE'), ANC_PROGRAM.id]).collect do |e|
-            e.observations.collect do |o|
-              o.answer_string.to_i if o.concept.concept_names.first.name.downcase == 'reason for visit'
-            end.compact
-          end.flatten
-        rescue StandardError
-          []
-        end
+            last_lmp, date,EncounterType.find_by_name("ANC VISIT TYPE"), ANC_PROGRAM.id]).collect{|e|
+              e.observations.collect{|o|
+                o.answer_string.to_i if o.concept.concept_names.first.name.downcase == "reason for visit"
+                }.compact
+            }.flatten rescue []
 
       end
 
-      { "visit_number": @visit, "gravida": gravida(patient, date) }
+      return {"visit_number": @visit, "gravida": gravida(patient, date)}
+
     end
 
-    def surgical_history(patient, _date)
-      { hysterectomy: hysterectomy(patient) }
+    def surgical_history(patient, date)
+      {hysterectomy: hysterectomy(patient)}
     end
 
     def saved_encounters(patient, date)
       last_lmp = date_of_lnmp(patient, date)
-      date_diff = begin
-        (date.to_date.year * 12 + date.to_date.month) - (last_lmp.to_date.year * 12 + last_lmp.to_date.month)
-      rescue StandardError
-        nil
-      end
-      ontime_encounters = ['REGISTRATION', 'SOCIAL HISTORY', 'SURGICAL HISTORY',
-                           'OBSTETRIC HISTORY', 'MEDICAL HISTORY', 'CURRENT PREGNANCY']
+      date_diff = (date.to_date.year * 12 + date.to_date.month) - (last_lmp.to_date.year * 12 + last_lmp.to_date.month) rescue nil
+      ontime_encounters = ["REGISTRATION", "SOCIAL HISTORY", "SURGICAL HISTORY",
+        "OBSTETRIC HISTORY", "MEDICAL HISTORY", "CURRENT PREGNANCY"]
 
       x = Encounter.where(["DATE(encounter_datetime) = ? AND patient_id = ? AND voided = 0
-          AND program_id = ?", date.to_date.strftime('%Y-%m-%d'),
-                           patient.patient_id, ANC_PROGRAM.id]).collect(&:name).uniq
+          AND program_id = ?", date.to_date.strftime("%Y-%m-%d"),
+          patient.patient_id, ANC_PROGRAM.id]).collect{|e| e.name}.uniq
 
-      if last_lmp.blank? || (!date_diff.blank? && date_diff.to_i > 9)
+      if(last_lmp.blank? || (!(date_diff.blank?) && date_diff.to_i > 9))
 
-        x.delete('TREATMENT') unless patient_given_drugs_today(patient, date)
+        x.delete("TREATMENT") unless patient_given_drugs_today(patient, date)
 
-        x
+        return x
 
       else
 
         y = Encounter.where(["DATE(encounter_datetime) >= ? AND DATE(encounter_datetime) < ?
-          AND patient_id = ? and voided = 0", last_lmp.to_date.strftime('%Y-%m-%d'),
-                             date.to_date.strftime('%Y-%m-%d'), patient.patient_id]).collect do |e|
+          AND patient_id = ? and voided = 0", last_lmp.to_date.strftime("%Y-%m-%d"),
+          date.to_date.strftime("%Y-%m-%d"),patient.patient_id]).collect{|e|
           e.name if ontime_encounters.include?(e.name)
-        end.uniq
+      }.uniq
 
-        z = (x + y).compact
+      z = (x + y).compact
 
-        z.delete('TREATMENT') unless patient_given_drugs_today(patient, date)
+      z.delete("TREATMENT") unless patient_given_drugs_today(patient, date)
 
-        z
+      return z
 
       end
     end
 
     def hysterectomy(patient)
-      hysterectomy_conditions = ConceptName.where("name like '%hysterectomy%'").collect(&:concept_id)
+
+      hysterectomy_conditions = ConceptName.where("name like '%hysterectomy%'").collect{|c| c.concept_id}
 
       value = patient.encounters.joins([:observations]).where(["encounter_type = ?
         AND obs.concept_id in (?) AND obs.value_coded = ?",
-                                                               EncounterType.find_by_name('SURGICAL HISTORY').id,
-                                                               hysterectomy_conditions, ConceptName.find_by_name('Yes').concept_id]).last
+        EncounterType.find_by_name("SURGICAL HISTORY").id,
+        hysterectomy_conditions, ConceptName.find_by_name("Yes").concept_id
+        ]).last
 
-      return true unless value.blank?
+      unless value.blank?
+        return true
+      end
 
-      false
+      return false
     end
 
     def art_hiv_status(patient)
+
       hiv_positive = PatientProgram.find_by_sql("SELECT pg.patient_id
         FROM patient_program pg
         WHERE pg.patient_id = #{patient.patient_id}
         AND pg.program_id = #{ART_PROGRAM.id} AND pg.voided = 0")
 
-      unless hiv_positive.blank?
+      if !hiv_positive.blank?
         hiv_status = 'Positive'
         query = "SELECT pg.date_enrolled, s2.start_date, s2.state
             FROM patient_program pg
@@ -149,31 +142,24 @@ module AncService
             AND pg.voided = 0 AND pg.patient_id = '#{patient.patient_id}'
             AND s2.state = 7 ORDER BY s2.start_date ASC LIMIT 1"
 
-        art_start_date = begin
-          PatientProgram.find_by_sql(query).first.date_enrolled.to_date.to_s(:db)
-        rescue StandardError
-          nil
-        end
+				art_start_date = PatientProgram.find_by_sql(query).first.date_enrolled.to_date.to_s(:db) rescue nil
 
         on_art = 'Yes' if art_start_date.present?
 
-        begin
-          if on_art.downcase == 'yes'
+        if (on_art.downcase == 'yes')
 
-            arv_number = PatientIdentifier.find_by_sql("SELECT pi.identifier
+          arv_number = PatientIdentifier.find_by_sql("SELECT pi.identifier
             FROM patient_identifier pi
             WHERE pi.identifier_type = #{ARV_NUMBER.id}
               AND pi.patient_id = '#{patient.patient_id}'
             ORDER BY pi.date_created DESC LIMIT 1")[0]['identifier']
 
-          end
-        rescue StandardError
-          nil
-        end
+        end rescue nil
 
       end
 
-      { hiv_status:, art_status: on_art, arv_number:, arv_start_date: art_start_date }
+      return {hiv_status: hiv_status, art_status: on_art, arv_number: arv_number, arv_start_date: art_start_date}
+
     end
 
     def subsequent_visit(patient, date)
@@ -181,22 +167,18 @@ module AncService
       preg_test = false
 
       lmp_date = date_of_lnmp(patient, date)
-      return { subsequent_visit: false, pregnancy_test: false, hiv_status: '' } if lmp_date.nil?
+      return {subsequent_visit: false, pregnancy_test: false, hiv_status: ""} if lmp_date.nil?
 
       unless lmp_date.nil?
-        visit_type = EncounterType.find_by name: 'ANC VISIT TYPE'
-        reason_for_visit = ConceptName.find_by name: 'Reason for visit'
+        visit_type = EncounterType.find_by name: "ANC VISIT TYPE"
+        reason_for_visit = ConceptName.find_by name: "Reason for visit"
 
-        visit = begin
-          Encounter.joins(:observations).where("encounter.encounter_type = ?
+        visit = Encounter.joins(:observations).where("encounter.encounter_type = ?
             AND concept_id = ? AND encounter.patient_id = ? AND DATE(encounter.encounter_datetime) > DATE(?)
             AND DATE(encounter.encounter_datetime) < DATE(?) AND program_id = ?",
-                                               visit_type.id, reason_for_visit.concept_id,
-                                               patient.patient_id, lmp_date, date.to_date, ANC_PROGRAM.id)
-                   .order(encounter_datetime: :desc).first
-        rescue StandardError
-          nil
-        end
+            visit_type.id, reason_for_visit.concept_id,
+            patient.patient_id, lmp_date, date.to_date, ANC_PROGRAM.id)
+          .order(encounter_datetime: :desc).first rescue nil
 
         unless visit.blank?
           anc_visit = true
@@ -205,52 +187,53 @@ module AncService
         end
       end
 
-      { subsequent_visit: anc_visit, pregnancy_test: preg_test, hiv_status: prev_hiv_test }
+      return {subsequent_visit: anc_visit, pregnancy_test: preg_test, hiv_status: prev_hiv_test}
     end
 
     # Verifies if the last visit patient undergo pregnancy test
     def pregnancy_test_done?(patient, checked_date)
-      lab_encounter   = EncounterType.find_by_name('LAB RESULTS')
-      pregnancy_test  = ConceptName.find_by_name('Pregnancy test')
-      yes_concept     = ConceptName.find_by_name('Yes')
 
-      last_test_visit = begin
-        patient.encounters.joins([:observations])
-               .where(["encounter.encounter_type = ? AND (obs.concept_id = ?)
+      lab_encounter   = EncounterType.find_by_name("LAB RESULTS")
+      pregnancy_test  = ConceptName.find_by_name("Pregnancy test")
+      yes_concept     = ConceptName.find_by_name("Yes")
+
+      last_test_visit = patient.encounters.joins([:observations])
+        .where(["encounter.encounter_type = ? AND (obs.concept_id = ?)
           AND encounter.encounter_datetime > ? AND encounter.voided = 0
           AND encounter.program_id = ?", lab_encounter.id,
-                       pregnancy_test.concept_id, checked_date.to_date,
-                       ANC_PROGRAM.id])
-               .order([:encounter_datetime])
-               .select('value_coded')
-               .last.value_coded
-      rescue StandardError
-        ''
+          pregnancy_test.concept_id,checked_date.to_date,
+        ANC_PROGRAM.id])
+        .order([:encounter_datetime])
+        .select("value_coded")
+        .last.value_coded rescue ''
+
+      if last_test_visit == yes_concept.concept_id
+        return true
       end
 
-      return true if last_test_visit == yes_concept.concept_id
+      return false
 
-      false
     end
 
     # Check previous hiv test results
 
     def previous_hiv_test_results(patient, checked_date)
-      current_status =  ConceptName.find_by name: 'HIV Status'
+
+      current_status =  ConceptName.find_by name:'HIV Status'
       prev_hiv_status = ConceptName.find_by name: 'Previous HIV Test Results'
 
-      prev_test_done = Observation.where(person: patient.person, concept: concept('Previous HIV Test Done'))\
-                                  .order(obs_datetime: :desc)\
-                                  .first\
-                                  &.value_coded || nil
+      prev_test_done = Observation.where( person: patient.person, concept: concept('Previous HIV Test Done'))\
+          .order(obs_datetime: :desc)\
+          .first\
+          &.value_coded || nil
 
-      if prev_test_done == 1065 # if value is Yes, check prev hiv status
+      if (prev_test_done == 1065) #if value is Yes, check prev hiv status
 
-        prev_hiv_test_res = Observation.where(['person_id = ? and concept_id = ? and obs_datetime > ?',
-                                               patient.patient_id, prev_hiv_status.concept_id, checked_date])\
-                                       .order(obs_datetime: :desc)\
-                                       .first\
-                                       &.value_coded
+        prev_hiv_test_res = Observation.where(["person_id = ? and concept_id = ? and obs_datetime > ?",
+            patient.patient_id, prev_hiv_status.concept_id, checked_date])\
+          .order(obs_datetime: :desc)\
+          .first\
+          &.value_coded
 
         prev_status = ConceptName.find_by_concept_id(prev_hiv_test_res).name
 
@@ -258,106 +241,80 @@ module AncService
 
       end
 
-      hiv_test_res = begin
-        Observation.where(['person_id = ? and concept_id = ? and obs_datetime > ?',
-                           patient.person.id, current_status.concept_id, checked_date])\
-                   .order(obs_datetime: :desc)\
-                   .first\
-                   &.value_coded
-      rescue StandardError
-        nil
-      end
+      hiv_test_res =  Observation.where(["person_id = ? and concept_id = ? and obs_datetime > ?",
+          patient.person.id, current_status.concept_id, checked_date])\
+        .order(obs_datetime: :desc)\
+        .first\
+        &.value_coded rescue nil
 
-      hiv_status = begin
-        ConceptName.find_by_concept_id(hiv_test_res).name
-      rescue StandardError
-        nil
-      end
+        hiv_status = ConceptName.find_by_concept_id(hiv_test_res).name rescue nil
 
-      hiv_status ||= prev_status
+        hiv_status ||= prev_status
 
-      hiv_status
+        return hiv_status
     end
 
     def essentials(patient, date)
       @hiv_test = true
-      hiv_status = ConceptName.find_by_name('HIV STATUS')
-      prev_hiv_status = ConceptName.find_by_name('Previous HIV Test Results')
-      last_known_hiv_test = Observation.where(['concept_id = ? OR concept_id = ?',
-                                               hiv_status.concept_id, prev_hiv_status.concept_id]).last
+      hiv_status = ConceptName.find_by_name("HIV STATUS")
+      prev_hiv_status = ConceptName.find_by_name("Previous HIV Test Results")
+      last_known_hiv_test = Observation.where(["concept_id = ? OR concept_id = ?",
+        hiv_status.concept_id, prev_hiv_status.concept_id]).last
 
-      @hiv_test = false if !%w[unknown old_negative].include?(
-        recent_hiv_status?(date.to_date, patient)
-      ) || last_known_hiv_test.blank? ||
-                           last_known_hiv_test.obs_datetime.to_date < date.to_date
-      { 'hiv_test_done': @hiv_test }
+      @hiv_test = false if !["unknown", "old_negative"].include?(
+      recent_hiv_status?(date.to_date, patient)) || last_known_hiv_test.blank? ||
+      last_known_hiv_test.obs_datetime.to_date < date.to_date
+      return {'hiv_test_done': @hiv_test}
     end
 
     def recent_hiv_status?(today = Date.today, patient)
-      return 'positive' if hiv_positive?
+
+      return "positive" if self.hiv_positive?
 
       lmp = date_of_lnmp(patient, today)
 
-      checked_date = lmp.present? ? lmp : (today.to_date - 9.months)
+      checked_date = lmp.present?? lmp : (today.to_date - 9.months)
 
-      hiv_test_date = begin
-        encounters.joins([:observations])
-                  .where(["encounter.encounter_type = ? AND obs.concept_id = ?
+      hiv_test_date = self.encounters.joins([:observations])
+      .where(["encounter.encounter_type = ? AND obs.concept_id = ?
         AND encounter.encounter_datetime > ?",
-                          EncounterType.find_by_name('LAB RESULTS').id,
-                          ConceptName.find_by_name('Hiv Test Date').concept_id,
-                          checked_date.to_date])
-                  .order([:encounter_datetime])
-                  .select(['obs.value_text'])
-                  .last.value_text.to_date
-      rescue StandardError
-        nil
-      end
+        EncounterType.find_by_name("LAB RESULTS").id,
+        ConceptName.find_by_name("Hiv Test Date").concept_id,
+        checked_date.to_date])
+      .order([:encounter_datetime])
+      .select(["obs.value_text"])
+      .last.value_text.to_date  rescue nil
 
-      prev_hiv_test_date = begin
-        encounters.joins([:observations])
-                  .where(["encounter.encounter_type = ? AND obs.concept_id = ?
+      prev_hiv_test_date = self.encounters.joins([:observations])
+        .where(["encounter.encounter_type = ? AND obs.concept_id = ?
           AND encounter.encounter_datetime > ?",
-                          EncounterType.find_by_name('LAB RESULTS').id,
-                          ConceptName.find_by_name('Previous HIV Test Date').concept_id,
-                          checked_date.to_date])
-                  .order([:encounter_datetime])
-                  .select(['obs.value_datetime'])
-                  .last.value_datetime.to_date
-      rescue StandardError
-        nil
-      end
+          EncounterType.find_by_name("LAB RESULTS").id,
+          ConceptName.find_by_name("Previous HIV Test Date").concept_id,
+          checked_date.to_date])
+        .order([:encounter_datetime])
+        .select(["obs.value_datetime"])
+        .last.value_datetime.to_date  rescue nil
 
       last_test_visit = hiv_test_date.blank? ? prev_hiv_test_date : hiv_test_date
 
-      return 'old_negative' if begin
-        last_test_visit.to_date <= (today - 3.months)
-      rescue StandardError
-        false
-      end
-      return 'negative' unless last_test_visit.blank?
-
-      'unknown'
+      return "old_negative" if (last_test_visit.to_date <= (today - 3.months) rescue false)
+      return "negative" if !last_test_visit.blank?
+      return "unknown"
     end
 
     def hiv_positive?
-      encounters.joins([:observations])
-                .where(["encounter.encounter_type = ? AND (obs.concept_id = ? OR
+
+    self.encounters.joins([:observations])
+      .where(["encounter.encounter_type = ? AND (obs.concept_id = ? OR
         obs.concept_id = ?)",
-                        EncounterType.find_by_name('LAB RESULTS').id,
-                        ConceptName.find_by_name('HIV STATUS').concept_id,
-                        ConceptName.find_by_name('Previous HIV Test Results').concept_id])
-                .select(['obs.value_coded, obs.value_text'])
-                .collect do |ob|
-        (begin
-          Concept.find(ob.value_coded).name.name.downcase.strip
-        rescue StandardError
-          nil
-        end || ob.value_text.owncase.strip)
-      end
-                .include?('positive')
-    rescue StandardError
-      false
+        EncounterType.find_by_name("LAB RESULTS").id,
+        ConceptName.find_by_name("HIV STATUS").concept_id,
+        ConceptName.find_by_name("Previous HIV Test Results").concept_id
+      ])
+      .select(["obs.value_coded, obs.value_text"])
+      .collect{|ob|
+        ((Concept.find(ob.value_coded).name.name.downcase.strip rescue nil) || ob.value_text.owncase.strip)}
+      .include?("positive") rescue false
     end
 
     private
@@ -367,17 +324,18 @@ module AncService
     end
 
     def date_of_lnmp(patient, date = Date.today)
-      AncService::PregnancyService.date_of_lnmp(patient, date)
+      ANCService::PregnancyService.date_of_lnmp(patient, date)
     end
 
     # Check if patient has been given drugs
     # apart from TD drugs.
 
     def patient_given_drugs_today(patient, date)
-      td_drug = Drug.find_by name: 'TD (0.5ml)'
+
+      td_drug = Drug.find_by name: "TD (0.5ml)"
       drugs = []
 
-      ActiveRecord::Base.connection.select_all(
+      drug_order = ActiveRecord::Base.connection.select_all(
         "SELECT drug_order.drug_inventory_id FROM encounter INNER JOIN orders
           ON orders.encounter_id = encounter.encounter_id
           AND orders.voided = 0
@@ -386,13 +344,18 @@ module AncService
         AND (encounter.patient_id = #{patient.patient_id}
           AND DATE(encounter.encounter_datetime) = DATE('#{date}'))
           ORDER BY encounter.encounter_datetime DESC"
-      ).rows.collect { |d| drugs << d[0] }.compact
+      ).rows.collect{|d| drugs << d[0]}.compact
 
       drugs.delete(td_drug.id)
 
-      return true if drugs.length.positive?
+      if drugs.length > 0
+        return true
+      else
+        return false
+      end
 
-      false
     end
+
   end
+
 end
