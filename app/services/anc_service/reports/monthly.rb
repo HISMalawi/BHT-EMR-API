@@ -2,7 +2,7 @@
 
 require 'set'
 
-module ANCService
+module AncService
   module Reports
     # Cohort report builder class.
     #

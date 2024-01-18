@@ -3,7 +3,7 @@
 class ReportService
   ENGINES = {
     'HIV PROGRAM' => ARTService::ReportEngine,
-    'ANC PROGRAM' => ANCService::ReportEngine,
+    'ANC PROGRAM' => AncService::ReportEngine,
     'OPD PROGRAM' => OPDService::ReportEngine,
     'VMMC PROGRAM' => VMMCService::ReportEngine,
     'TB PROGRAM' => TBService::ReportEngine,

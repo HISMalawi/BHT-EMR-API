@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class ANCService::Reports::VisitsReport
+class AncService::Reports::VisitsReport
   include ModelUtils
 
   def initialize(name:, type:, start_date:, end_date:)

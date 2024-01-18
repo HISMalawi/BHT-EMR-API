@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ANCService
+module AncService
     # A summary of a patient's ART clinic visit
     class PatientVisit
       include ModelUtils

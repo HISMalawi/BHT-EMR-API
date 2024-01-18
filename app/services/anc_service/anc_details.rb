@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ANCService
+module AncService
   # class managing retrievel of anc patient details
   class ANCDetails
     # method to get DOB of patient

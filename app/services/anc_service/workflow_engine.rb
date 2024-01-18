@@ -1,4 +1,4 @@
-module ANCService
+module AncService
   class WorkflowEngine
     include ModelUtils
 
@@ -370,7 +370,7 @@ module ANCService
     end
 
     def date_of_lnmp
-      ANCService::PregnancyService.date_of_lnmp(@patient, @date)
+      AncService::PregnancyService.date_of_lnmp(@patient, @date)
     end
   end
 end

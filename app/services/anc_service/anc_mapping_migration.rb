@@ -1,6 +1,6 @@
 # frozen_string_literal:true
 
-module ANCService
+module AncService
   # class that will map the users in the system
   class ANCMappingMigration
     def initialize(anc_database, confidence)

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ANCService
+module AncService
   # rubocop:disable Metrics/ClassLength
   # Class managing the migration of anc data to
   class ANCMigration
@@ -104,7 +104,7 @@ module ANCService
         migrate_drug_order(mapped, 'Migrating patient drug orders for those linked')
         migrate_drug_order(not_linked, 'Migrating patient drug orders for those without any linkage')
         if @database_reversed
-          ANCService::ANCMissedMigration.new({ max_person_id: @person_id,
+          AncService::ANCMissedMigration.new({ max_person_id: @person_id,
                                                max_user_id: @user_id, max_patient_program_id: @patient_program_id,
                                                max_encounter_id: @encounter_id, max_obs_id: @obs_id,
                                                max_order_id: @order_id, database: @database }).main
@@ -194,7 +194,7 @@ module ANCService
     #       migrate_obs
     #       migrate_orders
     #       migrate_drug_order
-    #       ANCService::ANCMissedMigration.new({ max_person_id: @person_id,
+    #       AncService::ANCMissedMigration.new({ max_person_id: @person_id,
     #                                            max_user_id: @user_id, max_patient_program_id: @patient_program_id,
     #                                            max_encounter_id: @encounter_id, max_obs_id: @obs_id,
     #                                            max_order_id: @order_id, database: @database }).main

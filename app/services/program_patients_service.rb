@@ -2,7 +2,7 @@ class ProgramPatientsService
   ENGINES = {
     'HIV PROGRAM' => ARTService::PatientsEngine,
     'TB PROGRAM' => TBService::PatientsEngine,
-    'ANC PROGRAM' => ANCService::PatientsEngine,
+    'ANC PROGRAM' => AncService::PatientsEngine,
     'OPD PROGRAM' => OPDService::PatientsEngine,
     'VMMC PROGRAM' => VMMCService::PatientsEngine,
     'CXCA PROGRAM' => CXCAService::PatientsEngine,
