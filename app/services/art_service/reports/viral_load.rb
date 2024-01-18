@@ -283,7 +283,7 @@ module ArtService
       end
 
       def get_vl_due_info(patient_id, appointment_date)
-        vl_info = ArtService::VLReminder.new(patient_id: patient_id, date: appointment_date)
+        vl_info = ArtService::VlReminder.new(patient_id: patient_id, date: appointment_date)
         vl_info.vl_reminder_info
       end
     end

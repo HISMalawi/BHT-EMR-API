@@ -8,7 +8,7 @@ class Api::V1::LabRemaindersController < ApplicationController
   private
 
   def service
-    ArtService::VLReminder.new(patient_id: params[:program_patient_id], 
+    ArtService::VlReminder.new(patient_id: params[:program_patient_id], 
       date: params[:date])
   end
 
