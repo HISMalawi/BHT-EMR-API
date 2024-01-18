@@ -2,7 +2,7 @@
 
 # An extension to the DdeService that provides merging functionality
 # for local patients and remote patients
-class DDEMergingService
+class DdeMergingService
   include ModelUtils
 
   attr_accessor :parent
