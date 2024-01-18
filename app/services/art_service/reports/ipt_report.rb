@@ -3,7 +3,7 @@
 module ArtService
   module Reports
 
-    class IPTReport
+    class IptReport
       def initialize(start_date:, end_date:)
         @start_date = start_date
         @end_date = end_date

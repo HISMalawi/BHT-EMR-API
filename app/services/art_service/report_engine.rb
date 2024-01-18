@@ -18,7 +18,7 @@ module ArtService
       'COHORT_SURVIVAL_ANALYSIS' => ArtService::Reports::CohortSurvivalAnalysis,
       'DRUG_DISPENSATIONS' => ArtService::Reports::DrugDispensations,
       'HIGH_VL_PATIENTS' => ArtService::Reports::ViralLoadResults,
-      'IPT' => ArtService::Reports::IPTReport,
+      'IPT' => ArtService::Reports::IptReport,
       'PATIENTS_WITH_OUTDATED_DEMOGRAPHICS' => ArtService::Reports::PatientsWithOutdatedDemographics,
       'PATIENTS_ON_DTG' => ArtService::Reports::PatientsOnDTG,
       'PREGNANT_PATIENTS' => ArtService::Reports::PregnantPatients,
