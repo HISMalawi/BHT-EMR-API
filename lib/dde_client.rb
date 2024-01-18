@@ -3,7 +3,7 @@
 require 'logger'
 require 'restclient'
 
-class DDEClient
+class DdeClient
   def initialize
     @auto_login = true # If logged out, automatically login on next request
     @base_url = nil
@@ -20,7 +20,7 @@ class DDEClient
 
   # Reconnect to DDE using previous connection
   #
-  # @see: DDEClient#connect
+  # @see: DdeClient#connect
   def restore_connection(connection)
     @connection = reload_connection(connection)
   end
@@ -118,7 +118,7 @@ class DDEClient
     LOGGER.debug "Handling DDE response:\n\tStatus - #{response.code}\n\tBody - #{response.body}"
     handle_response response
   rescue RestClient::Unauthorized => e
-    LOGGER.error "DDEClient suppressed exception: #{e}"
+    LOGGER.error "DdeClient suppressed exception: #{e}"
     return handle_response e.response unless @auto_login
 
     LOGGER.debug 'Auto-logging into DDE...'
@@ -126,13 +126,13 @@ class DDEClient
     LOGGER.debug "Reset connection: #{@connection}"
     retry # Retry last request...
   rescue RestClient::BadRequest => e
-    LOGGER.error "DDEClient suppressed exception: #{e}"
+    LOGGER.error "DdeClient suppressed exception: #{e}"
     handle_response e.response
   rescue RestClient::UnprocessableEntity => e
-    LOGGER.error "DDEClient suppressed exception: #{e}"
+    LOGGER.error "DdeClient suppressed exception: #{e}"
     handle_response e.response
   rescue RestClient::NotFound => e
-    LOGGER.error "DDEClient suppressed exception: #{e}"
+    LOGGER.error "DdeClient suppressed exception: #{e}"
     handle_response e.response
   end
 

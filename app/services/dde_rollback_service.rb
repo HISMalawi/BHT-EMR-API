@@ -285,7 +285,7 @@ class DDERollbackService
   end
 
   def dde_client
-    client = DDEClient.new
+    client = DdeClient.new
 
     connection = dde_connections[program.id]
 
