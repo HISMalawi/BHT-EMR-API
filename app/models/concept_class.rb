@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ConceptClass < RetirableRecord
   self.table_name = :concept_class
   self.primary_key = :concept_class_id

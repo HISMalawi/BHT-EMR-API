@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Encounter < VoidableRecord
   self.table_name = :encounter
   self.primary_key = :encounter_id
@@ -75,17 +77,17 @@ class Encounter < VoidableRecord
                     (dde_enabled.property_value == 'true')
                   end
 
-    PushDdeFootprintsJob.perform_later(patient_id: patient_id,
-                                       program_id: program_id,
+    PushDdeFootprintsJob.perform_later(patient_id:,
+                                       program_id:,
                                        date: encounter_datetime.strftime('%Y-%m-%d'),
                                        creator_id: creator)
   end
 
   def after_void(reason)
     orders.each { |order| order.void(reason) }
-    
+
     if encounter_type == EncounterType.find_by_name('LAB ORDERS').id && lims_config_exists?
-      orders.each do |order|  
+      orders.each do |order|
         worker = Lab::Lims::PushWorker.new(Lab::Lims::ApiFactory.create_api)
         worker.void_order_in_lims(order.order_id)
       end
@@ -113,7 +115,7 @@ class Encounter < VoidableRecord
     lims_realtime_updates_url = YAML.safe_load(File.read('config/application.yml'))['lims_realtime_updates_url']
 
     return false if lims_api.blank? && lims_realtime_updates_url.blank?
-    
+
     true
   end
 
