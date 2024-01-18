@@ -47,7 +47,7 @@ module ArtService
       'SC_CURR' => ArtService::Reports::Pepfar::ScCurr,
       'PATIENT_ART_VL_DATES' => ArtService::Reports::Pepfar::PatientStartVL,
       'MOH_TPT' => ArtService::Reports::MohTpt,
-      'TX_TB' => ArtService::Reports::Pepfar::TxTB,
+      'TX_TB' => ArtService::Reports::Pepfar::TxTb,
       'VL_COLLECTION' => ArtService::Reports::VlCollection,
       'DISCREPANCY_REPORT' => ArtService::Reports::Clinic::DiscrepancyReport,
       'STOCK_CARD' => ArtService::Reports::Clinic::StockCardReport,
