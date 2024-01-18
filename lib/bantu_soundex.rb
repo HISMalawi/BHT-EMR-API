@@ -61,3 +61,5 @@ class String
     initial + tail.slice(0..2)
   end
 end
+
+class BantuSoundex; end
