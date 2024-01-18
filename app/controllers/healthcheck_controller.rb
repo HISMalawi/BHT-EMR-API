@@ -46,7 +46,7 @@ class HealthcheckController < ApplicationController
     end_date = params[:end_date].to_date.strftime("%Y-%m-%d 23:59:59")
     program_id = params[:program_id]
 
-    usage = ActiveRecord::Base.connection.select_all <<EOF
+    usage = ActiveRecord::Base.connection.select_all <<~SQL
     SELECT
       username, given_name, family_name, u.date_created,
       r.role, COUNT(encounter_id) encounters FROM encounter e
@@ -55,7 +55,7 @@ class HealthcheckController < ApplicationController
     LEFT JOIN user_role r ON r.user_id = u.user_id
     WHERE e.voided = 0 AND e.encounter_datetime BETWEEN '#{start_date}' AND '#{end_date}'
     AND e.program_id = #{program_id} GROUP BY username;
-EOF
+SQL
 
     counts = []
     (usage || []).each do |e|

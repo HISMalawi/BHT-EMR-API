@@ -216,36 +216,36 @@ module ArtService
       end
 
       def screened_for_tb(my_patient_id, age_group, start_date, end_date)
-        data = ActiveRecord::Base.connection.select_one <<EOF
+        data = ActiveRecord::Base.connection.select_one <<~SQL
         SELECT patient_screened_for_tb(#{my_patient_id},
           '#{start_date.to_date}', '#{end_date.to_date}') AS screened;
-EOF
+SQL
 
         screened = data['screened'].to_i
 
-        ActiveRecord::Base.connection.execute <<EOF
+        ActiveRecord::Base.connection.execute <<~SQL
         UPDATE temp_disaggregated SET screened_for_tb =  #{screened},
         age_group = '#{age_group}'
         WHERE patient_id = #{my_patient_id};
-EOF
+SQL
 
         return screened
       end
 
       def given_ipt(my_patient_id, age_group, start_date, end_date)
 
-        data = ActiveRecord::Base.connection.select_one <<EOF
+        data = ActiveRecord::Base.connection.select_one <<~SQL
         SELECT patient_given_ipt(#{my_patient_id},
           '#{start_date.to_date}', '#{end_date.to_date}') AS given;
-EOF
+SQL
 
         given = data['given'].to_i
 
-        ActiveRecord::Base.connection.execute <<EOF
+        ActiveRecord::Base.connection.execute <<~SQL
         UPDATE temp_disaggregated SET given_ipt =  #{given} ,
         age_group = '#{age_group}'
         WHERE patient_id = #{my_patient_id};
-EOF
+SQL
 
         return given
       end
@@ -338,7 +338,7 @@ EOF
 
         elsif age_group == 'Pregnant'
           create_mysql_female_maternal_status
-          results = ActiveRecord::Base.connection.select_all <<EOF
+          results = ActiveRecord::Base.connection.select_all <<~SQL
             SELECT
               e.*, maternal_status AS mstatus,
               t2.initial_maternal_status,
@@ -348,11 +348,11 @@ EOF
             INNER JOIN temp_patient_outcomes t3 ON t3.patient_id = e.patient_id
             WHERE maternal_status = 'FP' OR initial_maternal_status = 'FP'
             GROUP BY e.patient_id;
-EOF
+SQL
 
         elsif age_group == 'Breastfeeding'
           create_mysql_female_maternal_status
-          results = ActiveRecord::Base.connection.select_all <<EOF
+          results = ActiveRecord::Base.connection.select_all <<~SQL
             SELECT
               e.*, maternal_status AS mstatus,
               initial_maternal_status,
@@ -362,11 +362,11 @@ EOF
             INNER JOIN temp_patient_outcomes t3 ON t3.patient_id = e.patient_id
             WHERE maternal_status = 'FBf' OR initial_maternal_status = 'FBf'
             GROUP BY e.patient_id;
-EOF
+SQL
 
         elsif age_group == 'FNP'
           create_mysql_female_maternal_status
-          results = ActiveRecord::Base.connection.select_all <<EOF
+          results = ActiveRecord::Base.connection.select_all <<~SQL
             SELECT
               e.*, maternal_status AS mstatus,
               initial_maternal_status,
@@ -376,7 +376,7 @@ EOF
             INNER JOIN temp_patient_outcomes t3 ON t3.patient_id = e.patient_id
             WHERE maternal_status = 'FNP'
             GROUP BY e.patient_id;
-EOF
+SQL
 
         end
 
@@ -385,11 +385,11 @@ EOF
       end
 
       def create_mysql_female_maternal_status
-        ActiveRecord::Base.connection.execute <<EOF
+        ActiveRecord::Base.connection.execute <<~SQL
         DROP FUNCTION IF EXISTS female_maternal_status;
-EOF
+SQL
 
-        ActiveRecord::Base.connection.execute <<EOF
+        ActiveRecord::Base.connection.execute <<~SQL
 CREATE FUNCTION female_maternal_status(my_patient_id int, end_datetime datetime) RETURNS VARCHAR(20)
 DETERMINISTIC
 BEGIN
@@ -484,7 +484,7 @@ END IF;
 
 RETURN maternal_status;
 END;
-EOF
+SQL
 
       end
 
@@ -590,11 +590,11 @@ EOF
        end
 
 
-       ActiveRecord::Base.connection.execute <<EOF
+       ActiveRecord::Base.connection.execute <<~SQL
         UPDATE temp_disaggregated SET maternal_status =  '#{female_maternal_status}',
           initial_maternal_status = '#{initial_female_maternal_status}',
            age_group = '#{age_group}' WHERE patient_id = #{patient_id};
-EOF
+SQL
 
 
       end
@@ -613,10 +613,10 @@ EOF
         end
 =begin
         (data || []).each do |r|
-          ActiveRecord::Base.connection.execute <<EOF
+          ActiveRecord::Base.connection.execute <<~SQL
             INSERT INTO temp_disaggregated (patient_id, age_group)
             VALUES(#{r['patient_id']}, '#{age_group}');
-EOF
+SQL
         end
 =end
 

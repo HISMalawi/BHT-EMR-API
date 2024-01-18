@@ -278,10 +278,10 @@ module AncService
 
         end
 
-        art_patients = ActiveRecord::Base.connection.select_all <<EOF
+        art_patients = ActiveRecord::Base.connection.select_all <<~SQL
             SELECT patient_id, earliest_start_date FROM temp_earliest_start_date
             WHERE gender = 'F' AND death_date IS NULL
-EOF
+SQL
         art_patients.each do |patient|
           @patient_ids << patient["patient_id"]
           earliest_start_date = patient["earliest_start_date"].to_date
@@ -501,10 +501,10 @@ EOF
 
         end
 
-        art_patients = ActiveRecord::Base.connection.select_all <<EOF
+        art_patients = ActiveRecord::Base.connection.select_all <<~SQL
             SELECT patient_id, earliest_start_date FROM temp_earliest_start_date
             WHERE gender = 'F' AND death_date IS NULL
-EOF
+SQL
 
         art_patients.each do |patient|
           earliest_start_date = patient["earliest_start_date"].to_date

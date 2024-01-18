@@ -23,10 +23,10 @@ FastConcept = ConceptName.find_by_name('FAST')
 
 def notification_tracker_user_activities
 
-	activities = ActiveRecord::Base.connection.select_all <<EOF
+	activities = ActiveRecord::Base.connection.select_all <<~SQL
 	SELECT * FROM notification_tracker_user_activities 
 	WHERE login_datetime <= '#{@end_date}';
-EOF
+SQL
 
 	activities.each do |a|
 		user_id = a['user_id'].to_i
@@ -68,9 +68,9 @@ def start
 end
 
 def fetch_overall_record_complete_status
-	all_patients = ActiveRecord::Base.connection.select_all <<EOF
+	all_patients = ActiveRecord::Base.connection.select_all <<~SQL
 		SELECT * FROM patient_seen WHERE visit_date = '#{@start_date.to_date}';
-EOF
+SQL
 
 
 	(all_patients || []).each do |r|
@@ -86,10 +86,10 @@ EOF
 
 		puts "#{visit_date} ################################### #{skipped_encounter_type.name}"
 		unless skipped_encounter_type.name.blank?
-  		ActiveRecord::Base.connection.execute <<EOF
+  		ActiveRecord::Base.connection.execute <<~SQL
 				INSERT INTO overall_record_complete_status (patient_seen_id, complete)
  				VALUES(#{r['patient_seen_id']}, 0)
-EOF
+SQL
 
 		end
 		#raise complete.inspect
@@ -109,39 +109,39 @@ def fetch_patient_seen
 
 	encounter_ids = EncounterType.where("name IN(?)", hiv_encounter_types).map(&:id)
 
-  ActiveRecord::Base.connection.execute <<EOF
+  ActiveRecord::Base.connection.execute <<~SQL
     INSERT INTO patient_seen (patient_id, visit_date) 
 			SELECT DISTINCT(patient_id) patient_id, DATE(encounter_datetime) visit_date FROM
 			encounter WHERE encounter_datetime BETWEEN '#{@start_date}'
 			AND '#{@end_date}' AND voided = 0
       AND encounter_type IN(#{encounter_ids.join(',')})
 			ORDER BY patient_id;
-EOF
+SQL
 
 	
 end
 
 def build_temp_tables
-  ActiveRecord::Base.connection.execute <<EOF
+  ActiveRecord::Base.connection.execute <<~SQL
     DROP TABLE IF EXISTS `patient_seen`;
-EOF
+SQL
 
-  ActiveRecord::Base.connection.execute <<EOF
+  ActiveRecord::Base.connection.execute <<~SQL
    CREATE TABLE IF NOT EXISTS `patient_seen` (
  		`patient_seen_id` int(11) NOT NULL AUTO_INCREMENT,
  		`patient_id` int(11) NOT NULL,
  		`visit_date` date NOT NULL,
 		 PRIMARY KEY (`patient_seen_id`)
 	 );
-EOF
+SQL
 
 	puts "Created patient_seen ...."
 
-  ActiveRecord::Base.connection.execute <<EOF
+  ActiveRecord::Base.connection.execute <<~SQL
     DROP TABLE IF EXISTS `provider_record_complete_status`;
-EOF
+SQL
 
-  ActiveRecord::Base.connection.execute <<EOF
+  ActiveRecord::Base.connection.execute <<~SQL
    CREATE TABLE IF NOT EXISTS `provider_record_complete_status` (
  		`id` int(11) NOT NULL AUTO_INCREMENT,
  		`patient_seen_id` int(11) NOT NULL,
@@ -150,15 +150,15 @@ EOF
 		 PRIMARY KEY (`id`),
  		 UNIQUE KEY `ID_UNIQUE` (`id`)
 	 );
-EOF
+SQL
 
 	puts "Created provider_record_complete_status ...."
 
-  ActiveRecord::Base.connection.execute <<EOF
+  ActiveRecord::Base.connection.execute <<~SQL
     DROP TABLE IF EXISTS `overall_record_complete_status`;
-EOF
+SQL
 
-  ActiveRecord::Base.connection.execute <<EOF
+  ActiveRecord::Base.connection.execute <<~SQL
    CREATE TABLE IF NOT EXISTS `overall_record_complete_status` (
  		`id` int(11) NOT NULL AUTO_INCREMENT,
  		`patient_seen_id` int(11) NOT NULL,
@@ -166,17 +166,17 @@ EOF
 		 PRIMARY KEY (`id`),
  		 UNIQUE KEY `ID_UNIQUE` (`id`)
 	 );
-EOF
+SQL
 
 	puts "Created overall_record_complete_status ...."
 
 	###############################################################
 
-  ActiveRecord::Base.connection.execute <<EOF
+  ActiveRecord::Base.connection.execute <<~SQL
     DROP TABLE IF EXISTS `providers_who_interacted_with_patients`;
-EOF
+SQL
 
-  ActiveRecord::Base.connection.execute <<EOF
+  ActiveRecord::Base.connection.execute <<~SQL
    CREATE TABLE IF NOT EXISTS `providers_who_interacted_with_patients` (
  		`pi_id` int(11) NOT NULL AUTO_INCREMENT,
  		`user_id` int(11) NOT NULL,
@@ -184,16 +184,16 @@ EOF
 		 PRIMARY KEY (`pi_id`),
  		 UNIQUE KEY `ID_UNIQUE` (`pi_id`)
 	 );
-EOF
+SQL
 
 	puts "Created providers_who_interacted_with_patients ...."
 
 
-  ActiveRecord::Base.connection.execute <<EOF
+  ActiveRecord::Base.connection.execute <<~SQL
     DROP TABLE IF EXISTS `provider_patient_interactions`;
-EOF
+SQL
 
-  ActiveRecord::Base.connection.execute <<EOF
+  ActiveRecord::Base.connection.execute <<~SQL
    CREATE TABLE IF NOT EXISTS `provider_patient_interactions` (
  		`ppi_id` int(11) NOT NULL AUTO_INCREMENT,
  		`pi_id` int(11) NOT NULL,
@@ -201,16 +201,16 @@ EOF
 		 PRIMARY KEY (`ppi_id`),
  		 UNIQUE KEY `ID_UNIQUE` (`ppi_id`)
 	 );
-EOF
+SQL
 
 	puts "Created provider_patient_interactions ...."
 
 
-  ActiveRecord::Base.connection.execute <<EOF
+  ActiveRecord::Base.connection.execute <<~SQL
     DROP TABLE IF EXISTS `encounters_missed`;
-EOF
+SQL
 
-  ActiveRecord::Base.connection.execute <<EOF
+  ActiveRecord::Base.connection.execute <<~SQL
    CREATE TABLE IF NOT EXISTS `encounters_missed` (
  		`missed_encounter_id` int(11) NOT NULL AUTO_INCREMENT,
  		`ppi_id` int(11) NOT NULL,
@@ -219,7 +219,7 @@ EOF
 		 PRIMARY KEY (`missed_encounter_id`),
  		 UNIQUE KEY `ID_UNIQUE` (`missed_encounter_id`)
 	 );
-EOF
+SQL
 
 	puts "Created encounters_missed ...."
 
@@ -413,7 +413,7 @@ def fetch_individual_record_complete_status
 
 	encounter_ids = EncounterType.where("name IN(?)", hiv_encounter_types).map(&:id)
 
-  ActiveRecord::Base.connection.execute <<EOF
+  ActiveRecord::Base.connection.execute <<~SQL
     INSERT INTO providers_who_interacted_with_patients (user_id, visit_date) 
 			SELECT DISTINCT(e.creator) user_id, DATE(encounter_datetime) visit_date 
       FROM patient_seen s  
@@ -422,21 +422,21 @@ def fetch_individual_record_complete_status
 			AND '#{@end_date}' AND e.encounter_type IN(#{encounter_ids.join(',')})
       AND s.visit_date = '#{@start_date.to_date}' AND e.voided = 0
 			ORDER BY e.creator;
-EOF
+SQL
 
 end
 
 def build_provider_patient_interactions
 
-	providers = ActiveRecord::Base.connection.select_all <<EOF
+	providers = ActiveRecord::Base.connection.select_all <<~SQL
 	SELECT DISTINCT(user_id) FROM providers_who_interacted_with_patients 
 	WHERE visit_date = '#{@start_date.to_date}';
-EOF
+SQL
 
 	(providers || []).each do |p|
 		user_id = p['user_id'].to_i
 
-  	ActiveRecord::Base.connection.execute <<EOF
+  	ActiveRecord::Base.connection.execute <<~SQL
     	INSERT INTO provider_patient_interactions (patient_id, pi_id) 
 				SELECT DISTINCT(e.patient_id), t.pi_id FROM providers_who_interacted_with_patients t
 				INNER JOIN encounter e ON e.creator = t.user_id
@@ -447,7 +447,7 @@ EOF
 					SELECT patient_id FROM overall_record_complete_status WHERE complete = 0
 				)
 				ORDER BY e.patient_id;
-EOF
+SQL
 
 		puts ".... #{user_id} >> #{@start_date.to_date}"
 	end
@@ -456,12 +456,12 @@ end
 
 def build_individual_record_complete_status
 
-	provider_patient_interactions = ActiveRecord::Base.connection.select_all <<EOF
+	provider_patient_interactions = ActiveRecord::Base.connection.select_all <<~SQL
   SELECT i.ppi_id, t2.visit_date, user_id, s.patient_id FROM overall_record_complete_status t
   INNER JOIN patient_seen s on s.patient_seen_id = t.patient_seen_id
   INNER JOIN provider_patient_interactions i ON i.patient_id = s.patient_id
   INNER JOIN providers_who_interacted_with_patients t2 ON t2.pi_id = i.pi_id;
-EOF
+SQL
 
 	(provider_patient_interactions || []).each do |i|
 		ppi_id 			= i['ppi_id'].to_i
@@ -480,10 +480,10 @@ EOF
     user_activities_id = data[1]
 
     (missed_encounter_type_ids || []).each do |e| 
-		  ActiveRecord::Base.connection.execute <<EOF
+		  ActiveRecord::Base.connection.execute <<~SQL
     	  INSERT INTO encounters_missed (ppi_id, missed_encounter_type_id, user_activities_id)
 			  VALUES (#{ppi_id}, #{e.id}, #{user_activities_id}); 
-EOF
+SQL
 
       puts "Individual record complete status: #{user_activities_id}"
     end unless user_activities_id.blank?
@@ -494,11 +494,11 @@ end
 
 
 def select_user_missed_activities(user_id, encounter_types, start_date)
-  activities = ActiveRecord::Base.connection.select_one <<EOF
+  activities = ActiveRecord::Base.connection.select_one <<~SQL
   SELECT * FROM notification_tracker_user_activities
   WHERE user_id = #{user_id} AND login_datetime >= '#{start_date}'
   ORDER BY login_datetime ASC;
-EOF
+SQL
 
   return [encounter_types, nil] if activities.blank?
 

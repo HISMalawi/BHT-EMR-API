@@ -105,9 +105,9 @@ module ArtService
     end
 
     def art_period
-      sdate = ActiveRecord::Base.connection.select_one <<EOF
+      sdate = ActiveRecord::Base.connection.select_one <<~SQL
       SELECT date_antiretrovirals_started(#{patient.patient_id}, current_date()) AS earliest_date;
-EOF
+SQL
 
       start_date = sdate['earliest_date'].to_time rescue nil
 

@@ -1368,13 +1368,13 @@ module ArtService
         without_side_effects = []
         unknowns = []
 
-        records = ActiveRecord::Base.connection.select_all <<EOF
+        records = ActiveRecord::Base.connection.select_all <<~SQL
         SELECT e.*, s.has_se FROM temp_earliest_start_date e
         INNER JOIN temp_patient_side_effects s ON s.patient_id = e.patient_id
         INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
         WHERE o.cum_outcome = 'On antiretrovirals'
         AND DATE(e.date_enrolled) <= '#{end_date.to_date}';
-EOF
+SQL
 
         (records || []).each do |data|
           if data['has_se'] == 'Yes'
@@ -1989,13 +1989,13 @@ EOF
         def create_tmp_patient_table_2(end_date)
 
     ##########################################################
-    ActiveRecord::Base.connection.execute <<EOF
+    ActiveRecord::Base.connection.execute <<~SQL
       DROP FUNCTION IF EXISTS patient_date_enrolled;
-EOF
+SQL
 
     arv_concept_ids = Drug.arv_drugs.map(&:concept_id)
 
-    ActiveRecord::Base.connection.execute <<EOF
+    ActiveRecord::Base.connection.execute <<~SQL
 CREATE FUNCTION patient_date_enrolled(my_patient_id int) RETURNS DATE
 DETERMINISTIC
 BEGIN
@@ -2010,17 +2010,17 @@ SET my_start_date = (SELECT DATE(o.start_date) FROM drug_order d INNER JOIN orde
 
 RETURN my_start_date;
 END;
-EOF
+SQL
     ##########################################################
 
 
 
 
-    ActiveRecord::Base.connection.execute <<EOF
+    ActiveRecord::Base.connection.execute <<~SQL
       DROP TABLE IF EXISTS `temp_earliest_start_date`;
-EOF
+SQL
 
-    ActiveRecord::Base.connection.execute <<EOF
+    ActiveRecord::Base.connection.execute <<~SQL
       CREATE TABLE temp_earliest_start_date
         select
             `p`.`patient_id` AS `patient_id`,
@@ -2042,7 +2042,7 @@ EOF
                 and (`p`.`program_id` = 1)
                 and (`s`.`state` = 7))
         group by `p`.`patient_id`;
-EOF
+SQL
 
   end
 

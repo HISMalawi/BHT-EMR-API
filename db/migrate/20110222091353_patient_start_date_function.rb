@@ -1,10 +1,10 @@
 class PatientStartDateFunction < ActiveRecord::Migration[5.2]
   def self.up
-    ActiveRecord::Base.connection.execute <<EOF
+    ActiveRecord::Base.connection.execute <<~SQL
 DROP FUNCTION IF EXISTS patient_start_date;
-EOF
+SQL
 
-    ActiveRecord::Base.connection.execute <<EOF
+    ActiveRecord::Base.connection.execute <<~SQL
 CREATE FUNCTION patient_start_date(patient_id int) RETURNS VARCHAR(10) 
 DETERMINISTIC
 BEGIN
@@ -19,12 +19,12 @@ set start_date = (SELECT DATE(obs_datetime) FROM obs WHERE voided = 0 AND person
 
 RETURN start_date;
 END;
-EOF
+SQL
   end
 
   def self.down
-    ActiveRecord::Base.connection.execute <<EOF
+    ActiveRecord::Base.connection.execute <<~SQL
 DROP FUNCTION IF EXISTS patient_start_date;
-EOF
+SQL
   end
 end

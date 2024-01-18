@@ -47,14 +47,14 @@ module ArtService
         gender = @gender.first.upcase
 
         patient_ids = []
-        results = ActiveRecord::Base.connection.select_all <<EOF
+        results = ActiveRecord::Base.connection.select_all <<~SQL
         SELECT
           e.patient_id, disaggregated_age_group(e.birthdate, DATE('#{@end_date}')) age_group
         FROM temp_earliest_start_date e
         INNER JOIN temp_patient_outcomes USING(patient_id)
         WHERE cum_outcome = 'On antiretrovirals' AND LEFT(gender,1) = '#{gender}'
         GROUP BY e.patient_id HAVING  age_group = '#{@age_group}';
-EOF
+SQL
 
         (results || []).each do |row|
           patient_ids << row['patient_id'].to_i

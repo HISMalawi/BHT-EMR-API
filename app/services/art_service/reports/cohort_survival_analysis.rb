@@ -67,7 +67,7 @@ module ArtService
 		      end
 
           begin
-            data = ActiveRecord::Base.connection.select_all <<EOF
+            data = ActiveRecord::Base.connection.select_all <<~SQL
             SELECT
               cum_outcome, timestampdiff(month, DATE('#{qend_date}'), DATE('#{end_date}')) qinterval,
               timestampdiff(year, DATE(e.birthdate), DATE('#{end_date}')) AS patient_age,
@@ -77,7 +77,7 @@ module ArtService
             WHERE date_enrolled BETWEEN '#{qstart_date.strftime('%Y-%m-%d')}'
             AND '#{qend_date.strftime('%Y-%m-%d')}'
             #{additional_sql};
-EOF
+SQL
 
           rescue
             return results
@@ -107,14 +107,14 @@ EOF
       def pregnant_and_breastfeeding_women(start_date, end_date)
         patient_ids = []
 
-        patients = ActiveRecord::Base.connection.select_all <<EOF
+        patients = ActiveRecord::Base.connection.select_all <<~SQL
         SELECT
           e.*, patient_reason_for_starting_art_text(e.patient_id) reason
         FROM temp_earliest_start_date e
         WHERE date_enrolled BETWEEN '#{start_date.to_date}' AND '#{end_date.to_date}'
         AND gender IN('F','Female') GROUP BY e.patient_id
         HAVING reason LIKE '%pregnant%' OR reason LIKE '%breast%';
-EOF
+SQL
 
 				(patients || []).each do |aRow|
 				  patient_ids << aRow['patient_id'].to_i
@@ -129,7 +129,7 @@ EOF
         concept_ids << ConceptName.find_by_name('Is patient breast feeding?').concept_id
         yes_concept_id = ConceptName.find_by_name('Yes').concept_id
 
-        patients = ActiveRecord::Base.connection.select_all <<EOF
+        patients = ActiveRecord::Base.connection.select_all <<~SQL
         SELECT
           e.*, patient_reason_for_starting_art_text(e.patient_id) reason
         FROM temp_earliest_start_date e
@@ -141,7 +141,7 @@ EOF
         AND value_coded = #{yes_concept_id} GROUP BY e.patient_id
         HAVING reason LIKE '%Lymphocyte count below threshold with who stage%'
         ORDER BY obs_datetime DESC;
-EOF
+SQL
 
         pregnant_and_breastfeeding_clients = []
 
@@ -171,7 +171,7 @@ EOF
 				option_Bplus_women_ids = pregnant_and_breastfeeding_women(qstart_date, qend_date)
 				option_Bplus_women_ids = [0] if option_Bplus_women_ids.blank?
 
-        data = ActiveRecord::Base.connection.select_all <<EOF
+        data = ActiveRecord::Base.connection.select_all <<~SQL
         SELECT
           cum_outcome, timestampdiff(month, DATE('#{qend_date}'), DATE('#{end_date}')) qinterval,
           timestampdiff(year, DATE(e.birthdate), DATE('#{end_date}')) AS patient_age,
@@ -180,7 +180,7 @@ EOF
         INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
         WHERE date_enrolled BETWEEN '#{qstart_date.strftime('%Y-%m-%d')}'
         AND '#{qend_date.strftime('%Y-%m-%d')}' AND gender = 'F' AND e.patient_id IN (#{option_Bplus_women_ids.join(', ')});
-EOF
+SQL
 
         (data || []).each do |r|
           outcome = r['cum_outcome']

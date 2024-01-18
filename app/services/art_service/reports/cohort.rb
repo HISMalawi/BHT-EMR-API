@@ -268,10 +268,10 @@ module ArtService
         end
 
         unless sql_insert_statement.blank?
-          ActiveRecord::Base.connection.execute <<EOF
+          ActiveRecord::Base.connection.execute <<~SQL
           INSERT INTO cohort_drill_down (reporting_report_design_resource_id, patient_id)
           VALUES #{sql_insert_statement};
-EOF
+SQL
 
         end
 

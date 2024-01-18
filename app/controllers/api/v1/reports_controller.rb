@@ -139,11 +139,13 @@ module Api
 
       def regimen_switch
         pepfar = params[:pepfar] == 'true'
-        render json: service.regimen_switch(params[:start_date], params[:end_date], pepfar, occupation: params[:occupation])
+        render json: service.regimen_switch(params[:start_date], params[:end_date], pepfar,
+                                            occupation: params[:occupation])
       end
 
       def regimen_report
-        render json: service.regimen_report(params[:start_date], params[:end_date], params[:type], occupation: params[:occupation])
+        render json: service.regimen_report(params[:start_date], params[:end_date], params[:type],
+                                            occupation: params[:occupation])
       end
 
       def screened_for_tb
@@ -227,7 +229,8 @@ module Api
       end
 
       def external_consultation_clients
-        render json: service.external_consultation_clients(params[:start_date], params[:end_date], occupation: params[:occupation])
+        render json: service.external_consultation_clients(params[:start_date], params[:end_date],
+                                                           occupation: params[:occupation])
       end
 
       def cxca_reports
@@ -271,9 +274,9 @@ module Api
       def service
         return @service if @service
 
-        program_id, date = params.require %i[program_id date]
+        program_id, = params.require %i[program_id date]
 
-        @service = ReportService.new program_id: program_id
+        @service = ReportService.new(program_id:)
         @service
       end
 

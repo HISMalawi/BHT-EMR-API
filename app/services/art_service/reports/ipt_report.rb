@@ -18,21 +18,21 @@ module ArtService
 
       def coverage
         program_id = Program.find_by_name('HIV program').id
-        data = ActiveRecord::Base.connection.select_all <<EOF
+        data = ActiveRecord::Base.connection.select_all <<~SQL
         SELECT patient_id FROM encounter
         WHERE encounter_type = #{EncounterType.find_by_name('HIV Reception').id}
         AND encounter_datetime BETWEEN '#{@start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
         AND '#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}' AND voided = 0
         AND program_id = #{program_id}
         GROUP BY DATE(encounter_datetime), patient_id;
-EOF
+SQL
 
         patient_ids = data.map{|p| p['patient_id'].to_i}
         return {patients: 0, prescribed: 0, dispensed: 0} if patient_ids.blank?
 
         ipt_drugs = Drug.where('name LIKE (?)', "%Isoniazid%").map(&:drug_id)
 
-        data = ActiveRecord::Base.connection.select_one <<EOF
+        data = ActiveRecord::Base.connection.select_one <<~SQL
         SELECT count(o.patient_id) AS prescribed FROM orders o
         INNER JOIN encounter e ON e.encounter_id = o.encounter_id
         INNER JOIN drug_order i ON i.order_id = o.order_id
@@ -41,7 +41,7 @@ EOF
         AND "#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}" 
         AND drug_inventory_id IN(#{ipt_drugs.join(',')}) 
         AND e.program_id = #{program_id};
-EOF
+SQL
     
 =begin    
         data = Order.where("start_date BETWEEN ? AND ? AND drug_inventory_id IN(?)
@@ -52,7 +52,7 @@ EOF
           INNER JOIN drug_order i ON i.order_id = orders.order_id").count(:patient_id)
 =end
 
-        data2 = ActiveRecord::Base.connection.select_one <<EOF
+        data2 = ActiveRecord::Base.connection.select_one <<~SQL
         SELECT count(o.patient_id) AS dispensed FROM orders o
         INNER JOIN encounter e ON e.encounter_id = o.encounter_id
         INNER JOIN drug_order i ON i.order_id = o.order_id
@@ -61,7 +61,7 @@ EOF
         AND "#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}"
         AND drug_inventory_id IN(#{ipt_drugs.join(',')})
         AND quantity > 0 AND e.program_id = #{program_id};
-EOF
+SQL
    
 
         prescribed = data['prescribed']
