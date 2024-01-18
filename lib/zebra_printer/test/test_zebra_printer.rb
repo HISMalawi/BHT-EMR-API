@@ -210,3 +210,6 @@ class ZebraPrinterTest < Test::Unit::TestCase
     assert_equal "\nN\nq776\nQ329\nZT\nA13,0,0,1,1,1,N,\"Where-e'er you find \"the cooling western breeze,\"\"\nA13,26,0,1,1,1,N,\"In the next line, it \"whispers through the trees;\"\"\nA13,52,0,1,1,1,N,\"If crystal streams \"with pleasing murmurs creep,\"\"\nA13,78,0,1,1,1,N,\"The reader's threatened (not in vain) with \"sleep.\"\"\n", @label.output     
   end
 end
+
+class ZebraPrinter::Test::TestZebraPrinter
+end
