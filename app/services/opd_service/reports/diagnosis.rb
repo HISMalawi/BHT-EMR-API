@@ -1,4 +1,4 @@
-class OPDService::Reports::Diagnosis
+class OpdService::Reports::Diagnosis
 
   def find_report(start_date:, end_date:, **_extra_kwargs)
     diagnosis(start_date, end_date)

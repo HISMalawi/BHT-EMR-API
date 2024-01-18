@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-class OPDService::PatientsEngine
+class OpdService::PatientsEngine
   def initialize(program:)
     @program = program
   end
 
   def visit_summary_label(patient, date)
-    OPDService::VisitLabel.new(patient, date)
+    OpdService::VisitLabel.new(patient, date)
   end
   # Retrieves given patient's status info.
   #

@@ -2,7 +2,7 @@
 
 class ProgramBarcodeService
   ENGINES = {
-    'OPD PROGRAM' => OPDService::BarcodeEngine
+    'OPD PROGRAM' => OpdService::BarcodeEngine
   }.freeze
 
   def initialize(program:)

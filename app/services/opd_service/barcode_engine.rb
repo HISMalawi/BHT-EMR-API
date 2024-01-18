@@ -2,7 +2,7 @@
 
 require 'zebra_printer/lib/zebra_printer'
 
-class OPDService::BarcodeEngine
+class OpdService::BarcodeEngine
   def initialize(program: nil)
     @program = program
   end

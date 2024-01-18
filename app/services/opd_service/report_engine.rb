@@ -1,20 +1,20 @@
 
 require 'set'
 
-module OPDService
+module OpdService
   class ReportEngine
     include ModelUtils
 
     REPORTS = {
-      'LA_PRESCRIPTIONS' => OPDService::Reports::LaPrescriptions,
-      'DIAGNOSIS' => OPDService::Reports::Diagnosis,
-      'CASES_SEEN' => OPDService::Reports::CasesSeen,
-      'MENTAL_HEALTH' => OPDService::Reports::MentalHealth,
-      'MALARIA_REPORT' => OPDService::Reports::MalariaReport,
-      'TRIAGE_COVID' => OPDService::Reports::TriageCovid,
-      'TRIAGE_REGISTRATION' => OPDService::Reports::TriageRegistration,
-      'ATTENDANCE' => OPDService::Reports::Attendance,
-      'DRUG' => OPDService::Reports::Drug
+      'LA_PRESCRIPTIONS' => OpdService::Reports::LaPrescriptions,
+      'DIAGNOSIS' => OpdService::Reports::Diagnosis,
+      'CASES_SEEN' => OpdService::Reports::CasesSeen,
+      'MENTAL_HEALTH' => OpdService::Reports::MentalHealth,
+      'MALARIA_REPORT' => OpdService::Reports::MalariaReport,
+      'TRIAGE_COVID' => OpdService::Reports::TriageCovid,
+      'TRIAGE_REGISTRATION' => OpdService::Reports::TriageRegistration,
+      'ATTENDANCE' => OpdService::Reports::Attendance,
+      'DRUG' => OpdService::Reports::Drug
     }
 
     def initialize

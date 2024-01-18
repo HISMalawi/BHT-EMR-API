@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module OPDService
+module OpdService
   # Provides various summary statistics for an ART patient
   class PatientSummary
     NPID_TYPE = 'National id'

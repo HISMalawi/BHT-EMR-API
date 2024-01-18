@@ -2,7 +2,7 @@
 
 require 'set'
 
-module OPDService
+module OpdService
   class WorkflowEngine
     include ModelUtils
 

@@ -1,4 +1,4 @@
-class OPDService::Reports::Drug
+class OpdService::Reports::Drug
 
   def find_report(start_date:, end_date:, **_extra_kwargs)
     drug(start_date, end_date)

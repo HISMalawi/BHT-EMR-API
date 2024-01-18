@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # A report of LA(1-4) prescribed
-class OPDService::Reports::LaPrescriptions
+class OpdService::Reports::LaPrescriptions
   def find_report(start_date:, end_date:, **_extra_kwargs)
     build_report(start_date, end_date)
   end

@@ -1,4 +1,4 @@
-class OPDService::Reports::CasesSeen
+class OpdService::Reports::CasesSeen
 
   def find_report(start_date:, end_date:, **_extra_kwargs)
     cases_seen(start_date, end_date)

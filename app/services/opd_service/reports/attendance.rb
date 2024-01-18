@@ -1,4 +1,4 @@
-class OPDService::Reports::Attendance
+class OpdService::Reports::Attendance
 
   def find_report(start_date:, end_date:, **_extra_kwargs)
     attendance(start_date, end_date)
