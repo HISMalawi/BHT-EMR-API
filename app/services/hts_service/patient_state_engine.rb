@@ -1,4 +1,4 @@
-module HTSService
+module HtsService
   class PatientStateEngine
 
     include ModelUtils

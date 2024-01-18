@@ -10,7 +10,7 @@ class WorkflowService
     'ANC PROGRAM' => AncService::WorkflowEngine,
     'VMMC PROGRAM' => VmmcService::WorkflowEngine,
     'CXCA PROGRAM' => CxcaService::WorkflowEngine,
-    'HTC PROGRAM' => HTSService::WorkflowEngine,
+    'HTC PROGRAM' => HtsService::WorkflowEngine,
     'AETC PROGRAM' => AetcService::WorkflowEngine,
     'SPINE PROGRAM' => SpineService::WorkflowEngine
   }.freeze

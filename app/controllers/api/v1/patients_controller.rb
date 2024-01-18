@@ -234,7 +234,7 @@ class Api::V1::PatientsController < ApplicationController
   end
 
   def print_hts_linkage_code
-    label = HTSService::HtsLinkageCode.new(params[:patient_id], params[:code]).print_linkage_code
+    label = HtsService::HtsLinkageCode.new(params[:patient_id], params[:code]).print_linkage_code
     send_data label, type: 'application/label;charset=utf-8',
                      stream: false,
                      filename: "#{params[:patient_id]}-#{SecureRandom.hex(12)}.lbl",
@@ -364,7 +364,7 @@ class Api::V1::PatientsController < ApplicationController
   end
 
   def ait_intergration_service patient_id
-    HTSService::AitIntergration::AitIntergrationService.new(patient_id)
+    HtsService::AitIntergration::AitIntergrationService.new(patient_id)
   end
 
   def tb_prevention_service

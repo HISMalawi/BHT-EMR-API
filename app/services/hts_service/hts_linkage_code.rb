@@ -1,4 +1,4 @@
-module HTSService
+module HtsService
   class HtsLinkageCode
 
     HTS_LINK_CODE_CONCEPT = ConceptName.find_by_name('HTC serial number').concept_id

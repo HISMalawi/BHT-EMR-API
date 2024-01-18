@@ -1,4 +1,4 @@
-module HTSService
+module HtsService
   class PatientsSummary
     include ModelUtils
 
@@ -18,7 +18,7 @@ module HTSService
     def initialize(patient, date)
       @patient = patient
       @date = date
-      @hts_service = HTSService::PatientsSummary
+      @hts_service = HtsService::PatientsSummary
       @service = his_patient
     end
 

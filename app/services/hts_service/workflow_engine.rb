@@ -3,7 +3,7 @@
 
 require "set"
 
-module HTSService
+module HtsService
   class WorkflowEngine
     include ModelUtils
 
