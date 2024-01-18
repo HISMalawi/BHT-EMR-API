@@ -2,7 +2,7 @@
 
 module AncService
   # class that will map the users in the system
-  class ANCMappingMigration
+  class AncMappingMigration
     def initialize(anc_database, confidence)
       @database = anc_database
       @confidence = confidence

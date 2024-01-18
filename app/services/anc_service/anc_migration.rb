@@ -53,7 +53,7 @@ module AncService
     def normal
       msg = @database_reversed ? 'Starting an abnormal migration (KAWALE CASE)' : 'Starting a normal migration'
       print_time message: msg, long_form: true
-      ANCMappingMigration.new(@database, @confidence).map_linkage_between_anc_and_openmrs
+      AncMappingMigration.new(@database, @confidence).map_linkage_between_anc_and_openmrs
       not_linked = fetch_unmapped_patients
       mapped = fetch_mapped_patients
       # rubocop:disable Metrics/BlockLength
