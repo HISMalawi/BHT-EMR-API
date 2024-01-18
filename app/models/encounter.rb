@@ -75,7 +75,7 @@ class Encounter < VoidableRecord
                     (dde_enabled.property_value == 'true')
                   end
 
-    PushDDEFootprintsJob.perform_later(patient_id: patient_id,
+    PushDdeFootprintsJob.perform_later(patient_id: patient_id,
                                        program_id: program_id,
                                        date: encounter_datetime.strftime('%Y-%m-%d'),
                                        creator_id: creator)
