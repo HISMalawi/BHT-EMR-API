@@ -9,7 +9,7 @@ class WorkflowService
     'TB PROGRAM' => TbService::WorkflowEngine,
     'ANC PROGRAM' => AncService::WorkflowEngine,
     'VMMC PROGRAM' => VmmcService::WorkflowEngine,
-    'CXCA PROGRAM' => CXCAService::WorkflowEngine,
+    'CXCA PROGRAM' => CxcaService::WorkflowEngine,
     'HTC PROGRAM' => HTSService::WorkflowEngine,
     'AETC PROGRAM' => AetcService::WorkflowEngine,
     'SPINE PROGRAM' => SpineService::WorkflowEngine

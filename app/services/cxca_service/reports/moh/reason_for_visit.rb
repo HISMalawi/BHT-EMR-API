@@ -1,4 +1,4 @@
-module CXCAService::Reports::Moh
+module CxcaService::Reports::Moh
   class ReasonForVisit
     attr_accessor :start_date, :end_date
 

@@ -260,7 +260,7 @@ class Api::V1::PatientsController < ApplicationController
   end
 
   def last_cxca_screening_details
-    cxca = CXCAService::PatientSummary.new(patient, params[:date].to_date)
+    cxca = CxcaService::PatientSummary.new(patient, params[:date].to_date)
     render json: cxca.last_screening_info
   end
 

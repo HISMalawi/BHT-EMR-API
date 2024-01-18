@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module CXCAService::Reports::Pepfar
+module CxcaService::Reports::Pepfar
   ##
   # Common utilities for Pepfar reports
   module Utils

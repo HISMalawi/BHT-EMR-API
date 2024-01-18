@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module CXCAService
+module CxcaService
   # Patients sub service.
   #
   # Basically provides VMMC specific patient-centric functionality

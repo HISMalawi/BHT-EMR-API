@@ -1,4 +1,4 @@
-module CXCAService::Reports::Clinic
+module CxcaService::Reports::Clinic
   class MonthlyCecapTx
     include Utils
 

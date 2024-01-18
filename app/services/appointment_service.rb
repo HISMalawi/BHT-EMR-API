@@ -4,7 +4,7 @@ class AppointmentService
     'TB PROGRAM' => TbService::AppointmentEngine,
     'ANC PROGRAM' => AncService::AppointmentEngine,
     'VMMC PROGRAM' => VmmcService::AppointmentEngine,
-    'CXCA PROGRAM' => CXCAService::AppointmentEngine,
+    'CXCA PROGRAM' => CxcaService::AppointmentEngine,
     'HTC PROGRAM' => HTSService::AppointmentEngine
   }.freeze
 

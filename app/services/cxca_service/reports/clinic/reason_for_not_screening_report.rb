@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module CXCAService
+module CxcaService
   module Reports
     module Clinic
       # Reason for not screening report

@@ -8,7 +8,7 @@ class ReportService
     'VMMC PROGRAM' => VmmcService::ReportEngine,
     'TB PROGRAM' => TbService::ReportEngine,
     'LABORATORY ORDERS' => LaboratoryService::ReportEngine,
-    'CXCA PROGRAM' => CXCAService::ReportEngine,
+    'CXCA PROGRAM' => CxcaService::ReportEngine,
     'RADIOLOGY PROGRAM' => RadiologyService::ReportEngine,
     'PATIENT REGISTRATION PROGRAM' => PatientRegistrationService::ReportEngine,
     'HTC PROGRAM' => HtsService::ReportEngine,
