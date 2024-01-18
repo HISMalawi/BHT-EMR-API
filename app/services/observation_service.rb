@@ -31,7 +31,7 @@ class ObservationService
       )
       obs_parameters[:person_id] = encounter.patient_id
       obs_parameters[:encounter_id] = encounter.id
-      observation = Observation.create(obs_parameters)
+      observation = Observation.create!(obs_parameters)
       validate_observation(observation)
       records << observation
 
