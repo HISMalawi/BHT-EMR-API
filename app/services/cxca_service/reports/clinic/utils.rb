@@ -7,7 +7,7 @@ module CxcaService
       # Common utilities for clinic reports
       module Utils
         ##
-        # An array of all groups as required by PEPFAR.
+        # An array of all groups as required by Pepfar.
         def age_groups
           [
             '15-19 years',

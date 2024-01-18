@@ -7,7 +7,7 @@ module ArtService
       # Common utilities for Pepfar reports
       module Utils
         ##
-        # An array of all groups as required by PEPFAR.
+        # An array of all groups as required by Pepfar.
         def pepfar_age_groups
           @pepfar_age_groups ||= [
             'Unknown',
@@ -50,7 +50,7 @@ module ArtService
         end
 
         ##
-        # Returns the preferred PEPFAR identifier type.
+        # Returns the preferred Pepfar identifier type.
         #
         # In some clinics like Lighthouse Filing numbers are used exclusively and in other
         # sites, ARV Numbers are used.

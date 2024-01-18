@@ -234,9 +234,9 @@ describe 'Pepfar Reports API', type: :request, swagger_doc: 'v1/swagger.yaml' do
   end
 
   path '/api/v1/tx_rtt' do
-    get 'PEPFAR TX RTT Report' do
+    get 'Pepfar TX RTT Report' do
       tags TAGS_NAME
-      description 'This shows PEPFAR TX RTT report'
+      description 'This shows Pepfar TX RTT report'
       produces 'application/json'
       security [api_key: []]
       parameter name: :start_date, in: :query, type: :string
@@ -244,12 +244,12 @@ describe 'Pepfar Reports API', type: :request, swagger_doc: 'v1/swagger.yaml' do
       parameter name: :program_id, in: :query, type: :integer
       parameter name: :date, in: :query, type: :string
 
-      response '200', 'PEPFAR TX RTT Report found' do
+      response '200', 'Pepfar TX RTT Report found' do
         schema type: :array, items: { '$ref' => '#/components/schemas/tx_rtt' }
         run_test!
       end
 
-      response '404', 'PEPFAR TX RTT Report not found' do
+      response '404', 'Pepfar TX RTT Report not found' do
         schema type: :string, properties: {
           message: { type: :string }
         }

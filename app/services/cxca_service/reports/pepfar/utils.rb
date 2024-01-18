@@ -5,7 +5,7 @@ module CxcaService::Reports::Pepfar
   # Common utilities for Pepfar reports
   module Utils
     ##
-    # An array of all groups as required by PEPFAR.
+    # An array of all groups as required by Pepfar.
     def pepfar_age_groups
       @pepfar_age_groups ||= [
         "Unknown",
