@@ -7,7 +7,7 @@ require File.expand_path(File.dirname(__FILE__) + "/../lib/visit_label")
 class ZebraPrinterTest < Test::Unit::TestCase
 
   def setup
-    @label = ZebraPrinter::Label.new
+    @label = ZebraPrinter::Lib::Label.new
   end
 
   def test_should_use_label_defaults
