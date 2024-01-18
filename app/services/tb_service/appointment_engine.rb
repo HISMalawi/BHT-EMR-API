@@ -2,7 +2,7 @@
 
 require 'logger'
 
-module TBService
+module TbService
   class AppointmentEngine
     include ModelUtils
 

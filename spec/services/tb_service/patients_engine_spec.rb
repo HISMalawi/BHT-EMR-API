@@ -4,7 +4,7 @@ require 'rails_helper'
 require_relative '../../../app/services/drug_order_service'
 require_relative '../../../app/services/dispensation_service'
 
-describe TBService::PatientsEngine do
+describe TbService::PatientsEngine do
 	include DrugOrderService
 
   let(:epoch) { Time.now }
@@ -24,7 +24,7 @@ describe TBService::PatientsEngine do
 			date_created: Time.now, creator: 1, location_id: 700)
 	end
   let(:engine) do
-    TBService::PatientsEngine.new program: tb_program
+    TbService::PatientsEngine.new program: tb_program
 	end
 
   let(:drug_quantity) {10}

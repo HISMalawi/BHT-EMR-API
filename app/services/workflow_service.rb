@@ -6,7 +6,7 @@ class WorkflowService
     # Table mapping program concept name to engine
     'HIV PROGRAM' => ArtService::WorkflowEngine,
     'OPD PROGRAM' => OPDService::WorkflowEngine,
-    'TB PROGRAM' => TBService::WorkflowEngine,
+    'TB PROGRAM' => TbService::WorkflowEngine,
     'ANC PROGRAM' => AncService::WorkflowEngine,
     'VMMC PROGRAM' => VMMCService::WorkflowEngine,
     'CXCA PROGRAM' => CXCAService::WorkflowEngine,
