@@ -3,7 +3,7 @@
 module AncService
   # rubocop:disable Metrics/ClassLength
   # class to manage missed migrations during the first migration
-  class ANCMissedMigration
+  class AncMissedMigration
     def initialize(params)
       @person_id = params[:max_person_id]
       @user_id = params[:max_user_id]
