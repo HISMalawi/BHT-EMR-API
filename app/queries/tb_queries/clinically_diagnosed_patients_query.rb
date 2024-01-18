@@ -1,4 +1,4 @@
-class TBQueries::ClinicallyDiagnosedPatientsQuery
+class TbQueries::ClinicallyDiagnosedPatientsQuery
   def initialize (relation = Patient.all)
     @relation = relation
     @program = program('TB Program')

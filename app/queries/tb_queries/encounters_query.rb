@@ -1,6 +1,6 @@
 include TimeUtils
 
-class TBQueries::EncountersQuery
+class TbQueries::EncountersQuery
   def initialize ()
     @program = program('TB Program')
   end

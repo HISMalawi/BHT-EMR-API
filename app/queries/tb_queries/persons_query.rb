@@ -1,4 +1,4 @@
-class TBQueries::PersonsQuery
+class TbQueries::PersonsQuery
   def initialize (relation = Person.all)
     @relation = relation
   end

@@ -1,5 +1,5 @@
 
-  class TBQueries::PersonDrugsQuery
+  class TbQueries::PersonDrugsQuery
     include ModelUtils
 
     def initialize (relation = Person.all)

@@ -1,5 +1,5 @@
 
-  class TBQueries::PatientsQuery
+  class TbQueries::PatientsQuery
     def initialize (relation = Patient.all)
       @relation = relation.extending(Scopes)
     end

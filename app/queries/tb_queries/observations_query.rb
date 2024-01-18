@@ -1,5 +1,5 @@
 
-  class TBQueries::ObservationsQuery
+  class TbQueries::ObservationsQuery
     def initialize (relation = Observation.all)
       @relation = relation
       @program = program('TB Program')

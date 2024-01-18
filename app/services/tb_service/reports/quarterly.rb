@@ -215,23 +215,23 @@ module TBService::Reports::Quarterly
 
     private
     def patients_query
-      TBQueries::PatientsQuery.new.search
+      TbQueries::PatientsQuery.new.search
     end
 
     def patient_states_query
-      TBQueries::PatientStatesQuery.new
+      TbQueries::PatientStatesQuery.new
     end
 
     def obs_query
-      TBQueries::ObservationsQuery.new
+      TbQueries::ObservationsQuery.new
     end
 
     def clinically_diagnosed_patients_query
-      TBQueries::ClinicallyDiagnosedPatientsQuery.new
+      TbQueries::ClinicallyDiagnosedPatientsQuery.new
     end
 
     def relapse_patients_query
-      TBQueries::RelapsePatientsQuery.new
+      TbQueries::RelapsePatientsQuery.new
     end
   end
 end

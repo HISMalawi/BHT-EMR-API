@@ -1,5 +1,5 @@
 
-  class TBQueries::PatientStatesQuery
+  class TbQueries::PatientStatesQuery
     STATES = {
       'TREATMENT_COMPLETE' => 93,
       'TREATMENT_FAILED' => 99,

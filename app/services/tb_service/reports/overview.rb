@@ -27,7 +27,7 @@ module TBService::Reports::Overview
 
     private
     def query
-      TBQueries::EncountersQuery.new
+      TbQueries::EncountersQuery.new
     end
   end
 end

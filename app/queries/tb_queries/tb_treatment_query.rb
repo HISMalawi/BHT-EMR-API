@@ -1,4 +1,4 @@
-class TBQueries::TbTreatmentQuery
+class TbQueries::TbTreatmentQuery
   STATES = {
     :TB_RX => 92,
     :ART_RX => 7

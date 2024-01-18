@@ -82,23 +82,23 @@ module TBService::Reports::Tbhiv
 
     private
     def person_drugs_query
-      TBQueries::PersonDrugsQuery.new.search
+      TbQueries::PersonDrugsQuery.new.search
     end
 
     def patients_query
-      TBQueries::PatientsQuery.new.search
+      TbQueries::PatientsQuery.new.search
     end
 
     def persons_query
-      TBQueries::PersonsQuery.new
+      TbQueries::PersonsQuery.new
     end
 
     def relapse_patients_query
-      TBQueries::RelapsePatientsQuery.new
+      TbQueries::RelapsePatientsQuery.new
     end
 
     def tb_treatment_query
-      TBQueries::TbTreatmentQuery.new
+      TbQueries::TbTreatmentQuery.new
     end
   end
 end

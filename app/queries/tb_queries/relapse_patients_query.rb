@@ -1,4 +1,4 @@
-class TBQueries::RelapsePatientsQuery
+class TbQueries::RelapsePatientsQuery
   STATES = {
     :RX => 92, # in treatment
     :RP => 168, # relapse
