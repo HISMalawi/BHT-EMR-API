@@ -4,7 +4,7 @@ class WorkflowService
   # A factory for workflow engines.
   ENGINES = {
     # Table mapping program concept name to engine
-    'HIV PROGRAM' => ARTService::WorkflowEngine,
+    'HIV PROGRAM' => ArtService::WorkflowEngine,
     'OPD PROGRAM' => OPDService::WorkflowEngine,
     'TB PROGRAM' => TBService::WorkflowEngine,
     'ANC PROGRAM' => AncService::WorkflowEngine,

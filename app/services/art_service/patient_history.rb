@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   # Carries comprehensive historical information on a patient.
   #
   # Example:
@@ -8,7 +8,7 @@ module ARTService
   #   $ patient_history.first_line_drugs # Returns patient's first line drugs
   #   $ patient_history.current_regimen # Returns patient's current regimen
   #   $ patient_history.print # Generates label printer commands for printing the history.
-  class PatientHistory < ARTService::PatientSummary
+  class PatientHistory < ArtService::PatientSummary
     # Outputs a label with patient's history
     def print
       # demographics = mastercard_demographics(patient)

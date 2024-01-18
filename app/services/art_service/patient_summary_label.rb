@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   # A card having a summary/snapshot of a patient's current
   # state and history
   class PatientSummaryLabel

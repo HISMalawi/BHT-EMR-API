@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService::Reports::Cohort::Regimens
+module ArtService::Reports::Cohort::Regimens
   def self.patient_regimens(date)
     date = ActiveRecord::Base.connection.quote(date)
 

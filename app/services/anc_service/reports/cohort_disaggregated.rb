@@ -21,7 +21,7 @@ module AncService
           "35-39","40-49","50+" ]
         @patients = monthly_registrations(@start_date, @end_date)
 
-        ARTService::Reports::CohortBuilder.new.init_temporary_tables(start_date, end_date, '')
+        ArtService::Reports::CohortBuilder.new.init_temporary_tables(start_date, end_date, '')
       end
 
       def find_report

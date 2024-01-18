@@ -7,7 +7,7 @@ module HtsService
       class HtsIndex
         attr_accessor :start_date, :end_date
 
-        include ARTService::Reports::Pepfar::Utils
+        include ArtService::Reports::Pepfar::Utils
 
         def initialize(start_date:, end_date:)
           @start_date = start_date

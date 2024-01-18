@@ -368,7 +368,7 @@ class Api::V1::PatientsController < ApplicationController
   end
 
   def tb_prevention_service
-    @tb_prevention_service ||= ARTService::Reports::Pepfar::TptStatus
+    @tb_prevention_service ||= ArtService::Reports::Pepfar::TptStatus
   end
 
   def tb_lab_order_params

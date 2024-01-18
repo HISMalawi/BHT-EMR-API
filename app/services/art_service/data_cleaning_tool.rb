@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   class DataCleaningTool
     include CommonSqlQueryUtils
   
@@ -476,7 +476,7 @@ module ARTService
       patient_visit_dates.each do |patient_id, visit_date|
         patient = Patient.find(patient_id)
         date =  visit_date.to_date
-        workflow_engine = ARTService::WorkflowEngine.new(patient: patient, date: date, program: program)
+        workflow_engine = ArtService::WorkflowEngine.new(patient: patient, date: date, program: program)
         complete = workflow_engine.next_encounter.blank? ? true : false
 
         next if complete

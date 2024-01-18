@@ -3,7 +3,7 @@
 class LabTestService
   class << self
     ENGINES = {
-      'HIV PROGRAM' => ARTService::LabTestsEngine,
+      'HIV PROGRAM' => ArtService::LabTestsEngine,
       'TB PROGRAM' => TBService::LabTestsEngine
     }.freeze
 

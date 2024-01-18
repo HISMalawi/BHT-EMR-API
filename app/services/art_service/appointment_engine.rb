@@ -2,7 +2,7 @@
 
 require 'logger'
 
-module ARTService
+module ArtService
   class AppointmentEngine
     include ModelUtils
 

@@ -14,7 +14,7 @@ module HTSService
     end
 
     def art_full_summary
-       ARTService::PatientSummary.new(patient, date).full_summary
+       ArtService::PatientSummary.new(patient, date).full_summary
     end
 
     # Link patient to HTS program

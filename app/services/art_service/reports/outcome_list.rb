@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   module Reports
     # Outcome List Report
     class OutcomeList
@@ -70,7 +70,7 @@ module ARTService
         #         SQL
 
         report_type = 'moh'
-        ARTService::Reports::CohortBuilder.new(outcomes_definition: report_type).init_temporary_tables(@start_date.to_date, @end_date.to_date, @occupation)
+        ArtService::Reports::CohortBuilder.new(outcomes_definition: report_type).init_temporary_tables(@start_date.to_date, @end_date.to_date, @occupation)
 
         transfer_out_to_location_sql = ''
         transfer_out_to_location_name_sql = ''

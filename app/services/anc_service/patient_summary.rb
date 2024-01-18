@@ -16,7 +16,7 @@ module AncService
     def initialize(patient, date)
       @patient = patient
       @date = date
-      @art_service = ARTService::PatientSummary
+      @art_service = ArtService::PatientSummary
       @patient_visit = PatientVisit.new(patient,date)
     end
 

@@ -19,7 +19,7 @@ module AncService
         @type = type
         @cohort_builder = CohortBuilder.new
         @cohort_struct = CohortStruct.new
-        ARTService::Reports::CohortBuilder.new.init_temporary_tables(start_date, end_date, '') #.create_tmp_patient_table
+        ArtService::Reports::CohortBuilder.new.init_temporary_tables(start_date, end_date, '') #.create_tmp_patient_table
       end
 
       def build_report

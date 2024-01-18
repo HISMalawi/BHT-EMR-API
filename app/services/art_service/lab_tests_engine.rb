@@ -4,7 +4,7 @@ require_relative '../nlims'
 
 require 'auto12epl'
 
-class ARTService::LabTestsEngine
+class ArtService::LabTestsEngine
   include ModelUtils
 
   def initialize(program:)
