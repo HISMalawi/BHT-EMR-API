@@ -1,4 +1,4 @@
-module HTSService::AITIntergration
+module HTSService::AitIntergration
   class ContactCsvRowBuilder
 
     def first_name contact
@@ -206,7 +206,7 @@ module HTSService::AITIntergration
     private
 
     def csv_row_builder
-      HTSService::AITIntergration::CsvRowBuilder.new
+      HTSService::AitIntergration::CsvRowBuilder.new
     end
 
   end

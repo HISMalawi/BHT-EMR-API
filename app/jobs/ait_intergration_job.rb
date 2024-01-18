@@ -8,6 +8,6 @@ class AitIntergrationJob < ApplicationJob
   end
 
   def perform(**args)
-    HTSService::AITIntergration::AITIntergrationService.new(**args).sync
+    HtsService::AitIntergration::AitIntergrationService.new(**args).sync
   end
 end

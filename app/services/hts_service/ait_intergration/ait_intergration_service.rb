@@ -1,6 +1,6 @@
 # rubocop:disable Layout/LineLength
-module HTSService::AITIntergration
-  class AITIntergrationService
+module HTSService::AitIntergration
+  class AitIntergrationService
     attr_accessor :patients, :rest_client, :args
 
     LOGGER = Logger.new(STDOUT)
@@ -180,11 +180,11 @@ module HTSService::AITIntergration
     end
 
     def contact_csv_row_builder
-      HTSService::AITIntergration::ContactCsvRowBuilder.new
+      HTSService::AitIntergration::ContactCsvRowBuilder.new
     end
 
     def csv_row_builder
-      HTSService::AITIntergration::CsvRowBuilder.new
+      HTSService::AitIntergration::CsvRowBuilder.new
     end
   end
 end

@@ -1,4 +1,4 @@
-module HTSService::AITIntergration
+module HTSService::AitIntergration
     class CsvRowBuilder
 
       AIT_CONFIG = YAML.load_file("#{Rails.root}/config/ait.yml")
