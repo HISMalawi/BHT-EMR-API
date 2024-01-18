@@ -2,7 +2,7 @@
 
 module AncService
   # class managing retrievel of anc patient details
-  class ANCDetails
+  class AncDetails
     # method to get DOB of patient
     def self.fetch_dob(database, patient_id)
       puts("Running Fetch dob method: #{database}(#{patient_id})")
