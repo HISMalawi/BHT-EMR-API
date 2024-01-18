@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class LinkPatientJob < ApplicationJob
   queue_as :default
 
@@ -7,5 +9,4 @@ class LinkPatientJob < ApplicationJob
       HtsService::PatientStateEngine.new(patient, date).link_patient
     end
   end
-
 end
