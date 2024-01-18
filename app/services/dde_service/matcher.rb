@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class DDEService
+class DdeService
   ##
   # Matches local and remote (DDE) people.
   #

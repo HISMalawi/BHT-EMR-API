@@ -9,6 +9,6 @@ class PushDDEFootprintsJob < ApplicationJob
   private
 
   def dde_service(program_id)
-    DDEService.new(program: Program.find(program_id))
+    DdeService.new(program: Program.find(program_id))
   end
 end

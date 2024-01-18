@@ -55,7 +55,7 @@ module ExceptionHandler
              status: :bad_gateway
     end
 
-    rescue_from DDEService::DDEError do |e|
+    rescue_from DdeService::DdeError do |e|
       log_exception(e)
       render json: { errors: ["Failed to communicate with DDE: #{e.message}"] },
              status: :bad_gateway
