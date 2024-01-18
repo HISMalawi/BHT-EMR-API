@@ -5,7 +5,7 @@ class ReportService
     'HIV PROGRAM' => ArtService::ReportEngine,
     'ANC PROGRAM' => AncService::ReportEngine,
     'OPD PROGRAM' => OPDService::ReportEngine,
-    'VMMC PROGRAM' => VMMCService::ReportEngine,
+    'VMMC PROGRAM' => VmmcService::ReportEngine,
     'TB PROGRAM' => TbService::ReportEngine,
     'LABORATORY ORDERS' => LaboratoryService::ReportEngine,
     'CXCA PROGRAM' => CXCAService::ReportEngine,

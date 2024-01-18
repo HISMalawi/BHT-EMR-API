@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module VMMCService
+module VmmcService
   class PatientVisitLabel
     attr_accessor :patient, :date
 
@@ -10,7 +10,7 @@ module VMMCService
     end
 
     def print
-      visit = VMMCService::PatientVisit.new patient, date
+      visit = VmmcService::PatientVisit.new patient, date
       return unless visit
 
       label = ZebraPrinter::StandardLabel.new

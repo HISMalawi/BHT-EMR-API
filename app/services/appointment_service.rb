@@ -3,7 +3,7 @@ class AppointmentService
     'HIV PROGRAM' => ArtService::AppointmentEngine,
     'TB PROGRAM' => TbService::AppointmentEngine,
     'ANC PROGRAM' => AncService::AppointmentEngine,
-    'VMMC PROGRAM' => VMMCService::AppointmentEngine,
+    'VMMC PROGRAM' => VmmcService::AppointmentEngine,
     'CXCA PROGRAM' => CXCAService::AppointmentEngine,
     'HTC PROGRAM' => HTSService::AppointmentEngine
   }.freeze

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module VMMCService
+module VmmcService
   # Patients sub service.
   #
   # Basically provides VMMC specific patient-centric functionality
@@ -22,7 +22,7 @@ module VMMCService
     end
 
     def visit_summary_label(patient, date)
-      VMMCService::PatientVisitLabel.new patient, date
+      VmmcService::PatientVisitLabel.new patient, date
     end
 
     def saved_encounters(patient, date)

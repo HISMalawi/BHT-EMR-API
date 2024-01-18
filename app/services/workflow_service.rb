@@ -8,7 +8,7 @@ class WorkflowService
     'OPD PROGRAM' => OPDService::WorkflowEngine,
     'TB PROGRAM' => TbService::WorkflowEngine,
     'ANC PROGRAM' => AncService::WorkflowEngine,
-    'VMMC PROGRAM' => VMMCService::WorkflowEngine,
+    'VMMC PROGRAM' => VmmcService::WorkflowEngine,
     'CXCA PROGRAM' => CXCAService::WorkflowEngine,
     'HTC PROGRAM' => HTSService::WorkflowEngine,
     'AETC PROGRAM' => AetcService::WorkflowEngine,
