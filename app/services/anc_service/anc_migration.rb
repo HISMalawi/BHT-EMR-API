@@ -3,7 +3,7 @@
 module AncService
   # rubocop:disable Metrics/ClassLength
   # Class managing the migration of anc data to
-  class ANCMigration
+  class AncMigration
     include ActionView::Helpers::DateHelper
     def initialize(database, confidence)
       @person_id = max_person_id

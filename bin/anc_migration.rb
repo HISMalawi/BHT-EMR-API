@@ -113,7 +113,7 @@ end
 what_to_run = ARGV[0].to_i
 
 if what_to_run.zero?
-  AncService::ANCMigration.new(database, ARGV[1].to_f).main
+  AncService::AncMigration.new(database, ARGV[1].to_f).main
 elsif what_to_run == 1
   AncService::ANCReverseMigration.new({ database: database, migration_date: ARGV[1] }).main
 elsif what_to_run == 2
