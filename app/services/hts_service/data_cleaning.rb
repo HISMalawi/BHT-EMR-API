@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module HTSService
+module HtsService
   class DataCleaning
     include ModelUtils
 
