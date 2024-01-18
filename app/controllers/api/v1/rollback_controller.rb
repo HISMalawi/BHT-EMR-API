@@ -20,6 +20,6 @@ class Api::V1::RollbackController < ApplicationController
   end
 
   def rollback_service
-    DDERollbackService.new
+    DdeRollbackService.new
   end
 end
