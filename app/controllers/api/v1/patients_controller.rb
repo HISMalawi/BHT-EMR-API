@@ -269,7 +269,7 @@ class Api::V1::PatientsController < ApplicationController
     to_date = params.delete(:to_date)
     patient_id = params.delete(:patient_id)
     
-    AITIntergrationJob.perform_later({from_date: from_date, to_date: to_date, patient_id: patient_id})
+    AitIntergrationJob.perform_later({from_date: from_date, to_date: to_date, patient_id: patient_id})
     render json: { status: 'Enqueued ait sync' }, status: :ok
   end
 
