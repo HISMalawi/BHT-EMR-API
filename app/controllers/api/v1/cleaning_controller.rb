@@ -2,7 +2,7 @@ class Api::V1::CleaningController < ApplicationController
   SERVICES = {
     'ANC PROGRAM' => AncService::DataCleaning,
     'HIV PROGRAM' => ArtService::DataCleaningTool,
-    'HTC PROGRAM' => HTSService::DataCleaning
+    'HTC PROGRAM' => HtsService::DataCleaning
   }.freeze
 
   def index
