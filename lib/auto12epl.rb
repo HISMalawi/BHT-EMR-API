@@ -11,7 +11,7 @@ class Float
 end
 
 # Generates EPL code that conforms to the Auto12-A standard for specimen labeling
-class Auto12Epl
+class Auto12epl
 
   attr_accessor :element_font
   attr_accessor :barcode_human_font
@@ -182,7 +182,7 @@ end
 
 if __FILE__ == $0
 
-  auto = Auto12Epl.new
+  auto = Auto12epl.new
 
   puts auto.generate_epl("Banda", "Mary", "U", "Q23-HGF", "12-SEP-1997", "19y", "F", "01-JAN-2016 14:21", "byGD", "CHEM7,Ca,Mg", nil, "KCH-16-00001234", "1600001234")
   puts "\n"

@@ -202,6 +202,6 @@ class ArtService::LabTestsEngine
   end
 
   def auto12epl
-    @auto12epl ||= Auto12Epl.new
+    @auto12epl ||= Auto12epl.new
   end
 end
