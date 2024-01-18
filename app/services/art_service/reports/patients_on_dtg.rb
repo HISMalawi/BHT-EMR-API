@@ -2,7 +2,7 @@
 
 module ArtService
   module Reports
-    class PatientsOnDTG
+    class PatientsOnDtg
       attr_reader :start_date, :end_date
 
       HIV_PROGRAM_ID = 1

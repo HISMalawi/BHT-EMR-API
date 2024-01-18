@@ -20,7 +20,7 @@ module ArtService
       'HIGH_VL_PATIENTS' => ArtService::Reports::ViralLoadResults,
       'IPT' => ArtService::Reports::IptReport,
       'PATIENTS_WITH_OUTDATED_DEMOGRAPHICS' => ArtService::Reports::PatientsWithOutdatedDemographics,
-      'PATIENTS_ON_DTG' => ArtService::Reports::PatientsOnDTG,
+      'PATIENTS_ON_DTG' => ArtService::Reports::PatientsOnDtg,
       'PREGNANT_PATIENTS' => ArtService::Reports::PregnantPatients,
       'REGIMENS_AND_FORMULATIONS' => ArtService::Reports::RegimensAndFormulations,
       'REGIMENS_BY_WEIGHT_AND_GENDER' => ArtService::Reports::RegimensByWeightAndGender,
