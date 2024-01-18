@@ -89,7 +89,7 @@ class DdeClient
     @auto_login = true
 
     if status != 200
-      raise DDEClientError, "Unable to establish connection to DDE: #{response}"
+      raise DdeClientError, "Unable to establish connection to DDE: #{response}"
     end
 
     LOGGER.info('Connection to DDE established :)')
