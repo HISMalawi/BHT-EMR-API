@@ -6,7 +6,7 @@ module ArtService
     # This class only provides one public method (start_build_report) besides
     # the constructor. This method must be called to build report and save
     # it to database.
-    class IPTCoverage
+    class IptCoverage
 
       def initialize(start_date:, end_date:)
         @start_date = start_date.to_date.strftime('%Y-%m-%d 00:00:00')
