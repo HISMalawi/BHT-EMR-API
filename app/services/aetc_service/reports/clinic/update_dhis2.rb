@@ -1,7 +1,7 @@
 module AetcService
     module Reports
         module Clinic
-            class UpdateDHIS2
+            class UpdateDhis2
                 # To be implemented
                 
             end
