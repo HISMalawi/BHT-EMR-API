@@ -1,6 +1,6 @@
 include ModelUtils
 
-class TBNumberService
+class TbNumberService
   class DuplicateIdentifierError < StandardError; end
 
   NORMAL_TYPE = 'District TB Number'

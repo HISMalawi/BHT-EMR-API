@@ -130,7 +130,7 @@ module TbService
     end
 
     def tb_number
-      number = TBNumberService.get_patient_tb_number(patient_id: patient.patient_id)
+      number = TbNumberService.get_patient_tb_number(patient_id: patient.patient_id)
       return 'N/A' unless number
 
       number[:identifier]
