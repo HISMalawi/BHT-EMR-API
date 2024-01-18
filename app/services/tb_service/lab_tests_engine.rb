@@ -231,6 +231,6 @@ class TbService::LabTestsEngine
 
   # Dont't forget to put this back in order
   def nlims
-    @nlims ||= NLims.instance
+    @nlims ||= Nlims.instance
   end
 end

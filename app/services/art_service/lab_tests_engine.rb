@@ -198,7 +198,7 @@ class ArtService::LabTestsEngine
   end
 
   def nlims
-    @nlims ||= ::NLims.instance
+    @nlims ||= ::Nlims.instance
   end
 
   def auto12epl

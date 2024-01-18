@@ -101,7 +101,7 @@ describe TbService::RegimenEngine do
     return @nlims if @nlims
 
     @config = YAML.load_file "#{Rails.root}/config/application.yml"
-    @nlims = ::NLims.new config
+    @nlims = ::Nlims.new config
     @nlims.auth config['lims_default_user'], config['lims_default_password']
     @nlims
 	end
