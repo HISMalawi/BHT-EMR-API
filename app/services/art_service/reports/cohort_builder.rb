@@ -944,6 +944,7 @@ module ArtService
       end
 
       def total_patients_alive_and_on_art_above_30_years(total_alive_and_on_art, end_date)
+        return nil if total_alive_and_on_art.blank?
         return nil if total_alive_and_on_art.empty?
 
         results = ActiveRecord::Base.connection.select_all <<~SQL
