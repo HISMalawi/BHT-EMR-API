@@ -3,10 +3,10 @@
 require 'rails_helper'
 
 RSpec.describe ArtService::Reports::Pepfar::TbPrev3 do
-  let(:drug_order) { create(:drug_order, drug: Drug.find(1216), order: order, quantity: 12) }
+  let(:drug_order) { create(:drug_order, drug: Drug.find(1216), order:, quantity: 12) }
   let(:start_date) { Date.today - 3.months }
   let(:end_date) { Date.today }
-  let(:report) { ArtService::Reports::Pepfar::TbPrev3.new(start_date: start_date, end_date: end_date) }
+  let(:report) { ArtService::Reports::Pepfar::TbPrev3.new(start_date:, end_date:) }
 
   # persist data
   before(:all) do

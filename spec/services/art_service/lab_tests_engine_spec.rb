@@ -3,20 +3,20 @@
 require 'rails_helper'
 
 RSpec.describe ArtService::LabTestsEngine do
-  subject { ArtService::LabTestsEngine.new(program: program) }
+  subject { ArtService::LabTestsEngine.new(program:) }
   let(:program) { create :program }
 
   def make_test_type(concept)
     set = ConceptName.find_by_name!('Test type').concept_id
 
-    create :concept_set, concept_set: set, concept: concept
+    create :concept_set, concept_set: set, concept:
   end
 
   def make_sample_type(concept, test_type)
     samples_set = ConceptName.find_by_name!('Specimen Type').concept_id
 
-    create :concept_set, concept_set: samples_set, concept: concept
-    create :concept_set, concept_set: test_type.concept_id, concept: concept
+    create(:concept_set, concept_set: samples_set, concept:)
+    create :concept_set, concept_set: test_type.concept_id, concept:
   end
 
   describe :type do

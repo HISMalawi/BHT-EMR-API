@@ -62,7 +62,7 @@ describe 'Pepfar Reports API', type: :request, swagger_doc: 'v1/swagger.yaml' do
       end
     end
   end
-  
+
   path '/api/v1/programs/12/reports/pmtct_stat_art' do
     get 'Retrieve PMTCT STAT ART' do
       tags TAGS_NAME
