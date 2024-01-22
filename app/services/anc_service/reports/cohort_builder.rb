@@ -17,7 +17,7 @@ module AncService
       NO  = ConceptName.find_by name: 'No'
       LMP = ConceptName.find_by name: 'Date of Last Menstrual Period'
       TD = ConceptName.find_by name: 'TT STATUS'
-      HB  = ConceptName.find_by name: 'HB TEST RESULT'
+      HB = ConceptName.find_by name: 'HB TEST RESULT'
 
       WEEK_OF_FIRST_VISIT = ConceptName.find_by name: 'Week of First Visit'
       REASON_FOR_VISIT =    ConceptName.find_by name: 'Reason for visit'
@@ -151,11 +151,21 @@ module AncService
         @nvp_given = nvp_given
         @nvp_not_given = @c_total_hiv_positive - @nvp_given
 
-        cohort_struct.patients_with_total_of_one_visit = @anc_visits.select { |_x, y| y == 1 }.collect { |x, _y| x }.uniq
-        cohort_struct.patients_with_total_of_two_visits = @anc_visits.select { |_x, y| y == 2 }.collect { |x, _y| x }.uniq
-        cohort_struct.patients_with_total_of_three_visits = @anc_visits.select { |_x, y| y == 3 }.collect { |x, _y| x }.uniq
-        cohort_struct.patients_with_total_of_four_visits = @anc_visits.select { |_x, y| y == 4 }.collect { |x, _y| x }.uniq
-        cohort_struct.patients_with_total_of_five_plus_visits = @anc_visits.reject { |_x, y| y < 5 }.collect { |x, _y| x }.uniq
+        cohort_struct.patients_with_total_of_one_visit = @anc_visits.select { |_x, y|
+                                                           y == 1
+                                                         }.collect { |x, _y| x }.uniq
+        cohort_struct.patients_with_total_of_two_visits = @anc_visits.select { |_x, y|
+                                                            y == 2
+                                                          }.collect { |x, _y| x }.uniq
+        cohort_struct.patients_with_total_of_three_visits = @anc_visits.select { |_x, y|
+                                                              y == 3
+                                                            }.collect { |x, _y| x }.uniq
+        cohort_struct.patients_with_total_of_four_visits = @anc_visits.select { |_x, y|
+                                                             y == 4
+                                                           }.collect { |x, _y| x }.uniq
+        cohort_struct.patients_with_total_of_five_plus_visits = @anc_visits.reject { |_x, y|
+                                                                  y < 5
+                                                                }.collect { |x, _y| x }.uniq
         cohort_struct.patients_with_pre_eclampsia = patients_with_pre_eclampsia
         cohort_struct.patients_without_pre_eclampsia = @cohort_patients - cohort_struct.patients_with_pre_eclampsia
 
@@ -466,9 +476,9 @@ module AncService
         no_art = []
 
         art_patients = ActiveRecord::Base.connection.select_all <<~SQL
-            SELECT patient_id, earliest_start_date FROM temp_earliest_start_date
-            WHERE gender = 'F' AND death_date IS NULL
-SQL
+          SELECT patient_id, earliest_start_date FROM temp_earliest_start_date
+          WHERE gender = 'F' AND death_date IS NULL
+        SQL
         art_patients.each do |patient|
           @patient_ids << patient['patient_id']
           earliest_start_date = patient['earliest_start_date'].to_date

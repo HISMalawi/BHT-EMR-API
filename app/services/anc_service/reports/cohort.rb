@@ -19,7 +19,7 @@ module AncService
         @type = type
         @cohort_builder = CohortBuilder.new
         @cohort_struct = CohortStruct.new
-        ArtService::Reports::CohortBuilder.new.init_temporary_tables(start_date, end_date, '') #.create_tmp_patient_table
+        ArtService::Reports::CohortBuilder.new.init_temporary_tables(start_date, end_date, '') # .create_tmp_patient_table
       end
 
       def build_report
@@ -28,7 +28,7 @@ module AncService
 
       def find_report
         build_report
-        #Report.where(type: @type, name: @name,
+        # Report.where(type: @type, name: @name,
         #             start_date: @start_date, end_date: @end_date)\
         #      .order(date_created: :desc)\
         #      .first

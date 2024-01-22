@@ -28,7 +28,7 @@ module AncService
 
       def find_report
         build_report
-        #Report.where(type: @type, name: @name,
+        # Report.where(type: @type, name: @name,
         #             start_date: @start_date, end_date: @end_date)\
         #      .order(date_created: :desc)\
         #      .first
