@@ -30,14 +30,22 @@ module RadiologyService
     def examination
       return @examination if @examination
 
-      examination_concept = ConceptName.find_by_name("EXAMINATION").concept_id
+      examination_concept = ConceptName.find_by_name('EXAMINATION').concept_id
       examination_obs = Observation.where(concept_id: examination_concept)
                                    .where(encounter_id: @order.encounter_id)
                                    .where(order_id: @order.id)
                                    .last
-      examination = examination_obs.answer_concept.shortname rescue ''
+      examination = begin
+        examination_obs.answer_concept.shortname
+      rescue StandardError
+        ''
+      end
       if examination.blank?
-        examination = examination_obs.answer_concept.fullname rescue ''
+        examination = begin
+          examination_obs.answer_concept.fullname
+        rescue StandardError
+          ''
+        end
       end
       @examination = examination
     end
