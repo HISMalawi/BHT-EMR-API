@@ -149,6 +149,11 @@ module TBService
     end
 
 
+    def find_regimens_by_patient(patient)
+      find_regimens(patient)
+    end
+
+
     private
     def averse_to_strepto? (patient)
       !meningitis_tb?(patient: patient) || pregnant?(patient: patient)

@@ -12,5 +12,11 @@ class NtpRegimen < VoidableRecord
       }
     ))
   end
+
+  def self.adjust_weight_band(drugs, patient_weight)
+    NtpRegimen.joins(:drug)
+              .where('? BETWEEN min_weight AND max_weight', patient_weight)
+              .where(drug_id: drugs.map(&:drug_id))
+  end
  
 end
