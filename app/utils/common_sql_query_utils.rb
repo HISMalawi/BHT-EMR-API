@@ -5,7 +5,8 @@ module CommonSqlQueryUtils
   def process_occupation(start_date:, end_date:, occupation:, definition: 'moh')
     return if occupation.blank?
 
-    ArtService::Reports::CohortBuilder.new(outcomes_definition: definition).init_temporary_tables(start_date, end_date, occupation)
+    ArtService::Reports::CohortBuilder.new(outcomes_definition: definition).init_temporary_tables(start_date, end_date,
+                                                                                                  occupation)
   end
 
   def occupation_filter(occupation:, field_name:, table_name: '', include_clause: true)
@@ -13,8 +14,12 @@ module CommonSqlQueryUtils
     table_name = "#{table_name}." unless table_name.blank?
     return '' if occupation.blank?
     return '' if occupation == 'All'
-    return "#{clause} #{table_name}#{field_name} IN ('#{occupation}', 'MDF Reserve', 'MDF Retired', 'Soldier', 'Soldier/Police')" if occupation == 'Military'
-    return "#{clause} #{table_name}#{field_name} NOT IN ('Military', 'MDF Reserve', 'MDF Retired', 'Soldier', 'Soldier/Police')" if occupation == 'Civilian'
+    if occupation == 'Military'
+      return "#{clause} #{table_name}#{field_name} IN ('#{occupation}', 'MDF Reserve', 'MDF Retired', 'Soldier', 'Soldier/Police')"
+    end
+    return unless occupation == 'Civilian'
+
+    "#{clause} #{table_name}#{field_name} NOT IN ('Military', 'MDF Reserve', 'MDF Retired', 'Soldier', 'Soldier/Police')"
   end
 
   def external_client_query(end_date:)
