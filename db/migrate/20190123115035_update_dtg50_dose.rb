@@ -5,12 +5,11 @@ class UpdateDtg50Dose < ActiveRecord::Migration[5.2]
     dose_id = MohRegimenDose.find_by(am: 1, pm: 0)&.id
 
     return unless drug_id.present? && dose_id.present?
-      execute <<~SQL
-        UPDATE moh_regimen_ingredient
-        SET dose_id = #{dose_id}
-        WHERE drug_inventory_id = #{drug_id}
-      SQL
-    end
+    execute <<~SQL
+      UPDATE moh_regimen_ingredient
+      SET dose_id = #{dose_id}
+      WHERE drug_inventory_id = #{drug_id}
+    SQL
   end
 
   def down
