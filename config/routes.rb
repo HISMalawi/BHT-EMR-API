@@ -89,6 +89,8 @@ Rails.application.routes.draw do
         post '/update_or_create_htn_state', to: 'patients#update_or_create_htn_state'
         get '/visits/after_last_outcome', to: 'patients#visits_after_last_outcome'
         get '/tb_negative_minor', to: 'patients#tb_negative_minor'
+        get 'assign_national_id', to: 'patients#assign_national_identifier'
+        get 'update_national_id', to: 'patients#update_national_identifier'
         resources :patient_programs, path: :programs, controller: 'patients/programs'
       end
 

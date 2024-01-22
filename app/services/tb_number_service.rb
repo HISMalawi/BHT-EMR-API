@@ -5,9 +5,10 @@ class TBNumberService
   NORMAL_TYPE = 'District TB Number'
   IPT_TYPE = 'District IPT Number'
   MDR_TYPE = 'MDR-TB Program Identifier'
+  NATIONAL_ID = 'Malawi National ID'
 
   def self.assign_national_id (patient_id, date, identifier)
-    national_id_type = 28
+    national_id_type = patient_identifier_type(NATIONAL_ID).patient_identifier_type_id
 
     raise DuplicateIdentifierError if number_exists?(number: identifier, identifier_type: national_id_type)
 
@@ -20,7 +21,7 @@ class TBNumberService
   end
 
   def self.update_national_id (patient_id, date, identifier)
-    national_id_type = 28
+    national_id_type = patient_identifier_type(NATIONAL_ID).patient_identifier_type_id
     raise DuplicateIdentifierError if number_exists?(number: identifier, identifier_type: national_id_type)
 
     curr_identifier = PatientIdentifier.find_by(patient_id: patient_id, identifier_type:national_id_type)
@@ -46,7 +47,7 @@ class TBNumberService
   end
 
   def self.mw_national_identifier(patient_id)
-    PatientIdentifier.where(identifier_type: patient_identifier_type('Malawi National ID'),
+    PatientIdentifier.where(identifier_type: patient_identifier_type(NATIONAL_ID),
                             patient_id: patient_id)
                       .order(date_created: :desc)
                       .first
