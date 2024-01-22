@@ -128,6 +128,7 @@ DROP FUNCTION IF EXISTS date_antiretrovirals_started;
 
 DELIMITER $$
 CREATE FUNCTION date_antiretrovirals_started(set_patient_id INT, min_state_date DATE) RETURNS DATE
+DETERMINISTIC
 BEGIN
 
 DECLARE date_started DATE;
@@ -630,6 +631,7 @@ DROP FUNCTION IF EXISTS earliest_start_date_at_clinic;
 
 DELIMITER $$
 CREATE FUNCTION earliest_start_date_at_clinic(set_patient_id INT) RETURNS DATE
+DETERMINISTIC
 BEGIN
 
 DECLARE date_started DATE;
@@ -644,6 +646,7 @@ DROP FUNCTION IF EXISTS patient_outcome;
 
 DELIMITER $$
 CREATE FUNCTION `patient_outcome`(patient_id INT, visit_date date) RETURNS varchar(25)
+DETERMINISTIC
 BEGIN
 DECLARE set_program_id INT;
 DECLARE set_patient_state INT;
@@ -866,6 +869,7 @@ DELIMITER ;
 DROP FUNCTION IF EXISTS `current_defaulter`;
 DELIMITER ;;
 /*!50003 CREATE*/ /*!50020 */ /*!50003 FUNCTION `current_defaulter`(my_patient_id INT, my_end_date DATETIME) RETURNS int(1)
+DETERMINISTIC
 BEGIN
 	DECLARE done INT DEFAULT FALSE;
 	DECLARE my_start_date, my_expiry_date, my_obs_datetime DATETIME;
@@ -943,6 +947,7 @@ DELIMITER ;
 DROP FUNCTION IF EXISTS `drug_pill_count`;
 DELIMITER ;;
 /*!50003 CREATE*/ /*!50020 */ /*!50003 FUNCTION `drug_pill_count`(my_patient_id INT, my_drug_id INT, my_date DATE) RETURNS DECIMAL
+DETERMINISTIC
 BEGIN
 	DECLARE done INT DEFAULT FALSE;
 	DECLARE my_pill_count, my_total_text, my_total_numeric DECIMAL;
@@ -1002,6 +1007,7 @@ DELIMITER ;
 DROP FUNCTION IF EXISTS `current_state_for_program`;
 DELIMITER ;;
 /*!50003 CREATE*/ /*!50020 */ /*!50003 FUNCTION `current_state_for_program`(my_patient_id INT, my_program_id INT, my_end_date DATETIME) RETURNS int(11)
+DETERMINISTIC
 BEGIN
   SET @state_id = NULL;
   SET @new_state_id = NULL;
@@ -1050,6 +1056,7 @@ DELIMITER ;
 DROP FUNCTION IF EXISTS `current_state_for_patient_in_flat_tables`;
 DELIMITER ;;
 /*!50003 CREATE*/ /*!50020 */ /*!50003 FUNCTION `current_state_for_patient_in_flat_tables`(my_patient_id INT, my_end_date DATETIME) RETURNS varchar(255)
+DETERMINISTIC
 BEGIN
   SET @state_id = NULL;
 	SELECT current_hiv_program_state INTO @state_id FROM flat_table2
@@ -1106,6 +1113,7 @@ DELIMITER ;
 DROP FUNCTION IF EXISTS `last_text_for_obs`;
 DELIMITER ;;
 /*!50003 CREATE*/ /*!50020 */ /*!50003 FUNCTION `last_text_for_obs`(my_patient_id INT, my_encounter_type_id INT, my_concept_id INT, my_regimem_given INT, unknown_regimen_value INT, my_end_date DATETIME) RETURNS varchar(255)
+DETERMINISTIC
 BEGIN
   SET @obs_value = NULL;
   SET @encounter_id = NULL;
@@ -1170,6 +1178,7 @@ DELIMITER ;
 DROP FUNCTION IF EXISTS `current_text_for_obs`;
 DELIMITER ;;
 /*!50003 CREATE*/ /*!50020 */ /*!50003 FUNCTION `current_text_for_obs`(my_patient_id INT, my_encounter_type_id INT, my_concept_id INT, my_end_date DATETIME) RETURNS VARCHAR(255)
+DETERMINISTIC
 BEGIN
   SET @obs_value = NULL;
 	SELECT encounter_id INTO @encounter_id FROM encounter
@@ -1221,6 +1230,7 @@ DELIMITER ;
 DROP FUNCTION IF EXISTS `current_value_for_obs`;
 DELIMITER ;;
 /*!50003 CREATE*/ /*!50020 */ /*!50003 FUNCTION `current_value_for_obs`(my_patient_id INT, my_encounter_type_id INT, my_concept_id INT, my_end_date DATETIME) RETURNS int(11)
+DETERMINISTIC
 BEGIN
   SET @obs_value_coded = NULL;
 	SELECT encounter_id INTO @encounter_id FROM encounter
@@ -1255,6 +1265,7 @@ DELIMITER ;
 DROP FUNCTION IF EXISTS `current_value_for_obs_at_initiation`;
 DELIMITER ;;
 /*!50003 CREATE*/ /*!50020 */ /*!50003 FUNCTION `current_value_for_obs_at_initiation`(my_patient_id INT, my_earliest_start_date DATETIME, my_encounter_type_id INT, my_concept_id INT, my_end_date DATETIME) RETURNS int(11)
+DETERMINISTIC
 BEGIN
 	DECLARE obs_value_coded, my_encounter_id INT;
 
@@ -1330,6 +1341,7 @@ DELIMITER ;
 DROP FUNCTION IF EXISTS `current_defaulter_date`;
 DELIMITER ;;
 /*!50003 CREATE*/ /*!50020 */ /*!50003 FUNCTION `current_defaulter_date`(my_patient_id INT, my_end_date DATETIME) RETURNS DATE
+DETERMINISTIC
 BEGIN
 	DECLARE done INT DEFAULT FALSE;
 	DECLARE my_start_date, my_expiry_date, my_obs_datetime, my_defaulted_date DATETIME;
@@ -1411,6 +1423,7 @@ DELIMITER ;
 DROP FUNCTION IF EXISTS `patient_max_defaulted_date`;
 DELIMITER ;;
 /*!50003 CREATE*/ /*!50020 */ /*!50003 FUNCTION `patient_max_defaulted_date`(m_patient_id int, my_end_date DATETIME) RETURNS DATE
+DETERMINISTIC
 BEGIN
 
 DECLARE my_defaulted_date DATETIME;
@@ -1440,6 +1453,7 @@ DROP FUNCTION IF EXISTS `patient_reason_for_starting_art`;
 
 
 CREATE FUNCTION patient_reason_for_starting_art(my_patient_id INT) RETURNS INT
+DETERMINISTIC
 BEGIN
   DECLARE reason_for_art_eligibility INT DEFAULT 0;
   DECLARE reason_concept_id INT;
@@ -1459,6 +1473,7 @@ END;
   DROP FUNCTION IF EXISTS `patient_reason_for_starting_art_text`;
 
 CREATE FUNCTION patient_reason_for_starting_art_text(my_patient_id INT) RETURNS VARCHAR(255)
+DETERMINISTIC
 BEGIN
   DECLARE reason_for_art_eligibility VARCHAR(255);
   DECLARE reason_concept_id INT;
@@ -1476,6 +1491,7 @@ END;
 DROP FUNCTION IF EXISTS `patient_current_regimen`;
 
 CREATE FUNCTION `patient_current_regimen`(`my_patient_id` INT, `my_date` DATE) RETURNS VARCHAR(10)
+DETERMINISTIC
 BEGIN
   DECLARE max_obs_datetime DATETIME;
   DECLARE regimen VARCHAR(10) DEFAULT 'N/A';
@@ -1530,6 +1546,7 @@ DROP FUNCTION IF EXISTS `last_text_for_obs`;
 
 CREATE FUNCTION last_text_for_obs(my_patient_id INT, my_encounter_type_id INT, my_concept_id INT, my_regimem_given INT, unknown_regimen_value INT, my_end_date DATETIME) RETURNS varchar(255)
 
+DETERMINISTIC
 BEGIN
   SET @obs_value = NULL;
   SET @encounter_id = NULL;
@@ -1580,6 +1597,7 @@ END;
 DROP FUNCTION IF EXISTS `drug_pill_count`;
 
 CREATE FUNCTION `drug_pill_count`(my_patient_id INT, my_drug_id INT, my_date DATE) RETURNS decimal(10,0)
+DETERMINISTIC
 BEGIN
   DECLARE done INT DEFAULT FALSE;
   DECLARE my_pill_count, my_total_numeric, my_total_text, my_total_transfer_in DECIMAL;
@@ -1679,6 +1697,7 @@ END;
 DROP FUNCTION IF EXISTS `current_defaulter`;
 
 CREATE FUNCTION `current_defaulter`(my_patient_id INT, my_end_date DATETIME) RETURNS int(1)
+DETERMINISTIC
 BEGIN
   DECLARE done INT DEFAULT FALSE;
   DECLARE my_start_date, my_expiry_date, my_obs_datetime DATETIME;
@@ -1746,6 +1765,7 @@ END;
 
 DROP FUNCTION IF EXISTS `current_defaulter_date`;
 CREATE FUNCTION current_defaulter_date(my_patient_id INT, my_end_date date) RETURNS varchar(25)
+DETERMINISTIC
 DETERMINISTIC
 BEGIN
   DECLARE done INT DEFAULT FALSE;
@@ -1904,6 +1924,7 @@ END;
 DROP FUNCTION IF EXISTS `current_pepfar_defaulter`;
 
 CREATE  FUNCTION `current_pepfar_defaulter`(my_patient_id INT, my_end_date DATETIME) RETURNS int(1)
+DETERMINISTIC
 BEGIN
 DECLARE done INT DEFAULT FALSE;
   DECLARE my_start_date, my_expiry_date, my_obs_datetime DATETIME;
@@ -1973,6 +1994,7 @@ END;
 DROP FUNCTION IF EXISTS `current_pepfar_defaulter_date`;
 
 CREATE FUNCTION `current_pepfar_defaulter_date`(my_patient_id INT, my_end_date DATETIME) RETURNS DATE
+DETERMINISTIC
 BEGIN
 	DECLARE done INT DEFAULT FALSE;
 	DECLARE my_start_date, my_expiry_date, my_obs_datetime DATETIME;
@@ -2044,6 +2066,7 @@ END;
 DROP FUNCTION IF EXISTS `patient_screened_for_tb`;
 
 CREATE FUNCTION `patient_screened_for_tb`(my_patient_id INT, my_start_date DATE, my_end_date DATE) RETURNS INT
+DETERMINISTIC
 BEGIN
 	DECLARE screened INT DEFAULT FALSE;
 	DECLARE record_value INT;
@@ -2078,6 +2101,7 @@ END;
 DROP FUNCTION IF EXISTS `patient_given_ipt`;
 
 CREATE FUNCTION `patient_given_ipt`(my_patient_id INT, my_start_date DATE, my_end_date DATE) RETURNS INT
+DETERMINISTIC
 BEGIN
 	DECLARE given INT DEFAULT FALSE;
 	DECLARE record_value INT;
@@ -2106,6 +2130,7 @@ END;
 DROP FUNCTION IF EXISTS `cxca_age_group`;
 
 CREATE FUNCTION `cxca_age_group`(birthdate date, end_date date) RETURNS VARCHAR(15)
+DETERMINISTIC
 BEGIN
 
 DECLARE age_in_months INT(11);
@@ -2132,6 +2157,7 @@ END;
 DROP FUNCTION IF EXISTS `cohort_disaggregated_age_group`;
 
 CREATE FUNCTION `cohort_disaggregated_age_group`(birthdate date, end_date date) RETURNS VARCHAR(15)
+DETERMINISTIC
 BEGIN
 
 DECLARE age_in_months INT(11);
@@ -2166,6 +2192,7 @@ END;
 DROP FUNCTION IF EXISTS `disaggregated_age_group`;
 
 CREATE FUNCTION `disaggregated_age_group`(birthdate date, end_date date) RETURNS VARCHAR(15)
+DETERMINISTIC
 BEGIN
 
 DECLARE age_in_months INT(11);
@@ -2204,6 +2231,7 @@ END;
 DROP FUNCTION IF EXISTS `anc_age_group`;
 
 CREATE FUNCTION `anc_age_group`(birthdate date, end_date date) RETURNS VARCHAR(15)
+DETERMINISTIC
 BEGIN
 
 DECLARE age_in_years INT(11);
@@ -2238,6 +2266,7 @@ END;
 DROP FUNCTION IF EXISTS `cxca_moh_age_group`;
 
 CREATE FUNCTION `cxca_moh_age_group`(birthdate date, end_date date) RETURNS VARCHAR(15)
+DETERMINISTIC
 BEGIN
 
 DECLARE age_in_years INT(11);
@@ -2260,6 +2289,7 @@ END;
 DROP FUNCTION IF EXISTS `OPD_syndromic_statistics`;
 
 CREATE FUNCTION `OPD_syndromic_statistics`(start_date date, end_date date) RETURNS VARCHAR(15)
+DETERMINISTIC
 BEGIN
 
 DECLARE obs_in_months INT(11);
@@ -2288,6 +2318,7 @@ END;
 DROP FUNCTION IF EXISTS `opd_disaggregated_age_group`;
 
 CREATE FUNCTION `opd_disaggregated_age_group`(birthdate date, end_date date) RETURNS VARCHAR(15)
+DETERMINISTIC
 BEGIN
 
 DECLARE age_in_months INT(11);
@@ -2310,6 +2341,7 @@ END;
 DROP FUNCTION IF EXISTS `triage_covid_report`;
 
 CREATE FUNCTION `triage_covid_report`(obs_date VARCHAR(25), my_patient_id int) RETURNS VARCHAR(15)
+DETERMINISTIC
 BEGIN
 
 DECLARE count_obs VARCHAR(25);
@@ -2326,6 +2358,7 @@ END;
 DROP FUNCTION IF EXISTS `female_maternal_status`;
 
 CREATE FUNCTION female_maternal_status(my_patient_id int, end_datetime datetime) RETURNS VARCHAR(20)
+DETERMINISTIC
 DETERMINISTIC
 BEGIN
 
@@ -2426,6 +2459,7 @@ END;
 DROP FUNCTION IF EXISTS `patient_tb_status`;
 
 CREATE FUNCTION `patient_tb_status`(my_patient_id INT, my_end_date DATE) RETURNS INT
+DETERMINISTIC
 BEGIN
 	DECLARE screened INT DEFAULT FALSE;
 	DECLARE tb_status INT;
@@ -2455,6 +2489,7 @@ END;
 DROP FUNCTION IF EXISTS `patient_latest_adherence`;
 
 CREATE FUNCTION `patient_latest_adherence`(my_patient_id INT, my_end_date DATE) RETURNS VARCHAR(100)
+DETERMINISTIC
 BEGIN
   DECLARE art_adherence_concept_id INT;
   DECLARE latest_obs_datetime TIMESTAMP;
@@ -2495,6 +2530,7 @@ END;
 DROP FUNCTION IF EXISTS `patient_has_side_effects`;
 
 CREATE FUNCTION `patient_has_side_effects`(my_patient_id INT, my_end_date DATE) RETURNS VARCHAR(7)
+DETERMINISTIC
 BEGIN
   DECLARE mw_side_effects_concept_id INT;
   DECLARE yes_concept_id INT;
@@ -2541,6 +2577,7 @@ END;
 DROP FUNCTION IF EXISTS `patient_who_stage`;
 
 CREATE FUNCTION `patient_who_stage`(my_patient_id INT) RETURNS VARCHAR(50)
+DETERMINISTIC
 BEGIN
   DECLARE who_stage VARCHAR(255);
   DECLARE reason_concept_id INT;
@@ -2560,6 +2597,7 @@ END;
 DROP FUNCTION IF EXISTS pepfar_patient_outcome;
 
 CREATE FUNCTION `pepfar_patient_outcome`(patient_id INT, visit_date date) RETURNS varchar(25)
+DETERMINISTIC
 BEGIN
 DECLARE set_program_id INT;
 DECLARE set_patient_state INT;
@@ -2654,6 +2692,7 @@ END;
 
 DROP FUNCTION IF EXISTS `malaria_report`;
 CREATE FUNCTION `malaria_report`(_order_id varchar(100),_value_text varchar(100),_value_coded varchar(100),_person_id varchar(100),_obs_datetime varchar(100),_concept_name varchar(100),birthdate varchar(100),today_date varchar(100)) RETURNS varchar(100)
+DETERMINISTIC
 BEGIN
 
 DECLARE report_data VARCHAR(150);
