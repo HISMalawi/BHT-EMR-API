@@ -15,6 +15,6 @@ class LabService
     engine = ENGINES[program.name]
     raise NotFoundError, "#{program.name} Lab engine not found" unless engine
 
-    engine.new(program: program)
+    engine.new(program:)
   end
 end

@@ -17,7 +17,7 @@ module AuthenticationService
       raise LoginFailed, 'Invalid username or password' unless user
 
       token, expires = generate_jwt(user)
-      { token: token, expires: expires, user: user }
+      { token:, expires:, user: }
     end
 
     private

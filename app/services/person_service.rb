@@ -2,10 +2,9 @@
 
 require 'logger'
 require 'securerandom'
-require 'set'
 
 class PersonService
-  LOGGER = Logger.new STDOUT
+  LOGGER = Logger.new $stdout
 
   PERSON_TRUNK_FIELDS = %i[gender birthdate birthdate_estimated].freeze
   PERSON_NAME_FIELDS = %i[given_name family_name middle_name].freeze
@@ -57,7 +56,7 @@ class PersonService
 
   def create_person_name(person, params)
     name = handle_model_errors do
-      PersonName.create(person: person, given_name: params[:given_name],
+      PersonName.create(person:, given_name: params[:given_name],
                         family_name: params[:family_name], middle_name: params[:middle_name],
                         creator: User.current.id, uuid: SecureRandom.uuid)
     end
@@ -91,8 +90,8 @@ class PersonService
     current_traditional_authority: :township_division,
     home_district: :address2,
     home_village: :neighborhood_cell,
-    home_traditional_authority: :county_district,
-  }
+    home_traditional_authority: :county_district
+  }.freeze
 
   def create_person_address(person, params)
     params = PERSON_ADDRESS_FIELDS.each_with_object({}) do |field, address_params|
@@ -102,7 +101,7 @@ class PersonService
     return nil if params.empty?
 
     handle_model_errors do
-      new_address = person.addresses.first.dup || PersonAddress.new(person: person)
+      new_address = person.addresses.first.dup || PersonAddress.new(person:)
       person.addresses.each { |address| address.void('Address updated') }
 
       new_address.update(creator: User.current.id, uuid: SecureRandom.uuid, **params)
@@ -127,7 +126,7 @@ class PersonService
         PersonAttribute.create(
           person_id: person.id,
           person_attribute_type_id: type.person_attribute_type_id,
-          value: value
+          value:
         )
       end
     end
@@ -147,10 +146,10 @@ class PersonService
       attr = PersonAttribute.find_by person_attribute_type_id: type.id,
                                      person_id: person.id
 
-      return PersonAttribute.create(type: type, person: person, value: value) unless attr
+      return PersonAttribute.create(type:, person:, value:) unless attr
 
       handle_model_errors do
-        attr.update(value: value)
+        attr.update(value:)
         attr
       end
     end
@@ -175,7 +174,7 @@ class PersonService
     if given_name || family_name || middle_name
       # We may get names that match with an exact match but don't match with
       # soundex, vice-versa is also true, thus we capture both then combine them.
-      filters = { given_name: given_name, middle_name: middle_name, family_name: family_name }
+      filters = { given_name:, middle_name:, family_name: }
       raw_matches = NameSearchService.search_full_person_name(filters, use_soundex: false)
       soundex_matches = NameSearchService.search_full_person_name(filters, use_soundex: true)
 
@@ -194,7 +193,7 @@ class PersonService
     people = people.where('gender like ?', "#{gender}%") unless gender.blank?
 
     if given_name || family_name
-      filters = { given_name: gender, middle_name: middle_name, family_name: family_name }
+      filters = { given_name: gender, middle_name:, family_name: }
       names = NameSearchService.search_full_person_name(filters, use_soundex: true)
       people = people.joins(:names).merge(names)
     end

@@ -51,7 +51,7 @@ class ObservationService
 
       return true unless obs_parameters[obs_value_fields[0]].blank?
 
-      obs_value_exists.call(obs_value_fields[1..-1])
+      obs_value_exists.call(obs_value_fields[1..])
     end
 
     return true if obs_value_exists.call(OBS_VALUE_FIELDS)

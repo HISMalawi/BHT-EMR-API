@@ -33,14 +33,14 @@ class DdeService
   end
 
   def test_connection
-    response = { connection_available:  false, message: 'No connection to DDE', status: 500 }
+    response = { connection_available: false, message: 'No connection to DDE', status: 500 }
     begin
       result, status = dde_client
       response[:connection_available] = status == 200
       response[:message] = result
-    rescue => exception
-      LOGGER.error "Failed to connect to DDE: #{exception.message}"
-      response[:message] = exception.message
+    rescue StandardError => e
+      LOGGER.error "Failed to connect to DDE: #{e.message}"
+      response[:message] = e.message
     end
     response
   end
@@ -68,7 +68,7 @@ class DdeService
     raise ArgumentError, 'void_reason is required' if reason.blank?
 
     doc_id = PatientIdentifier.unscoped
-                              .where(type: dde_doc_id_type, patient: patient)
+                              .where(type: dde_doc_id_type, patient:)
                               .order(:date_voided)
                               .last
                               &.identifier
@@ -157,7 +157,8 @@ class DdeService
 
   # Similar to import_patients_by_npid but uses name and gender instead of npid
   def import_patients_by_name_and_gender(given_name, family_name, gender)
-    locals = patient_service.find_patients_by_name_and_gender(given_name, nil, family_name, gender).limit(PATIENT_SEARCH_RESULTS_LIMIT)
+    locals = patient_service.find_patients_by_name_and_gender(given_name, nil, family_name,
+                                                              gender).limit(PATIENT_SEARCH_RESULTS_LIMIT)
     remotes = find_remote_patients_by_name_and_gender(given_name, family_name, gender)
 
     import_remote_patient(locals, remotes)
@@ -171,7 +172,8 @@ class DdeService
   end
 
   def find_patients_by_name_and_gender(given_name, family_name, gender)
-    locals = patient_service.find_patients_by_name_and_gender(given_name, nil, family_name, gender).limit(PATIENT_SEARCH_RESULTS_LIMIT)
+    locals = patient_service.find_patients_by_name_and_gender(given_name, nil, family_name,
+                                                              gender).limit(PATIENT_SEARCH_RESULTS_LIMIT)
     remotes = find_remote_patients_by_name_and_gender(given_name, family_name, gender)
 
     package_patients(locals, remotes)
@@ -197,15 +199,15 @@ class DdeService
                                      gender:, home_district:, home_traditional_authority:,
                                      home_village:, birthdate_estimated: 0)
     response, status = dde_client.post(
-      'search/people', family_name: family_name,
-                       given_name: given_name,
-                       gender: gender,
-                       birthdate: birthdate,
+      'search/people', family_name:,
+                       given_name:,
+                       gender:,
+                       birthdate:,
                        birthdate_estimated: !birthdate_estimated.zero?,
                        attributes: {
-                         home_district: home_district,
-                         home_traditional_authority: home_traditional_authority,
-                         home_village: home_village
+                         home_district:,
+                         home_traditional_authority:,
+                         home_village:
                        }
     )
 
@@ -243,9 +245,9 @@ class DdeService
 
     # We have a doc_id thus we can re-assign npid in DDE
     # Check if person if available in DDE if not add person using doc_id
-    response, status = dde_client.post('search_by_doc_id', doc_id: doc_id)
+    response, status = dde_client.post('search_by_doc_id', doc_id:)
     if !response.blank? && status.to_i == 200
-      response, status = dde_client.post('reassign_npid', doc_id: doc_id)
+      response, status = dde_client.post('reassign_npid', doc_id:)
     elsif response.blank? && status.to_i == 200
       return push_local_patient_to_dde(Patient.find(patient_ids['patient_id']))
     end
@@ -306,16 +308,16 @@ class DdeService
   private
 
   def find_remote_patients_by_npid(npid)
-    response, _status = dde_client.post('search_by_npid', npid: npid)
+    response, _status = dde_client.post('search_by_npid', npid:)
     raise DdeError, "Patient search by npid failed: DDE Response => #{response}" unless response.instance_of?(Array)
 
     response
   end
 
   def find_remote_patients_by_name_and_gender(given_name, family_name, gender)
-    response, _status = dde_client.post('search_by_name_and_gender', given_name: given_name,
-                                                                     family_name: family_name,
-                                                                     gender: gender)
+    response, _status = dde_client.post('search_by_name_and_gender', given_name:,
+                                                                     family_name:,
+                                                                     gender:)
     unless response.instance_of?(Array)
       raise DdeError, "Patient search by name and gender failed: DDE Response => #{response}"
     end
@@ -325,7 +327,7 @@ class DdeService
 
   def find_remote_patients_by_doc_id(doc_id)
     Rails.logger.info("Searching for DDE patient by doc_id ##{doc_id}")
-    response, _status = dde_client.post('search_by_doc_id', doc_id: doc_id)
+    response, _status = dde_client.post('search_by_doc_id', doc_id:)
     raise DdeError, "Patient search by doc_id failed: DDE Response => #{response}" unless response.instance_of?(Array)
 
     response
@@ -339,15 +341,19 @@ class DdeService
   # patients to take on a structure similar to that of local
   # patients.
   def package_patients(local_patients, remote_patients, auto_push_singular_local: false)
-    patients = resolve_patients(local_patients: local_patients,
-                                remote_patients: remote_patients,
-                                auto_push_singular_local: auto_push_singular_local)
+    patients = resolve_patients(local_patients:,
+                                remote_patients:,
+                                auto_push_singular_local:)
 
     # In some cases we may have remote patients that were previously imported but
     # whose NPID has changed, we need to find and resolve these local patients.
-    unresolved_patients = find_patients_by_doc_id(patients[:remotes].collect { |remote_patient| remote_patient['doc_id'] })
+    unresolved_patients = find_patients_by_doc_id(patients[:remotes].collect do |remote_patient|
+                                                    remote_patient['doc_id']
+                                                  end)
     if unresolved_patients.empty?
-      return { locals: patients[:locals], remotes: patients[:remotes].collect { |patient| localise_remote_patient(patient) } }
+      return { locals: patients[:locals], remotes: patients[:remotes].collect do |patient|
+                                                     localise_remote_patient(patient)
+                                                   end }
     end
 
     additional_patients = resolve_patients(local_patients: unresolved_patients, remote_patients: patients[:remotes])
@@ -366,7 +372,7 @@ class DdeService
   # Returns: The imported patient (or nil if no local and remote patients are
   #          present).
   def import_remote_patient(local_patients, remote_patients)
-    patients = resolve_patients(local_patients: local_patients, remote_patients: remote_patients)
+    patients = resolve_patients(local_patients:, remote_patients:)
 
     return patients[:locals].first if patients[:remotes].empty?
 
@@ -389,7 +395,7 @@ class DdeService
     resolved_patients = local_patients.each_with_object([]) do |local_patient, resolved_patients|
       # Local patient present on remote?
       remote_patient = remote_patients.detect do |patient|
-        same_patient?(local_patient: local_patient, remote_patient: patient)
+        same_patient?(local_patient:, remote_patient: patient)
       end
 
       remote_patients.delete(remote_patient) if remote_patient
@@ -397,7 +403,7 @@ class DdeService
       resolved_patients << local_patient
     end
 
-    if resolved_patients.empty? && (local_patients.size.zero? && remote_patients.size == 1)
+    if resolved_patients.empty? && (local_patients.empty? && remote_patients.size == 1)
       # HACK: Frontenders requested that if only a single patient exists
       # remotely and locally none exists, the remote patient should be
       # imported.
@@ -529,12 +535,12 @@ class DdeService
       birthdate: person.birthdate,
       birthdate_estimated: person.birthdate_estimated, # Convert to bool?
       attributes: {
-        current_district: person_address ? person_address.state_province : nil,
-        current_traditional_authority: person_address ? person_address.township_division : nil,
-        current_village: person_address ? person_address.city_village : nil,
-        home_district: person_address ? person_address.address2 : nil,
-        home_village: person_address ? person_address.neighborhood_cell : nil,
-        home_traditional_authority: person_address ? person_address.county_district : nil,
+        current_district: person_address&.state_province,
+        current_traditional_authority: person_address&.township_division,
+        current_village: person_address&.city_village,
+        home_district: person_address&.address2,
+        home_village: person_address&.neighborhood_cell,
+        home_traditional_authority: person_address&.county_district,
         occupation: person_attributes ? person_attributes[:occupation] : nil
       }
     )
@@ -569,7 +575,7 @@ class DdeService
     PatientIdentifier
       .joins(:type)
       .merge(PatientIdentifierType.where(name: 'DDE person document id'))
-      .where(patient: patient)
+      .where(patient:)
       .first
       &.identifier
   end

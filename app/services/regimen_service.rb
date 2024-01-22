@@ -28,6 +28,6 @@ class RegimenService
     program = Program.find program_id
 
     engine = ENGINES[program.name.upcase]
-    engine.new program: program
+    engine.new program:
   end
 end

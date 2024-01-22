@@ -204,7 +204,7 @@ class DdeRollbackService
 
     voided_identifiers.each do |identifier|
       patient_id, row_id = process_patient_id_and_row_id(identifier['void_reason'])
-      record = PatientIdentifier.find_by(patient_identifier_id: row_id, patient_id: patient_id)
+      record = PatientIdentifier.find_by(patient_identifier_id: row_id, patient_id:)
       record&.void("Rollback to patient ##{identifier['patient_id']}:#{identifier['patient_identifier_id']}")
     end
   end
@@ -234,7 +234,7 @@ class DdeRollbackService
 
     voided_encounters.each do |encounter|
       patient_id, row_id = process_patient_id_and_row_id(encounter['void_reason'])
-      record = Encounter.find_by(encounter_id: row_id, patient_id: patient_id)
+      record = Encounter.find_by(encounter_id: row_id, patient_id:)
       record&.void("Rollback to patient ##{encounter['patient_id']}:#{encounter['encounter_id']}")
     end
   end
@@ -254,7 +254,7 @@ class DdeRollbackService
 
     voided_orders.each do |order|
       patient_id, row_id = process_patient_id_and_row_id(order['void_reason'])
-      record = Order.find_by(order_id: row_id, patient_id: patient_id)
+      record = Order.find_by(order_id: row_id, patient_id:)
       record&.void("Rollback to patient ##{order['patient_id']}:#{order['order_id']}")
     end
   end

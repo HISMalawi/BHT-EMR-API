@@ -19,9 +19,9 @@ class PatientStateService
 
     close_patient_state(current_patient_state, start_date) if current_patient_state
 
-    PatientState.create patient_program: patient_program,
-                        state: state,
-                        start_date: start_date,
+    PatientState.create patient_program:,
+                        state:,
+                        start_date:,
                         end_date: nil
   end
 
@@ -43,7 +43,7 @@ class PatientStateService
   end
 
   def find_patient_program(program, patient, ref_date)
-    patient_program = PatientProgram.where(program: program, patient: patient)\
+    patient_program = PatientProgram.where(program:, patient:)\
                                     .where('DATE(date_enrolled) <= ?', ref_date)\
                                     .last
 
@@ -62,7 +62,7 @@ class PatientStateService
 
   # Returns the patient's state on this given date
   def find_patient_state_impl(patient_program, date)
-    PatientState.where(patient_program: patient_program)\
+    PatientState.where(patient_program:)\
                 .where('start_date <= ? AND end_date IS NULL', date)\
                 .last
   end
