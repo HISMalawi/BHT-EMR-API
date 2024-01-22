@@ -10,6 +10,10 @@ class ObservationService
   def create_observation(encounter, obs_parameters)
     proccess_obs_creation(encounter, obs_parameters)
     records
+  rescue e
+    # log the error
+    Rails.logger.error("Error creating observation: #{e.message}")
+    raise e
   end
 
   private
@@ -35,10 +39,7 @@ class ObservationService
       validate_observation(observation)
       records << observation
 
-      return unless child_obs_parameters
-
-      Rails.logger.debug("Creating child observation for obs ##{observation.obs_id}")
-      child_obs_parameters.each do |child_obs|
+      child_obs_parameters&.each do |child_obs|
         child_obs[:obs_group_id] = observation.obs_id
         proccess_obs_creation(encounter, child_obs)
       end
