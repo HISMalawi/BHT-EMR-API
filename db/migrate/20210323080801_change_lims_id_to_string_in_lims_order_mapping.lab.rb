@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # This migration comes from lab (originally 20210323080140)
 
 class ChangeLimsIdToStringInLimsOrderMapping < ActiveRecord::Migration[5.2]

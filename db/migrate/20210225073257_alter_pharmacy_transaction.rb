@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AlterPharmacyTransaction < ActiveRecord::Migration[5.2]
   def change
     remove_column :pharmacy_obs, :expiry_date, :date if column_exists?(:pharmacy_obs, :expiry_date)
@@ -8,7 +10,8 @@ class AlterPharmacyTransaction < ActiveRecord::Migration[5.2]
     remove_column :pharmacy_obs, :expiring_units, :double if column_exists?(:pharmacy_obs, :expiring_units)
     remove_column :pharmacy_obs, :value_coded, :integer if column_exists?(:pharmacy_obs, :value_coded)
     remove_column :pharmacy_obs, :value_text, :string, limit: 255 if column_exists?(:pharmacy_obs, :value_text)
-    add_column :pharmacy_obs, :transaction_reason, :text, null: true unless column_exists?(:pharmacy_obs, :transaction_reason)
+    add_column :pharmacy_obs, :transaction_reason, :text, null: true unless column_exists?(:pharmacy_obs,
+                                                                                           :transaction_reason)
     rename_column :pharmacy_obs, :value_numeric, :quantity unless column_exists?(:pharmacy_obs, :quantity)
 
     reversible do |direction|

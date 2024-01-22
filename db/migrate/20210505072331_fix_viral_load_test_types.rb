@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class FixViralLoadTestTypes < ActiveRecord::Migration[5.2]
   def up
     ActiveRecord::Base.logger = Logger.new($stdout)
