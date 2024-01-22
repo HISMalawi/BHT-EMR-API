@@ -7,7 +7,7 @@ module CxcaService
   class PatientsEngine
     include ModelUtils
 
-    CxCa_PROGRAM =  Program.find_by name: 'CxCa program'
+    CxCa_PROGRAM = Program.find_by name: 'CxCa program'
 
     def initialize(program:)
       @program = program
@@ -22,10 +22,9 @@ module CxcaService
     end
 
     def saved_encounters(patient, date)
-
-      x = Encounter.where(["DATE(encounter_datetime) = ? AND patient_id = ? AND voided = 0
-          AND program_id = ?", date.to_date.strftime("%Y-%m-%d"),
-          patient.patient_id, CxCa_PROGRAM.id]).collect{|e| e.name}.uniq
+      Encounter.where(["DATE(encounter_datetime) = ? AND patient_id = ? AND voided = 0
+          AND program_id = ?", date.to_date.strftime('%Y-%m-%d'),
+                       patient.patient_id, CxCa_PROGRAM.id]).collect(&:name).uniq
     end
 
     private
@@ -33,7 +32,5 @@ module CxcaService
     def patient_summary(patient, date)
       PatientSummary.new patient, date
     end
-
   end
-
 end
