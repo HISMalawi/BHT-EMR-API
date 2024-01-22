@@ -87,6 +87,8 @@ Rails.application.routes.draw do
         post '/npid', to: 'patients#assign_npid'
         post '/remaining_bp_drugs', to: 'patients#remaining_bp_drugs'
         post '/update_or_create_htn_state', to: 'patients#update_or_create_htn_state'
+        get '/visits/after_last_outcome', to: 'patients#visits_after_last_outcome'
+        get '/tb_negative_minor', to: 'patients#tb_negative_minor'
         resources :patient_programs, path: :programs, controller: 'patients/programs'
       end
 
@@ -199,6 +201,7 @@ Rails.application.routes.draw do
         get '/lab_tests/orders_without_results' => 'lab_test_orders#orders_without_results'
         get '/lab_tests/measures' => 'lab_test_types#measures'
         get '/labs/:resource', to: 'lab#dispatch_request'
+        get '/patient_state', to: 'patient_states#patient_state'
         resources :program_reports, path: 'reports'
       end
 
