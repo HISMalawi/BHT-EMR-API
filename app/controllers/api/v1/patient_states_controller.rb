@@ -21,6 +21,26 @@ class Api::V1::PatientStatesController < ApplicationController
   end
   # TODO: Implement show, and maybe update...
 
+  def patient_state
+    patient_id, program_id = params.require %i[patient_id program_id]
+    state = service.find_patient_state Program.find(program_id), Patient.find(patient_id)
+    render json: state
+  end
+
+  def close_current_outcome
+    date = params[:date]&.to_date || Date.today
+    patient_program = PatientProgram.where(program: program, patient: patient)\
+                                    .where('DATE(date_enrolled) <= ?', date)\
+                                    .last
+    patient_state = PatientState.where(patient_program: patient_program)\
+                .where('start_date <= ? AND end_date IS NULL', date)\
+                .last
+    patient_state.end_date = date
+    patient_state.save
+    render json: patient_state
+    #patient_state = service.close_patient_state program patient status date
+  end
+
   private
 
   def program
