@@ -70,7 +70,7 @@ module ArtService
         tmp = get_age_groups(age_group, start_date, end_date)
 
         # A hack to get female that were pregnant / breastfeeding at the beginning of the reporting period + those are currently the same state
-        if (age_group == 'Pregnant')
+        if age_group == 'Pregnant'
           tmp_arr = []
           (tmp || []).each do |data|
             begin
@@ -79,10 +79,10 @@ module ArtService
               raise data.inspect
             end
             earliest_start_date = begin
-                                    data['earliest_start_date']
-                                  rescue
-                                    date_enrolled
-                                  end
+              data['earliest_start_date']
+            rescue StandardError
+              date_enrolled
+            end
 
             imstaus = data['initial_maternal_status']
             mstatus = data['mstatus']
@@ -97,7 +97,7 @@ module ArtService
           tmp = tmp_arr
         end
 
-        if (age_group == 'Breastfeeding')
+        if age_group == 'Breastfeeding'
           tmp_arr = []
           (tmp || []).each do |data|
             begin
@@ -106,10 +106,10 @@ module ArtService
               raise data.inspect
             end
             earliest_start_date = begin
-                                    data['earliest_start_date']
-                                  rescue
-                                    date_enrolled
-                                  end
+              data['earliest_start_date']
+            rescue StandardError
+              date_enrolled
+            end
 
             imstaus = data['initial_maternal_status']
             mstatus = data['mstatus']
@@ -140,7 +140,7 @@ module ArtService
 
         list = {}
 
-        if all_clients.blank? && (['Breastfeeding', 'Pregnant'].include?(age_group))
+        if all_clients.blank? && %w[Breastfeeding Pregnant].include?(age_group)
           list[age_group] = {}
           list[age_group]['F'] = {
             tx_new: [], tx_curr: [],
@@ -157,16 +157,18 @@ module ArtService
         (tmp || []).each do |r|
           gender = r['gender']&.first || 'Unknown'
           patient_id = r['patient_id'].to_i
-          tx_new, tx_curr, tx_given_ipt, tx_screened_for_tb = get_numbers(r, age_group, start_date, end_date, 
-all_clients_outcomes)
+          tx_new, tx_curr, tx_given_ipt, tx_screened_for_tb = get_numbers(r, age_group, start_date, end_date,
+                                                                          all_clients_outcomes)
 
           list[age_group] = {} if list[age_group].blank?
 
-          list[age_group][gender] = {
-            tx_new: [], tx_curr: [],
-            tx_screened_for_tb: [],
-            tx_given_ipt: []
-          } if list[age_group][gender].blank?
+          if list[age_group][gender].blank?
+            list[age_group][gender] = {
+              tx_new: [], tx_curr: [],
+              tx_screened_for_tb: [],
+              tx_given_ipt: []
+            }
+          end
 
           list[age_group][gender][:tx_new] << r['patient_id'] if tx_new
           list[age_group][gender][:tx_curr] << r['patient_id'] if tx_curr
@@ -259,13 +261,13 @@ all_clients_outcomes)
           raise data.inspect
         end
         earliest_start_date = begin
-                                 data['earliest_start_date'].to_date
-                               rescue
-                                 nil
-                               end
+          data['earliest_start_date'].to_date
+        rescue StandardError
+          nil
+        end
 
         if date_enrolled >= start_date && date_enrolled <= end_date
-          tx_new = true if date_enrolled == earliest_start_date unless earliest_start_date.blank?
+          tx_new = true if !earliest_start_date.blank? && (date_enrolled == earliest_start_date)
 
           tx_curr = true if outcome == 'On antiretrovirals'
         elsif outcome == 'On antiretrovirals'
@@ -310,16 +312,16 @@ all_clients_outcomes)
             AND e.patient_id IN(#{age_group_patient_ids.join(',')})
             GROUP BY e.patient_id;
           SQL
-#           results = ActiveRecord::Base.connection.select_all <<~SQL
-#             SELECT
-#               `cohort_disaggregated_age_group`(date(birthdate), date('#{@end_date}')) AS age_group,
-#               o.cum_outcome AS outcome, e.*
-#             FROM earliest_start_date e
-#             LEFT JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
-#             WHERE  date_enrolled IS NOT NULL AND DATE(date_enrolled) <= DATE('#{@end_date}')
-#             AND e.patient_id NOT IN(#{visiting_clients.blank? ? 0 : visiting_clients.join(',')})
-#             GROUP BY e.patient_id HAVING age_group = '#{age_group}';
-#           SQL
+        #           results = ActiveRecord::Base.connection.select_all <<~SQL
+        #             SELECT
+        #               `cohort_disaggregated_age_group`(date(birthdate), date('#{@end_date}')) AS age_group,
+        #               o.cum_outcome AS outcome, e.*
+        #             FROM earliest_start_date e
+        #             LEFT JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
+        #             WHERE  date_enrolled IS NOT NULL AND DATE(date_enrolled) <= DATE('#{@end_date}')
+        #             AND e.patient_id NOT IN(#{visiting_clients.blank? ? 0 : visiting_clients.join(',')})
+        #             GROUP BY e.patient_id HAVING age_group = '#{age_group}';
+        #           SQL
 
         elsif age_group == 'Pregnant'
           create_mysql_female_maternal_status
@@ -377,51 +379,51 @@ all_clients_outcomes)
           CREATE FUNCTION female_maternal_status(my_patient_id int, end_datetime datetime) RETURNS VARCHAR(20)
           DETERMINISTIC
           BEGIN
-          
+
           DECLARE breastfeeding_date DATETIME;
           DECLARE pregnant_date DATETIME;
           DECLARE maternal_status VARCHAR(20);
           DECLARE obs_value_coded INT(11);
-          
-          
+
+
           SET @reason_for_starting = (SELECT concept_id FROM concept_name WHERE name = 'Reason for ART eligibility' LIMIT 1);
-          
+
           SET @pregnant_concepts := (SELECT GROUP_CONCAT(concept_id) FROM concept_name WHERE name IN('Is patient pregnant?','Patient pregnant'));
           SET @breastfeeding_concept := (SELECT GROUP_CONCAT(concept_id) FROM concept_name WHERE name = 'Breastfeeding');
-          
+
           SET pregnant_date = (SELECT MAX(obs_datetime) FROM obs WHERE concept_id IN(@pregnant_concepts) AND voided = 0 AND person_id = my_patient_id AND obs_datetime <= end_datetime);
           SET breastfeeding_date = (SELECT MAX(obs_datetime) FROM obs WHERE concept_id IN(@breastfeeding_concept) AND voided = 0 AND person_id = my_patient_id AND obs_datetime <= end_datetime);
-          
+
           IF pregnant_date IS NULL THEN
             SET pregnant_date = (SELECT MAX(obs_datetime) FROM obs WHERE concept_id = @reason_for_starting AND voided = 0 AND person_id = my_patient_id AND obs_datetime <= end_datetime AND value_coded IN(1755));
           END IF;
-          
+
           IF breastfeeding_date IS NULL THEN
             SET breastfeeding_date = (SELECT MAX(obs_datetime) FROM obs WHERE concept_id = @reason_for_starting AND voided = 0 AND person_id = my_patient_id AND obs_datetime <= end_datetime AND value_coded IN(834,5632));
           END IF;
-          
+
           IF pregnant_date IS NULL AND breastfeeding_date IS NULL THEN SET maternal_status = "FNP";
           ELSEIF pregnant_date IS NOT NULL AND breastfeeding_date IS NOT NULL THEN SET maternal_status = "Unknown";
           ELSEIF pregnant_date IS NULL AND breastfeeding_date IS NOT NULL THEN SET maternal_status = "Check BF";
           ELSEIF pregnant_date IS NOT NULL AND breastfeeding_date IS NULL THEN SET maternal_status = "Check FP";
           END IF;
-          
+
           IF maternal_status = 'Unknown' THEN
-          
+
             IF breastfeeding_date <= pregnant_date THEN
               SET obs_value_coded = (SELECT value_coded FROM obs WHERE concept_id IN(@pregnant_concepts) AND voided = 0 AND person_id = my_patient_id AND obs_datetime = pregnant_date LIMIT 1);
               IF obs_value_coded = 1065 THEN SET maternal_status = 'FP';
               ELSEIF obs_value_coded = 1066 THEN SET maternal_status = 'FNP';
               END IF;
             END IF;
-          
+
             IF breastfeeding_date > pregnant_date THEN
               SET obs_value_coded = (SELECT value_coded FROM obs WHERE concept_id IN(@breastfeeding_concept) AND voided = 0 AND person_id = my_patient_id AND obs_datetime = breastfeeding_date LIMIT 1);
               IF obs_value_coded = 1065 THEN SET maternal_status = 'FBf';
               ELSEIF obs_value_coded = 1066 THEN SET maternal_status = 'FNP';
               END IF;
             END IF;
-          
+
             IF DATE(breastfeeding_date) = DATE(pregnant_date) AND maternal_status = 'FNP' THEN
               SET obs_value_coded = (SELECT value_coded FROM obs WHERE concept_id IN(@breastfeeding_concept) AND voided = 0 AND person_id = my_patient_id AND obs_datetime = breastfeeding_date LIMIT 1);
               IF obs_value_coded = 1065 THEN SET maternal_status = 'FBf';
@@ -429,51 +431,51 @@ all_clients_outcomes)
               END IF;
             END IF;
           END IF;
-          
+
           IF maternal_status = 'Check FP' THEN
-          
+
             SET obs_value_coded = (SELECT value_coded FROM obs WHERE concept_id IN(@pregnant_concepts) AND voided = 0 AND person_id = my_patient_id AND obs_datetime = pregnant_date LIMIT 1);
             IF obs_value_coded = 1065 THEN SET maternal_status = 'FP';
             ELSEIF obs_value_coded = 1066 THEN SET maternal_status = 'FNP';
             END IF;
-          
+
             IF obs_value_coded IS NULL THEN
               SET obs_value_coded = (SELECT GROUP_CONCAT(value_coded) FROM obs WHERE concept_id IN(7563) AND voided = 0 AND person_id = my_patient_id AND obs_datetime = pregnant_date);
               IF obs_value_coded IN(1755) THEN SET maternal_status = 'FP';
               END IF;
             END IF;
-          
+
             IF maternal_status = 'Check FP' THEN SET maternal_status = 'FNP';
             END IF;
           END IF;
-          
+
           IF maternal_status = 'Check BF' THEN
-          
+
             SET obs_value_coded = (SELECT value_coded FROM obs WHERE concept_id IN(@breastfeeding_concept) AND voided = 0 AND person_id = my_patient_id AND obs_datetime = breastfeeding_date LIMIT 1);
             IF obs_value_coded = 1065 THEN SET maternal_status = 'FBf';
             ELSEIF obs_value_coded = 1066 THEN SET maternal_status = 'FNP';
             END IF;
-          
+
             IF obs_value_coded IS NULL THEN
               SET obs_value_coded = (SELECT GROUP_CONCAT(value_coded) FROM obs WHERE concept_id IN(7563) AND voided = 0 AND person_id = my_patient_id AND obs_datetime = breastfeeding_date);
               IF obs_value_coded IN(834,5632) THEN SET maternal_status = 'FBf';
               END IF;
             END IF;
-          
+
             IF maternal_status = 'Check BF' THEN SET maternal_status = 'FNP';
             END IF;
           END IF;
-          
-          
-          
+
+
+
           RETURN maternal_status;
           END;
         SQL
       end
 
       def rebuild_outcomes(report_type)
-        ArtService::Reports::CohortBuilder.new(outcomes_definition: report_type).init_temporary_tables(@start_date, 
-@end_date, @occupation)
+        ArtService::Reports::CohortBuilder.new(outcomes_definition: report_type).init_temporary_tables(@start_date,
+                                                                                                       @end_date, @occupation)
       end
 
       def insert_female_maternal_status(patient_id, age_group, end_date)
@@ -508,12 +510,12 @@ all_clients_outcomes)
         if female_maternal_status == 'FNP'
 
           breastfeeding_concepts = []
-         breastfeeding_concepts <<  ConceptName.find_by_name('Breast feeding?').concept_id
-         breastfeeding_concepts <<  ConceptName.find_by_name('Breast feeding').concept_id
-         breastfeeding_concepts <<  ConceptName.find_by_name('Breastfeeding').concept_id
+          breastfeeding_concepts <<  ConceptName.find_by_name('Breast feeding?').concept_id
+          breastfeeding_concepts <<  ConceptName.find_by_name('Breast feeding').concept_id
+          breastfeeding_concepts <<  ConceptName.find_by_name('Breastfeeding').concept_id
 
-         results2 = ActiveRecord::Base.connection.select_all(
-           "SELECT person_id, obs.value_coded value_coded  FROM obs obs
+          results2 = ActiveRecord::Base.connection.select_all(
+            "SELECT person_id, obs.value_coded value_coded  FROM obs obs
             INNER JOIN encounter enc ON enc.encounter_id = obs.encounter_id
             AND enc.voided = 0 AND enc.program_id = 1
           WHERE obs.person_id =#{patient_id}
@@ -528,7 +530,7 @@ all_clients_outcomes)
                         AND o.obs_datetime <='#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
           GROUP BY obs.person_id HAVING value_coded = 1065
           ORDER BY obs.obs_datetime DESC;"
-         )
+          )
 
           female_maternal_status = results2.blank? ? 'FNP' : 'FBf'
         end
@@ -545,19 +547,19 @@ all_clients_outcomes)
                                         WHERE es.patient_id = obs.person_id)
           GROUP BY obs.person_id HAVING value_coded = 1065
           ORDER BY obs.obs_datetime DESC;"
-         )
+        )
 
         initial_female_maternal_status = results.blank? ? 'FNP' : 'FP'
 
         if initial_female_maternal_status == 'FNP'
 
           breastfeeding_concepts = []
-         breastfeeding_concepts <<  ConceptName.find_by_name('Breast feeding?').concept_id
-         breastfeeding_concepts <<  ConceptName.find_by_name('Breast feeding').concept_id
-         breastfeeding_concepts <<  ConceptName.find_by_name('Breastfeeding').concept_id
+          breastfeeding_concepts <<  ConceptName.find_by_name('Breast feeding?').concept_id
+          breastfeeding_concepts <<  ConceptName.find_by_name('Breast feeding').concept_id
+          breastfeeding_concepts <<  ConceptName.find_by_name('Breastfeeding').concept_id
 
-         results2 = ActiveRecord::Base.connection.select_all(
-           "SELECT person_id, obs.value_coded value_coded  FROM obs obs
+          results2 = ActiveRecord::Base.connection.select_all(
+            "SELECT person_id, obs.value_coded value_coded  FROM obs obs
             INNER JOIN encounter enc ON enc.encounter_id = obs.encounter_id
             AND enc.voided = 0 AND enc.program_id = 1
           WHERE obs.person_id =#{patient_id}
@@ -568,17 +570,16 @@ all_clients_outcomes)
                                         WHERE es.patient_id = obs.person_id)
           GROUP BY obs.person_id HAVING value_coded = 1065
           ORDER BY obs.obs_datetime DESC;"
-         )
+          )
 
-         initial_female_maternal_status = results2.blank? ? 'FNP' : 'FBf'
+          initial_female_maternal_status = results2.blank? ? 'FNP' : 'FBf'
         end
 
         ActiveRecord::Base.connection.execute <<~SQL
-         UPDATE temp_disaggregated SET maternal_status =  '#{female_maternal_status}',
-           initial_maternal_status = '#{initial_female_maternal_status}',
-            age_group = '#{age_group}' WHERE patient_id = #{patient_id};
-       SQL
-
+          UPDATE temp_disaggregated SET maternal_status =  '#{female_maternal_status}',
+            initial_maternal_status = '#{initial_female_maternal_status}',
+             age_group = '#{age_group}' WHERE patient_id = #{patient_id};
+        SQL
       end
 
       def big_insert(data, age_group)
@@ -588,17 +589,17 @@ all_clients_outcomes)
         end
 
         return if insert_array.blank?
-          ActiveRecord::Base.connection.execute <<~SQL
-            INSERT INTO temp_disaggregated (patient_id, age_group)
-            VALUES #{insert_array.join(',')};
-          SQL
-        end
-#         (data || []).each do |r|
-#           ActiveRecord::Base.connection.execute <<~SQL
-#             INSERT INTO temp_disaggregated (patient_id, age_group)
-#             VALUES(#{r['patient_id']}, '#{age_group}');
-# SQL
-#         end
+
+        ActiveRecord::Base.connection.execute <<~SQL
+          INSERT INTO temp_disaggregated (patient_id, age_group)
+          VALUES #{insert_array.join(',')};
+        SQL
+        #         (data || []).each do |r|
+        #           ActiveRecord::Base.connection.execute <<~SQL
+        #             INSERT INTO temp_disaggregated (patient_id, age_group)
+        #             VALUES(#{r['patient_id']}, '#{age_group}');
+        # SQL
+        #         end
       end
     end
   end

@@ -162,31 +162,6 @@ module ArtService
               AND o.start_date < #{start_date}
               GROUP BY o.patient_id
             ) AS last_tpt_prescription ON last_tpt_prescription.patient_id = orders.patient_id
-            /** WHERE cohort_patients.patient_id NOT IN (
-              -- Filter out patients who received TPT before current reporting period
-              SELECT DISTINCT cohort_patients.patient_id
-              FROM temp_earliest_start_date AS cohort_patients
-              INNER JOIN orders
-                ON orders.patient_id = cohort_patients.patient_id
-                AND orders.order_type_id = (SELECT order_type_id FROM order_type WHERE name = 'Drug order' LIMIT 1)
-                AND orders.start_date < #{start_date}
-                /* DHA Recommendation: A break of 3 quarters is considered a re-initiation.
-                AND orders.auto_expire_date >= (DATE(#{start_date}) - INTERVAL 9 MONTH)
-                AND orders.voided = 0
-              INNER JOIN concept_name AS tpt_drug_concepts
-                ON tpt_drug_concepts.concept_id = orders.concept_id
-                AND tpt_drug_concepts.name IN ('Rifapentine', 'Isoniazid', 'Isoniazid/Rifapentine')
-                AND tpt_drug_concepts.voided = 0
-              INNER JOIN drug_order AS drug_orders
-                ON drug_orders.order_id = orders.order_id
-                AND drug_orders.quantity > 0
-              INNER JOIN encounter
-                -- Ensure we are dealing with ART Prescriptions (Treatment encounter)
-                ON encounter.encounter_id = orders.encounter_id
-                AND encounter.encounter_type = (SELECT encounter_type_id FROM encounter_type WHERE name = 'Treatment' LIMIT 1)
-                AND encounter.program_id = (SELECT program_id FROM program WHERE name = 'HIV Program' LIMIT 1)
-                AND encounter.voided = 0
-            ) **/
             GROUP BY cohort_patients.patient_id
           SQL
         end
