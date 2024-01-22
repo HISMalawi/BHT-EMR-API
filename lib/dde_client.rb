@@ -15,7 +15,7 @@ class DdeClient
   #
   # @return A Connection object that can be used to re-connect to DDE
   def connect(url:, username:, password:)
-    @connection = establish_connection(url: url, username: username, password: password)
+    @connection = establish_connection(url:, username:, password:)
   end
 
   # Reconnect to DDE using previous connection
@@ -52,7 +52,7 @@ class DdeClient
   private
 
   JSON_CONTENT_TYPE = 'application/json'
-  LOGGER = Logger.new(STDOUT)
+  LOGGER = Logger.new($stdout)
   DDE_API_KEY_VALIDITY_PERIOD = 3600 * 12
   DDE_VERSION = 'v1'
 
@@ -84,19 +84,17 @@ class DdeClient
     # be available to the build_url method right now
     @base_url = url
 
-    response, status = post('login', username: username, password: password)
+    response, status = post('login', username:, password:)
 
     @auto_login = true
 
-    if status != 200
-      raise DdeClientError, "Unable to establish connection to DDE: #{response}"
-    end
+    raise DdeClientError, "Unable to establish connection to DDE: #{response}" if status != 200
 
     LOGGER.info('Connection to DDE established :)')
     @connection = {
       key: response['access_token'],
       expires: Time.now + DDE_API_KEY_VALIDITY_PERIOD,
-      config: { url: url, username: username, password: password }
+      config: { url:, username:, password: }
     }
   end
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 ## TODO: add text processing logic to escape characters outside of [A-Za-z0-9], consider :, \", (, ), \,
 ## TODO: add text processing logic to escape apostrophes
 ## TODO: maintain current x and current y throughout a label process
@@ -36,7 +38,7 @@ module ZebraPrinter # :nodoc:
 
       def draw_encounter(encounter)
         draw_multi_text(encounter.type.name, { font_reverse: true })
-        draw_multi_text(encounter.observations.collect { |obs| obs.to_short_s }.join(', '), { font_reverse: false })
+        draw_multi_text(encounter.observations.collect(&:to_short_s).join(', '), { font_reverse: false })
       end
     end
   end

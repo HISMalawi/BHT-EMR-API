@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 ## TODO: add text processing logic to escape characters outside of [A-Za-z0-9], consider :, \", (, ), \,
 ## TODO: add text processing logic to escape apostrophes
 ## TODO: maintain current x and current y throughout a label process
@@ -224,7 +226,7 @@ module ZebraPrinter # :nodoc:
               # Start from this word, count it and its size
               word_start_index = next_word
               # Account for writing a single, really long word
-              word_start_index += 1 if word_count == 0
+              word_start_index += 1 if word_count.zero?
               word_count = 1
               size = next_word_size
               @y += @line_spacing + @char_height
@@ -295,9 +297,7 @@ module ZebraPrinter # :nodoc:
           GlobalProperty.find_by_property('label_width_height').property_value
         rescue StandardError
           nil || '801,329'
-        end.split(',').collect do |d|
-          d.to_i
-        end
+        end.split(',').collect(&:to_i)
         super(dimensions.first, dimensions.last, 'T')
       end
     end
