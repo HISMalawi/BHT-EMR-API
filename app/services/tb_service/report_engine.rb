@@ -14,7 +14,15 @@ module TBService
     REPORTS = {
       'TBHIV' => TBService::Reports::Tbhiv,
       'QUARTERLY' => TBService::Reports::Quarterly,
-      'CASEFINDING' => TBService::Reports::CaseFinding
+      'CASEFINDING' => TBService::Reports::CaseFinding,
+      'PRESUMPTIVES' => TBService::Reports::Presumptives,
+      'CONTACTS' => TBService::Reports::Contacts,
+      'HIGHRISKPATIENTS' => TBService::Reports::HighRiskPatients,
+      'IPTOUTCOMES' => TBService::Reports::IptOutcomes,
+      'COMMUNITY' => TBService::Reports::Community,
+      'MDR_CASEFINDING' => TBService::Reports::MdrCaseFinding,
+      'MDR_OUTCOMES' => TBService::Reports::MdrOutcomes,
+      'MDR_INTERIM_OUTCOMES' => TBService::Reports::MdrInterimOutcomes
     }.freeze
 
     def find_report(type:, name:, start_date:, end_date:)

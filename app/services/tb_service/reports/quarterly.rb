@@ -1,237 +1,93 @@
 # frozen_string_literal: true
 
-include ModelUtils
-
 module TBService::Reports::Quarterly
   class << self
-    STATES = {
-      'TREATMENT_COMPLETE' => 93,
-      'TREATMENT_FAILED' => 99,
-      'DIED' => 94,
-      'CURED' => 97,
-      'DEFAULTED' => 96,
-      'RELAPSE' => 168,
-      'UNKNOWN' => 999,
-      'CURRENTLY_IN_TREATMENT' => 92,
-      'ART_TREATMENT' => 7
-    }.freeze
-
-    def new_pulmonary_clinically_diagnosed (start_date, end_date)
-      new_patients = patients_query.new_patients(start_date, end_date)
-      return [] if new_patients.empty?
-
-      ids = new_patients.map(&:patient_id)
-
-      new_pulm = clinically_diagnosed_patients_query.with_pulmonary_tuberculosis(ids, start_date, end_date)
-
-      return [] if new_pulm.empty?
-
-      patients = new_pulm.map(&:patient_id)
-
-      map_outcomes(patients, start_date, end_date)
+    def new_pulmonary_clinically_diagnosed(start_date, end_date)
+      query_init = new_patients_query.ref(start_date, end_date)
+      query = query_init.with_clinical_pulmonary_tuberculosis(start_date, end_date)
+      query.exclude_smear_positive(query_init, start_date, end_date)
     end
 
-    def new_eptb (start_date, end_date)
-      new_patients = patients_query.new_patients(start_date, end_date)
-      return [] if new_patients.empty?
-
-      ids = new_patients.map(&:patient_id)
-
-      with_mtb = obs_query.with_answer(ids, 'Extrapulmonary tuberculosis (EPTB)', start_date, end_date)
-
-      return [] if with_mtb.empty?
-
-      persons = with_mtb.map(&:person_id)
-
-      map_outcomes(persons, start_date, end_date)
+    def new_eptb(start_date, end_date)
+      query = new_patients_query.ref(start_date, end_date)
+      query.with_eptb_tuberculosis(start_date, end_date)
     end
 
-    def new_mtb_detected_xpert (start_date, end_date)
-      new_patients = patients_query.new_patients(start_date, end_date)
-      return [] if new_patients.empty?
-
-      ids = new_patients.map(&:patient_id)
-
-      with_mtb = obs_query.with_answer(ids, 'MTB Detetcted', start_date, end_date)
-
-      return [] if with_mtb.empty?
-
-      persons = with_mtb.map(&:person_id)
-
-      map_outcomes(persons, start_date, end_date)
+    def new_mtb_detected_xpert(start_date, end_date)
+      query = new_patients_query.ref(start_date, end_date)
+      query.with_mtb_through_xpert(start_date, end_date)
     end
 
-    def new_smear_positive (start_date, end_date)
-      new_patients = patients_query.new_patients(start_date, end_date)
-      return [] if new_patients.empty?
-
-      ids = new_patients.map(&:patient_id)
-
-      with_mtb = obs_query.with_answer(ids, 'AFB Positive', start_date, end_date)
-
-      return [] if with_mtb.empty?
-
-      persons = with_mtb.map(&:person_id)
-
-      map_outcomes(persons, start_date, end_date)
+    def new_smear_positive(start_date, end_date)
+      query = new_patients_query.ref(start_date, end_date)
+      query.smear_positive(start_date, end_date)
     end
 
-    def relapse_bacteriologically_confirmed (start_date, end_date)
-      patients = relapse_patients_query.bacteriologically_confirmed(start_date, end_date)
-
-      return [] if patients.empty?
-
-      ids = patients.map { |patient| patient['patient_id'] }
-
-      map_outcomes(ids, start_date, end_date)
+    def relapse_bacteriologically_confirmed(start_date, end_date)
+      query = relapses_query.ref(start_date, end_date)
+      query.bact_confirmed(start_date, end_date)
     end
 
-    def relapse_clinical_pulmonary (start_date, end_date)
-      patients = relapse_patients_query.clinical_pulmonary(start_date, end_date)
-
-      return [] if patients.empty?
-
-      ids = patients.map { |patient| patient['patient_id'] }
-
-      map_outcomes(ids, start_date, end_date)
+    def relapse_clinical_pulmonary(start_date, end_date)
+      query = relapses_query.ref(start_date, end_date)
+      query.clinical_pulmonary(start_date, end_date)
     end
 
-    def relapse_eptb (start_date, end_date)
-      patients = relapse_patients_query.eptb(start_date, end_date)
-
-      return [] if patients.empty?
-
-      ids = patients.map { |patient| patient['patient_id'] }
-
-      map_outcomes(ids, start_date, end_date)
+    def relapse_eptb(start_date, end_date)
+      query = relapses_query.ref(start_date, end_date)
+      query.eptb(start_date, end_date)
     end
 
-    def retreatment_excluding_relapse (start_date, end_date)
-      type = encounter_type('Treatment')
-      program = program('TB Program')
-
-      treated = PatientState.select('patient_program.patient_id').distinct\
-                            .joins(:patient_program)\
-                            .where(:patient_program => { program_id: program },
-                                   :patient_state => { state: STATES['CURRENTLY_IN_TREATMENT'], date_created: start_date..end_date })
-
-      return [] if treated.empty?
-
-      ids = treated.map(&:patient_id)
-
-      states = [STATES['CURED'], STATES['TREATMENT_COMPLETE'], STATES['TREATMENT_FAILED'], STATES['DEFAULTED']]
-
-      patients = PatientState.select('patient_program.patient_id').distinct\
-                             .joins(:patient_program)\
-                             .where(:patient_program => { program_id: program, patient_id: ids },
-                                    :patient_state => { state: states })\
-                             .where('patient_state.date_created < ?', start_date)
-
-      return [] if patients.empty?
-
-      retreated_ids = patients.map(&:patient_id)
-
-      map_outcomes(retreated_ids, start_date, end_date)
+    def retreatment_excluding_relapse(start_date, end_date)
+      retreatment_patients_query.ref(start_date, end_date)
     end
 
-    def hiv_positive_new_and_relapse (start_date, end_date)
-      hiv_status = concept('HIV Status')
-      value = concept('Positive')
+    def hiv_positive_new_and_relapse(start_date, end_date)
+      new_cases = new_patients_query.ref(start_date, end_date)
+      relapses = relapses_query.ref(start_date, end_date)
 
-      relapse = relapse_patients_query.relapse_patients(start_date, end_date)
-      new_patients = patients_query.new_patients(start_date, end_date)
-
-      return [] if relapse.empty? && new_patients.empty?
-
-      ids = (relapse.map { |r| r['patient_id']} + new_patients.map(&:patient_id)).uniq
-
-      positive = Observation.where(person_id: ids,
-                                   concept: hiv_status,
-                                   answer_concept: value)
-
-      return [] if positive.empty?
-
-      outcome_ids = positive.map(&:person_id)
-
-      map_outcomes(outcome_ids, start_date, end_date)
+      unless new_cases.empty? && relapses.empty?
+        all = Patient.where(patient_id: (new_cases + relapses))
+        query = hiv_result_query.new(all).ref
+        query.positive
+      end
     end
 
-    def children_aged_zero_to_four (start_date, end_date)
-      children = patients_query.age_range(0, 4, start_date, end_date)
-
-      return [] if children.empty?
-
-      patient_ids = children.map(&:patient_id)
-
-      map_outcomes(patient_ids, start_date, end_date)
+    def children_aged_zero_to_four(start_date, end_date)
+      query = cases_query.ref(start_date, end_date)
+      ipt_patients = ipt_candidate_query.ref(start_date, end_date)
+      query.age_range(0, 4).merge(query.where.not(patient_id: ipt_patients.map(&:patient_id)))
     end
 
-    def children_aged_five_to_fourteen (start_date, end_date)
-      children = patients_query.age_range(5, 14, start_date, end_date)
-
-      return [] if children.empty?
-
-      patient_ids = children.map(&:patient_id)
-
-      map_outcomes(patient_ids, start_date, end_date)
+    def children_aged_five_to_fourteen(start_date, end_date)
+      query = cases_query.ref(start_date, end_date)
+      query.age_range(5, 14)
     end
 
     private
-    def map_outcomes (patient_ids, start_date, end_date)
-      {
-        'cases' => number_of_cases(patient_ids, start_date, end_date),
-        'cured' => patients_with_state(patient_ids, start_date, end_date, STATES['CURED'] ),
-        'complete' => patients_with_state(patient_ids, start_date, end_date, STATES['TREATMENT_COMPLETE']),
-        'failed' => patients_with_state(patient_ids, start_date, end_date, STATES['TREATMENT_FAILED']),
-        'defaulted' => patients_with_state(patient_ids, start_date, end_date, STATES['DEFAULTED']),
-        'died' => patients_with_state(patient_ids, start_date, end_date, STATES['DIED']),
-        'not_evaluated' => cases_not_evaluated(patient_ids)
-      }
+
+    def cases_query
+      TBQueries::CasesQuery.new
     end
 
-    def number_of_cases (patient_ids, start_date, end_date)
-      patient_ids.size
-    end
-
-    def patients_with_state (patient_ids, start_date, end_date, state)
-      PatientState.joins(:patient_program)\
-                  .where('patient_program.patient_id': patient_ids,
-                          state: state,
-                          end_date: nil,
-                         'patient_state.date_created': start_date..end_date)\
-                  .count
-    end
-
-    def cases_not_evaluated (patient_ids)
-      tb_program = program('TB Program')
-
-      ids = patient_ids.select { |id| PatientState.joins(:patient_program)\
-                                                  .where('patient_program.patient_id': id,
-                                                         'patient_program.program_id': tb_program.program_id)\
-                                                  .blank? }
-
-      ids.size
-    end
-
-    private
-    def patients_query
-      TBQueries::PatientsQuery.new.search
-    end
-
-    def patient_states_query
-      TBQueries::PatientStatesQuery.new
-    end
-
-    def obs_query
-      TBQueries::ObservationsQuery.new
-    end
-
-    def clinically_diagnosed_patients_query
-      TBQueries::ClinicallyDiagnosedPatientsQuery.new
-    end
-
-    def relapse_patients_query
+    def relapses_query
       TBQueries::RelapsePatientsQuery.new
+    end
+
+    def new_patients_query
+      TBQueries::NewPatientsQuery.new
+    end
+
+    def hiv_result_query
+      TBQueries::HivResultQuery
+    end
+
+    def retreatment_patients_query
+      TBQueries::RetreatmentPatientsQuery.new
+    end
+
+    def ipt_candidate_query
+      TBQueries::IptCandidatesQuery.new
     end
   end
 end

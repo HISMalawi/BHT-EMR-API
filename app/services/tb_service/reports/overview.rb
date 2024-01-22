@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 module TBService::Reports::Overview
   class << self
-    def statistics (date)
+    def statistics(date)
       date = date.to_date
 
       {
@@ -26,6 +28,7 @@ module TBService::Reports::Overview
     end
 
     private
+
     def query
       TBQueries::EncountersQuery.new
     end

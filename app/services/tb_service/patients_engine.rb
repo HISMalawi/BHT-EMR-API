@@ -43,6 +43,27 @@ module TBService
       end).values
   end
 
+  def drugs_dispensed_on_date (patient, ref_date)
+    dispensing_encounter = Encounter.joins(:type).where(
+      'encounter_type.name = ? AND encounter.patient_id = ?
+         AND DATE(encounter_datetime) = DATE(?)',
+      'DISPENSING', patient.patient_id, ref_date
+    ).order(encounter_datetime: :desc).first
+
+    return [] unless dispensing_encounter
+
+    # HACK: Group orders in a map first to eliminate duplicates which can
+    # be created when a drug is scanned twice.
+    (dispensing_encounter.observations.each_with_object({}) do |obs, drug_map|
+      next unless obs.value_drug || drug_map.key?(obs.value_drug)
+
+      order = obs.order
+      next unless order&.drug_order&.quantity
+
+      drug_map[obs.value_drug] = order.drug_order if order.drug_order.drug.tb_drug?
+    end).values
+  end
+
         # assess whether a patient must go for a lab order
         def due_lab_order? (patient:)
           program_start_date = find_patient_date_enrolled(patient)
@@ -84,10 +105,52 @@ module TBService
       TBService::PatientVisitLabel.new patient, date
     end
 
+    def transfer_out_label(patient, date)
+      TBService::PatientTransferOutLabel.new patient, date
+    end
+
+    def medication_side_effects(patient, date)
+      service = TBService::PatientSideEffect.new(patient, date)
+      service.side_effects
+    end
+
+    def tb_negative_minor(patient)
+      status_concept = concept('TB status').concept_id
+      positive_concept = concept('Negative').concept_id
+      positive_status = Observation.where(
+        person_id: patient, concept_id: status_concept
+      ).order(obs_datetime: :desc).first
+
+      begin
+        return positive_status\
+        if (positive_status.value_coded == positive_concept) && patient_is_under_five?(patient)
+      rescue StandardError
+        nil
+      end
+    end
+
+    def current_program (patient)
+      patient.patient_programs.where(program_id: @program)\
+                              .order(date_enrolled: :asc)\
+                              .first
+    end
+
+    def saved_encounters(patient, date)
+      Encounter.where(program_id: @program, patient_id: patient)\
+               .where('DATE(encounter_datetime) = ?', date)\
+               .collect(&:name).uniq
+    end
+
     private
 
     def patient_summary(patient, date)
       TBService::PatientSummary.new patient, date
     end
+
+    def patient_is_under_five?(patient)
+      person = Person.find_by(person_id: patient)
+      ((Time.zone.now - person.birthdate.to_time) / 1.year.seconds).floor < 5
+    end
+
   end
   end
