@@ -2,7 +2,7 @@
 
 module TbService::Reports::Tbhiv
   class << self
-    def new_and_relapse_tb_cases_notified (start_date, end_date)
+    def new_and_relapse_tb_cases_notified(start_date, end_date)
       patients = patients_query.new_patients(start_date, end_date)
 
       bacterial = relapse_patients_query.bacteriologically_confirmed(start_date, end_date)
@@ -19,7 +19,7 @@ module TbService::Reports::Tbhiv
       persons_query.group_by_gender(ids)
     end
 
-    def total_with_hiv_result_documented (start_date, end_date)
+    def total_with_hiv_result_documented(start_date, end_date)
       type = encounter_type('TB_Initial')
       program = program('TB Program')
       hiv_status = concept('HIV Status')
@@ -38,7 +38,7 @@ module TbService::Reports::Tbhiv
       persons_query.group_by_gender(ids)
     end
 
-    def total_tested_hiv_positive (start_date, end_date)
+    def total_tested_hiv_positive(start_date, end_date)
       type = encounter_type('TB_Initial')
       program = program('TB Program')
       hiv_status = concept('HIV Status')
@@ -58,29 +58,30 @@ module TbService::Reports::Tbhiv
       persons_query.group_by_gender(ids)
     end
 
-    def started_cpt (start_date, end_date)
+    def started_cpt(start_date, end_date)
       persons = person_drugs_query.started_cpt(start_date, end_date)
 
       return [] if persons.empty?
 
-      ids = persons.map { |foo| foo['person_id']}
+      ids = persons.map { |foo| foo['person_id'] }
 
       persons_query.group_by_gender(ids)
     end
 
-    def started_art_before_tb_treatment (start_date, end_date)
+    def started_art_before_tb_treatment(start_date, end_date)
       ids = tb_treatment_query.started_after_art(start_date, end_date)
 
       persons_query.group_by_gender(ids)
     end
 
-    def started_art_while_on_treatment (start_date, end_date)
+    def started_art_while_on_treatment(start_date, end_date)
       ids = tb_treatment_query.started_before_art(start_date, end_date)
 
       persons_query.group_by_gender(ids)
     end
 
     private
+
     def person_drugs_query
       TbQueries::PersonDrugsQuery.new.search
     end

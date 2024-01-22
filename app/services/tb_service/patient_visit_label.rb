@@ -26,7 +26,9 @@ module TbService
       label.draw_text(('(' + visit.visit_by + ')' unless visit.visit_by.blank?).to_s, 255, 30, 0, 2, 1, 1, false)
 
       pill_count = visit.pills_brought.collect { |c| c.join(',') }&.join(' ')
-      label.draw_text("#{visit.height.to_s + 'cm' unless visit.height.blank?}  #{visit.weight.to_s + 'kg' unless visit.weight.blank?}  #{'BMI:' + visit.bmi.to_s unless visit.bmi.blank?} VL:#{visit.viral_load_result} #{'(PC:' + pill_count[0..24] + ')' unless pill_count.blank?}", 25, 95, 0, 2, 1, 1, false)
+      label.draw_text(
+        "#{visit.height.to_s + 'cm' unless visit.height.blank?}  #{visit.weight.to_s + 'kg' unless visit.weight.blank?}  #{'BMI:' + visit.bmi.to_s unless visit.bmi.blank?} VL:#{visit.viral_load_result} #{'(PC:' + pill_count[0..24] + ')' unless pill_count.blank?}", 25, 95, 0, 2, 1, 1, false
+      )
 
       label.draw_text('SE', 25, 130, 0, 3, 1, 1, false)
       label.draw_text('TB', 110, 130, 0, 3, 1, 1, false)
@@ -78,21 +80,23 @@ module TbService
                                   AND '#{date} 23:59:59'
                                   ORDER BY date_created DESC")
       provider = begin
-                  [a.first.name, a.first.creator]
-                 rescue StandardError
-                   nil
-                end
+        [a.first.name, a.first.creator]
+      rescue StandardError
+        nil
+      end
       # provider = patient.encounters.find_by_date(date).collect{|e| next unless e.name == 'HIV CLINIC CONSULTATION' ; [e.name,e.creator]}.compact
       provider_username = ('Seen by: ' + User.find(provider[1]).username).to_s unless provider.blank?
       if provider_username.blank?
-        clinic_encounters = ['HIV CLINIC CONSULTATION', 'HIV STAGING', 'ART ADHERENCE', 'TREATMENT', 'DISPENSION', 'HIV RECEPTION']
+        clinic_encounters = ['HIV CLINIC CONSULTATION', 'HIV STAGING', 'ART ADHERENCE', 'TREATMENT', 'DISPENSION',
+                             'HIV RECEPTION']
         encounter_type_ids = EncounterType.where(['name IN (?)', clinic_encounters]).collect(&:id)
-        encounter = Encounter.where(['patient_id = ? AND encounter_type In (?)', patient.id, encounter_type_ids]).order('encounter_datetime DESC').first
+        encounter = Encounter.where(['patient_id = ? AND encounter_type In (?)', patient.id,
+                                     encounter_type_ids]).order('encounter_datetime DESC').first
         provider_username = begin
-                              ('Seen by: ' + User.find(encounter.creator).username).to_s
-                            rescue StandardError
-                              nil
-                            end
+          ('Seen by: ' + User.find(encounter.creator).username).to_s
+        rescue StandardError
+          nil
+        end
       end
       provider_username
     end

@@ -3,10 +3,10 @@
 require 'set'
 include TimeUtils
 
-
 module TbService
   class ReportEngine
     attr_reader :program
+
     include ModelUtils
 
     LOGGER = Rails.logger

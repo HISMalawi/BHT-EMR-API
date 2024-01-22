@@ -6,7 +6,7 @@ module TbService
   class AppointmentEngine
     include ModelUtils
 
-    LOGGER = Logger.new STDOUT
+    LOGGER = Logger.new $stdout
 
     def initialize(program:, patient:, retro_date: Date.today)
       @retro_date = retro_date.respond_to?(:to_date) ? retro_date.to_date : date
@@ -38,9 +38,7 @@ module TbService
     end
 
     def next_appointment_date
-      if optimise_appointment?(@patient, @retro_date)
-        exec_drug_order_adjustments(@patient, @retro_date)
-      end
+      exec_drug_order_adjustments(@patient, @retro_date) if optimise_appointment?(@patient, @retro_date)
 
       _drug_id, date = earliest_appointment_date(@patient, @retro_date)
       return nil unless date
@@ -65,7 +63,7 @@ module TbService
       return encounter if encounter
 
       Encounter.new type: encounter_type('APPOINTMENT'),
-                    patient: patient,
+                    patient:,
                     encounter_datetime: Time.now,
                     program: @program,
                     location_id: Location.current.location_id,
@@ -83,12 +81,12 @@ module TbService
 
         original_auto_expire_date = order.void_reason&.to_date
 
-        if order.start_date.to_date == order.auto_expire_date.to_date\
+        auto_expire_date = if order.start_date.to_date == order.auto_expire_date.to_date\
           && original_auto_expire_date
-          auto_expire_date = original_auto_expire_date
-        else
-          auto_expire_date = (order.discontinued_date || order.auto_expire_date).to_date
-        end
+                             original_auto_expire_date
+                           else
+                             (order.discontinued_date || order.auto_expire_date).to_date
+                           end
 
         amount_dispensed[order.drug_order.drug_inventory_id] = auto_expire_date
       end
@@ -141,10 +139,10 @@ module TbService
 
       clinic_holidays = global_property('clinic.holidays')&.property_value
       clinic_holidays = begin
-                          clinic_holidays.split(',').map { |day| day.to_date.strftime('%d %B') }.join(',').split(',')
-                        rescue StandardError
-                          []
-                        end
+        clinic_holidays.split(',').map { |day| day.to_date.strftime('%d %B') }.join(',').split(',')
+      rescue StandardError
+        []
+      end
 
       recommended_date = expiry_date.to_date
 
@@ -193,7 +191,7 @@ module TbService
     def exec_drug_order_adjustments(patient, date)
       encounter = EncounterService.recent_encounter(
         encounter_type_name: 'Treatment', patient_id: patient.patient_id,
-        date: date, program_id: @program.program_id
+        date:, program_id: @program.program_id
       )
       return nil unless encounter
 
@@ -241,10 +239,10 @@ module TbService
 
       (amounts_brought_to_clinic || []).each do |amount|
         @amounts_brought_to_clinic[amount['drug_inventory_id'].to_i] = begin
-                                                                         amount['value_numeric'].to_f
-                                                                       rescue StandardError
-                                                                         0
-                                                                       end
+          amount['value_numeric'].to_f
+        rescue StandardError
+          0
+        end
       end
       @amounts_brought_to_clinic
     end
