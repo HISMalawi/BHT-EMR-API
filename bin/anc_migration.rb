@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'erb'
 require 'yaml'
 
@@ -98,7 +99,9 @@ def create_csv(database)
 
     open_person = fetch_person(nil, patient['identifier']) || { birthdate: nil, person_id: nil, gender: nil }
     open_name = fetch_person_names(nil, patient['identifier']) || { given_name: nil, family_name: nil }
-    open_address = fetch_person_address(nil, patient['identifier']) || { home_village: nil, home_region: nil, ta: nil, current_village: nil }
+    open_address = fetch_person_address(nil,
+                                        patient['identifier']) || { home_village: nil, home_region: nil, ta: nil,
+                                                                    current_village: nil }
     open_attribute = fetch_person_attribute(nil, patient['identifier']).map { |p| p['value'] }.join('/')
     open_identifier = fetch_other_identifiers(nil, patient['identifier']).map { |p| p['identifier'] }.join('/')
 
@@ -115,7 +118,7 @@ what_to_run = ARGV[0].to_i
 if what_to_run.zero?
   AncService::AncMigration.new(database, ARGV[1].to_f).main
 elsif what_to_run == 1
-  AncService::AncReverseMigration.new({ database: database, migration_date: ARGV[1] }).main
+  AncService::AncReverseMigration.new({ database:, migration_date: ARGV[1] }).main
 elsif what_to_run == 2
   AncService::AncMappingMigration.new(database, ARGV[1].to_f).map_linkage_between_anc_and_openmrs
 else

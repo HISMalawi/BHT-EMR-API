@@ -20,7 +20,7 @@ def concept_name(concept_id)
 end
 
 def arv_number(patient_id)
-  PatientIdentifier.where(patient_id: patient_id,
+  PatientIdentifier.where(patient_id:,
                           identifier_type: PatientIdentifierType.find_by_name('ARV NUMBER').id)&.first&.identifier
 end
 
