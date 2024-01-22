@@ -160,14 +160,14 @@ class ObsValueScopeRevised
   def self.call(query, indicators)
     indicators.map do |indicator|
       ActiveRecord::Base.connection.select_all(\
-                              ObsValueScope.call(model: query, name: indicator[:name], \
-                              concept: indicator[:concept], value: indicator[:value] || 'value_coded', \
-                              join: indicator[:join], max: indicator[:max]).select('person.gender, person.person_id, person.birthdate, encounter.encounter_datetime, person.person_id').group(:patient_id).to_sql
-                            ).to_hash
+        ObsValueScope.call(model: query, name: indicator[:name], \
+                           concept: indicator[:concept], value: indicator[:value] || 'value_coded', \
+                           join: indicator[:join], max: indicator[:max]).select('person.gender, person.person_id, person.birthdate, encounter.encounter_datetime, person.person_id').group(:patient_id).to_sql
+      ).to_hash
     end.flat_map { |arr| arr }
-       .group_by { |hash| hash['person_id'] }
-       .transform_values { |group| group.reduce(&:merge) }
-       .values
+              .group_by { |hash| hash['person_id'] }
+              .transform_values { |group| group.reduce(&:merge) }
+              .values
   end
 end
 
@@ -192,11 +192,11 @@ class ObsValueScope
     query = model
     unless [name.class, concept.class].include?(Array)
       query = query.joins(format(QUERY_STRING,
-                                join: join,
-                                name: name,
-                                concept: ConceptName.find_by_name(concept).concept_id,
-                                value: value))
-                                
+                                 join:,
+                                 name:,
+                                 concept: ConceptName.find_by_name(concept).concept_id,
+                                 value:))
+
       return query.select(max ? "MAX(#{name}.#{value}) AS #{name}" : "#{name}.#{value} AS #{name}")
     end
 
@@ -207,10 +207,10 @@ class ObsValueScope
     query = model
     concepts.each_with_index do |concept, index|
       query = query.joins(format(QUERY_STRING,
-                                 join: join,
+                                 join:,
                                  name: name[index],
                                  concept: ConceptName.find_by_name(concept).concept_id,
-                                 value: value))
+                                 value:))
       query = query.select(max ? "MAX(#{name[index]}.#{value}) AS #{name[index]}" : "#{name[index]}.#{value} AS #{name[index]}")
     end
     query

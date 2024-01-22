@@ -1,9 +1,10 @@
+# frozen_string_literal: true
+
 module HtsService
   class PatientsSummary
     include ModelUtils
 
-    attr_reader :patient
-    attr_reader :date
+    attr_reader :patient, :date
 
     HTC_PROGRAM = Program.find_by_name('HTC PROGRAM').id
     PREGNANCY_STATUS_CONCEPT = ConceptName.find_by_name('Pregnancy status').concept_id
@@ -26,12 +27,12 @@ module HtsService
       {
         patient_id: patient.patient_id,
         test_result_date: hiv_test_result_date,
-        is_pregnant: is_pregnant,
-        is_circumcised: is_circumcised,
-        art_outcome: art_outcome,
-        ever_received_art: ever_received_art,
-        last_date_taken_drugs: last_date_taken_drugs,
-        htc_serial_number: htc_serial_number
+        is_pregnant:,
+        is_circumcised:,
+        art_outcome:,
+        ever_received_art:,
+        last_date_taken_drugs:,
+        htc_serial_number:
       }.merge(hiv_status)
     end
 
@@ -39,18 +40,28 @@ module HtsService
       order_desc(
         @service.where(
           obs: {
-            concept_id: HTC_SERIAL_NUMBER_CONCEPT,
+            concept_id: HTC_SERIAL_NUMBER_CONCEPT
           }
-        )).first.value_text rescue nil
+        )
+      ).first.value_text
+    rescue StandardError
+      nil
     end
 
     def ever_received_art
-      order_desc(
+      if order_desc(
         @service.where(
           obs: {
             concept_id: ART_MEDICATION_HISTORY_CONCEPT
           }
-        )).first.value_coded == 1065 ? 'Yes' : 'No' rescue 'No'
+        )
+      ).first.value_coded == 1065
+        'Yes'
+      else
+        'No'
+      end
+    rescue StandardError
+      'No'
     end
 
     def last_date_taken_drugs
@@ -60,70 +71,89 @@ module HtsService
             concept_id: LAST_DATE_TAKEN_DRUGS_CONCEPT
           }
         )
-      ).first.obs_datetime.to_date rescue nil
+      ).first.obs_datetime.to_date
+    rescue StandardError
+      nil
     end
 
     def hiv_test_result_date
       order_desc(
         @service.where(
           obs: {
-            concept_id: TEST_ONE_CONCEPT,
+            concept_id: TEST_ONE_CONCEPT
           }
-        )).first.obs_datetime.to_date rescue nil
+        )
+      ).first.obs_datetime.to_date
+    rescue StandardError
+      nil
     end
 
     def hiv_status
       status = order_desc(
         @service.where(
           obs: {
-            concept_id: HIV_STATUS_CONCEPT,
+            concept_id: HIV_STATUS_CONCEPT
           }
-        )).pluck('concept_name.name, obs.obs_datetime').first
-      return {hiv_status: status[0], hiv_status_date: status[1].to_date} rescue {}
+        )
+      ).pluck('concept_name.name, obs.obs_datetime').first
+      begin
+        { hiv_status: status[0], hiv_status_date: status[1].to_date }
+      rescue StandardError
+        {}
+      end
     end
 
     def is_pregnant
       order_desc(
         @service.where(
           obs: {
-            concept_id: PREGNANCY_STATUS_CONCEPT,
+            concept_id: PREGNANCY_STATUS_CONCEPT
           }
-        )).pluck('concept_name.name').first rescue nil
+        )
+      ).pluck('concept_name.name').first
+    rescue StandardError
+      nil
     end
 
     def is_circumcised
       order_desc(
         @service.where(
           obs: {
-            concept_id: CIRCUMCISION_STATUS_CONCEPT,
+            concept_id: CIRCUMCISION_STATUS_CONCEPT
           }
-        )).pluck('concept_name.name').first rescue nil
+        )
+      ).pluck('concept_name.name').first
+    rescue StandardError
+      nil
     end
 
     def art_outcome
-      status = order_desc(
+      order_desc(
         @service.where(
           obs: {
-            concept_id: HIS_OUTCOME_CONCEPT,
+            concept_id: HIS_OUTCOME_CONCEPT
           }
-        )).pluck('concept_name.name').first rescue nil
+        )
+      ).pluck('concept_name.name').first
+    rescue StandardError
+      nil
     end
 
     private
 
-    def order_desc query
+    def order_desc(query)
       query.order(obs_datetime: :DESC)
     end
 
     def his_patient
-       Observation.joins(encounter: :program)
-            .joins(<<-SQL)
+      Observation.joins(encounter: :program)
+                 .joins(<<-SQL)
               LEFT JOIN concept_name ON concept_name.concept_id = obs.value_coded
-             SQL
-            .where(
-              obs: {person_id: patient.id},
-              program: { program_id: HTC_PROGRAM }
-            )
+                 SQL
+                 .where(
+                   obs: { person_id: patient.id },
+                   program: { program_id: HTC_PROGRAM }
+                 )
     end
   end
 end
