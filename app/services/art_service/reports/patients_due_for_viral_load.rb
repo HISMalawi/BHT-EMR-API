@@ -25,13 +25,13 @@ module ArtService
 
       def patients_alive_and_on_treatment
         ArtService::Reports::PatientsAliveAndOnTreatment
-          .new(start_date: start_date, end_date: end_date)
+          .new(start_date:, end_date:)
           .find_report
       end
 
       def viral_load_reminder(patient_id)
         ArtService::VlReminder
-          .new(patient_id: patient_id, date: end_date)
+          .new(patient_id:, date: end_date)
           .vl_reminder_info
       end
     end

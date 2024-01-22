@@ -16,8 +16,8 @@ module ArtService
         @start_date = start_date.to_s
         @end_date = end_date.to_s
         @use_filing_number = GlobalProperty.find_by(property: 'use.filing.numbers')
-                                       &.property_value
-                                       &.casecmp?('true')
+                                           &.property_value
+                                           &.casecmp?('true')
         @occupation = kwargs[:occupation]
       end
 

@@ -52,7 +52,7 @@ module ArtService
     # Returns patient's ART start date at current facility
     def find_patient_date_enrolled(patient)
       order = Order.joins(:encounter, :drug_order)\
-                   .where(encounter: { patient: patient },
+                   .where(encounter: { patient: },
                           drug_order: { drug: Drug.arv_drugs })\
                    .order(:start_date)\
                    .first
@@ -85,7 +85,7 @@ module ArtService
 
       vitals_encounter = Encounter.joins(:type)
                                   .merge(EncounterType.where(name: 'VITALS'))
-                                  .where(program: @program, patient_id: patient_id)
+                                  .where(program: @program, patient_id:)
                                   .where('encounter_datetime < DATE(?) + INTERVAL 1 DAY', as_of)
 
       Observation.joins(:encounter)
@@ -130,10 +130,10 @@ module ArtService
       "#{current_arv_code} #{next_available_number}"
     end
 
-    #function to check if an arv number already exists
+    # function to check if an arv number already exists
     def arv_number_already_exists(arv_number)
       identifier_type = PatientIdentifierType.find_by_name('ARV Number')
-      identifiers = PatientIdentifier.all.where(
+      PatientIdentifier.all.where(
         identifier: arv_number,
         identifier_type: identifier_type.id
       ).exists?
@@ -165,8 +165,8 @@ module ArtService
       service.side_effects
     end
 
-    def saved_encounters(patient, date)
-      return []
+    def saved_encounters(_patient, _date)
+      []
     end
 
     private
@@ -198,7 +198,6 @@ module ArtService
       village = address.city_village || 'Unknown Village'
       "#{district}, #{village}"
     end
-
 
     def patient_summary(patient, date)
       PatientSummary.new patient, date

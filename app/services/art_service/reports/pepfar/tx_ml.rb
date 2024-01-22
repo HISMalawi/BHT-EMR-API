@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module ArtService
   module Reports
     module Pepfar
@@ -45,9 +47,6 @@ module ArtService
             rescue StandardError
               pat['date_enrolled'].to_date
             end
-          end
-
-          (tx_new || []).each do |pat|
             patient_ids << pat['patient_id']
             patient_ids = patient_ids.uniq
           end
@@ -151,7 +150,11 @@ module ArtService
             SELECT current_pepfar_defaulter_date(#{patient_id}, '#{end_date}') def_date;
           SQL
 
-          defaulter_date = defaulter_date['def_date'].to_date rescue end_date.to_date
+          defaulter_date = begin
+            defaulter_date['def_date'].to_date
+          rescue StandardError
+            end_date.to_date
+          end
           days_gone = ActiveRecord::Base.connection.select_one <<~SQL
             SELECT TIMESTAMPDIFF(MONTH, DATE('#{earliest_start_date}'), DATE('#{defaulter_date}')) months;
           SQL

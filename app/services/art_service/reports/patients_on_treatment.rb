@@ -23,8 +23,8 @@ module ArtService
             AND state = :state
           SQL
 
-        on_arvs = PatientState.where(sql_conditions, start_date: start_date,
-                                                     end_date: end_date,
+        on_arvs = PatientState.where(sql_conditions, start_date:,
+                                                     end_date:,
                                                      state: ArtService::Constants::States::ON_ANTIRETROVIRALS)
 
         PatientProgram.select('DISTINCT patient_program.patient_id')

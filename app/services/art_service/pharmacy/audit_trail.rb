@@ -80,7 +80,7 @@ module ArtService
                 ELSE 0
                 END) AS quantity_received
             FROM `pharmacy_obs`
-            INNER JOIN `pharmacy_encounter_type` ON `pharmacy_encounter_type`.`retired` = FALSE 
+            INNER JOIN `pharmacy_encounter_type` ON `pharmacy_encounter_type`.`retired` = FALSE#{' '}
               AND `pharmacy_encounter_type`.`pharmacy_encounter_type_id` = `pharmacy_obs`.`pharmacy_encounter_type`
               AND `pharmacy_encounter_type`.`name` != 'Tins in previous stock'
             INNER JOIN `pharmacy_batch_items` ON `pharmacy_batch_items`.`voided` = FALSE AND `pharmacy_batch_items`.`id` = `pharmacy_obs`.`batch_item_id`
@@ -97,7 +97,8 @@ module ArtService
           SQL
         end
 
-        def drill_transactions(from: nil, to: nil, transaction_date: nil, drug_id: nil, batch_number: nil, transaction_reason: nil)
+        def drill_transactions(from: nil, to: nil, transaction_date: nil, drug_id: nil, batch_number: nil,
+                               transaction_reason: nil)
           transaction_reason_condition = if transaction_reason == 'Reversing voided drug dispensation'
                                            "SUBSTR(pharmacy_obs.transaction_reason, 1, 34) = '#{transaction_reason}'"
                                          else
@@ -107,7 +108,7 @@ module ArtService
             .joins(:type, :item, :user)
             .left_joins(:dispensation)
             .joins('LEFT JOIN alternative_drug_names ON alternative_drug_names.drug_inventory_id = pharmacy_batch_items.drug_id')
-            .merge(batch_items(drug_id: drug_id, batch_number: batch_number))
+            .merge(batch_items(drug_id:, batch_number:))
             .merge(transaction_types)
             .where(transaction_reason_condition)
             .order('pharmacy_obs.transaction_date DESC')
@@ -133,7 +134,7 @@ module ArtService
             .joins(:type, :item, :user)
             .left_joins(:dispensation)
             .joins('LEFT JOIN alternative_drug_names ON alternative_drug_names.drug_inventory_id = pharmacy_batch_items.drug_id')
-            .merge(batch_items(drug_id: drug_id, batch_number: batch_number))
+            .merge(batch_items(drug_id:, batch_number:))
             .merge(transaction_types)
             .group('pharmacy_obs.transaction_date')
             .group('pharmacy_batch_items.drug_id')
@@ -169,8 +170,8 @@ module ArtService
 
         def batch_items(drug_id: nil, batch_number: nil)
           items = PharmacyBatchItem.joins(:drug, :batch)
-          items = items.merge(Drug.where(drug_id: drug_id)) if drug_id
-          items = items.merge(PharmacyBatch.where(batch_number: batch_number)) if batch_number
+          items = items.merge(Drug.where(drug_id:)) if drug_id
+          items = items.merge(PharmacyBatch.where(batch_number:)) if batch_number
 
           items
         end

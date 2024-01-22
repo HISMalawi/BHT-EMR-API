@@ -25,9 +25,7 @@ module ArtService
       return if patient_state&.state == on_arvs_state.id
 
       ActiveRecord::Base.transaction do
-        unless patient_has_state?(patient_program, on_arvs_state)
-          mark_patient_art_start_date(patient)
-        end
+        mark_patient_art_start_date(patient) unless patient_has_state?(patient_program, on_arvs_state)
 
         create_patient_state(on_arvs_state, date, patient_state)
         # if patient is on HTS update the state on HTS to linked to care
@@ -47,7 +45,7 @@ module ArtService
     end
 
     def patient_program
-      @patient_program ||= patient.patient_programs.where(program: program).first
+      @patient_program ||= patient.patient_programs.where(program:).first
     end
 
     def arv_drug_order?(drug_order)
@@ -83,8 +81,8 @@ module ArtService
       end
 
       PatientState.create(
-        patient_program: patient_program,
-        program_workflow_state: program_workflow_state,
+        patient_program:,
+        program_workflow_state:,
         start_date: date
       )
     end

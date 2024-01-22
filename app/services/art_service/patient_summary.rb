@@ -12,8 +12,7 @@ module ArtService
 
     include ModelUtils
 
-    attr_reader :patient
-    attr_reader :date
+    attr_reader :patient, :date
 
     def initialize(patient, date)
       @patient = patient
@@ -27,10 +26,10 @@ module ArtService
         npid: npid || 'N/A',
         arv_number: arv_number || 'N/A',
         filing_number: filing_number || 'N/A',
-        current_outcome: current_outcome,
-        residence: residence,
+        current_outcome:,
+        residence:,
         art_duration: art_duration || 'N/A',
-        current_regimen: current_regimen,
+        current_regimen:,
         art_start_date: art_start_date&.strftime('%d/%m/%Y') || 'N/A',
         reason_for_art: art_reason
       }
@@ -106,10 +105,14 @@ module ArtService
 
     def art_period
       sdate = ActiveRecord::Base.connection.select_one <<~SQL
-      SELECT date_antiretrovirals_started(#{patient.patient_id}, current_date()) AS earliest_date;
-SQL
+        SELECT date_antiretrovirals_started(#{patient.patient_id}, current_date()) AS earliest_date;
+      SQL
 
-      start_date = sdate['earliest_date'].to_time rescue nil
+      start_date = begin
+        sdate['earliest_date'].to_time
+      rescue StandardError
+        nil
+      end
 
       return [nil, nil] unless start_date
 

@@ -82,7 +82,7 @@ module ArtService
     #             starting from set date going back (default: 12 months)
     def find_patient_recent_viral_load(duration: 12.months)
       Lab::LabOrder.where(concept: ConceptName.where(name: ['Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)', 'Plasma'])\
-                  .select(:concept_id), patient: patient)
+                  .select(:concept_id), patient:)
                    .where('start_date BETWEEN DATE(?) AND DATE(?)', (date - duration), date)
                    .joins(:tests)
                    .merge(viral_load_tests)
@@ -96,7 +96,7 @@ module ArtService
       specimens = ConceptName.where(name: ['Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)'])
                              .select(:concept_id)
 
-      Lab::LabOrder.where(concept: specimens, patient: patient)
+      Lab::LabOrder.where(concept: specimens, patient:)
                    .where('start_date <= DATE(?)', date)
                    .joins(:tests)
                    .merge(viral_load_tests)
@@ -154,11 +154,11 @@ module ArtService
     def vl_reminder_info
       due_date = find_patient_viral_load_due_date.to_date
       # So this will accept a due date that is 30 days before the patient's next VL due date
-      return struct_vl_info(eligible: true, due_date: due_date) if due_date - 30.days <= date
+      return struct_vl_info(eligible: true, due_date:) if due_date - 30.days <= date
 
       days_to_go = due_date - date
       if in_months(days_to_go) < 9.months
-        return struct_vl_info(eligible: false, due_date: due_date, message: "Viral load due in #{days_to_go.to_i} days")
+        return struct_vl_info(eligible: false, due_date:, message: "Viral load due in #{days_to_go.to_i} days")
       end
 
       last_viral_load = find_patient_last_viral_load
@@ -177,8 +177,8 @@ module ArtService
 
       struct_vl_info(
         eligible: false,
-        due_date: due_date,
-        message: message
+        due_date:,
+        message:
       )
     end
 
@@ -197,7 +197,7 @@ module ArtService
 
       date_enrolled = patients_service.find_patient_date_enrolled(patient)
       @patient_earliest_start_date = patients_service.find_patient_earliest_start_date(patient, date_enrolled)&.to_date
-      @patient_earliest_start_date ||= PatientProgram.find_by(patient: patient, program: @program)&.date_enrolled
+      @patient_earliest_start_date ||= PatientProgram.find_by(patient:, program: @program)&.date_enrolled
       Rails.logger.warn("Patient ##{patient.patient_id} is not on ART") unless @patient_earliest_start_date
 
       @patient_earliest_start_date || Date.today
@@ -209,12 +209,12 @@ module ArtService
       {
         eligibile: eligible, # Not fixing eligibile[sic] to maintain original interface
         milestone: nil, # TODO: Should this simply be a count of how many viral loads the patient has so far?
-        skip_milestone: skip_milestone,
-        due_date: due_date,
+        skip_milestone:,
+        due_date:,
         last_order_date: find_patient_last_viral_load&.start_date&.to_date,
         period_on_art: period_on_art_in_months, # months_on_art,
         earliest_start_date: patient_earliest_start_date,
-        message: message,
+        message:,
         current_regimen: {
           name: current_regimen&.regimen,
           date_started: current_regimen&.date_started
@@ -243,7 +243,7 @@ module ArtService
 
       Order.joins(:order_type, :drug_order)
            .merge(OrderType.where(name: 'Drug order'))
-           .where(concept_id: arv_concepts, patient: patient)
+           .where(concept_id: arv_concepts, patient:)
            .group('patient_current_regimen(orders.patient_id, DATE(orders.start_date))')
            .select("DATE(MIN(orders.start_date)) AS start_date,
                     DATE(MAX(auto_expire_date)) AS auto_expire_date,

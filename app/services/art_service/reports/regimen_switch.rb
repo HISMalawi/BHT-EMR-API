@@ -14,7 +14,7 @@ module ArtService
       end
 
       def regimen_report(type)
-        ArtService::Reports::RegimenDispensationData.new(type: type, start_date: @start_date,
+        ArtService::Reports::RegimenDispensationData.new(type:, start_date: @start_date,
                                                          end_date: @end_date, occupation: @occupation)
                                                     .find_report
       end
@@ -51,16 +51,16 @@ module ArtService
             INNER JOIN drug_order dor ON dor.order_id = o.order_id AND dor.quantity > 0
               AND dor.drug_inventory_id IN (SELECT drug_id FROM arv_drug)
             WHERE o.voided = 0
-              AND o.start_date <= '#{@end_date.to_date.strftime("%Y-%m-%d 23:59:59")}'
-              AND o.start_date >= '#{@start_date.to_date.strftime("%Y-%m-%d 00:00:00")}'
+              AND o.start_date <= '#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+              AND o.start_date >= '#{@start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
             GROUP BY o.patient_id
           ) lor ON lor.start_date = o.start_date AND lor.patient_id = o.patient_id
           LEFT JOIN obs on obs.order_id = o.order_id AND obs.concept_id=#{pills_dispensed} AND obs.voided = 0
           LEFT JOIN patient_identifier i ON i.patient_id = o.patient_id
             AND i.identifier_type = #{patient_identifier_type} AND i.voided = 0
           WHERE o.voided = 0
-            AND o.start_date <= '#{@end_date.to_date.strftime("%Y-%m-%d 23:59:59")}'
-            AND o.start_date >= '#{@start_date.to_date.strftime("%Y-%m-%d 00:00:00")}'
+            AND o.start_date <= '#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+            AND o.start_date >= '#{@start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
           ORDER BY o.patient_id
         SQL
 
@@ -85,19 +85,21 @@ module ArtService
           latest_result = @latest_result.select { |vl| vl['patient_id'] == patient_id }&.first
 
           formated_data[patient_id] = {} if formated_data[patient_id].blank?
-          formated_data[patient_id][order_id] = {
-            name: medication,
-            quantity: quantity,
-            dispensation_date: dispensation_date,
-            identifier: data['identifier'],
-            gender: data['gender'],
-            birthdate: data['birthdate'],
-            drug_id: drug_id,
-            pack_sizes: [],
-            vl_latest_order_date: latest_vl.present? ? latest_vl['order_date']&.to_date : 'N/A',
-            vl_latest_result_date: latest_result.present? ? latest_result['result_date']&.to_date : 'N/A',
-            vl_latest_result: latest_result.present? ? latest_result['result'] : 'N/A'
-          } if formated_data[patient_id][order_id].blank?
+          if formated_data[patient_id][order_id].blank?
+            formated_data[patient_id][order_id] = {
+              name: medication,
+              quantity:,
+              dispensation_date:,
+              identifier: data['identifier'],
+              gender: data['gender'],
+              birthdate: data['birthdate'],
+              drug_id:,
+              pack_sizes: [],
+              vl_latest_order_date: latest_vl.present? ? latest_vl['order_date']&.to_date : 'N/A',
+              vl_latest_result_date: latest_result.present? ? latest_result['result_date']&.to_date : 'N/A',
+              vl_latest_result: latest_result.present? ? latest_result['result'] : 'N/A'
+            }
+          end
 
           formated_data[patient_id][order_id][:pack_sizes] << value_numeric
         end
@@ -106,7 +108,7 @@ module ArtService
       end
 
       def regimen_data
-        encounter_type_id = EncounterType.find_by_name('DISPENSING').id
+        EncounterType.find_by_name('DISPENSING').id
         arv_concept_id = ConceptName.find_by_name('Antiretroviral drugs').concept_id
 
         drug_ids = Drug.joins('INNER JOIN concept_set s ON s.concept_id = drug.concept_id')\
@@ -168,7 +170,7 @@ module ArtService
       end
 
       def arv_dispensention_data(patient_id)
-        encounter_type_id = EncounterType.find_by_name('DISPENSING').id
+        EncounterType.find_by_name('DISPENSING').id
         arv_concept_id = ConceptName.find_by_name('Antiretroviral drugs').concept_id
 
         drug_ids = Drug.joins('INNER JOIN concept_set s ON s.concept_id = drug.concept_id')\
@@ -279,7 +281,6 @@ module ArtService
           patient_id = r['patient_id'].to_i
           medications = arv_dispensention_data(patient_id)
 
-
           outcome_status = ActiveRecord::Base.connection.select_one <<~SQL
             SELECT cum_outcome FROM temp_patient_outcomes WHERE patient_id = #{patient_id};
           SQL
@@ -348,7 +349,7 @@ module ArtService
 
         concept_id = ConceptName.find_by_name('Type of patient').concept_id
         ext_id = ConceptName.find_by_name('External consultation').concept_id
-        obs = Observation.where(concept_id: concept_id, value_coded: ext_id, person_id: patient_id)
+        obs = Observation.where(concept_id:, value_coded: ext_id, person_id: patient_id)
         (obs.blank? ? 'Resident' : 'External')
       end
 
@@ -443,7 +444,8 @@ module ArtService
       def maternal_status(patient_id, current_gender)
         return nil if current_gender.blank?
 
-        result = ArtService::Reports::Pepfar::ViralLoadCoverage2.new(start_date: @start_date, end_date: @end_date).vl_maternal_status([patient_id])
+        result = ArtService::Reports::Pepfar::ViralLoadCoverage2.new(start_date: @start_date,
+                                                                     end_date: @end_date).vl_maternal_status([patient_id])
         gender = 'FNP'
         gender = 'FP' unless result[:FP].blank?
         gender = 'FBf' unless result[:FBf].blank?

@@ -103,7 +103,8 @@ module ArtService
                  .joins(:order)
                  .joins("LEFT JOIN (#{current_occupation_query}) AS a ON a.person_id = orders.patient_id")
                  .where(quantity: 1..Float::INFINITY, drug_inventory_id: drugs)
-                 .where(occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'a', include_clause: false).to_s)
+                 .where(occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'a',
+                                          include_clause: false).to_s)
                  .merge(treatment_orders)
                  .group('orders.patient_id')
       end
@@ -132,7 +133,7 @@ module ArtService
                  .joins(:order)
                  .where(quantity: 1..Float::INFINITY, drug_inventory_id: drugs)
                  .merge(Order.joins(:encounter)
-                             .where(patient_id: patient_id, start_date: prescription_date)
+                             .where(patient_id:, start_date: prescription_date)
                              .merge(treatment_encounter))
       end
 
@@ -174,7 +175,7 @@ module ArtService
       end
 
       def arv_number_type_id
-        @arv_number_id ||= PatientIdentifierType.find_by_name('ARV Number').id
+        @arv_number_type_id ||= PatientIdentifierType.find_by_name('ARV Number').id
       end
     end
   end

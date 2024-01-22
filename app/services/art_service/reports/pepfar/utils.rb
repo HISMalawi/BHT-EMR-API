@@ -56,7 +56,7 @@ module ArtService
         # sites, ARV Numbers are used.
         def pepfar_patient_identifier_type
           name = GlobalPropertyService.use_filing_numbers? ? 'Filing number' : 'ARV Number'
-          PatientIdentifierType.where(name: name).select(:patient_identifier_type_id)
+          PatientIdentifierType.where(name:).select(:patient_identifier_type_id)
         end
 
         FULL_6H_COURSE_PILLS = 146

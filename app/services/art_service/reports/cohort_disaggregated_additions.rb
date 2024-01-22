@@ -1,9 +1,8 @@
+# frozen_string_literal: true
 
 module ArtService
   module Reports
-
     class CohortDisaggregatedAdditions
-
       COHORT_REGIMENS = %w[
         0P 2P 4PP 4PA 9PP 9PA 11PP 11PA 12PP 12PA 14PP 14PA 15PP 15PA 16P 17PP 17PA
         4A 5A 6A 7A 8A 9A 10A 11A 12A 13A 14A 15A 16A 17A
@@ -17,9 +16,9 @@ module ArtService
       end
 
       def screened_for_tb
-        return screened_for_tb_female_client('FP') if @gender == "pregnant"
-        return screened_for_tb_female_client('FNP') if @gender == "fnp"
-        return screened_for_tb_female_client('FBf') if @gender == "breastfeeding"
+        return screened_for_tb_female_client('FP') if @gender == 'pregnant'
+        return screened_for_tb_female_client('FNP') if @gender == 'fnp'
+        return screened_for_tb_female_client('FBf') if @gender == 'breastfeeding'
 
         gender = @gender.first.upcase
         results = ActiveRecord::Base.connection.select_all <<~SQL
@@ -36,72 +35,75 @@ module ArtService
           patient_ids << r['patient_id'].to_i
         end
 
-        return tb_screened(patient_ids)
+        tb_screened(patient_ids)
       end
 
       def clients_given_ipt
-        return female_clients_given_ipt('FP') if @gender == "pregnant"
-        return female_clients_given_ipt('FNP') if @gender == "fnp"
-        return female_clients_given_ipt('FBf') if @gender == "breastfeeding"
+        return female_clients_given_ipt('FP') if @gender == 'pregnant'
+        return female_clients_given_ipt('FNP') if @gender == 'fnp'
+        return female_clients_given_ipt('FBf') if @gender == 'breastfeeding'
 
         gender = @gender.first.upcase
 
         patient_ids = []
         results = ActiveRecord::Base.connection.select_all <<~SQL
-        SELECT
-          e.patient_id, disaggregated_age_group(e.birthdate, DATE('#{@end_date}')) age_group
-        FROM temp_earliest_start_date e
-        INNER JOIN temp_patient_outcomes USING(patient_id)
-        WHERE cum_outcome = 'On antiretrovirals' AND LEFT(gender,1) = '#{gender}'
-        GROUP BY e.patient_id HAVING  age_group = '#{@age_group}';
-SQL
+          SELECT
+            e.patient_id, disaggregated_age_group(e.birthdate, DATE('#{@end_date}')) age_group
+          FROM temp_earliest_start_date e
+          INNER JOIN temp_patient_outcomes USING(patient_id)
+          WHERE cum_outcome = 'On antiretrovirals' AND LEFT(gender,1) = '#{gender}'
+          GROUP BY e.patient_id HAVING  age_group = '#{@age_group}';
+        SQL
 
         (results || []).each do |row|
           patient_ids << row['patient_id'].to_i
         end
 
         return [] if patient_ids.blank?
-        return given_ipt(patient_ids)
+
+        given_ipt(patient_ids)
       end
 
       def disaggregated_regimen_distribution
-        additional_sql = ""
-        additional_for_women_sql = ""
+        additional_sql = ''
+        additional_for_women_sql = ''
         gender = @gender.first.upcase
 
         if @age_group != 'All'
           additional_sql = "HAVING age_group = '#{@age_group}'"
         else
-          if @gender.upcase  == 'FP'
-            additional_for_women_sql = "INNER JOIN temp_disaggregated t ON t.patient_id = e.patient_id"
+          case @gender.upcase
+          when 'FP'
+            additional_for_women_sql = 'INNER JOIN temp_disaggregated t ON t.patient_id = e.patient_id'
             additional_for_women_sql += " AND t.maternal_status = 'FP' "
-          elsif @gender.upcase == 'FBF'
-            additional_for_women_sql = "INNER JOIN temp_disaggregated t ON t.patient_id = e.patient_id"
+          when 'FBF'
+            additional_for_women_sql = 'INNER JOIN temp_disaggregated t ON t.patient_id = e.patient_id'
             additional_for_women_sql += " AND t.maternal_status = 'Fbf' "
-          elsif @gender.upcase == 'FNP'
-            additional_for_women_sql = "INNER JOIN temp_disaggregated t ON t.patient_id = e.patient_id"
+          when 'FNP'
+            additional_for_women_sql = 'INNER JOIN temp_disaggregated t ON t.patient_id = e.patient_id'
             additional_for_women_sql += " AND t.maternal_status = 'FNP' "
           end
         end
 
-        patients =  ActiveRecord::Base.connection.select_all <<~SQL
-        SELECT
-          e.patient_id,  disaggregated_age_group(e.birthdate, DATE("#{@end_date.to_date}")) age_group
-        FROM temp_earliest_start_date e
-        INNER JOIN temp_patient_outcomes o ON  o.patient_id = e.patient_id
-        #{additional_for_women_sql}
-        WHERE LEFT(gender,1) = '#{gender}' AND o.cum_outcome = 'On antiretrovirals'
-        AND DATE(date_enrolled) <= '#{@end_date.to_date}'
-        GROUP BY e.patient_id #{additional_sql};
+        patients = ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT
+            e.patient_id,  disaggregated_age_group(e.birthdate, DATE("#{@end_date.to_date}")) age_group
+          FROM temp_earliest_start_date e
+          INNER JOIN temp_patient_outcomes o ON  o.patient_id = e.patient_id
+          #{additional_for_women_sql}
+          WHERE LEFT(gender,1) = '#{gender}' AND o.cum_outcome = 'On antiretrovirals'
+          AND DATE(date_enrolled) <= '#{@end_date.to_date}'
+          GROUP BY e.patient_id #{additional_sql};
         SQL
 
         return {} if patients.blank?
-        patient_ids = patients.map{|p| p['patient_id'].to_i}
+
+        patient_ids = patients.map { |p| p['patient_id'].to_i }
         data = {}
 
         patient_ids.each do |patient_id|
-          regimen_data =  ActiveRecord::Base.connection.select_one <<~SQL
-          SELECT patient_current_regimen(#{patient_id}, DATE('#{@end_date.to_date}')) regimen;
+          regimen_data = ActiveRecord::Base.connection.select_one <<~SQL
+            SELECT patient_current_regimen(#{patient_id}, DATE('#{@end_date.to_date}')) regimen;
           SQL
 
           regimen = (COHORT_REGIMENS.include? regimen_data['regimen']) ? regimen_data['regimen'] : 'N/A'
@@ -109,13 +111,14 @@ SQL
           data[regimen] << patient_id
         end
 
-        return  data
+        data
       end
 
       private
 
       def given_ipt(patient_ids)
         return [] if patient_ids.blank?
+
         isoniazid_concept_id = ConceptName.find_by(name: 'Isoniazid').concept_id
         isoniazid_rifapentine_concept_id = ConceptName.find_by(name: 'Isoniazid/Rifapentine').concept_id
         pyridoxine_concept_id = ConceptName.find_by(name: 'Pyridoxine').concept_id
@@ -144,35 +147,34 @@ SQL
           results_patients << row['patient_id'].to_i
         end
 
-        return results_patients
+        results_patients
       end
 
       def tb_screened(patient_ids)
         return [] if patient_ids.blank?
 
         results = ActiveRecord::Base.connection.select_all <<~SQL
-        SELECT e.*, tb_status FROM temp_earliest_start_date e
-          INNER JOIN temp_patient_tb_status s ON s.patient_id = e.patient_id
-          INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
-          WHERE o.cum_outcome = 'On antiretrovirals' AND e.patient_id IN(#{patient_ids.join(',')})
-          AND DATE(e.date_enrolled) <= '#{@end_date.to_date}';
+          SELECT e.*, tb_status FROM temp_earliest_start_date e
+            INNER JOIN temp_patient_tb_status s ON s.patient_id = e.patient_id
+            INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
+            WHERE o.cum_outcome = 'On antiretrovirals' AND e.patient_id IN(#{patient_ids.join(',')})
+            AND DATE(e.date_enrolled) <= '#{@end_date.to_date}';
         SQL
-
 
         patient_ids = []
         (results || []).each do |r|
           patient_ids << r['patient_id'].to_i unless r['tb_status'].blank?
         end
 
-        return patient_ids
+        patient_ids
       end
 
       def screened_for_tb_female_client(group)
         results = ActiveRecord::Base.connection.select_all <<~SQL
-        SELECT f.patient_id FROM temp_disaggregated f
-        INNER JOIN temp_patient_outcomes o ON o.patient_id = f.patient_id
-        WHERE maternal_status = "#{group}"
-        AND o.cum_outcome = 'On antiretrovirals' GROUP BY f.patient_id;
+          SELECT f.patient_id FROM temp_disaggregated f
+          INNER JOIN temp_patient_outcomes o ON o.patient_id = f.patient_id
+          WHERE maternal_status = "#{group}"
+          AND o.cum_outcome = 'On antiretrovirals' GROUP BY f.patient_id;
         SQL
 
         patient_ids = []
@@ -180,15 +182,15 @@ SQL
           patient_ids << r['patient_id'].to_i
         end
 
-        return tb_screened(patient_ids)
+        tb_screened(patient_ids)
       end
 
       def female_clients_given_ipt(group)
         results = ActiveRecord::Base.connection.select_all <<~SQL
-        SELECT f.patient_id FROM temp_disaggregated f
-        INNER JOIN temp_patient_outcomes o ON o.patient_id = f.patient_id
-        WHERE maternal_status = "#{group}"
-        AND o.cum_outcome = 'On antiretrovirals' GROUP BY f.patient_id;
+          SELECT f.patient_id FROM temp_disaggregated f
+          INNER JOIN temp_patient_outcomes o ON o.patient_id = f.patient_id
+          WHERE maternal_status = "#{group}"
+          AND o.cum_outcome = 'On antiretrovirals' GROUP BY f.patient_id;
         SQL
 
         patient_ids = []
@@ -196,13 +198,8 @@ SQL
           patient_ids << r['patient_id'].to_i
         end
 
-        return given_ipt(patient_ids)
+        given_ipt(patient_ids)
       end
-
     end
-
-
-
-
   end
 end

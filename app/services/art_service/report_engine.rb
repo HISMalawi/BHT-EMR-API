@@ -56,16 +56,16 @@ module ArtService
     }.freeze
 
     def generate_report(type:, **kwargs)
-      call_report_manager(:build_report, type: type, **kwargs)
+      call_report_manager(:build_report, type:, **kwargs)
     end
 
     def find_report(type:, **kwargs)
-      call_report_manager(:find_report, type: type, **kwargs)
+      call_report_manager(:find_report, type:, **kwargs)
     end
 
     def cohort_disaggregated(quarter, age_group, start_date, end_date, rebuild, init, **kwargs)
-      cohort = REPORTS['COHORT_DISAGGREGATED'].new(type: 'disaggregated', name: 'disaggregated', start_date: start_date,
-                                                   end_date: end_date, rebuild: rebuild, **kwargs)
+      cohort = REPORTS['COHORT_DISAGGREGATED'].new(type: 'disaggregated', name: 'disaggregated', start_date:,
+                                                   end_date:, rebuild:, **kwargs)
       return cohort.initialize_disaggregated if init
 
       cohort.disaggregated(quarter, age_group)
@@ -74,14 +74,14 @@ module ArtService
     def cohort_survival_analysis(quarter, age_group, regenerate, occupation)
       cohort = REPORTS['COHORT_SURVIVAL_ANALYSIS'].new(type: 'survival_analysis',
                                                        name: 'survival_analysis', start_date: Date.today,
-                                                       end_date: Date.today, regenerate: regenerate, occupation: occupation)
+                                                       end_date: Date.today, regenerate:, occupation:)
       cohort.survival_analysis(quarter, age_group)
     end
 
     def defaulter_list(start_date, end_date, pepfar, **kwargs)
       REPORTS['COHORT'].new(type: 'defaulter_list',
-                            name: 'defaulter_list', start_date: start_date,
-                            end_date: end_date, **kwargs).defaulter_list(pepfar)
+                            name: 'defaulter_list', start_date:,
+                            end_date:, **kwargs).defaulter_list(pepfar)
     end
 
     def missed_appointments(start_date, end_date, **kwargs)
@@ -114,18 +114,18 @@ module ArtService
 
     def screened_for_tb(start_date, end_date, gender, age_group)
       REPORTS['COHORT_DISAGGREGATED_ADDITIONS'].new(start_date: start_date.to_date,
-                                                    end_date: end_date.to_date, age_group: age_group, gender: gender).screened_for_tb
+                                                    end_date: end_date.to_date, age_group:, gender:).screened_for_tb
     end
 
     def clients_given_ipt(start_date, end_date, gender, age_group)
       REPORTS['COHORT_DISAGGREGATED_ADDITIONS'].new(start_date: start_date.to_date,
-                                                    end_date: end_date.to_date, age_group: age_group, gender: gender).clients_given_ipt
+                                                    end_date: end_date.to_date, age_group:, gender:).clients_given_ipt
     end
 
     def arv_refill_periods(start_date, end_date, min_age, max_age, org, initialize_tables, **kwargs)
       REPORTS['ARV_REFILL_PERIODS'].new(start_date: start_date.to_date,
-                                        end_date: end_date.to_date, min_age: min_age,
-                                        max_age: max_age, org: org, initialize_tables: initialize_tables, **kwargs).arv_refill_periods
+                                        end_date: end_date.to_date, min_age:,
+                                        max_age:, org:, initialize_tables:, **kwargs).arv_refill_periods
     end
 
     def tx_ml(start_date, end_date, **kwargs)
@@ -146,13 +146,13 @@ module ArtService
 
     def disaggregated_regimen_distribution(start_date, end_date, gender, age_group)
       REPORTS['COHORT_DISAGGREGATED_ADDITIONS'].new(start_date: start_date.to_date,
-                                                    end_date: end_date.to_date, age_group: age_group, gender: gender).disaggregated_regimen_distribution
+                                                    end_date: end_date.to_date, age_group:, gender:).disaggregated_regimen_distribution
     end
 
     def tx_mmd_client_level_data(start_date, end_date, patient_ids, org)
       REPORTS['ARV_REFILL_PERIODS'].new(start_date: start_date.to_date,
                                         end_date: end_date.to_date, min_age: 0, max_age: 0,
-                                        org: org, initialize_tables: '').tx_mmd_client_level_data(patient_ids)
+                                        org:, initialize_tables: '').tx_mmd_client_level_data(patient_ids)
     end
 
     def tb_prev(start_date, end_date)
@@ -171,7 +171,7 @@ module ArtService
 
     def patient_outcome_list(start_date, end_date, outcome, **kwargs)
       REPORTS['OUTCOME_LIST'].new(start_date: start_date.to_date,
-                                  end_date: end_date.to_date, outcome: outcome, **kwargs).get_list
+                                  end_date: end_date.to_date, outcome:, **kwargs).get_list
     end
 
     def clients_due_vl(start_date, end_date, **kwargs)
@@ -194,7 +194,7 @@ module ArtService
                            tx_curr_definition, patient_ids)
       REPORTS['VIRAL_LOAD_COVERAGE'].new(start_date: start_date.to_date,
                                          end_date: end_date.to_date,
-                                         tx_curr_definition: tx_curr_definition).vl_maternal_status(patient_ids)
+                                         tx_curr_definition:).vl_maternal_status(patient_ids)
     end
 
     def patient_art_vl_dates(end_date, patient_ids)
@@ -208,7 +208,7 @@ module ArtService
 
     def sc_arvdisp(start_date, end_date, rebuild_outcome)
       REPORTS['SC_ARVDISP'].new(start_date: start_date.to_date,
-                                end_date: end_date.to_date, rebuild_outcome: rebuild_outcome).report
+                                end_date: end_date.to_date, rebuild_outcome:).report
     end
 
     private
@@ -220,7 +220,7 @@ module ArtService
       type = report_type(type)
 
       report_manager = REPORTS[type.name.upcase].new(
-        type: type, name: name, start_date: start_date, end_date: end_date, **kwargs
+        type:, name:, start_date:, end_date:, **kwargs
       )
 
       report_manager.send(method)

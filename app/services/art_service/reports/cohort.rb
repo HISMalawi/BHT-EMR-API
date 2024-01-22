@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'set'
 
 module ArtService
   module Reports
@@ -43,39 +42,38 @@ module ArtService
       end
 
       def defaulter_list(pepfar)
-=begin
-        data = ActiveRecord::Base.connection.select_all <<~SQL
-          SELECT o.patient_id, min(start_date) start_date
-          FROM orders o
-          INNER JOIN drug_order od ON od.order_id = o.order_id AND o.voided = 0
-          INNER JOIN drug d ON d.drug_id = od.drug_inventory_id
-          INNER JOIN concept_set s ON s.concept_id = d.concept_id
-          INNER JOIN patient_program pp ON pp.patient_id = o.patient_id
-          WHERE s.concept_set = 1085
-            AND od.quantity > 0
-            AND pp.program_id = 1
-            AND pp.voided = 0
-            AND o.patient_id NOT IN (
-              SELECT DISTINCT person_id
-              FROM obs
-              INNER JOIN encounter
-                ON encounter.encounter_id = obs.encounter_id
-                AND encounter.program_id = 1
-                AND encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'Registration')
-                AND encounter.encounter_datetime < DATE(#{ActiveRecord::Base.connection.quote(@end_date)}) + INTERVAL 1 DAY
-                AND encounter.voided = 0
-              WHERE obs.voided = 0
-                AND obs.concept_id IN (SELECT concept_id FROM concept_name WHERE name = 'Type of Patient' AND voided = 0)
-                AND obs.value_coded IN (SELECT concept_id FROM concept_name WHERE name = 'External consultation' AND voided = 0)
-                AND obs.obs_datetime < DATE(#{ActiveRecord::Base.connection.quote(@end_date)})
-            )
-          GROUP BY o.patient_id;
-        SQL
-=end
+#         data = ActiveRecord::Base.connection.select_all <<~SQL
+#           SELECT o.patient_id, min(start_date) start_date
+#           FROM orders o
+#           INNER JOIN drug_order od ON od.order_id = o.order_id AND o.voided = 0
+#           INNER JOIN drug d ON d.drug_id = od.drug_inventory_id
+#           INNER JOIN concept_set s ON s.concept_id = d.concept_id
+#           INNER JOIN patient_program pp ON pp.patient_id = o.patient_id
+#           WHERE s.concept_set = 1085
+#             AND od.quantity > 0
+#             AND pp.program_id = 1
+#             AND pp.voided = 0
+#             AND o.patient_id NOT IN (
+#               SELECT DISTINCT person_id
+#               FROM obs
+#               INNER JOIN encounter
+#                 ON encounter.encounter_id = obs.encounter_id
+#                 AND encounter.program_id = 1
+#                 AND encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'Registration')
+#                 AND encounter.encounter_datetime < DATE(#{ActiveRecord::Base.connection.quote(@end_date)}) + INTERVAL 1 DAY
+#                 AND encounter.voided = 0
+#               WHERE obs.voided = 0
+#                 AND obs.concept_id IN (SELECT concept_id FROM concept_name WHERE name = 'Type of Patient' AND voided = 0)
+#                 AND obs.value_coded IN (SELECT concept_id FROM concept_name WHERE name = 'External consultation' AND voided = 0)
+#                 AND obs.obs_datetime < DATE(#{ActiveRecord::Base.connection.quote(@end_date)})
+#             )
+#           GROUP BY o.patient_id;
+#         SQL
 
         report_type = (pepfar ? 'pepfar' : 'moh')
         defaulter_date_sql = pepfar ? 'current_pepfar_defaulter_date' : 'current_defaulter_date'
-        ArtService::Reports::CohortBuilder.new(outcomes_definition: report_type).init_temporary_tables(@start_date, @end_date, @occupation)
+        ArtService::Reports::CohortBuilder.new(outcomes_definition: report_type).init_temporary_tables(@start_date, 
+@end_date, @occupation)
 
         data = ActiveRecord::Base.connection.select_all <<~SQL
           SELECT
@@ -120,7 +118,6 @@ module ArtService
             next if defaulter_date > @end_date.to_date
           end
 
-
           patients << {
             person_id: person['patient_id'],
             given_name: person['given_name'],
@@ -129,7 +126,7 @@ module ArtService
             gender: person['gender'],
             arv_number: person['arv_number'],
             outcome: 'Defaulted',
-            defaulter_date: defaulter_date,
+            defaulter_date:,
             appointment_date: person['appointment_date'].to_date.strftime('%Y-%m-%d'),
             art_reason: person['art_reason'],
             cell_number: person['cell_number'],
@@ -191,7 +188,7 @@ module ArtService
 
           values = save_report_values(report)
 
-          { report: report, values: values }
+          { report:, values: }
         end
       end
 
@@ -199,7 +196,7 @@ module ArtService
       def save_report_values(report)
         @cohort_struct.values.collect do |value|
           puts "Saving #{value.name} = #{value_contents_to_json(value.contents)}"
-          report_value = ReportValue.create(report: report,
+          report_value = ReportValue.create(report:,
                                             name: value.name,
                                             indicator_name: value.indicator_name,
                                             indicator_short_name: value.indicator_short_name,
@@ -207,9 +204,7 @@ module ArtService
                                             description: value.description,
                                             contents: value_contents_to_json(value.contents))
 
-          unless report_value.errors.empty?
-            raise "Failed to save report value: #{report_value.errors.as_json}"
-          end
+          raise "Failed to save report value: #{report_value.errors.as_json}" unless report_value.errors.empty?
 
           save_patients(report_value, value_contents_to_json(value).contents)
 
@@ -267,29 +262,28 @@ module ArtService
           end
         end
 
-        unless sql_insert_statement.blank?
-          ActiveRecord::Base.connection.execute <<~SQL
+        return if sql_insert_statement.blank?
+
+        ActiveRecord::Base.connection.execute <<~SQL
           INSERT INTO cohort_drill_down (reporting_report_design_resource_id, patient_id)
           VALUES #{sql_insert_statement};
-SQL
-
-        end
-
+        SQL
       end
 
-      def  calculate_age(birthdate)
-        birthdate = birthdate.to_date rescue nil
+      def calculate_age(birthdate)
+        birthdate = begin
+                      birthdate.to_date
+                    rescue
+                      nil
+                    end
         return 'N/A' if birthdate.blank?
 
         birthdate = ActiveRecord::Base.connection.select_one <<~SQL
           SELECT TIMESTAMPDIFF(year, DATE('#{birthdate}'), DATE('#{@end_date}')) age;
         SQL
 
-        return birthdate['age']
+        birthdate['age']
       end
-
     end
   end
-
-
 end

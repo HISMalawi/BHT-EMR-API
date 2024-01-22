@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 
 module ArtService
   module Reports
@@ -7,12 +8,10 @@ module ArtService
     # the constructor. This method must be called to build report and save
     # it to database.
     class IptCoverage
-
       def initialize(start_date:, end_date:)
         @start_date = start_date.to_date.strftime('%Y-%m-%d 00:00:00')
         @end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
       end
-
 
       def data
         patient_ids = []
@@ -23,19 +22,19 @@ module ArtService
         end
 
         return patients if patient_ids.blank?
-        data = ipt_dispensations(patient_ids)
 
+        data = ipt_dispensations(patient_ids)
 
         (data || []).each do |record|
           patient_id = record['patient_id'].to_i
           age_group = record['age_group']
           gender = record['gender']
 
-          unless gender.blank?
-            gender = (gender.match(/F/i) ? 'Female' : 'Male')
-          else
-            gender = 'Unknown'
-          end
+          gender = if gender.blank?
+                     'Unknown'
+                   else
+                     (gender.match(/F/i) ? 'Female' : 'Male')
+                   end
 
           patients[age_group] = {} if patients[age_group].blank?
           patients[age_group][gender] = {} if patients[age_group][gender].blank?
@@ -46,6 +45,7 @@ module ArtService
           SQL
 
           next if prescription_info['days'].blank?
+
           patients[age_group][gender][patient_id] += prescription_info['days'].to_i
         end
 
@@ -55,23 +55,22 @@ module ArtService
           pats = values
           (pats || {}).each do |sex, ids|
             (ids || {}).each do |patient_id, count|
-              if(count >= 168)
-                age_groups[keys] = {} if age_groups[keys].blank?
-                age_groups[keys][sex] = [] if age_groups[keys][sex].blank?
-                age_groups[keys][sex] << patient_id
-              end
+              next unless count >= 168
+
+              age_groups[keys] = {} if age_groups[keys].blank?
+              age_groups[keys][sex] = [] if age_groups[keys][sex].blank?
+              age_groups[keys][sex] << patient_id
             end
           end
         end
 
-        return age_groups
+        age_groups
       end
-
 
       private
 
       def on_art_in_reporting_period
-        return ActiveRecord::Base.connection.select_all <<-SQL
+        ActiveRecord::Base.connection.select_all <<-SQL
           select
             `p`.`patient_id` AS `patient_id`, pe.birthdate, pe.gender,
              cast(patient_date_enrolled(`p`.`patient_id`) as date) AS `date_enrolled`
@@ -90,13 +89,12 @@ module ArtService
           group by `p`.`patient_id`
           HAVING date_enrolled IS NOT NULL;
         SQL
-
       end
 
       def ipt_dispensations(patient_ids)
         date_six_months_ago = (@start_date.to_date - 6.months).strftime('%Y-%m-%d 00:00:00')
 
-        return ActiveRecord::Base.connection.select_all <<-SQL
+        ActiveRecord::Base.connection.select_all <<-SQL
           SELECT
               o.patient_id, birthdate, gender, o.start_date, o.auto_expire_date,
               disaggregated_age_group(p.birthdate, DATE('#{@end_date}')) age_group
@@ -109,16 +107,6 @@ module ArtService
           AND t.quantity > 0 ORDER BY o.patient_id;
         SQL
       end
-
     end
-
-
-
-
-
-
-
-
-
   end
 end

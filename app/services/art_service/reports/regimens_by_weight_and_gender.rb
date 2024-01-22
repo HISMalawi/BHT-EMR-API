@@ -37,7 +37,7 @@ module ArtService
 
       def regimen_counts
         with_lock(Cohort::LOCK_FILE) do
-          PatientsAliveAndOnTreatment.new(start_date: start_date, end_date: end_date, occupation: @occupation)
+          PatientsAliveAndOnTreatment.new(start_date:, end_date:, occupation: @occupation)
                                      .refresh_outcomes_table
 
           WEIGHT_BANDS.map do |start_weight, end_weight|

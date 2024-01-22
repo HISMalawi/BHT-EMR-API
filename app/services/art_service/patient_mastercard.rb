@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module ArtService
   class PatientMastercard
     attr_accessor :patient, :date
@@ -23,22 +25,39 @@ module ArtService
       start_date  = visit_date.to_date.strftime('%Y-%m-%d 00:00:00')
       end_date    = visit_date.to_date.strftime('%Y-%m-%d 23:59;59')
 
-      data = Observation.where(["person_id = ? AND concept_id = ? AND obs_datetime BETWEEN ? AND ?",
-        patient_id, concpet.concept_id, start_date, end_date])
+      data = Observation.where(['person_id = ? AND concept_id = ? AND obs_datetime BETWEEN ? AND ?',
+                                patient_id, concpet.concept_id, start_date, end_date])
 
       pills_brought = []
       (data || []).each do |i|
-        drug_order = Order.find(i.order_id).drug_order rescue []
+        drug_order = begin
+          Order.find(i.order_id).drug_order
+        rescue StandardError
+          []
+        end
         next if drug_order.blank?
-        name = drug_order.drug.name rescue ''
+
+        begin
+          drug_order.drug.name
+        rescue StandardError
+          ''
+        end
         pills_brought << {
-          :name       =>  (drug_order.drug.name rescue nil),
-          :short_name =>  (drug_order.drug.concept.shortname rescue nil),
-          :quantity   => i.value_numeric
+          name: begin
+            drug_order.drug.name
+          rescue StandardError
+            nil
+          end,
+          short_name: begin
+            drug_order.drug.concept.shortname
+          rescue StandardError
+            nil
+          end,
+          quantity: i.value_numeric
         }
       end
 
-      return pills_brought
+      pills_brought
     end
 
     def get_adherence(patient_id, visit_date)
@@ -73,8 +92,8 @@ module ArtService
       start_date  = visit_date.to_date.strftime('%Y-%m-%d 00:00:00')
       end_date    = visit_date.to_date.strftime('%Y-%m-%d 23:59;59')
 
-      dispensed = Observation.where(["person_id = ? AND concept_id = ? AND obs_datetime BETWEEN ? AND ?",
-        patient_id, amount_dispensed, start_date, end_date]).last
+      dispensed = Observation.where(['person_id = ? AND concept_id = ? AND obs_datetime BETWEEN ? AND ?',
+                                     patient_id, amount_dispensed, start_date, end_date]).last
 
       unless dispensed.blank?
         reg = ActiveRecord::Base.connection.select_one <<~SQL
@@ -84,7 +103,7 @@ module ArtService
         return reg['regimen_category']
       end
 
-      return nil
+      nil
     end
 
     def get_pills_gave(patient_id, visit_date)
@@ -92,22 +111,39 @@ module ArtService
       start_date  = visit_date.to_date.strftime('%Y-%m-%d 00:00:00')
       end_date    = visit_date.to_date.strftime('%Y-%m-%d 23:59;59')
 
-      orders = Order.where(["patient_id = ? AND order_type_id = ? AND start_date BETWEEN ? AND ?",
-          patient_id, order_type, start_date, end_date])
+      orders = Order.where(['patient_id = ? AND order_type_id = ? AND start_date BETWEEN ? AND ?',
+                            patient_id, order_type, start_date, end_date])
 
       gave = []
       (orders || []).each do |order|
-        drug_order = order.drug_order rescue []
+        drug_order = begin
+          order.drug_order
+        rescue StandardError
+          []
+        end
         next if drug_order.blank?
-        name = drug_order.drug.name rescue ''
+
+        begin
+          drug_order.drug.name
+        rescue StandardError
+          ''
+        end
         gave << {
-          :name       =>  (drug_order.drug.name rescue nil),
-          :short_name =>  (drug_order.drug.concept.shortname rescue nil),
-          :quantity   =>  drug_order.quantity
+          name: begin
+            drug_order.drug.name
+          rescue StandardError
+            nil
+          end,
+          short_name: begin
+            drug_order.drug.concept.shortname
+          rescue StandardError
+            nil
+          end,
+          quantity: drug_order.quantity
         }
       end
 
-      return gave
+      gave
     end
 
     def get_side_effects(patient_id, visit_date)
@@ -116,7 +152,7 @@ module ArtService
       no_side_effects_concept_id = ConceptName.find_by_name('No').concept_id
       yes_side_effects_concept_id = ConceptName.find_by_name('Yes').concept_id
 
-      malawi_side_effects_ids =  ActiveRecord::Base.connection.select_all <<~SQL
+      malawi_side_effects_ids = ActiveRecord::Base.connection.select_all <<~SQL
           SELECT t1.person_id patient_id, t1.obs_id, value_coded, t1.obs_datetime
           FROM obs t1
           where t1.person_id = #{patient_id}
@@ -132,18 +168,23 @@ module ArtService
 
       results = []
       (malawi_side_effects_ids || []).each do |row|
-        obs_group = Observation.where(["concept_id = ? AND obs_group_id = ?",
-            row['value_coded'].to_i, row['obs_id'].to_i]).first rescue nil
+        obs_group = begin
+          Observation.where(['concept_id = ? AND obs_group_id = ?',
+                             row['value_coded'].to_i, row['obs_id'].to_i]).first
+        rescue StandardError
+          nil
+        end
 
         if obs_group.blank?
-            next if no_side_effects_concept_id == row['value_coded'].to_i
-            results << ConceptName.find_by_concept_id(row['value_coded'])&.name
+          next if no_side_effects_concept_id == row['value_coded'].to_i
+
+          results << ConceptName.find_by_concept_id(row['value_coded'])&.name
         elsif obs_group.value_coded == yes_side_effects_concept_id
-            results << ConceptName.find_by_concept_id(obs_group.concept_id)&.name
+          results << ConceptName.find_by_concept_id(obs_group.concept_id)&.name
         end
       end
 
-      return results
+      results
     end
   end
 end

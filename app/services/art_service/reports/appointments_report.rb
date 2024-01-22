@@ -37,7 +37,8 @@ module ArtService
                                   .where('value_datetime BETWEEN ? AND ? AND encounter.program_id = ?',
                                          @start_date.strftime('%Y-%m-%d 00:00:00'),
                                          @end_date.strftime('%Y-%m-%d 23:59:59'), 1)
-                                  .where(occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'a', include_clause: false).to_s)
+                                  .where(occupation_filter(occupation: @occupation, field_name: 'value',
+                                                           table_name: 'a', include_clause: false).to_s)
                                   .group(:person_id)
 
         appointments.each_with_object([]) do |appointment, patients|
@@ -244,7 +245,7 @@ module ArtService
           arv_number: (person['arv_number'].blank? ? 'N/A' : person['arv_number']),
           appointment_date: appointment_date.to_date,
           days_missed: days_missed(appointment_date.to_date),
-          current_outcome: current_outcome,
+          current_outcome:,
           person_id: patient_id
         }
       end

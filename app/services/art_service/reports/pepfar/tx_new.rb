@@ -74,7 +74,8 @@ module ArtService
               report[age_group.to_s][gender.to_s][indicator.to_sym] << patient_id
             end
             report[age_group.to_s][gender.to_s][indicator.to_sym] << patient_id if new_patient.zero?
-            process_aggreggation_rows(report: report, gender: gender, indicator: indicator, start_date: earliest_start_date, patient_id: patient_id, maternal_status: row['maternal_status'], maternal_status_date: row['maternal_status_date'])
+            process_aggreggation_rows(report:, gender:, indicator:,
+                                      start_date: earliest_start_date, patient_id:, maternal_status: row['maternal_status'], maternal_status_date: row['maternal_status_date'])
           end
         end
 
@@ -95,7 +96,7 @@ module ArtService
 
         def process_age_group_report(age_group, gender, age_group_report)
           {
-            age_group: age_group,
+            age_group:,
             gender: if gender == 'F'
                       'Female'
                     else

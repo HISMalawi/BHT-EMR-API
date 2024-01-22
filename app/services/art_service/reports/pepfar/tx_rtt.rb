@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module ArtService
   module Reports
     module Pepfar
@@ -91,8 +92,8 @@ module ArtService
 
         def process_age_group_report(age_group, gender, age_group_report)
           {
-            age_group: age_group,
-            gender: gender,
+            age_group:,
+            gender:,
             cd4_less_than_200: age_group_report[:cd4_less_than_200],
             cd4_greater_than_or_equal_to_200: age_group_report[:cd4_greater_than_or_equal_to_200],
             unknown_cd4_count: age_group_report[:unknown_cd4_count],

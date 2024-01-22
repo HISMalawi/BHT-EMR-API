@@ -12,7 +12,7 @@ module ArtService
         raise InvalidParameterError, "Patient doesn't have any weight recorded on or before given date" unless weight
 
         ingredient = MohRegimenIngredient.where(drug_inventory_id: drug_id)
-                                         .where('min_weight <= :weight AND max_weight >= :weight', weight: weight)
+                                         .where('min_weight <= :weight AND max_weight >= :weight', weight:)
                                          .includes(:dose)
                                          .group(:drug_inventory_id)
                                          .first

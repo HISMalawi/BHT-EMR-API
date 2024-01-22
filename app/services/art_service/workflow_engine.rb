@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'htn_workflow'
-require 'set'
 
 module ArtService
   class WorkflowEngine
@@ -158,7 +157,7 @@ module ArtService
       # of the actual vitals.
       return false if type.name == VITALS
 
-      Encounter.where(type: type, patient: @patient, program: @program)\
+      Encounter.where(type:, patient: @patient, program: @program)\
                .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
                .exists?
     end
@@ -365,21 +364,21 @@ module ArtService
 
     def patient_has_no_weight_today?
       concept_id = ConceptName.find_by_name('Weight').concept_id
-      !Observation.where(concept_id: concept_id, person_id: @patient.id)\
+      !Observation.where(concept_id:, person_id: @patient.id)\
                   .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
                   .exists?
     end
 
     def patient_has_no_height?
       concept_id = ConceptName.find_by_name('Height (cm)').concept_id
-      !Observation.where(concept_id: concept_id, person_id: @patient.id)\
+      !Observation.where(concept_id:, person_id: @patient.id)\
                   .where('obs_datetime < ?', TimeUtils.day_bounds(@date)[1])\
                   .exists?
     end
 
     def patient_has_no_height_today?
       concept_id = ConceptName.find_by_name('Height (cm)').concept_id
-      !Observation.where(concept_id: concept_id, person_id: @patient.id)\
+      !Observation.where(concept_id:, person_id: @patient.id)\
                   .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
                   .exists?
     end
@@ -393,7 +392,7 @@ module ArtService
       Observation.joins(:encounter)\
                  .where(person: @patient.person,
                         encounter: { program_id: @program.program_id },
-                        obs: { concept: concept('Medication orders'),  # last observation for a consultation encounter
+                        obs: { concept: concept('Medication orders'), # last observation for a consultation encounter
                                creator: [User.joins(:roles).where(role: { role: 'Clinician' }).pluck(:user_id)].flatten }).where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
                  .exists?
     end

@@ -48,7 +48,7 @@ module ArtService
           @report = []
           DRUG_CATEGORY.each do |category, drug|
             @report << {
-              category: category,
+              category:,
               drug_id: drug[:drugs],
               units: 0,
               quantity: drug[:quantity],
@@ -62,8 +62,12 @@ module ArtService
         def process_report
           current_stock.each do |item|
             # Find the drug category
-            drug_category = @report.find { |category| category[:drug_id].include?(item.drug_id) && category[:quantity] == item.pack_size }
-            drug_category ||= @report.find { |category| category[:drug_id].include?(item.drug_id) && category[:quantity] == 'N/A' }
+            drug_category = @report.find do |category|
+              category[:drug_id].include?(item.drug_id) && category[:quantity] == item.pack_size
+            end
+            drug_category ||= @report.find do |category|
+              category[:drug_id].include?(item.drug_id) && category[:quantity] == 'N/A'
+            end
             next unless drug_category
 
             bottles = (item.current_quantity / item.pack_size).to_i
@@ -85,7 +89,9 @@ module ArtService
 
         def current_stock
           drugs = DRUG_CATEGORY.map { |_, drug| drug[:drugs] }.flatten.uniq
-          PharmacyBatchItem.where('expiry_date >= ? AND delivery_date <= ? AND drug_id IN (?) AND current_quantity > 0', @end_date, @end_date, drugs)
+          PharmacyBatchItem.where(
+            'expiry_date >= ? AND delivery_date <= ? AND drug_id IN (?) AND current_quantity > 0', @end_date, @end_date, drugs
+          )
         end
       end
     end

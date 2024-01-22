@@ -34,8 +34,8 @@ module ArtService
           @completion_end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
           @rebuild_outcome = rebuild_outcome
           @use_filing_number = GlobalProperty.find_by(property: 'use.filing.numbers')
-                                              &.property_value
-                                              &.casecmp?('true')
+                                             &.property_value
+                                             &.casecmp?('true')
           @occupation = kwargs[:occupation]
         end
 
