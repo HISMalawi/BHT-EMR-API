@@ -2,33 +2,77 @@ include ModelUtils
 
 class TBNumberService
   class DuplicateIdentifierError < StandardError; end
-
   NORMAL_TYPE = 'District TB Number'
   IPT_TYPE = 'District IPT Number'
+  MDR_TYPE = 'MDR-TB Program Identifier'
 
-  def self.assign_tb_number (patient_id, date, number)
-    identifier = generate_tb_number(patient_id, date, number)
-    raise DuplicateIdentifierError if number_exists?(number: identifier)
+  def self.assign_national_id (patient_id, date, identifier)
+    national_id_type = 28
+
+    raise DuplicateIdentifierError if number_exists?(number: identifier, identifier_type: national_id_type)
 
     PatientIdentifier.create(
       identifier: identifier,
-      type: number_type(patient_id: patient_id),
+      identifier_type: national_id_type,
       patient_id: patient_id,
-      location_id: Location.current.location_id,
-      date_created: date
+      location_id: Location.current.location_id
     )
   end
 
-  def self.get_patient_tb_number (patient_id:)
-    PatientIdentifier.where(type: patient_identifier_type(NORMAL_TYPE),
+  def self.update_national_id (patient_id, date, identifier)
+    national_id_type = 28
+    raise DuplicateIdentifierError if number_exists?(number: identifier, identifier_type: national_id_type)
+
+    curr_identifier = PatientIdentifier.find_by(patient_id: patient_id, identifier_type:national_id_type)
+    curr_identifier.identifier = identifier
+    curr_identifier.save
+  end
+
+  def self.assign_tb_number (patient_id, date, number, type)
+    identifier = generate_tb_number(patient_id, date, number, type)
+    raise DuplicateIdentifierError if number_exists?(number: identifier, identifier_type: nil)
+
+    record= PatientIdentifier.create(
+      identifier: identifier,
+      identifier_type: type,
+      patient_id: patient_id,
+      location_id: Location.current.location_id,
+    )
+    # This is a workaround to save date created with date variable. When done in the method above
+    # it gets overwritten with current date..
+    record.date_created = date
+    record.save
+    record
+  end
+
+  def self.mw_national_identifier(patient_id)
+    PatientIdentifier.where(identifier_type: patient_identifier_type('Malawi National ID'),
+                            patient_id: patient_id)
+                      .order(date_created: :desc)
+                      .first
+  end
+
+  def self.get_patient_tb_number (patient_id, id_type)
+    PatientIdentifier.where(identifier_type: id_type.to_i,
                             patient_id: patient_id)\
-                     .or(PatientIdentifier.where(type: patient_identifier_type(IPT_TYPE), patient_id: patient_id))\
+                      .or(PatientIdentifier.where(type: patient_identifier_type(IPT_TYPE), patient_id: patient_id))\
+                      .order(date_created: :desc)
+                      .first
+  end
+
+  def self.get_current_patient_identifier(patient_id:)
+    valid_identifiers_types = [
+      patient_identifier_type(NORMAL_TYPE).patient_identifier_type_id,
+      patient_identifier_type(IPT_TYPE).patient_identifier_type_id,
+      patient_identifier_type(MDR_TYPE).patient_identifier_type_id
+    ]
+    PatientIdentifier.where(type: valid_identifiers_types, patient_id: patient_id)\
                      .order(date_created: :desc)
                      .first
   end
 
   def self.generate_tb_patient_id(patient_id)
-    patient_identifier = get_patient_tb_number(patient_id: patient_id)
+    patient_identifier = get_current_patient_identifier(patient_id: patient_id)
 
     return if patient_identifier.nil?
 
@@ -46,16 +90,27 @@ class TBNumberService
 
   private
 
-  def self.generate_tb_number (patient_id, date, number)
-    is_ipt_patient = ipt_eligible?(patient_id: patient_id)
-    category = is_ipt_patient ? 'IPT' : 'TB'
+  def self.generate_tb_number (patient_id, date, number, type)
+    identifier_type = PatientIdentifierType.find(type)
 
-    "#{facility_code}/#{category}/#{number}/#{date.year}"
+    case identifier_type.name
+    when 'District IPT Number'
+      category = 'IPT'
+    when 'District TB Number'
+      category = 'TB'
+    when 'MDR-TB Program Identifier'
+      category = 'MDR'
+    else
+      category = 'TB'
+    end
+
+    "#{facility_code}/#{category}/#{number}/#{date&.to_date.year}"
   end
 
-  def self.number_exists?(number:)
-    PatientIdentifier.where(identifier: number)\
-                     .exists?
+  def self.number_exists?(number:, identifier_type:)
+    query = PatientIdentifier.where(identifier: number)
+    query = query.where(type: identifier_type) if not identifier_type.nil?
+    query.exists?
   end
 
   def self.ipt_eligible? (patient_id:)
