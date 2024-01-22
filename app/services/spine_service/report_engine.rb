@@ -12,7 +12,7 @@ module SpineService
 
     def find_report(start_date:, end_date:, name:, **kwargs)
       name = name&.upcase&.gsub('_', ' ') || kwargs[:type]&.upcase&.gsub('_', ' ')
-      REPORTS[name].new(start_date: start_date, end_date: end_date, **kwargs).fetch_report
+      REPORTS[name].new(start_date:, end_date:, **kwargs).fetch_report
     end
   end
 end

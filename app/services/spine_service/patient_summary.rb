@@ -20,7 +20,7 @@ module SpineService
       {
         patient_id: patient.patient_id,
         npid: npid || 'N/A',
-        residence: residence
+        residence:
       }
     end
 

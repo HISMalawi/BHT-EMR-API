@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'set'
-
 module SpineService
   # rubocop:disable Metrics/ClassLength
   # This class implements a state machine that determines the next encounter
@@ -67,7 +65,7 @@ module SpineService
     # NOTE: By `relevant` above we mean encounters that matter in deciding
     # what encounter the patient should go for in this present time.
     def encounter_exists?(type)
-      Encounter.where(type: type, patient: @patient, program: @program)\
+      Encounter.where(type:, patient: @patient, program: @program)\
                .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
                .exists?
     end
