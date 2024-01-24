@@ -31,6 +31,13 @@ class TBService::LabTestsEngine
 
   def panels(test_type)
     nlims.specimen_types(test_type)
+  rescue StandardError
+    # TODO: Remove this once the LIMS is fixed
+    # TODO: add specimen type from concept sets
+    # ConceptName.where(
+    #   'concept_id in (?)', ConceptSet.where(concept_set: concept('TB Specimen Types')).map(&:concept_id)
+    # ).map(&:name)
+    return ['Sputum', 'Spit', 'Urine', 'Blood']
   end
 
   def results(accession_number)
@@ -67,6 +74,10 @@ class TBService::LabTestsEngine
       save_reason_for_test(encounter, local_order, test['reason'])
 
       { order: local_order, lims_order: lims_order }
+    rescue StandardError
+      create_local_order(patient, encounter, date, nil)
+      save_reason_for_test(encounter, local_order, test['reason'])
+      { order: local_order, lims_order: nil }
     end
   end
 

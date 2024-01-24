@@ -5,6 +5,19 @@ class Api::V1::ConceptsController < ApplicationController
     render json: Concept.unscoped.find(params[:id])
   end
 
+  def find_names_by_ids
+    params.permit(:ids)
+    ids = params[:ids]
+    concepts = []
+    ids.each do |id|
+      found = Concept.joins(:concept_names)\
+        .where('concept.concept_id = ?', id)\
+        .uniq
+      concepts << found if !found.empty?
+    end
+    render json: concepts
+  end
+
   def index
     permitted_params = params.permit(:name, :set)
     name = permitted_params[:name]

@@ -157,6 +157,12 @@ class Api::V1::PatientsController < ApplicationController
     end
   end
 
+  def most_recent_lab_order
+    patient_id, program_id, date = params.require([:patient_id, :program_id, :date])
+    render json: service.most_recent_lab_order(patient_id: patient_id,
+                                               program_id: program_id, date: date)
+  end
+
   def tpt_status
     patient_id = params.require(:patient_id)
     date = params[:date]&.to_date || Date.today

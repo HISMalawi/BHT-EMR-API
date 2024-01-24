@@ -71,6 +71,7 @@ Rails.application.routes.draw do
                        request.params
         end)
         get '/tpt_status' => 'patients#tpt_status'
+        get '/most_recent_lab_order', to: 'patients#most_recent_lab_order'
         get '/drugs_received', to: 'patients#drugs_received'
         get '/last_drugs_received', to: 'patients#last_drugs_received'
         get '/drugs_orders_by_program', to: 'patients#drugs_orders_by_program'
@@ -257,7 +258,7 @@ Rails.application.routes.draw do
 
       get '/current_time', to: 'time#current_time'
 
-      get '/dde/patients/find_by_npid', to: 'dde#find_patients_by_npid'
+      get '/dde/patients/find_by_find_by_npid', to: 'dde#find_patients_by_npid'
       get '/dde/patients/find_by_name_and_gender', to: 'dde#find_patients_by_name_and_gender'
       get '/dde/patients/import_by_doc_id', to: 'dde#import_patients_by_doc_id'
       get '/dde/patients/import_by_name_and_gender', to: 'dde#import_patients_by_name_and_gender'
@@ -306,6 +307,7 @@ Rails.application.routes.draw do
   end
 
   root to: 'static#index'
+  post '/api/v1/concept/find_by_ids', to: 'api/v1/concepts#find_names_by_ids'
   get '/api/v1/archiving_candidates' => 'api/v1/patients#find_archiving_candidates'
   get '/api/v1/_health' => 'healthcheck#index'
   post '/api/v1/auth/login' => 'api/v1/users#login'

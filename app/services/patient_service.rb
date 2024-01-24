@@ -358,6 +358,18 @@ class PatientService
     { new_identifier: new_identifier, voided_identifiers: existing_identifiers }
   end
 
+  def most_recent_lab_order(patient_id:, program_id:, date:)
+    outcome_date = patient_last_outcome_date(patient_id, program_id, date)
+    Encounter.joins(:observations)
+             .where(type: encounter_type('Lab Orders'),
+                    patient_id: patient_id,
+                    program_id: program_id)
+              .where(obs: {concept_id: concept('Test type').concept_id})
+              .where('obs.obs_datetime >= ? AND DATE(obs.obs_datetime) <= DATE(?)', outcome_date, date)
+              .order(encounter_datetime: :desc)
+              .first
+  end
+
   def current_htn_drugs_summary(patient, date)
     {
       drugs: current_htn_drugs(patient, date),
