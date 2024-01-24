@@ -146,13 +146,13 @@ module ARTService
                     WHEN transfer_in.value_coded IS NOT NULL THEN 0
                     ELSE 1
                 END new_patient,
-                pp.date_enrolled,
+                MIN(ord.start_date) date_enrolled,
                 DATE(COALESCE(art_start_date.value_datetime, MIN(ord.start_date))) earliest_start_date,
                 preg_or_breast.name AS maternal_status,
                 DATE(MIN(pregnant_or_breastfeeding.obs_datetime)) AS maternal_status_date
             FROM patient_program pp
             INNER JOIN person pe ON pe.person_id = pp.patient_id AND pe.voided = 0
-            INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id AND ps.voided = 0 AND ps.start_date >= '#{start_date}' AND ps.state = 7   -- ON ART
+            INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id AND ps.voided = 0 AND ps.start_date >= '#{start_date}' AND ps.start_date <= '#{end_date}' AND ps.state = 7   -- ON ART
             INNER JOIN orders ord ON ord.patient_id = pp.patient_id AND ord.voided = 0 AND ord.start_date <= '#{end_date}' AND ord.order_type_id = #{order_type('Drug Order').id}
             INNER JOIN drug_order do ON do.order_id = ord.order_id AND do.quantity > 0 AND do.drug_inventory_id IN (SELECT drug_id FROM arv_drug)
             LEFT JOIN obs art_start_date ON art_start_date.person_id = pp.patient_id AND art_start_date.concept_id = #{concept_name('ART start date').concept_id} AND art_start_date.voided = 0
@@ -180,8 +180,9 @@ module ARTService
               AND pregnant_or_breastfeeding.voided = 0
               AND pregnant_or_breastfeeding.value_coded = #{concept_name('Yes').concept_id}
             LEFT JOIN concept_name preg_or_breast ON preg_or_breast.concept_id = pregnant_or_breastfeeding.concept_id AND preg_or_breast.voided = 0
-            WHERE pp.program_id = #{program('HIV PROGRAM').id} AND pp.voided = 0 AND pp.date_enrolled <= DATE('#{end_date}') AND pp.date_enrolled >= DATE('#{start_date}')
+            WHERE pp.program_id = #{program('HIV PROGRAM').id} AND pp.voided = 0 -- AND pp.date_enrolled <= DATE('#{end_date}') AND pp.date_enrolled >= DATE('#{start_date}') ** This was removed because some people do hacks to the system **
             GROUP BY pp.patient_id
+            HAVING date_enrolled <= '#{end_date}' AND date_enrolled >= '#{start_date}'
           SQL
         end
       end
