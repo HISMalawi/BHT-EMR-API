@@ -11,12 +11,12 @@ class OPDService::Reports::Diagnosis
       AND obs.concept_id IN(6543, 6542)',
       start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
       end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id).\
-      joins('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
-      INNER JOIN person p ON p.person_id = encounter.patient_id
+      joins('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id AND obs.voided = 0
+      INNER JOIN person p ON p.person_id = encounter.patient_id AND p.voided = 0
       LEFT JOIN person_name n ON n.person_id = encounter.patient_id AND n.voided = 0
-      LEFT JOIN person_attribute z ON z.person_id = encounter.patient_id AND z.person_attribute_type_id = 12
-      RIGHT JOIN person_address a ON a.person_id = encounter.patient_id
-      INNER JOIN concept_name c ON c.concept_id = obs.value_coded
+      LEFT JOIN person_attribute z ON z.person_id = encounter.patient_id AND z.person_attribute_type_id = 12 AND z.voided = 0
+      RIGHT JOIN person_address a ON a.person_id = encounter.patient_id AND a.voided = 0
+      INNER JOIN concept_name c ON c.concept_id = obs.value_coded AND c.voided=0
       ').\
       group('obs.person_id,obs.value_coded,DATE(obs.obs_datetime)').\
       select("encounter.encounter_type,n.given_name, n.family_name, n.person_id, obs.value_coded, p.gender,
