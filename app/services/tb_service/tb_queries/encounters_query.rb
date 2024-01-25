@@ -1,11 +1,15 @@
+# frozen_string_literal: true
+
 include TimeUtils
 
-class TBQueries::EncountersQuery
-  def initialize ()
+class TBService::TBQueries::EncountersQuery
+  include ModelUtils
+
+  def initialize
     @program = program('TB Program')
   end
 
-  def by_date (date, type)
+  def by_date(date, type)
     type = encounter_type(type)
     start_time, end_time = TimeUtils.day_bounds(date)
 

@@ -2,7 +2,8 @@ class Api::V1::CleaningController < ApplicationController
   SERVICES = {
     'ANC PROGRAM' => ANCService::DataCleaning,
     'HIV PROGRAM' => ARTService::DataCleaningTool,
-    'HTC PROGRAM' => HTSService::DataCleaning
+    'HTC PROGRAM' => HTSService::DataCleaning,
+    'TB PROGRAM' => TBService::DataCleaning
   }.freeze
 
   def index
@@ -120,6 +121,16 @@ class Api::V1::CleaningController < ApplicationController
     program = Program.find(params[:program_id])
     service = SERVICES[program.name.upcase].new(start_date: params[:start_date],
                                                 end_date: params[:end_date], tool_name: params[:report_name])
+    render json: service.results
+  end
+
+  def tb_tools
+    program = Program.find(params[:program_id])
+    service = SERVICES[program.name.upcase].new(start_date: params[:start_date],
+                                                end_date: params[:end_date],
+                                                scenario: params[:scenario],
+                                                context: params[:context]
+                                                )
     render json: service.results
   end
 
