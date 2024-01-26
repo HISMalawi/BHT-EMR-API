@@ -159,12 +159,11 @@ module ARTService
             LEFT JOIN (
                 SELECT max(o.obs_datetime) AS obs_datetime, o.person_id
                 FROM obs o
-                INNER JOIN concept_name cn ON cn.concept_id = o.concept_id AND cn.name = 'CD4 count'
+                INNER JOIN concept_name cn ON cn.concept_id = o.concept_id AND cn.name = 'CD4 count' AND cn.voided = 0
                 INNER JOIN patient_program pp ON pp.patient_id = o.person_id
                     AND pp.program_id = #{program('HIV PROGRAM').id}
                     AND pp.voided = 0
-                    AND pp.date_enrolled <= DATE('#{end_date}')
-                    AND pp.date_enrolled >= DATE('#{start_date}')
+                INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id AND ps.voided = 0 AND ps.state = 7 AND ps.start_date <= DATE('#{end_date}') AND ps.start_date >= DATE('#{start_date}')
                 WHERE o.concept_id = #{concept_name('CD4 count').concept_id} AND o.voided = 0
                 AND o.obs_datetime <= '#{end_date}' AND o.obs_datetime >= '#{start_date}'
                 GROUP BY o.person_id
@@ -174,7 +173,7 @@ module ARTService
                 AND transfer_in.concept_id = #{concept_name('Ever registered at ART clinic').concept_id}
                 AND transfer_in.voided = 0
                 AND transfer_in.value_coded = #{concept_name('Yes').concept_id}
-                AND DATE(transfer_in.obs_datetime) <= pp.date_enrolled
+                AND DATE(transfer_in.obs_datetime) <= '#{end_date}'
             LEFT JOIN obs pregnant_or_breastfeeding ON pregnant_or_breastfeeding.person_id = pp.patient_id
               AND pregnant_or_breastfeeding.concept_id IN (SELECT concept_id FROM concept_name WHERE name IN ('Breast feeding?', 'Breast feeding', 'Breastfeeding', 'Is patient pregnant?', 'patient pregnant') AND voided = 0)
               AND pregnant_or_breastfeeding.voided = 0
