@@ -181,6 +181,7 @@ module ARTService
                 AND transfer_in.voided = 0
                 AND transfer_in.value_coded = #{concept_name('Yes').concept_id}
                 AND DATE(transfer_in.obs_datetime) <= '#{end_date}'
+                AND DATE(transfer_in.obs_datetime) >= '#{start_date}'
             LEFT JOIN obs art_initiation_location ON art_initiation_location.person_id = transfer_in.person_id AND art_initiation_location.concept_id = #{concept_name('Location of ART initiation').concept_id} AND art_initiation_location.voided = 0
             LEFT JOIN obs pregnant_or_breastfeeding ON pregnant_or_breastfeeding.person_id = pp.patient_id
               AND pregnant_or_breastfeeding.concept_id IN (SELECT concept_id FROM concept_name WHERE name IN ('Breast feeding?', 'Breast feeding', 'Breastfeeding', 'Is patient pregnant?', 'patient pregnant') AND voided = 0)
