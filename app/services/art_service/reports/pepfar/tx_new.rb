@@ -7,11 +7,12 @@ module ARTService
       class TxNew
         include ModelUtils
         include Pepfar::Utils
-        attr_reader :start_date, :end_date
+        attr_reader :start_date, :end_date, :current_location
 
         def initialize(start_date:, end_date:, **_kwargs)
           @start_date = start_date.to_date.beginning_of_day.strftime('%Y-%m-%d %H:%M:%S')
           @end_date = end_date.to_date.end_of_day.strftime('%Y-%m-%d %H:%M:%S')
+          @current_location = Location.current_health_center&.name&.downcase
         end
 
         def find_report
@@ -59,6 +60,7 @@ module ARTService
           data.each do |row|
             age_group = row['age_group']
             gender = row['gender']
+            date_enrolled = row['date_enrolled']
             next if age_group.blank?
             next if gender.blank?
             next unless GENDER.include?(gender)
@@ -69,12 +71,16 @@ module ARTService
             patient_id = row['patient_id'].to_i
             earliest_start_date = row['earliest_start_date']
             indicator = new_patient.positive? ? cd4_count_group : 'transfer_in'
+            art_initiation_location = row['art_initiation_location']&.downcase
 
             if new_patient.positive? && earliest_start_date.to_date >= start_date.to_date
+              report[age_group.to_s][gender.to_s][indicator.to_sym] << patient_id 
+            elsif new_patient.zero? && art_initiation_location != current_location
               report[age_group.to_s][gender.to_s][indicator.to_sym] << patient_id
+            else
+              next
             end
-            report[age_group.to_s][gender.to_s][indicator.to_sym] << patient_id if new_patient.zero?
-            process_aggreggation_rows(report: report, gender: gender, indicator: indicator, start_date: earliest_start_date, patient_id: patient_id, maternal_status: row['maternal_status'], maternal_status_date: row['maternal_status_date'])
+            process_aggreggation_rows(report: report, gender: gender, indicator: indicator, start_date: date_enrolled, patient_id: patient_id, maternal_status: row['maternal_status'], maternal_status_date: row['maternal_status_date'])
           end
         end
 
@@ -84,9 +90,9 @@ module ARTService
 
           if gender == 'M'
             report['All']['Male'][indicator.to_sym] << kwargs[:patient_id]
-          elsif maternal_status&.match?(/pregnant/i) && maternal_status_date&.to_date == start_date.to_date
+          elsif maternal_status&.match?(/pregnant/i) && maternal_status_date&.to_date <= start_date.to_date
             report['All']['FP'][indicator.to_sym] << kwargs[:patient_id]
-          elsif maternal_status&.match?(/breast/i) && maternal_status_date&.to_date == start_date.to_date
+          elsif maternal_status&.match?(/breast/i) && maternal_status_date&.to_date <= start_date.to_date
             report['All']['FBf'][indicator.to_sym] << kwargs[:patient_id]
           else
             report['All']['FNP'][indicator.to_sym] << kwargs[:patient_id]
@@ -146,10 +152,11 @@ module ARTService
                     WHEN transfer_in.value_coded IS NOT NULL THEN 0
                     ELSE 1
                 END new_patient,
-                MIN(ord.start_date) date_enrolled,
+                MIN(ps.start_date) date_enrolled,
                 DATE(COALESCE(art_start_date.value_datetime, MIN(ord.start_date))) earliest_start_date,
                 preg_or_breast.name AS maternal_status,
-                DATE(MIN(pregnant_or_breastfeeding.obs_datetime)) AS maternal_status_date
+                DATE(MIN(pregnant_or_breastfeeding.obs_datetime)) AS maternal_status_date,
+                art_initiation_location.value_text AS art_initiation_location
             FROM patient_program pp
             INNER JOIN person pe ON pe.person_id = pp.patient_id AND pe.voided = 0
             INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id AND ps.voided = 0 AND ps.start_date >= '#{start_date}' AND ps.start_date <= '#{end_date}' AND ps.state = 7   -- ON ART
@@ -174,6 +181,7 @@ module ARTService
                 AND transfer_in.voided = 0
                 AND transfer_in.value_coded = #{concept_name('Yes').concept_id}
                 AND DATE(transfer_in.obs_datetime) <= '#{end_date}'
+            LEFT JOIN obs art_initiation_location ON art_initiation_location.person_id = transfer_in.person_id AND art_initiation_location.concept_id = #{concept_name('Location of ART initiation').concept_id} AND art_initiation_location.voided = 0
             LEFT JOIN obs pregnant_or_breastfeeding ON pregnant_or_breastfeeding.person_id = pp.patient_id
               AND pregnant_or_breastfeeding.concept_id IN (SELECT concept_id FROM concept_name WHERE name IN ('Breast feeding?', 'Breast feeding', 'Breastfeeding', 'Is patient pregnant?', 'patient pregnant') AND voided = 0)
               AND pregnant_or_breastfeeding.voided = 0
