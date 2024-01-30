@@ -4,8 +4,6 @@ module CXCAService
     module Pepfar
       class CxcaScrn
         attr_reader :start_date, :end_date, :report
-        CxCa_PROGRAM = Program.find_by_name "CxCa program"
-
 
         include Utils
         include ModelUtils
