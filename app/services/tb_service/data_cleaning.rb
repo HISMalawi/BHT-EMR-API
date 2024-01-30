@@ -23,6 +23,9 @@ module TBService
     end
 
     def results
+      if(!TOOLS.keys.include?(@context.upcase))
+        raise "Invalid context #{@context}"
+      end
       map_results(eval(TOOLS[@context.upcase]))
     rescue StandardError => e
     "#{e.class}: #{e.message}"
