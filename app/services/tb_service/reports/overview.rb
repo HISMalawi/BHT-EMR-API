@@ -30,7 +30,7 @@ module TBService::Reports::Overview
     private
 
     def query
-      TBQueries::EncountersQuery.new
+      TBService::TBQueries::EncountersQuery.new
     end
   end
 end
