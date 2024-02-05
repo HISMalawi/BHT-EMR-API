@@ -2,6 +2,48 @@
 
 module TBService::Reports::Quarterly
   class << self
+
+    def report_format(indicator)
+      {
+        indicator: indicator,
+        cases: [],
+        cured: [],
+        complete: [],
+        failed: [],
+        died: [],
+        lost: [],
+        ne: []
+      }
+    end
+
+    def format_report(indicator:, report_data:)
+      data = report_format(indicator)
+      program = Program.find_by_name('TB PROGRAM')
+      report_data.each do |patient|
+        process_patient(patient, data, program)
+      end
+      data
+    end
+
+    private
+
+    def process_patient(patient, data, program)
+      data[:cases] << patient.id
+      outcome = patient.outcome(program, Date.today)
+      out_name = outcome.name&.parameterize&.underscore
+      case out_name
+      when nil
+        data[:ne] << patient.id
+      when 'cured', 'complete', 'failed', 'died', 'lost'
+        data[out_name] ||= []
+        data[out_name] << patient.id
+      end
+    end
+
+    def patient_ids(data)
+      data.map(&:patient_id)
+    end
+
     def new_pulmonary_clinically_diagnosed(start_date, end_date)
       query_init = new_patients_query.ref(start_date, end_date)
       query = query_init.with_clinical_pulmonary_tuberculosis(start_date, end_date)
@@ -67,27 +109,27 @@ module TBService::Reports::Quarterly
     private
 
     def cases_query
-      TBQueries::CasesQuery.new
+      TBService::TBQueries::CasesQuery.new
     end
 
     def relapses_query
-      TBQueries::RelapsePatientsQuery.new
+      TBService::TBQueries::RelapsePatientsQuery.new
     end
 
     def new_patients_query
-      TBQueries::NewPatientsQuery.new
+      TBService::TBQueries::NewPatientsQuery.new
     end
 
     def hiv_result_query
-      TBQueries::HivResultQuery
+      TBService::TBQueries::HivResultQuery
     end
 
     def retreatment_patients_query
-      TBQueries::RetreatmentPatientsQuery.new
+      TBService::TBQueries::RetreatmentPatientsQuery.new
     end
 
     def ipt_candidate_query
-      TBQueries::IptCandidatesQuery.new
+      TBService::TBQueries::IptCandidatesQuery.new
     end
   end
 end
