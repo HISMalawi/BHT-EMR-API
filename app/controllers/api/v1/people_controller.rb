@@ -97,6 +97,22 @@ class Api::V1::PeopleController < ApplicationController
     render json: clients
   end
 
+  def tb_list
+    clients  = ActiveRecord::Base.connection.select_all <<~SQL
+      SELECT p.*, CONCAT(pn.given_name, " ", pn.family_name) as name, 
+             TIMESTAMPDIFF(YEAR, p.birthdate, CURDATE()) as age,
+             a.identifier
+      FROM person p
+      INNER JOIN person_name pn ON pn.person_id = p.person_id
+      LEFT JOIN patient_identifier a ON a.patient_id = p.person_id
+      AND a.identifier_type IN (7, 11) AND a.voided = 0
+      WHERE p.person_id IN(#{params[:person_ids]})
+      GROUP BY p.person_id ORDER BY a.date_created DESC;
+    SQL
+
+    render json: clients
+  end
+
   private
 
   PERSON_ATTRIBUTES = %i[
