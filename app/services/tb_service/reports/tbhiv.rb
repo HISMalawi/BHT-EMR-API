@@ -2,6 +2,35 @@
 
 module TBService::Reports::Tbhiv
   class << self
+
+    def report_format(indicator)
+      {
+        indicator: indicator,
+        male: [],
+        female: [],
+        total: []
+      }
+    end
+
+    def format_report(indicator:, report_data:)
+      data = report_format(indicator)
+      program = Program.find_by_name('TB PROGRAM')
+      report_data.each do |patient|
+        process_patient(patient, data, program)
+      end
+      data
+    end
+
+    def process_patient(patient, data, program)
+      gender = patient.gender == 'M' ? :male : :female
+      data[:total] << patient.id
+      data[gender] << patient.id
+    end
+
+    def patient_ids(data)
+      data.map(&:patient_id)
+    end
+
     def new_and_relapse_tb_cases_notified(start_date, end_date)
       new_cases = new_patients_query.ref(start_date, end_date)
       relapses = relapse_patients_query.ref(start_date, end_date)
@@ -61,20 +90,20 @@ module TBService::Reports::Tbhiv
     private
 
     def new_patients_query
-      TBQueries::NewPatientsQuery.new
+      TBService::TBQueries::NewPatientsQuery.new
     end
 
 
     def hiv_result_query
-      TBQueries::HivResultQuery
+      TBService::TBQueries::HivResultQuery
     end
 
     def relapse_patients_query
-      TBQueries::RelapsePatientsQuery.new
+      TBService::TBQueries::RelapsePatientsQuery.new
     end
 
     def ipt_candidates_query
-      TBQueries::IptCandidatesQuery.new
+      TBService::TBQueries::IptCandidatesQuery.new
     end
   end
 end

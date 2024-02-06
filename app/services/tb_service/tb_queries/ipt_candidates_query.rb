@@ -32,12 +32,12 @@ class TBService::TBQueries::IptCandidatesQuery
     end
 
     def on_ipt (start_date, end_date)
-      ipt_patients = TBQueries::IptPatientsQuery.new.all(start_date, end_date)
+      ipt_patients = TBService::TBQueries::IptPatientsQuery.new.all(start_date, end_date)
       where(patient: { patient_id: ipt_patients }).distinct
     end
 
     def not_in_tb_program (start_date, end_date)
-      where.not(patient_id: TBQueries::EnrolledPatientsQuery.new.ref(start_date, end_date))
+      where.not(patient_id: TBService::TBQueries::EnrolledPatientsQuery.new.ref(start_date, end_date))
     end
   end
 end
