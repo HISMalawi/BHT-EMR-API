@@ -2,6 +2,46 @@
 
 module TBService::Reports::CaseFinding
   class << self
+
+    AGE_GROUPS = {
+      '0-4' => [0, 4],
+      '5-14' => [5, 14],
+      '15-24' => [15, 24],
+      '25-34' => [25, 34],
+      '35-44' => [35, 44],
+      '45-54' => [45, 54],
+      '55-64' => [55, 64],
+      '65+' => [65, 200]
+    }.freeze
+
+    def report_format(indicator)
+      format_ = {
+        indicator: indicator
+      }
+      AGE_GROUPS.each_key do |k|
+        format_[k] = {
+          male: [],
+          female: []
+        }
+      end
+      format_
+    end
+
+    def format_report(indicator:, report_data:)
+      data = report_format(indicator)
+      report_data.each do |patient|
+        process_patient(patient, data)
+      end
+      data
+    end
+
+    def process_patient(patient, data)
+      age = patient.age
+      gender = patient.gender == 'M' ? :male : :female
+      age_group = AGE_GROUPS.keys.find { |k| age.between?(*AGE_GROUPS[k]) }
+      data[age_group][gender] << patient.id
+    end
+
     def new_pulmonary_clinically_diagnosed(start_date, end_date)
       query_init = new_patients_query.ref(start_date, end_date)
       query = query_init.with_clinical_pulmonary_tuberculosis(start_date, end_date)
@@ -115,31 +155,31 @@ module TBService::Reports::CaseFinding
     private
 
     def new_patients_query
-      TBQueries::NewPatientsQuery.new
+      TBService::TBQueries::NewPatientsQuery.new
     end
 
     def relapses_query
-      TBQueries::RelapsePatientsQuery.new
+      TBService::TBQueries::RelapsePatientsQuery.new
     end
 
     def tx_history_query
-      TBQueries::UnknownTreatmentHistoryQuery.new
+      TBService::TBQueries::UnknownTreatmentHistoryQuery.new
     end
 
     def other_tx_history_query
-      TBQueries::OtherTreatmentHistoryQuery.new
+      TBService::TBQueries::OtherTreatmentHistoryQuery.new
     end
 
     def presumptives_query
-      TBQueries::PresumptivesQuery.new
+      TBService::TBQueries::PresumptivesQuery.new
     end
 
     def defaulters_query
-      TBQueries::DefaultersQuery.new
+      TBService::TBQueries::DefaultersQuery.new
     end
 
     def failures_query
-      TBQueries::FailuresQuery.new
+      TBService::TBQueries::FailuresQuery.new
     end
   end
 end
