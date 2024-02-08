@@ -1,5 +1,26 @@
 module TBService::Reports::HighRiskPatients
   class << self
+
+
+    def report_format(indicator:)
+      {
+        indicator: indicator,
+        total: []
+      }
+    end
+
+    def format_report(indicator:, report_data:)
+      data = report_format(indicator: indicator)
+      report_data.each do |patient|
+        process_patient(patient, data)
+      end
+      data
+    end
+
+    def process_patient(patient, data)
+      data[:total] << patient.id unless data[:total].include?(patient.id)
+    end
+
     def number_of_tb_cases_among_current_miners (start_date, end_date)
       enrolled = enrolled_patients_query.ref(start_date, end_date)
       high_risk_patients_query.new(enrolled).ref(start_date, end_date).current_miners
@@ -60,15 +81,15 @@ module TBService::Reports::HighRiskPatients
     private
 
     def enrolled_patients_query
-      TBQueries::EnrolledPatientsQuery.new
+      TBService::TBQueries::EnrolledPatientsQuery.new
     end
 
     def high_risk_patients_query
-      TBQueries::HighRiskPatientsQuery
+      TBService::TBQueries::HighRiskPatientsQuery
     end
 
     def index_case_contacts_query
-      TBQueries::IndexCaseContactsQuery.new
+      TBService::TBQueries::IndexCaseContactsQuery.new
     end
   end
 end
