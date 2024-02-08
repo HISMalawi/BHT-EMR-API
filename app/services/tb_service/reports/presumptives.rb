@@ -3,6 +3,25 @@
 module TBService::Reports::Presumptives
   class << self
 
+    def report_format(indicator:)
+      {
+        indicator: indicator,
+        total: []
+      }
+    end
+
+    def format_report(indicator:, report_data:)
+      data = report_format(indicator: indicator)
+      report_data.each do |patient|
+        process_patient(patient, data)
+      end
+      data
+    end
+
+    def process_patient(patient, data)
+      data[:total] << patient.id unless data[:total].include?(patient.id)
+    end
+
     def number_of_presumptive_tb_cases (start_date, end_date)
       query = presumptive_patients_query.ref(start_date, end_date)
       query.cases
@@ -62,15 +81,15 @@ module TBService::Reports::Presumptives
     private
 
     def presumptive_patients_query
-      TBQueries::PresumptivePatientsQuery.new
+      TBService::TBQueries::PresumptivePatientsQuery.new
     end
 
     def new_patients_query
-      TBQueries::NewPatientsQuery.new
+      TBService::TBQueries::NewPatientsQuery.new
     end
 
     def opd_patients_query
-      TBQueries::OpdPatientsQuery.new
+      TBService::TBQueries::OpdPatientsQuery.new
     end
   end
 end

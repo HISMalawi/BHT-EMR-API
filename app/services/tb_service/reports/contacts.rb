@@ -1,5 +1,26 @@
 module TBService::Reports::Contacts
   class << self
+
+
+    def report_format(indicator:)
+      {
+        indicator: indicator,
+        total: []
+      }
+    end
+
+    def format_report(indicator:, report_data:)
+      data = report_format(indicator: indicator)
+      report_data.each do |patient|
+        process_patient(patient, data)
+      end
+      data
+    end
+
+    def process_patient(patient, data)
+      data[:total] << patient.id unless data[:total].include?(patient.id)
+    end
+
     def number_of_pulmonary_tb_cases (start_date, end_date)
       enrolled = enrolled_patients.ref(start_date, end_date)
       enrolled.with_pulmonary_tuberculosis(start_date, end_date)
@@ -64,27 +85,27 @@ module TBService::Reports::Contacts
     private
 
     def index_cases
-      TBQueries::IndexCasesQuery
+      TBService::TBQueries::IndexCasesQuery
     end
 
     def enrolled_patients
-      TBQueries::EnrolledPatientsQuery.new
+      TBService::TBQueries::EnrolledPatientsQuery.new
     end
 
     def index_case_contacts
-      TBQueries::IndexCaseContactsQuery.new
+      TBService::TBQueries::IndexCaseContactsQuery.new
     end
 
     def screened_patients
-      TBQueries::ScreenedPatientsQuery.new
+      TBService::TBQueries::ScreenedPatientsQuery.new
     end
 
     def presumptive_patients
-      TBQueries::PresumptivePatientsQuery.new
+      TBService::TBQueries::PresumptivePatientsQuery.new
     end
 
     def ipt_candidates_query
-      TBQueries::IptCandidatesQuery.new
+      TBService::TBQueries::IptCandidatesQuery.new
     end
   end
 end
