@@ -1,5 +1,29 @@
 module TBService::Reports::Community
   class << self
+
+    def report_format(indicator:)
+      {
+        indicator: indicator,
+        total: []
+      }
+    end
+
+    def format_report(indicator:, report_data:)
+      data = report_format(indicator: indicator)
+      report_data.each do |patient|
+        if indicator == 'functional_sputum_sample_collection_points'
+          data[:total] << patient unless data[:total].include?(patient)
+          next
+        end
+        process_patient(patient, data)
+      end
+      data
+    end
+
+    def process_patient(patient, data)
+      data[:total] << patient&.id unless data[:total].include?(patient&.id)
+    end
+
     def number_of_presumptive_tb_cases_referred_from_cscp (start_date, end_date)
       query = initial_visits_query.new(start_date, end_date)
       query.referred_from_sscp
@@ -49,7 +73,7 @@ module TBService::Reports::Community
     private
 
     def initial_visits_query
-      TBQueries::InitialVisitsQuery
+      TBService::TBQueries::InitialVisitsQuery
     end
 
     def get_reporting_quarter(start_date, end_date)

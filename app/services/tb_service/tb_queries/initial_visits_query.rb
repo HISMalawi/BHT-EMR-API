@@ -34,11 +34,11 @@ class TBService::TBQueries::InitialVisitsQuery
   private
 
   def presumptives
-    TBQueries::PresumptivePatientsQuery.new.ref(@start_date, @end_date)
+    TBService::TBQueries::PresumptivePatientsQuery.new.ref(@start_date, @end_date)
   end
 
   def enrolled
-    TBQueries::EnrolledPatientsQuery.new.ref(@start_date, @end_date)
+    TBService::TBQueries::EnrolledPatientsQuery.new.ref(@start_date, @end_date)
   end
 
   def source_of_referral (src)
