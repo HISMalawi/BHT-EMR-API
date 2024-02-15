@@ -1,7 +1,7 @@
 # Mysql configurations
 default: &default
-  host: localhost
-  port: 3306
+  host: 127.0.0.1
+  port: 3308
   adapter: mysql2
   encoding: utf8
   collation: utf8_unicode_ci
@@ -9,10 +9,13 @@ default: &default
   password: your_secret_password
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 20 } %>
   checkout_timeout: 5000
+  variables:
+    sql_mode: STRICT_TRANS_TABLES
 
 development:
   <<: *default
   database: openmrs_dev
+
 test:
   <<: *default
   database: openmrs_test
