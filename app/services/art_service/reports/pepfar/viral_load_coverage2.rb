@@ -155,7 +155,7 @@ module ARTService
 
         def build_report(report)
           clients = process_due_people
-          clients.each { |patient| report[patient['age_group']][:due_for_vl] << patient }
+          clients.each { |patient| report[patient['age_group']][:due_for_vl] << patient['patient_id'] }
           load_patient_tests_into_report(report, clients.map { |patient| patient['patient_id'] })
         end
 
@@ -164,15 +164,15 @@ module ARTService
             age_group = patient['age_group']
             reason_for_test = (patient['reason_for_test'] || 'Routine').match?(/Routine/i) ? :routine : :targeted
 
-            report[age_group][:drawn][reason_for_test] << patient
+            report[age_group][:drawn][reason_for_test] << patient['patient_id']
             next unless patient['result_value']
 
             if patient['result_value'].casecmp?('LDL')
-              report[age_group][:low_vl][reason_for_test] << patient
+              report[age_group][:low_vl][reason_for_test] << patient['patient_id']
             elsif patient['result_value'].to_i < 1000
-              report[age_group][:low_vl][reason_for_test] << patient
+              report[age_group][:low_vl][reason_for_test] << patient['patient_id']
             else
-              report[age_group][:high_vl][reason_for_test] << patient
+              report[age_group][:high_vl][reason_for_test] << patient['patient_id']
             end
           end
         end
