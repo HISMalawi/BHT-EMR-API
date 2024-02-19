@@ -351,3 +351,25 @@ See the following for more:
 - [Vscode](https://code.visualstudio.com/download) for editing
 - Rubocop - you can use this to format your code and find/fix various [defect attractors](http://esr.ibiblio.org/?p=8042)
 - If you use VSCode check out the following plugins [Ruby](https://marketplace.visualstudio.com/search?term=Ruby&target=VSCode), [Ruby-Rubocop](https://marketplace.visualstudio.com/search?term=Rubocop&target=VSCode&category=All%20categories&sortBy=Relevance), and [Rufo](https://marketplace.visualstudio.com/search?term=Rufo&target=VSCode&category=All%20categories&sortBy=Relevance), [Ruby Solargraph](https://marketplace.visualstudio.com/items?itemName=castwide.solargraph)
+
+## Dev Container
+* Install [Docker](https://docs.docker.com/get-docker/)
+* Install [Docker Compose](https://docs.docker.com/compose/install/)
+* We assume you are using VSCode as your editor
+* Install the [Remote - Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension
+* Open the project in VSCode
+* Click on the green button at the bottom left of the window
+* Select `Reopen in Container`
+* Wait for the container to build
+* Run `bash bin/container_setup.sh` to setup the container and install dependencies. Only run this once unless you have rebuilt the container. If nothing happens after running this command, then you might want to execute the commands in the script manually.
+
+**Note:** If you are using a dev container, then it comes with a pre-configured database and you don't need to run the migrations and seeds.
+
+**Note:** Perks of using a dev container include:
+* You don't need to install Ruby, Rails, MySQL, etc on your local machine
+* You don't need to worry about setting up the database, migrations, seeds, etc
+* You don't need to worry about setting up mysql client the container comes with it pre-installed
+* You don't need to worry about setting up the environment variables, the container comes with them pre-configured
+* You don't need to worry about setting up the storage, the container comes with it pre-configured
+* You don't need to worry about setting up the locale, the container comes with it pre-configured
+* You don't need to worry about setting up the gems, the container comes with them pre-installed
