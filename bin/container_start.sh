@@ -45,3 +45,6 @@ bin/initial_database_setup.sh test mpc
 # update the art metadata
 bin/update_art_metadata.sh production
 bin/update_art_metadata.sh development
+
+# handling dubious ownership
+git config --global --add safe.directory /workspaces/BHT-EMR-API
