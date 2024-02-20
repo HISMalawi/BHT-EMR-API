@@ -1,9 +1,8 @@
 {
-  "name": "Malawi EMR API Dev Container",
-  "build": {
-    "dockerfile": "Dockerfile"
-  },
-  "runArgs": ["--network=host"],
+  "name": "EMR API Dev Container",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "devcontainer",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
   "customizations": {
     "vscode": {
       "extensions": [
@@ -12,7 +11,8 @@
         "jnbt.vscode-rufo",
         "eamodio.gitlens",
         "ms-azuretools.vscode-docker",
-        "cweijan.vscode-mysql-client2"
+        "cweijan.vscode-mysql-client2",
+        "foxundermoon.shell-format"
       ]
     }
   },
@@ -21,6 +21,5 @@
     "storage": "1gb",
     "cpus": 2
   },
-  "forwardPorts": [3001],
   "postCreateCommand": "bash bin/post_container_setup.sh"
 }
