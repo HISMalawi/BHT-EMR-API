@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 ## TODO: add text processing logic to escape characters outside of [A-Za-z0-9], consider :, \", (, ), \,
 ## TODO: add text processing logic to escape apostrophes
 ## TODO: maintain current x and current y throughout a label process
