@@ -12,6 +12,7 @@ module ANCService
       CURRENT_PREGNANCY = EncounterType.find_by name: 'CURRENT PREGNANCY'
       ANC_VISIT_TYPE =    EncounterType.find_by name: 'ANC VISIT TYPE'
       DISPENSING =        EncounterType.find_by name: 'DISPENSING'
+      ANC_EXAMINATION =   EncounterType.find_by name: 'ANC EXAMINATION'
 
       YES = ConceptName.find_by name: 'Yes'
       NO  = ConceptName.find_by name: 'No'
@@ -88,6 +89,7 @@ module ANCService
           [e.patient_id, e.form_id]
         end
 
+
         # Indicators for monthly patients in cohort report.
         @patients_done_pregnancy_test = pregnancy_test_done(start_date)
         @pregnancy_test_done_in_first_trim = pregnancy_test_done_in_first_trimester(start_date)
@@ -128,7 +130,6 @@ module ANCService
         cohort_struct.on_art_before_anc_first_visit = @on_art_before_anc_first_visit
         cohort_struct.start_art_zero_to_twenty_seven_for_first_visit = @start_art_zero_to_twenty_seven_for_first_visit
         cohort_struct.start_art_plus_twenty_eight_for_first_visit = @start_art_plus_twenty_eight_for_first_visit
-
         # Indicators for the cohort block
         cohort_struct.total_women_in_cohort = @cohort_patients
         @c_pre_hiv_pos = prev_hiv_positive_final_visit
@@ -155,7 +156,7 @@ module ANCService
         cohort_struct.patients_with_total_of_two_visits = @anc_visits.select { |_x, y| y == 2 }.collect { |x, _y| x }.uniq
         cohort_struct.patients_with_total_of_three_visits = @anc_visits.select { |_x, y| y == 3 }.collect { |x, _y| x }.uniq
         cohort_struct.patients_with_total_of_four_visits = @anc_visits.select { |_x, y| y == 4 }.collect { |x, _y| x }.uniq
-        cohort_struct.patients_with_total_of_five_plus_visits = @anc_visits.reject { |_x, y| y < 5 }.collect { |x, _y| x }.uniq
+        cohort_struct.patients_with_total_of_five_plus_visits = @anc_visits.select { |_x, y| y >= 5 }.collect { |x, _y| x }.uniq
         cohort_struct.patients_with_pre_eclampsia = patients_with_pre_eclampsia
         cohort_struct.patients_without_pre_eclampsia = @cohort_patients - cohort_struct.patients_with_pre_eclampsia
 
@@ -203,7 +204,6 @@ module ANCService
         cohort_struct.patients_with_negative_syphilis_status = syphil_neg
         cohort_struct.patients_with_positive_syphilis_status = syphil_pos
         cohort_struct.patients_with_unknown_syphilis_status = syphil_unk
-
         cohort_struct.new_hiv_negative_final_visit = new_hiv_negative_final_visit&.map { |v| v['patient_id'] } || []
         cohort_struct.new_hiv_positive_final_visit = @c_new_hiv_pos
         cohort_struct.prev_hiv_positive_final_visit = @c_pre_hiv_pos
@@ -619,12 +619,12 @@ EOF
 
       def patients_with_pre_eclampsia
         Encounter.joins([:observations])
-                 .where(['program_id = ? AND concept_id = ? AND value_coded = ? AND DATE(encounter_datetime) '\
+                 .where(['program_id = ? AND encounter_type = ? 
+                          AND concept_id = ? AND value_coded = ? AND DATE(encounter_datetime) '\
               "BETWEEN (#{@c_lmp}) AND (?) AND encounter.patient_id IN (?)",
-                         PROGRAM.id, DIAGNOSIS.concept_id, PRE_ECLAMPSIA.concept_id,
+                         PROGRAM.id, ANC_EXAMINATION.id, PRE_ECLAMPSIA.concept_id, YES.concept_id,
                          (@c_start_date.to_date + @c_pregnant_range),
                          @cohort_patients]).collect(&:patient_id).uniq
-        []
       end
 
       def patients_given_td_less_than_two_doses
@@ -698,7 +698,7 @@ EOF
           AND encounter.voided = 0 AND encounter.program_id = #{PROGRAM.id}
           INNER JOIN concept_name ON o.concept_id = concept_name.concept_id AND concept_name.voided = 0 AND concept_name.name = 'Sulfadoxine and Pyrimethamine'
           INNER JOIN drug_order ON o.order_id = drug_order.order_id AND drug_order.quantity > 0
-          WHERE DATE(encounter_datetime) <= '#{@c_start_date.to_date + @c_pregnant_range - 1.day}' AND encounter.patient_id IN (#{(@cohort_patients + [0]).join(',')})
+          WHERE DATE(encounter_datetime) <= '#{@c_start_date.to_date + @c_pregnant_range - 1.day}' AND encounter.patient_id IN (#{@cohort_patients.join(',')})
           AND encounter.program_id = #{PROGRAM.id}
           GROUP BY encounter.patient_id
         SQL
@@ -848,7 +848,7 @@ EOF
             SELECT e.patient_id, o.value_coded
             FROM encounter e
             LEFT JOIN obs o ON o.encounter_id = e.encounter_id AND o.voided = 0 AND o.concept_id = #{HIV_STATUS.concept_id}
-            WHERE e.encounter_type = #{LAB_RESULTS.id} AND e.voided = 0 AND e.program_id = #{PROGRAM.id} AND e.patient_id IN (#{@cohort_patients.push(0).join(',')})
+            WHERE e.encounter_type = #{LAB_RESULTS.id} AND e.voided = 0 AND e.program_id = #{PROGRAM.id} AND e.patient_id IN (#{@cohort_patients.join(',')})
               AND e.encounter_datetime <= '#{(@c_start_date + @c_pregnant_range) - 1}'
               AND (
                 SELECT COUNT(*)
@@ -861,7 +861,7 @@ EOF
             SELECT e.patient_id, o.value_coded
             FROM encounter e
             LEFT JOIN obs o ON o.encounter_id = e.encounter_id AND o.voided = 0 AND o.concept_id = #{HIV_STATUS.concept_id}
-            WHERE e.encounter_type = #{LAB_RESULTS.id} AND e.voided = 0 AND e.program_id = #{PROGRAM.id} AND e.patient_id IN (#{@cohort_patients.push(0).join(',')})
+            WHERE e.encounter_type = #{LAB_RESULTS.id} AND e.voided = 0 AND e.program_id = #{PROGRAM.id} AND e.patient_id IN (#{@cohort_patients.join(',')})
               AND e.encounter_datetime <= '#{(@c_start_date + @c_pregnant_range) - 1}'
               AND (
                 SELECT COUNT(*)
@@ -870,7 +870,7 @@ EOF
                 AND e2.encounter_datetime > e.encounter_datetime AND e2.patient_id = e.patient_id AND e2.encounter_datetime <= '#{(@c_start_date + @c_pregnant_range) - 1}'
               ) = 1
           ) AS second_last_encounter ON second_last_encounter.patient_id = p.patient_id
-          WHERE p.patient_id IN (#{@cohort_patients.push(0).join(',')}) AND p.voided = 0
+          WHERE p.patient_id IN (#{@cohort_patients.join(',')}) AND p.voided = 0
             AND last_encounter.value_coded = #{NEGATIVE.concept_id}
             AND second_last_encounter.value_coded = #{NEGATIVE.concept_id}
         SQL
@@ -924,7 +924,7 @@ EOF
             SELECT e.patient_id, o.value_coded
             FROM encounter e
             LEFT JOIN obs o ON o.encounter_id = e.encounter_id AND o.voided = 0 AND o.concept_id = #{HIV_STATUS.concept_id}
-            WHERE e.encounter_type = #{LAB_RESULTS.id} AND e.voided = 0 AND e.program_id = #{PROGRAM.id} AND e.patient_id IN (#{@cohort_patients.push(0).join(',')})
+            WHERE e.encounter_type = #{LAB_RESULTS.id} AND e.voided = 0 AND e.program_id = #{PROGRAM.id} AND e.patient_id IN (#{@cohort_patients.join(',')})
               AND e.encounter_datetime <= '#{(@c_start_date + @c_pregnant_range) - 1}'
               AND (
                 SELECT COUNT(*)
@@ -937,7 +937,7 @@ EOF
             SELECT e.patient_id, o.value_coded
             FROM encounter e
             LEFT JOIN obs o ON o.encounter_id = e.encounter_id AND o.voided = 0 AND o.concept_id = #{HIV_STATUS.concept_id}
-            WHERE e.encounter_type = #{LAB_RESULTS.id} AND e.voided = 0 AND e.program_id = #{PROGRAM.id} AND e.patient_id IN (#{@cohort_patients.push(0).join(',')})
+            WHERE e.encounter_type = #{LAB_RESULTS.id} AND e.voided = 0 AND e.program_id = #{PROGRAM.id} AND e.patient_id IN (#{@cohort_patients.join(',')})
               AND e.encounter_datetime <= '#{(@c_start_date + @c_pregnant_range) - 1}'
               AND (
                 SELECT COUNT(*)
@@ -946,7 +946,7 @@ EOF
                 AND e2.encounter_datetime > e.encounter_datetime AND e2.patient_id = e.patient_id AND e2.encounter_datetime <= '#{(@c_start_date + @c_pregnant_range) - 1}'
               ) = 1
           ) AS second_last_encounter ON second_last_encounter.patient_id = p.patient_id
-          WHERE p.patient_id IN (#{@cohort_patients.push(0).join(',')}) AND p.voided = 0
+          WHERE p.patient_id IN (#{@cohort_patients.join(',')}) AND p.voided = 0
             AND (last_encounter.value_coded IS NULL OR last_encounter.value_coded = #{NOT_DONE.concept_id})
             AND second_last_encounter.value_coded = #{NEGATIVE.concept_id}
         SQL
@@ -960,7 +960,7 @@ EOF
             SELECT e.patient_id, o.value_coded
             FROM encounter e
             LEFT JOIN obs o ON o.encounter_id = e.encounter_id AND o.voided = 0 AND o.concept_id = #{HIV_STATUS.concept_id}
-            WHERE e.encounter_type = #{LAB_RESULTS.id} AND e.voided = 0 AND e.program_id = #{PROGRAM.id} AND e.patient_id IN (#{@cohort_patients.push(0).join(',')})
+            WHERE e.encounter_type = #{LAB_RESULTS.id} AND e.voided = 0 AND e.program_id = #{PROGRAM.id} AND e.patient_id IN (#{@cohort_patients.join(',')})
               AND e.encounter_datetime <= '#{(@c_start_date + @c_pregnant_range) - 1}'
               AND (
                 SELECT COUNT(*)
@@ -973,7 +973,7 @@ EOF
             SELECT e.patient_id, o.value_coded
             FROM encounter e
             LEFT JOIN obs o ON o.encounter_id = e.encounter_id AND o.voided = 0 AND o.concept_id = #{HIV_STATUS.concept_id}
-            WHERE e.encounter_type = #{LAB_RESULTS.id} AND e.voided = 0 AND e.program_id = #{PROGRAM.id} AND e.patient_id IN (#{@cohort_patients.push(0).join(',')})
+            WHERE e.encounter_type = #{LAB_RESULTS.id} AND e.voided = 0 AND e.program_id = #{PROGRAM.id} AND e.patient_id IN (#{@cohort_patients.join(',')})
               AND e.encounter_datetime <= '#{(@c_start_date + @c_pregnant_range) - 1}'
               AND (
                 SELECT COUNT(*)
@@ -983,7 +983,7 @@ EOF
               ) = 1
           ) AS second_last_encounter ON second_last_encounter.patient_id = p.patient_id
           LEFT JOIN obs k on k.person_id = p.patient_id AND k.voided = 0 AND k.concept_id = #{ON_ART.concept_id}
-          WHERE p.patient_id IN (#{@cohort_patients.push(0).join(',')}) AND p.voided = 0
+          WHERE p.patient_id IN (#{@cohort_patients.join(',')}) AND p.voided = 0
             AND k.person_id IS NULL
             AND (last_encounter.value_coded IS NULL OR last_encounter.value_coded = #{NOT_DONE.concept_id})
             AND (second_last_encounter.value_coded IS NULL OR second_last_encounter.value_coded = #{NOT_DONE.concept_id})
