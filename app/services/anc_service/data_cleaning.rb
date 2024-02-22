@@ -18,7 +18,8 @@ module ANCService
       'INCOMPLETE VISITS' => 'incomplete_visits',
       'DUPLICATE ENCOUNTERS' => 'duplicate_encounter',
       'ENCOUNTERS AFTER DEATH' => 'encounters_after_death',
-      'MALES WITH ANC ENCOUNTERS' => 'males_with_anc_observations'
+      'MALES WITH ANC ENCOUNTERS' => 'males_with_anc_observations',
+      'MISSING LMP' => 'missing_lmp'
     }.freeze
 
     def initialize(start_date, end_date, tool_name)
@@ -69,6 +70,30 @@ module ANCService
         @incomplete_visits << visit_hash
       end
       @incomplete_visits
+    end
+
+    def missing_lmp
+      current_pregnancy = EncounterType.find_by_name('CURRENT PREGNANCY').id
+      lmp_concept = ConceptName.find_by_name('Last menstrual period').concept_id
+      anc_program = program('ANC PROGRAM').id
+
+      ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT
+          e.patient_id,
+          n.given_name,
+          n.family_name,
+          i.identifier
+        FROM encounter e
+        LEFT JOIN obs o ON o.encounter_id = e.encounter_id AND o.voided = 0
+          AND o.concept_id = #{lmp_concept}
+        INNER JOIN person_name n ON n.person_id = e.patient_id AND n.voided = 0
+        INNER JOIN patient_identifier i ON i.patient_id = e.patient_id AND i.identifier_type = #{patient_identifier_type('National id').id}
+        WHERE e.program_id = #{anc_program} AND e.voided = 0
+        AND e.encounter_type = #{current_pregnancy}
+        AND DATE(e.encounter_datetime) >= DATE('#{@start_date}') AND DATE(e.encounter_datetime) <= DATE('#{@end_date}')
+        AND o.value_datetime IS NULL
+        GROUP BY e.patient_id
+      SQL
     end
 
     def no_hiv_status

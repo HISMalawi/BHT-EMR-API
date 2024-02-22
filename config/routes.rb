@@ -104,6 +104,10 @@ Rails.application.routes.draw do
         get('/label', to: redirect do |params, _request|
           "/api/v1/labels/location?location_id=#{params[:location_id]}"
         end)
+
+        collection do
+          get :current_facility
+        end
       end
 
       resources :regions, only: %i[index] do
@@ -327,13 +331,12 @@ Rails.application.routes.draw do
   get '/api/v1/incomplete_visits' => 'api/v1/cleaning#incompleteVisits'
   get '/api/v1/art_data_cleaning_tools' => 'api/v1/cleaning#art_tools'
   get '/api/v1/anc_data_cleaning_tools' => 'api/v1/cleaning#anc_tools'
+  get '/api/v1/its_data_cleaning_tools' => 'api/v1/cleaning#its_tools'
 
   # OPD reports
   get '/api/v1/registration' => 'api/v1/reports#registration'
   get '/api/v1/diagnosis_by_address' => 'api/v1/reports#diagnosis_by_address'
   get '/api/v1/with_nids' => 'api/v1/reports#with_nids'
-  get '/api/v1/drugs_given_without_prescription' => 'api/v1/reports#drugs_given_without_prescription'
-  get '/api/v1/drugs_given_with_prescription' => 'api/v1/reports#drugs_given_with_prescription'
   get '/api/v1/dispensation' => 'api/v1/reports#dispensation'
 
   get '/api/v1/cohort_report_raw_data' => 'api/v1/reports#cohort_report_raw_data'

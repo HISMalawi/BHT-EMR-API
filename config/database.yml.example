@@ -20,6 +20,13 @@ production:
 
 # Uncomment out the following and update them accordingly if
 # you need to sync hts and anc to RDS.
+
+#metadata:
+#  host: <mysql_host>
+#  username: <mysql_username>
+#  password: <mysql_pass>
+#  database: <db_name>
+#
 #
 #hts:
 #  adapter: mysql2

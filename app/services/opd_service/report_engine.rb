@@ -13,7 +13,8 @@ module OPDService
       'MALARIA_REPORT' => OPDService::Reports::MalariaReport,
       'TRIAGE_COVID' => OPDService::Reports::TriageCovid,
       'TRIAGE_REGISTRATION' => OPDService::Reports::TriageRegistration,
-      'ATTENDANCE' => OPDService::Reports::Attendance
+      'ATTENDANCE' => OPDService::Reports::Attendance,
+      'DRUG' => OPDService::Reports::Drug
     }
 
     def initialize
@@ -349,75 +350,6 @@ module OPDService
       return stats
     end
 
-    def drugs_given_without_prescription(start_date, end_date)
-      programID = Program.find_by_name 'OPD Program'
-      type = EncounterType.find_by_name 'DRUGS GIVEN'
-       visit_type = ConceptName.find_by_name 'Given drugs'
-
-      data = Encounter.where('encounter_datetime BETWEEN ? AND ?
-        AND encounter_type = ? AND obs.concept_id = ? AND program_id = ?',
-        start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
-        end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id, visit_type.concept_id, programID.program_id).\
-        joins('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
-        INNER JOIN person p ON p.person_id = encounter.patient_id
-        INNER JOIN drug d ON d.drug_id = obs.value_drug
-        LEFT JOIN person_name n ON n.person_id = encounter.patient_id AND n.voided = 0').\
-        select('encounter.patient_id, obs.value_numeric,
-        d.drug_id, obs.obs_datetime,n.given_name, n.family_name, p.*, d.name drug_name').\
-        order('n.date_created DESC').group('n.person_id, encounter.encounter_id')
-
-      stats = []
-      (data || []).each do |record|
-        stats << {
-          given_name: record['given_name'],
-          family_name: record['family_name'],
-          drug_name: record['drug_name'],
-          drug_id: record['drug_id'],
-          gender: record['gender'],
-          date: record['obs_datetime'].to_date,
-          birthdate: record['birthdate'].to_date,
-          patient_id: record['patient_id'],
-          quantity: record['value_numeric']
-        }
-      end
-
-      return stats
-    end
-
-    def drugs_given_with_prescription(start_date, end_date)
-      type = EncounterType.find_by_name 'TREATMENT'
-      programID = Program.find_by_name 'OPD Program'
-
-      data = Encounter.where('encounter_datetime BETWEEN ? AND ?
-        AND encounter_type = ? AND program_id = ? AND i.quantity > 0',
-        start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
-        end_date.to_date.strftime('%Y-%m-%d 23:59:59'),type.id, programID.program_id).\
-        joins('INNER JOIN orders o ON o.encounter_id = encounter.encounter_id
-        INNER JOIN person p ON p.person_id = encounter.patient_id
-        INNER JOIN drug_order i ON i.order_id = o.order_id
-        INNER JOIN drug d ON d.drug_id = i.drug_inventory_id
-        LEFT JOIN person_name n ON n.person_id = encounter.patient_id AND n.voided = 0').\
-        select('encounter.patient_id person_id, i.quantity,
-        given_name, family_name, d.drug_id, o.start_date, p.*, d.name drug_name').\
-        order('n.date_created DESC').group('n.person_id, o.order_id')
-
-      stats = []
-      (data || []).each do |record|
-        stats << {
-          given_name: record['given_name'],
-          family_name: record['family_name'],
-          drug_name: record['drug_name'],
-          drug_id: record['drug_id'],
-          gender: record['gender'],
-          date: record['start_date'].to_date,
-          birthdate: record['birthdate'].to_date,
-          patient_id: record['person_id'],
-          quantity: record['quantity']
-        }
-      end
-
-      return stats
-    end
     def dispensation(start_date, end_date)
       type = EncounterType.find_by_name 'TREATMENT'
       programID = Program.find_by_name 'OPD Program'

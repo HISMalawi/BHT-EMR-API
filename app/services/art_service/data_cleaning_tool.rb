@@ -15,7 +15,8 @@ module ARTService
       'DOB MORE THAN DATE ENROLLED' => 'dob_more_than_date_enrolled',
       'INCOMPLETE VISITS' => 'incomplete_visit',
       'MISSING DEMOGRAPHICS' => 'incomplete_demographics',
-      'MISSING VL RESULTS' => 'missing_vl_results'
+      'MISSING VL RESULTS' => 'missing_vl_results',
+      'DIFFERENT PREGNANCY VALUE ON SAME DATE' => 'different_pregnancy_value_on_same_date'
     }.freeze
 
     def initialize(start_date:, end_date:, tool_name:)
@@ -528,6 +529,40 @@ module ARTService
         WHERE o.concept_id = #{concept('Test type').concept_id} AND o.value_coded = #{concept('HIV viral load').concept_id} AND o.voided = 0
         AND o.obs_datetime BETWEEN '#{@start_date}' AND '#{@end_date}'
         AND tr.obs_id IS NULL AND r.obs_id IS NULL
+      SQL
+    end
+
+    def different_pregnancy_value_on_same_date
+      ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT
+          person.person_id patient_id,
+          person_name.given_name,
+          person_name.family_name,
+          DATE(obs1.obs_datetime) AS visit_date,
+          person.gender,
+          person.birthdate,
+          a.identifier arv_number,
+          i.identifier national_id
+        FROM
+          obs AS obs1
+        INNER JOIN
+          obs AS obs2 ON obs1.person_id = obs2.person_id
+                      AND obs1.concept_id = obs2.concept_id
+                      AND DATE(obs1.obs_datetime) = DATE(obs2.obs_datetime)
+                      AND obs1.obs_id < obs2.obs_id
+                      AND obs2.voided = 0
+                      AND obs2.concept_id = #{concept('Is patient pregnant?').concept_id}
+                      AND obs2.obs_datetime BETWEEN '#{@start_date}' AND '#{@end_date}'
+        INNER JOIN person ON person.person_id = obs1.person_id AND person.voided = 0
+        INNER JOIN person_name ON person_name.person_id = person.person_id AND person_name.voided = 0
+        LEFT JOIN patient_identifier a ON a.patient_id = person.person_id AND a.voided = 0 AND a.identifier_type = #{indetifier_type}
+        LEFT JOIN patient_identifier i ON i.patient_id = person.person_id AND i.voided = 0 AND i.identifier_type = 3
+        WHERE
+          obs1.concept_id = #{concept('Is patient pregnant?').concept_id}
+          AND obs1.voided = 0
+          AND obs1.value_coded <> obs2.value_coded
+          AND obs1.obs_datetime BETWEEN '#{@start_date}' AND '#{@end_date}'
+        GROUP BY person.person_id
       SQL
     end
 

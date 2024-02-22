@@ -1582,7 +1582,7 @@ DROP FUNCTION IF EXISTS `drug_pill_count`;
 CREATE FUNCTION `drug_pill_count`(my_patient_id INT, my_drug_id INT, my_date DATE) RETURNS decimal(10,0)
 BEGIN
   DECLARE done INT DEFAULT FALSE;
-  DECLARE my_pill_count, my_total_text, my_total_numeric DECIMAL;
+  DECLARE my_pill_count, my_total_numeric, my_total_text, my_total_transfer_in DECIMAL;
 
   DECLARE cur1 CURSOR FOR SELECT SUM(ob.value_numeric), SUM(CAST(ob.value_text AS DECIMAL)) FROM obs ob
                         INNER JOIN drug_order do ON ob.order_id = do.order_id
@@ -1601,6 +1601,17 @@ BEGIN
                         AND ob.voided = 0
                         AND DATE(ob.obs_datetime) = my_date
                     GROUP BY ob.person_id;
+  
+  DECLARE cur3 CURSOR FOR SELECT SUM(ob.value_numeric)
+                    FROM obs ob
+                    INNER JOIN encounter e ON e.encounter_id = ob.encounter_id AND e.voided = 0
+                    INNER JOIN encounter_type et ON et.encounter_type_id = e.encounter_type AND et.retired = 0 AND et.name = 'HIV CLINIC CONSULTATION'
+                    WHERE ob.person_id = my_patient_id
+                        AND ob.concept_id = 2540
+                        AND ob.voided = 0
+                        AND DATE(ob.obs_datetime) = my_date
+                        AND ob.value_drug = my_drug_id
+                    GROUP BY ob.person_id;
 
   DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
 
@@ -1608,45 +1619,61 @@ BEGIN
 
   SET my_pill_count = 0;
 
-  read_loop: LOOP
+  read_loop1: LOOP
     FETCH cur1 INTO my_total_numeric, my_total_text;
 
     IF done THEN
       CLOSE cur1;
-      LEAVE read_loop;
+      LEAVE read_loop1;
     END IF;
 
-        IF my_total_numeric IS NULL THEN
-            SET my_total_numeric = 0;
-        END IF;
+    IF my_total_numeric IS NULL THEN
+      SET my_total_numeric = 0;
+    END IF;
+    IF my_total_text IS NULL THEN
+      SET my_total_text = 0;
+    END IF;
 
-        IF my_total_text IS NULL THEN
-            SET my_total_text = 0;
-        END IF;
+    SET my_pill_count = my_total_numeric + my_total_text;
+  END LOOP;
 
-        SET my_pill_count = my_total_numeric + my_total_text;
-    END LOOP;
-
+  SET done = FALSE;
   OPEN cur2;
-  SET done = false;
-
-  read_loop: LOOP
+  read_loop2: LOOP
     FETCH cur2 INTO my_total_numeric;
 
     IF done THEN
       CLOSE cur2;
-      LEAVE read_loop;
+      LEAVE read_loop2;
     END IF;
 
-        IF my_total_numeric IS NULL THEN
-            SET my_total_numeric = 0;
-        END IF;
+    IF my_total_numeric IS NULL THEN
+      SET my_total_numeric = 0;
+    END IF;
 
-        SET my_pill_count = my_total_numeric + my_pill_count;
-    END LOOP;
+    SET my_pill_count = my_total_numeric + my_pill_count;
+  END LOOP;
+
+  SET done = FALSE;
+  OPEN cur3;
+  read_loop3: LOOP
+    FETCH cur3 INTO my_total_transfer_in;
+
+    IF done THEN
+      CLOSE cur3;
+      LEAVE read_loop3;
+    END IF;
+
+    IF my_total_transfer_in IS NULL THEN
+      SET my_total_transfer_in = 0;
+    END IF;
+
+    SET my_pill_count = my_total_transfer_in + my_pill_count;
+  END LOOP;
 
   RETURN my_pill_count;
 END;
+
 
 
 DROP FUNCTION IF EXISTS `current_defaulter`;
@@ -1721,7 +1748,7 @@ DROP FUNCTION IF EXISTS `current_defaulter_date`;
 CREATE FUNCTION current_defaulter_date(my_patient_id INT, my_end_date date) RETURNS varchar(25)
 DETERMINISTIC
 BEGIN
-DECLARE done INT DEFAULT FALSE;
+  DECLARE done INT DEFAULT FALSE;
   DECLARE my_start_date, my_expiry_date, my_obs_datetime DATETIME;
   DECLARE my_daily_dose, my_quantity, my_pill_count, my_total_text, my_total_numeric DECIMAL(6, 2);
   DECLARE my_drug_id INT;
