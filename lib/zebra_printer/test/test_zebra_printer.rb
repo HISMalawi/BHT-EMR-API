@@ -16,8 +16,8 @@ class ZebraPrinterTest < Test::Unit::TestCase
   end
 
   def test_should_use_standard_label_defaults
-    @label = ZebraPrinter::StandardLabel.new
-    assert_equal "\nN\nq776\nQ329\nZT\n", @label.output
+    @label = ZebraPrinter::Lib::StandardLabel.new
+    assert_equal "\nN\nq801\nQ329,026\nZT\n", @label.output
   end
 
   def test_should_print_copies
@@ -56,7 +56,7 @@ class ZebraPrinterTest < Test::Unit::TestCase
   end
 
   def test_should_draw_text_from_template
-    @label = ZebraPrinter::Label.from_template({
+    @label = ZebraPrinter::Lib::Label.from_template({
                                                  name: 'National ID Label',
                                                  format: 1,
                                                  orientation: 'T',
@@ -79,7 +79,7 @@ class ZebraPrinterTest < Test::Unit::TestCase
   end
 
   def test_should_draw_line_from_template
-    @label = ZebraPrinter::Label.from_template({
+    @label = ZebraPrinter::Lib::Label.from_template({
                                                  name: 'National ID Label',
                                                  format: 1,
                                                  orientation: 'T',
@@ -108,7 +108,7 @@ class ZebraPrinterTest < Test::Unit::TestCase
   end
 
   def test_should_draw_frame_from_template
-    @label = ZebraPrinter::Label.from_template({
+    @label = ZebraPrinter::Lib::Label.from_template({
                                                  name: 'National ID Label',
                                                  format: 1,
                                                  orientation: 'T',
@@ -127,7 +127,7 @@ class ZebraPrinterTest < Test::Unit::TestCase
   end
 
   def test_should_draw_barcode_from_template
-    @label = ZebraPrinter::Label.from_template({
+    @label = ZebraPrinter::Lib::Label.from_template({
                                                  name: 'National ID Label',
                                                  format: 1,
                                                  orientation: 'T',
