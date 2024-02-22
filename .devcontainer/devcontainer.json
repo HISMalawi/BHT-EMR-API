@@ -21,5 +21,6 @@
     "storage": "1gb",
     "cpus": 2
   },
-  "postCreateCommand": "bash bin/post_container_setup.sh"
+  "postCreateCommand": "bash bin/post_container_setup.sh",
+  "postStartCommand": "bash bin/container_start.sh"
 }
