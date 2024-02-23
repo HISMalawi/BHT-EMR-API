@@ -139,3 +139,15 @@ current_dir=$(basename "$PWD")
 if [ "$(git config --global --get safe.directory)" != "/workspaces/$current_dir" ]; then
     git config --global --add safe.directory /workspaces/$current_dir
 fi
+
+# we need to ensure that git hooks are executable
+chmod +x .githooks/*
+
+# we need to check if git version is greater than 2.9.0
+git_version=$(git --version | awk '{print $3}')
+if [ "$(printf '%s\n' "2.9.0" "$git_version" | sort -V | head -n1)" = "2.9.0" ]; then
+    git config core.hooksPath .githooks
+else
+    find .git/hooks -type l -exec rm {} \\;
+    find .githooks -type f -exec ln -sf ../../{} .git/hooks/ \\;
+fi
