@@ -99,6 +99,8 @@ module ArtService
             when 'Patient transferred out'
               data[age_group][gender][4] << patient_id
             end
+          rescue StandardError => e
+            Rails.logger.error(e.message)
           end
 
           data
@@ -155,6 +157,9 @@ module ArtService
           rescue StandardError
             end_date.to_date
           end
+
+          raise "Defaulted outside the reporting period" if defaulter_date > end_date.to_date
+          raise "Defaulted outside the reporting period" if defaulter_date < start_date.to_date
           days_gone = ActiveRecord::Base.connection.select_one <<~SQL
             SELECT TIMESTAMPDIFF(MONTH, DATE('#{earliest_start_date}'), DATE('#{defaulter_date}')) months;
           SQL
