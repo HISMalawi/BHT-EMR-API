@@ -4,6 +4,11 @@ echo "3.2.0" >.ruby-version
 
 source ~/.bashrc
 
+bundle install
+
+if [ ! -f config/secrets.yml ]; then
+    bash bin/setup_production_mode.sh
+fi
 # we need to check for configuration files and create them if they don't exist
 if [ ! -f config/database.yml ]; then
     cp config/database.yml.example config/database.yml
@@ -88,11 +93,6 @@ if [ ! -f config/storage.yml ]; then
     cp config/storage.yml.example config/storage.yml
 fi
 
-bundle install
-
-if [ ! -f config/secrets.yml ]; then
-    bash bin/setup_production_mode.sh
-fi
 
 # read the database configuration and check if the database exists
 # if it doesn't exist, create it
