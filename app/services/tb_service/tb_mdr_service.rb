@@ -224,7 +224,7 @@ module TBService
 
     def mark_regimen_as_failure(reasons = ['None'])
       encounter = update_regimen_encounter
-      ObservationService.create_observation(encounter, {
+      ObservationService.new.create_observation(encounter, {
         person: Person.find(@patient),
         concept: concept('Regimen failure'),
         value_text: @title,
@@ -235,7 +235,7 @@ module TBService
 
     def create_regimen_failure_reasons(encounter, reasons)
       reasons.each do |reason|
-        ObservationService.create_observation(encounter, {
+        ObservationService.new.create_observation(encounter, {
           person: Person.find(@patient),
           concept: concept('Reason tuberculosis treatment changed or stopped'),
           value_text: reason,
@@ -300,7 +300,7 @@ module TBService
         obs[:value_datetime] = transfer_in_treatment_start_date
       end
 
-      ObservationService.create_observation(encounter, obs)
+      ObservationService.new.create_observation(encounter, obs)
     end
 
     def create_custom_regimen(drugs, duration = 0, code = '')
@@ -318,7 +318,7 @@ module TBService
     end
 
     def create_custom_duration(encounter, duration)
-      ObservationService.create_observation(
+      ObservationService.new.create_observation(
         encounter, {
         person: Person.find(@patient),
         concept: concept('Regimen duration in months'),
@@ -328,7 +328,7 @@ module TBService
     end
 
     def create_regimen_composition_code(encounter, composition)
-      ObservationService.create_observation(
+      ObservationService.new.create_observation(
         encounter, {
         person: Person.find(@patient),
         concept: concept('Regimen composition'),
@@ -339,7 +339,7 @@ module TBService
 
     def add_custom_regimen_drugs(encounter, drugs)
       drugs.each do |drug|
-        ObservationService.create_observation(encounter, {
+        ObservationService.new.create_observation(encounter, {
           concept: concept('Medication'),
           value_coded: drug,
           person: Person.find(@patient),

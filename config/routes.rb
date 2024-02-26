@@ -17,6 +17,13 @@ Rails.application.routes.draw do
         url
       end
 
+      get  '/mdr/regimen/create', to: 'mdr#new_regimen'
+      get  '/mdr/regimen/custom/options', to: 'mdr#custom_regimen_options'
+      get  '/mdr/regimen/types', to: 'mdr#regimen_types'
+      post '/mdr/regimen/create', to: 'mdr#create_custom_regimen'
+      get  '/mdr/regimen/status', to: 'mdr#active_regimen'
+      get  '/mdr/regimen/phase/next', to: 'mdr#next_phase'
+
       # Routes down here ... Best we move everything above into own modules
       resources :internal_sections, only: %i[index show create update destroy]
       resources :appointments
@@ -161,6 +168,7 @@ Rails.application.routes.draw do
         get 'regimen_starter_packs' => 'program_regimens#find_starter_pack'
         get 'custom_regimen_ingredients' => 'program_regimens#custom_regimen_ingredients'
         get 'custom_tb_ingredients' => 'program_regimens#custom_tb_ingredients'
+        get 'tb_regimen_group' => 'program_regimens#get_tb_regimen_group'
         get 'defaulter_list' => 'program_patients#defaulter_list'
         get '/barcodes/:barcode_name', to: 'program_barcodes#print_barcode'
         post 'void_arv_number/:arv_number' => 'program_patients#void_arv_number'
