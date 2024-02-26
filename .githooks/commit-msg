@@ -6,13 +6,19 @@ NC='\033[0m'
 
 GIT_DIR=$(git rev-parse --git-dir)
 
-# Read the message content
-commit_message=$(cat "$GIT_DIR/COMMIT_EDITMSG")
-commit_regex='^(feat|fix|docs|style|refactor|perf|test|chore|revert)(!)??(\(.+\))?: .{1,50}$'
-if [[ ! "$commit_message" =~ $commit_regex ]]; then
-    echo -e "${RED}Aborting commit. Your commit message does not follow the Conventional Commits 1.0.0!"
-    echo -e "Please check the Conventional Commits 1.0.0 documentation: ${GREEN}https://www.conventionalcommits.org/en/v1.0.0/${NC}"
-    exit 1
+parents=$(git rev-parse --verify --parents HEAD)
+if [[ $(echo "$parents" | wc -w) -eq 2 ]]; then
+    # It's a merge commit
+    echo -e "${GREEN}Merge commit detected!${NC}"
+else
+    # Read the message content
+    commit_message=$(cat "$GIT_DIR/COMMIT_EDITMSG")
+    commit_regex='^(feat|fix|docs|style|refactor|perf|test|chore|revert)(!)??(\(.+\))?: .{1,50}$'
+    if [[ ! "$commit_message" =~ $commit_regex ]]; then
+        echo -e "${RED}Aborting commit. Your commit message does not follow the Conventional Commits 1.0.0!"
+        echo -e "Please check the Conventional Commits 1.0.0 documentation: ${GREEN}https://www.conventionalcommits.org/en/v1.0.0/${NC}"
+        exit 1
+    fi
 fi
 
 echo -e "${GREEN}Commit message is valid!${NC}"
