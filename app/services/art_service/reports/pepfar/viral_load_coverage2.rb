@@ -9,6 +9,7 @@ module ArtService
       # 3. the picked clients should also include those that are new on ART 6 months before the end date
       # 4. for the sample drawns available pick the latest sample drawn within the reporting period
       # 5. for the results pick the latest result within the reporting period
+      # rubocop:disable Metrics/ClassLength
       class ViralLoadCoverage2
         attr_reader :start_date, :end_date, :occupation
 
@@ -46,6 +47,9 @@ module ArtService
           }
         end
 
+        # rubocop:disable Metrics/AbcSize
+        # rubocop:disable Metrics/CyclomaticComplexity
+        # rubocop:disable Metrics/MethodLength
         def process_due_people
           @clients = []
           start = Time.now
@@ -61,12 +65,21 @@ module ArtService
           end
           results.each { |patient| process_client_eligibility(patient) } if @type == 'emastercard'
           end_time = Time.now
-          Rails.logger.info "Time taken to process #{results.length} clients: #{end_time - start} seconds. These are the clients returned: #{@clients.length}"
+          Rails.logger.info "Time taken to process #{results.length} clients: #{end_time - start} seconds.
+                            These are the clients returned: #{@clients.length}"
           @clients
         end
+        # rubocop:enable Metrics/AbcSize
+        # rubocop:enable Metrics/CyclomaticComplexity
+        # rubocop:enable Metrics/MethodLength
 
         private
 
+        # rubocop:disable Metrics/AbcSize
+        # rubocop:disable Metrics/MethodLength
+        # rubocop:disable Metrics/CyclomaticComplexity
+        # rubocop:disable Metrics/PerceivedComplexity
+        # rubocop:disable Layout/LineLength
         def process_client_eligibility(patient)
           result = extra_information(patient['patient_id'])
           patient['defaulter_date'] = result['defaulter_date']
@@ -106,7 +119,14 @@ module ArtService
 
           true
         end
+        # rubocop:enable Metrics/AbcSize
+        # rubocop:enable Metrics/MethodLength
+        # rubocop:enable Metrics/CyclomaticComplexity
+        # rubocop:enable Metrics/PerceivedComplexity
+        # rubocop:enable Layout/LineLength
 
+        # rubocop:disable Metrics/AbcSize
+        # rubocop:disable Metrics/MethodLength
         def pregnant_women(patient_list)
           ActiveRecord::Base.connection.select_all <<~SQL
             SELECT o.person_id, o.value_coded
@@ -152,30 +172,36 @@ module ArtService
             GROUP BY o.person_id
           SQL
         end
+        # rubocop:enable Metrics/AbcSize
+        # rubocop:enable Metrics/MethodLength
 
         def build_report(report)
           clients = process_due_people
-          clients.each { |patient| report[patient['age_group']][:due_for_vl] << patient }
+          clients.each { |patient| report[patient['age_group']][:due_for_vl] << patient['patient_id'] }
           load_patient_tests_into_report(report, clients.map { |patient| patient['patient_id'] })
         end
 
+        # rubocop:disable Metrics/AbcSize
+        # rubocop:disable Metrics/MethodLength
         def load_patient_tests_into_report(report, clients)
           find_patients_with_viral_load(clients).each do |patient|
             age_group = patient['age_group']
             reason_for_test = (patient['reason_for_test'] || 'Routine').match?(/Routine/i) ? :routine : :targeted
 
-            report[age_group][:drawn][reason_for_test] << patient
+            report[age_group][:drawn][reason_for_test] << patient['patient_id']
             next unless patient['result_value']
 
             if patient['result_value'].casecmp?('LDL')
-              report[age_group][:low_vl][reason_for_test] << patient
+              report[age_group][:low_vl][reason_for_test] << patient['patient_id']
             elsif patient['result_value'].to_i < 1000
-              report[age_group][:low_vl][reason_for_test] << patient
+              report[age_group][:low_vl][reason_for_test] << patient['patient_id']
             else
-              report[age_group][:high_vl][reason_for_test] << patient
+              report[age_group][:high_vl][reason_for_test] << patient['patient_id']
             end
           end
         end
+        # rubocop:enable Metrics/AbcSize
+        # rubocop:enable Metrics/MethodLength
 
         ## This method prepares the response structure for the report
         def init_report
@@ -208,6 +234,8 @@ module ArtService
           ).map { |state| state['state'] }
         end
 
+        # rubocop:disable Metrics/MethodLength
+        # rubocop:disable Metrics/AbcSize
         def clients_on_art
           ActiveRecord::Base.connection.select_all <<~SQL
             SELECT
@@ -263,6 +291,8 @@ module ArtService
             GROUP BY ab.patient_id;
           SQL
         end
+        # rubocop:enable Metrics/AbcSize
+        # rubocop:enable Metrics/MethodLength
 
         def extra_information(patient_id)
           ActiveRecord::Base.connection.select_one <<~SQL
@@ -274,6 +304,9 @@ module ArtService
 
         ##
         # Find all patients that are on treatment with at least one VL before end of reporting period.
+        # rubocop:disable Metrics/AbcSize
+        # rubocop:disable Metrics/MethodLength
+
         def find_patients_with_viral_load(clients)
           ActiveRecord::Base.connection.select_all <<~SQL
             SELECT orders.patient_id,
@@ -339,6 +372,8 @@ module ArtService
             GROUP BY orders.patient_id
           SQL
         end
+        # rubocop:enable Metrics/AbcSize
+        # rubocop:enable Metrics/MethodLength
 
         def yes_concepts
           @yes_concepts ||= ConceptName.where(name: 'Yes').select(:concept_id).map do |record|
@@ -361,6 +396,7 @@ module ArtService
                                             .select(:encounter_type_id)
         end
       end
+      # rubocop:enable Metrics/ClassLength
     end
   end
 end
