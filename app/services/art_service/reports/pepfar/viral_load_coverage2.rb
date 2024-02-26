@@ -177,7 +177,9 @@ module ArtService
 
         def build_report(report)
           clients = process_due_people
-          clients.each { |patient| report[patient['age_group']][:due_for_vl] << patient['patient_id'] }
+          clients.each do |patient|
+            report[patient['age_group']][patient['gender'].to_sym][:due_for_vl] << patient['patient_id']
+          end
           load_patient_tests_into_report(report, clients.map { |patient| patient['patient_id'] })
         end
 
@@ -186,17 +188,18 @@ module ArtService
         def load_patient_tests_into_report(report, clients)
           find_patients_with_viral_load(clients).each do |patient|
             age_group = patient['age_group']
+            gender = patient['gender'].to_sym
             reason_for_test = (patient['reason_for_test'] || 'Routine').match?(/Routine/i) ? :routine : :targeted
 
-            report[age_group][:drawn][reason_for_test] << patient['patient_id']
+            report[age_group][gender][:drawn][reason_for_test] << patient['patient_id']
             next unless patient['result_value']
 
             if patient['result_value'].casecmp?('LDL')
-              report[age_group][:low_vl][reason_for_test] << patient['patient_id']
+              report[age_group][gender][:low_vl][reason_for_test] << patient['patient_id']
             elsif patient['result_value'].to_i < 1000
-              report[age_group][:low_vl][reason_for_test] << patient['patient_id']
+              report[age_group][gender][:low_vl][reason_for_test] << patient['patient_id']
             else
-              report[age_group][:high_vl][reason_for_test] << patient['patient_id']
+              report[age_group][gender][:high_vl][reason_for_test] << patient['patient_id']
             end
           end
         end
@@ -206,12 +209,14 @@ module ArtService
         ## This method prepares the response structure for the report
         def init_report
           pepfar_age_groups.each_with_object({}) do |age_group, report|
-            report[age_group] = {
-              due_for_vl: [],
-              drawn: { routine: [], targeted: [] },
-              high_vl: { routine: [], targeted: [] },
-              low_vl: { routine: [], targeted: [] }
-            }
+            report[age_group] = %i[F M].each_with_object({}) do |gender, hash|
+              hash[gender] = {
+                due_for_vl: [],
+                drawn: { routine: [], targeted: [] },
+                high_vl: { routine: [], targeted: [] },
+                low_vl: { routine: [], targeted: [] }
+              }
+            end
           end
         end
 
@@ -245,7 +250,7 @@ module ArtService
               -- date_antiretrovirals_started(ab.patient_id, DATE(#{ActiveRecord::Base.connection.quote(end_date)})) AS art_start_date,
               -- current_pepfar_defaulter_date(ab.patient_id, DATE(#{ActiveRecord::Base.connection.quote(end_date)})) AS defaulter_date,
               p.birthdate,
-              p.gender,
+              LEFT(p.gender,1) gender,
               pid.identifier AS arv_number,
               current_state.state,
               current_state.start_date outcome_date,
@@ -313,7 +318,7 @@ module ArtService
                    disaggregated_age_group(patient.birthdate,
                                                   DATE(#{ActiveRecord::Base.connection.quote(end_date)})) AS age_group,
                    patient.birthdate,
-                   patient.gender,
+                   LEFT(patient.gender, 1) gender,
                    patient_identifier.identifier AS arv_number,
                    orders.start_date AS order_date,
                    COALESCE(orders.discontinued_date, orders.start_date) AS sample_draw_date,
