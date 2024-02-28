@@ -15,7 +15,7 @@ module TBService::Reports::Tbhiv
     def format_report(indicator:, report_data:)
       data = report_format(indicator)
       program = Program.find_by_name('TB PROGRAM')
-      report_data.each do |patient|
+      report_data&.each do |patient|
         process_patient(patient, data, program)
       end
       data

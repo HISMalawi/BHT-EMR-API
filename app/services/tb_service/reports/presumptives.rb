@@ -12,7 +12,7 @@ module TBService::Reports::Presumptives
 
     def format_report(indicator:, report_data:)
       data = report_format(indicator: indicator)
-      report_data.each do |patient|
+      report_data&.each do |patient|
         process_patient(patient, data)
       end
       data

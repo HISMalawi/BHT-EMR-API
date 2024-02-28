@@ -10,7 +10,7 @@ module TBService::Reports::Community
 
     def format_report(indicator:, report_data:)
       data = report_format(indicator: indicator)
-      report_data.each do |patient|
+      report_data&.each do |patient|
         if indicator == 'functional_sputum_sample_collection_points'
           data[:total] << patient unless data[:total].include?(patient)
           next
