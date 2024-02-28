@@ -2,6 +2,46 @@
 module TBService::Reports::MdrInterimOutcomes
   class << self
 
+    AGE_GROUPS = {
+      '0-4' => [0, 4],
+      '5-14' => [5, 14],
+      '15-24' => [15, 24],
+      '25-34' => [25, 34],
+      '35-44' => [35, 44],
+      '45-54' => [45, 54],
+      '55-64' => [55, 64],
+      '65+' => [65, 200]
+    }.freeze
+
+    def report_format(indicator)
+      format_ = {
+        indicator: indicator
+      }
+      AGE_GROUPS.each_key do |k|
+        format_[k] = {
+          male: [],
+          female: []
+        }
+      end
+      format_
+    end
+
+    def format_report(indicator:, report_data:)
+      data = report_format(indicator)
+      report_data
+      &.each do |patient|
+        process_patient(patient, data)
+      end
+      data
+    end
+
+    def process_patient(patient, data)
+      age = patient.age
+      gender = patient.gender == 'M' ? :male : :female
+      age_group = AGE_GROUPS.keys.find { |k| age.between?(*AGE_GROUPS[k]) }
+      data[age_group][gender] << patient.id
+    end
+
     def culture_negative(start_date, end_date)
       query = mdr_patient_query.ref(start_date, end_date).tb_status('Negative')
       patients = query.present? ? query.map(&:patient_id) : []
@@ -50,15 +90,15 @@ module TBService::Reports::MdrInterimOutcomes
     end
 
     def patient_outcome_query
-      TBQueries::MdrOutcomeQuery.new
+      TBService::TBQueries::MdrOutcomeQuery.new
     end
 
     def mdr_patient_query
-      TBQueries::MdrPatientQuery.new
+      TBService::TBQueries::MDRPatientQuery.new
     end
 
     def mdr_examination_query
-      TBQueries::MdrQuery.new
+      TBService::TBQueries::MdrQuery.new
     end
 
   end

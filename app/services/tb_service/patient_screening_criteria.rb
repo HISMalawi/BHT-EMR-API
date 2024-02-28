@@ -2,7 +2,7 @@ require 'date'
 class TBService::PatientScreeningCriteria
   include ModelUtils
 
-  def initialize(patient_id:patient_id, program_id:program_id, date:date)
+  def initialize(patient_id:, program_id:, date:)
     @patient = Patient.find(patient_id)
     @program_id = program_id
     @patient_id = patient_id
