@@ -114,10 +114,10 @@ module ANCService
         # raise @m_on_art_in_nart.inspect
 
         cohort_struct.monthly_patient = @monthly_patients
-        cohort_struct.pregnancy_test_done = @patients_done_pregnancy_test
+        cohort_struct.pregnancy_test_done = @patients_done_pregnancy_test || []
         cohort_struct.pregnancy_test_not_done = (@monthly_patients.uniq - @patients_done_pregnancy_test.uniq).uniq
         cohort_struct.pregnancy_test_done_in_first_trimester = @pregnancy_test_done_in_first_trim
-        cohort_struct.pregnancy_test_not_done_in_first_trimester = (@patients_done_pregnancy_test - @pregnancy_test_done_in_first_trim).uniq
+        cohort_struct.pregnancy_test_not_done_in_first_trimester = (@monthly_patients.uniq - @pregnancy_test_done_in_first_trim).uniq
         cohort_struct.week_of_first_visit_zero_to_twelve = week_of_first_visit_zero_to_twelve(start_date)
         cohort_struct.week_of_first_visit_plus_thirteen = week_of_first_visit_plus_thirteen(start_date)
         cohort_struct.new_hiv_negative_first_visit = @first_new_hiv_negative
@@ -175,7 +175,7 @@ module ANCService
         cohort_struct.patients_given_zero_sp_doses = sp_zero_doses
         cohort_struct.patients_given_one_sp_dose = sp_one_dose
         cohort_struct.patients_given_two_sp_doses = sp_two_doses
-        cohort_struct.patients_given_three_or_more_sp_doses = sp_three_doses
+        cohort_struct.patients_given_three_or_more_sp_doses = patients_given_three_or_sp_doses
 
         # Fefol tablets given
         fefol_less_than_120, fefol_120_plus = patients_given_fefol_tablets
@@ -687,7 +687,7 @@ EOF
       end
 
       def patients_given_three_or_sp_doses
-        patient_sp_doses.collect { |p| p['patient_id'] if p['count'].to_i > 3 }.compact
+        patient_sp_doses.collect { |p| p['patient_id'] if p['count'].to_i >= 3 }.compact
       end
 
       def patient_sp_doses
