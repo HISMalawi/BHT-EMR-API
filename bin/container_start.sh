@@ -4,6 +4,8 @@ echo "3.2.0" >.ruby-version
 
 source ~/.bashrc
 
+rm Gemfile.lock
+
 bundle install
 
 if [ ! -f config/secrets.yml ]; then
