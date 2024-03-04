@@ -51,6 +51,7 @@ gem 'rswag-ui'
 
 gem 'emr_ohsp_interface', '~> 2.2.0'
 gem 'his_emr_api_lab', git: 'https://github.com/EGPAFMalawiHIS/HIS-EMR-API-Lab', branch: 'upgrade/rails-7'
+gem 'malawi_hiv_program_reports', git: 'https://github.com/EGPAFMalawiHIS/malawi_hiv_program_reports', branch: 'main'
 # gem 'his_emr_api_radiology', '~> 1.0.9'
 
 gem 'parallel', '~> 1.20.1'
