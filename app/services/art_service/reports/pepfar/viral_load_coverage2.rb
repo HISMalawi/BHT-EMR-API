@@ -154,16 +154,41 @@ module ARTService
         end
 
         def build_report(report)
+          refresh_outcomes_table
+          load_tx_curr_into_report(report, create_patients_alive_and_on_art_query)
           clients = process_due_people
           clients.each { |patient| report[patient['age_group']][:due_for_vl] << patient }
           load_patient_tests_into_report(report, clients.map { |patient| patient['patient_id'] })
+        end
+
+        def refresh_outcomes_table
+          CohortBuilder.new(outcomes_definition: 'pepfar')
+                      .init_temporary_tables(@start_date, @end_date, nil)
+        end
+
+        def create_patients_alive_and_on_art_query
+          ActiveRecord::Base.connection.select_all(
+            <<~SQL
+              SELECT tpo.patient_id, LEFT(tesd.gender, 1) AS gender, disaggregated_age_group(tesd.birthdate, DATE('#{end_date.to_date}')) age_group
+              FROM temp_patient_outcomes tpo
+              INNER JOIN temp_earliest_start_date tesd ON tesd.patient_id = tpo.patient_id
+              WHERE tpo.cum_outcome = 'On antiretrovirals'
+            SQL
+          )
+        end
+
+        def load_tx_curr_into_report(report, patients)
+          report.each do |age_group, _data|
+            report[age_group][:tx_curr] ||= []
+            report[age_group][:tx_curr] = patients.select { |patient| patient['age_group'] == age_group } || []
+          end
         end
 
         def load_patient_tests_into_report(report, clients)
           find_patients_with_viral_load(clients).each do |patient|
             age_group = patient['age_group']
             reason_for_test = (patient['reason_for_test'] || 'Routine').match?(/Routine/i) ? :routine : :targeted
-
+            
             report[age_group][:drawn][reason_for_test] << patient
             next unless patient['result_value']
 
