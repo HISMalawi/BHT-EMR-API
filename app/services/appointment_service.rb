@@ -5,7 +5,8 @@ class AppointmentService
     'ANC PROGRAM' => ANCService::AppointmentEngine,
     'VMMC PROGRAM' => VMMCService::AppointmentEngine,
     'CXCA PROGRAM' => CXCAService::AppointmentEngine,
-    'HTC PROGRAM' => HTSService::AppointmentEngine
+    'HTC PROGRAM' => HTSService::AppointmentEngine,
+    'NCD PROGRAM' => NCDService::AppointmentEngine,
   }.freeze
 
   def initialize(program_id:, patient_id:, retro_date:)

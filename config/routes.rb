@@ -152,6 +152,7 @@ Rails.application.routes.draw do
         get 'booked_appointments' => 'program_appointments#booked_appointments'
         get 'scheduled_appointments' => 'program_appointments#scheduled_appointments'
         get 'next_available_arv_number' => 'program_patients#find_next_available_arv_number'
+        get 'next_available_ncd_number' => 'program_patients#find_next_available_ncd_number'
         get 'lookup_arv_number/:arv_number' => 'program_patients#lookup_arv_number'
         get 'regimen_starter_packs' => 'program_regimens#find_starter_pack'
         get 'custom_regimen_ingredients' => 'program_regimens#custom_regimen_ingredients'
