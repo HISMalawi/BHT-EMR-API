@@ -37,7 +37,7 @@ module HtsService
                    encounter_type: EncounterType.find_by_name('Testing')
                  },
                  program: { program_id: Program.find_by_name('HTC PROGRAM').id }
-               )
+                ).where.not(person: { birthdate: nil })
       end
 
       def his_patients_revs(indicators)
