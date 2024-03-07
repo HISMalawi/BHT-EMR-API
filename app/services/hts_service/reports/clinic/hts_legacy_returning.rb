@@ -238,7 +238,7 @@ module HtsService
 
         def birthdate_to_age(birthdate)
           today = Date.today
-          today.year - birthdate.year
+          today.year - birthdate&.year
         end
 
         def query
