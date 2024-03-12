@@ -34,7 +34,14 @@ module ARTService
           'Enalapril (10mg)' => :enalapril_10mg,
           'Atenolol (50mg tablet)' => :atenolol_50mg,
           'Atenolol (50mg)' => :atenolol_50mg,
-          'Atenolol (100mg tablet)' => :atenolol_100mg
+          'Atenolol (100mg tablet)' => :atenolol_100mg,
+          'Nifedipine (10mg tablet)' => :nifedipine,
+          'Nifedipine (20mg tablet)' => :nifedipine,
+          'Captopril (25mg tablet)' => :captopril,
+          'Captopril (6.25mg tablet)' => :captopril,
+          'Captopril (12.5mg tablet)' => :captopril,
+          'Captopril (50mg tablet)' => :captopril,
+          'Captopril' => :captopril,
         }.freeze
 
         def initialize(start_date:, end_date:, **_kwargs)
@@ -65,6 +72,7 @@ module ARTService
         # rubocop:disable Metrics/MethodLength
         def initialize_gender_metrics
           {
+            due_screening: [],
             screened: [],
             normal_reading: [],
             mild_reading: [],
@@ -77,6 +85,8 @@ module ARTService
             enalapril_10mg: [],
             atenolol_50mg: [],
             atenolol_100mg: [],
+            nifedipine: [],
+            captopril: [],
             total_regimen: []
           }
         end
@@ -102,6 +112,18 @@ module ARTService
         # rubocop:enable Metrics/AbcSize
         # rubocop:enable Metrics/MethodLength
 
+        def process_due_clients
+          (due_for_bp_screening || []).each do |row|
+            age_group = row['age_group']
+            gender = row['gender']
+            next unless AGE_GROUPS.include?(age_group)
+            next unless GENDER.include?(gender)
+
+            cluster = @report[age_group][gender][:due_screening]
+            cluster << row['patient_id']
+          end
+        end
+
         def process_bp_classification(cluster, patient_id, sys_class, dia_class)
           classification = SEVERITY_ORDER[sys_class.to_sym] > SEVERITY_ORDER[dia_class.to_sym] ? sys_class : dia_class
           case SEVERITY_CLASSIFICATION[classification.to_sym]
@@ -122,6 +144,8 @@ module ARTService
           drugs.each do |drug|
             cluster_key = DRUG_MAPPING[drug]
             cluster[cluster_key] << patient_id if cluster_key
+            # unique cluster[cluster_key]
+            cluster[cluster_key].uniq!
           end
         end
 
@@ -143,19 +167,19 @@ module ARTService
           ActiveRecord::Base.connection.select_all <<~SQL
             SELECT
                 tpo.patient_id,
-                sys.value_numeric systolic,
-                dia.value_numeric diastolic,
+                COALESCE(sys.value_numeric, sys.value_text) systolic,
+                COALESCE(dia.value_numeric, dia.value_text) diastolic,
                 CASE
-                    WHEN sys.value_numeric <= 139 THEN 'normal_reading'
-                    WHEN sys.value_numeric > 139 AND sys.value_numeric <= 159 THEN 'mild_reading'
-                    WHEN sys.value_numeric > 159 AND sys.value_numeric <= 179 THEN 'moderate_reading'
-                    WHEN sys.value_numeric > 179 THEN 'severe_reading'
+                    WHEN COALESCE(sys.value_numeric, sys.value_text) <= 139 THEN 'normal_reading'
+                    WHEN COALESCE(sys.value_numeric, sys.value_text) > 139 AND COALESCE(sys.value_numeric, sys.value_text) <= 159 THEN 'mild_reading'
+                    WHEN COALESCE(sys.value_numeric, sys.value_text) > 159 AND COALESCE(sys.value_numeric, sys.value_text) <= 179 THEN 'moderate_reading'
+                    WHEN COALESCE(sys.value_numeric, sys.value_text) > 179 THEN 'severe_reading'
                 END AS systolic_classification,
                 CASE
-                    WHEN dia.value_numeric <= 89 THEN 'normal_reading'
-                    WHEN dia.value_numeric > 89 AND dia.value_numeric <= 99 THEN 'mild_reading'
-                    WHEN dia.value_numeric > 99 AND dia.value_numeric <= 109 THEN 'moderate_reading'
-                    WHEN dia.value_numeric > 109 THEN 'severe_reading'
+                    WHEN COALESCE(dia.value_numeric, dia.value_text) <= 89 THEN 'normal_reading'
+                    WHEN COALESCE(dia.value_numeric, dia.value_text) > 89 AND COALESCE(dia.value_numeric, dia.value_text) <= 99 THEN 'mild_reading'
+                    WHEN COALESCE(dia.value_numeric, dia.value_text) > 99 AND COALESCE(dia.value_numeric, dia.value_text) <= 109 THEN 'moderate_reading'
+                    WHEN COALESCE(dia.value_numeric, dia.value_text) > 109 THEN 'severe_reading'
                 END AS diastolic_classification,
                 UPPER(LEFT(p.gender, 1)) gender,
                 disaggregated_age_group(p.birthdate, #{@end_date}) age_group,
@@ -180,16 +204,45 @@ module ARTService
                 FROM orders o
                 INNER JOIN drug_order dor ON dor.order_id = o.order_id AND dor.quantity > 0
                 WHERE o.voided = 0
-                    AND o.concept_id IN (SELECT concept_id FROM concept_name WHERE name LIKE '%Hydrochlorothiazide%' OR name LIKE '%Amlodipine%' OR name LIKE '%Enalapril%' OR name LIKE '%Atenolol%')
+                    AND o.concept_id IN (SELECT concept_id FROM concept_name WHERE name LIKE '%Hydrochlorothiazide%' OR name LIKE '%Amlodipine%' OR name LIKE '%Enalapril%' OR name LIKE '%Atenolol%' OR name LIKE '%Nifedipine%' OR name LIKE '%Captopril%')
                     AND o.start_date >= #{@start_date} AND o.start_date < #{@end_date} + INTERVAL 1 DAY
                 GROUP BY o.patient_id
             ) AS latest_drug_order ON latest_drug_order.patient_id = tpo.patient_id AND DATE(latest_drug_order.start_date) >= DATE(tpo.obs_date)
-            LEFT JOIN orders ord ON ord.start_date = latest_drug_order.start_date AND ord.patient_id = latest_drug_order.patient_id AND ord.voided = 0 AND ord.concept_id IN (SELECT concept_id FROM concept_name WHERE name LIKE '%Hydrochlorothiazide%' OR name LIKE '%Amlodipine%' OR name LIKE '%Enalapril%' OR name LIKE '%Atenolol%')
+            LEFT JOIN orders ord ON ord.start_date = latest_drug_order.start_date AND ord.patient_id = latest_drug_order.patient_id AND ord.voided = 0 AND ord.concept_id IN (SELECT concept_id FROM concept_name WHERE name LIKE '%Hydrochlorothiazide%' OR name LIKE '%Amlodipine%' OR name LIKE '%Enalapril%' OR name LIKE '%Atenolol%' OR name LIKE '%Nifedipine%' OR name LIKE '%Captopril%')
             LEFT JOIN drug_order dor ON dor.order_id = ord.order_id AND dor.quantity > 0
             LEFT JOIN drug d ON d.drug_id = dor.drug_inventory_id AND d.retired = 0
             WHERE tpo.patient_id NOT IN (#{external_clients})
             GROUP BY tpo.patient_id
             ORDER BY tpo.patient_id ASC
+          SQL
+        end
+
+        def due_for_bp_screening
+          ActiveRecord::Base.connection.select_all <<~SQL
+            SELECT p.person_id patient_id, disaggregated_age_group(p.birthdate, #{@end_date}) age_group, UPPER(LEFT(p.gender, 1)) gender, TIMESTAMPDIFF(YEAR, DATE(COALESCE(latest_bp.obs_date, MIN(ps.start_date))), DATE(#{@start_date})) due
+            FROM person p
+            INNER JOIN patient_program pp ON pp.patient_id = p.person_id AND pp.voided = 0 AND pp.program_id = 20 -- HTN PROGRAM
+            INNER JOIN patient_program pp2 ON pp2.patient_id = p.person_id AND pp2.voided = 0 AND pp2.program_id = 1 -- HIV PROGRAM
+            INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id AND ps.voided = 0 AND ps.end_date IS NULL AND ps.start_date <= DATE(#{@start_date}) AND ps.state = 160 -- ALIVE
+            INNER JOIN (
+              SELECT MAX(ps.start_date) as start_date, ps.patient_program_id
+              FROM patient_state ps
+              INNER JOIN patient_program pp ON pp.patient_program_id = ps.patient_program_id AND pp.voided = 0 AND pp.patient_id NOT IN (#{external_clients}) AND pp.program_id = 1 -- HIV PROGRAM
+              WHERE ps.voided = 0 AND ps.start_date < #{@start_date} AND ps.end_date IS NULL
+              GROUP BY ps.patient_program_id
+            ) latest_state ON latest_state.patient_program_id = pp2.patient_program_id
+            INNER JOIN patient_state ps2 ON ps2.patient_program_id = pp2.patient_program_id AND ps2.voided = 0 AND ps2.start_date = latest_state.start_date AND ps2.end_date IS NULL AND ps2.state = 7 -- ON ART
+            LEFT JOIN (
+              SELECT MAX(o.obs_datetime) obs_date, o.person_id patient_id
+              FROM obs o
+              INNER JOIN encounter e ON e.encounter_id = o.encounter_id AND e.voided = 0 AND e.encounter_datetime < #{@start_date} AND e.patient_id NOT IN (#{external_clients}) AND e.program_id = 1 -- HIV PROGRAM AND we can add to filter encounters based on the vitals encounter
+              WHERE o.concept_id = 5085 -- Systolic blood pressure
+              AND o.voided = 0 AND o.obs_datetime < #{@start_date}
+              GROUP BY o.person_id
+            ) AS latest_bp ON latest_bp.patient_id = p.person_id
+            WHERE p.voided = 0 AND p.person_id NOT IN (#{external_clients})
+            GROUP BY p.person_id
+            HAVING due >= 1
           SQL
         end
 
