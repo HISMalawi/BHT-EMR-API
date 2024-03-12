@@ -35,12 +35,12 @@ module ARTService
           'Atenolol (50mg tablet)' => :atenolol_50mg,
           'Atenolol (50mg)' => :atenolol_50mg,
           'Atenolol (100mg tablet)' => :atenolol_100mg,
-          'Nifedipine (10mg tablet)' => :nifedipine,
-          'Nifedipine (20mg tablet)' => :nifedipine,
-          'Captopril (25mg tablet)' => :captopril,
-          'Captopril (6.25mg tablet)' => :captopril,
-          'Captopril (12.5mg tablet)' => :captopril,
-          'Captopril (50mg tablet)' => :captopril,
+          'Nifedipine (10mg tablet)' => :nifedipine_10mg,
+          'Nifedipine (20mg tablet)' => :nifedipine_20mg,
+          'Captopril (25mg tablet)' => :captopril_25mg,
+          'Captopril (6.25mg tablet)' => :captopril_6_25mg,
+          'Captopril (12.5mg tablet)' => :captopril_12_5mg,
+          'Captopril (50mg tablet)' => :captopril_50mg,
           'Captopril' => :captopril,
         }.freeze
 
@@ -228,16 +228,16 @@ module ARTService
               SELECT MAX(ps.start_date) as start_date, ps.patient_program_id
               FROM patient_state ps
               INNER JOIN patient_program pp ON pp.patient_program_id = ps.patient_program_id AND pp.voided = 0 AND pp.patient_id NOT IN (#{external_clients}) AND pp.program_id = 1 -- HIV PROGRAM
-              WHERE ps.voided = 0 AND ps.start_date < #{@start_date} AND ps.end_date IS NULL
+              WHERE ps.voided = 0 AND ps.start_date < DATE(#{@start_date}) AND ps.end_date IS NULL
               GROUP BY ps.patient_program_id
             ) latest_state ON latest_state.patient_program_id = pp2.patient_program_id
             INNER JOIN patient_state ps2 ON ps2.patient_program_id = pp2.patient_program_id AND ps2.voided = 0 AND ps2.start_date = latest_state.start_date AND ps2.end_date IS NULL AND ps2.state = 7 -- ON ART
             LEFT JOIN (
               SELECT MAX(o.obs_datetime) obs_date, o.person_id patient_id
               FROM obs o
-              INNER JOIN encounter e ON e.encounter_id = o.encounter_id AND e.voided = 0 AND e.encounter_datetime < #{@start_date} AND e.patient_id NOT IN (#{external_clients}) AND e.program_id = 1 -- HIV PROGRAM AND we can add to filter encounters based on the vitals encounter
+              INNER JOIN encounter e ON e.encounter_id = o.encounter_id AND e.voided = 0 AND e.encounter_datetime < DATE(#{@start_date}) AND e.patient_id NOT IN (#{external_clients}) AND e.program_id = 1 -- HIV PROGRAM AND we can add to filter encounters based on the vitals encounter
               WHERE o.concept_id = 5085 -- Systolic blood pressure
-              AND o.voided = 0 AND o.obs_datetime < #{@start_date}
+              AND o.voided = 0 AND o.obs_datetime < DATE(#{@start_date})
               GROUP BY o.person_id
             ) AS latest_bp ON latest_bp.patient_id = p.person_id
             WHERE p.voided = 0 AND p.person_id NOT IN (#{external_clients})
