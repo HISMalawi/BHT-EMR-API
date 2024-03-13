@@ -53,6 +53,14 @@ class Api::V1::ProgramPatientsController < ApplicationController
     end
   end
 
+  def lookup_ncd_number
+    if (service.ncd_number_already_exists(params[:arv_number]))
+      render json: { exists: true }
+    else
+      render json: { exists: false }
+    end
+  end
+
   def void_arv_number
     render json: service.void_arv_number(params[:arv_number])
   end
