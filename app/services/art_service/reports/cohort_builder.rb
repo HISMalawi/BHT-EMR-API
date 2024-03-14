@@ -572,7 +572,7 @@ module ARTService
         load_data_into_temp_cohort_members_table(end_date)
         ActiveRecord::Base.connection.execute <<~SQL
           INSERT INTO temp_earliest_start_date
-          SELECT patient_id, date_enrolled, earliest_start_date, birthdate, birthdate_estimated, death_date, gender, age_at_initiation, age_in_days, reason_for_starting_art
+          SELECT patient_id, date_enrolled, earliest_start_date, recorded_start_date, birthdate, birthdate_estimated, death_date, gender, age_at_initiation, age_in_days, reason_for_starting_art
           FROM temp_cohort_members #{occupation_filter(occupation: occupation, field_name: 'occupation')}
         SQL
       end
@@ -591,7 +591,8 @@ module ARTService
           INSERT INTO temp_cohort_members
           SELECT patient_program.patient_id,
                  DATE(MIN(art_order.start_date)) AS date_enrolled,
-                 DATE(COALESCE(art_start_date_obs.value_datetime, MIN(art_order.start_date))) AS earliest_start_date,
+                 DATE(COALESCE(MIN(art_start_date_obs.value_datetime), MIN(art_order.start_date))) AS earliest_start_date,
+                 DATE(MIN(art_start_date_obs.value_datetime)) AS recorded_start_date,
                  person.birthdate,
                  person.birthdate_estimated,
                  person.death_date,
@@ -600,7 +601,7 @@ module ARTService
                  IF(person.birthdate IS NOT NULL, TIMESTAMPDIFF(DAY, person.birthdate,  DATE(COALESCE(art_start_date_obs.value_datetime, MIN(art_order.start_date)))), NULL) AS age_in_days,
                  (SELECT value_coded FROM obs
                   WHERE concept_id = 7563 AND person_id = patient_program.patient_id AND voided = 0
-                  ORDER BY obs_datetime DESC LIMIT 1) AS reason_for_starting_art,
+                  ORDER BY obs_datetime DESC, date_created DESC LIMIT 1) AS reason_for_starting_art,
                  pa.value AS occupation
           FROM patient_program
           INNER JOIN person ON person.person_id = patient_program.patient_id
@@ -677,6 +678,7 @@ module ARTService
             patient_id INT PRIMARY KEY,
             date_enrolled DATE,
             earliest_start_date DATE,
+            recorded_start_date DATE DEFAULT NULL,
             birthdate DATE DEFAULT NULL,
             birthdate_estimated BOOLEAN,
             death_date DATE,
@@ -823,6 +825,7 @@ module ARTService
              patient_id INT PRIMARY KEY,
              date_enrolled DATE,
              earliest_start_date DATE,
+             recorded_start_date DATE DEFAULT NULL,
              birthdate DATE DEFAULT NULL,
              birthdate_estimated BOOLEAN,
              death_date DATE,
