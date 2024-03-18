@@ -20,6 +20,8 @@ class PersonService
     landmark: 'Landmark Or Plot Number',
     next_of_kin: 'NEXT OF KIN',
     next_of_kin_contact_number: 'NEXT OF KIN CONTACT NUMBER',
+    marital_status: 'Civil Status',
+    religion: 'Religion',
     occupation: 'Occupation'
   }.freeze
 

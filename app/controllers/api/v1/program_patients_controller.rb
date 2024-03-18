@@ -41,8 +41,20 @@ class Api::V1::ProgramPatientsController < ApplicationController
     render json: { arv_number: service.find_next_available_arv_number }
   end
 
+  def find_next_available_ncd_number
+    render json: { ncd_number: service.find_next_available_ncd_number }
+  end
+
   def lookup_arv_number
     if (service.arv_number_already_exists(params[:arv_number]))
+      render json: { exists: true }
+    else
+      render json: { exists: false }
+    end
+  end
+
+  def lookup_ncd_number
+    if (service.ncd_number_already_exists(params[:arv_number]))
       render json: { exists: true }
     else
       render json: { exists: false }

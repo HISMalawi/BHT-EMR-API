@@ -6,7 +6,8 @@ class ProgramPatientsService
     'OPD PROGRAM' => OPDService::PatientsEngine,
     'VMMC PROGRAM' => VMMCService::PatientsEngine,
     'CXCA PROGRAM' => CXCAService::PatientsEngine,
-    'HTC PROGRAM' => HTSService::PatientsEngine
+    'HTC PROGRAM' => HTSService::PatientsEngine,
+    'NCD PROGRAM' => NCDService::PatientsEngine,
   }.freeze
 
   def initialize(program:)
