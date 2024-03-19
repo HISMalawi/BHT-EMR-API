@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-
 module ArtService
   module Reports
     # Cohort report builder class.
@@ -8,7 +7,7 @@ module ArtService
     # This class only provides one public method (start_build_report) besides
     # the constructor. This method must be called to build report and save
     # it to database.
-    class Cohort
+    class ArtCohort
       include ConcurrencyUtils
       include ModelUtils
 
@@ -42,33 +41,33 @@ module ArtService
       end
 
       def defaulter_list(pepfar)
-#         data = ActiveRecord::Base.connection.select_all <<~SQL
-#           SELECT o.patient_id, min(start_date) start_date
-#           FROM orders o
-#           INNER JOIN drug_order od ON od.order_id = o.order_id AND o.voided = 0
-#           INNER JOIN drug d ON d.drug_id = od.drug_inventory_id
-#           INNER JOIN concept_set s ON s.concept_id = d.concept_id
-#           INNER JOIN patient_program pp ON pp.patient_id = o.patient_id
-#           WHERE s.concept_set = 1085
-#             AND od.quantity > 0
-#             AND pp.program_id = 1
-#             AND pp.voided = 0
-#             AND o.patient_id NOT IN (
-#               SELECT DISTINCT person_id
-#               FROM obs
-#               INNER JOIN encounter
-#                 ON encounter.encounter_id = obs.encounter_id
-#                 AND encounter.program_id = 1
-#                 AND encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'Registration')
-#                 AND encounter.encounter_datetime < DATE(#{ActiveRecord::Base.connection.quote(@end_date)}) + INTERVAL 1 DAY
-#                 AND encounter.voided = 0
-#               WHERE obs.voided = 0
-#                 AND obs.concept_id IN (SELECT concept_id FROM concept_name WHERE name = 'Type of Patient' AND voided = 0)
-#                 AND obs.value_coded IN (SELECT concept_id FROM concept_name WHERE name = 'External consultation' AND voided = 0)
-#                 AND obs.obs_datetime < DATE(#{ActiveRecord::Base.connection.quote(@end_date)})
-#             )
-#           GROUP BY o.patient_id;
-#         SQL
+        #         data = ActiveRecord::Base.connection.select_all <<~SQL
+        #           SELECT o.patient_id, min(start_date) start_date
+        #           FROM orders o
+        #           INNER JOIN drug_order od ON od.order_id = o.order_id AND o.voided = 0
+        #           INNER JOIN drug d ON d.drug_id = od.drug_inventory_id
+        #           INNER JOIN concept_set s ON s.concept_id = d.concept_id
+        #           INNER JOIN patient_program pp ON pp.patient_id = o.patient_id
+        #           WHERE s.concept_set = 1085
+        #             AND od.quantity > 0
+        #             AND pp.program_id = 1
+        #             AND pp.voided = 0
+        #             AND o.patient_id NOT IN (
+        #               SELECT DISTINCT person_id
+        #               FROM obs
+        #               INNER JOIN encounter
+        #                 ON encounter.encounter_id = obs.encounter_id
+        #                 AND encounter.program_id = 1
+        #                 AND encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'Registration')
+        #                 AND encounter.encounter_datetime < DATE(#{ActiveRecord::Base.connection.quote(@end_date)}) + INTERVAL 1 DAY
+        #                 AND encounter.voided = 0
+        #               WHERE obs.voided = 0
+        #                 AND obs.concept_id IN (SELECT concept_id FROM concept_name WHERE name = 'Type of Patient' AND voided = 0)
+        #                 AND obs.value_coded IN (SELECT concept_id FROM concept_name WHERE name = 'External consultation' AND voided = 0)
+        #                 AND obs.obs_datetime < DATE(#{ActiveRecord::Base.connection.quote(@end_date)})
+        #             )
+        #           GROUP BY o.patient_id;
+        #         SQL
 
         report_type = (pepfar ? 'pepfar' : 'moh')
         defaulter_date_sql = pepfar ? 'current_pepfar_defaulter_date' : 'current_defaulter_date'
@@ -272,10 +271,10 @@ module ArtService
 
       def calculate_age(birthdate)
         birthdate = begin
-                      birthdate.to_date
-                    rescue
-                      nil
-                    end
+          birthdate.to_date
+        rescue StandardError
+          nil
+        end
         return 'N/A' if birthdate.blank?
 
         birthdate = ActiveRecord::Base.connection.select_one <<~SQL
