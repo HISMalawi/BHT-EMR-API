@@ -23,8 +23,10 @@ module ArtService
         create_tmp_patient_table
         drop_temp_register_start_date_table
         drop_temp_other_patient_types
+        drop_temp_order_details
         create_temp_other_patient_types(end_date)
         create_temp_register_start_date_table(end_date)
+        create_temp_order_details(end_date)
         load_data_into_temp_earliest_start_date(end_date.to_date, occupation)
         update_cum_outcome(end_date)
       end
@@ -35,8 +37,10 @@ module ArtService
         create_tmp_patient_table
         drop_temp_register_start_date_table
         drop_temp_other_patient_types
+        drop_temp_order_details
         create_temp_other_patient_types(end_date)
         create_temp_register_start_date_table(end_date)
+        create_temp_order_details(end_date)
         load_data_into_temp_earliest_start_date(end_date.to_date, occupation)
 
         # create_tmp_patient_table_2(end_date)
