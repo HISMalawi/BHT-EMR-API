@@ -92,7 +92,7 @@ module ArtService
             AND patient_state.date_created = (SELECT MAX(date_created)
                 FROM patient_state ps
                 WHERE ps.patient_program_id = patient_state.patient_program_id #{site_manager(operator: 'AND', column: 'ps.site_id', location: @location)}
-                AND ps.state = patient_state.state AND ps.voided = 0)
+                AND ps.state = patient_state.state AND ps.voided = 0 AND ps.start_date <= #{date})
             GROUP BY patients.patient_id
           SQL
         end

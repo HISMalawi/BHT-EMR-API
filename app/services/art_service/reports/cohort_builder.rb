@@ -667,6 +667,7 @@ module ArtService
                  IF(person.birthdate IS NOT NULL, TIMESTAMPDIFF(DAY, person.birthdate,  DATE(COALESCE(art_start_date_obs.value_datetime, MIN(art_order.start_date)))), NULL) AS age_in_days,
                  (SELECT value_coded FROM obs
                   WHERE concept_id = 7563 AND person_id = patient_program.patient_id AND voided = 0
+                  AND obs_datetime <= DATE('#{end_date}') + INTERVAL 1 DAY
                   ORDER BY obs_datetime DESC, date_created DESC LIMIT 1) AS reason_for_starting_art,
                  pa.value AS occupation
           FROM patient_program
