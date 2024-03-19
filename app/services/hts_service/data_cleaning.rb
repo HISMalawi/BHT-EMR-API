@@ -16,7 +16,8 @@ module HtsService
       'MISSING LINKAGE' => 'missing_linkage',
       'DUPLICATE ENCOUNTERS' => 'duplicate_encounter',
       'PARTNER STATUS' => 'partner_status',
-      'TEST DATE EARLIER THAN BIRTHDATE' => 'test_date_earlier_than_birthdate'
+      'TEST DATE EARLIER THAN BIRTHDATE' => 'test_date_earlier_than_birthdate',
+      'MISSING BIRTHDATE' => 'missing_birthdate'
     }.freeze
 
     def initialize(start_date, end_date, tool_name)
@@ -32,6 +33,34 @@ module HtsService
     end
 
     private
+
+    def missing_birthdate
+      ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT
+          p.patient_id,
+          e.encounter_type,
+          i.identifier,
+          DATE(e.encounter_datetime) as visit_date,
+          pe.gender,
+          pe.birthdate,
+          pn.given_name,
+          pn.family_name
+        FROM patient p
+        INNER JOIN person_name pn ON pn.person_id = p.patient_id
+          AND pn.voided = 0
+        INNER JOIN person pe ON pe.person_id = p.patient_id
+          AND pe.voided = 0
+        INNER JOIN encounter e ON e.patient_id = p.patient_id
+          AND e.voided = 0
+        INNER JOIN patient_identifier i ON i.patient_id = p.patient_id AND i.identifier_type = #{patient_identifier_type('National id').id}
+        WHERE e.program_id = #{program('HTC PROGRAM').id}
+          AND e.voided = 0
+          AND DATE(e.encounter_datetime) >= DATE('#{@start_date}')
+          AND DATE(e.encounter_datetime) <= DATE('#{@end_date}')
+          AND pe.birthdate IS NULL
+          OR pe.birthdate = '0000-00-00'
+      SQL
+    end
 
     def incomplete_visits
       ActiveRecord::Base.connection.select_all <<~SQL
