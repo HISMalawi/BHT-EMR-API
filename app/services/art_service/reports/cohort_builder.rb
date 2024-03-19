@@ -698,7 +698,7 @@ module ArtService
             AND prescription_encounter.encounter_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
             AND prescription_encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name LIKE 'Treatment')
             AND prescription_encounter.voided = 0 */
-          LEFT JOIN temp_register_start_date AS patient_type_obs
+          /* LEFT JOIN temp_register_start_date AS patient_type_obs
             ON patient_type_obs.patient_id = patient_program.patient_id
           INNER JOIN orders AS art_order
             ON art_order.patient_id = patient_program.patient_id
@@ -710,7 +710,8 @@ module ArtService
             AND art_order.voided = 0
           INNER JOIN drug_order
             ON drug_order.order_id = art_order.order_id
-            AND drug_order.quantity > 0
+            AND drug_order.quantity > 0 */
+          INNER JOIN temp_order_details AS art_order ON art_order.patient_id = patient_program.patient_id
           WHERE patient_program.voided = 0
             AND outcome.voided = 0
             AND patient_program.program_id = 1
@@ -815,6 +816,27 @@ module ArtService
       def drop_temp_other_patient_types
         ActiveRecord::Base.connection.execute <<~SQL
           DROP TABLE IF EXISTS temp_other_patient_types
+        SQL
+      end
+
+      def drop_temp_order_details
+        ActiveRecord::Base.connection.execute <<~SQL
+          DROP TABLE IF EXISTS temp_order_details
+        SQL
+      end
+
+      def create_temp_order_details(end_date)
+        exe_temp_order_details_table(adapter: @adapter)
+        ActiveRecord::Base.connection.execute <<~SQL
+          INSERT INTO temp_order_details
+          SELECT o.patient_id, o.site_id, DATE(MIN(o.start_date)) start_date
+          FROM orders o
+          INNER JOIN drug_order do ON do.order_id = o.order_id AND do.quantity > 0
+          LEFT JOIN temp_register_start_date trsd ON trsd.patient_id  = o.patient_id
+          WHERE o.concept_id  IN (SELECT concept_id FROM concept_set WHERE concept_set = 1085)
+          AND o.start_date < DATE('#{end_date}') + INTERVAL 1 DAY AND o.start_date >= COALESCE(trsd.start_date, DATE('1901-01-01'))
+          and o.order_type_id = 1 ANd o.voided  = 0
+          GROUP BY o.patient_id;
         SQL
       end
 
