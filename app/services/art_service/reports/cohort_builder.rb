@@ -702,7 +702,7 @@ module ArtService
             ON patient_type_obs.patient_id = patient_program.patient_id
           INNER JOIN orders AS art_order
             ON art_order.patient_id = patient_program.patient_id
-            /* AND art_order.encounter_id = prescription_encounter.encounter_id */
+            AND art_order.encounter_id = prescription_encounter.encounter_id
             AND art_order.concept_id IN (SELECT concept_id FROM concept_set WHERE concept_set = 1085)
             AND art_order.start_date < DATE(#{end_date}) + INTERVAL 1 DAY
             AND art_order.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
