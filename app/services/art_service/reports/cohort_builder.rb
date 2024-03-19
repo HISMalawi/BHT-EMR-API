@@ -830,10 +830,20 @@ module ArtService
       end
 
       def create_temp_order_details(end_date)
-        exe_temp_order_details_table(adapter: @adapter)
+        ActiveRecord::Base.connection.execute <<-SQL
+          CREATE TABLE temp_order_details (
+            patient_id INT NOT NULL,
+            start_date DATE NOT NULL,
+            PRIMARY KEY (patient_id)
+          )
+        SQL
+        load_temp_order_details(end_date)
+      end
+
+      def load_temp_order_details(end_date)
         ActiveRecord::Base.connection.execute <<~SQL
           INSERT INTO temp_order_details
-          SELECT o.patient_id, o.site_id, DATE(MIN(o.start_date)) start_date
+          SELECT o.patient_id, DATE(MIN(o.start_date)) start_date
           FROM orders o
           INNER JOIN drug_order do ON do.order_id = o.order_id AND do.quantity > 0
           LEFT JOIN temp_register_start_date trsd ON trsd.patient_id  = o.patient_id
