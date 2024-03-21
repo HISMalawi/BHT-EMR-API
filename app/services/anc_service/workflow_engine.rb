@@ -1,4 +1,4 @@
-module ANCService
+module AncService
   class WorkflowEngine
     include ModelUtils
 
@@ -18,6 +18,7 @@ module ANCService
       loop do
         state = next_state state
         break if state == END_STATE
+
         LOGGER.debug "Loading encounter type: #{state}"
         encounter_type = EncounterType.find_by(name: state)
 
@@ -60,8 +61,8 @@ module ANCService
     PREGNANCY_STATUS = 'PREGNANCY STATUS'
 
     ONE_TIME_ENCOUNTERS = [
-      OBSTETRIC_HISTORY,MEDICAL_HISTORY,
-      SURGICAL_HISTORY,SOCIAL_HISTORY,
+      OBSTETRIC_HISTORY, MEDICAL_HISTORY,
+      SURGICAL_HISTORY, SOCIAL_HISTORY,
       CURRENT_PREGNANCY
     ]
 
@@ -88,21 +89,21 @@ module ANCService
     STATE_CONDITIONS = {
       DISPENSING => %i[patient_has_not_been_given_td?],
       OBSTETRIC_HISTORY => %i[is_not_a_subsequent_visit?
-                      obstetric_history_not_collected?],
+                              obstetric_history_not_collected?],
       MEDICAL_HISTORY => %i[is_not_a_subsequent_visit?
-                        medical_history_not_collected?],
+                            medical_history_not_collected?],
       SURGICAL_HISTORY => %i[is_not_a_subsequent_visit?
-                        surgical_history_not_collected?],
+                             surgical_history_not_collected?],
       SOCIAL_HISTORY => %i[is_not_a_subsequent_visit?
-                          social_history_not_collected?],
+                           social_history_not_collected?],
       CURRENT_PREGNANCY => %i[is_not_a_subsequent_visit?
-                      current_pregnancy_not_collected?],
+                              current_pregnancy_not_collected?],
       ART_FOLLOWUP => %i[patient_is_hiv_positive?],
       HIV_CLINIC_REGISTRATION => %i[patient_is_hiv_positive?
-                      proceed_to_pmtct?
-                      patient_is_not_enrolled_in_art?],
+                                    proceed_to_pmtct?
+                                    patient_is_not_enrolled_in_art?],
       HIV_RECEPTION => %i[patient_is_hiv_positive?
-                      proceed_to_pmtct?]
+                          proceed_to_pmtct?]
 
     }.freeze
 
@@ -162,13 +163,14 @@ module ANCService
       if (type == encounter_type("TREATMENT"))
         return patient_not_receiving_treatment_today? || patient_has_been_given_drugs?
       end
+
       Encounter.where(type: type, patient: @patient)\
                .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
                .exists?
     end
 
     def valid_state?(state)
-       if !@activities.include?(state)
+      if !@activities.include?(state)
         return false
       end
 
@@ -185,10 +187,10 @@ module ANCService
     def patient_has_not_been_given_td?
       td_drug = Drug.find_by name: "TD (0.5ml)"
       td_order = Encounter.joins(:orders => [:drug_order])
-        .where("encounter.patient_id = ? AND drug_order.drug_inventory_id = ?
+                          .where("encounter.patient_id = ? AND drug_order.drug_inventory_id = ?
           AND DATE(encounter.encounter_datetime) = DATE(?) AND program_id = ?",
-          @patient.patient_id, td_drug.id, @date, @program.id)
-        .order(encounter_datetime: :desc).first.blank?
+                                 @patient.patient_id, td_drug.id, @date, @program.id)
+                          .order(encounter_datetime: :desc).first.blank?
 
       td_order
     end
@@ -198,10 +200,9 @@ module ANCService
       no_concept = ConceptName.find_by_name("No").concept_id
       treatment_enc = EncounterType.find_by name: TREATMENT
       obs = Encounter.joins([:observations])
-        .where("encounter.patient_id = ? AND encounter.encounter_type = ?
+                     .where("encounter.patient_id = ? AND encounter.encounter_type = ?
           AND obs.concept_id = ? AND obs.value_coded = ? AND DATE(encounter.encounter_datetime) = DATE(?)",
-          @patient.patient_id, treatment_enc.id, med_recv_concept, no_concept, @date
-        )
+                            @patient.patient_id, treatment_enc.id, med_recv_concept, no_concept, @date)
       !obs.blank?
     end
 
@@ -218,7 +219,7 @@ module ANCService
         AND (encounter.patient_id = #{@patient.patient_id}
           AND DATE(encounter.encounter_datetime) = DATE('#{@date}'))
           ORDER BY encounter.encounter_datetime DESC"
-      ).rows.collect{|d| drugs << d[0]}.compact
+      ).rows.collect { |d| drugs << d[0] }.compact
 
       drugs.delete(td_drug.id)
 
@@ -230,39 +231,40 @@ module ANCService
     end
 
     def patient_is_hiv_positive?
-      current_status = ConceptName.find_by name:'HIV Status'
-      prev_test_done = Observation.where( person: @patient.person, concept: concept('Previous HIV Test Done'))\
-          .order(obs_datetime: :desc)\
-          .first\
-          &.value_coded || nil
+      current_status = ConceptName.find_by name: 'HIV Status'
+      prev_test_done = Observation.where(person: @patient.person, concept: concept('Previous HIV Test Done'))\
+                                  .order(obs_datetime: :desc)\
+                                  .first\
+                                  &.value_coded || nil
       date_of_last_mp = date_of_lnmp
       lmp = date_of_last_mp.blank? ? (@date - 45.week) : date_of_last_mp
-      if (prev_test_done == 1065) #if value is Yes, check prev hiv status
+      if (prev_test_done == 1065) # if value is Yes, check prev hiv status
         prev_hiv_test_res = Observation.where(["person_id = ? and concept_id = ? and obs_datetime > ?",
-            @patient.person.id, ConceptName.find_by_name('Previous HIV Test Results').concept_id, lmp])\
-          .order(obs_datetime: :desc)\
-          .first\
-          &.value_coded
+                                               @patient.person.id, ConceptName.find_by_name('Previous HIV Test Results').concept_id, lmp])\
+                                       .order(obs_datetime: :desc)\
+                                       .first\
+                                       &.value_coded
         prev_status = ConceptName.find_by_concept_id(prev_hiv_test_res).name
         return true if prev_status.to_s.downcase == 'positive'
       end
 
-      hiv_test_res =  Observation.where(["person_id = ? and concept_id = ? and obs_datetime > ?",
-          @patient.person.id, ConceptName.find_by_name('HIV Status').concept_id, lmp])\
-        .order(obs_datetime: :desc)\
-        .first\
-        &.value_coded #rescue nil
+      hiv_test_res = Observation.where(["person_id = ? and concept_id = ? and obs_datetime > ?",
+                                        @patient.person.id, ConceptName.find_by_name('HIV Status').concept_id, lmp])\
+                                .order(obs_datetime: :desc)\
+                                .first\
+                                &.value_coded # rescue nil
 
-        hiv_status = ConceptName.find_by_concept_id(hiv_test_res).name rescue nil
+      hiv_status = ConceptName.find_by_concept_id(hiv_test_res).name rescue nil
 
-        hiv_status ||= prev_status
-        return true if !hiv_status.nil? && hiv_status.downcase == 'positive'
-        return false
+      hiv_status ||= prev_status
+      return true if !hiv_status.nil? && hiv_status.downcase == 'positive'
+
+      return false
     end
 
     def patient_is_not_enrolled_in_art?
       PatientProgram.where("program_id = ? AND patient_id = ?",
-        HIV_PROGRAM.id, @patient.id).blank?
+                           HIV_PROGRAM.id, @patient.id).blank?
     end
 
     # Check if surgical history has been collected
@@ -274,7 +276,7 @@ module ANCService
       surgical_history_enc = EncounterType.find_by name: SURGICAL_HISTORY
       surg_history = Encounter.where("encounter_type = ?
           AND patient_id = ? AND DATE(encounter_datetime) >= DATE(?)",
-          surgical_history_enc.id, @patient.patient_id, lmp_date).blank?
+                                     surgical_history_enc.id, @patient.patient_id, lmp_date).blank?
 
       surg_history
     end
@@ -291,9 +293,9 @@ module ANCService
       anc_visit = Encounter.joins(:observations).where("encounter.encounter_type = ?
           AND concept_id = ? AND encounter.patient_id = ? AND
           DATE(encounter.encounter_datetime) >= DATE(?)",
-          visit_type.id, reason_for_visit.concept_id,
-          @patient.patient_id, lmp_date)
-        .order(encounter_datetime: :desc).first.blank?
+                                                       visit_type.id, reason_for_visit.concept_id,
+                                                       @patient.patient_id, lmp_date)
+                           .order(encounter_datetime: :desc).first.blank?
 
       anc_visit
     end
@@ -306,8 +308,8 @@ module ANCService
 
       obstetric = Encounter.where("encounter_type = ?
           AND patient_id = ? AND DATE(encounter_datetime) >= DATE(?)",
-          obstetric_encounter.id, @patient.patient_id, lmp_date)
-        .order(encounter_datetime: :desc).first.blank?
+                                  obstetric_encounter.id, @patient.patient_id, lmp_date)
+                           .order(encounter_datetime: :desc).first.blank?
 
       obstetric
     end
@@ -320,8 +322,8 @@ module ANCService
 
       med_history = Encounter.where("encounter_type = ?
           AND patient_id = ? AND DATE(encounter_datetime) >= DATE(?)",
-          medical_history_enc.id, @patient.patient_id, lmp_date)
-        .order(encounter_datetime: :desc).first.blank?
+                                    medical_history_enc.id, @patient.patient_id, lmp_date)
+                             .order(encounter_datetime: :desc).first.blank?
 
       med_history
     end
@@ -334,8 +336,8 @@ module ANCService
 
       social_history = Encounter.where("encounter_type = ?
           AND patient_id = ? AND DATE(encounter_datetime) >= DATE(?)",
-          social_history_enc.id, @patient.patient_id, lmp_date)
-        .order(encounter_datetime: :desc).first.blank?
+                                       social_history_enc.id, @patient.patient_id, lmp_date)
+                                .order(encounter_datetime: :desc).first.blank?
 
       social_history
     end
@@ -348,8 +350,8 @@ module ANCService
 
       curr_preg = Encounter.where("encounter_type = ?
           AND patient_id = ? AND DATE(encounter_datetime) >= DATE(?)",
-          curr_preg_enc.id, @patient.patient_id, lmp_date)
-        .order(encounter_datetime: :desc).first.blank?
+                                  curr_preg_enc.id, @patient.patient_id, lmp_date)
+                           .order(encounter_datetime: :desc).first.blank?
 
       curr_preg
     end
@@ -360,17 +362,16 @@ module ANCService
       yes   = ConceptName.find_by name: "Yes"
 
       proceed = Encounter.joins([:observations])
-          .where("encounter_type = ? AND obs.concept_id = ? AND patient_id = ?
-            AND (value_coded = ? OR value_text = 'Yes')",art_followup.id,
-            pmtct.concept_id, @patient.patient_id, yes.concept_id)
-          .order(encounter_datetime: :desc).first.blank?
+                         .where("encounter_type = ? AND obs.concept_id = ? AND patient_id = ?
+            AND (value_coded = ? OR value_text = 'Yes')", art_followup.id,
+                                pmtct.concept_id, @patient.patient_id, yes.concept_id)
+                         .order(encounter_datetime: :desc).first.blank?
 
       !proceed
-
     end
 
     def date_of_lnmp
-      ANCService::PregnancyService.date_of_lnmp(@patient, @date)
+      AncService::PregnancyService.date_of_lnmp(@patient, @date)
     end
   end
 end

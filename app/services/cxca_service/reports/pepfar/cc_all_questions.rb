@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module CXCAService
+module CxcaService
   module Reports
     module Pepfar
       # class providing all major Cervical Cancer quetions
@@ -29,7 +29,7 @@ module CXCAService
             group = response.find { |patient| patient[:age_group] == record['age_group'] }
             assign_to_type_of_screening(group, record)
           end
-          return response if is_returning
+          response if is_returning
         end
 
         def screening_result_report(is_returning: true)
@@ -37,7 +37,7 @@ module CXCAService
             group = response.find { |patient| patient[:age_group] == record['age_group'] }
             assign_to_screening_result(group, record)
           end
-          return response if is_returning
+          response if is_returning
         end
 
         def treatment_resport(is_returning: true)
@@ -45,7 +45,7 @@ module CXCAService
             group = response.find { |patient| patient[:age_group] == record['age_group'] }
             assign_to_type_of_treatment(group, record)
           end
-          return response if is_returning
+          response if is_returning
         end
 
         private
@@ -71,10 +71,10 @@ module CXCAService
             group[:follow_up_screen] << record['patient_id']
             @total[:follow_up_screen] << record['patient_id']
           end
-          if ['One year subsequent check-up after treatment', 'Subsequent screening'].include?(visit_type)
-            group[:rescreen] << record['patient_id']
-            @total[:rescreen] << record['patient_id']
-          end
+          return unless ['One year subsequent check-up after treatment', 'Subsequent screening'].include?(visit_type)
+
+          group[:rescreen] << record['patient_id']
+          @total[:rescreen] << record['patient_id']
         end
 
         # rubocop:disable Metrics/AbcSize
@@ -89,10 +89,10 @@ module CXCAService
             group[:result_positive] << record['patient_id']
             @total[:result_positive] << record['patient_id']
           end
-          if result_type.match(/suspect/i)
-            group[:result_suspected_cancer] << record['patient_id']
-            @total[:result_suspected_cancer] << record['patient_id']
-          end
+          return unless result_type.match(/suspect/i)
+
+          group[:result_suspected_cancer] << record['patient_id']
+          @total[:result_suspected_cancer] << record['patient_id']
         end
         # rubocop:enable Metrics/AbcSize
         # rubocop:enable Metrics/CyclomaticComplexity
@@ -107,10 +107,10 @@ module CXCAService
             group[:thermocoagulation] << record['patient_id']
             @total[:thermocoagulation] << record['patient_id']
           end
-          if treatment_type == 'LEEP'
-            group[:leep] << record['patient_id']
-            @total[:leep] << record['patient_id']
-          end
+          return unless treatment_type == 'LEEP'
+
+          group[:leep] << record['patient_id']
+          @total[:leep] << record['patient_id']
         end
 
         def type_of_screening

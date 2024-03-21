@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   module Reports
     class ArvRefillPeriods
       def initialize(start_date:, end_date:, min_age:, max_age:, org:, initialize_tables:, **kwargs)
@@ -30,7 +30,8 @@ module ARTService
 
         if @initialize_tables
           report_type = (@org.match(/pepfar/i) ? 'pepfar' : 'moh')
-          ARTService::Reports::CohortBuilder.new(outcomes_definition: report_type).init_temporary_tables(@start_date, @end_date, @occupation)
+          ArtService::Reports::CohortBuilder.new(outcomes_definition: report_type).init_temporary_tables(@start_date,
+                                                                                                         @end_date, @occupation)
         end
 
         patients = ActiveRecord::Base.connection.select_all <<~SQL
@@ -66,7 +67,7 @@ module ARTService
 
           results[gender][patient_id] = {
             prescribed_days: dispensing_info,
-            birthdate: birthdate, gender: gender
+            birthdate:, gender:
           }
         end
 
@@ -173,7 +174,7 @@ module ARTService
         return nil if weight_details.blank?
 
         weight_details = weight_details.first
-        weight = (weight_details.value_numeric.to_f > 0 ? weight_details.value_numeric.to_f : weight_details.value_text.to_f)
+        weight = (weight_details.value_numeric.to_f.positive? ? weight_details.value_numeric.to_f : weight_details.value_text.to_f)
         " WHERE #{weight} >= min_weight AND #{weight} <= max_weight "
       end
 
@@ -230,7 +231,6 @@ module ARTService
 
         regimen = regimen_info['regimen']
         regimen = (regimen.match(/N/i) ? 'Unknown' : regimen)
-        prescribed_days = nil
 
         unless regimen.match(/Unknown/i)
           weight_sql = get_weight(patient_id)
@@ -272,15 +272,15 @@ module ARTService
           birthdate = i['birthdate']
 
           info[patient_id][regimen][drug_id] = {
-            drug_name: drug_name,
+            drug_name:,
             start_date: start_date.to_date.strftime('%d/%b/%Y'),
             auto_expire_date: begin
               auto_expire_date.to_date.strftime('%d/%b/%Y')
             rescue StandardError
               nil
             end,
-            dose_per_day: dose_per_day,
-            quantity: quantity,
+            dose_per_day:,
+            quantity:,
             arv_number: (arv_number.blank? ? 'N/A' : arv_number),
             birthdate: begin
               birthdate.to_date.strftime('%d/%b/%Y')

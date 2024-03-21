@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 require 'swagger_helper'
 
-TAGS_NAME = 'Orders'.freeze
+TAGS_NAME = 'Orders'
 
 describe 'Orders API', type: :request, swagger_doc: 'v1/swagger.yaml' do
   path '/api/v1/orders/radiology' do

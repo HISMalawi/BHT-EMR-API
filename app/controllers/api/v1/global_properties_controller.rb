@@ -1,49 +1,55 @@
-class Api::V1::GlobalPropertiesController < ApplicationController
-  def search
-    name, = params.require %i[property]
+# frozen_string_literal: true
 
-    render json: GlobalProperty.where('property like ?', "%#{name}%")
-  end
+module Api
+  module V1
+    class GlobalPropertiesController < ApplicationController
+      def search
+        name, = params.require %i[property]
 
-  def show
-    name = params.require %i[property]
-    property = GlobalProperty.find_by property: name
-    if property
-      render json: { property.property => property.property_value }
-    else
-      render json: { errors: ["Property, #{name}, not found"] },
-             status: :not_found
-    end
-  end
+        render json: GlobalProperty.where('property like ?', "%#{name}%")
+      end
 
-  def create(success_response_status: :created)
-    name, value = params.require %i[property property_value]
+      def show
+        name = params.require %i[property]
+        property = GlobalProperty.find_by property: name
+        if property
+          render json: { property.property => property.property_value }
+        else
+          render json: { errors: ["Property, #{name}, not found"] },
+                 status: :not_found
+        end
+      end
 
-    property = GlobalProperty.find_by property: name
-    property ||= GlobalProperty.new property: name
-    property.property_value = value
+      def create(success_response_status: :created)
+        name, value = params.require %i[property property_value]
 
-    if property.save
-      render json: property, status: success_response_status
-    else
-      render json: ['Failed to save property'],
-             status: :internal_server_error
-    end
-  end
+        property = GlobalProperty.find_by property: name
+        property ||= GlobalProperty.new property: name
+        property.property_value = value
 
-  def update
-    create success_response_status: :ok
-  end
+        if property.save
+          render json: property, status: success_response_status
+        else
+          render json: ['Failed to save property'],
+                 status: :internal_server_error
+        end
+      end
 
-  def destroy
-    name = params.require %i[property]
-    property = GlobalProperty.find_by name: name
-    if property.nil?
-      render json: { errors: ["Property, #{name}, not found"] }
-    elsif property.destroy
-      render status: :no_content
-    else
-      render json: { errors: property.errors }, status: :internal_server_error
+      def update
+        create success_response_status: :ok
+      end
+
+      def destroy
+        name = params.require %i[property]
+        property = GlobalProperty.find_by(name:)
+        if property.nil?
+          render json: { errors: ["Property, #{name}, not found"] }
+        elsif property.destroy
+          render status: :no_content
+        else
+          render json: { errors: property.errors }, status: :internal_server_error
+        end
+      end
     end
   end
 end

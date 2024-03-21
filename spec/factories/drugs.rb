@@ -10,7 +10,7 @@ FactoryBot.define do
     factory :lacoca_drug do
       concept do
         concept = create(:concept)
-        create(:concept_name, concept: concept)
+        create(:concept_name, concept:)
 
         concept
       end

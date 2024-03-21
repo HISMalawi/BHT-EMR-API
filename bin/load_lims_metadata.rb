@@ -32,12 +32,12 @@ def concept(name, is_set: false)
       short_name: name,
       datatype_id: CONCEPT_DATATYPE_CODED,
       class_id: CONCEPT_CLASS_TEST,
-      is_set: is_set,
+      is_set:,
       uuid: SecureRandom.uuid,
       creator: User.current.user_id,
       date_created: Time.now
     ),
-    name: name,
+    name:,
     locale: 'en',
     concept_name_type: 'FULLY_SPECIED',
     uuid: SecureRandom.uuid,
@@ -47,11 +47,11 @@ def concept(name, is_set: false)
 end
 
 def create_concept_set(concept_set:, concept_id:)
-  set = ConceptSet.find_by(concept_set: concept_set, concept_id: concept_id)
+  set = ConceptSet.find_by(concept_set:, concept_id:)
   return set if set
 
-  ConceptSet.create!(concept_set: concept_set,
-                     concept_id: concept_id,
+  ConceptSet.create!(concept_set:,
+                     concept_id:,
                      creator: User.current.user_id,
                      date_created: Time.now)
 end
@@ -59,7 +59,7 @@ end
 def create_test_type(name)
   concept_id = concept(name, is_set: true).concept_id
 
-  create_concept_set(concept_set: test_type_concept_id, concept_id: concept_id)
+  create_concept_set(concept_set: test_type_concept_id, concept_id:)
 rescue StandardError => e
   raise "Failed to create test type `#{name}`: #{e}"
 end
@@ -68,8 +68,8 @@ def create_sample_type(name, test_type)
   concept_id = concept(name).concept_id
 
   [
-    create_concept_set(concept_set: sample_type_concept_id, concept_id: concept_id),
-    create_concept_set(concept_set: test_type.concept_id, concept_id: concept_id)
+    create_concept_set(concept_set: sample_type_concept_id, concept_id:),
+    create_concept_set(concept_set: test_type.concept_id, concept_id:)
   ]
 rescue StandardError => e
   raise "Failed to create sample type `#{name}`: #{e}"

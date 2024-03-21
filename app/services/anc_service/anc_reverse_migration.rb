@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-module ANCService
+module AncService
   # rubocop:disable Metrics/ClassLength
   # class to handle reversing of anc migrated data
   # in true sense we are just deleting the records
-  class ANCReverseMigration
+  class AncReverseMigration
     include ActionView::Helpers::DateHelper
     def initialize(params)
       @database = params[:database]

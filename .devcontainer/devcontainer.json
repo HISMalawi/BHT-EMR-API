@@ -1,0 +1,26 @@
+{
+  "name": "EMR API Dev Container",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "devcontainer",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "castwide.solargraph",
+        "misogi.ruby-rubocop",
+        "jnbt.vscode-rufo",
+        "eamodio.gitlens",
+        "ms-azuretools.vscode-docker",
+        "cweijan.vscode-mysql-client2",
+        "foxundermoon.shell-format"
+      ]
+    }
+  },
+  "hostRequirements": {
+    "memory": "1gb",
+    "storage": "1gb",
+    "cpus": 2
+  },
+  "postCreateCommand": "bash bin/post_container_setup.sh",
+  "postStartCommand": "bash bin/container_start.sh"
+}

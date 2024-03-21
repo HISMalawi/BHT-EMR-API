@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class FixForeignKeysOnReport < ActiveRecord::Migration[5.2]
   def up
     execute('SET FOREIGN_KEY_CHECKS=0')

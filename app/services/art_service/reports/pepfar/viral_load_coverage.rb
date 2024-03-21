@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   module Reports
     module Pepfar
       class ViralLoadCoverage
@@ -50,10 +50,10 @@ module ARTService
 
         def pregnant_women(patient_list)
           encounter_types = EncounterType.where(name: ['HIV CLINIC CONSULTATION', 'HIV STAGING'])
-                                           .select(:encounter_type_id)
+                                         .select(:encounter_type_id)
 
           pregnant_concepts = ConceptName.where(name: ['Is patient pregnant?', 'patient pregnant'])
-                                           .select(:concept_id)
+                                         .select(:concept_id)
 
           ActiveRecord::Base.connection.select_all <<~SQL
             SELECT obs.person_id,obs.value_coded
@@ -93,10 +93,10 @@ module ARTService
 
         def breast_feeding(patient_list)
           encounter_types = EncounterType.where(name: ['HIV CLINIC CONSULTATION', 'HIV STAGING'])
-                            .select(:encounter_type_id)
+                                         .select(:encounter_type_id)
 
           breastfeeding_concepts = ConceptName.where(name: ['Breast feeding?', 'Breast feeding', 'Breastfeeding'])
-                                .select(:concept_id)
+                                              .select(:concept_id)
 
           ActiveRecord::Base.connection.select_all <<~SQL
             SELECT obs.person_id,obs.value_coded
@@ -139,7 +139,9 @@ module ARTService
 
         def build_poc_report(report)
           find_patients_alive_and_on_art.each { |patient| report[patient['age_group']][:tx_curr] << patient }
-          find_patients_due_for_initial_viral_load.each { |patient| report[patient['age_group']][:due_for_vl] << patient }
+          find_patients_due_for_initial_viral_load.each do |patient|
+            report[patient['age_group']][:due_for_vl] << patient
+          end
           find_patients_with_overdue_viral_load.each { |patient| report[patient['age_group']][:due_for_vl] << patient }
           load_patient_tests_into_report(report)
         end
@@ -191,7 +193,7 @@ module ARTService
 
         def find_patients_alive_and_on_art
           patients = PatientsAliveAndOnTreatment
-                     .new(start_date: start_date, end_date: end_date, outcomes_definition: @tx_curr_definition, rebuild_outcomes: @rebuild_outcomes)
+                     .new(start_date:, end_date:, outcomes_definition: @tx_curr_definition, rebuild_outcomes: @rebuild_outcomes)
                      .query
           pepfar_patient_drilldown_information(patients, end_date).map do |patient|
             {
@@ -406,7 +408,7 @@ module ARTService
         end
 
         def concept(name)
-          ConceptName.where(name: name).select(:concept_id)
+          ConceptName.where(name:).select(:concept_id)
         end
       end
     end

@@ -2,7 +2,7 @@
 
 require 'logger'
 
-module ARTService
+module ArtService
   class AppointmentEngine
     include ModelUtils
 
@@ -83,7 +83,7 @@ module ARTService
       return encounter if encounter
 
       Encounter.new type: encounter_type('APPOINTMENT'),
-                    patient: patient,
+                    patient:,
                     encounter_datetime: Time.now,
                     program: @program,
                     location_id: Location.current.location_id,
@@ -204,7 +204,7 @@ module ARTService
     def exec_drug_order_adjustments(patient, date)
       encounter = EncounterService.recent_encounter(
         encounter_type_name: 'Treatment', patient_id: patient.patient_id,
-        date: date, program_id: @program.program_id
+        date:, program_id: @program.program_id
       )
       return nil unless encounter
 

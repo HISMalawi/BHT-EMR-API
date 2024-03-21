@@ -1,0 +1,41 @@
+#!/bin/bash
+# colors for the output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+
+# Get the list of staged files
+staged_files=$(git diff --cached --name-only --diff-filter=ACMRTUXB)
+
+# Flag to track if there are offenses
+has_offenses=false
+
+# Loop through the staged files
+for file in $staged_files; do
+    # Check if the file is a Ruby file
+    if [[ $file == *.rb ]]; then
+        # Check if the file exists
+        if [[ -f $file ]]; then
+            echo -e "Running Rubocop on ${GREEN}$file${NC}"
+            rubocop -A --fail-level error $file
+            rubocop_exit_code=$?
+            if [ $rubocop_exit_code -ne 0 ]; then
+                has_offenses=true
+                # unstage the file
+                git reset HEAD $file
+                # break the loop
+                break
+            fi
+            # Add the file to the staging area
+            git add $file
+        fi
+    fi
+done
+
+# Exit with non-zero status if there are offenses
+if [ "$has_offenses" = true ]; then
+    echo -e "${RED}RuboCop found offenses.${NC}"
+    exit 1
+fi
+
+exit 0

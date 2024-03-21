@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class FixArtRegimen12DtgDose < ActiveRecord::Migration[5.2]
   def up
     dose = MohRegimenDose.find_by(am: 1.0, pm: 0.0)&.dose_id

@@ -12,7 +12,7 @@ def find_patients_by_filing_number(filing_number, filing_number_type)
   Patient.joins(:patient_identifiers).merge(identifiers)
 end
 
-def filing_number_service()
+def filing_number_service
   FilingNumberService.new
 end
 
@@ -26,7 +26,7 @@ def archive_patient(patient)
   PatientIdentifier.create!(
     type: ARCHIVED_FILING_NUMBER_TYPE,
     identifier: new_filing_number,
-    patient: patient,
+    patient:,
     location_id: Location.current.location_id
   )
 
@@ -37,7 +37,7 @@ end
 # Void all of all a patient's filing numbers of a given type
 def void_patient_filing_numbers(patient, type)
   Rails.logger.debug("Voiding patient ##{patient.patient_id} '#{type.name}' identifiers")
-  PatientIdentifier.where(patient: patient, type: type)
+  PatientIdentifier.where(patient:, type:)
                    .each { |identifier| identifier.void('Duplicate filing number') }
 end
 
@@ -50,9 +50,9 @@ def process_duplicate_archived_filing_numbers
       void_patient_filing_numbers(patient, ARCHIVED_FILING_NUMBER_TYPE)
       new_filing_number = archive_patient(patient)
 
-      reassigned_patients << OpenStruct.new(patient: patient,
+      reassigned_patients << OpenStruct.new(patient:,
                                             old_filing_number: duplicate.fetch(:identifier),
-                                            new_filing_number: new_filing_number)
+                                            new_filing_number:)
     end
   end
 end
@@ -65,7 +65,7 @@ def process_duplicate_filing_numbers
     find_patients_by_filing_number(duplicate.fetch(:identifier), FILING_NUMBER_TYPE).each do |patient|
       void_patient_filing_numbers(patient, FILING_NUMBER_TYPE)
 
-      untracked_patients << OpenStruct.new(patient: patient, old_filing_number: duplicate.fetch(:identifier))
+      untracked_patients << OpenStruct.new(patient:, old_filing_number: duplicate.fetch(:identifier))
     end
   end
 end
@@ -75,7 +75,7 @@ end
 def find_patient_identifiers(patient)
   ['National ID', 'ARV Number'].map do |identifier_type_name|
     type = PatientIdentifierType.where(name: identifier_type_name)
-    identifier = PatientIdentifier.find_by(patient: patient, type: type)
+    identifier = PatientIdentifier.find_by(patient:, type:)
 
     identifier&.identifier
   end

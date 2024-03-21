@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   module Reports
     require 'ostruct'
 
@@ -199,10 +199,10 @@ module ARTService
         short_iname, long_iname = iname_parts
 
         @values[name] ||= OpenStruct.new(
-          name: name,
+          name:,
           indicator_name: long_iname.strip,
           indicator_short_name: short_iname ? short_iname.strip : short_iname,
-          description: description,
+          description:,
           contents: nil
         )
       end

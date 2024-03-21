@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
-require 'set'
-
-module ARTService
+module ArtService
   # TODO: This module reads like noise, it needs a re-write or even better,
   #       a complete rewrite.
   class RegimenEngine
@@ -32,7 +30,7 @@ module ARTService
       name ||= %w[Pyridoxine INH CPT]
 
       drug_id ||= Drug.where(concept: Concept.joins(:concept_names)
-                                             .merge(ConceptName.where(name: name)))
+                                             .merge(ConceptName.where(name:)))
                       .select(:drug_id)
                       .map(&:drug_id)
 
@@ -55,8 +53,8 @@ module ARTService
 
     def find_regimens_by_patient(patient, lpv_drug_type: 'tabs')
       use_tb_dosage = use_tb_patient_dosage?(dtg_drugs.first, patient)
-      find_regimens(patient.weight, use_tb_dosage: use_tb_dosage,
-                                    lpv_drug_type: lpv_drug_type)
+      find_regimens(patient.weight, use_tb_dosage:,
+                                    lpv_drug_type:)
     end
 
     def find_regimens(patient_weight, use_tb_dosage: false, lpv_drug_type: 'tabs')
@@ -66,7 +64,7 @@ module ARTService
         weight: patient_weight.to_f.round(1), active: 1
       )
 
-      raw_regimens = regimens_from_ingredients(ingredients, lpv_drug_type: lpv_drug_type)
+      raw_regimens = regimens_from_ingredients(ingredients, lpv_drug_type:)
       regimens = categorise_regimens(raw_regimens)
 
       repackage_regimens_for_tb_patients!(regimens, patient_weight) if use_tb_dosage
@@ -76,14 +74,14 @@ module ARTService
 
     def regimen(patient, regimen_index, lpv_drug_type: 'tabs')
       ingredients = MohRegimenIngredient.joins(:regimen)\
-                                        .where(moh_regimens: { regimen_index: regimen_index })\
+                                        .where(moh_regimens: { regimen_index: })\
                                         .where(
                                           '(CAST(min_weight AS DECIMAL(4, 1)) <= :weight
                                            AND CAST(max_weight AS DECIMAL(4, 1)) >= :weight)',
                                           weight: patient.weight.to_f.round(1)
                                         )
 
-      regimens_from_ingredients(ingredients, lpv_drug_type: lpv_drug_type, patient: patient)
+      regimens_from_ingredients(ingredients, lpv_drug_type:, patient:)
     end
 
     # Returns dosages for a patients prescribed medication courses
@@ -110,7 +108,7 @@ module ARTService
 
         dominant_course_name = select_dominant_course_name(course, prescribed_courses)
 
-        ingredients = find_regimen_ingredients(weight: patient.weight, drugs: drugs, course: dominant_course_name)
+        ingredients = find_regimen_ingredients(weight: patient.weight, drugs:, course: dominant_course_name)
 
         ingredients.each do |ingredient|
           drug_name = ConceptName.find_by(concept_id: ingredient.drug.concept_id).name
@@ -194,10 +192,10 @@ module ARTService
         pm: ingredient.dose.pm,
         units: drug.units,
         concept_name: drug.concept.concept_names[0].name,
-        pack_size: drug.drug_cms ? drug.drug_cms.pack_size : nil,
+        pack_size: drug.drug_cms&.pack_size,
         barcodes: drug.barcodes.collect { |barcode| { tabs: barcode.tabs } },
-        regimen_category: regimen_category,
-        frequency: frequency
+        regimen_category:,
+        frequency:
       }
     end
 
@@ -454,12 +452,13 @@ module ARTService
     #         they were being wrongly named in the application by their primary
     #         ingredient name.
     def find_drugs_by_course(drug_concept)
-      if drug_concept.name == 'INH' # IPT Course
+      case drug_concept.name
+      when 'INH' # IPT Course
         Drug.where(concept: [drug_concept.concept_id, ConceptName.find_by_name('Pyridoxine').concept_id])
-      elsif drug_concept.name == 'Rifapentine' # 3HP Course
+      when 'Rifapentine' # 3HP Course
         Drug.where(concept: [drug_concept.concept_id, ConceptName.find_by_name('Isoniazid').concept_id,
                              ConceptName.find_by_name('Pyridoxine').concept_id])
-      elsif drug_concept.name == 'Isoniazid/Rifapentine' # new 3HP
+      when 'Isoniazid/Rifapentine' # new 3HP
         Drug.where(concept: [drug_concept.concept_id, ConceptName.find_by_name('Pyridoxine').concept_id])
       else
         Drug.where(concept: drug_concept.concept_id)
@@ -467,7 +466,7 @@ module ARTService
     end
 
     def find_regimen_ingredients(weight: nil, drugs: nil, course: nil)
-      query = MohRegimenIngredient.where(course: course)
+      query = MohRegimenIngredient.where(course:)
       query = query.where(drug: drugs) if drugs
 
       return query unless weight

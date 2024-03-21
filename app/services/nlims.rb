@@ -3,7 +3,7 @@
 require 'ostruct'
 require 'rest-client'
 
-class NLims
+class Nlims
   LIMS_TEMP_FILE = Rails.root.join('tmp/lims_connection.yml')
   LOGGER = Rails.logger
 
@@ -77,14 +77,14 @@ class NLims
                          who_order_test_first_name: user_name.given_name,
                          who_order_test_id: User.current.id,
                          order_location: 'ART',
-                         sample_type: sample_type,
-                         tests: tests,
+                         sample_type:,
+                         tests:,
                          date_sample_drawn: order['date_sample_drawn'],
                          sample_priority: reason_for_test,
-                         sample_status: sample_status,
+                         sample_status:,
                          art_start_date: 'unknown',
                          requesting_clinician: '',
-                         target_lab: target_lab
+                         target_lab:
   end
 
   def order_test(patient:, user:, test_type:, date:, reason:, requesting_clinician:)
@@ -109,48 +109,46 @@ class NLims
       tests: test_type,
       sample_priority: reason,
       art_start_date: 'unknown',
-      requesting_clinician: requesting_clinician
+      requesting_clinician:
     }
 
     post('request_order', request_body, api_version: 'api/v2') # Force version LIMS api version 2
   end
 
   def order_tb_test(patient:, user:, test_type:, date:, reason:, sample_type:, sample_status:,
-    target_lab:, recommended_examination:, treatment_history:, sample_date:, sending_facility:, time_line: 'NA', requesting_clinician:)
+                    target_lab:, recommended_examination:, treatment_history:, sample_date:, sending_facility:, requesting_clinician:, time_line: 'NA')
     patient_name = patient.person.names.first
     user_name = user.person.names.first
 
     targeted_lab = GlobalProperty.find_by_property('target.lab')&.property_value
     raise InvalidParameterError, 'Global property `target.lab` is not set' unless target_lab
 
-    response = post 'create_order', district: 'Lilongwe', #health facility district
-          health_facility_name: sending_facility, #healh facility name
-          first_name: patient_name.given_name,
-          last_name: patient_name.family_name,
-          middle_name: '',
-          date_of_birth: patient.person.birthdate,
-          gender: patient.person.gender,
-          national_patient_id: patient.national_id,
-          phone_number: '',
-          who_order_test_last_name: user_name.family_name,
-          who_order_test_first_name: user_name.given_name,
-          who_order_test_id: user.id,
-          order_location: 'TB',
-          date_sample_drawn: date,
-          tests: test_type,
-          sample_priority: reason,
-          art_start_date: 'not_applicable', #not applicable
-          sample_type: sample_type, #Added to satify for TB
-          sample_status: sample_status, #Added to satify for TB
-          target_lab: targeted_lab || target_lab, #Added to satify for TB
-          recommended_examination: recommended_examination, #Added to satify for TB
-          treatment_history: treatment_history, #Added to satify for TB
-          sample_date: sample_date, #Mofified 'Add an actual one' Removed this
-          sending_facility: sending_facility,
-          time_line: time_line,
-          requesting_clinician: requesting_clinician
-
-          response
+    post('create_order', district: 'Lilongwe', # health facility district
+                         health_facility_name: sending_facility, # healh facility name
+                         first_name: patient_name.given_name,
+                         last_name: patient_name.family_name,
+                         middle_name: '',
+                         date_of_birth: patient.person.birthdate,
+                         gender: patient.person.gender,
+                         national_patient_id: patient.national_id,
+                         phone_number: '',
+                         who_order_test_last_name: user_name.family_name,
+                         who_order_test_first_name: user_name.given_name,
+                         who_order_test_id: user.id,
+                         order_location: 'TB',
+                         date_sample_drawn: date,
+                         tests: test_type,
+                         sample_priority: reason,
+                         art_start_date: 'not_applicable', # not applicable
+                         sample_type:, # Added to satify for TB
+                         sample_status:, # Added to satify for TB
+                         target_lab: targeted_lab || target_lab, # Added to satify for TB
+                         recommended_examination:, # Added to satify for TB
+                         treatment_history:, # Added to satify for TB
+                         sample_date:, # Mofified 'Add an actual one' Removed this
+                         sending_facility:,
+                         time_line:,
+                         requesting_clinician:)
   end
 
   def patient_results(accession_number)
@@ -224,20 +222,20 @@ class NLims
   end
 
   def get(path, auto_login: true, api_version: nil)
-    exec_request(path, auto_login: auto_login, api_version: api_version) do |full_path, headers|
+    exec_request(path, auto_login:, api_version:) do |full_path, headers|
       RestClient.get(full_path, headers)
     end
   end
 
   def post(path, body, api_version: nil)
-    exec_request(path, api_version: api_version) do |full_path, headers|
+    exec_request(path, api_version:) do |full_path, headers|
       RestClient.post(full_path, body.as_json, headers)
     end
   end
 
-  def exec_request(path, auto_login: true, api_version: nil,  &block)
-    response = yield expand_url(path, api_version: api_version), token: @connection&.token,
-                                                                 content_type: 'application/json'
+  def exec_request(path, auto_login: true, api_version: nil, &block)
+    response = yield expand_url(path, api_version:), token: @connection&.token,
+                                                     content_type: 'application/json'
 
     response = JSON.parse(response)
     if response['error'] == true

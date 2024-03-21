@@ -1,34 +1,36 @@
+# frozen_string_literal: true
+
 include ModelUtils
 
-class TBNumberService
+class TbNumberService
   class DuplicateIdentifierError < StandardError; end
 
   NORMAL_TYPE = 'District TB Number'
   IPT_TYPE = 'District IPT Number'
 
-  def self.assign_tb_number (patient_id, date, number)
+  def self.assign_tb_number(patient_id, date, number)
     identifier = generate_tb_number(patient_id, date, number)
     raise DuplicateIdentifierError if number_exists?(number: identifier)
 
     PatientIdentifier.create(
-      identifier: identifier,
-      type: number_type(patient_id: patient_id),
-      patient_id: patient_id,
+      identifier:,
+      type: number_type(patient_id:),
+      patient_id:,
       location_id: Location.current.location_id,
       date_created: date
     )
   end
 
-  def self.get_patient_tb_number (patient_id:)
+  def self.get_patient_tb_number(patient_id:)
     PatientIdentifier.where(type: patient_identifier_type(NORMAL_TYPE),
-                            patient_id: patient_id)\
-                     .or(PatientIdentifier.where(type: patient_identifier_type(IPT_TYPE), patient_id: patient_id))\
+                            patient_id:)\
+                     .or(PatientIdentifier.where(type: patient_identifier_type(IPT_TYPE), patient_id:))\
                      .order(date_created: :desc)
                      .first
   end
 
   def self.generate_tb_patient_id(patient_id)
-    patient_identifier = get_patient_tb_number(patient_id: patient_id)
+    patient_identifier = get_patient_tb_number(patient_id:)
 
     return if patient_identifier.nil?
 
@@ -44,10 +46,8 @@ class TBNumberService
     label.print(1)
   end
 
-  private
-
-  def self.generate_tb_number (patient_id, date, number)
-    is_ipt_patient = ipt_eligible?(patient_id: patient_id)
+  def self.generate_tb_number(patient_id, date, number)
+    is_ipt_patient = ipt_eligible?(patient_id:)
     category = is_ipt_patient ? 'IPT' : 'TB'
 
     "#{facility_code}/#{category}/#{number}/#{date.year}"
@@ -58,17 +58,17 @@ class TBNumberService
                      .exists?
   end
 
-  def self.ipt_eligible? (patient_id:)
+  def self.ipt_eligible?(patient_id:)
     regimen_engine.is_eligible_for_ipt?(person: Person.find(patient_id))
   end
 
-  def self.number_type (patient_id:)
-    type = ipt_eligible?(patient_id: patient_id) ? IPT_TYPE : NORMAL_TYPE
+  def self.number_type(patient_id:)
+    type = ipt_eligible?(patient_id:) ? IPT_TYPE : NORMAL_TYPE
     patient_identifier_type(type)
   end
 
   def self.regimen_engine
-    TBService::RegimenEngine.new(program: program('TB Program'))
+    TbService::RegimenEngine.new(program: program('TB Program'))
   end
 
   def self.facility_code

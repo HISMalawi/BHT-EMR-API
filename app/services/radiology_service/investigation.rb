@@ -39,7 +39,7 @@ module RadiologyService
     def self.create_order(params)
       order_type = OrderType.find_by_name('Radiology')
       encounter = Encounter.find(params[:encounter_id])
-      Order.create!(order_type: order_type,
+      Order.create!(order_type:,
                     concept_id: params[:concept_id] || unknown_concept_id,
                     encounter_id: encounter.id,
                     instructions: params[:instructions],

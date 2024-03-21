@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   module Reports
     ##
     # Patients newly initiated on TPT disaggregated by regimen type and age group.
@@ -34,13 +34,13 @@ module ARTService
             SQL
             age_group = person['age_group']
             gender = person['gender']&.strip&.first&.upcase || 'Unknown'
-            #course = patient_on_3hp?(patient) ? '3HP' : '6H'
+            # course = patient_on_3hp?(patient) ? '3HP' : '6H'
 
             report[age_group][tpt][gender] << {
               patient_id: person['person_id'],
               birthdate: person['birthdate'],
               arv_number: person['arv_number'],
-              gender: gender,
+              gender:,
               dispensation_date: dispensation_date(patient_id, patient['drug_concepts']),
               art_start_date: patient['earliest_start_date'],
               tpt_start_date: patient['tpt_start_date']
@@ -84,7 +84,7 @@ module ARTService
           AND orders.voided = 0 AND orders.patient_id = #{patient_id};
         SQL
 
-        return order['start_date'].to_date
+        order['start_date'].to_date
       end
 
       def init_report
@@ -107,13 +107,17 @@ module ARTService
       end
 
       def newly_initiated_on_tpt
-        tpt = ARTService::Reports::Cohort::Tpt.new(start_date.to_date, end_date.to_date, occupation: @occupation)
+        tpt = ArtService::Reports::Cohort::Tpt.new(start_date.to_date, end_date.to_date, occupation: @occupation)
         data = {}
         three_hp = tpt.newly_initiated_on_3hp
         ipt = tpt.newly_initiated_on_ipt
-        data['3HP_new'] = three_hp.select { |record| record['earliest_start_date'].to_date > end_date.to_date - 3.month }
+        data['3HP_new'] = three_hp.select do |record|
+          record['earliest_start_date'].to_date > end_date.to_date - 3.month
+        end
         data['6H_new'] = ipt.select { |record| record['earliest_start_date'].to_date > end_date.to_date - 3.month }
-        data['3HP_prev'] = three_hp.select { |record| record['earliest_start_date'].to_date <= end_date.to_date - 3.month }
+        data['3HP_prev'] = three_hp.select do |record|
+          record['earliest_start_date'].to_date <= end_date.to_date - 3.month
+        end
         data['6H_prev'] = ipt.select { |record| record['earliest_start_date'].to_date <= end_date.to_date - 3.month }
         data
       end
