@@ -187,18 +187,16 @@ module ARTService
 
         def refresh_outcomes_table
           CohortBuilder.new(outcomes_definition: 'pepfar')
-                       .init_temporary_tables(@start_date, @end_date, nil)
+                       .init_temporary_tables(@start_date, @end_date, @occupation)
         end
 
         def create_patients_alive_and_on_art_query
-          ActiveRecord::Base.connection.select_all(
-            <<~SQL
-              SELECT tpo.patient_id, LEFT(tesd.gender, 1) AS gender, disaggregated_age_group(tesd.birthdate, DATE('#{end_date.to_date}')) age_group
-              FROM temp_patient_outcomes tpo
-              INNER JOIN temp_earliest_start_date tesd ON tesd.patient_id = tpo.patient_id
-              WHERE tpo.cum_outcome = 'On antiretrovirals'
-            SQL
-          )
+          ActiveRecord::Base.connection.select_all <<~SQL
+            SELECT tpo.patient_id, LEFT(tesd.gender, 1) AS gender, disaggregated_age_group(tesd.birthdate, DATE('#{end_date.to_date}')) age_group
+            FROM temp_patient_outcomes tpo
+            INNER JOIN temp_earliest_start_date tesd ON tesd.patient_id = tpo.patient_id
+            WHERE tpo.cum_outcome = 'On antiretrovirals'
+          SQL
         end
 
         def load_tx_curr_into_report(report, patients)
@@ -213,7 +211,7 @@ module ARTService
         def populate_tx_curr(patients, age_group, gender)
           patients.select do |patient|
             (patient['age_group'] == age_group && patient['gender'].to_sym == gender) && patient['patient_id']
-          end
+          end&.map { |patient| patient['patient_id'] }
         end
 
         # rubocop:disable Metrics/AbcSize
