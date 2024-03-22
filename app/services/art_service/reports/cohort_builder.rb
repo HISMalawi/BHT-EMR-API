@@ -1031,6 +1031,7 @@ module ArtService
 
       private
 
+      # rubocop:disable Metrics/MethodLength
       def total_patients_with_screened_bp(total_alive_and_on_art, _start_date, end_date)
         return 0 if total_alive_and_on_art.blank? || total_alive_and_on_art.empty?
 
@@ -1050,6 +1051,7 @@ module ArtService
 
         ((results.count.to_f / total_alive_and_on_art.count) * 100).to_i
       end
+      # rubocop:enable Metrics/MethodLength
 
       def total_patients_alive_and_on_art_above_30_years(total_alive_and_on_art, end_date)
         return nil if total_alive_and_on_art.blank?
@@ -1066,6 +1068,9 @@ module ArtService
         results&.map { |r| r['patient_id'].to_i }
       end
 
+      # rubocop:disable Metrics/MethodLength
+      # rubocop:disable Metrics/AbcSize
+      # rubocop:disable Metrics/CyclomaticComplexity
       def total_patients_on_family_planning(patients_list, start_date, end_date)
         patient_ids = []
         patient_list = []
@@ -1104,6 +1109,7 @@ module ArtService
             AND e.encounter_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
             AND o.concept_id IN (#{family_planning_action_to_take_concept_id}, #{method_of_family_planning_concept_id})
             AND o.value_coded NOT IN (#{none_concept_id.join(',')})
+          INNER JOIN tmp_max_drug_orders latest_visit ON latest_visit.patient_id = e.patient_id AND DATE(latest_visit.start_date) = DATE(e.encounter_datetime)
           WHERE o.voided = 0
           AND o.concept_id IN (#{family_planning_action_to_take_concept_id}, #{method_of_family_planning_concept_id})
           AND o.value_coded NOT IN (#{none_concept_id.join(',')})
@@ -1117,8 +1123,11 @@ module ArtService
           0
         end
       end
+      # rubocop:enable Metrics/CyclomaticComplexity
+      # rubocop:enable Metrics/AbcSize
+      # rubocop:enable Metrics/MethodLength
 
-      def total_patients_on_arvs_and_ipt(patients_list, start_date, end_date)
+      def total_patients_on_arvs_and_ipt(patients_list, _start_date, _end_date)
         isoniazid_concept_id = concept('Isoniazid').concept_id
         pyridoxine_concept_id = concept('Pyridoxine').concept_id
 
@@ -1129,23 +1138,15 @@ module ArtService
 
         return [] if patient_ids.blank?
 
-        results = ActiveRecord::Base.connection.select_all(
-          "SELECT ods.patient_id FROM orders ods
-          INNER JOIN drug_order dos ON ods.order_id = dos.order_id AND ods.voided = 0
+        results = ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT ods.patient_id
+          FROM orders ods
+          INNER JOIN drug_order dos ON ods.order_id = dos.order_id AND ods.voided = 0 AND dos.quantity > 0 AND ods.concept_id IN (#{isoniazid_concept_id}, #{pyridoxine_concept_id})
+          INNER JOIN tmp_max_drug_orders latest_visit ON latest_visit.patient_id = e.patient_id AND DATE(latest_visit.start_date) = DATE(ods.start_date) AND latest_visit.patient_id in (#{patient_ids.join(',')})
           WHERE ods.concept_id IN (#{isoniazid_concept_id}, #{pyridoxine_concept_id})
-          AND dos.quantity IS NOT NULL
-          AND ods.patient_id in (#{patient_ids.join(',')})
-          AND ods.start_date BETWEEN '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
-          AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-          AND DATE(ods.start_date) = (SELECT MAX(DATE(o.start_date)) FROM orders o
-                                      INNER JOIN drug_order d ON o.order_id = d.order_id AND o.voided = 0
-                                      WHERE o.concept_id IN (#{isoniazid_concept_id}, #{pyridoxine_concept_id})
-                                      AND o.patient_id = ods.patient_id
-                                      AND d.quantity IS NOT NULL
-                                      AND o.start_date BETWEEN '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
-                                      AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
-          GROUP BY ods.patient_id"
-        )
+            AND ods.patient_id in (#{patient_ids.join(',')})
+          GROUP BY ods.patient_id
+        SQL
 
         ((results.count.to_f / patient_ids.count) * 100).to_i
       end
