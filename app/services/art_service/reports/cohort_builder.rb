@@ -1076,12 +1076,12 @@ module ArtService
 
         return [] if patient_ids.blank?
 
-        all_women = ActiveRecord::Base.connection.select_all(
-          "SELECT * FROM temp_earliest_start_date
+        all_women = ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT * FROM temp_earliest_start_date
           WHERE (gender = 'F' OR gender = 'Female') AND patient_id IN  (#{patient_ids.join(',')})
           AND date_enrolled BETWEEN '#{start_date.to_date}' AND '#{end_date.to_date}'
-          GROUP BY patient_id"
-        )
+          GROUP BY patient_id
+        SQL
 
         (all_women || []).each do |patient|
           patient_list << patient['patient_id'].to_i
@@ -1094,23 +1094,22 @@ module ArtService
         family_planning_action_to_take_concept_id = concept('Family planning, action to take').concept_id
         none_concept_id = [concept('None').concept_id, concept('No').concept_id]
 
-        results = ActiveRecord::Base.connection.select_all(
-          "SELECT o.person_id
+        results = ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT o.person_id
           FROM obs o
-          inner join encounter e on e.encounter_id = o.encounter_id AND e.encounter_type = #{hiv_clinic_consultation_encounter_type_id}
-          WHERE o.voided = 0 AND e.voided = 0
-          AND (o.concept_id IN (#{family_planning_action_to_take_concept_id}, #{method_of_family_planning_concept_id}) AND o.value_coded NOT IN (#{none_concept_id.join(',')}))
+          INNER JOIN encounter e on e.encounter_id = o.encounter_id
+            AND e.encounter_type = #{hiv_clinic_consultation_encounter_type_id} AND e.voided = 0
+            AND e.patient_id IN (#{patient_list.join(',')}) AND o.voided
+            AND e.encounter_datetime >= '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
+            AND e.encounter_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+            AND o.concept_id IN (#{family_planning_action_to_take_concept_id}, #{method_of_family_planning_concept_id})
+            AND o.value_coded NOT IN (#{none_concept_id.join(',')})
+          WHERE o.voided = 0
+          AND o.concept_id IN (#{family_planning_action_to_take_concept_id}, #{method_of_family_planning_concept_id})
+          AND o.value_coded NOT IN (#{none_concept_id.join(',')})
           AND o.person_id IN (#{patient_list.join(',')})
-          AND o.obs_datetime BETWEEN '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
-          AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-          AND DATE(o.obs_datetime) = (SELECT max(date(obs.obs_datetime)) FROM obs obs
-            WHERE obs.voided = 0
-            AND (obs.concept_id IN (#{family_planning_action_to_take_concept_id}, #{method_of_family_planning_concept_id}))
-            AND obs.obs_datetime BETWEEN '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
-            AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-            AND obs.person_id = o.person_id)
-          GROUP BY o.person_id"
-        )
+          GROUP BY o.person_id
+        SQL
 
         begin
           ((results.count.to_f / patient_list.count) * 100).to_i
