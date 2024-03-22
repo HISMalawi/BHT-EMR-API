@@ -1008,20 +1008,15 @@ module ArtService
           'ALTER TABLE temp_patient_tb_status
            ADD INDEX patient_id_tb_status_index (patient_id, tb_status)'
         )
+        prepare_latest_tb_status_table
+        create_temp_latest_tb_status(end_date)
 
         ActiveRecord::Base.connection.execute <<~SQL
           INSERT INTO temp_patient_tb_status
-            SELECT e.patient_id, obs.value_coded
-            FROM temp_earliest_start_date e
-            INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
-            RIGHT JOIN obs ON obs.person_id = o.patient_id
-            WHERE e.date_enrolled <= '#{end_date}' AND obs.obs_datetime <= '#{end_date} 23:59:59'
-            AND cum_outcome = 'On antiretrovirals' AND obs.voided = 0
-            AND obs.concept_id = 7459
-            AND obs.obs_datetime = (
-              SELECT MAX(t.obs_datetime) FROM obs t WHERE t.concept_id = 7459 AND t.voided = 0
-              AND t.person_id = e.patient_id AND t.obs_datetime <= '#{end_date} 23:59:59'
-            ) GROUP BY e.patient_id;
+          SELECT e.person_id, obs.value_coded
+          FROM temp_latest_tb_status e
+          INNER JOIN obs ON obs.person_id = e.person_id AND obs.voided = 0 AND obs.concept_id = 7459 AND obs.obs_datetime = e.obs_datetime
+          GROUP BY e.person_id;
         SQL
       end
 
@@ -1030,6 +1025,30 @@ module ArtService
       end
 
       private
+
+      def prepare_latest_tb_status_table
+        ActiveRecord::Base.connection.execute <<~SQL
+          CREATE TABLE IF NOT EXISTS temp_latest_tb_status(
+            person_id INT PRIMARY KEY,
+            obs_datetime DATETIME
+          )
+        SQL
+        unless ActiveRecord::Base.connection.index_exists?(:temp_latest_tb_status, :obs_datetime)
+          ActiveRecord::Base.connection.execute 'CREATE INDEX tlts_date ON temp_latest_tb_status(obs_datetime)'
+        end
+        ActiveRecord::Base.connection.execute 'TRUNCATE temp_latest_tb_status'
+      end
+
+      def create_temp_latest_tb_status(end_date)
+        ActiveRecord::Base.connection.select_all <<~SQL
+          INSERT INTO temp_latest_tb_status
+          SELECT t.person_id, MAX(t.obs_datetime) obs_datetime
+          FROM obs t
+          INNER JOIN temp_patient_outcomes o ON o.patient_id = t.person_id AND o.cum_outcome = 'On antiretrovirals'
+          WHERE t.concept_id = 7459 AND t.voided = 0 AND t.obs_datetime <= '#{end_date} 23:59:59'
+          GROUP BY t.person_id
+        SQL
+      end
 
       # rubocop:disable Metrics/MethodLength
       def total_patients_with_screened_bp(total_alive_and_on_art, _start_date, end_date)
@@ -1123,10 +1142,8 @@ module ArtService
         end
       end
       # rubocop:enable Metrics/CyclomaticComplexity
-      # rubocop:enable Metrics/AbcSize
-      # rubocop:enable Metrics/MethodLength
 
-      def total_patients_on_arvs_and_ipt(patients_list, _start_date, _end_date)
+      def total_patients_on_arvs_and_ipt(patients_list, start_date, end_date)
         isoniazid_concept_id = concept('Isoniazid').concept_id
         pyridoxine_concept_id = concept('Pyridoxine').concept_id
 
@@ -1259,6 +1276,8 @@ module ArtService
 
         (patient_ids - (all_breastfeeding_women_ids + all_pregnant_women_ids))
       end
+      # rubocop:enable Metrics/AbcSize
+      # rubocop:enable Metrics/MethodLength
 
       MIN_ART_ADHERENCE_THRESHOLD = 95.0 # Those below are not adherent
       MAX_ART_ADHERENCE_THRESHOLD = 105.0 # Thoseabove are not adherent
