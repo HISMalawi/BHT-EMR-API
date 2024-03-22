@@ -1102,14 +1102,13 @@ module ArtService
         results = ActiveRecord::Base.connection.select_all <<~SQL
           SELECT o.person_id
           FROM obs o
-          INNER JOIN encounter e on e.encounter_id = o.encounter_id
+          INNER JOIN encounter e ON e.encounter_id = o.encounter_id
             AND e.encounter_type = #{hiv_clinic_consultation_encounter_type_id} AND e.voided = 0
             AND e.patient_id IN (#{patient_list.join(',')}) AND o.voided
             AND e.encounter_datetime >= '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
             AND e.encounter_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
             AND o.concept_id IN (#{family_planning_action_to_take_concept_id}, #{method_of_family_planning_concept_id})
             AND o.value_coded NOT IN (#{none_concept_id.join(',')})
-          INNER JOIN tmp_max_drug_orders latest_visit ON latest_visit.patient_id = e.patient_id AND DATE(latest_visit.start_date) = DATE(e.encounter_datetime)
           WHERE o.voided = 0
           AND o.concept_id IN (#{family_planning_action_to_take_concept_id}, #{method_of_family_planning_concept_id})
           AND o.value_coded NOT IN (#{none_concept_id.join(',')})
@@ -1142,9 +1141,10 @@ module ArtService
           SELECT ods.patient_id
           FROM orders ods
           INNER JOIN drug_order dos ON ods.order_id = dos.order_id AND ods.voided = 0 AND dos.quantity > 0 AND ods.concept_id IN (#{isoniazid_concept_id}, #{pyridoxine_concept_id})
-          INNER JOIN tmp_max_drug_orders latest_visit ON latest_visit.patient_id = e.patient_id AND DATE(latest_visit.start_date) = DATE(ods.start_date) AND latest_visit.patient_id in (#{patient_ids.join(',')})
           WHERE ods.concept_id IN (#{isoniazid_concept_id}, #{pyridoxine_concept_id})
-            AND ods.patient_id in (#{patient_ids.join(',')})
+            AND ods.patient_id IN (#{patient_ids.join(',')})
+            AND ods.start_date >= '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
+            AND ods.start_date <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
           GROUP BY ods.patient_id
         SQL
 
@@ -1161,29 +1161,20 @@ module ArtService
 
         return [] if patient_ids.blank?
 
-        results = ActiveRecord::Base.connection.select_all(
-          "SELECT ods.patient_id FROM orders ods
-          INNER JOIN drug_order dos ON ods.order_id = dos.order_id AND ods.voided = 0
-          WHERE ods.concept_id = #{cpt_concept_id}
-          AND dos.quantity IS NOT NULL
-          AND ods.patient_id in (#{patient_ids.join(',')})
-          AND ods.start_date BETWEEN '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
-          AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-          AND DATE(ods.start_date) = (SELECT MAX(DATE(o.start_date)) FROM orders o
-                                      INNER JOIN drug_order d ON o.order_id = d.order_id AND o.voided = 0
-                                      WHERE o.concept_id =  #{cpt_concept_id}
-                                      AND d.quantity IS NOT NULL
-                                      AND o.patient_id = ods.patient_id
-                                      AND o.start_date BETWEEN '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
-                                      AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
-
-          GROUP BY ods.patient_id"
-        )
+        results = ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT ods.patient_id
+          FROM orders ods
+          INNER JOIN drug_order dos ON ods.order_id = dos.order_id AND ods.voided = 0 AND dos.quantity > 0 AND ods.concept_id = #{cpt_concept_id}
+          WHERE ods.patient_id in (#{patient_ids.join(',')})
+          AND ods.start_date >= '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
+          AND ods.start_date <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+          GROUP BY ods.patient_id
+        SQL
 
         ((results.count.to_f / patient_ids.count) * 100).to_i
       end
 
-      def total_breastfeeding_women(_patients_list, total_pregnant_women, _start_date, end_date)
+      def total_breastfeeding_women(_patients_list, total_pregnant_women, _start_date, _end_date)
         total_pregnant_women = if total_pregnant_women.empty?
                                  [0]
                                else
@@ -1203,32 +1194,17 @@ module ArtService
             ON enc.encounter_id = obs.encounter_id
             AND enc.voided = 0
             AND enc.encounter_type IN (#{encounter_types.to_sql})
+            AND obs.voided = 0 AND obs.concept_id IN (#{breastfeeding_concepts.to_sql})
           INNER JOIN temp_earliest_start_date e
             ON e.patient_id = enc.patient_id
             AND LEFT(e.gender, 1) = 'F'
+            AND e.patient_id NOT IN (#{total_pregnant_women.join(',')})
           INNER JOIN temp_patient_outcomes
             ON temp_patient_outcomes.patient_id = e.patient_id
             AND temp_patient_outcomes.cum_outcome = 'On antiretrovirals'
-          INNER JOIN (
-            SELECT person_id, MAX(obs_datetime) AS obs_datetime
-            FROM obs
-            INNER JOIN encounter
-              ON encounter.encounter_id = obs.encounter_id
-              AND encounter.encounter_type IN (#{encounter_types.to_sql})
-              AND encounter.voided = 0
-            WHERE person_id IN (SELECT patient_id FROM temp_patient_outcomes WHERE cum_outcome = 'On antiretrovirals')
-              AND concept_id IN (#{breastfeeding_concepts.to_sql})
-              AND obs.voided = 0
-              AND obs_datetime < DATE('#{end_date}') + INTERVAL 1 DAY
-            GROUP BY person_id
-          ) AS max_obs
-            ON max_obs.person_id = obs.person_id
-            AND max_obs.obs_datetime = obs.obs_datetime
+          INNER JOIN tmp_max_drug_orders AS max_obs ON max_obs.patient_id = obs.person_id
+            AND DATE(max_obs.start_date) = DATE(obs.obs_datetime)
           WHERE obs.person_id = e.patient_id
-            AND obs.person_id NOT IN (#{total_pregnant_women.join(',')})
-            AND obs.obs_datetime < DATE('#{end_date}') + INTERVAL 1 DAY
-            AND obs.concept_id IN (#{breastfeeding_concepts.to_sql})
-            AND obs.voided = 0
           GROUP BY obs.person_id
           HAVING value_coded = 1065
           ORDER BY obs.obs_datetime DESC;
