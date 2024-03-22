@@ -16,6 +16,8 @@ module ArtService
 
         def update_cummulative_outcomes
           initialize_table
+          create_tmp_max_drug_orders
+          create_tmp_min_auto_expire_date
 
           # HIC SUNT DRACONIS: The order of the operations below matters,
           # do not change it unless you know what you are doing!!!
@@ -228,6 +230,45 @@ module ArtService
           SQL
         end
 
+        # rubocop:disable Metrics/MethodLength
+        def create_tmp_max_drug_orders
+          date = ActiveRecord::Base.connection.quote(end_date)
+          ActiveRecord::Base.connection.execute 'DROP TABLE IF EXISTS tmp_max_drug_orders'
+          ActiveRecord::Base.connection.execute <<~SQL
+            CREATE TABLE tmp_max_drug_orders
+            SELECT patient_id, MAX(start_date) AS start_date
+            FROM orders
+            INNER JOIN temp_earliest_start_date USING (patient_id)
+            INNER JOIN drug_order ON orders.order_id = drug_order.order_id AND quantity > 0
+            WHERE order_type_id = #{drug_order_type.order_type_id}
+              AND concept_id IN (#{arv_drugs_concept_set.to_sql})
+              AND start_date < (DATE(#{date}) + INTERVAL 1 DAY)
+              AND voided = 0
+              AND patient_id NOT IN (SELECT patient_id FROM temp_patient_outcomes)
+            GROUP BY patient_id
+          SQL
+          # Index the table
+          ActiveRecord::Base.connection.execute 'CREATE INDEX idx_tmp_max_drug_orders ON tmp_max_drug_orders (patient_id, start_date)'
+        end
+        # rubocop:enable Metrics/MethodLength
+
+        def create_tmp_min_auto_expire_date
+          ActiveRecord::Base.connection.execute 'DROP TABLE IF EXISTS tmp_min_auto_expire_date'
+          ActiveRecord::Base.connection.execute <<~SQL
+            CREATE TABLE tmp_min_auto_expire_date
+            SELECT patient_id, MIN(auto_expire_date) AS auto_expire_date
+            FROM orders
+            INNER JOIN tmp_max_drug_orders USING (patient_id, start_date)
+            INNER JOIN drug_order ON orders.order_id = drug_order.order_id AND quantity > 0
+            WHERE order_type_id = #{drug_order_type.order_type_id}
+              AND concept_id IN (#{arv_drugs_concept_set.to_sql})
+              AND voided = 0
+            GROUP BY patient_id
+          SQL
+          # Index the table
+          ActiveRecord::Base.connection.execute 'CREATE INDEX idx_tmp_min_auto_expire_date ON tmp_min_auto_expire_date (patient_id, auto_expire_date)'
+        end
+
         # Loads all patients who are on treatment
         def load_patients_on_treatment
           date = ActiveRecord::Base.connection.quote(end_date)
@@ -261,34 +302,7 @@ module ArtService
                      ARV dispensations. In other words filter out any `on ARVs` states whose
                      dispensation's may have been voided or states that were created manually
                      without any drugs being dispensed.  */
-            INNER JOIN (
-              SELECT orders.patient_id, MIN(orders.auto_expire_date) AS auto_expire_date
-              FROM orders
-              INNER JOIN drug_order USING (order_id)
-              INNER JOIN (
-                SELECT patient_id, MAX(start_date) AS start_date
-                FROM orders INNER JOIN drug_order USING (order_id)
-                WHERE order_type_id = #{drug_order_type.order_type_id}
-                  AND concept_id IN (#{arv_drugs_concept_set.to_sql})
-                  AND start_date < (DATE(#{date}) + INTERVAL 1 DAY)
-                  AND quantity > 0
-                  AND voided = 0
-                  AND patient_id IN (SELECT patient_id FROM temp_earliest_start_date)
-                  AND patient_id NOT IN (SELECT patient_id FROM temp_patient_outcomes)
-                GROUP BY patient_id
-              ) AS max_drug_orders
-                ON max_drug_orders.patient_id = orders.patient_id
-                AND max_drug_orders.start_date = orders.start_date
-              WHERE order_type_id = #{drug_order_type.order_type_id}
-                AND concept_id IN (#{arv_drugs_concept_set.to_sql})
-                AND orders.start_date < (DATE(#{date}) + INTERVAL 1 DAY)
-                AND quantity > 0
-                AND voided = 0
-                AND orders.patient_id IN (SELECT patient_id FROM temp_earliest_start_date)
-                AND orders.patient_id NOT IN (SELECT patient_id FROM temp_patient_outcomes)
-              GROUP BY patient_id
-            ) AS first_order_to_expire
-              ON (first_order_to_expire.auto_expire_date >= #{date}
+            INNER JOIN tmp_min_auto_expire_date AS first_order_to_expire ON (first_order_to_expire.auto_expire_date >= #{date}
                   OR DATEDIFF(#{date}, DATE(first_order_to_expire.auto_expire_date)) <= #{@definition == 'pepfar' ? 28 : 56})
               AND first_order_to_expire.patient_id = patient_program.patient_id
             WHERE patients.date_enrolled <= #{date}
