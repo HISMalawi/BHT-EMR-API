@@ -31,14 +31,6 @@ else
     pool=$(ruby -ryaml -e "puts YAML.safe_load(File.read('config/database.yml'), aliases: true)['default']['pool']")
     checkout_timeout=$(ruby -ryaml -e "puts YAML.safe_load(File.read('config/database.yml'), aliases: true)['default']['checkout_timeout']")
     variables_sql_mode=$(ruby -ryaml -e "puts YAML.safe_load(File.read('config/database.yml'), aliases: true)['default']['variables']['sql_mode']")
-    if [ "$host" != "127.0.0.1" ]; then
-        echo "Updating host configuration"
-        sed -i "s/$host/127.0.0.1/g" config/database.yml
-    fi
-    if [ "$port" != "3306" ]; then
-        echo "Updating port configuration"
-        sed -i "s/$port/3306/g" config/database.yml
-    fi
     if [ "$adapter" != "mysql2" ]; then
         echo "Updating adapter configuration"
         sed -i "s/$adapter/mysql2/g" config/database.yml
@@ -50,14 +42,6 @@ else
     if [ "$collation" != "utf8_unicode_ci" ]; then
         echo "Updating collation configuration"
         sed -i "s/$collation/utf8_unicode_ci/g" config/database.yml
-    fi
-    if [ "$username" != "root" ]; then
-        echo "Updating username configuration"
-        sed -i "s/$username/root/g" config/database.yml
-    fi
-    if [ "$password" != "root" ]; then
-        echo "Updating password configuration"
-        sed -i "s/$password/root/g" config/database.yml
     fi
     if [ "$pool" != "<%= ENV.fetch(\"RAILS_MAX_THREADS\") { 20 } %>" ]; then
         echo "Updating pool configuration"
