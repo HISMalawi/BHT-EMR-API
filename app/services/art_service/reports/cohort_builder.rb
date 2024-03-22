@@ -1441,11 +1441,11 @@ module ArtService
         unknowns = []
 
         records = ActiveRecord::Base.connection.select_all <<~SQL
-          SELECT e.*, s.has_se FROM temp_earliest_start_date e
+          SELECT e.*, s.has_se
+          FROM temp_earliest_start_date e
           INNER JOIN temp_patient_side_effects s ON s.patient_id = e.patient_id
-          INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
-          WHERE o.cum_outcome = 'On antiretrovirals'
-          AND DATE(e.date_enrolled) <= '#{end_date.to_date}';
+          INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id AND o.cum_outcome = 'On antiretrovirals'
+          WHERE DATE(e.date_enrolled) <= '#{end_date.to_date}';
         SQL
 
         (records || []).each do |data|
@@ -1536,14 +1536,15 @@ module ArtService
         yes_concept_id = concept('Yes').concept_id
         who_stages_criteria = concept('Who stages criteria present').concept_id
 
-        ActiveRecord::Base.connection.select_all(
-          "SELECT * FROM temp_earliest_start_date t
+        ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT *
+          FROM temp_earliest_start_date t
           INNER JOIN obs ON t.patient_id = obs.person_id
-          WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-          AND ((value_coded = #{concept_id} AND concept_id = #{who_stages_criteria})
-          OR (concept_id = #{concept_id}) AND value_coded = #{yes_concept_id} )
-          AND voided = 0 AND DATE(obs_datetime) <= DATE(date_enrolled) GROUP BY patient_id"
-        )
+            AND ((value_coded = #{concept_id} AND concept_id = #{who_stages_criteria}) OR (concept_id = #{concept_id}) AND value_coded = #{yes_concept_id} )
+            AND voided = 0 AND DATE(obs_datetime) <= DATE(date_enrolled)
+          WHERE date_enrolled >= '#{start_date}' AND date_enrolled <= '#{end_date}'
+          GROUP BY patient_id
+        SQL
       end
 
       def current_episode_of_tb(start_date, end_date)
@@ -1555,14 +1556,16 @@ module ArtService
 
         who_stages_criteria = concept('Who stages criteria present').concept_id
 
-        ActiveRecord::Base.connection.select_all(
-          "SELECT * FROM temp_earliest_start_date t
+        ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT *
+          FROM temp_earliest_start_date t
           INNER JOIN obs ON t.patient_id = obs.person_id
-          WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
           AND ( (value_coded IN (#{eptb_concept_id}, #{pulmonary_tb_concept_id}, #{current_ptb_concept_id}) AND concept_id = #{who_stages_criteria} )
-          OR (concept_id IN (#{eptb_concept_id}, #{pulmonary_tb_concept_id}, #{current_ptb_concept_id}) AND value_coded = #{yes_concept_id}))
-          AND voided = 0 AND DATE(obs_datetime) <= DATE(date_enrolled) GROUP BY patient_id"
-        )
+            OR (concept_id IN (#{eptb_concept_id}, #{pulmonary_tb_concept_id}, #{current_ptb_concept_id}) AND value_coded = #{yes_concept_id}))
+          AND voided = 0 AND DATE(obs_datetime) <= DATE(date_enrolled)
+          WHERE date_enrolled >= '#{start_date}' AND date_enrolled <= '#{end_date}'
+          GROUP BY patient_id
+        SQL
       end
 
       def tb_within_the_last_two_years(patients_with_current_tb, start_date, end_date)
