@@ -1211,7 +1211,7 @@ module ArtService
         SQL
       end
 
-      def total_pregnant_women(_patients_list, _start_date, end_date)
+      def total_pregnant_women(_patients_list, _start_date, _end_date)
         encounter_types = EncounterType.where(name: ['HIV CLINIC CONSULTATION', 'HIV STAGING'])
                                        .select(:encounter_type_id)
 
@@ -1219,33 +1219,21 @@ module ArtService
                                        .select(:concept_id)
 
         ActiveRecord::Base.connection.select_all <<~SQL
-          SELECT obs.person_id, obs.value_coded FROM obs obs
-            INNER JOIN encounter enc
-              ON enc.encounter_id = obs.encounter_id
-              AND enc.voided = 0
-              AND enc.encounter_type IN (#{encounter_types.to_sql})
-            INNER JOIN temp_earliest_start_date e
-              ON e.patient_id = enc.patient_id
-              AND LEFT(e.gender, 1) = 'F'
+          SELECT obs.person_id, obs.value_coded
+          FROM obs obs
+          INNER JOIN encounter enc
+            ON enc.encounter_id = obs.encounter_id
+            AND enc.voided = 0
+            AND enc.encounter_type IN (#{encounter_types.to_sql})
+            AND obs.voided = 0 AND obs.concept_id IN (#{pregnant_concepts.to_sql})
+          INNER JOIN temp_earliest_start_date e
+            ON e.patient_id = enc.patient_id
+            AND LEFT(e.gender, 1) = 'F'
           INNER JOIN temp_patient_outcomes
             ON temp_patient_outcomes.patient_id = e.patient_id
             AND temp_patient_outcomes.cum_outcome = 'On antiretrovirals'
-          INNER JOIN (
-            SELECT person_id, MAX(obs_datetime) AS obs_datetime
-            FROM obs
-            INNER JOIN encounter
-              ON encounter.encounter_id = obs.encounter_id
-              AND encounter.encounter_type IN (#{encounter_types.to_sql})
-              AND encounter.voided = 0
-            WHERE concept_id IN (#{pregnant_concepts.to_sql})
-              AND obs_datetime < DATE('#{end_date}') + INTERVAL 1 DAY
-              AND obs.voided = 0
-            GROUP BY person_id
-          ) AS max_obs
-            ON max_obs.person_id = obs.person_id
-            AND max_obs.obs_datetime = obs.obs_datetime
-          WHERE obs.concept_id IN (#{pregnant_concepts.to_sql})
-            AND obs.voided = 0
+          INNER JOIN tmp_max_drug_orders AS max_obs ON max_obs.patient_id = obs.person_id
+            AND DATE(max_obs.start_date) = DATE(obs.obs_datetime)
           GROUP BY obs.person_id
           HAVING value_coded = 1065
           ORDER BY obs.obs_datetime DESC;
