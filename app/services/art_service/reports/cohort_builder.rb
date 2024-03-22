@@ -87,6 +87,7 @@ module ArtService
         cohort_struct.quarterly_all_males = males(quarter_start_date, end_date)
 
         # Pregnant females (all ages)
+        create_temp_pregnant_obs(start_date, end_date)
         cohort_struct.pregnant_females_all_ages = pregnant_females_all_ages(start_date, end_date)
         cohort_struct.cum_pregnant_females_all_ages = pregnant_females_all_ages(cum_start_date, end_date)
         cohort_struct.quarterly_pregnant_females_all_ages = pregnant_females_all_ages(quarter_start_date, end_date)
@@ -425,7 +426,9 @@ module ArtService
           hash['last_tpt_start_date'].nil?
         end
 
-        puts "Started at: #{time_started}. Finished at: #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}"
+        time_ended = Time.now.strftime('%Y-%m-%d %H:%M:%S')
+        puts "Started at: #{time_started}. Finished at: #{time_ended}. Total time in minutes: #{(Time.parse(time_ended) - Time.parse(time_started)) / 60}"
+        Rails.logger.info "Started at: #{time_started}. Finished at: #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}. Total time in minutes: #{(Time.parse(time_ended) - Time.parse(time_started)) / 60}"
         cohort_struct
       end
 
