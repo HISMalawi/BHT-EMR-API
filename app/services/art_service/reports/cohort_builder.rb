@@ -868,6 +868,7 @@ module ArtService
             PRIMARY KEY (patient_id)
           )
         SQL
+        ActiveRecord::Base.connection.execute 'CREATE INDEX trsd_date ON temp_register_start_date (start_date)'
         ActiveRecord::Base.connection.execute <<-SQL
           INSERT INTO temp_register_start_date (patient_id, start_date)
           SELECT pp.patient_id as patient_id, MIN(o.obs_datetime) AS start_date
