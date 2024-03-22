@@ -1891,9 +1891,7 @@ module ArtService
           SELECT patient_id
           FROM temp_earliest_start_date
           WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-            AND (gender = 'F' OR gender = 'Female')
-          GROUP BY patient_id
-          HAVING reason_concept_id IN (1755, 7972, 6131)
+            AND (gender = 'F' OR gender = 'Female') AND reason_for_starting_art IN (6131, 1755, 7972)
         SQL
 
         pregnant_at_initiation_ids = []
