@@ -1858,40 +1858,41 @@ module ArtService
         )
       end
 
-      def pregnant_females_all_ages(start_date, end_date)
-        yes_concept_id = concept('Yes').concept_id
-        preg_concept_id = concept('IS PATIENT PREGNANT?').concept_id
-        patient_preg_concept_id = concept('PATIENT PREGNANT').concept_id
-        preg_at_initiation_concept_id = concept('PREGNANT AT INITIATION?').concept_id
-        reason_for_starting_concept_id = concept('Reason for ART eligibility').concept_id
+      def create_temp_pregnant_obs(start_date, end_date)
+        ActiveRecord::Base.connection.execute 'DROP TABLE IF EXISTS temp_pregnant_obs;'
+        ActiveRecord::Base.connection.execute <<~SQL
+          CREATE TABLE temp_pregnant_obs
+          SELECT o.person_id,o.value_coded, o.obs_datetime
+          FROM obs o
+          WHERE o.concept_id IN (6131,1755,7972,7563)
+            AND o.value_coded IN (1065,1755)
+            AND o.voided = 0
+            AND o.obs_datetime >= '#{start_date}' AND o.obs_datetime < '#{end_date}' + INTERVAL 1 DAY;
+        SQL
+        ActiveRecord::Base.connection.execute 'CREATE INDEX fre_person ON temp_pregnant_obs(person_id);'
+        ActiveRecord::Base.connection.execute 'CREATE INDEX fre_obs_time ON temp_pregnant_obs(obs_datetime);'
+      end
 
+      def pregnant_females_all_ages(start_date, end_date)
         # (patient_id_plus_date_enrolled || []).each do |patient_id, date_enrolled|
         registered = ActiveRecord::Base.connection.select_all <<~SQL
-          SELECT patients.*, obs.value_coded
-          FROM temp_earliest_start_date AS patients
-          INNER JOIN obs
-            ON obs.person_id = patients.patient_id
-            AND obs.concept_id IN (#{preg_concept_id},
-                                   #{patient_preg_concept_id},
-                                   #{preg_at_initiation_concept_id},
-                                   #{reason_for_starting_concept_id})
-            AND obs.obs_datetime >= patients.earliest_start_date
-            AND obs.obs_datetime < (patients.earliest_start_date + INTERVAL 1 DAY)
-            AND obs.value_coded IN (#{yes_concept_id},#{patient_preg_concept_id})
-            AND obs.voided = 0
-          WHERE patients.gender IN ('F', 'Female')
-            AND patients.date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-          GROUP BY patient_id#{' '}
+          SELECT tesd.*, ft.value_coded
+          FROM temp_earliest_start_date tesd
+          INNER JOIN temp_pregnant_obs ft ON ft.person_id = tesd.patient_id AND DATE(ft.obs_datetime) = DATE(tesd.earliest_start_date)
+            AND tesd.gender = 'F'
+          WHERE tesd.gender = 'F' and tesd.date_enrolled >= DATE('#{start_date}') AND tesd.date_enrolled <= DATE('#{end_date}')
+          GROUP BY tesd.patient_id
         SQL
 
-        pregnant_at_initiation = ActiveRecord::Base.connection.select_all(
-          "SELECT patient_id, patient_reason_for_starting_art(patient_id) reason_concept_id
+        pregnant_at_initiation = ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT patient_id
           FROM temp_earliest_start_date
           WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
             AND (gender = 'F' OR gender = 'Female')
           GROUP BY patient_id
-          HAVING reason_concept_id IN (1755, 7972, 6131);"
-        )
+          HAVING reason_concept_id IN (1755, 7972, 6131)
+        SQL
+
         pregnant_at_initiation_ids = []
         (pregnant_at_initiation || []).each do |patient|
           pregnant_at_initiation_ids << patient['patient_id'].to_i
@@ -1899,16 +1900,16 @@ module ArtService
 
         pregnant_at_initiation_ids = [0] if pregnant_at_initiation_ids.blank?
 
-        transfer_ins_women = ActiveRecord::Base.connection.select_all(
-          "SELECT patient_id, re_initiated_check(patient_id, date_enrolled) re_initiated
+        transfer_ins_women = ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT patient_id, re_initiated_check(patient_id, date_enrolled) re_initiated
           FROM temp_earliest_start_date
           WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
             AND DATE(date_enrolled) != DATE(earliest_start_date)
             AND (gender = 'F' OR gender = 'Female')
             AND patient_id IN (#{pregnant_at_initiation_ids.join(',')})
           GROUP BY patient_id
-          HAVING re_initiated != 'Re-initiated'"
-        )
+          HAVING re_initiated != 'Re-initiated'
+        SQL
 
         transfer_ins_preg_women = []
         all_pregnant_females = []
@@ -1925,11 +1926,12 @@ module ArtService
 
       def initial_females_all_ages(start_date, end_date, data)
         clients = []
-        women = ActiveRecord::Base.connection.select_all("
-        SELECT * FROM temp_earliest_start_date e
-        WHERE patient_id IN(#{data.length.positive? ? data.join(',') : 0})
-        AND date_enrolled BETWEEN '#{start_date.to_date}' AND '#{end_date.to_date}'
-        AND DATE(date_enrolled) = DATE(earliest_start_date);")
+        women = ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT * FROM temp_earliest_start_date e
+          WHERE patient_id IN(#{data.length.positive? ? data.join(',') : 0})
+          AND date_enrolled BETWEEN '#{start_date.to_date}' AND '#{end_date.to_date}'
+          AND DATE(date_enrolled) = DATE(earliest_start_date)
+        SQL
 
         (women || []).each do |w|
           clients << w
