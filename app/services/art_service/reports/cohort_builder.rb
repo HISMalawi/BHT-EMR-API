@@ -678,7 +678,7 @@ module ArtService
                  IF(person.birthdate IS NOT NULL, TIMESTAMPDIFF(DAY, person.birthdate,  DATE(COALESCE(art_start_date_obs.value_datetime, MIN(art_order.start_date)))), NULL) AS age_in_days,
                  (SELECT value_coded FROM obs
                   WHERE concept_id = 7563 AND person_id = patient_program.patient_id AND voided = 0
-                  AND obs_datetime <= DATE(#{end_date}) + INTERVAL 1 DAY
+                  AND obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
                   ORDER BY obs_datetime DESC, date_created DESC LIMIT 1) AS reason_for_starting_art,
                  pa.value AS occupation
           FROM patient_program
@@ -1038,24 +1038,14 @@ module ArtService
                                  .select(:concept_id)
 
         results = ActiveRecord::Base.connection.select_all <<~SQL
-          SELECT o.person_id
-          FROM obs o
-          INNER JOIN (
-            SELECT person_id, MAX(obs.obs_datetime) AS obs_datetime
-            FROM obs
-            WHERE voided = 0
-              AND concept_id IN (#{bp_concepts.to_sql})
-              AND (value_text IS NOT NULL OR value_numeric IS NOT NULL)
-              AND obs_datetime < DATE('#{end_date}') + INTERVAL 1 DAY AND obs_datetime >= DATE('#{end_date}') - INTERVAL 12 MONTH
-              AND person_id IN (#{total_alive_and_on_art.join(',')})
-            GROUP BY person_id
-          ) AS max_obs
-            ON max_obs.person_id = o.person_id
-            AND max_obs.obs_datetime = o.obs_datetime
-          WHERE o.voided = 0
-            AND o.concept_id in (#{bp_concepts.to_sql})
-            AND (o.value_text IS NOT NULL OR o.value_numeric IS NOT NULL)
-          GROUP BY o.person_id
+          SELECT person_id
+          FROM obs
+          WHERE voided = 0
+            AND concept_id IN (#{bp_concepts.to_sql})
+            AND (value_text IS NOT NULL OR value_numeric IS NOT NULL)
+            AND obs_datetime < DATE('#{end_date}') + INTERVAL 1 DAY AND obs_datetime >= DATE('#{end_date}') - INTERVAL 12 MONTH
+            AND person_id IN (#{total_alive_and_on_art.join(',')})
+          GROUP BY person_id
         SQL
 
         ((results.count.to_f / total_alive_and_on_art.count) * 100).to_i
