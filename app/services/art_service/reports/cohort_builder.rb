@@ -24,9 +24,11 @@ module ArtService
         drop_temp_register_start_date_table
         drop_temp_other_patient_types
         drop_temp_order_details
+        drop_art_start_date
         create_temp_other_patient_types(end_date)
         create_temp_register_start_date_table(end_date)
         create_temp_order_details(end_date)
+        create_art_start_date(end_date)
         load_data_into_temp_earliest_start_date(end_date.to_date, occupation)
         update_cum_outcome(end_date)
       end
@@ -38,9 +40,11 @@ module ArtService
         drop_temp_register_start_date_table
         drop_temp_other_patient_types
         drop_temp_order_details
+        drop_art_start_date
         create_temp_other_patient_types(end_date)
         create_temp_register_start_date_table(end_date)
         create_temp_order_details(end_date)
+        create_art_start_date(end_date)
         load_data_into_temp_earliest_start_date(end_date.to_date, occupation)
 
         # create_tmp_patient_table_2(end_date)
@@ -682,20 +686,8 @@ module ArtService
           LEFT JOIN (#{current_occupation_query}) pa ON pa.person_id = patient_program.patient_id
           LEFT JOIN patient_state AS outcome
             ON outcome.patient_program_id = patient_program.patient_program_id
-          LEFT JOIN encounter AS clinic_registration_encounter
-            ON clinic_registration_encounter.encounter_type = (
-              SELECT encounter_type_id FROM encounter_type WHERE name = 'HIV CLINIC REGISTRATION' LIMIT 1
-            )
-            AND clinic_registration_encounter.patient_id = patient_program.patient_id
-            AND clinic_registration_encounter.program_id = patient_program.program_id
-            AND clinic_registration_encounter.encounter_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
-            AND clinic_registration_encounter.voided = 0
-          LEFT JOIN obs AS art_start_date_obs
-            ON art_start_date_obs.concept_id = 2516
-            AND art_start_date_obs.person_id = patient_program.patient_id
-            AND art_start_date_obs.voided = 0
-            AND art_start_date_obs.obs_datetime < (DATE(#{end_date}) + INTERVAL 1 DAY)
-            AND art_start_date_obs.encounter_id = clinic_registration_encounter.encounter_id
+          LEFT JOIN temp_art_start_date AS art_start_date_obs
+            ON art_start_date_obs.patient_id = patient_program.patient_id
            /* TODO: Re-enable the following condition. Has been removed because LLH and PIH
               were noted to be dropping patients because of it. Seems these sites may have orders
               without corresponding encounters. Adding this condition bumps up performance a bit. */
@@ -705,20 +697,7 @@ module ArtService
             AND prescription_encounter.encounter_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
             AND prescription_encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name LIKE 'Treatment')
             AND prescription_encounter.voided = 0 */
-          /* LEFT JOIN temp_register_start_date AS patient_type_obs
-            ON patient_type_obs.patient_id = patient_program.patient_id
-          INNER JOIN orders AS art_order
-            ON art_order.patient_id = patient_program.patient_id
-            AND art_order.encounter_id = prescription_encounter.encounter_id
-            AND art_order.concept_id IN (SELECT concept_id FROM concept_set WHERE concept_set = 1085)
-            AND art_order.start_date < DATE(#{end_date}) + INTERVAL 1 DAY
-            AND art_order.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
-            AND art_order.start_date >= COALESCE(patient_type_obs.start_date, DATE('1901-01-01'))
-            AND art_order.voided = 0
-          INNER JOIN drug_order
-            ON drug_order.order_id = art_order.order_id
-            AND drug_order.quantity > 0 */
-          INNER JOIN temp_order_details AS art_order ON art_order.patient_id = patient_program.patient_id
+          INNER JOIN temp_order_details AS art_order ON art_order.patient_id = patient_program.patient_id AND art_order.start_date <= DATE(#{end_date})
           WHERE patient_program.voided = 0
             AND outcome.voided = 0
             AND patient_program.program_id = 1
@@ -736,7 +715,6 @@ module ArtService
               GROUP BY e.patient_id
             )*/
           GROUP by patient_program.patient_id
-          HAVING date_enrolled <= #{end_date}
         SQL
         remove_drug_refills_and_external_consultation(end_date)
       end
@@ -832,6 +810,24 @@ module ArtService
         SQL
       end
 
+      def drop_art_start_date
+        ActiveRecord::Base.connection.execute <<~SQL
+          DROP TABLE IF EXISTS temp_art_start_date
+        SQL
+      end
+
+      def create_art_start_date(end_date)
+        ActiveRecord::Base.connection.execute <<-SQL
+          CREATE TABLE temp_art_start_date (
+            patient_id INT(11) NOT NULL,
+            value_datetime DATE NOT NULL,
+            PRIMARY KEY (patient_id)
+          )
+        SQL
+        ActiveRecord::Base.connection.execute 'CREATE INDEX tasd_date ON temp_art_start_date (value_datetime)'
+        load_art_start_date(end_date)
+      end
+
       def create_temp_order_details(end_date)
         ActiveRecord::Base.connection.execute <<-SQL
           CREATE TABLE temp_order_details (
@@ -840,6 +836,7 @@ module ArtService
             PRIMARY KEY (patient_id)
           )
         SQL
+        ActiveRecord::Base.connection.execute 'CREATE INDEX tod_date ON temp_order_details (start_date)'
         load_temp_order_details(end_date)
       end
 
@@ -849,11 +846,23 @@ module ArtService
           SELECT o.patient_id, DATE(MIN(o.start_date)) start_date
           FROM orders o
           INNER JOIN drug_order do ON do.order_id = o.order_id AND do.quantity > 0
+          INNER JOIN arv_drug ad ON ad.drug_id = do.drug_inventory_id
           LEFT JOIN temp_register_start_date trsd ON trsd.patient_id  = o.patient_id
-          WHERE o.concept_id  IN (SELECT concept_id FROM concept_set WHERE concept_set = 1085)
-          AND o.start_date < DATE('#{end_date}') + INTERVAL 1 DAY AND o.start_date >= COALESCE(trsd.start_date, DATE('1901-01-01'))
+          WHERE o.start_date < DATE('#{end_date}') + INTERVAL 1 DAY AND o.start_date >= COALESCE(trsd.start_date, DATE('1901-01-01'))
           and o.order_type_id = 1 ANd o.voided  = 0
           GROUP BY o.patient_id;
+        SQL
+      end
+
+      def load_art_start_date(end_date)
+        ActiveRecord::Base.connection.execute <<-SQL
+          INSERT INTO temp_art_start_date
+          SELECT o.person_id, DATE(MIN(o.value_datetime)) value_datetime
+          FROM encounter e
+          INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.concept_id = 2516 AND e.encounter_type = 9 AND e.program_id = 1 AND e.voided = 0 AND e.encounter_datetime < DATE('#{end_date}') + INTERVAL 1 DAY
+          AND o.obs_datetime < (DATE('#{end_date}') + INTERVAL 1 DAY) AND e.voided = 0
+          WHERE e.voided = 0
+          GROUP BY o.person_id
         SQL
       end
 
