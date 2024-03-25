@@ -186,7 +186,7 @@ module ArtService
           ActiveRecord::Base.connection.execute <<~SQL
             INSERT INTO temp_patient_outcomes
             SELECT patients.patient_id,
-                   IF(#{current_defaulter_function('patients.patient_id')} = 1, 'Defaulted', 'Unknown'),
+                   IF(#{current_defaulter_function('patients.patient_id')} = 1, 'Defaulted', 'Unknown') outcome,
                    NULL
             FROM temp_earliest_start_date AS patients
             INNER JOIN patient_program
@@ -201,7 +201,7 @@ module ArtService
                   AND voided = 0
               )
               AND patients.patient_id NOT IN (SELECT patient_id FROM temp_patient_outcomes)
-            GROUP BY patients.patient_id
+            GROUP BY patients.patient_id HAVING outcome = 'Defaulted'
           SQL
         end
 
@@ -274,7 +274,7 @@ module ArtService
             INNER JOIN arv_drug ad ON ad.drug_id = drug_order.drug_inventory_id
             WHERE order_type_id = #{drug_order_type.order_type_id}
               AND voided = 0
-            GROUP BY patient_id
+            GROUP BY patient_id HAVING auto_expire_date IS NOT NULL
           SQL
         end
         # rubocop:enable Metrics/MethodLength
