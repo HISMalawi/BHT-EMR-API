@@ -172,7 +172,7 @@ class Patient < VoidableRecord
       order by orders.auto_expire_date desc
       limit 1
     SQL
-    result['auto_expire_date']&.to_date || nil
+    result['auto_expire_date']&.to_date || nil if !result.blank?
   end
 
   def tpt_status
