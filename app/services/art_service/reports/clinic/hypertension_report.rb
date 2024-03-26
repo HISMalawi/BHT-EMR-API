@@ -44,13 +44,15 @@ module ArtService
           'Captopril' => :captopril
         }.freeze
 
-        def initialize(start_date:, end_date:, **_kwargs)
+        def initialize(start_date:, end_date:, **kwargs)
           @start_date = ActiveRecord::Base.connection.quote(start_date)
           @end_date = ActiveRecord::Base.connection.quote(end_date)
+          @process_due = kwargs[:process_due] == 'true'
         end
 
         def find_report
           @report = init_report
+          process_due_clients if @process_due
           process_data
           @report
         rescue StandardError => e
@@ -118,6 +120,7 @@ module ArtService
         # rubocop:enable Metrics/MethodLength
 
         def process_due_clients
+          @due_clients = []
           (due_for_bp_screening || []).each do |row|
             age_group = row['age_group']
             gender = row['gender']
@@ -126,9 +129,11 @@ module ArtService
 
             cluster = @report[age_group][gender][:due_screening]
             cluster << row['patient_id']
+            @due_clients << row['patient_id']
           end
         end
 
+        # rubocop:disable Metrics/MethodLength
         def process_bp_classification(cluster, patient_id, sys_class, dia_class)
           classification = SEVERITY_ORDER[sys_class.to_sym] > SEVERITY_ORDER[dia_class.to_sym] ? sys_class : dia_class
           case SEVERITY_CLASSIFICATION[classification.to_sym]
@@ -142,6 +147,7 @@ module ArtService
             cluster[:severe_reading] << patient_id
           end
         end
+        # rubocop:enable Metrics/MethodLength
 
         def process_drug_data(cluster, patient_id, drugs)
           return if drugs.blank?
@@ -168,6 +174,7 @@ module ArtService
           normal_reading: 'NORMAL'
         }.freeze
 
+        # rubocop:disable Metrics/MethodLength
         def data
           ActiveRecord::Base.connection.select_all <<~SQL
             SELECT
@@ -216,7 +223,7 @@ module ArtService
             LEFT JOIN orders ord ON ord.start_date = latest_drug_order.start_date AND ord.patient_id = latest_drug_order.patient_id AND ord.voided = 0 AND ord.concept_id IN (SELECT concept_id FROM concept_name WHERE name LIKE '%Hydrochlorothiazide%' OR name LIKE '%Amlodipine%' OR name LIKE '%Enalapril%' OR name LIKE '%Atenolol%' OR name LIKE '%Nifedipine%' OR name LIKE '%Captopril%')
             LEFT JOIN drug_order dor ON dor.order_id = ord.order_id AND dor.quantity > 0
             LEFT JOIN drug d ON d.drug_id = dor.drug_inventory_id AND d.retired = 0
-            WHERE tpo.patient_id NOT IN (#{external_clients})
+            WHERE tpo.patient_id #{@process_due ? "IN (#{@due_clients.join(',')})" : "NOT IN (#{external_clients})"}
             GROUP BY tpo.patient_id
             ORDER BY tpo.patient_id ASC
           SQL
@@ -224,11 +231,9 @@ module ArtService
 
         def due_for_bp_screening
           ActiveRecord::Base.connection.select_all <<~SQL
-            SELECT p.person_id patient_id, disaggregated_age_group(p.birthdate, #{@end_date}) age_group, UPPER(LEFT(p.gender, 1)) gender, TIMESTAMPDIFF(YEAR, DATE(COALESCE(latest_bp.obs_date, MIN(ps.start_date))), DATE(#{@start_date})) due
+            SELECT p.person_id patient_id, disaggregated_age_group(p.birthdate, #{@end_date}) age_group, UPPER(LEFT(p.gender, 1)) gender, TIMESTAMPDIFF(YEAR, DATE(COALESCE(latest_bp.obs_date, MIN(ps2.start_date))), DATE(#{@start_date})) due
             FROM person p
-            INNER JOIN patient_program pp ON pp.patient_id = p.person_id AND pp.voided = 0 AND pp.program_id = 20 -- HTN PROGRAM
             INNER JOIN patient_program pp2 ON pp2.patient_id = p.person_id AND pp2.voided = 0 AND pp2.program_id = 1 -- HIV PROGRAM
-            INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id AND ps.voided = 0 AND ps.end_date IS NULL AND ps.start_date <= DATE(#{@start_date}) AND ps.state = 160 -- ALIVE
             INNER JOIN (
               SELECT MAX(ps.start_date) as start_date, ps.patient_program_id
               FROM patient_state ps
@@ -245,11 +250,12 @@ module ArtService
               AND o.voided = 0 AND o.obs_datetime < DATE(#{@start_date})
               GROUP BY o.person_id
             ) AS latest_bp ON latest_bp.patient_id = p.person_id
-            WHERE p.voided = 0 AND p.person_id NOT IN (#{external_clients})
+            WHERE p.voided = 0 AND p.person_id NOT IN (#{external_clients}) AND p.dead = 0 AND p.death_date IS NULL
             GROUP BY p.person_id
             HAVING due >= 1
           SQL
         end
+        # rubocop:enable Metrics/MethodLength
 
         def external_clients
           <<~SQL
