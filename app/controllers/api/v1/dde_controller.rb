@@ -32,7 +32,7 @@ module Api
       #
       # Returns DDE patients matching demographics passed
       def match_patients_by_demographics
-        render json: service.match_patients_by_demographics(match_params)
+        render json: service.match_patients_by_demographics(**match_params)
       end
 
       def reassign_patient_npid
