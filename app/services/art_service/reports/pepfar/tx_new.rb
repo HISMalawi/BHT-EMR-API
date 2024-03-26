@@ -24,8 +24,8 @@ module ArtService
           report = init_report
           addittional_groups report
           if rebuild
-            ArtService::Reports::CohortBuilder.new(outcomes_definition: 'pepfar').init_temporary_tables(start_date,
-                                                                                                        end_date, '')
+            ArtService::Reports::CohortBuilder.new(outcomes_definition: 'pepfar')
+                                              .init_temporary_tables(start_date, end_date, '')
           end
           process_data report
           flatten_the_report report
