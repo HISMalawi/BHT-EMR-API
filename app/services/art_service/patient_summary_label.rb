@@ -65,7 +65,7 @@ module ArtService
       initial_height = PatientService.get_patient_attribute_value(patient, 'initial_height')
       initial_weight = PatientService.get_patient_attribute_value(patient, 'initial_weight')
 
-      label = ZebraPrinter::StandardLabel.new
+      label = ZebraPrinter::Lib::StandardLabel.new
       label.draw_text("Printed on: #{Date.today.strftime('%A, %d-%b-%Y')}", 450, 300, 0, 1, 1, 1, false)
       label.draw_text(demographics.arv_number.to_s, 575, 30, 0, 3, 1, 1, false)
       label.draw_text('PATIENT DETAILS', 25, 30, 0, 3, 1, 1, false)
@@ -117,7 +117,7 @@ module ArtService
       label.draw_text("TI:    #{demographics.transfer_in ||= 'No'}", 25, last_line += 30, 0, 3, 1, 1, false)
       label.draw_text("FUP:   (#{demographics.agrees_to_followup})", 25, last_line + 30, 0, 3, 1, 1, false)
 
-      label2 = ZebraPrinter::StandardLabel.new
+      label2 = ZebraPrinter::Lib::StandardLabel.new
       # Vertical lines
       label2.draw_line(25, 170, 795, 3)
       # label data
@@ -181,7 +181,7 @@ module ArtService
 
       if (line > 310) && !extra_lines.blank?
         line = 30
-        label3 = ZebraPrinter::StandardLabel.new
+        label3 = ZebraPrinter::Lib::StandardLabel.new
         label3.draw_text('STAGE DEFINING CONDITIONS', 25, line, 0, 3, 1, 1, false)
         label3.draw_text(PatientService.get_patient_identifier(patient, 'ARV Number').to_s, 370, line, 0, 2, 1, 1,
                          false)

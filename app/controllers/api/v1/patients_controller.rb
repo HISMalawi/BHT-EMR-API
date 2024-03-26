@@ -296,7 +296,7 @@ module Api
 
         sex =  "(#{person.gender})"
         address = person.addresses.first.to_s.strip[0..24].humanize
-        label = ZebraPrinter::StandardLabel.new
+        label = ZebraPrinter::Lib::StandardLabel.new
         label.font_size = 2
         label.font_horizontal_multiplier = 2
         label.font_vertical_multiplier = 2
@@ -328,7 +328,7 @@ module Api
         len = number.length - 5
         number = "#{number[len..len]}   #{number[(len + 1)..(len + 2)]} #{number[(len + 3)..(number.length)]}"
 
-        label = ZebraPrinter::StandardLabel.new
+        label = ZebraPrinter::Lib::StandardLabel.new
         label.draw_text(number, 75, 30, 0, 4, 4, 4, false)
         label.draw_text("Filing area #{file_type}", 75, 150, 0, 2, 2, 2, false)
         label.draw_text("Version number: #{version_number}", 75, 200, 0, 2, 2, 2, false)
@@ -346,7 +346,7 @@ module Api
 
         number = "#{number[0..1]} #{number[2..3]} #{number[4..]}"
 
-        label = ZebraPrinter::StandardLabel.new
+        label = ZebraPrinter::Lib::StandardLabel.new
         label.draw_text(number, 75, 30, 0, 4, 4, 4, false)
         label.draw_text("Filing area #{file_type}", 75, 150, 0, 2, 2, 2, false)
         label.draw_text("Version number: #{version_number}", 75, 200, 0, 2, 2, 2, false)

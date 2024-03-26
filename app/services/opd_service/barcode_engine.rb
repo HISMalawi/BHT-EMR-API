@@ -9,7 +9,7 @@ module OpdService
     end
 
     def la_report_barcode(params)
-      label = ZebraPrinter::StandardLabel.new
+      label = ZebraPrinter::Lib::StandardLabel.new
       label.draw_line(30, 85, 740, 3, 0)
       label.draw_text('Prescribed', 220, 55, 0, 1, 2, 2, false)
       label.draw_text('Dispensed', 540, 55, 0, 1, 2, 2, false)

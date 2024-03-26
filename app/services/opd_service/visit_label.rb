@@ -56,7 +56,7 @@ class OpdService::VisitLabel
     return ""
   end
   def print
-    label = ZebraPrinter::StandardLabel.new
+    label = ZebraPrinter::Lib::StandardLabel.new
     label.font_size = 3
     label.font_horizontal_multiplier = 1
     label.font_vertical_multiplier = 1
