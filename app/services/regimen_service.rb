@@ -2,8 +2,8 @@
 
 class RegimenService
   ENGINES = {
-    'HIV PROGRAM' => ARTService::RegimenEngine,
-    'TB PROGRAM' => TBService::RegimenEngine
+    'HIV PROGRAM' => ArtService::RegimenEngine,
+    'TB PROGRAM' => TbService::RegimenEngine
   }.freeze
 
   def initialize(program_id:)
@@ -28,6 +28,6 @@ class RegimenService
     program = Program.find program_id
 
     engine = ENGINES[program.name.upcase]
-    engine.new program: program
+    engine.new program:
   end
 end

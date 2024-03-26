@@ -22,7 +22,8 @@ module SpineService
 
         private
 
-        ENCOUNTERS = ['REGISTRATION', 'UPDATE HIV STATUS', 'INFLUENZA DATA', 'CHRONIC CONDITIONS', 'DIAGNOSIS', 'DISPENSING', 'TREATMENT', 'PATIENT OUTCOME'].freeze
+        ENCOUNTERS = ['REGISTRATION', 'UPDATE HIV STATUS', 'INFLUENZA DATA', 'CHRONIC CONDITIONS', 'DIAGNOSIS',
+                      'DISPENSING', 'TREATMENT', 'PATIENT OUTCOME'].freeze
         ENCOUNTER_MAP = {
           'REGISTRATION' => 'Patient registration',
           'UPDATE HIV STATUS' => 'HIV tests',

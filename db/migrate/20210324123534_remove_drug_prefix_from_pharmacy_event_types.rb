@@ -1,9 +1,11 @@
+# frozen_string_literal: true
+
 class RemoveDrugPrefixFromPharmacyEventTypes < ActiveRecord::Migration[5.2]
   NAMES_MAPPING = {
     'Drugs added' => 'Added',
     'Drugs removed' => 'Removed',
     'Drugs edited' => 'Edited'
-  }
+  }.freeze
 
   def up
     NAMES_MAPPING.each do |old_name, new_name|

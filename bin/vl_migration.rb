@@ -65,7 +65,7 @@ def prepare_order_payload(obs)
   provider = obs.encounter.provider_id
   prev_encounter = previous_visit(obs.person_id, obs.obs_datetime)
   encounter_id = create_encounter(obs, prev_encounter)['encounter_id']
-  { patient_id: obs.person_id, provider_id: provider, date: prev_encounter, encounter_id: encounter_id,
+  { patient_id: obs.person_id, provider_id: provider, date: prev_encounter, encounter_id:,
     program_id: program, 'target_lab' => target_lab, reason_for_test_id: concept_name('Unknown'),
     tests: [{ concept_id: concept_name('Viral Load') }], specimen: { concept_id: concept_name('Blood') },
     'requesting_clinician' => User.where(person_id: provider)&.first&.username }

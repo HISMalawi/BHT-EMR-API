@@ -8,7 +8,7 @@ namespace :nlims do
 
   desc 'Create NLIMS user for the application'
   task create_user: :environment do
-    lims = NLims.new
+    lims = Nlims.new
 
     connection = lims.temp_auth
     health_center_id = GlobalProperty.find_by(property: 'current_health_center_id').property_value

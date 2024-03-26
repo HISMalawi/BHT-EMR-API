@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   module Reports
     # Retrieve patients who are completing their first 1st, 3rd, and 6th month on ART
     # in the reporting period.
@@ -16,8 +16,8 @@ module ARTService
         @start_date = start_date.to_s
         @end_date = end_date.to_s
         @use_filing_number = GlobalProperty.find_by(property: 'use.filing.numbers')
-                                       &.property_value
-                                       &.casecmp?('true')
+                                           &.property_value
+                                           &.casecmp?('true')
         @occupation = kwargs[:occupation]
       end
 

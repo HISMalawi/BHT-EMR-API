@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   module Reports
     module Pepfar
       # TxTb report
       # rubocop:disable Metrics/ClassLength
-      class TxTB
+      class TxTb
         attr_accessor :start_date, :end_date, :report, :rebuild_outcome
 
         include Utils
@@ -69,7 +69,7 @@ module ARTService
         def build_cohort_tables
           return unless rebuild_outcome || @occupation.present?
 
-          cohort_builder = ARTService::Reports::CohortBuilder.new(outcomes_definition: 'pepfar')
+          cohort_builder = ArtService::Reports::CohortBuilder.new(outcomes_definition: 'pepfar')
           cohort_builder.init_temporary_tables(start_date, end_date, @occupation)
         end
 
@@ -218,10 +218,12 @@ module ARTService
 
         def process_screening_results(metrics, enrollment_date, tb_status, patient_id)
           if new_on_art(enrollment_date)
-            metrics[:sceen_pos_new] << patient_id if ['tb suspected', 'sup', 'confirmed tb not on treatment', 'norx', 'confirmed tb on treatment', 'rx'].include?(tb_status)
+            metrics[:sceen_pos_new] << patient_id if ['tb suspected', 'sup', 'confirmed tb not on treatment', 'norx',
+                                                      'confirmed tb on treatment', 'rx'].include?(tb_status)
             metrics[:sceen_neg_new] << patient_id if ['tb not suspected', 'nosup'].include?(tb_status)
           else
-            metrics[:sceen_pos_prev] << patient_id if ['tb suspected', 'sup', 'confirmed tb not on treatment', 'norx'].include?(tb_status)
+            metrics[:sceen_pos_prev] << patient_id if ['tb suspected', 'sup', 'confirmed tb not on treatment',
+                                                       'norx'].include?(tb_status)
             metrics[:sceen_neg_prev] << patient_id if ['tb not suspected', 'nosup'].include?(tb_status)
           end
         end

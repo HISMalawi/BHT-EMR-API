@@ -6,7 +6,7 @@ require 'logger'
 DEFAULT_PROGRAM = 'HIV Program'
 DEFAULT_REPORT_TYPE = 'Cohort'
 
-LOGGER = Logger.new STDOUT
+LOGGER = Logger.new $stdout
 Rails.logger = LOGGER
 ActiveRecord::Base.logger = LOGGER
 
@@ -46,7 +46,7 @@ def generate_report(program, report_name, report_type, start_date, end_date)
                               immediate_mode: true,
                               overwrite_mode: true)
   service.generate_report(name: report_name, type: report_type,
-                          start_date: start_date, end_date: end_date)
+                          start_date:, end_date:)
   LOGGER.info('Successfully generated report')
 end
 

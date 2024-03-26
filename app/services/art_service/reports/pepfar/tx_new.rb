@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   module Reports
     module Pepfar
       # This class is responsible for generating the tx_new report
@@ -75,13 +75,15 @@ module ARTService
             indicator = new_patient.positive? ? cd4_count_group : 'transfer_in'
 
             if new_patient.positive? && earliest_start_date.to_date >= start_date.to_date
-              report[age_group.to_s][gender.to_s][indicator.to_sym] << patient_id 
+              report[age_group.to_s][gender.to_s][indicator.to_sym] << patient_id
             elsif new_patient.zero?
               report[age_group.to_s][gender.to_s][indicator.to_sym] << patient_id
             else
               next
             end
-            process_aggreggation_rows(report: report, gender: gender, indicator: indicator, start_date: date_enrolled, patient_id: patient_id, maternal_status: row['maternal_status'], maternal_status_date: row['maternal_status_date'])
+            report[age_group.to_s][gender.to_s][indicator.to_sym] << patient_id if new_patient.zero?
+            process_aggreggation_rows(report:, gender:, indicator:, start_date: date_enrolled,
+                                      patient_id:, maternal_status: row['maternal_status'], maternal_status_date: row['maternal_status_date'])
           end
         end
 
@@ -91,9 +93,9 @@ module ARTService
 
           if gender == 'M'
             report['All']['Male'][indicator.to_sym] << kwargs[:patient_id]
-          elsif maternal_status&.match?(/pregnant/i) && maternal_status_date&.to_date <= start_date.to_date
+          elsif maternal_status&.match?(/pregnant/i) && (maternal_status_date&.to_date&.<= start_date.to_date)
             report['All']['FP'][indicator.to_sym] << kwargs[:patient_id]
-          elsif maternal_status&.match?(/breast/i) && maternal_status_date&.to_date <= start_date.to_date
+          elsif maternal_status&.match?(/breast/i) && (maternal_status_date&.to_date&.<= start_date.to_date)
             report['All']['FBf'][indicator.to_sym] << kwargs[:patient_id]
           else
             report['All']['FNP'][indicator.to_sym] << kwargs[:patient_id]
@@ -102,7 +104,7 @@ module ARTService
 
         def process_age_group_report(age_group, gender, age_group_report)
           {
-            age_group: age_group,
+            age_group:,
             gender: if gender == 'F'
                       'Female'
                     else

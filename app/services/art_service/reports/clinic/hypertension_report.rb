@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   module Reports
     module Clinic
       # Generates a hypertension report for a clinic
@@ -153,7 +153,7 @@ module ARTService
           severe_reading: 4,
           moderate_reading: 3,
           mild_reading: 2,
-          normal_reading: 1   
+          normal_reading: 1
         }.freeze
 
         SEVERITY_CLASSIFICATION = {

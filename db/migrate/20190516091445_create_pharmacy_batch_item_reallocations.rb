@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreatePharmacyBatchItemReallocations < ActiveRecord::Migration[5.2]
   def change
     create_table :pharmacy_batch_item_reallocations do |t|

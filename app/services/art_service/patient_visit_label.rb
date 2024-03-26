@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   class PatientVisitLabel
     attr_accessor :patient, :date
 
@@ -10,7 +10,7 @@ module ARTService
     end
 
     def print
-      visit = ARTService::PatientVisit.new patient, date
+      visit = ArtService::PatientVisit.new patient, date
       return unless visit
 
       owner = visit.guardian_present? && !visit.patient_present? ? ' :Guardian Visit' : ' :Patient visit'

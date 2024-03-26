@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ANCService
+module AncService
     class PatientVisitLabel
       attr_accessor :patient, :date
 
@@ -16,7 +16,7 @@ module ANCService
       end
 
       def print1
-        visit = ANCService::PatientVisit.new patient, date
+        visit = AncService::PatientVisit.new patient, date
         return unless visit
 
         @current_range = visit.active_range(@date.to_date)
@@ -238,7 +238,7 @@ module ANCService
         end
 
         def print2
-          visit = ANCService::PatientVisit.new patient, date
+          visit = AncService::PatientVisit.new patient, date
           return unless visit
 
           @current_range = visit.active_range(@date.to_date)

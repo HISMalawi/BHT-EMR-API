@@ -31,7 +31,7 @@ class StockTrackerService
       stock.close_balance -= quantity
     end
     stock.save
-    retrospective_stock_balance(transaction_type: transaction_type, quantity: quantity)
+    retrospective_stock_balance(transaction_type:, quantity:)
   rescue StandardError => e
     puts "Error updating stock balance: #{e.message}"
   end
@@ -46,7 +46,8 @@ class StockTrackerService
     # Update all stock balances from the transaction date to today
     # Use the transaction type to determine whether to add or subtract the quantity
 
-    PharmacyStockBalance.where('transaction_date > ? AND drug_id = ? AND pack_size = ? ', @transaction_date, @drug_id, @pack_size).each do |stock|
+    PharmacyStockBalance.where('transaction_date > ? AND drug_id = ? AND pack_size = ? ', @transaction_date, @drug_id,
+                               @pack_size).each do |stock|
       case transaction_type
       when STOCK_ADD
         stock.open_balance += quantity
@@ -66,7 +67,8 @@ class StockTrackerService
   # rubocop:enable Metrics/MethodLength
 
   def find_stock
-    result = PharmacyStockBalance.where(drug_id: @drug_id, pack_size: @pack_size, transaction_date: @transaction_date)&.first
+    result = PharmacyStockBalance.where(drug_id: @drug_id, pack_size: @pack_size,
+                                        transaction_date: @transaction_date)&.first
     return result if result
 
     create_stock
@@ -82,11 +84,13 @@ class StockTrackerService
     # The transaction date is the date of the current transaction
     # The drug id and pack size are the same as the current transaction
 
-    prev_stock = PharmacyStockBalance.where('transaction_date < ? AND drug_id = ? AND pack_size = ? ', @transaction_date, @drug_id, @pack_size).order(transaction_date: :desc)&.first
+    prev_stock = PharmacyStockBalance.where('transaction_date < ? AND drug_id = ? AND pack_size = ? ',
+                                            @transaction_date, @drug_id, @pack_size).order(transaction_date: :desc)&.first
     opening_balance = prev_stock&.close_balance || 0 # || current_record_details
     closing_balance = opening_balance
 
-    PharmacyStockBalance.create(drug_id: @drug_id, pack_size: @pack_size, open_balance: opening_balance, close_balance: closing_balance, transaction_date: @transaction_date)
+    PharmacyStockBalance.create(drug_id: @drug_id, pack_size: @pack_size, open_balance: opening_balance,
+                                close_balance: closing_balance, transaction_date: @transaction_date)
   rescue StandardError => e
     puts "Error creating stock: #{e.message}"
   end
@@ -94,7 +98,8 @@ class StockTrackerService
   # this method is not used because it will give wrong results so it is highly discouraged and should be politically motivated for activation
   def current_record_details
     # get all current balances from PharmacyBatchItem for this particular drug and pack size
-    result = PharmacyBatchItem.where(drug_id: @drug_id, pack_size: @pack_size).where('delivery_date < ?', @transaction_date)
+    result = PharmacyBatchItem.where(drug_id: @drug_id, pack_size: @pack_size).where('delivery_date < ?',
+                                                                                     @transaction_date)
     # return the sum of the current quantity
     result.sum(:current_quantity)
   end

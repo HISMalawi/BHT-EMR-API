@@ -22,19 +22,18 @@ def load_flags
 end
 
 def dump_file_name
-  #name rds dump with current_health_center_name
+  # name rds dump with current_health_center_name
   facility_name = GlobalProperty.find_by_property('current_health_center_name')['property_value']
-  return facility_name.parameterize.underscore
+  facility_name.parameterize.underscore
 end
 
 def main
   flags = load_flags
-  if flags.blank?
-    rds_dump_file_name = 'rds_' + dump_file_name + '_dump_' + Date.today.strftime('%d_%m_%Y') + '.sql'
-  else
-    rds_dump_file_name = 'rds_' + dump_file_name + '_dump.sql'
-  end
-
+  rds_dump_file_name = if flags.blank?
+                         "rds_#{dump_file_name}_dump_#{Date.today.strftime('%d_%m_%Y')}.sql"
+                       else
+                         "rds_#{dump_file_name}_dump.sql"
+                       end
 
   File.open(Rails.root.join('log', rds_dump_file_name), 'w') do |fout|
     config['databases'].each do |database, database_config|
@@ -42,7 +41,7 @@ def main
     end
   end
   puts 'compressing dump file'
-  `gzip -f #{Rails.root.join('log',rds_dump_file_name)}`
+  `gzip -f #{Rails.root.join('log', rds_dump_file_name)}`
 end
 
 # Dump database in an RDS compatible format into given file.

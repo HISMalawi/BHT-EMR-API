@@ -2,7 +2,7 @@
 
 require 'set'
 
-module ANCService
+module AncService
   module Reports
     # Cohort report builder class.
     #
@@ -19,7 +19,7 @@ module ANCService
         @type = type
         @cohort_builder = MonthlyBuilder.new
         @cohort_struct = MonthlyStruct.new
-        ARTService::Reports::CohortBuilder.new.init_temporary_tables(start_date, end_date, '')
+        ArtService::Reports::CohortBuilder.new.init_temporary_tables(start_date, end_date, '')
       end
 
       def build_report
@@ -28,7 +28,7 @@ module ANCService
 
       def find_report
         build_report
-        #Report.where(type: @type, name: @name,
+        # Report.where(type: @type, name: @name,
         #             start_date: @start_date, end_date: @end_date)\
         #      .order(date_created: :desc)\
         #      .first

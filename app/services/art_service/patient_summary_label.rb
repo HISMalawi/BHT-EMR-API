@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   # A card having a summary/snapshot of a patient's current
   # state and history
   class PatientSummaryLabel
@@ -8,13 +8,15 @@ module ARTService
 
     def print(patient)
       demographics = mastercard_demographics(patient)
-      hiv_staging = Encounter.where(type: encounter_type('HIV Staging'), patient: patient).last
+      hiv_staging = Encounter.where(type: encounter_type('HIV Staging'), patient:).last
 
       tb_within_last_two_yrs = 'tb within last 2 yrs' unless demographics.tb_within_last_two_yrs.blank?
       eptb = 'eptb' unless demographics.eptb.blank?
       pulmonary_tb = 'Pulmonary tb' unless demographics.pulmonary_tb.blank?
 
-      cd4_count_date = nil; cd4_count = nil; pregnant = 'N/A'
+      cd4_count_date = nil
+      cd4_count = nil
+      pregnant = 'N/A'
 
       begin
         hiv_staging.observations.map do |obs|
@@ -39,20 +41,26 @@ module ARTService
       cell_phone_number = PatientService.get_attribute(patient.person, 'Cell phone number')
 
       begin
-     phone_number = office_phone_number if !office_phone_number.casecmp('not available').zero? && !office_phone_number.casecmp('unknown').zero?
+        if !office_phone_number.casecmp('not available').zero? && !office_phone_number.casecmp('unknown').zero?
+          phone_number = office_phone_number
+        end
       rescue StandardError
         nil
-   end
+      end
       begin
-     phone_number = home_phone_number if !home_phone_number.casecmp('not available').zero? && !home_phone_number.casecmp('unknown').zero?
+        if !home_phone_number.casecmp('not available').zero? && !home_phone_number.casecmp('unknown').zero?
+          phone_number = home_phone_number
+        end
       rescue StandardError
         nil
-   end
+      end
       begin
-     phone_number = cell_phone_number if !cell_phone_number.casecmp('not available').zero? && !cell_phone_number.casecmp('unknown').zero?
+        if !cell_phone_number.casecmp('not available').zero? && !cell_phone_number.casecmp('unknown').zero?
+          phone_number = cell_phone_number
+        end
       rescue StandardError
         nil
-   end
+      end
 
       initial_height = PatientService.get_patient_attribute_value(patient, 'initial_height')
       initial_weight = PatientService.get_patient_attribute_value(patient, 'initial_weight')
@@ -66,7 +74,7 @@ module ARTService
       label.draw_text("Phone: #{phone_number}", 25, 120, 0, 3, 1, 1, false)
       if (demographics.address.blank? ? 0 : demographics.address.length) > 48
         label.draw_text("Addr:  #{demographics.address[0..47]}", 25, 150, 0, 3, 1, 1, false)
-        label.draw_text("    :  #{demographics.address[48..-1]}", 25, 180, 0, 3, 1, 1, false)
+        label.draw_text("    :  #{demographics.address[48..]}", 25, 180, 0, 3, 1, 1, false)
         last_line = 180
       else
         label.draw_text("Addr:  #{demographics.address}", 25, 150, 0, 3, 1, 1, false)
@@ -79,34 +87,35 @@ module ARTService
           last_line = 210
         elsif (last_line == 180) && (demographics.guardian.length > 48)
           label.draw_text("Guard: #{demographics.guardian[0..47]}", 25, 210, 0, 3, 1, 1, false)
-          label.draw_text("     : #{demographics.guardian[48..-1]}", 25, 240, 0, 3, 1, 1, false)
+          label.draw_text("     : #{demographics.guardian[48..]}", 25, 240, 0, 3, 1, 1, false)
           last_line = 240
         elsif (last_line == 150) && (demographics.guardian.length > 48)
           label.draw_text("Guard: #{demographics.guardian[0..47]}", 25, 180, 0, 3, 1, 1, false)
-          label.draw_text("     : #{demographics.guardian[48..-1]}", 25, 210, 0, 3, 1, 1, false)
+          label.draw_text("     : #{demographics.guardian[48..]}", 25, 210, 0, 3, 1, 1, false)
           last_line = 210
         elsif (last_line == 150) && (demographics.guardian.length < 48)
           label.draw_text("Guard: #{demographics.guardian}", 25, 180, 0, 3, 1, 1, false)
           last_line = 180
         end
       else
-        if last_line == 180
+        case last_line
+        when 180
           label.draw_text('Guard: None', 25, 210, 0, 3, 1, 1, false)
           last_line = 210
-        elsif last_line == 180
+        when 180
           label.draw_text('Guard: None}', 25, 210, 0, 3, 1, 1, false)
           last_line = 240
-        elsif last_line == 150
+        when 150
           label.draw_text('Guard: None', 25, 180, 0, 3, 1, 1, false)
           last_line = 210
-        elsif last_line == 150
+        when 150
           label.draw_text('Guard: None', 25, 180, 0, 3, 1, 1, false)
           last_line = 180
         end
       end
 
       label.draw_text("TI:    #{demographics.transfer_in ||= 'No'}", 25, last_line += 30, 0, 3, 1, 1, false)
-      label.draw_text("FUP:   (#{demographics.agrees_to_followup})", 25, last_line += 30, 0, 3, 1, 1, false)
+      label.draw_text("FUP:   (#{demographics.agrees_to_followup})", 25, last_line + 30, 0, 3, 1, 1, false)
 
       label2 = ZebraPrinter::StandardLabel.new
       # Vertical lines
@@ -114,10 +123,10 @@ module ARTService
       # label data
       label2.draw_text('STATUS AT ART INITIATION', 25, 30, 0, 3, 1, 1, false)
       label2.draw_text("(DSA:#{begin
-                                  patient.date_started_art.strftime('%d-%b-%Y')
-                               rescue StandardError
-                                 'N/A'
-                                end})", 370, 30, 0, 2, 1, 1, false)
+        patient.date_started_art.strftime('%d-%b-%Y')
+      rescue StandardError
+        'N/A'
+      end})", 370, 30, 0, 2, 1, 1, false)
       label2.draw_text(demographics.arv_number.to_s, 580, 20, 0, 3, 1, 1, false)
       label2.draw_text("Printed on: #{Date.today.strftime('%A, %d-%b-%Y')}", 25, 300, 0, 1, 1, 1, false)
 
@@ -127,34 +136,34 @@ module ARTService
 
       label2.draw_text("TB: #{tb_within_last_two_yrs} #{eptb} #{pulmonary_tb}", 380, 70, 0, 2, 1, 1, false)
       label2.draw_text("KS:#{begin
-                                demographics.ks
-                             rescue StandardError
-                               nil
-                              end}", 380, 110, 0, 2, 1, 1, false)
+        demographics.ks
+      rescue StandardError
+        nil
+      end}", 380, 110, 0, 2, 1, 1, false)
       label2.draw_text("Preg:#{pregnant}", 380, 150, 0, 2, 1, 1, false)
       label2.draw_text((begin
-                             demographics.first_line_drugs.join(',')[0..32]
-                        rescue StandardError
-                          nil
-                           end).to_s, 25, 190, 0, 2, 1, 1, false)
+        demographics.first_line_drugs.join(',')[0..32]
+      rescue StandardError
+        nil
+      end).to_s, 25, 190, 0, 2, 1, 1, false)
       label2.draw_text((begin
-                             demographics.alt_first_line_drugs.join(',')[0..32]
-                        rescue StandardError
-                          nil
-                           end).to_s, 25, 230, 0, 2, 1, 1, false)
+        demographics.alt_first_line_drugs.join(',')[0..32]
+      rescue StandardError
+        nil
+      end).to_s, 25, 230, 0, 2, 1, 1, false)
       label2.draw_text((begin
-                             demographics.second_line_drugs.join(',')[0..32]
-                        rescue StandardError
-                          nil
-                           end).to_s, 25, 270, 0, 2, 1, 1, false)
+        demographics.second_line_drugs.join(',')[0..32]
+      rescue StandardError
+        nil
+      end).to_s, 25, 270, 0, 2, 1, 1, false)
 
       label2.draw_text("HEIGHT: #{initial_height}", 570, 70, 0, 2, 1, 1, false)
       label2.draw_text("WEIGHT: #{initial_weight}", 570, 110, 0, 2, 1, 1, false)
       label2.draw_text("Init Age: #{begin
-                                       PatientService.patient_age_at_initiation(patient, demographics.date_of_first_line_regimen)
-                                    rescue StandardError
-                                      nil
-                                     end}", 570, 150, 0, 2, 1, 1, false)
+        PatientService.patient_age_at_initiation(patient, demographics.date_of_first_line_regimen)
+      rescue StandardError
+        nil
+      end}", 570, 150, 0, 2, 1, 1, false)
 
       line = 190
       extra_lines = []
@@ -163,9 +172,7 @@ module ARTService
       begin
         (demographics.who_clinical_conditions.split(';') || []).each do |condition|
           line += 25
-          if line <= 290
-            label2.draw_text(condition[0..35], 450, line, 0, 1, 1, 1, false)
-          end
+          label2.draw_text(condition[0..35], 450, line, 0, 1, 1, 1, false) if line <= 290
           extra_lines << condition[0..79] if line > 290
         end
       rescue StandardError
@@ -176,7 +183,8 @@ module ARTService
         line = 30
         label3 = ZebraPrinter::StandardLabel.new
         label3.draw_text('STAGE DEFINING CONDITIONS', 25, line, 0, 3, 1, 1, false)
-        label3.draw_text(PatientService.get_patient_identifier(patient, 'ARV Number').to_s, 370, line, 0, 2, 1, 1, false)
+        label3.draw_text(PatientService.get_patient_identifier(patient, 'ARV Number').to_s, 370, line, 0, 2, 1, 1,
+                         false)
         label3.draw_text("Printed on: #{Date.today.strftime('%A, %d-%b-%Y')}", 450, 300, 0, 1, 1, 1, false)
         begin
           extra_lines.each do |condition|
@@ -189,6 +197,6 @@ module ARTService
       return "#{label.print(1)} #{label2.print(1)} #{label3.print(1)}" unless extra_lines.blank?
 
       "#{label.print(1)} #{label2.print(1)}"
- end
+    end
   end
 end

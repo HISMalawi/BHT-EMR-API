@@ -12,7 +12,7 @@ module RadiologyService
 
     def reports(start_date, end_date, name)
       name = name.upcase
-      REPORT_NAMES[name].new(start_date: start_date, end_date: end_date).data
+      REPORT_NAMES[name].new(start_date:, end_date:).data
     end
 
     def dashboard_stats(date)

@@ -2,11 +2,11 @@
 
 require 'logger'
 
-module CXCAService
+module CxcaService
   class AppointmentEngine
     include ModelUtils
 
-    LOGGER = Logger.new STDOUT
+    LOGGER = Logger.new $stdout
 
     def initialize(program:, patient:, retro_date: Date.today)
       @ref_date = retro_date.respond_to?(:to_date) ? retro_date.to_date : date
@@ -22,26 +22,24 @@ module CXCAService
 
       ob = Observation.where("concept_id = ? AND person_id = ?
         AND DATE(obs_datetime) <= ?",
-       concept.concept_id, @patient.patient_id, @ref_date.to_date).\
-       order("obs_datetime DESC, date_created DESC").first
+                             concept.concept_id, @patient.patient_id, @ref_date.to_date)\
+                      .order('obs_datetime DESC, date_created DESC').first
 
-       ref_period = 1.week
+      1.week
 
-      unless ob.blank?
-        if negative_concept.include?(ob.value_coded)
-          ref_period = 3.year
-        else
-          ref_period = 1.year
-        end
-      else
-        ref_period = 1.year
-      end
+      ref_period = if ob.blank?
+                     1.year
+                   elsif negative_concept.include?(ob.value_coded)
+                     3.year
+                   else
+                     1.year
+                   end
 
-      clinic_days =  ['Monday','Tuesday','Wednesday','Thursday','Friday']
+      clinic_days = %w[Monday Tuesday Wednesday Thursday Friday]
       appointment_date = @ref_date + ref_period
       valid_day = false
 
-      while !valid_day do
+      until valid_day
         if clinic_days.include?(appointment_date.strftime('%A'))
           valid_day = true
         else
@@ -49,10 +47,9 @@ module CXCAService
         end
       end
 
-
       {
-        drugs_run_out_date: "",
-        appointment_date: appointment_date
+        drugs_run_out_date: '',
+        appointment_date:
       }
     end
   end
