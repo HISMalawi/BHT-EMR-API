@@ -498,7 +498,7 @@ class DdeService
     dde_connections[program.id] = if connection
                                     client.restore_connection(connection)
                                   else
-                                    client.connect(dde_config)
+                                    client.connect(**dde_config)
                                   end
 
     client
