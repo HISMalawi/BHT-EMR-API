@@ -41,48 +41,20 @@ module ArtService
       end
 
       def defaulter_list(pepfar)
-        #         data = ActiveRecord::Base.connection.select_all <<~SQL
-        #           SELECT o.patient_id, min(start_date) start_date
-        #           FROM orders o
-        #           INNER JOIN drug_order od ON od.order_id = o.order_id AND o.voided = 0
-        #           INNER JOIN drug d ON d.drug_id = od.drug_inventory_id
-        #           INNER JOIN concept_set s ON s.concept_id = d.concept_id
-        #           INNER JOIN patient_program pp ON pp.patient_id = o.patient_id
-        #           WHERE s.concept_set = 1085
-        #             AND od.quantity > 0
-        #             AND pp.program_id = 1
-        #             AND pp.voided = 0
-        #             AND o.patient_id NOT IN (
-        #               SELECT DISTINCT person_id
-        #               FROM obs
-        #               INNER JOIN encounter
-        #                 ON encounter.encounter_id = obs.encounter_id
-        #                 AND encounter.program_id = 1
-        #                 AND encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'Registration')
-        #                 AND encounter.encounter_datetime < DATE(#{ActiveRecord::Base.connection.quote(@end_date)}) + INTERVAL 1 DAY
-        #                 AND encounter.voided = 0
-        #               WHERE obs.voided = 0
-        #                 AND obs.concept_id IN (SELECT concept_id FROM concept_name WHERE name = 'Type of Patient' AND voided = 0)
-        #                 AND obs.value_coded IN (SELECT concept_id FROM concept_name WHERE name = 'External consultation' AND voided = 0)
-        #                 AND obs.obs_datetime < DATE(#{ActiveRecord::Base.connection.quote(@end_date)})
-        #             )
-        #           GROUP BY o.patient_id;
-        #         SQL
-
         report_type = (pepfar ? 'pepfar' : 'moh')
         defaulter_date_sql = pepfar ? 'current_pepfar_defaulter_date' : 'current_defaulter_date'
         ArtService::Reports::CohortBuilder.new(outcomes_definition: report_type)
                                           .init_temporary_tables(@start_date, @end_date, @occupation)
 
-        data = ActiveRecord::Base.connection.select_all <<~SQL
+        ActiveRecord::Base.connection.select_all <<~SQL
           SELECT
-            e.patient_id, i.identifier arv_number, e.birthdate,
+            e.patient_id person_id, i.identifier arv_number, e.birthdate,
             e.gender, n.given_name, n.family_name,
             art_reason.name art_reason, a.value cell_number, landmark.value landmark,
             s.state_province district, s.county_district ta,
             s.city_village village, TIMESTAMPDIFF(year, DATE(e.birthdate), DATE('#{@end_date}')) age,
             #{defaulter_date_sql}(e.patient_id, TIMESTAMP('#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')) AS defaulter_date,
-            appointment.appointment_date AS appointment_date
+            DATE(appointment.appointment_date) AS appointment_date
           FROM temp_earliest_start_date e
           INNER JOIN temp_patient_outcomes o ON e.patient_id = o.patient_id
           INNER JOIN (
@@ -95,49 +67,17 @@ module ArtService
             AND e.encounter_datetime < DATE('#{@end_date}') + INTERVAL 1 DAY
             GROUP BY e.patient_id
           ) appointment ON appointment.patient_id = e.patient_id
-          LEFT JOIN patient_identifier i ON i.patient_id = e.patient_id
-          AND i.voided = 0 AND i.identifier_type = 4
+          LEFT JOIN patient_identifier i ON i.patient_id = e.patient_id AND i.voided = 0 AND i.identifier_type = 4
           INNER JOIN person_name n ON n.person_id = e.patient_id AND n.voided = 0
-          LEFT JOIN person_attribute a ON a.person_id = e.patient_id
-          AND a.voided = 0 AND a.person_attribute_type_id = 12
+          LEFT JOIN person_attribute a ON a.person_id = e.patient_id AND a.voided = 0 AND a.person_attribute_type_id = 12
           LEFT JOIN person_attribute landmark ON landmark.person_id = e.patient_id AND landmark.voided = 0 AND landmark.person_attribute_type_id = 19
           LEFT JOIN person_address s ON s.person_id = e.patient_id AND s.voided = 0
           LEFT JOIN concept_name art_reason ON art_reason.concept_id = e.reason_for_starting_art AND art_reason.voided = 0
-          WHERE o.cum_outcome = 'Defaulted' GROUP BY e.patient_id
+          WHERE o.cum_outcome = 'Defaulted'
+          GROUP BY e.patient_id
+          HAVING (defaulter_date >= DATE('#{@start_date}') AND defaulter_date <= DATE('#{@end_date}')) OR (defaulter_date IS NULL)
           ORDER BY e.patient_id, n.date_created DESC;
         SQL
-
-        patients = []
-
-        (data || []).each do |person|
-          defaulter_date = person['defaulter_date']&.to_date || 'N/A'
-
-          unless defaulter_date == 'N/A'
-            next if defaulter_date < @start_date.to_date
-            next if defaulter_date > @end_date.to_date
-          end
-
-          patients << {
-            person_id: person['patient_id'],
-            given_name: person['given_name'],
-            family_name: person['family_name'],
-            birthdate: person['birthdate'],
-            gender: person['gender'],
-            arv_number: person['arv_number'],
-            outcome: 'Defaulted',
-            defaulter_date:,
-            appointment_date: person['appointment_date'].to_date.strftime('%Y-%m-%d'),
-            art_reason: person['art_reason'],
-            cell_number: person['cell_number'],
-            district: person['district'],
-            ta: person['ta'],
-            village: person['village'],
-            current_age: person['age'],
-            landmark: person['landmark']
-          }
-        end
-
-        patients
       end
 
       def cohort_report_drill_down(id)
