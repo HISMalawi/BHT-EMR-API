@@ -82,7 +82,7 @@ module AncService
             }
           }
 
-          label = ZebraPrinter::StandardLabel.new
+          label = ZebraPrinter::Lib::StandardLabel.new
 
           label.draw_line(20,25,800,2,0)
           label.draw_line(20,25,2,280,0)
@@ -305,7 +305,7 @@ module AncService
             }
           }
 
-          label = ZebraPrinter::StandardLabel.new
+          label = ZebraPrinter::Lib::StandardLabel.new
 
           label.draw_line(20,25,800,2,0)
           label.draw_line(20,25,2,280,0)
@@ -577,10 +577,10 @@ module AncService
         @obstetrics[current_level]["PLACE OF BIRTH"] = "<b>(Here)</b>"
       }
 
-      label = ZebraPrinter::StandardLabel.new
-      label2 = ZebraPrinter::StandardLabel.new
+      label = ZebraPrinter::Lib::StandardLabel.new
+      label2 = ZebraPrinter::Lib::StandardLabel.new
       label2set = false
-      label3 = ZebraPrinter::StandardLabel.new
+      label3 = ZebraPrinter::Lib::StandardLabel.new
       label3set = false
 
       label.draw_text("Detailed Obstetric History",28,29,0,1,1,2,false)

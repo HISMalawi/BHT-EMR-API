@@ -120,7 +120,7 @@ module TbService
       logger = Rails.logger
       logger.info "NATIONAL ID: #{identifier}"
 
-      label = ZebraPrinter::StandardLabel.new
+      label = ZebraPrinter::Lib::StandardLabel.new
       label.draw_text('Lab Order Summary', 28, 9, 0, 1, 1, 2, false)
       label.draw_line(25, 35, 115, 1, 0)
       label.draw_line(180, 140, 600, 1, 0)

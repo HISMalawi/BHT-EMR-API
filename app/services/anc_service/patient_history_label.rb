@@ -97,7 +97,7 @@ module AncService
 
       @age = self.age rescue 0
 
-      label = ZebraPrinter::StandardLabel.new
+      label = ZebraPrinter::Lib::StandardLabel.new
 
       label.draw_text("Obstetric History", 28, 8, 0, 1, 1, 2, false)
       label.draw_text("Medical History", 400, 8, 0, 1, 1, 2, false)

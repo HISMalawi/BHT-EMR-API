@@ -38,7 +38,7 @@ class TbNumberService
     first_name = PersonName.find_by(person_id: patient_id).given_name
     last_name = PersonName.find_by(person_id: patient_id).family_name
     name = "#{first_name} #{last_name}"
-    label = ZebraPrinter::StandardLabel.new
+    label = ZebraPrinter::Lib::StandardLabel.new
     label.draw_text(name, 40, 10, 0, 2, 2, 2, false)
     label.draw_text(identifier_name, 40, 60, 0, 2, 2, 2, false)
     label.draw_text(patient_identifier.identifier, 40, 120, 0, 2, 2, 2, false)

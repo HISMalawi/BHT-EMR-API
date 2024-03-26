@@ -9,7 +9,7 @@ module RadiologyService
     end
 
     def print
-      label = ZebraPrinter::StandardLabel.new
+      label = ZebraPrinter::Lib::StandardLabel.new
       label.font_size = 4
       label.x = 200
       label.font_horizontal_multiplier = 1
