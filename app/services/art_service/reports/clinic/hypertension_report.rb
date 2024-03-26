@@ -41,7 +41,7 @@ module ArtService
           'Captopril (6.25mg tablet)' => :captopril_6_25mg,
           'Captopril (12.5mg tablet)' => :captopril_12_5mg,
           'Captopril (50mg tablet)' => :captopril_50mg,
-          'Captopril' => :captopril,
+          'Captopril' => :captopril
         }.freeze
 
         def initialize(start_date:, end_date:, **_kwargs)
@@ -85,7 +85,12 @@ module ArtService
             enalapril_10mg: [],
             atenolol_50mg: [],
             atenolol_100mg: [],
-            nifedipine: [],
+            nifedipine_10mg: [],
+            nifedipine_20mg: [],
+            captopril_25mg: [],
+            captopril_6_25mg: [],
+            captopril_12_5mg: [],
+            captopril_50mg: [],
             captopril: [],
             total_regimen: []
           }
