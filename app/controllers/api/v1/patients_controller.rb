@@ -157,7 +157,7 @@ module Api
       end
 
       def find_archiving_candidates
-        page = params[:page]&.to_i || 0
+        page = params[:page].to_i
         page_size = params[:page_size]&.to_i || DEFAULT_PAGE_SIZE
         patients = filing_number_service.find_archiving_candidates(page * page_size, page_size)
         render json: patients

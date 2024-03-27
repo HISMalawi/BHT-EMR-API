@@ -718,7 +718,7 @@ module AncService
 
     # simple check on migrated patients
     def migrated_patients?
-      migrated_patients.length.zero?
+      migrated_patients.empty?
     end
 
     # method to get patient that were not in use

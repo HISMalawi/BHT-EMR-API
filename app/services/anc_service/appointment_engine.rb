@@ -6,7 +6,7 @@ module AncService
   class AppointmentEngine
     include ModelUtils
 
-    LOGGER = Logger.new STDOUT
+    LOGGER = Logger.new $stdout
 
     def initialize(program:, patient:, retro_date: Date.today)
       @ref_date = retro_date.respond_to?(:to_date) ? retro_date.to_date : date
@@ -18,8 +18,8 @@ module AncService
       appointment_date = @ref_date + 1.month
 
       {
-        drugs_run_out_date: "",
-        appointment_date: appointment_date
+        drugs_run_out_date: '',
+        appointment_date:
       }
     end
 
@@ -30,7 +30,7 @@ module AncService
       return encounter if encounter
 
       Encounter.new type: encounter_type('APPOINTMENT'),
-                    patient: patient,
+                    patient:,
                     encounter_datetime: Time.now,
                     program: @program,
                     location_id: Location.current.location_id,

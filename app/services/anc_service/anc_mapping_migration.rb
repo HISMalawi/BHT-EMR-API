@@ -72,12 +72,16 @@ module AncService
         patient = Patient.find_by(patient_id: identifier['patient_id'])
         next if patient.blank?
 
-        AncDetails.fetch_dob(@database,
-                             anc['patient_id']) == patient.person.birthdate ? update_score_variables('Birthdate',
-                                                                                                     5) : nil
+        if AncDetails.fetch_dob(@database,
+                                anc['patient_id']) == patient.person.birthdate
+          update_score_variables('Birthdate',
+                                 5)
+        end
         check_name(AncDetails.fetch_name(@database, anc['patient_id']), patient)
-        AncDetails.fetch_gender(@database,
-                                anc['patient_id']) == patient.person.gender ? update_score_variables('Gender', 5) : nil
+        if AncDetails.fetch_gender(@database,
+                                   anc['patient_id']) == patient.person.gender
+          update_score_variables('Gender', 5)
+        end
         check_address(AncDetails.fetch_address(@data, anc['patient_id']), patient.person.addresses[0])
         check_attribute(anc['patient_id'], patient)
         @local_score = (@score * 100) / 45.0

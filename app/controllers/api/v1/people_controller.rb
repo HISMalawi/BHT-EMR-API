@@ -39,7 +39,7 @@ module Api
         ActiveRecord::Base.transaction do
           max_id_property = GlobalProperty.find_or_create_by(property: 'hts.max_linkage_code_batch')
           threshold_property = GlobalProperty.find_or_create_by(property: 'hts.linkage_code_batch_threshold')
-          max_id_value = max_id_property&.property_value&.to_i || 0
+          max_id_value = max_id_property&.property_value.to_i
           threshold = threshold_property&.property_value&.to_i || 1000
           max_id_property.update(property_value: max_id_value + threshold)
           render json: { min_id: max_id_value + 1, max_id: max_id_value + threshold }

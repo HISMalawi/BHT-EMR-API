@@ -10,7 +10,7 @@ module Api
         type, start_date, end_date = parse_report_name(name)
         type ||= params[:id]
         start_date ||= params.require(:start_date)
-        end_date ||= (params[:end_date] || Date.today.strftime('%Y-%m-%d'))
+        end_date ||= params[:end_date] || Date.today.strftime('%Y-%m-%d')
 
         pp({ start_date: })
 
