@@ -93,7 +93,7 @@ module AncService
       @who = Encounter.find_by_sql("SELECT who_stage(#{@patient.id}, #{(session[:datetime] ?
         session[:datetime].to_date : Date.today)})") rescue nil
 
-      label = ZebraPrinter::StandardLabel.new
+      label = ZebraPrinter::Lib::StandardLabel.new
 
       label.draw_text("Examination", 28, 9, 0, 1, 1, 2, false)
       label.draw_line(25, 35, 115, 1, 0)

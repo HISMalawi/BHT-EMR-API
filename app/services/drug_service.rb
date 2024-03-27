@@ -5,7 +5,7 @@ class DrugService
   def print_drug_barcode(drug, quantity)
     drug_barcode = "#{drug.id}-#{quantity}"
 
-    label = ZebraPrinter::StandardLabel.new
+    label = ZebraPrinter::Lib::StandardLabel.new
 
     if drug.name.length <= 27
       label.draw_text(drug.name.to_s, 40, 30, 0, 2, 2, 2, false)

@@ -4,22 +4,29 @@ module ArtService
   module Reports
     module Pepfar
       # This class is responsible for generating the tx_new report
+      # rubocop:disable Metrics/ClassLength
       class TxNew
         include ModelUtils
         include Pepfar::Utils
+        include CommonSqlQueryUtils
+
         attr_reader :start_date, :end_date, :rebuild
 
         def initialize(start_date:, end_date:, **kwargs)
           @start_date = start_date.to_date.beginning_of_day.strftime('%Y-%m-%d %H:%M:%S')
           @end_date = end_date.to_date.end_of_day.strftime('%Y-%m-%d %H:%M:%S')
-          rebuild_string = kwargs[:rebuild]
-          @rebuild = rebuild_string.present? ? rebuild_string&.downcase == 'true' : false
+          @rebuild = kwargs[:rebuild] == 'true'
+          @occupation = kwargs[:occupation]
         end
 
+        # rubocop:disable Metrics/AbcSize
         def find_report
           report = init_report
           addittional_groups report
-          ARTService::Reports::CohortBuilder.new.init_temporary_tables(start_date, end_date, '') if rebuild
+          if rebuild
+            ArtService::Reports::CohortBuilder.new(outcomes_definition: 'pepfar')
+                                              .init_temporary_tables(start_date, end_date, '')
+          end
           process_data report
           flatten_the_report report
         rescue StandardError => e
@@ -28,6 +35,7 @@ module ArtService
 
           raise e
         end
+        # rubocop:enable Metrics/AbcSize
 
         private
 
@@ -58,6 +66,10 @@ module ArtService
           end
         end
 
+        # rubocop:disable Metrics/AbcSize
+        # rubocop:disable Metrics/MethodLength
+        # rubocop:disable Metrics/PerceivedComplexity
+        # rubocop:disable Metrics/CyclomaticComplexity
         def process_data(report)
           data.each do |row|
             age_group = row['age_group']
@@ -101,6 +113,8 @@ module ArtService
             report['All']['FNP'][indicator.to_sym] << kwargs[:patient_id]
           end
         end
+        # rubocop:enable Metrics/PerceivedComplexity
+        # rubocop:enable Metrics/CyclomaticComplexity
 
         def process_age_group_report(age_group, gender, age_group_report)
           {
@@ -116,6 +130,8 @@ module ArtService
             transfer_in: age_group_report['transfer_in'.to_sym]
           }
         end
+        # rubocop:enable Metrics/AbcSize
+        # rubocop:enable Metrics/MethodLength
 
         def flatten_the_report(report)
           result = []
@@ -160,6 +176,7 @@ module ArtService
               preg_or_breast.name AS maternal_status,
               DATE(MIN(pregnant_or_breastfeeding.obs_datetime)) AS maternal_status_date
             FROM temp_earliest_start_date pp
+            LEFT JOIN (#{current_occupation_query}) AS current_occupation ON current_occupation.person_id = pp.patient_id
             INNER JOIN person pe ON pe.person_id = pp.patient_id AND pe.voided = 0
             LEFT JOIN (
               SELECT max(o.obs_datetime) AS obs_datetime, o.person_id
@@ -185,11 +202,12 @@ module ArtService
               AND pregnant_or_breastfeeding.voided = 0
               AND pregnant_or_breastfeeding.value_coded = #{concept_name('Yes').concept_id}
             LEFT JOIN concept_name preg_or_breast ON preg_or_breast.concept_id = pregnant_or_breastfeeding.concept_id AND preg_or_breast.voided = 0
-            WHERE pp.date_enrolled <= '#{end_date}' AND pp.date_enrolled >= '#{start_date}'
+            WHERE pp.date_enrolled <= '#{end_date}' AND pp.date_enrolled >= '#{start_date}' #{%w[Military Civilian].include?(@occupation) ? 'AND' : ''} #{occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'current_occupation', include_clause: false)}
             GROUP BY pp.patient_id
           SQL
         end
       end
+      # rubocop:enable Metrics/ClassLength
     end
   end
 end

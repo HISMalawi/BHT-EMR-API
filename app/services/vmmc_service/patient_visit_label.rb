@@ -13,7 +13,7 @@ module VmmcService
       visit = VmmcService::PatientVisit.new patient, date
       return unless visit
 
-      label = ZebraPrinter::StandardLabel.new
+      label = ZebraPrinter::Lib::StandardLabel.new
       label.draw_text(seen_by(patient, date).to_s, 597, 250, 0, 1, 1, 1, false)
       label.draw_text(date&.strftime('%B %d %Y').upcase, 25, 30, 0, 3, 1, 1, false)
       label.draw_text(patient.national_id.to_s, 565, 30, 0, 3, 1, 1, true)
