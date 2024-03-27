@@ -1123,15 +1123,13 @@ module ArtService
           FROM obs o
           INNER JOIN encounter e ON e.encounter_id = o.encounter_id
             AND e.encounter_type = #{hiv_clinic_consultation_encounter_type_id} AND e.voided = 0
-            AND e.patient_id IN (#{patient_list.join(',')}) AND o.voided
-            AND e.encounter_datetime >= '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
-            AND e.encounter_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-            AND o.concept_id IN (#{family_planning_action_to_take_concept_id}, #{method_of_family_planning_concept_id})
-            AND o.value_coded NOT IN (#{none_concept_id.join(',')})
+            AND e.patient_id IN (#{patient_list.join(',')})
           WHERE o.voided = 0
           AND o.concept_id IN (#{family_planning_action_to_take_concept_id}, #{method_of_family_planning_concept_id})
           AND o.value_coded NOT IN (#{none_concept_id.join(',')})
           AND o.person_id IN (#{patient_list.join(',')})
+          AND o.obs_datetime >= '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
+          AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
           AND DATE(o.obs_datetime) = (SELECT max(date(obs.obs_datetime)) FROM obs obs
             WHERE obs.voided = 0
             AND (obs.concept_id IN (#{family_planning_action_to_take_concept_id}, #{method_of_family_planning_concept_id}))
