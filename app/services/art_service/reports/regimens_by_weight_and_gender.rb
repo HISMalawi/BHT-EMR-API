@@ -36,7 +36,7 @@ module ArtService
       ].freeze
 
       def regimen_counts
-        with_lock(Cohort::LOCK_FILE) do
+        with_lock(ArtCohort::LOCK_FILE) do
           PatientsAliveAndOnTreatment.new(start_date:, end_date:, occupation: @occupation)
                                      .refresh_outcomes_table
 
