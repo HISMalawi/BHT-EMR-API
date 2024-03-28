@@ -85,7 +85,7 @@ module ArtService
     end
 
     # Returns dosages for a patients prescribed medication courses
-    def find_dosages(patient, date = Date.today)
+    def find_dosages(patient:, date: Date.today)
       # Make sure it has been stated explicitly that drugs are getting prescribed
       # to this patient
       return {} unless patient_getting_prescription?(patient, date)
