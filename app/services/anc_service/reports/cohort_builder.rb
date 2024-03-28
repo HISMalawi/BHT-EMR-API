@@ -408,6 +408,20 @@ module AncService
             []
           end
 
+        elsif result = begin
+          Encounter.find_by_sql(['SELECT e.patient_id FROM encounter e
+                                               INNER JOIN obs o on o.encounter_id = e.encounter_id
+                                               WHERE e.voided = 0 AND e.program_id = ? AND e.patient_id IN (?)
+                                               AND e.encounter_type IN (?) AND o.concept_id IN (?)
+                                               AND DATE(e.encounter_datetime) <= ? AND COALESCE(
+                                               (SELECT name FROM concept_name WHERE concept_id = o.value_coded LIMIT 1),
+                                               o.value_text) IN (?)', PROGRAM.id,
+                                 ([0] + @cohort_patients), encounter_types, concept_ids, date,
+                                 art_answers]).map(&:patient_id)
+        rescue StandardError
+          []
+        end
+
         end
 
         result.uniq
@@ -416,7 +430,7 @@ module AncService
       # Returns patient's ART start date at current facility
       def find_patient_date_enrolled(patient)
         order = Order.joins(:encounter, :drug_order)\
-                     .where(encounter: { patient: },
+                     .where(encounter: { patient: patient },
                             drug_order: { drug: Drug.arv_drugs })\
                      .order(:start_date)\
                      .first
@@ -459,12 +473,13 @@ module AncService
         result = {}
         @patient_ids = []
         b4_visit_one = []
+        no_art = []
 
         art_patients = ActiveRecord::Base.connection.select_all <<~SQL
-          SELECT patient_id, earliest_start_date FROM temp_earliest_start_date
-          WHERE gender = 'F' AND death_date IS NULL
-          AND patient_id IN (#{positive_patients.join(',')})
-        SQL
+            SELECT patient_id, earliest_start_date FROM temp_earliest_start_date
+            WHERE gender = 'F' AND death_date IS NULL
+            AND patient_id IN (#{positive_patients.join(',')})
+SQL
         art_patients.each do |patient|
           @patient_ids << patient['patient_id']
           earliest_start_date = patient['earliest_start_date'].to_date
@@ -480,7 +495,7 @@ module AncService
 
         no_art = id_visit_map - result.keys
 
-        EncounterType.find_by_name('DISPENSING').id
+        dispensing_encounter_type = EncounterType.find_by_name('DISPENSING').id
         cpt_drug_id = Drug.where(['name LIKE ?', '%Cotrimoxazole%']).map(&:id)
 
         if @patient_ids.length.positive?
@@ -519,12 +534,12 @@ module AncService
 
       def start_art_zero_to_twenty_seven_for_first_visit(date)
         remote = []
-        Observation.find_by_sql(["SELECT o.value_datetime, o.person_id FROM obs o
+        obs = Observation.find_by_sql(["SELECT o.value_datetime, o.person_id FROM obs o
             JOIN encounter ON o.encounter_id = encounter.encounter_id
             AND encounter.voided = 0 AND encounter.program_id = ?
             WHERE o.concept_id = ? AND o.person_id IN (?)
             AND DATE(o.obs_datetime) BETWEEN #{@m_lmp} AND ?", PROGRAM.id, LMP.concept_id,
-                                 @total_hiv_positive_first_visit, date.to_date.end_of_month]).collect do |ob|
+                                       @total_hiv_positive_first_visit, date.to_date.end_of_month]).collect do |ob|
           ident = ob.person_id
           # raise ident.inspect
           next unless !ob.value_datetime.blank? && @m_on_art_in_nart[ident.to_s]
@@ -558,7 +573,7 @@ module AncService
           if  (start_date >= lmp) && (start_date < (lmp + 28.weeks)) && !remote.include?(ob.person_id)
             remote << ob.person_id
           end
-        end
+        end # rescue []
 
         remote = [] if remote.to_s.blank?
 
@@ -567,12 +582,12 @@ module AncService
 
       def start_art_plus_twenty_eight_for_first_visit(date)
         remote = []
-        Observation.find_by_sql(["SELECT o.value_datetime, o.person_id FROM obs o
+        obs = Observation.find_by_sql(["SELECT o.value_datetime, o.person_id FROM obs o
             JOIN encounter ON o.encounter_id = encounter.encounter_id
             AND encounter.voided = 0 AND encounter.program_id = ?
             WHERE o.concept_id = ? AND o.person_id IN (?)
             AND DATE(o.obs_datetime) BETWEEN #{@m_lmp} AND ?", PROGRAM.id, LMP.concept_id,
-                                 @total_hiv_positive_first_visit, date.to_date.end_of_month]).collect do |ob|
+                                       @total_hiv_positive_first_visit, date.to_date.end_of_month]).collect do |ob|
           ident = ob.person_id
           # raise ident.inspect
           next unless !ob.value_datetime.blank? && @m_on_art_in_nart[ident.to_s]
@@ -606,7 +621,7 @@ module AncService
           # rescue []
           # raise ident.inspect
           remote << ob.person_id if start_date >= (lmp + 28.weeks) && !remote.include?(ob.person_id)
-        end
+        end # rescue []
 
         remote = [] if remote.to_s.blank?
 
@@ -715,6 +730,7 @@ module AncService
 
       def patients_given_fefol_tablets
         fefol = {}
+        minus_120 = []
         plus_120 = []
         Order.joins([[drug_order: :drug], :encounter])
              .where(["encounter.program_id = ? AND drug.name = ? AND (DATE(encounter_datetime) >= #{@c_lmp}
@@ -746,13 +762,13 @@ module AncService
 
       def patients_given_one_albendazole_dose
         Order.joins([[drug_order: :drug], :encounter])
-             .where(["encounter.program_id = ? AND drug.name LIKE ? AND (DATE(encounter_datetime) >= #{@c_lmp}
+                    .where(["encounter.program_id = ? AND drug.name LIKE ? AND (DATE(encounter_datetime) >= #{@c_lmp}
                     AND DATE(encounter_datetime) <= ?) AND encounter.patient_id IN (?)", PROGRAM.id,
-                     '%albendazole%', (@c_start_date.to_date + @c_pregnant_range), @cohort_patients])
-             .select(["encounter.patient_id, encounter.encounter_id, drug.name instructions,
+                            '%albendazole%', (@c_start_date.to_date + @c_pregnant_range), @cohort_patients])
+                    .select(["encounter.patient_id, encounter.encounter_id, drug.name instructions,
                     SUM(DATEDIFF(orders.auto_expire_date, orders.start_date)) orderer"])
-             .group('encounter.patient_id')
-             .pluck(:patient_id)
+                    .group('encounter.patient_id')
+                    .pluck(:patient_id)
       end
 
       def patients_not_given_bed_net
@@ -1094,12 +1110,12 @@ module AncService
 
       def start_art_zero_to_twenty_seven_for_final_visit
         remote = []
-        Observation.find_by_sql(["SELECT o.value_datetime, o.person_id FROM obs o
+        obs = Observation.find_by_sql(["SELECT o.value_datetime, o.person_id FROM obs o
             JOIN encounter ON o.encounter_id = encounter.encounter_id
             WHERE o.concept_id = ? AND o.person_id IN (?)
             AND DATE(o.obs_datetime) BETWEEN #{@c_lmp} AND ?", LMP.concept_id,
-                                 @c_total_hiv_positive, ((@c_start_date.to_date + @c_pregnant_range) - 1.day)])
-                   .collect do |ob|
+                                       @c_total_hiv_positive, ((@c_start_date.to_date + @c_pregnant_range) - 1.day)])
+                         .collect do |ob|
           ident = ob.person_id
           # raise ident.inspect
           next unless !ob.value_datetime.blank? && @c_on_art_in_nart[ident.to_s]
@@ -1142,7 +1158,7 @@ module AncService
           if  (start_date >= lmp) && (start_date < (lmp + 28.weeks)) && !remote.include?(ob.person_id)
             remote << ob.person_id
           end
-        end
+        end # rescue []
 
         remote = [] if remote.to_s.blank?
 
@@ -1151,12 +1167,12 @@ module AncService
 
       def start_art_plus_twenty_eight_for_final_visit
         remote = []
-        Observation.find_by_sql(["SELECT o.value_datetime, o.person_id FROM obs o
+        obs = Observation.find_by_sql(["SELECT o.value_datetime, o.person_id FROM obs o
             JOIN encounter ON o.encounter_id = encounter.encounter_id
             WHERE o.concept_id = ? AND o.person_id IN (?)
             AND DATE(o.obs_datetime) BETWEEN #{@c_lmp} AND ?", LMP.concept_id,
-                                 @c_total_hiv_positive, ((@c_start_date.to_date + @c_pregnant_range) - 1.day)])
-                   .collect do |ob|
+                                       @c_total_hiv_positive, ((@c_start_date.to_date + @c_pregnant_range) - 1.day)])
+                         .collect do |ob|
           ident = ob.person_id
           # raise ident.inspect
           next unless !ob.value_datetime.blank? && @c_on_art_in_nart[ident.to_s]
@@ -1199,7 +1215,7 @@ module AncService
           # rescue []
           # raise ident.inspect
           remote << ob.person_id if start_date >= (lmp + 28.weeks) && !remote.include?(ob.person_id)
-        end
+        end # rescue []
 
         remote = [] if remote.to_s.blank?
 
