@@ -24,6 +24,7 @@ module ANCService
       REASON_FOR_VISIT =    ConceptName.find_by name: 'Reason for visit'
       HIV_TEST_DATE =       ConceptName.find_by name: 'HIV test date'
       PREV_HIV_TEST =       ConceptName.find_by name: 'Previous HIV Test Results'
+      PREV_HIV_TEST_DATE =  ConceptName.find_by name: 'Previous HIV Test Date'
       PRE_ECLAMPSIA =       ConceptName.find_by name: 'PRE-ECLAMPSIA'
       HIV_STATUS =          ConceptName.find_by name: 'HIV Status'
       DIAGNOSIS =           ConceptName.find_by name: 'DIAGNOSIS'
@@ -101,7 +102,7 @@ module ANCService
         @total_tested_in_first_visit = @total_hiv_negative_first_visit + @total_hiv_positive_first_visit
         @not_done_hiv_test_first_visit = @monthly_patients - @total_tested_in_first_visit
         @m_extra_art_checks = extra_art_checks('monthly', m_max_date)
-        @m_on_art_in_nart = on_art_in_nart(start_date)
+        @m_on_art_in_nart = on_art_in_nart(@total_hiv_positive_first_visit, start_date)
         @m_on_art_before  = @m_on_art_in_nart['arv_before_visit_one']
         @on_art_before_anc_first_visit = on_art_before_anc_first_visit(start_date)
         @start_art_zero_to_twenty_seven_for_first_visit = start_art_zero_to_twenty_seven_for_first_visit(start_date)
@@ -136,8 +137,8 @@ module ANCService
         @c_total_hiv_positive = (@c_new_hiv_pos + @c_pre_hiv_pos).uniq
 
         @c_extra_art_checks = extra_art_checks('cohort', c_max_date)
-        @c_on_art_in_nart = on_art_in_nart(@c_start_date)
-        @c_on_art_before  = (@c_on_art_in_nart['arv_before_visit_one'] - @monthly_patients).uniq
+        @c_on_art_in_nart = on_art_in_nart(@c_total_hiv_positive, @c_start_date)
+        @c_on_art_before  = (@c_on_art_in_nart['arv_before_visit_one']).uniq
         @on_art_before_anc_final_visit = on_art_before_anc_final_visit
         @start_art_zero_to_twenty_seven_for_final_visit = start_art_zero_to_twenty_seven_for_final_visit
         @start_art_plus_twenty_eight_for_final_visit = start_art_plus_twenty_eight_for_final_visit
@@ -192,8 +193,8 @@ module ANCService
         cohort_struct.patients_given_one_twenty_plus_fefol_tablets = fefol_120_plus
 
         # Albendazole
-        cohort_struct.patients_not_given_albendazole_doses = patients_not_given_albendazole_doses
         cohort_struct.patients_given_one_albendazole_dose = patients_given_one_albendazole_dose
+        cohort_struct.patients_not_given_albendazole_doses = (@cohort_patients - patients_given_one_albendazole_dose).uniq
 
         # Bed nets
         cohort_struct.patients_not_given_bed_net = patients_not_given_bed_net
@@ -214,8 +215,8 @@ module ANCService
         cohort_struct.patients_with_positive_syphilis_status = syphil_pos
         cohort_struct.patients_with_unknown_syphilis_status = syphil_unk
         cohort_struct.new_hiv_negative_final_visit = c_patients_hiv_statuses[:new_negative] || []
-        cohort_struct.new_hiv_positive_final_visit = c_patients_hiv_statuses[:new_positive] || []
-        cohort_struct.prev_hiv_positive_final_visit = c_patients_hiv_statuses[:prev_positive] || []
+        cohort_struct.prev_hiv_positive_final_visit = (@on_art_before_anc_final_visit + c_patients_hiv_statuses[:prev_positive]).uniq || []
+        cohort_struct.new_hiv_positive_final_visit = (c_patients_hiv_statuses[:new_positive] - @on_art_before_anc_final_visit) || []
         cohort_struct.pre_hiv_negative_final_visit = c_patients_hiv_statuses[:prev_negative] || []
         cohort_struct.not_done_hiv_test_final_visit = c_patients_hiv_statuses[:not_done] || []
         cohort_struct.c_total_hiv_positive = @c_total_hiv_positive
@@ -451,10 +452,10 @@ module ANCService
         result['date']&.to_date
       end
 
-      def on_art_in_nart(date)
+      def on_art_in_nart(positive_patients, date)
         id_visit_map = []
         anc_visit = {}
-        @total_hiv_positive_first_visit.each do |id|
+        positive_patients.each do |id|
           next if id.nil?
 
           d = Observation.find_by_sql(['SELECT MAX(value_datetime) as date FROM obs
@@ -474,10 +475,11 @@ module ANCService
         b4_visit_one = []
         no_art = []
 
-        art_patients = ActiveRecord::Base.connection.select_all <<EOF
+        art_patients = ActiveRecord::Base.connection.select_all <<~SQL
             SELECT patient_id, earliest_start_date FROM temp_earliest_start_date
             WHERE gender = 'F' AND death_date IS NULL
-EOF
+            AND patient_id IN (#{positive_patients.join(',')})
+SQL
         art_patients.each do |patient|
           @patient_ids << patient['patient_id']
           earliest_start_date = patient['earliest_start_date'].to_date
@@ -758,35 +760,15 @@ EOF
         [minus_120, plus_120]
       end
 
-      def patients_not_given_albendazole_doses
-        data = Order.joins([[drug_order: :drug], :encounter])
-                    .where(["encounter.program_id = ? AND drug.name REGEXP ? AND (DATE(encounter_datetime) >= #{@c_lmp}
-                    AND DATE(encounter_datetime) <= ?) AND encounter.patient_id IN (?)", PROGRAM.id,
-                            'Albendazole', (@c_start_date.to_date + @c_pregnant_range), @cohort_patients])
-                    .select(["encounter.patient_id, encounter.encounter_id, drug.name instructions,
-                    DATEDIFF(orders.auto_expire_date, orders.start_date) orderer"])
-                    .group('encounter.patient_id')
-                    .collect(&:patient_id)
-        @cohort_patients - data
-      end
-
       def patients_given_one_albendazole_dose
-        result = []
-
-        data = Order.joins([[drug_order: :drug], :encounter])
+        Order.joins([[drug_order: :drug], :encounter])
                     .where(["encounter.program_id = ? AND drug.name LIKE ? AND (DATE(encounter_datetime) >= #{@c_lmp}
                     AND DATE(encounter_datetime) <= ?) AND encounter.patient_id IN (?)", PROGRAM.id,
                             '%albendazole%', (@c_start_date.to_date + @c_pregnant_range), @cohort_patients])
                     .select(["encounter.patient_id, encounter.encounter_id, drug.name instructions,
                     SUM(DATEDIFF(orders.auto_expire_date, orders.start_date)) orderer"])
                     .group('encounter.patient_id')
-                    .collect do |o|
-          [o.patient_id, o.orderer]
-        end
-
-        result = data.delete_if { |_x, y| y != 1 unless y.blank? }.collect { |p, _c| p }
-
-        result.compact
+                    .pluck(:patient_id)
       end
 
       def patients_not_given_bed_net
