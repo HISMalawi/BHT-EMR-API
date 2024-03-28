@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module AncService
+module ANCService
   module Reports
     # ANC cohort report builder
     class CohortBuilder
