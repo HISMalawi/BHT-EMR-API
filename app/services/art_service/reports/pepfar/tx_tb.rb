@@ -161,12 +161,12 @@ module ArtService
         end
 
         def process_patients_alive_and_on_art
-          @tx_curr = []
+          @tx_curr = [] if @report_type == 'pepfar'
           find_patients_alive_and_on_art.each do |patient|
             next unless pepfar_age_groups.include?(patient['age_group'])
 
             @report[patient['age_group']][patient['gender'].to_sym][:tx_curr] << patient['patient_id']
-            @tx_curr << patient['patient_id']
+            @tx_curr << patient['patient_id'] if @report_type == 'pepfar'
           end
         end
 
