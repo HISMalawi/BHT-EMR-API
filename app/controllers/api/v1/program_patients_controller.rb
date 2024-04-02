@@ -22,7 +22,7 @@ module Api
 
       def find_dosages
         service = RegimenService.new(program_id: params[:program_id])
-        dosage = service.find_dosages patient, (params[:date]&.to_date || Date.today)
+        dosage = service.find_dosages(patient:, date: params[:date]&.to_date || Date.today)
         render json: dosage
       end
 

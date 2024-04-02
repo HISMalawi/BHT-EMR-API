@@ -51,13 +51,13 @@ module ArtService
       ingredients.collect { |ingredient| ingredient_to_drug(ingredient) }
     end
 
-    def find_regimens_by_patient(patient, lpv_drug_type: 'tabs')
+    def find_regimens_by_patient(patient:, lpv_drug_type: 'tabs')
       use_tb_dosage = use_tb_patient_dosage?(dtg_drugs.first, patient)
-      find_regimens(patient.weight, use_tb_dosage:,
-                                    lpv_drug_type:)
+      find_regimens(patient_weight: patient.weight, use_tb_dosage:,
+                    lpv_drug_type:)
     end
 
-    def find_regimens(patient_weight, use_tb_dosage: false, lpv_drug_type: 'tabs')
+    def find_regimens(patient_weight:, use_tb_dosage: false, lpv_drug_type: 'tabs')
       ingredients = MohRegimenIngredient.where(
         '(CAST(min_weight AS DECIMAL(4, 1)) <= :weight
          AND CAST(max_weight AS DECIMAL(4, 1)) >= :weight AND ingredient_active = :active)',
@@ -85,7 +85,7 @@ module ArtService
     end
 
     # Returns dosages for a patients prescribed medication courses
-    def find_dosages(patient, date = Date.today)
+    def find_dosages(patient:, date: Date.today)
       # Make sure it has been stated explicitly that drugs are getting prescribed
       # to this patient
       return {} unless patient_getting_prescription?(patient, date)
