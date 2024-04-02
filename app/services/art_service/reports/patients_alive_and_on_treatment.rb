@@ -33,7 +33,7 @@ module ArtService
       end
 
       def query
-        with_lock(Cohort::LOCK_FILE) do
+        with_lock(ArtCohort::LOCK_FILE) do
           refresh_outcomes_table if @rebuild_outcomes || !outcomes_table_exists?
 
           Patient.find_by_sql <<~SQL
